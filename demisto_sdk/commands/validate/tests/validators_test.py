@@ -1055,7 +1055,7 @@ class TestValidators:
         test_file = os.path.join(files_path, "fake_pack/.pack-ignore")
 
         mocker.patch.object(
-            demisto_sdk.commands.validate.validate_manager,
+            demisto_sdk.commands.validate.validate_manager.tools,
             "get_pack_ignore_file_path",
             return_value=test_file,
         )
@@ -1515,18 +1515,19 @@ class TestValidators:
             - running validate_no_old_format on the files
         Then:
             - return a False as the files are invalid
-            - assert the handle_error function is called for each file (and 1 for not finding the id set file)
+            - assert the handle_error function is called for each file
         """
         handle_error_mock = mocker.patch.object(
             BaseValidator, "handle_error", return_value="not-a-non-string"
         )
-        validate_manager = ValidateManager()
+        # silence_init_prints=True to avoid printing the id_set.json not found error
+        validate_manager = ValidateManager(silence_init_prints=True)
         old_format_files = {
             f"{git_path()}/demisto_sdk/tests/test_files/script-valid.yml",
             f"{git_path()}/demisto_sdk/tests/test_files/integration-test.yml",
         }
         assert not validate_manager.validate_no_old_format(old_format_files)
-        assert handle_error_mock.call_count == 3
+        assert handle_error_mock.call_count == 2
 
     def test_validate_no_old_format_deprecated_content(self, repo):
         """

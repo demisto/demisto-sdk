@@ -1,6 +1,6 @@
 import functools
-import logging
 import os
+import re
 import shutil
 import tarfile
 import tempfile
@@ -8,12 +8,20 @@ from pathlib import Path
 from typing import Dict, List, Optional, Tuple, Union
 
 import docker
+import requests
 from docker.types import Mount
+from packaging.version import Version
+from requests import JSONDecodeError
 
-from demisto_sdk.commands.common.constants import TYPE_PWSH, TYPE_PYTHON
+from demisto_sdk.commands.common.constants import (
+    DEFAULT_PYTHON2_VERSION,
+    DEFAULT_PYTHON_VERSION,
+    TYPE_PWSH,
+    TYPE_PYTHON,
+)
+from demisto_sdk.commands.common.logger import logger
 
 DOCKER_CLIENT = None
-logger = logging.getLogger("demisto-sdk")
 FILES_SRC_TARGET = List[Tuple[os.PathLike, str]]
 # this will be used to determine if the system supports mounts
 CAN_MOUNT_FILES = bool(os.getenv("GITLAB_CI", False)) or (
@@ -23,6 +31,8 @@ CAN_MOUNT_FILES = bool(os.getenv("GITLAB_CI", False)) or (
         or os.getenv("DOCKER_HOST", "").lower().startswith("unix:")
     )
 )
+
+PYTHON_IMAGE_REGEX = re.compile(r"[\d\w]+/python3?:(?P<python_version>[23]\.\d+)")
 
 
 class DockerException(Exception):
@@ -50,6 +60,7 @@ def init_global_docker_client(timeout: int = 60, log_prompt: str = ""):
         docker_user = os.getenv("DOCKERHUB_USER")
         docker_pass = os.getenv("DOCKERHUB_PASSWORD")
         if docker_user and docker_pass:
+            logger.info(f"{log_prompt} - logging in to docker registry")
             try:
                 DOCKER_CLIENT.login(
                     username=docker_user,
@@ -181,15 +192,22 @@ class DockerBase:
             command="/install.sh",
         )
         container.start()
-        if container.wait(condition="exited").get("StatusCode") != 0:
+        if container.wait().get("StatusCode") != 0:
+            container_logs = container.logs()
             raise docker.errors.BuildError(
-                reason=f"Installation script failed to run on container '{container.id}'.",
-                build_log=container.logs(),
+                reason=f"Installation script failed to run on container '{container.id}', {container_logs=}",
+                build_log=container_logs,
             )
         repository, tag = image.split(":")
         container.commit(
             repository=repository, tag=tag, changes=self.changes[container_type]
         )
+        if os.getenv("GITLAB_CI"):
+            container.commit(
+                repository=repository.replace("docker-io.art.code.pan.run/", ""),
+                tag=tag,
+                changes=self.changes[container_type],
+            )
         return image
 
 
@@ -256,6 +274,95 @@ class MountableDocker(DockerBase):
             )
 
 
-@functools.lru_cache
 def get_docker():
     return MountableDocker() if CAN_MOUNT_FILES else DockerBase()
+
+
+def _get_docker_hub_token(repo: str) -> str:
+    auth = None
+
+    # If the user has credentials for docker hub, use them to get the token
+    if (docker_user := os.getenv("DOCKERHUB_USER")) and (
+        docker_pass := os.getenv("DOCKERHUB_PASSWORD")
+    ):
+        logger.debug("Using docker hub credentials to get token")
+        auth = (docker_user, docker_pass)
+
+    response = requests.get(
+        f"https://auth.docker.io/token?service=registry.docker.io&scope=repository:{repo}:pull",
+        auth=auth,
+    )
+    if not response.ok:
+        raise RuntimeError(f"Failed to get docker hub token: {response.text}")
+    try:
+        return response.json()["token"]
+    except (JSONDecodeError, KeyError) as e:
+        raise RuntimeError(f"Failed to get docker hub token: {response.text}") from e
+
+
+def _get_image_digest(repo: str, tag: str, token: str) -> str:
+    response = requests.get(
+        f"https://registry-1.docker.io/v2/{repo}/manifests/{tag}",
+        headers={
+            "Accept": "application/vnd.docker.distribution.manifest.v2+json",
+            "Authorization": f"Bearer {token}",
+        },
+    )
+    if not response.ok:
+        raise RuntimeError(f"Failed to get docker image digest: {response.text}")
+    try:
+        return response.json()["config"]["digest"]
+    except (JSONDecodeError, KeyError) as e:
+        raise RuntimeError(f"Failed to get docker image digest: {response.text}") from e
+
+
+@functools.lru_cache
+def _get_image_env(repo: str, digest: str, token: str) -> List[str]:
+    response = requests.get(
+        f"https://registry-1.docker.io/v2/{repo}/blobs/{digest}",
+        headers={
+            "Accept": "application/vnd.docker.distribution.manifest.v2+json",
+            "Authorization": f"Bearer {token}",
+        },
+    )
+    if not response.ok:
+        raise RuntimeError(f"Failed to get docker image env: {response.text}")
+    try:
+        return response.json()["config"]["Env"]
+    except (JSONDecodeError, KeyError) as e:
+        raise RuntimeError(f"Failed to get docker image env: {response.text}") from e
+
+
+@functools.lru_cache
+def get_python_version_from_image(image: Optional[str]) -> Optional[Version]:
+    if not image:
+        # When no docker_image is specified, we use the default python version which is Python 2.7.18
+        logger.debug(
+            f"No docker image specified, using default python version: {DEFAULT_PYTHON2_VERSION}"
+        )
+        return Version(DEFAULT_PYTHON2_VERSION)
+    if match := PYTHON_IMAGE_REGEX.match(image):
+        return Version(match.group("python_version"))
+    if ":" not in image:
+        repo = image
+        tag = "latest"
+    else:
+        if image.count(":") > 1:
+            raise ValueError(f"Invalid docker image: {image}")
+        repo, tag = image.split(":")
+    try:
+        token = _get_docker_hub_token(repo)
+        digest = _get_image_digest(repo, tag, token)
+        env = _get_image_env(repo, digest, token)
+        python_version_envs = [env for env in env if env.startswith("PYTHON_VERSION=")]
+        if not python_version_envs:
+            # no python version available, use the default python version (python 3)
+            return Version(DEFAULT_PYTHON_VERSION)
+        return Version(
+            python_version_envs[0].split("=")[1]
+        )  # we can assume that we have python version after the "="
+    except Exception as e:
+        logger.error(
+            f"Failed to get python version from docker hub for image {image}: {e}"
+        )
+        raise

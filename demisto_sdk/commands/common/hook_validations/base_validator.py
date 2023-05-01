@@ -1,4 +1,3 @@
-import logging
 import os
 from pathlib import Path
 from typing import Optional
@@ -21,6 +20,7 @@ from demisto_sdk.commands.common.errors import (
     get_error_object,
 )
 from demisto_sdk.commands.common.handlers import JSON_Handler
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     find_type,
     get_file_displayed_name,
@@ -29,8 +29,6 @@ from demisto_sdk.commands.common.tools import (
     get_relative_path_from_packs_dir,
     get_yaml,
 )
-
-logger = logging.getLogger("demisto-sdk")
 
 json = JSON_Handler()
 
@@ -225,12 +223,12 @@ class BaseValidator:
             self.predefined_deprecated_ignored_errors.get(file_name)
             or self.predefined_deprecated_ignored_errors.get(rel_file_path)
             or []
-        )  # noqa: E501
+        )
         predefined_by_support_ignored_errors = (
             self.predefined_by_support_ignored_errors.get(file_path)
             or self.predefined_by_support_ignored_errors.get(rel_file_path)
             or []
-        )  # noqa: E501
+        )
 
         is_error_not_allowed_in_pack_ignore = self.is_error_not_allowed_in_pack_ignore(
             error_code=error_code, ignored_errors_pack_ignore=ignored_errors_pack_ignore
@@ -416,6 +414,8 @@ class BaseValidator:
             FileType.MODELING_RULE,
             FileType.PARSING_RULE,
             FileType.XIF_FILE,
+            FileType.MODELING_RULE_XIF,
+            FileType.PARSING_RULE_XIF,
         }:
             if file_name != dir_name:
                 return False

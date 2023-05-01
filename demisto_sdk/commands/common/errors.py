@@ -33,6 +33,7 @@ ALLOWED_IGNORE_ERRORS = [
     "BA113",
     "BA116",
     "BA119",
+    "BA124",
     "DS107",
     "GF102",
     "IF100",
@@ -91,6 +92,7 @@ ALLOWED_IGNORE_ERRORS = [
     "RN113",
     "RN114",
     "RN115",
+    "RN116",
     "MR104",
     "MR105",
     "LO107",
@@ -213,6 +215,11 @@ ERROR_CODE = {
     },
     "copyright_section_in_python_error": {
         "code": "BA119",
+        "ui_applicable": False,
+        "related_field": "",
+    },
+    "missing_unit_test_file": {
+        "code": "BA124",
         "ui_applicable": False,
         "related_field": "",
     },
@@ -1494,6 +1501,11 @@ ERROR_CODE = {
     },
     "release_notes_invalid_header_format": {
         "code": "RN115",
+        "ui_applicable": False,
+        "related_field": "",
+    },
+    "first_level_is_header_missing": {
+        "code": "RN116",
         "ui_applicable": False,
         "related_field": "",
     },
@@ -2897,6 +2909,15 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
+    def first_level_is_header_missing(pack_name):
+        error = (
+            f'Please use "demisto-sdk update-release-notes -i Packs/{pack_name}"\n'
+            "For more information, refer to the following documentation: https://xsoar.pan.dev/docs/documentation/release-notes"
+        )
+        return f"The following RN is missing a first level header.\n{error}"
+
+    @staticmethod
+    @error_code_decorator
     def release_notes_docker_image_not_match_yaml(
         rn_file_name, un_matching_files_list: list, pack_path
     ):
@@ -4250,6 +4271,11 @@ class Errors:
     @error_code_decorator
     def missing_readme_file(location: FileType):
         return f"{location.name} is missing a README file"
+
+    @staticmethod
+    @error_code_decorator
+    def missing_unit_test_file(path: Path):
+        return f"Missing {path.stem}_test.py unit test file for {path.name}."
 
     @staticmethod
     @error_code_decorator

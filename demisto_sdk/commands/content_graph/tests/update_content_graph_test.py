@@ -649,6 +649,6 @@ class TestUpdateContentGraph:
             extracted_files = list(tmp_path.glob("extracted/*"))
             assert extracted_files
             assert all(
-                file.suffix == ".csv" or file.name == "metadata.json"
+                file.suffix == ".graphml" or file.name == "metadata.json"
                 for file in extracted_files
             )

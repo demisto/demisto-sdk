@@ -1,13 +1,11 @@
 """This file is a part of the generating yml design. Generating a yml file from a python file."""
 import enum
-import logging
 import re
 from dataclasses import dataclass
 from typing import Any, Callable, List, Optional
 
 from demisto_sdk.commands.common.constants import ParameterType
-
-logger = logging.getLogger("demisto-sdk")
+from demisto_sdk.commands.common.logger import logger
 
 # This is done so the dependencies will not clash or be mocked.
 ParameterTypes = ParameterType
@@ -27,6 +25,7 @@ class InputArgument:
         execution: bool = False,
         options: Optional[list] = None,
         input_type: Optional[enum.EnumMeta] = None,
+        default_arg: bool = False,
     ):
         # if name is not provided convert class name to camel case
         self.name = (
@@ -36,7 +35,8 @@ class InputArgument:
         )
         self.description = description
         self.required = required
-        self.default = default
+        self.default_value = default  # Saving backwards compatibility
+        self.default = default_arg
         self.is_array = is_array
         self.secret = secret
         self.execution = execution

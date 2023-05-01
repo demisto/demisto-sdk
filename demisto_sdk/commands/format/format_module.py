@@ -1,4 +1,3 @@
-import logging
 import os
 from pathlib import Path
 from typing import Dict, List, Tuple
@@ -11,6 +10,7 @@ from demisto_sdk.commands.common.constants import (
     FileType,
 )
 from demisto_sdk.commands.common.git_util import GitUtil
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import find_type, get_files_in_dir
 from demisto_sdk.commands.format.format_constants import SCHEMAS_PATH
 from demisto_sdk.commands.format.update_classifier import (
@@ -108,8 +108,6 @@ VALIDATE_RES_FAILED_CODE = 3
 
 CONTENT_ENTITY_IDS_TO_UPDATE: Dict = {}
 
-logger = logging.getLogger("demisto-sdk")
-
 
 def format_manager(
     input: str = None,
@@ -153,7 +151,9 @@ def format_manager(
     use_git = use_git or not input
 
     if input:
-        files = get_files_in_dir(input, supported_file_types)
+        files = []
+        for i in input.split(","):
+            files.extend(get_files_in_dir(i, supported_file_types))
 
     elif use_git:
         files = get_files_to_format_from_git(
@@ -164,6 +164,10 @@ def format_manager(
         raise Exception(
             "The given output path is not a specific file path.\n"
             "Only file path can be a output path.  Please specify a correct output."
+        )
+    if output and input and "," in input:
+        raise Exception(
+            "Cannot use the output argument when provided with a list of inputs. Remove the first or only provide a single file as input."
         )
 
     log_list = []
@@ -235,7 +239,7 @@ def format_manager(
             )
         return 1
 
-    print("")  # Just adding a new line before summary
+    logger.info("")  # Just adding a new line before summary
     for string, print_color in log_list:
         joined_string = "\n".join(string)
         logger.info(f"[{print_color}]{joined_string}[/{print_color}]")

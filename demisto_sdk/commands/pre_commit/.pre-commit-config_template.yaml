@@ -1,0 +1,79 @@
+exclude: .devcontainer/|.vscode|Pipfile.lock|.gitlab/ci/|.circleci/
+
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.4.0
+    hooks:
+      - id: check-json
+      - id: check-yaml
+      - id: check-ast
+      - id: check-merge-conflict
+      - id: debug-statements
+        language_version: python3
+      - id: name-tests-test
+        files: .+_test.py$
+
+  - repo: https://github.com/hadialqattan/pycln
+    rev: v2.1.2
+    hooks:
+      - id: pycln
+
+  - repo: https://github.com/charliermarsh/ruff-pre-commit
+    rev: "v0.0.259"
+    hooks:
+      - id: ruff
+
+  - repo: https://github.com/pre-commit/mirrors-autopep8
+    rev: "v2.0.1"
+    hooks:
+      - id: autopep8
+
+  - repo: local
+    hooks:
+      - id: mypy
+        name: mypy
+        entry: mypy
+        language: python
+        types: [python]
+        args:
+          [
+            --ignore-missing-imports,
+            --check-untyped-defs,
+            --show-error-codes,
+            --follow-imports=silent,
+            --allow-redefinition,
+            # this will be replaced by the python version in the runtime
+            --python-version=3.10,
+          ]
+        exclude: "test_data|tests_data|.venv|.*_test.py$|infrastructure_tests"
+
+      - id: is-circle-changed
+        name: is-circle-changed
+        description: Checks if circle files are changed, and checkout to current if it is.
+        entry: ./Tests/scripts/is_file_up_to_date.sh .circleci/config.yml "" true
+        language: script
+
+      - id: is-gitlab-changed
+        name: is-gitlab-changed
+        description: Checks if gitlab files are changed, and checkout to current if it is.
+        entry: ./Tests/scripts/is_file_up_to_date.sh .gitlab "" true
+        language: script
+
+  - repo: https://github.com/PyCQA/flake8
+    rev: "6.0.0"
+    hooks:
+      - id: flake8
+
+  - repo: https://github.com/demisto/demisto-sdk
+    # Replace with the latest release version or master
+    rev: master
+    hooks:
+      # enable with --test
+      - id: run-unit-tests
+
+      # those will be skipped by default, to run them use --force-run-hooks=validate,format
+      - id: format
+        # update docker image to the latest version
+        args: ["-ud"]
+
+      - id: validate

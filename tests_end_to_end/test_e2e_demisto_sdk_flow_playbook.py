@@ -4,6 +4,7 @@ from os import path
 import e2e_tests_utils
 from demisto_client.demisto_api.rest import ApiException
 
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.download.downloader import Downloader
 from demisto_sdk.commands.format.format_module import format_manager
 from demisto_sdk.commands.generate_docs import generate_playbook_doc
@@ -30,7 +31,7 @@ def test_e2e_demisto_sdk_flow_playbook_testsuite(tmpdir):
     playbook.create_default_playbook(name=playbook_name)
     assert path.exists(f"{tmpdir}/Packs/{pack_name}/Playbooks/{playbook_name}.yml")
 
-    print(
+    logger.info(
         f"Trying to upload playbook from {tmpdir}/Packs/{pack_name}/Playbooks/{playbook_name}.yml"
     )
     Uploader(
@@ -40,7 +41,7 @@ def test_e2e_demisto_sdk_flow_playbook_testsuite(tmpdir):
     # Preparing updated pack folder
     e2e_tests_utils.cli(f"mkdir {tmpdir}/Packs/{pack_name}_testsuite")
 
-    print(
+    logger.info(
         f"Trying to download the updated playbook from {playbook_name} to {tmpdir}/Packs/{pack_name}_testsuite/Playbooks"
     )
     Downloader(
@@ -52,7 +53,7 @@ def test_e2e_demisto_sdk_flow_playbook_testsuite(tmpdir):
         f"{tmpdir}/Packs/{pack_name}_testsuite/Playbooks/{playbook_name}.yml"
     )
 
-    print(
+    logger.info(
         "Generating docs (creating a readme file)"
         f" for the playbook {tmpdir}/Packs/{pack_name}_testsuite/Playbooks/{playbook_name}.yml"
     )
@@ -63,21 +64,21 @@ def test_e2e_demisto_sdk_flow_playbook_testsuite(tmpdir):
         f"{tmpdir}/Packs/{pack_name}_testsuite/Playbooks/{playbook_name}_README.md"
     )
 
-    print(
+    logger.info(
         f"Formating playbook {tmpdir}/Packs/{pack_name}_testsuite/Playbooks/{playbook_name}.yml"
     )
     format_manager(
         input=f"{tmpdir}/Packs/{pack_name}_testsuite/Playbooks/{playbook_name}.yml",
         assume_yes=True,
     )
-    print(
+    logger.info(
         f"Validating playbook {tmpdir}/Packs/{pack_name}_testsuite/Playbooks/{playbook_name}.yml"
     )
     ValidateManager(
         file_path=f"{tmpdir}/Packs/{pack_name}_testsuite/Playbooks/{playbook_name}.yml"
     ).run_validation()
 
-    print(
+    logger.info(
         f"Uploading updated playbook {tmpdir}/Packs/{pack_name}_testsuite/Playbooks/{playbook_name}.yml"
     )
     Uploader(
@@ -108,7 +109,7 @@ def test_e2e_demisto_sdk_flow_playbook_client(tmpdir, insecure: bool = True):
     ]
 
     header_params = {
-        "Accept": "application/json",  # noqa: E501
+        "Accept": "application/json",
         "Accept-Encoding": "gzip, deflate, br",
         "Content-Type": "application/json",
     }
@@ -121,13 +122,13 @@ def test_e2e_demisto_sdk_flow_playbook_client(tmpdir, insecure: bool = True):
             body=body,
         )
     except ApiException as ae:
-        print(f"*** Failed to create playbook {playbook_name}, reason: {ae}")
+        logger.info(f"*** Failed to create playbook {playbook_name}, reason: {ae}")
         assert False
 
     # Preparing updated pack folder
     e2e_tests_utils.cli(f"mkdir -p {tmpdir}/Packs/{pack_name}_client")
 
-    print(
+    logger.info(
         f"Trying to download the updated playbook from {playbook_name} to {tmpdir}/Packs/{pack_name}_client/Playbooks"
     )
     Downloader(
@@ -139,7 +140,7 @@ def test_e2e_demisto_sdk_flow_playbook_client(tmpdir, insecure: bool = True):
         f"{tmpdir}/Packs/{pack_name}_client/Playbooks/{playbook_name}.yml"
     )
 
-    print(
+    logger.info(
         "Generating docs (creating a readme file)"
         f" for the playbook {tmpdir}/Packs/{pack_name}_client/Playbooks/{playbook_name}.yml"
     )
@@ -150,21 +151,21 @@ def test_e2e_demisto_sdk_flow_playbook_client(tmpdir, insecure: bool = True):
         f"{tmpdir}/Packs/{pack_name}_client/Playbooks/{playbook_name}_README.md"
     )
 
-    print(
+    logger.info(
         f"Formating playbook {tmpdir}/Packs/{pack_name}_client/Playbooks/{playbook_name}.yml"
     )
     format_manager(
         input=f"{tmpdir}/Packs/{pack_name}_client/Playbooks/{playbook_name}.yml",
         assume_yes=True,
     )
-    print(
+    logger.info(
         f"Validating playbook {tmpdir}/Packs/{pack_name}_client/Playbooks/{playbook_name}.yml"
     )
     ValidateManager(
         file_path=f"{tmpdir}/Packs/{pack_name}_client/Playbooks/{playbook_name}.yml"
     ).run_validation()
 
-    print(
+    logger.info(
         f"Uploading updated playbook {tmpdir}/Packs/{pack_name}_client/Playbooks/{playbook_name}.yml"
     )
     Uploader(

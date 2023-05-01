@@ -4,7 +4,6 @@ import pathlib
 import shutil
 from collections import Counter
 from copy import deepcopy
-from pathlib import Path
 from typing import Dict, Optional
 from unittest import mock
 
@@ -878,7 +877,8 @@ class TestRNUpdate:
         with pytest.raises(Exception) as execinfo:
             update_rn.bump_version_number()
         assert (
-            "Pack HelloWorld was not found. Please verify the pack name is correct."
+            "The metadata file of pack HelloWorld was not found."
+            " Please verify the pack name is correct, and that the file exists."
             in execinfo.value.args[0]
         )
 
@@ -2694,9 +2694,7 @@ def test_handle_existing_rn_version_path(mocker, repo):
         Ensure the function does not sets should delete existing rn property to True when paths are identical.
     """
     pack = repo.create_pack("test")
-    mocker.patch.object(
-        Path, "absolute", return_value=f"{str(pack.path)}/ReleaseNotes/1_0_1.md"
-    )
+    mocker.patch.object(UpdateRN, "CONTENT_PATH", return_value=repo.path)
     pack.create_release_notes(version="1_0_1")
     client = UpdateRN(
         pack_path=str(pack.path),
@@ -2729,3 +2727,30 @@ def test_get_file_description(path, file_type, expected_results):
         Ensure the function extracted the information from the right field.
     """
     assert get_file_description(path, file_type) == expected_results
+
+
+def test_no_release_notes_for_first_version(mocker):
+    """
+    Given:
+        - Changes made in the content repo.
+    When:
+        - runing update release notes for the first version of the pack (1.0.0).
+    Then
+        - validate the a proper error message is raised.
+    """
+    mocker.patch.object(UpdateRN, "get_master_version", return_value="0.0.0")
+    mocker.patch.object(UpdateRN, "is_bump_required", return_value=False)
+    mocker.patch.object(
+        UpdateRN, "get_pack_metadata", return_value={"currentVersion": "1.0.0"}
+    )
+    update_rn = UpdateRN(
+        pack_path="Packs/HelloWorld",
+        update_type="minor",
+        modified_files_in_pack=set(),
+        added_files=set(),
+        pack_metadata_only=True,
+    )
+
+    with pytest.raises(ValueError) as e:
+        update_rn.get_new_version_and_metadata()
+        assert str(e) == "Release notes do not need to be updated for version '1.0.0'."

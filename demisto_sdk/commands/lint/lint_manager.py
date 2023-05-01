@@ -1,6 +1,5 @@
 # STD packages
 import concurrent.futures
-import logging
 import os
 import platform
 import re
@@ -25,6 +24,7 @@ from demisto_sdk.commands.common.constants import (
 )
 from demisto_sdk.commands.common.docker_helper import init_global_docker_client
 from demisto_sdk.commands.common.handlers import JSON_Handler
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.timers import report_time_measurements
 from demisto_sdk.commands.common.tools import (
     find_file,
@@ -58,7 +58,6 @@ json = JSON_Handler()
 # Third party packages
 
 # Local packages
-logger = logging.getLogger("demisto-sdk")
 
 sha1Regex = re.compile(r"\b[0-9a-fA-F]{40}\b", re.M)
 
@@ -214,7 +213,7 @@ class LintManager:
                 ]
                 logger.debug(
                     "Test requirements successfully collected for python 3:\n"
-                    f" {facts[f'requirements_3']}"
+                    f" {facts['requirements_3']}"
                 )
             python2_requirements = pipfile_dir / "pipfile_python2/dev-requirements.txt"
             facts["requirements_2"] = python2_requirements.read_text().strip().split("\n")  # type: ignore

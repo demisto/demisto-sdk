@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 
 import pytest
 
@@ -255,6 +256,36 @@ def test_validate_readme_exists_not_checking_on_api_modules(repo):
     structue_validator = StructureValidator(api_modules.yml.path)
     content_entity_validator = ContentEntityValidator(structue_validator)
     assert content_entity_validator.validate_readme_exists()
+
+
+@pytest.mark.parametrize(
+    "with_test, support_level, expected_result",
+    [(True, "xsoar", True), (False, "xsoar", False), (False, "community", True)],
+)
+def test_validate_unit_test_exists(
+    repo, with_test: bool, support_level: str, expected_result: bool
+):
+    """
+    Given:
+    - A 'test pack' which contains / does not contain a 'test file'
+
+    When:
+    - Validating if an unittest file exists
+
+    Then:
+    - Ensure that False is being returned since unittest for the Python file was not found,
+        or True is being returned since there's an unittest for the Python file.
+         (Validation just for xsoar and partner support.)
+    """
+    pack = repo.create_pack(name="Test_Pack")
+    integration = pack.create_integration("Test_Integration")
+    structure_validator = StructureValidator(integration.yml.path)
+    pack.pack_metadata.update({"support": support_level})
+    path = Path(integration.code.path)
+    if not with_test:
+        path.with_name(f"{path.stem}_test.py").unlink(missing_ok=True)
+    content_entity_validator = ContentEntityValidator(structure_validator)
+    assert content_entity_validator.validate_unit_test_exists() == expected_result
 
 
 FROM_AND_TO_VERSION_FOR_TEST = [

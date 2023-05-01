@@ -1,5 +1,4 @@
 import json
-import logging
 import os
 from pathlib import Path
 from typing import Dict, List
@@ -11,6 +10,7 @@ from demisto_sdk.commands.common.constants import (
     GENERIC_COMMANDS_NAMES,
     MarketplaceVersions,
 )
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.content_graph.common import (
     ContentType,
     Neo4jRelationshipResult,
@@ -25,8 +25,6 @@ from demisto_sdk.commands.content_graph.interface.neo4j.queries.common import (
 IGNORED_PACKS_IN_DEPENDENCY_CALC = ["NonSupported", "Base", "ApiModules"]
 
 MAX_DEPTH = 5
-
-logger = logging.getLogger("demisto-sdk")
 
 
 def get_all_level_packs_dependencies(

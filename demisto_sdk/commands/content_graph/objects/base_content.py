@@ -75,7 +75,7 @@ class BaseContent(ABC, BaseModel, metaclass=BaseContentMetaclass):
 
     def __getstate__(self):
         """Needed to for the object to be pickled correctly (to use multiprocessing)"""
-        if "relationships_data" not in se;f.__dict__:
+        if "relationships_data" not in self.__dict__:
             # if we don't have relationships, we can use the default __getstate__ method
             return super().__getstate__()
 

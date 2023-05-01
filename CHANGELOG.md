@@ -1,14 +1,37 @@
 # Changelog
 
 ## Unreleased
+* Improved the warning message displayed for Contribution PRs editing outdated code.
+* **lint** now prevents unit-tests from accessing online resources in runtime.
+* Added support for the `<~XPANSE>` marketplace tag in release notes.
+* Added support for marketplace tags in the **doc-review** command.
+* Updated the logs shown during lint when running in docker.
+* Fixed an issue where **validate** showed errors twice.
+* Added **generate-unit-tests** documentation to the repo README.
+* Fixed an issue where **validate** did not fail when xif files had wrong naming.
+* Added the `hiddenpassword` field to the integration schema, allowing **validate** to run on integrations with username-only inputs.
+* Fixed an issue where **doc-review** required dot suffixes in release notes describing new content.
+* Improved logs and error handling in the **modeling-rules test** command.
+* Fixed an issue where **download** command failed when running on a beta integration.
+* Added the `DEMISTO_SDK_GRAPH_FORCE_CREATE` environment variable. Use it to force the SDK to recreate the graph, rather than update it.
+* Added support for code importing multi-level ApiModules to **lint**.
+* Added a validation that the **modeling-rules test** command will fail if no test data file exist.
+* Standardized repo-wide logging. All logs are now created in one logger instance.
+* Improved the clarity of error messages for cases where yml files cannot be parsed as a dictionary.
+* Fixed an issue where **update-release-notes** generated release notes for packs in their initial version (1.0.0).
+
+## 1.13.0
 * Added the pack version to the code files when calling **unify**. The same value is removed when calling **split**.
 * Added a message showing the output path when **prepare-content** is called.
 * Contribution PRs that update outdated packs now display a warning message.
+* Fixed an issue when kebab-case has a misspelling in one of the sub words, the suggestion might be confusing.
 * Improved caching and stability for **lint**.
+* Added support for *.xif* files in the **secrets** command.
 * Fixed an issue where **validate** would fail when playbook inputs contain Transform Language (DT).
 * Added a new **validate** check, making sure a first level header exist in release notes (RN116)
 * Fixed an issue where **lint** would not properly handle multiple ApiModules imports.
 * Fixed an issue when trying to fetch remote files when not under the content repo.
+
 
 ## 1.12.0
 * Added the **pre-commit** command, to improve code quality of XSOAR content.

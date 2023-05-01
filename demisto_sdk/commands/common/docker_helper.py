@@ -1,5 +1,4 @@
 import functools
-import logging
 import os
 import re
 import shutil
@@ -20,9 +19,9 @@ from demisto_sdk.commands.common.constants import (
     TYPE_PWSH,
     TYPE_PYTHON,
 )
+from demisto_sdk.commands.common.logger import logger
 
 DOCKER_CLIENT = None
-logger = logging.getLogger("demisto-sdk")
 FILES_SRC_TARGET = List[Tuple[os.PathLike, str]]
 # this will be used to determine if the system supports mounts
 CAN_MOUNT_FILES = bool(os.getenv("GITLAB_CI", False)) or (

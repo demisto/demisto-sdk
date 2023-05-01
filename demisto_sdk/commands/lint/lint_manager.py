@@ -1,6 +1,5 @@
 # STD packages
 import concurrent.futures
-import logging
 import os
 import platform
 import re
@@ -26,6 +25,7 @@ from demisto_sdk.commands.common.constants import (
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.docker_helper import init_global_docker_client
 from demisto_sdk.commands.common.handlers import JSON_Handler
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.timers import report_time_measurements
 from demisto_sdk.commands.common.tools import (
     find_file,
@@ -58,7 +58,6 @@ json = JSON_Handler()
 # Third party packages
 
 # Local packages
-logger = logging.getLogger("demisto-sdk")
 
 sha1Regex = re.compile(r"\b[0-9a-fA-F]{40}\b", re.M)
 

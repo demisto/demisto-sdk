@@ -1,5 +1,4 @@
 import glob
-import logging
 import os
 import sys
 from copy import deepcopy
@@ -20,6 +19,7 @@ from demisto_sdk.commands.common.constants import (
 )
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.handlers import JSON_Handler
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     ProcessPoolHandler,
     get_content_id_set,
@@ -34,7 +34,6 @@ from demisto_sdk.commands.common.update_id_set import (
 )
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator, get_id_set
 
-logger = logging.getLogger("demisto-sdk")
 json = JSON_Handler()
 
 
@@ -3093,7 +3092,7 @@ def get_all_packs_dependency_graph(id_set: dict, packs: list) -> Iterable:
     Returns:
         A graph with all packs dependencies
     """
-    print("Calculating all packs dependencies.")
+    logger.info("Calculating all packs dependencies.")
     # try:
     dependency_graph = PackDependencies.build_all_dependencies_graph(
         packs, id_set=id_set
@@ -3170,7 +3169,7 @@ def calculate_all_packs_dependencies(id_set_path: str, output_path: str) -> dict
                 )
             )
         wait_futures_complete(futures=futures, done_fn=add_pack_metadata_results)
-        print(
+        logger.info(
             f"Number of created pack dependencies entries: {len(pack_dependencies_result.keys())}"
         )
         # finished iteration over pack folders
@@ -3445,7 +3444,7 @@ def calculate_dependencies(
                     ).update(dependent_entities_list)
 
                     # for debug purposes
-                    print(
+                    logger.info(
                         f"Removing {dependent_entities_list} due to {entity_dependent_on}"
                     )
 

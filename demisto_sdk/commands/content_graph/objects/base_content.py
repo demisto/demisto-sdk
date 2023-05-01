@@ -76,7 +76,8 @@ class BaseContent(ABC, BaseModel, metaclass=BaseContentMetaclass):
     def __getstate__(self):
         """Needed to for the object to be pickled correctly (to use multiprocessing)"""
         dict_copy = self.__dict__.copy()
-
+        if "relationships_data" not in dict_copy:
+            return super().__getstate__()
         # This avoids circular references when pickling store only the first level relationships.
         relationships_data_copy = dict_copy["relationships_data"].copy()
         dict_copy["relationships_data"] = defaultdict(set)

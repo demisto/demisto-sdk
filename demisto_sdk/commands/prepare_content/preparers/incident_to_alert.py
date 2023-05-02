@@ -1,7 +1,7 @@
 import re
 import copy
 import logging
-from typing import Any
+from typing import Any, Tuple
 
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
@@ -33,10 +33,10 @@ WRAPPED_MAPPING = {
 }
 
 WRAPPER_SCRIPT = {
-    'python': "register_module_line('script_name', 'start', __line__())\n\n"
+    "python": "register_module_line('script_name', 'start', __line__())\n\n"
               "return_results(demisto.executeCommand('<original_script_name>', demisto.args()))\n\n"
               "register_module_line('script_name', 'end', __line__())",
-    'javascript': "return executeCommand('<original_script_name>', args)\n"
+    "javascript": "return executeCommand('<original_script_name>', args)\n",
 }
 
 
@@ -111,10 +111,13 @@ def edit_names_and_descriptions_for_playbook(
     return new_content
 
 
-def replace_playbook_access_fields_recursively(datum: Any) -> Any:
-
+def replace_playbook_access_fields_recursively(
+    datum: Any, script_names: Tuple[str, ...]
+) -> Any:
     if isinstance(datum, list):
-        return [replace_playbook_access_fields_recursively(item) for item in datum]
+        return [
+            replace_playbook_access_fields_recursively(item, script_names) for item in datum
+        ]
 
     elif isinstance(datum, dict):
         for key, val in datum.items():
@@ -127,16 +130,22 @@ def replace_playbook_access_fields_recursively(datum: Any) -> Any:
                 if key == "script" and val == "Builtin|||setIncident":
                     val = val.replace("setIncident", "setAlert")
 
+                elif (
+                    key == "scriptName"
+                    and "incident" in val
+                    and val in script_names
+                ):
+                    val = ...
                 datum[key] = val
 
             else:
-                datum[key] = replace_playbook_access_fields_recursively(val)
+                datum[key] = replace_playbook_access_fields_recursively(val, script_names)
 
     return datum
 
 
-def prepare_playbook_access_fields(data: dict) -> dict:
-    data = replace_playbook_access_fields_recursively(data)
+def prepare_playbook_access_fields(data: dict, script_names: Tuple[str, ...]) -> dict:
+    data = replace_playbook_access_fields_recursively(data, script_names)
     return data
 
 
@@ -145,7 +154,9 @@ SCRIPT HELPER FUNCTIONS
 """
 
 
-def edit_ids_names_and_descriptions_for_script(data: str, incident_to_alert: bool = False):
+def edit_ids_names_and_descriptions_for_script(
+    data: str, incident_to_alert: bool = False
+):
     if incident_to_alert:
         for pattern, replace_with in NOT_WRAPPED_RE_MAPPING.items():
             data = re.sub(pattern, replace_with, data)
@@ -156,16 +167,18 @@ def edit_ids_names_and_descriptions_for_script(data: str, incident_to_alert: boo
 
 
 def create_wrapper_script(data: dict) -> dict:
-
     copy_data = copy.deepcopy(data)
     try:
-        copy_data['script'] = WRAPPER_SCRIPT[copy_data['type']].replace(
-            '<original_script_name>',
-            edit_ids_names_and_descriptions_for_script(copy_data['name'], True)).replace(
-                'script_name',
-                copy_data['name'])
+        copy_data["script"] = (
+            WRAPPER_SCRIPT[copy_data["type"]]
+            .replace(
+                "<original_script_name>",
+                edit_ids_names_and_descriptions_for_script(copy_data["name"], True),
+            )
+            .replace("script_name", copy_data["name"])
+        )
     except Exception as e:
-        logger.error(f'Failed to create the wrapper script: {e}')
+        logger.error(f"Failed to create the wrapper script: {e}")
 
     copy_data = set_deprecated_for_scripts(copy_data, old_script=True)
     logger.debug(f"Created {copy_data['name']} script wrapper to {data['name']} script")
@@ -173,19 +186,26 @@ def create_wrapper_script(data: dict) -> dict:
     return replace_script_access_fields_recursively(copy_data)
 
 
-def replace_script_access_fields_recursively(data: Any, incident_to_alert: bool = False) -> Any:
+def replace_script_access_fields_recursively(
+    data: Any, incident_to_alert: bool = False
+) -> Any:
     if isinstance(data, list):
-        return [replace_script_access_fields_recursively(item, incident_to_alert) for item in data]
+        return [
+            replace_script_access_fields_recursively(item, incident_to_alert)
+            for item in data
+        ]
     if isinstance(data, dict):
-        for key in tuple(
-            data.keys()
-        ):
+        for key in tuple(data.keys()):
             value = data[key]
             if isinstance(value, str):
-                if key in ('name', 'id', 'comment', 'description'):
-                    data[key] = edit_ids_names_and_descriptions_for_script(value, incident_to_alert)
+                if key in ("name", "id", "comment", "description"):
+                    data[key] = edit_ids_names_and_descriptions_for_script(
+                        value, incident_to_alert
+                    )
             else:
-                data[key] = replace_script_access_fields_recursively(value, incident_to_alert)
+                data[key] = replace_script_access_fields_recursively(
+                    value, incident_to_alert
+                )
         return data
     else:
         return data
@@ -193,22 +213,22 @@ def replace_script_access_fields_recursively(data: Any, incident_to_alert: bool 
 
 def replace_register_module_line_for_script(data: dict):
     new_name = edit_ids_names_and_descriptions_for_script(
-        data['name'],
-        incident_to_alert=True
+        data["name"], incident_to_alert=True
     )
-    for state in ('start', 'end'):
-        data['script'] = data['script'].replace(
+    for state in ("start", "end"):
+        data["script"] = data["script"].replace(
             f"register_module_line('{data['name']}', '{state}', __line__())",
-            f"register_module_line('{new_name}', '{state}', __line__())")
+            f"register_module_line('{new_name}', '{state}', __line__())",
+        )
 
     return data
 
 
 def set_deprecated_for_scripts(data: dict, old_script: bool):
     if old_script:
-        data['deprecated'] = True
-    elif 'deprecated' not in data:
-        data['deprecated'] = False
+        data["deprecated"] = True
+    elif "deprecated" not in data:
+        data["deprecated"] = False
     return data
 
 

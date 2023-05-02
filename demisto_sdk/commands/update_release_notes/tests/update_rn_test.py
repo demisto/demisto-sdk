@@ -1364,7 +1364,7 @@ class TestRNUpdate:
             },
         )
 
-        assert get_deprecated_rn(integration.path, FileType.INTEGRATION)
+        assert get_deprecated_rn(integration.path, FileType.INTEGRATION) == ""
 
 
 def get_mock_yml_obj(path, file_type, deprecated) -> dict:

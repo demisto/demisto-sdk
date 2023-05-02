@@ -21,3 +21,11 @@
   entry: demisto-sdk format
   language: python
   files: *files
+
+- id: no implicit optional
+  name: no implicit optional
+  description: A codemod to make your implicit optional type hints PEP 484 compliant.
+  entry: no-implicit-optional
+  language: python
+  files: &files
+    .*Packs/.*/(?:Integrations|Scripts)/.*.py$

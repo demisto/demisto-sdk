@@ -7,6 +7,7 @@ import demisto_sdk.commands.pre_commit.pre_commit_command as pre_commit_command
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.pre_commit.hooks.mypy import MypyHook
 from demisto_sdk.commands.pre_commit.hooks.ruff import RuffHook
+from demisto_sdk.commands.pre_commit.hooks.pep484 import PEP484Hook
 from demisto_sdk.commands.pre_commit.pre_commit_command import (
     YAML_Handler,
     group_by_python_version,
@@ -118,3 +119,16 @@ def test_ruff_hook(python_version, github_actions):
     assert ruff_hook["args"][1] == "--fix"
     if github_actions:
         assert ruff_hook["args"][2] == "--format=github"
+
+
+@pytest.mark.parametrize("python_version, should_contain_flag", [("3.9", False), ("3.10", True), ("3.11", True)])
+def test_pep484_hook(python_version, should_contain_flag):
+    """
+    Testing pep484 hook created successfully
+    """
+    pep484_hook = {}
+    PEP484Hook(pep484_hook).prepare_hook(python_version)
+    if should_contain_flag:
+        assert pep484_hook["args"][-1] == "--use-union-or"
+    else:
+        assert not pep484_hook

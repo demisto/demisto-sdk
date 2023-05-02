@@ -1,6 +1,8 @@
 # Changelog
 
 ## Unreleased
+* Fixed an issue where **update-release-notes** command failed when running on a pack that contains deprecated integrations without the `commands` section.
+* Fixed an issue where **validate** failed when attempting to map null values in a classifier.
 
 ## 1.14.0
 * Added the `DEMISTO_SDK_GRAPH_FORCE_CREATE` environment variable. Use it to force the SDK to recreate the graph, rather than update it.
@@ -23,7 +25,8 @@
 * Fixed an issue where **download** command failed when running on a beta integration.
 * Fixed an issue where **update-release-notes** generated release notes for packs in their initial version (1.0.0).
 * Fixed an issue with **update-content-graph** where `--use-git` parameter was ignored when using `--imported-path` parameter.
-* Fixed an issue where **validate** failed when attempting to map null values in a classifier.
+* Fixed an issue where **validate** failed on playbooks with valid inputs, since it did not collect the playbook inputs occurrences properly.
+
 
 ## 1.13.0
 * Added the pack version to the code files when calling **unify**. The same value is removed when calling **split**.

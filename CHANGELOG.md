@@ -20,6 +20,7 @@
 * Standardized repo-wide logging. All logs are now created in one logger instance.
 * Improved the clarity of error messages for cases where yml files cannot be parsed as a dictionary.
 * Fixed an issue where **update-release-notes** generated release notes for packs in their initial version (1.0.0).
+* Fixed an issue with **update-content-graph** where `--use-git` parameter was ignored when using `--imported-path` parameter.
 
 ## 1.13.0
 * Added the pack version to the code files when calling **unify**. The same value is removed when calling **split**.

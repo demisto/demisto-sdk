@@ -87,13 +87,23 @@ class BaseContent(ABC, BaseModel, metaclass=BaseContentMetaclass):
 
     def __getstate__(self):
         """Needed to for the object to be pickled correctly (to use multiprocessing)"""
-        dict_copy = self.__dict__.copy()
+        if "relationships_data" not in self.__dict__:
+            # if we don't have relationships, we can use the default __getstate__ method
+            return super().__getstate__()
 
+        dict_copy = self.__dict__.copy()
         # This avoids circular references when pickling store only the first level relationships.
-        # Remove when updating to pydantic 2
-        for _, relationship_data in dict_copy["relationships_data"].items():
+        relationships_data_copy = dict_copy["relationships_data"].copy()
+        dict_copy["relationships_data"] = defaultdict(set)
+        for _, relationship_data in relationships_data_copy.items():
             for r in relationship_data:
-                r.content_item_to.relationships_data = defaultdict(set)
+                # override the relationships_data of the content item to avoid circular references
+                r: RelationshipData  # type: ignore[no-redef]
+                r_copy = r.copy()
+                content_item_to_copy = r_copy.content_item_to.copy()
+                r_copy.content_item_to = content_item_to_copy
+                content_item_to_copy.relationships_data = defaultdict(set)
+                dict_copy["relationships_data"][r.relationship_type].add(r_copy)
 
         return {
             "__dict__": dict_copy,

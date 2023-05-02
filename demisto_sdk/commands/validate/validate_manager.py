@@ -10,6 +10,7 @@ from git import InvalidGitRepositoryError
 from packaging import version
 
 from demisto_sdk.commands.common import tools
+from demisto_sdk.commands.common.cpu_count import cpu_count
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import (
     API_MODULES_PACK,
@@ -545,7 +546,7 @@ class ValidateManager:
     ) -> bool:
 
         if self.run_with_multiprocessing:
-            with pebble.ProcessPool(max_workers=4) as executor:
+            with pebble.ProcessPool(max_workers=cpu_count()) as executor:
                 futures = []
                 for pack_path in all_packs:
                     futures.append(

@@ -7,7 +7,7 @@ from contextlib import contextmanager
 from pprint import pformat
 from subprocess import STDOUT, CalledProcessError, call, check_call, check_output
 from threading import Lock
-from typing import Dict, Iterator
+from typing import Dict, Iterator, Optional
 
 import demisto_client.demisto_api
 import urllib3
@@ -359,7 +359,9 @@ class MITMProxy:
             self.ami.call(["mkdir", "--parents", dst_folder])
             self.ami.call(["mv", src_files, dst_folder])
 
-    def normalize_mock_file(self, playbook_or_integration_id: str, path: str = None):
+    def normalize_mock_file(
+        self, playbook_or_integration_id: str, path: Optional[str] = None
+    ):
         """Normalize the mock file of a test playbook
 
         Normalizes a mock file by doing the following:

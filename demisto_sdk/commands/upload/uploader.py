@@ -1,7 +1,7 @@
 import ast
 import glob
 import os
-from typing import List, Tuple, Union
+from typing import List, Optional, Tuple, Union
 
 import demisto_client
 from demisto_client.demisto_api.rest import ApiException
@@ -109,7 +109,7 @@ class Uploader:
         self,
         input: str,
         insecure: bool = False,
-        pack_names: list = None,
+        pack_names: Optional[list] = None,
         skip_validation: bool = False,
         detached_files: bool = False,
         reattach: bool = False,

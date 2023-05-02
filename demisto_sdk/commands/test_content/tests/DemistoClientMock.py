@@ -1,5 +1,5 @@
 import re
-from typing import List
+from typing import List, Optional
 from unittest.mock import MagicMock
 
 from demisto_sdk.commands.common.constants import PB_Status
@@ -18,7 +18,7 @@ class DemistoClientMock:
     demisto_api = MagicMock()
     api_client.configuration.host = "https://1.1.1.1"
 
-    def __init__(self, integrations: List[str] = None):
+    def __init__(self, integrations: Optional[List[str]] = None):
         """
         Configures the integrations known by the server which will be returned by the search integration request.
         Args:

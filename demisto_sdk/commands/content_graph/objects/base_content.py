@@ -26,7 +26,12 @@ content_type_to_model: Dict[ContentType, Type["BaseContent"]] = {}
 
 class BaseContentMetaclass(ModelMetaclass):
     def __new__(
-        cls, name, bases, namespace, content_type: ContentType = None, **kwargs
+        cls,
+        name,
+        bases,
+        namespace,
+        content_type: Optional[ContentType] = None,
+        **kwargs,
     ):
         """This method is called before every creation of a ContentItem *class* (NOT class instances!).
         If `content_type` is passed as an argument of the class, we add a mapping between the content type

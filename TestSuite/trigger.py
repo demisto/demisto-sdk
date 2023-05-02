@@ -1,10 +1,13 @@
 from pathlib import Path
+from typing import Optional
 
 from TestSuite.json_based import JSONBased
 
 
 class Trigger(JSONBased):
-    def __init__(self, name: str, trigger_dir_path: Path, json_content: dict = None):
+    def __init__(
+        self, name: str, trigger_dir_path: Path, json_content: Optional[dict] = None
+    ):
         self.trigger_tmp_path = trigger_dir_path / f"{name}.json"
         self.name = name
 

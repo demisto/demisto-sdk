@@ -33,7 +33,7 @@ class XDRCTemplate(JSONContentObject):
     def type(self):
         return FileType.XDRC_TEMPLATE
 
-    def _unify(self, dest_dir: Path = None, output: str = "") -> List[Path]:
+    def _unify(self, dest_dir: Optional[Path] = None, output: str = "") -> List[Path]:
         """Unify XDRCTemplate in destination dir.
 
         Args:

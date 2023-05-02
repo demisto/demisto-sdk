@@ -1,5 +1,5 @@
 import pprint
-from typing import List
+from typing import List, Optional
 
 import click
 
@@ -133,7 +133,7 @@ class ReleaseNotesChecker:
 
     def __init__(
         self,
-        rn_file_path: str = None,
+        rn_file_path: Optional[str] = None,
         rn_file_content: List = [],
         template_examples: bool = False,
     ):

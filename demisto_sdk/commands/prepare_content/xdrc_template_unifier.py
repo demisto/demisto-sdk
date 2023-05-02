@@ -1,5 +1,6 @@
 import base64
 from pathlib import Path
+from typing import Optional
 
 import click
 
@@ -10,7 +11,10 @@ from demisto_sdk.commands.prepare_content.unifier import Unifier
 class XDRCTemplateUnifier(Unifier):
     @staticmethod
     def unify(
-        path: Path, data: dict, marketplace: MarketplaceVersions = None, **kwargs
+        path: Path,
+        data: dict,
+        marketplace: Optional[MarketplaceVersions] = None,
+        **kwargs,
     ) -> dict:
         click.echo(f"Unifying {path}...")
         data = XDRCTemplateUnifier._insert_yaml_template(path, data)

@@ -169,9 +169,9 @@ class GitContentConfig:
     def _set_repo_config(
         self,
         hostname: str,
-        organization: str = None,
-        repo_name: str = None,
-        project_id: int = None,
+        organization: Optional[str] = None,
+        repo_name: Optional[str] = None,
+        project_id: Optional[int] = None,
     ):
         """
         Set repository config.

@@ -1,5 +1,5 @@
 from copy import deepcopy
-from typing import List, Union
+from typing import List, Optional, Union
 
 from tabulate import tabulate
 from wcmatch.pathlib import Path
@@ -96,7 +96,7 @@ class ArtifactsReport:
 
         return self
 
-    def to_str(self, src_relative_to: Path = None):
+    def to_str(self, src_relative_to: Optional[Path] = None):
         """Create pandas table as pretty string.
 
         Args:

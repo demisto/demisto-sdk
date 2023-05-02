@@ -38,7 +38,7 @@ class DockerImageValidator(BaseValidator):
         ignored_errors=None,
         json_file_path: Optional[str] = None,
         is_iron_bank: bool = False,
-        specific_validations: list = None,
+        specific_validations: Optional[list] = None,
     ):
         super().__init__(
             ignored_errors=ignored_errors,

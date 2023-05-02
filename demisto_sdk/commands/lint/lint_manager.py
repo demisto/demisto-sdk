@@ -5,7 +5,7 @@ import platform
 import re
 import sys
 import textwrap
-from typing import Any, Dict, List, Set, Tuple, Union
+from typing import Any, Dict, List, Optional, Set, Tuple, Union
 
 import docker
 import docker.errors
@@ -594,7 +594,7 @@ class LintManager:
         docker_timeout: int,
         docker_image_flag: str,
         docker_image_target: str,
-        time_measurements_dir: str = None,
+        time_measurements_dir: Optional[str] = None,
     ) -> int:
         """Runs the Lint command on all given packages.
 

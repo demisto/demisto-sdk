@@ -1,3 +1,5 @@
+from typing import Optional
+
 import pytest
 
 from demisto_sdk.commands.common.handlers import JSON_Handler
@@ -11,16 +13,16 @@ json = JSON_Handler()
 
 def generate_test_configuration(
     playbook_id: str,
-    integrations: list = None,
-    instance_names: list = None,
-    nightly: bool = None,
+    integrations: Optional[list] = None,
+    instance_names: Optional[list] = None,
+    nightly: Optional[bool] = None,
     fromversion: str = "",
     toversion: str = "",
-    timeout: int = None,
-    memory_threshold: int = None,
-    pid_threshold: int = None,
-    is_mockable: bool = None,
-    runnable_on_docker_only: bool = None,
+    timeout: Optional[int] = None,
+    memory_threshold: Optional[int] = None,
+    pid_threshold: Optional[int] = None,
+    is_mockable: Optional[bool] = None,
+    runnable_on_docker_only: Optional[bool] = None,
 ) -> dict:
     playbook_config = {
         "playbookID": playbook_id,
@@ -49,12 +51,12 @@ def generate_test_configuration(
 
 
 def generate_content_conf_json(
-    tests: list = None,
-    skipped_tests: dict = None,
-    skipped_integrations: dict = None,
-    unmockable_integrations: dict = None,
-    parallel_integrations: list = None,
-    docker_thresholds_images: dict = None,
+    tests: Optional[list] = None,
+    skipped_tests: Optional[dict] = None,
+    skipped_integrations: Optional[dict] = None,
+    unmockable_integrations: Optional[dict] = None,
+    parallel_integrations: Optional[list] = None,
+    docker_thresholds_images: Optional[dict] = None,
 ) -> dict:
     """
     Generates a replica of the content conf.json file according to parameters
@@ -80,7 +82,7 @@ def generate_content_conf_json(
     }
 
 
-def generate_secret_conf_json(integrations: list = None):
+def generate_secret_conf_json(integrations: Optional[list] = None):
     return {
         "username": "username",
         "userPassword": "password",
@@ -90,10 +92,10 @@ def generate_secret_conf_json(integrations: list = None):
 
 def generate_integration_configuration(
     name: str,
-    params: dict = None,
-    instance_name: str = None,
-    byoi: bool = None,
-    validate_test: bool = None,
+    params: Optional[dict] = None,
+    instance_name: Optional[str] = None,
+    byoi: Optional[bool] = None,
+    validate_test: Optional[bool] = None,
 ) -> dict:
     """
     Generates an integration configuration according to params
@@ -160,10 +162,10 @@ def generate_xsiam_servers_data():
 def get_mocked_build_context(
     mocker,
     tmp_file,
-    content_conf_json: dict = None,
-    secret_conf_json: dict = None,
-    env_results_content: dict = None,
-    filtered_tests_content: list = None,
+    content_conf_json: Optional[dict] = None,
+    secret_conf_json: Optional[dict] = None,
+    env_results_content: Optional[dict] = None,
+    filtered_tests_content: Optional[list] = None,
     nightly: bool = False,
     server_version: str = "Server Master",
 ) -> BuildContext:

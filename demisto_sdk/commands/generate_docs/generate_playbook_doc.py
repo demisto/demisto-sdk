@@ -16,9 +16,9 @@ from demisto_sdk.commands.generate_docs.common import (
 
 def generate_playbook_doc(
     input_path: str,
-    output: str = None,
-    permissions: str = None,
-    limitations: str = None,
+    output: Optional[str] = None,
+    permissions: Optional[str] = None,
+    limitations: Optional[str] = None,
     custom_image_path: str = "",
 ):
     try:

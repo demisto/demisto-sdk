@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 from unittest.mock import patch
 
 import networkx as nx
@@ -24,10 +24,10 @@ from TestSuite.utils import IsEqualFunctions
 
 def create_a_pack_entity(
     pack,
-    entity_type: FileType = None,
-    entity_id: str = None,
-    entity_name: str = None,
-    commands: List[str] = None,
+    entity_type: Optional[FileType] = None,
+    entity_id: Optional[str] = None,
+    entity_name: Optional[str] = None,
+    commands: Optional[List[str]] = None,
 ):
     """
     Given

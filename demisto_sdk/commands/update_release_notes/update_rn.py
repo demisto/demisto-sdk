@@ -134,9 +134,9 @@ class UpdateRN:
         update_type: Union[str, None],
         modified_files_in_pack: set,
         added_files: set,
-        specific_version: str = None,
+        specific_version: Optional[str] = None,
         pre_release: bool = False,
-        pack: str = None,
+        pack: Optional[str] = None,
         pack_metadata_only: bool = False,
         text: str = "",
         existing_rn_version_path: str = "",
@@ -552,7 +552,7 @@ class UpdateRN:
         return data_dictionary
 
     def bump_version_number(
-        self, specific_version: str = None, pre_release: bool = False
+        self, specific_version: Optional[str] = None, pre_release: bool = False
     ) -> Tuple[str, dict]:
         """Increases the version number by user input or update type.
 
@@ -710,7 +710,7 @@ class UpdateRN:
 
     def build_rn_desc(
         self,
-        _type: FileType = None,
+        _type: Optional[FileType] = None,
         content_name: str = "",
         desc: str = "",
         is_new_file: bool = False,

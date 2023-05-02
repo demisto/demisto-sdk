@@ -286,9 +286,9 @@ def should_skip_item_by_mp(
     file_path: str,
     marketplace: str,
     excluded_items_from_id_set: dict,
-    packs: Dict[str, Dict] = None,
+    packs: Optional[Dict[str, Dict]] = None,
     print_logs: bool = False,
-    item_type: str = None,
+    item_type: Optional[str] = None,
 ):
     """
     Checks if the item given (as path) should be part of the current generated id set.
@@ -562,7 +562,7 @@ def get_integration_api_modules(file_path, data_dictionary, is_unified_integrati
     )
 
 
-def get_integration_data(file_path, packs: Dict[str, Dict] = None):
+def get_integration_data(file_path, packs: Optional[Dict[str, Dict]] = None):
     data_dictionary = get_yaml(file_path)
 
     is_unified_integration = data_dictionary.get("script", {}).get(
@@ -762,7 +762,7 @@ def get_dependent_incident_and_indicator_fields(data_dictionary):
     return dependent_incident_fields, dependent_indicator_fields
 
 
-def get_playbook_data(file_path: str, packs: Dict[str, Dict] = None) -> dict:
+def get_playbook_data(file_path: str, packs: Optional[Dict[str, Dict]] = None) -> dict:
     data_dictionary = get_yaml(file_path)
     graph = build_tasks_graph(data_dictionary)
 
@@ -843,7 +843,9 @@ def get_playbook_data(file_path: str, packs: Dict[str, Dict] = None) -> dict:
     return {id_: playbook_data}
 
 
-def get_script_data(file_path, script_code=None, packs: Dict[str, Dict] = None):
+def get_script_data(
+    file_path, script_code=None, packs: Optional[Dict[str, Dict]] = None
+):
     data_dictionary = get_yaml(file_path)
     id_ = data_dictionary.get("commonfields", {}).get("id", "-")
     if script_code is None:
@@ -965,7 +967,7 @@ def get_values_for_keys_recursively(json_object: dict, keys_to_search: list) -> 
     return values
 
 
-def get_layout_data(path: str, packs: Dict[str, Dict] = None):
+def get_layout_data(path: str, packs: Optional[Dict[str, Dict]] = None):
     json_data = get_json(path)
 
     layout = json_data.get("layout", {})
@@ -1051,7 +1053,7 @@ def get_layouts_scripts_ids(layout_tabs):
     return scripts
 
 
-def get_layoutscontainer_data(path: str, packs: Dict[str, Dict] = None):
+def get_layoutscontainer_data(path: str, packs: Optional[Dict[str, Dict]] = None):
     json_data = get_json(path)
     layouts_container_fields = [
         "group",
@@ -1105,7 +1107,7 @@ def get_layoutscontainer_data(path: str, packs: Dict[str, Dict] = None):
 
 
 def get_incident_field_data(
-    path: str, incident_types: List, packs: Dict[str, Dict] = None
+    path: str, incident_types: List, packs: Optional[Dict[str, Dict]] = None
 ):
     json_data = get_json(path)
 
@@ -1172,7 +1174,7 @@ def get_incident_field_data(
 
 
 def get_indicator_type_data(
-    path: str, all_integrations: List, packs: Dict[str, Dict] = None
+    path: str, all_integrations: List, packs: Optional[Dict[str, Dict]] = None
 ):
     json_data = get_json(path)
 
@@ -1223,7 +1225,7 @@ def get_indicator_type_data(
     return {id_: data}
 
 
-def get_incident_type_data(path: str, packs: Dict[str, Dict] = None):
+def get_incident_type_data(path: str, packs: Optional[Dict[str, Dict]] = None):
     json_data = get_json(path)
 
     id_ = json_data.get("id")
@@ -1253,7 +1255,7 @@ def get_incident_type_data(path: str, packs: Dict[str, Dict] = None):
     return {id_: data}
 
 
-def get_classifier_data(path: str, packs: Dict[str, Dict] = None):
+def get_classifier_data(path: str, packs: Optional[Dict[str, Dict]] = None):
     json_data = get_json(path)
 
     id_ = json_data.get("id")
@@ -1358,7 +1360,7 @@ def get_pack_metadata_data(file_path, print_logs: bool, marketplace: str = ""):
         raise
 
 
-def get_mapper_data(path: str, packs: Dict[str, Dict] = None):
+def get_mapper_data(path: str, packs: Optional[Dict[str, Dict]] = None):
     json_data = get_json(path)
 
     id_ = json_data.get("id")
@@ -1440,7 +1442,7 @@ def get_mapper_data(path: str, packs: Dict[str, Dict] = None):
     return {id_: data}
 
 
-def get_widget_data(path: str, packs: Dict[str, Dict] = None):
+def get_widget_data(path: str, packs: Optional[Dict[str, Dict]] = None):
     json_data = get_json(path)
 
     id_ = json_data.get("id")
@@ -1471,20 +1473,23 @@ def get_widget_data(path: str, packs: Dict[str, Dict] = None):
     return {id_: data}
 
 
-def get_dashboard_data(path: str, packs: Dict[str, Dict] = None):
+def get_dashboard_data(path: str, packs: Optional[Dict[str, Dict]] = None):
     dashboard_data = get_json(path)
     layouts = dashboard_data.get("layout", {})
     return parse_dashboard_or_report_data(path, dashboard_data, layouts, packs)
 
 
-def get_report_data(path: str, packs: Dict[str, Dict] = None):
+def get_report_data(path: str, packs: Optional[Dict[str, Dict]] = None):
     report_data = get_json(path)
     layouts = report_data.get("dashboard", {}).get("layout")
     return parse_dashboard_or_report_data(path, report_data, layouts, packs)
 
 
 def parse_dashboard_or_report_data(
-    path: str, data_file_json: Dict, all_layouts: List, packs: Dict[str, Dict] = None
+    path: str,
+    data_file_json: Dict,
+    all_layouts: List,
+    packs: Optional[Dict[str, Dict]] = None,
 ):
     id_ = data_file_json.get("id")
     name = data_file_json.get("name", "")
@@ -1516,7 +1521,7 @@ def parse_dashboard_or_report_data(
     return {id_: data}
 
 
-def get_general_data(path: str, packs: Dict[str, Dict] = None):
+def get_general_data(path: str, packs: Optional[Dict[str, Dict]] = None):
     json_data = get_json(path)
     id_ = json_data.get("id")
     display_name = get_display_name(path, json_data)
@@ -1550,7 +1555,7 @@ def get_general_data(path: str, packs: Dict[str, Dict] = None):
     return {id_: data}
 
 
-def get_xsiam_dashboard_data(path: str, packs: Dict[str, Dict] = None):
+def get_xsiam_dashboard_data(path: str, packs: Optional[Dict[str, Dict]] = None):
     json_data = get_json(path).get("dashboards_data", [{}])[0]
 
     id_ = json_data.get("global_id")
@@ -1574,7 +1579,7 @@ def get_xsiam_dashboard_data(path: str, packs: Dict[str, Dict] = None):
     return {id_: data}
 
 
-def get_xsiam_report_data(path: str, packs: Dict[str, Dict] = None):
+def get_xsiam_report_data(path: str, packs: Optional[Dict[str, Dict]] = None):
     json_data = get_json(path).get("templates_data", [{}])[0]
 
     id_ = json_data.get("global_id")
@@ -1598,7 +1603,7 @@ def get_xsiam_report_data(path: str, packs: Dict[str, Dict] = None):
     return {id_: data}
 
 
-def get_trigger_data(path: str, packs: Dict[str, Dict] = None):
+def get_trigger_data(path: str, packs: Optional[Dict[str, Dict]] = None):
     json_data = get_json(path)
 
     id_ = json_data.get("trigger_id")
@@ -1622,7 +1627,7 @@ def get_trigger_data(path: str, packs: Dict[str, Dict] = None):
     return {id_: data}
 
 
-def get_parsing_rule_data(path: str, packs: Dict[str, Dict] = None):
+def get_parsing_rule_data(path: str, packs: Optional[Dict[str, Dict]] = None):
     yaml_data = get_yaml(path)
 
     id_ = yaml_data.get("id")  # TODO: Need to change to the correct id field
@@ -1650,7 +1655,7 @@ def get_parsing_rule_data(path: str, packs: Dict[str, Dict] = None):
     return {id_: data}
 
 
-def get_modeling_rule_data(path: str, packs: Dict[str, Dict] = None):
+def get_modeling_rule_data(path: str, packs: Optional[Dict[str, Dict]] = None):
     yaml_data = get_yaml(path)
 
     id_ = yaml_data.get("id")  # TODO: Need to change to the correct id field
@@ -1678,7 +1683,7 @@ def get_modeling_rule_data(path: str, packs: Dict[str, Dict] = None):
     return {id_: data}
 
 
-def get_correlation_rule_data(path: str, packs: Dict[str, Dict] = None):
+def get_correlation_rule_data(path: str, packs: Optional[Dict[str, Dict]] = None):
     yaml_data = get_yaml(path)
 
     id_ = yaml_data.get("global_rule_id")
@@ -1701,7 +1706,7 @@ def get_correlation_rule_data(path: str, packs: Dict[str, Dict] = None):
     return {id_: data}
 
 
-def get_xdrc_template_data(path: str, packs: Dict[str, Dict] = None):
+def get_xdrc_template_data(path: str, packs: Optional[Dict[str, Dict]] = None):
     json_data = get_json(path)
 
     id_ = json_data.get("content_global_id")
@@ -1949,7 +1954,7 @@ def process_generic_items(
     packs: Dict[str, Dict],
     marketplace: str,
     print_logs: bool,
-    generic_types_list: list = None,
+    generic_types_list: Optional[list] = None,
 ) -> Tuple[list, dict]:
     """
     Process a generic field JSON file
@@ -2291,7 +2296,7 @@ def get_generic_entities_paths(path, pack_to_create):
     return files
 
 
-def get_generic_type_data(path, packs: Dict[str, Dict] = None):
+def get_generic_type_data(path, packs: Optional[Dict[str, Dict]] = None):
     json_data = get_json(path)
 
     id_ = json_data.get("id")
@@ -2330,7 +2335,9 @@ def get_module_id_from_definition_id(definition_id: str, generic_modules_list: l
             return module_id
 
 
-def get_generic_field_data(path, generic_types_list, packs: Dict[str, Dict] = None):
+def get_generic_field_data(
+    path, generic_types_list, packs: Optional[Dict[str, Dict]] = None
+):
     json_data = get_json(path)
 
     id_ = json_data.get("id")
@@ -2385,7 +2392,7 @@ def get_generic_field_data(path, generic_types_list, packs: Dict[str, Dict] = No
     return {id_: data}
 
 
-def get_job_data(path: str, packs: Dict[str, Dict] = None):
+def get_job_data(path: str, packs: Optional[Dict[str, Dict]] = None):
     json_data = get_json(path)
     marketplaces = get_item_marketplaces(path, item_data=json_data, packs=packs)
 
@@ -2405,7 +2412,7 @@ def get_job_data(path: str, packs: Dict[str, Dict] = None):
     return {json_data.get("id"): data}
 
 
-def get_generic_module_data(path, packs: Dict[str, Dict] = None):
+def get_generic_module_data(path, packs: Optional[Dict[str, Dict]] = None):
     json_data = get_json(path)
     id_ = json_data.get("id")
     name = json_data.get("name", "")
@@ -2443,7 +2450,7 @@ def get_generic_module_data(path, packs: Dict[str, Dict] = None):
     return {id_: data}
 
 
-def get_list_data(path: str, packs: Dict[str, Dict] = None):
+def get_list_data(path: str, packs: Optional[Dict[str, Dict]] = None):
     json_data = get_json(path)
     marketplaces = get_item_marketplaces(path, item_data=json_data, packs=packs)
     data = create_common_entity_data(
@@ -2459,7 +2466,7 @@ def get_list_data(path: str, packs: Dict[str, Dict] = None):
     return {json_data.get("id"): data}
 
 
-def get_wizard_data(path: str, packs: Dict[str, Dict] = None):
+def get_wizard_data(path: str, packs: Optional[Dict[str, Dict]] = None):
     json_data = get_json(path)
     marketplaces = get_item_marketplaces(path, item_data=json_data, packs=packs)
     data = create_common_entity_data(
@@ -2478,7 +2485,7 @@ def get_wizard_data(path: str, packs: Dict[str, Dict] = None):
     return {json_data.get("id"): data}
 
 
-def get_layout_rule_data(path: str, packs: Dict[str, Dict] = None):
+def get_layout_rule_data(path: str, packs: Optional[Dict[str, Dict]] = None):
     json_data = get_json(path)
 
     id_ = json_data.get("rule_id")
@@ -2619,7 +2626,7 @@ def merge_id_sets(
 def re_create_id_set(  # noqa: C901
     id_set_path: Optional[Path] = DEFAULT_ID_SET_PATH,
     pack_to_create=None,
-    objects_to_create: list = None,
+    objects_to_create: Optional[list] = None,
     print_logs: bool = True,
     fail_on_duplicates: bool = False,
     marketplace: str = "",

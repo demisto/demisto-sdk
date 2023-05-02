@@ -282,7 +282,7 @@ class Client(BaseClient):
         }
         return self._http_request("GET", url_suffix=f"/service_desk/queues/{queue_number}/fields", headers=headers)
 
-    def tickets_list_request(self, shaping_fields: str = None, filter_fields: str = None) -> dict:
+    def tickets_list_request(self, shaping_fields: Optional[str] = None, filter_fields: Optional[str] = None) -> dict:
         """List of Tickets.
             Args:
                 shaping_fields: str of the shaping that will be sent in the request.
@@ -547,11 +547,11 @@ def create_ticket_command(client: Client, args: dict) -> Tuple[str, dict, dict]:
     return ticket_view, {}, {}
 
 
-def create_body_from_args(hd_queue_id: Union[str, int] = None, title: Union[str, int] = None,
-                          summary: Union[str, int] = None, impact: Union[str, int] = None,
-                          category: Union[str, int] = None, status: Union[str, int] = None,
-                          priority: Union[str, int] = None, machine: Union[str, int] = None,
-                          asset: Union[str, int] = None) -> dict:
+def create_body_from_args(hd_queue_id: Optional[Union[str, int]] = None, title: Optional[Union[str, int]] = None,
+                          summary: Optional[Union[str, int]] = None, impact: Optional[Union[str, int]] = None,
+                          category: Optional[Union[str, int]] = None, status: Optional[Union[str, int]] = None,
+                          priority: Optional[Union[str, int]] = None, machine: Optional[Union[str, int]] = None,
+                          asset: Optional[Union[str, int]] = None) -> dict:
     """Function which creates the body of the request from user arguments.
         Args:
            hd_queue_id: the queue number to insert the ticket to.

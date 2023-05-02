@@ -59,7 +59,7 @@ class DocReviewer:
         expand_dictionary: bool = False,
         templates: bool = False,
         use_git: bool = False,
-        prev_ver: str = None,
+        prev_ver: Optional[str] = None,
         release_notes_only: bool = False,
         xsoar_only: bool = False,
         load_known_words_from_pack: bool = False,

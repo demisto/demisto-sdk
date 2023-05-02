@@ -2,7 +2,7 @@ import functools
 import os
 import re
 from pathlib import Path
-from typing import Callable, List
+from typing import Optional, Callable, List
 
 import click
 
@@ -40,7 +40,9 @@ def get_current_working_branch() -> str:
     return ""
 
 
-def get_changed_files(from_branch: str = "master", filter_results: Callable = None):
+def get_changed_files(
+    from_branch: str = "master", filter_results: Optional[Callable] = None
+):
     temp_files = run_command(f"git diff --name-status {from_branch}").split("\n")
     files: List = []
     for file in temp_files:

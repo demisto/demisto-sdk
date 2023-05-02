@@ -31,7 +31,7 @@ class Integration(YAMLContentUnifiedObject):
     def is_feed(self) -> bool:
         return self.script.get("feed", False)
 
-    def upload(self, client: demisto_client = None):
+    def upload(self, client: Optional[demisto_client] = None):
         """
         Upload the integration to demisto_client
         Args:

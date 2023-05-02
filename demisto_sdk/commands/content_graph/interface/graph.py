@@ -134,7 +134,7 @@ class ContentGraphInterface(ABC):
     @abstractmethod
     def search(
         self,
-        marketplace: MarketplaceVersions = None,
+        marketplace: Optional[MarketplaceVersions] = None,
         content_type: Optional[ContentType] = None,
         ids_list: Optional[Iterable[int]] = None,
         all_level_dependencies: bool = False,

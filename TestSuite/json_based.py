@@ -1,7 +1,7 @@
 import os
 import re
 from pathlib import Path
-from typing import Union
+from typing import Optional, Union
 
 from demisto_sdk.commands.common.constants import PACKS_DIR
 from demisto_sdk.commands.common.handlers import JSON_Handler
@@ -55,7 +55,7 @@ class JSONBased:
         file_content.pop(key, None)
         self.write_json(file_content)
 
-    def _set_field_by_path(self, path_to_field: str, new_val: str = None):
+    def _set_field_by_path(self, path_to_field: str, new_val: Optional[str] = None):
         """Inner method to remove, add or update a given field.
 
         Args:

@@ -285,8 +285,8 @@ class PlaybookTestsGenerator:
         no_outputs: bool = False,
         verbose: bool = False,
         use_all_brands: bool = False,
-        commands: str = None,
-        examples: str = None,
+        commands: Optional[str] = None,
+        examples: Optional[str] = None,
         upload: bool = False,
     ):
         self.integration_yml_path = input

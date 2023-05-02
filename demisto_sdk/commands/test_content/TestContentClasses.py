@@ -1425,7 +1425,7 @@ class Integration:
         self,
         instance_name: str,
         configuration: dict,
-        incident_configuration: dict = None,
+        incident_configuration: Optional[dict] = None,
     ):
         module_configuration = configuration["configuration"]
 
@@ -2574,7 +2574,7 @@ class ServerContext:
         self,
         build_context: BuildContext,
         server_private_ip: str,
-        tunnel_port: int = None,
+        tunnel_port: Optional[int] = None,
         use_retries_mechanism: bool = True,
     ):
         self.build_context = build_context

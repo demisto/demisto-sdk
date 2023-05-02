@@ -1,6 +1,6 @@
 import ast as ast_mod
 from pathlib import Path
-from typing import Dict, List, Union
+from typing import Dict, List, Optional, Union
 
 from ordered_set import OrderedSet
 
@@ -119,7 +119,7 @@ class TestCase:
         client_ast: ast_mod.ClassDef,
         example_dict: dict,
         id: int = 0,
-        module: ast_mod.Module = None,
+        module: Optional[ast_mod.Module] = None,
     ):
         self.asserts = []
         self.func = func

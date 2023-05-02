@@ -417,7 +417,9 @@ def get_marketplace_to_core_packs() -> Dict[MarketplaceVersions, Set[str]]:
     return mp_to_core_packs
 
 
-def get_core_pack_list(marketplaces: List[MarketplaceVersions] = None) -> list:
+def get_core_pack_list(
+    marketplaces: Optional[List[MarketplaceVersions]] = None,
+) -> list:
     """Getting the core pack list from Github content
 
     Arguments:
@@ -2997,9 +2999,9 @@ def get_current_repo() -> Tuple[str, str, str]:
 
 def get_item_marketplaces(
     item_path: str,
-    item_data: Dict = None,
-    packs: Dict[str, Dict] = None,
-    item_type: str = None,
+    item_data: Optional[Dict] = None,
+    packs: Optional[Dict[str, Dict]] = None,
+    item_type: Optional[str] = None,
 ) -> List:
     """
     Return the supporting marketplaces of the item.

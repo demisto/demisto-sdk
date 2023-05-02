@@ -4,7 +4,7 @@ import glob
 import os
 import re
 from pathlib import Path
-from typing import Dict, List, Union
+from typing import Dict, List, Optional, Union
 
 import click
 from inflection import dasherize, underscore
@@ -60,7 +60,7 @@ class IntegrationScriptUnifier(Unifier):
     def unify(
         path: Path,
         data: dict,
-        marketplace: MarketplaceVersions = None,
+        marketplace: Optional[MarketplaceVersions] = None,
         custom: str = "",
         image_prefix: str = DEFAULT_IMAGE_PREFIX,
         **kwargs,
@@ -126,7 +126,7 @@ class IntegrationScriptUnifier(Unifier):
 
     @staticmethod
     def update_hidden_parameters_value(
-        data: dict, marketplace: MarketplaceVersions = None
+        data: dict, marketplace: Optional[MarketplaceVersions] = None
     ) -> None:
         """
         The `hidden` attribute of each param may be a bool (affecting both marketplaces),

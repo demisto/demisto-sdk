@@ -1,6 +1,7 @@
 import ast
 import re
 import tempfile
+from typing import Optional
 
 import demisto_client
 
@@ -42,8 +43,8 @@ class Runner:
         self,
         query: str,
         insecure: bool = False,
-        debug: str = None,
-        debug_path: str = None,
+        debug: Optional[str] = None,
+        debug_path: Optional[str] = None,
         json_to_outputs: bool = False,
         prefix: str = "",
         raw_response: bool = False,

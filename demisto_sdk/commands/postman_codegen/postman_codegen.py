@@ -1,6 +1,6 @@
 import re
 from collections import defaultdict
-from typing import Any, Dict, List, Union
+from typing import Any, Dict, List, Optional, Union
 
 import demisto_sdk.commands.common.tools as tools
 from demisto_sdk.commands.common.constants import DemistoException
@@ -58,7 +58,7 @@ def postman_headers_to_conf_headers(
 
 
 def create_body_format(
-    body: Union[dict, list], args: List[IntegrationGeneratorArg] = None
+    body: Union[dict, list], args: Optional[List[IntegrationGeneratorArg]] = None
 ):
     """
     Gets the raw body of a request and creates a request holding the argument's names in it (that we will get from the users),

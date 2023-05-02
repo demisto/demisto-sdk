@@ -2810,11 +2810,11 @@ class PackDependencies:
         id_set_path: str = "",
         update_pack_metadata: bool = False,
         use_pack_metadata: bool = False,
-        input_paths: Tuple = None,
+        input_paths: Optional[Tuple] = None,
         all_packs_dependencies: bool = False,
         get_dependent_on: bool = False,
         dependency: str = "",
-        output_path: str = None,
+        output_path: Optional[str] = None,
     ) -> None:
         """
 
@@ -3183,8 +3183,8 @@ def calculate_all_packs_dependencies(id_set_path: str, output_path: str) -> dict
 def get_packs_dependent_on_given_packs(
     packs: list,
     id_set_path: str,
-    output_path: str = None,
-    id_set: dict = None,
+    output_path: Optional[str] = None,
+    id_set: Optional[dict] = None,
     marketplace: str = "",
 ) -> Tuple:
     """
@@ -3252,8 +3252,8 @@ def get_packs_dependent_on_given_packs(
 
 
 def find_dependencies_between_two_packs(
-    input_paths: Tuple = None,
-    output_path: str = None,
+    input_paths: Optional[Tuple] = None,
+    output_path: Optional[str] = None,
     dependency: str = "",
     id_set_path: str = "",
 ):

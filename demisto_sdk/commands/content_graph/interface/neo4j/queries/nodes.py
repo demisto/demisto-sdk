@@ -166,7 +166,7 @@ def create_nodes_by_type(
 
 def _match(
     tx: Transaction,
-    marketplace: MarketplaceVersions = None,
+    marketplace: Optional[MarketplaceVersions] = None,
     content_type: Optional[ContentType] = None,
     ids_list: Optional[Iterable[int]] = None,
     **properties,

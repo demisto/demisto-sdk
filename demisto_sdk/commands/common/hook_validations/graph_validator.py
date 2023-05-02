@@ -21,9 +21,9 @@ class GraphValidator(BaseValidator):
 
     def __init__(
         self,
-        specific_validations: list = None,
-        git_files: list = None,
-        input_files: list = None,
+        specific_validations: Optional[list] = None,
+        git_files: Optional[list] = None,
+        input_files: Optional[list] = None,
         should_update: bool = True,
     ):
         super().__init__(specific_validations=specific_validations)

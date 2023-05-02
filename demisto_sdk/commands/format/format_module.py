@@ -1,6 +1,6 @@
 import os
 from pathlib import Path
-from typing import Dict, List, Tuple
+from typing import Dict, List, Optional, Tuple
 
 import click
 
@@ -110,19 +110,19 @@ CONTENT_ENTITY_IDS_TO_UPDATE: Dict = {}
 
 
 def format_manager(
-    input: str = None,
-    output: str = None,
+    input: Optional[str] = None,
+    output: Optional[str] = None,
     from_version: str = "",
     no_validate: bool = False,
     update_docker: bool = False,
     assume_yes: bool = False,
     deprecate: bool = False,
     use_git: bool = False,
-    prev_ver: str = None,
+    prev_ver: Optional[str] = None,
     include_untracked: bool = False,
-    add_tests: bool = None,
+    add_tests: Optional[bool] = None,
     interactive: bool = True,
-    id_set_path: str = None,
+    id_set_path: Optional[str] = None,
     clear_cache: bool = False,
 ):
     """

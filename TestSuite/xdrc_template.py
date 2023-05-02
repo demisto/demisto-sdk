@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import Optional
 
 from demisto_sdk.commands.common.handlers import YAML_Handler
 from TestSuite.json_based import JSONBased
@@ -11,8 +12,8 @@ class XDRCTemplate(JSONBased):
         self,
         name: str,
         xdrc_template_dir_path: Path,
-        json_content: dict = None,
-        yaml_content: dict = None,
+        json_content: Optional[dict] = None,
+        yaml_content: Optional[dict] = None,
     ):
         self.xdrc_template_tmp_path = xdrc_template_dir_path / f"{name}.json"
         self.xdrc_template_yml_tmp_path = xdrc_template_dir_path / f"{name}.yml"

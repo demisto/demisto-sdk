@@ -1,4 +1,4 @@
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 from neo4j import Transaction
 
@@ -218,7 +218,7 @@ def create_relationships_by_type(
 def _match_relationships(
     tx: Transaction,
     ids_list: List[str],
-    marketplace: MarketplaceVersions = None,
+    marketplace: Optional[MarketplaceVersions] = None,
 ) -> Dict[int, Neo4jRelationshipResult]:
     """Match relationships of the given ids list.
 

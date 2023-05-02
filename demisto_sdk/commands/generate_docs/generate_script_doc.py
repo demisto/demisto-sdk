@@ -1,5 +1,6 @@
 import os
 import random
+from typing import Optional
 
 from demisto_sdk.commands.common.content_constant_paths import DEFAULT_ID_SET_PATH
 from demisto_sdk.commands.common.logger import logger
@@ -24,9 +25,9 @@ from demisto_sdk.commands.generate_docs.common import (
 def generate_script_doc(
     input_path,
     examples,
-    output: str = None,
-    permissions: str = None,
-    limitations: str = None,
+    output: Optional[str] = None,
+    permissions: Optional[str] = None,
+    limitations: Optional[str] = None,
     insecure: bool = False,
     verbose: bool = False,
 ):

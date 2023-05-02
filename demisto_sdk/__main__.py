@@ -5,7 +5,7 @@ import logging
 import os
 import sys
 from pathlib import Path
-from typing import IO, Any, Dict, Iterable, Tuple
+from typing import IO, Any, Dict, Iterable, Optional, Tuple
 
 import click
 import git
@@ -3135,7 +3135,7 @@ def create_content_graph(
     ctx,
     marketplace: str = MarketplaceVersions.XSOAR,
     no_dependencies: bool = False,
-    output_path: Path = None,
+    output_path: Optional[Path] = None,
     **kwargs,
 ):
     from demisto_sdk.commands.content_graph.content_graph_commands import (
@@ -3218,10 +3218,10 @@ def update_content_graph(
     use_git: bool = False,
     marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR,
     use_current: bool = False,
-    imported_path: Path = None,
-    packs: list = None,
+    imported_path: Optional[Path] = None,
+    packs: Optional[list] = None,
     no_dependencies: bool = False,
-    output_path: Path = None,
+    output_path: Optional[Path] = None,
     **kwargs,
 ):
     from demisto_sdk.commands.content_graph.content_graph_commands import (

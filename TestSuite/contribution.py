@@ -117,7 +117,11 @@ class Contribution:
         return script
 
     def _create_json_based(
-        self, name, prefix: str, content: dict = None, dir_path: Path = None
+        self,
+        name,
+        prefix: str,
+        content: Optional[dict] = None,
+        dir_path: Optional[Path] = None,
     ):
         if content is None:
             content = {}
@@ -128,7 +132,9 @@ class Contribution:
         obj.write_json(content)
         return obj
 
-    def _create_text_based(self, name, content: str = "", dir_path: Path = None):
+    def _create_text_based(
+        self, name, content: str = "", dir_path: Optional[Path] = None
+    ):
         if dir_path:
             obj = TextBased(dir_path, name)
         else:
@@ -136,7 +142,7 @@ class Contribution:
         obj.write_text(content)
         return obj
 
-    def create_classifier(self, name, content: dict = None):
+    def create_classifier(self, name, content: Optional[dict] = None):
         prefix = "classifier"
         classifier = self._create_json_based(
             name, prefix, content, dir_path=self._classifiers_path
@@ -144,7 +150,7 @@ class Contribution:
         self.classifiers.append(classifier)
         return classifier
 
-    def create_mapper(self, name, content: dict = None):
+    def create_mapper(self, name, content: Optional[dict] = None):
         prefix = "classifier-mapper"
         mapper = self._create_json_based(
             name, prefix, content, dir_path=self._mappers_path
@@ -152,7 +158,7 @@ class Contribution:
         self.mapper.append(mapper)
         return mapper
 
-    def create_dashboard(self, name, content: dict = None):
+    def create_dashboard(self, name, content: Optional[dict] = None):
         prefix = "dashboard"
         dashboard = self._create_json_based(
             name, prefix, content, dir_path=self._dashboards_path
@@ -160,7 +166,7 @@ class Contribution:
         self.dashboards.append(dashboard)
         return dashboard
 
-    def create_layout(self, name, content: dict = None):
+    def create_layout(self, name, content: Optional[dict] = None):
         prefix = LAYOUT
         layout = self._create_json_based(
             name, prefix, content, dir_path=self._layouts_path
@@ -168,7 +174,7 @@ class Contribution:
         self.layouts.append(layout)
         return layout
 
-    def create_layoutscontainer(self, name, content: dict = None):
+    def create_layoutscontainer(self, name, content: Optional[dict] = None):
         prefix = LAYOUTS_CONTAINER
         layoutscontainer = self._create_json_based(
             name, prefix, content, dir_path=self._layoutscontainer_path
@@ -177,7 +183,7 @@ class Contribution:
         return layoutscontainer
 
     def create_incident_field(
-        self, name, content: dict = None, release_notes: bool = False
+        self, name, content: Optional[dict] = None, release_notes: bool = False
     ):
         prefix = "incident-field"
         incident_field = self._create_json_based(
@@ -191,7 +197,7 @@ class Contribution:
         self.incident_field.append(incident_field)
         return incident_field
 
-    def create_incident_type(self, name, content: dict = None):
+    def create_incident_type(self, name, content: Optional[dict] = None):
         prefix = "incident-type"
         incident_type = self._create_json_based(
             name, prefix, content, dir_path=self._incident_types_path
@@ -199,7 +205,7 @@ class Contribution:
         self.incident_types.append(incident_type)
         return incident_type
 
-    def create_indicator_field(self, name, content: dict = None):
+    def create_indicator_field(self, name, content: Optional[dict] = None):
         prefix = "incident-field"
         indicator_field = self._create_json_based(
             name, prefix, content, dir_path=self._indicator_fields_path

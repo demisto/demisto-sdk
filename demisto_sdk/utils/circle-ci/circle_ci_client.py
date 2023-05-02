@@ -110,7 +110,7 @@ class CircleCIClient:
         url: str,
         params: Optional[Dict] = None,
         api_version: str = API_VERSION_V2,
-        stream: bool = None,
+        stream: Optional[bool] = None,
     ):
         logger.debug(
             f"Sending HTTP request to {self.base_url}/{api_version}/{url} with params: {params}"

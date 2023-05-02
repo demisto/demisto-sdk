@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from pathlib import Path
+from typing import Optional
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 
@@ -12,7 +13,7 @@ class Unifier(ABC):
     def unify(
         path: Path,
         data: dict,
-        marketplace: MarketplaceVersions = None,
+        marketplace: Optional[MarketplaceVersions] = None,
         **kwargs,
     ) -> dict:
         """Merges the various components to create a unified output yml file."""

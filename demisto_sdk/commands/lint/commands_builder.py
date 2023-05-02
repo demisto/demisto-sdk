@@ -158,7 +158,7 @@ def build_xsoar_linter_command(files: List[Path], support_level: str = "base") -
 
 
 def build_mypy_command(
-    files: List[Path], version: str, content_repo: Path = None
+    files: List[Path], version: str, content_repo: Optional[Path] = None
 ) -> str:
     """Build command to execute with mypy module
         https://mypy.readthedocs.io/en/stable/command_line.html

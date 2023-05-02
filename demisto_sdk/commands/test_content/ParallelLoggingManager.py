@@ -4,7 +4,7 @@ import sys
 from logging.handlers import QueueHandler, QueueListener
 from queue import Queue
 from threading import Lock, currentThread
-from typing import Any, Dict, Set
+from typing import Any, Dict, Optional, Set
 
 import coloredlogs
 
@@ -21,7 +21,7 @@ LEVEL_STYLES = {
 
 
 def _add_logging_level(
-    level_name: str, level_num: int, method_name: str = None
+    level_name: str, level_num: int, method_name: Optional[str] = None
 ) -> None:
     """
     Comprehensively adds a new logging level to the `logging` module and the

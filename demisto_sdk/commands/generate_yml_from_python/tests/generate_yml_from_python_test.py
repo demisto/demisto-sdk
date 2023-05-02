@@ -33,11 +33,11 @@ def dedent(code_line: str, spaces_num: int) -> str:
 
 def save_code_as_integration(
     code: Callable,
-    full_path: str = None,
+    full_path: Optional[str] = None,
     configuration: Optional[Any] = None,
     conf_in_second_line: bool = False,
     docstring: Optional[str] = None,
-    integration: Integration = None,
+    integration: Optional[Integration] = None,
 ):
     """Save code from given function as integration to full_path.
 

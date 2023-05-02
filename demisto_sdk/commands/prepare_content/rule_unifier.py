@@ -2,6 +2,7 @@ import json
 import os
 from collections import defaultdict
 from pathlib import Path
+from typing import Optional
 
 import click
 from ruamel.yaml.scalarstring import FoldedScalarString
@@ -13,7 +14,10 @@ from demisto_sdk.commands.prepare_content.unifier import Unifier
 class RuleUnifier(Unifier):
     @staticmethod
     def unify(
-        path: Path, data: dict, marketplace: MarketplaceVersions = None, **kwargs
+        path: Path,
+        data: dict,
+        marketplace: Optional[MarketplaceVersions] = None,
+        **kwargs,
     ) -> dict:
         click.echo(f"Unifiying {path}...")
         RuleUnifier._insert_rules(path, data)

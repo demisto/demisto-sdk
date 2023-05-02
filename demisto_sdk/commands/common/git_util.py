@@ -1,7 +1,7 @@
 import os
 import re
 from pathlib import Path
-from typing import Set, Tuple, Union
+from typing import Optional, Set, Tuple, Union
 
 import click
 import gitdb
@@ -15,7 +15,7 @@ from demisto_sdk.commands.content_graph.common import PACKS_FOLDER
 class GitUtil:
     repo: Repo
 
-    def __init__(self, repo: Repo = None):
+    def __init__(self, repo: Optional[Repo] = None):
         if not repo:
             try:
                 self.repo = Repo(Path.cwd(), search_parent_directories=True)

@@ -271,7 +271,7 @@ class Client(BaseClient):
                                   response_type='xml')
         return users
 
-    def list_activity_data_request(self, from_: str, to_: str, query: str = None) -> Dict:
+    def list_activity_data_request(self, from_: str, to_: str, query: Optional[str] = None) -> Dict:
         """List activity data.
 
         Args:
@@ -294,7 +294,7 @@ class Client(BaseClient):
                                           params=params)
         return activity_data
 
-    def list_violation_data_request(self, from_: str, to_: str, query: str = None) -> Dict:
+    def list_violation_data_request(self, from_: str, to_: str, query: Optional[str] = None) -> Dict:
         """List violation data.
 
         Args:
@@ -445,8 +445,8 @@ class Client(BaseClient):
         return incident.get('result')
 
     def create_incident_request(self, violation_name: str, resource_group: str, resource_name: str,
-                                entity_type: str, entity_name: str, action_name: str, workflow: str = None,
-                                comment: str = None, criticality: str = None) -> Dict:
+                                entity_type: str, entity_name: str, action_name: str, workflow: Optional[str] = None,
+                                comment: Optional[str] = None, criticality: Optional[str] = None) -> Dict:
         """create an incident by sending a POST request.
 
         Args:

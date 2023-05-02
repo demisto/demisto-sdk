@@ -52,7 +52,7 @@ class YmlSplitter:
         no_demisto_mock: bool = False,
         no_common_server: bool = False,
         no_auto_create_dir: bool = False,
-        configuration: Configuration = None,
+        configuration: Optional[Configuration] = None,
         base_name: str = "",
         no_readme: bool = False,
         **_,  # ignoring unexpected kwargs

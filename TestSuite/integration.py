@@ -98,7 +98,7 @@ class Integration:
             shutil.rmtree(self._tmpdir_integration_path)
 
     def create_default_integration(
-        self, name: str = "Sample", commands: List[str] = None
+        self, name: str = "Sample", commands: Optional[List[str]] = None
     ):
         """Creates a new integration with basic data
 

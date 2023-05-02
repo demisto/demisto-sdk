@@ -184,7 +184,7 @@ class ArtifactsManager:
         id_set_path: str = "",
         pack_names: str = "all",
         signature_key: str = "",
-        sign_directory: Path = None,
+        sign_directory: Optional[Path] = None,
         remove_test_playbooks: bool = True,
         filter_by_id_set: bool = False,
         alternate_fields: bool = False,

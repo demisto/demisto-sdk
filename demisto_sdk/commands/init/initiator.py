@@ -3,7 +3,7 @@ import os
 import shutil
 from distutils.dir_util import copy_tree
 from distutils.version import LooseVersion
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.configuration import Configuration
@@ -437,7 +437,7 @@ class Initiator:
             fp.close()
 
     @staticmethod
-    def create_metadata(fill_manually: bool, data: Dict = None) -> Dict:
+    def create_metadata(fill_manually: bool, data: Optional[Dict] = None) -> Dict:
         """Builds pack metadata JSON content.
 
         Args:

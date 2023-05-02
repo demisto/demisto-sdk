@@ -89,16 +89,16 @@ class ContributionConverter:
     def __init__(
         self,
         name: str = "",
-        contribution: Union[str] = None,
+        contribution: Optional[Union[str]] = None,
         description: str = "",
         author: str = "",
         gh_user: str = "",
         create_new: bool = True,
-        pack_dir_name: Union[str] = None,
+        pack_dir_name: Optional[Union[str]] = None,
         update_type: str = "",
         release_notes: str = "",
-        detected_content_items: list = None,
-        base_dir: Union[str] = None,
+        detected_content_items: Optional[list] = None,
+        base_dir: Optional[Union[str]] = None,
     ):
         """Initializes a ContributionConverter instance
 
@@ -400,7 +400,9 @@ class ContributionConverter:
                 if len(os.listdir(src_path)) == 0:
                     shutil.rmtree(src_path, ignore_errors=True)
 
-    def convert_contribution_to_pack(self, files_to_source_mapping: Dict = None):
+    def convert_contribution_to_pack(
+        self, files_to_source_mapping: Optional[Dict] = None
+    ):
         """Create or updates a pack in the content repo from the contents of a contribution zipfile
 
         Args:
@@ -527,7 +529,7 @@ class ContributionConverter:
         self,
         content_item_dir: str,
         del_unified: bool = True,
-        source_mapping: Union[Dict[str, Dict[str, str]]] = None,
+        source_mapping: Optional[Union[Dict[str, Dict[str, str]]]] = None,
     ):
         """
         Iterate over the YAML files in a directory and create packages (a containing directory and
@@ -691,7 +693,7 @@ class ContributionConverter:
             json.dump(metadata_dict, pack_metadata_file, indent=4)
 
     @staticmethod
-    def create_pack_metadata(data: Dict = None) -> Dict:
+    def create_pack_metadata(data: Optional[Dict] = None) -> Dict:
         """Builds pack metadata JSON content.
 
         Args:

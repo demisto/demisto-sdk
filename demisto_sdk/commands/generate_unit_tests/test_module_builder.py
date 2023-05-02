@@ -1,4 +1,5 @@
 import ast as ast_mod
+from typing import Optional
 
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.generate_unit_tests.common import ast_name
@@ -10,7 +11,7 @@ class TestModule:
         tree: ast_mod.Module,
         module_name: str,
         to_concat: bool,
-        module: ast_mod.Module = None,
+        module: Optional[ast_mod.Module] = None,
     ):
         self.functions = []
         self.imports = [

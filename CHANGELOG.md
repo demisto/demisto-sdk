@@ -27,7 +27,6 @@
 * Fixed an issue with **update-content-graph** where `--use-git` parameter was ignored when using `--imported-path` parameter.
 * Fixed an issue where **validate** failed on playbooks with valid inputs, since it did not collect the playbook inputs occurrences properly.
 
-
 ## 1.13.0
 * Added the pack version to the code files when calling **unify**. The same value is removed when calling **split**.
 * Added a message showing the output path when **prepare-content** is called.

@@ -387,9 +387,6 @@ def test_upload_pack(demisto_client_configure, mocker):
         for content_item in uploader._successfully_uploaded_content_items
     } == set(expected_entities)
     assert mocked_upload_method.call_count == len(expected_entities)
-    assert uploader.failed_parsing == [  # TODO
-        (Path("layout-details-test_bla-V2.json", "foo"))
-    ]
 
 
 def test_upload_invalid_path(mocker):

@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Sequence
+from typing import Optional, Sequence
 
 
 class FailedUploadException(RuntimeError):
@@ -7,9 +7,13 @@ class FailedUploadException(RuntimeError):
         self,
         path: Path,
         response_body: dict,
-        status_code: int,
+        status_code: Optional[int] = None,
     ) -> None:
-        super().__init__(f"Failed uploading {path}, {status_code=}, {response_body=}")
+        if status_code is not None:
+            error = f"Failed uploading {path}, {status_code=}, {response_body=}"
+        else:
+            error = f"Failed uploading {path}, {response_body=}"
+        super().__init__(error)
 
 
 class FailedUploadMultipleException(RuntimeError):

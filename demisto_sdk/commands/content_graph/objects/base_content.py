@@ -166,7 +166,12 @@ class BaseContent(ABC, BaseModel, metaclass=BaseContentMetaclass):
             return None
 
     @abstractmethod
-    def dump(self, path: DirectoryPath, marketplace: MarketplaceVersions) -> None:
+    def dump(
+        self,
+        path: DirectoryPath,
+        marketplace: MarketplaceVersions,
+        dump_into_list: bool = False,
+    ) -> None:
         pass
 
     def upload(

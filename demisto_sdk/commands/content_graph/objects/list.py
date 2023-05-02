@@ -18,10 +18,15 @@ class List(ContentItem, content_type=ContentType.LIST):  # type: ignore[call-arg
     def metadata_fields(self) -> Set[str]:
         return {"name"}
 
-    def _upload(self, client: demisto_client, marketplace: MarketplaceVersions) -> None:
+    def _upload(
+        self,
+        client: demisto_client,
+        marketplace: MarketplaceVersions,
+        dump_into_list: bool = False,
+    ) -> None:
         with TemporaryDirectory("w") as f:
             dir_path = Path(f)
-            self.dump(dir_path, marketplace=marketplace)
+            self.dump(dir_path, marketplace=marketplace, dump_into_list=dump_into_list)
 
             client.generic_request(
                 method="POST",

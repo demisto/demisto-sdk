@@ -13,6 +13,14 @@ class GenericType(ContentItem, content_type=ContentType.GENERIC_TYPE):  # type: 
     def metadata_fields(self) -> Set[str]:
         return {"name", "description"}
 
-    def dump(self, dir: DirectoryPath, marketplace: MarketplaceVersions) -> None:
-        dir = dir / self.path.parent.name
-        super().dump(dir, marketplace)
+    def dump(
+        self,
+        dir: DirectoryPath,
+        marketplace: MarketplaceVersions,
+        dump_into_list: bool = False,
+    ) -> None:
+        super().dump(
+            dir=dir / self.path.parent.name,
+            marketplace=marketplace,
+            dump_into_list=dump_into_list,
+        )

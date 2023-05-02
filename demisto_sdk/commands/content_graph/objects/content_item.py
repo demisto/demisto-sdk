@@ -1,7 +1,7 @@
 from abc import abstractmethod
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import TYPE_CHECKING, Callable, List, Optional, Set
+from typing import TYPE_CHECKING, Callable, List, Optional, Set, Union
 
 import demisto_client
 from packaging.version import Version
@@ -178,9 +178,16 @@ class ContentItem(BaseContent):
         logger.debug(f"Normalized file name from {name} to {normalized}")
         return normalized
 
-    def dump(self, dir: DirectoryPath, marketplace: MarketplaceVersions) -> None:
+    def dump(
+        self,
+        dir: DirectoryPath,
+        marketplace: MarketplaceVersions,
+        dump_into_list: bool = False,  # some items must be uploaded inside a list
+    ) -> None:
         dir.mkdir(exist_ok=True, parents=True)
-        data = self.prepare_for_upload(marketplace=marketplace)
+        data: Union[dict, list] = self.prepare_for_upload(marketplace=marketplace)
+        if dump_into_list:
+            data = [data]
         try:
             with (dir / self.normalize_name).open("w") as f:
                 self.handler.dump(data, f)
@@ -213,7 +220,12 @@ class ContentItem(BaseContent):
         """
         raise NotImplementedError
 
-    def _upload(self, client: demisto_client, marketplace: MarketplaceVersions) -> None:
+    def _upload(
+        self,
+        client: demisto_client,
+        marketplace: MarketplaceVersions,
+        dump_into_list: bool = False,
+    ) -> None:
         """
         Called once the version is validated.
         Implementation may differ between content items.
@@ -228,15 +240,29 @@ class ContentItem(BaseContent):
 
         with TemporaryDirectory() as f:
             dir_path = Path(f)
-            self.dump(dir_path, marketplace=marketplace)
-            data, status_code, _ = upload_method(
-                dir_path / self.normalize_name
-            )  # third output is headers
-            if status_code > 299:
-                raise FailedUploadException(
-                    path=self.path,
-                    response_body=data,
-                    status_code=status_code,
+            self.dump(dir_path, marketplace=marketplace, dump_into_list=dump_into_list)
+            response = upload_method(dir_path / self.normalize_name)
+            if all(
+                (isinstance(response, dict), len(response) == 2, "error" in response)
+            ):  # response format: {"response": {...}, "error": <empty string if ok>}
+                if response["error"]:
+                    raise FailedUploadException(path=self.path, response_body=response)
+            elif len(response) == 3:
+                (
+                    data,
+                    status_code,
+                    _,
+                ) = response  # third output is headers, not used here
+                if status_code > 299:
+                    raise FailedUploadException(
+                        path=self.path,
+                        response_body=data,
+                        status_code=status_code,
+                    )
+            else:
+                raise RuntimeError(
+                    f"Unexpected response structure when uploading {self.content_type} {self.path}",
+                    response,
                 )
 
     def upload(

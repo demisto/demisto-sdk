@@ -1343,7 +1343,7 @@ class TestRNUpdate:
         When:
             - Calling get_deprecated_rn function
         Then:
-            Ensure the function returns a valid rn when the yml is deprecated without the "commands" section
+            - Ensure the function returns a valid rn when the yml is deprecated without the "commands" section
 
         """
         integration = pack.create_integration(

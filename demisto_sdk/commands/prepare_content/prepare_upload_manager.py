@@ -1,17 +1,15 @@
-import logging
 import shutil
 from pathlib import Path
 from typing import Optional, Union
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.content_graph.interface.neo4j.neo4j_graph import (
     Neo4jContentGraphInterface,
 )
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 from demisto_sdk.commands.content_graph.objects.pack import Pack
-
-logger = logging.getLogger("demisto-sdk")
 
 
 class PrepareUploadManager:

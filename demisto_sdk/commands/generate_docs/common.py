@@ -1,14 +1,12 @@
 import html
-import logging
 import os.path
 import re
 from typing import Dict, List, Tuple
 
 from demisto_sdk.commands.common.handlers import JSON_Handler
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import run_command
 from demisto_sdk.commands.run_cmd.runner import Runner
-
-logger = logging.getLogger("demisto-sdk")
 
 json = JSON_Handler()
 

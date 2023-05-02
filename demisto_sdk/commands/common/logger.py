@@ -6,6 +6,11 @@ from pathlib import Path
 
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 
+logger: logging.Logger = logging.getLogger("demisto-sdk")
+
+CONSOLE_HANDLER = "console-handler"
+FILE_HANDLER = "file-handler"
+
 LOG_FILE_NAME: str = "demisto_sdk_debug.log"
 
 LOG_FILE_PATH: Path = CONTENT_PATH / LOG_FILE_NAME
@@ -80,6 +85,18 @@ escapes = {
 }
 
 
+def get_handler_by_name(logger: logging.Logger, handler_name: str):
+    for current_handler in logger.handlers:
+        if current_handler.get_name == handler_name:
+            return current_handler
+    return None
+
+
+def set_demisto_logger(demisto_logger: logging.Logger):
+    global logger
+    logger = demisto_logger
+
+
 def logging_setup(
     console_log_threshold=logging.INFO,
     file_log_threshold=logging.DEBUG,
@@ -96,8 +113,10 @@ def logging_setup(
         logging.Logger: logger object
     """
 
+    global logger
+
     console_handler = logging.StreamHandler()
-    console_handler.set_name("console-handler")
+    console_handler.set_name(CONSOLE_HANDLER)
     console_handler.setLevel(
         console_log_threshold if console_log_threshold else logging.INFO
     )
@@ -134,7 +153,7 @@ def logging_setup(
         maxBytes=1048576,
         backupCount=10,
     )
-    file_handler.set_name("file-handler")
+    file_handler.set_name(FILE_HANDLER)
     file_handler.setLevel(file_log_threshold if file_log_threshold else logging.DEBUG)
 
     class NoColorFileFormatter(logging.Formatter):
@@ -170,6 +189,8 @@ def logging_setup(
     demisto_logger: logging.Logger = logging.getLogger("demisto-sdk")
     set_demisto_handlers_to_logger(demisto_logger, console_handler, file_handler)
     demisto_logger.propagate = False
+
+    set_demisto_logger(demisto_logger)
 
     return demisto_logger
 

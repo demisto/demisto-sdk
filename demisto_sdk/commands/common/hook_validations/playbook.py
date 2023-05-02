@@ -1,4 +1,3 @@
-import logging
 import re
 from typing import Dict, Set
 
@@ -13,9 +12,8 @@ from demisto_sdk.commands.common.hook_validations.base_validator import error_co
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import (
     ContentEntityValidator,
 )
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import is_string_uuid
-
-logger = logging.getLogger("demisto-sdk")
 
 
 class PlaybookValidator(ContentEntityValidator):
@@ -118,15 +116,12 @@ class PlaybookValidator(ContentEntityValidator):
         result: set = set()
         with open(self.file_path) as f:
             playbook_text = f.read()
-        all_inputs_occurrences = re.findall(r"inputs\.[-\W|\w ].*", playbook_text)
+        all_inputs_occurrences = re.findall(r"inputs\.[-\w ?!():]+", playbook_text)
         for input in all_inputs_occurrences:
             input = input.strip()
             splitted = input.split(".")
             if len(splitted) > 1 and splitted[1] and not splitted[1].startswith(" "):
-                input_in_use = splitted[1]
-                result.add(
-                    input_in_use[:-1] if input_in_use.endswith("}") else input_in_use
-                )
+                result.add(splitted[1])
         return result
 
     def collect_all_inputs_from_inputs_section(self) -> Set[str]:

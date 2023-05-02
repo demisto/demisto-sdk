@@ -195,6 +195,7 @@ class ReadMeValidator(BaseValidator):
             [
                 self.verify_readme_relative_urls(),
                 self.is_image_path_valid(),
+                self.verify_image_exist(),
                 self.verify_readme_image_paths(),
                 self.is_mdx_file(),
                 self.verify_no_empty_sections(),
@@ -357,6 +358,28 @@ class ReadMeValidator(BaseValidator):
                     error_list.append(formatted_error)
 
         return error_list
+
+    def verify_image_exist(self) -> bool:
+        """Validate README images are actually exits.
+
+        Returns:
+            bool: True If all image path's actually exist else False.
+
+        """
+        images_path = re.findall(
+            r"\.\./doc_files/[a-zA-Z0-9_-]+\.png",
+            self.readme_content,
+        )
+
+        for image_path in images_path:
+            if not os.path.isfile(
+                f"{self.file_path.parent.parent}{image_path.removeprefix('..')}"
+            ):
+                error_message, error_code = Errors.image_does_not_exist(image_path)
+                self.handle_error(error_message, error_code, file_path=self.file_path)
+                return False
+
+        return True
 
     @staticmethod
     @lru_cache(None)

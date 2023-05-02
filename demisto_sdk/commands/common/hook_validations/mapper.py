@@ -97,7 +97,9 @@ class MapperValidator(ContentEntityValidator):
             removed_incident_fields = {}
             for inc in old_incidents_types:
                 old_incident_fields = old_mapper[inc].get("internalMapping", {}) or {}
-                current_incident_fields = current_mapper[inc].get("internalMapping", {}) or {}
+                current_incident_fields = (
+                    current_mapper[inc].get("internalMapping", {}) or {}
+                )
                 old_fields = {inc for inc in old_incident_fields}
                 current_fields = {inc for inc in current_incident_fields}
 

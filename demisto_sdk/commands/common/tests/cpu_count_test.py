@@ -15,5 +15,6 @@ def test_with_invalid_env_set(mocker):
     assert cpu_count() == (os.cpu_count() or 1)
 
 
-def test_without_env_set():
+def test_without_env_set(mocker):
+    mocker.patch.dict(os.environ, {})
     assert cpu_count() == os.cpu_count()

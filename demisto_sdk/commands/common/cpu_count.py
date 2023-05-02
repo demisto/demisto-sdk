@@ -11,7 +11,11 @@ DEMISTO_SDK_MAX_CPU_CORES = "DEMISTO_SDK_MAX_CPU_CORES"
 
 def cpu_count() -> int:
     result = max_available_cpus = os.cpu_count() or 1
-    if raw_env_var := os.getenv(DEMISTO_SDK_MAX_CPU_CORES) is not None:
+
+    if result > 1:  # in case cpu_count returns 1
+        result -= 1
+
+    if (raw_env_var := os.getenv(DEMISTO_SDK_MAX_CPU_CORES)) is not None:
         try:
             max_allowed_cpus = int(raw_env_var)
             requsted_cpus = min(max_allowed_cpus, max_available_cpus)

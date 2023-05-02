@@ -1546,7 +1546,7 @@ class Integration:
                     if param_conf["display"] in params
                     else param_conf["name"]
                 )
-                if key == "credentials" or key == "creds_apikey ":
+                if key == "credentials" or key == "creds_apikey":
                     credentials = params[key]
                     param_value = {
                         "credential": "",

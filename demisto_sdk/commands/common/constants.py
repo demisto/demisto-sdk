@@ -1483,7 +1483,7 @@ FEED_REQUIRED_PARAMS = [
         "name": "tlp_color",
         "must_equal": {
             "display": "Traffic Light Protocol Color",
-            "options": ["RED", "AMBER", "GREEN", "WHITE"],
+            "options": ["RED", "AMBER+STRICT", "AMBER", "GREEN", "CLEAR"],
             "required": False,
             "type": 15,
         },

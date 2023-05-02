@@ -1,7 +1,7 @@
 # Changelog
 
 ## Unreleased
-* Fixed an issue where **update-release-notes** failed when running on a pack that contains deprecated integrations without the `commands` section.
+* Fixed an issue where **update-release-notes** command failed when running on a pack that contains deprecated integrations without the `commands` section.
 * Improved the warning message displayed for Contribution PRs editing outdated code.
 * **lint** now prevents unit-tests from accessing online resources in runtime.
 * Added support for the `<~XPANSE>` marketplace tag in release notes.

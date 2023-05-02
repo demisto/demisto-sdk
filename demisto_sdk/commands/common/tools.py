@@ -42,6 +42,7 @@ from packaging.version import LegacyVersion, Version, parse
 from pebble import ProcessFuture, ProcessPool
 from requests.exceptions import HTTPError
 from ruamel.yaml.comments import CommentedSeq
+from demisto_sdk.commands.common.cpu_count import cpu_count
 
 from demisto_sdk.commands.common.constants import (
     ALL_FILES_VALIDATION_IGNORE_WHITELIST,
@@ -3092,7 +3093,7 @@ def ProcessPoolHandler() -> ProcessPool:
     Yields:
         ProcessPool: Pebble process pool.
     """
-    with ProcessPool(max_workers=3) as pool:
+    with ProcessPool(max_workers=cpu_count()) as pool:
         try:
             yield pool
         except Exception:

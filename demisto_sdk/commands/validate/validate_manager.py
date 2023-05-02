@@ -1,4 +1,3 @@
-import logging
 import os
 from concurrent.futures._base import Future, as_completed
 from configparser import ConfigParser, MissingSectionHeaderError
@@ -137,7 +136,7 @@ from demisto_sdk.commands.common.hook_validations.xsiam_report import (
 from demisto_sdk.commands.common.hook_validations.xsoar_config_json import (
     XSOARConfigJsonValidator,
 )
-from demisto_sdk.commands.common.logger import get_log_file
+from demisto_sdk.commands.common.logger import get_log_file, logger
 from demisto_sdk.commands.common.tools import (
     _get_file_id,
     find_type,
@@ -156,8 +155,6 @@ from demisto_sdk.commands.common.tools import (
     run_command_os,
 )
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
-
-logger = logging.getLogger("demisto-sdk")
 
 SKIPPED_FILES = [
     "CommonServerUserPython.py",
@@ -1035,7 +1032,7 @@ class ValidateManager:
             FileType.MODELING_RULE_XIF,
             FileType.MODELING_RULE_TEST_DATA,
         ):
-            print(f"Validating {file_type.value} file: {file_path}")
+            logger.info(f"Validating {file_type.value} file: {file_path}")
             if self.validate_all:
                 error_ignore_list = pack_error_ignore_list.copy()
                 error_ignore_list.setdefault(os.path.basename(file_path), [])

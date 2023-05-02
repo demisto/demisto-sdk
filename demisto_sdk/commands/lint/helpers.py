@@ -1,6 +1,5 @@
 # STD python packages
 import io
-import logging
 import os
 import re
 import shlex
@@ -29,6 +28,7 @@ from demisto_sdk.commands.common.constants import (
     DemistoException,
 )
 from demisto_sdk.commands.common.docker_helper import init_global_docker_client
+from demisto_sdk.commands.common.logger import logger
 
 # Python2 requirements
 from demisto_sdk.commands.common.tools import get_remote_file
@@ -63,8 +63,6 @@ PY_CHCEKS = ["flake8", "XSOAR_linter", "bandit", "mypy", "vulture", "pytest", "p
 RL = "\n"
 
 IMPORT_API_MODULE_REGEX = r"from (\w+ApiModule) import \*(?:  # noqa: E402)?"
-
-logger = logging.getLogger("demisto-sdk")
 
 
 def build_skipped_exit_code(

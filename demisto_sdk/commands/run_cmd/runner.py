@@ -1,16 +1,15 @@
 import ast
-import logging
 import re
 import tempfile
 
 import demisto_client
 
 from demisto_sdk.commands.common.handlers import JSON_Handler
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.generate_outputs.json_to_outputs.json_to_outputs import (
     json_to_outputs,
 )
 
-logger = logging.getLogger("demisto-sdk")
 json = JSON_Handler()
 
 
@@ -106,12 +105,16 @@ class Runner:
 
     def _get_playground_id(self):
         """Retrieves Playground ID from the remote Demisto instance."""
-        playground_filter = {"filter": {"type": [9]}}
-        answer = self.client.search_investigations(filter=playground_filter)
+
+        def playground_filter(page: int = 0):
+            return {"filter": {"type": [9], "page": page}}
+
+        answer = self.client.search_investigations(filter=playground_filter())
         if answer.total == 0:
             raise RuntimeError("No playgrounds were detected in the environment.")
-        playgrounds = answer.data
-        if len(playgrounds) > 1:
+        elif answer.total == 1:
+            result = answer.data[0].id
+        else:
             # if found more than one playground, try to filter to results against the current user
             user_data, response, _ = self.client.generic_request(
                 path="/user",
@@ -122,18 +125,28 @@ class Runner:
             if response != 200:
                 raise RuntimeError("Cannot find username")
             username = user_data.get("username")
-            playgrounds = [
-                playground
-                for playground in playgrounds
-                if playground.creating_user_id == username
-            ]
+
+            def filter_by_creating_user_id(playground):
+                return playground.creating_user_id == username
+
+            playgrounds = list(filter(filter_by_creating_user_id, answer.data))
+
+            for i in range(int((answer.total - 1) / len(answer.data))):
+                playgrounds.extend(
+                    filter(
+                        filter_by_creating_user_id,
+                        self.client.search_investigations(
+                            filter=playground_filter(i + 1)
+                        ).data,
+                    )
+                )
+
             if len(playgrounds) != 1:
                 raise RuntimeError(
                     f"There is more than one playground to the user. "
                     f"Number of playgrounds is: {len(playgrounds)}"
                 )
-
-        result = playgrounds[0].id
+            result = playgrounds[0].id
 
         logger.debug(f"Playground ID: {result}")
 

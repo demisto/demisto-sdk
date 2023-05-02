@@ -1,12 +1,16 @@
+import gzip
+import io
 import logging
 import os
 import shutil
+import tarfile
 from io import TextIOWrapper
 from pathlib import Path
 from typing import Callable, Tuple
 from unittest.mock import patch
 
 import pytest
+from packaging.version import parse
 
 from demisto_sdk.commands.common.constants import (
     CLASSIFIERS_DIR,
@@ -158,6 +162,7 @@ class Environment:
         self.CUSTOM_CONTENT_JS_INTEGRATION_PATH = (
             f"{self.CUSTOM_CONTENT_BASE_PATH}/integration-DummyJSIntegration.yml"
         )
+        self.CUSTOM_API_RESPONSE = f"{self.CUSTOM_CONTENT_BASE_PATH}/api-response"
 
         self.INTEGRATION_PACK_OBJECT = {
             "Test Integration": [
@@ -1235,24 +1240,6 @@ def test_build_file_name():
             "name: TestingScript\ncommonfields:\n id: f1e4c6e5-0d44-48a0-8020-a9711243e918",
             {"f1e4c6e5-0d44-48a0-8020-a9711243e918": "TestingScript"},
         ),
-        (
-            '{\n\t"name":"TestingField",\n\t"script":"f1e4c6e5-0d44-48a0-8020-a9711243e918"\n}',
-            "incidentfield-TestingField.json",
-            {"f1e4c6e5-0d44-48a0-8020-a9711243e918": "TestingScript"},
-            '{\n\t"name":"TestingField",\n\t"script":"TestingScript"\n}',
-            {"f1e4c6e5-0d44-48a0-8020-a9711243e918": "TestingScript"},
-        ),
-        (
-            '{\n\t"name":"TestingLayout",\n\t"detailsV2":{\n\t\t"tabs":[\n\t\t\t{\n\t\t\t\t"sections":[\n\t\t\t\t\t{\n\t\t\t\t'
-            '\t\t"items":[\n\t\t\t\t\t\t\t{\n\t\t\t\t\t\t\t\t"scriptId":"f1e4c6e5-0d44-48a0-8020-a9711243e918"\n\t\t\t\t\t\t'
-            "\t}\n\t\t\t\t\t\t]\n\t\t\t\t\t}\n\t\t\t\t]\n\t\t\t}\n\t\t]\n\t}\n}",
-            "layoutcontainer-TestingLayout.json",
-            {"f1e4c6e5-0d44-48a0-8020-a9711243e918": "TestingScript"},
-            '{\n\t"name":"TestingLayout",\n\t"detailsV2":{\n\t\t"tabs":[\n\t\t\t{\n\t\t\t\t"sections":[\n\t\t\t\t\t{\n\t\t\t\t'
-            '\t\t"items":[\n\t\t\t\t\t\t\t{\n\t\t\t\t\t\t\t\t"scriptId":"TestingScript"\n\t\t\t\t\t\t'
-            "\t}\n\t\t\t\t\t\t]\n\t\t\t\t\t}\n\t\t\t\t]\n\t\t\t}\n\t\t]\n\t}\n}",
-            {"f1e4c6e5-0d44-48a0-8020-a9711243e918": "TestingScript"},
-        ),
     ],
 )
 def test_handle_file(
@@ -1381,3 +1368,51 @@ def test_safe_write_unicode_to_non_unicode(
     result = get_file(dest, suffix)
     assert set(result.keys()) == set(fields)
     assert set(result.values()) == {SENTENCE_WITH_UMLAUTS}
+
+
+@pytest.fixture
+def demisto_client_configure(mocker):
+    mocker.patch(
+        "demisto_sdk.commands.upload.uploader.get_demisto_version",
+        return_value=parse("6.0.0"),
+    )
+    mocker.patch(
+        "demisto_sdk.commands.common.content.objects.pack_objects.integration.integration.get_demisto_version",
+        return_value=parse("6.0.0"),
+    )
+    mocker.patch(
+        "demisto_sdk.commands.common.content.objects.pack_objects.script.script.get_demisto_version",
+        return_value=parse("6.0.0"),
+    )
+    mocker.patch("builtins.print")
+
+
+def util_load_gz(path):
+    with gzip.open(path, "r") as f:
+        return f.read()
+
+
+def util_load_file_bytes(path) -> bytes:
+    with io.open(path, mode="rb") as f:
+        return f.read()
+
+
+def test_find_uuids_in_content_item(mocker):
+    expected_UUIDs = {
+        "a53a2f17-2f05-486d-867f-a36c9f5b88d4",
+        "e4c2306d-5d4b-4b19-8320-6fdad94595d4",
+    }
+    api_res = util_load_file_bytes(
+        "demisto_sdk/commands/download/tests/tests_data/custom_content/download_tar.tar"
+    )
+    io_bytes = io.BytesIO(api_res)
+    tar = tarfile.open(fileobj=io_bytes, mode="r")
+    downloader = Downloader(
+        output="Packs/AbuseDB/Integrations/AbuseDB",
+        input="",
+        regex="",
+        all_custom_content=True,
+    )
+    scripts_id_name, strings_to_write = downloader.find_uuids_in_content_item(tar)
+    for key in scripts_id_name:
+        assert key in expected_UUIDs

@@ -115,8 +115,8 @@ def get_deprecated_rn(path: str, file_type):
 
     # look for deprecated commands
     rn = ""
-    old_commands = deprecated_commands(old_yml.get("script", {}).get("commands", []))
-    new_commands = deprecated_commands(new_yml.script.get("commands", []))
+    old_commands = deprecated_commands(old_yml.get("script", {}).get("commands") or [])
+    new_commands = deprecated_commands(new_yml.script.get("commands") or [])
 
     for command_name in new_commands:
         # if command is deprecated in new yml, and not in old yml

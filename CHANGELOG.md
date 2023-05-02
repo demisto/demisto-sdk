@@ -1,6 +1,7 @@
 # Changelog
 
 ## Unreleased
+* Fixed an issue where **update-release-notes** command failed when running on a pack that contains deprecated integrations without the `commands` section.
 
 ## 1.14.0
 * Added the `DEMISTO_SDK_GRAPH_FORCE_CREATE` environment variable. Use it to force the SDK to recreate the graph, rather than update it.

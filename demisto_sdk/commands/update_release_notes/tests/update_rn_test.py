@@ -1336,6 +1336,36 @@ class TestRNUpdate:
         res = get_deprecated_rn(path, file_type)
         assert res == expected_res
 
+    def test_deprecated_rn_yml_no_commands_section(self, mocker, pack):
+        """
+        Given:
+            - deprecated integration which does not have "commands" section
+        When:
+            - Calling get_deprecated_rn function
+        Then:
+            - Ensure the function returns a valid rn when the yml is deprecated without the "commands" section
+
+        """
+        integration = pack.create_integration(
+            name="test",
+            yml={
+                "commonfields": {"id": "test", "version": -1},
+                "name": "test",
+                "display": "test",
+                "description": "this is an integration test",
+                "category": "category",
+                "script": {
+                    "type": "python",
+                    "subtype": "python3",
+                    "script": "",
+                    "dockerimage": "",
+                },
+                "configuration": [],
+            },
+        )
+
+        assert get_deprecated_rn(integration.path, FileType.INTEGRATION) == ""
+
 
 def get_mock_yml_obj(path, file_type, deprecated) -> dict:
     new_yml_obj = CLASS_BY_FILE_TYPE[file_type](path)

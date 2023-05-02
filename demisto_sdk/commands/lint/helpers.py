@@ -1,6 +1,5 @@
 # STD python packages
 import io
-import logging
 import os
 import re
 import shlex
@@ -29,6 +28,7 @@ from demisto_sdk.commands.common.constants import (
     DemistoException,
 )
 from demisto_sdk.commands.common.docker_helper import init_global_docker_client
+from demisto_sdk.commands.common.logger import logger
 
 # Python2 requirements
 from demisto_sdk.commands.common.tools import get_remote_file
@@ -62,7 +62,7 @@ PY_CHCEKS = ["flake8", "XSOAR_linter", "bandit", "mypy", "vulture", "pytest", "p
 # Line break
 RL = "\n"
 
-logger = logging.getLogger("demisto-sdk")
+IMPORT_API_MODULE_REGEX = r"from (\w+ApiModule) import \*(?:  # noqa: E402)?"
 
 
 def build_skipped_exit_code(
@@ -277,32 +277,53 @@ def add_tmp_lint_files(
                 copied_common_server_python_path.touch()
                 added_modules.append(copied_common_server_python_path)
 
-            # Add API modules to directory if needed
-            module_regex = r"from ([\w\d]+ApiModule) import \*(?:  # noqa: E402)?"
-            for lint_file in lint_files:
-                data = lint_file.read_text()
-                for module_name in re.findall(module_regex, data):
-                    api_code_path = (
-                        Path("Packs/ApiModules/Scripts")
-                        / module_name
-                        / f"{module_name}.py"
-                    )
-                    copied_api_module_path = pack_path / f"{module_name}.py"
-                    if content_repo:  # if working in a repo
-                        module_path = content_repo / api_code_path
-                        shutil.copy(src=module_path, dst=copied_api_module_path)
-                    else:
-                        api_content = get_remote_file(
-                            full_file_path=f"https://raw.githubusercontent.com/demisto/content/master/{api_code_path}",
-                            return_content=True,
-                        )
-                        copied_api_module_path.write_bytes(api_content)
+            api_modules = add_api_modules(lint_files, content_repo, pack_path)
+            added_modules.extend(api_modules)
 
-                    added_modules.append(copied_api_module_path)
         yield
     except Exception as e:
         logger.error(f"add_tmp_lint_files unexpected exception: {str(e)}")
         raise
+
+
+def add_api_modules(
+    module_list: List[Path], content_repo: Path, pack_path: Path
+) -> List[Path]:
+    """Add API modules to directory if needed
+    Args:
+        modules_list(list): Modules that might import Api Modules
+        content_repo(Path): Absolute path of the repository
+        pack_path(Path): Absolute path of pack
+    Returns:
+        list[Path]: Paths of the added ApiModules
+    Raises:
+        IOError: if can't write to files due permissions or other reasons
+    """
+    added_modules: List[Path] = []
+    for module in module_list:
+        api_modules = re.findall(IMPORT_API_MODULE_REGEX, module.read_text())
+        for module_name in api_modules:
+            api_module_path = Path(
+                f"Packs/ApiModules/Scripts/{module_name}/{module_name}.py"
+            )
+            copied_api_module_path = pack_path / f"{module_name}.py"
+            if content_repo:  # if working in a repo
+                module_path = content_repo / api_module_path
+                shutil.copy(src=module_path, dst=copied_api_module_path)
+            else:
+                api_content = get_remote_file(
+                    full_file_path=f"https://raw.githubusercontent.com/demisto/content/master/{api_module_path}",
+                    return_content=True,
+                )
+                copied_api_module_path.write_bytes(api_content)
+
+            added_modules.append(copied_api_module_path)
+    # if there is added_modules - we recursively check for ApiModules imported by them
+    return (
+        added_modules + add_api_modules(added_modules, content_repo, pack_path)
+        if added_modules
+        else []
+    )
 
 
 @lru_cache(maxsize=300)

@@ -1,5 +1,4 @@
 import csv
-import logging
 import traceback
 from io import StringIO
 from pathlib import Path
@@ -13,11 +12,14 @@ from demisto_sdk.commands.common.constants import (
     FileType,
 )
 from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
-from demisto_sdk.commands.common.logger import handle_deprecated_args, logging_setup
+from demisto_sdk.commands.common.logger import (
+    handle_deprecated_args,
+    logger,
+    logging_setup,
+)
 from demisto_sdk.commands.common.tools import get_max_version
 
 app = typer.Typer()
-logger = logging.getLogger("demisto-sdk")
 json = JSON_Handler()
 yaml = YAML_Handler()
 

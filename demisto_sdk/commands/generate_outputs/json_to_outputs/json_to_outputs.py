@@ -71,7 +71,6 @@ outputs:
   description: ''
   type: String
 """
-import logging
 import os
 import sys
 from typing import Dict, Optional
@@ -79,8 +78,7 @@ from typing import Dict, Optional
 import dateparser
 
 from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
-
-logger = logging.getLogger("demisto-sdk")
+from demisto_sdk.commands.common.logger import logger
 
 json = JSON_Handler()
 yaml = YAML_Handler()
@@ -208,7 +206,7 @@ def parse_json(
         if descriptions and key in descriptions:
             description = descriptions[key]
         elif interactive:
-            print(f"Enter description for: [{key}]")
+            logger.info(f"Enter description for: [{key}]")
             description = input_multiline()
 
         arg_json.append(jsonise(key, value, description))
@@ -253,7 +251,7 @@ def json_to_outputs(
             with open(json) as json_file:
                 input_json = json_file.read()
         else:
-            print(
+            logger.info(
                 "Enter the command's output in JSON format.\n "
                 'As an example, If one of the command\'s output is `item_id`,\n enter {"item_id": 1234}'
             )

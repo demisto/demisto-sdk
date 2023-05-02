@@ -123,7 +123,7 @@ def logging_setup_decorator(func, *args, **kwargs):
         for arg in args:
             if type(arg) == click.core.Context:
                 return arg
-        print(
+        print(  # noqa: T201
             "Error: Cannot find the Context arg. Is the command configured correctly?"
         )
         return None
@@ -202,7 +202,9 @@ def main(ctx, config, version, release_notes, **kwargs):
 
     dotenv.load_dotenv(Path(get_content_path()) / ".env", override=True)  # type: ignore # load .env file from the cwd
     if (
-        not os.getenv("DEMISTO_SDK_SKIP_VERSION_CHECK") or version
+        not os.getenv("DEMISTO_SDK_SKIP_VERSION_CHECK")
+        or not os.getenv("CI")
+        or version
     ):  # If the key exists/called to version
         try:
             __version__ = get_distribution("demisto-sdk").version
@@ -1956,40 +1958,52 @@ def init(ctx, **kwargs):
     "--custom-image-path",
     help="A custom path to a playbook image. If not stated, a default link will be added to the file.",
 )
+@click.option(
+    "-rt",
+    "--readme-template",
+    help="The readme template that should be appended to the given README.md file",
+    type=click.Choice(["syslog", "xdrc", "http-collector"]),
+)
 @click.pass_context
 @logging_setup_decorator
 def generate_docs(ctx, **kwargs):
     """Generate documentation for integration, playbook or script from yaml file."""
-    check_configuration_file("generate-docs", kwargs)
-    input_path_str: str = kwargs.get("input", "")
-    if not (input_path := Path(input_path_str)).exists():
-        logger.info(f"[red]input {input_path_str} does not exist[/red]")
-        return 1
+    try:
+        check_configuration_file("generate-docs", kwargs)
+        input_path_str: str = kwargs.get("input", "")
+        if not (input_path := Path(input_path_str)).exists():
+            raise Exception(f"[red]input {input_path_str} does not exist[/red]")
 
-    if (output_path := kwargs.get("output")) and not Path(output_path).is_dir():
-        logger.info(f"[red]Output directory {output_path} is not a directory.[/red]")
-        return 1
+        if (output_path := kwargs.get("output")) and not Path(output_path).is_dir():
+            raise Exception(
+                f"[red]Output directory {output_path} is not a directory.[/red]"
+            )
 
-    if input_path.is_file():
-        if input_path.suffix.lower() != ".yml":
-            logger.info(f"[red]input {input_path} is not a valid yml file.[/red]")
-            return 1
-        _generate_docs_for_file(kwargs)
+        if input_path.is_file():
+            if input_path.suffix.lower() not in {".yml", ".md"}:
+                raise Exception(
+                    f"[red]input {input_path} is not a valid yml or readme file.[/red]"
+                )
 
-    # Add support for input which is a Playbooks directory and not a single yml file
-    elif input_path.is_dir() and input_path.name == "Playbooks":
-        for yml in input_path.glob("*.yml"):
-            file_kwargs = copy.deepcopy(kwargs)
-            file_kwargs["input"] = str(yml)
-            _generate_docs_for_file(file_kwargs)
+            _generate_docs_for_file(kwargs)
 
-    else:
-        logger.info(
-            f"[red]Input {input_path} is neither a valid yml file, nor a folder named Playbooks."
-        )
-        return 1
+        # Add support for input which is a Playbooks directory and not a single yml file
+        elif input_path.is_dir() and input_path.name == "Playbooks":
+            for yml in input_path.glob("*.yml"):
+                file_kwargs = copy.deepcopy(kwargs)
+                file_kwargs["input"] = str(yml)
+                _generate_docs_for_file(file_kwargs)
 
-    return 0
+        else:
+            raise Exception(
+                f"[red]Input {input_path} is neither a valid yml file, nor a folder named Playbooks, nor a readme file."
+            )
+
+        return 0
+
+    except Exception:
+        logger.exception("Failed generating docs")
+        sys.exit(1)
 
 
 def _generate_docs_for_file(kwargs: Dict[str, Any]):
@@ -2000,6 +2014,9 @@ def _generate_docs_for_file(kwargs: Dict[str, Any]):
     )
     from demisto_sdk.commands.generate_docs.generate_playbook_doc import (
         generate_playbook_doc,
+    )
+    from demisto_sdk.commands.generate_docs.generate_readme_template import (
+        generate_readme_template,
     )
     from demisto_sdk.commands.generate_docs.generate_script_doc import (
         generate_script_doc,
@@ -2016,79 +2033,96 @@ def _generate_docs_for_file(kwargs: Dict[str, Any]):
     old_version: str = kwargs.get("old_version", "")
     skip_breaking_changes: bool = kwargs.get("skip_breaking_changes", False)
     custom_image_path: str = kwargs.get("custom_image_path", "")
+    readme_template: str = kwargs.get("readme_template", "")
 
-    if command:
-        if (
-            output_path
-            and (not os.path.isfile(os.path.join(output_path, "README.md")))
-            or (not output_path)
-            and (
-                not os.path.isfile(
-                    os.path.join(
-                        os.path.dirname(os.path.realpath(input_path)), "README.md"
+    try:
+        if command:
+            if (
+                output_path
+                and (not os.path.isfile(os.path.join(output_path, "README.md")))
+                or (not output_path)
+                and (
+                    not os.path.isfile(
+                        os.path.join(
+                            os.path.dirname(os.path.realpath(input_path)), "README.md"
+                        )
                     )
                 )
+            ):
+                raise Exception(
+                    "[red]The `command` argument must be presented with existing `README.md` docs."
+                )
+
+        file_type = find_type(kwargs.get("input", ""), ignore_sub_categories=True)
+        if file_type not in {
+            FileType.INTEGRATION,
+            FileType.SCRIPT,
+            FileType.PLAYBOOK,
+            FileType.README,
+        }:
+            raise Exception(
+                "[red]File is not an Integration, Script, Playbook or a README.[/red]"
             )
-        ):
-            logger.info(
-                "[red]The `command` argument must be presented with existing `README.md` docs."
+
+        if old_version and not os.path.isfile(old_version):
+            raise Exception(
+                f"[red]Input old version file {old_version} was not found.[/red]"
             )
-            return 1
 
-    file_type = find_type(kwargs.get("input", ""), ignore_sub_categories=True)
-    if file_type not in [FileType.INTEGRATION, FileType.SCRIPT, FileType.PLAYBOOK]:
-        logger.info("[red]File is not an Integration, Script or a Playbook.[/red]")
-        return 1
+        if old_version and not old_version.lower().endswith(".yml"):
+            raise Exception(
+                f"[red]Input old version {old_version} is not a valid yml file.[/red]"
+            )
 
-    if old_version and not os.path.isfile(old_version):
-        logger.info(f"[red]Input old version file {old_version} was not found.[/red]")
-        return 1
+        if file_type == FileType.INTEGRATION:
+            logger.info(f"Generating {file_type.value.lower()} documentation")
+            use_cases = kwargs.get("use_cases")
+            command_permissions = kwargs.get("command_permissions")
+            return generate_integration_doc(
+                input_path=input_path,
+                output=output_path,
+                use_cases=use_cases,
+                examples=examples,
+                permissions=permissions,
+                command_permissions=command_permissions,
+                limitations=limitations,
+                insecure=insecure,
+                command=command,
+                old_version=old_version,
+                skip_breaking_changes=skip_breaking_changes,
+            )
+        elif file_type == FileType.SCRIPT:
+            logger.info(f"Generating {file_type.value.lower()} documentation")
+            return generate_script_doc(
+                input_path=input_path,
+                output=output_path,
+                examples=examples,
+                permissions=permissions,
+                limitations=limitations,
+                insecure=insecure,
+            )
+        elif file_type == FileType.PLAYBOOK:
+            logger.info(f"Generating {file_type.value.lower()} documentation")
+            return generate_playbook_doc(
+                input_path=input_path,
+                output=output_path,
+                permissions=permissions,
+                limitations=limitations,
+                custom_image_path=custom_image_path,
+            )
 
-    if old_version and not old_version.lower().endswith(".yml"):
-        logger.info(
-            f"[red]Input old version {old_version} is not a valid yml file.[/red]"
-        )
-        return 1
+        elif file_type == FileType.README:
+            logger.info(f"Adding template to {file_type.value.lower()} file")
+            return generate_readme_template(
+                input_path=Path(input_path), readme_template=readme_template
+            )
 
-    if file_type == FileType.INTEGRATION:
-        logger.info(f"Generating {file_type.value.lower()} documentation")
-        use_cases = kwargs.get("use_cases")
-        command_permissions = kwargs.get("command_permissions")
-        return generate_integration_doc(
-            input_path=input_path,
-            output=output_path,
-            use_cases=use_cases,
-            examples=examples,
-            permissions=permissions,
-            command_permissions=command_permissions,
-            limitations=limitations,
-            insecure=insecure,
-            command=command,
-            old_version=old_version,
-            skip_breaking_changes=skip_breaking_changes,
-        )
-    elif file_type == FileType.SCRIPT:
-        logger.info(f"Generating {file_type.value.lower()} documentation")
-        return generate_script_doc(
-            input_path=input_path,
-            output=output_path,
-            examples=examples,
-            permissions=permissions,
-            limitations=limitations,
-            insecure=insecure,
-        )
-    elif file_type == FileType.PLAYBOOK:
-        logger.info(f"Generating {file_type.value.lower()} documentation")
-        return generate_playbook_doc(
-            input_path=input_path,
-            output=output_path,
-            permissions=permissions,
-            limitations=limitations,
-            custom_image_path=custom_image_path,
-        )
-    else:
-        logger.info(f"[red]File type {file_type.value} is not supported.[/red]")
-        return 1
+        else:
+            raise Exception(f"[red]File type {file_type.value} is not supported.[/red]")
+
+    except Exception:
+        logger.exception(f"Failed generating docs for {input_path}")
+        sys.exit(1)
 
 
 # ====================== create-id-set ====================== #

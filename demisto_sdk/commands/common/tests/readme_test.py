@@ -348,6 +348,10 @@ def test_copyright_sections(integration, file_input):
             "integration. some extra text here",
             "getting started and learn how to build an integration",
         ),
+        (
+            "In this readme template all required notes should be replaced.\n# %%UPDATE%% <Product Name>",
+            "%%UPDATE%%",
+        ),
     ],
 )
 def test_verify_no_default_sections_left(integration, mocker, file_input, section):

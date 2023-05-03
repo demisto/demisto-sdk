@@ -160,5 +160,5 @@ def unit_test_runner(file_paths: List[Path], verbose: bool = False) -> int:
     cov = coverage.Coverage(data_file=CONTENT_PATH / ".coverage")
     cov.combine(coverage_files())
     cov.xml_report(outfile=str(CONTENT_PATH / "coverage.xml"))
-
+    print(f"Coverage report saved to {CONTENT_PATH / 'coverage.xml'}")
     return exit_code

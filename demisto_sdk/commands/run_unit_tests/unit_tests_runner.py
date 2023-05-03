@@ -42,13 +42,14 @@ def fix_coverage_report_path(code_directory: Path):
         so we have to change the path to the correct one.
     """
     coverage_file = code_directory / ".coverage"
+    shutil.copy(coverage_file, coverage_file.with_suffix(".coverage.bak"))
     if not coverage_file.exists():
         logger.debug(
             f"Skipping {code_directory} as it does not contain a coverage report."
         )
         return
     logger.debug(f"Editing coverage report for {coverage_file}")
-    with sqlite3.connect(coverage_file) as sql_connection:
+    with sqlite3.connect(coverage_file.with_suffix(".coverage.bak")) as sql_connection:
         cursor = sql_connection.cursor()
         files = cursor.execute("SELECT * FROM file").fetchall()
         for id_, file in files:
@@ -59,6 +60,8 @@ def fix_coverage_report_path(code_directory: Path):
             )
         sql_connection.commit()
         logger.debug("Done editing coverage report")
+    coverage_file.unlink()
+    shutil.move(coverage_file.with_suffix(".coverage.bak"), coverage_file)
 
 
 def unit_test_runner(file_paths: List[Path], verbose: bool = False) -> int:

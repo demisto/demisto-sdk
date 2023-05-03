@@ -1,4 +1,6 @@
-from typing import Callable, Set
+import json
+from tempfile import NamedTemporaryFile
+from typing import Set
 
 import demisto_client
 from pydantic import Field
@@ -16,15 +18,15 @@ class IncidentField(ContentItem, content_type=ContentType.INCIDENT_FIELD):  # ty
     def metadata_fields(self) -> Set[str]:
         return {"name", "field_type", "description"}
 
-    @classmethod
-    def _client_upload_method(cls, client: demisto_client) -> Callable:
-        return client.import_incident_fields
-
     def _upload(
         self,
         client: demisto_client,
         marketplace: MarketplaceVersions,
         dump_into_list: bool = False,
     ) -> None:
-        # sets dump_into_list = True
-        return super()._upload(client, marketplace, dump_into_list=True)
+        data = self._dump_body(marketplace=marketplace, dump_into_list=True)
+        with NamedTemporaryFile(suffix=".json", mode="r+") as file:
+            json.dump({"incidentFields": data}, file)
+            file.flush()
+            file.seek(0)
+            return client.import_incident_fields(file=file.name)

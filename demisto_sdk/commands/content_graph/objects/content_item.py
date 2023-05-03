@@ -1,7 +1,7 @@
 from abc import abstractmethod
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import TYPE_CHECKING, Callable, List, Optional, Set, Union
+from typing import TYPE_CHECKING, Callable, Dict, List, Optional, Set, Union
 
 import demisto_client
 from packaging.version import Version
@@ -184,15 +184,23 @@ class ContentItem(BaseContent):
         marketplace: MarketplaceVersions,
         dump_into_list: bool = False,  # some items must be uploaded inside a list
     ) -> None:
+        data = self._dump_body(marketplace=marketplace, dump_into_list=dump_into_list)
+
         dir.mkdir(exist_ok=True, parents=True)
-        data: Union[dict, list] = self.prepare_for_upload(marketplace=marketplace)
-        if dump_into_list:
-            data = [data]
         try:
             with (dir / self.normalize_name).open("w") as f:
                 self.handler.dump(data, f)
         except FileNotFoundError as e:
             logger.warning(f"Failed to dump {self.path} to {dir}: {e}")
+
+    def _dump_body(
+        self, marketplace: MarketplaceVersions, dump_into_list: bool
+    ) -> Union[List, Dict]:
+        """
+        returns the body that will later be used for dumping into a file
+        """
+        data = self.prepare_for_upload(marketplace=marketplace)
+        return [data] if dump_into_list else data
 
     def to_id_set_entity(self) -> dict:
         """

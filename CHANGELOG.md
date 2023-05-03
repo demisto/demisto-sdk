@@ -2,12 +2,12 @@
 
 ## Unreleased
 * Fixed an issue where **update-release-notes** command failed when running on a pack that contains deprecated integrations without the `commands` section.
+* Added toVersion and fromVersion to XSIAM content items schema.
 * Fixed an issue where **validate** failed when attempting to map null values in a classifier.
 
 ## 1.14.0
 * Added the `DEMISTO_SDK_GRAPH_FORCE_CREATE` environment variable. Use it to force the SDK to recreate the graph, rather than update it.
 * Added support for code importing multi-level ApiModules to **lint**.
-* Added toVersion and fromVersion to XSIAM content items schema.
 * Added a validation that the **modeling-rules test** command will fail if no test data file exist.
 * Added support for the `<~XPANSE>` marketplace tag in release notes.
 * Added support for marketplace tags in the **doc-review** command.

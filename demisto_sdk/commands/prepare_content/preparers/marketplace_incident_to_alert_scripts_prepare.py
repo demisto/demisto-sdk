@@ -2,8 +2,8 @@ import logging
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.prepare_content.preparers.incident_to_alert import (
-    prepare_script_access_fields,
     create_wrapper_script,
+    prepare_script_access_fields,
 )
 
 logger = logging.getLogger("demisto-sdk")
@@ -11,9 +11,9 @@ logger = logging.getLogger("demisto-sdk")
 
 class MarketplaceIncidentToAlertScriptsPreparer:
     @staticmethod
-    def prepare(data: dict,
-                current_marketplace: MarketplaceVersions,
-                incident_to_alert: bool) -> tuple:
+    def prepare(
+        data: dict, current_marketplace: MarketplaceVersions, incident_to_alert: bool
+    ) -> tuple:
         """
         Two cases in which script preparation is needed:
         - incident_to_alert is false:
@@ -43,7 +43,9 @@ class MarketplaceIncidentToAlertScriptsPreparer:
             scripts_preparation.append(create_wrapper_script(data))
 
         # Handling the incident word in the script
-        scripts_preparation.append(prepare_script_access_fields(data, incident_to_alert))
+        scripts_preparation.append(
+            prepare_script_access_fields(data, incident_to_alert)
+        )
         logging.debug(f"Script preparation {data['name']} completed")
 
         return tuple(scripts_preparation)

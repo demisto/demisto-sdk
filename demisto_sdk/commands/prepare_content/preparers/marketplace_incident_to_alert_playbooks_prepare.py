@@ -1,7 +1,8 @@
 import logging
-from typing import List, Optional, Tuple
+from typing import List, Optional
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
+from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 from demisto_sdk.commands.prepare_content.preparers.incident_to_alert import (
     prepare_descriptions_and_names,
     prepare_playbook_access_fields,
@@ -13,8 +14,8 @@ logger = logging.getLogger("demisto-sdk")
 class MarketplaceIncidentToAlertPlaybooksPreparer:
     @staticmethod
     def prepare(
+        playbook: ContentItem,
         data: dict,
-        script_names: Tuple[str, ...],
         current_marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR,
         supported_marketplaces: Optional[List[MarketplaceVersions]] = None,
     ) -> dict:
@@ -43,6 +44,6 @@ class MarketplaceIncidentToAlertPlaybooksPreparer:
             and MarketplaceVersions.MarketplaceV2 in supported_marketplaces
             and len(supported_marketplaces) > 1
         ):
-            data = prepare_playbook_access_fields(data, script_names)
+            data = prepare_playbook_access_fields(data, playbook)
 
         return data

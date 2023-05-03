@@ -5,6 +5,7 @@ from typing import Any, Tuple
 
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
+from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 
 logger = logging.getLogger("demisto-sdk")
 
@@ -112,11 +113,11 @@ def edit_names_and_descriptions_for_playbook(
 
 
 def replace_playbook_access_fields_recursively(
-    datum: Any, script_names: Tuple[str, ...]
+    datum: Any, replaceable_scripts: Tuple[str, ...]
 ) -> Any:
     if isinstance(datum, list):
         return [
-            replace_playbook_access_fields_recursively(item, script_names) for item in datum
+            replace_playbook_access_fields_recursively(item, replaceable_scripts) for item in datum
         ]
 
     elif isinstance(datum, dict):
@@ -132,20 +133,40 @@ def replace_playbook_access_fields_recursively(
 
                 elif (
                     key == "scriptName"
-                    and "incident" in val
-                    and val in script_names
+                    and val in replaceable_scripts
                 ):
-                    val = ...
+                    val = edit_ids_names_and_descriptions_for_script(val, True)
                 datum[key] = val
 
             else:
-                datum[key] = replace_playbook_access_fields_recursively(val, script_names)
+                datum[key] = replace_playbook_access_fields_recursively(val, replaceable_scripts)
 
     return datum
 
 
-def prepare_playbook_access_fields(data: dict, script_names: Tuple[str, ...]) -> dict:
-    data = replace_playbook_access_fields_recursively(data, script_names)
+def get_script_names_from_playbooks_intended_preparation(playbook: ContentItem) -> Tuple[str, ...]:
+    from demisto_sdk.commands.content_graph.objects.script import Script
+    return tuple(
+        map(
+            lambda s: s.object_id,
+            filter(
+                lambda s: (
+                    isinstance(s, Script)
+                    and s.is_incident_to_alert(MarketplaceVersions.MarketplaceV2)
+                ),
+                tuple(
+                    map(
+                        lambda content_item: content_item.content_item_to, playbook.uses
+                    )
+                ),
+            ),
+        )
+    )
+
+
+def prepare_playbook_access_fields(data: dict, playbook: ContentItem) -> dict:
+    script_intended_prepare = get_script_names_from_playbooks_intended_preparation(playbook)
+    data = replace_playbook_access_fields_recursively(data, script_intended_prepare)
     return data
 
 

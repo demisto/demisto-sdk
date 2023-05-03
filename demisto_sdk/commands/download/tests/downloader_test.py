@@ -1,4 +1,3 @@
-import gzip
 import io
 import logging
 import os
@@ -1385,11 +1384,6 @@ def demisto_client_configure(mocker):
         return_value=parse("6.0.0"),
     )
     mocker.patch("builtins.print")
-
-
-def util_load_gz(path):
-    with gzip.open(path, "r") as f:
-        return f.read()
 
 
 def util_load_file_bytes(path) -> bytes:

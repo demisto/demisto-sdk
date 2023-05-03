@@ -129,8 +129,7 @@ def unit_test_runner(file_paths: List[Path], verbose: bool = False) -> int:
                     logger.info if verbose else logger.debug,
                 )
                 # wait for container to finish
-                container_exit_code = container.wait()["StatusCode"]
-                if container_exit_code:
+                if container.wait()["StatusCode"]:
                     if not (
                         integration_script.path.parent / ".report_pytest.xml"
                     ).exists():

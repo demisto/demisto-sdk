@@ -3,7 +3,7 @@
 ## Unreleased
 * Fixed an issue where **update-release-notes** command failed when running on a pack that contains deprecated integrations without the `commands` section.
 * Fixed an issue where **validate** failed when attempting to map null values in a classifier.
-
+* When running **update-content-graph** with no arguments, the graph will be updated using git.
 ## 1.14.0
 * Added the `DEMISTO_SDK_GRAPH_FORCE_CREATE` environment variable. Use it to force the SDK to recreate the graph, rather than update it.
 * Added support for code importing multi-level ApiModules to **lint**.

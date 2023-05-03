@@ -72,7 +72,7 @@ def update_content_graph(
             content_graph_interface, marketplace, dependencies, output_path
         )
         return
-    if not imported_path:
+    if not imported_path or not use_current:
         use_git = True
     builder = ContentGraphBuilder(content_graph_interface)
     if not use_current:

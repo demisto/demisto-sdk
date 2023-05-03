@@ -1,4 +1,5 @@
 # Changelog
+* Added a validation that an image in a README file exist.
 
 ## Unreleased
 * Fixed an issue where **update-release-notes** command failed when running on a pack that contains deprecated integrations without the `commands` section.

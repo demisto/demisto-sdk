@@ -41,7 +41,7 @@ class ContentGraphBuilder:
         self.content_graph.clean_graph()
         self.content_graph.create_indexes_and_constraints()
 
-    def _parse_and_model_content(
+    def  _parse_and_model_content(
         self, packs_to_parse: Optional[List[str]] = None
     ) -> None:
         content_dto: ContentDTO = self._create_content_dto(packs_to_parse)

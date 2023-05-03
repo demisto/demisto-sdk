@@ -330,7 +330,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         logger.info("Creating graph nodes...")
         pack_ids = [p.get("object_id") for p in nodes.get(ContentType.PACK, [])]
         with self.driver.session() as session:
-            self._rels_to_preserve = session.execute_read(
+            self.        = session.execute_read(
                 get_relationships_to_preserve, pack_ids
             )
             session.execute_write(remove_packs_before_creation, pack_ids)

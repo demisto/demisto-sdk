@@ -340,7 +340,7 @@ def test_upload_incident_field_correct_file_change(demisto_client_configure, moc
     with open(path) as json_file:
         incident_field_data = json.load(json_file)
 
-    assert json.loads(DATA)[0]["incidentFields"] == incident_field_data
+    assert json.loads(DATA)["incidentFields"][0] == incident_field_data
 
 
 def test_upload_pack(demisto_client_configure, mocker):

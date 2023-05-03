@@ -1230,22 +1230,19 @@ def test_build_file_name():
 
 
 @pytest.mark.parametrize(
-    "original_string, object_name, scripts_mapper, expected_string, expected_mapper",
+    "original_string, object_name, expected_string, expected_mapper",
     [
         (
             "name: TestingScript\ncommonfields:\n id: f1e4c6e5-0d44-48a0-8020-a9711243e918",
             "automation-Testing.yml",
-            {},
             "name: TestingScript\ncommonfields:\n id: f1e4c6e5-0d44-48a0-8020-a9711243e918",
             {"f1e4c6e5-0d44-48a0-8020-a9711243e918": "TestingScript"},
         ),
     ],
 )
-def test_handle_file(
-    original_string, object_name, scripts_mapper, expected_string, expected_mapper
-):
+def test_handle_file(original_string, object_name, expected_string, expected_mapper):
     downloader = Downloader(output="", input="", regex="", all_custom_content=True)
-    final_string = downloader.handle_file(original_string, object_name, scripts_mapper)
+    final_string = downloader.handle_file(original_string, object_name)
     assert final_string == expected_string
 
 
@@ -1259,7 +1256,6 @@ def test_download_playbook_yaml_is_called():
         downloader.handle_file(
             "name: TestingPlaybook\ncommonfields:\n id: f1e4c6e5-0d44-48a0-8020-a9711243e918",
             "playbook-Testing.yml",
-            {},
         )
 
     mock.assert_called()

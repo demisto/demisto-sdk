@@ -44,6 +44,7 @@ from demisto_sdk.commands.common.tools import (
     get_entity_name_by_entity_type,
     get_file,
     get_files_in_dir,
+    get_id,
     get_json,
     get_yaml,
     get_yml_paths_in_dir,
@@ -274,22 +275,33 @@ class Downloader:
         return playbook_string
 
     @staticmethod
-    def map_script(member_name, script_string: str, scripts_mapper: dict) -> dict:
-        script_yml = yaml.load(script_string)
-        if member_name.lower().lstrip("/").startswith("playbook"):
-            script_id = script_yml.get("id", "")
-        else:
-            script_id = script_yml.get("commonfields", {}).get("id", "")
-        if re.search(UUID_REGEX, script_id):
+    def map_yml_content_items(content_item_string: str, scripts_mapper: dict) -> dict:
+        """
+        Args:
+            content_item_string (str): content item as a string.
+            scripts_mapper (dict): a mapper from id to name for content items.
+        Returns:
+            dict: scripts_mapper
+        """
+        script_yml = yaml.load(content_item_string)
+        script_id = get_id(script_yml)
+        if re.search(UUID_REGEX, str(script_id)):
             scripts_mapper[script_id] = script_yml.get("name")
         return scripts_mapper
 
     @staticmethod
-    def map_json_content_item(script_string: str, scripts_mapper: dict) -> dict:
-        script_json = json.loads(script_string)
-        script_id = script_json.get("id", "")
-        if re.search(UUID_REGEX, script_id):
-            scripts_mapper[script_id] = script_json.get("name")
+    def map_json_content_item(content_item_string: str, scripts_mapper: dict) -> dict:
+        """
+        Args:
+            content_item_string (str): content item as a string.
+            scripts_mapper (dict): a mapper from id to name for content items.
+        Returns:
+            dict: scripts_mapper
+        """
+        content_item_json = json.loads(content_item_string)
+        content_item_id = get_id(content_item_json)
+        if re.search(UUID_REGEX, str(content_item_id)):
+            scripts_mapper[content_item_id] = content_item_json.get("name")
         return scripts_mapper
 
     def replace_uuids(self, string_to_write: str, uuid_dict: dict) -> str:
@@ -306,12 +318,11 @@ class Downloader:
         uuids = re.findall(UUID_REGEX, string_to_write)
 
         for uuid in set(uuids).intersection(uuid_dict):
+            logger.debug(f"Replacing UUID: {uuid}")
             string_to_write = string_to_write.replace(uuid, uuid_dict[uuid])
         return string_to_write
 
-    def handle_file(
-        self, string_to_write: str, member_name: str, scripts_id_name: dict
-    ):
+    def handle_file(self, string_to_write: str, member_name: str):
 
         if not self.list_files and re.search(PLAYBOOK_REGEX, member_name):
             #  if the content item is playbook and list-file flag is true, we should download the
@@ -322,12 +333,11 @@ class Downloader:
 
         return string_to_write
 
-    def write_custom_content(self, strings_to_write, scripts_id_name: dict):
+    def write_custom_content(self, strings_to_write: list, scripts_id_name: dict):
         for string_to_write, file_name in strings_to_write:
             string_to_write = self.handle_file(
                 string_to_write=string_to_write,
                 member_name=file_name,
-                scripts_id_name=scripts_id_name,
             )
             string_to_write = self.replace_uuids(string_to_write, scripts_id_name)
             file_name = self.update_file_prefix(file_name.strip("/"))
@@ -341,12 +351,12 @@ class Downloader:
                 )
                 path.write_text(string_to_write, encoding="utf8")
 
-    def find_uuids_in_content_item(self, tar):
+    def find_uuids_in_content_item(self, tar: tarfile.TarFile):
         scripts_id_name: dict = {}
         strings_to_write: List[Tuple[str, str]] = []
         for member in tar.getmembers():
             file_name: str = self.update_file_prefix(member.name.strip("/"))
-            file_path: str = os.path.join(self.custom_content_temp_dir, file_name)
+            file_path: str = str(Path(self.custom_content_temp_dir) / Path(file_name))
 
             if not (extracted_file := tar.extractfile(member)):
                 raise FileNotFoundError(
@@ -356,10 +366,16 @@ class Downloader:
             if (
                 member.name.lower()
                 .lstrip("/")
-                .startswith(("playbook", "automation", "integration"))
+                .startswith(
+                    (
+                        "playbook",
+                        "automation",
+                        "integration",
+                    )
+                )
             ):
-                scripts_id_name = self.map_script(
-                    member.name.lower(), string_to_write, scripts_id_name
+                scripts_id_name = self.map_yml_content_items(
+                    string_to_write, scripts_id_name
                 )
             elif member.name.lower().lstrip("/").startswith(("layout", "incident")):
                 scripts_id_name = self.map_json_content_item(

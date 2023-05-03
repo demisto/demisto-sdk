@@ -1381,14 +1381,9 @@ def demisto_client_configure(mocker):
     )
     mocker.patch(
         "demisto_sdk.commands.common.content.objects.pack_objects.script.script.get_demisto_version",
-        return_value=parse("6.0.0"),
+        return_value=parse("6.8.0"),
     )
     mocker.patch("builtins.print")
-
-
-def util_load_file_bytes(path) -> bytes:
-    with io.open(path, mode="rb") as f:
-        return f.read()
 
 
 def test_find_uuids_in_content_item():
@@ -1406,10 +1401,12 @@ def test_find_uuids_in_content_item():
         "84731e69-0e55-40f9-806a-6452f97a01a0",
         "4d45f0d7-5fdd-4a4b-8f1e-5f2502f90a61",
     }
-    api_res = util_load_file_bytes(
-        "demisto_sdk/commands/download/tests/tests_data/custom_content/download_tar.tar"
+    io_bytes = io.BytesIO(
+        Path(
+            "demisto_sdk/commands/download/tests/tests_data/custom_content/\
+download_tar.tar"
+        ).read_bytes()
     )
-    io_bytes = io.BytesIO(api_res)
     tar = tarfile.open(fileobj=io_bytes, mode="r")
     downloader = Downloader(
         output="Packs/AbuseDB/Integrations/AbuseDB",

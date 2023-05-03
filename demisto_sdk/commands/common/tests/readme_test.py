@@ -38,6 +38,11 @@ MDX_SKIP_NPM_MESSAGE = (
 
 @pytest.mark.parametrize("current, answer", README_INPUTS)
 def test_is_file_valid(mocker, current, answer):
+    mocker.patch(
+        "demisto_sdk.commands.common.hook_validations.readme.get_pack_name",
+        return_value="PackName",
+    )
+    mocker.patch.object(os.path, "isfile", return_value=answer)
     readme_validator = ReadMeValidator(current)
     valid = ReadMeValidator.are_modules_installed_for_verify(
         readme_validator.content_path
@@ -70,6 +75,11 @@ def test_is_file_valid(mocker, current, answer):
 
 @pytest.mark.parametrize("current, answer", README_INPUTS)
 def test_is_file_valid_mdx_server(mocker, current, answer):
+    mocker.patch(
+        "demisto_sdk.commands.common.hook_validations.readme.get_pack_name",
+        return_value="PackName",
+    )
+    mocker.patch.object(os.path, "isfile", return_value=answer)
     ReadMeValidator.add_node_env_vars()
     with ReadMeValidator.start_mdx_server():
         readme_validator = ReadMeValidator(current)

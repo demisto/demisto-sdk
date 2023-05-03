@@ -1,15 +1,28 @@
 # Changelog
 
 ## Unreleased
-* **lint** now prevents unit-tests from accessing online resources in runtime.
+* Fixed an issue where **update-release-notes** command failed when running on a pack that contains deprecated integrations without the `commands` section.
+* Fixed an issue where **validate** failed when attempting to map null values in a classifier.
+* Fixed an issue in **pre-commit** command where `MYPYPATH` was not set properly.
+
+## 1.14.0
+* Added the `DEMISTO_SDK_GRAPH_FORCE_CREATE` environment variable. Use it to force the SDK to recreate the graph, rather than update it.
+* Added support for code importing multi-level ApiModules to **lint**.
+* Added a validation that the **modeling-rules test** command will fail if no test data file exist.
 * Added support for the `<~XPANSE>` marketplace tag in release notes.
 * Added support for marketplace tags in the **doc-review** command.
-* Updated the logs shown during lint when running in docker.
-* Fixed an issue where **validate** showed errors twice.
 * Added **generate-unit-tests** documentation to the repo README.
 * Added the `hiddenpassword` field to the integration schema, allowing **validate** to run on integrations with username-only inputs.
-* Fixed an issue where **doc-review** required dot suffixes in release notes describing new content.
 * Improved logs and error handling in the **modeling-rules test** command.
+* Improved the warning message displayed for Contribution PRs editing outdated code.
+* Improved the clarity of error messages for cases where yml files cannot be parsed as a dictionary.
+* Updated the `XSIAMReport` schema.
+* Standardized repo-wide logging. All logs are now created in one logger instance.
+* **lint** now prevents unit-tests from accessing online resources in runtime.
+* Updated the logs shown during lint when running in docker.
+* Fixed an issue where **validate** showed errors twice.
+* Fixed an issue where **validate** did not fail when xif files had wrong naming.
+* Fixed an issue where **doc-review** required dot suffixes in release notes describing new content.
 * Fixed an issue where **download** command failed when running on a beta integration.
 * Improved **validate** command with `layouts` and `layouts container` content types as input, so validations will run with graph instead of id_set.
 
@@ -23,7 +36,6 @@
 * Fixed an issue where **validate** would fail when playbook inputs contain Transform Language (DT).
 * Added a new **validate** check, making sure a first level header exist in release notes (RN116)
 * Fixed an issue where **lint** would not properly handle multiple ApiModules imports.
-
 
 ## 1.12.0
 * Added the **pre-commit** command, to improve code quality of XSOAR content.

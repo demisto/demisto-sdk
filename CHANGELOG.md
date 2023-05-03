@@ -1,6 +1,6 @@
 # Changelog
-* Added a validation that an image in a README file exist.
-
+* Added a validation that the **validate** command will fail on README files if an image does not exist in the specified path.
+k
 ## Unreleased
 * Fixed an issue where **update-release-notes** command failed when running on a pack that contains deprecated integrations without the `commands` section.
 * Fixed an issue where **validate** failed when attempting to map null values in a classifier.

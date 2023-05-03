@@ -3575,12 +3575,8 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def image_does_not_exist(path):
-        return (
-            f"Detected the following image path\n"
-            f"{path}\n"
-            f"Which is a path to a file that does not exist. Please make sure the image really exists."
-        )
+    def image_does_not_exist(path: str):
+        return f"Image at {path} does not exist."
 
     @staticmethod
     @error_code_decorator

@@ -2,8 +2,6 @@ import os
 from pathlib import Path
 from typing import Dict, List, Tuple
 
-import click
-
 from demisto_sdk.commands.common.constants import (
     JOB,
     TESTS_AND_DOC_DIRECTORIES,
@@ -278,13 +276,12 @@ def get_files_to_format_from_git(
 
     if filtered_files:
         detected_files_string = "\n".join(filtered_files)
-        click.secho(
-            f"Found the following files to format:\n{detected_files_string}",
-            fg="bright_cyan",
+        logger.info(
+            f"[cyan]Found the following files to format:\n{detected_files_string}[/cyan]"
         )
 
     else:
-        click.secho("Did not find any files to format", fg="bright_red")
+        logger.info("[red]Did not find any files to format[/red]")
 
     return filtered_files
 

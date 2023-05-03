@@ -117,6 +117,7 @@ def unit_test_runner(file_paths: List[Path], verbose: bool = False) -> int:
                     ],
                     command="sh test_runner.sh",
                     working_dir=working_dir,
+                    user=os.getuid(),
                     detach=True,
                 )
                 logger.debug(f"Running test in container {container.id}")

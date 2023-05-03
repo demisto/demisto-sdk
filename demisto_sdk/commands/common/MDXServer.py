@@ -3,7 +3,6 @@ from contextlib import contextmanager
 from pathlib import Path
 from typing import Callable, Optional
 
-import click
 import docker
 import docker.errors
 import docker.models.containers
@@ -96,7 +95,7 @@ def start_docker_MDX_server(
             logger.error("Docker for MDX server was not started correctly")
             logger.error(f'docker logs:\n{container.logs().decode("utf-8")}')
         except docker.errors.NotFound:
-            click.secho(line)
+            logger.exception(line)
 
         error_message = Errors.error_starting_docker_mdx_server(line=line)
 
@@ -106,7 +105,7 @@ def start_docker_MDX_server(
         else:
             raise Exception(error_message)
     else:
-        click.secho("Successfully started node server in docker")
+        logger.info("Successfully started node server in docker")
 
     try:
         yield True
@@ -136,7 +135,7 @@ def start_local_MDX_server(
         A context manager
 
     """
-    click.secho("Starting local mdx server")
+    logger.info("Starting local mdx server")
 
     logger.debug(subprocess.check_output(["npm", "list", "--json"]))
     process = subprocess.Popen(
@@ -161,5 +160,5 @@ def start_local_MDX_server(
 
 def terminate_process(process):
     if process:
-        click.secho("Stopping local mdx server")
+        logger.info("Stopping local mdx server")
         process.terminate()

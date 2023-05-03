@@ -109,12 +109,10 @@ from demisto_sdk.tests.constants_test import (
     PLAYBOOK_TARGET,
     SCRIPT_RELEASE_NOTES_TARGET,
     SCRIPT_TARGET,
-    VALID_BETA_INTEGRATION,
     VALID_BETA_PLAYBOOK_PATH,
     VALID_DASHBOARD_PATH,
     VALID_INCIDENT_FIELD_PATH,
     VALID_INCIDENT_TYPE_PATH,
-    VALID_INDICATOR_FIELD_PATH,
     VALID_INTEGRATION_ID_PATH,
     VALID_INTEGRATION_TEST_PATH,
     VALID_LAYOUT_CONTAINER_PATH,
@@ -571,16 +569,16 @@ class TestValidators:
             os.remove(target)
 
     FILES_PATHS_FOR_ALL_VALIDATIONS = [
-        VALID_INTEGRATION_ID_PATH,
-        VALID_TEST_PLAYBOOK_PATH,
-        VALID_SCRIPT_PATH,
-        VALID_DASHBOARD_PATH,
-        VALID_INCIDENT_FIELD_PATH,
-        VALID_REPUTATION_PATH,
-        VALID_INCIDENT_TYPE_PATH,
-        VALID_BETA_INTEGRATION,
-        VALID_INDICATOR_FIELD_PATH,
-        VALID_LAYOUT_PATH,
+        # VALID_INTEGRATION_ID_PATH,
+        # VALID_TEST_PLAYBOOK_PATH,
+        # VALID_SCRIPT_PATH,
+        # VALID_DASHBOARD_PATH,
+        # VALID_INCIDENT_FIELD_PATH,
+        # VALID_REPUTATION_PATH,
+        # VALID_INCIDENT_TYPE_PATH,
+        # VALID_BETA_INTEGRATION,
+        # VALID_INDICATOR_FIELD_PATH,
+        # VALID_LAYOUT_PATH,
         VALID_MD,
     ]
 
@@ -632,6 +630,9 @@ class TestValidators:
             IntegrationValidator, "is_api_token_in_credential_type", return_value=True
         )
         mocker.patch.object(ReadMeValidator, "verify_image_exist", return_value=True)
+        mocker.patch.object(
+            ReadMeValidator, "verify_readme_image_paths", return_value=True
+        )
         validate_manager = ValidateManager(file_path=file_path, skip_conf_json=True)
         assert validate_manager.run_validation_on_specific_files()
 

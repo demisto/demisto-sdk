@@ -3,10 +3,10 @@ import os
 from collections import defaultdict
 from pathlib import Path
 
-import click
 from ruamel.yaml.scalarstring import FoldedScalarString
 
 from demisto_sdk.commands.common.constants import SAMPLES_DIR, MarketplaceVersions
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.prepare_content.unifier import Unifier
 
 
@@ -15,11 +15,11 @@ class RuleUnifier(Unifier):
     def unify(
         path: Path, data: dict, marketplace: MarketplaceVersions = None, **kwargs
     ) -> dict:
-        click.echo(f"Unifiying {path}...")
+        logger.info(f"Unifiying {path}...")
         RuleUnifier._insert_rules(path, data)
         RuleUnifier._insert_schema(path, data)
         RuleUnifier._insert_samples(path, data)
-        click.secho(f"Successfully created unified YAML in {path}", fg="green")
+        logger.info(f"[green]Successfully created unified YAML in {path}[/green]")
         return data
 
     @staticmethod
@@ -45,9 +45,9 @@ class RuleUnifier(Unifier):
                         ].extend(sample.get("samples"))
             if samples:
                 data["samples"] = FoldedScalarString(json.dumps(samples, indent=4))
-                click.echo(f"Added {len(samples)} samples.")
+                logger.info(f"Added {len(samples)} samples.")
             else:
-                click.echo("Did not find matching samples.")
+                logger.info("Did not find matching samples.")
 
     @staticmethod
     def _insert_schema(path: Path, data: dict):
@@ -57,4 +57,4 @@ class RuleUnifier(Unifier):
                 schema = json.loads(schema_file.read())
                 data["schema"] = FoldedScalarString(json.dumps(schema, indent=4))
         else:
-            click.echo("No schema file was found.")
+            logger.info("No schema file was found.")

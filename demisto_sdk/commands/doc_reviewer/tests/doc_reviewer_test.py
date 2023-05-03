@@ -516,10 +516,6 @@ class TestDocReviewPrinting:
 
         Args:
             files_type (str): whether mock misspelled files or valid spelled files or both are required.
-
-
-        Returns:
-            MagicMock: a magic mock object of the click 'secho' function.
         """
         doc_reviewer = DocReviewer()
 

@@ -50,6 +50,7 @@ def fix_coverage_report_path(code_directory: Path):
         return
     logger.debug(f"Editing coverage report for {coverage_file}")
     with tempfile.NamedTemporaryFile() as temp_file:
+        # we use a tempfile because the original file could be readonly, this way we assure we can edit it.
         shutil.copy(coverage_file, temp_file.name)
         with sqlite3.connect(temp_file.name) as sql_connection:
             cursor = sql_connection.cursor()

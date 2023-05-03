@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "demisto-sdk"
-version = "1.13.0"
+version = "1.14.0"
 description = "\"A Python library for the Demisto SDK\""
 authors = ["Demisto"]
 license = "MIT"
@@ -167,6 +167,7 @@ select = [
     "I",
     "PLE",
     "RUF100",
+    "T20",
     "W",
     "T10",
 ]
@@ -175,3 +176,7 @@ target-version = "py38"
 
 [tool.ruff.mccabe]
 max-complexity = 30
+
+[tool.ruff.flake8-tidy-imports]
+[tool.ruff.flake8-tidy-imports.banned-api]
+"logging".msg = "The logging framework is banned. Please use demisto_sdk.commands.common.logger."

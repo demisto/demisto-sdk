@@ -1,7 +1,6 @@
 """
 This module is designed to validate the correctness of incident field entities in content.
 """
-import logging
 import re
 from distutils.version import LooseVersion
 from enum import IntEnum
@@ -16,13 +15,12 @@ from demisto_sdk.commands.common.hook_validations.base_validator import error_co
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import (
     ContentEntityValidator,
 )
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     get_core_pack_list,
     get_pack_metadata,
     get_pack_name,
 )
-
-logger = logging.getLogger("demisto-sdk")
 
 # Cortex XSOAR is using a Bleve DB, those keys cannot be the cliName
 BleveMapping = {

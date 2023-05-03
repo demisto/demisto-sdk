@@ -311,6 +311,8 @@ jobs:
               
         - store_artifacts:
             path: /home/circleci/project/artifacts
+        - store_artifacts:
+            path: /home/circleci/project/content/demisto_sdk_debug.log*
       
 
   test-lint:

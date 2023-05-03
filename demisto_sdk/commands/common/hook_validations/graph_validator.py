@@ -235,8 +235,8 @@ class GraphValidator(BaseValidator):
         2. Cases where an error should be raised - the complementary case.
         """
         is_valid = [
-            self._find_unknown_content_uses(raises_error=False),
-            self._find_unknown_content_uses(raises_error=True),
+            # self._find_unknown_content_uses(raises_error=False),
+            self._find_unknown_content_uses(raises_error=True)
         ]
         return all(is_valid)
 

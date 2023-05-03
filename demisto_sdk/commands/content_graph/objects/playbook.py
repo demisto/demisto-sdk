@@ -34,7 +34,7 @@ class Playbook(ContentItem, content_type=ContentType.PLAYBOOK):  # type: ignore[
                 filter(
                     lambda s: (
                         isinstance(s, Script)
-                        and "script-name-incident-to-alert" not in s.skip_prepare
+                        and s.is_incident_to_alert(MarketplaceVersions.MarketplaceV2)
                     ),
                     tuple(
                         map(

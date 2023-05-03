@@ -18,6 +18,7 @@ from requests.exceptions import HTTPError
 from urllib3.util import Retry
 
 from demisto_sdk.commands.common.constants import (
+    PACKS_DIR,
     RELATIVE_HREF_URL_REGEX,
     RELATIVE_MARKDOWN_URL_REGEX,
 )
@@ -42,6 +43,7 @@ from demisto_sdk.commands.common.MDXServer import (
 from demisto_sdk.commands.common.tools import (
     compare_context_path_in_yml_and_readme,
     get_content_path,
+    get_pack_name,
     get_url_with_retries,
     get_yaml,
     get_yml_paths_in_dir,
@@ -373,7 +375,11 @@ class ReadMeValidator(BaseValidator):
 
         for image_path in images_path:
             if not os.path.isfile(
-                f"{self.file_path.parent.parent}{image_path.removeprefix('..')}"
+                Path(
+                    PACKS_DIR,
+                    get_pack_name(self.file_path),
+                    image_path.removeprefix("../"),
+                )
             ):
                 error_message, error_code = Errors.image_does_not_exist(image_path)
                 self.handle_error(error_message, error_code, file_path=self.file_path)

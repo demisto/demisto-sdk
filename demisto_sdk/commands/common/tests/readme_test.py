@@ -747,3 +747,17 @@ def test_check_readme_relative_image_paths(mocker):
         formatted_errors = readme_validator.check_readme_relative_image_paths()
 
     assert not formatted_errors
+
+
+@pytest.mark.parametrize("current, answer", README_INPUTS[:2])
+def test_verify_image_exist(mocker, current, answer):
+    mocker.patch(
+        "demisto_sdk.commands.common.hook_validations.readme.get_pack_name",
+        return_value="PackName",
+    )
+    mocker.patch.object(os.path, "isfile", return_value=answer)
+    readme_validator = ReadMeValidator(current)
+
+    result = readme_validator.verify_image_exist()
+
+    assert result == answer

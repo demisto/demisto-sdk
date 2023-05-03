@@ -1397,10 +1397,20 @@ def util_load_file_bytes(path) -> bytes:
         return f.read()
 
 
-def test_find_uuids_in_content_item(mocker):
+def test_find_uuids_in_content_item():
+    """
+    Given: a mock tar file download_tar.tar
+    When: calling find_uuids_in_content_item on the mock tar
+    Then: Find all UUIDs in different content items:
+          playbook, automation, layout, incident
+          and replaces these UUIDs with the corresponding names in strings_to_write
+    """
     expected_UUIDs = {
         "a53a2f17-2f05-486d-867f-a36c9f5b88d4",
         "e4c2306d-5d4b-4b19-8320-6fdad94595d4",
+        "de57b1f7-b754-43d2-8a8c-379d12bdddcd",
+        "84731e69-0e55-40f9-806a-6452f97a01a0",
+        "4d45f0d7-5fdd-4a4b-8f1e-5f2502f90a61",
     }
     api_res = util_load_file_bytes(
         "demisto_sdk/commands/download/tests/tests_data/custom_content/download_tar.tar"
@@ -1416,3 +1426,5 @@ def test_find_uuids_in_content_item(mocker):
     scripts_id_name, strings_to_write = downloader.find_uuids_in_content_item(tar)
     for key in scripts_id_name:
         assert key in expected_UUIDs
+    for key in scripts_id_name:
+        assert key not in strings_to_write

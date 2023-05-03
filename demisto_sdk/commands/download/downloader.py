@@ -276,7 +276,7 @@ class Downloader:
     @staticmethod
     def map_script(member_name, script_string: str, scripts_mapper: dict) -> dict:
         script_yml = yaml.load(script_string)
-        if "playbook" in member_name.lower():
+        if member_name.lower().lstrip("/").startswith("playbook"):
             script_id = script_yml.get("id", "")
         else:
             script_id = script_yml.get("commonfields", {}).get("id", "")
@@ -354,15 +354,14 @@ class Downloader:
                 )
             string_to_write = extracted_file.read().decode("utf-8")
             if (
-                "playbook" in member.name
-                or "automation" in member.name
-                or "integration" in member.name
+                member.name.lower()
+                .lstrip("/")
+                .startswith(("playbook", "automation", "integration"))
             ):
                 scripts_id_name = self.map_script(
                     member.name.lower(), string_to_write, scripts_id_name
                 )
-            # elif member.name.strip("/").lower().startswith(("layout", "incident")):
-            elif "layout" in member.name.lower() or "incident" in member.name.lower():
+            elif member.name.lower().lstrip("/").startswith(("layout", "incident")):
                 scripts_id_name = self.map_json_content_item(
                     string_to_write, scripts_id_name
                 )

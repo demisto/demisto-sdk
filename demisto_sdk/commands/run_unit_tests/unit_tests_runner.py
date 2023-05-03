@@ -63,6 +63,7 @@ def fix_coverage_report_path(code_directory: Path):
                 )
             sql_connection.commit()
             logger.debug("Done editing coverage report")
+        coverage_file.unlink()
         shutil.copy(temp_file.name, coverage_file)
 
 

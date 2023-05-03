@@ -24,7 +24,6 @@
 * Fixed an issue where **validate** did not fail when xif files had wrong naming.
 * Fixed an issue where **doc-review** required dot suffixes in release notes describing new content.
 * Fixed an issue where **download** command failed when running on a beta integration.
-* Added support for code importing multi-level ApiModules to **lint**.
 * Fixed an issue where **update-release-notes** generated release notes for packs in their initial version (1.0.0).
 * Fixed an issue with **update-content-graph** where `--use-git` parameter was ignored when using `--imported-path` parameter.
 * Fixed an issue where **validate** failed on playbooks with valid inputs, since it did not collect the playbook inputs occurrences properly.

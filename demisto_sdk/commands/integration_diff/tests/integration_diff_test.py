@@ -1,8 +1,10 @@
 import copy
+import logging
 
 from demisto_sdk.commands.integration_diff.integration_diff_detector import (
     IntegrationDiffDetector,
 )
+from TestSuite.test_tools import str_in_call_args_list
 
 
 class TestIntegrationDiffDetector:
@@ -551,7 +553,7 @@ class TestIntegrationDiffDetector:
         assert missing_param in parameters
         assert changed_param in parameters
 
-    def test_print_without_items(self, pack, capsys):
+    def test_print_without_items(self, pack, mocker, monkeypatch):
         """
         Given
             - Two integration versions when the new version are backward compatible .
@@ -560,6 +562,8 @@ class TestIntegrationDiffDetector:
         Then
             - Verify there are no items to print and that the printed output as excepted.
         """
+        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+        monkeypatch.setenv("COLUMNS", "1000")
 
         old_integration = pack.create_integration(
             "oldIntegration", yml=self.OLD_INTEGRATION_YAML
@@ -574,8 +578,9 @@ class TestIntegrationDiffDetector:
 
         assert not integration_detector.print_items()
 
-        captured = capsys.readouterr()
-        assert "The integrations are backwards compatible" in captured.out
+        assert str_in_call_args_list(
+            logger_info.call_args_list, "The integrations are backwards compatible"
+        )
 
     def test_print_items(self, pack, capsys):
         """
@@ -604,7 +609,7 @@ class TestIntegrationDiffDetector:
 
         assert integration_detector.print_items()
 
-    def test_print_missing_items(self, pack, capsys):
+    def test_print_missing_items(self, pack, mocker, monkeypatch):
         """
         Given
             - Missing items to print.
@@ -613,6 +618,8 @@ class TestIntegrationDiffDetector:
         Then
             - Verify that all the items are printed.
         """
+        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+        monkeypatch.setenv("COLUMNS", "1000")
 
         old_integration = pack.create_integration(
             "oldIntegration", yml=self.OLD_INTEGRATION_YAML
@@ -631,19 +638,32 @@ class TestIntegrationDiffDetector:
 
         integration_detector.print_missing_items()
 
-        excepted_output = (
-            "Missing parameters:\n\nMissing the parameter 'Credentials'.\n\nChanged parameters:\n\n"
-            "The parameter `API key` - Is now required.\n\nMissing commands:\n\nMissing the command "
-            "'command_1'.\n\nMissing arguments:\n\n\nChanged arguments:\n\nThe argument `argument_2` "
-            "in the command `command_2` - Now supports comma separated values.\n\nMissing outputs:"
-            "\n\n\nChanged outputs:\n\nThe output 'contextPath_2' in the command 'command_2' was "
-            "changed in field 'type'.\n\n"
+        excepted_output = [
+            "Missing parameters:",
+            "Missing the parameter 'Credentials'.",
+            "Changed parameters:",
+            "The parameter `API key` - Is now required.",
+            "Missing commands:",
+            "Missing the command ",
+            "'command_1'.",
+            "Missing arguments:",
+            "Changed arguments:",
+            "The argument `argument_2` ",
+            "in the command `command_2` - Now supports comma separated values.",
+            "Missing outputs:",
+            "Changed outputs:",
+            "The output 'contextPath_2' in the command 'command_2' was ",
+            "changed in field 'type'.",
+        ]
+
+        assert all(
+            [
+                str_in_call_args_list(logger_info.call_args_list, current_str)
+                for current_str in excepted_output
+            ]
         )
 
-        captured = capsys.readouterr()
-        assert excepted_output in captured.out
-
-    def test_print_items_in_docs_format(self, pack, capsys, mocker):
+    def test_print_items_in_docs_format(self, pack, mocker, monkeypatch):
         """
         Given
             - Missing items to print in docs format.
@@ -652,6 +672,9 @@ class TestIntegrationDiffDetector:
         Then
             - Verify that all the items are printed in docs format.
         """
+        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+        monkeypatch.setenv("COLUMNS", "1000")
+
         old_integration = pack.create_integration(
             "oldIntegration", yml=self.OLD_INTEGRATION_YAML
         )
@@ -669,16 +692,22 @@ class TestIntegrationDiffDetector:
 
         integration_detector.print_items_in_docs_format()
 
-        excepted_output = (
-            "\n## Breaking changes from the previous version of this integration - \n"
-            "The following sections list the changes in this version.\n\n### Commands\n"
-            "#### The following commands were removed in this version:\n* *command_1* - this command "
-            "was replaced by XXX.\n\n### Arguments\n"
-            "#### The behavior of the following arguments was changed:\n\nIn the *command_2* command:\n"
-            "* *argument_2* - Now supports comma separated values.\n\n### Outputs\n"
-            "#### The following outputs were removed in this version:\n\n## Additional Considerations for"
-            " this version\n* Insert any API changes, any behavioral changes, limitations, "
-            "or restrictions that would be new to this version.\n\n"
+        excepted_output = [
+            "\n## Breaking changes from the previous version of this integration - \n",
+            "The following sections list the changes in this version.\n\n### Commands\n",
+            "#### The following commands were removed in this version:\n* *command_1* - this command ",
+            "was replaced by XXX.\n\n### Arguments\n",
+            "#### The behavior of the following arguments was changed:\n\nIn the *command_2* command:\n",
+            "* *argument_2* - Now supports comma separated values.",
+            "### Outputs\n",
+            "#### The following outputs were removed in this version:",
+            "## Additional Considerations for",
+            " this version\n* Insert any API changes, any behavioral changes, limitations, ",
+            "or restrictions that would be new to this version.",
+        ]
+        assert all(
+            [
+                str_in_call_args_list(logger_info.call_args_list, current_str)
+                for current_str in excepted_output
+            ]
         )
-        captured = capsys.readouterr()
-        assert excepted_output in captured.out

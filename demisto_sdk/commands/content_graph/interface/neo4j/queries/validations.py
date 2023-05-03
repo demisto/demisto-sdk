@@ -38,6 +38,25 @@ RETURN content_item_from, collect(r) as relationships, collect(n) as nodes_to
     }
 
 
+def validate_all_unknown_content(
+    tx: Transaction, file_paths: List[str], raises_error: bool
+):
+    query = f"""// Returns USES relationships to content items not in the repository
+MATCH (content_item_from{{deprecated: false}})-[r:{RelationshipType.USES}]->(n{{not_in_repository: true}})
+WHERE{' NOT' if raises_error else ''} (content_item_from.is_test)
+{f'AND content_item_from.path in {file_paths}' if file_paths else ''}
+RETURN content_item_from, collect(r) as relationships, collect(n) as nodes_to
+"""
+    return {
+        int(item.get("content_item_from").id): Neo4jRelationshipResult(
+            node_from=item.get("content_item_from"),
+            relationships=item.get("relationships"),
+            nodes_to=item.get("nodes_to"),
+        )
+        for item in run_query(tx, query)
+    }
+
+
 def validate_fromversion(
     tx: Transaction, file_paths: List[str], for_supported_versions: bool
 ):

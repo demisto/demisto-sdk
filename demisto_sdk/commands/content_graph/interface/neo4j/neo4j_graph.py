@@ -56,13 +56,13 @@ from demisto_sdk.commands.content_graph.interface.neo4j.queries.relationships im
     create_relationships,
 )
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.validations import (
+    validate_all_unknown_content,
     validate_core_packs_dependencies,
     validate_duplicate_ids,
     validate_fromversion,
     validate_marketplaces,
     validate_multiple_packs_with_same_display_name,
     validate_toversion,
-    validate_unknown_content,
 )
 from demisto_sdk.commands.content_graph.objects.base_content import (
     BaseContent,
@@ -344,7 +344,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
     ) -> List[BaseContent]:
         with self.driver.session() as session:
             results: Dict[int, Neo4jRelationshipResult] = session.execute_read(
-                validate_unknown_content, file_paths, raises_error
+                validate_all_unknown_content, file_paths, raises_error
             )
             self._add_nodes_to_mapping(result.node_from for result in results.values())
             self._add_relationships_to_objects(session, results)

@@ -1,3 +1,4 @@
+import logging
 import os
 import re
 import time
@@ -5,9 +6,10 @@ import time
 import demisto_client
 from demisto_client.demisto_api.rest import ApiException
 
-from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import get_yaml
 from demisto_sdk.commands.upload.uploader import Uploader
+
+logger = logging.getLogger("demisto-sdk")
 
 SUCCESS_RETURN_CODE = 0
 ERROR_RETURN_CODE = 1

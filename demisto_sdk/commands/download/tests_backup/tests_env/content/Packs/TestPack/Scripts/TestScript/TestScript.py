@@ -1,5 +1,5 @@
 def main():
-    print("Test Script")  # noqa: T201
+    print("Test Script")
 
 
 if __name__ in ["__main__", "builtins"]:

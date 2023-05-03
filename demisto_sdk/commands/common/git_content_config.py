@@ -18,6 +18,7 @@ from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import JSON_Handler
 
 logger = logging.getLogger("demisto-sdk")
+
 json = JSON_Handler()
 
 

@@ -1,1 +1,1 @@
-print("This is a test")  # noqa: T201
+print("This is a test")

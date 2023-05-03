@@ -1,10 +1,12 @@
+import logging
 import os
 from typing import Dict, List
 
 import demisto_client
 
 from demisto_sdk.commands.common.handlers import JSON_Handler
-from demisto_sdk.commands.common.logger import logger
+
+logger = logging.getLogger("demisto-sdk")
 
 json = JSON_Handler()
 

@@ -91,7 +91,6 @@ from demisto_sdk.commands.common.content.objects.pack_objects import (
     XSIAMReport,
 )
 from demisto_sdk.commands.common.content.objects_factory import path_to_pack_object
-from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import get_demisto_version, is_object_in_id_set
 from demisto_sdk.commands.test_content import tools
 
@@ -143,7 +142,7 @@ class Pack:
                 ):
                     yield content_object
                 else:
-                    logger.warning(
+                    logging.warning(
                         f'Skipping object {object_path} with id "{object_id}" since it is missing from '
                         f"the given id set. Items may be missing when their from/to version values are incompatible"
                         f" with the current settings."

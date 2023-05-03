@@ -1,7 +1,9 @@
+import logging
 from typing import Any, Dict
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
-from demisto_sdk.commands.common.logger import logger
+
+logger = logging.getLogger("demisto-sdk")
 
 
 class MarketplaceSuffixPreparer:

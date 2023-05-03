@@ -1124,7 +1124,7 @@ def test_format_playbook_no_input_specified(mocker, repo):
         ],
         input="y\n5.5.0",
     )
-    print(format_result.stdout)  # noqa: T201
+    print(format_result.stdout)
     assert "Success" in format_result.stdout
     assert playbook.yml.read_dict().get("id") == playbook_id
     assert playbook.yml.read_dict().get("name") == playbook_name

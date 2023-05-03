@@ -1,10 +1,11 @@
+import logging
 import os
 import time
 
 import demisto_client
 from demisto_client.demisto_api.rest import ApiException
 
-from demisto_sdk.commands.common.logger import logger
+logger = logging.getLogger("demisto-sdk")
 
 
 class PlaybookRunner:
@@ -88,7 +89,7 @@ class PlaybookRunner:
 
         # The command does not wait for the playbook to finish running
         else:
-            logger.info(f"To see results please go to : {work_plan_link}")
+            print(f"To see results please go to : {work_plan_link}")
 
         return 0
 

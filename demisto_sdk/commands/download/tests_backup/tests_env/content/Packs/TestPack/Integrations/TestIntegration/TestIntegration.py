@@ -1,5 +1,5 @@
 def main():
-    print("Test Integration")  # noqa: T201
+    print("Test Integration")
 
 
 if __name__ in ["__main__", "builtins"]:

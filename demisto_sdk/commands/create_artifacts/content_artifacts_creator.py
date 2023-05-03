@@ -1,3 +1,4 @@
+import logging
 import os
 import re
 import sys
@@ -66,7 +67,6 @@ from demisto_sdk.commands.common.content.objects.pack_objects import (
     YAMLContentObject,
     YAMLContentUnifiedObject,
 )
-from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import arg_to_list, open_id_set_file
 
 from .artifacts_report import ArtifactsReport, ObjectReport
@@ -82,6 +82,7 @@ IGNORED_TEST_PLAYBOOKS_DIR = "Deprecated"
 ContentObject = Union[
     YAMLContentUnifiedObject, YAMLContentObject, JSONContentObject, TextObject
 ]
+logger = logging.getLogger("demisto-sdk")
 EX_SUCCESS = 0
 EX_FAIL = 1
 

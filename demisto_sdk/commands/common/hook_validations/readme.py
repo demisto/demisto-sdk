@@ -1,3 +1,4 @@
+import logging
 import os
 import re
 import socket
@@ -33,7 +34,6 @@ from demisto_sdk.commands.common.hook_validations.base_validator import (
     BaseValidator,
     error_codes,
 )
-from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.markdown_lint import run_markdownlint
 from demisto_sdk.commands.common.MDXServer import (
     start_docker_MDX_server,
@@ -867,7 +867,7 @@ class ReadMeValidator(BaseValidator):
 
         with ReadMeValidator._MDX_SERVER_LOCK:
             if mdx_server_is_up():  # this allows for this context to be reentrant
-                logger.debug("server is already up. Not restarting")
+                logging.debug("server is already up. Not restarting")
                 return empty_context_mgr(True)
             if ReadMeValidator.are_modules_installed_for_verify(get_content_path()):  # type: ignore
                 ReadMeValidator.add_node_env_vars()

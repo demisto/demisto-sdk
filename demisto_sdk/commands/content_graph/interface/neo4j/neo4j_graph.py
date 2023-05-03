@@ -1,3 +1,4 @@
+import logging
 import os
 from multiprocessing import Pool
 from pathlib import Path
@@ -8,7 +9,6 @@ from neo4j import Driver, GraphDatabase, Session, graph
 import demisto_sdk.commands.content_graph.neo4j_service as neo4j_service
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.common.cpu_count import cpu_count
-from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.content_graph.common import (
     NEO4J_DATABASE_URL,
     NEO4J_PASSWORD,
@@ -56,13 +56,13 @@ from demisto_sdk.commands.content_graph.interface.neo4j.queries.relationships im
     create_relationships,
 )
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.validations import (
+    validate_all_unknown_content,
     validate_core_packs_dependencies,
     validate_duplicate_ids,
     validate_fromversion,
     validate_marketplaces,
     validate_multiple_packs_with_same_display_name,
     validate_toversion,
-    validate_unknown_content,
 )
 from demisto_sdk.commands.content_graph.objects.base_content import (
     BaseContent,
@@ -72,6 +72,8 @@ from demisto_sdk.commands.content_graph.objects.base_content import (
 from demisto_sdk.commands.content_graph.objects.integration import Integration
 from demisto_sdk.commands.content_graph.objects.pack import Pack
 from demisto_sdk.commands.content_graph.objects.relationship import RelationshipData
+
+logger = logging.getLogger("demisto-sdk")
 
 
 def _parse_node(element_id: int, node: dict) -> BaseContent:
@@ -269,7 +271,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         """
         nodes = filter(lambda node: node.id not in self._id_to_obj, nodes)
         if not nodes:
-            logger.debug(
+            logger.debug(  # noqa: PLE1205
                 "No nodes to parse packs because all of them in mapping",
                 self._id_to_obj,
             )
@@ -342,7 +344,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
     ) -> List[BaseContent]:
         with self.driver.session() as session:
             results: Dict[int, Neo4jRelationshipResult] = session.execute_read(
-                validate_unknown_content, file_paths, raises_error
+                validate_all_unknown_content, file_paths, raises_error
             )
             self._add_nodes_to_mapping(result.node_from for result in results.values())
             self._add_relationships_to_objects(session, results)

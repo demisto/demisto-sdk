@@ -1,9 +1,8 @@
+import logging
 import os
 from abc import ABC, abstractmethod
 from distutils.version import LooseVersion
-from typing import Dict, List
-
-import click
+from typing import List
 
 from demisto_sdk.commands.common.constants import (
     DEFAULT_CONTENT_ITEM_FROM_VERSION,
@@ -19,13 +18,21 @@ from demisto_sdk.commands.common.hook_validations.content_entity_validator impor
 )
 from demisto_sdk.commands.common.tools import (
     LAYOUT_CONTAINER_FIELDS,
-    get_all_incident_and_indicator_fields_from_id_set,
     get_invalid_incident_fields_from_layout,
     get_item_marketplaces,
 )
 from demisto_sdk.commands.common.update_id_set import BUILT_IN_FIELDS
+from demisto_sdk.commands.content_graph.common import (
+    ContentType,
+)
+from demisto_sdk.commands.content_graph.interface.neo4j.neo4j_graph import (
+    Neo4jContentGraphInterface,
+)
 
 FROM_VERSION_LAYOUTS_CONTAINER = "6.0.0"
+
+# Local packages
+logger = logging.getLogger("demisto-sdk")
 
 
 class LayoutBaseValidator(ContentEntityValidator, ABC):
@@ -42,9 +49,7 @@ class LayoutBaseValidator(ContentEntityValidator, ABC):
             "toVersion", DEFAULT_CONTENT_ITEM_TO_VERSION
         )
 
-    def is_valid_layout(
-        self, validate_rn=True, id_set_file=None, is_circle=False
-    ) -> bool:
+    def is_valid_layout(self, validate_rn=True, is_circle=False) -> bool:
         """Check whether the layout is valid or not.
 
         Returns:
@@ -58,7 +63,7 @@ class LayoutBaseValidator(ContentEntityValidator, ABC):
                 self.is_valid_to_version(),
                 self.is_to_version_higher_than_from_version(),
                 self.is_valid_file_path(),
-                self.is_incident_field_exist(id_set_file, is_circle),
+                self.is_incident_field_exist(is_circle),
             ]
         )
 
@@ -113,18 +118,30 @@ class LayoutBaseValidator(ContentEntityValidator, ABC):
         return non_existent_incident_fields
 
     @staticmethod
-    def get_fields_from_id_set(id_set_file: Dict[str, List]) -> List[str]:
+    def get_fields_from_graph() -> List[str]:
         """
-        Get all the available layout fields from the id set.
-
-        Args:
-            id_set_file (dict): content of the id set file.
+        Get all the available layout fields from graph.
 
         Returns:
-            list[str]: available indicator/incident fields from the id set file.
+            list[str]: available indicator/incident fields from graph.
         """
+        with Neo4jContentGraphInterface() as graph:
+            incident_fields_objs = graph.search(content_type=ContentType.INCIDENT_FIELD)
+            indicator_fields_objs = graph.search(
+                content_type=ContentType.INDICATOR_FIELD
+            )
+
+        incident_field_ids = [
+            incident_fields_obj.cli_name for incident_fields_obj in incident_fields_objs
+        ]
+        indicator_fields_ids = [
+            indicator_fields_obj.cli_name
+            for indicator_fields_obj in indicator_fields_objs
+        ]
+        content_field_ids = incident_field_ids + indicator_fields_ids
+
         return (
-            get_all_incident_and_indicator_fields_from_id_set(id_set_file, "layout")
+            content_field_ids
             + [field.lower() for field in BUILT_IN_FIELDS]
             + LAYOUT_AND_MAPPER_BUILT_IN_FIELDS
         )
@@ -142,7 +159,7 @@ class LayoutBaseValidator(ContentEntityValidator, ABC):
         pass
 
     @abstractmethod
-    def is_incident_field_exist(self, id_set_file, is_circle) -> bool:
+    def is_incident_field_exist(self, is_circle) -> bool:
         pass
 
 
@@ -151,15 +168,16 @@ class LayoutsContainerValidator(LayoutBaseValidator):
         super().__init__(
             structure_validator,
             oldest_supported_version=LAYOUTS_CONTAINERS_OLDEST_SUPPORTED_VERSION,
-            **kwargs
+            **kwargs,
         )
 
-    def is_valid_layout(
-        self, validate_rn=True, id_set_file=None, is_circle=False
-    ) -> bool:
+    def is_valid_layout(self, validate_rn=True, is_circle=False) -> bool:
         return all(
             [
-                super().is_valid_layout(),
+                super().is_valid_layout(
+                    validate_rn=validate_rn,
+                    is_circle=is_circle,
+                ),
                 self.is_id_equals_name(),
                 self.is_valid_mpv2_layout(),
             ]
@@ -211,14 +229,11 @@ class LayoutsContainerValidator(LayoutBaseValidator):
         return True
 
     @error_codes("LO104")
-    def is_incident_field_exist(
-        self, id_set_file: Dict[str, List], is_circle: bool
-    ) -> bool:
+    def is_incident_field_exist(self, is_circle: bool) -> bool:
         """
         Check if the incident fields which are part of the layout actually exist in the content items (id set).
 
         Args:
-            id_set_file (dict): content of the id set file.
             is_circle (bool): whether running on circle CI or not, True if yes, False if not.
 
         Returns:
@@ -228,14 +243,8 @@ class LayoutsContainerValidator(LayoutBaseValidator):
         if not is_circle:
             return True
 
-        if not id_set_file:
-            click.secho(
-                "Skipping mapper incident field validation. Could not read id_set.json.",
-                fg="yellow",
-            )
-            return True
+        content_fields = self.get_fields_from_graph()
 
-        content_fields = self.get_fields_from_id_set(id_set_file=id_set_file)
         invalid_incident_fields = []
 
         layout_container_items = [
@@ -356,14 +365,11 @@ class LayoutValidator(LayoutBaseValidator):
         return True
 
     @error_codes("LO104")
-    def is_incident_field_exist(
-        self, id_set_file: Dict[str, List], is_circle: bool
-    ) -> bool:
+    def is_incident_field_exist(self, is_circle: bool) -> bool:
         """
         Check if the incident fields which are part of the layout actually exist in the content items (id set).
 
         Args:
-            id_set_file (dict): content of the id set file.
             is_circle (bool): whether running on circle CI or not, True if yes, False if not.
 
         Returns:
@@ -373,15 +379,9 @@ class LayoutValidator(LayoutBaseValidator):
         if not is_circle:
             return True
 
-        if not id_set_file:
-            click.secho(
-                "Skipping mapper incident field validation. Could not read id_set.json.",
-                fg="yellow",
-            )
-            return True
+        content_fields = self.get_fields_from_graph()
 
         invalid_incident_fields = []
-        content_fields = self.get_fields_from_id_set(id_set_file=id_set_file)
 
         layout = self.current_file.get("layout", {})
         layout_sections = layout.get("sections", [])

@@ -1,4 +1,5 @@
 import json
+import logging
 from abc import ABC, abstractmethod
 from collections import defaultdict
 from pathlib import Path
@@ -12,7 +13,6 @@ from demisto_sdk.commands.common.constants import (
     MARKETPLACE_MIN_VERSION,
     MarketplaceVersions,
 )
-from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import get_content_path
 from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
 from demisto_sdk.commands.content_graph.parsers.content_item import ContentItemParser
@@ -20,6 +20,8 @@ from demisto_sdk.commands.content_graph.parsers.pack import PackParser
 
 if TYPE_CHECKING:
     from demisto_sdk.commands.content_graph.objects.relationship import RelationshipData
+
+logger = logging.getLogger("demisto-sdk")
 
 content_type_to_model: Dict[ContentType, Type["BaseContent"]] = {}
 
@@ -75,23 +77,13 @@ class BaseContent(ABC, BaseModel, metaclass=BaseContentMetaclass):
 
     def __getstate__(self):
         """Needed to for the object to be pickled correctly (to use multiprocessing)"""
-        if "relationships_data" not in self.__dict__:
-            # if we don't have relationships, we can use the default __getstate__ method
-            return super().__getstate__()
-
         dict_copy = self.__dict__.copy()
+
         # This avoids circular references when pickling store only the first level relationships.
-        relationships_data_copy = dict_copy["relationships_data"].copy()
-        dict_copy["relationships_data"] = defaultdict(set)
-        for _, relationship_data in relationships_data_copy.items():
+        # Remove when updating to pydantic 2
+        for _, relationship_data in dict_copy["relationships_data"].items():
             for r in relationship_data:
-                # override the relationships_data of the content item to avoid circular references
-                r: RelationshipData  # type: ignore[no-redef]
-                r_copy = r.copy()
-                content_item_to_copy = r_copy.content_item_to.copy()
-                r_copy.content_item_to = content_item_to_copy
-                content_item_to_copy.relationships_data = defaultdict(set)
-                dict_copy["relationships_data"][r.relationship_type].add(r_copy)
+                r.content_item_to.relationships_data = defaultdict(set)
 
         return {
             "__dict__": dict_copy,

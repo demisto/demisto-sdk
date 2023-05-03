@@ -278,7 +278,7 @@ class Repo:
                 f"{name}_trigger",
                 {"trigger_id": "trigger_id", "trigger_name": "trigger_name"},
             )
-            print("parsing done")  # noqa: T201
+            print("parsing done")
         return pack
 
     def setup_content_repo(

@@ -7,7 +7,6 @@ from shutil import make_archive
 
 from demisto_sdk.commands.common.constants import PACKS_DIR, MarketplaceVersions
 from demisto_sdk.commands.common.content.objects.pack_objects.pack import Pack
-from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import arg_to_list
 from demisto_sdk.commands.create_artifacts.content_artifacts_creator import (
     IGNORED_PACKS,
@@ -18,6 +17,8 @@ from demisto_sdk.commands.create_artifacts.content_artifacts_creator import (
     dump_pack,
     zip_packs,
 )
+
+logger = logging.getLogger("demisto-sdk")
 
 EX_SUCCESS = 0
 EX_FAIL = 1

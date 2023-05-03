@@ -1,3 +1,4 @@
+import logging
 from pathlib import Path
 from typing import Tuple
 
@@ -15,7 +16,6 @@ from demisto_sdk.commands.common.constants import (
     ParameterType,
 )
 from demisto_sdk.commands.common.handlers import JSON_Handler
-from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import find_type, get_item_marketplaces, get_json
 from demisto_sdk.commands.format.format_constants import (
     ERROR_RETURN_CODE,
@@ -25,6 +25,7 @@ from demisto_sdk.commands.format.format_constants import (
 from demisto_sdk.commands.format.update_generic_yml import BaseUpdateYML
 from demisto_sdk.commands.format.update_script import ScriptYMLFormat
 
+logger = logging.getLogger("demisto-sdk")
 json = JSON_Handler()
 
 

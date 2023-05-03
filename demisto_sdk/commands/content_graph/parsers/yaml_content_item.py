@@ -1,3 +1,4 @@
+import logging
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
@@ -12,6 +13,8 @@ from demisto_sdk.commands.content_graph.parsers.content_item import (
     ContentItemParser,
     NotAContentItemException,
 )
+
+logger = logging.getLogger("demisto-sdk")
 
 
 class YAMLContentItemParser(ContentItemParser):

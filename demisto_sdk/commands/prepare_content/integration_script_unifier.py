@@ -1,6 +1,7 @@
 import base64
 import copy
 import glob
+import logging
 import os
 import re
 from pathlib import Path
@@ -18,7 +19,6 @@ from demisto_sdk.commands.common.constants import (
     MarketplaceVersions,
 )
 from demisto_sdk.commands.common.handlers import JSON_Handler
-from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     arg_to_list,
     find_type,
@@ -29,6 +29,8 @@ from demisto_sdk.commands.common.tools import (
     get_yml_paths_in_dir,
 )
 from demisto_sdk.commands.prepare_content.unifier import Unifier
+
+logger = logging.getLogger("demisto-sdk")
 
 json = JSON_Handler()
 

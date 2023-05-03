@@ -13,6 +13,7 @@ def test_error_code_info_sanity():
         in result.output
     )
     assert result.exit_code == 0
+    assert result.stderr == ""
 
 
 def test_error_code_info_failure():
@@ -21,3 +22,4 @@ def test_error_code_info_failure():
 
     assert "No such error" in result.output
     assert result.exit_code == 1
+    assert result.stderr == ""

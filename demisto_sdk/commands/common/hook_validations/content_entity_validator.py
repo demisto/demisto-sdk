@@ -1,3 +1,4 @@
+import logging
 import os
 import re
 from abc import abstractmethod
@@ -32,7 +33,6 @@ from demisto_sdk.commands.common.hook_validations.base_validator import (
 from demisto_sdk.commands.common.hook_validations.structure import (
     StructureValidator,
 )
-from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     _get_file_id,
     find_type,
@@ -44,6 +44,7 @@ from demisto_sdk.commands.format.format_constants import OLD_FILE_DEFAULT_1_FROM
 
 json = JSON_Handler()
 yaml = YAML_Handler()
+logger = logging.getLogger("demisto-sdk")
 
 
 class ContentEntityValidator(BaseValidator):

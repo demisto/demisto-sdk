@@ -1,3 +1,4 @@
+import logging
 import os
 import re
 from copy import deepcopy
@@ -10,7 +11,6 @@ from demisto_sdk.commands.common.constants import (
     VERSION_5_5_0,
 )
 from demisto_sdk.commands.common.handlers import YAML_Handler
-from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     find_type,
     get_dict_from_file,
@@ -29,6 +29,8 @@ from demisto_sdk.commands.format.format_constants import (
     VERSION_KEY,
 )
 from demisto_sdk.commands.validate.validate_manager import ValidateManager
+
+logger = logging.getLogger("demisto-sdk")
 
 yaml = YAML_Handler(allow_duplicate_keys=True)
 
@@ -313,7 +315,7 @@ class BaseUpdate:
             current_fromversion_value: current from_version if exists in the file.
             file_type: the file type.
         """
-        logger.info(
+        print(
             default_from_version, GENERAL_DEFAULT_FROMVERSION, current_fromversion_value
         )
         max_version = get_max_version(

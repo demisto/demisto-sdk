@@ -5,8 +5,6 @@ import sys
 import requests
 import urllib3
 
-from demisto_sdk.commands.common.logger import logger
-
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 JIRA_HOST_FOR_REGEX = r"https:\/\/jira-hq.paloaltonetworks.local\/browse\/"
@@ -48,22 +46,20 @@ def find_fixed_issue_in_body(body_text, is_merged):
     """
     fixed_jira_issues = re.findall(JIRA_FIXED_ISSUE_REGEX, body_text)
     related_jira_issue = re.findall(JIRA_RELATED_ISSUE_REGEX, body_text)
-    logger.info(f"Detected {related_jira_issue=}")
+    print(f"Detected {related_jira_issue=}")
 
     # If a PR is not merged, we just add the pr link to all the linked issues using Gold.
     # If the PR is merged, we only send issues that should be closed by it.
     # Assuming If the PR was merged, all the related links were fetched when the PR last edited.
     fixed_issue = [
-        {"link": link, "id": issue_id, "action": "fixes"}
-        for link, issue_id in fixed_jira_issues
+        {"link": link, "id": issue_id} for link, issue_id in fixed_jira_issues
     ]
     related_issue = []
 
     if not is_merged:
-        logger.info("Not merging, getting related issues.")
+        print("Not merging, getting related issues.")
         related_issue = [
-            {"link": link, "id": issue_id, "action": "relates"}
-            for link, issue_id in related_jira_issue
+            {"link": link, "id": issue_id} for link, issue_id in related_jira_issue
         ]
 
     return fixed_issue + related_issue
@@ -79,7 +75,7 @@ def trigger_generic_webhook(options):
     password = options.password
     instance_url = options.url
 
-    logger.info(f"Detected Pr: {pr_title=}, {pr_link=}, {pr_body=}")
+    print(f"Detected Pr: {pr_title=}, {pr_link=}, {pr_body=}")
 
     # Handle cases where the PR did not intend to add links:
     if (
@@ -88,38 +84,38 @@ def trigger_generic_webhook(options):
         and "fixed:" not in pr_body.lower()
         and "related:" not in pr_body.lower()
     ):
-        logger.info("Did not detect Jira linking pattern.")
+        print("Did not detect Jira linking pattern.")
         return
 
     issues_in_pr = find_fixed_issue_in_body(pr_body, is_merged)
 
     if not issues_in_pr:
-        logger.error(
+        print(
             "ERROR: No linked issues were found in PR. Make sure you correctly linked issues."
         )
 
         sys.exit(1)
 
-    logger.info(f"found issues in PR: {issues_in_pr}")
+    print(f"found issues in PR: {issues_in_pr}")
 
     body = {
-        "name": f"{GENERIC_WEBHOOK_NAME} - #{pr_num}",
+        "name": GENERIC_WEBHOOK_NAME,
         "raw_json": {
             "PullRequestNum": pr_num,
             "closeIssue": "true"
             if is_merged
             else "false",  # whether to close the fixed issue in Jira
             "PullRequestLink": pr_link,  # will be used to add to jira issue's fields
-            "PullRequestTitle": f"[{pr_title}|{pr_link}]",  # will be used in comment of attaching jira issue.
+            "PullRequestTitle": f"{pr_title} ({pr_link})",  # will be used in comment of attaching jira issue.
             "JiraIssues": issues_in_pr,
         },
     }
-    logger.info(body)
+    print(body)
     # post to Content Gold
     res = requests.post(instance_url, json=body, auth=(username, password))
 
     if res.status_code != 200:
-        logger.error(
+        print(
             f"Trigger playbook for Linking GitHub PR to Jira Issue failed. Post request to Content"
             f" Gold has status code of {res.status_code}"
         )
@@ -130,7 +126,7 @@ def trigger_generic_webhook(options):
         res_json_response_data = res.json()[0]
         if res_json_response_data:
             investigation_id = res_json_response_data.get("id")
-            logger.info(f"{investigation_id=}")
+            print(f"{investigation_id=}")
 
 
 def main():

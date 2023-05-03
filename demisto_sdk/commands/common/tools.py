@@ -2,7 +2,6 @@ import argparse
 import glob
 import io
 import logging
-
 import os
 import re
 import shlex
@@ -42,7 +41,6 @@ from packaging.version import LegacyVersion, Version, parse
 from pebble import ProcessFuture, ProcessPool
 from requests.exceptions import HTTPError
 from ruamel.yaml.comments import CommentedSeq
-from demisto_sdk.commands.common.cpu_count import cpu_count
 
 from demisto_sdk.commands.common.constants import (
     ALL_FILES_VALIDATION_IGNORE_WHITELIST,
@@ -287,7 +285,7 @@ def get_yml_paths_in_dir(project_dir: str, error_msg: str = "") -> Tuple[list, s
     yml_files = glob.glob(os.path.join(project_dir, "*.yml"))
     if not yml_files:
         if error_msg:
-            logger.info(error_msg)
+            print(error_msg)
         return [], ""
     return yml_files, yml_files[0]
 
@@ -749,7 +747,7 @@ def _read_file(file_path: Path) -> str:
             return UnicodeDammit(file_path.read_bytes()).unicode_markup
 
         except UnicodeDecodeError:
-            logger.info(f"could not auto-detect encoding for file {file_path}")
+            print(f"could not auto-detect encoding for file {file_path}")
             raise
 
 
@@ -922,9 +920,6 @@ def get_from_version(file_path):
         get_yaml(file_path) if file_path.endswith("yml") else get_json(file_path)
     )
 
-    if not isinstance(data_dictionary, dict):
-        raise ValueError("yml file returned is not of type dict")
-
     if data_dictionary:
         from_version = (
             data_dictionary.get("fromversion")
@@ -933,7 +928,7 @@ def get_from_version(file_path):
         )
 
         if not from_version:
-            logger.warning(
+            logging.warning(
                 f'fromversion/fromVersion was not found in {data_dictionary.get("id", "")}'
             )
             return ""
@@ -1476,7 +1471,7 @@ def get_python_version(docker_image):
             docker_image,
             "python",
             "-c",
-            "import sys;logger.info('{}.{}'.format(sys.version_info[0], sys.version_info[1]))",
+            "import sys;print('{}.{}'.format(sys.version_info[0], sys.version_info[1]))",
         ],
         text=True,
         stderr=DEVNULL,
@@ -1893,7 +1888,7 @@ def find_type(
                 if _id.startswith("indicator"):
                     return FileType.INDICATOR_FIELD
             else:
-                logger.info(
+                print(
                     f'The file {path} could not be recognized, please update the "id" to be a string'
                 )
 
@@ -2880,8 +2875,8 @@ def suppress_stdout():
     Example of use:
 
         with suppress_stdout():
-            logger.info('This message will not be printed')
-        logger.info('This message will be printed')
+            print('This message will not be printed')
+        print('This message will be printed')
     """
     with open(os.devnull, "w") as devnull:
         try:
@@ -2917,11 +2912,11 @@ def get_definition_name(path: str, pack_path: str) -> Optional[str]:
                 if cur_id == definition_id:
                     return def_file_dictionary["name"]
 
-        logger.info("Was unable to find the file for definitionId " + definition_id)
+        print("Was unable to find the file for definitionId " + definition_id)
         return None
 
     except (FileNotFoundError, AttributeError):
-        logger.info(
+        print(
             "Error while retrieving definition name for definitionId "
             + definition_id
             + "\n Check file structure and make sure all relevant fields are entered properly"
@@ -3093,7 +3088,7 @@ def ProcessPoolHandler() -> ProcessPool:
     Yields:
         ProcessPool: Pebble process pool.
     """
-    with ProcessPool(max_workers=cpu_count()) as pool:
+    with ProcessPool(max_workers=3) as pool:
         try:
             yield pool
         except Exception:

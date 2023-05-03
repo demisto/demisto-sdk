@@ -8,7 +8,6 @@ from demisto_sdk.commands.common.hook_validations.base_validator import (
     BaseValidator,
     error_codes,
 )
-from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import _get_file_id, get_pack_name
 
 json = JSON_Handler()
@@ -44,7 +43,7 @@ class ConfJsonValidator(BaseValidator):
 
     def is_valid_conf_json(self):
         """Validate the fields skipped_tests, skipped_integrations and unmockable_integrations in conf.json file."""
-        logger.info("\nValidating conf.json")
+        print("\nValidating conf.json")
         skipped_tests_conf = self.conf_data["skipped_tests"]
         skipped_integrations_conf = self.conf_data["skipped_integrations"]
         unmockable_integrations_conf = self.conf_data["unmockable_integrations"]

@@ -22,12 +22,12 @@ class TestGenerateTestPlaybook:
 
     @classmethod
     def setup_class(cls):
-        print("Setups TestGenerateTestPlaybook class")  # noqa: T201
+        print("Setups TestGenerateTestPlaybook class")
         Path(TestGenerateTestPlaybook.TEMP_DIR).mkdir(exist_ok=True)
 
     @classmethod
     def teardown_class(cls):
-        print("Tearing down TestGenerateTestPlaybook class")  # noqa: T201
+        print("Tearing down TestGenerateTestPlaybook class")
         if Path(TestGenerateTestPlaybook.TEMP_DIR).exists():
             shutil.rmtree(
                 TestGenerateTestPlaybook.TEMP_DIR, ignore_errors=False, onerror=None

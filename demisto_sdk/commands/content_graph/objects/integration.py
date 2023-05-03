@@ -1,3 +1,4 @@
+import logging
 from typing import TYPE_CHECKING, List
 
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
@@ -9,11 +10,12 @@ if TYPE_CHECKING:
 from pydantic import Field
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
-from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
 from demisto_sdk.commands.content_graph.objects.integration_script import (
     IntegrationScript,
 )
+
+logger = logging.getLogger("demisto-sdk")
 
 
 class Command(BaseContent, content_type=ContentType.COMMAND):  # type: ignore[call-arg]

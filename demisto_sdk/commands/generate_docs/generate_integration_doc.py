@@ -1,3 +1,4 @@
+import logging
 import os.path
 import re
 from pathlib import Path
@@ -13,7 +14,6 @@ from demisto_sdk.commands.common.default_additional_info_loader import (
     load_default_additional_info_dict,
 )
 from demisto_sdk.commands.common.handlers import JSON_Handler
-from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import get_yaml
 from demisto_sdk.commands.generate_docs.common import (
     add_lines,
@@ -27,6 +27,8 @@ from demisto_sdk.commands.generate_docs.common import (
 from demisto_sdk.commands.integration_diff.integration_diff_detector import (
     IntegrationDiffDetector,
 )
+
+logger = logging.getLogger("demisto-sdk")
 
 json = JSON_Handler()
 
@@ -130,7 +132,7 @@ def generate_integration_doc(
             with open(readme_path) as f:
                 doc_text = f.read()
             for specific_command in specific_commands:
-                logger.info(f"Generating docs for command `{specific_command}`")
+                print(f"Generating docs for command `{specific_command}`")
                 command_section, command_errors = generate_commands_section(
                     yml_data,
                     example_dict,
@@ -784,7 +786,7 @@ def get_command_examples(commands_examples_input, specific_commands):
         list(filter(None, map(command_example_filter, command_examples))) or []
     )
 
-    logger.info("found the following commands:\n{}".format("\n".join(command_examples)))
+    print("found the following commands:\n{}".format("\n".join(command_examples)))
     return command_examples
 
 
@@ -815,13 +817,13 @@ def get_command_permissions(commands_permissions_file_path) -> list:
         with open(commands_permissions_file_path) as permissions_file:
             permissions = permissions_file.read().splitlines()
     else:
-        logger.info("failed to open permissions file")
+        print("failed to open permissions file")
         permissions = commands_permissions_file_path.split("\n")
 
     permissions_map = map(command_permissions_filter, permissions)
     permissions_list: List = list(filter(None, permissions_map))
 
-    logger.info(
+    print(
         "found the following commands permissions:\n{}".format(
             "\n ".join(permissions_list)
         )

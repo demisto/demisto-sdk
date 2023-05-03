@@ -85,8 +85,7 @@ def update_content_graph(
 
     if use_git and (commit := content_graph_interface.commit):
         logger.info(f"Using git to get the packs to update from commit {commit}")
-        git_util = GitUtil()
-        packs_to_update.extend(git_util._get_all_changed_files(commit) | git_util._get_staged_files())
+        packs_to_update.extend(GitUtil().get_all_changed_pack_ids(commit))
 
     packs_str = "\n".join([f"- {p}" for p in packs_to_update])
     logger.info(f"Updating the following packs:\n{packs_str}")

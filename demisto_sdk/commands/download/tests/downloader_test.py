@@ -1369,11 +1369,11 @@ def test_safe_write_unicode_to_non_unicode(
 def demisto_client_configure(mocker):
     mocker.patch(
         "demisto_sdk.commands.upload.uploader.get_demisto_version",
-        return_value=parse("6.0.0"),
+        return_value=parse("6.8.0"),
     )
     mocker.patch(
         "demisto_sdk.commands.common.content.objects.pack_objects.integration.integration.get_demisto_version",
-        return_value=parse("6.0.0"),
+        return_value=parse("6.8.0"),
     )
     mocker.patch(
         "demisto_sdk.commands.common.content.objects.pack_objects.script.script.get_demisto_version",

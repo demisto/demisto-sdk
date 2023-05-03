@@ -235,7 +235,6 @@ class GraphValidator(BaseValidator):
         2. Cases where an error should be raised - the complementary case.
         """
         is_valid = [
-            self._find_unknown_content_uses(raises_error=False),
             self._find_unknown_content_uses(raises_error=True),
         ]
         return all(is_valid)
@@ -262,7 +261,7 @@ class GraphValidator(BaseValidator):
                 error_message,
                 error_code,
                 content_item.path,
-                warning=not bool(self.file_paths) or not raises_error,
+                warning=not raises_error,
             ):
                 is_valid = False
 

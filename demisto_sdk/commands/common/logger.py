@@ -27,6 +27,7 @@ DEPRECATED_PARAMETERS = {
     "--quiet": "--console-log-threshold or --file-log-threshold",
     "-ln": "--log-path",
     "--log-name": "--log-path",
+    "no_logging": "--console-log-threshold or --file-log-threshold",
 }
 
 

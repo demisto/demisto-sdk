@@ -315,7 +315,6 @@ def split(ctx, config, **kwargs):
             input=kwargs.get("input"),  # type: ignore[arg-type]
             output=kwargs.get("output"),  # type: ignore[arg-type]
             no_auto_create_dir=kwargs.get("no_auto_create_dir"),  # type: ignore[arg-type]
-            no_logging=kwargs.get("no_logging"),  # type: ignore[arg-type]
             new_module_file=kwargs.get("new_module_file"),  # type: ignore[arg-type]
         )
         return json_splitter.split_json()

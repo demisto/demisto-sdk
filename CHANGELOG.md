@@ -1,6 +1,8 @@
 # Changelog
 
 ## Unreleased
+
+## 1.14.1
 * Fixed an issue where **update-release-notes** command failed when running on a pack that contains deprecated integrations without the `commands` section.
 * Fixed an issue where **validate** failed when attempting to map null values in a classifier.
 * Fixed an issue in **pre-commit** command where `MYPYPATH` was not set properly.

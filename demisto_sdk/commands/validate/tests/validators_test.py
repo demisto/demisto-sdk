@@ -677,6 +677,7 @@ class TestValidators:
         mocker.patch.object(
             IntegrationValidator, "is_valid_category", return_value=True
         )
+        mocker.patch.object(os.path, "isfile", return_value=True)
         validate_manager = ValidateManager(file_path=file_path, skip_conf_json=True)
         assert not validate_manager.run_validation_on_specific_files()
 

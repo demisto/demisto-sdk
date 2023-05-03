@@ -3,12 +3,12 @@ import re
 from pathlib import Path
 from typing import Set, Tuple, Union
 
-import click
 import gitdb
 from git import InvalidGitRepositoryError, Repo
 from git.diff import Lit_change_type
 from git.remote import Remote
 
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.content_graph.common import PACKS_FOLDER
 
 
@@ -647,12 +647,12 @@ class GitUtil:
         self, debug: bool, status: str, staged: Set, committed: Set
     ) -> None:
         if debug:
-            click.echo(f"######## - {status} staged:")
-            click.echo(staged)
-            click.echo("\n")
-            click.echo(f"######## - {status} committed:")
-            click.echo(committed)
-            click.echo("\n")
+            logger.info(f"######## - {status} staged:")
+            logger.info(staged)
+            logger.info("\n")
+            logger.info(f"######## - {status} committed:")
+            logger.info(committed)
+            logger.info("\n")
 
     def handle_wrong_renamed_status(
         self, status: str, remote: str, branch: str, staged_only: bool

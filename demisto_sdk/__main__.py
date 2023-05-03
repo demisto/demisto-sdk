@@ -2667,7 +2667,7 @@ def openapi_codegen(ctx, **kwargs):
         except Exception as e:
             logger.info(f"[red]Failed to load configuration file: {e}[/red]")
 
-    click.echo("Processing swagger file...")
+    logger.info("Processing swagger file...")
     integration = OpenAPIIntegration(
         input_file,
         base_name,
@@ -2702,7 +2702,7 @@ def openapi_codegen(ctx, **kwargs):
             if fix_code:
                 command_to_run = command_to_run + " -f"
 
-            click.echo(
+            logger.info(
                 f"Run the command again with the created configuration file(after a review): {command_to_run}"
             )
             sys.exit(0)

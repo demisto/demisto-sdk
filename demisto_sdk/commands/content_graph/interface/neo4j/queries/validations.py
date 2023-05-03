@@ -24,7 +24,7 @@ def validate_unknown_content(
 ):
     query = f"""// Returns USES relationships to content items not in the repository
 MATCH (content_item_from{{deprecated: false}})-[r:{RelationshipType.USES}]->(n{{not_in_repository: true}})
-WHERE{' NOT' if raises_error else ''} (content_item_from.is_test OR NOT r.mandatorily)
+WHERE NOT (content_item_from.is_test)
 {f'AND content_item_from.path in {file_paths}' if file_paths else ''}
 RETURN content_item_from, collect(r) as relationships, collect(n) as nodes_to
 """

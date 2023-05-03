@@ -1089,6 +1089,7 @@ def test_unify_partner_contributed_pack(mocker, monkeypatch, repo):
         - Ensure unify create unified file with partner support notes.
     """
     logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+    logger_debug = mocker.patch.object(logging.getLogger("demisto-sdk"), "debug")
     monkeypatch.setenv("COLUMNS", "1000")
 
     pack = repo.create_pack("PackName")
@@ -1126,7 +1127,7 @@ def test_unify_partner_contributed_pack(mocker, monkeypatch, repo):
     assert all(
         [
             str_in_call_args_list(logger_info.call_args_list, "Unifying package:"),
-            str_in_call_args_list(logger_info.call_args_list, "Created unified yml:"),
+            str_in_call_args_list(logger_debug.call_args_list, "Created unified yml:"),
         ]
     )
 
@@ -1147,6 +1148,7 @@ def test_unify_partner_contributed_pack_no_email(mocker, monkeypatch, repo):
         - Ensure unify create unified file with partner support notes.
     """
     logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+    logger_debug = mocker.patch.object(logging.getLogger("demisto-sdk"), "debug")
     monkeypatch.setenv("COLUMNS", "1000")
 
     pack = repo.create_pack("PackName")
@@ -1184,7 +1186,7 @@ def test_unify_partner_contributed_pack_no_email(mocker, monkeypatch, repo):
     assert all(
         [
             str_in_call_args_list(logger_info.call_args_list, "Unifying package:"),
-            str_in_call_args_list(logger_info.call_args_list, "Created unified yml:"),
+            str_in_call_args_list(logger_debug.call_args_list, "Created unified yml:"),
         ]
     )
 
@@ -1255,6 +1257,7 @@ def test_unify_partner_contributed_pack_no_url(mocker, monkeypatch, repo):
         - Ensure unify create unified file with partner support notes.
     """
     logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+    logger_debug = mocker.patch.object(logging.getLogger("demisto-sdk"), "debug")
     monkeypatch.setenv("COLUMNS", "1000")
 
     pack = repo.create_pack("PackName")
@@ -1292,7 +1295,7 @@ def test_unify_partner_contributed_pack_no_url(mocker, monkeypatch, repo):
     assert all(
         [
             str_in_call_args_list(logger_info.call_args_list, "Unifying package:"),
-            str_in_call_args_list(logger_info.call_args_list, "Created unified yml:"),
+            str_in_call_args_list(logger_debug.call_args_list, "Created unified yml:"),
         ]
     )
 
@@ -1313,6 +1316,7 @@ def test_unify_not_partner_contributed_pack(mocker, monkeypatch, repo):
         - Ensure unify create unified file without partner support notes.
     """
     logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+    logger_debug = mocker.patch.object(logging.getLogger("demisto-sdk"), "debug")
     monkeypatch.setenv("COLUMNS", "1000")
 
     pack = repo.create_pack("PackName")
@@ -1346,7 +1350,7 @@ def test_unify_not_partner_contributed_pack(mocker, monkeypatch, repo):
     assert all(
         [
             str_in_call_args_list(logger_info.call_args_list, "Unifying package:"),
-            str_in_call_args_list(logger_info.call_args_list, "Created unified yml:"),
+            str_in_call_args_list(logger_debug.call_args_list, "Created unified yml:"),
         ]
     )
 
@@ -1365,6 +1369,7 @@ def test_unify_community_contributed(mocker, monkeypatch, repo):
         - Ensure unify create unified file with community detailed description.
     """
     logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+    logger_debug = mocker.patch.object(logging.getLogger("demisto-sdk"), "debug")
     monkeypatch.setenv("COLUMNS", "1000")
 
     pack = repo.create_pack("PackName")
@@ -1402,7 +1407,7 @@ def test_unify_community_contributed(mocker, monkeypatch, repo):
     assert all(
         [
             str_in_call_args_list(logger_info.call_args_list, "Unifying package:"),
-            str_in_call_args_list(logger_info.call_args_list, "Created unified yml:"),
+            str_in_call_args_list(logger_debug.call_args_list, "Created unified yml:"),
         ]
     )
 

@@ -121,7 +121,7 @@ class IntegrationScriptUnifier(Unifier):
                 yml_unified, custom, is_script_package
             )
 
-        logger.info(f"[green]Created unified yml: {path.name}[/green]")
+        logger.debug(f"[green]Created unified yml: {path.name}[/green]")
         return yml_unified
 
     @staticmethod

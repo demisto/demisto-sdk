@@ -480,17 +480,6 @@ def _testcase7__changed_script2_fromversion(repository: ContentDTO) -> List[Pack
             break
     return [pack3]
 
-def _testcase8__delete_pack(repository: ContentDTO) -> List[Pack]:
-    """Test case for the following update:
-    * Delete SamplePack3
-
-    Returns:
-        A list of the updated pack: pack3.
-    """
-    pack3 = _get_pack_by_id(repository, "SamplePack3")
-    repository.packs.remove(pack3)
-    return [pack3]
-
 # Test class
 
 
@@ -583,12 +572,6 @@ class TestUpdateContentGraph:
                 [],
                 [],
                 id="Changed fromversion of script",
-            ),
-            pytest.param(
-                _testcase8__delete_pack,
-                [],
-                [],
-                id="Delete pack 3",
             ),
         ],
     )

@@ -1379,7 +1379,6 @@ def demisto_client_configure(mocker):
         "demisto_sdk.commands.common.content.objects.pack_objects.script.script.get_demisto_version",
         return_value=parse("6.8.0"),
     )
-    mocker.patch("builtins.print")
 
 
 def test_find_uuids_in_content_item():
@@ -1403,15 +1402,14 @@ def test_find_uuids_in_content_item():
 download_tar.tar"
         ).read_bytes()
     )
-    tar = tarfile.open(fileobj=io_bytes, mode="r")
     downloader = Downloader(
         output="Packs/AbuseDB/Integrations/AbuseDB",
         input="",
         regex="",
         all_custom_content=True,
     )
-    scripts_id_name, strings_to_write = downloader.find_uuids_in_content_item(tar)
-    for key in scripts_id_name:
-        assert key in expected_UUIDs
-    for key in scripts_id_name:
-        assert key not in strings_to_write
+    with tarfile.open(fileobj=io_bytes, mode="r") as tar:
+        scripts_id_name, strings_to_write = downloader.find_uuids_in_content_item(tar)
+    ids = set(scripts_id_name.keys())
+    assert ids.issubset(expected_UUIDs)
+    assert ids.isdisjoint(strings_to_write)

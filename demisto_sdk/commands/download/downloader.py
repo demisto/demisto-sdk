@@ -352,37 +352,34 @@ class Downloader:
                 path.write_text(string_to_write, encoding="utf8")
 
     def find_uuids_in_content_item(self, tar: tarfile.TarFile):
-        scripts_id_name: dict = {}
+        scripts_id_to_name: dict = {}
         strings_to_write: List[Tuple[str, str]] = []
-        for member in tar.getmembers():
-            file_name: str = self.update_file_prefix(member.name.strip("/"))
-            file_path: str = str(Path(self.custom_content_temp_dir) / Path(file_name))
+        for file in tar.getmembers():
+            file_name: str = self.update_file_prefix(file.name.strip("/"))
+            file_path: str = str(Path(self.custom_content_temp_dir, file_name))
 
-            if not (extracted_file := tar.extractfile(member)):
+            if not (extracted_file := tar.extractfile(file)):
                 raise FileNotFoundError(
                     f"Could not extract files from tar file: {file_path}"
                 )
             string_to_write = extracted_file.read().decode("utf-8")
-            if (
-                member.name.lower()
-                .lstrip("/")
-                .startswith(
-                    (
-                        "playbook",
-                        "automation",
-                        "integration",
-                    )
+            file_name = file.name.lower().lstrip("/")
+            if file_name.startswith(
+                (
+                    "playbook",
+                    "automation",
+                    "integration",
                 )
             ):
-                scripts_id_name = self.map_yml_content_items(
-                    string_to_write, scripts_id_name
+                scripts_id_to_name = self.map_yml_content_items(
+                    string_to_write, scripts_id_to_name
                 )
-            elif member.name.lower().lstrip("/").startswith(("layout", "incident")):
-                scripts_id_name = self.map_json_content_item(
-                    string_to_write, scripts_id_name
+            elif file_name.startswith(("layout", "incident")):
+                scripts_id_to_name = self.map_json_content_item(
+                    string_to_write, scripts_id_to_name
                 )
-            strings_to_write.append((string_to_write, member.name))
-        return scripts_id_name, strings_to_write
+            strings_to_write.append((string_to_write, file.name))
+        return scripts_id_to_name, strings_to_write
 
     def fetch_custom_content(self) -> bool:
         """

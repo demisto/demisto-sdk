@@ -391,8 +391,8 @@ def test_json_to_outputs__empty_list_or_dict():
     )
 
     assert (
-            yaml_output
-            == """arguments: []
+        yaml_output
+        == """arguments: []
 name: xdr-get-incidents
 outputs:
 - contextPath: XDR.Incident.empty_dict

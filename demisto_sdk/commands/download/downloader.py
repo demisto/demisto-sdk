@@ -363,7 +363,9 @@ class Downloader:
                     f"Could not extract files from tar file: {file_path}"
                 )
             string_to_write = extracted_file.read().decode("utf-8")
-            file_name = file.name.lower().lstrip("/")
+            file_name = file.name.lower().lstrip(
+                "/"
+            )  # sometimes we get `/playbook-foo.json`
             if file_name.startswith(
                 (
                     "playbook",

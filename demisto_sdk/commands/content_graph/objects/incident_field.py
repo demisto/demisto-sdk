@@ -22,11 +22,12 @@ class IncidentField(ContentItem, content_type=ContentType.INCIDENT_FIELD):  # ty
         self,
         client: demisto_client,
         marketplace: MarketplaceVersions,
-        dump_into_list: bool = False,
     ) -> None:
-        data = self._dump_body(marketplace=marketplace, dump_into_list=True)
         with NamedTemporaryFile(suffix=".json", mode="r+") as file:
-            json.dump({"incidentFields": data}, file)
+            json.dump(
+                {"incidentFields": [self.prepare_for_upload(marketplace=marketplace)]},
+                file,
+            )
             file.flush()
             file.seek(0)
             return client.import_incident_fields(file=file.name)

@@ -170,7 +170,6 @@ class BaseContent(ABC, BaseModel, metaclass=BaseContentMetaclass):
         self,
         path: DirectoryPath,
         marketplace: MarketplaceVersions,
-        dump_into_list: bool = False,
     ) -> None:
         pass
 

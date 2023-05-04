@@ -17,7 +17,6 @@ class GenericField(ContentItem, content_type=ContentType.GENERIC_FIELD):  # type
         self,
         dir: DirectoryPath,
         marketplace: MarketplaceVersions,
-        dump_into_list: bool = False,
     ) -> None:
         dir = dir / self.path.parent.name
-        super().dump(dir, marketplace, dump_into_list=dump_into_list)
+        super().dump(dir, marketplace)

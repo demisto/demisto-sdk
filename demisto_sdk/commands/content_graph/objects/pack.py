@@ -292,9 +292,7 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: i
             except Exception as e:
                 logger.error(f"Failed dumping readme: {e}")
 
-    def dump(
-        self, path: Path, marketplace: MarketplaceVersions, dump_into_list: bool = False
-    ):
+    def dump(self, path: Path, marketplace: MarketplaceVersions):
         if not self.path.exists():
             logger.warning(f"Pack {self.name} does not exist in {self.path}")
             return

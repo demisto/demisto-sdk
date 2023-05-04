@@ -22,11 +22,10 @@ class List(ContentItem, content_type=ContentType.LIST):  # type: ignore[call-arg
         self,
         client: demisto_client,
         marketplace: MarketplaceVersions,
-        dump_into_list: bool = False,
     ) -> None:
         with TemporaryDirectory("w") as f:
             dir_path = Path(f)
-            self.dump(dir_path, marketplace=marketplace, dump_into_list=dump_into_list)
+            self.dump(dir_path, marketplace=marketplace)
 
             client.generic_request(
                 method="POST",

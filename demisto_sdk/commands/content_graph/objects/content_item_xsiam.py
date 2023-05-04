@@ -17,7 +17,6 @@ class ContentItemXSIAM(ContentItem, ABC):
         self,
         dir: DirectoryPath,
         marketplace: MarketplaceVersions,
-        dump_into_list: bool = False,
     ) -> None:
         dir.mkdir(exist_ok=True, parents=True)
 
@@ -36,9 +35,6 @@ class ContentItemXSIAM(ContentItem, ABC):
             output_paths.append(dir / f"external-{self.normalize_name}")
             output_paths.append(dir / self.normalize_name)
 
-        if dump_into_list:
-            data = [data]
-
         for file in output_paths:
             with open(file, "w") as f:
                 self.handler.dump(data, f)
@@ -47,7 +43,6 @@ class ContentItemXSIAM(ContentItem, ABC):
         self,
         client: demisto_client,
         marketplace: MarketplaceVersions,
-        dump_into_list: bool = False,
     ) -> None:
         """
         Uploadable XSIAM items should override this method.

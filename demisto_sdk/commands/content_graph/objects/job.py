@@ -23,7 +23,6 @@ class Job(ContentItem, content_type=ContentType.JOB):  # type: ignore[call-arg]
         self,
         client: demisto_client,
         marketplace: MarketplaceVersions,
-        dump_into_list: bool = False,
     ) -> None:
         with TemporaryDirectory("w") as f:
             dir_path = Path(f)

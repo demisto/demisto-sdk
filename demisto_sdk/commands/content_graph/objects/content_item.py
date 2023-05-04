@@ -1,7 +1,7 @@
 from abc import abstractmethod
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import TYPE_CHECKING, Callable, Dict, List, Optional, Set, Union
+from typing import TYPE_CHECKING, Callable, List, Optional, Set
 
 import demisto_client
 from packaging.version import Version
@@ -182,25 +182,13 @@ class ContentItem(BaseContent):
         self,
         dir: DirectoryPath,
         marketplace: MarketplaceVersions,
-        dump_into_list: bool = False,  # some items must be uploaded inside a list
     ) -> None:
-        data = self._dump_body(marketplace=marketplace, dump_into_list=dump_into_list)
-
         dir.mkdir(exist_ok=True, parents=True)
         try:
             with (dir / self.normalize_name).open("w") as f:
-                self.handler.dump(data, f)
+                self.handler.dump(self.prepare_for_upload(marketplace=marketplace), f)
         except FileNotFoundError as e:
             logger.warning(f"Failed to dump {self.path} to {dir}: {e}")
-
-    def _dump_body(
-        self, marketplace: MarketplaceVersions, dump_into_list: bool
-    ) -> Union[List, Dict]:
-        """
-        returns the body that will later be used for dumping into a file
-        """
-        data = self.prepare_for_upload(marketplace=marketplace)
-        return [data] if dump_into_list else data
 
     def to_id_set_entity(self) -> dict:
         """
@@ -232,7 +220,6 @@ class ContentItem(BaseContent):
         self,
         client: demisto_client,
         marketplace: MarketplaceVersions,
-        dump_into_list: bool = False,
     ) -> None:
         """
         Called once the version is validated.
@@ -248,7 +235,7 @@ class ContentItem(BaseContent):
 
         with TemporaryDirectory() as f:
             dir_path = Path(f)
-            self.dump(dir_path, marketplace=marketplace, dump_into_list=dump_into_list)
+            self.dump(dir_path, marketplace=marketplace)
             response = upload_method(dir_path / self.normalize_name)
             if all(
                 (isinstance(response, dict), len(response) == 2, "error" in response)

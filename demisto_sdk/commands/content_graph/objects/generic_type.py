@@ -17,10 +17,8 @@ class GenericType(ContentItem, content_type=ContentType.GENERIC_TYPE):  # type: 
         self,
         dir: DirectoryPath,
         marketplace: MarketplaceVersions,
-        dump_into_list: bool = False,
     ) -> None:
         super().dump(
             dir=dir / self.path.parent.name,
             marketplace=marketplace,
-            dump_into_list=dump_into_list,
         )

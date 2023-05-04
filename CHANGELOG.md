@@ -5,6 +5,7 @@
 * Fixed an issue where **validate** failed when attempting to map null values in a classifier.
 * Fixed an issue in **pre-commit** command where `MYPYPATH` was not set properly.
 * Updated the integration category list in the **init** command.
+* Fixed an issue where in some environments docker errors were not caught.
 
 ## 1.14.0
 * Added the `DEMISTO_SDK_GRAPH_FORCE_CREATE` environment variable. Use it to force the SDK to recreate the graph, rather than update it.

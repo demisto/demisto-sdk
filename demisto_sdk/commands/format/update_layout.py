@@ -3,8 +3,6 @@ import re
 from abc import ABC
 from typing import Dict, List, Tuple
 
-import click
-
 from demisto_sdk.commands.common.constants import (
     LAYOUT_AND_MAPPER_BUILT_IN_FIELDS,
     FileType,
@@ -196,9 +194,8 @@ class LayoutBaseFormat(BaseUpdateJSON, ABC):
 
     def set_group_field(self):
         if self.data["group"] != "incident" and self.data["group"] != "indicator":
-            click.secho(
-                "No group is specified for this layout, would you like me to update for you? [Y/n]",
-                fg="red",
+            logger.info(
+                "[red]No group is specified for this layout, would you like me to update for you? [Y/n][/red]"
             )
             user_answer = input()
             # Checks if the user input is no

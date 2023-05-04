@@ -3,6 +3,8 @@
 ## Unreleased
 * Fixed an issue where **update-release-notes** command failed when running on a pack that contains deprecated integrations without the `commands` section.
 * Fixed an issue where **validate** failed when attempting to map null values in a classifier.
+* Fixed an issue in **pre-commit** command where `MYPYPATH` was not set properly.
+* Updated the integration category list in the **init** command.
 * Added support for mapping uuid to names for Layout files in the **download** command.
 
 ## 1.14.0

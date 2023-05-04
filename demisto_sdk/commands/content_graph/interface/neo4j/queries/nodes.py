@@ -67,7 +67,6 @@ def get_relationships_to_preserve(
 ) -> List[Dict[str, Any]]:
     """
     Get the relationships to preserve before removing packs
-    We don't want to preserve relationships which
     """
     query = f"""// Gets the relationships to preserve before removing packs
 MATCH (s)-[r]->(t)-[:{RelationshipType.IN_PACK}]->(p)
@@ -115,6 +114,7 @@ DETACH DELETE n, p"""
 def return_preserved_relationships(
     tx: Transaction, rels_to_preserve: List[Dict[str, Any]]
 ) -> None:
+    """We search for source nodes which are in the preserved relationships, and they are the same nodes (same object_id and content_type)"""
     query = f"""// Returns the preserved relationships
 UNWIND $rels_data AS rel_data
 MATCH (s) WHERE id(s) = rel_data.source_id AND s.object_id = rel_data.source.object_id AND s.content_type = rel_data.source.content_type

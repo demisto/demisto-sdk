@@ -376,7 +376,7 @@ class ReadMeValidator(BaseValidator):
             image_file_path = Path(
                 PACKS_DIR, get_pack_name(self.file_path), image_path.replace("../", "")
             )
-            if not os.path.isfile(image_file_path):
+            if not image_file_path.is_file():
                 error_message, error_code = Errors.image_does_not_exist(image_path)
                 self.handle_error(error_message, error_code, file_path=self.file_path)
                 return False

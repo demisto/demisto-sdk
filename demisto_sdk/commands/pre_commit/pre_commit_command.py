@@ -1,5 +1,4 @@
 import itertools
-import logging
 import multiprocessing
 import os
 import re
@@ -22,6 +21,7 @@ from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH, PYT
 from demisto_sdk.commands.common.docker_helper import get_python_version_from_image
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import get_last_remote_release_version
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.content_graph.objects.integration_script import (
@@ -31,7 +31,6 @@ from demisto_sdk.commands.pre_commit.hooks.mypy import MypyHook
 from demisto_sdk.commands.pre_commit.hooks.pycln import PyclnHook
 from demisto_sdk.commands.pre_commit.hooks.ruff import RuffHook
 
-logger = logging.getLogger("demisto-sdk")
 yaml = YAML_Handler()
 json = JSON_Handler()
 
@@ -119,7 +118,7 @@ class PreCommitRunner:
         precommit_env["SKIP"] = ",".join(sorted(skipped_hooks))
         precommit_env["PYTHONPATH"] = ":".join(str(path) for path in sorted(PYTHONPATH))
         # The PYTHONPATH should be the same as the PYTHONPATH, but without the site-packages because MYPY does not support it
-        precommit_env["MYPY"] = ":".join(
+        precommit_env["MYPYPATH"] = ":".join(
             str(path) for path in sorted(PYTHONPATH) if "site-packages" not in str(path)
         )
         for python_version, changed_files in self.python_version_to_files.items():

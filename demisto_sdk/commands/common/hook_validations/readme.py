@@ -1,4 +1,3 @@
-import logging
 import os
 import re
 import socket
@@ -10,7 +9,6 @@ from threading import Lock
 from typing import Callable, List, Optional, Set
 from urllib.parse import urlparse
 
-import click
 import docker
 import requests
 from git import InvalidGitRepositoryError
@@ -34,6 +32,7 @@ from demisto_sdk.commands.common.hook_validations.base_validator import (
     BaseValidator,
     error_codes,
 )
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.markdown_lint import run_markdownlint
 from demisto_sdk.commands.common.MDXServer import (
     start_docker_MDX_server,
@@ -389,7 +388,7 @@ class ReadMeValidator(BaseValidator):
         # Check node exist
         stdout, stderr, exit_code = run_command_os("node -v", cwd=content_path)
         if exit_code:
-            click.secho(
+            logger.error(
                 f"There is no node installed on the machine, error - {stderr}, {stdout}"
             )
             valid = False
@@ -407,7 +406,7 @@ class ReadMeValidator(BaseValidator):
                         missing_module.append(pack)
         if missing_module:
             valid = False
-            click.secho(
+            logger.error(
                 f"The npm modules: {missing_module} are not installed. To run the mdx server locally, use "
                 f"'npm install' to install all required node dependencies. Otherwise, if docker is installed, the server"
                 f"will run in a docker container"
@@ -533,8 +532,8 @@ class ReadMeValidator(BaseValidator):
                             response=error.response,
                         )
             except Exception as ex:
-                click.secho(
-                    f"Could not validate the image link: {img_url}\n {ex}", fg="yellow"
+                logger.exception(
+                    f"[yellow]Could not validate the image link: {img_url}\n {ex}[/yellow]"
                 )
                 continue
 
@@ -597,9 +596,8 @@ class ReadMeValidator(BaseValidator):
 
         current_pack_name = self.pack_path.name
         if ignore_packs and current_pack_name in ignore_packs:
-            click.secho(
-                f"Default sentences check - Pack {current_pack_name} is ignored.",
-                fg="yellow",
+            logger.info(
+                f"[yellow]Default sentences check - Pack {current_pack_name} is ignored.[/yellow]"
             )
             return errors  # returns empty string
 
@@ -867,7 +865,7 @@ class ReadMeValidator(BaseValidator):
 
         with ReadMeValidator._MDX_SERVER_LOCK:
             if mdx_server_is_up():  # this allows for this context to be reentrant
-                logging.debug("server is already up. Not restarting")
+                logger.debug("server is already up. Not restarting")
                 return empty_context_mgr(True)
             if ReadMeValidator.are_modules_installed_for_verify(get_content_path()):  # type: ignore
                 ReadMeValidator.add_node_env_vars()

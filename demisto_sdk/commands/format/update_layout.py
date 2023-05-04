@@ -1,16 +1,14 @@
-import logging
 import os
 import re
 from abc import ABC
 from typing import Dict, List, Tuple
-
-import click
 
 from demisto_sdk.commands.common.constants import (
     LAYOUT_AND_MAPPER_BUILT_IN_FIELDS,
     FileType,
 )
 from demisto_sdk.commands.common.handlers import YAML_Handler
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     LAYOUT_CONTAINER_FIELDS,
     get_all_incident_and_indicator_fields_from_id_set,
@@ -28,8 +26,6 @@ from demisto_sdk.commands.format.format_constants import (
     VERSION_6_0_0,
 )
 from demisto_sdk.commands.format.update_generic_json import BaseUpdateJSON
-
-logger = logging.getLogger("demisto-sdk")
 
 yaml = YAML_Handler()
 
@@ -198,9 +194,8 @@ class LayoutBaseFormat(BaseUpdateJSON, ABC):
 
     def set_group_field(self):
         if self.data["group"] != "incident" and self.data["group"] != "indicator":
-            click.secho(
-                "No group is specified for this layout, would you like me to update for you? [Y/n]",
-                fg="red",
+            logger.info(
+                "[red]No group is specified for this layout, would you like me to update for you? [Y/n][/red]"
             )
             user_answer = input()
             # Checks if the user input is no

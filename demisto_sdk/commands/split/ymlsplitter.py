@@ -1,5 +1,4 @@
 import base64
-import logging
 import os
 import re
 import shutil
@@ -17,12 +16,12 @@ from demisto_sdk.commands.common.constants import (
     TYPE_TO_EXTENSION,
 )
 from demisto_sdk.commands.common.handlers import YAML_Handler
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import get_yaml, pascal_case
 from demisto_sdk.commands.prepare_content.integration_script_unifier import (
     IntegrationScriptUnifier,
 )
 
-logger = logging.getLogger("demisto-sdk")
 yaml = YAML_Handler()
 
 REGEX_MODULE = r"### GENERATED CODE ###((.|\s)+?)### END GENERATED CODE ###"

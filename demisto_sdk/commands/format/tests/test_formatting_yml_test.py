@@ -1278,7 +1278,6 @@ class TestFormatting:
                 "inputs": {"sequence": [{"include": "input_schema"}], "type": "seq"}
             },
         }
-        mocker.patch("click.echo")
         BaseUpdate.recursive_extend_schema(schema, schema)
         assert logger_info.call_count == 1
         assert (

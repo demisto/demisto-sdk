@@ -123,7 +123,7 @@ def logging_setup_decorator(func, *args, **kwargs):
         for arg in args:
             if type(arg) == click.core.Context:
                 return arg
-        print(
+        print(  # noqa: T201
             "Error: Cannot find the Context arg. Is the command configured correctly?"
         )
         return None
@@ -316,7 +316,6 @@ def split(ctx, config, **kwargs):
             input=kwargs.get("input"),  # type: ignore[arg-type]
             output=kwargs.get("output"),  # type: ignore[arg-type]
             no_auto_create_dir=kwargs.get("no_auto_create_dir"),  # type: ignore[arg-type]
-            no_logging=kwargs.get("no_logging"),  # type: ignore[arg-type]
             new_module_file=kwargs.get("new_module_file"),  # type: ignore[arg-type]
         )
         return json_splitter.split_json()
@@ -2669,7 +2668,7 @@ def openapi_codegen(ctx, **kwargs):
         except Exception as e:
             logger.info(f"[red]Failed to load configuration file: {e}[/red]")
 
-    click.echo("Processing swagger file...")
+    logger.info("Processing swagger file...")
     integration = OpenAPIIntegration(
         input_file,
         base_name,
@@ -2704,7 +2703,7 @@ def openapi_codegen(ctx, **kwargs):
             if fix_code:
                 command_to_run = command_to_run + " -f"
 
-            click.echo(
+            logger.info(
                 f"Run the command again with the created configuration file(after a review): {command_to_run}"
             )
             sys.exit(0)

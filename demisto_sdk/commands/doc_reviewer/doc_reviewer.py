@@ -7,7 +7,6 @@ from configparser import ConfigParser
 from pathlib import Path
 from typing import Dict, List, Optional, Set, Tuple
 
-import click
 import nltk
 from nltk.corpus import brown, webtext
 from spellchecker import SpellChecker
@@ -26,6 +25,7 @@ from demisto_sdk.commands.common.content.objects.pack_objects.abstract_pack_obje
     YAMLContentObject,
 )
 from demisto_sdk.commands.common.git_util import GitUtil
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     add_default_pack_known_words,
     find_type,
@@ -132,22 +132,19 @@ class DocReviewer:
                     )
                     return packs_ignore_path, packs_known_words
                 else:
-                    click.secho(
-                        f"\nNo [known_words] section was found within: {packs_ignore_path}",
-                        fg="yellow",
+                    logger.info(
+                        f"\n[yellow]No [known_words] section was found within: {packs_ignore_path}[/yellow]"
                     )
                     return packs_ignore_path, default_pack_known_words
 
-            click.secho(
-                f"\nNo .pack-ignore file was found within pack: {packs_ignore_path}",
-                fg="yellow",
+            logger.info(
+                f"\n[yellow]No .pack-ignore file was found within pack: {packs_ignore_path}[/yellow]"
             )
             return "", default_pack_known_words
 
-        click.secho(
-            f"\nCould not load pack's known words file since no pack structure was found for {file_path}"
-            f"\nMake sure you are running from the content directory.",
-            fg="bright_red",
+        logger.error(
+            f"\n[red]Could not load pack's known words file since no pack structure was found for {file_path}"
+            f"\nMake sure you are running from the content directory.[/red]"
         )
         return "", []
 
@@ -203,7 +200,7 @@ class DocReviewer:
         return modified.union(added).union(renamed)  # type: ignore[arg-type]
 
     def get_files_from_git(self):
-        click.secho("Gathering all changed files from git", fg="bright_cyan")
+        logger.info("[cyan]Gathering all changed files from git[/cyan]")
         for file in self.gather_all_changed_files():
             file = str(file)
             if (
@@ -237,43 +234,37 @@ class DocReviewer:
             correction_text = f" - did you mean: {corrections}" if corrections else ""
 
             if sub_word:
-                click.secho(
-                    f"  - {sub_word} in {word}{correction_text}", fg="bright_red"
-                )
+                logger.info(f"[red]  - {sub_word} in {word}{correction_text}[/red]")
             else:
-                click.secho(f"  - {word}{correction_text}", fg="bright_red")
-        click.secho(
-            "If these are not misspelled consider adding them to a known_words file:\n"
+                logger.info(f"[red]  - {word}{correction_text}[/red]")
+        logger.info(
+            "[yellow]If these are not misspelled consider adding them to a known_words file:\n"
             "  Pack related words: content/Packs/<PackName>/.pack-ignore under the [known_words] section.\n"
             "  Not pack specific words: content/Tests/known_words.txt\n"
-            "To test locally add --use-packs-known-words or --known-words flags.",
-            fg="yellow",
+            "To test locally add --use-packs-known-words or --known-words flags.[/yellow]"
         )
 
     def print_file_report(self):
         if self.files_without_misspells:
-            click.secho(
-                "\n================= Files Without Misspells =================",
-                fg="green",
+            logger.info(
+                "\n[green]================= Files Without Misspells =================[/green]"
             )
             no_misspells_string = "\n".join(self.files_without_misspells)
-            click.secho(no_misspells_string, fg="green")
+            logger.info(f"[green]{no_misspells_string}[/green]")
 
         if self.files_with_misspells:
-            click.secho(
-                "\n================= Files With Misspells =================",
-                fg="bright_red",
+            logger.info(
+                "\n[red]================= Files With Misspells =================[/red]"
             )
             misspells_string = "\n".join(self.files_with_misspells)
-            click.secho(misspells_string, fg="bright_red")
+            logger.info(f"[red]{misspells_string}[/red]")
 
         if self.malformed_rn_files:
-            click.secho(
-                "\n================= Malformed Release Notes =================",
-                fg="bright_red",
+            logger.info(
+                "\n[red]================= Malformed Release Notes =================[/red]"
             )
             bad_rn = "\n".join(self.malformed_rn_files)
-            click.secho(bad_rn, fg="bright_red")
+            logger.info(f"[red]{bad_rn}[/red]")
 
     def run_doc_review(self):
         """Runs spell-check on the given file and release notes check if relevant.
@@ -281,12 +272,11 @@ class DocReviewer:
         Returns:
             bool. True if no problematic words found, False otherwise.
         """
-        click.secho(
-            "\n================= Starting Doc Review =================",
-            fg="bright_cyan",
+        logger.info(
+            "\n[cyan]================= Starting Doc Review =================[/cyan]"
         )
         if len(self.SUPPORTED_FILE_TYPES) == 1:
-            click.secho("Running only on release notes", fg="bright_cyan")
+            logger.info("[cyan]Running only on release notes[/cyan]")
 
         if self.file_paths:
             for file_path in self.file_paths:
@@ -296,19 +286,18 @@ class DocReviewer:
 
         # no eligible files found
         if not self.files:
-            click.secho("Could not find any relevant files - Aborting.")
+            logger.info("Could not find any relevant files - Aborting.")
             return True
 
         self.add_known_words()
 
         for file in self.files:
-            click.echo(f"\nChecking file {file}")
+            logger.info(f"\nChecking file {file}")
 
             # --xsoar-only flag is specified.
             if self.is_xsoar_supported_rn_only and not is_xsoar_supported_pack(file):
-                click.secho(
-                    f"File '{file}' was skipped because it does not belong to an XSOAR-supported Pack",
-                    fg="yellow",
+                logger.info(
+                    f"[yellow]File '{file}' was skipped because it does not belong to an XSOAR-supported Pack[/yellow]"
                 )
                 continue
 
@@ -323,16 +312,16 @@ class DocReviewer:
                 self.check_yaml(file)
 
             if self.unknown_words:
-                click.secho(
-                    f"\n - Words that might be misspelled were found in " f"{file}:",
-                    fg="bright_red",
+                logger.info(
+                    f"\n[red] - Words that might be misspelled were found in "
+                    f"{file}:[/red]"
                 )
                 self.print_unknown_words(unknown_words=self.unknown_words)
                 self.found_misspelled = True
                 self.files_with_misspells.add(file)
 
             else:
-                click.secho(f" - No misspelled words found in {file}", fg="green")
+                logger.info(f"[green] - No misspelled words found in {file}[/green]")
                 self.files_without_misspells.add(file)
 
         self.print_file_report()
@@ -355,9 +344,8 @@ class DocReviewer:
                 file_path
             )
             if self.known_pack_words_file_path != known_pack_words_file_path:
-                click.secho(
-                    f"\nUsing known words file found within pack: {known_pack_words_file_path}",
-                    fg="yellow",
+                logger.info(
+                    f"\n[yellow]Using known words file found within pack: {known_pack_words_file_path}[/yellow]"
                 )
                 if self.known_pack_words_file_path:
                     # Restart Spellchecker to remove old known_words packs file
@@ -396,9 +384,8 @@ class DocReviewer:
                 ssl._create_default_https_context = _create_unverified_https_context
 
             # downloading "brown" and "webtext" sets from nltk.
-            click.secho(
-                "Downloading expanded dictionary, this may take a minute...",
-                fg="yellow",
+            logger.info(
+                "[yellow]Downloading expanded dictionary, this may take a minute...[/yellow]"
             )
             nltk.download("brown")
             nltk.download("webtext")

@@ -4,6 +4,7 @@
 * Fixed an issue where **update-release-notes** command failed when running on a pack that contains deprecated integrations without the `commands` section.
 * Added toVersion and fromVersion to XSIAM content items schema.
 * Fixed an issue where **validate** failed when attempting to map null values in a classifier.
+* Added search marketplace functionality to XSIAM client.
 * Fixed an issue in **pre-commit** command where `MYPYPATH` was not set properly.
 * Updated the integration category list in the **init** command.
 * Fixed an issue where in some environments docker errors were not caught.

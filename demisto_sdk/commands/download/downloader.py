@@ -92,6 +92,36 @@ ITEM_TYPE_TO_PREFIX = {
 }
 
 
+def map_json_content_item(content_item_string: str, scripts_mapper: dict) -> dict:
+    """
+    Args:
+        content_item_string (str): content item as a string.
+        scripts_mapper (dict): a mapper from id to name for content items.
+    Returns:
+        dict: scripts_mapper
+    """
+    content_item_json = json.loads(content_item_string)
+    content_item_id = get_id(content_item_json)
+    if re.search(UUID_REGEX, str(content_item_id)):
+        scripts_mapper[content_item_id] = content_item_json.get("name")
+    return scripts_mapper
+
+
+def map_yml_content_items(content_item_string: str, scripts_mapper: dict) -> dict:
+    """
+    Args:
+        content_item_string (str): content item as a string.
+        scripts_mapper (dict): a mapper from id to name for content items.
+    Returns:
+        dict: scripts_mapper
+    """
+    script_yml = yaml.load(content_item_string)
+    script_id = get_id(script_yml)
+    if re.search(UUID_REGEX, str(script_id)):
+        scripts_mapper[script_id] = script_yml.get("name")
+    return scripts_mapper
+
+
 class Downloader:
     """
     Downloader is a class that's designed to download and merge custom content from Demisto to the content repository.
@@ -274,36 +304,6 @@ class Downloader:
 
         return playbook_string
 
-    @staticmethod
-    def map_yml_content_items(content_item_string: str, scripts_mapper: dict) -> dict:
-        """
-        Args:
-            content_item_string (str): content item as a string.
-            scripts_mapper (dict): a mapper from id to name for content items.
-        Returns:
-            dict: scripts_mapper
-        """
-        script_yml = yaml.load(content_item_string)
-        script_id = get_id(script_yml)
-        if re.search(UUID_REGEX, str(script_id)):
-            scripts_mapper[script_id] = script_yml.get("name")
-        return scripts_mapper
-
-    @staticmethod
-    def map_json_content_item(content_item_string: str, scripts_mapper: dict) -> dict:
-        """
-        Args:
-            content_item_string (str): content item as a string.
-            scripts_mapper (dict): a mapper from id to name for content items.
-        Returns:
-            dict: scripts_mapper
-        """
-        content_item_json = json.loads(content_item_string)
-        content_item_id = get_id(content_item_json)
-        if re.search(UUID_REGEX, str(content_item_id)):
-            scripts_mapper[content_item_id] = content_item_json.get("name")
-        return scripts_mapper
-
     def replace_uuids(self, string_to_write: str, uuid_dict: dict) -> str:
         """
         Replace all occurrences of UUIDs in a string with their corresponding values from a dictionary.
@@ -371,11 +371,11 @@ class Downloader:
                     "integration",
                 )
             ):
-                scripts_id_to_name = self.map_yml_content_items(
+                scripts_id_to_name = map_yml_content_items(
                     string_to_write, scripts_id_to_name
                 )
             elif file_name.startswith(("layout", "incident")):
-                scripts_id_to_name = self.map_json_content_item(
+                scripts_id_to_name = map_json_content_item(
                     string_to_write, scripts_id_to_name
                 )
             strings_to_write.append((string_to_write, file.name))

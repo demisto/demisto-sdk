@@ -761,13 +761,12 @@ def test_check_readme_relative_image_paths(mocker):
 
 @pytest.mark.parametrize("current, answer", README_INPUTS[:2])
 def test_verify_image_exist(mocker, current, answer):
+    from pathlib import Path
+
     mocker.patch(
         "demisto_sdk.commands.common.hook_validations.readme.get_pack_name",
         return_value="PackName",
     )
-    mocker.patch.object(os.path, "isfile", return_value=answer)
-    readme_validator = ReadMeValidator(current)
+    mocker.patch.object(Path, "is_file", return_value=answer)
 
-    result = readme_validator.verify_image_exist()
-
-    assert result == answer
+    assert ReadMeValidator(current).verify_image_exist() == answer

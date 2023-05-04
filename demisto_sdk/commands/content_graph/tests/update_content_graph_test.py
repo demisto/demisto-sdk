@@ -480,6 +480,7 @@ def _testcase7__changed_script2_fromversion(repository: ContentDTO) -> List[Pack
             break
     return [pack3]
 
+
 # Test class
 
 

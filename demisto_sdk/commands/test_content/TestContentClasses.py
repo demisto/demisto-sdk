@@ -1278,7 +1278,7 @@ class Integration:
                 self.configuration.params = {  # type: ignore
                     "url": "https://localhost",
                     "creds_apikey": {
-                        "identifier": '',
+                        "identifier": "",
                         "password": self.build_context.api_key,
                     },
                     "auth_method": "Standard",

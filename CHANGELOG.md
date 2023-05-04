@@ -5,6 +5,7 @@
 * Fixed an issue where **validate** failed when attempting to map null values in a classifier.
 * Fixed an issue in **pre-commit** command where `MYPYPATH` was not set properly.
 * Updated the integration category list in the **init** command.
+* Fixed an issue where in some environments docker errors were not caught.
 
 ## 1.14.0
 * Added the `DEMISTO_SDK_GRAPH_FORCE_CREATE` environment variable. Use it to force the SDK to recreate the graph, rather than update it.
@@ -26,7 +27,6 @@
 * Fixed an issue where **doc-review** required dot suffixes in release notes describing new content.
 * Fixed an issue where **download** command failed when running on a beta integration.
 * Fixed an issue where **update-release-notes** generated release notes for packs in their initial version (1.0.0).
-* Fixed an issue where in some environments docker errors were not caught.
 * Fixed an issue with **update-content-graph** where `--use-git` parameter was ignored when using `--imported-path` parameter.
 * Fixed an issue where **validate** failed on playbooks with valid inputs, since it did not collect the playbook inputs occurrences properly.
 

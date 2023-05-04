@@ -72,7 +72,8 @@ def update_content_graph(
             content_graph_interface, marketplace, dependencies, output_path
         )
         return
-
+    if not imported_path and not use_current:
+        use_git = True
     builder = ContentGraphBuilder(content_graph_interface)
     if not use_current:
         content_graph_interface.clean_import_dir()
@@ -83,6 +84,7 @@ def update_content_graph(
     content_graph_interface.import_graph(imported_path)
 
     if use_git and (commit := content_graph_interface.commit):
+        logger.info(f"Using git to get the packs to update from commit {commit}")
         packs_to_update.extend(GitUtil().get_all_changed_pack_ids(commit))
 
     packs_str = "\n".join([f"- {p}" for p in packs_to_update])

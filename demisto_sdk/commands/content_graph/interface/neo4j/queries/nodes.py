@@ -60,13 +60,14 @@ CALL apoc.periodic.iterate(
     {batchSize:30000, parallel:true, iterateList:true}
 );"""
 
+
 def get_relationships_to_preserve(
     tx: Transaction,
     pack_ids: List[str],
 ) -> List[Dict[str, Any]]:
     """
     Get the relationships to preserve before removing packs
-    We don't want to preserve relationships which 
+    We don't want to preserve relationships which
     """
     query = f"""// Gets the relationships to preserve before removing packs
 MATCH (s)-[r]->(t)-[:{RelationshipType.IN_PACK}]->(p)

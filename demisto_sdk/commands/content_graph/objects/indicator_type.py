@@ -20,4 +20,6 @@ class IndicatorType(ContentItem, content_type=ContentType.INDICATOR_TYPE):  # ty
             "details",
             "reputation_script_name",
             "enhancement_script_names",
+            "fromversion",
+            "toversion",
         }

@@ -6,4 +6,4 @@ from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 
 class Report(ContentItem, content_type=ContentType.REPORT):  # type: ignore[call-arg]
     def metadata_fields(self) -> Set[str]:
-        return {"object_id", "name", "description"}
+        return {"object_id", "name", "description", "fromversion", "toversion"}

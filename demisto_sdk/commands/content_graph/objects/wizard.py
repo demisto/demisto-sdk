@@ -15,6 +15,6 @@ class Wizard(ContentItem, content_type=ContentType.WIZARD):  # type: ignore[call
             "name",
             "description",
             "dependency_packs",
-            "fromVersion",
-            "toVersion",
+            "fromversion",
+            "toversion",
         }

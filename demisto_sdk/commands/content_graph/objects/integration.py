@@ -76,6 +76,8 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
             "commands": {
                 "__all__": {"name": True, "description": True}
             },  # for all commands, keep the name and description
+            "fromversion": True,
+            "toversion": True,
         }
 
     def prepare_for_upload(

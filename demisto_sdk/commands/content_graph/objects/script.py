@@ -13,7 +13,7 @@ class Script(IntegrationScript, content_type=ContentType.SCRIPT):  # type: ignor
     tags: List[str]
 
     def metadata_fields(self) -> Set[str]:
-        return {"object_id", "name", "description", "tags"}
+        return {"object_id", "name", "description", "tags", "fromversion", "toversion"}
 
     def prepare_for_upload(
         self, marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR, **kwargs

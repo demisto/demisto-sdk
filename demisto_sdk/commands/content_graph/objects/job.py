@@ -10,4 +10,4 @@ class Job(ContentItem, content_type=ContentType.JOB):  # type: ignore[call-arg]
     description: str = Field(alias="details")
 
     def metadata_fields(self) -> Set[str]:
-        return {"object_id", "name", "description"}
+        return {"object_id", "name", "description", "fromversion", "toversion"}

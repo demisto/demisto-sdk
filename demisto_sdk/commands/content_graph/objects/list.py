@@ -8,4 +8,4 @@ class List(ContentItem, content_type=ContentType.LIST):  # type: ignore[call-arg
     type: str
 
     def metadata_fields(self) -> Set[str]:
-        return {"object_id", "name"}
+        return {"object_id", "name", "fromversion", "toversion"}

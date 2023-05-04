@@ -1,4 +1,5 @@
 from pathlib import Path
+import os
 from typing import Any, Dict, Iterator, List, Optional
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions

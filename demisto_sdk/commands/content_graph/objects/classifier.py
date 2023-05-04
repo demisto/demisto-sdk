@@ -11,4 +11,4 @@ class Classifier(ContentItem, content_type=ContentType.CLASSIFIER):  # type: ign
     definition_id: Optional[str] = Field(alias="definitionId")
 
     def metadata_fields(self) -> Set[str]:
-        return {"object_id", "name", "description"}
+        return {"object_id", "name", "description", "fromversion", "toversion"}

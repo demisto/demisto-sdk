@@ -12,4 +12,4 @@ class IndicatorField(ContentItem, content_type=ContentType.INDICATOR_FIELD):  # 
     associated_to_all: bool = Field(alias="associatedToAll")
 
     def metadata_fields(self) -> Set[str]:
-        return {"object_id", "name", "type", "description"}
+        return {"object_id", "name", "type", "description", "fromversion", "toversion"}

@@ -11,7 +11,7 @@ class GenericType(ContentItem, content_type=ContentType.GENERIC_TYPE):  # type: 
     definition_id: Optional[str] = Field(alias="definitionId")
 
     def metadata_fields(self) -> Set[str]:
-        return {"object_id", "name", "description"}
+        return {"object_id", "name", "description", "fromversion", "toversion"}
 
     def dump(self, dir: DirectoryPath, marketplace: MarketplaceVersions) -> None:
         dir = dir / self.path.parent.name

@@ -22,4 +22,6 @@ class IncidentType(ContentItem, content_type=ContentType.INCIDENT_TYPE):  # type
             "hours",
             "days",
             "weeks",
+            "fromversion",
+            "toversion",
         }

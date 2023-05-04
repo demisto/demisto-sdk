@@ -13,4 +13,4 @@ class Mapper(ContentItem, content_type=ContentType.MAPPER):  # type: ignore[call
     )  # TODO decide if this should be optional or not
 
     def metadata_fields(self) -> Set[str]:
-        return {"object_id", "name", "description"}
+        return {"object_id", "name", "description", "fromversion", "toversion"}

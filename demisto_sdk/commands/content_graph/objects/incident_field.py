@@ -12,4 +12,4 @@ class IncidentField(ContentItem, content_type=ContentType.INCIDENT_FIELD):  # ty
     associated_to_all: bool = Field(False, alias="associatedToAll")
 
     def metadata_fields(self) -> Set[str]:
-        return {"object_id", "name", "field_type", "description"}
+        return {"object_id", "name", "field_type", "description", "fromversion", "toversion"}

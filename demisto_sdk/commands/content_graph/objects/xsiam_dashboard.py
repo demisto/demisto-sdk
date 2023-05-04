@@ -12,7 +12,7 @@ from demisto_sdk.commands.content_graph.objects.content_item_xsiam import (
 
 class XSIAMDashboard(ContentItemXSIAM, content_type=ContentType.XSIAM_DASHBOARD):  # type: ignore[call-arg]
     def metadata_fields(self) -> Set[str]:
-        return {"object_id", "name", "description"}
+        return {"object_id", "name", "description", "fromversion", "toversion"}
 
     def dump(self, dir: DirectoryPath, marketplace: MarketplaceVersions) -> None:
         super().dump(dir, marketplace)

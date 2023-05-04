@@ -11,4 +11,4 @@ class Widget(ContentItem, content_type=ContentType.WIDGET):  # type: ignore[call
     widget_type: str = Field(alias="widgetType")
 
     def metadata_fields(self) -> Set[str]:
-        return {"object_id", "name", "data_type", "widget_type"}
+        return {"object_id", "name", "data_type", "widget_type", "fromversion", "toversion"}

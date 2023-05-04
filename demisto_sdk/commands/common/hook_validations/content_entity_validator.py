@@ -5,7 +5,6 @@ from distutils.version import LooseVersion
 from pathlib import Path
 from typing import Optional
 
-import click
 from packaging import version
 
 from demisto_sdk.commands.common import tools
@@ -91,7 +90,7 @@ class ContentEntityValidator(BaseValidator):
         if not self.old_file:
             return True
 
-        click.secho(f"Validating backwards compatibility for {self.file_path}")
+        logger.info(f"Validating backwards compatibility for {self.file_path}")
 
         is_backward_compatible = [
             self.is_id_not_modified(),

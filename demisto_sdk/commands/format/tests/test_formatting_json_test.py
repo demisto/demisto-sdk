@@ -359,7 +359,7 @@ class TestFormattingIncidentTypes:
 
     @pytest.mark.parametrize("user_answer, expected", EXTRACTION_MODE_ALL_CONFLICT)
     def test_format_autoextract_all_mode_conflict(
-        self, mocker, user_answer, expected, capsys
+        self, mocker, user_answer, expected, monkeypatch
     ):
         """
         Given
@@ -372,6 +372,9 @@ class TestFormattingIncidentTypes:
         - If the user selected 'All', he will get an warning message and the mode will not be changed.
         - If the user selected 'Specific', the mode will be changed.
         """
+        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+        monkeypatch.setenv("COLUMNS", "1000")
+
         mock_dict = {
             "extractSettings": {
                 "mode": None,
@@ -394,11 +397,13 @@ class TestFormattingIncidentTypes:
         )
         formatter = IncidentTypesJSONFormat("test")
         formatter.format_auto_extract_mode()
-        stdout, _ = capsys.readouterr()
         current_mode = formatter.data.get("extractSettings", {}).get("mode")
         assert current_mode == expected
         if user_answer == "All":
-            assert 'Cannot set mode to "All" since there are specific types' in stdout
+            assert str_in_call_args_list(
+                logger_info.call_args_list,
+                'Cannot set mode to "All" since there are specific types',
+            )
 
     EXTRACTION_MODE_SPECIFIC_CONFLICT = [
         ("All", "All"),
@@ -407,7 +412,7 @@ class TestFormattingIncidentTypes:
 
     @pytest.mark.parametrize("user_answer, expected", EXTRACTION_MODE_SPECIFIC_CONFLICT)
     def test_format_autoextract_specific_mode_conflict(
-        self, mocker, user_answer, expected, capsys
+        self, mocker, user_answer, expected, capsys, monkeypatch
     ):
         """
         Given
@@ -420,6 +425,9 @@ class TestFormattingIncidentTypes:
         - If the user selected 'Specific', the mode will be changed but he will get a warning that no specific types were found.
         - If the user selected 'All', the mode will be changed.
         """
+        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+        monkeypatch.setenv("COLUMNS", "1000")
+
         mock_dict = {
             "extractSettings": {"mode": None, "fieldCliNameToExtractSettings": {}}
         }
@@ -437,9 +445,9 @@ class TestFormattingIncidentTypes:
         current_mode = formatter.data.get("extractSettings", {}).get("mode")
         assert current_mode == expected
         if user_answer == "Specific":
-            assert (
-                'Please notice that mode was set to "Specific" but there are no specific types'
-                in stdout
+            assert str_in_call_args_list(
+                logger_info.call_args_list,
+                'Please notice that mode was set to "Specific" but there are no specific types',
             )
 
 

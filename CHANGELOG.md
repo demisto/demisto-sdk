@@ -1,4 +1,5 @@
 # Changelog
+* Added a validation that the **validate** command will fail on README files if an image does not exist in the specified path.
 
 ## Unreleased
 * Fixed an issue where **update-release-notes** command failed when running on a pack that contains deprecated integrations without the `commands` section.

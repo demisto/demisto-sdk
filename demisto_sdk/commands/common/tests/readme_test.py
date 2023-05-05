@@ -45,6 +45,8 @@ def test_is_file_valid(mocker, current, answer):
         return_value="PackName",
     )
     mocker.patch.object(Path, "is_file", return_value=answer)
+    mocker.patch.object(os.path, "isfile", return_value=answer)
+
     readme_validator = ReadMeValidator(current)
     valid = ReadMeValidator.are_modules_installed_for_verify(
         readme_validator.content_path
@@ -84,6 +86,8 @@ def test_is_file_valid_mdx_server(mocker, current, answer):
         return_value="PackName",
     )
     mocker.patch.object(Path, "is_file", return_value=answer)
+    mocker.patch.object(os.path, "isfile", return_value=answer)
+
     ReadMeValidator.add_node_env_vars()
     with ReadMeValidator.start_mdx_server():
         readme_validator = ReadMeValidator(current)

@@ -1,7 +1,7 @@
 import re
 import copy
 import logging
-from typing import Any, Tuple
+from typing import Any, List, Tuple
 
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
@@ -144,24 +144,19 @@ def replace_playbook_access_fields_recursively(
     return datum
 
 
-def get_script_names_from_playbooks_intended_preparation(playbook: ContentItem) -> Tuple[str, ...]:
+def get_script_names_from_playbooks_intended_preparation(playbook: ContentItem) -> List[str]:
+    """
+    Extracts all scripts of the Playbook and filters only those intended
+    for special preparation of `incident to alert`.
+    """
     from demisto_sdk.commands.content_graph.objects.script import Script
-    return tuple(
-        map(
-            lambda s: s.object_id,
-            filter(
-                lambda s: (
-                    isinstance(s, Script)
-                    and s.is_incident_to_alert(MarketplaceVersions.MarketplaceV2)
-                ),
-                tuple(
-                    map(
-                        lambda content_item: content_item.content_item_to, playbook.uses
-                    )
-                ),
-            ),
-        )
-    )
+    return [
+        name.object_id for name in [
+            content_item.content_item_to for content_item in playbook.uses
+            if isinstance(content_item.content_item_to, Script) and
+            content_item.content_item_to.is_incident_to_alert(MarketplaceVersions.MarketplaceV2)
+        ]
+    ]
 
 
 def prepare_playbook_access_fields(data: dict, playbook: ContentItem) -> dict:

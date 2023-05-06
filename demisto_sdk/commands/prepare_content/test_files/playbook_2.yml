@@ -1,6 +1,6 @@
-id: Phishing Investigation - Generic
+id: playbook_2
 version: -1
-name: Phishing Investigation - Generic
+name: playbook_2
 description: 'Use this playbook to investigate and remediate a potential phishing
   incident. The playbook simultaneously engages with the user that triggered the incident,
   while investigating the incident itself. Incidents <-incidents->'
@@ -47,6 +47,66 @@ tasks:
     nexttasks:
       '#none#':
         - "7"
+  "6":
+    id: "6"
+    taskid: 6f3b1215-c4b1-4d16-8581-ae0b3bdcb030
+    type: regular
+    task:
+      id: 6f3b1215-c4b1-4d16-8581-ae0b3bdcb030
+      version: -1
+      name: Sleep
+      description: Sleep for X seconds
+      scriptName: getIncident
+      type: regular
+      iscommand: false
+      brand: ""
+    nexttasks:
+      '#none#':
+      - "3"
+    scriptarguments:
+      seconds:
+        simple: "10"
+    separatecontext: false
+    view: |-
+      {
+        "position": {
+          "x": 450,
+          "y": 870
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+  "7":
+    id: "7"
+    taskid: 6f3b1215-c4b1-4d16-8581-ae0b3bdcb030
+    type: regular
+    task:
+      id: 6f3b1215-c4b1-4d16-8581-ae0b3bdcb030
+      version: -1
+      name: Sleep
+      description: Sleep for X seconds
+      scriptName: setIncidentByID
+      type: regular
+      iscommand: false
+      brand: ""
+    nexttasks:
+      '#none#':
+      - "3"
+    scriptarguments:
+      seconds:
+        simple: "10"
+    separatecontext: false
+    view: |-
+      {
+        "position": {
+          "x": 450,
+          "y": 870
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
 system: true
 inputs:
 - key: Role

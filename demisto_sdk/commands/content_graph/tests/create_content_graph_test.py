@@ -95,7 +95,11 @@ def mock_integration(name: str = "SampleIntegration"):
     )
 
 
-def mock_script(name: str = "SampleScript"):
+def mock_script(
+    name: str = "SampleScript",
+    marketplaces: List[MarketplaceVersions] = [MarketplaceVersions.XSOAR],
+    skip_prepare: List[str] = []
+):
     return Script(
         id=name,
         content_type=ContentType.SCRIPT,
@@ -105,13 +109,13 @@ def mock_script(name: str = "SampleScript"):
         display_name=name,
         toversion="99.99.99",
         name=name,
-        marketplaces=[MarketplaceVersions.XSOAR],
+        marketplaces=marketplaces,
         deprecated=False,
         type="python3",
         docker_image="mock:docker",
         tags=[],
         is_test=False,
-        skip_prepare=[],
+        skip_prepare=skip_prepare,
     )
 
 
@@ -134,7 +138,10 @@ def mock_classifier(name: str = "SampleClassifier"):
     )
 
 
-def mock_playbook(name: str = "SamplePlaybook"):
+def mock_playbook(
+    name: str = "SamplePlaybook",
+    marketplaces: List[MarketplaceVersions] = [MarketplaceVersions.XSOAR]
+):
     return Playbook(
         id=name,
         content_type=ContentType.PLAYBOOK,
@@ -144,7 +151,7 @@ def mock_playbook(name: str = "SamplePlaybook"):
         toversion="99.99.99",
         display_name=name,
         name=name,
-        marketplaces=[MarketplaceVersions.XSOAR],
+        marketplaces=marketplaces,
         deprecated=False,
         is_test=False,
     )

@@ -2,12 +2,14 @@ import ruamel.yaml as yaml
 from pathlib import Path
 
 import pytest
-
+import demisto_sdk.commands.content_graph.neo4j_service as neo4j_service
+from TestSuite.repo import Repo
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
 from demisto_sdk.commands.content_graph.content_graph_commands import (
     create_content_graph,
+    stop_content_graph,
 )
 from demisto_sdk.commands.content_graph.interface.neo4j.neo4j_graph import (
     Neo4jContentGraphInterface as ContentGraphInterface,
@@ -24,6 +26,18 @@ from demisto_sdk.commands.prepare_content.preparers.marketplace_incident_to_aler
 )
 
 GIT_ROOT = git_path()
+
+
+@pytest.fixture(autouse=True)
+def setup(mocker, repo: Repo):
+    """Auto-used fixture for setup before every test run"""
+    mocker.patch(
+        "demisto_sdk.commands.content_graph.objects.base_content.get_content_path",
+        return_value=Path(repo.path),
+    )
+    mocker.patch.object(ContentGraphInterface, "repo_path", Path(repo.path))
+    mocker.patch.object(neo4j_service, "REPO_PATH", Path(repo.path))
+    stop_content_graph()
 
 
 @pytest.fixture

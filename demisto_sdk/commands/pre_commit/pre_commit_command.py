@@ -304,6 +304,5 @@ def preprocess_files(
 
     # Convert to absolute paths
     return {
-        file if file.is_absolute() else CONTENT_PATH / file
-        for file in files_to_run
+        file if file.is_absolute() else CONTENT_PATH / file for file in files_to_run
     }

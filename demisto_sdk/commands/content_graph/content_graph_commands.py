@@ -89,7 +89,7 @@ def update_content_graph(
                 create_content_graph(
                     content_graph_interface, marketplace, dependencies, output_path
                 )
-        return
+                return
     content_graph_interface.import_graph(imported_path)
     try:
         # Test that the imported graph is valid by marshaling it

@@ -530,11 +530,12 @@ class ItemDetacher:
         return detach_files_list
 
     def is_valid_file_for_detach(self, file_path: str) -> bool:
-        path = Path(file_path)
-        return path.suffix in {".yml", "json"} and any(
-            content_type_folder in path.parts
-            for content_type_folder in self.VALID_FILES_FOR_DETACH
-        )
+        for file in self.VALID_FILES_FOR_DETACH:
+            if file in file_path and (
+                file_path.endswith("yml") or file_path.endswith("json")
+            ):
+                return True
+        return False
 
     def find_item_type_to_detach(self, file_path: Union[str, Path]) -> str:
         return (

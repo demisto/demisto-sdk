@@ -288,7 +288,7 @@ class LayoutsContainerValidator(LayoutBaseValidator):
 
         for key, val in self.current_file.items():
             if isinstance(val, dict):
-                for tab in val.get("tabs", []):
+                for tab in val.get("tabs", []) or []:
                     if "type" in tab.keys() and tab.get("type") in invalid_tabs:
                         invalid_types_contained.append(tab.get("type"))
                     sections = tab.get("sections", [])

@@ -64,7 +64,7 @@ class IntegrationScriptUnifier(Unifier):
         image_prefix: str = DEFAULT_IMAGE_PREFIX,
         **kwargs,
     ):
-        logger.info(f"Unifying package: {path}")
+        logger.debug(f"Unifying {path}")
         if path.parent.name in {"Integrations", "Scripts"}:
             return data
         package_path = path.parent

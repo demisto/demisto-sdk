@@ -8,12 +8,17 @@ class FailedUploadException(RuntimeError):
         path: Path,
         response_body: dict,
         status_code: Optional[int] = None,
+        additional_info: Optional[str] = None,
     ) -> None:
-        if status_code is not None:
-            error = f"Failed uploading {path}, {status_code=}, {response_body=}"
-        else:
-            error = f"Failed uploading {path}, {response_body=}"
-        super().__init__(error)
+        super().__init__(
+            "\n".join(
+                (
+                    additional_info or "",
+                    f"{status_code=}" if status_code else "",
+                    f"{response_body=}" if response_body else "",
+                )
+            )
+        )
 
 
 class FailedUploadMultipleException(RuntimeError):
@@ -22,7 +27,4 @@ class FailedUploadMultipleException(RuntimeError):
         super().__init__(self.failures)
 
     def __str__(self) -> str:
-        return "\n".join(
-            "Failed uploading multiple content items:",
-            *[str(failure) for failure in self.failures],
-        )
+        return "\n".join(str(failure) for failure in self.failures)

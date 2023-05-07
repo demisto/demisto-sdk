@@ -5,6 +5,7 @@ from tempfile import TemporaryDirectory
 from typing import TYPE_CHECKING, Any, Generator, List, Optional
 
 import demisto_client
+from demisto_client.demisto_api.rest import ApiException
 from packaging.version import Version, parse
 from pydantic import BaseModel, Field, validator
 
@@ -67,6 +68,10 @@ from demisto_sdk.commands.content_graph.objects.wizard import Wizard
 from demisto_sdk.commands.content_graph.objects.xdrc_template import XDRCTemplate
 from demisto_sdk.commands.content_graph.objects.xsiam_dashboard import XSIAMDashboard
 from demisto_sdk.commands.content_graph.objects.xsiam_report import XSIAMReport
+from demisto_sdk.commands.upload.tools import (
+    parse_error_response,
+    parse_upload_response,
+)
 
 if TYPE_CHECKING:
     from demisto_sdk.commands.content_graph.objects.relationship import RelationshipData
@@ -74,6 +79,7 @@ if TYPE_CHECKING:
 json = JSON_Handler()
 
 MINIMAL_UPLOAD_SUPPORTED_VERSION = Version("6.5.0")
+MINIMAL_ALLOWED_SKIP_VALIDATION_VERSION = Version("6.6.0")
 
 
 def upload_zipped_pack(
@@ -81,7 +87,6 @@ def upload_zipped_pack(
     client: demisto_client,
     skip_validations: bool,
     target_demisto_version: Version,
-    marketplace: MarketplaceVersions,  # TODO
 ) -> bool:
     """
     Used to upload an existing zip file
@@ -93,15 +98,22 @@ def upload_zipped_pack(
         )
     server_kwargs = {"skip_verify": "true"}
 
-    if skip_validations and target_demisto_version >= Version("6.6.0"):
+    if (
+        skip_validations
+        and target_demisto_version >= MINIMAL_ALLOWED_SKIP_VALIDATION_VERSION
+    ):
         server_kwargs["skip_validation"] = "true"
 
-    data, status_code, _ = client.upload_content_packs(
+    response = client.upload_content_packs(
         file=str(path),
         **server_kwargs,
     )
-    if status_code > 299:
-        raise FailedUploadException(Path(path), data, status_code)
+    if response is None:  # uploaded successfully
+        return True
+
+    parse_upload_response(
+        response, path=path, content_type=ContentType.PACK
+    )  # raises on error
     return True
 
 
@@ -371,13 +383,12 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: i
 
         with TemporaryDirectory() as dir:
             dir_path = Path(dir)
-            self.dump(dir_path, marketplace=marketplace)
+            self.dump(dir_path, marketplace=marketplace, announce_output_path=False)
             return upload_zipped_pack(
                 path=dir_path,
                 client=client,
                 target_demisto_version=target_demisto_version,
                 skip_validations=skip_validations,
-                marketplace=marketplace,
             )
 
     def _upload_item_by_item(
@@ -390,7 +401,7 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: i
         logger.debug(
             f"Uploading pack {self.object_id} element-by-element, as -z was not specified"
         )
-        failures = []
+        failures: List[FailedUploadException] = []
         for item in self.content_items:
             try:
                 logger.debug(
@@ -407,6 +418,15 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: i
                 logger.warning(
                     f"Not uploading pack {self.object_id}: {item.content_type} {item.object_id} as it was not indivudally uploaded"
                 )
+            except ApiException as e:
+                failures.append(
+                    FailedUploadException(
+                        item.path,
+                        response_body={},
+                        additional_info=parse_error_response(e),
+                    )
+                )
+
             except FailedUploadException as e:
                 failures.append(e)
 

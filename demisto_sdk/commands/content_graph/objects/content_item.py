@@ -1,4 +1,3 @@
-import contextlib
 from abc import abstractmethod
 from pathlib import Path
 from tempfile import TemporaryDirectory
@@ -12,7 +11,7 @@ from demisto_sdk.commands.common.handlers import (
     XSOAR_Handler,
     YAML_Handler,
 )
-from demisto_sdk.commands.content_graph.objects.exceptions import FailedUploadException
+from demisto_sdk.commands.upload.tools import parse_upload_response
 
 if TYPE_CHECKING:
     from demisto_sdk.commands.content_graph.objects.pack import Pack
@@ -247,33 +246,9 @@ class ContentItem(BaseContent):
                 dir_path, marketplace=marketplace, announce_output_path=False
             )  # announce_output_path=False so we don't print on every call
             response = upload_method(dir_path / self.normalize_name)
-
-            if (
-                isinstance(response, dict)
-                and len(response) == 2
-                and "error" in response
-            ):  # response format: {"response": {...}, "error": <empty string if ok>}
-                if response["error"]:
-                    raise FailedUploadException(path=self.path, response_body=response)
-            elif (isinstance(response, tuple) and len(response)) == 3:
-                (
-                    data,
-                    status_code,
-                    _,
-                ) = response  # third output is headers, not used here
-                if status_code > 299:
-                    raise FailedUploadException(
-                        path=self.path,
-                        response_body=data,
-                        status_code=status_code,
-                    )
-            else:
-                response_str = "(could not convert response to string)"
-                with contextlib.suppress(Exception):
-                    response_str = str(response)
-                logger.debug(
-                    f"got response of type {type(response)} when uploading {self.content_type} {self.path}: {response_str}"
-                )
+            parse_upload_response(
+                response, path=self.path, content_type=self.content_type
+            )  # raises on error
 
     def upload(
         self,

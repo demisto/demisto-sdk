@@ -1,5 +1,4 @@
 import ast
-import contextlib
 import glob
 import itertools
 import os
@@ -31,11 +30,14 @@ from demisto_sdk.commands.content_graph.objects.base_content import (
 )
 from demisto_sdk.commands.content_graph.objects.content_item import (
     ContentItem,
-    FailedUploadException,
     IncompatibleUploadVersionException,
     NotUploadableException,
 )
+from demisto_sdk.commands.content_graph.objects.exceptions import (
+    FailedUploadException,
+)
 from demisto_sdk.commands.content_graph.objects.pack import Pack, upload_zipped_pack
+from demisto_sdk.commands.upload.tools import parse_error_response
 
 json = JSON_Handler()
 
@@ -130,7 +132,6 @@ class Uploader:
                 path=path,
                 client=self.client,
                 target_demisto_version=Version(str(self.demisto_version)),
-                marketplace=self.marketplace,
                 skip_validations=True,  # TODO
             ):
                 self._successfully_uploaded_zipped_packs.extend(pack_names)
@@ -258,10 +259,9 @@ class Uploader:
             return False
 
         except ApiException as e:
-            message = f"unknown: {e}"
-            with contextlib.suppress(Exception):
-                message = parse_error_response(e)
-            self._failed_upload_content_items.append((content_item, message))
+            self._failed_upload_content_items.append(
+                (content_item, parse_error_response(e))
+            )
             return False
 
         except (FailedUploadException, NotUploadableException, Exception) as e:
@@ -402,40 +402,6 @@ class Uploader:
                 tablefmt="fancy_grid",
             )
             logger.info(f"[red]FAILED UPLOADS:\n{failed_upload_str}\n[/red]")
-
-
-def parse_error_response(error: ApiException) -> str:
-    """
-    Parses error message from exception raised in call to client to upload a file
-
-    error (ApiException): The exception which was raised in call in to client
-    """
-    if isinstance(error, KeyboardInterrupt):
-        return "Aborted due to keyboard interrupt."
-
-    if hasattr(error, "reason"):
-        reason = str(error.reason)
-        if "[SSL: CERTIFICATE_VERIFY_FAILED]" in reason:
-            return (
-                "[SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: self signed certificate.\n"
-                "Run the command with the --insecure flag."
-            )
-
-        elif "Failed to establish a new connection:" in reason:
-            return (
-                "Failed to establish a new connection: Connection refused.\n"
-                "Check the BASE url configuration."
-            )
-
-        elif reason in ("Bad Request", "Forbidden"):
-            error_body = json.loads(error.body)
-            message = error_body.get("error", "")
-
-            if error_body.get("status") == 403:
-                message += "\nTry checking your API key configuration."
-            return message
-        return reason
-    return str(error)
 
 
 class ConfigFileParser:
@@ -610,9 +576,7 @@ def parse_uploaded_successfully(
 ) -> Iterable[ContentItem]:
     # packs uploaded unzipped are uploaded item by item, we have to extract the item details here
     return (
-        iter(content_item.content_items)
+        iter(content_item.content_items)  # type:ignore[return-value]
         if (isinstance(content_item, Pack) and not zipped)
-        else iter(
-            content_item,
-        )
+        else (content_item,)
     )

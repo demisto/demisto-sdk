@@ -1,3 +1,4 @@
+import contextlib
 from abc import abstractmethod
 from pathlib import Path
 from tempfile import TemporaryDirectory
@@ -237,12 +238,15 @@ class ContentItem(BaseContent):
             dir_path = Path(f)
             self.dump(dir_path, marketplace=marketplace)
             response = upload_method(dir_path / self.normalize_name)
-            if all(
-                (isinstance(response, dict), len(response) == 2, "error" in response)
+
+            if (
+                isinstance(response, dict)
+                and len(response) == 2
+                and "error" in response
             ):  # response format: {"response": {...}, "error": <empty string if ok>}
                 if response["error"]:
                     raise FailedUploadException(path=self.path, response_body=response)
-            elif len(response) == 3:
+            elif (isinstance(response, tuple) and len(response)) == 3:
                 (
                     data,
                     status_code,
@@ -255,9 +259,11 @@ class ContentItem(BaseContent):
                         status_code=status_code,
                     )
             else:
-                raise RuntimeError(
-                    f"Unexpected response structure when uploading {self.content_type} {self.path}",
-                    response,
+                response_str = "(could not convert response to string)"
+                with contextlib.suppress(Exception):
+                    response_str = str(response)
+                logger.debug(
+                    f"got response of type {type(response)} when uploading {self.content_type} {self.path}: {response_str}"
                 )
 
     def upload(

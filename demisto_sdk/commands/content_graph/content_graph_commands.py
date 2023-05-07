@@ -74,7 +74,8 @@ def update_content_graph(
             content_graph_interface, marketplace, dependencies, output_path
         )
         return
-
+    
+    builder = ContentGraphBuilder(content_graph_interface)
     if not use_current:
         content_graph_interface.clean_import_dir()
         if not imported_path:
@@ -94,6 +95,8 @@ def update_content_graph(
     try:
         # Test that the imported graph is valid by marshaling it
         content_graph_interface.marshal_graph(MarketplaceVersions.XSOAR)
+        # we need to clear cache after validating the graph
+        content_graph_interface.clear_cache()
     except ValidationError as e:
         logger.warning(
             "Failed to marshal the graph, probably the schema has changed. Will create a new graph"
@@ -104,7 +107,6 @@ def update_content_graph(
         )
         return
 
-    builder = ContentGraphBuilder(content_graph_interface)
     if use_git and (commit := content_graph_interface.commit):
         packs_to_update.extend(GitUtil().get_all_changed_pack_ids(commit))
 

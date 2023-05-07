@@ -404,8 +404,8 @@ def get_marketplace_to_core_packs() -> Dict[MarketplaceVersions, Set[str]]:
     for mp in MarketplaceVersions:
         # for backwards compatibility mp_core_packs can be a list, but we expect a dict.
         try:
-            mp_core_packs: Union[list, dict] = get_file(
-                file_path=MARKETPLACE_TO_CORE_PACKS_FILE[mp], type_of_file="json"
+            mp_core_packs: Union[list, dict] = get_json(
+                MARKETPLACE_TO_CORE_PACKS_FILE[mp],
             )
         except FileNotFoundError:
             mp_core_packs = get_remote_file(

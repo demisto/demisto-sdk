@@ -2,6 +2,7 @@ import logging
 import shutil
 import tempfile
 from os.path import join
+from pathlib import Path
 
 import demisto_client
 import pytest
@@ -56,7 +57,7 @@ def test_integration_upload_pack_positive(demisto_client_mock, mocker):
     - Ensure success upload message is printed.
     """
     logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
-    pack_path = join(
+    pack_path = Path(
         DEMISTO_SDK_PATH, "tests/test_files/content_repo_example/Packs/FeedAzure"
     )
     for content_class in (
@@ -64,12 +65,11 @@ def test_integration_upload_pack_positive(demisto_client_mock, mocker):
         Integration,
         Playbook,
         Script,
-        Playbook,
     ):
         mock_upload_method(mocker, content_class)
 
     runner = CliRunner(mix_stderr=False)
-    result = runner.invoke(main, [UPLOAD_CMD, "-i", pack_path, "--insecure"])
+    result = runner.invoke(main, [UPLOAD_CMD, "-i", str(pack_path), "--insecure"])
     assert result.exit_code == 0
 
     assert all(

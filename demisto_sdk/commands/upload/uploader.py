@@ -15,6 +15,7 @@ from tabulate import tabulate
 from demisto_sdk.commands.common.constants import (
     CONTENT_ENTITIES_DIRS,
     INTEGRATIONS_DIR,
+    PLAYBOOKS_DIR,
     SCRIPTS_DIR,
     FileType,
     MarketplaceVersions,
@@ -518,8 +519,7 @@ class ItemDetacher:
             if os.path.isfile(file_path) and self.is_valid_file_for_detach(file_path):
                 file_type = self.find_item_type_to_detach(file_path)
                 file_data = get_file(file_path, file_type)
-                file_id = file_data.get("id")
-                if file_id:
+                if file_id := file_data.get("id"):
                     detach_files_list.append(
                         {
                             "file_id": file_id,
@@ -530,20 +530,24 @@ class ItemDetacher:
         return detach_files_list
 
     def is_valid_file_for_detach(self, file_path: str) -> bool:
-        for file in self.VALID_FILES_FOR_DETACH:
-            if file in file_path and (
-                file_path.endswith("yml") or file_path.endswith("json")
-            ):
-                return True
-        return False
+        path = Path(file_path)
+        return path.suffix in {".yml", "json"} and any(
+            content_type_folder in path.parts
+            for content_type_folder in self.VALID_FILES_FOR_DETACH
+        )
 
-    def find_item_type_to_detach(self, file_path) -> str:
-        return "yml" if "Playbooks" in file_path or "Scripts" in file_path else "json"
+    def find_item_type_to_detach(self, file_path: Union[str, Path]) -> str:
+        return (
+            "yml"
+            if len({PLAYBOOKS_DIR, SCRIPTS_DIR}.intersection((Path(file_path).parts)))
+            == 1
+            else "json"
+        )
 
     def find_item_id_to_detach(self):
         file_type = self.find_item_type_to_detach(self.file_path)
         file_data = get_file(self.file_path, file_type)
-        return file_data.get("id")  # TODO get_id
+        return file_data.get("id")
 
     def detach(self, upload_file: bool = False) -> List[str]:
         detach_files_list: list = []
@@ -617,10 +621,8 @@ class ItemReattacher:
             all_files: dict = self.download_all_detach_supported_items()
             for item_type, item_list in all_files.items():
                 for item in item_list:
-                    if (
-                        not item.get("detached", "")
-                        or item.get("detached", "") == "false"
-                    ):
+                    detached = item.get("detached", "")
+                    if not detached or detached == "false":
                         continue
                     item_id = item.get("id")
                     if item_id and item_id not in detached_files_ids:

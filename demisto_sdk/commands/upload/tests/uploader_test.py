@@ -57,8 +57,7 @@ json = JSON_Handler()
 def mock_upload_method(mocker: Any, class_: ContentItem):
     return mocker.patch.object(
         class_,
-        "_client_upload_method",
-        return_value=lambda path: ({}, 200, "Headers"),
+        "upload",
     )
 
 

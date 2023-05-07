@@ -508,6 +508,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         except ValidationError as e:
             logger.warning("Failed to import the content graph")
             logger.debug(f"Validation Error: {e}")
+            self._id_to_obj = {}
             return False
         return True
 

@@ -105,13 +105,14 @@ class NoModelException(Exception):
 class Neo4jContentGraphInterface(ContentGraphInterface):
 
     # this is used to save cache of packs and integrations which queried
-    _id_to_obj: Dict[int, BaseContent] = {}
     _import_handler = Neo4jImportHandler()
 
     def __init__(
         self,
         should_update: bool = False,
     ) -> None:
+        self._id_to_obj: Dict[int, BaseContent] = {}
+
         if not neo4j_service.is_alive():
             neo4j_service.start()
         self._rels_to_preserve: List[Dict[str, Any]] = []  # used for graph updates
@@ -168,7 +169,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             nodes_to.extend(res.nodes_to)
         self._add_nodes_to_mapping(nodes_to)
         for id, res in result.items():
-            obj = Neo4jContentGraphInterface._id_to_obj[id]
+            obj = self._id_to_obj[id]
             self._add_relationships(obj, res.relationships, res.nodes_to)
             if isinstance(obj, Pack) and not obj.content_items:
                 packs.append(obj)
@@ -217,7 +218,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
                     relationship_type=rel.type,
                     source_id=rel.start_node.id,
                     target_id=rel.end_node.id,
-                    content_item_to=Neo4jContentGraphInterface._id_to_obj[node_to.id],
+                    content_item_to=self._id_to_obj[node_to.id],
                     is_direct=True,
                     **rel,
                 ),
@@ -247,9 +248,9 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         self._add_nodes_to_mapping(nodes_to)
 
         for pack_id, pack_depends_on_relationship in mandatorily_dependencies.items():
-            obj = Neo4jContentGraphInterface._id_to_obj[pack_id]
+            obj = self._id_to_obj[pack_id]
             for node in pack_depends_on_relationship.nodes_to:
-                target = Neo4jContentGraphInterface._id_to_obj[node.id]
+                target = self._id_to_obj[node.id]
                 obj.add_relationship(
                     RelationshipType.DEPENDS_ON,
                     RelationshipData(
@@ -523,7 +524,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
     def clean_graph(self):
         with self.driver.session() as session:
             session.execute_write(delete_all_graph_nodes)
-        Neo4jContentGraphInterface._id_to_obj = {}
+        self._id_to_obj = {}
         super().clean_graph()
 
     def search(

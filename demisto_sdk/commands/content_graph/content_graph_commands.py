@@ -91,17 +91,8 @@ def update_content_graph(
                     content_graph_interface, marketplace, dependencies, output_path
                 )
                 return
-    content_graph_interface.import_graph(imported_path)
-    try:
-        # Test that the imported graph is valid by marshaling it
-        content_graph_interface.marshal_graph(MarketplaceVersions.XSOAR)
-        # we need to clear cache after validating the graph
-        content_graph_interface.clear_cache()
-    except ValidationError as e:
-        logger.warning(
-            "Failed to marshal the graph, probably the schema has changed. Will create a new graph"
-        )
-        logger.debug(f"Validation Error: {e}")
+    if not content_graph_interface.import_graph(imported_path):
+        # if the import failed, we need to create a new graph
         create_content_graph(
             content_graph_interface, marketplace, dependencies, output_path
         )

@@ -503,14 +503,14 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         try:
             # Test that the imported graph is valid by marshaling it
             self.marshal_graph(MarketplaceVersions.XSOAR)
-            # clear the cache after validating the graph
-            self._id_to_obj = {}
+            result = True
         except ValidationError as e:
             logger.warning("Failed to import the content graph")
             logger.debug(f"Validation Error: {e}")
-            self._id_to_obj = {}
-            return False
-        return True
+            result = False
+        # clear cache after loading the graph
+        self._id_to_obj = {}
+        return result
 
     def export_graph(self, output_path: Optional[Path] = None) -> None:
         self.clean_import_dir()

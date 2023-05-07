@@ -1,5 +1,6 @@
 from abc import ABC
-from typing import Union
+from pathlib import Path
+from typing import List
 
 import demisto_client
 from packaging.version import Version
@@ -21,9 +22,7 @@ class ContentItemXSIAM(ContentItem, ABC):
     ) -> None:
         dir.mkdir(exist_ok=True, parents=True)
 
-        output_paths = []
-        data: Union[list, dict] = self.prepare_for_upload(marketplace)
-
+        output_paths: List[Path] = []
         if Version(self.fromversion) >= Version("6.10.0"):
             # export XSIAM 1.3 items only with the external prefix
             output_paths.append(dir / f"external-{self.normalize_name}")
@@ -36,9 +35,18 @@ class ContentItemXSIAM(ContentItem, ABC):
             output_paths.append(dir / f"external-{self.normalize_name}")
             output_paths.append(dir / self.normalize_name)
 
+        data = (
+            self.prepare_for_upload(
+                marketplace, announce_output_path=announce_output_path
+            ),
+        )
+
         for file in output_paths:
             with open(file, "w") as f:
-                self.handler.dump(data, f, announce_output_path=announce_output_path)
+                self.handler.dump(
+                    data,
+                    f,
+                )
 
     def _upload(
         self,

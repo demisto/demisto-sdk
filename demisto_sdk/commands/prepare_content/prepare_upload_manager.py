@@ -69,6 +69,11 @@ class PrepareUploadManager:
         with output.open("w") as f:
             content_item.handler.dump(data, f)
 
+        log_message = f"[green]Output saved in: {str(output.absolute())}[/green]"
+
         if announce_output_path:
-            logger.info(f"[green]Output saved in: {str(output.absolute())}[/green]")
+            logger.info(log_message)
+        else:
+            logger.debug(log_message)
+
         return output

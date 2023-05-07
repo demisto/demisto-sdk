@@ -19,5 +19,8 @@ class GenericField(ContentItem, content_type=ContentType.GENERIC_FIELD):  # type
         marketplace: MarketplaceVersions,
         announce_output_path: bool = True,
     ) -> None:
-        dir = dir / self.path.parent.name
-        super().dump(dir, marketplace, announce_output_path=announce_output_path)
+        super().dump(
+            dir=dir / self.path.parent.name,
+            marketplace=marketplace,
+            announce_output_path=announce_output_path,
+        )

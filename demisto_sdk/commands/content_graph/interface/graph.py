@@ -132,10 +132,6 @@ class ContentGraphInterface(ABC):
         ...
 
     @abstractmethod
-    def clear_cache(self):
-        ...
-
-    @abstractmethod
     def search(
         self,
         marketplace: MarketplaceVersions = None,

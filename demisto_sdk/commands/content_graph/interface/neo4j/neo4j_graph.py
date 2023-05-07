@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional, Set, Tuple
 
 from neo4j import Driver, GraphDatabase, Session, graph
+from pydantic import ValidationError
 
 import demisto_sdk.commands.content_graph.neo4j_service as neo4j_service
 from demisto_sdk.commands.common.constants import MarketplaceVersions
@@ -471,7 +472,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         with self.driver.session() as session:
             session.execute_write(remove_server_nodes)
 
-    def import_graph(self, imported_path: Optional[Path] = None) -> None:
+    def import_graph(self, imported_path: Optional[Path] = None) -> bool:
         """Imports GraphML files to neo4j, by:
         1. Preparing the GraphML files for import
         2. Dropping the constraints (we temporarily allow creating duplicate nodes from different repos)
@@ -483,6 +484,9 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         Args:
             external_import_paths (List[Path]): A list of external repositories' import paths.
             imported_path (Path): The path to import the graph from.
+            
+        Returns:
+            bool: Whether the import was successful or not
         """
         logger.info("Importing graph from GraphML files...")
         self._import_handler.extract_files_from_path(imported_path)
@@ -496,6 +500,17 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
                 session.execute_write(merge_duplicate_content_items)
                 session.execute_write(create_constraints)
                 session.execute_write(remove_empty_properties)
+        try:
+            # Test that the imported graph is valid by marshaling it
+            self.marshal_graph(MarketplaceVersions.XSOAR)
+            # clear the cache after validating the graph
+            self._id_to_obj = {}
+        except ValidationError as e:
+            logger.warning("Failed to import the content graph")
+            logger.debug(f"Validation Error: {e}")
+            return False
+        return True
+
 
     def export_graph(self, output_path: Optional[Path] = None) -> None:
         self.clean_import_dir()
@@ -505,13 +520,10 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         if output_path:
             self.zip_import_dir(output_path)
 
-    def clear_cache(self):
-        Neo4jContentGraphInterface._id_to_obj = {}
-
     def clean_graph(self):
         with self.driver.session() as session:
             session.execute_write(delete_all_graph_nodes)
-        self.clear_cache()
+        Neo4jContentGraphInterface._id_to_obj = {}
         super().clean_graph()
 
     def search(

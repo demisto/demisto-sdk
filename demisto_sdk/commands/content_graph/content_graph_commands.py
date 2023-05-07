@@ -2,6 +2,7 @@ import os
 from pathlib import Path
 from tempfile import NamedTemporaryFile
 from typing import List, Optional
+
 from pydantic import ValidationError
 
 import demisto_sdk.commands.content_graph.neo4j_service as neo4j_service
@@ -85,7 +86,9 @@ def update_content_graph(
     try:
         content_graph_interface.marshal_graph(MarketplaceVersions.XSOAR)
     except ValidationError as e:
-        logger.warning("Failed to marshal the graph, probably the schema has changed. Will create a new graph")
+        logger.warning(
+            "Failed to marshal the graph, probably the schema has changed. Will create a new graph"
+        )
         logger.debug(f"Validation Error: {e}")
         create_content_graph(
             content_graph_interface, marketplace, dependencies, output_path

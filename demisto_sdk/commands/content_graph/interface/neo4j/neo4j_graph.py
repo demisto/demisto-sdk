@@ -505,10 +505,13 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         if output_path:
             self.zip_import_dir(output_path)
 
+    def clear_cache(self):
+        Neo4jContentGraphInterface._id_to_obj = {}
+
     def clean_graph(self):
         with self.driver.session() as session:
             session.execute_write(delete_all_graph_nodes)
-        Neo4jContentGraphInterface._id_to_obj = {}
+        self.clear_cache()
         super().clean_graph()
 
     def search(

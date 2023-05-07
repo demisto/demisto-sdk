@@ -40,32 +40,6 @@ from demisto_sdk.commands.content_graph.objects.pack import Pack, upload_zipped_
 json = JSON_Handler()
 
 
-# These are the class names of the objects in demisto_sdk.commands.common.content.objects
-UPLOAD_SUPPORTED_ENTITIES = [
-    # NOTE: THIS IS NO LONGER IN USE OR MAINAINED. SEE GRAPH OBJECTS INSTEAD
-    FileType.INTEGRATION,
-    FileType.BETA_INTEGRATION,
-    FileType.SCRIPT,
-    FileType.TEST_SCRIPT,
-    FileType.PLAYBOOK,
-    FileType.TEST_PLAYBOOK,
-    FileType.OLD_CLASSIFIER,  # TODO check
-    FileType.CLASSIFIER,
-    FileType.MAPPER,
-    FileType.INCIDENT_TYPE,
-    FileType.INCIDENT_FIELD,
-    FileType.REPUTATION,
-    FileType.INDICATOR_FIELD,
-    FileType.WIDGET,
-    FileType.REPORT,
-    FileType.DASHBOARD,
-    FileType.LAYOUT,
-    FileType.LAYOUTS_CONTAINER,
-    FileType.LISTS,
-    FileType.JOB,
-]
-
-
 SUCCESS_RETURN_CODE = 0
 ERROR_RETURN_CODE = 1
 ABORTED_RETURN_CODE = 2
@@ -262,15 +236,11 @@ class Uploader:
             )
 
             # upon reaching this line, the upload is surely successful
-            uploaded_succesfully = (
-                iter(content_item.content_items)
-                if (isinstance(content_item, Pack) and not zipped)  # TODO not zipped?
-                # packs uploaded unzipped are uploaded item by item, we have to extract the item details here
-                else (content_item,)
+            uploaded_successfully = parse_uploaded_successfully(
+                content_item=content_item, zipped=zipped
             )
-
-            self._successfully_uploaded_content_items.extend(uploaded_succesfully)
-            for item_uploaded_successfully in uploaded_succesfully:
+            self._successfully_uploaded_content_items.extend(uploaded_successfully)
+            for item_uploaded_successfully in uploaded_successfully:
                 logger.debug(
                     f"Uploaded {item_uploaded_successfully.content_type} {item_uploaded_successfully.normalize_name} successfully"
                 )
@@ -632,4 +602,17 @@ def is_uploadable_dir(path: Path) -> bool:
     return path.name in CONTENT_ENTITIES_DIRS or (
         path.name in {INTEGRATIONS_DIR, SCRIPTS_DIR}
         and path.parent.name in CONTENT_ENTITIES_DIRS
+    )
+
+
+def parse_uploaded_successfully(
+    content_item: Union[Pack, ContentItem], zipped: bool
+) -> Iterable[ContentItem]:
+    # packs uploaded unzipped are uploaded item by item, we have to extract the item details here
+    return (
+        iter(content_item.content_items)
+        if (isinstance(content_item, Pack) and not zipped)
+        else iter(
+            content_item,
+        )
     )

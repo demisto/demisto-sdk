@@ -17,6 +17,7 @@ class ContentItemXSIAM(ContentItem, ABC):
         self,
         dir: DirectoryPath,
         marketplace: MarketplaceVersions,
+        announce_output_path: bool = True,
     ) -> None:
         dir.mkdir(exist_ok=True, parents=True)
 
@@ -37,7 +38,7 @@ class ContentItemXSIAM(ContentItem, ABC):
 
         for file in output_paths:
             with open(file, "w") as f:
-                self.handler.dump(data, f)
+                self.handler.dump(data, f, announce_output_path=announce_output_path)
 
     def _upload(
         self,

@@ -292,7 +292,12 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: i
             except Exception as e:
                 logger.error(f"Failed dumping readme: {e}")
 
-    def dump(self, path: Path, marketplace: MarketplaceVersions):
+    def dump(
+        self,
+        path: Path,
+        marketplace: MarketplaceVersions,
+        announce_output_path: bool = True,
+    ):
         if not self.path.exists():
             logger.warning(f"Pack {self.name} does not exist in {self.path}")
             return
@@ -305,7 +310,11 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: i
                     and content_item.is_test
                 ):
                     folder = ContentType.TEST_PLAYBOOK.as_folder
-                content_item.dump(path / folder, marketplace)
+                content_item.dump(
+                    dir=path / folder,
+                    marketplace=marketplace,
+                    announce_output_path=announce_output_path,
+                )
             self.dump_metadata(path / "metadata.json", marketplace)
             self.dump_readme(path / "README.md", marketplace)
             shutil.copy(

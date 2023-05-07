@@ -170,6 +170,7 @@ class BaseContent(ABC, BaseModel, metaclass=BaseContentMetaclass):
         self,
         path: DirectoryPath,
         marketplace: MarketplaceVersions,
+        announce_output_path: bool = True,  # False when using Upload
     ) -> None:
         pass
 

@@ -175,10 +175,9 @@ configuration:
   name: tlp_color
   options:
   - RED
-  - AMBER+STRICT
   - AMBER
   - GREEN
-  - CLEAR
+  - WHITE
   required: false
   type: 15
 description: Azure.CloudIPs Feed Integration.

@@ -644,7 +644,6 @@ PARSING_RULES_PACKAGE_REGEX = rf"{PARSING_RULES_DIR_REGEX}\/([^\\/]+)"
 PARSING_RULE_YML_REGEX = rf"{PARSING_RULES_PACKAGE_REGEX}/(?:parsingrule-)?([^/]+)\.yml"
 PARSING_RULE_RULES_REGEX = rf"{PARSING_RULES_PACKAGE_REGEX}\/([^/]+)\.xif"
 
-
 # Modeling Rules
 MODELING_RULE_DIR_REGEX = rf"{PACK_DIR_REGEX}\/{MODELING_RULES_DIR}"
 MODELING_RULE_PACKAGE_REGEX = rf"{MODELING_RULE_DIR_REGEX}\/([^\\/]+)"
@@ -1200,7 +1199,7 @@ BETA_INTEGRATION_DISCLAIMER = (
 INTEGRATION_CATEGORIES = [
     "Analytics & SIEM",
     "Utilities",
-    "Messaging and Conferencing",
+    "Messaging",
     "Endpoint",
     "Network Security",
     "Vulnerability Management",
@@ -1208,12 +1207,12 @@ INTEGRATION_CATEGORIES = [
     "Forensics & Malware Analysis",
     "IT Services",
     "Data Enrichment & Threat Intelligence",
+    "Authentication",
     "Database",
-    "Deception & Breach Simulation",
-    "Email",
+    "Deception",
+    "Email Gateway",
     "Identity and Access Management",
-    "Cloud Services",
-    "Authentication & Identity Management",
+    "File Integrity Management",
 ]
 SCHEMA_TO_REGEX = {
     "integration": YML_INTEGRATION_REGEXES,
@@ -1483,13 +1482,16 @@ FEED_REQUIRED_PARAMS = [
         "name": "tlp_color",
         "must_equal": {
             "display": "Traffic Light Protocol Color",
-            "options": ["RED", "AMBER+STRICT", "AMBER", "GREEN", "CLEAR"],
             "required": False,
             "type": 15,
         },
         "must_contain": {
             "additionalinfo": "The Traffic Light Protocol (TLP) designation to apply to indicators fetched from the "
-            "feed"
+            "feed",
+            "options": [
+                ["RED", "AMBER", "GREEN", "WHITE"],
+                ["RED", "AMBER+STRICT", "AMBER", "GREEN", "CLEAR"],
+            ],
         },
     },
 ]
@@ -1699,7 +1701,6 @@ MARKETPLACE_TO_CORE_PACKS_FILE: Dict[MarketplaceVersions, str] = {
     MarketplaceVersions.MarketplaceV2: "Tests/Marketplace/core_packs_mpv2_list.json",
     MarketplaceVersions.XPANSE: "Tests/Marketplace/core_packs_xpanse_list.json",
 }
-
 
 INDICATOR_FIELD_TYPE_TO_MIN_VERSION = {
     "html": LooseVersion("6.1.0"),

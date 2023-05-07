@@ -1386,12 +1386,13 @@ class IntegrationValidator(ContentEntityValidator):
             param_details = params.get(required_param.get("name"))  # type: ignore
             equal_key_values: Dict = required_param.get("must_equal", dict())  # type: ignore
             contained_key_values: Dict = required_param.get("must_contain", dict())  # type: ignore
+
             if param_details:
                 is_valid = all(
                     k in param_details and param_details[k] == v
                     for k, v in equal_key_values.items()
                 ) and all(
-                    k in param_details and v in param_details[k]
+                    k in param_details and param_details[k] in v
                     for k, v in contained_key_values.items()
                 )
             if not is_valid:

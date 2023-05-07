@@ -25,6 +25,7 @@ class IncidentField(ContentItem, content_type=ContentType.INCIDENT_FIELD):  # ty
     ) -> None:
         with NamedTemporaryFile(suffix=".json", mode="r+") as file:
             json.dump(
+                # Wrapping the data as the server expects to receive it
                 {"incidentFields": [self.prepare_for_upload(marketplace=marketplace)]},
                 file,
             )

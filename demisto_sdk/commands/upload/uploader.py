@@ -15,7 +15,6 @@ from tabulate import tabulate
 from demisto_sdk.commands.common.constants import (
     CONTENT_ENTITIES_DIRS,
     INTEGRATIONS_DIR,
-    PLAYBOOKS_DIR,
     SCRIPTS_DIR,
     FileType,
     MarketplaceVersions,
@@ -519,7 +518,8 @@ class ItemDetacher:
             if os.path.isfile(file_path) and self.is_valid_file_for_detach(file_path):
                 file_type = self.find_item_type_to_detach(file_path)
                 file_data = get_file(file_path, file_type)
-                if file_id := file_data.get("id"):
+                file_id = file_data.get("id", "")
+                if file_id:
                     detach_files_list.append(
                         {
                             "file_id": file_id,
@@ -537,13 +537,8 @@ class ItemDetacher:
                 return True
         return False
 
-    def find_item_type_to_detach(self, file_path: Union[str, Path]) -> str:
-        return (
-            "yml"
-            if len({PLAYBOOKS_DIR, SCRIPTS_DIR}.intersection((Path(file_path).parts)))
-            == 1
-            else "json"
-        )
+    def find_item_type_to_detach(self, file_path) -> str:
+        return "yml" if "Playbooks" in file_path or "Scripts" in file_path else "json"
 
     def find_item_id_to_detach(self):
         file_type = self.find_item_type_to_detach(self.file_path)

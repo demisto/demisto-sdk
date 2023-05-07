@@ -3,6 +3,7 @@ from pathlib import Path
 from typing import Optional, Union
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.content_graph.interface.neo4j.neo4j_graph import (
     Neo4jContentGraphInterface,
 )
@@ -68,4 +69,5 @@ class PrepareUploadManager:
         with output.open("w") as f:
             content_item.handler.dump(data, f)
 
+        logger.info(f"[green]Output saved in: {str(output.absolute())}[/green]")
         return output

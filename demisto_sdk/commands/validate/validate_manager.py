@@ -1,4 +1,3 @@
-import logging
 import os
 from concurrent.futures._base import Future, as_completed
 from configparser import ConfigParser, MissingSectionHeaderError
@@ -11,6 +10,7 @@ from git import InvalidGitRepositoryError
 from packaging import version
 
 from demisto_sdk.commands.common import tools
+from demisto_sdk.commands.common.cpu_count import cpu_count
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import (
     API_MODULES_PACK,
@@ -137,7 +137,7 @@ from demisto_sdk.commands.common.hook_validations.xsiam_report import (
 from demisto_sdk.commands.common.hook_validations.xsoar_config_json import (
     XSOARConfigJsonValidator,
 )
-from demisto_sdk.commands.common.logger import get_log_file
+from demisto_sdk.commands.common.logger import get_log_file, logger
 from demisto_sdk.commands.common.tools import (
     _get_file_id,
     find_type,
@@ -145,6 +145,7 @@ from demisto_sdk.commands.common.tools import (
     get_api_module_integrations_set,
     get_content_path,
     get_file,
+    get_pack_ignore_content,
     get_pack_ignore_file_path,
     get_pack_name,
     get_pack_names_from_files,
@@ -155,8 +156,6 @@ from demisto_sdk.commands.common.tools import (
     run_command_os,
 )
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
-
-logger = logging.getLogger("demisto-sdk")
 
 SKIPPED_FILES = [
     "CommonServerUserPython.py",
@@ -547,7 +546,7 @@ class ValidateManager:
     ) -> bool:
 
         if self.run_with_multiprocessing:
-            with pebble.ProcessPool(max_workers=4) as executor:
+            with pebble.ProcessPool(max_workers=cpu_count()) as executor:
                 futures = []
                 for pack_path in all_packs:
                     futures.append(
@@ -1034,7 +1033,7 @@ class ValidateManager:
             FileType.MODELING_RULE_XIF,
             FileType.MODELING_RULE_TEST_DATA,
         ):
-            print(f"Validating {file_type.value} file: {file_path}")
+            logger.info(f"Validating {file_type.value} file: {file_path}")
             if self.validate_all:
                 error_ignore_list = pack_error_ignore_list.copy()
                 error_ignore_list.setdefault(os.path.basename(file_path), [])
@@ -1901,7 +1900,6 @@ class ValidateManager:
             self.id_set_validations
         )
         if pack_errors:
-            logger.info(f"[red]{pack_errors}[/red]")
             files_valid = False
 
         # check author image
@@ -2657,29 +2655,17 @@ class ValidateManager:
     def get_error_ignore_list(self, pack_name):
         ignored_errors_list: dict = {}
         if pack_name:
-            pack_ignore_path = get_pack_ignore_file_path(pack_name)
-
-            if os.path.isfile(pack_ignore_path):
-                try:
-                    config = ConfigParser(allow_no_value=True)
-                    config.read(pack_ignore_path)
-
-                    # create file specific ignored errors list
-                    for section in config.sections():
-                        if section.startswith("file:"):
-                            file_name = section[5:]
-                            ignored_errors_list[file_name] = []
-                            for key in config[section]:
-                                self.add_ignored_errors_to_list(
-                                    config, section, key, ignored_errors_list[file_name]
-                                )
-
-                except MissingSectionHeaderError:
-                    pass
-            else:
-                logger.info(
-                    f"[red]Could not find pack-ignore file at path {pack_ignore_path}[/red]"
-                )
+            if config := get_pack_ignore_content(pack_name):
+                # create file specific ignored errors list
+                for section in filter(
+                    lambda section: section.startswith("file:"), config.sections()
+                ):
+                    file_name = section[5:]
+                    ignored_errors_list[file_name] = []
+                    for key in config[section]:
+                        self.add_ignored_errors_to_list(
+                            config, section, key, ignored_errors_list[file_name]
+                        )
 
         return ignored_errors_list
 

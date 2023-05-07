@@ -92,6 +92,7 @@ ALLOWED_IGNORE_ERRORS = [
     "RN113",
     "RN114",
     "RN115",
+    "RN116",
     "MR104",
     "MR105",
     "LO107",
@@ -1422,6 +1423,11 @@ ERROR_CODE = {
         "ui_applicable": False,
         "related_field": "",
     },
+    "image_does_not_exist": {
+        "code": "RM114",
+        "ui_applicable": False,
+        "related_field": "",
+    },
     # RN - Release Notes
     "missing_release_notes": {
         "code": "RN100",
@@ -1500,6 +1506,11 @@ ERROR_CODE = {
     },
     "release_notes_invalid_header_format": {
         "code": "RN115",
+        "ui_applicable": False,
+        "related_field": "",
+    },
+    "first_level_is_header_missing": {
+        "code": "RN116",
         "ui_applicable": False,
         "related_field": "",
     },
@@ -2903,6 +2914,15 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
+    def first_level_is_header_missing(pack_name):
+        error = (
+            f'Please use "demisto-sdk update-release-notes -i Packs/{pack_name}"\n'
+            "For more information, refer to the following documentation: https://xsoar.pan.dev/docs/documentation/release-notes"
+        )
+        return f"The following RN is missing a first level header.\n{error}"
+
+    @staticmethod
+    @error_code_decorator
     def release_notes_docker_image_not_match_yaml(
         rn_file_name, un_matching_files_list: list, pack_path
     ):
@@ -3552,6 +3572,11 @@ class Errors:
             f"Detected following image url:\n{path}\n"
             f"Which is not the raw link. You probably want to use the following raw image url:\n{alternative_path}"
         )
+
+    @staticmethod
+    @error_code_decorator
+    def image_does_not_exist(path: str):
+        return f"Image at {path} does not exist."
 
     @staticmethod
     @error_code_decorator

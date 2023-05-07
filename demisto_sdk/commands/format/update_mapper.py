@@ -1,7 +1,7 @@
-import logging
 from typing import Tuple
 
 from demisto_sdk.commands.common.constants import LAYOUT_AND_MAPPER_BUILT_IN_FIELDS
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     get_all_incident_and_indicator_fields_from_id_set,
     get_invalid_incident_fields_from_mapper,
@@ -13,8 +13,6 @@ from demisto_sdk.commands.format.format_constants import (
     SUCCESS_RETURN_CODE,
 )
 from demisto_sdk.commands.format.update_generic_json import BaseUpdateJSON
-
-logger = logging.getLogger("demisto-sdk")
 
 
 class MapperJSONFormat(BaseUpdateJSON):

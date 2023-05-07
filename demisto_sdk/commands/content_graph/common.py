@@ -448,6 +448,7 @@ SERVER_CONTENT_ITEMS = {
         "searchRelationships",
         "getSystemDiagnostics",
         "triggerDebugMirroringRun",
+        "stopScheduleEntry",
         # Filters
         "isEqual",
         "isNotEqual",

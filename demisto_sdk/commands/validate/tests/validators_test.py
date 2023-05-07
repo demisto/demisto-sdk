@@ -52,6 +52,9 @@ from demisto_sdk.commands.common.hook_validations.pack_unique_files import (
     PackUniqueFilesValidator,
 )
 from demisto_sdk.commands.common.hook_validations.playbook import PlaybookValidator
+from demisto_sdk.commands.common.hook_validations.readme import (
+    ReadMeValidator,
+)
 from demisto_sdk.commands.common.hook_validations.release_notes import (
     ReleaseNotesValidator,
 )
@@ -628,6 +631,10 @@ class TestValidators:
         mocker.patch.object(
             IntegrationValidator, "is_api_token_in_credential_type", return_value=True
         )
+        mocker.patch.object(ReadMeValidator, "verify_image_exist", return_value=True)
+        mocker.patch.object(
+            ReadMeValidator, "verify_readme_image_paths", return_value=True
+        )
         validate_manager = ValidateManager(file_path=file_path, skip_conf_json=True)
         assert validate_manager.run_validation_on_specific_files()
 
@@ -1055,7 +1062,7 @@ class TestValidators:
         test_file = os.path.join(files_path, "fake_pack/.pack-ignore")
 
         mocker.patch.object(
-            demisto_sdk.commands.validate.validate_manager,
+            demisto_sdk.commands.validate.validate_manager.tools,
             "get_pack_ignore_file_path",
             return_value=test_file,
         )

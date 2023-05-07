@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "demisto-sdk"
-version = "1.12.0"
+version = "1.14.0"
 description = "\"A Python library for the Demisto SDK\""
 authors = ["Demisto"]
 license = "MIT"
@@ -34,7 +34,7 @@ coloredlogs = "^15.0.1"
 configparser = "^5.2.0"
 coverage = "^7.2.1"
 decorator = "^5.1.1"
-demisto-py = "^3.2.6"
+demisto-py = "^3.2.9"
 dictor = "^0.1.9"
 docker = "^5.0.3"
 flatten-dict = "^0.4.2"
@@ -149,6 +149,7 @@ ignore = [
     "F403",
     "F405",
     "E501",
+    "W293",  # handled by Black
 ]
 
 
@@ -166,10 +167,16 @@ select = [
     "I",
     "PLE",
     "RUF100",
+    "T20",
     "W",
+    "T10",
 ]
 
 target-version = "py38"
 
 [tool.ruff.mccabe]
 max-complexity = 30
+
+[tool.ruff.flake8-tidy-imports]
+[tool.ruff.flake8-tidy-imports.banned-api]
+"logging".msg = "The logging framework is banned. Please use demisto_sdk.commands.common.logger."

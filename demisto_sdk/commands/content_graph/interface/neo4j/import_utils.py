@@ -1,4 +1,3 @@
-import logging
 import os
 import xml.etree.ElementTree as ET
 from pathlib import Path
@@ -6,11 +5,10 @@ from typing import List, Optional, Set
 from zipfile import ZipFile
 
 from demisto_sdk.commands.common.handlers import JSON_Handler
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.content_graph.neo4j_service import get_neo4j_import_path
 
 json = JSON_Handler()
-
-logger = logging.getLogger("demisto-sdk")
 
 GRAPHML_FILE_SUFFIX = ".graphml"
 

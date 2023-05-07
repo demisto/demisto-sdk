@@ -19,6 +19,7 @@ In the database, every content object has a unique **node** which contains its p
 ### create-content-graph
 **Creates a content graph from a given repository.**
 This commands parses all content packs under the repository, including their relationships. Then, the parsed content objects are mapped to a Repository model and uploaded to the database.
+When the graph creation is completed, it will be available in http://localhost:7474 (the username is `neo4j` and the password is `contentgraph`).
 
 ![Parsers](images/parsers.png) ![Models](images/models.png)
 
@@ -52,6 +53,7 @@ This commands parses all content packs under the repository, including their rel
 ### update-content-graph
 **Updates the content graph from the official content graph**
 This commands downloads the official content graph, imports it locally, and updates it with the changes in the given repository or by an argument of packs to update with.
+When the graph update is completed, it will be available in http://localhost:7474 (the username is `neo4j` and the password is `contentgraph`).
 
 #### Arguments
 
@@ -94,3 +96,7 @@ This commands downloads the official content graph, imports it locally, and upda
 * **-lp, --log-path**
 
     Path to store all levels of logs.
+
+## Environment Variables
+
+DEMISTO_SDK_GRAPH_FORCE_CREATE - Whether to create the content graph instead of updating it. Will be used in all commands which use the content graph.

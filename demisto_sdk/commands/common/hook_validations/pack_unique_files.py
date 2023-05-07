@@ -2,7 +2,6 @@
 This module is designed to validate the existence and structure of content pack essential files in content.
 """
 import glob
-import logging
 import os
 import re
 from datetime import datetime
@@ -53,6 +52,7 @@ from demisto_sdk.commands.common.hook_validations.base_validator import (
     error_codes,
 )
 from demisto_sdk.commands.common.hook_validations.readme import ReadMeValidator
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     get_core_pack_list,
     get_json,
@@ -61,8 +61,6 @@ from demisto_sdk.commands.common.tools import (
     pack_name_to_path,
 )
 from demisto_sdk.commands.find_dependencies.find_dependencies import PackDependencies
-
-logger = logging.getLogger("demisto-sdk")
 
 json = JSON_Handler()
 
@@ -866,7 +864,7 @@ class PackUniqueFilesValidator(BaseValidator):
                     for tag_marketplace in tag_marketplaces:
                         pack_tags[tag_marketplace].append(tag_data[1])
                 except KeyError:
-                    logger.info(
+                    logger.warning(
                         "[yellow]You have non-approved tag prefix in the pack metadata tags, cannot validate all tags until it is fixed."
                         f' Valid tag prefixes are: { ", ".join(marketplaces)}.[/yellow]'
                     )

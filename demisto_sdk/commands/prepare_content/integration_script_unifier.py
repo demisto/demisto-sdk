@@ -1,13 +1,11 @@
 import base64
 import copy
 import glob
-import logging
 import os
 import re
 from pathlib import Path
 from typing import Dict, List, Union
 
-import click
 from inflection import dasherize, underscore
 from ruamel.yaml.scalarstring import FoldedScalarString
 
@@ -19,6 +17,7 @@ from demisto_sdk.commands.common.constants import (
     MarketplaceVersions,
 )
 from demisto_sdk.commands.common.handlers import JSON_Handler
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     arg_to_list,
     find_type,
@@ -29,8 +28,6 @@ from demisto_sdk.commands.common.tools import (
     get_yml_paths_in_dir,
 )
 from demisto_sdk.commands.prepare_content.unifier import Unifier
-
-logger = logging.getLogger("demisto-sdk")
 
 json = JSON_Handler()
 
@@ -181,7 +178,9 @@ class IntegrationScriptUnifier(Unifier):
             image_data = image_prefix + base64.b64encode(image_data).decode("utf-8")
             yml_unified["image"] = image_data
         else:
-            click.secho(f"Failed getting image data for {package_path}", fg="yellow")
+            logger.warning(
+                f"[yellow]Failed getting image data for {package_path}[/yellow]"
+            )
 
         return yml_unified, found_img_path
 
@@ -291,7 +290,7 @@ class IntegrationScriptUnifier(Unifier):
             "currentVersion", ""
         ):
             script_code = IntegrationScriptUnifier.insert_pack_version(
-                script_code, pack_version
+                script_type, script_code, pack_version
             )
 
         if script_type == ".py":
@@ -411,16 +410,28 @@ class IntegrationScriptUnifier(Unifier):
         return script_code
 
     @staticmethod
-    def insert_pack_version(script_code: str, pack_version: str) -> str:
+    def insert_pack_version(
+        script_type: str, script_code: str, pack_version: str
+    ) -> str:
         """
         Inserts the pack version to the script so it will be easy to know what was the contribution original pack version.
         :param script_code: The integration code
         :param pack_version: The pack version
         :return: The integration script with the pack version appended if needed, otherwise returns the original script
         """
-        if "### pack version:" in script_code:
-            return script_code
-        return f"\n### pack version: {pack_version}\n{script_code}"
+        if script_type == ".js":
+            return (
+                script_code
+                if "// pack version:" in script_code
+                else f"// pack version: {pack_version}\n{script_code}"
+            )
+        elif script_type in {".py", ".ps1"}:
+            return (
+                script_code
+                if "### pack version:" in script_code
+                else f"### pack version: {pack_version}\n{script_code}"
+            )
+        return script_code
 
     @staticmethod
     def _get_api_module_code(module_name, module_path):
@@ -580,9 +591,8 @@ class IntegrationScriptUnifier(Unifier):
             # verify README file exists and is not empty
             return f"[View Integration Documentation]({integration_doc_link})"
         else:
-            click.secho(
-                f"Did not find README in {package_path}, not adding integration doc link",
-                fg="bright_cyan",
+            logger.info(
+                f"[cyan]Did not find README in {package_path}, not adding integration doc link[/cyan]"
             )
             return ""
 

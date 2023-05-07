@@ -8,6 +8,7 @@ from wcmatch.pathlib import Path
 
 from demisto_sdk.commands.common.hook_validations.docker import DockerImageValidator
 from demisto_sdk.commands.lint import linter
+from TestSuite.pack import Pack
 from TestSuite.test_tools import ChangeCWD
 
 logger = logging.getLogger("demisto-sdk")
@@ -862,3 +863,59 @@ def test_linter_pack_abs_dir():
         # Delete the temporary directory we created
         if Path(path).is_dir():
             shutil.rmtree(Path(path))
+
+
+@pytest.mark.parametrize(
+    argnames="pack_ignore_content, should_disable_network",
+    argvalues=[
+        (
+            "[file:README.md]\nignore=RM106\n\n[known_words]\ntest1\ntest2\n\n[tests_require_network]\ntest",
+            False,
+        ),
+        ("", True),
+        ("[file:README.md]\nignore=RM106\n\n[known_words]\ntest1\ntest2\n\n", True),
+        ("[tests_require_network]\ntest1\ntest", False),
+        ("[tests_require_network]\ntest1\ntest2", True),
+    ],
+)
+def test_should_use_network(
+    pack_ignore_content: str, should_disable_network: bool, pack: Pack
+):
+    """
+    This unit-test testing whether an integration/script needs to use docker network in order to run unit-tests.
+
+    Given:
+        - Case A: .pack-ignore file which contains ignored validation, ignored known words and
+                   an integration id that needs to use network.
+        - Case B: empty .pack-ignore
+        - Case C: .pack-ignore without section that defines which integrations/scripts need network
+        - Case D: .pack-ignore that has section that defines the integration/script needs network without
+                   any ignored validation or ignored known words
+        - Case E: .pack-ignore that has section that defines the integration/script does not need network
+
+    When:
+        - testing whether the integration/script should disable network on docker.
+
+    Then:
+        - Case A: network should not be disabled.
+        - Case B: network should be disabled
+        - Case C: network should be disabled.
+        - Case D: network should not be disabled
+        - Case E: network should be disabled.
+    """
+    from demisto_sdk.commands.lint.linter import Linter
+
+    integration = pack.create_integration("test")
+    pack.pack_ignore.write_text(pack_ignore_content)
+
+    _linter = Linter(
+        pack_dir=Path(integration.path),
+        content_repo=Path(pack.repo_path),
+        req_3=[],
+        req_2=[],
+        docker_timeout=0,
+        docker_engine=False,
+    )
+
+    with ChangeCWD(pack.repo_path):
+        assert _linter.should_disable_network() == should_disable_network

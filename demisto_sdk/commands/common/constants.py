@@ -1200,7 +1200,7 @@ BETA_INTEGRATION_DISCLAIMER = (
 INTEGRATION_CATEGORIES = [
     "Analytics & SIEM",
     "Utilities",
-    "Messaging",
+    "Messaging and Conferencing",
     "Endpoint",
     "Network Security",
     "Vulnerability Management",
@@ -1208,12 +1208,12 @@ INTEGRATION_CATEGORIES = [
     "Forensics & Malware Analysis",
     "IT Services",
     "Data Enrichment & Threat Intelligence",
-    "Authentication",
     "Database",
-    "Deception",
-    "Email Gateway",
+    "Deception & Breach Simulation",
+    "Email",
     "Identity and Access Management",
-    "File Integrity Management",
+    "Cloud Services",
+    "Authentication & Identity Management",
 ]
 SCHEMA_TO_REGEX = {
     "integration": YML_INTEGRATION_REGEXES,
@@ -1355,6 +1355,9 @@ MODULES = ["compliance"]
 
 # From Version constants
 FILETYPE_TO_DEFAULT_FROMVERSION = {
+    FileType.INTEGRATION: "4.5.0",
+    FileType.SCRIPT: "4.5.0",
+    FileType.PLAYBOOK: "4.5.0",
     FileType.WIZARD: "6.8.0",
     FileType.JOB: "6.8.0",
     FileType.PRE_PROCESS_RULES: "6.8.0",
@@ -1790,3 +1793,4 @@ class ParameterType(Enum):
 
 NO_TESTS_DEPRECATED = "No tests (deprecated)"
 NATIVE_IMAGE_FILE_NAME = "docker_native_image_config.json"
+TESTS_REQUIRE_NETWORK_PACK_IGNORE = "tests_require_network"

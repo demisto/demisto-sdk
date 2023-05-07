@@ -53,7 +53,7 @@ def str_in_call_args_list(
         for current_call in filter(None, call_args_list)
     )
     if not ret_value:
-        print(f"Could not find {required_str=}")
+        print(f"Could not find {required_str=}")  # noqa: T201
     return ret_value
 
 

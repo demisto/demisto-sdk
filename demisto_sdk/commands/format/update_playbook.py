@@ -1,12 +1,16 @@
-import logging
 import os
 import uuid
 from typing import Tuple
 
 from git import InvalidGitRepositoryError
 
-from demisto_sdk.commands.common.constants import PLAYBOOK, FileType
+from demisto_sdk.commands.common.constants import (
+    FILETYPE_TO_DEFAULT_FROMVERSION,
+    PLAYBOOK,
+    FileType,
+)
 from demisto_sdk.commands.common.git_util import GitUtil
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     find_type,
     get_yaml,
@@ -21,8 +25,6 @@ from demisto_sdk.commands.format.format_constants import (
     SUCCESS_RETURN_CODE,
 )
 from demisto_sdk.commands.format.update_generic_yml import BaseUpdateYML
-
-logger = logging.getLogger("demisto-sdk")
 
 
 class BasePlaybookYMLFormat(BaseUpdateYML):
@@ -102,7 +104,10 @@ class BasePlaybookYMLFormat(BaseUpdateYML):
 
     def run_format(self) -> int:
         self.update_playbook_usages()
-        super().update_yml(file_type=PLAYBOOK)
+        super().update_yml(
+            default_from_version=FILETYPE_TO_DEFAULT_FROMVERSION[FileType.PLAYBOOK],
+            file_type=PLAYBOOK,
+        )
         self.add_description()
         self.update_task_uuid()
         self.save_yml_to_destination_file()

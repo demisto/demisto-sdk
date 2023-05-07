@@ -1,4 +1,3 @@
-import logging
 from pathlib import Path
 from time import sleep
 from typing import Any, Dict, List, Optional, Tuple
@@ -17,7 +16,11 @@ from demisto_sdk.commands.common.content.objects.pack_objects.modeling_rule.mode
     ModelingRule,
     SingleModelingRule,
 )
-from demisto_sdk.commands.common.logger import handle_deprecated_args, logging_setup
+from demisto_sdk.commands.common.logger import (
+    handle_deprecated_args,
+    logger,
+    logging_setup,
+)
 from demisto_sdk.commands.test_content.test_modeling_rule import init_test_data
 from demisto_sdk.commands.test_content.xsiam_tools.xsiam_client import (
     XsiamApiClient,
@@ -25,8 +28,6 @@ from demisto_sdk.commands.test_content.xsiam_tools.xsiam_client import (
 )
 from demisto_sdk.commands.upload.upload import upload_content_entity as upload_cmd
 from demisto_sdk.utils.utils import get_containing_pack
-
-logger = logging.getLogger("demisto-sdk")
 
 custom_theme = Theme(
     {
@@ -120,7 +121,9 @@ def verify_results(results: List[dict], test_data: init_test_data.TestData):
                     )
                     if result_val != val:
                         logger.error(
-                            f'[red][bold]{key}[/bold] --- "{result_val}" != "{val}"[/red]',
+                            f'[red][bold]{key}[/bold] --- "{result_val}" != "{val}"\n'
+                            f'[bold]{key}[/bold] --- Received value type: "{type(result_val)}" '
+                            f'!=  Expected value type: "{type(val)}"[/red]',
                             extra={"markup": True},
                         )
                         errors = True
@@ -220,7 +223,9 @@ def check_dataset_exists(
     for i in range(timeout // interval):
         logger.debug(f"Check #{i+1}...")
         try:
-            execution_id = xsiam_client.start_xql_query(query)
+            execution_id = xsiam_client.start_xql_query(
+                query, print_req_error=(i + 1 == timeout // interval)
+            )
             results = xsiam_client.get_xql_query_result(execution_id)
             if results:
                 logger.info(
@@ -478,15 +483,15 @@ def validate_modeling_rule(
                     f"[yellow]Skipping test data file generation for {mrule_dir}[/yellow]",
                     extra={"markup": True},
                 )
-                logger.warning(
-                    f"[yellow]Please create a test data file for {mrule_dir} and then rerun,[/yellow]",
+                logger.error(
+                    f"[red]Please create a test data file for {mrule_dir} and then rerun,[/red]",
                     extra={"markup": True},
                 )
                 printr(execd_cmd)
                 raise typer.Abort()
         else:
-            logger.warning(
-                f"[yellow]Please create a test data file for {mrule_dir} and then rerun,[/yellow]",
+            logger.error(
+                f"[red]Please create a test data file for {mrule_dir} and then rerun,[/red]",
                 extra={"markup": True},
             )
             printr(execd_cmd)

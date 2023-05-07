@@ -1,5 +1,4 @@
 import functools
-import logging
 import os
 import re
 import shutil
@@ -20,9 +19,9 @@ from demisto_sdk.commands.common.constants import (
     TYPE_PWSH,
     TYPE_PYTHON,
 )
+from demisto_sdk.commands.common.logger import logger
 
 DOCKER_CLIENT = None
-logger = logging.getLogger("demisto-sdk")
 FILES_SRC_TARGET = List[Tuple[os.PathLike, str]]
 # this will be used to determine if the system supports mounts
 CAN_MOUNT_FILES = bool(os.getenv("GITLAB_CI", False)) or (
@@ -193,7 +192,7 @@ class DockerBase:
             command="/install.sh",
         )
         container.start()
-        if container.wait(condition="exited").get("StatusCode") != 0:
+        if container.wait().get("StatusCode") != 0:
             container_logs = container.logs()
             raise docker.errors.BuildError(
                 reason=f"Installation script failed to run on container '{container.id}', {container_logs=}",
@@ -203,6 +202,12 @@ class DockerBase:
         container.commit(
             repository=repository, tag=tag, changes=self.changes[container_type]
         )
+        if os.getenv("GITLAB_CI"):
+            container.commit(
+                repository=repository.replace("docker-io.art.code.pan.run/", ""),
+                tag=tag,
+                changes=self.changes[container_type],
+            )
         return image
 
 
@@ -269,7 +274,6 @@ class MountableDocker(DockerBase):
             )
 
 
-@functools.lru_cache
 def get_docker():
     return MountableDocker() if CAN_MOUNT_FILES else DockerBase()
 

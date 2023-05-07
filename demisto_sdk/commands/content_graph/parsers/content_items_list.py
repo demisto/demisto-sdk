@@ -1,9 +1,5 @@
-import logging
-
 from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.parsers.content_item import ContentItemParser
-
-logger = logging.getLogger("demisto-sdk")
 
 
 class ContentItemsList(list):

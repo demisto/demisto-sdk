@@ -1200,7 +1200,7 @@ BETA_INTEGRATION_DISCLAIMER = (
 INTEGRATION_CATEGORIES = [
     "Analytics & SIEM",
     "Utilities",
-    "Messaging",
+    "Messaging and Conferencing",
     "Endpoint",
     "Network Security",
     "Vulnerability Management",
@@ -1208,12 +1208,12 @@ INTEGRATION_CATEGORIES = [
     "Forensics & Malware Analysis",
     "IT Services",
     "Data Enrichment & Threat Intelligence",
-    "Authentication",
     "Database",
-    "Deception",
-    "Email Gateway",
+    "Deception & Breach Simulation",
+    "Email",
     "Identity and Access Management",
-    "File Integrity Management",
+    "Cloud Services",
+    "Authentication & Identity Management",
 ]
 SCHEMA_TO_REGEX = {
     "integration": YML_INTEGRATION_REGEXES,

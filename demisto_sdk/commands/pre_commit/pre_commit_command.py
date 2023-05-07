@@ -118,7 +118,7 @@ class PreCommitRunner:
         precommit_env["SKIP"] = ",".join(sorted(skipped_hooks))
         precommit_env["PYTHONPATH"] = ":".join(str(path) for path in sorted(PYTHONPATH))
         # The PYTHONPATH should be the same as the PYTHONPATH, but without the site-packages because MYPY does not support it
-        precommit_env["MYPY"] = ":".join(
+        precommit_env["MYPYPATH"] = ":".join(
             str(path) for path in sorted(PYTHONPATH) if "site-packages" not in str(path)
         )
         for python_version, changed_files in self.python_version_to_files.items():
@@ -303,4 +303,6 @@ def preprocess_files(
             files_to_run.add(file)
 
     # Convert to absolute paths
-    return {file.absolute() for file in files_to_run}
+    return {
+        file if file.is_absolute() else CONTENT_PATH / file for file in files_to_run
+    }

@@ -2,10 +2,9 @@ import os
 import sys
 from typing import Dict, Optional
 
-import click
-
 from demisto_sdk.commands.common.constants import PACKS_DIR, FileType
 from demisto_sdk.commands.common.handlers import JSON_Handler
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import find_type, get_pack_name
 
 json = JSON_Handler()
@@ -42,9 +41,7 @@ class GenericModuleUnifier:
 
         if output:
             if not os.path.isdir(output):
-                click.secho(
-                    "You have failed to provide a legal dir path", fg="bright_red"
-                )
+                logger.error("[red]You have failed to provide a legal dir path[/red]")
                 sys.exit(1)
 
             self.dest_dir = output
@@ -100,10 +97,9 @@ class GenericModuleUnifier:
                         tab["dashboard"] = dashboard_content
 
                     else:
-                        click.secho(
-                            f"Dashboard {dashboard_id} was not found in pack: {self.pack_name} "
-                            f"and therefore was not unified",
-                            fg="bright_red",
+                        logger.info(
+                            f"[red]Dashboard {dashboard_id} was not found in pack: {self.pack_name} "
+                            f"and therefore was not unified[/red]"
                         )
 
         self.save_unified_generic_module(generic_module)

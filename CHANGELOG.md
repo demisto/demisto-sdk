@@ -1,9 +1,14 @@
 # Changelog
+* Added a validation that the **validate** command will fail on README files if an image does not exist in the specified path.
 
 ## Unreleased
 * Fixed an issue where **update-release-notes** command failed when running on a pack that contains deprecated integrations without the `commands` section.
-* Fixed an issue where **validate** failed when attempting to map null values in a classifier.
+* Added toVersion and fromVersion to XSIAM content items schema.
+* Fixed an issue where **validate** failed when attempting to map null values in a classifier and layout.
+* Added search marketplace functionality to XSIAM client.
 * Fixed an issue in **pre-commit** command where `MYPYPATH` was not set properly.
+* Updated the integration category list in the **init** command.
+* Fixed an issue where in some environments docker errors were not caught.
 
 ## 1.14.0
 * Added the `DEMISTO_SDK_GRAPH_FORCE_CREATE` environment variable. Use it to force the SDK to recreate the graph, rather than update it.

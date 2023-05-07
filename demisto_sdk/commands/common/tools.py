@@ -42,6 +42,7 @@ from packaging.version import LegacyVersion, Version, parse
 from pebble import ProcessFuture, ProcessPool
 from requests.exceptions import HTTPError
 from ruamel.yaml.comments import CommentedSeq
+from demisto_sdk.commands.common.cpu_count import cpu_count
 
 from demisto_sdk.commands.common.constants import (
     ALL_FILES_VALIDATION_IGNORE_WHITELIST,
@@ -929,6 +930,9 @@ def get_from_version(file_path):
     data_dictionary = (
         get_yaml(file_path) if file_path.endswith("yml") else get_json(file_path)
     )
+
+    if not isinstance(data_dictionary, dict):
+        raise ValueError("yml file returned is not of type dict")
 
     if data_dictionary:
         from_version = (
@@ -3098,7 +3102,7 @@ def ProcessPoolHandler() -> ProcessPool:
     Yields:
         ProcessPool: Pebble process pool.
     """
-    with ProcessPool(max_workers=3) as pool:
+    with ProcessPool(max_workers=cpu_count()) as pool:
         try:
             yield pool
         except Exception:

@@ -904,7 +904,7 @@ def test_format_commonserver_skipped_files(repo, mocker, monkeypatch):
         assert not str_in_call_args_list(logger_info.call_args_list, excluded_file)
 
 
-def test_format_playbook_without_fromversion_no_preset_flag(repo):
+def test_format_playbook_without_fromversion_no_preset_flag(repo, mocker, monkeypatch):
     """
     Given:
         - A playbook without fromversion
@@ -916,6 +916,9 @@ def test_format_playbook_without_fromversion_no_preset_flag(repo):
         - Ensure format runs successfully
         - Ensure format adds fromversion with the oldest supported version to the playbook.
     """
+    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+    monkeypatch.setenv("COLUMNS", "1000")
+
     pack = repo.create_pack("Temp")
     playbook = pack.create_playbook("my_temp_playbook")
     playbook.create_default_playbook()
@@ -927,7 +930,7 @@ def test_format_playbook_without_fromversion_no_preset_flag(repo):
 
     playbook.yml.write_dict(playbook_content)
     runner = CliRunner(mix_stderr=False)
-    format_result = runner.invoke(
+    runner.invoke(
         main,
         [
             FORMAT_CMD,
@@ -936,11 +939,13 @@ def test_format_playbook_without_fromversion_no_preset_flag(repo):
             "--assume-yes",
         ],
     )
-    assert "Success" in format_result.stdout
+    assert str_in_call_args_list(logger_info.call_args_list, "Success")
     assert playbook.yml.read_dict().get("fromversion") == GENERAL_DEFAULT_FROMVERSION
 
 
-def test_format_playbook_without_fromversion_with_preset_flag(repo):
+def test_format_playbook_without_fromversion_with_preset_flag(
+    repo, mocker, monkeypatch
+):
     """
     Given:
         - A playbook without fromversion
@@ -952,6 +957,9 @@ def test_format_playbook_without_fromversion_with_preset_flag(repo):
         - Ensure format runs successfully
         - Ensure format adds fromversion with the given from-version.
     """
+    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+    monkeypatch.setenv("COLUMNS", "1000")
+
     pack = repo.create_pack("Temp")
     playbook = pack.create_playbook("my_temp_playbook")
     playbook.create_default_playbook()
@@ -963,7 +971,7 @@ def test_format_playbook_without_fromversion_with_preset_flag(repo):
 
     playbook.yml.write_dict(playbook_content)
     runner = CliRunner(mix_stderr=False)
-    format_result = runner.invoke(
+    runner.invoke(
         main,
         [
             FORMAT_CMD,
@@ -974,11 +982,13 @@ def test_format_playbook_without_fromversion_with_preset_flag(repo):
             "6.0.0",
         ],
     )
-    assert "Success" in format_result.stdout
+    assert str_in_call_args_list(logger_info.call_args_list, "Success")
     assert playbook.yml.read_dict().get("fromversion") == "6.0.0"
 
 
-def test_format_playbook_without_fromversion_with_preset_flag_manual(repo):
+def test_format_playbook_without_fromversion_with_preset_flag_manual(
+    repo, mocker, monkeypatch
+):
     """
     Given:
         - A playbook without fromversion
@@ -990,6 +1000,9 @@ def test_format_playbook_without_fromversion_with_preset_flag_manual(repo):
         - Ensure format runs successfully
         - Ensure format adds fromversion with the given from-version.
     """
+    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+    monkeypatch.setenv("COLUMNS", "1000")
+
     pack = repo.create_pack("Temp")
     playbook = pack.create_playbook("my_temp_playbook")
     playbook.create_default_playbook()
@@ -1001,7 +1014,7 @@ def test_format_playbook_without_fromversion_with_preset_flag_manual(repo):
 
     playbook.yml.write_dict(playbook_content)
     runner = CliRunner(mix_stderr=False)
-    format_result = runner.invoke(
+    runner.invoke(
         main,
         [
             FORMAT_CMD,
@@ -1012,11 +1025,13 @@ def test_format_playbook_without_fromversion_with_preset_flag_manual(repo):
         ],
         input="y",
     )
-    assert "Success" in format_result.stdout
+    assert str_in_call_args_list(logger_info.call_args_list, "Success")
     assert playbook.yml.read_dict().get("fromversion") == "6.0.0"
 
 
-def test_format_playbook_without_fromversion_without_preset_flag_manual(repo):
+def test_format_playbook_without_fromversion_without_preset_flag_manual(
+    repo, mocker, monkeypatch
+):
     """
     Given:
         - A playbook without fromversion
@@ -1027,6 +1042,9 @@ def test_format_playbook_without_fromversion_without_preset_flag_manual(repo):
     Then:
         - Ensure format runs successfully
     """
+    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+    monkeypatch.setenv("COLUMNS", "1000")
+
     pack = repo.create_pack("Temp")
     playbook = pack.create_playbook("my_temp_playbook")
     playbook.create_default_playbook()
@@ -1038,7 +1056,7 @@ def test_format_playbook_without_fromversion_without_preset_flag_manual(repo):
 
     playbook.yml.write_dict(playbook_content)
     runner = CliRunner(mix_stderr=False)
-    format_result = runner.invoke(
+    runner.invoke(
         main,
         [
             FORMAT_CMD,
@@ -1047,11 +1065,11 @@ def test_format_playbook_without_fromversion_without_preset_flag_manual(repo):
         ],
         input="y",
     )
-    assert "Success" in format_result.stdout
+    assert str_in_call_args_list(logger_info.call_args_list, "Success")
     assert playbook.yml.read_dict().get("fromversion") == GENERAL_DEFAULT_FROMVERSION
 
 
-def test_format_playbook_copy_removed_from_name_and_id(repo):
+def test_format_playbook_copy_removed_from_name_and_id(repo, mocker, monkeypatch):
     """
     Given:
         - A playbook with name and id ending in `_copy`
@@ -1063,6 +1081,9 @@ def test_format_playbook_copy_removed_from_name_and_id(repo):
         - Ensure format runs successfully
         - Ensure format removes `_copy` from both name and id.
     """
+    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+    monkeypatch.setenv("COLUMNS", "1000")
+
     pack = repo.create_pack("Temp")
     playbook = pack.create_playbook("my_temp_playbook")
     playbook.create_default_playbook()
@@ -1074,7 +1095,7 @@ def test_format_playbook_copy_removed_from_name_and_id(repo):
 
     playbook.yml.write_dict(playbook_content)
     runner = CliRunner(mix_stderr=False)
-    format_result = runner.invoke(
+    runner.invoke(
         main,
         [
             FORMAT_CMD,
@@ -1083,12 +1104,12 @@ def test_format_playbook_copy_removed_from_name_and_id(repo):
         ],
         input="y\n5.5.0",
     )
-    assert "Success" in format_result.stdout
+    assert str_in_call_args_list(logger_info.call_args_list, "Success")
     assert playbook.yml.read_dict().get("id") == playbook_id
     assert playbook.yml.read_dict().get("name") == playbook_name
 
 
-def test_format_playbook_no_input_specified(mocker, repo):
+def test_format_playbook_no_input_specified(mocker, repo, monkeypatch):
     """
     Given:
         - A playbook with name and id ending in `_copy`
@@ -1102,6 +1123,9 @@ def test_format_playbook_no_input_specified(mocker, repo):
         - Ensure format runs successfully
         - Ensure format removes `_copy` from both name and id.
     """
+    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+    monkeypatch.setenv("COLUMNS", "1000")
+
     pack = repo.create_pack("Temp")
     playbook = pack.create_playbook("my_temp_playbook")
     playbook.create_default_playbook()
@@ -1117,15 +1141,14 @@ def test_format_playbook_no_input_specified(mocker, repo):
         return_value=[str(playbook.yml.path)],
     )
     runner = CliRunner(mix_stderr=False)
-    format_result = runner.invoke(
+    runner.invoke(
         main,
         [
             FORMAT_CMD,
         ],
         input="y\n5.5.0",
     )
-    print(format_result.stdout)  # noqa: T201
-    assert "Success" in format_result.stdout
+    assert str_in_call_args_list(logger_info.call_args_list, "Success")
     assert playbook.yml.read_dict().get("id") == playbook_id
     assert playbook.yml.read_dict().get("name") == playbook_name
 

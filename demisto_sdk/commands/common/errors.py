@@ -1423,6 +1423,11 @@ ERROR_CODE = {
         "ui_applicable": False,
         "related_field": "",
     },
+    "image_does_not_exist": {
+        "code": "RM114",
+        "ui_applicable": False,
+        "related_field": "",
+    },
     # RN - Release Notes
     "missing_release_notes": {
         "code": "RN100",
@@ -3572,6 +3577,11 @@ class Errors:
             f"Detected following image url:\n{path}\n"
             f"Which is not the raw link. You probably want to use the following raw image url:\n{alternative_path}"
         )
+
+    @staticmethod
+    @error_code_decorator
+    def image_does_not_exist(path: str):
+        return f"Image at {path} does not exist."
 
     @staticmethod
     @error_code_decorator

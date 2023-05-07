@@ -59,3 +59,7 @@ mapping:
     type: str
   mapping_strategy:
     type: str
+  fromversion:
+    type: str
+  toversion:
+    type: str

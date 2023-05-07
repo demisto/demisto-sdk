@@ -1,9 +1,8 @@
 import base64
 from pathlib import Path
 
-import click
-
 from demisto_sdk.commands.common.constants import MarketplaceVersions
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.prepare_content.unifier import Unifier
 
 
@@ -12,9 +11,9 @@ class XDRCTemplateUnifier(Unifier):
     def unify(
         path: Path, data: dict, marketplace: MarketplaceVersions = None, **kwargs
     ) -> dict:
-        click.echo(f"Unifying {path}...")
+        logger.info(f"Unifying {path}...")
         data = XDRCTemplateUnifier._insert_yaml_template(path, data)
-        click.secho(f"Successfully created a unified JSON in {path}", fg="green")
+        logger.info(f"[green]Successfully created a unified JSON in {path}[/green]")
         return data
 
     @staticmethod

@@ -74,7 +74,7 @@ def update_content_graph(
             content_graph_interface, marketplace, dependencies, output_path
         )
         return
-    
+
     builder = ContentGraphBuilder(content_graph_interface)
     if not use_current:
         content_graph_interface.clean_import_dir()

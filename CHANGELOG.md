@@ -4,6 +4,7 @@
 * Fixed an issue where **run-unit-tests** failed running on items with `test_data`.
 * Add the `--staged-only` flag to **pre-commit**.
 * Fixed an issue where **pre-commit** ran on unchanged files.
+* Added support to override the log file with the **DEMISTO_SDK_LOG_FILE_PATH** environment variable.
 
 ## 1.14.1
 * Fixed an issue where **update-release-notes** command failed when running on a pack that contains deprecated integrations without the `commands` section.

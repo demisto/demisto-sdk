@@ -1264,26 +1264,15 @@ class Integration:
             for conf in integration_params
         ]
         if self.name == "Core REST API":
-            if IS_XSIAM:
-                self.configuration.params = {  # type: ignore
-                    "url": server_url,
-                    "creds_apikey": {
-                        "identifier": str(self.build_context.auth_id),
-                        "password": self.build_context.api_key,
-                    },
-                    "auth_method": "Standard",
-                    "insecure": True,
-                }
-            else:
-                self.configuration.params = {  # type: ignore
-                    "url": "https://localhost",
-                    "creds_apikey": {
-                        "identifier": "",
-                        "password": self.build_context.api_key,
-                    },
-                    "auth_method": "Standard",
-                    "insecure": True,
-                }
+            self.configuration.params = {
+                "url": server_url if IS_XSIAM else "https://localhost",
+                "creds_apikey": {
+                    "identifier": str(self.build_context.auth_id) if IS_XSIAM else "",
+                    "password": self.build_context.api_key,
+                },
+                "auth_method": "Standard",
+                "insecure": True,
+            }
         elif integration_params:
             # If we have more then one configuration for this integration - we will try to filter by instance name
             if len(integration_params) != 1:
@@ -1546,7 +1535,7 @@ class Integration:
                     if param_conf["display"] in params
                     else param_conf["name"]
                 )
-                if key == "credentials" or key == "creds_apikey":
+                if key in {"credentials", "creds_apikey"}:
                     credentials = params[key]
                     param_value = {
                         "credential": "",

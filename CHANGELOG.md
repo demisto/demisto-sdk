@@ -4,6 +4,7 @@
 * Fixed an issue where **run-unit-tests** failed running on items with `test_data`.
 * Add the `--staged-only` flag to **pre-commit**.
 * Fixed an issue where **pre-commit** ran on unchanged files.
+* Add the `--secrets` flag to **pre-commit** to run **secrets** command.
 
 ## 1.14.1
 * Fixed an issue where **update-release-notes** command failed when running on a pack that contains deprecated integrations without the `commands` section.

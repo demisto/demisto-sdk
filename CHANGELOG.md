@@ -2,6 +2,7 @@
 
 ## Unreleased
 * Fixed an issue where **run-unit-tests** failed running on items with `test_data`.
+* Updated the demisto-py to v3.2.10 which now supports url decoding for the proxy authentication password.
 
 ## 1.14.2
 * Added the `--staged-only` flag to **pre-commit**.

@@ -28,7 +28,6 @@ def generate_script_doc(
     permissions: str = None,
     limitations: str = None,
     insecure: bool = False,
-    verbose: bool = False,
 ):
     try:
         doc: list = []
@@ -168,12 +167,8 @@ def generate_script_doc(
                 logger.info(f"[yellow]{error}[/yellow]")
 
     except Exception as ex:
-        if verbose:
-            # TODO Handle this verbose
-            raise
-        else:
-            logger.info(f"[yellow]Error: {str(ex)}[/yellow]")
-            return
+        logger.info(f"[yellow]Error: {str(ex)}[/yellow]")
+        return
 
 
 def get_script_info(script_path: str, clear_cache: bool = False):

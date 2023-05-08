@@ -734,7 +734,6 @@ class IntegrationLogger(object):
         if self.messages:
             text = 'Full Integration Log:\n' + '\n'.join(self.messages)
             if verbose:
-                # TODO Handle this verbose
                 demisto.log(text)
             demisto.info(text)
             self.messages = []

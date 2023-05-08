@@ -59,6 +59,7 @@ LAYOUT = "layout"
 LAYOUTS_CONTAINER = "layoutscontainer"
 PRE_PROCESS_RULES = "pre-process-rules"
 LISTS = "list"  # singular, as it is the prefix of the file
+INCIDENT = "incident"  # prefix to identify any incident entity
 INCIDENT_TYPE = "incidenttype"
 INCIDENT_FIELD = "incidentfield"
 INDICATOR_FIELD = "indicatorfield"

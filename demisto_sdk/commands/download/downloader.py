@@ -17,6 +17,7 @@ from tabulate import tabulate
 from urllib3.exceptions import MaxRetryError
 
 from demisto_sdk.commands.common.constants import (
+    AUTOMATION,
     CONTENT_ENTITIES_DIRS,
     CONTENT_FILE_ENDINGS,
     DELETED_JSON_FIELDS_BY_DEMISTO,
@@ -25,7 +26,11 @@ from demisto_sdk.commands.common.constants import (
     ENTITY_TYPE_TO_DIR,
     FILE_EXIST_REASON,
     FILE_NOT_IN_CC_REASON,
+    INCIDENT,
+    INTEGRATION,
     INTEGRATIONS_DIR,
+    LAYOUT,
+    PLAYBOOK,
     PLAYBOOK_REGEX,
     PLAYBOOKS_DIR,
     SCRIPTS_DIR,
@@ -297,7 +302,9 @@ class Downloader:
 
         return playbook_string
 
-    def replace_uuids(self, string_to_write: str, uuid_dict: dict) -> str:
+    def replace_uuids(
+        self, string_to_write: str, uuid_dict: dict, file_name: str
+    ) -> str:
         """
         Replace all occurrences of UUIDs in a string with their corresponding values from a dictionary.
 
@@ -311,7 +318,10 @@ class Downloader:
         uuids = re.findall(UUID_REGEX, string_to_write)
 
         for uuid in set(uuids).intersection(uuid_dict):
-            logger.debug(f"Replacing UUID: {uuid}")
+            logger.debug(
+                f"Replacing UUID: {uuid} with the following:\
+ {uuid_dict[uuid]} in {file_name}"
+            )
             string_to_write = string_to_write.replace(uuid, uuid_dict[uuid])
         return string_to_write
 
@@ -330,7 +340,7 @@ class Downloader:
                     content_item_as_string
                 )
             content_item_as_string = self.replace_uuids(
-                content_item_as_string, scripts_id_to_name
+                content_item_as_string, scripts_id_to_name, file_name
             )
             file_name = self.update_file_prefix(file_name.strip("/"))
             path = Path(self.custom_content_temp_dir, file_name)
@@ -357,7 +367,7 @@ class Downloader:
             string_to_write = extracted_file.read().decode("utf-8")
             file_name = file.name.lower().lstrip("/")
             if file_name.startswith(
-                ("playbook", "automation", "integration", "layout", "incident")
+                (PLAYBOOK, AUTOMATION, INTEGRATION, LAYOUT, INCIDENT)
             ):
                 scripts_id_to_name = map_uuid_to_name(
                     string_to_write, scripts_id_to_name, Path(file_name).suffix

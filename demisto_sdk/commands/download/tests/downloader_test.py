@@ -9,7 +9,7 @@ from typing import Callable, Tuple
 from unittest.mock import patch
 
 import pytest
-from packaging.version import parse
+from packaging.version import Version
 
 from demisto_sdk.commands.common.constants import (
     CLASSIFIERS_DIR,
@@ -47,6 +47,7 @@ from demisto_sdk.commands.common.constants import (
     XSIAM_REPORTS_DIR,
 )
 from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
+from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.tests.tools_test import SENTENCE_WITH_UMLAUTS
 from demisto_sdk.commands.common.tools import (
     get_child_files,
@@ -1282,7 +1283,9 @@ def test_download_playbook(
 )
 def test_replace_uuids(original_string, uuids_to_name_map, expected_string):
     downloader = Downloader(output="", input="", regex="", all_custom_content=True)
-    final_string = downloader.replace_uuids(original_string, uuids_to_name_map)
+    final_string = downloader.replace_uuids(
+        original_string, uuids_to_name_map, "file_name"
+    )
     assert final_string == expected_string
 
 
@@ -1364,15 +1367,15 @@ def test_safe_write_unicode_to_non_unicode(
 def demisto_client_configure(mocker):
     mocker.patch(
         "demisto_sdk.commands.upload.uploader.get_demisto_version",
-        return_value=parse("6.8.0"),
+        return_value=Version("6.8.0"),
     )
     mocker.patch(
         "demisto_sdk.commands.common.content.objects.pack_objects.integration.integration.get_demisto_version",
-        return_value=parse("6.8.0"),
+        return_value=Version("6.8.0"),
     )
     mocker.patch(
         "demisto_sdk.commands.common.content.objects.pack_objects.script.script.get_demisto_version",
-        return_value=parse("6.8.0"),
+        return_value=Version("6.8.0"),
     )
 
 
@@ -1393,12 +1396,12 @@ def test_find_uuids_in_content_item():
     }
     io_bytes = io.BytesIO(
         Path(
-            "demisto_sdk/commands/download/tests/tests_data/custom_content/\
+            f"{git_path()}/demisto_sdk/commands/download/tests/tests_data/custom_content/\
 download_tar.tar"
         ).read_bytes()
     )
     downloader = Downloader(
-        output="Packs/AbuseDB/Integrations/AbuseDB",
+        output="",
         input="",
         regex="",
         all_custom_content=True,

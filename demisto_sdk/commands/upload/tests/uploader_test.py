@@ -630,7 +630,9 @@ class TestZippedPackUpload:
         mocked_upload_content_packs = mocker.patch.object(
             API_CLIENT, "upload_content_packs", return_value=({}, 200, "")
         )
-        mocker.patch("builtins.input", return_value="y")
+        mocker.patch.object(
+            API_CLIENT, "generic_request", return_value=("{}", 200, None)
+        )
         # run
         uploader = Uploader(path)
         assert uploader.upload() == SUCCESS_RETURN_CODE
@@ -739,6 +741,10 @@ class TestZippedPackUpload:
         mock_upload_content_packs = mocker.patch.object(
             API_CLIENT, "upload_content_packs", return_value=({}, 200, None)
         )
+        mocker.patch.object(
+            API_CLIENT, "generic_request", return_value=("{}", 200, None)
+        )
+
         # run
         click.Context(command=upload).invoke(upload, input=path)
         assert mock_upload_content_packs.call_count == 1
@@ -769,7 +775,9 @@ class TestZippedPackUpload:
         mock_upload_content_packs = mocker.patch.object(
             API_CLIENT, "upload_content_packs", return_value=({}, 200, None)
         )
-        mocker.patch("builtins.input", return_value="y")
+        mocker.patch.object(
+            API_CLIENT, "generic_request", return_value=("{}", 200, None)
+        )
 
         # run
         result = click.Context(command=upload).invoke(
@@ -800,6 +808,9 @@ class TestZippedPackUpload:
         mock_api_client(mocker, version)
         mock_upload_content_packs = mocker.patch.object(
             API_CLIENT, "upload_content_packs", return_value=({}, 200, None)
+        )
+        mocker.patch.object(
+            API_CLIENT, "generic_request", return_value=("{}", 200, None)
         )
 
         mocker.patch.object(
@@ -856,6 +867,9 @@ class TestZippedPackUpload:
         mock_api_client(mocker)
         mocked_upload_content_packs = mocker.patch.object(
             API_CLIENT, "upload_content_packs", return_value=({}, 200, None)
+        )
+        mocker.patch.object(
+            API_CLIENT, "generic_request", return_value=("{}", 200, None)
         )
 
         click.Context(command=upload).invoke(

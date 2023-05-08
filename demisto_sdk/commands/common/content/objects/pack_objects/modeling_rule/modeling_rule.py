@@ -45,7 +45,7 @@ class SingleModelingRule:
     RULE_HEADER_NEW_REGEX = re.compile(
         r"\[MODEL:\s*dataset\s*=\s*\"?(?P<dataset>\w+)\"?\s*\]"
     )
-    RULE_FIELDS_REGEX = re.compile(r"XDM\.[\w\.]+(?=\s*?=\s*?\w+)", flags=re.IGNORECASE)
+    RULE_FIELDS_REGEX = re.compile(r"XDM\.[\w\.]+(?=\s*?=\s*\"?\w+)", flags=re.IGNORECASE)
     RULE_FILTER_REGEX = re.compile(
         r"^\s*filter\s*(?P<condition>(?!.*(\||alter)).+$(\s*(^\s*(?!\||alter).+$))*)",
         flags=re.M,

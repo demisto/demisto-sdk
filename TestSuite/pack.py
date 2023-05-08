@@ -264,7 +264,7 @@ class Pack:
                 "subtype": "python3",
                 "dockerimage": docker_image,
                 "script": "-",
-                "skipPrepare": skip_prepare,
+                "skipprepare": skip_prepare,
             }
         script = Script(
             self._scripts_path, name, self._repo, create_unified=create_unified

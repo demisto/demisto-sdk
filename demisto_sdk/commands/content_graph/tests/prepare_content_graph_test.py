@@ -120,11 +120,11 @@ def create_mini_content(repository: ContentDTO):
     repository.packs.extend([pack1, pack2])
 
 
-def test_marketplace_version_is_xsiam_3(repository: ContentDTO):
+def test_marketplace_version_is_xsiam_with_graph(repository: ContentDTO):
     """
     Given:
         - A playbook which contains scripts that names include incident/s.
-        - One script is set as `skipPrepare` and a second script is not set as skip.
+        - One script is set as `skipprepare` and a second script is not set as skip.
     When:
         - MarketplaceIncidentToAlertPlaybooksPreparer.prepare() command is executed
 

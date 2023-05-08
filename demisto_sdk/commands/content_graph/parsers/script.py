@@ -27,7 +27,7 @@ class ScriptParser(IntegrationScriptParser, content_type=ContentType.SCRIPT):
         self.is_test: bool = is_test_script
         self.type = self.yml_data.get("subtype") or self.yml_data.get("type")
         self.tags: List[str] = self.yml_data.get("tags", [])
-        self.skip_prepare: List[str] = self.yml_data.get("skipPrepare", [])
+        self.skip_prepare: List[str] = self.yml_data.get("skipprepare", [])
         if self.type == "python":
             self.type += "2"
 

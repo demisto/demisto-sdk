@@ -3538,14 +3538,6 @@ def get_pack_paths_from_files(file_paths: Iterable[str]) -> list:
 
 
 def replace_incident_to_alerts(value: str) -> str:
-    TABLE_INCIDENT_TO_ALERT = {
-        'incident': 'alert',
-        'incidents': 'alerts',
-        'Incident': 'Alert',
-        'Incidents': 'Alerts',
-        'INCIDENT': 'ALERT',
-        'INCIDENTS': 'ALERTS'
-    }
     if not isinstance(value, str):
         return value
 
@@ -3556,7 +3548,6 @@ def replace_incident_to_alerts(value: str) -> str:
 
 
 def replace_alert_to_incident(value: str) -> str:
-
     if not isinstance(value, str):
         return value
 

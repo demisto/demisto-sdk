@@ -149,6 +149,7 @@ def get_script_names_from_playbooks_intended_preparation(playbook: ContentItem) 
     Extracts all scripts of the Playbook and filters only those intended
     for special preparation of `incident to alert`.
     """
+    # Import inside the function to avoiding circular import
     from demisto_sdk.commands.content_graph.objects.script import Script
     return [
         name.object_id for name in [

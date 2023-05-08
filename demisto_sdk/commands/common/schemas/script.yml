@@ -107,7 +107,7 @@ mapping:
     sequence:
       - type: str
         enum: ['xsoar', 'marketplacev2', 'xpanse']
-  skipPrepare:
+  skipprepare:
     type: seq
     sequence:
       - type: str

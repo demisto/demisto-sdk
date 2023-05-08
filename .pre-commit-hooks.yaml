@@ -21,3 +21,10 @@
   entry: demisto-sdk format
   language: python
   files: *files
+
+- id: secrets
+  name: secrets
+  description: Check for secrets in files.
+  entry: demisto-sdk secrets
+  language: python
+  files: *files

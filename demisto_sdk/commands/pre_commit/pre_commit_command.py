@@ -39,7 +39,7 @@ IS_GITHUB_ACTIONS = os.getenv("GITHUB_ACTIONS", False)
 PRECOMMIT_TEMPLATE_PATH = Path(__file__).parent / ".pre-commit-config_template.yaml"
 PRECOMMIT_PATH = CONTENT_PATH / ".pre-commit-config-content.yaml"
 
-SKIPPED_HOOKS = {"format", "validate"}
+SKIPPED_HOOKS = {"format", "validate", "secrets"}
 
 INTEGRATION_SCRIPT_REGEX = re.compile(r"^Packs/.*/(?:Integrations|Scripts)/.*.yml$")
 
@@ -98,6 +98,7 @@ class PreCommitRunner:
         skip_hooks: Optional[List[str]] = None,
         validate: bool = False,
         format: bool = False,
+        secrets: bool = False,
         verbose: bool = False,
         show_diff_on_failure: bool = False,
     ) -> int:
@@ -114,7 +115,8 @@ class PreCommitRunner:
             skipped_hooks.remove("validate")
         if format and "format" in skipped_hooks:
             skipped_hooks.remove("format")
-
+        if secrets and "secrets" in skipped_hooks:
+            skipped_hooks.remove("secrets")
         precommit_env["SKIP"] = ",".join(sorted(skipped_hooks))
         precommit_env["PYTHONPATH"] = ":".join(str(path) for path in sorted(PYTHONPATH))
         # The PYTHONPATH should be the same as the PYTHONPATH, but without the site-packages because MYPY does not support it
@@ -239,6 +241,7 @@ def pre_commit_manager(
     skip_hooks: Optional[List[str]] = None,
     validate: bool = False,
     format: bool = False,
+    secrets: bool = False,
     verbose: bool = False,
     show_diff_on_failure: bool = False,
     sdk_ref: Optional[str] = None,
@@ -275,6 +278,7 @@ def pre_commit_manager(
         skip_hooks,
         validate,
         format,
+        secrets,
         verbose,
         show_diff_on_failure,
     )

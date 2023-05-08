@@ -895,13 +895,18 @@ def create_content_artifacts(ctx, **kwargs) -> int:
     help='Full path to whitelist file, file name should be "secrets_white_list.json"',
 )
 @click.option("--prev-ver", help="The branch against which to run secrets validation.")
+@click.argument("file_paths", nargs=-1, type=click.Path(exists=True, resolve_path=True))
 @pass_config
 @click.pass_context
 @logging_setup_decorator
-def secrets(ctx, config, **kwargs):
+def secrets(ctx, config, file_paths: str, **kwargs):
     """Run Secrets validator to catch sensitive data before exposing your code to public repository.
     Attach path to whitelist to allow manual whitelists.
     """
+    if file_paths and not kwargs["input"]:
+        # If file_paths is given as an argument, use it as the file_paths input (instead of the -i flag). If both, input wins.
+        kwargs["input"] = ",".join(file_paths)
+
     from demisto_sdk.commands.secrets.secrets import SecretsValidator
 
     check_configuration_file("secrets", kwargs)
@@ -3300,6 +3305,12 @@ def update_content_graph(
     default=False,
 )
 @click.option(
+    "--secrets",
+    help="Whether to run demisto-sdk secrets",
+    is_flag=True,
+    default=False,
+)
+@click.option(
     "-v",
     "--verbose",
     help="Verbose output of pre-commit",
@@ -3329,6 +3340,7 @@ def pre_commit(
     skip: str,
     validate: bool,
     format: bool,
+    secrets: bool,
     verbose: bool,
     show_diff_on_failure: bool,
     sdk_ref: str,
@@ -3348,6 +3360,7 @@ def pre_commit(
             skip,
             validate,
             format,
+            secrets,
             verbose,
             show_diff_on_failure,
             sdk_ref=sdk_ref,

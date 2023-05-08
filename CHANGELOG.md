@@ -1,6 +1,7 @@
 # Changelog
 
 ## Unreleased
+* Fixed an issue where **run-unit-tests** failed running on items with `test_data`.
 
 ## 1.14.2
 * Added the `--staged-only` flag to **pre-commit**.

@@ -56,10 +56,10 @@ def fix_coverage_report_path(code_directory: Path):
             cursor = sql_connection.cursor()
             files = cursor.execute("SELECT * FROM file").fetchall()
             for id_, file in files:
-                file_name = Path(file).name
+                file = Path(file).relative_to("/content")
                 cursor.execute(
                     "UPDATE file SET path = ? WHERE id = ?",
-                    (str(code_directory / file_name), id_),
+                    (str(CONTENT_PATH / file), id_),
                 )
             sql_connection.commit()
             logger.debug("Done editing coverage report")
@@ -77,7 +77,7 @@ def unit_test_runner(file_paths: List[Path], verbose: bool = False) -> int:
             logger.warning(f"Skipping {filename} as it is not a content item.")
             continue
 
-        if (test_data_dir := (integration_script.path / "test_data")).exists():
+        if (test_data_dir := (integration_script.path.parent / "test_data")).exists():
             (test_data_dir / "__init__.py").touch()
 
         working_dir = (

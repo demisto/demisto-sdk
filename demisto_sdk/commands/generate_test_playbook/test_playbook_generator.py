@@ -364,7 +364,6 @@ class PlaybookTestsGenerator:
                 f"[red]File {self.integration_yml_path} was not found when trying to generate a test playbook[/red]"
             )
             if self.verbose:
-                # TODO Handle this verbose
                 raise FileNotFoundError()
             else:
                 return

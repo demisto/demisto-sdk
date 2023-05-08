@@ -145,8 +145,8 @@ def logging_setup(
     console_handler.setFormatter(fmt=console_formatter)
 
     global current_log_file_path
-    if os.environ.get("DEMISTO_SDK_LOG_FILE_PATH"):
-        current_log_file_path
+    if (custom_log_path := os.getenv("DEMISTO_SDK_LOG_FILE_PATH")):
+        current_log_file_path = custom_log_path
     else:
         current_log_file_path = log_file_path or LOG_FILE_PATH
         if Path(current_log_file_path).is_dir():

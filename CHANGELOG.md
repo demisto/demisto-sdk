@@ -3,7 +3,7 @@
 ## Unreleased
 
 ## 1.14.2
-* Add the `--staged-only` flag to **pre-commit**.
+* Added the `--staged-only` flag to **pre-commit**.
 * Fixed an issue where **run-unit-tests** failed running on items with `test_data`.
 * Fixed an issue where **pre-commit** ran on unchanged files.
 

@@ -77,3 +77,5 @@ repos:
         args: ["-ud"]
 
       - id: validate
+
+      - id: secrets

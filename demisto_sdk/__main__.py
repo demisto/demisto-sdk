@@ -3256,6 +3256,13 @@ def update_content_graph(
     type=click.Path(path_type=Path),
 )
 @click.option(
+    "-s",
+    "--staged-only",
+    help="Whether to run only on staged files",
+    is_flag=True,
+    default=False,
+)
+@click.option(
     "-g",
     "--git-diff",
     help="Whether to use git to determine which files to run on",
@@ -3315,6 +3322,7 @@ def update_content_graph(
 def pre_commit(
     ctx,
     input: Iterable[Path],
+    staged_only: bool,
     git_diff: bool,
     all_files: bool,
     unit_test: bool,
@@ -3333,6 +3341,7 @@ def pre_commit(
     sys.exit(
         pre_commit_manager(
             input,
+            staged_only,
             git_diff,
             all_files,
             unit_test,

@@ -1,7 +1,7 @@
 # Changelog
 
 ## Unreleased
-* Fixed an issue in **run-unit-tests** command to support content items with `test_data` folder.
+* Fixed an issue where **run-unit-tests** failed running on items with `test_data`.
 
 ## 1.14.1
 * Fixed an issue where **update-release-notes** command failed when running on a pack that contains deprecated integrations without the `commands` section.

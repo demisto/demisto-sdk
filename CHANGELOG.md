@@ -1,6 +1,8 @@
 # Changelog
 
 ## Unreleased
+* **Breaking Change**: the **upload** command now only supports XSOAR 6.5 or newer (and all XSIAM versions).
+* **upload** now uses content models, and calls the `prepare` method of each model before uploading (unless uploading a zipped pack).
 * Fixed an issue where **run-unit-tests** failed running on items with `test_data`.
 
 ## 1.14.2

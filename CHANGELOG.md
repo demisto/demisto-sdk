@@ -1,7 +1,7 @@
 # Changelog
 
 ## Unreleased
-* Add the `--staged-only` flag in **pre-commit**.
+* Add the `--staged-only` flag to **pre-commit**.
 
 ## 1.14.1
 * Fixed an issue where **update-release-notes** command failed when running on a pack that contains deprecated integrations without the `commands` section.

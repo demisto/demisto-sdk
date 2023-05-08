@@ -214,7 +214,10 @@ def replace_script_access_fields_recursively(
         for key in tuple(data.keys()):
             value = data[key]
             if isinstance(value, str):
-                if key in ("name", "id", "comment", "description"):
+                if key in ("id", "comment", "description") or (
+                    # To avoid replacing the name of the arguments
+                    key == "name" and "commonfields" in data
+                ):
                     data[key] = edit_ids_names_and_descriptions_for_script(
                         value, incident_to_alert
                     )

@@ -1,13 +1,14 @@
-from typing import Optional
+from typing import TYPE_CHECKING, Optional
 
 from packaging.version import Version
 
-from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
-from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
+if TYPE_CHECKING:
+    from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
+    from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 
 
 class NotUploadableException(NotImplementedError):
-    def __init__(self, item: BaseContent, description: Optional[str] = None) -> None:
+    def __init__(self, item: "BaseContent", description: Optional[str] = None) -> None:
         description_suffix = f" {description}" if description else ""
         super().__init__(
             f"Object ({item.content_type} {item.object_id}) cannot be uploaded{description_suffix}"
@@ -27,7 +28,7 @@ class NotIndivitudallyUploadableException(NotUploadableException):
 
 
 class IncompatibleUploadVersionException(NotUploadableException):
-    def __init__(self, item: ContentItem, target: Version) -> None:
+    def __init__(self, item: "ContentItem", target: Version) -> None:
         if target > Version(item.toversion):
             message = f"to_version={item.toversion}"
         elif target < Version(item.fromversion):

@@ -1230,35 +1230,30 @@ def test_build_file_name():
 
 
 @pytest.mark.parametrize(
-    "original_string, object_name, expected_string, expected_mapper",
+    "original_string, object_name, expected_string, should_download_expected_res",
     [
         (
             "name: TestingScript\ncommonfields:\n id: f1e4c6e5-0d44-48a0-8020-a9711243e918",
             "automation-Testing.yml",
             "name: TestingScript\ncommonfields:\n id: f1e4c6e5-0d44-48a0-8020-a9711243e918",
-            {"f1e4c6e5-0d44-48a0-8020-a9711243e918": "TestingScript"},
+            False,
+        ),
+        (
+            "name: Playbook\ncommonfields:\n id: f1e4c6e5-0d44-48a0-8020-a9711243e918",
+            "playbook-Testing.yml",
+            "name: Playbook\ncommonfields:\n id: f1e4c6e5-0d44-48a0-8020-a9711243e918",
+            True,
         ),
     ],
 )
-def test_handle_file(original_string, object_name, expected_string, expected_mapper):
+def test_download_playbook(
+    original_string, object_name, expected_string, should_download_expected_res
+):
     downloader = Downloader(output="", input="", regex="", all_custom_content=True)
-    final_string = downloader.handle_file(original_string, object_name)
+    should_download_playbook = downloader.should_download_playbook(object_name)
+    final_string = downloader.download_playbook_yaml(original_string)
+    assert should_download_playbook == should_download_expected_res
     assert final_string == expected_string
-
-
-def test_download_playbook_yaml_is_called():
-    """
-    Test that the `download_playbook_yaml` method is called when `handle_file` is called,
-    if member name contains the word playbook.
-    """
-    downloader = Downloader(output="", input="", regex="", all_custom_content=True)
-    with patch.object(downloader, "download_playbook_yaml") as mock:
-        downloader.handle_file(
-            "name: TestingPlaybook\ncommonfields:\n id: f1e4c6e5-0d44-48a0-8020-a9711243e918",
-            "playbook-Testing.yml",
-        )
-
-    mock.assert_called()
 
 
 @pytest.mark.parametrize(
@@ -1409,7 +1404,7 @@ download_tar.tar"
         all_custom_content=True,
     )
     with tarfile.open(fileobj=io_bytes, mode="r") as tar:
-        scripts_id_name, strings_to_write = downloader.find_uuids_in_content_item(tar)
+        strings_to_write, scripts_id_name = downloader.find_uuids_in_content_item(tar)
     ids = set(scripts_id_name.keys())
     assert ids.issubset(expected_UUIDs)
     assert ids.isdisjoint(strings_to_write)

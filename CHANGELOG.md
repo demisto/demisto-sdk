@@ -1,8 +1,11 @@
 # Changelog
 
 ## Unreleased
+
+## 1.14.3
 * Fixed an issue where **run-unit-tests** failed running on items with `test_data`.
 * Updated the demisto-py to v3.2.10 which now supports url decoding for the proxy authentication password.
+* Fixed an issue where **generate-outputs** did not generate context paths for empty lists or dictionaries in the response.
 
 ## 1.14.2
 * Added the `--staged-only` flag to **pre-commit**.
@@ -10,7 +13,6 @@
 * Fixed an issue where **pre-commit** ran on unchanged files.
 * Add the ability to run **secrets** in **pre-commit** by passing a `--secrets` flag.
 * Added support to override the log file with the **DEMISTO_SDK_LOG_FILE_PATH** environment variable.
-* Fixed an issue where **generate-outputs** did not generate context paths for empty lists or dictionaries in the response.
 
 ## 1.14.1
 * Fixed an issue where **update-release-notes** command failed when running on a pack that contains deprecated integrations without the `commands` section.

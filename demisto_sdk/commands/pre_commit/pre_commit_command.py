@@ -232,6 +232,7 @@ def group_by_python_version(files: Set[Path]) -> Dict[str, set]:
 
 def pre_commit_manager(
     input_files: Optional[Iterable[Path]] = None,
+    staged_only: bool = False,
     git_diff: bool = False,
     all_files: bool = False,
     unit_test: bool = False,
@@ -246,6 +247,7 @@ def pre_commit_manager(
 
     Args:
         input_files (Iterable[Path], optional): Input files to run pre-commit on. Defaults to None.
+        staged_only (bool, optional): Whether to run on staged files only. Defaults to False.
         git_diff (bool, optional): Whether use git to determine precommit files. Defaults to False.
         all_files (bool, optional): Whether to run on all_files. Defaults to False.
         test (bool, optional): Whether to run unit-tests. Defaults to False.
@@ -260,11 +262,11 @@ def pre_commit_manager(
     # We have imports to this module, however it does not exists in the repo.
     (CONTENT_PATH / "CommonServerUserPython.py").touch()
 
-    if not any((input_files, git_diff, all_files)):
+    if not any((input_files, staged_only, git_diff, all_files)):
         logger.info("No arguments were given, running on staged files and git changes.")
         git_diff = True
 
-    files_to_run = preprocess_files(input_files, git_diff, all_files)
+    files_to_run = preprocess_files(input_files, staged_only, git_diff, all_files)
     if not sdk_ref:
         sdk_ref = f"v{get_last_remote_release_version()}"
     pre_commit_runner = PreCommitRunner(group_by_python_version(files_to_run), sdk_ref)
@@ -280,6 +282,7 @@ def pre_commit_manager(
 
 def preprocess_files(
     input_files: Optional[Iterable[Path]],
+    staged_only: bool = False,
     use_git: bool = False,
     all_files: bool = False,
 ) -> Set[Path]:
@@ -287,6 +290,8 @@ def preprocess_files(
     staged_files = git_util._get_staged_files()
     if input_files:
         raw_files = set(input_files)
+    elif staged_only:
+        raw_files = staged_files
     elif use_git:
         raw_files = git_util._get_all_changed_files() | staged_files
     elif all_files:
@@ -303,4 +308,6 @@ def preprocess_files(
             files_to_run.add(file)
 
     # Convert to absolute paths
-    return {file.absolute() for file in files_to_run}
+    return {
+        file if file.is_absolute() else CONTENT_PATH / file for file in files_to_run
+    }

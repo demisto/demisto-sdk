@@ -15,6 +15,7 @@ import urllib3.exceptions
 from packaging.version import Version
 from wcmatch.pathlib import Path, PosixPath
 
+import demisto_sdk
 from demisto_sdk.commands.common.constants import (
     API_MODULES_PACK,
     PACKS_PACK_META_FILE_NAME,
@@ -257,13 +258,16 @@ class LintManager:
             sys.exit(1)
         # Validating docker engine connection
         logger.debug("creating docker client from env")
-        docker_client: docker.DockerClient = init_global_docker_client(
-            log_prompt="LintManager"
-        )
+
         try:
+            docker_client: docker.DockerClient = init_global_docker_client(
+                log_prompt="LintManager"
+            )
             logger.debug("pinging docker daemon")
             docker_client.ping()
         except (
+            docker.errors.DockerException,
+            demisto_sdk.commands.common.docker_helper.DockerException,
             requests.exceptions.ConnectionError,
             urllib3.exceptions.ProtocolError,
             docker.errors.APIError,

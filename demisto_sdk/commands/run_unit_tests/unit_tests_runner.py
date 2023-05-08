@@ -1,6 +1,7 @@
 import os
 import shutil
 import sqlite3
+import tempfile
 import traceback
 from pathlib import Path
 from typing import List
@@ -48,17 +49,22 @@ def fix_coverage_report_path(code_directory: Path):
         )
         return
     logger.debug(f"Editing coverage report for {coverage_file}")
-    with sqlite3.connect(coverage_file) as sql_connection:
-        cursor = sql_connection.cursor()
-        files = cursor.execute("SELECT * FROM file").fetchall()
-        for id_, file in files:
-            file_name = Path(file).name
-            cursor.execute(
-                "UPDATE file SET path = ? WHERE id = ?",
-                (str(code_directory / file_name), id_),
-            )
-        sql_connection.commit()
-        logger.debug("Done editing coverage report")
+    with tempfile.NamedTemporaryFile() as temp_file:
+        # we use a tempfile because the original file could be readonly, this way we assure we can edit it.
+        shutil.copy(coverage_file, temp_file.name)
+        with sqlite3.connect(temp_file.name) as sql_connection:
+            cursor = sql_connection.cursor()
+            files = cursor.execute("SELECT * FROM file").fetchall()
+            for id_, file in files:
+                file_name = Path(file).name
+                cursor.execute(
+                    "UPDATE file SET path = ? WHERE id = ?",
+                    (str(code_directory / file_name), id_),
+                )
+            sql_connection.commit()
+            logger.debug("Done editing coverage report")
+        coverage_file.unlink()
+        shutil.copy(temp_file.name, coverage_file)
 
 
 def unit_test_runner(file_paths: List[Path], verbose: bool = False) -> int:
@@ -70,6 +76,10 @@ def unit_test_runner(file_paths: List[Path], verbose: bool = False) -> int:
         if not isinstance(integration_script, IntegrationScript):
             logger.warning(f"Skipping {filename} as it is not a content item.")
             continue
+
+        if (test_data_dir := (integration_script.path / "test_data")).exists():
+            (test_data_dir / "__init__.py").touch()
+
         working_dir = (
             f"/content/{integration_script.path.parent.relative_to(CONTENT_PATH)}"
         )
@@ -125,8 +135,7 @@ def unit_test_runner(file_paths: List[Path], verbose: bool = False) -> int:
                     logger.info if verbose else logger.debug,
                 )
                 # wait for container to finish
-                container_exit_code = container.wait()["StatusCode"]
-                if container_exit_code:
+                if container.wait()["StatusCode"]:
                     if not (
                         integration_script.path.parent / ".report_pytest.xml"
                     ).exists():
@@ -160,5 +169,5 @@ def unit_test_runner(file_paths: List[Path], verbose: bool = False) -> int:
     cov = coverage.Coverage(data_file=CONTENT_PATH / ".coverage")
     cov.combine(coverage_files())
     cov.xml_report(outfile=str(CONTENT_PATH / "coverage.xml"))
-
+    logger.info(f"Coverage report saved to {CONTENT_PATH / 'coverage.xml'}")
     return exit_code

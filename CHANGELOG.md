@@ -1,8 +1,10 @@
 # Changelog
 
 ## Unreleased
+
+## 1.14.2
+* Added the `--staged-only` flag to **pre-commit**.
 * Fixed an issue where **run-unit-tests** failed running on items with `test_data`.
-* Add the `--staged-only` flag to **pre-commit**.
 * Fixed an issue where **pre-commit** ran on unchanged files.
 * Add the ability to run **secrets** in **pre-commit** by passing a `--secrets` flag.
 * Added support to override the log file with the **DEMISTO_SDK_LOG_FILE_PATH** environment variable.

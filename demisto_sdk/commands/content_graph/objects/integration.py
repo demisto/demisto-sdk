@@ -6,9 +6,9 @@ if TYPE_CHECKING:
     # avoid circular imports
     from demisto_sdk.commands.content_graph.objects.script import Script
 
-from pydantic import Field
+from pydantic import Field, validator
 
-from demisto_sdk.commands.common.constants import MarketplaceVersions
+from demisto_sdk.commands.common.constants import REPUTATION_COMMAND_NAMES, MarketplaceVersions
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
 from demisto_sdk.commands.content_graph.objects.integration_script import (
@@ -18,15 +18,21 @@ from demisto_sdk.commands.content_graph.objects.integration_script import (
 
 class Command(BaseContent, content_type=ContentType.COMMAND):  # type: ignore[call-arg]
     name: str
-
+    is_reputation: bool
+    
     # From HAS_COMMAND relationship
     deprecated: bool = False
     description: str = ""
-
+    
     # missing attributes in DB
     node_id: str = ""
     object_id: str = Field("", alias="id")
 
+    
+    @validator("is_reputation")
+    def validate_reputation(cls, v, values, **kwargs):
+        return v if v else values.get("name") in REPUTATION_COMMAND_NAMES
+    
     @property
     def integrations(self) -> List["Integration"]:
         return [

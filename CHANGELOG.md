@@ -4,6 +4,7 @@
 * Fixed an issue where **update-release-notes** command failed when running on a pack that contains deprecated integrations without the `commands` section.
 * Fixed an issue where **validate** failed when attempting to map null values in a classifier.
 * Fixed an issue in **pre-commit** command where `MYPYPATH` was not set properly.
+* Added support to override the log file with the **DEMISTO_SDK_LOG_FILE_PATH** environment variable.
 
 ## 1.14.0
 * Added the `DEMISTO_SDK_GRAPH_FORCE_CREATE` environment variable. Use it to force the SDK to recreate the graph, rather than update it.

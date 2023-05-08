@@ -149,7 +149,7 @@ def logging_setup(
         current_log_file_path
     else:
         current_log_file_path = log_file_path or LOG_FILE_PATH
-        if os.path.isdir(current_log_file_path):
+        if Path(current_log_file_path).is_dir():
             current_log_file_path = current_log_file_path / LOG_FILE_NAME
     file_handler = RotatingFileHandler(
         filename=current_log_file_path,

@@ -20,7 +20,7 @@ class NotIndivitudallyUploadableException(NotUploadableException):
     Some XSIAM items must be uploaded as part of a pack.
     """
 
-    def __init__(self, item: BaseContent):
+    def __init__(self, item: "BaseContent"):
         super().__init__(
             item,
             description=" independently. Use the -z flag to upload the whole pack, zipped.",

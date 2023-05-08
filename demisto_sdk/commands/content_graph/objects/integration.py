@@ -29,9 +29,9 @@ class Command(BaseContent, content_type=ContentType.COMMAND):  # type: ignore[ca
     object_id: str = Field("", alias="id")
 
     
-    @validator("is_reputation")
+    @validator("is_reputation", always=True)
     def validate_reputation(cls, v, values, **kwargs):
-        return v if v else values.get("name") in REPUTATION_COMMAND_NAMES
+        return values.get("name") in REPUTATION_COMMAND_NAMES
     
     @property
     def integrations(self) -> List["Integration"]:

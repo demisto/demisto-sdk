@@ -1,6 +1,7 @@
 # Changelog
 
 ## Unreleased
+* Add support for `--staged-only` flag in **pre-commit** command to run on staged files only.
 
 ## 1.14.1
 * Fixed an issue where **update-release-notes** command failed when running on a pack that contains deprecated integrations without the `commands` section.

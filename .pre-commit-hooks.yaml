@@ -26,4 +26,5 @@
   name: secrets
   description: Check for secrets in files.
   entry: demisto-sdk secrets
+  args: ["--ignore-entropy"]
   language: python

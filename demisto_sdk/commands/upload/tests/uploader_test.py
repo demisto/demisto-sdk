@@ -630,9 +630,7 @@ class TestZippedPackUpload:
         mocked_upload_content_packs = mocker.patch.object(
             API_CLIENT, "upload_content_packs", return_value=({}, 200, "")
         )
-        mocker.patch.object(
-            API_CLIENT, "generic_request", return_value=("{}", 200, None)
-        )
+        mocker.patch.object(API_CLIENT, "generic_request", return_value=([], 200, None))
         # run
         uploader = Uploader(path)
         assert uploader.upload() == SUCCESS_RETURN_CODE
@@ -689,7 +687,7 @@ class TestZippedPackUpload:
         mocker.patch.object(
             API_CLIENT,
             "generic_request",
-            return_value=[json.dumps([{"name": "TestPack"}])],
+            return_value=[[{"name": "TestPack"}]],
         )
         mocker.patch.object(API_CLIENT, "upload_content_packs")
 
@@ -741,9 +739,7 @@ class TestZippedPackUpload:
         mock_upload_content_packs = mocker.patch.object(
             API_CLIENT, "upload_content_packs", return_value=({}, 200, None)
         )
-        mocker.patch.object(
-            API_CLIENT, "generic_request", return_value=("{}", 200, None)
-        )
+        mocker.patch.object(API_CLIENT, "generic_request", return_value=([], 200, None))
 
         # run
         click.Context(command=upload).invoke(upload, input=path)
@@ -775,9 +771,7 @@ class TestZippedPackUpload:
         mock_upload_content_packs = mocker.patch.object(
             API_CLIENT, "upload_content_packs", return_value=({}, 200, None)
         )
-        mocker.patch.object(
-            API_CLIENT, "generic_request", return_value=("{}", 200, None)
-        )
+        mocker.patch.object(API_CLIENT, "generic_request", return_value=([], 200, None))
 
         # run
         result = click.Context(command=upload).invoke(
@@ -809,9 +803,7 @@ class TestZippedPackUpload:
         mock_upload_content_packs = mocker.patch.object(
             API_CLIENT, "upload_content_packs", return_value=({}, 200, None)
         )
-        mocker.patch.object(
-            API_CLIENT, "generic_request", return_value=("{}", 200, None)
-        )
+        mocker.patch.object(API_CLIENT, "generic_request", return_value=([], 200, None))
 
         mocker.patch.object(
             tools, "update_server_configuration", return_value=(None, None, {})
@@ -868,9 +860,7 @@ class TestZippedPackUpload:
         mocked_upload_content_packs = mocker.patch.object(
             API_CLIENT, "upload_content_packs", return_value=({}, 200, None)
         )
-        mocker.patch.object(
-            API_CLIENT, "generic_request", return_value=("{}", 200, None)
-        )
+        mocker.patch.object(API_CLIENT, "generic_request", return_value=([], 200, None))
 
         click.Context(command=upload).invoke(
             upload,

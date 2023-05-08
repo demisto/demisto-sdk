@@ -10,6 +10,11 @@ class FailedUploadException(RuntimeError):
         status_code: Optional[int] = None,
         additional_info: Optional[str] = None,
     ) -> None:
+        self.path = path
+        self.response_body = response_body
+        self.status_code = status_code
+        self.additional_info = additional_info
+
         super().__init__(
             "\n".join(
                 (

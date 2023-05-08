@@ -106,7 +106,7 @@ def test_zipped_pack_upload_positive(repo, mocker, demisto_client_mock):
         API_CLIENT, "upload_content_packs", return_value=({}, 200, None)
     )
     mocked_get_installed = mocker.patch.object(
-        API_CLIENT, "generic_request", return_value=("{}", 200, None)
+        API_CLIENT, "generic_request", return_value=({}, 200, None)
     )
 
     pack = repo.setup_one_pack(name="test-pack")

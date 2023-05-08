@@ -34,6 +34,7 @@ from demisto_sdk.commands.content_graph.objects.content_item import (
 )
 from demisto_sdk.commands.content_graph.objects.exceptions import (
     FailedUploadException,
+    FailedUploadMultipleException,
 )
 from demisto_sdk.commands.content_graph.objects.pack import Pack, upload_zipped_pack
 from demisto_sdk.commands.upload.exceptions import (
@@ -105,11 +106,12 @@ class Uploader:
         def notify_user_should_override_packs():
             """Notify the user about possible overridden packs."""
 
-            response = self.client.generic_request(
-                "/contentpacks/metadata/installed", "GET"
-            )
-            if installed_packs := json.loads(response[0]):
-                installed_packs = {pack["name"] for pack in installed_packs}
+            if (
+                response := self.client.generic_request(
+                    "/contentpacks/metadata/installed", "GET", response_type="object"
+                )
+            ) and response[0]:
+                installed_packs = {pack["name"] for pack in response[0]}
                 if common_packs := installed_packs.intersection(self.pack_names):
                     pack_names = "\n".join(sorted(common_packs))
                     product = (
@@ -293,8 +295,7 @@ class Uploader:
         except KeyboardInterrupt:
             raise  # the functinos calling this one have a special return code for manual interruption
 
-        except IncompatibleUploadVersionException as e:
-            logger.error(e)
+        except IncompatibleUploadVersionException:
             assert isinstance(
                 content_item, ContentItem
             ), "Cannot compare version for Pack items, only ContentItems"
@@ -307,8 +308,25 @@ class Uploader:
             )
             return False
 
+        except FailedUploadMultipleException as e:
+            for failure in e.failures:
+                failure_str = failure.additional_info or str(failure)
+
+                _failed_content_item: Union[
+                    Pack, ContentItem, None
+                ] = BaseContent.from_path(
+                    failure.path
+                )  # type:ignore[assignment]
+
+                if _failed_content_item is None:
+                    self.failed_parsing.append((failure.path, failure_str))
+                else:
+                    self._failed_upload_content_items.append(
+                        (_failed_content_item, failure_str)
+                    )
+            return False
+
         except (FailedUploadException, NotUploadableException, Exception) as e:
-            logger.error(str(e))
             self._failed_upload_content_items.append((content_item, str(e)))
             return False
 

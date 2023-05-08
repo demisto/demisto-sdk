@@ -73,7 +73,7 @@ def test_config_files(mocker, repo: Repo, is_test: bool):
     # precommit should not run on python2 files, unless test files
     assert mock_subprocess.call_count == 3 if not is_test else 4
 
-    tests_we_should_skip = {"format", "validate"}
+    tests_we_should_skip = {"format", "validate", "secrets"}
     if not is_test:
         tests_we_should_skip.add("run-unit-tests")
     if os.getenv("CI"):

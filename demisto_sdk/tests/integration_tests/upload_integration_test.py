@@ -105,6 +105,10 @@ def test_zipped_pack_upload_positive(repo, mocker, demisto_client_mock):
     mocker.patch.object(
         API_CLIENT, "upload_content_packs", return_value=({}, 200, None)
     )
+    mocked_get_installed = mocker.patch.object(
+        API_CLIENT, "generic_request", return_value=("{}", 200, None)
+    )
+
     pack = repo.setup_one_pack(name="test-pack")
     runner = CliRunner(mix_stderr=False)
     with tempfile.TemporaryDirectory() as dir:
@@ -132,7 +136,9 @@ def test_zipped_pack_upload_positive(repo, mocker, demisto_client_mock):
         assert "nativeimage" in integration_content.get("script", {})
 
     logged = flatten_call_args(logger_info.call_args_list)
-
+    assert mocked_get_installed.called_once_with(
+        "/contentpacks/metadata/installed", "GET"
+    )
     assert result.exit_code == SUCCESS_RETURN_CODE
     assert logged[-1] == "\n".join(
         (

@@ -17,4 +17,4 @@ class IndicatorField(ContentItem, content_type=ContentType.INDICATOR_FIELD):  # 
 
     @classmethod
     def _client_upload_method(cls, client: demisto_client) -> Callable:
-        return client.import_incident_fields  # TODO check name
+        return client.import_incident_fields

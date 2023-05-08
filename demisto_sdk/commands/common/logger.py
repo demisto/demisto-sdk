@@ -148,7 +148,7 @@ def logging_setup(
     if os.environ.get("DEMISTO_SDK_LOG_FILE_PATH"):
         current_log_file_path
     else:
-        current_log_file_path = log_file_path if log_file_path else LOG_FILE_PATH
+        current_log_file_path = log_file_path or LOG_FILE_PATH
         if os.path.isdir(current_log_file_path):
             current_log_file_path = current_log_file_path / LOG_FILE_NAME
     file_handler = RotatingFileHandler(

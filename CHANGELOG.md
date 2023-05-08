@@ -1,7 +1,11 @@
 # Changelog
-* Added a validation that the **validate** command will fail on README files if an image does not exist in the specified path.
 
 ## Unreleased
+* Fixed an issue where **run-unit-tests** failed running on items with `test_data`.
+* Add the `--staged-only` flag to **pre-commit**.
+* Fixed an issue where **pre-commit** ran on unchanged files.
+
+## 1.14.1
 * Fixed an issue where **update-release-notes** command failed when running on a pack that contains deprecated integrations without the `commands` section.
 * Added toVersion and fromVersion to XSIAM content items schema.
 * Fixed an issue where **validate** failed when attempting to map null values in a classifier and layout.
@@ -9,8 +13,7 @@
 * Fixed an issue in **pre-commit** command where `MYPYPATH` was not set properly.
 * Updated the integration category list in the **init** command.
 * Fixed an issue where in some environments docker errors were not caught.
-* Fixed an issue where **validate** fails when adding the *advance* field to the integration required fields.
-* Updated the integration Traffic Light Protocol (TLP) color list schema in the **validate** command.
+* Added a validation that the **validate** command will fail on README files if an image does not exist in the specified path.
 
 ## 1.14.0
 * Added the `DEMISTO_SDK_GRAPH_FORCE_CREATE` environment variable. Use it to force the SDK to recreate the graph, rather than update it.

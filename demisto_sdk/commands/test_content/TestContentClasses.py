@@ -1264,7 +1264,7 @@ class Integration:
             for conf in integration_params
         ]
         if self.name == "Core REST API":
-            self.configuration.params = {
+            self.configuration.params = {  # type: ignore
                 "url": server_url if IS_XSIAM else "https://localhost",
                 "creds_apikey": {
                     "identifier": str(self.build_context.auth_id) if IS_XSIAM else "",

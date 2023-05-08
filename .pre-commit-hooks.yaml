@@ -27,4 +27,3 @@
   description: Check for secrets in files.
   entry: demisto-sdk secrets
   language: python
-  files: *files

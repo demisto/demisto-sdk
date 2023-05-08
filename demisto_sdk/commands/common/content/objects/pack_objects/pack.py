@@ -1,6 +1,5 @@
 import logging
 import subprocess
-from distutils.version import LooseVersion
 from typing import Any, Dict, Iterator, Optional, Union
 
 import regex
@@ -90,7 +89,7 @@ from demisto_sdk.commands.common.content.objects.pack_objects import (
 )
 from demisto_sdk.commands.common.content.objects_factory import path_to_pack_object
 from demisto_sdk.commands.common.logger import logger
-from demisto_sdk.commands.common.tools import get_demisto_version, is_object_in_id_set
+from demisto_sdk.commands.common.tools import is_object_in_id_set
 
 
 class Pack:
@@ -549,10 +548,4 @@ class Pack:
         """
         Get content of the pack metadata.
         """
-        if pack_metadata := self.pack_metadata:
-            return pack_metadata.to_dict()
-        return {}
-
-    def is_server_version_ge(self, client, server_version_to_check):
-        server_version = get_demisto_version(client)
-        return LooseVersion(server_version.base_version) >= LooseVersion(server_version_to_check)  # type: ignore
+        return pack_metadata.to_dict() if (pack_metadata := self.pack_metadata) else {}

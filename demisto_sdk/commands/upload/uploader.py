@@ -24,19 +24,22 @@ from demisto_sdk.commands.common.tools import (
     find_type,
     get_demisto_version,
     get_file,
+    string_to_bool,
 )
 from demisto_sdk.commands.content_graph.objects.base_content import (
     BaseContent,
 )
 from demisto_sdk.commands.content_graph.objects.content_item import (
     ContentItem,
-    IncompatibleUploadVersionException,
-    NotUploadableException,
 )
 from demisto_sdk.commands.content_graph.objects.exceptions import (
     FailedUploadException,
 )
 from demisto_sdk.commands.content_graph.objects.pack import Pack, upload_zipped_pack
+from demisto_sdk.commands.upload.exceptions import (
+    IncompatibleUploadVersionException,
+    NotUploadableException,
+)
 from demisto_sdk.commands.upload.tools import parse_error_response
 
 json = JSON_Handler()
@@ -99,6 +102,44 @@ class Uploader:
             bool: True if the upload was successful, False otherwise.
         """
 
+        def notify_user_should_override_packs():
+            """Notify the user about possible overridden packs."""
+
+            response = self.client.generic_request(
+                "/contentpacks/metadata/installed", "GET"
+            )
+            if installed_packs := json.loads(response[0]):
+                installed_packs = {pack["name"] for pack in installed_packs}
+                if common_packs := installed_packs.intersection(self.pack_names):
+                    pack_names = "\n".join(sorted(common_packs))
+                    product = (
+                        self.marketplace.lower()
+                        .replace(MarketplaceVersions.MarketplaceV2, "XSIAM")
+                        .upper()
+                    )
+                    logger.info(
+                        "\n".join(
+                            (
+                                "[red]This command will overwrite the following packs:",
+                                pack_names,
+                                f"All changes made in these content items on {product} will be lost.[red]",
+                            )
+                        )
+                    )
+                    if not self.override_existing:
+                        logger.info(
+                            "[red]Are you sure you want to continue? y/[N][/red]"
+                        )
+                        try:
+                            return string_to_bool(
+                                str(input()),
+                                accept_yes_no=True,
+                                accept_single_letter=True,
+                            )
+                        except ValueError:
+                            return False
+            return True
+
         def _parse_internal_pack_names(zip_path: Path) -> Optional[Tuple[str, ...]]:
             """
             A zip can be
@@ -126,6 +167,8 @@ class Uploader:
                 return None
 
         pack_names = _parse_internal_pack_names(path) or (path.name,)
+        if not notify_user_should_override_packs():
+            return False
 
         try:
             if upload_zipped_pack(
@@ -293,13 +336,13 @@ class Uploader:
 
         return all(self._upload_single(item) for item in to_upload)
 
-    def notify_user_should_override_packs(self):  # TODO is used?
+    def notify_user_should_override_packs(self):
         """Notify the user about possible overridden packs."""
 
         response = self.client.generic_request(
             "/contentpacks/metadata/installed", "GET"
         )
-        if installed_packs := eval(response[0]):  # TODO json loads
+        if installed_packs := json.loads(response[0]):
             installed_packs = {pack["name"] for pack in installed_packs}
             if common_packs := installed_packs.intersection(self.pack_names):
                 pack_names = "\n".join(common_packs)

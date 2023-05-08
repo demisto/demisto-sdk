@@ -630,10 +630,7 @@ class TestZippedPackUpload:
         mocked_upload_content_packs = mocker.patch.object(
             API_CLIENT, "upload_content_packs", return_value=({}, 200, "")
         )
-        mocker.patch.object(
-            Uploader, "notify_user_should_override_packs", return_value=True  # TODO
-        )
-
+        mocker.patch("builtins.input", return_value="y")
         # run
         uploader = Uploader(path)
         assert uploader.upload() == SUCCESS_RETURN_CODE
@@ -738,9 +735,7 @@ class TestZippedPackUpload:
         """
         # prepare
         mock_api_client(mocker, version)
-        # mocker.patch.object( # TODO
-        #     Uploader, "notify_user_should_override_packs", return_value=True
-        # )
+        mocker.patch("builtins.input", return_value="y")
         mock_upload_content_packs = mocker.patch.object(
             API_CLIENT, "upload_content_packs", return_value=({}, 200, None)
         )
@@ -774,9 +769,7 @@ class TestZippedPackUpload:
         mock_upload_content_packs = mocker.patch.object(
             API_CLIENT, "upload_content_packs", return_value=({}, 200, None)
         )
-        # mocker.patch.object( # TODO
-        #     Uploader, "notify_user_should_override_packs", return_value=True
-        # )
+        mocker.patch("builtins.input", return_value="y")
 
         # run
         result = click.Context(command=upload).invoke(
@@ -812,10 +805,7 @@ class TestZippedPackUpload:
         mocker.patch.object(
             tools, "update_server_configuration", return_value=(None, None, {})
         )
-        # mocker.patch.object( # TODO
-        #     Uploader, "notify_user_should_override_packs", return_value=True
-        # )
-
+        mocker.patch("builtins.input", return_value="y")
         # run
         click.Context(command=upload).invoke(upload, input=path)
         assert mock_upload_content_packs.call_args[1]["file"] == str(path)

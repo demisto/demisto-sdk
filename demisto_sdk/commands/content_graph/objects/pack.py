@@ -91,6 +91,7 @@ def upload_zipped_pack(
     """
     Used to upload an existing zip file
     """
+
     if target_demisto_version < MINIMAL_UPLOAD_SUPPORTED_VERSION:
         raise RuntimeError(
             "Uploading packs to XSOAR versions earlier than 6.5.0 is no longer supported."

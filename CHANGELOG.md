@@ -1,6 +1,8 @@
 # Changelog
 
 ## Unreleased
+
+## 1.14.3
 * Fixed an issue where **run-unit-tests** failed running on items with `test_data`.
 * Fixed an issue where **generate-outputs** did not generate context paths for empty lists or dictionaries in the response.
 

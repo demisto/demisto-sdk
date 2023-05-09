@@ -59,11 +59,6 @@ repos:
         entry: ./Tests/scripts/is_file_up_to_date.sh .gitlab "" true
         language: script
 
-  - repo: https://github.com/PyCQA/flake8
-    rev: "6.0.0"
-    hooks:
-      - id: flake8
-
   - repo: https://github.com/demisto/demisto-sdk
     # Replace with the latest release version or master
     rev: master
@@ -77,3 +72,5 @@ repos:
         args: ["-ud"]
 
       - id: validate
+
+      - id: secrets

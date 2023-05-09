@@ -1409,6 +1409,7 @@ FEED_REQUIRED_PARAMS = [
             "required": False,
         },
         "must_contain": {},
+        "have_at_least_one": {},
     },
     {
         "name": "feedReputation",
@@ -1421,6 +1422,7 @@ FEED_REQUIRED_PARAMS = [
         "must_contain": {
             "additionalinfo": "Indicators from this integration instance will be marked with this reputation"
         },
+        "have_at_least_one": {},
     },
     {
         "name": "feedReliability",
@@ -1440,6 +1442,7 @@ FEED_REQUIRED_PARAMS = [
         "must_contain": {
             "additionalinfo": "Reliability of the source providing the intelligence data"
         },
+        "have_at_least_one": {},
     },
     {
         "name": "feedExpirationPolicy",
@@ -1450,16 +1453,19 @@ FEED_REQUIRED_PARAMS = [
             "options": ["never", "interval", "indicatorType", "suddenDeath"],
         },
         "must_contain": {},
+        "have_at_least_one": {},
     },
     {
         "name": "feedExpirationInterval",
         "must_equal": {"display": "", "type": 1, "required": False},
         "must_contain": {},
+        "have_at_least_one": {},
     },
     {
         "name": "feedFetchInterval",
         "must_equal": {"display": "Feed Fetch Interval", "type": 19, "required": False},
         "must_contain": {},
+        "have_at_least_one": {},
     },
     {
         "name": "feedBypassExclusionList",
@@ -1473,23 +1479,30 @@ FEED_REQUIRED_PARAMS = [
             " This means that if an indicator from this feed is on the exclusion list,"
             " the indicator might still be added to the system."
         },
+        "have_at_least_one": {},
     },
     {
         "name": "feedTags",
         "must_equal": {"display": "Tags", "required": False, "type": 0},
         "must_contain": {"additionalinfo": "Supports CSV values."},
+        "have_at_least_one": {},
     },
     {
         "name": "tlp_color",
         "must_equal": {
             "display": "Traffic Light Protocol Color",
-            "options": ["RED", "AMBER", "GREEN", "WHITE"],
             "required": False,
             "type": 15,
         },
         "must_contain": {
             "additionalinfo": "The Traffic Light Protocol (TLP) designation to apply to indicators fetched from the "
             "feed"
+        },
+        "have_at_least_one": {
+            "options": [
+                ["RED", "AMBER", "GREEN", "WHITE"],
+                ["RED", "AMBER+STRICT", "AMBER", "GREEN", "CLEAR"],
+            ]
         },
     },
 ]

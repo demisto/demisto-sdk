@@ -2,7 +2,8 @@
 
 ## Unreleased
 * Removed `Flake8` from **pre-commit**, as `ruff` covers its basic rules.
-
+* Fixed an issue where **validate** fails when adding the *advance* field to the integration required fields.
+* Updated the integration Traffic Light Protocol (TLP) color list schema in the **validate** command.
 
 ## 1.14.3
 * Fixed an issue where **run-unit-tests** failed running on items with `test_data`.

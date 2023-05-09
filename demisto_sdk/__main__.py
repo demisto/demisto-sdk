@@ -895,13 +895,18 @@ def create_content_artifacts(ctx, **kwargs) -> int:
     help='Full path to whitelist file, file name should be "secrets_white_list.json"',
 )
 @click.option("--prev-ver", help="The branch against which to run secrets validation.")
+@click.argument("file_paths", nargs=-1, type=click.Path(exists=True, resolve_path=True))
 @pass_config
 @click.pass_context
 @logging_setup_decorator
-def secrets(ctx, config, **kwargs):
+def secrets(ctx, config, file_paths: str, **kwargs):
     """Run Secrets validator to catch sensitive data before exposing your code to public repository.
     Attach path to whitelist to allow manual whitelists.
     """
+    if file_paths and not kwargs["input"]:
+        # If file_paths is given as an argument, use it as the file_paths input (instead of the -i flag). If both, input wins.
+        kwargs["input"] = ",".join(file_paths)
+
     from demisto_sdk.commands.secrets.secrets import SecretsValidator
 
     check_configuration_file("secrets", kwargs)
@@ -3246,7 +3251,7 @@ def update_content_graph(
         )
 
 
-@main.command()
+@main.command(short_help="Runs pre-commit hooks on the files in the repository")
 @click.help_option("-h", "--help")
 @click.option(
     "-i",
@@ -3277,10 +3282,9 @@ def update_content_graph(
     default=False,
 )
 @click.option(
-    "-ut",
-    "--unit-test",
+    "-ut/--no-ut",
+    "--unit-test/--no-unit-test",
     help="Whether to run unit tests for content items",
-    is_flag=True,
     default=False,
 )
 @click.option(
@@ -3288,16 +3292,19 @@ def update_content_graph(
     help="A comma separated list of precommit hooks to skip",
 )
 @click.option(
-    "--validate",
+    "--validate/--no-validate",
     help="Whether to run demisto-sdk validate",
-    is_flag=True,
-    default=False,
+    default=True,
 )
 @click.option(
-    "--format",
+    "--format/--no-format",
     help="Whether to run demisto-sdk format",
-    is_flag=True,
-    default=False,
+    default=True,
+)
+@click.option(
+    "--secrets/--no-secrets",
+    help="Whether to run demisto-sdk secrets",
+    default=True,
 )
 @click.option(
     "-v",
@@ -3329,6 +3336,7 @@ def pre_commit(
     skip: str,
     validate: bool,
     format: bool,
+    secrets: bool,
     verbose: bool,
     show_diff_on_failure: bool,
     sdk_ref: str,
@@ -3348,6 +3356,7 @@ def pre_commit(
             skip,
             validate,
             format,
+            secrets,
             verbose,
             show_diff_on_failure,
             sdk_ref=sdk_ref,

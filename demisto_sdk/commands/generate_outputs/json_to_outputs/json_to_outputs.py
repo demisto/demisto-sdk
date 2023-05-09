@@ -99,10 +99,10 @@ def flatten_json(nested_json, camelize=False):
         except IndexError:
             name = name.title() if camelize else name
 
-        if isinstance(x, dict):
+        if isinstance(x, dict) and x:
             for a in x:
                 flatten(x[a], name + a + ".")
-        elif isinstance(x, list):
+        elif isinstance(x, list) and x:
             for a in x:
                 flatten(a, name[:-1] + ".")
         else:

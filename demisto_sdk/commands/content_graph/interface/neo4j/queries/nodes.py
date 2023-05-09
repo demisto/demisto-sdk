@@ -65,25 +65,28 @@ def get_relationships_to_preserve(
     tx: Transaction,
     pack_ids: List[str],
 ) -> List[Dict[str, Any]]:
+    """
+    Get the relationships to preserve before removing packs
+    """
     query = f"""// Gets the relationships to preserve before removing packs
 MATCH (s)-[r]->(t)-[:{RelationshipType.IN_PACK}]->(p)
 WHERE NOT (s)-[:{RelationshipType.IN_PACK}]->(p)
 AND p.object_id in {pack_ids}
-RETURN id(s) as source_id, type(r) as r_type, properties(r) as r_properties, t as target
+RETURN id(s) as source_id, s as source, type(r) as r_type, properties(r) as r_properties, t as target
 
 UNION
 
 MATCH (s)-[r]->(t)<-[:{RelationshipType.HAS_COMMAND}]-()-[:{RelationshipType.IN_PACK}]->(p)
 WHERE NOT (s)-[:{RelationshipType.IN_PACK}]->(p)
 AND p.object_id in {pack_ids}
-RETURN id(s) as source_id, type(r) as r_type, properties(r) as r_properties, t as target
+RETURN id(s) as source_id, s as source, type(r) as r_type, properties(r) as r_properties, t as target
 
 UNION
 
 MATCH (s)-[r]->(t)
 WHERE NOT (s)-[:{RelationshipType.IN_PACK}]->(t)
 AND t.object_id in {pack_ids}
-RETURN id(s) as source_id, type(r) as r_type, properties(r) as r_properties, t as target"""
+RETURN id(s) as source_id, s as source, type(r) as r_type, properties(r) as r_properties, t as target"""
     return run_query(tx, query).data()
 
 
@@ -111,9 +114,10 @@ DETACH DELETE n, p"""
 def return_preserved_relationships(
     tx: Transaction, rels_to_preserve: List[Dict[str, Any]]
 ) -> None:
+    """We search for source nodes which are in the preserved relationships, and they are the same nodes (same object_id and content_type)"""
     query = f"""// Returns the preserved relationships
 UNWIND $rels_data AS rel_data
-MATCH (s) WHERE id(s) = rel_data.source_id
+MATCH (s) WHERE id(s) = rel_data.source_id AND s.object_id = rel_data.source.object_id AND s.content_type = rel_data.source.content_type
 OPTIONAL MATCH (t:{ContentType.BASE_CONTENT}{{
     object_id: rel_data.target.object_id,
     content_type: rel_data.target.content_type

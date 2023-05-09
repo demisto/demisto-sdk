@@ -5,7 +5,6 @@ from pathlib import Path
 from typing import Callable, List, Optional, Set, Tuple
 
 import pebble
-from colorama import Fore
 from git import InvalidGitRepositoryError
 from packaging import version
 
@@ -806,12 +805,10 @@ class ValidateManager:
             validation_print = f"\nValidating {file_path} as {file_type.value}"
             if self.print_percent:
                 if FOUND_FILES_AND_ERRORS:
-                    validation_print += (
-                        f" {Fore.RED}[{self.completion_percentage}%]{Fore.RESET}"
-                    )
+                    validation_print += f" [red][{self.completion_percentage}%][/red]"
                 else:
                     validation_print += (
-                        f" {Fore.GREEN}[{self.completion_percentage}%]{Fore.RESET}"
+                        f" [green][{self.completion_percentage}%][/green]"
                     )
 
             logger.info(validation_print)

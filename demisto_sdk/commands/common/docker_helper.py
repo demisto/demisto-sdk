@@ -333,34 +333,73 @@ def _get_image_env(repo: str, digest: str, token: str) -> List[str]:
         raise RuntimeError(f"Failed to get docker image env: {response.text}") from e
 
 
+def _get_python_version_from_env(env: List[str]) -> Version:
+    python_version_envs = tuple(
+        filter(lambda env: env.startswith("PYTHON_VERSION="), env)
+    )
+    return (
+        Version(python_version_envs[0].split("=")[1])
+        if python_version_envs
+        else Version(DEFAULT_PYTHON_VERSION)
+    )
+
+
 @functools.lru_cache
-def get_python_version_from_image(image: Optional[str]) -> Optional[Version]:
-    if not image:
+def get_python_version(image: Optional[str]) -> Version:
+    log_prompt = f"Get python version from image {image}"
+    logger.debug(f"{log_prompt} - Start")
+    if not image or "pwsh" in image or "powershell" in image:
         # When no docker_image is specified, we use the default python version which is Python 2.7.18
         logger.debug(
-            f"No docker image specified, using default python version: {DEFAULT_PYTHON2_VERSION}"
+            f"No docker image specified or a powershell image, using default python version: {DEFAULT_PYTHON2_VERSION}"
         )
         return Version(DEFAULT_PYTHON2_VERSION)
     if match := PYTHON_IMAGE_REGEX.match(image):
         return Version(match.group("python_version"))
+    try:
+        return _get_python_version_from_image_client(image)
+    except Exception:
+        logger.debug(
+            "Could not get the python version from client. Trying with API",
+            exc_info=True,
+        )
+        return _get_python_version_from_dockerhub_api(image)
+
+
+def _get_python_version_from_image_client(image: str) -> Version:
+    """Get python version from docker image
+
+    Args:
+        image(str): Docker image id or name
+
+    Returns:
+        Version: Python version X.Y (3.7, 3.6, ..)
+    """
+    docker_client = init_global_docker_client()
+    try:
+        docker_client.images.pull(image)
+        image_model = docker_client.images.get(image)
+        env = image_model.attrs["Config"]["Env"]
+        logger.debug(f"Got {env=} from {image=}")
+        return _get_python_version_from_env(env)
+    except Exception:
+        logger.exception(f"Failed detecting Python version for {image=}")
+        raise
+
+
+def _get_python_version_from_dockerhub_api(image: str):
     if ":" not in image:
         repo = image
         tag = "latest"
+    elif image.count(":") > 1:
+        raise ValueError(f"Invalid docker image: {image}")
     else:
-        if image.count(":") > 1:
-            raise ValueError(f"Invalid docker image: {image}")
         repo, tag = image.split(":")
     try:
         token = _get_docker_hub_token(repo)
         digest = _get_image_digest(repo, tag, token)
         env = _get_image_env(repo, digest, token)
-        python_version_envs = [env for env in env if env.startswith("PYTHON_VERSION=")]
-        if not python_version_envs:
-            # no python version available, use the default python version (python 3)
-            return Version(DEFAULT_PYTHON_VERSION)
-        return Version(
-            python_version_envs[0].split("=")[1]
-        )  # we can assume that we have python version after the "="
+        return _get_python_version_from_env(env)
     except Exception as e:
         logger.error(
             f"Failed to get python version from docker hub for image {image}: {e}"

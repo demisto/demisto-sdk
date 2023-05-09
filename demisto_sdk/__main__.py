@@ -3282,10 +3282,9 @@ def update_content_graph(
     default=False,
 )
 @click.option(
-    "-ut",
-    "--unit-test",
+    "-ut/--no-ut",
+    "--unit-test/--no-unit-test",
     help="Whether to run unit tests for content items",
-    is_flag=True,
     default=False,
 )
 @click.option(
@@ -3293,22 +3292,19 @@ def update_content_graph(
     help="A comma separated list of precommit hooks to skip",
 )
 @click.option(
-    "--validate",
+    "--validate/--no-validate",
     help="Whether to run demisto-sdk validate",
-    is_flag=True,
-    default=False,
+    default=True,
 )
 @click.option(
-    "--format",
+    "--format/--no-format",
     help="Whether to run demisto-sdk format",
-    is_flag=True,
-    default=False,
+    default=True,
 )
 @click.option(
-    "--secrets",
+    "--secrets/--no-secrets",
     help="Whether to run demisto-sdk secrets",
-    is_flag=True,
-    default=False,
+    default=True,
 )
 @click.option(
     "-v",
@@ -3347,7 +3343,6 @@ def pre_commit(
     **kwargs,
 ):
     from demisto_sdk.commands.pre_commit.pre_commit_command import pre_commit_manager
-
     if skip:
         skip = skip.split(",")  # type: ignore[assignment]
     sys.exit(

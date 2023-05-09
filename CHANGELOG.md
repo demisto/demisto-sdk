@@ -1,6 +1,8 @@
 # Changelog
 
 ## Unreleased
+* Removed `Flake8` from **pre-commit**, as `ruff` covers its basic rules.
+
 
 ## 1.14.3
 * Fixed an issue where **run-unit-tests** failed running on items with `test_data`.

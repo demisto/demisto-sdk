@@ -22,7 +22,7 @@
   language: python
   files: *files
 
-- id: no implicit optional
+- id: no-implicit-optional
   name: no implicit optional
   description: Making code implicit-optional type hints PEP 484 compliant.
   entry: no-implicit-optional

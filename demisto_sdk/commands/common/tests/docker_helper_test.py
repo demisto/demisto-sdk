@@ -2,6 +2,7 @@ import os
 from unittest import mock
 
 import pytest
+from packaging.version import Version
 
 import demisto_sdk.commands.common.docker_helper as dhelper
 
@@ -30,9 +31,7 @@ def test_init_global_docker_client():
         ("demisto/python:2.7.18.24398", "", "2.7"),
     ],
 )
-def test_get_python_version_from_image(
-    image: str, output: bytes, expected: float, mocker
-):
+def test_get_python_version_from_image(image: str, output: str, expected: str, mocker):
     from demisto_sdk.commands.common import docker_helper
 
     class ImageMock:
@@ -43,7 +42,7 @@ def test_get_python_version_from_image(
     docker_helper.init_global_docker_client().images.get.return_value = ImageMock(
         {"Config": {"Env": [f"PYTHON_VERSION={output}"]}}
     )
-    assert expected == docker_helper.get_python_version(image)
+    assert Version(expected) == docker_helper.get_python_version(image)
 
 
 def test_cache_of_get_python_version_from_image():

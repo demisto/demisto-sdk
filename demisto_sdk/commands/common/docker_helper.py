@@ -334,7 +334,9 @@ def _get_image_env(repo: str, digest: str, token: str) -> List[str]:
 
 
 def _get_python_version_from_env(env: List[str]) -> Version:
-    python_version_envs = tuple(filter(lambda env: env.startswith("PYTHON_VERSION="), env))
+    python_version_envs = tuple(
+        filter(lambda env: env.startswith("PYTHON_VERSION="), env)
+    )
     return (
         Version(python_version_envs[0].split("=")[1])
         if python_version_envs
@@ -357,7 +359,10 @@ def get_python_version_from_image(image: Optional[str]) -> Version:
     try:
         return _get_python_version_from_image_client(image)
     except Exception as e:
-        logger.debug(f"Could not get the python version from client. Trying with API. Error: {e}", exc_info=True)
+        logger.debug(
+            f"Could not get the python version from client. Trying with API. Error: {e}",
+            exc_info=True,
+        )
         return _get_python_version_from_dockerhub_api(image)
 
 
@@ -377,7 +382,7 @@ def _get_python_version_from_image_client(image: str) -> Version:
         env = image_model.attrs["Config"]["Env"]
         logger.debug(f"Got env from image {image}: {env}")
         return _get_python_version_from_env(env)
-    except Exception as e:
+    except Exception:
         logger.exception(f"Failed detecting Python version for image {image}")
         raise
 

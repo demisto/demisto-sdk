@@ -378,8 +378,7 @@ def _get_python_version_from_image_client(image: str) -> Version:
         logger.debug(f"Got env from image {image}: {env}")
         return _get_python_version_from_env(env)
     except Exception as e:
-        logger.error(f"Failed detecting Python version for image {image}")
-        logger.debug(f"Error: {e}")
+        logger.exception(f"Failed detecting Python version for image {image}")
         raise
 
 

@@ -3251,7 +3251,7 @@ def update_content_graph(
         )
 
 
-@main.command(short_help="""Runs pre-commit hooks on the files in the repository""")
+@main.command(short_help="Runs pre-commit hooks on the files in the repository")
 @click.help_option("-h", "--help")
 @click.option(
     "-i",

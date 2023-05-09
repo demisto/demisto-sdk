@@ -34,5 +34,4 @@
   description: Making code implicit-optional type hints PEP 484 compliant.
   entry: no-implicit-optional
   language: python
-  files: &files
-    .*Packs/.*/(?:Integrations|Scripts)/.*.py$
+  files: *files

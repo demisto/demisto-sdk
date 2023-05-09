@@ -345,7 +345,7 @@ def _get_python_version_from_env(env: List[str]) -> Version:
 
 
 @functools.lru_cache
-def get_python_version_from_image(image: Optional[str]) -> Version:
+def get_python_version(image: Optional[str]) -> Version:
     log_prompt = f"Get python version from image {image}"
     logger.debug(f"{log_prompt} - Start")
     if not image or "pwsh" in image or "powershell" in image:

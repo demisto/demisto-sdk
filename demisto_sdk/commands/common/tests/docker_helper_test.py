@@ -54,11 +54,11 @@ def test_cache_of_get_python_version_from_image():
 
     image = "demisto/python3:3.9.8.12345"
 
-    cache_info_before = docker_helper.get_python_version_from_image.cache_info()
-    docker_helper.get_python_version_from_image(image)
-    cache_info = docker_helper.get_python_version_from_image.cache_info()
+    cache_info_before = docker_helper.get_python_version.cache_info()
+    docker_helper.get_python_version(image)
+    cache_info = docker_helper.get_python_version.cache_info()
     assert cache_info.hits == cache_info_before.hits
 
-    docker_helper.get_python_version_from_image(image)
-    cache_info = docker_helper.get_python_version_from_image.cache_info()
+    docker_helper.get_python_version(image)
+    cache_info = docker_helper.get_python_version.cache_info()
     assert cache_info.hits == cache_info_before.hits + 1

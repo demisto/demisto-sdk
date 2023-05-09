@@ -161,7 +161,7 @@ def create_integration(mocker) -> Callable:
             from demisto_sdk.commands.lint import linter
 
             mocker.patch.object(linter, "get_python_version_from_image")
-            linter.get_python_version_from_image.return_value = image_py_num
+            linter.get_python_version.return_value = image_py_num
             yaml.dump(stream=yml_file.open(mode="w"), data=yml_dict)
 
         return integration_path

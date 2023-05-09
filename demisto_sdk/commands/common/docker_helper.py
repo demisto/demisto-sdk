@@ -358,9 +358,9 @@ def get_python_version(image: Optional[str]) -> Version:
         return Version(match.group("python_version"))
     try:
         return _get_python_version_from_image_client(image)
-    except Exception as e:
+    except Exception:
         logger.debug(
-            f"Could not get the python version from client. Trying with API",
+            "Could not get the python version from client. Trying with API",
             exc_info=True,
         )
         return _get_python_version_from_dockerhub_api(image)

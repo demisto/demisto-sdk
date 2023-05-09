@@ -4,6 +4,7 @@ import tempfile
 from typing import Callable
 
 import pytest
+from packaging.version import Version
 from wcmatch.pathlib import Path
 
 from demisto_sdk.commands.common.hook_validations.docker import DockerImageValidator
@@ -234,7 +235,7 @@ class TestDockerImagesCollection:
             "get_docker_image_latest_tag_request",
             return_value=native_image_latest_tag,
         )
-        mocker.patch.object(linter, "get_python_version", return_value="3.8")
+        mocker.patch.object(linter, "get_python_version", return_value=Version("3.8"))
 
         # Crete integration to test on:
         integration_name = "TestIntegration"
@@ -306,7 +307,7 @@ class TestDockerImagesCollection:
             - Ensure that the docker images list is empty, and suitable logs (skipping) were written.
         """
         # Mock:
-        mocker.patch.object(linter, "get_python_version", return_value="3.8")
+        mocker.patch.object(linter, "get_python_version", return_value=Version("3.8"))
         log = mocker.patch.object(logger, "info")
 
         # Crete integration to test on:
@@ -465,7 +466,7 @@ class TestDockerImagesCollection:
                 4. Ensure that the docker image is only the docker image from the integration yml.
         """
         # Mock:
-        mocker.patch.object(linter, "get_python_version", return_value="3.8")
+        mocker.patch.object(linter, "get_python_version", return_value=Version("3.8"))
         log = mocker.patch.object(logger, "info")
 
         # Crete integration to test on:
@@ -607,7 +608,7 @@ class TestDockerImagesCollection:
             },
         }
 
-        mocker.patch.object(linter, "get_python_version", return_value="3.8")
+        mocker.patch.object(linter, "get_python_version", return_value=Version("3.8"))
         mocker.patch(
             "demisto_sdk.commands.common.native_image.NativeImageConfig.load",
             return_value=native_image_config_mock,

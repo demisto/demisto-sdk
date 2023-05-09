@@ -360,7 +360,7 @@ def get_python_version_from_image(image: Optional[str]) -> Version:
         return _get_python_version_from_image_client(image)
     except Exception as e:
         logger.debug(
-            f"Could not get the python version from client. Trying with API. Error: {e}",
+            f"Could not get the python version from client. Trying with API",
             exc_info=True,
         )
         return _get_python_version_from_dockerhub_api(image)

@@ -19,6 +19,7 @@ def test_init_global_docker_client():
         assert res is not None
         assert res == dhelper.DOCKER_CLIENT
 
+
 @pytest.mark.parametrize(
     argnames="image, output, expected",
     argvalues=[
@@ -32,11 +33,11 @@ def test_init_global_docker_client():
 def test_get_python_version_from_image(
     image: str, output: bytes, expected: float, mocker
 ):
-    from demisto_sdk.commands.lint import helpers
+    from demisto_sdk.commands.common import docker_helper
 
-    mocker.patch.object(helpers, "init_global_docker_client")
-    helpers.init_global_docker_client().containers.run.return_value = output
-    assert expected == helpers.get_python_version_from_image(image)
+    mocker.patch.object(docker_helper, "init_global_docker_client")
+    docker_helper.init_global_docker_client().containers.run.return_value = output
+    assert expected == docker_helper.get_python_version(image)
 
 
 def test_cache_of_get_python_version_from_image():

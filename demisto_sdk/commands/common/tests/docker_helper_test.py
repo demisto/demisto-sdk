@@ -30,6 +30,8 @@ def test_init_global_docker_client():
         ("demisto/python:2.7.18.24398", "", "2.7"),
     ],
 )
+
+
 def test_get_python_version_from_image(
     image: str, output: bytes, expected: float, mocker
 ):

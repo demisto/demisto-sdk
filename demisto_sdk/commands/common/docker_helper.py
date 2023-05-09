@@ -334,7 +334,7 @@ def _get_image_env(repo: str, digest: str, token: str) -> List[str]:
 
 
 def _get_python_version_from_env(env: List[str]) -> Version:
-    python_version_envs = tuple(filter(lambda env: env.startswith("PYTHON_VERSION="), env)
+    python_version_envs = tuple(filter(lambda env: env.startswith("PYTHON_VERSION="), env))
     return (
         Version(python_version_envs[0].split("=")[1])
         if python_version_envs

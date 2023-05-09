@@ -129,6 +129,6 @@ def test_pep484_hook(python_version, should_contain_flag):
     pep484_hook = {}
     PEP484Hook(pep484_hook).prepare_hook(python_version)
     if should_contain_flag:
-        assert pep484_hook["args"][-1] == "--use-union-or"
+        assert pep484_hook["args"] == ["--use-union-or"]
     else:
         assert not pep484_hook

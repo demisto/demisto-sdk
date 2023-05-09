@@ -145,9 +145,12 @@ def logging_setup(
     console_handler.setFormatter(fmt=console_formatter)
 
     global current_log_file_path
-    current_log_file_path = log_file_path if log_file_path else LOG_FILE_PATH
-    if os.path.isdir(current_log_file_path):
-        current_log_file_path = current_log_file_path / LOG_FILE_NAME
+    if custom_log_path := os.getenv("DEMISTO_SDK_LOG_FILE_PATH"):
+        current_log_file_path = Path(custom_log_path)
+    else:
+        current_log_file_path = log_file_path or LOG_FILE_PATH
+        if Path(current_log_file_path).is_dir():
+            current_log_file_path = current_log_file_path / LOG_FILE_NAME
     file_handler = RotatingFileHandler(
         filename=current_log_file_path,
         mode="a",

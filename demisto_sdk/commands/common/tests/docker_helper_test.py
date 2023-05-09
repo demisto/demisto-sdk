@@ -23,9 +23,9 @@ def test_init_global_docker_client():
 @pytest.mark.parametrize(
     argnames="image, output, expected",
     argvalues=[
-        ("alpine", b"3.7\n", "3.7"),
-        ("alpine-3", b"2.7\n", "2.7"),
-        ("alpine-310", b"3.10\n", "3.10"),
+        ("alpine", "3.7.11", "3.7"),
+        ("alpine-3", "2.7.1", "2.7"),
+        ("alpine-310", "3.10.11", "3.10"),
         ("demisto/python3:3.9.8.24399", "", "3.9"),
         ("demisto/python:2.7.18.24398", "", "2.7"),
     ],
@@ -35,8 +35,14 @@ def test_get_python_version_from_image(
 ):
     from demisto_sdk.commands.common import docker_helper
 
+    class ImageMock:
+        def __init__(self, attrs):
+            self.attrs = attrs
+
     mocker.patch.object(docker_helper, "init_global_docker_client")
-    docker_helper.init_global_docker_client().containers.run.return_value = output
+    docker_helper.init_global_docker_client().images.get.return_value = ImageMock(
+        {"Config": {"Env": [f"PYTHON_VERSION={output}"]}}
+    )
     assert expected == docker_helper.get_python_version(image)
 
 

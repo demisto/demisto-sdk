@@ -21,7 +21,6 @@ class PrepareUploadManager:
         force: bool = False,
         graph: bool = False,
         skip_update: bool = False,
-        announce_output_path: bool = True,  # False when using Upload
         **kwargs,
     ) -> Path:
         if isinstance(input, str):
@@ -69,11 +68,5 @@ class PrepareUploadManager:
         with output.open("w") as f:
             content_item.handler.dump(data, f)
 
-        log_message = f"[green]Output saved in: {str(output.absolute())}[/green]"
-
-        if announce_output_path:
-            logger.info(log_message)
-        else:
-            logger.debug(log_message)
-
+        logger.info(f"[green]Output saved in: {str(output.absolute())}[/green]")
         return output

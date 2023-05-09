@@ -309,7 +309,6 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: i
         self,
         path: Path,
         marketplace: MarketplaceVersions,
-        announce_output_path: bool = True,
     ):
         if not self.path.exists():
             logger.warning(f"Pack {self.name} does not exist in {self.path}")
@@ -326,7 +325,6 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: i
                 content_item.dump(
                     dir=path / folder,
                     marketplace=marketplace,
-                    announce_output_path=announce_output_path,
                 )
             self.dump_metadata(path / "metadata.json", marketplace)
             self.dump_readme(path / "README.md", marketplace)
@@ -384,7 +382,7 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: i
 
         with TemporaryDirectory() as dir:
             dir_path = Path(dir)
-            self.dump(dir_path, marketplace=marketplace, announce_output_path=False)
+            self.dump(dir_path, marketplace=marketplace)
             return upload_zipped_pack(
                 path=dir_path,
                 client=client,

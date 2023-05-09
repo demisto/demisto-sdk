@@ -121,7 +121,9 @@ class ContentItem(BaseContent):
             return self.handler.load(f)
 
     def prepare_for_upload(
-        self, marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR, **kwargs
+        self,
+        marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR,
+        **kwargs,
     ) -> dict:
         data = self.data
         logger.debug(f"preparing {self.path}")
@@ -183,16 +185,12 @@ class ContentItem(BaseContent):
         self,
         dir: DirectoryPath,
         marketplace: MarketplaceVersions,
-        announce_output_path: bool = True,
     ) -> None:
         dir.mkdir(exist_ok=True, parents=True)
         try:
             with (dir / self.normalize_name).open("w") as f:
                 self.handler.dump(
-                    self.prepare_for_upload(
-                        marketplace=marketplace,
-                        announce_output_path=announce_output_path,
-                    ),
+                    self.prepare_for_upload(marketplace=marketplace),
                     f,
                 )
         except FileNotFoundError as e:
@@ -244,8 +242,9 @@ class ContentItem(BaseContent):
         with TemporaryDirectory() as f:
             dir_path = Path(f)
             self.dump(
-                dir_path, marketplace=marketplace, announce_output_path=False
-            )  # announce_output_path=False so we don't print on every call
+                dir_path,
+                marketplace=marketplace,
+            )
             response = upload_method(dir_path / self.normalize_name)
             parse_upload_response(
                 response, path=self.path, content_type=self.content_type

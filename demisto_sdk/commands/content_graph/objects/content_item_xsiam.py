@@ -20,7 +20,6 @@ class ContentItemXSIAM(ContentItem, ABC):
         self,
         dir: DirectoryPath,
         marketplace: MarketplaceVersions,
-        announce_output_path: bool = True,
     ) -> None:
         dir.mkdir(exist_ok=True, parents=True)
 
@@ -39,7 +38,7 @@ class ContentItemXSIAM(ContentItem, ABC):
 
         data = (
             self.prepare_for_upload(
-                marketplace, announce_output_path=announce_output_path
+                marketplace,
             ),
         )
 

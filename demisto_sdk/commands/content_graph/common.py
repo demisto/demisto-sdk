@@ -1,6 +1,7 @@
 import enum
 import os
 from pathlib import Path
+import re
 from typing import Any, Dict, Iterator, List, NamedTuple, Set
 
 from neo4j import graph
@@ -126,41 +127,12 @@ class ContentType(str, enum.Enum):
     def metadata_display_name(self) -> str:
         if self == ContentType.SCRIPT:
             return "Automation"
-        elif self == ContentType.INCIDENT_FIELD:
-            return "Incident Field"
-        elif self == ContentType.INCIDENT_TYPE:
-            return "Incident Type"
-        elif self == ContentType.INDICATOR_FIELD:
-            return "Indicator Field"
         elif self == ContentType.INDICATOR_TYPE:
             return "Reputation"
-        elif self == ContentType.LAYOUT:
-            return "Layouts Container"
         elif self == ContentType.MAPPER:
             return "Classifier"
-        elif self == ContentType.GENERIC_DEFINITION:
-            return "Generic Definition"
-        elif self == ContentType.GENERIC_FIELD:
-            return "Generic Field"
-        elif self == ContentType.GENERIC_MODULE:
-            return "Generic Module"
-        elif self == ContentType.GENERIC_TYPE:
-            return "Generic Type"
-        elif self == ContentType.PREPROCESS_RULE:
-            return "Pre Process Rule"
-        elif self == ContentType.PARSING_RULE:
-            return "Parsing Rule"
-        elif self == ContentType.MODELING_RULE:
-            return "Modeling Rule"
-        elif self == ContentType.CORRELATION_RULE:
-            return "Correlation Rule"
-        elif self == ContentType.XSIAM_DASHBOARD:
-            return "XSIAM Dashboard"
-        elif self == ContentType.XSIAM_REPORT:
-            return "XSIAM Report"
-        elif self == ContentType.XDRC_TEMPLATE:
-            return "XDRC Template"
-        return self
+        else:
+            return re.sub(r'([a-z](?=[A-Z])|[A-Z](?=[A-Z][a-z]))', r'\1 ', self.value)
 
     @staticmethod
     def server_names() -> List[str]:

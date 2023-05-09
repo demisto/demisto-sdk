@@ -1,4 +1,4 @@
-import logging
+import logging, os
 import shutil
 from collections import defaultdict
 from datetime import datetime
@@ -11,6 +11,7 @@ from pydantic import BaseModel, Field, validator
 from demisto_sdk.commands.common.constants import (
     BASE_PACK,
     CONTRIBUTORS_README_TEMPLATE,
+    DEFAULT_CONTENT_ITEM_TO_VERSION,
     MARKETPLACE_MIN_VERSION,
     MarketplaceVersions,
 )
@@ -133,7 +134,7 @@ class PackMetadata(BaseModel):
     id: Optional[str]
     description: Optional[str]
     created: Optional[str]
-    updated: Optional[str]
+    updated: Optional[str] = Field('')
     legacy: Optional[bool]
     support: Optional[str]
     url: Optional[str]
@@ -155,7 +156,8 @@ class PackMetadata(BaseModel):
     keywords: Optional[List[str]]
     search_rank: Optional[int] = Field(alias="searchRank")
     excluded_dependencies: Optional[List[str]] = Field(alias="excludedDependencies")
-    videos: Optional[List[str]]
+    videos: Optional[List[str]] = Field([])
+    modules: Optional[List[str]] = Field([])
 
     # For private packs
     premium: Optional[bool]
@@ -341,6 +343,8 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
 
     def enhance_pack_properties(self, marketplace: MarketplaceVersions):
         self.tags = self.get_pack_tags(marketplace)
+        self.commit = self.get_last_commit()
+        self.version_info = os.environ.get('CI_PIPELINE_ID', '')
         self.server_min_version = (
             self.server_min_version
             or str(
@@ -369,7 +373,6 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
             {
                 "contentItems": content_items,
                 "contentDisplays": content_displays,
-                "commit": self.get_last_commit(),
                 "dependencies": self.enhance_dependencies(),
                 "supportDetails": support_details,
             }
@@ -385,14 +388,24 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
         for content_item in self.content_items:
             try:
                 content_item_summary = content_item.summary(marketplace)
-
-                if content_item.content_type == ContentType.INCIDENT_FIELD:
-                    incident_field_cliname = content_item.object_id
-                    content_item_summary["id"] = f"incident_{incident_field_cliname}"
+                # if 'fromversion' in content_item_summary and content_item_summary['fromversion'] == DEFAULT_CONTENT_ITEM_FROM_VERSION:
+                #     content_item_summary['fromversion'] = self.server_min_version
 
                 content_items.setdefault(
                     content_item.content_type.metadata_name, []
-                ).append(content_item_summary)
+                )
+
+                if is_item_metadata_appended := [c for c in content_items[content_item.content_type.metadata_name] if c.get('id') == content_item.object_id]:
+                    content_item_metadata = is_item_metadata_appended[0]
+
+                    if parse(content_item.toversion) > parse(content_item_metadata['toversion'] or DEFAULT_CONTENT_ITEM_TO_VERSION):
+                        content_item_metadata.update(content_item_summary.items())
+
+                        if content_item.toversion == DEFAULT_CONTENT_ITEM_TO_VERSION:
+                            content_item_metadata['toversion'] = ''
+                else:
+                    content_item_summary['toversion'] = content_item_summary['toversion'] if content_item_summary['toversion'] != DEFAULT_CONTENT_ITEM_TO_VERSION else ''
+                    content_items[content_item.content_type.metadata_name].append(content_item_summary)
 
                 content_displays[content_item.content_type.metadata_name] = content_item.content_type.metadata_display_name  # type: ignore[index]
             except NotImplementedError as e:
@@ -416,10 +429,10 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
         return {
             r.content_item_to.object_id: {
                 "mandatory": r.mandatorily,
-                "minVersion": r.content_item_to.current_version,
-                "author": r.content_item_to.author,
-                "name": r.content_item_to.name,
-                "certification": r.content_item_to.certification,
+                "minVersion": r.content_item_to.current_version,  # type:ignore[attr-defined]
+                "author": r.content_item_to.author,  # type:ignore[attr-defined]
+                "name": r.content_item_to.name,  # type:ignore[attr-defined]
+                "certification": r.content_item_to.certification,  # type:ignore[attr-defined]
             }
             for r in self.depends_on
         }
@@ -519,6 +532,5 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
                     and (integration.is_fetch or integration.is_fetch_events)
                     for integration in self.content_items.integration
                 ]
-            )
-            == 1
+            ) == 1
         )

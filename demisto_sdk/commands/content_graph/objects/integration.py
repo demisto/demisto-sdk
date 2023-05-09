@@ -67,6 +67,11 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
         ]
         self.commands = commands
 
+    def summary(self, marketplace: MarketplaceVersions | None = None) -> dict:
+        summary = super().summary(marketplace)
+        summary["name"] = self.display_name
+        return summary
+
     def metadata_fields(self):
         return {
             "object_id": True,

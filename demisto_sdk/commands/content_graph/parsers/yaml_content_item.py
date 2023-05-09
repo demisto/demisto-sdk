@@ -1,5 +1,6 @@
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
+import re
 
 from demisto_sdk.commands.common.constants import (
     DEFAULT_CONTENT_ITEM_FROM_VERSION,
@@ -41,9 +42,7 @@ class YAMLContentItemParser(ContentItemParser):
         description = self.yml_data.get("description", "")
         description = description.replace("\\ ", " ")  # removes unwanted backslashes
         description = description.replace("\\\n", " ")  # removes unwanted backslashes
-        # description = " ".join(
-        #     description.split()
-        # )  # substitutes multiple spaces into one
+        description = re.sub('^\n +', ' ', description)  # substitutes multiple spaces into one
         return description
 
     @property

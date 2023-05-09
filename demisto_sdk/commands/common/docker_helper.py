@@ -357,9 +357,8 @@ def get_python_version_from_image(image: Optional[str]) -> Version:
     try:
         return _get_python_version_from_image_client(image)
     except Exception as e:
-        logger.warning("Could not get the python version from client. Trying with API")
-        logger.debug(f"Error: {e}")
-        return _get_python_version_from_api(image)
+        logger.debug(f"Could not get the python version from client. Trying with API. Error: {e}", exc_info=True)
+        return _get_python_version_from_dockerhub_api(image)
 
 
 def _get_python_version_from_image_client(image: str) -> Version:
@@ -384,7 +383,7 @@ def _get_python_version_from_image_client(image: str) -> Version:
         raise
 
 
-def _get_python_version_from_api(image: str):
+def _get_python_version_from_dockerhub_api(image: str):
     if ":" not in image:
         repo = image
         tag = "latest"

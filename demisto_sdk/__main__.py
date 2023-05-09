@@ -3343,6 +3343,7 @@ def pre_commit(
     **kwargs,
 ):
     from demisto_sdk.commands.pre_commit.pre_commit_command import pre_commit_manager
+
     if skip:
         skip = skip.split(",")  # type: ignore[assignment]
     sys.exit(

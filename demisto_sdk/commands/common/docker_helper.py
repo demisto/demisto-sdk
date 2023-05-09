@@ -380,7 +380,7 @@ def _get_python_version_from_image_client(image: str) -> Version:
         docker_client.images.pull(image)
         image_model = docker_client.images.get(image)
         env = image_model.attrs["Config"]["Env"]
-        logger.debug(f"Got env from image {image}: {env}")
+        logger.debug(f"Got {env=} from {image=}")
         return _get_python_version_from_env(env)
     except Exception:
         logger.exception(f"Failed detecting Python version for image {image}")

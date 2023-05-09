@@ -366,10 +366,9 @@ def _get_python_version_from_image_client(image: str) -> Version:
 
     Args:
         image(str): Docker image id or name
-        timeout(int): Docker client request timeout
 
     Returns:
-        str: Python version X.Y (3.7, 3.6, ..)
+        Version: Python version X.Y (3.7, 3.6, ..)
     """
     docker_client = init_global_docker_client()
     try:

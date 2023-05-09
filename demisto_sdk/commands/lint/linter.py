@@ -27,8 +27,8 @@ from demisto_sdk.commands.common.constants import (
 )
 from demisto_sdk.commands.common.docker_helper import (
     get_docker,
+    get_python_version_from_image,
     init_global_docker_client,
-    get_python_version_from_image
 )
 from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
 from demisto_sdk.commands.common.hook_validations.docker import DockerImageValidator
@@ -388,11 +388,9 @@ class Linter:
             if self._facts["docker_engine"]:
                 # Getting python version from docker image - verifying if not valid docker image configured
                 for image in self._facts["images"]:
-                    py_num_version = get_python_version_from_image(
-                        image=image[0]
-                    )
+                    py_num_version = get_python_version_from_image(image=image[0])
                     py_num = f"{py_num_version.major}.{py_num_version.minor}"
-                    
+
                     image[1] = py_num
                     logger.info(
                         f"{self._pack_name} - Facts - {image[0]} - Python {py_num}"

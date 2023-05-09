@@ -2,13 +2,11 @@
 import io
 import os
 import re
-import shlex
 import shutil
 import sqlite3
 import tarfile
 import textwrap
 from contextlib import contextmanager
-from functools import lru_cache
 from pathlib import Path
 from typing import Callable, Dict, Generator, List, Optional, Union
 
@@ -27,7 +25,6 @@ from demisto_sdk.commands.common.constants import (
     TYPE_PYTHON,
     DemistoException,
 )
-from demisto_sdk.commands.common.docker_helper import init_global_docker_client
 from demisto_sdk.commands.common.logger import logger
 
 # Python2 requirements
@@ -324,6 +321,7 @@ def add_api_modules(
         if added_modules
         else []
     )
+
 
 def get_file_from_container(
     container_obj: Container, container_path: str, encoding: str = ""

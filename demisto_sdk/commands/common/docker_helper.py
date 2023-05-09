@@ -1,7 +1,6 @@
 import functools
 import os
 import re
-import shlex
 import shutil
 import tarfile
 import tempfile
@@ -333,6 +332,7 @@ def _get_image_env(repo: str, digest: str, token: str) -> List[str]:
     except (JSONDecodeError, KeyError) as e:
         raise RuntimeError(f"Failed to get docker image env: {response.text}") from e
 
+
 def _get_python_version_from_env(env: List[str]) -> Version:
     python_version_envs = [env for env in env if env.startswith("PYTHON_VERSION=")]
     return (
@@ -361,6 +361,7 @@ def get_python_version_from_image(image: Optional[str]) -> Version:
         logger.debug(f"Error: {e}")
         return _get_python_version_from_api(image)
 
+
 def _get_python_version_from_image_client(image: str) -> Version:
     """Get python version from docker image
 
@@ -378,11 +379,10 @@ def _get_python_version_from_image_client(image: str) -> Version:
         logger.debug(f"Got env from image {image}: {env}")
         return _get_python_version_from_env(env)
     except Exception as e:
-        logger.error(
-            f"Failed detecting Python version for image {image}"
-        )
+        logger.error(f"Failed detecting Python version for image {image}")
         logger.debug(f"Error: {e}")
         raise
+
 
 def _get_python_version_from_api(image: str):
     if ":" not in image:

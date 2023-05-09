@@ -2,6 +2,7 @@
 
 ## Unreleased
 * Removed `Flake8` from **pre-commit**, as `ruff` covers its basic rules.
+* Add PEP484 hook to **pre-commit** command.
 
 
 ## 1.14.3

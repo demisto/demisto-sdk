@@ -24,9 +24,9 @@ def test_init_global_docker_client():
 @pytest.mark.parametrize(
     argnames="image, output, expected",
     argvalues=[
-        ("alpine", "3.7.11", "3.7"),
-        ("alpine-3", "2.7.1", "2.7"),
-        ("alpine-310", "3.10.11", "3.10"),
+        ("alpine", "3.7.11", "3.7.11"),
+        ("alpine-3", "2.7.1", "2.7.1"),
+        ("alpine-310", "3.10.11", "3.10.11"),
         ("demisto/python3:3.9.8.24399", "", "3.9"),
         ("demisto/python:2.7.18.24398", "", "2.7"),
     ],

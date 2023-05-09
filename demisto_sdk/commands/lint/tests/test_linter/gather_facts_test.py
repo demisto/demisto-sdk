@@ -407,7 +407,7 @@ class TestDockerImagesCollection:
         test_integration = pack.create_integration(
             name=integration_name, yml=integration_yml
         )
-        from demisto_sdk.commands.lint.helpers import get_python_version
+        from demisto_sdk.commands.common.docker_helper import get_python_version
 
         get_python_version.cache_clear()
 

@@ -1,6 +1,7 @@
 from typing import Callable, List
 
 import pytest
+from packaging.version import Version
 from wcmatch.pathlib import Path
 
 from demisto_sdk.commands.common.handlers import YAML_Handler
@@ -161,7 +162,7 @@ def create_integration(mocker) -> Callable:
             from demisto_sdk.commands.lint import linter
 
             mocker.patch.object(linter, "get_python_version")
-            linter.get_python_version.return_value = image_py_num
+            linter.get_python_version.return_value = Version(image_py_num)
             yaml.dump(stream=yml_file.open(mode="w"), data=yml_dict)
 
         return integration_path

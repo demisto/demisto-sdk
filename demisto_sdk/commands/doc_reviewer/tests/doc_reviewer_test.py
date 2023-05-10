@@ -1,3 +1,4 @@
+import logging
 import os
 import re
 from enum import Enum
@@ -21,7 +22,10 @@ from demisto_sdk.tests.integration_tests.validate_integration_test import (
 )
 from TestSuite.json_based import JSONBased
 from TestSuite.pack import Pack
-from TestSuite.test_tools import ChangeCWD
+from TestSuite.test_tools import (
+    ChangeCWD,
+    str_in_call_args_list,
+)
 
 
 class TestDocReviewFilesAreFound:
@@ -506,20 +510,13 @@ class TestDocReviewPrinting:
         BOTH_INVALID_AND_VALID = "invalid_and_valid"
         INVALID_RELEASE_NOTES = "invalid_release_notes"
 
-    def get_file_report_mocker(self, mocker, files_type):
+    def get_file_report_mocker(self, files_type):
         """
         Returns a mock of the file report.
 
         Args:
-            mocker (MockerFixture): a mocker object.
             files_type (str): whether mock misspelled files or valid spelled files or both are required.
-
-
-        Returns:
-            MagicMock: a magic mock object of the click 'secho' function.
         """
-        import click
-
         doc_reviewer = DocReviewer()
 
         if files_type == self.SpelledFileType.VALID:
@@ -532,12 +529,9 @@ class TestDocReviewPrinting:
             doc_reviewer.files_with_misspells = self.MOCKED_FILES
             doc_reviewer.files_without_misspells = self.MOCKED_FILES
 
-        secho_mocker = mocker.patch.object(click, "secho")
         doc_reviewer.print_file_report()
 
-        return secho_mocker
-
-    def test_printing_of_valid_spelled_files(self, mocker):
+    def test_printing_of_valid_spelled_files(self, mocker, monkeypatch):
         """
         Given -
             Files reported as valid spelled files.
@@ -548,22 +542,26 @@ class TestDocReviewPrinting:
         Then -
             Ensure only the files without misspells are printed.
         """
-        secho_mocker = self.get_file_report_mocker(
-            mocker=mocker, files_type=self.SpelledFileType.VALID
+        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+        monkeypatch.setenv("COLUMNS", "1000")
+
+        self.get_file_report_mocker(files_type=self.SpelledFileType.VALID)
+
+        assert all(
+            [
+                str_in_call_args_list(logger_info.call_args_list, current_str)
+                for current_str in [
+                    "Files Without Misspells",
+                    "file1\nfile2",
+                ]
+            ]
         )
 
-        first_call = secho_mocker.mock_calls[0]
-        assert "Files Without Misspells" in first_call.args[0]
-        assert first_call.kwargs == self.GREEN_FG
+        assert not str_in_call_args_list(
+            logger_info.call_args_list, "Files With Misspells"
+        )
 
-        second_call = secho_mocker.mock_calls[1]
-        assert "file1\nfile2" in second_call.args[0]
-        assert second_call.kwargs == self.GREEN_FG
-
-        for i in range(2, len(secho_mocker.mock_calls)):
-            assert "Files With Misspells" not in secho_mocker.mock_calls[i].args
-
-    def test_printing_invalid_spelled_files(self, mocker):
+    def test_printing_invalid_spelled_files(self, mocker, monkeypatch):
         """
         Given -
             Files reported as invalid spelled files.
@@ -574,22 +572,26 @@ class TestDocReviewPrinting:
         Then -
             Ensure only the files with misspells are printed.
         """
-        secho_mocker = self.get_file_report_mocker(
-            mocker=mocker, files_type=self.SpelledFileType.INVALID
+        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+        monkeypatch.setenv("COLUMNS", "1000")
+
+        self.get_file_report_mocker(files_type=self.SpelledFileType.INVALID)
+
+        assert all(
+            [
+                str_in_call_args_list(logger_info.call_args_list, current_str)
+                for current_str in [
+                    "Files With Misspells",
+                    "file1\nfile2",
+                ]
+            ]
         )
 
-        first_call = secho_mocker.mock_calls[0]
-        assert "Files With Misspells" in first_call.args[0]
-        assert first_call.kwargs == self.BRIGHT_RED_FG
+        assert not str_in_call_args_list(
+            logger_info.call_args_list, "Files Without Misspells"
+        )
 
-        second_call = secho_mocker.mock_calls[1]
-        assert "file1\nfile2" in second_call.args[0]
-        assert second_call.kwargs == self.BRIGHT_RED_FG
-
-        for i in range(2, len(secho_mocker.mock_calls)):
-            assert "Files Without Misspells" not in secho_mocker.mock_calls[i].args
-
-    def test_printing_malformed_release_notes(self, mocker):
+    def test_printing_malformed_release_notes(self, mocker, monkeypatch):
         """
         Given -
             Malformed release-note.
@@ -600,19 +602,24 @@ class TestDocReviewPrinting:
         Then -
             Ensure 'Malformed Release Notes' is printed.
         """
-        secho_mocker = self.get_file_report_mocker(
-            mocker=mocker, files_type=self.SpelledFileType.INVALID_RELEASE_NOTES
+        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+        monkeypatch.setenv("COLUMNS", "1000")
+
+        self.get_file_report_mocker(
+            files_type=self.SpelledFileType.INVALID_RELEASE_NOTES
         )
 
-        first_call = secho_mocker.mock_calls[0]
-        assert "Malformed Release Notes" in first_call.args[0]
-        assert first_call.kwargs == self.BRIGHT_RED_FG
+        assert all(
+            [
+                str_in_call_args_list(logger_info.call_args_list, current_str)
+                for current_str in [
+                    "Malformed Release Notes",
+                    "file1\nfile2",
+                ]
+            ]
+        )
 
-        second_call = secho_mocker.mock_calls[1]
-        assert "file1\nfile2" in second_call.args[0]
-        assert second_call.kwargs == self.BRIGHT_RED_FG
-
-    def test_printing_mixed_report(self, mocker):
+    def test_printing_mixed_report(self, mocker, monkeypatch):
         """
         Given -
             Files reported as both valid/invalid spelled files.
@@ -623,25 +630,24 @@ class TestDocReviewPrinting:
         Then -
             Ensure both files misspelled and correctly spelled files are printed.
         """
-        secho_mocker = self.get_file_report_mocker(
-            mocker=mocker, files_type=self.SpelledFileType.BOTH_INVALID_AND_VALID
+        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+        monkeypatch.setenv("COLUMNS", "1000")
+
+        self.get_file_report_mocker(
+            files_type=self.SpelledFileType.BOTH_INVALID_AND_VALID
         )
 
-        first_call = secho_mocker.mock_calls[0]
-        assert "Files Without Misspells" in first_call.args[0]
-        assert first_call.kwargs == self.GREEN_FG
-
-        second_call = secho_mocker.mock_calls[1]
-        assert "file1\nfile2" in second_call.args[0]
-        assert second_call.kwargs == self.GREEN_FG
-
-        third_call = secho_mocker.mock_calls[2]
-        assert "Files With Misspells" in third_call.args[0]
-        assert third_call.kwargs == self.BRIGHT_RED_FG
-
-        forth_call = secho_mocker.mock_calls[3]
-        assert "file1\nfile2" in forth_call.args[0]
-        assert forth_call.kwargs == self.BRIGHT_RED_FG
+        assert all(
+            [
+                str_in_call_args_list(logger_info.call_args_list, current_str)
+                for current_str in [
+                    "Files Without Misspells",
+                    "file1\nfile2",
+                    "Files With Misspells",
+                    "file1\nfile2",
+                ]
+            ]
+        )
 
     def test_printing_skip_non_xsoar_supported_file(
         self, mix_invalid_packs: List[Pack], mocker

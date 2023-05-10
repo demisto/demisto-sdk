@@ -314,7 +314,6 @@ def split(ctx, config, **kwargs):
             input=kwargs.get("input"),  # type: ignore[arg-type]
             output=kwargs.get("output"),  # type: ignore[arg-type]
             no_auto_create_dir=kwargs.get("no_auto_create_dir"),  # type: ignore[arg-type]
-            no_logging=kwargs.get("no_logging"),  # type: ignore[arg-type]
             new_module_file=kwargs.get("new_module_file"),  # type: ignore[arg-type]
         )
         return json_splitter.split_json()
@@ -895,13 +894,18 @@ def create_content_artifacts(ctx, **kwargs) -> int:
     help='Full path to whitelist file, file name should be "secrets_white_list.json"',
 )
 @click.option("--prev-ver", help="The branch against which to run secrets validation.")
+@click.argument("file_paths", nargs=-1, type=click.Path(exists=True, resolve_path=True))
 @pass_config
 @click.pass_context
 @logging_setup_decorator
-def secrets(ctx, config, **kwargs):
+def secrets(ctx, config, file_paths: str, **kwargs):
     """Run Secrets validator to catch sensitive data before exposing your code to public repository.
     Attach path to whitelist to allow manual whitelists.
     """
+    if file_paths and not kwargs["input"]:
+        # If file_paths is given as an argument, use it as the file_paths input (instead of the -i flag). If both, input wins.
+        kwargs["input"] = ",".join(file_paths)
+
     from demisto_sdk.commands.secrets.secrets import SecretsValidator
 
     check_configuration_file("secrets", kwargs)
@@ -2667,7 +2671,7 @@ def openapi_codegen(ctx, **kwargs):
         except Exception as e:
             logger.info(f"[red]Failed to load configuration file: {e}[/red]")
 
-    click.echo("Processing swagger file...")
+    logger.info("Processing swagger file...")
     integration = OpenAPIIntegration(
         input_file,
         base_name,
@@ -2702,7 +2706,7 @@ def openapi_codegen(ctx, **kwargs):
             if fix_code:
                 command_to_run = command_to_run + " -f"
 
-            click.echo(
+            logger.info(
                 f"Run the command again with the created configuration file(after a review): {command_to_run}"
             )
             sys.exit(0)
@@ -3246,7 +3250,7 @@ def update_content_graph(
         )
 
 
-@main.command()
+@main.command(short_help="Runs pre-commit hooks on the files in the repository")
 @click.help_option("-h", "--help")
 @click.option(
     "-i",
@@ -3254,6 +3258,13 @@ def update_content_graph(
     help="The path to the input file to run the command on.",
     multiple=True,
     type=click.Path(path_type=Path),
+)
+@click.option(
+    "-s",
+    "--staged-only",
+    help="Whether to run only on staged files",
+    is_flag=True,
+    default=False,
 )
 @click.option(
     "-g",
@@ -3270,10 +3281,9 @@ def update_content_graph(
     default=False,
 )
 @click.option(
-    "-ut",
-    "--unit-test",
+    "-ut/--no-ut",
+    "--unit-test/--no-unit-test",
     help="Whether to run unit tests for content items",
-    is_flag=True,
     default=False,
 )
 @click.option(
@@ -3281,16 +3291,19 @@ def update_content_graph(
     help="A comma separated list of precommit hooks to skip",
 )
 @click.option(
-    "--validate",
+    "--validate/--no-validate",
     help="Whether to run demisto-sdk validate",
-    is_flag=True,
-    default=False,
+    default=True,
 )
 @click.option(
-    "--format",
+    "--format/--no-format",
     help="Whether to run demisto-sdk format",
-    is_flag=True,
-    default=False,
+    default=True,
+)
+@click.option(
+    "--secrets/--no-secrets",
+    help="Whether to run demisto-sdk secrets",
+    default=True,
 )
 @click.option(
     "-v",
@@ -3315,12 +3328,14 @@ def update_content_graph(
 def pre_commit(
     ctx,
     input: Iterable[Path],
+    staged_only: bool,
     git_diff: bool,
     all_files: bool,
     unit_test: bool,
     skip: str,
     validate: bool,
     format: bool,
+    secrets: bool,
     verbose: bool,
     show_diff_on_failure: bool,
     sdk_ref: str,
@@ -3333,12 +3348,14 @@ def pre_commit(
     sys.exit(
         pre_commit_manager(
             input,
+            staged_only,
             git_diff,
             all_files,
             unit_test,
             skip,
             validate,
             format,
+            secrets,
             verbose,
             show_diff_on_failure,
             sdk_ref=sdk_ref,

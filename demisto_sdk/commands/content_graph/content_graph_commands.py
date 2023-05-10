@@ -78,12 +78,26 @@ def update_content_graph(
         content_graph_interface.clean_import_dir()
         if not imported_path:
             # getting the graph from remote, so we need to clean the import dir
-            extract_remote_import_files(content_graph_interface, builder)
+            try:
+                extract_remote_import_files(content_graph_interface)
+            except RuntimeError as e:
+                logger.warning(
+                    "Failed to download the content graph, will create a new graph"
+                )
+                logger.debug(f"Runtime Error: {e}")
+                create_content_graph(
+                    content_graph_interface, marketplace, dependencies, output_path
+                )
+                return
+    if not content_graph_interface.import_graph(imported_path):
+        # if the import failed, we need to create a new graph
+        create_content_graph(
+            content_graph_interface, marketplace, dependencies, output_path
+        )
+        return
 
     if use_git and (commit := content_graph_interface.commit):
         packs_to_update.extend(GitUtil().get_all_changed_pack_ids(commit))
-
-    content_graph_interface.import_graph(imported_path)
 
     packs_str = "\n".join([f"- {p}" for p in packs_to_update])
     logger.info(f"Updating the following packs:\n{packs_str}")
@@ -100,9 +114,7 @@ def update_content_graph(
     )
 
 
-def extract_remote_import_files(
-    content_graph_interface: ContentGraphInterface, builder: ContentGraphBuilder
-) -> None:
+def extract_remote_import_files(content_graph_interface: ContentGraphInterface) -> None:
     """Get or create a content graph.
     If the graph is not in the bucket or there are network issues, it will create a new one.
 
@@ -116,9 +128,7 @@ def extract_remote_import_files(
             official_content_graph = download_content_graph(Path(temp_file.name))
             content_graph_interface.move_to_import_dir(official_content_graph)
     except Exception as e:
-        logger.warning("Failed to download from bucket. Will create a new graph")
-        logger.debug(f"Error: {e}")
-        builder.create_graph()
+        raise RuntimeError("Failed to download the content graph") from e
 
 
 def stop_content_graph() -> None:

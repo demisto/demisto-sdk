@@ -78,12 +78,11 @@ class IncidentTypesJSONFormat(BaseUpdateJSON):
                     user_input == "All"
                     and auto_extract_settings["fieldCliNameToExtractSettings"]
                 ):
-                    click.secho(
-                        'Cannot set mode to "All" since there are specific types under the '
+                    logger.info(
+                        '[yellow]Cannot set mode to "All" since there are specific types under the '
                         "fieldCliNameToExtractSettings, "
                         'If you want the mode to be "All" you should delete them manually and run this '
-                        "command again.",
-                        fg="yellow",
+                        "command again.[/yellow]"
                     )
                     return
                 if (
@@ -92,10 +91,9 @@ class IncidentTypesJSONFormat(BaseUpdateJSON):
                         "fieldCliNameToExtractSettings"
                     ]
                 ):
-                    click.secho(
-                        'Please notice that mode was set to "Specific" but there are no specific types under '
-                        "fieldCliNameToExtractSettings",
-                        fg="yellow",
+                    logger.info(
+                        '[yellow]Please notice that mode was set to "Specific" but there are no specific types under '
+                        "fieldCliNameToExtractSettings[/yellow]"
                     )
                 self.data["extractSettings"]["mode"] = user_input
 

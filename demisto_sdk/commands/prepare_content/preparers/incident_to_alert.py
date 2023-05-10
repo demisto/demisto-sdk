@@ -229,9 +229,7 @@ def replace_script_access_fields_recursively(
                 data[key] = replace_script_access_fields_recursively(
                     value, incident_to_alert
                 )
-        return data
-    else:
-        return data
+    return data
 
 
 def replace_register_module_line_for_script(data: dict):

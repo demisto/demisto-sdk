@@ -147,7 +147,7 @@ def test_marketplace_version_is_xsoar():
     data = get_yaml(f"{GIT_ROOT}/demisto_sdk/commands/prepare_content/test_files/playbook_1.yml")
 
     playbook_dummy = mock_playbook(
-        name="playbook_1",
+        name="playbook_2",
     )
     data = MarketplaceIncidentToAlertPlaybooksPreparer.prepare(playbook_dummy, data)
 

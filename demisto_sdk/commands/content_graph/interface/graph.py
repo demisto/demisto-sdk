@@ -77,7 +77,7 @@ class ContentGraphInterface(ABC):
         pass
 
     @abstractmethod
-    def import_graph(self, imported_path: Optional[Path] = None) -> None:
+    def import_graph(self, imported_path: Optional[Path] = None) -> bool:
         pass
 
     @abstractmethod

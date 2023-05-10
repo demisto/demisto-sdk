@@ -1,4 +1,3 @@
-import logging
 import os
 from concurrent.futures._base import Future, as_completed
 from configparser import ConfigParser, MissingSectionHeaderError
@@ -6,11 +5,11 @@ from pathlib import Path
 from typing import Callable, List, Optional, Set, Tuple
 
 import pebble
-from colorama import Fore
 from git import InvalidGitRepositoryError
 from packaging import version
 
 from demisto_sdk.commands.common import tools
+from demisto_sdk.commands.common.cpu_count import cpu_count
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import (
     API_MODULES_PACK,
@@ -137,7 +136,7 @@ from demisto_sdk.commands.common.hook_validations.xsiam_report import (
 from demisto_sdk.commands.common.hook_validations.xsoar_config_json import (
     XSOARConfigJsonValidator,
 )
-from demisto_sdk.commands.common.logger import get_log_file
+from demisto_sdk.commands.common.logger import get_log_file, logger
 from demisto_sdk.commands.common.tools import (
     _get_file_id,
     find_type,
@@ -156,8 +155,6 @@ from demisto_sdk.commands.common.tools import (
     run_command_os,
 )
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
-
-logger = logging.getLogger("demisto-sdk")
 
 SKIPPED_FILES = [
     "CommonServerUserPython.py",
@@ -548,7 +545,7 @@ class ValidateManager:
     ) -> bool:
 
         if self.run_with_multiprocessing:
-            with pebble.ProcessPool(max_workers=4) as executor:
+            with pebble.ProcessPool(max_workers=cpu_count()) as executor:
                 futures = []
                 for pack_path in all_packs:
                     futures.append(
@@ -808,12 +805,10 @@ class ValidateManager:
             validation_print = f"\nValidating {file_path} as {file_type.value}"
             if self.print_percent:
                 if FOUND_FILES_AND_ERRORS:
-                    validation_print += (
-                        f" {Fore.RED}[{self.completion_percentage}%]{Fore.RESET}"
-                    )
+                    validation_print += f" [red][{self.completion_percentage}%][/red]"
                 else:
                     validation_print += (
-                        f" {Fore.GREEN}[{self.completion_percentage}%]{Fore.RESET}"
+                        f" [green][{self.completion_percentage}%][/green]"
                     )
 
             logger.info(validation_print)
@@ -1035,7 +1030,7 @@ class ValidateManager:
             FileType.MODELING_RULE_XIF,
             FileType.MODELING_RULE_TEST_DATA,
         ):
-            print(f"Validating {file_type.value} file: {file_path}")
+            logger.info(f"Validating {file_type.value} file: {file_path}")
             if self.validate_all:
                 error_ignore_list = pack_error_ignore_list.copy()
                 error_ignore_list.setdefault(os.path.basename(file_path), [])

@@ -877,7 +877,8 @@ class TestRNUpdate:
         with pytest.raises(Exception) as execinfo:
             update_rn.bump_version_number()
         assert (
-            "Pack HelloWorld was not found. Please verify the pack name is correct."
+            "The metadata file of pack HelloWorld was not found."
+            " Please verify the pack name is correct, and that the file exists."
             in execinfo.value.args[0]
         )
 
@@ -1334,6 +1335,36 @@ class TestRNUpdate:
         )
         res = get_deprecated_rn(path, file_type)
         assert res == expected_res
+
+    def test_deprecated_rn_yml_no_commands_section(self, mocker, pack):
+        """
+        Given:
+            - deprecated integration which does not have "commands" section
+        When:
+            - Calling get_deprecated_rn function
+        Then:
+            - Ensure the function returns a valid rn when the yml is deprecated without the "commands" section
+
+        """
+        integration = pack.create_integration(
+            name="test",
+            yml={
+                "commonfields": {"id": "test", "version": -1},
+                "name": "test",
+                "display": "test",
+                "description": "this is an integration test",
+                "category": "category",
+                "script": {
+                    "type": "python",
+                    "subtype": "python3",
+                    "script": "",
+                    "dockerimage": "",
+                },
+                "configuration": [],
+            },
+        )
+
+        assert get_deprecated_rn(integration.path, FileType.INTEGRATION) == ""
 
 
 def get_mock_yml_obj(path, file_type, deprecated) -> dict:
@@ -2726,3 +2757,30 @@ def test_get_file_description(path, file_type, expected_results):
         Ensure the function extracted the information from the right field.
     """
     assert get_file_description(path, file_type) == expected_results
+
+
+def test_no_release_notes_for_first_version(mocker):
+    """
+    Given:
+        - Changes made in the content repo.
+    When:
+        - runing update release notes for the first version of the pack (1.0.0).
+    Then
+        - validate the a proper error message is raised.
+    """
+    mocker.patch.object(UpdateRN, "get_master_version", return_value="0.0.0")
+    mocker.patch.object(UpdateRN, "is_bump_required", return_value=False)
+    mocker.patch.object(
+        UpdateRN, "get_pack_metadata", return_value={"currentVersion": "1.0.0"}
+    )
+    update_rn = UpdateRN(
+        pack_path="Packs/HelloWorld",
+        update_type="minor",
+        modified_files_in_pack=set(),
+        added_files=set(),
+        pack_metadata_only=True,
+    )
+
+    with pytest.raises(ValueError) as e:
+        update_rn.get_new_version_and_metadata()
+        assert str(e) == "Release notes do not need to be updated for version '1.0.0'."

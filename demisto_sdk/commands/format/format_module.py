@@ -1,9 +1,6 @@
-import logging
 import os
 from pathlib import Path
 from typing import Dict, List, Tuple
-
-import click
 
 from demisto_sdk.commands.common.constants import (
     JOB,
@@ -11,6 +8,7 @@ from demisto_sdk.commands.common.constants import (
     FileType,
 )
 from demisto_sdk.commands.common.git_util import GitUtil
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import find_type, get_files_in_dir
 from demisto_sdk.commands.format.format_constants import SCHEMAS_PATH
 from demisto_sdk.commands.format.update_classifier import (
@@ -107,8 +105,6 @@ VALIDATE_RES_SKIPPED_CODE = 2
 VALIDATE_RES_FAILED_CODE = 3
 
 CONTENT_ENTITY_IDS_TO_UPDATE: Dict = {}
-
-logger = logging.getLogger("demisto-sdk")
 
 
 def format_manager(
@@ -241,7 +237,7 @@ def format_manager(
             )
         return 1
 
-    print("")  # Just adding a new line before summary
+    logger.info("")  # Just adding a new line before summary
     for string, print_color in log_list:
         joined_string = "\n".join(string)
         logger.info(f"[{print_color}]{joined_string}[/{print_color}]")
@@ -280,13 +276,12 @@ def get_files_to_format_from_git(
 
     if filtered_files:
         detected_files_string = "\n".join(filtered_files)
-        click.secho(
-            f"Found the following files to format:\n{detected_files_string}",
-            fg="bright_cyan",
+        logger.info(
+            f"[cyan]Found the following files to format:\n{detected_files_string}[/cyan]"
         )
 
     else:
-        click.secho("Did not find any files to format", fg="bright_red")
+        logger.info("[red]Did not find any files to format[/red]")
 
     return filtered_files
 

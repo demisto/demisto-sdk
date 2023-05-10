@@ -15,6 +15,7 @@ from demisto_sdk.commands.common.constants import (
 )
 from demisto_sdk.commands.common.content.objects.abstract_objects import JSONObject
 from demisto_sdk.commands.common.handlers import JSON_Handler
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import get_core_pack_list
 from demisto_sdk.commands.find_dependencies.find_dependencies import PackDependencies
 
@@ -251,7 +252,7 @@ class PackMetaData(JSONObject):
             if not self._author:
                 return XSOAR_AUTHOR
             elif self._author != XSOAR_AUTHOR:
-                logging.warning(
+                logger.warning(
                     f"{self._author} author doest not match {XSOAR_AUTHOR} default value"
                 )
                 return self._author

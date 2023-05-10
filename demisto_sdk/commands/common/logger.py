@@ -6,6 +6,14 @@ from pathlib import Path
 
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 
+logger: logging.Logger = logging.getLogger("demisto-sdk")
+
+neo4j_log = logging.getLogger("neo4j")
+neo4j_log.setLevel(logging.CRITICAL)
+
+CONSOLE_HANDLER = "console-handler"
+FILE_HANDLER = "file-handler"
+
 LOG_FILE_NAME: str = "demisto_sdk_debug.log"
 
 LOG_FILE_PATH: Path = CONTENT_PATH / LOG_FILE_NAME
@@ -22,6 +30,7 @@ DEPRECATED_PARAMETERS = {
     "--quiet": "--console-log-threshold or --file-log-threshold",
     "-ln": "--log-path",
     "--log-name": "--log-path",
+    "no_logging": "--console-log-threshold or --file-log-threshold",
 }
 
 
@@ -80,6 +89,18 @@ escapes = {
 }
 
 
+def get_handler_by_name(logger: logging.Logger, handler_name: str):
+    for current_handler in logger.handlers:
+        if current_handler.get_name == handler_name:
+            return current_handler
+    return None
+
+
+def set_demisto_logger(demisto_logger: logging.Logger):
+    global logger
+    logger = demisto_logger
+
+
 def logging_setup(
     console_log_threshold=logging.INFO,
     file_log_threshold=logging.DEBUG,
@@ -96,8 +117,10 @@ def logging_setup(
         logging.Logger: logger object
     """
 
+    global logger
+
     console_handler = logging.StreamHandler()
-    console_handler.set_name("console-handler")
+    console_handler.set_name(CONSOLE_HANDLER)
     console_handler.setLevel(
         console_log_threshold if console_log_threshold else logging.INFO
     )
@@ -125,16 +148,19 @@ def logging_setup(
     console_handler.setFormatter(fmt=console_formatter)
 
     global current_log_file_path
-    current_log_file_path = log_file_path if log_file_path else LOG_FILE_PATH
-    if os.path.isdir(current_log_file_path):
-        current_log_file_path = current_log_file_path / LOG_FILE_NAME
+    if custom_log_path := os.getenv("DEMISTO_SDK_LOG_FILE_PATH"):
+        current_log_file_path = Path(custom_log_path)
+    else:
+        current_log_file_path = log_file_path or LOG_FILE_PATH
+        if Path(current_log_file_path).is_dir():
+            current_log_file_path = current_log_file_path / LOG_FILE_NAME
     file_handler = RotatingFileHandler(
         filename=current_log_file_path,
         mode="a",
         maxBytes=1048576,
         backupCount=10,
     )
-    file_handler.set_name("file-handler")
+    file_handler.set_name(FILE_HANDLER)
     file_handler.setLevel(file_log_threshold if file_log_threshold else logging.DEBUG)
 
     class NoColorFileFormatter(logging.Formatter):
@@ -171,6 +197,8 @@ def logging_setup(
     set_demisto_handlers_to_logger(demisto_logger, console_handler, file_handler)
     demisto_logger.propagate = False
 
+    set_demisto_logger(demisto_logger)
+
     return demisto_logger
 
 
@@ -186,55 +214,3 @@ def set_demisto_handlers_to_logger(
 
 def get_log_file() -> Path:
     return current_log_file_path
-
-
-# Python program to print
-# colored text and background
-class Colors:
-    """Colors class:reset all colors with colors.reset;
-    two sub classes fg for foreground
-    and bg for background;
-    use as colors.subclass.colorname.
-    i.e. colors.fg.red or colors.bg.green
-    also, the generic bold, disable,
-    underline, reverse, strike through,
-    and invisible work with the main class
-    i.e. colors.bold"""
-
-    reset = "\033[0m"
-    bold = "\033[01m"
-    disable = "\033[02m"
-    underline = "\033[04m"
-    reverse = "\033[07m"
-    strikethrough = "\033[09m"
-    invisible = "\033[08m"
-
-    class Fg:
-        """Forgrownd"""
-
-        black = "\033[30m"
-        red = "\033[31m"
-        green = "\033[32m"
-        orange = "\033[33m"
-        blue = "\033[34m"
-        purple = "\033[35m"
-        cyan = "\033[36m"
-        lightgrey = "\033[37m"
-        darkgrey = "\033[90m"
-        lightred = "\033[91m"
-        lightgreen = "\033[92m"
-        yellow = "\033[93m"
-        lightblue = "\033[94m"
-        pink = "\033[95m"
-        lightcyan = "\033[96m"
-
-    class Bg:
-        """Backgrownd"""
-
-        black = "\033[40m"
-        red = "\033[41m"
-        green = "\033[42m"
-        orange = "\033[43m"
-        blue = "\033[44m"
-        purple = "\033[45m"
-        cyan = "\033[46m"

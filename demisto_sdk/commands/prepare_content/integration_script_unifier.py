@@ -1,13 +1,11 @@
 import base64
 import copy
 import glob
-import logging
 import os
 import re
 from pathlib import Path
 from typing import Dict, List, Union
 
-import click
 from inflection import dasherize, underscore
 from ruamel.yaml.scalarstring import FoldedScalarString
 
@@ -19,6 +17,7 @@ from demisto_sdk.commands.common.constants import (
     MarketplaceVersions,
 )
 from demisto_sdk.commands.common.handlers import JSON_Handler
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     arg_to_list,
     find_type,
@@ -29,8 +28,6 @@ from demisto_sdk.commands.common.tools import (
     get_yml_paths_in_dir,
 )
 from demisto_sdk.commands.prepare_content.unifier import Unifier
-
-logger = logging.getLogger("demisto-sdk")
 
 json = JSON_Handler()
 
@@ -181,7 +178,9 @@ class IntegrationScriptUnifier(Unifier):
             image_data = image_prefix + base64.b64encode(image_data).decode("utf-8")
             yml_unified["image"] = image_data
         else:
-            click.secho(f"Failed getting image data for {package_path}", fg="yellow")
+            logger.warning(
+                f"[yellow]Failed getting image data for {package_path}[/yellow]"
+            )
 
         return yml_unified, found_img_path
 
@@ -592,9 +591,8 @@ class IntegrationScriptUnifier(Unifier):
             # verify README file exists and is not empty
             return f"[View Integration Documentation]({integration_doc_link})"
         else:
-            click.secho(
-                f"Did not find README in {package_path}, not adding integration doc link",
-                fg="bright_cyan",
+            logger.info(
+                f"[cyan]Did not find README in {package_path}, not adding integration doc link[/cyan]"
             )
             return ""
 

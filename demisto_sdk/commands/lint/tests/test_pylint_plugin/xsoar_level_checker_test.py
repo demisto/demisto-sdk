@@ -117,7 +117,7 @@ class TestTypeAnnotationsChecker(pylint.testutils.CheckerTestCase):
                 line=2,
                 col_offset=0,
                 end_line=2,
-                end_col_offset=13
+                end_col_offset=13,
             ),
             pylint.testutils.MessageTest(
                 msg_id="missing-arg-type-annoation",
@@ -125,7 +125,7 @@ class TestTypeAnnotationsChecker(pylint.testutils.CheckerTestCase):
                 line=7,
                 col_offset=0,
                 end_line=7,
-                end_col_offset=13
+                end_col_offset=13,
             ),
         ):
             self.checker.visit_functiondef(node_a)
@@ -368,7 +368,7 @@ class TestDirectAccessDictChecker(pylint.testutils.CheckerTestCase):
                 line=3,
                 col_offset=4,
                 end_line=3,
-                end_col_offset=17
+                end_col_offset=17,
             ),
         ):
             self.checker.visit_subscript(node_b)
@@ -387,7 +387,7 @@ class TestDirectAccessDictChecker(pylint.testutils.CheckerTestCase):
                 line=2,
                 col_offset=4,
                 end_line=2,
-                end_col_offset=27
+                end_col_offset=27,
             ),
         ):
             self.checker.visit_subscript(node_b)

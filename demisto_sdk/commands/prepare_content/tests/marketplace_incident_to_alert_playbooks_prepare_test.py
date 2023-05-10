@@ -144,10 +144,10 @@ def test_marketplace_version_is_xsoar():
         - Ensure that access fields did NOT change from incident to alert as this playbook is in XSOAR.
     """
 
-    data = get_yaml(f"{GIT_ROOT}/demisto_sdk/commands/prepare_content/test_files/playbook_1.yml")
+    data = get_yaml(f"{GIT_ROOT}/demisto_sdk/commands/prepare_content/test_files/playbook_3.yml")
 
     playbook_dummy = mock_playbook(
-        name="playbook_2",
+        name="playbook_1",
     )
     data = MarketplaceIncidentToAlertPlaybooksPreparer.prepare(playbook_dummy, data)
 

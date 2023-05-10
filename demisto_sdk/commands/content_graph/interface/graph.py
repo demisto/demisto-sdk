@@ -77,7 +77,7 @@ class ContentGraphInterface(ABC):
         pass
 
     @abstractmethod
-    def import_graph(self, imported_path: Optional[Path] = None) -> None:
+    def import_graph(self, imported_path: Optional[Path] = None) -> bool:
         pass
 
     @abstractmethod
@@ -121,6 +121,10 @@ class ContentGraphInterface(ABC):
         marketplace: MarketplaceVersions,
         core_pack_list: List[str],
     ) -> List[BaseContent]:
+        pass
+
+    @abstractmethod
+    def validate_duplicate_ids(self, file_paths: List[str]) -> None:
         pass
 
     @abstractmethod

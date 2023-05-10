@@ -1,4 +1,3 @@
-import logging
 import traceback
 from datetime import datetime
 from pathlib import Path
@@ -7,9 +6,8 @@ from typing import Any, Dict
 from neo4j import Result, Transaction
 from packaging.version import Version
 
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.content_graph.common import ContentType
-
-logger = logging.getLogger("demisto-sdk")
 
 
 def labels_of(content_type: ContentType) -> str:

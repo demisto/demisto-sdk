@@ -6,7 +6,6 @@ from pathlib import Path
 from pprint import pformat
 from typing import Any, Iterable, Optional, Set, Tuple, Union
 
-import click
 import networkx as nx
 from packaging.version import Version
 from requests import RequestException
@@ -19,6 +18,7 @@ from demisto_sdk.commands.common.constants import (
     PACKS_DIR,
 )
 from demisto_sdk.commands.common.handlers import JSON_Handler
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     ProcessPoolHandler,
     get_content_id_set,
@@ -26,9 +26,6 @@ from demisto_sdk.commands.common.tools import (
     get_pack_name,
     is_external_repository,
     item_type_to_content_items_header,
-    print_error,
-    print_success,
-    print_warning,
     wait_futures_complete,
 )
 from demisto_sdk.commands.common.update_id_set import (
@@ -51,7 +48,6 @@ PACKS_FULL_PATH = os.path.join(get_content_path(), PACKS_DIR)  # type: ignore
 def parse_for_pack_metadata(
     dependency_graph: nx.DiGraph,
     graph_root: str,
-    verbose: bool = False,
     complete_data: bool = False,
     id_set_data=None,
 ) -> tuple:
@@ -62,7 +58,6 @@ def parse_for_pack_metadata(
     Args:
         dependency_graph (DiGraph): dependency direct graph.
         graph_root (str): graph root pack id.
-        verbose(bool): Whether to print the log to the console.
         complete_data (bool): whether to update complete data on the dependent packs.
         id_set_data (dict): id set data.
 
@@ -103,8 +98,7 @@ def parse_for_pack_metadata(
         n for n in dependency_graph.nodes if dependency_graph.in_degree(n) > 0
     ]
 
-    if verbose:
-        click.secho(f"All level dependencies are: {all_level_dependencies}", fg="white")
+    logger.info(f"All level dependencies are: {all_level_dependencies}")
 
     return first_level_dependencies, all_level_dependencies
 
@@ -170,8 +164,8 @@ def update_pack_metadata_with_dependencies(
     found_path_results = find_pack_path(pack_folder_name)
 
     if not found_path_results:
-        print_error(
-            f"{pack_folder_name} {constants.PACKS_PACK_META_FILE_NAME} was not found"
+        logger.info(
+            f"[red]{pack_folder_name} {constants.PACKS_PACK_META_FILE_NAME} was not found[/red]"
         )
         sys.exit(1)
 
@@ -551,7 +545,6 @@ class PackDependencies:
     def _collect_scripts_dependencies(
         pack_scripts: list,
         id_set: dict,
-        verbose: bool,
         exclude_ignored_dependencies: bool = True,
         get_dependent_items: bool = False,
         marketplace: str = "",
@@ -563,7 +556,6 @@ class PackDependencies:
         Args:
             pack_scripts (list): pack scripts collection.
             id_set (dict): id set json.
-            verbose (bool): Whether to log the dependencies to the console.
             exclude_ignored_dependencies (bool): Determines whether to include unsupported dependencies or not.
             marketplace: The dependency calculation desired marketplace.
 
@@ -574,8 +566,7 @@ class PackDependencies:
         dependencies_packs: set = set()
         items_dependencies: dict = {}
         pack_dependencies_data = []
-        if verbose:
-            click.secho("### Scripts", fg="white")
+        logger.info("### Scripts")
 
         for script_mapping in pack_scripts:
             script_id = list(script_mapping.keys())[0]
@@ -651,11 +642,9 @@ class PackDependencies:
                         packs_and_items_dict,
                     )
 
-            if verbose:
-                click.secho(
-                    f'{os.path.basename(script.get("file_path", ""))} depends on: {script_dependencies}',
-                    fg="white",
-                )
+            logger.debug(
+                f'{os.path.basename(script.get("file_path", ""))} depends on: {script_dependencies}'
+            )
             dependencies_packs.update(script_dependencies)
 
         if get_dependent_items:
@@ -724,7 +713,6 @@ class PackDependencies:
     def _collect_playbooks_dependencies(
         pack_playbooks: list,
         id_set: dict,
-        verbose: bool,
         exclude_ignored_dependencies: bool = True,
         get_dependent_items: bool = False,
         marketplace: str = "",
@@ -736,7 +724,6 @@ class PackDependencies:
         Args:
             pack_playbooks (list): collection of pack playbooks data.
             id_set (dict): id set json.
-            verbose (bool): Whether to log the dependencies to the console.
             exclude_ignored_dependencies (bool): Determines whether to include unsupported dependencies or not.
             marketplace: The dependency calculation desired marketplace.
 
@@ -748,8 +735,7 @@ class PackDependencies:
         dependencies_packs: set = set()
         items_dependencies: dict = dict()
         packs_and_items_dict: dict = dict()
-        if verbose:
-            click.secho("### Playbooks", fg="white")
+        logger.info("### Playbooks")
 
         for playbook in pack_playbooks:
             playbook_id = list(playbook.keys())[0]
@@ -938,11 +924,9 @@ class PackDependencies:
                     )
             if playbook_dependencies:
                 # do not trim spaces from the end of the string, they are required for the MD structure.
-                if verbose:
-                    click.secho(
-                        f'{os.path.basename(playbook_data.get("file_path", ""))} depends on: {playbook_dependencies}',
-                        fg="white",
-                    )
+                logger.debug(
+                    f'{os.path.basename(playbook_data.get("file_path", ""))} depends on: {playbook_dependencies}',
+                )
             dependencies_packs.update(playbook_dependencies)
 
         if get_dependent_items:
@@ -953,7 +937,6 @@ class PackDependencies:
     def _collect_layouts_dependencies(
         pack_layouts: list,
         id_set: dict,
-        verbose: bool,
         exclude_ignored_dependencies: bool = True,
         get_dependent_items: bool = False,
         marketplace: str = "",
@@ -965,7 +948,6 @@ class PackDependencies:
         Args:
             pack_layouts (list): collection of pack layouts data.
             id_set (dict): id set json.
-            verbose (bool): Whether to log the dependencies to the console.
             exclude_ignored_dependencies (bool): Determines whether to include unsupported dependencies or not.
             marketplace: The dependency calculation desired marketplace.
 
@@ -976,8 +958,7 @@ class PackDependencies:
         """
         dependencies_packs: set = set()
         items_dependencies: dict = dict()
-        if verbose:
-            click.secho("### Layouts", fg="white")
+        logger.info("### Layouts")
 
         for layout in pack_layouts:
             layout_id = list(layout.keys())[0]
@@ -1051,11 +1032,9 @@ class PackDependencies:
 
             if layout_dependencies:
                 # do not trim spaces from the end of the string, they are required for the MD structure.
-                if verbose:
-                    click.secho(
-                        f'{os.path.basename(layout_data.get("file_path", ""))} depends on: {layout_dependencies}',
-                        fg="white",
-                    )
+                logger.debug(
+                    f'{os.path.basename(layout_data.get("file_path", ""))} depends on: {layout_dependencies}'
+                )
             dependencies_packs.update(layout_dependencies)
 
         if get_dependent_items:
@@ -1066,7 +1045,6 @@ class PackDependencies:
     def _collect_incidents_fields_dependencies(
         pack_incidents_fields: list,
         id_set: dict,
-        verbose: bool,
         exclude_ignored_dependencies: bool = True,
         get_dependent_items: bool = False,
         marketplace: str = "",
@@ -1078,7 +1056,6 @@ class PackDependencies:
         Args:
             pack_incidents_fields (list): collection of pack incidents fields data.
             id_set (dict): id set json.
-            verbose (bool): Whether to log the dependencies to the console.
             exclude_ignored_dependencies (bool): Determines whether to include unsupported dependencies or not.
             marketplace: The dependency calculation desired marketplace.
 
@@ -1089,8 +1066,7 @@ class PackDependencies:
         """
         dependencies_packs: set = set()
         items_dependencies: dict = dict()
-        if verbose:
-            click.secho("### Incident Fields", fg="white")
+        logger.info("### Incident Fields")
 
         for incident_field in pack_incidents_fields:
             incident_field_id = list(incident_field.keys())[0]
@@ -1132,12 +1108,10 @@ class PackDependencies:
                     )
             if incident_field_dependencies:
                 # do not trim spaces from the end of the string, they are required for the MD structure.
-                if verbose:
-                    click.secho(
-                        f'{os.path.basename(incident_field_data.get("file_path", ""))} '
-                        f"depends on: {incident_field_dependencies}",
-                        fg="white",
-                    )
+                logger.debug(
+                    f'{os.path.basename(incident_field_data.get("file_path", ""))} '
+                    f"depends on: {incident_field_dependencies}"
+                )
             dependencies_packs.update(incident_field_dependencies)
 
         if get_dependent_items:
@@ -1148,7 +1122,6 @@ class PackDependencies:
     def _collect_indicators_types_dependencies(
         pack_indicators_types: list,
         id_set: dict,
-        verbose: bool,
         exclude_ignored_dependencies: bool = True,
         get_dependent_items: bool = False,
         marketplace: str = "",
@@ -1160,7 +1133,6 @@ class PackDependencies:
         Args:
             pack_indicators_types (list): collection of pack indicators types data.
             id_set (dict): id set json.
-            verbose (bool): Whether to log the dependencies to the console.
             exclude_ignored_dependencies (bool): Determines whether to include unsupported dependencies or not.
             marketplace: The dependency calculation desired marketplace.
 
@@ -1171,8 +1143,7 @@ class PackDependencies:
         """
         dependencies_packs: set = set()
         items_dependencies: dict = dict()
-        if verbose:
-            click.secho("### Indicator Types", fg="white")
+        logger.info("### Indicator Types")
 
         for indicator_type in pack_indicators_types:
             indicator_type_id = list(indicator_type.keys())[0]
@@ -1224,12 +1195,10 @@ class PackDependencies:
 
             if indicator_type_dependencies:
                 # do not trim spaces from the end of the string, they are required for the MD structure.
-                if verbose:
-                    click.secho(
-                        f'{os.path.basename(indicator_type_data.get("file_path", ""))} depends on:'
-                        f" {indicator_type_dependencies}",
-                        fg="white",
-                    )
+                logger.debug(
+                    f'{os.path.basename(indicator_type_data.get("file_path", ""))} depends on:'
+                    f" {indicator_type_dependencies}"
+                )
             dependencies_packs.update(indicator_type_dependencies)
 
         if get_dependent_items:
@@ -1240,7 +1209,6 @@ class PackDependencies:
     def _collect_integrations_dependencies(
         pack_integrations: list,
         id_set: dict,
-        verbose: bool,
         exclude_ignored_dependencies: bool = True,
         get_dependent_items: bool = False,
         marketplace: str = "",
@@ -1251,7 +1219,6 @@ class PackDependencies:
         Args:
             pack_integrations (list): collection of pack integrations data.
             id_set (dict): id set json.
-            verbose (bool): Whether to log the dependencies to the console.
             exclude_ignored_dependencies (bool): Determines whether to include unsupported dependencies or not.
             marketplace: The dependency calculation desired marketplace.
 
@@ -1262,8 +1229,7 @@ class PackDependencies:
         """
         dependencies_packs: set = set()
         items_dependencies: dict = dict()
-        if verbose:
-            click.secho("### Integrations", fg="white")
+        logger.info("### Integrations")
 
         for integration in pack_integrations:
             integration_id = list(integration.keys())[0]
@@ -1360,11 +1326,9 @@ class PackDependencies:
 
             if integration_dependencies:
                 # do not trim spaces from the end of the string, they are required for the MD structure.
-                if verbose:
-                    click.secho(
-                        f'{os.path.basename(integration_data.get("file_path", ""))} depends on: {integration_dependencies}',
-                        fg="white",
-                    )
+                logger.debug(
+                    f'{os.path.basename(integration_data.get("file_path", ""))} depends on: {integration_dependencies}'
+                )
             dependencies_packs.update(integration_dependencies)
 
         if get_dependent_items:
@@ -1375,7 +1339,6 @@ class PackDependencies:
     def _collect_incidents_types_dependencies(
         pack_incidents_types: list,
         id_set: dict,
-        verbose: bool,
         exclude_ignored_dependencies: bool = True,
         get_dependent_items: bool = False,
         marketplace: str = "",
@@ -1387,7 +1350,6 @@ class PackDependencies:
         Args:
             pack_incidents_types (list): collection of pack incidents types data.
             id_set (dict): id set json.
-            verbose (bool): Whether to log the dependencies to the console.
             exclude_ignored_dependencies (bool): Determines whether to include unsupported dependencies or not.
             marketplace: The dependency calculation desired marketplace.
 
@@ -1398,8 +1360,7 @@ class PackDependencies:
         """
         dependencies_packs: set = set()
         items_dependencies: dict = dict()
-        if verbose:
-            click.secho("### Incident Types", fg="white")
+        logger.info("### Incident Types")
 
         for incident_type in pack_incidents_types:
             incident_type_id = list(incident_type.keys())[0]
@@ -1460,12 +1421,10 @@ class PackDependencies:
 
             if incident_type_dependencies:
                 # do not trim spaces from the end of the string, they are required for the MD structure.
-                if verbose:
-                    click.secho(
-                        f'{os.path.basename(incident_type_data.get("file_path", ""))} depends on:'
-                        f" {incident_type_dependencies}",
-                        fg="white",
-                    )
+                logger.debug(
+                    f'{os.path.basename(incident_type_data.get("file_path", ""))} depends on:'
+                    f" {incident_type_dependencies}"
+                )
             dependencies_packs.update(incident_type_dependencies)
 
         if get_dependent_items:
@@ -1476,7 +1435,6 @@ class PackDependencies:
     def _collect_classifiers_dependencies(
         pack_classifiers: list,
         id_set: dict,
-        verbose: bool,
         exclude_ignored_dependencies: bool = True,
         get_dependent_items: bool = False,
         marketplace: str = "",
@@ -1488,7 +1446,6 @@ class PackDependencies:
         Args:
             pack_classifiers (list): collection of pack classifiers data.
             id_set (dict): id set json.
-            verbose (bool): Whether to log the dependencies to the console.
             exclude_ignored_dependencies (bool): Determines whether to include unsupported dependencies or not.
             marketplace: The dependency calculation desired marketplace.
 
@@ -1499,8 +1456,7 @@ class PackDependencies:
         """
         dependencies_packs: set = set()
         items_dependencies: dict = dict()
-        if verbose:
-            click.secho("### Classifiers", fg="white")
+        logger.info("### Classifiers")
 
         for classifier in pack_classifiers:
             classifier_id = list(classifier.keys())[0]
@@ -1598,11 +1554,9 @@ class PackDependencies:
                     )
             if classifier_dependencies:
                 # do not trim spaces from the end of the string, they are required for the MD structure.
-                if verbose:
-                    click.secho(
-                        f'{os.path.basename(classifier_data.get("file_path", ""))} depends on: {classifier_dependencies}',
-                        fg="white",
-                    )
+                logger.debug(
+                    f'{os.path.basename(classifier_data.get("file_path", ""))} depends on: {classifier_dependencies}'
+                )
             dependencies_packs.update(classifier_dependencies)
 
         if get_dependent_items:
@@ -1613,7 +1567,6 @@ class PackDependencies:
     def _collect_mappers_dependencies(
         pack_mappers: list,
         id_set: dict,
-        verbose: bool,
         exclude_ignored_dependencies: bool = True,
         get_dependent_items: bool = False,
         marketplace: str = "",
@@ -1625,7 +1578,6 @@ class PackDependencies:
         Args:
             pack_mappers (list): collection of pack mappers data.
             id_set (dict): id set json.
-            verbose (bool): Whether to log the dependencies to the console.
             exclude_ignored_dependencies (bool): Determines whether to include unsupported dependencies or not.
             marketplace: The dependency calculation desired marketplace.
 
@@ -1637,8 +1589,7 @@ class PackDependencies:
         dependencies_packs: set = set()
         items_dependencies: dict = dict()
 
-        if verbose:
-            click.secho("### Mappers", fg="white")
+        logger.info("### Mappers")
         for mapper in pack_mappers:
             mapper_id = list(mapper.keys())[0]
             mapper_data = next(iter(mapper.values()))
@@ -1790,11 +1741,9 @@ class PackDependencies:
                     )
             if mapper_dependencies:
                 # do not trim spaces from the end of the string, they are required for the MD structure.
-                if verbose:
-                    click.secho(
-                        f'{os.path.basename(mapper_data.get("file_path", ""))} depends on: {mapper_dependencies}',
-                        fg="white",
-                    )
+                logger.debug(
+                    f'{os.path.basename(mapper_data.get("file_path", ""))} depends on: {mapper_dependencies}'
+                )
             dependencies_packs.update(mapper_dependencies)
 
         if get_dependent_items:
@@ -1805,7 +1754,6 @@ class PackDependencies:
     def _collect_widget_dependencies(
         pack_widgets: list,
         id_set: dict,
-        verbose: bool,
         exclude_ignored_dependencies: bool = True,
         header: str = "Widgets",
         get_dependent_items: bool = False,
@@ -1818,7 +1766,6 @@ class PackDependencies:
         Args:
             pack_widgets (list): collection of pack widget data.
             id_set (dict): id set json.
-            verbose (bool): Whether to log the dependencies to the console.
             exclude_ignored_dependencies (bool): Determines whether to include unsupported dependencies or not.
             marketplace: The dependency calculation desired marketplace.
 
@@ -1830,8 +1777,7 @@ class PackDependencies:
         dependencies_packs: set = set()
         items_dependencies: dict = dict()
 
-        if verbose:
-            click.secho(f"### {header}", fg="white")
+        logger.info(f"### {header}")
 
         for widget in pack_widgets:
             widget_id = list(widget.keys())[0]
@@ -1865,11 +1811,9 @@ class PackDependencies:
                     )
             if widget_dependencies:
                 # do not trim spaces from the end of the string, they are required for the MD structure.
-                if verbose:
-                    click.secho(
-                        f'{os.path.basename(widget_data.get("file_path", ""))} depends on: {widget_dependencies}',
-                        fg="white",
-                    )
+                logger.debug(
+                    f'{os.path.basename(widget_data.get("file_path", ""))} depends on: {widget_dependencies}'
+                )
             dependencies_packs.update(widget_dependencies)
 
         if get_dependent_items:
@@ -1880,7 +1824,6 @@ class PackDependencies:
     def _collect_generic_types_dependencies(
         pack_generic_types: list,
         id_set: dict,
-        verbose: bool,
         exclude_ignored_dependencies: bool = True,
         get_dependent_items: bool = False,
         marketplace: str = "",
@@ -1892,7 +1835,6 @@ class PackDependencies:
         Args:
             pack_generic_types (list): collection of pack generics types data.
             id_set (dict): id set json.
-            verbose (bool): Whether to log the dependencies to the console.
             exclude_ignored_dependencies (bool): Determines whether to include unsupported dependencies or not.
             marketplace: The dependency calculation desired marketplace.
 
@@ -1904,8 +1846,7 @@ class PackDependencies:
         dependencies_packs: set = set()
         items_dependencies: dict = dict()
 
-        if verbose:
-            click.secho("### Generic Types", fg="white")
+        logger.info("### Generic Types")
 
         for generic_type in pack_generic_types:
             generic_type_id = list(generic_type.keys())[0]
@@ -1992,11 +1933,9 @@ class PackDependencies:
                     )
             if generic_type_dependencies:
                 # do not trim spaces from the end of the string, they are required for the MD structure.
-                if verbose:
-                    click.secho(
-                        f'{os.path.basename(generic_type_data.get("file_path", ""))} depends on: {generic_type_dependencies}',
-                        fg="white",
-                    )
+                logger.debug(
+                    f'{os.path.basename(generic_type_data.get("file_path", ""))} depends on: {generic_type_dependencies}'
+                )
             dependencies_packs.update(generic_type_dependencies)
 
         if get_dependent_items:
@@ -2007,7 +1946,6 @@ class PackDependencies:
     def _collect_generic_fields_dependencies(
         pack_generic_fields: list,
         id_set: dict,
-        verbose: bool,
         exclude_ignored_dependencies: bool = True,
         get_dependent_items: bool = False,
         marketplace: str = "",
@@ -2019,7 +1957,6 @@ class PackDependencies:
         Args:
             pack_generic_fields (list): collection of pack incidents fields data.
             id_set (dict): id set json.
-            verbose (bool): Whether to log the dependencies to the console.
             exclude_ignored_dependencies (bool): Determines whether to include unsupported dependencies or not.
             marketplace: The dependency calculation desired marketplace.
 
@@ -2031,8 +1968,7 @@ class PackDependencies:
         dependencies_packs: set = set()
         items_dependencies: dict = dict()
 
-        if verbose:
-            click.secho("### Generic Fields", fg="white")
+        logger.info("### Generic Fields")
 
         for generic_field in pack_generic_fields:
             generic_field_id = list(generic_field.keys())[0]
@@ -2118,12 +2054,10 @@ class PackDependencies:
                     )
             if generic_field_dependencies:
                 # do not trim spaces from the end of the string, they are required for the MD structure.
-                if verbose:
-                    click.secho(
-                        f'{os.path.basename(generic_field_data.get("file_path", ""))} '
-                        f"depends on: {generic_field_dependencies}",
-                        fg="white",
-                    )
+                logger.debug(
+                    f'{os.path.basename(generic_field_data.get("file_path", ""))} '
+                    f"depends on: {generic_field_dependencies}"
+                )
             dependencies_packs.update(generic_field_dependencies)
 
         if get_dependent_items:
@@ -2134,7 +2068,6 @@ class PackDependencies:
     def _collect_generic_modules_dependencies(
         pack_generic_modules: list,
         id_set: dict,
-        verbose: bool,
         exclude_ignored_dependencies: bool = True,
         get_dependent_items: bool = False,
         marketplace: str = "",
@@ -2146,7 +2079,6 @@ class PackDependencies:
         Args:
             pack_generic_types (list): collection of pack generics types data.
             id_set (dict): id set json.
-            verbose (bool): Whether to log the dependencies to the console.
             exclude_ignored_dependencies (bool): Determines whether to include unsupported dependencies or not.
             marketplace: The dependency calculation desired marketplace.
 
@@ -2158,8 +2090,7 @@ class PackDependencies:
         dependencies_packs: set = set()
         items_dependencies: dict = dict()
 
-        if verbose:
-            click.secho("### Generic Modules", fg="white")
+        logger.info("### Generic Modules")
 
         for generic_module in pack_generic_modules:
             generic_module_id = list(generic_module.keys())[0]
@@ -2222,12 +2153,10 @@ class PackDependencies:
 
             if generic_module_dependencies:
                 # do not trim spaces from the end of the string, they are required for the MD structure.
-                if verbose:
-                    click.secho(
-                        f'{os.path.basename(generic_module_data.get("file_path", ""))} '
-                        f"depends on: {generic_module_dependencies}",
-                        fg="white",
-                    )
+                logger.debug(
+                    f'{os.path.basename(generic_module_data.get("file_path", ""))} '
+                    f"depends on: {generic_module_dependencies}"
+                )
             dependencies_packs.update(generic_module_dependencies)
 
         if get_dependent_items:
@@ -2238,7 +2167,6 @@ class PackDependencies:
     def _collect_jobs_dependencies(
         pack_jobs: list,
         id_set: dict,
-        verbose: bool,
         exclude_ignored_dependencies: bool = True,
         get_dependent_items: bool = False,
         marketplace: str = "",
@@ -2250,7 +2178,6 @@ class PackDependencies:
         Args:
             pack_jobs: collection of pack job data.
             id_set: id set json.
-            verbose: Whether to log the dependencies to the console.
             exclude_ignored_dependencies: Determines whether to include unsupported dependencies or not.
             marketplace: The dependency calculation desired marketplace.
 
@@ -2262,8 +2189,7 @@ class PackDependencies:
         all_job_dependencies: set = set()
         items_dependencies: dict = dict()
 
-        if verbose:
-            click.secho("### Jobs", fg="white")
+        logger.info("### Jobs")
 
         for job in pack_jobs:
             job_id = list(job.keys())[0]
@@ -2320,11 +2246,9 @@ class PackDependencies:
                 )
             if job_dependencies:
                 # do not trim spaces from the end of the string, they are required for the MD structure.
-                if verbose:
-                    click.secho(
-                        f'{os.path.basename(job_data.get("file_path", ""))} depends on: {job_dependencies}',
-                        fg="white",
-                    )
+                logger.debug(
+                    f'{os.path.basename(job_data.get("file_path", ""))} depends on: {job_dependencies}'
+                )
             all_job_dependencies.update(job_dependencies)
 
         if get_dependent_items:
@@ -2383,12 +2307,11 @@ class PackDependencies:
             )
 
         if not sum(pack_items.values(), []):
-            click.secho(
-                f"Couldn't find any items for pack '{pack_id}'. Please make sure:\n"
+            logger.info(
+                f"[yellow]Couldn't find any items for pack '{pack_id}'. Please make sure:\n"
                 f"1 - The spelling is correct.\n"
                 f"2 - The id_set.json file is up to date. Delete the file by running: `rm -rf "
-                f"Tests/id_set.json` and rerun the command.",
-                fg="yellow",
+                f"Tests/id_set.json` and rerun the command.[/yellow]"
             )
 
         return pack_items
@@ -2397,7 +2320,6 @@ class PackDependencies:
     def _find_pack_dependencies(
         pack_id: str,
         id_set: dict,
-        verbose: bool,
         exclude_ignored_dependencies: bool = True,
         marketplace: str = "",
     ):
@@ -2407,7 +2329,6 @@ class PackDependencies:
         Args:
             pack_id (str): pack id, currently pack folder name is in use.
             id_set (dict): id set json.
-            verbose (bool): Whether to log the dependencies to the console.
             exclude_ignored_dependencies (bool): Determines whether to include unsupported dependencies or not.
             marketplace: The dependency calculation desired marketplace.
 
@@ -2417,8 +2338,7 @@ class PackDependencies:
             dict: found {pack, (item_type, item_id)} ids of mandatory dependent items.
 
         """
-        if verbose:
-            click.secho(f"\n# Pack ID: {pack_id}", fg="white")
+        logger.info(f"\n# Pack ID: {pack_id}")
         pack_items = PackDependencies._collect_pack_items(pack_id, id_set)
 
         (
@@ -2427,7 +2347,6 @@ class PackDependencies:
         ) = PackDependencies._collect_scripts_dependencies(
             pack_items["scripts"],
             id_set,
-            verbose,
             exclude_ignored_dependencies,
             get_dependent_items=True,
             marketplace=marketplace,
@@ -2439,7 +2358,6 @@ class PackDependencies:
         ) = PackDependencies._collect_playbooks_dependencies(
             pack_items["playbooks"],
             id_set,
-            verbose,
             exclude_ignored_dependencies,
             get_dependent_items=True,
             marketplace=marketplace,
@@ -2451,7 +2369,6 @@ class PackDependencies:
         ) = PackDependencies._collect_layouts_dependencies(
             pack_items["layouts"],
             id_set,
-            verbose,
             exclude_ignored_dependencies,
             get_dependent_items=True,
             marketplace=marketplace,
@@ -2462,7 +2379,6 @@ class PackDependencies:
         ) = PackDependencies._collect_incidents_fields_dependencies(
             pack_items["incidents_fields"],
             id_set,
-            verbose,
             exclude_ignored_dependencies,
             get_dependent_items=True,
             marketplace=marketplace,
@@ -2473,7 +2389,6 @@ class PackDependencies:
         ) = PackDependencies._collect_indicators_types_dependencies(
             pack_items["indicators_types"],
             id_set,
-            verbose,
             exclude_ignored_dependencies,
             get_dependent_items=True,
             marketplace=marketplace,
@@ -2485,7 +2400,6 @@ class PackDependencies:
         ) = PackDependencies._collect_integrations_dependencies(
             pack_items["integrations"],
             id_set,
-            verbose,
             exclude_ignored_dependencies,
             get_dependent_items=True,
             marketplace=marketplace,
@@ -2496,7 +2410,6 @@ class PackDependencies:
         ) = PackDependencies._collect_incidents_types_dependencies(
             pack_items["incidents_types"],
             id_set,
-            verbose,
             exclude_ignored_dependencies,
             True,
             marketplace=marketplace,
@@ -2507,7 +2420,6 @@ class PackDependencies:
         ) = PackDependencies._collect_classifiers_dependencies(
             pack_items["classifiers"],
             id_set,
-            verbose,
             exclude_ignored_dependencies,
             get_dependent_items=True,
             marketplace=marketplace,
@@ -2518,7 +2430,6 @@ class PackDependencies:
         ) = PackDependencies._collect_mappers_dependencies(
             pack_items["mappers"],
             id_set,
-            verbose,
             exclude_ignored_dependencies,
             get_dependent_items=True,
             marketplace=marketplace,
@@ -2529,7 +2440,6 @@ class PackDependencies:
         ) = PackDependencies._collect_widget_dependencies(
             pack_items["widgets"],
             id_set,
-            verbose,
             exclude_ignored_dependencies,
             get_dependent_items=True,
             marketplace=marketplace,
@@ -2540,7 +2450,6 @@ class PackDependencies:
         ) = PackDependencies._collect_widget_dependencies(
             pack_items["dashboards"],
             id_set,
-            verbose,
             exclude_ignored_dependencies,
             header="Dashboards",
             get_dependent_items=True,
@@ -2552,7 +2461,6 @@ class PackDependencies:
         ) = PackDependencies._collect_widget_dependencies(
             pack_items["reports"],
             id_set,
-            verbose,
             exclude_ignored_dependencies,
             header="Reports",
             get_dependent_items=True,
@@ -2564,7 +2472,6 @@ class PackDependencies:
         ) = PackDependencies._collect_generic_types_dependencies(
             pack_items["generic_types"],
             id_set,
-            verbose,
             exclude_ignored_dependencies,
             get_dependent_items=True,
             marketplace=marketplace,
@@ -2575,7 +2482,6 @@ class PackDependencies:
         ) = PackDependencies._collect_generic_fields_dependencies(
             pack_items["generic_fields"],
             id_set,
-            verbose,
             exclude_ignored_dependencies,
             get_dependent_items=True,
             marketplace=marketplace,
@@ -2586,7 +2492,6 @@ class PackDependencies:
         ) = PackDependencies._collect_generic_modules_dependencies(
             pack_items["generic_modules"],
             id_set,
-            verbose,
             exclude_ignored_dependencies,
             get_dependent_items=True,
             marketplace=marketplace,
@@ -2597,7 +2502,6 @@ class PackDependencies:
         ) = PackDependencies._collect_jobs_dependencies(
             pack_items["jobs"],
             id_set,
-            verbose,
             exclude_ignored_dependencies,
             get_dependent_items=True,
             marketplace=marketplace,
@@ -2647,7 +2551,6 @@ class PackDependencies:
     def build_all_dependencies_graph(
         pack_ids: list,
         id_set: dict,
-        verbose: bool = False,
         exclude_ignored_dependencies: bool = True,
         marketplace: str = "",
     ) -> nx.DiGraph:
@@ -2681,15 +2584,13 @@ class PackDependencies:
         Args:
             pack_ids (list): pack ids, currently pack folder names is in use.
             id_set (dict): id set json.
-            verbose (bool): Whether to log the dependencies to the console.
             exclude_ignored_dependencies (bool): Determines whether to include unsupported dependencies or not.
             marketplace: The dependency calculation desired marketplace.
 
         Returns:
             DiGraph: all dependencies of given packs.
         """
-        if verbose:
-            print("Building the dependencies graph...")
+        logger.debug("Building the dependencies graph...")
         dependency_graph = nx.DiGraph()
         for pack in pack_ids:
             dependency_graph.add_node(
@@ -2700,23 +2601,20 @@ class PackDependencies:
                 depending_on_packs=[],
             )
         for pack in pack_ids:
-            if verbose:
-                print(f"Adding {pack} pack dependencies to the graph...")
+            logger.debug(f"Adding {pack} pack dependencies to the graph...")
             # ITEMS *THIS PACK* IS DEPENDENT *ON*:
             dependencies, dependencies_items = PackDependencies._find_pack_dependencies(
                 pack,
                 id_set,
-                verbose=verbose,
                 exclude_ignored_dependencies=exclude_ignored_dependencies,
                 marketplace=marketplace,
             )
             for dependency_name, is_mandatory in dependencies:
                 if dependency_name == pack:
                     continue
-                if verbose:
-                    print(
-                        f"Collecting info about {pack} and {dependency_name} dependencies"
-                    )
+                logger.debug(
+                    f"Collecting info about {pack} and {dependency_name} dependencies"
+                )
                 if dependency_name not in dependency_graph:
                     dependency_graph.add_node(
                         dependency_name,
@@ -2727,8 +2625,9 @@ class PackDependencies:
                     )
                 dependency_graph.add_edge(pack, dependency_name)
                 if is_mandatory:
-                    if verbose:
-                        print(f"Found {dependency_name} pack is mandatory for {pack}")
+                    logger.debug(
+                        f"Found {dependency_name} pack is mandatory for {pack}"
+                    )
                     dependency_graph.nodes()[dependency_name][
                         "mandatory_for_packs"
                     ].append(pack)
@@ -2749,11 +2648,10 @@ class PackDependencies:
                             depending_on_packs=[],
                         )
                     for item_dependent_on in items_dependent_on:
-                        if verbose:
-                            print(
-                                f"Adding the dependency between the items {dependent_item} and {item_dependent_on} "
-                                f"to the dependency graph"
-                            )
+                        logger.debug(
+                            f"Adding the dependency between the items {dependent_item} and {item_dependent_on} "
+                            f"to the dependency graph"
+                        )
                         if (
                             dependency_graph.nodes()[pack_of_item_dependent_on][
                                 "mandatory_for_items"
@@ -2773,10 +2671,9 @@ class PackDependencies:
                                 {pack: [dependent_item]}
                             )
 
-            if verbose:
-                print(
-                    f"\nPack {pack} and its dependencies were successfully added to the dependencies graph."
-                )
+            logger.debug(
+                f"\nPack {pack} and its dependencies were successfully added to the dependencies graph."
+            )
             dependency_graph.nodes()[pack]["depending_on_packs"] = list(dependencies)
             dependency_graph.nodes()[pack][
                 "depending_on_items_mandatorily"
@@ -2806,7 +2703,6 @@ class PackDependencies:
     def build_dependency_graph_single_pack(
         pack_id: str,
         id_set: dict,
-        verbose: bool,
         exclude_ignored_dependencies: bool = True,
         get_dependent_items: bool = True,
         marketplace: str = "",
@@ -2817,7 +2713,6 @@ class PackDependencies:
         Args:
             pack_id (str): pack id, currently pack folder name is in use.
             id_set (dict): id set json.
-            verbose (bool): Whether to log the dependencies to the console.
             exclude_ignored_dependencies (bool): Determines whether to include unsupported dependencies or not.
             marketplace: The dependency calculation desired marketplace.
 
@@ -2839,7 +2734,6 @@ class PackDependencies:
                 ) = PackDependencies._find_pack_dependencies(
                     leaf,
                     id_set,
-                    verbose=verbose,
                     exclude_ignored_dependencies=exclude_ignored_dependencies,
                     marketplace=marketplace,
                 )
@@ -2863,15 +2757,15 @@ class PackDependencies:
         input_paths, all_packs_dependencies, output_path, get_dependent_on
     ):
         if output_path and not all_packs_dependencies and not get_dependent_on:
-            print_warning(
-                "You used the '--output-path' argument, which only works when using either the"
-                " '--all-packs-dependencies' or '--get-dependent-on' flags. Ignoring this argument."
+            logger.info(
+                "[yellow]You used the '--output-path' argument, which only works when using either the"
+                " '--all-packs-dependencies' or '--get-dependent-on' flags. Ignoring this argument.[/yellow]"
             )
         if not input_paths:
             if not all_packs_dependencies:
-                print_error(
-                    "Please provide an input path. The path should be formatted as 'Packs/<some pack name>'. "
-                    "For example, Packs/HelloWorld."
+                logger.info(
+                    "[red]Please provide an input path. The path should be formatted as 'Packs/<some pack name>'. "
+                    "For example, Packs/HelloWorld.[/red]"
                 )
                 sys.exit(1)
 
@@ -2879,35 +2773,35 @@ class PackDependencies:
             input_paths = [Path(path) for path in list(input_paths)]
 
             if input_paths and all_packs_dependencies:
-                print_warning(
-                    "You used the '--input/-i' argument, which is not relevant for when using the"
-                    " '--all-packs-dependencies'. Ignoring this argument."
+                logger.info(
+                    "[yellow]You used the '--input/-i' argument, which is not relevant for when using the"
+                    " '--all-packs-dependencies'. Ignoring this argument.[/yellow]"
                 )
                 return
 
             elif len(input_paths) > 1 and not get_dependent_on:
-                print_error(
-                    "Please supply only one pack path to calculate its dependencies. Multiple inputs in only "
-                    "supported when using the --get-dependent-on flag."
+                logger.info(
+                    "[red]Please supply only one pack path to calculate its dependencies. Multiple inputs in only "
+                    "supported when using the --get-dependent-on flag.[/red]"
                 )
                 sys.exit(1)
 
             for path in input_paths:
                 if len(path.parts) != 2 or path.parts[-2] != "Packs":
-                    print_error(
-                        f"Input path ({path}) must be formatted as 'Packs/<some pack name>'. "
-                        f"For example, Packs/HelloWorld."
+                    logger.info(
+                        f"[red]Input path ({path}) must be formatted as 'Packs/<some pack name>'. "
+                        f"For example, Packs/HelloWorld.[/red]"
                     )
                     sys.exit(1)
                 if get_dependent_on:
                     if path.parts[-1] in IGNORED_PACKS_IN_DEPENDENCY_CALC:
-                        print_error(
-                            f"Finding all packs dependent on {path.parts[-1]} pack is not supported."
+                        logger.info(
+                            f"[red]Finding all packs dependent on {path.parts[-1]} pack is not supported.[/red]"
                         )
                         sys.exit(1)
         if all_packs_dependencies and not output_path:
-            print_error(
-                "Please insert path for the generated output using --output-path"
+            logger.info(
+                "[red]Please insert path for the generated output using --output-path[/red]"
             )
             sys.exit(1)
 
@@ -2915,7 +2809,6 @@ class PackDependencies:
     def find_dependencies_manager(
         id_set_path: str = "",
         update_pack_metadata: bool = False,
-        verbose: bool = False,
         use_pack_metadata: bool = False,
         input_paths: Tuple = None,
         all_packs_dependencies: bool = False,
@@ -2928,7 +2821,6 @@ class PackDependencies:
         Args:
             id_set_path: Path to id set json file.
             update_pack_metadata: Whether to update the pack metadata.
-            verbose :Whether to print the log to the console
             use_pack_metadata: Whether to update the dependencies from the pack metadata.
             input_paths: Packs paths to find dependencies.
             all_packs_dependencies: Whether to calculate dependencies for all content packs.
@@ -2944,11 +2836,11 @@ class PackDependencies:
 
         if get_dependent_on:
             dependent_packs, _ = get_packs_dependent_on_given_packs(
-                input_paths, id_set_path, output_path, verbose  # type: ignore[arg-type]
+                input_paths, id_set_path, output_path  # type: ignore[arg-type]
             )
-            print_success("Found the following dependent packs:")
+            logger.info("[green]Found the following dependent packs:[/green]")
             dependent_packs = json.dumps(dependent_packs, indent=4)
-            click.echo(click.style(dependent_packs, bold=True))
+            logger.info(f"[bold]{dependent_packs}[/bold]")
 
         elif dependency:
             input_pack_name = ""
@@ -2956,30 +2848,29 @@ class PackDependencies:
                 input_pack_name = get_pack_name(input_paths[0])
             dependency_pack_name = get_pack_name(dependency)
             dependencies = find_dependencies_between_two_packs(
-                input_paths, output_path, dependency, id_set_path, verbose
+                input_paths, output_path, dependency, id_set_path
             )
             if dependencies:
-                print_success(
-                    f'The pack "{input_pack_name}" depends on "{dependency_pack_name}" '
-                    f"with the following items:"
+                logger.info(
+                    f'[green]The pack "{input_pack_name}" depends on "{dependency_pack_name}" '
+                    f"with the following items:[/green]"
                 )
-                click.echo(click.style(dependencies, bold=True))
+                logger.info(f"[bold]{dependencies}[/bold]")
             else:
-                print_warning(
-                    f"Could not find dependencies between the two packs: {input_pack_name} and {dependency}"
+                logger.info(
+                    f"[yellow]Could not find dependencies between the two packs: {input_pack_name} and {dependency}[/yellow]"
                 )
 
         elif all_packs_dependencies:
-            calculate_all_packs_dependencies(id_set_path, output_path, verbose)  # type: ignore[arg-type]
-            print_success(
-                f"The packs dependencies json was successfully saved to {output_path}"
+            calculate_all_packs_dependencies(id_set_path, output_path)  # type: ignore[arg-type]
+            logger.info(
+                f"[green]The packs dependencies json was successfully saved to {output_path}[/green]"
             )
 
         else:
             PackDependencies.find_dependencies(
                 pack_name=Path(input_paths[0]).name,  # type: ignore
                 id_set_path=id_set_path,
-                verbose=verbose,
                 update_pack_metadata=update_pack_metadata,
                 use_pack_metadata=use_pack_metadata,
             )
@@ -2991,7 +2882,6 @@ class PackDependencies:
         exclude_ignored_dependencies: bool = True,
         update_pack_metadata: bool = False,
         silent_mode: bool = False,
-        verbose: bool = False,
         skip_id_set_creation: bool = False,
         use_pack_metadata: bool = False,
         complete_data: bool = False,
@@ -3006,7 +2896,6 @@ class PackDependencies:
             exclude_ignored_dependencies (bool): Determines whether to include unsupported dependencies or not.
             update_pack_metadata (bool): Determines whether to update to pack metadata or not.
             silent_mode (bool): Determines whether to echo the dependencies or not.
-            verbose(bool): Whether to print the log to the console.
             skip_id_set_creation (bool): Whether to skip id_set.json file creation.
             complete_data (bool): Whether to update complete data on the dependent packs.
 
@@ -3025,8 +2914,8 @@ class PackDependencies:
             id_set, _, _ = IDSetCreator(print_logs=False).create_id_set()
 
         if is_external_repository():
-            print_warning(
-                "Running in a private repository, will download the id set from official content"
+            logger.info(
+                "[yellow]Running in a private repository, will download the id set from official content[/yellow]"
             )
             id_set = get_merged_official_and_local_id_set(
                 id_set, silent_mode=silent_mode
@@ -3035,13 +2924,11 @@ class PackDependencies:
         dependency_graph = PackDependencies.build_dependency_graph_single_pack(
             pack_id=pack_name,
             id_set=id_set,
-            verbose=verbose,
             exclude_ignored_dependencies=exclude_ignored_dependencies,
         )
         first_level_dependencies, _ = parse_for_pack_metadata(
             dependency_graph,
             pack_name,
-            verbose,
             complete_data=complete_data,
             id_set_data=id_set,
         )
@@ -3054,15 +2941,10 @@ class PackDependencies:
         if update_pack_metadata:
             update_pack_metadata_with_dependencies(pack_name, first_level_dependencies)
 
-        if not silent_mode:
-            # print the found pack dependency results
-            click.echo(
-                click.style(
-                    f"Found dependencies result for {pack_name} pack:", bold=True
-                )
-            )
-            dependency_result = json.dumps(first_level_dependencies, indent=4)
-            click.echo(click.style(dependency_result, bold=True))
+        # print the found pack dependency results
+        logger.info(f"[bold]Found dependencies result for {pack_name} pack:[/bold]")
+        dependency_result = json.dumps(first_level_dependencies, indent=4)
+        logger.info(f"[bold]{dependency_result}[/bold]")
 
         return first_level_dependencies
 
@@ -3104,14 +2986,13 @@ class PackDependencies:
 
 
 def calculate_single_pack_depends_on(
-    pack: str, dependency_graph: nx.DiGraph, verbose: bool = False
+    pack: str, dependency_graph: nx.DiGraph
 ) -> Tuple[dict, str]:
     """
 
     Args:
         pack: the pack to calculate the items and packs are dependent on
         dependency_graph: the already generated dependencies graph
-        verbose (bool): Whether to log the dependencies to the console.
 
     Returns:
          first_level_dependencies: A dict of the form containing the dependency info of the first level.
@@ -3122,21 +3003,19 @@ def calculate_single_pack_depends_on(
         first_level_dependencies = {}
 
         for man_pack in pack_graph_node.get("mandatory_for_packs"):
-            if verbose:
-                print(
-                    f"Parsing info of {man_pack} mandatory dependency of pack {pack} from graph"
-                )
+            logger.debug(
+                f"Parsing info of {man_pack} mandatory dependency of pack {pack} from graph"
+            )
             first_level_dependencies[man_pack] = {"mandatory": True}
             for item, dependent_item_and_pack in pack_graph_node.get(
                 "mandatory_for_items", {}
             ).items():
                 for dep_pack, dep_item in dependent_item_and_pack.items():
                     if dep_pack == man_pack:
-                        if verbose:
-                            print(
-                                f"Parsing info of dependent items {dep_item} from {dep_pack} on item {item} from "
-                                f"{pack} from graph"
-                            )
+                        logger.debug(
+                            f"Parsing info of dependent items {dep_item} from {dep_pack} on item {item} from "
+                            f"{pack} from graph"
+                        )
                         if first_level_dependencies[man_pack].get("dependent_items"):
                             first_level_dependencies[man_pack][
                                 "dependent_items"
@@ -3148,14 +3027,14 @@ def calculate_single_pack_depends_on(
                                 (item, dep_item)
                             ]  # type:ignore
     except Exception as e:
-        print_error(f"Failed calculating {pack} pack dependencies: {e}")
+        logger.info(f"[red]Failed calculating {pack} pack dependencies: {e}[/red]")
         raise
 
     return first_level_dependencies, pack
 
 
 def calculate_single_pack_dependencies(
-    pack: str, dependency_graph: object, verbose: bool = False
+    pack: str, dependency_graph: object
 ) -> Tuple[dict, list, str]:
     """
     Calculates pack dependencies given a pack and a dependencies graph.
@@ -3169,15 +3048,13 @@ def calculate_single_pack_dependencies(
     Args:
         pack: The pack for which we need to calculate the dependencies
         dependency_graph: The full dependencies graph
-        verbose: Whether to output a detailed response.
 
     Returns:
         first_level_dependencies: A dict of the form {'dependency_name': {'mandatory': < >, 'display_name': < >}}
         all_level_dependencies: A list with all dependencies names
         pack: The pack name
     """
-    if verbose:
-        print(f"Calculating {pack} pack dependencies.")
+    logger.debug(f"Calculating {pack} pack dependencies.")
 
     try:
         subgraph = PackDependencies.get_dependencies_subgraph_by_dfs(
@@ -3185,8 +3062,7 @@ def calculate_single_pack_dependencies(
         )
 
         for dependency_pack, additional_data in subgraph.nodes(data=True):
-            if verbose:
-                print(f"Iterating dependency {dependency_pack} for pack {pack}")
+            logger.debug(f"Iterating dependency {dependency_pack} for pack {pack}")
             additional_data["mandatory"] = (
                 pack in additional_data["mandatory_for_packs"]
             )
@@ -3200,7 +3076,7 @@ def calculate_single_pack_dependencies(
             subgraph, pack
         )
     except Exception:
-        print_error(f"Failed calculating {pack} pack dependencies")
+        logger.info(f"[red]Failed calculating {pack} pack dependencies[/red]")
         raise
 
     return first_level_dependencies, all_level_dependencies, pack
@@ -3216,14 +3092,14 @@ def get_all_packs_dependency_graph(id_set: dict, packs: list) -> Iterable:
     Returns:
         A graph with all packs dependencies
     """
-    print("Calculating all packs dependencies.")
+    logger.info("Calculating all packs dependencies.")
     # try:
     dependency_graph = PackDependencies.build_all_dependencies_graph(
-        packs, id_set=id_set, verbose=False
+        packs, id_set=id_set
     )
     return dependency_graph
     # except Exception as e:
-    #     print_error(f"Failed calculating dependencies graph: {e}")
+    #     logger.info(f"[red]Failed calculating dependencies graph: {e}[/red]")
     #     exit(2)
 
 
@@ -3236,15 +3112,15 @@ def select_packs_for_calculation() -> list:
     packs = []
     for pack in os.scandir(PACKS_FULL_PATH):
         if not pack.is_dir() or pack.name in IGNORED_PACKS_IN_DEPENDENCY_CALC:
-            print_warning(f"Skipping dependency calculation of {pack.name} pack.")
+            logger.info(
+                f"[yellow]Skipping dependency calculation of {pack.name} pack.[/yellow]"
+            )
             continue  # skipping ignored packs
         packs.append(pack.name)
     return packs
 
 
-def calculate_all_packs_dependencies(
-    id_set_path: str, output_path: str, verbose: bool = False
-) -> dict:
+def calculate_all_packs_dependencies(id_set_path: str, output_path: str) -> dict:
     """
     Calculates all packs dependencies in parallel.
     First - the method generates the full dependency graph. Then - using a process pool we extract the
@@ -3252,7 +3128,6 @@ def calculate_all_packs_dependencies(
     Args:
         id_set_path: The id_set content.
         output_path: The path for the outputs json.
-        verbose: Whether to print the log to the console.
     """
 
     def add_pack_metadata_results(results: Tuple) -> None:
@@ -3263,10 +3138,9 @@ def calculate_all_packs_dependencies(
         """
         try:
             first_level_dependencies, all_level_dependencies, pack_name = results
-            if verbose:
-                print(
-                    f"Got dependencies for pack {pack_name}\n: {pformat(all_level_dependencies)}"
-                )
+            logger.debug(
+                f"Got dependencies for pack {pack_name}\n: {pformat(all_level_dependencies)}"
+            )
             pack_dependencies_result[pack_name] = {
                 "dependencies": first_level_dependencies,
                 "displayedImages": list(first_level_dependencies.keys()),
@@ -3275,7 +3149,7 @@ def calculate_all_packs_dependencies(
                 "fullPath": os.path.abspath(os.path.join(PACKS_DIR, pack_name)),
             }
         except Exception:
-            print_error("Failed to collect pack dependencies results")
+            logger.info("[red]Failed to collect pack dependencies results[/red]")
             raise
 
     pack_dependencies_result: dict = {}
@@ -3291,15 +3165,15 @@ def calculate_all_packs_dependencies(
             futures.append(
                 pool.schedule(
                     calculate_single_pack_dependencies,
-                    args=(pack, dependency_graph, verbose),
+                    args=(pack, dependency_graph),
                 )
             )
         wait_futures_complete(futures=futures, done_fn=add_pack_metadata_results)
-        print(
+        logger.info(
             f"Number of created pack dependencies entries: {len(pack_dependencies_result.keys())}"
         )
         # finished iteration over pack folders
-        print_success("Finished dependencies calculation")
+        logger.info("[green]Finished dependencies calculation[/green]")
 
         with open(output_path, "w") as pack_dependencies_file:
             json.dump(pack_dependencies_result, pack_dependencies_file, indent=4)
@@ -3310,7 +3184,6 @@ def get_packs_dependent_on_given_packs(
     packs: list,
     id_set_path: str,
     output_path: str = None,
-    verbose: bool = False,
     id_set: dict = None,
     marketplace: str = "",
 ) -> Tuple:
@@ -3321,7 +3194,6 @@ def get_packs_dependent_on_given_packs(
             dependent on these packs.
         id_set_path: Path to id_set.json file.
         output_path: The path for the outputs json.
-        verbose: Whether to print the log to the console.
         id_set: id_set to calculate the dependencies
         marketplace: The dependency calculation desired marketplace.
 
@@ -3342,7 +3214,9 @@ def get_packs_dependent_on_given_packs(
             dependent_packs_list.extend(first_level_dependencies.keys())
 
         except Exception:
-            print_error("Failed to collect the packs dependent on given packs")
+            logger.info(
+                "[red]Failed to collect the packs dependent on given packs[/red]"
+            )
             raise
 
     dependent_on_results: dict = {}
@@ -3351,7 +3225,7 @@ def get_packs_dependent_on_given_packs(
         id_set = get_id_set(id_set_path)
     all_packs = select_packs_for_calculation()
     dependency_graph = PackDependencies.build_all_dependencies_graph(
-        all_packs, id_set=id_set, verbose=verbose, marketplace=marketplace
+        all_packs, id_set=id_set, marketplace=marketplace
     )
     reverse_dependency_graph = nx.DiGraph.reverse(dependency_graph)
 
@@ -3362,12 +3236,14 @@ def get_packs_dependent_on_given_packs(
             futures.append(
                 pool.schedule(
                     calculate_single_pack_depends_on,
-                    args=(str(pack), reverse_dependency_graph, verbose),
+                    args=(str(pack), reverse_dependency_graph),
                 )
             )
         wait_futures_complete(futures=futures, done_fn=collect_dependent_packs)
         # finished iteration over pack folders
-        print_success("Finished calculating the dependencies on the given packs.")
+        logger.info(
+            "[green]Finished calculating the dependencies on the given packs.[/green]"
+        )
 
         if output_path:
             with open(output_path, "w") as pack_dependencies_file:
@@ -3380,7 +3256,6 @@ def find_dependencies_between_two_packs(
     output_path: str = None,
     dependency: str = "",
     id_set_path: str = "",
-    verbose: bool = False,
 ):
     """
     Returns the content items that cause the dependencies between two packs
@@ -3388,11 +3263,10 @@ def find_dependencies_between_two_packs(
         input_paths: Packs paths to find dependencies.
         id_set_path: Path to id_set.json file.
         output_path: The path for the outputs json.
-        verbose: Whether to print the log to the console.
         dependency: The pack to search the dependency for.
     """
     dependent_packs, _ = get_packs_dependent_on_given_packs(
-        [dependency], id_set_path, output_path, verbose=True  # type: ignore[arg-type]
+        [dependency], id_set_path, output_path  # type: ignore[arg-type]
     )
     input_pack_name = ""
     if input_paths:
@@ -3481,7 +3355,9 @@ def remove_dependencies_from_id_set(
 
     save_dict_of_sets("items_removed_manually_from_id_set.json", excluded_items_by_pack)
 
-    print_success("Starting to remove dependencies of excluded items from id_set")
+    logger.info(
+        "[green]Starting to remove dependencies of excluded items from id_set[/green]"
+    )
 
     unfiltered_id_set = get_id_set(
         id_set_path=""
@@ -3493,8 +3369,8 @@ def remove_dependencies_from_id_set(
             additional_items_to_exclude, unfiltered_id_set, marketplace
         )
         if additional_items_to_exclude:
-            print_success(
-                f"Adding the following packs to the exclusion list: {list(additional_items_to_exclude.keys())}"
+            logger.info(
+                f"[green]Adding the following packs to the exclusion list: {list(additional_items_to_exclude.keys())}[/green]"
             )
             update_excluded_items_dict(
                 excluded_items_by_pack,
@@ -3544,7 +3420,7 @@ def calculate_dependencies(
     packs_list = [f"Packs/{pack}" for pack in excluded_items]
 
     packs_dependencies_result, _ = get_packs_dependent_on_given_packs(
-        packs_list, "", "", False, id_set, marketplace=marketplace
+        packs_list, "", "", id_set, marketplace=marketplace
     )
 
     for excluded_pack, excluded_pack_entities_set in excluded_items.items():
@@ -3568,7 +3444,7 @@ def calculate_dependencies(
                     ).update(dependent_entities_list)
 
                     # for debug purposes
-                    print(
+                    logger.info(
                         f"Removing {dependent_entities_list} due to {entity_dependent_on}"
                     )
 

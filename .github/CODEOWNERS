@@ -1,6 +1,6 @@
 # Validations
-demisto-sdk/demisto_sdk/commands/validate/validate_manager.py @idovandijk
-demisto_sdk/commands/common/hook_validations/ @idovandijk
+demisto-sdk/demisto_sdk/commands/validate/validate_manager.py @idovandijk @YuvHayun
+demisto_sdk/commands/common/hook_validations/ @idovandijk @YuvHayun
 
 # VS Code plugin
 .vscode/ @ilaner
@@ -18,6 +18,9 @@ pytest.ini @dorschw
 
 # Content graph
 demisto_sdk/commands/content_graph/** @dantavori @ilaner
+
+# Modeling rules
+demisto-sdk/demisto_sdk/commands/test_content/test_modeling_rule/ @daryakoval
 
 # Misc
 demisto_sdk/__main__.py @dorschw

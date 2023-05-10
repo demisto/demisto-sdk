@@ -6,7 +6,6 @@ from pathlib import Path
 import pytest
 
 from demisto_sdk.commands.common.handlers import JSON_Handler
-from demisto_sdk.commands.common.logger import logging_setup
 from demisto_sdk.commands.coverage_analyze.coverage_report import CoverageReport
 from demisto_sdk.commands.coverage_analyze.helpers import (
     fix_file_path,
@@ -22,6 +21,8 @@ from demisto_sdk.commands.coverage_analyze.tests.helpers_test import (
     read_file,
 )
 
+logger = logging.getLogger("demisto-sdk")
+
 json = JSON_Handler()
 
 
@@ -30,9 +31,6 @@ REPORT_STR_FILE = os.path.join(TEST_DATA_DIR, "coverage.txt")
 
 
 class TestCoverageReport:
-    def setup(self):
-        logging_setup(3).propagate = True
-
     @staticmethod
     def patern(r_type, file_name, suffix):
         return (
@@ -164,9 +162,6 @@ class TestCoverageReport:
 
 
 class TestFileMinCoverage:
-    def setup(self):
-        logging_setup(3).propagate = True
-
     data_test_with_new_file = [
         ("test", 70.0),
         (
@@ -226,9 +221,6 @@ class TestFileMinCoverage:
 
 
 class TestCoverageDiffReport:
-    def setup(self):
-        logging_setup(3).propagate = True
-
     @staticmethod
     def get_coverage_report_obj():
         cov_report = CoverageReport()

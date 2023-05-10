@@ -1,7 +1,7 @@
 """
 This module is designed to validate the correctness of generic definition entities in content.
 """
-import logging
+
 
 from ruamel.yaml.comments import CommentedSeq
 
@@ -10,6 +10,7 @@ from demisto_sdk.commands.common.hook_validations.base_validator import error_co
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import (
     ContentEntityValidator,
 )
+from demisto_sdk.commands.common.logger import logger
 
 
 class CorrelationRuleValidator(ContentEntityValidator):
@@ -21,13 +22,11 @@ class CorrelationRuleValidator(ContentEntityValidator):
         self,
         structure_validator,
         ignored_errors=None,
-        print_as_warnings=False,
         json_file_path=None,
     ):
         super().__init__(
             structure_validator,
             ignored_errors=ignored_errors,
-            print_as_warnings=print_as_warnings,
             json_file_path=json_file_path,
         )
         self._is_valid = True
@@ -38,7 +37,7 @@ class CorrelationRuleValidator(ContentEntityValidator):
         Note: For now we return True regardless of the item content. More info:
         https://github.com/demisto/etc/issues/48151#issuecomment-1109660727
         """
-        logging.debug(
+        logger.debug(
             "Automatically considering XSIAM content item as valid, see issue #48151"
         )
 

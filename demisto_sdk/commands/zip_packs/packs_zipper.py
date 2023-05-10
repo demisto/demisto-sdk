@@ -5,10 +5,9 @@ from contextlib import contextmanager
 from pathlib import Path
 from shutil import make_archive
 
-import click
-
 from demisto_sdk.commands.common.constants import PACKS_DIR, MarketplaceVersions
 from demisto_sdk.commands.common.content.objects.pack_objects.pack import Pack
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import arg_to_list
 from demisto_sdk.commands.create_artifacts.content_artifacts_creator import (
     IGNORED_PACKS,
@@ -33,6 +32,7 @@ class PacksZipper:
         zip_all: bool,
         marketplace: str = MarketplaceVersions.XSOAR.value,
         quiet_mode: bool = False,
+        **kwargs,
     ):
         self.artifacts_manager = PacksManager(
             pack_paths=pack_paths,
@@ -105,9 +105,8 @@ class PacksManager(ArtifactsManager):
                 path = self.content.path / path
 
             if not os.path.exists(path):
-                click.secho(
-                    f"Error: Given input path: {path} does not exist, ignored",
-                    fg="bright_red",
+                logger.info(
+                    f"[red]Error: Given input path: {path} does not exist, ignored[/red]"
                 )
                 continue
 
@@ -155,7 +154,6 @@ class PacksManager(ArtifactsManager):
                     reports.append(dump_pack(self, self.packs[pack_name]))
 
         if not self.quiet_mode:
-            logger = logging.getLogger("demisto-sdk")
             for report in reports:
                 logger.info(report.to_str(src_relative_to=None))
 
@@ -185,19 +183,18 @@ class QuietModeController:
     def __init__(self, quiet_logger: bool, quiet_output):
         self.quiet_modes = dict(quiet_logger=quiet_logger, quiet_output=quiet_output)
         self.old_stdout = sys.stdout
-        self.logger = logging.getLogger("demisto-sdk")
-        self.prev_logger_level = self.logger.getEffectiveLevel()
+        self.prev_logger_level = logger.getEffectiveLevel()
 
     def __enter__(self):
         if self.quiet_modes["quiet_output"]:
             sys.stdout = open(os.devnull, "w")
         if self.quiet_modes["quiet_logger"]:
-            self.logger.setLevel(logging.ERROR)
+            logger.setLevel(logging.ERROR)
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        self.logger.debug(f"{exc_type} {exc_val} {exc_tb}")
+        logger.debug(f"{exc_type} {exc_val} {exc_tb}")
         sys.stdout = self.old_stdout
-        self.logger.setLevel(self.prev_logger_level)
+        logger.setLevel(self.prev_logger_level)
 
 
 def zip_uploadable_packs(artifact_manager: ArtifactsManager):
@@ -230,7 +227,6 @@ def PacksDirsHandler(artifact_manager: PacksManager):
     except (Exception, KeyboardInterrupt) as e:
         delete_dirs(artifact_manager)
         artifact_manager.exit_code = EX_FAIL
-        logger = logging.getLogger("demisto-sdk")
         logger.error(e)
         exit(EX_FAIL)
     else:

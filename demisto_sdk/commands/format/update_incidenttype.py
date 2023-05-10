@@ -2,6 +2,7 @@ from typing import Tuple
 
 import click
 
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.format.format_constants import (
     ERROR_RETURN_CODE,
     SKIP_RETURN_CODE,
@@ -26,7 +27,6 @@ class IncidentTypesJSONFormat(BaseUpdateJSON):
         path: str = "",
         from_version: str = "",
         no_validate: bool = False,
-        verbose: bool = False,
         **kwargs,
     ):
         super().__init__(
@@ -35,15 +35,13 @@ class IncidentTypesJSONFormat(BaseUpdateJSON):
             path=path,
             from_version=from_version,
             no_validate=no_validate,
-            verbose=verbose,
             **kwargs,
         )
 
     def run_format(self) -> int:
         try:
-            click.secho(
-                f"\n================= Updating file {self.source_file} =================",
-                fg="bright_blue",
+            logger.info(
+                f"\n[blue]================= Updating file {self.source_file} =================[/blue]"
             )
             super().update_json()
             self.format_auto_extract_mode()
@@ -52,11 +50,9 @@ class IncidentTypesJSONFormat(BaseUpdateJSON):
             self.save_json_to_destination_file()
             return SUCCESS_RETURN_CODE
         except Exception as err:
-            if self.verbose:
-                click.secho(
-                    f"\nFailed to update file {self.source_file}. Error: {err}",
-                    fg="red",
-                )
+            logger.debug(
+                f"\n[red]Failed to update file {self.source_file}. Error: {err}[/red]"
+            )
             return ERROR_RETURN_CODE
 
     def format_auto_extract_mode(self):
@@ -82,12 +78,11 @@ class IncidentTypesJSONFormat(BaseUpdateJSON):
                     user_input == "All"
                     and auto_extract_settings["fieldCliNameToExtractSettings"]
                 ):
-                    click.secho(
-                        'Cannot set mode to "All" since there are specific types under the '
+                    logger.info(
+                        '[yellow]Cannot set mode to "All" since there are specific types under the '
                         "fieldCliNameToExtractSettings, "
                         'If you want the mode to be "All" you should delete them manually and run this '
-                        "command again.",
-                        fg="yellow",
+                        "command again.[/yellow]"
                     )
                     return
                 if (
@@ -96,10 +91,9 @@ class IncidentTypesJSONFormat(BaseUpdateJSON):
                         "fieldCliNameToExtractSettings"
                     ]
                 ):
-                    click.secho(
-                        'Please notice that mode was set to "Specific" but there are no specific types under '
-                        "fieldCliNameToExtractSettings",
-                        fg="yellow",
+                    logger.info(
+                        '[yellow]Please notice that mode was set to "Specific" but there are no specific types under '
+                        "fieldCliNameToExtractSettings[/yellow]"
                     )
                 self.data["extractSettings"]["mode"] = user_input
 

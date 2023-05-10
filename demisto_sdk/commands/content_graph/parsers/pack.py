@@ -1,8 +1,8 @@
-import logging
 from pathlib import Path
 from typing import Any, Dict, Iterator, List, Optional
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import get_json
 from demisto_sdk.commands.content_graph.common import (
     PACK_CONTRIBUTORS_FILENAME,
@@ -19,8 +19,6 @@ from demisto_sdk.commands.content_graph.parsers.content_item import (
 from demisto_sdk.commands.content_graph.parsers.content_items_list import (
     ContentItemsList,
 )
-
-logger = logging.getLogger("demisto-sdk")
 
 
 class PackContentItems:

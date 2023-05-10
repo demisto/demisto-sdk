@@ -2,11 +2,15 @@ import os
 import uuid
 from typing import Tuple
 
-import click
 from git import InvalidGitRepositoryError
 
-from demisto_sdk.commands.common.constants import PLAYBOOK, FileType
+from demisto_sdk.commands.common.constants import (
+    FILETYPE_TO_DEFAULT_FROMVERSION,
+    PLAYBOOK,
+    FileType,
+)
 from demisto_sdk.commands.common.git_util import GitUtil
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     find_type,
     get_yaml,
@@ -31,12 +35,12 @@ class BasePlaybookYMLFormat(BaseUpdateYML):
         path: str = "",
         from_version: str = "",
         no_validate: bool = False,
-        verbose: bool = False,
         assume_yes: bool = False,
         deprecate: bool = False,
         add_tests: bool = False,
         interactive: bool = True,
         clear_cache: bool = False,
+        **kwargs,
     ):
         super().__init__(
             input=input,
@@ -44,7 +48,6 @@ class BasePlaybookYMLFormat(BaseUpdateYML):
             path=path,
             from_version=from_version,
             no_validate=no_validate,
-            verbose=verbose,
             assume_yes=assume_yes,
             deprecate=deprecate,
             add_tests=add_tests,
@@ -54,12 +57,10 @@ class BasePlaybookYMLFormat(BaseUpdateYML):
 
     def add_description(self):
         """Add empty description to playbook and tasks."""
-        if self.verbose:
-            click.echo("Adding descriptions for the playbook and to relevant tasks")
+        logger.debug("Adding descriptions for the playbook and to relevant tasks")
         if "description" not in set(self.data.keys()):
-            click.secho(
-                "No description is specified for this playbook, would you like to add a description? [Y/n]",
-                fg="bright_red",
+            logger.info(
+                "[red]No description is specified for this playbook, would you like to add a description? [Y/n][/red]"
             )
             user_answer = "y" if self.assume_yes else ""
             while not user_answer:
@@ -74,9 +75,8 @@ class BasePlaybookYMLFormat(BaseUpdateYML):
                         user_description = ""
                     self.data["description"] = user_description
                 else:
-                    click.secho(
-                        "Invalid input, would you like to add a description? [Y/n]",
-                        fg="bright_red",
+                    logger.info(
+                        "[red]Invalid input, would you like to add a description? [Y/n][/red]"
                     )
                     user_answer = ""
 
@@ -94,19 +94,20 @@ class BasePlaybookYMLFormat(BaseUpdateYML):
             taskid = str(task.get("taskid", ""))
             task_id_under_task = str(task.get("task", {}).get("id", ""))
             if not is_string_uuid(taskid) or not is_string_uuid(task_id_under_task):
-                if self.verbose:
-                    click.secho(
-                        f"Taskid field and the id under task field must be from uuid format. Generating uuid "
-                        f"for those fields under task key: {task_key}",
-                        fg="white",
-                    )
+                logger.debug(
+                    f"Taskid field and the id under task field must be from uuid format. Generating uuid "
+                    f"for those fields under task key: {task_key}"
+                )
                 generated_uuid = str(uuid.uuid4())
                 task["taskid"] = generated_uuid
                 task["task"]["id"] = generated_uuid
 
     def run_format(self) -> int:
         self.update_playbook_usages()
-        super().update_yml(file_type=PLAYBOOK)
+        super().update_yml(
+            default_from_version=FILETYPE_TO_DEFAULT_FROMVERSION[FileType.PLAYBOOK],
+            file_type=PLAYBOOK,
+        )
         self.add_description()
         self.update_task_uuid()
         self.save_yml_to_destination_file()
@@ -145,11 +146,8 @@ class BasePlaybookYMLFormat(BaseUpdateYML):
             all_changed_files = modified_files.union(added_files).union(renamed_files)  # type: ignore[arg-type]
 
         except (InvalidGitRepositoryError, TypeError) as e:
-            click.secho(
-                "Unable to connect to git - skipping sub-playbook checks", fg="yellow"
-            )
-            if self.verbose:
-                click.secho(f"The error: {e}")
+            logger.info("Unable to connect to git - skipping sub-playbook checks")
+            logger.debug(f"The error: {e}")
             return
 
         for file_path in all_changed_files:
@@ -189,11 +187,10 @@ class BasePlaybookYMLFormat(BaseUpdateYML):
 
             # if any tasks were changed re-write the playbook
             if updated_tasks:
-                if self.verbose:
-                    click.echo(
-                        f"Found usage of playbook in {file_path} tasks: "
-                        f'{" ".join(updated_tasks)} - Updating playbookId'
-                    )
+                logger.debug(
+                    f"Found usage of playbook in {file_path} tasks: "
+                    f'{" ".join(updated_tasks)} - Updating playbookId'
+                )
                 write_yml(file_path, playbook_data)
 
 
@@ -207,8 +204,7 @@ class PlaybookYMLFormat(BasePlaybookYMLFormat):
 
     def delete_sourceplaybookid(self):
         """Delete the not needed sourceplaybookid fields"""
-        if self.verbose:
-            click.echo("Removing sourceplaybookid field from playbook")
+        logger.debug("Removing sourceplaybookid field from playbook")
         if "sourceplaybookid" in self.data:
             self.data.pop("sourceplaybookid", None)
 
@@ -232,8 +228,7 @@ class PlaybookYMLFormat(BasePlaybookYMLFormat):
 
     def update_playbook_task_name(self):
         """Updates the name of the task to be the same as playbookName it is running."""
-        if self.verbose:
-            click.echo("Updating name of tasks who calls other playbooks to their name")
+        logger.debug("Updating name of tasks who calls other playbooks to their name")
 
         for task_id, task in self.data.get("tasks", {}).items():
             if task.get("type", "") == "playbook":
@@ -263,9 +258,8 @@ class PlaybookYMLFormat(BasePlaybookYMLFormat):
 
     def run_format(self) -> int:
         try:
-            click.secho(
-                f"\n================= Updating file {self.source_file} =================",
-                fg="bright_blue",
+            logger.info(
+                f"\n[blue]================= Updating file {self.source_file} =================[/blue]"
             )
             self.update_tests()
             self.remove_copy_and_dev_suffixes_from_subplaybook()
@@ -277,11 +271,9 @@ class PlaybookYMLFormat(BasePlaybookYMLFormat):
             super().run_format()
             return SUCCESS_RETURN_CODE
         except Exception as err:
-            if self.verbose:
-                click.secho(
-                    f"\nFailed to update file {self.source_file}. Error: {err}",
-                    fg="red",
-                )
+            logger.info(
+                f"\n[red]Failed to update file {self.source_file}. Error: {err}[/red]"
+            )
             return ERROR_RETURN_CODE
 
 
@@ -301,15 +293,12 @@ class TestPlaybookYMLFormat(BasePlaybookYMLFormat):
 
     def run_format(self) -> int:
         try:
-            click.secho(
-                f"\n================= Updating file {self.source_file} =================",
-                fg="bright_blue",
+            logger.info(
+                f"\n[blue]================= Updating file {self.source_file} =================[/blue]"
             )
             return super().run_format()
         except Exception as err:
-            if self.verbose:
-                click.secho(
-                    f"\nFailed to update file {self.source_file}. Error: {err}",
-                    fg="red",
-                )
+            logger.info(
+                f"\n[red]Failed to update file {self.source_file}. Error: {err}[/red]"
+            )
             return ERROR_RETURN_CODE

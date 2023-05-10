@@ -4,9 +4,8 @@ import re
 from dataclasses import dataclass
 from typing import Any, Callable, List, Optional
 
-import click
-
 from demisto_sdk.commands.common.constants import ParameterType
+from demisto_sdk.commands.common.logger import logger
 
 # This is done so the dependencies will not clash or be mocked.
 ParameterTypes = ParameterType
@@ -26,6 +25,7 @@ class InputArgument:
         execution: bool = False,
         options: Optional[list] = None,
         input_type: Optional[enum.EnumMeta] = None,
+        default_arg: bool = False,
     ):
         # if name is not provided convert class name to camel case
         self.name = (
@@ -35,7 +35,8 @@ class InputArgument:
         )
         self.description = description
         self.required = required
-        self.default = default
+        self.default_value = default  # Saving backwards compatibility
+        self.default = default_arg
         self.is_array = is_array
         self.secret = secret
         self.execution = execution
@@ -139,11 +140,9 @@ class YMLMetadataCollector:
         integration_name_x2: Optional[str] = None,
         default_enabled_x2: Optional[bool] = None,
         default_enabled: Optional[bool] = None,
-        verbose: bool = False,
     ):
         self.commands: list = []
         self.collect_data = False
-        self.verbose = verbose
 
         # Integration configurations
         self.integration_name = integration_name
@@ -178,10 +177,6 @@ class YMLMetadataCollector:
     def set_collect_data(self, value: bool):
         """A setter for collect_data."""
         self.collect_data = value
-
-    def set_verbose(self, value: bool):
-        """A setter for collect_data."""
-        self.verbose = value
 
     def command(
         self,
@@ -223,8 +218,7 @@ class YMLMetadataCollector:
                 """The function which will collect data if needed or
                 run the original function instead."""
                 if self.collect_data:
-                    if self.verbose:
-                        click.secho(f"Collecting metadata from command {command_name}")
+                    logger.debug(f"Collecting metadata from command {command_name}")
                     # Collect details from function declaration and builtins.
                     command_metadata = CommandMetadata(
                         name=command_name,

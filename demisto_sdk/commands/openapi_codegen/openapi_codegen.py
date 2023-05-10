@@ -9,7 +9,8 @@ import autopep8
 
 from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
 from demisto_sdk.commands.common.hook_validations.docker import DockerImageValidator
-from demisto_sdk.commands.common.tools import camel_to_snake, print_error
+from demisto_sdk.commands.common.logger import logger
+from demisto_sdk.commands.common.tools import camel_to_snake
 from demisto_sdk.commands.generate_integration.base_code import (
     BASE_ARGUMENT,
     BASE_BASIC_AUTH,
@@ -93,7 +94,6 @@ class OpenAPIIntegration:
         context_path: str,
         unique_keys: Optional[str] = None,
         root_objects: Optional[str] = None,
-        verbose: bool = False,
         fix_code: bool = False,
         configuration: Optional[dict] = None,
     ):
@@ -115,7 +115,6 @@ class OpenAPIIntegration:
         self.reference: dict = {}
         self.functions: list = []
         self.parameters: list = []
-        self.verbose = verbose
         self.fix_code = fix_code
 
     def load_file(self):
@@ -127,7 +126,7 @@ class OpenAPIIntegration:
             with open(self.file_path, "rb") as json_file:
                 self.json = json.load(json_file)
         except Exception as e:
-            print_error(f"Failed to load the swagger file: {e}")
+            logger.info(f"[red]Failed to load the swagger file: {e}[/red]")
             sys.exit(1)
 
         if self.json.get("host", None):
@@ -154,12 +153,14 @@ class OpenAPIIntegration:
                         continue
                     if isinstance(data, list):
                         data = data[0]
-                    self.print_with_verbose(f"Adding command for the path: {path}")
+                    logger.debug(f"Adding command for the path: {path}")
                     self.add_function(
                         path, method, data, function.get("parameters", [])
                     )
             except Exception as e:
-                print_error(f"Failed adding the command for the path {path}: {e}")
+                logger.info(
+                    f"[red]Failed adding the command for the path {path}: {e}[/red]"
+                )
                 raise
         self.handle_duplicates(self.functions)
         self.functions = sorted(self.functions, key=lambda x: x["name"])
@@ -268,9 +269,7 @@ class OpenAPIIntegration:
             )
             configuration["docker_image"] = f"demisto/python3:{latest_tag}"
         except Exception as e:
-            self.print_with_verbose(
-                f"Failed getting latest docker image for demisto/python3: {e}"
-            )
+            logger.debug(f"Failed getting latest docker image for demisto/python3: {e}")
 
         self.configuration = configuration
 
@@ -337,10 +336,10 @@ class OpenAPIIntegration:
             list_functions.append(function)
 
         code = code.replace("$COMMANDSLIST$", "\n\t".join(list_functions))
-        self.print_with_verbose("Finished generating the Python code.")
+        logger.debug("Finished generating the Python code.")
 
         if self.fix_code:
-            self.print_with_verbose("Fixing the code with autopep8...")
+            logger.debug("Fixing the code with autopep8...")
             code = autopep8.fix_code(code)
 
         return code
@@ -359,7 +358,7 @@ class OpenAPIIntegration:
         """
         function_name = command["name"].replace("-", "_")
         headers = command["headers"]
-        self.print_with_verbose(f"Adding the function {function_name} to the code...")
+        logger.debug(f"Adding the function {function_name} to the code...")
         function = BASE_FUNCTION.replace("$FUNCTIONNAME$", function_name)
         req_function = BASE_REQUEST_FUNCTION.replace("$FUNCTIONNAME$", function_name)
         (
@@ -855,9 +854,7 @@ class OpenAPIIntegration:
                 if int(response_code) != 200:
                     continue
             except Exception:
-                self.print_with_verbose(
-                    f"Could not get the code for the response {response}"
-                )
+                logger.debug(f"Could not get the code for the response {response}")
 
             new_response["description"] = response.get("description", None)
             all_items = []
@@ -1042,14 +1039,14 @@ class OpenAPIIntegration:
         Returns:
             python_file: The path to the python file.
         """
-        self.print_with_verbose("Creating python file...")
+        logger.debug("Creating python file...")
         python_file = os.path.join(directory, f"{self.base_name}.py")
         try:
             with open(python_file, "w") as fp:
                 fp.write(self.generate_python_code())
                 return python_file
         except Exception as err:
-            print_error(f"Error writing {python_file} - {err}")
+            logger.info(f"[red]Error writing {python_file} - {err}[/red]")
             raise
 
     def save_yaml(self, directory: str) -> str:
@@ -1061,14 +1058,14 @@ class OpenAPIIntegration:
         Returns:
             yaml_file: The path to the yaml file.
         """
-        self.print_with_verbose("Creating yaml file...")
+        logger.debug("Creating yaml file...")
         yaml_file = os.path.join(directory, f"{self.base_name}.yml")
         try:
             with open(yaml_file, "w") as fp:
                 yaml.dump(self.generate_yaml().to_dict(), fp)
             return yaml_file
         except Exception as err:
-            print_error(f"Error writing {yaml_file} - {err}")
+            logger.info(f"[red]Error writing {yaml_file} - {err}[/red]")
             raise
 
     def save_config(self, config: dict, directory: str) -> str:
@@ -1081,14 +1078,14 @@ class OpenAPIIntegration:
         Returns:
             config_file: The path to the configuration file.
         """
-        self.print_with_verbose("Creating configuration file...")
+        logger.debug("Creating configuration file...")
         config_file = os.path.join(directory, f"{self.base_name}_config.json")
         try:
             with open(config_file, "w") as fp:
                 json.dump(config, fp, indent=4)
             return config_file
         except Exception as err:
-            print_error(f"Error writing {config_file} - {err}")
+            logger.info(f"[red]Error writing {config_file} - {err}[/red]")
             raise
 
     def save_image_and_desc(self, directory: str) -> tuple:
@@ -1101,7 +1098,7 @@ class OpenAPIIntegration:
             image_path: The path to the image file.
             desc_path: The path to the description file.
         """
-        self.print_with_verbose("Creating image and description files...")
+        logger.debug("Creating image and description files...")
         image_path = os.path.join(directory, f"{self.base_name}_image.png")
         desc_path = os.path.join(directory, f"{self.base_name}_description.md")
         try:
@@ -1119,7 +1116,7 @@ class OpenAPIIntegration:
             )
             return image_path, desc_path
         except Exception as err:
-            print_error(f"Error copying image and description files - {err}")
+            logger.info(f"[red]Error copying image and description files - {err}[/red]")
             return "", ""
 
     def save_package(self, directory: str) -> tuple:
@@ -1138,15 +1135,6 @@ class OpenAPIIntegration:
         yml_path = self.save_yaml(directory)
         image_path, desc_path = self.save_image_and_desc(directory)
         return code_path, yml_path, image_path, desc_path
-
-    def print_with_verbose(self, text: str):
-        """
-        Prints a text verbose is set to true.
-        Args:
-            text: The text to print.
-        """
-        if self.verbose:
-            print(text)
 
     def init_arg(self, arg: dict):
         """

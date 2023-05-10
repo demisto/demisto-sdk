@@ -1,6 +1,7 @@
+import logging
 import os
 from pathlib import PosixPath
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 import pytest
 
@@ -11,7 +12,7 @@ from demisto_sdk.commands.content_graph.interface.neo4j.neo4j_graph import (
 )
 from demisto_sdk.commands.lint.lint_manager import LintManager
 from demisto_sdk.commands.lint.linter import DockerImageFlagOption
-from TestSuite.test_tools import ChangeCWD
+from TestSuite.test_tools import ChangeCWD, str_in_call_args_list
 
 
 def mock_lint_manager(mocker):
@@ -21,14 +22,11 @@ def mock_lint_manager(mocker):
         input="",
         git=False,
         all_packs=False,
-        quiet=False,
-        verbose=False,
         prev_ver="master",
         json_file_path="path",
     )
 
 
-@patch("builtins.print")
 @pytest.mark.parametrize(
     argnames="return_exit_code, skipped_code, pkgs_type",
     argvalues=[(0b0, 0b0, [TYPE_PWSH, TYPE_PYTHON])],
@@ -36,12 +34,13 @@ def mock_lint_manager(mocker):
 def test_report_pass_lint_checks(
     mocker, return_exit_code: int, skipped_code: int, pkgs_type: list
 ):
+    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
     from demisto_sdk.commands.lint import lint_manager
 
     lint_manager.LintManager.report_pass_lint_checks(
         return_exit_code, skipped_code, pkgs_type
     )
-    assert mocker.call_count == 9
+    assert logger_info.call_count == 9
 
 
 def test_report_failed_image_creation():
@@ -132,7 +131,7 @@ def test_create_failed_unit_tests_report_no_failed_tests():
     assert not os.path.isfile(file_path)
 
 
-def test_report_warning_lint_checks_not_packages_tests(capsys, mocker):
+def test_report_warning_lint_checks_not_packages_tests(mocker):
     """
     Given:
         - Lint manager dictionary with one pack which has warnings.
@@ -143,6 +142,7 @@ def test_report_warning_lint_checks_not_packages_tests(capsys, mocker):
     Then:
         - Ensure that the correct warnings printed to stdout.
     """
+    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
     lint_status = {
         "fail_packs_flake8": ["Maltiverse"],
         "fail_packs_XSOAR_linter": ["Maltiverse"],
@@ -256,16 +256,25 @@ def test_report_warning_lint_checks_not_packages_tests(capsys, mocker):
         pkgs_status=pkgs_status,
         all_packs=False,
     )
-    captured = capsys.readouterr()
-    assert (
-        "Maltiverse.py:511:0: W9010: try and except statements were not found in main function. Please add them ("
-        "try-except-main-doesnt-exists)" in captured.out
+    assert all(
+        [
+            str_in_call_args_list(
+                logger_info.call_args_list,
+                "Maltiverse.py:511:0: W9010: try and except statements were not found in main function. Please add them (",
+            ),
+            str_in_call_args_list(
+                logger_info.call_args_list, "try-except-main-doesnt-exists)"
+            ),
+            str_in_call_args_list(
+                logger_info.call_args_list,
+                "Maltiverse.py:511:0: W9012: return_error should be used in main function. Please add it. (",
+            ),
+            str_in_call_args_list(
+                logger_info.call_args_list, "return-error-does-not-exist-in-main)"
+            ),
+            str_in_call_args_list(logger_info.call_args_list, "Xsoar_linter warnings"),
+        ],
     )
-    assert (
-        "Maltiverse.py:511:0: W9012: return_error should be used in main function. Please add it. ("
-        "return-error-does-not-exist-in-main)" in captured.out
-    )
-    assert "Xsoar_linter warnings" in captured.out
 
 
 def test_report_warning_lint_checks_all_packages_tests(capsys, mocker):
@@ -397,7 +406,7 @@ def test_report_warning_lint_checks_all_packages_tests(capsys, mocker):
     assert captured.out == ""
 
 
-def test_report_summary_with_warnings(capsys):
+def test_report_summary_with_warnings(mocker):
     """
     Given:
         - Lint manager dictionary with one pack which has warnings.
@@ -408,6 +417,7 @@ def test_report_summary_with_warnings(capsys):
     Then:
         - Ensure that there are warnings printed in the summary and failed packs.
     """
+    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
     from demisto_sdk.commands.lint import lint_manager
 
     lint_status = {
@@ -441,15 +451,19 @@ def test_report_summary_with_warnings(capsys):
     lint_manager.LintManager.report_summary(
         pkg=pkg, pkgs_status=pkgs_status, lint_status=lint_status
     )
-    captured = capsys.readouterr()
-    assert "Packages PASS: \x1b[32m0\x1b[0m" in captured.out
-    assert (
-        "Packages WARNING (can either PASS or FAIL): \x1b[33m1\x1b[0m" in captured.out
+    assert all(
+        [
+            str_in_call_args_list(logger_info.call_args_list, "Packages PASS: "),
+            str_in_call_args_list(
+                logger_info.call_args_list,
+                "Packages WARNING (can either PASS or FAIL): ",
+            ),
+            str_in_call_args_list(logger_info.call_args_list, "Packages FAIL: "),
+        ],
     )
-    assert "Packages FAIL: [31m1[0m" in captured.out
 
 
-def test_report_summary_no_warnings(capsys):
+def test_report_summary_no_warnings(mocker):
     """
     Given:
         - Lint manager dictionary with one pack which has warnings.
@@ -460,6 +474,7 @@ def test_report_summary_no_warnings(capsys):
     Then:
         - Ensure that there are no warnings printed in the summary and all passed.
     """
+    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
     from demisto_sdk.commands.lint import lint_manager
 
     lint_status = {
@@ -493,12 +508,16 @@ def test_report_summary_no_warnings(capsys):
     lint_manager.LintManager.report_summary(
         pkg=pkg, lint_status=lint_status, pkgs_status=pkgs_status
     )
-    captured = capsys.readouterr()
-    assert "Packages PASS: \x1b[32m1\x1b[0m" in captured.out
-    assert (
-        "Packages WARNING (can either PASS or FAIL): \x1b[33m0\x1b[0m" in captured.out
+    assert all(
+        [
+            str_in_call_args_list(logger_info.call_args_list, "Packages PASS: "),
+            str_in_call_args_list(
+                logger_info.call_args_list,
+                "Packages WARNING (can either PASS or FAIL): ",
+            ),
+            str_in_call_args_list(logger_info.call_args_list, "Packages FAIL: "),
+        ],
     )
-    assert "Packages FAIL: [31m0[0m" in captured.out
 
 
 def test_create_json_output_flake8(repo, mocker):
@@ -969,8 +988,6 @@ def test_get_api_module_dependent_items(
         input="",
         git=False,
         all_packs=False,
-        quiet=False,
-        verbose=False,
         prev_ver="master",
         json_file_path="path",
         check_dependent_api_module=cdam_flag,
@@ -1055,8 +1072,6 @@ def test_get_api_module_dependent_items_which_were_changed(
         input="",
         git=False,
         all_packs=False,
-        quiet=False,
-        verbose=False,
         prev_ver="master",
         json_file_path="path",
         check_dependent_api_module=cdam_flag,

@@ -59,7 +59,6 @@ from demisto_sdk.commands.common.tools import (
     get_item_marketplaces,
     get_pack_name,
     is_iron_bank_pack,
-    print_error,
     server_version_compare,
     string_to_bool,
 )
@@ -81,7 +80,6 @@ class IntegrationValidator(ContentEntityValidator):
         self,
         structure_validator,
         ignored_errors=None,
-        print_as_warnings=False,
         skip_docker_check=False,
         json_file_path=None,
         validate_all=False,
@@ -90,7 +88,6 @@ class IntegrationValidator(ContentEntityValidator):
         super().__init__(
             structure_validator,
             ignored_errors=ignored_errors,
-            print_as_warnings=print_as_warnings,
             json_file_path=json_file_path,
             skip_docker_check=skip_docker_check,
         )
@@ -175,6 +172,7 @@ class IntegrationValidator(ContentEntityValidator):
             self.is_api_token_in_credential_type(),
             self.are_common_outputs_with_description(),
             self.is_native_image_does_not_exist_in_yml(),
+            self.validate_unit_test_exists(),
         ]
 
         return all(answers)
@@ -366,7 +364,6 @@ class IntegrationValidator(ContentEntityValidator):
                         error_message,
                         error_code,
                         file_path=self.file_path,
-                        should_print=False,
                     )
                     if formatted_message:
                         err_msgs.append(formatted_message)
@@ -384,7 +381,6 @@ class IntegrationValidator(ContentEntityValidator):
                         error_message,
                         error_code,
                         file_path=self.file_path,
-                        should_print=False,
                     )
                     if formatted_message:
                         err_msgs.append(formatted_message)
@@ -395,7 +391,6 @@ class IntegrationValidator(ContentEntityValidator):
                         error_message,
                         error_code,
                         file_path=self.file_path,
-                        should_print=False,
                     )
                     if formatted_message:
                         err_msgs.append(formatted_message)
@@ -406,19 +401,19 @@ class IntegrationValidator(ContentEntityValidator):
                         error_message,
                         error_code,
                         file_path=self.file_path,
-                        should_print=False,
                     )
                     if formatted_message:
                         err_msgs.append(formatted_message)
 
         if err_msgs:
-            print_error(
+            server_version_compare(
                 "{} Received the following error for {} validation:\n{}\n {}\n".format(
                     self.file_path,
                     param_name,
                     "\n".join(err_msgs),
                     Errors.suggest_fix(file_path=self.file_path),
-                )
+                ),
+                "red",
             )
             self.is_valid = False
             return False
@@ -539,7 +534,7 @@ class IntegrationValidator(ContentEntityValidator):
                         flag = False
 
         if not flag:
-            print_error(Errors.suggest_fix(self.file_path))
+            server_version_compare(Errors.suggest_fix(self.file_path), "red")
         return flag
 
     @error_codes("IN134")
@@ -1195,8 +1190,6 @@ class IntegrationValidator(ContentEntityValidator):
             is_modified_file=True,
             is_integration=True,
             ignored_errors=self.ignored_errors,
-            print_as_warnings=self.print_as_warnings,
-            suppress_print=self.suppress_print,
             json_file_path=self.json_file_path,
             is_iron_bank=is_iron_bank,
             specific_validations=self.specific_validations,
@@ -1553,7 +1546,6 @@ class IntegrationValidator(ContentEntityValidator):
         image_validator = ImageValidator(
             self.file_path,
             ignored_errors=self.ignored_errors,
-            print_as_warnings=self.print_as_warnings,
             json_file_path=self.json_file_path,
             specific_validations=self.specific_validations,
         )
@@ -1570,7 +1562,6 @@ class IntegrationValidator(ContentEntityValidator):
         description_validator = DescriptionValidator(
             self.file_path,
             ignored_errors=self.ignored_errors,
-            print_as_warnings=self.print_as_warnings,
             json_file_path=self.json_file_path,
             specific_validations=self.specific_validations,
         )
@@ -1713,7 +1704,7 @@ class IntegrationValidator(ContentEntityValidator):
 
     @error_codes("IN137")
     def is_valid_py_file_names(self):
-        # Gets the all integration .py files from the integration folder.
+        # Files that will be excluded from the check.
         excluded_files = [
             "demistomock.py",
             "conftest.py",
@@ -1721,6 +1712,13 @@ class IntegrationValidator(ContentEntityValidator):
             "CommonServerUserPython.py",
             ".vulture_whitelist.py",
         ]
+
+        # Files that will be excluded from the check if they end with the given suffix (str.endswith).
+        excluded_file_suffixes = [
+            "ApiModule.py",  # won't affect the actual API module since it's a script not an integration.
+        ]
+
+        # Gets the all integration .py files from the integration folder.
         files_to_check = get_files_in_dir(
             os.path.dirname(self.file_path), ["py"], False
         )
@@ -1729,13 +1727,19 @@ class IntegrationValidator(ContentEntityValidator):
 
         for file_path in files_to_check:
             file_name = os.path.basename(file_path)
-            if file_name not in excluded_files:
-                # The unittest has _test.py suffix whereas the integration only has the .py suffix
-                splitter = "_" if file_name.endswith("_test.py") else "."
-                base_name = file_name.rsplit(splitter, 1)[0]
 
-                if integrations_folder != base_name:
-                    invalid_files.append(file_name)
+            # If the file is in an exclusion list, skip it.
+            if file_name in excluded_files or any(
+                file_name.endswith(suffix) for suffix in excluded_file_suffixes
+            ):
+                continue
+
+            # The unittest has _test.py suffix whereas the integration only has the .py suffix
+            splitter = "_" if file_name.endswith("_test.py") else "."
+            base_name = file_name.rsplit(splitter, 1)[0]
+
+            if integrations_folder != base_name:
+                invalid_files.append(file_name)
 
         if invalid_files:
             error_message, error_code = Errors.is_valid_integration_file_path_in_folder(

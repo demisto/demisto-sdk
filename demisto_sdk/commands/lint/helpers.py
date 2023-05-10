@@ -1,15 +1,12 @@
 # STD python packages
 import io
-import logging
 import os
 import re
-import shlex
 import shutil
 import sqlite3
 import tarfile
 import textwrap
 from contextlib import contextmanager
-from functools import lru_cache
 from pathlib import Path
 from typing import Callable, Dict, Generator, List, Optional, Union
 
@@ -28,9 +25,11 @@ from demisto_sdk.commands.common.constants import (
     TYPE_PYTHON,
     DemistoException,
 )
-from demisto_sdk.commands.common.docker_helper import init_global_docker_client
+from demisto_sdk.commands.common.logger import logger
 
 # Python2 requirements
+from demisto_sdk.commands.common.tools import get_remote_file
+
 PYTHON2_REQ = ["flake8", "vulture"]
 
 # Define check exit code if failed
@@ -60,7 +59,7 @@ PY_CHCEKS = ["flake8", "XSOAR_linter", "bandit", "mypy", "vulture", "pytest", "p
 # Line break
 RL = "\n"
 
-logger = logging.getLogger("demisto-sdk")
+IMPORT_API_MODULE_REGEX = r"from (\w+ApiModule) import \*(?:  # noqa: E402)?"
 
 
 def build_skipped_exit_code(
@@ -264,91 +263,64 @@ def add_tmp_lint_files(
             pwsh_module = TYPE_PWSH == pack_type and module.suffix == ".ps1"
             python_module = TYPE_PYTHON == pack_type and module.suffix == ".py"
             if pwsh_module or python_module:
-                cur_path = pack_path / module.name
-                if not cur_path.exists():
-                    cur_path.write_bytes(content)
-                    added_modules.append(cur_path)
+                copied_api_module_path = pack_path / module.name
+                if not copied_api_module_path.exists():
+                    copied_api_module_path.write_bytes(content)
+                    added_modules.append(copied_api_module_path)
         if pack_type == TYPE_PYTHON:
             # Append empty so it will exists
-            cur_path = pack_path / "CommonServerUserPython.py"
-            if not cur_path.exists():
-                cur_path.touch()
-                added_modules.append(cur_path)
+            copied_common_server_python_path = pack_path / "CommonServerUserPython.py"
+            if not copied_common_server_python_path.exists():
+                copied_common_server_python_path.touch()
+                added_modules.append(copied_common_server_python_path)
 
-            # Add API modules to directory if needed
-            module_regex = r"from ([\w\d]+ApiModule) import \*(?:  # noqa: E402)?"
-            for lint_file in lint_files:
-                module_name = ""
-                data = lint_file.read_text()
-                module_match = re.search(module_regex, data)
-                if module_match:
-                    module_name = module_match.group(1)
-                    rel_api_path = (
-                        Path("Packs/ApiModules/Scripts")
-                        / module_name
-                        / f"{module_name}.py"
-                    )
-                    cur_path = pack_path / f"{module_name}.py"
-                    if content_repo:
-                        module_path = content_repo / rel_api_path
-                        shutil.copy(src=module_path, dst=cur_path)
-                    else:
-                        url = f"https://raw.githubusercontent.com/demisto/content/master/{rel_api_path}"
-                        api_content = requests.get(url=url, verify=False).content
-                        cur_path.write_bytes(api_content)
+            api_modules = add_api_modules(lint_files, content_repo, pack_path)
+            added_modules.extend(api_modules)
 
-                    added_modules.append(cur_path)
         yield
     except Exception as e:
         logger.error(f"add_tmp_lint_files unexpected exception: {str(e)}")
         raise
 
 
-@lru_cache(maxsize=300)
-def get_python_version_from_image(image: str, timeout: int = 60) -> str:
-    """Get python version from docker image
-
+def add_api_modules(
+    module_list: List[Path], content_repo: Path, pack_path: Path
+) -> List[Path]:
+    """Add API modules to directory if needed
     Args:
-        image(str): Docker image id or name
-        timeout(int): Docker client request timeout
-
+        modules_list(list): Modules that might import Api Modules
+        content_repo(Path): Absolute path of the repository
+        pack_path(Path): Absolute path of pack
     Returns:
-        str: Python version X.Y (3.7, 3.6, ..)
+        list[Path]: Paths of the added ApiModules
+    Raises:
+        IOError: if can't write to files due permissions or other reasons
     """
-    # skip pwoershell images
-    if "pwsh" in image or "powershell" in image:
-        return "3.8"
+    added_modules: List[Path] = []
+    for module in module_list:
+        api_modules = re.findall(IMPORT_API_MODULE_REGEX, module.read_text())
+        for module_name in api_modules:
+            api_module_path = Path(
+                f"Packs/ApiModules/Scripts/{module_name}/{module_name}.py"
+            )
+            copied_api_module_path = pack_path / f"{module_name}.py"
+            if content_repo:  # if working in a repo
+                module_path = content_repo / api_module_path
+                shutil.copy(src=module_path, dst=copied_api_module_path)
+            else:
+                api_content = get_remote_file(
+                    full_file_path=f"https://raw.githubusercontent.com/demisto/content/master/{api_module_path}",
+                    return_content=True,
+                )
+                copied_api_module_path.write_bytes(api_content)
 
-    match_group = re.match(r"[\d\w]+/python3?:(?P<python_version>[23]\.\d+)", image)
-    if match_group:
-        return match_group.groupdict()["python_version"]
-    py_num = None
-    # Run three times
-    log_prompt = f"Get python version from image {image}"
-    docker_client = init_global_docker_client(timeout=timeout, log_prompt=log_prompt)
-    logger.info(f"{log_prompt} - Start")
-    try:
-        logger.debug(f"{log_prompt} - Running `sys.version_info` in the image")
-        command = "python -c \"import sys; print('{}.{}'.format(sys.version_info[0], sys.version_info[1]))\""
-
-        py_num = docker_client.containers.run(
-            image=image,
-            command=shlex.split(command),
-            remove=True,
-            restart_policy={"Name": "on-failure", "MaximumRetryCount": 3},
-        )
-        # Wait for container to finish
-        logger.debug(f"{log_prompt} - Container finished running. {py_num=}")
-
-        # Get python version
-        py_num = parse(py_num.decode("utf-8")).base_version
-
-    except Exception:
-        logger.exception(
-            f"{log_prompt} - Failed detecting Python version for image {image}"
-        )
-    logger.info(f"{log_prompt} - End. Python version is {py_num}")
-    return py_num if py_num else "3.8"
+            added_modules.append(copied_api_module_path)
+    # if there is added_modules - we recursively check for ApiModules imported by them
+    return (
+        added_modules + add_api_modules(added_modules, content_repo, pack_path)
+        if added_modules
+        else []
+    )
 
 
 def get_file_from_container(
@@ -522,7 +494,7 @@ def coverage_report_editor(coverage_file, code_file_absolute_path):
         cursor = sql_connection.cursor()
         index = cursor.execute("SELECT count(*) FROM file").fetchall()[0][0]
         if not index == 1:
-            logger.debug("unexpected file list in coverage report")
+            logger.warning("unexpected file list in coverage report")
         else:
             cursor.execute(
                 "UPDATE file SET path = ? WHERE id = ?", (code_file_absolute_path, 1)

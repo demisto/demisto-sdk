@@ -1,8 +1,7 @@
 from typing import List, Tuple
 
-import click
-
 from demisto_sdk.commands.common.handlers import JSON_Handler
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     get_dict_from_file,
     get_item_marketplaces,
@@ -33,7 +32,6 @@ class IncidentFieldJSONFormat(BaseUpdateJSON):
         path: str = "",
         from_version: str = "",
         no_validate: bool = False,
-        verbose: bool = False,
         **kwargs,
     ):
         super().__init__(
@@ -42,16 +40,14 @@ class IncidentFieldJSONFormat(BaseUpdateJSON):
             path=path,
             from_version=from_version,
             no_validate=no_validate,
-            verbose=verbose,
             **kwargs,
         )
         self.id_set_path = kwargs.get("id_set_path")
 
     def run_format(self) -> int:
         try:
-            click.secho(
-                f"\n================= Updating file {self.source_file} =================",
-                fg="bright_blue",
+            logger.info(
+                f"\n[blue]================= Updating file {self.source_file} =================[/blue]"
             )
             super().update_json()
             self.format_marketplaces_field_of_aliases()
@@ -59,11 +55,9 @@ class IncidentFieldJSONFormat(BaseUpdateJSON):
             self.save_json_to_destination_file()
             return SUCCESS_RETURN_CODE
         except Exception as err:
-            if self.verbose:
-                click.secho(
-                    f"\nFailed to update file {self.source_file}. Error: {err}",
-                    fg="red",
-                )
+            logger.debug(
+                f"\n[red]Failed to update file {self.source_file}. Error: {err}[/red]"
+            )
             return ERROR_RETURN_CODE
 
     def format_marketplaces_field_of_aliases(self):
@@ -73,9 +67,8 @@ class IncidentFieldJSONFormat(BaseUpdateJSON):
         """
 
         if not self.id_set_path:
-            click.secho(
-                'Skipping "Aliases" formatting as id_set_path argument is missing',
-                fg="yellow",
+            logger.info(
+                '[yellow]Skipping "Aliases" formatting as id_set_path argument is missing[/yellow]'
             )
 
         aliases = self.data.get("Aliases", {})
@@ -91,9 +84,8 @@ class IncidentFieldJSONFormat(BaseUpdateJSON):
 
                 if len(marketplaces) != 1 or marketplaces[0] != "xsoar":
                     alias_field["marketplaces"] = ["xsoar"]
-                    click.secho(
-                        f"\n================= Updating file {alias_field_file_path} =================",
-                        fg="bright_blue",
+                    logger.info(
+                        f"\n[blue]================= Updating file {alias_field_file_path} =================[/blue]"
                     )
                     self._save_alias_field_file(
                         dest_file_path=alias_field_file_path, field_data=alias_field

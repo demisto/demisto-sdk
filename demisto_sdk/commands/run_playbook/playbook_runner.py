@@ -4,7 +4,7 @@ import time
 import demisto_client
 from demisto_client.demisto_api.rest import ApiException
 
-from demisto_sdk.commands.common.tools import LOG_COLORS, print_color, print_error
+from demisto_sdk.commands.common.logger import logger
 
 
 class PlaybookRunner:
@@ -49,15 +49,14 @@ class PlaybookRunner:
                 incident_name=f"inc_{self.playbook_id}", playbook_id=self.playbook_id
             )
         except ApiException as a:
-            print_error(str(a))
+            logger.info(f"[red]{a}[/red]")
             return 1
 
         work_plan_link = self.base_link_to_workplan + str(incident_id)
         if self.should_wait:
-            print(
-                f"Waiting for the playbook to finish running.. \n"
-                f"To see the playbook run in real-time please go to : {work_plan_link}",
-                LOG_COLORS.GREEN,
+            logger.info(
+                f"[green]Waiting for the playbook to finish running.. \n"
+                f"To see the playbook run in real-time please go to : {work_plan_link}[/green]"
             )
 
             elasped_time = 0
@@ -73,22 +72,23 @@ class PlaybookRunner:
 
             # Ended the loop because of timeout
             if elasped_time >= self.timeout:
-                print_error(
-                    f"The command had timed out while the playbook is in progress.\n"
-                    f"To keep tracking the playbook please go to : {work_plan_link}"
+                logger.info(
+                    f"[red]The command had timed out while the playbook is in progress.\n"
+                    f"To keep tracking the playbook please go to : {work_plan_link}[/red]"
                 )
             else:
                 if playbook_results["state"] == "failed":
-                    print_error("The playbook finished running with status: FAILED")
+                    logger.info(
+                        "[red]The playbook finished running with status: FAILED[/red]"
+                    )
                 else:
-                    print_color(
-                        "The playbook has completed its run successfully",
-                        LOG_COLORS.GREEN,
+                    logger.info(
+                        "[green]The playbook has completed its run successfully[/green]"
                     )
 
         # The command does not wait for the playbook to finish running
         else:
-            print(f"To see results please go to : {work_plan_link}")
+            logger.info(f"To see results please go to : {work_plan_link}")
 
         return 0
 
@@ -118,18 +118,17 @@ class PlaybookRunner:
                 create_incident_request=create_incident_request
             )
         except ApiException as e:
-            print_error(
-                f'Failed to create incident with playbook id : "{playbook_id}", '
+            logger.info(
+                f'[red]Failed to create incident with playbook id : "{playbook_id}", '
                 "possible reasons are:\n"
                 "1. This playbook name does not exist \n"
                 "2. Schema problems in the playbook \n"
-                "3. Unauthorized api key"
+                "3. Unauthorized api key[/red]"
             )
             raise e
 
-        print_color(
-            f"The playbook: {self.playbook_id} was triggered successfully.",
-            LOG_COLORS.GREEN,
+        logger.info(
+            f"[green]The playbook: {self.playbook_id} was triggered successfully.[/green]"
         )
         return response.id
 

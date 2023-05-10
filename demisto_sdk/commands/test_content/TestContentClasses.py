@@ -20,7 +20,7 @@ import requests
 import urllib3
 from demisto_client.demisto_api import DefaultApi, Incident
 from demisto_client.demisto_api.rest import ApiException
-from slack import WebClient as SlackClient
+from slack_sdk import WebClient as SlackClient
 
 from demisto_sdk.commands.common.constants import (
     DEFAULT_CONTENT_ITEM_FROM_VERSION,
@@ -960,6 +960,8 @@ class BuildContext:
             "Server 6.6": "6.6.0",
             "Server 6.8": "6.8.0",
             "Server 6.9": "6.9.0",
+            "Server 6.10": "6.10.0",
+            "Server 6.11": "6.11.0",
             "Server Master": default_version,
             "XSIAM 1.2": "6.9.0",
             "XSIAM Master": default_version,
@@ -1261,8 +1263,17 @@ class Integration:
             self._change_placeholders_to_values(server_url, conf)
             for conf in integration_params
         ]
-
-        if integration_params:
+        if self.name == "Core REST API":
+            self.configuration.params = {  # type: ignore
+                "url": server_url if IS_XSIAM else "https://localhost",
+                "creds_apikey": {
+                    "identifier": str(self.build_context.auth_id) if IS_XSIAM else "",
+                    "password": self.build_context.api_key,
+                },
+                "auth_method": "Standard",
+                "insecure": True,
+            }
+        elif integration_params:
             # If we have more then one configuration for this integration - we will try to filter by instance name
             if len(integration_params) != 1:
                 found_matching_instance = False
@@ -1288,18 +1299,6 @@ class Integration:
             else:
                 self.configuration = integration_params[0]
 
-        elif self.name == "Demisto REST API":
-            if IS_XSIAM:
-                self.build_context.logging_module.warning(
-                    'Trying to configure "Demisto REST API" for XSIAM server, '
-                    "this integration will not work on XSIAM, "
-                    "consider using CoreRestAPI."
-                )
-            self.configuration.params = {  # type: ignore
-                "url": "https://localhost",
-                "apikey": self.build_context.api_key,
-                "insecure": True,
-            }
         if is_mockable:
             self.build_context.logging_module.debug(
                 f"configuring {self} with proxy params"
@@ -1536,7 +1535,7 @@ class Integration:
                     if param_conf["display"] in params
                     else param_conf["name"]
                 )
-                if key == "credentials":
+                if key in {"credentials", "creds_apikey"}:
                     credentials = params[key]
                     param_value = {
                         "credential": "",
@@ -1820,7 +1819,7 @@ class TestContext:
         try:
             state = investigation_playbook["state"]
             return state
-        except Exception:  # noqa: E722
+        except Exception:
             # setting state to `in progress` in XSIAM build,
             # Because `investigation_playbook` returned empty if xsiam investigation is still in progress.
             if IS_XSIAM:

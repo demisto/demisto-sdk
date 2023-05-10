@@ -1,9 +1,8 @@
 from abc import ABC
 from typing import Tuple
 
-import click
-
 from demisto_sdk.commands.common.constants import FileType
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.format.format_constants import (
     ERROR_RETURN_CODE,
     SKIP_RETURN_CODE,
@@ -21,7 +20,6 @@ class BaseClassifierJSONFormat(BaseUpdateJSON, ABC):
         path: str = "",
         from_version: str = "",
         no_validate: bool = False,
-        verbose: bool = False,
         clear_cache: bool = False,
         old_classifier_type: bool = False,
         **kwargs,
@@ -32,7 +30,6 @@ class BaseClassifierJSONFormat(BaseUpdateJSON, ABC):
             path=path,
             from_version=from_version,
             no_validate=no_validate,
-            verbose=verbose,
             clear_cache=clear_cache,
             **kwargs,
         )
@@ -63,9 +60,8 @@ class OldClassifierJSONFormat(BaseClassifierJSONFormat):
 
     def run_format(self) -> int:
         try:
-            click.secho(
-                f"\n================= Updating file {self.source_file} =================",
-                fg="bright_blue",
+            logger.info(
+                f"\n[blue]================= Updating file {self.source_file} =================[/blue]"
             )
             self.old_classifier_type = True
             super().run_format()
@@ -75,11 +71,9 @@ class OldClassifierJSONFormat(BaseClassifierJSONFormat):
             return SUCCESS_RETURN_CODE
 
         except Exception as err:
-            if self.verbose:
-                click.secho(
-                    f"\nFailed to update file {self.source_file}. Error: {err}",
-                    fg="red",
-                )
+            logger.debug(
+                f"\n[red]Failed to update file {self.source_file}. Error: {err}[/red]"
+            )
             return ERROR_RETURN_CODE
 
 
@@ -93,9 +87,8 @@ class ClassifierJSONFormat(BaseClassifierJSONFormat):
 
     def run_format(self) -> int:
         try:
-            click.secho(
-                f"\n================= Updating file {self.source_file} =================",
-                fg="bright_blue",
+            logger.info(
+                f"\n[blue]================= Updating file {self.source_file} =================[/blue]"
             )
             super().run_format()
             self.update_id()
@@ -106,11 +99,9 @@ class ClassifierJSONFormat(BaseClassifierJSONFormat):
             return SUCCESS_RETURN_CODE
 
         except Exception as err:
-            if self.verbose:
-                click.secho(
-                    f"\nFailed to update file {self.source_file}. Error: {err}",
-                    fg="red",
-                )
+            logger.debug(
+                f"\n[red]Failed to update file {self.source_file}. Error: {err}[/red]"
+            )
             return ERROR_RETURN_CODE
 
     def set_keyTypeMap(self):

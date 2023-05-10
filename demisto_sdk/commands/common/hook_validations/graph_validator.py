@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.base_validator import (
@@ -31,9 +31,11 @@ class GraphValidator(BaseValidator):
         self.file_paths: List[str] = git_files or get_all_content_objects_paths_in_dir(
             input_files
         )
-        self.pack_ids: List[str] = list(
-            {get_pack_name(file_path) for file_path in self.file_paths}
-        )
+        self.pack_ids: List[str] = []
+        for file_path in self.file_paths:
+            pack_name: Optional[str] = get_pack_name(file_path)
+            if pack_name and pack_name not in self.pack_ids:
+                self.pack_ids.append(pack_name)
 
     def __enter__(self):
         return self
@@ -49,6 +51,7 @@ class GraphValidator(BaseValidator):
             self.validate_toversion_fields(),
             self.is_file_using_unknown_content(),
             self.is_file_display_name_already_exists(),
+            self.validate_duplicate_ids(),
         )
         return all(is_valid)
 
@@ -57,6 +60,25 @@ class GraphValidator(BaseValidator):
         is_valid = []
         is_valid.append(self.are_core_pack_dependencies_valid())
         return all(is_valid)
+
+    @error_codes("GR105")
+    def validate_duplicate_ids(self):
+        is_valid = True
+        for content_item, duplicates in self.graph.validate_duplicate_ids(
+            self.file_paths
+        ):
+            for duplicate in duplicates:
+                error_message, error_code = Errors.duplicated_id(
+                    content_item.object_id, duplicate.path
+                )
+                if self.handle_error(
+                    error_message,
+                    error_code,
+                    file_path=content_item.path,
+                    drop_line=True,
+                ):
+                    is_valid = False
+        return is_valid
 
     @error_codes("PA124")
     def are_core_pack_dependencies_valid(self):

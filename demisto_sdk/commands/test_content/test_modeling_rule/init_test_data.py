@@ -1,4 +1,3 @@
-import logging
 import traceback
 from io import StringIO
 from pathlib import Path
@@ -9,15 +8,22 @@ import typer
 from demisto_sdk.commands.common.content.objects.pack_objects.modeling_rule.modeling_rule import (
     ModelingRule,
 )
-from demisto_sdk.commands.common.logger import setup_rich_logging
+from demisto_sdk.commands.common.logger import (
+    handle_deprecated_args,
+    logger,
+    logging_setup,
+)
 from demisto_sdk.commands.test_content.xsiam_tools.test_data import EventLog, TestData
 
 app = typer.Typer()
-logger = logging.getLogger("demisto-sdk")
 
 
-@app.command(no_args_is_help=True)
+@app.command(
+    no_args_is_help=True,
+    context_settings={"allow_extra_args": True, "ignore_unknown_options": True},
+)
 def init_test_data(
+    ctx: typer.Context,
     input: List[Path] = typer.Argument(
         ...,
         exists=True,
@@ -37,45 +43,34 @@ def init_test_data(
         show_default=True,
         help="The number of events to initialize the test data file for.",
     ),
-    verbosity: int = typer.Option(
-        0,
-        "-v",
-        "--verbose",
-        count=True,
-        clamp=True,
-        max=3,
-        show_default=True,
-        help="Verbosity level -v / -vv / .. / -vvv",
-        rich_help_panel="Logging Configuration",
+    console_log_threshold: str = typer.Option(
+        "INFO",
+        "-clt",
+        "--console_log_threshold",
+        help=("Minimum logging threshold for the console logger."),
     ),
-    quiet: bool = typer.Option(
-        False,
-        help="Quiet output - sets verbosity to default.",
-        rich_help_panel="Logging Configuration",
+    file_log_threshold: str = typer.Option(
+        "DEBUG",
+        "-flt",
+        "--file_log_threshold",
+        help=("Minimum logging threshold for the file logger."),
     ),
-    log_path: Path = typer.Option(
-        None,
+    log_file_path: str = typer.Option(
+        "demisto_sdk_debug.log",
         "-lp",
-        "--log-path",
-        resolve_path=True,
-        show_default=False,
-        help="Path of directory in which you would like to store all levels of logs. If not given, then the "
-        '"log_file_name" command line option will be disregarded, and the log output will be to stdout.',
-        rich_help_panel="Logging Configuration",
-    ),
-    log_file_name: str = typer.Option(
-        "test-modeling-rule.log",
-        "-ln",
-        "--log-name",
-        resolve_path=True,
-        help="The file name (including extension) where log output should be saved to.",
-        rich_help_panel="Logging Configuration",
+        "--log_file_path",
+        help=("Path to the log file. Default: ./demisto_sdk_debug.log."),
     ),
 ):
     """
     Initialize or update a test data file for a modeling rule
     """
-    setup_rich_logging(verbosity, quiet, log_path, log_file_name)
+    logging_setup(
+        console_log_threshold=console_log_threshold,
+        file_log_threshold=file_log_threshold,
+        log_file_path=log_file_path,
+    )
+    handle_deprecated_args(ctx.args)
 
     errors = False
     for fp in input:

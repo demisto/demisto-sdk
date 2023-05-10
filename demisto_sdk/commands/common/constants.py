@@ -641,9 +641,8 @@ CORRELATION_RULES_YML_REGEX = (
 
 PARSING_RULES_DIR_REGEX = rf"{PACK_DIR_REGEX}/{PARSING_RULES_DIR}"
 PARSING_RULES_PACKAGE_REGEX = rf"{PARSING_RULES_DIR_REGEX}\/([^\\/]+)"
-PARSING_RULES_YML_REGEX = (
-    rf"{PARSING_RULES_PACKAGE_REGEX}/(?:parsingrule-)?([^/]+)\.yml"
-)
+PARSING_RULE_YML_REGEX = rf"{PARSING_RULES_PACKAGE_REGEX}/(?:parsingrule-)?([^/]+)\.yml"
+PARSING_RULE_RULES_REGEX = rf"{PARSING_RULES_PACKAGE_REGEX}\/([^/]+)\.xif"
 
 
 # Modeling Rules
@@ -741,6 +740,7 @@ PACK_METADATA_AUTHOR = "author"
 PACK_METADATA_URL = "url"
 PACK_METADATA_EMAIL = "email"
 PACK_METADATA_CATEGORIES = "categories"
+PACK_METADATA_MODULES = "modules"
 PACK_METADATA_TAGS = "tags"
 PACK_METADATA_CREATED = "created"
 PACK_METADATA_CERTIFICATION = "certification"
@@ -804,6 +804,9 @@ PACKS_PACK_META_FILE_NAME = "pack_metadata.json"
 PACKS_README_FILE_NAME = "README.md"
 PACKS_CONTRIBUTORS_FILE_NAME = "CONTRIBUTORS.json"
 AUTHOR_IMAGE_FILE_NAME = "Author_image.png"
+METADATA_FILE_NAME = "pack_metadata.json"
+
+CONF_JSON_FILE_NAME = "conf.json"
 
 PYTHON_TEST_REGEXES = [PACKS_SCRIPT_TEST_PY_REGEX, PACKS_INTEGRATION_TEST_PY_REGEX]
 
@@ -965,6 +968,9 @@ CHECKED_TYPES_REGEXES = [
     MODELING_RULE_YML_REGEX,
     MODELING_RULE_RULES_REGEX,
     MODELING_RULE_SCHEMA_REGEX,
+    # # Parsing Rules
+    PARSING_RULE_YML_REGEX,
+    PARSING_RULE_RULES_REGEX,
     PACKS_CLASSIFIER_JSON_REGEX,
     PACKS_CLASSIFIER_JSON_5_9_9_REGEX,
     PACKS_MAPPER_JSON_REGEX,
@@ -996,7 +1002,12 @@ PATHS_TO_VALIDATE: List[str] = sum([PYTHON_ALL_REGEXES, JSON_ALL_REPORTS_REGEXES
 
 PACKAGE_SCRIPTS_REGEXES = [PACKS_SCRIPT_PY_REGEX, PACKS_SCRIPT_YML_REGEX]
 
-PACKAGE_SUPPORTING_DIRECTORIES = [INTEGRATIONS_DIR, SCRIPTS_DIR, MODELING_RULES_DIR]
+PACKAGE_SUPPORTING_DIRECTORIES = [
+    INTEGRATIONS_DIR,
+    SCRIPTS_DIR,
+    MODELING_RULES_DIR,
+    PARSING_RULES_DIR,
+]
 
 IGNORED_TYPES_REGEXES = [DESCRIPTION_REGEX, IMAGE_REGEX, PIPFILE_REGEX, SCHEMA_REGEX]
 
@@ -1189,7 +1200,7 @@ BETA_INTEGRATION_DISCLAIMER = (
 INTEGRATION_CATEGORIES = [
     "Analytics & SIEM",
     "Utilities",
-    "Messaging",
+    "Messaging and Conferencing",
     "Endpoint",
     "Network Security",
     "Vulnerability Management",
@@ -1197,12 +1208,12 @@ INTEGRATION_CATEGORIES = [
     "Forensics & Malware Analysis",
     "IT Services",
     "Data Enrichment & Threat Intelligence",
-    "Authentication",
     "Database",
-    "Deception",
-    "Email Gateway",
+    "Deception & Breach Simulation",
+    "Email",
     "Identity and Access Management",
-    "File Integrity Management",
+    "Cloud Services",
+    "Authentication & Identity Management",
 ]
 SCHEMA_TO_REGEX = {
     "integration": YML_INTEGRATION_REGEXES,
@@ -1241,7 +1252,7 @@ SCHEMA_TO_REGEX = {
     JOB: JSON_ALL_JOB_REGEXES,
     WIZARD: JSON_ALL_WIZARD_REGEXES,
     "correlationrule": [CORRELATION_RULES_YML_REGEX],
-    "parsingrule": [PARSING_RULES_YML_REGEX],
+    "parsingrule": [PARSING_RULE_YML_REGEX],
     "xsiamdashboard": [XSIAM_DASHBOARD_JSON_REGEX],
     "xsiamreport": [XSIAM_REPORT_JSON_REGEX],
     "trigger": [TRIGGER_JSON_REGEX],
@@ -1340,9 +1351,13 @@ XSOAR_SUPPORT_URL = "https://www.paloaltonetworks.com/cortex"
 MARKETPLACE_LIVE_DISCUSSIONS = "https://live.paloaltonetworks.com/t5/cortex-xsoar-discussions/bd-p/Cortex_XSOAR_Discussions"
 EXCLUDED_DISPLAY_NAME_WORDS = ["partner", "community"]
 MARKETPLACES = ["xsoar", "marketplacev2"]
+MODULES = ["compliance"]
 
 # From Version constants
 FILETYPE_TO_DEFAULT_FROMVERSION = {
+    FileType.INTEGRATION: "4.5.0",
+    FileType.SCRIPT: "4.5.0",
+    FileType.PLAYBOOK: "4.5.0",
     FileType.WIZARD: "6.8.0",
     FileType.JOB: "6.8.0",
     FileType.PRE_PROCESS_RULES: "6.8.0",
@@ -1356,6 +1371,10 @@ FILETYPE_TO_DEFAULT_FROMVERSION = {
     FileType.MODELING_RULE: "6.10.0",
     FileType.LAYOUT_RULE: "6.10.0",
 }
+
+DEFAULT_PYTHON_VERSION = "3.10"
+DEFAULT_PYTHON2_VERSION = "2.7"
+
 # This constant below should always be two versions before the latest server version
 GENERAL_DEFAULT_FROMVERSION = "6.8.0"
 VERSION_5_5_0 = "5.5.0"
@@ -1563,8 +1582,6 @@ LAYOUT_AND_MAPPER_BUILT_IN_FIELDS = [
     "Tags",
     "blocked",
 ]
-
-METADATA_FILE_NAME = "pack_metadata.json"
 
 CONTEXT_OUTPUT_README_TABLE_HEADER = "| **Path** | **Type** | **Description** |"
 
@@ -1779,3 +1796,4 @@ class ParameterType(Enum):
 
 NO_TESTS_DEPRECATED = "No tests (deprecated)"
 NATIVE_IMAGE_FILE_NAME = "docker_native_image_config.json"
+TESTS_REQUIRE_NETWORK_PACK_IGNORE = "tests_require_network"

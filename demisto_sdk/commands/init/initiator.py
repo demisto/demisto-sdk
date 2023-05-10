@@ -5,8 +5,6 @@ from distutils.dir_util import copy_tree
 from distutils.version import LooseVersion
 from typing import Dict, List
 
-import click
-
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import (
@@ -43,14 +41,11 @@ from demisto_sdk.commands.common.constants import (
 )
 from demisto_sdk.commands.common.git_content_config import GitContentConfig
 from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
-    LOG_COLORS,
     get_common_server_path,
     get_pack_name,
     get_yaml,
-    print_error,
-    print_v,
-    print_warning,
 )
 from demisto_sdk.commands.secrets.secrets import SecretsValidator
 
@@ -208,6 +203,7 @@ class Initiator:
         author_image: str = "",
         demisto_mock: bool = False,
         common_server: bool = False,
+        **kwargs,
     ):
         self.output = output if output else ""
         self.id = id
@@ -353,7 +349,7 @@ class Initiator:
         # if it does not exist create it
         elif tools.is_external_repository():
             if not os.path.isdir("Packs"):
-                print("Creating 'Packs' directory")
+                logger.info("Creating 'Packs' directory")
                 os.mkdir("Packs")
             self.full_output_path = os.path.join("Packs", self.dir_name)
 
@@ -368,9 +364,8 @@ class Initiator:
             os.mkdir(path=path)
 
         self.create_pack_base_files()
-        click.echo(
-            f"Successfully created the pack {self.dir_name} in: {self.full_output_path}",
-            color=LOG_COLORS.GREEN,
+        logger.info(
+            f"[green]Successfully created the pack {self.dir_name} in: {self.full_output_path}[/green]"
         )
 
         metadata_path = os.path.join(self.full_output_path, "pack_metadata.json")
@@ -388,9 +383,8 @@ class Initiator:
             )
             json.dump(pack_metadata, fp, indent=4)
 
-            click.echo(
-                f"Created pack metadata at path : {metadata_path}",
-                color=LOG_COLORS.GREEN,
+            logger.info(
+                f"[green]Created pack metadata at path : {metadata_path}[/green]"
             )
 
         create_integration = str(
@@ -424,7 +418,7 @@ class Initiator:
         Create empty 'README.md', '.secrets-ignore', '.pack-ignore' and 'Author_image.png' files that are expected
         to be in the base directory of a pack
         """
-        click.echo("Creating pack base files", color=LOG_COLORS.NATIVE)
+        logger.info("Creating pack base files")
         fp = open(os.path.join(self.full_output_path, "README.md"), "a")
         fp.close()
 
@@ -604,8 +598,8 @@ class Initiator:
                     f.write(secret)
                     f.write("\n")
         except FileNotFoundError:
-            print_warning(
-                "Could not find the .secrets-ignore file - make sure your path is correct"
+            logger.info(
+                "[yellow]Could not find the .secrets-ignore file - make sure your path is correct[/yellow]"
             )
 
     def integration_init(self) -> bool:
@@ -653,10 +647,9 @@ class Initiator:
             secrets = self.find_secrets()
             if secrets:
                 new_line = "\n"
-                click.echo(
-                    f"\nThe following secrets were detected:\n"
-                    f"{new_line.join(secret for secret in secrets)}",
-                    color=LOG_COLORS.GREEN,
+                logger.info(
+                    f"\n[green]The following secrets were detected:\n"
+                    f"{new_line.join(secret for secret in secrets)}[/green]"
                 )
 
                 ignore_secrets = input(
@@ -665,9 +658,8 @@ class Initiator:
                 if ignore_secrets in ["y", "yes"]:
                     self.ignore_secrets(secrets)
 
-        click.echo(
-            f"Finished creating integration: {self.full_output_path}.",
-            color=LOG_COLORS.GREEN,
+        logger.info(
+            f"[green]Finished creating integration: {self.full_output_path}.[/green]"
         )
 
         return True
@@ -716,10 +708,9 @@ class Initiator:
         secrets = self.find_secrets()
         if secrets:
             new_line = "\n"
-            click.echo(
-                f"\nThe following secrets were detected in the pack:\n"
-                f"{new_line.join(secret for secret in secrets)}",
-                color=LOG_COLORS.GREEN,
+            logger.info(
+                f"\n[green]The following secrets were detected in the pack:\n"
+                f"{new_line.join(secret for secret in secrets)}[/green]"
             )
 
             ignore_secrets = input(
@@ -728,9 +719,7 @@ class Initiator:
             if ignore_secrets in ["y", "yes"]:
                 self.ignore_secrets(secrets)
 
-        click.echo(
-            f"Finished creating script: {self.full_output_path}", color=LOG_COLORS.GREEN
-        )
+        logger.info(f"[green]Finished creating script: {self.full_output_path}[/green]")
 
         return True
 
@@ -846,7 +835,7 @@ class Initiator:
                 os.mkdir(self.full_output_path)
 
             else:
-                print_error(f"Pack not created in {self.full_output_path}")
+                logger.info(f"[red]Pack not created in {self.full_output_path}[/red]")
                 return False
 
         return True
@@ -876,7 +865,7 @@ class Initiator:
                 common_server_path = get_common_server_path(self.configuration.env_dir)
                 shutil.copy(common_server_path, self.full_output_path)
             except Exception as err:
-                print_v(f"Could not copy CommonServerPython: {str(err)}")
+                logger.debug(f"Could not copy CommonServerPython: {str(err)}")
 
     def copy_demistotmock(self):
         """copy demistomock from content"""
@@ -887,7 +876,7 @@ class Initiator:
                     self.full_output_path,
                 )
             except Exception as err:
-                print_v(f"Could not copy demistomock: {str(err)}")
+                logger.debug(f"Could not copy demistomock: {str(err)}")
 
     def get_template_files(self):
         """
@@ -980,8 +969,8 @@ class Initiator:
                 with open(os.path.join(self.full_output_path, file), "wb") as f:
                     f.write(file_content)
             except Exception:
-                print_warning(
-                    f"Could not fetch remote template - {file}. Using local templates instead."
+                logger.info(
+                    f"[yellow]Could not fetch remote template - {file}. Using local templates instead.[/yellow]"
                 )
                 return False
 

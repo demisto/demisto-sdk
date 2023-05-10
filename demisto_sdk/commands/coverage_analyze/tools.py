@@ -7,7 +7,7 @@ from typing import Optional
 import requests
 
 from demisto_sdk.commands.common.handlers import JSON_Handler
-from demisto_sdk.commands.common.logger import logging_setup
+from demisto_sdk.commands.common.logger import logger
 
 json = JSON_Handler()
 
@@ -15,9 +15,6 @@ json = JSON_Handler()
 ONE_DAY = timedelta(days=1)
 LATEST_URL = "https://storage.googleapis.com/marketplace-dist-dev/code-coverage-reports/coverage-min.json"
 HISTORY_URL = "https://storage.googleapis.com/marketplace-dist-dev/code-coverage-reports/history/coverage-min/{date}.json"
-
-
-logger = logging_setup(2)
 
 
 def get_total_coverage(

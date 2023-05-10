@@ -1,14 +1,15 @@
-import logging
 import os
 from multiprocessing import Pool
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional, Set, Tuple
 
 from neo4j import Driver, GraphDatabase, Session, graph
+from pydantic import ValidationError
 
 import demisto_sdk.commands.content_graph.neo4j_service as neo4j_service
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.common.cpu_count import cpu_count
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.content_graph.common import (
     NEO4J_DATABASE_URL,
     NEO4J_PASSWORD,
@@ -33,13 +34,10 @@ from demisto_sdk.commands.content_graph.interface.neo4j.queries.dependencies imp
     get_all_level_packs_dependencies,
 )
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.import_export import (
-    export_to_csv,
-    import_csv,
+    export_graphml,
+    import_graphml,
     merge_duplicate_commands,
     merge_duplicate_content_items,
-    post_export_write_queries,
-    post_import_write_queries,
-    pre_export_write_queries,
 )
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.indexes import (
     create_indexes,
@@ -60,6 +58,7 @@ from demisto_sdk.commands.content_graph.interface.neo4j.queries.relationships im
 )
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.validations import (
     validate_core_packs_dependencies,
+    validate_duplicate_ids,
     validate_fromversion,
     validate_marketplaces,
     validate_multiple_packs_with_same_display_name,
@@ -74,8 +73,6 @@ from demisto_sdk.commands.content_graph.objects.base_content import (
 from demisto_sdk.commands.content_graph.objects.integration import Integration
 from demisto_sdk.commands.content_graph.objects.pack import Pack
 from demisto_sdk.commands.content_graph.objects.relationship import RelationshipData
-
-logger = logging.getLogger("demisto-sdk")
 
 
 def _parse_node(element_id: int, node: dict) -> BaseContent:
@@ -108,13 +105,14 @@ class NoModelException(Exception):
 class Neo4jContentGraphInterface(ContentGraphInterface):
 
     # this is used to save cache of packs and integrations which queried
-    _id_to_obj: Dict[int, BaseContent] = {}
     _import_handler = Neo4jImportHandler()
 
     def __init__(
         self,
         should_update: bool = False,
     ) -> None:
+        self._id_to_obj: Dict[int, BaseContent] = {}
+
         if not neo4j_service.is_alive():
             neo4j_service.start()
         self._rels_to_preserve: List[Dict[str, Any]] = []  # used for graph updates
@@ -171,7 +169,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             nodes_to.extend(res.nodes_to)
         self._add_nodes_to_mapping(nodes_to)
         for id, res in result.items():
-            obj = Neo4jContentGraphInterface._id_to_obj[id]
+            obj = self._id_to_obj[id]
             self._add_relationships(obj, res.relationships, res.nodes_to)
             if isinstance(obj, Pack) and not obj.content_items:
                 packs.append(obj)
@@ -220,7 +218,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
                     relationship_type=rel.type,
                     source_id=rel.start_node.id,
                     target_id=rel.end_node.id,
-                    content_item_to=Neo4jContentGraphInterface._id_to_obj[node_to.id],
+                    content_item_to=self._id_to_obj[node_to.id],
                     is_direct=True,
                     **rel,
                 ),
@@ -250,9 +248,9 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         self._add_nodes_to_mapping(nodes_to)
 
         for pack_id, pack_depends_on_relationship in mandatorily_dependencies.items():
-            obj = Neo4jContentGraphInterface._id_to_obj[pack_id]
+            obj = self._id_to_obj[pack_id]
             for node in pack_depends_on_relationship.nodes_to:
-                target = Neo4jContentGraphInterface._id_to_obj[node.id]
+                target = self._id_to_obj[node.id]
                 obj.add_relationship(
                     RelationshipType.DEPENDS_ON,
                     RelationshipData(
@@ -361,6 +359,22 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             )
             return results
 
+    def validate_duplicate_ids(
+        self, file_paths: List[str]
+    ) -> List[Tuple[BaseContent, List[BaseContent]]]:
+        with self.driver.session() as session:
+            duplicates = session.execute_read(validate_duplicate_ids, file_paths)
+        all_nodes = []
+        for content_item, dups in duplicates:
+            all_nodes.append(content_item)
+            all_nodes.extend(dups)
+        self._add_nodes_to_mapping(all_nodes)
+        duplicate_models = []
+        for content_item, dups in duplicates:
+            dups = [self._id_to_obj[duplicate.id] for duplicate in dups]
+            duplicate_models.append((self._id_to_obj[content_item.id], dups))
+        return duplicate_models
+
     def find_uses_paths_with_invalid_fromversion(
         self, file_paths: List[str], for_supported_versions=False
     ) -> List[BaseContent]:
@@ -459,39 +473,50 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         with self.driver.session() as session:
             session.execute_write(remove_server_nodes)
 
-    def import_graph(self, imported_path: Optional[Path] = None) -> None:
-        """Imports CSV files to neo4j, by:
-        1. Dropping the constraints (we temporarily allow creating duplicate nodes from different repos)
-        2. Preparing the CSV files for import and importing them
-        3. Running serveral DB queries to fix the imported data
+    def import_graph(self, imported_path: Optional[Path] = None) -> bool:
+        """Imports GraphML files to neo4j, by:
+        1. Preparing the GraphML files for import
+        2. Dropping the constraints (we temporarily allow creating duplicate nodes from different repos)
+        3. Import the GraphML files
         4. Merging duplicate nodes (conmmands/content items)
         5. Recreating the constraints
+        6. Remove empty properties
 
         Args:
             external_import_paths (List[Path]): A list of external repositories' import paths.
             imported_path (Path): The path to import the graph from.
+
+        Returns:
+            bool: Whether the import was successful or not
         """
-        logger.info("Importing graph from CSV files...")
+        logger.info("Importing graph from GraphML files...")
         self._import_handler.extract_files_from_path(imported_path)
         self._import_handler.ensure_data_uniqueness()
-        node_files = self._import_handler.get_nodes_files()
-        relationship_files = self._import_handler.get_relationships_files()
-        if node_files and relationship_files:
+        graphml_filenames = self._import_handler.get_graphml_filenames()
+        if graphml_filenames:
             with self.driver.session() as session:
                 session.execute_write(drop_constraints)
-                session.execute_write(import_csv, node_files, relationship_files)
-                session.execute_write(post_import_write_queries)
+                session.execute_write(import_graphml, graphml_filenames)
                 session.execute_write(merge_duplicate_commands)
                 session.execute_write(merge_duplicate_content_items)
                 session.execute_write(create_constraints)
                 session.execute_write(remove_empty_properties)
+        try:
+            # Test that the imported graph is valid by marshaling it
+            self.marshal_graph(MarketplaceVersions.XSOAR)
+            result = True
+        except ValidationError as e:
+            logger.warning("Failed to import the content graph")
+            logger.debug(f"Validation Error: {e}")
+            result = False
+        # clear cache after loading the graph
+        self._id_to_obj = {}
+        return result
 
     def export_graph(self, output_path: Optional[Path] = None) -> None:
         self.clean_import_dir()
         with self.driver.session() as session:
-            session.execute_write(pre_export_write_queries)
-            session.execute_write(export_to_csv, self.repo_path.name)
-            session.execute_write(post_export_write_queries)
+            session.execute_write(export_graphml, self.repo_path.name)
         self.dump_metadata()
         if output_path:
             self.zip_import_dir(output_path)
@@ -499,7 +524,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
     def clean_graph(self):
         with self.driver.session() as session:
             session.execute_write(delete_all_graph_nodes)
-        Neo4jContentGraphInterface._id_to_obj = {}
+        self._id_to_obj = {}
         super().clean_graph()
 
     def search(

@@ -1,10 +1,8 @@
 import ast
 import glob
-import logging
 import os
 from typing import List, Tuple, Union
 
-import click
 import demisto_client
 from demisto_client.demisto_api.rest import ApiException
 from packaging.version import Version
@@ -39,13 +37,13 @@ from demisto_sdk.commands.common.content.objects.abstract_objects import (
 from demisto_sdk.commands.common.content.objects.pack_objects.pack import Pack
 from demisto_sdk.commands.common.content.objects_factory import path_to_pack_object
 from demisto_sdk.commands.common.handlers import JSON_Handler
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     find_type,
     get_child_directories,
     get_demisto_version,
     get_file,
     get_parent_directory_name,
-    print_v,
 )
 
 json = JSON_Handler()
@@ -104,7 +102,6 @@ class Uploader:
     """Upload a pack specified in self.infile to a remote Cortex XSOAR instance.
     Attributes:
         path (str): The path of a pack / directory / file to upload.
-        verbose (bool): Whether to output a detailed response.
         client (DefaultApi): Demisto-SDK client object.
     """
 
@@ -112,15 +109,14 @@ class Uploader:
         self,
         input: str,
         insecure: bool = False,
-        verbose: bool = False,
         pack_names: list = None,
         skip_validation: bool = False,
         detached_files: bool = False,
         reattach: bool = False,
         override_existing: bool = False,
+        **kwargs,
     ):
         self.path = input
-        self.log_verbose = verbose
         verify = (
             (not insecure) if insecure else None
         )  # set to None so demisto_client will use env var DEMISTO_VERIFY_SSL
@@ -140,9 +136,8 @@ class Uploader:
     def upload(self):
         """Upload the pack / directory / file to the remote Cortex XSOAR instance."""
         if self.demisto_version == "0":
-            click.secho(
-                "Could not connect to XSOAR server. Try checking your connection configurations.",
-                fg="bright_red",
+            logger.info(
+                "[red]Could not connect to XSOAR server. Try checking your connection configurations.[/red]"
             )
             return ERROR_RETURN_CODE
 
@@ -163,11 +158,11 @@ class Uploader:
             if not self.path:
                 return SUCCESS_RETURN_CODE
         host = self.client.api_client.configuration.host
-        click.secho(f"Using {host=}")
-        click.secho(f"Uploading {self.path} ...")
+        logger.info(f"Using {host=}")
+        logger.info(f"Uploading {self.path} ...")
         if self.path is None or not os.path.exists(self.path):
-            click.secho(
-                f"Error: Given input path: {self.path} does not exist", fg="bright_red"
+            logger.info(
+                f"[red]Error: Given input path: {self.path} does not exist[/red]"
             )
             return ERROR_RETURN_CODE
 
@@ -200,15 +195,14 @@ class Uploader:
             and not self.unuploaded_due_to_version
         ):
             # if not uploaded any file
-            click.secho(
-                f"\nError: Given input path: {self.path} is not uploadable. "
+            logger.info(
+                f"\n[red]Error: Given input path: {self.path} is not uploadable. "
                 f"Input path should point to one of the following:\n"
                 f"  1. Pack\n"
                 f"  2. A content entity directory that is inside a pack. For example: an Integrations directory or "
                 f"a Layouts directory\n"
                 f"  3. Valid file that can be imported to Cortex XSOAR manually. "
-                f"For example a playbook: helloWorld.yml",
-                fg="bright_red",
+                f"For example a playbook: helloWorld.yml[/red]"
             )
             return ERROR_RETURN_CODE
 
@@ -235,8 +229,7 @@ class Uploader:
             message = (
                 f"Cannot upload {path} as the file type is not supported for upload."
             )
-            if self.log_verbose:
-                click.secho(message, fg="bright_red")
+            logger.debug(f"[red]{message}[/red]")
             self.failed_uploaded_files.append((file_name, "Unknown", message))
             return ERROR_RETURN_CODE
 
@@ -247,35 +240,29 @@ class Uploader:
             if upload_object.from_version <= self.demisto_version <= upload_object.to_version:  # type: ignore
                 try:
                     result = upload_object.upload(self.client)  # type: ignore
-                    if self.log_verbose:
-                        if hasattr(result, "to_str"):
-                            print_v(f"Result:\n{result.to_str()}", self.log_verbose)
-                        else:
-                            print_v(f"Result:\n{result}", self.log_verbose)
-                        click.secho(
-                            f"Uploaded {entity_type} - '{os.path.basename(path)}': successfully",
-                            fg="green",
-                        )
+                    if hasattr(result, "to_str"):
+                        logger.debug(f"Result:\n{result.to_str()}")
+                    else:
+                        logger.debug(f"Result:\n{result}")
+                    logger.debug(
+                        f"[green]Uploaded {entity_type} - '{os.path.basename(path)}': successfully[/green]"
+                    )
                     self.successfully_uploaded_files.append(
                         (file_name, entity_type.value)
                     )
                     return SUCCESS_RETURN_CODE
                 except Exception as err:
-                    message = parse_error_response(
-                        err, entity_type, file_name, self.log_verbose
-                    )
+                    message = parse_error_response(err, entity_type, file_name)
                     self.failed_uploaded_files.append(
                         (file_name, entity_type.value, message)
                     )
                     return ERROR_RETURN_CODE
             else:
-                if self.log_verbose:
-                    click.secho(
-                        f"Input path {path} is not uploading due to version mismatch.\n"
-                        f"XSOAR version is: {self.demisto_version} while the file's version is "
-                        f"{upload_object.from_version} - {upload_object.to_version}",
-                        fg="bright_red",
-                    )
+                logger.debug(
+                    f"Input path {path} is not uploading due to version mismatch.\n"
+                    f"XSOAR version is: {self.demisto_version} while the file's version is "
+                    f"{upload_object.from_version} - {upload_object.to_version}",
+                )
                 self.unuploaded_due_to_version.append(
                     (
                         file_name,
@@ -287,17 +274,15 @@ class Uploader:
                 )
                 return ERROR_RETURN_CODE
         else:
-            if self.log_verbose:
-                click.secho(
-                    f"\nError: Given input path: {path} is not uploadable. "
-                    f"Input path should point to one of the following:\n"
-                    f"  1. Pack\n"
-                    f"  2. A content entity directory that is inside a pack. For example: an Integrations directory or "
-                    f"a Layouts directory\n"
-                    f"  3. Valid file that can be imported to Cortex XSOAR manually. "
-                    f"For example a playbook: helloWorld.yml",
-                    fg="bright_red",
-                )
+            logger.debug(
+                f"\n[red]Error: Given input path: {path} is not uploadable. "
+                f"Input path should point to one of the following:\n"
+                f"  1. Pack\n"
+                f"  2. A content entity directory that is inside a pack. For example: an Integrations directory or "
+                f"a Layouts directory\n"
+                f"  3. Valid file that can be imported to Cortex XSOAR manually. "
+                f"For example a playbook: helloWorld.yml[/red]",
+            )
             self.failed_uploaded_files.append(
                 (file_name, entity_type.value, "Unsuported file path/type")
             )
@@ -374,8 +359,6 @@ class Uploader:
         zipped_pack = Pack(path)
 
         try:
-            logger = logging.getLogger("demisto-sdk")
-
             if not self.pack_names:
                 self.pack_names = [zipped_pack.path.stem]
 
@@ -390,9 +373,7 @@ class Uploader:
 
         except (Exception, KeyboardInterrupt) as err:
             file_name = zipped_pack.path.name  # type: ignore
-            message = parse_error_response(
-                err, FileType.PACK.value, file_name, self.log_verbose
-            )
+            message = parse_error_response(err, FileType.PACK.value, file_name)
             self.failed_uploaded_files.append((file_name, FileType.PACK.value, message))
             return ERROR_RETURN_CODE
 
@@ -416,24 +397,19 @@ class Uploader:
                     .replace(MarketplaceVersions.MarketplaceV2, "XSIAM")
                     .upper()
                 )
-                click.secho(
-                    f"This command will overwrite the following packs:\n{pack_names}.\n"
-                    f"Any changes made on {marketplace} will be lost.",
-                    fg="bright_red",
+                logger.debug(
+                    f"[red]This command will overwrite the following packs:\n{pack_names}.\n"
+                    f"Any changes made on {marketplace} will be lost.[red]"
                 )
                 if not self.override_existing:
-                    click.secho(
-                        "Are you sure you want to continue? Y/[N]", fg="bright_red"
-                    )
+                    logger.info("[red]Are you sure you want to continue? Y/[N][/red]")
                     answer = str(input())
                     return answer in ["y", "Y", "yes"]
 
         return True
 
 
-def parse_error_response(
-    error: ApiException, file_type: str, file_name: str, print_error: bool = False
-):
+def parse_error_response(error: ApiException, file_type: str, file_name: str):
     """
     Parses error message from exception raised in call to client to upload a file
 
@@ -461,9 +437,8 @@ def parse_error_response(
 
             if error_body.get("status") == 403:
                 message += "\nTry checking your API key configuration."
-    if print_error:
-        click.secho(str(f"\nUpload {file_type}: {file_name} failed:"), fg="bright_red")
-        click.secho(str(message), fg="bright_red")
+    logger.debug(str(f"\n[red]Upload {file_type}: {file_name} failed:[/red]"))
+    logger.debug(f"[red]{message}[/red]")
     if isinstance(error, KeyboardInterrupt):
         message = "Aborted due to keyboard interrupt."
     return message
@@ -476,22 +451,23 @@ def print_summary(
     Successful uploads grid based on `successfully_uploaded_files` attribute in green color
     Failed uploads grid based on `failed_uploaded_files` attribute in red color
     """
-    click.secho("\n\nUPLOAD SUMMARY:")
+    logger.info("\n\nUPLOAD SUMMARY:")
     if successfully_uploaded_files:
-        click.secho("\nSUCCESSFUL UPLOADS:", fg="green")
-        click.secho(
-            tabulate(
+        logger.info("\n[green]SUCCESSFUL UPLOADS:[/green]")
+        logger.info(
+            "[green]"
+            + tabulate(
                 successfully_uploaded_files,
                 headers=["NAME", "TYPE"],
                 tablefmt="fancy_grid",
             )
-            + "\n",
-            fg="green",
+            + "[/green]\n"
         )
     if unuploaded_due_to_version:
-        click.secho("\nNOT UPLOADED DUE TO VERSION MISMATCH:", fg="yellow")
-        click.secho(
-            tabulate(
+        logger.info("\n[yellow]NOT UPLOADED DUE TO VERSION MISMATCH:[/yellow]")
+        logger.info(
+            "[yellow]"
+            + tabulate(
                 unuploaded_due_to_version,
                 headers=[
                     "NAME",
@@ -502,19 +478,18 @@ def print_summary(
                 ],
                 tablefmt="fancy_grid",
             )
-            + "\n",
-            fg="yellow",
+            + "[/yellow]\n"
         )
     if failed_uploaded_files:
-        click.secho("\nFAILED UPLOADS:", fg="bright_red")
-        click.secho(
-            tabulate(
+        logger.info("\n[red]FAILED UPLOADS:[/red]")
+        logger.info(
+            "[red]"
+            + tabulate(
                 failed_uploaded_files,
                 headers=["NAME", "TYPE", "ERROR"],
                 tablefmt="fancy_grid",
             )
-            + "\n",
-            fg="bright_red",
+            + "[/red]\n"
         )
 
 
@@ -589,7 +564,7 @@ class ItemDetacher:
 
         try:
             self.client.generic_request(endpoint, "POST")
-            click.secho(f"\nFile: {file_id} was detached", fg="green")
+            logger.info(f"\n[green]File: {file_id} was detached[/green]")
         except Exception as e:
             raise Exception(f"Exception raised when fetching custom content:\n{e}")
 
@@ -687,7 +662,7 @@ class ItemReattacher:
         endpoint = endpoint.replace(":id", item_id)
         try:
             self.client.generic_request(endpoint, "POST")
-            click.secho(f"\n{item_type}: {item_id} was reattached", fg="green")
+            logger.debug(f"\n[green]{item_type}: {item_id} was reattached[/green]")
         except Exception as e:
             raise Exception(f"Exception raised when fetching custom content:\n{e}")
 

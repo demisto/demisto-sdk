@@ -1,3 +1,4 @@
+import logging
 import os
 import shutil
 from typing import Optional
@@ -96,6 +97,7 @@ from demisto_sdk.tests.constants_test import (
     WIDGET_SCHEMA_PATH,
 )
 from TestSuite.json_based import JSONBased
+from TestSuite.test_tools import str_in_call_args_list
 
 json = JSON_Handler()
 
@@ -177,7 +179,7 @@ class TestFormattingJson:
     def test_format_file(self, source, target, path, answer):
         os.makedirs(path, exist_ok=True)
         shutil.copyfile(source, target)
-        res = format_manager(input=target, output=target, verbose=True)
+        res = format_manager(input=target, output=target)
         shutil.rmtree(target, ignore_errors=True)
         shutil.rmtree(path, ignore_errors=True)
 
@@ -202,7 +204,7 @@ class TestFormattingJson:
 
         monkeypatch.setattr("builtins.input", lambda _: "N")
 
-        res = format_manager(input=target, output=target, verbose=True)
+        res = format_manager(input=target, output=target)
         shutil.rmtree(target, ignore_errors=True)
         shutil.rmtree(path, ignore_errors=True)
 
@@ -211,9 +213,7 @@ class TestFormattingJson:
     @pytest.mark.parametrize("invalid_output", [INVALID_OUTPUT_PATH])
     def test_output_file(self, invalid_output):
         try:
-            res_invalid = format_manager(
-                input=invalid_output, output=invalid_output, verbose=True
-            )
+            res_invalid = format_manager(input=invalid_output, output=invalid_output)
             assert res_invalid
         except Exception as e:
             assert (
@@ -359,7 +359,7 @@ class TestFormattingIncidentTypes:
 
     @pytest.mark.parametrize("user_answer, expected", EXTRACTION_MODE_ALL_CONFLICT)
     def test_format_autoextract_all_mode_conflict(
-        self, mocker, user_answer, expected, capsys
+        self, mocker, user_answer, expected, monkeypatch
     ):
         """
         Given
@@ -372,6 +372,9 @@ class TestFormattingIncidentTypes:
         - If the user selected 'All', he will get an warning message and the mode will not be changed.
         - If the user selected 'Specific', the mode will be changed.
         """
+        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+        monkeypatch.setenv("COLUMNS", "1000")
+
         mock_dict = {
             "extractSettings": {
                 "mode": None,
@@ -394,11 +397,13 @@ class TestFormattingIncidentTypes:
         )
         formatter = IncidentTypesJSONFormat("test")
         formatter.format_auto_extract_mode()
-        stdout, _ = capsys.readouterr()
         current_mode = formatter.data.get("extractSettings", {}).get("mode")
         assert current_mode == expected
         if user_answer == "All":
-            assert 'Cannot set mode to "All" since there are specific types' in stdout
+            assert str_in_call_args_list(
+                logger_info.call_args_list,
+                'Cannot set mode to "All" since there are specific types',
+            )
 
     EXTRACTION_MODE_SPECIFIC_CONFLICT = [
         ("All", "All"),
@@ -407,7 +412,7 @@ class TestFormattingIncidentTypes:
 
     @pytest.mark.parametrize("user_answer, expected", EXTRACTION_MODE_SPECIFIC_CONFLICT)
     def test_format_autoextract_specific_mode_conflict(
-        self, mocker, user_answer, expected, capsys
+        self, mocker, user_answer, expected, capsys, monkeypatch
     ):
         """
         Given
@@ -420,6 +425,9 @@ class TestFormattingIncidentTypes:
         - If the user selected 'Specific', the mode will be changed but he will get a warning that no specific types were found.
         - If the user selected 'All', the mode will be changed.
         """
+        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+        monkeypatch.setenv("COLUMNS", "1000")
+
         mock_dict = {
             "extractSettings": {"mode": None, "fieldCliNameToExtractSettings": {}}
         }
@@ -437,9 +445,9 @@ class TestFormattingIncidentTypes:
         current_mode = formatter.data.get("extractSettings", {}).get("mode")
         assert current_mode == expected
         if user_answer == "Specific":
-            assert (
-                'Please notice that mode was set to "Specific" but there are no specific types'
-                in stdout
+            assert str_in_call_args_list(
+                logger_info.call_args_list,
+                'Please notice that mode was set to "Specific" but there are no specific types',
             )
 
 
@@ -1711,7 +1719,9 @@ class TestFormattingReport:
     ]
 
     @pytest.mark.parametrize(argnames="format_object", argvalues=FORMAT_OBJECT)
-    def test_json_run_format_exception_handling(self, format_object, mocker, capsys):
+    def test_json_run_format_exception_handling(
+        self, format_object, mocker, monkeypatch
+    ):
         """
         Given
             - A JSON object formatter
@@ -1720,7 +1730,10 @@ class TestFormattingReport:
         Then
             - Ensure the error is printed.
         """
-        formatter = format_object(verbose=True, input="my_file_path")
+        logger_debug = mocker.patch.object(logging.getLogger("demisto-sdk"), "debug")
+        monkeypatch.setenv("COLUMNS", "1000")
+
+        formatter = format_object(input="my_file_path")
         mocker.patch.object(
             BaseUpdateJSON, "update_json", side_effect=self.exception_raise
         )
@@ -1735,8 +1748,10 @@ class TestFormattingReport:
         )
 
         formatter.run_format()
-        stdout, _ = capsys.readouterr()
-        assert "Failed to update file my_file_path. Error: MY ERROR" in stdout
+        assert str_in_call_args_list(
+            logger_debug.call_args_list,
+            "Failed to update file my_file_path. Error: MY ERROR",
+        )
 
     def test_set_fromversion_six_new_contributor_pack_no_fromversion(self, pack):
         """

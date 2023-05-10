@@ -126,6 +126,8 @@ class ContentType(str, enum.Enum):
     def by_path(cls, path: Path) -> "ContentType":
         for idx, folder in enumerate(path.parts):
             if folder == PACKS_FOLDER:
+                if len(path.parts) <= idx + 2:
+                    raise ValueError("Invalid content path.")
                 content_type_dir = path.parts[idx + 2]
                 break
         else:
@@ -452,6 +454,7 @@ SERVER_CONTENT_ITEMS = {
         "searchRelationships",
         "getSystemDiagnostics",
         "triggerDebugMirroringRun",
+        "stopScheduleEntry",
         # Filters
         "isEqual",
         "isNotEqual",

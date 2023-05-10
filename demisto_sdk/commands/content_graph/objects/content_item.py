@@ -146,12 +146,14 @@ class ContentItem(BaseContent):
                 summary_res["name"] = data.get("name_x2") or self.name
 
             if incident_to_alert:
-                summary_res['name'] = replace_incident_to_alerts(
-                    summary_res["name"]
-                )
-                summary_res['description'] = replace_incident_to_alerts(
-                    summary_res.get('description', "")
-                )
+                if "name" in summary_res:
+                    summary_res["name"] = replace_incident_to_alerts(
+                        summary_res["name"]
+                    )
+                if "id" in summary_res:
+                    summary_res["description"] = replace_incident_to_alerts(
+                        summary_res.get('description', "")
+                    )
 
         return summary_res
 
@@ -214,6 +216,7 @@ class ContentItem(BaseContent):
         """
         As long as the content item does not have an implementation of the `is_incident_to_alert` function,
         the return value will always be false,
+        When there is, please override this method in the inheriting class and return `True`.
         Namely, there is no need for special preparation of an incident to alert for the content item.
 
         Args:

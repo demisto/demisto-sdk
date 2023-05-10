@@ -1,6 +1,6 @@
 from typing import List, Set
 
-from demisto_sdk.commands.common.constants import MarketplaceVersions
+from demisto_sdk.commands.common.constants import SKIP_PREPARE_SCRIPT_NAME, MarketplaceVersions
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
@@ -82,7 +82,7 @@ class Script(IntegrationScript, content_type=ContentType.SCRIPT):  # type: ignor
             (
                 marketplace == MarketplaceVersions.MarketplaceV2,
                 'incident' in self.name.lower(),
-                'script-name-incident-to-alert' not in self.skip_prepare,
+                SKIP_PREPARE_SCRIPT_NAME not in self.skip_prepare,
                 not self.deprecated,
             )
         )

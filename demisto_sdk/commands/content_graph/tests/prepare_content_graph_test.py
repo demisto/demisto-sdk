@@ -1,10 +1,10 @@
-import ruamel.yaml as yaml
 from pathlib import Path
 
 import pytest
+from demisto_sdk.commands.common.tools import get_yaml
 import demisto_sdk.commands.content_graph.neo4j_service as neo4j_service
 from TestSuite.repo import Repo
-from demisto_sdk.commands.common.constants import MarketplaceVersions
+from demisto_sdk.commands.common.constants import SKIP_PREPARE_SCRIPT_NAME, MarketplaceVersions
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
 from demisto_sdk.commands.content_graph.content_graph_commands import (
@@ -109,7 +109,7 @@ def create_mini_content(repository: ContentDTO):
     pack2.content_items.script.append(
         mock_script(
             "getIncident",
-            skip_prepare=['script-name-incident-to-alert'],
+            skip_prepare=[SKIP_PREPARE_SCRIPT_NAME],
         )
     )
     pack2.content_items.script.append(
@@ -137,11 +137,7 @@ def test_marketplace_version_is_xsiam_with_graph(repository: ContentDTO):
         playbooks = interface.search(
             content_type=ContentType.PLAYBOOK
         )
-
-        with open(
-            f"{GIT_ROOT}/demisto_sdk/commands/prepare_content/test_files/playbook_2.yml"
-        ) as yml_file:
-            data = yaml.safe_load(yml_file)
+        data = get_yaml(f"{GIT_ROOT}/demisto_sdk/commands/prepare_content/test_files/playbook_2.yml")
 
         data = MarketplaceIncidentToAlertPlaybooksPreparer.prepare(
             playbook=playbooks[0],

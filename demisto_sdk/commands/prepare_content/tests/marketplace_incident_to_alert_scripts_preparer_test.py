@@ -23,7 +23,6 @@ GIT_ROOT = git_path()
 
 
 def create_script_for_test(tmp_path, repo):
-
     script = Script(
         tmpdir=tmp_path,
         name='script_incident_to_alert',
@@ -90,7 +89,7 @@ def test_marketplace_incident_to_alert_scripts_preparer(
 
     assert isinstance(data, tuple)
 
-    for i, script_name in enumerate(expected_names, start=0):
+    for i, script_name in enumerate(expected_names):
         assert (
             data[i].get('name') == script_name
         )

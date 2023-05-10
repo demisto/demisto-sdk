@@ -5,7 +5,7 @@ from zipfile import ZipFile
 import pytest
 
 import demisto_sdk.commands.content_graph.neo4j_service as neo4j_service
-from demisto_sdk.commands.common.constants import MarketplaceVersions
+from demisto_sdk.commands.common.constants import SKIP_PREPARE_SCRIPT_NAME, MarketplaceVersions
 from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
 from demisto_sdk.commands.content_graph.content_graph_commands import (
     create_content_graph,
@@ -793,6 +793,17 @@ class TestCreateContentGraph:
     def test_create_content_graph_incident_to_alert_scripts(
         self, repo: Repo, tmp_path: Path, mocker
     ):
+        """
+        Given:
+            - A repository with a pack TestPack, containing two scripts,
+            one (getIncident) is set with skipping the preparation of incident to alert
+            and the other (setIncident) is not.
+        When:
+            - Running create_content_graph().
+        Then:
+            - Ensure that `getIncident` script has passed the prepare process as expected.
+            - Ensure the 'setIncident' script has not passed incident to alert preparation.
+        """
         mocker.patch.object(
             IntegrationScript, "get_supported_native_images", return_value=[]
         )
@@ -802,7 +813,7 @@ class TestCreateContentGraph:
         pack.create_script(name="getIncident")
         pack.create_script(
             name="setIncident",
-            skip_prepare=["script-name-incident-to-alert"]
+            skip_prepare=[SKIP_PREPARE_SCRIPT_NAME]
         )
 
         with ContentGraphInterface() as interface:
@@ -821,7 +832,8 @@ class TestCreateContentGraph:
         assert len(all_content_items) == 3
         with ChangeCWD(repo.path):
             content_cto.dump(tmp_path, MarketplaceVersions.MarketplaceV2, zip=False)
-        assert (tmp_path / "TestPack" / "Scripts" / "script-getIncident.yml").exists()
-        assert (tmp_path / "TestPack" / "Scripts" / "script-getAlert.yml").exists()
-        assert (tmp_path / "TestPack" / "Scripts" / "script-setIncident.yml").exists()
-        assert not (tmp_path / "TestPack" / "Scripts" / "script-setAlert.yml").exists()
+        script_path = tmp_path / "TestPack" / "Scripts"
+        assert (script_path / "script-getIncident.yml").exists()
+        assert (script_path / "script-getAlert.yml").exists()
+        assert (script_path / "script-setIncident.yml").exists()
+        assert not (script_path / "script-setAlert.yml").exists()

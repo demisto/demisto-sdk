@@ -1,7 +1,6 @@
-import ruamel.yaml as yaml
-
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.common.legacy_git_tools import git_path
+from demisto_sdk.commands.common.tools import get_yaml
 from demisto_sdk.commands.content_graph.tests.create_content_graph_test import (
     mock_playbook,
 )
@@ -30,10 +29,7 @@ def test_marketplace_version_is_xsiam():
         - Ensure that the required fields have changed from incident to alert.
     """
 
-    with open(
-        f"{GIT_ROOT}/demisto_sdk/commands/prepare_content/test_files/playbook_1.yml"
-    ) as yml_file:
-        data = yaml.safe_load(yml_file)
+    data = get_yaml(f"{GIT_ROOT}/demisto_sdk/commands/prepare_content/test_files/playbook_1.yml")
 
     playbook_dummy = mock_playbook(
         name="playbook_1",
@@ -105,10 +101,7 @@ def test_marketplace_version_is_xsiam_2():
         - Ensure the access fields did NOT change as the playbook is supported only in MarketplaceVersions.MarketplaceV2.
     """
 
-    with open(
-        f"{GIT_ROOT}/demisto_sdk/commands/prepare_content/test_files/playbook_2.yml"
-    ) as yml_file:
-        data = yaml.safe_load(yml_file)
+    data = get_yaml(f"{GIT_ROOT}/demisto_sdk/commands/prepare_content/test_files/playbook_2.yml")
 
     playbook_dummy = mock_playbook(
         name="playbook_1",
@@ -151,10 +144,7 @@ def test_marketplace_version_is_xsoar():
         - Ensure that access fields did NOT change from incident to alert as this playbook is in XSOAR.
     """
 
-    with open(
-        f"{GIT_ROOT}/demisto_sdk/commands/prepare_content/test_files/playbook_1.yml"
-    ) as yml_file:
-        data = yaml.safe_load(yml_file)
+    data = get_yaml(f"{GIT_ROOT}/demisto_sdk/commands/prepare_content/test_files/playbook_1.yml")
 
     playbook_dummy = mock_playbook(
         name="playbook_1",

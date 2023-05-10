@@ -195,10 +195,13 @@ def create_wrapper_script(data: dict) -> dict:
             .replace("script_name", copy_data["name"])
         )
     except Exception as e:
-        logger.error(f"Failed to create the wrapper script: {e}")
+        logger.exception(f"Failed to create the wrapper script: {e}")
 
     copy_data = set_deprecated_for_scripts(copy_data, old_script=True)
-    logger.debug(f"Created {copy_data['name']} script wrapper to {data['name']} script")
+    logger.debug(
+        f"Created {copy_data['name']} script, "
+        f"wrapping {data['name']}, as part of incidents-to-alerts preparation"
+    )
 
     return replace_script_access_fields_recursively(copy_data)
 

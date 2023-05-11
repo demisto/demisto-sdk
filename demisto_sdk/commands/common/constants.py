@@ -1794,3 +1794,5 @@ class ParameterType(Enum):
 NO_TESTS_DEPRECATED = "No tests (deprecated)"
 NATIVE_IMAGE_FILE_NAME = "docker_native_image_config.json"
 TESTS_REQUIRE_NETWORK_PACK_IGNORE = "tests_require_network"
+NATIVE_IMAGE_DOCKER_NAME = "demisto/py3-native"
+NATIVE_IMAGE_DEVDEMISTO_NAME = "devdemisto/py3-native"

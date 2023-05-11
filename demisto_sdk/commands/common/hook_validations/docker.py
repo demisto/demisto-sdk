@@ -6,7 +6,11 @@ from typing import Optional, Tuple, Union
 import requests
 from pkg_resources import parse_version
 
-from demisto_sdk.commands.common.constants import IronBankDockers
+from demisto_sdk.commands.common.constants import (
+    NATIVE_IMAGE_DEVDEMISTO_NAME,
+    NATIVE_IMAGE_DOCKER_NAME,
+    IronBankDockers,
+)
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.base_validator import (
     BaseValidator,
@@ -67,7 +71,7 @@ class DockerImageValidator(BaseValidator):
             self.docker_image_name, self.yml_docker_image, self.is_iron_bank
         )
 
-    @error_codes("DO108,DO107,DO109")
+    @error_codes("DO108,DO107,DO109, DO110")
     def is_docker_image_valid(self):
         # javascript code should not check docker
         if self.code_type == "javascript":
@@ -97,6 +101,13 @@ class DockerImageValidator(BaseValidator):
 
         elif not self.is_docker_image_latest_tag():
             self.is_valid = False
+
+        if self.is_native_image_in_dockerimage_field():
+            error_message, error_code = Errors.native_image_is_in_dockerimage_field(
+                self.yml_docker_image
+            )
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                self.is_valid = False
 
         return self.is_valid
 
@@ -532,3 +543,16 @@ class DockerImageValidator(BaseValidator):
                 deprecated_reason = docker_image.get("reason")
                 return docker_image_name, deprecated_reason
         return ""
+
+    def is_native_image_in_dockerimage_field(self) -> bool:
+        """
+        Checks if py3-native docker image is in the "dockerimage" yml field
+
+        Returns:
+            bool: True if py3-native docker image is configured in the "dockerimage" field, False otherwise.
+
+        """
+        return (
+            NATIVE_IMAGE_DOCKER_NAME in self.yml_docker_image
+            or NATIVE_IMAGE_DEVDEMISTO_NAME in self.yml_docker_image
+        )

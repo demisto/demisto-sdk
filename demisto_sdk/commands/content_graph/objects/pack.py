@@ -181,6 +181,7 @@ class PackContentItems(BaseModel):
 
 class PackMetadata(BaseModel):
     name: str
+    id: str
     description: Optional[str]
     created: Optional[str]
     updated: Optional[str]
@@ -354,14 +355,15 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: i
         client: demisto_client,
         marketplace: MarketplaceVersions,
         target_demisto_version: Version,
+        zip: bool = False,
         **kwargs,
     ):
-        if kwargs["zipped"]:
+        if zip:
             self._zip_and_upload(
                 client=client,
                 marketplace=marketplace,
                 target_demisto_version=target_demisto_version,
-                skip_validations=kwargs["skip_validations"],
+                skip_validations=kwargs.get("skip_validations", False),
             )
         else:
             self._upload_item_by_item(
@@ -383,8 +385,9 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: i
         with TemporaryDirectory() as dir:
             dir_path = Path(dir)
             self.dump(dir_path, marketplace=marketplace)
+            shutil.make_archive(str(dir_path.parent / self.name), "zip", dir_path)
             return upload_zipped_pack(
-                path=dir_path,
+                path=(dir_path.parent / self.name).with_suffix(".zip"),
                 client=client,
                 target_demisto_version=target_demisto_version,
                 skip_validations=skip_validations,

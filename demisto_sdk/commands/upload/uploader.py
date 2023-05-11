@@ -68,6 +68,7 @@ class Uploader:
         reattach: bool = False,
         override_existing: bool = False,
         marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR,
+        zip: bool = False,
         **kwargs,
     ):
         self.path = None if input is None else Path(input)
@@ -93,6 +94,7 @@ class Uploader:
         self.should_reattach_files = reattach
         self.override_existing = override_existing
         self.marketplace = marketplace
+        self.zip = zip  # -z flag
 
     def _upload_zipped(self, path: Path) -> bool:
         """
@@ -250,7 +252,7 @@ class Uploader:
         self.print_summary()
         return SUCCESS_RETURN_CODE if success else ERROR_RETURN_CODE
 
-    def _upload_single(self, path: Path, zipped: bool = False) -> bool:
+    def _upload_single(self, path: Path) -> bool:
         """
         Upload a content item, a pack, or a zip containing packs.
 
@@ -278,12 +280,12 @@ class Uploader:
                 client=self.client,
                 marketplace=self.marketplace,
                 target_demisto_version=Version(str(self.demisto_version)),
-                zipped=zipped,  # only used for Packs
+                zip=self.zip,  # only used for Packs
             )
 
             # upon reaching this line, the upload is surely successful
             uploaded_successfully = parse_uploaded_successfully(
-                content_item=content_item, zipped=zipped
+                content_item=content_item, zip=self.zip
             )
             self._successfully_uploaded_content_items.extend(uploaded_successfully)
             for item_uploaded_successfully in uploaded_successfully:
@@ -634,11 +636,11 @@ def is_uploadable_dir(path: Path) -> bool:
 
 
 def parse_uploaded_successfully(
-    content_item: Union[Pack, ContentItem], zipped: bool
+    content_item: Union[Pack, ContentItem], zip: bool
 ) -> Iterable[ContentItem]:
     # packs uploaded unzipped are uploaded item by item, we have to extract the item details here
     return (
         iter(content_item.content_items)  # type:ignore[return-value]
-        if (isinstance(content_item, Pack) and not zipped)
+        if (isinstance(content_item, Pack) and not zip)
         else (content_item,)
     )

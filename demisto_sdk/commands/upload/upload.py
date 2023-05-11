@@ -1,6 +1,7 @@
 import logging
 import shutil
 import tempfile
+from contextlib import suppress
 from pathlib import Path
 from typing import Iterable
 
@@ -16,17 +17,17 @@ from demisto_sdk.utils.utils import check_configuration_file
 
 logger = logging.getLogger("demisto-sdk")
 
+MULTIPLE_ZIPPED_PACKS_FILE_NAME = "uploadable_packs.zip"
+
 
 def upload_content_entity(**kwargs):
     from demisto_sdk.commands.upload.uploader import ConfigFileParser, Uploader
 
     keep_zip = kwargs.pop("keep_zip", None)
-    zipped = kwargs.get("zip", False)
-    config_file_path = kwargs.pop("input_config_file", None)
 
     marketplace: MarketplaceVersions = parse_marketplace_kwargs(kwargs)
 
-    if config_file_path:
+    if config_file_path := kwargs.pop("input_config_file", None):
         logger.info("Uploading files from config file")
         if input_ := kwargs.get("input"):
             logger.warning(f"[orange]The input ({input_}) will NOT be used[/orange]")
@@ -39,7 +40,7 @@ def upload_content_entity(**kwargs):
             dir=Path(output_zip_path),
         )
         kwargs["detached_files"] = True
-        kwargs["input"] = Path(output_zip_path, "uploadable_packs.zip")
+        kwargs["input"] = Path(output_zip_path, MULTIPLE_ZIPPED_PACKS_FILE_NAME)
 
     check_configuration_file("upload", kwargs)
 
@@ -47,7 +48,7 @@ def upload_content_entity(**kwargs):
     upload_result = Uploader(marketplace=marketplace, **kwargs).upload()
 
     # Clean up
-    if (zipped or config_file_path) and not keep_zip:
+    if config_file_path and not keep_zip:
         shutil.rmtree(output_zip_path, ignore_errors=True)
 
     return upload_result
@@ -63,10 +64,20 @@ def zip_multiple_packs(
             logger.error(f"[red]{path} does not exist, skipping[/red]")
             continue
 
-        pack = BaseContent.from_path(path)
+        if path.is_file() and path.suffix == ".zip":
+            # zipped pack
+            shutil.copy(src=path, dst=dir)
+            continue
+
+        pack = None
+        with suppress(Exception):
+            pack = BaseContent.from_path(path)
         if (pack is None) or (not isinstance(pack, Pack)):
             logger.error(f"[red]could not parse pack from {path}, skipping[/red]")
             continue
 
-        pack.dump(dir, marketplace)
-    shutil.make_archive(str(dir / "uploadable_packs"), "zip", str(dir))
+        pack.dump(dir, marketplace)  # dump into a zip
+
+    shutil.make_archive(
+        str((dir / Path(MULTIPLE_ZIPPED_PACKS_FILE_NAME).stem)), "zip", str(dir)
+    )

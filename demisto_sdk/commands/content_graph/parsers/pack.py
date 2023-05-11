@@ -1,3 +1,4 @@
+from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, Iterator, List, Optional
 
@@ -86,14 +87,18 @@ class PackContentItems:
         )
 
 
+NOW = datetime.now().strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
 class PackMetadataParser:
     """A pack metadata parser."""
 
     def __init__(self, metadata: Dict[str, Any]) -> None:
         self.name: str = metadata["name"]
+        self.id: str = self.name
         self.description: str = metadata["description"]
-        self.created: str = metadata.get("created", "")
-        self.updated: str = metadata.get("updated", "")
+        self.created: str = metadata.get("created", NOW)
+        self.updated: str = metadata.get("updated", NOW)
         self.support: str = metadata["support"]
         self.email: str = metadata.get("email", "")
         self.url: str = metadata["url"]

@@ -1,9 +1,7 @@
-import inspect
 import logging
 import re
 import shutil
 import zipfile
-from functools import wraps
 from io import BytesIO
 from pathlib import Path
 from typing import Any, Optional
@@ -24,7 +22,6 @@ from demisto_sdk.commands.common.constants import (
 from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.tools import src_root
-from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 from demisto_sdk.commands.content_graph.objects.dashboard import Dashboard
 from demisto_sdk.commands.content_graph.objects.incident_field import IncidentField
@@ -40,8 +37,17 @@ from demisto_sdk.commands.content_graph.objects.mapper import Mapper
 from demisto_sdk.commands.content_graph.objects.playbook import Playbook
 from demisto_sdk.commands.content_graph.objects.script import Script
 from demisto_sdk.commands.content_graph.objects.widget import Widget
+from demisto_sdk.commands.content_graph.tests.create_content_graph_test import (
+    mock_integration,
+    mock_pack,
+)
 from demisto_sdk.commands.test_content import tools
 from demisto_sdk.commands.upload import uploader
+from demisto_sdk.commands.upload.upload import (
+    MULTIPLE_ZIPPED_PACKS_FILE_NAME,
+    BaseContent,
+    zip_multiple_packs,
+)
 from demisto_sdk.commands.upload.uploader import (
     ERROR_RETURN_CODE,
     SUCCESS_RETURN_CODE,
@@ -67,18 +73,6 @@ DUMMY_SCRIPT_OBJECT: ContentItem = BaseContent.from_path(  # type:ignore[assignm
         f"{git_path()}/demisto_sdk/tests/test_files/Packs/DummyPack/Scripts/DummyScript/DummyScript.py"
     )
 )
-# Taken from https://github.com/pytest-dev/pytest-bdd/issues/155
-if not hasattr(inspect, "_orig_findsource"):
-
-    @wraps(inspect.findsource)
-    def findsource(*args, **kwargs):
-        try:
-            return inspect._orig_findsource(*args, **kwargs)
-        except IndexError:
-            raise OSError("Invalid line")
-
-    inspect._orig_findsource = inspect.findsource
-    inspect.findsource = findsource
 
 
 @pytest.fixture
@@ -1011,6 +1005,62 @@ class TestItemDetacher:
         assert len(detached_items_ids) == 1
         assert detached_items_ids == ["Pack_playbook"]
 
+        # Tests that the function successfully zips and dumps multiple valid pack paths.
 
-def exception_raiser(**kwargs):
-    raise Exception()
+    def test_zip_multiple_packs(self, tmp_path, mocker):
+        tmp_path = tmp_path / "Packs"
+        tmp_path.mkdir()
+
+        pack0 = mock_pack(name="Pack0", path=tmp_path / "Pack0")
+        pack0.path.mkdir(parents=True)
+        pack0.content_items.integration.append(mock_integration())
+        (pack0.path / "README.md").touch()
+        (pack0.path / "pack_metadata.json").touch()
+
+        pack1 = mock_pack(name="Pack1", path=tmp_path / "Pack1")
+        pack1.path.mkdir(parents=True)
+        pack1.content_items.integration.append(
+            mock_integration(path=pack1.path / "Integrations")
+        )
+        (pack1.path / "README.md").touch()
+        (pack1.path / "pack_metadata.json").touch()
+
+        pack_to_zip = mock_pack(name="zipped", path=tmp_path / "Pack_zip")
+        pack_to_zip.path.mkdir(parents=True)
+        pack_to_zip.content_items.integration.append(
+            mock_integration(path=pack_to_zip.path / "Integrations")
+        )
+        (pack_to_zip.path / "README.md").touch()
+        (pack_to_zip.path / "pack_metadata.json").touch()
+        shutil.make_archive(pack_to_zip.path, "zip")
+        shutil.rmtree(pack_to_zip.path)  # leave only the zip
+
+        zipped_pack_path = tmp_path / "zipped.zip"
+        mocker.patch.object(
+            BaseContent, "from_path", side_effect=[pack0, pack1, pack_to_zip]
+        )
+        zip_multiple_packs(
+            [pack0.path, pack1.path, zipped_pack_path],
+            MarketplaceVersions.XSOAR,
+            tmp_path,
+        )
+
+        assert (zip_path := (tmp_path / MULTIPLE_ZIPPED_PACKS_FILE_NAME)).exists()
+        with zipfile.ZipFile(zip_path, "r") as zip_file:
+            assert set(zip_file.namelist()) == {
+                {
+                    "pack_metadata.json",
+                    "README.md",
+                    "Integrations/",
+                    "Integrations/integration-Packs",
+                    "Pack1/",
+                    "Integrations/integration-Integrations",
+                    "uploadable_packs.zip",
+                    "Pack1/pack_metadata.json",
+                    "Pack0/pack_metadata.json",
+                    "metadata.json",
+                    "Pack1/README.md",
+                    "Pack0/README.md",
+                    "Pack0/",
+                }
+            }

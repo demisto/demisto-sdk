@@ -9,7 +9,7 @@ from demisto_sdk.commands.common.tools import (
     get_all_content_objects_paths_in_dir,
     get_marketplace_to_core_packs,
     get_pack_name,
-    replace_incident_to_alerts,
+    replace_incident_to_alert,
 )
 from demisto_sdk.commands.content_graph.interface.neo4j.neo4j_graph import (
     Neo4jContentGraphInterface as ContentGraphInterface,
@@ -308,7 +308,7 @@ class GraphValidator(BaseValidator):
                     error_message,
                     error_code,
                 ) = Errors.duplicated_script_name(
-                    replace_incident_to_alerts(script_name),
+                    replace_incident_to_alert(script_name),
                     script_name
                 )
                 if self.handle_error(

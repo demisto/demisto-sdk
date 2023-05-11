@@ -1,8 +1,7 @@
-import re
 import copy
 import logging
+import re
 from typing import Any, List, Tuple
-
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem

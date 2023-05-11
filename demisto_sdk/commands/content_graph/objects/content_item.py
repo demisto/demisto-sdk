@@ -18,13 +18,11 @@ from pydantic import DirectoryPath, validator
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.logger import logger
+from demisto_sdk.commands.common.tools import replace_incident_to_alert
 from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.prepare_content.preparers.marketplace_suffix_preparer import (
     MarketplaceSuffixPreparer,
-)
-from demisto_sdk.commands.common.tools import (
-    replace_incident_to_alerts
 )
 
 
@@ -147,11 +145,11 @@ class ContentItem(BaseContent):
 
             if incident_to_alert:
                 if "name" in summary_res:
-                    summary_res["name"] = replace_incident_to_alerts(
+                    summary_res["name"] = replace_incident_to_alert(
                         summary_res["name"]
                     )
                 if "description" in summary_res:
-                    summary_res["description"] = replace_incident_to_alerts(
+                    summary_res["description"] = replace_incident_to_alert(
                         summary_res.get('description', "")
                     )
 

@@ -3537,7 +3537,7 @@ def get_pack_paths_from_files(file_paths: Iterable[str]) -> list:
     return list(pack_paths)
 
 
-def replace_incident_to_alerts(value: str) -> str:
+def replace_incident_to_alert(value: str) -> str:
     if not isinstance(value, str):
         return value
 

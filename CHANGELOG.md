@@ -3,6 +3,7 @@
 ## Unreleased
 * Removed `Flake8` from **pre-commit**, as `ruff` covers its basic rules.
 * Improved log readability by silencing non-critical `neo4j` (content graph infrastructure) logs.
+* Fixed an issue with **run-unit-tests** command on python2 content items.
 
 ## 1.14.3
 * Fixed an issue where **run-unit-tests** failed running on items with `test_data`.

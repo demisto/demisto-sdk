@@ -1,5 +1,4 @@
 # Changelog
-* Fixed an issue when trying to fetch remote files when not under the content repo.
 
 ## Unreleased
 * Added a validation that the **validate** command will fail if the `dockerimage` field in scripts/integrations uses any py3-native docker image.
@@ -7,6 +6,7 @@
 * Improved log readability by silencing non-critical `neo4j` (content graph infrastructure) logs.
 * Fixed an issue where **run-unit-tests** failed on python2 content items.
 * Fixed an issue where **modeling-rules test** did not properly handle query fields that pointed to a string.
+* Fixed an issue when trying to fetch remote files when not under the content repo.
 
 ## 1.14.3
 * Fixed an issue where **run-unit-tests** failed running on items with `test_data`.

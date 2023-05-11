@@ -404,8 +404,8 @@ class TestCreateContentGraph:
         assert (
             tmp_path / "TestPack" / "Integrations" / "integration-integration_0.yml"
         ).exists()
-        assert (tmp_path / "TestPack" / "Scripts" / "script-SampleScript.yml").exists()
-        assert (tmp_path / "TestPack" / "Scripts" / "script-TestApiModule.yml").exists()
+        assert (tmp_path / "TestPack" / "Scripts" / "script-script0.yml").exists()
+        assert (tmp_path / "TestPack" / "Scripts" / "script-script1.yml").exists()
 
         # make sure that the output file zip is created
         assert Path.exists(tmp_path / "xsoar.zip")

@@ -46,7 +46,7 @@ PLAYBOOK HELPER FUNCTIONS
 """
 
 
-def prepare_descriptions_and_names_helper(
+def prepare_descriptions_and_names_classifier(
     name_or_description_content: str, replace_incident_to_alert: bool
 ):
     if replace_incident_to_alert:
@@ -72,24 +72,24 @@ def prepare_descriptions_and_names(
                 # Since it is a server key, we do not want to change it
                 data["tasks"][task_key]["task"][
                     "description"
-                ] = prepare_descriptions_and_names_helper(
+                ] = prepare_descriptions_and_names_classifier(
                     description, replace_incident_to_alert
                 )
 
         if name := task_value.get("task", {}).get("name", ""):
             data["tasks"][task_key]["task"][
                 "name"
-            ] = prepare_descriptions_and_names_helper(name, replace_incident_to_alert)
+            ] = prepare_descriptions_and_names_classifier(name, replace_incident_to_alert)
 
     # The external playbook's description
     if description := data.get("description"):
-        data["description"] = prepare_descriptions_and_names_helper(
+        data["description"] = prepare_descriptions_and_names_classifier(
             description, replace_incident_to_alert
         )
 
     # The external playbook's name
     if name := data.get("name"):
-        data["name"] = prepare_descriptions_and_names_helper(
+        data["name"] = prepare_descriptions_and_names_classifier(
             name, replace_incident_to_alert
         )
 

@@ -27,14 +27,26 @@ from TestSuite.test_tools import ChangeCWD, str_in_call_args_list
 
 default_additional_info = load_default_additional_info_dict()
 
-FEED_REQUIRED_PARAMS_STRUCTURE = [
-    dict(
-        required_param.get("must_equal"),
-        **required_param.get("must_contain"),
-        name=required_param.get("name"),
-    )
-    for required_param in FEED_REQUIRED_PARAMS
-]
+
+def build_feed_required_params():
+    params = []
+    for required_param in FEED_REQUIRED_PARAMS:
+        have_at_least_one = {
+            key: val[-1] if isinstance(val, list) else val
+            for key, val in required_param.get("have_at_least_one").items()
+        }
+        params.append(
+            dict(
+                required_param.get("must_equal"),
+                **required_param.get("must_contain"),
+                name=required_param.get("name"),
+                **have_at_least_one,
+            )
+        )
+    return params
+
+
+FEED_REQUIRED_PARAMS_STRUCTURE = build_feed_required_params()
 
 
 def mock_structure(

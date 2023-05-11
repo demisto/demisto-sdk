@@ -3,6 +3,8 @@
 ## Unreleased
 * Removed `Flake8` from **pre-commit**, as `ruff` covers its basic rules.
 * Improved log readability by silencing non-critical `neo4j` (content graph infrastructure) logs.
+* Fixed an issue where **modeling-rules test** did not properly handle query fields that pointed to a string.
+
 
 ## 1.14.3
 * Fixed an issue where **run-unit-tests** failed running on items with `test_data`.
@@ -32,22 +34,16 @@
 * Added a validation that the **modeling-rules test** command will fail if no test data file exist.
 * Added support for the `<~XPANSE>` marketplace tag in release notes.
 * Added support for marketplace tags in the **doc-review** command.
-* Added **generate-unit-tests** documentation to the repo README.
-* Added the `hiddenpassword` field to the integration schema, allowing **validate** to run on integrations with username-only inputs.
-* Improved logs and error handling in the **modeling-rules test** command.
-* Improved the warning message displayed for Contribution PRs editing outdated code.
-* Improved the clarity of error messages for cases where yml files cannot be parsed as a dictionary.
-* Updated the `XSIAMReport` schema.
-* Standardized repo-wide logging. All logs are now created in one logger instance.
-* **lint** now prevents unit-tests from accessing online resources in runtime.
 * Updated the logs shown during lint when running in docker.
 * Fixed an issue where **validate** showed errors twice.
+* Added **generate-unit-tests** documentation to the repo README.
 * Fixed an issue where **validate** did not fail when xif files had wrong naming.
+* Added the `hiddenpassword` field to the integration schema, allowing **validate** to run on integrations with username-only inputs.
 * Fixed an issue where **doc-review** required dot suffixes in release notes describing new content.
+* Improved logs and error handling in the **modeling-rules test** command.
 * Fixed an issue where **download** command failed when running on a beta integration.
-* Fixed an issue where **update-release-notes** generated release notes for packs in their initial version (1.0.0).
-* Fixed an issue with **update-content-graph** where `--use-git` parameter was ignored when using `--imported-path` parameter.
-* Fixed an issue where **validate** failed on playbooks with valid inputs, since it did not collect the playbook inputs occurrences properly.
+* Added the `DEMISTO_SDK_GRAPH_FORCE_CREATE` environment variable. Use it to force the SDK to recreate the graph, rather than update it.
+* Added support for code importing multi-level ApiModules to **lint**.
 
 ## 1.13.0
 * Added the pack version to the code files when calling **unify**. The same value is removed when calling **split**.
@@ -59,6 +55,7 @@
 * Fixed an issue where **validate** would fail when playbook inputs contain Transform Language (DT).
 * Added a new **validate** check, making sure a first level header exist in release notes (RN116)
 * Fixed an issue where **lint** would not properly handle multiple ApiModules imports.
+
 
 ## 1.12.0
 * Added the **pre-commit** command, to improve code quality of XSOAR content.
@@ -78,7 +75,6 @@
 * Fixed an issue where **validate** did not properly check `conf.json` when the latter is modified.
 * Fixed an issue in the **upload** command, where a prompt was not showing on the console.
 * Fixed an issue where running **lint** failed installing dependencies in containers.
-* Added integration configuration for *Cortex REST API* integration.
 
 ## 1.11.0
 * **Note: Demisto-SDK will soon stop supporting Python 3.8**

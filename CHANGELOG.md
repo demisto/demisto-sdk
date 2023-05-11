@@ -8,6 +8,7 @@
 * Fixed an issue where **modeling-rules test** did not properly handle query fields that pointed to a string.
 
 ## 1.14.3
+* Added a validation that the **validate** command will fail if the `dockerimage` field in scripts/integrations uses any py3-native docker image.
 * Fixed an issue where **run-unit-tests** failed running on items with `test_data`.
 * Updated the demisto-py to v3.2.10 which now supports url decoding for the proxy authentication password.
 * Fixed an issue where **generate-outputs** did not generate context paths for empty lists or dictionaries in the response.

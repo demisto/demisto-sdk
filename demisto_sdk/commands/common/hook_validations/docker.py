@@ -552,7 +552,10 @@ class DockerImageValidator(BaseValidator):
             bool: True if py3-native docker image is configured in the "dockerimage" field, False otherwise.
 
         """
-        return (
-            NATIVE_IMAGE_DOCKER_NAME in self.yml_docker_image
-            or NATIVE_IMAGE_DEVDEMISTO_NAME in self.yml_docker_image
-        )
+        if self.yml_docker_image:
+            return (
+                NATIVE_IMAGE_DOCKER_NAME in self.yml_docker_image
+                or NATIVE_IMAGE_DEVDEMISTO_NAME in self.yml_docker_image
+            )
+
+        return False

@@ -1,9 +1,9 @@
 # Changelog
-* Fixed an issue when trying to fetch remote files when not under the content repo.
 
 ## Unreleased
 * Removed `Flake8` from **pre-commit**, as `ruff` covers its basic rules.
 * Improved log readability by silencing non-critical `neo4j` (content graph infrastructure) logs.
+* Fixed an issue when trying to fetch remote files when not under the content repo.
 
 ## 1.14.3
 * Fixed an issue where **run-unit-tests** failed running on items with `test_data`.

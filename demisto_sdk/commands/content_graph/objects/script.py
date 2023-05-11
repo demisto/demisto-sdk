@@ -51,20 +51,28 @@ class Script(IntegrationScript, content_type=ContentType.SCRIPT):  # type: ignor
         data = self.prepare_for_upload(current_marketplace=marketplace)
 
         # Keeps the original name of the script to redefine it at the end of the dump process
-        original_path = self.path
-        for data in MarketplaceIncidentToAlertScriptsPreparer.prepare(
-                data, marketplace, self.is_incident_to_alert(marketplace)):
-
+        # original_path = self.path
+        for is_new, data in enumerate(MarketplaceIncidentToAlertScriptsPreparer.prepare(
+                data, marketplace, self.is_incident_to_alert(marketplace))):
+            if is_new:
+                tmp_obj = self.copy()
+                tmp_obj.path = self.path.with_name(f"{data.get('name')}.yml")
+                try:
+                    with (dir / tmp_obj.normalize_name).open("w") as f:
+                        tmp_obj.handler.dump(data, f)
+                except FileNotFoundError as e:
+                    logger.warning(f"Failed to dump {tmp_obj.path} to {dir}: {e}")
             # Sets the name of the script to the new name so that it will be normalized
-            self.path = self.path.with_name(f"{data.get('name')}.yml")
-            try:
-                with (dir / self.normalize_name).open("w") as f:
-                    self.handler.dump(data, f)
-            except FileNotFoundError as e:
-                logger.warning(f"Failed to dump {self.path} to {dir}: {e}")
+            # self.path = self.path.with_name(f"{data.get('name')}.yml")
+            else:
+                try:
+                    with (dir / self.normalize_name).open("w") as f:
+                        self.handler.dump(data, f)
+                except FileNotFoundError as e:
+                    logger.warning(f"Failed to dump {self.path} to {dir}: {e}")
 
         # Redefines the script name to the original name to continue the prepare process
-        self.path = original_path
+        # self.path = original_path
 
     def is_incident_to_alert(self, marketplace: MarketplaceVersions) -> bool:
         """

@@ -71,7 +71,7 @@ class DockerImageValidator(BaseValidator):
             self.docker_image_name, self.yml_docker_image, self.is_iron_bank
         )
 
-    @error_codes("DO108,DO107,DO109, DO110")
+    @error_codes("DO108,DO107,DO109,DO110")
     def is_docker_image_valid(self):
         # javascript code should not check docker
         if self.code_type == "javascript":

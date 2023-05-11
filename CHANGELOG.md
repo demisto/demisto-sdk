@@ -1,4 +1,5 @@
 # Changelog
+* Fixed an issue when trying to fetch remote files when not under the content repo.
 
 ## Unreleased
 * Removed `Flake8` from **pre-commit**, as `ruff` covers its basic rules.

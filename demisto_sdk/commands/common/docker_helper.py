@@ -44,10 +44,10 @@ def init_global_docker_client(timeout: int = 60, log_prompt: str = ""):
     global DOCKER_CLIENT
     if DOCKER_CLIENT is None:
         if log_prompt:
-            logger.debug(f" - init and login the docker client")
+            logger.debug(f"{log_prompt} - init and login the docker client")
         else:
             logger.debug("init and login the docker client")
-        if (ssh_client := os.getenv("DOCKER_SSH_CLIENT") is not None):
+        if ssh_client := os.getenv("DOCKER_SSH_CLIENT") is not None:
             logger.debug(f"{log_prompt} - Using ssh client setting: {ssh_client}")
         logger.debug(f"{log_prompt} - Using docker mounting: {CAN_MOUNT_FILES}")
         try:

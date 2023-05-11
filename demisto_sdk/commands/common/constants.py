@@ -1798,3 +1798,13 @@ TESTS_REQUIRE_NETWORK_PACK_IGNORE = "tests_require_network"
 
 # SKIP PREPARE CONSTANTS
 SKIP_PREPARE_SCRIPT_NAME = 'script-name-incident-to-alert'
+
+
+TABLE_INCIDENT_TO_ALERT = {
+    'incident': 'alert',
+    'incidents': 'alerts',
+    'Incident': 'Alert',
+    'Incidents': 'Alerts',
+    'INCIDENT': 'ALERT',
+    'INCIDENTS': 'ALERTS'
+}

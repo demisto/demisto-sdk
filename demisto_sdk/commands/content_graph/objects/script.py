@@ -62,11 +62,10 @@ class Script(IntegrationScript, content_type=ContentType.SCRIPT):  # type: ignor
             # in case it is a new script with an update of the name and path.
             script_name = data.get("name")
             
-            # In case the original script
-            if script_name == self.name:
+            if script_name == self.name: # the original script
                 obj = self
-            # In case the new script
-            else:
+
+            else:  # a modified script, replaced incidents->alerts
                 obj = self.copy(
                     update={
                         "name": script_name,

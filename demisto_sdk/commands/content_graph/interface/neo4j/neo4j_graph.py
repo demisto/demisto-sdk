@@ -364,10 +364,9 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         self, file_paths: List[str]
     ) -> Dict[str, str]:
         with self.driver.session() as session:
-            results = session.execute_read(
+            return session.execute_read(
                 validate_multiple_script_with_same_name, file_paths
             )
-        return results
 
     def validate_duplicate_ids(
         self, file_paths: List[str]

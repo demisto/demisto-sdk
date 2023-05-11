@@ -93,6 +93,7 @@ from demisto_sdk.commands.common.constants import (
     REPORTS_DIR,
     SCRIPTS_DIR,
     SIEM_ONLY_ENTITIES,
+    TABLE_INCIDENT_TO_ALERT,
     TEST_PLAYBOOKS_DIR,
     TESTS_AND_DOC_DIRECTORIES,
     TRIGGER_DIR,
@@ -256,15 +257,6 @@ LAYOUT_CONTAINER_FIELDS = {
 SDK_PYPI_VERSION = r"https://pypi.org/pypi/demisto-sdk/json"
 
 SUFFIX_TO_REMOVE = ("_dev", "_copy")
-
-TABLE_INCIDENT_TO_ALERT = {
-        'incident': 'alert',
-        'incidents': 'alerts',
-        'Incident': 'Alert',
-        'Incidents': 'Alerts',
-        'INCIDENT': 'ALERT',
-        'INCIDENTS': 'ALERTS'
-    }
 
 
 def generate_xsiam_normalized_name(file_name, prefix):
@@ -3551,10 +3543,9 @@ def replace_alert_to_incident(value: str) -> str:
     if not isinstance(value, str):
         return value
 
-    TABLE_ALERT_TO_INCIDENT = {v: k for k, v in TABLE_INCIDENT_TO_ALERT.items()}
     new_value = value
-    for pattern, replace_with in TABLE_ALERT_TO_INCIDENT.items():
-        new_value = re.sub(pattern, replace_with, new_value)
+    for incident, alert in TABLE_INCIDENT_TO_ALERT.items():
+        new_value = re.sub(alert, incident, new_value)
     return new_value
 
 

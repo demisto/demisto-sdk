@@ -3,33 +3,22 @@ import logging
 import re
 from typing import Any, List, Tuple
 
-from demisto_sdk.commands.common.constants import MarketplaceVersions
+from demisto_sdk.commands.common.constants import (
+    TABLE_INCIDENT_TO_ALERT,
+    MarketplaceVersions,
+)
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 
 logger = logging.getLogger("demisto-sdk")
 
 NOT_WRAPPED_RE_MAPPING = {
     rf"(?<!<-){key}(?!->)": value
-    for key, value in {
-        "incident": "alert",
-        "Incident": "Alert",
-        "incidents": "alerts",
-        "Incidents": "Alerts",
-        "INCIDENT": "ALERT",
-        "INCIDENTS": "ALERTS",
-    }.items()
+    for key, value in TABLE_INCIDENT_TO_ALERT.items()
 }
 
 WRAPPED_MAPPING = {
     rf"<-{key}->": key
-    for key in (
-        "incident",
-        "incidents",
-        "Incident",
-        "Incidents",
-        "INCIDENT",
-        "INCIDENTS",
-    )
+    for key in TABLE_INCIDENT_TO_ALERT.keys()
 }
 
 WRAPPER_SCRIPT = {
@@ -161,8 +150,7 @@ def get_script_names_from_playbooks_intended_preparation(playbook: ContentItem) 
 
 def prepare_playbook_access_fields(data: dict, playbook: ContentItem) -> dict:
     script_intended_prepare = get_script_names_from_playbooks_intended_preparation(playbook)
-    data = replace_playbook_access_fields_recursively(data, script_intended_prepare)
-    return data
+    return replace_playbook_access_fields_recursively(data, script_intended_prepare)
 
 
 """
@@ -173,6 +161,12 @@ SCRIPT HELPER FUNCTIONS
 def edit_ids_names_and_descriptions_for_script(
     data: str, incident_to_alert: bool = False
 ):
+    """
+    In any case:
+        When the word incident appears with a wrapper like this: <-incident-> the wrapper is removed.
+    If `incident_to_alert` is true:
+        Replace the word incident with alert when it does not have a wrapper (<-incident->).
+    """
     if incident_to_alert:
         for pattern, replace_with in NOT_WRAPPED_RE_MAPPING.items():
             data = re.sub(pattern, replace_with, data)
@@ -194,7 +188,7 @@ def create_wrapper_script(data: dict) -> dict:
             .replace("script_name", copy_data["name"])
         )
     except Exception as e:
-        logger.exception(f"Failed to create the wrapper script: {e}")
+        logger.exception("Failed to create the wrapper script")
 
     copy_data = set_deprecated_for_scripts(copy_data, old_script=True)
     logger.debug(
@@ -217,7 +211,7 @@ def replace_script_access_fields_recursively(
         for key in tuple(data.keys()):
             value = data[key]
             if isinstance(value, str):
-                if key in ("id", "comment", "description") or (
+                if key in {"id", "comment", "description"} or (
                     # To avoid replacing the name of the arguments
                     key == "name" and "commonfields" in data
                 ):

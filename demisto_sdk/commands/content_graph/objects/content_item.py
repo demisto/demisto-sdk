@@ -150,7 +150,7 @@ class ContentItem(BaseContent):
                     )
                 if "description" in summary_res:
                     summary_res["description"] = replace_incident_to_alert(
-                        summary_res.get('description', "")
+                        summary_res['description']
                     )
 
         return summary_res

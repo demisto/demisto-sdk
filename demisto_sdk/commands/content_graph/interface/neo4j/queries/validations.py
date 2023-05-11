@@ -177,7 +177,7 @@ AND 'marketplacev2' IN a.marketplaces
 MATCH (b:{ContentType.SCRIPT})
 WHERE b.name in {list(content_item_names_and_paths.keys())}
 AND NOT 'script-name-incident-to-alert' IN b.skip_prepare
-AND 'marketplacev2' IN b.marketplaces
+AND '{MarketplaceVersions.MarketplaceV2}' IN b.marketplaces
 RETURN b.name AS b_name
 """
     return {

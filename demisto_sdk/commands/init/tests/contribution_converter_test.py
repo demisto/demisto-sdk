@@ -150,6 +150,9 @@ def test_convert_contribution_zip_updated_pack(tmp_path, mocker):
     contribution_zip_dir.mkdir()
     # Create fake content repo and contribution zip
     repo = Repo(repo_dir)
+    mocker.patch(
+        "demisto_sdk.commands.init.contribution_converter.CONTENT_PATH", repo.path
+    )
     pack = repo.create_pack("TestPack")
     integration = pack.create_integration("integration0")
     integration.create_default_integration()

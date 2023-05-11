@@ -36,16 +36,17 @@ class MarketplaceIncidentToAlertScriptsPreparer:
         Returns:
             Tuple[dict]: A tuple of two scripts, the wrapper script and the modified original script.
         """
-        scripts_preparation = []
+        # Collects the scripts that go through the prepare process
+        results = []
 
         # Creating a wrapper script
         if incident_to_alert:
-            scripts_preparation.append(create_wrapper_script(data))
+            results.append(create_wrapper_script(data))
 
         # Handling the incident word in the script
-        scripts_preparation.append(
+        results.append(
             prepare_script_access_fields(data, incident_to_alert)
         )
         logging.debug(f"Script preparation {data['name']} completed")
 
-        return tuple(scripts_preparation)
+        return tuple(results)

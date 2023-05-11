@@ -3561,7 +3561,11 @@ def parse_marketplace_kwargs(kwargs: Dict[str, Any]) -> MarketplaceVersions:
     marketplace = kwargs.get("marketplace")
     is_xsiam = kwargs.get("is_xsiam")
 
-    if marketplace and is_xsiam:
+    if (
+        marketplace
+        and is_xsiam
+        and MarketplaceVersions(marketplace) != MarketplaceVersions.MarketplaceV2
+    ):
         raise ValueError(
             "The arguments `marketplace` and `is_xsiam` cannot be used at the same time, remove one of them."
         )

@@ -468,11 +468,12 @@ class Uploader:
 class ConfigFileParser:
     def __init__(self, path: Path):
         self.path = path
+
         with self.path.open() as f:
             self.content = json.load(f)
 
-        self.custom_packs_paths = ",".join(
-            pack.get("url") for pack in self.content.get("custom_packs", ())
+        self.custom_packs_paths: Tuple[Path, ...] = tuple(
+            Path(pack.get["url"]) for pack in self.content.get("custom_packs", ())
         )
 
 

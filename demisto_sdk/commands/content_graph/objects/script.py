@@ -1,6 +1,11 @@
 from typing import List, Set
 
-from demisto_sdk.commands.common.constants import SKIP_PREPARE_SCRIPT_NAME, MarketplaceVersions
+from pydantic import DirectoryPath
+
+from demisto_sdk.commands.common.constants import (
+    SKIP_PREPARE_SCRIPT_NAME,
+    MarketplaceVersions,
+)
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
@@ -8,9 +13,8 @@ from demisto_sdk.commands.content_graph.objects.integration_script import (
     IntegrationScript,
 )
 from demisto_sdk.commands.prepare_content.preparers.marketplace_incident_to_alert_scripts_prepare import (
-    MarketplaceIncidentToAlertScriptsPreparer
+    MarketplaceIncidentToAlertScriptsPreparer,
 )
-from pydantic import DirectoryPath
 
 
 class Script(IntegrationScript, content_type=ContentType.SCRIPT):  # type: ignore[call-arg]
@@ -50,29 +54,30 @@ class Script(IntegrationScript, content_type=ContentType.SCRIPT):  # type: ignor
         dir.mkdir(exist_ok=True, parents=True)
         data = self.prepare_for_upload(current_marketplace=marketplace)
 
-        # Keeps the original name of the script to redefine it at the end of the dump process
-        # original_path = self.path
-        for is_new, data in enumerate(MarketplaceIncidentToAlertScriptsPreparer.prepare(
-                data, marketplace, self.is_incident_to_alert(marketplace))):
-            if is_new:
-                tmp_obj = self.copy()
-                tmp_obj.path = self.path.with_name(f"{data.get('name')}.yml")
-                try:
-                    with (dir / tmp_obj.normalize_name).open("w") as f:
-                        tmp_obj.handler.dump(data, f)
-                except FileNotFoundError as e:
-                    logger.warning(f"Failed to dump {tmp_obj.path} to {dir}: {e}")
-            # Sets the name of the script to the new name so that it will be normalized
-            # self.path = self.path.with_name(f"{data.get('name')}.yml")
+        for data in MarketplaceIncidentToAlertScriptsPreparer.prepare(
+            data, marketplace, self.is_incident_to_alert(marketplace)
+        ):
+            # Two scripts return from the preparation, one the original, and other the new script,
+            # in order to normalize the name of the new script, make a copy of the original object
+            # in case it is a new script with an update of the name and path.
+            script_name = data.get("name")
+            
+            # In case the original script
+            if script_name == self.name:
+                obj = self
+            # In case the new script
             else:
-                try:
-                    with (dir / self.normalize_name).open("w") as f:
-                        self.handler.dump(data, f)
-                except FileNotFoundError as e:
-                    logger.warning(f"Failed to dump {self.path} to {dir}: {e}")
-
-        # Redefines the script name to the original name to continue the prepare process
-        # self.path = original_path
+                obj = self.copy(
+                    update={
+                        "name": script_name,
+                        "path": self.path.with_name(f"{script_name}.yml"),
+                    }
+                )
+            try:
+                with (dir / obj.normalize_name).open("w") as f:
+                    obj.handler.dump(data, f)
+            except FileNotFoundError as e:
+                logger.warning(f"Failed to dump {obj.path} to {dir}: {e}")
 
     def is_incident_to_alert(self, marketplace: MarketplaceVersions) -> bool:
         """
@@ -89,7 +94,7 @@ class Script(IntegrationScript, content_type=ContentType.SCRIPT):  # type: ignor
         return all(
             (
                 marketplace == MarketplaceVersions.MarketplaceV2,
-                'incident' in self.name.lower(),
+                "incident" in self.name.lower(),
                 SKIP_PREPARE_SCRIPT_NAME not in self.skip_prepare,
                 not self.deprecated,
             )

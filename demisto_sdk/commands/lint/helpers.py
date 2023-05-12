@@ -185,7 +185,9 @@ def get_test_modules(
                     raise requests.exceptions.ConnectionError
 
     try:
-        modules_content[Path("CommonServerUserPython.py")] = Path("CommonServerUserPython.py").read_bytes()
+        modules_content[Path("CommonServerUserPython.py")] = Path(
+            "CommonServerUserPython.py"
+        ).read_bytes()
     except FileNotFoundError:
         modules_content[Path("CommonServerUserPython.py")] = b""
 

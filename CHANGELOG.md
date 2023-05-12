@@ -6,7 +6,7 @@
 * Fixed an issue where **run-unit-tests** failed on python2 content items.
 * Fixed an issue where **modeling-rules test** did not properly handle query fields that pointed to a string.
 * Fixed an issue when trying to fetch remote files when not under the content repo.
-* Fixed an issue where **lint** failed on custom automations when using functions from CommonServerUserPython.
+* Fixed an issue where **lint** failed when importing functions from CommonServerUserPython.
 
 ## 1.14.3
 * Fixed an issue where **run-unit-tests** failed running on items with `test_data`.

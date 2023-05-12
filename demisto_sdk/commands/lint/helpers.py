@@ -184,7 +184,6 @@ def get_test_modules(
                 elif trial == 2:
                     raise requests.exceptions.ConnectionError
 
-
     return modules_content
 
 

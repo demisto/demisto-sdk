@@ -185,8 +185,7 @@ def get_test_modules(
                     raise requests.exceptions.ConnectionError
 
     try:
-        module_full_path = content_repo.working_dir / Path("CommonServerUserPython.py")
-        modules_content[Path("CommonServerUserPython.py")] = (module_full_path).read_bytes()
+        modules_content[Path("CommonServerUserPython.py")] = Path("CommonServerUserPython.py").read_bytes()
     except FileNotFoundError:
         modules_content[Path("CommonServerUserPython.py")] = b""
 

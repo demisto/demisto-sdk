@@ -184,12 +184,6 @@ def get_test_modules(
                 elif trial == 2:
                     raise requests.exceptions.ConnectionError
 
-    try:
-        modules_content[Path("CommonServerUserPython.py")] = Path(
-            "CommonServerUserPython.py"
-        ).read_bytes()
-    except FileNotFoundError:
-        modules_content[Path("CommonServerUserPython.py")] = b""
 
     return modules_content
 

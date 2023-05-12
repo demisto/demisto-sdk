@@ -127,6 +127,7 @@ def get_test_modules(
             Path("demistomock.py"),
             Path("dev_envs/pytest/conftest.py"),
             Path("CommonServerPython.py"),
+            Path("CommonServerUserPython.py"),
             Path("demistomock.ps1"),
             Path("CommonServerPowerShell.ps1"),
         ]
@@ -183,7 +184,11 @@ def get_test_modules(
                 elif trial == 2:
                     raise requests.exceptions.ConnectionError
 
-    modules_content[Path("CommonServerUserPython.py")] = b""
+    try:
+        module_full_path = content_repo.working_dir / Path("CommonServerUserPython.py")
+        modules_content[Path("CommonServerUserPython.py")] = (module_full_path).read_bytes()
+    except FileNotFoundError:
+        modules_content[Path("CommonServerUserPython.py")] = b""
 
     return modules_content
 

@@ -1,10 +1,17 @@
 # Changelog
 
 ## Unreleased
+* Removed `Flake8` from **pre-commit**, as `ruff` covers its basic rules.
+* Improved log readability by silencing non-critical `neo4j` (content graph infrastructure) logs.
+* Fixed an issue where **run-unit-tests** failed on python2 content items.
+* Fixed an issue where **modeling-rules test** did not properly handle query fields that pointed to a string.
+* Fixed an issue when trying to fetch remote files when not under the content repo.
+* Fixed a validation that the **modeling-rules test** command will fail if no test data file exist.
 * Added support for mapping uuid to names for Layout files in the **download** command.
 
 ## 1.14.3
 * Fixed an issue where **run-unit-tests** failed running on items with `test_data`.
+* Updated the demisto-py to v3.2.10 which now supports url decoding for the proxy authentication password.
 * Fixed an issue where **generate-outputs** did not generate context paths for empty lists or dictionaries in the response.
 
 ## 1.14.2
@@ -76,6 +83,7 @@
 * Fixed an issue where **validate** did not properly check `conf.json` when the latter is modified.
 * Fixed an issue in the **upload** command, where a prompt was not showing on the console.
 * Fixed an issue where running **lint** failed installing dependencies in containers.
+* Added integration configuration for *Cortex REST API* integration.
 
 ## 1.11.0
 * **Note: Demisto-SDK will soon stop supporting Python 3.8**

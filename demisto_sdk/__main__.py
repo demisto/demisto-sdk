@@ -20,6 +20,7 @@ from demisto_sdk.commands.common.constants import (
 )
 from demisto_sdk.commands.common.content_constant_paths import (
     ALL_PACKS_DEPENDENCIES_DEFAULT_PATH,
+    CONTENT_PATH,
 )
 from demisto_sdk.commands.common.cpu_count import cpu_count
 from demisto_sdk.commands.common.handlers import JSON_Handler
@@ -193,14 +194,12 @@ def main(ctx, config, version, release_notes, **kwargs):
     config.configuration = Configuration()
     import dotenv
 
-    from demisto_sdk.commands.common.tools import get_content_path
-
     if sys.version_info[:2] == (3, 8):
         logger.info(
             "[red]Demisto-SDK will soon stop supporting Python 3.8. Please update your python environment.[/red]"
         )
 
-    dotenv.load_dotenv(Path(get_content_path()) / ".env", override=True)  # type: ignore # load .env file from the cwd
+    dotenv.load_dotenv(CONTENT_PATH / ".env", override=True)  # type: ignore # load .env file from the cwd
     if (
         not os.getenv("DEMISTO_SDK_SKIP_VERSION_CHECK")
         or not os.getenv("CI")
@@ -3251,7 +3250,7 @@ def update_content_graph(
         )
 
 
-@main.command()
+@main.command(short_help="Runs pre-commit hooks on the files in the repository")
 @click.help_option("-h", "--help")
 @click.option(
     "-i",
@@ -3282,10 +3281,9 @@ def update_content_graph(
     default=False,
 )
 @click.option(
-    "-ut",
-    "--unit-test",
+    "-ut/--no-ut",
+    "--unit-test/--no-unit-test",
     help="Whether to run unit tests for content items",
-    is_flag=True,
     default=False,
 )
 @click.option(
@@ -3293,22 +3291,19 @@ def update_content_graph(
     help="A comma separated list of precommit hooks to skip",
 )
 @click.option(
-    "--validate",
+    "--validate/--no-validate",
     help="Whether to run demisto-sdk validate",
-    is_flag=True,
-    default=False,
+    default=True,
 )
 @click.option(
-    "--format",
+    "--format/--no-format",
     help="Whether to run demisto-sdk format",
-    is_flag=True,
-    default=False,
+    default=True,
 )
 @click.option(
-    "--secrets",
+    "--secrets/--no-secrets",
     help="Whether to run demisto-sdk secrets",
-    is_flag=True,
-    default=False,
+    default=True,
 )
 @click.option(
     "-v",

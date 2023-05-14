@@ -28,6 +28,7 @@ from demisto_sdk.commands.common.constants import (
     XSOAR_SUPPORT_URL,
     FileType,
 )
+from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
@@ -35,7 +36,6 @@ from demisto_sdk.commands.common.tools import (
     find_type,
     get_child_directories,
     get_child_files,
-    get_content_path,
     get_display_name,
     get_pack_metadata,
 )
@@ -117,7 +117,7 @@ class ContributionConverter:
                 updating an existing pack and the pack's directory is not equivalent to the value returned from
                 running `self.format_pack_dir_name(name)`
             base_dir (Union[str], optional): Used to explicitly pass the path to the top-level directory of the
-                local content repo. If no value is passed, the `get_content_path()` function is used to determine
+                local content repo. If no value is passed, the `CONTENT_PATH` variable is used to determine
                 the path. Defaults to None.
 
         """
@@ -133,7 +133,7 @@ class ContributionConverter:
         self.create_new = create_new
         self.contribution_items_version: Dict[str, Dict[str, str]] = {}
         self.contribution_items_version_note = ""
-        base_dir = base_dir or get_content_path()  # type: ignore
+        base_dir = base_dir or CONTENT_PATH  # type: ignore
         self.packs_dir_path = os.path.join(base_dir, "Packs")  # type: ignore
         if not os.path.isdir(self.packs_dir_path):
             os.makedirs(self.packs_dir_path)

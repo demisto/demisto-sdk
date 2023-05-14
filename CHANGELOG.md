@@ -7,6 +7,7 @@
 * Fixed an issue where **modeling-rules test** did not properly handle query fields that pointed to a string.
 * Fixed an issue when trying to fetch remote files when not under the content repo.
 * Fixed a validation that the **modeling-rules test** command will fail if no test data file exist.
+* Fixed an issue where **format** command failed while updating the `fromversion` entry.
 * Added support for mapping uuid to names for Layout files in the **download** command.
 
 ## 1.14.3

@@ -1007,62 +1007,63 @@ class TestItemDetacher:
 
         # Tests that the function successfully zips and dumps multiple valid pack paths.
 
-    def test_zip_multiple_packs(self, tmp_path, mocker):
-        tmp_path = tmp_path / "Packs"
-        tmp_path.mkdir()
 
-        pack0 = mock_pack(name="Pack0", path=tmp_path / "Pack0")
-        pack0.path.mkdir(parents=True)
-        pack0.content_items.integration.append(
-            mock_integration(path=pack0.path / "Integrations")
-        )
-        (pack0.path / "README.md").touch()
-        (pack0.path / "pack_metadata.json").touch()
+def test_zip_multiple_packs(self, tmp_path, mocker):
+    tmp_path = tmp_path / "Packs"
+    tmp_path.mkdir()
 
-        pack1 = mock_pack(name="Pack1", path=tmp_path / "Pack1")
-        pack1.path.mkdir(parents=True)
-        pack1.content_items.integration.append(
-            mock_integration(path=pack1.path / "Integrations")
-        )
-        (pack1.path / "README.md").touch()
-        (pack1.path / "pack_metadata.json").touch()
+    pack0 = mock_pack(name="Pack0", path=tmp_path / "Pack0")
+    pack0.path.mkdir(parents=True)
+    pack0.content_items.integration.append(
+        mock_integration(path=pack0.path / "Integrations")
+    )
+    (pack0.path / "README.md").touch()
+    (pack0.path / "pack_metadata.json").touch()
 
-        pack_to_zip = mock_pack(name="zipped", path=tmp_path / "Pack_zip")
-        pack_to_zip.path.mkdir(parents=True)
-        pack_to_zip.content_items.integration.append(
-            mock_integration(path=pack_to_zip.path / "Integrations")
-        )
-        (pack_to_zip.path / "README.md").touch()
-        (pack_to_zip.path / "pack_metadata.json").touch()
-        shutil.make_archive(
-            str(pack_to_zip.path.parent / pack_to_zip.name), "zip", pack_to_zip.path
-        )
-        shutil.rmtree(pack_to_zip.path)  # leave only the zip
+    pack1 = mock_pack(name="Pack1", path=tmp_path / "Pack1")
+    pack1.path.mkdir(parents=True)
+    pack1.content_items.integration.append(
+        mock_integration(path=pack1.path / "Integrations")
+    )
+    (pack1.path / "README.md").touch()
+    (pack1.path / "pack_metadata.json").touch()
 
-        zipped_pack_path = tmp_path / "zipped.zip"
-        mocker.patch.object(BaseContent, "from_path", side_effect=[pack0, pack1, None])
-        zip_multiple_packs(
-            [pack0.path, pack1.path, zipped_pack_path],
-            MarketplaceVersions.XSOAR,
-            tmp_path,
-        )
+    pack_to_zip = mock_pack(name="zipped", path=tmp_path / "Pack_zip")
+    pack_to_zip.path.mkdir(parents=True)
+    pack_to_zip.content_items.integration.append(
+        mock_integration(path=pack_to_zip.path / "Integrations")
+    )
+    (pack_to_zip.path / "README.md").touch()
+    (pack_to_zip.path / "pack_metadata.json").touch()
+    shutil.make_archive(
+        str(pack_to_zip.path.parent / pack_to_zip.name), "zip", pack_to_zip.path
+    )
+    shutil.rmtree(pack_to_zip.path)  # leave only the zip
 
-        assert (zip_path := (tmp_path / MULTIPLE_ZIPPED_PACKS_FILE_NAME)).exists()
-        with zipfile.ZipFile(zip_path, "r") as zip_file:
-            assert set(zip_file.namelist()) == {
-                {
-                    "pack_metadata.json",
-                    "README.md",
-                    "Integrations/",
-                    "Integrations/integration-Packs",
-                    "Pack1/",
-                    "Integrations/integration-Integrations",
-                    "uploadable_packs.zip",
-                    "Pack1/pack_metadata.json",
-                    "Pack0/pack_metadata.json",
-                    "metadata.json",
-                    "Pack1/README.md",
-                    "Pack0/README.md",
-                    "Pack0/",
-                }
+    zipped_pack_path = tmp_path / "zipped.zip"
+    mocker.patch.object(BaseContent, "from_path", side_effect=[pack0, pack1, None])
+    zip_multiple_packs(
+        [pack0.path, pack1.path, zipped_pack_path],
+        MarketplaceVersions.XSOAR,
+        tmp_path,
+    )
+
+    assert (zip_path := (tmp_path / MULTIPLE_ZIPPED_PACKS_FILE_NAME)).exists()
+    with zipfile.ZipFile(zip_path, "r") as zip_file:
+        assert set(zip_file.namelist()) == {
+            {
+                "pack_metadata.json",
+                "README.md",
+                "Integrations/",
+                "Integrations/integration-Packs",
+                "Pack1/",
+                "Integrations/integration-Integrations",
+                "uploadable_packs.zip",
+                "Pack1/pack_metadata.json",
+                "Pack0/pack_metadata.json",
+                "metadata.json",
+                "Pack1/README.md",
+                "Pack0/README.md",
+                "Pack0/",
             }
+        }

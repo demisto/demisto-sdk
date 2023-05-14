@@ -3,7 +3,8 @@ import shutil
 import tempfile
 from contextlib import suppress
 from pathlib import Path
-from typing import Iterable
+from typing import Iterable, List
+from zipfile import ZipFile
 
 from pydantic import DirectoryPath
 
@@ -13,6 +14,7 @@ from demisto_sdk.commands.common.constants import (
 from demisto_sdk.commands.common.tools import parse_marketplace_kwargs
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.content_graph.objects.pack import Pack
+from demisto_sdk.commands.content_graph.objects.repository import ContentDTO
 from demisto_sdk.utils.utils import check_configuration_file
 
 logger = logging.getLogger("demisto-sdk")
@@ -59,14 +61,16 @@ def zip_multiple_packs(
     marketplace: MarketplaceVersions,
     dir: DirectoryPath,
 ):
+    packs = []
+    were_zipped: List[Path] = []
+
     for path in paths:
         if not path.exists():
             logger.error(f"[red]{path} does not exist, skipping[/red]")
             continue
 
         if path.is_file() and path.suffix == ".zip":
-            # zipped pack
-            shutil.copy(src=path, dst=dir)
+            were_zipped.append(path)
             continue
 
         pack = None
@@ -75,9 +79,16 @@ def zip_multiple_packs(
         if (pack is None) or (not isinstance(pack, Pack)):
             logger.error(f"[red]could not parse pack from {path}, skipping[/red]")
             continue
+        packs.append(pack)
 
-        pack.dump(dir, marketplace)  # dump into a zip
+    result_zip_path = dir / "content_packs.zip"
+    ContentDTO(packs=packs).dump(dir / "result", marketplace=marketplace, zip=True)
 
-    shutil.make_archive(
-        str((dir / Path(MULTIPLE_ZIPPED_PACKS_FILE_NAME).stem)), "zip", str(dir)
+    with ZipFile(result_zip_path, "a") as zip_file:
+        # copy files that were already zipped into the result
+        for was_zipped in were_zipped:
+            zip_file.write(was_zipped, was_zipped.name)
+
+    shutil.move(  # rename
+        str(result_zip_path), result_zip_path.with_name(MULTIPLE_ZIPPED_PACKS_FILE_NAME)
     )

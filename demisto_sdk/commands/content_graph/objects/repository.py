@@ -12,7 +12,7 @@ from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import get_content_path
 from demisto_sdk.commands.content_graph.objects.pack import Pack
 
-USE_FUTURE = True  # toggle this for better debugging
+USE_MULTIPROCESSING = False  # toggle this for better debugging
 
 
 class ContentDTO(BaseModel):
@@ -25,7 +25,7 @@ class ContentDTO(BaseModel):
         dir.mkdir(parents=True, exist_ok=True)
         logger.debug("Starting repository dump")
         start_time = time.time()
-        if USE_FUTURE:
+        if USE_MULTIPROCESSING:
             with Pool(processes=cpu_count()) as pool:
                 pool.starmap(
                     Pack.dump,

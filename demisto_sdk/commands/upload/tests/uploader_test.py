@@ -1013,7 +1013,9 @@ class TestItemDetacher:
 
         pack0 = mock_pack(name="Pack0", path=tmp_path / "Pack0")
         pack0.path.mkdir(parents=True)
-        pack0.content_items.integration.append(mock_integration())
+        pack0.content_items.integration.append(
+            mock_integration(path=pack0.path / "Integrations")
+        )
         (pack0.path / "README.md").touch()
         (pack0.path / "pack_metadata.json").touch()
 
@@ -1032,13 +1034,13 @@ class TestItemDetacher:
         )
         (pack_to_zip.path / "README.md").touch()
         (pack_to_zip.path / "pack_metadata.json").touch()
-        shutil.make_archive(pack_to_zip.path, "zip")
+        shutil.make_archive(
+            str(pack_to_zip.path.parent / pack_to_zip.name), "zip", pack_to_zip.path
+        )
         shutil.rmtree(pack_to_zip.path)  # leave only the zip
 
         zipped_pack_path = tmp_path / "zipped.zip"
-        mocker.patch.object(
-            BaseContent, "from_path", side_effect=[pack0, pack1, pack_to_zip]
-        )
+        mocker.patch.object(BaseContent, "from_path", side_effect=[pack0, pack1, None])
         zip_multiple_packs(
             [pack0.path, pack1.path, zipped_pack_path],
             MarketplaceVersions.XSOAR,

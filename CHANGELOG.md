@@ -11,6 +11,7 @@
 * Disabled **pre-commit** multiprocessing for `validate` and `format`, as they use a service.
 * **pre-commit** now calls `format` with `--assume-yes` and `--no-validate`.
 * Fixed an issue where **pre-commit** ran multiple times when checking out build related files.
+* Fixed an issue where **format** command failed while updating the `fromversion` entry.
 
 ## 1.14.3
 * Fixed an issue where **run-unit-tests** failed running on items with `test_data`.

@@ -181,7 +181,6 @@ class PackContentItems(BaseModel):
 
 class PackMetadata(BaseModel):
     name: str
-    id: str
     description: Optional[str]
     created: Optional[str]
     updated: Optional[str]
@@ -274,6 +273,7 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: i
             exclude={"path", "node_id", "content_type", "excluded_dependencies"}
         )
         metadata["contentItems"] = {}
+        metadata["id"] = self.object_id
         for content_item in self.content_items:
             try:
                 metadata["contentItems"].setdefault(

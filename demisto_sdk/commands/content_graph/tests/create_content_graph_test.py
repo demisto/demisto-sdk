@@ -59,7 +59,6 @@ def repository(mocker):
 def mock_pack(name: str = "SamplePack", path: Path = Path("Packs")) -> Pack:
     return Pack(
         object_id=name,
-        id=name,
         content_type=ContentType.PACK,
         node_id=f"{ContentType.PACK}:{name}",
         path=path,

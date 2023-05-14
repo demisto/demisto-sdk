@@ -1006,7 +1006,7 @@ class TestItemDetacher:
         # Tests that the function successfully zips and dumps multiple valid pack paths.
 
 
-def test_zip_multiple_packs(self, tmp_path, mocker):
+def test_zip_multiple_packs(tmp_path, mocker):
     tmp_path = tmp_path / "Packs"
     tmp_path.mkdir()
 
@@ -1049,19 +1049,17 @@ def test_zip_multiple_packs(self, tmp_path, mocker):
     assert (zip_path := (tmp_path / MULTIPLE_ZIPPED_PACKS_FILE_NAME)).exists()
     with zipfile.ZipFile(zip_path, "r") as zip_file:
         assert set(zip_file.namelist()) == {
-            {
-                "pack_metadata.json",
-                "README.md",
-                "Integrations/",
-                "Integrations/integration-Packs",
-                "Pack1/",
-                "Integrations/integration-Integrations",
-                "uploadable_packs.zip",
-                "Pack1/pack_metadata.json",
-                "Pack0/pack_metadata.json",
-                "metadata.json",
-                "Pack1/README.md",
-                "Pack0/README.md",
-                "Pack0/",
-            }
+            "pack_metadata.json",
+            "README.md",
+            "Integrations/",
+            "Integrations/integration-Packs",
+            "Pack1/",
+            "Integrations/integration-Integrations",
+            "uploadable_packs.zip",
+            "Pack1/pack_metadata.json",
+            "Pack0/pack_metadata.json",
+            "metadata.json",
+            "Pack1/README.md",
+            "Pack0/README.md",
+            "Pack0/",
         }

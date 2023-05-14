@@ -1,6 +1,9 @@
 # Changelog
 
 ## Unreleased
+
+## 1.14.4
+* Added integration configuration for *Cortex REST API* integration.
 * Removed `Flake8` from **pre-commit**, as `ruff` covers its basic rules.
 * Improved log readability by silencing non-critical `neo4j` (content graph infrastructure) logs.
 * Fixed an issue where **run-unit-tests** failed on python2 content items.
@@ -84,7 +87,6 @@
 * Fixed an issue where **validate** did not properly check `conf.json` when the latter is modified.
 * Fixed an issue in the **upload** command, where a prompt was not showing on the console.
 * Fixed an issue where running **lint** failed installing dependencies in containers.
-* Added integration configuration for *Cortex REST API* integration.
 
 ## 1.11.0
 * **Note: Demisto-SDK will soon stop supporting Python 3.8**

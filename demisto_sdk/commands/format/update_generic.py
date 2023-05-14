@@ -314,7 +314,7 @@ class BaseUpdate:
             file_type: the file type.
         """
         logger.info(
-            f"{default_from_version=}, {GENERAL_DEFAULT_FROMVERSION=}, {current_fromversion_value=}"
+            default_from_version, GENERAL_DEFAULT_FROMVERSION, current_fromversion_value
         )
         max_version = get_max_version(
             [

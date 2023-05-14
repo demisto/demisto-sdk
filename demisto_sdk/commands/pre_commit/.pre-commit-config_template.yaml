@@ -74,3 +74,4 @@ repos:
       - id: validate
 
       - id: secrets
+        args: ["--ignore-entropy"]

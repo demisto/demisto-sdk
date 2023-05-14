@@ -20,6 +20,7 @@ from demisto_sdk.commands.common.constants import (
 )
 from demisto_sdk.commands.common.content_constant_paths import (
     ALL_PACKS_DEPENDENCIES_DEFAULT_PATH,
+    CONTENT_PATH,
 )
 from demisto_sdk.commands.common.cpu_count import cpu_count
 from demisto_sdk.commands.common.handlers import JSON_Handler
@@ -193,14 +194,12 @@ def main(ctx, config, version, release_notes, **kwargs):
     config.configuration = Configuration()
     import dotenv
 
-    from demisto_sdk.commands.common.tools import get_content_path
-
     if sys.version_info[:2] == (3, 8):
         logger.info(
             "[red]Demisto-SDK will soon stop supporting Python 3.8. Please update your python environment.[/red]"
         )
 
-    dotenv.load_dotenv(Path(get_content_path()) / ".env", override=True)  # type: ignore # load .env file from the cwd
+    dotenv.load_dotenv(CONTENT_PATH / ".env", override=True)  # type: ignore # load .env file from the cwd
     if (
         not os.getenv("DEMISTO_SDK_SKIP_VERSION_CHECK")
         or not os.getenv("CI")

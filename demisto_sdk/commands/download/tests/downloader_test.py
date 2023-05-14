@@ -9,7 +9,6 @@ from typing import Callable, Tuple
 from unittest.mock import patch
 
 import pytest
-from packaging.version import Version
 
 from demisto_sdk.commands.common.constants import (
     CLASSIFIERS_DIR,
@@ -1361,22 +1360,6 @@ def test_safe_write_unicode_to_non_unicode(
     result = get_file(dest, suffix)
     assert set(result.keys()) == set(fields)
     assert set(result.values()) == {SENTENCE_WITH_UMLAUTS}
-
-
-@pytest.fixture
-def demisto_client_configure(mocker):
-    mocker.patch(
-        "demisto_sdk.commands.upload.uploader.get_demisto_version",
-        return_value=Version("6.8.0"),
-    )
-    mocker.patch(
-        "demisto_sdk.commands.common.content.objects.pack_objects.integration.integration.get_demisto_version",
-        return_value=Version("6.8.0"),
-    )
-    mocker.patch(
-        "demisto_sdk.commands.common.content.objects.pack_objects.script.script.get_demisto_version",
-        return_value=Version("6.8.0"),
-    )
 
 
 def test_find_uuids_in_content_item():

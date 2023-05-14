@@ -7,6 +7,7 @@
 * Fixed an issue where **modeling-rules test** did not properly handle query fields that pointed to a string.
 * Fixed an issue when trying to fetch remote files when not under the content repo.
 * Fixed a validation that the **modeling-rules test** command will fail if no test data file exist.
+* Fixed **format** command crashes when updating the `fromversion` entry.
 
 ## 1.14.3
 * Fixed an issue where **run-unit-tests** failed running on items with `test_data`.

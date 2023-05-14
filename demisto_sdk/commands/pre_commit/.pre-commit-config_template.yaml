@@ -52,12 +52,14 @@ repos:
         description: Checks if circle files are changed, and checkout to current if it is.
         entry: ./Tests/scripts/is_file_up_to_date.sh .circleci/config.yml "" true
         language: script
+        pass_filenames: false
 
       - id: is-gitlab-changed
         name: is-gitlab-changed
         description: Checks if gitlab files are changed, and checkout to current if it is.
         entry: ./Tests/scripts/is_file_up_to_date.sh .gitlab "" true
         language: script
+        pass_filenames: false
 
   - repo: https://github.com/demisto/demisto-sdk
     # Replace with the latest release version or master

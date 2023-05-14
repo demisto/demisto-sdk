@@ -4,6 +4,7 @@
   description: Run content test using docker
   entry: demisto-sdk run-unit-tests
   language: python
+  require_serial: true
   files: &files
     .*Packs/.*/(?:Integrations|Scripts)/.*.yml$
 
@@ -13,6 +14,7 @@
   entry: demisto-sdk validate
   pass_filenames: true
   language: python
+  require_serial: true
   files: *files
 
 - id: format
@@ -20,6 +22,7 @@
   description: Format non-code files, to comply with XSOAR standards.
   entry: demisto-sdk format
   language: python
+  require_serial: true
   files: *files
 
 - id: secrets

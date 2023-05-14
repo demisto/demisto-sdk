@@ -321,6 +321,7 @@ def _get_pack_by_id(repository: ContentDTO, pack_id: str) -> Pack:
 def mock_pack(name, marketplaces):
     return Pack(
         object_id=name,
+        id=name,
         content_type=ContentType.PACK,
         node_id=f"{ContentType.PACK}:{name}",
         path=Path("Packs"),

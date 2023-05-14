@@ -4,6 +4,7 @@ import shutil
 import zipfile
 from io import BytesIO
 from pathlib import Path
+from tempfile import TemporaryDirectory
 from typing import Any, Optional
 from unittest.mock import MagicMock, patch
 
@@ -13,6 +14,7 @@ import pytest
 from click.testing import CliRunner
 from demisto_client.demisto_api import DefaultApi
 from demisto_client.demisto_api.rest import ApiException
+from more_itertools import first_true
 from packaging.version import Version
 
 from demisto_sdk.__main__ import main, upload
@@ -120,10 +122,10 @@ def test_upload_folder(
     )
     path = Path(f"{git_path()}/demisto_sdk/tests/test_files/", path_end)
     assert path.exists()
-    uploader = Uploader(path)
+    uploader = Uploader()
     with patch.object(uploader, "client", return_value="ok"):
         assert (
-            uploader.upload() == SUCCESS_RETURN_CODE
+            uploader.upload(path) == SUCCESS_RETURN_CODE
         ), f"failed uploading {'/'.join(path.parts[-2:])}"
     assert len(uploader._successfully_uploaded_content_items) == item_count
     assert mock_upload.call_count == item_count
@@ -207,7 +209,7 @@ def test_upload_single_positive(mocker, path: str, content_class: ContentItem):
     mocker.patch.object(uploader, "client")
 
     # run
-    uploader.upload()
+    uploader.upload(path)
 
     assert len(uploader._successfully_uploaded_content_items) == 1
     assert mocked_client_upload_method.called_once()
@@ -233,7 +235,7 @@ def test_upload_single_not_supported(mocker):
     assert BaseContent.from_path(path) is None
     uploader = Uploader(input=path)
 
-    uploader.upload()
+    uploader.upload(path)
 
     assert len(uploader.failed_parsing) == 1
     failed_path, reason = uploader.failed_parsing[0]
@@ -280,7 +282,7 @@ def test_upload_incident_type_correct_file_change(demisto_client_configure, mock
     )
     uploader = Uploader(input=path, insecure=False)
     uploader.client.import_incident_types_handler = MagicMock(side_effect=save_file)
-    uploader.upload()
+    uploader.upload(path)
 
     with open(path) as json_file:
         incident_type_data = json.load(json_file)
@@ -328,7 +330,7 @@ def test_upload_incident_field_correct_file_change(demisto_client_configure, moc
     uploader.client.import_incident_fields = MagicMock(
         side_effect=save_file,
     )
-    assert uploader.upload() == SUCCESS_RETURN_CODE
+    assert uploader.upload(path) == SUCCESS_RETURN_CODE
 
     with open(path) as json_file:
         incident_field_data = json.load(json_file)
@@ -354,7 +356,7 @@ def test_upload_pack(demisto_client_configure, mocker):
         IntegrationScript, "get_supported_native_images", return_value=[]
     )
     path = Path(f"{git_path()}/demisto_sdk/tests/test_files/Packs/DummyPack")
-    uploader = Uploader(path)
+    uploader = Uploader()
     mocker.patch.object(uploader, "client")
     mocked_upload_method = mocker.patch.object(ContentItem, "upload")
     expected_entities = [
@@ -374,7 +376,7 @@ def test_upload_pack(demisto_client_configure, mocker):
         "upload_test_dashboard.json",
         "DummyXDRCTemplate.json",
     ]
-    assert uploader.upload() == SUCCESS_RETURN_CODE
+    assert uploader.upload(path) == SUCCESS_RETURN_CODE
     assert {
         content_item.path.name
         for content_item in uploader._successfully_uploaded_content_items
@@ -390,7 +392,7 @@ def test_upload_invalid_path(mocker):
         f"{git_path()}/demisto_sdk/tests/test_files/content_repo_not_exists/Scripts/"
     )
     uploader = Uploader(input=path, insecure=False)
-    assert uploader.upload() == ERROR_RETURN_CODE
+    assert uploader.upload(path) == ERROR_RETURN_CODE
     assert not any(
         (
             uploader.failed_parsing,
@@ -420,7 +422,7 @@ def test_upload_single_unsupported_file(mocker):
     )
     uploader = Uploader(input=path)
     mocker.patch.object(uploader, "client")
-    assert uploader.upload() == ERROR_RETURN_CODE
+    assert uploader.upload(path) == ERROR_RETURN_CODE
     assert uploader.failed_parsing == [(path, "unknown")]
 
 
@@ -568,9 +570,9 @@ class TestPrintSummary:
         script.yml.update({"fromversion": "0.0.0", "toversion": "1.2.3"})
         path = Path(script.path)
 
-        uploader = Uploader(path)
+        uploader = Uploader()
         assert uploader.demisto_version == Version("6.6.0")
-        assert uploader.upload() == ERROR_RETURN_CODE
+        assert uploader.upload(path) == ERROR_RETURN_CODE
         assert uploader._failed_upload_version_mismatch == [BaseContent.from_path(path)]
 
         logged = flatten_call_args(logger_info.call_args_list)
@@ -626,8 +628,8 @@ class TestZippedPackUpload:
         )
         mocker.patch.object(API_CLIENT, "generic_request", return_value=([], 200, None))
         # run
-        uploader = Uploader(path)
-        assert uploader.upload() == SUCCESS_RETURN_CODE
+        uploader = Uploader()
+        assert uploader.upload(path) == SUCCESS_RETURN_CODE
 
         # validate
         assert len(uploader._successfully_uploaded_zipped_packs) == 1
@@ -838,8 +840,7 @@ class TestZippedPackUpload:
     #
     #     assert 'Triggers/' in xsiam_pack_files
     #     assert 'XSIAMDashboards/' in xsiam_pack_files
-    @pytest.mark.parametrize(argnames="is_cleanup", argvalues=(True, False))
-    def test_upload_xsiam_pack_to_xsoar(self, mocker, is_cleanup: bool):
+    def test_upload_xsiam_pack_to_xsoar(self, mocker):
         """
         Given:
             - XSIAM pack to upload to XSOAR
@@ -848,38 +849,35 @@ class TestZippedPackUpload:
         Then:
             - Make sure XSIAM entities are not in the zip we want to upload
         """
-        if not is_cleanup:
-            mocker.patch.object(shutil, "rmtree")
         mock_api_client(mocker)
-        mocked_upload_content_packs = mocker.patch.object(
+        mocker.patch.object(
             API_CLIENT, "upload_content_packs", return_value=({}, 200, None)
         )
-        mocker.patch.object(API_CLIENT, "generic_request", return_value=([], 200, None))
+        # mocker.patch.object(API_CLIENT, "generic_request", return_value=([], 200, None))
 
-        click.Context(command=upload).invoke(
-            upload,
-            input=TEST_XSIAM_PACK,
-            xsiam=False,
-            zip=True,
-        )
-        zip_path = Path(mocked_upload_content_packs.call_args.kwargs["file"])
-        assert zip_path.exists() != is_cleanup
+        with TemporaryDirectory() as dir:
+            click.Context(command=upload).invoke(
+                upload,
+                input=TEST_XSIAM_PACK,
+                xsiam=False,
+                zip=True,
+                keep_zip=dir,
+            )
 
-        if is_cleanup:
-            return  # the following code only checks the other case
-
-        with zipfile.ZipFile(zip_path, "r") as zip_file:
-            for file_name in filter(
-                lambda _file_name: re.search(r"\.zip$", _file_name) is not None,
-                zip_file.namelist(),
-            ):
+            with zipfile.ZipFile(
+                Path(dir) / MULTIPLE_ZIPPED_PACKS_FILE_NAME, "r"
+            ) as zip_file:
+                file_name = first_true(
+                    zip_file.namelist(),
+                    pred=lambda _file_name: re.search(r"\.zip$", _file_name)
+                    is not None,
+                )
                 xsiam_pack_files = zipfile.ZipFile(
                     BytesIO(zip_file.read(file_name))
                 ).namelist()
-                break
-        assert len(xsiam_pack_files) == 2
 
         # XSIAM entities are not supposed to be uploaded to XSOAR
+        assert len(xsiam_pack_files) == 2
         assert "Triggers/" not in xsiam_pack_files
         assert "XSIAMDashboards/" not in xsiam_pack_files
 

@@ -82,7 +82,7 @@ MINIMAL_UPLOAD_SUPPORTED_VERSION = Version("6.5.0")
 MINIMAL_ALLOWED_SKIP_VALIDATION_VERSION = Version("6.6.0")
 
 
-def upload_zipped_pack(
+def upload_zip(
     path: Path,
     client: demisto_client,
     skip_validations: bool,
@@ -91,7 +91,8 @@ def upload_zipped_pack(
     """
     Used to upload an existing zip file
     """
-
+    if path.suffix != ".zip":
+        raise RuntimeError(f"cannot upload {path} as zip")
     if target_demisto_version < MINIMAL_UPLOAD_SUPPORTED_VERSION:
         raise RuntimeError(
             "Uploading packs to XSOAR versions earlier than 6.5.0 is no longer supported."
@@ -386,7 +387,7 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: i
             dir_path = Path(dir)
             self.dump(dir_path, marketplace=marketplace)
             shutil.make_archive(str(dir_path.parent / self.name), "zip", dir_path)
-            return upload_zipped_pack(
+            return upload_zip(
                 path=(dir_path.parent / self.name).with_suffix(".zip"),
                 client=client,
                 target_demisto_version=target_demisto_version,

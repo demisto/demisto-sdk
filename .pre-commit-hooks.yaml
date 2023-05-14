@@ -4,7 +4,6 @@
   description: Run content test using docker
   entry: demisto-sdk run-unit-tests
   language: python
-  require_serial: true
   files: &files
     .*Packs/.*/(?:Integrations|Scripts)/.*.yml$
 

@@ -151,7 +151,7 @@ def unit_test_runner(file_paths: List[Path], verbose: bool = False) -> int:
                                     f"Test for {integration_script.object_id} failed in {case.name} with error {case.result[0].message}: {case.result[0].text}"
                                 )
                     logger.info(
-                        f"Container status code {status_code}, logs: {container.logs()}"
+                        f"For docker image {docker_image}, container status code {status_code}, logs: {container.logs()}"
                     )
                     exit_code = 1
                 else:

@@ -36,7 +36,7 @@ from demisto_sdk.commands.content_graph.objects.exceptions import (
     FailedUploadException,
     FailedUploadMultipleException,
 )
-from demisto_sdk.commands.content_graph.objects.pack import Pack, upload_zipped_pack
+from demisto_sdk.commands.content_graph.objects.pack import Pack, upload_zip
 from demisto_sdk.commands.upload.exceptions import (
     IncompatibleUploadVersionException,
     NotUploadableException,
@@ -84,7 +84,7 @@ class Uploader:
             Tuple[Union[ContentItem, Pack], str]
         ] = []
         self._failed_upload_version_mismatch: List[ContentItem] = []
-        self._failed_upload_zipped_packs: List[str] = []
+        self._failed_upload_zips: List[str] = []
         self.failed_parsing: List[Tuple[Path, str]] = []
 
         self.demisto_version = get_demisto_version(self.client)
@@ -175,7 +175,7 @@ class Uploader:
             return False
 
         try:
-            if upload_zipped_pack(
+            if upload_zip(
                 path=path,
                 client=self.client,
                 target_demisto_version=Version(str(self.demisto_version)),
@@ -186,7 +186,7 @@ class Uploader:
 
         except Exception:
             logger.exception(f"Failed uploading {pack_names}")
-            self._failed_upload_zipped_packs.extend(pack_names)
+            self._failed_upload_zips.extend(pack_names)
 
         return False
 
@@ -233,7 +233,7 @@ class Uploader:
                 self._successfully_uploaded_zipped_packs,
                 self._failed_upload_content_items,
                 self._failed_upload_version_mismatch,
-                self._failed_upload_zipped_packs,
+                self._failed_upload_zips,
             )
         ):
             # Nothing was uploaded, nor collected as error
@@ -445,7 +445,7 @@ class Uploader:
             )
             logger.info(f"[red]FAILED PARSING CONTENT:\n{failed_parsing_str}[/red]")
 
-        if self._failed_upload_content_items or self._failed_upload_zipped_packs:
+        if self._failed_upload_content_items or self._failed_upload_zips:
             failed_upload_str = tabulate(
                 (
                     itertools.chain(
@@ -456,7 +456,7 @@ class Uploader:
                         (
                             (
                                 (item, "Pack", "see logs above")
-                                for item in self._failed_upload_zipped_packs
+                                for item in self._failed_upload_zips
                             )
                         ),
                     )

@@ -122,10 +122,10 @@ def test_upload_folder(
     )
     path = Path(f"{git_path()}/demisto_sdk/tests/test_files/", path_end)
     assert path.exists()
-    uploader = Uploader()
+    uploader = Uploader(path)
     with patch.object(uploader, "client", return_value="ok"):
         assert (
-            uploader.upload(path) == SUCCESS_RETURN_CODE
+            uploader.upload() == SUCCESS_RETURN_CODE
         ), f"failed uploading {'/'.join(path.parts[-2:])}"
     assert len(uploader._successfully_uploaded_content_items) == item_count
     assert mock_upload.call_count == item_count
@@ -209,7 +209,7 @@ def test_upload_single_positive(mocker, path: str, content_class: ContentItem):
     mocker.patch.object(uploader, "client")
 
     # run
-    uploader.upload(path)
+    uploader.upload()
 
     assert len(uploader._successfully_uploaded_content_items) == 1
     assert mocked_client_upload_method.called_once()
@@ -235,7 +235,7 @@ def test_upload_single_not_supported(mocker):
     assert BaseContent.from_path(path) is None
     uploader = Uploader(input=path)
 
-    uploader.upload(path)
+    uploader.upload()
 
     assert len(uploader.failed_parsing) == 1
     failed_path, reason = uploader.failed_parsing[0]
@@ -282,7 +282,7 @@ def test_upload_incident_type_correct_file_change(demisto_client_configure, mock
     )
     uploader = Uploader(input=path, insecure=False)
     uploader.client.import_incident_types_handler = MagicMock(side_effect=save_file)
-    uploader.upload(path)
+    uploader.upload()
 
     with open(path) as json_file:
         incident_type_data = json.load(json_file)
@@ -330,7 +330,7 @@ def test_upload_incident_field_correct_file_change(demisto_client_configure, moc
     uploader.client.import_incident_fields = MagicMock(
         side_effect=save_file,
     )
-    assert uploader.upload(path) == SUCCESS_RETURN_CODE
+    assert uploader.upload() == SUCCESS_RETURN_CODE
 
     with open(path) as json_file:
         incident_field_data = json.load(json_file)
@@ -356,7 +356,7 @@ def test_upload_pack(demisto_client_configure, mocker):
         IntegrationScript, "get_supported_native_images", return_value=[]
     )
     path = Path(f"{git_path()}/demisto_sdk/tests/test_files/Packs/DummyPack")
-    uploader = Uploader()
+    uploader = Uploader(path)
     mocker.patch.object(uploader, "client")
     mocked_upload_method = mocker.patch.object(ContentItem, "upload")
     expected_entities = [
@@ -376,7 +376,7 @@ def test_upload_pack(demisto_client_configure, mocker):
         "upload_test_dashboard.json",
         "DummyXDRCTemplate.json",
     ]
-    assert uploader.upload(path) == SUCCESS_RETURN_CODE
+    assert uploader.upload() == SUCCESS_RETURN_CODE
     assert {
         content_item.path.name
         for content_item in uploader._successfully_uploaded_content_items
@@ -392,7 +392,7 @@ def test_upload_invalid_path(mocker):
         f"{git_path()}/demisto_sdk/tests/test_files/content_repo_not_exists/Scripts/"
     )
     uploader = Uploader(input=path, insecure=False)
-    assert uploader.upload(path) == ERROR_RETURN_CODE
+    assert uploader.upload() == ERROR_RETURN_CODE
     assert not any(
         (
             uploader.failed_parsing,
@@ -422,7 +422,7 @@ def test_upload_single_unsupported_file(mocker):
     )
     uploader = Uploader(input=path)
     mocker.patch.object(uploader, "client")
-    assert uploader.upload(path) == ERROR_RETURN_CODE
+    assert uploader.upload() == ERROR_RETURN_CODE
     assert uploader.failed_parsing == [(path, "unknown")]
 
 
@@ -570,9 +570,9 @@ class TestPrintSummary:
         script.yml.update({"fromversion": "0.0.0", "toversion": "1.2.3"})
         path = Path(script.path)
 
-        uploader = Uploader()
+        uploader = Uploader(path)
         assert uploader.demisto_version == Version("6.6.0")
-        assert uploader.upload(path) == ERROR_RETURN_CODE
+        assert uploader.upload() == ERROR_RETURN_CODE
         assert uploader._failed_upload_version_mismatch == [BaseContent.from_path(path)]
 
         logged = flatten_call_args(logger_info.call_args_list)
@@ -611,7 +611,7 @@ def mock_api_client(mocker, version: str = "6.6.0"):
 
 class TestZippedPackUpload:
     @pytest.mark.parametrize("path", (TEST_PACK_ZIP, CONTENT_PACKS_ZIP))
-    def test_upload_zipped_packs(self, mocker, path: Path):
+    def test_upload_zips(self, mocker, path: Path):
         """
         Given:
             - zipped pack or zip of pack zips to upload
@@ -628,8 +628,8 @@ class TestZippedPackUpload:
         )
         mocker.patch.object(API_CLIENT, "generic_request", return_value=([], 200, None))
         # run
-        uploader = Uploader()
-        assert uploader.upload(path) == SUCCESS_RETURN_CODE
+        uploader = Uploader(path)
+        assert uploader.upload() == SUCCESS_RETURN_CODE
 
         # validate
         assert len(uploader._successfully_uploaded_zipped_packs) == 1

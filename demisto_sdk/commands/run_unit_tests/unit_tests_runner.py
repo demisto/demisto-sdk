@@ -135,7 +135,7 @@ def unit_test_runner(file_paths: List[Path], verbose: bool = False) -> int:
                     logger.info if verbose else logger.debug,
                 )
                 # wait for container to finish
-                if container.wait()["StatusCode"]:
+                if status_code := container.wait()["StatusCode"]:
                     if not (
                         integration_script.path.parent / ".report_pytest.xml"
                     ).exists():
@@ -150,6 +150,9 @@ def unit_test_runner(file_paths: List[Path], verbose: bool = False) -> int:
                                 logger.error(
                                     f"Test for {integration_script.object_id} failed in {case.name} with error {case.result[0].message}: {case.result[0].text}"
                                 )
+                    logger.info(
+                        f"Container status code {status_code}, logs: {container.logs()}"
+                    )
                     exit_code = 1
                 else:
                     logger.info(f"All tests passed for {filename} in {docker_image}")

@@ -68,10 +68,9 @@ repos:
       # enable with --test
       - id: run-unit-tests
 
-      # those will be skipped by default, to run them use --force-run-hooks=validate,format
       - id: format
-        # update docker image to the latest version
-        args: ["-ud"]
+        # update docker image to the latest version, assume yes
+        args: ["-ud", "-y"]
 
       - id: validate
 

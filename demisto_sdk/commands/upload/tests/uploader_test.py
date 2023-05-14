@@ -21,6 +21,7 @@ from demisto_sdk.__main__ import main, upload
 from demisto_sdk.commands.common.constants import (
     MarketplaceVersions,
 )
+from demisto_sdk.commands.common.content.objects.pack_objects.pack import Pack
 from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.tools import src_root
@@ -1010,34 +1011,24 @@ def test_zip_multiple_packs(tmp_path, mocker):
     tmp_path = tmp_path / "Packs"
     tmp_path.mkdir()
 
-    pack0 = mock_pack(name="Pack0", path=tmp_path / "Pack0")
-    pack0.path.mkdir(parents=True)
-    pack0.content_items.integration.append(
-        mock_integration(path=pack0.path / "Integrations")
-    )
-    (pack0.path / "README.md").touch()
-    (pack0.path / "pack_metadata.json").touch()
+    def _mock_pack(name: str) -> Pack:
+        pack = mock_pack(name=name, path=tmp_path / name)
+        pack.path.mkdir(parents=True)
+        pack.content_items.integration.append(
+            mock_integration(path=pack.path / "Integrations")
+        )
+        (pack.path / "README.md").touch()
+        (pack.path / "pack_metadata.json").touch()
+        return pack
 
-    pack1 = mock_pack(name="Pack1", path=tmp_path / "Pack1")
-    pack1.path.mkdir(parents=True)
-    pack1.content_items.integration.append(
-        mock_integration(path=pack1.path / "Integrations")
-    )
-    (pack1.path / "README.md").touch()
-    (pack1.path / "pack_metadata.json").touch()
+    pack0 = _mock_pack("Pack0")
+    pack1 = _mock_pack("Pack1")
 
-    pack_to_zip = mock_pack(name="zipped", path=tmp_path / "Pack_zip")
-    pack_to_zip.path.mkdir(parents=True)
-    pack_to_zip.content_items.integration.append(
-        mock_integration(path=pack_to_zip.path / "Integrations")
-    )
-    (pack_to_zip.path / "README.md").touch()
-    (pack_to_zip.path / "pack_metadata.json").touch()
+    pack_to_zip = _mock_pack("zipped")
     shutil.make_archive(
         str(pack_to_zip.path.parent / pack_to_zip.name), "zip", pack_to_zip.path
     )
     shutil.rmtree(pack_to_zip.path)  # leave only the zip
-
     zipped_pack_path = tmp_path / "zipped.zip"
     mocker.patch.object(BaseContent, "from_path", side_effect=[pack0, pack1, None])
     zip_multiple_packs(
@@ -1049,17 +1040,17 @@ def test_zip_multiple_packs(tmp_path, mocker):
     assert (zip_path := (tmp_path / MULTIPLE_ZIPPED_PACKS_FILE_NAME)).exists()
     with zipfile.ZipFile(zip_path, "r") as zip_file:
         assert set(zip_file.namelist()) == {
-            "pack_metadata.json",
-            "README.md",
-            "Integrations/",
-            "Integrations/integration-Packs",
-            "Pack1/",
-            "Integrations/integration-Integrations",
-            "uploadable_packs.zip",
-            "Pack1/pack_metadata.json",
-            "Pack0/pack_metadata.json",
-            "metadata.json",
-            "Pack1/README.md",
-            "Pack0/README.md",
             "Pack0/",
+            "Pack0/Integrations/",
+            "Pack0/Integrations/integration-Integrations",
+            "Pack0/README.md",
+            "Pack0/metadata.json",
+            "Pack0/pack_metadata.json",
+            "Pack1/",
+            "Pack1/Integrations/",
+            "Pack1/Integrations/integration-Integrations",
+            "Pack1/README.md",
+            "Pack1/metadata.json",
+            "Pack1/pack_metadata.json",
+            "zipped.zip",
         }

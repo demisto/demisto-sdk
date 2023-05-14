@@ -154,7 +154,7 @@ def unit_test_runner(file_paths: List[Path], verbose: bool = False) -> int:
                                 test_failed = True
                     if not test_failed:
                         logger.error(
-                            f"Something is wrong with {integration_script.path} with docker image {docker_image}. Container status code {status_code}, logs: {container.logs()}"
+                            f"Error running unit tests for {integration_script.path} using {docker_image=}. Container reports  {status_code=}, logs: {container.logs()}"
                         )
                     exit_code = 1
                 else:

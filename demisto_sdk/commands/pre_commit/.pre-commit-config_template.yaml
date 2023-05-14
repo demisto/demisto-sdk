@@ -62,8 +62,7 @@ repos:
         pass_filenames: false
 
   - repo: https://github.com/demisto/demisto-sdk
-    # Replace with the latest release version or master
-    rev: master
+    rev: ""
     hooks:
       # enable with --test
       - id: run-unit-tests

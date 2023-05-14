@@ -7,6 +7,10 @@
 * Fixed an issue where **modeling-rules test** did not properly handle query fields that pointed to a string.
 * Fixed an issue when trying to fetch remote files when not under the content repo.
 * Fixed a validation that the **modeling-rules test** command will fail if no test data file exist.
+* Added logging in case the container fails to run in **run-unit-tests**.
+* Disabled **pre-commit** multiprocessing for `validate` and `format`, as they use a service.
+* **pre-commit** now calls `format` with `--assume-yes` and `--no-validate`.
+* Fixed an issue where **pre-commit** ran multiple times when checking out build related files.
 
 ## 1.14.3
 * Fixed an issue where **run-unit-tests** failed running on items with `test_data`.

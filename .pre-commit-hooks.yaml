@@ -20,7 +20,7 @@
   name: format
   description: Format non-code files, to comply with XSOAR standards.
   entry: demisto-sdk format
-  args: ["-ud", "-y"]
+  args: ["-ud", "-y", "--no-validate"]
   language: python
   require_serial: true
   files: *files

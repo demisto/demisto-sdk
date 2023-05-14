@@ -69,7 +69,7 @@ repos:
 
       - id: format
         # update docker image to the latest version, assume yes
-        args: ["-ud", "-y"]
+        args: ["-ud", "-y", "--no-validate"]
 
       - id: validate
 

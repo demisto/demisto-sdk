@@ -19,7 +19,8 @@ from demisto_sdk.utils.utils import check_configuration_file
 
 logger = logging.getLogger("demisto-sdk")
 
-MULTIPLE_ZIPPED_PACKS_FILE_NAME = "uploadable_packs.zip"
+MULTIPLE_ZIPPED_PACKS_FILE_STEM = "uploadable_packs"
+MULTIPLE_ZIPPED_PACKS_FILE_NAME = f"{MULTIPLE_ZIPPED_PACKS_FILE_STEM}.zip"
 
 
 def upload_content_entity(**kwargs):
@@ -81,14 +82,19 @@ def zip_multiple_packs(
             continue
         packs.append(pack)
 
-    result_zip_path = dir / "content_packs.zip"
-    ContentDTO(packs=packs).dump(dir / "result", marketplace=marketplace, zip=True)
+    result_zip_path = dir / MULTIPLE_ZIPPED_PACKS_FILE_NAME
+    ContentDTO(packs=packs).dump(
+        dir / "result",
+        marketplace=marketplace,
+        zip=True,
+        output_stem=MULTIPLE_ZIPPED_PACKS_FILE_STEM,
+    )
 
     with ZipFile(result_zip_path, "a") as zip_file:
         # copy files that were already zipped into the result
         for was_zipped in were_zipped:
             zip_file.write(was_zipped, was_zipped.name)
 
-    shutil.move(  # rename
+    shutil.move(  # rename content_packs.zip
         str(result_zip_path), result_zip_path.with_name(MULTIPLE_ZIPPED_PACKS_FILE_NAME)
     )

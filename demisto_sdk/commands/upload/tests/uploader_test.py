@@ -340,7 +340,7 @@ def test_upload_incident_field_correct_file_change(demisto_client_configure, moc
     assert json.loads(DATA)["incidentFields"][0] == incident_field_data
 
 
-def test_upload_pack(demisto_client_configure, mocker):
+def test_upload_pack(demisto_client_configure, mocker, tmpdir):
     """
     Given
         - A pack called DummyPack
@@ -358,7 +358,7 @@ def test_upload_pack(demisto_client_configure, mocker):
         IntegrationScript, "get_supported_native_images", return_value=[]
     )
     path = Path(f"{git_path()}/demisto_sdk/tests/test_files/Packs/DummyPack")
-    uploader = Uploader(path)
+    uploader = Uploader(path, destination_zip_dir=tmpdir)
     mocker.patch.object(uploader, "client")
     mocked_upload_method = mocker.patch.object(ContentItem, "upload")
     expected_entities = [

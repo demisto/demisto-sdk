@@ -813,7 +813,7 @@ class TestZippedPackUpload:
         assert mock_upload_content_packs.call_args[1].get("skip_validate") is None
 
     @pytest.mark.parametrize(
-        "marketplace,expected_zip_file_count",
+        "marketplace,expected_files",
         [
             (
                 MarketplaceVersions.XSOAR,

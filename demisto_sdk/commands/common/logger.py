@@ -153,6 +153,114 @@ def _add_logging_level(
     setattr(logging, method_name, logToRoot)
 
 
+SUCCESS_LEVEL: int = 25
+if not hasattr(logging.getLoggerClass(), "success"):
+    _add_logging_level("SUCCESS", SUCCESS_LEVEL)
+
+
+class ColorConsoleFormatter(logging.Formatter):
+    FORMATS = {
+        logging.DEBUG: "[lightgrey]%(message)s[/lightgrey]",
+        logging.INFO: "[lightgrey]%(message)s[/lightgrey]",
+        logging.WARNING: "[yellow][%(levelname)s] %(message)s[/yellow]",
+        logging.ERROR: "[red][%(levelname)s] %(message)s[/red]",
+        logging.CRITICAL: "[red][bold][%(levelname)s] %(message)s[/bold[/red]",
+        SUCCESS_LEVEL: "[green]%(message)s[/green]",
+    }
+
+    def __init__(
+        self,
+    ):
+        super().__init__(
+            fmt="[%(levelname)s] %(message)s",
+            datefmt=DATE_FORMAT,
+        )
+
+    @staticmethod
+    def _record_contains_escapes(record: logging.LogRecord) -> bool:
+        message = record.getMessage()
+        for key in escapes:
+            if not key.startswith("[/]") and key in message:
+                return True
+        return False
+
+    @staticmethod
+    def _string_starts_with_escapes(string: str) -> bool:
+        message = string.strip()
+        return message.startswith("[")
+
+    @staticmethod
+    def _record_starts_with_escapes(record: logging.LogRecord) -> bool:
+        message = record.getMessage().strip()
+        return message.startswith("[")
+
+    @staticmethod
+    def _get_start_escapes(record: logging.LogRecord) -> str:
+        ret_value = ""
+
+        current_message = record.getMessage()
+        while ColorConsoleFormatter._string_starts_with_escapes(current_message):
+
+            if not ColorConsoleFormatter._string_starts_with_escapes(current_message):
+                return ret_value
+
+            # Record starts with escapes - Extract them
+            current_escape = current_message[0 : current_message.find("]") + 1]
+            ret_value += current_escape
+            current_message = current_message[
+                len(current_escape) : current_message.find("]", len(current_escape)) + 1
+            ]
+
+        return ret_value
+
+    @staticmethod
+    def _insert_into_escapes(record: logging.LogRecord, string: str) -> str:
+        if not ColorConsoleFormatter._record_starts_with_escapes(record):
+            return string + record.getMessage()
+
+        # Need to "insert" the string into the escapes
+        start_escapes = ColorConsoleFormatter._get_start_escapes(record)
+        # import pdb; pdb.set_trace()
+        return start_escapes + string + record.getMessage()[len(start_escapes) :]
+
+    def format(self, record):
+        if ColorConsoleFormatter._record_contains_escapes(record):
+            message = ColorConsoleFormatter._insert_into_escapes(
+                record, "[%(levelname)s] "
+            )
+            message = logging.Formatter(message).format(record)
+        else:
+            log_fmt = self.FORMATS.get(record.levelno)
+            message = logging.Formatter(log_fmt).format(record)
+        message = self.replace_escapes(message)
+        return message
+
+    def replace_escapes(self, message):
+        for key in escapes:
+            message = message.replace(key, escapes[key])
+        return message
+
+
+class NoColorFileFormatter(logging.Formatter):
+    def __init__(
+        self,
+    ):
+        super().__init__(
+            fmt="[%(asctime)s] - [%(threadName)s] - [%(levelname)s] - %(filename)s:%(lineno)d - %(message)s",
+            datefmt=DATE_FORMAT,
+        )
+
+    def format(self, record):
+        message = logging.Formatter.format(self, record)
+        message = self.replace_escapes(message)
+        return message
+
+    def replace_escapes(self, message):
+        for key in escapes:
+            message = message.replace(key, "")
+        return message
+
+
 def logging_setup(
     console_log_threshold=logging.INFO,
     file_log_threshold=logging.DEBUG,
@@ -173,56 +281,11 @@ def logging_setup(
     global logger
     global current_log_file_path
     global current_log_file_path_notified
-
-    SUCCESS_LEVEL: int = 25
-    if not hasattr(logging.getLoggerClass(), "success"):
-        _add_logging_level("SUCCESS", SUCCESS_LEVEL)
-
     console_handler = logging.StreamHandler()
     console_handler.set_name(CONSOLE_HANDLER)
     console_handler.setLevel(
         console_log_threshold if console_log_threshold else logging.INFO
     )
-
-    class ColorConsoleFormatter(logging.Formatter):
-        FORMATS = {
-            logging.DEBUG: "[lightgrey]%(message)s[/lightgrey]",
-            logging.INFO: "[lightgrey]%(message)s[/lightgrey]",
-            logging.WARNING: "[yellow]%(message)s[/yellow]",
-            logging.ERROR: "[red]%(message)s[/red]",
-            logging.CRITICAL: "[red][bold]%(message)s[/bold[/red]",
-            SUCCESS_LEVEL: "[green]%(message)s[/green]",
-        }
-
-        def __init__(
-            self,
-        ):
-            super().__init__(
-                fmt="%(message)s",
-                datefmt=DATE_FORMAT,
-            )
-
-        @staticmethod
-        def _record_contains_escapes(record):
-            message = record.getMessage()
-            for key in escapes:
-                if not key.startswith("[/]") and key in message:
-                    return True
-            return False
-
-        def format(self, record):
-            if ColorConsoleFormatter._record_contains_escapes(record):
-                message = logging.Formatter().format(record)
-            else:
-                log_fmt = self.FORMATS.get(record.levelno)
-                message = logging.Formatter(log_fmt).format(record)
-            message = self.replace_escapes(message)
-            return message
-
-        def replace_escapes(self, message):
-            for key in escapes:
-                message = message.replace(key, escapes[key])
-            return message
 
     if custom_log_path := os.getenv("DEMISTO_SDK_LOG_FILE_PATH"):
         current_log_file_path = Path(custom_log_path)
@@ -238,25 +301,6 @@ def logging_setup(
     )
     file_handler.set_name(FILE_HANDLER)
     file_handler.setLevel(file_log_threshold if file_log_threshold else logging.DEBUG)
-
-    class NoColorFileFormatter(logging.Formatter):
-        def __init__(
-            self,
-        ):
-            super().__init__(
-                fmt="[%(asctime)s] - [%(threadName)s] - [%(levelname)s] - %(filename)s:%(lineno)d - %(message)s",
-                datefmt=DATE_FORMAT,
-            )
-
-        def format(self, record):
-            message = logging.Formatter.format(self, record)
-            message = self.replace_escapes(message)
-            return message
-
-        def replace_escapes(self, message):
-            for key in escapes:
-                message = message.replace(key, "")
-            return message
 
     if os.getenv("DEMISTO_SDK_LOG_NO_COLORS", "False") == "True":
         console_handler.setFormatter(fmt=NoColorFileFormatter())

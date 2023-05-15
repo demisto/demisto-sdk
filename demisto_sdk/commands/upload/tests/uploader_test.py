@@ -875,7 +875,7 @@ class TestZippedPackUpload:
                 )
                 if not pack_zip:
                     raise RuntimeError(
-                        f"Failed finding the pack zip in {MULTIPLE_ZIPPED_PACKS_FILE_NAME}"
+                        f"Cannot find a pack zip under {MULTIPLE_ZIPPED_PACKS_FILE_NAME}"
                     )
 
                 xsiam_pack_files = zipfile.ZipFile(

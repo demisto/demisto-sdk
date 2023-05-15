@@ -117,7 +117,7 @@ def test_zipped_pack_upload_positive(repo, mocker, demisto_client_mock):
                 main,
                 [UPLOAD_CMD, "-i", pack.path, "-z", "--insecure", "--keep-zip", dir],
             )
-
+            assert result.exit_code == SUCCESS_RETURN_CODE
         shutil.unpack_archive(f"{dir}/uploadable_packs.zip", dir, "zip")
         shutil.unpack_archive(f"{dir}/test-pack.zip", dir, "zip")
 
@@ -139,7 +139,6 @@ def test_zipped_pack_upload_positive(repo, mocker, demisto_client_mock):
     assert mocked_get_installed.called_once_with(
         "/contentpacks/metadata/installed", "GET"
     )
-    assert result.exit_code == SUCCESS_RETURN_CODE
     assert logged[-1] == "\n".join(
         (
             "[green]SUCCESSFUL UPLOADS:",

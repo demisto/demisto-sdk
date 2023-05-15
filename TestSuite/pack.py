@@ -184,7 +184,20 @@ class Pack:
         self.readme = TextBased(self._pack_path, "README.md")
 
         self.pack_metadata = JSONBased(self._pack_path, "pack_metadata", "")
-
+        self.pack_metadata.update(
+            {
+                "name": self.name,
+                "description": "here be description",
+                "support": "xsoar",
+                "url": "https://paloaltonetworks.com",
+                "author": "Cortex XSOAR",
+                "currentVersion": "1.0.0",
+                "tags": [],
+                "categories": [],
+                "useCases": [],
+                "keywords": [],
+            }
+        )
         self.author_image = File(
             tmp_path=self._pack_path / "Author_image.png", repo_path=repo.path
         )

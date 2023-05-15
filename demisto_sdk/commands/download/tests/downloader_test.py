@@ -1,6 +1,8 @@
+import io
 import logging
 import os
 import shutil
+import tarfile
 from io import TextIOWrapper
 from pathlib import Path
 from typing import Callable, Tuple
@@ -44,6 +46,7 @@ from demisto_sdk.commands.common.constants import (
     XSIAM_REPORTS_DIR,
 )
 from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
+from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.tests.tools_test import SENTENCE_WITH_UMLAUTS
 from demisto_sdk.commands.common.tools import (
     get_child_files,
@@ -158,6 +161,7 @@ class Environment:
         self.CUSTOM_CONTENT_JS_INTEGRATION_PATH = (
             f"{self.CUSTOM_CONTENT_BASE_PATH}/integration-DummyJSIntegration.yml"
         )
+        self.CUSTOM_API_RESPONSE = f"{self.CUSTOM_CONTENT_BASE_PATH}/api-response"
 
         self.INTEGRATION_PACK_OBJECT = {
             "Test Integration": [
@@ -1226,57 +1230,30 @@ def test_build_file_name():
 
 
 @pytest.mark.parametrize(
-    "original_string, object_name, scripts_mapper, expected_string, expected_mapper",
+    "original_string, object_name, expected_string, should_download_expected_res",
     [
         (
             "name: TestingScript\ncommonfields:\n id: f1e4c6e5-0d44-48a0-8020-a9711243e918",
             "automation-Testing.yml",
-            {},
             "name: TestingScript\ncommonfields:\n id: f1e4c6e5-0d44-48a0-8020-a9711243e918",
-            {"f1e4c6e5-0d44-48a0-8020-a9711243e918": "TestingScript"},
+            False,
         ),
         (
-            '{\n\t"name":"TestingField",\n\t"script":"f1e4c6e5-0d44-48a0-8020-a9711243e918"\n}',
-            "incidentfield-TestingField.json",
-            {"f1e4c6e5-0d44-48a0-8020-a9711243e918": "TestingScript"},
-            '{\n\t"name":"TestingField",\n\t"script":"TestingScript"\n}',
-            {"f1e4c6e5-0d44-48a0-8020-a9711243e918": "TestingScript"},
-        ),
-        (
-            '{\n\t"name":"TestingLayout",\n\t"detailsV2":{\n\t\t"tabs":[\n\t\t\t{\n\t\t\t\t"sections":[\n\t\t\t\t\t{\n\t\t\t\t'
-            '\t\t"items":[\n\t\t\t\t\t\t\t{\n\t\t\t\t\t\t\t\t"scriptId":"f1e4c6e5-0d44-48a0-8020-a9711243e918"\n\t\t\t\t\t\t'
-            "\t}\n\t\t\t\t\t\t]\n\t\t\t\t\t}\n\t\t\t\t]\n\t\t\t}\n\t\t]\n\t}\n}",
-            "layoutcontainer-TestingLayout.json",
-            {"f1e4c6e5-0d44-48a0-8020-a9711243e918": "TestingScript"},
-            '{\n\t"name":"TestingLayout",\n\t"detailsV2":{\n\t\t"tabs":[\n\t\t\t{\n\t\t\t\t"sections":[\n\t\t\t\t\t{\n\t\t\t\t'
-            '\t\t"items":[\n\t\t\t\t\t\t\t{\n\t\t\t\t\t\t\t\t"scriptId":"TestingScript"\n\t\t\t\t\t\t'
-            "\t}\n\t\t\t\t\t\t]\n\t\t\t\t\t}\n\t\t\t\t]\n\t\t\t}\n\t\t]\n\t}\n}",
-            {"f1e4c6e5-0d44-48a0-8020-a9711243e918": "TestingScript"},
+            "name: Playbook\ncommonfields:\n id: f1e4c6e5-0d44-48a0-8020-a9711243e918",
+            "playbook-Testing.yml",
+            "name: Playbook\ncommonfields:\n id: f1e4c6e5-0d44-48a0-8020-a9711243e918",
+            True,
         ),
     ],
 )
-def test_handle_file(
-    original_string, object_name, scripts_mapper, expected_string, expected_mapper
+def test_download_playbook(
+    original_string, object_name, expected_string, should_download_expected_res
 ):
     downloader = Downloader(output="", input="", regex="", all_custom_content=True)
-    final_string = downloader.handle_file(original_string, object_name, scripts_mapper)
+    should_download_playbook = downloader.should_download_playbook(object_name)
+    final_string = downloader.download_playbook_yaml(original_string)
+    assert should_download_playbook == should_download_expected_res
     assert final_string == expected_string
-
-
-def test_download_playbook_yaml_is_called():
-    """
-    Test that the `download_playbook_yaml` method is called when `handle_file` is called,
-    if member name contains the word playbook.
-    """
-    downloader = Downloader(output="", input="", regex="", all_custom_content=True)
-    with patch.object(downloader, "download_playbook_yaml") as mock:
-        downloader.handle_file(
-            "name: TestingPlaybook\ncommonfields:\n id: f1e4c6e5-0d44-48a0-8020-a9711243e918",
-            "playbook-Testing.yml",
-            {},
-        )
-
-    mock.assert_called()
 
 
 @pytest.mark.parametrize(
@@ -1305,7 +1282,9 @@ def test_download_playbook_yaml_is_called():
 )
 def test_replace_uuids(original_string, uuids_to_name_map, expected_string):
     downloader = Downloader(output="", input="", regex="", all_custom_content=True)
-    final_string = downloader.replace_uuids(original_string, uuids_to_name_map)
+    final_string = downloader.replace_uuids(
+        original_string, uuids_to_name_map, "file_name"
+    )
     assert final_string == expected_string
 
 
@@ -1381,3 +1360,37 @@ def test_safe_write_unicode_to_non_unicode(
     result = get_file(dest, suffix)
     assert set(result.keys()) == set(fields)
     assert set(result.values()) == {SENTENCE_WITH_UMLAUTS}
+
+
+def test_find_uuids_in_content_item():
+    """
+    Given: a mock tar file download_tar.tar
+    When: calling find_uuids_in_content_item on the mock tar
+    Then: Find all UUIDs in different content items:
+          playbook, automation, layout, incident
+          and replaces these UUIDs with the corresponding names in strings_to_write
+    """
+    expected_UUIDs = {
+        "a53a2f17-2f05-486d-867f-a36c9f5b88d4",
+        "e4c2306d-5d4b-4b19-8320-6fdad94595d4",
+        "de57b1f7-b754-43d2-8a8c-379d12bdddcd",
+        "84731e69-0e55-40f9-806a-6452f97a01a0",
+        "4d45f0d7-5fdd-4a4b-8f1e-5f2502f90a61",
+    }
+    io_bytes = io.BytesIO(
+        Path(
+            f"{git_path()}/demisto_sdk/commands/download/tests/tests_data/custom_content/\
+download_tar.tar"
+        ).read_bytes()
+    )
+    downloader = Downloader(
+        output="",
+        input="",
+        regex="",
+        all_custom_content=True,
+    )
+    with tarfile.open(fileobj=io_bytes, mode="r") as tar:
+        strings_to_write, scripts_id_name = downloader.find_uuids_in_content_item(tar)
+    ids = set(scripts_id_name.keys())
+    assert ids.issubset(expected_UUIDs)
+    assert ids.isdisjoint(strings_to_write)

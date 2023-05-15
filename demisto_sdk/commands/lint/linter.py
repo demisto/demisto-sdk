@@ -19,6 +19,7 @@ from wcmatch.pathlib import NEGATE, Path
 from demisto_sdk.commands.common.constants import (
     API_MODULE_FILE_SUFFIX,
     INTEGRATIONS_DIR,
+    NATIVE_IMAGE_DOCKER_NAME,
     NATIVE_IMAGE_FILE_NAME,
     PACKS_PACK_META_FILE_NAME,
     TESTS_REQUIRE_NETWORK_PACK_IGNORE,
@@ -79,8 +80,6 @@ json = JSON_Handler()
 # 3-rd party packages
 
 # Local packages
-
-NATIVE_IMAGE_DOCKER_NAME = "demisto/py3-native"
 
 
 class DockerImageFlagOption(Enum):

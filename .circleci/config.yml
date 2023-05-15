@@ -402,7 +402,7 @@ jobs:
             # we run the update graph command twice to make sure the graph is updated correctly
             demisto-sdk create-content-graph -o ./tmp/content_graph_after_create
             # unzip the graph zip file
-            unzip ./tmp/content_graph/xsoar.zip -d ./tmp/content_graph_after_create
+            unzip ./tmp/content_graph_after_create/xsoar.zip -d ./tmp/content_graph_after_create
 
             demisto-sdk update-content-graph -o ./tmp/content_graph_after_update
             # unzip the graph zip file

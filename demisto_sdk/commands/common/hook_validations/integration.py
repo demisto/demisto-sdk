@@ -205,7 +205,7 @@ class IntegrationValidator(ContentEntityValidator):
             self.is_valid_description(beta_integration=False),
             self.is_context_correct_in_readme(),
             self.verify_yml_commands_match_readme(is_modified),
-            self.verify_reputation_commands_has_reliability(is_modified),
+            self.verify_reputation_commands_has_reliability(),
             self.is_integration_deprecated_and_used(),
         ]
 
@@ -2217,18 +2217,14 @@ class IntegrationValidator(ContentEntityValidator):
         return is_valid
 
     @error_codes("IN154")
-    def verify_reputation_commands_has_reliability(self, is_modified: bool = False):
+    def verify_reputation_commands_has_reliability(self):
         """
         In case the integration has reputation command, ensure there is a reliability parameter.
-        Args:
-            is_modified (bool): Whether the given files are modified or not.
 
         Return:
             bool: True if there are no reputation commands or there is a reliability parameter
              and False if there is at least one reputation command without a reliability parameter in the configuration.
         """
-        if not is_modified:
-            return True
         commands_names = [
             command.get("name")
             for command in self.current_file.get("script", {}).get("commands", [])

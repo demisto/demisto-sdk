@@ -5,7 +5,7 @@ import zipfile
 from io import BytesIO
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import Any, Optional
+from typing import TYPE_CHECKING, Any, Optional
 from unittest.mock import MagicMock, patch
 
 import click
@@ -21,7 +21,6 @@ from demisto_sdk.__main__ import main, upload
 from demisto_sdk.commands.common.constants import (
     MarketplaceVersions,
 )
-from demisto_sdk.commands.common.content.objects.pack_objects.pack import Pack
 from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.tools import src_root
@@ -59,6 +58,9 @@ from demisto_sdk.commands.upload.uploader import (
     parse_error_response,
 )
 from TestSuite.test_tools import flatten_call_args, str_in_call_args_list
+
+if TYPE_CHECKING:
+    from demisto_sdk.commands.common.content.objects.pack_objects.pack import Pack
 
 json = JSON_Handler()
 
@@ -1011,7 +1013,7 @@ def test_zip_multiple_packs(tmp_path, mocker):
     tmp_path = tmp_path / "Packs"
     tmp_path.mkdir()
 
-    def _mock_pack(name: str) -> Pack:
+    def _mock_pack(name: str) -> "Pack":
         pack = mock_pack(name=name, path=tmp_path / name)
         pack.path.mkdir(parents=True)
         pack.content_items.integration.append(

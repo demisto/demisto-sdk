@@ -3,11 +3,12 @@ from collections import defaultdict
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import TYPE_CHECKING, Any, Generator, List, Optional
+from zipfile import ZipFile
 
 import demisto_client
 from demisto_client.demisto_api.rest import ApiException
 from packaging.version import Version, parse
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, DirectoryPath, Field, validator
 
 from demisto_sdk.commands.common.constants import (
     BASE_PACK,
@@ -68,6 +69,9 @@ from demisto_sdk.commands.content_graph.objects.wizard import Wizard
 from demisto_sdk.commands.content_graph.objects.xdrc_template import XDRCTemplate
 from demisto_sdk.commands.content_graph.objects.xsiam_dashboard import XSIAMDashboard
 from demisto_sdk.commands.content_graph.objects.xsiam_report import XSIAMReport
+from demisto_sdk.commands.upload.constants import (
+    MULTIPLE_ZIPPED_PACKS_FILE_NAME,
+)
 from demisto_sdk.commands.upload.tools import (
     parse_error_response,
     parse_upload_response,
@@ -318,16 +322,25 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: i
         try:
             path.mkdir(exist_ok=True, parents=True)
             for content_item in self.content_items:
+                if marketplace not in content_item.marketplaces:
+                    logger.debug(
+                        f"SKIPPING dump {content_item.content_type} {content_item.normalize_name}"
+                        f"to destination {marketplace=}"
+                        f" - content item has marketplaces {content_item.marketplaces}"
+                    )
+                    continue
+
                 folder = content_item.content_type.as_folder
                 if (
                     content_item.content_type == ContentType.SCRIPT
                     and content_item.is_test
                 ):
                     folder = ContentType.TEST_PLAYBOOK.as_folder
-                content_item.dump(
-                    dir=path / folder,
-                    marketplace=marketplace,
-                )
+
+                    content_item.dump(
+                        dir=path / folder,
+                        marketplace=marketplace,
+                    )
             self.dump_metadata(path / "metadata.json", marketplace)
             self.dump_readme(path / "README.md", marketplace)
             shutil.copy(
@@ -337,18 +350,21 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: i
                 shutil.copytree(self.path / "ReleaseNotes", path / "ReleaseNotes")
             except FileNotFoundError:
                 logger.debug(f'No such file {self.path / "ReleaseNotes"}')
+
             try:
                 shutil.copy(self.path / "Author_image.png", path / "Author_image.png")
             except FileNotFoundError:
                 logger.debug(f'No such file {self.path / "Author_image.png"}')
+
             if self.object_id == BASE_PACK:
                 self._copy_base_pack_docs(path)
 
             pack_files = "\n".join([str(f) for f in path.iterdir()])
             logger.info(f"Dumped pack {self.name}.")
             logger.debug(f"Pack {self.name} files:\n{pack_files}")
-        except Exception as e:
-            logger.error(f"Failed dumping pack {self.name}: {e}")
+
+        except Exception:
+            logger.exception(f"Failed dumping pack {self.name}")
             raise
 
     def upload(
@@ -356,15 +372,20 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: i
         client: demisto_client,
         marketplace: MarketplaceVersions,
         target_demisto_version: Version,
+        destination_zip_dir: Optional[Path] = None,
         zip: bool = False,
         **kwargs,
     ):
+        if destination_zip_dir is None:
+            raise ValueError("invalid destination_zip_dir=None")
+
         if zip:
             self._zip_and_upload(
                 client=client,
                 marketplace=marketplace,
                 target_demisto_version=target_demisto_version,
                 skip_validations=kwargs.get("skip_validations", False),
+                destination_dir=destination_zip_dir,
             )
         else:
             self._upload_item_by_item(
@@ -379,16 +400,26 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: i
         target_demisto_version: Version,
         skip_validations: bool,
         marketplace: MarketplaceVersions,
+        destination_dir: DirectoryPath,
     ) -> bool:
         # this should only be called from Pack.upload
         logger.debug(f"Uploading zipped pack {self.object_id}")
+        result_path = destination_dir / MULTIPLE_ZIPPED_PACKS_FILE_NAME
 
         with TemporaryDirectory() as dir:
-            dir_path = Path(dir)
-            self.dump(dir_path, marketplace=marketplace)
-            shutil.make_archive(str(dir_path.parent / self.name), "zip", dir_path)
+            # dump the pack and zip it
+            temp_dir_path = Path(dir)
+            self.dump(temp_dir_path, marketplace=marketplace)
+            shutil.make_archive(str(temp_dir_path / self.name), "zip", temp_dir_path)
+            temp_zip_path = temp_dir_path / f"{self.name}.zip"
+
+            # add the zip to the result zip
+            with ZipFile(result_path, "w") as zip_file:
+                zip_file.write(str(temp_zip_path))
+
+            # upload (the temp zip, so we don't need to care about multiple runs)
             return upload_zip(
-                path=(dir_path.parent / self.name).with_suffix(".zip"),
+                path=temp_zip_path,
                 client=client,
                 target_demisto_version=target_demisto_version,
                 skip_validations=skip_validations,

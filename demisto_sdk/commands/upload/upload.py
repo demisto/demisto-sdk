@@ -15,44 +15,45 @@ from demisto_sdk.commands.common.tools import parse_marketplace_kwargs
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.content_graph.objects.pack import Pack
 from demisto_sdk.commands.content_graph.objects.repository import ContentDTO
+from demisto_sdk.commands.upload.constants import (
+    MULTIPLE_ZIPPED_PACKS_FILE_NAME,
+    MULTIPLE_ZIPPED_PACKS_FILE_STEM,
+)
 from demisto_sdk.utils.utils import check_configuration_file
 
 logger = logging.getLogger("demisto-sdk")
-
-MULTIPLE_ZIPPED_PACKS_FILE_STEM = "uploadable_packs"
-MULTIPLE_ZIPPED_PACKS_FILE_NAME = f"{MULTIPLE_ZIPPED_PACKS_FILE_STEM}.zip"
 
 
 def upload_content_entity(**kwargs):
     from demisto_sdk.commands.upload.uploader import ConfigFileParser, Uploader
 
     keep_zip = kwargs.pop("keep_zip", None)
-
-    marketplace: MarketplaceVersions = parse_marketplace_kwargs(kwargs)
+    destination_zip_path = Path(keep_zip or tempfile.mkdtemp())
+    marketplace = parse_marketplace_kwargs(kwargs)
 
     if config_file_path := kwargs.pop("input_config_file", None):
         logger.info("Uploading files from config file")
         if input_ := kwargs.get("input"):
             logger.warning(f"[orange]The input ({input_}) will NOT be used[/orange]")
 
-        output_zip_path = keep_zip or tempfile.mkdtemp()
-
         zip_multiple_packs(
             paths=ConfigFileParser(Path(config_file_path)).custom_packs_paths,
             marketplace=marketplace,
-            dir=Path(output_zip_path),
+            dir=destination_zip_path,
         )
         kwargs["detached_files"] = True
-        kwargs["input"] = Path(output_zip_path, MULTIPLE_ZIPPED_PACKS_FILE_NAME)
+        kwargs["input"] = Path(destination_zip_path, MULTIPLE_ZIPPED_PACKS_FILE_NAME)
 
     check_configuration_file("upload", kwargs)
 
     # Here the magic happens
-    upload_result = Uploader(marketplace=marketplace, **kwargs).upload()
+    upload_result = Uploader(
+        marketplace=marketplace, destination_zip_dir=destination_zip_path, **kwargs
+    ).upload()
 
     # Clean up
-    if config_file_path and not keep_zip:
-        shutil.rmtree(output_zip_path, ignore_errors=True)
+    if not keep_zip:
+        shutil.rmtree(destination_zip_path, ignore_errors=True)
 
     return upload_result
 

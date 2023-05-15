@@ -488,13 +488,14 @@ def validate_modeling_rule(
                     extra={"markup": True},
                 )
                 printr(execd_cmd)
-                raise typer.Abort()
+                raise typer.Exit(1)
         else:
             logger.error(
                 f"[red]Please create a test data file for {mrule_dir} and then rerun,[/red]",
                 extra={"markup": True},
             )
             printr(execd_cmd)
+            raise typer.Exit(1)
     else:
         logger.info(
             f"[cyan]Test data file found at {mr_entity.testdata_path}[/cyan]",

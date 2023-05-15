@@ -24,8 +24,8 @@ from demisto_sdk.commands.common.constants import (
     MARKETPLACE_MIN_VERSION,
     MarketplaceVersions,
 )
+from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.logger import logger
-from demisto_sdk.commands.common.tools import get_content_path
 from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
 from demisto_sdk.commands.content_graph.parsers.content_item import ContentItemParser
 from demisto_sdk.commands.content_graph.parsers.pack import PackParser
@@ -126,7 +126,7 @@ class BaseContent(ABC, BaseModel, metaclass=BaseContentMetaclass):
 
         json_dct = json.loads(self.json(exclude={"commands"}))
         if "path" in json_dct and Path(json_dct["path"]).is_absolute():
-            json_dct["path"] = (Path(json_dct["path"]).relative_to(get_content_path())).as_posix()  # type: ignore
+            json_dct["path"] = (Path(json_dct["path"]).relative_to(CONTENT_PATH)).as_posix()  # type: ignore
         json_dct["content_type"] = self.content_type
         return json_dct
 

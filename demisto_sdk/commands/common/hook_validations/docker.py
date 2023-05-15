@@ -7,7 +7,6 @@ import requests
 from pkg_resources import parse_version
 
 from demisto_sdk.commands.common.constants import (
-    NATIVE_IMAGE_DEVDEMISTO_NAME,
     NATIVE_IMAGE_DOCKER_NAME,
     IronBankDockers,
 )
@@ -553,9 +552,6 @@ class DockerImageValidator(BaseValidator):
 
         """
         if self.yml_docker_image:
-            return (
-                NATIVE_IMAGE_DOCKER_NAME in self.yml_docker_image
-                or NATIVE_IMAGE_DEVDEMISTO_NAME in self.yml_docker_image
-            )
+            return NATIVE_IMAGE_DOCKER_NAME in self.yml_docker_image
 
         return False

@@ -3298,7 +3298,7 @@ def update_content_graph(
 @click.option(
     "--format/--no-format",
     help="Whether to run demisto-sdk format",
-    default=True,
+    default=False,
 )
 @click.option(
     "--secrets/--no-secrets",

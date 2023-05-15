@@ -410,8 +410,7 @@ jobs:
 
             # compare same txt files
             cd ..
-            cd demisto-sdk
-            poetry run python demisto_sdk/utils/compare_graphs.py ../content/tmp/content_graph_after_create/content.graphml -a ../content/tmp/content_graph_after_update/content.graphml
+            poetry run python demisto_sdk/utils/compare_graphs.py ./content/tmp/content_graph_after_create/content.graphml ./content/tmp/content_graph_after_update/content.graphml
       - store_artifacts:
           path: content/tmp
 

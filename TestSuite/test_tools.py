@@ -1,7 +1,5 @@
 import os
-from typing import Any, Iterable, List, Tuple, Union
-
-CallArgs = Iterable[Union[Tuple[Any], Tuple[Any, dict]]]
+from typing import List, Tuple
 
 
 def get_test_suite_path():

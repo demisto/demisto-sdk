@@ -1,5 +1,4 @@
 import logging
-import re
 import shutil
 import zipfile
 from io import BytesIO
@@ -869,14 +868,18 @@ class TestZippedPackUpload:
 
             with zipfile.ZipFile(
                 Path(dir) / MULTIPLE_ZIPPED_PACKS_FILE_NAME, "r"
-            ) as zip_file:
-                file_name = first_true(
-                    zip_file.namelist(),
-                    pred=lambda _file_name: re.search(r"\.zip$", _file_name)
-                    is not None,
+            ) as outer_zip_file:
+                pack_zip = first_true(
+                    outer_zip_file.namelist(),
+                    pred=lambda file_name: file_name.endswith(".zip"),
                 )
+                if not pack_zip:
+                    raise RuntimeError(
+                        f"Failed finding the pack zip in {MULTIPLE_ZIPPED_PACKS_FILE_NAME}"
+                    )
+
                 xsiam_pack_files = zipfile.ZipFile(
-                    BytesIO(zip_file.read(file_name))
+                    BytesIO(outer_zip_file.read(pack_zip))
                 ).namelist()
 
         # XSIAM entities are not supposed to be uploaded to XSOAR

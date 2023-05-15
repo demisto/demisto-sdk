@@ -1,6 +1,7 @@
 # Changelog
 
 ## Unreleased
+* Added a validation that the **validate** command will fail if the `dockerimage` field in scripts/integrations uses any py3-native docker image.
 
 ## 1.14.5
 * Added logging in case the container fails to run in **run-unit-tests**.

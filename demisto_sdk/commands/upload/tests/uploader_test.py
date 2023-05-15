@@ -857,7 +857,6 @@ class TestZippedPackUpload:
         mocker.patch.object(
             API_CLIENT, "upload_content_packs", return_value=({}, 200, None)
         )
-        # mocker.patch.object(API_CLIENT, "generic_request", return_value=([], 200, None))
 
         with TemporaryDirectory() as dir:
             click.Context(command=upload).invoke(

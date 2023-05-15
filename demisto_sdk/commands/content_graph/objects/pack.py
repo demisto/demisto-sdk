@@ -3,7 +3,6 @@ from collections import defaultdict
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import TYPE_CHECKING, Any, Generator, List, Optional
-from zipfile import ZipFile
 
 import demisto_client
 from demisto_client.demisto_api.rest import ApiException
@@ -71,6 +70,7 @@ from demisto_sdk.commands.content_graph.objects.xsiam_dashboard import XSIAMDash
 from demisto_sdk.commands.content_graph.objects.xsiam_report import XSIAMReport
 from demisto_sdk.commands.upload.constants import (
     MULTIPLE_ZIPPED_PACKS_FILE_NAME,
+    MULTIPLE_ZIPPED_PACKS_FILE_STEM,
 )
 from demisto_sdk.commands.upload.tools import (
     parse_error_response,
@@ -337,10 +337,10 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: i
                 ):
                     folder = ContentType.TEST_PLAYBOOK.as_folder
 
-                    content_item.dump(
-                        dir=path / folder,
-                        marketplace=marketplace,
-                    )
+                content_item.dump(
+                    dir=path / folder,
+                    marketplace=marketplace,
+                )
             self.dump_metadata(path / "metadata.json", marketplace)
             self.dump_readme(path / "README.md", marketplace)
             shutil.copy(
@@ -404,22 +404,36 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: i
     ) -> bool:
         # this should only be called from Pack.upload
         logger.debug(f"Uploading zipped pack {self.object_id}")
-        result_path = destination_dir / MULTIPLE_ZIPPED_PACKS_FILE_NAME
 
-        with TemporaryDirectory() as dir:
-            # dump the pack and zip it
-            temp_dir_path = Path(dir)
+        # 1) dump the pack into a temporary file
+        with TemporaryDirectory() as temp_dump_dir:
+            temp_dir_path = Path(temp_dump_dir)
             self.dump(temp_dir_path, marketplace=marketplace)
-            shutil.make_archive(str(temp_dir_path / self.name), "zip", temp_dir_path)
-            temp_zip_path = temp_dir_path / f"{self.name}.zip"
 
-            # add the zip to the result zip
-            with ZipFile(result_path, "w") as zip_file:
-                zip_file.write(str(temp_zip_path))
+            # 2) zip the dumped pack
+            with TemporaryDirectory() as pack_zips_dir:
+                pack_zip_path = Path(
+                    shutil.make_archive(
+                        str(Path(pack_zips_dir, self.name)), "zip", temp_dir_path
+                    )
+                )
+                str(pack_zip_path)
 
-            # upload (the temp zip, so we don't need to care about multiple runs)
+                # 3) zip the zipped pack into uploadable_packs.zip under the result directory
+                try:
+                    shutil.make_archive(
+                        str(destination_dir / MULTIPLE_ZIPPED_PACKS_FILE_STEM),
+                        "zip",
+                        pack_zips_dir,
+                    )
+                except Exception:
+                    logger.exception(
+                        f"Cannot write to {str(destination_dir / MULTIPLE_ZIPPED_PACKS_FILE_NAME)}"
+                    )
+
+            # upload the pack zip (not the result)
             return upload_zip(
-                path=temp_zip_path,
+                path=pack_zip_path,
                 client=client,
                 target_demisto_version=target_demisto_version,
                 skip_validations=skip_validations,

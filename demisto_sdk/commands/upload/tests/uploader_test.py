@@ -4,7 +4,7 @@ import zipfile
 from io import BytesIO
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import TYPE_CHECKING, Any, Optional
+from typing import TYPE_CHECKING, Any, Optional, Set
 from unittest.mock import MagicMock, patch
 
 import click
@@ -812,44 +812,46 @@ class TestZippedPackUpload:
         assert mock_upload_content_packs.call_args[1]["file"] == str(path)
         assert mock_upload_content_packs.call_args[1].get("skip_validate") is None
 
-    # def test_upload_xsiam_pack_to_xsiam(self, mocker):
-    #     """
-    #     Given:
-    #         - XSIAM pack to upload to XSIAM
-    #     When:
-    #         - call to upload command
-    #     Then:
-    #         - Make sure XSIAM entities are in the zip we want to upload
-    #     """
-    #     # prepare
-    #     mock_api_client(mocker)
-    #     mocker.patch.object(Uploader, 'zipped_pack_uploader')
-    #
-    #     # run
-    #     click.Context(command=upload).invoke(upload, input=TEST_XSIAM_PACK, xsiam=True, zip=True)
-    #
-    #     zip_file_path = Uploader.zipped_pack_uploader.call_args[1]['path']
-    #
-    #     assert 'uploadable_packs.zip' in zip_file_path
-    #
-    #     with zipfile.ZipFile(zip_file_path, "r") as zfile:
-    #         for name in zfile.namelist():
-    #             if re.search(r'\.zip$', name) is not None:
-    #                 # We have a zip within a zip
-    #                 zfiledata = BytesIO(zfile.read(name))
-    #                 with zipfile.ZipFile(zfiledata) as xsiamzipfile:
-    #                     xsiam_pack_files = xsiamzipfile.namelist()
-    #
-    #     assert 'Triggers/' in xsiam_pack_files
-    #     assert 'XSIAMDashboards/' in xsiam_pack_files
-    def test_upload_xsiam_pack_to_xsoar(self, mocker):
+    @pytest.mark.parametrize(
+        "marketplace,expected_zip_file_count",
+        [
+            (
+                MarketplaceVersions.XSOAR,
+                {
+                    "README.md",
+                    "metadata.json",
+                    "pack_metadata.json",
+                },
+            ),
+            (
+                MarketplaceVersions.MarketplaceV2,
+                {
+                    "README.md",
+                    "metadata.json",
+                    "pack_metadata.json",
+                    "XSIAMDashboards/",
+                    "XSIAMDashboards/xsiamdashboard-MyDashboard.json",
+                    "XSIAMDashboards/external-xsiamdashboard-MyDashboard.json",
+                    "Triggers/",
+                    "Triggers/trigger-MyTrigger.json",
+                    "Triggers/external-trigger-MyTrigger.json",
+                },
+            ),
+        ],
+    )
+    def test_upload_xsiam_pack(
+        self,
+        mocker,
+        marketplace: MarketplaceVersions,
+        expected_files: Set[str],
+    ):
         """
         Given:
-            - XSIAM pack to upload to XSOAR
+            - An XSIAM pack to upload
         When:
-            - call to upload command
+            - Calling upload command
         Then:
-            - Make sure XSIAM entities are not in the zip we want to upload
+            - Make sure the only files uploaded are the ones belonging to the marketplace.
         """
         mock_api_client(mocker)
         mocker.patch.object(
@@ -860,8 +862,8 @@ class TestZippedPackUpload:
         with TemporaryDirectory() as dir:
             click.Context(command=upload).invoke(
                 upload,
+                marketplace=marketplace,
                 input=TEST_XSIAM_PACK,
-                xsiam=False,
                 zip=True,
                 keep_zip=dir,
             )
@@ -878,14 +880,12 @@ class TestZippedPackUpload:
                         f"Cannot find a pack zip under {MULTIPLE_ZIPPED_PACKS_FILE_NAME}"
                     )
 
-                xsiam_pack_files = zipfile.ZipFile(
+                pack_zip_files = zipfile.ZipFile(
                     BytesIO(outer_zip_file.read(pack_zip))
                 ).namelist()
 
         # XSIAM entities are not supposed to be uploaded to XSOAR
-        assert len(xsiam_pack_files) == 2
-        assert "Triggers/" not in xsiam_pack_files
-        assert "XSIAMDashboards/" not in xsiam_pack_files
+        assert set(pack_zip_files) == expected_files
 
 
 class TestItemDetacher:

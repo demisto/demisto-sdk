@@ -3558,7 +3558,7 @@ def parse_marketplace_kwargs(kwargs: Dict[str, Any]) -> MarketplaceVersions:
     Supports both the `marketplace` argument and `is_xsiam`.
     Raises an error when both are supplied.
     """
-    marketplace = kwargs.get("marketplace")
+    marketplace = kwargs.pop("marketplace", None)  # removing to not pass it twice later
     is_xsiam = kwargs.get("is_xsiam")
 
     if (

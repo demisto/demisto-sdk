@@ -1322,6 +1322,12 @@ def format(
     is_flag=True,
 )
 @click.option(
+    "-mp",
+    "--marketplace",
+    help="The marketplace to which the content will be uploaded.",
+    default=MarketplaceVersions.XSOAR.value,
+)
+@click.option(
     "--keep-zip",
     help="Directory where to store the zip after creation, this argument is relevant only for packs "
     "and in case the --zip flag is used.",

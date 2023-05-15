@@ -95,7 +95,6 @@ class PackMetadataParser:
 
     def __init__(self, metadata: Dict[str, Any]) -> None:
         self.name: str = metadata["name"]
-        self.id: str = self.name
         self.description: str = metadata["description"]
         self.created: str = metadata.get("created", NOW)
         self.updated: str = metadata.get("updated", NOW)

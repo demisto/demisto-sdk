@@ -394,6 +394,9 @@ def _get_python_version_from_dockerhub_api(image: str):
         raise ValueError(f"Invalid docker image: {image}")
     else:
         repo, tag = image.split(":")
+    if os.getenv("GITLAB_CI"):
+        # we need to remove the gitlab prefix, as we query the API
+        repo = repo.replace("docker-io.art.code.pan.run/", "")
     try:
         token = _get_docker_hub_token(repo)
         digest = _get_image_digest(repo, tag, token)

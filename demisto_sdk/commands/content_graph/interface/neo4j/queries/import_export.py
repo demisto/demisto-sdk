@@ -14,7 +14,7 @@ def import_graphml(tx: Transaction, graphml_filenames: List[str]) -> None:
 
 def export_graphml(tx: Transaction, repo_name: str) -> None:
     sleep(1)  # doesn't work without it
-    query = f'CALL apoc.export.graphml.all("{repo_name}.graphml", {{useTypes: true}})'
+    query = f'CALL apoc.export.graphml.all("{repo_name}.graphml", {{useTypes: true, storeNodeIds: true}})'
     run_query(tx, query)
 
 

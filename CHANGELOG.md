@@ -2,6 +2,7 @@
 
 ## Unreleased
 * Added a validation that the **validate** command will fail if the `dockerimage` field in scripts/integrations uses any py3-native docker image.
+* Fixed an issue where **run-unit-tests** failed on python2 content items.
 * Fixed an issue where **lint** failed fetching docker image details from a PANW GitLab CI environment. (PANW-internal only)
 
 ## 1.14.5

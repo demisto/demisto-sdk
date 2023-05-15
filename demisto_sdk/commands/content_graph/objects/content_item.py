@@ -173,7 +173,7 @@ class ContentItem(BaseContent):
                 except AttributeError:
                     # not supported in python 3.8
                     name = (
-                        name[: len(prefix) + 1]
+                        name[len(prefix) + 1 :]
                         if name.startswith(f"{prefix}-")
                         else name
                     )

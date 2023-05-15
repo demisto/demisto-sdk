@@ -388,7 +388,7 @@ jobs:
           at: ~/project
       - <<: *install_demisto_sdk
       - run:
-          name: Run Update Graph Twice
+          name: Compare create and update graph
           when: always
           command: |
             source $(poetry env info --path)/bin/activate
@@ -400,11 +400,11 @@ jobs:
             while ! curl --fail http://127.0.0.1:7474 &> /dev/null; do sleep 1; done
 
             # we run the update graph command twice to make sure the graph is updated correctly
-            demisto-sdk create-content-graph -g -o ./tmp/content_graph
+            demisto-sdk create-content-graph -o ./tmp/content_graph
             # unzip the graph zip file
             unzip ./tmp/content_graph/xsoar.zip -d ./tmp/content_graph
 
-            demisto-sdk update-content-graph -i ./tmp/content_graph/xsoar.zip -o ./tmp/content_graph_after_update
+            demisto-sdk update-content-graph -o ./tmp/content_graph_after_update
             # unzip the graph zip file
             unzip ./tmp/content_graph_after_update/xsoar.zip -d ./tmp/content_graph_after_update
 

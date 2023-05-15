@@ -3,6 +3,8 @@
 ## Unreleased
 * Added a validation that the **validate** command will fail if the `dockerimage` field in scripts/integrations uses any py3-native docker image.
 * Fixed an issue where **lint** failed fetching docker image details from a PANW GitLab CI environment. (PANW-internal only)
+* Ability to disable the default colors with an env variable: DEMISTO_SDK_LOG_NO_COLORS
+* Added support to disable the default logging colors with the **DEMISTO_SDK_LOG_NO_COLORS** environment variable.
 
 ## 1.14.5
 * Added logging in case the container fails to run in **run-unit-tests**.

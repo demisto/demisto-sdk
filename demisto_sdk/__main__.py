@@ -3353,10 +3353,9 @@ def pre_commit(
         logger.info(
             "Both `--input` parameter and `file_paths` arguments were provided. Will use the `--input` parameter."
         )
-    if file_paths:
+    input_files = input
+    if file_paths and not input_files:
         input_files = file_paths
-    if input:
-        input_files = input
     if skip:
         skip = skip.split(",")  # type: ignore[assignment]
     sys.exit(

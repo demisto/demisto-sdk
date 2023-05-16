@@ -289,6 +289,7 @@ def preprocess_files(
     all_files: bool = False,
 ) -> Set[Path]:
     git_util = GitUtil()
+    all_git_files = git_util.get_all_files()
     staged_files = git_util._get_staged_files()
     if input_files:
         raw_files = set(input_files)
@@ -297,7 +298,7 @@ def preprocess_files(
     elif use_git:
         raw_files = git_util._get_all_changed_files() | staged_files
     elif all_files:
-        raw_files = git_util.get_all_files() | staged_files
+        raw_files = all_git_files | staged_files
     else:
         raise ValueError(
             "No files were given to run pre-commit on, and no flags were given."
@@ -309,7 +310,10 @@ def preprocess_files(
         else:
             files_to_run.add(file)
 
-    # Convert to absolute paths
-    return {
-        file if file.is_absolute() else CONTENT_PATH / file for file in files_to_run
+    # convert to relative file to content path
+    relative_paths = {
+        file.relative_to(CONTENT_PATH) if file.is_absolute() else file
+        for file in files_to_run
     }
+    # filter out files that are not in the content git repo (e.g in .gitignore)
+    return relative_paths & all_git_files

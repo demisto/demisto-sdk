@@ -146,8 +146,6 @@ class TestPreprocessFiles:
 
     Additional aspects:
     - The function raises a ValueError if no files were given to preprocess and no flags were given
-    - The function uses the pathlib and typing modules
-    - The function imports the os and re modules but does not use them in the code
     """
 
     # Tests that preprocess_files() returns the correct set of Path objects when input_files is not None.

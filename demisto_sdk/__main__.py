@@ -3323,6 +3323,11 @@ def update_content_graph(
     help="The demisto-sdk ref to use for the pre-commit hooks",
     default="",
 )
+@click.argument(
+    "file_paths",
+    nargs=-1,
+    type=click.Path(exists=True, resolve_path=True, path_type=Path),
+)
 @click.pass_context
 @logging_setup_decorator
 def pre_commit(
@@ -3339,15 +3344,23 @@ def pre_commit(
     verbose: bool,
     show_diff_on_failure: bool,
     sdk_ref: str,
+    file_paths: Iterable[Path],
     **kwargs,
 ):
     from demisto_sdk.commands.pre_commit.pre_commit_command import pre_commit_manager
 
+    if file_paths and input:
+        logger.info(
+            "Both `--input` parameter and `file_paths` arguments were provided. Will use the `--input` parameter."
+        )
+    input_files = input
+    if file_paths and not input_files:
+        input_files = file_paths
     if skip:
         skip = skip.split(",")  # type: ignore[assignment]
     sys.exit(
         pre_commit_manager(
-            input,
+            input_files,
             staged_only,
             git_diff,
             all_files,

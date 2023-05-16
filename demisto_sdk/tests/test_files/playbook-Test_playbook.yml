@@ -185,7 +185,7 @@ inputs:
 - key: InputD
   value:
     simple: File.NameD
-  required: true
+  required: false
   description: test & description
 - key: ""
   value: {}

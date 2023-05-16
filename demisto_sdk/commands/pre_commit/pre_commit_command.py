@@ -283,7 +283,7 @@ def pre_commit_manager(
 
 
 def preprocess_files(
-    input_files: Optional[Iterable[Path]],
+    input_files: Optional[Iterable[Path]] = None,
     staged_only: bool = False,
     use_git: bool = False,
     all_files: bool = False,

@@ -37,6 +37,7 @@ from demisto_sdk.commands.content_graph.objects.exceptions import (
     FailedUploadMultipleException,
 )
 from demisto_sdk.commands.content_graph.objects.pack import Pack, upload_zip
+from demisto_sdk.commands.upload.constants import CONTENT_TYPES_EXCLUDED_FROM_UPLOAD
 from demisto_sdk.commands.upload.exceptions import (
     IncompatibleUploadVersionException,
     NotUploadableException,
@@ -640,10 +641,15 @@ def is_uploadable_dir(path: Path) -> bool:
 
 def parse_uploaded_successfully(
     content_item: Union[Pack, ContentItem], zip: bool
-) -> Iterable[ContentItem]:
+) -> Iterable[Union[Pack, ContentItem]]:
     # packs uploaded unzipped are uploaded item by item, we have to extract the item details here
-    return (
-        iter(content_item.content_items)  # type:ignore[return-value]
-        if (isinstance(content_item, Pack) and not zip)
-        else (content_item,)
-    )
+    if isinstance(content_item, Pack) and not zip:
+        return iter(
+            filter(
+                lambda content_item: content_item.content_type
+                not in CONTENT_TYPES_EXCLUDED_FROM_UPLOAD,
+                content_item.content_items,
+            )
+        )
+
+    return (content_item,)

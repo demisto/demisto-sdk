@@ -52,6 +52,8 @@ def iter_flatten_call_args(
 
         elif isinstance(arg, str):
             yield arg
+        elif isinstance(arg, dict) and not arg:
+            pass
         else:
             raise ValueError("Unexpected call arg type")
 

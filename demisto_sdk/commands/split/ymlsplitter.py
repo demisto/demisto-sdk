@@ -1,5 +1,4 @@
 import base64
-import logging
 import os
 import re
 import shutil
@@ -10,17 +9,19 @@ from ruamel.yaml.scalarstring import PlainScalarString, SingleQuotedScalarString
 
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import (
+    BETA_INTEGRATION,
+    INTEGRATION,
     TYPE_PWSH,
     TYPE_PYTHON,
     TYPE_TO_EXTENSION,
 )
 from demisto_sdk.commands.common.handlers import YAML_Handler
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import get_yaml, pascal_case
 from demisto_sdk.commands.prepare_content.integration_script_unifier import (
     IntegrationScriptUnifier,
 )
 
-logger = logging.getLogger("demisto-sdk")
 yaml = YAML_Handler()
 
 REGEX_MODULE = r"### GENERATED CODE ###((.|\s)+?)### END GENERATED CODE ###"
@@ -109,7 +110,7 @@ class YmlSplitter:
         script = self.yml_data.get("script", {})
         lang_type: str = (
             script.get("type", "")
-            if self.file_type == "integration"
+            if self.file_type in (BETA_INTEGRATION, INTEGRATION)
             else self.yml_data.get("type")
         )
         self.extract_image(f"{output_path}/{base_name}_image.png")
@@ -136,7 +137,7 @@ class YmlSplitter:
                 yaml.dump(yaml_obj, yf)
         else:
             code_file = f"{code_file}{TYPE_TO_EXTENSION[lang_type]}"
-            if self.file_type == "integration":
+            if self.file_type in (BETA_INTEGRATION, INTEGRATION):
                 script_obj = yaml_obj["script"]
                 if "image" in yaml_obj:
                     del yaml_obj["image"]
@@ -184,8 +185,9 @@ class YmlSplitter:
             return 0
 
         script = self.yml_data["script"]
-        if (
-            self.file_type == "integration"
+        if self.file_type in (
+            BETA_INTEGRATION,
+            INTEGRATION,
         ):  # in integration the script is stored at a second level
             lang_type = script["type"]
             script = script["script"]

@@ -416,6 +416,43 @@ class TestDockerImage:
                 ]
             )
 
+    @pytest.mark.parametrize(
+        "native_image",
+        ["demisto/py3-native:8.2.0.58349", "devdemisto/py3-native:8.2.0.58349"],
+    )
+    def test_is_native_image_in_dockerimage_field(self, mocker, pack, native_image):
+        """
+        Given:
+            native image that is configured into the yml for the dockerimage field
+
+        When:
+            running is_docker_image_valid for both script/integration
+
+        Then:
+            make sure that validation for the integration/script with
+            native image configured in the dockerimage field fails
+        """
+        integration = pack.create_integration(docker_image=native_image)
+        script = pack.create_script(docker_image=native_image)
+
+        integration_docker_validator = DockerImageValidator(
+            yml_file_path=integration.yml.path,
+            is_modified_file=False,
+            is_integration=True,
+        )
+        script_docker_validator = DockerImageValidator(
+            yml_file_path=script.yml.path, is_modified_file=False, is_integration=False
+        )
+        error_mocker = mocker.patch(
+            "demisto_sdk.commands.common.errors.Errors.native_image_is_in_dockerimage_field",
+            return_value=("test", "DO110"),
+        )
+
+        assert not integration_docker_validator.is_docker_image_valid()
+        assert not script_docker_validator.is_docker_image_valid()
+        assert error_mocker.called
+        assert error_mocker.call_args.args[0] == native_image
+
     class TestIronBankDockerParse:
         def test_get_latest_commit(self, integration, requests_mock):
             """
@@ -673,7 +710,9 @@ class TestDockerImage:
                 ],
             )
             docker_image_validator = mock_docker_image_validator()
-            print(docker_image_validator.is_docker_image_deprecated("demisto/aiohttp"))
+            print(  # noqa: T201
+                docker_image_validator.is_docker_image_deprecated("demisto/aiohttp")
+            )
             assert (
                 "demisto/aiohttp",
                 "Use the demisto/py3-tools docker image instead.",

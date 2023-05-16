@@ -38,6 +38,12 @@ from demisto_sdk.commands.doc_reviewer.rn_checker import ReleaseNotesChecker
             True,
         ),
         (["Documentation and metadata improvements."], True),
+        (["<~XSOAR>Documentation and metadata improvements.</~XSOAR>"], True),
+        (["<~XSOAR>", "Documentation and metadata improvements.", "</~XSOAR>"], True),
+        (["<~XSIAM>Documentation and metadata improvements.</~XSIAM>"], True),
+        (["<~XSIAM>", "Documentation and metadata improvements.", "</~XSIAM>"], True),
+        (["<~XPANSE>Documentation and metadata improvements.</~XPANSE>"], True),
+        (["<~XPANSE>", "Documentation and metadata improvements.", "</~XPANSE>"], True),
         (["Maintenance and stability enhancements."], False),
         (["Stability and maintenance enhancements."], False),
         (["Blah."], False),
@@ -76,6 +82,13 @@ from demisto_sdk.commands.doc_reviewer.rn_checker import ReleaseNotesChecker
             True,
         ),
         (["##### New: script", "Blah.", "##### script", "Blah."], False),
+        (
+            [
+                "#### Indicator Fields",
+                "- New: **Indicator Field**",
+            ],
+            True,
+        ),
     ],
 )
 def test_release_notes_templates(file_content, expected_result):

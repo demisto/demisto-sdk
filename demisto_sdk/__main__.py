@@ -20,6 +20,7 @@ from demisto_sdk.commands.common.constants import (
 )
 from demisto_sdk.commands.common.content_constant_paths import (
     ALL_PACKS_DEPENDENCIES_DEFAULT_PATH,
+    CONTENT_PATH,
 )
 from demisto_sdk.commands.common.cpu_count import cpu_count
 from demisto_sdk.commands.common.handlers import JSON_Handler
@@ -123,7 +124,7 @@ def logging_setup_decorator(func, *args, **kwargs):
         for arg in args:
             if type(arg) == click.core.Context:
                 return arg
-        print(
+        print(  # noqa: T201
             "Error: Cannot find the Context arg. Is the command configured correctly?"
         )
         return None
@@ -193,16 +194,16 @@ def main(ctx, config, version, release_notes, **kwargs):
     config.configuration = Configuration()
     import dotenv
 
-    from demisto_sdk.commands.common.tools import get_content_path
-
     if sys.version_info[:2] == (3, 8):
         logger.info(
             "[red]Demisto-SDK will soon stop supporting Python 3.8. Please update your python environment.[/red]"
         )
 
-    dotenv.load_dotenv(Path(get_content_path()) / ".env", override=True)  # type: ignore # load .env file from the cwd
+    dotenv.load_dotenv(CONTENT_PATH / ".env", override=True)  # type: ignore # load .env file from the cwd
     if (
-        not os.getenv("DEMISTO_SDK_SKIP_VERSION_CHECK") or version
+        not os.getenv("DEMISTO_SDK_SKIP_VERSION_CHECK")
+        or not os.getenv("CI")
+        or version
     ):  # If the key exists/called to version
         try:
             __version__ = get_distribution("demisto-sdk").version
@@ -313,7 +314,6 @@ def split(ctx, config, **kwargs):
             input=kwargs.get("input"),  # type: ignore[arg-type]
             output=kwargs.get("output"),  # type: ignore[arg-type]
             no_auto_create_dir=kwargs.get("no_auto_create_dir"),  # type: ignore[arg-type]
-            no_logging=kwargs.get("no_logging"),  # type: ignore[arg-type]
             new_module_file=kwargs.get("new_module_file"),  # type: ignore[arg-type]
         )
         return json_splitter.split_json()
@@ -894,13 +894,18 @@ def create_content_artifacts(ctx, **kwargs) -> int:
     help='Full path to whitelist file, file name should be "secrets_white_list.json"',
 )
 @click.option("--prev-ver", help="The branch against which to run secrets validation.")
+@click.argument("file_paths", nargs=-1, type=click.Path(exists=True, resolve_path=True))
 @pass_config
 @click.pass_context
 @logging_setup_decorator
-def secrets(ctx, config, **kwargs):
+def secrets(ctx, config, file_paths: str, **kwargs):
     """Run Secrets validator to catch sensitive data before exposing your code to public repository.
     Attach path to whitelist to allow manual whitelists.
     """
+    if file_paths and not kwargs["input"]:
+        # If file_paths is given as an argument, use it as the file_paths input (instead of the -i flag). If both, input wins.
+        kwargs["input"] = ",".join(file_paths)
+
     from demisto_sdk.commands.secrets.secrets import SecretsValidator
 
     check_configuration_file("secrets", kwargs)
@@ -1956,40 +1961,52 @@ def init(ctx, **kwargs):
     "--custom-image-path",
     help="A custom path to a playbook image. If not stated, a default link will be added to the file.",
 )
+@click.option(
+    "-rt",
+    "--readme-template",
+    help="The readme template that should be appended to the given README.md file",
+    type=click.Choice(["syslog", "xdrc", "http-collector"]),
+)
 @click.pass_context
 @logging_setup_decorator
 def generate_docs(ctx, **kwargs):
     """Generate documentation for integration, playbook or script from yaml file."""
-    check_configuration_file("generate-docs", kwargs)
-    input_path_str: str = kwargs.get("input", "")
-    if not (input_path := Path(input_path_str)).exists():
-        logger.info(f"[red]input {input_path_str} does not exist[/red]")
-        return 1
+    try:
+        check_configuration_file("generate-docs", kwargs)
+        input_path_str: str = kwargs.get("input", "")
+        if not (input_path := Path(input_path_str)).exists():
+            raise Exception(f"[red]input {input_path_str} does not exist[/red]")
 
-    if (output_path := kwargs.get("output")) and not Path(output_path).is_dir():
-        logger.info(f"[red]Output directory {output_path} is not a directory.[/red]")
-        return 1
+        if (output_path := kwargs.get("output")) and not Path(output_path).is_dir():
+            raise Exception(
+                f"[red]Output directory {output_path} is not a directory.[/red]"
+            )
 
-    if input_path.is_file():
-        if input_path.suffix.lower() != ".yml":
-            logger.info(f"[red]input {input_path} is not a valid yml file.[/red]")
-            return 1
-        _generate_docs_for_file(kwargs)
+        if input_path.is_file():
+            if input_path.suffix.lower() not in {".yml", ".md"}:
+                raise Exception(
+                    f"[red]input {input_path} is not a valid yml or readme file.[/red]"
+                )
 
-    # Add support for input which is a Playbooks directory and not a single yml file
-    elif input_path.is_dir() and input_path.name == "Playbooks":
-        for yml in input_path.glob("*.yml"):
-            file_kwargs = copy.deepcopy(kwargs)
-            file_kwargs["input"] = str(yml)
-            _generate_docs_for_file(file_kwargs)
+            _generate_docs_for_file(kwargs)
 
-    else:
-        logger.info(
-            f"[red]Input {input_path} is neither a valid yml file, nor a folder named Playbooks."
-        )
-        return 1
+        # Add support for input which is a Playbooks directory and not a single yml file
+        elif input_path.is_dir() and input_path.name == "Playbooks":
+            for yml in input_path.glob("*.yml"):
+                file_kwargs = copy.deepcopy(kwargs)
+                file_kwargs["input"] = str(yml)
+                _generate_docs_for_file(file_kwargs)
 
-    return 0
+        else:
+            raise Exception(
+                f"[red]Input {input_path} is neither a valid yml file, nor a folder named Playbooks, nor a readme file."
+            )
+
+        return 0
+
+    except Exception:
+        logger.exception("Failed generating docs")
+        sys.exit(1)
 
 
 def _generate_docs_for_file(kwargs: Dict[str, Any]):
@@ -2000,6 +2017,9 @@ def _generate_docs_for_file(kwargs: Dict[str, Any]):
     )
     from demisto_sdk.commands.generate_docs.generate_playbook_doc import (
         generate_playbook_doc,
+    )
+    from demisto_sdk.commands.generate_docs.generate_readme_template import (
+        generate_readme_template,
     )
     from demisto_sdk.commands.generate_docs.generate_script_doc import (
         generate_script_doc,
@@ -2016,79 +2036,96 @@ def _generate_docs_for_file(kwargs: Dict[str, Any]):
     old_version: str = kwargs.get("old_version", "")
     skip_breaking_changes: bool = kwargs.get("skip_breaking_changes", False)
     custom_image_path: str = kwargs.get("custom_image_path", "")
+    readme_template: str = kwargs.get("readme_template", "")
 
-    if command:
-        if (
-            output_path
-            and (not os.path.isfile(os.path.join(output_path, "README.md")))
-            or (not output_path)
-            and (
-                not os.path.isfile(
-                    os.path.join(
-                        os.path.dirname(os.path.realpath(input_path)), "README.md"
+    try:
+        if command:
+            if (
+                output_path
+                and (not os.path.isfile(os.path.join(output_path, "README.md")))
+                or (not output_path)
+                and (
+                    not os.path.isfile(
+                        os.path.join(
+                            os.path.dirname(os.path.realpath(input_path)), "README.md"
+                        )
                     )
                 )
+            ):
+                raise Exception(
+                    "[red]The `command` argument must be presented with existing `README.md` docs."
+                )
+
+        file_type = find_type(kwargs.get("input", ""), ignore_sub_categories=True)
+        if file_type not in {
+            FileType.INTEGRATION,
+            FileType.SCRIPT,
+            FileType.PLAYBOOK,
+            FileType.README,
+        }:
+            raise Exception(
+                "[red]File is not an Integration, Script, Playbook or a README.[/red]"
             )
-        ):
-            logger.info(
-                "[red]The `command` argument must be presented with existing `README.md` docs."
+
+        if old_version and not os.path.isfile(old_version):
+            raise Exception(
+                f"[red]Input old version file {old_version} was not found.[/red]"
             )
-            return 1
 
-    file_type = find_type(kwargs.get("input", ""), ignore_sub_categories=True)
-    if file_type not in [FileType.INTEGRATION, FileType.SCRIPT, FileType.PLAYBOOK]:
-        logger.info("[red]File is not an Integration, Script or a Playbook.[/red]")
-        return 1
+        if old_version and not old_version.lower().endswith(".yml"):
+            raise Exception(
+                f"[red]Input old version {old_version} is not a valid yml file.[/red]"
+            )
 
-    if old_version and not os.path.isfile(old_version):
-        logger.info(f"[red]Input old version file {old_version} was not found.[/red]")
-        return 1
+        if file_type == FileType.INTEGRATION:
+            logger.info(f"Generating {file_type.value.lower()} documentation")
+            use_cases = kwargs.get("use_cases")
+            command_permissions = kwargs.get("command_permissions")
+            return generate_integration_doc(
+                input_path=input_path,
+                output=output_path,
+                use_cases=use_cases,
+                examples=examples,
+                permissions=permissions,
+                command_permissions=command_permissions,
+                limitations=limitations,
+                insecure=insecure,
+                command=command,
+                old_version=old_version,
+                skip_breaking_changes=skip_breaking_changes,
+            )
+        elif file_type == FileType.SCRIPT:
+            logger.info(f"Generating {file_type.value.lower()} documentation")
+            return generate_script_doc(
+                input_path=input_path,
+                output=output_path,
+                examples=examples,
+                permissions=permissions,
+                limitations=limitations,
+                insecure=insecure,
+            )
+        elif file_type == FileType.PLAYBOOK:
+            logger.info(f"Generating {file_type.value.lower()} documentation")
+            return generate_playbook_doc(
+                input_path=input_path,
+                output=output_path,
+                permissions=permissions,
+                limitations=limitations,
+                custom_image_path=custom_image_path,
+            )
 
-    if old_version and not old_version.lower().endswith(".yml"):
-        logger.info(
-            f"[red]Input old version {old_version} is not a valid yml file.[/red]"
-        )
-        return 1
+        elif file_type == FileType.README:
+            logger.info(f"Adding template to {file_type.value.lower()} file")
+            return generate_readme_template(
+                input_path=Path(input_path), readme_template=readme_template
+            )
 
-    if file_type == FileType.INTEGRATION:
-        logger.info(f"Generating {file_type.value.lower()} documentation")
-        use_cases = kwargs.get("use_cases")
-        command_permissions = kwargs.get("command_permissions")
-        return generate_integration_doc(
-            input_path=input_path,
-            output=output_path,
-            use_cases=use_cases,
-            examples=examples,
-            permissions=permissions,
-            command_permissions=command_permissions,
-            limitations=limitations,
-            insecure=insecure,
-            command=command,
-            old_version=old_version,
-            skip_breaking_changes=skip_breaking_changes,
-        )
-    elif file_type == FileType.SCRIPT:
-        logger.info(f"Generating {file_type.value.lower()} documentation")
-        return generate_script_doc(
-            input_path=input_path,
-            output=output_path,
-            examples=examples,
-            permissions=permissions,
-            limitations=limitations,
-            insecure=insecure,
-        )
-    elif file_type == FileType.PLAYBOOK:
-        logger.info(f"Generating {file_type.value.lower()} documentation")
-        return generate_playbook_doc(
-            input_path=input_path,
-            output=output_path,
-            permissions=permissions,
-            limitations=limitations,
-            custom_image_path=custom_image_path,
-        )
-    else:
-        logger.info(f"[red]File type {file_type.value} is not supported.[/red]")
-        return 1
+        else:
+            raise Exception(f"[red]File type {file_type.value} is not supported.[/red]")
+
+    except Exception:
+        logger.exception(f"Failed generating docs for {input_path}")
+        sys.exit(1)
 
 
 # ====================== create-id-set ====================== #
@@ -2634,7 +2671,7 @@ def openapi_codegen(ctx, **kwargs):
         except Exception as e:
             logger.info(f"[red]Failed to load configuration file: {e}[/red]")
 
-    click.echo("Processing swagger file...")
+    logger.info("Processing swagger file...")
     integration = OpenAPIIntegration(
         input_file,
         base_name,
@@ -2669,7 +2706,7 @@ def openapi_codegen(ctx, **kwargs):
             if fix_code:
                 command_to_run = command_to_run + " -f"
 
-            click.echo(
+            logger.info(
                 f"Run the command again with the created configuration file(after a review): {command_to_run}"
             )
             sys.exit(0)
@@ -3213,7 +3250,7 @@ def update_content_graph(
         )
 
 
-@main.command()
+@main.command(short_help="Runs pre-commit hooks on the files in the repository")
 @click.help_option("-h", "--help")
 @click.option(
     "-i",
@@ -3221,6 +3258,13 @@ def update_content_graph(
     help="The path to the input file to run the command on.",
     multiple=True,
     type=click.Path(path_type=Path),
+)
+@click.option(
+    "-s",
+    "--staged-only",
+    help="Whether to run only on staged files",
+    is_flag=True,
+    default=False,
 )
 @click.option(
     "-g",
@@ -3237,10 +3281,9 @@ def update_content_graph(
     default=False,
 )
 @click.option(
-    "-ut",
-    "--unit-test",
+    "-ut/--no-ut",
+    "--unit-test/--no-unit-test",
     help="Whether to run unit tests for content items",
-    is_flag=True,
     default=False,
 )
 @click.option(
@@ -3248,16 +3291,19 @@ def update_content_graph(
     help="A comma separated list of precommit hooks to skip",
 )
 @click.option(
-    "--validate",
+    "--validate/--no-validate",
     help="Whether to run demisto-sdk validate",
-    is_flag=True,
+    default=True,
+)
+@click.option(
+    "--format/--no-format",
+    help="Whether to run demisto-sdk format",
     default=False,
 )
 @click.option(
-    "--format",
-    help="Whether to run demisto-sdk format",
-    is_flag=True,
-    default=False,
+    "--secrets/--no-secrets",
+    help="Whether to run demisto-sdk secrets",
+    default=True,
 )
 @click.option(
     "-v",
@@ -3277,35 +3323,52 @@ def update_content_graph(
     help="The demisto-sdk ref to use for the pre-commit hooks",
     default="",
 )
+@click.argument(
+    "file_paths",
+    nargs=-1,
+    type=click.Path(exists=True, resolve_path=True, path_type=Path),
+)
 @click.pass_context
 @logging_setup_decorator
 def pre_commit(
     ctx,
     input: Iterable[Path],
+    staged_only: bool,
     git_diff: bool,
     all_files: bool,
     unit_test: bool,
     skip: str,
     validate: bool,
     format: bool,
+    secrets: bool,
     verbose: bool,
     show_diff_on_failure: bool,
     sdk_ref: str,
+    file_paths: Iterable[Path],
     **kwargs,
 ):
     from demisto_sdk.commands.pre_commit.pre_commit_command import pre_commit_manager
 
+    if file_paths and input:
+        logger.info(
+            "Both `--input` parameter and `file_paths` arguments were provided. Will use the `--input` parameter."
+        )
+    input_files = input
+    if file_paths and not input_files:
+        input_files = file_paths
     if skip:
         skip = skip.split(",")  # type: ignore[assignment]
     sys.exit(
         pre_commit_manager(
-            input,
+            input_files,
+            staged_only,
             git_diff,
             all_files,
             unit_test,
             skip,
             validate,
             format,
+            secrets,
             verbose,
             show_diff_on_failure,
             sdk_ref=sdk_ref,

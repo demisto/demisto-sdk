@@ -92,6 +92,7 @@ ALLOWED_IGNORE_ERRORS = [
     "RN113",
     "RN114",
     "RN115",
+    "RN116",
     "MR104",
     "MR105",
     "LO107",
@@ -397,6 +398,11 @@ ERROR_CODE = {
     },
     "deprecated_docker_error": {
         "code": "DO109",
+        "ui_applicable": True,
+        "related_field": "dockerimage",
+    },
+    "native_image_is_in_dockerimage_field": {
+        "code": "DO110",
         "ui_applicable": True,
         "related_field": "dockerimage",
     },
@@ -1422,6 +1428,11 @@ ERROR_CODE = {
         "ui_applicable": False,
         "related_field": "",
     },
+    "image_does_not_exist": {
+        "code": "RM114",
+        "ui_applicable": False,
+        "related_field": "",
+    },
     # RN - Release Notes
     "missing_release_notes": {
         "code": "RN100",
@@ -1500,6 +1511,11 @@ ERROR_CODE = {
     },
     "release_notes_invalid_header_format": {
         "code": "RN115",
+        "ui_applicable": False,
+        "related_field": "",
+    },
+    "first_level_is_header_missing": {
+        "code": "RN116",
         "ui_applicable": False,
         "related_field": "",
     },
@@ -2585,6 +2601,11 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
+    def native_image_is_in_dockerimage_field(native_image: str) -> str:
+        return f"invalid dockerimage {native_image}, the native image cannot be set to the dockerimage field in the yml."
+
+    @staticmethod
+    @error_code_decorator
     def id_set_conflicts():
         return (
             "You probably merged from master and your id_set.json has "
@@ -2900,6 +2921,15 @@ class Errors:
         else:
             error = f'Did not find content items headers under "{content_type}" - might be duo to invalid format.\n{error}'
         return error
+
+    @staticmethod
+    @error_code_decorator
+    def first_level_is_header_missing(pack_name):
+        error = (
+            f'Please use "demisto-sdk update-release-notes -i Packs/{pack_name}"\n'
+            "For more information, refer to the following documentation: https://xsoar.pan.dev/docs/documentation/release-notes"
+        )
+        return f"The following RN is missing a first level header.\n{error}"
 
     @staticmethod
     @error_code_decorator
@@ -3552,6 +3582,11 @@ class Errors:
             f"Detected following image url:\n{path}\n"
             f"Which is not the raw link. You probably want to use the following raw image url:\n{alternative_path}"
         )
+
+    @staticmethod
+    @error_code_decorator
+    def image_does_not_exist(path: str):
+        return f"Image at {path} does not exist."
 
     @staticmethod
     @error_code_decorator

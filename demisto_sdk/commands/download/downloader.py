@@ -1,6 +1,5 @@
 import ast
 import io
-import logging
 import os
 import re
 import shutil
@@ -18,6 +17,7 @@ from tabulate import tabulate
 from urllib3.exceptions import MaxRetryError
 
 from demisto_sdk.commands.common.constants import (
+    AUTOMATION,
     CONTENT_ENTITIES_DIRS,
     CONTENT_FILE_ENDINGS,
     DELETED_JSON_FIELDS_BY_DEMISTO,
@@ -26,9 +26,11 @@ from demisto_sdk.commands.common.constants import (
     ENTITY_TYPE_TO_DIR,
     FILE_EXIST_REASON,
     FILE_NOT_IN_CC_REASON,
-    INCIDENT_FIELD_FILE_NAME_REGEX,
+    INCIDENT,
+    INTEGRATION,
     INTEGRATIONS_DIR,
-    LAYOUT_FILE_NAME__REGEX,
+    LAYOUT,
+    PLAYBOOK,
     PLAYBOOK_REGEX,
     PLAYBOOKS_DIR,
     SCRIPTS_DIR,
@@ -36,6 +38,7 @@ from demisto_sdk.commands.common.constants import (
     UUID_REGEX,
 )
 from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     find_type,
     get_child_directories,
@@ -46,6 +49,7 @@ from demisto_sdk.commands.common.tools import (
     get_entity_name_by_entity_type,
     get_file,
     get_files_in_dir,
+    get_id,
     get_json,
     get_yaml,
     get_yml_paths_in_dir,
@@ -54,8 +58,6 @@ from demisto_sdk.commands.common.tools import (
 )
 from demisto_sdk.commands.format.format_module import format_manager
 from demisto_sdk.commands.split.ymlsplitter import YmlSplitter
-
-logger = logging.getLogger("demisto-sdk")
 
 json = JSON_Handler()
 yaml = YAML_Handler()
@@ -93,6 +95,29 @@ ITEM_TYPE_TO_PREFIX = {
     "Classifier": ".json",
     "Mapper": ".json",
 }
+
+
+def map_uuid_to_name(
+    content_item_string: str, scripts_mapper: dict, file_suffix: str
+) -> dict:
+    """
+    Gets id from content item, if the id is UUID it maps it
+    to the content items' name.
+    Args:
+        content_item_string (str): content item as a string.
+        scripts_mapper (dict): a mapper from id to name for content items.
+        file_suffix (str): suffix of the file.
+    Returns:
+        dict: scripts_mapper
+    """
+    if file_suffix == ".yml":
+        content_item = yaml.load(content_item_string)
+    else:
+        content_item = json.loads(content_item_string)
+    content_item_id = get_id(content_item)
+    if re.search(UUID_REGEX, str(content_item_id)):
+        scripts_mapper[content_item_id] = content_item.get("name")
+    return scripts_mapper
 
 
 class Downloader:
@@ -277,48 +302,9 @@ class Downloader:
 
         return playbook_string
 
-    def handle_incidentfield(
-        self, incidentfield_string: str, scripts_mapper: dict
+    def replace_uuids(
+        self, string_to_write: str, uuid_dict: dict, file_name: str
     ) -> str:
-        # In case the incident field uses a custom script, replace the id value of the script with its name
-        file_json_object = json.loads(incidentfield_string)
-        incidentfield_name = file_json_object.get("name")
-        script = file_json_object.get("script")
-        if incidentfield_name and (
-            incidentfield_name in self.input_files or self.all_custom_content
-        ):
-            if script and script in scripts_mapper:
-                incidentfield_string = incidentfield_string.replace(
-                    script, scripts_mapper[script]
-                )
-
-        return incidentfield_string
-
-    def handle_layout(self, layout_string, scripts_mapper):
-        # In case the layout uses a custom script, replace the id value of the script with its name
-        file_json_object = json.loads(layout_string)
-        layout_name = file_json_object.get("name")
-        if layout_name and (layout_name in self.input_files or self.all_custom_content):
-            for tab in (file_json_object.get("detailsV2") or {}).get("tabs", ()):
-                for section in tab.get("sections", ()):
-                    for item in section.get("items", ()):
-                        script_id = item.get("scriptId")
-                        if script_id and script_id in scripts_mapper:
-                            layout_string = layout_string.replace(
-                                script_id, scripts_mapper[script_id]
-                            )
-
-        return layout_string
-
-    @staticmethod
-    def map_script(script_string: str, scripts_mapper: dict) -> dict:
-        script_yml = yaml.load(script_string)
-        script_id = script_yml.get("commonfields").get("id")
-        if re.search(UUID_REGEX, script_id):
-            scripts_mapper[script_id] = script_yml.get("name")
-        return scripts_mapper
-
-    def replace_uuids(self, string_to_write: str, uuid_dict: dict) -> str:
         """
         Replace all occurrences of UUIDs in a string with their corresponding values from a dictionary.
 
@@ -332,31 +318,62 @@ class Downloader:
         uuids = re.findall(UUID_REGEX, string_to_write)
 
         for uuid in set(uuids).intersection(uuid_dict):
+            logger.debug(
+                f"Replacing UUID: {uuid} with the following:\
+ {uuid_dict[uuid]} in {file_name}"
+            )
             string_to_write = string_to_write.replace(uuid, uuid_dict[uuid])
         return string_to_write
 
-    def handle_file(
-        self, string_to_write: str, member_name: str, scripts_id_name: dict
+    def should_download_playbook(self, file_name: str) -> bool:
+        #  if the content item is playbook and list-file flag is true, we should download the
+        #  file via direct REST API because there are props like scriptName, that playbook from custom
+        #  content bundle don't contain
+        return bool(not self.list_files and re.search(PLAYBOOK_REGEX, file_name))
+
+    def write_custom_content(
+        self, content_items_file_names: List[Tuple[str, str]], scripts_id_to_name: dict
     ):
-
-        if not self.list_files and re.search(
-            INCIDENT_FIELD_FILE_NAME_REGEX, member_name
-        ):
-            string_to_write = self.handle_incidentfield(
-                string_to_write, scripts_id_name
+        for content_item_as_string, file_name in content_items_file_names:
+            if self.should_download_playbook(file_name):
+                content_item_as_string = self.download_playbook_yaml(
+                    content_item_as_string
+                )
+            content_item_as_string = self.replace_uuids(
+                content_item_as_string, scripts_id_to_name, file_name
             )
+            file_name = self.update_file_prefix(file_name.strip("/"))
+            path = Path(self.custom_content_temp_dir, file_name)
+            try:
+                path.write_text(content_item_as_string)
 
-        if not self.list_files and re.search(PLAYBOOK_REGEX, member_name):
-            #  if the content item is playbook and list-file flag is true, we should download the
-            #  file via direct REST API because there are props like scriptName, that playbook from custom
-            #  content bundle don't contain
+            except Exception:
+                logger.exception(
+                    "encountered exception, trying to write with encoding=utf8"
+                )
+                path.write_text(content_item_as_string, encoding="utf8")
 
-            string_to_write = self.download_playbook_yaml(string_to_write)
+    def find_uuids_in_content_item(self, tar: tarfile.TarFile):
+        scripts_id_to_name: dict = {}
+        content_items_file_names_tuple: List[Tuple[str, str]] = []
+        for file in tar.getmembers():
+            file_name: str = self.update_file_prefix(file.name.strip("/"))
+            file_path: str = str(Path(self.custom_content_temp_dir, file_name))
 
-        if not self.list_files and re.search(LAYOUT_FILE_NAME__REGEX, member_name):
-            string_to_write = self.handle_layout(string_to_write, scripts_id_name)
-
-        return string_to_write
+            if not (extracted_file := tar.extractfile(file)):
+                raise FileNotFoundError(
+                    f"Could not extract files from tar file: {file_path}"
+                )
+            string_to_write = extracted_file.read().decode("utf-8")
+            file_name = file.name.lower().lstrip("/")
+            if file_name.startswith(
+                (PLAYBOOK, AUTOMATION, INTEGRATION, LAYOUT, INCIDENT)
+            ):
+                scripts_id_to_name = map_uuid_to_name(
+                    string_to_write, scripts_id_to_name, Path(file_name).suffix
+                )
+            content_items_file_names_tuple.append((string_to_write, file.name))
+        return content_items_file_names_tuple, scripts_id_to_name
 
     def fetch_custom_content(self) -> bool:
         """
@@ -377,44 +394,13 @@ class Downloader:
             # Demisto's custom content file is of type tar.gz
             tar = tarfile.open(fileobj=io_bytes, mode="r")
 
-            scripts_id_name: dict = {}
-            strings_to_write: List[Tuple[str, str]] = []
-            for member in tar.getmembers():
-                file_name: str = self.update_file_prefix(member.name.strip("/"))
-                file_path: str = os.path.join(self.custom_content_temp_dir, file_name)
-
-                extracted_file = tar.extractfile(member)
-                if extracted_file:
-                    string_to_write = extracted_file.read().decode("utf-8")
-                    if (
-                        "automation-" in member.name.lower()
-                        or "integration-" in member.name.lower()
-                    ):
-                        scripts_id_name = self.map_script(
-                            string_to_write, scripts_id_name
-                        )
-                    strings_to_write.append((string_to_write, member.name))
-                else:
-                    raise FileNotFoundError(
-                        f"Could not extract files from tar file: {file_path}"
-                    )
-
-            for string_to_write, file_name in strings_to_write:
-                string_to_write = self.handle_file(
-                    string_to_write=string_to_write,
-                    member_name=file_name,
-                    scripts_id_name=scripts_id_name,
-                )
-                string_to_write = self.replace_uuids(string_to_write, scripts_id_name)
-                file_name = self.update_file_prefix(file_name.strip("/"))
-                path = Path(self.custom_content_temp_dir, file_name)
-                try:
-                    path.write_text(string_to_write)
-
-                except Exception as e:
-                    print(f"encountered exception {type(e)}: {e}")
-                    print("trying to write with encoding=utf8")
-                    path.write_text(string_to_write, encoding="utf8")
+            (
+                content_items_file_names_tuple,
+                scripts_id_to_name,
+            ) = self.find_uuids_in_content_item(tar)
+            self.write_custom_content(
+                content_items_file_names_tuple, scripts_id_to_name
+            )
             return True
 
         except ApiException as e:

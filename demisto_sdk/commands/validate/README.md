@@ -40,8 +40,6 @@ Whether the validation should run only on the current branch's committed changed
 Whether the validation should run only on the current branch's staged files. This applies only when the **-g** flag is supplied.
 * **-iu, --include-untracked**
 Whether to include untracked files in the validation. This applies only when the **-g** flag is supplied.
-* **-i, --input**
-Path of file to validate specifically.
 * **-a, --validate-all**
 Whether to run all validation on all files or not.
 * **-i, --input**
@@ -81,10 +79,6 @@ Whether use the content graph
 `demisto-sdk validate -g --no-backwards-comp`
 This will validate only changed files from content origin/master branch and will exclude backwards
 compatibility checks.
-<br><br>
-
-`demisto-sdk validate -j`
-This will validate all content repo files and including conf.json file.
 <br><br>
 
 `demisto-sdk validate --prev-ver SHA1-HASH`

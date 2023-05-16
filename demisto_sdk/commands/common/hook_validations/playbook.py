@@ -1,8 +1,5 @@
-import logging
 import re
 from typing import Dict, Set
-
-import click
 
 from demisto_sdk.commands.common.constants import (
     DEPRECATED_DESC_REGEX,
@@ -13,9 +10,8 @@ from demisto_sdk.commands.common.hook_validations.base_validator import error_co
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import (
     ContentEntityValidator,
 )
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import is_string_uuid
-
-logger = logging.getLogger("demisto-sdk")
 
 
 class PlaybookValidator(ContentEntityValidator):
@@ -118,7 +114,7 @@ class PlaybookValidator(ContentEntityValidator):
         result: set = set()
         with open(self.file_path) as f:
             playbook_text = f.read()
-        all_inputs_occurrences = re.findall(r"inputs\.[-\W|\w ].*", playbook_text)
+        all_inputs_occurrences = re.findall(r"inputs\.[-\w ?!():]+", playbook_text)
         for input in all_inputs_occurrences:
             input = input.strip()
             splitted = input.split(".")
@@ -563,9 +559,8 @@ class PlaybookValidator(ContentEntityValidator):
         """
 
         if not id_set_file:
-            click.secho(
-                "Skipping playbook script id validation. Could not read id_set.json.",
-                fg="yellow",
+            logger.info(
+                "[yellow]Skipping playbook script id validation. Could not read id_set.json.[/yellow]"
             )
             return True
 

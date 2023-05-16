@@ -1,4 +1,3 @@
-import logging
 import os
 import re
 import shutil
@@ -29,13 +28,14 @@ from demisto_sdk.commands.common.constants import (
     XSOAR_SUPPORT_URL,
     FileType,
 )
+from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.handlers import JSON_Handler
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     capital_case,
     find_type,
     get_child_directories,
     get_child_files,
-    get_content_path,
     get_display_name,
     get_pack_metadata,
 )
@@ -55,8 +55,6 @@ from demisto_sdk.commands.split.ymlsplitter import YmlSplitter
 from demisto_sdk.commands.update_release_notes.update_rn_manager import (
     UpdateReleaseNotesManager,
 )
-
-logger = logging.getLogger("demisto-sdk")
 
 json = JSON_Handler()
 
@@ -119,7 +117,7 @@ class ContributionConverter:
                 updating an existing pack and the pack's directory is not equivalent to the value returned from
                 running `self.format_pack_dir_name(name)`
             base_dir (Union[str], optional): Used to explicitly pass the path to the top-level directory of the
-                local content repo. If no value is passed, the `get_content_path()` function is used to determine
+                local content repo. If no value is passed, the `CONTENT_PATH` variable is used to determine
                 the path. Defaults to None.
 
         """
@@ -135,7 +133,7 @@ class ContributionConverter:
         self.create_new = create_new
         self.contribution_items_version: Dict[str, Dict[str, str]] = {}
         self.contribution_items_version_note = ""
-        base_dir = base_dir or get_content_path()  # type: ignore
+        base_dir = base_dir or CONTENT_PATH  # type: ignore
         self.packs_dir_path = os.path.join(base_dir, "Packs")  # type: ignore
         if not os.path.isdir(self.packs_dir_path):
             os.makedirs(self.packs_dir_path)
@@ -477,7 +475,7 @@ class ContributionConverter:
                 ):
                     return pack_version_reg.groups()[0]
             except Exception as e:
-                logging.warning(f"Failed extracting pack version from script: {e}")
+                logger.warning(f"Failed extracting pack version from script: {e}")
         return "0.0.0"
 
     def create_contribution_items_version_note(self):
@@ -501,6 +499,29 @@ class ContributionConverter:
                     f"> | {item_name} | {item_versions.get('contribution_version', '')} | "
                     f"{item_versions.get('latest_version', '')}\n"
                 )
+
+            self.contribution_items_version_note += (
+                ">\n"
+                "> **For the Reviewer:**\n"
+                "> 1. Compare the code of this PR with the latest version of the pack. Make sure you understand"
+                " the changes the contributor intended to contribute, and **solve the conflicts accordingly**.\n"
+                "> 2. In case improvements are needed, instruct the contributor to edit the code through the "
+                "**GitHub Codespaces** and **Not through the XSOAR UI**.\n"
+            )
+
+            self.contribution_items_version_note += (
+                f">\n"
+                f"> **For the Contributor:**\n @{self.gh_user}\n"
+                f"> In case you are requested by your reviewer to improve the code or to make changes, submit "
+                f"them through the **GitHub Codespaces** and **Not through the XSOAR UI**.\n"
+                f">\n"
+                f"> **To use the GitHub Codespaces, do the following:**\n"
+                f"> 1. Click the **'Code'** button in the right upper corner of this PR.\n"
+                f"> 2. Click **'Create codespace on Transformers'**.\n"
+                f"> 3. Click **'Authorize and continue'**.\n"
+                f"> 4. Wait until your Codespace environment is generated. When it is, you can edit your code.\n"
+                f"> 5. Commit and push your changes to the head branch of the PR.\n"
+            )
 
     def content_item_to_package_format(
         self,
@@ -587,7 +608,7 @@ class ContributionConverter:
                                 }
 
                     except Exception as e:
-                        logging.warning(
+                        logger.warning(
                             f"Could not parse {content_item_file_path} contribution item version: {e}.",
                         )
                     extractor.extract_to_package_format(

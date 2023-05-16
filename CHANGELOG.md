@@ -1,8 +1,83 @@
 # Changelog
 
 ## Unreleased
+* Added a validation that the **validate** command will fail if the `dockerimage` field in scripts/integrations uses any py3-native docker image.
+* Fixed an issue where **run-unit-tests** failed on python2 content items.
+* Fixed an issue where **lint** failed fetching docker image details from a PANW GitLab CI environment. (PANW-internal only)
+* Fixed an issue in **pre-commit** where `--input` flag was not filtered by the git files.
+
+## 1.14.5
+* Added logging in case the container fails to run in **run-unit-tests**.
+* Disabled **pre-commit** multiprocessing for `validate` and `format`, as they use a service.
+* **pre-commit** now calls `format` with `--assume-yes` and `--no-validate`.
+* Fixed an issue where **pre-commit** ran multiple times when checking out build related files.
+
+## 1.14.4
+* Added integration configuration for *Cortex REST API* integration.
+* Removed `Flake8` from **pre-commit**, as `ruff` covers its basic rules.
+* Improved log readability by silencing non-critical `neo4j` (content graph infrastructure) logs.
+* Fixed an issue where **run-unit-tests** failed on python2 content items.
+* Fixed an issue where **modeling-rules test** did not properly handle query fields that pointed to a string.
+* Fixed an issue when trying to fetch remote files when not under the content repo.
+* Fixed a validation that the **modeling-rules test** command will fail if no test data file exist.
+* Fixed an issue where **format** command failed while updating the `fromversion` entry.
+* Added support for mapping uuid to names for Layout files in the **download** command.
+
+## 1.14.3
+* Fixed an issue where **run-unit-tests** failed running on items with `test_data`.
+* Updated the demisto-py to v3.2.10 which now supports url decoding for the proxy authentication password.
+* Fixed an issue where **generate-outputs** did not generate context paths for empty lists or dictionaries in the response.
+
+## 1.14.2
+* Added the `--staged-only` flag to **pre-commit**.
+* Fixed an issue where **run-unit-tests** failed running on items with `test_data`.
+* Fixed an issue where **pre-commit** ran on unchanged files.
+* Add the ability to run **secrets** in **pre-commit** by passing a `--secrets` flag.
+* Added support to override the log file with the **DEMISTO_SDK_LOG_FILE_PATH** environment variable.
+
+## 1.14.1
+* Fixed an issue where **update-release-notes** command failed when running on a pack that contains deprecated integrations without the `commands` section.
+* Added toVersion and fromVersion to XSIAM content items schema.
+* Fixed an issue where **validate** failed when attempting to map null values in a classifier and layout.
+* Added search marketplace functionality to XSIAM client.
+* Fixed an issue in **pre-commit** command where `MYPYPATH` was not set properly.
+* Updated the integration category list in the **init** command.
+* Fixed an issue where in some environments docker errors were not caught.
+* Added a validation that the **validate** command will fail on README files if an image does not exist in the specified path.
+
+## 1.14.0
+* Added the `DEMISTO_SDK_GRAPH_FORCE_CREATE` environment variable. Use it to force the SDK to recreate the graph, rather than update it.
+* Added support for code importing multi-level ApiModules to **lint**.
+* Added a validation that the **modeling-rules test** command will fail if no test data file exist.
+* Added support for the `<~XPANSE>` marketplace tag in release notes.
+* Added support for marketplace tags in the **doc-review** command.
+* Added **generate-unit-tests** documentation to the repo README.
+* Added the `hiddenpassword` field to the integration schema, allowing **validate** to run on integrations with username-only inputs.
+* Improved logs and error handling in the **modeling-rules test** command.
+* Improved the warning message displayed for Contribution PRs editing outdated code.
+* Improved the clarity of error messages for cases where yml files cannot be parsed as a dictionary.
+* Updated the `XSIAMReport` schema.
+* Standardized repo-wide logging. All logs are now created in one logger instance.
+* **lint** now prevents unit-tests from accessing online resources in runtime.
+* Updated the logs shown during lint when running in docker.
+* Fixed an issue where **validate** showed errors twice.
+* Fixed an issue where **validate** did not fail when xif files had wrong naming.
+* Fixed an issue where **doc-review** required dot suffixes in release notes describing new content.
+* Fixed an issue where **download** command failed when running on a beta integration.
+* Fixed an issue where **update-release-notes** generated release notes for packs in their initial version (1.0.0).
+* Fixed an issue with **update-content-graph** where `--use-git` parameter was ignored when using `--imported-path` parameter.
+* Fixed an issue where **validate** failed on playbooks with valid inputs, since it did not collect the playbook inputs occurrences properly.
+
+## 1.13.0
 * Added the pack version to the code files when calling **unify**. The same value is removed when calling **split**.
+* Added a message showing the output path when **prepare-content** is called.
 * Contribution PRs that update outdated packs now display a warning message.
+* Fixed an issue when kebab-case has a misspelling in one of the sub words, the suggestion might be confusing.
+* Improved caching and stability for **lint**.
+* Added support for *.xif* files in the **secrets** command.
+* Fixed an issue where **validate** would fail when playbook inputs contain Transform Language (DT).
+* Added a new **validate** check, making sure a first level header exist in release notes (RN116)
+* Fixed an issue where **lint** would not properly handle multiple ApiModules imports.
 
 ## 1.12.0
 * Added the **pre-commit** command, to improve code quality of XSOAR content.

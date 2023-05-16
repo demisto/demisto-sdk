@@ -1,13 +1,12 @@
 from distutils.version import LooseVersion
 
-import click
-
 from demisto_sdk.commands.common.constants import LAYOUT_AND_MAPPER_BUILT_IN_FIELDS
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.base_validator import error_codes
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import (
     ContentEntityValidator,
 )
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     get_all_incident_and_indicator_fields_from_id_set,
 )
@@ -232,9 +231,8 @@ class ClassifierValidator(ContentEntityValidator):
             return True
 
         if not id_set_file:
-            click.secho(
-                "Skipping classifier incident field validation. Could not read id_set.json.",
-                fg="yellow",
+            logger.info(
+                "[yellow]Skipping classifier incident field validation. Could not read id_set.json.[/yellow]"
             )
             return True
 

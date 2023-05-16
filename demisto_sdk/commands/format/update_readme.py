@@ -1,4 +1,3 @@
-import logging
 from typing import Optional, Tuple
 
 from demisto_sdk.commands.common.hook_validations.readme import (
@@ -6,6 +5,7 @@ from demisto_sdk.commands.common.hook_validations.readme import (
     get_relative_urls,
     mdx_server_is_up,
 )
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.markdown_lint import run_markdownlint
 from demisto_sdk.commands.format.format_constants import (
     ERROR_RETURN_CODE,
@@ -13,8 +13,6 @@ from demisto_sdk.commands.format.format_constants import (
     SUCCESS_RETURN_CODE,
 )
 from demisto_sdk.commands.format.update_generic import BaseUpdate
-
-logger = logging.getLogger("demisto-sdk")
 
 
 class ReadmeFormat(BaseUpdate):

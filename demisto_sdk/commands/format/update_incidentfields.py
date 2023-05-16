@@ -1,9 +1,7 @@
-import logging
 from typing import List, Tuple
 
-import click
-
 from demisto_sdk.commands.common.handlers import JSON_Handler
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     get_dict_from_file,
     get_item_marketplaces,
@@ -15,8 +13,6 @@ from demisto_sdk.commands.format.format_constants import (
     SUCCESS_RETURN_CODE,
 )
 from demisto_sdk.commands.format.update_generic_json import BaseUpdateJSON
-
-logger = logging.getLogger("demisto-sdk")
 
 json = JSON_Handler()
 
@@ -71,9 +67,8 @@ class IncidentFieldJSONFormat(BaseUpdateJSON):
         """
 
         if not self.id_set_path:
-            click.secho(
-                'Skipping "Aliases" formatting as id_set_path argument is missing',
-                fg="yellow",
+            logger.info(
+                '[yellow]Skipping "Aliases" formatting as id_set_path argument is missing[/yellow]'
             )
 
         aliases = self.data.get("Aliases", {})

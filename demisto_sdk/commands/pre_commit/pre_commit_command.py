@@ -201,7 +201,9 @@ def group_by_python_version(files: Set[Path]) -> Dict[str, set]:
             )
             if not find_path_index:
                 raise Exception(f"Could not find Integrations/Scripts path for {file}")
-            code_file_path = Path(*file.parts[: next(find_path_index) + 1])
+            code_file_path = CONTENT_PATH / Path(
+                *file.parts[: next(find_path_index) + 1]
+            )
             integrations_scripts_mapping[code_file_path].add(file)
         else:
             infra_files.append(file)
@@ -306,7 +308,7 @@ def preprocess_files(
     files_to_run: Set[Path] = set()
     for file in raw_files:
         if file.is_dir():
-            files_to_run |= set(file.rglob("*"))
+            files_to_run |= {file for file in file.rglob("*") if file.is_file()}
         else:
             files_to_run.add(file)
 

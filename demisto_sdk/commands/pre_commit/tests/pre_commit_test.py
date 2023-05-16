@@ -53,19 +53,41 @@ def test_config_files(mocker, repo: Repo, is_test: bool):
     classifier = pack1.create_classifier("classifier")
     mocker.patch.object(YAML_Handler, "dump", side_effect=lambda *args: [])
     mock_subprocess = mocker.patch.object(subprocess, "run")
-
+    relative_paths = {
+        path.relative_to(repo.path)
+        for path in Path(pack1.path).rglob("*")
+        if path.is_file()
+    }
+    mocker.patch.object(
+        GitUtil,
+        "get_all_files",
+        return_value=relative_paths | {Path("README.md")} | {Path("test.md")},
+    ) | {Path("fix.md")}
     files_to_run = preprocess_files([Path(pack1.path)])
-    assert files_to_run == set(Path(pack1.path).rglob("*"))
+    assert files_to_run == relative_paths
 
     pre_commit = pre_commit_command.PreCommitRunner(
         group_by_python_version(files_to_run), ""
     )
-    assert Path(script1.yml.path) in pre_commit.python_version_to_files["2.7"]
-    assert Path(integration3.yml.path) in pre_commit.python_version_to_files["3.8"]
-    assert Path(integration1.yml.path) in pre_commit.python_version_to_files["3.9"]
-    assert Path(integration2.yml.path) in pre_commit.python_version_to_files["3.10"]
+    assert (
+        Path(script1.yml.path).relative_to(repo.path)
+        in pre_commit.python_version_to_files["2.7"]
+    )
+    assert (
+        Path(integration3.yml.path).relative_to(repo.path)
+        in pre_commit.python_version_to_files["3.8"]
+    )
+    assert (
+        Path(integration1.yml.path).relative_to(repo.path)
+        in pre_commit.python_version_to_files["3.9"]
+    )
+    assert (
+        Path(integration2.yml.path).relative_to(repo.path)
+        in pre_commit.python_version_to_files["3.10"]
+    )
     assert all(
-        Path(obj.path) in pre_commit.python_version_to_files["3.10"]
+        Path(obj.path).relative_to(repo.path)
+        in pre_commit.python_version_to_files["3.10"]
         for obj in (incident_field, classifier)
     )
 

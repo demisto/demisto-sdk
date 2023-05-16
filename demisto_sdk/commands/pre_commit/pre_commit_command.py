@@ -289,8 +289,8 @@ def preprocess_files(
     all_files: bool = False,
 ) -> Set[Path]:
     git_util = GitUtil()
-    all_git_files = git_util.get_all_files()
     staged_files = git_util._get_staged_files()
+    all_git_files = git_util.get_all_files() | staged_files
     if input_files:
         raw_files = set(input_files)
     elif staged_only:
@@ -298,7 +298,7 @@ def preprocess_files(
     elif use_git:
         raw_files = git_util._get_all_changed_files() | staged_files
     elif all_files:
-        raw_files = all_git_files | staged_files
+        raw_files = all_git_files
     else:
         raise ValueError(
             "No files were given to run pre-commit on, and no flags were given."

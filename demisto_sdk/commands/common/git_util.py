@@ -525,6 +525,7 @@ class GitUtil:
                 for item in self.repo.git.diff(
                     "--name-only", f"{remote}/{branch}...{current_branch_or_hash}"
                 ).split("\n")
+                if item
             }
 
         # if remote does not exist we are checking against the commit sha1
@@ -534,6 +535,7 @@ class GitUtil:
                 for item in self.repo.git.diff(
                     "--name-only", f"{branch}...{current_branch_or_hash}"
                 ).split("\n")
+                if item
             }
 
     def _only_last_commit(

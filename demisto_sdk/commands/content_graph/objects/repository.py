@@ -7,16 +7,16 @@ from typing import List
 from pydantic import BaseModel, DirectoryPath
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
+from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.cpu_count import cpu_count
 from demisto_sdk.commands.common.logger import logger
-from demisto_sdk.commands.common.tools import get_content_path
 from demisto_sdk.commands.content_graph.objects.pack import Pack
 
 USE_FUTURE = True  # toggle this for better debugging
 
 
 class ContentDTO(BaseModel):
-    path: DirectoryPath = Path(get_content_path())  # type: ignore
+    path: DirectoryPath = Path(CONTENT_PATH)  # type: ignore
     packs: List[Pack]
 
     def dump(

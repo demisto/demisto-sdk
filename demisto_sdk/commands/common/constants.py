@@ -59,6 +59,7 @@ LAYOUT = "layout"
 LAYOUTS_CONTAINER = "layoutscontainer"
 PRE_PROCESS_RULES = "pre-process-rules"
 LISTS = "list"  # singular, as it is the prefix of the file
+INCIDENT = "incident"  # prefix to identify any incident entity
 INCIDENT_TYPE = "incidenttype"
 INCIDENT_FIELD = "incidentfield"
 INDICATOR_FIELD = "indicatorfield"
@@ -1794,6 +1795,7 @@ class ParameterType(Enum):
 NO_TESTS_DEPRECATED = "No tests (deprecated)"
 NATIVE_IMAGE_FILE_NAME = "docker_native_image_config.json"
 TESTS_REQUIRE_NETWORK_PACK_IGNORE = "tests_require_network"
+NATIVE_IMAGE_DOCKER_NAME = "demisto/py3-native"
 
 
 # SKIP PREPARE CONSTANTS
@@ -1808,3 +1810,5 @@ TABLE_INCIDENT_TO_ALERT = {
     'INCIDENT': 'ALERT',
     'INCIDENTS': 'ALERTS'
 }
+
+NATIVE_IMAGE_DOCKER_NAME = "demisto/py3-native"

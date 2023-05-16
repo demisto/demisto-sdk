@@ -401,6 +401,11 @@ ERROR_CODE = {
         "ui_applicable": True,
         "related_field": "dockerimage",
     },
+    "native_image_is_in_dockerimage_field": {
+        "code": "DO110",
+        "ui_applicable": True,
+        "related_field": "dockerimage",
+    },
     # DS - Descriptions
     "description_missing_in_beta_integration": {
         "code": "DS100",
@@ -2598,6 +2603,11 @@ class Errors:
             f'The latest docker image tag in {"Iron Bank" if is_iron_bank else "docker hub"} '
             f"is: {docker_image_latest_tag}\n"
         )
+
+    @staticmethod
+    @error_code_decorator
+    def native_image_is_in_dockerimage_field(native_image: str) -> str:
+        return f"invalid dockerimage {native_image}, the native image cannot be set to the dockerimage field in the yml."
 
     @staticmethod
     @error_code_decorator

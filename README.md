@@ -5,7 +5,7 @@
 [![Coverage Status](https://coveralls.io/repos/github/demisto/demisto-sdk/badge.svg?branch=master)](https://coveralls.io/github/demisto/demisto-sdk?branch=master)
 
 The Demisto SDK library can be used to manage your Cortex XSOAR content with ease and efficiency.
-The library uses python 3.8+.
+The library supports Python 3.8-3.10. _Python 3.8 support will be removed soon._
 
 ## Usage
 

@@ -1,11 +1,14 @@
 from pathlib import Path
 
 import pytest
-from demisto_sdk.commands.common.tools import get_yaml
+
 import demisto_sdk.commands.content_graph.neo4j_service as neo4j_service
-from TestSuite.repo import Repo
-from demisto_sdk.commands.common.constants import SKIP_PREPARE_SCRIPT_NAME, MarketplaceVersions
+from demisto_sdk.commands.common.constants import (
+    SKIP_PREPARE_SCRIPT_NAME,
+    MarketplaceVersions,
+)
 from demisto_sdk.commands.common.legacy_git_tools import git_path
+from demisto_sdk.commands.common.tools import get_yaml
 from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
 from demisto_sdk.commands.content_graph.content_graph_commands import (
     create_content_graph,
@@ -17,13 +20,14 @@ from demisto_sdk.commands.content_graph.interface.neo4j.neo4j_graph import (
 from demisto_sdk.commands.content_graph.objects.repository import ContentDTO
 from demisto_sdk.commands.content_graph.tests.create_content_graph_test import (
     mock_pack,
+    mock_playbook,
     mock_relationship,
     mock_script,
-    mock_playbook
 )
 from demisto_sdk.commands.prepare_content.preparers.marketplace_incident_to_alert_playbooks_prepare import (
     MarketplaceIncidentToAlertPlaybooksPreparer,
 )
+from TestSuite.repo import Repo
 
 GIT_ROOT = git_path()
 
@@ -78,7 +82,7 @@ def create_mini_content(repository: ContentDTO):
                 "setIncidentByID",
                 ContentType.SCRIPT,
                 mandatorily=True,
-            )
+            ),
         ],
     }
     relationships2 = {
@@ -94,7 +98,7 @@ def create_mini_content(repository: ContentDTO):
                 ContentType.PLAYBOOK,
                 "TestPack2",
                 ContentType.PACK,
-            )
+            ),
         ]
     }
     pack1 = mock_pack("TestPack")
@@ -134,10 +138,10 @@ def test_marketplace_version_is_xsiam_with_graph(repository: ContentDTO):
     create_mini_content(repository)
     with ContentGraphInterface() as interface:
         create_content_graph(interface)
-        playbooks = interface.search(
-            content_type=ContentType.PLAYBOOK
+        playbooks = interface.search(content_type=ContentType.PLAYBOOK)
+        data = get_yaml(
+            f"{GIT_ROOT}/demisto_sdk/commands/prepare_content/test_files/playbook_2.yml"
         )
-        data = get_yaml(f"{GIT_ROOT}/demisto_sdk/commands/prepare_content/test_files/playbook_2.yml")
 
         data = MarketplaceIncidentToAlertPlaybooksPreparer.prepare(
             playbook=playbooks[0],

@@ -12,26 +12,17 @@ from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 logger = logging.getLogger("demisto-sdk")
 
 NOT_WRAPPED_RE_MAPPING = {
-    rf"(?<!<-){key}(?!->)": value
-    for key, value in TABLE_INCIDENT_TO_ALERT.items()
+    rf"(?<!<-){key}(?!->)": value for key, value in TABLE_INCIDENT_TO_ALERT.items()
 }
 
-WRAPPED_MAPPING = {
-    rf"<-{key}->": key
-    for key in TABLE_INCIDENT_TO_ALERT.keys()
-}
+WRAPPED_MAPPING = {rf"<-{key}->": key for key in TABLE_INCIDENT_TO_ALERT.keys()}
 
 WRAPPER_SCRIPT = {
     "python": "register_module_line('script_name', 'start', __line__())\n\n"
-              "return_results(demisto.executeCommand('<original_script_name>', demisto.args()))\n\n"
-              "register_module_line('script_name', 'end', __line__())",
+    "return_results(demisto.executeCommand('<original_script_name>', demisto.args()))\n\n"
+    "register_module_line('script_name', 'end', __line__())",
     "javascript": "return executeCommand('<original_script_name>', args)\n",
 }
-
-
-"""
-PLAYBOOK HELPER FUNCTIONS
-"""
 
 
 def prepare_descriptions_and_names_classifier(
@@ -67,7 +58,9 @@ def prepare_descriptions_and_names(
         if name := task_value.get("task", {}).get("name", ""):
             data["tasks"][task_key]["task"][
                 "name"
-            ] = prepare_descriptions_and_names_classifier(name, replace_incident_to_alert)
+            ] = prepare_descriptions_and_names_classifier(
+                name, replace_incident_to_alert
+            )
 
     # The external playbook's description
     if description := data.get("description"):
@@ -105,7 +98,8 @@ def replace_playbook_access_fields_recursively(
 ) -> Any:
     if isinstance(datum, list):
         return [
-            replace_playbook_access_fields_recursively(item, replaceable_scripts) for item in datum
+            replace_playbook_access_fields_recursively(item, replaceable_scripts)
+            for item in datum
         ]
 
     elif isinstance(datum, dict):
@@ -119,43 +113,46 @@ def replace_playbook_access_fields_recursively(
                 if key == "script" and val == "Builtin|||setIncident":
                     val = val.replace("setIncident", "setAlert")
 
-                elif (
-                    key == "scriptName"
-                    and val in replaceable_scripts
-                ):
+                elif key == "scriptName" and val in replaceable_scripts:
                     val = edit_ids_names_and_descriptions_for_script(val, True)
                 datum[key] = val
 
             else:
-                datum[key] = replace_playbook_access_fields_recursively(val, replaceable_scripts)
+                datum[key] = replace_playbook_access_fields_recursively(
+                    val, replaceable_scripts
+                )
 
     return datum
 
 
-def get_script_names_from_playbooks_intended_preparation(playbook: ContentItem) -> List[str]:
+def get_script_names_from_playbooks_intended_preparation(
+    playbook: ContentItem,
+) -> List[str]:
     """
     Extracts all scripts of the Playbook and filters only those intended
     for special preparation of `incident to alert`.
     """
     # Import inside the function to avoiding circular import
     from demisto_sdk.commands.content_graph.objects.script import Script
+
     return [
-        name.object_id for name in [
-            content_item.content_item_to for content_item in playbook.uses
-            if isinstance(content_item.content_item_to, Script) and
-            content_item.content_item_to.is_incident_to_alert(MarketplaceVersions.MarketplaceV2)
+        name.object_id
+        for name in [
+            content_item.content_item_to
+            for content_item in playbook.uses
+            if isinstance(content_item.content_item_to, Script)
+            and content_item.content_item_to.is_incident_to_alert(
+                MarketplaceVersions.MarketplaceV2
+            )
         ]
     ]
 
 
 def prepare_playbook_access_fields(data: dict, playbook: ContentItem) -> dict:
-    script_intended_prepare = get_script_names_from_playbooks_intended_preparation(playbook)
+    script_intended_prepare = get_script_names_from_playbooks_intended_preparation(
+        playbook
+    )
     return replace_playbook_access_fields_recursively(data, script_intended_prepare)
-
-
-"""
-SCRIPT HELPER FUNCTIONS
-"""
 
 
 def edit_ids_names_and_descriptions_for_script(
@@ -187,7 +184,7 @@ def create_wrapper_script(data: dict) -> dict:
             )
             .replace("script_name", copy_data["name"])
         )
-    except Exception as e:
+    except Exception:
         logger.exception("Failed to create the wrapper script")
 
     copy_data = set_deprecated_for_scripts(copy_data, old_script=True)
@@ -213,7 +210,8 @@ def replace_script_access_fields_recursively(
             if isinstance(value, str):
                 if key in {"id", "comment", "description"} or (
                     # To avoid replacing the name of the arguments
-                    key == "name" and "commonfields" in data
+                    key == "name"
+                    and "commonfields" in data
                 ):
                     data[key] = edit_ids_names_and_descriptions_for_script(
                         value, incident_to_alert

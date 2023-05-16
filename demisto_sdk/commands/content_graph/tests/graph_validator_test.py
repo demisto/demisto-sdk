@@ -5,7 +5,10 @@ from typing import Any, Callable, Dict, List
 import pytest
 
 import demisto_sdk.commands.content_graph.neo4j_service as neo4j_service
-from demisto_sdk.commands.common.constants import SKIP_PREPARE_SCRIPT_NAME, MarketplaceVersions
+from demisto_sdk.commands.common.constants import (
+    SKIP_PREPARE_SCRIPT_NAME,
+    MarketplaceVersions,
+)
 from demisto_sdk.commands.common.hook_validations.graph_validator import GraphValidator
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
@@ -271,7 +274,7 @@ def repository(mocker) -> ContentDTO:
         mock_script(
             "getIncidents",
             marketplaces=[MarketplaceVersions.XSOAR, MarketplaceVersions.MarketplaceV2],
-            skip_prepare=[SKIP_PREPARE_SCRIPT_NAME]
+            skip_prepare=[SKIP_PREPARE_SCRIPT_NAME],
         )
     )
     pack2.content_items.classifier.append(mock_classifier("SampleClassifier2"))
@@ -290,20 +293,17 @@ def repository(mocker) -> ContentDTO:
     pack3.content_items.script.append(mock_script("SampleScript2"))
     pack3.content_items.script.append(
         mock_script(
-            'setAlert',
-            [MarketplaceVersions.XSOAR, MarketplaceVersions.MarketplaceV2]
+            "setAlert", [MarketplaceVersions.XSOAR, MarketplaceVersions.MarketplaceV2]
         )
     )
     pack3.content_items.script.append(
         mock_script(
-            'getAlert',
-            [MarketplaceVersions.XSOAR, MarketplaceVersions.MarketplaceV2]
+            "getAlert", [MarketplaceVersions.XSOAR, MarketplaceVersions.MarketplaceV2]
         )
     )
     pack3.content_items.script.append(
         mock_script(
-            'getAlerts',
-            [MarketplaceVersions.XSOAR, MarketplaceVersions.MarketplaceV2]
+            "getAlerts", [MarketplaceVersions.XSOAR, MarketplaceVersions.MarketplaceV2]
         )
     )
     pack4.content_items.playbook.append(mock_playbook("SamplePlaybook"))
@@ -389,11 +389,7 @@ def mock_playbook(
     )
 
 
-def mock_script(
-        name,
-        marketplaces=[MarketplaceVersions.XSOAR],
-        skip_prepare=[]
-):
+def mock_script(name, marketplaces=[MarketplaceVersions.XSOAR], skip_prepare=[]):
     return Script(
         id=name,
         content_type=ContentType.SCRIPT,

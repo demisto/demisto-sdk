@@ -1820,7 +1820,7 @@ ERROR_CODE = {
         "code": "GR106",
         "ui_applicable": False,
         "related_field": "",
-    }
+    },
 }
 
 
@@ -4533,10 +4533,11 @@ class Errors:
         script_name: str,
         existing_script_name: str,
     ):
-        return (f"Cannot create a script with the name {script_name}, "
-                f"because a script with the name {existing_script_name} already exists.\n"
-                "(it will not be possible to create a new script whose name includes the word Alert/Alerts "
-                "if there is already a script with a similar name and only the word Alert/Alerts "
-                "is replaced by the word Incident/Incidents\nfor example: if there is a script `getIncident'"
-                "it will not be possible to create a script with the name `getAlert`)")
-
+        return (
+            f"Cannot create a script with the name {script_name}, "
+            f"because a script with the name {existing_script_name} already exists.\n"
+            "(it will not be possible to create a new script whose name includes the word Alert/Alerts "
+            "if there is already a script with a similar name and only the word Alert/Alerts "
+            "is replaced by the word Incident/Incidents\nfor example: if there is a script `getIncident'"
+            "it will not be possible to create a script with the name `getAlert`)"
+        )

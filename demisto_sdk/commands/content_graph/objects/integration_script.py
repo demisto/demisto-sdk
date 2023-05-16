@@ -33,11 +33,11 @@ class IntegrationScript(ContentItem):
         current_marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR,
         **kwargs,
     ) -> dict:
-        if not kwargs.get("unify_only"):
-            data = super().prepare_for_upload(current_marketplace)
-        else:
-            data = self.data
-
+        data = (
+            self.data
+            if kwargs.get("unify_only")
+            else super().prepare_for_upload(current_marketplace)
+        )
         data = IntegrationScriptUnifier.unify(
             self.path, data, current_marketplace, **kwargs
         )

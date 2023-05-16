@@ -1,4 +1,4 @@
-from typing import List, Tuple, Dict
+from typing import Dict, List, Tuple
 
 from neo4j import Transaction, graph
 
@@ -7,6 +7,7 @@ from demisto_sdk.commands.common.constants import (
     GENERAL_DEFAULT_FROMVERSION,
     MarketplaceVersions,
 )
+from demisto_sdk.commands.common.tools import replace_alert_to_incident
 from demisto_sdk.commands.content_graph.common import (
     ContentType,
     Neo4jRelationshipResult,
@@ -16,10 +17,6 @@ from demisto_sdk.commands.content_graph.interface.neo4j.queries.common import (
     is_target_available,
     run_query,
     versioned,
-)
-
-from demisto_sdk.commands.common.tools import (
-    replace_alert_to_incident
 )
 
 
@@ -181,7 +178,7 @@ AND '{MarketplaceVersions.MarketplaceV2}' IN b.marketplaces
 RETURN b.name AS b_name
 """
     return {
-        item['b_name']: content_item_names_and_paths[item['b_name']]
+        item["b_name"]: content_item_names_and_paths[item["b_name"]]
         for item in run_query(tx, query)
     }
 

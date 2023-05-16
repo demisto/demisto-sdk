@@ -304,12 +304,8 @@ class GraphValidator(BaseValidator):
 
         if query_results:
             for script_name, file_path in query_results.items():
-                (
-                    error_message,
-                    error_code,
-                ) = Errors.duplicated_script_name(
-                    replace_incident_to_alert(script_name),
-                    script_name
+                (error_message, error_code,) = Errors.duplicated_script_name(
+                    replace_incident_to_alert(script_name), script_name
                 )
                 if self.handle_error(
                     error_message,

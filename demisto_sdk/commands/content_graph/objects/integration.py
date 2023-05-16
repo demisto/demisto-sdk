@@ -1,4 +1,6 @@
-from typing import TYPE_CHECKING, List
+from typing import TYPE_CHECKING, Callable, List
+
+import demisto_client
 
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 
@@ -94,3 +96,7 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
             data["script"]["nativeimage"] = supported_native_images
 
         return data
+
+    @classmethod
+    def _client_upload_method(cls, client: demisto_client) -> Callable:
+        return client.integration_upload

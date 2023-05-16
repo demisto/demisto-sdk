@@ -58,12 +58,12 @@ def repository(mocker):
     return repository
 
 
-def mock_pack(name: str = "SamplePack"):
+def mock_pack(name: str = "SamplePack", path: Path = Path("Packs")) -> Pack:
     return Pack(
         object_id=name,
         content_type=ContentType.PACK,
         node_id=f"{ContentType.PACK}:{name}",
-        path=Path("Packs"),
+        path=path,
         name=name,
         marketplaces=[MarketplaceVersions.XSOAR],
         hidden=False,
@@ -78,12 +78,12 @@ def mock_pack(name: str = "SamplePack"):
     )
 
 
-def mock_integration(name: str = "SampleIntegration"):
+def mock_integration(name: str = "SampleIntegration", path: Path = Path("Packs")):
     return Integration(
         id=name,
         content_type=ContentType.INTEGRATION,
         node_id=f"{ContentType.INTEGRATION}:{name}",
-        path=Path("Packs"),
+        path=path,
         fromversion="5.0.0",
         toversion="99.99.99",
         display_name=name,
@@ -100,7 +100,7 @@ def mock_integration(name: str = "SampleIntegration"):
 def mock_script(
     name: str = "SampleScript",
     marketplaces: List[MarketplaceVersions] = [MarketplaceVersions.XSOAR],
-    skip_prepare: List[str] = []
+    skip_prepare: List[str] = [],
 ):
     return Script(
         id=name,
@@ -142,7 +142,7 @@ def mock_classifier(name: str = "SampleClassifier"):
 
 def mock_playbook(
     name: str = "SamplePlaybook",
-    marketplaces: List[MarketplaceVersions] = [MarketplaceVersions.XSOAR]
+    marketplaces: List[MarketplaceVersions] = [MarketplaceVersions.XSOAR],
 ):
     return Playbook(
         id=name,
@@ -487,7 +487,6 @@ class TestCreateContentGraph:
                     # test dependency
                     assert p.is_test
                 else:
-
                     assert False
 
             # now with all levels
@@ -813,20 +812,21 @@ class TestCreateContentGraph:
         pack = repo.create_pack("TestPack")
         pack.pack_metadata.write_json(load_json("pack_metadata.json"))
         pack.create_script(name="getIncident")
-        pack.create_script(
-            name="setIncident",
-            skip_prepare=[SKIP_PREPARE_SCRIPT_NAME]
-        )
+        pack.create_script(name="setIncident", skip_prepare=[SKIP_PREPARE_SCRIPT_NAME])
 
         with ContentGraphInterface() as interface:
             create_content_graph(interface, output_path=tmp_path)
             packs = interface.search(
-                marketplace=MarketplaceVersions.MarketplaceV2, content_type=ContentType.PACK
+                marketplace=MarketplaceVersions.MarketplaceV2,
+                content_type=ContentType.PACK,
             )
             scripts = interface.search(
-                marketplace=MarketplaceVersions.MarketplaceV2, content_type=ContentType.SCRIPT
+                marketplace=MarketplaceVersions.MarketplaceV2,
+                content_type=ContentType.SCRIPT,
             )
-            all_content_items = interface.search(marketplace=MarketplaceVersions.MarketplaceV2)
+            all_content_items = interface.search(
+                marketplace=MarketplaceVersions.MarketplaceV2
+            )
             content_cto = interface.marshal_graph(MarketplaceVersions.MarketplaceV2)
 
         assert len(packs) == 1

@@ -1,4 +1,6 @@
-from typing import Set
+from typing import Callable, Set
+
+import demisto_client
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.common import ContentType
@@ -24,3 +26,7 @@ class Playbook(ContentItem, content_type=ContentType.PLAYBOOK):  # type: ignore[
             current_marketplace=current_marketplace,
             supported_marketplaces=self.marketplaces,
         )
+
+    @classmethod
+    def _client_upload_method(cls, client: demisto_client) -> Callable:
+        return client.import_playbook

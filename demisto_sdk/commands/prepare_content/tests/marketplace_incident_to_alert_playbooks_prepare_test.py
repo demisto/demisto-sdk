@@ -29,7 +29,9 @@ def test_marketplace_version_is_xsiam():
         - Ensure that the required fields have changed from incident to alert.
     """
 
-    data = get_yaml(f"{GIT_ROOT}/demisto_sdk/commands/prepare_content/test_files/playbook_1.yml")
+    data = get_yaml(
+        f"{GIT_ROOT}/demisto_sdk/commands/prepare_content/test_files/playbook_1.yml"
+    )
 
     playbook_dummy = mock_playbook(
         name="playbook_1",
@@ -101,7 +103,9 @@ def test_marketplace_version_is_xsiam_2():
         - Ensure the access fields did NOT change as the playbook is supported only in MarketplaceVersions.MarketplaceV2.
     """
 
-    data = get_yaml(f"{GIT_ROOT}/demisto_sdk/commands/prepare_content/test_files/playbook_2.yml")
+    data = get_yaml(
+        f"{GIT_ROOT}/demisto_sdk/commands/prepare_content/test_files/playbook_2.yml"
+    )
 
     playbook_dummy = mock_playbook(
         name="playbook_1",
@@ -144,7 +148,9 @@ def test_marketplace_version_is_xsoar():
         - Ensure that access fields did NOT change from incident to alert as this playbook is in XSOAR.
     """
 
-    data = get_yaml(f"{GIT_ROOT}/demisto_sdk/commands/prepare_content/test_files/playbook_3.yml")
+    data = get_yaml(
+        f"{GIT_ROOT}/demisto_sdk/commands/prepare_content/test_files/playbook_3.yml"
+    )
 
     playbook_dummy = mock_playbook(
         name="playbook_1",

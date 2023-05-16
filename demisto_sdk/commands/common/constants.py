@@ -1799,16 +1799,16 @@ NATIVE_IMAGE_DOCKER_NAME = "demisto/py3-native"
 
 
 # SKIP PREPARE CONSTANTS
-SKIP_PREPARE_SCRIPT_NAME = 'script-name-incident-to-alert'
+SKIP_PREPARE_SCRIPT_NAME = "script-name-incident-to-alert"
 
 
 TABLE_INCIDENT_TO_ALERT = {
-    'incident': 'alert',
-    'incidents': 'alerts',
-    'Incident': 'Alert',
-    'Incidents': 'Alerts',
-    'INCIDENT': 'ALERT',
-    'INCIDENTS': 'ALERTS'
+    "incident": "alert",
+    "incidents": "alerts",
+    "Incident": "Alert",
+    "Incidents": "Alerts",
+    "INCIDENT": "ALERT",
+    "INCIDENTS": "ALERTS",
 }
 
 NATIVE_IMAGE_DOCKER_NAME = "demisto/py3-native"

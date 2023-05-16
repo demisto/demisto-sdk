@@ -1,5 +1,6 @@
-from typing import List, Set
+from typing import Callable, List, Set
 
+import demisto_client
 from pydantic import DirectoryPath
 
 from demisto_sdk.commands.common.constants import (
@@ -61,8 +62,8 @@ class Script(IntegrationScript, content_type=ContentType.SCRIPT):  # type: ignor
             # in order to normalize the name of the new script, make a copy of the original object
             # in case it is a new script with an update of the name and path.
             script_name = data.get("name")
-            
-            if script_name == self.name: # the original script
+
+            if script_name == self.name:  # the original script
                 obj = self
 
             else:  # a modified script, replaced incidents->alerts
@@ -98,3 +99,7 @@ class Script(IntegrationScript, content_type=ContentType.SCRIPT):  # type: ignor
                 not self.deprecated,
             )
         )
+
+    @classmethod
+    def _client_upload_method(cls, client: demisto_client) -> Callable:
+        return client.import_script

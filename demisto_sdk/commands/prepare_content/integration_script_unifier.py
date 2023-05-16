@@ -64,7 +64,7 @@ class IntegrationScriptUnifier(Unifier):
         image_prefix: str = DEFAULT_IMAGE_PREFIX,
         **kwargs,
     ):
-        logger.info(f"Unifying package: {path}")
+        logger.debug(f"Unifying {path}")
         if path.parent.name in {"Integrations", "Scripts"}:
             return data
         package_path = path.parent
@@ -120,7 +120,7 @@ class IntegrationScriptUnifier(Unifier):
                 yml_unified, custom, is_script_package
             )
 
-        logger.info(f"[green]Created unified yml: {path.name}[/green]")
+        logger.debug(f"[green]Created unified yml: {path.name}[/green]")
         return yml_unified
 
     @staticmethod

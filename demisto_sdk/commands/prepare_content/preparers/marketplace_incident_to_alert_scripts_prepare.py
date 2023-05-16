@@ -44,9 +44,7 @@ class MarketplaceIncidentToAlertScriptsPreparer:
             results.append(create_wrapper_script(data))
 
         # Handling the incident word in the script
-        results.append(
-            prepare_script_access_fields(data, incident_to_alert)
-        )
+        results.append(prepare_script_access_fields(data, incident_to_alert))
         logging.debug(f"Script preparation {data['name']} completed")
 
         return tuple(results)

@@ -2,6 +2,7 @@
 
 ## Unreleased
 * Added a validation that the **validate** command will fail if the `dockerimage` field in scripts/integrations uses any py3-native docker image.
+* Fixed an issue in **create-content-graph** which caused missing detection of duplicated content items.
 * Fixed an issue where **run-unit-tests** failed on python2 content items.
 * Fixed an issue where **lint** failed fetching docker image details from a PANW GitLab CI environment. (PANW-internal only)
 * Fixed an issue in **pre-commit** where `--input` flag was not filtered by the git files.

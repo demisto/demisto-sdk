@@ -18,7 +18,7 @@ NESTING_LEVEL = 5
 
 CREATE_CONTENT_ITEM_NODES_BY_TYPE_TEMPLATE = """// Creates/overrides existing content items with labels {labels}
 UNWIND $data AS node_data
-MERGE (n:{labels}{{
+CREATE (n:{labels}{{
     object_id: node_data.object_id,
     fromversion: node_data.fromversion,
     marketplaces: node_data.marketplaces

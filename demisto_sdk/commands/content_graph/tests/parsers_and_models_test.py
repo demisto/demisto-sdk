@@ -889,7 +889,7 @@ class TestParsersAndModels:
             LayoutParser(Path(layout.path), list(MarketplaceVersions))
         )
         model.group = override_group
-        ready_for_upload = model.prepare_for_upload(marketplace=marketplace)
+        ready_for_upload = model.prepare_for_upload(current_marketplace=marketplace)
         checked_dict = ready_for_upload["detailsV2"]["tabs"][5]
 
         # these two are for sanity, to make sure we're checking the right value (and the test file hasn't been changed)

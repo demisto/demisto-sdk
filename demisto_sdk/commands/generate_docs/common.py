@@ -147,7 +147,7 @@ def generate_table_section(
     for item in data:
         tmp_item = "    |" if numbered_section else "|"
         escape_less_greater_signs = (
-            "First fetch time" in item
+            "First fetch time" or "First fetch timestamp" in item
         )  # instead of html escaping
         for key in item:
             escaped_string = string_escape_md(

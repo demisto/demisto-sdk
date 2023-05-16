@@ -5,6 +5,7 @@
 * Fixed an issue where **run-unit-tests** failed on python2 content items.
 * Fixed an issue where **lint** failed fetching docker image details from a PANW GitLab CI environment. (PANW-internal only)
 * Fixed an issue in **pre-commit** where `--input` flag was not filtered by the git files.
+* Fixed  an issue in **generate-docs** command where some fields were generated with double html escaping.
 
 ## 1.14.5
 * Added logging in case the container fails to run in **run-unit-tests**.

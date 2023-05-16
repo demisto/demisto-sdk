@@ -232,23 +232,24 @@ class IntegrationScriptUnifier(Unifier):
         :return: path to found code file
         :rtype: str
         """
-        package_path = str(package_path)
+        package_path = str(package_path)  # type: ignore
         ignore_regex = (
             r"CommonServerPython\.py|CommonServerUserPython\.py|demistomock\.py|_test\.py"
             r"|conftest\.py|__init__\.py|ApiModule\.py|vulture_whitelist\.py"
             r"|CommonServerPowerShell\.ps1|CommonServerUserPowerShell\.ps1|demistomock\.ps1|\.Tests\.ps1"
         )
-        if package_path.endswith("/"):
-            package_path = package_path[:-1]  # remove the last / as we use os.path.join
-        if package_path.endswith(os.path.join("Scripts", "CommonServerPython")):
+        if package_path.endswith("/"):  # type: ignore
+            # remove the last / as we use os.path.join
+            package_path = package_path[:-1]  # type: ignore
+        if package_path.endswith(os.path.join("Scripts", "CommonServerPython")):  # type: ignore
             return os.path.join(package_path, "CommonServerPython.py")
-        if package_path.endswith(os.path.join("Scripts", "CommonServerUserPython")):
+        if package_path.endswith(os.path.join("Scripts", "CommonServerUserPython")):  # type: ignore
             return os.path.join(package_path, "CommonServerUserPython.py")
-        if package_path.endswith(os.path.join("Scripts", "CommonServerPowerShell")):
+        if package_path.endswith(os.path.join("Scripts", "CommonServerPowerShell")):  # type: ignore
             return os.path.join(package_path, "CommonServerPowerShell.ps1")
-        if package_path.endswith(os.path.join("Scripts", "CommonServerUserPowerShell")):
+        if package_path.endswith(os.path.join("Scripts", "CommonServerUserPowerShell")):  # type: ignore
             return os.path.join(package_path, "CommonServerUserPowerShell.ps1")
-        if package_path.endswith(API_MODULE_FILE_SUFFIX):
+        if package_path.endswith(API_MODULE_FILE_SUFFIX):  # type: ignore
             return os.path.join(
                 package_path, os.path.basename(os.path.normpath(package_path)) + ".py"
             )

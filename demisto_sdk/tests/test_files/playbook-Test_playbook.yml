@@ -182,6 +182,11 @@ inputs:
       root: No_Accessor
   required: false
   description: ""
+- key: InputD
+  value:
+    simple: File.NameD
+  required: true
+  description: test & description
 - key: ""
   value: {}
   required: false
@@ -208,4 +213,7 @@ outputs:
   description: The recipient of the email.
   type: string
 - contextPath: FileData
+  type: string
+- contextPath: Email.From
+  description: The sender & of the email.
   type: string

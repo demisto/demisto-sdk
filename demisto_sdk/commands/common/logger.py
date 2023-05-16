@@ -91,7 +91,7 @@ escapes = {
 
 def get_handler_by_name(logger: logging.Logger, handler_name: str):
     for current_handler in logger.handlers:
-        if current_handler.get_name == handler_name:
+        if current_handler.get_name == handler_name:  # type: ignore
             return current_handler
     return None
 
@@ -120,7 +120,7 @@ def logging_setup(
     global logger
 
     console_handler = logging.StreamHandler()
-    console_handler.set_name(CONSOLE_HANDLER)
+    console_handler.set_name(CONSOLE_HANDLER)  # type: ignore
     console_handler.setLevel(
         console_log_threshold if console_log_threshold else logging.INFO
     )
@@ -160,7 +160,7 @@ def logging_setup(
         maxBytes=1048576,
         backupCount=10,
     )
-    file_handler.set_name(FILE_HANDLER)
+    file_handler.set_name(FILE_HANDLER)  # type: ignore
     file_handler.setLevel(file_log_threshold if file_log_threshold else logging.DEBUG)
 
     class NoColorFileFormatter(logging.Formatter):

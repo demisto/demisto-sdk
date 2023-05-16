@@ -89,6 +89,7 @@
 * Fixed an issue where Demisto-SDK did not detect layout ID when using the **download** command.
 * Fixed an issue where the **lint** command ran on `native:dev` supported content when passing the `--docker-image all` flag, instead it will run on `native:candidate`.
 * Added support for `native:candidate` as a docker image flag for **lint** command.
+* Added a modification for layouts in **prepare-content**, replacing `Related Incidents`, `Linked Incidents` and `Child Incidents` with the suitable `... Alerts` name when uploading to XSIAM.
 * Fixed an issue where logs and messages would not show when using the **download** command.
 * Fixed an issue where the `server_min_version` field in metadata was an empty value when parsing packs without content items.
 * Fixed an issue where running **openapi-codegen** resulted in false-positive error messages.

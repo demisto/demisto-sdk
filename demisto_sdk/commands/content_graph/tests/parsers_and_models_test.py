@@ -857,6 +857,49 @@ class TestParsersAndModels:
             expected_toversion=DEFAULT_CONTENT_ITEM_TO_VERSION,
         )
 
+    @pytest.mark.parametrize("override_group", ("incident", "indicator"))
+    @pytest.mark.parametrize(
+        "marketplace",
+        (
+            MarketplaceVersions.XSOAR,
+            MarketplaceVersions.MarketplaceV2,
+            MarketplaceVersions.XPANSE,
+        ),
+    )
+    def test_layoutscontainer_parser_fixes(
+        self, pack: Pack, marketplace: MarketplaceVersions, override_group: str
+    ):
+        """
+        Given:
+            - A pack with a layout.
+            - The marketplace for which the item is prepared.
+        When:
+            - Preparing for upload.
+        Then:
+            - Verify a `Related Incidents` field's name is changed to `Related Alerts`
+                if and only if marketpalce==marketplacev2 and group=="indicator"
+        """
+        from demisto_sdk.commands.content_graph.objects.layout import Layout
+        from demisto_sdk.commands.content_graph.parsers.layout import LayoutParser
+
+        layout = pack.create_layoutcontainer(
+            "TestLayoutscontainer", load_json("layoutscontainer.json")
+        )
+        model = Layout.from_orm(
+            LayoutParser(Path(layout.path), list(MarketplaceVersions))
+        )
+        model.group = override_group
+        ready_for_upload = model.prepare_for_upload(marketplace=marketplace)
+        checked_dict = ready_for_upload["detailsV2"]["tabs"][5]
+
+        # these two are for sanity, to make sure we're checking the right value (and the test file hasn't been changed)
+        assert checked_dict["id"] == "relatedIncidents"
+        assert checked_dict["type"] == "relatedIncidents"
+        assert ("Alerts" in checked_dict["name"]) == (
+            override_group == "indicator"
+            and marketplace == MarketplaceVersions.MarketplaceV2
+        )
+
     def test_list_parser(self, pack: Pack):
         """
         Given:
@@ -1496,3 +1539,46 @@ class TestParsersAndModels:
         model = ContentDTO.from_orm(parser)
         pack_ids = {pack.object_id for pack in model.packs}
         assert pack_ids == {"sample1", "sample2"}
+
+
+@pytest.mark.parametrize(
+    "name,type_,expected_change",
+    (
+        ("Child Incidents", "childInv", True),
+        ("Child Incident", "childInv", False),  # name should be Child Incidents
+        ("", "childInv", False),
+        ("Incidents", "", False),
+        ("Linked Incidents", "linkedIncidents", True),
+        (
+            "Related Incidents",
+            "linkedIncidents",
+            False,
+        ),  # type should be relatedIncidents
+        ("Related Incidents", "relatedIncidents", True),
+        ("Related Incidents", "", False),
+        ("Related Incident", "relatedIncidents", False),
+    ),
+)
+def test_fix_layout_incident_to_alert(
+    name: str,
+    type_: str,
+    expected_change: bool,
+):
+    """
+    Given:
+        - A layout body
+    When:
+        - change_incident_to_alert is called
+    Then:
+        - Make sure it replaces values as expected
+    """
+    from demisto_sdk.commands.content_graph.objects.layout import (
+        replace_layout_incident_alert,
+    )
+
+    expected_name = name.replace("Incident", "Alert") if expected_change else name
+
+    assert replace_layout_incident_alert({"name": name, "type": type_}) == {
+        "name": expected_name,
+        "type": type_,
+    }

@@ -144,113 +144,46 @@ def test_ruff_hook(python_version, github_actions):
 
 
 class TestPreprocessFiles:
-    """
-        Code Analysis
-
-    Objective:
-    The objective of the function is to preprocess files for pre-commit checks. The function takes in various inputs such as input files, staged files, all files, and uses Git to get the files. The function then converts the file paths to relative paths and filters out files that are not in the content Git repo.
-
-    Inputs:
-    - input_files: an optional iterable of Path objects representing input files
-    - staged_only: a boolean flag indicating whether to only preprocess staged files
-    - use_git: a boolean flag indicating whether to use Git to get changed files
-    - all_files: a boolean flag indicating whether to preprocess all files
-
-    Flow:
-    1. Create a GitUtil object
-    2. Get all Git files and staged files using GitUtil methods
-    3. Determine the set of raw files to preprocess based on input_files, staged_only, use_git, and all_files
-    4. Convert file paths to relative paths
-    5. Filter out files that are not in the content Git repo
-
-    Outputs:
-    - A set of Path objects representing the files to be preprocessed
-
-    Additional aspects:
-    - The function raises a ValueError if no files were given to preprocess and no flags were given
-    """
-
-    # Tests that preprocess_files() returns the correct set of Path objects when input_files is not None.
     def test_preprocess_files_with_input_files(self, mocker):
-        # Setup
         input_files = [Path("file1.txt"), Path("file2.txt")]
         expected_output = set(input_files)
-
-        # Mock
         mocker.patch.object(GitUtil, "get_all_files", return_value=set(input_files))
-
-        # Exercise
         output = preprocess_files(input_files=input_files)
-
-        # Verify
         assert output == expected_output
 
-    # Tests that preprocess_files() returns the correct set of Path objects when staged_only is True.
     def test_preprocess_files_with_staged_only(self, mocker):
-        # Setup
         expected_output = set([Path("file1.txt"), Path("file2.txt")])
-
-        # Mock
         mocker.patch.object(GitUtil, "_get_staged_files", return_value=expected_output)
         mocker.patch.object(GitUtil, "get_all_files", return_value=expected_output)
-        # Exercise
         output = preprocess_files(staged_only=True)
-
-        # Verify
         assert output == expected_output
 
-    # Tests that preprocess_files() raises a ValueError when input_files is an empty iterable.
     def test_preprocess_files_with_empty_input_files(self):
-        # Setup
         input_files = []
-
-        # Exercise and Verify
         with pytest.raises(ValueError):
             preprocess_files(input_files=input_files)
 
-    # Tests that preprocess_files() filters out non-existent files from input_files.
     def test_preprocess_files_with_nonexistent_files(self, mocker):
-        # Setup
         input_files = [Path("file1.txt"), Path("file2.txt"), Path("nonexistent.txt")]
         expected_output = set([Path("file1.txt"), Path("file2.txt")])
-
-        # Mock
         mocker.patch.object(GitUtil, "get_all_files", return_value=expected_output)
-
-        # Exercise
         output = preprocess_files(input_files=input_files)
-
-        # Verify
         assert output == expected_output
 
-    # Tests that preprocess_files() returns the correct set of Path objects when use_git is True.
     def test_preprocess_files_with_use_git(self, mocker):
-        # Setup
         expected_output = set([Path("file1.txt"), Path("file2.txt")])
-
-        # Mock
         mocker.patch.object(
             GitUtil, "_get_all_changed_files", return_value=expected_output
         )
         mocker.patch.object(GitUtil, "_get_staged_files", return_value=set())
         mocker.patch.object(GitUtil, "get_all_files", return_value=expected_output)
-        # Exercise
         output = preprocess_files(use_git=True)
-
-        # Verify
         assert output == expected_output
 
     # Tests that preprocess_files() returns the correct set of Path objects when all_files is True.
     def test_preprocess_files_with_all_files(self, mocker):
-        # Setup
         expected_output = set([Path("file1.txt"), Path("file2.txt"), Path("file3.txt")])
-
-        # Mock
         mocker.patch.object(GitUtil, "get_all_files", return_value=expected_output)
         mocker.patch.object(GitUtil, "_get_staged_files", return_value=set())
-
-        # Exercise
         output = preprocess_files(all_files=True)
-
-        # Verify
         assert output == expected_output

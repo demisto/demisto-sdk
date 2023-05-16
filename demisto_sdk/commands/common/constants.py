@@ -59,6 +59,7 @@ LAYOUT = "layout"
 LAYOUTS_CONTAINER = "layoutscontainer"
 PRE_PROCESS_RULES = "pre-process-rules"
 LISTS = "list"  # singular, as it is the prefix of the file
+INCIDENT = "incident"  # prefix to identify any incident entity
 INCIDENT_TYPE = "incidenttype"
 INCIDENT_FIELD = "incidentfield"
 INDICATOR_FIELD = "indicatorfield"
@@ -1200,7 +1201,7 @@ BETA_INTEGRATION_DISCLAIMER = (
 INTEGRATION_CATEGORIES = [
     "Analytics & SIEM",
     "Utilities",
-    "Messaging",
+    "Messaging and Conferencing",
     "Endpoint",
     "Network Security",
     "Vulnerability Management",
@@ -1208,12 +1209,12 @@ INTEGRATION_CATEGORIES = [
     "Forensics & Malware Analysis",
     "IT Services",
     "Data Enrichment & Threat Intelligence",
-    "Authentication",
     "Database",
-    "Deception",
-    "Email Gateway",
+    "Deception & Breach Simulation",
+    "Email",
     "Identity and Access Management",
-    "File Integrity Management",
+    "Cloud Services",
+    "Authentication & Identity Management",
 ]
 SCHEMA_TO_REGEX = {
     "integration": YML_INTEGRATION_REGEXES,
@@ -1794,3 +1795,4 @@ class ParameterType(Enum):
 NO_TESTS_DEPRECATED = "No tests (deprecated)"
 NATIVE_IMAGE_FILE_NAME = "docker_native_image_config.json"
 TESTS_REQUIRE_NETWORK_PACK_IGNORE = "tests_require_network"
+NATIVE_IMAGE_DOCKER_NAME = "demisto/py3-native"

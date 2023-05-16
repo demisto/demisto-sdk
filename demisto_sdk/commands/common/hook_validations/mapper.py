@@ -1,14 +1,13 @@
 from distutils.version import LooseVersion
 from typing import Dict, List
 
-import click
-
 from demisto_sdk.commands.common.constants import LAYOUT_AND_MAPPER_BUILT_IN_FIELDS
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.base_validator import error_codes
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import (
     ContentEntityValidator,
 )
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     get_all_incident_and_indicator_fields_from_id_set,
     get_invalid_incident_fields_from_mapper,
@@ -96,8 +95,11 @@ class MapperValidator(ContentEntityValidator):
         else:
             removed_incident_fields = {}
             for inc in old_incidents_types:
-                old_incident_fields = old_mapper[inc].get("internalMapping", {})
-                current_incident_fields = current_mapper[inc].get("internalMapping", {})
+                old_incident_fields = old_mapper[inc].get("internalMapping", {}) or {}
+                current_incident_fields = (
+                    current_mapper[inc].get("internalMapping", {}) or {}
+                )
+
                 old_fields = {inc for inc in old_incident_fields}
                 current_fields = {inc for inc in current_incident_fields}
 
@@ -223,9 +225,8 @@ class MapperValidator(ContentEntityValidator):
             return True
 
         if not id_set_file:
-            click.secho(
-                "Skipping mapper incident field validation. Could not read id_set.json.",
-                fg="yellow",
+            logger.info(
+                "[yellow]Skipping mapper incident field validation. Could not read id_set.json.[/yellow]"
             )
             return True
 

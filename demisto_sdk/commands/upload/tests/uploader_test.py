@@ -568,7 +568,6 @@ def test_upload_incident_fields_directory(demisto_client_configure, mocker):
         - Ensure amount of messages is as expected
     """
     mocker.patch.object(demisto_client, "configure", return_value="object")
-    mocker.patch("click.secho")
     dir_name = "IncidentFields"
     incident_fields_path = (
         f"{git_path()}/demisto_sdk/tests/test_files/Packs/DummyPack/{dir_name}/"

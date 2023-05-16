@@ -401,6 +401,11 @@ ERROR_CODE = {
         "ui_applicable": True,
         "related_field": "dockerimage",
     },
+    "native_image_is_in_dockerimage_field": {
+        "code": "DO110",
+        "ui_applicable": True,
+        "related_field": "dockerimage",
+    },
     # DS - Descriptions
     "description_missing_in_beta_integration": {
         "code": "DS100",
@@ -1420,6 +1425,11 @@ ERROR_CODE = {
     },
     "copyright_section_in_readme_error": {
         "code": "RM113",
+        "ui_applicable": False,
+        "related_field": "",
+    },
+    "image_does_not_exist": {
+        "code": "RM114",
         "ui_applicable": False,
         "related_field": "",
     },
@@ -2591,6 +2601,11 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
+    def native_image_is_in_dockerimage_field(native_image: str) -> str:
+        return f"invalid dockerimage {native_image}, the native image cannot be set to the dockerimage field in the yml."
+
+    @staticmethod
+    @error_code_decorator
     def id_set_conflicts():
         return (
             "You probably merged from master and your id_set.json has "
@@ -3567,6 +3582,11 @@ class Errors:
             f"Detected following image url:\n{path}\n"
             f"Which is not the raw link. You probably want to use the following raw image url:\n{alternative_path}"
         )
+
+    @staticmethod
+    @error_code_decorator
+    def image_does_not_exist(path: str):
+        return f"Image at {path} does not exist."
 
     @staticmethod
     @error_code_decorator

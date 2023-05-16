@@ -14,6 +14,10 @@ Use the Kenna v2 integration to search and update vulnerabilities, schedule a ru
     * __Trust any certificate (not secure)__
 4. Click __Test__ to validate the URLs, token, and connection.
 
+![valid-integration-image](../../doc_files/valid.png)
+![valid-playbook-image](../doc_files/valid.png)
+
+
 ## Commands
 
 ---

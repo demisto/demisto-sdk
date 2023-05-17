@@ -31,7 +31,7 @@ class Layout(ContentItem, content_type=ContentType.LAYOUT):  # type: ignore[call
     def prepare_for_upload(
         self,
         current_marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR,
-        **kwargs
+        **kwargs,
     ) -> dict:
         # marketplace is the marketplace for which the content is prepared.
         data = super().prepare_for_upload(current_marketplace, **kwargs)
@@ -54,6 +54,7 @@ class Layout(ContentItem, content_type=ContentType.LAYOUT):  # type: ignore[call
     @classmethod
     def _client_upload_method(cls, client: demisto_client) -> Callable:
         return client.import_layout
+
 
 def replace_layout_incident_alert(data: dict) -> dict:
     """

@@ -1,7 +1,7 @@
 import copy
 import logging
 import re
-from typing import Any, List, Tuple
+from typing import Any, List
 
 from demisto_sdk.commands.common.constants import (
     TABLE_INCIDENT_TO_ALERT,
@@ -94,7 +94,7 @@ def edit_names_and_descriptions_for_playbook(
 
 
 def replace_playbook_access_fields_recursively(
-    datum: Any, replaceable_scripts: Tuple[str, ...]
+    datum: Any, replaceable_scripts: List[str]
 ) -> Any:
     if isinstance(datum, list):
         return [

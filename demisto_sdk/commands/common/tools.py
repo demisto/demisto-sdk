@@ -1,4 +1,5 @@
 import argparse
+import contextlib
 import glob
 import io
 import logging
@@ -3550,3 +3551,32 @@ def get_id(file_content: Dict) -> Union[str, None]:
             return file_content[key]
 
     return file_content.get("id")
+
+
+def parse_marketplace_kwargs(kwargs: Dict[str, Any]) -> MarketplaceVersions:
+    """
+    Supports both the `marketplace` argument and `is_xsiam`.
+    Raises an error when both are supplied.
+    """
+    marketplace = kwargs.pop("marketplace", None)  # removing to not pass it twice later
+    is_xsiam = kwargs.get("is_xsiam")
+
+    if (
+        marketplace
+        and is_xsiam
+        and MarketplaceVersions(marketplace) != MarketplaceVersions.MarketplaceV2
+    ):
+        raise ValueError(
+            "The arguments `marketplace` and `is_xsiam` cannot be used at the same time, remove one of them."
+        )
+
+    if is_xsiam:
+        return MarketplaceVersions.MarketplaceV2
+
+    if marketplace:
+        return MarketplaceVersions(marketplace)
+
+    logger.debug(
+        "neither marketplace nor is_xsiam provided, using default marketplace=XSOAR"
+    )
+    return MarketplaceVersions.XSOAR  # default

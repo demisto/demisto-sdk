@@ -50,7 +50,9 @@ To deactivate the virtual environment and return simply run: `exit`.
 ---
 
 ### 3. Pre-commit hooks setup
-We use are using [pre-commit](https://pre-commit.com/) to run hooks on our build. To use it run:
+We use are using [pre-commit](https://pre-commit.com/) to run hooks on our build. Before using the hooks make sure you have pre-commit insalled (you can check it by running `which pre-commit`, if it does not exist install it via pip: `pip install pre-commit`).
+
+To use pre-commit, run:
 1. Install hook to be performed as a hook before commit changes - `pre-commit install`
 2. Enable auto update of pre-commit hooks - `pre-commit autoupdate`
 3. In order to run pre-commit without commit- `pre-commit run -a` (on all files), `pre-commit run` (on staged files)

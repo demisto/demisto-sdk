@@ -31,11 +31,11 @@ class IntegrationScript(ContentItem):
     def prepare_for_upload(
         self, marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR, **kwargs
     ) -> dict:
-        if not kwargs.get("unify_only"):
-            data = super().prepare_for_upload(marketplace)
-        else:
-            data = self.data
-
+        data = (
+            self.data
+            if kwargs.get("unify_only")
+            else super().prepare_for_upload(marketplace)
+        )
         data = IntegrationScriptUnifier.unify(self.path, data, marketplace, **kwargs)
         return data
 

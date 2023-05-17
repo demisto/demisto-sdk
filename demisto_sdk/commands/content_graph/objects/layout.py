@@ -1,10 +1,14 @@
-from typing import List, Optional, Set
+import logging
+from typing import Callable, List, Optional, Set
 
+import demisto_client
 from pydantic import Field
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
+
+logger = logging.getLogger("demisto-sdk")
 
 
 class Layout(ContentItem, content_type=ContentType.LAYOUT):  # type: ignore[call-arg]
@@ -31,3 +35,7 @@ class Layout(ContentItem, content_type=ContentType.LAYOUT):  # type: ignore[call
         data["fromServerVersion"] = self.fromversion
         data["toServerVersion"] = self.toversion
         return data
+
+    @classmethod
+    def _client_upload_method(cls, client: demisto_client) -> Callable:
+        return client.import_layout

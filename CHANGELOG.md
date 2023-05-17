@@ -1,9 +1,51 @@
 # Changelog
 
 ## Unreleased
+* **Breaking Change**: the **upload** command now only supports XSOAR 6.5 or newer (and all XSIAM versions).
+* **upload** now uses content models, and calls the `prepare` method of each model before uploading (unless uploading a zipped pack).
+* Added a validation that the **validate** command will fail if the `dockerimage` field in scripts/integrations uses any py3-native docker image.
+* Fixed an issue where **run-unit-tests** failed on python2 content items.
+* Fixed an issue where **lint** failed fetching docker image details from a PANW GitLab CI environment. (PANW-internal only)
+* Fixed an issue in **pre-commit** where `--input` flag was not filtered by the git files.
+
+## 1.14.5
+* Added logging in case the container fails to run in **run-unit-tests**.
+* Disabled **pre-commit** multiprocessing for `validate` and `format`, as they use a service.
+* **pre-commit** now calls `format` with `--assume-yes` and `--no-validate`.
+* Fixed an issue where **pre-commit** ran multiple times when checking out build related files.
+
+## 1.14.4
+* Added integration configuration for *Cortex REST API* integration.
+* Removed `Flake8` from **pre-commit**, as `ruff` covers its basic rules.
+* Improved log readability by silencing non-critical `neo4j` (content graph infrastructure) logs.
+* Fixed an issue where **run-unit-tests** failed on python2 content items.
+* Fixed an issue where **modeling-rules test** did not properly handle query fields that pointed to a string.
+* Fixed an issue when trying to fetch remote files when not under the content repo.
+* Fixed a validation that the **modeling-rules test** command will fail if no test data file exist.
+* Fixed an issue where **format** command failed while updating the `fromversion` entry.
+* Added support for mapping uuid to names for Layout files in the **download** command.
+
+## 1.14.3
+* Fixed an issue where **run-unit-tests** failed running on items with `test_data`.
+* Updated the demisto-py to v3.2.10 which now supports url decoding for the proxy authentication password.
+* Fixed an issue where **generate-outputs** did not generate context paths for empty lists or dictionaries in the response.
+
+## 1.14.2
+* Added the `--staged-only` flag to **pre-commit**.
+* Fixed an issue where **run-unit-tests** failed running on items with `test_data`.
+* Fixed an issue where **pre-commit** ran on unchanged files.
+* Add the ability to run **secrets** in **pre-commit** by passing a `--secrets` flag.
+* Added support to override the log file with the **DEMISTO_SDK_LOG_FILE_PATH** environment variable.
+
+## 1.14.1
 * Fixed an issue where **update-release-notes** command failed when running on a pack that contains deprecated integrations without the `commands` section.
-* Fixed an issue where **validate** failed when attempting to map null values in a classifier.
+* Added toVersion and fromVersion to XSIAM content items schema.
+* Fixed an issue where **validate** failed when attempting to map null values in a classifier and layout.
+* Added search marketplace functionality to XSIAM client.
 * Fixed an issue in **pre-commit** command where `MYPYPATH` was not set properly.
+* Updated the integration category list in the **init** command.
+* Fixed an issue where in some environments docker errors were not caught.
+* Added a validation that the **validate** command will fail on README files if an image does not exist in the specified path.
 
 ## 1.14.0
 * Added the `DEMISTO_SDK_GRAPH_FORCE_CREATE` environment variable. Use it to force the SDK to recreate the graph, rather than update it.

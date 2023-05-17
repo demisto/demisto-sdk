@@ -1,4 +1,6 @@
-from typing import List, Set
+from typing import Callable, List, Set
+
+import demisto_client
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.common.logger import logger
@@ -38,3 +40,7 @@ class Script(IntegrationScript, content_type=ContentType.SCRIPT):  # type: ignor
             for r in self.relationships_data[RelationshipType.IMPORTS]
             if r.content_item_to.database_id == r.source_id
         ]
+
+    @classmethod
+    def _client_upload_method(cls, client: demisto_client) -> Callable:
+        return client.import_script

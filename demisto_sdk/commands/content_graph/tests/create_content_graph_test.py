@@ -34,10 +34,9 @@ from TestSuite.test_tools import ChangeCWD
 @pytest.fixture(autouse=True)
 def setup(mocker, repo: Repo):
     """Auto-used fixture for setup before every test run"""
-    mocker.patch(
-        "demisto_sdk.commands.content_graph.objects.base_content.get_content_path",
-        return_value=Path(repo.path),
-    )
+    import demisto_sdk.commands.content_graph.objects.base_content as bc
+
+    bc.CONTENT_PATH = Path(repo.path)
     mocker.patch.object(ContentGraphInterface, "repo_path", Path(repo.path))
     mocker.patch.object(neo4j_service, "REPO_PATH", Path(repo.path))
     stop_content_graph()
@@ -56,12 +55,12 @@ def repository(mocker):
     return repository
 
 
-def mock_pack(name: str = "SamplePack"):
+def mock_pack(name: str = "SamplePack", path: Path = Path("Packs")) -> Pack:
     return Pack(
         object_id=name,
         content_type=ContentType.PACK,
         node_id=f"{ContentType.PACK}:{name}",
-        path=Path("Packs"),
+        path=path,
         name=name,
         marketplaces=[MarketplaceVersions.XSOAR],
         hidden=False,
@@ -76,12 +75,12 @@ def mock_pack(name: str = "SamplePack"):
     )
 
 
-def mock_integration(name: str = "SampleIntegration"):
+def mock_integration(name: str = "SampleIntegration", path: Path = Path("Packs")):
     return Integration(
         id=name,
         content_type=ContentType.INTEGRATION,
         node_id=f"{ContentType.INTEGRATION}:{name}",
-        path=Path("Packs"),
+        path=path,
         fromversion="5.0.0",
         toversion="99.99.99",
         display_name=name,
@@ -477,7 +476,6 @@ class TestCreateContentGraph:
                     # test dependency
                     assert p.is_test
                 else:
-
                     assert False
 
             # now with all levels

@@ -24,6 +24,7 @@ from demisto_sdk.commands.content_graph.objects.playbook import Playbook
 from demisto_sdk.commands.content_graph.objects.repository import ContentDTO
 from demisto_sdk.commands.content_graph.objects.script import Script
 from demisto_sdk.commands.content_graph.objects.test_playbook import TestPlaybook
+from demisto_sdk.commands.content_graph.objects.widget import Widget
 from demisto_sdk.commands.content_graph.tests.test_tools import load_json
 from TestSuite.repo import Repo
 from TestSuite.test_tools import ChangeCWD
@@ -161,6 +162,23 @@ def mock_test_playbook(name: str = "SampleTestPlaybook"):
         marketplaces=[MarketplaceVersions.XSOAR],
         deprecated=False,
         is_test=True,
+    )
+
+
+def mock_widget(name: str = "SampleWidget"):
+    return Widget(
+        id=name,
+        content_type=ContentType.WIDGET,
+        node_id=f"{ContentType.WIDGET}:{name}",
+        path=Path("Packs"),
+        fromversion="5.0.0",
+        toversion="99.99.99",
+        display_name=name,
+        name=name,
+        marketplaces=[MarketplaceVersions.XSOAR],
+        deprecated=False,
+        widget_type="number",
+        data_type="roi",
     )
 
 
@@ -610,6 +628,46 @@ class TestCreateContentGraph:
             create_content_graph(interface)
             script = interface.search(object_id="TestScript")[0]
         assert script.not_in_repository
+
+    def test_create_content_graph_duplicate_widgets(
+        self,
+        repository: ContentDTO,
+    ):
+        """
+        Given:
+            - A mocked model of a repository with a pack TestPack, containing two widgets
+              with the exact same id, fromversion and marketplaces properties.
+        When:
+            - Running create_content_graph().
+        Then:
+            - Make sure both widgets exist in the graph.
+        """
+        pack = mock_pack()
+        widget = mock_widget()
+        widget2 = mock_widget()
+        relationships = {
+            RelationshipType.IN_PACK: [
+                mock_relationship(
+                    "SampleWidget",
+                    ContentType.WIDGET,
+                    "SamplePack",
+                    ContentType.PACK,
+                ),
+                mock_relationship(
+                    "SampleWidget",
+                    ContentType.WIDGET,
+                    "SamplePack",
+                    ContentType.PACK,
+                ),
+            ],
+        }
+        pack.relationships = relationships
+        pack.content_items.widget.append(widget)
+        pack.content_items.widget.append(widget2)
+        repository.packs.append(pack)
+        with ContentGraphInterface() as interface:
+            create_content_graph(interface)
+            assert len(interface.search(object_id="SampleWidget")) == 2
 
     def test_create_content_graph_duplicate_integrations_different_marketplaces(
         self,

@@ -17,7 +17,6 @@ from TestSuite.yml import YAML
 
 # Helper Functions
 
-
 def get_repo(request: FixtureRequest, tmp_path_factory: TempPathFactory) -> Repo:
     tmp_dir = _mk_tmp(request, tmp_path_factory)
     return Repo(tmp_dir)
@@ -141,3 +140,8 @@ def mock_update_id_set_cpu_count() -> Generator:
         "demisto_sdk.commands.common.update_id_set.cpu_count", return_value=2
     ) as _fixture:
         yield _fixture
+
+@pytest.fixture(autouse=True)
+def mock_get_file(mocker):
+    import demisto_sdk.commands.common.tools as tools
+    mocker.patc.object(tools, "get_file", side_effect=lambda **kwargs: tools.get_file(**kwargs, clear_cache=True))

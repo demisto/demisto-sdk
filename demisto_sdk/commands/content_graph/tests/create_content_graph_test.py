@@ -5,7 +5,10 @@ from zipfile import ZipFile
 import pytest
 
 import demisto_sdk.commands.content_graph.neo4j_service as neo4j_service
-from demisto_sdk.commands.common.constants import MarketplaceVersions
+from demisto_sdk.commands.common.constants import (
+    SKIP_PREPARE_SCRIPT_NAME,
+    MarketplaceVersions,
+)
 from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
 from demisto_sdk.commands.content_graph.content_graph_commands import (
     create_content_graph,
@@ -94,7 +97,11 @@ def mock_integration(name: str = "SampleIntegration", path: Path = Path("Packs")
     )
 
 
-def mock_script(name: str = "SampleScript"):
+def mock_script(
+    name: str = "SampleScript",
+    marketplaces: List[MarketplaceVersions] = [MarketplaceVersions.XSOAR],
+    skip_prepare: List[str] = [],
+):
     return Script(
         id=name,
         content_type=ContentType.SCRIPT,
@@ -104,12 +111,13 @@ def mock_script(name: str = "SampleScript"):
         display_name=name,
         toversion="99.99.99",
         name=name,
-        marketplaces=[MarketplaceVersions.XSOAR],
+        marketplaces=marketplaces,
         deprecated=False,
         type="python3",
         docker_image="mock:docker",
         tags=[],
         is_test=False,
+        skip_prepare=skip_prepare,
     )
 
 
@@ -132,7 +140,10 @@ def mock_classifier(name: str = "SampleClassifier"):
     )
 
 
-def mock_playbook(name: str = "SamplePlaybook"):
+def mock_playbook(
+    name: str = "SamplePlaybook",
+    marketplaces: List[MarketplaceVersions] = [MarketplaceVersions.XSOAR],
+):
     return Playbook(
         id=name,
         content_type=ContentType.PLAYBOOK,
@@ -142,7 +153,7 @@ def mock_playbook(name: str = "SamplePlaybook"):
         toversion="99.99.99",
         display_name=name,
         name=name,
-        marketplaces=[MarketplaceVersions.XSOAR],
+        marketplaces=marketplaces,
         deprecated=False,
         is_test=False,
     )
@@ -390,13 +401,13 @@ class TestCreateContentGraph:
         assert returned_scripts == {"SampleScript", "TestApiModule"}
         with ChangeCWD(repo.path):
             content_cto.dump(tmp_path, MarketplaceVersions.XSOAR, zip=False)
-        assert Path.exists(tmp_path / "TestPack")
-        assert Path.exists(tmp_path / "TestPack" / "metadata.json")
-        assert Path.exists(
+        assert (tmp_path / "TestPack").exists()
+        assert (tmp_path / "TestPack" / "metadata.json").exists()
+        assert (
             tmp_path / "TestPack" / "Integrations" / "integration-integration_0.yml"
-        )
-        assert Path.exists(tmp_path / "TestPack" / "Scripts" / "script-script0.yml")
-        assert Path.exists(tmp_path / "TestPack" / "Scripts" / "script-script1.yml")
+        ).exists()
+        assert (tmp_path / "TestPack" / "Scripts" / "script-script0.yml").exists()
+        assert (tmp_path / "TestPack" / "Scripts" / "script-script1.yml").exists()
 
         # make sure that the output file zip is created
         assert Path.exists(tmp_path / "xsoar.zip")
@@ -779,3 +790,52 @@ class TestCreateContentGraph:
             - Make sure no exception is raised.
         """
         stop_content_graph()
+
+    def test_create_content_graph_incident_to_alert_scripts(
+        self, repo: Repo, tmp_path: Path, mocker
+    ):
+        """
+        Given:
+            - A repository with a pack TestPack, containing two scripts,
+            one (getIncident) is set with skipping the preparation of incident to alert
+            and the other (setIncident) is not.
+        When:
+            - Running create_content_graph().
+        Then:
+            - Ensure that `getIncident` script has passed the prepare process as expected.
+            - Ensure the 'setIncident' script has not passed incident to alert preparation.
+        """
+        mocker.patch.object(
+            IntegrationScript, "get_supported_native_images", return_value=[]
+        )
+
+        pack = repo.create_pack("TestPack")
+        pack.pack_metadata.write_json(load_json("pack_metadata.json"))
+        pack.create_script(name="getIncident")
+        pack.create_script(name="setIncident", skip_prepare=[SKIP_PREPARE_SCRIPT_NAME])
+
+        with ContentGraphInterface() as interface:
+            create_content_graph(interface, output_path=tmp_path)
+            packs = interface.search(
+                marketplace=MarketplaceVersions.MarketplaceV2,
+                content_type=ContentType.PACK,
+            )
+            scripts = interface.search(
+                marketplace=MarketplaceVersions.MarketplaceV2,
+                content_type=ContentType.SCRIPT,
+            )
+            all_content_items = interface.search(
+                marketplace=MarketplaceVersions.MarketplaceV2
+            )
+            content_cto = interface.marshal_graph(MarketplaceVersions.MarketplaceV2)
+
+        assert len(packs) == 1
+        assert len(scripts) == 2
+        assert len(all_content_items) == 3
+        with ChangeCWD(repo.path):
+            content_cto.dump(tmp_path, MarketplaceVersions.MarketplaceV2, zip=False)
+        script_path = tmp_path / "TestPack" / "Scripts"
+        assert (script_path / "script-getIncident.yml").exists()
+        assert (script_path / "script-getAlert.yml").exists()
+        assert (script_path / "script-setIncident.yml").exists()
+        assert not (script_path / "script-setAlert.yml").exists()

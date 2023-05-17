@@ -1816,6 +1816,11 @@ ERROR_CODE = {
         "ui_applicable": False,
         "related_field": "",
     },
+    "duplicated_script_name": {
+        "code": "GR106",
+        "ui_applicable": False,
+        "related_field": "",
+    },
 }
 
 
@@ -4521,3 +4526,18 @@ class Errors:
         content_name: str, pack_display_names: List[str]
     ):
         return f"Pack '{content_name}' has a duplicate display_name as: {', '.join(pack_display_names)} "
+
+    @staticmethod
+    @error_code_decorator
+    def duplicated_script_name(
+        script_name: str,
+        existing_script_name: str,
+    ):
+        return (
+            f"Cannot create a script with the name {script_name}, "
+            f"because a script with the name {existing_script_name} already exists.\n"
+            "(it will not be possible to create a new script whose name includes the word Alert/Alerts "
+            "if there is already a script with a similar name and only the word Alert/Alerts "
+            "is replaced by the word Incident/Incidents\nfor example: if there is a script `getIncident'"
+            "it will not be possible to create a script with the name `getAlert`)"
+        )

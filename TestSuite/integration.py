@@ -21,7 +21,7 @@ class Integration:
         self.name = name
         self._repo = repo
         self.repo_path = repo.path
-
+        self.prefix = "integration"
         # Create paths
         self._tmpdir_integration_path = tmpdir / f"{self.name}"
         self._tmpdir_integration_path.mkdir()
@@ -82,7 +82,9 @@ class Integration:
             self.image.write_bytes(image)
 
         if self.create_unified:
-            output_yml_path = Path(self.path).with_name(f"integration-{self.name}.yml")
+            output_yml_path = Path(self.path).with_name(
+                f"{self.prefix}-{self.name}.yml"
+            )
             self.yml = YAML(
                 output_yml_path,
                 self._repo.path,

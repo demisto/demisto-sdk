@@ -36,10 +36,8 @@ class ContentItemXSIAM(ContentItem, ABC):
             output_paths.append(dir / f"external-{self.normalize_name}")
             output_paths.append(dir / self.normalize_name)
 
-        data = (
-            self.prepare_for_upload(
-                marketplace,
-            ),
+        data = self.prepare_for_upload(
+            marketplace,
         )
 
         for file in output_paths:

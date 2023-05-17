@@ -24,6 +24,7 @@ from pydantic import DirectoryPath, validator
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.logger import logger
+from demisto_sdk.commands.common.tools import replace_incident_to_alert
 from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
 from demisto_sdk.commands.content_graph.objects.base_content import (
     BaseContent,
@@ -122,14 +123,20 @@ class ContentItem(BaseContent):
 
     def prepare_for_upload(
         self,
-        marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR,
+        current_marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR,
         **kwargs,
     ) -> dict:
         data = self.data
         logger.debug(f"preparing {self.path}")
-        return MarketplaceSuffixPreparer.prepare(data, marketplace)
+        return MarketplaceSuffixPreparer.prepare(
+            data, current_marketplace, self.marketplaces
+        )
 
-    def summary(self, marketplace: Optional[MarketplaceVersions] = None) -> dict:
+    def summary(
+        self,
+        marketplace: Optional[MarketplaceVersions] = None,
+        incident_to_alert: bool = False,
+    ) -> dict:
         """Summary of a content item (the most important metadata fields)
 
         Args:
@@ -146,6 +153,15 @@ class ContentItem(BaseContent):
                 )
             if "name" in summary_res:
                 summary_res["name"] = data.get("name_x2") or self.name
+
+            if incident_to_alert:
+                if "name" in summary_res:
+                    summary_res["name"] = replace_incident_to_alert(summary_res["name"])
+                if "description" in summary_res:
+                    summary_res["description"] = replace_incident_to_alert(
+                        summary_res["description"]
+                    )
+
         return summary_res
 
     @abstractmethod
@@ -190,7 +206,7 @@ class ContentItem(BaseContent):
         try:
             with (dir / self.normalize_name).open("w") as f:
                 self.handler.dump(
-                    self.prepare_for_upload(marketplace=marketplace),
+                    self.prepare_for_upload(current_marketplace=marketplace),
                     f,
                 )
         except FileNotFoundError as e:
@@ -208,6 +224,21 @@ class ContentItem(BaseContent):
         id_set_entity["file_path"] = str(self.path)
         id_set_entity["pack"] = self.in_pack.object_id  # type: ignore[union-attr]
         return id_set_entity
+
+    def is_incident_to_alert(self, marketplace: MarketplaceVersions) -> bool:
+        """
+        As long as the content item does not have an implementation of the `is_incident_to_alert` function,
+        the return value will always be false,
+        When there is, please override this method in the inheriting class and return `True`.
+        Namely, there is no need for special preparation of an incident to alert for the content item.
+
+        Args:
+            marketplace (MarketplaceVersions): the destination marketplace.
+
+        Returns:
+            bool: False
+        """
+        return False
 
     @classmethod
     def _client_upload_method(cls, client: demisto_client) -> Callable:

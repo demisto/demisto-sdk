@@ -144,4 +144,4 @@ def mock_update_id_set_cpu_count() -> Generator:
 @pytest.fixture(autouse=True)
 def mock_get_file(mocker):
     import demisto_sdk.commands.common.tools as tools
-    mocker.patch.object(tools, "get_file", side_effect=lambda x, y, z: tools.get_file(x, y, clear_cache=True))
+    mocker.patch.object(tools, "get_file", side_effect=lambda x, y, **kwargs: tools.get_file(x, y, clear_cache=True))

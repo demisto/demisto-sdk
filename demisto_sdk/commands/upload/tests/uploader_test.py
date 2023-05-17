@@ -361,13 +361,14 @@ def test_upload_pack(demisto_client_configure, mocker, tmpdir):
     uploader = Uploader(path, destination_zip_dir=tmpdir)
     mocker.patch.object(uploader, "client")
     mocked_upload_method = mocker.patch.object(ContentItem, "upload")
-    expected_entities = [
+    assert uploader.upload() == SUCCESS_RETURN_CODE
+
+    expected_names = {
         "DummyIntegration.yml",
         "UploadTest.yml",
         "DummyScriptUnified.yml",
         "DummyScript.yml",
         "DummyPlaybook.yml",
-        "DummyTestPlaybook.yml",
         "incidenttype-Hello_World_Alert.json",
         "incidentfield-Hello_World_ID.json",
         "incidentfield-Hello_World_Type.json",
@@ -377,13 +378,14 @@ def test_upload_pack(demisto_client_configure, mocker, tmpdir):
         "layoutscontainer-test.json",
         "upload_test_dashboard.json",
         "DummyXDRCTemplate.json",
-    ]
-    assert uploader.upload() == SUCCESS_RETURN_CODE
-    assert {
+    }
+    actual_names = {
         content_item.path.name
         for content_item in uploader._successfully_uploaded_content_items
-    } == set(expected_entities)
-    assert mocked_upload_method.call_count == len(expected_entities)
+    }
+
+    assert actual_names == expected_names
+    assert mocked_upload_method.call_count == len(expected_names)
 
 
 def test_upload_invalid_path(mocker):

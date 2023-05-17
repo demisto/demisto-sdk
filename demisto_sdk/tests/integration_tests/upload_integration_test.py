@@ -71,20 +71,26 @@ def test_integration_upload_pack_positive(demisto_client_mock, mocker):
     runner = CliRunner(mix_stderr=False)
     result = runner.invoke(main, [UPLOAD_CMD, "-i", str(pack_path), "--insecure"])
     assert result.exit_code == 0
-
-    assert all(
-        str_in_call_args_list(logger_info.call_args_list, current_str)
-        for current_str in [
-            "SUCCESSFUL UPLOADS:",
-            "│ NAME                                       │ TYPE          │",
-            "│ incidentfield-city.json                    │ IncidentField │",
-            "│ FeedAzure.yml                              │ Integration   │",
-            "│ FeedAzure_test.yml                         │ Playbook      │",
-            "│ just_a_test_script.yml                     │ Script        │",
-            "│ script-prefixed_automation.yml             │ Script        │",
-            "│ playbook-FeedAzure_test_copy_no_prefix.yml │ TestPlaybook  │",
-            "│ FeedAzure_test.yml                         │ TestPlaybook  │",
-        ]
+    logged = flatten_call_args(logger_info.call_args)
+    assert len(logged) == 1
+    assert logged[0] == "\n".join(
+        (
+            "[green]SUCCESSFUL UPLOADS:",
+            "╒════════════════════════════════╤═══════════════╕",
+            "│ NAME                           │ TYPE          │",
+            "╞════════════════════════════════╪═══════════════╡",
+            "│ incidentfield-city.json        │ IncidentField │",
+            "├────────────────────────────────┼───────────────┤",
+            "│ FeedAzure.yml                  │ Integration   │",
+            "├────────────────────────────────┼───────────────┤",
+            "│ FeedAzure_test.yml             │ Playbook      │",
+            "├────────────────────────────────┼───────────────┤",
+            "│ just_a_test_script.yml         │ Script        │",
+            "├────────────────────────────────┼───────────────┤",
+            "│ script-prefixed_automation.yml │ Script        │",
+            "╘════════════════════════════════╧═══════════════╛",
+            "[/green]",
+        )
     )
 
 
@@ -163,9 +169,6 @@ def test_zipped_pack_upload_positive(repo, mocker, tmpdir, demisto_client_mock):
                 "Reports/report-test-pack_report.json",
                 "Scripts/",
                 "Scripts/script-test-pack_script.yml",
-                "TestPlaybooks/",
-                "TestPlaybooks/playbook-test-pack_integration_test_playbook.yml",
-                "TestPlaybooks/playbook-test-pack_script_test_playbook.yml",
                 "Widgets/",
                 "Widgets/widget-test-pack_widget.json",
                 "Wizards/",

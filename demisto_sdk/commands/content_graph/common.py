@@ -108,6 +108,9 @@ class ContentType(str, enum.Enum):
             return "classifier-mapper"
         return self.lower()
 
+    # def __hash__(self) -> int:
+    #     return hash(self.value)
+
     @staticmethod
     def server_names() -> List[str]:
         return [c.server_name for c in ContentType] + ["indicatorfield", "mapper"]

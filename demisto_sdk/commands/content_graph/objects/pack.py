@@ -69,6 +69,7 @@ from demisto_sdk.commands.content_graph.objects.xdrc_template import XDRCTemplat
 from demisto_sdk.commands.content_graph.objects.xsiam_dashboard import XSIAMDashboard
 from demisto_sdk.commands.content_graph.objects.xsiam_report import XSIAMReport
 from demisto_sdk.commands.upload.constants import (
+    CONTENT_TYPES_EXCLUDED_FROM_UPLOAD,
     MULTIPLE_ZIPPED_PACKS_FILE_NAME,
     MULTIPLE_ZIPPED_PACKS_FILE_STEM,
 )
@@ -328,9 +329,18 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: i
         if not self.path.exists():
             logger.warning(f"Pack {self.name} does not exist in {self.path}")
             return
+
         try:
             path.mkdir(exist_ok=True, parents=True)
+
             for content_item in self.content_items:
+                if content_item.content_type in CONTENT_TYPES_EXCLUDED_FROM_UPLOAD:
+                    logger.debug(
+                        f"SKIPPING dump {content_item.content_type} {content_item.normalize_name}"
+                        "whose type was passed in `exclude_content_types`"
+                    )
+                    continue
+
                 if marketplace not in content_item.marketplaces:
                     logger.debug(
                         f"SKIPPING dump {content_item.content_type} {content_item.normalize_name}"
@@ -460,6 +470,12 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: i
         )
         failures: List[FailedUploadException] = []
         for item in self.content_items:
+            if item.content_type in CONTENT_TYPES_EXCLUDED_FROM_UPLOAD:
+                logger.debug(
+                    f"SKIPPING upload of {item.content_type} {item.object_id}: type is skipped"
+                )
+                continue
+
             try:
                 logger.debug(
                     f"uploading pack {self.object_id}: {item.content_type} {item.object_id}"

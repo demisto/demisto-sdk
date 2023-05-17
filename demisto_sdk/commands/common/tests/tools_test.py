@@ -1370,7 +1370,7 @@ def test_get_pack_metadata(repo):
 
     pack = repo.create_pack("MyPack")
     pack_metadata = pack.pack_metadata
-    pack_metadata.update(metadata_json)
+    pack_metadata.write_json(metadata_json)
 
     result = get_pack_metadata(pack.path)
 

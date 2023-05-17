@@ -1,6 +1,8 @@
 # Changelog
 
 ## Unreleased
+* **Breaking Change**: the **upload** command now only supports XSOAR 6.5 or newer (and all XSIAM versions).
+* **upload** now uses content models, and calls the `prepare` method of each model before uploading (unless uploading a zipped pack).
 * Added a validation that the **validate** command will fail if the `dockerimage` field in scripts/integrations uses any py3-native docker image.
 * Fixed an issue where **run-unit-tests** failed on python2 content items.
 * Fixed an issue where **lint** failed fetching docker image details from a PANW GitLab CI environment. (PANW-internal only)

@@ -2,8 +2,20 @@ import json
 from abc import ABC, abstractmethod
 from collections import defaultdict
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, ClassVar, Dict, List, Optional, Set, Type, cast
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    ClassVar,
+    Dict,
+    List,
+    Optional,
+    Set,
+    Type,
+    cast,
+)
 
+import demisto_client
+from packaging.version import Version
 from pydantic import BaseModel, DirectoryPath, Field
 from pydantic.main import ModelMetaclass
 
@@ -154,8 +166,22 @@ class BaseContent(ABC, BaseModel, metaclass=BaseContentMetaclass):
             return None
 
     @abstractmethod
-    def dump(self, path: DirectoryPath, marketplace: MarketplaceVersions) -> None:
+    def dump(
+        self,
+        path: DirectoryPath,
+        marketplace: MarketplaceVersions,
+    ) -> None:
         pass
+
+    def upload(
+        self,
+        client: demisto_client,
+        marketplace: MarketplaceVersions,
+        target_demisto_version: Version,
+        **kwargs,
+    ) -> None:
+        # Implemented at the ContentItem/Pack level rather than here
+        raise NotImplementedError()
 
     def add_relationship(
         self, relationship_type: RelationshipType, relationship: "RelationshipData"

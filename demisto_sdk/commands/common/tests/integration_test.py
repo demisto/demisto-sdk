@@ -1785,7 +1785,6 @@ class TestIntegrationValidator:
         # Test feed integration validation
         (["test1", "test2"], True, False, False),
         (["test3", "test4"], True, True, True),
-
         # Test reputation commands validation
         (["test5", "test6"], False, False, True),
         (["test7", "url"], False, False, False),
@@ -1797,7 +1796,7 @@ class TestIntegrationValidator:
         "commands, is_feed, has_reliability, result", VERIFY_REPUTATION_COMMANDS
     )
     def test_verify_reputation_commands_has_reliability(
-        self, commands: list[str], is_feed: bool, has_reliability: bool, result: bool
+        self, commands, is_feed, has_reliability, result
     ):
         """
         Given

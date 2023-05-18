@@ -2706,10 +2706,14 @@ class ServerContext:
         )
 
     def _reset_containers(self):
-        if self.build_context.server_numeric_version == '99.99.98':
-            self.build_context.logging_module.info("Skip reset containers - this API is not supported.", real_time=True)
+        if self.build_context.server_numeric_version == "99.99.98":
+            self.build_context.logging_module.info(
+                "Skip reset containers - this API is not supported.", real_time=True
+            )
         else:
-            self.build_context.logging_module.info("Resetting containers\n", real_time=True)
+            self.build_context.logging_module.info(
+                "Resetting containers\n", real_time=True
+            )
 
             body, status_code, _ = demisto_client.generic_request_func(
                 self=self.client, method="POST", path="/containers/reset"

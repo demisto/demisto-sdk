@@ -153,7 +153,7 @@ class GitContentConfig:
         """Returns the git repository of the cwd.
         if not running in a git repository, will return an empty string
         """
-        if os.getenv(GitContentConfig.ENV_SDK_WORKING_OFFLINE, "").lower() == 'yes':
+        if os.getenv(GitContentConfig.ENV_SDK_WORKING_OFFLINE, "").lower() == "yes":
             return None
         try:
             urls = GitUtil().repo.remote().urls

@@ -2710,7 +2710,7 @@ class ServerContext:
             self.build_context.logging_module.info(
                 "Skip reset containers - this API is not supported.", real_time=True
             )
-        return
+            return
 
         self.build_context.logging_module.info("Resetting containers\n", real_time=True)
 

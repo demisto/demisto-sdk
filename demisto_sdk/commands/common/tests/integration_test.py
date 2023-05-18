@@ -1782,17 +1782,22 @@ class TestIntegrationValidator:
         assert validator.is_unskipped_integration(conf_dict) is answer
 
     VERIFY_REPUTATION_COMMANDS = [
-        (["test1", "test2"], False, True),
-        (["test1", "url"], False, False),
-        (["test1", "url"], True, True),
-        (["domain", "url"], True, True),
+        # Test feed integration validation
+        (["test1", "test2"], True, False, False),
+        (["test3", "test4"], True, True, True),
+
+        # Test reputation commands validation
+        (["test5", "test6"], False, False, True),
+        (["test7", "url"], False, False, False),
+        (["test8", "url"], False, True, True),
+        (["domain", "url"], False, True, True),
     ]
 
     @pytest.mark.parametrize(
-        "commands, has_reliability, result", VERIFY_REPUTATION_COMMANDS
+        "commands, is_feed, has_reliability, result", VERIFY_REPUTATION_COMMANDS
     )
     def test_verify_reputation_commands_has_reliability(
-        self, commands, has_reliability, result
+        self, commands: list[str], is_feed: bool, has_reliability: bool, result: bool
     ):
         """
         Given
@@ -1802,20 +1807,19 @@ class TestIntegrationValidator:
         Then
             - Ensure the command fails when there is a reputation command without reliability parameter.
         """
+        current = {"script": {"commands": [{"name": command} for command in commands]}}
 
-        current = (
-            {
-                "script": {"commands": [{"name": command} for command in commands]},
-                "configuration": [{"name": "integrationReliability"}],
-            }
-            if has_reliability
-            else {"script": {"commands": [{"name": command} for command in commands]}}
-        )
+        if is_feed:
+            current["script"]["feed"] = True
+
+        if has_reliability:
+            current["configuration"] = [{"name": "integrationReliability"}]
+
         structure = mock_structure("", current)
         validator = IntegrationValidator(structure)
         validator.current_file = current
         assert (
-            validator.verify_reputation_commands_has_reliability(is_modified=True)
+            validator.verify_reputation_commands_has_reliability()
             is result
         )
 

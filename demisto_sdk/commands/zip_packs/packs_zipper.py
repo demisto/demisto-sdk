@@ -30,7 +30,7 @@ class PacksZipper:
         output: str,
         content_version: str,
         zip_all: bool,
-        marketplace: str = MarketplaceVersions.XSOAR.value,
+        marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR,
         quiet_mode: bool = False,
         **kwargs,
     ):
@@ -40,7 +40,7 @@ class PacksZipper:
             content_version=content_version,
             all_in_one_zip=zip_all,
             quiet_mode=quiet_mode,
-            marketplace=marketplace,
+            marketplace=marketplace.value,
         )
 
     def zip_packs(self):

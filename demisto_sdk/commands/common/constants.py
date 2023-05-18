@@ -1796,3 +1796,19 @@ NO_TESTS_DEPRECATED = "No tests (deprecated)"
 NATIVE_IMAGE_FILE_NAME = "docker_native_image_config.json"
 TESTS_REQUIRE_NETWORK_PACK_IGNORE = "tests_require_network"
 NATIVE_IMAGE_DOCKER_NAME = "demisto/py3-native"
+
+
+# SKIP PREPARE CONSTANTS
+SKIP_PREPARE_SCRIPT_NAME = "script-name-incident-to-alert"
+
+
+TABLE_INCIDENT_TO_ALERT = {
+    "incident": "alert",
+    "incidents": "alerts",
+    "Incident": "Alert",
+    "Incidents": "Alerts",
+    "INCIDENT": "ALERT",
+    "INCIDENTS": "ALERTS",
+}
+
+NATIVE_IMAGE_DOCKER_NAME = "demisto/py3-native"

@@ -837,7 +837,7 @@ class ValidateManager:
             FileType.TEST_SCRIPT,
             FileType.DESCRIPTION,
         }:
-            if not structure_validator.is_valid_file():     # TODO: merit: until here same new and modified
+            if not structure_validator.is_valid_file():
                 return False
 
         # Passed schema validation
@@ -1485,7 +1485,7 @@ class ValidateManager:
                         conf_json_data=self.conf_json_data,
                         is_modified=is_modified,
                     ),
-                    integration_validator.is_backward_compatible(),     # TODO: merit: start here, remove check outputs from it
+                    integration_validator.is_backward_compatible(),
                 ]
             )
         else:

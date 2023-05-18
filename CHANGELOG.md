@@ -9,6 +9,7 @@
 * Fixed an issue where **lint** failed fetching docker image details from a PANW GitLab CI environment. (PANW-internal only)
 * Fixed an issue in **validate** where core packs validations were checked against the core packs defined on master branch, rather than on the current branch.
 * Fixed an issue in **pre-commit** where `--input` flag was not filtered by the git files.
+* Fixed an issue in *validate* where reputation command's outputs where not checked in new content.
 
 ## 1.14.5
 * Added logging in case the container fails to run in **run-unit-tests**.

@@ -2364,9 +2364,9 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def missing_reliability_parameter(is_feed: bool, command: str | None = None):
+    def missing_reliability_parameter(is_feed: bool, command_name: str | None = None):
         # Assure function is called properly, as 'command' is required when 'is_feed' is False
-        if not is_feed and not command:
+        if not is_feed and not command_name:
             raise ValueError("If is_feed is False, command must be provided.")
 
         error_message = (
@@ -2379,7 +2379,7 @@ class Errors:
             return f"Feed integrations {error_message}"
 
         else:
-            return f"Integrations that contain reputation commands ({command}) {error_message}"
+            return f"Integrations that contain reputation commands ({command_name}) {error_message}"
 
     @staticmethod
     @error_code_decorator

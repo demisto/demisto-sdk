@@ -1,15 +1,15 @@
 # Changelog
 
 ## Unreleased
-* Skip reset containers for XSOAR NG and XSIAM(PANW-internal only)
 * **Breaking Change**: the **upload** command now only supports XSOAR 6.5 or newer (and all XSIAM versions).
 * **upload** now uses content models, and calls the `prepare` method of each model before uploading (unless uploading a zipped pack).
 * Added a validation that the **validate** command will fail if the `dockerimage` field in scripts/integrations uses any py3-native docker image.
 * Fixed an issue in **create-content-graph** which caused missing detection of duplicated content items.
 * Fixed an issue where **run-unit-tests** failed on python2 content items.
-* Fixed an issue where **lint** failed fetching docker image details from a PANW GitLab CI environment. (PANW-internal only)
 * Fixed an issue in **validate** where core packs validations were checked against the core packs defined on master branch, rather than on the current branch.
 * Fixed an issue in **pre-commit** where `--input` flag was not filtered by the git files.
+* Skip reset containers for XSOAR NG and XSIAM(PANW-internal only).
+* Fixed an issue where **lint** failed fetching docker image details from a PANW GitLab CI environment. (PANW-internal only).
 
 ## 1.14.5
 * Added logging in case the container fails to run in **run-unit-tests**.

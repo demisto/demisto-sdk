@@ -1,7 +1,10 @@
 # Changelog
 
 ## Unreleased
-* **Breaking Change**: the **upload** command now only supports XSOAR 6.5 or newer (and all XSIAM versions).
+
+
+## 1.15.0
+* **Breaking Change**: the **upload** command now only supports **XSOAR 6.5** or newer (and all XSIAM versions).
 * **upload** now uses content models, and calls the `prepare` method of each model before uploading (unless uploading a zipped pack).
 * Added a *playbook* modification to **prepare-content**, replacing `getIncident` calls with `getAlerts`, when uploading to XSIAM.
 * Added a *playbook* modification to **prepare-content**, replacing `${incident.fieldname}` context accessors with `${alert.fieldname}` when uploading to XSIAM.

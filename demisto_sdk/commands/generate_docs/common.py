@@ -150,7 +150,7 @@ def generate_table_section(
             True
             if {"First fetch time", "First fetch timestamp"}.intersection(item.keys())
             else False
-        )  # instead of html escaping
+        )  # instead of HTML escaping
         for key in item:
             escaped_string = string_escape_md(
                 str(item.get(key, "")),

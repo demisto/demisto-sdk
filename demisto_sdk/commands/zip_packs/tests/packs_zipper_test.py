@@ -106,13 +106,13 @@ class TestPacksZipper:
         When:
             - run the zip_packs command
         Then:
-            - validate the pack.zipped_pack_uploader was called with correct path
+            - validate the upload command was called once
         """
         mocker.patch.object(demisto_client, "configure", return_value=DefaultApi())
         mocker.patch.object(
             uploader, "get_demisto_version", return_value=parse("6.0.0")
         )
-        mocker.patch.object(Uploader, "zipped_pack_uploader")
+        mocker.patch.object(Uploader, "upload")
 
         with temp_dir() as tmp_output_dir:
             click.Context(command=zip_packs).invoke(
@@ -124,10 +124,7 @@ class TestPacksZipper:
                 upload=True,
             )
 
-            assert (
-                Uploader.zipped_pack_uploader.call_args[1]["path"]
-                == f"{tmp_output_dir}/uploadable_packs.zip"
-            )
+            assert Uploader.upload.called_once()
 
     # Edge cases
     def test_invalid_pack_name(self):

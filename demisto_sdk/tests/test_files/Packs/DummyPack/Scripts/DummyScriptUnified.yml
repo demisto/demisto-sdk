@@ -2,7 +2,7 @@ commonfields:
   id: DummyScriptUnified
   version: -1
 name: DummyScriptUnified
-script: ''
+script: 'print("hi")'
 type: python
 tags:
 - dynamic-section

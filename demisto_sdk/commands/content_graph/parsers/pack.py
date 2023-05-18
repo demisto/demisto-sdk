@@ -1,3 +1,4 @@
+from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, Iterator, List, Optional
 
@@ -67,23 +68,26 @@ class PackContentItems:
         yield from vars(self).values()
 
     def append(self, obj: ContentItemParser) -> None:
-        """Appends a content item by iterating the content item lists
-        until the correct list is found, and appends to it.
+        """
+        Appends the object to the list with the same content_type.
 
         Args:
-            obj (ContentItemParser): The conten item to append.
+            obj (ContentItemParser): The content item to append.
 
         Raises:
             NotAContentItemException: If did not find any matching content item list.
         """
-        for content_item_list in self.iter_lists():
-            try:
-                content_item_list.append(obj)
-                break
-            except TypeError:
-                continue
-        else:
-            raise NotAContentItemException
+        for item_list in self.iter_lists():
+            if item_list.content_type == obj.content_type:
+                item_list.append(obj)
+                return
+
+        raise NotAContentItemException(
+            f"Could not find list of {obj.content_type} items"
+        )
+
+
+NOW = datetime.now().strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
 class PackMetadataParser:
@@ -92,8 +96,8 @@ class PackMetadataParser:
     def __init__(self, metadata: Dict[str, Any]) -> None:
         self.name: str = metadata["name"]
         self.description: str = metadata["description"]
-        self.created: str = metadata.get("created", "")
-        self.updated: str = metadata.get("updated", "")
+        self.created: str = metadata.get("created", NOW)
+        self.updated: str = metadata.get("updated", NOW)
         self.support: str = metadata["support"]
         self.email: str = metadata.get("email", "")
         self.url: str = metadata["url"]

@@ -1,6 +1,7 @@
 # Changelog
 
 ## Unreleased
+* Skip reset containers for XSOAR NG and XSIAM(PANW-internal only)
 * **Breaking Change**: the **upload** command now only supports XSOAR 6.5 or newer (and all XSIAM versions).
 * **upload** now uses content models, and calls the `prepare` method of each model before uploading (unless uploading a zipped pack).
 * Added a validation that the **validate** command will fail if the `dockerimage` field in scripts/integrations uses any py3-native docker image.

@@ -24,6 +24,7 @@ from demisto_sdk.commands.common.constants import (
     PACKS_DIR,
     PACKS_PACK_META_FILE_NAME,
     PYTHON_SUBTYPES,
+    RELIABILITY_PARAMETER_NAMES,
     REPUTATION_COMMAND_NAMES,
     TYPE_PWSH,
     XSOAR_CONTEXT_STANDARD_URL,
@@ -2219,33 +2220,56 @@ class IntegrationValidator(ContentEntityValidator):
     @error_codes("IN154")
     def verify_reputation_commands_has_reliability(self):
         """
-        In case the integration has reputation command, ensure there is a reliability parameter.
+        If the integration is a feed, or has reputation commands, assure it has a reliability configuration parameter.
 
         Return:
             bool: True if there are no reputation commands or there is a reliability parameter
              and False if there is at least one reputation command without a reliability parameter in the configuration.
         """
-        commands_names = [
-            command.get("name")
-            for command in self.current_file.get("script", {}).get("commands", [])
-        ]
-        yml_config_names = " ".join(
-            [
-                config.get("name")
-                for config in self.current_file.get("configuration", {})
+        yml_config_names = [
+                config_item["name"].casefold()
+                for config_item in self.current_file.get("configuration", {}) if config_item.get("name")
             ]
-        )
-        for command in commands_names:
-            if command in REPUTATION_COMMAND_NAMES:
-                if "reliability" in yml_config_names.lower():
-                    return True
+
+        # Integration has a reliability parameter
+        if any(
+                reliability_parameter_name.casefold() in yml_config_names
+                for reliability_parameter_name in RELIABILITY_PARAMETER_NAMES
+        ):
+            return True
+
+        # Doesn't have reliability parameter
+        else:
+            # Is a feed integration
+            if bool(self.current_file.get("script", {}).get("feed")):
                 error_message, error_code = Errors.missing_reliability_parameter(
-                    command
+                    is_feed=True
                 )
+
                 if self.handle_error(
-                    error_message, error_code, file_path=self.file_path
+                        error_message, error_code, file_path=self.file_path
                 ):
                     return False
+
+            else:
+                commands_names = [
+                    command.get("name")
+                    for command in self.current_file.get("script", {}).get("commands", [])
+                ]
+
+                for command in commands_names:
+                    # Integration has a reputation command
+                    if command in REPUTATION_COMMAND_NAMES:
+                        error_message, error_code = Errors.missing_reliability_parameter(
+                            is_feed=False,
+                            command_name=command
+                        )
+
+                        if self.handle_error(
+                                error_message, error_code, file_path=self.file_path
+                        ):
+                            return False
+
         return True
 
     @error_codes("IN155")

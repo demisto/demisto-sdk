@@ -12,6 +12,7 @@ from demisto_sdk.commands.common.constants import (
     MODULES,
     PACK_METADATA_DESC,
     PACK_METADATA_NAME,
+    RELIABILITY_PARAMETER_NAMES,
     RN_CONTENT_ENTITY_WITH_STARS,
     RN_HEADER_BY_FILE_TYPE,
     FileType,
@@ -2361,12 +2362,26 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def missing_reliability_parameter(command: str):
-        return (
-            f'Missing "Reliability" parameter in the {command} reputation command.'
-            f"Please add it to the YAML file."
-            f"For more information, refer to https://xsoar.pan.dev/docs/integrations/dbot#reliability-level"
-        )
+    def missing_reliability_parameter(is_feed: bool, command: str | None = None):
+        # Assure function is called properly, as 'command' is required when 'is_feed' is False
+        if not is_feed and not command:
+            raise ValueError(
+                "If is_feed is False, command must be provided."
+            )
+
+        error_message = f"must implement the '{RELIABILITY_PARAMETER_NAMES[0]}' configuration parameter " \
+                        f"in the YAML file.\n" \
+                        "For more information, refer to https://xsoar.pan.dev/docs/integrations/dbot#reliability-level"
+
+        if is_feed:
+            return (
+                f"Feed integrations {error_message}"
+            )
+
+        else:
+            return (
+                f'Integrations that contain reputation commands ({command}) {error_message}'
+            )
 
     @staticmethod
     @error_code_decorator
@@ -4419,7 +4434,7 @@ class Errors:
     @error_code_decorator
     def xsiam_report_files_naming_error(invalid_files: list):
         return (
-            f"The following xsiam report files do not match the naming conventions: {','.join(invalid_files)}.\n"
+            f"The following XSIAM report files do not match the naming conventions: {','.join(invalid_files)}.\n"
             f"XSIAM reports file name must use the pack's name as a prefix, e.g. `myPack-report1.yml`"
         )
 

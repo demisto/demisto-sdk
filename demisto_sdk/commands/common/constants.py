@@ -1307,6 +1307,9 @@ ACCEPTED_FILE_EXTENSIONS = [
 ]
 ENDPOINT_COMMAND_NAME = "endpoint"
 
+# First item is the one that should be used (will appear in errors), others are for backwards compatibility
+RELIABILITY_PARAMETER_NAMES = ["integrationReliability", "reliability"]
+
 REPUTATION_COMMAND_NAMES = {"file", "email", "domain", "url", "ip", "cve"}
 
 BANG_COMMAND_NAMES = {"file", "email", "domain", "url", "ip", "cve", "endpoint"}

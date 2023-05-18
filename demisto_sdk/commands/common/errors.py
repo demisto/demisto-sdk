@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from distutils.version import LooseVersion
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union

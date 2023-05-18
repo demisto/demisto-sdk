@@ -505,7 +505,7 @@ def get_remote_file_from_api(
             )  # Sometime we need headers
             if not res.ok:  # sometime we need param token
                 res = requests.get(
-                    git_path, verify=False, timeout=10, params={"token": github_token}  # type: ignore
+                    git_path, verify=False, timeout=10, params={"token": github_token}
                 )
 
         res.raise_for_status()

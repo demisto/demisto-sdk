@@ -147,7 +147,9 @@ def generate_table_section(
     for item in data:
         tmp_item = "    |" if numbered_section else "|"
         escape_less_greater_signs = (
-            "First fetch time" or "First fetch timestamp" in item
+            True
+            if {"First fetch time", "First fetch timestamp"}.intersection(item.keys())
+            else False
         )  # instead of html escaping
         for key in item:
             escaped_string = string_escape_md(

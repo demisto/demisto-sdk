@@ -1257,7 +1257,6 @@ class IntegrationValidator(ContentEntityValidator):
         """
         fetch_params_exist = True
         if self.current_file.get("script", {}).get("isfetch") is True:
-
             # get the iten marketplaces to decide which are the required params
             # if no marketplaces or xsoar in marketplaces - the required params will be INCIDENT_FETCH_REQUIRED_PARAMS (with Incident type etc. )
             # otherwise it will be the ALERT_FETCH_REQUIRED_PARAMS (with Alert type etc. )
@@ -1676,7 +1675,6 @@ class IntegrationValidator(ContentEntityValidator):
 
         if integrations_folder == "Integrations":
             if not integration_file.startswith("integration-"):
-
                 (
                     error_message,
                     error_code,
@@ -1888,7 +1886,6 @@ class IntegrationValidator(ContentEntityValidator):
         valid_files = []
 
         for file_path in files_to_check:
-
             file_name = os.path.basename(file_path)
             if file_name.startswith("README"):
                 continue
@@ -1911,7 +1908,6 @@ class IntegrationValidator(ContentEntityValidator):
                 valid_files.append(valid_base_name.join(file_name.rsplit(base_name, 1)))
 
         if invalid_files:
-
             error_message, error_code = Errors.file_name_has_separators(
                 "integration", invalid_files, valid_files
             )
@@ -2227,14 +2223,15 @@ class IntegrationValidator(ContentEntityValidator):
              and False if there is at least one reputation command without a reliability parameter in the configuration.
         """
         yml_config_names = [
-                config_item["name"].casefold()
-                for config_item in self.current_file.get("configuration", {}) if config_item.get("name")
-            ]
+            config_item["name"].casefold()
+            for config_item in self.current_file.get("configuration", {})
+            if config_item.get("name")
+        ]
 
         # Integration has a reliability parameter
         if any(
-                reliability_parameter_name.casefold() in yml_config_names
-                for reliability_parameter_name in RELIABILITY_PARAMETER_NAMES
+            reliability_parameter_name.casefold() in yml_config_names
+            for reliability_parameter_name in RELIABILITY_PARAMETER_NAMES
         ):
             return True
 
@@ -2247,26 +2244,30 @@ class IntegrationValidator(ContentEntityValidator):
                 )
 
                 if self.handle_error(
-                        error_message, error_code, file_path=self.file_path
+                    error_message, error_code, file_path=self.file_path
                 ):
                     return False
 
             else:
                 commands_names = [
                     command.get("name")
-                    for command in self.current_file.get("script", {}).get("commands", [])
+                    for command in self.current_file.get("script", {}).get(
+                        "commands", []
+                    )
                 ]
 
                 for command in commands_names:
                     # Integration has a reputation command
                     if command in REPUTATION_COMMAND_NAMES:
-                        error_message, error_code = Errors.missing_reliability_parameter(
-                            is_feed=False,
-                            command_name=command
+                        (
+                            error_message,
+                            error_code,
+                        ) = Errors.missing_reliability_parameter(
+                            is_feed=False, command_name=command
                         )
 
                         if self.handle_error(
-                                error_message, error_code, file_path=self.file_path
+                            error_message, error_code, file_path=self.file_path
                         ):
                             return False
 

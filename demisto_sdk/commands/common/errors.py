@@ -2365,23 +2365,19 @@ class Errors:
     def missing_reliability_parameter(is_feed: bool, command: str | None = None):
         # Assure function is called properly, as 'command' is required when 'is_feed' is False
         if not is_feed and not command:
-            raise ValueError(
-                "If is_feed is False, command must be provided."
-            )
+            raise ValueError("If is_feed is False, command must be provided.")
 
-        error_message = f"must implement the '{RELIABILITY_PARAMETER_NAMES[0]}' configuration parameter " \
-                        f"in the YAML file.\n" \
-                        "For more information, refer to https://xsoar.pan.dev/docs/integrations/dbot#reliability-level"
+        error_message = (
+            f"must implement the '{RELIABILITY_PARAMETER_NAMES[0]}' configuration parameter "
+            f"in the YAML file.\n"
+            "For more information, refer to https://xsoar.pan.dev/docs/integrations/dbot#reliability-level"
+        )
 
         if is_feed:
-            return (
-                f"Feed integrations {error_message}"
-            )
+            return f"Feed integrations {error_message}"
 
         else:
-            return (
-                f'Integrations that contain reputation commands ({command}) {error_message}'
-            )
+            return f"Integrations that contain reputation commands ({command}) {error_message}"
 
     @staticmethod
     @error_code_decorator

@@ -1817,10 +1817,7 @@ class TestIntegrationValidator:
         structure = mock_structure("", current)
         validator = IntegrationValidator(structure)
         validator.current_file = current
-        assert (
-            validator.verify_reputation_commands_has_reliability()
-            is result
-        )
+        assert validator.verify_reputation_commands_has_reliability() is result
 
     @pytest.mark.parametrize(
         "hidden_value,is_valid",

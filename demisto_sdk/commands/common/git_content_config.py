@@ -60,6 +60,7 @@ class GitContentConfig:
     )
 
     ENV_REPO_HOSTNAME_NAME = "DEMISTO_SDK_REPO_HOSTNAME"
+    ENV_SDK_WORKING_OFFLINE = "DEMISTO_SDK_OFFLINE_ENV"
 
     GITHUB_TO_USERCONTENT = {GITHUB: GITHUB_USER_CONTENT}
     USERCONTENT_TO_GITHUB = {GITHUB_USER_CONTENT: GITHUB}
@@ -152,6 +153,8 @@ class GitContentConfig:
         """Returns the git repository of the cwd.
         if not running in a git repository, will return an empty string
         """
+        if os.getenv(GitContentConfig.ENV_SDK_WORKING_OFFLINE, "").lower() == 'yes':
+            return None
         try:
             urls = GitUtil().repo.remote().urls
             for url in urls:

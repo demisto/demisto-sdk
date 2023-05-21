@@ -336,7 +336,7 @@ class TestFormatting:
             )
         ]
     )
-    def test_test_bang_commands_default_arguments(self, integration, test_data: list, expected_data: tuple, condition: bool):
+    def test_bang_commands_default_arguments(self, integration, test_data: list, expected_data: tuple, name_is_default: bool):
         
         """
         Test case to verify the behavior of setting reputation commands' basic arguments as needed.
@@ -345,7 +345,7 @@ class TestFormatting:
             integration: The integration object.
             test_data: Test data representing the modified command structure.
             expected_data: Tuple specifying the expected location of the 'default' field in the modified structure.
-            condition: The expected value of the 'default' field.
+            name_is_default: Whether the argument named as the integration should have `default`.
 
         """
         yml_contents = integration.yml.read_dict()
@@ -360,7 +360,7 @@ class TestFormatting:
         for key in expected_data:
             current_data = current_data[key]
 
-        assert current_data.get("default", False) == condition
+        assert current_data.get("default", False) == name_is_default
    
     @pytest.mark.parametrize(
         "test_data",
@@ -368,7 +368,7 @@ class TestFormatting:
             [{"name": "ip", "arguments": []}]
         ]
     )
-    def test_test_bang_commands_default_no_arguments(self, integration, test_data: list):
+    def test_bang_commands_default_no_arguments(self, integration, test_data: list):
         """
         Test for `test_bang_commands_default_no_arguments` function.
         when is no arguments

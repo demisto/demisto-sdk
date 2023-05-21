@@ -139,8 +139,7 @@ class IntegrationYMLFormat(BaseUpdateYML):
 
             if command_name in BANG_COMMAND_NAMES:
                 
-                arguments =  command.get("arguments")
-                if not arguments:  # if no argument in the command
+                if not (arguments := command.get("arguments")):   # if no argument in the command
                     return
                 
                 if any(argument.get('default') for argument in arguments):  # if one of the arguments already have a default value
@@ -150,7 +149,7 @@ class IntegrationYMLFormat(BaseUpdateYML):
   
                 # if one of the arguments have the same name as command name, update him to be a default
                 for argument in arguments:
-                    if argument.get("name", "") == command_name:
+                    if argument["name"] == command_name:
                         argument.update(default_argument)
                         return
         return

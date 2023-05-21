@@ -19,7 +19,7 @@
 * Fixed an issue in **pre-commit** where `--input` flag was not filtered by the git files.
 * Skip reset containers for XSOAR NG and XSIAM(PANW-internal only).
 * Fixed an issue where **lint** failed fetching docker image details from a PANW GitLab CI environment. (PANW-internal only).
-* Fixed an issue in *validate* where reputation command's outputs where not checked in new content.
+* Fixed an issue where *validate* reputation commands outputs weren't checked for new contribution content.
 
 ## 1.14.5
 * Added logging in case the container fails to run in **run-unit-tests**.

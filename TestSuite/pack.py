@@ -264,6 +264,7 @@ class Pack:
         image: bytes = b"",
         docker_image: Optional[str] = None,
         create_unified=False,
+        skip_prepare=[],
     ) -> Script:
         if name is None:
             name = f"script{len(self.scripts)}"
@@ -276,6 +277,7 @@ class Pack:
                 "subtype": "python3",
                 "dockerimage": docker_image,
                 "script": "-",
+                "skipprepare": skip_prepare,
             }
         script = Script(
             self._scripts_path, name, self._repo, create_unified=create_unified

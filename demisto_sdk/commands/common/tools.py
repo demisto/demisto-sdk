@@ -94,6 +94,7 @@ from demisto_sdk.commands.common.constants import (
     REPORTS_DIR,
     SCRIPTS_DIR,
     SIEM_ONLY_ENTITIES,
+    TABLE_INCIDENT_TO_ALERT,
     TEST_PLAYBOOKS_DIR,
     TESTS_AND_DOC_DIRECTORIES,
     TRIGGER_DIR,
@@ -404,13 +405,18 @@ def get_marketplace_to_core_packs() -> Dict[MarketplaceVersions, Set[str]]:
     mp_to_core_packs: Dict[MarketplaceVersions, Set[str]] = {}
     for mp in MarketplaceVersions:
         # for backwards compatibility mp_core_packs can be a list, but we expect a dict.
-        mp_core_packs: Union[list, dict] = get_remote_file(
-            MARKETPLACE_TO_CORE_PACKS_FILE[mp],
-            git_content_config=GitContentConfig(
-                repo_name=GitContentConfig.OFFICIAL_CONTENT_REPO_NAME,
-                git_provider=GitProvider.GitHub,
-            ),
-        )
+        try:
+            mp_core_packs: Union[list, dict] = get_json(
+                MARKETPLACE_TO_CORE_PACKS_FILE[mp],
+            )
+        except FileNotFoundError:
+            mp_core_packs = get_remote_file(
+                MARKETPLACE_TO_CORE_PACKS_FILE[mp],
+                git_content_config=GitContentConfig(
+                    repo_name=GitContentConfig.OFFICIAL_CONTENT_REPO_NAME,
+                    git_provider=GitProvider.GitHub,
+                ),
+            )
         if isinstance(mp_core_packs, list):
             mp_to_core_packs[mp] = set(mp_core_packs)
         else:
@@ -3527,6 +3533,26 @@ def get_pack_paths_from_files(file_paths: Iterable[str]) -> list:
     """Returns the pack paths from a list/set of files"""
     pack_paths = {f"Packs/{get_pack_name(file_path)}" for file_path in file_paths}
     return list(pack_paths)
+
+
+def replace_incident_to_alert(value: str) -> str:
+    if not isinstance(value, str):
+        return value
+
+    new_value = value
+    for pattern, replace_with in TABLE_INCIDENT_TO_ALERT.items():
+        new_value = re.sub(pattern, replace_with, new_value)
+    return new_value
+
+
+def replace_alert_to_incident(value: str) -> str:
+    if not isinstance(value, str):
+        return value
+
+    new_value = value
+    for incident, alert in TABLE_INCIDENT_TO_ALERT.items():
+        new_value = re.sub(alert, incident, new_value)
+    return new_value
 
 
 def get_id(file_content: Dict) -> Union[str, None]:

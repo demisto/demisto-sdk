@@ -1,9 +1,18 @@
 # Changelog
 
 ## Unreleased
-* **Breaking Change**: the **upload** command now only supports XSOAR 6.5 or newer (and all XSIAM versions).
+
+
+## 1.15.0
+* **Breaking Change**: the **upload** command now only supports **XSOAR 6.5** or newer (and all XSIAM versions).
 * **upload** now uses content models, and calls the `prepare` method of each model before uploading (unless uploading a zipped pack).
+* Added a *playbook* modification to **prepare-content**, replacing `getIncident` calls with `getAlerts`, when uploading to XSIAM.
+* Added a *playbook* modification to **prepare-content**, replacing `${incident.fieldname}` context accessors with `${alert.fieldname}` when uploading to XSIAM.
+* Added a *playbook* modification to **prepare-content**, replacing `incident` to `alert` in task display names, when uploading to XSIAM.
+* Added a *layout* modification to **prepare-content**, replacing `Related/Child/Linked Incidents` to `... Alerts` when uploading to XSIAM.
+* Added a *script* modification to **prepare-content**, automatically replacing the word `incident` with `alert` when uploading to XSIAM.
 * Added a validation that the **validate** command will fail if the `dockerimage` field in scripts/integrations uses any py3-native docker image.
+* Updated the `ruff` version used in **pre-commit** to `0.0.269`.
 * Fixed an issue in **create-content-graph** which caused missing detection of duplicated content items.
 * Fixed an issue where **run-unit-tests** failed on python2 content items.
 * Fixed an issue in **validate** where core packs validations were checked against the core packs defined on master branch, rather than on the current branch.

@@ -2235,7 +2235,7 @@ class IntegrationValidator(ContentEntityValidator):
         ):
             return True
 
-        # Doesn't have reliability parameter
+        # Integration doesn't have a reliability parameter
         else:
             # Is a feed integration
             if bool(self.current_file.get("script", {}).get("feed")):

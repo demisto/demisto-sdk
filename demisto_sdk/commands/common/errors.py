@@ -14,7 +14,6 @@ from demisto_sdk.commands.common.constants import (
     MODULES,
     PACK_METADATA_DESC,
     PACK_METADATA_NAME,
-    RELIABILITY_PARAMETER_NAMES,
     RN_CONTENT_ENTITY_WITH_STARS,
     RN_HEADER_BY_FILE_TYPE,
     FileType,
@@ -2370,7 +2369,7 @@ class Errors:
             raise ValueError("If is_feed is False, command must be provided.")
 
         error_message = (
-            f"must implement a reliability configuration parameter in the YAML file.\n"
+            "must implement a reliability configuration parameter in the YAML file.\n"
             "For more information, refer to https://xsoar.pan.dev/docs/integrations/dbot#reliability-level"
         )
 

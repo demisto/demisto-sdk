@@ -2236,40 +2236,34 @@ class IntegrationValidator(ContentEntityValidator):
             return True
 
         # Integration doesn't have a reliability parameter
+        if bool(
+            self.current_file.get("script", {}).get("feed")
+        ):  # Is a feed integration
+            error_message, error_code = Errors.missing_reliability_parameter(
+                is_feed=True
+            )
+
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                return False
+
         else:
-            # Is a feed integration
-            if bool(self.current_file.get("script", {}).get("feed")):
-                error_message, error_code = Errors.missing_reliability_parameter(
-                    is_feed=True
-                )
+            commands_names = [
+                command.get("name")
+                for command in self.current_file.get("script", {}).get("commands", [])
+            ]
 
-                if self.handle_error(
-                    error_message, error_code, file_path=self.file_path
-                ):
-                    return False
-
-            else:
-                commands_names = [
-                    command.get("name")
-                    for command in self.current_file.get("script", {}).get(
-                        "commands", []
+            for command in commands_names:
+                if (
+                    command in REPUTATION_COMMAND_NAMES
+                ):  # Integration has a reputation command
+                    (error_message, error_code,) = Errors.missing_reliability_parameter(
+                        is_feed=False, command_name=command
                     )
-                ]
 
-                for command in commands_names:
-                    # Integration has a reputation command
-                    if command in REPUTATION_COMMAND_NAMES:
-                        (
-                            error_message,
-                            error_code,
-                        ) = Errors.missing_reliability_parameter(
-                            is_feed=False, command_name=command
-                        )
-
-                        if self.handle_error(
-                            error_message, error_code, file_path=self.file_path
-                        ):
-                            return False
+                    if self.handle_error(
+                        error_message, error_code, file_path=self.file_path
+                    ):
+                        return False
 
         return True
 

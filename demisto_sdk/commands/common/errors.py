@@ -14,6 +14,7 @@ from demisto_sdk.commands.common.constants import (
     MODULES,
     PACK_METADATA_DESC,
     PACK_METADATA_NAME,
+    RELIABILITY_PARAMETER_NAMES,
     RN_CONTENT_ENTITY_WITH_STARS,
     RN_HEADER_BY_FILE_TYPE,
     FileType,
@@ -2364,12 +2365,24 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def missing_reliability_parameter(is_feed: bool, command_name: str | None = None):
-        # Assure function is called properly, as 'command' is required when 'is_feed' is False
+        """
+        Returns an error message for missing reliability parameter, according to provided arguments.
+
+        Args:
+            is_feed (bool): Whether the integration is a feed integration or not.
+            command_name (str | None, optional): The name of the command that is missing the reliability parameter.
+                Defaults to None. Required when is_feed is False.
+
+        Returns:
+            str: The error message.
+        """
+        # Assure 'command' parameter was passed if 'is_feed' is False
         if not is_feed and not command_name:
-            raise ValueError("If is_feed is False, command must be provided.")
+            raise ValueError("If 'is_feed' is set to False, command must be provided.")
 
         error_message = (
-            "must implement a reliability configuration parameter in the YAML file.\n"
+            f"must implement a reliability ('{RELIABILITY_PARAMETER_NAMES[0]}') configuration parameter"
+            f"in the YAML file.\n"
             "For more information, refer to https://xsoar.pan.dev/docs/integrations/dbot#reliability-level"
         )
 

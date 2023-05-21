@@ -144,6 +144,6 @@ def mock_update_id_set_cpu_count() -> Generator:
         yield _fixture
 
 
-@pytest.fixture()
+@pytest.fixture(autouse=True)
 def clear_cache():
     tools.get_file.cache_clear()

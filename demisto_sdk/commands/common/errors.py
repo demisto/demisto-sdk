@@ -2370,8 +2370,7 @@ class Errors:
             raise ValueError("If is_feed is False, command must be provided.")
 
         error_message = (
-            f"must implement the '{RELIABILITY_PARAMETER_NAMES[0]}' configuration parameter "
-            f"in the YAML file.\n"
+            f"must implement a reliability configuration parameter in the YAML file.\n"
             "For more information, refer to https://xsoar.pan.dev/docs/integrations/dbot#reliability-level"
         )
 

@@ -135,7 +135,6 @@ class TestPacksMetadata:
         pack.pack_metadata.write_json(metadata_file_content)
 
         res = get_pack_metadata_data(pack.pack_metadata.path, print_logs=False)
-        tools.get_file.cache_clear()
         result = res.get("Pack1")
 
         assert "name" in result.keys()

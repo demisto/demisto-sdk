@@ -239,7 +239,8 @@ class IntegrationScriptUnifier(Unifier):
             r"|CommonServerPowerShell\.ps1|CommonServerUserPowerShell\.ps1|demistomock\.ps1|\.Tests\.ps1"
         )
         if package_path.endswith("/"):
-            package_path = package_path[:-1]  # remove the last / as we use os.path.join
+            # remove the last / as we use os.path.join
+            package_path = package_path[:-1]
         if package_path.endswith(os.path.join("Scripts", "CommonServerPython")):
             return os.path.join(package_path, "CommonServerPython.py")
         if package_path.endswith(os.path.join("Scripts", "CommonServerUserPython")):

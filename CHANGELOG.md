@@ -1,6 +1,7 @@
 # Changelog
 
 ## Unreleased
+* Fixed an issue where **format** added default arguments even is exist already.
 
 
 ## 1.15.0

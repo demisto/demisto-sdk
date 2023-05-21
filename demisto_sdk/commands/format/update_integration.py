@@ -127,6 +127,7 @@ class IntegrationYMLFormat(BaseUpdateYML):
                     output["description"] = default_values[output["contextPath"]]
 
     def set_reputation_commands_basic_argument_as_needed(self):
+        # remove this function
         """Sets basic arguments of reputation commands to be default, isArray and required."""
         logger.debug(
             "Updating reputation commands' basic arguments to be True for default, isArray and required"

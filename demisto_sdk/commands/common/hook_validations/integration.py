@@ -2317,3 +2317,42 @@ class IntegrationValidator(ContentEntityValidator):
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 return False
         return True
+
+    @error_codes("IN159")
+    def verify_reputation_commands_arguments(self):
+        """
+        In case the integration has reputation command, ensure basic arguments to be default, isArray and required.
+        Args:
+            is_modified (bool): Whether the given files are modified or not.
+
+        Return:
+            bool: True if there are no reputation commands or the arguments are valid
+             and False if there is at least one reputation command without a valid argument in the configuration.
+        """
+        integration_commands = self.current_file.get("script", {}).get("commands", [])
+
+        failed_commands = {}
+
+        for command in integration_commands:
+            command_name = command.get("name", "")
+
+            if command_name in BANG_COMMAND_NAMES:
+                for argument in command.get("arguments", []):
+                    arg_name = argument.get("name")
+
+                    if arg_name == command_name:
+                        default_bang_args = {"default", "isArray", "required"}
+
+                        for arg in default_bang_args:
+                            if not argument.get(arg, False):
+                                failed_commands.setdefault(command_name, []).append(arg)
+
+        if failed_commands:
+            error_message, error_code = Errors.reputation_commands_missing_default_args(
+                failed_commands
+            )
+
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                return False
+
+        return True

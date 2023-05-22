@@ -1,6 +1,7 @@
 # Changelog
 
 ## Unreleased
+* Fixed an issue where **upload** failed parsing a configuration file.
 
 ## 1.15.1
 * Fixed an issue where **generate-docs** generated fields with double html escaping.

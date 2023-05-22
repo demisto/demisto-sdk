@@ -21,7 +21,6 @@ from demisto_sdk.commands.content_graph.parsers.content_items_list import (
     ContentItemsList,
 )
 
-
 DEFAULT_MARKETPLACES = [
     MarketplaceVersions.XSOAR,
     MarketplaceVersions.MarketplaceV2,

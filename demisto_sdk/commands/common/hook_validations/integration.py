@@ -173,6 +173,7 @@ class IntegrationValidator(ContentEntityValidator):
             self.are_common_outputs_with_description(),
             self.is_native_image_does_not_exist_in_yml(),
             self.validate_unit_test_exists(),
+            self.verify_reputation_commands_arguments(),
         ]
 
         return all(answers)

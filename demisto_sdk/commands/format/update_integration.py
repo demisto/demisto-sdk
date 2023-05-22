@@ -145,7 +145,7 @@ class IntegrationYMLFormat(BaseUpdateYML):
 
                 if any(
                     argument.get("default") for argument in arguments
-                ):  # if one of the arguments already have a default value
+                ):  # command already has a default argument
                     return
 
                 # if one of the arguments have the same name as command name, update him to be a default

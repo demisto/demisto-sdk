@@ -2,6 +2,7 @@
 
 ## Unreleased
 * Fixed an issue where **generate-docs** generated fields with double html escaping.
+* Fixed an issue where **upload** failed when using the `-z` flag.
 * Fixed an issue where **validate** fails when adding the *advance* field to the integration required fields.
 * Updated the integration Traffic Light Protocol (TLP) color list schema in the **validate** command.
 

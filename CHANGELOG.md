@@ -1,7 +1,7 @@
 # Changelog
 
 ## Unreleased
-* Fixed an issue where **format** added default arguments even is exist already.
+* Fixed an issue where **format** added default arguments to reputation commands which already have one.
 * Fixed an issue where **generate-docs** generated fields with double html escaping.
 
 ## 1.15.0

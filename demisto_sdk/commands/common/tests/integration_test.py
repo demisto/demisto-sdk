@@ -31,16 +31,16 @@ default_additional_info = load_default_additional_info_dict()
 def build_feed_required_params():
     params = []
     for required_param in FEED_REQUIRED_PARAMS:
-        have_at_least_one = {
+        must_be_one_of = {
             key: val[-1] if isinstance(val, list) else val
-            for key, val in required_param.get("have_at_least_one").items()
+            for key, val in required_param.get("must_be_one_of").items()
         }
         params.append(
             dict(
                 required_param.get("must_equal"),
                 **required_param.get("must_contain"),
                 name=required_param.get("name"),
-                **have_at_least_one,
+                **must_be_one_of,
             )
         )
     return params

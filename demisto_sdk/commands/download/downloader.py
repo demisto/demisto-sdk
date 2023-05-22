@@ -239,7 +239,7 @@ class Downloader:
                 output_flag = False
                 logger.info("[red]Error: Missing option '-o' / '--output'.[/red]")
             if not self.input_files:
-                if not self.all_custom_content and not self.regex and not self.init:
+                if not any((self.all_custom_content, self.regex, self.init)):
                     input_flag = False
                     logger.info("[red]Error: Missing option '-i' / '--input'.[/red]")
             if not input_flag or not output_flag:
@@ -603,13 +603,12 @@ class Downloader:
         self.all_custom_content = True
         self.run_format = True
 
-        if self.keep_empty_folders:
-            return
-        # delete the empty folders created by the initiator
-        pack_folder = Path(self.output_pack_path)
-        for folder_path in pack_folder.rglob("*"):
-            if folder_path.is_dir() and not any(folder_path.iterdir()):
-                folder_path.rmdir()
+        if not self.keep_empty_folders:
+            # delete the empty folders created by the initiator
+            pack_folder = Path(self.output_pack_path)
+            for folder_path in pack_folder.rglob("*"):
+                if folder_path.is_dir() and not any(folder_path.iterdir()):
+                    folder_path.rmdir()
 
     def verify_output_pack_is_pack(self) -> bool:
         """

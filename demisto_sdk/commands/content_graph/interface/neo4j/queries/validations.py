@@ -1,4 +1,4 @@
-from typing import List, Tuple
+from typing import Dict, List, Tuple
 
 from neo4j import Transaction, graph
 
@@ -7,6 +7,7 @@ from demisto_sdk.commands.common.constants import (
     GENERAL_DEFAULT_FROMVERSION,
     MarketplaceVersions,
 )
+from demisto_sdk.commands.common.tools import replace_alert_to_incident
 from demisto_sdk.commands.content_graph.common import (
     ContentType,
     Neo4jRelationshipResult,
@@ -147,6 +148,39 @@ RETURN a.object_id AS a_object_id, collect(b.object_id) AS b_object_ids
         (item.get("a_object_id"), item.get("b_object_ids"))
         for item in run_query(tx, query)
     ]
+
+
+def validate_multiple_script_with_same_name(
+    tx: Transaction, file_paths: List[str]
+) -> Dict[str, str]:
+    query = f"""// Returns all scripts that have the word 'alert' in their name
+MATCH (a:{ContentType.SCRIPT})
+WHERE toLower(a.name) contains "alert"
+AND 'marketplacev2' IN a.marketplaces
+"""
+    if file_paths:
+        query += f"AND a.path in {file_paths}"
+    query += """
+    RETURN a.name AS a_name, a.path AS a_path
+    """
+
+    content_item_names_and_paths = {
+        # replace the name of the script.
+        replace_alert_to_incident(item["a_name"]): item["a_path"]
+        for item in run_query(tx, query)
+    }
+
+    query = f"""// Returns script names if they match the replaced name
+MATCH (b:{ContentType.SCRIPT})
+WHERE b.name in {list(content_item_names_and_paths.keys())}
+AND NOT 'script-name-incident-to-alert' IN b.skip_prepare
+AND '{MarketplaceVersions.MarketplaceV2}' IN b.marketplaces
+RETURN b.name AS b_name
+"""
+    return {
+        item["b_name"]: content_item_names_and_paths[item["b_name"]]
+        for item in run_query(tx, query)
+    }
 
 
 def validate_core_packs_dependencies(

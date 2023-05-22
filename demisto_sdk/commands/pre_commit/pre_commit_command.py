@@ -18,7 +18,7 @@ from demisto_sdk.commands.common.constants import (
     SCRIPTS_DIR,
 )
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH, PYTHONPATH
-from demisto_sdk.commands.common.docker_helper import get_python_version_from_image
+from demisto_sdk.commands.common.docker_helper import get_python_version
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
 from demisto_sdk.commands.common.logger import logger
@@ -201,7 +201,9 @@ def group_by_python_version(files: Set[Path]) -> Dict[str, set]:
             )
             if not find_path_index:
                 raise Exception(f"Could not find Integrations/Scripts path for {file}")
-            code_file_path = Path(*file.parts[: next(find_path_index) + 1])
+            code_file_path = CONTENT_PATH / Path(
+                *file.parts[: next(find_path_index) + 1]
+            )
             integrations_scripts_mapping[code_file_path].add(file)
         else:
             infra_files.append(file)
@@ -218,10 +220,8 @@ def group_by_python_version(files: Set[Path]) -> Dict[str, set]:
         ):
             continue
         code_file_path = integration_script.path.parent
-        if python_version := get_python_version_from_image(
-            integration_script.docker_image
-        ):
-            python_version_string = f"{python_version.major}.{python_version.minor}"
+        python_version = get_python_version(integration_script.docker_image)
+        python_version_string = f"{python_version.major}.{python_version.minor}"
         python_versions_to_files[
             python_version_string or DEFAULT_PYTHON2_VERSION
         ].update(
@@ -285,13 +285,14 @@ def pre_commit_manager(
 
 
 def preprocess_files(
-    input_files: Optional[Iterable[Path]],
+    input_files: Optional[Iterable[Path]] = None,
     staged_only: bool = False,
     use_git: bool = False,
     all_files: bool = False,
 ) -> Set[Path]:
     git_util = GitUtil()
     staged_files = git_util._get_staged_files()
+    all_git_files = git_util.get_all_files() | staged_files
     if input_files:
         raw_files = set(input_files)
     elif staged_only:
@@ -299,7 +300,7 @@ def preprocess_files(
     elif use_git:
         raw_files = git_util._get_all_changed_files() | staged_files
     elif all_files:
-        raw_files = git_util.get_all_files() | staged_files
+        raw_files = all_git_files
     else:
         raise ValueError(
             "No files were given to run pre-commit on, and no flags were given."
@@ -307,11 +308,14 @@ def preprocess_files(
     files_to_run: Set[Path] = set()
     for file in raw_files:
         if file.is_dir():
-            files_to_run |= set(file.rglob("*"))
+            files_to_run |= {file for file in file.rglob("*") if file.is_file()}
         else:
             files_to_run.add(file)
 
-    # Convert to absolute paths
-    return {
-        file if file.is_absolute() else CONTENT_PATH / file for file in files_to_run
+    # convert to relative file to content path
+    relative_paths = {
+        file.relative_to(CONTENT_PATH) if file.is_absolute() else file
+        for file in files_to_run
     }
+    # filter out files that are not in the content git repo (e.g in .gitignore)
+    return relative_paths & all_git_files

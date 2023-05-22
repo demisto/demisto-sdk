@@ -1437,6 +1437,18 @@ def upload(ctx, **kwargs):
         case_sensitive=False,
     ),
 )
+@click.option(
+    "--init",
+    help="Create a directory structure and download all the custom content items",
+    is_flag=True,
+    default=False,
+)
+@click.option(
+    "--keep-empty-folders",
+    help="Keep empty folders when using the --init flag",
+    is_flag=True,
+    default=False,
+)
 @click.pass_context
 @logging_setup_decorator
 def download(ctx, **kwargs):

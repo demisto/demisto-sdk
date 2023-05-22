@@ -319,22 +319,28 @@ class TestFormatting:
     @pytest.mark.parametrize(
         "test_data, name_is_default",
         [
+            ([{"name": "ip", "arguments": [{"name": "ip"}]}], True),
             (
-                [{"name": "ip", "arguments": [{"name": "ip"}]}],
-                True
+                [
+                    {
+                        "name": "ip",
+                        "arguments": [
+                            {"name": "ip"},
+                            {"name": "endpoint", "default": True},
+                        ],
+                    }
+                ],
+                False,
             ),
             (
-                [{"name": "ip", "arguments": [{"name": "ip"}, {"name": "endpoint", "default": True}]}],
-                False
+                [{"name": "ip", "arguments": [{"name": "ip"}, {"name": "endpoint"}]}],
+                True,
             ),
-            (
-                [{"name": "ip", "arguments": [{"name": "ip"},{"name": "endpoint"}]}],
-                True
-            )
-        ]
+        ],
     )
-    def test_bang_commands_default_arguments(self, integration, test_data: list, name_is_default: bool):
-        
+    def test_bang_commands_default_arguments(
+        self, integration, test_data: list, name_is_default: bool
+    ):
         """
         Test case to verify the behavior of setting reputation commands' basic arguments as needed.
 
@@ -347,20 +353,20 @@ class TestFormatting:
         """
         yml_contents = integration.yml.read_dict()
         yml_contents["script"]["commands"] = test_data
-        
+
         integration.yml.write_dict(yml_contents)
         formatter = IntegrationYMLFormat(integration.yml.path)
         formatter.set_reputation_commands_basic_argument_as_needed()
         formatter.save_yml_to_destination_file()
 
-        assert integration.yml.read_dict()["script"]["commands"][0]["arguments"][0].get("default", False) is name_is_default
-   
-    @pytest.mark.parametrize(
-        "test_data",
-        [
-            [{"name": "ip", "arguments": []}]
-        ]
-    )
+        assert (
+            integration.yml.read_dict()["script"]["commands"][0]["arguments"][0].get(
+                "default", False
+            )
+            is name_is_default
+        )
+
+    @pytest.mark.parametrize("test_data", [[{"name": "ip", "arguments": []}]])
     def test_bang_commands_default_no_arguments(self, integration, test_data: list):
         """
         Test for `test_bang_commands_default_no_arguments` function.
@@ -371,15 +377,15 @@ class TestFormatting:
 
         """
         yml_contents = integration.yml.read_dict()
-        yml_contents["script"]["commands"] =  test_data
+        yml_contents["script"]["commands"] = test_data
 
         integration.yml.write_dict(yml_contents)
         formatter = IntegrationYMLFormat(integration.yml.path)
         formatter.set_reputation_commands_basic_argument_as_needed()
         formatter.save_yml_to_destination_file()
-     
+
         assert integration.yml.read_dict()["script"]["commands"] == test_data
-    
+
     @pytest.mark.parametrize("source_path", [SOURCE_FORMAT_PLAYBOOK_COPY])
     def test_playbook_task_description_name(self, source_path):
         schema_path = os.path.normpath(
@@ -1862,6 +1868,3 @@ def test_yml_run_format_exception_handling(format_object, mocker):
         logger_info.call_args_list,
         "Failed to update file my_file_path. Error: MY ERROR",
     )
-
-
-

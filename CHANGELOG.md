@@ -2,6 +2,7 @@
 
 ## Unreleased
 * Fixed an issue where **generate-docs** generated fields with double html escaping.
+* Fixed an issue where **upload** failed when using the `-z` flag.
 
 ## 1.15.0
 * **Breaking Change**: the **upload** command now only supports **XSOAR 6.5** or newer (and all XSIAM versions).

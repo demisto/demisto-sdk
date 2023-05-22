@@ -1308,8 +1308,8 @@ ACCEPTED_FILE_EXTENSIONS = [
 ENDPOINT_COMMAND_NAME = "endpoint"
 
 RELIABILITY_PARAMETER_NAMES = [
-    "integrationReliability",  # First item in the list will be used in errors
-    "integration_reliability",
+    "integration_reliability",  # First item in the list will be used in errors
+    "integrationReliability",
     "feedReliability",
     "reliability",
 ]

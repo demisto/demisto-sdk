@@ -2380,17 +2380,22 @@ class Errors:
         if not is_feed and not command_name:
             raise ValueError("If 'is_feed' is set to False, command must be provided.")
 
-        error_message = (
-            f"must implement a reliability ('{RELIABILITY_PARAMETER_NAMES[0]}') configuration parameter"
-            f"in the YAML file.\n"
-            "For more information, refer to https://xsoar.pan.dev/docs/integrations/dbot#reliability-level"
-        )
-
         if is_feed:
-            return f"Feed integrations {error_message}"
+            specific_case_error = (
+                "Feed integrations must implement a reliability parameter."
+            )
 
         else:
-            return f"Integrations that contain reputation commands ({command_name}) {error_message}"
+            specific_case_error = (
+                f"Integrations with reputation commands ('{command_name}') "
+                "must implement a reliability parameter."
+            )
+
+        return (
+            f"Missing a reliability ('{RELIABILITY_PARAMETER_NAMES[0]}') configuration parameter in the YAML file.\n"
+            f"{specific_case_error}\n"
+            "For more information, refer to https://xsoar.pan.dev/docs/integrations/dbot#reliability-level"
+        )
 
     @staticmethod
     @error_code_decorator

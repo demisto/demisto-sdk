@@ -2332,7 +2332,7 @@ class IntegrationValidator(ContentEntityValidator):
         """
         integration_commands = self.current_file.get("script", {}).get("commands", [])
 
-        failed_commands = {}
+        failed_commands = {}  # type: ignore[misc, var-annotated]
 
         for command in integration_commands:
             command_name = command.get("name", "")

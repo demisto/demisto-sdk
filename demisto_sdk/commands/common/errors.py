@@ -4550,7 +4550,7 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def reputation_commands_missing_default_args(failed_commands: dict[list[str]]):
+    def reputation_commands_missing_default_args(failed_commands: Dict[str, List[str]]):
         return "".join(
             f"The following fields: {list_args}  in '{command}' command are set to False. "
             f"Fix the command to support that function and set them to True.\n"

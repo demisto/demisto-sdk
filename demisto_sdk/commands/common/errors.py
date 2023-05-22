@@ -2138,7 +2138,7 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def added_required_fields(field):
-        return f"You've added required, the field is '{field}'"
+        return f"A required field ('{field}') has been added to an existing integration."
 
     @staticmethod
     @error_code_decorator

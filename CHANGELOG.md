@@ -1,9 +1,10 @@
 # Changelog
 
 ## Unreleased
-* Fixed an issue where **upload** failed parsing a configuration file.
 * Fixed an issue where **validate** fails when adding the *advance* field to the integration required fields.
 * Updated the integration Traffic Light Protocol (TLP) color list schema in the **validate** command.
+* Fixed an issue where **upload** would not read a repo configuration file properly.
+* Fixed an issue where **upload** would not handle the `-x`/`--xsiam` flag properly.
 
 ## 1.15.1
 * Fixed an issue where **generate-docs** generated fields with double html escaping.

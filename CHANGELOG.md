@@ -1,6 +1,8 @@
 # Changelog
 
 ## Unreleased
+
+## 1.15.1
 * Fixed an issue where **generate-docs** generated fields with double html escaping.
 * Fixed an issue where **upload** failed when using the `-z` flag.
 

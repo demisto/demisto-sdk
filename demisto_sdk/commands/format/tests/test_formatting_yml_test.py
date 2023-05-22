@@ -317,26 +317,23 @@ class TestFormatting:
         assert argument_count == appearances
 
     @pytest.mark.parametrize(
-        "test_data, expected_data, condition",
+        "test_data, name_is_default",
         [
             (
                 [{"name": "ip", "arguments": [{"name": "ip"}]}],
-                ("script", "commands", 0, "arguments", 0),
                 True
             ),
             (
                 [{"name": "ip", "arguments": [{"name": "ip"}, {"name": "endpoint", "default": True}]}],
-                ("script", "commands", 0, "arguments", 0),
                 False
             ),
             (
                 [{"name": "ip", "arguments": [{"name": "ip"},{"name": "endpoint"}]}],
-                ("script", "commands", 0, "arguments", 0),
                 True
             )
         ]
     )
-    def test_bang_commands_default_arguments(self, integration, test_data: list, expected_data: tuple, name_is_default: bool):
+    def test_bang_commands_default_arguments(self, integration, test_data: list, name_is_default: bool):
         
         """
         Test case to verify the behavior of setting reputation commands' basic arguments as needed.
@@ -355,12 +352,8 @@ class TestFormatting:
         formatter = IntegrationYMLFormat(integration.yml.path)
         formatter.set_reputation_commands_basic_argument_as_needed()
         formatter.save_yml_to_destination_file()
-        
-        current_data = integration.yml.read_dict()
-        for key in expected_data:
-            current_data = current_data[key]
 
-        assert current_data.get("default", False) == name_is_default
+        assert integration.yml.read_dict()["script"]["commands"][0]["arguments"][0].get("default", False) is name_is_default
    
     @pytest.mark.parametrize(
         "test_data",

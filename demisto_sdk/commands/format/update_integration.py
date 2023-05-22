@@ -144,15 +144,12 @@ class IntegrationYMLFormat(BaseUpdateYML):
                 
                 if any(argument.get('default') for argument in arguments):  # if one of the arguments already have a default value
                     return
-                
-                default_argument =  {"default": True, "required": True}
-  
+                  
                 # if one of the arguments have the same name as command name, update him to be a default
                 for argument in arguments:
                     if argument["name"] == command_name:
-                        argument.update(default_argument)
+                        argument.update({"default": True, "required": True})
                         return
-        return
     
     def set_fetch_params_in_config(self):
         """

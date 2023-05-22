@@ -140,7 +140,7 @@ class IntegrationYMLFormat(BaseUpdateYML):
             if command_name in BANG_COMMAND_NAMES:
                 if not (
                     arguments := command.get("arguments")
-                ):  # if no argument in the command
+                ):  # command has no arguments
                     return
 
                 if any(

@@ -1439,7 +1439,7 @@ def upload(ctx, **kwargs):
 )
 @click.option(
     "--init",
-    help="Create a directory structure and download all the custom content items",
+    help="Create a directory structure and download the items to it",
     is_flag=True,
     default=False,
 )

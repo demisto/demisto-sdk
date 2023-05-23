@@ -141,7 +141,7 @@ class Downloader:
         pack_content (dict): The pack content that maps the pack
         system (bool): whether to download system items
         item_type (str): The items type to download, use just when downloading system items.
-        init (bool): Initialize a new Pack and download the all custom items to it.
+        init (bool): Initialize a new Pack and download the items to it.
         keep_empty_folders (bool): Whether to keep empty folders when using init.
     """
 
@@ -239,7 +239,7 @@ class Downloader:
                 output_flag = False
                 logger.info("[red]Error: Missing option '-o' / '--output'.[/red]")
             if not self.input_files:
-                if not any((self.all_custom_content, self.regex, self.init)):
+                if not self.all_custom_content and not self.regex:
                     input_flag = False
                     logger.info("[red]Error: Missing option '-i' / '--input'.[/red]")
             if not input_flag or not output_flag:
@@ -595,13 +595,17 @@ class Downloader:
         if not self.init:
             return
 
-        root_folder = Path(self.output_pack_path) / "Packs"
-        root_folder.mkdir(parents=True, exist_ok=True)
+        root_folder = Path(self.output_pack_path)
+        if root_folder.name != "Packs":
+            root_folder = root_folder / "Packs"
+            try:
+                root_folder.mkdir(exist_ok=True)
+            except FileNotFoundError as e:
+                e.filename = str(Path(e.filename).parent)
+                raise e
         initiator = Initiator(str(root_folder))
         initiator.init()
         self.output_pack_path = initiator.full_output_path
-        self.all_custom_content = True
-        self.run_format = True
 
         if not self.keep_empty_folders:
             # delete the empty folders created by the initiator
@@ -1266,7 +1270,9 @@ class Downloader:
         :return: None
         """
         if self.run_format and file_ending in ("yml", "json"):
-            format_manager(input=os.path.abspath(file_path), no_validate=False)
+            format_manager(
+                input=os.path.abspath(file_path), no_validate=False, assume_yes=False
+            )
 
     def remove_traces(self):
         """

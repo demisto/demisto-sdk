@@ -401,7 +401,7 @@ class ContributionConverter:
                 if len(os.listdir(src_path)) == 0:
                     shutil.rmtree(src_path, ignore_errors=True)
 
-    def convert_contribution_to_pack(self, working_pack_dir_path: str, files_to_source_mapping: Dict = None):
+    def convert_contribution_to_pack(self, working_pack_dir_path: str = '', files_to_source_mapping: Dict = None):
         """Create or updates a pack in the content repo from the contents of a contribution zipfile
 
         Args:

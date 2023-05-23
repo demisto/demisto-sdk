@@ -38,4 +38,4 @@
   description: Making code implicit-optional type hints PEP 484 compliant.
   entry: no_implicit_optional
   language: python
-  files: *files
+  types: [python]

@@ -46,7 +46,7 @@ class BaseUpdate:
         data (dict): Dictionary of loaded file.
         file_type (str): Whether the file is yml or json.
         from_version_key (str): The fromVersion key in file, different between yml and json files.
-        assume_yes (bool): Whether to assume "yes" as answer to all prompts and run non-interactively
+        assume_yes (bool | None): Whether to assume "yes" or "no" as answer to all prompts and run non-interactively
         interactive (bool): Whether to run the format interactively or not (usually for contribution management)
     """
 
@@ -58,7 +58,7 @@ class BaseUpdate:
         from_version: str = "",
         prev_ver: str = "master",
         no_validate: bool = False,
-        assume_yes: bool = False,
+        assume_yes: Union[bool, None] = None,
         interactive: bool = True,
         clear_cache: bool = False,
         **kwargs,
@@ -281,6 +281,9 @@ class BaseUpdate:
         return input()
 
     def ask_user(self, preserve_from_version_question=False):
+        if self.assume_yes is False:
+            return False
+
         if preserve_from_version_question:
             user_answer = self.get_answer(
                 f'Both "{self.from_version_key}" and "{self.json_from_server_version_key}" '

@@ -5,7 +5,7 @@ import logging
 import os
 import sys
 from pathlib import Path
-from typing import IO, Any, Dict, Iterable, Tuple
+from typing import IO, Any, Dict, Iterable, Tuple, Union
 
 import click
 import git
@@ -1198,10 +1198,11 @@ def coverage_analyze(ctx, **kwargs):
     is_flag=True,
 )
 @click.option(
-    "-y",
-    "--assume-yes",
-    help="Automatic yes to prompts; assume 'yes' as answer to all prompts and run non-interactively",
+    "-y/-n",
+    "--assume-yes/--assume-no",
+    help="Automatic yes/no to prompts; assume 'yes'/'no' as answer to all prompts and run non-interactively",
     is_flag=True,
+    default=None,
 )
 @click.option(
     "-d",
@@ -1246,7 +1247,7 @@ def format(
     from_version: str,
     no_validate: bool,
     update_docker: bool,
-    assume_yes: bool,
+    assume_yes: Union[None, bool],
     deprecate: bool,
     use_git: bool,
     prev_ver: str,

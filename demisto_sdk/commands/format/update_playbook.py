@@ -1,6 +1,6 @@
 import os
 import uuid
-from typing import Tuple
+from typing import Tuple, Union
 
 from git import InvalidGitRepositoryError
 
@@ -35,7 +35,7 @@ class BasePlaybookYMLFormat(BaseUpdateYML):
         path: str = "",
         from_version: str = "",
         no_validate: bool = False,
-        assume_yes: bool = False,
+        assume_yes: Union[bool, None] = None,
         deprecate: bool = False,
         add_tests: bool = False,
         interactive: bool = True,
@@ -62,7 +62,9 @@ class BasePlaybookYMLFormat(BaseUpdateYML):
             logger.info(
                 "[red]No description is specified for this playbook, would you like to add a description? [Y/n][/red]"
             )
-            user_answer = "y" if self.assume_yes else ""
+            user_answer = (
+                "y" if self.assume_yes else "n" if self.assume_yes is False else ""
+            )
             while not user_answer:
                 user_answer = input()
                 if user_answer in ["n", "N", "no", "No"]:

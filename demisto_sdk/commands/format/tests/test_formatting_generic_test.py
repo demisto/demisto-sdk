@@ -129,7 +129,7 @@ class TestFormattingFromVersionKey:
         mocker.patch.object(BaseUpdate, "__init__", return_value=None)
         mocker.patch.object(BaseUpdate, "is_key_in_schema_root", return_value=True)
         base_update = BaseUpdate()
-        self.init_BaseUpdate(base_update, assume_yes=False)
+        self.init_BaseUpdate(base_update, assume_yes=None)
         mocker.patch.object(BaseUpdate, "get_answer", return_value="Y")
         base_update.set_fromVersion()
         assert (
@@ -149,8 +149,24 @@ class TestFormattingFromVersionKey:
         mocker.patch.object(BaseUpdate, "__init__", return_value=None)
         mocker.patch.object(BaseUpdate, "is_key_in_schema_root", return_value=True)
         base_update = BaseUpdate()
-        self.init_BaseUpdate(base_update, assume_yes=False)
+        self.init_BaseUpdate(base_update, assume_yes=None)
         mocker.patch.object(BaseUpdate, "get_answer", return_value="F")
+        base_update.set_fromVersion()
+        assert base_update.from_version_key not in base_update.data
+
+    def test_update_fromVersion_from_default_contentItem_assume_yes_False(self, mocker):
+        """
+        Given
+            - A new content item.
+        When
+            - Calling set_fromVersion method.
+        Then
+            - Ensure that fromVersion key in the file data hasn't been generated.
+        """
+        mocker.patch.object(BaseUpdate, "__init__", return_value=None)
+        mocker.patch.object(BaseUpdate, "is_key_in_schema_root", return_value=True)
+        base_update = BaseUpdate()
+        self.init_BaseUpdate(base_update, assume_yes=False)
         base_update.set_fromVersion()
         assert base_update.from_version_key not in base_update.data
 

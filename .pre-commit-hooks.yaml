@@ -13,13 +13,16 @@
   entry: demisto-sdk validate
   pass_filenames: true
   language: python
+  require_serial: true
   files: *files
 
 - id: format
   name: format
   description: Format non-code files, to comply with XSOAR standards.
   entry: demisto-sdk format
+  args: ["-ud", "-y", "--no-validate"]
   language: python
+  require_serial: true
   files: *files
 
 - id: secrets
@@ -27,6 +30,7 @@
   description: Check for secrets in files.
   entry: demisto-sdk secrets
   args: ["--ignore-entropy"]
+  pass_filenames: false
   language: python
 
 - id: no-implicit-optional

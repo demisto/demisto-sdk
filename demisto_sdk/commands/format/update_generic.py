@@ -314,7 +314,7 @@ class BaseUpdate:
             file_type: the file type.
         """
         logger.info(
-            default_from_version, GENERAL_DEFAULT_FROMVERSION, current_fromversion_value
+            f"{default_from_version=}, {GENERAL_DEFAULT_FROMVERSION=}, {current_fromversion_value=}"
         )
         max_version = get_max_version(
             [
@@ -452,10 +452,10 @@ class BaseUpdate:
             if current_from_server_version == current_from_version:
                 self.data.pop(self.json_from_server_version_key)
             else:
-                preserve_from_version = self.ask_user(
+                preserve_from_version = self.assume_yes or self.ask_user(
                     preserve_from_version_question=True
                 )
-                if preserve_from_version or self.assume_yes:
+                if preserve_from_version:
                     self.data.pop(self.json_from_server_version_key)
                 else:
                     self.data[self.from_version_key] = current_from_server_version

@@ -14,7 +14,11 @@ class XSIAMDashboard(ContentItemXSIAM, content_type=ContentType.XSIAM_DASHBOARD)
     def metadata_fields(self) -> Set[str]:
         return {"name", "description"}
 
-    def dump(self, dir: DirectoryPath, marketplace: MarketplaceVersions) -> None:
+    def dump(
+        self,
+        dir: DirectoryPath,
+        marketplace: MarketplaceVersions,
+    ) -> None:
         super().dump(dir, marketplace)
         if (self.path.parent / f"{self.path.stem}_image.png").exists():
             shutil.copy(

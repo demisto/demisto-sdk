@@ -1386,11 +1386,17 @@ class IntegrationValidator(ContentEntityValidator):
             param_details = params.get(required_param.get("name"))  # type: ignore
             equal_key_values: Dict = required_param.get("must_equal", dict())  # type: ignore
             contained_key_values: Dict = required_param.get("must_contain", dict())  # type: ignore
+            must_be_one_of: Dict = required_param.get("must_be_one_of", list())  # type: ignore
             if param_details:
                 # Check length to see no unexpected key exists in the config. Add +1 for the 'name' key.
                 is_valid = (
-                    len(equal_key_values) + len(contained_key_values) + 1
-                    == len(param_details)
+                    (
+                        any(
+                            k in param_details and param_details[k] in v
+                            for k, v in must_be_one_of.items()
+                        )
+                        or not must_be_one_of
+                    )
                     and all(
                         k in param_details and param_details[k] == v
                         for k, v in equal_key_values.items()
@@ -2111,24 +2117,18 @@ class IntegrationValidator(ContentEntityValidator):
             if metadata_content.get("support") != XSOAR_SUPPORT:
                 return True
 
-            conf_params = self.current_file.get("configuration", [])
-            for param in conf_params:
-                if param.get("type") == 4 and not param.get("hidden"):
-                    (
-                        error_message,
-                        error_code,
-                    ) = Errors.api_token_is_not_in_credential_type(param.get("name"))
-                    if self.handle_error(
-                        error_message, error_code, file_path=self.file_path
-                    ):
-                        return False
-
-            return True
-
-        raise Exception(
-            "Could not find the pack name of the integration, "
-            "please verify the integration is in a pack"
-        )
+        conf_params = self.current_file.get("configuration", [])
+        for param in conf_params:
+            if param.get("type") == 4 and not param.get("hidden"):
+                (
+                    error_message,
+                    error_code,
+                ) = Errors.api_token_is_not_in_credential_type(param.get("name"))
+                if self.handle_error(
+                    error_message, error_code, file_path=self.file_path
+                ):
+                    return False
+        return True
 
     @error_codes("IN149")
     def are_common_outputs_with_description(self):

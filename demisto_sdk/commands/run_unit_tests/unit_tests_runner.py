@@ -135,13 +135,14 @@ def unit_test_runner(file_paths: List[Path], verbose: bool = False) -> int:
                     logger.info if verbose else logger.debug,
                 )
                 # wait for container to finish
-                if container.wait()["StatusCode"]:
+                if status_code := container.wait()["StatusCode"]:
                     if not (
                         integration_script.path.parent / ".report_pytest.xml"
                     ).exists():
                         raise Exception(
                             f"No pytest report found in {integration_script.path.parent}. Logs: {container.logs()}"
                         )
+                    test_failed = False
                     for suite in JUnitXml.fromfile(
                         integration_script.path.parent / ".report_pytest.xml"
                     ):
@@ -150,6 +151,11 @@ def unit_test_runner(file_paths: List[Path], verbose: bool = False) -> int:
                                 logger.error(
                                     f"Test for {integration_script.object_id} failed in {case.name} with error {case.result[0].message}: {case.result[0].text}"
                                 )
+                                test_failed = True
+                    if not test_failed:
+                        logger.error(
+                            f"Error running unit tests for {integration_script.path} using {docker_image=}. Container reports  {status_code=}, logs: {container.logs()}"
+                        )
                     exit_code = 1
                 else:
                     logger.info(f"All tests passed for {filename} in {docker_image}")

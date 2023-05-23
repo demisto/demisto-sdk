@@ -20,6 +20,7 @@ from demisto_sdk.commands.common.constants import (
 )
 from demisto_sdk.commands.common.content_constant_paths import (
     ALL_PACKS_DEPENDENCIES_DEFAULT_PATH,
+    CONTENT_PATH,
 )
 from demisto_sdk.commands.common.cpu_count import cpu_count
 from demisto_sdk.commands.common.handlers import JSON_Handler
@@ -30,6 +31,7 @@ from demisto_sdk.commands.common.tools import (
     get_last_remote_release_version,
     get_release_note_entries,
     is_external_repository,
+    parse_marketplace_kwargs,
 )
 from demisto_sdk.commands.content_graph.interface.neo4j.neo4j_graph import (
     Neo4jContentGraphInterface,
@@ -193,14 +195,12 @@ def main(ctx, config, version, release_notes, **kwargs):
     config.configuration = Configuration()
     import dotenv
 
-    from demisto_sdk.commands.common.tools import get_content_path
-
     if sys.version_info[:2] == (3, 8):
         logger.info(
             "[red]Demisto-SDK will soon stop supporting Python 3.8. Please update your python environment.[/red]"
         )
 
-    dotenv.load_dotenv(Path(get_content_path()) / ".env", override=True)  # type: ignore # load .env file from the cwd
+    dotenv.load_dotenv(CONTENT_PATH / ".env", override=True)  # type: ignore # load .env file from the cwd
     if (
         not os.getenv("DEMISTO_SDK_SKIP_VERSION_CHECK")
         or not os.getenv("CI")
@@ -499,9 +499,7 @@ def zip_packs(ctx, **kwargs) -> int:
     # if upload is true - all zip packs will be compressed to one zip file
     should_upload = kwargs.pop("upload", False)
     zip_all = kwargs.pop("zip_all", False) or should_upload
-
-    if marketplace := kwargs.get("marketplace"):
-        os.environ[ENV_DEMISTO_SDK_MARKETPLACE] = marketplace.lower()
+    marketplace = parse_marketplace_kwargs(kwargs)
 
     packs_zipper = PacksZipper(
         zip_all=zip_all, pack_paths=kwargs.pop("input"), quiet_mode=zip_all, **kwargs
@@ -509,7 +507,9 @@ def zip_packs(ctx, **kwargs) -> int:
     zip_path, unified_pack_names = packs_zipper.zip_packs()
 
     if should_upload and zip_path:
-        return Uploader(input=zip_path, pack_names=unified_pack_names).upload()
+        return Uploader(
+            input=zip_path, pack_names=unified_pack_names, marketplace=marketplace
+        ).upload()
 
     return EX_SUCCESS if zip_path is not None else EX_FAIL
 
@@ -1319,6 +1319,11 @@ def format(
     "--xsiam",
     help="Upload the pack to XSIAM server. Must be used together with -z",
     is_flag=True,
+)
+@click.option(
+    "-mp",
+    "--marketplace",
+    help="The marketplace to which the content will be uploaded.",
 )
 @click.option(
     "--keep-zip",
@@ -3299,7 +3304,7 @@ def update_content_graph(
 @click.option(
     "--format/--no-format",
     help="Whether to run demisto-sdk format",
-    default=True,
+    default=False,
 )
 @click.option(
     "--secrets/--no-secrets",
@@ -3324,6 +3329,11 @@ def update_content_graph(
     help="The demisto-sdk ref to use for the pre-commit hooks",
     default="",
 )
+@click.argument(
+    "file_paths",
+    nargs=-1,
+    type=click.Path(exists=True, resolve_path=True, path_type=Path),
+)
 @click.pass_context
 @logging_setup_decorator
 def pre_commit(
@@ -3340,15 +3350,23 @@ def pre_commit(
     verbose: bool,
     show_diff_on_failure: bool,
     sdk_ref: str,
+    file_paths: Iterable[Path],
     **kwargs,
 ):
     from demisto_sdk.commands.pre_commit.pre_commit_command import pre_commit_manager
 
+    if file_paths and input:
+        logger.info(
+            "Both `--input` parameter and `file_paths` arguments were provided. Will use the `--input` parameter."
+        )
+    input_files = input
+    if file_paths and not input_files:
+        input_files = file_paths
     if skip:
         skip = skip.split(",")  # type: ignore[assignment]
     sys.exit(
         pre_commit_manager(
-            input,
+            input_files,
             staged_only,
             git_diff,
             all_files,

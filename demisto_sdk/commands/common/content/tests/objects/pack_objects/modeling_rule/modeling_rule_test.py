@@ -101,7 +101,8 @@ filter
     xdm.event.outcome = json_extract_scalar(kind, "$.value"),
     xdm.target.resource.id = to_string(json_extract(assigned_object, "$.id")),
     xdm.target.resource.name = json_extract_scalar(assigned_object, "$.name"),
-    xdm.target.resource.type = assigned_object_type;
+    xdm.target.resource.type = assigned_object_type,
+    xdm.network.source.ipv4 = "8.8.8.8";
 filter
     user != null
 | alter
@@ -137,7 +138,8 @@ filter
     xdm.target.resource.name = json_extract_scalar(changed_object, "$.display"),
     xdm.target.resource.type = changed_object_type,
     xdm.target.resource_before.name = json_extract_scalar(prechange_data, "$.name"),
-    xdm.source.user.username = user_name;
+    xdm.source.user.username = user_name,
+    xdm.network.source.ipv4 = "8.8.8.8";
 """
 UNIFIED_RULE_FIELDS = {
     "xdm.event.description",
@@ -149,6 +151,7 @@ UNIFIED_RULE_FIELDS = {
     "xdm.event.operation",
     "xdm.target.resource_before.name",
     "xdm.source.user.username",
+    "xdm.network.source.ipv4",
 }
 
 

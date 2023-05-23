@@ -2138,7 +2138,9 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def added_required_fields(field):
-        return f"A required field ('{field}') has been added to an existing integration."
+        return (
+            f"A required field ('{field}') has been added to an existing integration."
+        )
 
     @staticmethod
     @error_code_decorator
@@ -2371,15 +2373,11 @@ class Errors:
         Args:
             is_feed (bool): Whether the integration is a feed integration or not.
             command_name (str | None, optional): The name of the command that is missing the reliability parameter.
-                Defaults to None. Required when is_feed is False.
+                Defaults to None. Used on error message when is_feed is False.
 
         Returns:
             str: The error message.
         """
-        # Assure 'command' parameter was passed if 'is_feed' is False
-        if not is_feed and not command_name:
-            raise ValueError("If 'is_feed' is set to False, command must be provided.")
-
         if is_feed:
             specific_case_error = (
                 "Feed integrations must implement a reliability parameter."
@@ -2387,8 +2385,12 @@ class Errors:
 
         else:
             specific_case_error = (
-                f"Integrations with reputation commands ('{command_name}') "
-                "must implement a reliability parameter."
+                f"Integrations with reputation commands{0} "
+                f"must implement a reliability parameter.".format(
+                    f" ('{command_name}')"  # Add reputation command's name to error if provided
+                    if command_name
+                    else ""
+                )
             )
 
         return (

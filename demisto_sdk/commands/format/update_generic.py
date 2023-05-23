@@ -452,10 +452,10 @@ class BaseUpdate:
             if current_from_server_version == current_from_version:
                 self.data.pop(self.json_from_server_version_key)
             else:
-                preserve_from_version = self.ask_user(
+                preserve_from_version = self.assume_yes or self.ask_user(
                     preserve_from_version_question=True
                 )
-                if preserve_from_version or self.assume_yes:
+                if preserve_from_version:
                     self.data.pop(self.json_from_server_version_key)
                 else:
                     self.data[self.from_version_key] = current_from_server_version

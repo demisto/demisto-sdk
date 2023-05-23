@@ -7,6 +7,7 @@ import pytz
 import requests
 from google.api_core.exceptions import PreconditionFailed
 from google.cloud import storage
+from time import sleep
 
 LOCKS_PATH = "content-locks"
 BUCKET_NAME = os.environ.get("GCS_ARTIFACTS_BUCKET")
@@ -79,14 +80,24 @@ def safe_lock_integrations(test_playbook) -> bool:
     else:
         print_msg = "No integrations to lock"
     test_playbook.build_context.logging_module.debug(print_msg)
-    try:
-        storage_client = storage.Client()
-        locked = lock_integrations(test_playbook, storage_client)
-    except Exception:
-        test_playbook.build_context.logging_module.exception(
-            "attempt to lock integration failed for unknown reason."
-        )
-        locked = False
+
+    max_retry_times = 4
+
+    for i in range(max_retry_times):
+        try:
+            storage_client = storage.Client()
+            locked = lock_integrations(test_playbook, storage_client)
+
+            if locked:
+                break
+        except Exception as e:
+            test_playbook.build_context.logging_module.exception(
+                f"attempt to lock integration failed, error: {str(e)}"
+            )
+            locked = False
+        test_playbook.build_context.logging_module.info(f'Attempt {i} to lock integrations {integration_names} failed')
+        sleep(10)
+
     return locked
 
 

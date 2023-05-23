@@ -13,8 +13,5 @@ class Hook(ABC):
         return self.hook
 
     def additional_dependencies(self, group_name: str) -> List[str]:
-        factory = Factory()
-        poetry = factory.create_poetry(CONTENT_PATH)
-        pkg = poetry.package
-
-        return [p.to_pep_508() for p in pkg.dependency_group(group_name).dependencies]
+        dependencies = Factory().create_poetry(CONTENT_PATH).package(group_name).dependencies
+        return [p.to_pep_508() for p in dependencies]

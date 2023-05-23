@@ -3581,11 +3581,11 @@ def get_id(file_content: Dict) -> Union[str, None]:
 
 def parse_marketplace_kwargs(kwargs: Dict[str, Any]) -> MarketplaceVersions:
     """
-    Supports both the `marketplace` argument and `is_xsiam`.
+    Supports both the `marketplace` argument and `xsiam`.
     Raises an error when both are supplied.
     """
     marketplace = kwargs.pop("marketplace", None)  # removing to not pass it twice later
-    is_xsiam = kwargs.get("is_xsiam")
+    is_xsiam = kwargs.get("xsiam")
 
     if (
         marketplace
@@ -3593,7 +3593,7 @@ def parse_marketplace_kwargs(kwargs: Dict[str, Any]) -> MarketplaceVersions:
         and MarketplaceVersions(marketplace) != MarketplaceVersions.MarketplaceV2
     ):
         raise ValueError(
-            "The arguments `marketplace` and `is_xsiam` cannot be used at the same time, remove one of them."
+            "The arguments `marketplace` and `xsiam` cannot be used at the same time, remove one of them."
         )
 
     if is_xsiam:

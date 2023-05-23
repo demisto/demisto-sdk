@@ -479,7 +479,7 @@ class ConfigFileParser:
             self.content = json.load(f)
 
         self.custom_packs_paths: Tuple[Path, ...] = tuple(
-            Path(pack.get["url"]) for pack in self.content.get("custom_packs", ())
+            Path(pack["url"]) for pack in self.content.get("custom_packs", ())
         )
 
 

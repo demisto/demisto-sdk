@@ -2482,10 +2482,8 @@ class Errors:
     @error_code_decorator
     def dbot_invalid_output(command_name, missing_outputs, context_standard):
         return (
-            "The DBotScore outputs specified in the YAML file for the reputation command {} aren't complete. "
-            "Missing: {}. Fix according to context standard {} ".format(
-                command_name, missing_outputs, context_standard
-            )
+            f"The DBotScore outputs specified in the YAML file for the reputation command '{command_name}' "
+            f"aren't valid. Missing: {missing_outputs}. Fix according to context standard {context_standard}"
         )
 
     @staticmethod

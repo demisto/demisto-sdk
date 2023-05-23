@@ -138,35 +138,21 @@ class IntegrationYMLFormat(BaseUpdateYML):
             command_name = command.get("name", "")
 
             if command_name in BANG_COMMAND_NAMES:
-                for argument in command.get(
-                    "arguments", []
-                ):  # If there're arguments under the command
-                    name = argument.get("name")
-                    if name == command_name:
-                        is_array = argument.get("isArray", False)
-                        if not is_array:
-                            logger.info(
-                                f"isArray field in {name} command is set to False. Fix the command to support that function and set it to True."
-                            )
-                        argument.update(
-                            {"default": True, "isArray": is_array, "required": True}
-                        )
-                        break
-                else:  # No arguments at all
-                    default_bang_args = {
-                        "default": True,
-                        "description": "",
-                        "isArray": True,
-                        "name": command_name,
-                        "required": True,
-                        "secret": False,
-                    }
-                    logger.info(
-                        f"Command {command_name} has no arguemnts. Setting them: {json.dumps(default_bang_args, indent=4)}"
-                    )
-                    argument_list: list = command.get("arguments", [])
-                    argument_list.append(default_bang_args)
-                    command["arguments"] = argument_list
+                if not (
+                    arguments := command.get("arguments")
+                ):  # command has no arguments
+                    return
+
+                if any(
+                    argument.get("default") for argument in arguments
+                ):  # command already has a default argument
+                    return
+
+                # if one of the arguments have the same name as command name, update him to be a default
+                for argument in arguments:
+                    if argument["name"] == command_name:
+                        argument.update({"default": True, "required": True})
+                        return
 
     def set_fetch_params_in_config(self):
         """

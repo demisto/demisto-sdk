@@ -1,7 +1,16 @@
 # Changelog
 
 ## Unreleased
+* Fixed an issue where **format** added default arguments to reputation commands which already have one.
+* Fixed an issue where **validate** fails when adding the *advance* field to the integration required fields.
+* Updated the integration Traffic Light Protocol (TLP) color list schema in the **validate** command.
+* Fixed an issue where **upload** would not read a repo configuration file properly.
+* Fixed an issue where **upload** would not handle the `-x`/`--xsiam` flag properly.
+* Fixed an issue where **format** failed to use input from the user, when asking about a `from_version`.
+
+## 1.15.1
 * Fixed an issue where **generate-docs** generated fields with double html escaping.
+* Fixed an issue where **upload** failed when using the `-z` flag.
 
 ## 1.15.0
 * **Breaking Change**: the **upload** command now only supports **XSOAR 6.5** or newer (and all XSIAM versions).

@@ -92,7 +92,7 @@ class PreCommitRunner:
         PyclnHook(hooks["pycln"]).prepare_hook(PYTHONPATH)
         RuffHook(hooks["ruff"]).prepare_hook(python_version, IS_GITHUB_ACTIONS)
         MypyHook(hooks["mypy"]).prepare_hook(python_version)
-        PEP484Hook(hooks["pep484"]).prepare_hook(python_version)
+        PEP484Hook(hooks["no-implicit-optional"]).prepare_hook(python_version)
 
     def run(
         self,

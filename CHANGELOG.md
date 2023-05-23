@@ -6,6 +6,7 @@
 * Updated the integration Traffic Light Protocol (TLP) color list schema in the **validate** command.
 * Fixed an issue where **upload** would not read a repo configuration file properly.
 * Fixed an issue where **upload** would not handle the `-x`/`--xsiam` flag properly.
+* Fixed an issue where **format** failed to use input from the user, when asking about a `from_version`.
 
 ## 1.15.1
 * Fixed an issue where **generate-docs** generated fields with double html escaping.

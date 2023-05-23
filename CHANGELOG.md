@@ -1,7 +1,7 @@
 # Changelog
 
 ## Unreleased
-* Add PEP484 hook to **pre-commit** command.
+* Added the PEP484 (no-implicit-optional) hook to **pre-commit**.
 
 ## 1.15.2
 * Fixed an issue where **format** added default arguments to reputation commands which already have one.

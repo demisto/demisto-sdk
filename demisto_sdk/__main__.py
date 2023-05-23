@@ -1324,7 +1324,6 @@ def format(
     "-mp",
     "--marketplace",
     help="The marketplace to which the content will be uploaded.",
-    default=MarketplaceVersions.XSOAR.value,
 )
 @click.option(
     "--keep-zip",

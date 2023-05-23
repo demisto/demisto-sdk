@@ -246,7 +246,7 @@ class BaseUpdateYML(BaseUpdate):
                 # In case no_interactive flag was given - modify the tests without confirmation
                 if self.assume_yes or not self.add_tests:
                     should_modify_yml_tests = True
-                if self.assume_yes is False:
+                elif self.assume_yes is False:
                     should_modify_yml_tests = False
                 else:
                     should_modify_yml_tests = click.confirm(

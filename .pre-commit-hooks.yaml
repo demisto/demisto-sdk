@@ -37,5 +37,7 @@
   name: no implicit optional
   description: Making code implicit-optional type hints PEP 484 compliant.
   entry: no-implicit-optional
+  additional_dependencies:
+    - no-implicit-optional
   language: python
   files: *files

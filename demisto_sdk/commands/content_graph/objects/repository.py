@@ -12,7 +12,7 @@ from demisto_sdk.commands.common.cpu_count import cpu_count
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.content_graph.objects.pack import Pack
 
-USE_FUTURE = True  # toggle this for better debugging
+USE_MULTIPROCESSING = False  # toggle this for better debugging
 
 
 class ContentDTO(BaseModel):
@@ -20,12 +20,16 @@ class ContentDTO(BaseModel):
     packs: List[Pack]
 
     def dump(
-        self, dir: DirectoryPath, marketplace: MarketplaceVersions, zip: bool = True
+        self,
+        dir: DirectoryPath,
+        marketplace: MarketplaceVersions,
+        zip: bool = True,
+        output_stem: str = "content_packs",  # without extension
     ):
         dir.mkdir(parents=True, exist_ok=True)
         logger.debug("Starting repository dump")
         start_time = time.time()
-        if USE_FUTURE:
+        if USE_MULTIPROCESSING:
             with Pool(processes=cpu_count()) as pool:
                 pool.starmap(
                     Pack.dump,
@@ -40,7 +44,7 @@ class ContentDTO(BaseModel):
         logger.debug(f"Repository dump ended. Took {time_taken} seconds")
 
         if zip:
-            shutil.make_archive(str(dir.parent / "content_packs"), "zip", dir)
+            shutil.make_archive(str(dir.parent / output_stem), "zip", dir)
             shutil.rmtree(dir)
 
     class Config:

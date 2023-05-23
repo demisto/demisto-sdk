@@ -48,9 +48,8 @@ class PrepareUploadManager:
             if not input.is_dir():
                 input = input.parent
             output = input / content_item.normalize_name
-        else:
-            if output.is_dir():
-                output = output / content_item.normalize_name
+        elif output.is_dir():
+            output = output / content_item.normalize_name
         output: Path  # Output is not optional anymore (for mypy)
         if isinstance(content_item, Pack):
             Pack.dump(content_item, output, marketplace)

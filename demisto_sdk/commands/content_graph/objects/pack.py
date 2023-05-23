@@ -1,10 +1,13 @@
 import shutil
 from collections import defaultdict
 from pathlib import Path
+from tempfile import TemporaryDirectory
 from typing import TYPE_CHECKING, Any, Generator, List, Optional
 
-from packaging.version import parse
-from pydantic import BaseModel, Field, validator
+import demisto_client
+from demisto_client.demisto_api.rest import ApiException
+from packaging.version import Version, parse
+from pydantic import BaseModel, DirectoryPath, Field, validator
 
 from demisto_sdk.commands.common.constants import (
     BASE_PACK,
@@ -23,11 +26,20 @@ from demisto_sdk.commands.content_graph.common import (
     Relationships,
     RelationshipType,
 )
-from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
+from demisto_sdk.commands.content_graph.objects.base_content import (
+    BaseContent,
+)
 from demisto_sdk.commands.content_graph.objects.classifier import Classifier
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
+from demisto_sdk.commands.content_graph.objects.content_item_xsiam import (
+    NotIndivitudallyUploadableException,
+)
 from demisto_sdk.commands.content_graph.objects.correlation_rule import CorrelationRule
 from demisto_sdk.commands.content_graph.objects.dashboard import Dashboard
+from demisto_sdk.commands.content_graph.objects.exceptions import (
+    FailedUploadException,
+    FailedUploadMultipleException,
+)
 from demisto_sdk.commands.content_graph.objects.generic_definition import (
     GenericDefinition,
 )
@@ -56,11 +68,60 @@ from demisto_sdk.commands.content_graph.objects.wizard import Wizard
 from demisto_sdk.commands.content_graph.objects.xdrc_template import XDRCTemplate
 from demisto_sdk.commands.content_graph.objects.xsiam_dashboard import XSIAMDashboard
 from demisto_sdk.commands.content_graph.objects.xsiam_report import XSIAMReport
+from demisto_sdk.commands.upload.constants import (
+    CONTENT_TYPES_EXCLUDED_FROM_UPLOAD,
+    MULTIPLE_ZIPPED_PACKS_FILE_NAME,
+    MULTIPLE_ZIPPED_PACKS_FILE_STEM,
+)
+from demisto_sdk.commands.upload.tools import (
+    parse_error_response,
+    parse_upload_response,
+)
 
 if TYPE_CHECKING:
     from demisto_sdk.commands.content_graph.objects.relationship import RelationshipData
 
 json = JSON_Handler()
+
+MINIMAL_UPLOAD_SUPPORTED_VERSION = Version("6.5.0")
+MINIMAL_ALLOWED_SKIP_VALIDATION_VERSION = Version("6.6.0")
+
+
+def upload_zip(
+    path: Path,
+    client: demisto_client,
+    skip_validations: bool,
+    target_demisto_version: Version,
+) -> bool:
+    """
+    Used to upload an existing zip file
+    """
+    if path.suffix != ".zip":
+        raise RuntimeError(f"cannot upload {path} as zip")
+    if target_demisto_version < MINIMAL_UPLOAD_SUPPORTED_VERSION:
+        raise RuntimeError(
+            "Uploading packs to XSOAR versions earlier than 6.5.0 is no longer supported."
+            "Use older versions of the Demisto-SDK for that (<=1.13.0)"
+        )
+    server_kwargs = {"skip_verify": "true"}
+
+    if (
+        skip_validations
+        and target_demisto_version >= MINIMAL_ALLOWED_SKIP_VALIDATION_VERSION
+    ):
+        server_kwargs["skip_validation"] = "true"
+
+    response = client.upload_content_packs(
+        file=str(path),
+        **server_kwargs,
+    )
+    if response is None:  # uploaded successfully
+        return True
+
+    parse_upload_response(
+        response, path=path, content_type=ContentType.PACK
+    )  # raises on error
+    return True
 
 
 class PackContentItems(BaseModel):
@@ -218,13 +279,23 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: i
             exclude={"path", "node_id", "content_type", "excluded_dependencies"}
         )
         metadata["contentItems"] = {}
+        metadata["id"] = self.object_id
         for content_item in self.content_items:
-            try:
+
+            if content_item.content_type == ContentType.TEST_PLAYBOOK:
+                logger.debug(
+                    f"Skip loading the {content_item.name} test playbook into metadata.json"
+                )
+                continue
+            if content_item.is_incident_to_alert(marketplace):
                 metadata["contentItems"].setdefault(
                     content_item.content_type.server_name, []
-                ).append(content_item.summary(marketplace))
-            except NotImplementedError as e:
-                logger.debug(f"Could not add {content_item.name} to pack metadata: {e}")
+                ).append(content_item.summary(marketplace, incident_to_alert=True))
+
+            metadata["contentItems"].setdefault(
+                content_item.content_type.server_name, []
+            ).append(content_item.summary(marketplace))
+
         with open(path, "w") as f:
             json.dump(metadata, f, indent=4)
 
@@ -250,20 +321,45 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: i
             except Exception as e:
                 logger.error(f"Failed dumping readme: {e}")
 
-    def dump(self, path: Path, marketplace: MarketplaceVersions):
+    def dump(
+        self,
+        path: Path,
+        marketplace: MarketplaceVersions,
+    ):
         if not self.path.exists():
             logger.warning(f"Pack {self.name} does not exist in {self.path}")
             return
+
         try:
             path.mkdir(exist_ok=True, parents=True)
+
             for content_item in self.content_items:
+                if content_item.content_type in CONTENT_TYPES_EXCLUDED_FROM_UPLOAD:
+                    logger.debug(
+                        f"SKIPPING dump {content_item.content_type} {content_item.normalize_name}"
+                        "whose type was passed in `exclude_content_types`"
+                    )
+                    continue
+
+                if marketplace not in content_item.marketplaces:
+                    logger.debug(
+                        f"SKIPPING dump {content_item.content_type} {content_item.normalize_name}"
+                        f"to destination {marketplace=}"
+                        f" - content item has marketplaces {content_item.marketplaces}"
+                    )
+                    continue
+
                 folder = content_item.content_type.as_folder
                 if (
                     content_item.content_type == ContentType.SCRIPT
                     and content_item.is_test
                 ):
                     folder = ContentType.TEST_PLAYBOOK.as_folder
-                content_item.dump(path / folder, marketplace)
+
+                content_item.dump(
+                    dir=path / folder,
+                    marketplace=marketplace,
+                )
             self.dump_metadata(path / "metadata.json", marketplace)
             self.dump_readme(path / "README.md", marketplace)
             shutil.copy(
@@ -273,23 +369,150 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: i
                 shutil.copytree(self.path / "ReleaseNotes", path / "ReleaseNotes")
             except FileNotFoundError:
                 logger.debug(f'No such file {self.path / "ReleaseNotes"}')
+
             try:
                 shutil.copy(self.path / "Author_image.png", path / "Author_image.png")
             except FileNotFoundError:
                 logger.debug(f'No such file {self.path / "Author_image.png"}')
+
             if self.object_id == BASE_PACK:
-                self.handle_base_pack(path)
+                self._copy_base_pack_docs(path)
 
             pack_files = "\n".join([str(f) for f in path.iterdir()])
             logger.info(f"Dumped pack {self.name}.")
             logger.debug(f"Pack {self.name} files:\n{pack_files}")
-        except Exception as e:
-            logger.error(f"Failed dumping pack {self.name}: {e}")
+
+        except Exception:
+            logger.exception(f"Failed dumping pack {self.name}")
             raise
 
-    def handle_base_pack(self, path: Path):
+    def upload(
+        self,
+        client: demisto_client,
+        marketplace: MarketplaceVersions,
+        target_demisto_version: Version,
+        destination_zip_dir: Optional[Path] = None,
+        zip: bool = False,
+        **kwargs,
+    ):
+        if destination_zip_dir is None:
+            raise ValueError("invalid destination_zip_dir=None")
+
+        if zip:
+            self._zip_and_upload(
+                client=client,
+                marketplace=marketplace,
+                target_demisto_version=target_demisto_version,
+                skip_validations=kwargs.get("skip_validations", False),
+                destination_dir=destination_zip_dir,
+            )
+        else:
+            self._upload_item_by_item(
+                client=client,
+                marketplace=marketplace,
+                target_demisto_version=target_demisto_version,
+            )
+
+    def _zip_and_upload(
+        self,
+        client: demisto_client,
+        target_demisto_version: Version,
+        skip_validations: bool,
+        marketplace: MarketplaceVersions,
+        destination_dir: DirectoryPath,
+    ) -> bool:
+        # this should only be called from Pack.upload
+        logger.debug(f"Uploading zipped pack {self.object_id}")
+
+        # 1) dump the pack into a temporary file
+        with TemporaryDirectory() as temp_dump_dir:
+            temp_dir_path = Path(temp_dump_dir)
+            self.dump(temp_dir_path, marketplace=marketplace)
+
+            # 2) zip the dumped pack
+            with TemporaryDirectory() as pack_zips_dir:
+                pack_zip_path = Path(
+                    shutil.make_archive(
+                        str(Path(pack_zips_dir, self.name)), "zip", temp_dir_path
+                    )
+                )
+                str(pack_zip_path)
+
+                # 3) zip the zipped pack into uploadable_packs.zip under the result directory
+                try:
+                    shutil.make_archive(
+                        str(destination_dir / MULTIPLE_ZIPPED_PACKS_FILE_STEM),
+                        "zip",
+                        pack_zips_dir,
+                    )
+                except Exception:
+                    logger.exception(
+                        f"Cannot write to {str(destination_dir / MULTIPLE_ZIPPED_PACKS_FILE_NAME)}"
+                    )
+
+                # upload the pack zip (not the result)
+                return upload_zip(
+                    path=pack_zip_path,
+                    client=client,
+                    target_demisto_version=target_demisto_version,
+                    skip_validations=skip_validations,
+                )
+
+    def _upload_item_by_item(
+        self,
+        client: demisto_client,
+        marketplace: MarketplaceVersions,
+        target_demisto_version: Version,
+    ) -> bool:
+        # this should only be called from Pack.upload
+        logger.debug(
+            f"Uploading pack {self.object_id} element-by-element, as -z was not specified"
+        )
+        failures: List[FailedUploadException] = []
+        for item in self.content_items:
+            if item.content_type in CONTENT_TYPES_EXCLUDED_FROM_UPLOAD:
+                logger.debug(
+                    f"SKIPPING upload of {item.content_type} {item.object_id}: type is skipped"
+                )
+                continue
+
+            try:
+                logger.debug(
+                    f"uploading pack {self.object_id}: {item.content_type} {item.object_id}"
+                )
+                item.upload(
+                    client=client,
+                    marketplace=marketplace,
+                    target_demisto_version=target_demisto_version,
+                )
+            except NotIndivitudallyUploadableException:
+                if marketplace == MarketplaceVersions.MarketplaceV2:
+                    raise  # many XSIAM content types must be uploaded zipped.
+                logger.warning(
+                    f"Not uploading pack {self.object_id}: {item.content_type} {item.object_id} as it was not indivudally uploaded"
+                )
+            except ApiException as e:
+                failures.append(
+                    FailedUploadException(
+                        item.path,
+                        response_body={},
+                        additional_info=parse_error_response(e),
+                    )
+                )
+
+            except FailedUploadException as e:
+                failures.append(e)
+
+        if failures:
+            if len(failures) == 1:
+                raise failures[0]
+            raise FailedUploadMultipleException(failures)
+
+        return True
+
+    def _copy_base_pack_docs(self, destination_path: Path):
         documentation_path = CONTENT_PATH / "Documentation"
-        documentation_output = path / "Documentation"
+        documentation_output = destination_path / "Documentation"
         documentation_output.mkdir(exist_ok=True, parents=True)
         shutil.copy(
             documentation_path / "doc-howto.json",

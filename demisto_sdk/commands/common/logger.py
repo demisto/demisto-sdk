@@ -19,7 +19,7 @@ LOG_FILE_NAME: str = "demisto_sdk_debug.log"
 LOG_FILE_PATH: Path = CONTENT_PATH / LOG_FILE_NAME
 current_log_file_path: Path = LOG_FILE_PATH
 
-DATE_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
+DATE_FORMAT = "%Y-%m-%dT%H:%M:%S"
 
 DEPRECATED_PARAMETERS = {
     "-v": "--console-log-threshold or --file-log-threshold",

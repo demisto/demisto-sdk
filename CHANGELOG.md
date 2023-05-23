@@ -1,6 +1,7 @@
 # Changelog
 
 ## Unreleased
+* Added the `--init` flag to **download**.
 
 ## 1.15.2
 * Fixed an issue where **format** added default arguments to reputation commands which already have one.

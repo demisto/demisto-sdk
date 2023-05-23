@@ -32,3 +32,10 @@
   args: ["--ignore-entropy"]
   pass_filenames: false
   language: python
+
+- id: mypy
+  name: mypy
+  entry: mypy
+  language: python
+  types: [python]
+  require_serial: true

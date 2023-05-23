@@ -27,12 +27,6 @@ repos:
     rev: "v2.0.1"
     hooks:
       - id: autopep8
-  
-  - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: "v0.982"
-    hooks:
-      - id: mypy
-        exclude: "test_data|tests_data|.venv|.*_test.py$|infrastructure_tests"
 
 
   - repo: local
@@ -71,6 +65,7 @@ repos:
   - repo: https://github.com/demisto/demisto-sdk
     rev: ""
     hooks:
+      - id: mypy
       # enable with --test
       - id: run-unit-tests
 
@@ -82,3 +77,4 @@ repos:
 
       - id: secrets
         args: ["--ignore-entropy"]
+      

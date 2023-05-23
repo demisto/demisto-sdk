@@ -2386,9 +2386,7 @@ class Errors:
         else:
             specific_case_error = (
                 "Integrations with reputation commands{0} ".format(
-                    f" ('{command_name}')"  # Add reputation command's name to error if provided
-                    if command_name
-                    else ""
+                    f" ('{command_name}')" if command_name else ""
                 )
                 + "must implement a reliability parameter."
             )

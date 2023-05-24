@@ -275,7 +275,10 @@ def pre_commit_manager(
         git_diff = True
 
     files_to_run = preprocess_files(input_files, staged_only, git_diff, all_files)
-    logger.info(f"Running pre-commit on the following files: {files_to_run}")
+    files_to_run_string = ", ".join(
+        sorted((str(changed_path) for changed_path in files_to_run))
+    )
+    logger.info(f"Running pre-commit on {files_to_run_string}")
     if not sdk_ref:
         sdk_ref = f"v{get_last_remote_release_version()}"
     pre_commit_runner = PreCommitRunner(group_by_python_version(files_to_run), sdk_ref)

@@ -75,9 +75,7 @@ def zip_multiple_packs(
             were_zipped.append(path)
             continue
 
-        pack = None
-        with suppress(Exception):
-            pack = BaseContent.from_path(path)
+        pack = BaseContent.from_path(path)
         if (pack is None) or (not isinstance(pack, Pack)):
             logger.error(f"[red]could not parse pack from {path}, skipping[/red]")
             continue

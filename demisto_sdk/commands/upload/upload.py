@@ -19,6 +19,7 @@ from demisto_sdk.commands.upload.constants import (
     MULTIPLE_ZIPPED_PACKS_FILE_NAME,
     MULTIPLE_ZIPPED_PACKS_FILE_STEM,
 )
+from demisto_sdk.commands.upload.uploader import ABORTED_RETURN_CODE
 from demisto_sdk.utils.utils import check_configuration_file
 
 logger = logging.getLogger("demisto-sdk")
@@ -36,8 +37,18 @@ def upload_content_entity(**kwargs):
         if input_ := kwargs.get("input"):
             logger.warning(f"[orange]The input ({input_}) will NOT be used[/orange]")
 
+        # extract all paths from config_file_path
+        paths = ConfigFileParser(Path(config_file_path)).custom_packs_paths
+
+        if not kwargs.get('zip') and are_all_packs_unzipped(paths=paths):
+            return multiple_packs_without_zip(
+                marketplace=marketplace,
+                paths=paths,
+                **kwargs
+            )
+
         zip_multiple_packs(
-            paths=ConfigFileParser(Path(config_file_path)).custom_packs_paths,
+            paths=paths,
             marketplace=marketplace,
             dir=destination_zip_path,
         )
@@ -99,3 +110,26 @@ def zip_multiple_packs(
     shutil.move(  # rename content_packs.zip
         str(result_zip_path), result_zip_path.with_name(MULTIPLE_ZIPPED_PACKS_FILE_NAME)
     )
+
+
+def multiple_packs_without_zip(
+    marketplace: MarketplaceVersions,
+    paths: Iterable[Path],
+    **kwargs,
+):
+    upload_results = []
+    for path in paths:
+        kwargs["input"] = path
+        kwargs["marketplace"] = marketplace
+        if (result := upload_content_entity(**kwargs) == ABORTED_RETURN_CODE):
+            return ABORTED_RETURN_CODE
+        upload_results.append(result)
+
+    return 0 if not tuple(filter(lambda result: result == 1, upload_results)) else 1
+
+
+def are_all_packs_unzipped(paths: Iterable[Path]) -> bool:
+    """
+    Checks whether all the packs intended to be uploaded are not zip files.
+    """
+    return not tuple(filter(lambda path: path.suffix == ".zip", paths))

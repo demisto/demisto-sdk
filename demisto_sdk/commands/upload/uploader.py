@@ -61,7 +61,7 @@ class Uploader:
 
     def __init__(
         self,
-        input: Optional[Path],
+        input: Optional[List[Path]],
         insecure: bool = False,
         pack_names: Optional[List[str]] = None,
         skip_validation: bool = False,
@@ -73,7 +73,7 @@ class Uploader:
         destination_zip_dir: Optional[Path] = None,
         **kwargs,
     ):
-        self.path = None if input is None else Path(input)
+        self.path = None if input is None else [Path(i) for i in input]
         verify = (
             (not insecure) if insecure else None
         )  # set to None so demisto_client will use env var DEMISTO_VERIFY_SSL
@@ -201,56 +201,59 @@ class Uploader:
             )
             return ERROR_RETURN_CODE
 
-        if not self.path or not self.path.exists():
-            logger.error(f"[red]input path: {self.path} does not exist[/red]")
-            return ERROR_RETURN_CODE
+        paths: List[Path] = self.path if isinstance(self.path, list) else []
+        
+        for path in paths:
+            if not path.exists():
+                logger.error(f"[red]input path: {path} does not exist[/red]")
+                return ERROR_RETURN_CODE
 
-        if self.should_detach_files:
-            item_detacher = ItemDetacher(
-                client=self.client, marketplace=self.marketplace
-            )
-            detached_items_ids = item_detacher.detach(upload_file=True)
-
-            if self.should_reattach_files:
-                ItemReattacher(client=self.client).reattach(
-                    detached_files_ids=detached_items_ids
+            if self.should_detach_files:
+                item_detacher = ItemDetacher(
+                    client=self.client, marketplace=self.marketplace
                 )
+                detached_items_ids = item_detacher.detach(upload_file=True)
 
-        logger.info(
-            f"Uploading {self.path} to {self.client.api_client.configuration.host}..."
-        )
+                if self.should_reattach_files:
+                    ItemReattacher(client=self.client).reattach(
+                        detached_files_ids=detached_items_ids
+                    )
 
-        try:
-            if self.path.suffix == ".zip":
-                success = self._upload_zipped(self.path)
-            elif self.path.is_dir() and is_uploadable_dir(self.path):
-                success = self._upload_entity_dir(self.path)
-            else:
-                success = self._upload_single(self.path)
-        except KeyboardInterrupt:
-            return ABORTED_RETURN_CODE
-
-        if self.failed_parsing and not any(
-            (
-                self._successfully_uploaded_content_items,
-                self._successfully_uploaded_zipped_packs,
-                self._failed_upload_content_items,
-                self._failed_upload_version_mismatch,
-                self._failed_upload_zips,
+            logger.info(
+                f"Uploading {path} to {self.client.api_client.configuration.host}..."
             )
-        ):
-            # Nothing was uploaded, nor collected as error
-            logger.error(
-                "\n".join(
-                    (
-                        "[red]Nothing to upload: the input path should point to one of the following:",
-                        "\t1. A Pack",
-                        "\t2. A content entity directory that is inside a pack, e.g. Integrations",
-                        "\t3. A valid content item file, that can be imported to Cortex XSOAR manually.[/red]",
+
+            try:
+                if path.suffix == ".zip":
+                    success = self._upload_zipped(path)
+                elif path.is_dir() and is_uploadable_dir(path):
+                    success = self._upload_entity_dir(path)
+                else:
+                    success = self._upload_single(path)
+            except KeyboardInterrupt:
+                return ABORTED_RETURN_CODE
+
+            if self.failed_parsing and not any(
+                (
+                    self._successfully_uploaded_content_items,
+                    self._successfully_uploaded_zipped_packs,
+                    self._failed_upload_content_items,
+                    self._failed_upload_version_mismatch,
+                    self._failed_upload_zips,
+                )
+            ):
+                # Nothing was uploaded, nor collected as error
+                logger.error(
+                    "\n".join(
+                        (
+                            "[red]Nothing to upload: the input path should point to one of the following:",
+                            "\t1. A Pack",
+                            "\t2. A content entity directory that is inside a pack, e.g. Integrations",
+                            "\t3. A valid content item file, that can be imported to Cortex XSOAR manually.[/red]",
+                        )
                     )
                 )
-            )
-            return ERROR_RETURN_CODE
+                return ERROR_RETURN_CODE
 
         self.print_summary()
         return SUCCESS_RETURN_CODE if success else ERROR_RETURN_CODE

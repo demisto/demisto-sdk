@@ -41,19 +41,20 @@ def upload_content_entity(**kwargs):
         paths = ConfigFileParser(Path(config_file_path)).custom_packs_paths
 
         if not kwargs.get('zip') and are_all_packs_unzipped(paths=paths):
-            return multiple_packs_without_zip(
-                marketplace=marketplace,
+            # return multiple_packs_without_zip(
+            #     marketplace=marketplace,
+            #     paths=paths,
+            #     **kwargs
+            # )
+            kwargs["input"] = paths
+        else:
+            zip_multiple_packs(
                 paths=paths,
-                **kwargs
+                marketplace=marketplace,
+                dir=destination_zip_path,
             )
-
-        zip_multiple_packs(
-            paths=paths,
-            marketplace=marketplace,
-            dir=destination_zip_path,
-        )
-        kwargs["detached_files"] = True
-        kwargs["input"] = Path(destination_zip_path, MULTIPLE_ZIPPED_PACKS_FILE_NAME)
+            kwargs["detached_files"] = True
+            kwargs["input"] = [Path(destination_zip_path, MULTIPLE_ZIPPED_PACKS_FILE_NAME)]
 
     check_configuration_file("upload", kwargs)
 

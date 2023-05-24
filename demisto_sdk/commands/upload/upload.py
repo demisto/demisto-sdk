@@ -19,7 +19,7 @@ from demisto_sdk.commands.upload.constants import (
     MULTIPLE_ZIPPED_PACKS_FILE_NAME,
     MULTIPLE_ZIPPED_PACKS_FILE_STEM,
 )
-from demisto_sdk.commands.upload.uploader import ABORTED_RETURN_CODE
+from demisto_sdk.commands.upload.uploader import ABORTED_RETURN_CODE, ERROR_RETURN_CODE, SUCCESS_RETURN_CODE
 from demisto_sdk.utils.utils import check_configuration_file
 
 logger = logging.getLogger("demisto-sdk")
@@ -125,7 +125,10 @@ def multiple_packs_without_zip(
             return ABORTED_RETURN_CODE
         upload_results.append(result)
 
-    return 0 if not tuple(filter(lambda result: result == 1, upload_results)) else 1
+    return (SUCCESS_RETURN_CODE
+            if not tuple(
+                filter(lambda result: result == ERROR_RETURN_CODE, upload_results))
+            else ERROR_RETURN_CODE)
 
 
 def are_all_packs_unzipped(paths: Iterable[Path]) -> bool:

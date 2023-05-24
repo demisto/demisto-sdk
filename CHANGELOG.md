@@ -1,12 +1,16 @@
 # Changelog
 
 ## Unreleased
+* Added the PEP484 (no-implicit-optional) hook to **pre-commit**.
+* Added a validation that assures feed integrations implement the `integration_reliability` configuration parameter.
+
+## 1.15.2
 * Fixed an issue where **format** added default arguments to reputation commands which already have one.
 * Fixed an issue where **validate** fails when adding the *advance* field to the integration required fields.
 * Updated the integration Traffic Light Protocol (TLP) color list schema in the **validate** command.
 * Fixed an issue where **upload** would not read a repo configuration file properly.
 * Fixed an issue where **upload** would not handle the `-x`/`--xsiam` flag properly.
-* Added a validation that assures feed integrations implement the `integration_reliability` configuration parameter.
+* Fixed an issue where **format** failed to use input from the user, when asking about a `from_version`.
 
 ## 1.15.1
 * Fixed an issue where **generate-docs** generated fields with double html escaping.

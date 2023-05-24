@@ -2,7 +2,7 @@
 
 ## Unreleased
 * Added the PEP484 (no-implicit-optional) hook to **pre-commit**.
-* Fixed an issue where *validate* reputation commands outputs weren't checked for new content.
+* Fixed an issue where the content-graph parsing failed on mappers with undefined mapping.
 
 ## 1.15.2
 * Fixed an issue where **format** added default arguments to reputation commands which already have one.
@@ -32,7 +32,6 @@
 * Fixed an issue in **pre-commit** where `--input` flag was not filtered by the git files.
 * Skip reset containers for XSOAR NG and XSIAM(PANW-internal only).
 * Fixed an issue where **lint** failed fetching docker image details from a PANW GitLab CI environment. (PANW-internal only).
-* Fixed an issue where *validate* reputation commands outputs weren't checked for new contribution content.
 
 ## 1.14.5
 * Added logging in case the container fails to run in **run-unit-tests**.

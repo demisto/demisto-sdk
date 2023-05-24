@@ -602,7 +602,7 @@ class Downloader:
                 root_folder.mkdir(exist_ok=True)
             except FileNotFoundError as e:
                 e.filename = str(Path(e.filename).parent)
-                raise e
+                raise
         initiator = Initiator(str(root_folder))
         initiator.init()
         self.output_pack_path = initiator.full_output_path
@@ -610,7 +610,7 @@ class Downloader:
         if not self.keep_empty_folders:
             # delete the empty folders created by the initiator
             pack_folder = Path(self.output_pack_path)
-            for folder_path in pack_folder.rglob("*"):
+            for folder_path in pack_folder.glob("*"):
                 if folder_path.is_dir() and not any(folder_path.iterdir()):
                     folder_path.rmdir()
 

@@ -309,7 +309,7 @@ class ContributionConverter:
             from_version=from_version,
             no_validate=True,
             update_docker=True,
-            assume_yes=True,
+            assume_answer=True,
             include_untracked=True,
             interactive=False,
         )

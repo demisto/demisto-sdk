@@ -1273,7 +1273,7 @@ def format(
             from_version=from_version,
             no_validate=no_validate,
             update_docker=update_docker,
-            assume_yes=assume_yes,
+            assume_answer=assume_yes,
             deprecate=deprecate,
             use_git=use_git,
             prev_ver=prev_ver,

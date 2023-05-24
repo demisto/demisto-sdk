@@ -35,7 +35,7 @@ class BasePlaybookYMLFormat(BaseUpdateYML):
         path: str = "",
         from_version: str = "",
         no_validate: bool = False,
-        assume_yes: Union[bool, None] = None,
+        assume_answer: Union[bool, None] = None,
         deprecate: bool = False,
         add_tests: bool = False,
         interactive: bool = True,
@@ -48,7 +48,7 @@ class BasePlaybookYMLFormat(BaseUpdateYML):
             path=path,
             from_version=from_version,
             no_validate=no_validate,
-            assume_yes=assume_yes,
+            assume_answer=assume_answer,
             deprecate=deprecate,
             add_tests=add_tests,
             interactive=interactive,
@@ -63,7 +63,11 @@ class BasePlaybookYMLFormat(BaseUpdateYML):
                 "[red]No description is specified for this playbook, would you like to add a description? [Y/n][/red]"
             )
             user_answer = (
-                "y" if self.assume_yes else "n" if self.assume_yes is False else ""
+                "y"
+                if self.assume_answer
+                else "n"
+                if self.assume_answer is False
+                else ""
             )
             while not user_answer:
                 user_answer = input()

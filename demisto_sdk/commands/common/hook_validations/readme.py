@@ -233,7 +233,8 @@ class ReadMeValidator(BaseValidator):
                 ):
                     return False
             return True
-        except TimeoutError:
+        except ConnectionError:
+            logger.info("caught exception")
             start_local_MDX_server()
             return True
 

@@ -1,3 +1,4 @@
+import builtins
 import io
 import logging
 import os
@@ -584,6 +585,20 @@ class TestFlagHandlers:
             downloader.handle_all_custom_content_flag()
             custom_content_names = [cco["name"] for cco in env.CUSTOM_CONTENT]
             assert ordered(custom_content_names) == ordered(downloader.input_files)
+
+    def test_handle_init_flag(self, tmp_path, mocker):
+        env = Environment(tmp_path)
+        mocker.patch.object(builtins, "input", return_value="test_pack_name")
+
+        downloader = Downloader(env.CONTENT_BASE_PATH, "")
+        downloader.init = True
+        downloader.handle_init_flag()
+
+        assert downloader.output_pack_path == str(
+            Path(env.CONTENT_BASE_PATH) / "Packs" / "test_pack_name"
+        )
+        assert Path(Path(downloader.output_pack_path) / "pack_metadata.json").exists()
+        assert not Path(Path(downloader.output_pack_path) / "Integrations").exists()
 
     def test_handle_list_files_flag(self, tmp_path, mocker):
         logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")

@@ -279,7 +279,7 @@ class GraphValidator(BaseValidator):
                 error_message,
                 error_code,
                 content_item.path,
-                warning=not raises_error,
+                warning=not include_optional or not raises_error,
             ):
                 is_valid = False
 

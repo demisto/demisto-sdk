@@ -125,8 +125,11 @@ class PreCommitRunner:
         )
         for python_version, changed_files in self.python_version_to_files.items():
             precommit_config = deepcopy(self.precommit_template)
+            changed_files_string = ", ".join(
+                sorted((str(changed_path) for changed_path in changed_files))
+            )
             logger.info(
-                f"Running pre-commit for {changed_files} with python version {python_version}"
+                f"Running pre-commit with Python {python_version} on {changed_files_string}"
             )
             if python_version.startswith("2"):
                 with open(PRECOMMIT_PATH, "w") as f:

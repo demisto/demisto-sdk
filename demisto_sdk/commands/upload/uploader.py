@@ -73,7 +73,7 @@ class Uploader:
         destination_zip_dir: Optional[Path] = None,
         **kwargs,
     ):
-        self.path = None if input is None else [Path(i) for i in input]
+        self.path = self.organize_input(input)
         verify = (
             (not insecure) if insecure else None
         )  # set to None so demisto_client will use env var DEMISTO_VERIFY_SSL
@@ -473,6 +473,14 @@ class Uploader:
             )
             logger.info(f"[red]FAILED UPLOADS:\n{failed_upload_str}\n[/red]")
 
+    def organize_input(self, input_) -> Optional[List[Path]]:
+        if not input_:
+            return None
+        elif isinstance(input_, (str, Path)):
+            return [Path(input_)]
+        elif isinstance(input_, list):
+            return [Path(i) for i in input_]
+        return None
 
 class ConfigFileParser:
     def __init__(self, path: Path):

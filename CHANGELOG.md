@@ -2,6 +2,7 @@
 
 ## Unreleased
 * Added the `--init` flag to **download**.
+* Added the PEP484 (no-implicit-optional) hook to **pre-commit**.
 
 ## 1.15.2
 * Fixed an issue where **format** added default arguments to reputation commands which already have one.

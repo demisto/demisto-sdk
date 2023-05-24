@@ -1,6 +1,10 @@
 # Changelog
 
 ## Unreleased
+* Added the PEP484 (no-implicit-optional) hook to **pre-commit**.
+* Fixed an issue where the content-graph parsing failed on mappers with undefined mapping.
+
+## 1.15.2
 * Fixed an issue where **format** added default arguments to reputation commands which already have one.
 * Fixed an issue where **validate** fails when adding the *advance* field to the integration required fields.
 * Updated the integration Traffic Light Protocol (TLP) color list schema in the **validate** command.

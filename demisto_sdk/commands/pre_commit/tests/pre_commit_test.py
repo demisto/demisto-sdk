@@ -6,6 +6,7 @@ import pytest
 import demisto_sdk.commands.pre_commit.pre_commit_command as pre_commit_command
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.pre_commit.hooks.mypy import MypyHook
+from demisto_sdk.commands.pre_commit.hooks.pep484 import PEP484Hook
 from demisto_sdk.commands.pre_commit.hooks.ruff import RuffHook
 from demisto_sdk.commands.pre_commit.pre_commit_command import (
     GitUtil,
@@ -187,3 +188,23 @@ class TestPreprocessFiles:
         mocker.patch.object(GitUtil, "_get_staged_files", return_value=set())
         output = preprocess_files(all_files=True)
         assert output == expected_output
+
+
+@pytest.mark.parametrize("python_version", ["3.9"])
+def test_pep484_hook(python_version):
+    """
+    Testing pep484 hook created successfully (without any args)
+    """
+    pep484_hook = {}
+    PEP484Hook(pep484_hook).prepare_hook(python_version)
+    assert not pep484_hook
+
+
+@pytest.mark.parametrize("python_version", ["3.10", "3.11"])
+def test_pep484_hook_latest_versions(python_version):
+    """
+    Testing pep484 hook created successfully (with args)
+    """
+    pep484_hook = {}
+    PEP484Hook(pep484_hook).prepare_hook(python_version)
+    assert pep484_hook["args"] == ["--use-union-or"]

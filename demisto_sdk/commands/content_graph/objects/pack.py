@@ -281,12 +281,21 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: i
         metadata["contentItems"] = {}
         metadata["id"] = self.object_id
         for content_item in self.content_items:
-            try:
+
+            if content_item.content_type == ContentType.TEST_PLAYBOOK:
+                logger.debug(
+                    f"Skip loading the {content_item.name} test playbook into metadata.json"
+                )
+                continue
+            if content_item.is_incident_to_alert(marketplace):
                 metadata["contentItems"].setdefault(
                     content_item.content_type.server_name, []
-                ).append(content_item.summary(marketplace))
-            except NotImplementedError as e:
-                logger.debug(f"Could not add {content_item.name} to pack metadata: {e}")
+                ).append(content_item.summary(marketplace, incident_to_alert=True))
+
+            metadata["contentItems"].setdefault(
+                content_item.content_type.server_name, []
+            ).append(content_item.summary(marketplace))
+
         with open(path, "w") as f:
             json.dump(metadata, f, indent=4)
 
@@ -441,13 +450,13 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: i
                         f"Cannot write to {str(destination_dir / MULTIPLE_ZIPPED_PACKS_FILE_NAME)}"
                     )
 
-            # upload the pack zip (not the result)
-            return upload_zip(
-                path=pack_zip_path,
-                client=client,
-                target_demisto_version=target_demisto_version,
-                skip_validations=skip_validations,
-            )
+                # upload the pack zip (not the result)
+                return upload_zip(
+                    path=pack_zip_path,
+                    client=client,
+                    target_demisto_version=target_demisto_version,
+                    skip_validations=skip_validations,
+                )
 
     def _upload_item_by_item(
         self,

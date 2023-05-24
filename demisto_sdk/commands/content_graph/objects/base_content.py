@@ -66,9 +66,7 @@ class BaseContentMetaclass(ModelMetaclass):
 
 
 class BaseContent(ABC, BaseModel, metaclass=BaseContentMetaclass):
-    database_id: Optional[int] = Field(
-        None, exclude=True, repr=False
-    )  # used for the database
+    database_id: Optional[int] = Field(None)  # used for the database
     object_id: str = Field(alias="id")
     content_type: ClassVar[ContentType] = Field(include=True)
     node_id: str
@@ -124,7 +122,7 @@ class BaseContent(ABC, BaseModel, metaclass=BaseContentMetaclass):
             Dict[str, Any]: _description_
         """
 
-        json_dct = json.loads(self.json(exclude={"commands"}))
+        json_dct = json.loads(self.json(exclude={"commands", "database_id"}))
         if "path" in json_dct and Path(json_dct["path"]).is_absolute():
             json_dct["path"] = (Path(json_dct["path"]).relative_to(CONTENT_PATH)).as_posix()  # type: ignore
         json_dct["content_type"] = self.content_type

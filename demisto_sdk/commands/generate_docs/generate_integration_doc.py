@@ -245,7 +245,8 @@ def generate_setup_section(yaml_data: dict):
                     "Parameter": conf.get("display"),
                     "Description": string_escape_md(
                         conf.get("additionalinfo", "")
-                        or default_additional_info.get(conf.get("name", ""), "")
+                        or default_additional_info.get(conf.get("name", ""), ""),
+                        escape_html=False,
                     ),
                     "Required": conf.get("required", ""),
                 }

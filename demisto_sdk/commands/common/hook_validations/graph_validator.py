@@ -9,6 +9,7 @@ from demisto_sdk.commands.common.tools import (
     get_all_content_objects_paths_in_dir,
     get_marketplace_to_core_packs,
     get_pack_name,
+    replace_incident_to_alert,
 )
 from demisto_sdk.commands.content_graph.interface.neo4j.neo4j_graph import (
     Neo4jContentGraphInterface as ContentGraphInterface,
@@ -54,6 +55,7 @@ class GraphValidator(BaseValidator):
             self.is_file_using_unknown_content(),
             self.is_file_display_name_already_exists(),
             self.validate_duplicate_ids(),
+            self.validate_unique_script_name(),
         )
         return all(is_valid)
 
@@ -300,6 +302,31 @@ class GraphValidator(BaseValidator):
                     content_id, duplicate_names_id
                 )
                 if self.handle_error(error_message, error_code, ""):
+                    is_valid = False
+
+        return is_valid
+
+    @error_codes("GR106")
+    def validate_unique_script_name(self):
+        """
+        Validate that there are no duplicate names of scripts
+        when the script name included `alert`.
+        """
+        is_valid = True
+        query_results = self.graph.get_duplicate_script_name_included_incident(
+            self.file_paths
+        )
+
+        if query_results:
+            for script_name, file_path in query_results.items():
+                (error_message, error_code,) = Errors.duplicated_script_name(
+                    replace_incident_to_alert(script_name), script_name
+                )
+                if self.handle_error(
+                    error_message,
+                    error_code,
+                    file_path,
+                ):
                     is_valid = False
 
         return is_valid

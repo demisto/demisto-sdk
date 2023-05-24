@@ -19,7 +19,7 @@ repos:
       - id: pycln
 
   - repo: https://github.com/charliermarsh/ruff-pre-commit
-    rev: "v0.0.259"
+    rev: "v0.0.269"
     hooks:
       - id: ruff
 
@@ -75,3 +75,5 @@ repos:
 
       - id: secrets
         args: ["--ignore-entropy"]
+
+      - id: no-implicit-optional

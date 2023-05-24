@@ -32,3 +32,10 @@
   args: ["--ignore-entropy"]
   pass_filenames: false
   language: python
+
+- id: no-implicit-optional
+  name: no implicit optional
+  description: Making code implicit-optional type hints PEP 484 compliant.
+  entry: no_implicit_optional
+  language: python
+  types: [python]

@@ -516,10 +516,13 @@ class ValidateManager:
             logger.info(
                 f"\n[cyan]================= Validating graph =================[/cyan]"
             )
+            specific_validations_list = (
+                self.specific_validations if self.specific_validations else []
+            )
             with GraphValidator(
                 specific_validations=self.specific_validations,
                 include_optional_deps=(
-                    True if "GR103" in self.specific_validations else False
+                    True if "GR103" in specific_validations_list else False
                 ),
             ) as graph_validator:
                 all_packs_valid.add(graph_validator.is_valid_content_graph())

@@ -2,6 +2,7 @@
 
 ## Unreleased
 * Added the PEP484 (no-implicit-optional) hook to **pre-commit**.
+* Fixed an issue where **validate** failed when attempting to map null values in a classifier.
 
 ## 1.15.2
 * Fixed an issue where **format** added default arguments to reputation commands which already have one.

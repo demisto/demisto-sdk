@@ -597,8 +597,8 @@ class TestFlagHandlers:
         assert downloader.output_pack_path == str(
             Path(env.CONTENT_BASE_PATH) / "Packs" / "test_pack_name"
         )
-        assert Path(Path(downloader.output_pack_path) / "pack_metadata.json").exists()
-        assert not Path(Path(downloader.output_pack_path) / "Integrations").exists()
+        assert Path(downloader.output_pack_path,  "pack_metadata.json").exists()
+        assert not Path(downloader.output_pack_path,  "Integrations").exists()
 
     def test_handle_list_files_flag(self, tmp_path, mocker):
         logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")

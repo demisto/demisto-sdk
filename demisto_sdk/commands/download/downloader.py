@@ -141,7 +141,7 @@ class Downloader:
         pack_content (dict): The pack content that maps the pack
         system (bool): whether to download system items
         item_type (str): The items type to download, use just when downloading system items.
-        init (bool): Initialize a new Pack and download the items to it.
+        init (bool): Initialize a new Pack and download the items to it. This will create an empty folder for each supported content item type.
         keep_empty_folders (bool): Whether to keep empty folders when using init.
     """
 
@@ -1271,7 +1271,7 @@ class Downloader:
         """
         if self.run_format and file_ending in ("yml", "json"):
             format_manager(
-                input=os.path.abspath(file_path), no_validate=False, assume_yes=False
+                input=Path(file_path).resolve(), no_validate=False, assume_yes=False
             )
 
     def remove_traces(self):

@@ -41,6 +41,7 @@ class Runner:
     def __init__(
         self,
         query: str,
+        incident_id: str = None,
         insecure: bool = False,
         debug: str = None,
         debug_path: str = None,
@@ -50,6 +51,7 @@ class Runner:
         **kwargs,
     ):
         self.query = query if query.startswith("!") else f"!{query}"
+        self.incident_id = incident_id
         self.debug = debug
         self.debug_path = debug_path
         verify = (
@@ -65,10 +67,10 @@ class Runner:
 
     def run(self):
         """Runs an integration command on Demisto and prints the result."""
-        playground_id = self._get_playground_id()
+        investigation_id = self.incident_id if self.incident_id else self._get_playground_id()
 
         try:
-            log_ids = self._run_query(playground_id)
+            log_ids = self._run_query(investigation_id)
         except DemistoRunTimeError as err:
             log_ids = None
             logger.info(f"[red]{err}[/red]")

@@ -1524,6 +1524,11 @@ def xsoar_config_file_update(ctx, **kwargs):
 @click.option("-q", "--query", help="The query to run", required=True)
 @click.option("--insecure", help="Skip certificate validation", is_flag=True)
 @click.option(
+    "-id",
+    "--incident-id",
+    help="The incident to run the query on"
+)
+@click.option(
     "-D",
     "--debug",
     help="Whether to enable the debug-mode feature or not, if you want to save the output file "

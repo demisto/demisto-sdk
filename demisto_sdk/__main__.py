@@ -1526,7 +1526,7 @@ def xsoar_config_file_update(ctx, **kwargs):
 @click.option(
     "-id",
     "--incident-id",
-    help="The incident to run the query on, if not specified the playground will be used."
+    help="The incident to run the query on, if not specified the playground will be used.",
 )
 @click.option(
     "-D",

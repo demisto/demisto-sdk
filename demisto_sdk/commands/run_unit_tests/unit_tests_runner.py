@@ -71,7 +71,10 @@ def fix_coverage_report_path(code_directory: Path):
 
 def merge_coverage_report():
     cov = coverage.Coverage(data_file=CONTENT_PATH / ".coverage")
-    cov.combine(coverage_files())
+    if not (files := coverage_files()):
+        logger.warning("No coverage files found, skipping coverage report.")
+        return
+    cov.combine(files)
     cov.xml_report(outfile=str(CONTENT_PATH / "coverage.xml"))
     logger.info(f"Coverage report saved to {CONTENT_PATH / 'coverage.xml'}")
 

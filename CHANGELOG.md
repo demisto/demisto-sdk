@@ -3,6 +3,8 @@
 ## Unreleased
 * Added the PEP484 (no-implicit-optional) hook to **pre-commit**.
 * Fixed an issue where the content-graph parsing failed on mappers with undefined mapping.
+* Fixed an issue where *validate* reputation commands outputs were not checked for new content.
+* Added *IN107* and *DB100* error codes to *ALLOWED_IGNORE_ERRORS* list.
 * Added a validation that assures feed integrations implement the `integration_reliability` configuration parameter.
 
 ## 1.15.2

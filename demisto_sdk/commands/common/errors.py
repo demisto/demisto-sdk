@@ -99,6 +99,8 @@ ALLOWED_IGNORE_ERRORS = [
     "MR104",
     "MR105",
     "LO107",
+    "IN107",
+    "DB100",
 ]
 
 # predefined errors to be ignored in partner/community supported packs even if they do not appear in .pack-ignore

@@ -214,29 +214,31 @@ class ReadMeValidator(BaseValidator):
         server_started = mdx_server_is_up()
         if not server_started:
             return False
-        try:
-            readme_content = self.fix_mdx()
-            retry = Retry(total=2)
-            adapter = HTTPAdapter(max_retries=retry)
-            session = requests.Session()
-            session.mount("http://", adapter)
-            response = session.request(
-                "POST",
-                "http://localhost:6161",
-                data=readme_content.encode("utf-8"),
-                timeout=20,
-            )
-            if response.status_code != 200:
-                error_message, error_code = Errors.readme_error(response.text)
-                if self.handle_error(
-                    error_message, error_code, file_path=self.file_path
-                ):
-                    return False
-            return True
-        except Exception:
-            logger.info("caught exception")
-            start_local_MDX_server()
-            return True
+        for _ in range(2):
+            try:
+                readme_content = self.fix_mdx()
+                retry = Retry(total=2)
+                adapter = HTTPAdapter(max_retries=retry)
+                session = requests.Session()
+                session.mount("http://", adapter)
+                response = session.request(
+                    "POST",
+                    "http://localhost:6161",
+                    data=readme_content.encode("utf-8"),
+                    timeout=20,
+                )
+                if response.status_code != 200:
+                    error_message, error_code = Errors.readme_error(response.text)
+                    if self.handle_error(
+                        error_message, error_code, file_path=self.file_path
+                    ):
+                        return False
+                return True
+            except Exception:
+                logger.info("caught exception")
+                start_local_MDX_server()
+                return True
+        return True
 
     def is_mdx_file(self) -> bool:
         html = self.is_html_doc()

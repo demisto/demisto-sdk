@@ -1278,7 +1278,9 @@ class Downloader:
         """
         if self.run_format and file_ending in ("yml", "json"):
             format_manager(
-                input=Path(file_path).resolve(), no_validate=False, assume_yes=False
+                input=str(Path(file_path).resolve()),
+                no_validate=False,
+                assume_yes=False,
             )
 
     def remove_traces(self):

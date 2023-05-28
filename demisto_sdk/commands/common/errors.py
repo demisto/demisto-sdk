@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from distutils.version import LooseVersion
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
@@ -12,6 +14,7 @@ from demisto_sdk.commands.common.constants import (
     MODULES,
     PACK_METADATA_DESC,
     PACK_METADATA_NAME,
+    RELIABILITY_PARAMETER_NAMES,
     RN_CONTENT_ENTITY_WITH_STARS,
     RN_HEADER_BY_FILE_TYPE,
     FileType,
@@ -96,6 +99,8 @@ ALLOWED_IGNORE_ERRORS = [
     "MR104",
     "MR105",
     "LO107",
+    "IN107",
+    "DB100",
 ]
 
 # predefined errors to be ignored in partner/community supported packs even if they do not appear in .pack-ignore
@@ -2135,7 +2140,9 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def added_required_fields(field):
-        return f"You've added required, the field is '{field}'"
+        return (
+            f"A required field ('{field}') has been added to an existing integration."
+        )
 
     @staticmethod
     @error_code_decorator
@@ -2361,11 +2368,35 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def missing_reliability_parameter(command: str):
+    def missing_reliability_parameter(is_feed: bool, command_name: str | None = None):
+        """
+        Returns an error message for missing reliability parameter, according to provided arguments.
+
+        Args:
+            is_feed (bool): Whether the integration is a feed integration or not.
+            command_name (str | None, optional): The name of the command that is missing the reliability parameter.
+                Defaults to None. Used on error message when is_feed is False.
+
+        Returns:
+            str: The error message.
+        """
+        if is_feed:
+            specific_case_error = (
+                "Feed integrations must implement a reliability parameter."
+            )
+
+        else:
+            specific_case_error = (
+                "Integrations with reputation commands{0} ".format(
+                    f" ('{command_name}')" if command_name else ""
+                )
+                + "must implement a reliability parameter."
+            )
+
         return (
-            f'Missing "Reliability" parameter in the {command} reputation command.'
-            f"Please add it to the YAML file."
-            f"For more information, refer to https://xsoar.pan.dev/docs/integrations/dbot#reliability-level"
+            f"Missing a reliability ('{RELIABILITY_PARAMETER_NAMES[0]}') configuration parameter in the YAML file.\n"
+            f"{specific_case_error}\n"
+            "For more information, refer to https://xsoar.pan.dev/docs/integrations/dbot#reliability-level"
         )
 
     @staticmethod
@@ -2453,10 +2484,8 @@ class Errors:
     @error_code_decorator
     def dbot_invalid_output(command_name, missing_outputs, context_standard):
         return (
-            "The DBotScore outputs of the reputation command {} aren't valid. Missing: {}. "
-            "Fix according to context standard {} ".format(
-                command_name, missing_outputs, context_standard
-            )
+            f"The DBotScore outputs specified in the YAML file for the reputation command '{command_name}' "
+            f"aren't valid. Missing: {missing_outputs}. Fix according to context standard {context_standard}"
         )
 
     @staticmethod
@@ -4419,7 +4448,7 @@ class Errors:
     @error_code_decorator
     def xsiam_report_files_naming_error(invalid_files: list):
         return (
-            f"The following xsiam report files do not match the naming conventions: {','.join(invalid_files)}.\n"
+            f"The following XSIAM report files do not match the naming conventions: {','.join(invalid_files)}.\n"
             f"XSIAM reports file name must use the pack's name as a prefix, e.g. `myPack-report1.yml`"
         )
 

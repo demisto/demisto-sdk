@@ -57,6 +57,8 @@ def fix_coverage_report_path(code_directory: Path):
             files = cursor.execute("SELECT * FROM file").fetchall()
             for id_, file in files:
                 file = Path(file).relative_to("/content")
+                if (CONTENT_PATH / file).exists():
+                    continue
                 cursor.execute(
                     "UPDATE file SET path = ? WHERE id = ?",
                     (str(CONTENT_PATH / file), id_),

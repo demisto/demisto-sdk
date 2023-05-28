@@ -127,8 +127,6 @@ class IntegrationValidator(ContentEntityValidator):
             self.no_changed_command_name_or_arg(),
             self.is_valid_display_configuration(),
             self.no_changed_removed_yml_fields(),
-            # will move to is_valid_integration after https://github.com/demisto/etc/issues/17949
-            self.is_outputs_for_reputations_commands_valid(),
         ]
         return all(answers)
 
@@ -207,6 +205,7 @@ class IntegrationValidator(ContentEntityValidator):
             self.verify_yml_commands_match_readme(is_modified),
             self.verify_reputation_commands_has_reliability(is_modified),
             self.is_integration_deprecated_and_used(),
+            self.is_outputs_for_reputations_commands_valid(),
         ]
 
         if check_is_unskipped:

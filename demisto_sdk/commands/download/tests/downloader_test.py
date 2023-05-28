@@ -588,17 +588,22 @@ class TestFlagHandlers:
 
     def test_handle_init_flag(self, tmp_path, mocker):
         env = Environment(tmp_path)
-        mocker.patch.object(builtins, "input", return_value="test_pack_name")
+        mock = mocker.patch.object(
+            builtins, "input", side_effect=("test_pack_name", "n", "n")
+        )
 
         downloader = Downloader(env.CONTENT_BASE_PATH, "")
         downloader.init = True
         downloader.handle_init_flag()
 
+        assert mock.call_count == 3
         assert downloader.output_pack_path == str(
             Path(env.CONTENT_BASE_PATH) / "Packs" / "test_pack_name"
         )
-        assert Path(downloader.output_pack_path,  "pack_metadata.json").exists()
-        assert not Path(downloader.output_pack_path,  "Integrations").exists()
+        assert Path(downloader.output_pack_path, "pack_metadata.json").exists()
+        assert not Path(downloader.output_pack_path, "Integrations").exists()
+        for file in Path(downloader.output_pack_path).iterdir():
+            assert not file.is_dir()
 
     def test_handle_list_files_flag(self, tmp_path, mocker):
         logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")

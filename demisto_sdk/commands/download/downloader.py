@@ -608,7 +608,14 @@ class Downloader:
         self.output_pack_path = initiator.full_output_path
 
         if not self.keep_empty_folders:
-            # delete the empty folders created by the initiator
+            self.remove_empty_folders()
+
+    def remove_empty_folders(self) -> None:
+        """
+        Removes empty folders from the output pack path
+        :return: None
+        """
+        if not self.keep_empty_folders:
             pack_folder = Path(self.output_pack_path)
             for folder_path in pack_folder.glob("*"):
                 if folder_path.is_dir() and not any(folder_path.iterdir()):

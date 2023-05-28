@@ -201,7 +201,10 @@ class Uploader:
             )
             return ERROR_RETURN_CODE
 
-        if not self.path or not self.is_path_exist():
+        if not self.path:
+            logger.error(f"[red]input path: {self.path} does not exist[/red]")
+            return ERROR_RETURN_CODE
+        if not self.is_path_exist():
             return ERROR_RETURN_CODE
 
         if self.should_detach_files:
@@ -501,7 +504,7 @@ class Uploader:
                     logger.error(f"[red]input path: {path} does not exist[/red]")
                     all_exist = False
             return all_exist
-        elif not self.path.exists():
+        elif self.path and not self.path.exists():
             logger.error(f"[red]input path: {self.path} does not exist[/red]")
             return False
         return True

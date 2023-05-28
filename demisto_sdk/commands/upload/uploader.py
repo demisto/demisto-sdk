@@ -302,10 +302,10 @@ class Uploader:
             raise  # the functinos calling this one have a special return code for manual interruption
 
         except IncompatibleUploadVersionException:
-            assert isinstance(
-                content_item, ContentItem
-            ), "Cannot compare version for Pack items, only ContentItems"
-            self._failed_upload_version_mismatch.append(content_item)
+            if isinstance(content_item, Pack):
+                self._failed_upload_version_mismatch.extend(content_item.content_items)
+            else:
+                self._failed_upload_version_mismatch.append(content_item)
             return False
 
         except ApiException as e:

@@ -330,6 +330,10 @@ class Uploader:
                     self._failed_upload_content_items.append(
                         (_failed_content_item, failure_str)
                     )
+            for failure_mismatch in e.incompatible_versions_items:
+                self._failed_upload_version_mismatch.append(failure_mismatch.item)
+
+            self._successfully_uploaded_content_items.extend(e.uploaded_successfully)
             return False
 
         except (FailedUploadException, NotUploadableException, Exception) as e:

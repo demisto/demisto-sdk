@@ -79,6 +79,8 @@ PACKS_TO_IGNORE = ["HelloWorld", "HelloWorldPremium"]
 
 DEFAULT_SENTENCES = ["getting started and learn how to build an integration"]
 
+RETRIES_VERIFY_MDX = 2
+
 
 @dataclass(frozen=True)
 class ReadmeUrl:
@@ -214,7 +216,7 @@ class ReadMeValidator(BaseValidator):
         server_started = mdx_server_is_up()
         if not server_started:
             return False
-        for _ in range(2):
+        for _ in range(RETRIES_VERIFY_MDX):
             try:
                 readme_content = self.fix_mdx()
                 retry = Retry(total=2)
@@ -234,8 +236,8 @@ class ReadMeValidator(BaseValidator):
                     ):
                         return False
                 return True
-            except Exception:
-                logger.info("caught exception")
+            except Exception as e:
+                logger.info(f"Starting MDX local server due to exception. Error: {e}")
                 start_local_MDX_server()
                 return True
         return True

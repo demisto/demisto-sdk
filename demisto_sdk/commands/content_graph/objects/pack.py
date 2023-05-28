@@ -499,7 +499,7 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: i
             except ApiException as e:
                 upload_failures.append(
                     FailedUploadException(
-                        item,
+                        item.path,
                         response_body={},
                         additional_info=parse_error_response(e),
                     )

@@ -1,3 +1,4 @@
+from pathlib import Path
 from typing import TYPE_CHECKING, Optional, Sequence
 
 from demisto_sdk.commands.upload.exceptions import IncompatibleUploadVersionException
@@ -9,12 +10,12 @@ if TYPE_CHECKING:
 class FailedUploadException(RuntimeError):
     def __init__(
         self,
-        item: "ContentItem",
+        path: Path,
         response_body: dict,
         status_code: Optional[int] = None,
         additional_info: Optional[str] = None,
     ) -> None:
-        self.item = item
+        self.path = path
         self.response_body = response_body
         self.status_code = status_code
         self.additional_info = additional_info

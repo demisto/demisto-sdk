@@ -33,15 +33,10 @@ from demisto_sdk.commands.content_graph.objects.content_item import (
     ContentItem,
 )
 from demisto_sdk.commands.content_graph.objects.exceptions import (
-    FailedUploadException,
     FailedUploadMultipleException,
 )
 from demisto_sdk.commands.content_graph.objects.pack import Pack, upload_zip
 from demisto_sdk.commands.upload.constants import CONTENT_TYPES_EXCLUDED_FROM_UPLOAD
-from demisto_sdk.commands.upload.exceptions import (
-    IncompatibleUploadVersionException,
-    NotUploadableException,
-)
 from demisto_sdk.commands.upload.tools import parse_error_response
 
 json = JSON_Handler()
@@ -301,13 +296,6 @@ class Uploader:
         except KeyboardInterrupt:
             raise  # the functinos calling this one have a special return code for manual interruption
 
-        except IncompatibleUploadVersionException:
-            if isinstance(content_item, Pack):
-                self._failed_upload_version_mismatch.extend(content_item.content_items)
-            else:
-                self._failed_upload_version_mismatch.append(content_item)
-            return False
-
         except ApiException as e:
             self._failed_upload_content_items.append(
                 (content_item, parse_error_response(e))
@@ -315,25 +303,19 @@ class Uploader:
             return False
 
         except FailedUploadMultipleException as e:
-            for failure in e.failures:
+            for failure in e.upload_failures:
                 failure_str = failure.additional_info or str(failure)
 
-                _failed_content_item: Union[
-                    Pack, ContentItem, None
-                ] = BaseContent.from_path(
-                    failure.path
-                )  # type:ignore[assignment]
+                _failed_content_item = failure.item
 
-                if _failed_content_item is None:
-                    self.failed_parsing.append((failure.path, failure_str))
-                else:
-                    self._failed_upload_content_items.append(
-                        (_failed_content_item, failure_str)
-                    )
-            return False
+                self._failed_upload_content_items.append(
+                    (_failed_content_item, failure_str)
+                )
+            for incompatible_failure in e.incompatible_versions_items:
+                self._failed_upload_version_mismatch.append(incompatible_failure.item)
 
-        except (FailedUploadException, NotUploadableException, Exception) as e:
-            self._failed_upload_content_items.append((content_item, str(e)))
+            self._successfully_uploaded_content_items.extend(e.uploaded_successfully)
+
             return False
 
     def _upload_entity_dir(self, path: Path) -> bool:

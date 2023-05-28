@@ -1307,6 +1307,13 @@ ACCEPTED_FILE_EXTENSIONS = [
 ]
 ENDPOINT_COMMAND_NAME = "endpoint"
 
+RELIABILITY_PARAMETER_NAMES = [
+    "integration_reliability",  # First item in the list will be used in errors
+    "integrationReliability",
+    "feedReliability",
+    "reliability",
+]
+
 REPUTATION_COMMAND_NAMES = {"file", "email", "domain", "url", "ip", "cve"}
 
 BANG_COMMAND_NAMES = {"file", "email", "domain", "url", "ip", "cve", "endpoint"}
@@ -1410,6 +1417,7 @@ FEED_REQUIRED_PARAMS = [
             "required": False,
         },
         "must_contain": {},
+        "must_be_one_of": {},
     },
     {
         "name": "feedReputation",
@@ -1422,6 +1430,7 @@ FEED_REQUIRED_PARAMS = [
         "must_contain": {
             "additionalinfo": "Indicators from this integration instance will be marked with this reputation"
         },
+        "must_be_one_of": {},
     },
     {
         "name": "feedReliability",
@@ -1441,6 +1450,7 @@ FEED_REQUIRED_PARAMS = [
         "must_contain": {
             "additionalinfo": "Reliability of the source providing the intelligence data"
         },
+        "must_be_one_of": {},
     },
     {
         "name": "feedExpirationPolicy",
@@ -1451,16 +1461,19 @@ FEED_REQUIRED_PARAMS = [
             "options": ["never", "interval", "indicatorType", "suddenDeath"],
         },
         "must_contain": {},
+        "must_be_one_of": {},
     },
     {
         "name": "feedExpirationInterval",
         "must_equal": {"display": "", "type": 1, "required": False},
         "must_contain": {},
+        "must_be_one_of": {},
     },
     {
         "name": "feedFetchInterval",
         "must_equal": {"display": "Feed Fetch Interval", "type": 19, "required": False},
         "must_contain": {},
+        "must_be_one_of": {},
     },
     {
         "name": "feedBypassExclusionList",
@@ -1474,23 +1487,30 @@ FEED_REQUIRED_PARAMS = [
             " This means that if an indicator from this feed is on the exclusion list,"
             " the indicator might still be added to the system."
         },
+        "must_be_one_of": {},
     },
     {
         "name": "feedTags",
         "must_equal": {"display": "Tags", "required": False, "type": 0},
         "must_contain": {"additionalinfo": "Supports CSV values."},
+        "must_be_one_of": {},
     },
     {
         "name": "tlp_color",
         "must_equal": {
             "display": "Traffic Light Protocol Color",
-            "options": ["RED", "AMBER", "GREEN", "WHITE"],
             "required": False,
             "type": 15,
         },
         "must_contain": {
             "additionalinfo": "The Traffic Light Protocol (TLP) designation to apply to indicators fetched from the "
             "feed"
+        },
+        "must_be_one_of": {
+            "options": [
+                ["RED", "AMBER", "GREEN", "WHITE"],
+                ["RED", "AMBER+STRICT", "AMBER", "GREEN", "CLEAR"],
+            ]
         },
     },
 ]

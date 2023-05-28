@@ -450,13 +450,13 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: i
                         f"Cannot write to {str(destination_dir / MULTIPLE_ZIPPED_PACKS_FILE_NAME)}"
                     )
 
-            # upload the pack zip (not the result)
-            return upload_zip(
-                path=pack_zip_path,
-                client=client,
-                target_demisto_version=target_demisto_version,
-                skip_validations=skip_validations,
-            )
+                # upload the pack zip (not the result)
+                return upload_zip(
+                    path=pack_zip_path,
+                    client=client,
+                    target_demisto_version=target_demisto_version,
+                    skip_validations=skip_validations,
+                )
 
     def _upload_item_by_item(
         self,

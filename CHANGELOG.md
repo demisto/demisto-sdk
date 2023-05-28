@@ -1,6 +1,7 @@
 # Changelog
 
 ## Unreleased
+* Added `markdown-lint` to **pre-commit**
 * Added the PEP484 (no-implicit-optional) hook to **pre-commit**.
 * Fixed an issue where the content-graph parsing failed on mappers with undefined mapping.
 * Fixed an issue in **validate** where `pack_metadata.json` files were not collected proplely in `--graph` option.

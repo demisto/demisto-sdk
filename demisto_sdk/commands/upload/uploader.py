@@ -61,7 +61,7 @@ class Uploader:
 
     def __init__(
         self,
-        input: Optional[List[Path]],
+        input: Optional[Path],
         insecure: bool = False,
         pack_names: Optional[List[str]] = None,
         skip_validation: bool = False,
@@ -73,7 +73,7 @@ class Uploader:
         destination_zip_dir: Optional[Path] = None,
         **kwargs,
     ):
-        self.path = self.organize_input(input)
+        self.path = self.arranging_input(input)
         verify = (
             (not insecure) if insecure else None
         )  # set to None so demisto_client will use env var DEMISTO_VERIFY_SSL
@@ -201,59 +201,57 @@ class Uploader:
             )
             return ERROR_RETURN_CODE
 
-        paths: List[Path] = self.path if isinstance(self.path, list) else []
-        
-        for path in paths:
-            if not path.exists():
-                logger.error(f"[red]input path: {path} does not exist[/red]")
-                return ERROR_RETURN_CODE
+        if not self.path or not self.is_path_exist():
+            return ERROR_RETURN_CODE
 
-            if self.should_detach_files:
-                item_detacher = ItemDetacher(
-                    client=self.client, marketplace=self.marketplace
-                )
-                detached_items_ids = item_detacher.detach(upload_file=True)
-
-                if self.should_reattach_files:
-                    ItemReattacher(client=self.client).reattach(
-                        detached_files_ids=detached_items_ids
-                    )
-
-            logger.info(
-                f"Uploading {path} to {self.client.api_client.configuration.host}..."
+        if self.should_detach_files:
+            item_detacher = ItemDetacher(
+                client=self.client, marketplace=self.marketplace
             )
+            detached_items_ids = item_detacher.detach(upload_file=True)
 
-            try:
-                if path.suffix == ".zip":
-                    success = self._upload_zipped(path)
-                elif path.is_dir() and is_uploadable_dir(path):
-                    success = self._upload_entity_dir(path)
-                else:
-                    success = self._upload_single(path)
-            except KeyboardInterrupt:
-                return ABORTED_RETURN_CODE
-
-            if self.failed_parsing and not any(
-                (
-                    self._successfully_uploaded_content_items,
-                    self._successfully_uploaded_zipped_packs,
-                    self._failed_upload_content_items,
-                    self._failed_upload_version_mismatch,
-                    self._failed_upload_zips,
+            if self.should_reattach_files:
+                ItemReattacher(client=self.client).reattach(
+                    detached_files_ids=detached_items_ids
                 )
-            ):
-                # Nothing was uploaded, nor collected as error
-                logger.error(
-                    "\n".join(
-                        (
-                            "[red]Nothing to upload: the input path should point to one of the following:",
-                            "\t1. A Pack",
-                            "\t2. A content entity directory that is inside a pack, e.g. Integrations",
-                            "\t3. A valid content item file, that can be imported to Cortex XSOAR manually.[/red]",
-                        )
+
+        logger.info(
+            f"Uploading {self.path} to {self.client.api_client.configuration.host}..."
+        )
+
+        try:
+            if isinstance(self.path, list):
+                success = self._upload_multiple_packs(self.path)
+            elif self.path.suffix == ".zip":
+                success = self._upload_zipped(self.path)
+            elif self.path.is_dir() and is_uploadable_dir(self.path):
+                success = self._upload_entity_dir(self.path)
+            else:
+                success = self._upload_single(self.path)
+        except KeyboardInterrupt:
+            return ABORTED_RETURN_CODE
+
+        if self.failed_parsing and not any(
+            (
+                self._successfully_uploaded_content_items,
+                self._successfully_uploaded_zipped_packs,
+                self._failed_upload_content_items,
+                self._failed_upload_version_mismatch,
+                self._failed_upload_zips,
+            )
+        ):
+            # Nothing was uploaded, nor collected as error
+            logger.error(
+                "\n".join(
+                    (
+                        "[red]Nothing to upload: the input path should point to one of the following:",
+                        "\t1. A Pack",
+                        "\t2. A content entity directory that is inside a pack, e.g. Integrations",
+                        "\t3. A valid content item file, that can be imported to Cortex XSOAR manually.[/red]",
                     )
                 )
-                return ERROR_RETURN_CODE
+            )
+            return ERROR_RETURN_CODE
 
         self.print_summary()
         return SUCCESS_RETURN_CODE if success else ERROR_RETURN_CODE
@@ -361,6 +359,19 @@ class Uploader:
         else:
             to_upload = itertools.chain(path.glob("*.yml"), path.glob("*.json"))
 
+        return all(self._upload_single(item) for item in to_upload)
+
+    def _upload_multiple_packs(self, paths: List[Path]) -> bool:
+        """
+        Uploads all packs from a given list.
+
+        Args:
+            path (List[Path])
+
+        Returns:
+            Whether the upload succeeded.
+        """
+        to_upload = filter(lambda p: p.is_dir(), paths)
         return all(self._upload_single(item) for item in to_upload)
 
     def notify_user_should_override_packs(self):
@@ -473,14 +484,28 @@ class Uploader:
             )
             logger.info(f"[red]FAILED UPLOADS:\n{failed_upload_str}\n[/red]")
 
-    def organize_input(self, input_) -> Optional[List[Path]]:
-        if not input_:
+    def arranging_input(self, input_) -> Union[List[Path], Path, None]:
+        if input_ is None:
             return None
         elif isinstance(input_, (str, Path)):
-            return [Path(input_)]
-        elif isinstance(input_, list):
+            return Path(input_)
+        elif isinstance(input_, Iterable):
             return [Path(i) for i in input_]
         return None
+
+    def is_path_exist(self):
+        if isinstance(self.path, list):
+            all_exist = True
+            for path in self.path:
+                if not path.exists():
+                    logger.error(f"[red]input path: {path} does not exist[/red]")
+                    all_exist = False
+            return all_exist
+        elif not self.path.exists():
+            logger.error(f"[red]input path: {self.path} does not exist[/red]")
+            return False
+        return True
+
 
 class ConfigFileParser:
     def __init__(self, path: Path):

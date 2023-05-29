@@ -13,6 +13,7 @@
 * Fixed an issue where the format command did not work as expected on pre-process rules files.
 * Fixed an issue where **upload** command failed to upload when the XSOAR version is beta.
 * Fixed an issue where **upload** command summary was inaccurate when uploading a `Pack` without the `-z` flag.
+* Added pack name and pack version to **upload** command summary.
 * Added support for modeling rules with multi datasets in ****modeling-rules test**** command.
 
 ## 1.15.2

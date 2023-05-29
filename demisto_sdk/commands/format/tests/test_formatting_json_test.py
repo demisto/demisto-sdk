@@ -480,7 +480,7 @@ def test_update_connection_removes_unnecessary_keys(tmpdir, monkeypatch):
         output=connection_file_path,
         path=CONNECTION_SCHEMA_PATH,
     )
-    connection_formatter.assume_yes = True
+    connection_formatter.assume_answer = True
     monkeypatch.setattr("builtins.input", lambda _: "N")
     connection_formatter.format_file()
     with open(connection_file_path) as file:
@@ -1767,7 +1767,7 @@ class TestFormattingReport:
         pack.pack_metadata.update({"support": "partner", "currentVersion": "1.0.0"})
         incident_type = pack.create_incident_type(name="TestType", content={})
         bs = BaseUpdate(
-            input=incident_type.path, assume_yes=True, path=INCIDENTTYPE_SCHEMA_PATH
+            input=incident_type.path, assume_answer=True, path=INCIDENTTYPE_SCHEMA_PATH
         )
         bs.set_fromVersion()
         assert bs.data["fromVersion"] == GENERAL_DEFAULT_FROMVERSION
@@ -1809,7 +1809,7 @@ class TestFormattingReport:
                 LAYOUTS_CONTAINER_SCHEMA_PATH,
             ],
         ):
-            bs = BaseUpdate(input=path, assume_yes=True, path=schema_path)
+            bs = BaseUpdate(input=path, assume_answer=True, path=schema_path)
             bs.set_fromVersion()
             assert bs.data["fromVersion"] == GENERAL_DEFAULT_FROMVERSION
 
@@ -1830,7 +1830,7 @@ class TestFormattingReport:
 
         layout = pack.create_layout(name="TestType", content={})
         bs = LayoutBaseFormat(
-            input=layout.path, assume_yes=True, path=LAYOUTS_CONTAINER_SCHEMA_PATH
+            input=layout.path, assume_answer=True, path=LAYOUTS_CONTAINER_SCHEMA_PATH
         )
         bs.run_format()
         assert bs.data["fromVersion"] == VERSION_5_5_0
@@ -1864,7 +1864,7 @@ class TestFormattingReport:
                 "fromVersion": "",
             },
         )
-        bs = LayoutBaseFormat(input=layout.path, assume_yes=True)
+        bs = LayoutBaseFormat(input=layout.path, assume_answer=True)
         bs.remove_copy_and_dev_suffixes_from_layoutscontainer()
         assert bs.data["name"] == "SHA256_Indicator"
 
@@ -1885,7 +1885,7 @@ class TestFormattingReport:
 
         classifier = pack.create_classifier(name="TestType", content={})
         bs = OldClassifierJSONFormat(
-            input=classifier.path, assume_yes=True, path=CLASSIFIER_5_9_9_SCHEMA_PATH
+            input=classifier.path, assume_answer=True, path=CLASSIFIER_5_9_9_SCHEMA_PATH
         )
         bs.run_format()
         assert bs.data["fromVersion"] == VERSION_5_5_0

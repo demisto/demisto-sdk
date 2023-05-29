@@ -60,7 +60,7 @@ def test_e2e_demisto_sdk_flow_playbook_testsuite(tmpdir):
     logger.info(f"Formating playbook {dest_playbook_path}")
     format_manager(
         input=str(dest_playbook_path),
-        assume_yes=True,
+        assume_answer=True,
     )
     logger.info(f"Validating playbook {dest_playbook_path}")
     ValidateManager(file_path=str(dest_playbook_path)).run_validation()
@@ -138,7 +138,7 @@ def test_e2e_demisto_sdk_flow_playbook_client(tmpdir, insecure: bool = True):
     logger.info(f"Formating playbook {dest_playbook_path}")
     format_manager(
         input=str(dest_playbook_path),
-        assume_yes=True,
+        assume_answer=True,
     )
     logger.info(f"Validating playbook {dest_playbook_path}")
     ValidateManager(file_path=str(dest_playbook_path)).run_validation()

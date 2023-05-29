@@ -1,6 +1,7 @@
 import logging
 import logging.config
 import os.path
+import sys
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
 
@@ -18,7 +19,6 @@ LOG_FILE_NAME: str = "demisto_sdk_debug.log"
 
 LOG_FILE_PATH: Path = CONTENT_PATH / LOG_FILE_NAME
 current_log_file_path: Path = LOG_FILE_PATH
-current_log_file_path_notified: bool = False
 
 DATE_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
 
@@ -33,6 +33,8 @@ DEPRECATED_PARAMETERS = {
     "--log-name": "--log-path",
     "no_logging": "--console-log-threshold or --file-log-threshold",
 }
+
+SUCCESS_LEVEL: int = 25
 
 
 def handle_deprecated_args(input_args):
@@ -153,11 +155,6 @@ def _add_logging_level(
     setattr(logging, method_name, logToRoot)
 
 
-SUCCESS_LEVEL: int = 25
-if not hasattr(logging.getLoggerClass(), "success"):
-    _add_logging_level("SUCCESS", SUCCESS_LEVEL)
-
-
 class ColorConsoleFormatter(logging.Formatter):
     FORMATS = {
         logging.DEBUG: "[lightgrey]%(message)s[/lightgrey]",
@@ -200,9 +197,6 @@ class ColorConsoleFormatter(logging.Formatter):
 
         current_message = record.getMessage()
         while ColorConsoleFormatter._string_starts_with_escapes(current_message):
-
-            if not ColorConsoleFormatter._string_starts_with_escapes(current_message):
-                return ret_value
 
             # Record starts with escapes - Extract them
             current_escape = current_message[0 : current_message.find("]") + 1]
@@ -265,7 +259,6 @@ def logging_setup(
     console_log_threshold=logging.INFO,
     file_log_threshold=logging.DEBUG,
     log_file_path=LOG_FILE_PATH,
-    notify_log_file_path=False,
 ) -> logging.Logger:
     """Init logger object for logging in demisto-sdk
         For more info - https://docs.python.org/3/library/logging.html
@@ -278,9 +271,11 @@ def logging_setup(
         logging.Logger: logger object
     """
 
+    if not hasattr(logging.getLoggerClass(), "success"):
+        _add_logging_level("SUCCESS", SUCCESS_LEVEL)
+
     global logger
     global current_log_file_path
-    global current_log_file_path_notified
     console_handler = logging.StreamHandler()
     console_handler.set_name(CONSOLE_HANDLER)
     console_handler.setLevel(
@@ -324,19 +319,13 @@ def logging_setup(
 
     set_demisto_logger(demisto_logger)
 
-    if notify_log_file_path and not current_log_file_path_notified:
-        import sys
+    demisto_logger.debug(f"Python version: {sys.version}")
+    demisto_logger.debug(f"Working dir: {os.getcwd()}")
+    import platform
 
-        demisto_logger.debug(f"Python version: {sys.version}")
-        demisto_logger.debug(f"Working dir: {os.getcwd()}")
-        import platform
+    demisto_logger.debug(f"Platform: {platform.system()}")
 
-        demisto_logger.debug(f"Platform: {platform.system()}")
-
-        demisto_logger.info(
-            f"[yellow]Log file location: {current_log_file_path}[/yellow]"
-        )
-        current_log_file_path_notified = True
+    demisto_logger.info(f"[yellow]Log file location: {current_log_file_path}[/yellow]")
 
     logger = demisto_logger
 

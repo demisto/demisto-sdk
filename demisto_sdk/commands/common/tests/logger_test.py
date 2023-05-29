@@ -63,6 +63,7 @@ def test_record_starts_with_escapes(msg: str, expected: bool):
         (" foo", ""),
         ("foo [red]bar[/red]", ""),
         ("[red][bold]foo[/bold][/red]", "[red][bold]"),
+        ("[red foo", ""),
     ],
 )
 def test_get_start_escapes(msg: str, expected: bool):

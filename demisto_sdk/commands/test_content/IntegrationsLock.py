@@ -7,7 +7,6 @@ import pytz
 import requests
 from google.api_core.exceptions import PreconditionFailed
 from google.cloud import storage
-from time import sleep
 
 LOCKS_PATH = "content-locks"
 BUCKET_NAME = os.environ.get("GCS_ARTIFACTS_BUCKET")
@@ -80,24 +79,14 @@ def safe_lock_integrations(test_playbook) -> bool:
     else:
         print_msg = "No integrations to lock"
     test_playbook.build_context.logging_module.debug(print_msg)
-
-    max_retry_times = 4
-
-    for i in range(max_retry_times):
-        try:
-            storage_client = storage.Client()
-            locked = lock_integrations(test_playbook, storage_client)
-
-            if locked:
-                break
-        except Exception as e:
-            test_playbook.build_context.logging_module.exception(
-                f"attempt to lock integration failed, error: {str(e)}"
-            )
-            locked = False
-        test_playbook.build_context.logging_module.info(f'Attempt {i} to lock integrations {integration_names} failed')
-        sleep(10)
-
+    try:
+        storage_client = storage.Client()
+        locked = lock_integrations(test_playbook, storage_client)
+    except Exception:
+        test_playbook.build_context.logging_module.exception(
+            "attempt to lock integration failed for unknown reason."
+        )
+        locked = False
     return locked
 
 
@@ -220,10 +209,6 @@ def create_lock_files(
             )
             locked_integrations.append(integration)
         except PreconditionFailed:
-            storage_gn_nember = blob.get(bucket=BUCKET_NAME, object=f"{LOCKS_PATH}/{integration}").generation
-            test_playbook.build_context.logging_module.info(
-                f"Failed on pre condition | {generation_number=} | storage generation number {storage_gn_nember=}")
-
             # if this exception occurs it means that another build has locked this integration
             # before this build managed to do it.
             # we need to unlock all the integrations we have already locked and try again later
@@ -233,6 +218,17 @@ def create_lock_files(
             )
             unlock_integrations(locked_integrations, test_playbook, storage_client)
             return False
+        except Exception as ex:
+            if '412' in str(ex):
+                test_playbook.build_context.logging_module.warning('===========')
+                test_playbook.build_context.logging_module.warning(ex)
+                test_playbook.build_context.logging_module.warning(
+                    f"Could not lock integration {integration}, Create file with precondition failed."
+                    f"delaying test execution."
+                )
+                unlock_integrations(locked_integrations, test_playbook, storage_client)
+                return False
+
     return True
 
 

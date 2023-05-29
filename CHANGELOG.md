@@ -15,6 +15,7 @@
 * Fixed an issue where **upload** command summary was inaccurate when uploading a `Pack` without the `-z` flag.
 * Added pack name and pack version to **upload** command summary.
 * Added support for modeling rules with multi datasets in ****modeling-rules test**** command.
+* Fixed an issue where **validate** command did not fail on non-existent dependency ids of non-mandatory dependant content.
 
 ## 1.15.2
 * Fixed an issue where **format** added default arguments to reputation commands which already have one.

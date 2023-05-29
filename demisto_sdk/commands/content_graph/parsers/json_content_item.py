@@ -56,8 +56,13 @@ class JSONContentItemParser(ContentItemParser):
         if file_marketplaces := [
             MarketplaceVersions(mp) for mp in self.json_data.get("marketplaces", [])
         ]:
-            return file_marketplaces
-        return sorted(set(self.pack_marketplaces) & self.supported_marketplaces)
+            marketplaces = file_marketplaces
+
+        marketplaces = sorted(set(self.pack_marketplaces) & self.supported_marketplaces)
+        if MarketplaceVersions.XSOAR in marketplaces:
+            marketplaces.append(MarketplaceVersions.XSOAR_SAAS)
+
+        return marketplaces
 
     def get_json(self) -> Dict[str, Any]:
         if self.path.is_dir():

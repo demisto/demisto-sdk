@@ -177,6 +177,11 @@ class MarketplaceTagParser:
     XPANSE_INLINE_PREFIX = "<~XPANSE>"
     XPANSE_INLINE_SUFFIX = "</~XPANSE>"
 
+    XSOAR_SAAS_PREFIX = "<~XSOAR-SAAS>\n"
+    XSOAR_SAAS_SUFFIX = "\n</~XSOAR-SAAS>\n"
+    XSOAR_SAAS_INLINE_PREFIX = "<~XSOAR-SAAS>"
+    XSOAR_SAAS_INLINE_SUFFIX = "</~XSOAR-SAAS>"
+
     def __init__(self, marketplace: str = MarketplaceVersions.XSOAR.value):
         self.marketplace = marketplace
         self._xsoar_parser = TagParser(
@@ -203,6 +208,14 @@ class MarketplaceTagParser:
             tag_prefix=self.XPANSE_INLINE_PREFIX,
             tag_suffix=self.XPANSE_INLINE_SUFFIX,
         )
+        self._xsoar_saas_inline_parser = TagParser(
+            tag_prefix=self.XSOAR_SAAS_PREFIX,
+            tag_suffix=self.XSOAR_SAAS_SUFFIX
+        )
+        self._xsoar_saas_inline_parser = TagParser(
+            tag_prefix=self.XSOAR_SAAS_INLINE_PREFIX,
+            tag_suffix=self.XSOAR_SAAS_INLINE_SUFFIX
+        )
 
     @property
     def marketplace(self):
@@ -217,6 +230,9 @@ class MarketplaceTagParser:
         )
         self._should_remove_xpanse_text = (
             marketplace != MarketplaceVersions.XPANSE.value
+        )
+        self._should_remove_xsoar_saas_text = (
+            marketplace != MarketplaceVersions.XSOAR_SAAS.value
         )
 
     def parse_text(self, text):
@@ -241,6 +257,7 @@ class MarketplaceTagParser:
                 ),
             ),
         )
+    #omertodo: check this function in a test.
 
 
 MARKETPLACE_TAG_PARSER = None
@@ -2860,6 +2877,7 @@ def get_approved_tags_from_branch() -> Dict[str, List[str]]:
                 "xsoar": [],
                 "marketplacev2": [],
                 "xpanse": [],
+                # omertodo: this is supposed to be like XSOAR check what we want to do here.
             }
 
         return approved_tags_json.get("approved_list", {})

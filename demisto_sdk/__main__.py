@@ -823,7 +823,7 @@ def validate(ctx, config, file_paths: str, **kwargs):
     "Default is the XSOAR marketplace, that has all of the packs "
     "artifacts.",
     default="xsoar",
-    type=click.Choice(["xsoar", "marketplacev2", "v2", "xpanse"]),
+    type=click.Choice(["xsoar", "marketplacev2", "v2", "xpanse", "xsoar_saas"]),
 )
 @click.option(
     "-fbi",
@@ -1323,8 +1323,7 @@ def format(
 @click.option(
     "-mp",
     "--marketplace",
-    help="The marketplace to which the content will be uploaded.",
-    default=MarketplaceVersions.XSOAR.value,
+    help="The marketplace to which the content will be uploaded."
 )
 @click.option(
     "--keep-zip",

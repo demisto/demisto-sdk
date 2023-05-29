@@ -1273,7 +1273,9 @@ class ValidateManager:
                 f"\n[cyan]================= Validating graph =================[/cyan]"
             )
             all_files_set = list(
-                set().union(modified_files, added_files, old_format_files)
+                set().union(
+                    modified_files, added_files, old_format_files, changed_meta_files
+                )
             )
             if all_files_set:
                 with GraphValidator(

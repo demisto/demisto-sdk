@@ -83,6 +83,7 @@ from demisto_sdk.commands.common.constants import (
     PACKAGE_YML_FILE_REGEX,
     PACKS_DIR,
     PACKS_DIR_REGEX,
+    PACKS_FOLDER,
     PACKS_PACK_IGNORE_FILE_NAME,
     PACKS_PACK_META_FILE_NAME,
     PACKS_README_FILE_NAME,
@@ -1280,9 +1281,9 @@ def get_pack_name(file_path):
     """
     file_path = Path(file_path)
     parts = file_path.parts
-    if "Packs" not in parts:
+    if PACKS_FOLDER not in parts:
         return None
-    pack_name_index = parts.index("Packs") + 1
+    pack_name_index = parts.index(PACKS_FOLDER) + 1
     if len(parts) <= pack_name_index:
         return None
     return parts[pack_name_index]
@@ -2366,7 +2367,7 @@ def open_id_set_file(id_set_path):
         return id_set
 
 
-def get_demisto_version(client: demisto_client) -> Union[Version, LegacyVersion]:
+def get_demisto_version(client: demisto_client) -> Version:
     """
     Args:
         demisto_client: A configured demisto_client instance
@@ -2377,12 +2378,12 @@ def get_demisto_version(client: demisto_client) -> Union[Version, LegacyVersion]
     try:
         resp = client.generic_request("/about", "GET")
         about_data = json.loads(resp[0].replace("'", '"'))
-        return parse(about_data.get("demistoVersion"))  # type: ignore
+        return Version(Version(about_data.get("demistoVersion")).base_version)
     except Exception:
         logger.warning(
             "Could not parse Xsoar version, please make sure the environment is properly configured."
         )
-        return parse("0")
+        return Version("0")
 
 
 def arg_to_list(arg: Union[str, List[str]], separator: str = ",") -> List[str]:

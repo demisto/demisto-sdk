@@ -3,9 +3,9 @@ import traceback
 from pathlib import Path
 from typing import Iterator, List, Optional
 
+from demisto_sdk.commands.common.constants import PACKS_FOLDER
 from demisto_sdk.commands.common.cpu_count import cpu_count
 from demisto_sdk.commands.common.logger import logger
-from demisto_sdk.commands.content_graph.common import PACKS_FOLDER
 from demisto_sdk.commands.content_graph.parsers.pack import PackParser
 
 IGNORED_PACKS_FOR_PARSING = ["NonSupported"]

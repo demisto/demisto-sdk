@@ -806,6 +806,7 @@ PACKS_README_FILE_NAME = "README.md"
 PACKS_CONTRIBUTORS_FILE_NAME = "CONTRIBUTORS.json"
 AUTHOR_IMAGE_FILE_NAME = "Author_image.png"
 METADATA_FILE_NAME = "pack_metadata.json"
+PACKS_FOLDER = "Packs"
 
 CONF_JSON_FILE_NAME = "conf.json"
 
@@ -1306,6 +1307,13 @@ ACCEPTED_FILE_EXTENSIONS = [
     ".lock",
 ]
 ENDPOINT_COMMAND_NAME = "endpoint"
+
+RELIABILITY_PARAMETER_NAMES = [
+    "integration_reliability",  # First item in the list will be used in errors
+    "integrationReliability",
+    "feedReliability",
+    "reliability",
+]
 
 REPUTATION_COMMAND_NAMES = {"file", "email", "domain", "url", "ip", "cve"}
 

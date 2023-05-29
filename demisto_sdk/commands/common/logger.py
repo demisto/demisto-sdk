@@ -214,7 +214,6 @@ class ColorConsoleFormatter(logging.Formatter):
 
         # Need to "insert" the string into the escapes
         start_escapes = ColorConsoleFormatter._get_start_escapes(record)
-        # import pdb; pdb.set_trace()
         return start_escapes + string + record.getMessage()[len(start_escapes) :]
 
     def format(self, record):

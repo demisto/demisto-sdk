@@ -227,6 +227,18 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: i
         return CONTENT_PATH / v
 
     @property
+    def pack_id(self) -> str:
+        return self.object_id
+
+    @property
+    def pack_name(self) -> str:
+        return self.name
+
+    @property
+    def pack_version(self) -> Optional[Version]:
+        return Version(self.current_version) if self.current_version else None
+
+    @property
     def depends_on(self) -> List["RelationshipData"]:
         """
         This returns the packs which this content item depends on.

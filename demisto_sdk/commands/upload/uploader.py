@@ -405,16 +405,26 @@ class Uploader:
                 (
                     itertools.chain(
                         (
-                            (item.path.name, item.content_type)
+                            (
+                                item.path.name,
+                                item.content_type,
+                                item.pack_name,
+                                item.pack_version,
+                            )
                             for item in self._successfully_uploaded_content_items
                         ),
                         (
-                            (item, "Pack")
+                            (
+                                item,
+                                "Pack",
+                                item,
+                                "",  # When uploading zips we are not aware of the version
+                            )
                             for item in self._successfully_uploaded_zipped_packs
                         ),
                     )
                 ),
-                headers=["NAME", "TYPE"],
+                headers=["NAME", "TYPE", "PACK_NAME", "PACK_VERSION"],
                 tablefmt="fancy_grid",
             )
 

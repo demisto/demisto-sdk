@@ -304,7 +304,7 @@ class Uploader:
         except IncompatibleUploadVersionException:
             assert isinstance(
                 content_item, ContentItem
-            ), "Cannot compare version for Pack items, only ContentItems"
+            ), "This exception should only be raised for content items"
             self._failed_upload_version_mismatch.append(content_item)
             return False
 
@@ -315,7 +315,7 @@ class Uploader:
             return False
 
         except FailedUploadMultipleException as e:
-            for failure in e.failures:
+            for failure in e.upload_failures:
                 failure_str = failure.additional_info or str(failure)
 
                 _failed_content_item: Union[
@@ -330,6 +330,10 @@ class Uploader:
                     self._failed_upload_content_items.append(
                         (_failed_content_item, failure_str)
                     )
+            for failure_mismatch in e.incompatible_versions_items:
+                self._failed_upload_version_mismatch.append(failure_mismatch.item)
+
+            self._successfully_uploaded_content_items.extend(e.uploaded_successfully)
             return False
 
         except (FailedUploadException, NotUploadableException, Exception) as e:
@@ -479,7 +483,7 @@ class ConfigFileParser:
             self.content = json.load(f)
 
         self.custom_packs_paths: Tuple[Path, ...] = tuple(
-            Path(pack.get["url"]) for pack in self.content.get("custom_packs", ())
+            Path(pack["url"]) for pack in self.content.get("custom_packs", ())
         )
 
 

@@ -2366,7 +2366,7 @@ def open_id_set_file(id_set_path):
         return id_set
 
 
-def get_demisto_version(client: demisto_client) -> Union[Version, LegacyVersion]:
+def get_demisto_version(client: demisto_client) -> Version:
     """
     Args:
         demisto_client: A configured demisto_client instance
@@ -2377,12 +2377,12 @@ def get_demisto_version(client: demisto_client) -> Union[Version, LegacyVersion]
     try:
         resp = client.generic_request("/about", "GET")
         about_data = json.loads(resp[0].replace("'", '"'))
-        return parse(about_data.get("demistoVersion"))  # type: ignore
+        return Version(Version(about_data.get("demistoVersion")).base_version)
     except Exception:
         logger.warning(
             "Could not parse Xsoar version, please make sure the environment is properly configured."
         )
-        return parse("0")
+        return Version("0")
 
 
 def arg_to_list(arg: Union[str, List[str]], separator: str = ",") -> List[str]:
@@ -3581,11 +3581,11 @@ def get_id(file_content: Dict) -> Union[str, None]:
 
 def parse_marketplace_kwargs(kwargs: Dict[str, Any]) -> MarketplaceVersions:
     """
-    Supports both the `marketplace` argument and `is_xsiam`.
+    Supports both the `marketplace` argument and `xsiam`.
     Raises an error when both are supplied.
     """
     marketplace = kwargs.pop("marketplace", None)  # removing to not pass it twice later
-    is_xsiam = kwargs.get("is_xsiam")
+    is_xsiam = kwargs.get("xsiam")
 
     if (
         marketplace
@@ -3593,7 +3593,7 @@ def parse_marketplace_kwargs(kwargs: Dict[str, Any]) -> MarketplaceVersions:
         and MarketplaceVersions(marketplace) != MarketplaceVersions.MarketplaceV2
     ):
         raise ValueError(
-            "The arguments `marketplace` and `is_xsiam` cannot be used at the same time, remove one of them."
+            "The arguments `marketplace` and `xsiam` cannot be used at the same time, remove one of them."
         )
 
     if is_xsiam:

@@ -2706,6 +2706,12 @@ class ServerContext:
         )
 
     def _reset_containers(self):
+        if self.build_context.is_xsiam:
+            self.build_context.logging_module.info(
+                "Skip reset containers - this API is not supported.", real_time=True
+            )
+            return
+
         self.build_context.logging_module.info("Resetting containers\n", real_time=True)
 
         body, status_code, _ = demisto_client.generic_request_func(

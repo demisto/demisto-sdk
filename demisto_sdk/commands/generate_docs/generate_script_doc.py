@@ -220,7 +220,9 @@ def get_inputs(script):
         inputs.append(
             {
                 "Argument Name": arg.get("name"),
-                "Description": string_escape_md(arg.get("description", "")),
+                "Description": string_escape_md(
+                    arg.get("description", ""), escape_html=False
+                ),
             }
         )
 
@@ -250,7 +252,9 @@ def get_outputs(script):
         outputs.append(
             {
                 "Path": arg.get("contextPath"),
-                "Description": string_escape_md(arg.get("description", "")),
+                "Description": string_escape_md(
+                    arg.get("description", ""), escape_html=False
+                ),
                 "Type": arg.get("type", "Unknown"),
             }
         )

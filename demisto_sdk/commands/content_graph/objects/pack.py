@@ -73,6 +73,7 @@ from demisto_sdk.commands.upload.constants import (
     MULTIPLE_ZIPPED_PACKS_FILE_NAME,
     MULTIPLE_ZIPPED_PACKS_FILE_STEM,
 )
+from demisto_sdk.commands.upload.exceptions import IncompatibleUploadVersionException
 from demisto_sdk.commands.upload.tools import (
     parse_error_response,
     parse_upload_response,
@@ -450,13 +451,13 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: i
                         f"Cannot write to {str(destination_dir / MULTIPLE_ZIPPED_PACKS_FILE_NAME)}"
                     )
 
-            # upload the pack zip (not the result)
-            return upload_zip(
-                path=pack_zip_path,
-                client=client,
-                target_demisto_version=target_demisto_version,
-                skip_validations=skip_validations,
-            )
+                # upload the pack zip (not the result)
+                return upload_zip(
+                    path=pack_zip_path,
+                    client=client,
+                    target_demisto_version=target_demisto_version,
+                    skip_validations=skip_validations,
+                )
 
     def _upload_item_by_item(
         self,
@@ -468,7 +469,10 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: i
         logger.debug(
             f"Uploading pack {self.object_id} element-by-element, as -z was not specified"
         )
-        failures: List[FailedUploadException] = []
+        upload_failures: List[FailedUploadException] = []
+        uploaded_successfully: List[ContentItem] = []
+        incompatible_content_items = []
+
         for item in self.content_items:
             if item.content_type in CONTENT_TYPES_EXCLUDED_FROM_UPLOAD:
                 logger.debug(
@@ -485,6 +489,7 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: i
                     marketplace=marketplace,
                     target_demisto_version=target_demisto_version,
                 )
+                uploaded_successfully.append(item)
             except NotIndivitudallyUploadableException:
                 if marketplace == MarketplaceVersions.MarketplaceV2:
                     raise  # many XSIAM content types must be uploaded zipped.
@@ -492,21 +497,23 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: i
                     f"Not uploading pack {self.object_id}: {item.content_type} {item.object_id} as it was not indivudally uploaded"
                 )
             except ApiException as e:
-                failures.append(
+                upload_failures.append(
                     FailedUploadException(
                         item.path,
                         response_body={},
                         additional_info=parse_error_response(e),
                     )
                 )
+            except IncompatibleUploadVersionException as e:
+                incompatible_content_items.append(e)
 
             except FailedUploadException as e:
-                failures.append(e)
+                upload_failures.append(e)
 
-        if failures:
-            if len(failures) == 1:
-                raise failures[0]
-            raise FailedUploadMultipleException(failures)
+        if upload_failures or incompatible_content_items:
+            raise FailedUploadMultipleException(
+                uploaded_successfully, upload_failures, incompatible_content_items
+            )
 
         return True
 

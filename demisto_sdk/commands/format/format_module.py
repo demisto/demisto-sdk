@@ -1,6 +1,6 @@
 import os
 from pathlib import Path
-from typing import Dict, List, Tuple
+from typing import Dict, List, Tuple, Union
 
 from demisto_sdk.commands.common.constants import (
     JOB,
@@ -113,7 +113,7 @@ def format_manager(
     from_version: str = "",
     no_validate: bool = False,
     update_docker: bool = False,
-    assume_yes: bool = False,
+    assume_answer: Union[bool, None] = None,
     deprecate: bool = False,
     use_git: bool = False,
     prev_ver: str = None,
@@ -131,7 +131,7 @@ def format_manager(
         output: (str) The path to save the formatted file to.
         no_validate (flag): Whether the user specifies not to run validate after format.
         update_docker (flag): Whether to update the docker image.
-        assume_yes (bool): Whether to assume "yes" as answer to all prompts and run non-interactively
+        assume_answer (bool | None): Whether to assume "yes" or "no" as answer to all prompts and run non-interactively
         deprecate (bool): Whether to deprecate the entity
         use_git (bool): Use git to automatically recognize which files changed and run format on them
         prev_ver (str): Against which branch should the difference be recognized
@@ -194,7 +194,7 @@ def format_manager(
                     output=output,
                     no_validate=no_validate,
                     update_docker=update_docker,
-                    assume_yes=assume_yes,
+                    assume_answer=assume_answer,
                     deprecate=deprecate,
                     add_tests=add_tests,
                     id_set_path=id_set_path,

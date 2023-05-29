@@ -21,11 +21,14 @@ if TYPE_CHECKING:
 
 from pydantic import DirectoryPath, validator
 
-from demisto_sdk.commands.common.constants import MarketplaceVersions
+from demisto_sdk.commands.common.constants import PACKS_FOLDER, MarketplaceVersions
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.logger import logger
-from demisto_sdk.commands.common.tools import replace_incident_to_alert
-from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
+from demisto_sdk.commands.common.tools import get_pack_name, replace_incident_to_alert
+from demisto_sdk.commands.content_graph.common import (
+    ContentType,
+    RelationshipType,
+)
 from demisto_sdk.commands.content_graph.objects.base_content import (
     BaseContent,
 )
@@ -52,6 +55,18 @@ class ContentItem(BaseContent):
         return CONTENT_PATH / v
 
     @property
+    def pack_id(self) -> str:
+        return self.in_pack.pack_id if self.in_pack else ""
+
+    @property
+    def pack_name(self) -> str:
+        return self.in_pack.name if self.in_pack else ""
+
+    @property
+    def pack_version(self) -> Optional[Version]:
+        return self.in_pack.pack_version if self.in_pack else None
+
+    @property
     def in_pack(self) -> Optional["Pack"]:
         """
         This returns the Pack which the content item is in.
@@ -59,10 +74,13 @@ class ContentItem(BaseContent):
         Returns:
             Pack: Pack model.
         """
-        in_pack = self.relationships_data[RelationshipType.IN_PACK]
-        if not in_pack:
-            return None
-        return next(iter(in_pack)).content_item_to  # type: ignore[return-value]
+        if in_pack := self.relationships_data[RelationshipType.IN_PACK]:
+            return next(iter(in_pack)).content_item_to  # type: ignore[return-value]
+        if pack_name := get_pack_name(self.path):
+            return BaseContent.from_path(
+                CONTENT_PATH / PACKS_FOLDER / pack_name
+            )  # type: ignore[return-value]
+        return None
 
     @property
     def uses(self) -> List["RelationshipData"]:

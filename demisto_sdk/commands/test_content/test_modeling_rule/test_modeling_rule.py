@@ -63,12 +63,12 @@ def create_table(expected: Dict[str, Any], received: Dict[str, Any]) -> Table:
 
 
 def verify_results(
-    rule: SingleModelingRule, results: List[dict], test_data: init_test_data.TestData
+    tested_dataset: str, results: List[dict], test_data: init_test_data.TestData
 ):
     """Verify that the results of the XQL query match the expected values.
 
     Args:
-        rule (SingleModelingRule): The rule to verify result for.
+        tested_dataset (str): The dataset to verify result for.
         results (List[dict]): The results of the XQL query.
         test_data (init_test_data.TestData): The data parsed from the test data file.
 
@@ -84,7 +84,7 @@ def verify_results(
 
         return False
     rule_relevant_data = [
-        data for data in test_data.data if data.dataset == rule.dataset
+        data for data in test_data.data if data.dataset == tested_dataset
     ]
     if len(results) != len(rule_relevant_data):
         err = (
@@ -103,7 +103,7 @@ def verify_results(
         )
 
         # get expected_values for the given query result
-        td_event_id = result.pop(f"{rule.dataset}.test_data_event_id")
+        td_event_id = result.pop(f"{tested_dataset}.test_data_event_id")
         expected_values = None
         for e in test_data.data:
             if str(e.test_data_event_id) == td_event_id:
@@ -198,7 +198,7 @@ def validate_expected_values(
             )
             success = False
         else:
-            success &= verify_results(rule, results, test_data)
+            success &= verify_results(rule.dataset, results, test_data)
     if success:
         logger.info(
             "[green]Mappings validated successfully[/green]", extra={"markup": True}

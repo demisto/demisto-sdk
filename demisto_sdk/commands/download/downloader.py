@@ -615,11 +615,10 @@ class Downloader:
         Removes empty folders from the output pack path
         :return: None
         """
-        if not self.keep_empty_folders:
-            pack_folder = Path(self.output_pack_path)
-            for folder_path in pack_folder.glob("*"):
-                if folder_path.is_dir() and not any(folder_path.iterdir()):
-                    folder_path.rmdir()
+        pack_folder = Path(self.output_pack_path)
+        for folder_path in pack_folder.glob("*"):
+            if folder_path.is_dir() and not any(folder_path.iterdir()):
+                folder_path.rmdir()
 
     def verify_output_pack_is_pack(self) -> bool:
         """

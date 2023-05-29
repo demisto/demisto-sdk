@@ -11,6 +11,7 @@
 * Fixed an issue where the format command did not work as expected on pre-process rules files.
 * Fixed an issue where **upload** command failed to upload when the XSOAR version is beta.
 * Fixed an issue where **upload** command summary was inaccurate when uploading a `Pack` without the `-z` flag.
+* Added pack name and pack version to **upload** command summary.
 
 ## 1.15.2
 * Fixed an issue where **format** added default arguments to reputation commands which already have one.

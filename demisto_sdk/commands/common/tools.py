@@ -83,6 +83,7 @@ from demisto_sdk.commands.common.constants import (
     PACKAGE_YML_FILE_REGEX,
     PACKS_DIR,
     PACKS_DIR_REGEX,
+    PACKS_FOLDER,
     PACKS_PACK_IGNORE_FILE_NAME,
     PACKS_PACK_META_FILE_NAME,
     PACKS_README_FILE_NAME,
@@ -1280,9 +1281,9 @@ def get_pack_name(file_path):
     """
     file_path = Path(file_path)
     parts = file_path.parts
-    if "Packs" not in parts:
+    if PACKS_FOLDER not in parts:
         return None
-    pack_name_index = parts.index("Packs") + 1
+    pack_name_index = parts.index(PACKS_FOLDER) + 1
     if len(parts) <= pack_name_index:
         return None
     return parts[pack_name_index]

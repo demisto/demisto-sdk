@@ -130,7 +130,8 @@ class CoverageReport:
             min_cov = self.file_min_coverage(file_name)
             if min_cov > cov_precents:
                 logger.error(
-                    f"file: {file_name} unittests coverage should reach at least {min_cov} currently {cov_precents}."
+                    f"[red]Unit-tests for '{file_name}' must reach a coverage of at least {min_cov}% "
+                    f"(currently: {cov_precents}%)[/red]."
                 )
                 coverage_ok = False
         return coverage_ok

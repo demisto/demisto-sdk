@@ -424,7 +424,7 @@ class Uploader:
                         ),
                     )
                 ),
-                headers=["NAME", "TYPE", "PACK_NAME", "PACK_VERSION"],
+                headers=["NAME", "TYPE", "PACK NAME", "PACK VERSION"],
                 tablefmt="fancy_grid",
             )
 

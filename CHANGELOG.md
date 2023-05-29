@@ -1,7 +1,19 @@
 # Changelog
 
 ## Unreleased
+* Added the `--init` flag to **download**.
+* Added the `--keep-empty-folders` flag to **download**.
+* Added `markdown-lint` to **pre-commit**
 * Added the PEP484 (no-implicit-optional) hook to **pre-commit**.
+* Fixed an issue where the content-graph parsing failed on mappers with undefined mapping.
+* Fixed an issue in **validate** where `pack_metadata.json` files were not collected proplely in `--graph` option.
+* Fixed an issue where *validate* reputation commands outputs were not checked for new content.
+* Added *IN107* and *DB100* error codes to *ALLOWED_IGNORE_ERRORS* list.
+* Added a validation that assures feed integrations implement the `integration_reliability` configuration parameter.
+* Fixed an issue where the format command did not work as expected on pre-process rules files.
+* Fixed an issue where **upload** command failed to upload when the XSOAR version is beta.
+* Fixed an issue where **upload** command summary was inaccurate when uploading a `Pack` without the `-z` flag.
+* Added support for modeling rules with multi datasets in ****modeling-rules test**** command.
 
 ## 1.15.2
 * Fixed an issue where **format** added default arguments to reputation commands which already have one.
@@ -10,6 +22,7 @@
 * Fixed an issue where **upload** would not read a repo configuration file properly.
 * Fixed an issue where **upload** would not handle the `-x`/`--xsiam` flag properly.
 * Fixed an issue where **format** failed to use input from the user, when asking about a `from_version`.
+* Added the `-n`/`--assume_no` flag to **format**.
 
 ## 1.15.1
 * Fixed an issue where **generate-docs** generated fields with double html escaping.

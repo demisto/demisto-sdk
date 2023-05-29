@@ -138,7 +138,7 @@ class TestFormatting:
 
         mocker.patch.object(update_generic, "get_remote_file", return_value={})
         base_yml = formatter(source_path, path=schema_path)
-        base_yml.assume_yes = True
+        base_yml.assume_answer = True
         base_yml.update_yml(file_type=file_type)
         assert yml_title not in str(base_yml.data)
         assert -1 == base_yml.id_and_version_location["version"]
@@ -769,7 +769,7 @@ class TestFormatting:
         os.makedirs(path, exist_ok=True)
         shutil.copyfile(source, target)
         monkeypatch.setattr("builtins.input", lambda _: "N")
-        res = format_manager(input=target, assume_yes=True)
+        res = format_manager(input=target, assume_answer=True)
         with open(target) as f:
             yaml_content = yaml.load(f)
             params = yaml_content["configuration"]
@@ -815,7 +815,7 @@ class TestFormatting:
         )
         os.makedirs(path, exist_ok=True)
         shutil.copyfile(source, target)
-        res = format_manager(input=target, clear_cache=True, assume_yes=True)
+        res = format_manager(input=target, clear_cache=True, assume_answer=True)
         with open(target) as f:
             yaml_content = yaml.load(f)
             params = yaml_content["configuration"]
@@ -962,7 +962,7 @@ class TestFormatting:
         formatter = TestPlaybookYMLFormat(
             input=SOURCE_FORMAT_TEST_PLAYBOOK, output=DESTINATION_FORMAT_TEST_PLAYBOOK
         )
-        formatter.assume_yes = True
+        formatter.assume_answer = True
         res = formatter.run_format()
         assert res == 0
         assert formatter.data.get("fromversion") == GENERAL_DEFAULT_FROMVERSION
@@ -1007,7 +1007,7 @@ class TestFormatting:
 
         with ChangeCWD(repo.path):
             formatter = PlaybookYMLFormat(
-                input=playbook.yml.path, path=PLAYBOOK_SCHEMA_PATH, assume_yes=True
+                input=playbook.yml.path, path=PLAYBOOK_SCHEMA_PATH, assume_answer=True
             )
             formatter.run_format()
             assert formatter.data.get("fromversion") == expected_fromversion
@@ -1151,7 +1151,7 @@ class TestFormatting:
             path=f"{schema_dir}/script.yml",
             no_validate=True,
             update_docker=True,
-            assume_yes=True,
+            assume_answer=True,
         )
         monkeypatch.setattr("builtins.input", lambda _: "N")
         mocker.patch.object(BaseUpdate, "set_fromVersion", return_value=None)
@@ -1400,7 +1400,7 @@ class TestFormatting:
         test_playbook.create_default_test_playbook("SamplePlaybookTest")
         test_playbook.yml.update({"id": "other_id"})
         playbook_yml = TestPlaybookYMLFormat(
-            test_playbook.yml.path, path=test_playbook.yml.path, assume_yes=True
+            test_playbook.yml.path, path=test_playbook.yml.path, assume_answer=True
         )
         with ChangeCWD(repo.path):
             playbook_yml.run_format()
@@ -1420,7 +1420,7 @@ class TestFormatting:
         pack.pack_metadata.update({"support": "partner", "currentVersion": "1.0.0"})
         integration = pack.create_integration()
         bs = BaseUpdate(
-            input=integration.yml.path, assume_yes=True, path=INTEGRATION_SCHEMA_PATH
+            input=integration.yml.path, assume_answer=True, path=INTEGRATION_SCHEMA_PATH
         )
         bs.set_fromVersion()
         assert bs.data["fromversion"] == GENERAL_DEFAULT_FROMVERSION
@@ -1444,7 +1444,7 @@ class TestFormatting:
             [script.yml.path, playbook.yml.path, integration.yml.path],
             [SCRIPT_SCHEMA_PATH, PLAYBOOK_SCHEMA_PATH, INTEGRATION_SCHEMA_PATH],
         ):
-            bs = BaseUpdate(input=path, assume_yes=True, path=schema_path)
+            bs = BaseUpdate(input=path, assume_answer=True, path=schema_path)
             bs.set_fromVersion()
             assert bs.data["fromversion"] == GENERAL_DEFAULT_FROMVERSION, path
 

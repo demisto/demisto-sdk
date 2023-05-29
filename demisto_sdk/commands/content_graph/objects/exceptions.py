@@ -1,5 +1,10 @@
 from pathlib import Path
-from typing import Optional, Sequence
+from typing import TYPE_CHECKING, Optional, Sequence
+
+from demisto_sdk.commands.upload.exceptions import IncompatibleUploadVersionException
+
+if TYPE_CHECKING:
+    from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 
 
 class FailedUploadException(RuntimeError):
@@ -27,9 +32,17 @@ class FailedUploadException(RuntimeError):
 
 
 class FailedUploadMultipleException(RuntimeError):
-    def __init__(self, failures: Sequence[FailedUploadException]) -> None:
-        self.failures = failures
-        super().__init__(self.failures)
+    def __init__(
+        self,
+        uploaded_successfully: Sequence["ContentItem"],
+        upload_failures: Sequence[FailedUploadException],
+        incompatible_versions_items: Sequence[IncompatibleUploadVersionException],
+    ) -> None:
+        self.uploaded_successfully = uploaded_successfully
+        self.upload_failures = upload_failures
+        self.incompatible_versions_items = incompatible_versions_items
+        super().__init__((self.upload_failures, self.incompatible_versions_items))
 
     def __str__(self) -> str:
-        return "\n".join(str(failure) for failure in self.failures)
+        new_line = "\n"
+        return f"""Upload Failures: {new_line.join(str(failure) for failure in self.upload_failures)}{new_line}Incompatible versions: {new_line.join(str(item) for item in self.incompatible_versions_items)}"""

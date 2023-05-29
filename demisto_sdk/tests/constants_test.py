@@ -342,7 +342,7 @@ DESTINATION_FORMAT_PRE_PROCESS_RULES_INVALID_NAME_COPY = (
 )
 PRE_PROCESS_RULES_PATH = "PreProcessRules"
 PRE_PROCESS_RULES_SCHEMA_PATH = (
-    f"{GIT_ROOT}/demisto_sdk/commands/common/schemas/pre-process-rules.yml"
+    f"{GIT_ROOT}/demisto_sdk/commands/common/schemas/pre-process-rule.yml"
 )
 
 DESTINATION_FORMAT_LISTS_COPY = "Lists/list-copy.json"

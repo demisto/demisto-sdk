@@ -220,6 +220,10 @@ def create_lock_files(
             )
             locked_integrations.append(integration)
         except PreconditionFailed:
+            storage_gn_nember = blob.get(bucket=BUCKET_NAME, object=f"{LOCKS_PATH}/{integration}").generation
+            test_playbook.build_context.logging_module.info(
+                f"Failed on pre condition | {generation_number=} | storage generation number {storage_gn_nember=}")
+
             # if this exception occurs it means that another build has locked this integration
             # before this build managed to do it.
             # we need to unlock all the integrations we have already locked and try again later

@@ -24,6 +24,7 @@ from demisto_sdk.commands.common.constants import (
     PACKS_DIR,
     PACKS_PACK_META_FILE_NAME,
     PYTHON_SUBTYPES,
+    RELIABILITY_PARAMETER_NAMES,
     REPUTATION_COMMAND_NAMES,
     TYPE_PWSH,
     XSOAR_CONTEXT_STANDARD_URL,
@@ -127,8 +128,6 @@ class IntegrationValidator(ContentEntityValidator):
             self.no_changed_command_name_or_arg(),
             self.is_valid_display_configuration(),
             self.no_changed_removed_yml_fields(),
-            # will move to is_valid_integration after https://github.com/demisto/etc/issues/17949
-            self.is_outputs_for_reputations_commands_valid(),
         ]
         return all(answers)
 
@@ -205,8 +204,9 @@ class IntegrationValidator(ContentEntityValidator):
             self.is_valid_description(beta_integration=False),
             self.is_context_correct_in_readme(),
             self.verify_yml_commands_match_readme(is_modified),
-            self.verify_reputation_commands_has_reliability(is_modified),
+            self.verify_reputation_commands_has_reliability(),
             self.is_integration_deprecated_and_used(),
+            self.is_outputs_for_reputations_commands_valid(),
         ]
 
         if check_is_unskipped:
@@ -1256,7 +1256,6 @@ class IntegrationValidator(ContentEntityValidator):
         """
         fetch_params_exist = True
         if self.current_file.get("script", {}).get("isfetch") is True:
-
             # get the iten marketplaces to decide which are the required params
             # if no marketplaces or xsoar in marketplaces - the required params will be INCIDENT_FETCH_REQUIRED_PARAMS (with Incident type etc. )
             # otherwise it will be the ALERT_FETCH_REQUIRED_PARAMS (with Alert type etc. )
@@ -1386,11 +1385,17 @@ class IntegrationValidator(ContentEntityValidator):
             param_details = params.get(required_param.get("name"))  # type: ignore
             equal_key_values: Dict = required_param.get("must_equal", dict())  # type: ignore
             contained_key_values: Dict = required_param.get("must_contain", dict())  # type: ignore
+            must_be_one_of: Dict = required_param.get("must_be_one_of", list())  # type: ignore
             if param_details:
                 # Check length to see no unexpected key exists in the config. Add +1 for the 'name' key.
                 is_valid = (
-                    len(equal_key_values) + len(contained_key_values) + 1
-                    == len(param_details)
+                    (
+                        any(
+                            k in param_details and param_details[k] in v
+                            for k, v in must_be_one_of.items()
+                        )
+                        or not must_be_one_of
+                    )
                     and all(
                         k in param_details and param_details[k] == v
                         for k, v in equal_key_values.items()
@@ -1675,7 +1680,6 @@ class IntegrationValidator(ContentEntityValidator):
 
         if integrations_folder == "Integrations":
             if not integration_file.startswith("integration-"):
-
                 (
                     error_message,
                     error_code,
@@ -1887,7 +1891,6 @@ class IntegrationValidator(ContentEntityValidator):
         valid_files = []
 
         for file_path in files_to_check:
-
             file_name = os.path.basename(file_path)
             if file_name.startswith("README"):
                 continue
@@ -1910,7 +1913,6 @@ class IntegrationValidator(ContentEntityValidator):
                 valid_files.append(valid_base_name.join(file_name.rsplit(base_name, 1)))
 
         if invalid_files:
-
             error_message, error_code = Errors.file_name_has_separators(
                 "integration", invalid_files, valid_files
             )
@@ -2111,24 +2113,18 @@ class IntegrationValidator(ContentEntityValidator):
             if metadata_content.get("support") != XSOAR_SUPPORT:
                 return True
 
-            conf_params = self.current_file.get("configuration", [])
-            for param in conf_params:
-                if param.get("type") == 4 and not param.get("hidden"):
-                    (
-                        error_message,
-                        error_code,
-                    ) = Errors.api_token_is_not_in_credential_type(param.get("name"))
-                    if self.handle_error(
-                        error_message, error_code, file_path=self.file_path
-                    ):
-                        return False
-
-            return True
-
-        raise Exception(
-            "Could not find the pack name of the integration, "
-            "please verify the integration is in a pack"
-        )
+        conf_params = self.current_file.get("configuration", [])
+        for param in conf_params:
+            if param.get("type") == 4 and not param.get("hidden"):
+                (
+                    error_message,
+                    error_code,
+                ) = Errors.api_token_is_not_in_credential_type(param.get("name"))
+                if self.handle_error(
+                    error_message, error_code, file_path=self.file_path
+                ):
+                    return False
+        return True
 
     @error_codes("IN149")
     def are_common_outputs_with_description(self):
@@ -2223,39 +2219,57 @@ class IntegrationValidator(ContentEntityValidator):
         return is_valid
 
     @error_codes("IN154")
-    def verify_reputation_commands_has_reliability(self, is_modified: bool = False):
+    def verify_reputation_commands_has_reliability(self):
         """
-        In case the integration has reputation command, ensure there is a reliability parameter.
-        Args:
-            is_modified (bool): Whether the given files are modified or not.
+        If the integration is a feed, or has reputation commands, assure it has a reliability configuration parameter.
 
         Return:
             bool: True if there are no reputation commands or there is a reliability parameter
              and False if there is at least one reputation command without a reliability parameter in the configuration.
         """
-        if not is_modified:
-            return True
-        commands_names = [
-            command.get("name")
-            for command in self.current_file.get("script", {}).get("commands", [])
+        yml_config_names = [
+            config_item["name"].casefold()
+            for config_item in self.current_file.get("configuration", {})
+            if config_item.get("name")
         ]
-        yml_config_names = " ".join(
-            [
-                config.get("name")
-                for config in self.current_file.get("configuration", {})
+
+        # Integration has a reliability parameter
+        if any(
+            reliability_parameter_name.casefold() in yml_config_names
+            for reliability_parameter_name in RELIABILITY_PARAMETER_NAMES
+        ):
+            return True
+
+        # Integration doesn't have a reliability parameter
+        if bool(
+            self.current_file.get("script", {}).get("feed")
+        ):  # Is a feed integration
+            error_message, error_code = Errors.missing_reliability_parameter(
+                is_feed=True
+            )
+
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                return False
+
+        else:
+            commands_names = [
+                command.get("name")
+                for command in self.current_file.get("script", {}).get("commands", [])
             ]
-        )
-        for command in commands_names:
-            if command in REPUTATION_COMMAND_NAMES:
-                if "reliability" in yml_config_names.lower():
-                    return True
-                error_message, error_code = Errors.missing_reliability_parameter(
-                    command
-                )
-                if self.handle_error(
-                    error_message, error_code, file_path=self.file_path
-                ):
-                    return False
+
+            for command in commands_names:
+                if (
+                    command in REPUTATION_COMMAND_NAMES
+                ):  # Integration has a reputation command
+                    (error_message, error_code,) = Errors.missing_reliability_parameter(
+                        is_feed=False, command_name=command
+                    )
+
+                    if self.handle_error(
+                        error_message, error_code, file_path=self.file_path
+                    ):
+                        return False
+
         return True
 
     @error_codes("IN155")

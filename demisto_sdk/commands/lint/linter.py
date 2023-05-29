@@ -1,7 +1,6 @@
 # STD python packages
 import copy
 import hashlib
-import logging
 import os
 import platform
 import traceback
@@ -20,6 +19,7 @@ from wcmatch.pathlib import NEGATE, Path
 from demisto_sdk.commands.common.constants import (
     API_MODULE_FILE_SUFFIX,
     INTEGRATIONS_DIR,
+    NATIVE_IMAGE_DOCKER_NAME,
     NATIVE_IMAGE_FILE_NAME,
     PACKS_PACK_META_FILE_NAME,
     TESTS_REQUIRE_NETWORK_PACK_IGNORE,
@@ -28,10 +28,12 @@ from demisto_sdk.commands.common.constants import (
 )
 from demisto_sdk.commands.common.docker_helper import (
     get_docker,
+    get_python_version,
     init_global_docker_client,
 )
 from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
 from demisto_sdk.commands.common.hook_validations.docker import DockerImageValidator
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.native_image import (
     NativeImageConfig,
     ScriptIntegrationSupportedNativeImages,
@@ -67,7 +69,6 @@ from demisto_sdk.commands.lint.helpers import (
     add_typing_module,
     coverage_report_editor,
     get_file_from_container,
-    get_python_version_from_image,
     pylint_plugin,
     split_warnings_errors,
     stream_docker_container_output,
@@ -79,10 +80,6 @@ json = JSON_Handler()
 # 3-rd party packages
 
 # Local packages
-
-logger = logging.getLogger("demisto-sdk")
-
-NATIVE_IMAGE_DOCKER_NAME = "demisto/py3-native"
 
 
 class DockerImageFlagOption(Enum):
@@ -390,9 +387,9 @@ class Linter:
             if self._facts["docker_engine"]:
                 # Getting python version from docker image - verifying if not valid docker image configured
                 for image in self._facts["images"]:
-                    py_num: str = get_python_version_from_image(
-                        image=image[0], timeout=self.docker_timeout
-                    )
+                    py_num_version = get_python_version(image=image[0])
+                    py_num = f"{py_num_version.major}.{py_num_version.minor}"
+
                     image[1] = py_num
                     logger.info(
                         f"{self._pack_name} - Facts - {image[0]} - Python {py_num}"
@@ -1090,7 +1087,7 @@ class Linter:
                 logger.info(f"{log_prompt} - Successfully finished")
             # Keeping container if needed or remove it
             if keep_container:
-                print(f"{log_prompt} - container name {container_name}")
+                logger.info(f"{log_prompt} - container name {container_name}")
                 container.commit(repository=container_name.lower(), tag=linter)
             else:
                 try:
@@ -1228,7 +1225,7 @@ class Linter:
                 exit_code = FAIL
             # Remove container if not needed
             if keep_container:
-                print(f"{log_prompt} - Container name {container_name}")
+                logger.info(f"{log_prompt} - Container name {container_name}")
                 container.commit(repository=container_name.lower(), tag="pytest")
             else:
                 try:
@@ -1300,7 +1297,7 @@ class Linter:
                 logger.info(f"{log_prompt} - Successfully finished")
             # Keeping container if needed or remove it
             if keep_container:
-                print(f"{log_prompt} - container name {container_name}")
+                logger.info(f"{log_prompt} - container name {container_name}")
                 container.commit(repository=container_name.lower(), tag="pwsh_analyze")
             else:
                 try:
@@ -1391,7 +1388,7 @@ class Linter:
                 logger.info(f"{log_prompt} - Successfully finished")
             # Keeping container if needed or remove it
             if keep_container:
-                print(f"{log_prompt} - container name {container_name}")
+                logger.info(f"{log_prompt} - container name {container_name}")
                 container.commit(repository=container_name.lower(), tag="pwsh_test")
             else:
                 try:

@@ -3,7 +3,6 @@ import re
 import shutil
 from os.path import join
 from typing import Union
-from unittest.mock import patch
 from zipfile import ZipFile
 
 import pytest
@@ -114,15 +113,12 @@ def rename_file_in_zip(
     os.replace(modded_zip_file, path_to_zip)
 
 
-@patch("demisto_sdk.commands.init.contribution_converter.get_content_path")
-def test_convert_contribution_zip_updated_pack(get_content_path_mock, tmp_path, mocker):
+def test_convert_contribution_zip_updated_pack(tmp_path, mocker):
     """
     Create a fake contribution zip file and test that it is converted to a Pack correctly.
     The pack already exists, checking the update flow.
 
     Args:
-        get_content_path_mock (MagicMock): Patch of the 'get_content_path' function to return the fake repo directory
-            used in the test
         tmp_path (fixture): Temporary Path used for the unit test and cleaned up afterwards
 
     Scenario: Simulate converting a contribution zip file.
@@ -145,7 +141,6 @@ def test_convert_contribution_zip_updated_pack(get_content_path_mock, tmp_path, 
     # create temp directory for the repo
     repo_dir = tmp_path / "content_repo"
     repo_dir.mkdir()
-    get_content_path_mock.return_value = repo_dir
     # create temp target dir in which we will create all the TestSuite content items to use in the contribution zip and
     # that will be deleted after
     target_dir = repo_dir / "target_dir"
@@ -155,6 +150,9 @@ def test_convert_contribution_zip_updated_pack(get_content_path_mock, tmp_path, 
     contribution_zip_dir.mkdir()
     # Create fake content repo and contribution zip
     repo = Repo(repo_dir)
+    mocker.patch(
+        "demisto_sdk.commands.init.contribution_converter.CONTENT_PATH", repo.path
+    )
     pack = repo.create_pack("TestPack")
     integration = pack.create_integration("integration0")
     integration.create_default_integration()
@@ -200,15 +198,10 @@ def test_convert_contribution_zip_updated_pack(get_content_path_mock, tmp_path, 
     assert not unified_yml_in_sample.exists()
 
 
-@patch("demisto_sdk.commands.init.contribution_converter.get_content_path")
-def test_convert_contribution_zip_outputs_structure(
-    get_content_path_mock, tmp_path, mocker
-):
+def test_convert_contribution_zip_outputs_structure(tmp_path, mocker):
     """Create a fake contribution zip file and test that it is converted to a Pack correctly
 
     Args:
-        get_content_path_mock (MagicMock): Patch of the 'get_content_path' function to return the fake repo directory
-            used in the test
         tmp_path (fixture): Temporary Path used for the unit test and cleaned up afterwards
 
     Scenario: Simulate converting a contribution zip file
@@ -231,7 +224,6 @@ def test_convert_contribution_zip_outputs_structure(
     # create temp directory for the repo
     repo_dir = tmp_path / "content_repo"
     repo_dir.mkdir()
-    get_content_path_mock.return_value = repo_dir
     # create temp target dir in which we will create all the TestSuite content items to use in the contribution zip and
     # that will be deleted after
     target_dir = repo_dir / "target_dir"
@@ -241,6 +233,9 @@ def test_convert_contribution_zip_outputs_structure(
     contribution_zip_dir.mkdir()
     # Create fake content repo and contribution zip
     repo = Repo(repo_dir)
+    mocker.patch(
+        "demisto_sdk.commands.init.contribution_converter.CONTENT_PATH", repo.path
+    )
     contrib_zip = Contribution(target_dir, "ContribTestPack", repo)
     contrib_zip.create_zip(contribution_zip_dir)
     # rename script-script0.yml unified to automation-script0.yml
@@ -320,13 +315,10 @@ def test_convert_contribution_zip_outputs_structure(
     assert not unified_yml_in_sample.exists()
 
 
-@patch("demisto_sdk.commands.init.contribution_converter.get_content_path")
-def test_convert_contribution_zip(get_content_path_mock, tmp_path, mocker):
+def test_convert_contribution_zip(tmp_path, mocker):
     """Create a fake contribution zip file and test that it is converted to a Pack correctly
 
     Args:
-        get_content_path_mock (MagicMock): Patch of the 'get_content_path' function to return the fake repo directory
-            used in the test
         tmp_path (fixture): Temporary Path used for the unit test and cleaned up afterwards
 
     Scenario: Simulate converting a contribution zip file
@@ -348,7 +340,6 @@ def test_convert_contribution_zip(get_content_path_mock, tmp_path, mocker):
     # create temp directory for the repo
     repo_dir = tmp_path / "content_repo"
     repo_dir.mkdir()
-    get_content_path_mock.return_value = repo_dir
     # create temp target dir in which we will create all the TestSuite content items to use in the contribution zip and
     # that will be deleted after
     target_dir = repo_dir / "target_dir"
@@ -358,6 +349,9 @@ def test_convert_contribution_zip(get_content_path_mock, tmp_path, mocker):
     contribution_zip_dir.mkdir()
     # Create fake content repo and contribution zip
     repo = Repo(repo_dir)
+    mocker.patch(
+        "demisto_sdk.commands.init.contribution_converter.CONTENT_PATH", repo.path
+    )
     contrib_zip = Contribution(target_dir, "ContribTestPack", repo)
     contrib_zip.create_zip(contribution_zip_dir)
     # target_dir should have been deleted after creation of the zip file
@@ -448,13 +442,10 @@ def test_convert_contribution_zip(get_content_path_mock, tmp_path, mocker):
     }
 
 
-@patch("demisto_sdk.commands.init.contribution_converter.get_content_path")
-def test_convert_contribution_zip_with_args(get_content_path_mock, tmp_path, mocker):
+def test_convert_contribution_zip_with_args(tmp_path, mocker):
     """Convert a contribution zip to a pack and test that the converted pack's 'pack_metadata.json' is correct
 
     Args:
-        get_content_path_mock (MagicMock): Patch of the 'get_content_path' function to return the fake repo directory
-            used in the test
         tmp_path (fixture): Temporary Path used for the unit test and cleaned up afterwards
 
     Scenario: Simulate converting a contribution zip file
@@ -483,7 +474,6 @@ def test_convert_contribution_zip_with_args(get_content_path_mock, tmp_path, moc
     # create temp directory for the repo
     repo_dir = tmp_path / "content_repo"
     repo_dir.mkdir()
-    get_content_path_mock.return_value = repo_dir
     # create temp target dir in which we will create all the TestSuite content items to use in the contribution zip and
     # that will be deleted after
     target_dir = repo_dir / "target_dir"
@@ -493,6 +483,9 @@ def test_convert_contribution_zip_with_args(get_content_path_mock, tmp_path, moc
     contribution_zip_dir.mkdir()
     # Create fake content repo and contribution zip
     repo = Repo(repo_dir)
+    mocker.patch(
+        "demisto_sdk.commands.init.contribution_converter.CONTENT_PATH", repo.path
+    )
     contrib_zip = Contribution(target_dir, "ContribTestPack", repo)
     # contrib_zip.create_zip(contribution_zip_dir)
     contrib_zip.create_zip(contribution_zip_dir)
@@ -725,6 +718,21 @@ def test_create_contribution_items_version_note():
 > | --------- | ------------------------- | -------------------
 > | CortexXDRIR | 1.2.2 | 1.2.4
 > | XDRScript | 1.2.2 | 1.2.4
+>
+> **For the Reviewer:**
+> 1. Compare the code of this PR with the latest version of the pack. Make sure you understand the changes the contributor intended to contribute, and **solve the conflicts accordingly**.
+> 2. In case improvements are needed, instruct the contributor to edit the code through the **GitHub Codespaces** and **Not through the XSOAR UI**.
+>
+> **For the Contributor:**
+ @
+> In case you are requested by your reviewer to improve the code or to make changes, submit them through the **GitHub Codespaces** and **Not through the XSOAR UI**.
+>
+> **To use the GitHub Codespaces, do the following:**
+> 1. Click the **'Code'** button in the right upper corner of this PR.
+> 2. Click **'Create codespace on Transformers'**.
+> 3. Click **'Authorize and continue'**.
+> 4. Wait until your Codespace environment is generated. When it is, you can edit your code.
+> 5. Commit and push your changes to the head branch of the PR.
 """
     )
 
@@ -753,7 +761,7 @@ class TestEnsureUniquePackDirName:
         crb_crvrt = contribution_converter
         assert crb_crvrt.name == pack_name
         assert crb_crvrt.dir_name == pack_name
-        print(f"crb_crvrt.pack_dir_path={crb_crvrt.pack_dir_path}")
+        print(f"crb_crvrt.pack_dir_path={crb_crvrt.pack_dir_path}")  # noqa: T201
         assert os.path.isdir(crb_crvrt.pack_dir_path)
 
     def test_ensure_unique_pack_dir_name_with_conflict(self, contribution_converter):

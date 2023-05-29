@@ -1,4 +1,3 @@
-import logging
 import os
 import re
 import socket
@@ -10,7 +9,6 @@ from threading import Lock
 from typing import Callable, List, Optional, Set
 from urllib.parse import urlparse
 
-import click
 import docker
 import requests
 from git import InvalidGitRepositoryError
@@ -19,9 +17,11 @@ from requests.exceptions import HTTPError
 from urllib3.util import Retry
 
 from demisto_sdk.commands.common.constants import (
+    PACKS_DIR,
     RELATIVE_HREF_URL_REGEX,
     RELATIVE_MARKDOWN_URL_REGEX,
 )
+from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.docker_helper import init_global_docker_client
 from demisto_sdk.commands.common.errors import (
     FOUND_FILES_AND_ERRORS,
@@ -34,6 +34,7 @@ from demisto_sdk.commands.common.hook_validations.base_validator import (
     BaseValidator,
     error_codes,
 )
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.markdown_lint import run_markdownlint
 from demisto_sdk.commands.common.MDXServer import (
     start_docker_MDX_server,
@@ -41,7 +42,7 @@ from demisto_sdk.commands.common.MDXServer import (
 )
 from demisto_sdk.commands.common.tools import (
     compare_context_path_in_yml_and_readme,
-    get_content_path,
+    get_pack_name,
     get_url_with_retries,
     get_yaml,
     get_yml_paths_in_dir,
@@ -177,7 +178,7 @@ class ReadMeValidator(BaseValidator):
             json_file_path=json_file_path,
             specific_validations=specific_validations,
         )
-        self.content_path = get_content_path()
+        self.content_path = CONTENT_PATH
         self.file_path_str = file_path
         self.file_path = Path(file_path)
         self.pack_path = self.file_path.parent
@@ -195,6 +196,7 @@ class ReadMeValidator(BaseValidator):
             [
                 self.verify_readme_relative_urls(),
                 self.is_image_path_valid(),
+                self.verify_image_exist(),
                 self.verify_readme_image_paths(),
                 self.is_mdx_file(),
                 self.verify_no_empty_sections(),
@@ -358,6 +360,29 @@ class ReadMeValidator(BaseValidator):
 
         return error_list
 
+    def verify_image_exist(self) -> bool:
+        """Validate README images are actually exits.
+
+        Returns:
+            bool: True If all image path's actually exist else False.
+
+        """
+        images_path = re.findall(
+            r"\.\./doc_files/[a-zA-Z0-9_-]+\.png",
+            self.readme_content,
+        )
+
+        for image_path in images_path:
+            image_file_path = Path(
+                PACKS_DIR, get_pack_name(self.file_path), image_path.replace("../", "")
+            )
+            if not image_file_path.is_file():
+                error_message, error_code = Errors.image_does_not_exist(image_path)
+                self.handle_error(error_message, error_code, file_path=self.file_path)
+                return False
+
+        return True
+
     @staticmethod
     @lru_cache(None)
     def is_docker_available():
@@ -389,7 +414,7 @@ class ReadMeValidator(BaseValidator):
         # Check node exist
         stdout, stderr, exit_code = run_command_os("node -v", cwd=content_path)
         if exit_code:
-            click.secho(
+            logger.error(
                 f"There is no node installed on the machine, error - {stderr}, {stdout}"
             )
             valid = False
@@ -407,7 +432,7 @@ class ReadMeValidator(BaseValidator):
                         missing_module.append(pack)
         if missing_module:
             valid = False
-            click.secho(
+            logger.error(
                 f"The npm modules: {missing_module} are not installed. To run the mdx server locally, use "
                 f"'npm install' to install all required node dependencies. Otherwise, if docker is installed, the server"
                 f"will run in a docker container"
@@ -533,8 +558,8 @@ class ReadMeValidator(BaseValidator):
                             response=error.response,
                         )
             except Exception as ex:
-                click.secho(
-                    f"Could not validate the image link: {img_url}\n {ex}", fg="yellow"
+                logger.exception(
+                    f"[yellow]Could not validate the image link: {img_url}\n {ex}[/yellow]"
                 )
                 continue
 
@@ -597,9 +622,8 @@ class ReadMeValidator(BaseValidator):
 
         current_pack_name = self.pack_path.name
         if ignore_packs and current_pack_name in ignore_packs:
-            click.secho(
-                f"Default sentences check - Pack {current_pack_name} is ignored.",
-                fg="yellow",
+            logger.info(
+                f"[yellow]Default sentences check - Pack {current_pack_name} is ignored.[/yellow]"
             )
             return errors  # returns empty string
 
@@ -867,9 +891,9 @@ class ReadMeValidator(BaseValidator):
 
         with ReadMeValidator._MDX_SERVER_LOCK:
             if mdx_server_is_up():  # this allows for this context to be reentrant
-                logging.debug("server is already up. Not restarting")
+                logger.debug("server is already up. Not restarting")
                 return empty_context_mgr(True)
-            if ReadMeValidator.are_modules_installed_for_verify(get_content_path()):  # type: ignore
+            if ReadMeValidator.are_modules_installed_for_verify(CONTENT_PATH):  # type: ignore
                 ReadMeValidator.add_node_env_vars()
                 return start_local_MDX_server(handle_error, file_path)
             elif ReadMeValidator.is_docker_available():
@@ -878,7 +902,7 @@ class ReadMeValidator(BaseValidator):
 
     @staticmethod
     def add_node_env_vars():
-        content_path = get_content_path()
+        content_path = CONTENT_PATH
         node_modules_path = content_path / Path("node_modules")  # type: ignore
         os.environ["NODE_PATH"] = (
             str(node_modules_path) + os.pathsep + os.getenv("NODE_PATH", "")

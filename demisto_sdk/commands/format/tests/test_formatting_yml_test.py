@@ -138,7 +138,7 @@ class TestFormatting:
 
         mocker.patch.object(update_generic, "get_remote_file", return_value={})
         base_yml = formatter(source_path, path=schema_path)
-        base_yml.assume_yes = True
+        base_yml.assume_answer = True
         base_yml.update_yml(file_type=file_type)
         assert yml_title not in str(base_yml.data)
         assert -1 == base_yml.id_and_version_location["version"]
@@ -316,79 +316,75 @@ class TestFormatting:
 
         assert argument_count == appearances
 
-    INTEGRATION_BANG_COMMANDS_ARGUMENTS_PACK = [
-        (
-            SOURCE_FORMAT_INTEGRATION_COPY,
-            "integration",
-            "url",
-            [("default", True), ("isArray", False), ("required", True)],
-        ),
-        (
-            SOURCE_FORMAT_INTEGRATION_COPY,
-            "integration",
-            "email",
-            [
-                ("default", True),
-                ("isArray", True),
-                ("required", True),
-                ("description", ""),
-            ],
-        ),
-    ]
-
     @pytest.mark.parametrize(
-        "source_path, file_type, bang_command, verifications",
-        INTEGRATION_BANG_COMMANDS_ARGUMENTS_PACK,
+        "test_data, name_is_default",
+        [
+            ([{"name": "ip", "arguments": [{"name": "ip"}]}], True),
+            (
+                [
+                    {
+                        "name": "ip",
+                        "arguments": [
+                            {"name": "ip"},
+                            {"name": "endpoint", "default": True},
+                        ],
+                    }
+                ],
+                False,
+            ),
+            (
+                [{"name": "ip", "arguments": [{"name": "ip"}, {"name": "endpoint"}]}],
+                True,
+            ),
+        ],
     )
     def test_bang_commands_default_arguments(
-        self, source_path, file_type, bang_command, verifications
+        self, integration, test_data: list, name_is_default: bool
     ):
-        schema_path = os.path.normpath(
-            os.path.join(
-                __file__, "..", "..", "..", "common", "schemas", f"{file_type}.yml"
-            )
-        )
-        base_yml = IntegrationYMLFormat(source_path, path=schema_path)
-        base_yml.set_reputation_commands_basic_argument_as_needed()
-
-        for command in base_yml.data["script"]["commands"]:
-            if bang_command == command["name"]:
-                command_arguments = command["arguments"]
-                for argument in command_arguments:
-                    if argument.get("name", "") == bang_command:
-                        for verification in verifications:
-                            assert argument[verification[0]] == verification[1]
-
-    def test_isarray_false(self, integration, mocker):
         """
-        Given:
-        - An integration with IP command and ip argument when isArray is False
+        Test case to verify the behavior of setting reputation commands' basic arguments as needed.
 
-        When:
-        - Running validate on IP command
-
-        Then:
-        - Check a warning printed to the user.
-        - Validate isArray hasn't changed.
+        Args:
+            integration: The integration object.
+            test_data: Test data representing the modified command structure.
+            expected_data: Tuple specifying the expected location of the 'default' field in the modified structure.
+            name_is_default: Whether the argument named as the integration should have `default`.
 
         """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
         yml_contents = integration.yml.read_dict()
-        yml_contents["script"]["commands"] = [
-            {"name": "ip", "arguments": [{"isArray": False, "name": "ip"}]}
-        ]
+        yml_contents["script"]["commands"] = test_data
+
         integration.yml.write_dict(yml_contents)
-        base_yml = IntegrationYMLFormat(integration.yml.path)
-        base_yml.set_reputation_commands_basic_argument_as_needed()
-        assert str_in_call_args_list(
-            logger_info.call_args_list, "Array field in ip command is set to False."
-        )
+        formatter = IntegrationYMLFormat(integration.yml.path)
+        formatter.set_reputation_commands_basic_argument_as_needed()
+        formatter.save_yml_to_destination_file()
+
         assert (
-            integration.yml.read_dict()["script"]["commands"][0]["arguments"][0][
-                "isArray"
-            ]
-            is False
+            integration.yml.read_dict()["script"]["commands"][0]["arguments"][0].get(
+                "default", False
+            )
+            is name_is_default
         )
+
+    @pytest.mark.parametrize("test_data", [[{"name": "ip", "arguments": []}]])
+    def test_bang_commands_default_no_arguments(self, integration, test_data: list):
+        """
+        Test for `test_bang_commands_default_no_arguments` function.
+        when is no arguments
+        Args:
+            integration: The integration object.
+            test_data: A list containing the test data.
+
+        """
+        yml_contents = integration.yml.read_dict()
+        yml_contents["script"]["commands"] = test_data
+
+        integration.yml.write_dict(yml_contents)
+        formatter = IntegrationYMLFormat(integration.yml.path)
+        formatter.set_reputation_commands_basic_argument_as_needed()
+        formatter.save_yml_to_destination_file()
+
+        assert integration.yml.read_dict()["script"]["commands"] == test_data
 
     @pytest.mark.parametrize("source_path", [SOURCE_FORMAT_PLAYBOOK_COPY])
     def test_playbook_task_description_name(self, source_path):
@@ -773,7 +769,7 @@ class TestFormatting:
         os.makedirs(path, exist_ok=True)
         shutil.copyfile(source, target)
         monkeypatch.setattr("builtins.input", lambda _: "N")
-        res = format_manager(input=target, assume_yes=True)
+        res = format_manager(input=target, assume_answer=True)
         with open(target) as f:
             yaml_content = yaml.load(f)
             params = yaml_content["configuration"]
@@ -819,7 +815,7 @@ class TestFormatting:
         )
         os.makedirs(path, exist_ok=True)
         shutil.copyfile(source, target)
-        res = format_manager(input=target, clear_cache=True, assume_yes=True)
+        res = format_manager(input=target, clear_cache=True, assume_answer=True)
         with open(target) as f:
             yaml_content = yaml.load(f)
             params = yaml_content["configuration"]
@@ -966,7 +962,7 @@ class TestFormatting:
         formatter = TestPlaybookYMLFormat(
             input=SOURCE_FORMAT_TEST_PLAYBOOK, output=DESTINATION_FORMAT_TEST_PLAYBOOK
         )
-        formatter.assume_yes = True
+        formatter.assume_answer = True
         res = formatter.run_format()
         assert res == 0
         assert formatter.data.get("fromversion") == GENERAL_DEFAULT_FROMVERSION
@@ -1011,7 +1007,7 @@ class TestFormatting:
 
         with ChangeCWD(repo.path):
             formatter = PlaybookYMLFormat(
-                input=playbook.yml.path, path=PLAYBOOK_SCHEMA_PATH, assume_yes=True
+                input=playbook.yml.path, path=PLAYBOOK_SCHEMA_PATH, assume_answer=True
             )
             formatter.run_format()
             assert formatter.data.get("fromversion") == expected_fromversion
@@ -1155,7 +1151,7 @@ class TestFormatting:
             path=f"{schema_dir}/script.yml",
             no_validate=True,
             update_docker=True,
-            assume_yes=True,
+            assume_answer=True,
         )
         monkeypatch.setattr("builtins.input", lambda _: "N")
         mocker.patch.object(BaseUpdate, "set_fromVersion", return_value=None)
@@ -1278,7 +1274,6 @@ class TestFormatting:
                 "inputs": {"sequence": [{"include": "input_schema"}], "type": "seq"}
             },
         }
-        mocker.patch("click.echo")
         BaseUpdate.recursive_extend_schema(schema, schema)
         assert logger_info.call_count == 1
         assert (
@@ -1405,7 +1400,7 @@ class TestFormatting:
         test_playbook.create_default_test_playbook("SamplePlaybookTest")
         test_playbook.yml.update({"id": "other_id"})
         playbook_yml = TestPlaybookYMLFormat(
-            test_playbook.yml.path, path=test_playbook.yml.path, assume_yes=True
+            test_playbook.yml.path, path=test_playbook.yml.path, assume_answer=True
         )
         with ChangeCWD(repo.path):
             playbook_yml.run_format()
@@ -1425,7 +1420,7 @@ class TestFormatting:
         pack.pack_metadata.update({"support": "partner", "currentVersion": "1.0.0"})
         integration = pack.create_integration()
         bs = BaseUpdate(
-            input=integration.yml.path, assume_yes=True, path=INTEGRATION_SCHEMA_PATH
+            input=integration.yml.path, assume_answer=True, path=INTEGRATION_SCHEMA_PATH
         )
         bs.set_fromVersion()
         assert bs.data["fromversion"] == GENERAL_DEFAULT_FROMVERSION
@@ -1449,7 +1444,7 @@ class TestFormatting:
             [script.yml.path, playbook.yml.path, integration.yml.path],
             [SCRIPT_SCHEMA_PATH, PLAYBOOK_SCHEMA_PATH, INTEGRATION_SCHEMA_PATH],
         ):
-            bs = BaseUpdate(input=path, assume_yes=True, path=schema_path)
+            bs = BaseUpdate(input=path, assume_answer=True, path=schema_path)
             bs.set_fromVersion()
             assert bs.data["fromversion"] == GENERAL_DEFAULT_FROMVERSION, path
 

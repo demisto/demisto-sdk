@@ -1,4 +1,3 @@
-import logging
 import os
 from concurrent.futures._base import Future, as_completed
 from configparser import ConfigParser, MissingSectionHeaderError
@@ -6,11 +5,11 @@ from pathlib import Path
 from typing import Callable, List, Optional, Set, Tuple
 
 import pebble
-from colorama import Fore
 from git import InvalidGitRepositoryError
 from packaging import version
 
 from demisto_sdk.commands.common import tools
+from demisto_sdk.commands.common.cpu_count import cpu_count
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import (
     API_MODULES_PACK,
@@ -30,7 +29,10 @@ from demisto_sdk.commands.common.constants import (
     PathLevel,
 )
 from demisto_sdk.commands.common.content import Content
-from demisto_sdk.commands.common.content_constant_paths import DEFAULT_ID_SET_PATH
+from demisto_sdk.commands.common.content_constant_paths import (
+    CONTENT_PATH,
+    DEFAULT_ID_SET_PATH,
+)
 from demisto_sdk.commands.common.errors import (
     FOUND_FILES_AND_ERRORS,
     FOUND_FILES_AND_IGNORED_ERRORS,
@@ -137,13 +139,12 @@ from demisto_sdk.commands.common.hook_validations.xsiam_report import (
 from demisto_sdk.commands.common.hook_validations.xsoar_config_json import (
     XSOARConfigJsonValidator,
 )
-from demisto_sdk.commands.common.logger import get_log_file
+from demisto_sdk.commands.common.logger import get_log_file, logger
 from demisto_sdk.commands.common.tools import (
     _get_file_id,
     find_type,
     get_api_module_ids,
     get_api_module_integrations_set,
-    get_content_path,
     get_file,
     get_pack_ignore_content,
     get_pack_ignore_file_path,
@@ -156,8 +157,6 @@ from demisto_sdk.commands.common.tools import (
     run_command_os,
 )
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
-
-logger = logging.getLogger("demisto-sdk")
 
 SKIPPED_FILES = [
     "CommonServerUserPython.py",
@@ -345,7 +344,7 @@ class ValidateManager:
             bool: True if node exist, else False
         """
         # Check node exist
-        content_path = get_content_path()
+        content_path = CONTENT_PATH
         stdout, stderr, exit_code = run_command_os("node -v", cwd=content_path)  # type: ignore
         if exit_code:
             return False
@@ -425,7 +424,8 @@ class ValidateManager:
     def run_validation_on_specific_files(self):
         """Run validations only on specific files"""
         files_validation_result = set()
-        self.setup_git_params()
+        if self.use_git:
+            self.setup_git_params()
         files_to_validate = self.file_path.split(",")
 
         if self.validate_graph:
@@ -548,7 +548,7 @@ class ValidateManager:
     ) -> bool:
 
         if self.run_with_multiprocessing:
-            with pebble.ProcessPool(max_workers=4) as executor:
+            with pebble.ProcessPool(max_workers=cpu_count()) as executor:
                 futures = []
                 for pack_path in all_packs:
                     futures.append(
@@ -787,7 +787,7 @@ class ValidateManager:
         if (
             file_type in self.skipped_file_types
             or self.is_skipped_file(file_path)
-            or self.git_util._is_file_git_ignored(file_path)
+            or (self.use_git and self.git_util._is_file_git_ignored(file_path))
             or self.detect_file_level(file_path)
             in (PathLevel.PACKAGE, PathLevel.CONTENT_ENTITY_DIR)
         ):
@@ -808,12 +808,10 @@ class ValidateManager:
             validation_print = f"\nValidating {file_path} as {file_type.value}"
             if self.print_percent:
                 if FOUND_FILES_AND_ERRORS:
-                    validation_print += (
-                        f" {Fore.RED}[{self.completion_percentage}%]{Fore.RESET}"
-                    )
+                    validation_print += f" [red][{self.completion_percentage}%][/red]"
                 else:
                     validation_print += (
-                        f" {Fore.GREEN}[{self.completion_percentage}%]{Fore.RESET}"
+                        f" [green][{self.completion_percentage}%][/green]"
                     )
 
             logger.info(validation_print)
@@ -912,7 +910,7 @@ class ValidateManager:
                 ReadMeValidator.add_node_env_vars()
                 if (
                     not ReadMeValidator.are_modules_installed_for_verify(
-                        get_content_path()  # type: ignore
+                        CONTENT_PATH  # type: ignore
                     )
                     and not ReadMeValidator.is_docker_available()
                 ):  # shows warning message
@@ -1035,7 +1033,7 @@ class ValidateManager:
             FileType.MODELING_RULE_XIF,
             FileType.MODELING_RULE_TEST_DATA,
         ):
-            print(f"Validating {file_type.value} file: {file_path}")
+            logger.info(f"Validating {file_type.value} file: {file_path}")
             if self.validate_all:
                 error_ignore_list = pack_error_ignore_list.copy()
                 error_ignore_list.setdefault(os.path.basename(file_path), [])
@@ -1275,7 +1273,9 @@ class ValidateManager:
                 f"\n[cyan]================= Validating graph =================[/cyan]"
             )
             all_files_set = list(
-                set().union(modified_files, added_files, old_format_files)
+                set().union(
+                    modified_files, added_files, old_format_files, changed_meta_files
+                )
             )
             if all_files_set:
                 with GraphValidator(

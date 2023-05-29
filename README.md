@@ -3,9 +3,11 @@
 [![PyPI version](https://badge.fury.io/py/demisto-sdk.svg)](https://badge.fury.io/py/demisto-sdk)
 [![CircleCI](https://circleci.com/gh/demisto/demisto-sdk/tree/master.svg?style=svg)](https://circleci.com/gh/demisto/demisto-sdk/tree/master)
 [![Coverage Status](https://coveralls.io/repos/github/demisto/demisto-sdk/badge.svg?branch=master)](https://coveralls.io/github/demisto/demisto-sdk?branch=master)
+[![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/charliermarsh/ruff/main/assets/badge/v1.json)](https://github.com/charliermarsh/ruff)
+[![Black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
 The Demisto SDK library can be used to manage your Cortex XSOAR content with ease and efficiency.
-The library uses python 3.8+.
+The library supports Python 3.8-3.10. _Python 3.8 support will be removed soon._
 
 ## Usage
 
@@ -181,3 +183,21 @@ The development environment is connected to the branch you are currently using i
 Contributions are welcome and appreciated.
 For information regarding contributing, press [here](CONTRIBUTION.md).
 For release guide, press [here](docs/release_guide.md)
+
+---
+
+## Internet Connection
+
+An internet connection is required for the following commands to work properly:
+
+1. [Format](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/format/README.md)
+2. [Validate](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/validate/README.md)
+3. [Update-release-notes](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/update_release_notes/README.md)
+
+
+Note that the following commands may work partially without an internet connection:
+
+1. [Download](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/download/README.md) - will fail when using the '-fmt, --run-format' argument.
+2. [Lint](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/lint/README.md) - will fail when creating the image.
+
+---

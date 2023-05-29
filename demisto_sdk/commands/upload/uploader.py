@@ -202,7 +202,7 @@ class Uploader:
             return ERROR_RETURN_CODE
 
         if not self.path:
-            logger.error(f"[red]input path: {self.path} does not exist[/red]")
+            logger.error(f"[red]No input provided for uploading[/red]")
             return ERROR_RETURN_CODE
         if not self.is_path_exist():
             return ERROR_RETURN_CODE

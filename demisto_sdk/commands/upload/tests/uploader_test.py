@@ -705,6 +705,8 @@ class TestZippedPackUpload:
             - validate the error msg
         """
         # prepare
+        expected_err = (f"input path: {path} does not exist"
+                        if path else "No input provided for uploading")
         logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
         mock_api_client(mocker)
 
@@ -716,7 +718,7 @@ class TestZippedPackUpload:
 
         logged = flatten_call_args(logger_error.call_args_list)
         assert len(logged) == 1
-        assert f"input path: {path} does not exist" in logged[0]
+        assert expected_err in logged[0]
 
     @pytest.mark.parametrize(
         argnames="user_answer, exp_call_count", argvalues=[("y", 1), ("n", 0)]

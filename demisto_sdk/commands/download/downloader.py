@@ -1279,7 +1279,7 @@ class Downloader:
             format_manager(
                 input=str(Path(file_path).resolve()),
                 no_validate=False,
-                assume_yes=False,
+                assume_answer=False,
             )
 
     def remove_traces(self):

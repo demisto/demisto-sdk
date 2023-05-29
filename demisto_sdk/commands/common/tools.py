@@ -973,6 +973,9 @@ def get_to_version(file_path):
 
 
 def str2bool(v):
+    if not v:
+        return False
+
     if isinstance(v, bool):
         return v
     if v.lower() in ("yes", "true", "t", "y", "1"):

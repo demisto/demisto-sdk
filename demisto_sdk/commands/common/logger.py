@@ -5,6 +5,8 @@ import sys
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
 
+from tools import str2bool
+
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 
 logger: logging.Logger = logging.getLogger("demisto-sdk")
@@ -296,7 +298,7 @@ def logging_setup(
     file_handler.set_name(FILE_HANDLER)
     file_handler.setLevel(file_log_threshold if file_log_threshold else logging.DEBUG)
 
-    if os.getenv("DEMISTO_SDK_LOG_NO_COLORS", "False") == "True":
+    if str2bool(os.getenv("DEMISTO_SDK_LOG_NO_COLORS")):
         console_handler.setFormatter(fmt=NoColorFileFormatter())
     else:
         console_handler.setFormatter(fmt=ColorConsoleFormatter())

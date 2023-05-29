@@ -117,7 +117,7 @@ def init_test_data(
                             extra={"markup": True},
                         )
                         continue
-                    # update existing values ad remove fields from expected_values that are no longer in the rule
+                    # update existing values and remove fields from expected_values that are no longer in the rule
                     if event_log.expected_values:
                         new_mapping = {
                             key: event_log.expected_values.get(key)

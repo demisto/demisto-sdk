@@ -97,7 +97,6 @@ def generate_integration_context(
     input_path: str,
     examples: Optional[str] = None,
     insecure: bool = False,
-    verbose: bool = False,
     output_path: Optional[str] = None,
 ):
     """Generate integration command contexts in-place.
@@ -107,7 +106,6 @@ def generate_integration_context(
         input_path: path to the yaml integration.
         examples: path to the command examples.
         insecure: should use insecure.
-        verbose: verbose (debug mode).
     """
     if not output_path:
         output_path = input_path
@@ -131,10 +129,6 @@ def generate_integration_context(
         logger.info(f"[green]Writing outputs to {output_path}[/green]")
         write_yml(output_path, yml_data)
     except ValueError as ex:
-        if verbose:
-            # TODO Handle this verbose
-            raise
-        else:
-            logger.info(f"[red]Error: {str(ex)}[/red]")
-            return 1
+        logger.info(f"[red]Error: {str(ex)}[/red]")
+        return 1
     return 0

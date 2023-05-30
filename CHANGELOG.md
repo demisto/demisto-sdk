@@ -2,6 +2,7 @@
 
 ## Unreleased
 - Fixed an issue where *update-release-notes* and *doc-review* did not handle new content notes as expected.
+* Added support to disable the default logging colors with the **DEMISTO_SDK_LOG_NO_COLORS** environment variable.
 
 ## 1.15.3
 * Added the `--init` flag to **download**.

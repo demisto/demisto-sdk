@@ -235,7 +235,10 @@ class TestRNUpdate:
         Then:
             - return a markdown string
         """
-        expected_result = "\n#### Playbooks\n\n##### New: Hello World Playbook\n\n- Hello World Playbook description\n"
+        expected_result = (
+            "\n#### Playbooks\n\n##### New: Hello World Playbook\n\n"
+            "- New: Hello World Playbook description\n"
+        )
         from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
 
         mock_master.return_value = "1.0.0"

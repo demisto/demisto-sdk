@@ -3,7 +3,7 @@ import shutil
 import tempfile
 from contextlib import suppress
 from pathlib import Path
-from typing import Iterable, List, Optional, Tuple
+from typing import Iterable, List, Optional, Sequence, Tuple
 from zipfile import ZipFile
 
 from pydantic import DirectoryPath
@@ -17,10 +17,8 @@ from demisto_sdk.commands.content_graph.objects.pack import Pack
 from demisto_sdk.commands.content_graph.objects.repository import ContentDTO
 from demisto_sdk.commands.upload.constants import (
     MULTIPLE_ZIPPED_PACKS_FILE_NAME,
-    MULTIPLE_ZIPPED_PACKS_FILE_STEM,
 )
 from demisto_sdk.commands.upload.uploader import (
-    ABORTED_RETURN_CODE,
     ERROR_RETURN_CODE,
     SUCCESS_RETURN_CODE,
 )
@@ -46,19 +44,19 @@ def upload_content_entity(**kwargs):
         if input_ := kwargs.get("input"):
             logger.warning(f"[orange]The input ({input_}) will NOT be used[/orange]")
 
-        # extract all paths from config_file_path
         paths = ConfigFileParser(Path(config_file_path)).custom_packs_paths
 
         if not kwargs.get('zip') and are_all_packs_unzipped(paths=paths):
             inputs = paths
         else:
-            zip_multiple_packs(
-                paths=paths,
+            pack_names = zip_multiple_packs(
+                paths=ConfigFileParser(Path(config_file_path)).custom_packs_paths,
                 marketplace=marketplace,
                 dir=destination_zip_path,
             )
             kwargs["detached_files"] = True
-            inputs = tuple([Path(destination_zip_path, MULTIPLE_ZIPPED_PACKS_FILE_NAME)])
+            kwargs["input"] = Path(destination_zip_path, MULTIPLE_ZIPPED_PACKS_FILE_NAME)
+            kwargs["pack_names"] = pack_names
 
     check_configuration_file("upload", kwargs)
 
@@ -89,8 +87,8 @@ def zip_multiple_packs(
     paths: Iterable[Path],
     marketplace: MarketplaceVersions,
     dir: DirectoryPath,
-):
-    packs = []
+) -> Sequence[str]:
+    packs: List[Pack] = []
     were_zipped: List[Path] = []
 
     for path in paths:
@@ -111,21 +109,20 @@ def zip_multiple_packs(
         packs.append(pack)
 
     result_zip_path = dir / MULTIPLE_ZIPPED_PACKS_FILE_NAME
-    ContentDTO(packs=packs).dump(
-        dir / "result",
-        marketplace=marketplace,
-        zip=True,
-        output_stem=MULTIPLE_ZIPPED_PACKS_FILE_STEM,
-    )
-
-    with ZipFile(result_zip_path, "a") as zip_file:
+    ContentDTO(packs=packs).dump(dir / "result", marketplace=marketplace, zip=False)
+    with ZipFile(result_zip_path, "w") as zip_file:
         # copy files that were already zipped into the result
         for was_zipped in were_zipped:
             zip_file.write(was_zipped, was_zipped.name)
+        for pack_path in (dir / "result").iterdir():
+            shutil.make_archive(str(pack_path), "zip", pack_path)
+            zip_file.write(pack_path.with_suffix(".zip"), f"{pack_path.name}.zip")
 
     shutil.move(  # rename content_packs.zip
         str(result_zip_path), result_zip_path.with_name(MULTIPLE_ZIPPED_PACKS_FILE_NAME)
     )
+
+    return [pack.name for pack in packs] + [path.name for path in were_zipped]
 
 
 def are_all_packs_unzipped(paths: Iterable[Path]) -> bool:

@@ -125,10 +125,14 @@ class PreCommitRunner:
         precommit_env["MYPYPATH"] = ":".join(
             str(path) for path in sorted(PYTHONPATH) if "site-packages" not in str(path)
         )
+        precommit_env["DEMISTO_SDK_CONTENT_PATH"] = str(CONTENT_PATH)
         for python_version, changed_files in self.python_version_to_files.items():
             precommit_config = deepcopy(self.precommit_template)
+            changed_files_string = ", ".join(
+                sorted((str(changed_path) for changed_path in changed_files))
+            )
             logger.info(
-                f"Running pre-commit for {changed_files} with python version {python_version}"
+                f"Running pre-commit with Python {python_version} on {changed_files_string}"
             )
             if python_version.startswith("2"):
                 with open(PRECOMMIT_PATH, "w") as f:
@@ -272,6 +276,10 @@ def pre_commit_manager(
         git_diff = True
 
     files_to_run = preprocess_files(input_files, staged_only, git_diff, all_files)
+    files_to_run_string = ", ".join(
+        sorted((str(changed_path) for changed_path in files_to_run))
+    )
+    logger.info(f"Running pre-commit on {files_to_run_string}")
     if not sdk_ref:
         sdk_ref = f"v{get_last_remote_release_version()}"
     pre_commit_runner = PreCommitRunner(group_by_python_version(files_to_run), sdk_ref)

@@ -1,7 +1,7 @@
 # Changelog
 
 ## Unreleased
-- Fixed an issue where *update-release-notes* and *doc-review* did not handle new content notes as expected.
+* Fixed an issue where *update-release-notes* and *doc-review* did not handle new content notes as expected.
 * Added the `_time` field to the compare table in the **modeling-rules test**.
 
 ## 1.15.3

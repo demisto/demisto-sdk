@@ -1025,7 +1025,7 @@ class TestItemDetacher:
         # Tests that the function successfully zips and dumps multiple valid pack paths.
 
 
-def test_zip_multiple_packs(tmp_path: git_path, mocker):
+def test_zip_multiple_packs(tmp_path: Path, mocker):
     tmp_path = tmp_path / "Packs"
     tmp_path.mkdir()
 

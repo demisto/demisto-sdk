@@ -239,7 +239,6 @@ class ReadMeValidator(BaseValidator):
             except Exception as e:
                 logger.info(f"Starting MDX local server due to exception. Error: {e}")
                 start_local_MDX_server()
-                return True
         return True
 
     def is_mdx_file(self) -> bool:

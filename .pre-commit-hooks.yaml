@@ -5,7 +5,7 @@
   entry: demisto-sdk run-unit-tests
   language: python
   files: &files
-    .*Packs/.*/.*/.*.yml$
+    .*Packs/.*/(?:Integrations|Scripts)/.*.yml$
 
 - id: validate
   name: validate
@@ -14,7 +14,8 @@
   pass_filenames: true
   language: python
   require_serial: true
-  files: *files
+  files: &all_files
+    .*Packs/.*/.*/.*.yml$|.*Packs/.*/.*/.*.json$
 
 - id: format
   name: format
@@ -23,7 +24,7 @@
   args: ["-ud", "-y", "--no-validate"]
   language: python
   require_serial: true
-  files: *files
+  files: *all_files
 
 - id: secrets
   name: secrets

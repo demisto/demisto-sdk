@@ -18,6 +18,7 @@
 * Added pack name and pack version to **upload** command summary.
 * Added support for modeling rules with multi datasets in ****modeling-rules test**** command.
 * Fixed an issue where **validate** didn't recognize layouts with incident fields missing from `id_set.json` even when `--post-commit` was indicated.
+* Fixed an issue in **upload** with `--input-config-file` where the content items weren't uploaded in the correct pack.
 
 ## 1.15.2
 * Fixed an issue where **format** added default arguments to reputation commands which already have one.

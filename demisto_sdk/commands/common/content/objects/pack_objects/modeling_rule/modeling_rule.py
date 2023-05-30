@@ -112,6 +112,7 @@ class SingleModelingRule:
     def fields(self):
         if not self._fields:
             uniq_fields = set(re.findall(self.RULE_FIELDS_REGEX, self.rule_text))
+            uniq_fields.add("_time")  # The '_time' field is always required.
             self.fields = uniq_fields
             if not self._fields:
                 raise ValueError(

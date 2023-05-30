@@ -73,7 +73,7 @@ class Uploader:
         destination_zip_dir: Optional[Path] = None,
         **kwargs,
     ):
-        self.path = self.arranging_input(input)
+        self.path = None if input is None else Path(input)
         verify = (
             (not insecure) if insecure else None
         )  # set to None so demisto_client will use env var DEMISTO_VERIFY_SSL
@@ -201,10 +201,8 @@ class Uploader:
             )
             return ERROR_RETURN_CODE
 
-        if not self.path:
-            logger.error(f"[red]No input provided for uploading[/red]")
-            return ERROR_RETURN_CODE
-        if not self.is_path_exist():
+        if not self.path or not self.path.exists():
+            logger.error(f"[red]input path: {self.path} does not exist[/red]")
             return ERROR_RETURN_CODE
 
         if self.should_detach_files:
@@ -223,9 +221,7 @@ class Uploader:
         )
 
         try:
-            if isinstance(self.path, list):
-                success = self._upload_multiple_packs(self.path)
-            elif self.path.suffix == ".zip":
+            if self.path.suffix == ".zip":
                 success = self._upload_zipped(self.path)
             elif self.path.is_dir() and is_uploadable_dir(self.path):
                 success = self._upload_entity_dir(self.path)
@@ -364,19 +360,6 @@ class Uploader:
 
         return all(self._upload_single(item) for item in to_upload)
 
-    def _upload_multiple_packs(self, paths: List[Path]) -> bool:
-        """
-        Uploads all packs from a given list.
-
-        Args:
-            path (List[Path])
-
-        Returns:
-            Whether the upload succeeded.
-        """
-        to_upload = filter(lambda p: p.is_dir(), paths)
-        return all(self._upload_single(item) for item in to_upload)
-
     def notify_user_should_override_packs(self):
         """Notify the user about possible overridden packs."""
 
@@ -486,28 +469,6 @@ class Uploader:
                 tablefmt="fancy_grid",
             )
             logger.info(f"[red]FAILED UPLOADS:\n{failed_upload_str}\n[/red]")
-
-    def arranging_input(self, input_) -> Union[List[Path], Path, None]:
-        if input_ is None:
-            return None
-        elif isinstance(input_, (str, Path)):
-            return Path(input_)
-        elif isinstance(input_, Iterable):
-            return [Path(i) for i in input_]
-        return None
-
-    def is_path_exist(self):
-        if isinstance(self.path, list):
-            all_exist = True
-            for path in self.path:
-                if not path.exists():
-                    logger.error(f"[red]input path: {path} does not exist[/red]")
-                    all_exist = False
-            return all_exist
-        elif self.path and not self.path.exists():
-            logger.error(f"[red]input path: {self.path} does not exist[/red]")
-            return False
-        return True
 
 
 class ConfigFileParser:

@@ -3,7 +3,7 @@ import shutil
 import tempfile
 from contextlib import suppress
 from pathlib import Path
-from typing import Iterable, List
+from typing import Iterable, List, Optional, Tuple
 from zipfile import ZipFile
 
 from pydantic import DirectoryPath
@@ -19,6 +19,11 @@ from demisto_sdk.commands.upload.constants import (
     MULTIPLE_ZIPPED_PACKS_FILE_NAME,
     MULTIPLE_ZIPPED_PACKS_FILE_STEM,
 )
+from demisto_sdk.commands.upload.uploader import (
+    ABORTED_RETURN_CODE,
+    ERROR_RETURN_CODE,
+    SUCCESS_RETURN_CODE,
+)
 from demisto_sdk.utils.utils import check_configuration_file
 
 logger = logging.getLogger("demisto-sdk")
@@ -26,6 +31,11 @@ logger = logging.getLogger("demisto-sdk")
 
 def upload_content_entity(**kwargs):
     from demisto_sdk.commands.upload.uploader import ConfigFileParser, Uploader
+
+    inputs: Optional[Tuple[Path, ...]] = tuple(
+        Path(input) for input in
+        kwargs["input"].split(',')
+        ) if kwargs.get("input") else None
 
     keep_zip = kwargs.pop("keep_zip", None)
     destination_zip_path = Path(keep_zip or tempfile.mkdtemp())
@@ -40,7 +50,7 @@ def upload_content_entity(**kwargs):
         paths = ConfigFileParser(Path(config_file_path)).custom_packs_paths
 
         if not kwargs.get('zip') and are_all_packs_unzipped(paths=paths):
-            kwargs["input"] = paths
+            inputs = paths
         else:
             zip_multiple_packs(
                 paths=paths,
@@ -48,20 +58,37 @@ def upload_content_entity(**kwargs):
                 dir=destination_zip_path,
             )
             kwargs["detached_files"] = True
-            kwargs["input"] = Path(destination_zip_path, MULTIPLE_ZIPPED_PACKS_FILE_NAME)
+            inputs = tuple([Path(destination_zip_path, MULTIPLE_ZIPPED_PACKS_FILE_NAME)])
 
     check_configuration_file("upload", kwargs)
 
+    if not inputs:
+        logger.error("[red]No input provided for uploading[/red]")
+        return ERROR_RETURN_CODE
+
+    kwargs.pop("input")
     # Here the magic happens
-    upload_result = Uploader(
-        marketplace=marketplace, destination_zip_dir=destination_zip_path, **kwargs
-    ).upload()
+    upload_result = []
+    for input in inputs:
+        result = Uploader(
+            input=input,
+            marketplace=marketplace,
+            destination_zip_dir=destination_zip_path,
+            **kwargs
+            ).upload()
+        if result == ABORTED_RETURN_CODE:
+            return ABORTED_RETURN_CODE
+        upload_result.append(result)
 
     # Clean up
     if not keep_zip:
         shutil.rmtree(destination_zip_path, ignore_errors=True)
 
-    return upload_result
+    return (
+        SUCCESS_RETURN_CODE
+        if all(result == SUCCESS_RETURN_CODE for result in upload_result)
+        else ERROR_RETURN_CODE
+        )
 
 
 def zip_multiple_packs(

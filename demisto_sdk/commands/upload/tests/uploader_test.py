@@ -406,12 +406,27 @@ def test_upload_packs_from_configfile(demisto_client_configure, mocker, tmpdir):
         IntegrationScript, "get_supported_native_images", return_value=[]
     )
     
-    path = (Path(f"{git_path()}/demisto_sdk/tests/test_files/Packs/DummyPack"),
-            Path(f"{git_path()}/demisto_sdk/tests/test_files/Packs/Phishing"))
-    uploader = Uploader(path, destination_zip_dir=tmpdir)
+    with Path(f"{git_path()}/configfile_test.json").open('w+') as f:
+        json.dump({
+                "custom_packs": [
+                    {
+                        "id": "DummyPack",
+                        "url": f"{git_path()}/demisto_sdk/tests/test_files/Packs/DummyPack"
+                    },
+                    {
+                        "id": "Phishing",
+                        "url": f"{git_path()}/demisto_sdk/tests/test_files/Packs/Phishing"
+                    }
+                ]
+            },
+                  f
+        )
+        
+    
     mocker.patch.object(uploader, "client")
     mocked_upload_method = mocker.patch.object(ContentItem, "upload")
-    assert uploader.upload() == SUCCESS_RETURN_CODE
+    status = click.Context(command=upload).invoke(upload, input_confi=f"{git_path()}/configfile_test.json")
+    assert status == SUCCESS_RETURN_CODE
 
     expected_names = {
         "DummyIntegration.yml",
@@ -693,7 +708,7 @@ class TestZippedPackUpload:
         assert mocked_upload_content_packs.call_args[1]["file"] == str(path)
 
     @pytest.mark.parametrize(
-        argnames="path", argvalues=(Path("invalid_zip_path"), None)
+        argnames="path", argvalues=("invalid_zip_path", None)
     )
     def test_upload_invalid_zip_path(self, mocker, path: Optional[Path]):
         """
@@ -747,7 +762,7 @@ class TestZippedPackUpload:
         mocker.patch.object(API_CLIENT, "upload_content_packs")
 
         # run
-        click.Context(command=upload).invoke(upload, input=TEST_PACK_ZIP)
+        click.Context(command=upload).invoke(upload, input=str(TEST_PACK_ZIP))
 
         # validate
         tools.update_server_configuration.call_count == exp_call_count
@@ -797,7 +812,7 @@ class TestZippedPackUpload:
         mocker.patch.object(API_CLIENT, "generic_request", return_value=([], 200, None))
 
         # run
-        click.Context(command=upload).invoke(upload, input=path)
+        click.Context(command=upload).invoke(upload, input=str(path))
         assert mock_upload_content_packs.call_count == 1
         assert mock_upload_content_packs.call_args[1]["file"] == str(path)
         assert mock_upload_content_packs.call_args[1]["skip_verify"] == "true"
@@ -830,7 +845,7 @@ class TestZippedPackUpload:
 
         # run
         result = click.Context(command=upload).invoke(
-            upload, input=path, skip_validation=True
+            upload, input=str(path), skip_validation=True
         )
 
         assert result == SUCCESS_RETURN_CODE
@@ -865,7 +880,7 @@ class TestZippedPackUpload:
         )
         mocker.patch("builtins.input", return_value="y")
         # run
-        click.Context(command=upload).invoke(upload, input=path)
+        click.Context(command=upload).invoke(upload, input=str(path))
         assert mock_upload_content_packs.call_args[1]["file"] == str(path)
         assert mock_upload_content_packs.call_args[1].get("skip_validate") is None
 

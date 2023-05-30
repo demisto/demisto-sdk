@@ -1,7 +1,11 @@
 # Changelog
 
 ## Unreleased
-- Fixed an issue where *update-release-notes* and *doc-review* did not handle new content notes as expected.
+
+## 1.15.4
+* Fixed an issue where *update-release-notes* and *doc-review* did not handle new content notes as expected.
+* Fixed an issue in PEP484 (no-implicit-optional) hook to **pre-commit**.
+
 
 ## 1.15.3
 * Added the `--init` flag to **download**.

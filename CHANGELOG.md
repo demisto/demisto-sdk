@@ -1,6 +1,7 @@
 # Changelog
 
 ## Unreleased
+- Fixed an issue where *update-release-notes* and *doc-review* did not handle new content notes as expected.
 
 ## 1.15.3
 * Added the `--init` flag to **download**.

@@ -6,6 +6,8 @@
 * Fixed an issue where *update-release-notes* and *doc-review* did not handle new content notes as expected.
 * Fixed an issue in PEP484 (no-implicit-optional) hook to **pre-commit**.
 * Fixed an issue in **upload** with `--input-config-file` where the content items weren't uploaded in the correct pack.
+- Fixed an issue where *update-release-notes* and *doc-review* did not handle new content notes as expected.
+* Added support to disable the default logging colors with the **DEMISTO_SDK_LOG_NO_COLORS** environment variable.
 
 ## 1.15.3
 * Added the `--init` flag to **download**.

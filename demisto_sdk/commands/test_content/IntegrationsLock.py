@@ -6,6 +6,7 @@ from typing import Generator
 import pytz
 import requests
 from google.api_core.exceptions import PreconditionFailed
+from google.resumable_media.common import InvalidResponse
 from google.cloud import storage
 
 LOCKS_PATH = "content-locks"
@@ -218,16 +219,18 @@ def create_lock_files(
             )
             unlock_integrations(locked_integrations, test_playbook, storage_client)
             return False
-        except Exception as ex:
-            if '412' in str(ex):
-                test_playbook.build_context.logging_module.warning('===========')
-                test_playbook.build_context.logging_module.warning(ex)
+        except InvalidResponse as ex:
+            # if this exception occurs we want to check if the exception failed with status code 412
+            # and unlock all the integrations we have already locked and try again later.
+            if len(ex.args) > 2 and ex.args[0] == 'Request failed with status code' and ex.args[1] == 412:
                 test_playbook.build_context.logging_module.warning(
-                    f"Could not lock integration {integration}, Create file with precondition failed."
-                    f"delaying test execution."
+                    f"Could not lock integration {integration},"
+                    f"Create file with precondition failed on conditionNotMet exception."
+                    f"delaying test execution. Exception: {str(ex)}"
                 )
                 unlock_integrations(locked_integrations, test_playbook, storage_client)
                 return False
+            raise ex
 
     return True
 

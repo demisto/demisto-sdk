@@ -68,27 +68,21 @@ def upload_content_entity(**kwargs):
 
     kwargs.pop("input")
     # Here the magic happens
-    upload_result = []
     for input in inputs:
-        result = Uploader(
+        upload_result = Uploader(
             input=input,
             marketplace=marketplace,
             destination_zip_dir=destination_zip_path,
             **kwargs
             ).upload()
-        if result == ABORTED_RETURN_CODE:
-            return ABORTED_RETURN_CODE
-        upload_result.append(result)
+        if upload_result != SUCCESS_RETURN_CODE:
+            return upload_result
 
     # Clean up
     if not keep_zip:
         shutil.rmtree(destination_zip_path, ignore_errors=True)
 
-    return (
-        SUCCESS_RETURN_CODE
-        if all(result == SUCCESS_RETURN_CODE for result in upload_result)
-        else ERROR_RETURN_CODE
-        )
+    return upload_result
 
 
 def zip_multiple_packs(

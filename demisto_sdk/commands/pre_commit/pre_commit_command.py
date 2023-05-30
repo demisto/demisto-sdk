@@ -125,6 +125,7 @@ class PreCommitRunner:
         precommit_env["MYPYPATH"] = ":".join(
             str(path) for path in sorted(PYTHONPATH) if "site-packages" not in str(path)
         )
+        precommit_env["DEMISTO_SDK_CONTENT_PATH"] = str(CONTENT_PATH)
         for python_version, changed_files in self.python_version_to_files.items():
             precommit_config = deepcopy(self.precommit_template)
             changed_files_string = ", ".join(

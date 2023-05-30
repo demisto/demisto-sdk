@@ -117,12 +117,18 @@ def test_upload_folder(
     Then
             Make sure the expected count of content items have their _upload method called
     """
+    import demisto_sdk.commands.content_graph.objects.content_item as content_item
+
     mocker.patch.object(demisto_client, "configure", return_value="object")
     mock_upload = mocker.patch.object(
         ContentItem,
         "upload",
     )
-    path = Path(f"{git_path()}/demisto_sdk/tests/test_files/", path_end)
+    content_path = f"{git_path()}/demisto_sdk/tests/test_files/"
+    mocker.patch.object(content_item, "CONTENT_PATH", Path(content_path))
+
+    path = Path(content_path, path_end)
+
     assert path.exists()
     uploader = Uploader(path)
     with patch.object(uploader, "client", return_value="ok"):
@@ -496,6 +502,13 @@ class TestPrintSummary:
         Then
             - Ensure uploaded successfully message is printed as expected
         """
+        import demisto_sdk.commands.content_graph.objects.content_item as content_item
+
+        mocker.patch.object(
+            content_item,
+            "CONTENT_PATH",
+            Path(f"{git_path()}/demisto_sdk/tests/test_files"),
+        )
         logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
         mock_api_client(mocker)
 
@@ -504,17 +517,16 @@ class TestPrintSummary:
         uploader.print_summary()
 
         logged = flatten_call_args(logger_info.call_args_list)
-        assert len(logged) == 2
 
         assert logged[0] == "UPLOAD SUMMARY:\n"
-        assert logged[1] == "\n".join(
+        assert logged[-1] == "\n".join(
             (
                 "[green]SUCCESSFUL UPLOADS:",
-                "╒═════════════════╤════════╕",
-                "│ NAME            │ TYPE   │",
-                "╞═════════════════╪════════╡",
-                "│ DummyScript.yml │ Script │",
-                "╘═════════════════╧════════╛",
+                "╒═════════════════╤════════╤═════════════╤════════════════╕",
+                "│ NAME            │ TYPE   │ PACK NAME   │ PACK VERSION   │",
+                "╞═════════════════╪════════╪═════════════╪════════════════╡",
+                "│ DummyScript.yml │ Script │ DummyPack   │ 1.0.0          │",
+                "╘═════════════════╧════════╧═════════════╧════════════════╛",
                 "[/green]",
             )
         )

@@ -219,18 +219,13 @@ def create_lock_files(
             )
             unlock_integrations(locked_integrations, test_playbook, storage_client)
             return False
-        except InvalidResponse as ex:
-            # if this exception occurs we want to check if the exception failed with status code 412
-            # and unlock all the integrations we have already locked and try again later.
-            if len(ex.args) > 2 and ex.args[0] == 'Request failed with status code' and ex.args[1] == 412:
+        except InvalidResponse as exc:
+            if exc.__cause__ and type(exc.__cause__) == PreconditionFailed:
                 test_playbook.build_context.logging_module.warning(
-                    f"Could not lock integration {integration},"
-                    f"Create file with precondition failed on conditionNotMet exception."
-                    f"delaying test execution. Exception: {str(ex)}"
+                    f"The lock file of the integration {integration}, already created, delaying test execution."
                 )
                 unlock_integrations(locked_integrations, test_playbook, storage_client)
                 return False
-            raise ex
 
     return True
 

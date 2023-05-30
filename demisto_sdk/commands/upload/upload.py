@@ -3,7 +3,7 @@ import shutil
 import tempfile
 from contextlib import suppress
 from pathlib import Path
-from typing import Iterable, List
+from typing import Iterable, List, Sequence
 from zipfile import ZipFile
 
 from pydantic import DirectoryPath
@@ -17,7 +17,6 @@ from demisto_sdk.commands.content_graph.objects.pack import Pack
 from demisto_sdk.commands.content_graph.objects.repository import ContentDTO
 from demisto_sdk.commands.upload.constants import (
     MULTIPLE_ZIPPED_PACKS_FILE_NAME,
-    MULTIPLE_ZIPPED_PACKS_FILE_STEM,
 )
 from demisto_sdk.utils.utils import check_configuration_file
 
@@ -36,13 +35,14 @@ def upload_content_entity(**kwargs):
         if input_ := kwargs.get("input"):
             logger.warning(f"[orange]The input ({input_}) will NOT be used[/orange]")
 
-        zip_multiple_packs(
+        packs = zip_multiple_packs(
             paths=ConfigFileParser(Path(config_file_path)).custom_packs_paths,
             marketplace=marketplace,
             dir=destination_zip_path,
         )
         kwargs["detached_files"] = True
         kwargs["input"] = Path(destination_zip_path, MULTIPLE_ZIPPED_PACKS_FILE_NAME)
+        kwargs["pack_names"] = [pack.name for pack in packs]
 
     check_configuration_file("upload", kwargs)
 
@@ -62,7 +62,7 @@ def zip_multiple_packs(
     paths: Iterable[Path],
     marketplace: MarketplaceVersions,
     dir: DirectoryPath,
-):
+) -> Sequence[Pack]:
     packs = []
     were_zipped: List[Path] = []
 
@@ -87,15 +87,16 @@ def zip_multiple_packs(
     ContentDTO(packs=packs).dump(
         dir / "result",
         marketplace=marketplace,
-        zip=True,
-        output_stem=MULTIPLE_ZIPPED_PACKS_FILE_STEM,
     )
-
-    with ZipFile(result_zip_path, "a") as zip_file:
+    with ZipFile(result_zip_path, "w") as zip_file:
         # copy files that were already zipped into the result
         for was_zipped in were_zipped:
             zip_file.write(was_zipped, was_zipped.name)
+        for pack_path in (dir / "result").iterdir():
+            shutil.make_archive(str(pack_path), "zip", pack_path)
+            zip_file.write(pack_path.with_suffix(".zip"), pack_path.name)
 
     shutil.move(  # rename content_packs.zip
         str(result_zip_path), result_zip_path.with_name(MULTIPLE_ZIPPED_PACKS_FILE_NAME)
     )
+    return packs

@@ -1025,7 +1025,7 @@ class TestItemDetacher:
         # Tests that the function successfully zips and dumps multiple valid pack paths.
 
 
-def test_zip_multiple_packs(tmp_path, mocker):
+def test_zip_multiple_packs(tmp_path: git_path, mocker):
     tmp_path = tmp_path / "Packs"
     tmp_path.mkdir()
 
@@ -1058,17 +1058,24 @@ def test_zip_multiple_packs(tmp_path, mocker):
     assert (zip_path := (tmp_path / MULTIPLE_ZIPPED_PACKS_FILE_NAME)).exists()
     with zipfile.ZipFile(zip_path, "r") as zip_file:
         assert set(zip_file.namelist()) == {
-            "Pack0/",
-            "Pack0/Integrations/",
-            "Pack0/Integrations/integration-Integrations",
-            "Pack0/README.md",
-            "Pack0/metadata.json",
-            "Pack0/pack_metadata.json",
-            "Pack1/",
-            "Pack1/Integrations/",
-            "Pack1/Integrations/integration-Integrations",
-            "Pack1/README.md",
-            "Pack1/metadata.json",
-            "Pack1/pack_metadata.json",
+            "Pack0.zip",
+            "Pack1.zip",
             "zipped.zip",
         }
+    result_path = tmp_path / "result"
+    assert {str(path.relative_to(result_path)) for path in result_path.rglob("*")} == {
+        "Pack0",
+        "Pack0/Integrations",
+        "Pack0/Integrations/integration-Integrations",
+        "Pack0/README.md",
+        "Pack0/metadata.json",
+        "Pack0/pack_metadata.json",
+        "Pack1",
+        "Pack1/Integrations",
+        "Pack1/Integrations/integration-Integrations",
+        "Pack1/README.md",
+        "Pack1/metadata.json",
+        "Pack1/pack_metadata.json",
+        "Pack1.zip",
+        "Pack0.zip",
+    }

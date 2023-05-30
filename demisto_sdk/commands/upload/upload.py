@@ -35,14 +35,14 @@ def upload_content_entity(**kwargs):
         if input_ := kwargs.get("input"):
             logger.warning(f"[orange]The input ({input_}) will NOT be used[/orange]")
 
-        packs = zip_multiple_packs(
+        pack_names = zip_multiple_packs(
             paths=ConfigFileParser(Path(config_file_path)).custom_packs_paths,
             marketplace=marketplace,
             dir=destination_zip_path,
         )
         kwargs["detached_files"] = True
         kwargs["input"] = Path(destination_zip_path, MULTIPLE_ZIPPED_PACKS_FILE_NAME)
-        kwargs["pack_names"] = [pack.name for pack in packs]
+        kwargs["pack_names"] = pack_names
 
     check_configuration_file("upload", kwargs)
 
@@ -62,8 +62,8 @@ def zip_multiple_packs(
     paths: Iterable[Path],
     marketplace: MarketplaceVersions,
     dir: DirectoryPath,
-) -> Sequence[Pack]:
-    packs = []
+) -> Sequence[str]:
+    packs: List[Pack] = []
     were_zipped: List[Path] = []
 
     for path in paths:
@@ -96,4 +96,4 @@ def zip_multiple_packs(
     shutil.move(  # rename content_packs.zip
         str(result_zip_path), result_zip_path.with_name(MULTIPLE_ZIPPED_PACKS_FILE_NAME)
     )
-    return packs
+    return [pack.name for pack in packs] + [path.name for path in were_zipped]

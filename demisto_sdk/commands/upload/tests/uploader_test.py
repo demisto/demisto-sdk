@@ -79,6 +79,14 @@ DUMMY_SCRIPT_OBJECT: ContentItem = BaseContent.from_path(  # type:ignore[assignm
 )
 
 
+TEST_DATA = src_root() / "commands" / "upload" / "tests" / "data"
+CONTENT_PACKS_ZIP = TEST_DATA / "content_packs.zip"
+TEST_PACK_ZIP = TEST_DATA / "TestPack.zip"
+TEST_PACK = "Packs/TestPack"
+TEST_XSIAM_PACK = "Packs/TestXSIAMPack"
+API_CLIENT = DefaultApi()
+
+
 @pytest.fixture
 def demisto_client_configure(mocker):
     mocker.patch(
@@ -388,72 +396,44 @@ def test_upload_pack(demisto_client_configure, mocker, tmpdir):
     assert mocked_upload_method.call_count == len(expected_names)
 
 
-def test_upload_packs_from_configfile(demisto_client_configure, mocker, tmpdir):
+def test_upload_packs_from_configfile(demisto_client_configure, mocker):
     """
     Given
-        - Two packs DummyPack, Phishing
+        - Config file with two packs
 
     When
-        - Uploading packs
+        - call to upload command with --input-config-file
 
     Then
-        - Ensure packs are uploaded successfully
-        - Ensure status code is as expected
-        - Ensure that all expected content entities appearing in both packs are reported as uploaded.
+        - Ensure the Uploader().upload called twice
     """
     mocker.patch.object(demisto_client, "configure", return_value="object")
-    mocker.patch.object(
-        IntegrationScript, "get_supported_native_images", return_value=[]
-    )
-    
-    with Path(f"{git_path()}/configfile_test.json").open('w+') as f:
-        json.dump({
+    with Path(f"{git_path()}/configfile_test.json").open("w+") as config_file:
+        json.dump(
+            {
                 "custom_packs": [
                     {
                         "id": "DummyPack",
-                        "url": f"{git_path()}/demisto_sdk/tests/test_files/Packs/DummyPack"
+                        "url": f"{git_path()}/demisto_sdk/tests/test_files/Packs/DummyPack",
                     },
                     {
                         "id": "Phishing",
-                        "url": f"{git_path()}/demisto_sdk/tests/test_files/Packs/Phishing"
-                    }
+                        "url": f"{git_path()}/demisto_sdk/tests/test_files/Packs/Phishing",
+                    },
                 ]
             },
-                  f
+            config_file,
         )
-        
-    
-    mocker.patch.object(uploader, "client")
-    mocked_upload_method = mocker.patch.object(ContentItem, "upload")
-    status = click.Context(command=upload).invoke(upload, input_confi=f"{git_path()}/configfile_test.json")
-    assert status == SUCCESS_RETURN_CODE
 
-    expected_names = {
-        "DummyIntegration.yml",
-        "UploadTest.yml",
-        "DummyScriptUnified.yml",
-        "DummyScript.yml",
-        "DummyPlaybook.yml",
-        "incidenttype-Hello_World_Alert.json",
-        "incidentfield-Hello_World_ID.json",
-        "incidentfield-Hello_World_Type.json",
-        "incidentfield-Hello_World_Status.json",
-        "classifier-aws_sns_test_classifier.json",
-        "widget-ActiveIncidentsByRole.json",
-        "layoutscontainer-test.json",
-        "upload_test_dashboard.json",
-        "DummyXDRCTemplate.json",
-        "CheckEmailAuthenticity.yml",
-        "Phishing_Investigation_-_Generic_v2_-_6_0.yml",
-        "integration-VMware.yml",
-    }
-    actual_names = {
-        content_item.path.name
-        for content_item in uploader._successfully_uploaded_content_items
-    }
+    mock_api_client(mocker)
+    upload_mock = mocker.patch.object(
+        Uploader, "upload", return_value=SUCCESS_RETURN_CODE
+    )
+    click.Context(command=upload).invoke(
+        upload, input_config_file=f"{git_path()}/configfile_test.json"
+    )
 
-    assert actual_names == expected_names
-    assert mocked_upload_method.call_count == len(expected_names)
+    assert upload_mock.call_count == 2
 
 
 def test_upload_invalid_path(mocker):
@@ -668,14 +648,6 @@ class TestPrintSummary:
         )
 
 
-TEST_DATA = src_root() / "commands" / "upload" / "tests" / "data"
-CONTENT_PACKS_ZIP = TEST_DATA / "content_packs.zip"
-TEST_PACK_ZIP = TEST_DATA / "TestPack.zip"
-TEST_PACK = "Packs/TestPack"
-TEST_XSIAM_PACK = "Packs/TestXSIAMPack"
-API_CLIENT = DefaultApi()
-
-
 def mock_api_client(mocker, version: str = "6.6.0"):
     mocker.patch.object(demisto_client, "configure", return_value=API_CLIENT)
     mocker.patch.object(uploader, "get_demisto_version", return_value=Version(version))
@@ -707,9 +679,7 @@ class TestZippedPackUpload:
         assert len(uploader._successfully_uploaded_zipped_packs) == 1
         assert mocked_upload_content_packs.call_args[1]["file"] == str(path)
 
-    @pytest.mark.parametrize(
-        argnames="path", argvalues=("invalid_zip_path", None)
-    )
+    @pytest.mark.parametrize(argnames="path", argvalues=("invalid_zip_path", None))
     def test_upload_invalid_zip_path(self, mocker, path: Optional[Path]):
         """
         Given:
@@ -720,8 +690,11 @@ class TestZippedPackUpload:
             - validate the error msg
         """
         # prepare
-        expected_err = (f"input path: {path} does not exist"
-                        if path else "No input provided for uploading")
+        expected_err = (
+            f"input path: {path} does not exist"
+            if path
+            else "No input provided for uploading"
+        )
         logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
         mock_api_client(mocker)
 

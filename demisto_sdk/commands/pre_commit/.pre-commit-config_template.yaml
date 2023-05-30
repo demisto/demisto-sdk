@@ -72,10 +72,11 @@ repos:
       - id: run-unit-tests
 
       - id: format
-        # update docker image to the latest version, assume yes
-        args: ["-ud", "-y", "--no-validate"]
+        # update docker image to the latest version, assume no
+        args: ["-ud", "-n", "--no-validate", "-g"]
 
       - id: validate
+        args: ["-g"]
 
       - id: secrets
         args: ["--ignore-entropy"]

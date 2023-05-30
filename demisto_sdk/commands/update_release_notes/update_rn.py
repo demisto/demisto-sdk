@@ -742,7 +742,7 @@ class UpdateRN:
             if is_new_file:
                 rn_desc = f"##### New: {content_name}\n\n"
                 if desc:
-                    rn_desc += f"- {desc}"
+                    rn_desc += f"- New: {desc}"
                 if from_version:
                     rn_desc += f" (Available from Cortex XSOAR {from_version})."
                 rn_desc += "\n"

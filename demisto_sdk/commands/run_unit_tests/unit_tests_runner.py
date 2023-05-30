@@ -57,7 +57,7 @@ def fix_coverage_report_path(code_directory: Path):
             files = cursor.execute("SELECT * FROM file").fetchall()
             for id_, file in files:
                 file = Path(file).relative_to("/content")
-                if (CONTENT_PATH / file).exists():
+                if not (CONTENT_PATH / file).exists():
                     continue
                 cursor.execute(
                     "UPDATE file SET path = ? WHERE id = ?",
@@ -74,7 +74,7 @@ def merge_coverage_report():
     if not (files := coverage_files()):
         logger.warning("No coverage files found, skipping coverage report.")
         return
-    cov.combine(files)
+    cov.combine(files, keep=True)
     cov.xml_report(outfile=str(CONTENT_PATH / "coverage.xml"))
     logger.info(f"Coverage report saved to {CONTENT_PATH / 'coverage.xml'}")
 

@@ -1,6 +1,8 @@
 # Changelog
 
 ## Unreleased
+
+## 1.15.3
 * Added the `--init` flag to **download**.
 * Added the `--keep-empty-folders` flag to **download**.
 * Added `markdown-lint` to **pre-commit**

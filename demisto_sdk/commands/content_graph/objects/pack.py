@@ -73,6 +73,7 @@ from demisto_sdk.commands.upload.constants import (
     MULTIPLE_ZIPPED_PACKS_FILE_NAME,
     MULTIPLE_ZIPPED_PACKS_FILE_STEM,
 )
+from demisto_sdk.commands.upload.exceptions import IncompatibleUploadVersionException
 from demisto_sdk.commands.upload.tools import (
     parse_error_response,
     parse_upload_response,
@@ -224,6 +225,18 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: i
         if v.is_absolute():
             return v
         return CONTENT_PATH / v
+
+    @property
+    def pack_id(self) -> str:
+        return self.object_id
+
+    @property
+    def pack_name(self) -> str:
+        return self.name
+
+    @property
+    def pack_version(self) -> Optional[Version]:
+        return Version(self.current_version) if self.current_version else None
 
     @property
     def depends_on(self) -> List["RelationshipData"]:
@@ -468,7 +481,10 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: i
         logger.debug(
             f"Uploading pack {self.object_id} element-by-element, as -z was not specified"
         )
-        failures: List[FailedUploadException] = []
+        upload_failures: List[FailedUploadException] = []
+        uploaded_successfully: List[ContentItem] = []
+        incompatible_content_items = []
+
         for item in self.content_items:
             if item.content_type in CONTENT_TYPES_EXCLUDED_FROM_UPLOAD:
                 logger.debug(
@@ -485,6 +501,7 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: i
                     marketplace=marketplace,
                     target_demisto_version=target_demisto_version,
                 )
+                uploaded_successfully.append(item)
             except NotIndivitudallyUploadableException:
                 if marketplace == MarketplaceVersions.MarketplaceV2:
                     raise  # many XSIAM content types must be uploaded zipped.
@@ -492,21 +509,23 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: i
                     f"Not uploading pack {self.object_id}: {item.content_type} {item.object_id} as it was not indivudally uploaded"
                 )
             except ApiException as e:
-                failures.append(
+                upload_failures.append(
                     FailedUploadException(
                         item.path,
                         response_body={},
                         additional_info=parse_error_response(e),
                     )
                 )
+            except IncompatibleUploadVersionException as e:
+                incompatible_content_items.append(e)
 
             except FailedUploadException as e:
-                failures.append(e)
+                upload_failures.append(e)
 
-        if failures:
-            if len(failures) == 1:
-                raise failures[0]
-            raise FailedUploadMultipleException(failures)
+        if upload_failures or incompatible_content_items:
+            raise FailedUploadMultipleException(
+                uploaded_successfully, upload_failures, incompatible_content_items
+            )
 
         return True
 

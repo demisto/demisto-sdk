@@ -154,7 +154,7 @@ Our CLI supports autocomplete for Linux/MacOS machines, you can turn this featur
 for zsh users run in the terminal
 
 ```bash
-eval "$(_DEMISTO_SDK_COMPLETE=source_zsh demisto-sdk)"
+eval "$(_DEMISTO_SDK_COMPLETE=zsh_source demisto-sdk)"
 ```
 
 for regular bashrc users run in the terminal

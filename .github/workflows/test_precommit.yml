@@ -47,4 +47,4 @@ jobs:
         source $(poetry env info --path)/bin/activate
         cd content
         npm install
-        demisto-sdk pre-commit --unit-test --validate --format --show-diff-on-failure --verbose --sdk-ref ${{ github.event.pull_request.head.sha }} -i Packs/HelloWorld
+        demisto-sdk pre-commit --unit-test --validate --show-diff-on-failure --verbose --sdk-ref ${{ github.event.pull_request.head.sha }} -i Packs/HelloWorld

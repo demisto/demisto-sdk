@@ -57,6 +57,8 @@ def fix_coverage_report_path(code_directory: Path):
             files = cursor.execute("SELECT * FROM file").fetchall()
             for id_, file in files:
                 file = Path(file).relative_to("/content")
+                if not (CONTENT_PATH / file).exists():
+                    continue
                 cursor.execute(
                     "UPDATE file SET path = ? WHERE id = ?",
                     (str(CONTENT_PATH / file), id_),
@@ -65,6 +67,16 @@ def fix_coverage_report_path(code_directory: Path):
             logger.debug("Done editing coverage report")
         coverage_file.unlink()
         shutil.copy(temp_file.name, coverage_file)
+
+
+def merge_coverage_report():
+    cov = coverage.Coverage(data_file=CONTENT_PATH / ".coverage")
+    if not (files := coverage_files()):
+        logger.warning("No coverage files found, skipping coverage report.")
+        return
+    cov.combine(files, keep=True)
+    cov.xml_report(outfile=str(CONTENT_PATH / "coverage.xml"))
+    logger.info(f"Coverage report saved to {CONTENT_PATH / 'coverage.xml'}")
 
 
 def unit_test_runner(file_paths: List[Path], verbose: bool = False) -> int:
@@ -160,7 +172,12 @@ def unit_test_runner(file_paths: List[Path], verbose: bool = False) -> int:
                 else:
                     logger.info(f"All tests passed for {filename} in {docker_image}")
                 container.remove(force=True)
-                fix_coverage_report_path(integration_script.path.parent)
+                try:
+                    fix_coverage_report_path(integration_script.path.parent)
+                except Exception as e:
+                    logger.warning(
+                        f"Failed to edit coverage report for {filename}: {e}"
+                    )
             except Exception as e:
                 logger.error(
                     f"Failed to run test for {filename} in {docker_image}: {e}"
@@ -172,8 +189,8 @@ def unit_test_runner(file_paths: List[Path], verbose: bool = False) -> int:
                 shutil.rmtree(
                     integration_script.path.parent / ".pytest.ini", ignore_errors=True
                 )
-    cov = coverage.Coverage(data_file=CONTENT_PATH / ".coverage")
-    cov.combine(coverage_files())
-    cov.xml_report(outfile=str(CONTENT_PATH / "coverage.xml"))
-    logger.info(f"Coverage report saved to {CONTENT_PATH / 'coverage.xml'}")
+    try:
+        merge_coverage_report()
+    except Exception as e:
+        logger.warning(f"Failed to merge coverage report: {e}")
     return exit_code

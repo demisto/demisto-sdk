@@ -56,10 +56,18 @@ def test_integration_upload_pack_positive(demisto_client_mock, mocker):
     - Ensure upload runs successfully.
     - Ensure success upload message is printed.
     """
+    import demisto_sdk.commands.content_graph.objects.content_item as content_item
+
     logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
     pack_path = Path(
         DEMISTO_SDK_PATH, "tests/test_files/content_repo_example/Packs/FeedAzure"
     )
+    mocker.patch.object(
+        content_item,
+        "CONTENT_PATH",
+        Path(DEMISTO_SDK_PATH, "tests/test_files/content_repo_example"),
+    )
+
     for content_class in (
         IncidentField,
         Integration,
@@ -76,19 +84,19 @@ def test_integration_upload_pack_positive(demisto_client_mock, mocker):
     assert logged[0] == "\n".join(
         (
             "[green]SUCCESSFUL UPLOADS:",
-            "╒════════════════════════════════╤═══════════════╕",
-            "│ NAME                           │ TYPE          │",
-            "╞════════════════════════════════╪═══════════════╡",
-            "│ incidentfield-city.json        │ IncidentField │",
-            "├────────────────────────────────┼───────────────┤",
-            "│ FeedAzure.yml                  │ Integration   │",
-            "├────────────────────────────────┼───────────────┤",
-            "│ FeedAzure_test.yml             │ Playbook      │",
-            "├────────────────────────────────┼───────────────┤",
-            "│ just_a_test_script.yml         │ Script        │",
-            "├────────────────────────────────┼───────────────┤",
-            "│ script-prefixed_automation.yml │ Script        │",
-            "╘════════════════════════════════╧═══════════════╛",
+            "╒════════════════════════════════╤═══════════════╤═══════════════╤════════════════╕",
+            "│ NAME                           │ TYPE          │ PACK NAME     │ PACK VERSION   │",
+            "╞════════════════════════════════╪═══════════════╪═══════════════╪════════════════╡",
+            "│ incidentfield-city.json        │ IncidentField │ AzureSentinel │ 1.0.0          │",
+            "├────────────────────────────────┼───────────────┼───────────────┼────────────────┤",
+            "│ FeedAzure.yml                  │ Integration   │ AzureSentinel │ 1.0.0          │",
+            "├────────────────────────────────┼───────────────┼───────────────┼────────────────┤",
+            "│ FeedAzure_test.yml             │ Playbook      │ AzureSentinel │ 1.0.0          │",
+            "├────────────────────────────────┼───────────────┼───────────────┼────────────────┤",
+            "│ just_a_test_script.yml         │ Script        │ AzureSentinel │ 1.0.0          │",
+            "├────────────────────────────────┼───────────────┼───────────────┼────────────────┤",
+            "│ script-prefixed_automation.yml │ Script        │ AzureSentinel │ 1.0.0          │",
+            "╘════════════════════════════════╧═══════════════╧═══════════════╧════════════════╛",
             "[/green]",
         )
     )
@@ -198,11 +206,11 @@ def test_zipped_pack_upload_positive(repo, mocker, tmpdir, demisto_client_mock):
     assert logged[-1] == "\n".join(
         (
             "[green]SUCCESSFUL UPLOADS:",
-            "╒═══════════╤════════╕",
-            "│ NAME      │ TYPE   │",
-            "╞═══════════╪════════╡",
-            "│ test-pack │ Pack   │",
-            "╘═══════════╧════════╛",
+            "╒═══════════╤════════╤═════════════╤════════════════╕",
+            "│ NAME      │ TYPE   │ PACK NAME   │ PACK VERSION   │",
+            "╞═══════════╪════════╪═════════════╪════════════════╡",
+            "│ test-pack │ Pack   │ test-pack   │ 1.0.0          │",
+            "╘═══════════╧════════╧═════════════╧════════════════╛",
             "[/green]",
         )
     )

@@ -57,6 +57,7 @@ from demisto_sdk.commands.common.tools import (
     safe_write_unicode,
 )
 from demisto_sdk.commands.format.format_module import format_manager
+from demisto_sdk.commands.init.initiator import Initiator
 from demisto_sdk.commands.split.ymlsplitter import YmlSplitter
 
 json = JSON_Handler()
@@ -140,6 +141,8 @@ class Downloader:
         pack_content (dict): The pack content that maps the pack
         system (bool): whether to download system items
         item_type (str): The items type to download, use just when downloading system items.
+        init (bool): Initialize a new Pack and download the items to it. This will create an empty folder for each supported content item type.
+        keep_empty_folders (bool): Whether to keep empty folders when using init.
     """
 
     def __init__(
@@ -154,6 +157,8 @@ class Downloader:
         run_format: bool = False,
         system: bool = False,
         item_type: str = "",
+        init: bool = False,
+        keep_empty_folders: bool = False,
         **kwargs,
     ):
         self.output_pack_path = output
@@ -177,6 +182,8 @@ class Downloader:
         }
         self.num_merged_files = 0
         self.num_added_files = 0
+        self.init = init
+        self.keep_empty_folders = keep_empty_folders
 
     def download(self) -> int:
         """
@@ -200,6 +207,7 @@ class Downloader:
             return 1
         if self.handle_list_files_flag():
             return 0
+        self.handle_init_flag()
         self.handle_all_custom_content_flag()
         self.handle_regex_flag()
         if not self.verify_output_pack_is_pack():
@@ -578,6 +586,39 @@ class Downloader:
                 if re.search(self.regex, input_file):
                     input_files_regex_match.append(input_file)
             self.input_files = input_files_regex_match
+
+    def handle_init_flag(self) -> None:
+        """
+        Handles the case where the init flag is given
+        :return: None
+        """
+        if not self.init:
+            return
+
+        root_folder = Path(self.output_pack_path)
+        if root_folder.name != "Packs":
+            root_folder = root_folder / "Packs"
+            try:
+                root_folder.mkdir(exist_ok=True)
+            except FileNotFoundError as e:
+                e.filename = str(Path(e.filename).parent)
+                raise
+        initiator = Initiator(str(root_folder))
+        initiator.init()
+        self.output_pack_path = initiator.full_output_path
+
+        if not self.keep_empty_folders:
+            self.remove_empty_folders()
+
+    def remove_empty_folders(self) -> None:
+        """
+        Removes empty folders from the output pack path
+        :return: None
+        """
+        pack_folder = Path(self.output_pack_path)
+        for folder_path in pack_folder.glob("*"):
+            if folder_path.is_dir() and not any(folder_path.iterdir()):
+                folder_path.rmdir()
 
     def verify_output_pack_is_pack(self) -> bool:
         """
@@ -1235,7 +1276,11 @@ class Downloader:
         :return: None
         """
         if self.run_format and file_ending in ("yml", "json"):
-            format_manager(input=os.path.abspath(file_path), no_validate=False)
+            format_manager(
+                input=str(Path(file_path).resolve()),
+                no_validate=False,
+                assume_answer=False,
+            )
 
     def remove_traces(self):
         """

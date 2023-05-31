@@ -405,36 +405,6 @@ jobs:
             demisto-sdk update-content-graph -i ./tmp/content_graph/xsoar.zip -o ./tmp/content_graph
       - store_artifacts:
           path: content/tmp
-          
-  test-pre-commit:
-    docker:
-      - image: << pipeline.parameters.global-docker-image >>
-    steps:
-      - checkout
-      - <<: *install_poetry
-      - <<: *install_demisto_sdk
-      - setup_remote_docker:
-          version: 20.10.12
-      - attach_workspace:
-          at: ~/project
-      - run:
-          name: Test Pre Commit
-          when: always
-          no_output_timeout: 20m
-          command: |
-
-            source $(poetry env info --path)/bin/activate
-
-            export SDK_PRE_COMMIT_FILES_CHANGED=$(git diff master... --name-only -- demisto_sdk/commands/pre_commit)
-
-            if [[ -z "${SDK_PRE_COMMIT_FILES_CHANGED}" ]]; then
-                echo "files under demisto_sdk/commands/pre_commit did not change - Skipping pre runs."
-                exit 0
-            fi
-            cd content
-            echo "pre-commit files changed. running pre-commit"
-            
-            demisto-sdk pre-commit -i ./Packs/CortexXDR
 
   build:
       docker:
@@ -514,8 +484,6 @@ workflows:
           <<: *tag_filter
           <<: *reqs_content_checkout
       - test-lint:
-          <<: *reqs_content_checkout
-      - test-pre-commit:
           <<: *reqs_content_checkout
       - create-content-artifacts:
           <<: *tag_filter

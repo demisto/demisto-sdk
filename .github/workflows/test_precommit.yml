@@ -1,12 +1,14 @@
-name: test-pre-commit
+name: Test Demisto-SDK pre-commit
 on:
     pull_request:
         paths:
             - demisto_sdk/commands/pre_commit/**
-
+    push:
+        paths:
+          - demisto_sdk/commands/pre_commit/**
 
 jobs:
-  pre-commit:
+  test-pre-commit:
     runs-on: ubuntu-latest
 
     steps:

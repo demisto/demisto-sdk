@@ -1,6 +1,7 @@
 # Changelog
 
 ## Unreleased
+* Fixed a notification about log file location appeared more than once.
 
 ## 1.15.4
 * Fixed an issue where *update-release-notes* and *doc-review* did not handle new content notes as expected.

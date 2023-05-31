@@ -14,9 +14,6 @@ jobs:
 
     - name: Checkout
       uses: actions/checkout@v3
-      with:
-        fetch-depth: 0
-        repository: demisto/content
 
     - name: Setup python
       uses: actions/setup-python@v4
@@ -27,6 +24,14 @@ jobs:
     - name: Install dependencies
       run: poetry install
 
+    - name: Checkout
+      uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+        repository: demisto/content
+        path: content
+
+
     - name: Cache Pre commit
       id: cache-pre-commit
       uses: actions/cache@v3
@@ -35,4 +40,7 @@ jobs:
         key: ${{ runner.os }}-pre-commit
 
     - name: run pre-commit
-      run: poetry run demisto-sdk pre-commit --unit-test --validate --no-secrets --show-diff-on-failure -i Packs/QRadar
+      run: |
+        source $(poetry env info --path)/bin/activate
+        cd content
+        demisto-sdk pre-commit --unit-test --validate --format --show-diff-on-failure --sdk-ref ${{ github.event.pull_request.head.sha }} -i Packs/QRadar

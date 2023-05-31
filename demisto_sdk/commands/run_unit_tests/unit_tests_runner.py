@@ -60,12 +60,21 @@ def fix_coverage_report_path(code_directory: Path):
                     # means that the .coverage file is already fixed
                     continue
                 file = Path(file).relative_to("/content")
-                if not (CONTENT_PATH / file).exists():
-                    continue
-                cursor.execute(
-                    "UPDATE file SET path = ? WHERE id = ?",
-                    (str(CONTENT_PATH / file), id_),
-                )
+                if (
+                    not (CONTENT_PATH / file).exists()
+                    or "test_data" in file.parts
+                    or file.name in ("conftest.py", "__init__.py")
+                    or file.name.endswith("_test.py")
+                ):
+                    logger.debug(f"Removing {file} from coverage report")
+                    cursor.execute(
+                        "DELETE FROM file WHERE id = ?", (id_,)
+                    )  # delete the file from the coverage report, as it is not relevant.
+                else:
+                    cursor.execute(
+                        "UPDATE file SET path = ? WHERE id = ?",
+                        (str(CONTENT_PATH / file), id_),
+                    )
             sql_connection.commit()
             logger.debug("Done editing coverage report")
         coverage_file.unlink()

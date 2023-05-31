@@ -1,6 +1,10 @@
 # Changelog
 
 ## Unreleased
+* Removed the `no-implicit-optional` hook from **pre-commit**.
+* Removed the `markdownlint` hook from **pre-commit**.
+* Fixed an issue in **run-unit-tests** to pass with warnings when no tests are collected.
+* Fixed an issue in **run-unit-tests** with the coverage calculation.
 
 ## 1.15.4
 * Fixed an issue where *update-release-notes* and *doc-review* did not handle new content notes as expected.

@@ -355,7 +355,6 @@ jobs:
               
         - store_artifacts:
             path: /tmp/lint_env_installation.log
-  
 
     test-pre-commit:
       docker:
@@ -385,7 +384,6 @@ jobs:
               cd content
               echo "pre-commit files changed. running pre-commit"
               
-              # python file (CommonServerPython lint is running over python 3 and 2)
               demisto-sdk pre-commit -i ./Packs/CortexXDR -ut
 
   create-content-artifacts:
@@ -517,6 +515,8 @@ workflows:
           <<: *tag_filter
           <<: *reqs_content_checkout
       - test-lint:
+          <<: *reqs_content_checkout
+      - test-pre-commit:
           <<: *reqs_content_checkout
       - create-content-artifacts:
           <<: *tag_filter

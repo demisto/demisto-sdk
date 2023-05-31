@@ -27,10 +27,12 @@ from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.content_graph.objects.integration_script import (
     IntegrationScript,
 )
+from demisto_sdk.commands.pre_commit.hooks.format import FormatHook
 from demisto_sdk.commands.pre_commit.hooks.mypy import MypyHook
 from demisto_sdk.commands.pre_commit.hooks.pep484 import PEP484Hook
 from demisto_sdk.commands.pre_commit.hooks.pycln import PyclnHook
 from demisto_sdk.commands.pre_commit.hooks.ruff import RuffHook
+from demisto_sdk.commands.pre_commit.hooks.validate import ValidateHook
 
 yaml = YAML_Handler()
 json = JSON_Handler()
@@ -50,6 +52,7 @@ INTEGRATION_SCRIPT_REGEX = re.compile(r"^Packs/.*/(?:Integrations|Scripts)/.*.ym
 class PreCommitRunner:
     """This class is responsible of running pre-commit hooks."""
 
+    input_files: Optional[Iterable[Path]]
     python_version_to_files: Dict[str, Set[Path]]
     demisto_sdk_commit_hash: str
 
@@ -94,6 +97,8 @@ class PreCommitRunner:
         RuffHook(hooks["ruff"]).prepare_hook(python_version, IS_GITHUB_ACTIONS)
         MypyHook(hooks["mypy"]).prepare_hook(python_version)
         PEP484Hook(hooks["no-implicit-optional"]).prepare_hook(python_version)
+        ValidateHook(hooks["validate"]).prepare_hook(self.input_files)
+        FormatHook(hooks["format"]).prepare_hook(self.input_files)
 
     def run(
         self,
@@ -286,7 +291,9 @@ def pre_commit_manager(
     logger.info(f"Running pre-commit on {files_to_run_string}")
     if not sdk_ref:
         sdk_ref = f"v{get_last_remote_release_version()}"
-    pre_commit_runner = PreCommitRunner(group_by_python_version(files_to_run), sdk_ref)
+    pre_commit_runner = PreCommitRunner(
+        input_files, group_by_python_version(files_to_run), sdk_ref
+    )
     return pre_commit_runner.run(
         unit_test,
         skip_hooks,

@@ -355,6 +355,39 @@ jobs:
               
         - store_artifacts:
             path: /tmp/lint_env_installation.log
+  
+
+    test-pre-commit:
+      docker:
+        - image: << pipeline.parameters.global-docker-image >>
+      steps:
+        - checkout
+        - <<: *install_poetry
+        - <<: *install_demisto_sdk
+        - setup_remote_docker:
+            version: 20.10.12
+        - attach_workspace:
+            at: ~/project
+        - run:
+            name: Test lint on python and ps files
+            when: always
+            no_output_timeout: 20m
+            command: |
+
+              source $(poetry env info --path)/bin/activate
+
+              export SDK_PRE_COMMIT_FILES_CHANGED=$(git diff master... --name-only -- demisto_sdk/commands/pre-commit)
+
+              if [[ -z "${SDK_PRE_COMMIT_FILES_CHANGED}" ]]; then
+                  echo "files under demisto_sdk/commands/pre did not change - Skipping pre runs."
+                  exit 0
+              fi
+              cd content
+              echo "pre-commit files changed. running pre-commit"
+              
+              # python file (CommonServerPython lint is running over python 3 and 2)
+              demisto-sdk pre-commit -i ./Packs/CortexXDR -ut
+
   create-content-artifacts:
       docker:
         - image: << pipeline.parameters.global-docker-image >>

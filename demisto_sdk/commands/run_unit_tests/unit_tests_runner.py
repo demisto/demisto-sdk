@@ -148,6 +148,11 @@ def unit_test_runner(file_paths: List[Path], verbose: bool = False) -> int:
                 )
                 # wait for container to finish
                 if status_code := container.wait()["StatusCode"]:
+                    if status_code == 5:
+                        logger.warning(
+                            f"No test are collected for {integration_script.path} using {docker_image} skipped."
+                        )
+                        continue
                     if not (
                         integration_script.path.parent / ".report_pytest.xml"
                     ).exists():

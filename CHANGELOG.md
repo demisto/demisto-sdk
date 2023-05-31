@@ -1,7 +1,7 @@
 # Changelog
 
 ## Unreleased
-* Added the `_time` field to the compare table in the **modeling-rules test**.
+* Added the `_time` field to the output compare table of the **modeling-rules test** command.
 
 ## 1.15.4
 * Fixed an issue where *update-release-notes* and *doc-review* did not handle new content notes as expected.

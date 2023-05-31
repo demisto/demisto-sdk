@@ -913,7 +913,16 @@ class TestRNUpdate:
             "Received no update type when one was expected." in execinfo.value.args[0]
         )
 
-    def test_build_rn_desc_new_file(self):
+    new_file_test_params = [
+        (
+            FileType.TEST_SCRIPT,
+            "(Available from Cortex XSOAR 5.5.0).",
+        ),
+        (FileType.MODELING_RULE, "(Available from Cortex XSIAM %%XSIAM_VERSION%%)."),
+    ]
+
+    @pytest.mark.parametrize("file_type, expected_result", new_file_test_params)
+    def test_build_rn_desc_new_file(self, file_type, expected_result):
         """
         Given
             - A new file
@@ -932,7 +941,7 @@ class TestRNUpdate:
         )
 
         desc = update_rn.build_rn_desc(
-            _type=FileType.TEST_SCRIPT,
+            _type=file_type,
             content_name="Hello World Test",
             desc="Test description",
             is_new_file=True,
@@ -940,7 +949,7 @@ class TestRNUpdate:
             from_version="5.5.0",
             docker_image=None,
         )
-        assert "(Available from Cortex XSOAR 5.5.0)." in desc
+        assert expected_result in desc
 
     def test_build_rn_desc_old_file(self):
         """

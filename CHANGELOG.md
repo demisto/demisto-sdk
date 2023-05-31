@@ -2,6 +2,7 @@
 
 ## Unreleased
 - Fixed an issue where *update-release-notes* and *doc-review* did not handle new content notes as expected.
+- improved the generated release note for newly added XSIAM entities when running *update-release-notes*.
 
 ## 1.15.3
 * Added the `--init` flag to **download**.

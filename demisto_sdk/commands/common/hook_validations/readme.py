@@ -79,6 +79,8 @@ PACKS_TO_IGNORE = ["HelloWorld", "HelloWorldPremium"]
 
 DEFAULT_SENTENCES = ["getting started and learn how to build an integration"]
 
+RETRIES_VERIFY_MDX = 2
+
 
 @dataclass(frozen=True)
 class ReadmeUrl:
@@ -214,21 +216,29 @@ class ReadMeValidator(BaseValidator):
         server_started = mdx_server_is_up()
         if not server_started:
             return False
-        readme_content = self.fix_mdx()
-        retry = Retry(total=2)
-        adapter = HTTPAdapter(max_retries=retry)
-        session = requests.Session()
-        session.mount("http://", adapter)
-        response = session.request(
-            "POST",
-            "http://localhost:6161",
-            data=readme_content.encode("utf-8"),
-            timeout=20,
-        )
-        if response.status_code != 200:
-            error_message, error_code = Errors.readme_error(response.text)
-            if self.handle_error(error_message, error_code, file_path=self.file_path):
-                return False
+        for _ in range(RETRIES_VERIFY_MDX):
+            try:
+                readme_content = self.fix_mdx()
+                retry = Retry(total=2)
+                adapter = HTTPAdapter(max_retries=retry)
+                session = requests.Session()
+                session.mount("http://", adapter)
+                response = session.request(
+                    "POST",
+                    "http://localhost:6161",
+                    data=readme_content.encode("utf-8"),
+                    timeout=20,
+                )
+                if response.status_code != 200:
+                    error_message, error_code = Errors.readme_error(response.text)
+                    if self.handle_error(
+                        error_message, error_code, file_path=self.file_path
+                    ):
+                        return False
+                return True
+            except Exception as e:
+                logger.info(f"Starting MDX local server due to exception. Error: {e}")
+                start_local_MDX_server()
         return True
 
     def is_mdx_file(self) -> bool:

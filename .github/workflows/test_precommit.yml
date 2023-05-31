@@ -5,7 +5,7 @@ on:
             - demisto_sdk/commands/pre_commit/**
     push:
         paths:
-          - demisto_sdk/commands/pre_commit/**
+            - demisto_sdk/commands/pre_commit/**
 
 jobs:
   test-pre-commit:

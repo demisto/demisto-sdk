@@ -17,6 +17,7 @@ CONSOLE_HANDLER = "console-handler"
 FILE_HANDLER = "file-handler"
 
 LOG_FILE_NAME: str = "demisto_sdk_debug.log"
+log_file_name_notified = False
 
 LOG_FILE_PATH: Path = CONTENT_PATH / LOG_FILE_NAME
 current_log_file_path: Path = LOG_FILE_PATH
@@ -276,6 +277,8 @@ def logging_setup(
 
     global logger
     global current_log_file_path
+    global log_file_name_notified
+
     console_handler = logging.StreamHandler()
     console_handler.set_name(CONSOLE_HANDLER)
     console_handler.setLevel(
@@ -325,7 +328,11 @@ def logging_setup(
 
     demisto_logger.debug(f"Platform: {platform.system()}")
 
-    demisto_logger.info(f"[yellow]Log file location: {current_log_file_path}[/yellow]")
+    if not log_file_name_notified:
+        demisto_logger.info(
+            f"[yellow]Log file location: {current_log_file_path}[/yellow]"
+        )
+        log_file_name_notified = True
 
     logger = demisto_logger
 

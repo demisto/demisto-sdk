@@ -40,7 +40,8 @@ IS_GITHUB_ACTIONS = os.getenv("GITHUB_ACTIONS", False)
 PRECOMMIT_TEMPLATE_PATH = Path(__file__).parent / ".pre-commit-config_template.yaml"
 PRECOMMIT_PATH = CONTENT_PATH / ".pre-commit-config-content.yaml"
 
-SKIPPED_HOOKS = {"format", "validate", "secrets"}
+# UNSKIP no-implicit-optional once mypy is updated
+SKIPPED_HOOKS = {"format", "validate", "secrets", "no-implicit-optional"}
 
 INTEGRATION_SCRIPT_REGEX = re.compile(r"^Packs/.*/(?:Integrations|Scripts)/.*.yml$")
 

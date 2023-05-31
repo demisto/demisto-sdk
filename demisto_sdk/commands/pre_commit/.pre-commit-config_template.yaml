@@ -76,5 +76,4 @@ repos:
       - id: secrets
         args: ["--ignore-entropy"]
 
-      # delete this comment once upgrading mypy
-      # - id: no-implicit-optional
+      - id: no-implicit-optional

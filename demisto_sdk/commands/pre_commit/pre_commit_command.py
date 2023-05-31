@@ -226,6 +226,12 @@ def group_by_python_version(files: Set[Path]) -> Dict[str, set]:
             integration_script, IntegrationScript
         ):
             continue
+        if integration_script.deprecated:
+            logger.info(
+                f"Skipping pre-commit on deprecated integration {integration_script.name}"
+            )
+            continue
+
         code_file_path = integration_script.path.parent
         python_version = get_python_version(integration_script.docker_image)
         python_version_string = f"{python_version.major}.{python_version.minor}"

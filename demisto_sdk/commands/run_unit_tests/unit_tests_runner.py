@@ -56,6 +56,9 @@ def fix_coverage_report_path(code_directory: Path):
             cursor = sql_connection.cursor()
             files = cursor.execute("SELECT * FROM file").fetchall()
             for id_, file in files:
+                if not file.startswith("/content"):
+                    # means that the .coverage file is already fixed
+                    continue
                 file = Path(file).relative_to("/content")
                 if not (CONTENT_PATH / file).exists():
                     continue

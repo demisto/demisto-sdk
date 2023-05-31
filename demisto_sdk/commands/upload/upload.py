@@ -19,6 +19,7 @@ from demisto_sdk.commands.upload.constants import (
     MULTIPLE_ZIPPED_PACKS_FILE_NAME,
 )
 from demisto_sdk.commands.upload.uploader import (
+    ABORTED_RETURN_CODE,
     ERROR_RETURN_CODE,
     SUCCESS_RETURN_CODE,
 )
@@ -66,15 +67,18 @@ def upload_content_entity(**kwargs):
 
     kwargs.pop("input")
     # Here the magic happens
+    upload_result = SUCCESS_RETURN_CODE
     for input in inputs:
-        upload_result = Uploader(
+        result = Uploader(
             input=input,
             marketplace=marketplace,
             destination_zip_dir=destination_zip_path,
             **kwargs
             ).upload()
-        if upload_result != SUCCESS_RETURN_CODE:
-            return upload_result
+        if result == ABORTED_RETURN_CODE:
+            return result
+        elif result == ERROR_RETURN_CODE:
+            upload_result = ERROR_RETURN_CODE
 
     # Clean up
     if not keep_zip:

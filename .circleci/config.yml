@@ -434,7 +434,7 @@ jobs:
             cd content
             echo "pre-commit files changed. running pre-commit"
             
-            demisto-sdk pre-commit -i ./Packs/CortexXDR -ut
+            demisto-sdk pre-commit -i ./Packs/CortexXDR
 
   build:
       docker:

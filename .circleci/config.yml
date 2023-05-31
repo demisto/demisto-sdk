@@ -425,10 +425,10 @@ jobs:
 
             source $(poetry env info --path)/bin/activate
 
-            export SDK_PRE_COMMIT_FILES_CHANGED=$(git diff master... --name-only -- demisto_sdk/commands/pre-commit)
+            export SDK_PRE_COMMIT_FILES_CHANGED=$(git diff master... --name-only -- demisto_sdk/commands/pre_commit)
 
             if [[ -z "${SDK_PRE_COMMIT_FILES_CHANGED}" ]]; then
-                echo "files under demisto_sdk/commands/pre-commit did not change - Skipping pre runs."
+                echo "files under demisto_sdk/commands/pre_commit did not change - Skipping pre runs."
                 exit 0
             fi
             cd content

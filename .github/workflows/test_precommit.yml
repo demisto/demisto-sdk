@@ -1,11 +1,11 @@
 name: Test Demisto-SDK pre-commit
 on:
-    pull_request:
-      paths:
-        - demisto_sdk/commands/pre_commit/**
-    push:
-      paths:
-        - demisto_sdk/commands/pre_commit/**
+  pull_request:
+    paths:
+      - demisto_sdk/commands/pre_commit/**
+  push:
+    paths:
+      - demisto_sdk/commands/pre_commit/**
 
 jobs:
   test-pre-commit:

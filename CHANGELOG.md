@@ -1,6 +1,8 @@
 # Changelog
 
 ## Unreleased
+* Fixed a notification about log file location appeared more than once.
+* Updated the error message when code coverage is below the threshold in **coverage-analyze** to be printed in a more noticeable red color.
 * Added the `_time` field to the output compare table of the **modeling-rules test** command.
 
 ## 1.15.4

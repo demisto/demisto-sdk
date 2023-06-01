@@ -117,6 +117,9 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
                 return ContentItemParser.parse(
                     e.correct_parser, path, pack_marketplaces, **e.kwargs
                 )
+            except NotAContentItemException:
+                logger.debug(f"{path} is not a content item, skipping")
+                raise
             except Exception as e:
                 logger.error(f"Failed to parse {path}: {e}")
                 raise InvalidContentItemException from e

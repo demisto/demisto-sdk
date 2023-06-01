@@ -3,7 +3,7 @@
 ## Unreleased
 * Fixed a notification about log file location appeared more than once.
 * Updated the error message when code coverage is below the threshold in **coverage-analyze** to be printed in a more noticeable red color.
-* improved the generated release note for newly added XSIAM entities when running *update-release-notes*.
+* improved the generated release note for newly added XSIAM entities when running *update-release-notes* command.
 
 ## 1.15.4
 * Fixed an issue where *update-release-notes* and *doc-review* did not handle new content notes as expected.

@@ -15,6 +15,7 @@ from demisto_sdk.commands.content_graph.common import (
 from demisto_sdk.commands.content_graph.parsers.base_content import BaseContentParser
 from demisto_sdk.commands.content_graph.parsers.content_item import (
     ContentItemParser,
+    InvalidContentItemException,
     NotAContentItemException,
 )
 from demisto_sdk.commands.content_graph.parsers.content_items_list import (
@@ -196,3 +197,6 @@ class PackParser(BaseContentParser, PackMetadataParser):
             self.relationships.update(content_item.relationships)
         except NotAContentItemException:
             logger.debug(f"Skipping {content_item_path} - not a content item")
+        except InvalidContentItemException:
+            logger.error(f"{content_item_path} - invalid content item")
+            raise

@@ -727,7 +727,6 @@ class Linter:
             stdout, stderr, exit_code = run_command_os(
                 command=mypy_command, cwd=self._pack_abs_dir
             )
-        print(os.getenv['MYPYPATH'])
         logger.debug(f"{log_prompt} - Finished, exit-code: {exit_code}")
         logger.debug(f"{log_prompt} - Finished, stdout: {RL if stdout else ''}{stdout}")
         logger.debug(f"{log_prompt} - Finished, stderr: {RL if stderr else ''}{stderr}")

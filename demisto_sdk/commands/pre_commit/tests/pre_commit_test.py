@@ -67,7 +67,7 @@ def test_config_files(mocker, repo: Repo, is_test: bool):
     assert files_to_run == relative_paths
 
     pre_commit = pre_commit_command.PreCommitRunner(
-        group_by_python_version(files_to_run), ""
+        None, group_by_python_version(files_to_run), ""
     )
     assert (
         Path(script1.yml.path).relative_to(repo.path)

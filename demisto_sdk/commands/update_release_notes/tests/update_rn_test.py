@@ -915,10 +915,13 @@ class TestRNUpdate:
 
     new_file_test_params = [
         (
-            FileType.TEST_SCRIPT,
+            FileType.TEST_SCRIPT.value,
             "(Available from Cortex XSOAR 5.5.0).",
         ),
-        (FileType.MODELING_RULE, "(Available from Cortex XSIAM %%XSIAM_VERSION%%)."),
+        (
+            FileType.MODELING_RULE.value,
+            "(Available from Cortex XSIAM %%XSIAM_VERSION%%).",
+        ),
     ]
 
     @pytest.mark.parametrize("file_type, expected_result", new_file_test_params)

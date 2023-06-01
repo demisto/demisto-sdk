@@ -1,10 +1,10 @@
 # Changelog
 
 ## Unreleased
+* **Breaking Change**: The **upload** command with the `--input-config-file` argument will upload the packs as custom content items. To upload the packs as system use the `--zip` flag.
 * Fixed a notification about log file location appeared more than once.
 * Updated the error message when code coverage is below the threshold in **coverage-analyze** to be printed in a more noticeable red color.
-* Added support in **upload** with `--input-config-file` so that packs will now be uploaded as custom content items if the `--zip` argument is not used.
-* Fixed an issue in upload that failed when a comma-separated list of paths is passed to the `--input` argument.
+* Fixed an issue in **upload** that failed when a comma-separated list of paths is passed to the `--input` argument.
 
 ## 1.15.4
 * Fixed an issue where *update-release-notes* and *doc-review* did not handle new content notes as expected.

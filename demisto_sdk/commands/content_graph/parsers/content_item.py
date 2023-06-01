@@ -130,13 +130,9 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
         pack_marketplaces: List[MarketplaceVersions],
         **kwargs,
     ) -> "ContentItemParser":
-        try:
-            parser = parser_cls(path, pack_marketplaces, **kwargs)
-            logger.debug(f"Parsed {parser.node_id}")
-            return parser
-        except NotAContentItemException:
-            logger.debug(f"Skipping {path}")
-            raise NotAContentItemException
+        parser = parser_cls(path, pack_marketplaces, **kwargs)
+        logger.debug(f"Parsed {parser.node_id}")
+        return parser
 
     @property
     @abstractmethod

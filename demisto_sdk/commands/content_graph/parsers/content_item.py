@@ -22,6 +22,10 @@ class NotAContentItemException(Exception):
     pass
 
 
+class InvalidContentItemException(Exception):
+    pass
+
+
 class IncorrectParserException(Exception):
     def __init__(self, correct_parser: Type["ContentItemParser"], **kwargs) -> None:
         self.correct_parser = correct_parser
@@ -84,7 +88,7 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
     def from_path(
         path: Path,
         pack_marketplaces: List[MarketplaceVersions] = list(MarketplaceVersions),
-    ) -> Optional["ContentItemParser"]:
+    ) -> "ContentItemParser":
         """Tries to parse a content item by its path.
         If during the attempt we detected the file is not a content item, `None` is returned.
 
@@ -96,12 +100,12 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
             if ContentItemParser.is_content_item(path.parent):
                 path = path.parent
             else:
-                return None
+                raise NotAContentItemException
         try:
             content_type: ContentType = ContentType.by_path(path)
         except ValueError as e:
-            logger.error(e)
-            return None
+            logger.error(f"Could not determine content type for {path}: {e}")
+            raise InvalidContentItemException from e
         if parser_cls := ContentItemParser.content_type_to_parser.get(content_type):
             try:
                 return ContentItemParser.parse(
@@ -113,7 +117,11 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
                 return ContentItemParser.parse(
                     e.correct_parser, path, pack_marketplaces, **e.kwargs
                 )
-        return None
+            except Exception as e:
+                logger.error(f"Failed to parse {path}: {e}")
+                raise InvalidContentItemException from e
+        logger.error(f"Could not find parser for {content_type} of {path}")
+        raise InvalidContentItemException
 
     @staticmethod
     def parse(
@@ -121,14 +129,14 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
         path: Path,
         pack_marketplaces: List[MarketplaceVersions],
         **kwargs,
-    ) -> Optional["ContentItemParser"]:
+    ) -> "ContentItemParser":
         try:
             parser = parser_cls(path, pack_marketplaces, **kwargs)
             logger.debug(f"Parsed {parser.node_id}")
             return parser
         except NotAContentItemException:
             logger.debug(f"Skipping {path}")
-            return None
+            raise NotAContentItemException
 
     @property
     @abstractmethod

@@ -187,9 +187,12 @@ class PackParser(BaseContentParser, PackMetadataParser):
         Args:
             content_item_path (Path): The content item path.
         """
-        if content_item := ContentItemParser.from_path(
-            content_item_path, self.marketplaces
-        ):
+        try:
+            content_item = ContentItemParser.from_path(
+                content_item_path, self.marketplaces
+            )
             content_item.add_to_pack(self.object_id)
             self.content_items.append(content_item)
             self.relationships.update(content_item.relationships)
+        except NotAContentItemException:
+            logger.debug(f"Skipping {content_item_path} - not a content item")

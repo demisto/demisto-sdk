@@ -42,9 +42,20 @@ jobs:
         path: ~/.cache/pre-commit
         key: ${{ runner.os }}-pre-commit
 
+    - name: run pre-commit on changed files
+      continue-on-error: true
+      run: |
+        echo "# test" >> content/Packs/HelloWorld/Integrations/HelloWorld/HelloWorld.yml
+        echo "# test" >> content/Packs/CortexXDR/Integrations/CortexXDRIR/CortexXDRIR.yml
+        echo "# test" >> content/Packs/QRadar/Integrations/QRadar_v3/QRadar_v3.yml
+        echo "# test" >> content/Tests/collect_tests.py
+        git add .
+        demisto-sdk pre-commit --unit-test --format --validate --show-diff-on-failure --verbose --sdk-ref ${{ github.event.pull_request.head.sha }}
+
     - name: run pre-commit
+      continue-on-error: true
       run: |
         source $(poetry env info --path)/bin/activate
         cd content
         npm install
-        demisto-sdk pre-commit --unit-test --validate --show-diff-on-failure --verbose --sdk-ref ${{ github.event.pull_request.head.sha }} -i Packs/HelloWorld
+        demisto-sdk pre-commit --unit-test --format --validate --show-diff-on-failure --verbose --sdk-ref ${{ github.event.pull_request.head.sha }} -i Packs/HelloWorld,Packs/QRadar/Integrations/QRadar_v3

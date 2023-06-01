@@ -33,23 +33,17 @@ POWERSHELL_RUNNER = f"{(Path(__file__).parent / 'pwsh_test_runner.sh')}"
 NO_TESTS_COLLECTED = 5
 
 
-def fix_coverage_report_path(code_directory: Path):
+def fix_coverage_report_path(coverage_file: Path):
     """
 
     Args:
-        code_directory: The integration script (absolute file).
+        coverage_file: The coverage file to to fix (absolute file).
 
     Notes:
         the .coverage files contain all the files list with their absolute path.
         but our tests (pytest step) are running inside a docker container.
         so we have to change the path to the correct one.
     """
-    coverage_file = code_directory / ".coverage"
-    if not coverage_file.exists():
-        logger.debug(
-            f"Skipping {code_directory} as it does not contain a coverage report."
-        )
-        return
     logger.debug(f"Editing coverage report for {coverage_file}")
     with tempfile.NamedTemporaryFile() as temp_file:
         # we use a tempfile because the original file could be readonly, this way we assure we can edit it.
@@ -64,9 +58,8 @@ def fix_coverage_report_path(code_directory: Path):
                 file = Path(file).relative_to("/content")
                 if (
                     not (CONTENT_PATH / file).exists()
-                    or "test_data" in file.parts
-                    or file.name in ("conftest.py", "__init__.py")
-                    or file.name.endswith("_test.py")
+                    or file.parent.name
+                    not in file.name  # For example, in `QRadar_v3` directory we only care for `QRadar_v3.py`
                 ):
                     logger.debug(f"Removing {file} from coverage report")
                     cursor.execute(
@@ -90,7 +83,15 @@ def merge_coverage_report():
     if not (files := coverage_files()):
         logger.warning("No coverage files found, skipping coverage report.")
         return
-    cov.combine(files, keep=True)
+    fixed_files = []
+    for file in files:
+        try:
+            fix_coverage_report_path(file)
+            fixed_files.append(file)
+        except Exception:
+            logger.warning(f"Broken .coverage file found: {file}, deleting it")
+            Path(file).unlink(missing_ok=True)
+    cov.combine(fixed_files, keep=True)
     cov.xml_report(outfile=str(CONTENT_PATH / "coverage.xml"))
     logger.info(f"Coverage report saved to {CONTENT_PATH / 'coverage.xml'}")
 
@@ -193,12 +194,6 @@ def unit_test_runner(file_paths: List[Path], verbose: bool = False) -> int:
                 else:
                     logger.info(f"All tests passed for {filename} in {docker_image}")
                 container.remove(force=True)
-                try:
-                    fix_coverage_report_path(integration_script.path.parent)
-                except Exception as e:
-                    logger.warning(
-                        f"Failed to edit coverage report for {filename}: {e}"
-                    )
             except Exception as e:
                 logger.error(
                     f"Failed to run test for {filename} in {docker_image}: {e}"

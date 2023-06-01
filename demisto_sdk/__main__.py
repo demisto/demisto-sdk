@@ -3373,6 +3373,7 @@ def pre_commit(
         logger.info(
             "Both `--input` parameter and `file_paths` arguments were provided. Will use the `--input` parameter."
         )
+    input_files = []
     if input:
         input_files = [Path(i) for i in input.split(",")]
     elif file_paths:

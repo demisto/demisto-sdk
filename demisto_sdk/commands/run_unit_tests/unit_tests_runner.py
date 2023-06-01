@@ -84,7 +84,9 @@ def fix_coverage_report_path(code_directory: Path):
 
 
 def merge_coverage_report():
-    cov = coverage.Coverage(data_file=CONTENT_PATH / ".coverage")
+    coverage_path = CONTENT_PATH / ".coverage"
+    coverage_path.unlink(missing_ok=True)
+    cov = coverage.Coverage(data_file=coverage_path)
     if not (files := coverage_files()):
         logger.warning("No coverage files found, skipping coverage report.")
         return

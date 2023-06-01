@@ -16,14 +16,14 @@ from demisto_sdk.commands.content_graph.interface.neo4j.queries.common import (
 
 NESTING_LEVEL = 5
 
-CREATE_CONTENT_ITEM_NODES_BY_TYPE_TEMPLATE = """// Creates/overrides existing content items with labels {labels}
+CREATE_CONTENT_ITEM_NODES_BY_TYPE_TEMPLATE = """// Creates content items with labels {labels}
 UNWIND $data AS node_data
-MERGE (n:{labels}{{
+CREATE (n:{labels}{{
     object_id: node_data.object_id,
     fromversion: node_data.fromversion,
     marketplaces: node_data.marketplaces
 }})
-SET n = node_data,  // override existing data
+SET n = node_data,
     n.not_in_repository = false
 WITH n
     OPTIONAL MATCH (n)-[r]->()

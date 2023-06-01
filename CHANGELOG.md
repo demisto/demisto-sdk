@@ -1,9 +1,62 @@
 # Changelog
 
 ## Unreleased
-* Added a validation that the **validate** command will fail if the `dockerimage` field in scripts/integrations uses any py3-native docker image.
-* Fixed an issue where **lint** failed fetching docker image details from a PANW GitLab CI environment. (PANW-internal only)
+* Fixed a notification about log file location appeared more than once.
+* Updated the error message when code coverage is below the threshold in **coverage-analyze** to be printed in a more noticeable red color.
 * Fixed an issue where **lint** failed when importing functions from CommonServerUserPython.
+
+## 1.15.4
+* Fixed an issue where *update-release-notes* and *doc-review* did not handle new content notes as expected.
+* Fixed an issue in PEP484 (no-implicit-optional) hook to **pre-commit**.
+* Fixed an issue in **upload** with `--input-config-file` where the content items weren't uploaded in the correct pack.
+* Added support to disable the default logging colors with the **DEMISTO_SDK_LOG_NO_COLORS** environment variable.
+
+## 1.15.3
+* Added the `--init` flag to **download**.
+* Added the `--keep-empty-folders` flag to **download**.
+* Added `markdown-lint` to **pre-commit**
+* Added the PEP484 (no-implicit-optional) hook to **pre-commit**.
+* Fixed an issue where the content-graph parsing failed on mappers with undefined mapping.
+* Fixed an issue in **validate** where `pack_metadata.json` files were not collected proplely in `--graph` option.
+* Fixed an issue where *validate* reputation commands outputs were not checked for new content.
+* Added *IN107* and *DB100* error codes to *ALLOWED_IGNORE_ERRORS* list.
+* Added a validation that assures feed integrations implement the `integration_reliability` configuration parameter.
+* Fixed an issue where the format command did not work as expected on pre-process rules files.
+* Fixed an issue where **upload** command failed to upload when the XSOAR version is beta.
+* Fixed an issue where **upload** command summary was inaccurate when uploading a `Pack` without the `-z` flag.
+* Added pack name and pack version to **upload** command summary.
+* Added support for modeling rules with multi datasets in ****modeling-rules test**** command.
+* Fixed an issue where **validate** didn't recognize layouts with incident fields missing from `id_set.json` even when `--post-commit` was indicated.
+
+## 1.15.2
+* Fixed an issue where **format** added default arguments to reputation commands which already have one.
+* Fixed an issue where **validate** fails when adding the *advance* field to the integration required fields.
+* Updated the integration Traffic Light Protocol (TLP) color list schema in the **validate** command.
+* Fixed an issue where **upload** would not read a repo configuration file properly.
+* Fixed an issue where **upload** would not handle the `-x`/`--xsiam` flag properly.
+* Fixed an issue where **format** failed to use input from the user, when asking about a `from_version`.
+* Added the `-n`/`--assume_no` flag to **format**.
+
+## 1.15.1
+* Fixed an issue where **generate-docs** generated fields with double html escaping.
+* Fixed an issue where **upload** failed when using the `-z` flag.
+
+## 1.15.0
+* **Breaking Change**: the **upload** command now only supports **XSOAR 6.5** or newer (and all XSIAM versions).
+* **upload** now uses content models, and calls the `prepare` method of each model before uploading (unless uploading a zipped pack).
+* Added a *playbook* modification to **prepare-content**, replacing `getIncident` calls with `getAlerts`, when uploading to XSIAM.
+* Added a *playbook* modification to **prepare-content**, replacing `${incident.fieldname}` context accessors with `${alert.fieldname}` when uploading to XSIAM.
+* Added a *playbook* modification to **prepare-content**, replacing `incident` to `alert` in task display names, when uploading to XSIAM.
+* Added a *layout* modification to **prepare-content**, replacing `Related/Child/Linked Incidents` to `... Alerts` when uploading to XSIAM.
+* Added a *script* modification to **prepare-content**, automatically replacing the word `incident` with `alert` when uploading to XSIAM.
+* Added a validation that the **validate** command will fail if the `dockerimage` field in scripts/integrations uses any py3-native docker image.
+* Updated the `ruff` version used in **pre-commit** to `0.0.269`.
+* Fixed an issue in **create-content-graph** which caused missing detection of duplicated content items.
+* Fixed an issue where **run-unit-tests** failed on python2 content items.
+* Fixed an issue in **validate** where core packs validations were checked against the core packs defined on master branch, rather than on the current branch.
+* Fixed an issue in **pre-commit** where `--input` flag was not filtered by the git files.
+* Skip reset containers for XSOAR NG and XSIAM(PANW-internal only).
+* Fixed an issue where **lint** failed fetching docker image details from a PANW GitLab CI environment. (PANW-internal only).
 
 ## 1.14.5
 * Added logging in case the container fails to run in **run-unit-tests**.
@@ -87,6 +140,7 @@
 * Fixed an issue where Demisto-SDK did not detect layout ID when using the **download** command.
 * Fixed an issue where the **lint** command ran on `native:dev` supported content when passing the `--docker-image all` flag, instead it will run on `native:candidate`.
 * Added support for `native:candidate` as a docker image flag for **lint** command.
+* Added a modification for layouts in **prepare-content**, replacing `Related Incidents`, `Linked Incidents` and `Child Incidents` with the suitable `... Alerts` name when uploading to XSIAM.
 * Fixed an issue where logs and messages would not show when using the **download** command.
 * Fixed an issue where the `server_min_version` field in metadata was an empty value when parsing packs without content items.
 * Fixed an issue where running **openapi-codegen** resulted in false-positive error messages.

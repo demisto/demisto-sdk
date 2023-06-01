@@ -1,4 +1,4 @@
-exclude: .devcontainer/|.vscode|Pipfile.lock|.gitlab/ci/|.circleci/
+exclude: .devcontainer/|.vscode|Pipfile.lock|.gitlab/ci/|.circleci/|docs
 
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
@@ -19,7 +19,7 @@ repos:
       - id: pycln
 
   - repo: https://github.com/charliermarsh/ruff-pre-commit
-    rev: "v0.0.259"
+    rev: "v0.0.269"
     hooks:
       - id: ruff
 
@@ -27,7 +27,11 @@ repos:
     rev: "v2.0.1"
     hooks:
       - id: autopep8
-
+  - repo: https://github.com/DavidAnson/markdownlint-cli2
+    rev: "v0.7.1"
+    hooks:
+      - id: markdownlint-cli2-fix
+        args: [--config-file, .markdownlint.json]
   - repo: local
     hooks:
       - id: mypy
@@ -68,10 +72,13 @@ repos:
       - id: run-unit-tests
 
       - id: format
-        # update docker image to the latest version, assume yes
-        args: ["-ud", "-y", "--no-validate"]
+        # update docker image to the latest version, assume no
+        args: ["-ud", "-n", "--no-validate", "-g"]
 
       - id: validate
+        args: ["-g"]
 
       - id: secrets
         args: ["--ignore-entropy"]
+
+      - id: no-implicit-optional

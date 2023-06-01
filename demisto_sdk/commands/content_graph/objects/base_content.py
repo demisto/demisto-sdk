@@ -1,15 +1,29 @@
 import json
 from abc import ABC, abstractmethod
 from collections import defaultdict
+from functools import lru_cache
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, ClassVar, Dict, List, Optional, Set, Type, cast
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    ClassVar,
+    Dict,
+    List,
+    Optional,
+    Set,
+    Type,
+    cast,
+)
 
+import demisto_client
+from packaging.version import Version
 from pydantic import BaseModel, DirectoryPath, Field
 from pydantic.main import ModelMetaclass
 
 import demisto_sdk.commands.content_graph.parsers.content_item
 from demisto_sdk.commands.common.constants import (
     MARKETPLACE_MIN_VERSION,
+    PACKS_FOLDER,
     MarketplaceVersions,
 )
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
@@ -54,9 +68,7 @@ class BaseContentMetaclass(ModelMetaclass):
 
 
 class BaseContent(ABC, BaseModel, metaclass=BaseContentMetaclass):
-    database_id: Optional[int] = Field(
-        None, exclude=True, repr=False
-    )  # used for the database
+    database_id: Optional[int] = Field(None)  # used for the database
     object_id: str = Field(alias="id")
     content_type: ClassVar[ContentType] = Field(include=True)
     node_id: str
@@ -112,16 +124,19 @@ class BaseContent(ABC, BaseModel, metaclass=BaseContentMetaclass):
             Dict[str, Any]: _description_
         """
 
-        json_dct = json.loads(self.json(exclude={"commands"}))
+        json_dct = json.loads(self.json(exclude={"commands", "database_id"}))
         if "path" in json_dct and Path(json_dct["path"]).is_absolute():
             json_dct["path"] = (Path(json_dct["path"]).relative_to(CONTENT_PATH)).as_posix()  # type: ignore
         json_dct["content_type"] = self.content_type
         return json_dct
 
     @staticmethod
+    @lru_cache
     def from_path(path: Path) -> Optional["BaseContent"]:
         logger.debug(f"Loading content item from path: {path}")
-        if path.is_dir() and path.parent.name == "Packs":  # if the path given is a pack
+        if (
+            path.is_dir() and path.parent.name == PACKS_FOLDER
+        ):  # if the path given is a pack
             return content_type_to_model[ContentType.PACK].from_orm(PackParser(path))
         content_item_parser = ContentItemParser.from_path(path)
         if not content_item_parser:
@@ -154,8 +169,22 @@ class BaseContent(ABC, BaseModel, metaclass=BaseContentMetaclass):
             return None
 
     @abstractmethod
-    def dump(self, path: DirectoryPath, marketplace: MarketplaceVersions) -> None:
+    def dump(
+        self,
+        path: DirectoryPath,
+        marketplace: MarketplaceVersions,
+    ) -> None:
         pass
+
+    def upload(
+        self,
+        client: demisto_client,
+        marketplace: MarketplaceVersions,
+        target_demisto_version: Version,
+        **kwargs,
+    ) -> None:
+        # Implemented at the ContentItem/Pack level rather than here
+        raise NotImplementedError()
 
     def add_relationship(
         self, relationship_type: RelationshipType, relationship: "RelationshipData"

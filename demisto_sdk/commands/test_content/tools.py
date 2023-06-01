@@ -3,18 +3,21 @@ import logging
 from copy import deepcopy
 from pprint import pformat
 from subprocess import STDOUT, CalledProcessError, check_output
+from typing import Dict, Optional, Set
 
 import demisto_client
 
 from demisto_sdk.commands.test_content.constants import SSH_USER
 
+logger = logging.getLogger("demisto-sdk")
+
 
 def update_server_configuration(
-    client,
-    server_configuration,
-    error_msg,
-    logging_manager=logging,
-    config_keys_to_delete=None,
+    client: demisto_client,
+    server_configuration: Optional[Dict],
+    error_msg: str,
+    logging_manager=logger,
+    config_keys_to_delete: Optional[Set[str]] = None,
 ):
     """updates server configuration
 
@@ -22,7 +25,6 @@ def update_server_configuration(
         client (demisto_client): The configured client to use.
         server_configuration (dict): The server configuration to be added
         error_msg (str): The error message
-        logging_manager (logging.Logger): Logging manager object
         config_keys_to_delete (set): The server configuration keys to be deleted
 
     Returns:

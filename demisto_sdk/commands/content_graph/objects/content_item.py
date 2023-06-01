@@ -1,12 +1,18 @@
 from abc import abstractmethod
 from pathlib import Path
-from typing import TYPE_CHECKING, List, Optional, Set
+from tempfile import TemporaryDirectory
+from typing import TYPE_CHECKING, Callable, List, Optional, Set
+
+import demisto_client
+from packaging.version import Version
 
 from demisto_sdk.commands.common.handlers import (
     JSON_Handler,
     XSOAR_Handler,
     YAML_Handler,
 )
+from demisto_sdk.commands.upload.exceptions import IncompatibleUploadVersionException
+from demisto_sdk.commands.upload.tools import parse_upload_response
 
 if TYPE_CHECKING:
     from demisto_sdk.commands.content_graph.objects.pack import Pack
@@ -15,11 +21,17 @@ if TYPE_CHECKING:
 
 from pydantic import DirectoryPath, validator
 
-from demisto_sdk.commands.common.constants import MarketplaceVersions
+from demisto_sdk.commands.common.constants import PACKS_FOLDER, MarketplaceVersions
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.logger import logger
-from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
-from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
+from demisto_sdk.commands.common.tools import get_pack_name, replace_incident_to_alert
+from demisto_sdk.commands.content_graph.common import (
+    ContentType,
+    RelationshipType,
+)
+from demisto_sdk.commands.content_graph.objects.base_content import (
+    BaseContent,
+)
 from demisto_sdk.commands.prepare_content.preparers.marketplace_suffix_preparer import (
     MarketplaceSuffixPreparer,
 )
@@ -43,6 +55,18 @@ class ContentItem(BaseContent):
         return CONTENT_PATH / v
 
     @property
+    def pack_id(self) -> str:
+        return self.in_pack.pack_id if self.in_pack else ""
+
+    @property
+    def pack_name(self) -> str:
+        return self.in_pack.name if self.in_pack else ""
+
+    @property
+    def pack_version(self) -> Optional[Version]:
+        return self.in_pack.pack_version if self.in_pack else None
+
+    @property
     def in_pack(self) -> Optional["Pack"]:
         """
         This returns the Pack which the content item is in.
@@ -50,10 +74,13 @@ class ContentItem(BaseContent):
         Returns:
             Pack: Pack model.
         """
-        in_pack = self.relationships_data[RelationshipType.IN_PACK]
-        if not in_pack:
-            return None
-        return next(iter(in_pack)).content_item_to  # type: ignore[return-value]
+        if in_pack := self.relationships_data[RelationshipType.IN_PACK]:
+            return next(iter(in_pack)).content_item_to  # type: ignore[return-value]
+        if pack_name := get_pack_name(self.path):
+            return BaseContent.from_path(
+                CONTENT_PATH / PACKS_FOLDER / pack_name
+            )  # type: ignore[return-value]
+        return None
 
     @property
     def uses(self) -> List["RelationshipData"]:
@@ -113,13 +140,21 @@ class ContentItem(BaseContent):
             return self.handler.load(f)
 
     def prepare_for_upload(
-        self, marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR, **kwargs
+        self,
+        current_marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR,
+        **kwargs,
     ) -> dict:
         data = self.data
         logger.debug(f"preparing {self.path}")
-        return MarketplaceSuffixPreparer.prepare(data, marketplace)
+        return MarketplaceSuffixPreparer.prepare(
+            data, current_marketplace, self.marketplaces
+        )
 
-    def summary(self, marketplace: Optional[MarketplaceVersions] = None) -> dict:
+    def summary(
+        self,
+        marketplace: Optional[MarketplaceVersions] = None,
+        incident_to_alert: bool = False,
+    ) -> dict:
         """Summary of a content item (the most important metadata fields)
 
         Args:
@@ -136,6 +171,15 @@ class ContentItem(BaseContent):
                 )
             if "name" in summary_res:
                 summary_res["name"] = data.get("name_x2") or self.name
+
+            if incident_to_alert:
+                if "name" in summary_res:
+                    summary_res["name"] = replace_incident_to_alert(summary_res["name"])
+                if "description" in summary_res:
+                    summary_res["description"] = replace_incident_to_alert(
+                        summary_res["description"]
+                    )
+
         return summary_res
 
     @abstractmethod
@@ -163,7 +207,7 @@ class ContentItem(BaseContent):
                 except AttributeError:
                     # not supported in python 3.8
                     name = (
-                        name[: len(prefix) + 1]
+                        name[len(prefix) + 1 :]
                         if name.startswith(f"{prefix}-")
                         else name
                     )
@@ -171,12 +215,18 @@ class ContentItem(BaseContent):
         logger.debug(f"Normalized file name from {name} to {normalized}")
         return normalized
 
-    def dump(self, dir: DirectoryPath, marketplace: MarketplaceVersions) -> None:
+    def dump(
+        self,
+        dir: DirectoryPath,
+        marketplace: MarketplaceVersions,
+    ) -> None:
         dir.mkdir(exist_ok=True, parents=True)
-        data = self.prepare_for_upload(marketplace=marketplace)
         try:
             with (dir / self.normalize_name).open("w") as f:
-                self.handler.dump(data, f)
+                self.handler.dump(
+                    self.prepare_for_upload(current_marketplace=marketplace),
+                    f,
+                )
         except FileNotFoundError as e:
             logger.warning(f"Failed to dump {self.path} to {dir}: {e}")
 
@@ -192,3 +242,78 @@ class ContentItem(BaseContent):
         id_set_entity["file_path"] = str(self.path)
         id_set_entity["pack"] = self.in_pack.object_id  # type: ignore[union-attr]
         return id_set_entity
+
+    def is_incident_to_alert(self, marketplace: MarketplaceVersions) -> bool:
+        """
+        As long as the content item does not have an implementation of the `is_incident_to_alert` function,
+        the return value will always be false,
+        When there is, please override this method in the inheriting class and return `True`.
+        Namely, there is no need for special preparation of an incident to alert for the content item.
+
+        Args:
+            marketplace (MarketplaceVersions): the destination marketplace.
+
+        Returns:
+            bool: False
+        """
+        return False
+
+    @classmethod
+    def _client_upload_method(cls, client: demisto_client) -> Callable:
+        """
+        This attribute sets the method when the upload flow is only of the following form
+            >   with TemporaryDirectory("w") as f:
+            >       dir_path = Path(f)
+            >       self.dump(dir_path, marketplace=marketplace)
+            >       client.<<SOME_METHOD>>(file=dir_path / self.normalize_name)
+
+        When the flow is different, return None (default).
+        """
+        raise NotImplementedError
+
+    def _upload(
+        self,
+        client: demisto_client,
+        marketplace: MarketplaceVersions,
+    ) -> None:
+        """
+        Called once the version is validated.
+        Implementation may differ between content items.
+        Most items use _client_upload_method, refer to its docstrings.
+        """
+        try:
+            upload_method = self._client_upload_method(client=client)
+        except NotImplementedError as e:
+            raise NotImplementedError(
+                f"missing overriding upload method for {self.content_type}"
+            ) from e
+
+        with TemporaryDirectory() as f:
+            dir_path = Path(f)
+            self.dump(
+                dir_path,
+                marketplace=marketplace,
+            )
+            response = upload_method(dir_path / self.normalize_name)
+            parse_upload_response(
+                response, path=self.path, content_type=self.content_type
+            )  # raises on error
+
+    def upload(
+        self,
+        client: demisto_client,
+        marketplace: MarketplaceVersions,
+        target_demisto_version: Version,
+        **kwargs,
+    ) -> None:
+        """
+        The only upload-related function to be used - the rest are abstract.
+        This one checks for version compatibility and then calls _upload.
+        """
+        if not (
+            Version(self.fromversion)
+            <= target_demisto_version
+            <= Version(self.toversion)
+        ):
+            raise IncompatibleUploadVersionException(self, target_demisto_version)
+        self._upload(client, marketplace)

@@ -1058,7 +1058,6 @@ class TestDeprecatedIntegration:
         mocker.patch.object(
             GitUtil, "get_current_working_branch", return_value="MyBranch"
         )
-        mocker.patch.object(GitUtil, "repo", True)
 
         mocker.patch.object(GitUtil, "deleted_files", return_value={})
 
@@ -1176,9 +1175,9 @@ class TestDeprecatedIntegration:
         mocker.patch.object(
             GitUtil, "get_current_working_branch", return_value="MyBranch"
         )
-        mocker.patch.object(GitUtil, "repo", True)
+
         mocker.patch.object(GitUtil, "deleted_files", return_value={})
-        mocker.patch.object(GitUtil, "repo", True)
+
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
@@ -3639,7 +3638,7 @@ class TestPlaybookValidateDeprecated:
         )
 
         mocker.patch.object(GitUtil, "deleted_files", return_value={})
-        mocker.patch.object(GitUtil, "repo", True)
+
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
@@ -3741,7 +3740,6 @@ class TestPlaybookValidateDeprecated:
         )
 
         mocker.patch.object(GitUtil, "deleted_files", return_value={})
-        mocker.patch.object(GitUtil, "repo", True)
 
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
@@ -4140,7 +4138,6 @@ class TestScriptDeprecatedValidation:
         )
 
         mocker.patch.object(GitUtil, "deleted_files", return_value={})
-        mocker.patch.object(GitUtil, "repo", True)
 
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
@@ -4249,7 +4246,6 @@ class TestScriptDeprecatedValidation:
         )
 
         mocker.patch.object(GitUtil, "deleted_files", return_value={})
-        mocker.patch.object(GitUtil, "repo", True)
 
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
@@ -4806,7 +4802,6 @@ class TestValidationUsingGit:
         )
 
         mocker.patch.object(GitUtil, "deleted_files", return_value={})
-        mocker.patch.object(GitUtil, "repo", True)
 
         with ChangeCWD(repo.path):
             runner = CliRunner(mix_stderr=False)
@@ -4897,7 +4892,6 @@ class TestValidationUsingGit:
         )
 
         mocker.patch.object(GitUtil, "deleted_files", return_value={})
-        mocker.patch.object(GitUtil, "repo", True)
 
         with ChangeCWD(repo.path):
             runner = CliRunner(mix_stderr=False)
@@ -4977,7 +4971,6 @@ class TestValidationUsingGit:
         )
 
         mocker.patch.object(GitUtil, "deleted_files", return_value={})
-        mocker.patch.object(GitUtil, "repo", True)
 
         with ChangeCWD(repo.path):
             runner = CliRunner(mix_stderr=False)
@@ -5053,7 +5046,6 @@ class TestValidationUsingGit:
         )
 
         mocker.patch.object(GitUtil, "deleted_files", return_value={})
-        mocker.patch.object(GitUtil, "repo", True)
 
         with ChangeCWD(repo.path):
             runner = CliRunner(mix_stderr=False)
@@ -5200,7 +5192,6 @@ class TestValidationUsingGit:
         )
 
         mocker.patch.object(GitUtil, "deleted_files", return_value={})
-        mocker.patch.object(GitUtil, "repo", True)
 
         with ChangeCWD(repo.path):
             runner = CliRunner(mix_stderr=False)
@@ -5278,7 +5269,6 @@ class TestValidationUsingGit:
         )
 
         mocker.patch.object(GitUtil, "deleted_files", return_value={})
-        mocker.patch.object(GitUtil, "repo", True)
 
         with ChangeCWD(repo.path):
             runner = CliRunner(mix_stderr=False)
@@ -5367,7 +5357,6 @@ class TestValidationUsingGit:
         )
 
         mocker.patch.object(GitUtil, "deleted_files", return_value={})
-        mocker.patch.object(GitUtil, "repo", True)
 
         with ChangeCWD(repo.path):
             runner = CliRunner(mix_stderr=False)
@@ -5595,7 +5584,6 @@ class TestBasicValidation:
         )
 
         mocker.patch.object(GitUtil, "deleted_files", return_value={})
-        mocker.patch.object(GitUtil, "repo", True)
 
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)

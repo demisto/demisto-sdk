@@ -3,6 +3,7 @@
 ## Unreleased
 * Fixed a notification about log file location appeared more than once.
 * Updated the error message when code coverage is below the threshold in **coverage-analyze** to be printed in a more noticeable red color.
+* Running **validate** with `--graph` will now run after all other validations.
 
 ## 1.15.4
 * Fixed an issue where *update-release-notes* and *doc-review* did not handle new content notes as expected.

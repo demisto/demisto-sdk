@@ -149,7 +149,13 @@ class BaseContent(ABC, BaseModel, metaclass=BaseContentMetaclass):
             demisto_sdk.commands.content_graph.parsers.content_item.MARKETPLACE_MIN_VERSION = (
                 "0.0.0"
             )
-            content_item_parser = ContentItemParser.from_path(path)
+            try:
+                content_item_parser = ContentItemParser.from_path(path)
+            except NotAContentItemException:
+                logger.error(
+                    f"Invalid content path provided: {str(path)}. Please provide a valid content item or pack path."
+                )
+                return None
             demisto_sdk.commands.content_graph.parsers.content_item.MARKETPLACE_MIN_VERSION = (
                 MARKETPLACE_MIN_VERSION
             )

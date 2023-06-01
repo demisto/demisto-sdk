@@ -428,16 +428,6 @@ class ValidateManager:
             self.setup_git_params()
         files_to_validate = self.file_path.split(",")
 
-        if self.validate_graph:
-            logger.info(
-                f"\n[cyan]================= Validating graph =================[/cyan]"
-            )
-            with GraphValidator(
-                specific_validations=self.specific_validations,
-                input_files=files_to_validate,
-            ) as graph_validator:
-                files_validation_result.add(graph_validator.is_valid_content_graph())
-
         for path in files_to_validate:
             error_ignore_list = self.get_error_ignore_list(get_pack_name(path))
             file_level = self.detect_file_level(path)
@@ -479,6 +469,16 @@ class ValidateManager:
                 files_validation_result.add(
                     self.run_validation_on_package(path, error_ignore_list)
                 )
+
+        if self.validate_graph:
+            logger.info(
+                f"\n[cyan]================= Validating graph =================[/cyan]"
+            )
+            with GraphValidator(
+                specific_validations=self.specific_validations,
+                input_files=files_to_validate,
+            ) as graph_validator:
+                files_validation_result.add(graph_validator.is_valid_content_graph())
 
         return all(files_validation_result)
 

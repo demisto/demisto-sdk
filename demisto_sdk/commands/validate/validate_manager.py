@@ -511,15 +511,6 @@ class ValidateManager:
         )
         all_packs_valid = set()
 
-        if self.validate_graph:
-            logger.info(
-                f"\n[cyan]================= Validating graph =================[/cyan]"
-            )
-            with GraphValidator(
-                specific_validations=self.specific_validations
-            ) as graph_validator:
-                all_packs_valid.add(graph_validator.is_valid_content_graph())
-
         if not self.skip_conf_json:
             all_packs_valid.add(self.conf_json_validator.is_valid_conf_json())
 
@@ -568,6 +559,15 @@ class ValidateManager:
                 self.completion_percentage = format((count / num_of_packs) * 100, ".2f")  # type: ignore
                 all_packs_valid.add(self.run_validations_on_pack(pack_path)[0])
                 count += 1
+        if self.validate_graph:
+            logger.info(
+                f"\n[cyan]================= Validating graph =================[/cyan]"
+            )
+            with GraphValidator(
+                specific_validations=self.specific_validations
+            ) as graph_validator:
+                all_packs_valid.add(graph_validator.is_valid_content_graph())
+
         return all(all_packs_valid)
 
     def run_validations_on_pack(self, pack_path):

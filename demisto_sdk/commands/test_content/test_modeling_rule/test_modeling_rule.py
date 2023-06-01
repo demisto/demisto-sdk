@@ -1,9 +1,11 @@
+from datetime import datetime, timedelta
 from pathlib import Path
 from time import sleep
 from typing import Any, Dict, List, Optional, Tuple
 
 import requests
 import typer
+from dateutil import tz
 from rich import print as printr
 from rich.console import Console, Group
 from rich.panel import Panel
@@ -62,6 +64,26 @@ def create_table(expected: Dict[str, Any], received: Dict[str, Any]) -> Table:
     return table
 
 
+def convert_epoc_time_to_string_time(received_time: int, timezone_delta: int) -> str:
+    """
+    Converts epoch time with milliseconds to string time with timezone delta.
+
+    Args:
+        received_time: The received epoch time (with milliseconds).
+        timezone_delta: The time zone delta (for example '3' or '-4').
+
+    Returns:
+        The string time with timezone delta.
+    """
+    epoch_datetime = datetime.fromtimestamp(received_time / 1000)
+    epoch_time_with_time_zone_delta = epoch_datetime + timedelta(hours=timezone_delta)
+    string_time = epoch_time_with_time_zone_delta.astimezone(tz.tzlocal()).strftime(
+        "%m %dth %Y %H:%M:%S"
+    )
+
+    return string_time
+
+
 def verify_results(
     tested_dataset: str, results: List[dict], test_data: init_test_data.TestData
 ):
@@ -105,12 +127,18 @@ def verify_results(
         # get expected_values for the given query result
         td_event_id = result.pop(f"{tested_dataset}.test_data_event_id")
         expected_values = None
+        timezone_delta = 0
         for e in test_data.data:
             if str(e.test_data_event_id) == td_event_id:
                 expected_values = e.expected_values
+                timezone_delta = int(e.event_data.get("timezone_delta") or 0)
                 break
 
         if expected_values:
+            if time_value := result.get("_time"):
+                result["_time"] = convert_epoc_time_to_string_time(
+                    time_value, timezone_delta
+                )
             printr(create_table(expected_values, result))
 
             for key, val in expected_values.items():

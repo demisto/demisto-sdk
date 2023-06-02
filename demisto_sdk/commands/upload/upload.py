@@ -51,13 +51,13 @@ def upload_content_entity(**kwargs):
             inputs = paths
         else:
             pack_names = zip_multiple_packs(
-                paths=ConfigFileParser(Path(config_file_path)).custom_packs_paths,
+                paths=paths,
                 marketplace=marketplace,
                 dir=destination_zip_path,
             )
             kwargs["detached_files"] = True
-            kwargs["input"] = Path(destination_zip_path, MULTIPLE_ZIPPED_PACKS_FILE_NAME)
             kwargs["pack_names"] = pack_names
+            inputs = tuple([Path(destination_zip_path, MULTIPLE_ZIPPED_PACKS_FILE_NAME)])
 
     check_configuration_file("upload", kwargs)
 

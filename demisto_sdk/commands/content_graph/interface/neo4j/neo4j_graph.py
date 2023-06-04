@@ -91,9 +91,11 @@ def _parse_node(element_id: int, node: dict) -> BaseContent:
 
     elif content_model := content_type_to_model.get(content_type):
         model = content_model
-        node["not_in_repository"] = False
+        node.pop("not_in_repository", None)
     else:
         raise NoModelException(f"No model for {content_type}")
+
+    # as we create the models without validations, it is our responsibility to convert the types
     node.pop("content_type", None)
     if marketplaces := node.get("marketplaces"):
         node["marketplaces"] = [MarketplaceVersions(mp) for mp in marketplaces]

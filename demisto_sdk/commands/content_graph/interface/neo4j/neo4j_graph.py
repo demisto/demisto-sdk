@@ -95,6 +95,8 @@ def _parse_node(element_id: int, node: dict) -> BaseContent:
         raise NoModelException(f"No model for {content_type}")
     node.pop("content_type", None)
     node["marketplaces"] = [MarketplaceVersions(mp) for mp in node["marketplaces"]]
+    if path := node.get("path"):
+        node["path"] = Path(path)
     obj = model.construct(**node)
     obj.database_id = element_id
     return obj

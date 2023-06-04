@@ -55,3 +55,22 @@ class XSIAMDashboardValidator(ContentEntityValidator):
                 self._is_valid = False
                 return False
         return True
+
+    @error_codes("XD101")
+    def is_dashboard_file_name_equal_to_image_file_name(self):
+        """
+        Validates the dashboard file name equals the image file name.
+        """
+        dashboard_name = self.file_path
+        dashboard_image = self.file_path
+        if dashboard_name != dashboard_image:
+            (
+                error_message,
+                error_code,
+            ) = Errors.xsiam_dashboards_file_name_is_not_equal_to_image_name(
+                dashboard_name, dashboard_image
+            )
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                self._is_valid = False
+                return False
+        return True

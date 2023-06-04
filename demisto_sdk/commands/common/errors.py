@@ -1790,6 +1790,12 @@ ERROR_CODE = {
         "ui_applicable": False,
         "related_field": "",
     },
+    # XD - XSIAM Dashboards
+    "xsiam_dashboards_file_name_is_not_equal_to_image_name": {
+        "code": "XD101",
+        "ui_applicable": False,
+        "related_field": "",
+    },
     # GR - Graph validations
     "uses_items_not_in_marketplaces": {
         "code": "GR100",
@@ -4476,6 +4482,13 @@ class Errors:
             f"Files name in the XSIAM dashboards directory must use the pack's name as a prefix, "
             f"e.g. `myPack-report1.yml` "
         )
+
+    @staticmethod
+    @error_code_decorator
+    def xsiam_dashboards_file_name_is_not_equal_to_image_name(
+        dashboard_name: str, image_name: str
+    ):
+        return f"The XSIAM dashboard name: {dashboard_name} is not equal to image name: {image_name}."
 
     @staticmethod
     @error_code_decorator

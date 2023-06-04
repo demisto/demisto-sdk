@@ -1,7 +1,7 @@
 # Changelog
 
 ## Unreleased
-* **Breaking Change**: The **upload** command with the `--input-config-file` argument will upload the packs as custom content items. To upload the packs as system use the `--zip` flag.
+* **Breaking Change**: The default of the **upload** command `--zip` argument is `true`. To upload packs or `input-config-file` as custom content items use the `--no-zip` argument.
 * Removed the `no-implicit-optional` hook from **pre-commit**.
 * Removed the `markdownlint` hook from **pre-commit**.
 * Fixed an issue in **run-unit-tests** to pass with warnings when no tests are collected.

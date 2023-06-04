@@ -14,7 +14,7 @@ from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.tools import get_child_directories
-from demisto_sdk.commands.init.contribution_converter import ContributionConverter
+from demisto_sdk.commands.init.contribution_converter import ContributionConverter, get_previous_line
 from TestSuite.contribution import Contribution
 from TestSuite.repo import Repo
 
@@ -874,6 +874,40 @@ class TestReleaseNotes:
         )
         if os.path.exists(NEW_ENTITY_RELEASE_NOTES_COPY):
             os.remove(NEW_ENTITY_RELEASE_NOTES_COPY)
+
+    @pytest.mark.parametrize(
+        "index, expected_result",
+        [
+            (0, ''),
+            (1, ''),
+            (2, ''),
+            (3, '#### Integrations\n'),
+            (4, ''),
+            (5, '##### Core REST API\n'),
+            (6, ''),
+            (7, '- %%UPDATE_RN%%\n'),
+            (9, '#### Scripts\n'),
+            (11, '##### New: DemistoUploadFileToIncident\n')
+        ],
+    )
+    def test_get_previous_line(self, index: int, expected_result: str):
+        """Test the 'get_previous_line' method
+
+        Given
+        - An index and a lines array.
+
+        When
+        - Running get_previous_line.
+
+        Then
+        - Ensure the correct previous line (which is not a new line) was returned.
+        """
+        lines = ['\n', '#### Integrations\n', '\n', '##### Core REST API\n', '\n', '- %%UPDATE_RN%%\n',
+                 '\n', '#### Scripts\n', '\n', '##### New: DemistoUploadFileToIncident\n', '\n',
+                 'some description\n', '##### New: DemistoCreateList_1\n', '\n',
+                 '- New: Create a new list (Available from Cortex XSOAR 6.8.0).\n']
+
+        assert  get_previous_line(index, lines) == expected_result
 
     def test_replace_RN_template_with_value(
         self, mocker, contrib_converter, rn_file_copy

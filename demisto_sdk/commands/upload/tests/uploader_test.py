@@ -437,7 +437,7 @@ def test_upload_packs_from_configfile(demisto_client_configure, mocker):
         Uploader, "upload", return_value=SUCCESS_RETURN_CODE
     )
     click.Context(command=upload).invoke(
-        upload, input_config_file=f"{git_path()}/configfile_test.json"
+        upload, input_config_file=f"{git_path()}/configfile_test.json", zip=False
     )
 
     assert upload_mock.call_count == 2

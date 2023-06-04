@@ -1,4 +1,5 @@
 import os
+from multiprocessing import Pool
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional, Set, Tuple, Type
 
@@ -7,6 +8,7 @@ from pydantic import BaseModel, ValidationError
 
 import demisto_sdk.commands.content_graph.neo4j_service as neo4j_service
 from demisto_sdk.commands.common.constants import MarketplaceVersions
+from demisto_sdk.commands.common.cpu_count import cpu_count
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.content_graph.common import (
     NEO4J_DATABASE_URL,
@@ -284,10 +286,13 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
                 self._id_to_obj,
             )
             return
-        for node in nodes:
-            result = _parse_node(node.id, dict(node.items()))
-            assert result.database_id is not None
-            self._id_to_obj[result.database_id] = result
+        with Pool(processes=cpu_count()) as pool:
+            results = pool.starmap(
+                _parse_node, ((node.id, dict(node.items())) for node in nodes)
+            )
+            for result in results:
+                assert result.database_id is not None
+                self._id_to_obj[result.database_id] = result
 
     def _search(
         self,

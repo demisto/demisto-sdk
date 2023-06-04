@@ -1,12 +1,14 @@
 # Changelog
 
 ## Unreleased
+* **Breaking Change**: The default of the **upload** command `--zip` argument is `true`. To upload packs or `input-config-file` as custom content items use the `--no-zip` argument.
 * Removed the `no-implicit-optional` hook from **pre-commit**.
 * Removed the `markdownlint` hook from **pre-commit**.
 * Fixed an issue in **run-unit-tests** to pass with warnings when no tests are collected.
 * Fixed an issue in **run-unit-tests** with the coverage calculation.
 * Fixed a notification about log file location appeared more than once.
 * Updated the error message when code coverage is below the threshold in **coverage-analyze** to be printed in a more noticeable red color.
+* Fixed an issue in **upload** that failed when a comma-separated list of paths is passed to the `--input` argument.
 * Running **validate** with the `--graph` flag will now run the graph validations after all other validations.
 * improved the generated release note for newly added XSIAM entities when running *update-release-notes* command.
 * Fixed an issue where in some cases validation failed when mapping null values.

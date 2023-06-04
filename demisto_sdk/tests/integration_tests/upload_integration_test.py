@@ -77,7 +77,9 @@ def test_integration_upload_pack_positive(demisto_client_mock, mocker):
         mock_upload_method(mocker, content_class)
 
     runner = CliRunner(mix_stderr=False)
-    result = runner.invoke(main, [UPLOAD_CMD, "-i", str(pack_path), "--insecure"])
+    result = runner.invoke(
+        main, [UPLOAD_CMD, "-i", str(pack_path), "--insecure", "--no-zip"]
+    )
     assert result.exit_code == 0
     logged = flatten_call_args(logger_info.call_args)
     assert len(logged) == 1

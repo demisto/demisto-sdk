@@ -727,11 +727,23 @@ class ContributionConverter:
         and create a release-note file using the release-notes text.
 
         """
+        logger.info(
+            "**debug** updating RN"
+        )
+        logger.info(
+            f"**debug** self.update_type {self.update_type}"
+        )
         rn_mng = UpdateReleaseNotesManager(
             user_input=self.dir_name,
             update_type=self.update_type,
         )
         rn_mng.manage_rn_update()
+        logger.info(
+            f"**debug** rn_mng {rn_mng.rn_path}"
+        )
+        logger.info(
+            f"**debug** rn_mng {rn_mng.rn_path[0]}"
+        )
         self.replace_RN_template_with_value(rn_mng.rn_path[0])
 
     def format_user_input(self) -> Dict[str, str]:
@@ -776,6 +788,9 @@ class ContributionConverter:
         Args:
             rn_path: path to the rn file created.
         """
+        logger.info(
+            "**debug** replace_RN_template_with_value"
+        )
         entity_identifier = "##### "
         new_entity_identifier = "##### New: "
         template_text = "%%UPDATE_RN%%"
@@ -784,11 +799,24 @@ class ContributionConverter:
 
         with open(rn_path, "r+") as rn_file:
             lines = rn_file.readlines()
+            logger.info(
+                f"**debug** lines {lines}"
+            )
             for index in range(len(lines)):
                 previous_line = lines[index - 1] if index > 0 else ""
                 if template_text in lines[index] or previous_line.startswith(
                     new_entity_identifier
                 ):
+                    logger.info(
+                        f"**debug** lines[index] {lines[index]}"
+                    )
+                    logger.info(
+                        f"**debug** template_text in lines[index] {template_text in lines[index]}"
+                    )
+                    logger.info(
+                        f"**debug** previous_line.startswith(new_entity_identifier) "
+                        f"{previous_line.startswith(new_entity_identifier)}"
+                    )
                     # when contributing a new entity to existing pack, the release notes will look something like that:
                     # "##### New: entity name". The following code will extract the entity name in each case.
                     if previous_line.startswith(new_entity_identifier):

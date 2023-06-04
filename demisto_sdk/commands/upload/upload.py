@@ -31,10 +31,11 @@ logger = logging.getLogger("demisto-sdk")
 def upload_content_entity(**kwargs):
     from demisto_sdk.commands.upload.uploader import ConfigFileParser, Uploader
 
-    inputs: Optional[Tuple[Path, ...]] = tuple(
-        Path(input) for input in
-        kwargs["input"].split(',')
-        ) if kwargs.get("input") else None
+    inputs: Optional[Tuple[Path, ...]] = (
+        tuple(Path(input) for input in kwargs["input"].split(","))
+        if kwargs.get("input")
+        else None
+    )
 
     keep_zip = kwargs.pop("keep_zip", None)
     destination_zip_path = Path(keep_zip or tempfile.mkdtemp())
@@ -47,7 +48,7 @@ def upload_content_entity(**kwargs):
 
         paths = ConfigFileParser(Path(config_file_path)).custom_packs_paths
 
-        if not kwargs.get('zip') and are_all_packs_unzipped(paths=paths):
+        if not kwargs.get("zip") and are_all_packs_unzipped(paths=paths):
             inputs = paths
         else:
             pack_names = zip_multiple_packs(
@@ -57,7 +58,9 @@ def upload_content_entity(**kwargs):
             )
             kwargs["detached_files"] = True
             kwargs["pack_names"] = pack_names
-            inputs = tuple([Path(destination_zip_path, MULTIPLE_ZIPPED_PACKS_FILE_NAME)])
+            inputs = tuple(
+                [Path(destination_zip_path, MULTIPLE_ZIPPED_PACKS_FILE_NAME)]
+            )
 
     check_configuration_file("upload", kwargs)
 
@@ -73,8 +76,8 @@ def upload_content_entity(**kwargs):
             input=input,
             marketplace=marketplace,
             destination_zip_dir=destination_zip_path,
-            **kwargs
-            ).upload()
+            **kwargs,
+        ).upload()
         if result == ABORTED_RETURN_CODE:
             return result
         elif result == ERROR_RETURN_CODE:

@@ -161,9 +161,9 @@ class ColorConsoleFormatter(logging.Formatter):
     FORMATS = {
         logging.DEBUG: "[lightgrey]%(message)s[/lightgrey]",
         logging.INFO: "[lightgrey]%(message)s[/lightgrey]",
-        logging.WARNING: "[yellow][%(levelname)s] %(message)s[/yellow]",
-        logging.ERROR: "[red][%(levelname)s] %(message)s[/red]",
-        logging.CRITICAL: "[red][bold][%(levelname)s] %(message)s[/bold[/red]",
+        logging.WARNING: "[yellow]%(message)s[/yellow]",
+        logging.ERROR: "[red]%(message)s[/red]",
+        logging.CRITICAL: "[red][bold]%(message)s[/bold[/red]",
         SUCCESS_LEVEL: "[green]%(message)s[/green]",
     }
 

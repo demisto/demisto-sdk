@@ -1,6 +1,10 @@
 # Changelog
 
 ## Unreleased
+* Removed the `no-implicit-optional` hook from **pre-commit**.
+* Removed the `markdownlint` hook from **pre-commit**.
+* Fixed an issue in **run-unit-tests** to pass with warnings when no tests are collected.
+* Fixed an issue in **run-unit-tests** with the coverage calculation.
 * Fixed a notification about log file location appeared more than once.
 * Updated the error message when code coverage is below the threshold in **coverage-analyze** to be printed in a more noticeable red color.
 * Running **validate** with the `--graph` flag will now run the graph validations after all other validations.

@@ -3275,8 +3275,9 @@ def update_content_graph(
     "-i",
     "--input",
     help="The path to the input file to run the command on.",
-    multiple=True,
-    type=click.Path(path_type=Path),
+    type=PathsParamType(
+        exists=True, resolve_path=True
+    ),  # PathsParamType allows passing a list of paths
 )
 @click.option(
     "-s",
@@ -3351,7 +3352,7 @@ def update_content_graph(
 @logging_setup_decorator
 def pre_commit(
     ctx,
-    input: Iterable[Path],
+    input: str,
     staged_only: bool,
     git_diff: bool,
     all_files: bool,
@@ -3372,11 +3373,14 @@ def pre_commit(
         logger.info(
             "Both `--input` parameter and `file_paths` arguments were provided. Will use the `--input` parameter."
         )
-    input_files = input
-    if file_paths and not input_files:
-        input_files = file_paths
+    input_files = []
+    if input:
+        input_files = [Path(i) for i in input.split(",")]
+    elif file_paths:
+        input_files = list(file_paths)
     if skip:
         skip = skip.split(",")  # type: ignore[assignment]
+
     sys.exit(
         pre_commit_manager(
             input_files,

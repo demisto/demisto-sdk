@@ -1,14 +1,12 @@
 import os
-from multiprocessing import Pool
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Optional, Set, Tuple
+from typing import Any, Dict, Iterable, List, Optional, Set, Tuple, Type
 
 from neo4j import Driver, GraphDatabase, Session, graph
-from pydantic import ValidationError
+from pydantic import BaseModel, ValidationError
 
 import demisto_sdk.commands.content_graph.neo4j_service as neo4j_service
 from demisto_sdk.commands.common.constants import MarketplaceVersions
-from demisto_sdk.commands.common.cpu_count import cpu_count
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.content_graph.common import (
     NEO4J_DATABASE_URL,
@@ -87,14 +85,17 @@ def _parse_node(element_id: int, node: dict) -> BaseContent:
     """
     obj: BaseContent
     content_type = node.get("content_type", "")
+    model: Type[BaseModel]
     if node.get("not_in_repository"):
-        obj = UnknownContent.parse_obj(node)
+        model = UnknownContent
 
+    elif content_model := content_type_to_model.get(content_type):
+        model = content_model
     else:
-        model = content_type_to_model.get(content_type)
-        if not model:
-            raise NoModelException(f"No model for {content_type}")
-        obj = model.parse_obj(node)
+        raise NoModelException(f"No model for {content_type}")
+    node.pop("content_type", None)
+    node["marketplaces"] = [MarketplaceVersions(mp) for mp in node["marketplaces"]]
+    obj = model.construct(**node)
     obj.database_id = element_id
     return obj
 
@@ -277,13 +278,10 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
                 self._id_to_obj,
             )
             return
-        with Pool(processes=cpu_count()) as pool:
-            results = pool.starmap(
-                _parse_node, ((node.id, dict(node.items())) for node in nodes)
-            )
-            for result in results:
-                assert result.database_id is not None
-                self._id_to_obj[result.database_id] = result
+        for node in nodes:
+            result = _parse_node(node.id, dict(node.items()))
+            assert result.database_id is not None
+            self._id_to_obj[result.database_id] = result
 
     def _search(
         self,

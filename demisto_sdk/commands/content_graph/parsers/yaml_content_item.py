@@ -23,7 +23,9 @@ class YAMLContentItemParser(ContentItemParser):
         self.yml_data: Dict[str, Any] = self.get_yaml()
 
         if not isinstance(self.yml_data, dict):
-            raise InvalidContentItemException("The JSON should be a dictionary")
+            raise InvalidContentItemException(
+                f"The content of {self.path} must be in a JSON dictionary format"
+            )
 
         if self.should_skip_parsing():
             raise NotAContentItemException

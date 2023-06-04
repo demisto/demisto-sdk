@@ -61,19 +61,19 @@ json = JSON_Handler()
 
 def get_previous_line(index: int, lines: List[str]):
     """
-        Given a list of lines and a certain index, returns the previous line of the given line while ignoring newlines.
-        Args:
-            index: the current lines index.
-            lines: the lines.
+    Given a list of lines and a certain index, returns the previous line of the given line while ignoring newlines.
+    Args:
+        index: the current lines index.
+        lines: the lines.
     """
     j = 1
-    previous_line = ''
-    if lines[index] == '\n':
+    previous_line = ""
+    if lines[index] == "\n":
         return previous_line
 
     while index - j > 0:
         previous_line = lines[index - j]
-        if previous_line != '\n':
+        if previous_line != "\n":
             return previous_line
         j += 1
 

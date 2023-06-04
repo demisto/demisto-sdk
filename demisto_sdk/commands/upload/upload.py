@@ -95,7 +95,4 @@ def zip_multiple_packs(
                 shutil.make_archive(str(pack_path), "zip", pack_path)
                 zip_file.write(pack_path.with_suffix(".zip"), f"{pack_path.name}.zip")
 
-    shutil.move(  # rename content_packs.zip
-        str(result_zip_path), result_zip_path.with_name(MULTIPLE_ZIPPED_PACKS_FILE_NAME)
-    )
     return [pack.name for pack in packs] + [path.name for path in were_zipped]

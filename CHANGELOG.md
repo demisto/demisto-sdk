@@ -1,6 +1,7 @@
 # Changelog
-
 ## Unreleased
+
+## 1.15.5
 * **Breaking Change**: The default of the **upload** command `--zip` argument is `true`. To upload packs or `input-config-file` as custom content items use the `--no-zip` argument.
 * Removed the `no-implicit-optional` hook from **pre-commit**.
 * Removed the `markdownlint` hook from **pre-commit**.

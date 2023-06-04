@@ -113,18 +113,16 @@ def zip_multiple_packs(
         packs.append(pack)
 
     result_zip_path = dir / MULTIPLE_ZIPPED_PACKS_FILE_NAME
-    ContentDTO(packs=packs).dump(dir / "result", marketplace=marketplace, zip=False)
-    with ZipFile(result_zip_path, "w") as zip_file:
-        # copy files that were already zipped into the result
-        for was_zipped in were_zipped:
-            zip_file.write(was_zipped, was_zipped.name)
-        for pack_path in (dir / "result").iterdir():
-            shutil.make_archive(str(pack_path), "zip", pack_path)
-            zip_file.write(pack_path.with_suffix(".zip"), f"{pack_path.name}.zip")
-
-    shutil.move(  # rename content_packs.zip
-        str(result_zip_path), result_zip_path.with_name(MULTIPLE_ZIPPED_PACKS_FILE_NAME)
-    )
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        tmp_dir_path = Path(tmp_dir)
+        ContentDTO(packs=packs).dump(tmp_dir_path, marketplace=marketplace, zip=False)
+        with ZipFile(result_zip_path, "w") as zip_file:
+            # copy files that were already zipped into the result
+            for was_zipped in were_zipped:
+                zip_file.write(was_zipped, was_zipped.name)
+            for pack_path in tmp_dir_path.iterdir():
+                shutil.make_archive(str(pack_path), "zip", pack_path)
+                zip_file.write(pack_path.with_suffix(".zip"), f"{pack_path.name}.zip")
 
     return [pack.name for pack in packs] + [path.name for path in were_zipped]
 

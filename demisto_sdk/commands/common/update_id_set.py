@@ -1381,7 +1381,7 @@ def get_mapper_data(path: str, packs: Dict[str, Dict] = None):
     mapping = json_data.get("mapping", {})
     for key, value in mapping.items():
         incidents_types.add(key)
-        internal_mapping = value.get("internalMapping")  # get the mapping
+        internal_mapping = value.get("internalMapping") or {}  # get the mapping
         if type_ == "mapping-outgoing":
             incident_fields_set = set()
             # incident fields are in the simple key or in complex.root key of each key

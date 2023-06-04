@@ -44,6 +44,7 @@ from demisto_sdk.commands.content_graph.tests.create_content_graph_test import (
 )
 from demisto_sdk.commands.test_content import tools
 from demisto_sdk.commands.upload import uploader
+from demisto_sdk.commands.upload.constants import MULTIPLE_ZIPPED_PACKS_FILE_STEM
 from demisto_sdk.commands.upload.upload import (
     MULTIPLE_ZIPPED_PACKS_FILE_NAME,
     BaseContent,
@@ -1099,14 +1100,21 @@ def test_zip_multiple_packs(tmp_path: Path, mocker):
     )
 
     assert (zip_path := (tmp_path / MULTIPLE_ZIPPED_PACKS_FILE_NAME)).exists()
+    folder_path = tmp_path / MULTIPLE_ZIPPED_PACKS_FILE_STEM
     with zipfile.ZipFile(zip_path, "r") as zip_file:
-        assert set(zip_file.namelist()) == {
-            "Pack0.zip",
-            "Pack1.zip",
-            "zipped.zip",
-        }
-    result_path = tmp_path / "result"
-    assert {str(path.relative_to(result_path)) for path in result_path.rglob("*")} == {
+        zip_file.extractall(folder_path)
+    # we expect it zip file to contain pack zips
+    assert {str(path.name) for path in folder_path.iterdir()} == {
+        "Pack0.zip",
+        "Pack1.zip",
+        "zipped.zip",
+    }
+
+    # extract all pack zips and check their content
+    for pack_path in folder_path.iterdir():
+        with zipfile.ZipFile(pack_path, "r") as zip_file:
+            zip_file.extractall(pack_path.parent / pack_path.stem)
+    assert {str(path.relative_to(folder_path)) for path in folder_path.rglob("*")} == {
         "Pack0",
         "Pack0/Integrations",
         "Pack0/Integrations/integration-Integrations",
@@ -1119,6 +1127,10 @@ def test_zip_multiple_packs(tmp_path: Path, mocker):
         "Pack1/README.md",
         "Pack1/metadata.json",
         "Pack1/pack_metadata.json",
-        "Pack1.zip",
+        "zipped",
+        "zipped/pack_metadata.json",
+        "zipped/README.md",
         "Pack0.zip",
+        "Pack1.zip",
+        "zipped.zip",
     }

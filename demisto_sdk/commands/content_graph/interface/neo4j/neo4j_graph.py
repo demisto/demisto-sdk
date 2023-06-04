@@ -91,6 +91,7 @@ def _parse_node(element_id: int, node: dict) -> BaseContent:
 
     elif content_model := content_type_to_model.get(content_type):
         model = content_model
+        node["not_in_repository"] = False
     else:
         raise NoModelException(f"No model for {content_type}")
     node.pop("content_type", None)

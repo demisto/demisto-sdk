@@ -5,7 +5,7 @@
 * Updated the error message when code coverage is below the threshold in **coverage-analyze** to be printed in a more noticeable red color.
 * improved the generated release note for newly added XSIAM entities when running *update-release-notes* command.
 * Fixed an issue where in some cases validation failed when mapping null values.
-
+* Fixed an issue in **upload** command where the `--input-config-file`, with the `--zip` and `--keep-zip` argument did not clean the `--keep-zip` directory.
 
 ## 1.15.4
 * Fixed an issue where *update-release-notes* and *doc-review* did not handle new content notes as expected.

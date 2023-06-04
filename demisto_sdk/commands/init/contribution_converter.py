@@ -827,10 +827,26 @@ class ContributionConverter:
                         template_entity = previous_line.lstrip(
                             entity_identifier
                         ).rstrip("\n")
+                    logger.info(
+                        f"**debug** template_entity "
+                        f"{template_entity}"
+                    )
                     curr_content_items = rn_per_content_item.get(template_entity)
+                    logger.info(
+                        f"**debug** curr_content_items "
+                        f"{curr_content_items}"
+                    )
                     if curr_content_items:
                         lines[index] = curr_content_items
+                        logger.info(
+                            f"**debug** END lines[index] "
+                            f"{lines[index]}"
+                        )
 
             rn_file.seek(0)
             rn_file.writelines(lines)
             rn_file.truncate()
+            logger.info(
+                f"**debug**rn_file "
+                f"{rn_file}"
+            )

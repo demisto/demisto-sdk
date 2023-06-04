@@ -21,7 +21,7 @@ class JSONContentItemParser(ContentItemParser):
         super().__init__(path, pack_marketplaces)
         self.json_data: Dict[str, Any] = self.get_json()
         if not isinstance(self.json_data, dict):
-            raise InvalidContentItemException("The JSON should be a dictionary")
+            raise InvalidContentItemException(f"The content of {self.path} must be in a JSON dictionary format")
 
         if self.should_skip_parsing():
             raise NotAContentItemException

@@ -37,5 +37,6 @@
   name: no implicit optional
   description: Making code implicit-optional type hints PEP 484 compliant.
   entry: no_implicit_optional
+  require_serial: true
   language: python
   types: [python]

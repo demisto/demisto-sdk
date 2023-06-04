@@ -2,7 +2,7 @@ import re
 from datetime import datetime, timedelta
 from functools import lru_cache
 from typing import Optional, Tuple, Union
-
+from dateparser import parse
 import requests
 from pkg_resources import parse_version
 
@@ -134,7 +134,7 @@ class DockerImageValidator(BaseValidator):
             self.is_latest_tag = False
             return self.is_latest_tag
 
-        if self.docker_image_latest_tag != self.docker_image_tag:
+        if self.docker_image_latest_tag != self.docker_image_tag and self.is_docker_older_than_three_days():
             # If docker image tag is not the most updated one that exists in docker-hub
             error_message, error_code = Errors.docker_not_on_the_latest_tag(
                 self.docker_image_tag, self.docker_image_latest_tag, self.is_iron_bank
@@ -165,6 +165,19 @@ class DockerImageValidator(BaseValidator):
                 self.is_latest_tag = False
 
         return self.is_latest_tag
+
+    def is_docker_older_than_three_days(self):
+        """
+        Return True if the docker is more than 3 days old.
+
+        Returns:
+            bool: True if the docker is more than 3 days old.
+        """
+        three_days_ago: Optional[datetime] = parse('3 days ago')
+        last_updated = self.get_docker_image_creation_date(self.docker_image_name, self.docker_image_tag)
+        if not last_updated or three_days_ago and three_days_ago > datetime.strptime(last_updated, "%Y-%m-%dT%H:%M:%S.%fZ"):
+            return True
+        return False
 
     def get_code_type(self):
         if self.is_integration:
@@ -290,6 +303,36 @@ class DockerImageValidator(BaseValidator):
                 latest_tag_date = tag_date
                 latest_tag_name = tag.get("name")
         return latest_tag_name
+
+    @staticmethod
+    @lru_cache(256)
+    def get_docker_image_creation_date(docker_image_name: str,
+                                       docker_image_tag: str) -> str:
+        """
+        Get the last_updated field of the given docker.
+        Args:
+            docker_image_name: The docker image name.
+            docker_image_tag: The docker image tag.
+
+        Returns:
+            The last_updated value of the docker
+        """
+        last_updated = ""
+        auth_token = DockerImageValidator.docker_auth(
+            docker_image_name, False, DEFAULT_REGISTRY
+        )
+        headers = ACCEPT_HEADER.copy()
+        if auth_token:
+            headers["Authorization"] = f"Bearer {auth_token}"
+        # first try to get the docker image tags using normal http request
+        res = requests.get(
+            url=f"https://hub.docker.com/v2/repositories/{docker_image_name}/tags/{docker_image_tag}",
+            verify=False,
+            timeout=TIMEOUT,
+        )
+        if res.status_code == 200:
+            last_updated = res.json().get("last_updated", "")
+        return last_updated
 
     @staticmethod
     @lru_cache(256)

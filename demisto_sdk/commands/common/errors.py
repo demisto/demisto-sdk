@@ -1790,11 +1790,6 @@ ERROR_CODE = {
         "ui_applicable": False,
         "related_field": "",
     },
-    "xsiam_dashboard_or_image_file_name_not_begin_with_pack_name": {
-        "code": "XD101",
-        "ui_applicable": False,
-        "related_field": "",
-    },
     # GR - Graph validations
     "uses_items_not_in_marketplaces": {
         "code": "GR100",
@@ -4481,11 +4476,6 @@ class Errors:
             f"Files name in the XSIAM dashboards directory must use the pack's name as a prefix, "
             f"e.g. `MyPack_dashboard.json` or `MyPack_dashboard_image.png`."
         )
-
-    @staticmethod
-    @error_code_decorator
-    def xsiam_dashboard_or_image_file_name_not_begin_with_pack_name(files: list):
-        return f"The following XSIAM dashboard/image file name does not start with the pack name: [{', '.join(files)}]."
 
     @staticmethod
     @error_code_decorator

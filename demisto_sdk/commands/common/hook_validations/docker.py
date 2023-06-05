@@ -323,7 +323,7 @@ class DockerImageValidator(BaseValidator):
     @lru_cache(256)
     def get_docker_image_creation_date(
         docker_image_name: str, docker_image_tag: str
-    ) -> str:
+    ):
         """
         Get the last_updated field of the given docker.
         Args:
@@ -333,7 +333,7 @@ class DockerImageValidator(BaseValidator):
         Returns:
             The last_updated value of the docker
         """
-        last_updated = ""
+        last_updated = None
         auth_token = DockerImageValidator.docker_auth(
             docker_image_name, False, DEFAULT_REGISTRY
         )
@@ -348,6 +348,7 @@ class DockerImageValidator(BaseValidator):
         )
         if res.status_code == 200:
             last_updated = res.json().get("last_updated", "")
+            last_updated = datetime.strptime(last_updated, "%Y-%m-%dT%H:%M:%S.%fZ")
         return last_updated
 
     @staticmethod

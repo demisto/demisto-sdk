@@ -185,14 +185,10 @@ class DockerImageValidator(BaseValidator):
         last_updated = self.get_docker_image_creation_date(
             self.docker_image_name, self.docker_image_tag
         )
-        if (
+        return
             not last_updated
             or three_days_ago
-            and three_days_ago
             > datetime.strptime(last_updated, "%Y-%m-%dT%H:%M:%S.%fZ")
-        ):
-            return True
-        return False
 
     def get_code_type(self):
         if self.is_integration:

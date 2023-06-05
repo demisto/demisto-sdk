@@ -1,5 +1,7 @@
 # Changelog
 ## Unreleased
+* Fixed an issue in **upload** where the installed version was missing from the XSOAR and XSIAM UI.
+
 
 ## 1.15.5
 * **Breaking Change**: The default of the **upload** command `--zip` argument is `true`. To upload packs as custom content items use the `--no-zip` argument.

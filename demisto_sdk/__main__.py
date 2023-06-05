@@ -1310,10 +1310,11 @@ def format(
     required=False,
 )
 @click.option(
-    "-z",
-    "--zip",
+    "-z/-nz",
+    "--zip/--no-zip",
     help="Compress the pack to zip before upload, this flag is relevant only for packs.",
     is_flag=True,
+    default=True,
 )
 @click.option(
     "-x",

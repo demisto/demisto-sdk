@@ -123,8 +123,8 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
             except Exception as e:
                 logger.error(f"Failed to parse {path}: {e}")
                 raise InvalidContentItemException from e
-        logger.error(f"Could not find parser for {content_type} of {path}")
-        raise InvalidContentItemException
+        logger.warning(f"Could not find parser for {content_type} of {path}")
+        raise NotAContentItemException
 
     @staticmethod
     def parse(

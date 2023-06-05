@@ -67,9 +67,7 @@ def test_handle_error_on_unignorable_error_codes(
     monkeypatch.setenv("COLUMNS", "1000")
 
     base_validator = BaseValidator(ignored_errors=ignored_errors)
-    expected_error = (
-        f"file_name: [{error_code}] can not be ignored in .pack-ignore\n"
-    )
+    expected_error = f"file_name: [{error_code}] can not be ignored in .pack-ignore\n"
 
     result = base_validator.handle_error(
         error_message="",
@@ -112,10 +110,7 @@ def test_handle_error(mocker, caplog):
     formatted_error = base_validator.handle_error(
         "another-error-message", "IN101", "path/to/file_name"
     )
-    assert (
-        formatted_error
-        == "path/to/file_name: [IN101] - another-error-message\n"
-    )
+    assert formatted_error == "path/to/file_name: [IN101] - another-error-message\n"
     assert "path/to/file_name - [IN101]" in FOUND_FILES_AND_ERRORS
 
     formatted_error = base_validator.handle_error(
@@ -124,9 +119,7 @@ def test_handle_error(mocker, caplog):
     assert formatted_error is None
     assert "path/to/file_name - [BA101]" not in FOUND_FILES_AND_ERRORS
     assert "path/to/file_name - [BA101]" in FOUND_FILES_AND_IGNORED_ERRORS
-    assert (
-        "path/to/file_name: [BA101] - ignore-file-specific\n" in caplog.text
-    )
+    assert "path/to/file_name: [BA101] - ignore-file-specific\n" in caplog.text
 
     formatted_error = base_validator.handle_error(
         "Error-message", "ST109", "path/to/file_name"
@@ -175,10 +168,7 @@ def test_handle_error_file_with_path(pack):
     formatted_error = base_validator.handle_error(
         "Error-message", "BA101", integration.readme.path
     )
-    assert (
-        formatted_error
-        == f"{integration.readme.path}: [BA101] - Error-message\n"
-    )
+    assert formatted_error == f"{integration.readme.path}: [BA101] - Error-message\n"
     assert f"{integration.readme.path} - [BA101]" in FOUND_FILES_AND_ERRORS
 
     formatted_error = base_validator.handle_error(

@@ -16,7 +16,7 @@ from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.tools import get_child_directories
 from demisto_sdk.commands.init.contribution_converter import (
     ContributionConverter,
-    get_previous_line,
+    get_previous_nonempty_line,
 )
 from TestSuite.contribution import Contribution
 from TestSuite.repo import Repo
@@ -893,14 +893,14 @@ class TestReleaseNotes:
             (11, "##### New: DemistoUploadFileToIncident\n"),
         ],
     )
-    def test_get_previous_line(self, index: int, expected_result: str):
-        """Test the 'get_previous_line' method
+    def test_get_previous_nonempty_line(self, index: int, expected_result: str):
+        """Test the 'get_previous_nonempty_line' method
 
         Given
         - An index and a lines array.
 
         When
-        - Running get_previous_line.
+        - Running get_previous_nonempty_line.
 
         Then
         - Ensure the correct previous line (which is not a new line) was returned.
@@ -923,7 +923,7 @@ class TestReleaseNotes:
             "- New: Create a new list (Available from Cortex XSOAR 6.8.0).\n",
         ]
 
-        assert get_previous_line(index, lines) == expected_result
+        assert get_previous_nonempty_line(lines, index) == expected_result
 
     def test_replace_RN_template_with_value(
         self, mocker, contrib_converter, rn_file_copy

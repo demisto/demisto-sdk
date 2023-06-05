@@ -59,7 +59,7 @@ from demisto_sdk.commands.update_release_notes.update_rn_manager import (
 json = JSON_Handler()
 
 
-def get_previous_line(index: int, lines: List[str]):
+def get_previous_nonempty_line(lines: List[str], index: int):
     """
     Given a list of lines and a certain index, returns the previous line of the given line while ignoring newlines.
     Args:
@@ -806,7 +806,7 @@ class ContributionConverter:
         with open(rn_path, "r+") as rn_file:
             lines = rn_file.readlines()
             for index in range(len(lines)):
-                previous_line = get_previous_line(index, lines)
+                previous_line = get_previous_nonempty_line(lines, index)
                 if template_text in lines[index] or previous_line.startswith(
                     new_entity_identifier
                 ):

@@ -162,7 +162,7 @@ class CertifiedPartnerChecker(BaseChecker):
         Adds the relevant error message using `add_message` function if one of the above exists.
         """
         try:
-            file_path = node.root().file.replace(".py", ".yml")
+            file_path = node.root().file.replace(".py", ".yml") if node else ""
             with open(file_path) as file_obj:
                 loaded_file_data = yaml.load(file_obj)
                 if "indicator-format" not in loaded_file_data.get("tags", []):

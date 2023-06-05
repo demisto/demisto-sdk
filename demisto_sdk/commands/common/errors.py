@@ -4485,7 +4485,7 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def xsiam_dashboards_file_name_is_not_equal_to_image_name(
+    def xsiam_dashboards_file_name_is_not_equal_to_pack_name(
         dashboard_name: str, image_name: str
     ):
         return f"The XSIAM dashboard name: {dashboard_name} is not equal to image name: {image_name}."

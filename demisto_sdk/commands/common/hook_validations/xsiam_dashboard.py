@@ -57,9 +57,9 @@ class XSIAMDashboardValidator(ContentEntityValidator):
         return True
 
     @error_codes("XD101")
-    def is_dashboard_file_name_equal_to_image_file_name(self):
+    def is_dashboard_and_image_file_name_equals_to_pack_name(self):
         """
-        Validates the dashboard file name equals the image file name.
+        Validates the dashboard and image file name equals the pack name.
         """
         dashboard_name = self.file_path
         dashboard_image = self.file_path
@@ -67,7 +67,7 @@ class XSIAMDashboardValidator(ContentEntityValidator):
             (
                 error_message,
                 error_code,
-            ) = Errors.xsiam_dashboards_file_name_is_not_equal_to_image_name(
+            ) = Errors.xsiam_dashboards_file_name_is_not_equal_to_pack_name(
                 dashboard_name, dashboard_image
             )
             if self.handle_error(error_message, error_code, file_path=self.file_path):

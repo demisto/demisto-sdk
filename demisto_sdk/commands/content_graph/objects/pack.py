@@ -293,7 +293,8 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: i
     def dump_metadata(self, path: Path, marketplace: MarketplaceVersions) -> None:
         self.server_min_version = self.server_min_version or MARKETPLACE_MIN_VERSION
         metadata = self.dict(
-            exclude={"path", "node_id", "content_type", "excluded_dependencies"}
+            exclude={"path", "node_id", "content_type", "excluded_dependencies"},
+            by_alias=True,
         )
         metadata["contentItems"] = {}
         metadata["id"] = self.object_id

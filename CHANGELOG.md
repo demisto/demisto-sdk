@@ -11,6 +11,7 @@
 * improved the generated release note for newly added XSIAM entities when running *update-release-notes* command.
 * Fixed an issue where in some cases validation failed when mapping null values.
 * Fixed an issue in **upload** command where the `--keep-zip` argument did not clean the working directory.
+* Added a validation that the **validate** command will fail on modeling rules file name id or name with incorrect suffix.
 
 ## 1.15.4
 * Fixed an issue where *update-release-notes* and *doc-review* did not handle new content notes as expected.

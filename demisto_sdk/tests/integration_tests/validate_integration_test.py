@@ -634,7 +634,9 @@ class TestIncidentFieldValidation:
                 ]
             ]
         )
-        assert str_in_call_args_list(logger_error.call_args_list, "The system key must be set to False")
+        assert str_in_call_args_list(
+            logger_error.call_args_list, "The system key must be set to False"
+        )
 
     def test_valid_scripts_in_incident_field(self, mocker, repo):
         """
@@ -764,7 +766,10 @@ class TestIncidentFieldValidation:
                 ]
             ]
         )
-        assert str_in_call_args_list(logger_error.call_args_list, "the following scripts were not found in the id_set.json")
+        assert str_in_call_args_list(
+            logger_error.call_args_list,
+            "the following scripts were not found in the id_set.json",
+        )
         assert result.exit_code == 1
 
 
@@ -1363,7 +1368,9 @@ class TestIntegrationValidation:
                 ]
             ]
         )
-        assert str_in_call_args_list(logger_error.call_args_list, "This is a feed and has wrong fromversion.")
+        assert str_in_call_args_list(
+            logger_error.call_args_list, "This is a feed and has wrong fromversion."
+        )
         assert result.exit_code == 1
 
     def test_negative__non_latest_docker_image(self, mocker):
@@ -1410,7 +1417,10 @@ class TestIntegrationValidation:
                 ]
             ]
         )
-        assert str_in_call_args_list(logger_error.call_args_list, "The docker image tag is not the latest numeric tag, please update it")
+        assert str_in_call_args_list(
+            logger_error.call_args_list,
+            "The docker image tag is not the latest numeric tag, please update it",
+        )
         assert result.exit_code == 1
 
     def test_negative__hidden_param(self, mocker):
@@ -1826,7 +1836,10 @@ class TestClassifierValidation:
                 ]
             ]
         )
-        assert str_in_call_args_list(logger_error.call_args_list, "fromVersion field in new classifiers needs to be higher or equal to 6.0.0")
+        assert str_in_call_args_list(
+            logger_error.call_args_list,
+            "fromVersion field in new classifiers needs to be higher or equal to 6.0.0",
+        )
         assert result.exit_code == 1
 
     def test_invalid_to_version_in_new_classifiers(self, mocker, repo):
@@ -1927,7 +1940,9 @@ class TestClassifierValidation:
                 ]
             ]
         )
-        assert str_in_call_args_list(logger_error.call_args_list, 'Missing the field "id" in root')
+        assert str_in_call_args_list(
+            logger_error.call_args_list, 'Missing the field "id" in root'
+        )
         assert result.exit_code == 1
 
     def test_missing_fromversion_field_in_new_classifier(self, mocker, repo):
@@ -1961,7 +1976,10 @@ class TestClassifierValidation:
                 ]
             ]
         )
-        assert str_in_call_args_list(logger_error.call_args_list, "Must have fromVersion field in new classifiers")
+        assert str_in_call_args_list(
+            logger_error.call_args_list,
+            "Must have fromVersion field in new classifiers",
+        )
 
     def test_invalid_type_in_new_classifier(self, mocker, repo):
         """
@@ -2056,7 +2074,10 @@ class TestClassifierValidation:
                 ]
             ]
         )
-        assert str_in_call_args_list(logger_error.call_args_list, "fromVersion field in old classifiers needs to be lower than 6.0.0")
+        assert str_in_call_args_list(
+            logger_error.call_args_list,
+            "fromVersion field in old classifiers needs to be lower than 6.0.0",
+        )
 
     def test_invalid_to_version_in_old_classifiers(self, mocker, repo):
         """
@@ -2122,7 +2143,9 @@ class TestClassifierValidation:
                 ]
             ]
         )
-        assert str_in_call_args_list(logger_error.call_args_list, 'Missing the field "id" in root')
+        assert str_in_call_args_list(
+            logger_error.call_args_list, 'Missing the field "id" in root'
+        )
         assert result.exit_code == 1
 
     def test_missing_toversion_field_in_old_classifier(self, mocker, repo):
@@ -2156,7 +2179,9 @@ class TestClassifierValidation:
                 ]
             ]
         )
-        assert str_in_call_args_list(logger_error.call_args_list, "Must have toVersion field in old classifiers")
+        assert str_in_call_args_list(
+            logger_error.call_args_list, "Must have toVersion field in old classifiers"
+        )
         assert result.exit_code == 1
 
 
@@ -2226,7 +2251,10 @@ class TestMapperValidation:
                 ]
             ]
         )
-        assert str_in_call_args_list(logger_error.call_args_list, "fromVersion field in mapper needs to be higher or equal to 6.0.0")
+        assert str_in_call_args_list(
+            logger_error.call_args_list,
+            "fromVersion field in mapper needs to be higher or equal to 6.0.0",
+        )
         assert result.exit_code == 1
 
     def test_invalid_to_version_in_mapper(self, mocker, repo):
@@ -2293,7 +2321,9 @@ class TestMapperValidation:
                 ]
             ]
         )
-        assert str_in_call_args_list(logger_error.call_args_list, 'Missing the field "id" in root')
+        assert str_in_call_args_list(
+            logger_error.call_args_list, 'Missing the field "id" in root'
+        )
         assert result.exit_code == 1
 
     def test_mapper_from_version_higher_to_version(self, mocker, repo):
@@ -2423,7 +2453,10 @@ class TestDashboardValidation:
                 ]
             ]
         )
-        assert str_in_call_args_list(logger_error.call_args_list, "The version for our files should always be -1, please update the file.")
+        assert str_in_call_args_list(
+            logger_error.call_args_list,
+            "The version for our files should always be -1, please update the file.",
+        )
         assert result.exit_code == 1
 
 
@@ -2494,7 +2527,9 @@ class TestConnectionValidation:
                 ]
             ]
         )
-        assert str_in_call_args_list(logger_error.call_args_list, 'Missing the field "contextKey1"')
+        assert str_in_call_args_list(
+            logger_error.call_args_list, 'Missing the field "contextKey1"'
+        )
         assert result.exit_code == 1
 
 
@@ -2564,7 +2599,9 @@ class TestIndicatorFieldValidation:
                 ]
             ]
         )
-        assert str_in_call_args_list(logger_error.call_args_list, "The content key must be set to True.")
+        assert str_in_call_args_list(
+            logger_error.call_args_list, "The content key must be set to True."
+        )
         assert result.exit_code == 1
 
 
@@ -2940,7 +2977,10 @@ class TestLayoutValidation:
                 ]
             ]
         )
-        assert str_in_call_args_list(logger_error.call_args_list, "The version for our files should always be -1, please update the file.")
+        assert str_in_call_args_list(
+            logger_error.call_args_list,
+            "The version for our files should always be -1, please update the file.",
+        )
         assert result.exit_code == 1
 
     def test_invalid_layout__path(self, mocker, repo):
@@ -3046,7 +3086,10 @@ class TestLayoutValidation:
                 ]
             ]
         )
-        assert str_in_call_args_list(logger_error.call_args_list, "The version for our files should always be -1, please update the file.")
+        assert str_in_call_args_list(
+            logger_error.call_args_list,
+            "The version for our files should always be -1, please update the file.",
+        )
         assert result.exit_code == 1
 
     def test_invalid_layoutscontainer__path(self, mocker, repo):
@@ -3290,7 +3333,10 @@ class TestLayoutValidation:
                 ]
             ]
         )
-        assert str_in_call_args_list(logger_error.call_args_list, "the following scripts were not found in the id_set.json")
+        assert str_in_call_args_list(
+            logger_error.call_args_list,
+            "the following scripts were not found in the id_set.json",
+        )
         assert result.exit_code == 1
 
     @pytest.mark.parametrize(
@@ -3421,7 +3467,10 @@ class TestLayoutValidation:
                 ]
             ]
         )
-        assert str_in_call_args_list(logger_error.call_args_list, "the following scripts were not found in the id_set.json")
+        assert str_in_call_args_list(
+            logger_error.call_args_list,
+            "the following scripts were not found in the id_set.json",
+        )
         assert result.exit_code == 1
 
 
@@ -4355,7 +4404,10 @@ class TestWidgetValidation:
                 ]
             ]
         )
-        assert str_in_call_args_list(logger_error.call_args_list, "The version for our files should always be -1, please update the file.")
+        assert str_in_call_args_list(
+            logger_error.call_args_list,
+            "The version for our files should always be -1, please update the file.",
+        )
         assert result.exit_code == 1
 
 
@@ -4752,7 +4804,9 @@ class TestAllFilesValidator:
                 ]
             ]
         )
-        assert str_in_call_args_list(logger_error.call_args_list, "The content key must be set to True.")
+        assert str_in_call_args_list(
+            logger_error.call_args_list, "The content key must be set to True."
+        )
         assert result.exit_code == 1
 
 
@@ -4949,7 +5003,9 @@ class TestValidationUsingGit:
                 ]
             ]
         )
-        assert str_in_call_args_list(logger_error.call_args_list, "The content key must be set to True.")
+        assert str_in_call_args_list(
+            logger_error.call_args_list, "The content key must be set to True."
+        )
         assert result.exit_code == 1
 
     def test_validation_using_git_without_pack_dependencies(self, mocker, repo):

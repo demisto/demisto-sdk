@@ -281,7 +281,7 @@ class TestDockerImage:
                 False,
                 False,
             ),
-            (datetime.now(), True, False),
+            (datetime.now(), False, True),
         ],
     )
     def test_not_latest_docker_older_than_3_days(

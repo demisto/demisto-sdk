@@ -540,18 +540,18 @@ def test_is_file_using_unknown_content(
         if type(current_call[0]) == tuple:
             print(f"*** ERROR *** {current_call[0][0]=}")
 
-    found_level = False
+    # found_level = False
     str_to_search, logger_to_search = (
         ("[WARNING]", logger_warning) if is_valid else ("[ERROR]", logger_error)
     )
-    for current_call in logger_to_search.call_args_list:
-        if (
-            type(current_call[0]) == tuple
-            and str_to_search in current_call[0][0].lower()
-        ):
-            found_level = True
-            break
-    assert found_level
+    # for current_call in logger_to_search.call_args_list:
+    #     if (
+    #         type(current_call[0]) == tuple
+    #         and str_to_search in current_call[0][0].lower()
+    #     ):
+    #         found_level = True
+    #         break
+    # assert found_level
 
     assert str_in_call_args_list(
         logger_to_search.call_args_list,

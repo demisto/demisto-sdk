@@ -4472,7 +4472,7 @@ class Errors:
     @error_code_decorator
     def xsiam_dashboards_files_naming_error(invalid_files: list):
         return (
-            f"The following XSIAM dashboards do not match the naming conventions:: {', '.join(invalid_files)}.\n"
+            f"The following XSIAM dashboards do not match the naming conventions: {', '.join(invalid_files)}.\n"
             f"Files name in the XSIAM dashboards directory must use the pack's name as a prefix, "
             f"e.g. `MyPack_dashboard.json` or `MyPack_dashboard_image.png`."
         )

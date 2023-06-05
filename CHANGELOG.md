@@ -1,6 +1,7 @@
 # Changelog
 ## Unreleased
-- Fixed an issue in *lint* where it returned a warning regarding usage of `demisto.results` function in entities that have to use it and can't use `CommandResults` instead.
+* Fixed an issue where **upload** would not properly show the installed version in the UI.
+* Fixed an issue in *lint* where it returned a warning regarding usage of `demisto.results` function in entities that have to use it and can't use `CommandResults` instead.
 
 ## 1.15.5
 * **Breaking Change**: The default of the **upload** command `--zip` argument is `true`. To upload packs as custom content items use the `--no-zip` argument.

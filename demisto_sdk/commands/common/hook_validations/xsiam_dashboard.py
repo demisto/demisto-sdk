@@ -1,12 +1,14 @@
 """
 This module is designed to validate the correctness of generic definition entities in content.
 """
+from pathlib import Path
 
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.base_validator import error_codes
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import (
     ContentEntityValidator,
 )
+from demisto_sdk.commands.common.tools import get_pack_name
 
 
 class XSIAMDashboardValidator(ContentEntityValidator):
@@ -34,6 +36,7 @@ class XSIAMDashboardValidator(ContentEntityValidator):
         https://github.com/demisto/etc/issues/48151#issuecomment-1109660727
         """
         self.is_files_naming_correct()
+        # self.are_dashboard_and_image_file_names_begin_with_pack_name()
         return self._is_valid
 
     def is_valid_version(self):
@@ -61,16 +64,23 @@ class XSIAMDashboardValidator(ContentEntityValidator):
         """
         Validates the dashboard and image file name equals the pack name.
         """
-        dashboard_name = self.file_path
-        dashboard_image = self.file_path
-        if dashboard_name != dashboard_image:
+        pack_name = get_pack_name(self.file_path)
+        dashboard_folder = Path(self.file_path).parent
+
+        if invalid_prefix := list(
+            filter(
+                lambda x: not x.startswith(pack_name),
+                (file.name for file in Path(dashboard_folder).iterdir()),
+            )
+        ):
             (
                 error_message,
                 error_code,
-            ) = Errors.xsiam_dashboards_file_name_is_not_equal_to_pack_name(
-                dashboard_name, dashboard_image
+            ) = Errors.xsiam_dashboard_or_image_file_name_not_begin_with_pack_name(
+                invalid_prefix
             )
-            if self.handle_error(error_message, error_code, file_path=self.file_path):
+            if self.handle_error(error_message, error_code, file_path=invalid_prefix):
                 self._is_valid = False
                 return False
+
         return True

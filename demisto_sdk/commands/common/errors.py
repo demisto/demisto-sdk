@@ -1790,8 +1790,7 @@ ERROR_CODE = {
         "ui_applicable": False,
         "related_field": "",
     },
-    # XD - XSIAM Dashboards
-    "xsiam_dashboards_file_name_is_not_equal_to_image_name": {
+    "xsiam_dashboard_or_image_file_name_not_begin_with_pack_name": {
         "code": "XD101",
         "ui_applicable": False,
         "related_field": "",
@@ -4485,10 +4484,8 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def xsiam_dashboards_file_name_is_not_equal_to_pack_name(
-        dashboard_name: str, image_name: str
-    ):
-        return f"The XSIAM dashboard name: {dashboard_name} is not equal to image name: {image_name}."
+    def xsiam_dashboard_or_image_file_name_not_begin_with_pack_name(files: list):
+        return f"The following XSIAM dashboard/image file name does not start with the pack name: [{', '.join(files)}]."
 
     @staticmethod
     @error_code_decorator

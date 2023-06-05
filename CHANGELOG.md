@@ -1,5 +1,6 @@
 # Changelog
 ## Unreleased
+* Fixed an issue where an extra levelname was added to a logging message.
 
 ## 1.15.5
 * **Breaking Change**: The default of the **upload** command `--zip` argument is `true`. To upload packs as custom content items use the `--no-zip` argument.

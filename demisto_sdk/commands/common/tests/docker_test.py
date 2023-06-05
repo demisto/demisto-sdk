@@ -303,6 +303,7 @@ class TestDockerImage:
         docker_image_validator.docker_image_name = "demisto/python"
         docker_image_validator.code_type = "python"
         docker_image_validator.is_latest_tag = True
+        docker_image_validator.print_as_warnings = True
         docker_image_validator.docker_image_tag = "1.0.2"
         docker_image_validator.is_valid = True
         docker_image_validator.yml_docker_image = "demisto/python:1.0.2"

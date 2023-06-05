@@ -146,6 +146,13 @@ class CertifiedPartnerChecker(BaseChecker):
         except Exception:
             pass
 
+    def _check_demisto_results(self, node):
+        try:
+            if node.func.attrname == "results" and node.func.expr.name == "demisto":
+                self.add_message("demisto-results-exists", node=node)
+        except Exception:
+            pass
+
     def _demisto_results_checker(self, node):
         """
         Args: node which is a Call Node.
@@ -157,15 +164,13 @@ class CertifiedPartnerChecker(BaseChecker):
         try:
             file_path = node.root().file.replace(".py", ".yml")
             with open(file_path) as file_obj:
-                loaded_file_data = yaml.load(file_obj)  # type: ignore
+                loaded_file_data = yaml.load(file_obj)
                 if "indicator-format" not in loaded_file_data.get("tags", []):
-                    if (
-                        node.func.attrname == "results"
-                        and node.func.expr.name == "demisto"
-                    ):
-                        self.add_message("demisto-results-exists", node=node)
-        except Exception:
-            pass
+                    self._check_demisto_results(node)
+
+        # in case the yml version of the .py file does not exist, run the check
+        except IOError:
+            self._check_demisto_results(node)
 
     def _init_params_checker(self, node):
         """

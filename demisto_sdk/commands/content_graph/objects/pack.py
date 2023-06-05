@@ -108,7 +108,7 @@ def upload_zip(
             f"Uploading packs to XSOAR versions earlier than {MINIMAL_UPLOAD_SUPPORTED_VERSION} is no longer supported."
             "Use older versions of the Demisto-SDK for that (<=1.13.0)"
         )
-    server_kwargs = {"skip_verify": "true"}
+    server_kwargs = {"skip_verify": "false"}
 
     if (
         skip_validations

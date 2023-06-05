@@ -152,16 +152,15 @@ class DockerImageValidator(BaseValidator):
                     file_path=self.file_path,
                     suggested_fix=suggested_fix,
                 ):
-                    is_latest_tag = False
+                    return False
 
-                else:
-                    # if this error is ignored - do print it as a warning
-                    self.handle_error(
-                        error_message,
-                        error_code,
-                        file_path=self.file_path,
-                        warning=True,
-                    )
+            # if this error is ignored - do print it as a warning
+            self.handle_error(
+                error_message,
+                error_code,
+                file_path=self.file_path,
+                warning=True,
+            )
 
         # the most updated tag should be numeric and not labeled "latest"
         if self.docker_image_latest_tag == "latest":
@@ -185,10 +184,7 @@ class DockerImageValidator(BaseValidator):
         last_updated = self.get_docker_image_creation_date(
             self.docker_image_name, self.docker_image_tag
         )
-        return
-            not last_updated
-            or three_days_ago
-            > datetime.strptime(last_updated, "%Y-%m-%dT%H:%M:%S.%fZ")
+        return not last_updated or three_days_ago > last_updated
 
     def get_code_type(self):
         if self.is_integration:
@@ -317,9 +313,7 @@ class DockerImageValidator(BaseValidator):
 
     @staticmethod
     @lru_cache(256)
-    def get_docker_image_creation_date(
-        docker_image_name: str, docker_image_tag: str
-    ):
+    def get_docker_image_creation_date(docker_image_name: str, docker_image_tag: str):
         """
         Get the last_updated field of the given docker.
         Args:

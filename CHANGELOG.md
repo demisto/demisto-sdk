@@ -11,6 +11,7 @@
 * improved the generated release note for newly added XSIAM entities when running *update-release-notes* command.
 * Fixed an issue where in some cases validation failed when mapping null values.
 * Fixed an issue in **upload** command where the `--keep-zip` argument did not clean the working directory.
+* Added a check to **is_docker_image_latest_tag** to fail the validation on none latest image tag only when current tag is older than 3 days.
 
 ## 1.15.4
 * Fixed an issue where *update-release-notes* and *doc-review* did not handle new content notes as expected.

@@ -219,9 +219,9 @@ class ModelingRuleValidator(ContentEntityValidator):
     def is_valid_rule_suffix_name(self):
         """
         Verifies the following::
-            1. The modeling rule file name ends with 'ModelingRule'.
+            1. The modeling rule file name ends with 'ModelingRule.yml'.
             2. The modeling rule id ends with 'ModelingRule'.
-            3. The modeling rule name with 'Modeling Rule'.
+            3. The modeling rule name ends with 'Modeling Rule'.
         """
         with open(self.file_path) as yf:
             data = yaml.load(yf)

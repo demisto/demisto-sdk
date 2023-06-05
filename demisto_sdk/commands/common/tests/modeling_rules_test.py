@@ -226,9 +226,9 @@ def test_is_suffix_name_valid(
     mocker, repo, rule_file_name, rule_dict, expected_error, valid
 ):
     """
-    Given: A modeling rule with invalid schema attribute types
-    When: running is_schema_types_valid
-    Then: Validate that the modeling rule is invalid
+    Given: A modeling rule with valid/invalid file_name/id/name
+    When: running is_valid_rule_suffix_name
+    Then: Validate that the modeling rule is valid/invalid and the message (in case of invalid) is as expected.
     """
     pack = repo.create_pack("TestPack")
     dummy_modeling_rule = pack.create_modeling_rule(rule_file_name)

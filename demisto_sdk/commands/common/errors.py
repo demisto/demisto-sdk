@@ -1755,6 +1755,11 @@ ERROR_CODE = {
         "ui_applicable": False,
         "related_field": "",
     },
+    "invalid_rule_suffix_name": {
+        "code": "MR108",
+        "ui_applicable": False,
+        "related_field": "",
+    },
     # CR - Correlation Rules
     "correlation_rule_starts_with_hyphen": {
         "code": "CR100",
@@ -4492,6 +4497,11 @@ class Errors:
             f"The following rule file name is invalid {invalid_files} - make sure that the rule name is "
             f"the same as the folder containing it."
         )
+
+    @staticmethod
+    @error_code_decorator
+    def invalid_rule_suffix_name(message):
+        return message
 
     @staticmethod
     @error_code_decorator

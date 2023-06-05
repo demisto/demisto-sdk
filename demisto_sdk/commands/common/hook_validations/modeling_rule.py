@@ -7,6 +7,11 @@ import re
 from pathlib import Path
 from typing import List
 
+from demisto_sdk.commands.common.constants import (
+    MODELING_RULE_FILE_SUFFIX,
+    MODELING_RULE_ID_SUFFIX,
+    MODELING_RULE_NAME_SUFFIX,
+)
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.handlers import YAML_Handler
 from demisto_sdk.commands.common.hook_validations.base_validator import error_codes
@@ -64,6 +69,7 @@ class ModelingRuleValidator(ContentEntityValidator):
         self.is_schema_file_exists()
         self.are_keys_empty_in_yml()
         self.is_valid_rule_names()
+        self.is_valid_rule_suffix_name()
         self.is_schema_types_valid()
         self.dataset_name_matches_in_xif_and_schema()
 
@@ -207,5 +213,32 @@ class ModelingRuleValidator(ContentEntityValidator):
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 self._is_valid = False
                 return False
+
+        return True
+
+    def is_valid_rule_suffix_name(self):
+        """
+        Verifies the following::
+            1. The modeling rule file name ends with 'ModelingRule'.
+            2. The modeling rule id ends with 'ModelingRule'.
+            3. The modeling rule name with 'Modeling Rule'.
+        """
+        with open(self.file_path) as yf:
+            data = yaml.load(yf)
+        rule_id = data.get("id", "")
+        rule_name = data.get("name", "")
+        message = f"The file {self.file_path} is invalid please check the following:"
+
+        if invalid_file_name := not self.file_path.endswith(MODELING_RULE_FILE_SUFFIX):
+            message += f"ֿ\nThe file name ends with '{MODELING_RULE_FILE_SUFFIX}'"
+        if invalid_id := not rule_id.endswith(MODELING_RULE_ID_SUFFIX):
+            message += f"\nThe rule id ends with '{MODELING_RULE_ID_SUFFIX}'"
+        if invalid_name := not rule_name.endswith(MODELING_RULE_NAME_SUFFIX):
+            message += f"\nThe rule name ends with '{MODELING_RULE_NAME_SUFFIX}'"
+        if any((invalid_file_name, invalid_id, invalid_name)):
+            error_message, error_code = Errors.invalid_rule_suffix_name(message)
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                self._is_valid = False
+            return False
 
         return True

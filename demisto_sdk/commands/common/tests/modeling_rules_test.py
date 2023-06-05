@@ -183,6 +183,72 @@ def test_is_schema_types_valid(repo, schema, valid):
     assert modeling_rule_validator.is_schema_types_valid() == valid
 
 
+def mock_handle_error(error_message, error_code, file_path):
+    return error_message
+
+
+@pytest.mark.parametrize(
+    "rule_file_name, rule_dict, expected_error, valid",
+    [
+        (
+            "MyRule",
+            {"id": "modeling-rule", "name": "Modeling-Rule"},
+            "ֿ\nThe file name ends with 'ModelingRule.yml'\nThe rule id ends with 'ModelingRule'\nThe rule name ends with 'Modeling Rule'",
+            False,
+        ),
+        (
+            "MyRule",
+            {"id": "ModelingRule", "name": "Modeling Rule"},
+            "ֿ\nThe file name ends with 'ModelingRule.yml'",
+            False,
+        ),
+        (
+            "MyRuleModelingRule",
+            {"id": "modeling-rule", "name": "Modeling Rule"},
+            "\nThe rule id ends with 'ModelingRule'",
+            False,
+        ),
+        (
+            "MyRuleModelingRule",
+            {"id": "ModelingRule", "name": "Modeling-Rule"},
+            "\nThe rule name ends with 'Modeling Rule'",
+            False,
+        ),
+        (
+            "MyRuleModelingRule",
+            {"id": "ModelingRule", "name": "Modeling Rule"},
+            "",
+            True,
+        ),
+    ],
+)
+def test_is_suffix_name_valid(
+    mocker, repo, rule_file_name, rule_dict, expected_error, valid
+):
+    """
+    Given: A modeling rule with invalid schema attribute types
+    When: running is_schema_types_valid
+    Then: Validate that the modeling rule is invalid
+    """
+    pack = repo.create_pack("TestPack")
+    dummy_modeling_rule = pack.create_modeling_rule(rule_file_name)
+    structure_validator = StructureValidator(dummy_modeling_rule.yml.path)
+    dummy_modeling_rule.yml.write_dict(rule_dict)
+    error_message = mocker.patch(
+        "demisto_sdk.commands.common.hook_validations.modeling_rule.ModelingRuleValidator.handle_error",
+        side_effect=mock_handle_error,
+    )
+
+    with ChangeCWD(repo.path):
+        modeling_rule_validator = ModelingRuleValidator(structure_validator)
+        assert modeling_rule_validator.is_valid_rule_suffix_name() == valid
+        if not valid:
+            assert (
+                error_message.call_args[0][0].split("please check the following:")[1]
+                == expected_error
+            )
+
+
 def test_dataset_name_matches_in_xif_and_schema(repo):
     """
     Given: A modeling rule with mismatch between dataset name of the schema and xif files.

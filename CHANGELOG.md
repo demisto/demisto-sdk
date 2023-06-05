@@ -1,5 +1,6 @@
 # Changelog
 ## Unreleased
+- Fixed an issue in *lint* where it returned warnings for some unrelated files.
 
 ## 1.15.5
 * **Breaking Change**: The default of the **upload** command `--zip` argument is `true`. To upload packs as custom content items use the `--no-zip` argument.

@@ -115,7 +115,8 @@ def upload_zip(
         and target_demisto_version >= MINIMAL_ALLOWED_SKIP_VALIDATION_VERSION
     ):
         server_kwargs["skip_validation"] = "true"
-
+    else:
+        server_kwargs["skip_validation"] = "false"
     response = client.upload_content_packs(
         file=str(path),
         **server_kwargs,

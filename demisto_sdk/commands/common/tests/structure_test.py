@@ -407,7 +407,7 @@ class TestStructureValidator:
         Then
                 Ensure the structure validator raises a suitable error
         """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+        logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
         monkeypatch.setenv("COLUMNS", "1000")
 
         pack = repo.create_pack()
@@ -418,7 +418,7 @@ class TestStructureValidator:
         with ChangeCWD(repo.path):
             assert not validator.is_valid_file()
         assert str_in_call_args_list(
-            logger_info.call_args_list,
+            logger_error.call_args_list,
             f'Missing the field "{missing_field}" in root',
         )
 

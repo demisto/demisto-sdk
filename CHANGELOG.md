@@ -1,6 +1,7 @@
 # Changelog
 ## Unreleased
 * Added a validation that the **validate** command will fail on modeling rules file name id or name with incorrect suffix.
+
 ## 1.15.5
 * **Breaking Change**: The default of the **upload** command `--zip` argument is `true`. To upload packs as custom content items use the `--no-zip` argument.
 * Removed the `no-implicit-optional` hook from **pre-commit**.

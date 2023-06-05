@@ -182,7 +182,8 @@ class Uploader:
                 path=path,
                 client=self.client,
                 target_demisto_version=Version(str(self.demisto_version)),
-                skip_validations=True,  # TODO
+                skip_validations=True,
+                marketplace=self.marketplace,
             ):
                 self._successfully_uploaded_zipped_packs.extend(pack_names)
                 return True

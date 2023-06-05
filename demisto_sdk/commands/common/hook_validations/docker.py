@@ -4,6 +4,7 @@ from functools import lru_cache
 from typing import Optional, Tuple, Union
 
 import requests
+from dateparser import parse
 from pkg_resources import parse_version
 
 from demisto_sdk.commands.common.constants import (
@@ -112,59 +113,79 @@ class DockerImageValidator(BaseValidator):
 
     @error_codes("DO100,DO106,DO101")
     def is_docker_image_latest_tag(self):
+        is_latest_tag = True
         if (
             "demisto/python:1.3-alpine"
             == f"{self.docker_image_name}:{self.docker_image_tag}"
         ):
+            self.is_latest_tag = False
             # the docker image is the default one
             error_message, error_code = Errors.default_docker_error()
             if self.handle_error(error_message, error_code, file_path=self.file_path):
-                self.is_latest_tag = False
-
-            return self.is_latest_tag
+                is_latest_tag = False
 
         # ignore tag or non-demisto docker issues
-        if self.docker_image_latest_tag == "no-tag-required":
-            return self.is_latest_tag
+        elif self.docker_image_latest_tag == "no-tag-required":
+            return True
 
-        if not self.docker_image_name or not self.docker_image_latest_tag:
+        elif not self.docker_image_name or not self.docker_image_latest_tag:
             # If the docker image isn't in the format we expect it to be or we failed fetching the tag
             # We don't want to print any error msgs to user because they have already been printed
             # see parse_docker_image for the errors
-            self.is_latest_tag = False
-            return self.is_latest_tag
+            self.is_latest_tag, is_latest_tag = False, False
 
-        if self.docker_image_latest_tag != self.docker_image_tag:
+        elif self.docker_image_latest_tag != self.docker_image_tag:
             # If docker image tag is not the most updated one that exists in docker-hub
+            self.is_latest_tag = False
             error_message, error_code = Errors.docker_not_on_the_latest_tag(
-                self.docker_image_tag, self.docker_image_latest_tag, self.is_iron_bank
+                self.docker_image_tag,
+                self.docker_image_latest_tag,
+                self.is_iron_bank,
             )
             suggested_fix = Errors.suggest_docker_fix(
                 self.docker_image_name, self.file_path, self.is_iron_bank
             )
-            if self.handle_error(
+            if self.is_docker_older_than_three_days():
+                if self.handle_error(
+                    error_message,
+                    error_code,
+                    file_path=self.file_path,
+                    suggested_fix=suggested_fix,
+                ):
+                    return False
+
+            # if this error is ignored - do print it as a warning
+            self.handle_error(
                 error_message,
                 error_code,
                 file_path=self.file_path,
+                warning=True,
                 suggested_fix=suggested_fix,
-            ):
-                self.is_latest_tag = False
-
-            else:
-                # if this error is ignored - do print it as a warning
-                self.handle_error(
-                    error_message, error_code, file_path=self.file_path, warning=True
-                )
+            )
 
         # the most updated tag should be numeric and not labeled "latest"
         if self.docker_image_latest_tag == "latest":
+            self.is_latest_tag = False
             error_message, error_code = Errors.latest_docker_error(
                 self.docker_image_tag, self.docker_image_name
             )
             if self.handle_error(error_message, error_code, file_path=self.file_path):
-                self.is_latest_tag = False
+                is_latest_tag = False
 
-        return self.is_latest_tag
+        return is_latest_tag
+
+    def is_docker_older_than_three_days(self):
+        """
+        Return True if the docker is more than 3 days old.
+
+        Returns:
+            bool: True if the docker is more than 3 days old.
+        """
+        three_days_ago: Optional[datetime] = parse("3 days ago")
+        last_updated = self.get_docker_image_creation_date(
+            self.docker_image_name, self.docker_image_tag
+        )
+        return not last_updated or three_days_ago > last_updated
 
     def get_code_type(self):
         if self.is_integration:
@@ -290,6 +311,36 @@ class DockerImageValidator(BaseValidator):
                 latest_tag_date = tag_date
                 latest_tag_name = tag.get("name")
         return latest_tag_name
+
+    @staticmethod
+    @lru_cache(256)
+    def get_docker_image_creation_date(docker_image_name: str, docker_image_tag: str):
+        """
+        Get the last_updated field of the given docker.
+        Args:
+            docker_image_name: The docker image name.
+            docker_image_tag: The docker image tag.
+
+        Returns:
+            The last_updated value of the docker
+        """
+        last_updated = None
+        auth_token = DockerImageValidator.docker_auth(
+            docker_image_name, False, DEFAULT_REGISTRY
+        )
+        headers = ACCEPT_HEADER.copy()
+        if auth_token:
+            headers["Authorization"] = f"Bearer {auth_token}"
+        # first try to get the docker image tags using normal http request
+        res = requests.get(
+            url=f"https://hub.docker.com/v2/repositories/{docker_image_name}/tags/{docker_image_tag}",
+            verify=False,
+            timeout=TIMEOUT,
+        )
+        if res.status_code == 200:
+            last_updated = res.json().get("last_updated", "")
+            last_updated = datetime.strptime(last_updated, "%Y-%m-%dT%H:%M:%S.%fZ")
+        return last_updated
 
     @staticmethod
     @lru_cache(256)

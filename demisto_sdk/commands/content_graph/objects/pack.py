@@ -105,7 +105,7 @@ def upload_zip(
         and target_demisto_version < MINIMAL_UPLOAD_SUPPORTED_VERSION
     ):
         raise RuntimeError(
-            "Uploading packs to XSOAR versions earlier than 6.5.0 is no longer supported."
+            f"Uploading packs to XSOAR versions earlier than {MINIMAL_UPLOAD_SUPPORTED_VERSION} is no longer supported."
             "Use older versions of the Demisto-SDK for that (<=1.13.0)"
         )
     server_kwargs = {"skip_verify": "true"}

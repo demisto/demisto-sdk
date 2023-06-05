@@ -137,15 +137,15 @@ class DockerImageValidator(BaseValidator):
         elif self.docker_image_latest_tag != self.docker_image_tag:
             # If docker image tag is not the most updated one that exists in docker-hub
             self.is_latest_tag = False
+            error_message, error_code = Errors.docker_not_on_the_latest_tag(
+                self.docker_image_tag,
+                self.docker_image_latest_tag,
+                self.is_iron_bank,
+            )
+            suggested_fix = Errors.suggest_docker_fix(
+                self.docker_image_name, self.file_path, self.is_iron_bank
+            )
             if self.is_docker_older_than_three_days():
-                error_message, error_code = Errors.docker_not_on_the_latest_tag(
-                    self.docker_image_tag,
-                    self.docker_image_latest_tag,
-                    self.is_iron_bank,
-                )
-                suggested_fix = Errors.suggest_docker_fix(
-                    self.docker_image_name, self.file_path, self.is_iron_bank
-                )
                 if self.handle_error(
                     error_message,
                     error_code,
@@ -160,6 +160,7 @@ class DockerImageValidator(BaseValidator):
                 error_code,
                 file_path=self.file_path,
                 warning=True,
+                suggested_fix=suggested_fix
             )
 
         # the most updated tag should be numeric and not labeled "latest"

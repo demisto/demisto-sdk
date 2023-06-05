@@ -160,7 +160,7 @@ class DockerImageValidator(BaseValidator):
                 error_code,
                 file_path=self.file_path,
                 warning=True,
-                suggested_fix=suggested_fix
+                suggested_fix=suggested_fix,
             )
 
         # the most updated tag should be numeric and not labeled "latest"

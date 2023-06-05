@@ -1,5 +1,6 @@
 import logging
 import os
+from datetime import datetime
 from unittest import mock
 
 import pytest
@@ -272,7 +273,16 @@ class TestDockerImage:
     # disable-secrets-detection-end
     @pytest.mark.parametrize(
         "return_value, expected_latest_tag_value, expected_function_results",
-        [("2023-05-19T15:06:52.316769Z", False, False), ("python", True, False)],
+        [
+            (
+                datetime.strptime(
+                    "2023-05-19T15:06:52.316769Z", "%Y-%m-%dT%H:%M:%S.%fZ"
+                ),
+                False,
+                False,
+            ),
+            (datetime.now(), True, False),
+        ],
     )
     def test_not_latest_docker_older_than_3_days(
         self, mocker, return_value, expected_latest_tag_value, expected_function_results

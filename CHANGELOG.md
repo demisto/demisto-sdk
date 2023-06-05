@@ -1,6 +1,6 @@
 # Changelog
 ## Unreleased
-* Fixed an issue in **upload** where the installed version was missing from the XSOAR and XSIAM UI.
+* Fixed an issue where **upload** would not properly show the installed version in the UI.
 
 
 ## 1.15.5

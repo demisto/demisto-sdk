@@ -1,5 +1,6 @@
 # Changelog
 ## Unreleased
+* Added a validation that the **validate** command will fail if the pack name is not prefixed on XSIAM dashboard images.
 
 ## 1.15.5
 * **Breaking Change**: The default of the **upload** command `--zip` argument is `true`. To upload packs as custom content items use the `--no-zip` argument.

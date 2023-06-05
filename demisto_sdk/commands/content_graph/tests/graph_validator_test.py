@@ -542,7 +542,7 @@ def test_is_file_using_unknown_content(
 
     found_level = False
     str_to_search, logger_to_search = (
-        ("[warning]", logger_warning) if is_valid else ("[error]", logger_error)
+        ("[WARNING]", logger_warning) if is_valid else ("[ERROR]", logger_error)
     )
     for current_call in logger_to_search.call_args_list:
         if (

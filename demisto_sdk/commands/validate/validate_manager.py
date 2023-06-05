@@ -630,6 +630,8 @@ class ValidateManager:
                         file_path.endswith(".json")
                         or file_path.endswith(".yml")
                         or file_path.endswith(".md")
+                        or content_entity_dir_path.endswith("XSIAMDashboards")
+                        and file_path.endswith(".png")  # add XSIAM dashboard images
                     ):
                         content_entities_validation_results.add(
                             self.run_validations_on_file(

@@ -219,9 +219,9 @@ class ModelingRuleValidator(ContentEntityValidator):
     def is_valid_rule_suffix_name(self):
         """
         Verifies the following::
-            1. The modeling rule file name ends with 'ModelingRule.yml'.
-            2. The modeling rule id ends with 'ModelingRule'.
-            3. The modeling rule name ends with 'Modeling Rule'.
+            1. The modeling rule file name ends with 'MODELING_RULE_FILE_SUFFIX'.
+            2. The modeling rule id ends with 'MODELING_RULE_ID_SUFFIX'.
+            3. The modeling rule name ends with 'MODELING_RULE_NAME_SUFFIX'.
         """
         with open(self.file_path) as yf:
             data = yaml.load(yf)
@@ -230,11 +230,11 @@ class ModelingRuleValidator(ContentEntityValidator):
         message = f"The file {self.file_path} is invalid please check the following:"
 
         if invalid_file_name := not self.file_path.endswith(MODELING_RULE_FILE_SUFFIX):
-            message += f"ֿ\nThe file name ends with '{MODELING_RULE_FILE_SUFFIX}'"
+            message += f"ֿ\nThe file name should end with '{MODELING_RULE_FILE_SUFFIX}'"
         if invalid_id := not rule_id.endswith(MODELING_RULE_ID_SUFFIX):
-            message += f"\nThe rule id ends with '{MODELING_RULE_ID_SUFFIX}'"
+            message += f"\nThe rule id should end with '{MODELING_RULE_ID_SUFFIX}'"
         if invalid_name := not rule_name.endswith(MODELING_RULE_NAME_SUFFIX):
-            message += f"\nThe rule name ends with '{MODELING_RULE_NAME_SUFFIX}'"
+            message += f"\nThe rule name should end with '{MODELING_RULE_NAME_SUFFIX}'"
         if any((invalid_file_name, invalid_id, invalid_name)):
             error_message, error_code = Errors.invalid_rule_suffix_name(message)
             if self.handle_error(error_message, error_code, file_path=self.file_path):

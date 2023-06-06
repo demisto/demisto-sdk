@@ -11,6 +11,9 @@ from demisto_sdk.commands.common.constants import (
     BETA_INTEGRATION_DISCLAIMER,
     FILETYPE_TO_DEFAULT_FROMVERSION,
     INTEGRATION_CATEGORIES,
+    MODELING_RULE_FILE_SUFFIX,
+    MODELING_RULE_ID_SUFFIX,
+    MODELING_RULE_NAME_SUFFIX,
     MODULES,
     PACK_METADATA_DESC,
     PACK_METADATA_NAME,
@@ -4500,7 +4503,14 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def invalid_rule_suffix_name(message):
+    def invalid_rule_suffix_name(file_path, **kwargs):
+        message = f"The file {file_path} is invalid please check the following:"
+        if kwargs.get("invalid_file_name"):
+            message += f"\nThe file name should end with '{MODELING_RULE_FILE_SUFFIX}'"
+        if kwargs.get("invalid_id"):
+            message += f"\nThe rule id should end with '{MODELING_RULE_ID_SUFFIX}'"
+        if kwargs.get("invalid_name"):
+            message += f"\nThe rule name should end with '{MODELING_RULE_NAME_SUFFIX}'"
         return message
 
     @staticmethod

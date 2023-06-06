@@ -57,6 +57,7 @@ class TestCoverageReport:
             report_dir=str(tmpdir),
             report_type="html,json,xml",
             coverage_file=temp_cover_file,
+            no_cache=True,
         )
         with caplog.at_level(logging.INFO, logger="demisto-sdk"):
             cov_report.coverage_report()
@@ -194,7 +195,7 @@ class TestFileMinCoverage:
     ):
         file_path = os.path.relpath(file_path)
         monkeypatch.chdir(tmpdir)
-        cov_report = CoverageReport()
+        cov_report = CoverageReport(no_cache=True)
         cov_report._original_summary = {file_path: current_cover}
         assert cov_report.file_min_coverage(file_path) == expected_min_cover
 

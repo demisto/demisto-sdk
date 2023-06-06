@@ -79,7 +79,10 @@ jobs:
       - name: Run pytest
         run: |
           source .venv/bin/activate
+          node demisto_sdk/commands/common/markdown_server/mdx-parse-server.js &
+          node_pid=$!
           poetry run pytest --store-durations
+          kill $node_pid
 
       - name: Upload durations
         uses: actions/upload-artifact@v2

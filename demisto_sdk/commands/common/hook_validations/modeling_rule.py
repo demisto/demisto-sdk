@@ -235,7 +235,7 @@ class ModelingRuleValidator(ContentEntityValidator):
         }
 
         if any(invalid_suffix.values()):
-            error_message, error_code = Errors.invalid_rule_suffix_name(
+            error_message, error_code = Errors.modeling_rule_suffix_name(
                 self.file_path, **invalid_suffix
             )
             if self.handle_error(error_message, error_code, file_path=self.file_path):

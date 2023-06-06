@@ -17,6 +17,9 @@ from demisto_sdk.commands.common.constants import (
     MODULES,
     PACK_METADATA_DESC,
     PACK_METADATA_NAME,
+    PARSING_RULE_FILE_SUFFIX,
+    PARSING_RULE_ID_SUFFIX,
+    PARSING_RULE_NAME_SUFFIX,
     RELIABILITY_PARAMETER_NAMES,
     RN_CONTENT_ENTITY_WITH_STARS,
     RN_HEADER_BY_FILE_TYPE,
@@ -1758,7 +1761,7 @@ ERROR_CODE = {
         "ui_applicable": False,
         "related_field": "",
     },
-    "invalid_rule_suffix_name": {
+    "modeling_rule_suffix_name": {
         "code": "MR108",
         "ui_applicable": False,
         "related_field": "",
@@ -1783,6 +1786,11 @@ ERROR_CODE = {
     # PR - Parsing Rules
     "parsing_rules_files_naming_error": {
         "code": "PR100",
+        "ui_applicable": False,
+        "related_field": "",
+    },
+    "parsing_rule_suffix_name": {
+        "code": "PR101",
         "ui_applicable": False,
         "related_field": "",
     },
@@ -4503,7 +4511,7 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def invalid_rule_suffix_name(file_path, **kwargs):
+    def modeling_rule_suffix_name(file_path, **kwargs):
         message = f"The file {file_path} is invalid please check the following:"
         if kwargs.get("invalid_file_name"):
             message += f"\nThe file name should end with '{MODELING_RULE_FILE_SUFFIX}'"
@@ -4511,6 +4519,18 @@ class Errors:
             message += f"\nThe rule id should end with '{MODELING_RULE_ID_SUFFIX}'"
         if kwargs.get("invalid_name"):
             message += f"\nThe rule name should end with '{MODELING_RULE_NAME_SUFFIX}'"
+        return message
+
+    @staticmethod
+    @error_code_decorator
+    def parsing_rule_suffix_name(file_path, **kwargs):
+        message = f"The file {file_path} is invalid please check the following:"
+        if kwargs.get("invalid_file_name"):
+            message += f"\nThe file name should end with '{PARSING_RULE_FILE_SUFFIX}'"
+        if kwargs.get("invalid_id"):
+            message += f"\nThe rule id should end with '{PARSING_RULE_ID_SUFFIX}'"
+        if kwargs.get("invalid_name"):
+            message += f"\nThe rule name should end with '{PARSING_RULE_NAME_SUFFIX}'"
         return message
 
     @staticmethod

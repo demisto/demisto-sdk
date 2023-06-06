@@ -3,12 +3,20 @@ This module is designed to validate the correctness of generic definition entiti
 """
 import os
 
+from demisto_sdk.commands.common.constants import (
+    PARSING_RULE_FILE_SUFFIX,
+    PARSING_RULE_ID_SUFFIX,
+    PARSING_RULE_NAME_SUFFIX,
+)
 from demisto_sdk.commands.common.errors import Errors
+from demisto_sdk.commands.common.handlers import YAML_Handler
 from demisto_sdk.commands.common.hook_validations.base_validator import error_codes
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import (
     ContentEntityValidator,
 )
 from demisto_sdk.commands.common.tools import get_files_in_dir
+
+yaml = YAML_Handler()
 
 
 class ParsingRuleValidator(ContentEntityValidator):
@@ -36,6 +44,7 @@ class ParsingRuleValidator(ContentEntityValidator):
         https://github.com/demisto/etc/issues/48151#issuecomment-1109660727
         """
         self.is_files_naming_correct()
+        self.is_valid_rule_suffix_name()
         return self._is_valid
 
     def is_valid_version(self):
@@ -64,4 +73,32 @@ class ParsingRuleValidator(ContentEntityValidator):
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 self._is_valid = False
                 return False
+        return True
+
+    def is_valid_rule_suffix_name(self):
+        """
+        Verifies the following::
+            1. The parsing rule file name ends with 'PARSING_RULE_FILE_SUFFIX'.
+            2. The parsing rule id ends with 'PARSING_RULE_ID_SUFFIX'.
+            3. The parsing rule name ends with 'PARSING_RULE_NAME_SUFFIX'.
+        """
+        with open(self.file_path) as yf:
+            data = yaml.load(yf)
+        rule_id = data.get("id", "")
+        rule_name = data.get("name", "")
+
+        invalid_suffix = {
+            "invalid_file_name": not self.file_path.endswith(PARSING_RULE_FILE_SUFFIX),
+            "invalid_id": not rule_id.endswith(PARSING_RULE_ID_SUFFIX),
+            "invalid_name": not rule_name.endswith(PARSING_RULE_NAME_SUFFIX),
+        }
+
+        if any(invalid_suffix.values()):
+            error_message, error_code = Errors.parsing_rule_suffix_name(
+                self.file_path, **invalid_suffix
+            )
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                self._is_valid = False
+            return False
+
         return True

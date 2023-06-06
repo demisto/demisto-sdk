@@ -16,9 +16,9 @@ from demisto_sdk.commands.content_graph.common import (
 )
 
 REPO_PATH = CONTENT_PATH
-if not REPO_PATH:
-    logger.warning("Could not find repository path, using CWD")
-    REPO_PATH = Path.cwd()
+if not REPO_PATH.is_absolute():
+    logger.warning("The content path should be absolute")
+    REPO_PATH = REPO_PATH.resolve()
 
 NEO4J_VERSION = "5.5.0"
 

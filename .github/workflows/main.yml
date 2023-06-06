@@ -110,7 +110,7 @@ jobs:
           cd content
           ./Tests/scripts/validate.sh
   tests:
-    name: Unit Tests / ${{ matrix.python-version }} (group ${{ matrix.group }})
+    name: Unit Tests / ${{ matrix.python-version }} (${{ matrix.group }})
     runs-on: ubuntu-latest
     strategy:
       matrix:

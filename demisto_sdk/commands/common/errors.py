@@ -4474,7 +4474,7 @@ class Errors:
         return (
             f"The following XSIAM dashboards do not match the naming conventions: {', '.join(invalid_files)}.\n"
             f"Files name in the XSIAM dashboards directory must use the pack's name as a prefix, "
-            f"e.g. `MyPack_dashboard.json` or `MyPack_dashboard_image.png`."
+            f"e.g. `MyPack_dashboard.json` AND `MyPack_dashboard_image.png`."
         )
 
     @staticmethod

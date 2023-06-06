@@ -192,7 +192,6 @@ jobs:
           node_pid=$!
           demisto-sdk start-content-graph
           poetry run pytest --cov --splits 5 --group ${{ matrix.group }} -v
-          kill $node_pid
 
       - name: Upload coverage
         uses: actions/upload-artifact@v2

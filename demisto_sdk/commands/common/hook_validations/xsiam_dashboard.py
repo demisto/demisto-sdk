@@ -8,6 +8,8 @@ from demisto_sdk.commands.common.hook_validations.content_entity_validator impor
     ContentEntityValidator,
 )
 
+FROMVERSION = "6.10.0"
+
 
 class XSIAMDashboardValidator(ContentEntityValidator):
     """
@@ -24,6 +26,7 @@ class XSIAMDashboardValidator(ContentEntityValidator):
             structure_validator,
             ignored_errors=ignored_errors,
             json_file_path=json_file_path,
+            oldest_supported_version=FROMVERSION,
         )
         self._is_valid = True
 
@@ -34,6 +37,7 @@ class XSIAMDashboardValidator(ContentEntityValidator):
         https://github.com/demisto/etc/issues/48151#issuecomment-1109660727
         """
         self.is_files_naming_correct()
+        super().is_valid_fromversion()
         return self._is_valid
 
     def is_valid_version(self):

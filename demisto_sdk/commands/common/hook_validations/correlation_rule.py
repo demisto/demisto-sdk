@@ -12,6 +12,8 @@ from demisto_sdk.commands.common.hook_validations.content_entity_validator impor
 )
 from demisto_sdk.commands.common.logger import logger
 
+FROMVERSION = "6.10.0"
+
 
 class CorrelationRuleValidator(ContentEntityValidator):
     """
@@ -28,6 +30,7 @@ class CorrelationRuleValidator(ContentEntityValidator):
             structure_validator,
             ignored_errors=ignored_errors,
             json_file_path=json_file_path,
+            oldest_supported_version=FROMVERSION,
         )
         self._is_valid = True
 
@@ -43,6 +46,7 @@ class CorrelationRuleValidator(ContentEntityValidator):
 
         self.no_leading_hyphen()
         self.is_files_naming_correct()
+        super().is_valid_fromversion()
         return self.is_valid
 
     def is_valid_version(self):

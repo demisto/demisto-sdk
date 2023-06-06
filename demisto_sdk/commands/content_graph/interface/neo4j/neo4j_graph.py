@@ -55,6 +55,7 @@ from demisto_sdk.commands.content_graph.interface.neo4j.queries.nodes import (
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.relationships import (
     _match_relationships,
     create_relationships,
+    get_relationships_by_path,
 )
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.validations import (
     validate_core_packs_dependencies,
@@ -339,6 +340,17 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             session.execute_write(remove_packs_before_creation, pack_ids)
             session.execute_write(create_nodes, nodes)
             session.execute_write(remove_empty_properties)
+
+    def get_relationships_by_path(
+        self,
+        path: Path,
+        relationship_type: RelationshipType,
+        depth: int,
+    ) -> Dict[str, Any]:
+        with self.driver.session() as session:
+            return session.execute_read(
+                get_relationships_by_path, path, relationship_type, depth
+            )
 
     def get_unknown_content_uses(
         self, file_paths: List[str], raises_error: bool

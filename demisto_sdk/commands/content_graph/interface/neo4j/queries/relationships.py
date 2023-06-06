@@ -1,4 +1,5 @@
-from typing import Any, Dict, List
+from pathlib import Path
+from typing import Any, Dict, List, Tuple
 
 from neo4j import Transaction
 
@@ -249,3 +250,39 @@ RETURN node_from, collect(relationship) AS relationships, collect(node_to) AS no
         )
         for item in run_query(tx, query, ids_list=list(ids_list) if ids_list else None)
     }
+
+
+def get_relationships_by_path(
+    tx: Transaction,
+    path: Path,
+    relationship: RelationshipType,
+    depth,
+) -> Tuple[str, List[Dict[str, Any]], List[Dict[str, Any]]]:
+    query = f"""// Returns relationships of a given node by its path.
+MATCH (n{{path: "{path}"}})
+OPTIONAL MATCH (s)-[sr:{relationship}]->(n)
+OPTIONAL MATCH (n)-[tr:{relationship}]->(t)
+WITH
+    n.object_id AS obj_id,
+    collect(
+        CASE WHEN s IS NOT NULL THEN
+        {{
+            id: s.object_id,
+            content_type: s.content_type,
+            path: s.path,
+            rel_data: properties(sr)
+        }}
+        ELSE NULL END
+    ) AS sources,
+    collect(
+        CASE WHEN t IS NOT NULL THEN
+        {{
+            id: t.object_id,
+            content_type: t.content_type,
+            path: t.path,
+            rel_data: properties(tr)
+        }}
+        ELSE NULL END
+    ) AS targets
+RETURN obj_id, sources, targets"""
+    return run_query(tx, query).single()

@@ -88,7 +88,7 @@ jobs:
         run: poetry run pre-commit run --all-files --verbose --show-diff-on-failure
 
       - name: Run pytest
-        run: pytest --cov --splits 5 --group ${{ matrix.group }} -v
+        run: poetry run pytest --cov --splits 5 --group ${{ matrix.group }} -v
 
       - name: Upload coverage
         uses: actions/upload-artifact@v2

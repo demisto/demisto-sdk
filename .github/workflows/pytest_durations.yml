@@ -1,4 +1,4 @@
-name: Tests
+name: Store Durations
 
 on:
   workflow_dispatch:
@@ -49,7 +49,7 @@ jobs:
         run: poetry install --with github-actions
 
       - name: Run pytest
-        run: pytest --store-durations
+        run: poetry run pytest --store-durations
 
       - name: Upload durations
         uses: actions/upload-artifact@v2

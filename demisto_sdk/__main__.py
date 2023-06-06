@@ -2733,11 +2733,10 @@ def openapi_codegen(ctx, **kwargs):
 
     if integration.save_package(output_dir):
         logger.info(
-            f"Successfully finished generating integration code and saved it in {output_dir}",
-            "green",
+            f"[green]Successfully finished generating integration code and saved it in {output_dir}[/green]",
         )
     else:
-        logger.info(
+        logger.error(
             f"[red]There was an error creating the package in {output_dir}[/red]"
         )
         sys.exit(1)

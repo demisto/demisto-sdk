@@ -1,4 +1,5 @@
 import hashlib
+import os
 import shutil
 from pathlib import Path
 
@@ -91,6 +92,7 @@ def _docker_start():
         image=NEO4J_SERVICE_IMAGE,
         name="neo4j-content",
         ports={"7474/tcp": 7474, "7687/tcp": 7687, "7473/tcp": 7473},
+        user=f"{os.getuid()}:{os.getgid()}",
         volumes=[
             f"{REPO_PATH / NEO4J_FOLDER / NEO4J_DATA_FOLDER}:/{NEO4J_DATA_FOLDER}",
             f"{REPO_PATH / NEO4J_FOLDER / NEO4J_IMPORT_FOLDER}:{LOCAL_NEO4J_PATH / NEO4J_IMPORT_FOLDER}",

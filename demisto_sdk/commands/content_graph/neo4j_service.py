@@ -16,6 +16,9 @@ from demisto_sdk.commands.content_graph.common import (
 )
 
 REPO_PATH = CONTENT_PATH
+if not REPO_PATH:
+    logger.warning("Could not find repository path, using CWD")
+    REPO_PATH = Path.cwd()
 
 NEO4J_VERSION = "5.5.0"
 
@@ -86,11 +89,6 @@ def _download_apoc():
 
 
 def _docker_start():
-    repo_path = REPO_PATH
-    print(repo_path)
-    if not repo_path:
-        logger.warning("Could not find repository path, using CWD")
-        repo_path = Path.cwd().absolute()
     docker_client = init_global_docker_client()
     _stop_neo4j_service_docker(docker_client)
     docker_client.containers.run(
@@ -99,9 +97,9 @@ def _docker_start():
         ports={"7474/tcp": 7474, "7687/tcp": 7687, "7473/tcp": 7473},
         user=f"{os.getuid()}:{os.getgid()}",
         volumes=[
-            f"{repo_path / NEO4J_FOLDER / NEO4J_DATA_FOLDER}:/{NEO4J_DATA_FOLDER}",
-            f"{repo_path / NEO4J_FOLDER / NEO4J_IMPORT_FOLDER}:{LOCAL_NEO4J_PATH / NEO4J_IMPORT_FOLDER}",
-            f"{repo_path / NEO4J_FOLDER / NEO4J_PLUGINS_FOLDER}:/{NEO4J_PLUGINS_FOLDER}",
+            f"{REPO_PATH / NEO4J_FOLDER / NEO4J_DATA_FOLDER}:/{NEO4J_DATA_FOLDER}",
+            f"{REPO_PATH / NEO4J_FOLDER / NEO4J_IMPORT_FOLDER}:{LOCAL_NEO4J_PATH / NEO4J_IMPORT_FOLDER}",
+            f"{REPO_PATH / NEO4J_FOLDER / NEO4J_PLUGINS_FOLDER}:/{NEO4J_PLUGINS_FOLDER}",
         ],
         detach=True,
         environment={

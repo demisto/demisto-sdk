@@ -87,6 +87,7 @@ def _download_apoc():
 
 def _docker_start():
     repo_path = REPO_PATH
+    print(repo_path)
     if not repo_path:
         logger.warning("Could not find repository path, using CWD")
         repo_path = Path.cwd().absolute()

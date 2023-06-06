@@ -117,12 +117,15 @@ class ReleaseNotesChecker:
     }
 
     MP_TAGS = {
+        # omertodo: fix this to the new standard
         MarketplaceTagParser.XSOAR_INLINE_PREFIX,
         MarketplaceTagParser.XSOAR_INLINE_SUFFIX,
         MarketplaceTagParser.XSIAM_INLINE_PREFIX,
         MarketplaceTagParser.XSIAM_INLINE_SUFFIX,
         MarketplaceTagParser.XPANSE_INLINE_PREFIX,
         MarketplaceTagParser.XPANSE_INLINE_SUFFIX,
+        MarketplaceTagParser.XSOAR_SAAS_INLINE_PREFIX,
+        MarketplaceTagParser.XSOAR_SAAS_INLINE_SUFFIX
     }
 
     def __init__(

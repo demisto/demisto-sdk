@@ -688,7 +688,7 @@ class TestMergeScriptPackageToYMLIntegration:
         assert expected_yml == actual_yml
 
     @pytest.mark.parametrize(
-        "marketplace", (MarketplaceVersions.XSOAR, MarketplaceVersions.MarketplaceV2)
+        "marketplace", (MarketplaceVersions.XSOAR, MarketplaceVersions.MarketplaceV2, MarketplaceVersions.XSOAR_SAAS)
     )
     def test_unify_integration__hidden_param(
         self, marketplace: MarketplaceVersions, mocker
@@ -731,16 +731,24 @@ class TestMergeScriptPackageToYMLIntegration:
         assert (
             len(missing_hidden_field) == 5
         )  # old params + `Should not be hidden - no hidden attribute`
-        assert len(hidden_true | hidden_false) == 5
+        assert len(hidden_true | hidden_false) == 7
         assert ("Should be hidden on XSOAR only" in hidden_true) == (
             marketplace == MarketplaceVersions.XSOAR
         )
         assert ("Should be hidden on XSIAM only" in hidden_true) == (
             marketplace == MarketplaceVersions.MarketplaceV2
         )
-        assert "Should be hidden on both - attribute is True" in hidden_true
+        assert ("Should be hidden on XSOAR_SAAS only" in hidden_true) == (
+            marketplace == MarketplaceVersions.XSOAR_SAAS
+        )
+        if marketplace in [MarketplaceVersions.MarketplaceV2, MarketplaceVersions.XSOAR]:
+            assert "Should be hidden on both XSOAR and marketplaceV2 - attribute lists both marketplaces" in hidden_true
+
+        if marketplace in [MarketplaceVersions.MarketplaceV2, MarketplaceVersions.XSOAR_SAAS]:
+            assert "Should be hidden on both XSOAR_SAAS and MarketplaceV2" in hidden_true
+
         assert (
-            "Should be hidden on both - attribute lists both marketplaces"
+            "attribute is True Should be hidden in all marketplaces"
             in hidden_true
         )
         assert "Should not be hidden - hidden attribute is False" in hidden_false

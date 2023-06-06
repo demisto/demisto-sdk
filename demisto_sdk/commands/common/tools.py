@@ -128,13 +128,11 @@ GRAPH_SUPPORTED_FILE_TYPES = ["yml", "json"]
 
 
 class TagParser:
-    def __init__(self, tag_prefix: str, tag_suffix: str, remove_tag_text: bool = True):
-        self._tag_prefix = tag_prefix
-        self._tag_suffix = tag_suffix
-        self._pattern = re.compile(rf"{tag_prefix}((.|\s)+?){tag_suffix}")
-        self._remove_tag_text = remove_tag_text
+    def __init__(self, marketplace_tag):
+        self.pattern = fr"<~{marketplace_tag}>.*?</~{marketplace_tag}>|<~{marketplace_tag}>\n.*?\n</~{marketplace_tag}>\n"
+        self.only_tags_pattern = fr"<~{marketplace_tag}>|</~{marketplace_tag}>|<~{marketplace_tag}>\n|\n</~{marketplace_tag}>\n"
 
-    def parse(self, text: str, remove_tag: Optional[bool] = None) -> str:
+    def parse(self, text: str, remove_tag: Optional[bool] = False) -> str:
         """
         Given a prefix and suffix of an expected tag, remove the tag and the text it's wrapping, or just the wrappers
         Args:
@@ -144,77 +142,34 @@ class TagParser:
         Returns:
             Text with no wrapper tags.
         """
-        if text and 0 <= text.find(self._tag_prefix) < text.find(self._tag_suffix):
-            remove_tag = (
-                remove_tag if isinstance(remove_tag, bool) else self._remove_tag_text
-            )
-            # collect {orignal_text: text_to_replace}
-            matches = re.finditer(self._pattern, text)
-            replace_map = {}
-            for match in matches:
-                replace_val = "" if remove_tag else match.group(1)
-                replace_map[re.escape(match.group())] = replace_val
+        if remove_tag:
+            text = re.sub(self.pattern, "", text)
 
-            # replace collected text->replacement
-            pattern = re.compile("|".join(replace_map.keys()))
-            text = pattern.sub(lambda m: replace_map[re.escape(m.group(0))], text)
+        text = re.sub(self.only_tags_pattern, "", text)
         return text
 
 
 class MarketplaceTagParser:
-    XSOAR_PREFIX = "<~XSOAR>\n"
-    XSOAR_SUFFIX = "\n</~XSOAR>\n"
-    XSOAR_INLINE_PREFIX = "<~XSOAR>"
-    XSOAR_INLINE_SUFFIX = "</~XSOAR>"
-
-    XSIAM_PREFIX = "<~XSIAM>\n"
-    XSIAM_SUFFIX = "\n</~XSIAM>\n"
-    XSIAM_INLINE_PREFIX = "<~XSIAM>"
-    XSIAM_INLINE_SUFFIX = "</~XSIAM>"
-
-    XPANSE_PREFIX = "<~XPANSE>\n"
-    XPANSE_SUFFIX = "\n</~XPANSE>\n"
-    XPANSE_INLINE_PREFIX = "<~XPANSE>"
-    XPANSE_INLINE_SUFFIX = "</~XPANSE>"
-
-    XSOAR_SAAS_PREFIX = "<~XSOAR-SAAS>\n"
-    XSOAR_SAAS_SUFFIX = "\n</~XSOAR-SAAS>\n"
-    XSOAR_SAAS_INLINE_PREFIX = "<~XSOAR-SAAS>"
-    XSOAR_SAAS_INLINE_SUFFIX = "</~XSOAR-SAAS>"
+    XSOAR_TAG = 'XSOAR'
+    XSIAM_TAG = 'XSIAM'
+    XPANSE_TAG = 'XPANSE'
+    XSOAR_SAAS_TAG = 'XSOAR_SAAS'
 
     def __init__(self, marketplace: str = MarketplaceVersions.XSOAR.value):
+
         self.marketplace = marketplace
+
         self._xsoar_parser = TagParser(
-            tag_prefix=self.XSOAR_PREFIX,
-            tag_suffix=self.XSOAR_SUFFIX,
-        )
-        self._xsoar_inline_parser = TagParser(
-            tag_prefix=self.XSOAR_INLINE_PREFIX,
-            tag_suffix=self.XSOAR_INLINE_SUFFIX,
+            marketplace_tag= self.XSOAR_TAG
         )
         self._xsiam_parser = TagParser(
-            tag_prefix=self.XSIAM_PREFIX,
-            tag_suffix=self.XSIAM_SUFFIX,
-        )
-        self._xsiam_inline_parser = TagParser(
-            tag_prefix=self.XSIAM_INLINE_PREFIX,
-            tag_suffix=self.XSIAM_INLINE_SUFFIX,
+            marketplace_tag= self.XSIAM_TAG
         )
         self._xpanse_parser = TagParser(
-            tag_prefix=self.XPANSE_PREFIX,
-            tag_suffix=self.XPANSE_SUFFIX,
+            marketplace_tag= self.XPANSE_TAG
         )
-        self._xpanse_inline_parser = TagParser(
-            tag_prefix=self.XPANSE_INLINE_PREFIX,
-            tag_suffix=self.XPANSE_INLINE_SUFFIX,
-        )
-        self._xsoar_saas_inline_parser = TagParser(
-            tag_prefix=self.XSOAR_SAAS_PREFIX,
-            tag_suffix=self.XSOAR_SAAS_SUFFIX
-        )
-        self._xsoar_saas_inline_parser = TagParser(
-            tag_prefix=self.XSOAR_SAAS_INLINE_PREFIX,
-            tag_suffix=self.XSOAR_SAAS_INLINE_SUFFIX
+        self._xsoar_saas_parser = TagParser(
+            marketplace_tag= self.XSOAR_SAAS_TAG
         )
 
     @property
@@ -236,28 +191,11 @@ class MarketplaceTagParser:
         )
 
     def parse_text(self, text):
-        # the order of parse is important. inline should always be checked after paragraph tag
-        # xsoar->xsoar_inline->xsiam->xsiam_inline->xpanse->xpanse_inline
-        return self._xpanse_inline_parser.parse(
-            remove_tag=self._should_remove_xpanse_text,
-            text=self._xpanse_parser.parse(
-                remove_tag=self._should_remove_xpanse_text,
-                text=self._xsiam_inline_parser.parse(
-                    remove_tag=self._should_remove_xsiam_text,
-                    text=self._xsiam_parser.parse(
-                        remove_tag=self._should_remove_xsiam_text,
-                        text=self._xsoar_inline_parser.parse(
-                            remove_tag=self._should_remove_xsoar_text,
-                            text=self._xsoar_parser.parse(
-                                remove_tag=self._should_remove_xsoar_text,
-                                text=text,
-                            ),
-                        ),
-                    ),
-                ),
-            ),
-        )
-    #omertodo: check this function in a test.
+        # Remove the tags of the products if specified should_remove.
+        text = self._xsoar_parser.parse(remove_tag=self._should_remove_xsoar_text, text=text)
+        text = self._xsoar_saas_parser.parse(remove_tag=self._should_remove_xsoar_saas_text, text=text)
+        text = self._xsiam_parser.parse(remove_tag=self._should_remove_xsiam_text, text=text)
+        return self._xpanse_parser.parse(remove_tag=self._should_remove_xpanse_text, text=text)
 
 
 MARKETPLACE_TAG_PARSER = None

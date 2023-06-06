@@ -515,7 +515,7 @@ DIR_LIST = [
     constants.TESTS_DIR,
 ]
 
-DUMMY_XSIAM_PACK_PATH = f"{GIT_ROOT}/demisto_sdk/tests/test_files/TestXSIAMPack"
+DUMMY_XSIAM_PACK_PATH = f"{GIT_ROOT}/demisto_sdk/tests/test_files/DummyXSIAMPack"
 
 INVALID_XSIAM_DASHBOARD_PATH = (
     f"{GIT_ROOT}/demisto_sdk/tests/test_files/Invalid_Xsiam_Dashboard.json"
@@ -524,7 +524,7 @@ INVALID_XSIAM_DASHBOARD_PATH = (
 XSIAM_DASHBOARD_TARGET = f"{DUMMY_XSIAM_PACK_PATH}/Playbooks/test_Dashboard.json"
 
 INVALID_XSIAM_CORRELATION_PATH = (
-    f"{GIT_ROOT}/demisto_sdk/tests/test_files/Invalid_Xsiam_Correlation.yml"
+    f"{GIT_ROOT}/demisto_sdk/tests/test_files/Invalid_Correlation.yml"
 )
 
 XSIAM_CORRELATION_TARGET = f"{DUMMY_XSIAM_PACK_PATH}/Playbooks/test_Correlation.yml"

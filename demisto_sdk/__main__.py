@@ -3126,6 +3126,20 @@ def error_code(ctx, config, **kwargs):
 
 
 # ====================== create-content-graph ====================== #
+@main.command(hidden=True)
+@click.help_option("-h", "--help")
+def start_content_graph():
+    """
+    Starts the content graph server.
+    """
+    from demisto_sdk.commands.content_graph.content_graph_commands import (
+        start_content_graph as start_content_graph_command,
+    )
+
+    start_content_graph_command()
+
+
+# ====================== create-content-graph ====================== #
 @main.command(
     hidden=True,
 )

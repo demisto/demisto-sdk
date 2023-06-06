@@ -2,8 +2,8 @@ name: Store Durations
 
 on:
   workflow_dispatch:
+  # delete this after the first run
   pull_request:
-  push:
 
 jobs:
   store_durations:
@@ -81,6 +81,7 @@ jobs:
           source .venv/bin/activate
           node demisto_sdk/commands/common/markdown_server/mdx-parse-server.js &
           node_pid=$!
+          demisto-sdk start_content_graph
           poetry run pytest --store-durations
           kill $node_pid
 

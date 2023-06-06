@@ -27,6 +27,7 @@ from demisto_sdk.commands.common.constants import (
     FileType,
     FileType_ALLOWED_TO_DELETE,
     PathLevel,
+    XSIAM_DASHBOARDS_DIR,
 )
 from demisto_sdk.commands.common.content import Content
 from demisto_sdk.commands.common.content_constant_paths import (
@@ -630,8 +631,10 @@ class ValidateManager:
                         file_path.endswith(".json")
                         or file_path.endswith(".yml")
                         or file_path.endswith(".md")
-                        or content_entity_dir_path.endswith("XSIAMDashboards")
-                        and file_path.endswith(".png")  # add XSIAM dashboard images
+                        or (
+                            content_entity_dir_path.endswith(XSIAM_DASHBOARDS_DIR)
+                            and file_path.endswith(".png")
+                        )
                     ):
                         content_entities_validation_results.add(
                             self.run_validations_on_file(

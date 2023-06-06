@@ -47,6 +47,18 @@ def mock_handle_error(error_message, error_code, file_path):
             "",
             True,
         ),
+        (
+            "MyRuleModelingRules_1_3",
+            {"id": "ModelingRule", "name": "Modeling Rule"},
+            "",
+            True,
+        ),
+        (
+            "MyRuleModelingRules_1_!@#",
+            {"id": "ModelingRule", "name": "Modeling Rule"},
+            "\nThe file name should end with 'ModelingRules.yml'",
+            False,
+        ),
     ],
 )
 def test_is_suffix_name_valid(
@@ -59,6 +71,8 @@ def test_is_suffix_name_valid(
         case 3: Wrong id.
         case 4: Wrong name.
         case 5: Correct file_name id and name.
+        case 6: Correct file_name (with version) id and name.
+        case 7: Wrong file_name (wrong version).
     When: running is_valid_rule_suffix_name.
     Then: Validate that the parsing rule is valid/invalid and the message (in case of invalid) is as expected.
     """

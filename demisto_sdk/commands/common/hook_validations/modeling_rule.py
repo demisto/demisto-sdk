@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import List
 
 from demisto_sdk.commands.common.constants import (
-    MODELING_RULE_FILE_SUFFIX,
+    MODELING_RULE_FILE_SUFFIX_REGEX,
     MODELING_RULE_ID_SUFFIX,
     MODELING_RULE_NAME_SUFFIX,
 )
@@ -229,7 +229,9 @@ class ModelingRuleValidator(ContentEntityValidator):
         rule_name = data.get("name", "")
 
         invalid_suffix = {
-            "invalid_file_name": not self.file_path.endswith(MODELING_RULE_FILE_SUFFIX),
+            "invalid_file_name": not re.search(
+                MODELING_RULE_FILE_SUFFIX_REGEX, self.file_path
+            ),
             "invalid_id": not rule_id.endswith(MODELING_RULE_ID_SUFFIX),
             "invalid_name": not rule_name.endswith(MODELING_RULE_NAME_SUFFIX),
         }

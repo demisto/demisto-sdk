@@ -11,13 +11,11 @@ from demisto_sdk.commands.common.constants import (
     BETA_INTEGRATION_DISCLAIMER,
     FILETYPE_TO_DEFAULT_FROMVERSION,
     INTEGRATION_CATEGORIES,
-    MODELING_RULE_FILE_SUFFIX,
     MODELING_RULE_ID_SUFFIX,
     MODELING_RULE_NAME_SUFFIX,
     MODULES,
     PACK_METADATA_DESC,
     PACK_METADATA_NAME,
-    PARSING_RULE_FILE_SUFFIX,
     PARSING_RULE_ID_SUFFIX,
     PARSING_RULE_NAME_SUFFIX,
     RELIABILITY_PARAMETER_NAMES,
@@ -4514,7 +4512,9 @@ class Errors:
     def modeling_rule_suffix_name(file_path, **kwargs):
         message = f"The file {file_path} is invalid please check the following:"
         if kwargs.get("invalid_file_name"):
-            message += f"\nThe file name should end with '{MODELING_RULE_FILE_SUFFIX}'"
+            message += (
+                f"\nThe file name should end with '{MODELING_RULE_ID_SUFFIX}s.yml'"
+            )
         if kwargs.get("invalid_id"):
             message += f"\nThe rule id should end with '{MODELING_RULE_ID_SUFFIX}'"
         if kwargs.get("invalid_name"):
@@ -4526,7 +4526,9 @@ class Errors:
     def parsing_rule_suffix_name(file_path, **kwargs):
         message = f"The file {file_path} is invalid please check the following:"
         if kwargs.get("invalid_file_name"):
-            message += f"\nThe file name should end with '{PARSING_RULE_FILE_SUFFIX}'"
+            message += (
+                f"\nThe file name should end with '{PARSING_RULE_ID_SUFFIX}s.yml'"
+            )
         if kwargs.get("invalid_id"):
             message += f"\nThe rule id should end with '{PARSING_RULE_ID_SUFFIX}'"
         if kwargs.get("invalid_name"):

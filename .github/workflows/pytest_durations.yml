@@ -81,8 +81,8 @@ jobs:
           source .venv/bin/activate
           node demisto_sdk/commands/common/markdown_server/mdx-parse-server.js &
           node_pid=$!
-          demisto-sdk start_content_graph
-          poetry run pytest --store-durations
+          demisto-sdk start-content-graph
+          poetry run pytest --store-durations -n auto
           kill $node_pid
 
       - name: Upload durations

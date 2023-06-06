@@ -12,6 +12,7 @@ from demisto_sdk.commands.common.constants import (
 from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
 from demisto_sdk.commands.content_graph.content_graph_commands import (
     create_content_graph,
+    start_content_graph,
     stop_content_graph,
 )
 from demisto_sdk.commands.content_graph.interface.neo4j.neo4j_graph import (
@@ -43,7 +44,6 @@ def setup(mocker, repo: Repo):
     bc.CONTENT_PATH = Path(repo.path)
     mocker.patch.object(ContentGraphInterface, "repo_path", Path(repo.path))
     mocker.patch.object(neo4j_service, "REPO_PATH", Path(repo.path))
-    stop_content_graph()
 
 
 @pytest.fixture
@@ -848,6 +848,7 @@ class TestCreateContentGraph:
             - Make sure no exception is raised.
         """
         stop_content_graph()
+        start_content_graph()
 
     def test_create_content_graph_incident_to_alert_scripts(
         self, repo: Repo, tmp_path: Path, mocker

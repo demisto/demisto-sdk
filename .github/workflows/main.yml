@@ -70,9 +70,6 @@ jobs:
       - name: Ensure cache is healthy
         if: steps.cache.outputs.cache-hit == 'true'
         run: |
-          # `timeout` is not available on macOS, so we define a custom function.
-          [ "$(command -v timeout)" ] || function timeout() { perl -e 'alarm shift; exec @ARGV' "$@"; }
-
           # Using `timeout` is a safeguard against the Poetry command hanging for some reason.
           timeout 10s poetry run pip --version || rm -rf .venv
 
@@ -113,18 +110,12 @@ jobs:
           cd content
           ./Tests/scripts/validate.sh
   tests:
-    name: ${{ matrix.os }} / ${{ matrix.python-version }} (group ${{ matrix.group }})
-    runs-on: ${{ matrix.image }}
+    name: Unit Tests / ${{ matrix.python-version }} (group ${{ matrix.group }})
+    runs-on: ubuntu-latest
     strategy:
       matrix:
-        os: [Ubuntu, macOS]
         python-version: ["3.8", "3.9", "3.10"]
         group: [1, 2, 3, 4, 5]
-        include:
-          - os: Ubuntu
-            image: ubuntu-22.04
-          - os: macOS
-            image: macos-12
       fail-fast: false
     defaults:
       run:

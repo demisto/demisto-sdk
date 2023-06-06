@@ -1,5 +1,6 @@
 # Changelog
 ## Unreleased
+* Added a check to **is_docker_image_latest_tag** to only fail the validation on non-latest image tag when the current tag is older than 3 days.
 * Fixed an issue where **upload** would not properly show the installed version in the UI.
 * Fixed an issue in *lint* where it returned a warning regarding usage of `demisto.results` function in entities that have to use it and can't use `CommandResults` instead.
 
@@ -18,7 +19,6 @@
 * Fixed an issue in **upload** command where the `--keep-zip` argument did not clean the working directory.
 * Fixed an issue where an extra levelname was added to a logging message.
 * Fixed an issue in **upload** where uploading packs to XSIAM failed due to version mismatch.
-* Added a check to **is_docker_image_latest_tag** to only fail the validation on non-latest image tag when the current tag is older than 3 days.
 
 ## 1.15.4
 * Fixed an issue where *update-release-notes* and *doc-review* did not handle new content notes as expected.

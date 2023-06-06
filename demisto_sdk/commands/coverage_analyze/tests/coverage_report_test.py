@@ -39,7 +39,7 @@ class TestCoverageReport:
 
     def test_with_print_report(self, tmpdir, monkeypatch, caplog):
         monkeypatch.chdir(tmpdir)
-        cov_report = CoverageReport()
+        cov_report = CoverageReport(no_cache=True)
         cov_report._report_str = Path(REPORT_STR_FILE).read_text()
         with caplog.at_level(logging.INFO, logger="demisto-sdk"):
             cov_report.coverage_report()

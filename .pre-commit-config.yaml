@@ -23,7 +23,8 @@ repos:
           - id: name-tests-test
             exclude: test_tools.py|demisto_sdk/commands/download/tests/tests_env/.*|demisto_sdk/commands/create_artifacts/tests/data|demisto_sdk/commands/common/content/tests/objects/pack_objects/script/script_test/TestNotUnifiedScript|demisto_sdk/commands/common/content/tests/objects/pack_objects/integration/integration_test/TestNotUnifiedIntegration|demisto_sdk/commands/test_content/tests/DemistoClientMock
     - repo: https://github.com/demisto/demisto-sdk
-      rev: "v1.15.5"
+      # change to release commit hash after release
+      rev: "c5d9e9e5c613c29fc263482fca8f03565499fc78"
       hooks:
           - id: mypy
     - repo: https://github.com/jendrikseipp/vulture

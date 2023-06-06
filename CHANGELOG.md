@@ -3,7 +3,8 @@
 * Added a check to **is_docker_image_latest_tag** to only fail the validation on non-latest image tag when the current tag is older than 3 days.
 * Fixed an issue where **upload** would not properly show the installed version in the UI.
 * Fixed an issue where the `contribution_converter` failed replacing generated release notes with the contribution form release notes.
-* Added a validation that assures filename, id, and name have a correct suffix for modeling rules files.
+* Fixed an issue where an extra levelname was added to a logging message.
+* Added a validation that assures filename, id, and name have a correct suffix for modeling/parsing rules files.
 
 ## 1.15.5
 * **Breaking Change**: The default of the **upload** command `--zip` argument is `true`. To upload packs as custom content items use the `--no-zip` argument.

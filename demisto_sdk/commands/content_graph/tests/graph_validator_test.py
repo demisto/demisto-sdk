@@ -529,18 +529,7 @@ def test_is_file_using_unknown_content(
         create_content_graph(graph_validator.graph)
         assert graph_validator.is_file_using_unknown_content() == is_valid
 
-    found_level = False
-    str_to_search, logger_to_search = (
-        ("[warning]", logger_warning) if is_valid else ("[error]", logger_info)
-    )
-    for current_call in logger_to_search.call_args_list:
-        if (
-            type(current_call[0]) == tuple
-            and str_to_search in current_call[0][0].lower()
-        ):
-            found_level = True
-            break
-    assert found_level
+    logger_to_search = logger_warning if is_valid else logger_info
 
     assert str_in_call_args_list(
         logger_to_search.call_args_list,

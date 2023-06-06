@@ -113,7 +113,7 @@ jobs:
           cd content
           ./Tests/scripts/validate.sh
   tests:
-    name: ${{ matrix.os }} / ${{ matrix.python-version }}
+    name: ${{ matrix.os }} / ${{ matrix.python-version }} (group ${{ matrix.group }})
     runs-on: ${{ matrix.image }}
     strategy:
       matrix:

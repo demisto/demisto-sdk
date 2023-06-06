@@ -40,3 +40,11 @@
   require_serial: true
   language: python
   types: [python]
+
+- id: mypy
+  name: mypy
+  entry: mypy
+  language: python
+  types: [python]
+  require_serial: true
+  exclude: "test_data|tests_data|.venv|.*_test.py$|infrastructure_tests"

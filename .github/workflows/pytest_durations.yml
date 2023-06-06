@@ -82,7 +82,7 @@ jobs:
           node demisto_sdk/commands/common/markdown_server/mdx-parse-server.js &
           node_pid=$!
           demisto-sdk start-content-graph
-          poetry run pytest --store-durations -n auto
+          poetry run pytest --store-durations
           kill $node_pid
 
       - name: Upload durations

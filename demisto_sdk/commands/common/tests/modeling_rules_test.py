@@ -193,13 +193,13 @@ def mock_handle_error(error_message, error_code, file_path):
         (
             "MyRule",
             {"id": "modeling-rule", "name": "Modeling-Rule"},
-            "ֿ\nThe file name should end with 'ModelingRules.yml'\nThe rule id should end with 'ModelingRule'\nThe rule name should end with 'Modeling Rule'",
+            "\nThe file name should end with 'ModelingRules.yml'\nThe rule id should end with 'ModelingRule'\nThe rule name should end with 'Modeling Rule'",
             False,
         ),
         (
             "MyRule",
             {"id": "ModelingRule", "name": "Modeling Rule"},
-            "ֿ\nThe file name should end with 'ModelingRules.yml'",
+            "\nThe file name should end with 'ModelingRules.yml'",
             False,
         ),
         (

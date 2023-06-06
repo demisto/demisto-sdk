@@ -205,17 +205,9 @@ class LintManager:
         # Get global requirements file
         pipfile_dir = Path(__file__).parent / "resources"
         try:
-            pipfile_lock_path = pipfile_dir / "pipfile_python3/Pipfile.lock"
-            with open(file=pipfile_lock_path) as f:
-                lock_file: dict = json.load(fp=f)["develop"]
-                facts["requirements_3"] = [
-                    key + value["version"]
-                    for key, value in lock_file.items()  # type: ignore
-                ]
-                logger.debug(
-                    "Test requirements successfully collected for python 3:\n"
-                    f" {facts['requirements_3']}"
-                )
+            python3_requirements = pipfile_dir / "pipfile_python3/dev-requirements.txt"
+            facts["requirements_3"] = python3_requirements.read_text().strip().split("\n")  # type: ignore
+
             python2_requirements = pipfile_dir / "pipfile_python2/dev-requirements.txt"
             facts["requirements_2"] = python2_requirements.read_text().strip().split("\n")  # type: ignore
         except (json.JSONDecodeError, OSError, FileNotFoundError, KeyError) as e:

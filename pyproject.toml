@@ -186,6 +186,7 @@ max-complexity = 30
 "logging".msg = "The logging framework is banned. Please use demisto_sdk.commands.common.logger."
 
 # only used in github actions
+
 [tool.poetry.group.github-actions]
 optional = true
 [tool.poetry.group.github-actions.dependencies]

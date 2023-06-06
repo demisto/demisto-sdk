@@ -45,6 +45,6 @@
   name: mypy
   entry: mypy
   language: python
-  types: [python]
   require_serial: true
-  exclude: "test_data|tests_data|.venv|.*_test.py$|infrastructure_tests"
+  types: [python]
+  exclude: tests/.*|demisto_sdk/commands/init/templates/.*

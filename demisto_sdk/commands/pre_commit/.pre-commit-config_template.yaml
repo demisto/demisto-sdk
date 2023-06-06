@@ -64,7 +64,7 @@ repos:
     rev: ""
     hooks:
       - id: mypy
-        args:      
+        args:
           [
             --ignore-missing-imports,
             --check-untyped-defs,

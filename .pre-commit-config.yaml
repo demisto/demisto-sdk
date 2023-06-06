@@ -27,7 +27,6 @@ repos:
       rev: f74c9bdebbc1d083d8f6c1221c48be439a8d9cfc
       hooks:
           - id: mypy
-            args: [""]
     - repo: https://gitlab.com/smop/pre-commit-hooks
       rev: v1.0.0
       hooks:

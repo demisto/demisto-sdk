@@ -14,6 +14,8 @@ jobs:
         shell: bash
     steps:
       - uses: actions/checkout@v3
+        with:
+          fetch-depth: 2
       - name: Set up Python 3.10
         uses: actions/setup-python@v4
         with:
@@ -25,6 +27,10 @@ jobs:
 
       - name: Configure poetry
         run: poetry config virtualenvs.in-project true
+
+      - name: Get full Python version
+        id: full-python-version
+        run: echo version=$(python -c "import sys; print('-'.join(str(v) for v in sys.version_info))") >> $GITHUB_OUTPUT
 
       - name: Set up cache
         uses: actions/cache@v3

@@ -2,7 +2,7 @@ name: Tests
 
 on:
   workflow_dispatch:
-  pull_reqeust:
+  pull_request:
   push:
 
 concurrency:

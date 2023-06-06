@@ -14,6 +14,24 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  pre-commit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Python 3.10
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+      - name: Cache pre-commit
+        uses: actions/cache@v2
+        with:
+          path: ~/.cache/pre-commit
+          key: pre-commit-${{ runner.os }}-${{ hashFiles('**/.pre-commit-config.yaml') }}
+      - name: Install pre-commit
+        run: pip install pre-commit
+      - name: Run pre-commit
+        run: pre-commit run --all-files
+
   tests:
     name: ${{ matrix.os }} / ${{ matrix.python-version }} / ${{ matrix.group }}
     runs-on: ${{ matrix.image }}
@@ -65,13 +83,6 @@ jobs:
           path: .venv
           key: venv-${{ runner.os }}-${{ steps.full-python-version.outputs.version }}-${{ hashFiles('**/poetry.lock') }}
 
-      - name: Cache Pre commit
-        id: cache-pre-commit
-        uses: actions/cache@v3
-        with:
-          path: ~/.cache/pre-commit
-          key: ${{ runner.os }}-pre-commit
-
       - name: Ensure cache is healthy
         if: steps.cache.outputs.cache-hit == 'true'
         run: |
@@ -86,9 +97,6 @@ jobs:
 
       - name: Install dependencies
         run: poetry install --with github-actions
-
-      - name: Run pre-commit
-        run: poetry run pre-commit run --all-files --verbose --show-diff-on-failure
 
       - name: Run pytest
         run: poetry run pytest --cov --splits 5 --group ${{ matrix.group }} -v
@@ -107,7 +115,7 @@ jobs:
       - name: Set up Python 3.10
         uses: actions/setup-python@v4
         with:
-          python-version: 3.10
+          python-version: "3.10"
       - name: Download all artifacts
         # Downloads coverage1, coverage2, etc.
         uses: actions/download-artifact@v2

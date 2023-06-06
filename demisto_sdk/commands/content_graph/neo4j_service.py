@@ -89,7 +89,7 @@ def _docker_start():
     repo_path = REPO_PATH
     if not repo_path:
         logger.warning("Could not find repository path, using CWD")
-        repo_path = Path.cwd()
+        repo_path = Path.cwd().absolute()
     docker_client = init_global_docker_client()
     _stop_neo4j_service_docker(docker_client)
     docker_client.containers.run(

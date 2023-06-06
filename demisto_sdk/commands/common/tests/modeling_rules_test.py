@@ -227,7 +227,12 @@ def test_is_suffix_name_valid(
 ):
     """
     Given: A modeling rule with valid/invalid file_name/id/name
-    When: running is_valid_rule_suffix_name
+        case 1: Wrong file_name id and name.
+        case 2: Wrong file_name.
+        case 3: Wrong id.
+        case 4: Wrong name.
+        case 5: Correct file_name id and name.
+    When: running is_valid_rule_suffix_name.
     Then: Validate that the modeling rule is valid/invalid and the message (in case of invalid) is as expected.
     """
     pack = repo.create_pack("TestPack")

@@ -86,6 +86,9 @@ def _download_apoc():
 
 
 def _docker_start():
+    repo_path = REPO_PATH
+    if not repo_path:
+        repo_path = Path.cwd()
     docker_client = init_global_docker_client()
     _stop_neo4j_service_docker(docker_client)
     docker_client.containers.run(
@@ -134,7 +137,7 @@ def start():
         logger.debug(
             f"Could not start neo4j container, delete data folder and trying again. {e}"
         )
-        shutil.rmtree(REPO_PATH / NEO4J_FOLDER / NEO4J_DATA_FOLDER)
+        shutil.rmtree(REPO_PATH / NEO4J_FOLDER / NEO4J_DATA_FOLDER, ignore_errors=True)
         _docker_start()
 
 

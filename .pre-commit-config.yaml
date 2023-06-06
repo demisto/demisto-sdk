@@ -31,10 +31,6 @@ repos:
             require_serial: true
             types: [python]
             exclude: tests/.*|demisto_sdk/commands/init/templates/.*
-    - repo: https://gitlab.com/smop/pre-commit-hooks
-      rev: v1.0.0
-      hooks:
-          - id: check-poetry
     - repo: https://github.com/jendrikseipp/vulture
       rev: "v2.6"
       hooks:

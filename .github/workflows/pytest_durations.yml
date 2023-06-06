@@ -55,7 +55,9 @@ jobs:
         run: poetry install --with github-actions
 
       - name: Run pytest
-        run: poetry run pytest --store-durations
+        run: |
+          source .venv/bin/activate
+          poetry run pytest --store-durations
 
       - name: Upload durations
         uses: actions/upload-artifact@v2

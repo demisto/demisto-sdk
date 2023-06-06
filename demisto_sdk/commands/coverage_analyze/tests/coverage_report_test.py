@@ -215,7 +215,9 @@ class TestFileMinCoverage:
     ):
         file_path = os.path.relpath(file_path)
         monkeypatch.chdir(tmpdir)
-        cov_report = CoverageReport(allowed_coverage_degradation_percentage=epsilon)
+        cov_report = CoverageReport(
+            allowed_coverage_degradation_percentage=epsilon, no_cache=True
+        )
         cov_report._original_summary = {file_path: 80.0}
         assert cov_report.file_min_coverage(file_path) == expected_min_cover
 

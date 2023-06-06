@@ -1393,6 +1393,7 @@ def test_get_last_remote_release_version(requests_mock):
         r"https://pypi.org/pypi/demisto-sdk/json",
         json={"info": {"version": expected_version}},
     )
+    get_last_remote_release_version.cache_clear()
     assert get_last_remote_release_version() == expected_version
 
 

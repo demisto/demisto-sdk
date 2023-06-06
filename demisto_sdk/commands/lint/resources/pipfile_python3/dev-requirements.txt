@@ -1,4 +1,4 @@
-# Generate this file running `poetry export -o dev-requirements.txt` in this directory
+# To update this file, update `pyproject.toml`, run `poetry lock` and then `poetry export -o dev-requirements.txt` in this directory
 
 astroid==2.15.5 ; python_full_version >= "3.7.2" and python_version < "3.11" \
     --hash=sha256:078e5212f9885fa85fbb0cf0101978a336190aadea6e13305409d099f71b2324 \

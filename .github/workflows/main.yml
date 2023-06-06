@@ -7,6 +7,8 @@ on:
   pull_request:
     branches:
       - "**"
+env:
+    CI_COMMIT_BRANCH: GITHUB_HEAD_REF
 
 concurrency:
   group: tests-${{ github.head_ref || github.ref }}
@@ -32,6 +34,58 @@ jobs:
       - name: Run pre-commit
         run: pre-commit run --all-files
 
+  validate-files:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Checkout content
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          repository: demisto/content
+          path: content
+
+      - name: Set up Python 3.10
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+      - name: Get full Python version
+        id: full-python-version
+        run: echo version=$(python -c "import sys; print('-'.join(str(v) for v in sys.version_info))") >> $GITHUB_OUTPUT
+
+      - name: Bootstrap poetry
+        run: |
+          pipx install poetry
+
+      - name: Configure poetry
+        run: poetry config virtualenvs.in-project true
+
+      - name: Set up cache
+        uses: actions/cache@v3
+        id: cache
+        with:
+          path: .venv
+          key: venv-${{ runner.os }}-${{ steps.full-python-version.outputs.version }}-${{ hashFiles('**/poetry.lock') }}
+
+      - name: Ensure cache is healthy
+        if: steps.cache.outputs.cache-hit == 'true'
+        run: |
+          # `timeout` is not available on macOS, so we define a custom function.
+          [ "$(command -v timeout)" ] || function timeout() { perl -e 'alarm shift; exec @ARGV' "$@"; }
+
+          # Using `timeout` is a safeguard against the Poetry command hanging for some reason.
+          timeout 10s poetry run pip --version || rm -rf .venv
+
+      - name: Check lock file
+        run: poetry lock --check
+
+      - name: Install dependencies
+        run: poetry install
+      - name: Run validate-files
+        run: |
+          source .venv/bin/activate
+          cd content
+          ./Tests/scripts/validate.sh
   tests:
     name: ${{ matrix.os }} / ${{ matrix.python-version }} / ${{ matrix.group }}
     runs-on: ${{ matrix.image }}
@@ -54,12 +108,6 @@ jobs:
         with:
           fetch-depth: 0
 
-      #   - name: Checkout content
-      #     uses: actions/checkout@v3
-      #     with:
-      #       fetch-depth: 0
-      #       repository: demisto/content
-      #       path: content
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v4
         with:

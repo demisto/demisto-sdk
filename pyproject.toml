@@ -125,6 +125,9 @@ ipykernel = "^6.16.1"
 [tool.poetry.extras]
 build = ["gsutil"]
 
+[tool.poetry.group.dev.dependencies]
+pytest-split = "^0.8.1"
+
 [tool.mypy]
 check_untyped_defs = true
 ignore_missing_imports = true

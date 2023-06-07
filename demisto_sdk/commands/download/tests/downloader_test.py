@@ -1175,7 +1175,7 @@ class TestVerifyPackPath:
             "Playbook",
             False,
             "/playbook/search",
-            "POST",
+            "GET",
             {"query": "name:PB1 or PB2"},
         ),
         (
@@ -1220,7 +1220,7 @@ def test_arrange_response():
         downloader = Downloader("", "")
 
         downloader.system_item_type = "Playbook"
-        system_items_list = downloader.arrange_response({"playbooks": []})
+        system_items_list = downloader.arrange_response([])
         assert system_items_list == []
 
         downloader.system_item_type = "Classifier"

@@ -3163,7 +3163,7 @@ def create_content_graph(
     output_path: Path = None,
     **kwargs,
 ):
-    ctx.invoke(create, *ctx.args)
+    ctx.invoke(create, ctx.obj, *ctx.args)
 
 
 # ====================== update-content-graph ====================== #
@@ -3239,7 +3239,7 @@ def update_content_graph(
     output_path: Path = None,
     **kwargs,
 ):
-    ctx.invoke(update, *ctx.args)
+    ctx.invoke(update, ctx.obj, *ctx.args)
 
 
 @main.command(short_help="Runs pre-commit hooks on the files in the repository")

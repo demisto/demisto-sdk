@@ -5,7 +5,6 @@ from demisto_sdk.commands.common.hook_validations.parsing_rule import (
     ParsingRuleValidator,
 )
 from demisto_sdk.commands.common.hook_validations.structure import StructureValidator
-from TestSuite.test_tools import ChangeCWD
 
 yaml = YAML_Handler()
 
@@ -85,11 +84,10 @@ def test_is_suffix_name_valid(
         side_effect=mock_handle_error,
     )
 
-    with ChangeCWD(repo.path):
-        parsing_rule_validator = ParsingRuleValidator(structure_validator)
-        assert parsing_rule_validator.is_valid_rule_suffix_name() == valid
-        if not valid:
-            assert (
-                error_message.call_args[0][0].split("please check the following:")[1]
-                == expected_error
-            )
+    parsing_rule_validator = ParsingRuleValidator(structure_validator)
+    assert parsing_rule_validator.is_valid_rule_suffix_name() == valid
+    if not valid:
+        assert (
+            error_message.call_args[0][0].split("please check the following:")[1]
+            == expected_error
+        )

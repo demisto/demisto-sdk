@@ -4,6 +4,7 @@
 * Fixed an issue where **upload** would not properly show the installed version in the UI.
 * Fixed an issue where the `contribution_converter` failed replacing generated release notes with the contribution form release notes.
 * Fixed an issue where an extra levelname was added to a logging message.
+* Added a validation that the **validate** command will fail if the pack name is not prefixed on XSIAM dashboard images.
 * Added a validation that assures filename, id, and name have a correct suffix for modeling/parsing rules files.
 
 ## 1.15.5

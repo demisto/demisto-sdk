@@ -62,9 +62,9 @@ def update_content_graph(
                 extract_remote_import_files(content_graph_interface)
             except RuntimeError as e:
                 logger.warning(
-                    "Failed to download the content graph, " "will create a new graph"
+                    "Failed to download the content graph, recreating it instead"
                 )
-                logger.debug(f"Runtime Error: {e}")
+                logger.debug(f"Runtime Error: {e}", exc_info=True)
                 create_content_graph(
                     content_graph_interface, marketplace, dependencies, output_path
                 )
@@ -149,7 +149,7 @@ def update(
         dir_okay=True,
         file_okay=False,
         resolve_path=True,
-        help="Output folder to locate the zip file " "of the graph exported file.",
+        help="Output folder to locate the zip file of the graph exported file.",
     ),
     console_log_threshold: str = typer.Option(
         "INFO",

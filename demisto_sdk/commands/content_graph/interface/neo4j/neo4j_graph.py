@@ -18,9 +18,6 @@ from demisto_sdk.commands.content_graph.common import (
     Neo4jRelationshipResult,
     RelationshipType,
 )
-from demisto_sdk.commands.content_graph.content_graph_commands import (
-    update_content_graph,
-)
 from demisto_sdk.commands.content_graph.interface.graph import ContentGraphInterface
 from demisto_sdk.commands.content_graph.interface.neo4j.import_utils import (
     Neo4jImportHandler,
@@ -111,7 +108,6 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
 
     def __init__(
         self,
-        should_update: bool = False,
     ) -> None:
         self._id_to_obj: Dict[int, BaseContent] = {}
 
@@ -123,12 +119,10 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             NEO4J_DATABASE_URL,
             auth=(NEO4J_USERNAME, NEO4J_PASSWORD),
         )
-        if should_update:
-            output_path = None
-            if artifacts_folder := os.getenv("ARTIFACTS_FOLDER"):
-                output_path = Path(artifacts_folder) / "content_graph"
-                output_path.mkdir(parents=True, exist_ok=True)
-            update_content_graph(self, use_git=True, output_path=output_path)
+        self.output_path = None
+        if artifacts_folder := os.getenv("ARTIFACTS_FOLDER"):
+            self.output_path = Path(artifacts_folder) / "content_graph"
+            self.output_path.mkdir(parents=True, exist_ok=True)
 
     def __enter__(self) -> "Neo4jContentGraphInterface":
         return self

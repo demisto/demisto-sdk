@@ -460,7 +460,7 @@ def test_are_toversion_relationships_paths_valid(repository: ContentDTO):
     - Validate the existance of invalid to_version relationships
     """
 
-    with GraphValidator(should_update=False) as graph_validator:
+    with GraphValidator() as graph_validator:
         create_content_graph(graph_validator.graph)
         is_valid = graph_validator.validate_toversion_fields()
 
@@ -477,7 +477,7 @@ def test_are_fromversion_relationships_paths_valid(repository: ContentDTO, mocke
     - Validate the existance of invalid from_version relationships
     """
     logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
-    with GraphValidator(should_update=False) as graph_validator:
+    with GraphValidator() as graph_validator:
         create_content_graph(graph_validator.graph)
         is_valid = graph_validator.validate_fromversion_fields()
 
@@ -525,7 +525,7 @@ def test_is_file_using_unknown_content(
         git_files = [repository.packs[0].content_items.integration[0].path.as_posix()]
     else:
         git_files = []
-    with GraphValidator(should_update=False, git_files=git_files) as graph_validator:
+    with GraphValidator(git_files=git_files) as graph_validator:
         create_content_graph(graph_validator.graph)
         assert graph_validator.is_file_using_unknown_content() == is_valid
 
@@ -559,7 +559,7 @@ def test_is_file_display_name_already_exists(repository: ContentDTO, mocker):
     - Validate the existance of duplicate display names
     """
     logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
-    with GraphValidator(should_update=False) as graph_validator:
+    with GraphValidator() as graph_validator:
         create_content_graph(graph_validator.graph)
         is_valid = graph_validator.is_file_display_name_already_exists()
 
@@ -581,7 +581,7 @@ def test_validate_unique_script_name(repository: ContentDTO, mocker):
         - Validate the existance of duplicate script names
     """
     logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
-    with GraphValidator(should_update=False) as graph_validator:
+    with GraphValidator() as graph_validator:
         create_content_graph(graph_validator.graph)
         is_valid = graph_validator.validate_unique_script_name()
 
@@ -619,7 +619,7 @@ def test_are_marketplaces_relationships_paths_valid(
     - Validate the existence invalid marketplaces uses
     """
     logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
-    with GraphValidator(should_update=False) as graph_validator:
+    with GraphValidator() as graph_validator:
         create_content_graph(graph_validator.graph)
         is_valid = graph_validator.validate_marketplaces_fields()
 
@@ -646,7 +646,7 @@ def test_validate_dependencies(repository: ContentDTO, caplog, mocker):
         "demisto_sdk.commands.common.hook_validations.graph_validator.get_marketplace_to_core_packs",
         return_value={MarketplaceVersions.XSOAR: {"SamplePack"}},
     )
-    with GraphValidator(should_update=False) as graph_validator:
+    with GraphValidator() as graph_validator:
         create_content_graph(graph_validator.graph)
         is_valid = graph_validator.validate_dependencies()
 
@@ -668,7 +668,7 @@ def test_validate_duplicate_id(repository: ContentDTO, mocker):
     """
     logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
 
-    with GraphValidator(should_update=False) as graph_validator:
+    with GraphValidator() as graph_validator:
         create_content_graph(graph_validator.graph)
         is_valid = graph_validator.validate_duplicate_ids()
 
@@ -685,5 +685,5 @@ def test_pack_ids_collection():
         "Packs/MicrosoftExchangeOnline/Integrations/EwsExtension/README.md",
     ]
     expected_pack_ids = ["MicrosoftExchangeOnline"]
-    with GraphValidator(should_update=False, git_files=git_files) as graph_validator:
+    with GraphValidator(git_files=git_files) as graph_validator:
         assert graph_validator.pack_ids == expected_pack_ids

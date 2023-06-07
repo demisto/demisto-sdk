@@ -76,7 +76,7 @@ def create(
         dir_okay=True,
         file_okay=False,
         resolve_path=True,
-        help="Output folder to locate the zip file " "of the graph exported file.",
+        help="Output folder to locate the zip file of the graph exported file.",
     ),
     console_log_threshold: str = typer.Option(
         "INFO",

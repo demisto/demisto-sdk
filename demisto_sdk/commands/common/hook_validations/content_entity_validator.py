@@ -95,6 +95,8 @@ class ContentEntityValidator(BaseValidator):
         is_backward_compatible = [
             self.is_id_not_modified(),
             self.is_valid_fromversion_on_modified(),
+            self.is_valid_toversion_on_modified(),
+            self.is_valid_marketplaces_on_modified(),
         ]
 
         return all(is_backward_compatible)
@@ -161,6 +163,59 @@ class ContentEntityValidator(BaseValidator):
                 return False
 
         return True
+    
+    @error_codes("BC107")
+    def is_valid_toversion_on_modified(self) -> bool:
+        """Check that the fromversion property was not changed on existing Content files.
+
+        Returns:
+            (bool): Whether the files' fromversion as been modified or not.
+        """
+        if not self.old_file:
+            return True
+
+        to_version_new = self.current_file.get(
+            "toversion"
+        ) or self.current_file.get("toVersion")
+        to_version_old = self.old_file.get("toversion") or self.old_file.get(
+            "toVersion"
+        )
+        if to_version_old != to_version_new:
+            error_message, error_code = Errors.to_version_modified()
+            if self.handle_error(error_message, error_code,
+                                 file_path=self.file_path):
+                self.is_valid = False
+                return False
+
+        return True
+    
+    @error_codes("BC108,BC109")
+    def is_valid_marketplaces_on_modified(self) -> bool:
+        """verifying that marketplaces property has not been added (if wasn't exist before) or that its values have not been removed.
+
+        Returns:
+            (bool): Whether the files' marketplaces as been modified or not.
+        """
+        if not self.old_file:
+            return True
+
+        marketplaces_new = self.current_file.get("marketplaces",[])
+        marketplaces_old = self.old_file.get("marketplaces",[])
+        
+        if not marketplaces_old and marketplaces_new:
+            error_message, error_code = Errors.marketplaces_added()
+            if self.handle_error(error_message, error_code,
+                                 file_path=self.file_path):
+                self.is_valid = False
+                return False
+        if not (set(marketplaces_old).issubset(set(marketplaces_new))):
+            error_message, error_code = Errors.marketplaces_removed()
+            if self.handle_error(error_message, error_code,
+                                 file_path=self.file_path):
+                self.is_valid = False
+                return False
+        return True
+
 
     @error_codes("BA100")
     def _is_valid_version(self) -> bool:

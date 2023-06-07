@@ -177,7 +177,13 @@ def update(
     """
     if os.getenv("DEMISTO_SDK_GRAPH_FORCE_CREATE"):
         logger.info("DEMISTO_SDK_GRAPH_FORCE_CREATE is set. Will create a new graph")
-        ctx.invoke(create, ctx.obj, *ctx.args)
+        ctx.invoke(
+            create,
+            ctx.obj,
+            marketplace=marketplace,
+            no_dependencies=no_dependencies,
+            output_path=output_path,
+        )
         return
     logging_setup(
         console_log_threshold=console_log_threshold,

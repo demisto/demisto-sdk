@@ -3163,7 +3163,14 @@ def create_content_graph(
     output_path: Path = None,
     **kwargs,
 ):
-    ctx.invoke(create, ctx.obj, *ctx.args)
+    ctx.invoke(
+        create,
+        ctx.obj,
+        marketplace=marketplace,
+        no_dependencies=no_dependencies,
+        output_path=output_path,
+        **kwargs,
+    )
 
 
 # ====================== update-content-graph ====================== #
@@ -3239,7 +3246,18 @@ def update_content_graph(
     output_path: Path = None,
     **kwargs,
 ):
-    ctx.invoke(update, ctx.obj, *ctx.args)
+    ctx.invoke(
+        update,
+        ctx.obj,
+        use_git=use_git,
+        marketplace=marketplace,
+        use_current=use_current,
+        imported_path=imported_path,
+        packs_to_update=packs,
+        no_dependencies=no_dependencies,
+        output_path=output_path,
+        **kwargs,
+    )
 
 
 @main.command(short_help="Runs pre-commit hooks on the files in the repository")

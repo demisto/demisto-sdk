@@ -428,17 +428,6 @@ class ValidateManager:
             self.setup_git_params()
         files_to_validate = self.file_path.split(",")
 
-        if self.validate_graph:
-            logger.info(
-                f"\n[cyan]================= Validating graph =================[/cyan]"
-            )
-            with GraphValidator(
-                specific_validations=self.specific_validations,
-                input_files=files_to_validate,
-                include_optional_deps=True,
-            ) as graph_validator:
-                files_validation_result.add(graph_validator.is_valid_content_graph())
-
         for path in files_to_validate:
             error_ignore_list = self.get_error_ignore_list(get_pack_name(path))
             file_level = self.detect_file_level(path)
@@ -481,6 +470,17 @@ class ValidateManager:
                     self.run_validation_on_package(path, error_ignore_list)
                 )
 
+        if self.validate_graph:
+            logger.info(
+                f"\n[cyan]================= Validating graph =================[/cyan]"
+            )
+            with GraphValidator(
+                specific_validations=self.specific_validations,
+                input_files=files_to_validate,
+                include_optional_deps=True,
+            ) as graph_validator:
+                files_validation_result.add(graph_validator.is_valid_content_graph())
+
         return all(files_validation_result)
 
     def wait_futures_complete(self, futures_list: List[Future], done_fn: Callable):
@@ -511,21 +511,6 @@ class ValidateManager:
             "\n[cyan]================= Validating all files =================[/cyan]"
         )
         all_packs_valid = set()
-
-        if self.validate_graph:
-            logger.info(
-                f"\n[cyan]================= Validating graph =================[/cyan]"
-            )
-            specific_validations_list = (
-                self.specific_validations if self.specific_validations else []
-            )
-            with GraphValidator(
-                specific_validations=self.specific_validations,
-                include_optional_deps=(
-                    True if "GR103" in specific_validations_list else False
-                ),
-            ) as graph_validator:
-                all_packs_valid.add(graph_validator.is_valid_content_graph())
 
         if not self.skip_conf_json:
             all_packs_valid.add(self.conf_json_validator.is_valid_conf_json())
@@ -575,6 +560,21 @@ class ValidateManager:
                 self.completion_percentage = format((count / num_of_packs) * 100, ".2f")  # type: ignore
                 all_packs_valid.add(self.run_validations_on_pack(pack_path)[0])
                 count += 1
+        if self.validate_graph:
+            logger.info(
+                f"\n[cyan]================= Validating graph =================[/cyan]"
+            )
+            specific_validations_list = (
+                self.specific_validations if self.specific_validations else []
+            )
+            with GraphValidator(
+                specific_validations=self.specific_validations,
+                include_optional_deps=(
+                    True if "GR103" in specific_validations_list else False
+                ),
+            ) as graph_validator:
+                all_packs_valid.add(graph_validator.is_valid_content_graph())
+
         return all(all_packs_valid)
 
     def run_validations_on_pack(self, pack_path):
@@ -794,7 +794,7 @@ class ValidateManager:
         if (
             file_type in self.skipped_file_types
             or self.is_skipped_file(file_path)
-            or (self.use_git and self.git_util._is_file_git_ignored(file_path))
+            or (self.git_util and self.git_util._is_file_git_ignored(file_path))
             or self.detect_file_level(file_path)
             in (PathLevel.PACKAGE, PathLevel.CONTENT_ENTITY_DIR)
         ):
@@ -1275,23 +1275,6 @@ class ValidateManager:
 
         validation_results = {valid_git_setup, valid_types}
 
-        if self.validate_graph:
-            logger.info(
-                f"\n[cyan]================= Validating graph =================[/cyan]"
-            )
-            all_files_set = list(
-                set().union(
-                    modified_files, added_files, old_format_files, changed_meta_files
-                )
-            )
-            if all_files_set:
-                with GraphValidator(
-                    specific_validations=self.specific_validations,
-                    git_files=all_files_set,
-                    include_optional_deps=True,
-                ) as graph_validator:
-                    validation_results.add(graph_validator.is_valid_content_graph())
-
         validation_results.add(
             self.validate_modified_files(modified_files | old_format_files)
         )
@@ -1302,9 +1285,9 @@ class ValidateManager:
             )
         )
         validation_results.add(self.validate_deleted_files(deleted_files, added_files))
-        logger.info(f"*** after adding validate_deleted_files")
+        logger.debug(f"*** after adding validate_deleted_files")
 
-        logger.info(
+        logger.debug(
             f"*** Before ifs, {old_format_files=}, {self.skip_pack_rn_validation=}"
         )
         if old_format_files:
@@ -1325,6 +1308,22 @@ class ValidateManager:
                     modified_files, old_format_files, added_files
                 )
             )
+        if self.validate_graph:
+            logger.info(
+                f"\n[cyan]================= Validating graph =================[/cyan]"
+            )
+            all_files_set = list(
+                set().union(
+                    modified_files, added_files, old_format_files, changed_meta_files
+                )
+            )
+            if all_files_set:
+                with GraphValidator(
+                    specific_validations=self.specific_validations,
+                    git_files=all_files_set,
+                    include_optional_deps=True,
+                ) as graph_validator:
+                    validation_results.add(graph_validator.is_valid_content_graph())
 
         return all(validation_results)
 

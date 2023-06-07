@@ -59,6 +59,27 @@ from demisto_sdk.commands.update_release_notes.update_rn_manager import (
 json = JSON_Handler()
 
 
+def get_previous_nonempty_line(lines: List[str], index: int):
+    """
+    Given a list of lines and a certain index, returns the previous line of the given line while ignoring newlines.
+    Args:
+        index: the current lines index.
+        lines: the lines.
+    """
+    j = 1
+    previous_line = ""
+    if lines[index] == "\n":
+        return previous_line
+
+    while index - j > 0:
+        previous_line = lines[index - j]
+        if previous_line != "\n":
+            return previous_line
+        j += 1
+
+    return previous_line
+
+
 class ContributionConverter:
     """ContributionConverter converts contribution zip files to valid pack formats
 
@@ -785,7 +806,7 @@ class ContributionConverter:
         with open(rn_path, "r+") as rn_file:
             lines = rn_file.readlines()
             for index in range(len(lines)):
-                previous_line = lines[index - 1] if index > 0 else ""
+                previous_line = get_previous_nonempty_line(lines, index)
                 if template_text in lines[index] or previous_line.startswith(
                     new_entity_identifier
                 ):

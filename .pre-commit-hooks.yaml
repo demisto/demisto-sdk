@@ -11,19 +11,19 @@
   name: validate
   description: validate content
   entry: demisto-sdk validate
-  pass_filenames: true
+  args: ["-g"]
+  pass_filenames: false
   language: python
   require_serial: true
-  files: *files
 
 - id: format
   name: format
   description: Format non-code files, to comply with XSOAR standards.
   entry: demisto-sdk format
-  args: ["-ud", "-y", "--no-validate"]
+  args: ["-ud", "-n", "--no-validate", "-g"]
   language: python
+  pass_filenames: false
   require_serial: true
-  files: *files
 
 - id: secrets
   name: secrets
@@ -37,5 +37,6 @@
   name: no implicit optional
   description: Making code implicit-optional type hints PEP 484 compliant.
   entry: no_implicit_optional
+  require_serial: true
   language: python
   types: [python]

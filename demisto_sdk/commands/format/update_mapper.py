@@ -96,7 +96,7 @@ class MapperJSONFormat(BaseUpdateJSON):
         mapping_type = self.data.get("type", {})
 
         for mapping_name in mapper.values():
-            internal_mapping_fields = mapping_name.get("internalMapping", {})
+            internal_mapping_fields = mapping_name.get("internalMapping") or {}
             mapping_name["internalMapping"] = {
                 inc_name: inc_info
                 for inc_name, inc_info in internal_mapping_fields.items()

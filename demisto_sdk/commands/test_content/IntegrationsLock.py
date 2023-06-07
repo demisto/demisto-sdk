@@ -7,6 +7,7 @@ import pytz
 import requests
 from google.api_core.exceptions import PreconditionFailed
 from google.cloud import storage
+from google.resumable_media.common import InvalidResponse
 
 LOCKS_PATH = "content-locks"
 BUCKET_NAME = os.environ.get("GCS_ARTIFACTS_BUCKET")
@@ -218,6 +219,14 @@ def create_lock_files(
             )
             unlock_integrations(locked_integrations, test_playbook, storage_client)
             return False
+        except InvalidResponse as exc:
+            if exc.__cause__ and type(exc.__cause__) == PreconditionFailed:
+                test_playbook.build_context.logging_module.warning(
+                    f"The lock file of the integration {integration}, already created, delaying test execution."
+                )
+                unlock_integrations(locked_integrations, test_playbook, storage_client)
+                return False
+
     return True
 
 

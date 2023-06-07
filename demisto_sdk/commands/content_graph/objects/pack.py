@@ -93,15 +93,19 @@ def upload_zip(
     client: demisto_client,
     skip_validations: bool,
     target_demisto_version: Version,
+    marketplace: MarketplaceVersions,
 ) -> bool:
     """
     Used to upload an existing zip file
     """
     if path.suffix != ".zip":
         raise RuntimeError(f"cannot upload {path} as zip")
-    if target_demisto_version < MINIMAL_UPLOAD_SUPPORTED_VERSION:
+    if (
+        marketplace == MarketplaceVersions.XSOAR
+        and target_demisto_version < MINIMAL_UPLOAD_SUPPORTED_VERSION
+    ):
         raise RuntimeError(
-            "Uploading packs to XSOAR versions earlier than 6.5.0 is no longer supported."
+            f"Uploading packs to XSOAR versions earlier than {MINIMAL_UPLOAD_SUPPORTED_VERSION} is no longer supported."
             "Use older versions of the Demisto-SDK for that (<=1.13.0)"
         )
     server_kwargs = {"skip_verify": "true"}
@@ -289,7 +293,8 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: i
     def dump_metadata(self, path: Path, marketplace: MarketplaceVersions) -> None:
         self.server_min_version = self.server_min_version or MARKETPLACE_MIN_VERSION
         metadata = self.dict(
-            exclude={"path", "node_id", "content_type", "excluded_dependencies"}
+            exclude={"path", "node_id", "content_type", "excluded_dependencies"},
+            by_alias=True,
         )
         metadata["contentItems"] = {}
         metadata["id"] = self.object_id
@@ -469,6 +474,7 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: i
                     client=client,
                     target_demisto_version=target_demisto_version,
                     skip_validations=skip_validations,
+                    marketplace=marketplace,
                 )
 
     def _upload_item_by_item(

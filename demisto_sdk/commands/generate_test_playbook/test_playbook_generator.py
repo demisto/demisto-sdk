@@ -286,7 +286,7 @@ class PlaybookTestsGenerator:
         commands: str = None,
         examples: str = None,
         upload: bool = False,
-         **kwargs
+        **kwargs,
     ):
         self.integration_yml_path = input
         self.output = output

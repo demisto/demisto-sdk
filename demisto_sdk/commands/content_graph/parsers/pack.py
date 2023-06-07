@@ -147,7 +147,12 @@ class PackParser(BaseContentParser, PackMetadataParser):
             path (Path): The pack path.
         """
         BaseContentParser.__init__(self, path)
-        metadata = get_json(path / PACK_METADATA_FILENAME)
+        try:
+            metadata = get_json(path / PACK_METADATA_FILENAME)
+        except FileNotFoundError:
+            raise InvalidContentItemException(
+                f"{PACK_METADATA_FILENAME} not found in pack"
+            )
         PackMetadataParser.__init__(self, metadata)
         self.content_items: PackContentItems = PackContentItems()
         self.relationships: Relationships = Relationships()

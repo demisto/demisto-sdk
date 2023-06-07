@@ -11,6 +11,9 @@ from demisto_sdk.commands.common.handlers import (
     XSOAR_Handler,
     YAML_Handler,
 )
+from demisto_sdk.commands.content_graph.parsers.content_item import (
+    InvalidContentItemException,
+)
 from demisto_sdk.commands.upload.exceptions import IncompatibleUploadVersionException
 from demisto_sdk.commands.upload.tools import parse_upload_response
 
@@ -81,9 +84,16 @@ class ContentItem(BaseContent):
         if in_pack := self.relationships_data[RelationshipType.IN_PACK]:
             return next(iter(in_pack)).content_item_to  # type: ignore[return-value]
         if pack_name := get_pack_name(self.path):
-            return BaseContent.from_path(
-                CONTENT_PATH / PACKS_FOLDER / pack_name
-            )  # type: ignore[return-value]
+            try:
+                return BaseContent.from_path(
+                    CONTENT_PATH / PACKS_FOLDER / pack_name
+                )  # type: ignore[return-value]
+            except InvalidContentItemException:
+                logger.warning(
+                    f"Could not parse pack {pack_name} for content item {self.path}"
+                )
+                return None
+        logger.warning(f"Could not find pack for content item {self.path}")
         return None
 
     @property

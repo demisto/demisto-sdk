@@ -10,7 +10,6 @@ from git.diff import Lit_change_type
 from git.remote import Remote
 
 from demisto_sdk.commands.common.constants import PACKS_FOLDER
-from demisto_sdk.commands.common.logger import logger
 
 
 class GitUtil:
@@ -518,13 +517,13 @@ class GitUtil:
             Set: of Paths to files changed in the current branch.
         """
         remote, branch = self.handle_prev_ver(prev_ver)
-        current_branch_or_hash = self.get_current_commit_hash()
+        current_hash = self.get_current_commit_hash()
 
         if remote:
             return {
                 Path(os.path.join(item))
                 for item in self.repo.git.diff(
-                    "--name-only", f"{remote}/{branch}...{current_branch_or_hash}"
+                    "--name-only", f"{remote}/{branch}...{current_hash}"
                 ).split("\n")
                 if item
             }
@@ -534,7 +533,7 @@ class GitUtil:
             return {
                 Path(os.path.join(item))
                 for item in self.repo.git.diff(
-                    "--name-only", f"{branch}...{current_branch_or_hash}"
+                    "--name-only", f"{branch}...{current_hash}"
                 ).split("\n")
                 if item
             }
@@ -634,9 +633,6 @@ class GitUtil:
         try:
             return self.get_current_working_branch()
         except TypeError:
-            logger.warning(
-                "Unable to get the active branch because of detached HEAD. returning commit"
-            )
             return self.get_current_commit_hash()
 
     def get_current_working_branch(self) -> str:

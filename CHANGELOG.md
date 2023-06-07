@@ -6,6 +6,7 @@
 * Fixed an issue where an extra levelname was added to a logging message.
 * Added support to run **validate** with `--git` flag on detached HEAD.
 * Added a validation that the **validate** command will fail if the pack name is not prefixed on XSIAM dashboard images.
+* Fixed an issue where **validate** command did not fail on non-existent dependency ids of non-mandatory dependant content.
 
 ## 1.15.5
 * **Breaking Change**: The default of the **upload** command `--zip` argument is `true`. To upload packs as custom content items use the `--no-zip` argument.

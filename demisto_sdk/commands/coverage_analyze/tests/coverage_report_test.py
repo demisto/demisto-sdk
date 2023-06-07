@@ -228,9 +228,8 @@ class TestCoverageDiffReport:
         cov_report._original_summary = read_file(JSON_MIN_DATA_FILE)["files"]
         return cov_report
 
-    def test_without_files(self, caplog, tmpdir, monkeypatch, mocker):
+    def test_without_files(self, caplog, tmpdir, mocker):
         with ChangeCWD(tmpdir):
-            monkeypatch.chdir(tmpdir)
             cov_report = self.get_coverage_report_obj()
             mocker.patch(
                 "demisto_sdk.commands.coverage_analyze.coverage_report.CoverageReport.files",
@@ -240,9 +239,8 @@ class TestCoverageDiffReport:
                 assert cov_report.coverage_diff_report()
             assert caplog.records == []
 
-    def test_with_degradated_files(self, caplog, tmpdir, monkeypatch, mocker):
+    def test_with_degradated_files(self, caplog, tmpdir, mocker):
         with ChangeCWD(tmpdir):
-            monkeypatch.chdir(tmpdir)
             cov_report = self.get_coverage_report_obj()
             cov_report._report_str = Path(REPORT_STR_FILE).read_text()
             mocker.patch.object(cov_report, "file_min_coverage", return_value=100.0)
@@ -250,9 +248,8 @@ class TestCoverageDiffReport:
                 assert cov_report.coverage_diff_report() is False
             assert len(caplog.records) == 1
 
-    def test_with_passed_files(self, caplog, tmpdir, monkeypatch, mocker):
+    def test_with_passed_files(self, caplog, tmpdir, mocker):
         with ChangeCWD(tmpdir):
-            monkeypatch.chdir(tmpdir)
             cov_report = self.get_coverage_report_obj()
             cov_report._report_str = Path(REPORT_STR_FILE).read_text()
             mocker.patch.object(cov_report, "file_min_coverage", return_value=10.0)

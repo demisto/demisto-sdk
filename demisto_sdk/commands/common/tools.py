@@ -792,11 +792,16 @@ def safe_write_unicode(
 
 
 @lru_cache
-def get_file(file_path: Union[str, Path], type_of_file: str, clear_cache: bool = False):
+def get_file(
+    file_path: Union[str, Path],
+    type_of_file: Optional[str] = None,
+    clear_cache: bool = False,
+):
     if clear_cache:
         get_file.cache_clear()
-
     file_path = Path(file_path)  # type: ignore[arg-type]
+    if not type_of_file:
+        type_of_file = file_path.suffix
     if not file_path.exists():
         file_path = Path(get_content_path()) / file_path  # type: ignore[arg-type]
 

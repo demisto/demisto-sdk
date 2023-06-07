@@ -24,7 +24,11 @@ from pydantic import DirectoryPath, validator
 from demisto_sdk.commands.common.constants import PACKS_FOLDER, MarketplaceVersions
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.logger import logger
-from demisto_sdk.commands.common.tools import get_pack_name, replace_incident_to_alert
+from demisto_sdk.commands.common.tools import (
+    get_file,
+    get_pack_name,
+    replace_incident_to_alert,
+)
 from demisto_sdk.commands.content_graph.common import (
     ContentType,
     RelationshipType,
@@ -136,8 +140,7 @@ class ContentItem(BaseContent):
 
     @property
     def data(self) -> dict:
-        with self.path.open() as f:
-            return self.handler.load(f)
+        return get_file(self.path, type_of_file=self.path.suffix.lower())
 
     def prepare_for_upload(
         self,

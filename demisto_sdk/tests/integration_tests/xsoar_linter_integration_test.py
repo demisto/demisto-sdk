@@ -18,6 +18,7 @@ from demisto_sdk.tests.constants_test import (
     XSOAR_LINTER_PY3_INVALID,
     XSOAR_LINTER_PY3_INVALID_WARNINGS,
     XSOAR_LINTER_PY3_INVALID_WARNINGS_PARTNER,
+    XSOAR_LINTER_PY3_NO_DEMISTO_RESULTS_WARNINGS,
     XSOAR_LINTER_PY3_VALID,
 )
 
@@ -218,6 +219,16 @@ files = [
             "Initialize of args was found outside of main function. Please use demisto.args() only inside main func",
             "Hardcoded http URL was found in the code, using https (when possible) is recommended.",
         ],
+        [],
+    ),
+    # ------------- For Warning file with support level certified partner with indicator format file -------------------
+    (
+        Path(f"{XSOAR_LINTER_PY3_NO_DEMISTO_RESULTS_WARNINGS}"),
+        "3.8",
+        "certified partner",
+        False,
+        0,
+        [],
         [],
     ),
     # --------------------- For Warning file with support level xsoar------------- -----------------------------------

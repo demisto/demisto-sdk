@@ -682,6 +682,8 @@ def get_fields_by_script_argument(task):
                 custom_field_value = list(field_value.values())[0]
                 if isinstance(custom_field_value, str):
                     custom_fields_list = json.loads(custom_field_value)
+                    if not isinstance(custom_fields_list, list):
+                        continue
                     for custom_field in custom_fields_list:
                         field_name = list(custom_field.keys())[0]
                         if field_name not in BUILT_IN_FIELDS:

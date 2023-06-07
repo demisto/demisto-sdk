@@ -5,6 +5,7 @@ import os
 import re
 
 from demisto_sdk.commands.common.constants import (
+    PARSING_RULE_FILE_SUFFIX_REGEX,
     PARSING_RULE_ID_SUFFIX,
     PARSING_RULE_NAME_SUFFIX,
 )
@@ -89,7 +90,7 @@ class ParsingRuleValidator(ContentEntityValidator):
 
         invalid_suffix = {
             "invalid_file_name": not re.search(
-                PARSING_RULE_NAME_SUFFIX, self.file_path
+                PARSING_RULE_FILE_SUFFIX_REGEX, self.file_path
             ),
             "invalid_id": not rule_id.endswith(PARSING_RULE_ID_SUFFIX),
             "invalid_name": not rule_name.endswith(PARSING_RULE_NAME_SUFFIX),

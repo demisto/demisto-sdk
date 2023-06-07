@@ -6,6 +6,7 @@
 * Fixed an issue where an extra levelname was added to a logging message.
 * Added support to run **validate** with `--git` flag on detached HEAD.
 * Added a validation that the **validate** command will fail if the pack name is not prefixed on XSIAM dashboard images.
+* Fixed an issue where **validate** command did not fail on non-existent dependency ids of non-mandatory dependant content.
 * Fixed an issue where **lint** falsely warned of using `demisto.results`.
 
 ## 1.15.5

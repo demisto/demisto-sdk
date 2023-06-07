@@ -19,7 +19,6 @@ class XSIAMDashboardParser(
         self, path: Path, pack_marketplaces: List[MarketplaceVersions]
     ) -> None:
         super().__init__(path, pack_marketplaces)
-        self.original_json_data = self.get_json()
         self.json_data: Dict[str, Any] = self.json_data.get("dashboards_data", [{}])[0]
 
     @property

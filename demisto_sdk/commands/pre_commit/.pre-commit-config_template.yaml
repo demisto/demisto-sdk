@@ -55,7 +55,7 @@ repos:
             --show-error-codes,
             --follow-imports=silent,
             --allow-redefinition,
-            # this will be replaced by the python version in the runtime
+            # `--python-version` argument is replaced in runtime
             --python-version=3.10,
           ]
 

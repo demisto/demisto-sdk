@@ -227,8 +227,10 @@ files = [
         "3.8",
         "certified partner",
         False,
-        0,
-        [],
+        4,
+        [
+            "Do not use return_outputs function. Please return CommandResults object instead."
+        ],
         [],
     ),
     # --------------------- For Warning file with support level xsoar------------- -----------------------------------

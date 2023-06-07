@@ -3610,3 +3610,13 @@ def parse_marketplace_kwargs(kwargs: Dict[str, Any]) -> MarketplaceVersions:
         "neither marketplace nor is_xsiam provided, using default marketplace=XSOAR"
     )
     return MarketplaceVersions.XSOAR  # default
+
+
+def get_multiple_path_inputs(input: Any) -> Optional[Tuple[Path, ...]]:
+    if isinstance(input, Path):
+        return (input,)
+    return (
+        tuple(Path(i) for i in input.split(","))
+        if input
+        else None
+    )

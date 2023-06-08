@@ -284,7 +284,6 @@ def check_dataset_exists(
                     )
                     dataset_exist = True
                 else:
-                    logger.error
                     err = (
                         f"[red]Dataset {dataset} exists but no results were returned. This could mean that your testdata "
                         "does not meet the criteria for an associated Parsing Rule and is therefore being dropped from "

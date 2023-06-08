@@ -44,6 +44,7 @@ from demisto_sdk.commands.content_graph.tests.create_content_graph_test import (
 )
 from demisto_sdk.commands.test_content import tools
 from demisto_sdk.commands.upload import uploader
+from demisto_sdk.commands.upload.constants import MULTIPLE_ZIPPED_PACKS_FILE_STEM
 from demisto_sdk.commands.upload.upload import (
     MULTIPLE_ZIPPED_PACKS_FILE_NAME,
     BaseContent,
@@ -77,6 +78,14 @@ DUMMY_SCRIPT_OBJECT: ContentItem = BaseContent.from_path(  # type:ignore[assignm
         f"{git_path()}/demisto_sdk/tests/test_files/Packs/DummyPack/Scripts/DummyScript/DummyScript.py"
     )
 )
+
+
+TEST_DATA = src_root() / "commands" / "upload" / "tests" / "data"
+CONTENT_PACKS_ZIP = TEST_DATA / "content_packs.zip"
+TEST_PACK_ZIP = TEST_DATA / "TestPack.zip"
+TEST_PACK = "Packs/TestPack"
+TEST_XSIAM_PACK = "Packs/TestXSIAMPack"
+API_CLIENT = DefaultApi()
 
 
 @pytest.fixture
@@ -394,6 +403,46 @@ def test_upload_pack(demisto_client_configure, mocker, tmpdir):
     assert mocked_upload_method.call_count == len(expected_names)
 
 
+def test_upload_packs_from_configfile(demisto_client_configure, mocker):
+    """
+    Given
+        - Config file with two packs
+
+    When
+        - call to upload command with --input-config-file
+
+    Then
+        - Ensure the Uploader().upload called twice
+    """
+    mocker.patch.object(demisto_client, "configure", return_value="object")
+    with Path(f"{git_path()}/configfile_test.json").open("w+") as config_file:
+        json.dump(
+            {
+                "custom_packs": [
+                    {
+                        "id": "DummyPack",
+                        "url": f"{git_path()}/demisto_sdk/tests/test_files/Packs/DummyPack",
+                    },
+                    {
+                        "id": "Phishing",
+                        "url": f"{git_path()}/demisto_sdk/tests/test_files/Packs/Phishing",
+                    },
+                ]
+            },
+            config_file,
+        )
+
+    mock_api_client(mocker)
+    upload_mock = mocker.patch.object(
+        Uploader, "upload", return_value=SUCCESS_RETURN_CODE
+    )
+    click.Context(command=upload).invoke(
+        upload, input_config_file=f"{git_path()}/configfile_test.json", zip=False
+    )
+
+    assert upload_mock.call_count == 2
+
+
 def test_upload_invalid_path(mocker):
     logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
     mocker.patch.object(demisto_client, "configure", return_value="object")
@@ -612,14 +661,6 @@ class TestPrintSummary:
         )
 
 
-TEST_DATA = src_root() / "commands" / "upload" / "tests" / "data"
-CONTENT_PACKS_ZIP = TEST_DATA / "content_packs.zip"
-TEST_PACK_ZIP = TEST_DATA / "TestPack.zip"
-TEST_PACK = "Packs/TestPack"
-TEST_XSIAM_PACK = "Packs/TestXSIAMPack"
-API_CLIENT = DefaultApi()
-
-
 def mock_api_client(mocker, version: str = "6.6.0"):
     mocker.patch.object(demisto_client, "configure", return_value=API_CLIENT)
     mocker.patch.object(uploader, "get_demisto_version", return_value=Version(version))
@@ -651,9 +692,7 @@ class TestZippedPackUpload:
         assert len(uploader._successfully_uploaded_zipped_packs) == 1
         assert mocked_upload_content_packs.call_args[1]["file"] == str(path)
 
-    @pytest.mark.parametrize(
-        argnames="path", argvalues=(Path("invalid_zip_path"), None)
-    )
+    @pytest.mark.parametrize(argnames="path", argvalues=("invalid_zip_path", None))
     def test_upload_invalid_zip_path(self, mocker, path: Optional[Path]):
         """
         Given:
@@ -664,6 +703,11 @@ class TestZippedPackUpload:
             - validate the error msg
         """
         # prepare
+        expected_err = (
+            f"input path: {path} does not exist"
+            if path
+            else "No input provided for uploading"
+        )
         logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
         mock_api_client(mocker)
 
@@ -675,7 +719,7 @@ class TestZippedPackUpload:
 
         logged = flatten_call_args(logger_error.call_args_list)
         assert len(logged) == 1
-        assert f"input path: {path} does not exist" in logged[0]
+        assert expected_err in logged[0]
 
     @pytest.mark.parametrize(
         argnames="user_answer, exp_call_count", argvalues=[("y", 1), ("n", 0)]
@@ -704,7 +748,7 @@ class TestZippedPackUpload:
         mocker.patch.object(API_CLIENT, "upload_content_packs")
 
         # run
-        click.Context(command=upload).invoke(upload, input=TEST_PACK_ZIP)
+        click.Context(command=upload).invoke(upload, input=str(TEST_PACK_ZIP))
 
         # validate
         tools.update_server_configuration.call_count == exp_call_count
@@ -754,7 +798,7 @@ class TestZippedPackUpload:
         mocker.patch.object(API_CLIENT, "generic_request", return_value=([], 200, None))
 
         # run
-        click.Context(command=upload).invoke(upload, input=path)
+        click.Context(command=upload).invoke(upload, input=str(path))
         assert mock_upload_content_packs.call_count == 1
         assert mock_upload_content_packs.call_args[1]["file"] == str(path)
         assert mock_upload_content_packs.call_args[1]["skip_verify"] == "true"
@@ -787,7 +831,7 @@ class TestZippedPackUpload:
 
         # run
         result = click.Context(command=upload).invoke(
-            upload, input=path, skip_validation=True
+            upload, input=str(path), skip_validation=True
         )
 
         assert result == SUCCESS_RETURN_CODE
@@ -822,7 +866,7 @@ class TestZippedPackUpload:
         )
         mocker.patch("builtins.input", return_value="y")
         # run
-        click.Context(command=upload).invoke(upload, input=path)
+        click.Context(command=upload).invoke(upload, input=str(path))
         assert mock_upload_content_packs.call_args[1]["file"] == str(path)
         assert mock_upload_content_packs.call_args[1].get("skip_validate") is None
 
@@ -1056,14 +1100,21 @@ def test_zip_multiple_packs(tmp_path: Path, mocker):
     )
 
     assert (zip_path := (tmp_path / MULTIPLE_ZIPPED_PACKS_FILE_NAME)).exists()
+    folder_path = tmp_path / MULTIPLE_ZIPPED_PACKS_FILE_STEM
     with zipfile.ZipFile(zip_path, "r") as zip_file:
-        assert set(zip_file.namelist()) == {
-            "Pack0.zip",
-            "Pack1.zip",
-            "zipped.zip",
-        }
-    result_path = tmp_path / "result"
-    assert {str(path.relative_to(result_path)) for path in result_path.rglob("*")} == {
+        zip_file.extractall(folder_path)
+    # we expect it zip file to contain pack zips
+    assert {str(path.name) for path in folder_path.iterdir()} == {
+        "Pack0.zip",
+        "Pack1.zip",
+        "zipped.zip",
+    }
+
+    # extract all pack zips and check their content
+    for pack_path in folder_path.iterdir():
+        with zipfile.ZipFile(pack_path, "r") as zip_file:
+            zip_file.extractall(pack_path.parent / pack_path.stem)
+    assert {str(path.relative_to(folder_path)) for path in folder_path.rglob("*")} == {
         "Pack0",
         "Pack0/Integrations",
         "Pack0/Integrations/integration-Integrations",
@@ -1076,6 +1127,10 @@ def test_zip_multiple_packs(tmp_path: Path, mocker):
         "Pack1/README.md",
         "Pack1/metadata.json",
         "Pack1/pack_metadata.json",
-        "Pack1.zip",
+        "zipped",
+        "zipped/pack_metadata.json",
+        "zipped/README.md",
         "Pack0.zip",
+        "Pack1.zip",
+        "zipped.zip",
     }

@@ -5,6 +5,7 @@ import re
 import shutil
 import tarfile
 import tempfile
+import traceback
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple, Union
 
@@ -260,7 +261,7 @@ class DockerBase:
         )
 
         try:
-            logger.info(
+            logger.debug(
                 f"{log_prompt} - Trying to pull existing image {test_docker_image}"
             )
             self.pull_image(test_docker_image)
@@ -272,9 +273,9 @@ class DockerBase:
                 self.create_image(
                     base_image, test_docker_image, container_type, pip_requirements
                 )
-            except (docker.errors.BuildError, docker.errors.APIError, Exception) as e:
-                logger.critical(f"{log_prompt} - Build errors occurred {e}")
-                errors = str(e)
+            except (docker.errors.BuildError, docker.errors.APIError, Exception):
+                errors = traceback.format_exc()
+                logger.critical(f"{log_prompt} - Build errors occurred {errors}")
 
         return test_docker_image, errors
 

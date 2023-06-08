@@ -3780,8 +3780,8 @@ class Errors:
     @error_code_decorator
     def from_version_modified():
         return (
-            "You have added or changed the 'fromversion' field in an existing"
-            "file in the system, which is not allowed. "
+            "You have added or changed the 'fromversion' field in an existing "
+            "file in the system, which is not allowed. \n "
             "Please undo this action or request a force merge."
         )
 
@@ -3789,8 +3789,8 @@ class Errors:
     @error_code_decorator
     def to_version_modified():
         return (
-            "You have added or changed the 'toversion' field in an existing"
-            "file in the system, which is not allowed. "
+            "You have added or changed the 'toversion' field in an existing "
+            "file in the system, which is not allowed. \n"
             "Please undo this action or request a force merge."
         )
 
@@ -3799,7 +3799,7 @@ class Errors:
     def marketplaces_removed():
         return (
             "You have removed one or more existing marketplaces from the "
-            "'marketplaces' field list, which is not allowed."
+            "'marketplaces' field list, which is not allowed. \n"
             "Please undo this action or request a force merge."
         )
 
@@ -3807,8 +3807,8 @@ class Errors:
     @error_code_decorator
     def marketplaces_added():
         return (
-            "You have added the 'marketplace' field to an existing file in the"
-            "system, which is not allowed."
+            "You have added the 'marketplaces' field to an existing file in the "
+            "system, which is not allowed. \n"
             "Please undo this action or request a force merge."
         )
 

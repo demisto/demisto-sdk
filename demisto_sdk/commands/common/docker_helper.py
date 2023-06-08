@@ -1,4 +1,5 @@
 import functools
+import hashlib
 import os
 import re
 import shutil
@@ -35,6 +36,8 @@ CAN_MOUNT_FILES = bool(os.getenv("GITLAB_CI", False)) or (
 )
 
 PYTHON_IMAGE_REGEX = re.compile(r"[\d\w]+/python3?:(?P<python_version>[23]\.\d+)")
+
+TEST_REQUIREMENTS_DIR = Path(__file__).parent / "lint" / "resources"
 
 
 class DockerException(Exception):
@@ -215,22 +218,59 @@ class DockerBase:
             )
         return image
 
-    def pull_or_create_image(
+    def pull_or_create_test_image(
         self,
         base_image: str,
-        image: str,
         container_type: str = TYPE_PYTHON,
-        install_packages: Optional[List[str]] = None,
-    ):
+        python_version: Optional[int] = None,
+        additional_requirements: Optional[List[str]] = None,
+        log_prompt: str = "",
+    ) -> str:
+        """This will generate the test image for the given base image.
+
+        Args:
+            base_image (str): The base image to create the test image
+            container_type (str, optional): The container type (powershell or python). Defaults to TYPE_PYTHON.
+
+        Retruns:
+        """
+
+        python3_requirements_file = (
+            TEST_REQUIREMENTS_DIR / "python3_requirements" / "dev-requirements.txt"
+        )
+        python3_requirements = python3_requirements_file.read_text().strip().split("\n")  # type: ignore
+
+        python2_requirements = (
+            TEST_REQUIREMENTS_DIR / "python2_requirements" / "dev-requirements.txt"
+        )
+        python2_requirements = python2_requirements.read_text().strip().split("\n")  # type: ignore
+        if not python_version:
+            python_version = get_python_version(base_image).major
+        pip_requirements = (
+            python3_requirements if python_version == 3 else python2_requirements
+        )
+        if additional_requirements:
+            pip_requirements.extend(additional_requirements)
+        identifier = hashlib.md5(
+            "\n".join(sorted(pip_requirements)).encode("utf-8")
+        ).hexdigest()
+        test_docker_image = (
+            f'{base_image.replace("demisto", "devtestdemisto")}-{identifier}'
+        )
+
         try:
-            logger.info(f"Trying to pull existing image {image}")
-            self.pull_image(image)
-            return
+            logger.info(
+                f"{log_prompt} - Trying to pull existing image {test_docker_image}"
+            )
+            self.pull_image(test_docker_image)
         except (docker.errors.APIError, docker.errors.ImageNotFound):
             logger.info(
-                f"Unable to find image {image}. Creating image based on {base_image} - Could take 2-3 minutes at first"
+                f"{log_prompt} - Unable to find image {test_docker_image}. Creating image based on {base_image} - Could take 2-3 minutes at first"
             )
-            self.create_image(base_image, image, container_type, install_packages)
+            self.create_image(
+                base_image, test_docker_image, container_type, pip_requirements
+            )
+        return test_docker_image
 
 
 class MountableDocker(DockerBase):

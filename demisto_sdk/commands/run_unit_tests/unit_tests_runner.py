@@ -160,7 +160,7 @@ def unit_test_runner(file_paths: List[Path], verbose: bool = False) -> int:
             )
 
             try:
-                docker_base.pull_or_create_image(
+                test_docker_image = docker_base.pull_or_create_test_image(
                     docker_image,
                     test_docker_image,
                     integration_script.type,

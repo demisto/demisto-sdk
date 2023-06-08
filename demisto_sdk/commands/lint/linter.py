@@ -1,6 +1,5 @@
 # STD python packages
 import copy
-import hashlib
 import os
 import platform
 import traceback
@@ -941,71 +940,44 @@ class Linter:
         log_prompt = f"{self._pack_name} - Image create"
         docker_base = get_docker()
         # Get requirements file for image
-        requirements = []
-
+        py_ver = None
         if docker_base_image[1] != -1:
             py_ver = parse(docker_base_image[1]).major  # type: ignore
-            if py_ver == 2:
-                requirements = self._req_2
-            elif py_ver == 3:
-                requirements = self._req_3
-        # Using DockerFile template
-        pip_requirements = requirements + self._facts["additional_requirements"]
-        # Trying to pull image based on dockerfile hash, will check if something changed
         errors = ""
-        identifier = hashlib.md5(
-            "\n".join(sorted(pip_requirements)).encode("utf-8")
-        ).hexdigest()
-        test_image_name = (
-            f'{docker_base_image[0].replace("demisto", "devtestdemisto")}-{identifier}'
-        )
-        test_image = None
         try:
-            logger.info(
-                f"{log_prompt} - Trying to pull existing image {test_image_name}"
+            test_image_name = docker_base.pull_or_create_test_image(
+                docker_base_image[0],
+                additional_requirements=self._facts["additional_requirements"],
+                container_type=self._pkg_lint_status["pack_type"],
+                log_prompt=log_prompt,
+                python_version=py_ver,
             )
-            test_image = docker_base.pull_image(test_image_name)
-        except (docker.errors.APIError, docker.errors.ImageNotFound):
-            logger.info(f"{log_prompt} - Unable to find image {test_image_name}")
-        # Creatng new image if existing image isn't found
-        if not test_image:
-            logger.info(
-                f"{log_prompt} - Creating image based on {docker_base_image[0]} - Could take 2-3 minutes at first "
-                f"time"
-            )
-            try:
-                docker_base.create_image(
-                    docker_base_image[0],
-                    test_image_name,
-                    container_type=self._pkg_lint_status["pack_type"],
-                    install_packages=pip_requirements,
-                )
 
-                if self._docker_hub_login:
-                    for _ in range(2):
-                        try:
-                            test_image_name_to_push = test_image_name.replace(
-                                "docker-io.art.code.pan.run/", ""
-                            )
-                            docker_push_output = self._docker_client.images.push(
-                                test_image_name_to_push
-                            )
-                            logger.info(
-                                f"{log_prompt} - Trying to push Image {test_image_name_to_push} to repository. Output = {docker_push_output}"
-                            )
-                            break
-                        except (
-                            requests.exceptions.ConnectionError,
-                            urllib3.exceptions.ReadTimeoutError,
-                            requests.exceptions.ReadTimeout,
-                        ):
-                            logger.info(
-                                f"{log_prompt} - Unable to push image {test_image_name} to repository"
-                            )
+            if self._docker_hub_login:
+                for _ in range(2):
+                    try:
+                        test_image_name_to_push = test_image_name.replace(
+                            "docker-io.art.code.pan.run/", ""
+                        )
+                        docker_push_output = self._docker_client.images.push(
+                            test_image_name_to_push
+                        )
+                        logger.info(
+                            f"{log_prompt} - Trying to push Image {test_image_name_to_push} to repository. Output = {docker_push_output}"
+                        )
+                        break
+                    except (
+                        requests.exceptions.ConnectionError,
+                        urllib3.exceptions.ReadTimeoutError,
+                        requests.exceptions.ReadTimeout,
+                    ):
+                        logger.info(
+                            f"{log_prompt} - Unable to push image {test_image_name} to repository"
+                        )
 
-            except (docker.errors.BuildError, docker.errors.APIError, Exception) as e:
-                logger.critical(f"{log_prompt} - Build errors occurred {e}")
-                errors = str(e)
+        except (docker.errors.BuildError, docker.errors.APIError, Exception) as e:
+            logger.critical(f"{log_prompt} - Build errors occurred {e}")
+            errors = str(e)
         return test_image_name, errors
 
     def _docker_remove_container(self, container_name: str):

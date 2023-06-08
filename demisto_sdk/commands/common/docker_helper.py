@@ -80,6 +80,19 @@ def init_global_docker_client(timeout: int = 60, log_prompt: str = ""):
     return DOCKER_CLIENT
 
 
+@functools.lru_cache
+def get_pip_requirements_from_file(requirements_file: Path) -> List[str]:
+    """
+    Get the pip requirements from a requirements file.
+    Args:
+        requirements_file: The path to the requirements file.
+
+    Returns:
+        A list of pip requirements.
+    """
+    return requirements_file.read_text().strip().splitlines()
+
+
 class DockerBase:
     def __init__(self):
         self.tmp_dir_name = tempfile.TemporaryDirectory(
@@ -237,17 +250,14 @@ class DockerBase:
             The test image name and errors to create it if any
         """
         errors = ""
-        python3_requirements_file = (
-            TEST_REQUIREMENTS_DIR / "python3_requirements" / "dev-requirements.txt"
-        )
-        python3_requirements = python3_requirements_file.read_text().strip().split("\n")  # type: ignore
-
-        python2_requirements = (
-            TEST_REQUIREMENTS_DIR / "python2_requirements" / "dev-requirements.txt"
-        )
-        python2_requirements = python2_requirements.read_text().strip().split("\n")  # type: ignore
         if not python_version:
             python_version = get_python_version(base_image).major
+        python3_requirements = get_pip_requirements_from_file(
+            TEST_REQUIREMENTS_DIR / "python3_requirements" / "dev-requirements.txt"
+        )
+        python2_requirements = get_pip_requirements_from_file(
+            TEST_REQUIREMENTS_DIR / "python2_requirements" / "dev-requirements.txt"
+        )
         pip_requirements = (
             python3_requirements if python_version == 3 else python2_requirements
         )

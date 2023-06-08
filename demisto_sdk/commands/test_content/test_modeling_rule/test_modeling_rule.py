@@ -64,22 +64,28 @@ def create_table(expected: Dict[str, Any], received: Dict[str, Any]) -> Table:
     return table
 
 
-def convert_epoc_time_to_string_time(received_time: int, timezone_delta: int) -> str:
+def convert_epoch_time_to_string_time(
+    epoch_time: int, timezone_delta: int, with_ms: bool = False
+) -> str:
     """
     Converts epoch time with milliseconds to string time with timezone delta.
 
     Args:
-        received_time: The received epoch time (with milliseconds).
+        epoch_time: The received epoch time (with milliseconds).
         timezone_delta: The time zone delta (for example '3' or '-4').
+        with_ms: Whether to convert the epoch time with ms or not default is False.
 
     Returns:
         The string time with timezone delta.
     """
-    epoch_datetime = datetime.fromtimestamp(received_time / 1000)
-    epoch_time_with_time_zone_delta = epoch_datetime + timedelta(hours=timezone_delta)
-    string_time = epoch_time_with_time_zone_delta.astimezone(tz.tzlocal()).strftime(
-        "%m %dth %Y %H:%M:%S"
-    )
+    time_format = "%m %dth %Y %H:%M:%S"
+    if with_ms:
+        time_format = f"{time_format}.%f"
+    datetime_object = datetime.fromtimestamp(epoch_time / 1000)
+    datetime_object_with_time_zone_delta = (
+        datetime_object + timedelta(hours=timezone_delta)
+    ).astimezone(tz.tzlocal())
+    string_time = datetime_object_with_time_zone_delta.strftime(time_format)
 
     return string_time
 
@@ -128,16 +134,19 @@ def verify_results(
         td_event_id = result.pop(f"{tested_dataset}.test_data_event_id")
         expected_values = None
         timezone_delta = 0
+        with_ms = False
         for e in test_data.data:
             if str(e.test_data_event_id) == td_event_id:
                 expected_values = e.expected_values
                 timezone_delta = int(e.event_data.get("timezone_delta") or 0)
+                if e.event_data.get("with_ms", "").lower() in ("true", "yes"):
+                    with_ms = True
                 break
 
         if expected_values:
             if time_value := result.get("_time"):
-                result["_time"] = convert_epoc_time_to_string_time(
-                    time_value, timezone_delta
+                result["_time"] = convert_epoch_time_to_string_time(
+                    time_value, timezone_delta, with_ms
                 )
             printr(create_table(expected_values, result))
 

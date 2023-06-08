@@ -225,16 +225,17 @@ class DockerBase:
         python_version: Optional[int] = None,
         additional_requirements: Optional[List[str]] = None,
         log_prompt: str = "",
-    ) -> str:
+    ) -> Tuple[str, str]:
         """This will generate the test image for the given base image.
 
         Args:
             base_image (str): The base image to create the test image
             container_type (str, optional): The container type (powershell or python). Defaults to TYPE_PYTHON.
 
-        Retruns:
+        Returns:
+            The test image name and errors to create it if any
         """
-
+        errors = ""
         python3_requirements_file = (
             TEST_REQUIREMENTS_DIR / "python3_requirements" / "dev-requirements.txt"
         )
@@ -267,10 +268,15 @@ class DockerBase:
             logger.info(
                 f"{log_prompt} - Unable to find image {test_docker_image}. Creating image based on {base_image} - Could take 2-3 minutes at first"
             )
-            self.create_image(
-                base_image, test_docker_image, container_type, pip_requirements
-            )
-        return test_docker_image
+            try:
+                self.create_image(
+                    base_image, test_docker_image, container_type, pip_requirements
+                )
+            except (docker.errors.BuildError, docker.errors.APIError, Exception) as e:
+                logger.critical(f"{log_prompt} - Build errors occurred {e}")
+                errors = str(e)
+
+        return test_docker_image, errors
 
 
 class MountableDocker(DockerBase):

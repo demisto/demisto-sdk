@@ -130,11 +130,13 @@ def unit_test_runner(file_paths: List[Path], verbose: bool = False) -> int:
         logger.debug(f"{docker_images=}")
         for docker_image in docker_images:
             try:
-                test_docker_image = docker_base.pull_or_create_test_image(
+                test_docker_image, errors = docker_base.pull_or_create_test_image(
                     docker_image,
                     integration_script.type,
                     log_prompt=f"Unit test {integration_script.name}",
                 )
+                if errors:
+                    raise RuntimeError(f"Creating docker failed due to {errors}")
                 shutil.copy(
                     Path(__file__).parent / ".pytest.ini",
                     integration_script.path.parent / ".pytest.ini",

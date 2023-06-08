@@ -3,9 +3,12 @@ on:
   pull_request:
     paths:
       - demisto_sdk/commands/pre_commit/**
+      - demisto-sdk/commands/run-unit-tests/**
   push:
     paths:
       - demisto_sdk/commands/pre_commit/**
+      - demisto-sdk/commands/run-unit-tests/**
+
 
 jobs:
   test-pre-commit:

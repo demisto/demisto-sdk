@@ -3,6 +3,7 @@ import os
 from pathlib import Path
 from uuid import UUID
 
+import pytest
 import requests_mock
 import typer
 from typer.testing import CliRunner
@@ -1084,3 +1085,48 @@ class TestTheTestModelingRuleCommandInteractive:
 
         except typer.Exit:
             assert False, "No exception should be raised in this scenario."
+
+
+@pytest.mark.parametrize(
+    "epoc_time, timezone_delta, with_ms, human_readable_time",
+    [
+        (1686231456000, 0, False, "Jun 08th 2023 16:37:36"),
+        (1686231456000, 3, False, "Jun 08th 2023 19:37:36"),
+        (1686231456000, -6, False, "Jun 08th 2023 10:37:36"),
+        (1686231456000, 0, True, "Jun 08th 2023 16:37:36.000000"),
+        (1686231456123, 0, True, "Jun 08th 2023 16:37:36.123000"),
+    ],
+)
+def test_convert_epoch_time_to_string_time(
+    epoc_time, timezone_delta, with_ms, human_readable_time
+):
+    from demisto_sdk.commands.test_content.test_modeling_rule.test_modeling_rule import (
+        convert_epoch_time_to_string_time,
+    )
+
+    assert (
+        convert_epoch_time_to_string_time(epoc_time, timezone_delta, with_ms)
+        == human_readable_time
+    )
+
+
+@pytest.mark.parametrize(
+    "day, suffix",
+    [
+        (1, "st"),
+        (2, "nd"),
+        (3, "rd"),
+        (4, "th"),
+        (10, "th"),
+        (11, "th"),
+        (12, "th"),
+        (21, "st"),
+        (31, "st"),
+    ],
+)
+def test_day_suffix(day, suffix):
+    from demisto_sdk.commands.test_content.test_modeling_rule.test_modeling_rule import (
+        day_suffix,
+    )
+
+    assert day_suffix(day) == suffix

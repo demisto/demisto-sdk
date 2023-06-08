@@ -209,6 +209,23 @@ class DockerBase:
             )
         return image
 
+    def pull_or_create_image(
+        self,
+        base_image: str,
+        image: str,
+        container_type: str = TYPE_PYTHON,
+        install_packages: Optional[List[str]] = None,
+    ):
+        try:
+            logger.info(f"Trying to pull existing image {image}")
+            self.pull_image(image)
+            return
+        except (docker.errors.APIError, docker.errors.ImageNotFound):
+            logger.info(
+                f"Unable to find image {image}. Creating image based on {base_image} - Could take 2-3 minutes at first"
+            )
+            self.create_image(base_image, image, container_type, install_packages)
+
 
 class MountableDocker(DockerBase):
     def __init__(self):

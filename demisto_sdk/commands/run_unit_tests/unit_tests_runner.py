@@ -1,3 +1,4 @@
+import hashlib
 import os
 import shutil
 import sqlite3
@@ -29,6 +30,8 @@ DEFAULT_DOCKER_IMAGE = "demisto/python:1.3-alpine"
 
 PYTEST_RUNNER = f"{(Path(__file__).parent / 'pytest_runner.sh')}"
 POWERSHELL_RUNNER = f"{(Path(__file__).parent / 'pwsh_test_runner.sh')}"
+TEST_REQUIREMENTS_DIR = Path(__file__).parent.parent / "lint" / "resources"
+
 
 NO_TESTS_COLLECTED = 5
 
@@ -101,7 +104,17 @@ def merge_coverage_report():
 
 def unit_test_runner(file_paths: List[Path], verbose: bool = False) -> int:
     docker_client = docker_helper.init_global_docker_client()
+    docker_base = docker_helper.get_docker()
 
+    python3_requirements_file = (
+        TEST_REQUIREMENTS_DIR / "python3_requirements" / "dev-requirements.txt"
+    )
+    python3_requirements = python3_requirements_file.read_text().strip().split("\n")  # type: ignore
+
+    python2_requirements = (
+        TEST_REQUIREMENTS_DIR / "python2_requirements" / "dev-requirements.txt"
+    )
+    python2_requirements = python2_requirements.read_text().strip().split("\n")  # type: ignore
     exit_code = 0
     for filename in file_paths:
         integration_script = BaseContent.from_path(Path(filename))
@@ -129,21 +142,28 @@ def unit_test_runner(file_paths: List[Path], verbose: bool = False) -> int:
             ]
         logger.debug(f"{docker_images=}")
         for docker_image in docker_images:
-            logger.info(f"Running test for {filename} using {docker_image=}")
+            python_version = docker_helper.get_python_version(docker_image)
+            pip_requirements = (
+                python3_requirements
+                if python_version.major == 3
+                else python2_requirements
+            )
+            identifier = hashlib.md5(
+                "\n".join(sorted(pip_requirements)).encode("utf-8")
+            ).hexdigest()
+            test_docker_image = (
+                f'{docker_image.replace("demisto", "devtestdemisto")}-{identifier}'
+            )
+
+            logger.info(
+                f"Running test for {filename} using {docker_image=} with {test_docker_image}"
+            )
             try:
-                docker_client.images.pull(docker_image)
-                shutil.copy(
-                    Path(__file__).parent / ".pytest.ini",
-                    integration_script.path.parent / ".pytest.ini",
-                )
-                shutil.copy(
-                    CONTENT_PATH
-                    / "Tests"
-                    / "scripts"
-                    / "dev_envs"
-                    / "pytest"
-                    / "conftest.py",
-                    integration_script.path.parent / "conftest.py",
+                docker_base.pull_or_create_image(
+                    docker_image,
+                    test_docker_image,
+                    integration_script.type,
+                    pip_requirements,
                 )
                 container = docker_client.containers.run(
                     image=docker_image,
@@ -203,11 +223,6 @@ def unit_test_runner(file_paths: List[Path], verbose: bool = False) -> int:
                 )
                 traceback.print_exc()
                 exit_code = 1
-            finally:
-                # remove pytest.ini no matter the results
-                shutil.rmtree(
-                    integration_script.path.parent / ".pytest.ini", ignore_errors=True
-                )
     try:
         merge_coverage_report()
     except Exception as e:

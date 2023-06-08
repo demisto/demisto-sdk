@@ -203,12 +203,16 @@ class LintManager:
             )
             logger.warning(f"can't locate content repo {e}")
         # Get global requirements file
-        pipfile_dir = Path(__file__).parent / "resources"
+        test_requirements_dir = Path(__file__).parent / "resources"
         try:
-            python3_requirements = pipfile_dir / "pipfile_python3/dev-requirements.txt"
+            python3_requirements = (
+                test_requirements_dir / "python3_requirements" / "dev-requirements.txt"
+            )
             facts["requirements_3"] = python3_requirements.read_text().strip().split("\n")  # type: ignore
 
-            python2_requirements = pipfile_dir / "pipfile_python2/dev-requirements.txt"
+            python2_requirements = (
+                test_requirements_dir / "python2_requirements" / "dev-requirements.txt"
+            )
             facts["requirements_2"] = python2_requirements.read_text().strip().split("\n")  # type: ignore
         except (json.JSONDecodeError, OSError, FileNotFoundError, KeyError) as e:
             logger.info("[red]Can't parse pipfile.lock - Aborting![/red]")

@@ -403,6 +403,9 @@ class BaseUpdate:
             self.data["id"] = (
                 self.data.get("id", "").replace("_copy", "").replace("_dev", "")
             )
+    
+    def add_comma_to_description(self):
+        pass
 
     def initiate_file_validator(self) -> int:
         """Run schema validate and file validate of file

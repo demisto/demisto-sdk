@@ -157,8 +157,6 @@ def unit_test_runner(file_paths: List[Path], verbose: bool = False) -> int:
                     },
                     volumes=[
                         f"{CONTENT_PATH}:/content",
-                        "/etc/ssl/certs/ca-certificates.crt:/etc/ssl/certs/ca-certificates.crt",
-                        "/etc/pip.conf:/etc/pip.conf",
                     ],
                     command="sh test_runner.sh",
                     working_dir=working_dir,

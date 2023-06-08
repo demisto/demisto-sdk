@@ -64,6 +64,11 @@ def create_table(expected: Dict[str, Any], received: Dict[str, Any]) -> Table:
     return table
 
 
+# https://stackoverflow.com/questions/5891555/display-the-date-like-may-5th-using-pythons-strftime#answer-5891598
+def day_suffix(day: int):
+    return "th" if 11 <= day <= 13 else {1: "st", 2: "nd", 3: "rd"}.get(day % 10, "th")
+
+
 def convert_epoch_time_to_string_time(
     epoch_time: int, timezone_delta: int, with_ms: bool = False
 ) -> str:
@@ -78,13 +83,15 @@ def convert_epoch_time_to_string_time(
     Returns:
         The string time with timezone delta.
     """
-    time_format = "%m %dth %Y %H:%M:%S"
-    if with_ms:
-        time_format = f"{time_format}.%f"
     datetime_object = datetime.fromtimestamp(epoch_time / 1000)
     datetime_object_with_time_zone_delta = (
         datetime_object + timedelta(hours=timezone_delta)
     ).astimezone(tz.tzlocal())
+    time_format = (
+        f"%b %d{day_suffix(datetime_object_with_time_zone_delta.day)} %Y %H:%M:%S"
+    )
+    if with_ms:
+        time_format = f"{time_format}.%f"
     string_time = datetime_object_with_time_zone_delta.strftime(time_format)
 
     return string_time
@@ -134,19 +141,17 @@ def verify_results(
         td_event_id = result.pop(f"{tested_dataset}.test_data_event_id")
         expected_values = None
         timezone_delta = 0
-        with_ms = False
         for e in test_data.data:
             if str(e.test_data_event_id) == td_event_id:
                 expected_values = e.expected_values
                 timezone_delta = int(e.event_data.get("timezone_delta") or 0)
-                if e.event_data.get("with_ms", "").lower() in ("true", "yes"):
-                    with_ms = True
                 break
 
         if expected_values:
             if time_value := result.get("_time"):
+                time_with_ms = "." in expected_values.get("_time")
                 result["_time"] = convert_epoch_time_to_string_time(
-                    time_value, timezone_delta, with_ms
+                    time_value, timezone_delta, time_with_ms
                 )
             printr(create_table(expected_values, result))
 

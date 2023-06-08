@@ -224,10 +224,6 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: i
         PackContentItems(), alias="contentItems", exclude=True
     )
 
-    # @validator("path", always=True)
-    # def validate_path(cls, v: Path) -> Path:
-    #     return v.absolute().relative_to(CONTENT_PATH) if v.is_absolute() else v
-
     @property
     def pack_id(self) -> str:
         return self.object_id

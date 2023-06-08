@@ -135,18 +135,22 @@ def unit_test_runner(file_paths: List[Path], verbose: bool = False) -> int:
                     integration_script.type,
                     log_prompt=f"Unit test {integration_script.name}",
                 )
-
-                logger.info(
-                    f"Running test for {integration_script.path} using {docker_image=} with {test_docker_image=}"
-                )
                 shutil.copy(
                     Path(__file__).parent / ".pytest.ini",
+                    integration_script.path.parent / ".pytest.ini",
+                )
+                shutil.copy(
                     CONTENT_PATH
                     / "Tests"
                     / "scripts"
                     / "dev_envs"
                     / "pytest"
-                    / ".pytest.ini",
+                    / "conftest.py",
+                    integration_script.path.parent / "conftest.py",
+                )
+
+                logger.info(
+                    f"Running test for {integration_script.path} using {docker_image=} with {test_docker_image=}"
                 )
                 container = docker_client.containers.run(
                     image=test_docker_image,
@@ -158,7 +162,7 @@ def unit_test_runner(file_paths: List[Path], verbose: bool = False) -> int:
                     volumes=[
                         f"{CONTENT_PATH}:/content",
                     ],
-                    command=f"sh {working_dir}/test_runner.sh",
+                    command=[f"sh {working_dir}/test_runner.sh"],
                     working_dir=working_dir,
                     detach=True,
                 )

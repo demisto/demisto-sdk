@@ -69,25 +69,12 @@ def test_config_files(mocker, repo: Repo, is_test: bool):
     pre_commit = pre_commit_command.PreCommitRunner(
         None, group_by_python_version(files_to_run), ""
     )
-    assert (
-        Path(script1.yml.path).relative_to(repo.path)
-        in pre_commit.python_version_to_files["2.7"]
-    )
-    assert (
-        Path(integration3.yml.path).relative_to(repo.path)
-        in pre_commit.python_version_to_files["3.8"]
-    )
-    assert (
-        Path(integration1.yml.path).relative_to(repo.path)
-        in pre_commit.python_version_to_files["3.9"]
-    )
-    assert (
-        Path(integration2.yml.path).relative_to(repo.path)
-        in pre_commit.python_version_to_files["3.10"]
-    )
+    assert Path(script1.yml.path) in pre_commit.python_version_to_files["2.7"]
+    assert Path(integration3.yml.path) in pre_commit.python_version_to_files["3.8"]
+    assert Path(integration1.yml.path) in pre_commit.python_version_to_files["3.9"]
+    assert Path(integration2.yml.path) in pre_commit.python_version_to_files["3.10"]
     assert all(
-        Path(obj.path).relative_to(repo.path)
-        in pre_commit.python_version_to_files["3.10"]
+        Path(obj.path) in pre_commit.python_version_to_files["3.10"]
         for obj in (incident_field, classifier)
     )
 

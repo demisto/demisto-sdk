@@ -48,10 +48,6 @@ class ContentItem(BaseContent):
     description: Optional[str]
     is_test: bool = False
 
-    # @validator("path", always=True)
-    # def validate_path(cls, v: Path) -> Path:
-    #     return v.absolute().relative_to(CONTENT_PATH) if v.is_absolute() else v
-
     @property
     def pack_id(self) -> str:
         return self.in_pack.pack_id if self.in_pack else ""

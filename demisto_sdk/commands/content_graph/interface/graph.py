@@ -179,9 +179,7 @@ class ContentGraphInterface(ABC):
         if not isinstance(content_item, (ContentItem, Pack)):
             raise ValueError(f"Could not parse content_item from {path}")
         # enrich the content_item with the graph
-        result = self.search(
-            path=content_item.path.relative_to(self.repo_path), marketplace=marketplace
-        )
+        result = self.search(path=content_item.path, marketplace=marketplace)
         if not result or not isinstance(result[0], (Pack, ContentItem)):
             raise ValueError(f"Could not find content item in graph from {path}")
         return result[0]

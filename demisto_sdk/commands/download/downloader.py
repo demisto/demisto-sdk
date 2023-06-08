@@ -451,10 +451,9 @@ class Downloader:
         for playbook in self.input_files:
             endpoint = f"/playbook/{playbook}/yaml"
             api_response = demisto_client.generic_request_func(
-                self.client, endpoint, req_type
+                self.client, endpoint, req_type, response_type="object"
             )
-            playbook_received = ast.literal_eval(api_response[0])
-            playbook_list.append(yaml.load(playbook_received.decode()))
+            playbook_list.append(yaml.load(api_response[0].decode()))
 
         return playbook_list
 

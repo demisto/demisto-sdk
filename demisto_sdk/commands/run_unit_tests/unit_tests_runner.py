@@ -158,7 +158,7 @@ def unit_test_runner(file_paths: List[Path], verbose: bool = False) -> int:
                     volumes=[
                         f"{CONTENT_PATH}:/content",
                     ],
-                    command="sh test_runner.sh",
+                    command=f"sh {working_dir}/test_runner.sh",
                     working_dir=working_dir,
                     detach=True,
                 )

@@ -20,7 +20,6 @@ from demisto_sdk.commands.coverage_analyze.tests.helpers_test import (
     copy_file,
     read_file,
 )
-from TestSuite.test_tools import ChangeCWD
 
 logger = logging.getLogger("demisto-sdk")
 
@@ -38,12 +37,12 @@ class TestCoverageReport:
             rf"^exporting {r_type} coverage report to [\w\-\./]+/{file_name}\.{suffix}$"
         )
 
-    def test_with_print_report(self, tmpdir, caplog):
+    def test_with_print_report(self, tmpdir, monkeypatch, caplog):
+        monkeypatch.chdir(tmpdir)
         cov_report = CoverageReport()
         cov_report._report_str = Path(REPORT_STR_FILE).read_text()
         with caplog.at_level(logging.INFO, logger="demisto-sdk"):
-            with ChangeCWD(tmpdir):
-                cov_report.coverage_report()
+            cov_report.coverage_report()
         assert caplog.records[0].msg == f"\n{Path(REPORT_STR_FILE).read_text()}"
 
     def test_with_export_report_function(self, tmpdir, monkeypatch, caplog):

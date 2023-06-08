@@ -3780,36 +3780,32 @@ class Errors:
     @error_code_decorator
     def from_version_modified():
         return (
-            "You have added or changed the 'fromversion' field in an existing "
-            "file in the system, which is not allowed. \n "
-            "Please undo this action or request a force merge."
+            "Adding or changing the maximal supported version field (toVersion/toversion) is not allowed. \n"
+            "Please undo, or request a force merge."
         )
 
     @staticmethod
     @error_code_decorator
     def to_version_modified():
         return (
-            "You have added or changed the 'toversion' field in an existing "
-            "file in the system, which is not allowed. \n"
-            "Please undo this action or request a force merge."
+            "Adding or changing the maximal supported version field (toVersion/toversion) is not allowed. \n"
+            "Please undo, or request a force merge."
         )
 
     @staticmethod
     @error_code_decorator
-    def marketplaces_removed():
+    def marketplaces_removed(removed):
         return (
-            "You have removed one or more existing marketplaces from the "
-            "'marketplaces' field list, which is not allowed. \n"
-            "Please undo this action or request a force merge."
+            "Removing values from the list of supported marketplaces is not allowed. \n"
+            f"Please undo this action and add back - {removed} or request a force merge."
         )
 
     @staticmethod
     @error_code_decorator
     def marketplaces_added():
         return (
-            "You have added the 'marketplaces' field to an existing file in the "
-            "system, which is not allowed. \n"
-            "Please undo this action or request a force merge."
+            "Adding a marketplaces field to existing content is not allowed. \n"
+            "Undo this action or request a force merge."
         )
 
     @staticmethod

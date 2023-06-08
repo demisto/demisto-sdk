@@ -205,13 +205,21 @@ class ContentEntityValidator(BaseValidator):
         marketplaces_new = self.current_file.get("marketplaces", [])
         marketplaces_old = self.old_file.get("marketplaces", [])
 
-        if not marketplaces_old and marketplaces_new:
+        if (not marketplaces_old) and marketplaces_new:
             error_message, error_code = Errors.marketplaces_added()
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 self.is_valid = False
                 return False
-        if not (set(marketplaces_old).issubset(set(marketplaces_new))):
-            error_message, error_code = Errors.marketplaces_removed()
+
+        if marketplaces_old and (not marketplaces_new):
+            error_message, error_code = Errors.marketplaces_removed(marketplaces_old)
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                self.is_valid = False
+                return False
+
+        if not (set(marketplaces_old).issubset(marketplaces_new)):
+            removed = set(marketplaces_old) - set(marketplaces_new)
+            error_message, error_code = Errors.marketplaces_removed(removed)
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 self.is_valid = False
                 return False

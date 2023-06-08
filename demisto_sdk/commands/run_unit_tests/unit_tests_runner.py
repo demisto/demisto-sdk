@@ -114,9 +114,7 @@ def unit_test_runner(file_paths: List[Path], verbose: bool = False) -> int:
         if (test_data_dir := (integration_script.path.parent / "test_data")).exists():
             (test_data_dir / "__init__.py").touch()
 
-        working_dir = (
-            f"/content/{integration_script.path.parent.relative_to(CONTENT_PATH)}"
-        )
+        working_dir = f"/content/{integration_script.path.parent}"
         runner = (
             POWERSHELL_RUNNER
             if integration_script.type == "powershell"
@@ -137,10 +135,19 @@ def unit_test_runner(file_paths: List[Path], verbose: bool = False) -> int:
                     integration_script.type,
                     log_prompt=f"Unit test {integration_script.name}",
                 )
-                logger.info(
-                    f"Running test for {filename} using {docker_image=} with {test_docker_image=}"
-                )
 
+                logger.info(
+                    f"Running test for {integration_script.path} using {docker_image=} with {test_docker_image=}"
+                )
+                shutil.copy(
+                    Path(__file__).parent / ".pytest.ini",
+                    CONTENT_PATH
+                    / "Tests"
+                    / "scripts"
+                    / "dev_envs"
+                    / "pytest"
+                    / ".pytest.ini",
+                )
                 container = docker_client.containers.run(
                     image=test_docker_image,
                     environment={
@@ -191,7 +198,9 @@ def unit_test_runner(file_paths: List[Path], verbose: bool = False) -> int:
                         )
                     exit_code = 1
                 else:
-                    logger.info(f"All tests passed for {filename} in {docker_image}")
+                    logger.info(
+                        f"All tests passed for {integration_script.path} in {docker_image}"
+                    )
                 container.remove(force=True)
             except Exception as e:
                 logger.error(

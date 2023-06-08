@@ -156,8 +156,9 @@ def unit_test_runner(file_paths: List[Path], verbose: bool = False) -> int:
             )
 
             logger.info(
-                f"Running test for {filename} using {docker_image=} with {test_docker_image}"
+                f"Running test for {filename} using {docker_image=} with {test_docker_image=}"
             )
+
             try:
                 docker_base.pull_or_create_image(
                     docker_image,
@@ -166,7 +167,7 @@ def unit_test_runner(file_paths: List[Path], verbose: bool = False) -> int:
                     pip_requirements,
                 )
                 container = docker_client.containers.run(
-                    image=docker_image,
+                    image=test_docker_image,
                     environment={
                         "PYTHONPATH": ":".join(DOCKER_PYTHONPATH),
                         "REQUESTS_CA_BUNDLE": "/etc/ssl/certs/ca-certificates.crt",

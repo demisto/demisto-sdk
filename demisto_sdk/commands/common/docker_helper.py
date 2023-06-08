@@ -18,6 +18,8 @@ from demisto_sdk.commands.common.constants import (
     DEFAULT_PYTHON_VERSION,
     TYPE_PWSH,
     TYPE_PYTHON,
+    TYPE_PYTHON2,
+    TYPE_PYTHON3,
 )
 from demisto_sdk.commands.common.logger import logger
 
@@ -85,11 +87,15 @@ class DockerBase:
         )
         self.installation_scripts = {
             TYPE_PYTHON: installation_scripts / "python_image.sh",
+            TYPE_PYTHON2: installation_scripts / "python_image.sh",
+            TYPE_PYTHON3: installation_scripts / "python_image.sh",
             TYPE_PWSH: installation_scripts / "powershell_image.sh",
         }
         self.changes = {
             TYPE_PWSH: ["WORKDIR /devwork"],
             TYPE_PYTHON: ["WORKDIR /devwork", 'ENTRYPOINT ["/bin/sh", "-c"]'],
+            TYPE_PYTHON2: ["WORKDIR /devwork", 'ENTRYPOINT ["/bin/sh", "-c"]'],
+            TYPE_PYTHON3: ["WORKDIR /devwork", 'ENTRYPOINT ["/bin/sh", "-c"]'],
         }
         self.requirements = self.tmp_dir / "requirements.txt"
         self.requirements.touch()

@@ -37,7 +37,7 @@ CAN_MOUNT_FILES = bool(os.getenv("GITLAB_CI", False)) or (
 
 PYTHON_IMAGE_REGEX = re.compile(r"[\d\w]+/python3?:(?P<python_version>[23]\.\d+)")
 
-TEST_REQUIREMENTS_DIR = Path(__file__).parent / "lint" / "resources"
+TEST_REQUIREMENTS_DIR = Path(__file__).parent.parent / "lint" / "resources"
 
 
 class DockerException(Exception):

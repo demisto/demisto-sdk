@@ -1,6 +1,9 @@
+from pathlib import Path
 from typing import List, Optional
 
+from demisto_sdk.commands.common.content.content import Content
 from demisto_sdk.commands.common.errors import Errors
+from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.hook_validations.base_validator import (
     BaseValidator,
     error_codes,
@@ -54,6 +57,7 @@ class GraphValidator(BaseValidator):
             self.is_file_display_name_already_exists(),
             self.validate_duplicate_ids(),
             self.validate_unique_script_name(),
+            self.validate_deprecated_items_usage(),
         )
         return all(is_valid)
 
@@ -226,6 +230,33 @@ class GraphValidator(BaseValidator):
         ):
             is_valid = False
 
+        return is_valid
+
+    @error_codes("GR107")
+    def validate_deprecated_items_usage(self):
+        """Validate there is no items used deprecated items"""
+        is_valid = True
+        new_files = GitUtil(repo=Content.git()).added_files()
+        items: List[dict] = self.graph.find_items_used_deprecated_items(self.file_paths)
+        for item in items:
+            deprecated_command = item.get("deprecated_command")
+            deprecated_content = item.get("deprecated_content")
+            error_message, error_code = Errors.deprecated_items_usage(
+                deprecated_command or deprecated_content,
+                item.get("object_using_deprecated"),
+                is_deprecated_are_command=deprecated_command is not None,
+            )
+            items_using_deprecated = item.get("object_using_deprecated") or []
+            for item_using_deprecated in items_using_deprecated:
+                if self.handle_error(
+                    error_message,
+                    error_code,
+                    item_using_deprecated,
+                    warning=(
+                        Path(item_using_deprecated) not in new_files
+                    ),  # we raise error only for new content
+                ):
+                    is_valid &= False
         return is_valid
 
     @error_codes("GR103")

@@ -1826,6 +1826,11 @@ ERROR_CODE = {
         "ui_applicable": False,
         "related_field": "",
     },
+    "deprecated_items_usage": {
+        "code": "GR107",
+        "ui_applicable": False,
+        "related_field": "",
+    },
 }
 
 
@@ -4542,6 +4547,19 @@ class Errors:
         return (
             f"Content item '{content_name}' whose to_version is '{toversion}' uses the content items: "
             f"'{', '.join(content_items)}' whose to_version is lower (must be equal to, or more than ..)"
+        )
+
+    @staticmethod
+    @error_code_decorator
+    def deprecated_items_usage(
+        deprecated_item: str,
+        used_deprecated_tems: list,
+        is_deprecated_are_command=False,
+    ):
+        item_prefix = "command" if is_deprecated_are_command else "content item"
+        return (
+            f"The {item_prefix} '{deprecated_item}' are deprecated but used in the content items: "
+            f"'{', '.join(used_deprecated_tems)}'"
         )
 
     @staticmethod

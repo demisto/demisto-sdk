@@ -102,6 +102,29 @@ RETURN content_item_from, collect(r) as relationships, collect(n) as nodes_to"""
     }
 
 
+def get_items_used_deprecated(tx: Transaction, file_paths: List[str]):
+    files_filter = (
+        f"AND (p.path in {file_paths} OR d.path in {file_paths})" if file_paths else ""
+    )
+    command_query = f"""// Returning all the items which using deprecated commands
+    match (p{{deprecated: false}})-[:USES]->(c:Command)<-[:HAS_COMMAND{{deprecated: true}}]-(d:Integration) where not p.is_test
+optional match (i2:Integration)-[:HAS_COMMAND{{deprecated: false}}]->(c)
+with p, c, i2
+where i2 is null
+{files_filter}
+return c.object_id as deprecated_command, collect(p.path) as object_using_deprecated
+"""
+    general_items_query = f"""
+    match (p{{deprecated: false}})-[:USES]->(d{{deprecated: true}}) where not p.is_test
+optional match (p)-[:USES]->(c1:Command)<-[:HAS_COMMAND]-(d)
+with p, d, c1
+where c1 is null
+{files_filter}
+return d.path as deprecated_content, d.content_type as deprecated_content_type, collect(p.path) as object_using_deprecated, p.content_type as object_using_deprecated_type
+    """
+    return list(run_query(tx, command_query)) + list(run_query(tx, general_items_query))
+
+
 def validate_marketplaces(tx: Transaction, pack_ids: List[str]):
     query = f"""// Returns all the USES relationships with where the target's marketplaces doesn't include all of the source's marketplaces
 MATCH

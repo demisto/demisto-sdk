@@ -1,4 +1,6 @@
 {
+    "fromVersion": "8.1.0",
+    "toVersion": "8.3.0",
     "templates_data": [
       {
         "report_name": "sample",

@@ -6,6 +6,7 @@
 * Fixed an issue where an extra levelname was added to a logging message.
 * Added support to run **validate** with `--git` flag on detached HEAD.
 * Added a validation that the **validate** command will fail if the pack name is not prefixed on XSIAM dashboard images.
+* Fixed the **generate-test-playbook** which failed on an unexpected keyword argument - 'console_log_threshold'.
 * Fixed an issue where **validate** command did not fail on non-existent dependency ids of non-mandatory dependant content.
 * Added the `_time` field to the output compare table of the **modeling-rules test** command.
 

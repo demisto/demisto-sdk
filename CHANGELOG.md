@@ -1,6 +1,37 @@
 # Changelog
-
 ## Unreleased
+* Added a check to **is_docker_image_latest_tag** to only fail the validation on non-latest image tag when the current tag is older than 3 days.
+* Fixed an issue where **upload** would not properly show the installed version in the UI.
+* Fixed an issue where the `contribution_converter` failed replacing generated release notes with the contribution form release notes.
+* Fixed an issue where an extra levelname was added to a logging message.
+* Added support to run **validate** with `--git` flag on detached HEAD.
+* Added a validation that the **validate** command will fail if the pack name is not prefixed on XSIAM dashboard images.
+* Fixed the **generate-test-playbook** which failed on an unexpected keyword argument - 'console_log_threshold'.
+* Fixed an issue where **validate** command did not fail on non-existent dependency ids of non-mandatory dependant content.
+
+## 1.15.5
+* **Breaking Change**: The default of the **upload** command `--zip` argument is `true`. To upload packs as custom content items use the `--no-zip` argument.
+* Removed the `no-implicit-optional` hook from **pre-commit**.
+* Removed the `markdownlint` hook from **pre-commit**.
+* Fixed an issue in **run-unit-tests** to pass with warnings when no tests are collected.
+* Fixed an issue in **run-unit-tests** with the coverage calculation.
+* Fixed a notification about log file location appeared more than once.
+* Updated the error message when code coverage is below the threshold in **coverage-analyze** to be printed in a more noticeable red color.
+* Fixed an issue in **upload** that failed when a comma-separated list of paths is passed to the `--input` argument.
+* Running **validate** with the `--graph` flag will now run the graph validations after all other validations.
+* improved the generated release note for newly added XSIAM entities when running *update-release-notes* command.
+* Fixed an issue where in some cases validation failed when mapping null values.
+* Fixed an issue in **upload** command where the `--keep-zip` argument did not clean the working directory.
+* Fixed an issue where an extra levelname was added to a logging message.
+* Fixed an issue in **upload** where uploading packs to XSIAM failed due to version mismatch.
+
+## 1.15.4
+* Fixed an issue where *update-release-notes* and *doc-review* did not handle new content notes as expected.
+* Fixed an issue in PEP484 (no-implicit-optional) hook to **pre-commit**.
+* Fixed an issue in **upload** with `--input-config-file` where the content items weren't uploaded in the correct pack.
+* Added support to disable the default logging colors with the **DEMISTO_SDK_LOG_NO_COLORS** environment variable.
+
+## 1.15.3
 * Added the `--init` flag to **download**.
 * Added the `--keep-empty-folders` flag to **download**.
 * Added `markdown-lint` to **pre-commit**

@@ -9,6 +9,7 @@ from demisto_sdk.__main__ import main
 from demisto_sdk.commands.common.constants import ENV_DEMISTO_SDK_MARKETPLACE
 from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
 from demisto_sdk.commands.common.legacy_git_tools import git_path
+from demisto_sdk.commands.content_graph.parsers import base_content
 from demisto_sdk.tests.test_files.validate_integration_test_valid_types import (
     DASHBOARD,
     GENERIC_MODULE,
@@ -327,6 +328,7 @@ class TestLayoutUnifer:
         )
 
         output = "test.json"
+        mocker.patch.object(base_content, "CONTENT_PATH", repo.path)
 
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)

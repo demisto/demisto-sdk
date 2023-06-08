@@ -148,9 +148,7 @@ def verify_results(
                 break
 
         if expected_values:
-            if expected_time_value := expected_values.get("_time") and (
-                time_value := result.get("_time")
-            ):
+            if (expected_time_value := expected_values.get("_time")) and (time_value := result.get("_time")):  # fmt: skip
                 time_with_ms = "." in expected_time_value
                 result["_time"] = convert_epoch_time_to_string_time(
                     time_value, timezone_delta, time_with_ms

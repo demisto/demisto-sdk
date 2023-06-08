@@ -1,6 +1,9 @@
 # Changelog
 ## Unreleased
-
+* Added a new **validate** check, prevent change of `marketplaces` field (BC106)
+* Added a new **validate** check, prevent change of `toversion` field (BC107)
+* Added a new **validate** check, prevent change of `fromversion`  field (BC108,BC109))
+  
 ## 1.15.5
 * **Breaking Change**: The default of the **upload** command `--zip` argument is `true`. To upload packs as custom content items use the `--no-zip` argument.
 * Removed the `no-implicit-optional` hook from **pre-commit**.

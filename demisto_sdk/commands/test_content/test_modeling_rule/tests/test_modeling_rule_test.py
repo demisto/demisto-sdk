@@ -1098,11 +1098,15 @@ class TestTheTestModelingRuleCommandInteractive:
     ],
 )
 def test_convert_epoch_time_to_string_time(
-    epoc_time, timezone_delta, with_ms, human_readable_time
+    mocker, epoc_time, timezone_delta, with_ms, human_readable_time
 ):
+    from dateutil import tz
+
     from demisto_sdk.commands.test_content.test_modeling_rule.test_modeling_rule import (
         convert_epoch_time_to_string_time,
     )
+
+    mocker.patch("dateutil.tz.tzlocal", return_value=tz.gettz("Asia/Jerusalem"))
 
     assert (
         convert_epoch_time_to_string_time(epoc_time, timezone_delta, with_ms)

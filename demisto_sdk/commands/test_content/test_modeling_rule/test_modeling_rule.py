@@ -144,7 +144,7 @@ def verify_results(
         for e in test_data.data:
             if str(e.test_data_event_id) == td_event_id:
                 expected_values = e.expected_values
-                timezone_delta = int(e.event_data.get("timezone_delta") or 0)
+                timezone_delta = int(e.timezone_delta or 0)
                 break
 
         if expected_values:

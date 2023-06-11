@@ -220,18 +220,6 @@ class TestValidators:
         (INVALID_SCRIPT_PATH, SCRIPT_TARGET, False, ScriptValidator),
         (VALID_TEST_PLAYBOOK_PATH, PLAYBOOK_TARGET, True, PlaybookValidator),
         (INVALID_PLAYBOOK_PATH, PLAYBOOK_TARGET, False, PlaybookValidator),
-        (
-            INVALID_XSIAM_DASHBOARD_PATH,
-            XSIAM_DASHBOARD_TARGET,
-            False,
-            XSIAMDashboardValidator,
-        ),
-        (
-            INVALID_XSIAM_CORRELATION_PATH,
-            XSIAM_CORRELATION_TARGET,
-            False,
-            CorrelationRuleValidator,
-        ),
     ]
 
     def test_validation_of_beta_playbooks(self, mocker):
@@ -283,8 +271,24 @@ class TestValidators:
         finally:
             os.remove(target)
 
+    XSIAM_IS_VALID_FROM_VERSION = [
+        (
+            INVALID_XSIAM_DASHBOARD_PATH,
+            XSIAM_DASHBOARD_TARGET,
+            False,
+            XSIAMDashboardValidator,
+        ),
+        (
+            INVALID_XSIAM_CORRELATION_PATH,
+            XSIAM_CORRELATION_TARGET,
+            False,
+            CorrelationRuleValidator,
+        ),
+    ]
+
     @pytest.mark.parametrize(
-        "source, target, answer, validator", INPUTS_IS_VALID_VERSION
+        "source, target, answer, validator",
+        (XSIAM_IS_VALID_FROM_VERSION + INPUTS_IS_VALID_VERSION),
     )
     def test_is_valid_fromversion(
         self, source: str, target: str, answer: Any, validator: ContentEntityValidator

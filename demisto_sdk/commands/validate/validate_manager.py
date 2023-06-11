@@ -27,6 +27,7 @@ from demisto_sdk.commands.common.constants import (
     FileType,
     FileType_ALLOWED_TO_DELETE,
     PathLevel,
+    XSIAM_DASHBOARDS_DIR,
 )
 from demisto_sdk.commands.common.content import Content
 from demisto_sdk.commands.common.content_constant_paths import (
@@ -477,6 +478,7 @@ class ValidateManager:
             with GraphValidator(
                 specific_validations=self.specific_validations,
                 input_files=files_to_validate,
+                include_optional_deps=True,
             ) as graph_validator:
                 files_validation_result.add(graph_validator.is_valid_content_graph())
 
@@ -563,8 +565,14 @@ class ValidateManager:
             logger.info(
                 f"\n[cyan]================= Validating graph =================[/cyan]"
             )
+            specific_validations_list = (
+                self.specific_validations if self.specific_validations else []
+            )
             with GraphValidator(
-                specific_validations=self.specific_validations
+                specific_validations=self.specific_validations,
+                include_optional_deps=(
+                    True if "GR103" in specific_validations_list else False
+                ),
             ) as graph_validator:
                 all_packs_valid.add(graph_validator.is_valid_content_graph())
 
@@ -630,6 +638,10 @@ class ValidateManager:
                         file_path.endswith(".json")
                         or file_path.endswith(".yml")
                         or file_path.endswith(".md")
+                        or (
+                            content_entity_dir_path.endswith(XSIAM_DASHBOARDS_DIR)
+                            and file_path.endswith(".png")
+                        )
                     ):
                         content_entities_validation_results.add(
                             self.run_validations_on_file(
@@ -1314,6 +1326,7 @@ class ValidateManager:
                 with GraphValidator(
                     specific_validations=self.specific_validations,
                     git_files=all_files_set,
+                    include_optional_deps=True,
                 ) as graph_validator:
                     validation_results.add(graph_validator.is_valid_content_graph())
 

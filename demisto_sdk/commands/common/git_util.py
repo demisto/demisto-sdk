@@ -517,13 +517,13 @@ class GitUtil:
             Set: of Paths to files changed in the current branch.
         """
         remote, branch = self.handle_prev_ver(prev_ver)
-        current_branch_or_hash = self.get_current_git_branch_or_hash()
+        current_hash = self.get_current_commit_hash()
 
         if remote:
             return {
                 Path(os.path.join(item))
                 for item in self.repo.git.diff(
-                    "--name-only", f"{remote}/{branch}...{current_branch_or_hash}"
+                    "--name-only", f"{remote}/{branch}...{current_hash}"
                 ).split("\n")
                 if item
             }
@@ -533,7 +533,7 @@ class GitUtil:
             return {
                 Path(os.path.join(item))
                 for item in self.repo.git.diff(
-                    "--name-only", f"{branch}...{current_branch_or_hash}"
+                    "--name-only", f"{branch}...{current_hash}"
                 ).split("\n")
                 if item
             }
@@ -550,7 +550,7 @@ class GitUtil:
             running on master against master.
         """
         # when checking branch against itself only return the last commit.
-        if self.get_current_working_branch() != self.handle_prev_ver(prev_ver)[1]:
+        if self.get_current_git_branch_or_hash() != self.handle_prev_ver(prev_ver)[1]:
             return set()
 
         try:

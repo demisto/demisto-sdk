@@ -175,7 +175,7 @@ def test_incident_id_passed_to_run(mocker, monkeypatch, set_environment_variable
     assert not run_result.exception
 
     assert str_in_call_args_list(
-        logger_debug.call_args_list, "running command in investigation_id=pg_id"
+        logger_debug.call_args_list, "running command in investigation_id='pg_id'"
     )
     assert logger_warning.call_count == 0
     assert logger_error.call_count == 0

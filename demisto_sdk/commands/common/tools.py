@@ -820,8 +820,8 @@ def get_file(
             return yaml.load(io.StringIO(replaced))
         else:
             result = json.load(io.StringIO(file_content))
-        # It's possible to that the result will be `str` after loading it. In this case, we need to load it again.
-        return json.loads(result) if isinstance(result, str) else result
+            # It's possible to that the result will be `str` after loading it. In this case, we need to load it again.
+            return json.loads(result) if isinstance(result, str) else result
     except Exception as e:
         logger.error(
             f"{file_path} has a structure issue of file type {type_of_file}\n{e}"

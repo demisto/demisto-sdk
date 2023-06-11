@@ -154,7 +154,7 @@ def test_incident_id_passed_to_run(mocker, monkeypatch, set_environment_variable
     Then
     - Ensure the investigation-id is set from the incident-id.
     """
-    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+    logger_debug = mocker.patch.object(logging.getLogger("demisto-sdk"), "debug")
     logger_warning = mocker.patch.object(logging.getLogger("demisto-sdk"), "warning")
     logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
     monkeypatch.setenv("COLUMNS", "1000")
@@ -175,7 +175,7 @@ def test_incident_id_passed_to_run(mocker, monkeypatch, set_environment_variable
     assert not run_result.exception
 
     assert str_in_call_args_list(
-        logger_info.call_args_list, "run investigation_id is: pg_id"
+        logger_debug.call_args_list, "running command in investigation_id=pg_id"
     )
     assert logger_warning.call_count == 0
     assert logger_error.call_count == 0

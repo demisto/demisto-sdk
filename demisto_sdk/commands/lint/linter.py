@@ -11,7 +11,6 @@ import docker.errors
 import docker.models.containers
 import git
 import requests.exceptions
-import urllib3.exceptions
 from packaging.version import parse
 from wcmatch.pathlib import NEGATE, Path
 
@@ -949,30 +948,8 @@ class Linter:
             container_type=self._pkg_lint_status["pack_type"],
             log_prompt=log_prompt,
             python_version=py_ver,
+            push=self._docker_hub_login,
         )
-
-        if self._docker_hub_login:
-            for _ in range(2):
-                try:
-                    test_image_name_to_push = test_image_name.replace(
-                        "docker-io.art.code.pan.run/", ""
-                    )
-                    docker_push_output = self._docker_client.images.push(
-                        test_image_name_to_push
-                    )
-                    logger.info(
-                        f"{log_prompt} - Trying to push Image {test_image_name_to_push} to repository. Output = {docker_push_output}"
-                    )
-                    break
-                except (
-                    requests.exceptions.ConnectionError,
-                    urllib3.exceptions.ReadTimeoutError,
-                    requests.exceptions.ReadTimeout,
-                ):
-                    logger.info(
-                        f"{log_prompt} - Unable to push image {test_image_name} to repository"
-                    )
-
         return test_image_name, errors
 
     def _docker_remove_container(self, container_name: str):

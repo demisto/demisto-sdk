@@ -11,6 +11,7 @@ from typing import Dict, List, Optional, Tuple, Union
 
 import docker
 import requests
+import urllib3
 from docker.types import Mount
 from packaging.version import Version
 from requests import JSONDecodeError
@@ -188,6 +189,8 @@ class DockerBase:
         image: str,
         container_type: str = TYPE_PYTHON,
         install_packages: Optional[List[str]] = None,
+        push: bool = False,
+        log_prompt: str = "",
     ) -> docker.models.images.Image:
         """
         this function is used to create a new image of devtestsdemisto docker images.
@@ -230,6 +233,29 @@ class DockerBase:
                 tag=tag,
                 changes=self.changes[container_type],
             )
+        if push:
+            for _ in range(2):
+                try:
+
+                    test_image_name_to_push = image.replace(
+                        "docker-io.art.code.pan.run/", ""
+                    )
+                    docker_push_output = init_global_docker_client().images.push(
+                        test_image_name_to_push
+                    )
+                    logger.info(
+                        f"{log_prompt} - Trying to push Image {test_image_name_to_push} to repository. Output = {docker_push_output}"
+                    )
+                    break
+                except (
+                    requests.exceptions.ConnectionError,
+                    urllib3.exceptions.ReadTimeoutError,
+                    requests.exceptions.ReadTimeout,
+                ):
+                    logger.info(
+                        f"{log_prompt} - Unable to push image {image} to repository"
+                    )
+
         return image
 
     def pull_or_create_test_image(
@@ -238,6 +264,7 @@ class DockerBase:
         container_type: str = TYPE_PYTHON,
         python_version: Optional[int] = None,
         additional_requirements: Optional[List[str]] = None,
+        push: bool = False,
         log_prompt: str = "",
     ) -> Tuple[str, str]:
         """This will generate the test image for the given base image.
@@ -281,7 +308,11 @@ class DockerBase:
             )
             try:
                 self.create_image(
-                    base_image, test_docker_image, container_type, pip_requirements
+                    base_image,
+                    test_docker_image,
+                    container_type,
+                    pip_requirements,
+                    push=push,
                 )
             except (docker.errors.BuildError, docker.errors.APIError, Exception):
                 errors = traceback.format_exc()

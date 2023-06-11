@@ -815,7 +815,7 @@ def get_file(
         logger.error(f"Could not read file {file_path}.\nError: {e}")
         return {}
     try:
-        if type_of_file in {"yml", ".yml", "yaml", ".yaml"}:
+        if type_of_file.lstrip(".") in {"yml", "yaml"}:
             replaced = re.sub(r"(simple: \s*\n*)(=)(\s*\n)", r'\1"\2"\3', file_content)
             result = yaml.load(io.StringIO(replaced))
         else:

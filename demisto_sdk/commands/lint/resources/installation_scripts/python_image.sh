@@ -1,18 +1,9 @@
 #!/bin/sh
 set -e
-# if [ -f '/etc/ssl/certs/ca-certificates.crt' ]
-# then
-#     set REQUESTS_CA_BUNDLE='/etc/ssl/certs/ca-certificates.crt'
-# fi
-CONNECT_SERVER="github.com:443"
-
-FILE=/etc/ssl/certs/certs.crt
-
-REGEX_BEGIN="/^-----BEGIN CERTIFICATE-----$/"
-REGEX_END="/^-----END CERTIFICATE-----$"
-openssl s_client -showcerts -connect $CONNECT_SERVER | \
-    sed -n "$REGEX_BEGIN,$REGEX_END/p" > "$FILE"
-update-ca-certificates
+if [ -f '/etc/ssl/certs/ca-certificates.crt' ]
+then
+    set REQUESTS_CA_BUNDLE='/etc/ssl/certs/ca-certificates.crt'
+fi
 mkdir -p /devwork/
 cd /devwork
 chown -R :4000 /devwork/

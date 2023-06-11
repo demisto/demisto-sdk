@@ -1,4 +1,3 @@
-import os
 from pathlib import Path
 
 import pytest
@@ -68,7 +67,7 @@ def test_config_files(mocker, repo: Repo, is_test: bool):
     assert files_to_run == relative_paths
 
     pre_commit = pre_commit_command.PreCommitRunner(
-        group_by_python_version(files_to_run), ""
+        None, group_by_python_version(files_to_run), ""
     )
     assert (
         Path(script1.yml.path).relative_to(repo.path)
@@ -97,11 +96,9 @@ def test_config_files(mocker, repo: Repo, is_test: bool):
     # precommit should not run on python2 files, unless test files
     assert mock_subprocess.call_count == 3 if not is_test else 4
 
-    tests_we_should_skip = {"format", "validate", "secrets"}
+    tests_we_should_skip = {"format", "validate", "secrets", "no-implicit-optional"}
     if not is_test:
         tests_we_should_skip.add("run-unit-tests")
-    if os.getenv("CI"):
-        tests_we_should_skip.add("update-docker-image")
     for m in mock_subprocess.call_args_list:
         assert set(m.kwargs["env"]["SKIP"].split(",")) == tests_we_should_skip
 

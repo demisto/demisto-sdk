@@ -308,7 +308,10 @@ class ReleaseNotesValidator(BaseValidator):
                 error_message, error_code, file_path=self.release_notes_file_path
             ):
                 return False
-        elif "%%UPDATE_RN%%" in release_notes_comments:
+        elif any(
+            note in release_notes_comments
+            for note in ["%%UPDATE_RN%%", "%%XSIAM_VERSION%%"]
+        ):
             error_message, error_code = Errors.release_notes_not_finished()
             if self.handle_error(
                 error_message, error_code, file_path=self.release_notes_file_path

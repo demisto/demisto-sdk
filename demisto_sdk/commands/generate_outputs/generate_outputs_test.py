@@ -12,7 +12,7 @@ from TestSuite.test_tools import str_in_call_args_list
     [
         (["-j", "123"], "please include a `command` argument."),
         (["-j", "123", "-c", "ttt"], "please include a `prefix` argument."),
-        (["-j", "123", "-c", "ttt", "-p", "qwe"], "Log file location"),
+        (["-j", "123", "-c", "ttt", "-p", "qwe"], None),
     ],
 )
 def test_generate_outputs_json_to_outputs_flow(

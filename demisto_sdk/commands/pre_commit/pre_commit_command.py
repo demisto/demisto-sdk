@@ -31,6 +31,7 @@ from demisto_sdk.commands.pre_commit.hooks.mypy import MypyHook
 from demisto_sdk.commands.pre_commit.hooks.pep484 import PEP484Hook
 from demisto_sdk.commands.pre_commit.hooks.pycln import PyclnHook
 from demisto_sdk.commands.pre_commit.hooks.ruff import RuffHook
+from demisto_sdk.commands.pre_commit.hooks.validate_format import ValidateFormatHook
 
 yaml = YAML_Handler()
 json = JSON_Handler()
@@ -40,7 +41,8 @@ IS_GITHUB_ACTIONS = os.getenv("GITHUB_ACTIONS", False)
 PRECOMMIT_TEMPLATE_PATH = Path(__file__).parent / ".pre-commit-config_template.yaml"
 PRECOMMIT_PATH = CONTENT_PATH / ".pre-commit-config-content.yaml"
 
-SKIPPED_HOOKS = {"format", "validate", "secrets"}
+# UNSKIP no-implicit-optional once mypy is updated
+SKIPPED_HOOKS = {"format", "validate", "secrets", "no-implicit-optional"}
 
 INTEGRATION_SCRIPT_REGEX = re.compile(r"^Packs/.*/(?:Integrations|Scripts)/.*.yml$")
 
@@ -49,6 +51,7 @@ INTEGRATION_SCRIPT_REGEX = re.compile(r"^Packs/.*/(?:Integrations|Scripts)/.*.ym
 class PreCommitRunner:
     """This class is responsible of running pre-commit hooks."""
 
+    input_files: Optional[Iterable[Path]]
     python_version_to_files: Dict[str, Set[Path]]
     demisto_sdk_commit_hash: str
 
@@ -93,6 +96,8 @@ class PreCommitRunner:
         RuffHook(hooks["ruff"]).prepare_hook(python_version, IS_GITHUB_ACTIONS)
         MypyHook(hooks["mypy"]).prepare_hook(python_version)
         PEP484Hook(hooks["no-implicit-optional"]).prepare_hook(python_version)
+        ValidateFormatHook(hooks["validate"]).prepare_hook(self.input_files)
+        ValidateFormatHook(hooks["format"]).prepare_hook(self.input_files)
 
     def run(
         self,
@@ -108,9 +113,6 @@ class PreCommitRunner:
         precommit_env = os.environ.copy()
         skipped_hooks: set = SKIPPED_HOOKS
         skipped_hooks |= set(skip_hooks or [])
-        if os.getenv("CI"):
-            # No reason to update the docker-image on CI, as we don't commit from the CI
-            skipped_hooks.add("update-docker-image")
         if not unit_test:
             skipped_hooks.add("run-unit-tests")
         if validate and "validate" in skipped_hooks:
@@ -225,6 +227,12 @@ def group_by_python_version(files: Set[Path]) -> Dict[str, set]:
             integration_script, IntegrationScript
         ):
             continue
+        if integration_script.deprecated:
+            logger.info(
+                f"Skipping pre-commit on deprecated integration {integration_script.name}"
+            )
+            continue
+
         code_file_path = integration_script.path.parent
         python_version = get_python_version(integration_script.docker_image)
         python_version_string = f"{python_version.major}.{python_version.minor}"
@@ -282,7 +290,9 @@ def pre_commit_manager(
     logger.info(f"Running pre-commit on {files_to_run_string}")
     if not sdk_ref:
         sdk_ref = f"v{get_last_remote_release_version()}"
-    pre_commit_runner = PreCommitRunner(group_by_python_version(files_to_run), sdk_ref)
+    pre_commit_runner = PreCommitRunner(
+        input_files, group_by_python_version(files_to_run), sdk_ref
+    )
     return pre_commit_runner.run(
         unit_test,
         skip_hooks,

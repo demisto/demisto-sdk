@@ -822,9 +822,10 @@ def get_file(
             result = json.load(io.StringIO(file_content))
 
     except Exception as e:
-        raise ValueError(
+        logger.error(
             f"{file_path} has a structure issue of file type {type_of_file}\n{e}"
         )
+        return {}
 
     if isinstance(result, (dict, list)):
         return result

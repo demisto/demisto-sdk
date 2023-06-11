@@ -175,7 +175,7 @@ def test_build_pytest_command_2():
     from demisto_sdk.commands.lint.commands_builder import build_pytest_command
 
     command = (
-        "pytest -ra --override-ini='asyncio_mode=auto'--junitxml=/devwork/report_pytest.xml "
+        "pytest -ra --override-ini='asyncio_mode=auto' --junitxml=/devwork/report_pytest.xml "
         "--json=/devwork/report_pytest.json"
     )
     assert command == build_pytest_command(test_xml="test", json=True)

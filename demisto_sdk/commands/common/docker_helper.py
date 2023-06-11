@@ -5,7 +5,6 @@ import re
 import shutil
 import tarfile
 import tempfile
-import traceback
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple, Union
 
@@ -314,9 +313,9 @@ class DockerBase:
                     pip_requirements,
                     push=push,
                 )
-            except (docker.errors.BuildError, docker.errors.APIError, Exception):
-                errors = traceback.format_exc()
-                logger.critical(f"{log_prompt} - Build errors occurred {errors}")
+            except (docker.errors.BuildError, docker.errors.APIError, Exception) as e:
+                errors = str(e)
+                logger.critical(f"{log_prompt} - Build errors occurred: {errors}")
 
         return test_docker_image, errors
 

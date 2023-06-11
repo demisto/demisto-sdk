@@ -27,8 +27,8 @@ DOCKER_PYTHONPATH = [
 
 DEFAULT_DOCKER_IMAGE = "demisto/python:1.3-alpine"
 
-PYTEST_RUNNER = f"{(Path(__file__).parent / 'pytest_runner.sh')}"
-POWERSHELL_RUNNER = f"{(Path(__file__).parent / 'pwsh_test_runner.sh')}"
+PYTEST_COMMAND = "python -m pytest . -vv --rootdir=/content --junitxml=.report_pytest.xml --cov-report= --cov=."
+PWSH_COMMAND = "pwsh Invoke-Pester -Configuration '@{Run=@{Exit=$true}; Output=@{Verbosity=\"Detailed\"}}'"
 TEST_REQUIREMENTS_DIR = Path(__file__).parent.parent / "lint" / "resources"
 
 
@@ -117,12 +117,6 @@ def unit_test_runner(file_paths: List[Path], verbose: bool = False) -> int:
         working_dir = (
             f"/content/{integration_script.path.parent.relative_to(CONTENT_PATH)}"
         )
-        runner = (
-            POWERSHELL_RUNNER
-            if integration_script.type == "powershell"
-            else PYTEST_RUNNER
-        )
-        shutil.copy(runner, integration_script.path.parent / "test_runner.sh")
         docker_images = [integration_script.docker_image or DEFAULT_DOCKER_IMAGE]
         if os.getenv("GITLAB_CI"):
             docker_images = [
@@ -166,7 +160,11 @@ def unit_test_runner(file_paths: List[Path], verbose: bool = False) -> int:
                     volumes=[
                         f"{CONTENT_PATH}:/content",
                     ],
-                    command=[f"sh {working_dir}/test_runner.sh"],
+                    command=[
+                        PWSH_COMMAND
+                        if integration_script.type == "powershell"
+                        else PYTEST_COMMAND
+                    ],
                     working_dir=working_dir,
                     detach=True,
                 )

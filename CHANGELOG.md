@@ -1,4 +1,3 @@
-# Changelog
 ## Unreleased
 * Added a check to **is_docker_image_latest_tag** to only fail the validation on non-latest image tag when the current tag is older than 3 days.
 * Fixed an issue where **upload** would not properly show the installed version in the UI.

@@ -20,6 +20,7 @@ from pylint.checkers import BaseChecker
 from pylint.interfaces import IAstroidChecker
 
 from demisto_sdk.commands.common.handlers import YAML_Handler
+from demisto_sdk.commands.common.logger import logger
 
 # -------------------------------------------- Messages ------------------------------------------------
 
@@ -150,8 +151,10 @@ class CertifiedPartnerChecker(BaseChecker):
         try:
             if node.func.attrname == "results" and node.func.expr.name == "demisto":
                 self.add_message("demisto-results-exists", node=node)
-        except Exception:
-            pass
+        except Exception as e:
+            logger.info(
+                f"An error occured while checking `demisto results`, Error: {e}"
+            )
 
     def _demisto_results_checker(self, node):
         """

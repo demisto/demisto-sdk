@@ -147,7 +147,7 @@ class BaseContent(ABC, BaseModel, metaclass=BaseContentMetaclass):
                 )
             except InvalidContentItemException:
                 logger.error(
-                    f"Invalid content path provided: {str(path)}. Please provide a valid content item or pack path."
+                    f"Could not parse content from {str(path)}"
                 )
                 return None
         try:

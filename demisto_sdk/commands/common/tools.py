@@ -817,12 +817,11 @@ def get_file(
     try:
         if type_of_file.lstrip(".") in {"yml", "yaml"}:
             replaced = re.sub(r"(simple: \s*\n*)(=)(\s*\n)", r'\1"\2"\3', file_content)
-            result = yaml.load(io.StringIO(replaced))
+            return yaml.load(io.StringIO(replaced))
         else:
             result = json.load(io.StringIO(file_content))
-        if isinstance(result, str):
-            result = json.loads(result)
-        return result
+        # It's possible to that the result will be `str` after loading it. In this case, we need to load it again.
+        return json.loads(result) if isinstance(result, str) else result
     except Exception as e:
         logger.error(
             f"{file_path} has a structure issue of file type {type_of_file}\n{e}"

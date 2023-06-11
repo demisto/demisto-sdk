@@ -249,18 +249,17 @@ def test_is_suffix_name_valid(
     When: running is_valid_rule_suffix_name.
     Then: Validate that the modeling rule is valid/invalid and the message (in case of invalid) is as expected.
     """
+    pack = repo.create_pack("TestPack")
+    dummy_modeling_rule = pack.create_modeling_rule(rule_file_name)
+    structure_validator = StructureValidator(dummy_modeling_rule.yml.path)
+    dummy_modeling_rule.yml.write_dict(rule_dict)
+    error_message = mocker.patch(
+        "demisto_sdk.commands.common.hook_validations.modeling_rule.ModelingRuleValidator.handle_error",
+        side_effect=mock_handle_error,
+    )
+
     with ChangeCWD(repo.path):
-        pack = repo.create_pack("TestPack")
-        dummy_modeling_rule = pack.create_modeling_rule(rule_file_name)
-        structure_validator = StructureValidator(dummy_modeling_rule.yml.path)
-        dummy_modeling_rule.yml.write_dict(rule_dict)
-        error_message = mocker.patch(
-            "demisto_sdk.commands.common.hook_validations.modeling_rule.ModelingRuleValidator.handle_error",
-            side_effect=mock_handle_error,
-        )
-
         modeling_rule_validator = ModelingRuleValidator(structure_validator)
-
         assert modeling_rule_validator.is_valid_rule_suffix_name() == valid
         if not valid:
             assert (

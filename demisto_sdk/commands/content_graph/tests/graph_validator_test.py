@@ -490,7 +490,7 @@ def test_are_fromversion_relationships_paths_valid(repository: ContentDTO, mocke
 
 
 @pytest.mark.parametrize(
-    "should_provide_integration_path, is_valid",
+    "include_optional, is_valid",
     [
         pytest.param(
             False,
@@ -507,7 +507,7 @@ def test_are_fromversion_relationships_paths_valid(repository: ContentDTO, mocke
 def test_is_file_using_unknown_content(
     mocker,
     repository: ContentDTO,
-    should_provide_integration_path: bool,
+    include_optional: bool,
     is_valid: bool,
 ):
     """
@@ -517,30 +517,18 @@ def test_is_file_using_unknown_content(
     When
     - running the vaidation "is_file_using_unknown_content"
     Then
-    - Check whether the graph is valid or not, based on whether the integration file path was provided
+    - Check whether the graph is valid or not, based on whether optional content dependencies were included.
     """
     logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
     logger_warning = mocker.patch.object(logging.getLogger("demisto-sdk"), "warning")
-    if should_provide_integration_path:
-        git_files = [repository.packs[0].content_items.integration[0].path.as_posix()]
-    else:
-        git_files = []
-    with GraphValidator(should_update=False, git_files=git_files) as graph_validator:
+
+    with GraphValidator(
+        should_update=False, git_files=[], include_optional_deps=include_optional
+    ) as graph_validator:
         create_content_graph(graph_validator.graph)
         assert graph_validator.is_file_using_unknown_content() == is_valid
 
-    found_level = False
-    str_to_search, logger_to_search = (
-        ("[warning]", logger_warning) if is_valid else ("[error]", logger_info)
-    )
-    for current_call in logger_to_search.call_args_list:
-        if (
-            type(current_call[0]) == tuple
-            and str_to_search in current_call[0][0].lower()
-        ):
-            found_level = True
-            break
-    assert found_level
+    logger_to_search = logger_warning if is_valid else logger_info
 
     assert str_in_call_args_list(
         logger_to_search.call_args_list,

@@ -1,7 +1,15 @@
 # Changelog
 ## Unreleased
 * Added new **validate** checks, preventing unwanted changes of the marketplaces (BC108,BC109), toversion (BC107)  and fromversion (BC106) fields.
-
+* Added a check to **is_docker_image_latest_tag** to only fail the validation on non-latest image tag when the current tag is older than 3 days.
+* Fixed an issue where **upload** would not properly show the installed version in the UI.
+* Fixed an issue where the `contribution_converter` failed replacing generated release notes with the contribution form release notes.
+* Fixed an issue where an extra levelname was added to a logging message.
+* Added support to run **validate** with `--git` flag on detached HEAD.
+* Added a validation that the **validate** command will fail if the pack name is not prefixed on XSIAM dashboard images.
+* Fixed the **generate-test-playbook** which failed on an unexpected keyword argument - 'console_log_threshold'.
+* Fixed an issue where **prepare-content** would not properly parse the `fromVersion` and `toVersion` attributes of XSIAM-Dashbaord and XSIAM-Report content items.
+* Fixed an issue where **validate** command did not fail on non-existent dependency ids of non-mandatory dependant content.
 
 ## 1.15.5
 * **Breaking Change**: The default of the **upload** command `--zip` argument is `true`. To upload packs as custom content items use the `--no-zip` argument.

@@ -4,6 +4,11 @@
 * Fixed an issue where **upload** would not properly show the installed version in the UI.
 * Fixed an issue where the `contribution_converter` failed replacing generated release notes with the contribution form release notes.
 * Fixed an issue where an extra levelname was added to a logging message.
+* Added support to run **validate** with `--git` flag on detached HEAD.
+* Added a validation that the **validate** command will fail if the pack name is not prefixed on XSIAM dashboard images.
+* Fixed the **generate-test-playbook** which failed on an unexpected keyword argument - 'console_log_threshold'.
+* Fixed an issue where **prepare-content** would not properly parse the `fromVersion` and `toVersion` attributes of XSIAM-Dashbaord and XSIAM-Report content items.
+* Fixed an issue where **validate** command did not fail on non-existent dependency ids of non-mandatory dependant content.
 * Added validation and formatting for *fromversion* field in *Correlation Rule* and *XSIAM Dashboard* files.
 
 ## 1.15.5

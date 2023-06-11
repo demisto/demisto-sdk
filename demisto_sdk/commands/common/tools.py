@@ -801,31 +801,30 @@ def get_file(
         get_file.cache_clear()
     file_path = Path(file_path)  # type: ignore[arg-type]
     if not type_of_file:
-        type_of_file = file_path.suffix
+        type_of_file = file_path.suffix.lower()
+        logger.debug(f"The {type_of_file=} was not provided, so it was inferred.")
+
     if not file_path.exists():
         file_path = Path(get_content_path()) / file_path  # type: ignore[arg-type]
 
     if not file_path.exists():
         raise FileNotFoundError(file_path)
 
-    if type_of_file in file_path.suffix:  # e.g. 'yml' in '.yml'
-        file_content = _read_file(file_path)
-        try:
-            if type_of_file in {"yml", ".yml"}:
-                replaced = re.sub(
-                    r"(simple: \s*\n*)(=)(\s*\n)", r'\1"\2"\3', file_content
-                )
-                result = yaml.load(io.StringIO(replaced))
-            else:
-                result = json.load(io.StringIO(file_content))
+    file_content = _read_file(file_path)
+    try:
+        if type_of_file in {"yml", ".yml"}:
+            replaced = re.sub(r"(simple: \s*\n*)(=)(\s*\n)", r'\1"\2"\3', file_content)
+            result = yaml.load(io.StringIO(replaced))
+        else:
+            result = json.load(io.StringIO(file_content))
 
-        except Exception as e:
-            raise ValueError(
-                f"{file_path} has a structure issue of file type {type_of_file}\n{e}"
-            )
+    except Exception as e:
+        raise ValueError(
+            f"{file_path} has a structure issue of file type {type_of_file}\n{e}"
+        )
 
-        if isinstance(result, (dict, list)):
-            return result
+    if isinstance(result, (dict, list)):
+        return result
     return {}
 
 

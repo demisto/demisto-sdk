@@ -151,7 +151,7 @@ class PackParser(BaseContentParser, PackMetadataParser):
             metadata = get_json(path / PACK_METADATA_FILENAME)
         except FileNotFoundError:
             raise InvalidContentItemException(
-                f"{PACK_METADATA_FILENAME} not found in pack"
+                f"{PACK_METADATA_FILENAME} not found in pack in {path=}"
             )
         PackMetadataParser.__init__(self, metadata)
         self.content_items: PackContentItems = PackContentItems()

@@ -1421,8 +1421,8 @@ class TestParsersAndModels:
             expected_name="New Import test ",
             expected_path=xsiam_dashboard_path,
             expected_content_type=ContentType.XSIAM_DASHBOARD,
-            expected_fromversion=DEFAULT_CONTENT_ITEM_FROM_VERSION,
-            expected_toversion=DEFAULT_CONTENT_ITEM_TO_VERSION,
+            expected_fromversion="8.1.0",
+            expected_toversion="8.3.0",
         )
 
     def test_xsiam_report_parser(self, pack: Pack):
@@ -1454,8 +1454,8 @@ class TestParsersAndModels:
             expected_name="sample",
             expected_path=xsiam_report_path,
             expected_content_type=ContentType.XSIAM_REPORT,
-            expected_fromversion=DEFAULT_CONTENT_ITEM_FROM_VERSION,
-            expected_toversion=DEFAULT_CONTENT_ITEM_TO_VERSION,
+            expected_fromversion="8.1.0",
+            expected_toversion="8.3.0",
         )
 
     def test_pack_parser(self, repo: Repo):

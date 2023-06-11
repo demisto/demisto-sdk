@@ -820,16 +820,12 @@ def get_file(
             result = yaml.load(io.StringIO(replaced))
         else:
             result = json.load(io.StringIO(file_content))
-
+        return result
     except Exception as e:
         logger.error(
             f"{file_path} has a structure issue of file type {type_of_file}\n{e}"
         )
         return {}
-
-    if isinstance(result, (dict, list)):
-        return result
-    return {}
 
 
 def get_yaml(file_path, cache_clear=False):

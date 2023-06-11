@@ -67,9 +67,8 @@ class Runner:
 
     def run(self):
         """Runs an integration command on Demisto and prints the result."""
-        investigation_id = (
-            self.incident_id if self.incident_id else self._get_playground_id()
-        )
+        investigation_id = self.incident_id or self._get_playground_id()
+        logger.info(f"run investigation_id is: {investigation_id}")
 
         try:
             log_ids = self._run_query(investigation_id)

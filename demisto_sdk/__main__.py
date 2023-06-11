@@ -631,9 +631,10 @@ def zip_packs(ctx, **kwargs) -> int:
     help="Whether to skip the initialization prints.",
 )
 @click.option(
-    "--skip-pack-dependencies",
+    "--skip-pack-dependencies/--no-skip-pack-dependencies",
     is_flag=True,
     help="Skip validation of pack dependencies.",
+    default=True,
 )
 @click.option(
     "--create-id-set", is_flag=True, help="Whether to create the id_set.json file."

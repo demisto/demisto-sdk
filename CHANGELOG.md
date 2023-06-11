@@ -10,6 +10,7 @@
 * Fixed an issue where **prepare-content** would not properly parse the `fromVersion` and `toVersion` attributes of XSIAM-Dashbaord and XSIAM-Report content items.
 * Fixed an issue where **validate** command did not fail on non-existent dependency ids of non-mandatory dependant content.
 * Fixed pytest async io deprecation warning.
+* **Breaking Change**: In **validate**, the default value for the `skip-pack-dependencies` argument is now  `false`. The argument attempts to use the `id-set`, which is being gradually replaced with the neo4j graph. 
 
 ## 1.15.5
 * **Breaking Change**: The default of the **upload** command `--zip` argument is `true`. To upload packs as custom content items use the `--no-zip` argument.

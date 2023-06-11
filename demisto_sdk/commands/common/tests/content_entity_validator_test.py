@@ -21,9 +21,8 @@ from demisto_sdk.tests.constants_test import (
     INVALID_PLAYBOOK_PATH,
     VALID_INTEGRATION_TEST_PATH,
     VALID_PLAYBOOK_ID_PATH,
-    VALID_TEST_PLAYBOOK_PATH,
     VALID_TEST_PLAYBOOK_MARKETPLACES_PATH,
-    
+    VALID_TEST_PLAYBOOK_PATH,
 )
 
 HAS_TESTS_KEY_UNPUTS = [
@@ -420,12 +419,11 @@ INPUTS_VALID_TOVERSION_MODIFIED = [
     ),
 ]
 
+
 @pytest.mark.parametrize(
     "path, old_file_path, answer, error", INPUTS_VALID_TOVERSION_MODIFIED
 )
-def test_toversion_update_validation_yml_structure(
-    path, old_file_path, answer, error
-):
+def test_toversion_update_validation_yml_structure(path, old_file_path, answer, error):
     validator = ContentEntityValidator(StructureValidator(file_path=path))
     with open(old_file_path) as f:
         validator.old_file = yaml.load(f)

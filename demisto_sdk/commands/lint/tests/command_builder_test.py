@@ -166,7 +166,7 @@ def test_build_pytest_command_1():
     """Build Pytest command without json"""
     from demisto_sdk.commands.lint.commands_builder import build_pytest_command
 
-    command = "pytest -ra --junitxml=/devwork/report_pytest.xml"
+    command = "pytest -ra --override-ini='asyncio_mode=auto' --junitxml=/devwork/report_pytest.xml"
     assert command == build_pytest_command(test_xml="test")
 
 
@@ -174,7 +174,10 @@ def test_build_pytest_command_2():
     """Build Pytest command with json"""
     from demisto_sdk.commands.lint.commands_builder import build_pytest_command
 
-    command = "pytest -ra --junitxml=/devwork/report_pytest.xml --json=/devwork/report_pytest.json"
+    command = (
+        "pytest -ra --override-ini='asyncio_mode=auto'--junitxml=/devwork/report_pytest.xml "
+        "--json=/devwork/report_pytest.json"
+    )
     assert command == build_pytest_command(test_xml="test", json=True)
 
 
@@ -182,9 +185,7 @@ def test_build_pytest_command_3():
     """Build Pytest command with cov"""
     from demisto_sdk.commands.lint.commands_builder import build_pytest_command
 
-    command = (
-        "pytest -ra --junitxml=/devwork/report_pytest.xml --cov-report= --cov=test"
-    )
+    command = "pytest -ra --override-ini='asyncio_mode=auto' --junitxml=/devwork/report_pytest.xml --cov-report= --cov=test"
     assert command == build_pytest_command(test_xml="test", cov="test")
 
 

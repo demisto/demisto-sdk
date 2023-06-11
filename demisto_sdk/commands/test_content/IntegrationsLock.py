@@ -209,23 +209,21 @@ def create_lock_files(
                 f"integration {integration} locked"
             )
             locked_integrations.append(integration)
-        except PreconditionFailed:
+        except (PreconditionFailed, InvalidResponse) as exception:
             # if this exception occurs it means that another build has locked this integration
             # before this build managed to do it.
             # we need to unlock all the integrations we have already locked and try again later
-            test_playbook.build_context.logging_module.warning(
-                f"Could not lock integration {integration}, Create file with precondition failed."
-                f"delaying test execution."
-            )
-            unlock_integrations(locked_integrations, test_playbook, storage_client)
-            return False
-        except InvalidResponse as exc:
-            if exc.__cause__ and type(exc.__cause__) == PreconditionFailed:
+
+            if type(exception) == PreconditionFailed \
+                    or exception.__cause__ and type(exception.__cause__) == PreconditionFailed:
                 test_playbook.build_context.logging_module.warning(
-                    f"The lock file of the integration {integration}, already created, delaying test execution."
+                    f"Could not lock integration {integration}, Create file with precondition failed."
+                    f"delaying test execution."
                 )
                 unlock_integrations(locked_integrations, test_playbook, storage_client)
                 return False
+
+            raise exception
 
     return True
 
@@ -240,7 +238,7 @@ def unlock_integrations(
         test_playbook (TestPlaybook): The test playbook instance we want to test under the lock's context
         storage_client: The GCP storage client
     """
-    locked_integrations = [integration.name for integration in integrations_to_unlock]
+    locked_integrations = [getattr(integration, 'name', integration) for integration in integrations_to_unlock]
     locked_integration_blobs = get_locked_integrations(
         locked_integrations, storage_client
     )

@@ -820,6 +820,8 @@ def get_file(
             result = yaml.load(io.StringIO(replaced))
         else:
             result = json.load(io.StringIO(file_content))
+        if isinstance(result, str):
+            result = json.loads(result)
         return result
     except Exception as e:
         logger.error(

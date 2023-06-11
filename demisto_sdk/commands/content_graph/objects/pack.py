@@ -538,10 +538,14 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: i
     def _copy_base_pack_docs(
         self, destination_path: Path, marketplace: MarketplaceVersions
     ):
+
         documentation_path = CONTENT_PATH / "Documentation"
         documentation_output = destination_path / "Documentation"
         documentation_output.mkdir(exist_ok=True, parents=True)
-        if marketplace.value and (documentation_path / f"doc-howto-{marketplace.value}.json").exists():
+        if (
+            marketplace.value
+            and (documentation_path / f"doc-howto-{marketplace.value}.json").exists()
+        ):
             shutil.copy(
                 documentation_path / f"doc-howto-{marketplace.value}.json",
                 documentation_output / "doc-howto.json",

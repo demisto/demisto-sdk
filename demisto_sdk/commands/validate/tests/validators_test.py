@@ -286,20 +286,6 @@ class TestValidators:
     @pytest.mark.parametrize(
         "source, target, answer, validator", INPUTS_IS_VALID_VERSION
     )
-    # my_test = [
-    #     # (VALID_LAYOUT_PATH, LAYOUT_TARGET, True, LayoutValidator),
-    #     (
-    #         INVALID_XSIAM_DASHBOARD_PATH,
-    #         XSIAM_DASHBOARD_TARGET,
-    #         False,
-    #         XSIAMDashboardValidator,
-    #     ),
-    #
-    # ]
-    #
-    # @pytest.mark.parametrize(
-    #     "source, target, answer, validator", my_test
-    # )
     def test_is_valid_fromversion(
         self, source: str, target: str, answer: Any, validator: ContentEntityValidator
     ) -> None:

@@ -152,7 +152,7 @@ class CertifiedPartnerChecker(BaseChecker):
             if node.func.attrname == "results" and node.func.expr.name == "demisto":
                 self.add_message("demisto-results-exists", node=node)
         except Exception as e:
-            logger.info(
+            logger.error(
                 f"An error occured while checking `demisto results`, Error: {e}"
             )
 

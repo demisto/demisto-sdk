@@ -115,10 +115,11 @@ def test_json_to_outputs_flag_fail_no_prefix(
 ):
     """
     Given
-    - kl-get-components command
+    - kl-get-records command
 
     When
-    - Running `run` command on it with json-to-outputs flag and no prefix argument
+    - Running `run` command on runner instnce with json_to_outputs=True and
+      incident_id=pg_id
 
     Then
     - Ensure the json_to_outputs command is failing due to no prefix argument provided.
@@ -126,17 +127,14 @@ def test_json_to_outputs_flag_fail_no_prefix(
     logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
     monkeypatch.setenv("COLUMNS", "1000")
     # mocks to allow the command to run locally
-    mocker.patch.object(Runner, "_get_playground_id", return_value="pg_id")
-    mocker.patch.object(Runner, "_run_query", return_value=["123"])
+    runner = Runner(query="kl-get-records", json_to_outputs=True, incident_id="pg_id")
+    mocker.patch.object(runner, "_run_query", return_value=["123"])
     # mock to get test log file
     mocker.patch.object(DefaultApi, "download_file", return_value=DEBUG_FILE_PATH)
     # mock to set prefix instead of getting it from input
 
-    command = "!kl-get-records"
-    run_result = CliRunner(
-        mix_stderr=False,
-    ).invoke(main, ["run", "-q", command, "--json-to-outputs"])
-    assert 1 == run_result.exit_code
+    run_result = runner.run()
+    assert 1 == run_result
     assert str_in_call_args_list(
         logger_info.call_args_list,
         "A prefix for the outputs is needed for this command. Please provide one",

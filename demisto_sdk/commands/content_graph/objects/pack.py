@@ -546,9 +546,14 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: i
                 documentation_path / f"doc-howto-{marketplace.value}.json",
                 documentation_output / "doc-howto.json",
             )
-        else:
+        elif (documentation_path / "doc-howto-xsoar.json").exists():
             shutil.copy(
                 documentation_path / "doc-howto-xsoar.json",
+                documentation_output / "doc-howto.json",
+            )
+        else:
+            shutil.copy(
+                documentation_path / "doc-howto.json",
                 documentation_output / "doc-howto.json",
             )
         if (documentation_path / "doc-CommonServer.json").exists():

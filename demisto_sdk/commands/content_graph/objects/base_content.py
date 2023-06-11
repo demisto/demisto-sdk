@@ -146,9 +146,7 @@ class BaseContent(ABC, BaseModel, metaclass=BaseContentMetaclass):
                     PackParser(path)
                 )
             except InvalidContentItemException:
-                logger.error(
-                    f"Could not parse content from {str(path)}"
-                )
+                logger.error(f"Could not parse content from {str(path)}")
                 return None
         try:
             content_item_parser = ContentItemParser.from_path(path)

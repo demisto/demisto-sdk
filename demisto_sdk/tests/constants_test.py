@@ -520,13 +520,12 @@ DUMMY_XSIAM_PACK_PATH = f"{GIT_ROOT}/demisto_sdk/tests/test_files/DummyXSIAMPack
 INVALID_XSIAM_DASHBOARD_PATH = (
     f"{GIT_ROOT}/demisto_sdk/tests/test_files/Invalid_Xsiam_Dashboard.json"
 )
+XSIAM_PACK = "Packs/TestXSIAMPack"
 
-XSIAM_DASHBOARD_TARGET = f"{DUMMY_XSIAM_PACK_PATH}/XSIAMDashboards/test_Dashboard.json"
+XSIAM_DASHBOARD_TARGET = f"{XSIAM_PACK}/XSIAMDashboards/test_Dashboard.json"
 
 INVALID_XSIAM_CORRELATION_PATH = (
     f"{GIT_ROOT}/demisto_sdk/tests/test_files/Invalid_Correlation.yml"
 )
 
-XSIAM_CORRELATION_TARGET = (
-    f"{DUMMY_XSIAM_PACK_PATH}/CorrelationRules/test_Correlation.yml"
-)
+XSIAM_CORRELATION_TARGET = f"{XSIAM_PACK}/CorrelationRules/test_Correlation.yml"

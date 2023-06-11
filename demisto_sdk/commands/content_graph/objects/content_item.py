@@ -19,7 +19,7 @@ if TYPE_CHECKING:
     from demisto_sdk.commands.content_graph.objects.relationship import RelationshipData
     from demisto_sdk.commands.content_graph.objects.test_playbook import TestPlaybook
 
-from pydantic import DirectoryPath
+from pydantic import DirectoryPath, validator
 
 from demisto_sdk.commands.common.constants import PACKS_FOLDER, MarketplaceVersions
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
@@ -47,6 +47,12 @@ class ContentItem(BaseContent):
     deprecated: bool
     description: Optional[str]
     is_test: bool = False
+
+    @validator("path", always=True)
+    def validate_path(cls, v: Path) -> Path:
+        if v.is_absolute():
+            return v
+        return CONTENT_PATH / v
 
     @property
     def pack_id(self) -> str:

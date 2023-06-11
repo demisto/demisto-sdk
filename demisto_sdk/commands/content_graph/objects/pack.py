@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, Any, Generator, List, Optional
 import demisto_client
 from demisto_client.demisto_api.rest import ApiException
 from packaging.version import Version, parse
-from pydantic import BaseModel, DirectoryPath, Field
+from pydantic import BaseModel, DirectoryPath, Field, validator
 
 from demisto_sdk.commands.common.constants import (
     BASE_PACK,
@@ -223,6 +223,12 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: i
     content_items: PackContentItems = Field(
         PackContentItems(), alias="contentItems", exclude=True
     )
+
+    @validator("path", always=True)
+    def validate_path(cls, v: Path) -> Path:
+        if v.is_absolute():
+            return v
+        return CONTENT_PATH / v
 
     @property
     def pack_id(self) -> str:

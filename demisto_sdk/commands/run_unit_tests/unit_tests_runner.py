@@ -114,7 +114,9 @@ def unit_test_runner(file_paths: List[Path], verbose: bool = False) -> int:
         if (test_data_dir := (integration_script.path.parent / "test_data")).exists():
             (test_data_dir / "__init__.py").touch()
 
-        working_dir = f"/content/{integration_script.path.parent}"
+        working_dir = (
+            f"/content/{integration_script.path.parent.relative_to(CONTENT_PATH)}"
+        )
         runner = (
             POWERSHELL_RUNNER
             if integration_script.type == "powershell"

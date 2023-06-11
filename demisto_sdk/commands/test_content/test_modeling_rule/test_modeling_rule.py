@@ -64,8 +64,22 @@ def create_table(expected: Dict[str, Any], received: Dict[str, Any]) -> Table:
     return table
 
 
-# https://stackoverflow.com/questions/5891555/display-the-date-like-may-5th-using-pythons-strftime#answer-5891598
-def day_suffix(day: int):
+def day_suffix(day: int) -> str:
+    """
+    Returns a suffix string base on the day of the month.
+        for 1, 21, 31 => st
+        for 2, 22 => nd
+        for 3, 23 => rd
+        for to all the others => th
+
+        see here for more details: https://en.wikipedia.org/wiki/English_numerals#Ordinal_numbers
+
+    Args:
+        day: The day of the month represented by a number.
+
+    Returns:
+        suffix string (st, nd, rd, th).
+    """
     return "th" if 11 <= day <= 13 else {1: "st", 2: "nd", 3: "rd"}.get(day % 10, "th")
 
 

@@ -1100,6 +1100,21 @@ class TestTheTestModelingRuleCommandInteractive:
 def test_convert_epoch_time_to_string_time(
     mocker, epoc_time, timezone_delta, with_ms, human_readable_time
 ):
+    """
+    Given:
+        - An Epoch time.
+            case-1: Epoch time without time zone and without MS.
+            case-2: Epoch time with time zone +3 and without MS.
+            case-3: Epoch time with time zone -6 and without MS.
+            case-4: Epoch time without time zone and with MS equal to 0.
+            case-5: Epoch time without time zone and with MS equal to 123.
+
+    When:
+        - The convert_epoch_time_to_string_time function is running.
+
+    Then:
+        - Verify we get the expected results.
+    """
     from dateutil import tz
 
     from demisto_sdk.commands.test_content.test_modeling_rule.test_modeling_rule import (
@@ -1129,6 +1144,25 @@ def test_convert_epoch_time_to_string_time(
     ],
 )
 def test_day_suffix(day, suffix):
+    """
+    Given:
+        - A day of a month.
+            case-1: 1 => st.
+            case-2: 2 => nd.
+            case-3: 3 => rd.
+            case-4: 4 => th.
+            case-5: 10 => th.
+            case-6: 11 => th.
+            case-7: 12 => th.
+            case-8: 21 => st.
+            case-9: 31 => st.
+
+    When:
+        - The day_suffix function is running.
+
+    Then:
+        - Verify we get the expected results.
+    """
     from demisto_sdk.commands.test_content.test_modeling_rule.test_modeling_rule import (
         day_suffix,
     )

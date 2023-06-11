@@ -61,7 +61,7 @@ def mock_handle_error(error_message, error_code, file_path):
     ],
 )
 def test_is_suffix_name_valid(
-    mocker, repo, rule_file_name, rule_dict, expected_error, valid
+    mocker, monkeypatch, repo, rule_file_name, rule_dict, expected_error, valid
 ):
     """
     Given: A parsing rule with valid/invalid file_name/id/name
@@ -75,6 +75,7 @@ def test_is_suffix_name_valid(
     When: running is_valid_rule_suffix_name.
     Then: Validate that the parsing rule is valid/invalid and the message (in case of invalid) is as expected.
     """
+    monkeypatch.chdir(repo.path)
     pack = repo.create_pack("TestPack")
     dummy_parsing_rule = pack.create_parsing_rule(rule_file_name)
     structure_validator = StructureValidator(dummy_parsing_rule.yml.path)

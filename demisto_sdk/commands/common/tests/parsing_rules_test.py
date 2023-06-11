@@ -1,5 +1,8 @@
+import re
+
 import pytest
 
+from demisto_sdk.commands.common.constants import PARSING_RULE_FILE_SUFFIX_REGEX
 from demisto_sdk.commands.common.handlers import YAML_Handler
 from demisto_sdk.commands.common.hook_validations.parsing_rule import (
     ParsingRuleValidator,
@@ -94,3 +97,9 @@ def test_is_suffix_name_valid(
                 error_message.call_args[0][0].split("please check the following:")[1]
                 == expected_error
             )
+
+
+def test_parsing_rule_regex():
+    assert re.search(PARSING_RULE_FILE_SUFFIX_REGEX, "MyRuleParsingRules.yml")
+    assert re.search(PARSING_RULE_FILE_SUFFIX_REGEX, "MyRuleParsingRules_1_3.yml")
+    assert not re.search(PARSING_RULE_FILE_SUFFIX_REGEX, "MyRuleParsingRules_1_a.yml")

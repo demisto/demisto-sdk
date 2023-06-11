@@ -394,7 +394,7 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: i
                 logger.debug(f'No such file {self.path / "Author_image.png"}')
 
             if self.object_id == BASE_PACK:
-                self._copy_base_pack_docs(path)
+                self._copy_base_pack_docs(path, marketplace)
 
             pack_files = "\n".join([str(f) for f in path.iterdir()])
             logger.info(f"Dumped pack {self.name}.")
@@ -535,12 +535,14 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: i
 
         return True
 
-    def _copy_base_pack_docs(self, destination_path: Path):
+    def _copy_base_pack_docs(
+        self, destination_path: Path, marketplace: MarketplaceVersions
+    ):
         documentation_path = CONTENT_PATH / "Documentation"
         documentation_output = destination_path / "Documentation"
         documentation_output.mkdir(exist_ok=True, parents=True)
         shutil.copy(
-            documentation_path / "doc-howto.json",
+            documentation_path / f"doc-howto-{marketplace.value}.json",
             documentation_output / "doc-howto.json",
         )
         if (documentation_path / "doc-CommonServer.json").exists():

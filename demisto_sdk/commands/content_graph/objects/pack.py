@@ -541,7 +541,7 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: i
         documentation_path = CONTENT_PATH / "Documentation"
         documentation_output = destination_path / "Documentation"
         documentation_output.mkdir(exist_ok=True, parents=True)
-        if (documentation_path / f"doc-howto-{marketplace.value}.json").exists():
+        if marketplace.value and (documentation_path / f"doc-howto-{marketplace.value}.json").exists():
             shutil.copy(
                 documentation_path / f"doc-howto-{marketplace.value}.json",
                 documentation_output / "doc-howto.json",

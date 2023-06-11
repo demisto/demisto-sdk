@@ -809,10 +809,13 @@ def get_file(
 
     if not file_path.exists():
         raise FileNotFoundError(file_path)
-
-    file_content = _read_file(file_path)
     try:
-        if type_of_file in {"yml", ".yml"}:
+        file_content = _read_file(file_path)
+    except IOError as e:
+        logger.error(f"Could not read file {file_path}.\nError: {e}")
+        return {}
+    try:
+        if type_of_file in {"yml", ".yml", "yaml", ".yaml"}:
             replaced = re.sub(r"(simple: \s*\n*)(=)(\s*\n)", r'\1"\2"\3', file_content)
             result = yaml.load(io.StringIO(replaced))
         else:

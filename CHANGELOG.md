@@ -9,6 +9,7 @@
 * Fixed the **generate-test-playbook** which failed on an unexpected keyword argument - 'console_log_threshold'.
 * Fixed an issue where **prepare-content** would not properly parse the `fromVersion` and `toVersion` attributes of XSIAM-Dashbaord and XSIAM-Report content items.
 * Fixed an issue where **validate** command did not fail on non-existent dependency ids of non-mandatory dependant content.
+* Fixed pytest async io deprecation warning.
 * Added the `_time` field to the output compare table of the **modeling-rules test** command.
 
 ## 1.15.5

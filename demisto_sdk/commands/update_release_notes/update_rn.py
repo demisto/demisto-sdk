@@ -48,7 +48,6 @@ from demisto_sdk.commands.common.tools import (
     get_yaml,
     pack_name_to_path,
     run_command,
-    get_pack_names_from_files,
 )
 from demisto_sdk.commands.content_graph.content_graph_commands import (
     update_content_graph,
@@ -1002,6 +1001,7 @@ def get_file_description(path, file_type) -> str:
 
     return "%%UPDATE_RN%%"
 
+
 def update_api_modules_dependents_rn(
     pre_release: bool,
     update_type: Union[str, None],
@@ -1010,7 +1010,6 @@ def update_api_modules_dependents_rn(
     text: str = "",
 ) -> set:
     """Updates release notes for any pack that depends on API module that has changed.
-
     :param
         pre_release: The file type
         update_type: The update type
@@ -1059,31 +1058,32 @@ def get_api_module_from_graph(changed_api_modules):
 
             for changed_api_module in changed_api_modules:
                 logger.info(
-                f"Checking for packages dependent on the modified API module {changed_api_module}..."
+                    f"Checking for packages dependent on the modified API module {changed_api_module}..."
                 )
                 api_module_nodes = graph.search(object_id=changed_api_module)
                 api_module_node = api_module_nodes[0] if api_module_nodes else None
                 if not api_module_node:
                     raise ValueError(
-                            f"The modified API module `{changed_api_module}` was not found in the "
-                            f"content graph. Please check that it is up to date, and run"
-                            f" `demisto-sdk update-content-graph` if necessary."
+                        f"The modified API module `{changed_api_module}` was not found in the "
+                        f"content graph. Please check that it is up to date, and run"
+                        f" `demisto-sdk update-content-graph` if necessary."
                     )
 
                 dependent_items += [
                     str(dependency.path) for dependency in api_module_node.imported_by
                 ]
-                
+
         if dependent_items:
             logger.info(
-                    f"Found [cyan]{len(dependent_items)}[/cyan] dependent packages."
-                    f"{dependent_items}"
-                    "Executing update-release-notes on those as well.")
+                f"Found [cyan]{len(dependent_items)}[/cyan] dependent packages. "
+                "Executing update-release-notes on those as well."
+            )
             return dependent_items
-        
+
     logger.info("No dependent packages found.")
     return []
-    
+
+
 def update_api_modules_dependents_rn_using_id_set(
     pre_release: bool,
     update_type: Union[str, None],

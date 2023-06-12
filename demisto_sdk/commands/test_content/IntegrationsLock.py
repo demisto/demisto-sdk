@@ -8,6 +8,7 @@ import requests
 from google.api_core.exceptions import PreconditionFailed
 from google.cloud import storage
 from google.resumable_media.common import InvalidResponse
+from google.api_core.exceptions import NotFound
 
 LOCKS_PATH = "content-locks"
 BUCKET_NAME = os.environ.get("GCS_ARTIFACTS_BUCKET")

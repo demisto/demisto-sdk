@@ -652,7 +652,7 @@ class ContributionConverter:
                             script = content_item.code
                             contributor_item_version = self.extract_pack_version(script)
                             current_pack_version = get_pack_metadata(
-                                file_path=content_item_file_path
+                                file_path=self.pack_dir_path
                             ).get("currentVersion", "0.0.0")
                             if contributor_item_version != "0.0.0" and Version(
                                 current_pack_version

@@ -11,6 +11,9 @@
 * Fixed an issue where **validate** command did not fail on non-existent dependency ids of non-mandatory dependant content.
 * Fixed pytest async io deprecation warning.
 * Fixed an issue where **lint** falsely warned of using `demisto.results`.
+* Added the `--incident-id` argument (optional) to the **run** command.
+* Fixed an issue in **run-unit-tests** and **update-content-graph** where running commands in a docker container was done with insufficient permissions.
+* Added the `_time` field to the output compare table of the **modeling-rules test** command.
 * Added a validation that assures filename, id, and name have a correct suffix for modeling/parsing rules files.
 
 ## 1.15.5

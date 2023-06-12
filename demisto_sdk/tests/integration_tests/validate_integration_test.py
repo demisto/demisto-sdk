@@ -5024,7 +5024,9 @@ class TestValidationUsingGit:
         pack = repo.create_pack("FeedAzure")
         integration = pack.create_integration(
             name="FeedAzure",
-            yml=join(AZURE_FEED_PACK_PATH, "Integrations/FeedAzure/FeedAzure.yml"),
+            yml=get_yaml(
+                join(AZURE_FEED_PACK_PATH, "Integrations/FeedAzure/FeedAzure.yml")
+            ),
         )
         modified_files = {integration.yml.rel_path}
         mocker.patch.object(tools, "is_external_repository", return_value=False)

@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Callable, Tuple
 from unittest.mock import patch
 
+import demisto_client
 import pytest
 
 from demisto_sdk.commands.common.constants import (
@@ -1414,3 +1415,26 @@ download_tar.tar"
     ids = set(scripts_id_name.keys())
     assert ids.issubset(expected_UUIDs)
     assert ids.isdisjoint(strings_to_write)
+
+
+def test_get_system_playbook(mocker):
+    """
+    Given: a mock file raw_playbook.txt
+    When: calling get_system_playbook function.
+    Then:
+        - Ensure the playbook returns as valid json as expected
+        - Ensure a list is returned from the function
+    """
+    raw_pb_path = Path(f'{git_path()}/demisto_sdk/commands/download/tests/tests_data/custom_content/raw_playbook.txt')
+    expected_pb_path = Path(f'{git_path()}/demisto_sdk/commands/download/tests/tests_data/custom_content/playbook-DummyPlaybook2.yml')
+    
+    with raw_pb_path.open() as f:
+        raw_playbook = bytes(f.read(), 'utf-8')
+    
+    expected_pb = get_yaml(expected_pb_path)
+    mocker.patch.object(demisto_client, 'generic_request_func', return_value=[raw_playbook])
+    
+    downloader = Downloader(input=['test'], output='test')
+    pbs = downloader.get_system_playbook(req_type='GET')
+    assert isinstance(pbs, list)
+    assert pbs[0] == expected_pb

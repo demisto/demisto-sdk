@@ -1,4 +1,5 @@
 import hashlib
+import os
 import shutil
 from pathlib import Path
 
@@ -111,6 +112,7 @@ def _docker_start():
             "timeout": 15 * 1000000000,
             "retries": 10,
         },
+        user=f"{os.getuid()}:{os.getgid()}",
     )
 
 

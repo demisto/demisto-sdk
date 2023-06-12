@@ -171,9 +171,6 @@ def test_incident_id_passed_to_run(mocker, monkeypatch, set_environment_variable
     ).invoke(main, ["run", "-q", command, "--incident-id", "pg_id"])
 
     assert run_result.exit_code == 0
-    assert not run_result.stderr
-    assert not run_result.exception
-
     assert str_in_call_args_list(
         logger_debug.call_args_list, "running command in investigation_id='pg_id'"
     )

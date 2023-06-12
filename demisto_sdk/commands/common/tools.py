@@ -406,10 +406,11 @@ def get_marketplace_to_core_packs() -> Dict[MarketplaceVersions, Set[str]]:
     mp_to_core_packs: Dict[MarketplaceVersions, Set[str]] = {}
     for mp in MarketplaceVersions:
         # for backwards compatibility mp_core_packs can be a list, but we expect a dict.
-        mp_core_packs: Union[list, dict] = get_json(
-            MARKETPLACE_TO_CORE_PACKS_FILE[mp],
-        )
-        if not mp_core_packs:
+        try:
+            mp_core_packs: Union[list, dict] = get_json(
+                MARKETPLACE_TO_CORE_PACKS_FILE[mp],
+            )
+        except FileNotFoundError:
             mp_core_packs = get_remote_file(
                 MARKETPLACE_TO_CORE_PACKS_FILE[mp],
                 git_content_config=GitContentConfig(
@@ -805,6 +806,9 @@ def get_file(
 
     if not file_path.exists():
         file_path = Path(get_content_path()) / file_path  # type: ignore[arg-type]
+
+    if not file_path.exists():
+        raise FileNotFoundError(file_path)
 
     try:
         file_content = _read_file(file_path)
@@ -2880,9 +2884,17 @@ def get_current_categories() -> list:
     """
     if is_external_repository():
         return []
-    approved_categories_json, _ = get_dict_from_file(
-        "Tests/Marketplace/approved_categories.json"
-    )
+    try:
+        approved_categories_json, _ = get_dict_from_file(
+            "Tests/Marketplace/approved_categories.json"
+        )
+    except FileNotFoundError:
+        logger.warning(
+            "File approved_categories.json was not found. Getting from remote."
+        )
+        approved_categories_json = get_remote_file(
+            "Tests/Marketplace/approved_categories.json"
+        )
     return approved_categories_json.get("approved_list", [])
 
 

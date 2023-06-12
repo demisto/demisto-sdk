@@ -1085,6 +1085,11 @@ class Linter:
                 exit_code = RERUN
             else:
                 logger.info(f"{log_prompt} - Successfully finished")
+        except Exception as e:
+            logger.exception(f"{log_prompt} - Unable to run {linter}")
+            exit_code = RERUN
+            output = str(e)
+        finally:
             # Keeping container if needed or remove it
             if keep_container:
                 logger.info(f"{log_prompt} - container name {container_name}")
@@ -1094,10 +1099,6 @@ class Linter:
                     container.remove(force=True)
                 except docker.errors.NotFound as e:
                     logger.critical(f"{log_prompt} - Unable to delete container - {e}")
-        except Exception as e:
-            logger.exception(f"{log_prompt} - Unable to run {linter}")
-            exit_code = RERUN
-            output = str(e)
         return exit_code, output
 
     @timer(group_name="lint")

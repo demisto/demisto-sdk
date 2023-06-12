@@ -1,9 +1,11 @@
+from datetime import datetime, timedelta
 from pathlib import Path
 from time import sleep
 from typing import Any, Dict, List, Optional, Tuple
 
 import requests
 import typer
+from dateutil import tz
 from rich import print as printr
 from rich.console import Console, Group
 from rich.panel import Panel
@@ -62,6 +64,53 @@ def create_table(expected: Dict[str, Any], received: Dict[str, Any]) -> Table:
     return table
 
 
+def day_suffix(day: int) -> str:
+    """
+    Returns a suffix string base on the day of the month.
+        for 1, 21, 31 => st
+        for 2, 22 => nd
+        for 3, 23 => rd
+        for to all the others => th
+
+        see here for more details: https://en.wikipedia.org/wiki/English_numerals#Ordinal_numbers
+
+    Args:
+        day: The day of the month represented by a number.
+
+    Returns:
+        suffix string (st, nd, rd, th).
+    """
+    return "th" if 11 <= day <= 13 else {1: "st", 2: "nd", 3: "rd"}.get(day % 10, "th")
+
+
+def convert_epoch_time_to_string_time(
+    epoch_time: int, timezone_delta: int, with_ms: bool = False
+) -> str:
+    """
+    Converts epoch time with milliseconds to string time with timezone delta.
+
+    Args:
+        epoch_time: The received epoch time (with milliseconds).
+        timezone_delta: The time zone delta (for example '3' or '-4').
+        with_ms: Whether to convert the epoch time with ms or not default is False.
+
+    Returns:
+        The string time with timezone delta.
+    """
+    datetime_object = datetime.fromtimestamp(epoch_time / 1000)
+    datetime_object_with_time_zone_delta = (
+        datetime_object + timedelta(hours=timezone_delta)
+    ).astimezone(tz.tzlocal())
+    time_format = (
+        f"%b %d{day_suffix(datetime_object_with_time_zone_delta.day)} %Y %H:%M:%S"
+    )
+    if with_ms:
+        time_format = f"{time_format}.%f"
+    string_time = datetime_object_with_time_zone_delta.strftime(time_format)
+
+    return string_time
+
+
 def verify_results(
     tested_dataset: str, results: List[dict], test_data: init_test_data.TestData
 ):
@@ -105,12 +154,21 @@ def verify_results(
         # get expected_values for the given query result
         td_event_id = result.pop(f"{tested_dataset}.test_data_event_id")
         expected_values = None
+        timezone_delta = 0
         for e in test_data.data:
             if str(e.test_data_event_id) == td_event_id:
                 expected_values = e.expected_values
+                timezone_delta = int(e.timezone_delta or 0)
                 break
 
         if expected_values:
+            if (expected_time_value := expected_values.get("_time")) and (
+                time_value := result.get("_time")
+            ):
+                time_with_ms = "." in expected_time_value
+                result["_time"] = convert_epoch_time_to_string_time(
+                    time_value, timezone_delta, time_with_ms
+                )
             printr(create_table(expected_values, result))
 
             for key, val in expected_values.items():
@@ -247,7 +305,6 @@ def check_dataset_exists(
                     )
                     dataset_exist = True
                 else:
-                    logger.error
                     err = (
                         f"[red]Dataset {dataset} exists but no results were returned. This could mean that your testdata "
                         "does not meet the criteria for an associated Parsing Rule and is therefore being dropped from "

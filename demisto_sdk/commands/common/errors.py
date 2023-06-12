@@ -1761,7 +1761,7 @@ ERROR_CODE = {
         "ui_applicable": False,
         "related_field": "",
     },
-    "modeling_rule_suffix_name": {
+    "invalid_modeling_rule_suffix_name": {
         "code": "MR108",
         "ui_applicable": False,
         "related_field": "",
@@ -1789,7 +1789,7 @@ ERROR_CODE = {
         "ui_applicable": False,
         "related_field": "",
     },
-    "parsing_rule_suffix_name": {
+    "invalid_parsing_rule_suffix_name": {
         "code": "PR101",
         "ui_applicable": False,
         "related_field": "",
@@ -4511,8 +4511,8 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def modeling_rule_suffix_name(file_path, **kwargs):
-        message = f"The file {file_path} is invalid please check the following:"
+    def invalid_modeling_rule_suffix_name(file_path, **kwargs):
+        message = f"The file {file_path} is invalid:"
         if kwargs.get("invalid_file_name"):
             message += (
                 f"\nThe file name should end with '{MODELING_RULE_ID_SUFFIX}s.yml'"
@@ -4525,8 +4525,8 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def parsing_rule_suffix_name(file_path, **kwargs):
-        message = f"The file {file_path} is invalid please check the following:"
+    def invalid_parsing_rule_suffix_name(file_path, **kwargs):
+        message = f"The file {file_path} is invalid:"
         if kwargs.get("invalid_file_name"):
             message += (
                 f"\nThe file name should end with '{PARSING_RULE_ID_SUFFIX}s.yml'"

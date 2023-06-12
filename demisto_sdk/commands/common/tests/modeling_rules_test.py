@@ -2,14 +2,11 @@ import os
 
 import pytest
 
-from demisto_sdk.commands.common.handlers import YAML_Handler
 from demisto_sdk.commands.common.hook_validations.modeling_rule import (
     ModelingRuleValidator,
 )
 from demisto_sdk.commands.common.hook_validations.structure import StructureValidator
 from TestSuite.test_tools import ChangeCWD
-
-yaml = YAML_Handler()
 
 
 def test_is_valid_modeling_rule(repo):
@@ -181,91 +178,6 @@ def test_is_schema_types_valid(repo, schema, valid):
     structure_validator = StructureValidator(dummy_modeling_rule.yml.path)
     modeling_rule_validator = ModelingRuleValidator(structure_validator)
     assert modeling_rule_validator.is_schema_types_valid() == valid
-
-
-def mock_handle_error(error_message, error_code, file_path):
-    return error_message
-
-
-@pytest.mark.parametrize(
-    "rule_file_name, rule_dict, expected_error, valid",
-    [
-        (
-            "MyRule",
-            {"id": "modeling-rule", "name": "Modeling-Rule"},
-            "\nThe file name should end with 'ModelingRules.yml'\nThe rule id should end with 'ModelingRule'\nThe rule name should end with 'Modeling Rule'",
-            False,
-        ),
-        (
-            "MyRule",
-            {"id": "ModelingRule", "name": "Modeling Rule"},
-            "\nThe file name should end with 'ModelingRules.yml'",
-            False,
-        ),
-        (
-            "MyRuleModelingRules",
-            {"id": "modeling-rule", "name": "Modeling Rule"},
-            "\nThe rule id should end with 'ModelingRule'",
-            False,
-        ),
-        (
-            "MyRuleModelingRules",
-            {"id": "ModelingRule", "name": "Modeling-Rule"},
-            "\nThe rule name should end with 'Modeling Rule'",
-            False,
-        ),
-        (
-            "MyRuleModelingRules",
-            {"id": "ModelingRule", "name": "Modeling Rule"},
-            "",
-            True,
-        ),
-        (
-            "MyRuleModelingRules_1_3",
-            {"id": "ModelingRule", "name": "Modeling Rule"},
-            "",
-            True,
-        ),
-        (
-            "MyRuleModelingRules_1_!@#",
-            {"id": "ModelingRule", "name": "Modeling Rule"},
-            "\nThe file name should end with 'ModelingRules.yml'",
-            False,
-        ),
-    ],
-)
-def test_is_suffix_name_valid(
-    mocker, repo, rule_file_name, rule_dict, expected_error, valid
-):
-    """
-    Given: A modeling rule with valid/invalid file_name/id/name
-        case 1: Wrong file_name id and name.
-        case 2: Wrong file_name.
-        case 3: Wrong id.
-        case 4: Wrong name.
-        case 5: Correct file_name id and name.
-        case 6: Correct file_name (with version) id and name.
-        case 7: Wrong file_name (wrong version).
-    When: running is_valid_rule_suffix_name.
-    Then: Validate that the modeling rule is valid/invalid and the message (in case of invalid) is as expected.
-    """
-    pack = repo.create_pack("TestPack")
-    dummy_modeling_rule = pack.create_modeling_rule(rule_file_name)
-    structure_validator = StructureValidator(dummy_modeling_rule.yml.path)
-    dummy_modeling_rule.yml.write_dict(rule_dict)
-    error_message = mocker.patch(
-        "demisto_sdk.commands.common.hook_validations.modeling_rule.ModelingRuleValidator.handle_error",
-        side_effect=mock_handle_error,
-    )
-
-    with ChangeCWD(repo.path):
-        modeling_rule_validator = ModelingRuleValidator(structure_validator)
-        assert modeling_rule_validator.is_valid_rule_suffix_name() == valid
-        if not valid:
-            assert (
-                error_message.call_args[0][0].split("please check the following:")[1]
-                == expected_error
-            )
 
 
 def test_dataset_name_matches_in_xif_and_schema(repo):

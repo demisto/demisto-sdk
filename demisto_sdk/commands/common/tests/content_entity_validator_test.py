@@ -6,6 +6,8 @@ import pytest
 from demisto_sdk.commands.common.constants import (
     API_MODULES_PACK,
     EXCLUDED_DISPLAY_NAME_WORDS,
+    MODELING_RULE,
+    PARSING_RULE,
 )
 from demisto_sdk.commands.common.handlers import YAML_Handler
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import (
@@ -23,6 +25,7 @@ from demisto_sdk.tests.constants_test import (
     VALID_PLAYBOOK_ID_PATH,
     VALID_TEST_PLAYBOOK_PATH,
 )
+from TestSuite.test_tools import ChangeCWD
 
 HAS_TESTS_KEY_UNPUTS = [
     (VALID_INTEGRATION_TEST_PATH, "integration", True),
@@ -402,3 +405,153 @@ def test_is_backward_compatible(current_file, old_file, answer, error):
     with open(old_file) as f:
         validator.old_file = yaml.load(f)
         assert validator.is_backward_compatible() is answer, error
+
+
+def mock_handle_error(error_message, error_code, file_path):
+    return error_message
+
+
+@pytest.mark.parametrize(
+    "rule_file_name, rule_type, rule_dict, expected_error, valid",
+    [
+        (
+            "MyRule",
+            MODELING_RULE,
+            {"id": "modeling-rule", "name": "Modeling-Rule"},
+            "\nThe file name should end with 'ModelingRules.yml'\nThe rule id should end with 'ModelingRule'\nThe rule name should end with 'Modeling Rule'",
+            False,
+        ),
+        (
+            "MyRule",
+            MODELING_RULE,
+            {"id": "ModelingRule", "name": "Modeling Rule"},
+            "\nThe file name should end with 'ModelingRules.yml'",
+            False,
+        ),
+        (
+            "MyRuleModelingRules",
+            MODELING_RULE,
+            {"id": "modeling-rule", "name": "Modeling Rule"},
+            "\nThe rule id should end with 'ModelingRule'",
+            False,
+        ),
+        (
+            "MyRuleModelingRules",
+            MODELING_RULE,
+            {"id": "ModelingRule", "name": "Modeling-Rule"},
+            "\nThe rule name should end with 'Modeling Rule'",
+            False,
+        ),
+        (
+            "MyRuleModelingRules",
+            MODELING_RULE,
+            {"id": "ModelingRule", "name": "Modeling Rule"},
+            "",
+            True,
+        ),
+        (
+            "MyRuleModelingRules_1_3",
+            MODELING_RULE,
+            {"id": "ModelingRule", "name": "Modeling Rule"},
+            "",
+            True,
+        ),
+        (
+            "MyRuleModelingRules_1_!@#",
+            MODELING_RULE,
+            {"id": "ModelingRule", "name": "Modeling Rule"},
+            "\nThe file name should end with 'ModelingRules.yml'",
+            False,
+        ),
+        (
+            "MyRule",
+            PARSING_RULE,
+            {"id": "parsing-rule", "name": "Parsing-Rule"},
+            "\nThe file name should end with 'ParsingRules.yml'\nThe rule id should end with 'ParsingRule'\nThe rule name should end with 'Parsing Rule'",
+            False,
+        ),
+        (
+            "MyRule",
+            PARSING_RULE,
+            {"id": "ParsingRule", "name": "Parsing Rule"},
+            "\nThe file name should end with 'ParsingRules.yml'",
+            False,
+        ),
+        (
+            "MyRuleParsingRules",
+            PARSING_RULE,
+            {"id": "parsing-rule", "name": "Parsing Rule"},
+            "\nThe rule id should end with 'ParsingRule'",
+            False,
+        ),
+        (
+            "MyRuleParsingRules",
+            PARSING_RULE,
+            {"id": "ParsingRule", "name": "Parsing-Rule"},
+            "\nThe rule name should end with 'Parsing Rule'",
+            False,
+        ),
+        (
+            "MyRuleParsingRules",
+            PARSING_RULE,
+            {"id": "ParsingRule", "name": "Parsing Rule"},
+            "",
+            True,
+        ),
+        (
+            "MyRuleParsingRules_1_3",
+            PARSING_RULE,
+            {"id": "ParsingRule", "name": "Parsing Rule"},
+            "",
+            True,
+        ),
+        (
+            "MyRuleParsingRules_1_!@#",
+            PARSING_RULE,
+            {"id": "ParsingRule", "name": "Parsing Rule"},
+            "\nThe file name should end with 'ParsingRules.yml'",
+            False,
+        ),
+    ],
+)
+def test_is_valid_rule_suffix(
+    mocker, repo, rule_type, rule_file_name, rule_dict, expected_error, valid
+):
+    """
+    Given: A modeling/parsing rule with valid/invalid file_name/id/name
+        case 1: Wrong modeling rule file_name id and name.
+        case 2: Wrong modeling rule file_name.
+        case 3: Wrong modeling rule id.
+        case 4: Wrong modeling rule name.
+        case 5: Correct modeling rule file_name id and name.
+        case 6: Correct modeling rule file_name (with version) id and name.
+        case 7: Wrong modeling rule file_name (wrong version).
+        case 8: Wrong parsing rule file_name id and name.
+        case 9: Wrong parsing rule file_name.
+        case 10: Wrong parsing rule id.
+        case 11: Wrong parsing rule name.
+        case 12: Correct parsing rule file_name id and name.
+        case 13: Correct parsing rule file_name (with version) id and name.
+        case 14: Wrong parsing rule file_name (wrong version).
+    When: running is_valid_rule_suffix_name.
+    Then: Validate that the modeling/parsing rule is valid/invalid and the message (in case of invalid) is as expected.
+    """
+    pack = repo.create_pack("TestPack")
+    if rule_type == MODELING_RULE:
+        create_rule_function = pack.create_modeling_rule
+    if rule_type == PARSING_RULE:
+        create_rule_function = pack.create_parsing_rule
+    dummy_rule = create_rule_function(rule_file_name, rule_dict)
+    structure_validator = StructureValidator(dummy_rule.yml.path)
+    error_message = mocker.patch(
+        "demisto_sdk.commands.common.hook_validations.content_entity_validator.ContentEntityValidator.handle_error",
+        side_effect=mock_handle_error,
+    )
+
+    with ChangeCWD(repo.path):
+        rule_validator = ContentEntityValidator(structure_validator)
+        assert rule_validator.is_valid_rule_suffix(rule_type) == valid
+        if not valid:
+            assert (
+                error_message.call_args[0][0].split("is invalid:")[1] == expected_error
+            )

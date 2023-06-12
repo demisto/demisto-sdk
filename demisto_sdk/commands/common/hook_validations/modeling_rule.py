@@ -8,9 +8,7 @@ from pathlib import Path
 from typing import List
 
 from demisto_sdk.commands.common.constants import (
-    MODELING_RULE_FILE_SUFFIX_REGEX,
-    MODELING_RULE_ID_SUFFIX,
-    MODELING_RULE_NAME_SUFFIX,
+    MODELING_RULE,
 )
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.handlers import YAML_Handler
@@ -41,7 +39,7 @@ class ModelingRuleValidator(ContentEntityValidator):
             ignored_errors=ignored_errors,
             json_file_path=json_file_path,
         )
-        self._is_valid = True
+        self._is_valid = self.is_valid_rule_suffix(MODELING_RULE)
         self.schema_path = None
         self.schema_content = None
         self.xif_path = None
@@ -69,7 +67,6 @@ class ModelingRuleValidator(ContentEntityValidator):
         self.is_schema_file_exists()
         self.are_keys_empty_in_yml()
         self.is_valid_rule_names()
-        self.is_valid_rule_suffix_name()
         self.is_schema_types_valid()
         self.dataset_name_matches_in_xif_and_schema()
 
@@ -213,35 +210,5 @@ class ModelingRuleValidator(ContentEntityValidator):
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 self._is_valid = False
                 return False
-
-        return True
-
-    def is_valid_rule_suffix_name(self):
-        """
-        Verifies the following::
-            1. The modeling rule file name ends with 'MODELING_RULE_FILE_SUFFIX'.
-            2. The modeling rule id ends with 'MODELING_RULE_ID_SUFFIX'.
-            3. The modeling rule name ends with 'MODELING_RULE_NAME_SUFFIX'.
-        """
-        with open(self.file_path) as yf:
-            data = yaml.load(yf)
-        rule_id = data.get("id", "")
-        rule_name = data.get("name", "")
-
-        invalid_suffix = {
-            "invalid_file_name": not re.search(
-                MODELING_RULE_FILE_SUFFIX_REGEX, self.file_path
-            ),
-            "invalid_id": not rule_id.endswith(MODELING_RULE_ID_SUFFIX),
-            "invalid_name": not rule_name.endswith(MODELING_RULE_NAME_SUFFIX),
-        }
-
-        if any(invalid_suffix.values()):
-            error_message, error_code = Errors.modeling_rule_suffix_name(
-                self.file_path, **invalid_suffix
-            )
-            if self.handle_error(error_message, error_code, file_path=self.file_path):
-                self._is_valid = False
-            return False
 
         return True

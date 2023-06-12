@@ -7,8 +7,11 @@
 * Added support to run **validate** with `--git` flag on detached HEAD.
 * Added a validation that the **validate** command will fail if the pack name is not prefixed on XSIAM dashboard images.
 * Fixed the **generate-test-playbook** which failed on an unexpected keyword argument - 'console_log_threshold'.
+* Fixed an issue where **prepare-content** would not properly parse the `fromVersion` and `toVersion` attributes of XSIAM-Dashbaord and XSIAM-Report content items.
 * Fixed an issue where **validate** command did not fail on non-existent dependency ids of non-mandatory dependant content.
-* Added `GR107` validation to **validate** using the graph validations to check that no deprecated items are used.
+* Fixed pytest async io deprecation warning.
+* Fixed an issue where **lint** falsely warned of using `demisto.results`.
+* Added `GR107` validation to **validate** using the graph validations to check that no deprecated items are used in none-deprecated content.
 
 ## 1.15.5
 * **Breaking Change**: The default of the **upload** command `--zip` argument is `true`. To upload packs as custom content items use the `--no-zip` argument.

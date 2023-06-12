@@ -791,12 +791,25 @@ class ContributionConverter:
         and create a release-note file using the release-notes text.
 
         """
+        logger.info(
+            f"%%1 {self.dir_name}"
+        )
+        logger.info(
+            f"%%2 {self.update_type}"
+        )
         rn_mng = UpdateReleaseNotesManager(
             user_input=self.dir_name,
             update_type=self.update_type,
         )
         rn_mng.manage_rn_update()
-        self.replace_RN_template_with_value(rn_mng.rn_path[0])
+        logger.info(
+            f"%%3 {rn_mng.rn_path}"
+        )
+        if rn_mng.rn_path:
+            logger.info(
+                f"%%4 {rn_mng.rn_path[0]}"
+            )
+            self.replace_RN_template_with_value(rn_mng.rn_path[0])
 
     def format_user_input(self) -> Dict[str, str]:
         """

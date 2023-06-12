@@ -2,13 +2,15 @@
 This module is designed to validate the correctness of generic definition entities in content.
 """
 
+from demisto_sdk.commands.common.constants import (
+    FILETYPE_TO_DEFAULT_FROMVERSION,
+    FileType,
+)
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.base_validator import error_codes
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import (
     ContentEntityValidator,
 )
-
-FROMVERSION = "6.10.0"
 
 
 class XSIAMDashboardValidator(ContentEntityValidator):
@@ -26,7 +28,9 @@ class XSIAMDashboardValidator(ContentEntityValidator):
             structure_validator,
             ignored_errors=ignored_errors,
             json_file_path=json_file_path,
-            oldest_supported_version=FROMVERSION,
+            oldest_supported_version=FILETYPE_TO_DEFAULT_FROMVERSION[
+                FileType.XSIAM_DASHBOARD
+            ],
         )
         self._is_valid = True
 

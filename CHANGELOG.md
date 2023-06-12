@@ -11,7 +11,7 @@
 * Fixed an issue where **validate** command did not fail on non-existent dependency ids of non-mandatory dependant content.
 * Fixed pytest async io deprecation warning.
 * Fixed an issue where **lint** falsely warned of using `demisto.results`.
-* Added validation and formatting for *fromversion* field in *Correlation Rule* and *XSIAM Dashboard* files.
+* Added a **validate** check, and a **format** auto fix for the `fromversion` field in Correlation Rules and XSIAM Dashboards.
 
 ## 1.15.5
 * **Breaking Change**: The default of the **upload** command `--zip` argument is `true`. To upload packs as custom content items use the `--no-zip` argument.

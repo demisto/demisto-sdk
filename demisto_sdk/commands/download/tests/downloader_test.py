@@ -1425,22 +1425,20 @@ def test_get_system_playbook(mocker):
         - Ensure the playbook returns as valid json as expected
         - Ensure a list is returned from the function
     """
-    raw_pb_path = Path(
-        f"{git_path()}/demisto_sdk/commands/download/tests/tests_data/custom_content/raw_playbook.txt"
-    )
-    expected_pb_path = Path(
-        f"{git_path()}/demisto_sdk/commands/download/tests/tests_data/custom_content/playbook-DummyPlaybook2.yml"
+
+    playbook_path = Path(
+        f"{git_path()}/demisto_sdk/commands/download/tests/tests_data/playbook-DummyPlaybook2.yml"
     )
 
-    with raw_pb_path.open() as f:
-        raw_playbook = bytes(f.read(), "utf-8")
+    raw_playbook = playbook_path.read_bytes()
 
-    expected_pb = get_yaml(expected_pb_path)
+    expected_pb = get_yaml(playbook_path)
     mocker.patch.object(
         demisto_client, "generic_request_func", return_value=[raw_playbook]
     )
 
     downloader = Downloader(input=["test"], output="test")
-    pbs = downloader.get_system_playbook(req_type="GET")
-    assert isinstance(pbs, list)
-    assert pbs[0] == expected_pb
+    playbooks = downloader.get_system_playbook(req_type="GET")
+    assert isinstance(playbooks, list)
+    assert playbooks[0] == expected_pb
+    assert len(playbooks) == 1

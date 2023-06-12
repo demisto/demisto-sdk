@@ -20,7 +20,7 @@ from demisto_sdk.commands.coverage_analyze.tests.helpers_test import (
     copy_file,
     read_file,
 )
-from TestSuite.test_tools import str_in_call_args_list
+from TestSuite.test_tools import flatten_call_args
 
 logger = logging.getLogger("demisto-sdk")
 
@@ -45,8 +45,9 @@ class TestCoverageReport:
         cov_report = CoverageReport()
         cov_report._report_str = Path(REPORT_STR_FILE).read_text()
         cov_report.coverage_report()
-        assert str_in_call_args_list(
-            logger_info, f"\n{Path(REPORT_STR_FILE).read_text()}"
+        assert (
+            f"\n{Path(REPORT_STR_FILE).read_text()}"
+            in flatten_call_args(logger_info.call_args_list)[0]
         )
 
     def test_with_export_report_function(self, tmpdir, monkeypatch, mocker):
@@ -65,18 +66,14 @@ class TestCoverageReport:
             no_cache=True,
         )
         cov_report.coverage_report()
-
+        logger_args = flatten_call_args(logger_info.call_args_list)
         assert re.fullmatch(
             self.patern("html", "html/index", "html"),
-            logger_info.call_args_list[1][0][0],
+            logger_info.logger_args[1],
         )
-        assert re.fullmatch(
-            self.patern("xml", "coverage", "xml"), logger_info.call_args_list[2][0][0]
-        )
-        assert re.fullmatch(
-            self.patern("json", "coverage", "json"), logger_info.call_args_list[3][0][0]
-        )
-        assert len(logger_info.call_args_list) == 4
+        assert re.fullmatch(self.patern("xml", "coverage", "xml"), logger_args[2])
+        assert re.fullmatch(self.patern("json", "coverage", "json"), logger_args[3])
+        assert len(logger_args) == 4
 
     def test_with_txt_report(self, tmpdir, monkeypatch, caplog):
         monkeypatch.chdir(tmpdir)

@@ -5,6 +5,8 @@ from typing import Any, Dict, Iterator, List, NamedTuple, Set
 
 from neo4j import graph
 
+from demisto_sdk.commands.common.constants import PACKS_FOLDER
+
 NEO4J_ADMIN_DOCKER = ""
 
 NEO4J_DATABASE_HTTP = os.getenv(
@@ -18,7 +20,6 @@ NEO4J_PASSWORD = os.getenv("DEMISTO_SDK_NEO4J_PASSWORD", "contentgraph")
 
 NEO4J_FOLDER = "neo4j-data"
 
-PACKS_FOLDER = "Packs"
 PACK_METADATA_FILENAME = "pack_metadata.json"
 PACK_CONTRIBUTORS_FILENAME = "CONTRIBUTORS.json"
 UNIFIED_FILES_SUFFIXES = [".yml", ".json"]

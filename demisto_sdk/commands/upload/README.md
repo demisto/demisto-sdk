@@ -60,7 +60,12 @@ Uploading classifiers to Cortex XSOAR is available from version 6.0.0 and up.
 
 * **-z, --zip**
 
-    in case a pack was passed in the -i argument - zip the pack before upload
+    in case a pack was passed in the -i argument or using `--input-config-file` argument - zip the pack before upload.
+    Defauts to `true`.
+
+* **--nz, --no-zip**
+
+    Will not zip the pack and will upload the content items, item by item as custom content.
 
 * **--keep-zip <DIRECTORY_FOR_THE_ZIP>**
 

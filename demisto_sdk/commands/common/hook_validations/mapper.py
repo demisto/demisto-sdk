@@ -241,7 +241,7 @@ class MapperValidator(ContentEntityValidator):
 
         mapper = self.current_file.get("mapping", {})
         for value in mapper.values():
-            incident_fields = value.get("internalMapping", {})
+            incident_fields = value.get("internalMapping") or {}
             invalid_incident_fields.extend(
                 get_invalid_incident_fields_from_mapper(
                     mapper_incident_fields=incident_fields,

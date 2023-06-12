@@ -89,6 +89,10 @@ from demisto_sdk.commands.doc_reviewer.rn_checker import ReleaseNotesChecker
             ],
             True,
         ),
+        # New content, with only the header containing the prefix New.
+        (["##### New: script", "Blah."], True),
+        # New content, with only the note line containing the New prefix.
+        (["##### script", "New: Blah."], True),
     ],
 )
 def test_release_notes_templates(file_content, expected_result):

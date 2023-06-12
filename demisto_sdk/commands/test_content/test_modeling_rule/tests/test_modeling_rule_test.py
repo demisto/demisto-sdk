@@ -3,7 +3,6 @@ import os
 from pathlib import Path
 from uuid import UUID
 
-import pytest
 import requests_mock
 import typer
 from typer.testing import CliRunner
@@ -108,7 +107,7 @@ class TestVerifyResults:
             - The expected outputs match the simulated query results.
 
         Then:
-            - Verify the function returns successfully.
+            - Verify the function returns True indicating the verification passed.
         """
         from demisto_sdk.commands.test_content.test_modeling_rule.test_modeling_rule import (
             verify_results,
@@ -119,6 +118,7 @@ class TestVerifyResults:
         )
 
         # Arrange
+        tested_dataset = "vendor_product_raw"
         query_results = [
             {
                 "vendor_product_raw.test_data_event_id": str(DEFAULT_TEST_EVENT_ID),
@@ -133,7 +133,7 @@ class TestVerifyResults:
                     test_data_event_id=DEFAULT_TEST_EVENT_ID,
                     vendor="vendor",
                     product="product",
-                    dataset="vendor_product_raw",
+                    dataset=tested_dataset,
                     event_data={},
                     expected_values={
                         "xdm.field1": "value1",
@@ -145,7 +145,7 @@ class TestVerifyResults:
         )
 
         try:
-            verify_results(query_results, test_data)
+            assert verify_results(tested_dataset, query_results, test_data)
         except typer.Exit:
             assert False, "No exception should be raised in this scenario."
 
@@ -159,7 +159,7 @@ class TestVerifyResults:
             - The expected outputs do not match the simulated query results.
 
         Then:
-            - Verify the function raises a typer.Exit exception.
+            - Verify the function return False indicating the result not match the expected.
         """
         from demisto_sdk.commands.test_content.test_modeling_rule.test_modeling_rule import (
             verify_results,
@@ -170,6 +170,7 @@ class TestVerifyResults:
         )
 
         # Arrange
+        tested_dataset = "vendor_product_raw"
         query_results = [
             {
                 "vendor_product_raw.test_data_event_id": str(DEFAULT_TEST_EVENT_ID),
@@ -184,7 +185,7 @@ class TestVerifyResults:
                     test_data_event_id=DEFAULT_TEST_EVENT_ID,
                     vendor="vendor",
                     product="product",
-                    dataset="vendor_product_raw",
+                    dataset=tested_dataset,
                     event_data={},
                     expected_values={
                         "xdm.field1": "value1",
@@ -195,8 +196,7 @@ class TestVerifyResults:
             ]
         )
 
-        with pytest.raises(typer.Exit):
-            verify_results(query_results, test_data)
+        assert verify_results(tested_dataset, query_results, test_data) is False
 
 
 class TestTheTestModelingRuleCommandSingleRule:

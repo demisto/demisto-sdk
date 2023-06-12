@@ -62,17 +62,18 @@ def create_table(expected: Dict[str, Any], received: Dict[str, Any]) -> Table:
     return table
 
 
-def verify_results(results: List[dict], test_data: init_test_data.TestData):
+def verify_results(
+    tested_dataset: str, results: List[dict], test_data: init_test_data.TestData
+):
     """Verify that the results of the XQL query match the expected values.
 
     Args:
+        tested_dataset (str): The dataset to verify result for.
         results (List[dict]): The results of the XQL query.
         test_data (init_test_data.TestData): The data parsed from the test data file.
 
-    Raises:
-        typer.Exit: If there are no results.
-        ValueError: If the number of results does not match the number of test data events.
-        typer.Exit: If the results do not match the expected values.
+    Returns:
+        bool: True if the results are valid, False otherwise.
     """
     if not results:
         err = (
@@ -80,16 +81,21 @@ def verify_results(results: List[dict], test_data: init_test_data.TestData):
             " error with your modeling rule and that it did not install properly on the tenant[/red]"
         )
         logger.error(err, extra={"markup": True})
-        raise typer.Exit(1)
-    if len(results) != len(test_data.data):
+
+        return False
+    rule_relevant_data = [
+        data for data in test_data.data if data.dataset == tested_dataset
+    ]
+    if len(results) != len(rule_relevant_data):
         err = (
             f"[red]Expected {len(test_data.data)} results, got {len(results)}. Verify that the event"
             " data used in your test data file meets the criteria of the modeling rule, e.g. the filter"
             " condition.[/red]"
         )
         logger.error(err, extra={"markup": True})
-        raise typer.Exit(1)
+        return False
     errors = False
+
     for i, result in enumerate(results):
         logger.info(
             f"\n[cyan][underline]Result {i + 1}[/underline][/cyan]",
@@ -97,7 +103,7 @@ def verify_results(results: List[dict], test_data: init_test_data.TestData):
         )
 
         # get expected_values for the given query result
-        td_event_id = result.pop(f"{test_data.data[0].dataset}.test_data_event_id")
+        td_event_id = result.pop(f"{tested_dataset}.test_data_event_id")
         expected_values = None
         for e in test_data.data:
             if str(e.test_data_event_id) == td_event_id:
@@ -136,8 +142,7 @@ def verify_results(results: List[dict], test_data: init_test_data.TestData):
                 extra={"markup": True},
             )
             errors = True
-    if errors:
-        raise typer.Exit(1)
+    return not errors
 
 
 def generate_xql_query(rule: SingleModelingRule, test_data_event_ids: List[str]) -> str:
@@ -170,7 +175,12 @@ def validate_expected_values(
     success = True
     for rule in mr.rules:
         query = generate_xql_query(
-            rule, [str(d.test_data_event_id) for d in test_data.data]
+            rule,
+            [
+                str(d.test_data_event_id)
+                for d in test_data.data
+                if d.dataset == rule.dataset
+            ],
         )
         logger.debug(query)
         try:
@@ -188,7 +198,7 @@ def validate_expected_values(
             )
             success = False
         else:
-            verify_results(results, test_data)
+            success &= verify_results(rule.dataset, results, test_data)
     if success:
         logger.info(
             "[green]Mappings validated successfully[/green]", extra={"markup": True}
@@ -214,41 +224,47 @@ def check_dataset_exists(
     Raises:
         typer.Exit: If the dataset does not exist after the timeout.
     """
-    dataset = test_data.data[0].dataset
-    logger.info(
-        f'[cyan]Checking if dataset "{dataset}" exists on the tenant...[/cyan]',
-        extra={"markup": True},
-    )
-    query = f"config timeframe = 10y | dataset = {dataset}"
-    for i in range(timeout // interval):
-        logger.debug(f"Check #{i+1}...")
-        try:
-            execution_id = xsiam_client.start_xql_query(
-                query, print_req_error=(i + 1 == timeout // interval)
-            )
-            results = xsiam_client.get_xql_query_result(execution_id)
-            if results:
-                logger.info(
-                    f"[green]Dataset {dataset} exists[/green]", extra={"markup": True}
+    process_failed = False
+    dataset_set = {data.dataset for data in test_data.data}
+    for dataset in dataset_set:
+        dataset_exist = False
+        logger.info(
+            f'[cyan]Checking if dataset "{dataset}" exists on the tenant...[/cyan]',
+            extra={"markup": True},
+        )
+        query = f"config timeframe = 10y | dataset = {dataset}"
+        for i in range(timeout // interval):
+            logger.debug(f"Check #{i+1}...")
+            try:
+                execution_id = xsiam_client.start_xql_query(
+                    query, print_req_error=(i + 1 == timeout // interval)
                 )
-                return
-            else:
-                err = (
-                    f"[red]Dataset {dataset} exists but no results were returned. This could mean that your testdata "
-                    "does not meet the criteria for an associated Parsing Rule and is therefore being dropped from "
-                    "the dataset. Check to see if a Parsing Rule exists for your dataset and that your testdata "
-                    "meets the criteria for that rule.[/red]"
-                )
-                logger.error(err, extra={"markup": True})
-                raise typer.Exit(1)
-        except requests.exceptions.HTTPError:
-            pass
-        sleep(interval)
-    logger.error(
-        f"[red]Dataset {dataset} does not exist after {timeout} seconds[/red]",
-        extra={"markup": True},
-    )
-    raise typer.Exit(1)
+                results = xsiam_client.get_xql_query_result(execution_id)
+                if results:
+                    logger.info(
+                        f"[green]Dataset {dataset} exists[/green]",
+                        extra={"markup": True},
+                    )
+                    dataset_exist = True
+                else:
+                    err = (
+                        f"[red]Dataset {dataset} exists but no results were returned. This could mean that your testdata "
+                        "does not meet the criteria for an associated Parsing Rule and is therefore being dropped from "
+                        "the dataset. Check to see if a Parsing Rule exists for your dataset and that your testdata "
+                        "meets the criteria for that rule.[/red]"
+                    )
+                    logger.error(err, extra={"markup": True})
+                break
+            except requests.exceptions.HTTPError:
+                pass
+            sleep(interval)
+        if not dataset_exist:
+            err = f"[red]Dataset {dataset} does not exist after {timeout} seconds[/red]"
+            logger.error(err, extra={"markup": True})
+        process_failed |= not dataset_exist
+
+    if process_failed:
+        raise typer.Exit(1)
 
 
 def push_test_data_to_tenant(
@@ -261,29 +277,36 @@ def push_test_data_to_tenant(
         mr (ModelingRule): Modeling rule object parsed from the modeling rule file.
         test_data (init_test_data.TestData): Test data object parsed from the test data file.
     """
-    events_test_data = [
-        {
-            **event_log.event_data,
-            "test_data_event_id": str(event_log.test_data_event_id),
-        }
-        for event_log in test_data.data
-        if isinstance(event_log.event_data, dict)
-    ]
-    logger.info("[cyan]Pushing test data to tenant...[/cyan]", extra={"markup": True})
-    try:
-        xsiam_client.push_to_dataset(
-            events_test_data, mr.rules[0].vendor, mr.rules[0].product
-        )
-    except requests.exceptions.HTTPError:
-        logger.error(
-            (
-                "[red]Failed pushing test data to tenant, potential reasons could be:\n - an incorrect token\n"
-                ' - currently only http collectors configured with "Compression" as "gzip" and "Log Format" as "JSON"'
-                " are supported, double check your collector is configured as such\n - the configured http collector "
-                "on your tenant is disabled[/red]"
-            ),
+    error = False
+    for rule in mr.rules:
+
+        events_test_data = [
+            {
+                **event_log.event_data,
+                "test_data_event_id": str(event_log.test_data_event_id),
+            }
+            for event_log in test_data.data
+            if isinstance(event_log.event_data, dict)
+            and event_log.dataset == rule.dataset
+        ]
+        logger.info(
+            f"[cyan]Pushing test data for {rule.dataset} to tenant...[/cyan]",
             extra={"markup": True},
         )
+        try:
+            xsiam_client.push_to_dataset(events_test_data, rule.vendor, rule.product)
+        except requests.exceptions.HTTPError:
+            logger.error(
+                (
+                    "[red]Failed pushing test data to tenant, potential reasons could be:\n - an incorrect token\n"
+                    ' - currently only http collectors configured with "Compression" as "gzip" and "Log Format" as "JSON"'
+                    " are supported, double check your collector is configured as such\n - the configured http collector "
+                    "on your tenant is disabled[/red]"
+                ),
+                extra={"markup": True},
+            )
+            error = True
+    if error:
         raise typer.Exit(1)
     logger.info("[green]Test data pushed successfully[/green]", extra={"markup": True})
 

@@ -792,36 +792,42 @@ def safe_write_unicode(
 
 
 @lru_cache
-def get_file(file_path: Union[str, Path], type_of_file: str, clear_cache: bool = False):
+def get_file(
+    file_path: Union[str, Path],
+    type_of_file: Optional[str] = None,
+    clear_cache: bool = False,
+):
     if clear_cache:
         get_file.cache_clear()
-
     file_path = Path(file_path)  # type: ignore[arg-type]
+    if not type_of_file:
+        type_of_file = file_path.suffix.lower()
+        logger.debug(f"Inferred type {type_of_file} for file {file_path.name}.")
+
     if not file_path.exists():
         file_path = Path(get_content_path()) / file_path  # type: ignore[arg-type]
 
     if not file_path.exists():
         raise FileNotFoundError(file_path)
 
-    if type_of_file in file_path.suffix:  # e.g. 'yml' in '.yml'
+    try:
         file_content = _read_file(file_path)
-        try:
-            if type_of_file in {"yml", ".yml"}:
-                replaced = re.sub(
-                    r"(simple: \s*\n*)(=)(\s*\n)", r'\1"\2"\3', file_content
-                )
-                result = yaml.load(io.StringIO(replaced))
-            else:
-                result = json.load(io.StringIO(file_content))
-
-        except Exception as e:
-            raise ValueError(
-                f"{file_path} has a structure issue of file type {type_of_file}\n{e}"
-            )
-
-        if isinstance(result, (dict, list)):
-            return result
-    return {}
+    except IOError as e:
+        logger.error(f"Could not read file {file_path}.\nError: {e}")
+        return {}
+    try:
+        if type_of_file.lstrip(".") in {"yml", "yaml"}:
+            replaced = re.sub(r"(simple: \s*\n*)(=)(\s*\n)", r'\1"\2"\3', file_content)
+            return yaml.load(io.StringIO(replaced))
+        else:
+            result = json.load(io.StringIO(file_content))
+            # It's possible to that the result will be `str` after loading it. In this case, we need to load it again.
+            return json.loads(result) if isinstance(result, str) else result
+    except Exception as e:
+        logger.error(
+            f"{file_path} has a structure issue of file type {type_of_file}\n{e}"
+        )
+        return {}
 
 
 def get_yaml(file_path, cache_clear=False):
@@ -2878,9 +2884,17 @@ def get_current_categories() -> list:
     """
     if is_external_repository():
         return []
-    approved_categories_json, _ = get_dict_from_file(
-        "Tests/Marketplace/approved_categories.json"
-    )
+    try:
+        approved_categories_json, _ = get_dict_from_file(
+            "Tests/Marketplace/approved_categories.json"
+        )
+    except FileNotFoundError:
+        logger.warning(
+            "File approved_categories.json was not found. Getting from remote."
+        )
+        approved_categories_json = get_remote_file(
+            "Tests/Marketplace/approved_categories.json"
+        )
     return approved_categories_json.get("approved_list", [])
 
 

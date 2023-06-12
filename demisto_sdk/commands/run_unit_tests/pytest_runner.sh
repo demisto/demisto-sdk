@@ -11,4 +11,4 @@ else
     additional_dependencies="pytest pytest-mock requests-mock pytest-xdist pytest-datadir-ng freezegun pytest-cov hypothesis"
 fi
 python -m pip install --no-cache-dir -q $additional_dependencies
-python -m pytest . -v --rootdir=/content --junitxml=.report_pytest.xml --cov-report= --cov=.
+python -m pytest . -v --rootdir=/content --override-ini='asyncio_mode=auto' --override-ini='junit_family=xunit1' --junitxml=.report_pytest.xml --cov-report= --cov=.

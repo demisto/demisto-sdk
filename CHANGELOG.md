@@ -10,6 +10,11 @@
 * Fixed an issue where **prepare-content** would not properly parse the `fromVersion` and `toVersion` attributes of XSIAM-Dashbaord and XSIAM-Report content items.
 * Fixed an issue where **validate** command did not fail on non-existent dependency ids of non-mandatory dependant content.
 * Fixed pytest async io deprecation warning.
+* Fixed an issue where **lint** falsely warned of using `demisto.results`.
+* Added the `--incident-id` argument (optional) to the **run** command.
+* Fixed an issue in **run-unit-tests** and **update-content-graph** where running commands in a docker container was done with insufficient permissions.
+* Added the `_time` field to the output compare table of the **modeling-rules test** command.
+* Changed the endpoint **download** uses to get system content items.
 
 ## 1.15.5
 * **Breaking Change**: The default of the **upload** command `--zip` argument is `true`. To upload packs as custom content items use the `--no-zip` argument.

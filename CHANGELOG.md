@@ -12,7 +12,7 @@
 * Fixed pytest async io deprecation warning.
 * Fixed an issue where **lint** falsely warned of using `demisto.results`.
 * Added the `--incident-id` argument (optional) to the **run** command.
-* Fixed permissions issues in **run-unit-tests** and **update-content-graph** commands.
+* Fixed an issue in **run-unit-tests** and **update-content-graph** where running commands in a docker container was done with insufficient permissions.
 
 ## 1.15.5
 * **Breaking Change**: The default of the **upload** command `--zip` argument is `true`. To upload packs as custom content items use the `--no-zip` argument.

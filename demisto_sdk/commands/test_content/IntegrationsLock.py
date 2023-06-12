@@ -151,9 +151,13 @@ def lock_integrations(test_playbook, storage_client: storage.Client) -> bool:
     for integration, lock_file in existing_integrations_lock_files.items():
         # Each file has content in the form of <circleci-build-number>:<timeout in seconds>
         # If it has not expired - it means the integration is currently locked by another test.
-        workflow_id, build_number, lock_timeout = (
-            lock_file.download_as_string().decode().split(":")
-        )
+        try:
+            workflow_id, build_number, lock_timeout = (
+                lock_file.download_as_string().decode().split(":")
+            )
+        except NotFound:
+            continue
+
         if not lock_expired(lock_file, lock_timeout) and workflow_still_running(
             workflow_id, test_playbook
         ):

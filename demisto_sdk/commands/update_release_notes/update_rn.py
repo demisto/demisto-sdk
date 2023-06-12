@@ -48,6 +48,13 @@ from demisto_sdk.commands.common.tools import (
     get_yaml,
     pack_name_to_path,
     run_command,
+    get_pack_names_from_files,
+)
+from demisto_sdk.commands.content_graph.content_graph_commands import (
+    update_content_graph,
+)
+from demisto_sdk.commands.content_graph.interface.neo4j.neo4j_graph import (
+    Neo4jContentGraphInterface,
 )
 
 json = JSON_Handler()
@@ -995,8 +1002,89 @@ def get_file_description(path, file_type) -> str:
 
     return "%%UPDATE_RN%%"
 
-
 def update_api_modules_dependents_rn(
+    pre_release: bool,
+    update_type: Union[str, None],
+    added: Union[list, set],
+    modified: Union[list, set],
+    text: str = "",
+) -> set:
+    """Updates release notes for any pack that depends on API module that has changed.
+
+    :param
+        pre_release: The file type
+        update_type: The update type
+        added: The added files
+        modified: The modified files
+        id_set_path: The id set path
+        text: Text to add to the release notes files
+
+    :rtype: ``set``
+    :return
+    A set of updated packs
+    """
+    total_updated_packs: set = set()
+    api_module_set = get_api_module_ids(added)
+    api_module_set = api_module_set.union(get_api_module_ids(modified))
+    logger.info(
+        f"[yellow]Changes were found in the following APIModules: {api_module_set}, updating all dependent "
+        f"integrations.[/yellow]"
+    )
+    integrations = get_api_module_from_graph(api_module_set)
+    for integration in integrations:
+        integration_pack = get_pack_name(integration)
+        integration_path = integration
+        integration_pack_path = pack_name_to_path(integration_pack)
+        update_pack_rn = UpdateRN(
+            pack_path=integration_pack_path,
+            update_type=update_type,
+            modified_files_in_pack={integration_path},
+            pre_release=pre_release,
+            added_files=set(),
+            pack=integration_pack,
+            text=text,
+        )
+        updated = update_pack_rn.execute_update()
+        if updated:
+            total_updated_packs.add(integration_pack)
+    return total_updated_packs
+
+
+def get_api_module_from_graph(changed_api_modules):
+    if changed_api_modules:
+        dependent_items = []
+        with Neo4jContentGraphInterface() as graph:
+            logger.info("Updating graph...")
+            update_content_graph(graph, use_git=True, dependencies=True)
+
+            for changed_api_module in changed_api_modules:
+                logger.info(
+                f"Checking for packages dependent on the modified API module {changed_api_module}..."
+                )
+                api_module_nodes = graph.search(object_id=changed_api_module)
+                api_module_node = api_module_nodes[0] if api_module_nodes else None
+                if not api_module_node:
+                    raise ValueError(
+                            f"The modified API module `{changed_api_module}` was not found in the "
+                            f"content graph. Please check that it is up to date, and run"
+                            f" `demisto-sdk update-content-graph` if necessary."
+                    )
+
+                dependent_items += [
+                    str(dependency.path) for dependency in api_module_node.imported_by
+                ]
+                
+        if dependent_items:
+            logger.info(
+                    f"Found [cyan]{len(dependent_items)}[/cyan] dependent packages."
+                    f"{dependent_items}"
+                    "Executing update-release-notes on those as well.")
+            return dependent_items
+        
+    logger.info("No dependent packages found.")
+    return []
+    
+def update_api_modules_dependents_rn_using_id_set(
     pre_release: bool,
     update_type: Union[str, None],
     added: Union[list, set],

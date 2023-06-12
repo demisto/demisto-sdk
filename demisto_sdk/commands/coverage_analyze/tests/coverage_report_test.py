@@ -39,7 +39,7 @@ class TestCoverageReport:
 
     def test_with_print_report(self, tmpdir, monkeypatch, caplog):
         monkeypatch.chdir(tmpdir)
-        cov_report = CoverageReport()
+        cov_report = CoverageReport(no_cache=True)
         cov_report._report_str = Path(REPORT_STR_FILE).read_text()
         with caplog.at_level(logging.INFO, logger="demisto-sdk"):
             cov_report.coverage_report()
@@ -57,6 +57,7 @@ class TestCoverageReport:
             report_dir=str(tmpdir),
             report_type="html,json,xml",
             coverage_file=temp_cover_file,
+            no_cache=True,
         )
         with caplog.at_level(logging.INFO, logger="demisto-sdk"):
             cov_report.coverage_report()
@@ -81,7 +82,10 @@ class TestCoverageReport:
         copy_file(coverage_path, temp_cover_file)
         fix_file_path(temp_cover_file, PYTHON_FILE_PATH)
         cov_report = CoverageReport(
-            report_dir=str(tmpdir), report_type="text", coverage_file=temp_cover_file
+            report_dir=str(tmpdir),
+            report_type="text",
+            coverage_file=temp_cover_file,
+            no_cache=True,
         )
         with caplog.at_level(logging.INFO, logger="demisto-sdk"):
             cov_report.coverage_report()

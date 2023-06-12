@@ -1425,16 +1425,22 @@ def test_get_system_playbook(mocker):
         - Ensure the playbook returns as valid json as expected
         - Ensure a list is returned from the function
     """
-    raw_pb_path = Path(f'{git_path()}/demisto_sdk/commands/download/tests/tests_data/custom_content/raw_playbook.txt')
-    expected_pb_path = Path(f'{git_path()}/demisto_sdk/commands/download/tests/tests_data/custom_content/playbook-DummyPlaybook2.yml')
-    
+    raw_pb_path = Path(
+        f"{git_path()}/demisto_sdk/commands/download/tests/tests_data/custom_content/raw_playbook.txt"
+    )
+    expected_pb_path = Path(
+        f"{git_path()}/demisto_sdk/commands/download/tests/tests_data/custom_content/playbook-DummyPlaybook2.yml"
+    )
+
     with raw_pb_path.open() as f:
-        raw_playbook = bytes(f.read(), 'utf-8')
-    
+        raw_playbook = bytes(f.read(), "utf-8")
+
     expected_pb = get_yaml(expected_pb_path)
-    mocker.patch.object(demisto_client, 'generic_request_func', return_value=[raw_playbook])
-    
-    downloader = Downloader(input=['test'], output='test')
-    pbs = downloader.get_system_playbook(req_type='GET')
+    mocker.patch.object(
+        demisto_client, "generic_request_func", return_value=[raw_playbook]
+    )
+
+    downloader = Downloader(input=["test"], output="test")
+    pbs = downloader.get_system_playbook(req_type="GET")
     assert isinstance(pbs, list)
     assert pbs[0] == expected_pb

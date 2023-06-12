@@ -802,7 +802,7 @@ def get_file(
     file_path = Path(file_path)  # type: ignore[arg-type]
     if not type_of_file:
         type_of_file = file_path.suffix.lower()
-        logger.debug(f"The {type_of_file=} was not provided, so it was inferred.")
+        logger.debug(f"Inferred type {type_of_file} for file {file_path.name}.")
 
     if not file_path.exists():
         file_path = Path(get_content_path()) / file_path  # type: ignore[arg-type]

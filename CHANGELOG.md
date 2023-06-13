@@ -17,6 +17,7 @@
 * Changed the endpoint **download** uses to get system content items.
 * Fixed an issue where graph-related tasks failed when files were deleted from the repo.
 * Added a **validate** check, and a **format** auto fix for the `fromversion` field in Correlation Rules and XSIAM Dashboards.
+* Update the format used for dev-dependencies in pyproject.toml to match modern versions of Poetry.
 
 ## 1.15.5
 * **Breaking Change**: The default of the **upload** command `--zip` argument is `true`. To upload packs as custom content items use the `--no-zip` argument.

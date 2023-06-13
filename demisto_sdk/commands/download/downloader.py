@@ -80,7 +80,7 @@ ITEM_TYPE_TO_REQUEST_TYPE = {
     "IndicatorType": "GET",
     "Field": "GET",
     "Layout": "GET",
-    "Playbook": "POST",
+    "Playbook": "GET",
     "Automation": "POST",
     "Classifier": "POST",
     "Mapper": "POST",
@@ -446,10 +446,18 @@ class Downloader:
             automation_list.append(ast.literal_eval(api_response[0]))
         return automation_list
 
-    def arrange_response(self, system_items_list):
-        if self.system_item_type == "Playbook":
-            system_items_list = system_items_list.get("playbooks")
+    def get_system_playbook(self, req_type):
+        playbook_list: list = []
+        for playbook in self.input_files:
+            endpoint = f"/playbook/{playbook}/yaml"
+            api_response = demisto_client.generic_request_func(
+                self.client, endpoint, req_type, response_type="object"
+            )
+            playbook_list.append(yaml.load(api_response[0].decode()))
 
+        return playbook_list
+
+    def arrange_response(self, system_items_list):
         if self.system_item_type in ["Classifier", "Mapper"]:
             system_items_list = system_items_list.get("classifiers")
 
@@ -473,6 +481,9 @@ class Downloader:
 
             if self.system_item_type == "Automation":
                 system_items_list = self.get_system_automation(req_type)
+
+            elif self.system_item_type == "Playbook":
+                system_items_list = self.get_system_playbook(req_type)
 
             else:
                 api_response = demisto_client.generic_request_func(

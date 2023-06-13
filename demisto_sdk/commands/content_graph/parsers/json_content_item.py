@@ -20,6 +20,7 @@ class JSONContentItemParser(ContentItemParser):
     ) -> None:
         super().__init__(path, pack_marketplaces)
         self.json_data: Dict[str, Any] = self.get_json()
+        self.original_json_data: Dict[str, Any] = self.get_json()
         if not isinstance(self.json_data, dict):
             raise InvalidContentItemException(
                 f"The content of {self.path} must be in a JSON dictionary format"

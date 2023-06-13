@@ -5,10 +5,21 @@
 * Fixed an issue where **upload** would not properly show the installed version in the UI.
 * Fixed an issue where the `contribution_converter` failed replacing generated release notes with the contribution form release notes.
 * Fixed an issue where an extra levelname was added to a logging message.
+* Modified the `mypy` pre-commit hook to run in a virtual environment, rather than the local mypy version.
 * Added support to run **validate** with `--git` flag on detached HEAD.
 * Added a validation that the **validate** command will fail if the pack name is not prefixed on XSIAM dashboard images.
 * Fixed the **generate-test-playbook** which failed on an unexpected keyword argument - 'console_log_threshold'.
+* Fixed an issue where **prepare-content** would not properly parse the `fromVersion` and `toVersion` attributes of XSIAM-Dashbaord and XSIAM-Report content items.
 * Fixed an issue where **validate** command did not fail on non-existent dependency ids of non-mandatory dependant content.
+* Fixed pytest async io deprecation warning.
+* Added the `--incident-id` argument (optional) to the **run** command.
+* Fixed an issue in **run-unit-tests** and **update-content-graph** where running commands in a docker container was done with insufficient permissions.
+* Added the `_time` field to the output compare table of the **modeling-rules test** command.
+* Changed the endpoint **download** uses to get system content items.
+* Fixed an issue where graph-related tasks failed when files were deleted from the repo.
+* Added a **validate** check, and a **format** auto fix for the `fromversion` field in Correlation Rules and XSIAM Dashboards.
+* Update the format used for dev-dependencies in pyproject.toml to match modern versions of Poetry.
+* Added timestamps to logging messages when running in a CI build.
 
 ## 1.15.5
 * **Breaking Change**: The default of the **upload** command `--zip` argument is `true`. To upload packs as custom content items use the `--no-zip` argument.

@@ -69,7 +69,7 @@ class TestCoverageReport:
         logger_args = flatten_call_args(logger_info.call_args_list)
         assert re.fullmatch(
             self.patern("html", "html/index", "html"),
-            logger_args[0],
+            logger_args[1],
         )
         assert re.fullmatch(self.patern("xml", "coverage", "xml"), logger_args[2])
         assert re.fullmatch(self.patern("json", "coverage", "json"), logger_args[3])
@@ -245,7 +245,7 @@ class TestCoverageDiffReport:
         assert caplog.records == []
 
     def test_with_degradated_files(self, tmpdir, monkeypatch, mocker):
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
         monkeypatch.chdir(tmpdir)
         cov_report = self.get_coverage_report_obj()
         cov_report._report_str = Path(REPORT_STR_FILE).read_text()

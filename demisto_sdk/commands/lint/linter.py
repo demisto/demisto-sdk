@@ -328,6 +328,9 @@ class Linter:
             )
             self._facts["is_long_running"] = script_obj.get("longRunning")
             self._facts["commands"] = self._get_commands_list(script_obj)
+            self._facts["formatting_script"] = "indicator-format" in script_obj.get(
+                "tags", []
+            )
             self._pkg_lint_status["pack_type"] = script_obj.get("type")
         except (FileNotFoundError, OSError, KeyError):
             self._pkg_lint_status["errors"].append("Unable to parse package yml")
@@ -637,7 +640,7 @@ class Linter:
             )
             stdout, stderr, exit_code = run_command_os(
                 command=build_xsoar_linter_command(
-                    lint_files, self._facts.get("support_level", "base")  # type: ignore
+                    lint_files, self._facts.get("support_level", "base"), self._facts.get("formatting_script")  # type: ignore
                 ),
                 cwd=self._pack_abs_dir,
                 env=myenv,

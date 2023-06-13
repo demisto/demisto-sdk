@@ -150,9 +150,6 @@ class ContentItem(BaseContent):
 
     @property
     def data(self) -> dict:
-        if not self.path.exists():
-            logger.warning(f"Could not find file {self.path}")
-            return {}
         return get_file(self.path)
 
     def prepare_for_upload(
@@ -160,6 +157,8 @@ class ContentItem(BaseContent):
         current_marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR,
         **kwargs,
     ) -> dict:
+        if not self.path.exists():
+            raise FileNotFoundError(f"Could not find file {self.path}")
         data = self.data
         logger.debug(f"preparing {self.path}")
         return MarketplaceSuffixPreparer.prepare(

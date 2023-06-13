@@ -27,7 +27,7 @@ repos:
     #   rev: v1.15.6
     #   hooks:
     #       - id: mypy
-    
+
     # remove after v1.15.6 is released
     - repo: https://github.com/pre-commit/mirrors-mypy
       rev: v0.982

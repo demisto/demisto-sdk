@@ -19,9 +19,6 @@ import astroid
 from pylint.checkers import BaseChecker
 from pylint.interfaces import IAstroidChecker
 
-from demisto_sdk.commands.common.handlers import YAML_Handler
-from demisto_sdk.commands.common.logger import logger
-
 # -------------------------------------------- Messages ------------------------------------------------
 
 cert_partner_msg = {
@@ -57,8 +54,6 @@ cert_partner_msg = {
         "Initialize of args was found outside of main function. Please use demisto.args() only inside main func",
     ),
 }
-
-yaml = YAML_Handler()
 
 
 class CertifiedPartnerChecker(BaseChecker):
@@ -147,15 +142,6 @@ class CertifiedPartnerChecker(BaseChecker):
         except Exception:
             pass
 
-    def _check_demisto_results(self, node):
-        try:
-            if node.func.attrname == "results" and node.func.expr.name == "demisto":
-                self.add_message("demisto-results-exists", node=node)
-        except Exception as e:
-            logger.error(
-                f"An error occured while checking `demisto results`, Error: {e}"
-            )
-
     def _demisto_results_checker(self, node):
         """
         Args: node which is a Call Node.
@@ -165,15 +151,11 @@ class CertifiedPartnerChecker(BaseChecker):
         Adds the relevant error message using `add_message` function if one of the above exists.
         """
         try:
-            file_path = node.root().file.replace(".py", ".yml") if node else ""
-            with open(file_path) as file_obj:
-                loaded_file_data = yaml.load(file_obj)
-                if "indicator-format" not in loaded_file_data.get("tags", []):
-                    self._check_demisto_results(node)
+            if node.func.attrname == "results" and node.func.expr.name == "demisto":
+                self.add_message("demisto-results-exists", node=node)
 
-        # in case the yml version of the .py file does not exist, run the check
-        except IOError:
-            self._check_demisto_results(node)
+        except Exception:
+            pass
 
     def _init_params_checker(self, node):
         """

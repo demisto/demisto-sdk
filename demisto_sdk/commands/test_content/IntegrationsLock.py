@@ -157,7 +157,7 @@ def lock_integrations(test_playbook, storage_client: storage.Client) -> bool:
                 lock_file.download_as_string().decode().split(":")
             )
         except NotFound:
-            test_playbook.build_context.logging_module.warning("lock file in not exists, continue running")
+            test_playbook.build_context.logging_module.warning("Integration lock file in not exists, continue running")
             continue
 
         if not lock_expired(lock_file, lock_timeout) and workflow_still_running(
@@ -220,8 +220,8 @@ def create_lock_files(
             # before this build managed to do it.
             # we need to unlock all the integrations we have already locked and try again later
 
-            if type(exception) == PreconditionFailed \
-                    or exception.__cause__ and type(exception.__cause__) == PreconditionFailed:
+            if isinstance(exception, PreconditionFailed) \
+                    or exception.__cause__ and isinstance(exception.__cause__, PreconditionFailed):
                 test_playbook.build_context.logging_module.warning(
                     f"Could not lock integration {integration}, Create file with precondition failed."
                     f"delaying test execution."
@@ -229,7 +229,7 @@ def create_lock_files(
                 unlock_integrations(locked_integrations, test_playbook, storage_client)
                 return False
 
-            raise exception
+            raise
 
     return True
 

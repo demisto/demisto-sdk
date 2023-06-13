@@ -235,11 +235,32 @@ class IntegrationYMLFormat(BaseUpdateYML):
                     elif "false" == str(value).lower():
                         param["defaultvalue"] = "false"
 
+    def handle_hidden_marketplace_params(self):
+        """
+        During the upload flow, each marketplace interprets the hidden: <marketplace name> as True or False.
+        When contributing an integration from the marketplace UI, the final yml file will display hidden: False/True
+        since it comes from the marketplace bucket. When formating the file, we want it to be
+        equivalent to the master branch
+        """
+
+        current_configuration = self.data.get("configuration", [])
+        old_configuration = self.old_file.get("configuration", [])
+
+        for old_param_dict in old_configuration:
+            if 'hidden' in old_param_dict:
+                for current_param_dict in current_configuration:
+                    if current_param_dict.get('name') == old_param_dict.get('name') and\
+                            ('hidden' not in current_param_dict or not current_param_dict.get('hidden')):
+                        current_param_dict['hidden'] = old_param_dict['hidden']
+                        break
+
+
     def run_format(self) -> int:
         try:
             logger.info(
                 f"\n[blue]================= Updating file {self.source_file} =================[/blue]"
             )
+            self.handle_hidden_marketplace_params()
             super().update_yml(
                 default_from_version=FILETYPE_TO_DEFAULT_FROMVERSION[
                     FileType.INTEGRATION

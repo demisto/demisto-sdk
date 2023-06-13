@@ -93,13 +93,7 @@ def convert_epoch_time_to_string_time(epoch_time: int, with_ms: bool = False) ->
     Returns:
         The string time with timezone delta.
     """
-    # local_hours_offset = datetime.now(tz=tz.tzlocal()).utcoffset().total_seconds() // 3600
-    datetime_object = datetime.fromtimestamp(
-        epoch_time / 1000
-    )  # 'Local' time is returned according to the docs.
-    # datetime_object_with_time_zone_delta = (
-    #     datetime_object - timedelta(hours=timezone_delta + local_hours_offset)
-    # )
+    datetime_object = datetime.fromtimestamp(epoch_time / 1000)
     time_format = f"%b %-d{day_suffix(datetime_object.day)} %Y %H:%M:%S"
     if with_ms:
         time_format = f"{time_format}.%f"

@@ -134,10 +134,6 @@ def unit_test_runner(file_paths: List[Path], verbose: bool = False) -> int:
                 if errors:
                     raise RuntimeError(f"Creating docker failed due to {errors}")
                 shutil.copy(
-                    Path(__file__).parent / ".pytest.ini",
-                    integration_script.path.parent / ".pytest.ini",
-                )
-                shutil.copy(
                     CONTENT_PATH
                     / "Tests"
                     / "scripts"
@@ -165,6 +161,7 @@ def unit_test_runner(file_paths: List[Path], verbose: bool = False) -> int:
                         if integration_script.type == "powershell"
                         else PYTEST_COMMAND
                     ],
+                    user=f"{os.getuid()}:{os.getgid()}",
                     working_dir=working_dir,
                     detach=True,
                 )

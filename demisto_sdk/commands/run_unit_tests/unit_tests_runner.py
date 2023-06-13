@@ -27,7 +27,7 @@ DOCKER_PYTHONPATH = [
 
 DEFAULT_DOCKER_IMAGE = "demisto/python:1.3-alpine"
 
-PYTEST_COMMAND = "python -m pytest . -vv --rootdir=/content --junitxml=.report_pytest.xml --cov-report= --cov=."
+PYTEST_COMMAND = "python -m pytest . -v --rootdir=/content --override-ini='asyncio_mode=auto' --override-ini='junit_family=xunit1' --junitxml=.report_pytest.xml --cov-report= --cov=."
 PWSH_COMMAND = "pwsh Invoke-Pester -Configuration '@{Run=@{Exit=$true}; Output=@{Verbosity=\"Detailed\"}}'"
 TEST_REQUIREMENTS_DIR = Path(__file__).parent.parent / "lint" / "resources"
 

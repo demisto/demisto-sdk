@@ -1088,26 +1088,24 @@ class TestTheTestModelingRuleCommandInteractive:
 
 
 @pytest.mark.parametrize(
-    "epoc_time, timezone_delta, with_ms, human_readable_time",
+    "epoc_time, with_ms, human_readable_time",
     [
-        (1686231456000, 0, False, "Jun 08th 2023 16:37:36"),
-        (1686231456000, 3, False, "Jun 08th 2023 19:37:36"),
-        (1686231456000, -6, False, "Jun 08th 2023 10:37:36"),
-        (1686231456000, 0, True, "Jun 08th 2023 16:37:36.000000"),
-        (1686231456123, 0, True, "Jun 08th 2023 16:37:36.123000"),
+        (1686231456000, False, "Jun 8th 2023 16:37:36"),
+        (1686231456123, False, "Jun 8th 2023 16:37:36"),
+        (1686231456000, True, "Jun 8th 2023 16:37:36.000000"),
+        (1686231456123, True, "Jun 8th 2023 16:37:36.123000"),
     ],
 )
 def test_convert_epoch_time_to_string_time(
-    mocker, epoc_time, timezone_delta, with_ms, human_readable_time
+    mocker, epoc_time, with_ms, human_readable_time
 ):
     """
     Given:
         - An Epoch time.
-            case-1: Epoch time without time zone and without MS.
-            case-2: Epoch time with time zone +3 and without MS.
-            case-3: Epoch time with time zone -6 and without MS.
-            case-4: Epoch time without time zone and with MS equal to 0.
-            case-5: Epoch time without time zone and with MS equal to 123.
+            case-1: Epoch time with MS equal to 0. (ignore MS)
+            case-2: Epoch time with MS equal to 123. (ignore MS)
+            case-3: Epoch time with MS equal to 0.
+            case-4: Epoch time with MS equal to 123.
 
     When:
         - The convert_epoch_time_to_string_time function is running.
@@ -1123,10 +1121,7 @@ def test_convert_epoch_time_to_string_time(
 
     mocker.patch("dateutil.tz.tzlocal", return_value=tz.gettz("Asia/Jerusalem"))
 
-    assert (
-        convert_epoch_time_to_string_time(epoc_time, timezone_delta, with_ms)
-        == human_readable_time
-    )
+    assert convert_epoch_time_to_string_time(epoc_time, with_ms) == human_readable_time
 
 
 @pytest.mark.parametrize(

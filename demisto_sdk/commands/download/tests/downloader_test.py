@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Callable, Tuple
 from unittest.mock import patch
 
+import demisto_client
 import pytest
 
 from demisto_sdk.commands.common.constants import (
@@ -1175,7 +1176,7 @@ class TestVerifyPackPath:
             "Playbook",
             False,
             "/playbook/search",
-            "POST",
+            "GET",
             {"query": "name:PB1 or PB2"},
         ),
         (
@@ -1220,7 +1221,7 @@ def test_arrange_response():
         downloader = Downloader("", "")
 
         downloader.system_item_type = "Playbook"
-        system_items_list = downloader.arrange_response({"playbooks": []})
+        system_items_list = downloader.arrange_response([])
         assert system_items_list == []
 
         downloader.system_item_type = "Classifier"
@@ -1414,3 +1415,30 @@ download_tar.tar"
     ids = set(scripts_id_name.keys())
     assert ids.issubset(expected_UUIDs)
     assert ids.isdisjoint(strings_to_write)
+
+
+def test_get_system_playbook(mocker):
+    """
+    Given: a mock file raw_playbook.txt
+    When: calling get_system_playbook function.
+    Then:
+        - Ensure the playbook returns as valid json as expected
+        - Ensure a list is returned from the function
+    """
+
+    playbook_path = Path(
+        f"{git_path()}/demisto_sdk/commands/download/tests/tests_data/playbook-DummyPlaybook2.yml"
+    )
+
+    raw_playbook = playbook_path.read_bytes()
+
+    expected_pb = get_yaml(playbook_path)
+    mocker.patch.object(
+        demisto_client, "generic_request_func", return_value=[raw_playbook]
+    )
+
+    downloader = Downloader(input=["test"], output="test")
+    playbooks = downloader.get_system_playbook(req_type="GET")
+    assert isinstance(playbooks, list)
+    assert playbooks[0] == expected_pb
+    assert len(playbooks) == 1

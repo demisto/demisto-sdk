@@ -154,6 +154,7 @@ def unit_test_runner(file_paths: List[Path], verbose: bool = False) -> int:
                         "/etc/pip.conf:/etc/pip.conf",
                     ],
                     command="sh test_runner.sh",
+                    user=f"{os.getuid()}:{os.getgid()}",
                     working_dir=working_dir,
                     detach=True,
                 )

@@ -9,9 +9,6 @@ from click.testing import CliRunner
 from demisto_sdk.__main__ import main
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.legacy_git_tools import git_path
-from demisto_sdk.commands.content_graph.interface.neo4j.neo4j_graph import (
-    Neo4jContentGraphInterface,
-)
 from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
 from demisto_sdk.commands.update_release_notes.update_rn_manager import (
     UpdateReleaseNotesManager,
@@ -484,11 +481,13 @@ def test_update_release_notes_modified_apimodule(demisto_client, repo, mocker):
 
     class MockedApiModuleNode:
         def __init__(self):
-            self.imported_by = [MockedDependencyNode()]  # Simulate a list of dependencies
+            self.imported_by = [
+                MockedDependencyNode()
+            ]  # Simulate a list of dependencies
 
     class MockedDependencyNode:
         path = taxii_feed_integration_path
-    
+
     mocker.patch(
         "demisto_sdk.commands.update_release_notes.update_rn.Neo4jContentGraphInterface",
         return_value=MockedContentGraphInterface(),
@@ -521,11 +520,7 @@ def test_update_release_notes_modified_apimodule(demisto_client, repo, mocker):
 
     result = runner.invoke(
         main,
-        [
-            UPDATE_RN_COMMAND,
-            "-i",
-            join("Packs", "ApiModules")
-        ],
+        [UPDATE_RN_COMMAND, "-i", join("Packs", "ApiModules")],
     )
 
     assert result.exit_code == 0

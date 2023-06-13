@@ -18,7 +18,6 @@ from demisto_sdk.commands.common.hook_validations.readme import ReadMeValidator
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.markdown_lint import run_markdownlint
 from demisto_sdk.commands.common.tools import get_json
-from demisto_sdk.commands.common.update_id_set import DEFAULT_ID_SET_PATH
 from demisto_sdk.commands.update_release_notes.update_rn import (
     CLASS_BY_FILE_TYPE,
     UpdateRN,
@@ -1954,7 +1953,7 @@ class TestRNUpdateUnit:
         - ApiModules_script.yml which is part of APIModules pack was changed.
 
         When
-        - update_api_modules_rn is called 
+        - update_api_modules_rn is called
 
         Then
         - Ensure execute_update_mock is called
@@ -1968,10 +1967,12 @@ class TestRNUpdateUnit:
 
         modified = {"/Packs/ApiModules/Scripts/ApiModules_script/ApiModules_script.yml"}
         added = {}
-        
+
         mocker.patch(
             "demisto_sdk.commands.update_release_notes.update_rn.get_api_module_from_graph",
-            return_value=["Packs/Test/Integrations/Test.yml"],  # Mock the integration path
+            return_value=[
+                "Packs/Test/Integrations/Test.yml"
+            ],  # Mock the integration path
         )
         execute_update_mock = mocker.patch.object(UpdateRN, "execute_update")
 

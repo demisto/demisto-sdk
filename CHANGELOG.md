@@ -14,6 +14,7 @@
 * Added the `--incident-id` argument (optional) to the **run** command.
 * Fixed an issue in **run-unit-tests** and **update-content-graph** where running commands in a docker container was done with insufficient permissions.
 * Added the `_time` field to the output compare table of the **modeling-rules test** command.
+* Changed the endpoint **download** uses to get system content items.
 * Added a validation that assures filename, id, and name have a correct suffix for modeling/parsing rules files.
 
 ## 1.15.5

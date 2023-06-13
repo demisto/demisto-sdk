@@ -474,10 +474,13 @@ class BaseUpdate:
                 return f"{value}."
             return value
 
-        if data_description := self.data.get("description"):
+        if data_description := self.data.get("description", {}):
             self.data["description"] = _add_period(data_description)
 
-        if script := self.data.get("script"):
+        script = self.data.get("script", {})
+        if script and isinstance(
+            script, dict
+        ):  # script could be a 'LiteralScalarString' object.
             for command in script.get("commands", []):
                 if command_description := command.get("description"):
                     command["description"] = _add_period(command_description)

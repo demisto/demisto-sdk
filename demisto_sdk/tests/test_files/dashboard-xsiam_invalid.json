@@ -1,0 +1,162 @@
+{
+    "dashboards_data": [
+        {
+            "name": "Test Dashboard",
+            "description": "Dashboard description.",
+            "status": "ENABLED",
+            "layout": [
+                {
+                    "id": "row-1768",
+                    "data": [
+                        {
+                            "key": "xql_1668676732415",
+                            "data": {
+                                "type": "Custom XQL",
+                                "width": 50,
+                                "height": 434,
+                                "phrase": "phrase",
+                                "time_frame": {
+                                    "relativeTime": 2592000000
+                                },
+                                "viewOptions": {
+                                    "type": "map",
+                                    "commands": [
+                                        {
+                                            "command": {
+                                                "op": "=",
+                                                "name": "header",
+                                                "value": "\"Cloud Regions\""
+                                            }
+                                        }
+                                    ]
+                                }
+                            }
+                        },
+                        {
+                            "key": "xql_1668676934356",
+                            "data": {
+                                "type": "Custom XQL",
+                                "width": 50,
+                                "height": 434,
+                                "params": [],
+                                "phrase": " phrase2 ",
+                                "time_frame": {
+                                    "relativeTime": 2592000000
+                                },
+                                "viewOptions": {
+                                    "type": "map",
+                                    "commands": [
+                                        {
+                                            "command": {
+                                                "op": "=",
+                                                "name": "header",
+                                                "value": "\"IP Locations\""
+                                            }
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    ]
+                },
+                {
+                    "id": "row-7469",
+                    "data": [
+                        {
+                            "key": "xql_1668676995963",
+                            "data": {
+                                "type": "Custom XQL",
+                                "width": 33.333333333333336,
+                                "height": 434,
+                                "phrase": "phrase3",
+                                "time_frame": {
+                                    "relativeTime": 2592000000
+                                },
+                                "viewOptions": {
+                                    "type": "pie",
+                                    "commands": [
+                                        {
+                                            "command": {
+                                                "op": "=",
+                                                "name": "header",
+                                                "value": "\"Unauthorized events by Username\""
+                                            }
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    ]
+                }
+            ],
+            "default_dashboard_id": 1,
+            "global_id": "id"
+        }
+    ],
+    "widgets_data": [
+        {
+            "widget_key": "xql_1668676732415",
+            "title": "Cloud Regions",
+            "creation_time": 1668676732415,
+            "description": "This widget disaplys the cloud regions associated to the account and their usage volume",
+            "data": {
+                "phrase": "phrase4",
+                "time_frame": {
+                    "relativeTime": 2592000000
+                },
+                "viewOptions": {
+                    "type": "map",
+                    "commands": [
+                        {
+                            "command": {
+                                "op": "=",
+                                "name": "header",
+                                "value": "\"Cloud Regions\""
+                            }
+                        },
+                        {
+                            "command": {
+                                "op": "=",
+                                "name": "xaxis",
+                                "value": "countrycode"
+                            }
+                        },
+                        {
+                            "command": {
+                                "op": "=",
+                                "name": "yaxis",
+                                "value": "Count"
+                            }
+                        },
+                        {
+                            "command": {
+                                "op": "=",
+                                "name": "headerfontsize",
+                                "value": "15"
+                            }
+                        },
+                        {
+                            "command": {
+                                "op": "=",
+                                "name": "legendfontsize",
+                                "value": "10"
+                            }
+                        },
+                        {
+                            "command": {
+                                "op": "=",
+                                "name": "legend",
+                                "value": "`false`"
+                            }
+                        }
+                    ]
+                }
+            },
+            "support_time_range": true,
+            "additional_info": {
+                "query_tables": [],
+                "query_uses_library": false
+            }
+        }
+    ]
+}

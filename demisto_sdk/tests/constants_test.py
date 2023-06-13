@@ -457,9 +457,6 @@ XSOAR_LINTER_PY3_INVALID = (
 XSOAR_LINTER_PY3_INVALID_WARNINGS = (
     f"{GIT_ROOT}/demisto_sdk/tests/test_files/invalid_py3_XSOARLinter_warnings.py"
 )
-
-XSOAR_LINTER_PY3_NO_DEMISTO_RESULTS_WARNINGS = f"{GIT_ROOT}/demisto_sdk/tests/test_files/py3_XSOARLinter_demisto_results_warnings.py"
-
 XSOAR_LINTER_PY3_INVALID_WARNINGS_PARTNER = f"{GIT_ROOT}/demisto_sdk/tests/test_files/invalid_py3_XSOARLinter_warnings_partner.py"
 
 DESTINATION_FORMAT_INTEGRATION = "Integrations/integration.yml"
@@ -515,7 +512,21 @@ DIR_LIST = [
     f"{PACK_TARGET}/{constants.INDICATOR_TYPES_DIR}",
     f"{PACK_TARGET}/{constants.CONNECTIONS_DIR}",
     f"{PACK_TARGET}/{constants.INDICATOR_FIELDS_DIR}",
+    f"{PACK_TARGET}/{constants.XSIAM_DASHBOARDS_DIR}",
+    f"{PACK_TARGET}/{constants.CORRELATION_RULES_DIR}",
     constants.TESTS_DIR,
 ]
 
 DUMMY_XSIAM_PACK_PATH = f"{GIT_ROOT}/demisto_sdk/tests/test_files/DummyXSIAMPack"
+
+INVALID_XSIAM_DASHBOARD_PATH = (
+    f"{GIT_ROOT}/demisto_sdk/tests/test_files/dashboard-xsiam_invalid.json"
+)
+
+XSIAM_DASHBOARD_TARGET = f"{PACK_TARGET}/XSIAMDashboards/dashboard-xsiam_mock.json"
+
+INVALID_XSIAM_CORRELATION_PATH = (
+    f"{GIT_ROOT}/demisto_sdk/tests/test_files/correlationrule_invalid.yml"
+)
+
+XSIAM_CORRELATION_TARGET = f"{PACK_TARGET}/CorrelationRules/correlationrule-mock.yml"

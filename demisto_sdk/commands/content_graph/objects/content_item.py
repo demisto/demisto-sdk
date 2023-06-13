@@ -157,6 +157,8 @@ class ContentItem(BaseContent):
         current_marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR,
         **kwargs,
     ) -> dict:
+        if not self.path.exists():
+            raise FileNotFoundError(f"Could not find file {self.path}")
         data = self.data
         logger.debug(f"preparing {self.path}")
         return MarketplaceSuffixPreparer.prepare(
@@ -233,6 +235,9 @@ class ContentItem(BaseContent):
         dir: DirectoryPath,
         marketplace: MarketplaceVersions,
     ) -> None:
+        if not self.path.exists():
+            logger.warning(f"Could not find file {self.path}, skipping dump")
+            return
         dir.mkdir(exist_ok=True, parents=True)
         try:
             with (dir / self.normalize_name).open("w") as f:

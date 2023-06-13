@@ -1,7 +1,7 @@
 import os
 import re
 from copy import deepcopy
-from typing import Any, Dict, Set, Union
+from typing import Any, Dict, Optional, Set, Union
 
 import dictdiffer
 
@@ -403,9 +403,6 @@ class BaseUpdate:
             self.data["id"] = (
                 self.data.get("id", "").replace("_copy", "").replace("_dev", "")
             )
-    
-    def add_comma_to_description(self):
-        pass
 
     def initiate_file_validator(self) -> int:
         """Run schema validate and file validate of file
@@ -466,3 +463,29 @@ class BaseUpdate:
                 else:
                     self.data[self.from_version_key] = current_from_server_version
                     self.data.pop(self.json_from_server_version_key)
+
+    def adds_period_to_description(self):
+        """Adds a period to the end of the descriptions
+        if it does not already end with a period."""
+        logger.info("Adds a period to the end of the description")
+
+        def _add_period(value: Optional[str]) -> Optional[str]:
+            if isinstance(value, str) and not value.endswith("."):
+                return f"{value}."
+            return value
+
+        if data_description := self.data.get("description"):
+            self.data["description"] = _add_period(data_description)
+
+        if script := self.data.get("script"):
+            for command in script.get("commands", []):
+                if command_description := command.get("description"):
+                    command["description"] = _add_period(command_description)
+
+                for argument in command.get("arguments", []):
+                    if argument_description := argument.get("description"):
+                        argument["description"] = _add_period(argument_description)
+
+                for output in command.get("outputs", []):
+                    if output_description := output.get("description"):
+                        output["description"] = _add_period(output_description)

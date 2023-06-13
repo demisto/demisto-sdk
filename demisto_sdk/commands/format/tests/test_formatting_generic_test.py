@@ -270,3 +270,74 @@ def test_initiate_file_validator(mocker, is_old_file, function_validate):
 
     base_update.initiate_file_validator()
     assert result.call_count == 1
+
+
+@pytest.mark.parametrize(
+    "test_yml_data, expected_yml_data",
+    [
+        (
+            {
+                "description": "test",
+                "display": "Web",
+                "name": "Web",
+                "script": {
+                    "commands": [
+                        {
+                            "arguments": [
+                                {
+                                    "description": "test",
+                                    "name": "functionName",
+                                }
+                            ],
+                            "description": "test",
+                            "name": "get-function",
+                            "outputs": [
+                                {
+                                    "contextPath": "name.bla.bla",
+                                    "description": "test",
+                                }
+                            ],
+                        }
+                    ]
+                },
+                "fromversion": "6.8.0",
+            },
+            {
+                "description": "test.",
+                "display": "Web",
+                "name": "Web",
+                "script": {
+                    "commands": [
+                        {
+                            "arguments": [
+                                {
+                                    "description": "test.",
+                                    "name": "functionName",
+                                }
+                            ],
+                            "description": "test.",
+                            "name": "get-function",
+                            "outputs": [
+                                {
+                                    "contextPath": "name.bla.bla",
+                                    "description": "test.",
+                                }
+                            ],
+                        }
+                    ]
+                },
+                "fromversion": "6.8.0",
+            },
+        )
+    ],
+)
+def test_adds_period_to_description(
+    mocker, test_yml_data: dict, expected_yml_data: dict
+) -> None:
+    mocker.patch(
+        "demisto_sdk.commands.format.update_generic.get_dict_from_file",
+        return_value=(test_yml_data, "mock_type"),
+    )
+    base_update = BaseUpdate(input="test")
+    base_update.adds_period_to_description()
+    assert base_update.data == expected_yml_data

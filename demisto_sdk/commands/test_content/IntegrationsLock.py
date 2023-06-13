@@ -221,9 +221,8 @@ def create_lock_files(
             # before this build managed to do it.
             # we need to unlock all the integrations we have already locked and try again later
 
-            if (
-                isinstance(exception, PreconditionFailed)
-                or exception.__cause__
+            if isinstance(exception, PreconditionFailed) or (
+                exception.__cause__
                 and isinstance(exception.__cause__, PreconditionFailed)
             ):
                 test_playbook.build_context.logging_module.warning(

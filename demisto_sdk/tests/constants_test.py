@@ -457,9 +457,6 @@ XSOAR_LINTER_PY3_INVALID = (
 XSOAR_LINTER_PY3_INVALID_WARNINGS = (
     f"{GIT_ROOT}/demisto_sdk/tests/test_files/invalid_py3_XSOARLinter_warnings.py"
 )
-
-XSOAR_LINTER_PY3_NO_DEMISTO_RESULTS_WARNINGS = f"{GIT_ROOT}/demisto_sdk/tests/test_files/py3_XSOARLinter_demisto_results_warnings.py"
-
 XSOAR_LINTER_PY3_INVALID_WARNINGS_PARTNER = f"{GIT_ROOT}/demisto_sdk/tests/test_files/invalid_py3_XSOARLinter_warnings_partner.py"
 
 DESTINATION_FORMAT_INTEGRATION = "Integrations/integration.yml"

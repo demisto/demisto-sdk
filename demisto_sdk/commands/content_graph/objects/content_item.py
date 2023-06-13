@@ -238,6 +238,7 @@ class ContentItem(BaseContent):
     ) -> None:
         if not self.path.exists():
             logger.warning(f"Could not find file {self.path}, skipping dump")
+            return
         dir.mkdir(exist_ok=True, parents=True)
         try:
             with (dir / self.normalize_name).open("w") as f:

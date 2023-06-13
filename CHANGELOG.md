@@ -16,6 +16,7 @@
 * Added the `_time` field to the output compare table of the **modeling-rules test** command.
 * Changed the endpoint **download** uses to get system content items.
 * Fixed an issue where graph-related tasks failed when files were deleted from the repo.
+* Added a **validate** check, and a **format** auto fix for the `fromversion` field in Correlation Rules and XSIAM Dashboards.
 
 ## 1.15.5
 * **Breaking Change**: The default of the **upload** command `--zip` argument is `true`. To upload packs as custom content items use the `--no-zip` argument.

@@ -20,7 +20,8 @@ fi
 pip install --no-cache-dir --progress-bar off -r /test-requirements.txt
 if [ "$ID" = "alpine" ]
 then
-    apk update && del .build-deps
+    # Cleanup
+    apk del .build-deps || true
 elif [ "$ID" = "debian" ]
 then
     apt-get purge -y --auto-remove gcc python3-dev

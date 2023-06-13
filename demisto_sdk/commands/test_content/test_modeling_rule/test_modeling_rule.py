@@ -102,7 +102,7 @@ def convert_epoch_time_to_string_time(
         datetime_object + timedelta(hours=timezone_delta)
     ).astimezone(tz.tzlocal())
     time_format = (
-        f"%b %d{day_suffix(datetime_object_with_time_zone_delta.day)} %Y %H:%M:%S"
+        f"%b %-d{day_suffix(datetime_object_with_time_zone_delta.day)} %Y %H:%M:%S"
     )
     if with_ms:
         time_format = f"{time_format}.%f"

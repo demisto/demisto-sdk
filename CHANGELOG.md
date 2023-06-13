@@ -22,6 +22,7 @@
 * Added a **validate** check, and a **format** auto fix for the `fromversion` field in Correlation Rules and XSIAM Dashboards.
 * Update the format used for dev-dependencies in pyproject.toml to match modern versions of Poetry.
 * Added timestamps to logging messages when running in a CI build.
+* Fixed an issue where `register_module_line()` was not removed from python scripts when the script had no trailing newline.
 
 ## 1.15.5
 * **Breaking Change**: The default of the **upload** command `--zip` argument is `true`. To upload packs as custom content items use the `--no-zip` argument.

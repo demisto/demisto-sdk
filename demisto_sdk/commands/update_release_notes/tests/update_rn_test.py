@@ -1948,40 +1948,16 @@ class TestRNUpdateUnit:
         )
         assert yml_file_path == UpdateRN.change_image_or_desc_file_path(yml_file_path)
 
-    def test_update_api_modules_dependents_rn__no_id_set(self, mocker):
-        """
-        Given:
-            - The file system has no id_set.json in its root
-        When:
-            - update_api_modules_rn is called without an id_set.json
-        Then:
-            - Call print_error with the appropriate error message
-        """
-        import logging
-
-        from demisto_sdk.commands.update_release_notes.update_rn import (
-            update_api_modules_dependents_rn,
-        )
-
-        if os.path.exists(DEFAULT_ID_SET_PATH):
-            os.remove(DEFAULT_ID_SET_PATH)
-        print_error_mock = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
-        update_api_modules_dependents_rn(
-            pre_release="", update_type="", added="", modified="", id_set_path=None
-        )
-        assert "no id_set.json is available" in print_error_mock.call_args[0][0]
-
-    def test_update_api_modules_dependents_rn__happy_flow(self, mocker, tmpdir):
+    def test_update_api_modules_dependents_rn__happy_flow(self, mocker):
         """
         Given
-            - ApiModules_script.yml which is part of APIModules pack was changed.
-            - id_set.json indicates FeedTAXII uses APIModules
+        - ApiModules_script.yml which is part of APIModules pack was changed.
 
         When
-            - update_api_modules_rn is called with an id_set.json
+        - update_api_modules_rn is called 
 
         Then
-            - Ensure execute_update_mock is called
+        - Ensure execute_update_mock is called
         """
         from demisto_sdk.commands.update_release_notes.update_rn import (
             UpdateRN,
@@ -1992,21 +1968,11 @@ class TestRNUpdateUnit:
 
         modified = {"/Packs/ApiModules/Scripts/ApiModules_script/ApiModules_script.yml"}
         added = {}
-        id_set_content = {
-            "integrations": [
-                {
-                    "FeedTAXII_integration": {
-                        "name": "FeedTAXII_integration",
-                        "file_path": "/FeedTAXII_integration.yml",
-                        "pack": "FeedTAXII",
-                        "api_modules": ["ApiModules_script"],
-                    }
-                }
-            ]
-        }
-        id_set_f = tmpdir / "id_set.json"
-        id_set_f.write(json.dumps(id_set_content))
-
+        
+        mocker.patch(
+            "demisto_sdk.commands.update_release_notes.update_rn.get_api_module_from_graph",
+            return_value=["Packs/Test/Integrations/Test.yml"],  # Mock the integration path
+        )
         execute_update_mock = mocker.patch.object(UpdateRN, "execute_update")
 
         update_api_modules_dependents_rn(
@@ -2014,7 +1980,6 @@ class TestRNUpdateUnit:
             update_type=None,
             added=added,
             modified=modified,
-            id_set_path=id_set_f.strpath,
         )
         assert execute_update_mock.call_count == 1
 

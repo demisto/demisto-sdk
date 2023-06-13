@@ -9,6 +9,9 @@ from click.testing import CliRunner
 from demisto_sdk.__main__ import main
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.legacy_git_tools import git_path
+from demisto_sdk.commands.content_graph.interface.neo4j.neo4j_graph import (
+    Neo4jContentGraphInterface,
+)
 from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
 from demisto_sdk.commands.update_release_notes.update_rn_manager import (
     UpdateReleaseNotesManager,
@@ -441,17 +444,17 @@ def test_update_release_notes_modified_apimodule(demisto_client, repo, mocker):
     Given
     - ApiModules_script.yml which is part of APIModules pack was changed.
     - FeedTAXII pack path exists and uses ApiModules_script
-    - id_set.json indicates FeedTAXII uses APIModules
 
     When
     - Running demisto-sdk update-release-notes command.
 
     Then
-    - Ensure release notes file created with no errors for APIModule and related pack FeedTAXII:
+    - Ensure release notes file created with no errors for APIModule and related pack FeedTAXII.
     - Ensure message is printed when update release notes process finished.
     """
     logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
 
+    # Set up packs and paths
     repo.setup_one_pack("ApiModules")
     api_module_pack = repo.packs[0]
     api_module_script_path = join(
@@ -464,28 +467,34 @@ def test_update_release_notes_modified_apimodule(demisto_client, repo, mocker):
         taxii_feed_pack.path,
         "Integrations/FeedTAXII_integration/FeedTAXII_integration.yml",
     )
-    repo.id_set.update(
-        {
-            "scripts": [
-                {
-                    "ApiModules_script": {
-                        "name": "ApiModules_script",
-                        "file_path": api_module_script_path,
-                        "pack": "ApiModules",
-                    }
-                }
-            ],
-            "integrations": [
-                {
-                    "FeedTAXII_integration": {
-                        "name": "FeedTAXII_integration",
-                        "file_path": taxii_feed_integration_path,
-                        "pack": "FeedTAXII",
-                        "api_modules": ["ApiModules_script"],
-                    }
-                }
-            ],
-        }
+
+    # Mock the behavior of Neo4jContentGraphInterface
+    class MockedContentGraphInterface:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, exc_type, exc_val, exc_tb):
+            pass
+
+        def search(self, object_id):
+            # Simulate the graph search
+            if object_id == "ApiModules_script":
+                return [MockedApiModuleNode()]
+            return []
+
+    class MockedApiModuleNode:
+        def __init__(self):
+            self.imported_by = [MockedDependencyNode()]  # Simulate a list of dependencies
+
+    class MockedDependencyNode:
+        path = taxii_feed_integration_path
+    
+    mocker.patch(
+        "demisto_sdk.commands.update_release_notes.update_rn.Neo4jContentGraphInterface",
+        return_value=MockedContentGraphInterface(),
+    )
+    mocker.patch(
+        "demisto_sdk.commands.update_release_notes.update_rn.update_content_graph"
     )
 
     modified_files = {api_module_script_path}
@@ -505,9 +514,6 @@ def test_update_release_notes_modified_apimodule(demisto_client, repo, mocker):
         UpdateRN, "get_pack_metadata", return_value={"currentVersion": "1.0.0"}
     )
     mocker.patch(
-        "demisto_sdk.commands.common.tools.get_pack_name", return_value="ApiModules"
-    )
-    mocker.patch(
         "demisto_sdk.commands.update_release_notes.update_rn.get_deprecated_rn",
         return_value="",
     )
@@ -518,9 +524,7 @@ def test_update_release_notes_modified_apimodule(demisto_client, repo, mocker):
         [
             UPDATE_RN_COMMAND,
             "-i",
-            join("Packs", "ApiModules"),
-            "-idp",
-            repo.id_set.path,
+            join("Packs", "ApiModules")
         ],
     )
 

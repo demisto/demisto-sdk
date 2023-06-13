@@ -21,6 +21,7 @@ from demisto_sdk.commands.common.constants import (
     RELATIVE_HREF_URL_REGEX,
     RELATIVE_MARKDOWN_URL_REGEX,
 )
+from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.docker_helper import init_global_docker_client
 from demisto_sdk.commands.common.errors import (
     FOUND_FILES_AND_ERRORS,
@@ -41,7 +42,6 @@ from demisto_sdk.commands.common.MDXServer import (
 )
 from demisto_sdk.commands.common.tools import (
     compare_context_path_in_yml_and_readme,
-    get_content_path,
     get_pack_name,
     get_url_with_retries,
     get_yaml,
@@ -78,6 +78,8 @@ REQUIRED_MDX_PACKS = [
 PACKS_TO_IGNORE = ["HelloWorld", "HelloWorldPremium"]
 
 DEFAULT_SENTENCES = ["getting started and learn how to build an integration"]
+
+RETRIES_VERIFY_MDX = 2
 
 
 @dataclass(frozen=True)
@@ -178,7 +180,7 @@ class ReadMeValidator(BaseValidator):
             json_file_path=json_file_path,
             specific_validations=specific_validations,
         )
-        self.content_path = get_content_path()
+        self.content_path = CONTENT_PATH
         self.file_path_str = file_path
         self.file_path = Path(file_path)
         self.pack_path = self.file_path.parent
@@ -214,21 +216,29 @@ class ReadMeValidator(BaseValidator):
         server_started = mdx_server_is_up()
         if not server_started:
             return False
-        readme_content = self.fix_mdx()
-        retry = Retry(total=2)
-        adapter = HTTPAdapter(max_retries=retry)
-        session = requests.Session()
-        session.mount("http://", adapter)
-        response = session.request(
-            "POST",
-            "http://localhost:6161",
-            data=readme_content.encode("utf-8"),
-            timeout=20,
-        )
-        if response.status_code != 200:
-            error_message, error_code = Errors.readme_error(response.text)
-            if self.handle_error(error_message, error_code, file_path=self.file_path):
-                return False
+        for _ in range(RETRIES_VERIFY_MDX):
+            try:
+                readme_content = self.fix_mdx()
+                retry = Retry(total=2)
+                adapter = HTTPAdapter(max_retries=retry)
+                session = requests.Session()
+                session.mount("http://", adapter)
+                response = session.request(
+                    "POST",
+                    "http://localhost:6161",
+                    data=readme_content.encode("utf-8"),
+                    timeout=20,
+                )
+                if response.status_code != 200:
+                    error_message, error_code = Errors.readme_error(response.text)
+                    if self.handle_error(
+                        error_message, error_code, file_path=self.file_path
+                    ):
+                        return False
+                return True
+            except Exception as e:
+                logger.info(f"Starting MDX local server due to exception. Error: {e}")
+                start_local_MDX_server()
         return True
 
     def is_mdx_file(self) -> bool:
@@ -893,7 +903,7 @@ class ReadMeValidator(BaseValidator):
             if mdx_server_is_up():  # this allows for this context to be reentrant
                 logger.debug("server is already up. Not restarting")
                 return empty_context_mgr(True)
-            if ReadMeValidator.are_modules_installed_for_verify(get_content_path()):  # type: ignore
+            if ReadMeValidator.are_modules_installed_for_verify(CONTENT_PATH):  # type: ignore
                 ReadMeValidator.add_node_env_vars()
                 return start_local_MDX_server(handle_error, file_path)
             elif ReadMeValidator.is_docker_available():
@@ -902,7 +912,7 @@ class ReadMeValidator(BaseValidator):
 
     @staticmethod
     def add_node_env_vars():
-        content_path = get_content_path()
+        content_path = CONTENT_PATH
         node_modules_path = content_path / Path("node_modules")  # type: ignore
         os.environ["NODE_PATH"] = (
             str(node_modules_path) + os.pathsep + os.getenv("NODE_PATH", "")

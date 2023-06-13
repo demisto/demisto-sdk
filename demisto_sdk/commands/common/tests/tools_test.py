@@ -87,6 +87,7 @@ from demisto_sdk.commands.common.tools import (
     retrieve_file_ending,
     run_command_os,
     server_version_compare,
+    str2bool,
     string_to_bool,
     to_kebab_case,
 )
@@ -1370,7 +1371,7 @@ def test_get_pack_metadata(repo):
 
     pack = repo.create_pack("MyPack")
     pack_metadata = pack.pack_metadata
-    pack_metadata.update(metadata_json)
+    pack_metadata.write_json(metadata_json)
 
     result = get_pack_metadata(pack.path)
 
@@ -2635,3 +2636,33 @@ def test_get_from_version_error(mocker):
         get_from_version("fake_file_path.yml")
 
     assert str(e.value) == "yml file returned is not of type dict"
+
+
+@pytest.mark.parametrize(
+    "value, expected_output",
+    [
+        (None, False),
+        (True, True),
+        (False, False),
+        ("yes", True),
+        ("Yes", True),
+        ("YeS", True),
+        ("True", True),
+        ("t", True),
+        ("y", True),
+        ("Y", True),
+        ("1", True),
+        ("no", False),
+        ("No", False),
+        ("nO", False),
+        ("NO", False),
+        ("false", False),
+        ("False", False),
+        ("F", False),
+        ("n", False),
+        ("N", False),
+        ("0", False),
+    ],
+)
+def test_str2bool(value, expected_output):
+    assert str2bool(value) == expected_output

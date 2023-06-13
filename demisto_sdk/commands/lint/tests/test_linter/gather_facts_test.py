@@ -4,6 +4,7 @@ import tempfile
 from typing import Callable
 
 import pytest
+from packaging.version import Version
 from wcmatch.pathlib import Path
 
 from demisto_sdk.commands.common.hook_validations.docker import DockerImageValidator
@@ -234,7 +235,7 @@ class TestDockerImagesCollection:
             "get_docker_image_latest_tag_request",
             return_value=native_image_latest_tag,
         )
-        mocker.patch.object(linter, "get_python_version_from_image", return_value="3.8")
+        mocker.patch.object(linter, "get_python_version", return_value=Version("3.8"))
 
         # Crete integration to test on:
         integration_name = "TestIntegration"
@@ -306,7 +307,7 @@ class TestDockerImagesCollection:
             - Ensure that the docker images list is empty, and suitable logs (skipping) were written.
         """
         # Mock:
-        mocker.patch.object(linter, "get_python_version_from_image", return_value="3.8")
+        mocker.patch.object(linter, "get_python_version", return_value=Version("3.8"))
         log = mocker.patch.object(logger, "info")
 
         # Crete integration to test on:
@@ -347,9 +348,6 @@ class TestDockerImagesCollection:
         Then
             - Ensure that a suitable log was written.
         """
-        # Mock:
-        log_error = mocker.patch.object(logger, "error")
-
         # Crete integration to test on:
         integration_name = "TestIntegration"
         test_integration = pack.create_integration(name=integration_name)
@@ -363,14 +361,9 @@ class TestDockerImagesCollection:
                 True,
                 docker_image_flag=invalid_docker_image,
             )
-            runner._gather_facts(modules={})
-
-        # Verify docker images:
-        assert runner._facts["images"][0][0] == invalid_docker_image
-        assert (
-            f"Get python version from image {invalid_docker_image} - Failed detecting Python version for image"
-            f" {invalid_docker_image}" in log_error.call_args_list[0][0][0]
-        )
+            with pytest.raises(RuntimeError) as e:
+                runner._gather_facts(modules={})
+                assert "Failed detecting Python version for image" in str(e.value)
 
     def test_invalid_docker_image_as_docker_image_target(self, mocker, pack):
         """
@@ -384,9 +377,6 @@ class TestDockerImagesCollection:
         Then
             - Ensure that a suitable log was written.
         """
-        # Mock:
-        log_error = mocker.patch.object(logger, "error")
-
         # Crete integration to test on:
         integration_name = "TestIntegration"
         docker_image_yml = "demisto/py3-tools:1.0.0.42258"
@@ -407,9 +397,9 @@ class TestDockerImagesCollection:
         test_integration = pack.create_integration(
             name=integration_name, yml=integration_yml
         )
-        from demisto_sdk.commands.lint.helpers import get_python_version_from_image
+        from demisto_sdk.commands.common.docker_helper import get_python_version
 
-        get_python_version_from_image.cache_clear()
+        get_python_version.cache_clear()
 
         # Run lint:
         invalid_docker_image = "demisto/blabla:1.0.0.40800"
@@ -421,14 +411,9 @@ class TestDockerImagesCollection:
                 docker_image_flag=linter.DockerImageFlagOption.NATIVE_TARGET.value,
                 docker_image_target=invalid_docker_image,
             )
-            runner._gather_facts(modules={})
-
-        # Verify docker images:
-        assert runner._facts["images"][0][0] == invalid_docker_image
-        assert (
-            f"Get python version from image {invalid_docker_image} - Failed detecting Python version for image"
-            f" {invalid_docker_image}" in log_error.call_args_list[0][0][0]
-        )
+            with pytest.raises(RuntimeError) as e:
+                runner._gather_facts(modules={})
+                assert "Failed detecting Python version for image" in str(e.value)
 
     @pytest.mark.parametrize(
         argnames="docker_image_flag, exp_versioned_native_image_name",
@@ -465,7 +450,7 @@ class TestDockerImagesCollection:
                 4. Ensure that the docker image is only the docker image from the integration yml.
         """
         # Mock:
-        mocker.patch.object(linter, "get_python_version_from_image", return_value="3.8")
+        mocker.patch.object(linter, "get_python_version", return_value=Version("3.8"))
         log = mocker.patch.object(logger, "info")
 
         # Crete integration to test on:
@@ -607,7 +592,7 @@ class TestDockerImagesCollection:
             },
         }
 
-        mocker.patch.object(linter, "get_python_version_from_image", return_value="3.8")
+        mocker.patch.object(linter, "get_python_version", return_value=Version("3.8"))
         mocker.patch(
             "demisto_sdk.commands.common.native_image.NativeImageConfig.load",
             return_value=native_image_config_mock,

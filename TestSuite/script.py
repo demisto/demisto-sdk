@@ -13,6 +13,7 @@ class Script(Integration):
     # Im here just to have one!!!
     def __init__(self, tmpdir: Path, name, repo, create_unified=False):
         super().__init__(tmpdir, name, repo, create_unified)
+        self.prefix = "script"
 
     def create_default_script(self, name: str = "sample_script"):
         """Creates a new script with basic data.

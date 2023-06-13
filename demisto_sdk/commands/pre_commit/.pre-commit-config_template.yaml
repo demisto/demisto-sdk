@@ -1,4 +1,4 @@
-exclude: .devcontainer/|.vscode|Pipfile.lock|.gitlab/ci/|.circleci/
+exclude: .devcontainer/|.vscode|Pipfile.lock|.gitlab/ci/|.circleci/|docs
 
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
@@ -19,7 +19,7 @@ repos:
       - id: pycln
 
   - repo: https://github.com/charliermarsh/ruff-pre-commit
-    rev: "v0.0.259"
+    rev: "v0.0.269"
     hooks:
       - id: ruff
 
@@ -27,14 +27,27 @@ repos:
     rev: "v2.0.1"
     hooks:
       - id: autopep8
-
   - repo: local
     hooks:
+
+      - id: is-circle-changed
+        name: is-circle-changed
+        description: Checks if circle files are changed, and checkout to current if it is.
+        entry: ./Tests/scripts/is_file_up_to_date.sh .circleci/config.yml "" true
+        language: script
+        pass_filenames: false
+
+      - id: is-gitlab-changed
+        name: is-gitlab-changed
+        description: Checks if gitlab files are changed, and checkout to current if it is.
+        entry: ./Tests/scripts/is_file_up_to_date.sh .gitlab "" true
+        language: script
+        pass_filenames: false
+
+  - repo: https://github.com/demisto/demisto-sdk
+    rev: ""
+    hooks:
       - id: mypy
-        name: mypy
-        entry: mypy
-        language: python
-        types: [python]
         args:
           [
             --ignore-missing-imports,
@@ -42,35 +55,21 @@ repos:
             --show-error-codes,
             --follow-imports=silent,
             --allow-redefinition,
-            # this will be replaced by the python version in the runtime
+            # `--python-version` argument is replaced in runtime
             --python-version=3.10,
           ]
-        exclude: "test_data|tests_data|.venv|.*_test.py$|infrastructure_tests"
 
-      - id: is-circle-changed
-        name: is-circle-changed
-        description: Checks if circle files are changed, and checkout to current if it is.
-        entry: ./Tests/scripts/is_file_up_to_date.sh .circleci/config.yml "" true
-        language: script
-
-      - id: is-gitlab-changed
-        name: is-gitlab-changed
-        description: Checks if gitlab files are changed, and checkout to current if it is.
-        entry: ./Tests/scripts/is_file_up_to_date.sh .gitlab "" true
-        language: script
-
-  - repo: https://github.com/demisto/demisto-sdk
-    # Replace with the latest release version or master
-    rev: master
-    hooks:
       # enable with --test
       - id: run-unit-tests
 
-      # those will be skipped by default, to run them use --force-run-hooks=validate,format
       - id: format
-        # update docker image to the latest version
-        args: ["-ud"]
+        # update docker image to the latest version, assume no
+        args: ["-ud", "-n", "--no-validate", "-g"]
 
       - id: validate
+        args: ["-g"]
 
       - id: secrets
+        args: ["--ignore-entropy"]
+
+      - id: no-implicit-optional

@@ -1,5 +1,6 @@
-from typing import Optional, Set
+from typing import Callable, Optional, Set
 
+import demisto_client
 from pydantic import Field
 
 from demisto_sdk.commands.content_graph.common import ContentType
@@ -12,3 +13,7 @@ class Widget(ContentItem, content_type=ContentType.WIDGET):  # type: ignore[call
 
     def metadata_fields(self) -> Set[str]:
         return {"object_id", "name", "data_type", "widget_type", "fromversion", "toversion"}
+
+    @classmethod
+    def _client_upload_method(cls, client: demisto_client) -> Callable:
+        return client.import_widget

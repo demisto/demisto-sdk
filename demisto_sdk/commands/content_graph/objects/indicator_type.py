@@ -1,5 +1,6 @@
-from typing import List, Optional, Set
+from typing import Callable, List, Optional, Set
 
+import demisto_client
 from pydantic import Field
 
 from demisto_sdk.commands.content_graph.common import ContentType
@@ -23,3 +24,7 @@ class IndicatorType(ContentItem, content_type=ContentType.INDICATOR_TYPE):  # ty
             "fromversion",
             "toversion",
         }
+
+    @classmethod
+    def _client_upload_method(cls, client: demisto_client) -> Callable:
+        return client.import_reputation_handler  # TODO check file name

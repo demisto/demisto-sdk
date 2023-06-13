@@ -59,6 +59,7 @@ LAYOUT = "layout"
 LAYOUTS_CONTAINER = "layoutscontainer"
 PRE_PROCESS_RULES = "pre-process-rules"
 LISTS = "list"  # singular, as it is the prefix of the file
+INCIDENT = "incident"  # prefix to identify any incident entity
 INCIDENT_TYPE = "incidenttype"
 INCIDENT_FIELD = "incidentfield"
 INDICATOR_FIELD = "indicatorfield"
@@ -805,6 +806,7 @@ PACKS_README_FILE_NAME = "README.md"
 PACKS_CONTRIBUTORS_FILE_NAME = "CONTRIBUTORS.json"
 AUTHOR_IMAGE_FILE_NAME = "Author_image.png"
 METADATA_FILE_NAME = "pack_metadata.json"
+PACKS_FOLDER = "Packs"
 
 CONF_JSON_FILE_NAME = "conf.json"
 
@@ -1306,6 +1308,13 @@ ACCEPTED_FILE_EXTENSIONS = [
 ]
 ENDPOINT_COMMAND_NAME = "endpoint"
 
+RELIABILITY_PARAMETER_NAMES = [
+    "integration_reliability",  # First item in the list will be used in errors
+    "integrationReliability",
+    "feedReliability",
+    "reliability",
+]
+
 REPUTATION_COMMAND_NAMES = {"file", "email", "domain", "url", "ip", "cve"}
 
 BANG_COMMAND_NAMES = {"file", "email", "domain", "url", "ip", "cve", "endpoint"}
@@ -1370,6 +1379,7 @@ FILETYPE_TO_DEFAULT_FROMVERSION = {
     FileType.PARSING_RULE: "6.10.0",
     FileType.MODELING_RULE: "6.10.0",
     FileType.LAYOUT_RULE: "6.10.0",
+    FileType.XSIAM_DASHBOARD: "6.10.0",
 }
 
 DEFAULT_PYTHON_VERSION = "3.10"
@@ -1409,6 +1419,7 @@ FEED_REQUIRED_PARAMS = [
             "required": False,
         },
         "must_contain": {},
+        "must_be_one_of": {},
     },
     {
         "name": "feedReputation",
@@ -1421,6 +1432,7 @@ FEED_REQUIRED_PARAMS = [
         "must_contain": {
             "additionalinfo": "Indicators from this integration instance will be marked with this reputation"
         },
+        "must_be_one_of": {},
     },
     {
         "name": "feedReliability",
@@ -1440,6 +1452,7 @@ FEED_REQUIRED_PARAMS = [
         "must_contain": {
             "additionalinfo": "Reliability of the source providing the intelligence data"
         },
+        "must_be_one_of": {},
     },
     {
         "name": "feedExpirationPolicy",
@@ -1450,16 +1463,19 @@ FEED_REQUIRED_PARAMS = [
             "options": ["never", "interval", "indicatorType", "suddenDeath"],
         },
         "must_contain": {},
+        "must_be_one_of": {},
     },
     {
         "name": "feedExpirationInterval",
         "must_equal": {"display": "", "type": 1, "required": False},
         "must_contain": {},
+        "must_be_one_of": {},
     },
     {
         "name": "feedFetchInterval",
         "must_equal": {"display": "Feed Fetch Interval", "type": 19, "required": False},
         "must_contain": {},
+        "must_be_one_of": {},
     },
     {
         "name": "feedBypassExclusionList",
@@ -1473,23 +1489,30 @@ FEED_REQUIRED_PARAMS = [
             " This means that if an indicator from this feed is on the exclusion list,"
             " the indicator might still be added to the system."
         },
+        "must_be_one_of": {},
     },
     {
         "name": "feedTags",
         "must_equal": {"display": "Tags", "required": False, "type": 0},
         "must_contain": {"additionalinfo": "Supports CSV values."},
+        "must_be_one_of": {},
     },
     {
         "name": "tlp_color",
         "must_equal": {
             "display": "Traffic Light Protocol Color",
-            "options": ["RED", "AMBER", "GREEN", "WHITE"],
             "required": False,
             "type": 15,
         },
         "must_contain": {
             "additionalinfo": "The Traffic Light Protocol (TLP) designation to apply to indicators fetched from the "
             "feed"
+        },
+        "must_be_one_of": {
+            "options": [
+                ["RED", "AMBER", "GREEN", "WHITE"],
+                ["RED", "AMBER+STRICT", "AMBER", "GREEN", "CLEAR"],
+            ]
         },
     },
 ]
@@ -1794,3 +1817,20 @@ class ParameterType(Enum):
 NO_TESTS_DEPRECATED = "No tests (deprecated)"
 NATIVE_IMAGE_FILE_NAME = "docker_native_image_config.json"
 TESTS_REQUIRE_NETWORK_PACK_IGNORE = "tests_require_network"
+NATIVE_IMAGE_DOCKER_NAME = "demisto/py3-native"
+
+
+# SKIP PREPARE CONSTANTS
+SKIP_PREPARE_SCRIPT_NAME = "script-name-incident-to-alert"
+
+
+TABLE_INCIDENT_TO_ALERT = {
+    "incident": "alert",
+    "incidents": "alerts",
+    "Incident": "Alert",
+    "Incidents": "Alerts",
+    "INCIDENT": "ALERT",
+    "INCIDENTS": "ALERTS",
+}
+
+NATIVE_IMAGE_DOCKER_NAME = "demisto/py3-native"

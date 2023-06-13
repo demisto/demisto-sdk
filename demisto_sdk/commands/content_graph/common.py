@@ -6,6 +6,8 @@ from typing import Any, Dict, Iterator, List, NamedTuple, Set
 
 from neo4j import graph
 
+from demisto_sdk.commands.common.constants import PACKS_FOLDER
+
 NEO4J_ADMIN_DOCKER = ""
 
 NEO4J_DATABASE_HTTP = os.getenv(
@@ -19,7 +21,6 @@ NEO4J_PASSWORD = os.getenv("DEMISTO_SDK_NEO4J_PASSWORD", "contentgraph")
 
 NEO4J_FOLDER = "neo4j-data"
 
-PACKS_FOLDER = "Packs"
 PACK_METADATA_FILENAME = "pack_metadata.json"
 PACK_CONTRIBUTORS_FILENAME = "CONTRIBUTORS.json"
 UNIFIED_FILES_SUFFIXES = [".yml", ".json"]
@@ -133,6 +134,9 @@ class ContentType(str, enum.Enum):
             return "Classifier"
         else:
             return re.sub(r'([a-z](?=[A-Z])|[A-Z](?=[A-Z][a-z]))', r'\1 ', self.value)
+
+    # def __hash__(self) -> int:
+    #     return hash(self.value)
 
     @staticmethod
     def server_names() -> List[str]:

@@ -108,7 +108,7 @@ class TestVerifyResults:
             - The expected outputs match the simulated query results.
 
         Then:
-            - Verify the function returns successfully.
+            - Verify the function returns True indicating the verification passed.
         """
         from demisto_sdk.commands.test_content.test_modeling_rule.test_modeling_rule import (
             verify_results,
@@ -119,6 +119,7 @@ class TestVerifyResults:
         )
 
         # Arrange
+        tested_dataset = "vendor_product_raw"
         query_results = [
             {
                 "vendor_product_raw.test_data_event_id": str(DEFAULT_TEST_EVENT_ID),
@@ -133,7 +134,7 @@ class TestVerifyResults:
                     test_data_event_id=DEFAULT_TEST_EVENT_ID,
                     vendor="vendor",
                     product="product",
-                    dataset="vendor_product_raw",
+                    dataset=tested_dataset,
                     event_data={},
                     expected_values={
                         "xdm.field1": "value1",
@@ -145,7 +146,7 @@ class TestVerifyResults:
         )
 
         try:
-            verify_results(query_results, test_data)
+            assert verify_results(tested_dataset, query_results, test_data)
         except typer.Exit:
             assert False, "No exception should be raised in this scenario."
 
@@ -159,7 +160,7 @@ class TestVerifyResults:
             - The expected outputs do not match the simulated query results.
 
         Then:
-            - Verify the function raises a typer.Exit exception.
+            - Verify the function return False indicating the result not match the expected.
         """
         from demisto_sdk.commands.test_content.test_modeling_rule.test_modeling_rule import (
             verify_results,
@@ -170,6 +171,7 @@ class TestVerifyResults:
         )
 
         # Arrange
+        tested_dataset = "vendor_product_raw"
         query_results = [
             {
                 "vendor_product_raw.test_data_event_id": str(DEFAULT_TEST_EVENT_ID),
@@ -184,7 +186,7 @@ class TestVerifyResults:
                     test_data_event_id=DEFAULT_TEST_EVENT_ID,
                     vendor="vendor",
                     product="product",
-                    dataset="vendor_product_raw",
+                    dataset=tested_dataset,
                     event_data={},
                     expected_values={
                         "xdm.field1": "value1",
@@ -195,8 +197,7 @@ class TestVerifyResults:
             ]
         )
 
-        with pytest.raises(typer.Exit):
-            verify_results(query_results, test_data)
+        assert verify_results(tested_dataset, query_results, test_data) is False
 
 
 class TestTheTestModelingRuleCommandSingleRule:
@@ -1084,3 +1085,86 @@ class TestTheTestModelingRuleCommandInteractive:
 
         except typer.Exit:
             assert False, "No exception should be raised in this scenario."
+
+
+@pytest.mark.parametrize(
+    "epoc_time, timezone_delta, with_ms, human_readable_time",
+    [
+        (1686231456000, 0, False, "Jun 08th 2023 16:37:36"),
+        (1686231456000, 3, False, "Jun 08th 2023 19:37:36"),
+        (1686231456000, -6, False, "Jun 08th 2023 10:37:36"),
+        (1686231456000, 0, True, "Jun 08th 2023 16:37:36.000000"),
+        (1686231456123, 0, True, "Jun 08th 2023 16:37:36.123000"),
+    ],
+)
+def test_convert_epoch_time_to_string_time(
+    mocker, epoc_time, timezone_delta, with_ms, human_readable_time
+):
+    """
+    Given:
+        - An Epoch time.
+            case-1: Epoch time without time zone and without MS.
+            case-2: Epoch time with time zone +3 and without MS.
+            case-3: Epoch time with time zone -6 and without MS.
+            case-4: Epoch time without time zone and with MS equal to 0.
+            case-5: Epoch time without time zone and with MS equal to 123.
+
+    When:
+        - The convert_epoch_time_to_string_time function is running.
+
+    Then:
+        - Verify we get the expected results.
+    """
+    from dateutil import tz
+
+    from demisto_sdk.commands.test_content.test_modeling_rule.test_modeling_rule import (
+        convert_epoch_time_to_string_time,
+    )
+
+    mocker.patch("dateutil.tz.tzlocal", return_value=tz.gettz("Asia/Jerusalem"))
+
+    assert (
+        convert_epoch_time_to_string_time(epoc_time, timezone_delta, with_ms)
+        == human_readable_time
+    )
+
+
+@pytest.mark.parametrize(
+    "day, suffix",
+    [
+        (1, "st"),
+        (2, "nd"),
+        (3, "rd"),
+        (4, "th"),
+        (10, "th"),
+        (11, "th"),
+        (12, "th"),
+        (21, "st"),
+        (31, "st"),
+    ],
+)
+def test_day_suffix(day, suffix):
+    """
+    Given:
+        - A day of a month.
+            case-1: 1 => st.
+            case-2: 2 => nd.
+            case-3: 3 => rd.
+            case-4: 4 => th.
+            case-5: 10 => th.
+            case-6: 11 => th.
+            case-7: 12 => th.
+            case-8: 21 => st.
+            case-9: 31 => st.
+
+    When:
+        - The day_suffix function is running.
+
+    Then:
+        - Verify we get the expected results.
+    """
+    from demisto_sdk.commands.test_content.test_modeling_rule.test_modeling_rule import (
+        day_suffix,
+    )
+
+    assert day_suffix(day) == suffix

@@ -142,7 +142,6 @@ def build_xsoar_linter_command(
             if formatting_script and "W9008" in checker_msgs_list:
                 checker_msgs_list = list(checker_msgs_list)
                 checker_msgs_list.remove("W9008")
-            # message_enable += ",".join(checker_msgs_list)
             for msg in checker_msgs_list:
                 message_enable += f"{msg},"
 

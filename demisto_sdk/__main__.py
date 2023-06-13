@@ -2738,11 +2738,10 @@ def openapi_codegen(ctx, **kwargs):
 
     if integration.save_package(output_dir):
         logger.info(
-            f"Successfully finished generating integration code and saved it in {output_dir}",
-            "green",
+            f"[green]Successfully finished generating integration code and saved it in {output_dir}[/green]",
         )
     else:
-        logger.info(
+        logger.error(
             f"[red]There was an error creating the package in {output_dir}[/red]"
         )
         sys.exit(1)
@@ -3129,6 +3128,20 @@ def error_code(ctx, config, **kwargs):
     result = generate_error_code_information(kwargs.get("input"))
 
     sys.exit(result)
+
+
+# ====================== create-content-graph ====================== #
+@main.command(hidden=True)
+@click.help_option("-h", "--help")
+def start_content_graph():
+    """
+    Starts the content graph server.
+    """
+    from demisto_sdk.commands.content_graph.content_graph_commands import (
+        start_content_graph as start_content_graph_command,
+    )
+
+    start_content_graph_command()
 
 
 # ====================== create-content-graph ====================== #

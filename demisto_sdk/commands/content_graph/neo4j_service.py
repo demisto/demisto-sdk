@@ -16,6 +16,9 @@ from demisto_sdk.commands.content_graph.common import (
 )
 
 REPO_PATH = CONTENT_PATH
+if not REPO_PATH.is_absolute():
+    logger.warning("The content path should be absolute")
+    REPO_PATH = REPO_PATH.resolve()
 
 NEO4J_VERSION = "5.5.0"
 
@@ -92,6 +95,7 @@ def _docker_start():
         image=NEO4J_SERVICE_IMAGE,
         name="neo4j-content",
         ports={"7474/tcp": 7474, "7687/tcp": 7687, "7473/tcp": 7473},
+        user=f"{os.getuid()}:{os.getgid()}",
         volumes=[
             f"{REPO_PATH / NEO4J_FOLDER / NEO4J_DATA_FOLDER}:/{NEO4J_DATA_FOLDER}",
             f"{REPO_PATH / NEO4J_FOLDER / NEO4J_IMPORT_FOLDER}:{LOCAL_NEO4J_PATH / NEO4J_IMPORT_FOLDER}",
@@ -134,7 +138,7 @@ def start():
         logger.debug(
             f"Could not start neo4j container, delete data folder and trying again. {e}"
         )
-        shutil.rmtree(REPO_PATH / NEO4J_FOLDER / NEO4J_DATA_FOLDER)
+        shutil.rmtree(REPO_PATH / NEO4J_FOLDER / NEO4J_DATA_FOLDER, ignore_errors=True)
         _docker_start()
 
 

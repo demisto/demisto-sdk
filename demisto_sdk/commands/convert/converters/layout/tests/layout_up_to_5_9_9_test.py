@@ -112,8 +112,9 @@ class TestLayoutBelowSixConverter:
         result = LayoutBelowSixConverter.layout_to_indicators_or_incidents_dict(
             layout_converter.pack.incident_types
         )
-        assert result == {
-            "ExtraHop Detection": ["ExtraHop Detection", "ExtraHop Detection 2"]
+        assert set(result["ExtraHop Detection"]) == {
+            "ExtraHop Detection",
+            "ExtraHop Detection 2",
         }
 
     def test_layout_to_indicators_dict(self, tmpdir):

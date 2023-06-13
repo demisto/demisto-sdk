@@ -471,16 +471,15 @@ class ContributionConverter:
             # format
             self.format_converted_pack()
         except Exception as e:
-            logger.info(
+            logger.error(
                 f"Creating a Pack from the contribution zip failed with error: {e}\n {traceback.format_exc()}",
-                "red",
             )
         finally:
             if self.contrib_conversion_errs:
-                logger.info(
+                logger.error(
                     "The following errors occurred while converting unified content YAMLs to package structure:"
                 )
-                logger.info(
+                logger.error(
                     textwrap.indent("\n".join(self.contrib_conversion_errs), "\t")
                 )
 

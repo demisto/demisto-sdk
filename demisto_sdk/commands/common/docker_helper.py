@@ -276,7 +276,7 @@ class DockerBase:
             The test image name and errors to create it if any
         """
         errors = ""
-        if not python_version:
+        if not python_version and container_type != TYPE_PWSH:
             python_version = get_python_version(base_image).major
         python3_requirements = get_pip_requirements_from_file(
             TEST_REQUIREMENTS_DIR / "python3_requirements" / "dev-requirements.txt"
@@ -284,9 +284,11 @@ class DockerBase:
         python2_requirements = get_pip_requirements_from_file(
             TEST_REQUIREMENTS_DIR / "python2_requirements" / "dev-requirements.txt"
         )
-        pip_requirements = (
-            python3_requirements if python_version == 3 else python2_requirements
-        )
+        pip_requirements = []
+        if python_version == 3:
+            pip_requirements = python3_requirements
+        elif python_version == 2:
+            pip_requirements = python2_requirements
         if additional_requirements:
             pip_requirements.extend(additional_requirements)
         identifier = hashlib.md5(

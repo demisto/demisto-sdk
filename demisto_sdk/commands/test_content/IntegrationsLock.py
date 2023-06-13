@@ -157,6 +157,7 @@ def lock_integrations(test_playbook, storage_client: storage.Client) -> bool:
                 lock_file.download_as_string().decode().split(":")
             )
         except NotFound:
+            test_playbook.build_context.logging_module.warning("lock file in not exists, continue running")
             continue
 
         if not lock_expired(lock_file, lock_timeout) and workflow_still_running(

@@ -84,6 +84,7 @@ from demisto_sdk.commands.common.tools import (
     is_origin_content_repo,
     is_pack_path,
     is_uuid,
+    parse_multiple_path_inputs,
     retrieve_file_ending,
     run_command_os,
     server_version_compare,
@@ -2666,3 +2667,35 @@ def test_get_from_version_error(mocker):
 )
 def test_str2bool(value, expected_output):
     assert str2bool(value) == expected_output
+
+
+@pytest.mark.parametrize(
+    'input_paths, expected_inputs',
+    [
+        (
+            Path('test/test.yml'),
+            (Path('test/test.yml'),)
+        ),
+        (
+            'test/test.yml',
+            (Path('test/test.yml'),)
+        ),
+        (
+            'test/test.yml,test1/test1.yml',
+            (Path('test/test.yml'), Path('test1/test1.yml'))
+        )
+    ]
+)
+def test_parse_multiple_path_inputs(input_paths, expected_inputs):
+    """
+    Given:
+        Some variations of inputs
+    When:
+        - Runs the parse_multiple_path_inputs fomction
+    Then:
+        - Ensure that a tuple of Path is always returned
+        - Ensure input is handled when a comma-separated string is sent
+
+    """
+    inputs = parse_multiple_path_inputs(input_paths)
+    assert inputs == expected_inputs

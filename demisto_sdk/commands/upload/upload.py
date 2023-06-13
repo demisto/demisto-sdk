@@ -12,8 +12,8 @@ from demisto_sdk.commands.common.constants import (
     MarketplaceVersions,
 )
 from demisto_sdk.commands.common.tools import (
-    get_multiple_path_inputs,
     parse_marketplace_kwargs,
+    parse_multiple_path_inputs,
 )
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.content_graph.objects.pack import Pack
@@ -34,7 +34,8 @@ logger = logging.getLogger("demisto-sdk")
 def upload_content_entity(**kwargs):
     from demisto_sdk.commands.upload.uploader import ConfigFileParser, Uploader
 
-    inputs = get_multiple_path_inputs(kwargs.get('input'))
+
+    inputs = parse_multiple_path_inputs(kwargs.get('input'))
 
     keep_zip = kwargs.pop("keep_zip", None)
     destination_zip_path = Path(keep_zip or tempfile.mkdtemp())

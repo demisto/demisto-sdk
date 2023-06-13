@@ -5,10 +5,9 @@ from typing import Generator
 
 import pytz
 import requests
-from google.api_core.exceptions import PreconditionFailed
+from google.api_core.exceptions import NotFound, PreconditionFailed
 from google.cloud import storage
 from google.resumable_media.common import InvalidResponse
-from google.api_core.exceptions import NotFound
 
 LOCKS_PATH = "content-locks"
 BUCKET_NAME = os.environ.get("GCS_ARTIFACTS_BUCKET")
@@ -157,7 +156,9 @@ def lock_integrations(test_playbook, storage_client: storage.Client) -> bool:
                 lock_file.download_as_string().decode().split(":")
             )
         except NotFound:
-            test_playbook.build_context.logging_module.warning("Integration lock file in not exists, continue running")
+            test_playbook.build_context.logging_module.warning(
+                "Integration lock file in not exists, continue running"
+            )
             continue
 
         if not lock_expired(lock_file, lock_timeout) and workflow_still_running(
@@ -220,8 +221,11 @@ def create_lock_files(
             # before this build managed to do it.
             # we need to unlock all the integrations we have already locked and try again later
 
-            if isinstance(exception, PreconditionFailed) \
-                    or exception.__cause__ and isinstance(exception.__cause__, PreconditionFailed):
+            if (
+                isinstance(exception, PreconditionFailed)
+                or exception.__cause__
+                and isinstance(exception.__cause__, PreconditionFailed)
+            ):
                 test_playbook.build_context.logging_module.warning(
                     f"Could not lock integration {integration}, Create file with precondition failed."
                     f"delaying test execution."
@@ -244,7 +248,10 @@ def unlock_integrations(
         test_playbook (TestPlaybook): The test playbook instance we want to test under the lock's context
         storage_client: The GCP storage client
     """
-    locked_integrations = [getattr(integration, 'name', integration) for integration in integrations_to_unlock]
+    locked_integrations = [
+        getattr(integration, "name", integration)
+        for integration in integrations_to_unlock
+    ]
     locked_integration_blobs = get_locked_integrations(
         locked_integrations, storage_client
     )

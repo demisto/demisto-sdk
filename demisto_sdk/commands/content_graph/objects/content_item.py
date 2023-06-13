@@ -150,6 +150,9 @@ class ContentItem(BaseContent):
 
     @property
     def data(self) -> dict:
+        if not self.path.exists():
+            logger.warning(f"Could not find file {self.path}")
+            return {}
         return get_file(self.path)
 
     def prepare_for_upload(
@@ -233,6 +236,8 @@ class ContentItem(BaseContent):
         dir: DirectoryPath,
         marketplace: MarketplaceVersions,
     ) -> None:
+        if not self.path.exists():
+            logger.warning(f"Could not find file {self.path}, skipping dump")
         dir.mkdir(exist_ok=True, parents=True)
         try:
             with (dir / self.normalize_name).open("w") as f:

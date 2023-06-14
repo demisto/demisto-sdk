@@ -236,7 +236,9 @@ class GraphValidator(BaseValidator):
 
     @error_codes("GR107")
     def validate_deprecated_items_usage(self):
-        """Validate there is no items used deprecated items"""
+        """Validates there are no items used deprecated items.
+        For existing content, a warning is raised.
+        """
         is_valid = True
         new_files = GitUtil(repo=Content.git()).added_files()
         items: List[dict] = self.graph.find_items_used_deprecated_items(self.file_paths)

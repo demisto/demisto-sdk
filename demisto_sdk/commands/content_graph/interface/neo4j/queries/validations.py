@@ -129,20 +129,20 @@ def get_items_used_deprecated(tx: Transaction, file_paths: List[str]):
         f"AND (p.path in {file_paths} OR d.path in {file_paths})" if file_paths else ""
     )
     command_query = f"""// Returning all the items which using deprecated commands
-    match (p{{deprecated: false}})-[:USES]->(c:Command)<-[:HAS_COMMAND{{deprecated: true}}]-(d:Integration) where not p.is_test
-optional match (i2:Integration)-[:HAS_COMMAND{{deprecated: false}}]->(c)
-with p, c, i2
-where i2 is null
+MATCH (p{{deprecated: false}})-[:USES]->(c:Command)<-[:HAS_COMMAND{{deprecated: true}}]-(i:Integration) WHERE NOT p.is_test
+OPTIONAL MATCH (i2:Integration)-[:HAS_COMMAND{{deprecated: false}}]->(c)
+WHERE id(i) <> id(i2)
+WITH p, c, i2
+WHERE i2 IS NULL
 {files_filter}
-return c.object_id as deprecated_command, collect(p.path) as object_using_deprecated
-"""
+RETURN c.object_id AS deprecated_command, collect(p.path) AS object_using_deprecated"""
     general_items_query = f"""
     match (p{{deprecated: false}})-[:USES]->(d{{deprecated: true}}) where not p.is_test
 optional match (p)-[:USES]->(c1:Command)<-[:HAS_COMMAND]-(d)
 with p, d, c1
 where c1 is null
 {files_filter}
-return d.path as deprecated_content, d.content_type as deprecated_content_type, collect(p.path) as object_using_deprecated, p.content_type as object_using_deprecated_type
+return d.object_id as deprecated_content, d.content_type as deprecated_content_type, collect(p.path) as object_using_deprecated
     """
     return list(run_query(tx, command_query)) + list(run_query(tx, general_items_query))
 

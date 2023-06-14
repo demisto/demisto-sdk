@@ -750,7 +750,7 @@ def test_deprecated_usage__existing_content(repository: ContentDTO, mocker):
 def test_deprecated_usage__new_content(repository: ContentDTO, mocker):
     """
     Given
-    - A content repo with new items using deprecated commands.
+    - A content repo with the new item "SamplePlaybook" using a deprecated command.
     When
     - running the validation validate_deprecated_items_usage
     Then

@@ -11,7 +11,7 @@
 * Fixed an issue where **validate** command did not fail on non-existent dependency ids of non-mandatory dependant content.
 * Fixed pytest async io deprecation warning.
 * Fixed an issue where **lint** falsely warned of using `demisto.results`.
-* Added `GR107` validation to **validate** using the graph validations to check that no deprecated items are used in none-deprecated content.
+* Added `GR107` validation to **validate** using the graph validations to check that no deprecated items are used by non-deprecated content.
 
 ## 1.15.5
 * **Breaking Change**: The default of the **upload** command `--zip` argument is `true`. To upload packs as custom content items use the `--no-zip` argument.

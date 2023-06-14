@@ -4558,8 +4558,8 @@ class Errors:
     ):
         item_prefix = "command" if is_deprecated_are_command else "content item"
         return (
-            f"The {item_prefix} '{deprecated_item}' are deprecated but used in the content items: "
-            f"'{', '.join(used_deprecated_tems)}'"
+            f"The {item_prefix} '{deprecated_item}' is deprecated but used in the following content items: "
+            f"{', '.join(used_deprecated_tems)}."
         )
 
     @staticmethod

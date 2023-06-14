@@ -1091,10 +1091,10 @@ class TestTheTestModelingRuleCommandInteractive:
 @pytest.mark.parametrize(
     "epoc_time, with_ms, human_readable_time",
     [
-        (1686231456000, False, "Jun 8th 2023 15:37:36"),
-        (1686231456123, False, "Jun 8th 2023 15:37:36"),
-        (1686231456000, True, "Jun 8th 2023 15:37:36.000000"),
-        (1686231456123, True, "Jun 8th 2023 15:37:36.123000"),
+        (1686231456000, False, "Jun 8th 2023 13:37:36"),
+        (1686231456123, False, "Jun 8th 2023 13:37:36"),
+        (1686231456000, True, "Jun 8th 2023 13:37:36.000000"),
+        (1686231456123, True, "Jun 8th 2023 13:37:36.123000"),
     ],
 )
 def test_convert_epoch_time_to_string_time(epoc_time, with_ms, human_readable_time):
@@ -1116,7 +1116,7 @@ def test_convert_epoch_time_to_string_time(epoc_time, with_ms, human_readable_ti
         convert_epoch_time_to_string_time,
     )
 
-    with freeze_time("2023/06/14T10:20:00", tz_offset=2):
+    with freeze_time("2023/06/14T10:20:00Z"):
         assert (
             convert_epoch_time_to_string_time(epoc_time, with_ms) == human_readable_time
         )

@@ -235,7 +235,8 @@ def format_manager(
                     "red",
                 )
             )
-        return 1
+        # No files were found to format
+        return 0
 
     logger.info("")  # Just adding a new line before summary
     for string, print_color in log_list:

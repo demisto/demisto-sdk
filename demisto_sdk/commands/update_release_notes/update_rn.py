@@ -1052,10 +1052,7 @@ def update_api_modules_dependents_rn(
 def get_api_module_from_graph(changed_api_modules):
     if changed_api_modules:
         dependent_items = []
-        with Neo4jContentGraphInterface() as graph:
-            logger.info("Updating graph...")
-            update_content_graph(graph, use_git=True, dependencies=True)
-
+        with Neo4jContentGraphInterface(should_update=True) as graph:
             for changed_api_module in changed_api_modules:
                 logger.info(
                     f"Checking for packages dependent on the modified API module {changed_api_module}..."

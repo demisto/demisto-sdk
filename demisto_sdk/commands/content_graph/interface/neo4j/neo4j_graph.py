@@ -1,5 +1,7 @@
+from concurrent.futures import ProcessPoolExecutor
 import os
 from multiprocessing import Pool
+from multiprocessing.pool import ThreadPool
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional, Set, Tuple
 
@@ -277,7 +279,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
                 self._id_to_obj,
             )
             return
-        with Pool(processes=cpu_count()) as pool:
+        with ThreadPool(processes=cpu_count()) as pool:
             results = pool.starmap(
                 _parse_node, ((node.id, dict(node.items())) for node in nodes)
             )

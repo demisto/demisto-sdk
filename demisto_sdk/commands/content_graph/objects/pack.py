@@ -193,27 +193,27 @@ class PackContentItems(BaseModel):
 
 class PackMetadata(BaseModel):
     name: str
-    description: Optional[str]
-    created: Optional[str]
+    description: Optional[str] = None
+    created: Optional[str] = None
     updated: Optional[str] = None
-    support: Optional[str]
+    support: Optional[str] = None
     email: Optional[str] = None
     url: str = ""
     author: str = ""
     certification: str = ""
-    hidden: Optional[bool]
+    hidden: Optional[bool] = None
     server_min_version: Optional[str] = Field(None, alias="serverMinVersion")
-    current_version: Optional[str] = Field(alias="currentVersion")
-    tags: Optional[List[str]]
-    categories: Optional[List[str]]
-    use_cases: Optional[List[str]] = Field(alias="useCases")
-    keywords: Optional[List[str]]
+    current_version: Optional[str] = Field(None, alias="currentVersion")
+    tags: Optional[List[str]] = None
+    categories: Optional[List[str]] = None
+    use_cases: Optional[List[str]] = Field(None, alias="useCases")
+    keywords: Optional[List[str]] = None
     price: Optional[int] = None
     premium: Optional[bool] = None
     vendor_id: Optional[str] = Field(None, alias="vendorId")
     vendor_name: Optional[str] = Field(None, alias="vendorName")
     preview_only: Optional[bool] = Field(None, alias="previewOnly")
-    excluded_dependencies: Optional[List[str]]
+    excluded_dependencies: Optional[List[str]] = None
 
 
 class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: ignore[call-arg]

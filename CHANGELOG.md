@@ -1,6 +1,6 @@
 # Changelog
 ## Unreleased
-* Fixed an issue where lock integartions failed on FileNotFound.(PANW-internal only).
+* Fixed an issue where lock integration failed on FileNotFound.(PANW-internal only).
 * Added a validation that assures filename, id, and name have a correct suffix for modeling/parsing rules files.
 
 ## 1.16.0

@@ -1,5 +1,6 @@
 # Changelog
 ## Unreleased
+* Added a validation that assures filename, id, and name have a correct suffix for modeling/parsing rules files.
 
 ## 1.16.0
 * Added a check to **is_docker_image_latest_tag** to only fail the validation on non-latest image tag when the current tag is older than 3 days.
@@ -22,7 +23,6 @@
 * Update the format used for dev-dependencies in pyproject.toml to match modern versions of Poetry.
 * Added timestamps to logging messages when running in a CI build.
 * Fixed an issue where lock integartions failed on FileNotFound.(PANW-internal only).
-* Added a validation that assures filename, id, and name have a correct suffix for modeling/parsing rules files.
 
 ## 1.15.5
 * **Breaking Change**: The default of the **upload** command `--zip` argument is `true`. To upload packs as custom content items use the `--no-zip` argument.

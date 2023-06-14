@@ -318,7 +318,7 @@ def add_api_modules(
                 module_path = content_repo / api_module_path
                 if CAN_MOUNT_FILES:
                     copied_api_module_path.unlink(missing_ok=True)
-                    copied_api_module_path.symlink_to(module_path.resolve())
+                    copied_api_module_path.absolute().symlink_to(module_path.absolute())
                 else:
                     shutil.copy(src=module_path, dst=copied_api_module_path)
             else:

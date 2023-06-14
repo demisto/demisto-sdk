@@ -140,8 +140,7 @@ def build_xsoar_linter_command(
             checker_path += f"{checker},"
             checker_msgs_list = Msg_XSOAR_linter.get(checker, {}).keys()
             if formatting_script and "W9008" in checker_msgs_list:
-                checker_msgs_list = list(checker_msgs_list)
-                checker_msgs_list.remove("W9008")
+                checker_msgs_list = [msg for msg in checker_msgs_list if msg != "W9008"]
             for msg in checker_msgs_list:
                 message_enable += f"{msg},"
 

@@ -641,8 +641,8 @@ class Linter:
             )
             stdout, stderr, exit_code = run_command_os(
                 command=build_xsoar_linter_command(
-                    lint_files,  # type: ignore
-                    self._facts.get("support_level", "base"),
+                    files=lint_files,  # type: ignore
+                    support_level=self._facts.get("support_level", "base"),
                     formatting_script=self._facts.get("formatting_script", False),
                 ),
                 cwd=self._pack_abs_dir,

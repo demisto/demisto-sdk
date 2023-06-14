@@ -267,7 +267,6 @@ def add_tmp_lint_files(
                 copied_api_module_path = pack_path / module.name
                 if (
                     CAN_MOUNT_FILES
-                    and not pwsh_module
                     and module.stem != "demistomock"
                     and module.stem != "conftest"
                 ):

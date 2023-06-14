@@ -387,6 +387,7 @@ class Linter:
                 ),
                 "PYTHONDONTWRITEBYTECODE": "1",
                 "PYTHONPATH": DOCKER_PYTHONPATH,
+                "PSModulePath": DOCKER_PYTHONPATH,
             }
 
         lint_files = set()

@@ -1,12 +1,12 @@
+from dataclasses import dataclass
 from typing import Optional
-
-from pydantic import BaseModel
 
 from demisto_sdk.commands.content_graph.common import RelationshipType
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 
 
-class RelationshipData(BaseModel):
+@dataclass
+class RelationshipData:
     relationship_type: RelationshipType
 
     # These are the database ids of the relationships

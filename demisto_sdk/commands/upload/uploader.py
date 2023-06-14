@@ -663,7 +663,7 @@ def parse_uploaded_successfully(
             filter(
                 lambda content_item: content_item.content_type
                 not in CONTENT_TYPES_EXCLUDED_FROM_UPLOAD,
-                content_item.content_items,
+                filter(None, content_item.content_items),
             )
         )
 

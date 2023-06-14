@@ -1,6 +1,6 @@
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import Set
+from typing import Optional, Set
 
 import demisto_client
 from pydantic import Field
@@ -14,7 +14,7 @@ json = JSON_Handler()
 
 
 class IncidentType(ContentItem, content_type=ContentType.INCIDENT_TYPE):  # type: ignore[call-arg]
-    playbook: str = ""
+    playbook: Optional[str] = None
     hours: int
     days: int
     weeks: int

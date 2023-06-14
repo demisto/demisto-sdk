@@ -219,7 +219,7 @@ class PackMetadata(BaseModel):
 class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: ignore[call-arg]
     path: Path
     contributors: Optional[List[str]] = None
-    relationships: Relationships = Field(Relationships(), exclude=True)
+    relationships: Any = Field(Relationships(), exclude=True)
     content_items: Optional[PackContentItems] = Field(
         None, alias="contentItems", exclude=True
     )

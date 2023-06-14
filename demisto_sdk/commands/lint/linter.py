@@ -643,7 +643,7 @@ class Linter:
                 command=build_xsoar_linter_command(
                     lint_files,  # type: ignore
                     self._facts.get("support_level", "base"),
-                    formatting_script=self._facts.get("formatting_script"),  # type: ignore
+                    formatting_script=self._facts.get("formatting_script", False),
                 ),
                 cwd=self._pack_abs_dir,
                 env=myenv,

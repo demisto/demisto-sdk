@@ -195,7 +195,7 @@ class PackMetadata(BaseModel):
     name: str
     description: Optional[str]
     created: Optional[str]
-    updated: Optional[str]
+    updated: Optional[str] = None
     support: Optional[str]
     email: Optional[str] = None
     url: str = ""

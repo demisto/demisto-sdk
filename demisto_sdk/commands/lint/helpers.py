@@ -257,6 +257,9 @@ def add_tmp_lint_files(
     Raises:
         IOError: if can't write to files due permissions or other reasons
     """
+    if (test_data_dir := (pack_path / "test_data")).exists():
+        (test_data_dir / "__init__.py").touch()
+
     added_modules: List[Path] = []
     try:
         # Add mandatory test,lint modules

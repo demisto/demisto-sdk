@@ -18,7 +18,7 @@ class IncidentType(ContentItem, content_type=ContentType.INCIDENT_TYPE):  # type
     hours: int
     days: int
     weeks: int
-    closure_script: str = Field("", alias="closureScript")
+    closure_script: Optional[str] = Field(None, alias="closureScript")
 
     def metadata_fields(self) -> Set[str]:
         return {"name", "playbook", "closure_script", "hours", "days", "week"}

@@ -1,6 +1,5 @@
-from multiprocessing import Pool
 import os
-from multiprocessing.pool import ThreadPool
+from multiprocessing import Pool
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional, Set, Tuple
 

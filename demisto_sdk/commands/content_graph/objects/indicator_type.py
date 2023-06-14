@@ -12,8 +12,7 @@ class IndicatorType(ContentItem, content_type=ContentType.INDICATOR_TYPE):  # ty
     regex: Optional[str] = None
     reputation_script_name: Optional[str] = Field(None, alias="reputationScriptName")
     enhancement_script_names: Optional[List[str]] = Field(
-        None,
-        alias="enhancementScriptNames"
+        None, alias="enhancementScriptNames"
     )
 
     def metadata_fields(self) -> Set[str]:

@@ -1,3 +1,4 @@
+from multiprocessing.pool import ThreadPool
 import os
 from multiprocessing import Pool
 from pathlib import Path
@@ -277,7 +278,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
                 self._id_to_obj,
             )
             return
-        with Pool(processes=cpu_count()) as pool:
+        with ThreadPool(processes=cpu_count()) as pool:
             results = pool.starmap(
                 self._parse_node, ((node.id, dict(node.items())) for node in nodes)
             )

@@ -241,7 +241,9 @@ class GraphValidator(BaseValidator):
         """
         is_valid = True
         new_files = GitUtil(repo=Content.git()).added_files()
-        items: List[dict] = self.graph.find_items_used_deprecated_items(self.file_paths)
+        items: List[dict] = self.graph.find_items_using_deprecated_items(
+            self.file_paths
+        )
         for item in items:
             deprecated_command = item.get("deprecated_command")
             deprecated_content = item.get("deprecated_content")

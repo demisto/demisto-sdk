@@ -4553,13 +4553,13 @@ class Errors:
     @error_code_decorator
     def deprecated_items_usage(
         deprecated_item: str,
-        used_deprecated_tems: list,
+        using_deprecated_items: list,
         is_deprecated_are_command=False,
     ):
         item_prefix = "command" if is_deprecated_are_command else "content item"
         return (
             f"The {item_prefix} '{deprecated_item}' is deprecated but used in the following content items: "
-            f"{', '.join(used_deprecated_tems)}."
+            f"{', '.join(using_deprecated_items)}."
         )
 
     @staticmethod

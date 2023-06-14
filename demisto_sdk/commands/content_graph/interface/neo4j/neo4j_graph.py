@@ -57,7 +57,7 @@ from demisto_sdk.commands.content_graph.interface.neo4j.queries.relationships im
     create_relationships,
 )
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.validations import (
-    get_items_used_deprecated,
+    get_items_using_deprecated,
     validate_core_packs_dependencies,
     validate_duplicate_ids,
     validate_fromversion,
@@ -425,7 +425,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             self._add_relationships_to_objects(session, results)
             return [self._id_to_obj[result] for result in results]
 
-    def find_items_used_deprecated_items(self, file_paths: List[str]) -> List[dict]:
+    def find_items_using_deprecated_items(self, file_paths: List[str]) -> List[dict]:
         """Searches for content items who use content items which are deprecated.
 
         Args:
@@ -435,7 +435,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             List[dict]: A list of dicts with the deprecated item and all the items used it.
         """
         with self.driver.session() as session:
-            return session.execute_read(get_items_used_deprecated, file_paths)
+            return session.execute_read(get_items_using_deprecated, file_paths)
 
     def find_uses_paths_with_invalid_marketplaces(
         self, pack_ids: List[str]

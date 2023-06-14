@@ -58,7 +58,7 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
 
     def set_commands(self):
         commands = [
-            Command(
+            Command.construct(
                 # the related to has to be a command
                 name=r.content_item_to.name,  # type: ignore[union-attr,attr-defined]
                 marketplaces=self.marketplaces,

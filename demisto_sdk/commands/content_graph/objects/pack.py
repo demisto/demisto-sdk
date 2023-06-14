@@ -284,7 +284,7 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: i
                 min(parse(content_item.fromversion) for content_item in content_items)
             )
         self.server_min_version = self.server_min_version or min_content_items_version
-        self.content_items = PackContentItems(**content_item_dct)
+        self.content_items = PackContentItems.construct(**content_item_dct)  # type: ignore[arg-type]
 
     def dump_metadata(self, path: Path, marketplace: MarketplaceVersions) -> None:
         self.server_min_version = self.server_min_version or MARKETPLACE_MIN_VERSION

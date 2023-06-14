@@ -222,10 +222,11 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         for node_to, rel in zip(nodes_to, relationships):
             if not rel.start_node or not rel.end_node:
                 raise ValueError("Relationships must have start and end nodes")
+            rel_type = RelationshipType(rel.type)
             obj.add_relationship(
-                RelationshipType(rel.type),
+                rel_type,
                 RelationshipData(
-                    relationship_type=rel.type,
+                    relationship_type=rel_type,
                     source_id=rel.start_node.id,
                     target_id=rel.end_node.id,
                     content_item_to=self._id_to_obj[node_to.id],
@@ -321,6 +322,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             relationships: Dict[int, Neo4jRelationshipResult] = session.execute_read(
                 _match_relationships, nodes_without_relationships, marketplace
             )
+
             self._add_relationships_to_objects(session, relationships, marketplace)
 
             pack_nodes = {

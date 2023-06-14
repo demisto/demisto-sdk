@@ -22,6 +22,7 @@ class RelationshipData:
     mandatorily: bool = False
 
     # DEPENDS_ON relationship properties
+    from_metadata: bool = False
     is_test: bool = False
 
     # HAS_COMMAND relationship properties

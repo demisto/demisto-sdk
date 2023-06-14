@@ -298,7 +298,7 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: i
         )
         metadata["contentItems"] = {}
         metadata["id"] = self.object_id
-        for content_item in self.content_items:
+        for content_item in filter(None, self.content_items):
 
             if content_item.content_type == ContentType.TEST_PLAYBOOK:
                 logger.debug(

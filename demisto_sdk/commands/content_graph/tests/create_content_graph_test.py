@@ -74,7 +74,7 @@ def mock_pack(name: str = "SamplePack", path: Path = Path("Packs")) -> Pack:
         categories=[],
         useCases=[],
         keywords=[],
-        contentItems=None,
+        contentItems=[],
         excluded_dependencies=[],
     )
 

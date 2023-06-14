@@ -171,7 +171,6 @@ class ContributionConverter:
             os.makedirs(self.pack_dir_path)
         self.readme_files: List[str] = []
         self.api_module_path: Optional[str] = None
-        self.working_pack_dir_path = self.pack_dir_path
 
     @staticmethod
     def format_pack_dir_name(name: str) -> str:
@@ -254,13 +253,10 @@ class ContributionConverter:
         """Unpacks the contribution zip's contents to the destination pack directory and performs some cleanup"""
         if self.contribution:
             shutil.unpack_archive(
-                filename=self.contribution, extract_dir=self.working_pack_dir_path
-            )
-            logger.info(
-                f"#4 {self.working_pack_dir_path}"
+                filename=self.contribution, extract_dir=self.pack_dir_path
             )
             # remove metadata.json file
-            os.remove(os.path.join(self.working_pack_dir_path, "metadata.json"))
+            os.remove(os.path.join(self.pack_dir_path, "metadata.json"))
         else:
             err_msg = (
                 "Tried unpacking contribution to destination directory but the instance variable"
@@ -310,11 +306,8 @@ class ContributionConverter:
         basename = os.path.basename(unpacked_contribution_dir)
         if basename in ENTITY_TYPE_TO_DIR:
             dst_name = ENTITY_TYPE_TO_DIR.get(basename, "")
-            src_path = os.path.join(self.working_pack_dir_path, basename)
-            dst_path = os.path.join(self.working_pack_dir_path, dst_name)
-            logger.info(
-                f"#5 {self.working_pack_dir_path}"
-            )
+            src_path = os.path.join(self.pack_dir_path, basename)
+            dst_path = os.path.join(self.pack_dir_path, dst_name)
             if os.path.exists(dst_path):
                 # move src folder files to dst folder
                 for _, _, files in os.walk(src_path, topdown=False):
@@ -371,10 +364,7 @@ class ContributionConverter:
         """
         Generate the readme files for a new content pack.
         """
-        logger.info(
-            f"#6 {self.working_pack_dir_path}"
-        )
-        for pack_subdir in get_child_directories(self.working_pack_dir_path):
+        for pack_subdir in get_child_directories(self.pack_dir_path):
             basename = os.path.basename(pack_subdir)
             if basename in {SCRIPTS_DIR, INTEGRATIONS_DIR}:
                 directories = get_child_directories(pack_subdir)
@@ -404,10 +394,8 @@ class ContributionConverter:
         Rearrange content items that were mapped incorrectly by the server zip
           - indicatorfields rearranged to be under indicatorfield directory instead of incidentfields.
         """
-        unpacked_contribution_dirs = get_child_directories(self.working_pack_dir_path)
-        logger.info(
-            f"#7 {self.working_pack_dir_path}"
-        )
+        unpacked_contribution_dirs = get_child_directories(self.pack_dir_path)
+
         for unpacked_contribution_dir in unpacked_contribution_dirs:
 
             dir_name = os.path.basename(unpacked_contribution_dir)
@@ -416,9 +404,9 @@ class ContributionConverter:
             if dir_name == FileType.INCIDENT_FIELD.value:
 
                 dst_ioc_fields_dir = os.path.join(
-                    self.working_pack_dir_path, FileType.INDICATOR_FIELD.value
+                    self.pack_dir_path, FileType.INDICATOR_FIELD.value
                 )
-                src_path = os.path.join(self.working_pack_dir_path, dir_name)
+                src_path = os.path.join(self.pack_dir_path, dir_name)
 
                 for file in os.listdir(src_path):
 
@@ -426,17 +414,14 @@ class ContributionConverter:
                         # At first time, create another dir for all indicator-fields files and move them there
                         if not os.path.exists(dst_ioc_fields_dir):
                             os.makedirs(dst_ioc_fields_dir)
-                        file_path = os.path.join(self.working_pack_dir_path, dir_name, file)
+                        file_path = os.path.join(self.pack_dir_path, dir_name, file)
                         shutil.move(file_path, dst_ioc_fields_dir)  # type: ignore
 
                 # If there were only indicatorfiled files, the original folder will remain empty, so we will delete it
                 if len(os.listdir(src_path)) == 0:
                     shutil.rmtree(src_path, ignore_errors=True)
-        logger.info(
-            f"#8 {self.working_pack_dir_path}"
-        )
 
-    def convert_contribution_to_pack(self, working_pack_dir_path: str = '', files_to_source_mapping: Dict = None):
+    def convert_contribution_to_pack(self, files_to_source_mapping: Dict = None):
         """Create or updates a pack in the content repo from the contents of a contribution zipfile
 
         Args:
@@ -445,13 +430,6 @@ class ContributionConverter:
                 for that file, specifically the base name (the name used in naming the split component files) and
                 the name of the containing directory.
         """
-        logger.info("IN SDK")
-        logger.info(f"Before assign: {self.working_pack_dir_path}")
-        if working_pack_dir_path:
-            self.working_pack_dir_path = working_pack_dir_path
-            logger.info(
-                f"#1 {self.working_pack_dir_path}"
-            )
         try:
             # only create pack_metadata.json and base pack files if creating a new pack
             if self.create_new:
@@ -470,19 +448,13 @@ class ContributionConverter:
             self.unpack_contribution_to_dst_pack_directory()
             # convert
             self.rearranging_before_conversion()
-            unpacked_contribution_dirs = get_child_directories(self.working_pack_dir_path)
-            logger.info(
-                f"#2 {self.working_pack_dir_path}"
-            )
+            unpacked_contribution_dirs = get_child_directories(self.pack_dir_path)
             for unpacked_contribution_dir in unpacked_contribution_dirs:
                 self.convert_contribution_dir_to_pack_contents(
                     unpacked_contribution_dir
                 )
             # extract to package format
-            for pack_subdir in get_child_directories(self.working_pack_dir_path):
-                logger.info(
-                    f"#3 {self.working_pack_dir_path}"
-                )
+            for pack_subdir in get_child_directories(self.pack_dir_path):
                 basename = os.path.basename(pack_subdir)
                 if basename in {SCRIPTS_DIR, INTEGRATIONS_DIR}:
                     self.content_item_to_package_format(
@@ -617,14 +589,8 @@ class ContributionConverter:
                         autocreate_dir = containing_dir_name == ENTITY_TYPE_TO_DIR.get(
                             file_type, ""
                         )
-                        logger.info(
-                            f"#8 {self.working_pack_dir_path}"
-                        )
                         output_dir = os.path.join(
-                            self.working_pack_dir_path, ENTITY_TYPE_TO_DIR.get(file_type, "")
-                        )
-                        logger.info(
-                            f"#9 {self.working_pack_dir_path}"
+                            self.pack_dir_path, ENTITY_TYPE_TO_DIR.get(file_type, "")
                         )
                         if not autocreate_dir:
                             output_dir = os.path.join(output_dir, containing_dir_name)
@@ -652,7 +618,7 @@ class ContributionConverter:
                             script = content_item.code
                             contributor_item_version = self.extract_pack_version(script)
                             current_pack_version = get_pack_metadata(
-                                file_path=self.pack_dir_path
+                                file_path=content_item_file_path
                             ).get("currentVersion", "0.0.0")
                             if contributor_item_version != "0.0.0" and Version(
                                 current_pack_version
@@ -694,19 +660,13 @@ class ContributionConverter:
         to be in the base directory of a pack
         """
         logger.info("Creating pack base files")
-        logger.info(
-            f"#10 {self.working_pack_dir_path}"
-        )
-        fp = open(os.path.join(self.working_pack_dir_path, "README.md"), "a")
+        fp = open(os.path.join(self.pack_dir_path, "README.md"), "a")
         fp.close()
 
-        fp = open(os.path.join(self.working_pack_dir_path, ".secrets-ignore"), "a")
+        fp = open(os.path.join(self.pack_dir_path, ".secrets-ignore"), "a")
         fp.close()
 
-        fp = open(os.path.join(self.working_pack_dir_path, ".pack-ignore"), "a")
-        logger.info(
-            f"#11 {self.working_pack_dir_path}"
-        )
+        fp = open(os.path.join(self.pack_dir_path, ".pack-ignore"), "a")
         fp.close()
 
     def create_metadata_file(self, zipped_metadata: Dict) -> None:
@@ -747,10 +707,7 @@ class ContributionConverter:
             zipped_metadata.get("marketplaces") or MARKETPLACES
         )
         metadata_dict = ContributionConverter.create_pack_metadata(data=metadata_dict)
-        metadata_path = os.path.join(self.working_pack_dir_path, "pack_metadata.json")
-        logger.info(
-            f"#12 {self.working_pack_dir_path}"
-        )
+        metadata_path = os.path.join(self.pack_dir_path, "pack_metadata.json")
         with open(metadata_path, "w") as pack_metadata_file:
             json.dump(metadata_dict, pack_metadata_file, indent=4)
 
@@ -791,25 +748,12 @@ class ContributionConverter:
         and create a release-note file using the release-notes text.
 
         """
-        logger.info(
-            f"%%1 {self.dir_name}"
-        )
-        logger.info(
-            f"%%2 {self.update_type}"
-        )
         rn_mng = UpdateReleaseNotesManager(
             user_input=self.dir_name,
             update_type=self.update_type,
         )
         rn_mng.manage_rn_update()
-        logger.info(
-            f"%%3 {rn_mng.rn_path}"
-        )
-        if rn_mng.rn_path:
-            logger.info(
-                f"%%4 {rn_mng.rn_path[0]}"
-            )
-            self.replace_RN_template_with_value(rn_mng.rn_path[0])
+        self.replace_RN_template_with_value(rn_mng.rn_path[0])
 
     def format_user_input(self) -> Dict[str, str]:
         """

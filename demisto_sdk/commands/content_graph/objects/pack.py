@@ -221,8 +221,8 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: i
     contributors: Optional[List[str]] = None
     relationships: Relationships = Field(Relationships(), exclude=True)
 
-    content_items: Optional[PackContentItems] = Field(
-        None, alias="contentItems", exclude=True
+    content_items: PackContentItems = Field(
+        PackContentItems(), alias="contentItems", exclude=True
     )
 
     @validator("path", always=True)
@@ -283,9 +283,6 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: i
             content_item_dct[c.content_type.value].append(c)
 
         # If there is no server_min_version, set it to the minimum of its content items fromversion
-        if not hasattr(self, "server_min_version"):
-            self.server_min_version = None
-
         min_content_items_version = MARKETPLACE_MIN_VERSION
         if content_items:
             min_content_items_version = str(
@@ -295,8 +292,6 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: i
         self.content_items = PackContentItems(**content_item_dct)
 
     def dump_metadata(self, path: Path, marketplace: MarketplaceVersions) -> None:
-        if not hasattr(self, "server_min_version"):
-            self.server_min_version = None
         self.server_min_version = self.server_min_version or MARKETPLACE_MIN_VERSION
         metadata = self.dict(
             exclude={"path", "node_id", "content_type", "excluded_dependencies"},
@@ -575,8 +570,5 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: i
     def to_nodes(self) -> Nodes:
         return Nodes(
             self.to_dict(),
-            *[
-                content_item.to_dict()
-                for content_item in filter(None, self.content_items)
-            ],
+            *[content_item.to_dict() for content_item in self.content_items],
         )

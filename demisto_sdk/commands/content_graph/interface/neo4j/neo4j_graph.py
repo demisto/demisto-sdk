@@ -1,4 +1,5 @@
 import os
+from multiprocessing import Pool
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional, Set, Tuple
 
@@ -7,6 +8,7 @@ from pydantic import ValidationError
 
 import demisto_sdk.commands.content_graph.neo4j_service as neo4j_service
 from demisto_sdk.commands.common.constants import MarketplaceVersions
+from demisto_sdk.commands.common.cpu_count import cpu_count
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.content_graph.common import (
     NEO4J_DATABASE_URL,
@@ -86,13 +88,13 @@ def _parse_node(element_id: int, node: dict) -> BaseContent:
     obj: BaseContent
     content_type = node.get("content_type", "")
     if node.get("not_in_repository"):
-        obj = UnknownContent.model_construct(**node)
+        obj = UnknownContent.parse_obj(node)
 
-    elif model := content_type_to_model.get(content_type):
-        node.pop("content_type", None)
-        obj = model.model_construct(**node)
     else:
-        raise NoModelException(f"No model for {content_type}")
+        model = content_type_to_model.get(content_type)
+        if not model:
+            raise NoModelException(f"No model for {content_type}")
+        obj = model.parse_obj(node)
     obj.database_id = element_id
     return obj
 
@@ -275,10 +277,13 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
                 self._id_to_obj,
             )
             return
-        for node in nodes:
-            base_content = _parse_node(node.id, dict(node.items()))
-            assert base_content.database_id is not None
-            self._id_to_obj[base_content.database_id] = base_content
+        with Pool(processes=cpu_count()) as pool:
+            results = pool.starmap(
+                _parse_node, ((node.id, dict(node.items())) for node in nodes)
+            )
+            for result in results:
+                assert result.database_id is not None
+                self._id_to_obj[result.database_id] = result
 
     def _search(
         self,

@@ -1,5 +1,5 @@
 from typing import List, Optional
-import logging
+
 from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.content_graph.common import Nodes, Relationships
 from demisto_sdk.commands.content_graph.interface.graph import ContentGraphInterface
@@ -7,7 +7,7 @@ from demisto_sdk.commands.content_graph.objects.repository import ContentDTO
 from demisto_sdk.commands.content_graph.parsers.repository import RepositoryParser
 
 json = JSON_Handler()
-logger = logging.getLogger("demisto-sdk")
+
 
 class ContentGraphBuilder:
     def __init__(self, content_graph: ContentGraphInterface) -> None:
@@ -45,7 +45,6 @@ class ContentGraphBuilder:
         self, packs_to_parse: Optional[List[str]] = None
     ) -> None:
         content_dto: ContentDTO = self._create_content_dto(packs_to_parse)
-        logger.info("Creating nodes and relationships from repository model")
         self._collect_nodes_and_relationships_from_model(content_dto)
 
     def _create_content_dto(self, packs_to_parse: Optional[List[str]]) -> ContentDTO:
@@ -58,8 +57,7 @@ class ContentGraphBuilder:
         repository_parser = RepositoryParser(
             self.content_graph.repo_path, packs_to_parse
         )
-        logger.info("Finished parsing repository, creating repository model")
-        return ContentDTO.model_validate(repository_parser)
+        return ContentDTO.from_orm(repository_parser)
 
     def _collect_nodes_and_relationships_from_model(
         self, content_dto: ContentDTO

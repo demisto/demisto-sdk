@@ -7,7 +7,7 @@ import os
 import re
 from distutils.version import LooseVersion
 from pathlib import Path
-from typing import Any, Optional, Tuple, Union
+from typing import Any, Iterable, List, Optional, Tuple, Union
 
 from demisto_sdk.commands.common.constants import (
     ALL_FILES_VALIDATION_IGNORE_WHITELIST,
@@ -1002,13 +1002,13 @@ def get_file_description(path, file_type) -> str:
 def update_api_modules_dependents_rn(
     pre_release: bool,
     update_type: Union[str, None],
-    added: Union[list, set],
-    modified: Union[list, set],
+    added: Iterable[str],
+    modified: Iterable[str],
     text: str = "",
 ) -> set:
     """Updates release notes for any pack that depends on API module that has changed.
     :param
-        pre_release: The file type
+        pre_release: Indicates whether the change should be designated as a pre-release version
         update_type: The update type
         added: The added files
         modified: The modified files
@@ -1028,25 +1028,25 @@ def update_api_modules_dependents_rn(
     )
     integrations = get_api_module_from_graph(api_module_set)
     for integration in integrations:
-        integration_pack = get_pack_name(integration)
-        integration_path = integration
-        integration_pack_path = pack_name_to_path(integration_pack)
+        integration_pack_name = integration.pack_id
+        integration_path = integration.path
+        integration_pack_path = pack_name_to_path(integration_pack_name)
         update_pack_rn = UpdateRN(
             pack_path=integration_pack_path,
             update_type=update_type,
             modified_files_in_pack={integration_path},
             pre_release=pre_release,
             added_files=set(),
-            pack=integration_pack,
+            pack=integration_pack_name,
             text=text,
         )
         updated = update_pack_rn.execute_update()
         if updated:
-            total_updated_packs.add(integration_pack)
+            total_updated_packs.add(integration_pack_name)
     return total_updated_packs
 
 
-def get_api_module_from_graph(changed_api_modules):
+def get_api_module_from_graph(changed_api_modules) -> List[Integration]:
     if changed_api_modules:
         dependent_items = []
         with Neo4jContentGraphInterface(should_update=True) as graph:
@@ -1055,6 +1055,7 @@ def get_api_module_from_graph(changed_api_modules):
                     f"Checking for packages dependent on the modified API module {changed_api_module}..."
                 )
                 api_module_nodes = graph.search(object_id=changed_api_module)
+                # search return the one node of the changed_api_module
                 api_module_node = api_module_nodes[0] if api_module_nodes else None
                 if not api_module_node:
                     raise ValueError(
@@ -1063,7 +1064,7 @@ def get_api_module_from_graph(changed_api_modules):
                     )
 
                 dependent_items += [
-                    str(dependency.path) for dependency in api_module_node.imported_by
+                    dependency for dependency in api_module_node.imported_by
                 ]
 
         if dependent_items:

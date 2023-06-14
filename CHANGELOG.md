@@ -1,5 +1,11 @@
 # Changelog
 ## Unreleased
+* Fixed an issue where lock integartions failed on FileNotFound.(PANW-internal only).
+* Removed the `timezone_offset` argument in the *modeling-rules test* command.
+* Fixed an issue where **lint** failed when importing functions from CommonServerUserPython.
+* Updated **update-release-notes** to use graph instead of id_set.
+
+## 1.16.0
 * Added a check to **is_docker_image_latest_tag** to only fail the validation on non-latest image tag when the current tag is older than 3 days.
 * Fixed an issue where **upload** would not properly show the installed version in the UI.
 * Fixed an issue where the `contribution_converter` failed replacing generated release notes with the contribution form release notes.
@@ -19,8 +25,6 @@
 * Added a **validate** check, and a **format** auto fix for the `fromversion` field in Correlation Rules and XSIAM Dashboards.
 * Update the format used for dev-dependencies in pyproject.toml to match modern versions of Poetry.
 * Added timestamps to logging messages when running in a CI build.
-* Fixed an issue where lock integartions failed on FileNotFound.(PANW-internal only).
-* Updated **update-release-note** to use graph instead of id_set.
 
 ## 1.15.5
 * **Breaking Change**: The default of the **upload** command `--zip` argument is `true`. To upload packs as custom content items use the `--no-zip` argument.

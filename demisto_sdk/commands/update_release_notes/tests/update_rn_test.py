@@ -18,6 +18,9 @@ from demisto_sdk.commands.common.hook_validations.readme import ReadMeValidator
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.markdown_lint import run_markdownlint
 from demisto_sdk.commands.common.tools import get_json
+from demisto_sdk.commands.content_graph.tests.create_content_graph_test import (
+    mock_integration,
+)
 from demisto_sdk.commands.update_release_notes.update_rn import (
     CLASS_BY_FILE_TYPE,
     UpdateRN,
@@ -1968,11 +1971,10 @@ class TestRNUpdateUnit:
         modified = {"/Packs/ApiModules/Scripts/ApiModules_script/ApiModules_script.yml"}
         added = {}
 
+        integration_mock = mock_integration("SmapleIntegration")
         mocker.patch(
             "demisto_sdk.commands.update_release_notes.update_rn.get_api_module_from_graph",
-            return_value=[
-                "Packs/Test/Integrations/Test.yml"
-            ],  # Mock the integration path
+            return_value=[integration_mock],  # Mock the integration path
         )
         execute_update_mock = mocker.patch.object(UpdateRN, "execute_update")
 

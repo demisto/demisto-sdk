@@ -460,10 +460,8 @@ def test_update_release_notes_modified_apimodule(demisto_client, repo, mocker):
 
     repo.setup_one_pack("FeedTAXII")
     taxii_feed_pack = repo.packs[1]
-    taxii_feed_integration_path = join(
-        taxii_feed_pack.path,
-        "Integrations/FeedTAXII_integration/FeedTAXII_integration.yml",
-    )
+    taxii_feed_integration = taxii_feed_pack.integrations[0]
+    taxii_feed_integration.pack_id = "FeedTAXII"
 
     # Mock the behavior of Neo4jContentGraphInterface
     class MockedContentGraphInterface:
@@ -482,11 +480,11 @@ def test_update_release_notes_modified_apimodule(demisto_client, repo, mocker):
     class MockedApiModuleNode:
         def __init__(self):
             self.imported_by = [
-                MockedDependencyNode()
+                MockedDependencyNode().integration
             ]  # Simulate a list of dependencies
 
     class MockedDependencyNode:
-        path = taxii_feed_integration_path
+        integration = taxii_feed_integration
 
     mocker.patch(
         "demisto_sdk.commands.update_release_notes.update_rn.Neo4jContentGraphInterface",

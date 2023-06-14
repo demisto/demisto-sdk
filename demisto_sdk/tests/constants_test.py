@@ -342,7 +342,7 @@ DESTINATION_FORMAT_PRE_PROCESS_RULES_INVALID_NAME_COPY = (
 )
 PRE_PROCESS_RULES_PATH = "PreProcessRules"
 PRE_PROCESS_RULES_SCHEMA_PATH = (
-    f"{GIT_ROOT}/demisto_sdk/commands/common/schemas/pre-process-rules.yml"
+    f"{GIT_ROOT}/demisto_sdk/commands/common/schemas/pre-process-rule.yml"
 )
 
 DESTINATION_FORMAT_LISTS_COPY = "Lists/list-copy.json"
@@ -512,7 +512,21 @@ DIR_LIST = [
     f"{PACK_TARGET}/{constants.INDICATOR_TYPES_DIR}",
     f"{PACK_TARGET}/{constants.CONNECTIONS_DIR}",
     f"{PACK_TARGET}/{constants.INDICATOR_FIELDS_DIR}",
+    f"{PACK_TARGET}/{constants.XSIAM_DASHBOARDS_DIR}",
+    f"{PACK_TARGET}/{constants.CORRELATION_RULES_DIR}",
     constants.TESTS_DIR,
 ]
 
 DUMMY_XSIAM_PACK_PATH = f"{GIT_ROOT}/demisto_sdk/tests/test_files/DummyXSIAMPack"
+
+INVALID_XSIAM_DASHBOARD_PATH = (
+    f"{GIT_ROOT}/demisto_sdk/tests/test_files/dashboard-xsiam_invalid.json"
+)
+
+XSIAM_DASHBOARD_TARGET = f"{PACK_TARGET}/XSIAMDashboards/dashboard-xsiam_mock.json"
+
+INVALID_XSIAM_CORRELATION_PATH = (
+    f"{GIT_ROOT}/demisto_sdk/tests/test_files/correlationrule_invalid.yml"
+)
+
+XSIAM_CORRELATION_TARGET = f"{PACK_TARGET}/CorrelationRules/correlationrule-mock.yml"

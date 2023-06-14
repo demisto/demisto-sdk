@@ -1,18 +1,17 @@
 import gzip
 import json
-import logging
 import os
 from abc import ABC, abstractmethod
 from pathlib import Path
 from pprint import pformat
 from typing import Any, Dict, List, Optional
 from urllib.parse import urljoin
-from pydantic_core.core_schema import FieldValidationInfo
 
 import requests
 from pydantic import BaseModel, Field, HttpUrl, SecretStr, field_validator
+from pydantic_core.core_schema import FieldValidationInfo
 
-logger = logging.getLogger("demisto-sdk")
+from demisto_sdk.commands.common.logger import logger
 
 
 class XsiamApiClientConfig(BaseModel):
@@ -132,6 +131,18 @@ class XsiamApiClient(XsiamApiInterface):
         response.raise_for_status()
         return response.json()
 
+    def search_marketplace(self, filter_json: dict):
+        endpoint = urljoin(self.base_url, "xsoar/contentpacks/marketplace/search")
+        response = self._session.post(endpoint, json=filter_json)
+        response.raise_for_status()
+        return response.json()
+
+    def search_data_sources(self, filter_json: dict):
+        endpoint = urljoin(self.base_url, "xsoar/settings/datasourcepack/search")
+        response = self._session.post(endpoint, json=filter_json)
+        response.raise_for_status()
+        return response.json()
+
     def search_pack(self, pack_id):
         endpoint = urljoin(self.base_url, f"xsoar/contentpacks/marketplace/{pack_id}")
         response = self._session.get(endpoint)
@@ -154,7 +165,7 @@ class XsiamApiClient(XsiamApiInterface):
         files = {"file": file_path}
         response = self._session.post(endpoint, files=files, headers=header_params)
         response.raise_for_status()
-        logging.info(
+        logger.info(
             f"All packs from file {zip_path} were successfully installed on server {self.base_url}"
         )
 

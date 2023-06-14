@@ -1,5 +1,5 @@
 import hashlib
-import logging
+import os
 import shutil
 from pathlib import Path
 
@@ -8,6 +8,7 @@ import requests
 
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.docker_helper import init_global_docker_client
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.content_graph.common import (
     NEO4J_DATABASE_HTTP,
     NEO4J_FOLDER,
@@ -27,8 +28,6 @@ NEO4J_PLUGINS_FOLDER = "plugins"
 
 # When updating the APOC version, make sure to update the checksum as well
 APOC_URL_VERSIONS = "https://neo4j.github.io/apoc/versions.json"
-
-logger = logging.getLogger("demisto-sdk")
 
 
 class Neo4jServiceException(Exception):
@@ -113,6 +112,7 @@ def _docker_start():
             "timeout": 15 * 1000000000,
             "retries": 10,
         },
+        user=f"{os.getuid()}:{os.getgid()}",
     )
 
 

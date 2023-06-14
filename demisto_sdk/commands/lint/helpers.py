@@ -1,15 +1,12 @@
 # STD python packages
 import io
-import logging
 import os
 import re
-import shlex
 import shutil
 import sqlite3
 import tarfile
 import textwrap
 from contextlib import contextmanager
-from functools import lru_cache
 from pathlib import Path
 from typing import Callable, Dict, Generator, List, Optional, Union
 
@@ -28,7 +25,7 @@ from demisto_sdk.commands.common.constants import (
     TYPE_PYTHON,
     DemistoException,
 )
-from demisto_sdk.commands.common.docker_helper import init_global_docker_client
+from demisto_sdk.commands.common.logger import logger
 
 # Python2 requirements
 from demisto_sdk.commands.common.tools import get_remote_file
@@ -63,8 +60,6 @@ PY_CHCEKS = ["flake8", "XSOAR_linter", "bandit", "mypy", "vulture", "pytest", "p
 RL = "\n"
 
 IMPORT_API_MODULE_REGEX = r"from (\w+ApiModule) import \*(?:  # noqa: E402)?"
-
-logger = logging.getLogger("demisto-sdk")
 
 
 def build_skipped_exit_code(
@@ -326,53 +321,6 @@ def add_api_modules(
         if added_modules
         else []
     )
-
-
-@lru_cache(maxsize=300)
-def get_python_version_from_image(image: str, timeout: int = 60) -> str:
-    """Get python version from docker image
-
-    Args:
-        image(str): Docker image id or name
-        timeout(int): Docker client request timeout
-
-    Returns:
-        str: Python version X.Y (3.7, 3.6, ..)
-    """
-    # skip pwoershell images
-    if "pwsh" in image or "powershell" in image:
-        return "3.8"
-
-    match_group = re.match(r"[\d\w]+/python3?:(?P<python_version>[23]\.\d+)", image)
-    if match_group:
-        return match_group.groupdict()["python_version"]
-    py_num = None
-    # Run three times
-    log_prompt = f"Get python version from image {image}"
-    docker_client = init_global_docker_client(timeout=timeout, log_prompt=log_prompt)
-    logger.info(f"{log_prompt} - Start")
-    try:
-        logger.debug(f"{log_prompt} - Running `sys.version_info` in the image")
-        command = "python -c \"import sys; print('{}.{}'.format(sys.version_info[0], sys.version_info[1]))\""
-
-        py_num = docker_client.containers.run(
-            image=image,
-            command=shlex.split(command),
-            remove=True,
-            restart_policy={"Name": "on-failure", "MaximumRetryCount": 3},
-        )
-        # Wait for container to finish
-        logger.debug(f"{log_prompt} - Container finished running. {py_num=}")
-
-        # Get python version
-        py_num = parse(py_num.decode("utf-8")).base_version
-
-    except Exception:
-        logger.exception(
-            f"{log_prompt} - Failed detecting Python version for image {image}"
-        )
-    logger.info(f"{log_prompt} - End. Python version is {py_num}")
-    return py_num if py_num else "3.8"
 
 
 def get_file_from_container(

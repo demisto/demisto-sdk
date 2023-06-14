@@ -1,4 +1,3 @@
-import logging
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
@@ -11,10 +10,9 @@ from demisto_sdk.commands.common.tools import get_yaml, get_yml_paths_in_dir
 from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
 from demisto_sdk.commands.content_graph.parsers.content_item import (
     ContentItemParser,
+    InvalidContentItemException,
     NotAContentItemException,
 )
-
-logger = logging.getLogger("demisto-sdk")
 
 
 class YAMLContentItemParser(ContentItemParser):
@@ -23,6 +21,11 @@ class YAMLContentItemParser(ContentItemParser):
     ) -> None:
         super().__init__(path, pack_marketplaces)
         self.yml_data: Dict[str, Any] = self.get_yaml()
+
+        if not isinstance(self.yml_data, dict):
+            raise InvalidContentItemException(
+                f"The content of {self.path} must be in a JSON dictionary format"
+            )
 
         if self.should_skip_parsing():
             raise NotAContentItemException

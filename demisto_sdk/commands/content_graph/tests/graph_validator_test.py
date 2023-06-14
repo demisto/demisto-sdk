@@ -5,7 +5,10 @@ from typing import Any, Callable, Dict, List
 import pytest
 
 import demisto_sdk.commands.content_graph.neo4j_service as neo4j_service
-from demisto_sdk.commands.common.constants import MarketplaceVersions
+from demisto_sdk.commands.common.constants import (
+    SKIP_PREPARE_SCRIPT_NAME,
+    MarketplaceVersions,
+)
 from demisto_sdk.commands.common.hook_validations.graph_validator import GraphValidator
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
@@ -36,10 +39,9 @@ GIT_PATH = Path(git_path())
 @pytest.fixture(autouse=True)
 def setup(mocker):
     """Auto-used fixture for setup before every test run"""
-    mocker.patch(
-        "demisto_sdk.commands.content_graph.objects.base_content.get_content_path",
-        return_value=GIT_PATH,
-    )
+    import demisto_sdk.commands.content_graph.objects.base_content as bc
+
+    bc.CONTENT_PATH = GIT_PATH
     mocker.patch.object(neo4j_service, "REPO_PATH", GIT_PATH)
     mocker.patch.object(ContentGraphInterface, "repo_path", GIT_PATH)
 
@@ -261,7 +263,20 @@ def repository(mocker) -> ContentDTO:
             [MarketplaceVersions.XSOAR, MarketplaceVersions.MarketplaceV2],
         )
     )
+    pack1.content_items.script.append(
+        mock_script(
+            "setIncident",
+            [MarketplaceVersions.XSOAR, MarketplaceVersions.MarketplaceV2],
+        )
+    )
     pack2.content_items.script.append(mock_script("TestApiModule"))
+    pack2.content_items.script.append(
+        mock_script(
+            "getIncidents",
+            marketplaces=[MarketplaceVersions.XSOAR, MarketplaceVersions.MarketplaceV2],
+            skip_prepare=[SKIP_PREPARE_SCRIPT_NAME],
+        )
+    )
     pack2.content_items.classifier.append(mock_classifier("SampleClassifier2"))
     pack2.content_items.test_playbook.append(mock_test_playbook())
     pack3.content_items.playbook.append(
@@ -276,6 +291,21 @@ def repository(mocker) -> ContentDTO:
         mock_playbook("SamplePlaybook2", [MarketplaceVersions.XSOAR], "6.8.0", "6.5.0")
     )
     pack3.content_items.script.append(mock_script("SampleScript2"))
+    pack3.content_items.script.append(
+        mock_script(
+            "setAlert", [MarketplaceVersions.XSOAR, MarketplaceVersions.MarketplaceV2]
+        )
+    )
+    pack3.content_items.script.append(
+        mock_script(
+            "getAlert", [MarketplaceVersions.XSOAR, MarketplaceVersions.MarketplaceV2]
+        )
+    )
+    pack3.content_items.script.append(
+        mock_script(
+            "getAlerts", [MarketplaceVersions.XSOAR, MarketplaceVersions.MarketplaceV2]
+        )
+    )
     pack4.content_items.playbook.append(mock_playbook("SamplePlaybook"))
     repository.packs.extend([pack1, pack2, pack3, pack4])
     mocker.patch(
@@ -359,7 +389,7 @@ def mock_playbook(
     )
 
 
-def mock_script(name, marketplaces=[MarketplaceVersions.XSOAR]):
+def mock_script(name, marketplaces=[MarketplaceVersions.XSOAR], skip_prepare=[]):
     return Script(
         id=name,
         content_type=ContentType.SCRIPT,
@@ -375,6 +405,7 @@ def mock_script(name, marketplaces=[MarketplaceVersions.XSOAR]):
         docker_image="mock:docker",
         tags=[],
         is_test=False,
+        skip_prepare=skip_prepare,
     )
 
 
@@ -459,7 +490,7 @@ def test_are_fromversion_relationships_paths_valid(repository: ContentDTO, mocke
 
 
 @pytest.mark.parametrize(
-    "should_provide_integration_path, is_valid",
+    "include_optional, is_valid",
     [
         pytest.param(
             False,
@@ -476,7 +507,7 @@ def test_are_fromversion_relationships_paths_valid(repository: ContentDTO, mocke
 def test_is_file_using_unknown_content(
     mocker,
     repository: ContentDTO,
-    should_provide_integration_path: bool,
+    include_optional: bool,
     is_valid: bool,
 ):
     """
@@ -486,30 +517,18 @@ def test_is_file_using_unknown_content(
     When
     - running the vaidation "is_file_using_unknown_content"
     Then
-    - Check whether the graph is valid or not, based on whether the integration file path was provided
+    - Check whether the graph is valid or not, based on whether optional content dependencies were included.
     """
     logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
     logger_warning = mocker.patch.object(logging.getLogger("demisto-sdk"), "warning")
-    if should_provide_integration_path:
-        git_files = [repository.packs[0].content_items.integration[0].path.as_posix()]
-    else:
-        git_files = []
-    with GraphValidator(should_update=False, git_files=git_files) as graph_validator:
+
+    with GraphValidator(
+        should_update=False, git_files=[], include_optional_deps=include_optional
+    ) as graph_validator:
         create_content_graph(graph_validator.graph)
         assert graph_validator.is_file_using_unknown_content() == is_valid
 
-    found_level = False
-    str_to_search, logger_to_search = (
-        ("[warning]", logger_warning) if is_valid else ("[error]", logger_info)
-    )
-    for current_call in logger_to_search.call_args_list:
-        if (
-            type(current_call[0]) == tuple
-            and str_to_search in current_call[0][0].lower()
-        ):
-            found_level = True
-            break
-    assert found_level
+    logger_to_search = logger_warning if is_valid else logger_info
 
     assert str_in_call_args_list(
         logger_to_search.call_args_list,
@@ -538,6 +557,42 @@ def test_is_file_display_name_already_exists(repository: ContentDTO, mocker):
             logger_info.call_args_list,
             f"Pack 'SamplePack{i if i != 1 else ''}' has a duplicate display_name",
         )
+
+
+def test_validate_unique_script_name(repository: ContentDTO, mocker):
+    """
+    Given
+        - A content repo
+    When
+        - running the vaidation "validate_unique_script_name"
+    Then
+        - Validate the existance of duplicate script names
+    """
+    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+    with GraphValidator(should_update=False) as graph_validator:
+        create_content_graph(graph_validator.graph)
+        is_valid = graph_validator.validate_unique_script_name()
+
+    assert not is_valid
+
+    assert str_in_call_args_list(
+        logger_info.call_args_list,
+        "Cannot create a script with the name setAlert, "
+        "because a script with the name setIncident already exists.\n",
+    )
+
+    assert not str_in_call_args_list(
+        logger_info.call_args_list,
+        "Cannot create a script with the name getAlert, "
+        "because a script with the name getIncident already exists.\n",
+    )
+
+    # Ensure that the script-name-incident-to-alert ignore is working
+    assert not str_in_call_args_list(
+        logger_info.call_args_list,
+        "Cannot create a script with the name getAlerts, "
+        "because a script with the name getIncidents already exists.\n",
+    )
 
 
 def test_are_marketplaces_relationships_paths_valid(

@@ -5,8 +5,9 @@ from typing import Generator
 
 import pytz
 import requests
-from google.api_core.exceptions import PreconditionFailed
+from google.api_core.exceptions import NotFound, PreconditionFailed
 from google.cloud import storage
+from google.resumable_media.common import InvalidResponse
 
 LOCKS_PATH = "content-locks"
 BUCKET_NAME = os.environ.get("GCS_ARTIFACTS_BUCKET")
@@ -150,9 +151,16 @@ def lock_integrations(test_playbook, storage_client: storage.Client) -> bool:
     for integration, lock_file in existing_integrations_lock_files.items():
         # Each file has content in the form of <circleci-build-number>:<timeout in seconds>
         # If it has not expired - it means the integration is currently locked by another test.
-        workflow_id, build_number, lock_timeout = (
-            lock_file.download_as_string().decode().split(":")
-        )
+        try:
+            workflow_id, build_number, lock_timeout = (
+                lock_file.download_as_string().decode().split(":")
+            )
+        except NotFound:
+            test_playbook.build_context.logging_module.warning(
+                "Integration lock file in not exists, continue running"
+            )
+            continue
+
         if not lock_expired(lock_file, lock_timeout) and workflow_still_running(
             workflow_id, test_playbook
         ):
@@ -208,16 +216,24 @@ def create_lock_files(
                 f"integration {integration} locked"
             )
             locked_integrations.append(integration)
-        except PreconditionFailed:
+        except (PreconditionFailed, InvalidResponse) as exception:
             # if this exception occurs it means that another build has locked this integration
             # before this build managed to do it.
             # we need to unlock all the integrations we have already locked and try again later
-            test_playbook.build_context.logging_module.warning(
-                f"Could not lock integration {integration}, Create file with precondition failed."
-                f"delaying test execution."
-            )
-            unlock_integrations(locked_integrations, test_playbook, storage_client)
-            return False
+
+            if isinstance(exception, PreconditionFailed) or (
+                exception.__cause__
+                and isinstance(exception.__cause__, PreconditionFailed)
+            ):
+                test_playbook.build_context.logging_module.warning(
+                    f"Could not lock integration {integration}, Create file with precondition failed."
+                    f"delaying test execution."
+                )
+                unlock_integrations(locked_integrations, test_playbook, storage_client)
+                return False
+
+            raise
+
     return True
 
 
@@ -231,7 +247,10 @@ def unlock_integrations(
         test_playbook (TestPlaybook): The test playbook instance we want to test under the lock's context
         storage_client: The GCP storage client
     """
-    locked_integrations = [integration.name for integration in integrations_to_unlock]
+    locked_integrations = [
+        getattr(integration, "name", integration)
+        for integration in integrations_to_unlock
+    ]
     locked_integration_blobs = get_locked_integrations(
         locked_integrations, storage_client
     )

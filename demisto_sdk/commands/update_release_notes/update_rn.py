@@ -3,7 +3,6 @@ This script is used to create a release notes template
 """
 import copy
 import errno
-import logging
 import os
 import re
 from distutils.version import LooseVersion
@@ -17,6 +16,7 @@ from demisto_sdk.commands.common.constants import (
     IGNORED_PACK_NAMES,
     RN_CONTENT_ENTITY_WITH_STARS,
     RN_HEADER_BY_FILE_TYPE,
+    SIEM_ONLY_ENTITIES,
     XSIAM_DASHBOARDS_DIR,
     XSIAM_REPORTS_DIR,
     FileType,
@@ -33,6 +33,7 @@ from demisto_sdk.commands.common.content.objects.pack_objects.abstract_pack_obje
 from demisto_sdk.commands.common.content_constant_paths import DEFAULT_ID_SET_PATH
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import JSON_Handler
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     find_type,
     get_api_module_ids,
@@ -48,8 +49,6 @@ from demisto_sdk.commands.common.tools import (
     pack_name_to_path,
     run_command,
 )
-
-logger = logging.getLogger("demisto-sdk")
 
 json = JSON_Handler()
 
@@ -117,8 +116,8 @@ def get_deprecated_rn(path: str, file_type):
 
     # look for deprecated commands
     rn = ""
-    old_commands = deprecated_commands(old_yml.get("script", {}).get("commands"))
-    new_commands = deprecated_commands(new_yml.script.get("commands"))
+    old_commands = deprecated_commands(old_yml.get("script", {}).get("commands") or [])
+    new_commands = deprecated_commands(new_yml.script.get("commands") or [])
 
     for command_name in new_commands:
         # if command is deprecated in new yml, and not in old yml
@@ -383,6 +382,12 @@ class UpdateRN:
         else:
             new_metadata = self.get_pack_metadata()
             new_version = new_metadata.get("currentVersion", "99.99.99")
+
+        if self.master_version == "0.0.0" and new_version == "1.0.0":
+            raise ValueError(
+                "Release notes do not need to be updated for version '1.0.0'."
+            )
+
         return new_version, new_metadata
 
     def _does_pack_metadata_exist(self) -> bool:
@@ -543,7 +548,7 @@ class UpdateRN:
             data_dictionary = get_json(self.metadata_path, cache_clear=True)
         except FileNotFoundError as e:
             raise FileNotFoundError(
-                f"Pack {self.pack} was not found. Please verify the pack name is correct."
+                f"The metadata file of pack {self.pack} was not found. Please verify the pack name is correct, and that the file exists."
             ) from e
         return data_dictionary
 
@@ -738,9 +743,11 @@ class UpdateRN:
             if is_new_file:
                 rn_desc = f"##### New: {content_name}\n\n"
                 if desc:
-                    rn_desc += f"- {desc}"
-                if from_version:
+                    rn_desc += f"- New: {desc}"
+                if from_version and _type not in SIEM_ONLY_ENTITIES:
                     rn_desc += f" (Available from Cortex XSOAR {from_version})."
+                elif _type in SIEM_ONLY_ENTITIES:
+                    rn_desc += "(Available from Cortex XSIAM %%XSIAM_VERSION%%)."
                 rn_desc += "\n"
             else:
                 rn_desc = f"##### {content_name}\n\n"

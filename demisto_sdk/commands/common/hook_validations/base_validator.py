@@ -1,4 +1,3 @@
-import logging
 import os
 from pathlib import Path
 from typing import Optional
@@ -21,6 +20,7 @@ from demisto_sdk.commands.common.errors import (
     get_error_object,
 )
 from demisto_sdk.commands.common.handlers import JSON_Handler
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     find_type,
     get_file_displayed_name,
@@ -29,8 +29,6 @@ from demisto_sdk.commands.common.tools import (
     get_relative_path_from_packs_dir,
     get_yaml,
 )
-
-logger = logging.getLogger("demisto-sdk")
 
 json = JSON_Handler()
 
@@ -178,15 +176,8 @@ class BaseValidator:
                 # specific_validations list, we exit the function and return None
                 return None
 
-        def formatted_error_str(error_type):
-            if error_type not in {"ERROR", "WARNING"}:
-                raise ValueError(
-                    "Error type is not valid. Should be in {'ERROR', 'WARNING'}"
-                )
-
-            formatted_error_message_prefix = (
-                f"[{error_type}]: {file_path}: [{error_code}]"
-            )
+        def formatted_error_str():
+            formatted_error_message_prefix = f"{file_path}: [{error_code}]"
             if is_error_not_allowed_in_pack_ignore:
                 formatted = f"{formatted_error_message_prefix} can not be ignored in .pack-ignore\n"
             else:
@@ -246,16 +237,16 @@ class BaseValidator:
             or warning
         ):
             if self.print_as_warnings or warning:
-                logger.warning(f'[yellow]{formatted_error_str("WARNING")}[/yellow]')
+                logger.warning(f"[yellow]{formatted_error_str()}[/yellow]")
                 self.json_output(file_path, error_code, error_message, warning)
                 self.add_to_report_error_list(
                     error_code, file_path, FOUND_FILES_AND_IGNORED_ERRORS
                 )
             return None
 
-        formatted_error = formatted_error_str("ERROR")
+        formatted_error = formatted_error_str()
         if suggested_fix and not is_error_not_allowed_in_pack_ignore:
-            logger.info(f"[red]{formatted_error[:-1]}[/red]")
+            logger.error(f"[red]{formatted_error[:-1]}[/red]")
             if error_code == "ST109":
                 logger.info("[red]Please add to the root of the yml.[/red]\n")
             elif error_code == "ST107":

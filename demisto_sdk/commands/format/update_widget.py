@@ -1,17 +1,13 @@
-import logging
 from distutils.version import LooseVersion
 from typing import Tuple
 
-import click
-
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.format.format_constants import (
     ERROR_RETURN_CODE,
     SKIP_RETURN_CODE,
     SUCCESS_RETURN_CODE,
 )
 from demisto_sdk.commands.format.update_generic_json import BaseUpdateJSON
-
-logger = logging.getLogger("demisto-sdk")
 
 
 class WidgetJSONFormat(BaseUpdateJSON):
@@ -44,9 +40,8 @@ class WidgetJSONFormat(BaseUpdateJSON):
 
     def run_format(self) -> int:
         try:
-            click.secho(
-                f"\n================= Updating file {self.source_file} =================",
-                fg="bright_blue",
+            logger.info(
+                f"\n[blue]================= Updating file {self.source_file} =================[/blue]"
             )
             self.update_json()
             self.set_description()

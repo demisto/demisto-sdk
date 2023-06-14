@@ -1,4 +1,3 @@
-import logging
 import traceback
 from typing import Tuple
 
@@ -6,6 +5,7 @@ from demisto_sdk.commands.common.constants import (
     FILETYPE_TO_DEFAULT_FROMVERSION,
     FileType,
 )
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.format.format_constants import (
     ERROR_RETURN_CODE,
     SKIP_RETURN_CODE,
@@ -14,8 +14,6 @@ from demisto_sdk.commands.format.format_constants import (
 from demisto_sdk.commands.format.update_generic_json import BaseUpdateJSON
 
 MIN_FROM_VERSION_LISTS = "6.5.0"
-
-logger = logging.getLogger("demisto-sdk")
 
 
 class ListsFormat(BaseUpdateJSON):
@@ -54,7 +52,7 @@ class ListsFormat(BaseUpdateJSON):
             self.save_json_to_destination_file()
             return SUCCESS_RETURN_CODE
         except Exception as err:
-            print(
+            logger.info(
                 "".join(
                     traceback.format_exception(
                         type(err), value=err, tb=err.__traceback__

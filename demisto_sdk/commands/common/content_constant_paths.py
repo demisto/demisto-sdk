@@ -5,7 +5,6 @@ from demisto_sdk.commands.common.tools import get_content_path
 
 logger = logging.getLogger("demisto-sdk")
 
-
 CONTENT_PATH = Path(get_content_path())  # type: ignore
 
 ALL_PACKS_DEPENDENCIES_DEFAULT_PATH = CONTENT_PATH / "all_packs_dependencies.json"

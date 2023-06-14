@@ -64,6 +64,7 @@ from demisto_sdk.commands.common.tools import (
     get_file_displayed_name,
     get_file_version_suffix_if_exists,
     get_files_in_dir,
+    get_from_version,
     get_ignore_pack_skipped_tests,
     get_item_marketplaces,
     get_last_release_version,
@@ -86,6 +87,7 @@ from demisto_sdk.commands.common.tools import (
     retrieve_file_ending,
     run_command_os,
     server_version_compare,
+    str2bool,
     string_to_bool,
     to_kebab_case,
 )
@@ -1369,7 +1371,7 @@ def test_get_pack_metadata(repo):
 
     pack = repo.create_pack("MyPack")
     pack_metadata = pack.pack_metadata
-    pack_metadata.update(metadata_json)
+    pack_metadata.write_json(metadata_json)
 
     result = get_pack_metadata(pack.path)
 
@@ -1515,14 +1517,14 @@ def test_suppress_stdout(capsys):
         - Ensure that messages are not printed to console while suppress_stdout is enabled.
         - Ensure that messages are printed to console when suppress_stdout is disabled.
     """
-    print("You can see this")
+    print("You can see this")  # noqa: T201
     captured = capsys.readouterr()
     assert captured.out == "You can see this\n"
     with tools.suppress_stdout():
-        print("You cannot see this")
+        print("You cannot see this")  # noqa: T201
         captured = capsys.readouterr()
     assert captured.out == ""
-    print("And you can see this again")
+    print("And you can see this again")  # noqa: T201
     captured = capsys.readouterr()
     assert captured.out == "And you can see this again\n"
 
@@ -1544,7 +1546,7 @@ def test_suppress_stdout_exception(capsys):
         with tools.suppress_stdout():
             2 / 0
     assert str(excinfo.value) == "division by zero"
-    print("After error prints are enabled again.")
+    print("After error prints are enabled again.")  # noqa: T201
     captured = capsys.readouterr()
     assert captured.out == "After error prints are enabled again.\n"
 
@@ -2621,3 +2623,46 @@ def test_get_core_packs(mocker):
 )
 def test_extract_field_from_mapping(mapping_value, expected_output):
     assert extract_field_from_mapping(mapping_value) == expected_output
+
+
+def test_get_from_version(mocker):
+    mocker.patch.object(tools, "get_yaml", return_value={"fromversion": "6.1.0"})
+    assert get_from_version("fake_file_path.yml") == "6.1.0"
+
+
+def test_get_from_version_error(mocker):
+    mocker.patch.object(tools, "get_yaml", return_value=["item1, item2"])
+    with pytest.raises(ValueError) as e:
+        get_from_version("fake_file_path.yml")
+
+    assert str(e.value) == "yml file returned is not of type dict"
+
+
+@pytest.mark.parametrize(
+    "value, expected_output",
+    [
+        (None, False),
+        (True, True),
+        (False, False),
+        ("yes", True),
+        ("Yes", True),
+        ("YeS", True),
+        ("True", True),
+        ("t", True),
+        ("y", True),
+        ("Y", True),
+        ("1", True),
+        ("no", False),
+        ("No", False),
+        ("nO", False),
+        ("NO", False),
+        ("false", False),
+        ("False", False),
+        ("F", False),
+        ("n", False),
+        ("N", False),
+        ("0", False),
+    ],
+)
+def test_str2bool(value, expected_output):
+    assert str2bool(value) == expected_output

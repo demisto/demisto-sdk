@@ -1,27 +1,43 @@
 import json
-import logging
 from abc import ABC, abstractmethod
 from collections import defaultdict
+from functools import lru_cache
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, ClassVar, Dict, List, Optional, Set, Type, cast
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    ClassVar,
+    Dict,
+    List,
+    Optional,
+    Set,
+    Type,
+    cast,
+)
 
+import demisto_client
+from packaging.version import Version
 from pydantic import BaseModel, DirectoryPath, Field
 from pydantic._internal._model_construction import ModelMetaclass
 
 import demisto_sdk.commands.content_graph.parsers.content_item
 from demisto_sdk.commands.common.constants import (
     MARKETPLACE_MIN_VERSION,
+    PACKS_FOLDER,
     MarketplaceVersions,
 )
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
-from demisto_sdk.commands.content_graph.parsers.content_item import ContentItemParser
+from demisto_sdk.commands.content_graph.parsers.content_item import (
+    ContentItemParser,
+    InvalidContentItemException,
+    NotAContentItemException,
+)
 from demisto_sdk.commands.content_graph.parsers.pack import PackParser
 
 if TYPE_CHECKING:
     from demisto_sdk.commands.content_graph.objects.relationship import RelationshipData
-
-logger = logging.getLogger("demisto-sdk")
 
 content_type_to_model: Dict[ContentType, Type["BaseContent"]] = {}
 
@@ -58,9 +74,7 @@ class BaseContentMetaclass(ModelMetaclass):
 
 
 class BaseContent(ABC, BaseModel, metaclass=BaseContentMetaclass):
-    database_id: Optional[int] = Field(
-        None, exclude=True, repr=False
-    )  # used for the database
+    database_id: Optional[int] = Field(None)  # used for the database
     object_id: str = Field(alias="id")
     content_type: ClassVar[ContentType] = Field(include=True)
     node_id: str
@@ -80,8 +94,11 @@ class BaseContent(ABC, BaseModel, metaclass=BaseContentMetaclass):
 
     def __getstate__(self):
         """Needed to for the object to be pickled correctly (to use multiprocessing)"""
-        dict_copy = self.__dict__.copy()
+        if "relationships_data" not in self.__dict__:
+            # if we don't have relationships, we can use the default __getstate__ method
+            return super().__getstate__()
 
+        dict_copy = self.__dict__.copy()
         # This avoids circular references when pickling store only the first level relationships.
         relationships_data_copy = dict_copy["relationships_data"].copy()
         dict_copy["relationships_data"] = defaultdict(set)
@@ -115,29 +132,44 @@ class BaseContent(ABC, BaseModel, metaclass=BaseContentMetaclass):
             Dict[str, Any]: _description_
         """
 
-        json_dct = json.loads(self.json(exclude={"commands"}))
-        if (path := json_dct.get("path")) and (path := Path(path)).is_absolute():
-            json_dct["path"] = path.relative_to(CONTENT_PATH).as_posix()  # type: ignore
+        json_dct = json.loads(self.json(exclude={"commands", "database_id"}))
+        if "path" in json_dct and Path(json_dct["path"]).is_absolute():
+            json_dct["path"] = (Path(json_dct["path"]).relative_to(CONTENT_PATH)).as_posix()  # type: ignore
         json_dct["content_type"] = self.content_type
         return json_dct
 
     @staticmethod
+    @lru_cache
     def from_path(path: Path) -> Optional["BaseContent"]:
         logger.debug(f"Loading content item from path: {path}")
-        if path.is_dir() and path.parent.name == "Packs":  # if the path given is a pack
-            return content_type_to_model[ContentType.PACK].from_orm(PackParser(path))
-        content_item_parser = ContentItemParser.from_path(path)
-        if not content_item_parser:
+        if (
+            path.is_dir() and path.parent.name == PACKS_FOLDER
+        ):  # if the path given is a pack
+            try:
+                return content_type_to_model[ContentType.PACK].from_orm(
+                    PackParser(path)
+                )
+            except InvalidContentItemException:
+                logger.error(f"Could not parse content from {str(path)}")
+                return None
+        try:
+            content_item_parser = ContentItemParser.from_path(path)
+        except NotAContentItemException:
             # This is a workaround because `create-content-artifacts` still creates deprecated content items
             demisto_sdk.commands.content_graph.parsers.content_item.MARKETPLACE_MIN_VERSION = (
                 "0.0.0"
             )
-            content_item_parser = ContentItemParser.from_path(path)
+            try:
+                content_item_parser = ContentItemParser.from_path(path)
+            except NotAContentItemException:
+                logger.error(
+                    f"Invalid content path provided: {str(path)}. Please provide a valid content item or pack path."
+                )
+                return None
             demisto_sdk.commands.content_graph.parsers.content_item.MARKETPLACE_MIN_VERSION = (
                 MARKETPLACE_MIN_VERSION
             )
-
-        if not content_item_parser:  # if we still can't parse the content item
+        except InvalidContentItemException:
             logger.error(
                 f"Invalid content path provided: {str(path)}. Please provide a valid content item or pack path."
             )
@@ -157,8 +189,22 @@ class BaseContent(ABC, BaseModel, metaclass=BaseContentMetaclass):
             return None
 
     @abstractmethod
-    def dump(self, path: DirectoryPath, marketplace: MarketplaceVersions) -> None:
+    def dump(
+        self,
+        path: DirectoryPath,
+        marketplace: MarketplaceVersions,
+    ) -> None:
         pass
+
+    def upload(
+        self,
+        client: demisto_client,
+        marketplace: MarketplaceVersions,
+        target_demisto_version: Version,
+        **kwargs,
+    ) -> None:
+        # Implemented at the ContentItem/Pack level rather than here
+        raise NotImplementedError()
 
     def add_relationship(
         self, relationship_type: RelationshipType, relationship: "RelationshipData"

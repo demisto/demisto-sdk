@@ -94,7 +94,6 @@ class TestCreateIdSet:  # Use classes to speed up test - multi threaded py pytes
 
         assert IsEqualFunctions.is_dicts_equal(id_set_result, expected_id_set)
         assert result.exit_code == 0
-        assert result.stderr == ""
 
     def test_create_id_set_with_excluded_items_mini(self, mocker, repo):
         """
@@ -183,7 +182,6 @@ class TestCreateIdSet:  # Use classes to speed up test - multi threaded py pytes
 
         assert IsEqualFunctions.is_dicts_equal(id_set_result, expected_id_set)
         assert result.exit_code == 0
-        assert result.stderr == ""
 
     @staticmethod
     def test_excluded_items_contain_aliased_field(mocker, repo: Repo):

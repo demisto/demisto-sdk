@@ -9,7 +9,7 @@ from git import InvalidGitRepositoryError, Repo
 from git.diff import Lit_change_type
 from git.remote import Remote
 
-from demisto_sdk.commands.content_graph.common import PACKS_FOLDER
+from demisto_sdk.commands.common.constants import PACKS_FOLDER
 
 
 class GitUtil:
@@ -517,14 +517,15 @@ class GitUtil:
             Set: of Paths to files changed in the current branch.
         """
         remote, branch = self.handle_prev_ver(prev_ver)
-        current_branch_or_hash = self.get_current_git_branch_or_hash()
+        current_hash = self.get_current_commit_hash()
 
         if remote:
             return {
                 Path(os.path.join(item))
                 for item in self.repo.git.diff(
-                    "--name-only", f"{remote}/{branch}...{current_branch_or_hash}"
+                    "--name-only", f"{remote}/{branch}...{current_hash}"
                 ).split("\n")
+                if item
             }
 
         # if remote does not exist we are checking against the commit sha1
@@ -532,8 +533,9 @@ class GitUtil:
             return {
                 Path(os.path.join(item))
                 for item in self.repo.git.diff(
-                    "--name-only", f"{branch}...{current_branch_or_hash}"
+                    "--name-only", f"{branch}...{current_hash}"
                 ).split("\n")
+                if item
             }
 
     def _only_last_commit(
@@ -548,7 +550,7 @@ class GitUtil:
             running on master against master.
         """
         # when checking branch against itself only return the last commit.
-        if self.get_current_working_branch() != self.handle_prev_ver(prev_ver)[1]:
+        if self.get_current_git_branch_or_hash() != self.handle_prev_ver(prev_ver)[1]:
             return set()
 
         try:

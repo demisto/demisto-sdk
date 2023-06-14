@@ -171,7 +171,9 @@ class ColorConsoleFormatter(logging.Formatter):
         self,
     ):
         super().__init__(
-            fmt="[%(levelname)s] %(message)s",
+            fmt="[%(asctime)s] [%(levelname)s] %(message)s"
+            if os.getenv("CI")
+            else "[%(levelname)s] %(message)s",
             datefmt=DATE_FORMAT,
         )
 
@@ -221,16 +223,20 @@ class ColorConsoleFormatter(logging.Formatter):
     def format(self, record):
         if ColorConsoleFormatter._record_contains_escapes(record):
             message = ColorConsoleFormatter._insert_into_escapes(
-                record, "[%(levelname)s] "
+                record,
+                "[%(asctime)s] [%(levelname)s] "
+                if os.getenv("CI")
+                else "[%(levelname)s] ",
             )
             message = logging.Formatter(message).format(record)
         else:
-            log_fmt = self.FORMATS.get(record.levelno)
+            log_fmt = ColorConsoleFormatter.FORMATS.get(record.levelno)
             message = logging.Formatter(log_fmt).format(record)
-        message = self.replace_escapes(message)
+        message = ColorConsoleFormatter.replace_escapes(message)
         return message
 
-    def replace_escapes(self, message):
+    @staticmethod
+    def replace_escapes(message):
         for key in escapes:
             message = message.replace(key, escapes[key])
         return message

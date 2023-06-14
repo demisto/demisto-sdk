@@ -1065,8 +1065,7 @@ def get_api_module_from_graph(changed_api_modules):
                 if not api_module_node:
                     raise ValueError(
                         f"The modified API module `{changed_api_module}` was not found in the "
-                        f"content graph. Please check that it is up to date, and run"
-                        f" `demisto-sdk update-content-graph` if necessary."
+                        f"content graph."
                     )
 
                 dependent_items += [

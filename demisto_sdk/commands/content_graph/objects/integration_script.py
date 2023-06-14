@@ -24,7 +24,7 @@ yaml = YAML_Handler()
 class IntegrationScript(ContentItem):
     type: str
     docker_image: Optional[str] = None
-    description: Optional[str]
+    description: str = ""
     is_unified: bool = Field(False, exclude=True)
     code: Optional[str] = Field(None, exclude=True)
 

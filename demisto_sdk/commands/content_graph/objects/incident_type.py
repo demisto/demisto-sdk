@@ -1,6 +1,6 @@
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import Optional, Set
+from typing import Set
 
 import demisto_client
 from pydantic import Field
@@ -14,11 +14,11 @@ json = JSON_Handler()
 
 
 class IncidentType(ContentItem, content_type=ContentType.INCIDENT_TYPE):  # type: ignore[call-arg]
-    playbook: Optional[str]
+    playbook: str = ""
     hours: int
     days: int
     weeks: int
-    closure_script: Optional[str] = Field(alias="closureScript")
+    closure_script: str = Field("", alias="closureScript")
 
     def metadata_fields(self) -> Set[str]:
         return {"name", "playbook", "closure_script", "hours", "days", "week"}

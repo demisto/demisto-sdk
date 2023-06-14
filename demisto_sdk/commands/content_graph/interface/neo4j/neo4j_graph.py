@@ -1,6 +1,4 @@
-from concurrent.futures import ProcessPoolExecutor
 import os
-from multiprocessing import Pool
 from multiprocessing.pool import ThreadPool
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional, Set, Tuple
@@ -78,29 +76,6 @@ from demisto_sdk.commands.content_graph.objects.pack import Pack
 from demisto_sdk.commands.content_graph.objects.relationship import RelationshipData
 
 
-def _parse_node(element_id: int, node: dict) -> BaseContent:
-    """Parses nodes to content objects and adds it to mapping
-
-    Args:
-        nodes (Iterable[graph.Node]): List of nodes to parse
-
-    Raises:
-        NoModelException: If no model found to parse on
-    """
-    obj: BaseContent
-    content_type = node.get("content_type", "")
-    if node.get("not_in_repository"):
-        obj = UnknownContent.parse_obj(node)
-
-    else:
-        model = content_type_to_model.get(content_type)
-        if not model:
-            raise NoModelException(f"No model for {content_type}")
-        obj = model.parse_obj(node)
-    obj.database_id = element_id
-    return obj
-
-
 class NoModelException(Exception):
     pass
 
@@ -140,6 +115,29 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
     @property
     def import_path(self) -> Path:
         return self._import_handler.import_path
+
+    @staticmethod
+    def _parse_node(element_id: int, node: dict) -> BaseContent:
+        """Parses nodes to content objects and adds it to mapping
+
+        Args:
+            nodes (Iterable[graph.Node]): List of nodes to parse
+
+        Raises:
+            NoModelException: If no model found to parse on
+        """
+        obj: BaseContent
+        content_type = node.get("content_type", "")
+        if node.get("not_in_repository"):
+            obj = UnknownContent.parse_obj(node)
+
+        else:
+            model = content_type_to_model.get(content_type)
+            if not model:
+                raise NoModelException(f"No model for {content_type}")
+            obj = model.parse_obj(node)
+        obj.database_id = element_id
+        return obj
 
     def clean_import_dir(self) -> None:
         return self._import_handler.clean_import_dir()
@@ -281,7 +279,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             return
         with ThreadPool(processes=cpu_count()) as pool:
             results = pool.starmap(
-                _parse_node, ((node.id, dict(node.items())) for node in nodes)
+                self._parse_node, ((node.id, dict(node.items())) for node in nodes)
             )
             for result in results:
                 assert result.database_id is not None

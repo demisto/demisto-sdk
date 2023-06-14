@@ -80,7 +80,7 @@ class BaseContent(ABC, BaseModel, metaclass=BaseContentMetaclass):
     node_id: str
     marketplaces: List[MarketplaceVersions] = list(MarketplaceVersions)
 
-    relationships_data: Dict[RelationshipType, Set[Any]] = Field(
+    relationships_data: Dict[RelationshipType, Set["RelationshipData"]] = Field(
         defaultdict(set), exclude=True, repr=False
     )
 

@@ -2,8 +2,11 @@ from typing import Optional
 
 from pydantic import BaseModel
 
-from demisto_sdk.commands.content_graph.common import RelationshipType
-from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
+from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
+from demisto_sdk.commands.content_graph.objects.base_content import (
+    BaseContent,
+    content_type_to_model,
+)
 from demisto_sdk.commands.content_graph.objects.pack import PackContentItems
 from demisto_sdk.commands.content_graph.objects.repository import ContentDTO
 
@@ -45,6 +48,10 @@ class RelationshipData(BaseModel):
         """This is needed to check if the relationship already exists"""
         return hash(self) == hash(__o)
 
-# BaseContent.model_rebuild()
-# ContentDTO.model_rebuild()
-# PackContentItems.model_rebuild()
+
+PackContentItems.model_rebuild()
+BaseContent.model_rebuild()
+ContentDTO.model_rebuild()
+for content_type in ContentType:
+    if model := content_type_to_model.get(content_type):
+        model.model_rebuild()

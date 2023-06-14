@@ -197,12 +197,12 @@ class PackMetadata(BaseModel):
     created: Optional[str]
     updated: Optional[str]
     support: Optional[str]
-    email: Optional[str]
-    url: Optional[str]
-    author: Optional[str]
-    certification: Optional[str]
+    email: Optional[str] = None
+    url: str = ""
+    author: str = ""
+    certification: str = ""
     hidden: Optional[bool]
-    server_min_version: Optional[str] = Field(alias="serverMinVersion")
+    server_min_version: Optional[str] = Field(None, alias="serverMinVersion")
     current_version: Optional[str] = Field(alias="currentVersion")
     tags: Optional[List[str]]
     categories: Optional[List[str]]
@@ -220,9 +220,8 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: i
     path: Path
     contributors: Optional[List[str]] = None
     relationships: Relationships = Field(Relationships(), exclude=True)
-
-    content_items: PackContentItems = Field(
-        PackContentItems(), alias="contentItems", exclude=True
+    content_items: Optional[PackContentItems] = Field(
+        None, alias="contentItems", exclude=True
     )
 
     @validator("path", always=True)

@@ -1,5 +1,5 @@
 import logging
-from typing import Callable, List, Optional, Set, Union
+from typing import Callable, List, Set, Union
 
 import demisto_client
 from pydantic import Field
@@ -12,9 +12,9 @@ logger = logging.getLogger("demisto-sdk")
 
 
 class Layout(ContentItem, content_type=ContentType.LAYOUT):  # type: ignore[call-arg]
-    kind: Optional[str]
-    tabs: Optional[List[str]]
-    definition_id: Optional[str] = Field(alias="definitionId")
+    kind: str = ""
+    tabs: List[str] = []
+    definition_id: str = Field("", alias="definitionId")
     group: str
     edit: bool
     indicators_details: bool

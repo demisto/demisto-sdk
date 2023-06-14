@@ -142,21 +142,21 @@ WHERE id(i) <> id(i2)
 WITH p, c, i2
 WHERE i2 IS NULL
 {files_filter}
-RETURN c.object_id AS deprecated_command, collect(p.path) AS object_using_deprecated"""
+RETURN c.object_id AS deprecated_command, c.content_type AS deprecated_content_type, collect(p.path) AS object_using_deprecated"""
     return list(run_query(tx, command_query))
 
 
 def get_items_using_deprecated_content_items(tx: Transaction, file_paths: List[str]):
     files_filter = (
-        f"AND (p.path in {file_paths} OR d.path IN {file_paths})" if file_paths else ""
+        f"AND (p.path IN {file_paths} OR d.path IN {file_paths})" if file_paths else ""
     )
     query = f"""
     MATCH (p{{deprecated: false}})-[:USES]->(d{{deprecated: true}}) WHERE not p.is_test
 OPTIONAL MATCH (p)-[:USES]->(c1:Command)<-[:HAS_COMMAND]-(d)
 WITH p, d, c1
-WHERE c1 is null
+WHERE c1 IS NULL
 {files_filter}
-RETURN d.object_id as deprecated_content, d.content_type as deprecated_content_type, collect(p.path) as object_using_deprecated
+RETURN d.object_id AS deprecated_content, d.content_type AS deprecated_content_type, collect(p.path) AS object_using_deprecated
     """
     return list(run_query(tx, query))
 

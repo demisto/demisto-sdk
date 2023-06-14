@@ -739,11 +739,11 @@ def test_deprecated_usage__existing_content(repository: ContentDTO, mocker):
     assert is_valid
     assert str_in_call_args_list(
         logger_info.call_args_list,
-        "[GR107] - The command 'deprecated-command' are deprecated but used in the content items:",
+        "[GR107] - The Command 'deprecated-command' is deprecated but used in the following content items:",
     )
     assert str_in_call_args_list(
         logger_info.call_args_list,
-        "[GR107] - The content item 'DeprecatedIntegration' are deprecated but used in the content items:",
+        "[GR107] - The Integration 'DeprecatedIntegration' is deprecated but used in the following content items:",
     )
 
 

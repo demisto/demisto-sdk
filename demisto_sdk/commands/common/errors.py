@@ -4554,11 +4554,10 @@ class Errors:
     def deprecated_items_usage(
         deprecated_item: str,
         using_deprecated_items: list,
-        is_deprecated_are_command=False,
+        deprecated_item_type: str,
     ):
-        item_prefix = "command" if is_deprecated_are_command else "content item"
         return (
-            f"The {item_prefix} '{deprecated_item}' is deprecated but used in the following content items: "
+            f"The {deprecated_item_type} '{deprecated_item}' is deprecated but used in the following content items: "
             f"{', '.join(using_deprecated_items)}."
         )
 

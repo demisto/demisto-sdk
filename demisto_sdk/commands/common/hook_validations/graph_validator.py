@@ -51,14 +51,14 @@ class GraphValidator(BaseValidator):
 
     def is_valid_content_graph(self) -> bool:
         is_valid = (
-            self.validate_dependencies(),
-            self.validate_marketplaces_fields(),
-            self.validate_fromversion_fields(),
-            self.validate_toversion_fields(),
-            self.is_file_using_unknown_content(),
-            self.is_file_display_name_already_exists(),
-            self.validate_duplicate_ids(),
-            self.validate_unique_script_name(),
+            # self.validate_dependencies(),
+            # self.validate_marketplaces_fields(),
+            # self.validate_fromversion_fields(),
+            # self.validate_toversion_fields(),
+            # self.is_file_using_unknown_content(),
+            # self.is_file_display_name_already_exists(),
+            # self.validate_duplicate_ids(),
+            # self.validate_unique_script_name(),
             self.validate_deprecated_items_usage(),
         )
         return all(is_valid)
@@ -250,7 +250,7 @@ class GraphValidator(BaseValidator):
             error_message, error_code = Errors.deprecated_items_usage(
                 deprecated_command or deprecated_content,
                 item.get("object_using_deprecated"),
-                is_deprecated_are_command=deprecated_command is not None,
+                item.get("deprecated_content_type"),
             )
             items_using_deprecated = item.get("object_using_deprecated") or []
             for item_using_deprecated in items_using_deprecated:

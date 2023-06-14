@@ -278,6 +278,8 @@ def add_tmp_lint_files(
                     copied_api_module_path.unlink(missing_ok=True)
                     copied_api_module_path.absolute().symlink_to(module.absolute())
                 else:
+                    if module.stem == "conftest" and copied_api_module_path.exists():
+                        continue
                     copied_api_module_path.write_bytes(content)
                     added_modules.append(copied_api_module_path)
         if pack_type == TYPE_PYTHON:

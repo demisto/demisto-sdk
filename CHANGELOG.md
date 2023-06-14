@@ -2,6 +2,7 @@
 ## Unreleased
 * Fixed an issue where lock integartions failed on FileNotFound.(PANW-internal only).
 * Removed the `timezone_offset` argument in the *modeling-rules test* command.
+* Fixed an issue where **lint** failed when importing functions from CommonServerUserPython.
 
 ## 1.16.0
 * Added a check to **is_docker_image_latest_tag** to only fail the validation on non-latest image tag when the current tag is older than 3 days.

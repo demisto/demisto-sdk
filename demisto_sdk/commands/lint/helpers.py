@@ -127,6 +127,7 @@ def get_test_modules(
             Path("demistomock.py"),
             Path("dev_envs/pytest/conftest.py"),
             Path("CommonServerPython.py"),
+            Path("CommonServerUserPython.py"),
             Path("demistomock.ps1"),
             Path("CommonServerPowerShell.ps1"),
         ]
@@ -182,8 +183,6 @@ def get_test_modules(
                     break
                 elif trial == 2:
                     raise requests.exceptions.ConnectionError
-
-    modules_content[Path("CommonServerUserPython.py")] = b""
 
     return modules_content
 

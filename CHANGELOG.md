@@ -1,6 +1,7 @@
 # Changelog
 ## Unreleased
 * Added a validation that assures filename, id, and name have a correct suffix for modeling/parsing rules files.
+* Removed the `timezone_offset` argument in the *modeling-rules test* command.
 
 ## 1.16.0
 * Added a check to **is_docker_image_latest_tag** to only fail the validation on non-latest image tag when the current tag is older than 3 days.

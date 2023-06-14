@@ -6,6 +6,7 @@ from uuid import UUID
 import pytest
 import requests_mock
 import typer
+from freezegun import freeze_time
 from typer.testing import CliRunner
 
 from TestSuite.test_tools import str_in_call_args_list
@@ -1090,15 +1091,13 @@ class TestTheTestModelingRuleCommandInteractive:
 @pytest.mark.parametrize(
     "epoc_time, with_ms, human_readable_time",
     [
-        (1686231456000, False, "Jun 8th 2023 16:37:36"),
-        (1686231456123, False, "Jun 8th 2023 16:37:36"),
-        (1686231456000, True, "Jun 8th 2023 16:37:36.000000"),
-        (1686231456123, True, "Jun 8th 2023 16:37:36.123000"),
+        (1686231456000, False, "Jun 8th 2023 15:37:36"),
+        (1686231456123, False, "Jun 8th 2023 15:37:36"),
+        (1686231456000, True, "Jun 8th 2023 15:37:36.000000"),
+        (1686231456123, True, "Jun 8th 2023 15:37:36.123000"),
     ],
 )
-def test_convert_epoch_time_to_string_time(
-    mocker, epoc_time, with_ms, human_readable_time
-):
+def test_convert_epoch_time_to_string_time(epoc_time, with_ms, human_readable_time):
     """
     Given:
         - An Epoch time.
@@ -1117,9 +1116,10 @@ def test_convert_epoch_time_to_string_time(
         convert_epoch_time_to_string_time,
     )
 
-    mocker.patch("tzlocal.get_localzone", return_value="Asia/Jerusalem")
-
-    assert convert_epoch_time_to_string_time(epoc_time, with_ms) == human_readable_time
+    with freeze_time("2023/06/14T10:20:00", tz_offset=2):
+        assert (
+            convert_epoch_time_to_string_time(epoc_time, with_ms) == human_readable_time
+        )
 
 
 @pytest.mark.parametrize(

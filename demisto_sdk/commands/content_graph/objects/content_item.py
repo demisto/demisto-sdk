@@ -15,10 +15,9 @@ if TYPE_CHECKING:
 
 import logging
 
-from pydantic import DirectoryPath, field_validator
+from pydantic import DirectoryPath
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
-from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.prepare_content.preparers.marketplace_suffix_preparer import (
@@ -38,14 +37,6 @@ class ContentItem(BaseContent):
     deprecated: bool
     description: Optional[str]
     is_test: bool = False
-
-    def model_post_init(self, __context):
-        self.path = Path(self.path)
-    # @field_validator("path")
-    # def validate_path(cls, v: Path) -> Path:
-    #     if v.is_absolute():
-    #         return v
-    #     return CONTENT_PATH / v
 
     @property
     def in_pack(self) -> Optional["Pack"]:

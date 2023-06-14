@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any, ClassVar, Dict, List, Optional, Set, Type, cast
 
 from pydantic import BaseModel, DirectoryPath, Field
-from pydantic.main import ModelMetaclass
+from pydantic._internal._model_construction import ModelMetaclass
 
 import demisto_sdk.commands.content_graph.parsers.content_item
 from demisto_sdk.commands.common.constants import (
@@ -46,7 +46,9 @@ class BaseContentMetaclass(ModelMetaclass):
         Returns:
             BaseContent: The model class.
         """
-        super_cls: Type[BaseContentMetaclass] = super().__new__(cls, name, bases, namespace)
+        super_cls: Type[BaseContentMetaclass] = super().__new__(
+            cls, name, bases, namespace
+        )
         # for type checking
         model_cls: Type["BaseContent"] = cast(Type["BaseContent"], super_cls)
         if content_type:
@@ -67,9 +69,7 @@ class BaseContent(ABC, BaseModel, metaclass=BaseContentMetaclass):
     relationships_data: Dict[RelationshipType, Set[Any]] = Field(
         defaultdict(set), exclude=True, repr=False
     )
-    
-    def model_post_init(self, __context: Any) -> None:
-        self.marketplaces = [MarketplaceVersions(marketplace) for marketplace in self.marketplaces]
+
     class Config:
         arbitrary_types_allowed = (
             True  # allows having custom classes for properties in model
@@ -77,7 +77,7 @@ class BaseContent(ABC, BaseModel, metaclass=BaseContentMetaclass):
         from_attributes = True  # allows using from_orm() method
         populate_by_name = True  # when loading from orm, ignores the aliases and uses the property name
         undefined_types_warning = False
-    
+
     def __getstate__(self):
         """Needed to for the object to be pickled correctly (to use multiprocessing)"""
         dict_copy = self.__dict__.copy()
@@ -167,6 +167,7 @@ class BaseContent(ABC, BaseModel, metaclass=BaseContentMetaclass):
             # skip adding circular dependency
             return
         self.relationships_data[relationship_type].add(relationship)
+
 
 class UnknownContent(BaseContent):
     """A model for non-existing content items used by existing content items."""

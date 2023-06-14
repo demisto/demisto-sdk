@@ -5,7 +5,6 @@ from pydantic import BaseModel
 
 from demisto_sdk.commands.common.constants import NATIVE_IMAGE_FILE_NAME
 from demisto_sdk.commands.common.handlers import JSON_Handler
-from demisto_sdk.commands.common.singleton import Singleton
 from demisto_sdk.commands.common.tools import (
     extract_docker_image_from_text,
     get_dict_from_file,
@@ -38,12 +37,14 @@ class NativeImageConfig(BaseModel):
 
     @classmethod
     def from_path(cls, native_image_config_file_path: str):
-        native_image_config = NativeImageConfig(**cls.load(native_image_config_file_path))
+        native_image_config = NativeImageConfig(
+            **cls.load(native_image_config_file_path)
+        )
         native_image_config.docker_images_to_native_images_mapping = (
             native_image_config.__docker_images_to_native_images_support()
         )
         return native_image_config
-        
+
     def __docker_images_to_native_images_support(self):
         """
         Map all the docker images from the native image configuration file into the native-images which support it.

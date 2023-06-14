@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any, Generator, List, Optional
 
 from packaging.version import parse
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field
 
 from demisto_sdk.commands.common.constants import (
     BASE_PACK,
@@ -160,14 +160,6 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: i
         None, alias="contentItems", exclude=True
     )
 
-    def model_post_init(self, __context: Any) -> None:
-        self.path = Path(self.path)
-    # @field_validator("path")
-    # def validate_path(cls, v: Path) -> Path:
-    #     if v.is_absolute():
-    #         return v
-    #     return CONTENT_PATH / v
-
     @property
     def depends_on(self) -> List["RelationshipData"]:
         """
@@ -210,7 +202,7 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: i
         # If there is no server_min_version, set it to the minimum of its content items fromversion
         if not hasattr(self, "server_min_version"):
             self.server_min_version = None
-            
+
         min_content_items_version = MARKETPLACE_MIN_VERSION
         if content_items:
             min_content_items_version = str(
@@ -313,5 +305,5 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: i
     def to_nodes(self) -> Nodes:
         return Nodes(
             self.to_dict(),
-            *[content_item.to_dict() for content_item in self.content_items],
+            *[content_item.to_dict() for content_item in filter(None, self.content_items)],
         )

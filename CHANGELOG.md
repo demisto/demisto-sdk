@@ -1,6 +1,7 @@
 # Changelog
 ## Unreleased
 * Fixed an issue where lock integartions failed on FileNotFound.(PANW-internal only).
+* Removed the `timezone_offset` argument in the *modeling-rules test* command.
 * Fixed an issue where **lint** failed when importing functions from CommonServerUserPython.
 
 ## 1.16.0

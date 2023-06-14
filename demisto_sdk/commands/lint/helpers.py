@@ -269,9 +269,11 @@ def add_tmp_lint_files(
                     CAN_MOUNT_FILES
                     and module.stem != "demistomock"
                     and module.stem != "conftest"
+                    and pack_path.stem != "CommonServerPowerShell"
+                    and pack_path.stem != "CommonServerPython"
                 ):
                     copied_api_module_path.unlink(missing_ok=True)
-                    copied_api_module_path.symlink_to(module.resolve())
+                    copied_api_module_path.absolute().symlink_to(module.absolute())
                 else:
                     copied_api_module_path.write_bytes(content)
                     added_modules.append(copied_api_module_path)

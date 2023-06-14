@@ -18,6 +18,7 @@ XPANSE_ID_SET_PATH = CONTENT_PATH / "Tests" / "id_set_xpanse.json"
 PYTHONPATH = [
     Path(CONTENT_PATH),
     Path(CONTENT_PATH / "Packs" / "Base" / "Scripts" / "CommonServerPython"),
+    Path(CONTENT_PATH / "Packs" / "Base" / "Scripts" / "CommonServerPowerShell"),
     Path(CONTENT_PATH / "Tests" / "demistomock"),
     Path(__file__).parent.parent / "lint" / "resources" / "pylint_plugins",
 ]

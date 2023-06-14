@@ -26,7 +26,9 @@ from demisto_sdk.commands.common.constants import (
     TYPE_PWSH,
     TYPE_PYTHON,
 )
+from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH, PYTHONPATH
 from demisto_sdk.commands.common.docker_helper import (
+    CAN_MOUNT_FILES,
     get_docker,
     get_python_version,
     init_global_docker_client,
@@ -80,6 +82,12 @@ json = JSON_Handler()
 # 3-rd party packages
 
 # Local packages
+DOCKER_PYTHONPATH = [
+    f"/content/{path.relative_to(CONTENT_PATH)}"
+    for path in PYTHONPATH
+    if path.is_relative_to(CONTENT_PATH)  # type: ignore[attr-defined]
+]
+DOCKER_PYTHONPATH = ":".join(DOCKER_PYTHONPATH)
 
 
 class DockerImageFlagOption(Enum):
@@ -378,6 +386,7 @@ class Linter:
                     "DEMISTO_LINT_UPDATE_CERTS", "yes"
                 ),
                 "PYTHONDONTWRITEBYTECODE": "1",
+                "PYTHONPATH": DOCKER_PYTHONPATH,
             }
 
         lint_files = set()
@@ -507,6 +516,12 @@ class Linter:
                 self._facts["lint_files"], self._pack_abs_dir
             ),
         }
+
+    def _get_files_to_push(self):
+        files_to_push = [(self._pack_abs_dir, "/devwork")]
+        if CAN_MOUNT_FILES:
+            files_to_push.append((CONTENT_PATH, "/content"))  # type: ignore[arg-type]
+        return files_to_push
 
     def _remove_gitignore_files(self, log_prompt: str) -> None:
         """
@@ -1053,7 +1068,7 @@ class Linter:
                     image=test_image,
                     command=[self._facts["lint_to_commands"][linter]],
                     user=f"{os.getuid()}:4000",
-                    files_to_push=[(self._pack_abs_dir, "/devwork")],
+                    files_to_push=self._get_files_to_push(),
                     environment=self._facts["env_vars"],
                 )
             )
@@ -1148,7 +1163,7 @@ class Linter:
                         build_pytest_command(test_xml=test_xml, json=True, cov=cov)
                     ],
                     user=f"{uid}:4000",
-                    files_to_push=[(self._pack_abs_dir, "/devwork")],
+                    files_to_push=self._get_files_to_push(),
                     environment=self._facts["env_vars"],
                     network_disabled=should_disable_network,
                 )
@@ -1276,7 +1291,7 @@ class Linter:
                 image=test_image,
                 user=f"{uid}:4000",
                 environment=self._facts["env_vars"],
-                files_to_push=[(self._pack_abs_dir, "/devwork")],
+                files_to_push=self._get_files_to_push(),
                 command=build_pwsh_analyze_command(self._facts["lint_files"][0]),
             )
             container.start()
@@ -1362,7 +1377,7 @@ class Linter:
             )  # lgtm[py/clear-text-logging-sensitive-data]
             container: docker.models.containers.Container = (
                 get_docker().create_container(
-                    files_to_push=[(self._pack_abs_dir, "/devwork")],
+                    files_to_push=self._get_files_to_push(),
                     name=container_name,
                     image=test_image,
                     command=build_pwsh_test_command(),

@@ -18,6 +18,7 @@ from wcmatch.pathlib import NEGATE, Path
 
 from demisto_sdk.commands.common.constants import (
     API_MODULE_FILE_SUFFIX,
+    FORMATTING_SCRIPT,
     INTEGRATIONS_DIR,
     NATIVE_IMAGE_DOCKER_NAME,
     NATIVE_IMAGE_FILE_NAME,
@@ -328,7 +329,7 @@ class Linter:
             )
             self._facts["is_long_running"] = script_obj.get("longRunning")
             self._facts["commands"] = self._get_commands_list(script_obj)
-            self._facts["formatting_script"] = "indicator-format" in script_obj.get(
+            self._facts["formatting_script"] = FORMATTING_SCRIPT in script_obj.get(
                 "tags", []
             )
             self._pkg_lint_status["pack_type"] = script_obj.get("type")
@@ -640,7 +641,9 @@ class Linter:
             )
             stdout, stderr, exit_code = run_command_os(
                 command=build_xsoar_linter_command(
-                    lint_files, self._facts.get("support_level", "base"), self._facts.get("formatting_script")  # type: ignore
+                    lint_files,  # type: ignore
+                    self._facts.get("support_level", "base"),
+                    formatting_script=self._facts.get("formatting_script"),  # type: ignore
                 ),
                 cwd=self._pack_abs_dir,
                 env=myenv,

@@ -1113,13 +1113,11 @@ def test_convert_epoch_time_to_string_time(
     Then:
         - Verify we get the expected results.
     """
-    from dateutil import tz
-
     from demisto_sdk.commands.test_content.test_modeling_rule.test_modeling_rule import (
         convert_epoch_time_to_string_time,
     )
 
-    mocker.patch("dateutil.tz.tzlocal", return_value=tz.gettz("Asia/Jerusalem"))
+    mocker.patch("tzlocal.get_localzone", return_value="Asia/Jerusalem")
 
     assert convert_epoch_time_to_string_time(epoc_time, with_ms) == human_readable_time
 

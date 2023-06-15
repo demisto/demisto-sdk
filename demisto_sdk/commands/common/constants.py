@@ -1099,7 +1099,7 @@ TYPE_JS = "javascript"
 TYPE_TO_EXTENSION = {
     TYPE_PYTHON: ".py",
     TYPE_PYTHON3: ".py",
-    TYPE_PYTHON2: ",py",
+    TYPE_PYTHON2: ".py",
     TYPE_JS: ".js",
     TYPE_PWSH: ".ps1",
 }

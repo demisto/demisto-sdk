@@ -41,7 +41,7 @@ class XSIAMDashboardValidator(ContentEntityValidator):
         https://github.com/demisto/etc/issues/48151#issuecomment-1109660727
         """
         self.is_files_naming_correct()
-        super().is_valid_fromversion()
+        self.is_valid_fromversion()
         return self._is_valid
 
     def is_valid_version(self):

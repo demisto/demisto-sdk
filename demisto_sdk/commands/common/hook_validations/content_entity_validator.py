@@ -498,6 +498,7 @@ class ContentEntityValidator(BaseValidator):
                 file_path=self.file_path,
                 suggested_fix=Errors.suggest_fix(self.file_path),
             ):
+                self.is_valid = False
                 return False
 
         return True

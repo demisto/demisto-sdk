@@ -50,7 +50,7 @@ class CorrelationRuleValidator(ContentEntityValidator):
 
         self.no_leading_hyphen()
         self.is_files_naming_correct()
-        super().is_valid_fromversion()
+        self.is_valid_fromversion()
         return self.is_valid
 
     def is_valid_version(self):

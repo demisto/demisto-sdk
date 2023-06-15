@@ -24,7 +24,7 @@ from demisto_sdk.commands.common.hook_validations.integration import (
     IntegrationValidator,
 )
 from demisto_sdk.commands.common.legacy_git_tools import git_path
-from demisto_sdk.commands.common.tools import is_string_uuid
+from demisto_sdk.commands.common.tools import is_string_uuid, get_yaml
 from demisto_sdk.commands.format.format_module import format_manager
 from demisto_sdk.commands.format.update_generic import BaseUpdate
 from demisto_sdk.commands.format.update_generic_yml import BaseUpdateYML
@@ -1881,8 +1881,7 @@ def test_handle_hidden_marketplace_params():
     - Ensures the hidden value is equivalent to master branch.
     """
     base_yml = IntegrationYMLFormat(SOURCE_FORMAT_INTEGRATION_VALID, path="schema_path")
-    with open(SOURCE_FORMAT_INTEGRATION_VALID_OLD_FILE) as old_yml_file:
-        base_yml.old_file = yaml.load(old_yml_file)
+    base_yml.old_file = get_yaml(SOURCE_FORMAT_INTEGRATION_VALID_OLD_FILE)
     assert base_yml.old_file["configuration"][6]["hidden"] == ["marketplacev2"]
     assert base_yml.old_file["configuration"][7]["hidden"] == ["marketplacev2"]
     assert "hidden" not in base_yml.data["configuration"][6]

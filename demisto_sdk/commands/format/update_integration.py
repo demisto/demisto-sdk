@@ -237,10 +237,11 @@ class IntegrationYMLFormat(BaseUpdateYML):
 
     def handle_hidden_marketplace_params(self):
         """
-        During the upload flow, each marketplace interprets the hidden: <marketplace name> as True or False.
-        When contributing an integration from the marketplace UI, the final yml file will display hidden: False/True
-        since it comes from the marketplace bucket. When formating the file, we want it to be
-        equivalent to the master branch
+        During the upload flow, each marketplace interprets and converts the `hidden: <marketplace name>`
+        into a boolean - `hidden: <boolean>`, based on the marketplace.
+        When contributing an integration from the marketplace UI, the final yml file uses a boolean.
+        Since it's contributed to the marketplace repo, we need the value to be identical (marketplace),
+        rather than boolean. This function replaces booleans with marketplace values, if they exist.
         """
 
         current_configuration = self.data.get("configuration", [])

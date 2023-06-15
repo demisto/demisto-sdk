@@ -549,7 +549,7 @@ class ValidateManager:
         if self.run_with_multiprocessing:
             worker_count = cpu_count()
             logger.info(
-                f"Using multiprocessing to validate packs. Number of workers: {worker_count}"),
+                f"Using multiprocessing to validate packs. Number of workers: {worker_count}")
             with pebble.ProcessPool(max_workers=worker_count) as executor:
                 futures = []
                 for pack_path in all_packs:
@@ -562,8 +562,7 @@ class ValidateManager:
                     futures_list=futures,
                     done_fn=lambda x, y: (
                         all_packs_valid.add(x),  # type: ignore
-                        # type: ignore[func-returns-value]
-                        FOUND_FILES_AND_ERRORS.extend(y),
+                        FOUND_FILES_AND_ERRORS.extend(y),  # type: ignore[func-returns-value]
                     ),
                 )
         else:

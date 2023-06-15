@@ -212,7 +212,8 @@ class ContentEntityValidator(BaseValidator):
                 return False
 
         if marketplaces_old and (not marketplaces_new):
-            error_message, error_code = Errors.marketplaces_removed(marketplaces_old)
+            error_message, error_code = Errors.marketplaces_removed(
+                marketplaces_old)
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 self.is_valid = False
                 return False

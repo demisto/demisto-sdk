@@ -584,10 +584,10 @@ def test_is_valid_rule_suffix(
     Then: Validate that the modeling/parsing rule is valid/invalid and the message (in case of invalid) is as expected.
     """
     pack = repo.create_pack("TestPack")
-    if rule_type == MODELING_RULE:
-        create_rule_function = pack.create_modeling_rule
-    if rule_type == PARSING_RULE:
-        create_rule_function = pack.create_parsing_rule
+    create_rule_function = {
+        MODELING_RULE: pack.create_modeling_rule,
+        PARSING_RULE: pack.create_parsing_rule,
+    }[rule_type]
     dummy_rule = create_rule_function(rule_file_name, rule_dict)
     structure_validator = StructureValidator(dummy_rule.yml.path)
     error_message = mocker.patch(

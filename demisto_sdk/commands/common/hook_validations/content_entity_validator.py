@@ -170,7 +170,8 @@ class ContentEntityValidator(BaseValidator):
             True if version is valid, else False
         """
         if self.current_file.get("version") != self.DEFAULT_VERSION:
-            error_message, error_code = Errors.wrong_version(self.DEFAULT_VERSION)
+            error_message, error_code = Errors.wrong_version(
+                self.DEFAULT_VERSION)
             if self.handle_error(
                 error_message,
                 error_code,
@@ -314,7 +315,8 @@ class ContentEntityValidator(BaseValidator):
                     {"playbookID": content_item_id}, indent=4
                 )
                 missing_integration_configurations = json.dumps(
-                    {"integrations": "<integration ID>", "playbookID": content_item_id},
+                    {"integrations": "<integration ID>",
+                        "playbookID": content_item_id},
                     indent=4,
                 )
                 error_message, error_code = Errors.test_playbook_not_configured(
@@ -429,12 +431,14 @@ class ContentEntityValidator(BaseValidator):
             from_version = (
                 self.current_file.get("fromVersion", "00.00.00") or "00.00.00"
             )
-            to_version = self.current_file.get("toVersion", "00.00.00") or "00.00.00"
+            to_version = self.current_file.get(
+                "toVersion", "00.00.00") or "00.00.00"
         elif self.file_path.endswith(".yml"):
             from_version = (
                 self.current_file.get("fromversion", "00.00.00") or "00.00.00"
             )
-            to_version = self.current_file.get("toversion", "00.00.00") or "00.00.00"
+            to_version = self.current_file.get(
+                "toversion", "00.00.00") or "00.00.00"
         else:
             raise ValueError(f"{self.file_path} is not json or yml type")
 
@@ -443,7 +447,8 @@ class ContentEntityValidator(BaseValidator):
                 error_message, error_code = Errors.incorrect_from_to_version_format(
                     name
                 )
-                self.handle_error(error_message, error_code, file_path=self.file_path)
+                self.handle_error(error_message, error_code,
+                                  file_path=self.file_path)
                 return False
         return True
 
@@ -467,7 +472,8 @@ class ContentEntityValidator(BaseValidator):
 
         if version.parse(to_version) < version.parse(from_version):
             error_message, error_code = Errors.mismatching_from_to_versions()
-            self.handle_error(error_message, error_code, file_path=self.file_path)
+            self.handle_error(error_message, error_code,
+                              file_path=self.file_path)
             return False
         return True
 
@@ -487,7 +493,8 @@ class ContentEntityValidator(BaseValidator):
             return True
 
         if LooseVersion(
-            self.current_file.get(from_version_field, DEFAULT_CONTENT_ITEM_FROM_VERSION)
+            self.current_file.get(from_version_field,
+                                  DEFAULT_CONTENT_ITEM_FROM_VERSION)
         ) < LooseVersion(self.oldest_supported_version):
             error_message, error_code = Errors.no_minimal_fromversion_in_file(
                 from_version_field, self.oldest_supported_version
@@ -513,7 +520,8 @@ class ContentEntityValidator(BaseValidator):
             return True
 
         if LooseVersion(
-            self.current_file.get("fromVersion", DEFAULT_CONTENT_ITEM_FROM_VERSION)
+            self.current_file.get(
+                "fromVersion", DEFAULT_CONTENT_ITEM_FROM_VERSION)
         ) < LooseVersion(GENERIC_OBJECTS_OLDEST_SUPPORTED_VERSION):
             error_message, error_code = Errors.no_minimal_fromversion_in_file(
                 "fromVersion", GENERIC_OBJECTS_OLDEST_SUPPORTED_VERSION
@@ -605,7 +613,8 @@ class ContentEntityValidator(BaseValidator):
 
         file_path = os.path.normpath(self.file_path)
         path_split = file_path.split(os.sep)
-        file_type = find_type(self.file_path, _dict=self.current_file, file_type="yml")
+        file_type = find_type(
+            self.file_path, _dict=self.current_file, file_type="yml")
         if file_type == FileType.PLAYBOOK:
             to_replace = os.path.splitext(path_split[-1])[-1]
             readme_path = file_path.replace(to_replace, "_README.md")
@@ -627,7 +636,8 @@ class ContentEntityValidator(BaseValidator):
             error_message,
             error_code,
             file_path=self.file_path,
-            suggested_fix=Errors.suggest_fix(self.file_path, cmd="generate-docs"),
+            suggested_fix=Errors.suggest_fix(
+                self.file_path, cmd="generate-docs"),
         ):
             return False
 

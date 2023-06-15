@@ -66,11 +66,11 @@ class DockerImageValidator(BaseValidator):
         self.is_deprecated_image = self.is_docker_image_deprecated(
             self.docker_image_name
         )
+        self.is_pack_xsoar_supported = get_pack_metadata(yml_file_path).get("support", "xsoar").lower() == "xsoar"
 
         self.docker_image_latest_tag = self.get_docker_image_latest_tag(
             self.docker_image_name, self.yml_docker_image, self.is_iron_bank
         )
-        self.is_pack_xsoar_supported = get_pack_metadata(yml_file_path).get("support", "xsoar").lower() == "xsoar"
 
     @error_codes("DO108,DO107,DO109,DO110")
     def is_docker_image_valid(self):

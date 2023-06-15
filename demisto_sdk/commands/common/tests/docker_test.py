@@ -82,6 +82,7 @@ def mock_docker_image_validator():
         docker_image_validator.specific_validations = None
         docker_image_validator.predefined_deprecated_ignored_errors = {}
         docker_image_validator.predefined_by_support_ignored_errors = {}
+        docker_image_validator.is_pack_xsoar_supported=True
         return docker_image_validator
 
 
@@ -492,9 +493,11 @@ class TestDockerImage:
             is_modified_file=False,
             is_integration=True,
         )
+        integration_docker_validator.is_pack_xsoar_supported = True
         script_docker_validator = DockerImageValidator(
             yml_file_path=script.yml.path, is_modified_file=False, is_integration=False
         )
+        script_docker_validator.is_pack_xsoar_supported = True
         error_mocker = mocker.patch(
             "demisto_sdk.commands.common.errors.Errors.native_image_is_in_dockerimage_field",
             return_value=("test", "DO110"),

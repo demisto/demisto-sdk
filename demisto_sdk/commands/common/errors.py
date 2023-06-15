@@ -4592,12 +4592,12 @@ class Errors:
     @error_code_decorator
     def deprecated_items_usage(
         deprecated_item: str,
-        using_deprecated_items: list,
+        using_deprecated_item: str,
         deprecated_item_type: str,
     ):
         return (
-            f"The {deprecated_item_type} '{deprecated_item}' is deprecated but used in the following content items: "
-            f"{', '.join(using_deprecated_items)}."
+            f"The {deprecated_item_type} '{deprecated_item}' is deprecated but used in the following content item: "
+            f"{using_deprecated_item}."
         )
 
     @staticmethod

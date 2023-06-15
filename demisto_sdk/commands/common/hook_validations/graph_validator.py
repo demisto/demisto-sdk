@@ -247,13 +247,14 @@ class GraphValidator(BaseValidator):
         for item in items:
             deprecated_command = item.get("deprecated_command")
             deprecated_content = item.get("deprecated_content")
-            error_message, error_code = Errors.deprecated_items_usage(
-                deprecated_command or deprecated_content,
-                item.get("object_using_deprecated"),
-                item.get("deprecated_content_type"),
-            )
+
             items_using_deprecated = item.get("object_using_deprecated") or []
             for item_using_deprecated in items_using_deprecated:
+                error_message, error_code = Errors.deprecated_items_usage(
+                    deprecated_command or deprecated_content,
+                    item_using_deprecated,
+                    item.get("deprecated_content_type"),
+                )
                 if self.handle_error(
                     error_message,
                     error_code,

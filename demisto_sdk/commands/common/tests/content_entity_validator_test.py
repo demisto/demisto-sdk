@@ -481,98 +481,98 @@ def mock_handle_error(error_message, error_code, file_path):
             {"id": "modeling-rule", "name": "Modeling-Rule"},
             "\nThe file name should end with 'ModelingRules.yml'\nThe rule id should end with 'ModelingRule'\nThe rule name should end with 'Modeling Rule'",
             False,
-        ),
+        ),  # Wrong modeling rule file_name, id, and name.
         (
             "MyRule",
             MODELING_RULE,
             {"id": "ModelingRule", "name": "Modeling Rule"},
             "\nThe file name should end with 'ModelingRules.yml'",
             False,
-        ),
+        ),  # Wrong modeling rule file_name.
         (
             "MyRuleModelingRules",
             MODELING_RULE,
             {"id": "modeling-rule", "name": "Modeling Rule"},
             "\nThe rule id should end with 'ModelingRule'",
             False,
-        ),
+        ),  # Wrong modeling rule id.
         (
             "MyRuleModelingRules",
             MODELING_RULE,
             {"id": "ModelingRule", "name": "Modeling-Rule"},
             "\nThe rule name should end with 'Modeling Rule'",
             False,
-        ),
+        ),  # Wrong modeling rule name.
         (
             "MyRuleModelingRules",
             MODELING_RULE,
             {"id": "ModelingRule", "name": "Modeling Rule"},
             "",
             True,
-        ),
+        ),  # Correct modeling rule file_name id and name.
         (
             "MyRuleModelingRules_1_3",
             MODELING_RULE,
             {"id": "ModelingRule", "name": "Modeling Rule"},
             "",
             True,
-        ),
+        ),  # Correct modeling rule file_name (with version) id and name.
         (
             "MyRuleModelingRules_1_!@#",
             MODELING_RULE,
             {"id": "ModelingRule", "name": "Modeling Rule"},
             "\nThe file name should end with 'ModelingRules.yml'",
             False,
-        ),
+        ),  # Wrong modeling rule file_name (wrong version).
         (
             "MyRule",
             PARSING_RULE,
             {"id": "parsing-rule", "name": "Parsing-Rule"},
             "\nThe file name should end with 'ParsingRules.yml'\nThe rule id should end with 'ParsingRule'\nThe rule name should end with 'Parsing Rule'",
             False,
-        ),
+        ),  # Wrong parsing rule file_name id and name.
         (
             "MyRule",
             PARSING_RULE,
             {"id": "ParsingRule", "name": "Parsing Rule"},
             "\nThe file name should end with 'ParsingRules.yml'",
             False,
-        ),
+        ),  # Wrong parsing rule file_name.
         (
             "MyRuleParsingRules",
             PARSING_RULE,
             {"id": "parsing-rule", "name": "Parsing Rule"},
             "\nThe rule id should end with 'ParsingRule'",
             False,
-        ),
+        ),  # Wrong parsing rule id.
         (
             "MyRuleParsingRules",
             PARSING_RULE,
             {"id": "ParsingRule", "name": "Parsing-Rule"},
             "\nThe rule name should end with 'Parsing Rule'",
             False,
-        ),
+        ),  # Wrong parsing rule name.
         (
             "MyRuleParsingRules",
             PARSING_RULE,
             {"id": "ParsingRule", "name": "Parsing Rule"},
             "",
             True,
-        ),
+        ),  # Correct parsing rule file_name id and name.
         (
             "MyRuleParsingRules_1_3",
             PARSING_RULE,
             {"id": "ParsingRule", "name": "Parsing Rule"},
             "",
             True,
-        ),
+        ),  # Correct parsing rule file_name (with version) id and name.
         (
             "MyRuleParsingRules_1_!@#",
             PARSING_RULE,
             {"id": "ParsingRule", "name": "Parsing Rule"},
             "\nThe file name should end with 'ParsingRules.yml'",
             False,
-        ),
+        ),  # Wrong parsing rule file_name (wrong version).
     ],
 )
 def test_is_valid_rule_suffix(
@@ -580,20 +580,6 @@ def test_is_valid_rule_suffix(
 ):
     """
     Given: A modeling/parsing rule with valid/invalid file_name/id/name
-        case 1: Wrong modeling rule file_name id and name.
-        case 2: Wrong modeling rule file_name.
-        case 3: Wrong modeling rule id.
-        case 4: Wrong modeling rule name.
-        case 5: Correct modeling rule file_name id and name.
-        case 6: Correct modeling rule file_name (with version) id and name.
-        case 7: Wrong modeling rule file_name (wrong version).
-        case 8: Wrong parsing rule file_name id and name.
-        case 9: Wrong parsing rule file_name.
-        case 10: Wrong parsing rule id.
-        case 11: Wrong parsing rule name.
-        case 12: Correct parsing rule file_name id and name.
-        case 13: Correct parsing rule file_name (with version) id and name.
-        case 14: Wrong parsing rule file_name (wrong version).
     When: running is_valid_rule_suffix_name.
     Then: Validate that the modeling/parsing rule is valid/invalid and the message (in case of invalid) is as expected.
     """

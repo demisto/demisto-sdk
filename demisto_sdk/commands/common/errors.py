@@ -3794,7 +3794,7 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def marketplaces_removed(removed):
+    def marketplaces_removed(removed: str):
         return (
             "Removing values from the list of supported marketplaces is not allowed. \n"
             f"Please undo this action and add back - {removed} or request a force merge."

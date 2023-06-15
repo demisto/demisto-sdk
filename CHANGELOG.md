@@ -1,8 +1,10 @@
 # Changelog
 ## Unreleased
+* Added new **validate** checks, preventing unwanted changes of the marketplaces (BC108,BC109), toversion (BC107)  and fromversion (BC106) fields.
 * Fixed an issue where lock integartions failed on FileNotFound.(PANW-internal only).
 * Removed the `timezone_offset` argument in the *modeling-rules test* command.
 * Fixed an issue where **lint** failed when importing functions from CommonServerUserPython.
+* The **format** command now will sync hidden parameters with master branch.
 * Fixed an issue where **lint** falsely warned of using `demisto.results`.
 
 ## 1.16.0

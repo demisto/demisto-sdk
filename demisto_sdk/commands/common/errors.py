@@ -260,6 +260,21 @@ ERROR_CODE = {
         "ui_applicable": False,
         "related_field": "fromversion",
     },
+    "to_version_modified": {
+        "code": "BC107",
+        "ui_applicable": False,
+        "related_field": "toversion",
+    },
+    "marketplaces_removed": {
+        "code": "BC108",
+        "ui_applicable": False,
+        "related_field": "marketplaces",
+    },
+    "marketplaces_added": {
+        "code": "BC109",
+        "ui_applicable": False,
+        "related_field": "marketplaces",
+    },
     # CJ - conf.json
     "description_missing_from_conf_json": {
         "code": "CJ100",
@@ -3765,8 +3780,32 @@ class Errors:
     @error_code_decorator
     def from_version_modified():
         return (
-            "You've added fromversion to an existing "
-            "file in the system, this is not allowed, please undo."
+            "Adding or changing the maximal supported version field (toVersion/toversion) is not allowed. \n"
+            "Please undo, or request a force merge."
+        )
+
+    @staticmethod
+    @error_code_decorator
+    def to_version_modified():
+        return (
+            "Adding or changing the maximal supported version field (toVersion/toversion) is not allowed. \n"
+            "Please undo, or request a force merge."
+        )
+
+    @staticmethod
+    @error_code_decorator
+    def marketplaces_removed(removed: str):
+        return (
+            "Removing values from the list of supported marketplaces is not allowed. \n"
+            f"Please undo this action and add back - {removed} or request a force merge."
+        )
+
+    @staticmethod
+    @error_code_decorator
+    def marketplaces_added():
+        return (
+            "Adding a marketplaces field to existing content is not allowed. \n"
+            "Undo this action or request a force merge."
         )
 
     @staticmethod

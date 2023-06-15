@@ -2,11 +2,75 @@ import logging
 import logging.config
 import os.path
 import sys
+import threading
+from functools import wraps
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
 
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.tools import string_to_bool
+
+_countLock = threading.Lock()
+_count_calls_error: int = 0
+_count_calls_critical: int = 0
+_count_calls_exception: int = 0
+
+# Save the old logging functions
+__logging_error = logging.Logger.error
+__logging_critical = logging.Logger.critical
+__logging_exception = logging.Logger.exception
+
+
+@wraps(logging.error)
+def error(self, msg, *args, **kwargs):
+    global _countLock
+    global _count_calls_error
+    __logging_error(self, msg, *args, **kwargs)
+    _countLock.acquire()
+    _count_calls_error += 1
+    _countLock.release()
+
+
+@wraps(logging.critical)
+def critical(self, msg, *args, **kwargs):
+    global _countLock
+    global _count_calls_critical
+    __logging_critical(self, msg, *args, **kwargs)
+    _countLock.acquire()
+    _count_calls_critical += 1
+    _countLock.release()
+
+
+@wraps(logging.exception)
+def exception(self, msg, *args, exc_info=True, **kwargs):
+    global _countLock
+    global _count_calls_exception
+    __logging_exception(self, msg, *args, exc_info=exc_info, **kwargs)
+    _countLock.acquire()
+    _count_calls_exception += 1
+    _countLock.release()
+
+
+# Replace with the methods that count the number of calls
+logging.Logger.error = error  # type: ignore
+logging.Logger.critical = critical  # type: ignore
+logging.Logger.exception = exception  # type: ignore
+
+
+def count_error():
+    global _count_calls_error
+    return _count_calls_error
+
+
+def count_critical():
+    global _count_calls_critical
+    return _count_calls_critical
+
+
+def count_exception():
+    global _count_calls_exception
+    return _count_calls_exception
+
 
 logger: logging.Logger = logging.getLogger("demisto-sdk")
 

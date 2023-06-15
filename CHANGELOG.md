@@ -5,7 +5,7 @@
 * Removed the `timezone_offset` argument in the *modeling-rules test* command.
 * Fixed an issue where **lint** failed when importing functions from CommonServerUserPython.
 * The **format** command now will sync hidden parameters with master branch.
-* Fixed an issue where an error on the BA106 validation would only print an error, but wouldn't return an error code.
+* Fixed a **validate** issue where files failing on BA106 (newly introduced) did not result in a validate failure.
 
 ## 1.16.0
 * Added a check to **is_docker_image_latest_tag** to only fail the validation on non-latest image tag when the current tag is older than 3 days.

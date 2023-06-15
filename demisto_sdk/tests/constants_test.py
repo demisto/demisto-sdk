@@ -9,6 +9,9 @@ INVALID_PLAYBOOK_PATH = (
 VALID_TEST_PLAYBOOK_PATH = (
     f"{GIT_ROOT}/demisto_sdk/tests/test_files/Playbooks.playbook-test.yml"
 )
+VALID_TEST_PLAYBOOK_MARKETPLACES_PATH = (
+    f"{GIT_ROOT}/demisto_sdk/tests/test_files/Playbooks.playbook-test-marketplaces.yml"
+)
 VALID_BETA_PLAYBOOK_PATH = (
     f"{GIT_ROOT}/demisto_sdk/tests/test_files/beta-playbook-valid.yml"
 )

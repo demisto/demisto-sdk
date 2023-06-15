@@ -1,4 +1,3 @@
-import logging
 import os
 import re
 import shutil
@@ -7,8 +6,11 @@ import traceback
 import zipfile
 from collections import defaultdict
 from datetime import datetime
+from pathlib import Path
 from string import punctuation
 from typing import Dict, List, Optional, Union
+
+from packaging.version import Version
 
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import (
@@ -26,14 +28,20 @@ from demisto_sdk.commands.common.constants import (
     XSOAR_SUPPORT_URL,
     FileType,
 )
+from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.handlers import JSON_Handler
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     capital_case,
     find_type,
     get_child_directories,
     get_child_files,
-    get_content_path,
     get_display_name,
+    get_pack_metadata,
+)
+from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
+from demisto_sdk.commands.content_graph.objects.integration_script import (
+    IntegrationScript,
 )
 from demisto_sdk.commands.format.format_module import format_manager
 from demisto_sdk.commands.generate_docs.generate_integration_doc import (
@@ -48,9 +56,28 @@ from demisto_sdk.commands.update_release_notes.update_rn_manager import (
     UpdateReleaseNotesManager,
 )
 
-logger = logging.getLogger("demisto-sdk")
-
 json = JSON_Handler()
+
+
+def get_previous_nonempty_line(lines: List[str], index: int):
+    """
+    Given a list of lines and a certain index, returns the previous line of the given line while ignoring newlines.
+    Args:
+        index: the current lines index.
+        lines: the lines.
+    """
+    j = 1
+    previous_line = ""
+    if lines[index] == "\n":
+        return previous_line
+
+    while index - j > 0:
+        previous_line = lines[index - j]
+        if previous_line != "\n":
+            return previous_line
+        j += 1
+
+    return previous_line
 
 
 class ContributionConverter:
@@ -111,7 +138,7 @@ class ContributionConverter:
                 updating an existing pack and the pack's directory is not equivalent to the value returned from
                 running `self.format_pack_dir_name(name)`
             base_dir (Union[str], optional): Used to explicitly pass the path to the top-level directory of the
-                local content repo. If no value is passed, the `get_content_path()` function is used to determine
+                local content repo. If no value is passed, the `CONTENT_PATH` variable is used to determine
                 the path. Defaults to None.
 
         """
@@ -125,7 +152,9 @@ class ContributionConverter:
         self.gh_user = gh_user
         self.contrib_conversion_errs: List[str] = []
         self.create_new = create_new
-        base_dir = base_dir or get_content_path()  # type: ignore
+        self.contribution_items_version: Dict[str, Dict[str, str]] = {}
+        self.contribution_items_version_note = ""
+        base_dir = base_dir or CONTENT_PATH  # type: ignore
         self.packs_dir_path = os.path.join(base_dir, "Packs")  # type: ignore
         if not os.path.isdir(self.packs_dir_path):
             os.makedirs(self.packs_dir_path)
@@ -301,7 +330,7 @@ class ContributionConverter:
             from_version=from_version,
             no_validate=True,
             update_docker=True,
-            assume_yes=True,
+            assume_answer=True,
             include_untracked=True,
             interactive=False,
         )
@@ -434,6 +463,8 @@ class ContributionConverter:
                         source_mapping=files_to_source_mapping,
                     )
 
+            self.create_contribution_items_version_note()
+
             if self.create_new:
                 self.generate_readmes_for_new_content_pack(is_contribution=True)
 
@@ -452,6 +483,66 @@ class ContributionConverter:
                 logger.info(
                     textwrap.indent("\n".join(self.contrib_conversion_errs), "\t")
                 )
+
+    @staticmethod
+    def extract_pack_version(script: Optional[str]) -> str:
+        """
+        extract the pack version from script if exists, returns 0.0.0 if version was not found.
+        """
+        if script:
+            try:
+                if pack_version_reg := re.search(
+                    r"(?:###|//) pack version: (\d+\.\d+\.\d+)", script
+                ):
+                    return pack_version_reg.groups()[0]
+            except Exception as e:
+                logger.warning(f"Failed extracting pack version from script: {e}")
+        return "0.0.0"
+
+    def create_contribution_items_version_note(self):
+        """
+        creates note that can be paste on the created PR containing the
+        contributed item versions.
+        """
+        if self.contribution_items_version:
+            self.contribution_items_version_note = "> **Warning**\n"
+            self.contribution_items_version_note += (
+                "> The changes in the contributed files were not made on the "
+                "most updated pack versions\n"
+            )
+            self.contribution_items_version_note += "> | **Item Name** | **Contribution Pack Version** | **Latest Pack Version**\n"
+            self.contribution_items_version_note += (
+                "> | --------- | ------------------------- | -------------------\n"
+            )
+
+            for item_name, item_versions in self.contribution_items_version.items():
+                self.contribution_items_version_note += (
+                    f"> | {item_name} | {item_versions.get('contribution_version', '')} | "
+                    f"{item_versions.get('latest_version', '')}\n"
+                )
+
+            self.contribution_items_version_note += (
+                ">\n"
+                "> **For the Reviewer:**\n"
+                "> 1. Compare the code of this PR with the latest version of the pack. Make sure you understand"
+                " the changes the contributor intended to contribute, and **solve the conflicts accordingly**.\n"
+                "> 2. In case improvements are needed, instruct the contributor to edit the code through the "
+                "**GitHub Codespaces** and **Not through the XSOAR UI**.\n"
+            )
+
+            self.contribution_items_version_note += (
+                f">\n"
+                f"> **For the Contributor:**\n @{self.gh_user}\n"
+                f"> In case you are requested by your reviewer to improve the code or to make changes, submit "
+                f"them through the **GitHub Codespaces** and **Not through the XSOAR UI**.\n"
+                f">\n"
+                f"> **To use the GitHub Codespaces, do the following:**\n"
+                f"> 1. Click the **'Code'** button in the right upper corner of this PR.\n"
+                f"> 2. Click **'Create codespace on Transformers'**.\n"
+                f"> 3. Click **'Authorize and continue'**.\n"
+                f"> 4. Wait until your Codespace environment is generated. When it is, you can edit your code.\n"
+                f"> 5. Commit and push your changes to the head branch of the PR.\n"
+            )
 
     def content_item_to_package_format(
         self,
@@ -518,6 +609,28 @@ class ContributionConverter:
                             input=content_item_file_path,
                             file_type=file_type,
                             output=content_item_dir,
+                        )
+                    try:
+                        content_item = BaseContent.from_path(
+                            Path(content_item_file_path)
+                        )
+                        if isinstance(content_item, IntegrationScript):
+                            script = content_item.code
+                            contributor_item_version = self.extract_pack_version(script)
+                            current_pack_version = get_pack_metadata(
+                                file_path=content_item_file_path
+                            ).get("currentVersion", "0.0.0")
+                            if contributor_item_version != "0.0.0" and Version(
+                                current_pack_version
+                            ) > Version(contributor_item_version):
+                                self.contribution_items_version[content_item.name] = {
+                                    "contribution_version": contributor_item_version,
+                                    "latest_version": current_pack_version,
+                                }
+
+                    except Exception as e:
+                        logger.warning(
+                            f"Could not parse {content_item_file_path} contribution item version: {e}.",
                         )
                     extractor.extract_to_package_format(
                         executed_from_contrib_converter=True
@@ -693,7 +806,7 @@ class ContributionConverter:
         with open(rn_path, "r+") as rn_file:
             lines = rn_file.readlines()
             for index in range(len(lines)):
-                previous_line = lines[index - 1] if index > 0 else ""
+                previous_line = get_previous_nonempty_line(lines, index)
                 if template_text in lines[index] or previous_line.startswith(
                     new_entity_identifier
                 ):

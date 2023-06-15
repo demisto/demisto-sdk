@@ -1,4 +1,4 @@
-from typing import List, Tuple
+from typing import Dict, List, Tuple
 
 from neo4j import Transaction, graph
 
@@ -7,6 +7,7 @@ from demisto_sdk.commands.common.constants import (
     GENERAL_DEFAULT_FROMVERSION,
     MarketplaceVersions,
 )
+from demisto_sdk.commands.common.tools import replace_alert_to_incident
 from demisto_sdk.commands.content_graph.common import (
     ContentType,
     Neo4jRelationshipResult,
@@ -20,14 +21,36 @@ from demisto_sdk.commands.content_graph.interface.neo4j.queries.common import (
 
 
 def validate_unknown_content(
-    tx: Transaction, file_paths: List[str], raises_error: bool
+    tx: Transaction,
+    file_paths: List[str],
+    raises_error: bool,
+    include_optional: bool = False,
 ):
-    query = f"""// Returns USES relationships to content items not in the repository
-MATCH (content_item_from{{deprecated: false}})-[r:{RelationshipType.USES}]->(n{{not_in_repository: true}})
-WHERE{' NOT' if raises_error else ''} (content_item_from.is_test OR NOT r.mandatorily)
-{f'AND content_item_from.path in {file_paths}' if file_paths else ''}
-RETURN content_item_from, collect(r) as relationships, collect(n) as nodes_to
-"""
+    """Query graph to return all ids used in the provided files that are missing from the repo.
+
+    Args:
+        tx: The Transaction to contact the graph with.
+        file_paths: The file paths to check
+        raises_error: If True with include_optional=False, will only return the mandatory dependencies.
+                      If False with include_optional=False, will only return the non-mandatory dependencies.
+        include_optional: If True, will return both mandatory and non-mandatory dependencies.
+
+    Return:
+        All content ids used in the provided file paths that are missing from the repo.
+    """
+    if include_optional:
+        query = f"""// Returns USES relationships to content items not in the repository
+        MATCH (content_item_from{{deprecated: false}})-[r:{RelationshipType.USES}]->(n{{not_in_repository: true}})
+        WHERE NOT (content_item_from.is_test) {f'AND content_item_from.path in {file_paths}' if file_paths else ''}
+        RETURN content_item_from, collect(r) as relationships, collect(n) as nodes_to
+        """
+    else:
+        query = f"""// Returns USES relationships to content items not in the repository
+        MATCH (content_item_from{{deprecated: false}})-[r:{RelationshipType.USES}]->(n{{not_in_repository: true}})
+        WHERE{' NOT' if raises_error else ''} (content_item_from.is_test OR NOT r.mandatorily)
+        {f'AND content_item_from.path in {file_paths}' if file_paths else ''}
+        RETURN content_item_from, collect(r) as relationships, collect(n) as nodes_to
+        """
     return {
         int(item.get("content_item_from").id): Neo4jRelationshipResult(
             node_from=item.get("content_item_from"),
@@ -147,6 +170,39 @@ RETURN a.object_id AS a_object_id, collect(b.object_id) AS b_object_ids
         (item.get("a_object_id"), item.get("b_object_ids"))
         for item in run_query(tx, query)
     ]
+
+
+def validate_multiple_script_with_same_name(
+    tx: Transaction, file_paths: List[str]
+) -> Dict[str, str]:
+    query = f"""// Returns all scripts that have the word 'alert' in their name
+MATCH (a:{ContentType.SCRIPT})
+WHERE toLower(a.name) contains "alert"
+AND 'marketplacev2' IN a.marketplaces
+"""
+    if file_paths:
+        query += f"AND a.path in {file_paths}"
+    query += """
+    RETURN a.name AS a_name, a.path AS a_path
+    """
+
+    content_item_names_and_paths = {
+        # replace the name of the script.
+        replace_alert_to_incident(item["a_name"]): item["a_path"]
+        for item in run_query(tx, query)
+    }
+
+    query = f"""// Returns script names if they match the replaced name
+MATCH (b:{ContentType.SCRIPT})
+WHERE b.name in {list(content_item_names_and_paths.keys())}
+AND NOT 'script-name-incident-to-alert' IN b.skip_prepare
+AND '{MarketplaceVersions.MarketplaceV2}' IN b.marketplaces
+RETURN b.name AS b_name
+"""
+    return {
+        item["b_name"]: content_item_names_and_paths[item["b_name"]]
+        for item in run_query(tx, query)
+    }
 
 
 def validate_core_packs_dependencies(

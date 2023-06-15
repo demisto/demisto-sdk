@@ -1,7 +1,6 @@
 import copy
 import glob
 import itertools
-import logging
 import os
 import re
 import time
@@ -58,6 +57,7 @@ from demisto_sdk.commands.common.content_constant_paths import (
 )
 from demisto_sdk.commands.common.cpu_count import cpu_count
 from demisto_sdk.commands.common.handlers import JSON_Handler
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     find_type,
     get_current_repo,
@@ -71,8 +71,6 @@ from demisto_sdk.commands.common.tools import (
 from demisto_sdk.commands.prepare_content.integration_script_unifier import (
     IntegrationScriptUnifier,
 )
-
-logger = logging.getLogger("demisto-sdk")
 
 json = JSON_Handler()
 
@@ -327,7 +325,9 @@ def should_skip_item_by_mp(
     )
     if marketplace not in item_marketplaces:
         if print_logs:
-            print(f"Skipping {file_path} due to mismatch with the given marketplace")
+            logger.info(
+                f"Skipping {file_path} due to mismatch with the given marketplace"
+            )
 
         if (
             "pack_metadata" not in file_path
@@ -682,10 +682,12 @@ def get_fields_by_script_argument(task):
                 custom_field_value = list(field_value.values())[0]
                 if isinstance(custom_field_value, str):
                     custom_fields_list = json.loads(custom_field_value)
+                    if not isinstance(custom_fields_list, list):
+                        custom_fields_list = [custom_fields_list]
                     for custom_field in custom_fields_list:
-                        field_name = list(custom_field.keys())[0]
-                        if field_name not in BUILT_IN_FIELDS:
-                            dependent_incident_fields.add(field_name)
+                        for field_name in custom_field.keys():
+                            if field_name not in BUILT_IN_FIELDS:
+                                dependent_incident_fields.add(field_name)
     return dependent_incident_fields
 
 
@@ -1328,7 +1330,7 @@ def create_common_entity_data(
 def get_pack_metadata_data(file_path, print_logs: bool, marketplace: str = ""):
     try:
         if print_logs:
-            print(f"adding {file_path} to id_set")
+            logger.info(f"adding {file_path} to id_set")
 
         if should_skip_item_by_mp(file_path, marketplace, {}, print_logs=print_logs):
             return {}
@@ -1353,7 +1355,7 @@ def get_pack_metadata_data(file_path, print_logs: bool, marketplace: str = ""):
         pack_id = get_pack_name(file_path)
         return {pack_id: pack_data}
 
-    except Exception as exp:  # noqa
+    except Exception as exp:
         logger.info(f"[red]Failed to process {file_path}, Error: {str(exp)}[/red]")
         raise
 
@@ -1381,7 +1383,7 @@ def get_mapper_data(path: str, packs: Dict[str, Dict] = None):
     mapping = json_data.get("mapping", {})
     for key, value in mapping.items():
         incidents_types.add(key)
-        internal_mapping = value.get("internalMapping")  # get the mapping
+        internal_mapping = value.get("internalMapping") or {}  # get the mapping
         if type_ == "mapping-outgoing":
             incident_fields_set = set()
             # incident fields are in the simple key or in complex.root key of each key
@@ -1769,7 +1771,7 @@ def process_integration(
                 FileType.BETA_INTEGRATION,
             ):
                 if print_logs:
-                    print(f"adding {file_path} to id_set")
+                    logger.info(f"adding {file_path} to id_set")
                 res.append(get_integration_data(file_path, packs=packs))
         else:
             # package integration
@@ -1786,9 +1788,9 @@ def process_integration(
             if os.path.isfile(file_path):
                 # locally, might have leftover dirs without committed files
                 if print_logs:
-                    print(f"adding {file_path} to id_set")
+                    logger.info(f"adding {file_path} to id_set")
                 res.append(get_integration_data(file_path, packs=packs))
-    except Exception as exp:  # noqa
+    except Exception as exp:
         logger.info(f"[red]failed to process {file_path}, Error: {str(exp)}[/red]")
         raise
 
@@ -1824,7 +1826,7 @@ def process_script(
                 return [], excluded_items_from_id_set
             if find_type(file_path) == FileType.SCRIPT:
                 if print_logs:
-                    print(f"adding {file_path} to id_set")
+                    logger.info(f"adding {file_path} to id_set")
                 res.append(get_script_data(file_path, packs=packs))
         else:
             # package script
@@ -1843,9 +1845,9 @@ def process_script(
             ):
                 return [], excluded_items_from_id_set
             if print_logs:
-                print(f"adding {file_path} to id_set")
+                logger.info(f"adding {file_path} to id_set")
             res.append(get_script_data(yml_path, script_code=code, packs=packs))
-    except Exception as exp:  # noqa
+    except Exception as exp:
         logger.info(f"[red]failed to process {file_path}, Error: {str(exp)}[/red]")
         raise
 
@@ -1884,9 +1886,9 @@ def process_incident_fields(
             return [], excluded_items_from_id_set
         if find_type(file_path) == FileType.INCIDENT_FIELD:
             if print_logs:
-                print(f"adding {file_path} to id_set")
+                logger.info(f"adding {file_path} to id_set")
             res.append(get_incident_field_data(file_path, incident_types, packs=packs))
-    except Exception as exp:  # noqa
+    except Exception as exp:
         logger.info(f"[red]failed to process {file_path}, Error: {str(exp)}[/red]")
         raise
     return res, excluded_items_from_id_set
@@ -1923,7 +1925,7 @@ def process_indicator_types(
             print_logs=print_logs,
         ):
             if print_logs:
-                print(
+                logger.info(
                     f"Skipping {file_path} due to mismatch with the marketplace this id set is generated for."
                 )
             return [], excluded_items_from_id_set
@@ -1933,11 +1935,11 @@ def process_indicator_types(
             and find_type(file_path) == FileType.REPUTATION
         ):
             if print_logs:
-                print(f"adding {file_path} to id_set")
+                logger.info(f"adding {file_path} to id_set")
             res.append(
                 get_indicator_type_data(file_path, all_integrations, packs=packs)
             )
-    except Exception as exp:  # noqa
+    except Exception as exp:
         logger.info(f"[red]failed to process {file_path}, Error: {str(exp)}[/red]")
         raise
 
@@ -1977,15 +1979,15 @@ def process_generic_items(
             return [], excluded_items_from_id_set
         if find_type(file_path) == FileType.GENERIC_FIELD:
             if print_logs:
-                print(f"adding {file_path} to id_set")
+                logger.info(f"adding {file_path} to id_set")
             res.append(
                 get_generic_field_data(file_path, generic_types_list, packs=packs)
             )
         elif find_type(file_path) == FileType.GENERIC_TYPE:
             if print_logs:
-                print(f"adding {file_path} to id_set")
+                logger.info(f"adding {file_path} to id_set")
             res.append(get_generic_type_data(file_path, packs=packs))
-    except Exception as exp:  # noqa
+    except Exception as exp:
         logger.info(f"[red]failed to process {file_path}, Error: {str(exp)}[/red]")
         raise
     return res, excluded_items_from_id_set
@@ -2013,9 +2015,9 @@ def process_jobs(
             return []
         if find_type(file_path) == FileType.JOB:
             if print_logs:
-                print(f"adding {file_path} to id_set")
+                logger.info(f"adding {file_path} to id_set")
             result.append(get_job_data(file_path, packs=packs))
-    except Exception as exp:  # noqa
+    except Exception as exp:
         logger.info(f"[red]failed to process job {file_path}, Error: {str(exp)}[/red]")
         raise
     return result
@@ -2043,9 +2045,9 @@ def process_wizards(
             return []
         if find_type(file_path) == FileType.WIZARD:
             if print_logs:
-                print(f"adding {file_path} to id_set")
+                logger.info(f"adding {file_path} to id_set")
             result.append(get_wizard_data(file_path, packs=packs))
-    except Exception as exp:  # noqa
+    except Exception as exp:
         logger.info(
             f"[red]failed to process wizard {file_path}, Error: {str(exp)}[/red]"
         )
@@ -2083,7 +2085,7 @@ def process_layoutscontainers(
 
         if find_type(file_path) != FileType.LAYOUTS_CONTAINER:
             if print_logs:
-                print(
+                logger.info(
                     f"Recieved an invalid layoutcontainer file: {file_path}, Ignoring."
                 )
             return result, excluded_items_from_id_set
@@ -2091,10 +2093,10 @@ def process_layoutscontainers(
         layout_data = get_layoutscontainer_data(file_path, packs=packs)
 
         if print_logs:
-            print(f"adding {file_path} to id_set")
+            logger.info(f"adding {file_path} to id_set")
         result.append(layout_data)
 
-    except Exception as exp:  # noqa
+    except Exception as exp:
         logger.info(
             f"[red]failed to process layoutcontainer {file_path}, Error: {str(exp)}[/red]"
         )
@@ -2160,7 +2162,7 @@ def process_general_items(
                 ):
                     return [], excluded_items_from_id_set
                 if print_logs:
-                    print(f"adding {file_path} to id_set")
+                    logger.info(f"adding {file_path} to id_set")
                 res.append(data_extraction_func(file_path, packs=packs))
         else:
             package_name = os.path.basename(file_path)
@@ -2177,9 +2179,9 @@ def process_general_items(
                 ):
                     return [], excluded_items_from_id_set
                 if print_logs:
-                    print(f"adding {file_path} to id_set")
+                    logger.info(f"adding {file_path} to id_set")
                 res.append(data_extraction_func(file_path, packs=packs))
-    except Exception as exp:  # noqa
+    except Exception as exp:
         logger.info(f"[red]failed to process {file_path}, Error: {str(exp)}[/red]")
         raise
 
@@ -2205,7 +2207,7 @@ def process_test_playbook_path(
     playbook = None
     try:
         if print_logs:
-            print(f"adding {file_path} to id_set")
+            logger.info(f"adding {file_path} to id_set")
         if should_skip_item_by_mp(
             file_path, marketplace, {}, packs=packs, print_logs=print_logs
         ):
@@ -2214,7 +2216,7 @@ def process_test_playbook_path(
             script = get_script_data(file_path, packs=packs)
         if find_type(file_path) == FileType.TEST_PLAYBOOK:
             playbook = get_playbook_data(file_path, packs=packs)
-    except Exception as exp:  # noqa
+    except Exception as exp:
         logger.info(f"[red]failed to process {file_path}, Error: {str(exp)}[/red]")
         raise
 
@@ -2691,7 +2693,7 @@ def re_create_id_set(  # noqa: C901
                 "To avoid re-generating the id-set on every run, you can set the "
                 "DEMISTO_SDK_ID_SET_REFRESH_INTERVAL env var to any refresh interval (in minutes).[/green]"
             )
-        print("")  # add an empty line for clarity
+        logger.info("")  # add an empty line for clarity
 
     start_time = time.time()
     scripts_list = []

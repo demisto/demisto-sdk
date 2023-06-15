@@ -1,12 +1,10 @@
-import logging
 import os
 from typing import Dict, List
 
 import demisto_client
 
 from demisto_sdk.commands.common.handlers import JSON_Handler
-
-logger = logging.getLogger("demisto-sdk")
+from demisto_sdk.commands.common.logger import logger
 
 json = JSON_Handler()
 
@@ -41,7 +39,6 @@ class XSOARConfigFileUpdater:
         file_path: str = XSOAR_CONFIG_FILE_JSON,
         **kwargs,
     ):
-        logging.disable(logging.CRITICAL)
         self.pack_id = pack_id
         self.pack_data = pack_data
         self.add_marketplace_pack = add_marketplace_pack

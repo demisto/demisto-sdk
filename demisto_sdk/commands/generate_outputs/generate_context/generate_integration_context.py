@@ -1,6 +1,6 @@
-import logging
 from typing import Dict, List, Optional
 
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import get_yaml, write_yml
 from demisto_sdk.commands.generate_docs.common import build_example_dict
 from demisto_sdk.commands.generate_docs.generate_integration_doc import (
@@ -9,8 +9,6 @@ from demisto_sdk.commands.generate_docs.generate_integration_doc import (
 from demisto_sdk.commands.generate_outputs.json_to_outputs.json_to_outputs import (
     parse_json,
 )
-
-logger = logging.getLogger("demisto-sdk")
 
 
 def dict_from_outputs_str(command: str, outputs: str):
@@ -99,7 +97,6 @@ def generate_integration_context(
     input_path: str,
     examples: Optional[str] = None,
     insecure: bool = False,
-    verbose: bool = False,
     output_path: Optional[str] = None,
 ):
     """Generate integration command contexts in-place.
@@ -109,7 +106,6 @@ def generate_integration_context(
         input_path: path to the yaml integration.
         examples: path to the command examples.
         insecure: should use insecure.
-        verbose: verbose (debug mode).
     """
     if not output_path:
         output_path = input_path
@@ -133,10 +129,6 @@ def generate_integration_context(
         logger.info(f"[green]Writing outputs to {output_path}[/green]")
         write_yml(output_path, yml_data)
     except ValueError as ex:
-        if verbose:
-            # TODO Handle this verbose
-            raise
-        else:
-            logger.info(f"[red]Error: {str(ex)}[/red]")
-            return 1
+        logger.info(f"[red]Error: {str(ex)}[/red]")
+        return 1
     return 0

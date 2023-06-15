@@ -3,6 +3,10 @@ mapping:
   trigger_id:
     type: str
     required: true
+  fromVersion:
+    type: str
+  toVersion:
+    type: str
   trigger_name:
     type: str
     required: true

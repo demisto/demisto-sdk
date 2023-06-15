@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import logging
 import os
 from typing import Any, Iterator
 
@@ -25,8 +24,7 @@ from demisto_sdk.commands.common.content.objects.root_objects import (
     Documentation,
 )
 from demisto_sdk.commands.common.content.objects_factory import path_to_pack_object
-
-logger = logging.getLogger("demisto-sdk")
+from demisto_sdk.commands.common.logger import logger
 
 
 class Content:

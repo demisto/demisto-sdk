@@ -616,6 +616,7 @@ class TestIncidentFieldValidation:
         - Ensure validation fails on IF102 - wrong system field value.
         """
         logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+        logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
         mocker.patch.object(tools, "is_external_repository", return_value=True)
         pack = repo.create_pack("PackName")
         incident_field_copy = INCIDENT_FIELD.copy()
@@ -634,9 +635,11 @@ class TestIncidentFieldValidation:
                 for current_str in [
                     f"Validating {incident_field_path} as incidentfield",
                     "IF102",
-                    "The system key must be set to False",
                 ]
             ]
+        )
+        assert str_in_call_args_list(
+            logger_error.call_args_list, "The system key must be set to False"
         )
 
     def test_valid_scripts_in_incident_field(self, mocker, repo):
@@ -721,6 +724,7 @@ class TestIncidentFieldValidation:
         - Ensure validation fails on IF114 - incident field with non existent script id
         """
         logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+        logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
         mocker.patch.object(tools, "is_external_repository", return_value=True)
         pack = repo.create_pack("PackName")
         incident_field_copy = INCIDENT_FIELD.copy()
@@ -763,9 +767,12 @@ class TestIncidentFieldValidation:
                 for current_str in [
                     f"Validating {incident_field_path} as incidentfield",
                     "IF114",
-                    "the following scripts were not found in the id_set.json",
                 ]
             ]
+        )
+        assert str_in_call_args_list(
+            logger_error.call_args_list,
+            "the following scripts were not found in the id_set.json",
         )
         assert result.exit_code == 1
 
@@ -1336,6 +1343,7 @@ class TestIntegrationValidation:
         - Ensure validate fails on IN119 - wrong fromversion in feed integration.
         """
         logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+        logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
         mocker.patch.object(tools, "is_external_repository", return_value=True)
         mocker.patch.object(BaseValidator, "check_file_flags", return_value="")
         mocker.patch.object(
@@ -1361,9 +1369,11 @@ class TestIntegrationValidation:
                 for current_str in [
                     f"{integration.yml.path} as integration",
                     "IN119",
-                    "This is a feed and has wrong fromversion.",
                 ]
             ]
+        )
+        assert str_in_call_args_list(
+            logger_error.call_args_list, "This is a feed and has wrong fromversion."
         )
         assert result.exit_code == 1
 
@@ -1380,6 +1390,7 @@ class TestIntegrationValidation:
         - Ensure failure message on non-latest docker image.
         """
         logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+        logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
         pack_integration_path = join(
             AZURE_FEED_PACK_PATH, "Integrations/FeedAzure/FeedAzure.yml"
         )
@@ -1406,10 +1417,13 @@ class TestIntegrationValidation:
                 str_in_call_args_list(logger_info.call_args_list, current_str)
                 for current_str in [
                     f"Validating {pack_integration_path} as integration",
-                    "The docker image tag is not the latest numeric tag, please update it",
                     "You can check for the most updated version of demisto/python3 here:",
                 ]
             ]
+        )
+        assert str_in_call_args_list(
+            logger_error.call_args_list,
+            "The docker image tag is not the latest numeric tag, please update it",
         )
         assert result.exit_code == 1
 
@@ -1806,6 +1820,7 @@ class TestClassifierValidation:
         - Ensure validate found errors.
         """
         logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+        logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
         mocker.patch.object(tools, "is_external_repository", return_value=True)
         pack = repo.create_pack("PackName")
         new_classifier_copy = NEW_CLASSIFIER.copy()
@@ -1822,9 +1837,12 @@ class TestClassifierValidation:
                 str_in_call_args_list(logger_info.call_args_list, current_str)
                 for current_str in [
                     f"Validating {classifier.path} as classifier",
-                    "fromVersion field in new classifiers needs to be higher or equal to 6.0.0",
                 ]
             ]
+        )
+        assert str_in_call_args_list(
+            logger_error.call_args_list,
+            "fromVersion field in new classifiers needs to be higher or equal to 6.0.0",
         )
         assert result.exit_code == 1
 
@@ -1907,6 +1925,7 @@ class TestClassifierValidation:
         - Ensure validate found errors.
         """
         logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+        logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
         mocker.patch.object(tools, "is_external_repository", return_value=True)
         pack = repo.create_pack("PackName")
         new_classifier_copy = NEW_CLASSIFIER.copy()
@@ -1922,9 +1941,11 @@ class TestClassifierValidation:
                 str_in_call_args_list(logger_info.call_args_list, current_str)
                 for current_str in [
                     f"Validating {classifier.path} as classifier",
-                    'Missing the field "id" in root',
                 ]
             ]
+        )
+        assert str_in_call_args_list(
+            logger_error.call_args_list, 'Missing the field "id" in root'
         )
         assert result.exit_code == 1
 
@@ -1940,6 +1961,7 @@ class TestClassifierValidation:
         - Ensure validate found errors.
         """
         logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+        logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
         mocker.patch.object(tools, "is_external_repository", return_value=True)
         pack = repo.create_pack("PackName")
         new_classifier_copy = NEW_CLASSIFIER.copy()
@@ -1955,9 +1977,12 @@ class TestClassifierValidation:
                 str_in_call_args_list(logger_info.call_args_list, current_str)
                 for current_str in [
                     f"Validating {classifier.path} as classifier",
-                    "Must have fromVersion field in new classifiers",
                 ]
             ]
+        )
+        assert str_in_call_args_list(
+            logger_error.call_args_list,
+            "Must have fromVersion field in new classifiers",
         )
 
     def test_invalid_type_in_new_classifier(self, mocker, repo):
@@ -2034,6 +2059,7 @@ class TestClassifierValidation:
         - Ensure validate found errors.
         """
         logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+        logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
         mocker.patch.object(tools, "is_external_repository", return_value=True)
         pack = repo.create_pack("PackName")
         old_classifier_copy = OLD_CLASSIFIER.copy()
@@ -2049,9 +2075,12 @@ class TestClassifierValidation:
                 str_in_call_args_list(logger_info.call_args_list, current_str)
                 for current_str in [
                     f"Validating {classifier.path} as classifier_5_9_9",
-                    "fromVersion field in old classifiers needs to be lower than 6.0.0",
                 ]
             ]
+        )
+        assert str_in_call_args_list(
+            logger_error.call_args_list,
+            "fromVersion field in old classifiers needs to be lower than 6.0.0",
         )
 
     def test_invalid_to_version_in_old_classifiers(self, mocker, repo):
@@ -2099,6 +2128,7 @@ class TestClassifierValidation:
         - Ensure validate found errors.
         """
         logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+        logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
         mocker.patch.object(tools, "is_external_repository", return_value=True)
         pack = repo.create_pack("PackName")
         old_classifier_copy = OLD_CLASSIFIER.copy()
@@ -2114,9 +2144,11 @@ class TestClassifierValidation:
                 str_in_call_args_list(logger_info.call_args_list, current_str)
                 for current_str in [
                     f"Validating {classifier.path} as classifier_5_9_9",
-                    'Missing the field "id" in root',
                 ]
             ]
+        )
+        assert str_in_call_args_list(
+            logger_error.call_args_list, 'Missing the field "id" in root'
         )
         assert result.exit_code == 1
 
@@ -2132,6 +2164,7 @@ class TestClassifierValidation:
         - Ensure validate found errors.
         """
         logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+        logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
         mocker.patch.object(tools, "is_external_repository", return_value=True)
         pack = repo.create_pack("PackName")
         old_classifier_copy = OLD_CLASSIFIER.copy()
@@ -2147,9 +2180,11 @@ class TestClassifierValidation:
                 str_in_call_args_list(logger_info.call_args_list, current_str)
                 for current_str in [
                     f"Validating {classifier.path} as classifier_5_9_9",
-                    "Must have toVersion field in old classifiers",
                 ]
             ]
+        )
+        assert str_in_call_args_list(
+            logger_error.call_args_list, "Must have toVersion field in old classifiers"
         )
         assert result.exit_code == 1
 
@@ -2201,6 +2236,7 @@ class TestMapperValidation:
         - Ensure validate found errors.
         """
         logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+        logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
         mocker.patch.object(tools, "is_external_repository", return_value=True)
         pack = repo.create_pack("PackName")
         mapper_copy = MAPPER.copy()
@@ -2216,9 +2252,12 @@ class TestMapperValidation:
                 str_in_call_args_list(logger_info.call_args_list, current_str)
                 for current_str in [
                     f"Validating {mapper.path} as mapper",
-                    "fromVersion field in mapper needs to be higher or equal to 6.0.0",
                 ]
             ]
+        )
+        assert str_in_call_args_list(
+            logger_error.call_args_list,
+            "fromVersion field in mapper needs to be higher or equal to 6.0.0",
         )
         assert result.exit_code == 1
 
@@ -2267,6 +2306,7 @@ class TestMapperValidation:
         - Ensure validate found errors.
         """
         logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+        logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
         mocker.patch.object(tools, "is_external_repository", return_value=True)
         pack = repo.create_pack("PackName")
         mapper_copy = MAPPER.copy()
@@ -2282,9 +2322,11 @@ class TestMapperValidation:
                 str_in_call_args_list(logger_info.call_args_list, current_str)
                 for current_str in [
                     f"Validating {mapper.path} as mapper",
-                    'Missing the field "id" in root',
                 ]
             ]
+        )
+        assert str_in_call_args_list(
+            logger_error.call_args_list, 'Missing the field "id" in root'
         )
         assert result.exit_code == 1
 
@@ -2395,6 +2437,7 @@ class TestDashboardValidation:
         - Ensure validate fails on - BA100 wrong version error.
         """
         logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+        logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
         mocker.patch.object(tools, "is_external_repository", return_value=True)
         pack = repo.create_pack("PackName")
         dashboard_copy = DASHBOARD.copy()
@@ -2411,9 +2454,12 @@ class TestDashboardValidation:
                 for current_str in [
                     f"Validating {dashboard.path} as dashboard",
                     "BA100",
-                    "The version for our files should always be -1, please update the file.",
                 ]
             ]
+        )
+        assert str_in_call_args_list(
+            logger_error.call_args_list,
+            "The version for our files should always be -1, please update the file.",
         )
         assert result.exit_code == 1
 
@@ -2462,6 +2508,7 @@ class TestConnectionValidation:
         - Ensure validate fails on missing contextKey1.
         """
         logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+        logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
         mocker.patch.object(tools, "is_external_repository", return_value=True)
         pack = repo.create_pack("PackName")
         connection_copy = CONNECTION.copy()
@@ -2477,9 +2524,11 @@ class TestConnectionValidation:
                 str_in_call_args_list(logger_info.call_args_list, current_str)
                 for current_str in [
                     f"Validating {connection.path} as canvas-context-connections",
-                    'Missing the field "contextKey1"',
                 ]
             ]
+        )
+        assert str_in_call_args_list(
+            logger_error.call_args_list, 'Missing the field "contextKey1"'
         )
         assert result.exit_code == 1
 
@@ -2529,6 +2578,7 @@ class TestIndicatorFieldValidation:
         - Ensure validate fails on IF101 wrong content key value error.
         """
         logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+        logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
         mocker.patch.object(tools, "is_external_repository", return_value=True)
         pack = repo.create_pack("PackName")
         indicator_field_copy = INDICATOR_FIELD.copy()
@@ -2546,9 +2596,11 @@ class TestIndicatorFieldValidation:
                 for current_str in [
                     f"Validating {indicator_field_path} as indicatorfield",
                     "IF101",
-                    "The content key must be set to True.",
                 ]
             ]
+        )
+        assert str_in_call_args_list(
+            logger_error.call_args_list, "The content key must be set to True."
         )
         assert result.exit_code == 1
 
@@ -2903,6 +2955,7 @@ class TestLayoutValidation:
         - Ensure validate fails on - BA100 wrong version error.
         """
         logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+        logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
         mocker.patch.object(tools, "is_external_repository", return_value=True)
         pack = repo.create_pack("PackName")
         layout_copy = LAYOUT.copy()
@@ -2923,9 +2976,12 @@ class TestLayoutValidation:
                 for current_str in [
                     f"Validating {layout.path} as layout",
                     "BA100",
-                    "The version for our files should always be -1, please update the file.",
                 ]
             ]
+        )
+        assert str_in_call_args_list(
+            logger_error.call_args_list,
+            "The version for our files should always be -1, please update the file.",
         )
         assert result.exit_code == 1
 
@@ -3012,6 +3068,7 @@ class TestLayoutValidation:
         - Ensure validate fails on - BA100 wrong version error.
         """
         logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+        logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
         mocker.patch.object(tools, "is_external_repository", return_value=True)
         pack = repo.create_pack("PackName")
         layout_copy = LAYOUTS_CONTAINER.copy()
@@ -3030,9 +3087,12 @@ class TestLayoutValidation:
                 for current_str in [
                     f"Validating {layout.path} as layoutscontainer",
                     "BA100",
-                    "The version for our files should always be -1, please update the file.",
                 ]
             ]
+        )
+        assert str_in_call_args_list(
+            logger_error.call_args_list,
+            "The version for our files should always be -1, please update the file.",
         )
         assert result.exit_code == 1
 
@@ -3231,6 +3291,7 @@ class TestLayoutValidation:
         - Ensure validation fails on LO105 - layouts container non existent script id
         """
         logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+        logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
         mocker.patch.object(tools, "is_external_repository", return_value=True)
         pack = repo.create_pack("PackName")
         layoutscontainer_copy = LAYOUTS_CONTAINER.copy()
@@ -3275,9 +3336,12 @@ class TestLayoutValidation:
                 for current_str in [
                     f"Validating {layoutscontainer.path} as layoutscontainer",
                     "LO105",
-                    "the following scripts were not found in the id_set.json",
                 ]
             ]
+        )
+        assert str_in_call_args_list(
+            logger_error.call_args_list,
+            "the following scripts were not found in the id_set.json",
         )
         assert result.exit_code == 1
 
@@ -3361,6 +3425,7 @@ class TestLayoutValidation:
         - Ensure validation fails on LO106 - layout non existent script id
         """
         logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+        logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
         mocker.patch.object(tools, "is_external_repository", return_value=True)
         pack = repo.create_pack("PackName")
         layout_copy = LAYOUT.copy()
@@ -3401,9 +3466,12 @@ class TestLayoutValidation:
                 for current_str in [
                     f"Validating {layout.path} as layout",
                     "LO106",
-                    "the following scripts were not found in the id_set.json",
                 ]
             ]
+        )
+        assert str_in_call_args_list(
+            logger_error.call_args_list,
+            "the following scripts were not found in the id_set.json",
         )
         assert result.exit_code == 1
 
@@ -4318,6 +4386,7 @@ class TestWidgetValidation:
         - Ensure validate fails on - BA100 wrong version error.
         """
         logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+        logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
         mocker.patch.object(tools, "is_external_repository", return_value=True)
         pack = repo.create_pack("PackName")
         widget_copy = WIDGET.copy()
@@ -4334,9 +4403,12 @@ class TestWidgetValidation:
                 for current_str in [
                     f"Validating {widget.path} as widget",
                     "BA100",
-                    "The version for our files should always be -1, please update the file.",
                 ]
             ]
+        )
+        assert str_in_call_args_list(
+            logger_error.call_args_list,
+            "The version for our files should always be -1, please update the file.",
         )
         assert result.exit_code == 1
 
@@ -4639,7 +4711,7 @@ class TestAllFilesValidator:
                 ],
                 catch_exceptions=False,
             )
-            print(result.stdout)
+            print(result.stdout)  # noqa: T201
 
         assert all(
             [
@@ -4671,6 +4743,7 @@ class TestAllFilesValidator:
         - Ensure validate fails.
         """
         logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+        logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
         mocker.patch.object(tools, "is_external_repository", return_value=False)
         mocker.patch.object(
             PackUniqueFilesValidator, "are_valid_files", return_value=""
@@ -4727,12 +4800,14 @@ class TestAllFilesValidator:
                     f"Validating {script.yml.rel_path} as script",
                     "Validating pack author image",
                     "IF101",
-                    "The content key must be set to True.",
                     "SC100",
                     "The name of this v2 script is incorrect",
                     "RM111",
                 ]
             ]
+        )
+        assert str_in_call_args_list(
+            logger_error.call_args_list, "The content key must be set to True."
         )
         assert result.exit_code == 1
 
@@ -4851,6 +4926,7 @@ class TestValidationUsingGit:
         - Ensure validate fails.
         """
         logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+        logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
         mocker.patch.object(tools, "is_external_repository", return_value=False)
         mocker.patch.object(
             PackUniqueFilesValidator, "are_valid_files", return_value=""
@@ -4924,11 +5000,13 @@ class TestValidationUsingGit:
                     f"Validating {dashboard.get_path_from_pack()} as dashboard",
                     f"Validating {script.yml.rel_path} as script",
                     "IF101",
-                    "The content key must be set to True.",
                     "SC100",
                     "The name of this v2 script is incorrect",
                 ]
             ]
+        )
+        assert str_in_call_args_list(
+            logger_error.call_args_list, "The content key must be set to True."
         )
         assert result.exit_code == 1
 
@@ -4948,7 +5026,9 @@ class TestValidationUsingGit:
         pack = repo.create_pack("FeedAzure")
         integration = pack.create_integration(
             name="FeedAzure",
-            yml=join(AZURE_FEED_PACK_PATH, "Integrations/FeedAzure/FeedAzure.yml"),
+            yml=get_yaml(
+                join(AZURE_FEED_PACK_PATH, "Integrations/FeedAzure/FeedAzure.yml")
+            ),
         )
         modified_files = {integration.yml.rel_path}
         mocker.patch.object(tools, "is_external_repository", return_value=False)
@@ -5021,7 +5101,9 @@ class TestValidationUsingGit:
         pack = repo.create_pack("FeedAzure")
         integration = pack.create_integration(
             name="FeedAzure",
-            yml=join(AZURE_FEED_PACK_PATH, "Integrations/FeedAzure/FeedAzure.yml"),
+            yml=get_yaml(
+                join(AZURE_FEED_PACK_PATH, "Integrations/FeedAzure/FeedAzure.yml")
+            ),
         )
         modified_files = {integration.yml.rel_path}
         mocker.patch.object(tools, "is_external_repository", return_value=False)

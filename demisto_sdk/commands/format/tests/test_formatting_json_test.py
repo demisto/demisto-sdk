@@ -359,7 +359,7 @@ class TestFormattingIncidentTypes:
 
     @pytest.mark.parametrize("user_answer, expected", EXTRACTION_MODE_ALL_CONFLICT)
     def test_format_autoextract_all_mode_conflict(
-        self, mocker, user_answer, expected, capsys
+        self, mocker, user_answer, expected, monkeypatch
     ):
         """
         Given
@@ -372,6 +372,9 @@ class TestFormattingIncidentTypes:
         - If the user selected 'All', he will get an warning message and the mode will not be changed.
         - If the user selected 'Specific', the mode will be changed.
         """
+        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+        monkeypatch.setenv("COLUMNS", "1000")
+
         mock_dict = {
             "extractSettings": {
                 "mode": None,
@@ -394,11 +397,13 @@ class TestFormattingIncidentTypes:
         )
         formatter = IncidentTypesJSONFormat("test")
         formatter.format_auto_extract_mode()
-        stdout, _ = capsys.readouterr()
         current_mode = formatter.data.get("extractSettings", {}).get("mode")
         assert current_mode == expected
         if user_answer == "All":
-            assert 'Cannot set mode to "All" since there are specific types' in stdout
+            assert str_in_call_args_list(
+                logger_info.call_args_list,
+                'Cannot set mode to "All" since there are specific types',
+            )
 
     EXTRACTION_MODE_SPECIFIC_CONFLICT = [
         ("All", "All"),
@@ -407,7 +412,7 @@ class TestFormattingIncidentTypes:
 
     @pytest.mark.parametrize("user_answer, expected", EXTRACTION_MODE_SPECIFIC_CONFLICT)
     def test_format_autoextract_specific_mode_conflict(
-        self, mocker, user_answer, expected, capsys
+        self, mocker, user_answer, expected, capsys, monkeypatch
     ):
         """
         Given
@@ -420,6 +425,9 @@ class TestFormattingIncidentTypes:
         - If the user selected 'Specific', the mode will be changed but he will get a warning that no specific types were found.
         - If the user selected 'All', the mode will be changed.
         """
+        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+        monkeypatch.setenv("COLUMNS", "1000")
+
         mock_dict = {
             "extractSettings": {"mode": None, "fieldCliNameToExtractSettings": {}}
         }
@@ -437,9 +445,9 @@ class TestFormattingIncidentTypes:
         current_mode = formatter.data.get("extractSettings", {}).get("mode")
         assert current_mode == expected
         if user_answer == "Specific":
-            assert (
-                'Please notice that mode was set to "Specific" but there are no specific types'
-                in stdout
+            assert str_in_call_args_list(
+                logger_info.call_args_list,
+                'Please notice that mode was set to "Specific" but there are no specific types',
             )
 
 
@@ -472,7 +480,7 @@ def test_update_connection_removes_unnecessary_keys(tmpdir, monkeypatch):
         output=connection_file_path,
         path=CONNECTION_SCHEMA_PATH,
     )
-    connection_formatter.assume_yes = True
+    connection_formatter.assume_answer = True
     monkeypatch.setattr("builtins.input", lambda _: "N")
     connection_formatter.format_file()
     with open(connection_file_path) as file:
@@ -1759,7 +1767,7 @@ class TestFormattingReport:
         pack.pack_metadata.update({"support": "partner", "currentVersion": "1.0.0"})
         incident_type = pack.create_incident_type(name="TestType", content={})
         bs = BaseUpdate(
-            input=incident_type.path, assume_yes=True, path=INCIDENTTYPE_SCHEMA_PATH
+            input=incident_type.path, assume_answer=True, path=INCIDENTTYPE_SCHEMA_PATH
         )
         bs.set_fromVersion()
         assert bs.data["fromVersion"] == GENERAL_DEFAULT_FROMVERSION
@@ -1801,7 +1809,7 @@ class TestFormattingReport:
                 LAYOUTS_CONTAINER_SCHEMA_PATH,
             ],
         ):
-            bs = BaseUpdate(input=path, assume_yes=True, path=schema_path)
+            bs = BaseUpdate(input=path, assume_answer=True, path=schema_path)
             bs.set_fromVersion()
             assert bs.data["fromVersion"] == GENERAL_DEFAULT_FROMVERSION
 
@@ -1822,7 +1830,7 @@ class TestFormattingReport:
 
         layout = pack.create_layout(name="TestType", content={})
         bs = LayoutBaseFormat(
-            input=layout.path, assume_yes=True, path=LAYOUTS_CONTAINER_SCHEMA_PATH
+            input=layout.path, assume_answer=True, path=LAYOUTS_CONTAINER_SCHEMA_PATH
         )
         bs.run_format()
         assert bs.data["fromVersion"] == VERSION_5_5_0
@@ -1856,7 +1864,7 @@ class TestFormattingReport:
                 "fromVersion": "",
             },
         )
-        bs = LayoutBaseFormat(input=layout.path, assume_yes=True)
+        bs = LayoutBaseFormat(input=layout.path, assume_answer=True)
         bs.remove_copy_and_dev_suffixes_from_layoutscontainer()
         assert bs.data["name"] == "SHA256_Indicator"
 
@@ -1877,7 +1885,7 @@ class TestFormattingReport:
 
         classifier = pack.create_classifier(name="TestType", content={})
         bs = OldClassifierJSONFormat(
-            input=classifier.path, assume_yes=True, path=CLASSIFIER_5_9_9_SCHEMA_PATH
+            input=classifier.path, assume_answer=True, path=CLASSIFIER_5_9_9_SCHEMA_PATH
         )
         bs.run_format()
         assert bs.data["fromVersion"] == VERSION_5_5_0

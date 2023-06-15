@@ -1,13 +1,13 @@
-import logging
 import os
 import re
 from abc import abstractmethod
 from distutils.version import LooseVersion
+from pathlib import Path
 from typing import Optional
 
-import click
 from packaging import version
 
+from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import (
     API_MODULES_PACK,
     DEFAULT_CONTENT_ITEM_FROM_VERSION,
@@ -16,7 +16,15 @@ from demisto_sdk.commands.common.constants import (
     FEATURE_BRANCHES,
     FROM_TO_VERSION_REGEX,
     GENERIC_OBJECTS_OLDEST_SUPPORTED_VERSION,
+    MODELING_RULE,
+    MODELING_RULE_FILE_SUFFIX_REGEX,
+    MODELING_RULE_ID_SUFFIX,
+    MODELING_RULE_NAME_SUFFIX,
     OLDEST_SUPPORTED_VERSION,
+    PARSING_RULE,
+    PARSING_RULE_FILE_SUFFIX_REGEX,
+    PARSING_RULE_ID_SUFFIX,
+    PARSING_RULE_NAME_SUFFIX,
     FileType,
 )
 from demisto_sdk.commands.common.content import Content
@@ -28,13 +36,15 @@ from demisto_sdk.commands.common.hook_validations.base_validator import (
     BaseValidator,
     error_codes,
 )
-from demisto_sdk.commands.common.hook_validations.structure import (  # noqa:F401
+from demisto_sdk.commands.common.hook_validations.structure import (
     StructureValidator,
 )
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     _get_file_id,
     find_type,
     get_file_displayed_name,
+    get_yaml,
     is_test_config_match,
     run_command,
 )
@@ -42,7 +52,6 @@ from demisto_sdk.commands.format.format_constants import OLD_FILE_DEFAULT_1_FROM
 
 json = JSON_Handler()
 yaml = YAML_Handler()
-logger = logging.getLogger("demisto-sdk")
 
 
 class ContentEntityValidator(BaseValidator):
@@ -90,11 +99,13 @@ class ContentEntityValidator(BaseValidator):
         if not self.old_file:
             return True
 
-        click.secho(f"Validating backwards compatibility for {self.file_path}")
+        logger.info(f"Validating backwards compatibility for {self.file_path}")
 
         is_backward_compatible = [
             self.is_id_not_modified(),
             self.is_valid_fromversion_on_modified(),
+            self.is_valid_toversion_on_modified(),
+            self.is_valid_marketplaces_on_modified(),
         ]
 
         return all(is_backward_compatible)
@@ -135,7 +146,8 @@ class ContentEntityValidator(BaseValidator):
 
     @error_codes("BC106")
     def is_valid_fromversion_on_modified(self) -> bool:
-        """Check that the fromversion property was not changed on existing Content files.
+        """Check that the fromversion property was not
+        changed on existing Content files.
 
         Returns:
             (bool): Whether the files' fromversion as been modified or not.
@@ -160,6 +172,66 @@ class ContentEntityValidator(BaseValidator):
                 self.is_valid = False
                 return False
 
+        return True
+
+    @error_codes("BC107")
+    def is_valid_toversion_on_modified(self) -> bool:
+        """Check that the toversion property was not changed
+        on existing Content files.
+
+        Returns:
+            (bool): Whether the files' fromversion as been modified or not.
+        """
+        if not self.old_file:
+            return True
+
+        to_version_new = self.current_file.get("toversion") or self.current_file.get(
+            "toVersion"
+        )
+        to_version_old = self.old_file.get("toversion") or self.old_file.get(
+            "toVersion"
+        )
+        if to_version_old != to_version_new:
+            error_message, error_code = Errors.to_version_modified()
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                self.is_valid = False
+                return False
+
+        return True
+
+    @error_codes("BC108,BC109")
+    def is_valid_marketplaces_on_modified(self) -> bool:
+        """verifying that marketplaces property has not been added
+        (if wasn't exist before)
+        or that its values have not been removed.
+
+        Returns:
+            (bool): Whether the files' marketplaces as been modified or not.
+        """
+        if not self.old_file:
+            return True
+
+        marketplaces_new = self.current_file.get("marketplaces", [])
+        marketplaces_old = self.old_file.get("marketplaces", [])
+
+        if (not marketplaces_old) and marketplaces_new:
+            error_message, error_code = Errors.marketplaces_added()
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                self.is_valid = False
+                return False
+
+        if marketplaces_old and (not marketplaces_new):
+            error_message, error_code = Errors.marketplaces_removed(marketplaces_old)
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                self.is_valid = False
+                return False
+
+        if not (set(marketplaces_old).issubset(marketplaces_new)):
+            removed = set(marketplaces_old) - set(marketplaces_new)
+            error_message, error_code = Errors.marketplaces_removed(removed)
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                self.is_valid = False
+                return False
         return True
 
     @error_codes("BA100")
@@ -629,5 +701,76 @@ class ContentEntityValidator(BaseValidator):
             suggested_fix=Errors.suggest_fix(self.file_path, cmd="generate-docs"),
         ):
             return False
+
+        return True
+
+    @error_codes("BA124")
+    def validate_unit_test_exists(self) -> bool:
+        """
+        Validates Python files have a matching unit-test file next to them.
+
+        Return:
+           True if the unittest file exits False with an error otherwise
+
+        """
+
+        # Validate just for xsoar and partner support
+        if tools.get_pack_metadata(self.file_path).get("support", "") == "community":
+            return True
+
+        path = Path(self.file_path)
+        python_file_path = path.with_name(f"{path.stem}.py")
+        unit_test_path = path.with_name(f"{path.stem}_test.py")
+        if (
+            path.suffix == ".yml"
+            and python_file_path.exists()
+            and not unit_test_path.exists()
+        ):
+            error_message, error_code = Errors.missing_unit_test_file(path)
+            if self.handle_error(
+                error_message,
+                error_code,
+                file_path=self.file_path,
+                suggested_fix="Write unit tests to ensure code quality and correctness."
+                " See https://xsoar.pan.dev/docs/integrations/unit-testing#write-your-unit-tests"
+                " for more information.",
+            ):
+                return False
+        return True
+
+    def is_valid_rule_suffix(self, rule_type: str) -> bool:
+        """
+        Verifies the following::
+            1. The modeling/parsing rule file name ends with 'MODELING/PARSING_RULE_FILE_SUFFIX'.
+            2. The modeling/parsing rule id ends with 'MODELING/PARSING_RULE_ID_SUFFIX'.
+            3. The modeling/parsing rule name ends with 'MODELING/PARSING_RULE_NAME_SUFFIX'.
+        """
+        data = get_yaml(self.file_path)
+        rule_id = data.get("id", "")
+        rule_name = data.get("name", "")
+
+        if rule_type == MODELING_RULE:
+            file_suffix_regex = MODELING_RULE_FILE_SUFFIX_REGEX
+            id_suffix = MODELING_RULE_ID_SUFFIX
+            name_suffix = MODELING_RULE_NAME_SUFFIX
+            invalid_suffix_function = Errors.invalid_modeling_rule_suffix_name
+        if rule_type == PARSING_RULE:
+            file_suffix_regex = PARSING_RULE_FILE_SUFFIX_REGEX
+            id_suffix = PARSING_RULE_ID_SUFFIX
+            name_suffix = PARSING_RULE_NAME_SUFFIX
+            invalid_suffix_function = Errors.invalid_parsing_rule_suffix_name
+
+        invalid_suffix = {
+            "invalid_file_name": not re.search(file_suffix_regex, self.file_path),
+            "invalid_id": not rule_id.endswith(id_suffix),
+            "invalid_name": not rule_name.endswith(name_suffix),
+        }
+
+        if any(invalid_suffix.values()):
+            error_message, error_code = invalid_suffix_function(
+                self.file_path, **invalid_suffix
+            )
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                return False
 
         return True

@@ -1,4 +1,3 @@
-import logging
 import os
 from concurrent.futures._base import Future, as_completed
 from configparser import ConfigParser, MissingSectionHeaderError
@@ -6,11 +5,11 @@ from pathlib import Path
 from typing import Callable, List, Optional, Set, Tuple
 
 import pebble
-from colorama import Fore
 from git import InvalidGitRepositoryError
 from packaging import version
 
 from demisto_sdk.commands.common import tools
+from demisto_sdk.commands.common.cpu_count import cpu_count
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import (
     API_MODULES_PACK,
@@ -31,9 +30,13 @@ from demisto_sdk.commands.common.constants import (
     FileType,
     FileType_ALLOWED_TO_DELETE,
     PathLevel,
+    XSIAM_DASHBOARDS_DIR,
 )
 from demisto_sdk.commands.common.content import Content
-from demisto_sdk.commands.common.content_constant_paths import DEFAULT_ID_SET_PATH
+from demisto_sdk.commands.common.content_constant_paths import (
+    CONTENT_PATH,
+    DEFAULT_ID_SET_PATH,
+)
 from demisto_sdk.commands.common.errors import (
     FOUND_FILES_AND_ERRORS,
     FOUND_FILES_AND_IGNORED_ERRORS,
@@ -140,14 +143,14 @@ from demisto_sdk.commands.common.hook_validations.xsiam_report import (
 from demisto_sdk.commands.common.hook_validations.xsoar_config_json import (
     XSOARConfigJsonValidator,
 )
-from demisto_sdk.commands.common.logger import get_log_file
+from demisto_sdk.commands.common.logger import get_log_file, logger
 from demisto_sdk.commands.common.tools import (
     _get_file_id,
     find_type,
     get_api_module_ids,
     get_api_module_integrations_set,
-    get_content_path,
     get_file,
+    get_pack_ignore_content,
     get_pack_ignore_file_path,
     get_pack_name,
     get_pack_names_from_files,
@@ -158,8 +161,6 @@ from demisto_sdk.commands.common.tools import (
     run_command_os,
 )
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
-
-logger = logging.getLogger("demisto-sdk")
 
 SKIPPED_FILES = [
     "CommonServerUserPython.py",
@@ -347,7 +348,7 @@ class ValidateManager:
             bool: True if node exist, else False
         """
         # Check node exist
-        content_path = get_content_path()
+        content_path = CONTENT_PATH
         stdout, stderr, exit_code = run_command_os("node -v", cwd=content_path)  # type: ignore
         if exit_code:
             return False
@@ -427,18 +428,9 @@ class ValidateManager:
     def run_validation_on_specific_files(self):
         """Run validations only on specific files"""
         files_validation_result = set()
-        self.setup_git_params()
+        if self.use_git:
+            self.setup_git_params()
         files_to_validate = self.file_path.split(",")
-
-        if self.validate_graph:
-            logger.info(
-                f"\n[cyan]================= Validating graph =================[/cyan]"
-            )
-            with GraphValidator(
-                specific_validations=self.specific_validations,
-                input_files=files_to_validate,
-            ) as graph_validator:
-                files_validation_result.add(graph_validator.is_valid_content_graph())
 
         for path in files_to_validate:
             error_ignore_list = self.get_error_ignore_list(get_pack_name(path))
@@ -482,6 +474,17 @@ class ValidateManager:
                     self.run_validation_on_package(path, error_ignore_list)
                 )
 
+        if self.validate_graph:
+            logger.info(
+                f"\n[cyan]================= Validating graph =================[/cyan]"
+            )
+            with GraphValidator(
+                specific_validations=self.specific_validations,
+                input_files=files_to_validate,
+                include_optional_deps=True,
+            ) as graph_validator:
+                files_validation_result.add(graph_validator.is_valid_content_graph())
+
         return all(files_validation_result)
 
     def wait_futures_complete(self, futures_list: List[Future], done_fn: Callable):
@@ -513,15 +516,6 @@ class ValidateManager:
         )
         all_packs_valid = set()
 
-        if self.validate_graph:
-            logger.info(
-                f"\n[cyan]================= Validating graph =================[/cyan]"
-            )
-            with GraphValidator(
-                specific_validations=self.specific_validations
-            ) as graph_validator:
-                all_packs_valid.add(graph_validator.is_valid_content_graph())
-
         if not self.skip_conf_json:
             all_packs_valid.add(self.conf_json_validator.is_valid_conf_json())
 
@@ -549,7 +543,7 @@ class ValidateManager:
         self, all_packs: list, all_packs_valid: set, count: int, num_of_packs: int
     ) -> bool:
         if self.run_with_multiprocessing:
-            with pebble.ProcessPool(max_workers=4) as executor:
+            with pebble.ProcessPool(max_workers=cpu_count()) as executor:
                 futures = []
                 for pack_path in all_packs:
                     futures.append(
@@ -569,6 +563,21 @@ class ValidateManager:
                 self.completion_percentage = format((count / num_of_packs) * 100, ".2f")  # type: ignore
                 all_packs_valid.add(self.run_validations_on_pack(pack_path)[0])
                 count += 1
+        if self.validate_graph:
+            logger.info(
+                f"\n[cyan]================= Validating graph =================[/cyan]"
+            )
+            specific_validations_list = (
+                self.specific_validations if self.specific_validations else []
+            )
+            with GraphValidator(
+                specific_validations=self.specific_validations,
+                include_optional_deps=(
+                    True if "GR103" in specific_validations_list else False
+                ),
+            ) as graph_validator:
+                all_packs_valid.add(graph_validator.is_valid_content_graph())
+
         return all(all_packs_valid)
 
     def run_validations_on_pack(self, pack_path):
@@ -631,6 +640,10 @@ class ValidateManager:
                         file_path.endswith(".json")
                         or file_path.endswith(".yml")
                         or file_path.endswith(".md")
+                        or (
+                            content_entity_dir_path.endswith(XSIAM_DASHBOARDS_DIR)
+                            and file_path.endswith(".png")
+                        )
                     ):
                         content_entities_validation_results.add(
                             self.run_validations_on_file(
@@ -788,7 +801,7 @@ class ValidateManager:
         if (
             file_type in self.skipped_file_types
             or self.is_skipped_file(file_path)
-            or self.git_util._is_file_git_ignored(file_path)
+            or (self.git_util and self.git_util._is_file_git_ignored(file_path))
             or self.detect_file_level(file_path)
             in (PathLevel.PACKAGE, PathLevel.CONTENT_ENTITY_DIR)
         ):
@@ -812,12 +825,10 @@ class ValidateManager:
             validation_print = f"\nValidating {file_path} as {file_type.value}"
             if self.print_percent:
                 if FOUND_FILES_AND_ERRORS:
-                    validation_print += (
-                        f" {Fore.RED}[{self.completion_percentage}%]{Fore.RESET}"
-                    )
+                    validation_print += f" [red][{self.completion_percentage}%][/red]"
                 else:
                     validation_print += (
-                        f" {Fore.GREEN}[{self.completion_percentage}%]{Fore.RESET}"
+                        f" [green][{self.completion_percentage}%][/green]"
                     )
 
             logger.info(validation_print)
@@ -916,7 +927,7 @@ class ValidateManager:
                 ReadMeValidator.add_node_env_vars()
                 if (
                     not ReadMeValidator.are_modules_installed_for_verify(
-                        get_content_path()  # type: ignore
+                        CONTENT_PATH  # type: ignore
                     )
                     and not ReadMeValidator.is_docker_available()
                 ):  # shows warning message
@@ -1039,7 +1050,7 @@ class ValidateManager:
             FileType.MODELING_RULE_XIF,
             FileType.MODELING_RULE_TEST_DATA,
         ):
-            print(f"Validating {file_type.value} file: {file_path}")
+            logger.info(f"Validating {file_type.value} file: {file_path}")
             if self.validate_all:
                 error_ignore_list = pack_error_ignore_list.copy()
                 error_ignore_list.setdefault(os.path.basename(file_path), [])
@@ -1105,6 +1116,9 @@ class ValidateManager:
         elif file_type == FileType.CONTRIBUTORS:
             # This is temporarily - need to add a proper contributors validations
             return True
+
+        elif file_type == FileType.CONF_JSON and not self.skip_conf_json:
+            return self.validate_conf_json()
 
         else:
             return self.file_type_not_supported(
@@ -1271,20 +1285,6 @@ class ValidateManager:
 
         validation_results = {valid_git_setup, valid_types}
 
-        if self.validate_graph:
-            logger.info(
-                f"\n[cyan]================= Validating graph =================[/cyan]"
-            )
-            all_files_set = list(
-                set().union(modified_files, added_files, old_format_files)
-            )
-            if all_files_set:
-                with GraphValidator(
-                    specific_validations=self.specific_validations,
-                    git_files=all_files_set,
-                ) as graph_validator:
-                    validation_results.add(graph_validator.is_valid_content_graph())
-
         validation_results.add(
             self.validate_modified_files(modified_files | old_format_files)
         )
@@ -1295,9 +1295,9 @@ class ValidateManager:
             )
         )
         validation_results.add(self.validate_deleted_files(deleted_files, added_files))
-        logger.info(f"*** after adding validate_deleted_files")
+        logger.debug(f"*** after adding validate_deleted_files")
 
-        logger.info(
+        logger.debug(
             f"*** Before ifs, {old_format_files=}, {self.skip_pack_rn_validation=}"
         )
         if old_format_files:
@@ -1318,6 +1318,22 @@ class ValidateManager:
                     modified_files, old_format_files, added_files
                 )
             )
+        if self.validate_graph:
+            logger.info(
+                f"\n[cyan]================= Validating graph =================[/cyan]"
+            )
+            all_files_set = list(
+                set().union(
+                    modified_files, added_files, old_format_files, changed_meta_files
+                )
+            )
+            if all_files_set:
+                with GraphValidator(
+                    specific_validations=self.specific_validations,
+                    git_files=all_files_set,
+                    include_optional_deps=True,
+                ) as graph_validator:
+                    validation_results.add(graph_validator.is_valid_content_graph())
 
         return all(validation_results)
 
@@ -1764,6 +1780,10 @@ class ValidateManager:
         )
         return layout_rules_validator.is_valid_file(validate_rn=False)
 
+    def validate_conf_json(self):
+        conf_json_validator = ConfJsonValidator()
+        return conf_json_validator.is_valid_conf_json()
+
     def validate_xsiam_report(self, structure_validator, pack_error_ignore_list):
         xsiam_report_validator = XSIAMReportValidator(
             structure_validator,
@@ -1899,7 +1919,6 @@ class ValidateManager:
             self.id_set_validations
         )
         if pack_errors:
-            logger.info(f"[red]{pack_errors}[/red]")
             files_valid = False
 
         # check author image
@@ -2509,6 +2528,9 @@ class ValidateManager:
 
         file_type = find_type(file_path)
 
+        if file_type == FileType.CONF_JSON:
+            return file_path, "", True
+
         if self.ignore_files_irrelevant_for_validation(
             file_path, check_metadata_files=check_metadata_files
         ):
@@ -2652,35 +2674,23 @@ class ValidateManager:
     def get_error_ignore_list(self, pack_name):
         ignored_errors_list: dict = {}
         if pack_name:
-            pack_ignore_path = get_pack_ignore_file_path(pack_name)
-
-            if os.path.isfile(pack_ignore_path):
-                try:
-                    config = ConfigParser(allow_no_value=True)
-                    config.read(pack_ignore_path)
-
-                    # create file specific ignored errors list
-                    for section in config.sections():
-                        if section.startswith("file:"):
-                            file_name = section[5:]
-                            ignored_errors_list[file_name] = []
-                            for key in config[section]:
-                                self.add_ignored_errors_to_list(
-                                    config, section, key, ignored_errors_list[file_name]
-                                )
-
-                except MissingSectionHeaderError:
-                    pass
-            else:
-                logger.info(
-                    f"[red]Could not find pack-ignore file at path {pack_ignore_path}[/red]"
-                )
+            if config := get_pack_ignore_content(pack_name):
+                # create file specific ignored errors list
+                for section in filter(
+                    lambda section: section.startswith("file:"), config.sections()
+                ):
+                    file_name = section[5:]
+                    ignored_errors_list[file_name] = []
+                    for key in config[section]:
+                        self.add_ignored_errors_to_list(
+                            config, section, key, ignored_errors_list[file_name]
+                        )
 
         return ignored_errors_list
 
     @staticmethod
     def is_old_file_format(file_path, file_type):
-        file_yml = get_yaml(file_path)
+        file_yml = get_file(file_path)
         # check for unified integration
         if file_type == FileType.INTEGRATION and file_yml.get("script", {}).get(
             "script", "-"

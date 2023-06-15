@@ -1,7 +1,9 @@
 import argparse
+import contextlib
 import glob
 import io
 import logging
+
 import os
 import re
 import shlex
@@ -41,11 +43,13 @@ from packaging.version import LegacyVersion, Version, parse
 from pebble import ProcessFuture, ProcessPool
 from requests.exceptions import HTTPError
 from ruamel.yaml.comments import CommentedSeq
+from demisto_sdk.commands.common.cpu_count import cpu_count
 
 from demisto_sdk.commands.common.constants import (
     ALL_FILES_VALIDATION_IGNORE_WHITELIST,
     API_MODULES_PACK,
     CLASSIFIERS_DIR,
+    CONF_JSON_FILE_NAME,
     CORRELATION_RULES_DIR,
     DASHBOARDS_DIR,
     DEF_DOCKER,
@@ -79,6 +83,7 @@ from demisto_sdk.commands.common.constants import (
     PACKAGE_YML_FILE_REGEX,
     PACKS_DIR,
     PACKS_DIR_REGEX,
+    PACKS_FOLDER,
     PACKS_PACK_IGNORE_FILE_NAME,
     PACKS_PACK_META_FILE_NAME,
     PACKS_README_FILE_NAME,
@@ -90,6 +95,7 @@ from demisto_sdk.commands.common.constants import (
     REPORTS_DIR,
     SCRIPTS_DIR,
     SIEM_ONLY_ENTITIES,
+    TABLE_INCIDENT_TO_ALERT,
     TEST_PLAYBOOKS_DIR,
     TESTS_AND_DOC_DIRECTORIES,
     TRIGGER_DIR,
@@ -161,10 +167,16 @@ class MarketplaceTagParser:
     XSOAR_SUFFIX = "\n</~XSOAR>\n"
     XSOAR_INLINE_PREFIX = "<~XSOAR>"
     XSOAR_INLINE_SUFFIX = "</~XSOAR>"
+
     XSIAM_PREFIX = "<~XSIAM>\n"
     XSIAM_SUFFIX = "\n</~XSIAM>\n"
     XSIAM_INLINE_PREFIX = "<~XSIAM>"
     XSIAM_INLINE_SUFFIX = "</~XSIAM>"
+
+    XPANSE_PREFIX = "<~XPANSE>\n"
+    XPANSE_SUFFIX = "\n</~XPANSE>\n"
+    XPANSE_INLINE_PREFIX = "<~XPANSE>"
+    XPANSE_INLINE_SUFFIX = "</~XPANSE>"
 
     def __init__(self, marketplace: str = MarketplaceVersions.XSOAR.value):
         self.marketplace = marketplace
@@ -184,6 +196,14 @@ class MarketplaceTagParser:
             tag_prefix=self.XSIAM_INLINE_PREFIX,
             tag_suffix=self.XSIAM_INLINE_SUFFIX,
         )
+        self._xpanse_parser = TagParser(
+            tag_prefix=self.XPANSE_PREFIX,
+            tag_suffix=self.XPANSE_SUFFIX,
+        )
+        self._xpanse_inline_parser = TagParser(
+            tag_prefix=self.XPANSE_INLINE_PREFIX,
+            tag_suffix=self.XPANSE_INLINE_SUFFIX,
+        )
 
     @property
     def marketplace(self):
@@ -196,19 +216,28 @@ class MarketplaceTagParser:
         self._should_remove_xsiam_text = (
             marketplace != MarketplaceVersions.MarketplaceV2.value
         )
+        self._should_remove_xpanse_text = (
+            marketplace != MarketplaceVersions.XPANSE.value
+        )
 
     def parse_text(self, text):
         # the order of parse is important. inline should always be checked after paragraph tag
-        # xsoar->xsoar_inline->xsiam->xsiam_inline
-        return self._xsiam_inline_parser.parse(
-            remove_tag=self._should_remove_xsiam_text,
-            text=self._xsiam_parser.parse(
-                remove_tag=self._should_remove_xsiam_text,
-                text=self._xsoar_inline_parser.parse(
-                    remove_tag=self._should_remove_xsoar_text,
-                    text=self._xsoar_parser.parse(
-                        remove_tag=self._should_remove_xsoar_text,
-                        text=text,
+        # xsoar->xsoar_inline->xsiam->xsiam_inline->xpanse->xpanse_inline
+        return self._xpanse_inline_parser.parse(
+            remove_tag=self._should_remove_xpanse_text,
+            text=self._xpanse_parser.parse(
+                remove_tag=self._should_remove_xpanse_text,
+                text=self._xsiam_inline_parser.parse(
+                    remove_tag=self._should_remove_xsiam_text,
+                    text=self._xsiam_parser.parse(
+                        remove_tag=self._should_remove_xsiam_text,
+                        text=self._xsoar_inline_parser.parse(
+                            remove_tag=self._should_remove_xsoar_text,
+                            text=self._xsoar_parser.parse(
+                                remove_tag=self._should_remove_xsoar_text,
+                                text=text,
+                            ),
+                        ),
                     ),
                 ),
             ),
@@ -261,7 +290,7 @@ def get_yml_paths_in_dir(project_dir: str, error_msg: str = "") -> Tuple[list, s
     yml_files = glob.glob(os.path.join(project_dir, "*.yml"))
     if not yml_files:
         if error_msg:
-            print(error_msg)
+            logger.info(error_msg)
         return [], ""
     return yml_files, yml_files[0]
 
@@ -377,13 +406,18 @@ def get_marketplace_to_core_packs() -> Dict[MarketplaceVersions, Set[str]]:
     mp_to_core_packs: Dict[MarketplaceVersions, Set[str]] = {}
     for mp in MarketplaceVersions:
         # for backwards compatibility mp_core_packs can be a list, but we expect a dict.
-        mp_core_packs: Union[list, dict] = get_remote_file(
-            MARKETPLACE_TO_CORE_PACKS_FILE[mp],
-            git_content_config=GitContentConfig(
-                repo_name=GitContentConfig.OFFICIAL_CONTENT_REPO_NAME,
-                git_provider=GitProvider.GitHub,
-            ),
-        )
+        try:
+            mp_core_packs: Union[list, dict] = get_json(
+                MARKETPLACE_TO_CORE_PACKS_FILE[mp],
+            )
+        except FileNotFoundError:
+            mp_core_packs = get_remote_file(
+                MARKETPLACE_TO_CORE_PACKS_FILE[mp],
+                git_content_config=GitContentConfig(
+                    repo_name=GitContentConfig.OFFICIAL_CONTENT_REPO_NAME,
+                    git_provider=GitProvider.GitHub,
+                ),
+            )
         if isinstance(mp_core_packs, list):
             mp_to_core_packs[mp] = set(mp_core_packs)
         else:
@@ -679,33 +713,30 @@ def is_origin_content_repo():
         return False
 
 
+@lru_cache
 def get_last_remote_release_version():
     """
     Get latest release tag from PYPI.
 
     :return: tag
     """
-    if not os.environ.get(
-        "CI"
-    ):  # Check only when no on CI. If you want to disable it - use `DEMISTO_SDK_SKIP_VERSION_CHECK` environment variable
-        try:
-            pypi_request = requests.get(SDK_PYPI_VERSION, verify=False, timeout=5)
-            pypi_request.raise_for_status()
-            pypi_json = pypi_request.json()
-            version = pypi_json.get("info", {}).get("version", "")
-            return version
-        except Exception as exc:
-            exc_msg = str(exc)
-            if isinstance(exc, requests.exceptions.ConnectionError):
-                exc_msg = (
-                    f'{exc_msg[exc_msg.find(">") + 3:-3]}.\n'
-                    f"This may happen if you are not connected to the internet."
-                )
-            logger.info(
-                f"[yellow]Could not get latest demisto-sdk version.\nEncountered error: {exc_msg}[/yellow]"
+    try:
+        pypi_request = requests.get(SDK_PYPI_VERSION, verify=False, timeout=5)
+        pypi_request.raise_for_status()
+        pypi_json = pypi_request.json()
+        version = pypi_json.get("info", {}).get("version", "")
+        return version
+    except Exception as exc:
+        exc_msg = str(exc)
+        if isinstance(exc, requests.exceptions.ConnectionError):
+            exc_msg = (
+                f'{exc_msg[exc_msg.find(">") + 3:-3]}.\n'
+                f"This may happen if you are not connected to the internet."
             )
-
-    return ""
+        logger.info(
+            f"[yellow]Could not get latest demisto-sdk version.\nEncountered error: {exc_msg}[/yellow]"
+        )
+        return ""
 
 
 def _read_file(file_path: Path) -> str:
@@ -726,7 +757,7 @@ def _read_file(file_path: Path) -> str:
             return UnicodeDammit(file_path.read_bytes()).unicode_markup
 
         except UnicodeDecodeError:
-            print(f"could not auto-detect encoding for file {file_path}")
+            logger.info(f"could not auto-detect encoding for file {file_path}")
             raise
 
 
@@ -761,37 +792,47 @@ def safe_write_unicode(
 
 
 @lru_cache
-def get_file(file_path: Union[str, Path], type_of_file: str, clear_cache: bool = False):
+def get_file(
+    file_path: Union[str, Path],
+    type_of_file: Optional[str] = None,
+    clear_cache: bool = False,
+):
     if clear_cache:
         get_file.cache_clear()
+    file_path = Path(file_path)  # type: ignore[arg-type]
+    if not type_of_file:
+        type_of_file = file_path.suffix.lower()
+        logger.debug(f"Inferred type {type_of_file} for file {file_path.name}.")
 
-    file_path = Path(file_path).absolute()
+    if not file_path.exists():
+        file_path = Path(get_content_path()) / file_path  # type: ignore[arg-type]
 
     if not file_path.exists():
         raise FileNotFoundError(file_path)
 
-    if type_of_file in file_path.suffix:  # e.g. 'yml' in '.yml'
+    try:
         file_content = _read_file(file_path)
-        try:
-            if type_of_file in {"yml", ".yml"}:
-                replaced = re.sub(
-                    r"(simple: \s*\n*)(=)(\s*\n)", r'\1"\2"\3', file_content
-                )
-                result = yaml.load(io.StringIO(replaced))
-            else:
-                result = json.load(io.StringIO(file_content))
-
-        except Exception as e:
-            raise ValueError(
-                f"{file_path} has a structure issue of file type {type_of_file}\n{e}"
-            )
-
-        if isinstance(result, (dict, list)):
-            return result
-    return {}
+    except IOError as e:
+        logger.error(f"Could not read file {file_path}.\nError: {e}")
+        return {}
+    try:
+        if type_of_file.lstrip(".") in {"yml", "yaml"}:
+            replaced = re.sub(r"(simple: \s*\n*)(=)(\s*\n)", r'\1"\2"\3', file_content)
+            return yaml.load(io.StringIO(replaced))
+        else:
+            result = json.load(io.StringIO(file_content))
+            # It's possible to that the result will be `str` after loading it. In this case, we need to load it again.
+            return json.loads(result) if isinstance(result, str) else result
+    except Exception as e:
+        logger.error(
+            f"{file_path} has a structure issue of file type {type_of_file}\n{e}"
+        )
+        return {}
 
 
 def get_yaml(file_path, cache_clear=False):
+    if cache_clear:
+        get_file.cache_clear()
     return get_file(file_path, "yml", clear_cache=cache_clear)
 
 
@@ -849,7 +890,8 @@ def get_entity_id_by_entity_type(data: dict, content_entity: str):
         if content_entity in (INTEGRATIONS_DIR, SCRIPTS_DIR):
             return data.get("commonfields", {}).get("id", "")
         elif content_entity == LAYOUTS_DIR:
-            return data.get("typeId", "")
+            # typeId is for old format layouts, id is for layoutscontainers
+            return data.get("typeId", data.get("id", ""))
         else:
             return data.get("id", "")
 
@@ -894,6 +936,9 @@ def get_from_version(file_path):
         get_yaml(file_path) if file_path.endswith("yml") else get_json(file_path)
     )
 
+    if not isinstance(data_dictionary, dict):
+        raise ValueError("yml file returned is not of type dict")
+
     if data_dictionary:
         from_version = (
             data_dictionary.get("fromversion")
@@ -902,7 +947,7 @@ def get_from_version(file_path):
         )
 
         if not from_version:
-            logging.warning(
+            logger.warning(
                 f'fromversion/fromVersion was not found in {data_dictionary.get("id", "")}'
             )
             return ""
@@ -935,6 +980,9 @@ def get_to_version(file_path):
 
 
 def str2bool(v):
+    if not v:
+        return False
+
     if isinstance(v, bool):
         return v
     if v.lower() in ("yes", "true", "t", "y", "1"):
@@ -1242,9 +1290,9 @@ def get_pack_name(file_path):
     """
     file_path = Path(file_path)
     parts = file_path.parts
-    if "Packs" not in parts:
+    if PACKS_FOLDER not in parts:
         return None
-    pack_name_index = parts.index("Packs") + 1
+    pack_name_index = parts.index(PACKS_FOLDER) + 1
     if len(parts) <= pack_name_index:
         return None
     return parts[pack_name_index]
@@ -1325,6 +1373,31 @@ def get_test_playbook_id(test_playbooks_list: list, tpb_path: str) -> Tuple:  # 
     return None, None
 
 
+def get_pack_ignore_content(pack_name: str) -> Union[ConfigParser, None]:
+    """
+    Args:
+        pack_name: a pack name from which to get the pack ignore config.
+
+    Returns:
+        ConfigParser | None: config parser object in case of success, None otherwise.
+    """
+    _pack_ignore_file_path = Path(get_pack_ignore_file_path(pack_name))
+    if _pack_ignore_file_path.exists():
+        try:
+            config = ConfigParser(allow_no_value=True)
+            config.read(_pack_ignore_file_path)
+            return config
+        except MissingSectionHeaderError as err:
+            logger.exception(
+                f"Error when retrieving the content of {_pack_ignore_file_path}"
+            )
+            return None
+    logger.warning(
+        f"[red]Could not find pack-ignore file at path {_pack_ignore_file_path} for pack {pack_name}[/red]"
+    )
+    return None
+
+
 def get_ignore_pack_skipped_tests(
     pack_name: str, modified_packs: set, id_set: dict
 ) -> set:
@@ -1350,27 +1423,20 @@ def get_ignore_pack_skipped_tests(
     file_name_to_ignore_dict: Dict[str, List[str]] = {}
     test_playbooks = id_set.get("TestPlaybooks", {})
 
-    pack_ignore_path = get_pack_ignore_file_path(pack_name)
-    if pack_name in modified_packs:
-        if os.path.isfile(pack_ignore_path):
-            try:
-                # read pack_ignore using ConfigParser
-                config = ConfigParser(allow_no_value=True)
-                config.read(pack_ignore_path)
-
-                # go over every file in the config
-                for section in config.sections():
-                    if section.startswith("file:"):
-                        # given section is of type file
-                        file_name: str = section[5:]
-                        for key in config[section]:
-                            if key == "ignore":
-                                # group ignore codes to a list
-                                file_name_to_ignore_dict[file_name] = str(
-                                    config[section][key]
-                                ).split(",")
-            except MissingSectionHeaderError:
-                pass
+    # pack_ignore_path = get_pack_ignore_file_path(pack_name)
+    if pack_name in modified_packs and (config := get_pack_ignore_content(pack_name)):
+        # go over every file in the config
+        for section in filter(
+            lambda section: section.startswith("file:"), config.sections()
+        ):
+            # given section is of type file
+            file_name: str = section[5:]
+            for key in config[section]:
+                if key == "ignore":
+                    # group ignore codes to a list
+                    file_name_to_ignore_dict[file_name] = str(
+                        config[section][key]
+                    ).split(",")
 
     for file_name, ignore_list in file_name_to_ignore_dict.items():
         if any(ignore_code == "auto-test" for ignore_code in ignore_list):
@@ -1427,7 +1493,7 @@ def get_python_version(docker_image):
             docker_image,
             "python",
             "-c",
-            "import sys;print('{}.{}'.format(sys.version_info[0], sys.version_info[1]))",
+            "import sys;logger.info('{}.{}'.format(sys.version_info[0], sys.version_info[1]))",
         ],
         text=True,
         stderr=DEVNULL,
@@ -1540,6 +1606,8 @@ def find_type_by_path(path: Union[str, Path] = "") -> Optional[FileType]:
             return FileType.LISTS
         elif path.parent.name == JOBS_DIR:
             return FileType.JOB
+        elif path.name == CONF_JSON_FILE_NAME:
+            return FileType.CONF_JSON
         elif INDICATOR_TYPES_DIR in path.parts:
             return FileType.REPUTATION
         elif XSIAM_DASHBOARDS_DIR in path.parts:
@@ -1842,7 +1910,7 @@ def find_type(
                 if _id.startswith("indicator"):
                     return FileType.INDICATOR_FIELD
             else:
-                print(
+                logger.info(
                     f'The file {path} could not be recognized, please update the "id" to be a string'
                 )
 
@@ -2008,6 +2076,7 @@ def capital_case(st: str) -> str:
         return ""
 
 
+@lru_cache
 def get_last_release_version():
     """
     Get latest release tag (xx.xx.xx)
@@ -2307,7 +2376,7 @@ def open_id_set_file(id_set_path):
         return id_set
 
 
-def get_demisto_version(client: demisto_client) -> Union[Version, LegacyVersion]:
+def get_demisto_version(client: demisto_client) -> Version:
     """
     Args:
         demisto_client: A configured demisto_client instance
@@ -2318,12 +2387,12 @@ def get_demisto_version(client: demisto_client) -> Union[Version, LegacyVersion]
     try:
         resp = client.generic_request("/about", "GET")
         about_data = json.loads(resp[0].replace("'", '"'))
-        return parse(about_data.get("demistoVersion"))  # type: ignore
+        return Version(Version(about_data.get("demistoVersion")).base_version)
     except Exception:
         logger.warning(
             "Could not parse Xsoar version, please make sure the environment is properly configured."
         )
-        return parse("0")
+        return Version("0")
 
 
 def arg_to_list(arg: Union[str, List[str]], separator: str = ",") -> List[str]:
@@ -2815,9 +2884,17 @@ def get_current_categories() -> list:
     """
     if is_external_repository():
         return []
-    approved_categories_json, _ = get_dict_from_file(
-        "Tests/Marketplace/approved_categories.json"
-    )
+    try:
+        approved_categories_json, _ = get_dict_from_file(
+            "Tests/Marketplace/approved_categories.json"
+        )
+    except FileNotFoundError:
+        logger.warning(
+            "File approved_categories.json was not found. Getting from remote."
+        )
+        approved_categories_json = get_remote_file(
+            "Tests/Marketplace/approved_categories.json"
+        )
     return approved_categories_json.get("approved_list", [])
 
 
@@ -2828,8 +2905,8 @@ def suppress_stdout():
     Example of use:
 
         with suppress_stdout():
-            print('This message will not be printed')
-        print('This message will be printed')
+            logger.info('This message will not be printed')
+        logger.info('This message will be printed')
     """
     with open(os.devnull, "w") as devnull:
         try:
@@ -2865,11 +2942,11 @@ def get_definition_name(path: str, pack_path: str) -> Optional[str]:
                 if cur_id == definition_id:
                     return def_file_dictionary["name"]
 
-        print("Was unable to find the file for definitionId " + definition_id)
+        logger.info("Was unable to find the file for definitionId " + definition_id)
         return None
 
     except (FileNotFoundError, AttributeError):
-        print(
+        logger.info(
             "Error while retrieving definition name for definitionId "
             + definition_id
             + "\n Check file structure and make sure all relevant fields are entered properly"
@@ -3041,7 +3118,7 @@ def ProcessPoolHandler() -> ProcessPool:
     Yields:
         ProcessPool: Pebble process pool.
     """
-    with ProcessPool(max_workers=3) as pool:
+    with ProcessPool(max_workers=cpu_count()) as pool:
         try:
             yield pool
         except Exception:
@@ -3474,3 +3551,76 @@ def get_pack_paths_from_files(file_paths: Iterable[str]) -> list:
     """Returns the pack paths from a list/set of files"""
     pack_paths = {f"Packs/{get_pack_name(file_path)}" for file_path in file_paths}
     return list(pack_paths)
+
+
+def replace_incident_to_alert(value: str) -> str:
+    if not isinstance(value, str):
+        return value
+
+    new_value = value
+    for pattern, replace_with in TABLE_INCIDENT_TO_ALERT.items():
+        new_value = re.sub(pattern, replace_with, new_value)
+    return new_value
+
+
+def replace_alert_to_incident(value: str) -> str:
+    if not isinstance(value, str):
+        return value
+
+    new_value = value
+    for incident, alert in TABLE_INCIDENT_TO_ALERT.items():
+        new_value = re.sub(alert, incident, new_value)
+    return new_value
+
+
+def get_id(file_content: Dict) -> Union[str, None]:
+    """
+    Get ID from a dict based content object.
+
+    Args:
+        file_content: the content of the file.
+
+    Returns:
+        str: the ID of the content item in case found, None otherwise.
+    """
+    if "commonfields" in file_content:
+        return file_content["commonfields"].get("id")
+    elif "dashboards_data" in file_content:
+        return file_content["dashboards_data"][0].get("global_id")
+    elif "templates_data" in file_content:
+        return file_content["templates_data"][0].get("global_id")
+
+    for key in ("global_rule_id", "trigger_id", "content_global_id", "rule_id"):
+        if key in file_content:
+            return file_content[key]
+
+    return file_content.get("id")
+
+
+def parse_marketplace_kwargs(kwargs: Dict[str, Any]) -> MarketplaceVersions:
+    """
+    Supports both the `marketplace` argument and `xsiam`.
+    Raises an error when both are supplied.
+    """
+    marketplace = kwargs.pop("marketplace", None)  # removing to not pass it twice later
+    is_xsiam = kwargs.get("xsiam")
+
+    if (
+        marketplace
+        and is_xsiam
+        and MarketplaceVersions(marketplace) != MarketplaceVersions.MarketplaceV2
+    ):
+        raise ValueError(
+            "The arguments `marketplace` and `xsiam` cannot be used at the same time, remove one of them."
+        )
+
+    if is_xsiam:
+        return MarketplaceVersions.MarketplaceV2
+
+    if marketplace:
+        return MarketplaceVersions(marketplace)
+
+    logger.debug(
+        "neither marketplace nor is_xsiam provided, using default marketplace=XSOAR"
+    )
+    return MarketplaceVersions.XSOAR  # default

@@ -4,7 +4,6 @@ import pathlib
 import shutil
 from collections import Counter
 from copy import deepcopy
-from pathlib import Path
 from typing import Dict, Optional
 from unittest import mock
 
@@ -236,7 +235,10 @@ class TestRNUpdate:
         Then:
             - return a markdown string
         """
-        expected_result = "\n#### Playbooks\n\n##### New: Hello World Playbook\n\n- Hello World Playbook description\n"
+        expected_result = (
+            "\n#### Playbooks\n\n##### New: Hello World Playbook\n\n"
+            "- New: Hello World Playbook description\n"
+        )
         from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
 
         mock_master.return_value = "1.0.0"
@@ -878,7 +880,8 @@ class TestRNUpdate:
         with pytest.raises(Exception) as execinfo:
             update_rn.bump_version_number()
         assert (
-            "Pack HelloWorld was not found. Please verify the pack name is correct."
+            "The metadata file of pack HelloWorld was not found."
+            " Please verify the pack name is correct, and that the file exists."
             in execinfo.value.args[0]
         )
 
@@ -910,7 +913,19 @@ class TestRNUpdate:
             "Received no update type when one was expected." in execinfo.value.args[0]
         )
 
-    def test_build_rn_desc_new_file(self):
+    new_file_test_params = [
+        (
+            FileType.TEST_SCRIPT.value,
+            "(Available from Cortex XSOAR 5.5.0).",
+        ),
+        (
+            FileType.MODELING_RULE.value,
+            "(Available from Cortex XSIAM %%XSIAM_VERSION%%).",
+        ),
+    ]
+
+    @pytest.mark.parametrize("file_type, expected_result", new_file_test_params)
+    def test_build_rn_desc_new_file(self, file_type, expected_result):
         """
         Given
             - A new file
@@ -929,7 +944,7 @@ class TestRNUpdate:
         )
 
         desc = update_rn.build_rn_desc(
-            _type=FileType.TEST_SCRIPT,
+            _type=file_type,
             content_name="Hello World Test",
             desc="Test description",
             is_new_file=True,
@@ -937,7 +952,7 @@ class TestRNUpdate:
             from_version="5.5.0",
             docker_image=None,
         )
-        assert "(Available from Cortex XSOAR 5.5.0)." in desc
+        assert expected_result in desc
 
     def test_build_rn_desc_old_file(self):
         """
@@ -1335,6 +1350,36 @@ class TestRNUpdate:
         )
         res = get_deprecated_rn(path, file_type)
         assert res == expected_res
+
+    def test_deprecated_rn_yml_no_commands_section(self, mocker, pack):
+        """
+        Given:
+            - deprecated integration which does not have "commands" section
+        When:
+            - Calling get_deprecated_rn function
+        Then:
+            - Ensure the function returns a valid rn when the yml is deprecated without the "commands" section
+
+        """
+        integration = pack.create_integration(
+            name="test",
+            yml={
+                "commonfields": {"id": "test", "version": -1},
+                "name": "test",
+                "display": "test",
+                "description": "this is an integration test",
+                "category": "category",
+                "script": {
+                    "type": "python",
+                    "subtype": "python3",
+                    "script": "",
+                    "dockerimage": "",
+                },
+                "configuration": [],
+            },
+        )
+
+        assert get_deprecated_rn(integration.path, FileType.INTEGRATION) == ""
 
 
 def get_mock_yml_obj(path, file_type, deprecated) -> dict:
@@ -2694,9 +2739,7 @@ def test_handle_existing_rn_version_path(mocker, repo):
         Ensure the function does not sets should delete existing rn property to True when paths are identical.
     """
     pack = repo.create_pack("test")
-    mocker.patch.object(
-        Path, "absolute", return_value=f"{str(pack.path)}/ReleaseNotes/1_0_1.md"
-    )
+    mocker.patch.object(UpdateRN, "CONTENT_PATH", return_value=repo.path)
     pack.create_release_notes(version="1_0_1")
     client = UpdateRN(
         pack_path=str(pack.path),
@@ -2729,3 +2772,30 @@ def test_get_file_description(path, file_type, expected_results):
         Ensure the function extracted the information from the right field.
     """
     assert get_file_description(path, file_type) == expected_results
+
+
+def test_no_release_notes_for_first_version(mocker):
+    """
+    Given:
+        - Changes made in the content repo.
+    When:
+        - runing update release notes for the first version of the pack (1.0.0).
+    Then
+        - validate the a proper error message is raised.
+    """
+    mocker.patch.object(UpdateRN, "get_master_version", return_value="0.0.0")
+    mocker.patch.object(UpdateRN, "is_bump_required", return_value=False)
+    mocker.patch.object(
+        UpdateRN, "get_pack_metadata", return_value={"currentVersion": "1.0.0"}
+    )
+    update_rn = UpdateRN(
+        pack_path="Packs/HelloWorld",
+        update_type="minor",
+        modified_files_in_pack=set(),
+        added_files=set(),
+        pack_metadata_only=True,
+    )
+
+    with pytest.raises(ValueError) as e:
+        update_rn.get_new_version_and_metadata()
+        assert str(e) == "Release notes do not need to be updated for version '1.0.0'."

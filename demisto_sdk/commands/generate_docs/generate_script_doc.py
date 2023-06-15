@@ -1,8 +1,8 @@
-import logging
 import os
 import random
 
 from demisto_sdk.commands.common.content_constant_paths import DEFAULT_ID_SET_PATH
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     get_from_version,
     get_yaml,
@@ -20,8 +20,6 @@ from demisto_sdk.commands.generate_docs.common import (
     string_escape_md,
 )
 
-logger = logging.getLogger("demisto-sdk")
-
 
 def generate_script_doc(
     input_path,
@@ -30,7 +28,6 @@ def generate_script_doc(
     permissions: str = None,
     limitations: str = None,
     insecure: bool = False,
-    verbose: bool = False,
 ):
     try:
         doc: list = []
@@ -170,12 +167,8 @@ def generate_script_doc(
                 logger.info(f"[yellow]{error}[/yellow]")
 
     except Exception as ex:
-        if verbose:
-            # TODO Handle this verbose
-            raise
-        else:
-            logger.info(f"[yellow]Error: {str(ex)}[/yellow]")
-            return
+        logger.info(f"[yellow]Error: {str(ex)}[/yellow]")
+        return
 
 
 def get_script_info(script_path: str, clear_cache: bool = False):
@@ -227,7 +220,9 @@ def get_inputs(script):
         inputs.append(
             {
                 "Argument Name": arg.get("name"),
-                "Description": string_escape_md(arg.get("description", "")),
+                "Description": string_escape_md(
+                    arg.get("description", ""), escape_html=False
+                ),
             }
         )
 
@@ -257,7 +252,9 @@ def get_outputs(script):
         outputs.append(
             {
                 "Path": arg.get("contextPath"),
-                "Description": string_escape_md(arg.get("description", "")),
+                "Description": string_escape_md(
+                    arg.get("description", ""), escape_html=False
+                ),
                 "Type": arg.get("type", "Unknown"),
             }
         )

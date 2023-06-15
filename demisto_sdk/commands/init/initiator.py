@@ -1,5 +1,4 @@
 import glob
-import logging
 import os
 import shutil
 from distutils.dir_util import copy_tree
@@ -42,14 +41,13 @@ from demisto_sdk.commands.common.constants import (
 )
 from demisto_sdk.commands.common.git_content_config import GitContentConfig
 from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     get_common_server_path,
     get_pack_name,
     get_yaml,
 )
 from demisto_sdk.commands.secrets.secrets import SecretsValidator
-
-logger = logging.getLogger("demisto-sdk")
 
 json = JSON_Handler()
 yaml = YAML_Handler()
@@ -351,7 +349,7 @@ class Initiator:
         # if it does not exist create it
         elif tools.is_external_repository():
             if not os.path.isdir("Packs"):
-                print("Creating 'Packs' directory")
+                logger.info("Creating 'Packs' directory")
                 os.mkdir("Packs")
             self.full_output_path = os.path.join("Packs", self.dir_name)
 

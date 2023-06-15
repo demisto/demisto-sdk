@@ -1,11 +1,15 @@
+import builtins
+import io
 import logging
 import os
 import shutil
+import tarfile
 from io import TextIOWrapper
 from pathlib import Path
 from typing import Callable, Tuple
 from unittest.mock import patch
 
+import demisto_client
 import pytest
 
 from demisto_sdk.commands.common.constants import (
@@ -44,6 +48,7 @@ from demisto_sdk.commands.common.constants import (
     XSIAM_REPORTS_DIR,
 )
 from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
+from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.tests.tools_test import SENTENCE_WITH_UMLAUTS
 from demisto_sdk.commands.common.tools import (
     get_child_files,
@@ -81,6 +86,7 @@ class Environment:
         self.SCRIPT_INSTANCE_PATH = None
         self.PLAYBOOK_INSTANCE_PATH = None
         self.LAYOUT_INSTANCE_PATH = None
+        self.LAYOUTSCONTAINER_INSTANCE_PATH = None
         self.PRE_PROCESS_RULES_INSTANCE_PATH = None
         self.LISTS_INSTANCE_PATH = None
         self.CUSTOM_CONTENT_SCRIPT_PATH = None
@@ -92,6 +98,7 @@ class Environment:
         self.SCRIPT_PACK_OBJECT = None
         self.PLAYBOOK_PACK_OBJECT = None
         self.LAYOUT_PACK_OBJECT = None
+        self.LAYOUTSCONTAINER_PACK_OBJECT = None
         self.LISTS_PACK_OBJECT = None
         self.JOBS_PACK_OBJECT = None
         self.JOBS_INSTANCE_PATH = None
@@ -132,6 +139,9 @@ class Environment:
         self.LAYOUT_INSTANCE_PATH = (
             f"{self.PACK_INSTANCE_PATH}/Layouts/layout-details-TestLayout.json"
         )
+        self.LAYOUTSCONTAINER_INSTANCE_PATH = (
+            f"{self.PACK_INSTANCE_PATH}/Layouts/layoutscontainer-mytestlayout.json"
+        )
         self.PRE_PROCESS_RULES_INSTANCE_PATH = (
             f"{self.PACK_INSTANCE_PATH}/PreProcessRules/preprocessrule-dummy.json"
         )
@@ -153,6 +163,7 @@ class Environment:
         self.CUSTOM_CONTENT_JS_INTEGRATION_PATH = (
             f"{self.CUSTOM_CONTENT_BASE_PATH}/integration-DummyJSIntegration.yml"
         )
+        self.CUSTOM_API_RESPONSE = f"{self.CUSTOM_CONTENT_BASE_PATH}/api-response"
 
         self.INTEGRATION_PACK_OBJECT = {
             "Test Integration": [
@@ -248,6 +259,16 @@ class Environment:
                 }
             ]
         }
+        self.LAYOUTSCONTAINER_PACK_OBJECT = {
+            "mylayout": [
+                {
+                    "name": "mylayout",
+                    "id": "mylayout",
+                    "path": self.LAYOUTSCONTAINER_INSTANCE_PATH,
+                    "file_ending": "json",
+                }
+            ]
+        }
         self.PRE_PROCESS_RULES_PACK_OBJECT = {
             "DummyPreProcessRule": [
                 {
@@ -283,7 +304,7 @@ class Environment:
             INTEGRATIONS_DIR: [self.INTEGRATION_PACK_OBJECT],
             SCRIPTS_DIR: [self.SCRIPT_PACK_OBJECT],
             PLAYBOOKS_DIR: [self.PLAYBOOK_PACK_OBJECT],
-            LAYOUTS_DIR: [self.LAYOUT_PACK_OBJECT],
+            LAYOUTS_DIR: [self.LAYOUT_PACK_OBJECT, self.LAYOUTSCONTAINER_PACK_OBJECT],
             PRE_PROCESS_RULES_DIR: [],
             LISTS_DIR: [],
             JOBS_DIR: [],
@@ -566,6 +587,25 @@ class TestFlagHandlers:
             custom_content_names = [cco["name"] for cco in env.CUSTOM_CONTENT]
             assert ordered(custom_content_names) == ordered(downloader.input_files)
 
+    def test_handle_init_flag(self, tmp_path, mocker):
+        env = Environment(tmp_path)
+        mock = mocker.patch.object(
+            builtins, "input", side_effect=("test_pack_name", "n", "n")
+        )
+
+        downloader = Downloader(env.CONTENT_BASE_PATH, "")
+        downloader.init = True
+        downloader.handle_init_flag()
+
+        assert mock.call_count == 3
+        assert downloader.output_pack_path == str(
+            Path(env.CONTENT_BASE_PATH) / "Packs" / "test_pack_name"
+        )
+        assert Path(downloader.output_pack_path, "pack_metadata.json").exists()
+        assert not Path(downloader.output_pack_path, "Integrations").exists()
+        for file in Path(downloader.output_pack_path).iterdir():
+            assert not file.is_dir()
+
     def test_handle_list_files_flag(self, tmp_path, mocker):
         logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
         env = Environment(tmp_path)
@@ -640,6 +680,11 @@ class TestBuildPackContent:
                 "entity": LAYOUTS_DIR,
                 "path": "demisto_sdk/commands/download/tests/downloader_test.py",
                 "out": {},
+            },
+            {
+                "entity": LAYOUTS_DIR,
+                "path": env.LAYOUTSCONTAINER_INSTANCE_PATH,
+                "out": env.LAYOUTSCONTAINER_PACK_OBJECT,
             },
             {
                 "entity": PRE_PROCESS_RULES_DIR,
@@ -1131,7 +1176,7 @@ class TestVerifyPackPath:
             "Playbook",
             False,
             "/playbook/search",
-            "POST",
+            "GET",
             {"query": "name:PB1 or PB2"},
         ),
         (
@@ -1176,7 +1221,7 @@ def test_arrange_response():
         downloader = Downloader("", "")
 
         downloader.system_item_type = "Playbook"
-        system_items_list = downloader.arrange_response({"playbooks": []})
+        system_items_list = downloader.arrange_response([])
         assert system_items_list == []
 
         downloader.system_item_type = "Classifier"
@@ -1206,57 +1251,30 @@ def test_build_file_name():
 
 
 @pytest.mark.parametrize(
-    "original_string, object_name, scripts_mapper, expected_string, expected_mapper",
+    "original_string, object_name, expected_string, should_download_expected_res",
     [
         (
             "name: TestingScript\ncommonfields:\n id: f1e4c6e5-0d44-48a0-8020-a9711243e918",
             "automation-Testing.yml",
-            {},
             "name: TestingScript\ncommonfields:\n id: f1e4c6e5-0d44-48a0-8020-a9711243e918",
-            {"f1e4c6e5-0d44-48a0-8020-a9711243e918": "TestingScript"},
+            False,
         ),
         (
-            '{\n\t"name":"TestingField",\n\t"script":"f1e4c6e5-0d44-48a0-8020-a9711243e918"\n}',
-            "incidentfield-TestingField.json",
-            {"f1e4c6e5-0d44-48a0-8020-a9711243e918": "TestingScript"},
-            '{\n\t"name":"TestingField",\n\t"script":"TestingScript"\n}',
-            {"f1e4c6e5-0d44-48a0-8020-a9711243e918": "TestingScript"},
-        ),
-        (
-            '{\n\t"name":"TestingLayout",\n\t"detailsV2":{\n\t\t"tabs":[\n\t\t\t{\n\t\t\t\t"sections":[\n\t\t\t\t\t{\n\t\t\t\t'
-            '\t\t"items":[\n\t\t\t\t\t\t\t{\n\t\t\t\t\t\t\t\t"scriptId":"f1e4c6e5-0d44-48a0-8020-a9711243e918"\n\t\t\t\t\t\t'
-            "\t}\n\t\t\t\t\t\t]\n\t\t\t\t\t}\n\t\t\t\t]\n\t\t\t}\n\t\t]\n\t}\n}",
-            "layoutcontainer-TestingLayout.json",
-            {"f1e4c6e5-0d44-48a0-8020-a9711243e918": "TestingScript"},
-            '{\n\t"name":"TestingLayout",\n\t"detailsV2":{\n\t\t"tabs":[\n\t\t\t{\n\t\t\t\t"sections":[\n\t\t\t\t\t{\n\t\t\t\t'
-            '\t\t"items":[\n\t\t\t\t\t\t\t{\n\t\t\t\t\t\t\t\t"scriptId":"TestingScript"\n\t\t\t\t\t\t'
-            "\t}\n\t\t\t\t\t\t]\n\t\t\t\t\t}\n\t\t\t\t]\n\t\t\t}\n\t\t]\n\t}\n}",
-            {"f1e4c6e5-0d44-48a0-8020-a9711243e918": "TestingScript"},
+            "name: Playbook\ncommonfields:\n id: f1e4c6e5-0d44-48a0-8020-a9711243e918",
+            "playbook-Testing.yml",
+            "name: Playbook\ncommonfields:\n id: f1e4c6e5-0d44-48a0-8020-a9711243e918",
+            True,
         ),
     ],
 )
-def test_handle_file(
-    original_string, object_name, scripts_mapper, expected_string, expected_mapper
+def test_download_playbook(
+    original_string, object_name, expected_string, should_download_expected_res
 ):
     downloader = Downloader(output="", input="", regex="", all_custom_content=True)
-    final_string = downloader.handle_file(original_string, object_name, scripts_mapper)
+    should_download_playbook = downloader.should_download_playbook(object_name)
+    final_string = downloader.download_playbook_yaml(original_string)
+    assert should_download_playbook == should_download_expected_res
     assert final_string == expected_string
-
-
-def test_download_playbook_yaml_is_called():
-    """
-    Test that the `download_playbook_yaml` method is called when `handle_file` is called,
-    if member name contains the word playbook.
-    """
-    downloader = Downloader(output="", input="", regex="", all_custom_content=True)
-    with patch.object(downloader, "download_playbook_yaml") as mock:
-        downloader.handle_file(
-            "name: TestingPlaybook\ncommonfields:\n id: f1e4c6e5-0d44-48a0-8020-a9711243e918",
-            "playbook-Testing.yml",
-            {},
-        )
-
-    mock.assert_called()
 
 
 @pytest.mark.parametrize(
@@ -1285,7 +1303,9 @@ def test_download_playbook_yaml_is_called():
 )
 def test_replace_uuids(original_string, uuids_to_name_map, expected_string):
     downloader = Downloader(output="", input="", regex="", all_custom_content=True)
-    final_string = downloader.replace_uuids(original_string, uuids_to_name_map)
+    final_string = downloader.replace_uuids(
+        original_string, uuids_to_name_map, "file_name"
+    )
     assert final_string == expected_string
 
 
@@ -1361,3 +1381,64 @@ def test_safe_write_unicode_to_non_unicode(
     result = get_file(dest, suffix)
     assert set(result.keys()) == set(fields)
     assert set(result.values()) == {SENTENCE_WITH_UMLAUTS}
+
+
+def test_find_uuids_in_content_item():
+    """
+    Given: a mock tar file download_tar.tar
+    When: calling find_uuids_in_content_item on the mock tar
+    Then: Find all UUIDs in different content items:
+          playbook, automation, layout, incident
+          and replaces these UUIDs with the corresponding names in strings_to_write
+    """
+    expected_UUIDs = {
+        "a53a2f17-2f05-486d-867f-a36c9f5b88d4",
+        "e4c2306d-5d4b-4b19-8320-6fdad94595d4",
+        "de57b1f7-b754-43d2-8a8c-379d12bdddcd",
+        "84731e69-0e55-40f9-806a-6452f97a01a0",
+        "4d45f0d7-5fdd-4a4b-8f1e-5f2502f90a61",
+    }
+    io_bytes = io.BytesIO(
+        Path(
+            f"{git_path()}/demisto_sdk/commands/download/tests/tests_data/custom_content/\
+download_tar.tar"
+        ).read_bytes()
+    )
+    downloader = Downloader(
+        output="",
+        input="",
+        regex="",
+        all_custom_content=True,
+    )
+    with tarfile.open(fileobj=io_bytes, mode="r") as tar:
+        strings_to_write, scripts_id_name = downloader.find_uuids_in_content_item(tar)
+    ids = set(scripts_id_name.keys())
+    assert ids.issubset(expected_UUIDs)
+    assert ids.isdisjoint(strings_to_write)
+
+
+def test_get_system_playbook(mocker):
+    """
+    Given: a mock file raw_playbook.txt
+    When: calling get_system_playbook function.
+    Then:
+        - Ensure the playbook returns as valid json as expected
+        - Ensure a list is returned from the function
+    """
+
+    playbook_path = Path(
+        f"{git_path()}/demisto_sdk/commands/download/tests/tests_data/playbook-DummyPlaybook2.yml"
+    )
+
+    raw_playbook = playbook_path.read_bytes()
+
+    expected_pb = get_yaml(playbook_path)
+    mocker.patch.object(
+        demisto_client, "generic_request_func", return_value=[raw_playbook]
+    )
+
+    downloader = Downloader(input=["test"], output="test")
+    playbooks = downloader.get_system_playbook(req_type="GET")
+    assert isinstance(playbooks, list)
+    assert playbooks[0] == expected_pb
+    assert len(playbooks) == 1

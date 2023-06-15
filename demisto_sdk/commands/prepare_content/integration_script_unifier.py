@@ -1,13 +1,11 @@
 import base64
 import copy
 import glob
-import logging
 import os
 import re
 from pathlib import Path
 from typing import Dict, List, Union
 
-import click
 from inflection import dasherize, underscore
 from ruamel.yaml.scalarstring import FoldedScalarString
 
@@ -19,17 +17,17 @@ from demisto_sdk.commands.common.constants import (
     MarketplaceVersions,
 )
 from demisto_sdk.commands.common.handlers import JSON_Handler
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     arg_to_list,
     find_type,
     get_mp_tag_parser,
+    get_pack_metadata,
     get_pack_name,
     get_yaml,
     get_yml_paths_in_dir,
 )
 from demisto_sdk.commands.prepare_content.unifier import Unifier
-
-logger = logging.getLogger("demisto-sdk")
 
 json = JSON_Handler()
 
@@ -66,7 +64,7 @@ class IntegrationScriptUnifier(Unifier):
         image_prefix: str = DEFAULT_IMAGE_PREFIX,
         **kwargs,
     ):
-        logger.info(f"Unifying package: {path}")
+        logger.debug(f"Unifying {path}")
         if path.parent.name in {"Integrations", "Scripts"}:
             return data
         package_path = path.parent
@@ -122,7 +120,7 @@ class IntegrationScriptUnifier(Unifier):
                 yml_unified, custom, is_script_package
             )
 
-        logger.info(f"[green]Created unified yml: {path.name}[/green]")
+        logger.debug(f"[green]Created unified yml: {path.name}[/green]")
         return yml_unified
 
     @staticmethod
@@ -180,7 +178,9 @@ class IntegrationScriptUnifier(Unifier):
             image_data = image_prefix + base64.b64encode(image_data).decode("utf-8")
             yml_unified["image"] = image_data
         else:
-            click.secho(f"Failed getting image data for {package_path}", fg="yellow")
+            logger.warning(
+                f"[yellow]Failed getting image data for {package_path}[/yellow]"
+            )
 
         return yml_unified, found_img_path
 
@@ -239,7 +239,8 @@ class IntegrationScriptUnifier(Unifier):
             r"|CommonServerPowerShell\.ps1|CommonServerUserPowerShell\.ps1|demistomock\.ps1|\.Tests\.ps1"
         )
         if package_path.endswith("/"):
-            package_path = package_path[:-1]  # remove the last / as we use os.path.join
+            # remove the last / as we use os.path.join
+            package_path = package_path[:-1]
         if package_path.endswith(os.path.join("Scripts", "CommonServerPython")):
             return os.path.join(package_path, "CommonServerPython.py")
         if package_path.endswith(os.path.join("Scripts", "CommonServerUserPython")):
@@ -286,6 +287,12 @@ class IntegrationScriptUnifier(Unifier):
         script_code = IntegrationScriptUnifier.insert_module_code(
             script_code, imports_to_names
         )
+        if pack_version := get_pack_metadata(file_path=str(package_path)).get(
+            "currentVersion", ""
+        ):
+            script_code = IntegrationScriptUnifier.insert_pack_version(
+                script_type, script_code, pack_version
+            )
 
         if script_type == ".py":
             clean_code = IntegrationScriptUnifier.clean_python_code(script_code)
@@ -353,7 +360,7 @@ class IntegrationScriptUnifier(Unifier):
         :return: The import string and the imported module name
         """
 
-        # General regex to find API module imports, for example: "from MicrosoftApiModule import *  # noqa: E402"
+        # General regex to find API module imports, for example: "from MicrosoftApiModule import *  # "
         module_regex = r"from ([\w\d]+ApiModule) import \*(?:  # noqa: E402)?"
 
         module_matches = re.finditer(module_regex, script_code)
@@ -401,6 +408,30 @@ class IntegrationScriptUnifier(Unifier):
             )
 
             script_code = script_code.replace(module_import, module_code)
+        return script_code
+
+    @staticmethod
+    def insert_pack_version(
+        script_type: str, script_code: str, pack_version: str
+    ) -> str:
+        """
+        Inserts the pack version to the script so it will be easy to know what was the contribution original pack version.
+        :param script_code: The integration code
+        :param pack_version: The pack version
+        :return: The integration script with the pack version appended if needed, otherwise returns the original script
+        """
+        if script_type == ".js":
+            return (
+                script_code
+                if "// pack version:" in script_code
+                else f"// pack version: {pack_version}\n{script_code}"
+            )
+        elif script_type in {".py", ".ps1"}:
+            return (
+                script_code
+                if "### pack version:" in script_code
+                else f"### pack version: {pack_version}\n{script_code}"
+            )
         return script_code
 
     @staticmethod
@@ -561,9 +592,8 @@ class IntegrationScriptUnifier(Unifier):
             # verify README file exists and is not empty
             return f"[View Integration Documentation]({integration_doc_link})"
         else:
-            click.secho(
-                f"Did not find README in {package_path}, not adding integration doc link",
-                fg="bright_cyan",
+            logger.info(
+                f"[cyan]Did not find README in {package_path}, not adding integration doc link[/cyan]"
             )
             return ""
 

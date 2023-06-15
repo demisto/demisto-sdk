@@ -3,6 +3,7 @@ from pathlib import Path
 from typing import Optional, Union
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.content_graph.interface.neo4j.neo4j_graph import (
     Neo4jContentGraphInterface,
 )
@@ -47,9 +48,8 @@ class PrepareUploadManager:
             if not input.is_dir():
                 input = input.parent
             output = input / content_item.normalize_name
-        else:
-            if output.is_dir():
-                output = output / content_item.normalize_name
+        elif output.is_dir():
+            output = output / content_item.normalize_name
         output: Path  # Output is not optional anymore (for mypy)
         if isinstance(content_item, Pack):
             Pack.dump(content_item, output, marketplace)
@@ -68,4 +68,5 @@ class PrepareUploadManager:
         with output.open("w") as f:
             content_item.handler.dump(data, f)
 
+        logger.info(f"[green]Output saved in: {str(output.absolute())}[/green]")
         return output

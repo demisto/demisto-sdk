@@ -6,7 +6,6 @@ from pathlib import Path
 import pytest
 from click.testing import CliRunner
 
-import conftest  # noqa: F401
 from demisto_sdk.__main__ import main
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.legacy_git_tools import git_path
@@ -58,7 +57,7 @@ def test_update_release_notes_new_integration(demisto_client, mocker):
         "\n"
         + "#### Integrations\n\n"
         + "##### New: Azure Feed\n\n"
-        + "- Azure.CloudIPs Feed Integration. (Available from Cortex XSOAR 5.5.0).\n"
+        + "- New: Azure.CloudIPs Feed Integration. (Available from Cortex XSOAR 5.5.0).\n"
     )
     added_files = {
         join(
@@ -810,7 +809,7 @@ def test_update_release_notes_specific_version_valid(demisto_client, mocker, rep
     assert not result.exception
     for current_call in logger_info.call_args_list:
         if type(current_call[0]) == tuple:
-            print(f"*** INFO *** {current_call[0][0]=}")
+            print(f"*** INFO *** {current_call[0][0]=}")  # noqa: T201
     assert all(
         [
             str_in_call_args_list(logger_info.call_args_list, current_str)

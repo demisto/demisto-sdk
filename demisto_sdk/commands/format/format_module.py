@@ -1,9 +1,6 @@
-import logging
 import os
 from pathlib import Path
-from typing import Dict, List, Tuple
-
-import click
+from typing import Dict, List, Tuple, Union
 
 from demisto_sdk.commands.common.constants import (
     JOB,
@@ -11,6 +8,7 @@ from demisto_sdk.commands.common.constants import (
     FileType,
 )
 from demisto_sdk.commands.common.git_util import GitUtil
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import find_type, get_files_in_dir
 from demisto_sdk.commands.format.format_constants import SCHEMAS_PATH
 from demisto_sdk.commands.format.update_classifier import (
@@ -108,8 +106,6 @@ VALIDATE_RES_FAILED_CODE = 3
 
 CONTENT_ENTITY_IDS_TO_UPDATE: Dict = {}
 
-logger = logging.getLogger("demisto-sdk")
-
 
 def format_manager(
     input: str = None,
@@ -117,7 +113,7 @@ def format_manager(
     from_version: str = "",
     no_validate: bool = False,
     update_docker: bool = False,
-    assume_yes: bool = False,
+    assume_answer: Union[bool, None] = None,
     deprecate: bool = False,
     use_git: bool = False,
     prev_ver: str = None,
@@ -135,7 +131,7 @@ def format_manager(
         output: (str) The path to save the formatted file to.
         no_validate (flag): Whether the user specifies not to run validate after format.
         update_docker (flag): Whether to update the docker image.
-        assume_yes (bool): Whether to assume "yes" as answer to all prompts and run non-interactively
+        assume_answer (bool | None): Whether to assume "yes" or "no" as answer to all prompts and run non-interactively
         deprecate (bool): Whether to deprecate the entity
         use_git (bool): Use git to automatically recognize which files changed and run format on them
         prev_ver (str): Against which branch should the difference be recognized
@@ -153,7 +149,9 @@ def format_manager(
     use_git = use_git or not input
 
     if input:
-        files = get_files_in_dir(input, supported_file_types)
+        files = []
+        for i in input.split(","):
+            files.extend(get_files_in_dir(i, supported_file_types))
 
     elif use_git:
         files = get_files_to_format_from_git(
@@ -164,6 +162,10 @@ def format_manager(
         raise Exception(
             "The given output path is not a specific file path.\n"
             "Only file path can be a output path.  Please specify a correct output."
+        )
+    if output and input and "," in input:
+        raise Exception(
+            "Cannot use the output argument when provided with a list of inputs. Remove the first or only provide a single file as input."
         )
 
     log_list = []
@@ -192,7 +194,7 @@ def format_manager(
                     output=output,
                     no_validate=no_validate,
                     update_docker=update_docker,
-                    assume_yes=assume_yes,
+                    assume_answer=assume_answer,
                     deprecate=deprecate,
                     add_tests=add_tests,
                     id_set_path=id_set_path,
@@ -233,9 +235,10 @@ def format_manager(
                     "red",
                 )
             )
-        return 1
+        # No files were found to format
+        return 0
 
-    print("")  # Just adding a new line before summary
+    logger.info("")  # Just adding a new line before summary
     for string, print_color in log_list:
         joined_string = "\n".join(string)
         logger.info(f"[{print_color}]{joined_string}[/{print_color}]")
@@ -274,13 +277,12 @@ def get_files_to_format_from_git(
 
     if filtered_files:
         detected_files_string = "\n".join(filtered_files)
-        click.secho(
-            f"Found the following files to format:\n{detected_files_string}",
-            fg="bright_cyan",
+        logger.info(
+            f"[cyan]Found the following files to format:\n{detected_files_string}[/cyan]"
         )
 
     else:
-        click.secho("Did not find any files to format", fg="bright_red")
+        logger.info("[red]Did not find any files to format[/red]")
 
     return filtered_files
 

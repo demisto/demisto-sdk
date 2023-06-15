@@ -1,6 +1,5 @@
 # STD packages
 import concurrent.futures
-import logging
 import os
 import platform
 import re
@@ -16,6 +15,7 @@ import urllib3.exceptions
 from packaging.version import Version
 from wcmatch.pathlib import Path, PosixPath
 
+import demisto_sdk
 from demisto_sdk.commands.common.constants import (
     API_MODULES_PACK,
     PACKS_PACK_META_FILE_NAME,
@@ -23,13 +23,14 @@ from demisto_sdk.commands.common.constants import (
     TYPE_PYTHON,
     DemistoException,
 )
+from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.docker_helper import init_global_docker_client
 from demisto_sdk.commands.common.handlers import JSON_Handler
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.timers import report_time_measurements
 from demisto_sdk.commands.common.tools import (
     find_file,
     find_type,
-    get_content_path,
     get_file_displayed_name,
     get_json,
     is_external_repository,
@@ -58,7 +59,6 @@ json = JSON_Handler()
 # Third party packages
 
 # Local packages
-logger = logging.getLogger("demisto-sdk")
 
 sha1Regex = re.compile(r"\b[0-9a-fA-F]{40}\b", re.M)
 
@@ -214,7 +214,7 @@ class LintManager:
                 ]
                 logger.debug(
                     "Test requirements successfully collected for python 3:\n"
-                    f" {facts[f'requirements_3']}"
+                    f" {facts['requirements_3']}"
                 )
             python2_requirements = pipfile_dir / "pipfile_python2/dev-requirements.txt"
             facts["requirements_2"] = python2_requirements.read_text().strip().split("\n")  # type: ignore
@@ -258,13 +258,16 @@ class LintManager:
             sys.exit(1)
         # Validating docker engine connection
         logger.debug("creating docker client from env")
-        docker_client: docker.DockerClient = init_global_docker_client(
-            log_prompt="LintManager"
-        )
+
         try:
+            docker_client: docker.DockerClient = init_global_docker_client(
+                log_prompt="LintManager"
+            )
             logger.debug("pinging docker daemon")
             docker_client.ping()
         except (
+            docker.errors.DockerException,
+            demisto_sdk.commands.common.docker_helper.DockerException,
             requests.exceptions.ConnectionError,
             urllib3.exceptions.ProtocolError,
             docker.errors.APIError,
@@ -1345,7 +1348,7 @@ class LintManager:
         """
         error_messages = errors.get("messages", "")
         error_messages = error_messages.split("\n") if error_messages else []
-        content_path = get_content_path()
+        content_path = CONTENT_PATH
         for message in error_messages:
             if message:
                 file_name, line_number, error_contents = message.split(":", 2)

@@ -43,7 +43,8 @@ class JSONBased:
         return self._file_path.read_text()
 
     def read_json_as_dict(self) -> dict:
-        return json.loads(self._file_path.read_text())
+        with self._file_path.open() as f:
+            return json.load(f)
 
     def update(self, obj: dict):
         file_content = self.read_json_as_dict()

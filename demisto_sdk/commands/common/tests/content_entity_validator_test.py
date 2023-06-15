@@ -21,6 +21,7 @@ from demisto_sdk.tests.constants_test import (
     INVALID_PLAYBOOK_PATH,
     VALID_INTEGRATION_TEST_PATH,
     VALID_PLAYBOOK_ID_PATH,
+    VALID_TEST_PLAYBOOK_MARKETPLACES_PATH,
     VALID_TEST_PLAYBOOK_PATH,
 )
 
@@ -367,6 +368,66 @@ def test_fromversion_update_validation_yml_structure(
     with open(old_file_path) as f:
         validator.old_file = yaml.load(f)
         assert validator.is_valid_fromversion_on_modified() is answer, error
+
+
+INPUTS_VALID_MARKETPLACES_MODIFIED = [
+    (
+        VALID_TEST_PLAYBOOK_PATH,
+        VALID_TEST_PLAYBOOK_MARKETPLACES_PATH,
+        True,
+        "New marketplace was added to the supported marketplaces list",
+    ),
+    (
+        VALID_TEST_PLAYBOOK_MARKETPLACES_PATH,
+        VALID_TEST_PLAYBOOK_PATH,
+        False,
+        "Removing values from the list of supported marketplaces is not allowed",
+    ),
+    (
+        VALID_TEST_PLAYBOOK_MARKETPLACES_PATH,
+        INVALID_PLAYBOOK_PATH,
+        False,
+        "Adding a marketplaces field to existing content is not allowed.",
+    ),
+]
+
+
+@pytest.mark.parametrize(
+    "path, old_file_path, answer, error", INPUTS_VALID_MARKETPLACES_MODIFIED
+)
+def test_marketplaces_update_validation_yml_structure(
+    path, old_file_path, answer, error
+):
+    validator = ContentEntityValidator(StructureValidator(file_path=path))
+    with open(old_file_path) as f:
+        validator.old_file = yaml.load(f)
+        assert validator.is_valid_marketplaces_on_modified() is answer, error
+
+
+INPUTS_VALID_TOVERSION_MODIFIED = [
+    (
+        VALID_TEST_PLAYBOOK_PATH,
+        VALID_TEST_PLAYBOOK_MARKETPLACES_PATH,
+        False,
+        "change toversion field is not allowed",
+    ),
+    (
+        VALID_TEST_PLAYBOOK_PATH,
+        VALID_TEST_PLAYBOOK_PATH,
+        True,
+        "toversion was not changed.",
+    ),
+]
+
+
+@pytest.mark.parametrize(
+    "path, old_file_path, answer, error", INPUTS_VALID_TOVERSION_MODIFIED
+)
+def test_toversion_update_validation_yml_structure(path, old_file_path, answer, error):
+    validator = ContentEntityValidator(StructureValidator(file_path=path))
+    with open(old_file_path) as f:
+        validator.old_file = yaml.load(f)
+        assert validator.is_valid_toversion_on_modified() is answer, error
 
 
 INPUTS_IS_ID_MODIFIED = [

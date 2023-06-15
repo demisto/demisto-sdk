@@ -1,5 +1,9 @@
 # Changelog
 ## Unreleased
+* Added new **validate** checks, preventing unwanted changes of the marketplaces (BC108,BC109), toversion (BC107)  and fromversion (BC106) fields.
+* Fixed an issue where lock integartions failed on FileNotFound.(PANW-internal only).
+* Removed the `timezone_offset` argument in the *modeling-rules test* command.
+* Fixed an issue where **lint** failed when importing functions from CommonServerUserPython.
 * Added `GR107` validation to **validate** using the graph validations to check that no deprecated items are used by non-deprecated content.
 
 ## 1.16.0
@@ -22,7 +26,6 @@
 * Added a **validate** check, and a **format** auto fix for the `fromversion` field in Correlation Rules and XSIAM Dashboards.
 * Update the format used for dev-dependencies in pyproject.toml to match modern versions of Poetry.
 * Added timestamps to logging messages when running in a CI build.
-* Fixed an issue where lock integartions failed on FileNotFound.(PANW-internal only).
 
 
 ## 1.15.5

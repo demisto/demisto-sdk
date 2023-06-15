@@ -237,23 +237,27 @@ class IntegrationYMLFormat(BaseUpdateYML):
 
     def handle_hidden_marketplace_params(self):
         """
-        During the upload flow, each marketplace interprets the hidden: <marketplace name> as True or False.
-        When contributing an integration from the marketplace UI, the final yml file will display hidden: False/True
-        since it comes from the marketplace bucket. When formating the file, we want it to be
-        equivalent to the master branch
+        During the upload flow, each marketplace interprets and converts the `hidden: <marketplace name>`
+        into a boolean - `hidden: <boolean>`, based on the marketplace.
+        When contributing an integration from the marketplace UI, the final yml file uses a boolean.
+        Since it's contributed to the marketplace repo, we need the value to be identical (marketplace),
+        rather than boolean. This function replaces booleans with marketplace values, if they exist.
         """
 
         current_configuration = self.data.get("configuration", [])
         old_configuration = self.old_file.get("configuration", [])
 
         for old_param_dict in old_configuration:
-            if 'hidden' in old_param_dict:
+            if "hidden" in old_param_dict:
                 for current_param_dict in current_configuration:
-                    if current_param_dict.get('name') == old_param_dict.get('name') and\
-                            ('hidden' not in current_param_dict or not current_param_dict.get('hidden')):
-                        current_param_dict['hidden'] = old_param_dict['hidden']
+                    if current_param_dict.get("name") == old_param_dict.get(
+                        "name"
+                    ) and (
+                        "hidden" not in current_param_dict
+                        or not current_param_dict.get("hidden")
+                    ):
+                        current_param_dict["hidden"] = old_param_dict["hidden"]
                         break
-
 
     def run_format(self) -> int:
         try:

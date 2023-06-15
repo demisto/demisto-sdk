@@ -541,7 +541,9 @@ class ValidateManager:
     ) -> bool:
 
         if self.run_with_multiprocessing:
-            with pebble.ProcessPool(max_workers=cpu_count()) as executor:
+            worker_count = cpu_count()
+            logger.info(f"Using multiprocessing to validate packs. Number of workers: {worker_count}"),
+            with pebble.ProcessPool(max_workers=worker_count) as executor:
                 futures = []
                 for pack_path in all_packs:
                     futures.append(

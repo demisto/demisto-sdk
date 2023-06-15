@@ -16,7 +16,15 @@ from demisto_sdk.commands.common.constants import (
     FEATURE_BRANCHES,
     FROM_TO_VERSION_REGEX,
     GENERIC_OBJECTS_OLDEST_SUPPORTED_VERSION,
+    MODELING_RULE,
+    MODELING_RULE_FILE_SUFFIX_REGEX,
+    MODELING_RULE_ID_SUFFIX,
+    MODELING_RULE_NAME_SUFFIX,
     OLDEST_SUPPORTED_VERSION,
+    PARSING_RULE,
+    PARSING_RULE_FILE_SUFFIX_REGEX,
+    PARSING_RULE_ID_SUFFIX,
+    PARSING_RULE_NAME_SUFFIX,
     FileType,
 )
 from demisto_sdk.commands.common.content import Content
@@ -36,6 +44,7 @@ from demisto_sdk.commands.common.tools import (
     _get_file_id,
     find_type,
     get_file_displayed_name,
+    get_yaml,
     is_test_config_match,
     run_command,
 )
@@ -727,4 +736,41 @@ class ContentEntityValidator(BaseValidator):
                 " for more information.",
             ):
                 return False
+        return True
+
+    def is_valid_rule_suffix(self, rule_type: str) -> bool:
+        """
+        Verifies the following::
+            1. The modeling/parsing rule file name ends with 'MODELING/PARSING_RULE_FILE_SUFFIX'.
+            2. The modeling/parsing rule id ends with 'MODELING/PARSING_RULE_ID_SUFFIX'.
+            3. The modeling/parsing rule name ends with 'MODELING/PARSING_RULE_NAME_SUFFIX'.
+        """
+        data = get_yaml(self.file_path)
+        rule_id = data.get("id", "")
+        rule_name = data.get("name", "")
+
+        if rule_type == MODELING_RULE:
+            file_suffix_regex = MODELING_RULE_FILE_SUFFIX_REGEX
+            id_suffix = MODELING_RULE_ID_SUFFIX
+            name_suffix = MODELING_RULE_NAME_SUFFIX
+            invalid_suffix_function = Errors.invalid_modeling_rule_suffix_name
+        if rule_type == PARSING_RULE:
+            file_suffix_regex = PARSING_RULE_FILE_SUFFIX_REGEX
+            id_suffix = PARSING_RULE_ID_SUFFIX
+            name_suffix = PARSING_RULE_NAME_SUFFIX
+            invalid_suffix_function = Errors.invalid_parsing_rule_suffix_name
+
+        invalid_suffix = {
+            "invalid_file_name": not re.search(file_suffix_regex, self.file_path),
+            "invalid_id": not rule_id.endswith(id_suffix),
+            "invalid_name": not rule_name.endswith(name_suffix),
+        }
+
+        if any(invalid_suffix.values()):
+            error_message, error_code = invalid_suffix_function(
+                self.file_path, **invalid_suffix
+            )
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                return False
+
         return True

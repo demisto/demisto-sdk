@@ -2,6 +2,7 @@ from pathlib import Path
 from typing import List, Set
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.parsers.content_item import (
     NotAContentItemException,
@@ -15,7 +16,8 @@ class LayoutParser(JSONContentItemParser, content_type=ContentType.LAYOUT):
     def __init__(
         self, path: Path, pack_marketplaces: List[MarketplaceVersions]
     ) -> None:
-        if "layoutscontainer" not in path.name:
+        if not self.json_data.get("group"):
+            logger.debug(f"{path}: Not a layout container, skipping.")
             raise NotAContentItemException
 
         super().__init__(path, pack_marketplaces)

@@ -123,8 +123,8 @@ class PackMetadataParser:
         self.vendor_id: Optional[str] = metadata.get("vendorId")
         self.vendor_name: Optional[str] = metadata.get("vendorName")
         self.preview_only: Optional[bool] = metadata.get("previewOnly")
-        self.marketplaces: List[MarketplaceVersions] = metadata.get(
-            "marketplaces", DEFAULT_MARKETPLACES
+        self.marketplaces: List[MarketplaceVersions] = (
+            metadata.get("marketplaces") or DEFAULT_MARKETPLACES
         )
         self.excluded_dependencies: List[str] = metadata.get("excludedDependencies", [])
 

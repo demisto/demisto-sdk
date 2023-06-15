@@ -152,6 +152,7 @@ def get_items_using_deprecated_content_items(tx: Transaction, file_paths: List[s
     )
     query = f"""
     MATCH (p{{deprecated: false}})-[:USES]->(d{{deprecated: true}}) WHERE not p.is_test
+// be sure the USES relationship is not because a command, as commands has dedicated query
 OPTIONAL MATCH (p)-[:USES]->(c1:Command)<-[:HAS_COMMAND]-(d)
 WITH p, d, c1
 WHERE c1 IS NULL

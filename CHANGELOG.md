@@ -4,6 +4,7 @@
 * Fixed an issue where lock integartions failed on FileNotFound.(PANW-internal only).
 * Removed the `timezone_offset` argument in the *modeling-rules test* command.
 * Fixed an issue where **lint** failed when importing functions from CommonServerUserPython.
+* The **format** command now will sync hidden parameters with master branch.
 * Added `GR107` validation to **validate** using the graph validations to check that no deprecated items are used by non-deprecated content.
 
 ## 1.16.0

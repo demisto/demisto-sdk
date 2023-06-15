@@ -5,6 +5,7 @@
 * Removed the `timezone_offset` argument in the *modeling-rules test* command.
 * Fixed an issue where **lint** failed when importing functions from CommonServerUserPython.
 * The **format** command now will sync hidden parameters with master branch.
+* **validate** will no longer throw errors for custom dockers in case of none xsoar supported pack.
 
 ## 1.16.0
 * Added a check to **is_docker_image_latest_tag** to only fail the validation on non-latest image tag when the current tag is older than 3 days.

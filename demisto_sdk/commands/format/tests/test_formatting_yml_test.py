@@ -1870,6 +1870,7 @@ def test_yml_run_format_exception_handling(format_object, mocker):
         "Failed to update file my_file_path. Error: MY ERROR",
     )
 
+
 def test_handle_hidden_marketplace_params():
     """
     Given
@@ -1879,19 +1880,16 @@ def test_handle_hidden_marketplace_params():
     Then
     - Ensures the hidden value is equivalent to master branch.
     """
-    base_yml = IntegrationYMLFormat(
-        SOURCE_FORMAT_INTEGRATION_VALID, path="schema_path"
-    )
+    base_yml = IntegrationYMLFormat(SOURCE_FORMAT_INTEGRATION_VALID, path="schema_path")
     with open(SOURCE_FORMAT_INTEGRATION_VALID_OLD_FILE) as old_yml_file:
         base_yml.old_file = yaml.load(old_yml_file)
-        x = 5
-    assert base_yml.old_file['configuration'][6]['hidden'] == ['marketplacev2']
-    assert base_yml.old_file['configuration'][7]['hidden'] == ['marketplacev2']
-    assert 'hidden' not in base_yml.data['configuration'][6]
-    assert base_yml.data['configuration'][7]['hidden'] is False
+    assert base_yml.old_file["configuration"][6]["hidden"] == ["marketplacev2"]
+    assert base_yml.old_file["configuration"][7]["hidden"] == ["marketplacev2"]
+    assert "hidden" not in base_yml.data["configuration"][6]
+    assert base_yml.data["configuration"][7]["hidden"] is False
 
     base_yml.handle_hidden_marketplace_params()
-    assert base_yml.old_file['configuration'][6]['hidden'] == ['marketplacev2']
-    assert base_yml.old_file['configuration'][7]['hidden'] == ['marketplacev2']
-    assert base_yml.data['configuration'][6]['hidden'] == ['marketplacev2']
-    assert base_yml.data['configuration'][7]['hidden'] == ['marketplacev2']
+    assert base_yml.old_file["configuration"][6]["hidden"] == ["marketplacev2"]
+    assert base_yml.old_file["configuration"][7]["hidden"] == ["marketplacev2"]
+    assert base_yml.data["configuration"][6]["hidden"] == ["marketplacev2"]
+    assert base_yml.data["configuration"][7]["hidden"] == ["marketplacev2"]

@@ -247,13 +247,16 @@ class IntegrationYMLFormat(BaseUpdateYML):
         old_configuration = self.old_file.get("configuration", [])
 
         for old_param_dict in old_configuration:
-            if 'hidden' in old_param_dict:
+            if "hidden" in old_param_dict:
                 for current_param_dict in current_configuration:
-                    if current_param_dict.get('name') == old_param_dict.get('name') and\
-                            ('hidden' not in current_param_dict or not current_param_dict.get('hidden')):
-                        current_param_dict['hidden'] = old_param_dict['hidden']
+                    if current_param_dict.get("name") == old_param_dict.get(
+                        "name"
+                    ) and (
+                        "hidden" not in current_param_dict
+                        or not current_param_dict.get("hidden")
+                    ):
+                        current_param_dict["hidden"] = old_param_dict["hidden"]
                         break
-
 
     def run_format(self) -> int:
         try:

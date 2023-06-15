@@ -607,7 +607,7 @@ def test_convert_contribution_dir_to_pack_contents(tmp_path):
     new_json = {"field": "new_value"}
     update_file.write_text(json.dumps(new_json))
     cc = ContributionConverter()
-    cc.pack_dir_path = tmp_path
+    cc.pack_dir_path = cc.working_pack_dir_path = tmp_path
     cc.convert_contribution_dir_to_pack_contents(fake_pack_extracted_dir)
     assert json.loads(extant_file.read_text()) == new_json
     assert not fake_pack_extracted_dir.exists()

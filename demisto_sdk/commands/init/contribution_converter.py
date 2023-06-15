@@ -414,14 +414,18 @@ class ContributionConverter:
                         # At first time, create another dir for all indicator-fields files and move them there
                         if not os.path.exists(dst_ioc_fields_dir):
                             os.makedirs(dst_ioc_fields_dir)
-                        file_path = os.path.join(self.working_pack_dir_path, dir_name, file)
+                        file_path = os.path.join(
+                            self.working_pack_dir_path, dir_name, file
+                        )
                         shutil.move(file_path, dst_ioc_fields_dir)  # type: ignore
 
                 # If there were only indicatorfiled files, the original folder will remain empty, so we will delete it
                 if len(os.listdir(src_path)) == 0:
                     shutil.rmtree(src_path, ignore_errors=True)
 
-    def convert_contribution_to_pack(self, working_pack_dir_path: str = '', files_to_source_mapping: Dict = None):
+    def convert_contribution_to_pack(
+        self, working_pack_dir_path: str = "", files_to_source_mapping: Dict = None
+    ):
         """Create or updates a pack in the content repo from the contents of a contribution zipfile
 
         Args:
@@ -451,7 +455,9 @@ class ContributionConverter:
             self.unpack_contribution_to_dst_pack_directory()
             # convert
             self.rearranging_before_conversion()
-            unpacked_contribution_dirs = get_child_directories(self.working_pack_dir_path)
+            unpacked_contribution_dirs = get_child_directories(
+                self.working_pack_dir_path
+            )
             for unpacked_contribution_dir in unpacked_contribution_dirs:
                 self.convert_contribution_dir_to_pack_contents(
                     unpacked_contribution_dir
@@ -593,7 +599,8 @@ class ContributionConverter:
                             file_type, ""
                         )
                         output_dir = os.path.join(
-                            self.working_pack_dir_path, ENTITY_TYPE_TO_DIR.get(file_type, "")
+                            self.working_pack_dir_path,
+                            ENTITY_TYPE_TO_DIR.get(file_type, ""),
                         )
                         if not autocreate_dir:
                             output_dir = os.path.join(output_dir, containing_dir_name)
@@ -761,7 +768,6 @@ class ContributionConverter:
                 self.replace_RN_template_with_value(rn_mng.rn_path[0])
         except Exception as e:
             logger.warning(f"Failed updating release notes: {e}")
-
 
     def format_user_input(self) -> Dict[str, str]:
         """

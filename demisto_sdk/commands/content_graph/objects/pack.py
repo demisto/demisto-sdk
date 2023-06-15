@@ -337,27 +337,6 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
 
         metadata = self.dict(exclude=excluded_fields_from_metadata, by_alias=True)
         metadata.update(self.enhance_metadata(marketplace))
-        
-        
-        #############################
-
-        metadata["contentItems"] = {}
-        metadata["id"] = self.object_id
-        for content_item in self.content_items:
-
-            if content_item.content_type == ContentType.TEST_PLAYBOOK:
-                logger.debug(
-                    f"Skip loading the {content_item.name} test playbook into metadata.json"
-                )
-                continue
-            if content_item.is_incident_to_alert(marketplace):
-                metadata["contentItems"].setdefault(
-                    content_item.content_type.server_name, []
-                ).append(content_item.summary(marketplace, incident_to_alert=True))
-
-            metadata["contentItems"].setdefault(
-                content_item.content_type.server_name, []
-            ).append(content_item.summary(marketplace))
 
         with open(path, "w") as f:
             json.dump(metadata, f, indent=4, sort_keys=True)
@@ -662,8 +641,19 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
         content_items: dict = {}
         content_displays: dict = {}
         for content_item in self.content_items:
+
+            if content_item.content_type == ContentType.TEST_PLAYBOOK:
+                logger.debug(
+                    f"Skip loading the {content_item.name} test playbook into metadata.json"
+                )
+                continue
+
             try:
-                content_item_summary = content_item.summary(marketplace)
+                if content_item.is_incident_to_alert(marketplace):
+                    content_item_summary = content_item.summary(marketplace, incident_to_alert=True)
+                else:
+                    content_item_summary = content_item.summary(marketplace)
+
                 # if 'fromversion' in content_item_summary and content_item_summary['fromversion'] == DEFAULT_CONTENT_ITEM_FROM_VERSION:
                 #     content_item_summary['fromversion'] = self.server_min_version
 

@@ -1,11 +1,10 @@
-from datetime import datetime, timedelta
+from datetime import datetime
 from pathlib import Path
 from time import sleep
 from typing import Any, Dict, List, Optional, Tuple
 
 import requests
 import typer
-from dateutil import tz
 from rich import print as printr
 from rich.console import Console, Group
 from rich.panel import Panel
@@ -83,30 +82,22 @@ def day_suffix(day: int) -> str:
     return "th" if 11 <= day <= 13 else {1: "st", 2: "nd", 3: "rd"}.get(day % 10, "th")
 
 
-def convert_epoch_time_to_string_time(
-    epoch_time: int, timezone_delta: int, with_ms: bool = False
-) -> str:
+def convert_epoch_time_to_string_time(epoch_time: int, with_ms: bool = False) -> str:
     """
     Converts epoch time with milliseconds to string time with timezone delta.
 
     Args:
         epoch_time: The received epoch time (with milliseconds).
-        timezone_delta: The time zone delta (for example '3' or '-4').
         with_ms: Whether to convert the epoch time with ms or not default is False.
 
     Returns:
         The string time with timezone delta.
     """
     datetime_object = datetime.fromtimestamp(epoch_time / 1000)
-    datetime_object_with_time_zone_delta = (
-        datetime_object + timedelta(hours=timezone_delta)
-    ).astimezone(tz.tzlocal())
-    time_format = (
-        f"%b %d{day_suffix(datetime_object_with_time_zone_delta.day)} %Y %H:%M:%S"
-    )
+    time_format = f"%b %-d{day_suffix(datetime_object.day)} %Y %H:%M:%S"
     if with_ms:
         time_format = f"{time_format}.%f"
-    string_time = datetime_object_with_time_zone_delta.strftime(time_format)
+    string_time = datetime_object.strftime(time_format)
 
     return string_time
 
@@ -154,11 +145,9 @@ def verify_results(
         # get expected_values for the given query result
         td_event_id = result.pop(f"{tested_dataset}.test_data_event_id")
         expected_values = None
-        timezone_delta = 0
         for e in test_data.data:
             if str(e.test_data_event_id) == td_event_id:
                 expected_values = e.expected_values
-                timezone_delta = int(e.timezone_delta or 0)
                 break
 
         if expected_values:
@@ -167,7 +156,7 @@ def verify_results(
             ):
                 time_with_ms = "." in expected_time_value
                 result["_time"] = convert_epoch_time_to_string_time(
-                    time_value, timezone_delta, time_with_ms
+                    time_value, time_with_ms
                 )
             printr(create_table(expected_values, result))
 

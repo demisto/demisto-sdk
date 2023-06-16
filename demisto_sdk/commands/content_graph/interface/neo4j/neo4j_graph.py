@@ -1,6 +1,5 @@
-from multiprocessing.pool import ThreadPool
 import os
-from multiprocessing import Pool
+from multiprocessing.pool import ThreadPool
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional, Set, Tuple
 
@@ -130,13 +129,15 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         obj: BaseContent
         content_type = node.get("content_type", "")
         if node.get("not_in_repository"):
-            obj = UnknownContent.parse_obj(node)
+            obj = UnknownContent.model_validate(node)
 
         else:
             model = content_type_to_model.get(content_type)
             if not model:
                 raise NoModelException(f"No model for {content_type}")
-            obj = model.parse_obj(node)
+            if model == Pack:
+                node["contentItems"] = {}
+            obj = model.model_validate(node)
         obj.database_id = element_id
         return obj
 

@@ -1,8 +1,10 @@
+from pathlib import Path
 from typing import Dict, List, Optional
 
 from pydantic import BaseModel
 
 from demisto_sdk.commands.common.constants import NATIVE_IMAGE_FILE_NAME
+from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
@@ -35,7 +37,12 @@ class NativeImageConfig(BaseModel):
     docker_images_to_native_images_mapping: Dict[str, List] = {}
 
     @classmethod
-    def from_path(cls, native_image_config_file_path: str):
+    def from_path(
+        cls,
+        native_image_config_file_path: Path = CONTENT_PATH
+        / "Tests"
+        / NATIVE_IMAGE_FILE_NAME,
+    ):
         native_image_config = NativeImageConfig(
             **cls.load(native_image_config_file_path)
         )
@@ -71,13 +78,13 @@ class NativeImageConfig(BaseModel):
 
     @staticmethod
     def load(
-        native_image_config_file_path: str = f"Tests/{NATIVE_IMAGE_FILE_NAME}",
+        native_image_config_file_path: Path,
     ) -> Dict:
         """
         Load the native image configuration file
         """
         native_image_config_content, _ = get_dict_from_file(
-            native_image_config_file_path
+            str(native_image_config_file_path)
         )
         return native_image_config_content
 
@@ -182,12 +189,3 @@ class ScriptIntegrationSupportedNativeImages:
                 )
             return native_images
         return []
-
-
-def file_to_native_image_config(
-    native_image_config_file_path: str = f"Tests/{NATIVE_IMAGE_FILE_NAME}",
-) -> NativeImageConfig:
-    """
-    Converts the native image file to NativeImageConfig object.
-    """
-    return NativeImageConfig.from_path(native_image_config_file_path)

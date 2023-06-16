@@ -220,9 +220,7 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: i
     path: Path
     contributors: Optional[List[str]] = None
     relationships: Any = Field(Relationships(), exclude=True)
-    content_items: Optional[PackContentItems] = Field(
-        None, alias="contentItems", exclude=True
-    )
+    content_items: PackContentItems = Field(alias="contentItems", exclude=True)
 
     @validator("path", always=True)
     def validate_path(cls, v: Path) -> Path:
@@ -292,13 +290,13 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: i
 
     def dump_metadata(self, path: Path, marketplace: MarketplaceVersions) -> None:
         self.server_min_version = self.server_min_version or MARKETPLACE_MIN_VERSION
-        metadata = self.dict(
+        metadata = self.model_dump(
             exclude={"path", "node_id", "content_type", "excluded_dependencies"},
             by_alias=True,
         )
         metadata["contentItems"] = {}
         metadata["id"] = self.object_id
-        for content_item in filter(None, self.content_items):
+        for content_item in self.content_items:
 
             if content_item.content_type == ContentType.TEST_PLAYBOOK:
                 logger.debug(

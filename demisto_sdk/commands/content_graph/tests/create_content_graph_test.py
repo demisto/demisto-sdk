@@ -22,7 +22,7 @@ from demisto_sdk.commands.content_graph.objects.integration import Command, Inte
 from demisto_sdk.commands.content_graph.objects.integration_script import (
     IntegrationScript,
 )
-from demisto_sdk.commands.content_graph.objects.pack import Pack
+from demisto_sdk.commands.content_graph.objects.pack import Pack, PackContentItems
 from demisto_sdk.commands.content_graph.objects.playbook import Playbook
 from demisto_sdk.commands.content_graph.objects.repository import ContentDTO
 from demisto_sdk.commands.content_graph.objects.script import Script
@@ -74,7 +74,7 @@ def mock_pack(name: str = "SamplePack", path: Path = Path("Packs")) -> Pack:
         categories=[],
         useCases=[],
         keywords=[],
-        contentItems=[],
+        contentItems=PackContentItems(),
         excluded_dependencies=[],
     )
 

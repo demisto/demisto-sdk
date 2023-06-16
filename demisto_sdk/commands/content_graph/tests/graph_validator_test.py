@@ -18,14 +18,15 @@ from demisto_sdk.commands.content_graph.content_graph_commands import (
 from demisto_sdk.commands.content_graph.interface.neo4j.neo4j_graph import (
     Neo4jContentGraphInterface as ContentGraphInterface,
 )
-from demisto_sdk.commands.content_graph.objects.classifier import Classifier
-from demisto_sdk.commands.content_graph.objects.integration import Command, Integration
 from demisto_sdk.commands.content_graph.objects.pack import Pack
-from demisto_sdk.commands.content_graph.objects.playbook import Playbook
 from demisto_sdk.commands.content_graph.objects.repository import ContentDTO
-from demisto_sdk.commands.content_graph.objects.script import Script
 from demisto_sdk.commands.content_graph.tests.create_content_graph_test import (
+    mock_classifier,
+    mock_integration,
+    mock_pack,
+    mock_playbook,
     mock_relationship,
+    mock_script,
     mock_test_playbook,
 )
 from TestSuite.test_tools import str_in_call_args_list
@@ -339,112 +340,6 @@ def update_repository(
     ]
     repository.packs.extend(updated_packs)
     return pack_ids_to_update
-
-
-def _get_pack_by_id(repository: ContentDTO, pack_id: str) -> Pack:
-    for pack in repository.packs:
-        if pack.object_id == pack_id:
-            return pack
-    raise ValueError(f"Pack {pack_id} does not exist in the repository.")
-
-
-def mock_pack(name, marketplaces):
-    return Pack(
-        object_id=name,
-        content_type=ContentType.PACK,
-        node_id=f"{ContentType.PACK}:{name}",
-        path=Path("Packs"),
-        name="pack_name",
-        marketplaces=marketplaces,
-        hidden=False,
-        server_min_version="5.5.0",
-        current_version="1.0.0",
-        tags=[],
-        categories=[],
-        useCases=[],
-        keywords=[],
-        contentItems=[],
-        excluded_dependencies=[],
-    )
-
-
-def mock_playbook(
-    name,
-    marketplaces=[MarketplaceVersions.XSOAR],
-    fromversion="5.0.0",
-    toversion="99.99.99",
-):
-    return Playbook(
-        id=name,
-        content_type=ContentType.PLAYBOOK,
-        node_id=f"{ContentType.PLAYBOOK}:{name}",
-        path=Path("Packs"),
-        fromversion=fromversion,
-        toversion=toversion,
-        display_name=name,
-        name=name,
-        marketplaces=marketplaces,
-        deprecated=False,
-        is_test=False,
-    )
-
-
-def mock_script(name, marketplaces=[MarketplaceVersions.XSOAR], skip_prepare=[]):
-    return Script(
-        id=name,
-        content_type=ContentType.SCRIPT,
-        node_id=f"{ContentType.SCRIPT}:{name}",
-        path=Path("Packs"),
-        fromversion="5.0.0",
-        display_name=name,
-        toversion="6.0.0",
-        name=name,
-        marketplaces=marketplaces,
-        deprecated=False,
-        type="python3",
-        docker_image="mock:docker",
-        tags=[],
-        is_test=False,
-        skip_prepare=skip_prepare,
-    )
-
-
-def mock_integration(name: str = "SampleIntegration"):
-    return Integration(
-        id=name,
-        content_type=ContentType.INTEGRATION,
-        node_id=f"{ContentType.INTEGRATION}:{name}",
-        path=Path("Packs"),
-        fromversion="5.0.0",
-        toversion="99.99.99",
-        display_name=name,
-        name=name,
-        marketplaces=[MarketplaceVersions.XSOAR, MarketplaceVersions.MarketplaceV2],
-        deprecated=False,
-        type="python3",
-        docker_image="mock:docker",
-        category="blabla",
-        commands=[Command(name="test-command", description="")],
-    )
-
-
-def mock_classifier(name: str = "SampleClassifier"):
-    return Classifier(
-        id=name,
-        content_type=ContentType.CLASSIFIER,
-        node_id=f"{ContentType.CLASSIFIER}:{name}",
-        path=Path("Packs"),
-        fromversion="5.0.0",
-        display_name=name,
-        toversion="99.99.99",
-        name=name,
-        marketplaces=[MarketplaceVersions.XSOAR],
-        deprecated=False,
-        type="python3",
-        docker_image="mock:docker",
-        tags=[],
-        is_test=False,
-    )
 
 
 # TESTS

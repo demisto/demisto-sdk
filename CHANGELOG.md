@@ -7,7 +7,7 @@
 * The **format** command now will sync hidden parameters with master branch.
 * Fixed an issue where lock integration failed on FileNotFound.(PANW-internal only).
 * Fixed an issue where **lint** falsely warned of using `demisto.results`.
-* Fixed an issue where **validate** always returned *XSIAM Dashboards* and *Correlation Rule* files as valid.
+* Fixed an issue where **validate** always returned *XSIAM Dashboards* and *Correlation Rules* files as valid.
 
 ## 1.16.0
 * Added a check to **is_docker_image_latest_tag** to only fail the validation on non-latest image tag when the current tag is older than 3 days.

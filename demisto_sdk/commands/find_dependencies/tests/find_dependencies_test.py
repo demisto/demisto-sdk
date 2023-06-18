@@ -1,4 +1,3 @@
-from pathlib import Path
 from typing import List
 from unittest.mock import patch
 
@@ -126,7 +125,6 @@ def create_a_pack_entity(
 
 def working_repo(repo):
     # Create 5 packs with all entities
-
     repo.setup_content_repo(5)
 
     # Create a pack called 'PrismaCloudCompute' with 4 scripts and 1 incident_type.
@@ -624,7 +622,7 @@ def working_repo(repo):
     pack5.create_layout(pack5, generic_layout)
 
     with ChangeCWD(repo.path):
-        ids = cis.IDSetCreator(output=Path(repo.path) / "Tests" / "id_set.json")
+        ids = cis.IDSetCreator()
         ids.create_id_set()
     return repo
 
@@ -2635,6 +2633,7 @@ class TestDependsOnMappers:
                 }
             }
         ]
+
         found_result = PackDependencies._collect_mappers_dependencies(
             pack_mappers=test_input,
             id_set=module_repo.id_set.read_json_as_dict(),

@@ -2031,7 +2031,7 @@ def get_content_path() -> Path:
             logger.info(
                 "[yellow]Please run demisto-sdk in content repository![/yellow]"
             )
-    return Path.cwd()
+    return Path(".")
 
 
 def run_command_os(

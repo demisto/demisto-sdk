@@ -1442,3 +1442,33 @@ def test_get_system_playbook(mocker):
     assert isinstance(playbooks, list)
     assert playbooks[0] == expected_pb
     assert len(playbooks) == 1
+
+
+def test_get_system_playbook_item_does_not_exist_by_name(mocker):
+    """
+    Given: a mock file raw_playbook.txt
+    When: calling get_system_playbook function.
+    Then:
+        - Ensure the playbook returns as valid json as expected
+        - Ensure a list is returned from the function
+    """
+    from demisto_client.demisto_api.rest import ApiException
+    playbook_path = Path(
+        f"{git_path()}/demisto_sdk/commands/download/tests/tests_data/playbook-DummyPlaybook2.yml"
+    )
+
+
+    playbook = get_yaml(playbook_path)
+    playbook['id'] = 'dummy_-_playbook'
+    mocker.patch.object(
+        demisto_client,
+        "generic_request_func",
+        side_effect=(ApiException('Item not found'),
+                     [{"playbooks": [playbook]}],
+                     [playbook_path.read_bytes()])
+    )
+
+    downloader = Downloader(input=["DummyPlaybook"], output="test")
+    playbooks = downloader.get_system_playbook(req_type="GET")
+    assert isinstance(playbooks, list)
+    assert len(playbooks) == 1

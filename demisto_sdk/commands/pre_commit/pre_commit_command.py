@@ -45,7 +45,7 @@ PRECOMMIT_TEMPLATE_PATH = CONTENT_PATH / ".pre-commit-config_template.yaml"
 PRECOMMIT_PATH = CONTENT_PATH / ".pre-commit-config-content.yaml"
 
 # UNSKIP no-implicit-optional once mypy is updated
-SKIPPED_HOOKS = {"format", "validate", "secrets", "no-implicit-optional"}
+SKIPPED_HOOKS = {"format", "validate", "secrets"}
 
 INTEGRATION_SCRIPT_REGEX = re.compile(r"^Packs/.*/(?:Integrations|Scripts)/.*.yml$")
 
@@ -72,6 +72,7 @@ class PreCommitRunner:
         self._get_repos(self.precommit_template)[
             "https://github.com/demisto/demisto-sdk"
         ]["rev"] = self.demisto_sdk_commit_hash
+        self.hooks = self._get_hooks(self.precommit_template)
 
     @staticmethod
     def _get_repos(pre_commit_config: dict) -> dict:
@@ -87,22 +88,20 @@ class PreCommitRunner:
             for hook in repo["hooks"]:
                 hooks[hook["id"]] = hook
                 # if the hook has a skip key, we add it to the SKIPPED_HOOKS set
-                if skip := hook.pop("skip", None):
-                    SKIPPED_HOOKS.add(skip)
+                if hook.pop("skip", None):
+                    SKIPPED_HOOKS.add(hook["id"])
         return hooks
 
     def prepare_hooks(
         self,
-        pre_commit_config: dict,
         python_version: str,
     ) -> None:
-        hooks = self._get_hooks(pre_commit_config)
-        PyclnHook(hooks["pycln"]).prepare_hook(PYTHONPATH)
-        RuffHook(hooks["ruff"]).prepare_hook(python_version, IS_GITHUB_ACTIONS)
-        MypyHook(hooks["mypy"]).prepare_hook(python_version)
-        PEP484Hook(hooks["no-implicit-optional"]).prepare_hook(python_version)
-        ValidateFormatHook(hooks["validate"]).prepare_hook(self.input_files)
-        ValidateFormatHook(hooks["format"]).prepare_hook(self.input_files)
+        PyclnHook(self.hooks["pycln"]).prepare_hook(PYTHONPATH)
+        RuffHook(self.hooks["ruff"]).prepare_hook(python_version, IS_GITHUB_ACTIONS)
+        MypyHook(self.hooks["mypy"]).prepare_hook(python_version)
+        PEP484Hook(self.hooks["no-implicit-optional"]).prepare_hook(python_version)
+        ValidateFormatHook(self.hooks["validate"]).prepare_hook(self.input_files)
+        ValidateFormatHook(self.hooks["format"]).prepare_hook(self.input_files)
 
     def run(
         self,
@@ -162,7 +161,7 @@ class PreCommitRunner:
                     if response.returncode:
                         ret_val = response.returncode
                 continue
-            self.prepare_hooks(precommit_config, python_version)
+            self.prepare_hooks(python_version)
             with open(PRECOMMIT_PATH, "w") as f:
                 yaml.dump(precommit_config, f)
             # use chunks because OS does not support such large comments

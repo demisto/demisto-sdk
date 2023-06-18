@@ -830,7 +830,7 @@ def get_file(
         return {}
 
 
-def get_file_or_remote(file_path: Path, cache_clear=False):
+def get_file_or_remote(file_path: Path, clear_cache=False):
     content_path = get_content_path()
     if file_path.is_absolute():
         absolute_file_path = file_path
@@ -839,7 +839,7 @@ def get_file_or_remote(file_path: Path, cache_clear=False):
         absolute_file_path = content_path / file_path
         relative_file_path = file_path
     try:
-        return get_file(absolute_file_path, cache_clear=cache_clear)
+        return get_file(absolute_file_path, clear_cache=clear_cache)
     except FileNotFoundError:
         logger.warning(
             f"Could not read/find {absolute_file_path} locally, fetching from remote"

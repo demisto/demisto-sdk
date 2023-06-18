@@ -9,6 +9,7 @@
 * Fixed an issue where **lint** falsely warned of using `demisto.results`.
 * Fixed an issue where **validate** always returned *XSIAM Dashboards* and *Correlation Rules* files as valid.
 * Added `GR107` validation to **validate** using the graph validations to check that no deprecated items are used by non-deprecated content.
+* Fixed an issue where the **modeling-rules test** command failed to get the existence of dataset in cases where the dataset takes more than 1 minute to get indexed.
 * Fixed an issue where errors in **validate** was printed to logs as`INFO`.
 
 ## 1.16.0

@@ -429,6 +429,8 @@ class ContributionConverter:
         """Create or updates a pack in the content repo from the contents of a contribution zipfile
 
         Args:
+            working_dir_path (str): the directory where the contribution files are manipulated before coping them to the
+                content pack directory.
             files_to_source_mapping (Dict[str, Dict[str, str]]): Only used when updating a pack. mapping of a file
                 name as inside the contribution zip to a dictionary containing the the associated source info
                 for that file, specifically the base name (the name used in naming the split component files) and

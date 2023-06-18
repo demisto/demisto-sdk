@@ -1046,7 +1046,7 @@ def update_api_modules_dependents_rn(
     return total_updated_packs
 
 
-def get_api_module_from_graph(changed_api_modules) -> List[Integration]:
+def get_api_module_from_graph(changed_api_modules: set) -> List[Integration]:
     if changed_api_modules:
         dependent_items = []
         with Neo4jContentGraphInterface(should_update=True) as graph:
@@ -1076,67 +1076,6 @@ def get_api_module_from_graph(changed_api_modules) -> List[Integration]:
 
     logger.info("No dependent packages found.")
     return []
-
-
-def update_api_modules_dependents_rn_using_id_set(
-    pre_release: bool,
-    update_type: Union[str, None],
-    added: Union[list, set],
-    modified: Union[list, set],
-    id_set_path: Optional[Path] = None,
-    text: str = "",
-) -> set:
-    """Updates release notes for any pack that depends on API module that has changed.
-
-    :param
-        pre_release: The file type
-        update_type: The update type
-        added: The added files
-        modified: The modified files
-        id_set_path: The id set path
-        text: Text to add to the release notes files
-
-    :rtype: ``set``
-    :return
-    A set of updated packs
-    """
-    total_updated_packs: set = set()
-    if not id_set_path:
-        if not os.path.isfile(DEFAULT_ID_SET_PATH):
-            logger.info(
-                "[red]Failed to update integrations dependent on the APIModule pack - no id_set.json is "
-                "available. Please run `demisto-sdk create-id-set` to generate it, and rerun this command.[/red]"
-            )
-            return total_updated_packs
-        id_set_path = DEFAULT_ID_SET_PATH
-    with open(id_set_path) as conf_file:
-        id_set = json.load(conf_file)
-    api_module_set = get_api_module_ids(added)
-    api_module_set = api_module_set.union(get_api_module_ids(modified))
-    logger.info(
-        f"[yellow]Changes were found in the following APIModules: {api_module_set}, updating all dependent "
-        f"integrations.[/yellow]"
-    )
-    integrations = get_api_module_integrations_set(
-        api_module_set, id_set.get("integrations", [])
-    )
-    for integration in integrations:
-        integration_path = integration.get("file_path")
-        integration_pack = integration.get("pack")
-        integration_pack_path = pack_name_to_path(integration_pack)
-        update_pack_rn = UpdateRN(
-            pack_path=integration_pack_path,
-            update_type=update_type,
-            modified_files_in_pack={integration_path},
-            pre_release=pre_release,
-            added_files=set(),
-            pack=integration_pack,
-            text=text,
-        )
-        updated = update_pack_rn.execute_update()
-        if updated:
-            total_updated_packs.add(integration_pack)
-    return total_updated_packs
 
 
 def check_docker_image_changed(main_branch: str, packfile: str) -> Optional[str]:

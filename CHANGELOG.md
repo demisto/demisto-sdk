@@ -7,6 +7,7 @@
 * The **format** command now will sync hidden parameters with master branch.
 * Fixed an issue where lock integration failed on FileNotFound.(PANW-internal only).
 * Fixed an issue where **lint** falsely warned of using `demisto.results`.
+* Fixed an issue where **validate** always returned *XSIAM Dashboards* and *Correlation Rules* files as valid.
 * Added `GR107` validation to **validate** using the graph validations to check that no deprecated items are used by non-deprecated content.
 
 ## 1.16.0

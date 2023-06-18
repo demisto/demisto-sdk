@@ -182,6 +182,29 @@ class DockerBase:
             self.copy_files_container(container, files_to_push)
         return container
 
+    def push_image(self, image: str, log_prompt: str = ""):
+        for _ in range(2):
+            try:
+
+                test_image_name_to_push = image.replace(
+                    "docker-io.art.code.pan.run/", ""
+                )
+                docker_push_output = init_global_docker_client().images.push(
+                    test_image_name_to_push
+                )
+                logger.info(
+                    f"{log_prompt} - Trying to push Image {test_image_name_to_push} to repository. Output = {docker_push_output}"
+                )
+                break
+            except (
+                requests.exceptions.ConnectionError,
+                urllib3.exceptions.ReadTimeoutError,
+                requests.exceptions.ReadTimeout,
+            ):
+                logger.info(
+                    f"{log_prompt} - Unable to push image {image} to repository"
+                )
+
     def create_image(
         self,
         base_image: str,
@@ -233,28 +256,7 @@ class DockerBase:
                 changes=self.changes[container_type],
             )
         if push:
-            for _ in range(2):
-                try:
-
-                    test_image_name_to_push = image.replace(
-                        "docker-io.art.code.pan.run/", ""
-                    )
-                    docker_push_output = init_global_docker_client().images.push(
-                        test_image_name_to_push
-                    )
-                    logger.info(
-                        f"{log_prompt} - Trying to push Image {test_image_name_to_push} to repository. Output = {docker_push_output}"
-                    )
-                    break
-                except (
-                    requests.exceptions.ConnectionError,
-                    urllib3.exceptions.ReadTimeoutError,
-                    requests.exceptions.ReadTimeout,
-                ):
-                    logger.info(
-                        f"{log_prompt} - Unable to push image {image} to repository"
-                    )
-
+            self.push_image(image, log_prompt=log_prompt)
         return image
 
     def pull_or_create_test_image(

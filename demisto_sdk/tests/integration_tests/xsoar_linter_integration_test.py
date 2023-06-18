@@ -275,8 +275,6 @@ def test_xsoar_linter_errors(
     runner = linter.Linter(
         content_repo=test_path,
         pack_dir=test_path,
-        req_2=[],
-        req_3=[],
         docker_engine=True,
         docker_timeout=60,
     )

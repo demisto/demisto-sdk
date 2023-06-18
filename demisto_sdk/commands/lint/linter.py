@@ -97,8 +97,6 @@ class Linter:
     Attributes:
         pack_dir(Path): Pack to run lint on.
         content_repo(Path): Git repo object of content repo.
-        req_2(list): requirements for docker using python2.
-        req_3(list): requirements for docker using python3.
         docker_engine(bool):  Whether docker engine detected by docker-sdk.
         docker_timeout(int): Timeout for docker requests.
         docker_image_flag(str): Indicates the desirable docker image to run lint on (default value is 'from-yml).
@@ -109,8 +107,6 @@ class Linter:
         self,
         pack_dir: Path,
         content_repo: Path,
-        req_3: list,
-        req_2: list,
         docker_engine: bool,
         docker_timeout: int,
         docker_image_flag: str = DockerImageFlagOption.FROM_YML.value,
@@ -118,8 +114,6 @@ class Linter:
         docker_image_target: str = "",
         use_git: bool = False,
     ):
-        self._req_3 = req_3
-        self._req_2 = req_2
         self._content_repo = content_repo
 
         # For covering the case when a path file is sent instead of a directory

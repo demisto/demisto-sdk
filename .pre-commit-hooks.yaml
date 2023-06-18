@@ -40,3 +40,11 @@
   require_serial: true
   language: python
   types: [python]
+
+- id: mypy
+  name: mypy
+  entry: mypy
+  language: python
+  require_serial: true
+  types: [python]
+  exclude: tests/.*|demisto_sdk/commands/init/templates/.*

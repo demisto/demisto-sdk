@@ -841,7 +841,9 @@ def get_file_or_remote(file_path: Path, cache_clear=False):
     try:
         return get_file(absolute_file_path, cache_clear=cache_clear)
     except FileNotFoundError:
-        logger.debug(f"could not read/find {absolute_file_path} locally, fetching from remote"
+        logger.warning(
+            f"Could not read/find {absolute_file_path} locally, fetching from remote"
+        )
         return get_remote_file(relative_file_path)
 
 

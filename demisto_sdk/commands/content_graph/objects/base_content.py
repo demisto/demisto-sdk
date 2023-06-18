@@ -129,7 +129,7 @@ class BaseContent(ABC, BaseModel, metaclass=BaseContentMetaclass):
             Dict[str, Any]: _description_
         """
 
-        json_dct = json.loads(self.json(exclude={"commands", "database_id"}))
+        json_dct = json.loads(self.model_dump_json(exclude={"commands", "database_id"}))
         if "path" in json_dct and Path(json_dct["path"]).is_absolute():
             json_dct["path"] = (Path(json_dct["path"]).relative_to(CONTENT_PATH)).as_posix()  # type: ignore
         json_dct["content_type"] = self.content_type

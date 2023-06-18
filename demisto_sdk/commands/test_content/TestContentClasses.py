@@ -1012,7 +1012,7 @@ class BuildContext:
         )
         res.raise_for_status()
 
-        return res.json()
+        return res.model_dump_json()
 
     def _retrieve_slack_user_id(self):
         """

@@ -6,6 +6,8 @@ import pytest
 from demisto_sdk.commands.common.constants import (
     API_MODULES_PACK,
     EXCLUDED_DISPLAY_NAME_WORDS,
+    MODELING_RULE,
+    PARSING_RULE,
 )
 from demisto_sdk.commands.common.handlers import YAML_Handler
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import (
@@ -21,8 +23,10 @@ from demisto_sdk.tests.constants_test import (
     INVALID_PLAYBOOK_PATH,
     VALID_INTEGRATION_TEST_PATH,
     VALID_PLAYBOOK_ID_PATH,
+    VALID_TEST_PLAYBOOK_MARKETPLACES_PATH,
     VALID_TEST_PLAYBOOK_PATH,
 )
+from TestSuite.test_tools import ChangeCWD
 
 HAS_TESTS_KEY_UNPUTS = [
     (VALID_INTEGRATION_TEST_PATH, "integration", True),
@@ -369,6 +373,66 @@ def test_fromversion_update_validation_yml_structure(
         assert validator.is_valid_fromversion_on_modified() is answer, error
 
 
+INPUTS_VALID_MARKETPLACES_MODIFIED = [
+    (
+        VALID_TEST_PLAYBOOK_PATH,
+        VALID_TEST_PLAYBOOK_MARKETPLACES_PATH,
+        True,
+        "New marketplace was added to the supported marketplaces list",
+    ),
+    (
+        VALID_TEST_PLAYBOOK_MARKETPLACES_PATH,
+        VALID_TEST_PLAYBOOK_PATH,
+        False,
+        "Removing values from the list of supported marketplaces is not allowed",
+    ),
+    (
+        VALID_TEST_PLAYBOOK_MARKETPLACES_PATH,
+        INVALID_PLAYBOOK_PATH,
+        False,
+        "Adding a marketplaces field to existing content is not allowed.",
+    ),
+]
+
+
+@pytest.mark.parametrize(
+    "path, old_file_path, answer, error", INPUTS_VALID_MARKETPLACES_MODIFIED
+)
+def test_marketplaces_update_validation_yml_structure(
+    path, old_file_path, answer, error
+):
+    validator = ContentEntityValidator(StructureValidator(file_path=path))
+    with open(old_file_path) as f:
+        validator.old_file = yaml.load(f)
+        assert validator.is_valid_marketplaces_on_modified() is answer, error
+
+
+INPUTS_VALID_TOVERSION_MODIFIED = [
+    (
+        VALID_TEST_PLAYBOOK_PATH,
+        VALID_TEST_PLAYBOOK_MARKETPLACES_PATH,
+        False,
+        "change toversion field is not allowed",
+    ),
+    (
+        VALID_TEST_PLAYBOOK_PATH,
+        VALID_TEST_PLAYBOOK_PATH,
+        True,
+        "toversion was not changed.",
+    ),
+]
+
+
+@pytest.mark.parametrize(
+    "path, old_file_path, answer, error", INPUTS_VALID_TOVERSION_MODIFIED
+)
+def test_toversion_update_validation_yml_structure(path, old_file_path, answer, error):
+    validator = ContentEntityValidator(StructureValidator(file_path=path))
+    with open(old_file_path) as f:
+        validator.old_file = yaml.load(f)
+        assert validator.is_valid_toversion_on_modified() is answer, error
+
+
 INPUTS_IS_ID_MODIFIED = [
     (
         INVALID_PLAYBOOK_PATH,
@@ -402,3 +466,139 @@ def test_is_backward_compatible(current_file, old_file, answer, error):
     with open(old_file) as f:
         validator.old_file = yaml.load(f)
         assert validator.is_backward_compatible() is answer, error
+
+
+def mock_handle_error(error_message, error_code, file_path):
+    return error_message
+
+
+@pytest.mark.parametrize(
+    "rule_file_name, rule_type, rule_dict, expected_error, valid",
+    [
+        (
+            "MyRule",
+            MODELING_RULE,
+            {"id": "modeling-rule", "name": "Modeling-Rule"},
+            "\nThe file name should end with 'ModelingRules.yml'\nThe rule id should end with 'ModelingRule'\nThe rule name should end with 'Modeling Rule'",
+            False,
+        ),  # Wrong modeling rule file_name, id, and name.
+        (
+            "MyRule",
+            MODELING_RULE,
+            {"id": "ModelingRule", "name": "Modeling Rule"},
+            "\nThe file name should end with 'ModelingRules.yml'",
+            False,
+        ),  # Wrong modeling rule file_name.
+        (
+            "MyRuleModelingRules",
+            MODELING_RULE,
+            {"id": "modeling-rule", "name": "Modeling Rule"},
+            "\nThe rule id should end with 'ModelingRule'",
+            False,
+        ),  # Wrong modeling rule id.
+        (
+            "MyRuleModelingRules",
+            MODELING_RULE,
+            {"id": "ModelingRule", "name": "Modeling-Rule"},
+            "\nThe rule name should end with 'Modeling Rule'",
+            False,
+        ),  # Wrong modeling rule name.
+        (
+            "MyRuleModelingRules",
+            MODELING_RULE,
+            {"id": "ModelingRule", "name": "Modeling Rule"},
+            "",
+            True,
+        ),  # Correct modeling rule file_name id and name.
+        (
+            "MyRuleModelingRules_1_3",
+            MODELING_RULE,
+            {"id": "ModelingRule", "name": "Modeling Rule"},
+            "",
+            True,
+        ),  # Correct modeling rule file_name (with version) id and name.
+        (
+            "MyRuleModelingRules_1_!@#",
+            MODELING_RULE,
+            {"id": "ModelingRule", "name": "Modeling Rule"},
+            "\nThe file name should end with 'ModelingRules.yml'",
+            False,
+        ),  # Wrong modeling rule file_name (wrong version).
+        (
+            "MyRule",
+            PARSING_RULE,
+            {"id": "parsing-rule", "name": "Parsing-Rule"},
+            "\nThe file name should end with 'ParsingRules.yml'\nThe rule id should end with 'ParsingRule'\nThe rule name should end with 'Parsing Rule'",
+            False,
+        ),  # Wrong parsing rule file_name id and name.
+        (
+            "MyRule",
+            PARSING_RULE,
+            {"id": "ParsingRule", "name": "Parsing Rule"},
+            "\nThe file name should end with 'ParsingRules.yml'",
+            False,
+        ),  # Wrong parsing rule file_name.
+        (
+            "MyRuleParsingRules",
+            PARSING_RULE,
+            {"id": "parsing-rule", "name": "Parsing Rule"},
+            "\nThe rule id should end with 'ParsingRule'",
+            False,
+        ),  # Wrong parsing rule id.
+        (
+            "MyRuleParsingRules",
+            PARSING_RULE,
+            {"id": "ParsingRule", "name": "Parsing-Rule"},
+            "\nThe rule name should end with 'Parsing Rule'",
+            False,
+        ),  # Wrong parsing rule name.
+        (
+            "MyRuleParsingRules",
+            PARSING_RULE,
+            {"id": "ParsingRule", "name": "Parsing Rule"},
+            "",
+            True,
+        ),  # Correct parsing rule file_name id and name.
+        (
+            "MyRuleParsingRules_1_3",
+            PARSING_RULE,
+            {"id": "ParsingRule", "name": "Parsing Rule"},
+            "",
+            True,
+        ),  # Correct parsing rule file_name (with version) id and name.
+        (
+            "MyRuleParsingRules_1_!@#",
+            PARSING_RULE,
+            {"id": "ParsingRule", "name": "Parsing Rule"},
+            "\nThe file name should end with 'ParsingRules.yml'",
+            False,
+        ),  # Wrong parsing rule file_name (wrong version).
+    ],
+)
+def test_is_valid_rule_suffix(
+    mocker, repo, rule_type, rule_file_name, rule_dict, expected_error, valid
+):
+    """
+    Given: A modeling/parsing rule with valid/invalid file_name/id/name
+    When: running is_valid_rule_suffix_name.
+    Then: Validate that the modeling/parsing rule is valid/invalid and the message (in case of invalid) is as expected.
+    """
+    pack = repo.create_pack("TestPack")
+    create_rule_function = {
+        MODELING_RULE: pack.create_modeling_rule,
+        PARSING_RULE: pack.create_parsing_rule,
+    }[rule_type]
+    dummy_rule = create_rule_function(rule_file_name, rule_dict)
+    structure_validator = StructureValidator(dummy_rule.yml.path)
+    error_message = mocker.patch(
+        "demisto_sdk.commands.common.hook_validations.content_entity_validator.ContentEntityValidator.handle_error",
+        side_effect=mock_handle_error,
+    )
+
+    with ChangeCWD(repo.path):
+        rule_validator = ContentEntityValidator(structure_validator)
+        assert rule_validator.is_valid_rule_suffix(rule_type) == valid
+        if not valid:
+            assert (
+                error_message.call_args[0][0].split("is invalid:")[1] == expected_error
+            )

@@ -11,9 +11,13 @@ from demisto_sdk.commands.common.constants import (
     BETA_INTEGRATION_DISCLAIMER,
     FILETYPE_TO_DEFAULT_FROMVERSION,
     INTEGRATION_CATEGORIES,
+    MODELING_RULE_ID_SUFFIX,
+    MODELING_RULE_NAME_SUFFIX,
     MODULES,
     PACK_METADATA_DESC,
     PACK_METADATA_NAME,
+    PARSING_RULE_ID_SUFFIX,
+    PARSING_RULE_NAME_SUFFIX,
     RELIABILITY_PARAMETER_NAMES,
     RN_CONTENT_ENTITY_WITH_STARS,
     RN_HEADER_BY_FILE_TYPE,
@@ -98,6 +102,8 @@ ALLOWED_IGNORE_ERRORS = [
     "RN116",
     "MR104",
     "MR105",
+    "MR108",
+    "PR101",
     "LO107",
     "IN107",
     "DB100",
@@ -259,6 +265,21 @@ ERROR_CODE = {
         "code": "BC106",
         "ui_applicable": False,
         "related_field": "fromversion",
+    },
+    "to_version_modified": {
+        "code": "BC107",
+        "ui_applicable": False,
+        "related_field": "toversion",
+    },
+    "marketplaces_removed": {
+        "code": "BC108",
+        "ui_applicable": False,
+        "related_field": "marketplaces",
+    },
+    "marketplaces_added": {
+        "code": "BC109",
+        "ui_applicable": False,
+        "related_field": "marketplaces",
     },
     # CJ - conf.json
     "description_missing_from_conf_json": {
@@ -1755,6 +1776,11 @@ ERROR_CODE = {
         "ui_applicable": False,
         "related_field": "",
     },
+    "invalid_modeling_rule_suffix_name": {
+        "code": "MR108",
+        "ui_applicable": False,
+        "related_field": "",
+    },
     # CR - Correlation Rules
     "correlation_rule_starts_with_hyphen": {
         "code": "CR100",
@@ -1775,6 +1801,11 @@ ERROR_CODE = {
     # PR - Parsing Rules
     "parsing_rules_files_naming_error": {
         "code": "PR100",
+        "ui_applicable": False,
+        "related_field": "",
+    },
+    "invalid_parsing_rule_suffix_name": {
+        "code": "PR101",
         "ui_applicable": False,
         "related_field": "",
     },
@@ -3765,8 +3796,32 @@ class Errors:
     @error_code_decorator
     def from_version_modified():
         return (
-            "You've added fromversion to an existing "
-            "file in the system, this is not allowed, please undo."
+            "Adding or changing the maximal supported version field (toVersion/toversion) is not allowed. \n"
+            "Please undo, or request a force merge."
+        )
+
+    @staticmethod
+    @error_code_decorator
+    def to_version_modified():
+        return (
+            "Adding or changing the maximal supported version field (toVersion/toversion) is not allowed. \n"
+            "Please undo, or request a force merge."
+        )
+
+    @staticmethod
+    @error_code_decorator
+    def marketplaces_removed(removed: str):
+        return (
+            "Removing values from the list of supported marketplaces is not allowed. \n"
+            f"Please undo this action and add back - {removed} or request a force merge."
+        )
+
+    @staticmethod
+    @error_code_decorator
+    def marketplaces_added():
+        return (
+            "Adding a marketplaces field to existing content is not allowed. \n"
+            "Undo this action or request a force merge."
         )
 
     @staticmethod
@@ -4492,6 +4547,34 @@ class Errors:
             f"The following rule file name is invalid {invalid_files} - make sure that the rule name is "
             f"the same as the folder containing it."
         )
+
+    @staticmethod
+    @error_code_decorator
+    def invalid_modeling_rule_suffix_name(file_path, **kwargs):
+        message = f"The file {file_path} is invalid:"
+        if kwargs.get("invalid_file_name"):
+            message += (
+                f"\nThe file name should end with '{MODELING_RULE_ID_SUFFIX}s.yml'"
+            )
+        if kwargs.get("invalid_id"):
+            message += f"\nThe rule id should end with '{MODELING_RULE_ID_SUFFIX}'"
+        if kwargs.get("invalid_name"):
+            message += f"\nThe rule name should end with '{MODELING_RULE_NAME_SUFFIX}'"
+        return message
+
+    @staticmethod
+    @error_code_decorator
+    def invalid_parsing_rule_suffix_name(file_path, **kwargs):
+        message = f"The file {file_path} is invalid:"
+        if kwargs.get("invalid_file_name"):
+            message += (
+                f"\nThe file name should end with '{PARSING_RULE_ID_SUFFIX}s.yml'"
+            )
+        if kwargs.get("invalid_id"):
+            message += f"\nThe rule id should end with '{PARSING_RULE_ID_SUFFIX}'"
+        if kwargs.get("invalid_name"):
+            message += f"\nThe rule name should end with '{PARSING_RULE_NAME_SUFFIX}'"
+        return message
 
     @staticmethod
     @error_code_decorator

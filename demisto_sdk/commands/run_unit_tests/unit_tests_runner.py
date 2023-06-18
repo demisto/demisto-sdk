@@ -200,7 +200,7 @@ def unit_test_runner(file_paths: List[Path], verbose: bool = False) -> int:
                     exit_code = 1
                 else:
                     logger.info(
-                        f"All tests passed for {integration_script.path} in {docker_image}"
+                        f"[green]All tests passed for {integration_script.path} in {docker_image}[/green]"
                     )
                 container.remove(force=True)
             except Exception as e:

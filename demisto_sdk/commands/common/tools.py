@@ -830,6 +830,20 @@ def get_file(
         return {}
 
 
+def get_file_or_remote(file_path: Path, cache_clear=False):
+    content_path = get_content_path()
+    if file_path.is_absolute():
+        absolute_file_path = file_path
+        relative_file_path = file_path.relative_to(content_path)
+    else:
+        absolute_file_path = content_path / file_path
+        relative_file_path = file_path
+    try:
+        return get_file(absolute_file_path, cache_clear=cache_clear)
+    except FileNotFoundError:
+        return get_remote_file(relative_file_path)
+
+
 def get_yaml(file_path, cache_clear=False):
     if cache_clear:
         get_file.cache_clear()
@@ -1988,7 +2002,7 @@ def get_latest_upload_flow_commit_hash() -> str:
     return last_commit
 
 
-def get_content_path() -> Union[str, PathLike, None]:
+def get_content_path() -> Path:
     """Get abs content path, from any CWD
     Returns:
         str: Absolute content path
@@ -2006,13 +2020,13 @@ def get_content_path() -> Union[str, PathLike, None]:
 
         if not is_fork_repo and not is_external_repo:
             raise git.InvalidGitRepositoryError
-        return git_repo.working_dir
+        return Path(git_repo.working_dir).absolute()  # type: ignore[arg-type]
     except (git.InvalidGitRepositoryError, git.NoSuchPathError):
         if not os.getenv("DEMISTO_SDK_IGNORE_CONTENT_WARNING"):
             logger.info(
                 "[yellow]Please run demisto-sdk in content repository![/yellow]"
             )
-    return ""
+    return Path.cwd()
 
 
 def run_command_os(

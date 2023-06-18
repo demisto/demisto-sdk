@@ -22,7 +22,10 @@ from demisto_sdk.commands.common.docker_helper import get_python_version
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
 from demisto_sdk.commands.common.logger import logger
-from demisto_sdk.commands.common.tools import get_last_remote_release_version
+from demisto_sdk.commands.common.tools import (
+    get_file_or_remote,
+    get_last_remote_release_version,
+)
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.content_graph.objects.integration_script import (
     IntegrationScript,
@@ -38,7 +41,7 @@ json = JSON_Handler()
 
 IS_GITHUB_ACTIONS = os.getenv("GITHUB_ACTIONS", False)
 
-PRECOMMIT_TEMPLATE_PATH = Path(__file__).parent / ".pre-commit-config_template.yaml"
+PRECOMMIT_TEMPLATE_PATH = CONTENT_PATH / ".pre-commit-config_template.yaml"
 PRECOMMIT_PATH = CONTENT_PATH / ".pre-commit-config-content.yaml"
 
 # UNSKIP no-implicit-optional once mypy is updated
@@ -62,8 +65,7 @@ class PreCommitRunner:
         self.all_files = set(
             itertools.chain.from_iterable(self.python_version_to_files.values())
         )
-        with open(PRECOMMIT_TEMPLATE_PATH) as f:
-            self.precommit_template = yaml.load(f)
+        self.precommit_template = get_file_or_remote(PRECOMMIT_TEMPLATE_PATH)
 
         # changes the demisto-sdk revision to the latest release version (or the debug commit hash)
         # to debug, modify the DEMISTO_SDK_COMMIT_HASH_DEBUG variable to your demisto-sdk commit hash

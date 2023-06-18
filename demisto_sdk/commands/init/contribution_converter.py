@@ -414,9 +414,7 @@ class ContributionConverter:
                         # At first time, create another dir for all indicator-fields files and move them there
                         if not os.path.exists(dst_ioc_fields_dir):
                             os.makedirs(dst_ioc_fields_dir)
-                        file_path = os.path.join(
-                            self.working_dir_path, dir_name, file
-                        )
+                        file_path = os.path.join(self.working_dir_path, dir_name, file)
                         shutil.move(file_path, dst_ioc_fields_dir)  # type: ignore
 
                 # If there were only indicatorfiled files, the original folder will remain empty, so we will delete it
@@ -457,9 +455,7 @@ class ContributionConverter:
             self.unpack_contribution_to_dst_pack_directory()
             # convert
             self.rearranging_before_conversion()
-            unpacked_contribution_dirs = get_child_directories(
-                self.working_dir_path
-            )
+            unpacked_contribution_dirs = get_child_directories(self.working_dir_path)
             for unpacked_contribution_dir in unpacked_contribution_dirs:
                 self.convert_contribution_dir_to_pack_contents(
                     unpacked_contribution_dir

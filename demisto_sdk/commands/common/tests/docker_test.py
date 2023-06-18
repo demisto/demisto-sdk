@@ -71,7 +71,7 @@ TEST_INTEGRATION_FILE = os.path.join(FILES_PATH, "fake_integration.yml")
 TEST_SCRIPT_FILE = os.path.join(FILES_PATH, "fake-script.yml")
 
 
-def mock_docker_image_validator():
+def mock_docker_image_validator(is_pack_xsoar_supported=True):
     with mock.patch.object(DockerImageValidator, "__init__", lambda x, y, z, w: None):
         docker_image_validator = DockerImageValidator(None, None, None)
         docker_image_validator.yml_file = {}
@@ -82,7 +82,8 @@ def mock_docker_image_validator():
         docker_image_validator.specific_validations = None
         docker_image_validator.predefined_deprecated_ignored_errors = {}
         docker_image_validator.predefined_by_support_ignored_errors = {}
-        docker_image_validator.is_pack_xsoar_supported=True
+        docker_image_validator.is_pack_xsoar_supported = is_pack_xsoar_supported
+        docker_image_validator.print_as_warnings = False
         return docker_image_validator
 
 
@@ -190,6 +191,33 @@ class TestDockerImage:
         assert ("", "") == docker_image_validator.parse_docker_image(
             docker_image="blah/blah:1.2.3.4"
         )
+
+    def test_parse_docker_image_error(self, mocker):
+        """
+        Given: a mock for docker_image_validator which should fail on DO102, DO104, and DO107 and that the pack isn't xsoar supported.
+
+        When Running parse_docker_image, is_docker_image_valid, get_docker_image_latest_tag validations
+
+        Ensure that the right error codes were thrown to the warning logs and that the docker validator is_valid flag is still True.
+        """
+        docker_image_validator = mock_docker_image_validator(
+            is_pack_xsoar_supported=False
+        )
+        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "warning")
+        expected_errors = ["DO104", "DO107", "DO102"]
+        docker_image_validator.docker_image_latest_tag = ""
+        docker_image_validator.code_type = "Python"
+        docker_image_validator.yml_docker_image = "yml_docker_image"
+        docker_image_validator.is_deprecated_image = False
+        docker_image_validator.is_valid = True
+        docker_image_validator.parse_docker_image("my_test_docker")
+        docker_image_validator.is_docker_image_valid()
+        docker_image_validator.get_docker_image_latest_tag(
+            docker_image_name="", yml_docker_image="test/python:1.3-alpine"
+        )
+        for error in expected_errors:
+            assert str_in_call_args_list(logger_info.call_args_list, error)
+        assert docker_image_validator.is_valid
 
     # disable-secrets-detection-end
     def test_is_docker_image_latest_tag_with_default_image(self):

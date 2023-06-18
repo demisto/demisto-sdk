@@ -86,6 +86,9 @@ class PreCommitRunner:
         for repo in pre_commit_config["repos"]:
             for hook in repo["hooks"]:
                 hooks[hook["id"]] = hook
+                # if the hook has a skip key, we add it to the SKIPPED_HOOKS set
+                if skip := hook.pop("skip", None):
+                    SKIPPED_HOOKS.add(skip)
         return hooks
 
     def prepare_hooks(

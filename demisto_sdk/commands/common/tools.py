@@ -2023,7 +2023,9 @@ def get_content_path() -> Path:
 
         if not is_fork_repo and not is_external_repo:
             raise git.InvalidGitRepositoryError
-        return Path(git_repo.working_dir).absolute()  # type: ignore[arg-type]
+        if not git_repo.working_dir:
+            return Path.cwd()
+        return Path(git_repo.working_dir).absolute()
     except (git.InvalidGitRepositoryError, git.NoSuchPathError):
         if not os.getenv("DEMISTO_SDK_IGNORE_CONTENT_WARNING"):
             logger.info(

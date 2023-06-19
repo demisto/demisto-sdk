@@ -3626,15 +3626,15 @@ def parse_marketplace_kwargs(kwargs: Dict[str, Any]) -> MarketplaceVersions:
     return MarketplaceVersions.XSOAR  # default
 
 
-
 def get_api_module_from_graph(changed_api_modules: set, graph=None) -> List:
     if changed_api_modules:
         dependent_items = []
         if not graph:
             from demisto_sdk.commands.content_graph.interface.neo4j.neo4j_graph import (
-                Neo4jContentGraphInterface
+                Neo4jContentGraphInterface,
             )
-            graph= Neo4jContentGraphInterface(should_update=True)
+
+            graph = Neo4jContentGraphInterface(should_update=True)
         for changed_api_module in changed_api_modules:
             logger.info(
                 f"Checking for packages dependent on the modified API module {changed_api_module}..."

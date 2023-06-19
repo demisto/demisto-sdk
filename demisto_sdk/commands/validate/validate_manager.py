@@ -2189,6 +2189,7 @@ class ValidateManager:
             modified_files (set): a set of modified files.
             old_format_files (set): a set of old format files that were changed.
             added_files (set): a set of files that were added.
+            graph_validator : Content graph
 
         Returns:
             bool. True if no missing RN found, False otherwise

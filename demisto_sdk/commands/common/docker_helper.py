@@ -286,11 +286,8 @@ class DockerBase:
         python2_requirements = get_pip_requirements_from_file(
             TEST_REQUIREMENTS_DIR / "python2_requirements" / "dev-requirements.txt"
         )
-        pip_requirements = []
-        if python_version == 3:
-            pip_requirements = python3_requirements
-        elif python_version == 2:
-            pip_requirements = python2_requirements
+        pip_requirements = {3: python3_requirements, 2: python2_requirements}.get(python_version, [])
+
         if additional_requirements:
             pip_requirements.extend(additional_requirements)
         identifier = hashlib.md5(

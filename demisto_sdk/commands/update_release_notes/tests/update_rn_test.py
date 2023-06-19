@@ -1905,14 +1905,11 @@ class TestRNUpdateUnit:
             modified_files_in_pack=modified_files,
             added_files=set(),
         )
-        cwd = pathlib.Path.cwd()
-        assert str(cwd / "file1") in update_rn.modified_files_in_pack
-        assert str(cwd / "file2_new") in update_rn.modified_files_in_pack
-        assert (
-            str(cwd / "file2"),
-            str(cwd / "file2_new"),
-        ) not in update_rn.modified_files_in_pack
-        assert str(cwd / "file3") in update_rn.modified_files_in_pack
+
+        assert "file1" in update_rn.modified_files_in_pack
+        assert "file2_new" in update_rn.modified_files_in_pack
+        assert ("file2", "file2_new") not in update_rn.modified_files_in_pack
+        assert "file3" in update_rn.modified_files_in_pack
 
     def test_change_image_or_desc_file_path(self):
         """

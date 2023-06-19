@@ -111,12 +111,14 @@ def unit_test_runner(file_paths: List[Path], verbose: bool = False) -> int:
             logger.warning(f"Skipping {filename} as it is not a content item.")
             continue
 
+        relative_integration_script_path = integration_script.path.relative_to(
+            CONTENT_PATH
+        )
+
         if (test_data_dir := (integration_script.path.parent / "test_data")).exists():
             (test_data_dir / "__init__.py").touch()
 
-        working_dir = (
-            f"/content/{integration_script.path.parent.relative_to(CONTENT_PATH)}"
-        )
+        working_dir = f"/content/{relative_integration_script_path.parent}"
         docker_images = [integration_script.docker_image or DEFAULT_DOCKER_IMAGE]
         if os.getenv("GITLAB_CI"):
             docker_images = [
@@ -144,7 +146,7 @@ def unit_test_runner(file_paths: List[Path], verbose: bool = False) -> int:
                 )
 
                 logger.info(
-                    f"Running test for {integration_script.path} using {docker_image=} with {test_docker_image=}"
+                    f"Running test for {relative_integration_script_path} using {docker_image=} with {test_docker_image=}"
                 )
                 container = docker_client.containers.run(
                     image=test_docker_image,
@@ -174,14 +176,14 @@ def unit_test_runner(file_paths: List[Path], verbose: bool = False) -> int:
                 if status_code := container.wait()["StatusCode"]:
                     if status_code == NO_TESTS_COLLECTED:
                         logger.warning(
-                            f"No test are collected for {integration_script.path} using {docker_image}."
+                            f"No test are collected for {relative_integration_script_path} using {docker_image}."
                         )
                         continue
                     if not (
                         integration_script.path.parent / ".report_pytest.xml"
                     ).exists():
                         raise Exception(
-                            f"No pytest report found in {integration_script.path.parent}. Logs: {container.logs()}"
+                            f"No pytest report found in {relative_integration_script_path.parent}. Logs: {container.logs()}"
                         )
                     test_failed = False
                     for suite in JUnitXml.fromfile(
@@ -195,12 +197,12 @@ def unit_test_runner(file_paths: List[Path], verbose: bool = False) -> int:
                                 test_failed = True
                     if not test_failed:
                         logger.error(
-                            f"Error running unit tests for {integration_script.path} using {docker_image=}. Container reports  {status_code=}, logs: {container.logs()}"
+                            f"Error running unit tests for {relative_integration_script_path} using {docker_image=}. Container reports  {status_code=}, logs: {container.logs()}"
                         )
                     exit_code = 1
                 else:
                     logger.info(
-                        f"[green]All tests passed for {integration_script.path} in {docker_image}[/green]"
+                        f"[green]All tests passed for {relative_integration_script_path} in {docker_image}[/green]"
                     )
                 container.remove(force=True)
             except Exception as e:

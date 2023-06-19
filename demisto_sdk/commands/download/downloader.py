@@ -446,25 +446,6 @@ class Downloader:
             automation_list.append(ast.literal_eval(api_response[0]))
         return automation_list
 
-    def get_playbook_id_by_playbook_name(
-        self, playbook_name: str, err: Optional[ApiException] = None
-    ) -> Optional[str]:
-        
-        endpoint = "/playbook/search"
-        playbooks = demisto_client.generic_request_func(
-            self.client,
-            endpoint,
-            "POST",
-            response_type="object",
-            body={"query": f"name:{playbook_name}"},
-        )[0]["playbooks"]
-        if not playbooks:
-            if err:
-                raise err
-            else:
-                return None
-        return playbooks[0]["id"]
-
     def get_system_playbook(self, req_type):
         playbook_list: list = []
         for playbook in self.input_files:
@@ -476,12 +457,13 @@ class Downloader:
             except ApiException as err:
                 # handling in case the id and name are not the same,
                 # trying to get the id by the name through a different api call
-                playbook_id = self.get_playbook_id_by_playbook_name(playbook, err)
-                endpoint = f"/playbook/{playbook_id}/yaml"
-                api_response = demisto_client.generic_request_func(
-                    self.client, endpoint, req_type, response_type="object"
-                )
-                
+                if playbook_id := self.get_playbook_id_by_playbook_name(playbook):
+                    endpoint = f"/playbook/{playbook_id}/yaml"
+                    api_response = demisto_client.generic_request_func(
+                        self.client, endpoint, req_type, response_type="object"
+                    )
+                else:
+                    raise err
             playbook_list.append(yaml.load(api_response[0].decode()))
 
         return playbook_list
@@ -740,6 +722,30 @@ class Downloader:
                 )
 
         return content_object
+
+    def get_playbook_id_by_playbook_name(self, playbook_name: str) -> Optional[str]:
+        """
+        extract the playbook id by name,
+        calling the api returns an object that cannot be parsed properly,
+        and its use is only for extracting the id.
+        
+        Args:
+            playbook_name (str): The name of a playbook
+
+        Returns:
+            Optional[str]: The ID of a playbook
+        """
+        endpoint = "/playbook/search"
+        playbooks = demisto_client.generic_request_func(
+            self.client,
+            endpoint,
+            "POST",
+            response_type="object",
+            body={"query": f"name:{playbook_name}"},
+        )[0]["playbooks"]
+        if not playbooks:
+            return None
+        return playbooks[0]["id"]
 
     @staticmethod
     def get_main_file_details(content_entity: str, entity_instance_path: str) -> tuple:

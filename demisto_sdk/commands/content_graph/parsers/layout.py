@@ -16,11 +16,11 @@ class LayoutParser(JSONContentItemParser, content_type=ContentType.LAYOUT):
     def __init__(
         self, path: Path, pack_marketplaces: List[MarketplaceVersions]
     ) -> None:
+        super().__init__(path, pack_marketplaces)
         if not self.json_data.get("group"):
             logger.debug(f"{path}: Not a layout container, skipping.")
             raise NotAContentItemException
 
-        super().__init__(path, pack_marketplaces)
         self.kind = self.json_data.get("kind")
         self.tabs = self.json_data.get("tabs")
         self.definition_id = self.json_data.get("definitionId")

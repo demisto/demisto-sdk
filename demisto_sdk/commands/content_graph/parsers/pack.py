@@ -69,6 +69,9 @@ class PackContentItems:
         self.xsiam_report = ContentItemsList(content_type=ContentType.XSIAM_REPORT)
         self.xdrc_template = ContentItemsList(content_type=ContentType.XDRC_TEMPLATE)
         self.layout_rule = ContentItemsList(content_type=ContentType.LAYOUT_RULE)
+        self.preprocess_rule = ContentItemsList(
+            content_type=ContentType.PREPROCESS_RULE
+        )
 
     def iter_lists(self) -> Iterator[ContentItemsList]:
         yield from vars(self).values()

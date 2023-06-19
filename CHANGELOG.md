@@ -1,7 +1,9 @@
 # Changelog
 ## Unreleased
+* test
 * Added a validation that assures filename, id, and name have a correct suffix for modeling/parsing rules files.
 * Added new **validate** checks, preventing unwanted changes of the marketplaces (BC108,BC109), toversion (BC107)  and fromversion (BC106) fields.
+* other test
 * Removed the `timezone_offset` argument in the *modeling-rules test* command.
 * Fixed an issue where **lint** failed when importing functions from CommonServerUserPython.
 * The **format** command now will sync hidden parameters with master branch.

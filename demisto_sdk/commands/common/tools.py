@@ -838,7 +838,9 @@ def get_file_or_remote(file_path: Path, clear_cache=False):
         try:
             relative_file_path = file_path.relative_to(content_path)
         except ValueError:
-            logger.debug(f"{file_path} is not a subpath of {content_path}")
+            logger.debug(
+                f"{file_path} is not a subpath of {content_path}. If the file does not exists locally, it could not be fetched."
+            )
     else:
         absolute_file_path = content_path / file_path
         relative_file_path = file_path

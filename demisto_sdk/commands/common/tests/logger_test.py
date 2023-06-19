@@ -49,7 +49,8 @@ def test_string_starts_with_escapes(msg: str, expected: bool):
 )
 def test_record_starts_with_escapes(msg: str, expected: bool):
     assert (
-        ColorConsoleFormatter._record_starts_with_escapes(_create_log_record(msg))
+        ColorConsoleFormatter._record_starts_with_escapes(
+            _create_log_record(msg))
         == expected
     )
 
@@ -67,7 +68,8 @@ def test_record_starts_with_escapes(msg: str, expected: bool):
     ],
 )
 def test_get_start_escapes(msg: str, expected: bool):
-    assert ColorConsoleFormatter._get_start_escapes(_create_log_record(msg)) == expected
+    assert ColorConsoleFormatter._get_start_escapes(
+        _create_log_record(msg)) == expected
 
 
 @pytest.mark.parametrize(
@@ -82,7 +84,8 @@ def test_get_start_escapes(msg: str, expected: bool):
 )
 def test_insert_into_escapes(msg: str, string: str, expected: str):
     assert (
-        ColorConsoleFormatter._insert_into_escapes(_create_log_record(msg), string)
+        ColorConsoleFormatter._insert_into_escapes(
+            _create_log_record(msg), string)
         == expected
     )
 

@@ -183,6 +183,12 @@ class DockerBase:
         return container
 
     def push_image(self, image: str, log_prompt: str = ""):
+        """This pushes the test image to dockerhub if the DOCKERHUB env variables are set
+
+        Args:
+            image (str): The image to push
+            log_prompt (str, optional): The log prompt to print. Defaults to "".
+        """
         for _ in range(2):
             try:
 
@@ -201,7 +207,7 @@ class DockerBase:
                 urllib3.exceptions.ReadTimeoutError,
                 requests.exceptions.ReadTimeout,
             ):
-                logger.info(
+                logger.warning(
                     f"{log_prompt} - Unable to push image {image} to repository"
                 )
 

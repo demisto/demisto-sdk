@@ -359,7 +359,8 @@ class TestValidators:
         assert validator.is_valid_version() is answer
 
     @pytest.mark.parametrize(
-        "source, target, answer, validator", INPUTS_IS_VALID_VERSION
+        "source, target, answer, validator",
+        (INPUTS_IS_VALID_VERSION + XSIAM_IS_VALID_FROM_VERSION),
     )
     def test_is_file_valid(
         self,

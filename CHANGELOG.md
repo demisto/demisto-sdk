@@ -11,6 +11,7 @@
 * Fixed an issue where **validate** always returned *XSIAM Dashboards* and *Correlation Rules* files as valid.
 * Added `GR107` validation to **validate** using the graph validations to check that no deprecated items are used by non-deprecated content.
 * Fixed an issue where the **modeling-rules test** command failed to get the existence of dataset in cases where the dataset takes more than 1 minute to get indexed.
+* Moved the **pre-commmit** command template to the `demisto/content` repository, where it's easier to maintain.
 
 ## 1.16.0
 * Added a check to **is_docker_image_latest_tag** to only fail the validation on non-latest image tag when the current tag is older than 3 days.

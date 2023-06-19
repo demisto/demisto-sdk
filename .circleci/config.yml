@@ -248,7 +248,10 @@ jobs:
             command: |
               poetry run pre-commit --version
               poetry run pre-commit run -a
-        
+        - run:
+            name: Mypy
+            command: |
+              poetry run mypy .
         - run:
             name: Run Pytest collection
             command: |

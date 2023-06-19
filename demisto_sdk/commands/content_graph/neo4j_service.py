@@ -15,9 +15,7 @@ from demisto_sdk.commands.content_graph.common import (
     NEO4J_PASSWORD,
 )
 
-REPO_PATH = CONTENT_PATH
-if not CONTENT_PATH.is_absolute():
-    REPO_PATH = CONTENT_PATH.absolute()
+REPO_PATH = CONTENT_PATH.absolute()
 NEO4J_VERSION = "5.5.0"
 
 NEO4J_SERVICE_IMAGE = f"neo4j:{NEO4J_VERSION}"

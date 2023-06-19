@@ -222,6 +222,21 @@ class TestValidators:
         (INVALID_PLAYBOOK_PATH, PLAYBOOK_TARGET, False, PlaybookValidator),
     ]
 
+    XSIAM_IS_VALID_FROM_VERSION = [
+        (
+            INVALID_XSIAM_DASHBOARD_PATH,
+            XSIAM_DASHBOARD_TARGET,
+            False,
+            XSIAMDashboardValidator,
+        ),
+        (
+            INVALID_XSIAM_CORRELATION_PATH,
+            XSIAM_CORRELATION_TARGET,
+            False,
+            CorrelationRuleValidator,
+        ),
+    ]
+
     def test_validation_of_beta_playbooks(self, mocker):
         """
         Given
@@ -248,7 +263,7 @@ class TestValidators:
             os.remove(PLAYBOOK_TARGET)
 
     @pytest.mark.parametrize(
-        "source, target, answer, validator", INPUTS_IS_VALID_VERSION
+        "source, target, answer, validator", (INPUTS_IS_VALID_VERSION)
     )
     def test_is_valid_version(
         self, source: str, target: str, answer: Any, validator: ContentEntityValidator
@@ -270,21 +285,6 @@ class TestValidators:
             assert res_validator.is_valid_version() is answer
         finally:
             os.remove(target)
-
-    XSIAM_IS_VALID_FROM_VERSION = [
-        (
-            INVALID_XSIAM_DASHBOARD_PATH,
-            XSIAM_DASHBOARD_TARGET,
-            False,
-            XSIAMDashboardValidator,
-        ),
-        (
-            INVALID_XSIAM_CORRELATION_PATH,
-            XSIAM_CORRELATION_TARGET,
-            False,
-            CorrelationRuleValidator,
-        ),
-    ]
 
     @pytest.mark.parametrize(
         "source, target, answer, validator",
@@ -356,7 +356,8 @@ class TestValidators:
         assert validator.is_valid_version() is answer
 
     @pytest.mark.parametrize(
-        "source, target, answer, validator", INPUTS_IS_VALID_VERSION
+        "source, target, answer, validator",
+        (INPUTS_IS_VALID_VERSION + XSIAM_IS_VALID_FROM_VERSION),
     )
     def test_is_file_valid(
         self,

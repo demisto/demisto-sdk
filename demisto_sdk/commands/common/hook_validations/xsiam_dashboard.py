@@ -37,12 +37,10 @@ class XSIAMDashboardValidator(ContentEntityValidator):
     def is_valid_file(self, validate_rn=True, is_new_file=False, use_git=False):
         """
         Check whether the xsiam dashboard is valid or not
-        Note: For now we return True regardless of the item content. More info:
-        https://github.com/demisto/etc/issues/48151#issuecomment-1109660727
         """
-        self.is_files_naming_correct()
-        super().is_valid_fromversion()
-        return self._is_valid
+
+        answers = [self.is_files_naming_correct(), super().is_valid_fromversion()]
+        return all(answers)
 
     def is_valid_version(self):
         """

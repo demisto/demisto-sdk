@@ -18,6 +18,7 @@ from wcmatch.pathlib import NEGATE, Path
 
 from demisto_sdk.commands.common.constants import (
     API_MODULE_FILE_SUFFIX,
+    FORMATTING_SCRIPT,
     INTEGRATIONS_DIR,
     NATIVE_IMAGE_DOCKER_NAME,
     NATIVE_IMAGE_FILE_NAME,
@@ -328,6 +329,9 @@ class Linter:
             )
             self._facts["is_long_running"] = script_obj.get("longRunning")
             self._facts["commands"] = self._get_commands_list(script_obj)
+            self._facts["formatting_script"] = FORMATTING_SCRIPT in script_obj.get(
+                "tags", []
+            )
             self._pkg_lint_status["pack_type"] = script_obj.get("type")
         except (FileNotFoundError, OSError, KeyError):
             self._pkg_lint_status["errors"].append("Unable to parse package yml")
@@ -637,7 +641,9 @@ class Linter:
             )
             stdout, stderr, exit_code = run_command_os(
                 command=build_xsoar_linter_command(
-                    lint_files, self._facts.get("support_level", "base")  # type: ignore
+                    files=lint_files,  # type: ignore
+                    support_level=self._facts.get("support_level", "base"),
+                    formatting_script=self._facts.get("formatting_script", False),
                 ),
                 cwd=self._pack_abs_dir,
                 env=myenv,
@@ -1085,6 +1091,11 @@ class Linter:
                 exit_code = RERUN
             else:
                 logger.info(f"{log_prompt} - Successfully finished")
+        except Exception as e:
+            logger.exception(f"{log_prompt} - Unable to run {linter}")
+            exit_code = RERUN
+            output = str(e)
+        finally:
             # Keeping container if needed or remove it
             if keep_container:
                 logger.info(f"{log_prompt} - container name {container_name}")
@@ -1094,10 +1105,6 @@ class Linter:
                     container.remove(force=True)
                 except docker.errors.NotFound as e:
                     logger.critical(f"{log_prompt} - Unable to delete container - {e}")
-        except Exception as e:
-            logger.exception(f"{log_prompt} - Unable to run {linter}")
-            exit_code = RERUN
-            output = str(e)
         return exit_code, output
 
     @timer(group_name="lint")

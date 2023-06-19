@@ -27,6 +27,9 @@ from demisto_sdk.commands.common.hook_validations.base_validator import BaseVali
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import (
     ContentEntityValidator,
 )
+from demisto_sdk.commands.common.hook_validations.correlation_rule import (
+    CorrelationRuleValidator,
+)
 from demisto_sdk.commands.common.hook_validations.dashboard import DashboardValidator
 from demisto_sdk.commands.common.hook_validations.description import (
     DescriptionValidator,
@@ -62,6 +65,9 @@ from demisto_sdk.commands.common.hook_validations.reputation import ReputationVa
 from demisto_sdk.commands.common.hook_validations.script import ScriptValidator
 from demisto_sdk.commands.common.hook_validations.structure import StructureValidator
 from demisto_sdk.commands.common.hook_validations.widget import WidgetValidator
+from demisto_sdk.commands.common.hook_validations.xsiam_dashboard import (
+    XSIAMDashboardValidator,
+)
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.prepare_content.integration_script_unifier import (
     IntegrationScriptUnifier,
@@ -100,6 +106,8 @@ from demisto_sdk.tests.constants_test import (
     INVALID_REPUTATION_PATH,
     INVALID_SCRIPT_PATH,
     INVALID_WIDGET_PATH,
+    INVALID_XSIAM_CORRELATION_PATH,
+    INVALID_XSIAM_DASHBOARD_PATH,
     LAYOUT_TARGET,
     LAYOUTS_CONTAINER_TARGET,
     MODELING_RULES_SCHEMA_FILE,
@@ -131,6 +139,8 @@ from demisto_sdk.tests.constants_test import (
     VALID_TEST_PLAYBOOK_PATH,
     VALID_WIDGET_PATH,
     WIDGET_TARGET,
+    XSIAM_CORRELATION_TARGET,
+    XSIAM_DASHBOARD_TARGET,
 )
 from demisto_sdk.tests.test_files.validate_integration_test_valid_types import (
     INCIDENT_FIELD,
@@ -212,6 +222,21 @@ class TestValidators:
         (INVALID_PLAYBOOK_PATH, PLAYBOOK_TARGET, False, PlaybookValidator),
     ]
 
+    XSIAM_IS_VALID_FROM_VERSION = [
+        (
+            INVALID_XSIAM_DASHBOARD_PATH,
+            XSIAM_DASHBOARD_TARGET,
+            False,
+            XSIAMDashboardValidator,
+        ),
+        (
+            INVALID_XSIAM_CORRELATION_PATH,
+            XSIAM_CORRELATION_TARGET,
+            False,
+            CorrelationRuleValidator,
+        ),
+    ]
+
     def test_validation_of_beta_playbooks(self, mocker):
         """
         Given
@@ -238,7 +263,7 @@ class TestValidators:
             os.remove(PLAYBOOK_TARGET)
 
     @pytest.mark.parametrize(
-        "source, target, answer, validator", INPUTS_IS_VALID_VERSION
+        "source, target, answer, validator", (INPUTS_IS_VALID_VERSION)
     )
     def test_is_valid_version(
         self, source: str, target: str, answer: Any, validator: ContentEntityValidator
@@ -262,7 +287,8 @@ class TestValidators:
             os.remove(target)
 
     @pytest.mark.parametrize(
-        "source, target, answer, validator", INPUTS_IS_VALID_VERSION
+        "source, target, answer, validator",
+        (XSIAM_IS_VALID_FROM_VERSION + INPUTS_IS_VALID_VERSION),
     )
     def test_is_valid_fromversion(
         self, source: str, target: str, answer: Any, validator: ContentEntityValidator
@@ -330,7 +356,8 @@ class TestValidators:
         assert validator.is_valid_version() is answer
 
     @pytest.mark.parametrize(
-        "source, target, answer, validator", INPUTS_IS_VALID_VERSION
+        "source, target, answer, validator",
+        (INPUTS_IS_VALID_VERSION + XSIAM_IS_VALID_FROM_VERSION),
     )
     def test_is_file_valid(
         self,

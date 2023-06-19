@@ -21,14 +21,36 @@ from demisto_sdk.commands.content_graph.interface.neo4j.queries.common import (
 
 
 def validate_unknown_content(
-    tx: Transaction, file_paths: List[str], raises_error: bool
+    tx: Transaction,
+    file_paths: List[str],
+    raises_error: bool,
+    include_optional: bool = False,
 ):
-    query = f"""// Returns USES relationships to content items not in the repository
-MATCH (content_item_from{{deprecated: false}})-[r:{RelationshipType.USES}]->(n{{not_in_repository: true}})
-WHERE{' NOT' if raises_error else ''} (content_item_from.is_test OR NOT r.mandatorily)
-{f'AND content_item_from.path in {file_paths}' if file_paths else ''}
-RETURN content_item_from, collect(r) as relationships, collect(n) as nodes_to
-"""
+    """Query graph to return all ids used in the provided files that are missing from the repo.
+
+    Args:
+        tx: The Transaction to contact the graph with.
+        file_paths: The file paths to check
+        raises_error: If True with include_optional=False, will only return the mandatory dependencies.
+                      If False with include_optional=False, will only return the non-mandatory dependencies.
+        include_optional: If True, will return both mandatory and non-mandatory dependencies.
+
+    Return:
+        All content ids used in the provided file paths that are missing from the repo.
+    """
+    if include_optional:
+        query = f"""// Returns USES relationships to content items not in the repository
+        MATCH (content_item_from{{deprecated: false}})-[r:{RelationshipType.USES}]->(n{{not_in_repository: true}})
+        WHERE NOT (content_item_from.is_test) {f'AND content_item_from.path in {file_paths}' if file_paths else ''}
+        RETURN content_item_from, collect(r) as relationships, collect(n) as nodes_to
+        """
+    else:
+        query = f"""// Returns USES relationships to content items not in the repository
+        MATCH (content_item_from{{deprecated: false}})-[r:{RelationshipType.USES}]->(n{{not_in_repository: true}})
+        WHERE{' NOT' if raises_error else ''} (content_item_from.is_test OR NOT r.mandatorily)
+        {f'AND content_item_from.path in {file_paths}' if file_paths else ''}
+        RETURN content_item_from, collect(r) as relationships, collect(n) as nodes_to
+        """
     return {
         int(item.get("content_item_from").id): Neo4jRelationshipResult(
             node_from=item.get("content_item_from"),
@@ -100,6 +122,44 @@ RETURN content_item_from, collect(r) as relationships, collect(n) as nodes_to"""
         )
         for item in run_query(tx, query)
     }
+
+
+def get_items_using_deprecated(tx: Transaction, file_paths: List[str]):
+
+    return get_items_using_deprecated_commands(
+        tx, file_paths
+    ) + get_items_using_deprecated_content_items(tx, file_paths)
+
+
+def get_items_using_deprecated_commands(tx: Transaction, file_paths: List[str]):
+    files_filter = (
+        f"AND (p.path in {file_paths} OR i.path IN {file_paths})" if file_paths else ""
+    )
+    command_query = f"""// Returning all the items which using deprecated commands
+MATCH (p{{deprecated: false}})-[:USES]->(c:Command)<-[:HAS_COMMAND{{deprecated: true}}]-(i:Integration) WHERE NOT p.is_test
+OPTIONAL MATCH (i2:Integration)-[:HAS_COMMAND{{deprecated: false}}]->(c)
+WHERE id(i) <> id(i2)
+WITH p, c, i2
+WHERE i2 IS NULL
+{files_filter}
+RETURN c.object_id AS deprecated_command, c.content_type AS deprecated_content_type, collect(p.path) AS object_using_deprecated"""
+    return list(run_query(tx, command_query))
+
+
+def get_items_using_deprecated_content_items(tx: Transaction, file_paths: List[str]):
+    files_filter = (
+        f"AND (p.path IN {file_paths} OR d.path IN {file_paths})" if file_paths else ""
+    )
+    query = f"""
+    MATCH (p{{deprecated: false}})-[:USES]->(d{{deprecated: true}}) WHERE not p.is_test
+// be sure the USES relationship is not because a command, as commands has dedicated query
+OPTIONAL MATCH (p)-[:USES]->(c1:Command)<-[:HAS_COMMAND]-(d)
+WITH p, d, c1
+WHERE c1 IS NULL
+{files_filter}
+RETURN d.object_id AS deprecated_content, d.content_type AS deprecated_content_type, collect(p.path) AS object_using_deprecated
+    """
+    return list(run_query(tx, query))
 
 
 def validate_marketplaces(tx: Transaction, pack_ids: List[str]):

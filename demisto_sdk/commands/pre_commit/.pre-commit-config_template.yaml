@@ -29,22 +29,6 @@ repos:
       - id: autopep8
   - repo: local
     hooks:
-      - id: mypy
-        name: mypy
-        entry: mypy
-        language: python
-        types: [python]
-        args:
-          [
-            --ignore-missing-imports,
-            --check-untyped-defs,
-            --show-error-codes,
-            --follow-imports=silent,
-            --allow-redefinition,
-            # this will be replaced by the python version in the runtime
-            --python-version=3.10,
-          ]
-        exclude: "test_data|tests_data|.venv|.*_test.py$|infrastructure_tests"
 
       - id: is-circle-changed
         name: is-circle-changed
@@ -63,6 +47,18 @@ repos:
   - repo: https://github.com/demisto/demisto-sdk
     rev: ""
     hooks:
+      - id: mypy
+        args:
+          [
+            --ignore-missing-imports,
+            --check-untyped-defs,
+            --show-error-codes,
+            --follow-imports=silent,
+            --allow-redefinition,
+            # `--python-version` argument is replaced in runtime
+            --python-version=3.10,
+          ]
+
       # enable with --test
       - id: run-unit-tests
 

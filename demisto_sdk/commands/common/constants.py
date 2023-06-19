@@ -794,7 +794,11 @@ ID_IN_ROOT = [  # entities in which 'id' key is in the root
 INTEGRATION_PREFIX = "integration"
 SCRIPT_PREFIX = "script"
 PARSING_RULE_PREFIX = "parsingrule"
+PARSING_RULE_ID_SUFFIX = "ParsingRule"
+PARSING_RULE_NAME_SUFFIX = "Parsing Rule"
 MODELING_RULE_PREFIX = "modelingrule"
+MODELING_RULE_ID_SUFFIX = "ModelingRule"
+MODELING_RULE_NAME_SUFFIX = "Modeling Rule"
 XDRC_TEMPLATE_PREFIX = "xdrctemplate"
 LAYOUT_RULE_PREFIX = "layoutrule"
 
@@ -1379,6 +1383,7 @@ FILETYPE_TO_DEFAULT_FROMVERSION = {
     FileType.PARSING_RULE: "6.10.0",
     FileType.MODELING_RULE: "6.10.0",
     FileType.LAYOUT_RULE: "6.10.0",
+    FileType.XSIAM_DASHBOARD: "6.10.0",
 }
 
 DEFAULT_PYTHON_VERSION = "3.10"
@@ -1833,3 +1838,5 @@ TABLE_INCIDENT_TO_ALERT = {
 }
 
 NATIVE_IMAGE_DOCKER_NAME = "demisto/py3-native"
+
+FORMATTING_SCRIPT = "indicator-format"

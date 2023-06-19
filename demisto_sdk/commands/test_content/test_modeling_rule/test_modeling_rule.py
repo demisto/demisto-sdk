@@ -1,3 +1,4 @@
+from datetime import datetime
 from pathlib import Path
 from time import sleep
 from typing import Any, Dict, List, Optional, Tuple
@@ -62,6 +63,45 @@ def create_table(expected: Dict[str, Any], received: Dict[str, Any]) -> Table:
     return table
 
 
+def day_suffix(day: int) -> str:
+    """
+    Returns a suffix string base on the day of the month.
+        for 1, 21, 31 => st
+        for 2, 22 => nd
+        for 3, 23 => rd
+        for to all the others => th
+
+        see here for more details: https://en.wikipedia.org/wiki/English_numerals#Ordinal_numbers
+
+    Args:
+        day: The day of the month represented by a number.
+
+    Returns:
+        suffix string (st, nd, rd, th).
+    """
+    return "th" if 11 <= day <= 13 else {1: "st", 2: "nd", 3: "rd"}.get(day % 10, "th")
+
+
+def convert_epoch_time_to_string_time(epoch_time: int, with_ms: bool = False) -> str:
+    """
+    Converts epoch time with milliseconds to string time with timezone delta.
+
+    Args:
+        epoch_time: The received epoch time (with milliseconds).
+        with_ms: Whether to convert the epoch time with ms or not default is False.
+
+    Returns:
+        The string time with timezone delta.
+    """
+    datetime_object = datetime.fromtimestamp(epoch_time / 1000)
+    time_format = f"%b %-d{day_suffix(datetime_object.day)} %Y %H:%M:%S"
+    if with_ms:
+        time_format = f"{time_format}.%f"
+    string_time = datetime_object.strftime(time_format)
+
+    return string_time
+
+
 def verify_results(
     tested_dataset: str, results: List[dict], test_data: init_test_data.TestData
 ):
@@ -111,6 +151,13 @@ def verify_results(
                 break
 
         if expected_values:
+            if (expected_time_value := expected_values.get("_time")) and (
+                time_value := result.get("_time")
+            ):
+                time_with_ms = "." in expected_time_value
+                result["_time"] = convert_epoch_time_to_string_time(
+                    time_value, time_with_ms
+                )
             printr(create_table(expected_values, result))
 
             for key, val in expected_values.items():
@@ -210,7 +257,7 @@ def validate_expected_values(
 def check_dataset_exists(
     xsiam_client: XsiamApiClient,
     test_data: init_test_data.TestData,
-    timeout: int = 60,
+    timeout: int = 120,
     interval: int = 5,
 ):
     """Check if the dataset in the test data file exists in the tenant.
@@ -218,7 +265,7 @@ def check_dataset_exists(
     Args:
         xsiam_client (XsiamApiClient): Xsiam API client.
         test_data (init_test_data.TestData): The data parsed from the test data file.
-        timeout (int, optional): The number of seconds to wait for the dataset to exist. Defaults to 60.
+        timeout (int, optional): The number of seconds to wait for the dataset to exist. Defaults to 120 seconds.
         interval (int, optional): The number of seconds to wait between checking for the dataset. Defaults to 5.
 
     Raises:
@@ -247,7 +294,6 @@ def check_dataset_exists(
                     )
                     dataset_exist = True
                 else:
-                    logger.error
                     err = (
                         f"[red]Dataset {dataset} exists but no results were returned. This could mean that your testdata "
                         "does not meet the criteria for an associated Parsing Rule and is therefore being dropped from "

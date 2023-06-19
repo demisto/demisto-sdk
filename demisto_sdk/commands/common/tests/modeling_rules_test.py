@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 
 import pytest
 
@@ -134,7 +135,7 @@ files_to_rename = ["xif", "yml", "schema", "testdata"]
 
 
 @pytest.mark.parametrize("file_to_rename", files_to_rename)
-def test_is_invalid_rule_file_name(repo, file_to_rename):
+def test_is_invalid_rule_file_name(mocker, repo, file_to_rename):
     """
     Given: A modeling rule with invalid component file name
     When: running is_valid_rule_names
@@ -158,6 +159,7 @@ def test_is_invalid_rule_file_name(repo, file_to_rename):
     os.rename(path_to_replace, new_name)
 
     with ChangeCWD(repo.path):
+        mocker.patch.object(Path, "exists", return_value=True)
         modeling_rule_validator = ModelingRuleValidator(structure_validator)
         assert not modeling_rule_validator.is_valid_rule_names()
         assert not modeling_rule_validator._is_valid

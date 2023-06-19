@@ -1,9 +1,23 @@
 # Changelog
 ## Unreleased
+* **validate** will only fail on docker related errors if the pack is supported by xsoar.
+* Added a validation that assures filename, id, and name have a correct suffix for modeling/parsing rules files.
+* Added new **validate** checks, preventing unwanted changes of the marketplaces (BC108,BC109), toversion (BC107)  and fromversion (BC106) fields.
+* Removed the `timezone_offset` argument in the *modeling-rules test* command.
+* Fixed an issue where **lint** failed when importing functions from CommonServerUserPython.
+* The **format** command now will sync hidden parameters with master branch.
+* Fixed an issue where lock integration failed on FileNotFound.(PANW-internal only).
+* Fixed an issue where **lint** falsely warned of using `demisto.results`.
+* Fixed an issue where **validate** always returned *XSIAM Dashboards* and *Correlation Rules* files as valid.
+* Added `GR107` validation to **validate** using the graph validations to check that no deprecated items are used by non-deprecated content.
+* Fixed an issue where the **modeling-rules test** command failed to get the existence of dataset in cases where the dataset takes more than 1 minute to get indexed.
+
+## 1.16.0
 * Added a check to **is_docker_image_latest_tag** to only fail the validation on non-latest image tag when the current tag is older than 3 days.
 * Fixed an issue where **upload** would not properly show the installed version in the UI.
 * Fixed an issue where the `contribution_converter` failed replacing generated release notes with the contribution form release notes.
 * Fixed an issue where an extra levelname was added to a logging message.
+* Modified the `mypy` pre-commit hook to run in a virtual environment, rather than the local mypy version.
 * Added support to run **validate** with `--git` flag on detached HEAD.
 * Added a validation that the **validate** command will fail if the pack name is not prefixed on XSIAM dashboard images.
 * Fixed the **generate-test-playbook** which failed on an unexpected keyword argument - 'console_log_threshold'.
@@ -17,6 +31,8 @@
 * Fixed an issue where graph-related tasks failed when files were deleted from the repo.
 * Added a **validate** check, and a **format** auto fix for the `fromversion` field in Correlation Rules and XSIAM Dashboards.
 * Update the format used for dev-dependencies in pyproject.toml to match modern versions of Poetry.
+* Added timestamps to logging messages when running in a CI build.
+
 
 ## 1.15.5
 * **Breaking Change**: The default of the **upload** command `--zip` argument is `true`. To upload packs as custom content items use the `--no-zip` argument.

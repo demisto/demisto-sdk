@@ -23,6 +23,7 @@ __logging_exception = logging.Logger.exception
 
 @wraps(logging.error)
 def error(self, msg, *args, **kwargs):
+    print(f"logger.error, {_count_calls_error=}, {msg=}")
     global _countLock
     global _count_calls_error
     __logging_error(self, msg, *args, **kwargs)

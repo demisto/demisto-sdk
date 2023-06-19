@@ -1,15 +1,20 @@
 """
 This module is designed to validate the correctness of generic definition entities in content.
 """
-import logging
+
 
 from ruamel.yaml.comments import CommentedSeq
 
+from demisto_sdk.commands.common.constants import (
+    FILETYPE_TO_DEFAULT_FROMVERSION,
+    FileType,
+)
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.base_validator import error_codes
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import (
     ContentEntityValidator,
 )
+from demisto_sdk.commands.common.logger import logger
 
 
 class CorrelationRuleValidator(ContentEntityValidator):
@@ -21,30 +26,32 @@ class CorrelationRuleValidator(ContentEntityValidator):
         self,
         structure_validator,
         ignored_errors=None,
-        print_as_warnings=False,
         json_file_path=None,
     ):
         super().__init__(
             structure_validator,
             ignored_errors=ignored_errors,
-            print_as_warnings=print_as_warnings,
             json_file_path=json_file_path,
+            oldest_supported_version=FILETYPE_TO_DEFAULT_FROMVERSION[
+                FileType.CORRELATION_RULE
+            ],
         )
         self._is_valid = True
 
     def is_valid_file(self, validate_rn=True, is_new_file=False, use_git=False):
         """
         Check whether the correlation rule is valid or not
-        Note: For now we return True regardless of the item content. More info:
-        https://github.com/demisto/etc/issues/48151#issuecomment-1109660727
         """
-        logging.debug(
+        logger.debug(
             "Automatically considering XSIAM content item as valid, see issue #48151"
         )
 
-        self.no_leading_hyphen()
-        self.is_files_naming_correct()
-        return self.is_valid
+        answers = [
+            self.no_leading_hyphen(),
+            self.is_files_naming_correct(),
+            super().is_valid_fromversion(),
+        ]
+        return all(answers)
 
     def is_valid_version(self):
         """

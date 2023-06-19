@@ -1,7 +1,6 @@
 # STD python packages
 import copy
 import hashlib
-import logging
 import os
 import platform
 import traceback
@@ -19,24 +18,36 @@ from wcmatch.pathlib import NEGATE, Path
 
 from demisto_sdk.commands.common.constants import (
     API_MODULE_FILE_SUFFIX,
+    FORMATTING_SCRIPT,
     INTEGRATIONS_DIR,
+    NATIVE_IMAGE_DOCKER_NAME,
     NATIVE_IMAGE_FILE_NAME,
     PACKS_PACK_META_FILE_NAME,
+    TESTS_REQUIRE_NETWORK_PACK_IGNORE,
     TYPE_PWSH,
     TYPE_PYTHON,
 )
 from demisto_sdk.commands.common.docker_helper import (
     get_docker,
+    get_python_version,
     init_global_docker_client,
 )
 from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
 from demisto_sdk.commands.common.hook_validations.docker import DockerImageValidator
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.native_image import (
     NativeImageConfig,
     ScriptIntegrationSupportedNativeImages,
 )
 from demisto_sdk.commands.common.timers import timer
-from demisto_sdk.commands.common.tools import get_docker_images_from_yml, run_command_os
+from demisto_sdk.commands.common.tools import (
+    get_docker_images_from_yml,
+    get_id,
+    get_pack_ignore_content,
+    get_pack_name,
+    get_yaml,
+    run_command_os,
+)
 from demisto_sdk.commands.lint.commands_builder import (
     build_bandit_command,
     build_flake8_command,
@@ -59,7 +70,6 @@ from demisto_sdk.commands.lint.helpers import (
     add_typing_module,
     coverage_report_editor,
     get_file_from_container,
-    get_python_version_from_image,
     pylint_plugin,
     split_warnings_errors,
     stream_docker_container_output,
@@ -72,10 +82,6 @@ json = JSON_Handler()
 
 # Local packages
 
-logger = logging.getLogger("demisto-sdk")
-
-NATIVE_IMAGE_DOCKER_NAME = "demisto/py3-native"
-
 
 class DockerImageFlagOption(Enum):
     FROM_YML = "from-yml"
@@ -85,6 +91,7 @@ class DockerImageFlagOption(Enum):
     NATIVE_MAINTENANCE = "native:maintenance"
     ALL_IMAGES = "all"
     NATIVE_TARGET = "native:target"
+    NATIVE_CANDIDATE = "native:candidate"
 
 
 class Linter:
@@ -112,6 +119,7 @@ class Linter:
         docker_image_flag: str = DockerImageFlagOption.FROM_YML.value,
         all_packs: bool = False,
         docker_image_target: str = "",
+        use_git: bool = False,
     ):
         self._req_3 = req_3
         self._req_2 = req_2
@@ -178,6 +186,7 @@ class Linter:
             try:
                 self._yml_file = next(yml_file)  # type: ignore
                 self._pack_name = self._yml_file.stem
+                self._yml_file_content = get_yaml(self._yml_file)
             except StopIteration:
                 logger.info(
                     f"{self._pack_abs_dir} - Skipping no yaml file found {yml_file}"
@@ -186,6 +195,17 @@ class Linter:
                     "Unable to find yml file in package"
                 )
         self._all_packs = all_packs
+        self._use_git = use_git
+
+    def should_disable_network(self) -> bool:
+        if config := get_pack_ignore_content(get_pack_name(str(self._pack_abs_dir))):
+            if TESTS_REQUIRE_NETWORK_PACK_IGNORE in config.sections():
+                ignored_integrations_scripts_ids = config[
+                    TESTS_REQUIRE_NETWORK_PACK_IGNORE
+                ]
+                if get_id(self._yml_file_content) in ignored_integrations_scripts_ids:
+                    return False
+        return True
 
     @timer(group_name="lint")
     def run_pack(
@@ -263,6 +283,7 @@ class Linter:
                         no_coverage=no_coverage,
                         no_vulture=no_vulture,
                         no_flake8=no_flake8,
+                        should_disable_network=self.should_disable_network(),
                     )
         except Exception as ex:
             err = f"{self._pack_abs_dir}: Unexpected fatal exception: {str(ex)}"
@@ -289,16 +310,18 @@ class Linter:
         try:
             script_obj: Dict = {}
             yml_obj: Dict = YAML_Handler().load(self._yml_file)
-            if isinstance(yml_obj, dict):
-                script_obj = (
-                    yml_obj.get("script", {})
-                    if isinstance(yml_obj.get("script"), dict)
-                    else yml_obj
-                )
-            # if the script/integration is deprecated and the -a flag
-            if self._all_packs and yml_obj.get("deprecated"):
+            if not isinstance(yml_obj, dict):
+                self._pkg_lint_status["errors"].append("Unable to parse package yml")
+                return True
+            script_obj = (
+                yml_obj.get("script", {})
+                if isinstance(yml_obj.get("script"), dict)
+                else yml_obj
+            )
+            # if the script/integration is deprecated and the -a or -g flag
+            if (self._all_packs or self._use_git) and yml_obj.get("deprecated"):
                 logger.info(
-                    f"skipping lint for {self._pack_name} because its deprecated"
+                    f"skipping lint for {self._pack_name} because its deprecated. To lint it, use the -i flag."
                 )
                 return True
             self._facts["is_script"] = (
@@ -306,6 +329,9 @@ class Linter:
             )
             self._facts["is_long_running"] = script_obj.get("longRunning")
             self._facts["commands"] = self._get_commands_list(script_obj)
+            self._facts["formatting_script"] = FORMATTING_SCRIPT in script_obj.get(
+                "tags", []
+            )
             self._pkg_lint_status["pack_type"] = script_obj.get("type")
         except (FileNotFoundError, OSError, KeyError):
             self._pkg_lint_status["errors"].append("Unable to parse package yml")
@@ -355,6 +381,7 @@ class Linter:
                 "DEMISTO_LINT_UPDATE_CERTS": os.getenv(
                     "DEMISTO_LINT_UPDATE_CERTS", "yes"
                 ),
+                "PYTHONDONTWRITEBYTECODE": "1",
             }
 
         lint_files = set()
@@ -364,9 +391,9 @@ class Linter:
             if self._facts["docker_engine"]:
                 # Getting python version from docker image - verifying if not valid docker image configured
                 for image in self._facts["images"]:
-                    py_num: str = get_python_version_from_image(
-                        image=image[0], timeout=self.docker_timeout
-                    )
+                    py_num_version = get_python_version(image=image[0])
+                    py_num = f"{py_num_version.major}.{py_num_version.minor}"
+
                     image[1] = py_num
                     logger.info(
                         f"{self._pack_name} - Facts - {image[0]} - Python {py_num}"
@@ -614,7 +641,9 @@ class Linter:
             )
             stdout, stderr, exit_code = run_command_os(
                 command=build_xsoar_linter_command(
-                    lint_files, self._facts.get("support_level", "base")  # type: ignore
+                    files=lint_files,  # type: ignore
+                    support_level=self._facts.get("support_level", "base"),
+                    formatting_script=self._facts.get("formatting_script", False),
                 ),
                 cwd=self._pack_abs_dir,
                 env=myenv,
@@ -730,6 +759,7 @@ class Linter:
         no_coverage: bool,
         no_flake8: bool,
         no_vulture: bool,
+        should_disable_network: bool,
     ):
         """Run lint check on docker image
 
@@ -741,6 +771,7 @@ class Linter:
             keep_container(bool): Whether to keep the test container
             test_xml(str): Path for saving pytest xml results
             no_coverage(bool): Run pytest without coverage report
+            should_disable_network(bool): whether network should not be disabled when running pytest, True to disable, False otherwise.
 
         """
         log_prompt = f"{self._pack_name} - Run Lint On Docker Image"
@@ -829,6 +860,7 @@ class Linter:
                                     keep_container=keep_container,
                                     test_xml=test_xml,
                                     no_coverage=no_coverage,
+                                    should_disable_network=should_disable_network,
                                 )
                                 status["pytest_json"] = test_json
                         elif self._pkg_lint_status["pack_type"] == TYPE_PWSH:
@@ -913,6 +945,7 @@ class Linter:
             str, str. image name to use and errors string.
         """
         log_prompt = f"{self._pack_name} - Image create"
+        docker_base = get_docker()
         # Get requirements file for image
         requirements = []
 
@@ -937,7 +970,7 @@ class Linter:
             logger.info(
                 f"{log_prompt} - Trying to pull existing image {test_image_name}"
             )
-            test_image = get_docker().pull_image(test_image_name)
+            test_image = docker_base.pull_image(test_image_name)
         except (docker.errors.APIError, docker.errors.ImageNotFound):
             logger.info(f"{log_prompt} - Unable to find image {test_image_name}")
         # Creatng new image if existing image isn't found
@@ -947,7 +980,7 @@ class Linter:
                 f"time"
             )
             try:
-                get_docker().create_image(
+                docker_base.create_image(
                     docker_base_image[0],
                     test_image_name,
                     container_type=self._pkg_lint_status["pack_type"],
@@ -960,9 +993,11 @@ class Linter:
                             test_image_name_to_push = test_image_name.replace(
                                 "docker-io.art.code.pan.run/", ""
                             )
-                            self._docker_client.images.push(test_image_name_to_push)
+                            docker_push_output = self._docker_client.images.push(
+                                test_image_name_to_push
+                            )
                             logger.info(
-                                f"{log_prompt} - Image {test_image_name_to_push} pushed to repository"
+                                f"{log_prompt} - Trying to push Image {test_image_name_to_push} to repository. Output = {docker_push_output}"
                             )
                             break
                         except (
@@ -981,14 +1016,29 @@ class Linter:
 
     def _docker_remove_container(self, container_name: str):
         try:
+            logger.info(f"Trying to remove container {container_name}")
             container = self._docker_client.containers.get(container_name)
+            logger.info(f"Found container {container_name=}, {container.id=}")
             container.remove(force=True)
+            logger.info(f"Successfully removed container {container_name}")
         except docker.errors.NotFound:
+            logger.info(f"Didn't remove container {container_name} as it wasn't found")
             pass
         except requests.exceptions.ChunkedEncodingError as err:
             # see: https://github.com/docker/docker-py/issues/2696#issuecomment-721322548
-            if platform.system() != "Darwin" or "Connection broken" not in str(err):
+            system_is_not_darwin = platform.system() != "Darwin"
+            not_connetion_broken = "Connection broken" not in str(err)
+            logger.info(
+                f"Didn't remove container {container_name} as it wasn't found, {system_is_not_darwin=}, {not_connetion_broken=}"
+            )
+            if system_is_not_darwin or not_connetion_broken:
                 raise
+        except Exception:
+            logger.exception(
+                f"Exception when trying to remove the container {container_name}.",
+                exc_info=True,
+            )
+            raise
 
     def _docker_run_linter(
         self, linter: str, test_image: str, keep_container: bool
@@ -1016,7 +1066,7 @@ class Linter:
             container.start()
             stream_docker_container_output(container.logs(stream=True))
             # wait for container to finish
-            container_status = container.wait(condition="exited")
+            container_status = container.wait()
             # Get container exit code
             container_exit_code = container_status.get("StatusCode")
             # Getting container logs
@@ -1041,19 +1091,20 @@ class Linter:
                 exit_code = RERUN
             else:
                 logger.info(f"{log_prompt} - Successfully finished")
+        except Exception as e:
+            logger.exception(f"{log_prompt} - Unable to run {linter}")
+            exit_code = RERUN
+            output = str(e)
+        finally:
             # Keeping container if needed or remove it
             if keep_container:
-                print(f"{log_prompt} - container name {container_name}")
+                logger.info(f"{log_prompt} - container name {container_name}")
                 container.commit(repository=container_name.lower(), tag=linter)
             else:
                 try:
                     container.remove(force=True)
                 except docker.errors.NotFound as e:
                     logger.critical(f"{log_prompt} - Unable to delete container - {e}")
-        except Exception as e:
-            logger.exception(f"{log_prompt} - Unable to run {linter}")
-            exit_code = RERUN
-            output = str(e)
         return exit_code, output
 
     @timer(group_name="lint")
@@ -1063,6 +1114,7 @@ class Linter:
         keep_container: bool,
         test_xml: str,
         no_coverage: bool = False,
+        should_disable_network: bool = False,
     ) -> Tuple[int, str, dict]:
         """Run Pytest in created test image
 
@@ -1075,7 +1127,9 @@ class Linter:
             int: 0 on successful, errors 1, need to retry 2
             str: Unit test json report
         """
-        log_prompt = f"{self._pack_name} - Pytest - Image {test_image}"
+        network_status = "disabled" if should_disable_network else "enabled"
+
+        log_prompt = f"{self._pack_name} - Pytest - Image {test_image}, network: {network_status}"
         logger.info(f"{log_prompt} - Start")
         container_name = f"{self._pack_name}-pytest"
         # Check if previous run left container a live if it does, Remove it
@@ -1102,12 +1156,13 @@ class Linter:
                     user=f"{uid}:4000",
                     files_to_push=[(self._pack_abs_dir, "/devwork")],
                     environment=self._facts["env_vars"],
+                    network_disabled=should_disable_network,
                 )
             )
             container.start()
             stream_docker_container_output(container.logs(stream=True))
             # Waiting for container to be finished
-            container_status: dict = container.wait(condition="exited")
+            container_status: dict = container.wait()
             # Getting container exit code
             container_exit_code = container_status.get("StatusCode")
             # Getting container logs
@@ -1177,7 +1232,7 @@ class Linter:
                 exit_code = FAIL
             # Remove container if not needed
             if keep_container:
-                print(f"{log_prompt} - Container name {container_name}")
+                logger.info(f"{log_prompt} - Container name {container_name}")
                 container.commit(repository=container_name.lower(), tag="pytest")
             else:
                 try:
@@ -1233,7 +1288,7 @@ class Linter:
             container.start()
             stream_docker_container_output(container.logs(stream=True))
             # wait for container to finish
-            container_status = container.wait(condition="exited")
+            container_status = container.wait()
             # Get container exit code
             container_exit_code = container_status.get("StatusCode")
             # Getting container logs
@@ -1249,7 +1304,7 @@ class Linter:
                 logger.info(f"{log_prompt} - Successfully finished")
             # Keeping container if needed or remove it
             if keep_container:
-                print(f"{log_prompt} - container name {container_name}")
+                logger.info(f"{log_prompt} - container name {container_name}")
                 container.commit(repository=container_name.lower(), tag="pwsh_analyze")
             else:
                 try:
@@ -1324,7 +1379,7 @@ class Linter:
             container.start()
             stream_docker_container_output(container.logs(stream=True))
             # wait for container to finish
-            container_status = container.wait(condition="exited")
+            container_status = container.wait()
             # Get container exit code
             container_exit_code = container_status.get("StatusCode")
             # Getting container logs
@@ -1340,7 +1395,7 @@ class Linter:
                 logger.info(f"{log_prompt} - Successfully finished")
             # Keeping container if needed or remove it
             if keep_container:
-                print(f"{log_prompt} - container name {container_name}")
+                logger.info(f"{log_prompt} - container name {container_name}")
                 container.commit(repository=container_name.lower(), tag="pwsh_test")
             else:
                 try:
@@ -1415,6 +1470,7 @@ class Linter:
             DockerImageFlagOption.NATIVE_GA.value,
             DockerImageFlagOption.NATIVE_MAINTENANCE.value,
             DockerImageFlagOption.NATIVE_TARGET.value,
+            DockerImageFlagOption.NATIVE_CANDIDATE.value,
         ):
             err_msg = (
                 f"The requested native image: '{docker_image_flag}' is not supported. The possible options are: "
@@ -1543,15 +1599,11 @@ class Linter:
             if self._is_native_image_support_script(
                 native_image, supported_native_images, script_id
             ):
-
-                if native_image == DockerImageFlagOption.NATIVE_DEV.value:
-                    #  Get native latest from Docker Hub
-                    native_image_ref = self._get_dev_native_image(script_id)
-                else:  # versioned native image
+                # When running lint --di all, do not run native:dev
+                if native_image != DockerImageFlagOption.NATIVE_DEV.value:
                     native_image_ref = self._get_versioned_native_image(native_image)
-
-                if native_image_ref:
-                    imgs.append(native_image_ref)
+                    if native_image_ref:
+                        imgs.append(native_image_ref)
 
         return imgs
 
@@ -1582,7 +1634,7 @@ class Linter:
             - If docker_image_flag is 'all', lint will run on:
                 1. Native GA - the native image of the current server version.
                 2. Native Maintenance - the native image of the previous server version.
-                3. Native Dev - The latest tag of the native image for Docker Hub.
+                3. Native Candidate - the candidate of the next GA version (the last dev version that was checked).
                 4. The docker images that appear in the YML file of the integration/script that lint runs on.
 
             - If the docker_image_flag is a specific docker image tag, lint will try to run on it.

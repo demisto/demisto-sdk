@@ -2,12 +2,12 @@
 This is module to store the git configuration of the content repo
 """
 import enum
+import logging
 import os
 from functools import lru_cache
 from typing import Optional, Tuple
 from urllib.parse import urljoin, urlparse
 
-import click
 import giturlparse
 
 # dirs
@@ -15,8 +15,8 @@ import requests
 
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import JSON_Handler
-from demisto_sdk.commands.common.logger import logger
 
+logger = logging.getLogger("demisto-sdk")
 json = JSON_Handler()
 
 
@@ -228,15 +228,13 @@ class GitContentConfig:
         Checks the class variable, prints if necessary, and sets the class variable to avoid multiple prints
         """
         if not GitContentConfig.NOTIFIED_PRIVATE_REPO:
-            click.secho(
-                "Could not find the repository name on gitlab - defaulting to demisto/content",
-                fg="yellow",
+            logger.info(
+                "[yellow]Could not find the repository name on gitlab - defaulting to demisto/content[/yellow]"
             )
-            click.secho(
-                f"If you are using a private gitlab repo, "
+            logger.info(
+                f"[yellow]If you are using a private gitlab repo, "
                 f"configure one of the following environment variables: "
-                f"`{GitCredentials.ENV_GITLAB_TOKEN_NAME}`,`{GitContentConfig.ENV_REPO_HOSTNAME_NAME}`",
-                fg="yellow",
+                f"`{GitCredentials.ENV_GITLAB_TOKEN_NAME}`,`{GitContentConfig.ENV_REPO_HOSTNAME_NAME}`[/yellow]"
             )
             GitContentConfig.NOTIFIED_PRIVATE_REPO = True
 

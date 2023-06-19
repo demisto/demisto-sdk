@@ -1,5 +1,5 @@
 import glob
-import io
+import logging
 import os
 import sys
 
@@ -10,7 +10,7 @@ import demisto_sdk
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.hook_validations.readme import ReadMeValidator
 from demisto_sdk.commands.common.legacy_git_tools import git_path
-from TestSuite.test_tools import ChangeCWD
+from TestSuite.test_tools import ChangeCWD, str_in_call_args_list
 
 VALID_MD = f"{git_path()}/demisto_sdk/tests/test_files/README-valid.md"
 INVALID_MD = f"{git_path()}/demisto_sdk/tests/test_files/README-invalid.md"
@@ -38,6 +38,15 @@ MDX_SKIP_NPM_MESSAGE = (
 
 @pytest.mark.parametrize("current, answer", README_INPUTS)
 def test_is_file_valid(mocker, current, answer):
+    from pathlib import Path
+
+    mocker.patch(
+        "demisto_sdk.commands.common.hook_validations.readme.get_pack_name",
+        return_value="PackName",
+    )
+    mocker.patch.object(Path, "is_file", return_value=answer)
+    mocker.patch.object(os.path, "isfile", return_value=answer)
+
     readme_validator = ReadMeValidator(current)
     valid = ReadMeValidator.are_modules_installed_for_verify(
         readme_validator.content_path
@@ -70,6 +79,15 @@ def test_is_file_valid(mocker, current, answer):
 
 @pytest.mark.parametrize("current, answer", README_INPUTS)
 def test_is_file_valid_mdx_server(mocker, current, answer):
+    from pathlib import Path
+
+    mocker.patch(
+        "demisto_sdk.commands.common.hook_validations.readme.get_pack_name",
+        return_value="PackName",
+    )
+    mocker.patch.object(Path, "is_file", return_value=answer)
+    mocker.patch.object(os.path, "isfile", return_value=answer)
+
     ReadMeValidator.add_node_env_vars()
     with ReadMeValidator.start_mdx_server():
         readme_validator = ReadMeValidator(current)
@@ -106,7 +124,7 @@ def test_air_gapped_env(tmp_path, mocker):
     assert ReadMeValidator(r).is_mdx_file()
 
 
-def test_relative_url_not_valid():
+def test_relative_url_not_valid(mocker):
     """
     Given
         - A README file with invalid relative urls in it.
@@ -119,8 +137,7 @@ def test_relative_url_not_valid():
             - Valid url was not caught
             - Image url was not caught
     """
-    captured_output = io.StringIO()
-    sys.stdout = captured_output  # redirect stdout.
+    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
     absolute_urls = [
         "https://www.good.co.il",
         "https://example.com",
@@ -136,23 +153,22 @@ def test_relative_url_not_valid():
     ]
     readme_validator = ReadMeValidator(INVALID_MD)
     result = readme_validator.verify_readme_relative_urls()
-    sys.stdout = sys.__stdout__  # reset stdout.
     assert not result
-    output = captured_output.getvalue()
     for url in absolute_urls:
-        assert url not in output
+        assert not str_in_call_args_list(logger_info.call_args_list, url)
 
     for url in relative_urls:
-        assert url in output
+        assert str_in_call_args_list(logger_info.call_args_list, url)
 
     # no empty links found
-    assert (
+    assert not str_in_call_args_list(
+        logger_info.call_args_list,
         "[RM112] - Relative urls are not supported within README. If this is not a relative url, please add an "
-        "https:// prefix:\n. " not in output
+        "https:// prefix:\n. ",
     )
 
 
-def test_is_image_path_valid():
+def test_is_image_path_valid(mocker):
     """
     Given
         - A README file with 2 invalid images paths in it.
@@ -165,24 +181,33 @@ def test_is_image_path_valid():
             - Valid image path was not caught
             - An alternative paths were suggested
     """
-    captured_output = io.StringIO()
-    sys.stdout = captured_output  # redirect stdout.
-    images_paths = [
+    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+    blob_images_paths = [
         "https://github.com/demisto/content/blob/123/Packs/AutoFocus/doc_files/AutoFocusPolling.png",
         "https://github.com/demisto/content/blob/123/Packs/FeedOffice365/doc_files/test.png",
-        "https://github.com/demisto/content/raw/123/Packs/valid/doc_files/test.png",
     ]
-    alternative_images_paths = [
+    raw_image_path = (
+        "https://github.com/demisto/content/raw/123/Packs/valid/doc_files/test.png"
+    )
+    raw_images_paths = [
         "https://github.com/demisto/content/raw/123/Packs/AutoFocus/doc_files/AutoFocusPolling.png",
         "https://github.com/demisto/content/raw/123/Packs/FeedOffice365/doc_files/test.png",
     ]
     readme_validator = ReadMeValidator(INVALID_MD)
     result = readme_validator.is_image_path_valid()
-    sys.stdout = sys.__stdout__  # reset stdout.
+
     assert not result
-    assert images_paths[0] and alternative_images_paths[0] in captured_output.getvalue()
-    assert images_paths[1] and alternative_images_paths[1] in captured_output.getvalue()
-    assert images_paths[2] not in captured_output.getvalue()
+    assert all(
+        [
+            str_in_call_args_list(logger_info.call_args_list, current_str)
+            for current_str in blob_images_paths
+        ]
+        + [
+            str_in_call_args_list(logger_info.call_args_list, current_str)
+            for current_str in raw_images_paths
+        ]
+    )
+    assert not str_in_call_args_list(logger_info.call_args_list, raw_image_path)
 
 
 @pytest.mark.parametrize(
@@ -197,7 +222,7 @@ def test_is_image_path_valid():
     ],
 )
 def test_unvalid_verify_no_empty_sections(
-    integration, capsys, file_input, missing_section
+    integration, file_input, missing_section, mocker
 ):
     """
     Given
@@ -207,6 +232,7 @@ def test_unvalid_verify_no_empty_sections(
     Then
         - Ensure no empty sections from the SECTIONS list
     """
+    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
 
     integration.readme.write(file_input)
     readme_path = integration.readme.path
@@ -215,13 +241,12 @@ def test_unvalid_verify_no_empty_sections(
         readme_validator = ReadMeValidator(readme_path)
         result = readme_validator.verify_no_empty_sections()
 
-        stdout, _ = capsys.readouterr()
         section_error = (
             f"{missing_section} is empty, please elaborate or delete the section."
         )
 
         assert not result
-        assert section_error in stdout
+        assert str_in_call_args_list(logger_info.call_args_list, section_error)
 
 
 @pytest.mark.parametrize(
@@ -230,7 +255,7 @@ def test_unvalid_verify_no_empty_sections(
         "## Troubleshooting\n## OtherSection\n## Additional Information\n\n## OtherSection\n##"
     ],
 )
-def test_combined_unvalid_verify_no_empty_sections(integration, capsys, file_input):
+def test_combined_unvalid_verify_no_empty_sections(integration, mocker, file_input):
     """
     Given
         - Couple of empty sections
@@ -239,6 +264,7 @@ def test_combined_unvalid_verify_no_empty_sections(integration, capsys, file_inp
     Then
         - Ensure no empty sections from the SECTIONS list
     """
+    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
 
     integration.readme.write(file_input)
     readme_path = integration.readme.path
@@ -247,14 +273,13 @@ def test_combined_unvalid_verify_no_empty_sections(integration, capsys, file_inp
         readme_validator = ReadMeValidator(readme_path)
         result = readme_validator.verify_no_empty_sections()
 
-        stdout, _ = capsys.readouterr()
         error = (
             "Failed verifying README.md Error Message is: Troubleshooting is empty, please elaborate or delete the"
             " section.\nAdditional Information is empty, please elaborate or delete the section."
         )
 
         assert not result
-        assert error in stdout
+        assert str_in_call_args_list(logger_info.call_args_list, error)
 
 
 @pytest.mark.parametrize(
@@ -341,9 +366,13 @@ def test_copyright_sections(integration, file_input):
             "integration. some extra text here",
             "getting started and learn how to build an integration",
         ),
+        (
+            "In this readme template all required notes should be replaced.\n# %%UPDATE%% <Product Name>",
+            "%%UPDATE%%",
+        ),
     ],
 )
-def test_verify_no_default_sections_left(integration, capsys, file_input, section):
+def test_verify_no_default_sections_left(integration, mocker, file_input, section):
     """
     Given
         - Readme that contains sections that are created as default and need to be changed
@@ -352,6 +381,7 @@ def test_verify_no_default_sections_left(integration, capsys, file_input, sectio
     Then
         - Ensure no default sections in the readme file
     """
+    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
     integration.readme.write(file_input)
     readme_path = integration.readme.path
 
@@ -359,10 +389,9 @@ def test_verify_no_default_sections_left(integration, capsys, file_input, sectio
         readme_validator = ReadMeValidator(readme_path)
         result = readme_validator.verify_no_default_sections_left()
 
-        stdout, _ = capsys.readouterr()
         section_error = f'Replace "{section}" with a suitable info.'
         assert not result
-        assert section_error in stdout
+        assert str_in_call_args_list(logger_info.call_args_list, section_error)
 
 
 ERROR_FOUND_CASES = [
@@ -473,7 +502,7 @@ def test_context_difference_created_is_valid(mocker, difference_found, expected)
         handle_error_mock.assert_not_called()
 
 
-def test_invalid_short_file(capsys):
+def test_invalid_short_file(mocker):
     """
     Given
         - Non empty Readme with less than 30 chars.
@@ -482,16 +511,16 @@ def test_invalid_short_file(capsys):
     Then
         - Ensure verify on Readme fails
     """
+    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
     readme_validator = ReadMeValidator(INVALID3_MD)
     result = readme_validator.verify_readme_is_not_too_short()
-    stdout, _ = capsys.readouterr()
     short_readme_error = (
         "Your Pack README is too small (29 chars). Please move its content to the pack "
         "description or add more useful information to the Pack README. "
         "Pack README files are expected to include a few sentences about the pack and/or images."
     )
     assert not result
-    assert short_readme_error in stdout
+    assert str_in_call_args_list(logger_info.call_args_list, short_readme_error)
 
 
 def test_demisto_in_integration_readme(repo):
@@ -622,9 +651,7 @@ def test_verify_readme_image_paths(mocker):
                - Image paths were caught correctly
                - Valid paths are not caught
     """
-    captured_output = io.StringIO()
-    sys.stdout = captured_output  # redirect stdout.
-
+    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
     readme_validator = ReadMeValidator(IMAGES_MD)
     mocker.patch.object(
         GitUtil, "get_current_working_branch", return_value="branch_name"
@@ -647,48 +674,59 @@ def test_verify_readme_image_paths(mocker):
         is_valid = readme_validator.verify_readme_image_paths()
 
     sys.stdout = sys.__stdout__  # reset stdout.
-    captured_output = captured_output.getvalue()
     assert not is_valid
-    assert (
+    assert all(
+        [
+            str_in_call_args_list(
+                logger_info.call_args_list,
+                "The following image relative path is not valid, please recheck it:\n",
+            ),
+            str_in_call_args_list(
+                logger_info.call_args_list,
+                "![Identity with High Risk Score](../../default.png)",
+            ),
+            str_in_call_args_list(
+                logger_info.call_args_list,
+                "Branch name was found in the URL, please change it to the commit hash:\n",
+            ),
+            str_in_call_args_list(logger_info.call_args_list, "![branch in url]"),
+            str_in_call_args_list(
+                logger_info.call_args_list,
+                "\n".join(
+                    (
+                        "[RM108] - Error in readme image: got HTTP response code 404, reason = just because",
+                        "The following image link seems to be broken, please repair it:",
+                        "![Identity with High Risk Score](https://github.com/demisto/test1.png)",
+                    )
+                ),
+            ),
+            str_in_call_args_list(
+                logger_info.call_args_list,
+                "\n".join(
+                    (
+                        "[RM108] - Error in readme image: got HTTP response code 404 ",
+                        "The following image link seems to be broken, please repair it:",
+                        "(https://github.com/demisto/content/raw/test2.png)",
+                    )
+                ),
+            ),
+        ]
+    )
+
+    assert not str_in_call_args_list(
+        logger_info.call_args_list,
         "The following image relative path is not valid, please recheck it:\n"
-        "![Identity with High Risk Score](../../default.png)" in captured_output
+        "![Identity with High Risk Score](default.png)",
     )
-    assert (
-        "The following image relative path is not valid, please recheck it:\n"
-        "![Identity with High Risk Score](default.png)" not in captured_output
-    )
-    assert (
+    assert not str_in_call_args_list(
+        logger_info.call_args_list,
         "Branch name was found in the URL, please change it to the commit hash:\n"
-        "![branch in url]" in captured_output
+        "![commit hash in url]",
     )
-    assert (
-        "Branch name was found in the URL, please change it to the commit hash:\n"
-        "![commit hash in url]" not in captured_output
-    )
-    assert (
-        "\n".join(
-            (
-                "[RM108] - Error in readme image: got HTTP response code 404, reason = just because",
-                "The following image link seems to be broken, please repair it:",
-                "![Identity with High Risk Score](https://github.com/demisto/test1.png)",
-            )
-        )
-        in captured_output
-    )
-    assert (
-        "\n".join(
-            (
-                "[RM108] - Error in readme image: got HTTP response code 404 ",
-                "The following image link seems to be broken, please repair it:",
-                "(https://github.com/demisto/content/raw/test2.png)",
-            )
-        )
-        in captured_output
-    )
-    assert (
+    assert not str_in_call_args_list(
+        logger_info.call_args_list,
         "please repair it:\n"
-        "![Identity with High Risk Score](https://github.com/demisto/test3.png)"
-        not in captured_output
+        "![Identity with High Risk Score](https://github.com/demisto/test3.png)",
     )
 
 
@@ -727,3 +765,16 @@ def test_check_readme_relative_image_paths(mocker):
         formatted_errors = readme_validator.check_readme_relative_image_paths()
 
     assert not formatted_errors
+
+
+@pytest.mark.parametrize("current, answer", README_INPUTS[:2])
+def test_verify_image_exist(mocker, current, answer):
+    from pathlib import Path
+
+    mocker.patch(
+        "demisto_sdk.commands.common.hook_validations.readme.get_pack_name",
+        return_value="PackName",
+    )
+    mocker.patch.object(Path, "is_file", return_value=answer)
+
+    assert ReadMeValidator(current).verify_image_exist() == answer

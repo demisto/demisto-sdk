@@ -3,8 +3,6 @@ from abc import ABC, abstractmethod
 from distutils.version import LooseVersion
 from typing import Dict, List
 
-import click
-
 from demisto_sdk.commands.common.constants import (
     DEFAULT_CONTENT_ITEM_FROM_VERSION,
     DEFAULT_CONTENT_ITEM_TO_VERSION,
@@ -17,6 +15,7 @@ from demisto_sdk.commands.common.hook_validations.base_validator import error_co
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import (
     ContentEntityValidator,
 )
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     LAYOUT_CONTAINER_FIELDS,
     get_all_incident_and_indicator_fields_from_id_set,
@@ -30,19 +29,10 @@ FROM_VERSION_LAYOUTS_CONTAINER = "6.0.0"
 
 class LayoutBaseValidator(ContentEntityValidator, ABC):
     def __init__(
-        self,
-        structure_validator,
-        ignored_errors=False,
-        print_as_warnings=False,
-        json_file_path=None,
-        **kwargs
+        self, structure_validator, ignored_errors=False, json_file_path=None, **kwargs
     ):
         super().__init__(
-            structure_validator,
-            ignored_errors,
-            print_as_warnings,
-            json_file_path=json_file_path,
-            **kwargs
+            structure_validator, ignored_errors, json_file_path=json_file_path, **kwargs
         )
         self.from_version = self.current_file.get(
             "fromVersion", DEFAULT_CONTENT_ITEM_FROM_VERSION
@@ -168,7 +158,11 @@ class LayoutsContainerValidator(LayoutBaseValidator):
     ) -> bool:
         return all(
             [
-                super().is_valid_layout(),
+                super().is_valid_layout(
+                    validate_rn=validate_rn,
+                    id_set_file=id_set_file,
+                    is_circle=is_circle,
+                ),
                 self.is_id_equals_name(),
                 self.is_valid_mpv2_layout(),
             ]
@@ -238,9 +232,8 @@ class LayoutsContainerValidator(LayoutBaseValidator):
             return True
 
         if not id_set_file:
-            click.secho(
-                "Skipping mapper incident field validation. Could not read id_set.json.",
-                fg="yellow",
+            logger.info(
+                "[yellow]Skipping mapper incident field validation. Could not read id_set.json.[/yellow]"
             )
             return True
 
@@ -299,7 +292,7 @@ class LayoutsContainerValidator(LayoutBaseValidator):
 
         for key, val in self.current_file.items():
             if isinstance(val, dict):
-                for tab in val.get("tabs", []):
+                for tab in val.get("tabs", []) or []:
                     if "type" in tab.keys() and tab.get("type") in invalid_tabs:
                         invalid_types_contained.append(tab.get("type"))
                     sections = tab.get("sections", [])
@@ -383,9 +376,8 @@ class LayoutValidator(LayoutBaseValidator):
             return True
 
         if not id_set_file:
-            click.secho(
-                "Skipping mapper incident field validation. Could not read id_set.json.",
-                fg="yellow",
+            logger.info(
+                "[yellow]Skipping mapper incident field validation. Could not read id_set.json.[/yellow]"
             )
             return True
 

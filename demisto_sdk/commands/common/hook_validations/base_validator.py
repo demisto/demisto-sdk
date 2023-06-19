@@ -2,7 +2,6 @@ import os
 from pathlib import Path
 from typing import Optional
 
-import click
 from ruamel.yaml.comments import CommentedSeq
 
 from demisto_sdk.commands.common.constants import (
@@ -21,6 +20,7 @@ from demisto_sdk.commands.common.errors import (
     get_error_object,
 )
 from demisto_sdk.commands.common.handlers import JSON_Handler
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     find_type,
     get_file_displayed_name,
@@ -28,7 +28,6 @@ from demisto_sdk.commands.common.tools import (
     get_pack_name,
     get_relative_path_from_packs_dir,
     get_yaml,
-    print_warning,
 )
 
 json = JSON_Handler()
@@ -57,7 +56,6 @@ class BaseValidator:
         self,
         ignored_errors=None,
         print_as_warnings=False,
-        suppress_print: bool = False,
         json_file_path: Optional[str] = None,
         specific_validations: Optional[list] = None,
     ):
@@ -71,7 +69,6 @@ class BaseValidator:
         self.predefined_deprecated_ignored_errors = {}  # type: ignore[var-annotated]
         self.print_as_warnings = print_as_warnings
         self.checked_files = set()  # type: ignore
-        self.suppress_print = suppress_print
         self.json_file_path = json_file_path
         self.specific_validations = specific_validations
 
@@ -150,7 +147,6 @@ class BaseValidator:
         error_message,
         error_code,
         file_path,
-        should_print=True,
         suggested_fix=None,
         warning=False,
         drop_line=False,
@@ -166,7 +162,6 @@ class BaseValidator:
             error_message (str): The error message
             file_path (str): The file from which the error occurred
             error_code (str): The error code
-            should_print (bool): whether the command should be printed
             ignored_errors (dict): if there are any ignored_errors, will override the ignored_errors attribute.
 
         Returns:
@@ -181,15 +176,8 @@ class BaseValidator:
                 # specific_validations list, we exit the function and return None
                 return None
 
-        def formatted_error_str(error_type):
-            if error_type not in {"ERROR", "WARNING"}:
-                raise ValueError(
-                    "Error type is not valid. Should be in {'ERROR', 'WARNING'}"
-                )
-
-            formatted_error_message_prefix = (
-                f"[{error_type}]: {file_path}: [{error_code}]"
-            )
+        def formatted_error_str():
+            formatted_error_message_prefix = f"{file_path}: [{error_code}]"
             if is_error_not_allowed_in_pack_ignore:
                 formatted = f"{formatted_error_message_prefix} can not be ignored in .pack-ignore\n"
             else:
@@ -209,8 +197,8 @@ class BaseValidator:
             try:
                 self.check_file_flags(file_name, file_path)
             except FileNotFoundError:
-                print_warning(
-                    f"File {file_path} not found, cannot check its flags (deprecated, etc)"
+                logger.info(
+                    f"[yellow]File {file_path} not found, cannot check its flags (deprecated, etc)[/yellow]"
                 )
 
             rel_file_path = get_relative_path_from_packs_dir(file_path)
@@ -228,12 +216,12 @@ class BaseValidator:
             self.predefined_deprecated_ignored_errors.get(file_name)
             or self.predefined_deprecated_ignored_errors.get(rel_file_path)
             or []
-        )  # noqa: E501
+        )
         predefined_by_support_ignored_errors = (
             self.predefined_by_support_ignored_errors.get(file_path)
             or self.predefined_by_support_ignored_errors.get(rel_file_path)
             or []
-        )  # noqa: E501
+        )
 
         is_error_not_allowed_in_pack_ignore = self.is_error_not_allowed_in_pack_ignore(
             error_code=error_code, ignored_errors_pack_ignore=ignored_errors_pack_ignore
@@ -249,31 +237,29 @@ class BaseValidator:
             or warning
         ):
             if self.print_as_warnings or warning:
-                click.secho(formatted_error_str("WARNING"), fg="yellow")
+                logger.warning(f"[yellow]{formatted_error_str()}[/yellow]")
                 self.json_output(file_path, error_code, error_message, warning)
                 self.add_to_report_error_list(
                     error_code, file_path, FOUND_FILES_AND_IGNORED_ERRORS
                 )
             return None
 
-        formatted_error = formatted_error_str("ERROR")
-        if should_print and not self.suppress_print:
-            if suggested_fix and not is_error_not_allowed_in_pack_ignore:
-                click.secho(formatted_error[:-1], fg="bright_red")
-                if error_code == "ST109":
-                    click.secho("Please add to the root of the yml.\n", fg="bright_red")
-                elif error_code == "ST107":
-                    missing_field = error_message.split(" ")[3]
-                    path_to_add = error_message.split(":")[1]
-                    click.secho(
-                        f"Please add the field {missing_field} to the path: {path_to_add} in the yml.\n",
-                        fg="bright_red",
-                    )
-                else:
-                    click.secho(suggested_fix + "\n", fg="bright_red")
-
+        formatted_error = formatted_error_str()
+        if suggested_fix and not is_error_not_allowed_in_pack_ignore:
+            logger.error(f"[red]{formatted_error[:-1]}[/red]")
+            if error_code == "ST109":
+                logger.info("[red]Please add to the root of the yml.[/red]\n")
+            elif error_code == "ST107":
+                missing_field = error_message.split(" ")[3]
+                path_to_add = error_message.split(":")[1]
+                logger.info(
+                    f"[red]Please add the field {missing_field} to the path: {path_to_add} in the yml.[/red]\n"
+                )
             else:
-                click.secho(formatted_error, fg="bright_red")
+                logger.info(f"[red]{suggested_fix}[/red]\n")
+
+        else:
+            logger.info(f"[red]{formatted_error}[/red]")
 
         self.json_output(file_path, error_code, error_message, warning)
         self.add_to_report_error_list(error_code, file_path, FOUND_FILES_AND_ERRORS)
@@ -421,6 +407,8 @@ class BaseValidator:
             FileType.MODELING_RULE,
             FileType.PARSING_RULE,
             FileType.XIF_FILE,
+            FileType.MODELING_RULE_XIF,
+            FileType.PARSING_RULE_XIF,
         }:
             if file_name != dir_name:
                 return False

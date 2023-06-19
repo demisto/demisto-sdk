@@ -4,13 +4,12 @@ from configparser import ConfigParser, MissingSectionHeaderError
 from pathlib import Path
 from typing import Callable, List, Optional, Set, Tuple
 
-import click
 import pebble
-from colorama import Fore
 from git import InvalidGitRepositoryError
 from packaging import version
 
 from demisto_sdk.commands.common import tools
+from demisto_sdk.commands.common.cpu_count import cpu_count
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import (
     API_MODULES_PACK,
@@ -28,9 +27,13 @@ from demisto_sdk.commands.common.constants import (
     FileType,
     FileType_ALLOWED_TO_DELETE,
     PathLevel,
+    XSIAM_DASHBOARDS_DIR,
 )
 from demisto_sdk.commands.common.content import Content
-from demisto_sdk.commands.common.content_constant_paths import DEFAULT_ID_SET_PATH
+from demisto_sdk.commands.common.content_constant_paths import (
+    CONTENT_PATH,
+    DEFAULT_ID_SET_PATH,
+)
 from demisto_sdk.commands.common.errors import (
     FOUND_FILES_AND_ERRORS,
     FOUND_FILES_AND_IGNORED_ERRORS,
@@ -137,13 +140,14 @@ from demisto_sdk.commands.common.hook_validations.xsiam_report import (
 from demisto_sdk.commands.common.hook_validations.xsoar_config_json import (
     XSOARConfigJsonValidator,
 )
+from demisto_sdk.commands.common.logger import get_log_file, logger
 from demisto_sdk.commands.common.tools import (
     _get_file_id,
     find_type,
     get_api_module_ids,
     get_api_module_integrations_set,
-    get_content_path,
     get_file,
+    get_pack_ignore_content,
     get_pack_ignore_file_path,
     get_pack_name,
     get_pack_names_from_files,
@@ -236,9 +240,7 @@ class ValidateManager:
             self.specific_validations = specific_validations.split(",")
 
         # Class constants
-        self.handle_error = BaseValidator(
-            print_as_warnings=print_ignored_errors, json_file_path=json_file_path
-        ).handle_error
+        self.handle_error = BaseValidator(json_file_path=json_file_path).handle_error
         self.should_run_validation = BaseValidator(
             specific_validations=specific_validations
         ).should_run_validation
@@ -254,7 +256,6 @@ class ValidateManager:
                 is_circle=self.is_circle,
                 configuration=Configuration(),
                 ignored_errors=None,
-                print_as_warnings=self.print_ignored_errors,
                 id_set_file=self.id_set_file,
                 json_file_path=json_file_path,
                 specific_validations=self.specific_validations,
@@ -274,7 +275,7 @@ class ValidateManager:
                 raise
             # if we are not using git - simply move on.
             else:
-                click.echo("Unable to connect to git")
+                logger.info("Unable to connect to git")
                 self.git_util = None  # type: ignore[assignment]
                 self.branch_name = ""
 
@@ -310,7 +311,7 @@ class ValidateManager:
         self.is_external_repo = is_external_repo
         if is_external_repo:
             if not self.no_configuration_prints:
-                click.echo("Running in a private repository")
+                logger.info("Running in a private repository")
             self.skip_conf_json = True
 
         self.print_percent = False
@@ -344,7 +345,7 @@ class ValidateManager:
             bool: True if node exist, else False
         """
         # Check node exist
-        content_path = get_content_path()
+        content_path = CONTENT_PATH
         stdout, stderr, exit_code = run_command_os("node -v", cwd=content_path)  # type: ignore
         if exit_code:
             return False
@@ -355,25 +356,23 @@ class ValidateManager:
         self.print_ignored_errors_report(self.print_ignored_errors)
 
         if valid:
-            click.secho("\nThe files are valid", fg="green")
+            logger.info("\n[green]The files are valid[/green]")
             return 0
 
         else:
             all_failing_files = "\n".join(set(FOUND_FILES_AND_ERRORS))
-            click.secho(
-                f"\n=========== Found errors in the following files ===========\n\n{all_failing_files}\n",
-                fg="bright_red",
+            logger.info(
+                f"\n[red]=========== Found errors in the following files ===========\n\n{all_failing_files}[/red]\n"
             )
 
             if self.always_valid:
-                click.secho(
-                    "Found the errors above, but not failing build", fg="yellow"
+                logger.info(
+                    "[yellow]Found the errors above, but not failing build[/yellow]"
                 )
                 return 0
 
-            click.secho(
-                "The files were found as invalid, the exact error message can be located above",
-                fg="red",
+            logger.info(
+                "[red]The files were found as invalid, the exact error message can be located above[/red]"
             )
             return 1
 
@@ -426,66 +425,62 @@ class ValidateManager:
     def run_validation_on_specific_files(self):
         """Run validations only on specific files"""
         files_validation_result = set()
-        self.setup_git_params()
+        if self.use_git:
+            self.setup_git_params()
         files_to_validate = self.file_path.split(",")
-
-        if self.validate_graph:
-            click.secho(
-                f"\n================= Validating graph =================",
-                fg="bright_cyan",
-            )
-            with GraphValidator(
-                specific_validations=self.specific_validations,
-                input_files=files_to_validate,
-            ) as graph_validator:
-                files_validation_result.add(graph_validator.is_valid_content_graph())
 
         for path in files_to_validate:
             error_ignore_list = self.get_error_ignore_list(get_pack_name(path))
             file_level = self.detect_file_level(path)
 
             if file_level == PathLevel.FILE:
-                click.secho(
-                    f"\n================= Validating file {path} =================",
-                    fg="bright_cyan",
+                logger.info(
+                    f"\n[cyan]================= Validating file {path} =================[/cyan]"
                 )
                 files_validation_result.add(
                     self.run_validations_on_file(path, error_ignore_list)
                 )
 
             elif file_level == PathLevel.CONTENT_ENTITY_DIR:
-                click.secho(
-                    f"\n================= Validating content directory {path} =================",
-                    fg="bright_cyan",
+                logger.info(
+                    f"\n[cyan]================= Validating content directory {path} =================[/cyan]"
                 )
                 files_validation_result.add(
                     self.run_validation_on_content_entities(path, error_ignore_list)
                 )
 
             elif file_level == PathLevel.CONTENT_GENERIC_ENTITY_DIR:
-                click.secho(
-                    f"\n================= Validating content directory {path} =================",
-                    fg="bright_cyan",
+                logger.info(
+                    f"\n[cyan]================= Validating content directory {path} =================[/cyan]"
                 )
                 files_validation_result.add(
                     self.run_validation_on_generic_entities(path, error_ignore_list)
                 )
 
             elif file_level == PathLevel.PACK:
-                click.secho(
-                    f"\n================= Validating pack {path} =================",
-                    fg="bright_cyan",
+                logger.info(
+                    f"\n[cyan]================= Validating pack {path} =================[/cyan]"
                 )
                 files_validation_result.add(self.run_validations_on_pack(path)[0])
 
             else:
-                click.secho(
-                    f"\n================= Validating package {path} =================",
-                    fg="bright_cyan",
+                logger.info(
+                    f"\n[cyan]================= Validating package {path} =================[/cyan]"
                 )
                 files_validation_result.add(
                     self.run_validation_on_package(path, error_ignore_list)
                 )
+
+        if self.validate_graph:
+            logger.info(
+                f"\n[cyan]================= Validating graph =================[/cyan]"
+            )
+            with GraphValidator(
+                specific_validations=self.specific_validations,
+                input_files=files_to_validate,
+                include_optional_deps=True,
+            ) as graph_validator:
+                files_validation_result.add(graph_validator.is_valid_content_graph())
 
         return all(files_validation_result)
 
@@ -502,9 +497,8 @@ class ValidateManager:
                 result = future.result()
                 done_fn(result[0], result[1])
             except Exception as e:
-                click.secho(
-                    f"An error occurred while tried to collect result, Error: {e}",
-                    fg="bright_red",
+                logger.info(
+                    f"[red]An error occurred while tried to collect result, Error: {e}[/red]"
                 )
                 raise
 
@@ -514,21 +508,10 @@ class ValidateManager:
         Returns:
             bool. true if all files are valid, false otherwise.
         """
-        click.secho(
-            "\n================= Validating all files =================",
-            fg="bright_cyan",
+        logger.info(
+            "\n[cyan]================= Validating all files =================[/cyan]"
         )
         all_packs_valid = set()
-
-        if self.validate_graph:
-            click.secho(
-                f"\n================= Validating graph =================",
-                fg="bright_cyan",
-            )
-            with GraphValidator(
-                specific_validations=self.specific_validations
-            ) as graph_validator:
-                all_packs_valid.add(graph_validator.is_valid_content_graph())
 
         if not self.skip_conf_json:
             all_packs_valid.add(self.conf_json_validator.is_valid_conf_json())
@@ -558,7 +541,7 @@ class ValidateManager:
     ) -> bool:
 
         if self.run_with_multiprocessing:
-            with pebble.ProcessPool(max_workers=4) as executor:
+            with pebble.ProcessPool(max_workers=cpu_count()) as executor:
                 futures = []
                 for pack_path in all_packs:
                     futures.append(
@@ -578,6 +561,21 @@ class ValidateManager:
                 self.completion_percentage = format((count / num_of_packs) * 100, ".2f")  # type: ignore
                 all_packs_valid.add(self.run_validations_on_pack(pack_path)[0])
                 count += 1
+        if self.validate_graph:
+            logger.info(
+                f"\n[cyan]================= Validating graph =================[/cyan]"
+            )
+            specific_validations_list = (
+                self.specific_validations if self.specific_validations else []
+            )
+            with GraphValidator(
+                specific_validations=self.specific_validations,
+                include_optional_deps=(
+                    True if "GR103" in specific_validations_list else False
+                ),
+            ) as graph_validator:
+                all_packs_valid.add(graph_validator.is_valid_content_graph())
+
         return all(all_packs_valid)
 
     def run_validations_on_pack(self, pack_path):
@@ -640,6 +638,10 @@ class ValidateManager:
                         file_path.endswith(".json")
                         or file_path.endswith(".yml")
                         or file_path.endswith(".md")
+                        or (
+                            content_entity_dir_path.endswith(XSIAM_DASHBOARDS_DIR)
+                            and file_path.endswith(".png")
+                        )
                     ):
                         content_entities_validation_results.add(
                             self.run_validations_on_file(
@@ -754,6 +756,8 @@ class ValidateManager:
             bool. true if file is in SKIPPED_FILES list, false otherwise.
         """
         path = Path(file_path)
+        if get_log_file() == path:
+            return True
         return path.name in SKIPPED_FILES or (
             path.name == "CommonServerPython.py" and path.parent.parent.name != "Base"
         )
@@ -795,7 +799,7 @@ class ValidateManager:
         if (
             file_type in self.skipped_file_types
             or self.is_skipped_file(file_path)
-            or self.git_util._is_file_git_ignored(file_path)
+            or (self.git_util and self.git_util._is_file_git_ignored(file_path))
             or self.detect_file_level(file_path)
             in (PathLevel.PACKAGE, PathLevel.CONTENT_ENTITY_DIR)
         ):
@@ -816,21 +820,18 @@ class ValidateManager:
             validation_print = f"\nValidating {file_path} as {file_type.value}"
             if self.print_percent:
                 if FOUND_FILES_AND_ERRORS:
-                    validation_print += (
-                        f" {Fore.RED}[{self.completion_percentage}%]{Fore.RESET}"
-                    )
+                    validation_print += f" [red][{self.completion_percentage}%][/red]"
                 else:
                     validation_print += (
-                        f" {Fore.GREEN}[{self.completion_percentage}%]{Fore.RESET}"
+                        f" [green][{self.completion_percentage}%][/green]"
                     )
 
-            click.echo(validation_print)
+            logger.info(validation_print)
 
         structure_validator = StructureValidator(
             file_path,
             predefined_scheme=file_type,
             ignored_errors=pack_error_ignore_list,
-            print_as_warnings=self.print_ignored_errors,
             tag=self.prev_ver,
             old_file_path=old_file_path,
             branch_name=self.branch_name,
@@ -899,7 +900,7 @@ class ValidateManager:
                     pack_error_ignore_list,
                 )
             else:
-                click.secho("Skipping release notes validation", fg="yellow")
+                logger.info("[yellow]Skipping release notes validation[/yellow]")
 
         elif file_type == FileType.RELEASE_NOTES_CONFIG:
             return self.validate_release_notes_config(file_path, pack_error_ignore_list)
@@ -921,7 +922,7 @@ class ValidateManager:
                 ReadMeValidator.add_node_env_vars()
                 if (
                     not ReadMeValidator.are_modules_installed_for_verify(
-                        get_content_path()  # type: ignore
+                        CONTENT_PATH  # type: ignore
                     )
                     and not ReadMeValidator.is_docker_available()
                 ):  # shows warning message
@@ -1044,7 +1045,7 @@ class ValidateManager:
             FileType.MODELING_RULE_XIF,
             FileType.MODELING_RULE_TEST_DATA,
         ):
-            print(f"Validating {file_type.value} file: {file_path}")
+            logger.info(f"Validating {file_type.value} file: {file_path}")
             if self.validate_all:
                 error_ignore_list = pack_error_ignore_list.copy()
                 error_ignore_list.setdefault(os.path.basename(file_path), [])
@@ -1110,6 +1111,9 @@ class ValidateManager:
         elif file_type == FileType.CONTRIBUTORS:
             # This is temporarily - need to add a proper contributors validations
             return True
+
+        elif file_type == FileType.CONF_JSON and not self.skip_conf_json:
+            return self.validate_conf_json()
 
         else:
             return self.file_type_not_supported(
@@ -1276,21 +1280,6 @@ class ValidateManager:
 
         validation_results = {valid_git_setup, valid_types}
 
-        if self.validate_graph:
-            click.secho(
-                f"\n================= Validating graph =================",
-                fg="bright_cyan",
-            )
-            all_files_set = list(
-                set().union(modified_files, added_files, old_format_files)
-            )
-            if all_files_set:
-                with GraphValidator(
-                    specific_validations=self.specific_validations,
-                    git_files=all_files_set,
-                ) as graph_validator:
-                    validation_results.add(graph_validator.is_valid_content_graph())
-
         validation_results.add(
             self.validate_modified_files(modified_files | old_format_files)
         )
@@ -1301,23 +1290,45 @@ class ValidateManager:
             )
         )
         validation_results.add(self.validate_deleted_files(deleted_files, added_files))
+        logger.debug(f"*** after adding validate_deleted_files")
 
+        logger.debug(
+            f"*** Before ifs, {old_format_files=}, {self.skip_pack_rn_validation=}"
+        )
         if old_format_files:
-            click.secho(
-                f"\n================= Running validation on old format files =================",
-                fg="bright_cyan",
+            logger.info(
+                f"\n[cyan]================= Running validation on old format files =================[/cyan]"
             )
             validation_results.add(self.validate_no_old_format(old_format_files))
+            logger.info(f"*** after adding validate_no_old_format")
 
         if not self.skip_pack_rn_validation:
+            logger.info(f"*** adding validate_no_duplicated_release_notes")
             validation_results.add(
                 self.validate_no_duplicated_release_notes(added_files)
             )
+            logger.info(f"*** after adding validate_no_duplicated_release_notes")
             validation_results.add(
                 self.validate_no_missing_release_notes(
                     modified_files, old_format_files, added_files
                 )
             )
+        if self.validate_graph:
+            logger.info(
+                f"\n[cyan]================= Validating graph =================[/cyan]"
+            )
+            all_files_set = list(
+                set().union(
+                    modified_files, added_files, old_format_files, changed_meta_files
+                )
+            )
+            if all_files_set:
+                with GraphValidator(
+                    specific_validations=self.specific_validations,
+                    git_files=all_files_set,
+                    include_optional_deps=True,
+                ) as graph_validator:
+                    validation_results.add(graph_validator.is_valid_content_graph())
 
         return all(validation_results)
 
@@ -1327,7 +1338,6 @@ class ValidateManager:
         description_validator = DescriptionValidator(
             file_path,
             ignored_errors=pack_error_ignore_list,
-            print_as_warnings=self.print_ignored_errors,
             json_file_path=self.json_file_path,
             specific_validations=self.specific_validations,
         )
@@ -1337,7 +1347,6 @@ class ValidateManager:
         readme_validator = ReadMeValidator(
             file_path,
             ignored_errors=pack_error_ignore_list,
-            print_as_warnings=self.print_ignored_errors,
             json_file_path=self.json_file_path,
             specific_validations=self.specific_validations,
         )
@@ -1347,7 +1356,6 @@ class ValidateManager:
         python_file_validator = PythonFileValidator(
             file_path,
             ignored_errors=pack_error_ignore_list,
-            print_as_warnings=self.print_ignored_errors,
             json_file_path=self.json_file_path,
             specific_validations=self.specific_validations,
         )
@@ -1357,7 +1365,6 @@ class ValidateManager:
         test_playbook_validator = TestPlaybookValidator(
             structure_validator=structure_validator,
             ignored_errors=pack_error_ignore_list,
-            print_as_warnings=self.print_ignored_errors,
             json_file_path=self.json_file_path,
         )
         return test_playbook_validator.is_valid_test_playbook(validate_rn=False)
@@ -1404,7 +1411,6 @@ class ValidateManager:
                 modified_files=modified_files,
                 added_files=added_files,
                 ignored_errors=pack_error_ignore_list,
-                print_as_warnings=self.print_ignored_errors,
                 json_file_path=self.json_file_path,
                 specific_validations=self.specific_validations,
             )
@@ -1430,7 +1436,6 @@ class ValidateManager:
         release_notes_config_validator = ReleaseNotesConfigValidator(
             file_path,
             ignored_errors=pack_error_ignore_list,
-            print_as_warnings=self.print_ignored_errors,
             json_file_path=self.json_file_path,
             specific_validations=self.specific_validations,
         )
@@ -1442,7 +1447,6 @@ class ValidateManager:
         playbook_validator = PlaybookValidator(
             structure_validator,
             ignored_errors=pack_error_ignore_list,
-            print_as_warnings=self.print_ignored_errors,
             json_file_path=self.json_file_path,
             validate_all=self.validate_all,
             deprecation_validator=self.deprecation_validator,
@@ -1469,7 +1473,6 @@ class ValidateManager:
         integration_validator = IntegrationValidator(
             structure_validator,
             ignored_errors=pack_error_ignore_list,
-            print_as_warnings=self.print_ignored_errors,
             skip_docker_check=self.skip_docker_checks,
             json_file_path=self.json_file_path,
             validate_all=self.validate_all,
@@ -1513,7 +1516,6 @@ class ValidateManager:
         script_validator = ScriptValidator(
             structure_validator,
             ignored_errors=pack_error_ignore_list,
-            print_as_warnings=self.print_ignored_errors,
             skip_docker_check=self.skip_docker_checks,
             json_file_path=self.json_file_path,
             validate_all=self.validate_all,
@@ -1545,7 +1547,6 @@ class ValidateManager:
         integration_validator = IntegrationValidator(
             structure_validator,
             ignored_errors=pack_error_ignore_list,
-            print_as_warnings=self.print_ignored_errors,
             skip_docker_check=self.skip_docker_checks,
             json_file_path=self.json_file_path,
             validate_all=self.validate_all,
@@ -1559,7 +1560,6 @@ class ValidateManager:
         image_validator = ImageValidator(
             file_path,
             ignored_errors=pack_error_ignore_list,
-            print_as_warnings=self.print_ignored_errors,
             json_file_path=self.json_file_path,
             specific_validations=self.specific_validations,
         )
@@ -1569,7 +1569,6 @@ class ValidateManager:
         author_image_validator: AuthorImageValidator = AuthorImageValidator(
             file_path,
             ignored_errors=pack_error_ignore_list,
-            print_as_warnings=self.print_ignored_errors,
             specific_validations=self.specific_validations,
         )
         return author_image_validator.is_valid()
@@ -1578,7 +1577,6 @@ class ValidateManager:
         report_validator = ReportValidator(
             structure_validator=structure_validator,
             ignored_errors=pack_error_ignore_list,
-            print_as_warnings=self.print_ignored_errors,
             json_file_path=self.json_file_path,
         )
         return report_validator.is_valid_file(validate_rn=False)
@@ -1589,7 +1587,6 @@ class ValidateManager:
         incident_field_validator = IncidentFieldValidator(
             structure_validator,
             ignored_errors=pack_error_ignore_list,
-            print_as_warnings=self.print_ignored_errors,
             json_file_path=self.json_file_path,
             id_set_file=self.id_set_file,
         )
@@ -1619,7 +1616,6 @@ class ValidateManager:
         indicator_field_validator = IndicatorFieldValidator(
             structure_validator,
             ignored_errors=pack_error_ignore_list,
-            print_as_warnings=self.print_ignored_errors,
             json_file_path=self.json_file_path,
         )
         if is_modified and self.is_backward_check:
@@ -1646,7 +1642,6 @@ class ValidateManager:
         reputation_validator = ReputationValidator(
             structure_validator,
             ignored_errors=pack_error_ignore_list,
-            print_as_warnings=self.print_ignored_errors,
             json_file_path=self.json_file_path,
         )
         return reputation_validator.is_valid_file(validate_rn=False)
@@ -1655,7 +1650,6 @@ class ValidateManager:
         layout_validator = LayoutValidator(
             structure_validator,
             ignored_errors=pack_error_ignore_list,
-            print_as_warnings=self.print_ignored_errors,
             json_file_path=self.json_file_path,
         )
         return layout_validator.is_valid_layout(
@@ -1666,7 +1660,6 @@ class ValidateManager:
         layout_validator = LayoutsContainerValidator(
             structure_validator,
             ignored_errors=pack_error_ignore_list,
-            print_as_warnings=self.print_ignored_errors,
             json_file_path=self.json_file_path,
         )
         return layout_validator.is_valid_layout(
@@ -1677,7 +1670,6 @@ class ValidateManager:
         pre_process_rules_validator = PreProcessRuleValidator(
             structure_validator,
             ignored_errors=pack_error_ignore_list,
-            print_as_warnings=self.print_ignored_errors,
             json_file_path=self.json_file_path,
         )
         return pre_process_rules_validator.is_valid_pre_process_rule(
@@ -1688,7 +1680,6 @@ class ValidateManager:
         lists_validator = ListsValidator(
             structure_validator,
             ignored_errors=pack_error_ignore_list,
-            print_as_warnings=self.print_ignored_errors,
             json_file_path=self.json_file_path,
         )
         return lists_validator.is_valid_list()
@@ -1697,7 +1688,6 @@ class ValidateManager:
         dashboard_validator = DashboardValidator(
             structure_validator,
             ignored_errors=pack_error_ignore_list,
-            print_as_warnings=self.print_ignored_errors,
             json_file_path=self.json_file_path,
         )
         return dashboard_validator.is_valid_dashboard(validate_rn=False)
@@ -1708,7 +1698,6 @@ class ValidateManager:
         incident_type_validator = IncidentTypeValidator(
             structure_validator,
             ignored_errors=pack_error_ignore_list,
-            print_as_warnings=self.print_ignored_errors,
             json_file_path=self.json_file_path,
         )
         if is_modified and self.is_backward_check:
@@ -1725,7 +1714,6 @@ class ValidateManager:
         mapper_validator = MapperValidator(
             structure_validator,
             ignored_errors=pack_error_ignore_list,
-            print_as_warnings=self.print_ignored_errors,
             json_file_path=self.json_file_path,
         )
         if is_modified and self.is_backward_check:
@@ -1757,7 +1745,6 @@ class ValidateManager:
             structure_validator,
             new_classifier_version=new_classifier_version,
             ignored_errors=pack_error_ignore_list,
-            print_as_warnings=self.print_ignored_errors,
             json_file_path=self.json_file_path,
         )
         return classifier_validator.is_valid_classifier(
@@ -1768,7 +1755,6 @@ class ValidateManager:
         widget_validator = WidgetValidator(
             structure_validator,
             ignored_errors=pack_error_ignore_list,
-            print_as_warnings=self.print_ignored_errors,
             json_file_path=self.json_file_path,
         )
         return widget_validator.is_valid_file(validate_rn=False)
@@ -1777,7 +1763,6 @@ class ValidateManager:
         triggers_validator = TriggersValidator(
             structure_validator,
             ignored_errors=pack_error_ignore_list,
-            print_as_warnings=self.print_ignored_errors,
             json_file_path=self.json_file_path,
         )
         return triggers_validator.is_valid_file(validate_rn=False)
@@ -1786,16 +1771,18 @@ class ValidateManager:
         layout_rules_validator = LayoutRuleValidator(
             structure_validator,
             ignored_errors=pack_error_ignore_list,
-            print_as_warnings=self.print_ignored_errors,
             json_file_path=self.json_file_path,
         )
         return layout_rules_validator.is_valid_file(validate_rn=False)
+
+    def validate_conf_json(self):
+        conf_json_validator = ConfJsonValidator()
+        return conf_json_validator.is_valid_conf_json()
 
     def validate_xsiam_report(self, structure_validator, pack_error_ignore_list):
         xsiam_report_validator = XSIAMReportValidator(
             structure_validator,
             ignored_errors=pack_error_ignore_list,
-            print_as_warnings=self.print_ignored_errors,
             json_file_path=self.json_file_path,
         )
         return xsiam_report_validator.is_valid_file(validate_rn=False)
@@ -1804,7 +1791,6 @@ class ValidateManager:
         xsiam_dashboard_validator = XSIAMDashboardValidator(
             structure_validator,
             ignored_errors=pack_error_ignore_list,
-            print_as_warnings=self.print_ignored_errors,
             json_file_path=self.json_file_path,
         )
         return xsiam_dashboard_validator.is_valid_file(validate_rn=False)
@@ -1813,7 +1799,6 @@ class ValidateManager:
         xdrc_templates_validator = XDRCTemplatesValidator(
             structure_validator,
             ignored_errors=pack_error_ignore_list,
-            print_as_warnings=self.print_ignored_errors,
             json_file_path=self.json_file_path,
         )
         return xdrc_templates_validator.is_valid_file(validate_rn=False)
@@ -1822,7 +1807,6 @@ class ValidateManager:
         parsing_rule_validator = ParsingRuleValidator(
             structure_validator,
             ignored_errors=pack_error_ignore_list,
-            print_as_warnings=self.print_ignored_errors,
             json_file_path=self.json_file_path,
         )
         return parsing_rule_validator.is_valid_file(validate_rn=False)
@@ -1831,7 +1815,6 @@ class ValidateManager:
         correlation_rule_validator = CorrelationRuleValidator(
             structure_validator,
             ignored_errors=pack_error_ignore_list,
-            print_as_warnings=self.print_ignored_errors,
             json_file_path=self.json_file_path,
         )
         return correlation_rule_validator.is_valid_file(validate_rn=False)
@@ -1840,7 +1823,6 @@ class ValidateManager:
         modeling_rule_validator = ModelingRuleValidator(
             structure_validator,
             ignored_errors=pack_error_ignore_list,
-            print_as_warnings=self.print_ignored_errors,
             json_file_path=self.json_file_path,
         )
         return modeling_rule_validator.is_valid_file(validate_rn=False)
@@ -1849,7 +1831,6 @@ class ValidateManager:
         wizard_validator = WizardValidator(
             structure_validator,
             ignored_errors=pack_error_ignore_list,
-            print_as_warnings=self.print_ignored_errors,
             json_file_path=self.json_file_path,
         )
         return wizard_validator.is_valid_file(
@@ -1862,7 +1843,6 @@ class ValidateManager:
         generic_field_validator = GenericFieldValidator(
             structure_validator,
             ignored_errors=pack_error_ignore_list,
-            print_as_warnings=self.print_ignored_errors,
             json_file_path=self.json_file_path,
         )
 
@@ -1874,7 +1854,6 @@ class ValidateManager:
         generic_type_validator = GenericTypeValidator(
             structure_validator,
             ignored_errors=pack_error_ignore_list,
-            print_as_warnings=self.print_ignored_errors,
             json_file_path=self.json_file_path,
         )
 
@@ -1884,7 +1863,6 @@ class ValidateManager:
         generic_module_validator = GenericModuleValidator(
             structure_validator,
             ignored_errors=pack_error_ignore_list,
-            print_as_warnings=self.print_ignored_errors,
             json_file_path=self.json_file_path,
         )
 
@@ -1894,7 +1872,6 @@ class ValidateManager:
         generic_definition_validator = GenericDefinitionValidator(
             structure_validator,
             ignored_errors=pack_error_ignore_list,
-            print_as_warnings=self.print_ignored_errors,
             json_file_path=self.json_file_path,
         )
 
@@ -1919,12 +1896,11 @@ class ValidateManager:
         files_valid = True
         author_valid = True
 
-        click.echo(f"\nValidating {pack_path} unique pack files")
+        logger.info(f"\nValidating {pack_path} unique pack files")
         pack_unique_files_validator = PackUniqueFilesValidator(
             pack=os.path.basename(pack_path),
             pack_path=pack_path,
             ignored_errors=pack_error_ignore_list,
-            print_as_warnings=self.print_ignored_errors,
             should_version_raise=should_version_raise,
             validate_dependencies=not self.skip_dependencies,
             id_set_path=self.id_set_path,
@@ -1938,13 +1914,12 @@ class ValidateManager:
             self.id_set_validations
         )
         if pack_errors:
-            click.secho(pack_errors, fg="bright_red")
             files_valid = False
 
         # check author image
         author_image_path = os.path.join(pack_path, AUTHOR_IMAGE_FILE_NAME)
         if os.path.exists(author_image_path):
-            click.echo("Validating pack author image")
+            logger.info("Validating pack author image")
             author_valid = self.validate_author_image(
                 author_image_path, pack_error_ignore_list
             )
@@ -1955,19 +1930,18 @@ class ValidateManager:
         job_validator = JobValidator(
             structure_validator,
             pack_error_ignore_list,
-            print_as_warnings=self.print_ignored_errors,
             json_file_path=self.json_file_path,
         )
         is_valid = job_validator.is_valid_file()
         if not is_valid:
-            click.secho(job_validator.get_errors(), fg="bright_red")
+            job_validator_errors = job_validator.get_errors()
+            logger.info(f"[red]{job_validator_errors}[/red]")
 
         return is_valid
 
     def validate_modified_files(self, modified_files):
-        click.secho(
-            f"\n================= Running validation on modified files =================",
-            fg="bright_cyan",
+        logger.info(
+            f"\n[cyan]================= Running validation on modified files =================[/cyan]"
         )
         valid_files = set()
         for file_path in modified_files:
@@ -1991,9 +1965,8 @@ class ValidateManager:
         return all(valid_files)
 
     def validate_added_files(self, added_files, modified_files):
-        click.secho(
-            f"\n================= Running validation on newly added files =================",
-            fg="bright_cyan",
+        logger.info(
+            f"\n[cyan]================= Running validation on newly added files =================[/cyan]"
         )
 
         valid_files = set()
@@ -2068,9 +2041,8 @@ class ValidateManager:
 
     @error_codes("BA115")
     def validate_deleted_files(self, deleted_files: set, added_files: set) -> bool:
-        click.secho(
-            f"\n================= Checking for prohibited deleted files =================",
-            fg="bright_cyan",
+        logger.info(
+            f"\n[cyan]================= Checking for prohibited deleted files =================[/cyan]"
         )
 
         is_valid = True
@@ -2108,9 +2080,8 @@ class ValidateManager:
     def validate_changed_packs_unique_files(
         self, modified_files, added_files, old_format_files, changed_meta_files
     ):
-        click.secho(
-            f"\n================= Running validation on changed pack unique files =================",
-            fg="bright_cyan",
+        logger.info(
+            f"\n[cyan]================= Running validation on changed pack unique files =================[/cyan]"
         )
         valid_pack_files = set()
 
@@ -2153,7 +2124,7 @@ class ValidateManager:
         """
         handle_error = True
         for file_path in old_format_files:
-            click.echo(f"Validating old-format file {file_path}")
+            logger.info(f"Validating old-format file {file_path}")
             yaml_data = get_yaml(file_path)
             # we only fail on old format if no toversion (meaning it is latest) or if the ynl is not deprecated.
             if "toversion" not in yaml_data and not yaml_data.get("deprecated"):
@@ -2178,9 +2149,8 @@ class ValidateManager:
         Returns:
             bool. True if no duplications found, false otherwise
         """
-        click.secho(
-            f"\n================= Verifying no duplicated release notes =================",
-            fg="bright_cyan",
+        logger.info(
+            f"\n[cyan]================= Verifying no duplicated release notes =================[/cyan]"
         )
         added_rn = set()
         for file in added_files:
@@ -2199,7 +2169,7 @@ class ValidateManager:
                     ):
                         return False
 
-        click.secho("\nNo duplicated release notes found.\n", fg="bright_green")
+        logger.info("\n[green]No duplicated release notes found.[/green]\n")
         return True
 
     @error_codes("RN106")
@@ -2216,9 +2186,8 @@ class ValidateManager:
         Returns:
             bool. True if no missing RN found, False otherwise
         """
-        click.secho(
-            "\n================= Checking for missing release notes =================\n",
-            fg="bright_cyan",
+        logger.info(
+            "\n[cyan]================= Checking for missing release notes =================[/cyan]\n"
         )
         packs_that_should_have_new_rn_api_module_related: set = set()
         # existing packs that have files changed (which are not RN, README nor test files) - should have new RN
@@ -2267,7 +2236,6 @@ class ValidateManager:
                     )
                 if not BaseValidator(
                     ignored_errors=ignored_errors_list,
-                    print_as_warnings=self.print_ignored_errors,
                     json_file_path=self.json_file_path,
                     specific_validations=self.specific_validations,
                 ).handle_error(
@@ -2285,7 +2253,7 @@ class ValidateManager:
             return all(is_valid)
 
         else:
-            click.secho("No missing release notes found.\n", fg="bright_green")
+            logger.info("[green]No missing release notes found.[/green]\n")
             return True
 
     """ ######################################## Git Tools and filtering ####################################### """
@@ -2322,10 +2290,9 @@ class ValidateManager:
             self.prev_ver
         ):
             non_existing_remote = self.prev_ver.split("/")[0]
-            click.secho(
-                f"Could not find remote {non_existing_remote} reverting to "
-                f"{str(self.git_util.repo.remote())}",
-                fg="bright_red",
+            logger.info(
+                f"[red]Could not find remote {non_existing_remote} reverting to "
+                f"{str(self.git_util.repo.remote())}[/red]"
             )
             self.prev_ver = self.prev_ver.replace(
                 non_existing_remote, str(self.git_util.repo.remote())
@@ -2355,39 +2322,38 @@ class ValidateManager:
         return True
 
     def print_git_config(self):
-        click.secho(
-            f"\n================= Running validation on branch {self.branch_name} =================",
-            fg="bright_cyan",
+        logger.info(
+            f"\n[cyan]================= Running validation on branch {self.branch_name} =================[/cyan]"
         )
         if not self.no_configuration_prints:
-            click.echo(f"Validating against {self.prev_ver}")
+            logger.info(f"Validating against {self.prev_ver}")
 
             if self.branch_name in [
                 self.prev_ver,
                 self.prev_ver.replace("origin/", ""),
             ]:  # pragma: no cover
-                click.echo("Running only on last commit")
+                logger.info("Running only on last commit")
 
             elif self.is_circle:
-                click.echo("Running only on committed files")
+                logger.info("Running only on committed files")
 
             elif self.staged:
-                click.echo("Running only on staged files")
+                logger.info("Running only on staged files")
 
             else:
-                click.echo("Running on committed and staged files")
+                logger.info("Running on committed and staged files")
 
             if self.skip_pack_rn_validation:
-                click.echo("Skipping release notes validation")
+                logger.info("Skipping release notes validation")
 
             if self.skip_docker_checks:
-                click.echo("Skipping Docker checks")
+                logger.info("Skipping Docker checks")
 
             if not self.is_backward_check:
-                click.echo("Skipping backwards compatibility checks")
+                logger.info("Skipping backwards compatibility checks")
 
             if self.skip_dependencies:
-                click.echo("Skipping pack dependencies check")
+                logger.info("Skipping pack dependencies check")
 
     def get_unfiltered_changed_files_from_git(self) -> Tuple[Set, Set, Set]:
         """
@@ -2530,7 +2496,7 @@ class ValidateManager:
             except FileNotFoundError:
                 if file_path not in self.ignored_files:
                     if self.print_ignored_files:
-                        click.secho(f"ignoring file {file_path}", fg="yellow")
+                        logger.info(f"[yellow]ignoring file {file_path}[/yellow]")
                     self.ignored_files.add(file_path)
 
         return filtered_set, old_format_files, all(valid_types)
@@ -2557,6 +2523,9 @@ class ValidateManager:
 
         file_type = find_type(file_path)
 
+        if file_type == FileType.CONF_JSON:
+            return file_path, "", True
+
         if self.ignore_files_irrelevant_for_validation(
             file_path, check_metadata_files=check_metadata_files
         ):
@@ -2580,6 +2549,7 @@ class ValidateManager:
             FileType.JAVASCRIPT_FILE,
             FileType.XIF_FILE,
             FileType.MODELING_RULE_XIF,
+            FileType.PARSING_RULE_XIF,
         ]:
             if not (
                 str(file_path).endswith("_test.py")
@@ -2667,7 +2637,7 @@ class ValidateManager:
 
     def ignore_file(self, file_path: str) -> None:
         if self.print_ignored_files:
-            click.secho(f"ignoring file {file_path}", fg="yellow")
+            logger.info(f"[yellow]ignoring file {file_path}[/yellow]")
         self.ignored_files.add(file_path)
 
     """ ######################################## Validate Tools ############################################### """
@@ -2699,36 +2669,23 @@ class ValidateManager:
     def get_error_ignore_list(self, pack_name):
         ignored_errors_list: dict = {}
         if pack_name:
-            pack_ignore_path = get_pack_ignore_file_path(pack_name)
-
-            if os.path.isfile(pack_ignore_path):
-                try:
-                    config = ConfigParser(allow_no_value=True)
-                    config.read(pack_ignore_path)
-
-                    # create file specific ignored errors list
-                    for section in config.sections():
-                        if section.startswith("file:"):
-                            file_name = section[5:]
-                            ignored_errors_list[file_name] = []
-                            for key in config[section]:
-                                self.add_ignored_errors_to_list(
-                                    config, section, key, ignored_errors_list[file_name]
-                                )
-
-                except MissingSectionHeaderError:
-                    pass
-            else:
-                click.secho(
-                    f"Could not find pack-ignore file at path {pack_ignore_path}",
-                    fg="bright_red",
-                )
+            if config := get_pack_ignore_content(pack_name):
+                # create file specific ignored errors list
+                for section in filter(
+                    lambda section: section.startswith("file:"), config.sections()
+                ):
+                    file_name = section[5:]
+                    ignored_errors_list[file_name] = []
+                    for key in config[section]:
+                        self.add_ignored_errors_to_list(
+                            config, section, key, ignored_errors_list[file_name]
+                        )
 
         return ignored_errors_list
 
     @staticmethod
     def is_old_file_format(file_path, file_type):
-        file_yml = get_yaml(file_path)
+        file_yml = get_file(file_path)
         # check for unified integration
         if file_type == FileType.INTEGRATION and file_yml.get("script", {}).get(
             "script", "-"
@@ -2759,18 +2716,16 @@ class ValidateManager:
     def print_ignored_errors_report(self, print_ignored_errors):
         if print_ignored_errors:
             all_ignored_errors = "\n".join(FOUND_FILES_AND_IGNORED_ERRORS)
-            click.secho(
-                f"\n=========== Found ignored errors "
-                f"in the following files ===========\n\n{all_ignored_errors}",
-                fg="yellow",
+            logger.info(
+                f"\n[yellow]=========== Found ignored errors "
+                f"in the following files ===========\n\n{all_ignored_errors}[/yellow]"
             )
 
     def print_ignored_files_report(self, print_ignored_files):
         if print_ignored_files:
             all_ignored_files = "\n".join(list(self.ignored_files))
-            click.secho(
-                f"\n=========== Ignored the following files ===========\n\n{all_ignored_files}",
-                fg="yellow",
+            logger.info(
+                f"\n[yellow]=========== Ignored the following files ===========\n\n{all_ignored_files}[/yellow]"
             )
 
     def get_packs_that_should_have_version_raised(
@@ -2889,7 +2844,7 @@ class ValidateManager:
         ) < version.parse(OLDEST_SUPPORTED_VERSION)
 
         if is_deprecated or toversion_is_old:
-            click.echo(f"Validating deprecated file: {file_path}")
+            logger.info(f"Validating deprecated file: {file_path}")
 
             is_valid_as_deprecated = True
             if hasattr(validator, "is_valid_as_deprecated"):
@@ -2900,7 +2855,7 @@ class ValidateManager:
 
             self.ignored_files.add(file_path)
             if self.print_ignored_files:
-                click.echo(f"Skipping validation for: {file_path}")
+                logger.info(f"Skipping validation for: {file_path}")
 
             return is_valid_as_deprecated
         return None

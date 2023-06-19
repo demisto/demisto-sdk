@@ -1,4 +1,4 @@
-import logging
+from datetime import datetime
 from pathlib import Path
 from time import sleep
 from typing import Any, Dict, List, Optional, Tuple
@@ -18,11 +18,11 @@ from demisto_sdk.commands.common.content.objects.pack_objects.modeling_rule.mode
     SingleModelingRule,
 )
 from demisto_sdk.commands.common.logger import (
-    set_console_stream_handler,
-    setup_rich_logging,
+    handle_deprecated_args,
+    logger,
+    logging_setup,
 )
 from demisto_sdk.commands.test_content.test_modeling_rule import init_test_data
-from demisto_sdk.commands.test_content.xsiam_tools import xsiam_client
 from demisto_sdk.commands.test_content.xsiam_tools.xsiam_client import (
     XsiamApiClient,
     XsiamApiClientConfig,
@@ -45,7 +45,6 @@ console = Console(theme=custom_theme)
 
 
 app = typer.Typer()
-logger = logging.getLogger("demisto-sdk")
 
 
 def create_table(expected: Dict[str, Any], received: Dict[str, Any]) -> Table:
@@ -64,17 +63,57 @@ def create_table(expected: Dict[str, Any], received: Dict[str, Any]) -> Table:
     return table
 
 
-def verify_results(results: List[dict], test_data: init_test_data.TestData):
+def day_suffix(day: int) -> str:
+    """
+    Returns a suffix string base on the day of the month.
+        for 1, 21, 31 => st
+        for 2, 22 => nd
+        for 3, 23 => rd
+        for to all the others => th
+
+        see here for more details: https://en.wikipedia.org/wiki/English_numerals#Ordinal_numbers
+
+    Args:
+        day: The day of the month represented by a number.
+
+    Returns:
+        suffix string (st, nd, rd, th).
+    """
+    return "th" if 11 <= day <= 13 else {1: "st", 2: "nd", 3: "rd"}.get(day % 10, "th")
+
+
+def convert_epoch_time_to_string_time(epoch_time: int, with_ms: bool = False) -> str:
+    """
+    Converts epoch time with milliseconds to string time with timezone delta.
+
+    Args:
+        epoch_time: The received epoch time (with milliseconds).
+        with_ms: Whether to convert the epoch time with ms or not default is False.
+
+    Returns:
+        The string time with timezone delta.
+    """
+    datetime_object = datetime.fromtimestamp(epoch_time / 1000)
+    time_format = f"%b %-d{day_suffix(datetime_object.day)} %Y %H:%M:%S"
+    if with_ms:
+        time_format = f"{time_format}.%f"
+    string_time = datetime_object.strftime(time_format)
+
+    return string_time
+
+
+def verify_results(
+    tested_dataset: str, results: List[dict], test_data: init_test_data.TestData
+):
     """Verify that the results of the XQL query match the expected values.
 
     Args:
+        tested_dataset (str): The dataset to verify result for.
         results (List[dict]): The results of the XQL query.
         test_data (init_test_data.TestData): The data parsed from the test data file.
 
-    Raises:
-        typer.Exit: If there are no results.
-        ValueError: If the number of results does not match the number of test data events.
-        typer.Exit: If the results do not match the expected values.
+    Returns:
+        bool: True if the results are valid, False otherwise.
     """
     if not results:
         err = (
@@ -82,23 +121,29 @@ def verify_results(results: List[dict], test_data: init_test_data.TestData):
             " error with your modeling rule and that it did not install properly on the tenant[/red]"
         )
         logger.error(err, extra={"markup": True})
-        raise typer.Exit(1)
-    if len(results) != len(test_data.data):
+
+        return False
+    rule_relevant_data = [
+        data for data in test_data.data if data.dataset == tested_dataset
+    ]
+    if len(results) != len(rule_relevant_data):
         err = (
             f"[red]Expected {len(test_data.data)} results, got {len(results)}. Verify that the event"
             " data used in your test data file meets the criteria of the modeling rule, e.g. the filter"
             " condition.[/red]"
         )
         logger.error(err, extra={"markup": True})
-        raise typer.Exit(1)
+        return False
     errors = False
+
     for i, result in enumerate(results):
         logger.info(
-            f"\n[cyan underline]Result {i + 1}[/cyan underline]", extra={"markup": True}
+            f"\n[cyan][underline]Result {i + 1}[/underline][/cyan]",
+            extra={"markup": True},
         )
 
         # get expected_values for the given query result
-        td_event_id = result.pop(f"{test_data.data[0].dataset}.test_data_event_id")
+        td_event_id = result.pop(f"{tested_dataset}.test_data_event_id")
         expected_values = None
         for e in test_data.data:
             if str(e.test_data_event_id) == td_event_id:
@@ -106,6 +151,13 @@ def verify_results(results: List[dict], test_data: init_test_data.TestData):
                 break
 
         if expected_values:
+            if (expected_time_value := expected_values.get("_time")) and (
+                time_value := result.get("_time")
+            ):
+                time_with_ms = "." in expected_time_value
+                result["_time"] = convert_epoch_time_to_string_time(
+                    time_value, time_with_ms
+                )
             printr(create_table(expected_values, result))
 
             for key, val in expected_values.items():
@@ -122,7 +174,9 @@ def verify_results(results: List[dict], test_data: init_test_data.TestData):
                     )
                     if result_val != val:
                         logger.error(
-                            f'[red][bold]{key}[/bold] --- "{result_val}" != "{val}"[/red]',
+                            f'[red][bold]{key}[/bold] --- "{result_val}" != "{val}"\n'
+                            f'[bold]{key}[/bold] --- Received value type: "{type(result_val)}" '
+                            f'!=  Expected value type: "{type(val)}"[/red]',
                             extra={"markup": True},
                         )
                         errors = True
@@ -135,8 +189,7 @@ def verify_results(results: List[dict], test_data: init_test_data.TestData):
                 extra={"markup": True},
             )
             errors = True
-    if errors:
-        raise typer.Exit(1)
+    return not errors
 
 
 def generate_xql_query(rule: SingleModelingRule, test_data_event_ids: List[str]) -> str:
@@ -169,7 +222,12 @@ def validate_expected_values(
     success = True
     for rule in mr.rules:
         query = generate_xql_query(
-            rule, [str(d.test_data_event_id) for d in test_data.data]
+            rule,
+            [
+                str(d.test_data_event_id)
+                for d in test_data.data
+                if d.dataset == rule.dataset
+            ],
         )
         logger.debug(query)
         try:
@@ -187,7 +245,7 @@ def validate_expected_values(
             )
             success = False
         else:
-            verify_results(results, test_data)
+            success &= verify_results(rule.dataset, results, test_data)
     if success:
         logger.info(
             "[green]Mappings validated successfully[/green]", extra={"markup": True}
@@ -199,7 +257,7 @@ def validate_expected_values(
 def check_dataset_exists(
     xsiam_client: XsiamApiClient,
     test_data: init_test_data.TestData,
-    timeout: int = 60,
+    timeout: int = 120,
     interval: int = 5,
 ):
     """Check if the dataset in the test data file exists in the tenant.
@@ -207,45 +265,53 @@ def check_dataset_exists(
     Args:
         xsiam_client (XsiamApiClient): Xsiam API client.
         test_data (init_test_data.TestData): The data parsed from the test data file.
-        timeout (int, optional): The number of seconds to wait for the dataset to exist. Defaults to 60.
+        timeout (int, optional): The number of seconds to wait for the dataset to exist. Defaults to 120 seconds.
         interval (int, optional): The number of seconds to wait between checking for the dataset. Defaults to 5.
 
     Raises:
         typer.Exit: If the dataset does not exist after the timeout.
     """
-    dataset = test_data.data[0].dataset
-    logger.info(
-        f'[cyan]Checking if dataset "{dataset}" exists on the tenant...[/cyan]',
-        extra={"markup": True},
-    )
-    query = f"config timeframe = 10y | dataset = {dataset}"
-    for i in range(timeout // interval):
-        logger.debug(f"Check #{i+1}...")
-        try:
-            execution_id = xsiam_client.start_xql_query(query)
-            results = xsiam_client.get_xql_query_result(execution_id)
-            if results:
-                logger.info(
-                    f"[green]Dataset {dataset} exists[/green]", extra={"markup": True}
+    process_failed = False
+    dataset_set = {data.dataset for data in test_data.data}
+    for dataset in dataset_set:
+        dataset_exist = False
+        logger.info(
+            f'[cyan]Checking if dataset "{dataset}" exists on the tenant...[/cyan]',
+            extra={"markup": True},
+        )
+        query = f"config timeframe = 10y | dataset = {dataset}"
+        for i in range(timeout // interval):
+            logger.debug(f"Check #{i+1}...")
+            try:
+                execution_id = xsiam_client.start_xql_query(
+                    query, print_req_error=(i + 1 == timeout // interval)
                 )
-                return
-            else:
-                err = (
-                    f"[red]Dataset {dataset} exists but no results were returned. This could mean that your testdata "
-                    "does not meet the criteria for an associated Parsing Rule and is therefore being dropped from "
-                    "the dataset. Check to see if a Parsing Rule exists for your dataset and that your testdata "
-                    "meets the criteria for that rule.[/red]"
-                )
-                logger.error(err, extra={"markup": True})
-                raise typer.Exit(1)
-        except requests.exceptions.HTTPError:
-            pass
-        sleep(interval)
-    logger.error(
-        f"[red]Dataset {dataset} does not exist after {timeout} seconds[/red]",
-        extra={"markup": True},
-    )
-    raise typer.Exit(1)
+                results = xsiam_client.get_xql_query_result(execution_id)
+                if results:
+                    logger.info(
+                        f"[green]Dataset {dataset} exists[/green]",
+                        extra={"markup": True},
+                    )
+                    dataset_exist = True
+                else:
+                    err = (
+                        f"[red]Dataset {dataset} exists but no results were returned. This could mean that your testdata "
+                        "does not meet the criteria for an associated Parsing Rule and is therefore being dropped from "
+                        "the dataset. Check to see if a Parsing Rule exists for your dataset and that your testdata "
+                        "meets the criteria for that rule.[/red]"
+                    )
+                    logger.error(err, extra={"markup": True})
+                break
+            except requests.exceptions.HTTPError:
+                pass
+            sleep(interval)
+        if not dataset_exist:
+            err = f"[red]Dataset {dataset} does not exist after {timeout} seconds[/red]"
+            logger.error(err, extra={"markup": True})
+        process_failed |= not dataset_exist
+
+    if process_failed:
+        raise typer.Exit(1)
 
 
 def push_test_data_to_tenant(
@@ -258,29 +324,36 @@ def push_test_data_to_tenant(
         mr (ModelingRule): Modeling rule object parsed from the modeling rule file.
         test_data (init_test_data.TestData): Test data object parsed from the test data file.
     """
-    events_test_data = [
-        {
-            **event_log.event_data,
-            "test_data_event_id": str(event_log.test_data_event_id),
-        }
-        for event_log in test_data.data
-        if isinstance(event_log.event_data, dict)
-    ]
-    logger.info("[cyan]Pushing test data to tenant...[/cyan]", extra={"markup": True})
-    try:
-        xsiam_client.push_to_dataset(
-            events_test_data, mr.rules[0].vendor, mr.rules[0].product
-        )
-    except requests.exceptions.HTTPError:
-        logger.error(
-            (
-                "[red]Failed pushing test data to tenant, potential reasons could be:\n - an incorrect token\n"
-                ' - currently only http collectors configured with "Compression" as "gzip" and "Log Format" as "JSON"'
-                " are supported, double check your collector is configured as such\n - the configured http collector "
-                "on your tenant is disabled[/red]"
-            ),
+    error = False
+    for rule in mr.rules:
+
+        events_test_data = [
+            {
+                **event_log.event_data,
+                "test_data_event_id": str(event_log.test_data_event_id),
+            }
+            for event_log in test_data.data
+            if isinstance(event_log.event_data, dict)
+            and event_log.dataset == rule.dataset
+        ]
+        logger.info(
+            f"[cyan]Pushing test data for {rule.dataset} to tenant...[/cyan]",
             extra={"markup": True},
         )
+        try:
+            xsiam_client.push_to_dataset(events_test_data, rule.vendor, rule.product)
+        except requests.exceptions.HTTPError:
+            logger.error(
+                (
+                    "[red]Failed pushing test data to tenant, potential reasons could be:\n - an incorrect token\n"
+                    ' - currently only http collectors configured with "Compression" as "gzip" and "Log Format" as "JSON"'
+                    " are supported, double check your collector is configured as such\n - the configured http collector "
+                    "on your tenant is disabled[/red]"
+                ),
+                extra={"markup": True},
+            )
+            error = True
+    if error:
         raise typer.Exit(1)
     logger.info("[green]Test data pushed successfully[/green]", extra={"markup": True})
 
@@ -324,7 +397,7 @@ def verify_pack_exists_on_tenant(
             )
             if upload:
                 logger.info(
-                    f'[cyan underline]Upload "{containing_pack_id}"[/cyan underline]',
+                    f'[cyan][underline]Upload "{containing_pack_id}"[/underline][/cyan]',
                     extra={"markup": True},
                 )
                 upload_kwargs = {
@@ -335,7 +408,6 @@ def verify_pack_exists_on_tenant(
                     "insecure": False,
                     "input_config_file": None,
                     "skip_validation": False,
-                    "verbose": False,
                     "reattach": True,
                 }
                 upload_result = upload_cmd(**upload_kwargs)
@@ -421,7 +493,7 @@ def validate_modeling_rule(
             )
             if generate:
                 logger.info(
-                    "[cyan underline]Generate Test Data File[/cyan underline]",
+                    "[cyan][underline]Generate Test Data File[/underline][/cyan]",
                     extra={"markup": True},
                 )
                 events_count = typer.prompt(
@@ -481,18 +553,19 @@ def validate_modeling_rule(
                     f"[yellow]Skipping test data file generation for {mrule_dir}[/yellow]",
                     extra={"markup": True},
                 )
-                logger.warning(
-                    f"[yellow]Please create a test data file for {mrule_dir} and then rerun,[/yellow]",
+                logger.error(
+                    f"[red]Please create a test data file for {mrule_dir} and then rerun,[/red]",
                     extra={"markup": True},
                 )
                 printr(execd_cmd)
-                raise typer.Abort()
+                raise typer.Exit(1)
         else:
-            logger.warning(
-                f"[yellow]Please create a test data file for {mrule_dir} and then rerun,[/yellow]",
+            logger.error(
+                f"[red]Please create a test data file for {mrule_dir} and then rerun,[/red]",
                 extra={"markup": True},
             )
             printr(execd_cmd)
+            raise typer.Exit(1)
     else:
         logger.info(
             f"[cyan]Test data file found at {mr_entity.testdata_path}[/cyan]",
@@ -578,7 +651,10 @@ def logs_token_cb(ctx: typer.Context, param: typer.CallbackParam, value: Optiona
     return value
 
 
-@app.command(no_args_is_help=True)
+@app.command(
+    no_args_is_help=True,
+    context_settings={"allow_extra_args": True, "ignore_unknown_options": True},
+)
 def test_modeling_rule(
     ctx: typer.Context,
     input: List[Path] = typer.Argument(
@@ -628,40 +704,6 @@ def test_modeling_rule(
         show_default=False,
         callback=logs_token_cb,
     ),
-    verbosity: int = typer.Option(
-        0,
-        "-v",
-        "--verbose",
-        count=True,
-        clamp=True,
-        max=3,
-        show_default=True,
-        help="Verbosity level -v / -vv / .. / -vvv",
-        rich_help_panel="Logging Configuration",
-    ),
-    quiet: bool = typer.Option(
-        False,
-        help="Quiet output - sets verbosity to default.",
-        rich_help_panel="Logging Configuration",
-    ),
-    log_path: Path = typer.Option(
-        None,
-        "-lp",
-        "--log-path",
-        resolve_path=True,
-        show_default=False,
-        help="Path of directory in which you would like to store all levels of logs. If not given, then the "
-        '"log_file_name" command line option will be disregarded, and the log output will be to stdout.',
-        rich_help_panel="Logging Configuration",
-    ),
-    log_file_name: str = typer.Option(
-        "test-modeling-rule.log",
-        "-ln",
-        "--log-name",
-        resolve_path=True,
-        help="The file name (including extension) where log output should be saved to.",
-        rich_help_panel="Logging Configuration",
-    ),
     push: bool = typer.Option(
         True,
         "--push/--no-push",
@@ -683,16 +725,34 @@ def test_modeling_rule(
         rich_help_panel="Interactive Configuration",
         hidden=True,
     ),
+    console_log_threshold: str = typer.Option(
+        "INFO",
+        "-clt",
+        "--console_log_threshold",
+        help=("Minimum logging threshold for the console logger."),
+    ),
+    file_log_threshold: str = typer.Option(
+        "DEBUG",
+        "-flt",
+        "--file_log_threshold",
+        help=("Minimum logging threshold for the file logger."),
+    ),
+    log_file_path: str = typer.Option(
+        "demisto_sdk_debug.log",
+        "-lp",
+        "--log_file_path",
+        help=("Path to the log file. Default: ./demisto_sdk_debug.log."),
+    ),
 ):
     """
     Test a modeling rule against an XSIAM tenant
     """
-    setup_rich_logging(verbosity, quiet, log_path, log_file_name)
-
-    # override XsiamApiClient logger
-    xsiam_logger = logging.getLogger(xsiam_client.__name__)
-    set_console_stream_handler(xsiam_logger)
-    xsiam_logger.propagate = False
+    logging_setup(
+        console_log_threshold=console_log_threshold,
+        file_log_threshold=file_log_threshold,
+        log_file_path=log_file_path,
+    )
+    handle_deprecated_args(ctx.args)
 
     logger.info(
         f"[cyan]modeling rules directories to test: {input}[/cyan]",

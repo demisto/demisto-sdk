@@ -13,13 +13,8 @@ from demisto_sdk.commands.common.default_additional_info_loader import (
     load_default_additional_info_dict,
 )
 from demisto_sdk.commands.common.handlers import JSON_Handler
-from demisto_sdk.commands.common.tools import (
-    LOG_COLORS,
-    get_yaml,
-    print_color,
-    print_error,
-    print_warning,
-)
+from demisto_sdk.commands.common.logger import logger
+from demisto_sdk.commands.common.tools import get_yaml
 from demisto_sdk.commands.generate_docs.common import (
     add_lines,
     build_example_dict,
@@ -56,9 +51,7 @@ def append_or_replace_command_in_docs(
     errs = list()
     if re.findall(regexp, old_docs, flags=re.DOTALL):
         new_docs = re.sub(regexp, new_doc_section, old_docs, flags=re.DOTALL)
-        print_color(
-            "New command docs has been replaced in README.md.", LOG_COLORS.GREEN
-        )
+        logger.info("[green]New command docs has been replaced in README.md.[/green]")
     else:
         if command_name in old_docs:
             errs.append(
@@ -70,9 +63,7 @@ def append_or_replace_command_in_docs(
             # Remove trailing '\n'
             old_docs = old_docs[:-1]
         new_docs = f"{old_docs}\n{new_doc_section}"
-        print_color(
-            "New command docs has been added to the README.md.", LOG_COLORS.GREEN
-        )
+        logger.info("[green]New command docs has been added to the README.md.[/green]")
     return new_docs, errs
 
 
@@ -85,7 +76,6 @@ def generate_integration_doc(
     command_permissions: Optional[str] = None,
     limitations: Optional[str] = None,
     insecure: bool = False,
-    verbose: bool = False,
     command: Optional[str] = None,
     old_version: str = "",
     skip_breaking_changes: bool = False,
@@ -102,7 +92,6 @@ def generate_integration_doc(
         command_permissions: permissions per command
         limitations: limitations description
         insecure: should use insecure
-        verbose: verbose (debug mode)
         command: specific command to generate docs for
         is_contribution: Check if the content item is a new integration contribution or not.
 
@@ -141,7 +130,7 @@ def generate_integration_doc(
             with open(readme_path) as f:
                 doc_text = f.read()
             for specific_command in specific_commands:
-                print(f"Generating docs for command `{specific_command}`")
+                logger.info(f"Generating docs for command `{specific_command}`")
                 command_section, command_errors = generate_commands_section(
                     yml_data,
                     example_dict,
@@ -219,16 +208,13 @@ def generate_integration_doc(
         save_output(output, "README.md", doc_text)
 
         if errors:
-            print_warning("Possible Errors:")
+            logger.info("[yellow]Possible Errors:[/yellow]")
             for error in errors:
-                print_warning(error)
+                logger.info(f"[yellow]{error}[/yellow]")
 
     except Exception as ex:
-        if verbose:
-            raise
-        else:
-            print_error(f"Error: {str(ex)}")
-            return
+        logger.info(f"[red]Error: {str(ex)}[/red]")
+        raise
 
 
 # Setup integration on Demisto
@@ -259,7 +245,8 @@ def generate_setup_section(yaml_data: dict):
                     "Parameter": conf.get("display"),
                     "Description": string_escape_md(
                         conf.get("additionalinfo", "")
-                        or default_additional_info.get(conf.get("name", ""), "")
+                        or default_additional_info.get(conf.get("name", ""), ""),
+                        escape_html=False,
                     ),
                     "Required": conf.get("required", ""),
                 }
@@ -446,7 +433,7 @@ def generate_commands_section(
             command_dict = list(filter(lambda cmd: cmd["name"] == command, commands))[0]
         except IndexError:
             err = f"Could not find the command `{command}` in the .yml file."
-            print_error(err)
+            logger.info("[red]{err}[/red]")
             raise IndexError(err)
         return generate_single_command_section(
             command_dict, example_dict, command_permissions_dict
@@ -781,8 +768,8 @@ def get_command_examples(commands_examples_input, specific_commands):
         with open(commands_examples_input) as examples_file:
             command_examples = examples_file.read().splitlines()
     else:
-        print_warning(
-            "failed to open commands file, using commands as comma seperated list"
+        logger.info(
+            "[yellow]failed to open commands file, using commands as comma seperated list[/yellow]"
         )
         command_examples = commands_examples_input.split(",")
 
@@ -798,7 +785,7 @@ def get_command_examples(commands_examples_input, specific_commands):
         list(filter(None, map(command_example_filter, command_examples))) or []
     )
 
-    print("found the following commands:\n{}".format("\n".join(command_examples)))
+    logger.info("found the following commands:\n{}".format("\n".join(command_examples)))
     return command_examples
 
 
@@ -829,13 +816,13 @@ def get_command_permissions(commands_permissions_file_path) -> list:
         with open(commands_permissions_file_path) as permissions_file:
             permissions = permissions_file.read().splitlines()
     else:
-        print("failed to open permissions file")
+        logger.info("failed to open permissions file")
         permissions = commands_permissions_file_path.split("\n")
 
     permissions_map = map(command_permissions_filter, permissions)
     permissions_list: List = list(filter(None, permissions_map))
 
-    print(
+    logger.info(
         "found the following commands permissions:\n{}".format(
             "\n ".join(permissions_list)
         )

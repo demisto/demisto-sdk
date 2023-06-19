@@ -1,6 +1,5 @@
-import io
+import logging
 import os
-from contextlib import redirect_stdout
 from copy import deepcopy
 from typing import Any, Dict, List, Optional
 from unittest.mock import mock_open, patch
@@ -24,18 +23,30 @@ from demisto_sdk.commands.common.hook_validations.integration import (
 from demisto_sdk.commands.common.hook_validations.structure import StructureValidator
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from TestSuite.integration import Integration
-from TestSuite.test_tools import ChangeCWD
+from TestSuite.test_tools import ChangeCWD, str_in_call_args_list
 
 default_additional_info = load_default_additional_info_dict()
 
-FEED_REQUIRED_PARAMS_STRUCTURE = [
-    dict(
-        required_param.get("must_equal"),
-        **required_param.get("must_contain"),
-        name=required_param.get("name"),
-    )
-    for required_param in FEED_REQUIRED_PARAMS
-]
+
+def build_feed_required_params():
+    params = []
+    for required_param in FEED_REQUIRED_PARAMS:
+        must_be_one_of = {
+            key: val[-1] if isinstance(val, list) else val
+            for key, val in required_param.get("must_be_one_of").items()
+        }
+        params.append(
+            dict(
+                required_param.get("must_equal"),
+                **required_param.get("must_contain"),
+                name=required_param.get("name"),
+                **must_be_one_of,
+            )
+        )
+    return params
+
+
+FEED_REQUIRED_PARAMS_STRUCTURE = build_feed_required_params()
 
 
 def mock_structure(
@@ -305,18 +316,18 @@ class TestIntegrationValidator:
         "current, old, answer, changed_command_names", IS_CHANGED_CONTEXT_INPUTS
     )
     def test_no_change_to_context_path(
-        self, current, old, answer, changed_command_names
+        self, current, old, answer, changed_command_names, mocker
     ):
+        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
         current = {"script": {"commands": current}}
         old = {"script": {"commands": old}}
         structure = mock_structure("", current, old)
         validator = IntegrationValidator(structure)
-        stdout_print = io.StringIO()
-        with redirect_stdout(stdout_print):
-            assert validator.no_change_to_context_path() is answer
-        printed_errors = stdout_print.getvalue()
+        assert validator.no_change_to_context_path() is answer
         for changed_command_name in changed_command_names:
-            assert changed_command_name in printed_errors
+            assert str_in_call_args_list(
+                logger_info.call_args_list, changed_command_name
+            )
         structure.quiet_bc = True
         assert (
             validator.no_change_to_context_path() is True
@@ -382,7 +393,7 @@ class TestIntegrationValidator:
                     "arguments": [{"name": "argument_test_name_2", "required": True}],
                 },
             ],
-            "[ERROR]: : [BC104] - Possible backwards compatibility break, Your updates to this file contains changes"
+            "[BC104] - Possible backwards compatibility break, Your updates to this file contains changes"
             " to a name or an argument of an existing command(s).\nPlease undo you changes to the following command(s):\ntest1\ntest2",
         )
     ]
@@ -391,7 +402,7 @@ class TestIntegrationValidator:
         "current, old, expected_error_msg", CHANGED_COMMAND_OR_ARG_MST_TEST_INPUTS
     )
     def test_no_changed_command_name_or_arg_msg(
-        self, capsys, current, old, expected_error_msg
+        self, current, old, expected_error_msg, mocker
     ):
         """
         Given
@@ -409,13 +420,13 @@ class TestIntegrationValidator:
         Ensure that the error massage was created correctly.
         - Case 1: Should include both command_test_name_1 and command_test_name_2 in the commands list in the error as they both have BC break changes.
         """
+        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
         current = {"script": {"commands": current}}
         old = {"script": {"commands": old}}
         structure = mock_structure("", current, old)
         validator = IntegrationValidator(structure)
         validator.no_changed_command_name_or_arg()
-        stdout = capsys.readouterr().out
-        assert expected_error_msg == stdout.strip()
+        assert str_in_call_args_list(logger_info.call_args_list, expected_error_msg)
 
     WITHOUT_DUP = [{"name": "test"}, {"name": "test1"}]
     DUPLICATE_PARAMS_INPUTS = [(WITHOUT_DUP, True)]
@@ -427,8 +438,7 @@ class TestIntegrationValidator:
         validator = IntegrationValidator(structure)
         assert validator.has_no_duplicate_params() is answer
 
-    @patch("demisto_sdk.commands.common.hook_validations.integration.print_error")
-    def test_with_duplicate_params(self, print_error):
+    def test_with_duplicate_params(self):
         """
         Given
         - integration configuration contains duplicate parameter (called test)
@@ -441,9 +451,6 @@ class TestIntegrationValidator:
         - it should return True (there are duplicate params)
         - it should print an error message that contains the duplicated param name
         """
-        # from demisto_sdk.commands.common.tools import print_error
-        # mocker.patch(tools, 'print_error')
-
         current = {"configuration": [{"name": "test"}, {"name": "test"}]}
         structure = mock_structure("", current)
         validator = IntegrationValidator(structure)
@@ -494,8 +501,11 @@ class TestIntegrationValidator:
 
     @pytest.mark.parametrize("args, answer, expecting_warning", DEFAULT_INFO_INPUTS)
     def test_default_params_default_info(
-        self, capsys, args: List[Dict], answer: str, expecting_warning: bool
+        self, mocker, args: List[Dict], answer: str, expecting_warning: bool
     ):
+        logger_warning = mocker.patch.object(
+            logging.getLogger("demisto-sdk"), "warning"
+        )
         validator = IntegrationValidator(mock_structure("", {"configuration": args}))
         assert validator.default_params_have_default_additional_info() is answer
 
@@ -505,10 +515,10 @@ class TestIntegrationValidator:
             warning_message, warning_code = Errors.non_default_additional_info(
                 ["API key"]
             )
-            expected_warning = f"[WARNING]: : [{warning_code}] - {warning_message}"
-            captured = capsys.readouterr()
-            assert captured.out.lstrip('":').strip() == expected_warning
-            assert not captured.err
+            expected_message = f"[{warning_code}] - {warning_message}"
+            assert str_in_call_args_list(
+                logger_warning.call_args_list, expected_message
+            )
 
     NO_INCIDENT_INPUT = [
         (
@@ -1784,17 +1794,21 @@ class TestIntegrationValidator:
         assert validator.is_unskipped_integration(conf_dict) is answer
 
     VERIFY_REPUTATION_COMMANDS = [
-        (["test1", "test2"], False, True),
-        (["test1", "url"], False, False),
-        (["test1", "url"], True, True),
-        (["domain", "url"], True, True),
+        # Test feed integration validation
+        (["test1", "test2"], True, False, False),
+        (["test3", "test4"], True, True, True),
+        # Test reputation commands validation
+        (["test5", "test6"], False, False, True),
+        (["test7", "url"], False, False, False),
+        (["test8", "url"], False, True, True),
+        (["domain", "url"], False, True, True),
     ]
 
     @pytest.mark.parametrize(
-        "commands, has_reliability, result", VERIFY_REPUTATION_COMMANDS
+        "commands, is_feed, has_reliability, result", VERIFY_REPUTATION_COMMANDS
     )
     def test_verify_reputation_commands_has_reliability(
-        self, commands, has_reliability, result
+        self, commands, is_feed, has_reliability, result
     ):
         """
         Given
@@ -1804,22 +1818,18 @@ class TestIntegrationValidator:
         Then
             - Ensure the command fails when there is a reputation command without reliability parameter.
         """
+        current = {"script": {"commands": [{"name": command} for command in commands]}}
 
-        current = (
-            {
-                "script": {"commands": [{"name": command} for command in commands]},
-                "configuration": [{"name": "integrationReliability"}],
-            }
-            if has_reliability
-            else {"script": {"commands": [{"name": command} for command in commands]}}
-        )
+        if is_feed:
+            current["script"]["feed"] = True
+
+        if has_reliability:
+            current["configuration"] = [{"name": "integrationReliability"}]
+
         structure = mock_structure("", current)
         validator = IntegrationValidator(structure)
         validator.current_file = current
-        assert (
-            validator.verify_reputation_commands_has_reliability(is_modified=True)
-            is result
-        )
+        assert validator.verify_reputation_commands_has_reliability() is result
 
     @pytest.mark.parametrize(
         "hidden_value,is_valid",
@@ -1910,7 +1920,9 @@ class TestIsFetchParamsExist:
             self.validator.is_valid_fetch() is False
         ), "is_valid_fetch() returns True instead False"
 
-    def test_missing_max_fetch_text(self, capsys):
+    def test_missing_max_fetch_text(self, mocker, caplog, capsys):
+        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+        logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
         # missing param in configuration
         self.validator.current_file["configuration"] = [
             t
@@ -1918,13 +1930,12 @@ class TestIsFetchParamsExist:
             if t["name"] != "incidentType"
         ]
         assert self.validator.is_valid_fetch() is False
-        captured = capsys.readouterr()
-        out = captured.out
-        print(out)
-        assert "display: Incident type" not in out
-        assert (
-            """A required parameter "incidentType" is missing from the YAML file."""
-            in out
+        assert not str_in_call_args_list(
+            logger_info.call_args_list, "display: Incident type"
+        )
+        assert str_in_call_args_list(
+            logger_error.call_args_list,
+            """A required parameter "incidentType" is missing from the YAML file.""",
         )
 
     def test_missing_field(self):
@@ -1932,13 +1943,14 @@ class TestIsFetchParamsExist:
         for i, t in enumerate(self.validator.current_file["configuration"]):
             if t["name"] == "incidentType":
                 del self.validator.current_file["configuration"][i]["name"]
-        print(self.validator.current_file["configuration"])
+        print(self.validator.current_file["configuration"])  # noqa: T201
         assert (
             self.validator.is_valid_fetch() is False
         ), "is_valid_fetch() returns True instead False"
 
-    def test_malformed_field(self, capsys):
+    def test_malformed_field(self, mocker):
         # incorrect param
+        logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
         config = self.validator.current_file["configuration"]
         self.validator.current_file["configuration"] = []
         for t in config:
@@ -1949,16 +1961,20 @@ class TestIsFetchParamsExist:
         assert (
             self.validator.is_valid_fetch() is False
         ), "is_valid_fetch() returns True instead False"
-        captured = capsys.readouterr()
-        out = captured.out
-        print(out)
-        assert "display: Incident type" in out
-        assert "name: incidentType" in out
-        assert "required: false" in out
-        assert "type: 13" in out
+        assert all(
+            [
+                str_in_call_args_list(
+                    logger_error.call_args_list, "display: Incident type"
+                ),
+                str_in_call_args_list(
+                    logger_error.call_args_list, "name: incidentType"
+                ),
+                str_in_call_args_list(logger_error.call_args_list, "required: false"),
+            ]
+        )
 
-    def test_not_fetch(self, capsys):
-        self.test_malformed_field(capsys)
+    def test_not_fetch(self, mocker):
+        self.test_malformed_field(mocker)
         self.validator.is_valid = True
         self.validator.current_file["script"]["isfetch"] = False
         assert (

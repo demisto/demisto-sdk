@@ -1,8 +1,6 @@
 import re
 from typing import Dict, Set
 
-import click
-
 from demisto_sdk.commands.common.constants import (
     DEPRECATED_DESC_REGEX,
     DEPRECATED_NO_REPLACE_DESC_REGEX,
@@ -12,7 +10,8 @@ from demisto_sdk.commands.common.hook_validations.base_validator import error_co
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import (
     ContentEntityValidator,
 )
-from demisto_sdk.commands.common.tools import LOG_COLORS, is_string_uuid
+from demisto_sdk.commands.common.logger import logger
+from demisto_sdk.commands.common.tools import is_string_uuid
 
 
 class PlaybookValidator(ContentEntityValidator):
@@ -22,7 +21,6 @@ class PlaybookValidator(ContentEntityValidator):
         self,
         structure_validator,
         ignored_errors=None,
-        print_as_warnings=False,
         json_file_path=None,
         validate_all=False,
         deprecation_validator=None,
@@ -30,7 +28,6 @@ class PlaybookValidator(ContentEntityValidator):
         super().__init__(
             structure_validator,
             ignored_errors=ignored_errors,
-            print_as_warnings=print_as_warnings,
             json_file_path=json_file_path,
         )
         self.validate_all = validate_all
@@ -51,9 +48,8 @@ class PlaybookValidator(ContentEntityValidator):
             bool. Whether the playbook is valid or not
         """
         if "TestPlaybooks" in self.file_path:
-            click.echo(
-                f"Skipping validation for Test Playbook {self.file_path}",
-                color=LOG_COLORS.YELLOW,
+            logger.info(
+                f"[yellow]Skipping validation for Test Playbook {self.file_path}[/yellow]"
             )
             return True
         playbook_checks = [
@@ -118,7 +114,7 @@ class PlaybookValidator(ContentEntityValidator):
         result: set = set()
         with open(self.file_path) as f:
             playbook_text = f.read()
-        all_inputs_occurrences = re.findall(r"inputs\.[-\w ]+", playbook_text)
+        all_inputs_occurrences = re.findall(r"inputs\.[-\w ?!():]+", playbook_text)
         for input in all_inputs_occurrences:
             input = input.strip()
             splitted = input.split(".")
@@ -563,9 +559,8 @@ class PlaybookValidator(ContentEntityValidator):
         """
 
         if not id_set_file:
-            click.secho(
-                "Skipping playbook script id validation. Could not read id_set.json.",
-                fg="yellow",
+            logger.info(
+                "[yellow]Skipping playbook script id validation. Could not read id_set.json.[/yellow]"
             )
             return True
 

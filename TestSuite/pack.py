@@ -184,7 +184,20 @@ class Pack:
         self.readme = TextBased(self._pack_path, "README.md")
 
         self.pack_metadata = JSONBased(self._pack_path, "pack_metadata", "")
-
+        self.pack_metadata.update(
+            {
+                "name": self.name,
+                "description": "here be description",
+                "support": "xsoar",
+                "url": "https://paloaltonetworks.com",
+                "author": "Cortex XSOAR",
+                "currentVersion": "1.0.0",
+                "tags": [],
+                "categories": [],
+                "useCases": [],
+                "keywords": [],
+            }
+        )
         self.author_image = File(
             tmp_path=self._pack_path / "Author_image.png", repo_path=repo.path
         )
@@ -207,6 +220,7 @@ class Pack:
         description: Optional[str] = None,
         changelog: Optional[str] = None,
         image: Optional[bytes] = None,
+        docker_image: Optional[str] = None,
         create_unified=False,
     ) -> Integration:
         if name is None:
@@ -223,6 +237,7 @@ class Pack:
                     "subtype": "python3",
                     "script": "",
                     "commands": [],
+                    "dockerimage": docker_image,
                 },
                 "configuration": [],
             }
@@ -247,7 +262,9 @@ class Pack:
         description: str = "",
         changelog: str = "",
         image: bytes = b"",
+        docker_image: Optional[str] = None,
         create_unified=False,
+        skip_prepare=[],
     ) -> Script:
         if name is None:
             name = f"script{len(self.scripts)}"
@@ -258,7 +275,9 @@ class Pack:
                 "comment": f"this is script {name}",
                 "type": "python",
                 "subtype": "python3",
+                "dockerimage": docker_image,
                 "script": "-",
+                "skipprepare": skip_prepare,
             }
         script = Script(
             self._scripts_path, name, self._repo, create_unified=create_unified

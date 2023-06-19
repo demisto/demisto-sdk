@@ -4,9 +4,9 @@ from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
+from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import JSON_Handler
-from demisto_sdk.commands.common.tools import get_content_path
 from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
@@ -18,7 +18,7 @@ METADATA_FILE_NAME = "metadata.json"
 
 
 class ContentGraphInterface(ABC):
-    repo_path = Path(get_content_path())  # type: ignore
+    repo_path = CONTENT_PATH  # type: ignore
 
     @property
     @abstractmethod
@@ -77,7 +77,7 @@ class ContentGraphInterface(ABC):
         pass
 
     @abstractmethod
-    def import_graph(self, imported_path: Optional[Path] = None) -> None:
+    def import_graph(self, imported_path: Optional[Path] = None) -> bool:
         pass
 
     @abstractmethod
@@ -124,8 +124,16 @@ class ContentGraphInterface(ABC):
         pass
 
     @abstractmethod
+    def validate_duplicate_ids(self, file_paths: List[str]) -> None:
+        pass
+
+    @abstractmethod
     def clean_graph(self):
         ...
+
+    @abstractmethod
+    def find_items_using_deprecated_items(self, file_paths: List[str]) -> List[dict]:
+        pass
 
     @abstractmethod
     def search(

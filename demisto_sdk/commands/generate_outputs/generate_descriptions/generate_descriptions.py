@@ -1,5 +1,4 @@
 import itertools
-import logging
 import math
 import os
 import os.path
@@ -10,7 +9,8 @@ from typing import Dict
 import requests
 
 from demisto_sdk.commands.common.handlers import JSON_Handler
-from demisto_sdk.commands.common.tools import get_yaml, print_error, write_yml
+from demisto_sdk.commands.common.logger import logger
+from demisto_sdk.commands.common.tools import get_yaml, write_yml
 
 json = JSON_Handler()
 
@@ -18,8 +18,6 @@ json = JSON_Handler()
 CREDENTIALS = 9
 
 old_merge_environment_settings = requests.Session.merge_environment_settings
-
-logger = logging.getLogger(__name__)
 
 # Globals
 STOP_SEQS = ["\n", "\ncontextPath:"]
@@ -87,25 +85,23 @@ def animate():
     for c in itertools.cycle(["|", "/", "-", "\\"]):
         if LOADING_DONE:
             break
-        print(f"\r{INPUT_PREFIX} {c}", end="", flush=True)
+        logger.info(f"\r{INPUT_PREFIX} {c}")
         time.sleep(0.1)
 
 
-def generate_desc_with_spinner(command_output_path, insecure, output, verbose):
+def generate_desc_with_spinner(command_output_path, insecure, output):
     global LOADING_DONE
     LOADING_DONE = False
     t = threading.Thread(target=animate)
     t.start()
-    output = generate_desc(
-        command_output_path, verbose=verbose, prob_check=True, insecure=insecure
-    )
+    output = generate_desc(command_output_path, prob_check=True, insecure=insecure)
     LOADING_DONE = True
     return output
 
 
-def generate_desc(input_ctx, verbose=False, prob_check=False, insecure=False):
-    logger = logging.getLogger()
-    logger.setLevel(logging.ERROR)
+def generate_desc(input_ctx, prob_check=False, insecure=False):
+    # from demisto_sdk.commands.common.logger import logger
+    # logger.setLevel(logging.ERROR)
 
     prompt = get_current_prompt()
     prompt += f"contextPath: {input_ctx}\ndescriptionMessage:"
@@ -116,7 +112,7 @@ def generate_desc(input_ctx, verbose=False, prob_check=False, insecure=False):
 def ai21_api_request(prompt, options={}):
     ai21_key = os.environ.get("AI21_KEY")
     if not ai21_key:
-        print_error("No ai21 key provided, see docs and obtain one.")
+        logger.info("[red]No ai21 key provided, see docs and obtain one.[/red]")
         return
 
     res = requests.post(
@@ -163,10 +159,9 @@ def build_description_with_probabilities(data):
     return output
 
 
-def write_desc(c_index, final_output, o_index, output_path, verbose, yml_data):
+def write_desc(c_index, final_output, o_index, output_path, yml_data):
     """Write a description to disk"""
-    if verbose:
-        logger.debug(f"Writing: {final_output}\n---")
+    logger.debug(f"Writing: {final_output}\n---")
     yml_data["script"]["commands"][c_index]["outputs"][o_index][
         "description"
     ] = final_output
@@ -174,22 +169,22 @@ def write_desc(c_index, final_output, o_index, output_path, verbose, yml_data):
 
 
 def correct_interactively(command_output_path, final_output, output):
-    print("\r", end="", flush=True)
+    logger.info("\r")
     final_output = pinput(INPUT_PREFIX, final_output)
 
     # Learn from mistakes
     if final_output != output:
         y = input("Should we append to prompt (y/n)? ").lower()
         if y == "y" or y == "yes":
-            print(f"(Correcting prompt `{final_output}` instead of `{output}`)")
+            logger.info(f"(Correcting prompt `{final_output}` instead of `{output}`)")
             correct_prompt(command_output_path, final_output)
     return final_output
 
 
 def print_experimental():
-    print()
-    print("⚠" * 100)
-    print(
+    logger.info("\n")
+    logger.info("⚠" * 100)
+    logger.info(
         """    ███████ ██   ██ ██████  ███████ ██████  ██ ███    ███ ███████ ███    ██ ████████  █████  ██
     ██       ██ ██  ██   ██ ██      ██   ██ ██ ████  ████ ██      ████   ██    ██    ██   ██ ██
     █████     ███   ██████  █████   ██████  ██ ██ ████ ██ █████   ██ ██  ██    ██    ███████ ██
@@ -197,16 +192,15 @@ def print_experimental():
     ███████ ██   ██ ██      ███████ ██   ██ ██ ██      ██ ███████ ██   ████    ██    ██   ██ ███████
     """
     )
-    print("this feature is experimental, use with caution.")
-    print("⚠" * 100)
-    print()
+    logger.info("this feature is experimental, use with caution.")
+    logger.info("⚠" * 100)
+    logger.info("\n")
 
 
 def generate_ai_descriptions(
     input_path: str,
     output_path: str = "out.yml",
     interactive: bool = True,
-    verbose: bool = False,
     insecure: bool = False,
 ):
     """Generate integration command contexts.
@@ -215,13 +209,9 @@ def generate_ai_descriptions(
         input_path: path to the yaml integration input path
         output_path: path to the yaml integration output path
         interactive: interactivity (correct ai result mistakes)
-        verbose: verbose (debug mode)
         insecure: insecure https (debug mode)
     """
     print_experimental()
-
-    if verbose:
-        logger.setLevel(logging.DEBUG)
 
     try:
         similar_paths: Dict[str, str] = {}
@@ -239,12 +229,12 @@ def generate_ai_descriptions(
         for c_index, command in enumerate(commands):
             command_name = command.get("name")
 
-            if interactive or verbose:
+            if interactive:
                 logger.debug(f"Command: {command_name}")
 
             outputs = command.get("outputs")
             if not outputs:
-                if interactive or verbose:
+                if interactive:
                     logger.debug("-- Skipping because no outputs for command")
                 continue
 
@@ -254,27 +244,27 @@ def generate_ai_descriptions(
 
                 # Match past paths automatically.
                 if command_output_path in similar_paths:
-                    print(
+                    logger.info(
                         f"\n--Already added description for exact path: {command_output_path}--"
                     )
                     final_output = similar_paths.get(command_output_path)
-                    print(f"Last output was: '{final_output}'")
+                    logger.info(f"Last output was: '{final_output}'")
                     y = input("Should we use it (y/n)? ").lower()
                     if y == "y" or y == "yes":
-                        print("Using last seen output.")
+                        logger.info("Using last seen output.")
                         yml_data["script"]["commands"][c_index]["outputs"][o_index][
                             "description"
                         ] = final_output
                         write_yml(output_path, yml_data)
                         continue
                     else:
-                        print("Asking again...")
+                        logger.info("Asking again...")
 
                 # Print the progress and current context path
-                if interactive or verbose:
-                    print(f"\n{o_index + 1}/{len(outputs)}")
-                    print(f"Command: {command_name}")
-                    print(f"Context path:\t\t{command_output_path}")
+                if interactive:
+                    logger.debug(f"\n{o_index + 1}/{len(outputs)}")
+                    logger.debug(f"Command: {command_name}")
+                    logger.debug(f"Context path:\t\t{command_output_path}")
 
                 output = "No result from GPT."
 
@@ -283,11 +273,11 @@ def generate_ai_descriptions(
                 for _exception in range(2):
                     try:
                         output = generate_desc_with_spinner(
-                            command_output_path, insecure, output, verbose
+                            command_output_path, insecure, output
                         )
                         break
                     except requests.exceptions.RequestException as e:
-                        print("Failed AI description request: ", e)
+                        logger.error(f"Failed AI description request: {e}")
                         remove_last_prompt()
                         continue
 
@@ -300,9 +290,7 @@ def generate_ai_descriptions(
                     )
 
                 # Write the final description to the file (backup)
-                write_desc(
-                    c_index, final_output, o_index, output_path, verbose, yml_data
-                )
+                write_desc(c_index, final_output, o_index, output_path, yml_data)
 
                 # Update the similar context paths
                 similar_paths[command_output_path] = str(final_output)
@@ -313,7 +301,7 @@ def generate_ai_descriptions(
                     f.write(get_current_prompt())
 
     except Exception as ex:
-        print_error(f"Error: {str(ex)}")
+        logger.info(f"[red]Error: {str(ex)}[/red]")
 
     # backup all of the prompts (without truncating)
     if DEBUG_PROMPT:

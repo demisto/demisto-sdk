@@ -15,11 +15,11 @@ from demisto_sdk.commands.common.hook_validations.base_validator import error_co
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import (
     ContentEntityValidator,
 )
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     get_core_pack_list,
     get_pack_metadata,
     get_pack_name,
-    print_warning,
 )
 
 # Cortex XSOAR is using a Bleve DB, those keys cannot be the cliName
@@ -69,7 +69,6 @@ class FieldBaseValidator(ContentEntityValidator):
         field_types: Set[str],
         prohibited_cli_names: Set[str],
         ignored_errors=False,
-        print_as_warnings=False,
         json_file_path=None,
         id_set_file=None,
         **kwargs,
@@ -77,7 +76,6 @@ class FieldBaseValidator(ContentEntityValidator):
         super().__init__(
             structure_validator,
             ignored_errors,
-            print_as_warnings,
             json_file_path=json_file_path,
             **kwargs,
         )
@@ -496,7 +494,9 @@ class FieldBaseValidator(ContentEntityValidator):
         """
 
         if not self.id_set_file:
-            print_warning("Validate will skip since an id set file was not provided")
+            logger.warning(
+                "[yellow]Validate will skip since an id set file was not provided[/yellow]"
+            )
             return True
 
         aliases = self.current_file.get("Aliases", [])

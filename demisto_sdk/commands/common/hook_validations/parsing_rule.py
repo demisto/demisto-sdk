@@ -3,6 +3,9 @@ This module is designed to validate the correctness of generic definition entiti
 """
 import os
 
+from demisto_sdk.commands.common.constants import (
+    PARSING_RULE,
+)
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.base_validator import error_codes
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import (
@@ -20,16 +23,14 @@ class ParsingRuleValidator(ContentEntityValidator):
         self,
         structure_validator,
         ignored_errors=None,
-        print_as_warnings=False,
         json_file_path=None,
     ):
         super().__init__(
             structure_validator,
             ignored_errors=ignored_errors,
-            print_as_warnings=print_as_warnings,
             json_file_path=json_file_path,
         )
-        self._is_valid = True
+        self._is_valid = self.is_valid_rule_suffix(PARSING_RULE)
 
     def is_valid_file(self, validate_rn=True, is_new_file=False, use_git=False):
         """

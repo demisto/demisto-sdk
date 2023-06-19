@@ -2,14 +2,13 @@ import traceback
 from distutils.version import LooseVersion
 from typing import Optional, Tuple
 
-import click
-
 from demisto_sdk.commands.common.constants import (
     DEFAULT_CONTENT_ITEM_TO_VERSION,
     FILETYPE_TO_DEFAULT_FROMVERSION,
 )
 from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
-from demisto_sdk.commands.common.tools import is_uuid, print_error
+from demisto_sdk.commands.common.logger import logger
+from demisto_sdk.commands.common.tools import is_uuid
 from demisto_sdk.commands.format.format_constants import (
     ARGUMENTS_DEFAULT_VALUES,
     ERROR_RETURN_CODE,
@@ -38,7 +37,6 @@ class BaseUpdateJSON(BaseUpdate):
         path: str = "",
         from_version: str = "",
         no_validate: bool = False,
-        verbose: bool = False,
         clear_cache: bool = False,
         **kwargs,
     ):
@@ -48,15 +46,13 @@ class BaseUpdateJSON(BaseUpdate):
             path=path,
             from_version=from_version,
             no_validate=no_validate,
-            verbose=verbose,
             clear_cache=clear_cache,
             **kwargs,
         )
 
     def set_default_values_as_needed(self):
         """Sets basic arguments of reputation commands to be default, isArray and required."""
-        if self.verbose:
-            click.echo("Updating required default values")
+        logger.debug("Updating required default values")
         for field in ARGUMENTS_DEFAULT_VALUES:
             if self.__class__.__name__ in ARGUMENTS_DEFAULT_VALUES[field][1]:
                 self.data[field] = ARGUMENTS_DEFAULT_VALUES[field][0]
@@ -70,7 +66,7 @@ class BaseUpdateJSON(BaseUpdate):
     ):
         """Save formatted JSON data to destination file."""
         if self.source_file != self.output_file:
-            click.secho(f"Saving output JSON file to {self.output_file}", fg="white")
+            logger.info(f"Saving output JSON file to {self.output_file}")
         with open(self.output_file, "w") as file:
             json.dump(
                 self.data,
@@ -105,15 +101,13 @@ class BaseUpdateJSON(BaseUpdate):
             or LooseVersion(self.data.get("toVersion", DEFAULT_CONTENT_ITEM_TO_VERSION))
             >= TO_VERSION_5_9_9
         ):
-            if self.verbose:
-                click.echo("Setting toVersion field")
+            logger.debug("Setting toVersion field")
             self.data["toVersion"] = TO_VERSION_5_9_9
 
     def set_description(self):
         """Add an empty description to file root."""
         if "description" not in self.data:
-            if self.verbose:
-                click.echo("Adding empty descriptions to root")
+            logger.debug("Adding empty descriptions to root")
             self.data["description"] = ""
 
     def remove_null_fields(self):
@@ -137,19 +131,17 @@ class BaseUpdateJSON(BaseUpdate):
             current_id = self.data.get("id")
             old_id = self.old_file.get("id")
             if current_id != old_id:
-                click.secho(
-                    f"The modified JSON file corresponding to the path: {self.relative_content_path} contains an "
+                logger.info(
+                    f"[yellow]The modified JSON file corresponding to the path: {self.relative_content_path} contains an "
                     f"ID which does not match the ID in remote file. Changing the ID from {current_id} back "
-                    f"to {old_id}.",
-                    fg="yellow",
+                    f"to {old_id}.[/yellow]"
                 )
                 self.data["id"] = old_id
         else:
-            if self.verbose:
-                click.echo("Updating ID to be the same as JSON name")
+            logger.debug("Updating ID to be the same as JSON name")
             if field not in self.data:
-                print_error(
-                    f"Missing {field} field in file {self.source_file} - add this field manually"
+                logger.info(
+                    f"[red]Missing {field} field in file {self.source_file} - add this field manually[/red]"
                 )
                 return None
             if "id" in self.data and is_uuid(
@@ -163,8 +155,7 @@ class BaseUpdateJSON(BaseUpdate):
     def remove_spaces_end_of_id_and_name(self):
         """Updates the id and name of the json to have no spaces on its end"""
         if not self.old_file:
-            if self.verbose:
-                click.echo("Updating json ID and name to be without spaces at the end")
+            logger.debug("Updating json ID and name to be without spaces at the end")
             if "name" in self.data:
                 self.data["name"] = self.data["name"].strip()
             if "id" in self.data:
@@ -180,9 +171,7 @@ class BaseUpdateJSON(BaseUpdate):
 
     def run_format(self) -> int:
         try:
-            click.secho(
-                f"\n======= Updating file: {self.source_file} =======", fg="white"
-            )
+            logger.info(f"\n======= Updating file: {self.source_file} =======")
             self.update_json(
                 default_from_version=FILETYPE_TO_DEFAULT_FROMVERSION.get(
                     self.source_file_type  # type: ignore
@@ -191,16 +180,14 @@ class BaseUpdateJSON(BaseUpdate):
             self.save_json_to_destination_file()
             return SUCCESS_RETURN_CODE
         except Exception as err:
-            print(
+            logger.exception(
                 "".join(
                     traceback.format_exception(
                         type(err), value=err, tb=err.__traceback__
                     )
                 )
             )
-            if self.verbose:
-                click.secho(
-                    f"\nFailed to update file {self.source_file}. Error: {err}",
-                    fg="red",
-                )
+            logger.error(
+                f"\n[red]Failed to update file {self.source_file}. Error: {err}[/red]"
+            )
             return ERROR_RETURN_CODE

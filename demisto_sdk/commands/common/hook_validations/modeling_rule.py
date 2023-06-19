@@ -7,6 +7,9 @@ import re
 from pathlib import Path
 from typing import List
 
+from demisto_sdk.commands.common.constants import (
+    MODELING_RULE,
+)
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.handlers import YAML_Handler
 from demisto_sdk.commands.common.hook_validations.base_validator import error_codes
@@ -29,16 +32,14 @@ class ModelingRuleValidator(ContentEntityValidator):
         self,
         structure_validator,
         ignored_errors=None,
-        print_as_warnings=False,
         json_file_path=None,
     ):
         super().__init__(
             structure_validator,
             ignored_errors=ignored_errors,
-            print_as_warnings=print_as_warnings,
             json_file_path=json_file_path,
         )
-        self._is_valid = True
+        self._is_valid = self.is_valid_rule_suffix(MODELING_RULE)
         self.schema_path = None
         self.schema_content = None
         self.xif_path = None

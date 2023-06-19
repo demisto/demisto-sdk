@@ -107,12 +107,7 @@ class IncidentFieldValidator(FieldBaseValidator):
     EVIDENCE_GROUP_ID = 1
 
     def __init__(
-        self,
-        structure_validator,
-        ignored_errors=False,
-        print_as_warnings=False,
-        json_file_path=None,
-        **kwargs
+        self, structure_validator, ignored_errors=False, json_file_path=None, **kwargs
     ):
         prohibited_cli_names: Set[str] = (
             self.EVIDENCE_PROHIBITED_CLI_NAMES
@@ -124,7 +119,6 @@ class IncidentFieldValidator(FieldBaseValidator):
             self.FIELD_TYPES,
             prohibited_cli_names,
             ignored_errors,
-            print_as_warnings,
             json_file_path=json_file_path,
             **kwargs
         )

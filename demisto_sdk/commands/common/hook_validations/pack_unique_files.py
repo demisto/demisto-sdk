@@ -9,7 +9,6 @@ from distutils.version import LooseVersion
 from pathlib import Path
 from typing import Dict, List, Set, Tuple
 
-import click
 from dateutil import parser
 from git import GitCommandError, Repo
 from packaging.version import parse
@@ -53,13 +52,13 @@ from demisto_sdk.commands.common.hook_validations.base_validator import (
     error_codes,
 )
 from demisto_sdk.commands.common.hook_validations.readme import ReadMeValidator
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     get_core_pack_list,
     get_json,
     get_local_remote_file,
     get_remote_file,
     pack_name_to_path,
-    print_warning,
 )
 from demisto_sdk.commands.find_dependencies.find_dependencies import PackDependencies
 
@@ -105,10 +104,8 @@ class PackUniqueFilesValidator(BaseValidator):
         pack_path=None,
         validate_dependencies=False,
         ignored_errors=None,
-        print_as_warnings=False,
         should_version_raise=False,
         id_set_path=None,
-        suppress_print=False,
         private_repo=False,
         skip_id_set_creation=False,
         prev_ver=None,
@@ -122,8 +119,6 @@ class PackUniqueFilesValidator(BaseValidator):
         """
         super().__init__(
             ignored_errors=ignored_errors,
-            print_as_warnings=print_as_warnings,
-            suppress_print=suppress_print,
             json_file_path=json_file_path,
             specific_validations=specific_validations,
         )
@@ -161,7 +156,6 @@ class PackUniqueFilesValidator(BaseValidator):
         file_path: str,
         warning=False,
         suggested_fix=None,
-        should_print=False,
     ):
         """Adds error entry to a list under pack's name
         Returns True if added and false otherwise"""
@@ -174,7 +168,6 @@ class PackUniqueFilesValidator(BaseValidator):
             error_message,
             error_code,
             file_path=file_path,
-            should_print=should_print,
             warning=warning,
             suggested_fix=suggested_fix,
         )
@@ -871,9 +864,9 @@ class PackUniqueFilesValidator(BaseValidator):
                     for tag_marketplace in tag_marketplaces:
                         pack_tags[tag_marketplace].append(tag_data[1])
                 except KeyError:
-                    print_warning(
-                        "You have non-approved tag prefix in the pack metadata tags, cannot validate all tags until it is fixed."
-                        f' Valid tag prefixes are: { ", ".join(marketplaces)}.'
+                    logger.warning(
+                        "[yellow]You have non-approved tag prefix in the pack metadata tags, cannot validate all tags until it is fixed."
+                        f' Valid tag prefixes are: { ", ".join(marketplaces)}.[/yellow]'
                     )
                     is_valid = False
 
@@ -964,11 +957,9 @@ class PackUniqueFilesValidator(BaseValidator):
 
         # if running on master branch in private repo - do not run the test
         if current_repo.active_branch == "master":
-            if not self.suppress_print:
-                click.secho(
-                    "Running on master branch - skipping price change validation",
-                    fg="yellow",
-                )
+            logger.debug(
+                "[yellow]Running on master branch - skipping price change validation[/yellow]"
+            )
             return None
         try:
             tag = self.prev_ver
@@ -978,20 +969,17 @@ class PackUniqueFilesValidator(BaseValidator):
             )
 
         except GitCommandError as e:
-            if not self.suppress_print:
-                click.secho(
-                    f"Got an error while trying to connect to git - {str(e)}\n"
-                    f"Skipping price change validation"
-                )
+            logger.debug(
+                f"Got an error while trying to connect to git - {str(e)}\n"
+                f"Skipping price change validation"
+            )
             return None
 
         # if there was no past version
         if not old_meta_file_content:
-            if not self.suppress_print:
-                click.secho(
-                    "Unable to find previous pack_metadata.json file - skipping price change validation",
-                    fg="yellow",
-                )
+            logger.debug(
+                "[yellow]Unable to find previous pack_metadata.json file - skipping price change validation[/yellow]"
+            )
             return None
 
         return json.loads(old_meta_file_content)
@@ -1065,9 +1053,8 @@ class PackUniqueFilesValidator(BaseValidator):
     # pack dependencies validation
     def validate_pack_dependencies(self):
         try:
-            click.secho(
-                f"\nRunning pack dependencies validation on {self.pack}\n",
-                fg="bright_cyan",
+            logger.info(
+                f"\n[cyan]Running pack dependencies validation on {self.pack}[/cyan]\n"
             )
             core_pack_list = get_core_pack_list()
 
@@ -1082,26 +1069,20 @@ class PackUniqueFilesValidator(BaseValidator):
             )
 
             if not first_level_dependencies:
-                if not self.suppress_print:
-                    click.secho("No first level dependencies found", fg="yellow")
+                logger.debug("[yellow]No first level dependencies found[/yellow]")
                 return True
 
             for core_pack in core_pack_list:
                 first_level_dependencies.pop(core_pack, None)
             if not first_level_dependencies:
-                if not self.suppress_print:
-                    click.secho(
-                        "Found first level dependencies only on core packs", fg="yellow"
-                    )
+                logger.debug(
+                    "[yellow]Found first level dependencies only on core packs[/yellow]"
+                )
                 return True
 
             dependency_result = json.dumps(first_level_dependencies, indent=4)
-            click.echo(
-                click.style(
-                    f"Found dependencies result for {self.pack} pack:", bold=True
-                )
-            )
-            click.echo(click.style(dependency_result, bold=True))
+            logger.info(f"[bold]Found dependencies result for {self.pack} pack:[/bold]")
+            logger.info(f"[bold]{dependency_result}[/bold]")
 
             if self.pack in core_pack_list:
                 if not self.validate_core_pack_dependencies(first_level_dependencies):
@@ -1167,7 +1148,6 @@ class PackUniqueFilesValidator(BaseValidator):
             return self._add_error(
                 (error_message, error_code),
                 file_path=self.pack_meta_file,
-                should_print=True,
                 suggested_fix=Errors.suggest_fix(
                     file_path=self._get_pack_file_path(self.pack_meta_file)
                 ),

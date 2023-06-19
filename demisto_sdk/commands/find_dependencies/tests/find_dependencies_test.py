@@ -782,7 +782,6 @@ class TestDependsOnScriptAndIntegration:
         found_result = PackDependencies._collect_scripts_dependencies(
             pack_scripts=test_input,
             id_set=module_repo.id_set.read_json_as_dict(),
-            verbose=False,
         )
 
         assert set(found_result) == set(expected_result)
@@ -851,7 +850,6 @@ class TestDependsOnScriptAndIntegration:
         found_result, found_items = PackDependencies._collect_scripts_dependencies(
             pack_scripts=test_input,
             id_set=module_repo.id_set.read_json_as_dict(),
-            verbose=False,
             get_dependent_items=True,
         )
 
@@ -896,7 +894,6 @@ class TestDependsOnScriptAndIntegration:
         found_result = PackDependencies._collect_scripts_dependencies(
             pack_scripts=test_input,
             id_set=module_repo.id_set.read_json_as_dict(),
-            verbose=False,
         )
 
         assert set(found_result) == set(expected_result)
@@ -969,7 +966,6 @@ class TestDependsOnScriptAndIntegration:
         found_result, found_items = PackDependencies._collect_scripts_dependencies(
             pack_scripts=test_input,
             id_set=module_repo.id_set.read_json_as_dict(),
-            verbose=False,
             get_dependent_items=True,
         )
 
@@ -1007,7 +1003,6 @@ class TestDependsOnScriptAndIntegration:
         found_result = PackDependencies._collect_scripts_dependencies(
             pack_scripts=test_input,
             id_set=module_repo.id_set.read_json_as_dict(),
-            verbose=False,
         )
 
         assert set(found_result) == set(expected_result)
@@ -1042,7 +1037,6 @@ class TestDependsOnScriptAndIntegration:
         found_result = PackDependencies._collect_scripts_dependencies(
             pack_scripts=test_input,
             id_set=module_repo.id_set.read_json_as_dict(),
-            verbose=False,
             exclude_ignored_dependencies=False,
         )
 
@@ -1076,7 +1070,6 @@ class TestDependsOnScriptAndIntegration:
         found_result = PackDependencies._collect_scripts_dependencies(
             pack_scripts=test_input,
             id_set=module_repo.id_set.read_json_as_dict(),
-            verbose=False,
         )
 
         assert set(found_result) == set(expected_result)
@@ -1110,7 +1103,6 @@ class TestDependsOnScriptAndIntegration:
         found_result = PackDependencies._collect_scripts_dependencies(
             pack_scripts=test_input,
             id_set=module_repo.id_set.read_json_as_dict(),
-            verbose=False,
         )
 
         assert set(found_result) == set(expected_result)
@@ -1147,7 +1139,6 @@ class TestDependsOnScriptAndIntegration:
         found_result = PackDependencies._collect_scripts_dependencies(
             pack_scripts=test_input,
             id_set=module_repo.id_set.read_json_as_dict(),
-            verbose=False,
         )
 
         assert set(found_result) == set(expected_result)
@@ -1188,7 +1179,6 @@ class TestDependsOnScriptAndIntegration:
         found_result = PackDependencies._collect_scripts_dependencies(
             pack_scripts=test_input,
             id_set=module_repo.id_set.read_json_as_dict(),
-            verbose=False,
         )
 
         assert set(found_result) == set(expected_result)
@@ -1229,7 +1219,6 @@ class TestDependsOnScriptAndIntegration:
         found_result = PackDependencies._collect_scripts_dependencies(
             pack_scripts=test_input,
             id_set=module_repo.id_set.read_json_as_dict(),
-            verbose=False,
         )
 
         assert set(found_result) == set(expected_result)
@@ -1277,7 +1266,6 @@ class TestDependsOnScriptAndIntegration:
         dependencies_set = PackDependencies._collect_scripts_dependencies(
             pack_scripts=test_input,
             id_set=module_repo.id_set.read_json_as_dict(),
-            verbose=False,
         )
 
         assert len(dependencies_set) == 0
@@ -1313,7 +1301,6 @@ class TestDependsOnPlaybook:
         found_result = PackDependencies._collect_playbooks_dependencies(
             pack_playbooks=test_input,
             id_set=module_repo.id_set.read_json_as_dict(),
-            verbose=False,
         )
 
         assert set(found_result) == set(expected_result)
@@ -1373,7 +1360,6 @@ class TestDependsOnPlaybook:
         found_result = PackDependencies._collect_playbooks_dependencies(
             pack_playbooks=test_input,
             id_set=module_repo.id_set.read_json_as_dict(),
-            verbose=False,
             get_dependent_items=True,
         )
 
@@ -1409,7 +1395,6 @@ class TestDependsOnPlaybook:
         found_result = PackDependencies._collect_playbooks_dependencies(
             pack_playbooks=test_input,
             id_set=module_repo.id_set.read_json_as_dict(),
-            verbose=False,
         )
 
         assert set(found_result) == set(expected_result)
@@ -1443,7 +1428,6 @@ class TestDependsOnPlaybook:
         found_result = PackDependencies._collect_playbooks_dependencies(
             pack_playbooks=test_input,
             id_set=module_repo.id_set.read_json_as_dict(),
-            verbose=False,
         )
 
         assert set(found_result) == set(expected_result)
@@ -1470,7 +1454,6 @@ class TestDependsOnPlaybook:
         found_result_set = PackDependencies._collect_playbooks_dependencies(
             pack_playbooks=test_input,
             id_set=module_repo.id_set.read_json_as_dict(),
-            verbose=False,
         )
 
         assert len(found_result_set) == 1
@@ -1511,7 +1494,6 @@ class TestDependsOnPlaybook:
         found_result_set = PackDependencies._collect_playbooks_dependencies(
             pack_playbooks=test_input,
             id_set=module_repo.id_set.read_json_as_dict(),
-            verbose=False,
         )
 
         assert len(found_result_set) == 0
@@ -1551,7 +1533,6 @@ class TestDependsOnPlaybook:
         found_result = PackDependencies._collect_playbooks_dependencies(
             pack_playbooks=test_input,
             id_set=module_repo.id_set.read_json_as_dict(),
-            verbose=False,
         )
 
         assert set(found_result) == set(expected_result)
@@ -1586,7 +1567,6 @@ class TestDependsOnPlaybook:
         found_result = PackDependencies._collect_playbooks_dependencies(
             pack_playbooks=test_input,
             id_set=module_repo.id_set.read_json_as_dict(),
-            verbose=False,
         )
 
         assert set(found_result) == set(expected_result)
@@ -1621,7 +1601,6 @@ class TestDependsOnPlaybook:
         found_result = PackDependencies._collect_playbooks_dependencies(
             pack_playbooks=test_input,
             id_set=module_repo.id_set.read_json_as_dict(),
-            verbose=False,
         )
 
         assert set(found_result) == set(expected_result)
@@ -1677,7 +1656,6 @@ class TestDependsOnPlaybook:
         found_packs, found_items = PackDependencies._collect_playbooks_dependencies(
             pack_playbooks=test_input,
             id_set=module_repo.id_set.read_json_as_dict(),
-            verbose=False,
             get_dependent_items=True,
         )
 
@@ -1743,7 +1721,6 @@ class TestDependsOnPlaybook:
         found_result = PackDependencies._collect_playbooks_dependencies(
             pack_playbooks=test_input,
             id_set=module_repo.id_set.read_json_as_dict(),
-            verbose=False,
         )
 
         assert set(found_result) == set(expected_result)
@@ -1776,7 +1753,6 @@ class TestDependsOnPlaybook:
         found_result = PackDependencies._collect_playbooks_dependencies(
             pack_playbooks=test_input,
             id_set=module_repo.id_set.read_json_as_dict(),
-            verbose=False,
         )
 
         assert set(found_result) == set(expected_result)
@@ -1890,7 +1866,6 @@ class TestDependsOnLayout:
         found_result = PackDependencies._collect_layouts_dependencies(
             pack_layouts=test_input,
             id_set=module_repo.id_set.read_json_as_dict(),
-            verbose=False,
         )
         assert set(found_result) == set(expected_result)
 
@@ -1934,7 +1909,6 @@ class TestDependsOnLayout:
         found_result = PackDependencies._collect_layouts_dependencies(
             pack_layouts=test_input,
             id_set=module_repo.id_set.read_json_as_dict(),
-            verbose=False,
         )
 
         assert set(found_result) == set(expected_result)
@@ -1988,7 +1962,6 @@ class TestDependsOnLayout:
         found_result = PackDependencies._collect_layouts_dependencies(
             pack_layouts=test_input,
             id_set=module_repo.id_set.read_json_as_dict(),
-            verbose=False,
             get_dependent_items=True,
         )
 
@@ -2029,7 +2002,6 @@ class TestDependsOnLayout:
         found_result = PackDependencies._collect_layouts_dependencies(
             pack_layouts=test_input,
             id_set=module_repo.id_set.read_json_as_dict(),
-            verbose=False,
             exclude_ignored_dependencies=False,
         )
 
@@ -2066,7 +2038,6 @@ class TestDependsOnLayout:
         found_result = PackDependencies._collect_layouts_dependencies(
             pack_layouts=test_input,
             id_set=module_repo.id_set.read_json_as_dict(),
-            verbose=False,
         )
         assert set(found_result) == set(expected_result)
 
@@ -2109,7 +2080,6 @@ class TestDependsOnIncidentField:
         found_result = PackDependencies._collect_incidents_fields_dependencies(
             pack_incidents_fields=test_input,
             id_set=module_repo.id_set.read_json_as_dict(),
-            verbose=False,
         )
 
         assert set(found_result) == set(expected_result)
@@ -2155,7 +2125,6 @@ class TestDependsOnIncidentField:
         found_result = PackDependencies._collect_incidents_fields_dependencies(
             pack_incidents_fields=test_input,
             id_set=module_repo.id_set.read_json_as_dict(),
-            verbose=False,
             get_dependent_items=True,
         )
 
@@ -2199,7 +2168,6 @@ class TestDependsOnIndicatorType:
         found_result = PackDependencies._collect_indicators_types_dependencies(
             pack_indicators_types=test_input,
             id_set=module_repo.id_set.read_json_as_dict(),
-            verbose=False,
         )
 
         assert set(found_result) == set(expected_result)
@@ -2239,7 +2207,6 @@ class TestDependsOnIndicatorType:
         found_result = PackDependencies._collect_indicators_types_dependencies(
             pack_indicators_types=test_input,
             id_set=module_repo.id_set.read_json_as_dict(),
-            verbose=False,
             get_dependent_items=True,
         )
 
@@ -2281,7 +2248,6 @@ class TestDependsOnIntegrations:
         found_result = PackDependencies._collect_integrations_dependencies(
             pack_integrations=test_input,
             id_set=module_repo.id_set.read_json_as_dict(),
-            verbose=False,
         )
 
         assert set(found_result) == set(expected_result)
@@ -2330,7 +2296,6 @@ class TestDependsOnIntegrations:
         found_result = PackDependencies._collect_integrations_dependencies(
             pack_integrations=test_input,
             id_set=module_repo.id_set.read_json_as_dict(),
-            verbose=False,
             get_dependent_items=True,
         )
 
@@ -2364,7 +2329,6 @@ class TestDependsOnIncidentType:
         found_result = PackDependencies._collect_incidents_types_dependencies(
             pack_incidents_types=test_input,
             id_set=module_repo.id_set.read_json_as_dict(),
-            verbose=False,
         )
 
         assert set(found_result) == set(expected_result)
@@ -2405,7 +2369,6 @@ class TestDependsOnIncidentType:
         found_result = PackDependencies._collect_incidents_types_dependencies(
             pack_incidents_types=test_input,
             id_set=module_repo.id_set.read_json_as_dict(),
-            verbose=False,
             get_dependent_items=True,
         )
 
@@ -2442,7 +2405,6 @@ class TestDependsOnClassifiers:
         found_result = PackDependencies._collect_classifiers_dependencies(
             pack_classifiers=test_input,
             id_set=module_repo.id_set.read_json_as_dict(),
-            verbose=False,
         )
 
         assert set(found_result) == set(expected_result)
@@ -2480,7 +2442,6 @@ class TestDependsOnClassifiers:
         found_result = PackDependencies._collect_classifiers_dependencies(
             pack_classifiers=test_input,
             id_set=module_repo.id_set.read_json_as_dict(),
-            verbose=False,
             get_dependent_items=True,
         )
 
@@ -2511,7 +2472,6 @@ class TestDependsOnClassifiers:
         found_result = PackDependencies._collect_classifiers_dependencies(
             pack_classifiers=test_input,
             id_set=module_repo.id_set.read_json_as_dict(),
-            verbose=False,
         )
 
         assert set(found_result) == set(expected_result)
@@ -2541,7 +2501,6 @@ class TestDependsOnClassifiers:
         found_result = PackDependencies._collect_classifiers_dependencies(
             pack_classifiers=test_input,
             id_set=module_repo.id_set.read_json_as_dict(),
-            verbose=False,
         )
 
         assert set(found_result) == set(expected_result)
@@ -2572,7 +2531,6 @@ class TestDependsOnClassifiers:
         found_result = PackDependencies._collect_classifiers_dependencies(
             pack_classifiers=test_input,
             id_set=module_repo.id_set.read_json_as_dict(),
-            verbose=False,
         )
         assert set(found_result) == set(expected_result)
 
@@ -2609,7 +2567,6 @@ class TestDependsOnMappers:
         found_result = PackDependencies._collect_mappers_dependencies(
             pack_mappers=test_input,
             id_set=module_repo.id_set.read_json_as_dict(),
-            verbose=False,
         )
         assert set(found_result) == set(expected_result)
 
@@ -2651,7 +2608,6 @@ class TestDependsOnMappers:
         found_result = PackDependencies._collect_mappers_dependencies(
             pack_mappers=test_input,
             id_set=module_repo.id_set.read_json_as_dict(),
-            verbose=False,
             get_dependent_items=True,
         )
         assert found_result == expected_result
@@ -2681,7 +2637,6 @@ class TestDependsOnMappers:
         found_result = PackDependencies._collect_mappers_dependencies(
             pack_mappers=test_input,
             id_set=module_repo.id_set.read_json_as_dict(),
-            verbose=False,
         )
 
         assert set(found_result) == set(expected_result)
@@ -2711,7 +2666,6 @@ class TestDependsOnMappers:
         found_result = PackDependencies._collect_mappers_dependencies(
             pack_mappers=test_input,
             id_set=module_repo.id_set.read_json_as_dict(),
-            verbose=False,
         )
 
         assert set(found_result) == set(expected_result)
@@ -2805,7 +2759,6 @@ class TestDependsOnWidgets:
         found_result = PackDependencies._collect_widget_dependencies(
             pack_widgets=test_input,
             id_set=module_repo.id_set.read_json_as_dict(),
-            verbose=False,
         )
 
         assert set(found_result) == set(expected_result)
@@ -2842,7 +2795,6 @@ class TestDependsOnWidgets:
         found_result = PackDependencies._collect_widget_dependencies(
             pack_widgets=test_input,
             id_set=module_repo.id_set.read_json_as_dict(),
-            verbose=False,
             get_dependent_items=True,
         )
 
@@ -2875,7 +2827,6 @@ class TestDependsOnDashboard:
         found_result = PackDependencies._collect_widget_dependencies(
             pack_widgets=test_input,
             id_set=module_repo.id_set.read_json_as_dict(),
-            verbose=False,
             header="Dashboards",
         )
 
@@ -2913,7 +2864,6 @@ class TestDependsOnDashboard:
         found_result = PackDependencies._collect_widget_dependencies(
             pack_widgets=test_input,
             id_set=module_repo.id_set.read_json_as_dict(),
-            verbose=False,
             header="Dashboards",
             get_dependent_items=True,
         )
@@ -2953,7 +2903,7 @@ class TestDependsOnJob:
             }
         ]
         found_result = PackDependencies._collect_jobs_dependencies(
-            test_job_data, module_repo.id_set.read_json_as_dict(), verbose=False
+            test_job_data, module_repo.id_set.read_json_as_dict()
         )
         assert set(found_result) == set(expected_result)
 
@@ -2988,7 +2938,6 @@ class TestDependsOnJob:
         found_result = PackDependencies._collect_jobs_dependencies(
             test_job_data,
             id_set=module_repo.id_set.read_json_as_dict(),
-            verbose=False,
             get_dependent_items=True,
         )
         assert found_result == expected_result
@@ -3020,7 +2969,6 @@ class TestDependsOnReports:
         found_result = PackDependencies._collect_widget_dependencies(
             pack_widgets=test_input,
             id_set=module_repo.id_set.read_json_as_dict(),
-            verbose=False,
             header="Reports",
         )
 
@@ -3058,7 +3006,6 @@ class TestDependsOnReports:
         found_result = PackDependencies._collect_widget_dependencies(
             pack_widgets=test_input,
             id_set=module_repo.id_set.read_json_as_dict(),
-            verbose=False,
             header="Reports",
             get_dependent_items=True,
         )
@@ -3343,7 +3290,6 @@ class TestDependencyGraph:
         found_graph = PackDependencies.build_dependency_graph_single_pack(
             pack_id=pack_name,
             id_set=module_repo.id_set.read_json_as_dict(),
-            verbose=False,
         )
         root_of_graph = [n for n in found_graph.nodes if found_graph.in_degree(n) == 0][
             0
@@ -3369,7 +3315,6 @@ class TestDependencyGraph:
         found_graph = PackDependencies.build_dependency_graph_single_pack(
             pack_id=pack_name,
             id_set=module_repo.id_set.read_json_as_dict(),
-            verbose=False,
             exclude_ignored_dependencies=False,
         )
         root_of_graph = [n for n in found_graph.nodes if found_graph.in_degree(n) == 0][
@@ -3418,7 +3363,6 @@ class TestDependsOnGenericField:
         found_result = PackDependencies._collect_generic_fields_dependencies(
             pack_generic_fields=test_input,
             id_set=module_repo.id_set.read_json_as_dict(),
-            verbose=False,
         )
         assert set(found_result) == set(expected_result)
 
@@ -3455,7 +3399,6 @@ class TestDependsOnGenericType:
         found_result = PackDependencies._collect_generic_types_dependencies(
             pack_generic_types=test_input,
             id_set=module_repo.id_set.read_json_as_dict(),
-            verbose=False,
         )
 
         assert set(found_result) == set(expected_result)
@@ -3494,7 +3437,6 @@ class TestDependsOnGenericModules:
         found_result = PackDependencies._collect_generic_modules_dependencies(
             pack_generic_modules=test_input,
             id_set=module_repo.id_set.read_json_as_dict(),
-            verbose=False,
         )
         assert set(found_result) == set(expected_result)
 

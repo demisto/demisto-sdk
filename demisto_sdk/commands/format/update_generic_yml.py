@@ -1,6 +1,6 @@
 import os
 import traceback
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple, Union
 
 import click
 
@@ -15,6 +15,7 @@ from demisto_sdk.commands.common.constants import (
 )
 from demisto_sdk.commands.common.content_constant_paths import CONF_PATH
 from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     _get_file_id,
     find_type,
@@ -60,8 +61,7 @@ class BaseUpdateYML(BaseUpdate):
         path: str = "",
         from_version: str = "",
         no_validate: bool = False,
-        verbose: bool = False,
-        assume_yes: bool = False,
+        assume_answer: Union[bool, None] = None,
         deprecate: bool = False,
         add_tests: bool = True,
         interactive: bool = True,
@@ -73,8 +73,7 @@ class BaseUpdateYML(BaseUpdate):
             path=path,
             from_version=from_version,
             no_validate=no_validate,
-            verbose=verbose,
-            assume_yes=assume_yes,
+            assume_answer=assume_answer,
             interactive=interactive,
             clear_cache=clear_cache,
         )
@@ -113,8 +112,7 @@ class BaseUpdateYML(BaseUpdate):
         """
         updated_integration_id = {}
         if not self.old_file:
-            if self.verbose:
-                click.echo("Updating YML ID to be the same as YML name")
+            logger.debug("Updating YML ID to be the same as YML name")
             if is_uuid(self.id_and_version_location["id"]):
                 updated_integration_id[self.id_and_version_location["id"]] = self.data[
                     "name"
@@ -124,7 +122,7 @@ class BaseUpdateYML(BaseUpdate):
             current_id = self.id_and_version_location.get("id")
             old_id = self.get_id_and_version_for_data(self.old_file).get("id")
             if current_id != old_id:
-                click.secho(
+                logger.info(
                     f"The modified YML file corresponding to the path: {self.relative_content_path} ID does not match the ID in remote YML file."
                     f" Changing the YML ID from {current_id} back to {old_id}."
                 )
@@ -134,8 +132,8 @@ class BaseUpdateYML(BaseUpdate):
 
     def save_yml_to_destination_file(self):
         """Safely saves formatted YML data to destination file."""
-        if self.source_file != self.output_file and self.verbose:
-            click.secho(f"Saving output YML file to {self.output_file} \n", fg="white")
+        if self.source_file != self.output_file:
+            logger.debug(f"Saving output YML file to {self.output_file} \n")
         with open(self.output_file, "w") as f:
             yaml.dump(self.data, f)  # ruamel preservers multilines
 
@@ -246,16 +244,20 @@ class BaseUpdateYML(BaseUpdate):
 
             if not test_playbook_ids:
                 # In case no_interactive flag was given - modify the tests without confirmation
-                if self.assume_yes or not self.add_tests:
+                if self.assume_answer or not self.add_tests:
                     should_modify_yml_tests = True
+                elif self.assume_answer is False:
+                    should_modify_yml_tests = False
                 else:
                     should_modify_yml_tests = click.confirm(
                         f"The file {self.source_file} has no test playbooks "
                         f'configured. Do you want to configure it with "No tests"?'
                     )
                 if should_modify_yml_tests:
-                    click.echo(f'Formatting {self.output_file} with "No tests"')
+                    logger.info(f'Formatting {self.output_file} with "No tests"')
                     self.data["tests"] = ["No tests (auto formatted)"]
+                else:
+                    logger.debug(f'Not formatting {self.source_file} with "No tests"')
 
     def update_conf_json(self, file_type: str) -> None:
         """
@@ -275,10 +277,9 @@ class BaseUpdateYML(BaseUpdate):
         try:
             conf_json_content = self._load_conf_file()
         except FileNotFoundError:
-            if self.verbose:
-                click.secho(
-                    f"Unable to find {CONF_PATH} - skipping update.", fg="yellow"
-                )
+            logger.debug(
+                f"[yellow]Unable to find {CONF_PATH} - skipping update.[/yellow]"
+            )
             return
         conf_json_test_configuration = conf_json_content["tests"]
         content_item_id = _get_file_id(file_type, self.data)
@@ -287,8 +288,10 @@ class BaseUpdateYML(BaseUpdate):
         )
         if not_registered_tests:
             not_registered_tests_string = "\n".join(not_registered_tests)
-            if self.assume_yes:
+            if self.assume_answer:
                 should_edit_conf_json = True
+            elif self.assume_answer is False:
+                should_edit_conf_json = False
             else:
                 should_edit_conf_json = click.confirm(
                     f"The following test playbooks are not configured in conf.json file "
@@ -302,9 +305,11 @@ class BaseUpdateYML(BaseUpdate):
                     )
                 )
                 self._save_to_conf_json(conf_json_content)
-                click.echo("Added test playbooks to conf.json successfully")
+                logger.info("Added test playbooks to conf.json successfully")
             else:
-                click.echo("Skipping test playbooks configuration")
+                logger.info("Skipping test playbooks configuration")
+        else:
+            logger.debug("No unconfigured test playbooks")
 
     def _save_to_conf_json(self, conf_json_content: Dict) -> None:
         """Save formatted JSON data to destination file."""
@@ -376,8 +381,7 @@ class BaseUpdateYML(BaseUpdate):
     def remove_spaces_end_of_id_and_name(self):
         """Updates the id and name of the YML to have no spaces on its end"""
         if not self.old_file:
-            if self.verbose:
-                click.echo("Updating YML ID and name to be without spaces at the end")
+            logger.debug("Updating YML ID and name to be without spaces at the end")
             self.data["name"] = self.data["name"].strip()
             if self.id_and_version_location:
                 self.id_and_version_location["id"] = self.id_and_version_location[
@@ -403,9 +407,7 @@ class BaseUpdateYML(BaseUpdate):
 
     def run_format(self) -> int:
         try:
-            click.secho(
-                f"\n======= Updating file: {self.source_file} =======", fg="white"
-            )
+            logger.info(f"\n======= Updating file: {self.source_file} =======")
             self.update_yml(
                 default_from_version=FILETYPE_TO_DEFAULT_FROMVERSION.get(
                     self.source_file_type  # type: ignore
@@ -414,16 +416,14 @@ class BaseUpdateYML(BaseUpdate):
             self.save_yml_to_destination_file()
             return SUCCESS_RETURN_CODE
         except Exception as err:
-            print(
+            logger.info(
                 "".join(
                     traceback.format_exception(
                         type(err), value=err, tb=err.__traceback__
                     )
                 )
             )
-            if self.verbose:
-                click.secho(
-                    f"\nFailed to update file {self.source_file}. Error: {err}",
-                    fg="red",
-                )
+            logger.debug(
+                f"\n[red]Failed to update file {self.source_file}. Error: {err}[/red]"
+            )
             return ERROR_RETURN_CODE

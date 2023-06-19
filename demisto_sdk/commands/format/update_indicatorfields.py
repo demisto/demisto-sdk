@@ -1,8 +1,7 @@
 from typing import Tuple
 
-import click
-
 from demisto_sdk.commands.common.constants import INDICATOR_FIELD_TYPE_TO_MIN_VERSION
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.format.format_constants import (
     ERROR_RETURN_CODE,
     SKIP_RETURN_CODE,
@@ -26,18 +25,14 @@ class IndicatorFieldJSONFormat(BaseUpdateJSON):
         path: str = "",
         from_version: str = "",
         no_validate: bool = False,
-        verbose: bool = False,
         **kwargs,
     ):
-        super().__init__(
-            input, output, path, from_version, no_validate, verbose=verbose, **kwargs
-        )
+        super().__init__(input, output, path, from_version, no_validate, **kwargs)
 
     def run_format(self) -> int:
         try:
-            click.secho(
-                f"\n================= Updating file {self.source_file} =================",
-                fg="bright_blue",
+            logger.info(
+                f"\n[blue]================= Updating file {self.source_file} =================[/bright_blue]"
             )
             self.update_from_version()
             super().update_json()
@@ -46,11 +41,9 @@ class IndicatorFieldJSONFormat(BaseUpdateJSON):
 
             return SUCCESS_RETURN_CODE
         except Exception as err:
-            if self.verbose:
-                click.secho(
-                    f"\nFailed to update file {self.source_file}. Error: {err}",
-                    fg="red",
-                )
+            logger.debug(
+                f"\n[red]Failed to update file {self.source_file}. Error: {err}[/red]"
+            )
             return ERROR_RETURN_CODE
 
     def format_file(self) -> Tuple[int, int]:

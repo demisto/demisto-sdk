@@ -3,7 +3,6 @@ import re
 from copy import deepcopy
 from typing import Any, Dict, Set, Union
 
-import click
 import dictdiffer
 
 from demisto_sdk.commands.common.constants import (
@@ -11,8 +10,8 @@ from demisto_sdk.commands.common.constants import (
     VERSION_5_5_0,
 )
 from demisto_sdk.commands.common.handlers import YAML_Handler
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
-    LOG_COLORS,
     find_type,
     get_dict_from_file,
     get_max_version,
@@ -47,8 +46,7 @@ class BaseUpdate:
         data (dict): Dictionary of loaded file.
         file_type (str): Whether the file is yml or json.
         from_version_key (str): The fromVersion key in file, different between yml and json files.
-        verbose (bool): Whether to print a verbose log
-        assume_yes (bool): Whether to assume "yes" as answer to all prompts and run non-interactively
+        assume_answer (bool | None): Whether to assume "yes" or "no" as answer to all prompts and run non-interactively
         interactive (bool): Whether to run the format interactively or not (usually for contribution management)
     """
 
@@ -60,8 +58,7 @@ class BaseUpdate:
         from_version: str = "",
         prev_ver: str = "master",
         no_validate: bool = False,
-        verbose: bool = False,
-        assume_yes: bool = False,
+        assume_answer: Union[bool, None] = None,
         interactive: bool = True,
         clear_cache: bool = False,
         **kwargs,
@@ -69,7 +66,6 @@ class BaseUpdate:
         self.source_file = input
         self.source_file_type = find_type(self.source_file)
         self.output_file = self.set_output_file_path(output)
-        self.verbose = verbose
         _, self.relative_content_path = is_file_from_content_repo(self.output_file)
         self.prev_ver = prev_ver
         self.old_file = self.is_old_file(
@@ -77,14 +73,13 @@ class BaseUpdate:
             if self.relative_content_path
             else self.output_file,
             self.prev_ver,
-            self.verbose,
         )
         self.schema_path = path
         self.schema = self.get_schema()
         self.extended_schema: dict = self.recursive_extend_schema(self.schema, self.schema)  # type: ignore
         self.from_version = from_version
         self.no_validate = no_validate
-        self.assume_yes = assume_yes
+        self.assume_answer = assume_answer
         self.interactive = interactive
         self.updated_ids: Dict = {}
         if not self.no_validate:
@@ -143,12 +138,11 @@ class BaseUpdate:
 
     def set_default_value(self, key: str, value: Any, location=None):
         """Replaces the version to default."""
-        if self.verbose:
-            click.echo(
-                f"Setting {key} to default={value}" + " in custom location"
-                if location
-                else ""
-            )
+        logger.info(
+            f"Setting {key} to default={value}" + " in custom location"
+            if location
+            else ""
+        )
         if location:
             location[key] = value
         else:
@@ -156,8 +150,7 @@ class BaseUpdate:
 
     def remove_unnecessary_keys(self):
         """Removes keys that are in file but not in schema of file type"""
-        if self.verbose:
-            print("Removing Unnecessary fields from file")
+        logger.debug("Removing Unnecessary fields from file")
         if isinstance(self.extended_schema, dict):
             self.recursive_remove_unnecessary_keys(
                 self.extended_schema.get("mapping", {}), self.data
@@ -206,8 +199,8 @@ class BaseUpdate:
                 if isinstance(value, str) and key == "include":
                     extended_schema: dict = full_schema.get(f"schema;{value}")  # type: ignore
                     if extended_schema is None:
-                        click.echo(
-                            f"Could not find sub-schema for {value}", LOG_COLORS.YELLOW
+                        logger.info(
+                            f"[yellow]Could not find sub-schema for {value}[/yellow]"
                         )
                     # sometimes the sub-schema can have it's own sub-schemas so we need to unify that too
                     return BaseUpdate.recursive_extend_schema(
@@ -241,8 +234,7 @@ class BaseUpdate:
                             data.get(field, {}),
                         )
                 else:
-                    if self.verbose:
-                        print(f"Removing {field} field")
+                    logger.debug(f"Removing {field} field")
                     data.pop(field, None)
             else:
                 mapping = schema.get(field, {}).get("mapping")
@@ -257,10 +249,9 @@ class BaseUpdate:
                     sequence = schema.get(field, {}).get("sequence", [])
                     if sequence and sequence[0].get("mapping"):
                         if data[field] is None:
-                            if self.verbose:
-                                print(
-                                    f"Adding an empty array - `[]` as the value of the `{field}` field"
-                                )
+                            logger.debug(
+                                f"Adding an empty array - `[]` as the value of the `{field}` field"
+                            )
                             data[field] = []
                         else:
                             for list_element in data[field]:
@@ -286,10 +277,13 @@ class BaseUpdate:
 
     @staticmethod
     def get_answer(promote):
-        click.secho(promote, fg="red")
+        logger.info(f"[red]{promote}[/red]")
         return input()
 
     def ask_user(self, preserve_from_version_question=False):
+        if self.assume_answer is False:
+            return False
+
         if preserve_from_version_question:
             user_answer = self.get_answer(
                 f'Both "{self.from_version_key}" and "{self.json_from_server_version_key}" '
@@ -305,7 +299,7 @@ class BaseUpdate:
         if not user_answer or user_answer.lower() in ["y", "yes"]:
             return True
         else:
-            click.secho("Skipping update of fromVersion", fg="yellow")
+            logger.info("[yellow]Skipping update of fromVersion[/yellow]")
             return False
 
     def set_default_from_version(
@@ -322,8 +316,8 @@ class BaseUpdate:
             current_fromversion_value: current from_version if exists in the file.
             file_type: the file type.
         """
-        print(
-            default_from_version, GENERAL_DEFAULT_FROMVERSION, current_fromversion_value
+        logger.info(
+            f"{default_from_version=}, {GENERAL_DEFAULT_FROMVERSION=}, {current_fromversion_value=}"
         )
         max_version = get_max_version(
             [
@@ -333,7 +327,7 @@ class BaseUpdate:
             ]
         )
         if max_version != current_fromversion_value and (
-            self.assume_yes or self.ask_user()
+            self.assume_answer or self.ask_user()
         ):
             self.data[self.from_version_key] = max_version
 
@@ -348,8 +342,7 @@ class BaseUpdate:
         ):
             return  # nothing to set
         current_fromversion_value = self.data.get(self.from_version_key, "")
-        if self.verbose:
-            click.echo("Setting fromVersion field")
+        logger.info("Setting fromVersion field")
 
         if self.from_version:
             self.data[self.from_version_key] = self.from_version
@@ -383,10 +376,10 @@ class BaseUpdate:
         return None
 
     @staticmethod
-    def is_old_file(path: str, prev_ver: str, verbose: bool = False) -> dict:
+    def is_old_file(path: str, prev_ver: str) -> dict:
         """Check whether the file is in git repo or new file."""
         if path:
-            data = get_remote_file(path, prev_ver, suppress_print=not verbose)
+            data = get_remote_file(path, prev_ver)
             if not data:
                 return {}
             else:
@@ -397,10 +390,7 @@ class BaseUpdate:
         """Removes any _dev and _copy suffixes in the file.
         When developer clones playbook/integration/script it will automatically add _copy or _dev suffix.
         """
-        if self.verbose:
-            click.echo(
-                "Removing _dev and _copy suffixes from name, id and display tags"
-            )
+        logger.info("Removing _dev and _copy suffixes from name, id and display tags")
         if self.data["name"]:
             self.data["name"] = (
                 self.data.get("name", "").replace("_copy", "").replace("_dev", "")
@@ -422,11 +412,9 @@ class BaseUpdate:
             int 2 in case of skip
         """
         if self.no_validate:
-            if self.verbose:
-                click.secho(
-                    f"Validator Skipped on file: {self.output_file} , no-validate flag was set.",
-                    fg="yellow",
-                )
+            logger.debug(
+                f"[yellow]Validator Skipped on file: {self.output_file} , no-validate flag was set.[/yellow]"
+            )
             return SKIP_RETURN_CODE
         else:
             self.validate_manager.file_path = self.output_file
@@ -467,10 +455,10 @@ class BaseUpdate:
             if current_from_server_version == current_from_version:
                 self.data.pop(self.json_from_server_version_key)
             else:
-                preserve_from_version = self.ask_user(
+                preserve_from_version = self.assume_answer or self.ask_user(
                     preserve_from_version_question=True
                 )
-                if preserve_from_version or self.assume_yes:
+                if preserve_from_version:
                     self.data.pop(self.json_from_server_version_key)
                 else:
                     self.data[self.from_version_key] = current_from_server_version

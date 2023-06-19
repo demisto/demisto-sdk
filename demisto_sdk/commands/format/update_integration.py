@@ -1,20 +1,21 @@
 from pathlib import Path
 from typing import Tuple
 
-import click
-
 from demisto_sdk.commands.common.constants import (
     ALERT_FETCH_REQUIRED_PARAMS,
     BANG_COMMAND_NAMES,
     BETA_INTEGRATION,
     FEED_REQUIRED_PARAMS,
+    FILETYPE_TO_DEFAULT_FROMVERSION,
     INCIDENT_FETCH_REQUIRED_PARAMS,
     INTEGRATION,
     TYPE_PWSH,
+    FileType,
     MarketplaceVersions,
     ParameterType,
 )
 from demisto_sdk.commands.common.handlers import JSON_Handler
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import find_type, get_item_marketplaces, get_json
 from demisto_sdk.commands.format.format_constants import (
     ERROR_RETURN_CODE,
@@ -48,7 +49,6 @@ class IntegrationYMLFormat(BaseUpdateYML):
         path: str = "",
         from_version: str = "",
         no_validate: bool = False,
-        verbose: bool = False,
         update_docker: bool = False,
         add_tests: bool = False,
         clear_cache: bool = False,
@@ -60,7 +60,6 @@ class IntegrationYMLFormat(BaseUpdateYML):
             path,
             from_version,
             no_validate,
-            verbose=verbose,
             add_tests=add_tests,
             clear_cache=clear_cache,
             **kwargs,
@@ -75,10 +74,9 @@ class IntegrationYMLFormat(BaseUpdateYML):
 
     def update_proxy_insecure_param_to_default(self):
         """Updates important integration arguments names and description."""
-        if self.verbose:
-            click.echo(
-                "Updating proxy and insecure/unsecure integration arguments description to default"
-            )
+        logger.debug(
+            "Updating proxy and insecure/unsecure integration arguments description to default"
+        )
 
         for integration_argument in self.data.get("configuration", {}):
             argument_name = integration_argument.get("name", "")
@@ -98,10 +96,9 @@ class IntegrationYMLFormat(BaseUpdateYML):
 
         default_additional_info = load_default_additional_info_dict()
 
-        if self.verbose:
-            click.echo(
-                "Updating params with an empty additionalnifo, to the default (if exists)"
-            )
+        logger.debug(
+            "Updating params with an empty additionalnifo, to the default (if exists)"
+        )
 
         for param in self.data.get("configuration", {}):
             if param["name"] in default_additional_info and not param.get(
@@ -119,10 +116,7 @@ class IntegrationYMLFormat(BaseUpdateYML):
             "default_output_descriptions.json"
         )
 
-        if self.verbose:
-            click.echo(
-                "Updating empty integration outputs to their default (if exists)"
-            )
+        logger.debug("Updating empty integration outputs to their default (if exists)")
 
         for command in self.data.get("script", {}).get("commands", {}):
             for output in command.get("outputs", []):
@@ -134,10 +128,9 @@ class IntegrationYMLFormat(BaseUpdateYML):
 
     def set_reputation_commands_basic_argument_as_needed(self):
         """Sets basic arguments of reputation commands to be default, isArray and required."""
-        if self.verbose:
-            click.echo(
-                "Updating reputation commands' basic arguments to be True for default, isArray and required"
-            )
+        logger.debug(
+            "Updating reputation commands' basic arguments to be True for default, isArray and required"
+        )
 
         integration_commands = self.data.get("script", {}).get("commands", [])
 
@@ -145,35 +138,21 @@ class IntegrationYMLFormat(BaseUpdateYML):
             command_name = command.get("name", "")
 
             if command_name in BANG_COMMAND_NAMES:
-                for argument in command.get(
-                    "arguments", []
-                ):  # If there're arguments under the command
-                    name = argument.get("name")
-                    if name == command_name:
-                        is_array = argument.get("isArray", False)
-                        if not is_array:
-                            click.echo(
-                                f"isArray field in {name} command is set to False. Fix the command to support that function and set it to True."
-                            )
-                        argument.update(
-                            {"default": True, "isArray": is_array, "required": True}
-                        )
-                        break
-                else:  # No arguments at all
-                    default_bang_args = {
-                        "default": True,
-                        "description": "",
-                        "isArray": True,
-                        "name": command_name,
-                        "required": True,
-                        "secret": False,
-                    }
-                    click.echo(
-                        f"Command {command_name} has no arguemnts. Setting them: {json.dumps(default_bang_args, indent=4)}"
-                    )
-                    argument_list: list = command.get("arguments", [])
-                    argument_list.append(default_bang_args)
-                    command["arguments"] = argument_list
+                if not (
+                    arguments := command.get("arguments")
+                ):  # command has no arguments
+                    return
+
+                if any(
+                    argument.get("default") for argument in arguments
+                ):  # command already has a default argument
+                    return
+
+                # if one of the arguments have the same name as command name, update him to be a default
+                for argument in arguments:
+                    if argument["name"] == command_name:
+                        argument.update({"default": True, "required": True})
+                        return
 
     def set_fetch_params_in_config(self):
         """
@@ -256,14 +235,41 @@ class IntegrationYMLFormat(BaseUpdateYML):
                     elif "false" == str(value).lower():
                         param["defaultvalue"] = "false"
 
+    def handle_hidden_marketplace_params(self):
+        """
+        During the upload flow, each marketplace interprets and converts the `hidden: <marketplace name>`
+        into a boolean - `hidden: <boolean>`, based on the marketplace.
+        When contributing an integration from the marketplace UI, the final yml file uses a boolean.
+        Since it's contributed to the marketplace repo, we need the value to be identical (marketplace),
+        rather than boolean. This function replaces booleans with marketplace values, if they exist.
+        """
+
+        current_configuration = self.data.get("configuration", [])
+        old_configuration = self.old_file.get("configuration", [])
+
+        for old_param_dict in old_configuration:
+            if "hidden" in old_param_dict:
+                for current_param_dict in current_configuration:
+                    if current_param_dict.get("name") == old_param_dict.get(
+                        "name"
+                    ) and (
+                        "hidden" not in current_param_dict
+                        or not current_param_dict.get("hidden")
+                    ):
+                        current_param_dict["hidden"] = old_param_dict["hidden"]
+                        break
+
     def run_format(self) -> int:
         try:
-            click.secho(
-                f"\n================= Updating file {self.source_file} =================",
-                fg="bright_blue",
+            logger.info(
+                f"\n[blue]================= Updating file {self.source_file} =================[/blue]"
             )
+            self.handle_hidden_marketplace_params()
             super().update_yml(
-                file_type=BETA_INTEGRATION if self.is_beta else INTEGRATION
+                default_from_version=FILETYPE_TO_DEFAULT_FROMVERSION[
+                    FileType.INTEGRATION
+                ],
+                file_type=BETA_INTEGRATION if self.is_beta else INTEGRATION,
             )
             self.update_tests()
             self.update_conf_json("integration")
@@ -283,11 +289,9 @@ class IntegrationYMLFormat(BaseUpdateYML):
 
             return SUCCESS_RETURN_CODE
         except Exception as err:
-            if self.verbose:
-                click.secho(
-                    f"\nFailed to update file {self.source_file}. Error: {err}",
-                    fg="red",
-                )
+            logger.info(
+                f"\n[red]Failed to update file {self.source_file}. Error: {err}[/red]"
+            )
             return ERROR_RETURN_CODE
 
     def format_file(self) -> Tuple[int, int]:

@@ -1,7 +1,7 @@
+import logging
 import os
 from contextlib import nullcontext as does_not_raise
 
-import click
 import pytest
 import requests_mock
 from click.testing import CliRunner
@@ -26,7 +26,9 @@ from demisto_sdk.commands.common.hook_validations.pack_unique_files import (
 )
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.validate.validate_manager import ValidateManager
-from TestSuite.test_tools import ChangeCWD
+from TestSuite.test_tools import ChangeCWD, str_in_call_args_list
+
+logger = logging.getLogger("demisto-sdk")
 
 json = JSON_Handler()
 
@@ -170,7 +172,7 @@ class TestPackUniqueFilesValidator:
         assert fake_validator.are_valid_files(id_set_validations=False)
 
     def test_validate_partner_contribute_pack_metadata_no_mail_and_url(
-        self, mocker, repo
+        self, mocker, monkeypatch, repo
     ):
         """
         Given
@@ -182,6 +184,9 @@ class TestPackUniqueFilesValidator:
         Then
         - Ensure validate found errors.
         """
+        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+        monkeypatch.setenv("COLUMNS", "1000")
+
         pack_metadata_no_email_and_url = PACK_METADATA_PARTNER.copy()
         mocker.patch.object(ValidateManager, "setup_git_params", return_value=True)
         pack_metadata_no_email_and_url["email"] = ""
@@ -211,10 +216,11 @@ class TestPackUniqueFilesValidator:
         pack.pack_metadata.write_json(pack_metadata_no_email_and_url)
         with ChangeCWD(repo.path):
             runner = CliRunner(mix_stderr=False)
-            result = runner.invoke(
-                main, [VALIDATE_CMD, "-i", pack.path], catch_exceptions=False
-            )
-        assert "Contributed packs must include email or url" in result.stdout
+            runner.invoke(main, [VALIDATE_CMD, "-i", pack.path], catch_exceptions=False)
+        assert str_in_call_args_list(
+            logger_info.call_args_list,
+            "Contributed packs must include email or url",
+        )
 
     @pytest.mark.parametrize(
         "url, is_valid",
@@ -224,7 +230,9 @@ class TestPackUniqueFilesValidator:
             ("https://github.com/pont_to_repo/issues", True),
         ],
     )
-    def test_validate_partner_pack_metadata_url(self, mocker, repo, url, is_valid):
+    def test_validate_partner_pack_metadata_url(
+        self, mocker, monkeypatch, repo, url, is_valid
+    ):
         """
         Given
         - Partner contributed pack with an is_valid url.
@@ -235,6 +243,9 @@ class TestPackUniqueFilesValidator:
         Then
         - Ensure validate finds errors accordingly.
         """
+        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+        monkeypatch.setenv("COLUMNS", "1000")
+
         pack_metadata_changed_url = PACK_METADATA_PARTNER.copy()
         pack_metadata_changed_url["url"] = url
         mocker.patch.object(tools, "is_external_repository", return_value=True)
@@ -263,19 +274,19 @@ class TestPackUniqueFilesValidator:
         pack.pack_metadata.write_json(pack_metadata_changed_url)
         with ChangeCWD(repo.path):
             runner = CliRunner(mix_stderr=False)
-            result = runner.invoke(
-                main, [VALIDATE_CMD, "-i", pack.path], catch_exceptions=False
-            )
+            runner.invoke(main, [VALIDATE_CMD, "-i", pack.path], catch_exceptions=False)
 
         error_text = (
             "The metadata URL leads to a GitHub repo instead of a support page."
         )
         if is_valid:
-            assert error_text not in result.stdout
+            assert not str_in_call_args_list(logger_info.call_args_list, error_text)
         else:
-            assert error_text in result.stdout
+            assert str_in_call_args_list(logger_info.call_args_list, error_text)
 
-    def test_validate_partner_contribute_pack_metadata_price_change(self, mocker, repo):
+    def test_validate_partner_contribute_pack_metadata_price_change(
+        self, mocker, monkeypatch, repo
+    ):
         """
         Given
         - Partner contributed pack where price has changed.
@@ -286,6 +297,9 @@ class TestPackUniqueFilesValidator:
         Then
         - Ensure validate found errors.
         """
+        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+        monkeypatch.setenv("COLUMNS", "1000")
+
         pack_metadata_price_changed = PACK_METADATA_PARTNER.copy()
         pack_metadata_price_changed["price"] = 3
         mocker.patch.object(tools, "is_external_repository", return_value=True)
@@ -314,12 +328,10 @@ class TestPackUniqueFilesValidator:
         pack.pack_metadata.write_json(pack_metadata_price_changed)
         with ChangeCWD(repo.path):
             runner = CliRunner(mix_stderr=False)
-            result = runner.invoke(
-                main, [VALIDATE_CMD, "-i", pack.path], catch_exceptions=False
-            )
-        assert (
-            "The pack price was changed from 2 to 3 - revert the change"
-            in result.stdout
+            runner.invoke(main, [VALIDATE_CMD, "-i", pack.path], catch_exceptions=False)
+        assert str_in_call_args_list(
+            logger_info.call_args_list,
+            "The pack price was changed from 2 to 3 - revert the change",
         )
 
     def test_check_timestamp_format(self):
@@ -405,7 +417,7 @@ class TestPackUniqueFilesValidator:
             in self.validator.get_errors()
         )
 
-    def test_validate_pack_dependencies_skip_id_set_creation(self, capsys):
+    def test_validate_pack_dependencies_skip_id_set_creation(self, mocker, monkeypatch):
         """
         Given
         -  skip_id_set_creation flag set to true.
@@ -417,6 +429,9 @@ class TestPackUniqueFilesValidator:
         Then
         - Ensure that the validation passes and that the skipping message is printed.
         """
+        logger_debug = mocker.patch.object(logging.getLogger("demisto-sdk"), "debug")
+        monkeypatch.setenv("COLUMNS", "1000")
+
         self.restart_validator()
         self.validator.skip_id_set_creation = True
         res = self.validator.validate_pack_dependencies()
@@ -424,7 +439,9 @@ class TestPackUniqueFilesValidator:
             False  # reverting to default for next tests
         )
         assert res
-        assert "No first level dependencies found" in capsys.readouterr().out
+        assert str_in_call_args_list(
+            logger_debug.call_args_list, "No first level dependencies found"
+        )
 
     @pytest.mark.parametrize(
         "usecases, is_valid, branch_usecases",
@@ -720,7 +737,7 @@ class TestPackUniqueFilesValidator:
                 )
 
     def test_get_master_private_repo_meta_file_running_on_master(
-        self, mocker, repo, capsys
+        self, mocker, repo, monkeypatch
     ):
         """
         Given:
@@ -732,6 +749,9 @@ class TestPackUniqueFilesValidator:
         Then:
             - Ensure result is None and the appropriate skipping message is printed.
         """
+        logger_debug = mocker.patch.object(logging.getLogger("demisto-sdk"), "debug")
+        monkeypatch.setenv("COLUMNS", "1000")
+
         self.restart_validator()
         pack_name = "PackName"
         pack = repo.create_pack(pack_name)
@@ -748,13 +768,13 @@ class TestPackUniqueFilesValidator:
             str(pack.pack_metadata.path)
         )
         assert not res
-        assert (
-            "Running on master branch - skipping price change validation"
-            in capsys.readouterr().out
+        assert str_in_call_args_list(
+            logger_debug.call_args_list,
+            "Running on master branch - skipping price change validation",
         )
 
     def test_get_master_private_repo_meta_file_getting_git_error(
-        self, repo, capsys, mocker
+        self, repo, mocker, monkeypatch
     ):
         """
         Given:
@@ -767,6 +787,9 @@ class TestPackUniqueFilesValidator:
         Then:
             - Ensure result is None and the appropriate skipping message is printed.
         """
+        logger_debug = mocker.patch.object(logging.getLogger("demisto-sdk"), "debug")
+        monkeypatch.setenv("COLUMNS", "1000")
+
         self.restart_validator()
         pack_name = "PackName"
         pack = repo.create_pack(pack_name)
@@ -799,12 +822,13 @@ class TestPackUniqueFilesValidator:
                 str(pack.pack_metadata.path)
             )
             assert not res
-            assert (
-                "Got an error while trying to connect to git" in capsys.readouterr().out
+            assert str_in_call_args_list(
+                logger_debug.call_args_list,
+                "Got an error while trying to connect to git",
             )
 
     def test_get_master_private_repo_meta_file_file_not_found(
-        self, mocker, repo, capsys
+        self, mocker, repo, monkeypatch
     ):
         """
         Given:
@@ -817,6 +841,9 @@ class TestPackUniqueFilesValidator:
         Then:
             - Ensure result is None and the appropriate skipping message is printed.
         """
+        logger_debug = mocker.patch.object(logging.getLogger("demisto-sdk"), "debug")
+        monkeypatch.setenv("COLUMNS", "1000")
+
         self.restart_validator()
         pack_name = "PackName"
         pack = repo.create_pack(pack_name)
@@ -849,9 +876,9 @@ class TestPackUniqueFilesValidator:
         )
         with ChangeCWD(repo.path):
             assert not res
-            assert (
-                "Unable to find previous pack_metadata.json file - skipping price change validation"
-                in capsys.readouterr().out
+            assert str_in_call_args_list(
+                logger_debug.call_args_list,
+                "Unable to find previous pack_metadata.json file - skipping price change validation",
             )
 
     def test_get_master_private_repo_meta_file_relative_path(self, mocker, repo):
@@ -1244,7 +1271,7 @@ class TestPackUniqueFilesValidator:
         pack_description = "Hey there, just testing"
         assert self.validator.is_pack_metadata_desc_too_long(pack_description) is True
 
-    def test_invalid_is_pack_metadata_desc_too_long(self, mocker, repo):
+    def test_invalid_is_pack_metadata_desc_too_long(self, mocker, monkeypatch):
         """
         Given:
             - Invalid description length - higher than 130
@@ -1256,17 +1283,20 @@ class TestPackUniqueFilesValidator:
             - Ensure validation passes although description field length is higher than 130
             - Ensure warning will be printed.
         """
+        logger_warning = mocker.patch.object(
+            logging.getLogger("demisto-sdk"), "warning"
+        )
+        monkeypatch.setenv("COLUMNS", "1000")
+
         pack_description = (
             "This is will fail cause the description here is too long."
             "test test test test test test test test test test test test test test test test test"
             " test test test test test"
         )
-        error_desc = "The description field of the pack_metadata.json file is longer than 130 characters."
-
-        mocker.patch("click.secho")
-
         assert self.validator.is_pack_metadata_desc_too_long(pack_description) is True
-        assert error_desc in click.secho.call_args_list[0][0][0]
+
+        error_desc = "The description field of the pack_metadata.json file is longer than 130 characters."
+        assert str_in_call_args_list(logger_warning.call_args_list, error_desc)
 
     def test_validate_author_image_exists_valid(self, repo):
         """

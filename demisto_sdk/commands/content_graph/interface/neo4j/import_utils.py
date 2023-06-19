@@ -1,18 +1,16 @@
-import csv
-import logging
 import os
-import shutil
+import xml.etree.ElementTree as ET
 from pathlib import Path
-from tempfile import NamedTemporaryFile
 from typing import List, Optional, Set
 from zipfile import ZipFile
 
 from demisto_sdk.commands.common.handlers import JSON_Handler
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.content_graph.neo4j_service import get_neo4j_import_path
 
 json = JSON_Handler()
 
-logger = logging.getLogger("demisto-sdk")
+GRAPHML_FILE_SUFFIX = ".graphml"
 
 
 class Neo4jImportHandler:
@@ -40,16 +38,11 @@ class Neo4jImportHandler:
         for file in self.import_path.iterdir():
             os.remove(file)
 
-    def get_nodes_files(self) -> List[str]:
-        return [
-            file.name for file in self.import_path.iterdir() if ".nodes." in file.name
-        ]
-
-    def get_relationships_files(self) -> List[str]:
+    def get_graphml_filenames(self) -> List[str]:
         return [
             file.name
             for file in self.import_path.iterdir()
-            if ".relationships." in file.name
+            if file.suffix == GRAPHML_FILE_SUFFIX
         ]
 
     def ensure_data_uniqueness(self) -> None:
@@ -60,37 +53,26 @@ class Neo4jImportHandler:
     def _get_import_sources(self) -> Set[str]:
         sources: Set[str] = set()
         for filename in self.import_path.iterdir():
-            # csv filenames are in the format <source>.<nodes/relationships>.<labels/type>.csv
-            if source := filename.name.split(".")[0]:
-                sources.add(source)
+            if filename.suffix == GRAPHML_FILE_SUFFIX:
+                sources.add(filename.as_posix())
         return sources
 
     def _set_unique_ids_for_source(self, source: str, prefix: str) -> None:
-        for filename in self.import_path.iterdir():
-            if filename.name.startswith(f"{source}.") and filename.suffix == ".csv":
-                tempfile = NamedTemporaryFile(mode="w", delete=False)
-                with open(filename) as csv_file, tempfile:
-                    reader = csv.reader(
-                        csv_file,
-                        delimiter=",",
-                        quotechar='"',
-                        quoting=csv.QUOTE_MINIMAL,
-                    )
-                    writer = csv.writer(
-                        tempfile,
-                        delimiter=",",
-                        quotechar='"',
-                        quoting=csv.QUOTE_MINIMAL,
-                    )
-                    writer.writerow(next(reader))  # skip headers row
-                    for row in reader:
-                        row[0] = f"{prefix}{row[0]}"
-                        row[1] = (
-                            f"{prefix}{row[1]}"
-                            if "relationships" in filename.name
-                            else row[1]
-                        )
-                        writer.writerow(row)
-                shutil.move(
-                    tempfile.name, (self.import_path / filename.name).as_posix()
-                )
+        xml_namespace: str = "http://graphml.graphdrawing.org/xmlns"
+        ET.register_namespace("", xml_namespace)
+        # Load the graphml file
+        tree: ET.ElementTree = ET.parse(source)
+        root: ET.Element = tree.getroot()
+
+        # Set the prefix for each node
+        for node in root.findall(f".//{{{xml_namespace}}}node"):
+            node.attrib["id"] = f"n{prefix}{node.attrib['id'][1:]}"
+
+        # Set the prefix for each edge
+        for edge in root.findall(f".//{{{xml_namespace}}}edge"):
+            edge.attrib["id"] = f"e{prefix}{edge.attrib['id'][1:]}"
+            edge.attrib["source"] = f"n{prefix}{edge.attrib['source'][1:]}"
+            edge.attrib["target"] = f"n{prefix}{edge.attrib['target'][1:]}"
+
+        # Write the updated graphml file
+        tree.write(source)

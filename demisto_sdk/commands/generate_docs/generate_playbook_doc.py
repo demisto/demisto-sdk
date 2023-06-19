@@ -1,7 +1,8 @@
 import os
 from typing import Any, Dict, List, Optional, Tuple, Union
 
-from demisto_sdk.commands.common.tools import get_yaml, print_error, print_warning
+from demisto_sdk.commands.common.logger import logger
+from demisto_sdk.commands.common.tools import get_yaml
 from demisto_sdk.commands.generate_docs.common import (
     HEADER_TYPE,
     generate_list_section,
@@ -18,7 +19,6 @@ def generate_playbook_doc(
     output: str = None,
     permissions: str = None,
     limitations: str = None,
-    verbose: bool = False,
     custom_image_path: str = "",
 ):
     try:
@@ -115,16 +115,13 @@ def generate_playbook_doc(
         save_output(output, f"{playbook_filename}_README.md", doc_text)
 
         if errors:
-            print_warning("Possible Errors:")
+            logger.info("[yellow]Possible Errors:[yellow]")
             for error in errors:
-                print_warning(error)
+                logger.info(f"[yellow]{error}[/yellow]")
 
     except Exception as ex:
-        if verbose:
-            raise
-        else:
-            print_error(f"Error: {str(ex)}")
-            return
+        logger.info(f"[red]Error: {str(ex)}[/red]")
+        raise
 
 
 def get_playbook_dependencies(
@@ -215,7 +212,7 @@ def get_inputs(playbook: Dict[str, List[Dict]]) -> Tuple[List[Dict], List[str]]:
     playbook_inputs: List = playbook.get("inputs", [])
     for _input in playbook_inputs:
         name = _input.get("key")
-        description = string_escape_md(_input.get("description", ""))
+        description = string_escape_md(_input.get("description", ""), escape_html=False)
         required_status = "Required" if _input.get("required") else "Optional"
         _value: Optional[str] = get_input_data(_input)
 
@@ -274,7 +271,9 @@ def get_outputs(playbook):
         outputs.append(
             {
                 "Path": output.get("contextPath"),
-                "Description": string_escape_md(output.get("description", "")),
+                "Description": string_escape_md(
+                    output.get("description", ""), escape_html=False
+                ),
                 "Type": output_type,
             }
         )

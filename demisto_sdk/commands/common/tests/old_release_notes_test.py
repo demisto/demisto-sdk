@@ -104,5 +104,4 @@ diff_package = [
 def test_rn_master_diff(release_notes_diff, expected_result, mocker):
     mocker.patch.object(OldReleaseNotesValidator, "__init__", lambda a, b: None)
     validator = get_validator(diff=release_notes_diff)
-    validator.suppress_print = False
     assert validator.is_release_notes_changed() == expected_result

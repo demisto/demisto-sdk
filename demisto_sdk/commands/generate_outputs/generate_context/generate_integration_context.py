@@ -1,12 +1,7 @@
 from typing import Dict, List, Optional
 
-from demisto_sdk.commands.common.tools import (
-    get_yaml,
-    print_error,
-    print_success,
-    print_v,
-    write_yml,
-)
+from demisto_sdk.commands.common.logger import logger
+from demisto_sdk.commands.common.tools import get_yaml, write_yml
 from demisto_sdk.commands.generate_docs.common import build_example_dict
 from demisto_sdk.commands.generate_docs.generate_integration_doc import (
     get_command_examples,
@@ -16,15 +11,14 @@ from demisto_sdk.commands.generate_outputs.json_to_outputs.json_to_outputs impor
 )
 
 
-def dict_from_outputs_str(command: str, outputs: str, verbose=False):
+def dict_from_outputs_str(command: str, outputs: str):
     """Create a pythonic dict from the yml outputs string.
 
     Args:
         command: the command to parse.
         outputs: the json outputs to parse into a dict.
-        verbose: whether to run in verbose mode or not.
     """
-    dict_output = parse_json(outputs, command, "", verbose, return_object=True)
+    dict_output = parse_json(outputs, command, "", return_object=True)
     return dict_output
 
 
@@ -103,7 +97,6 @@ def generate_integration_context(
     input_path: str,
     examples: Optional[str] = None,
     insecure: bool = False,
-    verbose: bool = False,
     output_path: Optional[str] = None,
 ):
     """Generate integration command contexts in-place.
@@ -113,7 +106,6 @@ def generate_integration_context(
         input_path: path to the yaml integration.
         examples: path to the command examples.
         insecure: should use insecure.
-        verbose: verbose (debug mode).
     """
     if not output_path:
         output_path = input_path
@@ -124,24 +116,19 @@ def generate_integration_context(
         example_dict = generate_example_dict(examples, insecure)
 
         for command in example_dict:
-            print_v(f"Building context for the {command} command...", verbose)
+            logger.debug(f"Building context for the {command} command...")
             example = example_dict.get(command)
 
             # Generate the examples with a local server
             for _, _, outputs in example:
-                output_with_contexts = dict_from_outputs_str(
-                    command, outputs, verbose=verbose
-                )
+                output_with_contexts = dict_from_outputs_str(command, outputs)
                 output_contexts = output_with_contexts.get("outputs")
                 yml_data = insert_outputs(yml_data, command, output_contexts)
 
         # Make the changes in place the input yml
-        print_success(f"Writing outputs to {output_path}")
+        logger.info(f"[green]Writing outputs to {output_path}[/green]")
         write_yml(output_path, yml_data)
     except ValueError as ex:
-        if verbose:
-            raise
-        else:
-            print_error(f"Error: {str(ex)}")
-            return 1
+        logger.info(f"[red]Error: {str(ex)}[/red]")
+        return 1
     return 0

@@ -29,6 +29,7 @@ class IDSetCreator:
         print_logs: bool = True,
         fail_duplicates: bool = False,
         marketplace: str = "",
+        **kwargs,
     ):
         """IDSetCreator
 

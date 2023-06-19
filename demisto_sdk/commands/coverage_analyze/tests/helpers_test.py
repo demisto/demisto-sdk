@@ -22,6 +22,7 @@ from demisto_sdk.commands.coverage_analyze.helpers import (
     parse_report_type,
     percent_to_float,
 )
+from TestSuite.test_tools import str_in_call_args_list
 
 json = JSON_Handler()
 
@@ -135,30 +136,36 @@ class TestParseReportType:
 
 
 class TestExportReport:
-    def setup(self):
-        logging_setup(3).propagate = True
-
     def foo(self):
         pass
 
     def foo_raises(self):
         raise coverage.misc.CoverageException("coverage.misc.CoverageException")
 
-    def test_export_report(self, caplog, mocker):
+    def test_export_report(self, mocker, monkeypatch):
+        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+        monkeypatch.setenv("COLUMNS", "1000")
+
         foo_mock = mocker.patch.object(self, "foo")
-        with caplog.at_level(logging.INFO, logger="demisto-sdk"):
-            export_report(self.foo, "the_format", "the_path")
+        export_report(self.foo, "the_format", "the_path")
         foo_mock.assert_called_once()
-        assert len(caplog.records) == 1
-        assert (
-            caplog.records[0].msg == "exporting the_format coverage report to the_path"
+        assert len(logger_info.call_args_list) == 1
+        assert str_in_call_args_list(
+            logger_info.call_args_list,
+            "exporting the_format coverage report to the_path",
         )
 
-    def test_export_report_with_error(self, caplog):
-        with caplog.at_level(logging.WARNING, logger="demisto-sdk"):
-            export_report(self.foo_raises, "the_format", "the_path")
-        assert len(caplog.records) == 1
-        assert caplog.records[0].msg == "coverage.misc.CoverageException"
+    def test_export_report_with_error(self, mocker, monkeypatch):
+        logger_warning = mocker.patch.object(
+            logging.getLogger("demisto-sdk"), "warning"
+        )
+        monkeypatch.setenv("COLUMNS", "1000")
+
+        export_report(self.foo_raises, "the_format", "the_path")
+        assert len(logger_warning.call_args_list) == 1
+        assert str_in_call_args_list(
+            logger_warning.call_args_list, "coverage.misc.CoverageException"
+        )
 
 
 class TestCoverageSummary:
@@ -341,8 +348,10 @@ class TestFixFilePath:
     data_test_with_two_files = [["HealthCheckAnalyzeLargeInvestigations", "Vertica"]]
 
     @pytest.mark.parametrize("cov_file_names", data_test_with_two_files)
-    def test_with_two_files(self, caplog, tmpdir, cov_file_names):
-        logging_setup(3).propagate = True
+    def test_with_two_files(self, mocker, monkeypatch, tmpdir, cov_file_names):
+        logger_debug = mocker.patch.object(logging.getLogger("demisto-sdk"), "debug")
+        monkeypatch.setenv("COLUMNS", "1000")
+
         cov_files_paths = []
         for cov_file_name in cov_file_names:
             named_coverage_path = tmpdir.join(cov_file_name)
@@ -354,15 +363,19 @@ class TestFixFilePath:
         cov_obj = coverage.Coverage(data_file=dot_cov_file_path)
         cov_obj.combine(cov_files_paths)
 
-        with caplog.at_level(logging.ERROR & logging.DEBUG, logger="demisto-sdk"):
-            fix_file_path(dot_cov_file_path, "some_path")
+        fix_file_path(dot_cov_file_path, "some_path")
 
-        assert len(caplog.records) == 2
-        assert caplog.records[0].msg == "unexpected file list in coverage report"
-        assert caplog.records[0].levelname == "DEBUG"
-        assert caplog.records[1].msg == "removing coverage report for some_path"
-        assert caplog.records[1].levelname == "DEBUG"
         assert not os.path.exists(dot_cov_file_path)
+        assert len(logger_debug.call_args_list) == 2
+        assert all(
+            [
+                str_in_call_args_list(logger_debug.call_args_list, current_str)
+                for current_str in [
+                    "unexpected file list in coverage report",
+                    "removing coverage report for some_path",
+                ]
+            ]
+        )
 
 
 class TestGetCoverageObj:
@@ -428,10 +441,44 @@ class TestGetCoverageObj:
         )
 
 
+LOGGING_LEVELS = [
+    (logging.DEBUG, 10),
+    (logging.INFO, 20),
+    (logging.WARNING, 30),
+    (logging.ERROR, 40),
+    (logging.CRITICAL, 50),
+    ("DEBUG", 10),
+    ("INFO", 20),
+    ("WARNING", 30),
+    ("ERROR", 40),
+    ("CRITICAL", 50),
+]
+
+
 @pytest.mark.parametrize(
-    "verbose, logging_level",
-    [(0, logging.INFO), (1, logging.WARNING), (2, logging.DEBUG), (10, logging.DEBUG)],
+    "console_log_threshold, threshold_value",
+    LOGGING_LEVELS,
 )
-def test_verbose(verbose: int, logging_level: int):
-    logger = logging_setup(verbose=verbose)
-    assert logger.level == logging_level
+def test_console_log_threshold(console_log_threshold: int, threshold_value: int):
+    logger = logging_setup(console_log_threshold=console_log_threshold)
+    console_handler = _get_logger_handler(logger, "console-handler")
+    assert console_handler
+    assert console_handler.level == threshold_value
+
+
+@pytest.mark.parametrize(
+    "file_log_threshold, threshold_value",
+    LOGGING_LEVELS,
+)
+def test_file_log_threshold(file_log_threshold: int, threshold_value: int):
+    logger = logging_setup(file_log_threshold=file_log_threshold)
+    file_handler = _get_logger_handler(logger, "file-handler")
+    assert file_handler
+    assert file_handler.level == threshold_value
+
+
+def _get_logger_handler(logger, handler_name):
+    for current_handler in logger.handlers:
+        if current_handler.name == handler_name:
+            return current_handler
+    return None

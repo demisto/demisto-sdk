@@ -1,5 +1,4 @@
 import csv
-import logging
 import traceback
 from io import StringIO
 from pathlib import Path
@@ -13,11 +12,14 @@ from demisto_sdk.commands.common.constants import (
     FileType,
 )
 from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
-from demisto_sdk.commands.common.logger import setup_rich_logging
+from demisto_sdk.commands.common.logger import (
+    handle_deprecated_args,
+    logger,
+    logging_setup,
+)
 from demisto_sdk.commands.common.tools import get_max_version
 
 app = typer.Typer()
-logger = logging.getLogger("demisto-sdk")
 json = JSON_Handler()
 yaml = YAML_Handler()
 
@@ -26,8 +28,12 @@ SCHEMA_TYPE_NUMBER = "Number"
 SCHEMA_TYPE_BOOLEAN = "Boolean"
 
 
-@app.command(no_args_is_help=True)
+@app.command(
+    no_args_is_help=True,
+    context_settings={"allow_extra_args": True, "ignore_unknown_options": True},
+)
 def generate_modeling_rules(
+    ctx: typer.Context,
     mapping: Path = typer.Option(
         ...,
         "-m",
@@ -82,43 +88,33 @@ def generate_modeling_rules(
         show_default=False,
         help=("The name of the product in snake_case"),
     ),
-    verbosity: int = typer.Option(
-        0,
-        "-v",
-        "--verbose",
-        clamp=True,
-        max=3,
-        show_default=True,
-        help="Verbosity level -v / -vv / .. / -vvv",
-        rich_help_panel="Logging Configuration",
+    console_log_threshold: str = typer.Option(
+        "INFO",
+        "-clt",
+        "--console_log_threshold",
+        help=("Minimum logging threshold for the console logger."),
     ),
-    quiet: bool = typer.Option(
-        False,
-        help="Quiet output - sets verbosity to default.",
-        rich_help_panel="Logging Configuration",
+    file_log_threshold: str = typer.Option(
+        "DEBUG",
+        "-flt",
+        "--file_log_threshold",
+        help=("Minimum logging threshold for the file logger."),
     ),
-    log_path: Path = typer.Option(
-        None,
+    log_file_path: str = typer.Option(
+        "demisto_sdk_debug.log",
         "-lp",
-        "--log-path",
-        resolve_path=True,
-        show_default=False,
-        help="Path of directory in which you would like to store all levels of logs. If not given, then the "
-        '"log_file_name" command line option will be disregarded, and the log output will be to stdout.',
-        rich_help_panel="Logging Configuration",
-    ),
-    log_file_name: str = typer.Option(
-        "generate_modeling_rules.log",
-        "-ln",
-        "--log-name",
-        resolve_path=True,
-        help="The file name (including extension) where log output should be saved to.",
-        rich_help_panel="Logging Configuration",
+        "--log_file_path",
+        help=("Path to the log file. Default: ./demisto_sdk_debug.log."),
     ),
 ):
+    logging_setup(
+        console_log_threshold=console_log_threshold,
+        file_log_threshold=file_log_threshold,
+        log_file_path=log_file_path,
+    )
+    handle_deprecated_args(ctx.args)
     errors = False
     try:
-        setup_rich_logging(verbosity, quiet, log_path, log_file_name)
         path_prefix = snake_to_camel_case(vendor)
         outputfile_schema = Path(output_path, (f"{path_prefix}ModelingRules.json"))
         outputfile_xif = Path(output_path, (f"{path_prefix}ModelingRules.xif"))

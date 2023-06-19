@@ -1,8 +1,6 @@
 import os
 from pathlib import Path
-from typing import Dict, List, Tuple
-
-import click
+from typing import Dict, List, Tuple, Union
 
 from demisto_sdk.commands.common.constants import (
     JOB,
@@ -10,13 +8,8 @@ from demisto_sdk.commands.common.constants import (
     FileType,
 )
 from demisto_sdk.commands.common.git_util import GitUtil
-from demisto_sdk.commands.common.tools import (
-    find_type,
-    get_files_in_dir,
-    print_error,
-    print_success,
-    print_warning,
-)
+from demisto_sdk.commands.common.logger import logger
+from demisto_sdk.commands.common.tools import find_type, get_files_in_dir
 from demisto_sdk.commands.format.format_constants import SCHEMAS_PATH
 from demisto_sdk.commands.format.update_classifier import (
     ClassifierJSONFormat,
@@ -119,9 +112,8 @@ def format_manager(
     output: str = None,
     from_version: str = "",
     no_validate: bool = False,
-    verbose: bool = False,
     update_docker: bool = False,
-    assume_yes: bool = False,
+    assume_answer: Union[bool, None] = None,
     deprecate: bool = False,
     use_git: bool = False,
     prev_ver: str = None,
@@ -138,9 +130,8 @@ def format_manager(
         from_version: (str) in case of specific value for from_version that needs to be updated.
         output: (str) The path to save the formatted file to.
         no_validate (flag): Whether the user specifies not to run validate after format.
-        verbose (bool): Whether to print verbose logs or not
         update_docker (flag): Whether to update the docker image.
-        assume_yes (bool): Whether to assume "yes" as answer to all prompts and run non-interactively
+        assume_answer (bool | None): Whether to assume "yes" or "no" as answer to all prompts and run non-interactively
         deprecate (bool): Whether to deprecate the entity
         use_git (bool): Use git to automatically recognize which files changed and run format on them
         prev_ver (str): Against which branch should the difference be recognized
@@ -158,7 +149,9 @@ def format_manager(
     use_git = use_git or not input
 
     if input:
-        files = get_files_in_dir(input, supported_file_types)
+        files = []
+        for i in input.split(","):
+            files.extend(get_files_in_dir(i, supported_file_types))
 
     elif use_git:
         files = get_files_to_format_from_git(
@@ -169,6 +162,10 @@ def format_manager(
         raise Exception(
             "The given output path is not a specific file path.\n"
             "Only file path can be a output path.  Please specify a correct output."
+        )
+    if output and input and "," in input:
+        raise Exception(
+            "Cannot use the output argument when provided with a list of inputs. Remove the first or only provide a single file as input."
         )
 
     log_list = []
@@ -196,19 +193,18 @@ def format_manager(
                     interactive=interactive,
                     output=output,
                     no_validate=no_validate,
-                    verbose=verbose,
                     update_docker=update_docker,
-                    assume_yes=assume_yes,
+                    assume_answer=assume_answer,
                     deprecate=deprecate,
                     add_tests=add_tests,
                     id_set_path=id_set_path,
                 )
                 if err_res:
-                    log_list.extend([(err_res, print_error)])
+                    log_list.extend([(err_res, "red")])
                 if info_res:
-                    log_list.extend([(info_res, print_success)])
+                    log_list.extend([(info_res, "green")])
                 if skip_res:
-                    log_list.extend([(skip_res, print_warning)])
+                    log_list.extend([(skip_res, "yellow")])
             elif file_type:
                 log_list.append(
                     (
@@ -216,7 +212,7 @@ def format_manager(
                             f"Ignoring format for {file_path} as {file_type.value} is currently not "
                             f"supported by format command"
                         ],
-                        print_warning,
+                        "yellow",
                     )
                 )
             else:
@@ -225,25 +221,27 @@ def format_manager(
                         [
                             f"Was unable to identify the file type for the following file: {file_path}"
                         ],
-                        print_error,
+                        "red",
                     )
                 )
 
-        update_content_entity_ids(files, verbose)
+        update_content_entity_ids(files)
 
     else:
         if not use_git:
             log_list.append(
                 (
                     [f"Failed format file {input}." + "No such file or directory"],
-                    print_error,
+                    "red",
                 )
             )
-        return 1
+        # No files were found to format
+        return 0
 
-    print("")  # Just adding a new line before summary
-    for string, print_func in log_list:
-        print_func("\n".join(string))
+    logger.info("")  # Just adding a new line before summary
+    for string, print_color in log_list:
+        joined_string = "\n".join(string)
+        logger.info(f"[{print_color}]{joined_string}[/{print_color}]")
 
     if error_list:
         return 1
@@ -279,38 +277,34 @@ def get_files_to_format_from_git(
 
     if filtered_files:
         detected_files_string = "\n".join(filtered_files)
-        click.secho(
-            f"Found the following files to format:\n{detected_files_string}",
-            fg="bright_cyan",
+        logger.info(
+            f"[cyan]Found the following files to format:\n{detected_files_string}[/cyan]"
         )
 
     else:
-        click.secho("Did not find any files to format", fg="bright_red")
+        logger.info("[red]Did not find any files to format[/red]")
 
     return filtered_files
 
 
-def update_content_entity_ids(files: List[str], verbose: bool):
+def update_content_entity_ids(files: List[str]):
     """Update the changed content entity ids in the files.
     Args:
         files (list): a list of files in which to update the content ids.
-        verbose (bool): whether to print
 
     """
     if not CONTENT_ENTITY_IDS_TO_UPDATE:
         return
 
-    if verbose:
-        click.echo(
-            f"Collected content entities IDs to update:\n{CONTENT_ENTITY_IDS_TO_UPDATE}\n"
-            f"Going over files to update these IDs in other files..."
-        )
+    logger.debug(
+        f"Collected content entities IDs to update:\n{CONTENT_ENTITY_IDS_TO_UPDATE}\n"
+        f"Going over files to update these IDs in other files..."
+    )
     for file in files:
         file_path = str(Path(file))
-        if verbose:
-            click.echo(
-                f"Processing file {file_path} to check for content entities IDs to update"
-            )
+        logger.debug(
+            f"Processing file {file_path} to check for content entities IDs to update"
+        )
         with open(file_path, "r+") as f:
             file_content = f.read()
             for id_to_replace, updated_id in CONTENT_ENTITY_IDS_TO_UPDATE.items():
@@ -358,8 +352,10 @@ def run_format_on_file(
         del kwargs["id_set_path"]
     updater_class = FILE_TYPE_AND_LINKED_CLASS.get(file_type)
     if not updater_class:  # fail format so long as xsiam entities dont have formatters
-        print_warning(f"No  updater_class was found for file type {file_type}")
-        return logger(input, 1, VALIDATE_RES_SKIPPED_CODE)
+        logger.info(
+            f"[yellow]No updater_class was found for file type {file_type}[/yellow]"
+        )
+        return format_output(input, 1, VALIDATE_RES_SKIPPED_CODE)
 
     update_object = updater_class(
         input=input,
@@ -370,10 +366,10 @@ def run_format_on_file(
     )
     format_res, validate_res = update_object.format_file()  # type: ignore
     CONTENT_ENTITY_IDS_TO_UPDATE.update(update_object.updated_ids)
-    return logger(input, format_res, validate_res)
+    return format_output(input, format_res, validate_res)
 
 
-def logger(
+def format_output(
     input: str,
     format_res: int,
     validate_res: int,

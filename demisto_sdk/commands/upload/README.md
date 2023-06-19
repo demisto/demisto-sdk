@@ -5,16 +5,18 @@
 In order to run the command, `DEMISTO_BASE_URL` environment variable should contain the Cortex XSOAR/XSIAM instance URL,
 and `DEMISTO_API_KEY` environment variable should contain a valid Cortex XSOAR/XSIAM API Key.
 
-**Note:** Cortex XSIAM Base URL should be retrieved from XSIAM instance -> Settings -> Configurations -> API Keys -> `Copy URL` button on the top rigth corner, and not the browser URL.
-**Note:** Cortex XSIAM API key should be of a `standard` security level, and have the `Instance Administrator` role.
+**Notes for Cortex XSIAM or Cortex XSOAR 8.x:**
+- Cortex XSIAM Base URL should be retrieved from XSIAM instance -> Settings -> Configurations -> API Keys -> `Copy URL` button on the top rigth corner, and not the browser URL.
+- API key should be of a `standard` security level, and have the `Instance Administrator` role.
+- To use the command the `XSIAM_AUTH_ID` environment variable should also be set.
 
-To use the command on Cortex XSIAM the `XSIAM_AUTH_ID` environment variable should also be set.
+
 To set the environment variables, run the following shell commands:
 ```
 export DEMISTO_BASE_URL=<YOUR_DESMISTO_BASE_URL>
 export DEMISTO_API_KEY=<YOUR_DEMISTO_API_KEY>
 ```
-and for Cortex XSIAM
+and for Cortex XSIAM or Cortex XSOAR 8.x
 ```
 export XSIAM_AUTH_ID=<THE_XSIAM_AUTH_ID>
 ```
@@ -58,7 +60,12 @@ Uploading classifiers to Cortex XSOAR is available from version 6.0.0 and up.
 
 * **-z, --zip**
 
-    in case a pack was passed in the -i argument - zip the pack before upload
+    in case a pack was passed in the -i argument or using `--input-config-file` argument - zip the pack before upload.
+    Defauts to `true`.
+
+* **--nz, --no-zip**
+
+    Will not zip the pack and will upload the content items, item by item as custom content.
 
 * **--keep-zip <DIRECTORY_FOR_THE_ZIP>**
 

@@ -1,16 +1,13 @@
-import logging
 from pathlib import Path
 from typing import List
 
 import astor
 import autopep8
-import click
 from klara.contract import solver
 from klara.contract.solver import MANAGER, ContractSolver, nodes
 
 from demisto_sdk.commands.common.handlers import JSON_Handler
-from demisto_sdk.commands.common.logger import Colors
-from demisto_sdk.commands.common.tools import print_error, print_success
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.generate_docs.common import execute_command
 from demisto_sdk.commands.generate_docs.generate_integration_doc import (
     get_command_examples,
@@ -21,7 +18,6 @@ from demisto_sdk.commands.generate_unit_tests.test_case_builder import (
 )
 from demisto_sdk.commands.generate_unit_tests.test_module_builder import TestModule
 
-logger = logging.getLogger("demisto-sdk")
 json = JSON_Handler()
 
 
@@ -127,8 +123,8 @@ class UnitTestsGenerator:
                     {command_name_without_vendor: [command_dict]}
                 )
 
-        click.echo("Unit tests will be generated for the following commands:")
-        click.echo("\n".join(display_commands))
+        logger.info("Unit tests will be generated for the following commands:")
+        logger.info("\n".join(display_commands))
 
     def run_commands(self):
         """
@@ -234,20 +230,16 @@ class CustomContactSolver(ContractSolver):
             if command_name not in generator.commands_to_generate:
                 continue
             logger.info(
-                f"{Colors.Fg.cyan}Analyzing function: {func} at line: {getattr(func, 'lineno', -1)}{Colors.reset}"
+                f"[cyan]Analyzing function: {func} at line: {getattr(func, 'lineno', -1)}[/cyan]"
             )
             try:
                 ast_func = self.solve_function(func, client_ast, generator)
-                logger.info(
-                    f"{Colors.Fg.cyan}Finished analyzing function: {func}\n{Colors.reset}"
-                )
+                logger.info(f"[cyan]Finished analyzing function: {func}[/cyan]\n")
                 test_module.functions.append(ast_func)
                 if ast_func.global_arg:
                     test_module.global_args.extend(ast_func.global_arg)
             except Exception as e:
-                logger.error(
-                    f"{Colors.Fg.red}Skipped function: {func}, error is {e}\n{Colors.reset}"
-                )
+                logger.error(f"[red]Skipped function: {func}, error is {e}[/red]\n")
                 raise e
             MANAGER.clear_z3_cache()
         test_module.imports.append(test_module.build_imports(names_to_import))
@@ -265,21 +257,21 @@ def run_generate_unit_tests(
 ):
     global logger
 
-    click.echo("================= Running Unit Testing Generator ===================")
+    logger.info("================= Running Unit Testing Generator ===================")
     # validate inputs
     input_path_obj = Path(input_path)
     if not input_path:
-        print_error(
-            "To use the generate_unit_tests version of this command please include an `input` argument"
+        logger.info(
+            "[red]To use the generate_unit_tests version of this command please include an `input` argument[/red]"
         )
         return 1
 
     if not input_path_obj.is_file():
-        print_error(f"Input file {input_path} was not found.")
+        logger.info(f"[red]Input file {input_path} was not found.[/red]")
         return 1
 
     if not input_path.lower().endswith(".py"):
-        print_error(f"Input {input_path} is not a valid python file.")
+        logger.info(f"[red]Input {input_path} is not a valid python file.[/red]")
         return 1
 
     module_name = input_path_obj.name
@@ -304,10 +296,12 @@ def run_generate_unit_tests(
         try:
             output_dir_path_obj.mkdir(parents=True, exist_ok=True)
         except Exception as err:
-            print_error(f"Error creating directory {output_dir} - {err}")
+            logger.info(f"[red]Error creating directory {output_dir} - {err}[/red]")
             return 1
     if not output_dir_path_obj.is_dir():
-        print_error(f'The directory provided "{output_dir}" is not a directory')
+        logger.info(
+            f'[red]The directory provided "{output_dir}" is not a directory[/red]'
+        )
         return 1
 
     file_name = module_name.split(".")[0]
@@ -349,23 +343,23 @@ def run_generate_unit_tests(
             with open(output_file, write_mode) as f:
                 f.write(output_test)
 
-            print_success(
-                f"Successfully finished generating integration code and saved it in {output_dir}"
+            logger.info(
+                f"[green]Successfully finished generating integration code and saved it in {output_dir}[/green]"
             )
         except Exception as e:
-            print_error(f'An error occurred: {e.args if hasattr(e, "args") else e}')
+            logger.info(
+                f'[red]An error occurred: {e.args if hasattr(e, "args") else e}[/red]'
+            )
             return 1
     else:
-        print_error("No source code was detected.")
+        logger.info("[red]No source code was detected.[/red]")
         return 1
     return 0
 
 
 def run(source: str, generator: UnitTestsGenerator):
     global logger
-    logger.info(
-        f"\n{Colors.Fg.green}Running code parser and testing generator.{Colors.reset}"
-    )
+    logger.info("\n[green]Running code parser and testing generator.[/green]")
     logger.debug("Starting parsing input code into ast.")
     tree = MANAGER.build_tree(ast_str=source)
     logger.debug("Finished parsing code into ast.")

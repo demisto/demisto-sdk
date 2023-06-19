@@ -57,8 +57,8 @@ from demisto_sdk.commands.common.content_constant_paths import (
 )
 from demisto_sdk.commands.common.cpu_count import cpu_count
 from demisto_sdk.commands.common.handlers import JSON_Handler
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
-    LOG_COLORS,
     find_type,
     get_current_repo,
     get_display_name,
@@ -67,9 +67,6 @@ from demisto_sdk.commands.common.tools import (
     get_json,
     get_pack_name,
     get_yaml,
-    print_color,
-    print_error,
-    print_warning,
 )
 from demisto_sdk.commands.prepare_content.integration_script_unifier import (
     IntegrationScriptUnifier,
@@ -328,7 +325,9 @@ def should_skip_item_by_mp(
     )
     if marketplace not in item_marketplaces:
         if print_logs:
-            print(f"Skipping {file_path} due to mismatch with the given marketplace")
+            logger.info(
+                f"Skipping {file_path} due to mismatch with the given marketplace"
+            )
 
         if (
             "pack_metadata" not in file_path
@@ -416,7 +415,9 @@ def get_lists_names_from_playbook(
                 skippable = not graph.nodes[task_id]["mandatory"]
             except KeyError:
                 # if task id not in the graph - the task is unreachable.
-                print_error(f'{data_dictionary["id"]}: task {task_id} is not connected')
+                logger.info(
+                    f'[red]{data_dictionary["id"]}: task {task_id} is not connected[/red]'
+                )
                 continue
             if list_name:
                 lists_names.add(list_name)
@@ -441,7 +442,9 @@ def get_task_ids_from_playbook(
             skippable = not graph.nodes[task_id]["mandatory"]
         except KeyError:
             # if task id not in the graph - the task is unreachable.
-            print_error(f'{data_dict["id"]}: task {task_id} is not connected')
+            logger.info(
+                f'[red]{data_dict["id"]}: task {task_id} is not connected[/red]'
+            )
             continue
         if enriched_id:
             implementing_ids.add(enriched_id)
@@ -679,10 +682,12 @@ def get_fields_by_script_argument(task):
                 custom_field_value = list(field_value.values())[0]
                 if isinstance(custom_field_value, str):
                     custom_fields_list = json.loads(custom_field_value)
+                    if not isinstance(custom_fields_list, list):
+                        custom_fields_list = [custom_fields_list]
                     for custom_field in custom_fields_list:
-                        field_name = list(custom_field.keys())[0]
-                        if field_name not in BUILT_IN_FIELDS:
-                            dependent_incident_fields.add(field_name)
+                        for field_name in custom_field.keys():
+                            if field_name not in BUILT_IN_FIELDS:
+                                dependent_incident_fields.add(field_name)
     return dependent_incident_fields
 
 
@@ -1325,7 +1330,7 @@ def create_common_entity_data(
 def get_pack_metadata_data(file_path, print_logs: bool, marketplace: str = ""):
     try:
         if print_logs:
-            print(f"adding {file_path} to id_set")
+            logger.info(f"adding {file_path} to id_set")
 
         if should_skip_item_by_mp(file_path, marketplace, {}, print_logs=print_logs):
             return {}
@@ -1350,8 +1355,8 @@ def get_pack_metadata_data(file_path, print_logs: bool, marketplace: str = ""):
         pack_id = get_pack_name(file_path)
         return {pack_id: pack_data}
 
-    except Exception as exp:  # noqa
-        print_error(f"Failed to process {file_path}, Error: {str(exp)}")
+    except Exception as exp:
+        logger.info(f"[red]Failed to process {file_path}, Error: {str(exp)}[/red]")
         raise
 
 
@@ -1378,7 +1383,7 @@ def get_mapper_data(path: str, packs: Dict[str, Dict] = None):
     mapping = json_data.get("mapping", {})
     for key, value in mapping.items():
         incidents_types.add(key)
-        internal_mapping = value.get("internalMapping")  # get the mapping
+        internal_mapping = value.get("internalMapping") or {}  # get the mapping
         if type_ == "mapping-outgoing":
             incident_fields_set = set()
             # incident fields are in the simple key or in complex.root key of each key
@@ -1766,7 +1771,7 @@ def process_integration(
                 FileType.BETA_INTEGRATION,
             ):
                 if print_logs:
-                    print(f"adding {file_path} to id_set")
+                    logger.info(f"adding {file_path} to id_set")
                 res.append(get_integration_data(file_path, packs=packs))
         else:
             # package integration
@@ -1783,10 +1788,10 @@ def process_integration(
             if os.path.isfile(file_path):
                 # locally, might have leftover dirs without committed files
                 if print_logs:
-                    print(f"adding {file_path} to id_set")
+                    logger.info(f"adding {file_path} to id_set")
                 res.append(get_integration_data(file_path, packs=packs))
-    except Exception as exp:  # noqa
-        print_error(f"failed to process {file_path}, Error: {str(exp)}")
+    except Exception as exp:
+        logger.info(f"[red]failed to process {file_path}, Error: {str(exp)}[/red]")
         raise
 
     return res, excluded_items_from_id_set
@@ -1821,7 +1826,7 @@ def process_script(
                 return [], excluded_items_from_id_set
             if find_type(file_path) == FileType.SCRIPT:
                 if print_logs:
-                    print(f"adding {file_path} to id_set")
+                    logger.info(f"adding {file_path} to id_set")
                 res.append(get_script_data(file_path, packs=packs))
         else:
             # package script
@@ -1840,10 +1845,10 @@ def process_script(
             ):
                 return [], excluded_items_from_id_set
             if print_logs:
-                print(f"adding {file_path} to id_set")
+                logger.info(f"adding {file_path} to id_set")
             res.append(get_script_data(yml_path, script_code=code, packs=packs))
-    except Exception as exp:  # noqa
-        print_error(f"failed to process {file_path}, Error: {str(exp)}")
+    except Exception as exp:
+        logger.info(f"[red]failed to process {file_path}, Error: {str(exp)}[/red]")
         raise
 
     return res, excluded_items_from_id_set
@@ -1881,10 +1886,10 @@ def process_incident_fields(
             return [], excluded_items_from_id_set
         if find_type(file_path) == FileType.INCIDENT_FIELD:
             if print_logs:
-                print(f"adding {file_path} to id_set")
+                logger.info(f"adding {file_path} to id_set")
             res.append(get_incident_field_data(file_path, incident_types, packs=packs))
-    except Exception as exp:  # noqa
-        print_error(f"failed to process {file_path}, Error: {str(exp)}")
+    except Exception as exp:
+        logger.info(f"[red]failed to process {file_path}, Error: {str(exp)}[/red]")
         raise
     return res, excluded_items_from_id_set
 
@@ -1920,7 +1925,7 @@ def process_indicator_types(
             print_logs=print_logs,
         ):
             if print_logs:
-                print(
+                logger.info(
                     f"Skipping {file_path} due to mismatch with the marketplace this id set is generated for."
                 )
             return [], excluded_items_from_id_set
@@ -1930,12 +1935,12 @@ def process_indicator_types(
             and find_type(file_path) == FileType.REPUTATION
         ):
             if print_logs:
-                print(f"adding {file_path} to id_set")
+                logger.info(f"adding {file_path} to id_set")
             res.append(
                 get_indicator_type_data(file_path, all_integrations, packs=packs)
             )
-    except Exception as exp:  # noqa
-        print_error(f"failed to process {file_path}, Error: {str(exp)}")
+    except Exception as exp:
+        logger.info(f"[red]failed to process {file_path}, Error: {str(exp)}[/red]")
         raise
 
     return res, excluded_items_from_id_set
@@ -1974,16 +1979,16 @@ def process_generic_items(
             return [], excluded_items_from_id_set
         if find_type(file_path) == FileType.GENERIC_FIELD:
             if print_logs:
-                print(f"adding {file_path} to id_set")
+                logger.info(f"adding {file_path} to id_set")
             res.append(
                 get_generic_field_data(file_path, generic_types_list, packs=packs)
             )
         elif find_type(file_path) == FileType.GENERIC_TYPE:
             if print_logs:
-                print(f"adding {file_path} to id_set")
+                logger.info(f"adding {file_path} to id_set")
             res.append(get_generic_type_data(file_path, packs=packs))
-    except Exception as exp:  # noqa
-        print_error(f"failed to process {file_path}, Error: {str(exp)}")
+    except Exception as exp:
+        logger.info(f"[red]failed to process {file_path}, Error: {str(exp)}[/red]")
         raise
     return res, excluded_items_from_id_set
 
@@ -2010,10 +2015,10 @@ def process_jobs(
             return []
         if find_type(file_path) == FileType.JOB:
             if print_logs:
-                print(f"adding {file_path} to id_set")
+                logger.info(f"adding {file_path} to id_set")
             result.append(get_job_data(file_path, packs=packs))
-    except Exception as exp:  # noqa
-        print_error(f"failed to process job {file_path}, Error: {str(exp)}")
+    except Exception as exp:
+        logger.info(f"[red]failed to process job {file_path}, Error: {str(exp)}[/red]")
         raise
     return result
 
@@ -2040,10 +2045,12 @@ def process_wizards(
             return []
         if find_type(file_path) == FileType.WIZARD:
             if print_logs:
-                print(f"adding {file_path} to id_set")
+                logger.info(f"adding {file_path} to id_set")
             result.append(get_wizard_data(file_path, packs=packs))
-    except Exception as exp:  # noqa
-        print_error(f"failed to process wizard {file_path}, Error: {str(exp)}")
+    except Exception as exp:
+        logger.info(
+            f"[red]failed to process wizard {file_path}, Error: {str(exp)}[/red]"
+        )
         raise
     return result
 
@@ -2078,7 +2085,7 @@ def process_layoutscontainers(
 
         if find_type(file_path) != FileType.LAYOUTS_CONTAINER:
             if print_logs:
-                print(
+                logger.info(
                     f"Recieved an invalid layoutcontainer file: {file_path}, Ignoring."
                 )
             return result, excluded_items_from_id_set
@@ -2086,11 +2093,13 @@ def process_layoutscontainers(
         layout_data = get_layoutscontainer_data(file_path, packs=packs)
 
         if print_logs:
-            print(f"adding {file_path} to id_set")
+            logger.info(f"adding {file_path} to id_set")
         result.append(layout_data)
 
-    except Exception as exp:  # noqa
-        print_error(f"failed to process layoutcontainer {file_path}, Error: {str(exp)}")
+    except Exception as exp:
+        logger.info(
+            f"[red]failed to process layoutcontainer {file_path}, Error: {str(exp)}[/red]"
+        )
         raise
 
     return result, excluded_items_from_id_set
@@ -2153,7 +2162,7 @@ def process_general_items(
                 ):
                     return [], excluded_items_from_id_set
                 if print_logs:
-                    print(f"adding {file_path} to id_set")
+                    logger.info(f"adding {file_path} to id_set")
                 res.append(data_extraction_func(file_path, packs=packs))
         else:
             package_name = os.path.basename(file_path)
@@ -2170,10 +2179,10 @@ def process_general_items(
                 ):
                     return [], excluded_items_from_id_set
                 if print_logs:
-                    print(f"adding {file_path} to id_set")
+                    logger.info(f"adding {file_path} to id_set")
                 res.append(data_extraction_func(file_path, packs=packs))
-    except Exception as exp:  # noqa
-        print_error(f"failed to process {file_path}, Error: {str(exp)}")
+    except Exception as exp:
+        logger.info(f"[red]failed to process {file_path}, Error: {str(exp)}[/red]")
         raise
 
     return res, excluded_items_from_id_set
@@ -2198,7 +2207,7 @@ def process_test_playbook_path(
     playbook = None
     try:
         if print_logs:
-            print(f"adding {file_path} to id_set")
+            logger.info(f"adding {file_path} to id_set")
         if should_skip_item_by_mp(
             file_path, marketplace, {}, packs=packs, print_logs=print_logs
         ):
@@ -2207,8 +2216,8 @@ def process_test_playbook_path(
             script = get_script_data(file_path, packs=packs)
         if find_type(file_path) == FileType.TEST_PLAYBOOK:
             playbook = get_playbook_data(file_path, packs=packs)
-    except Exception as exp:  # noqa
-        print_error(f"failed to process {file_path}, Error: {str(exp)}")
+    except Exception as exp:
+        logger.info(f"[red]failed to process {file_path}, Error: {str(exp)}[/red]")
         raise
 
     return playbook, script
@@ -2650,12 +2659,11 @@ def re_create_id_set(  # noqa: C901
             refresh_interval = int(os.getenv("DEMISTO_SDK_ID_SET_REFRESH_INTERVAL", -1))
         except ValueError:
             refresh_interval = -1
-            print_color(
-                "Re-creating id_set.\n"
+            logger.info(
+                "[yellow]Re-creating id_set.\n"
                 "DEMISTO_SDK_ID_SET_REFRESH_INTERVAL env var is set with value: "
                 f"{os.getenv('DEMISTO_SDK_ID_SET_REFRESH_INTERVAL')} which is an illegal integer."
-                "\nPlease modify or unset env var.",
-                LOG_COLORS.YELLOW,
+                "\nPlease modify or unset env var.[/yellow]"
             )
         if (
             refresh_interval > 0
@@ -2664,31 +2672,28 @@ def re_create_id_set(  # noqa: C901
             mtime_dt = datetime.fromtimestamp(mtime)
             target_time = time.time() - (refresh_interval * 60)
             if mtime >= target_time:
-                print_color(
-                    f"DEMISTO_SDK_ID_SET_REFRESH_INTERVAL env var is set and detected that current id_set: {id_set_path}"
+                logger.info(
+                    f"[green]DEMISTO_SDK_ID_SET_REFRESH_INTERVAL env var is set and detected that current id_set: {id_set_path}"
                     f" modify time: {mtime_dt} "
                     "doesn't require a refresh. Will use current id-set. "
-                    "If you rather force an id-set refresh, unset DEMISTO_SDK_ID_SET_REFRESH_INTERVAL or set it to -1.",
-                    LOG_COLORS.GREEN,
+                    "If you rather force an id-set refresh, unset DEMISTO_SDK_ID_SET_REFRESH_INTERVAL or set it to -1.[/green]"
                 )
                 with open(id_set_path) as f:
                     return json.load(f)
             else:
-                print_color(
-                    f"The DEMISTO_SDK_ID_SET_REFRESH_INTERVAL env var is set, but current id_set: {id_set_path} "
+                logger.info(
+                    f"[green]The DEMISTO_SDK_ID_SET_REFRESH_INTERVAL env var is set, but current id_set: {id_set_path} "
                     f"modify time: {mtime_dt} is older than the refresh interval. "
-                    "Re-generating id-set.",
-                    LOG_COLORS.GREEN,
+                    "Re-generating id-set.[/green]"
                 )
         else:
-            print_color(
-                "Note: DEMISTO_SDK_ID_SET_REFRESH_INTERVAL env var is not enabled. "
+            logger.info(
+                "[green]Note: DEMISTO_SDK_ID_SET_REFRESH_INTERVAL env var is not enabled. "
                 f"Will re-generate the id-set and overwrite the existing file: {id_set_path}. "
                 "To avoid re-generating the id-set on every run, you can set the "
-                "DEMISTO_SDK_ID_SET_REFRESH_INTERVAL env var to any refresh interval (in minutes).",
-                LOG_COLORS.GREEN,
+                "DEMISTO_SDK_ID_SET_REFRESH_INTERVAL env var to any refresh interval (in minutes).[/green]"
             )
-        print("")  # add an empty line for clarity
+        logger.info("")  # add an empty line for clarity
 
     start_time = time.time()
     scripts_list = []
@@ -2727,14 +2732,14 @@ def re_create_id_set(  # noqa: C901
 
     pool = Pool(processes=int(cpu_count()))
 
-    print_color("Starting the creation of the id_set", LOG_COLORS.GREEN)
+    logger.info("[green]Starting the creation of the id_set[/green]")
 
     with click.progressbar(
         length=len(objects_to_create), label="Creating id-set"
     ) as progress_bar:
 
         if "Packs" in objects_to_create:
-            print_color("\nStarting iteration over Packs", LOG_COLORS.GREEN)
+            logger.info("\n[green]Starting iteration over Packs[/green]")
             for pack_data in pool.map(
                 partial(
                     get_pack_metadata_data,
@@ -2748,7 +2753,7 @@ def re_create_id_set(  # noqa: C901
         progress_bar.update(1)
 
         if "Integrations" in objects_to_create:
-            print_color("\nStarting iteration over Integrations", LOG_COLORS.GREEN)
+            logger.info("\n[green]Starting iteration over Integrations[/green]")
             for arr, excluded_items_from_iteration in pool.map(
                 partial(
                     process_integration,
@@ -2776,7 +2781,7 @@ def re_create_id_set(  # noqa: C901
         progress_bar.update(1)
 
         if "Playbooks" in objects_to_create:
-            print_color("\nStarting iteration over Playbooks", LOG_COLORS.GREEN)
+            logger.info("\n[green]Starting iteration over Playbooks[/green]")
             for arr, excluded_items_from_iteration in pool.map(
                 partial(
                     process_general_items,
@@ -2805,7 +2810,7 @@ def re_create_id_set(  # noqa: C901
         progress_bar.update(1)
 
         if "Scripts" in objects_to_create:
-            print_color("\nStarting iteration over Scripts", LOG_COLORS.GREEN)
+            logger.info("\n[green]Starting iteration over Scripts[/green]")
             for arr, excluded_items_from_iteration in pool.map(
                 partial(
                     process_script,
@@ -2832,7 +2837,7 @@ def re_create_id_set(  # noqa: C901
         progress_bar.update(1)
 
         if "TestPlaybooks" in objects_to_create:
-            print_color("\nStarting iteration over TestPlaybooks", LOG_COLORS.GREEN)
+            logger.info("\n[green]Starting iteration over TestPlaybooks[/green]")
             for pair in pool.map(
                 partial(
                     process_test_playbook_path,
@@ -2850,7 +2855,7 @@ def re_create_id_set(  # noqa: C901
         progress_bar.update(1)
 
         if "Classifiers" in objects_to_create:
-            print_color("\nStarting iteration over Classifiers", LOG_COLORS.GREEN)
+            logger.info("\n[green]Starting iteration over Classifiers[/green]")
             for arr, excluded_items_from_iteration in pool.map(
                 partial(
                     process_general_items,
@@ -2879,7 +2884,7 @@ def re_create_id_set(  # noqa: C901
         progress_bar.update(1)
 
         if "Dashboards" in objects_to_create:
-            print_color("\nStarting iteration over Dashboards", LOG_COLORS.GREEN)
+            logger.info("\n[green]Starting iteration over Dashboards[/green]")
             for arr, excluded_items_from_iteration in pool.map(
                 partial(
                     process_general_items,
@@ -2908,7 +2913,7 @@ def re_create_id_set(  # noqa: C901
         progress_bar.update(1)
 
         if "IncidentTypes" in objects_to_create:
-            print_color("\nStarting iteration over Incident Types", LOG_COLORS.GREEN)
+            logger.info("\n[green]Starting iteration over Incident Types[/green]")
             for arr, excluded_items_from_iteration in pool.map(
                 partial(
                     process_general_items,
@@ -2938,7 +2943,7 @@ def re_create_id_set(  # noqa: C901
 
         # Has to be called after 'IncidentTypes' is called
         if "IncidentFields" in objects_to_create:
-            print_color("\nStarting iteration over Incident Fields", LOG_COLORS.GREEN)
+            logger.info("\n[green]Starting iteration over Incident Fields[/green]")
             for arr, excluded_items_from_iteration in pool.map(
                 partial(
                     process_incident_fields,
@@ -2966,7 +2971,7 @@ def re_create_id_set(  # noqa: C901
         progress_bar.update(1)
 
         if "IndicatorFields" in objects_to_create:
-            print_color("\nStarting iteration over Indicator Fields", LOG_COLORS.GREEN)
+            logger.info("\n[green]Starting iteration over Indicator Fields[/green]")
             for arr, excluded_items_from_iteration in pool.map(
                 partial(
                     process_general_items,
@@ -2996,7 +3001,7 @@ def re_create_id_set(  # noqa: C901
 
         # Has to be called after 'Integrations' is called
         if "IndicatorTypes" in objects_to_create:
-            print_color("\nStarting iteration over Indicator Types", LOG_COLORS.GREEN)
+            logger.info("\n[green]Starting iteration over Indicator Types[/green]")
             for arr, excluded_items_from_iteration in pool.map(
                 partial(
                     process_indicator_types,
@@ -3024,7 +3029,7 @@ def re_create_id_set(  # noqa: C901
         progress_bar.update(1)
 
         if "Layouts" in objects_to_create:
-            print_color("\nStarting iteration over Layouts", LOG_COLORS.GREEN)
+            logger.info("\n[green]Starting iteration over Layouts[/green]")
             for arr, excluded_items_from_iteration in pool.map(
                 partial(
                     process_general_items,
@@ -3069,7 +3074,7 @@ def re_create_id_set(  # noqa: C901
         progress_bar.update(1)
 
         if "Reports" in objects_to_create:
-            print_color("\nStarting iteration over Reports", LOG_COLORS.GREEN)
+            logger.info("\n[green]Starting iteration over Reports[/green]")
             for arr, excluded_items_from_iteration in pool.map(
                 partial(
                     process_general_items,
@@ -3098,7 +3103,7 @@ def re_create_id_set(  # noqa: C901
         progress_bar.update(1)
 
         if "Widgets" in objects_to_create:
-            print_color("\nStarting iteration over Widgets", LOG_COLORS.GREEN)
+            logger.info("\n[green]Starting iteration over Widgets[/green]")
             for arr, excluded_items_from_iteration in pool.map(
                 partial(
                     process_general_items,
@@ -3127,7 +3132,7 @@ def re_create_id_set(  # noqa: C901
         progress_bar.update(1)
 
         if "Mappers" in objects_to_create:
-            print_color("\nStarting iteration over Mappers", LOG_COLORS.GREEN)
+            logger.info("\n[green]Starting iteration over Mappers[/green]")
             for arr, excluded_items_from_iteration in pool.map(
                 partial(
                     process_general_items,
@@ -3156,7 +3161,7 @@ def re_create_id_set(  # noqa: C901
         progress_bar.update(1)
 
         if "Lists" in objects_to_create:
-            print_color("\nStarting iteration over Lists", LOG_COLORS.GREEN)
+            logger.info("\n[green]Starting iteration over Lists[/green]")
             for arr, excluded_items_from_iteration in pool.map(
                 partial(
                     process_general_items,
@@ -3185,9 +3190,7 @@ def re_create_id_set(  # noqa: C901
         progress_bar.update(1)
 
         if "GenericDefinitions" in objects_to_create:
-            print_color(
-                "\nStarting iteration over Generic Definitions", LOG_COLORS.GREEN
-            )
+            logger.info("\n[green]Starting iteration over Generic Definitions[/green]")
             for arr, excluded_items_from_iteration in pool.map(
                 partial(
                     process_general_items,
@@ -3216,7 +3219,7 @@ def re_create_id_set(  # noqa: C901
         progress_bar.update(1)
 
         if "GenericModules" in objects_to_create:
-            print_color("\nStarting iteration over Generic Modules", LOG_COLORS.GREEN)
+            logger.info("\n[green]Starting iteration over Generic Modules[/green]")
             for arr, excluded_items_from_iteration in pool.map(
                 partial(
                     process_general_items,
@@ -3245,7 +3248,7 @@ def re_create_id_set(  # noqa: C901
         progress_bar.update(1)
 
         if "GenericTypes" in objects_to_create:
-            print_color("\nStarting iteration over Generic Types", LOG_COLORS.GREEN)
+            logger.info("\n[green]Starting iteration over Generic Types[/green]")
             for arr, excluded_items_from_iteration in pool.map(
                 partial(
                     process_generic_items,
@@ -3273,7 +3276,7 @@ def re_create_id_set(  # noqa: C901
 
         # Has to be called after 'GenericTypes' is called
         if "GenericFields" in objects_to_create:
-            print_color("\nStarting iteration over Generic Fields", LOG_COLORS.GREEN)
+            logger.info("\n[green]Starting iteration over Generic Fields[/green]")
             for arr, excluded_items_from_iteration in pool.map(
                 partial(
                     process_generic_items,
@@ -3301,7 +3304,7 @@ def re_create_id_set(  # noqa: C901
         progress_bar.update(1)
 
         if "Jobs" in objects_to_create:
-            print_color("\nStarting iteration over Jobs", LOG_COLORS.GREEN)
+            logger.info("\n[green]Starting iteration over Jobs[/green]")
             for arr in pool.map(
                 partial(
                     process_jobs,
@@ -3323,7 +3326,7 @@ def re_create_id_set(  # noqa: C901
         progress_bar.update(1)
 
         if "ParsingRules" in objects_to_create:
-            print_color("\nStarting iteration over Parsing Rules", LOG_COLORS.GREEN)
+            logger.info("\n[green]Starting iteration over Parsing Rules[/green]")
             for arr, excluded_items_from_iteration in pool.map(
                 partial(
                     process_general_items,
@@ -3352,7 +3355,7 @@ def re_create_id_set(  # noqa: C901
         progress_bar.update(1)
 
         if "ModelingRules" in objects_to_create:
-            print_color("\nStarting iteration over Modeling Rules", LOG_COLORS.GREEN)
+            logger.info("\n[green]Starting iteration over Modeling Rules[/green]")
             for arr, excluded_items_from_iteration in pool.map(
                 partial(
                     process_general_items,
@@ -3381,7 +3384,7 @@ def re_create_id_set(  # noqa: C901
         progress_bar.update(1)
 
         if "CorrelationRules" in objects_to_create:
-            print_color("\nStarting iteration over Correlation Rules", LOG_COLORS.GREEN)
+            logger.info("\n[green]Starting iteration over Correlation Rules[/green]")
             for arr, excluded_items_from_iteration in pool.map(
                 partial(
                     process_general_items,
@@ -3410,7 +3413,7 @@ def re_create_id_set(  # noqa: C901
         progress_bar.update(1)
 
         if "XSIAMDashboards" in objects_to_create:
-            print_color("\nStarting iteration over XSIAMDashboards", LOG_COLORS.GREEN)
+            logger.info("\n[green]Starting iteration over XSIAMDashboards[/green]")
             for arr, excluded_items_from_iteration in pool.map(
                 partial(
                     process_general_items,
@@ -3439,7 +3442,7 @@ def re_create_id_set(  # noqa: C901
         progress_bar.update(1)
 
         if "XSIAMReports" in objects_to_create:
-            print_color("\nStarting iteration over XSIAMReports", LOG_COLORS.GREEN)
+            logger.info("\n[green]Starting iteration over XSIAMReports[/green]")
             for arr, excluded_items_from_iteration in pool.map(
                 partial(
                     process_general_items,
@@ -3468,7 +3471,7 @@ def re_create_id_set(  # noqa: C901
         progress_bar.update(1)
 
         if "Triggers" in objects_to_create:
-            print_color("\nStarting iteration over Triggers", LOG_COLORS.GREEN)
+            logger.info("\n[green]Starting iteration over Triggers[/green]")
             for arr, excluded_items_from_iteration in pool.map(
                 partial(
                     process_general_items,
@@ -3497,7 +3500,7 @@ def re_create_id_set(  # noqa: C901
         progress_bar.update(1)
 
         if "Wizards" in objects_to_create:
-            print_color("\nStarting iteration over Wizards", LOG_COLORS.GREEN)
+            logger.info("\n[green]Starting iteration over Wizards[/green]")
             for arr in pool.map(
                 partial(
                     process_wizards,
@@ -3519,7 +3522,7 @@ def re_create_id_set(  # noqa: C901
         progress_bar.update(1)
 
         if "XDRCTemplates" in objects_to_create:
-            print_color("\nStarting iteration over XDRCTemplates", LOG_COLORS.GREEN)
+            logger.info("\n[green]Starting iteration over XDRCTemplates[/green]")
             for arr, excluded_items_from_iteration in pool.map(
                 partial(
                     process_general_items,
@@ -3549,7 +3552,7 @@ def re_create_id_set(  # noqa: C901
         progress_bar.update(1)
 
         if "LayoutRules" in objects_to_create:
-            print_color("\nStarting iteration over LayoutRules", LOG_COLORS.GREEN)
+            logger.info("\n[green]Starting iteration over LayoutRules[/green]")
             for arr, excluded_items_from_iteration in pool.map(
                 partial(
                     process_general_items,
@@ -3623,9 +3626,8 @@ def re_create_id_set(  # noqa: C901
         new_ids_dict["Dashboards"] = []
 
     exec_time = time.time() - start_time
-    print_color(
-        f"Finished the creation of the id_set. Total time: {exec_time} seconds",
-        LOG_COLORS.GREEN,
+    logger.info(
+        f"[green]Finished the creation of the id_set. Total time: {exec_time} seconds[/green]"
     )
 
     duplicates = find_duplicates(new_ids_dict, print_logs, marketplace)
@@ -3646,7 +3648,7 @@ def find_duplicates(id_set, print_logs, marketplace):
 
     for object_type in entities:
         if print_logs:
-            print_color(f"Checking diff for {object_type}", LOG_COLORS.GREEN)
+            logger.info(f"[green]Checking diff for {object_type}[/green]")
         objects = id_set.get(object_type)
         ids = {list(specific_item.keys())[0] for specific_item in objects}
 
@@ -3659,7 +3661,7 @@ def find_duplicates(id_set, print_logs, marketplace):
         lists_to_return.append(dup_list)
 
     if print_logs:
-        print_color("Checking diff for Incident and Indicator Fields", LOG_COLORS.GREEN)
+        logger.info("[green]Checking diff for Incident and Indicator Fields[/green]")
 
     fields = id_set["IncidentFields"] + id_set["IndicatorFields"]
     field_ids = {list(field.keys())[0] for field in fields}
@@ -3767,17 +3769,17 @@ def has_duplicate(
                 <= dict2_to_version,  # will catch (C, B), (C, A)
             ]
         ):
-            print_warning(
-                f"There are several {object_type} with the same ID ({id_to_check}) and their versions overlap: "
+            logger.info(
+                f"[yellow]There are several {object_type} with the same ID ({id_to_check}) and their versions overlap: "
                 f'1) "{dict1_from_version}-{dict1_to_version}", '
-                f'2) "{dict2_from_version}-{dict2_to_version}".'
+                f'2) "{dict2_from_version}-{dict2_to_version}".[/yellow]'
             )
             return True
 
         if print_logs and dict1.get("name") != dict2.get("name"):
-            print_warning(
-                f"The following {object_type} have the same ID ({id_to_check}) but different names: "
-                f'"{dict1.get("name")}", "{dict2.get("name")}".'
+            logger.info(
+                f"[yellow]The following {object_type} have the same ID ({id_to_check}) but different names: "
+                f'"{dict1.get("name")}", "{dict2.get("name")}".[/yellow]'
             )
 
     return False

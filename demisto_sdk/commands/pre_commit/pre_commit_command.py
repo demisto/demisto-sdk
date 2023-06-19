@@ -22,7 +22,11 @@ from demisto_sdk.commands.common.docker_helper import get_python_version
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
 from demisto_sdk.commands.common.logger import logger
-from demisto_sdk.commands.common.tools import get_last_remote_release_version
+from demisto_sdk.commands.common.tools import (
+    get_file_or_remote,
+    get_last_remote_release_version,
+    str2bool,
+)
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.content_graph.objects.integration_script import (
     IntegrationScript,
@@ -36,13 +40,13 @@ from demisto_sdk.commands.pre_commit.hooks.validate_format import ValidateFormat
 yaml = YAML_Handler()
 json = JSON_Handler()
 
-IS_GITHUB_ACTIONS = os.getenv("GITHUB_ACTIONS", False)
+IS_GITHUB_ACTIONS = str2bool(os.getenv("GITHUB_ACTIONS"))
 
-PRECOMMIT_TEMPLATE_PATH = Path(__file__).parent / ".pre-commit-config_template.yaml"
+PRECOMMIT_TEMPLATE_PATH = CONTENT_PATH / ".pre-commit-config_template.yaml"
 PRECOMMIT_PATH = CONTENT_PATH / ".pre-commit-config-content.yaml"
 
 # UNSKIP no-implicit-optional once mypy is updated
-SKIPPED_HOOKS = {"format", "validate", "secrets", "no-implicit-optional"}
+SKIPPED_HOOKS = {"format", "validate", "secrets"}
 
 INTEGRATION_SCRIPT_REGEX = re.compile(r"^Packs/.*/(?:Integrations|Scripts)/.*.yml$")
 
@@ -62,14 +66,17 @@ class PreCommitRunner:
         self.all_files = set(
             itertools.chain.from_iterable(self.python_version_to_files.values())
         )
-        with open(PRECOMMIT_TEMPLATE_PATH) as f:
-            self.precommit_template = yaml.load(f)
-
+        self.precommit_template = get_file_or_remote(PRECOMMIT_TEMPLATE_PATH)
+        if not isinstance(self.precommit_template, dict):
+            raise TypeError(
+                f"Pre-commit template in {PRECOMMIT_TEMPLATE_PATH} is not a dictionary."
+            )
         # changes the demisto-sdk revision to the latest release version (or the debug commit hash)
         # to debug, modify the DEMISTO_SDK_COMMIT_HASH_DEBUG variable to your demisto-sdk commit hash
         self._get_repos(self.precommit_template)[
             "https://github.com/demisto/demisto-sdk"
         ]["rev"] = self.demisto_sdk_commit_hash
+        self.hooks = self._get_hooks(self.precommit_template)
 
     @staticmethod
     def _get_repos(pre_commit_config: dict) -> dict:
@@ -84,14 +91,16 @@ class PreCommitRunner:
         for repo in pre_commit_config["repos"]:
             for hook in repo["hooks"]:
                 hooks[hook["id"]] = hook
+                # if the hook has a skip key, we add it to the SKIPPED_HOOKS set
+                if hook.pop("skip", None):
+                    SKIPPED_HOOKS.add(hook["id"])
         return hooks
 
     def prepare_hooks(
         self,
-        pre_commit_config: dict,
+        hooks: dict,
         python_version: str,
     ) -> None:
-        hooks = self._get_hooks(pre_commit_config)
         PyclnHook(hooks["pycln"]).prepare_hook(PYTHONPATH)
         RuffHook(hooks["ruff"]).prepare_hook(python_version, IS_GITHUB_ACTIONS)
         MypyHook(hooks["mypy"]).prepare_hook(python_version)
@@ -130,6 +139,7 @@ class PreCommitRunner:
         precommit_env["DEMISTO_SDK_CONTENT_PATH"] = str(CONTENT_PATH)
         for python_version, changed_files in self.python_version_to_files.items():
             precommit_config = deepcopy(self.precommit_template)
+            assert isinstance(precommit_config, dict)
             changed_files_string = ", ".join(
                 sorted((str(changed_path) for changed_path in changed_files))
             )
@@ -157,7 +167,7 @@ class PreCommitRunner:
                     if response.returncode:
                         ret_val = response.returncode
                 continue
-            self.prepare_hooks(precommit_config, python_version)
+            self.prepare_hooks(self._get_hooks(precommit_config), python_version)
             with open(PRECOMMIT_PATH, "w") as f:
                 yaml.dump(precommit_config, f)
             # use chunks because OS does not support such large comments

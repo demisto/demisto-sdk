@@ -168,5 +168,4 @@ class PylintParser(BaseParser):
             error_message=raw["message"],
             col_start=raw["column"],
             col_end=raw["endColumn"],
-
         )

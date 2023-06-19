@@ -51,6 +51,7 @@ def get_diff() -> Dict[Path, Set[int]]:
     )
     return _parse_changed_files(raw)
 
+
 def filter_errors(errors: Tuple[LinterError, ...]):
     # return errors that occur in lines showing in the diff
     diff = get_diff()

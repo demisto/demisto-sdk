@@ -208,7 +208,8 @@ class DockerBase:
                 requests.exceptions.ReadTimeout,
             ):
                 logger.warning(
-                    f"{log_prompt} - Unable to push image {image} to repository"
+                    f"{log_prompt} - Unable to push image {image} to repository",
+                    exc_info=True,
                 )
 
     def create_image(

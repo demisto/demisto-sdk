@@ -832,9 +832,13 @@ def get_file(
 
 def get_file_or_remote(file_path: Path, clear_cache=False):
     content_path = get_content_path()
+    relative_file_path = None
     if file_path.is_absolute():
         absolute_file_path = file_path
-        relative_file_path = file_path.relative_to(content_path)
+        try:
+            relative_file_path = file_path.relative_to(content_path)
+        except ValueError:
+            logger.warning(f"Could not get relative path for {file_path}")
     else:
         absolute_file_path = content_path / file_path
         relative_file_path = file_path
@@ -844,6 +848,8 @@ def get_file_or_remote(file_path: Path, clear_cache=False):
         logger.warning(
             f"Could not read/find {absolute_file_path} locally, fetching from remote"
         )
+        if not relative_file_path:
+            raise
         return get_remote_file(relative_file_path)
 
 

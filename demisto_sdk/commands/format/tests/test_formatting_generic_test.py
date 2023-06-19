@@ -277,7 +277,7 @@ def test_initiate_file_validator(mocker, is_old_file, function_validate):
     [
         (
             {
-                "description": "test",
+                "description": "test three words",
                 "display": "Web",
                 "name": "Web",
                 "script": {
@@ -285,16 +285,16 @@ def test_initiate_file_validator(mocker, is_old_file, function_validate):
                         {
                             "arguments": [
                                 {
-                                    "description": "test",
+                                    "description": "test two_words",
                                     "name": "functionName",
                                 }
                             ],
-                            "description": "test",
+                            "description": "test long des, bla bla bla",
                             "name": "get-function",
                             "outputs": [
                                 {
                                     "contextPath": "name.bla.bla",
-                                    "description": "test",
+                                    "description": "test_one_word",
                                 }
                             ],
                         }
@@ -303,7 +303,7 @@ def test_initiate_file_validator(mocker, is_old_file, function_validate):
                 "fromversion": "6.8.0",
             },
             {
-                "description": "test.",
+                "description": "test three words.",
                 "display": "Web",
                 "name": "Web",
                 "script": {
@@ -311,16 +311,16 @@ def test_initiate_file_validator(mocker, is_old_file, function_validate):
                         {
                             "arguments": [
                                 {
-                                    "description": "test.",
+                                    "description": "test two_words",
                                     "name": "functionName",
                                 }
                             ],
-                            "description": "test.",
+                            "description": "test long des, bla bla bla.",
                             "name": "get-function",
                             "outputs": [
                                 {
                                     "contextPath": "name.bla.bla",
-                                    "description": "test.",
+                                    "description": "test_one_word",
                                 }
                             ],
                         }
@@ -334,6 +334,18 @@ def test_initiate_file_validator(mocker, is_old_file, function_validate):
 def test_adds_period_to_description(
     mocker, test_yml_data: dict, expected_yml_data: dict
 ) -> None:
+    """
+    Testing the `adds_period_to_description` function.
+
+    This test checks the formatting of the `adds_period_to_description` function.
+    Checks if the description has less than three words, in which case a period is not added.
+    Otherwise, a period is added if is missing...
+
+    Args:
+        mocker: The mocker object for patching.
+        test_yml_data (dict): The test YAML data.
+        expected_yml_data (dict): The expected YAML data after applying the function.
+    """
     mocker.patch(
         "demisto_sdk.commands.format.update_generic.get_dict_from_file",
         return_value=(test_yml_data, "mock_type"),

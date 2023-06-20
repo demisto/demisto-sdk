@@ -812,8 +812,7 @@ def get_file(
         raise FileNotFoundError(file_path)
 
     try:
-        file_content = _read_file(file_path)
-        if return_content:
+        if return_content := _read_file(file_path):
             return file_content
     except IOError as e:
         logger.error(f"Could not read file {file_path}.\nError: {e}")

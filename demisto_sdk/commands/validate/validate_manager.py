@@ -2684,7 +2684,9 @@ class ValidateManager:
         return ignored_errors_list
 
     @staticmethod
-    def is_old_file_format(file_path, file_type):
+    def is_old_file_format(file_path: str, file_type: FileType):
+        if file_type not in {FileType.INTEGRATION, FileType.SCRIPT}:
+            return False
         file_yml = get_file(file_path)
         # check for unified integration
         if file_type == FileType.INTEGRATION and file_yml.get("script", {}).get(

@@ -147,7 +147,7 @@ class BanditParser(BaseParser):
 
         return LinterError(
             error_code=match_dict["code"],
-            row_start=match_dict["row_start"],
+            row_start=int(match_dict["row_start"]),
             path=Path(match_dict["path"]),
             error_message=match_dict["error_message"],
         )

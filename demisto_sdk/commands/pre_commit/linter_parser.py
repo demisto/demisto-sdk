@@ -10,47 +10,56 @@ class LinterType(str, enum.Enum):
     VULTURE = "Vulture"
 
 
-class ErrorType(enum.Enum):
+class ViolationType(enum.Enum):
     ERROR = enum.auto()
     WARNING = enum.auto()
 
 
-class LinterError(NamedTuple):
+class LinterViolation(NamedTuple):
     error_code: str
     path: Path
     row_start: int
-    error_message: str
-    error_type: Optional[ErrorType] = None
+    message: str
+    violation_type: Optional[ViolationType] = None
+    is_autofixable: Optional[bool] = None
+    fix_suggestion: Optional[str] = None
     row_end: Optional[int] = None
     col_start: Optional[int] = None
     col_end: Optional[int] = None
 
     def __str__(self) -> str:
-        return f"{self.path}:{self.row_end} [{self.error_code}]"
+        fix_suggestion_suffix = (
+            f" (Fix: {self.fix_suggestion})" if self.fix_suggestion else ""
+        )
+        return f"{self.path}:{self.row_start} [{self.error_code}] {self.message}{fix_suggestion_suffix}"
 
 
 class BaseParser:
     linter_type: LinterType
 
     @staticmethod
-    def parse_single(raw: Union[str, dict]) -> LinterError:
-        ...
+    def parse_single(raw: Union[str, dict]) -> LinterViolation:
+        raise NotImplementedError
 
 
 class RuffParser(BaseParser):
     linter_type = LinterType.RUFF
 
     @staticmethod
-    def parse_single(raw: Union[str, dict]) -> LinterError:
+    def parse_single(raw: Union[str, dict]) -> LinterViolation:
         if not isinstance(raw, dict):
-            raise ValueError(f"input must be a dictionary, got {raw}")
+            raise ValueError(f"input must be a dictionary, got {type(raw)} {raw}")
 
-        return LinterError(
+        return LinterViolation(
             error_code=raw["code"],
             row_start=raw["location"]["row"],
             col_start=raw["location"]["column"],
             row_end=raw["end_location"]["row"],
             col_end=raw["end_location"]["column"],
             path=Path(raw["filename"]),
-            error_message=raw["message"],
+            message=raw["message"],
+            fix_suggestion=raw.get("fix", {})[
+                "message"
+            ],  # TODO too safe vs not safe enough
+            is_autofixable=bool(raw["fix"]),  # TODO check docs
         )

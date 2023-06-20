@@ -736,14 +736,16 @@ class Downloader:
             Optional[str]: The ID of a playbook
         """
         endpoint = "/playbook/search"
-        playbooks = demisto_client.generic_request_func(
+        response = demisto_client.generic_request_func(
             self.client,
             endpoint,
             "POST",
             response_type="object",
             body={"query": f"name:{playbook_name}"},
-        )[0]["playbooks"]
-        if not playbooks:
+        )
+        if not response:
+            return None
+        if not (playbooks := response[0].get("playbooks")):
             return None
         return playbooks[0]["id"]
 

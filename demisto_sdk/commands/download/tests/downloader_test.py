@@ -12,7 +12,6 @@ from unittest.mock import patch
 import demisto_client
 import pytest
 from demisto_client.demisto_api.rest import ApiException
-from urllib3.exceptions import MaxRetryError
 
 from demisto_sdk.commands.common.constants import (
     CLASSIFIERS_DIR,
@@ -1475,11 +1474,8 @@ def test_get_system_playbook_item_does_not_exist_by_name(mocker):
 
 
 @pytest.mark.parametrize(
-    'exception, mock_value, expected_call',
-    [
-        (Exception, 'test', 0),
-        (ApiException, None, 1)
-    ]
+    "exception, mock_value, expected_call",
+    [(Exception, "test", 0), (ApiException, None, 1)],
 )
 def test_get_system_playbook_failure(mocker, exception, mock_value, expected_call):
     """
@@ -1491,7 +1487,7 @@ def test_get_system_playbook_failure(mocker, exception, mock_value, expected_cal
         - Ensure that when the API call throws an ApiException error and the id extraction fails,
           the function raises the same error.
     """
-    mocker.patch.object(demisto_client, 'generic_request_func', side_effect=exception())
+    mocker.patch.object(demisto_client, "generic_request_func", side_effect=exception())
     get_id_by_name_mock = mocker.patch.object(
         Downloader, "get_playbook_id_by_playbook_name", return_value=mock_value
     )

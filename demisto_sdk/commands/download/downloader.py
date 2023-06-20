@@ -728,7 +728,7 @@ class Downloader:
         extract the playbook id by name,
         calling the api returns an object that cannot be parsed properly,
         and its use is only for extracting the id.
-        
+
         Args:
             playbook_name (str): The name of a playbook
 

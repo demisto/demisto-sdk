@@ -3,6 +3,24 @@ from typing import List
 
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import MarketplaceTagParser
+from demisto_sdk.commands.common.constants import (
+    XSOAR_PREFIX_TAG,
+    XSOAR_SUFFIX_TAG,
+    XSOAR_INLINE_PREFIX_TAG,
+    XSOAR_INLINE_SUFFIX_TAG,
+    XSOAR_SAAS_PREFIX_TAG,
+    XSOAR_SAAS_SUFFIX_TAG,
+    XSOAR_SAAS_INLINE_PREFIX_TAG,
+    XSOAR_SAAS_INLINE_SUFFIX_TAG,
+    XSIAM_PREFIX_TAG,
+    XSIAM_SUFFIX_TAG,
+    XSIAM_INLINE_PREFIX_TAG,
+    XSIAM_INLINE_SUFFIX_TAG,
+    XPANSE_PREFIX_TAG,
+    XPANSE_SUFFIX_TAG,
+    XPANSE_INLINE_PREFIX_TAG,
+    XPANSE_INLINE_SUFFIX_TAG
+)
 
 
 def print_template_examples():
@@ -117,15 +135,22 @@ class ReleaseNotesChecker:
     }
 
     MP_TAGS = {
-        # omertodo: fix this to the new standard
-        MarketplaceTagParser.XSOAR_INLINE_PREFIX,
-        MarketplaceTagParser.XSOAR_INLINE_SUFFIX,
-        MarketplaceTagParser.XSIAM_INLINE_PREFIX,
-        MarketplaceTagParser.XSIAM_INLINE_SUFFIX,
-        MarketplaceTagParser.XPANSE_INLINE_PREFIX,
-        MarketplaceTagParser.XPANSE_INLINE_SUFFIX,
-        MarketplaceTagParser.XSOAR_SAAS_INLINE_PREFIX,
-        MarketplaceTagParser.XSOAR_SAAS_INLINE_SUFFIX
+        XSOAR_PREFIX_TAG,
+        XSOAR_SUFFIX_TAG,
+        XSOAR_INLINE_PREFIX_TAG,
+        XSOAR_INLINE_SUFFIX_TAG,
+        XSOAR_SAAS_PREFIX_TAG,
+        XSOAR_SAAS_SUFFIX_TAG,
+        XSOAR_SAAS_INLINE_PREFIX_TAG,
+        XSOAR_SAAS_INLINE_SUFFIX_TAG,
+        XSIAM_PREFIX_TAG,
+        XSIAM_SUFFIX_TAG,
+        XSIAM_INLINE_PREFIX_TAG,
+        XSIAM_INLINE_SUFFIX_TAG,
+        XPANSE_PREFIX_TAG,
+        XPANSE_SUFFIX_TAG,
+        XPANSE_INLINE_PREFIX_TAG,
+        XPANSE_INLINE_SUFFIX_TAG
     }
 
     def __init__(

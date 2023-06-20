@@ -47,6 +47,7 @@ TRIGGER_DIR = "Triggers"
 WIZARDS_DIR = "Wizards"
 XDRC_TEMPLATE_DIR = "XDRCTemplates"
 LAYOUT_RULES_DIR = "LayoutRules"
+README_IMAGES = "readme_images"
 
 # NAMES OF ENTITIES
 
@@ -1709,6 +1710,21 @@ class MarketplaceVersions(str, Enum):
     XSOAR_SAAS = "xsoar_saas"
 
 
+MarketplaceVersionToMarketplaceName = {
+    "xsoar": "marketplace-dist",
+    "marketplacev2": "marketplace-v2-dist",
+    "xpanse": "xpanse-dist",
+    "xsoar-saas": "xsoar-saas-dist",
+}
+
+
+class MarketplaceNames(str, Enum):
+    xsoar = "marketplace-dist"
+    marketplacev2 = "marketplace-v2-dist"
+    xpanse = "xpanse-dist"
+    GCS_PRODUCTION_XSOAR_SAAS_BUCKET = "marketplace-xsoar-saas-dist"
+
+
 MARKETPLACE_TO_CORE_PACKS_FILE: Dict[MarketplaceVersions, str] = {
     MarketplaceVersions.XSOAR: "Tests/Marketplace/core_packs_list.json",
     MarketplaceVersions.XSOAR_SAAS: "Tests/Marketplace/core_packs_list.json",
@@ -1827,3 +1843,23 @@ TABLE_INCIDENT_TO_ALERT = {
 }
 
 NATIVE_IMAGE_DOCKER_NAME = "demisto/py3-native"
+
+XSOAR_PREFIX_TAG = "<~XSOAR>\n"
+XSOAR_SUFFIX_TAG = "\n</~XSOAR>\n"
+XSOAR_INLINE_PREFIX_TAG = "<~XSOAR>"
+XSOAR_INLINE_SUFFIX_TAG = "</~XSOAR>"
+
+XSIAM_PREFIX_TAG = "<~XSIAM>\n"
+XSIAM_SUFFIX_TAG = "\n</~XSIAM>\n"
+XSIAM_INLINE_PREFIX_TAG = "<~XSIAM>"
+XSIAM_INLINE_SUFFIX_TAG = "</~XSIAM>"
+
+XPANSE_PREFIX_TAG = "<~XPANSE>\n"
+XPANSE_SUFFIX_TAG = "\n</~XPANSE>\n"
+XPANSE_INLINE_PREFIX_TAG = "<~XPANSE>"
+XPANSE_INLINE_SUFFIX_TAG = "</~XPANSE>"
+
+XSOAR_SAAS_PREFIX_TAG = "<~XSOAR_SAAS>\n"
+XSOAR_SAAS_SUFFIX_TAG = "\n</~XSOAR_SAAS>\n"
+XSOAR_SAAS_INLINE_PREFIX_TAG = "<~XSOAR_SAAS>"
+XSOAR_SAAS_INLINE_SUFFIX_TAG = "</~XSOAR_SAAS>"

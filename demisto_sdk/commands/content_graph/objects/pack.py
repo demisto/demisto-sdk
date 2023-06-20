@@ -1,4 +1,5 @@
 import shutil
+import os
 from collections import defaultdict
 from pathlib import Path
 from tempfile import TemporaryDirectory
@@ -77,6 +78,7 @@ from demisto_sdk.commands.upload.tools import (
     parse_error_response,
     parse_upload_response,
 )
+from demisto_sdk.commands.prepare_content.pack_readme_handler import replace_readme_urls
 
 if TYPE_CHECKING:
     from demisto_sdk.commands.content_graph.objects.relationship import RelationshipData
@@ -300,6 +302,7 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: i
             json.dump(metadata, f, indent=4)
 
     def dump_readme(self, path: Path, marketplace: MarketplaceVersions) -> None:
+
         shutil.copyfile(self.path / "README.md", path)
         if self.contributors:
             fixed_contributor_names = [
@@ -320,6 +323,20 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: i
                     f.truncate()
             except Exception as e:
                 logger.error(f"Failed dumping readme: {e}")
+
+        pack_readme_images_data: dict = replace_readme_urls(path, marketplace)
+
+        if (artifacts_folder := os.getenv("ARTIFACTS_FOLDER")) and Path(
+            artifacts_folder
+        ).exists():
+            artifacts_readme_images_path = f"{artifacts_folder}/readme_images.json"
+            with open (artifacts_readme_images_path, 'r') as readme_images_data_file:
+                readme_images_data_dict: dict = json.load(readme_images_data_file)
+                readme_images_data_dict.update(pack_readme_images_data)
+
+            with open(artifacts_readme_images_path, "w") as fp:
+                json.dump(readme_images_data_dict, fp, indent=4)
+
 
     def dump(
         self,

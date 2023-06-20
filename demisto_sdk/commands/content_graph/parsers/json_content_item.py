@@ -60,6 +60,7 @@ class JSONContentItemParser(ContentItemParser):
 
         marketplaces = sorted(set(self.pack_marketplaces) & self.supported_marketplaces)
         if MarketplaceVersions.XSOAR in marketplaces:
+            # Since we want xsoar-saas and xsoar to contain the same content items.
             marketplaces.append(MarketplaceVersions.XSOAR_SAAS)
 
         return marketplaces

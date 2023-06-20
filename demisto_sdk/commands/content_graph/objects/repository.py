@@ -1,5 +1,7 @@
 import shutil
 import time
+import json
+import os
 from multiprocessing.pool import Pool
 from pathlib import Path
 from typing import List
@@ -42,6 +44,11 @@ class ContentDTO(BaseModel):
 
         time_taken = time.time() - start_time
         logger.debug(f"Repository dump ended. Took {time_taken} seconds")
+
+        if (artifacts_folder := os.getenv("ARTIFACTS_FOLDER")) and Path(
+            artifacts_folder).exists():
+            with open(f"{artifacts_folder}/readme_images_data.json", "w") as fp:
+                json.dump({'a':'a'}, fp, indent=4)
 
         if zip:
             shutil.make_archive(str(dir.parent / output_stem), "zip", dir)

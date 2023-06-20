@@ -16,7 +16,7 @@ from demisto_sdk.commands.common.hook_validations.base_validator import (
     BaseValidator,
     error_codes,
 )
-from demisto_sdk.commands.common.tools import get_yaml
+from demisto_sdk.commands.common.tools import get_pack_metadata, get_yaml
 
 # disable insecure warnings
 requests.packages.urllib3.disable_warnings()  # type: ignore
@@ -58,6 +58,9 @@ class DockerImageValidator(BaseValidator):
         self.code_type = self.get_code_type()
         self.yml_docker_image = self.get_docker_image_from_yml()
         self.from_version = self.yml_file.get("fromversion", "0")
+        self.is_pack_xsoar_supported = (
+            get_pack_metadata(yml_file_path).get("support", "xsoar").lower() == "xsoar"
+        )
         self.docker_image_name, self.docker_image_tag = self.parse_docker_image(
             self.yml_docker_image
         )
@@ -96,7 +99,12 @@ class DockerImageValidator(BaseValidator):
             error_message, error_code = Errors.non_existing_docker(
                 self.yml_docker_image
             )
-            if self.handle_error(error_message, error_code, file_path=self.file_path):
+            if self.handle_error(
+                error_message,
+                error_code,
+                file_path=self.file_path,
+                warning=not self.is_pack_xsoar_supported,
+            ):
                 self.is_valid = False
 
         elif not self.is_docker_image_latest_tag():
@@ -404,7 +412,10 @@ class DockerImageValidator(BaseValidator):
             if not yml_docker_image.startswith("demisto/"):
                 error_message, error_code = Errors.not_demisto_docker()
                 if self.handle_error(
-                    error_message, error_code, file_path=self.file_path
+                    error_message,
+                    error_code,
+                    file_path=self.file_path,
+                    warning=not self.is_pack_xsoar_supported,
                 ):
                     return ""
                 return "no-tag-required"
@@ -448,7 +459,10 @@ class DockerImageValidator(BaseValidator):
                 else:
                     error_message, error_code = Errors.no_docker_tag(docker_image)
                     self.handle_error(
-                        error_message, error_code, file_path=self.file_path
+                        error_message,
+                        error_code,
+                        file_path=self.file_path,
+                        warning=not self.is_pack_xsoar_supported,
                     )
 
             except IndexError:

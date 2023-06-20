@@ -103,6 +103,8 @@ class ContributionConverter:
         release_notes (str): The release note text. For exiting pack only.
         detected_content_items (List[str]):
             List of the detected content items objects in the contribution. For exiting pack only.
+        working_dir_path (str): This directory is where contributions are processed before they are copied to the
+            content pack directory.
     """
 
     DATE_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
@@ -120,6 +122,7 @@ class ContributionConverter:
         release_notes: str = "",
         detected_content_items: list = None,
         base_dir: Union[str] = None,
+        working_dir_path: str = ""
     ):
         """Initializes a ContributionConverter instance
 
@@ -171,7 +174,7 @@ class ContributionConverter:
             os.makedirs(self.pack_dir_path)
         self.readme_files: List[str] = []
         self.api_module_path: Optional[str] = None
-        self.working_dir_path = self.pack_dir_path
+        self.working_dir_path = working_dir_path or self.pack_dir_path
 
     @staticmethod
     def format_pack_dir_name(name: str) -> str:
@@ -421,22 +424,15 @@ class ContributionConverter:
                 if len(os.listdir(src_path)) == 0:
                     shutil.rmtree(src_path, ignore_errors=True)
 
-    def convert_contribution_to_pack(
-        self, working_dir_path: str = "", files_to_source_mapping: Dict = None
-    ):
+    def convert_contribution_to_pack(self, files_to_source_mapping: Dict = None):
         """Create or updates a pack in the content repo from the contents of a contribution zipfile
 
         Args:
-            working_dir_path (str): the directory where the contribution files are manipulated before coping them to the
-                content pack directory.
             files_to_source_mapping (Dict[str, Dict[str, str]]): Only used when updating a pack. mapping of a file
                 name as inside the contribution zip to a dictionary containing the the associated source info
                 for that file, specifically the base name (the name used in naming the split component files) and
                 the name of the containing directory.
         """
-        # if working_dir_path was not provided, the working directory will remain the pack directory.
-        if working_dir_path:
-            self.working_dir_path = working_dir_path
         try:
             # only create pack_metadata.json and base pack files if creating a new pack
             if self.create_new:

@@ -794,11 +794,9 @@ ID_IN_ROOT = [  # entities in which 'id' key is in the root
 INTEGRATION_PREFIX = "integration"
 SCRIPT_PREFIX = "script"
 PARSING_RULE_PREFIX = "parsingrule"
-PARSING_RULE_FILE_SUFFIX_REGEX = r"ParsingRules([_\d]*)?\.yml$"
 PARSING_RULE_ID_SUFFIX = "ParsingRule"
 PARSING_RULE_NAME_SUFFIX = "Parsing Rule"
 MODELING_RULE_PREFIX = "modelingrule"
-MODELING_RULE_FILE_SUFFIX_REGEX = r"ModelingRules([_\d]*)?\.yml$"
 MODELING_RULE_ID_SUFFIX = "ModelingRule"
 MODELING_RULE_NAME_SUFFIX = "Modeling Rule"
 XDRC_TEMPLATE_PREFIX = "xdrctemplate"
@@ -1098,9 +1096,17 @@ REQUIRED_YML_FILE_TYPES = [
 
 TYPE_PWSH = "powershell"
 TYPE_PYTHON = "python"
+TYPE_PYTHON3 = "python3"
+TYPE_PYTHON2 = "python2"
 TYPE_JS = "javascript"
 
-TYPE_TO_EXTENSION = {TYPE_PYTHON: ".py", TYPE_JS: ".js", TYPE_PWSH: ".ps1"}
+TYPE_TO_EXTENSION = {
+    TYPE_PYTHON: ".py",
+    TYPE_PYTHON3: ".py",
+    TYPE_PYTHON2: ".py",
+    TYPE_JS: ".js",
+    TYPE_PWSH: ".ps1",
+}
 
 TESTS_AND_DOC_DIRECTORIES = [
     "testdata",
@@ -1840,3 +1846,5 @@ TABLE_INCIDENT_TO_ALERT = {
 }
 
 NATIVE_IMAGE_DOCKER_NAME = "demisto/py3-native"
+
+FORMATTING_SCRIPT = "indicator-format"

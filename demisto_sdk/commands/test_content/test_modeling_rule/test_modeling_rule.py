@@ -257,7 +257,7 @@ def validate_expected_values(
 def check_dataset_exists(
     xsiam_client: XsiamApiClient,
     test_data: init_test_data.TestData,
-    timeout: int = 60,
+    timeout: int = 120,
     interval: int = 5,
 ):
     """Check if the dataset in the test data file exists in the tenant.
@@ -265,7 +265,7 @@ def check_dataset_exists(
     Args:
         xsiam_client (XsiamApiClient): Xsiam API client.
         test_data (init_test_data.TestData): The data parsed from the test data file.
-        timeout (int, optional): The number of seconds to wait for the dataset to exist. Defaults to 60.
+        timeout (int, optional): The number of seconds to wait for the dataset to exist. Defaults to 120 seconds.
         interval (int, optional): The number of seconds to wait between checking for the dataset. Defaults to 5.
 
     Raises:

@@ -450,7 +450,9 @@ class Pack:
         self.layouts.append(layout)
         return layout
 
-    def create_layoutcontainer(self, name, content: dict = None) -> JSONBased:
+    def create_layoutcontainer(self, name, content: Optional[dict] = None) -> JSONBased:
+        if not content:
+            content = {"group": "default"}
         prefix = "layoutscontainer"
         layoutcontainer = self._create_json_based(
             name, prefix, content, dir_path=self._layout_path

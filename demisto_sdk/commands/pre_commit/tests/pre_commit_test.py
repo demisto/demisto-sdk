@@ -36,6 +36,11 @@ def test_config_files(mocker, repo: Repo, is_test: bool):
     Then:
         Categorize the scripts and integration by python version, and make sure that pre-commit configuration is created for each
     """
+    mocker.patch.object(
+        pre_commit_command,
+        "PRECOMMIT_TEMPLATE_PATH",
+        TEST_DATA_PATH / ".pre-commit-config_template.yaml",
+    )
     pack1 = repo.create_pack("Pack1")
     mocker.patch.object(pre_commit_command, "CONTENT_PATH", Path(repo.path))
 

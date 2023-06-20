@@ -26,8 +26,6 @@ def initiate_linter(
     return linter.Linter(
         content_repo=demisto_content,
         pack_dir=Path(integration_path),
-        req_2=[],
-        req_3=[],
         docker_engine=docker_engine,
         docker_timeout=60,
         docker_image_flag=docker_image_flag,
@@ -837,8 +835,6 @@ def test_linter_pack_abs_dir():
         linter_instance: Linter = Linter(
             pack_dir=Path(path),
             content_repo=Path(path),
-            req_3=[],
-            req_2=[],
             docker_engine=False,
             docker_timeout=30,
         )
@@ -896,8 +892,6 @@ def test_should_use_network(
     _linter = Linter(
         pack_dir=Path(integration.path),
         content_repo=Path(pack.repo_path),
-        req_3=[],
-        req_2=[],
         docker_timeout=0,
         docker_engine=False,
     )

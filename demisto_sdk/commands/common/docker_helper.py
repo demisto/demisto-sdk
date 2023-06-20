@@ -1,4 +1,5 @@
 import functools
+import hashlib
 import os
 import re
 import shutil
@@ -9,6 +10,7 @@ from typing import Dict, List, Optional, Tuple, Union
 
 import docker
 import requests
+import urllib3
 from docker.types import Mount
 from packaging.version import Version
 from requests import JSONDecodeError
@@ -18,6 +20,8 @@ from demisto_sdk.commands.common.constants import (
     DEFAULT_PYTHON_VERSION,
     TYPE_PWSH,
     TYPE_PYTHON,
+    TYPE_PYTHON2,
+    TYPE_PYTHON3,
 )
 from demisto_sdk.commands.common.logger import logger
 
@@ -33,6 +37,8 @@ CAN_MOUNT_FILES = bool(os.getenv("GITLAB_CI", False)) or (
 )
 
 PYTHON_IMAGE_REGEX = re.compile(r"[\d\w]+/python3?:(?P<python_version>[23]\.\d+)")
+
+TEST_REQUIREMENTS_DIR = Path(__file__).parent.parent / "lint" / "resources"
 
 
 class DockerException(Exception):
@@ -74,6 +80,19 @@ def init_global_docker_client(timeout: int = 60, log_prompt: str = ""):
     return DOCKER_CLIENT
 
 
+@functools.lru_cache
+def get_pip_requirements_from_file(requirements_file: Path) -> List[str]:
+    """
+    Get the pip requirements from a requirements file.
+    Args:
+        requirements_file: The path to the requirements file.
+
+    Returns:
+        A list of pip requirements.
+    """
+    return requirements_file.read_text().strip().splitlines()
+
+
 class DockerBase:
     def __init__(self):
         self.tmp_dir_name = tempfile.TemporaryDirectory(
@@ -85,11 +104,15 @@ class DockerBase:
         )
         self.installation_scripts = {
             TYPE_PYTHON: installation_scripts / "python_image.sh",
+            TYPE_PYTHON2: installation_scripts / "python_image.sh",
+            TYPE_PYTHON3: installation_scripts / "python_image.sh",
             TYPE_PWSH: installation_scripts / "powershell_image.sh",
         }
         self.changes = {
             TYPE_PWSH: ["WORKDIR /devwork"],
             TYPE_PYTHON: ["WORKDIR /devwork", 'ENTRYPOINT ["/bin/sh", "-c"]'],
+            TYPE_PYTHON2: ["WORKDIR /devwork", 'ENTRYPOINT ["/bin/sh", "-c"]'],
+            TYPE_PYTHON3: ["WORKDIR /devwork", 'ENTRYPOINT ["/bin/sh", "-c"]'],
         }
         self.requirements = self.tmp_dir / "requirements.txt"
         self.requirements.touch()
@@ -159,12 +182,44 @@ class DockerBase:
             self.copy_files_container(container, files_to_push)
         return container
 
+    def push_image(self, image: str, log_prompt: str = ""):
+        """This pushes the test image to dockerhub if the DOCKERHUB env variables are set
+
+        Args:
+            image (str): The image to push
+            log_prompt (str, optional): The log prompt to print. Defaults to "".
+        """
+        for _ in range(2):
+            try:
+
+                test_image_name_to_push = image.replace(
+                    "docker-io.art.code.pan.run/", ""
+                )
+                docker_push_output = init_global_docker_client().images.push(
+                    test_image_name_to_push
+                )
+                logger.info(
+                    f"{log_prompt} - Trying to push Image {test_image_name_to_push} to repository. Output = {docker_push_output}"
+                )
+                break
+            except (
+                requests.exceptions.ConnectionError,
+                urllib3.exceptions.ReadTimeoutError,
+                requests.exceptions.ReadTimeout,
+            ):
+                logger.warning(
+                    f"{log_prompt} - Unable to push image {image} to repository",
+                    exc_info=True,
+                )
+
     def create_image(
         self,
         base_image: str,
         image: str,
         container_type: str = TYPE_PYTHON,
         install_packages: Optional[List[str]] = None,
+        push: bool = False,
+        log_prompt: str = "",
     ) -> docker.models.images.Image:
         """
         this function is used to create a new image of devtestsdemisto docker images.
@@ -207,7 +262,74 @@ class DockerBase:
                 tag=tag,
                 changes=self.changes[container_type],
             )
+        if push:
+            self.push_image(image, log_prompt=log_prompt)
         return image
+
+    def pull_or_create_test_image(
+        self,
+        base_image: str,
+        container_type: str = TYPE_PYTHON,
+        python_version: Optional[int] = None,
+        additional_requirements: Optional[List[str]] = None,
+        push: bool = False,
+        log_prompt: str = "",
+    ) -> Tuple[str, str]:
+        """This will generate the test image for the given base image.
+
+        Args:
+            base_image (str): The base image to create the test image
+            container_type (str, optional): The container type (powershell or python). Defaults to TYPE_PYTHON.
+
+        Returns:
+            The test image name and errors to create it if any
+        """
+        errors = ""
+        if not python_version and container_type != TYPE_PWSH:
+            python_version = get_python_version(base_image).major
+        python3_requirements = get_pip_requirements_from_file(
+            TEST_REQUIREMENTS_DIR / "python3_requirements" / "dev-requirements.txt"
+        )
+        python2_requirements = get_pip_requirements_from_file(
+            TEST_REQUIREMENTS_DIR / "python2_requirements" / "dev-requirements.txt"
+        )
+        pip_requirements = []
+        if python_version:
+            pip_requirements = {3: python3_requirements, 2: python2_requirements}.get(
+                python_version, []
+            )
+
+        if additional_requirements:
+            pip_requirements.extend(additional_requirements)
+        identifier = hashlib.md5(
+            "\n".join(sorted(pip_requirements)).encode("utf-8")
+        ).hexdigest()
+        test_docker_image = (
+            f'{base_image.replace("demisto", "devtestdemisto")}-{identifier}'
+        )
+
+        try:
+            logger.debug(
+                f"{log_prompt} - Trying to pull existing image {test_docker_image}"
+            )
+            self.pull_image(test_docker_image)
+        except (docker.errors.APIError, docker.errors.ImageNotFound):
+            logger.info(
+                f"{log_prompt} - Unable to find image {test_docker_image}. Creating image based on {base_image} - Could take 2-3 minutes at first"
+            )
+            try:
+                self.create_image(
+                    base_image,
+                    test_docker_image,
+                    container_type,
+                    pip_requirements,
+                    push=push,
+                )
+            except (docker.errors.BuildError, docker.errors.APIError, Exception) as e:
+                errors = str(e)
+                logger.critical(f"{log_prompt} - Build errors occurred: {errors}")
+
+        return test_docker_image, errors
 
 
 class MountableDocker(DockerBase):

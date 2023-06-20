@@ -11,7 +11,7 @@
 * Fixed an issue where **validate** always returned *XSIAM Dashboards* and *Correlation Rules* files as valid.
 * Added `GR107` validation to **validate** using the graph validations to check that no deprecated items are used by non-deprecated content.
 * Fixed an issue where the **modeling-rules test** command failed to get the existence of dataset in cases where the dataset takes more than 1 minute to get indexed.
-* Fixed an issue in **lint** where the test docker image had conflicts with the official docker image and caused inconsistent results.
+* Fixed an issue in **lint** where the container used for linting had dependency conflicts with the image used by content, and caused inconsistent results.
 
 ## 1.16.0
 * Added a check to **is_docker_image_latest_tag** to only fail the validation on non-latest image tag when the current tag is older than 3 days.
@@ -33,6 +33,7 @@
 * Added a **validate** check, and a **format** auto fix for the `fromversion` field in Correlation Rules and XSIAM Dashboards.
 * Update the format used for dev-dependencies in pyproject.toml to match modern versions of Poetry.
 * Added timestamps to logging messages when running in a CI build.
+
 ## 1.15.5
 * **Breaking Change**: The default of the **upload** command `--zip` argument is `true`. To upload packs as custom content items use the `--no-zip` argument.
 * Removed the `no-implicit-optional` hook from **pre-commit**.

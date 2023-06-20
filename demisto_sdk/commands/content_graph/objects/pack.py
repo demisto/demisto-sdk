@@ -201,7 +201,7 @@ class PackMetadata(BaseModel):
     id: Optional[str]
     description: Optional[str]
     created: Optional[str]
-    updated: Optional[str] = Field('')
+    updated: Optional[str] = Field("")
     legacy: Optional[bool]
     support: Optional[str]
     url: Optional[str]
@@ -599,7 +599,7 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
     def enhance_pack_properties(self, marketplace: MarketplaceVersions):
         self.tags = self.get_pack_tags(marketplace)
         self.commit = self.get_last_commit()
-        self.version_info = os.environ.get('CI_PIPELINE_ID', '')
+        self.version_info = os.environ.get("CI_PIPELINE_ID", "")
         self.server_min_version = (
             self.server_min_version
             or str(
@@ -650,28 +650,42 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
 
             try:
                 if content_item.is_incident_to_alert(marketplace):
-                    content_item_summary = content_item.summary(marketplace, incident_to_alert=True)
+                    content_item_summary = content_item.summary(
+                        marketplace, incident_to_alert=True
+                    )
                 else:
                     content_item_summary = content_item.summary(marketplace)
 
                 # if 'fromversion' in content_item_summary and content_item_summary['fromversion'] == DEFAULT_CONTENT_ITEM_FROM_VERSION:
                 #     content_item_summary['fromversion'] = self.server_min_version
 
-                content_items.setdefault(
-                    content_item.content_type.metadata_name, []
-                )
+                content_items.setdefault(content_item.content_type.metadata_name, [])
 
-                if is_item_metadata_appended := [c for c in content_items[content_item.content_type.metadata_name] if c.get('id') == content_item.object_id]:
+                if is_item_metadata_appended := [
+                    c
+                    for c in content_items[content_item.content_type.metadata_name]
+                    if c.get("id") == content_item.object_id
+                ]:
                     content_item_metadata = is_item_metadata_appended[0]
 
-                    if parse(content_item.toversion) > parse(content_item_metadata['toversion'] or DEFAULT_CONTENT_ITEM_TO_VERSION):
+                    if parse(content_item.toversion) > parse(
+                        content_item_metadata["toversion"]
+                        or DEFAULT_CONTENT_ITEM_TO_VERSION
+                    ):
                         content_item_metadata.update(content_item_summary.items())
 
                         if content_item.toversion == DEFAULT_CONTENT_ITEM_TO_VERSION:
-                            content_item_metadata['toversion'] = ''
+                            content_item_metadata["toversion"] = ""
                 else:
-                    content_item_summary['toversion'] = content_item_summary['toversion'] if content_item_summary['toversion'] != DEFAULT_CONTENT_ITEM_TO_VERSION else ''
-                    content_items[content_item.content_type.metadata_name].append(content_item_summary)
+                    content_item_summary["toversion"] = (
+                        content_item_summary["toversion"]
+                        if content_item_summary["toversion"]
+                        != DEFAULT_CONTENT_ITEM_TO_VERSION
+                        else ""
+                    )
+                    content_items[content_item.content_type.metadata_name].append(
+                        content_item_summary
+                    )
 
                 content_displays[content_item.content_type.metadata_name] = content_item.content_type.metadata_display_name  # type: ignore[index]
             except NotImplementedError as e:
@@ -798,5 +812,6 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
                     and (integration.is_fetch or integration.is_fetch_events)
                     for integration in self.content_items.integration
                 ]
-            ) == 1
+            )
+            == 1
         )

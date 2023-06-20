@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Callable, List
+from typing import TYPE_CHECKING, Callable, List, Optional
 
 import demisto_client
 
@@ -69,8 +69,12 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
         ]
         self.commands = commands
 
-    def summary(self, marketplace: MarketplaceVersions | None = None) -> dict:
-        summary = super().summary(marketplace)
+    def summary(
+        self,
+        marketplace: Optional[MarketplaceVersions] = None,
+        incident_to_alert: bool = False,
+    ) -> dict:
+        summary = super().summary(marketplace, incident_to_alert)
         summary["name"] = self.display_name
         return summary
 

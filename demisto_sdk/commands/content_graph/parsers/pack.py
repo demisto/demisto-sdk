@@ -142,7 +142,7 @@ class PackMetadataParser:
             "marketplaces", DEFAULT_MARKETPLACES
         )
         self.excluded_dependencies: List[str] = metadata.get("excludedDependencies", [])
-        self.modules: List[str] = metadata.get('modules', [])
+        self.modules: List[str] = metadata.get("modules", [])
 
         # For private packs
         self.premium: Optional[bool] = "partnerId" in metadata

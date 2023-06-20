@@ -1,4 +1,4 @@
-from typing import Callable, Set
+from typing import Callable, Optional, Set
 
 import demisto_client
 from pydantic import Field
@@ -13,8 +13,12 @@ class IndicatorField(ContentItem, content_type=ContentType.INDICATOR_FIELD):  # 
     type: str
     associated_to_all: bool = Field(alias="associatedToAll")
 
-    def summary(self, marketplace: MarketplaceVersions | None = None) -> dict:
-        summary = super().summary(marketplace)
+    def summary(
+        self,
+        marketplace: Optional[MarketplaceVersions] = None,
+        incident_to_alert: bool = False,
+    ) -> dict:
+        summary = super().summary(marketplace, incident_to_alert)
         summary["id"] = f"indicator_{self.object_id}"
         return summary
 

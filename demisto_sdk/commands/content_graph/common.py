@@ -1,7 +1,7 @@
 import enum
 import os
-from pathlib import Path
 import re
+from pathlib import Path
 from typing import Any, Dict, Iterator, List, NamedTuple, Set
 
 from neo4j import graph
@@ -132,8 +132,10 @@ class ContentType(str, enum.Enum):
             return "Reputation"
         elif self == ContentType.MAPPER:
             return "Classifier"
+        elif self == ContentType.LAYOUT:
+            return "Layouts Container"
         else:
-            return re.sub(r'([a-z](?=[A-Z])|[A-Z](?=[A-Z][a-z]))', r'\1 ', self.value)
+            return re.sub(r"([a-z](?=[A-Z])|[A-Z](?=[A-Z][a-z]))", r"\1 ", self.value)
 
     # def __hash__(self) -> int:
     #     return hash(self.value)

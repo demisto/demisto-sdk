@@ -1096,9 +1096,17 @@ REQUIRED_YML_FILE_TYPES = [
 
 TYPE_PWSH = "powershell"
 TYPE_PYTHON = "python"
+TYPE_PYTHON3 = "python3"
+TYPE_PYTHON2 = "python2"
 TYPE_JS = "javascript"
 
-TYPE_TO_EXTENSION = {TYPE_PYTHON: ".py", TYPE_JS: ".js", TYPE_PWSH: ".ps1"}
+TYPE_TO_EXTENSION = {
+    TYPE_PYTHON: ".py",
+    TYPE_PYTHON3: ".py",
+    TYPE_PYTHON2: ".py",
+    TYPE_JS: ".js",
+    TYPE_PWSH: ".ps1",
+}
 
 TESTS_AND_DOC_DIRECTORIES = [
     "testdata",

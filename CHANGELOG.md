@@ -17,6 +17,7 @@
 * Fixed an issue where an internal method caused warning messages when reading md files.
 * Added support for Pre Process Rules in the **upload** command.
 * Fixed an issue where **upload** would not upload items whose `maketplaces` value was an empty list.
+* Added a prettyName key to the incident field schema.
 
 ## 1.16.0
 * Added a check to **is_docker_image_latest_tag** to only fail the validation on non-latest image tag when the current tag is older than 3 days.

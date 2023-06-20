@@ -32,7 +32,7 @@ DUMMY_VIOLATIONS = (
     )
 
 @pytest.mark.parametrize("modified_lines,expected", [((0,), (DUMMY_VIOLATIONS[0],))])
-def test_filter_violations(modified_lines:Tuple[int,...], expected: list[LinterViolation]):
+def test_filter_violations(modified_lines:Tuple[int,...], expected: List[LinterViolation]):
     from demisto_sdk.commands.pre_commit.ruff_wrapper import filter_violations
 
     git_modified_files = {path: modified_lines}

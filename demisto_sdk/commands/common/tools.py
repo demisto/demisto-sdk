@@ -796,6 +796,7 @@ def get_file(
     file_path: Union[str, Path],
     type_of_file: Optional[str] = None,
     clear_cache: bool = False,
+    return_content: bool = False,
 ):
     if clear_cache:
         get_file.cache_clear()
@@ -812,6 +813,8 @@ def get_file(
 
     try:
         file_content = _read_file(file_path)
+        if return_content:
+            return file_content
     except IOError as e:
         logger.error(f"Could not read file {file_path}.\nError: {e}")
         return {}

@@ -14,8 +14,8 @@
 * Fixed an issue where the **download** command failed when the playbook has different `name` and `id`.
 * Moved the **pre-commmit** command template to the `demisto/content` repository, where it's easier to maintain.
 * Fixed an issue where an internal method caused warning messages when reading md files.
-* Added support to the **upload** command to upload packs contains Pre Process Rules.
-* Fixed an issue in **upload** and **prepare-content** where the content items were skipping where the `maketplaces` field was an empty list.
+* Added support for Pre Process Rules in the **upload** command.
+* Fixed an issue where **upload** would not upload items whose `maketplaces` value was an empty list.
 
 ## 1.16.0
 * Added a check to **is_docker_image_latest_tag** to only fail the validation on non-latest image tag when the current tag is older than 3 days.

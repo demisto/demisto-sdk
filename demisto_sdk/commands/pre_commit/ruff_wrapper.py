@@ -50,7 +50,9 @@ def run(files: List[str], fail_autofixable: bool):
             return
 
         logger.error(f"Found {len(filtered_violations)} Ruff vioations:")
-        logger.error("\n".join(_violations_to_string(filtered_violations)))
+        logger.error(
+            "\n".join(_violations_to_string(filtered_violations))
+        )  # TODO Github Annotation format
         exit(1)
 
     logger.info("Done! No ruff violations were found.")

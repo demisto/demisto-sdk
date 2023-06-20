@@ -221,6 +221,7 @@ class GraphValidator(BaseValidator):
         self, content_item: ContentItem, warning: bool = False
     ):
         """Handles a single invalid toversion query result"""
+        is_valid = True
         used_content_items = [
             relationship.content_item_to.object_id for relationship in content_item.uses
         ]

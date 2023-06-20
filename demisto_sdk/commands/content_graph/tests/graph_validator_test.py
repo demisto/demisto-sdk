@@ -330,7 +330,12 @@ def repository(mocker) -> ContentDTO:
         )
     )
     pack3.content_items.playbook.append(
-        mock_playbook("SamplePlaybook2", [MarketplaceVersions.XSOAR], GENERAL_DEFAULT_FROMVERSION, "6.5.0")
+        mock_playbook(
+            "SamplePlaybook2",
+            [MarketplaceVersions.XSOAR],
+            GENERAL_DEFAULT_FROMVERSION,
+            "6.5.0",
+        )
     )
     pack3.content_items.script.append(mock_script("SampleScript2"))
     pack3.content_items.script.append(

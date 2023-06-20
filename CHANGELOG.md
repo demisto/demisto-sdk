@@ -1,5 +1,6 @@
 # Changelog
 ## Unreleased
+* **validate** will only fail on docker related errors if the pack is supported by xsoar.
 * Added a validation that assures filename, id, and name have a correct suffix for modeling/parsing rules files.
 * Added new **validate** checks, preventing unwanted changes of the marketplaces (BC108,BC109), toversion (BC107)  and fromversion (BC106) fields.
 * Removed the `timezone_offset` argument in the *modeling-rules test* command.
@@ -11,6 +12,8 @@
 * Added `GR107` validation to **validate** using the graph validations to check that no deprecated items are used by non-deprecated content.
 * Fixed an issue where the **modeling-rules test** command failed to get the existence of dataset in cases where the dataset takes more than 1 minute to get indexed.
 * Fixed an issue where the **download** command failed when the playbook has different `name` and `id`.
+* Moved the **pre-commmit** command template to the `demisto/content` repository, where it's easier to maintain.
+* Fixed an issue where an internal method caused warning messages when reading md files.
 
 ## 1.16.0
 * Added a check to **is_docker_image_latest_tag** to only fail the validation on non-latest image tag when the current tag is older than 3 days.

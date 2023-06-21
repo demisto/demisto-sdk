@@ -469,8 +469,19 @@ class BaseUpdate:
         if it does not already end with a period."""
         logger.info("Adds a period to the end of the description")
 
+        def _is_url(value: str):
+            str_to_check = value.split()[-1]
+            if str_to_check.startswith("http://") or str_to_check.startswith(
+                "https://"
+            ):
+                return True
+            else:
+                return False
+
         def _add_period(value: Optional[str]) -> Optional[str]:
             if value and isinstance(value, str) and not value.endswith("."):
+                if _is_url(value):
+                    return f"{value} ."
                 return f"{value}."
             return value
 

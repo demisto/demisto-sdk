@@ -2,7 +2,7 @@
 ## Unreleased
 
 
-## 1.16.1
+## 1.17.0
 * **validate** will only fail on docker related errors if the pack is supported by xsoar.
 * Added a validation that assures filename, id, and name have a correct suffix for modeling/parsing rules files.
 * Added new **validate** checks, preventing unwanted changes of the marketplaces (BC108,BC109), toversion (BC107)  and fromversion (BC106) fields.

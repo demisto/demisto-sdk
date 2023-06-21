@@ -470,12 +470,7 @@ class BaseUpdate:
         logger.info("Adds a period to the end of the description")
 
         def _add_period(value: Optional[str]) -> Optional[str]:
-            if (
-                value
-                and isinstance(value, str)
-                and not value.endswith(".")
-                and len(value.split(" ")) >= 3
-            ):
+            if value and isinstance(value, str) and not value.endswith("."):
                 return f"{value}."
             return value
 

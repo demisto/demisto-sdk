@@ -29,7 +29,7 @@ def update_additional_dependencies(
             yaml.dump(pre_commit, f)
         return 0
     except Exception as e:
-        logger.error("Failed to update additional dependencies: %s", e)
+        logger.exception("Failed to update additional dependencies")
         return 1
 
 

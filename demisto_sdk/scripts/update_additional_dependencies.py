@@ -34,11 +34,13 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     parser.add_argument(
         "pre_commit_config",
         help="The path to the pre-commit config file",
+        required=False,
         default=".pre-commit-config.yaml",
     )
     parser.add_argument(
         "requirements",
         help="The path to the requirements file",
+        required=False,
         default="requirements.txt",
     )
     parser.add_argument(

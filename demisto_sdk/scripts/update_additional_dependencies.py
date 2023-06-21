@@ -35,7 +35,7 @@ def update_additional_dependencies(
 
 def main(argv: Optional[Sequence[str]] = None) -> int:
     parser = argparse.ArgumentParser(
-        description="Update the additional dependencies of precommit"
+        description="Update the additional dependencies of precommit hooks"
     )
     parser.add_argument(
         "--pre_commit_config",

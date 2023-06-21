@@ -13,6 +13,16 @@ yaml = YAML_Handler()
 def update_additional_dependencies(
     pre_commit_config_path: Path, requirements_path: Path, hooks: Sequence[str]
 ) -> int:
+    """This function updates the additional dependencies of selected pre-commit hooks according to a requirements file
+
+    Args:
+        pre_commit_config_path (Path): The path of the pre-commit-config
+        requirements_path (Path): The path of the requirements file
+        hooks (Sequence[str]): The hooks to update
+
+    Returns:
+        int: 1 if failed, 0 if succeeded
+    """
     try:
         if "poetry.lock" not in GitUtil().get_all_changed_files():
             logger.info(
@@ -28,7 +38,7 @@ def update_additional_dependencies(
         with pre_commit_config_path.open("w") as f:
             yaml.dump(pre_commit, f)
         return 0
-    except Exception as e:
+    except Exception:
         logger.exception("Failed to update additional dependencies")
         return 1
 

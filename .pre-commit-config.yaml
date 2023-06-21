@@ -14,7 +14,7 @@ repos:
   - id: poetry-export
     args: [--without-hashes, "-o", "requirements.txt"]
 - repo: https://github.com/demisto/demisto-sdk
-  rev: "ec30858ae8779501147cc56e66856f45f3aa321c"
+  rev: "cd15c464c17b6d15eb2bcd5184adde58af8a1f51"
   hooks:
   - id: update-additional-dependencies
 - repo: https://github.com/pre-commit/mirrors-mypy

@@ -44,7 +44,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     )
     parser.add_argument(
         "--requirements",
-        help="The path to the requirements file",
+        help="Path to the requirements file",
         default="requirements.txt",
     )
     parser.add_argument(

@@ -88,7 +88,7 @@ class XsiamApiInterface(ABC):
 
 class XsiamApiClient(XsiamApiInterface):
     def __init__(self, config: XsiamApiClientConfig):
-        self.base_url = config.base_url
+        self.base_url = str(config.base_url)
         self.api_key = (
             config.api_key.get_secret_value()
             if isinstance(config.api_key, SecretStr)

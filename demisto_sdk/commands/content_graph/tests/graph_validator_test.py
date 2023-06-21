@@ -91,6 +91,7 @@ def repository(mocker) -> ContentDTO:
                 name="test-command",
                 description="",
                 deprecated=False,
+            ),
             mock_relationship(
                 "SampleIntegration",
                 ContentType.INTEGRATION,

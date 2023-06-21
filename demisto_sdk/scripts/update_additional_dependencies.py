@@ -10,7 +10,7 @@ yaml = YAML_Handler()
 
 
 def update_additional_dependencies(
-    pre_commit_config_path: Path, requirements_path: Path, hooks: List[str]
+    pre_commit_config_path: Path, requirements_path: Path
 ) -> int:
     try:
         requirements = requirements_path.read_text().splitlines()

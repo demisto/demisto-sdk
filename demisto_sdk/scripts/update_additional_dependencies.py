@@ -58,7 +58,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         default="requirements.txt",
     )
     parser.add_argument(
-        "hooks", help="The hooks to update", nargs="*", default=["mypy"]
+        "hooks", help="The hooks to update, separated by spaces", nargs="*", default=["mypy"]
     )
     args = parser.parse_args(argv)
     return update_additional_dependencies(

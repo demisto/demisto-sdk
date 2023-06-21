@@ -15,10 +15,7 @@ def update_additional_dependencies(
     try:
         requirements = requirements_path.read_text().splitlines()
         pre_commit = get_file(pre_commit_config_path)
-        for repo in pre_commit["repos"]:
-            for hook in repo["hooks"]:
-                if hook["id"] in hooks:
-                    hook["additional_dependencies"] = requirements
+        pre_commit["dependencies"] = requirements
         with pre_commit_config_path.open("w") as f:
             yaml.dump(pre_commit, f)
         return 0

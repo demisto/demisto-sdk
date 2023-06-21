@@ -122,7 +122,7 @@ class ContributionConverter:
         release_notes: str = "",
         detected_content_items: list = None,
         base_dir: Union[str] = None,
-        working_dir_path: str = ""
+        working_dir_path: str = "",
     ):
         """Initializes a ContributionConverter instance
 

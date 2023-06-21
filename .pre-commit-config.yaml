@@ -13,10 +13,12 @@ repos:
     args: [--check]
   - id: poetry-export
     args: [--without-hashes, "-o", "requirements.txt"]
-- repo: https://github.com/demisto/demisto-sdk
-  rev: "985dea3b3d387ebd902763dbe583e0682fbf613b"
-  hooks:
-  - id: update-additional-dependencies
+
+# Uncomment when demisto-sdk is updated to 1.16.2
+# - repo: https://github.com/demisto/demisto-sdk
+#   rev: v1.16.2
+#   hooks:
+#   - id: update-additional-dependencies
 - repo: https://github.com/pre-commit/mirrors-mypy
   rev: v0.982
   hooks:

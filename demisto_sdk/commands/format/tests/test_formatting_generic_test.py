@@ -277,7 +277,7 @@ def test_initiate_file_validator(mocker, is_old_file, function_validate):
     [
         (
             {
-                "description": "test three words",
+                "description": "",
                 "display": "Web",
                 "name": "Web",
                 "script": {
@@ -303,7 +303,7 @@ def test_initiate_file_validator(mocker, is_old_file, function_validate):
                 "fromversion": "6.8.0",
             },
             {
-                "description": "test three words.",
+                "description": "",
                 "display": "Web",
                 "name": "Web",
                 "script": {
@@ -311,7 +311,7 @@ def test_initiate_file_validator(mocker, is_old_file, function_validate):
                         {
                             "arguments": [
                                 {
-                                    "description": "test two_words",
+                                    "description": "test two_words.",
                                     "name": "functionName",
                                 }
                             ],
@@ -320,7 +320,7 @@ def test_initiate_file_validator(mocker, is_old_file, function_validate):
                             "outputs": [
                                 {
                                     "contextPath": "name.bla.bla",
-                                    "description": "test_one_word",
+                                    "description": "test_one_word.",
                                 }
                             ],
                         }

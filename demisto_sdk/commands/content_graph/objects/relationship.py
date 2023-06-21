@@ -49,6 +49,7 @@ class RelationshipData(BaseModel):
         """This is needed to check if the relationship already exists"""
         return hash(self) == hash(__o)
 
+
 # we need to rebuild the models, as the relationship model is not known at the time of the first build
 PackContentItems.model_rebuild()
 BaseContent.model_rebuild()

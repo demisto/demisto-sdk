@@ -1,4 +1,5 @@
 exclude: demisto_sdk/tests/test_files/.*|.circleci/config.yml|demisto_sdk/commands/.*/tests/test_files/.*
+# This is auto-generated dependencies list taken from `poetry.lock`. DO NOT EDIT MANUALLY
 additional_dependencies: &additional_dependencies
 - astor==0.8.1 ; python_version >= "3.8" and python_version < "3.11"
 - astroid==2.9.3 ; python_version >= "3.8" and python_version < "3.11"

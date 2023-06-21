@@ -13,7 +13,7 @@ repos:
           args: [--check]
         - id: poetry-export
     - repo: https://github.com/demisto/demisto-sdk
-      rev: "bdfca37745395eadf9eb82ef1f1d2174797182c1"
+      rev: "4d0f46df54bc2a97da5ed3828052be823ff71069"
       hooks:
         - id: update-additional-dependencies
 

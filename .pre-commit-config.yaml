@@ -5,6 +5,18 @@ repos:
       hooks:
         - id: ruff
           args: [--fix, --exit-non-zero-on-fix]
+    - repo: https://github.com/python-poetry
+      rev: "1.5.1"
+      hooks:
+        - id: poetry-check
+        - id: poetry-lock
+          args: [--check]
+        - id: poetry-export
+    - repo: https://github.com/demisto/demisto-sdk
+      rev: ""
+      hooks:
+        - id: update-additional-dependencies
+
     - repo: https://github.com/psf/black
       rev: "22.12.0"
       hooks:
@@ -22,20 +34,7 @@ repos:
             language_version: python3
           - id: name-tests-test
             exclude: test_tools.py|demisto_sdk/commands/download/tests/tests_env/.*|demisto_sdk/commands/create_artifacts/tests/data|demisto_sdk/commands/common/content/tests/objects/pack_objects/script/script_test/TestNotUnifiedScript|demisto_sdk/commands/common/content/tests/objects/pack_objects/integration/integration_test/TestNotUnifiedIntegration|demisto_sdk/commands/test_content/tests/DemistoClientMock
-    - repo: local
-      hooks:
-        - id: mypy
-          name: mypy
-          entry: mypy
-          language: python
-          require_serial: true
-          types: [python]
-          exclude: tests/.*|demisto_sdk/commands/init/templates/.*
 
-    - repo: https://gitlab.com/smop/pre-commit-hooks
-      rev: v1.0.0
-      hooks:
-          - id: check-poetry
     - repo: https://github.com/jendrikseipp/vulture
       rev: "v2.6"
       hooks:

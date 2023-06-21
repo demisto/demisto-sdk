@@ -12,7 +12,7 @@ from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import get_yaml
 
 CHANGELOG_FOLDER = Path(f"{git_path()}/.changelog")
-RELEASE_VERSION_RGX = re.compile(r"v\d{1,2}\.\d{1,2}\.\d{1,2}")
+RELEASE_VERSION_REGEX = re.compile(r"v\d{1,2}\.\d{1,2}\.\d{1,2}")
 
 yaml = YAML_Handler()
 
@@ -27,7 +27,7 @@ class Changelog:
 
     def is_release(self) -> bool:
         return (
-            RELEASE_VERSION_RGX.match(self.pr_name) is not None
+            RELEASE_VERSION_REGEX.match(self.pr_name) is not None
             if self.pr_name
             else False
         )
@@ -72,12 +72,12 @@ class Changelog:
             "type": "<fix|feature|breaking>",
         }
         try:
-            new_opj = ChangelogObject(**initial_changelog)
+            new_obj = ChangelogObject(**initial_changelog)
         except ValidationError as e:
             logger.error(e.json())
 
         with Path(f"{git_path()}/.changelog/{self.pr_number}.yml").open("w") as f:
-            yaml.dump(new_opj.dict(), f)
+            yaml.dump(new_obj.dict(), f)
 
         logger.info("Something msg")
 

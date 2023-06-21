@@ -280,18 +280,19 @@ def repository(mocker) -> ContentDTO:
         ]
     }
     pack1 = mock_pack(
-        "SamplePack", [MarketplaceVersions.XSOAR, MarketplaceVersions.MarketplaceV2]
+        "SamplePack",
+        marketplaces=[MarketplaceVersions.XSOAR, MarketplaceVersions.MarketplaceV2],
     )
-    pack2 = mock_pack("SamplePack2", [MarketplaceVersions.XSOAR])
+    pack2 = mock_pack("SamplePack2", marketplaces=[MarketplaceVersions.XSOAR])
     pack3 = mock_pack(
         "SamplePack3",
-        [
+        marketplaces=[
             MarketplaceVersions.XSOAR,
             MarketplaceVersions.MarketplaceV2,
             MarketplaceVersions.XPANSE,
         ],
     )
-    pack4 = mock_pack("SamplePack4", list(MarketplaceVersions))
+    pack4 = mock_pack("SamplePack4", marketplaces=list(MarketplaceVersions))
     pack1.relationships = relationships
     pack2.relationships = relationship_pack2
     pack3.relationships = relationship_pack3

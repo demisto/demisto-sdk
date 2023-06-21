@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 from zipfile import ZipFile
 
 import pytest
@@ -59,14 +59,20 @@ def repository(mocker):
     return repository
 
 
-def mock_pack(name: str = "SamplePack", path: Path = Path("Packs")) -> Pack:
+def mock_pack(
+    name: str = "SamplePack",
+    path: Path = Path("Packs"),
+    marketplaces: Optional[List[MarketplaceVersions]] = None,
+) -> Pack:
+    if marketplaces is None:
+        marketplaces = [MarketplaceVersions.XSOAR]
     return Pack(
         object_id=name,
         content_type=ContentType.PACK,
         node_id=f"{ContentType.PACK}:{name}",
         path=path,
         name=name,
-        marketplaces=[MarketplaceVersions.XSOAR],
+        marketplaces=marketplaces,
         hidden=False,
         server_min_version="5.5.0",
         current_version="1.0.0",
@@ -79,7 +85,11 @@ def mock_pack(name: str = "SamplePack", path: Path = Path("Packs")) -> Pack:
     )
 
 
-def mock_integration(name: str = "SampleIntegration", path: Path = Path("Packs")):
+def mock_integration(
+    name: str = "SampleIntegration",
+    path: Path = Path("Packs"),
+    deprecated: bool = False,
+):
     return Integration(
         id=name,
         content_type=ContentType.INTEGRATION,
@@ -90,7 +100,7 @@ def mock_integration(name: str = "SampleIntegration", path: Path = Path("Packs")
         display_name=name,
         name=name,
         marketplaces=[MarketplaceVersions.XSOAR],
-        deprecated=False,
+        deprecated=deprecated,
         type="python3",
         docker_image="mock:docker",
         category="blabla",
@@ -144,14 +154,16 @@ def mock_classifier(name: str = "SampleClassifier"):
 def mock_playbook(
     name: str = "SamplePlaybook",
     marketplaces: List[MarketplaceVersions] = [MarketplaceVersions.XSOAR],
+    fromversion="5.0.0",
+    toversion="99.99.99",
 ):
     return Playbook(
         id=name,
         content_type=ContentType.PLAYBOOK,
         node_id=f"{ContentType.PLAYBOOK}:{name}",
         path=Path("Packs"),
-        fromversion="5.0.0",
-        toversion="99.99.99",
+        fromversion=fromversion,
+        toversion=toversion,
         display_name=name,
         name=name,
         marketplaces=marketplaces,

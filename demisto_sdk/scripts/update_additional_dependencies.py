@@ -2,6 +2,7 @@ import argparse
 from pathlib import Path
 from typing import Optional, Sequence
 
+from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import YAML_Handler
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import get_file
@@ -13,6 +14,11 @@ def update_additional_dependencies(
     pre_commit_config_path: Path, requirements_path: Path, hooks: Sequence[str]
 ) -> int:
     try:
+        if "poetry.lock" not in GitUtil().get_all_changed_files():
+            logger.info(
+                "Skipping update of additional dependencies since poetry.lock was not changed"
+            )
+            return 0
         requirements = requirements_path.read_text().splitlines()
         pre_commit = get_file(pre_commit_config_path)
         for repo in pre_commit["repos"]:

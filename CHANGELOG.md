@@ -18,6 +18,7 @@
 * Added support for Pre Process Rules in the **upload** command.
 * Fixed an issue where **upload** would not upload items whose `maketplaces` value was an empty list.
 * Added a prettyName key to the incident field schema.
+* Fixed an issue where **upload** command could not parse content items that are not unicode-encoded.
 * Added a working directory to the `contribution_converter` in order to support working on a temporary directory.
 
 ## 1.16.0

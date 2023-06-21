@@ -6,6 +6,7 @@ import pytest
 
 import demisto_sdk.commands.content_graph.neo4j_service as neo4j_service
 from demisto_sdk.commands.common.constants import (
+    GENERAL_DEFAULT_FROMVERSION,
     SKIP_PREPARE_SCRIPT_NAME,
     MarketplaceVersions,
 )
@@ -246,7 +247,7 @@ def repository(mocker) -> ContentDTO:
                 ContentType.PLAYBOOK,
                 "SamplePack3",
                 ContentType.PACK,
-                source_fromversion="6.8.0",
+                source_fromversion=GENERAL_DEFAULT_FROMVERSION,
             ),
             mock_relationship(
                 "SampleScript2",
@@ -325,11 +326,16 @@ def repository(mocker) -> ContentDTO:
             "SamplePlaybook",
             [MarketplaceVersions.XSOAR, MarketplaceVersions.XPANSE],
             "6.5.0",
-            "6.8.0",
+            GENERAL_DEFAULT_FROMVERSION,
         )
     )
     pack3.content_items.playbook.append(
-        mock_playbook("SamplePlaybook2", [MarketplaceVersions.XSOAR], "6.8.0", "6.5.0")
+        mock_playbook(
+            "SamplePlaybook2",
+            [MarketplaceVersions.XSOAR],
+            GENERAL_DEFAULT_FROMVERSION,
+            "6.5.0",
+        )
     )
     pack3.content_items.script.append(mock_script("SampleScript2"))
     pack3.content_items.script.append(

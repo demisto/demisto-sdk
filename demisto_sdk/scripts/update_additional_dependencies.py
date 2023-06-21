@@ -7,7 +7,7 @@ from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import get_file
 
 yaml = YAML_Handler()
-
+from ruamel.yaml import CommentedSeq
 
 def update_additional_dependencies(
     pre_commit_config_path: Path, requirements_path: Path, hooks: List[str]
@@ -15,7 +15,9 @@ def update_additional_dependencies(
     try:
         requirements = requirements_path.read_text().splitlines()
         pre_commit = get_file(pre_commit_config_path)
-        pre_commit["dependencies"] = requirements
+        additional_dependencies = pre_commit.get("additional_dependencies", [])
+        additional_dependencies.clear()
+        additional_dependencies.extend(requirements)
         with pre_commit_config_path.open("w") as f:
             yaml.dump(pre_commit, f)
         return 0

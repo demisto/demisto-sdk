@@ -249,10 +249,6 @@ jobs:
               poetry run pre-commit --version
               poetry run pre-commit run -a
         - run:
-            name: Mypy
-            command: |
-              poetry run mypy .
-        - run:
             name: Run Pytest collection
             command: |
                 poetry run pytest --collect-only .

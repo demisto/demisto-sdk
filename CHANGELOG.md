@@ -1,5 +1,8 @@
 # Changelog
 ## Unreleased
+
+
+## 1.17.0
 * **validate** will only fail on docker related errors if the pack is supported by xsoar.
 * Added a validation that assures filename, id, and name have a correct suffix for modeling/parsing rules files.
 * Added new **validate** checks, preventing unwanted changes of the marketplaces (BC108,BC109), toversion (BC107)  and fromversion (BC106) fields.
@@ -18,6 +21,7 @@
 * Added support for Pre Process Rules in the **upload** command.
 * Fixed an issue where **upload** would not upload items whose `maketplaces` value was an empty list.
 * Added a prettyName key to the incident field schema.
+* Fixed an issue where **upload** command could not parse content items that are not unicode-encoded.
 
 ## 1.16.0
 * Added a check to **is_docker_image_latest_tag** to only fail the validation on non-latest image tag when the current tag is older than 3 days.

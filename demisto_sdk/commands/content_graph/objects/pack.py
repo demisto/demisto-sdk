@@ -15,6 +15,7 @@ from demisto_sdk.commands.common.constants import (
     CONTRIBUTORS_README_TEMPLATE,
     MARKETPLACE_MIN_VERSION,
     MarketplaceVersions,
+    GOOGLE_CLOUD_STORAGE_PUBLIC_BASE_PATH
 )
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.handlers import JSON_Handler
@@ -324,13 +325,18 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: i
             except Exception as e:
                 logger.error(f"Failed dumping readme: {e}")
 
-        pack_readme_images_data: dict = replace_readme_urls(path, marketplace)
+        pack_readme_images_data: dict = replace_readme_urls(path, marketplace, self.object_id)
 
         if (artifacts_folder := os.getenv("ARTIFACTS_FOLDER")) and Path(
             artifacts_folder
         ).exists():
-            artifacts_readme_images_path = f"{artifacts_folder}/readme_images.json"
-            with open (artifacts_readme_images_path, 'r') as readme_images_data_file:
+            artifacts_readme_images_path = Path(f"{artifacts_folder}/readme_images.json")
+            if not artifacts_readme_images_path.exists():
+                with open(artifacts_readme_images_path, 'w') as f:
+                    # If this is the first pack init the file with an empty dict.
+                    json.dump({}, f)
+
+            with open(artifacts_readme_images_path, 'r') as readme_images_data_file:
                 readme_images_data_dict: dict = json.load(readme_images_data_file)
                 readme_images_data_dict.update(pack_readme_images_data)
 

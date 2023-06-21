@@ -1161,6 +1161,7 @@ OFFICIAL_INDEX_JSON_PATH = (
 RUN_ALL_TESTS_FORMAT = "Run all tests"
 FILTER_CONF = "./artifacts/filter_file.txt"
 
+GOOGLE_CLOUD_STORAGE_PUBLIC_BASE_PATH = "https://storage.googleapis.com/"
 
 class PB_Status:
     NOT_SUPPORTED_VERSION = "Not supported version"
@@ -1716,14 +1717,6 @@ MarketplaceVersionToMarketplaceName = {
     "xpanse": "xpanse-dist",
     "xsoar-saas": "xsoar-saas-dist",
 }
-
-
-class MarketplaceNames(str, Enum):
-    xsoar = "marketplace-dist"
-    marketplacev2 = "marketplace-v2-dist"
-    xpanse = "xpanse-dist"
-    GCS_PRODUCTION_XSOAR_SAAS_BUCKET = "marketplace-xsoar-saas-dist"
-
 
 MARKETPLACE_TO_CORE_PACKS_FILE: Dict[MarketplaceVersions, str] = {
     MarketplaceVersions.XSOAR: "Tests/Marketplace/core_packs_list.json",

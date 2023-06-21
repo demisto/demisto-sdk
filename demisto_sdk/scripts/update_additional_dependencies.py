@@ -2,11 +2,11 @@ import argparse
 from pathlib import Path
 from typing import List, Optional, Sequence
 
-from demisto_sdk.commands.common.handlers import JSON_Handler
+from demisto_sdk.commands.common.handlers import YAML_Handler
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import get_file
 
-json = JSON_Handler()
+yaml = YAML_Handler()
 
 
 def update_additional_dependencies(
@@ -20,7 +20,7 @@ def update_additional_dependencies(
                 if hook["id"] in hooks:
                     hook["additional_dependencies"] = requirements
         with pre_commit_config_path.open("w") as f:
-            json.dump(pre_commit, f)
+            yaml.dump(pre_commit, f)
         return 0
     except Exception as e:
         logger.error("Failed to update additional dependencies: %s", e)

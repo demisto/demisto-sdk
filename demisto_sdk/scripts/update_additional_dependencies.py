@@ -7,7 +7,7 @@ from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import get_file
 
 yaml = YAML_Handler()
-from ruamel.yaml import CommentedSeq
+
 
 def update_additional_dependencies(
     pre_commit_config_path: Path, requirements_path: Path, hooks: List[str]

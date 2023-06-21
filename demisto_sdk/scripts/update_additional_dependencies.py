@@ -1,6 +1,6 @@
 import argparse
 from pathlib import Path
-from typing import List, Optional, Sequence
+from typing import Optional, Sequence
 
 from demisto_sdk.commands.common.handlers import YAML_Handler
 from demisto_sdk.commands.common.logger import logger
@@ -10,14 +10,15 @@ yaml = YAML_Handler()
 
 
 def update_additional_dependencies(
-    pre_commit_config_path: Path, requirements_path: Path
+    pre_commit_config_path: Path, requirements_path: Path, hooks: Sequence[str]
 ) -> int:
     try:
         requirements = requirements_path.read_text().splitlines()
         pre_commit = get_file(pre_commit_config_path)
-        additional_dependencies = pre_commit.get("additional_dependencies", [])
-        additional_dependencies.clear()
-        additional_dependencies.extend(requirements)
+        for repo in pre_commit["repos"]:
+            for hook in pre_commit["hooks"]:
+                if hook["id"] in hooks:
+                    hook["additional_dependencies"] = requirements
         with pre_commit_config_path.open("w") as f:
             yaml.dump(pre_commit, f)
         return 0

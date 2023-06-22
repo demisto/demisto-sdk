@@ -145,9 +145,9 @@ class TestGenericFunctions:
             tools.get_yaml,
         ),
         (
-            str(Path(
-                PATH_TO_HERE, "test_playbook_value_starting_with_equal_sign.yaml"
-            )),
+            str(
+                Path(PATH_TO_HERE, "test_playbook_value_starting_with_equal_sign.yaml")
+            ),
             tools.get_yaml,
         ),
         (str(Path(PATH_TO_HERE, "fake_json.json")), tools.get_json),

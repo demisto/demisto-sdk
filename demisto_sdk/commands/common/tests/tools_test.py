@@ -170,12 +170,14 @@ class TestGenericFunctions:
             Ensure that the file data is returned
         """
         absolute_path = Path(file_path)
-        assert tools.get_file_or_remote(absolute_path)
         relative_path = absolute_path.relative_to(GIT_ROOT)
-        assert tools.get_file_or_remote(relative_path)
+
+        assert (result_non_relative := tools.get_file_or_remote(absolute_path))
+        assert (result_relative := tools.get_file_or_remote(relative_path))
+        assert result_non_relative == result_relative
 
     @pytest.mark.parametrize("file_path, func", FILE_PATHS)
-    def test_get_file_or_remote_with_origin(self, mocker, file_path: str, func):
+    def test_get_file_or_remote_with_origin(self, mocker, file_path: str, _func):
         """
         Given:
             file_path to a file
@@ -194,9 +196,11 @@ class TestGenericFunctions:
             GitUtil, "get_local_remote_file_content", return_value=content
         )
         mocker.patch.object(tools, "get_content_path", return_value=Path(GIT_ROOT))
-        assert tools.get_file_or_remote(path)
         relative_path = path.relative_to(GIT_ROOT)
-        assert tools.get_file_or_remote(relative_path)
+
+        assert (result_non_relative := tools.get_file_or_remote(path))
+        assert (result_relative := tools.get_file_or_remote(relative_path))
+        assert result_non_relative == result_relative
 
     @pytest.mark.parametrize("file_path, func", FILE_PATHS)
     def test_get_file_or_remote_with_api(
@@ -224,8 +228,9 @@ class TestGenericFunctions:
             f"https://raw.githubusercontent.com/demisto/demisto-sdk/master/{relative_path}",
             text=content,
         )
-        assert tools.get_file_or_remote(path)
-        assert tools.get_file_or_remote(relative_path)
+        assert (result_non_relative := tools.get_file_or_remote(path))
+        assert (result_relative := tools.get_file_or_remote(relative_path))
+        assert result_non_relative == result_relative
 
     @staticmethod
     @pytest.mark.parametrize(

@@ -145,12 +145,12 @@ class TestGenericFunctions:
             tools.get_yaml,
         ),
         (
-            os.path.join(
+            str(Path(
                 PATH_TO_HERE, "test_playbook_value_starting_with_equal_sign.yaml"
-            ),
+            )),
             tools.get_yaml,
         ),
-        (os.path.join(PATH_TO_HERE, "fake_json.json"), tools.get_json),
+        (str(Path(PATH_TO_HERE, "fake_json.json")), tools.get_json),
     ]
 
     @pytest.mark.parametrize("file_path, func", FILE_PATHS)

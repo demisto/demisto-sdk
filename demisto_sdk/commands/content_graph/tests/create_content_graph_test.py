@@ -446,10 +446,9 @@ class TestCreateContentGraph:
             # make sure that the extracted files are all .csv
             extracted_files = list(tmp_path.glob("extracted/*"))
             assert extracted_files
-            assert all(
-                file.suffix == ".graphml" or file.name == "metadata.json"
-                for file in extracted_files
-            )
+            assert any(file.suffix == ".graphml" for file in extracted_files)
+            assert any(file.name == "metadata.json" for file in extracted_files)
+            assert any(file.name == "schema.json" for file in extracted_files)
 
     def test_create_content_graph_relationships(
         self,

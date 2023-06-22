@@ -14,11 +14,12 @@ from demisto_sdk.commands.content_graph.objects.pack import Pack
 from demisto_sdk.commands.content_graph.objects.repository import ContentDTO
 
 json = JSON_Handler()
-METADATA_FILE_NAME = "metadata.json"
 
 
 class ContentGraphInterface(ABC):
     repo_path = CONTENT_PATH  # type: ignore
+    METADATA_FILE_NAME = "metadata.json"
+    SCHEMA_FILE_NAME = "schema.json"
 
     @property
     @abstractmethod
@@ -36,7 +37,7 @@ class ContentGraphInterface(ABC):
     @property
     def metadata(self) -> Optional[dict]:
         try:
-            with (self.import_path / METADATA_FILE_NAME).open() as f:
+            with (self.import_path / self.METADATA_FILE_NAME).open() as f:
                 return json.load(f)
         except FileNotFoundError:
             return None
@@ -52,8 +53,10 @@ class ContentGraphInterface(ABC):
         metadata = {
             "commit": GitUtil().get_current_commit_hash(),
         }
-        with open(self.import_path / METADATA_FILE_NAME, "w") as f:
+        with open(self.import_path / self.METADATA_FILE_NAME, "w") as f:
             json.dump(metadata, f)
+        with open(self.import_path / self.SCHEMA_FILE_NAME, "w") as f:
+            json.dump(ContentDTO.model_json_schema(), f)
 
     def zip_import_dir(self, output_file: Path) -> None:
         shutil.make_archive(str(output_file), "zip", self.import_path)

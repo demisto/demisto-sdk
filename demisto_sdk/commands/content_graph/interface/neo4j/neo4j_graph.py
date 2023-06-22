@@ -10,6 +10,7 @@ import demisto_sdk.commands.content_graph.neo4j_service as neo4j_service
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.common.cpu_count import cpu_count
 from demisto_sdk.commands.common.logger import logger
+from demisto_sdk.commands.common.tools import get_file
 from demisto_sdk.commands.content_graph.common import (
     NEO4J_DATABASE_URL,
     NEO4J_PASSWORD,
@@ -75,6 +76,7 @@ from demisto_sdk.commands.content_graph.objects.base_content import (
 from demisto_sdk.commands.content_graph.objects.integration import Integration
 from demisto_sdk.commands.content_graph.objects.pack import Pack
 from demisto_sdk.commands.content_graph.objects.relationship import RelationshipData
+from demisto_sdk.commands.content_graph.objects.repository import ContentDTO
 
 
 class NoModelException(Exception):
@@ -526,13 +528,23 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
                 session.execute_write(create_constraints)
                 session.execute_write(remove_empty_properties)
         try:
-            # Test that the imported graph is valid by marshaling it
-            self.marshal_graph(MarketplaceVersions.XSOAR)
-            result = True
-        except ValidationError as e:
-            logger.warning("Failed to import the content graph")
-            logger.debug(f"Validation Error: {e}")
-            result = False
+            previous_schema = get_file(self.import_path / self.SCHEMA_FILE_NAME)
+            if previous_schema == ContentDTO.model_json_schema():
+                result = True
+            else:
+                logger.warning("The graph schema has been changed")
+                result = False
+
+        except FileNotFoundError:
+            try:
+                logger.warning("The graph schema file is missing, trying to marshal it")
+                self.marshal_graph(MarketplaceVersions.XSOAR)
+                result = True
+
+            except ValidationError as e:
+                logger.warning("Failed to import the content graph")
+                logger.debug(f"Validation Error: {e}")
+                result = False
         # clear cache after loading the graph
         self._id_to_obj = {}
         return result

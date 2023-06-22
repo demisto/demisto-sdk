@@ -144,12 +144,39 @@ class TestGenericFunctions:
             ),
             tools.get_yaml,
         ),
+        (
+            os.path.join(
+                PATH_TO_HERE, "test_playbook_value_starting_with_equal_sign.yaml"
+            ),
+            tools.get_yaml,
+        ),
         (os.path.join(PATH_TO_HERE, "fake_json.json"), tools.get_json),
     ]
 
     @pytest.mark.parametrize("file_path, func", FILE_PATHS)
     def test_get_file(self, file_path, func):
         assert func(file_path)
+
+    @pytest.mark.parametrize("file_path, func", FILE_PATHS)
+    def test_get_file_or_remote_with_local(self, file_path: str, func):
+        absolute_path = Path(file_path)
+        assert tools.get_file_or_remote(absolute_path)
+        relative_path = absolute_path.relative_to(GIT_ROOT)
+        assert tools.get_file_or_remote(relative_path)
+
+    @pytest.mark.parametrize("file_path, func", FILE_PATHS)
+    def test_get_file_or_remote_with_remote(self, mocker, file_path: str, func):
+        path = Path(file_path)
+        content = path.read_text()
+        mocker.patch.object(tools, "get_file", side_effect=FileNotFoundError)
+        mocker.patch.object(GitUtil, "get_local_remote_file_path")
+        mocker.patch.object(
+            GitUtil, "get_local_remote_file_content", return_value=content
+        )
+        mocker.patch.object(tools, "get_content_path", return_value=Path(GIT_ROOT))
+        assert tools.get_file_or_remote(path)
+        relative_path = path.relative_to(GIT_ROOT)
+        assert tools.get_file_or_remote(relative_path)
 
     @staticmethod
     @pytest.mark.parametrize(

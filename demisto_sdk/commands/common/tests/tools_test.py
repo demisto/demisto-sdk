@@ -157,7 +157,7 @@ class TestGenericFunctions:
     def test_get_file(self, file_path, func):
         assert func(file_path)
 
-    @pytest.mark.parametrize("file_path, func", FILE_PATHS)
+    @pytest.mark.parametrize("file_path, _", FILE_PATHS)
     def test_get_file_or_remote_with_local(self, file_path: str, _):
         """
         Given:
@@ -176,8 +176,8 @@ class TestGenericFunctions:
         assert (result_relative := tools.get_file_or_remote(relative_path))
         assert result_non_relative == result_relative
 
-    @pytest.mark.parametrize("file_path, func", FILE_PATHS)
-    def test_get_file_or_remote_with_origin(self, mocker, file_path: str, _func):
+    @pytest.mark.parametrize("file_path, _", FILE_PATHS)
+    def test_get_file_or_remote_with_origin(self, mocker, file_path: str, _):
         """
         Given:
             file_path to a file
@@ -202,9 +202,9 @@ class TestGenericFunctions:
         assert (result_relative := tools.get_file_or_remote(relative_path))
         assert result_non_relative == result_relative
 
-    @pytest.mark.parametrize("file_path, func", FILE_PATHS)
+    @pytest.mark.parametrize("file_path, _", FILE_PATHS)
     def test_get_file_or_remote_with_api(
-        self, mocker, requests_mock, file_path: str, func
+        self, mocker, requests_mock, file_path: str, _
     ):
         """
         Given:

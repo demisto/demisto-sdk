@@ -159,13 +159,19 @@ class TestGenericFunctions:
 
     @pytest.mark.parametrize("file_path, func", FILE_PATHS)
     def test_get_file_or_remote_with_local(self, file_path: str, func):
+        """
+        This tests the get_file_or_remote function in the case where the file exists locally
+        """
         absolute_path = Path(file_path)
         assert tools.get_file_or_remote(absolute_path)
         relative_path = absolute_path.relative_to(GIT_ROOT)
         assert tools.get_file_or_remote(relative_path)
 
     @pytest.mark.parametrize("file_path, func", FILE_PATHS)
-    def test_get_file_or_remote_with_remote(self, mocker, file_path: str, func):
+    def test_get_file_or_remote_with_origin(self, mocker, file_path: str, func):
+        """
+        This tests the get_file_or_remote function in the case where the file exists in origin
+        """
         path = Path(file_path)
         content = path.read_text()
         mocker.patch.object(tools, "get_file", side_effect=FileNotFoundError)
@@ -176,6 +182,27 @@ class TestGenericFunctions:
         mocker.patch.object(tools, "get_content_path", return_value=Path(GIT_ROOT))
         assert tools.get_file_or_remote(path)
         relative_path = path.relative_to(GIT_ROOT)
+        assert tools.get_file_or_remote(relative_path)
+
+    @pytest.mark.parametrize("file_path, func", FILE_PATHS)
+    def test_get_file_or_remote_with_api(
+        self, mocker, requests_mock, file_path: str, func
+    ):
+        """
+        This tests the get_file_or_remote function in the case where the file doesn't exist on origin, only in GitHub
+        """
+        path = Path(file_path)
+        content = path.read_text()
+        mocker.patch.object(tools, "get_file", side_effect=FileNotFoundError)
+        mocker.patch.object(tools, "get_local_remote_file", side_effect=ValueError)
+        mocker.patch.object(tools, "get_content_path", return_value=Path(GIT_ROOT))
+        relative_path = path.relative_to(GIT_ROOT)
+        requests_mock.get("https://api.github.com/repos/demisto/demisto-sdk")
+        requests_mock.get(
+            f"https://raw.githubusercontent.com/demisto/demisto-sdk/master/{relative_path}",
+            text=content,
+        )
+        assert tools.get_file_or_remote(path)
         assert tools.get_file_or_remote(relative_path)
 
     @staticmethod

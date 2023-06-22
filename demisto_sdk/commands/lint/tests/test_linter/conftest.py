@@ -20,8 +20,6 @@ def linter_obj(mocker) -> Linter:
         / "Integrations"
         / "Sample_integration",
         content_repo=Path(__file__).parent / "data",
-        req_3=["pytest==3.0"],
-        req_2=["pytest==2.0"],
         docker_engine=True,
         docker_timeout=60,
     )

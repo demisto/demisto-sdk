@@ -158,7 +158,7 @@ class TestGenericFunctions:
         assert func(file_path)
 
     @pytest.mark.parametrize("file_path, func", FILE_PATHS)
-    def test_get_file_or_remote_with_local(self, file_path: str, func):
+    def test_get_file_or_remote_with_local(self, file_path: str, _):
         """
         Given:
             file_path to a file

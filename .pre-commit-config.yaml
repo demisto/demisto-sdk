@@ -15,10 +15,10 @@ repos:
     args: [--without-hashes, "-o", "requirements.txt"]
 
 # Uncomment when demisto-sdk is updated to 1.16.2
-- repo: https://github.com/demisto/demisto-sdk
-  rev: e0c8b92aaad369a09544de7a8c0a0c327360e4cc
-  hooks:
-  - id: update-additional-dependencies
+# - repo: https://github.com/demisto/demisto-sdk
+#   rev: v1.16.2
+#   hooks:
+#   - id: update-additional-dependencies
 - repo: https://github.com/pre-commit/mirrors-mypy
   rev: v0.982
   hooks:

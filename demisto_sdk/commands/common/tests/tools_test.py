@@ -144,12 +144,93 @@ class TestGenericFunctions:
             ),
             tools.get_yaml,
         ),
-        (os.path.join(PATH_TO_HERE, "fake_json.json"), tools.get_json),
+        (
+            str(
+                Path(PATH_TO_HERE, "test_playbook_value_starting_with_equal_sign.yaml")
+            ),
+            tools.get_yaml,
+        ),
+        (str(Path(PATH_TO_HERE, "fake_json.json")), tools.get_json),
     ]
 
     @pytest.mark.parametrize("file_path, func", FILE_PATHS)
     def test_get_file(self, file_path, func):
         assert func(file_path)
+
+    @pytest.mark.parametrize("file_path, _", FILE_PATHS)
+    def test_get_file_or_remote_with_local(self, file_path: str, _):
+        """
+        Given:
+            file_path to a file
+
+        When:
+            Calling `get_file_or_remote` when the file exists locally
+
+        Then
+            Ensure that the file data is returned
+        """
+        absolute_path = Path(file_path)
+        relative_path = absolute_path.relative_to(GIT_ROOT)
+
+        assert (result_non_relative := tools.get_file_or_remote(absolute_path))
+        assert (result_relative := tools.get_file_or_remote(relative_path))
+        assert result_non_relative == result_relative
+
+    @pytest.mark.parametrize("file_path, _", FILE_PATHS)
+    def test_get_file_or_remote_with_origin(self, mocker, file_path: str, _):
+        """
+        Given:
+            file_path to a file
+
+        When:
+            Calling `get_file_or_remote` when the file doesn't exist locally, but exists on origin
+
+        Then
+            Ensure that the file data is returned
+        """
+        path = Path(file_path)
+        content = path.read_text()
+        mocker.patch.object(tools, "get_file", side_effect=FileNotFoundError)
+        mocker.patch.object(GitUtil, "get_local_remote_file_path")
+        mocker.patch.object(
+            GitUtil, "get_local_remote_file_content", return_value=content
+        )
+        mocker.patch.object(tools, "get_content_path", return_value=Path(GIT_ROOT))
+        relative_path = path.relative_to(GIT_ROOT)
+
+        assert (result_non_relative := tools.get_file_or_remote(path))
+        assert (result_relative := tools.get_file_or_remote(relative_path))
+        assert result_non_relative == result_relative
+
+    @pytest.mark.parametrize("file_path, _", FILE_PATHS)
+    def test_get_file_or_remote_with_api(
+        self, mocker, requests_mock, file_path: str, _
+    ):
+        """
+        Given:
+            file_path to a file
+
+        When:
+            Calling `get_file_or_remote` when the file doesn't exist locally, and not on origin, but exists GitHub
+
+        Then
+            Ensure that the file data is returned
+        """
+
+        path = Path(file_path)
+        content = path.read_text()
+        mocker.patch.object(tools, "get_file", side_effect=FileNotFoundError)
+        mocker.patch.object(tools, "get_local_remote_file", side_effect=ValueError)
+        mocker.patch.object(tools, "get_content_path", return_value=Path(GIT_ROOT))
+        relative_path = path.relative_to(GIT_ROOT)
+        requests_mock.get("https://api.github.com/repos/demisto/demisto-sdk")
+        requests_mock.get(
+            f"https://raw.githubusercontent.com/demisto/demisto-sdk/master/{relative_path}",
+            text=content,
+        )
+        assert (result_non_relative := tools.get_file_or_remote(path))
+        assert (result_relative := tools.get_file_or_remote(relative_path))
+        assert result_non_relative == result_relative
 
     @staticmethod
     @pytest.mark.parametrize(

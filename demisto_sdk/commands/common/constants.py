@@ -1161,7 +1161,7 @@ OFFICIAL_INDEX_JSON_PATH = (
 RUN_ALL_TESTS_FORMAT = "Run all tests"
 FILTER_CONF = "./artifacts/filter_file.txt"
 
-GOOGLE_CLOUD_STORAGE_PUBLIC_BASE_PATH = "https://storage.googleapis.com/"
+GOOGLE_CLOUD_STORAGE_PUBLIC_BASE_PATH = "https://storage.googleapis.com"
 
 class PB_Status:
     NOT_SUPPORTED_VERSION = "Not supported version"

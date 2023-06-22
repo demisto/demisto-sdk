@@ -1,18 +1,29 @@
 import os
 from pathlib import Path
-from demisto_sdk.commands.prepare_content.pack_readme_handler import collect_images_from_readme_and_replace_with_storage_path
-from demisto_sdk.commands.common.constants import README_IMAGES, MarketplaceVersions, MarketplaceVersionToMarketplaceName
+from demisto_sdk.commands.prepare_content.pack_readme_handler import (
+    collect_images_from_readme_and_replace_with_storage_path, replace_readme_urls
+)
+from demisto_sdk.commands.common.constants import (
+    README_IMAGES,
+    MarketplaceVersions,
+    MarketplaceVersionToMarketplaceName,
+    GOOGLE_CLOUD_STORAGE_PUBLIC_BASE_PATH
+)
 import pytest
 
 
 expected_urls_ret = {
-    "original_read_me_url": "https://raw.githubusercontent.com/crestdatasystems/content/"
-    "4f707f8922d7ef1fe234a194dcc6fa73f96a4a87/Packs/Lansweeper/doc_files/"
-    "Retrieve_Asset_Details_-_Lansweeper.png",
-    "new_gcs_image_path": Path(os.path.dirname(os.path.abspath(__file__)),
-        "test_data",'readme_images_test_data', README_IMAGES, 'Retrieve_Asset_Details_-_Lansweeper.png'),
-    "image_name": "Retrieve_Asset_Details_-_Lansweeper.png",
-    "pack_name": "readme_images_test_data"
+    "test_pack": [
+        {
+            "original_read_me_url": "https://raw.githubusercontent.com/crestdatasystems/content/"
+            "4f707f8922d7ef1fe234a194dcc6fa73f96a4a87/Packs/Lansweeper/doc_files/"
+            "Retrieve_Asset_Details_-_Lansweeper.png",
+            "new_gcs_image_path": f"{GOOGLE_CLOUD_STORAGE_PUBLIC_BASE_PATH}/"
+            f"{MarketplaceVersionToMarketplaceName.get(MarketplaceVersions.XSOAR)}/"
+            f"content/packs/test_pack/{README_IMAGES}/Retrieve_Asset_Details_-_Lansweeper.png",
+            "image_name": "Retrieve_Asset_Details_-_Lansweeper.png",
+        }
+    ]
 }
 
 
@@ -45,13 +56,76 @@ def test_collect_images_from_readme_and_replace_with_storage_path(
         to_replace.write(data)
 
     ret = collect_images_from_readme_and_replace_with_storage_path(
-        pack_readme_path=path_readme_to_replace_url, marketplace=marketplace
+        pack_readme_path=path_readme_to_replace_url,
+        pack_name="test_pack",
+        marketplace=marketplace,
     )
 
-    assert ret == [expected_res]
+    assert ret == expected_res
 
     replaced = Path(path_readme_to_replace_url).read_text()
     expected = Path(
         os.path.join(readme_images_test_folder_path, "README_after_replace.md")
     ).read_text()
     assert replaced == expected
+
+
+# def test_replace_readme_urls(mocker):
+#     mocker.patch(
+#         "Tests.Marketplace.pack_readme_handler.os.listdir",
+#         return_value=["pack1", "pack2"],
+#     )
+#     mocker.patch(
+#         "Tests.Marketplace.pack_readme_handler.os.path.exists", return_value=True
+#     )
+#     mocker.patch(
+#         "Tests.Marketplace.pack_readme_handler.collect_images_from_readme_and_replace_with_storage_path",
+#         side_effect=[
+#             [
+#                 {
+#                     "original_read_me_url": "image_url1",
+#                     "new_gcs_image_path": "gcp_storage_path1",
+#                     "image_name": "image1",
+#                 },
+#                 {
+#                     "original_read_me_url": "image_url2",
+#                     "new_gcs_image_path": "gcp_storage_path2",
+#                     "image_name": "image2",
+#                 },
+#             ],
+#             [
+#                 {
+#                     "original_read_me_url": "image_url3",
+#                     "new_gcs_image_path": "gcp_storage_path3",
+#                     "image_name": "image3",
+#                 }
+#             ],
+#         ],
+#     )
+
+#     readme_images, readme_urls_data_list = replace_readme_urls(
+#         index_local_path="fake_index_path", storage_base_path="fake_base_path"
+#     )
+
+#     readme_images_expected_result = {"pack1": ["image1", "image2"], "pack2": ["image3"]}
+
+#     readme_urls_data_list_expected_result = [
+#         {
+#             "original_read_me_url": "image_url1",
+#             "new_gcs_image_path": "gcp_storage_path1",
+#             "image_name": "image1",
+#         },
+#         {
+#             "original_read_me_url": "image_url2",
+#             "new_gcs_image_path": "gcp_storage_path2",
+#             "image_name": "image2",
+#         },
+#         {
+#             "original_read_me_url": "image_url3",
+#             "new_gcs_image_path": "gcp_storage_path3",
+#             "image_name": "image3",
+#         },
+#     ]
+
+#     assert readme_images == readme_images_expected_result
+#     assert readme_urls_data_list == readme_urls_data_list_expected_result

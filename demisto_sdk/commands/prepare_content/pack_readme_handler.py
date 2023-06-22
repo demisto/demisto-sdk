@@ -80,13 +80,16 @@ def collect_images_from_readme_and_replace_with_storage_path(
             lines[i] = line.replace(url, new_replace_url)
             logger.debug(f"Replacing {url=} with new url {new_replace_url=}")
 
-            image_gcp_path = Path(google_api_readme_images_url, README_IMAGES, image_name)
+            image_gcp_path = f'{google_api_readme_images_url}/{README_IMAGES}/{image_name}'
             urls_list.append(
                 {
                     "original_read_me_url": url,
-                    "new_gcs_image_path": str(image_gcp_path),
+                    "new_gcs_image_path": image_gcp_path,
                     "image_name": image_name,
                 }
             )
+
+    with open(pack_readme_path, "w") as file:
+        file.writelines(lines)
 
     return {pack_name: urls_list}

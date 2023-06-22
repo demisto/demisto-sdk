@@ -572,9 +572,8 @@ def get_remote_file(
     tag = tag.replace("origin/", "").replace("demisto/", "")
     if not git_content_config:
         try:
-            result = get_local_remote_file(full_file_path, tag, return_content)
-            if not result:
-                raise Exception("Got empty content from local remote file")
+            if not (result := get_local_remote_file(full_file_path, tag, return_content)):
+                raise ValueError(f"Got empty content from local-origin file {full_file_path}")
         except Exception as e:
             logger.debug(
                 f"Could not get local remote file because of: {str(e)}\n"

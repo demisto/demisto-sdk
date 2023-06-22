@@ -544,7 +544,7 @@ def get_file_details(
 ) -> Dict:
     if full_file_path.endswith("json"):
         file_details = json.loads(file_content)
-    elif full_file_path.endswith("yml"):
+    elif full_file_path.endswith("yml") or full_file_path.endswith("yaml"):
         file_details = yaml.load(file_content)
     # if neither yml nor json then probably a CHANGELOG or README file.
     else:
@@ -572,7 +572,9 @@ def get_remote_file(
     tag = tag.replace("origin/", "").replace("demisto/", "")
     if not git_content_config:
         try:
-            return get_local_remote_file(full_file_path, tag, return_content)
+            result = get_local_remote_file(full_file_path, tag, return_content)
+            if not result:
+                raise Exception("Got empty content from local remote file")
         except Exception as e:
             logger.debug(
                 f"Could not get local remote file because of: {str(e)}\n"
@@ -858,7 +860,7 @@ def get_file_or_remote(file_path: Path, clear_cache=False):
                 f"The file path provided {file_path} is not a subpath of {content_path}. could not fetch from remote."
             )
             raise
-        return get_remote_file(relative_file_path)
+        return get_remote_file(str(relative_file_path))
 
 
 def get_yaml(file_path, cache_clear=False):

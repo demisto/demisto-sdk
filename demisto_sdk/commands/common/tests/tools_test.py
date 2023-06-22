@@ -160,7 +160,14 @@ class TestGenericFunctions:
     @pytest.mark.parametrize("file_path, func", FILE_PATHS)
     def test_get_file_or_remote_with_local(self, file_path: str, func):
         """
-        This tests the get_file_or_remote function in the case where the file exists locally
+        Given:
+            file_path to a file
+
+        When:
+            Calling `get_file_or_remote` when the file exists locally
+
+        Then
+            Ensure that the file data is returned
         """
         absolute_path = Path(file_path)
         assert tools.get_file_or_remote(absolute_path)
@@ -170,7 +177,14 @@ class TestGenericFunctions:
     @pytest.mark.parametrize("file_path, func", FILE_PATHS)
     def test_get_file_or_remote_with_origin(self, mocker, file_path: str, func):
         """
-        This tests the get_file_or_remote function in the case where the file exists in origin
+        Given:
+            file_path to a file
+
+        When:
+            Calling `get_file_or_remote` when the file doesn't exist locally, but exists on origin
+
+        Then
+            Ensure that the file data is returned
         """
         path = Path(file_path)
         content = path.read_text()
@@ -189,8 +203,16 @@ class TestGenericFunctions:
         self, mocker, requests_mock, file_path: str, func
     ):
         """
-        This tests the get_file_or_remote function in the case where the file doesn't exist on origin, only in GitHub
+        Given:
+            file_path to a file
+
+        When:
+            Calling `get_file_or_remote` when the file doesn't exist locally, and not on origin, but exists GitHub
+
+        Then
+            Ensure that the file data is returned
         """
+
         path = Path(file_path)
         content = path.read_text()
         mocker.patch.object(tools, "get_file", side_effect=FileNotFoundError)

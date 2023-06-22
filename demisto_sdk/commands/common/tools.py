@@ -572,7 +572,7 @@ def get_remote_file(
     tag = tag.replace("origin/", "").replace("demisto/", "")
     if not git_content_config:
         try:
-            if not (result := get_local_remote_file(full_file_path, tag, return_content)):
+            if not (local_origin_content := get_local_remote_file(full_file_path, tag, return_content)):
                 raise ValueError(f"Got empty content from local-origin file {full_file_path}")
         except Exception as e:
             logger.debug(

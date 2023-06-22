@@ -544,7 +544,7 @@ def get_file_details(
 ) -> Dict:
     if full_file_path.endswith("json"):
         file_details = json.loads(file_content)
-    elif full_file_path.endswith("yml") or full_file_path.endswith("yaml"):
+    elif full_file_path.endswith(("yml", "yaml")):
         file_details = yaml.load(file_content)
     # if neither yml nor json then probably a CHANGELOG or README file.
     else:

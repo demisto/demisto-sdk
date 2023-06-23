@@ -55,6 +55,10 @@ class Changelog:
             if not self.validate_log_yml():
                 logger.error("Something msg")
                 return False
+            if not self.is_pr_number_valid():  # I am not sure if this belongs in this part
+                logger.error("Something msg")
+                return False
+
         return True
 
     """ INIT """
@@ -92,6 +96,9 @@ class Changelog:
         self.cleaning_changelogs_folder()
 
     """ HELPER FUNCTIONS """
+
+    def is_pr_number_valid(self) -> bool:
+        ...
 
     def is_changelog_changed(self) -> bool:
         ...

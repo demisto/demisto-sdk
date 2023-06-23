@@ -39,7 +39,7 @@ class Changelog:
         ...
         """
         if self.is_release():
-            if not self.is_changelog_folder_empty():
+            if not self.is_log_folder_empty():
                 logger.error("Something msg")
                 return False
             if not self.is_changelog_changed():
@@ -49,10 +49,10 @@ class Changelog:
             if self.is_changelog_changed():
                 logger.error("Something msg")
                 return False
-            if not self.is_changelog_yml_exist():
+            if not self.is_log_yml_exist():
                 logger.error("Something msg")
                 return False
-            if not self.validate_changelog_yml():
+            if not self.validate_log_yml():
                 logger.error("Something msg")
                 return False
         return True
@@ -96,13 +96,13 @@ class Changelog:
     def is_changelog_changed(self) -> bool:
         ...
 
-    def is_changelog_folder_empty(self) -> bool:
+    def is_log_folder_empty(self) -> bool:
         return any(CHANGELOG_FOLDER.iterdir())
 
-    def is_changelog_yml_exist(self) -> bool:
+    def is_log_yml_exist(self) -> bool:
         return Path(f"{git_path()}/{self.pr_number}.yml").is_file()
 
-    def validate_changelog_yml(self) -> bool:
+    def validate_log_yml(self) -> bool:
         data = get_yaml(Path(f"{git_path()}/.changelog/{self.pr_number}.yml"))
         try:
             ChangelogObject(**data)

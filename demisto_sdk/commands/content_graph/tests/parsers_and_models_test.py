@@ -8,13 +8,16 @@ from demisto_sdk.commands.common.constants import (
     DEFAULT_CONTENT_ITEM_TO_VERSION,
     MarketplaceVersions,
 )
+from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.content_graph.common import (
     ContentType,
     Relationships,
     RelationshipType,
 )
+from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 from demisto_sdk.commands.content_graph.objects.pack import Pack as PackModel
+from demisto_sdk.commands.content_graph.objects.pre_process_rule import PreProcessRule
 from demisto_sdk.commands.content_graph.parsers.content_item import (
     NotAContentItemException,
 )
@@ -1457,6 +1460,16 @@ class TestParsersAndModels:
             expected_fromversion="8.1.0",
             expected_toversion="8.3.0",
         )
+
+    def test_preprocess_parser(self):
+        pre_process_rule = BaseContent.from_path(
+            Path(
+                f"{git_path()}/demisto_sdk/tests/test_files/content_slim/Packs/Sample01/PreProcessRules/preprocessrule-Drop.json"
+            )
+        )
+        assert isinstance(pre_process_rule, PreProcessRule)
+        assert pre_process_rule.name == "Drop"
+        assert pre_process_rule.object_id == "preprocessrule-Drop-id"
 
     def test_pack_parser(self, repo: Repo):
         """

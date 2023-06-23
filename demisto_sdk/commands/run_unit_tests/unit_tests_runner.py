@@ -27,8 +27,10 @@ DOCKER_PYTHONPATH = [
 
 DEFAULT_DOCKER_IMAGE = "demisto/python:1.3-alpine"
 
-PYTEST_RUNNER = f"{(Path(__file__).parent / 'pytest_runner.sh')}"
-POWERSHELL_RUNNER = f"{(Path(__file__).parent / 'pwsh_test_runner.sh')}"
+PYTEST_COMMAND = "python -m pytest . -v --rootdir=/content --override-ini='asyncio_mode=auto' --override-ini='junit_family=xunit1' --junitxml=.report_pytest.xml --cov-report= --cov=."
+PWSH_COMMAND = "pwsh Invoke-Pester -Configuration '@{Run=@{Exit=$true}; Output=@{Verbosity=\"Detailed\"}}'"
+TEST_REQUIREMENTS_DIR = Path(__file__).parent.parent / "lint" / "resources"
+
 
 NO_TESTS_COLLECTED = 5
 
@@ -101,7 +103,7 @@ def merge_coverage_report():
 
 def unit_test_runner(file_paths: List[Path], verbose: bool = False) -> int:
     docker_client = docker_helper.init_global_docker_client()
-
+    docker_base = docker_helper.get_docker()
     exit_code = 0
     for filename in file_paths:
         integration_script = BaseContent.from_path(Path(filename))
@@ -109,18 +111,14 @@ def unit_test_runner(file_paths: List[Path], verbose: bool = False) -> int:
             logger.warning(f"Skipping {filename} as it is not a content item.")
             continue
 
+        relative_integration_script_path = integration_script.path.relative_to(
+            CONTENT_PATH
+        )
+
         if (test_data_dir := (integration_script.path.parent / "test_data")).exists():
             (test_data_dir / "__init__.py").touch()
 
-        working_dir = (
-            f"/content/{integration_script.path.parent.relative_to(CONTENT_PATH)}"
-        )
-        runner = (
-            POWERSHELL_RUNNER
-            if integration_script.type == "powershell"
-            else PYTEST_RUNNER
-        )
-        shutil.copy(runner, integration_script.path.parent / "test_runner.sh")
+        working_dir = f"/content/{relative_integration_script_path.parent}"
         docker_images = [integration_script.docker_image or DEFAULT_DOCKER_IMAGE]
         if os.getenv("GITLAB_CI"):
             docker_images = [
@@ -129,9 +127,14 @@ def unit_test_runner(file_paths: List[Path], verbose: bool = False) -> int:
             ]
         logger.debug(f"{docker_images=}")
         for docker_image in docker_images:
-            logger.info(f"Running test for {filename} using {docker_image=}")
             try:
-                docker_client.images.pull(docker_image)
+                test_docker_image, errors = docker_base.pull_or_create_test_image(
+                    docker_image,
+                    integration_script.type,
+                    log_prompt=f"Unit test {integration_script.name}",
+                )
+                if errors:
+                    raise RuntimeError(f"Creating docker failed due to {errors}")
                 shutil.copy(
                     CONTENT_PATH
                     / "Tests"
@@ -141,8 +144,12 @@ def unit_test_runner(file_paths: List[Path], verbose: bool = False) -> int:
                     / "conftest.py",
                     integration_script.path.parent / "conftest.py",
                 )
+
+                logger.info(
+                    f"Running test for {relative_integration_script_path} using {docker_image=} with {test_docker_image=}"
+                )
                 container = docker_client.containers.run(
-                    image=docker_image,
+                    image=test_docker_image,
                     environment={
                         "PYTHONPATH": ":".join(DOCKER_PYTHONPATH),
                         "REQUESTS_CA_BUNDLE": "/etc/ssl/certs/ca-certificates.crt",
@@ -150,10 +157,12 @@ def unit_test_runner(file_paths: List[Path], verbose: bool = False) -> int:
                     },
                     volumes=[
                         f"{CONTENT_PATH}:/content",
-                        "/etc/ssl/certs/ca-certificates.crt:/etc/ssl/certs/ca-certificates.crt",
-                        "/etc/pip.conf:/etc/pip.conf",
                     ],
-                    command="sh test_runner.sh",
+                    command=[
+                        PWSH_COMMAND
+                        if integration_script.type == "powershell"
+                        else PYTEST_COMMAND
+                    ],
                     user=f"{os.getuid()}:{os.getgid()}",
                     working_dir=working_dir,
                     detach=True,
@@ -167,14 +176,14 @@ def unit_test_runner(file_paths: List[Path], verbose: bool = False) -> int:
                 if status_code := container.wait()["StatusCode"]:
                     if status_code == NO_TESTS_COLLECTED:
                         logger.warning(
-                            f"No test are collected for {integration_script.path} using {docker_image}."
+                            f"No test are collected for {relative_integration_script_path} using {docker_image}."
                         )
                         continue
                     if not (
                         integration_script.path.parent / ".report_pytest.xml"
                     ).exists():
                         raise Exception(
-                            f"No pytest report found in {integration_script.path.parent}. Logs: {container.logs()}"
+                            f"No pytest report found in {relative_integration_script_path.parent}. Logs: {container.logs()}"
                         )
                     test_failed = False
                     for suite in JUnitXml.fromfile(
@@ -188,11 +197,13 @@ def unit_test_runner(file_paths: List[Path], verbose: bool = False) -> int:
                                 test_failed = True
                     if not test_failed:
                         logger.error(
-                            f"Error running unit tests for {integration_script.path} using {docker_image=}. Container reports  {status_code=}, logs: {container.logs()}"
+                            f"Error running unit tests for {relative_integration_script_path} using {docker_image=}. Container reports  {status_code=}, logs: {container.logs()}"
                         )
                     exit_code = 1
                 else:
-                    logger.info(f"All tests passed for {filename} in {docker_image}")
+                    logger.info(
+                        f"[green]All tests passed for {relative_integration_script_path} in {docker_image}[/green]"
+                    )
                 container.remove(force=True)
             except Exception as e:
                 logger.error(
@@ -200,11 +211,6 @@ def unit_test_runner(file_paths: List[Path], verbose: bool = False) -> int:
                 )
                 traceback.print_exc()
                 exit_code = 1
-            finally:
-                # remove pytest.ini no matter the results
-                shutil.rmtree(
-                    integration_script.path.parent / ".pytest.ini", ignore_errors=True
-                )
     try:
         merge_coverage_report()
     except Exception as e:

@@ -544,7 +544,7 @@ def get_file_details(
 ) -> Dict:
     if full_file_path.endswith("json"):
         file_details = json.loads(file_content)
-    elif full_file_path.endswith("yml"):
+    elif full_file_path.endswith(("yml", "yaml")):
         file_details = yaml.load(file_content)
     # if neither yml nor json then probably a CHANGELOG or README file.
     else:
@@ -572,7 +572,15 @@ def get_remote_file(
     tag = tag.replace("origin/", "").replace("demisto/", "")
     if not git_content_config:
         try:
-            return get_local_remote_file(full_file_path, tag, return_content)
+            if not (
+                local_origin_content := get_local_remote_file(
+                    full_file_path, tag, return_content
+                )
+            ):
+                raise ValueError(
+                    f"Got empty content from local-origin file {full_file_path}"
+                )
+            return local_origin_content
         except Exception as e:
             logger.debug(
                 f"Could not get local remote file because of: {str(e)}\n"
@@ -796,6 +804,7 @@ def get_file(
     file_path: Union[str, Path],
     type_of_file: Optional[str] = None,
     clear_cache: bool = False,
+    return_content: bool = False,
 ):
     if clear_cache:
         get_file.cache_clear()
@@ -812,6 +821,8 @@ def get_file(
 
     try:
         file_content = _read_file(file_path)
+        if return_content:
+            return file_content
     except IOError as e:
         logger.error(f"Could not read file {file_path}.\nError: {e}")
         return {}
@@ -828,6 +839,34 @@ def get_file(
             f"{file_path} has a structure issue of file type {type_of_file}\n{e}"
         )
         return {}
+
+
+def get_file_or_remote(file_path: Path, clear_cache=False):
+    content_path = get_content_path()
+    relative_file_path = None
+    if file_path.is_absolute():
+        absolute_file_path = file_path
+        try:
+            relative_file_path = file_path.relative_to(content_path)
+        except ValueError:
+            logger.debug(
+                f"{file_path} is not a subpath of {content_path}. If the file does not exists locally, it could not be fetched."
+            )
+    else:
+        absolute_file_path = content_path / file_path
+        relative_file_path = file_path
+    try:
+        return get_file(absolute_file_path, clear_cache=clear_cache)
+    except FileNotFoundError:
+        logger.warning(
+            f"Could not read/find {absolute_file_path} locally, fetching from remote"
+        )
+        if not relative_file_path:
+            logger.error(
+                f"The file path provided {file_path} is not a subpath of {content_path}. could not fetch from remote."
+            )
+            raise
+        return get_remote_file(str(relative_file_path))
 
 
 def get_yaml(file_path, cache_clear=False):
@@ -1988,7 +2027,7 @@ def get_latest_upload_flow_commit_hash() -> str:
     return last_commit
 
 
-def get_content_path() -> Union[str, PathLike, None]:
+def get_content_path() -> Path:
     """Get abs content path, from any CWD
     Returns:
         str: Absolute content path
@@ -2006,13 +2045,15 @@ def get_content_path() -> Union[str, PathLike, None]:
 
         if not is_fork_repo and not is_external_repo:
             raise git.InvalidGitRepositoryError
-        return git_repo.working_dir
+        if not git_repo.working_dir:
+            return Path.cwd()
+        return Path(git_repo.working_dir)
     except (git.InvalidGitRepositoryError, git.NoSuchPathError):
         if not os.getenv("DEMISTO_SDK_IGNORE_CONTENT_WARNING"):
             logger.info(
                 "[yellow]Please run demisto-sdk in content repository![/yellow]"
             )
-    return ""
+    return Path(".")
 
 
 def run_command_os(

@@ -1,6 +1,8 @@
 # Changelog
 ## Unreleased
 
+## 1.1.1
+
 
 ## 1.17.0
 * **validate** will only fail on docker related errors if the pack is supported by xsoar.

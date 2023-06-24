@@ -56,6 +56,30 @@ def get_all_level_packs_dependencies(
     }
 
 
+def get_all_level_packs_imports(
+    tx: Transaction,
+    ids_list: List[int],
+    **properties,
+) -> Dict[int, Neo4jRelationshipResult]:
+
+    query = f"""
+        UNWIND $ids_list AS pack_id
+        MATCH path=shortestPath((node_from) - [relationship:{RelationshipType.IMPORTS}*..{MAX_DEPTH}] - (node_to))
+        WHERE id(node_from) = pack_id and node_from <> node_to
+        return pack_id, node_from, collect(relationship) AS relationships, collect(node_to) AS nodes_to
+    """
+    result = run_query(tx, query, ids_list=list(ids_list))
+    logger.debug("Found dependencies.")
+    return {
+        int(item.get("pack_id")): Neo4jRelationshipResult(
+            node_from=item.get("node_from"),
+            nodes_to=item.get("nodes_to"),
+            relationships=item.get("relationships"),
+        )
+        for item in result
+    }
+
+
 def create_pack_dependencies(tx: Transaction) -> None:
     remove_existing_depends_on_relationships(tx)
     update_uses_for_integration_commands(tx)

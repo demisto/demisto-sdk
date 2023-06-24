@@ -32,6 +32,7 @@ from demisto_sdk.commands.content_graph.interface.neo4j.queries.constraints impo
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.dependencies import (
     create_pack_dependencies,
     get_all_level_packs_dependencies,
+    get_all_level_packs_imports,
 )
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.import_export import (
     export_graphml,
@@ -265,6 +266,45 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
                     ),
                 )
 
+    def _add_all_level_imports(
+        self,
+        session: Session,
+        pack_node_ids: Iterable[int],
+    ):
+        """Helper method to add all level imports
+
+        Args:
+            session (Session): neo4j session
+            pack_nodes (List[graph.Node]): List of the pack nodes
+        """
+        relationships: Dict[int, Neo4jRelationshipResult] = session.execute_read(
+            get_all_level_packs_imports, pack_node_ids
+        )
+        nodes_to = []
+        for pack_relationship in relationships.values():
+            nodes_to.extend(pack_relationship.nodes_to)
+        self._add_nodes_to_mapping(nodes_to)
+
+        for pack_id, pack_relationship in relationships.items():
+            obj = self._id_to_obj[pack_id]
+            for node_to, relationship in zip(
+                pack_relationship.nodes_to, pack_relationship.relationships
+            ):
+                target = self._id_to_obj[node_to.id]
+                for r in relationship:
+                    relationship_type = r.type
+                    obj.add_relationship(
+                        relationship_type,
+                        RelationshipData(
+                            relationship_type=relationship_type,
+                            source_id=node_to.id,
+                            target_id=pack_id,
+                            content_item_to=target,
+                            mandatorily=True,
+                            is_direct=False,
+                        ),
+                    )
+
     def _add_nodes_to_mapping(self, nodes: Iterable[graph.Node]) -> None:
         """Add nodes to the content models mapping
 
@@ -292,6 +332,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         content_type: Optional[ContentType] = None,
         ids_list: Optional[Iterable[int]] = None,
         all_level_dependencies: bool = False,
+        all_level_imports: bool = False,
         **properties,
     ) -> List[BaseContent]:
         """
@@ -320,6 +361,9 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
                 for result in results
                 if isinstance(self._id_to_obj[result.id], Pack)
             }
+            nodes = {result.id for result in results}
+            if all_level_imports:
+                self._add_all_level_imports(session, nodes)
             if all_level_dependencies and pack_nodes and marketplace:
                 self._add_all_level_dependencies(session, marketplace, pack_nodes)
             return [self._id_to_obj[result.id] for result in results]
@@ -555,6 +599,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         content_type: Optional[ContentType] = None,
         ids_list: Optional[Iterable[int]] = None,
         all_level_dependencies: bool = False,
+        all_level_imports: bool = False,
         **properties,
     ) -> List[BaseContent]:
         """
@@ -572,7 +617,12 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         """
         super().search()
         return self._search(
-            marketplace, content_type, ids_list, all_level_dependencies, **properties
+            marketplace,
+            content_type,
+            ids_list,
+            all_level_dependencies,
+            all_level_imports,
+            **properties,
         )
 
     def create_pack_dependencies(self):

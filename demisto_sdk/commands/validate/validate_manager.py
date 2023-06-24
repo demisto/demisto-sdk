@@ -2208,7 +2208,6 @@ class ValidateManager:
             integrations = get_api_module_from_graph(
                 api_module_set, graph_validator.graph
             )
-
             packs_that_should_have_new_rn_api_module_related = set(
                 map(lambda integration: integration.pack_id, integrations)
             )

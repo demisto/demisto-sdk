@@ -3639,7 +3639,9 @@ def get_api_module_from_graph(changed_api_modules: set, graph=None) -> List:
             logger.info(
                 f"Checking for packages dependent on the modified API module {changed_api_module}..."
             )
-            api_module_nodes = graph.search(object_id=changed_api_module)
+            api_module_nodes = graph.search(
+                object_id=changed_api_module, all_level_imports=True
+            )
             # search return the one node of the changed_api_module
             api_module_node = api_module_nodes[0] if api_module_nodes else None
             if not api_module_node:

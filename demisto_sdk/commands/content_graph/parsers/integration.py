@@ -35,7 +35,6 @@ class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGR
         self.commands: List[CommandParser] = []
         self.connect_to_commands()
         self.connect_to_dependencies()
-        self.connect_to_api_modules()
         self.connect_to_tests()
 
     @property
@@ -107,14 +106,3 @@ class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGR
         return IntegrationScriptUnifier.get_script_or_integration_package_data(
             self.path.parent
         )[1]
-
-    def connect_to_api_modules(self) -> None:
-        """Creates IMPORTS relationships with the API modules used in the integration."""
-        code = self.code
-        if not code:
-            raise ValueError("Integration code is not available")
-        api_modules = IntegrationScriptUnifier.check_api_module_imports(code).values()
-        for api_module in api_modules:
-            self.add_relationship(
-                RelationshipType.IMPORTS, api_module, ContentType.SCRIPT
-            )

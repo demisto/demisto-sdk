@@ -31,7 +31,6 @@ from demisto_sdk.commands.content_graph.interface.neo4j.queries.constraints impo
 )
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.dependencies import (
     create_pack_dependencies,
-    get_all_level_packs_relationships,
     get_all_level_packs_dependencies,
 )
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.import_export import (
@@ -230,8 +229,9 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
     def _add_all_level_dependencies(
         self,
         session: Session,
-        marketplace: MarketplaceVersions,
         pack_node_ids: Iterable[int],
+        relationship_type: RelationshipType,
+        marketplace: MarketplaceVersions = None,
     ):
         """Helper method to add all level dependencies
 
@@ -243,7 +243,11 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         mandatorily_dependencies: Dict[
             int, Neo4jRelationshipResult
         ] = session.execute_read(
-            get_all_level_packs_dependencies, pack_node_ids, marketplace, True
+            get_all_level_packs_dependencies,
+            relationship_type,
+            pack_node_ids,
+            marketplace,
+            True,
         )
         nodes_to = []
         for pack_depends_on_relationship in mandatorily_dependencies.values():
@@ -254,63 +258,25 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             obj = self._id_to_obj[pack_id]
             for node in pack_depends_on_relationship.nodes_to:
                 target = self._id_to_obj[node.id]
-                obj.add_relationship(
-                    RelationshipType.DEPENDS_ON,
-                    RelationshipData(
-                        relationship_type=RelationshipType.DEPENDS_ON,
-                        source_id=pack_id,
-                        target_id=node.id,
-                        content_item_to=target,
-                        mandatorily=True,
-                        is_direct=False,
-                    ),
-                )
-
-    def _add_all_level_relationships(
-        self,
-        session: Session,
-        pack_node_ids: Iterable[int],
-        type: RelationshipType,
-        marketplace: MarketplaceVersions = None,
-    ):
-        """Helper method to add all level relationship
-
-        Args:
-            session (Session): neo4j session
-            pack_nodes (List[graph.Node]): List of the pack nodes
-            type (RelationshipType): the type of the relationship
-        """
-        relationships: Dict[int, Neo4jRelationshipResult] = session.execute_read(
-            get_all_level_packs_relationships, pack_node_ids, type, marketplace
-        )
-        nodes_to = []
-        for pack_relationship in relationships.values():
-            nodes_to.extend(pack_relationship.nodes_to)
-        self._add_nodes_to_mapping(nodes_to)
-
-        for pack_id, pack_relationship in relationships.items():
-            obj = self._id_to_obj[pack_id]
-            for node_to in pack_relationship.nodes_to:
-                target = self._id_to_obj[node_to.id]
-                if type == RelationshipType.IMPORTS:
-                    obj.add_relationship(
-                        RelationshipType.IMPORTS,
-                        RelationshipData(
-                            relationship_type=RelationshipType.IMPORTS,
-                            source_id=node_to.id,
-                            target_id=pack_id,
-                            content_item_to=target,
-                            mandatorily=True,
-                            is_direct=False,
-                        ),
-                    )
-                elif type == RelationshipType.DEPENDS_ON:
+                if relationship_type == RelationshipType.DEPENDS_ON:
                     obj.add_relationship(
                         RelationshipType.DEPENDS_ON,
                         RelationshipData(
                             relationship_type=RelationshipType.DEPENDS_ON,
                             source_id=pack_id,
-                            target_id=node_to.id,
+                            target_id=node.id,
+                            content_item_to=target,
+                            mandatorily=True,
+                            is_direct=False,
+                        ),
+                    )
+                elif relationship_type == RelationshipType.IMPORTS:
+                    obj.add_relationship(
+                        RelationshipType.IMPORTS,
+                        RelationshipData(
+                            relationship_type=RelationshipType.IMPORTS,
+                            source_id=node.id,
+                            target_id=pack_id,
                             content_item_to=target,
                             mandatorily=True,
                             is_direct=False,
@@ -375,11 +341,13 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             }
             nodes = {result.id for result in results}
             if all_level_imports:
-                self._add_all_level_relationships(
+                self._add_all_level_dependencies(
                     session, nodes, RelationshipType.IMPORTS
                 )
             if all_level_dependencies and pack_nodes and marketplace:
-                self._add_all_level_dependencies(session, marketplace, pack_nodes)
+                self._add_all_level_dependencies(
+                    session, pack_nodes, RelationshipType.DEPENDS_ON, marketplace
+                )
             return [self._id_to_obj[result.id] for result in results]
 
     def create_indexes_and_constraints(self) -> None:

@@ -31,7 +31,7 @@ from demisto_sdk.commands.content_graph.interface.neo4j.queries.constraints impo
 )
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.dependencies import (
     create_pack_dependencies,
-    get_all_level_packs_dependencies,
+    get_all_level_packs_relationships,
 )
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.import_export import (
     export_graphml,
@@ -226,7 +226,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
                 ),
             )
 
-    def _add_all_level_dependencies(
+    def _add_all_level_relationships(
         self,
         session: Session,
         pack_node_ids: Iterable[int],
@@ -243,7 +243,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         mandatorily_dependencies: Dict[
             int, Neo4jRelationshipResult
         ] = session.execute_read(
-            get_all_level_packs_dependencies,
+            get_all_level_packs_relationships,
             relationship_type,
             pack_node_ids,
             marketplace,
@@ -341,11 +341,11 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             }
             nodes = {result.id for result in results}
             if all_level_imports:
-                self._add_all_level_dependencies(
+                self._add_all_level_relationships(
                     session, nodes, RelationshipType.IMPORTS
                 )
             if all_level_dependencies and pack_nodes and marketplace:
-                self._add_all_level_dependencies(
+                self._add_all_level_relationships(
                     session, pack_nodes, RelationshipType.DEPENDS_ON, marketplace
                 )
             return [self._id_to_obj[result.id] for result in results]

@@ -27,7 +27,7 @@ IGNORED_PACKS_IN_DEPENDENCY_CALC = ["NonSupported", "Base", "ApiModules"]
 MAX_DEPTH = 5
 
 
-def get_all_level_packs_dependencies(
+def get_all_level_packs_relationships(
     tx: Transaction,
     relationship_type: RelationshipType,
     ids_list: List[int],

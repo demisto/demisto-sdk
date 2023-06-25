@@ -232,8 +232,6 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         session: Session,
         marketplace: MarketplaceVersions,
         pack_node_ids: Iterable[int],
-        type: RelationshipType,
-
     ):
         """Helper method to add all level dependencies
 

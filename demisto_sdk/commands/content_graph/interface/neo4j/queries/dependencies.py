@@ -39,15 +39,13 @@ def get_all_level_packs_relationships(
     params_str = to_neo4j_map(properties)
     if type == RelationshipType.DEPENDS_ON:
         query = f"""
-            UNWIND $ids_list AS pack_id
-            MATCH path = shortestPath((p1:{ContentType.PACK}{params_str})-[r:{RelationshipType.DEPENDS_ON}*..{MAX_DEPTH}]->(p2:{ContentType.PACK}))
-            WHERE id(p1) = pack_id AND id(p1) <> id(p2)
-            AND all(n IN nodes(path) WHERE "{marketplace}" IN n.marketplaces)
-            AND all(r IN relationships(path) WHERE NOT r.is_test
-            {"AND r.mandatorily = true)" if mandatorily else ""}
-            RETURN pack_id, p1 as node_from ,collect(r) as relationships,
-            collect(p2) AS node_to
-        """
+        UNWIND $ids_list AS pack_id
+        MATCH path = shortestPath((p1:{ContentType.PACK}{params_str})-[r:{RelationshipType.DEPENDS_ON}*..{MAX_DEPTH}]->(p2:{ContentType.PACK}))
+        WHERE id(p1) = pack_id AND id(p1) <> id(p2)
+        AND all(n IN nodes(path) WHERE "{marketplace}" IN n.marketplaces)
+        AND all(r IN relationships(path) WHERE NOT r.is_test {"AND r.mandatorily = true)" if mandatorily else ")"}
+        RETURN pack_id, collect(r) as relationships, collect(p2) AS nodes_to
+    """
 
     elif type == RelationshipType.IMPORTS:
         query = f"""UNWIND $ids_list AS pack_id

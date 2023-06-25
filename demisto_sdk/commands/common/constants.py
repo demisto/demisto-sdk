@@ -794,11 +794,9 @@ ID_IN_ROOT = [  # entities in which 'id' key is in the root
 INTEGRATION_PREFIX = "integration"
 SCRIPT_PREFIX = "script"
 PARSING_RULE_PREFIX = "parsingrule"
-PARSING_RULE_FILE_SUFFIX_REGEX = r"ParsingRules([_\d]*)?\.yml$"
 PARSING_RULE_ID_SUFFIX = "ParsingRule"
 PARSING_RULE_NAME_SUFFIX = "Parsing Rule"
 MODELING_RULE_PREFIX = "modelingrule"
-MODELING_RULE_FILE_SUFFIX_REGEX = r"ModelingRules([_\d]*)?\.yml$"
 MODELING_RULE_ID_SUFFIX = "ModelingRule"
 MODELING_RULE_NAME_SUFFIX = "Modeling Rule"
 XDRC_TEMPLATE_PREFIX = "xdrctemplate"
@@ -1098,9 +1096,17 @@ REQUIRED_YML_FILE_TYPES = [
 
 TYPE_PWSH = "powershell"
 TYPE_PYTHON = "python"
+TYPE_PYTHON3 = "python3"
+TYPE_PYTHON2 = "python2"
 TYPE_JS = "javascript"
 
-TYPE_TO_EXTENSION = {TYPE_PYTHON: ".py", TYPE_JS: ".js", TYPE_PWSH: ".ps1"}
+TYPE_TO_EXTENSION = {
+    TYPE_PYTHON: ".py",
+    TYPE_PYTHON3: ".py",
+    TYPE_PYTHON2: ".py",
+    TYPE_JS: ".js",
+    TYPE_PWSH: ".ps1",
+}
 
 TESTS_AND_DOC_DIRECTORIES = [
     "testdata",
@@ -1392,7 +1398,7 @@ DEFAULT_PYTHON_VERSION = "3.10"
 DEFAULT_PYTHON2_VERSION = "2.7"
 
 # This constant below should always be two versions before the latest server version
-GENERAL_DEFAULT_FROMVERSION = "6.8.0"
+GENERAL_DEFAULT_FROMVERSION = "6.9.0"
 VERSION_5_5_0 = "5.5.0"
 DEFAULT_CONTENT_ITEM_FROM_VERSION = "0.0.0"
 DEFAULT_CONTENT_ITEM_TO_VERSION = "99.99.99"

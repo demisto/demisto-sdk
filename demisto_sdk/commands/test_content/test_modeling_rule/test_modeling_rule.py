@@ -274,6 +274,9 @@ def check_dataset_exists(
     process_failed = False
     dataset_set = {data.dataset for data in test_data.data}
     for dataset in dataset_set:
+        number_of_events = len(
+            [data for data in test_data.data if data.dataset == dataset]
+        )
         dataset_exist = False
         logger.info(
             f'[cyan]Checking if dataset "{dataset}" exists on the tenant...[/cyan]',
@@ -293,6 +296,12 @@ def check_dataset_exists(
                         extra={"markup": True},
                     )
                     dataset_exist = True
+                elif (
+                    i < (timeout // interval) - 1
+                    and isinstance(results, list)
+                    and len(results) < number_of_events
+                ):
+                    continue
                 else:
                     err = (
                         f"[red]Dataset {dataset} exists but no results were returned. This could mean that your testdata "

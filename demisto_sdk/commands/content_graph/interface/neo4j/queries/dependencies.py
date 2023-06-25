@@ -27,49 +27,41 @@ IGNORED_PACKS_IN_DEPENDENCY_CALC = ["NonSupported", "Base", "ApiModules"]
 MAX_DEPTH = 5
 
 
-def get_all_level_packs_dependencies(
+def get_all_level_packs_relationships(
     tx: Transaction,
     ids_list: List[int],
-    marketplace: MarketplaceVersions,
+    type: RelationshipType,
+    marketplace: MarketplaceVersions = None,
     mandatorily: bool = False,
     **properties,
 ) -> Dict[int, Neo4jRelationshipResult]:
+
     params_str = to_neo4j_map(properties)
+    if type == RelationshipType.DEPENDS_ON:
+        query = f"""
+            UNWIND $ids_list AS pack_id
+            MATCH path = shortestPath((p1:{ContentType.PACK}{params_str})-[r:{RelationshipType.DEPENDS_ON}*..{MAX_DEPTH}]->(p2:{ContentType.PACK}))
+            WHERE id(p1) = pack_id AND id(p1) <> id(p2)
+            AND all(n IN nodes(path) WHERE "{marketplace}" IN n.marketplaces)
+            AND all(r IN relationships(path) WHERE NOT r.is_test
+            {"AND r.mandatorily = true)" if mandatorily else ""}
+            RETURN pack_id, p1 as node_from ,collect(r) as relationships,
+            collect(p2) AS node_to
+        """
 
-    query = f"""
-        UNWIND $ids_list AS pack_id
-        MATCH path = shortestPath((p1:{ContentType.PACK}{params_str})-[r:{RelationshipType.DEPENDS_ON}*..{MAX_DEPTH}]->(p2:{ContentType.PACK}))
-        WHERE id(p1) = pack_id AND id(p1) <> id(p2)
-        AND all(n IN nodes(path) WHERE "{marketplace}" IN n.marketplaces)
-        AND all(r IN relationships(path) WHERE NOT r.is_test {"AND r.mandatorily = true)" if mandatorily else ""}
-        RETURN pack_id, collect(r) as relationships, collect(p2) AS dependencies
-    """
+    elif type == RelationshipType.IMPORTS:
+        query = f"""UNWIND $ids_list AS pack_id
+            MATCH path=shortestPath((node_from) - [relationship:{RelationshipType.IMPORTS}*..{MAX_DEPTH}] - (node_to))
+            WHERE id(node_from) = pack_id and node_from <> node_to
+            return pack_id, node_from, collect(relationship) AS relationships,
+            collect(node_to) AS nodes_to
+        """
+    else:
+        logger.debug("only support for IMPORTS or DEPENDS_ON relationship")
+        return {}
+
     result = run_query(tx, query, ids_list=list(ids_list))
-    logger.debug("Found dependencies.")
-    return {
-        int(item.get("pack_id")): Neo4jRelationshipResult(
-            node_from=item.get("node_from"),
-            nodes_to=item.get("dependencies"),
-            relationships=item.get("relationships"),
-        )
-        for item in result
-    }
-
-
-def get_all_level_packs_imports(
-    tx: Transaction,
-    ids_list: List[int],
-    **properties,
-) -> Dict[int, Neo4jRelationshipResult]:
-
-    query = f"""
-        UNWIND $ids_list AS pack_id
-        MATCH path=shortestPath((node_from) - [relationship:{RelationshipType.IMPORTS}*..{MAX_DEPTH}] - (node_to))
-        WHERE id(node_from) = pack_id and node_from <> node_to
-        return pack_id, node_from, collect(relationship) AS relationships, collect(node_to) AS nodes_to
-    """
-    result = run_query(tx, query, ids_list=list(ids_list))
-    logger.debug("Found dependencies.")
+    logger.debug("Found relationship.")
     return {
         int(item.get("pack_id")): Neo4jRelationshipResult(
             node_from=item.get("node_from"),

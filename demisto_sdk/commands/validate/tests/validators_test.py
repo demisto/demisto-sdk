@@ -1319,10 +1319,10 @@ class TestValidators:
             incident_field1.get_path_from_pack(),
             incident_field2.get_path_from_pack(),
         }
-        # Mock the graph and the get_api_module_from_graph function
+        # Mock the graph and the get_api_module_dependencies_from_graph function
         integration_mock = mock_integration("ApiDependent")
         mocker.patch(
-            "demisto_sdk.commands.validate.validate_manager.get_api_module_from_graph",
+            "demisto_sdk.commands.validate.validate_manager.get_api_module_dependencies_from_graph",
             return_value=[integration_mock],
         )
         added_files = {"Packs/PackName1/ReleaseNotes/1_0_0.md"}
@@ -1357,7 +1357,7 @@ class TestValidators:
         integration_mock = mock_integration("ApiDependent", "Packs/ApiDependent/")
         validate_manager = ValidateManager()
         mocker.patch(
-            "demisto_sdk.commands.validate.validate_manager.get_api_module_from_graph",
+            "demisto_sdk.commands.validate.validate_manager.get_api_module_dependencies_from_graph",
             return_value=[integration_mock],
         )
         mocker.patch.object(

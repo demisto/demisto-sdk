@@ -147,7 +147,7 @@ from demisto_sdk.commands.common.logger import get_log_file, logger
 from demisto_sdk.commands.common.tools import (
     _get_file_id,
     find_type,
-    get_api_module_from_graph,
+    get_api_module_dependencies_from_graph,
     get_api_module_ids,
     get_api_module_integrations_set,
     get_file,
@@ -2205,7 +2205,7 @@ class ValidateManager:
         )
         if API_MODULES_PACK in packs_that_should_have_new_rn:
             api_module_set = get_api_module_ids(changed_files)
-            integrations = get_api_module_from_graph(
+            integrations = get_api_module_dependencies_from_graph(
                 api_module_set, graph_validator.graph
             )
             packs_that_should_have_new_rn_api_module_related = set(

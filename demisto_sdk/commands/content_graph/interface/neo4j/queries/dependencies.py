@@ -26,7 +26,34 @@ IGNORED_PACKS_IN_DEPENDENCY_CALC = ["NonSupported", "Base", "ApiModules"]
 
 MAX_DEPTH = 5
 
+def get_all_level_packs_dependencies(
+    tx: Transaction,
+    ids_list: List[int],
+    marketplace: MarketplaceVersions,
+    mandatorily: bool = False,
+    **properties,
+) -> Dict[int, Neo4jRelationshipResult]:
+    params_str = to_neo4j_map(properties)
 
+    query = f"""
+        UNWIND $ids_list AS pack_id
+        MATCH path = shortestPath((p1:{ContentType.PACK}{params_str})-[r:{RelationshipType.DEPENDS_ON}*..{MAX_DEPTH}]->(p2:{ContentType.PACK}))
+        WHERE id(p1) = pack_id AND id(p1) <> id(p2)
+        AND all(n IN nodes(path) WHERE "{marketplace}" IN n.marketplaces)
+        AND all(r IN relationships(path) WHERE NOT r.is_test {"AND r.mandatorily = true)" if mandatorily else ""}
+        RETURN pack_id, collect(r) as relationships, collect(p2) AS dependencies
+    """
+    result = run_query(tx, query, ids_list=list(ids_list))
+    logger.debug("Found dependencies.")
+    return {
+        int(item.get("pack_id")): Neo4jRelationshipResult(
+            node_from=item.get("node_from"),
+            nodes_to=item.get("dependencies"),
+            relationships=item.get("relationships"),
+        )
+        for item in result
+    }
+    
 def get_all_level_packs_relationships(
     tx: Transaction,
     ids_list: List[int],
@@ -44,7 +71,7 @@ def get_all_level_packs_relationships(
         WHERE id(p1) = pack_id AND id(p1) <> id(p2)
         AND all(n IN nodes(path) WHERE "{marketplace}" IN n.marketplaces)
         AND all(r IN relationships(path) WHERE NOT r.is_test {"AND r.mandatorily = true)" if mandatorily else ")"}
-        RETURN pack_id, collect(r) as relationships, collect(p2) AS nodes_to
+        RETURN pack_id, p1 as node_from, collect(r) as relationships, collect(p2) AS nodes_to
     """
 
     elif type == RelationshipType.IMPORTS:

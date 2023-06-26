@@ -5,7 +5,7 @@ from typing import List
 
 from pydantic import ValidationError
 
-from demisto_sdk.commands.changelog.changelog_obj import ChangelogObject, ChangelogType
+from demisto_sdk.commands.changelog.changelog_obj import INITIAL_LOG, LogObject
 from demisto_sdk.commands.common.handlers import YAML_Handler
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.logger import logger
@@ -49,10 +49,10 @@ class Changelog:
             if self.is_changelog_changed():
                 logger.error("Something msg")
                 return False
-            if not self.is_changelog_yml_exist():
+            if not self.is_log_yml_exist():
                 logger.error("Something msg")
                 return False
-            if not self.validate_changelog_yml():
+            if not self.validate_log_yml():
                 logger.error("Something msg")
                 return False
         return True
@@ -61,18 +61,15 @@ class Changelog:
 
     def init(self) -> None:
         """
-        Creates a new changelog file for the current PR
+        Creates a new log file for the current PR
         """
         if self.is_release():
             logger.error(
                 "This PR is for release, please use in changelog release command"
             )
-        initial_changelog = {
-            "description": "enter description about this PR",
-            "type": "<fix|feature|breaking>",
-        }
+
         try:
-            new_obj = ChangelogObject(**initial_changelog)
+            new_obj = LogObject(**INITIAL_LOG)
         except ValidationError as e:
             logger.error(e.json())
 
@@ -88,7 +85,6 @@ class Changelog:
             logger.error("Something msg")
             return
         changelogs = self.get_all_changelogs()
-        self.edit_changelog_file(changelogs)
         self.cleaning_changelogs_folder()
 
     """ HELPER FUNCTIONS """
@@ -99,48 +95,28 @@ class Changelog:
     def is_changelog_folder_empty(self) -> bool:
         return any(CHANGELOG_FOLDER.iterdir())
 
-    def is_changelog_yml_exist(self) -> bool:
+    def is_log_yml_exist(self) -> bool:
         return Path(f"{git_path()}/{self.pr_number}.yml").is_file()
 
-    def validate_changelog_yml(self) -> bool:
+    def validate_log_yml(self) -> bool:
         data = get_yaml(Path(f"{git_path()}/.changelog/{self.pr_number}.yml"))
         try:
-            ChangelogObject(**data)
+            LogObject(**data)
         except ValidationError as e:
             logger.error(e.json())
             return False
         return True
 
-    def get_all_changelogs(self) -> List[ChangelogObject]:
-        changelogs: List[ChangelogObject] = []
+    def get_all_changelogs(self) -> List[LogObject]:
+        changelogs: List[LogObject] = []
         for path in CHANGELOG_FOLDER.iterdir():
             changelog_data = get_yaml(path)
             try:
-                changelogs.append(ChangelogObject(**changelog_data))
+                changelogs.append(LogObject(**changelog_data))
             except ValidationError as e:
                 logger.error(f"{path}: {e.json()}")
 
         return changelogs
-
-    def edit_changelog_file(self, changelogs: List[ChangelogObject]) -> None:
-        fixes = tuple(
-            filter(
-                lambda f: f.description if f.type == ChangelogType.fix else None,
-                changelogs,
-            )
-        )
-        features = tuple(
-            filter(
-                lambda f: f.description if f.type == ChangelogType.feature else None,
-                changelogs,
-            )
-        )
-        breakings = tuple(
-            filter(
-                lambda f: f.description if f.type == ChangelogType.breaking else None,
-                changelogs,
-            )
-        )
 
     def cleaning_changelogs_folder(self) -> None:
         for item in CHANGELOG_FOLDER.iterdir():

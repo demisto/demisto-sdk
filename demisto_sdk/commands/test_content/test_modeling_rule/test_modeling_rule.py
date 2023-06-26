@@ -274,7 +274,6 @@ def check_dataset_exists(
     process_failed = False
     dataset_set = {data.dataset for data in test_data.data}
     for dataset in dataset_set:
-        len([data for data in test_data.data if data.dataset == dataset])
         dataset_exist = False
         logger.info(
             f'[cyan]Checking if dataset "{dataset}" exists on the tenant...[/cyan]',

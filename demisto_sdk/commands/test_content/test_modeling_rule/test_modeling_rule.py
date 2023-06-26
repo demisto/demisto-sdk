@@ -274,9 +274,7 @@ def check_dataset_exists(
     process_failed = False
     dataset_set = {data.dataset for data in test_data.data}
     for dataset in dataset_set:
-        number_of_events = len(
-            [data for data in test_data.data if data.dataset == dataset]
-        )
+        len([data for data in test_data.data if data.dataset == dataset])
         dataset_exist = False
         logger.info(
             f'[cyan]Checking if dataset "{dataset}" exists on the tenant...[/cyan]',
@@ -296,11 +294,13 @@ def check_dataset_exists(
                         extra={"markup": True},
                     )
                     dataset_exist = True
-                elif (
-                    i < (timeout // interval) - 1
-                    and isinstance(results, list)
-                    and len(results) < number_of_events
-                ):
+                # if we don't have results from the dataset immediately we will continue to try until the timeout.
+                # if we don't have any results until the timeout dataset_exist is set to False and we will raise an error.
+                elif i < (timeout // interval) - 1:
+                    logger.info(
+                        f"[cyan]try to get result from the data set, there are not results for the {i}th time. continue.[/cyan]",
+                        extra={"markup": True},
+                    )
                     continue
                 else:
                     err = (

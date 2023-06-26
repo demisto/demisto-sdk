@@ -257,7 +257,7 @@ def validate_expected_values(
 def check_dataset_exists(
     xsiam_client: XsiamApiClient,
     test_data: init_test_data.TestData,
-    timeout: int = 120,
+    timeout: int = 180,
     interval: int = 5,
 ):
     """Check if the dataset in the test data file exists in the tenant.
@@ -297,7 +297,7 @@ def check_dataset_exists(
                 # if we don't have any results until the timeout dataset_exist is set to False and we will raise an error.
                 elif i < (timeout // interval) - 1:
                     logger.info(
-                        f"[cyan]try to get result from the data set, there are not results for the {i}th time. continue.[/cyan]",
+                        f"[cyan]try to get results from the data set, there are not results for the {i}th time. continue.[/cyan]",
                         extra={"markup": True},
                     )
                     continue

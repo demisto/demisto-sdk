@@ -125,6 +125,9 @@ class PackMetadataParser:
         self.marketplaces: List[MarketplaceVersions] = metadata.get(
             "marketplaces", DEFAULT_MARKETPLACES
         )
+        if MarketplaceVersions.XSOAR in self.marketplaces:
+            # Since we want xsoar-saas and xsoar to contain the same content items.
+            self.marketplaces.append(MarketplaceVersions.XSOAR_SAAS)
         self.excluded_dependencies: List[str] = metadata.get("excludedDependencies", [])
 
 

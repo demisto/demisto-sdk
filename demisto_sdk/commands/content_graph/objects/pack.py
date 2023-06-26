@@ -325,6 +325,10 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: i
             except Exception as e:
                 logger.error(f"Failed dumping readme: {e}")
 
+        self.replce_readme_urls_and_write_to_artifacts(path, marketplace)
+
+
+    def replce_readme_urls_and_write_to_artifacts(self, path, marketplace):
         pack_readme_images_data: dict = replace_readme_urls(path, marketplace, self.object_id)
 
         if (artifacts_folder := os.getenv("ARTIFACTS_FOLDER")) and Path(

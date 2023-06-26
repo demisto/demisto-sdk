@@ -1,7 +1,7 @@
 from pathlib import Path
 from typing import Any, Dict, List
 from zipfile import ZipFile
-
+import tempfile
 import pytest
 
 import demisto_sdk.commands.content_graph.neo4j_service as neo4j_service
@@ -897,3 +897,16 @@ class TestCreateContentGraph:
         assert (script_path / "script-getAlert.yml").exists()
         assert (script_path / "script-setIncident.yml").exists()
         assert not (script_path / "script-setAlert.yml").exists()
+
+
+#  omertodo: complete this test to check the population of the artifact readme_images_data file.
+# def test_dump_pack_readme(mocker):
+#     import os
+#     from demisto_sdk.commands.prepare_content.pack_readme_handler import replace_readme_urls
+#     pack = mock_pack()
+#     with tempfile.TemporaryDirectory() as artifact_dir:
+#         mocker.patch.object(os, 'getenv' , return_value=artifact_dir)
+#         mocker.patch("pack.replace_readme_urls", side_affect)
+#         pack.replce_readme_urls_and_write_to_artifacts('fake_path', MarketplaceVersions.MarketplaceV2)
+
+

@@ -1715,7 +1715,7 @@ MarketplaceVersionToMarketplaceName = {
     "xsoar": "marketplace-dist",
     "marketplacev2": "marketplace-v2-dist",
     "xpanse": "xpanse-dist",
-    "xsoar-saas": "xsoar-saas-dist",
+    "xsoar_saas": "marketplace-saas-dist",
 }
 
 MARKETPLACE_TO_CORE_PACKS_FILE: Dict[MarketplaceVersions, str] = {

@@ -13,9 +13,12 @@ from demisto_sdk.commands.common.logger import logger
 
 def replace_readme_urls(pack_readme_path: Path, marketplace: MarketplaceVersions, pack_name:str) -> dict:
     """
-    This function goes over the index.zip folder. iterates over all the pack README.md files.
-    It replaces inplace the readme images path to point to there new location gcp or api.
-
+    This function goes over the pack readme.md file and by the marketplace value.
+    replaces the images url to the appropriate images urls.
+    Args:
+        pack_readme_path (Path): The path of the pack readme file
+        marketplace (MarketplaceVersions): The marketplace version
+        pack_name (str): The pack name
     Returns:
         - A dict in the form of {pack_name: [images_data]} or empty dict if no images urls were found in the README
     """

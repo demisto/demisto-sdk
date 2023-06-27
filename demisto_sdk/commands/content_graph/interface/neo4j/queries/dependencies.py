@@ -40,7 +40,7 @@ def get_all_level_packs_relationships(
     if relationship_type == RelationshipType.DEPENDS_ON:
         query = f"""
             UNWIND $ids_list AS pack_id
-            MATCH path = shortestPath((p1:{ContentType.PACK}{params_str})-[r:{RelationshipType.DEPENDS_ON}*..{MAX_DEPTH}]->(p2:{ContentType.PACK}))
+            MATCH path = shortestPath((p1:{ContentType.PACK}{params_str})-[r:{relationship_type}*..{MAX_DEPTH}]->(p2:{ContentType.PACK}))
             WHERE id(p1) = pack_id AND id(p1) <> id(p2)
             AND all(n IN nodes(path) WHERE "{marketplace}" IN n.marketplaces)
             AND all(r IN relationships(path) WHERE NOT r.is_test {"AND r.mandatorily = true)" if mandatorily else ""}
@@ -48,7 +48,7 @@ def get_all_level_packs_relationships(
         """
     if relationship_type == RelationshipType.IMPORTS:
         query = f"""UNWIND $ids_list AS pack_id
-            MATCH path=shortestPath((node_from) - [relationship:{RelationshipType.IMPORTS}*..{MAX_DEPTH}] - (node_to))
+            MATCH path=shortestPath((node_from) <- [relationship:{relationship_type}*..{MAX_DEPTH}] - (node_to))
             WHERE id(node_from) = pack_id and node_from <> node_to
             return pack_id, node_from, collect(relationship) AS relationships,
             collect(node_to) AS dependencies

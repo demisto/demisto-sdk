@@ -3667,7 +3667,9 @@ def parse_marketplace_kwargs(kwargs: Dict[str, Any]) -> MarketplaceVersions:
     return MarketplaceVersions.XSOAR  # default
 
 
-def get_api_module_dependencies_from_graph(changed_api_modules: set, graph) -> List:
+def get_api_module_dependencies_from_graph(
+    changed_api_modules: Set[str], graph
+) -> List:
     if changed_api_modules:
         dependent_items = []
         for changed_api_module in changed_api_modules:

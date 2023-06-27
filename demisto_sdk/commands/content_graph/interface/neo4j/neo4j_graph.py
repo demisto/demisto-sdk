@@ -260,9 +260,9 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
                 target = self._id_to_obj[node.id]
                 if relationship_type == RelationshipType.DEPENDS_ON:
                     obj.add_relationship(
-                        RelationshipType.DEPENDS_ON,
+                        relationship_type,
                         RelationshipData(
-                            relationship_type=RelationshipType.DEPENDS_ON,
+                            relationship_type=relationship_type,
                             source_id=pack_id,
                             target_id=node.id,
                             content_item_to=target,
@@ -272,9 +272,9 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
                     )
                 elif relationship_type == RelationshipType.IMPORTS:
                     obj.add_relationship(
-                        RelationshipType.IMPORTS,
+                        relationship_type,
                         RelationshipData(
-                            relationship_type=RelationshipType.IMPORTS,
+                            relationship_type=relationship_type,
                             source_id=node.id,
                             target_id=pack_id,
                             content_item_to=target,

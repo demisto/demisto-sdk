@@ -2,6 +2,7 @@
 ## Unreleased
 * Fixed an issue where `register_module_line()` was not removed from python scripts when the script had no trailing newline.
 * Fixed an issue where attempting to individually upload `Preprocess Rule` files raised an unclear error message. Note: preprocess rules can not be individually uploaded, but only as part of a pack.
+* Fixed an issue where Indicator Types would fail to upload when using the **upload** command.
 
 
 ## 1.17.0

@@ -1,6 +1,7 @@
 # Changelog
 ## Unreleased
 * Fixed an issue where `register_module_line()` was not removed from python scripts when the script had no trailing newline.
+* Fixed an issue where an integration containing a command without a description would fail to upload while using the **upload** command.
 * Fixed an issue where attempting to individually upload `Preprocess Rule` files raised an unclear error message. Note: preprocess rules can not be individually uploaded, but only as part of a pack.
 
 

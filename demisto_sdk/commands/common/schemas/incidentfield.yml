@@ -16,6 +16,9 @@ mapping:
     required: True
   name_x2:
     type: str
+  prettyName:
+    type: str
+    required: False
   ownerOnly:
     type: bool
   placeholder:

@@ -4557,10 +4557,6 @@ class Errors:
     @error_code_decorator
     def invalid_modeling_rule_suffix_name(file_path, **kwargs):
         message = f"The file {file_path} is invalid:"
-        if kwargs.get("invalid_file_name"):
-            message += (
-                f"\nThe file name should end with '{MODELING_RULE_ID_SUFFIX}s.yml'"
-            )
         if kwargs.get("invalid_id"):
             message += f"\nThe rule id should end with '{MODELING_RULE_ID_SUFFIX}'"
         if kwargs.get("invalid_name"):
@@ -4571,10 +4567,6 @@ class Errors:
     @error_code_decorator
     def invalid_parsing_rule_suffix_name(file_path, **kwargs):
         message = f"The file {file_path} is invalid:"
-        if kwargs.get("invalid_file_name"):
-            message += (
-                f"\nThe file name should end with '{PARSING_RULE_ID_SUFFIX}s.yml'"
-            )
         if kwargs.get("invalid_id"):
             message += f"\nThe rule id should end with '{PARSING_RULE_ID_SUFFIX}'"
         if kwargs.get("invalid_name"):

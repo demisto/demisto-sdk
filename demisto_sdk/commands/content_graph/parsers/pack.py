@@ -15,6 +15,7 @@ from demisto_sdk.commands.content_graph.common import (
 from demisto_sdk.commands.content_graph.parsers.base_content import BaseContentParser
 from demisto_sdk.commands.content_graph.parsers.content_item import (
     ContentItemParser,
+    InvalidContentItemException,
     NotAContentItemException,
 )
 from demisto_sdk.commands.content_graph.parsers.content_items_list import (
@@ -68,6 +69,9 @@ class PackContentItems:
         self.xsiam_report = ContentItemsList(content_type=ContentType.XSIAM_REPORT)
         self.xdrc_template = ContentItemsList(content_type=ContentType.XDRC_TEMPLATE)
         self.layout_rule = ContentItemsList(content_type=ContentType.LAYOUT_RULE)
+        self.preprocess_rule = ContentItemsList(
+            content_type=ContentType.PREPROCESS_RULE
+        )
 
     def iter_lists(self) -> Iterator[ContentItemsList]:
         yield from vars(self).values()
@@ -122,8 +126,8 @@ class PackMetadataParser:
         self.vendor_id: Optional[str] = metadata.get("vendorId")
         self.vendor_name: Optional[str] = metadata.get("vendorName")
         self.preview_only: Optional[bool] = metadata.get("previewOnly")
-        self.marketplaces: List[MarketplaceVersions] = metadata.get(
-            "marketplaces", DEFAULT_MARKETPLACES
+        self.marketplaces: List[MarketplaceVersions] = (
+            metadata.get("marketplaces") or DEFAULT_MARKETPLACES
         )
         if MarketplaceVersions.XSOAR.value in self.marketplaces:
             # Since we want xsoar-saas and xsoar to contain the same content items.
@@ -149,7 +153,12 @@ class PackParser(BaseContentParser, PackMetadataParser):
             path (Path): The pack path.
         """
         BaseContentParser.__init__(self, path)
-        metadata = get_json(path / PACK_METADATA_FILENAME)
+        try:
+            metadata = get_json(path / PACK_METADATA_FILENAME)
+        except FileNotFoundError:
+            raise InvalidContentItemException(
+                f"{PACK_METADATA_FILENAME} not found in pack in {path=}"
+            )
         PackMetadataParser.__init__(self, metadata)
         self.content_items: PackContentItems = PackContentItems()
         self.relationships: Relationships = Relationships()
@@ -190,9 +199,15 @@ class PackParser(BaseContentParser, PackMetadataParser):
         Args:
             content_item_path (Path): The content item path.
         """
-        if content_item := ContentItemParser.from_path(
-            content_item_path, self.marketplaces
-        ):
+        try:
+            content_item = ContentItemParser.from_path(
+                content_item_path, self.marketplaces
+            )
             content_item.add_to_pack(self.object_id)
             self.content_items.append(content_item)
             self.relationships.update(content_item.relationships)
+        except NotAContentItemException:
+            logger.debug(f"Skipping {content_item_path} - not a content item")
+        except InvalidContentItemException:
+            logger.error(f"{content_item_path} - invalid content item")
+            raise

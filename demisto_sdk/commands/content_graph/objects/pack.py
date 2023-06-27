@@ -61,6 +61,7 @@ from demisto_sdk.commands.content_graph.objects.mapper import Mapper
 from demisto_sdk.commands.content_graph.objects.modeling_rule import ModelingRule
 from demisto_sdk.commands.content_graph.objects.parsing_rule import ParsingRule
 from demisto_sdk.commands.content_graph.objects.playbook import Playbook
+from demisto_sdk.commands.content_graph.objects.pre_process_rule import PreProcessRule
 from demisto_sdk.commands.content_graph.objects.report import Report
 from demisto_sdk.commands.content_graph.objects.script import Script
 from demisto_sdk.commands.content_graph.objects.test_playbook import TestPlaybook
@@ -75,6 +76,7 @@ from demisto_sdk.commands.upload.constants import (
     MULTIPLE_ZIPPED_PACKS_FILE_NAME,
     MULTIPLE_ZIPPED_PACKS_FILE_STEM,
 )
+from demisto_sdk.commands.upload.exceptions import IncompatibleUploadVersionException
 from demisto_sdk.commands.upload.tools import (
     parse_error_response,
     parse_upload_response,
@@ -95,15 +97,19 @@ def upload_zip(
     client: demisto_client,
     skip_validations: bool,
     target_demisto_version: Version,
+    marketplace: MarketplaceVersions,
 ) -> bool:
     """
     Used to upload an existing zip file
     """
     if path.suffix != ".zip":
         raise RuntimeError(f"cannot upload {path} as zip")
-    if target_demisto_version < MINIMAL_UPLOAD_SUPPORTED_VERSION:
+    if (
+        marketplace == MarketplaceVersions.XSOAR
+        and target_demisto_version < MINIMAL_UPLOAD_SUPPORTED_VERSION
+    ):
         raise RuntimeError(
-            "Uploading packs to XSOAR versions earlier than 6.5.0 is no longer supported."
+            f"Uploading packs to XSOAR versions earlier than {MINIMAL_UPLOAD_SUPPORTED_VERSION} is no longer supported."
             "Use older versions of the Demisto-SDK for that (<=1.13.0)"
         )
     server_kwargs = {"skip_verify": "true"}
@@ -172,6 +178,9 @@ class PackContentItems(BaseModel):
     xsiam_report: List[XSIAMReport] = Field([], alias=ContentType.XSIAM_REPORT.value)
     xdrc_template: List[XDRCTemplate] = Field([], alias=ContentType.XDRC_TEMPLATE.value)
     layout_rule: List[LayoutRule] = Field([], alias=ContentType.LAYOUT_RULE.value)
+    preprocess_rule: List[PreProcessRule] = Field(
+        [], alias=ContentType.PREPROCESS_RULE.value
+    )
 
     def __iter__(self) -> Generator[ContentItem, Any, Any]:  # type: ignore
         """Defines the iteration of the object. Each iteration yields a single content item."""
@@ -229,6 +238,18 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: i
         return CONTENT_PATH / v
 
     @property
+    def pack_id(self) -> str:
+        return self.object_id
+
+    @property
+    def pack_name(self) -> str:
+        return self.name
+
+    @property
+    def pack_version(self) -> Optional[Version]:
+        return Version(self.current_version) if self.current_version else None
+
+    @property
     def depends_on(self) -> List["RelationshipData"]:
         """
         This returns the packs which this content item depends on.
@@ -279,7 +300,8 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: i
     def dump_metadata(self, path: Path, marketplace: MarketplaceVersions) -> None:
         self.server_min_version = self.server_min_version or MARKETPLACE_MIN_VERSION
         metadata = self.dict(
-            exclude={"path", "node_id", "content_type", "excluded_dependencies"}
+            exclude={"path", "node_id", "content_type", "excluded_dependencies"},
+            by_alias=True,
         )
         metadata["contentItems"] = {}
         metadata["id"] = self.object_id
@@ -403,7 +425,7 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: i
                 logger.debug(f'No such file {self.path / "Author_image.png"}')
 
             if self.object_id == BASE_PACK:
-                self._copy_base_pack_docs(path)
+                self._copy_base_pack_docs(path, marketplace)
 
             pack_files = "\n".join([str(f) for f in path.iterdir()])
             logger.info(f"Dumped pack {self.name}.")
@@ -483,6 +505,7 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: i
                     client=client,
                     target_demisto_version=target_demisto_version,
                     skip_validations=skip_validations,
+                    marketplace=marketplace,
                 )
 
     def _upload_item_by_item(
@@ -495,7 +518,10 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: i
         logger.debug(
             f"Uploading pack {self.object_id} element-by-element, as -z was not specified"
         )
-        failures: List[FailedUploadException] = []
+        upload_failures: List[FailedUploadException] = []
+        uploaded_successfully: List[ContentItem] = []
+        incompatible_content_items = []
+
         for item in self.content_items:
             if item.content_type in CONTENT_TYPES_EXCLUDED_FROM_UPLOAD:
                 logger.debug(
@@ -512,6 +538,7 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: i
                     marketplace=marketplace,
                     target_demisto_version=target_demisto_version,
                 )
+                uploaded_successfully.append(item)
             except NotIndivitudallyUploadableException:
                 if marketplace == MarketplaceVersions.MarketplaceV2:
                     raise  # many XSIAM content types must be uploaded zipped.
@@ -519,32 +546,51 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: i
                     f"Not uploading pack {self.object_id}: {item.content_type} {item.object_id} as it was not indivudally uploaded"
                 )
             except ApiException as e:
-                failures.append(
+                upload_failures.append(
                     FailedUploadException(
                         item.path,
                         response_body={},
                         additional_info=parse_error_response(e),
                     )
                 )
+            except IncompatibleUploadVersionException as e:
+                incompatible_content_items.append(e)
 
             except FailedUploadException as e:
-                failures.append(e)
+                upload_failures.append(e)
 
-        if failures:
-            if len(failures) == 1:
-                raise failures[0]
-            raise FailedUploadMultipleException(failures)
+        if upload_failures or incompatible_content_items:
+            raise FailedUploadMultipleException(
+                uploaded_successfully, upload_failures, incompatible_content_items
+            )
 
         return True
 
-    def _copy_base_pack_docs(self, destination_path: Path):
+    def _copy_base_pack_docs(
+        self, destination_path: Path, marketplace: MarketplaceVersions
+    ):
+
         documentation_path = CONTENT_PATH / "Documentation"
         documentation_output = destination_path / "Documentation"
         documentation_output.mkdir(exist_ok=True, parents=True)
-        shutil.copy(
-            documentation_path / "doc-howto.json",
-            documentation_output / "doc-howto.json",
-        )
+        if (
+            marketplace.value
+            and (documentation_path / f"doc-howto-{marketplace.value}.json").exists()
+        ):
+            shutil.copy(
+                documentation_path / f"doc-howto-{marketplace.value}.json",
+                documentation_output / "doc-howto.json",
+            )
+        elif (documentation_path / "doc-howto-xsoar.json").exists():
+            shutil.copy(
+                documentation_path / "doc-howto-xsoar.json",
+                documentation_output / "doc-howto.json",
+            )
+        else:
+            shutil.copy(
+                documentation_path / "doc-howto.json",
+                documentation_output / "doc-howto.json",
+            )
         if (documentation_path / "doc-CommonServer.json").exists():
             shutil.copy(
                 documentation_path / "doc-CommonServer.json",

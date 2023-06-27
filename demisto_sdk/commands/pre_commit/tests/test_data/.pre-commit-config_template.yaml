@@ -1,4 +1,4 @@
-exclude: .devcontainer/|.vscode|Pipfile.lock|.gitlab/ci/|.circleci/
+exclude: .devcontainer/|.vscode|Pipfile.lock|.gitlab/ci/|.circleci/|docs
 
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
@@ -27,25 +27,8 @@ repos:
     rev: "v2.0.1"
     hooks:
       - id: autopep8
-
   - repo: local
     hooks:
-      - id: mypy
-        name: mypy
-        entry: mypy
-        language: python
-        types: [python]
-        args:
-          [
-            --ignore-missing-imports,
-            --check-untyped-defs,
-            --show-error-codes,
-            --follow-imports=silent,
-            --allow-redefinition,
-            # this will be replaced by the python version in the runtime
-            --python-version=3.10,
-          ]
-        exclude: "test_data|tests_data|.venv|.*_test.py$|infrastructure_tests"
 
       - id: is-circle-changed
         name: is-circle-changed
@@ -64,14 +47,31 @@ repos:
   - repo: https://github.com/demisto/demisto-sdk
     rev: ""
     hooks:
+      - id: mypy
+        args:
+          [
+            --ignore-missing-imports,
+            --check-untyped-defs,
+            --show-error-codes,
+            --follow-imports=silent,
+            --allow-redefinition,
+            # `--python-version` argument is replaced in runtime
+            --python-version=3.10,
+          ]
+        exclude: "test_data|tests_data|.venv|.*_test.py$|infrastructure_tests"
+
       # enable with --test
       - id: run-unit-tests
 
       - id: format
-        # update docker image to the latest version, assume yes
-        args: ["-ud", "-y", "--no-validate"]
+        # update docker image to the latest version, assume no
+        args: ["-ud", "-n", "--no-validate", "-g"]
 
       - id: validate
+        args: ["-g"]
 
       - id: secrets
         args: ["--ignore-entropy"]
+
+      - id: no-implicit-optional
+        skip: true

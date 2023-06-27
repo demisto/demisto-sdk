@@ -65,7 +65,7 @@ class TestFieldValidator:
 
     @pytest.mark.parametrize("current_file, answer", INPUTS_NAMES)
     def test_is_valid_name_sanity(self, current_file, answer, mocker):
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+        logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
 
         with patch.object(StructureValidator, "__init__", lambda a, b: None):
             structure = StructureValidator("")
@@ -81,7 +81,7 @@ class TestFieldValidator:
 
             validator.is_valid_name()
 
-            assert str_in_call_args_list(logger_info.call_args_list, "IF100") is answer
+            assert str_in_call_args_list(logger_error.call_args_list, "IF100") is answer
 
     CONTENT_1 = {"content": True}
 

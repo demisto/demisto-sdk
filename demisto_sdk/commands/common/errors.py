@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from distutils.version import LooseVersion
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
@@ -9,9 +11,14 @@ from demisto_sdk.commands.common.constants import (
     BETA_INTEGRATION_DISCLAIMER,
     FILETYPE_TO_DEFAULT_FROMVERSION,
     INTEGRATION_CATEGORIES,
+    MODELING_RULE_ID_SUFFIX,
+    MODELING_RULE_NAME_SUFFIX,
     MODULES,
     PACK_METADATA_DESC,
     PACK_METADATA_NAME,
+    PARSING_RULE_ID_SUFFIX,
+    PARSING_RULE_NAME_SUFFIX,
+    RELIABILITY_PARAMETER_NAMES,
     RN_CONTENT_ENTITY_WITH_STARS,
     RN_HEADER_BY_FILE_TYPE,
     FileType,
@@ -95,7 +102,11 @@ ALLOWED_IGNORE_ERRORS = [
     "RN116",
     "MR104",
     "MR105",
+    "MR108",
+    "PR101",
     "LO107",
+    "IN107",
+    "DB100",
 ]
 
 # predefined errors to be ignored in partner/community supported packs even if they do not appear in .pack-ignore
@@ -254,6 +265,21 @@ ERROR_CODE = {
         "code": "BC106",
         "ui_applicable": False,
         "related_field": "fromversion",
+    },
+    "to_version_modified": {
+        "code": "BC107",
+        "ui_applicable": False,
+        "related_field": "toversion",
+    },
+    "marketplaces_removed": {
+        "code": "BC108",
+        "ui_applicable": False,
+        "related_field": "marketplaces",
+    },
+    "marketplaces_added": {
+        "code": "BC109",
+        "ui_applicable": False,
+        "related_field": "marketplaces",
     },
     # CJ - conf.json
     "description_missing_from_conf_json": {
@@ -1750,6 +1776,11 @@ ERROR_CODE = {
         "ui_applicable": False,
         "related_field": "",
     },
+    "invalid_modeling_rule_suffix_name": {
+        "code": "MR108",
+        "ui_applicable": False,
+        "related_field": "",
+    },
     # CR - Correlation Rules
     "correlation_rule_starts_with_hyphen": {
         "code": "CR100",
@@ -1770,6 +1801,11 @@ ERROR_CODE = {
     # PR - Parsing Rules
     "parsing_rules_files_naming_error": {
         "code": "PR100",
+        "ui_applicable": False,
+        "related_field": "",
+    },
+    "invalid_parsing_rule_suffix_name": {
+        "code": "PR101",
         "ui_applicable": False,
         "related_field": "",
     },
@@ -1818,6 +1854,11 @@ ERROR_CODE = {
     },
     "duplicated_script_name": {
         "code": "GR106",
+        "ui_applicable": False,
+        "related_field": "",
+    },
+    "deprecated_items_usage": {
+        "code": "GR107",
         "ui_applicable": False,
         "related_field": "",
     },
@@ -2135,7 +2176,9 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def added_required_fields(field):
-        return f"You've added required, the field is '{field}'"
+        return (
+            f"A required field ('{field}') has been added to an existing integration."
+        )
 
     @staticmethod
     @error_code_decorator
@@ -2361,11 +2404,35 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def missing_reliability_parameter(command: str):
+    def missing_reliability_parameter(is_feed: bool, command_name: str | None = None):
+        """
+        Returns an error message for missing reliability parameter, according to provided arguments.
+
+        Args:
+            is_feed (bool): Whether the integration is a feed integration or not.
+            command_name (str | None, optional): The name of the command that is missing the reliability parameter.
+                Defaults to None. Used on error message when is_feed is False.
+
+        Returns:
+            str: The error message.
+        """
+        if is_feed:
+            specific_case_error = (
+                "Feed integrations must implement a reliability parameter."
+            )
+
+        else:
+            specific_case_error = (
+                "Integrations with reputation commands{0} ".format(
+                    f" ('{command_name}')" if command_name else ""
+                )
+                + "must implement a reliability parameter."
+            )
+
         return (
-            f'Missing "Reliability" parameter in the {command} reputation command.'
-            f"Please add it to the YAML file."
-            f"For more information, refer to https://xsoar.pan.dev/docs/integrations/dbot#reliability-level"
+            f"Missing a reliability ('{RELIABILITY_PARAMETER_NAMES[0]}') configuration parameter in the YAML file.\n"
+            f"{specific_case_error}\n"
+            "For more information, refer to https://xsoar.pan.dev/docs/integrations/dbot#reliability-level"
         )
 
     @staticmethod
@@ -2453,10 +2520,8 @@ class Errors:
     @error_code_decorator
     def dbot_invalid_output(command_name, missing_outputs, context_standard):
         return (
-            "The DBotScore outputs of the reputation command {} aren't valid. Missing: {}. "
-            "Fix according to context standard {} ".format(
-                command_name, missing_outputs, context_standard
-            )
+            f"The DBotScore outputs specified in the YAML file for the reputation command '{command_name}' "
+            f"aren't valid. Missing: {missing_outputs}. Fix according to context standard {context_standard}"
         )
 
     @staticmethod
@@ -3736,8 +3801,32 @@ class Errors:
     @error_code_decorator
     def from_version_modified():
         return (
-            "You've added fromversion to an existing "
-            "file in the system, this is not allowed, please undo."
+            "Adding or changing the maximal supported version field (toVersion/toversion) is not allowed. \n"
+            "Please undo, or request a force merge."
+        )
+
+    @staticmethod
+    @error_code_decorator
+    def to_version_modified():
+        return (
+            "Adding or changing the maximal supported version field (toVersion/toversion) is not allowed. \n"
+            "Please undo, or request a force merge."
+        )
+
+    @staticmethod
+    @error_code_decorator
+    def marketplaces_removed(removed: str):
+        return (
+            "Removing values from the list of supported marketplaces is not allowed. \n"
+            f"Please undo this action and add back - {removed} or request a force merge."
+        )
+
+    @staticmethod
+    @error_code_decorator
+    def marketplaces_added():
+        return (
+            "Adding a marketplaces field to existing content is not allowed. \n"
+            "Undo this action or request a force merge."
         )
 
     @staticmethod
@@ -4419,7 +4508,7 @@ class Errors:
     @error_code_decorator
     def xsiam_report_files_naming_error(invalid_files: list):
         return (
-            f"The following xsiam report files do not match the naming conventions: {','.join(invalid_files)}.\n"
+            f"The following XSIAM report files do not match the naming conventions: {','.join(invalid_files)}.\n"
             f"XSIAM reports file name must use the pack's name as a prefix, e.g. `myPack-report1.yml`"
         )
 
@@ -4443,9 +4532,9 @@ class Errors:
     @error_code_decorator
     def xsiam_dashboards_files_naming_error(invalid_files: list):
         return (
-            f"The following XSIAM dashboards do not match the naming conventions:: {','.join(invalid_files)}.\n"
+            f"The following XSIAM dashboards do not match the naming conventions: {', '.join(invalid_files)}.\n"
             f"Files name in the XSIAM dashboards directory must use the pack's name as a prefix, "
-            f"e.g. `myPack-report1.yml` "
+            f"e.g. `MyPack_dashboard.json` AND `MyPack_dashboard_image.png`."
         )
 
     @staticmethod
@@ -4463,6 +4552,26 @@ class Errors:
             f"The following rule file name is invalid {invalid_files} - make sure that the rule name is "
             f"the same as the folder containing it."
         )
+
+    @staticmethod
+    @error_code_decorator
+    def invalid_modeling_rule_suffix_name(file_path, **kwargs):
+        message = f"The file {file_path} is invalid:"
+        if kwargs.get("invalid_id"):
+            message += f"\nThe rule id should end with '{MODELING_RULE_ID_SUFFIX}'"
+        if kwargs.get("invalid_name"):
+            message += f"\nThe rule name should end with '{MODELING_RULE_NAME_SUFFIX}'"
+        return message
+
+    @staticmethod
+    @error_code_decorator
+    def invalid_parsing_rule_suffix_name(file_path, **kwargs):
+        message = f"The file {file_path} is invalid:"
+        if kwargs.get("invalid_id"):
+            message += f"\nThe rule id should end with '{PARSING_RULE_ID_SUFFIX}'"
+        if kwargs.get("invalid_name"):
+            message += f"\nThe rule name should end with '{PARSING_RULE_NAME_SUFFIX}'"
+        return message
 
     @staticmethod
     @error_code_decorator
@@ -4513,6 +4622,18 @@ class Errors:
         return (
             f"Content item '{content_name}' whose to_version is '{toversion}' uses the content items: "
             f"'{', '.join(content_items)}' whose to_version is lower (must be equal to, or more than ..)"
+        )
+
+    @staticmethod
+    @error_code_decorator
+    def deprecated_items_usage(
+        deprecated_item: str,
+        using_deprecated_item: str,
+        deprecated_item_type: str,
+    ):
+        return (
+            f"The {deprecated_item_type} '{deprecated_item}' is deprecated but used in the following content item: "
+            f"{using_deprecated_item}."
         )
 
     @staticmethod

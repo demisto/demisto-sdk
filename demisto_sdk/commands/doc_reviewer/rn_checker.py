@@ -228,12 +228,12 @@ class ReleaseNotesChecker:
                 continue
 
             # skip headers
-            if line.startswith(("#", "*")) or line.isspace() or not line:
+            if line.startswith(("#", "*")):
                 is_new_content_item = False
                 continue
 
-            if is_new_content_item:
-                # The description of new content items does not need to conform to templates
+            if is_new_content_item or not line or line.isspace():
+                # The description of new content items, or empty lines do not need to conform to templates
                 continue
 
             if not self.check_templates(line):

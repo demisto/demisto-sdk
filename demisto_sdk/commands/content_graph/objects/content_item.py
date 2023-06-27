@@ -11,6 +11,9 @@ from demisto_sdk.commands.common.handlers import (
     XSOAR_Handler,
     YAML_Handler,
 )
+from demisto_sdk.commands.content_graph.parsers.content_item import (
+    InvalidContentItemException,
+)
 from demisto_sdk.commands.upload.exceptions import IncompatibleUploadVersionException
 from demisto_sdk.commands.upload.tools import parse_upload_response
 
@@ -21,11 +24,18 @@ if TYPE_CHECKING:
 
 from pydantic import DirectoryPath, validator
 
-from demisto_sdk.commands.common.constants import MarketplaceVersions
+from demisto_sdk.commands.common.constants import PACKS_FOLDER, MarketplaceVersions
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.logger import logger
-from demisto_sdk.commands.common.tools import replace_incident_to_alert
-from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
+from demisto_sdk.commands.common.tools import (
+    get_file,
+    get_pack_name,
+    replace_incident_to_alert,
+)
+from demisto_sdk.commands.content_graph.common import (
+    ContentType,
+    RelationshipType,
+)
 from demisto_sdk.commands.content_graph.objects.base_content import (
     BaseContent,
 )
@@ -52,6 +62,18 @@ class ContentItem(BaseContent):
         return CONTENT_PATH / v
 
     @property
+    def pack_id(self) -> str:
+        return self.in_pack.pack_id if self.in_pack else ""
+
+    @property
+    def pack_name(self) -> str:
+        return self.in_pack.name if self.in_pack else ""
+
+    @property
+    def pack_version(self) -> Optional[Version]:
+        return self.in_pack.pack_version if self.in_pack else None
+
+    @property
     def in_pack(self) -> Optional["Pack"]:
         """
         This returns the Pack which the content item is in.
@@ -59,10 +81,20 @@ class ContentItem(BaseContent):
         Returns:
             Pack: Pack model.
         """
-        in_pack = self.relationships_data[RelationshipType.IN_PACK]
-        if not in_pack:
-            return None
-        return next(iter(in_pack)).content_item_to  # type: ignore[return-value]
+        if in_pack := self.relationships_data[RelationshipType.IN_PACK]:
+            return next(iter(in_pack)).content_item_to  # type: ignore[return-value]
+        if pack_name := get_pack_name(self.path):
+            try:
+                return BaseContent.from_path(
+                    CONTENT_PATH / PACKS_FOLDER / pack_name
+                )  # type: ignore[return-value]
+            except InvalidContentItemException:
+                logger.warning(
+                    f"Could not parse pack {pack_name} for content item {self.path}"
+                )
+                return None
+        logger.warning(f"Could not find pack for content item {self.path}")
+        return None
 
     @property
     def uses(self) -> List["RelationshipData"]:
@@ -118,14 +150,15 @@ class ContentItem(BaseContent):
 
     @property
     def data(self) -> dict:
-        with self.path.open() as f:
-            return self.handler.load(f)
+        return get_file(self.path)
 
     def prepare_for_upload(
         self,
         current_marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR,
         **kwargs,
     ) -> dict:
+        if not self.path.exists():
+            raise FileNotFoundError(f"Could not find file {self.path}")
         data = self.data
         logger.debug(f"preparing {self.path}")
         return MarketplaceSuffixPreparer.prepare(
@@ -202,6 +235,9 @@ class ContentItem(BaseContent):
         dir: DirectoryPath,
         marketplace: MarketplaceVersions,
     ) -> None:
+        if not self.path.exists():
+            logger.warning(f"Could not find file {self.path}, skipping dump")
+            return
         dir.mkdir(exist_ok=True, parents=True)
         try:
             with (dir / self.normalize_name).open("w") as f:

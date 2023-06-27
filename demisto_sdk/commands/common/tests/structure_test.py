@@ -380,7 +380,7 @@ class TestStructureValidator:
         Then
                 Ensure the structure validator raises a suitable error
         """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+        logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
         monkeypatch.setenv("COLUMNS", "1000")
 
         pack = repo.create_pack()
@@ -391,7 +391,7 @@ class TestStructureValidator:
         with ChangeCWD(repo.path):
             assert not validator.is_valid_file()
         assert str_in_call_args_list(
-            logger_info.call_args_list,
+            logger_error.call_args_list,
             f'Missing the field "{missing_field}" in root',
         )
 
@@ -407,7 +407,7 @@ class TestStructureValidator:
         Then
                 Ensure the structure validator raises a suitable error
         """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+        logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
         monkeypatch.setenv("COLUMNS", "1000")
 
         pack = repo.create_pack()
@@ -418,9 +418,40 @@ class TestStructureValidator:
         with ChangeCWD(repo.path):
             assert not validator.is_valid_file()
         assert str_in_call_args_list(
-            logger_info.call_args_list,
+            logger_error.call_args_list,
             f'Missing the field "{missing_field}" in root',
         )
+
+    def test_validate_field_with_pretty_name(self, pack: Pack):
+        """
+        Given
+            Incident field with a prettyName field.
+        When
+            Validating the item.
+        Then
+            Ensures the schema is valid.
+        """
+        field_content = {
+            "cliName": "mainfield",
+            "name": "main field",
+            "id": "incident",
+            "prettyName": "Host",
+            "content": True,
+            "type": "longText",
+            "Aliases": [
+                {
+                    "cliName": "aliasfield",
+                    "type": "shortText",
+                    "name": "Alias Field",
+                }
+            ],
+        }
+        incident_field: JSONBased = pack.create_incident_field(
+            "incident-field-test",
+            content=field_content,
+        )
+        structure = StructureValidator(incident_field.path)
+        assert structure.is_valid_scheme()
 
     def test_validate_field_with_aliases__valid(self, pack: Pack):
         """

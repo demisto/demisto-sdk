@@ -1,0 +1,254 @@
+id: DummyPlaybook
+version: 2
+vcShouldKeepItemLegacyProdMachine: false
+name: DummyPlaybook
+description: Test to ensure that indicator extraction and formatting for 1000 indicator string (used as a benchmark amount) executes in less than 1 second.
+starttaskid: "0"
+tasks:
+  "0":
+    id: "0"
+    taskid: 280a9fc6-09d6-4129-89f4-6da267ef0c39
+    type: start
+    task:
+      id: 280a9fc6-09d6-4129-89f4-6da267ef0c39
+      version: -1
+      name: ""
+      iscommand: false
+      brand: ""
+    nexttasks:
+      '#none#':
+      - "1"
+    separatecontext: false
+    continueonerrortype: ""
+    view: |-
+      {
+        "position": {
+          "x": 50,
+          "y": 50
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 0
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  "1":
+    id: "1"
+    taskid: 0644038d-6662-4161-8d54-1399e9dd57bc
+    type: regular
+    task:
+      id: 0644038d-6662-4161-8d54-1399e9dd57bc
+      version: -1
+      name: DeleteContext
+      description: Delete field from context
+      scriptName: DeleteContext
+      type: regular
+      iscommand: false
+      brand: ""
+    nexttasks:
+      '#none#':
+      - "2"
+    scriptarguments:
+      all:
+        simple: "yes"
+    separatecontext: false
+    continueonerrortype: ""
+    view: |-
+      {
+        "position": {
+          "x": 50,
+          "y": 195
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 0
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  "2":
+    id: "2"
+    taskid: 392c8ffb-e179-4d0e-83da-4d3adad02fae
+    type: regular
+    task:
+      id: 392c8ffb-e179-4d0e-83da-4d3adad02fae
+      version: -1
+      name: FormattingPerformance
+      description: Generates 1000 random emails and batches them into a large string. Returns the time it takes to execute `extractIndicators` on the big batch of indicators.
+      script: FormattingPerformance
+      type: regular
+      iscommand: false
+      brand: ""
+    nexttasks:
+      '#none#':
+      - "5"
+    separatecontext: false
+    continueonerrortype: ""
+    view: |-
+      {
+        "position": {
+          "x": 50,
+          "y": 370
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 0
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  "3":
+    id: "3"
+    taskid: 223bb82d-49b9-4d87-8c5f-8041af81f1ba
+    type: condition
+    task:
+      id: 223bb82d-49b9-4d87-8c5f-8041af81f1ba
+      version: -1
+      name: Check that `extractIndicators` (and the formatting scripts) took less than 1 seconds on 1000 indicator string
+      type: condition
+      iscommand: false
+      brand: ""
+    nexttasks:
+      "yes":
+      - "4"
+    separatecontext: false
+    conditions:
+    - label: "yes"
+      condition:
+      - - operator: lessThan
+          left:
+            value:
+              complex:
+                root: Formatting
+                accessor: Time
+            iscontext: true
+          right:
+            value:
+              simple: "1.5"
+    continueonerrortype: ""
+    view: |-
+      {
+        "position": {
+          "x": 50,
+          "y": 895
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 0
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  "4":
+    id: "4"
+    taskid: 32029db6-7385-4415-813c-6f28bb487618
+    type: title
+    task:
+      id: 32029db6-7385-4415-813c-6f28bb487618
+      version: -1
+      name: Done TEST
+      type: title
+      iscommand: false
+      brand: ""
+    separatecontext: false
+    continueonerrortype: ""
+    view: |-
+      {
+        "position": {
+          "x": 50,
+          "y": 1070
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 0
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  "5":
+    id: "5"
+    taskid: 85cc7b24-222c-4e20-88df-5186df9374e3
+    type: regular
+    task:
+      id: 85cc7b24-222c-4e20-88df-5186df9374e3
+      version: -1
+      name: DeleteContext
+      description: Delete field from context
+      scriptName: DeleteContext
+      type: regular
+      iscommand: false
+      brand: ""
+    nexttasks:
+      '#none#':
+      - "6"
+    scriptarguments:
+      all:
+        simple: "yes"
+    separatecontext: false
+    continueonerrortype: ""
+    view: |-
+      {
+        "position": {
+          "x": 50,
+          "y": 545
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 0
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  "6":
+    id: "6"
+    taskid: 9eced6e5-f994-447c-8ebc-d1df18de5dc7
+    type: regular
+    task:
+      id: 9eced6e5-f994-447c-8ebc-d1df18de5dc7
+      version: -1
+      name: FormattingPerformance... again
+      description: Generates 1000 random emails and batches them into a large string. Returns the time it takes to execute `extractIndicators` on the big batch of indicators.
+      script: FormattingPerformance
+      type: regular
+      iscommand: false
+      brand: ""
+    nexttasks:
+      '#none#':
+      - "3"
+    separatecontext: false
+    continueonerrortype: ""
+    view: |-
+      {
+        "position": {
+          "x": 50,
+          "y": 720
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 0
+    isoversize: false
+    isautoswitchedtoquietmode: false
+view: |-
+  {
+    "linkLabelsPosition": {},
+    "paper": {
+      "dimensions": {
+        "height": 1085,
+        "width": 380,
+        "x": 50,
+        "y": 50
+      }
+    }
+  }
+inputs: []
+outputs: []

@@ -22,7 +22,7 @@ def test_readme_markdown_fixes():
 
     """
     with ReadMeValidator.start_mdx_server():
-        readme_formatter = ReadmeFormat(INVALID_MD, assume_yes=True)
+        readme_formatter = ReadmeFormat(INVALID_MD, assume_answer=True)
         old_content = readme_formatter.readme_content
         readme_formatter.fix_lint_markdown()
 
@@ -59,7 +59,7 @@ def test_format_with_update_docker_flag(mocker, monkeypatch):
 
 def get_new_url_from_user_assume_yes(relative_url: list) -> Optional[str]:
     """Check if new url is as expected when using assume_yes flag"""
-    readme_formatter = ReadmeFormat(INVALID_MD, assume_yes=True)
+    readme_formatter = ReadmeFormat(INVALID_MD, assume_answer=True)
     return readme_formatter.get_new_url_from_user(relative_url)
 
 

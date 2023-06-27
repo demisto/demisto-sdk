@@ -24,7 +24,7 @@ from demisto_sdk.commands.common.hook_validations.integration import (
     IntegrationValidator,
 )
 from demisto_sdk.commands.common.legacy_git_tools import git_path
-from demisto_sdk.commands.common.tools import is_string_uuid
+from demisto_sdk.commands.common.tools import get_yaml, is_string_uuid
 from demisto_sdk.commands.format.format_module import format_manager
 from demisto_sdk.commands.format.update_generic import BaseUpdate
 from demisto_sdk.commands.format.update_generic_yml import BaseUpdateYML
@@ -56,6 +56,7 @@ from demisto_sdk.tests.constants_test import (
     SOURCE_FORMAT_INTEGRATION_DEFAULT_VALUE,
     SOURCE_FORMAT_INTEGRATION_INVALID,
     SOURCE_FORMAT_INTEGRATION_VALID,
+    SOURCE_FORMAT_INTEGRATION_VALID_OLD_FILE,
     SOURCE_FORMAT_PLAYBOOK,
     SOURCE_FORMAT_PLAYBOOK_COPY,
     SOURCE_FORMAT_SCRIPT_COPY,
@@ -138,7 +139,7 @@ class TestFormatting:
 
         mocker.patch.object(update_generic, "get_remote_file", return_value={})
         base_yml = formatter(source_path, path=schema_path)
-        base_yml.assume_yes = True
+        base_yml.assume_answer = True
         base_yml.update_yml(file_type=file_type)
         assert yml_title not in str(base_yml.data)
         assert -1 == base_yml.id_and_version_location["version"]
@@ -769,7 +770,7 @@ class TestFormatting:
         os.makedirs(path, exist_ok=True)
         shutil.copyfile(source, target)
         monkeypatch.setattr("builtins.input", lambda _: "N")
-        res = format_manager(input=target, assume_yes=True)
+        res = format_manager(input=target, assume_answer=True)
         with open(target) as f:
             yaml_content = yaml.load(f)
             params = yaml_content["configuration"]
@@ -815,7 +816,7 @@ class TestFormatting:
         )
         os.makedirs(path, exist_ok=True)
         shutil.copyfile(source, target)
-        res = format_manager(input=target, clear_cache=True, assume_yes=True)
+        res = format_manager(input=target, clear_cache=True, assume_answer=True)
         with open(target) as f:
             yaml_content = yaml.load(f)
             params = yaml_content["configuration"]
@@ -962,7 +963,7 @@ class TestFormatting:
         formatter = TestPlaybookYMLFormat(
             input=SOURCE_FORMAT_TEST_PLAYBOOK, output=DESTINATION_FORMAT_TEST_PLAYBOOK
         )
-        formatter.assume_yes = True
+        formatter.assume_answer = True
         res = formatter.run_format()
         assert res == 0
         assert formatter.data.get("fromversion") == GENERAL_DEFAULT_FROMVERSION
@@ -1007,7 +1008,7 @@ class TestFormatting:
 
         with ChangeCWD(repo.path):
             formatter = PlaybookYMLFormat(
-                input=playbook.yml.path, path=PLAYBOOK_SCHEMA_PATH, assume_yes=True
+                input=playbook.yml.path, path=PLAYBOOK_SCHEMA_PATH, assume_answer=True
             )
             formatter.run_format()
             assert formatter.data.get("fromversion") == expected_fromversion
@@ -1151,7 +1152,7 @@ class TestFormatting:
             path=f"{schema_dir}/script.yml",
             no_validate=True,
             update_docker=True,
-            assume_yes=True,
+            assume_answer=True,
         )
         monkeypatch.setattr("builtins.input", lambda _: "N")
         mocker.patch.object(BaseUpdate, "set_fromVersion", return_value=None)
@@ -1400,7 +1401,7 @@ class TestFormatting:
         test_playbook.create_default_test_playbook("SamplePlaybookTest")
         test_playbook.yml.update({"id": "other_id"})
         playbook_yml = TestPlaybookYMLFormat(
-            test_playbook.yml.path, path=test_playbook.yml.path, assume_yes=True
+            test_playbook.yml.path, path=test_playbook.yml.path, assume_answer=True
         )
         with ChangeCWD(repo.path):
             playbook_yml.run_format()
@@ -1420,7 +1421,7 @@ class TestFormatting:
         pack.pack_metadata.update({"support": "partner", "currentVersion": "1.0.0"})
         integration = pack.create_integration()
         bs = BaseUpdate(
-            input=integration.yml.path, assume_yes=True, path=INTEGRATION_SCHEMA_PATH
+            input=integration.yml.path, assume_answer=True, path=INTEGRATION_SCHEMA_PATH
         )
         bs.set_fromVersion()
         assert bs.data["fromversion"] == GENERAL_DEFAULT_FROMVERSION
@@ -1444,7 +1445,7 @@ class TestFormatting:
             [script.yml.path, playbook.yml.path, integration.yml.path],
             [SCRIPT_SCHEMA_PATH, PLAYBOOK_SCHEMA_PATH, INTEGRATION_SCHEMA_PATH],
         ):
-            bs = BaseUpdate(input=path, assume_yes=True, path=schema_path)
+            bs = BaseUpdate(input=path, assume_answer=True, path=schema_path)
             bs.set_fromVersion()
             assert bs.data["fromversion"] == GENERAL_DEFAULT_FROMVERSION, path
 
@@ -1868,3 +1869,26 @@ def test_yml_run_format_exception_handling(format_object, mocker):
         logger_info.call_args_list,
         "Failed to update file my_file_path. Error: MY ERROR",
     )
+
+
+def test_handle_hidden_marketplace_params():
+    """
+    Given
+    - Integration yml with parameters configured with Hidden: False.
+    When
+    - Running the handle_hidden_marketplace_params function.
+    Then
+    - Ensures the hidden value is equivalent to master branch.
+    """
+    base_yml = IntegrationYMLFormat(SOURCE_FORMAT_INTEGRATION_VALID, path="schema_path")
+    base_yml.old_file = get_yaml(SOURCE_FORMAT_INTEGRATION_VALID_OLD_FILE)
+    assert base_yml.old_file["configuration"][6]["hidden"] == ["marketplacev2"]
+    assert base_yml.old_file["configuration"][7]["hidden"] == ["marketplacev2"]
+    assert "hidden" not in base_yml.data["configuration"][6]
+    assert base_yml.data["configuration"][7]["hidden"] is False
+
+    base_yml.handle_hidden_marketplace_params()
+    assert base_yml.old_file["configuration"][6]["hidden"] == ["marketplacev2"]
+    assert base_yml.old_file["configuration"][7]["hidden"] == ["marketplacev2"]
+    assert base_yml.data["configuration"][6]["hidden"] == ["marketplacev2"]
+    assert base_yml.data["configuration"][7]["hidden"] == ["marketplacev2"]

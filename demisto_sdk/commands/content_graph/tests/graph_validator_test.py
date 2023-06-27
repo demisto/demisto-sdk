@@ -6,9 +6,11 @@ import pytest
 
 import demisto_sdk.commands.content_graph.neo4j_service as neo4j_service
 from demisto_sdk.commands.common.constants import (
+    GENERAL_DEFAULT_FROMVERSION,
     SKIP_PREPARE_SCRIPT_NAME,
     MarketplaceVersions,
 )
+from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.hook_validations.graph_validator import GraphValidator
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
@@ -88,7 +90,20 @@ def repository(mocker) -> ContentDTO:
                 name="test-command",
                 description="",
                 deprecated=False,
-            )
+            ),
+            mock_relationship(
+                "SampleIntegration",
+                ContentType.INTEGRATION,
+                "deprecated-command",
+                ContentType.COMMAND,
+                source_marketplaces=[
+                    MarketplaceVersions.XSOAR,
+                    MarketplaceVersions.MarketplaceV2,
+                ],
+                name="deprecated-command",
+                description="",
+                deprecated=True,
+            ),
         ],
         RelationshipType.IMPORTS: [
             mock_relationship(
@@ -150,6 +165,30 @@ def repository(mocker) -> ContentDTO:
                 ],
             ),
         ],
+        RelationshipType.USES: [
+            mock_relationship(
+                "SamplePlaybook",
+                ContentType.PLAYBOOK,
+                "DeprecatedIntegration",
+                ContentType.INTEGRATION,
+                source_marketplaces=[
+                    MarketplaceVersions.XSOAR,
+                    MarketplaceVersions.XPANSE,
+                ],
+                source_fromversion="6.5.0",
+            ),
+            mock_relationship(
+                "SamplePlaybook",
+                ContentType.PLAYBOOK,
+                "deprecated-command",
+                ContentType.COMMAND,
+                source_marketplaces=[
+                    MarketplaceVersions.XSOAR,
+                    MarketplaceVersions.XPANSE,
+                ],
+                source_fromversion="6.5.0",
+            ),
+        ],
     }
     relationship_pack2 = {
         RelationshipType.IN_PACK: [
@@ -208,7 +247,7 @@ def repository(mocker) -> ContentDTO:
                 ContentType.PLAYBOOK,
                 "SamplePack3",
                 ContentType.PACK,
-                source_fromversion="6.8.0",
+                source_fromversion=GENERAL_DEFAULT_FROMVERSION,
             ),
             mock_relationship(
                 "SampleScript2",
@@ -257,6 +296,9 @@ def repository(mocker) -> ContentDTO:
     pack3.relationships = relationship_pack3
     pack4.relationships = relationship_pack4
     pack1.content_items.integration.append(mock_integration())
+    pack1.content_items.integration.append(
+        mock_integration(name="DeprecatedIntegration", deprecated=True)
+    )
     pack1.content_items.script.append(
         mock_script(
             "SampleScript",
@@ -284,11 +326,16 @@ def repository(mocker) -> ContentDTO:
             "SamplePlaybook",
             [MarketplaceVersions.XSOAR, MarketplaceVersions.XPANSE],
             "6.5.0",
-            "6.8.0",
+            GENERAL_DEFAULT_FROMVERSION,
         )
     )
     pack3.content_items.playbook.append(
-        mock_playbook("SamplePlaybook2", [MarketplaceVersions.XSOAR], "6.8.0", "6.5.0")
+        mock_playbook(
+            "SamplePlaybook2",
+            [MarketplaceVersions.XSOAR],
+            GENERAL_DEFAULT_FROMVERSION,
+            "6.5.0",
+        )
     )
     pack3.content_items.script.append(mock_script("SampleScript2"))
     pack3.content_items.script.append(
@@ -378,7 +425,7 @@ def mock_playbook(
         id=name,
         content_type=ContentType.PLAYBOOK,
         node_id=f"{ContentType.PLAYBOOK}:{name}",
-        path=Path("Packs"),
+        path=Path(name),
         fromversion=fromversion,
         toversion=toversion,
         display_name=name,
@@ -409,22 +456,25 @@ def mock_script(name, marketplaces=[MarketplaceVersions.XSOAR], skip_prepare=[])
     )
 
 
-def mock_integration(name: str = "SampleIntegration"):
+def mock_integration(name: str = "SampleIntegration", deprecated: bool = False):
     return Integration(
         id=name,
         content_type=ContentType.INTEGRATION,
         node_id=f"{ContentType.INTEGRATION}:{name}",
-        path=Path("Packs"),
+        path=Path(name),
         fromversion="5.0.0",
         toversion="99.99.99",
         display_name=name,
         name=name,
         marketplaces=[MarketplaceVersions.XSOAR, MarketplaceVersions.MarketplaceV2],
-        deprecated=False,
+        deprecated=deprecated,
         type="python3",
         docker_image="mock:docker",
         category="blabla",
-        commands=[Command(name="test-command", description="")],
+        commands=[
+            Command(name="test-command", description=""),
+            Command(name="deprecated-command", description=""),
+        ],
     )
 
 
@@ -490,7 +540,7 @@ def test_are_fromversion_relationships_paths_valid(repository: ContentDTO, mocke
 
 
 @pytest.mark.parametrize(
-    "should_provide_integration_path, is_valid",
+    "include_optional, is_valid",
     [
         pytest.param(
             False,
@@ -507,7 +557,7 @@ def test_are_fromversion_relationships_paths_valid(repository: ContentDTO, mocke
 def test_is_file_using_unknown_content(
     mocker,
     repository: ContentDTO,
-    should_provide_integration_path: bool,
+    include_optional: bool,
     is_valid: bool,
 ):
     """
@@ -517,30 +567,18 @@ def test_is_file_using_unknown_content(
     When
     - running the vaidation "is_file_using_unknown_content"
     Then
-    - Check whether the graph is valid or not, based on whether the integration file path was provided
+    - Check whether the graph is valid or not, based on whether optional content dependencies were included.
     """
     logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
     logger_warning = mocker.patch.object(logging.getLogger("demisto-sdk"), "warning")
-    if should_provide_integration_path:
-        git_files = [repository.packs[0].content_items.integration[0].path.as_posix()]
-    else:
-        git_files = []
-    with GraphValidator(should_update=False, git_files=git_files) as graph_validator:
+
+    with GraphValidator(
+        should_update=False, git_files=[], include_optional_deps=include_optional
+    ) as graph_validator:
         create_content_graph(graph_validator.graph)
         assert graph_validator.is_file_using_unknown_content() == is_valid
 
-    found_level = False
-    str_to_search, logger_to_search = (
-        ("[warning]", logger_warning) if is_valid else ("[error]", logger_info)
-    )
-    for current_call in logger_to_search.call_args_list:
-        if (
-            type(current_call[0]) == tuple
-            and str_to_search in current_call[0][0].lower()
-        ):
-            found_level = True
-            break
-    assert found_level
+    logger_to_search = logger_warning if is_valid else logger_info
 
     assert str_in_call_args_list(
         logger_to_search.call_args_list,
@@ -687,3 +725,46 @@ def test_pack_ids_collection():
     expected_pack_ids = ["MicrosoftExchangeOnline"]
     with GraphValidator(should_update=False, git_files=git_files) as graph_validator:
         assert graph_validator.pack_ids == expected_pack_ids
+
+
+def test_deprecated_usage__existing_content(repository: ContentDTO, mocker):
+    """
+    Given
+    - A content repo with item using deprecated commands in existing content.
+    When
+    - running the validation validate_deprecated_items_usage
+    Then
+    - validate warning is display but it's considered as valid
+    """
+
+    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "warning")
+    with GraphValidator(should_update=False) as validator:
+        create_content_graph(validator.graph)
+        is_valid = validator.validate_deprecated_items_usage()
+
+    assert is_valid
+    assert str_in_call_args_list(
+        logger_info.call_args_list,
+        "[GR107] - The Command 'deprecated-command' is deprecated but used in the following content item:",
+    )
+    assert str_in_call_args_list(
+        logger_info.call_args_list,
+        "[GR107] - The Integration 'DeprecatedIntegration' is deprecated but used in the following content item:",
+    )
+
+
+def test_deprecated_usage__new_content(repository: ContentDTO, mocker):
+    """
+    Given
+    - A content repo with the new item "SamplePlaybook" using a deprecated command.
+    When
+    - running the validation validate_deprecated_items_usage
+    Then
+    - validate the files considered as invalid.
+    """
+    mocker.patch.object(GitUtil, "added_files", return_value=[Path("SamplePlaybook")])
+    with GraphValidator(should_update=False) as validator:
+        create_content_graph(validator.graph)
+        is_valid = validator.validate_deprecated_items_usage()
+
+    assert not is_valid

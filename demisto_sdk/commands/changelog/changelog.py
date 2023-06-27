@@ -2,7 +2,7 @@ import re
 import shutil
 from pathlib import Path
 from typing import List
-
+from git import Repo
 from pydantic import ValidationError
 
 from demisto_sdk.commands.changelog.changelog_obj import INITIAL_LOG, LogObject
@@ -39,7 +39,7 @@ class Changelog:
         ...
         """
         if self.is_release():
-            if not self.is_changelog_folder_empty():
+            if not self.is_log_folder_empty():
                 logger.error("Something msg")
                 return False
             if not self.is_changelog_changed():
@@ -55,6 +55,7 @@ class Changelog:
             if not self.validate_log_yml():
                 logger.error("Something msg")
                 return False
+
         return True
 
     """ INIT """
@@ -68,13 +69,8 @@ class Changelog:
                 "This PR is for release, please use in changelog release command"
             )
 
-        try:
-            new_obj = LogObject(**INITIAL_LOG)
-        except ValidationError as e:
-            logger.error(e.json())
-
         with Path(f"{git_path()}/.changelog/{self.pr_number}.yml").open("w") as f:
-            yaml.dump(new_obj.dict(), f)
+            yaml.dump(INITIAL_LOG, f)
 
         logger.info("Something msg")
 
@@ -90,16 +86,17 @@ class Changelog:
     """ HELPER FUNCTIONS """
 
     def is_changelog_changed(self) -> bool:
-        ...
+        return "CHANGELOG.md" in Repo(".").git.diff('HEAD~1..HEAD', name_only=True).split()
 
-    def is_changelog_folder_empty(self) -> bool:
-        return any(CHANGELOG_FOLDER.iterdir())
+    def is_log_folder_empty(self) -> bool:
+        return not any(CHANGELOG_FOLDER.iterdir())
 
     def is_log_yml_exist(self) -> bool:
-        return Path(f"{git_path()}/{self.pr_number}.yml").is_file()
+        return Path(f"{git_path()}/.changelog/{self.pr_number}.yml").is_file()
 
     def validate_log_yml(self) -> bool:
         data = get_yaml(Path(f"{git_path()}/.changelog/{self.pr_number}.yml"))
+        
         try:
             LogObject(**data)
         except ValidationError as e:
@@ -125,3 +122,4 @@ class Changelog:
             elif item.is_dir():
                 shutil.rmtree(item)
         logger.info("Something msg")
+

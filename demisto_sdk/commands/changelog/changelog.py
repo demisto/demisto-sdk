@@ -123,3 +123,4 @@ class Changelog:
                 shutil.rmtree(item)
         logger.info("Something msg")
 
+print(Repo(".").git.diff('HEAD..master', name_only=True).split())

@@ -296,12 +296,13 @@ def check_dataset_exists(
                 # if we don't have results from the dataset immediately we will continue to try until the timeout.
                 # if we don't have any results until the timeout dataset_exist is set to False and we will raise an error.
                 elif i < (timeout // interval) - 1:
+                    dataset_exist = True
                     logger.info(
                         f"[cyan]try to get results from the data set, there are not results for the {i}th time. continue.[/cyan]",
                         extra={"markup": True},
                     )
                     continue
-                else:
+                elif dataset_exist:
                     err = (
                         f"[red]Dataset {dataset} exists but no results were returned. This could mean that your testdata "
                         "does not meet the criteria for an associated Parsing Rule and is therefore being dropped from "

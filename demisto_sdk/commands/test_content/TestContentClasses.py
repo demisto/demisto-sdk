@@ -501,7 +501,7 @@ class TestPlaybook:
         search_filter = demisto_client.demisto_api.SearchIncidentsData()
         inc_filter = demisto_client.demisto_api.IncidentFilter()
         # inc_filter.query = f"id: {inc_id}"
-        incident_name='inc-FireEyeHX_v2--build_number:28173035--9457bbc0-ce6e-4e80-a2a7-f9b84ccf3447'
+        incident_name='inc-Sanity Test - Playbook with Unmockable Whois Integration--build_number:28158442--7156859b-1edc-4c02-9be3-57b440c76a8f'
         if IS_XSIAM:
             # in xsiam `create_incident` response don`t return created incident id.
             inc_filter.query = f'rawName:"{incident_name}"'

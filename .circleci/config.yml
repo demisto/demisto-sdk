@@ -141,6 +141,8 @@ jobs:
               # remove the integration tests (integration tests as opposed to unit tests) from the list because those
               # tests shouldn't be parallelized.
               TEST_FILES=$(circleci tests glob "**/*_test.py")
+              # filter out files which are in .venv directory
+              TEST_FILES=$(echo "$TEST_FILES" | sed -E 's/\S*\.venv\S*\.py//g')
               TEST_FILES=$(echo "$TEST_FILES" | sed -E 's/\S*demisto_sdk\/commands\/init\/templates\S*\.py//g')
               TEST_FILES=$(echo "$TEST_FILES" | sed -E 's/\S*demisto_sdk\/tests\/integration_tests\S*\.py//g')
               TEST_FILES=$(echo "$TEST_FILES" | sed -E 's/\S*demisto_sdk\/commands\/content_graph\/tests\S*\.py//g')

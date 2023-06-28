@@ -1,6 +1,7 @@
 import glob
 import os
 import shutil
+import re
 from configparser import ConfigParser
 from pathlib import Path
 from typing import Callable, List, Optional, Union
@@ -2419,15 +2420,15 @@ class TestMarketplaceTagParser:
 
     TEXT_WITH_TAGS = f"""
 ### Sections:
-{XSOAR_PREFIX} - XSOAR PARAGRAPH{XSOAR_SUFFIX}
-{XSIAM_PREFIX} - XSIAM PARAGRAPH{XSIAM_SUFFIX}
-{XPANSE_PREFIX} - XPANSE PARAGRAPH{XPANSE_SUFFIX}
-{XSOAR_SAAS_PREFIX} - XSOAR_SAAS{XSOAR_SAAS_SUFFIX}
+{XSOAR_PREFIX} - XSOAR PARAGRAPH {XSOAR_SUFFIX}
+{XSIAM_PREFIX} - XSIAM PARAGRAPH {XSIAM_SUFFIX}
+{XPANSE_PREFIX} - XPANSE PARAGRAPH {XPANSE_SUFFIX}
+{XSOAR_SAAS_PREFIX} - XSOAR_SAAS {XSOAR_SAAS_SUFFIX}
 ### Inline:
-{XSOAR_INLINE_PREFIX}xsoar inline text{XSOAR_INLINE_SUFFIX}
-{XSIAM_INLINE_PREFIX}xsiam inline text{XSIAM_INLINE_SUFFIX}
-{XPANSE_INLINE_PREFIX}xpanse inline text{XPANSE_INLINE_SUFFIX}
-{XSOAR_SAAS_INLINE_PREFIX}xsoar saas inline test{XSOAR_SAAS_INLINE_SUFFIX}"""
+{XSOAR_INLINE_PREFIX} xsoar inline text {XSOAR_INLINE_SUFFIX}
+{XSIAM_INLINE_PREFIX} xsiam inline text {XSIAM_INLINE_SUFFIX}
+{XPANSE_INLINE_PREFIX} xpanse inline text {XPANSE_INLINE_SUFFIX}
+{XSOAR_SAAS_INLINE_PREFIX} xsoar_saas inline test {XSOAR_SAAS_INLINE_SUFFIX}"""
 
     def test_invalid_marketplace_version(self):
         """
@@ -2536,14 +2537,16 @@ class TestMarketplaceTagParser:
         assert "XPANSE" in actual
         assert "xpanse" in actual
 
-
     def test_xsoar_saas_marketplace_version(self):
         self.MARKETPLACE_TAG_PARSER.marketplace = MarketplaceVersions.XSOAR_SAAS.value
         actual = self.MARKETPLACE_TAG_PARSER.parse_text(self.TEXT_WITH_TAGS)
+
+        pattern = r'\bxsoar\b'
+        match = re.search(pattern, actual, re.IGNORECASE)
+        assert not match
+
         assert "### Sections:" in actual
         assert "### Inline:" in actual
-        assert "XSOAR" not in actual
-        assert "xsoar" not in actual
         assert "XSIAM" not in actual
         assert "xsiam" not in actual
         assert "XPANSE" and "xpanse" not in actual
@@ -2551,7 +2554,7 @@ class TestMarketplaceTagParser:
         assert self.XSIAM_PREFIX not in actual
         assert self.XPANSE_PREFIX not in actual
         assert self.XSOAR_SAAS_PREFIX not in actual
-        assert "XSOAR_SAAS" and "xsoar saas" in actual
+        assert "XSOAR_SAAS" and "xsoar_saas" in actual
 
 
 @pytest.mark.parametrize(

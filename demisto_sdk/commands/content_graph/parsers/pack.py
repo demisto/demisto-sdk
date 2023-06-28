@@ -201,7 +201,7 @@ class PackParser(BaseContentParser, PackMetadataParser):
         """
         try:
             content_item = ContentItemParser.from_path(
-                content_item_path, self.marketplaces
+                content_item_path, [MarketplaceVersions(mp) for mp in self.marketplaces]
             )
             content_item.add_to_pack(self.object_id)
             self.content_items.append(content_item)

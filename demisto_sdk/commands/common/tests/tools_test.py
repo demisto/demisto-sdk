@@ -2537,21 +2537,21 @@ class TestMarketplaceTagParser:
         assert "xpanse" in actual
 
 
-def test_xsoar_saas_marketplace_version(self):
-    self.MARKETPLACE_TAG_PARSER.marketplace = MarketplaceVersions.XSOAR_SAAS.value
-    actual = self.MARKETPLACE_TAG_PARSER.parse_text(self.TEXT_WITH_TAGS)
-    assert "### Sections:" in actual
-    assert "### Inline:" in actual
-    assert "XSOAR" not in actual
-    assert "xsoar" not in actual
-    assert "XSIAM" not in actual
-    assert "xsiam" not in actual
-    assert "XPANSE" and "xpanse" not in actual
-    assert self.XSOAR_PREFIX not in actual
-    assert self.XSIAM_PREFIX not in actual
-    assert self.XPANSE_PREFIX not in actual
-    assert self.XSOAR_SAAS_PREFIX not in actual
-    assert "XSOAR_SAAS" and "xsoar saas" in actual
+    def test_xsoar_saas_marketplace_version(self):
+        self.MARKETPLACE_TAG_PARSER.marketplace = MarketplaceVersions.XSOAR_SAAS.value
+        actual = self.MARKETPLACE_TAG_PARSER.parse_text(self.TEXT_WITH_TAGS)
+        assert "### Sections:" in actual
+        assert "### Inline:" in actual
+        assert "XSOAR" not in actual
+        assert "xsoar" not in actual
+        assert "XSIAM" not in actual
+        assert "xsiam" not in actual
+        assert "XPANSE" and "xpanse" not in actual
+        assert self.XSOAR_PREFIX not in actual
+        assert self.XSIAM_PREFIX not in actual
+        assert self.XPANSE_PREFIX not in actual
+        assert self.XSOAR_SAAS_PREFIX not in actual
+        assert "XSOAR_SAAS" and "xsoar saas" in actual
 
 
 @pytest.mark.parametrize(

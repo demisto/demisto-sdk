@@ -175,7 +175,6 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
 
         return marketplaces
 
-
     @property
     @abstractmethod
     def supported_marketplaces(self) -> Set[MarketplaceVersions]:

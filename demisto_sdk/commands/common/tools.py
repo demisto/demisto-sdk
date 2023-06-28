@@ -130,8 +130,8 @@ GRAPH_SUPPORTED_FILE_TYPES = ["yml", "json"]
 
 class TagParser:
     def __init__(self, marketplace_tag):
-        self.pattern = fr"<~{marketplace_tag}>.*?</~{marketplace_tag}>|<~{marketplace_tag}>\n.*?\n</~{marketplace_tag}>\n"
-        self.only_tags_pattern = fr"<~{marketplace_tag}>|</~{marketplace_tag}>|<~{marketplace_tag}>\n|\n</~{marketplace_tag}>\n"
+        self.pattern = rf"<~{marketplace_tag}>.*?</~{marketplace_tag}>|<~{marketplace_tag}>\n.*?\n</~{marketplace_tag}>\n"
+        self.only_tags_pattern = rf"<~{marketplace_tag}>|</~{marketplace_tag}>|<~{marketplace_tag}>\n|\n</~{marketplace_tag}>\n"
 
     def parse(self, text: str, remove_tag: Optional[bool] = False) -> str:
         """
@@ -151,27 +151,19 @@ class TagParser:
 
 
 class MarketplaceTagParser:
-    XSOAR_TAG = 'XSOAR'
-    XSIAM_TAG = 'XSIAM'
-    XPANSE_TAG = 'XPANSE'
-    XSOAR_SAAS_TAG = 'XSOAR_SAAS'
+    XSOAR_TAG = "XSOAR"
+    XSIAM_TAG = "XSIAM"
+    XPANSE_TAG = "XPANSE"
+    XSOAR_SAAS_TAG = "XSOAR_SAAS"
 
     def __init__(self, marketplace: str = MarketplaceVersions.XSOAR.value):
 
         self.marketplace = marketplace
 
-        self._xsoar_parser = TagParser(
-            marketplace_tag= self.XSOAR_TAG
-        )
-        self._xsiam_parser = TagParser(
-            marketplace_tag= self.XSIAM_TAG
-        )
-        self._xpanse_parser = TagParser(
-            marketplace_tag= self.XPANSE_TAG
-        )
-        self._xsoar_saas_parser = TagParser(
-            marketplace_tag= self.XSOAR_SAAS_TAG
-        )
+        self._xsoar_parser = TagParser(marketplace_tag=self.XSOAR_TAG)
+        self._xsiam_parser = TagParser(marketplace_tag=self.XSIAM_TAG)
+        self._xpanse_parser = TagParser(marketplace_tag=self.XPANSE_TAG)
+        self._xsoar_saas_parser = TagParser(marketplace_tag=self.XSOAR_SAAS_TAG)
 
     @property
     def marketplace(self):
@@ -193,10 +185,18 @@ class MarketplaceTagParser:
 
     def parse_text(self, text):
         # Remove the tags of the products if specified should_remove.
-        text = self._xsoar_parser.parse(remove_tag=self._should_remove_xsoar_text, text=text)
-        text = self._xsoar_saas_parser.parse(remove_tag=self._should_remove_xsoar_saas_text, text=text)
-        text = self._xsiam_parser.parse(remove_tag=self._should_remove_xsiam_text, text=text)
-        return self._xpanse_parser.parse(remove_tag=self._should_remove_xpanse_text, text=text)
+        text = self._xsoar_parser.parse(
+            remove_tag=self._should_remove_xsoar_text, text=text
+        )
+        text = self._xsoar_saas_parser.parse(
+            remove_tag=self._should_remove_xsoar_saas_text, text=text
+        )
+        text = self._xsiam_parser.parse(
+            remove_tag=self._should_remove_xsiam_text, text=text
+        )
+        return self._xpanse_parser.parse(
+            remove_tag=self._should_remove_xpanse_text, text=text
+        )
 
 
 MARKETPLACE_TAG_PARSER = None

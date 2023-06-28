@@ -24,27 +24,27 @@ from demisto_sdk.commands.common.constants import (
     SCRIPTS_DIR,
     TEST_PLAYBOOKS_DIR,
     TRIGGER_DIR,
-    XSIAM_DASHBOARDS_DIR,
-    XSIAM_REPORTS_DIR,
-    XSOAR_CONFIG_FILE,
-    FileType,
-    MarketplaceVersions,
-    XSOAR_PREFIX_TAG,
-    XSOAR_SUFFIX_TAG,
-    XSOAR_INLINE_PREFIX_TAG,
-    XSOAR_INLINE_SUFFIX_TAG,
-    XSOAR_SAAS_PREFIX_TAG,
-    XSOAR_SAAS_SUFFIX_TAG,
-    XSOAR_SAAS_INLINE_PREFIX_TAG,
-    XSOAR_SAAS_INLINE_SUFFIX_TAG,
-    XSIAM_PREFIX_TAG,
-    XSIAM_SUFFIX_TAG,
-    XSIAM_INLINE_PREFIX_TAG,
-    XSIAM_INLINE_SUFFIX_TAG,
+    XPANSE_INLINE_PREFIX_TAG,
+    XPANSE_INLINE_SUFFIX_TAG,
     XPANSE_PREFIX_TAG,
     XPANSE_SUFFIX_TAG,
-    XPANSE_INLINE_PREFIX_TAG,
-    XPANSE_INLINE_SUFFIX_TAG
+    XSIAM_DASHBOARDS_DIR,
+    XSIAM_INLINE_PREFIX_TAG,
+    XSIAM_INLINE_SUFFIX_TAG,
+    XSIAM_PREFIX_TAG,
+    XSIAM_REPORTS_DIR,
+    XSIAM_SUFFIX_TAG,
+    XSOAR_CONFIG_FILE,
+    XSOAR_INLINE_PREFIX_TAG,
+    XSOAR_INLINE_SUFFIX_TAG,
+    XSOAR_PREFIX_TAG,
+    XSOAR_SAAS_INLINE_PREFIX_TAG,
+    XSOAR_SAAS_INLINE_SUFFIX_TAG,
+    XSOAR_SAAS_PREFIX_TAG,
+    XSOAR_SAAS_SUFFIX_TAG,
+    XSOAR_SUFFIX_TAG,
+    FileType,
+    MarketplaceVersions,
 )
 from demisto_sdk.commands.common.content import Content
 from demisto_sdk.commands.common.content.tests.objects.pack_objects.pack_ignore.pack_ignore_test import (
@@ -2358,7 +2358,7 @@ class TestTagParser:
         prefix = "<>"
         suffix = "</>"
         text = "some text"
-        tag_parser = TagParser('XSOAR')
+        tag_parser = TagParser("XSOAR")
         for tag in (prefix, suffix):
             assert tag_parser.parse(text + tag) == text + tag
 
@@ -2375,7 +2375,7 @@ class TestTagParser:
         """
         text = "some text<~>more text</~>"
         expected_text = "some text"
-        tag_parser = TagParser('')
+        tag_parser = TagParser("")
         assert tag_parser.parse(text, True) == expected_text
 
     def test_remove_tags_only(self):
@@ -2391,7 +2391,7 @@ class TestTagParser:
         """
         text = "some text <~>tag text</~>"
         expected_text = "some text tag text"
-        tag_parser = TagParser('')
+        tag_parser = TagParser("")
         assert tag_parser.parse(text) == expected_text
 
 
@@ -2546,12 +2546,13 @@ def test_xsoar_saas_marketplace_version(self):
     assert "xsoar" not in actual
     assert "XSIAM" not in actual
     assert "xsiam" not in actual
-    assert "XPANSE" and  "xpanse" not in actual
+    assert "XPANSE" and "xpanse" not in actual
     assert self.XSOAR_PREFIX not in actual
     assert self.XSIAM_PREFIX not in actual
     assert self.XPANSE_PREFIX not in actual
     assert self.XSOAR_SAAS_PREFIX not in actual
     assert "XSOAR_SAAS" and "xsoar saas" in actual
+
 
 @pytest.mark.parametrize(
     "data, answer",

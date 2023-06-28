@@ -165,7 +165,7 @@ MARKETPLACE_TO_ITEMS_MAPPING = {
     MarketplaceVersions.XSOAR.value: XSOAR_MARKETPLACE_ITEMS_TO_DUMP,
     MarketplaceVersions.XSOAR_SAAS.value: XSOAR_MARKETPLACE_ITEMS_TO_DUMP,
     MarketplaceVersions.MarketplaceV2.value: XSIAM_MARKETPLACE_ITEMS_TO_DUMP,
-    MarketplaceVersions.XPANSE.value: XPANSE_MARKETPLACE_ITEMS_TO_DUMP
+    MarketplaceVersions.XPANSE.value: XPANSE_MARKETPLACE_ITEMS_TO_DUMP,
 }
 ##############
 # Main logic #

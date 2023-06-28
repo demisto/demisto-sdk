@@ -1,7 +1,7 @@
 from pathlib import Path
 from typing import Any, Dict, List
 from zipfile import ZipFile
-import tempfile
+
 import pytest
 
 import demisto_sdk.commands.content_graph.neo4j_service as neo4j_service
@@ -908,5 +908,3 @@ class TestCreateContentGraph:
 #         mocker.patch.object(os, 'getenv' , return_value=artifact_dir)
 #         mocker.patch("pack.replace_readme_urls", side_affect)
 #         pack.replce_readme_urls_and_write_to_artifacts('fake_path', MarketplaceVersions.MarketplaceV2)
-
-

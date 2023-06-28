@@ -23,8 +23,8 @@ from demisto_sdk.commands.content_graph.parsers.content_items_list import (
 )
 
 DEFAULT_MARKETPLACES = [
-    MarketplaceVersions.XSOAR,
-    MarketplaceVersions.MarketplaceV2,
+    MarketplaceVersions.XSOAR.value,
+    MarketplaceVersions.MarketplaceV2.value,
 ]
 
 
@@ -126,7 +126,7 @@ class PackMetadataParser:
         self.vendor_id: Optional[str] = metadata.get("vendorId")
         self.vendor_name: Optional[str] = metadata.get("vendorName")
         self.preview_only: Optional[bool] = metadata.get("previewOnly")
-        self.marketplaces: List[MarketplaceVersions] = (
+        self.marketplaces: List[str] = (
             metadata.get("marketplaces") or DEFAULT_MARKETPLACES
         )
         if MarketplaceVersions.XSOAR.value in self.marketplaces:

@@ -1176,6 +1176,7 @@ FILTER_CONF = "./artifacts/filter_file.txt"
 
 GOOGLE_CLOUD_STORAGE_PUBLIC_BASE_PATH = "https://storage.googleapis.com"
 
+
 class PB_Status:
     NOT_SUPPORTED_VERSION = "Not supported version"
     COMPLETED = "completed"

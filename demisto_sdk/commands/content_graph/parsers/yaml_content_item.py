@@ -62,16 +62,8 @@ class YAMLContentItemParser(ContentItemParser):
 
     @property
     def marketplaces(self) -> List[MarketplaceVersions]:
-        if file_marketplaces := [
-            MarketplaceVersions(mp) for mp in self.yml_data.get("marketplaces", [])
-        ]:
-            marketplaces = file_marketplaces
-        marketplaces = sorted(set(self.pack_marketplaces) & self.supported_marketplaces)
-        if MarketplaceVersions.XSOAR in marketplaces:
-            marketplaces.append(MarketplaceVersions.XSOAR_SAAS)
+        return self.get_marketplaces(self.yml_data)
 
-        return marketplaces
-    
     def connect_to_tests(self) -> None:
         """Iterates over the test playbooks registered to this content item,
         and creates a TESTED_BY relationship between the content item to each of them.

@@ -688,7 +688,12 @@ class TestMergeScriptPackageToYMLIntegration:
         assert expected_yml == actual_yml
 
     @pytest.mark.parametrize(
-        "marketplace", (MarketplaceVersions.XSOAR, MarketplaceVersions.MarketplaceV2, MarketplaceVersions.XSOAR_SAAS)
+        "marketplace",
+        (
+            MarketplaceVersions.XSOAR,
+            MarketplaceVersions.MarketplaceV2,
+            MarketplaceVersions.XSOAR_SAAS,
+        ),
     )
     def test_unify_integration__hidden_param(
         self, marketplace: MarketplaceVersions, mocker
@@ -741,16 +746,24 @@ class TestMergeScriptPackageToYMLIntegration:
         assert ("Should be hidden on XSOAR_SAAS only" in hidden_true) == (
             marketplace == MarketplaceVersions.XSOAR_SAAS
         )
-        if marketplace in [MarketplaceVersions.MarketplaceV2, MarketplaceVersions.XSOAR]:
-            assert "Should be hidden on both XSOAR and marketplaceV2 - attribute lists both marketplaces" in hidden_true
+        if marketplace in [
+            MarketplaceVersions.MarketplaceV2,
+            MarketplaceVersions.XSOAR,
+        ]:
+            assert (
+                "Should be hidden on both XSOAR and marketplaceV2 - attribute lists both marketplaces"
+                in hidden_true
+            )
 
-        if marketplace in [MarketplaceVersions.MarketplaceV2, MarketplaceVersions.XSOAR_SAAS]:
-            assert "Should be hidden on both XSOAR_SAAS and MarketplaceV2" in hidden_true
+        if marketplace in [
+            MarketplaceVersions.MarketplaceV2,
+            MarketplaceVersions.XSOAR_SAAS,
+        ]:
+            assert (
+                "Should be hidden on both XSOAR_SAAS and MarketplaceV2" in hidden_true
+            )
 
-        assert (
-            "attribute is True Should be hidden in all marketplaces"
-            in hidden_true
-        )
+        assert "attribute is True Should be hidden in all marketplaces" in hidden_true
         assert "Should not be hidden - hidden attribute is False" in hidden_false
         assert "Should not be hidden - no hidden attribute" in missing_hidden_field
 

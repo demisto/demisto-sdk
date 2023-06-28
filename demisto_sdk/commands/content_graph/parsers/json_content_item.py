@@ -59,17 +59,7 @@ class JSONContentItemParser(ContentItemParser):
 
     @property
     def marketplaces(self) -> List[MarketplaceVersions]:
-        if file_marketplaces := [
-            MarketplaceVersions(mp) for mp in self.json_data.get("marketplaces", [])
-        ]:
-            marketplaces = file_marketplaces
-
-        marketplaces = sorted(set(self.pack_marketplaces) & self.supported_marketplaces)
-        if MarketplaceVersions.XSOAR in marketplaces:
-            # Since we want xsoar-saas and xsoar to contain the same content items.
-            marketplaces.append(MarketplaceVersions.XSOAR_SAAS)
-
-        return marketplaces
+        return self.get_marketplaces(self.json_data)
 
     def get_json(self) -> Dict[str, Any]:
         if self.path.is_dir():

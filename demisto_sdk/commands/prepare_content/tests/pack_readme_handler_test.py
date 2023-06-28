@@ -1,16 +1,17 @@
 import os
 from pathlib import Path
-from demisto_sdk.commands.prepare_content.pack_readme_handler import (
-    collect_images_from_readme_and_replace_with_storage_path, replace_readme_urls
-)
+
+import pytest
+
 from demisto_sdk.commands.common.constants import (
+    GOOGLE_CLOUD_STORAGE_PUBLIC_BASE_PATH,
     README_IMAGES,
     MarketplaceVersions,
     MarketplaceVersionToMarketplaceName,
-    GOOGLE_CLOUD_STORAGE_PUBLIC_BASE_PATH
 )
-import pytest
-
+from demisto_sdk.commands.prepare_content.pack_readme_handler import (
+    collect_images_from_readme_and_replace_with_storage_path,
+)
 
 expected_urls_ret = {
     "test_pack": [

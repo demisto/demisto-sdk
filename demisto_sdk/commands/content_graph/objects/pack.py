@@ -1,5 +1,5 @@
-import shutil
 import os
+import shutil
 from collections import defaultdict
 from pathlib import Path
 from tempfile import TemporaryDirectory
@@ -15,7 +15,6 @@ from demisto_sdk.commands.common.constants import (
     CONTRIBUTORS_README_TEMPLATE,
     MARKETPLACE_MIN_VERSION,
     MarketplaceVersions,
-    GOOGLE_CLOUD_STORAGE_PUBLIC_BASE_PATH
 )
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.handlers import JSON_Handler
@@ -71,6 +70,7 @@ from demisto_sdk.commands.content_graph.objects.wizard import Wizard
 from demisto_sdk.commands.content_graph.objects.xdrc_template import XDRCTemplate
 from demisto_sdk.commands.content_graph.objects.xsiam_dashboard import XSIAMDashboard
 from demisto_sdk.commands.content_graph.objects.xsiam_report import XSIAMReport
+from demisto_sdk.commands.prepare_content.pack_readme_handler import replace_readme_urls
 from demisto_sdk.commands.upload.constants import (
     CONTENT_TYPES_EXCLUDED_FROM_UPLOAD,
     MULTIPLE_ZIPPED_PACKS_FILE_NAME,
@@ -81,7 +81,6 @@ from demisto_sdk.commands.upload.tools import (
     parse_error_response,
     parse_upload_response,
 )
-from demisto_sdk.commands.prepare_content.pack_readme_handler import replace_readme_urls
 
 if TYPE_CHECKING:
     from demisto_sdk.commands.content_graph.objects.relationship import RelationshipData
@@ -349,26 +348,28 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: i
 
         self.replce_readme_urls_and_write_to_artifacts(path, marketplace)
 
-
     def replce_readme_urls_and_write_to_artifacts(self, path, marketplace):
-        pack_readme_images_data: dict = replace_readme_urls(path, marketplace, self.object_id)
+        pack_readme_images_data: dict = replace_readme_urls(
+            path, marketplace, self.object_id
+        )
 
         if (artifacts_folder := os.getenv("ARTIFACTS_FOLDER")) and Path(
             artifacts_folder
         ).exists():
-            artifacts_readme_images_path = Path(f"{artifacts_folder}/readme_images.json")
+            artifacts_readme_images_path = Path(
+                f"{artifacts_folder}/readme_images.json"
+            )
             if not artifacts_readme_images_path.exists():
-                with open(artifacts_readme_images_path, 'w') as f:
+                with open(artifacts_readme_images_path, "w") as f:
                     # If this is the first pack init the file with an empty dict.
                     json.dump({}, f)
 
-            with open(artifacts_readme_images_path, 'r') as readme_images_data_file:
+            with open(artifacts_readme_images_path, "r") as readme_images_data_file:
                 readme_images_data_dict: dict = json.load(readme_images_data_file)
                 readme_images_data_dict.update(pack_readme_images_data)
 
             with open(artifacts_readme_images_path, "w") as fp:
                 json.dump(readme_images_data_dict, fp, indent=4)
-
 
     def dump(
         self,

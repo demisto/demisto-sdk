@@ -1526,6 +1526,7 @@ class TestParsersAndModels:
             expected_marketplaces=[
                 MarketplaceVersions.XSOAR,
                 MarketplaceVersions.MarketplaceV2,
+                MarketplaceVersions.XSOAR_SAAS,
             ],
             expected_content_items=expected_content_items,
         )

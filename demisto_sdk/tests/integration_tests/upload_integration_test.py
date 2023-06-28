@@ -295,5 +295,5 @@ def test_integration_upload_pack_invalid_connection_params(mocker):
     assert result.exit_code == 1
     assert str_in_call_args_list(
         logger_info.call_args_list,
-        "Could not connect to XSOAR server. Try checking your connection configurations.",
+        "Could not connect to the server. Try checking your connection configurations.",
     )

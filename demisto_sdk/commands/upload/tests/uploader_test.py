@@ -479,7 +479,6 @@ def test_upload_single_unsupported_file(mocker):
         "demisto_sdk.commands.upload.uploader.get_demisto_version",
         return_value=Version("8.0.0"),
     )
-    # mocker.patch.object(tools,"get_demisto_version",return_value=Version("0"))
     mocker.patch.object(demisto_client, "configure", return_value="object")
     path = Path(
         f"{git_path()}/demisto_sdk/tests/test_files/fake_pack/Integrations/test_data/results.json"

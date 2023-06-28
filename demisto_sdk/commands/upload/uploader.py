@@ -196,14 +196,14 @@ class Uploader:
 
     def upload(self):
         """Upload the pack / directory / file to the remote Cortex XSOAR instance."""
-        if not self.path or not self.path.exists():
-            logger.error(f"[red]input path: {self.path} does not exist[/red]")
-            return ERROR_RETURN_CODE
-
         if self.demisto_version.base_version == "0":
             logger.info(
                 "[red]Could not connect to the server. Try checking your connection configurations.[/red]"
             )
+            return ERROR_RETURN_CODE
+
+        if not self.path or not self.path.exists():
+            logger.error(f"[red]input path: {self.path} does not exist[/red]")
             return ERROR_RETURN_CODE
 
         if self.should_detach_files:

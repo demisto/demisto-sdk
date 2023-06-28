@@ -2,6 +2,7 @@ import re
 import shutil
 from pathlib import Path
 from typing import List
+
 from git import Repo
 from pydantic import ValidationError
 
@@ -12,6 +13,7 @@ from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import get_yaml
 
 CHANGELOG_FOLDER = Path(f"{git_path()}/.changelog")
+CHANGELOG_MD_FILE = Path(f"{git_path()}/CHANGELOG.md")
 RELEASE_VERSION_REGEX = re.compile(r"v\d{1,2}\.\d{1,2}\.\d{1,2}")
 
 yaml = YAML_Handler()
@@ -80,13 +82,15 @@ class Changelog:
         if not self.is_release():
             logger.error("Something msg")
             return
-        changelogs = self.get_all_changelogs()
+        logs = self.get_all_logs()
+        self.extract_and_build_changelogs(logs)
         self.cleaning_changelogs_folder()
+        logger.info("end")
 
     """ HELPER FUNCTIONS """
 
     def is_changelog_changed(self) -> bool:
-        return "CHANGELOG.md" in Repo(".").git.diff('HEAD~1..HEAD', name_only=True).split()
+        return "CHANGELOG.md" in Repo(".").git.diff('HEAD..master', name_only=True).split()
 
     def is_log_folder_empty(self) -> bool:
         return not any(CHANGELOG_FOLDER.iterdir())
@@ -104,7 +108,7 @@ class Changelog:
             return False
         return True
 
-    def get_all_changelogs(self) -> List[LogObject]:
+    def get_all_logs(self) -> List[LogObject]:
         changelogs: List[LogObject] = []
         for path in CHANGELOG_FOLDER.iterdir():
             changelog_data = get_yaml(path)
@@ -115,6 +119,31 @@ class Changelog:
 
         return changelogs
 
+    def extract_and_build_changelogs(self, logs: List[LogObject]) -> None:
+        all_logs_unreleased: List[str] = []
+        for log in logs:
+            all_logs_unreleased.extend(log.build_log())
+        with CHANGELOG_MD_FILE.open() as f:
+            old_changelog = f.readlines()
+
+        new_changelog = self.prepare_new_changelog(all_logs_unreleased, old_changelog[1:])
+        self.write_to_changelog_file(new_changelog)
+        logger.info("")
+
+    def prepare_new_changelog(self, new_logs: List[str], old_changelog: List[str]) -> str:
+        new_changelog = "# Changelog\n"
+        new_changelog += f"## {self.pr_name[1:]}\n"
+        for log in new_logs:
+            new_changelog += log
+        new_changelog += "\n"
+        for log in old_changelog:
+            new_changelog += log
+        return new_changelog
+
+    def write_to_changelog_file(self, new_changelog: str) -> None:
+        with CHANGELOG_MD_FILE.open('w') as f:
+            f.write(new_changelog)
+
     def cleaning_changelogs_folder(self) -> None:
         for item in CHANGELOG_FOLDER.iterdir():
             if item.is_file():
@@ -123,4 +152,5 @@ class Changelog:
                 shutil.rmtree(item)
         logger.info("Something msg")
 
-print(Repo(".").git.diff('HEAD..master', name_only=True).split())
+
+Changelog("12345", "v2.0.0").release()

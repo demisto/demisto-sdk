@@ -288,7 +288,8 @@ def test_integration_upload_pack_invalid_connection_params(mocker):
         "demisto_sdk.commands.upload.uploader.demisto_client", return_valure="object"
     )
     mocker.patch(
-        "demisto_sdk.commands.upload.uploader.get_demisto_version", return_value="0"
+        "demisto_sdk.commands.upload.uploader.get_demisto_version",
+        return_value=Version("0"),
     )
     runner = CliRunner(mix_stderr=False)
     result = runner.invoke(main, [UPLOAD_CMD, "-i", pack_path, "--insecure"])

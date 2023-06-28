@@ -450,6 +450,10 @@ def test_upload_invalid_path(mocker):
     path = Path(
         f"{git_path()}/demisto_sdk/tests/test_files/content_repo_not_exists/Scripts/"
     )
+    mocker.patch(
+        "demisto_sdk.commands.upload.uploader.get_demisto_version",
+        return_value=Version("8.0.0"),
+    )
     uploader = Uploader(input=path, insecure=False)
     assert uploader.upload() == ERROR_RETURN_CODE
     assert not any(

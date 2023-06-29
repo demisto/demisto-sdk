@@ -16,9 +16,30 @@ from demisto_sdk.commands.content_graph.common import (
 from demisto_sdk.commands.content_graph.content_graph_builder import ContentGraphBuilder
 from demisto_sdk.commands.content_graph.interface.graph import ContentGraphInterface
 
-MAX_RETRIES = 2
+
+def recover_if_fails(func):
+    def func_wrapper(*args, **kwargs):
+        try:
+            return func(*args, **kwargs)
+        except Exception:
+            if not neo4j_service.is_running_on_docker():
+                logger.error(
+                    "Something is broken in the neo4j local configuration, check `neo4j.conf` and `apoc.conf` files.",
+                    exc_info=True,
+                )
+                raise
+            logger.warning(
+                "Failed to build content graph, retrying with a clean environment.",
+                exc_info=True,
+            )
+            neo4j_service.stop(force=True, clean=True)
+            neo4j_service.start()
+            return func(*args, **kwargs)
+
+    return func_wrapper
 
 
+@recover_if_fails
 def create_content_graph(
     content_graph_interface: ContentGraphInterface,
     marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR,
@@ -33,23 +54,20 @@ def create_content_graph(
         dependencies (bool): Whether to create the dependencies.
         output_path (Path): The path to export the graph zip to.
     """
-    for _ in range(MAX_RETRIES):
-        try:
-            ContentGraphBuilder(content_graph_interface).create_graph()
-            if dependencies:
-                content_graph_interface.create_pack_dependencies()
-            if output_path:
-                output_path = output_path / marketplace.value
-            content_graph_interface.export_graph(output_path)
-            logger.info(
-                f"Successfully created the content graph. UI representation is available at {NEO4J_DATABASE_HTTP} "
-                f"(username: {NEO4J_USERNAME}, password: {NEO4J_PASSWORD})"
-            )
-            return
-        except Exception:
-            recover_from_error()
+    ContentGraphBuilder(content_graph_interface).create_graph()
+    if dependencies:
+        content_graph_interface.create_pack_dependencies()
+    if output_path:
+        output_path = output_path / marketplace.value
+    content_graph_interface.export_graph(output_path)
+    logger.info(
+        f"Successfully created the content graph. UI representation is available at {NEO4J_DATABASE_HTTP} "
+        f"(username: {NEO4J_USERNAME}, password: {NEO4J_PASSWORD})"
+    )
+    return
 
 
+@recover_if_fails
 def update_content_graph(
     content_graph_interface: ContentGraphInterface,
     marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR,
@@ -96,49 +114,29 @@ def update_content_graph(
                     content_graph_interface, marketplace, dependencies, output_path
                 )
                 return
-    for _ in range(MAX_RETRIES):
-        try:
-            if not content_graph_interface.import_graph(imported_path):
-                # if the import failed, we need to create a new graph
-                create_content_graph(
-                    content_graph_interface, marketplace, dependencies, output_path
-                )
-                return
-
-            if use_git and (commit := content_graph_interface.commit):
-                packs_to_update.extend(GitUtil().get_all_changed_pack_ids(commit))
-
-            packs_str = "\n".join([f"- {p}" for p in packs_to_update])
-            logger.info(f"Updating the following packs:\n{packs_str}")
-            builder.update_graph(packs_to_update)
-
-            if dependencies:
-                content_graph_interface.create_pack_dependencies()
-            if output_path:
-                output_path = output_path / marketplace.value
-            content_graph_interface.export_graph(output_path)
-            logger.info(
-                f"Successfully updated the content graph. UI representation is available at {NEO4J_DATABASE_HTTP} "
-                f"(username: {NEO4J_USERNAME}, password: {NEO4J_PASSWORD})"
-            )
-            return
-        except Exception:
-            recover_from_error()
-
-
-def recover_from_error():
-    logger.warning(
-        "Failed to update content graph. stopping neo4j service, cleaning and starting it again.",
-        exc_info=True,
-    )
-    if not neo4j_service.is_running_on_docker():
-        logger.error(
-            "Something is broken in the neo4j local configuration, check `neo4j.conf` and `apoc.conf` files.",
-            exc_info=True,
+    if not content_graph_interface.import_graph(imported_path):
+        # if the import failed, we need to create a new graph
+        create_content_graph(
+            content_graph_interface, marketplace, dependencies, output_path
         )
-        raise
-    neo4j_service.stop(force=True, clean=True)
-    neo4j_service.start()
+        return
+
+    if use_git and (commit := content_graph_interface.commit):
+        packs_to_update.extend(GitUtil().get_all_changed_pack_ids(commit))
+
+    packs_str = "\n".join([f"- {p}" for p in packs_to_update])
+    logger.info(f"Updating the following packs:\n{packs_str}")
+    builder.update_graph(packs_to_update)
+
+    if dependencies:
+        content_graph_interface.create_pack_dependencies()
+    if output_path:
+        output_path = output_path / marketplace.value
+    content_graph_interface.export_graph(output_path)
+    logger.info(
+        f"Successfully updated the content graph. UI representation is available at {NEO4J_DATABASE_HTTP} "
+        f"(username: {NEO4J_USERNAME}, password: {NEO4J_PASSWORD})"
+    )
 
 
 def extract_remote_import_files(content_graph_interface: ContentGraphInterface) -> None:

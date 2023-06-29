@@ -450,6 +450,10 @@ def test_upload_invalid_path(mocker):
     path = Path(
         f"{git_path()}/demisto_sdk/tests/test_files/content_repo_not_exists/Scripts/"
     )
+    mocker.patch(
+        "demisto_sdk.commands.upload.uploader.get_demisto_version",
+        return_value=Version("8.0.0"),
+    )
     uploader = Uploader(input=path, insecure=False)
     assert uploader.upload() == ERROR_RETURN_CODE
     assert not any(
@@ -475,6 +479,10 @@ def test_upload_single_unsupported_file(mocker):
     Then
         - Ensure uploaded failure message is printed as expected
     """
+    mocker.patch(
+        "demisto_sdk.commands.upload.uploader.get_demisto_version",
+        return_value=Version("8.0.0"),
+    )
     mocker.patch.object(demisto_client, "configure", return_value="object")
     path = Path(
         f"{git_path()}/demisto_sdk/tests/test_files/fake_pack/Integrations/test_data/results.json"
@@ -1069,7 +1077,7 @@ class TestItemDetacher:
         # Tests that the function successfully zips and dumps multiple valid pack paths.
 
 
-def test_zip_multiple_packs(tmp_path: Path, mocker):
+def test_zip_multiple_packs(tmp_path: Path, integration, mocker):
     tmp_path = tmp_path / "Packs"
     tmp_path.mkdir()
 
@@ -1077,8 +1085,9 @@ def test_zip_multiple_packs(tmp_path: Path, mocker):
         pack = mock_pack(name=name, path=tmp_path / name)
         pack.path.mkdir(parents=True)
         pack.content_items.integration.append(
-            mock_integration(path=pack.path / "Integrations")
+            mock_integration(path=integration.yml.path)
         )
+
         (pack.path / "README.md").touch()
         (pack.path / "pack_metadata.json").touch()
         return pack
@@ -1117,13 +1126,13 @@ def test_zip_multiple_packs(tmp_path: Path, mocker):
     assert {str(path.relative_to(folder_path)) for path in folder_path.rglob("*")} == {
         "Pack0",
         "Pack0/Integrations",
-        "Pack0/Integrations/integration-Integrations",
+        "Pack0/Integrations/integration-integration_0.yml",
         "Pack0/README.md",
         "Pack0/metadata.json",
         "Pack0/pack_metadata.json",
         "Pack1",
         "Pack1/Integrations",
-        "Pack1/Integrations/integration-Integrations",
+        "Pack1/Integrations/integration-integration_0.yml",
         "Pack1/README.md",
         "Pack1/metadata.json",
         "Pack1/pack_metadata.json",

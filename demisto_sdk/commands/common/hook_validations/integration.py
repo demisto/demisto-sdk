@@ -1276,7 +1276,7 @@ class IntegrationValidator(ContentEntityValidator):
 
             # ignore optional fields
             for param in params:
-                for field in ["defaultvalue", "section", "advanced"]:
+                for field in ["defaultvalue", "section", "advanced", "required"]:
                     param.pop(field, None)
 
             for fetch_required_param in fetch_required_params:

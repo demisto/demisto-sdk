@@ -141,6 +141,8 @@ jobs:
               # remove the integration tests (integration tests as opposed to unit tests) from the list because those
               # tests shouldn't be parallelized.
               TEST_FILES=$(circleci tests glob "**/*_test.py")
+              # filter out files which are in .venv directory
+              TEST_FILES=$(echo "$TEST_FILES" | sed -E 's/\S*\.venv\S*\.py//g')
               TEST_FILES=$(echo "$TEST_FILES" | sed -E 's/\S*demisto_sdk\/commands\/init\/templates\S*\.py//g')
               TEST_FILES=$(echo "$TEST_FILES" | sed -E 's/\S*demisto_sdk\/tests\/integration_tests\S*\.py//g')
               TEST_FILES=$(echo "$TEST_FILES" | sed -E 's/\S*demisto_sdk\/commands\/content_graph\/tests\S*\.py//g')
@@ -239,7 +241,7 @@ jobs:
             name: create cache key for pre-commit
             command: |
               cp .pre-commit-config.yaml pre-commit-cache-key.txt
-              poetry run python --version --version >> pre-commit-cache-key.txt
+              poetry run python --version >> pre-commit-cache-key.txt
         - restore_cache:
             keys:
             - v1-pc-cache-{{ checksum "pre-commit-cache-key.txt" }}
@@ -248,7 +250,6 @@ jobs:
             command: |
               poetry run pre-commit --version
               poetry run pre-commit run -a
-        
         - run:
             name: Run Pytest collection
             command: |

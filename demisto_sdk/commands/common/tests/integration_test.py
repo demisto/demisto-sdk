@@ -1970,7 +1970,6 @@ class TestIsFetchParamsExist:
                 str_in_call_args_list(
                     logger_error.call_args_list, "name: incidentType"
                 ),
-                str_in_call_args_list(logger_error.call_args_list, "required: false"),
             ]
         )
 

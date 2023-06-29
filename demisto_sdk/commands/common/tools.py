@@ -2386,7 +2386,7 @@ def get_demisto_version(client: demisto_client) -> Version:
         return Version(Version(about_data.get("demistoVersion")).base_version)
     except Exception:
         logger.warning(
-            "Could not parse Xsoar version, please make sure the environment is properly configured."
+            "Could not parse server version, please make sure the environment is properly configured."
         )
         return Version("0")
 

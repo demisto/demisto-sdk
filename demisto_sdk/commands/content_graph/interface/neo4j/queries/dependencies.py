@@ -39,27 +39,28 @@ def get_all_level_packs_relationships(
 
     if relationship_type == RelationshipType.DEPENDS_ON:
         query = f"""
-            UNWIND $ids_list AS pack_id
+            UNWIND $ids_list AS node_id
             MATCH path = shortestPath((p1:{ContentType.PACK}{params_str})-[r:{relationship_type}*..{MAX_DEPTH}]->(p2:{ContentType.PACK}))
-            WHERE id(p1) = pack_id AND id(p1) <> id(p2)
+            WHERE id(p1) = node_id AND id(p1) <> id(p2)
             AND all(n IN nodes(path) WHERE "{marketplace}" IN n.marketplaces)
             AND all(r IN relationships(path) WHERE NOT r.is_test {"AND r.mandatorily = true)" if mandatorily else ""}
-            RETURN pack_id, collect(r) as relationships, collect(p2) AS dependencies
+            RETURN node_id, collect(r) as relationships, collect(p2) AS nodes_to
         """
     if relationship_type == RelationshipType.IMPORTS:
-        query = f"""UNWIND $ids_list AS pack_id
+        # search all the content items that import the 'node_from' content item
+        query = f"""UNWIND $ids_list AS node_id
             MATCH path=shortestPath((node_from) <- [relationship:{relationship_type}*..{MAX_DEPTH}] - (node_to))
-            WHERE id(node_from) = pack_id and node_from <> node_to
-            return pack_id, node_from, collect(relationship) AS relationships,
-            collect(node_to) AS dependencies
+            WHERE id(node_from) = node_id and node_from <> node_to
+            return node_id, node_from, collect(relationship) AS relationships,
+            collect(node_to) AS nodes_to
         """
 
     result = run_query(tx, query, ids_list=list(ids_list))
     logger.debug("Found dependencies.")
     return {
-        int(item.get("pack_id")): Neo4jRelationshipResult(
+        int(item.get("node_id")): Neo4jRelationshipResult(
             node_from=item.get("node_from"),
-            nodes_to=item.get("dependencies"),
+            nodes_to=item.get("nodes_to"),
             relationships=item.get("relationships"),
         )
         for item in result

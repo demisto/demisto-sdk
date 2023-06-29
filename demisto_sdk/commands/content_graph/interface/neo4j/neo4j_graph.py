@@ -229,7 +229,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
     def _add_all_level_relationships(
         self,
         session: Session,
-        pack_node_ids: Iterable[int],
+        node_ids: Iterable[int],
         relationship_type: RelationshipType,
         marketplace: MarketplaceVersions = None,
     ):
@@ -240,48 +240,39 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             marketplace (MarketplaceVersions): Marketplace version to check for dependencies
             pack_nodes (List[graph.Node]): List of the pack nodes
         """
-        mandatorily_dependencies: Dict[
-            int, Neo4jRelationshipResult
-        ] = session.execute_read(
+        relationships: Dict[int, Neo4jRelationshipResult] = session.execute_read(
             get_all_level_packs_relationships,
             relationship_type,
-            pack_node_ids,
+            node_ids,
             marketplace,
             True,
         )
         nodes_to = []
-        for pack_depends_on_relationship in mandatorily_dependencies.values():
-            nodes_to.extend(pack_depends_on_relationship.nodes_to)
+        for content_item_relationship in relationships.values():
+            nodes_to.extend(content_item_relationship.nodes_to)
         self._add_nodes_to_mapping(nodes_to)
 
-        for pack_id, pack_depends_on_relationship in mandatorily_dependencies.items():
-            obj = self._id_to_obj[pack_id]
-            for node in pack_depends_on_relationship.nodes_to:
+        for content_item_id, content_item_relationship in relationships.items():
+            obj = self._id_to_obj[content_item_id]
+            for node in content_item_relationship.nodes_to:
                 target = self._id_to_obj[node.id]
-                if relationship_type == RelationshipType.DEPENDS_ON:
-                    obj.add_relationship(
-                        relationship_type,
-                        RelationshipData(
-                            relationship_type=relationship_type,
-                            source_id=pack_id,
-                            target_id=node.id,
-                            content_item_to=target,
-                            mandatorily=True,
-                            is_direct=False,
-                        ),
-                    )
-                elif relationship_type == RelationshipType.IMPORTS:
-                    obj.add_relationship(
-                        relationship_type,
-                        RelationshipData(
-                            relationship_type=relationship_type,
-                            source_id=node.id,
-                            target_id=pack_id,
-                            content_item_to=target,
-                            mandatorily=True,
-                            is_direct=False,
-                        ),
-                    )
+                source_id = content_item_id
+                target_id = node.id
+                if relationship_type == RelationshipType.IMPORTS:
+                    # the import relationship is from the integration to the content item
+                    source_id = node.id
+                    target_id = content_item_id
+                obj.add_relationship(
+                    relationship_type,
+                    RelationshipData(
+                        relationship_type=relationship_type,
+                        source_id=source_id,
+                        target_id=target_id,
+                        content_item_to=target,
+                        mandatorily=True,
+                        is_direct=False,
+                    ),
+                )
 
     def _add_nodes_to_mapping(self, nodes: Iterable[graph.Node]) -> None:
         """Add nodes to the content models mapping

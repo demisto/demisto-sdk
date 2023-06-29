@@ -3667,11 +3667,25 @@ def parse_marketplace_kwargs(kwargs: Dict[str, Any]) -> MarketplaceVersions:
     return MarketplaceVersions.XSOAR  # default
 
 
-def parse_multiple_path_inputs(input_path: Optional[Union[Path, str]]) -> Optional[Tuple[Path, ...]]:
+def parse_multiple_path_inputs(
+    input_path: Optional[Union[Path, str, List[Path], Tuple[Path]]]
+) -> Optional[Tuple[Path, ...]]:
+    if not input_path:
+        return ()
+
     if isinstance(input_path, Path):
         return (input_path,)
-    return (
-        tuple(Path(path_str) for path_str in input_path.split(","))
-        if input_path
-        else None
-    )
+
+    if isinstance(input_path, str):
+        return (
+            tuple(Path(path_str) for path_str in input_path.split(","))
+            if input_path
+            else None
+        )
+
+    if isinstance(input_path, (list, tuple)) and isinstance(
+        (result := tuple(input_path))[0], Path
+    ):
+        return result
+
+    raise ValueError(f"Cannot parse paths from {input_path}")

@@ -474,34 +474,33 @@ class TestPlaybook:
         create_incident_request.playbook_id = self.configuration.playbook_id
         create_incident_request.name = incident_name
 
-        # try:
-        #     response = client.create_incident(
-        #         create_incident_request=create_incident_request
-        #     )
-        # except ApiException:
-        #     self.build_context.logging_module.exception(
-        #         f"Failed to create incident with name {incident_name} for playbook {self}"
-        #     )
-        # try:
-        #     inc_id = response.id
-        # except Exception:
-        #     inc_id = "incCreateErr"
+        try:
+            response = client.create_incident(
+                create_incident_request=create_incident_request
+            )
+        except ApiException:
+            self.build_context.logging_module.exception(
+                f"Failed to create incident with name {incident_name} for playbook {self}"
+            )
+        try:
+            inc_id = response.id
+        except Exception:
+            inc_id = "incCreateErr"
         # inc_id = response_json.get('id', 'incCreateErr')
-        # if inc_id == "incCreateErr":
-        #     error_message = (
-        #         f"Failed to create incident for playbookID: {self}."
-        #         "Possible reasons are:\nMismatch between playbookID in conf.json and "
-        #         "the id of the real playbook you were trying to use,"
-        #         "or schema problems in the TestPlaybook."
-        #     )
-        #     self.build_context.logging_module.error(error_message)
-        #     return None
+        if inc_id == "incCreateErr":
+            error_message = (
+                f"Failed to create incident for playbookID: {self}."
+                "Possible reasons are:\nMismatch between playbookID in conf.json and "
+                "the id of the real playbook you were trying to use,"
+                "or schema problems in the TestPlaybook."
+            )
+            self.build_context.logging_module.error(error_message)
+            return None
 
         # get incident
         search_filter = demisto_client.demisto_api.SearchIncidentsData()
         inc_filter = demisto_client.demisto_api.IncidentFilter()
-        # inc_filter.query = f"id: {inc_id}"
-        incident_name='inc-Sanity Test - Playbook with Unmockable Whois Integration--build_number:28158442--7156859b-1edc-4c02-9be3-57b440c76a8f'
+        inc_filter.query = f"id: {inc_id}"
         if IS_XSIAM:
             # in xsiam `create_incident` response don`t return created incident id.
             inc_filter.query = f'rawName:"{incident_name}"'

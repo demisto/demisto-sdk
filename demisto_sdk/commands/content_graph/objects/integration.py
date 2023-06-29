@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Callable, List
+from typing import TYPE_CHECKING, Callable, List, Optional
 
 import demisto_client
 
@@ -23,7 +23,7 @@ class Command(BaseContent, content_type=ContentType.COMMAND):  # type: ignore[ca
 
     # From HAS_COMMAND relationship
     deprecated: bool = False
-    description: str = ""
+    description: Optional[str] = ""
 
     # missing attributes in DB
     node_id: str = ""

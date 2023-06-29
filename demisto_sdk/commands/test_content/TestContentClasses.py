@@ -503,7 +503,7 @@ class TestPlaybook:
         inc_filter.query = f"id: {inc_id}"
         if IS_XSIAM:
             # in xsiam `create_incident` response don`t return created incident id.
-            inc_filter.query = f'rawName:"{incident_name}"'
+            inc_filter.query = f'name:"[{incident_name}"]'
         # inc_filter.query
         search_filter.filter = inc_filter
 
@@ -518,7 +518,7 @@ class TestPlaybook:
         while found_incidents < 1:
             try:
                 incidents = client.search_incidents(filter=search_filter)
-                found_incidents = incidents.total
+                found_incidents = len(incidents.data)
                 incident_search_responses.append(incidents)
             except ApiException:
                 if IS_XSIAM:

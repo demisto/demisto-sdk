@@ -3,6 +3,7 @@ from pathlib import Path
 from time import sleep
 from typing import Any, Dict, List, Optional, Tuple
 
+import pytz
 import requests
 import typer
 from rich import print as printr
@@ -82,18 +83,23 @@ def day_suffix(day: int) -> str:
     return "th" if 11 <= day <= 13 else {1: "st", 2: "nd", 3: "rd"}.get(day % 10, "th")
 
 
-def convert_epoch_time_to_string_time(epoch_time: int, with_ms: bool = False) -> str:
+def convert_epoch_time_to_string_time(
+    epoch_time: int, with_ms: bool = False, tenant_timezone: str = "UTC"
+) -> str:
     """
     Converts epoch time with milliseconds to string time with timezone delta.
 
     Args:
         epoch_time: The received epoch time (with milliseconds).
         with_ms: Whether to convert the epoch time with ms or not default is False.
+        tenant_timezone: The timezone of the XSIAM tenant.
 
     Returns:
         The string time with timezone delta.
     """
-    datetime_object = datetime.fromtimestamp(epoch_time / 1000)
+    datetime_object = datetime.fromtimestamp(
+        epoch_time / 1000, pytz.timezone(tenant_timezone)
+    )
     time_format = f"%b %-d{day_suffix(datetime_object.day)} %Y %H:%M:%S"
     if with_ms:
         time_format = f"{time_format}.%f"
@@ -103,7 +109,10 @@ def convert_epoch_time_to_string_time(epoch_time: int, with_ms: bool = False) ->
 
 
 def verify_results(
-    tested_dataset: str, results: List[dict], test_data: init_test_data.TestData
+    tested_dataset: str,
+    results: List[dict],
+    test_data: init_test_data.TestData,
+    tenant_timezone: str,
 ):
     """Verify that the results of the XQL query match the expected values.
 
@@ -111,6 +120,7 @@ def verify_results(
         tested_dataset (str): The dataset to verify result for.
         results (List[dict]): The results of the XQL query.
         test_data (init_test_data.TestData): The data parsed from the test data file.
+        tenant_timezone (str): The timezone of the XSIAM tenant.
 
     Returns:
         bool: True if the results are valid, False otherwise.
@@ -156,7 +166,7 @@ def verify_results(
             ):
                 time_with_ms = "." in expected_time_value
                 result["_time"] = convert_epoch_time_to_string_time(
-                    time_value, time_with_ms
+                    time_value, time_with_ms, tenant_timezone
                 )
             printr(create_table(expected_values, result))
 
@@ -245,7 +255,9 @@ def validate_expected_values(
             )
             success = False
         else:
-            success &= verify_results(rule.dataset, results, test_data)
+            success &= verify_results(
+                rule.dataset, results, test_data, xsiam_client.tenant_timezone
+            )
     if success:
         logger.info(
             "[green]Mappings validated successfully[/green]", extra={"markup": True}

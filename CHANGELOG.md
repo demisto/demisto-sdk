@@ -6,6 +6,7 @@
 * Removed fields with default (false) value that used in the **validate** command.
 * Fixed an issue where Indicator Types would fail to upload when using the **upload** command.
 * Fixed an issue where the **upload** command return wrong error message when API key is invalid.
+* Fixed an issue where the **upload** command failed parsing input paths.
 
 ## 1.17.0
 * **validate** will only fail on docker related errors if the pack is supported by xsoar.

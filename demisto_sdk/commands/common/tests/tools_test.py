@@ -2769,6 +2769,7 @@ PATH_2 = Path("2.yml")
         ),
         ([PATH_1, PATH_2], (PATH_1, PATH_2)),
         ((), ()),
+        ("", ()),
         (None, ()),
         (
             "test/test.yml,test1/test1.yml",

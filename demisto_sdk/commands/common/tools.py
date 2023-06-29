@@ -3677,11 +3677,7 @@ def parse_multiple_path_inputs(
         return (input_path,)
 
     if isinstance(input_path, str):
-        return (
-            tuple(Path(path_str) for path_str in input_path.split(","))
-            if input_path
-            else None
-        )
+        return tuple(Path(path_str) for path_str in input_path.split(","))
 
     if isinstance(input_path, (list, tuple)) and isinstance(
         (result := tuple(input_path))[0], Path

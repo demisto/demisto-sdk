@@ -7,7 +7,7 @@ import demisto_sdk.commands.content_graph.neo4j_service as neo4j_service
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.logger import logger
-from demisto_sdk.commands.common.tools import download_content_graph
+from demisto_sdk.commands.common.tools import download_content_graph, get_file
 from demisto_sdk.commands.content_graph.common import (
     NEO4J_DATABASE_HTTP,
     NEO4J_PASSWORD,
@@ -23,8 +23,14 @@ def recover_if_fails(func):
             return func(*args, **kwargs)
         except Exception:
             if not neo4j_service.is_running_on_docker():
+                neo4j_conf = get_file(
+                    Path(__file__).parent / "neo4j.conf", return_content=True
+                )
+                apoc_conf = get_file(
+                    Path(__file__).parent / "apoc.conf", return_content=True
+                )
                 logger.error(
-                    "Something is broken in the neo4j local configuration, check `neo4j.conf` and `apoc.conf` files.",
+                    f"Something is broken in the neo4j local configuration. Run with docker or set `neo4j.conf` file to {neo4j_conf} and `apoc.conf` file to {apoc_conf}",
                     exc_info=True,
                 )
                 raise

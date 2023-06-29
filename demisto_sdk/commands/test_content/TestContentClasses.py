@@ -509,6 +509,9 @@ class TestPlaybook:
 
         incident_search_responses = []
 
+        self.build_context.logging_module.info(search_filter)
+        self.build_context.logging_module.info(search_filter.filter.query)
+
         found_incidents = 0
         # poll the incidents queue for a max time of 300 seconds
         timeout = time.time() + 300

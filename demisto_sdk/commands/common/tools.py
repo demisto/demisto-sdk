@@ -20,6 +20,7 @@ from pathlib import Path, PosixPath
 from subprocess import DEVNULL, PIPE, Popen, check_output
 from time import sleep
 from typing import (
+    TYPE_CHECKING,
     Any,
     Callable,
     Dict,
@@ -116,6 +117,8 @@ from demisto_sdk.commands.common.constants import (
 from demisto_sdk.commands.common.git_content_config import GitContentConfig, GitProvider
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
+if TYPE_CHECKING:
+    from demisto_sdk.commands.content_graph.interface.graph import ContentGraphInterface
 
 logger = logging.getLogger("demisto-sdk")
 
@@ -3668,7 +3671,7 @@ def parse_marketplace_kwargs(kwargs: Dict[str, Any]) -> MarketplaceVersions:
 
 
 def get_api_module_dependencies_from_graph(
-    changed_api_modules: Set[str], graph
+    changed_api_modules: Set[str], graph: "ContentGraphInterface"
 ) -> List:
     if changed_api_modules:
         dependent_items = []

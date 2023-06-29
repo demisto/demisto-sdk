@@ -1,7 +1,7 @@
 import glob
 import os
-import shutil
 import re
+import shutil
 from configparser import ConfigParser
 from pathlib import Path
 from typing import Callable, List, Optional, Union
@@ -2541,7 +2541,7 @@ class TestMarketplaceTagParser:
         self.MARKETPLACE_TAG_PARSER.marketplace = MarketplaceVersions.XSOAR_SAAS.value
         actual = self.MARKETPLACE_TAG_PARSER.parse_text(self.TEXT_WITH_TAGS)
 
-        pattern = r'\bxsoar\b'
+        pattern = r"\bxsoar\b"
         match = re.search(pattern, actual, re.IGNORECASE)
         assert not match
 

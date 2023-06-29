@@ -519,6 +519,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             with self.driver.session() as session:
                 session.execute_write(drop_constraints)
                 session.execute_write(import_graphml, graphml_filenames)
+                session.execute_write(import_graphml, graphml_filenames)
                 session.execute_write(merge_duplicate_commands)
                 session.execute_write(merge_duplicate_content_items)
                 session.execute_write(create_constraints)

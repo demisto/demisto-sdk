@@ -19,9 +19,10 @@ expected_urls_ret = {
             "original_read_me_url": "https://raw.githubusercontent.com/crestdatasystems/content/"
             "4f707f8922d7ef1fe234a194dcc6fa73f96a4a87/Packs/Lansweeper/doc_files/"
             "Retrieve_Asset_Details_-_Lansweeper.png",
-            "new_gcs_image_path": f"{GOOGLE_CLOUD_STORAGE_PUBLIC_BASE_PATH}/"
+            "final_dst_image_path": f"{GOOGLE_CLOUD_STORAGE_PUBLIC_BASE_PATH}/"
             f"{MarketplaceVersionToMarketplaceName.get(MarketplaceVersions.XSOAR)}/"
             f"content/packs/test_pack/{README_IMAGES}/Retrieve_Asset_Details_-_Lansweeper.png",
+            "relative_image_path": f'test_pack/{README_IMAGES}/Retrieve_Asset_Details_-_Lansweeper.png',
             "image_name": "Retrieve_Asset_Details_-_Lansweeper.png",
         }
     ]

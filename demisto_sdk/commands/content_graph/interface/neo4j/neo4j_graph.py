@@ -499,6 +499,25 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         with self.driver.session() as session:
             session.execute_write(remove_server_nodes)
 
+    def _has_schema_been_changed(self) -> bool:
+        try:
+            previous_schema = get_file(self.import_path / self.SCHEMA_FILE_NAME)
+            if previous_schema == ContentDTO.model_json_schema():
+                return True
+            logger.warning("The graph schema has been changed")
+            return False
+
+        except FileNotFoundError:
+            try:
+                logger.warning("The graph schema file is missing, trying to marshal it")
+                self.marshal_graph(MarketplaceVersions.XSOAR)
+                return True
+
+            except ValidationError as e:
+                logger.warning("Failed to import the content graph")
+                logger.debug(f"Validation Error: {e}")
+                return False
+
     def import_graph(self, imported_path: Optional[Path] = None) -> bool:
         """Imports GraphML files to neo4j, by:
         1. Preparing the GraphML files for import
@@ -527,27 +546,9 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
                 session.execute_write(merge_duplicate_content_items)
                 session.execute_write(create_constraints)
                 session.execute_write(remove_empty_properties)
-        try:
-            previous_schema = get_file(self.import_path / self.SCHEMA_FILE_NAME)
-            if previous_schema == ContentDTO.model_json_schema():
-                result = True
-            else:
-                logger.warning("The graph schema has been changed")
-                result = False
-
-        except FileNotFoundError:
-            try:
-                logger.warning("The graph schema file is missing, trying to marshal it")
-                self.marshal_graph(MarketplaceVersions.XSOAR)
-                result = True
-
-            except ValidationError as e:
-                logger.warning("Failed to import the content graph")
-                logger.debug(f"Validation Error: {e}")
-                result = False
-        # clear cache after loading the graph
+        has_schema_changed = self._has_schema_been_changed()
         self._id_to_obj = {}
-        return result
+        return has_schema_changed
 
     def export_graph(self, output_path: Optional[Path] = None) -> None:
         self.clean_import_dir()

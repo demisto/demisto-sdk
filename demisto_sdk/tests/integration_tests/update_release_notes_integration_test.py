@@ -471,7 +471,7 @@ def test_update_release_notes_modified_apimodule(demisto_client, repo, mocker):
         def __exit__(self, exc_type, exc_val, exc_tb):
             pass
 
-        def search(self, object_id):
+        def search(self, object_id, all_level_imports):
             # Simulate the graph search
             if object_id == "ApiModules_script":
                 return [MockedApiModuleNode()]

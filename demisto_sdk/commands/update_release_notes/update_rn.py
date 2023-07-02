@@ -7,7 +7,7 @@ import os
 import re
 from distutils.version import LooseVersion
 from pathlib import Path
-from typing import Any, Iterable, List, Optional, Tuple, Union
+from typing import Any, Iterable, Optional, Tuple, Union
 
 from demisto_sdk.commands.common.constants import (
     ALL_FILES_VALIDATION_IGNORE_WHITELIST,
@@ -30,14 +30,13 @@ from demisto_sdk.commands.common.content.objects.pack_objects import (
 from demisto_sdk.commands.common.content.objects.pack_objects.abstract_pack_objects.yaml_content_object import (
     YAMLContentObject,
 )
-from demisto_sdk.commands.common.content_constant_paths import DEFAULT_ID_SET_PATH
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     find_type,
+    get_api_module_dependencies_from_graph,
     get_api_module_ids,
-    get_api_module_integrations_set,
     get_content_path,
     get_display_name,
     get_from_version,
@@ -1026,56 +1025,25 @@ def update_api_modules_dependents_rn(
         f"[yellow]Changes were found in the following APIModules: {api_module_set}, updating all dependent "
         f"integrations.[/yellow]"
     )
-    integrations = get_api_module_from_graph(api_module_set)
-    for integration in integrations:
-        integration_pack_name = integration.pack_id
-        integration_path = integration.path
-        integration_pack_path = pack_name_to_path(integration_pack_name)
-        update_pack_rn = UpdateRN(
-            pack_path=integration_pack_path,
-            update_type=update_type,
-            modified_files_in_pack={integration_path},
-            pre_release=pre_release,
-            added_files=set(),
-            pack=integration_pack_name,
-            text=text,
-        )
-        updated = update_pack_rn.execute_update()
-        if updated:
-            total_updated_packs.add(integration_pack_name)
-    return total_updated_packs
-
-
-def get_api_module_from_graph(changed_api_modules: set) -> List[Integration]:
-    if changed_api_modules:
-        dependent_items = []
-        with Neo4jContentGraphInterface(should_update=True) as graph:
-            for changed_api_module in changed_api_modules:
-                logger.info(
-                    f"Checking for packages dependent on the modified API module {changed_api_module}..."
-                )
-                api_module_nodes = graph.search(object_id=changed_api_module)
-                # search return the one node of the changed_api_module
-                api_module_node = api_module_nodes[0] if api_module_nodes else None
-                if not api_module_node:
-                    raise ValueError(
-                        f"The modified API module `{changed_api_module}` was not found in the "
-                        f"content graph."
-                    )
-
-                dependent_items += [
-                    dependency for dependency in api_module_node.imported_by
-                ]
-
-        if dependent_items:
-            logger.info(
-                f"Found [cyan]{len(dependent_items)}[/cyan] dependent packages. "
-                "Executing update-release-notes on those as well."
+    with Neo4jContentGraphInterface(should_update=True) as graph:
+        integrations = get_api_module_dependencies_from_graph(api_module_set, graph)
+        for integration in integrations:
+            integration_pack_name = integration.pack_id
+            integration_path = integration.path
+            integration_pack_path = pack_name_to_path(integration_pack_name)
+            update_pack_rn = UpdateRN(
+                pack_path=integration_pack_path,
+                update_type=update_type,
+                modified_files_in_pack={integration_path},
+                pre_release=pre_release,
+                added_files=set(),
+                pack=integration_pack_name,
+                text=text,
             )
-            return dependent_items
-
-    logger.info("No dependent packages found.")
-    return []
+            updated = update_pack_rn.execute_update()
+            if updated:
+                total_updated_packs.add(integration_pack_name)
+        return total_updated_packs
 
 
 def check_docker_image_changed(main_branch: str, packfile: str) -> Optional[str]:

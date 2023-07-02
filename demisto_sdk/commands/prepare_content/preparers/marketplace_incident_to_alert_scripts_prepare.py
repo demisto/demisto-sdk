@@ -38,7 +38,8 @@ class MarketplaceIncidentToAlertScriptsPreparer:
         """
         # Collects the scripts that go through the prepare process
         results = []
-
+        if "incident" not in data["name"].lower():
+            return tuple([data])
         # Creating a wrapper script
         if incident_to_alert:
             results.append(create_wrapper_script(data))

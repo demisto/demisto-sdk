@@ -245,8 +245,6 @@ def set_deprecated_for_scripts(data: dict, old_script: bool):
 
 
 def prepare_script_access_fields(data: dict, incident_to_alert: bool) -> dict:
-    if "incident" not in data["name"].lower():
-        return data
     if incident_to_alert:
         data = replace_register_module_line_for_script(data)
         data = set_deprecated_for_scripts(data, old_script=False)

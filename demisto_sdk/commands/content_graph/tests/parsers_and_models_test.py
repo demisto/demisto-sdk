@@ -1524,8 +1524,8 @@ class TestParsersAndModels:
             expected_use_cases=[],
             expected_keywords=[],
             expected_marketplaces=[
-                MarketplaceVersions.XSOAR,
                 MarketplaceVersions.MarketplaceV2,
+                MarketplaceVersions.XSOAR,
                 MarketplaceVersions.XSOAR_SAAS,
             ],
             expected_content_items=expected_content_items,

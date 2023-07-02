@@ -3704,3 +3704,23 @@ def get_api_module_dependencies_from_graph(
 
     logger.info("No dependent packages found.")
     return []
+
+  
+def parse_multiple_path_inputs(
+    input_path: Optional[Union[Path, str, List[Path], Tuple[Path]]]
+) -> Optional[Tuple[Path, ...]]:
+    if not input_path:
+        return ()
+
+    if isinstance(input_path, Path):
+        return (input_path,)
+
+    if isinstance(input_path, str):
+        return tuple(Path(path_str) for path_str in input_path.split(","))
+
+    if isinstance(input_path, (list, tuple)) and isinstance(
+        (result := tuple(input_path))[0], Path
+    ):
+        return result
+
+    raise ValueError(f"Cannot parse paths from {input_path}")

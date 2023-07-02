@@ -9,6 +9,7 @@
 * Fixed an issue where the **upload** command failed parsing input paths.
 * added support for `isfetcheventsandassets` flag in content graph.
 * Updated **validate** on changed *APIModules* to use graph instead of id_set.
+* Added an aliasTo key to the incident field schema.
 
 ## 1.17.0
 * **validate** will only fail on docker related errors if the pack is supported by xsoar.

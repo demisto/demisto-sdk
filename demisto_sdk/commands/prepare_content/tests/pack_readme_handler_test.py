@@ -22,7 +22,7 @@ expected_urls_ret = {
             "final_dst_image_path": f"{GOOGLE_CLOUD_STORAGE_PUBLIC_BASE_PATH}/"
             f"{MarketplaceVersionToMarketplaceName.get(MarketplaceVersions.XSOAR)}/"
             f"content/packs/test_pack/{README_IMAGES}/Retrieve_Asset_Details_-_Lansweeper.png",
-            "relative_image_path": f'test_pack/{README_IMAGES}/Retrieve_Asset_Details_-_Lansweeper.png',
+            "relative_image_path": f"test_pack/{README_IMAGES}/Retrieve_Asset_Details_-_Lansweeper.png",
             "image_name": "Retrieve_Asset_Details_-_Lansweeper.png",
         }
     ]

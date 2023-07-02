@@ -4393,12 +4393,16 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def missing_commands_from_readme(yml_name, missing_commands_from_readme):
-        error_msg = (
-            f"The following commands appear in {yml_name} but not in the README file:\n"
-        )
+    def missing_commands_from_readme(yaml_path, missing_commands_from_readme):
+        error_msg = "The following commands appear in the YML file but not in the README file:\n"
         for command in missing_commands_from_readme:
             error_msg += f"{command}\n"
+
+        error_msg += f'Please type them or run:' \
+                     f'demisto-sdk generate-docs -i {yaml_path} -c {",".join(missing_commands_from_readme)}' \
+                     f'\nFor more information, refer to the following documentation: ' \
+                     f'https://xsoar.pan.dev/docs/documentation/readme_file#run-demisto-sdk-generate-docs'
+
         return error_msg
 
     @staticmethod

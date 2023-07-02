@@ -2211,7 +2211,7 @@ class IntegrationValidator(ContentEntityValidator):
         )
         if missing_commands_from_readme:
             error_message, error_code = Errors.missing_commands_from_readme(
-                os.path.basename(self.file_path), missing_commands_from_readme
+                self.file_path, missing_commands_from_readme
             )
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 is_valid = False

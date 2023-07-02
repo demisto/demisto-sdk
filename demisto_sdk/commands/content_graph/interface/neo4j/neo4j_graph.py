@@ -10,7 +10,6 @@ import demisto_sdk.commands.content_graph.neo4j_service as neo4j_service
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.common.cpu_count import cpu_count
 from demisto_sdk.commands.common.logger import logger
-from demisto_sdk.commands.common.tools import get_file
 from demisto_sdk.commands.content_graph.common import (
     NEO4J_DATABASE_URL,
     NEO4J_PASSWORD,
@@ -500,30 +499,27 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             session.execute_write(remove_server_nodes)
 
     def _has_infra_graph_been_changed(self) -> bool:
-        if (
-            self.content_parser_commit
-            and self.content_parser_commit != self._get_content_parser_commit_hash()
-        ):
-            logger.info("The content parser has been changed.")
+        if not self.content_parser_commit:
+            logger.warning("The content parser commit hash is missing.")
+        elif self.content_parser_commit != self._get_content_parser_commit_hash():
+            logger.warning("The content parser has been changed.")
             return False
-
-        try:
-            previous_schema = get_file(self.import_path / self.SCHEMA_FILE_NAME)
-            if previous_schema == ContentDTO.model_json_schema():
-                return True
-            logger.warning("The graph schema has been changed")
-            return False
-
-        except FileNotFoundError:
+        schema = self.schema
+        if not self.schema:
+            logger.warning("The graph schema file is missing, trying to marshal it.")
             try:
-                logger.warning("The graph schema file is missing, trying to marshal it")
                 self.marshal_graph(MarketplaceVersions.XSOAR)
                 return True
 
             except ValidationError as e:
-                logger.warning("Failed to load the content graph")
+                logger.warning("Failed to load the content graph.")
                 logger.debug(f"Validation Error: {e}")
                 return False
+
+        if schema == ContentDTO.model_json_schema():
+            return True
+        logger.warning("The graph infra files has been changed.")
+        return False
 
     def import_graph(self, imported_path: Optional[Path] = None) -> bool:
         """Imports GraphML files to neo4j, by:
@@ -553,9 +549,9 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
                 session.execute_write(merge_duplicate_content_items)
                 session.execute_write(create_constraints)
                 session.execute_write(remove_empty_properties)
-        has_schema_changed = self._has_infra_graph_been_changed()
+        has_infra_graph_been_changed = self._has_infra_graph_been_changed()
         self._id_to_obj = {}
-        return has_schema_changed
+        return has_infra_graph_been_changed
 
     def export_graph(self, output_path: Optional[Path] = None) -> None:
         self.clean_import_dir()

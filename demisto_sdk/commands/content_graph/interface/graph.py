@@ -58,6 +58,13 @@ class ContentGraphInterface(ABC):
             return self.metadata.get("content_parser_commit")
         return None
 
+    @property
+    def schema(self) -> Optional[dict]:
+        try:
+            return get_file(self.import_path / self.SCHEMA_FILE_NAME)
+        except FileNotFoundError:
+            return None
+
     def dump_metadata(self) -> None:
         """Adds metadata to the graph."""
         # I want to save the latest commit from this page: https://github.com/demisto/demisto-sdk/commits/master/demisto_sdk/commands/content_graph/parsers using API
@@ -71,14 +78,15 @@ class ContentGraphInterface(ABC):
         with open(self.import_path / self.SCHEMA_FILE_NAME, "w") as f:
             json.dump(ContentDTO.model_json_schema(), f)
 
-    def _get_content_parser_commit_hash(self) -> str:
+    def _get_content_parser_commit_hash(self) -> Optional[str]:
         try:
             return requests.get(
-                "https://api.github.com/repos/demisto/demisto-sdk/commits?sha=master&path=demisto_sdk/commands/content_graph/parsers"
+                "https://api.github.com/repos/demisto/demisto-sdk/commits?sha=master&path=demisto_sdk/commands/content_graph/parsers",
+                verify=False,
             ).json()[0]["sha"]
-        except (IndexError, JSONDecodeError) as e:
+        except (IndexError, JSONDecodeError, KeyError) as e:
             logger.warning(f"Failed to get content parser commit: {e}")
-            return ""
+            return None
 
     def zip_import_dir(self, output_file: Path) -> None:
         shutil.make_archive(str(output_file), "zip", self.import_path)

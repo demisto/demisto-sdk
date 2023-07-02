@@ -3705,7 +3705,7 @@ def get_api_module_dependencies_from_graph(
     logger.info("No dependent packages found.")
     return []
 
-  
+
 def parse_multiple_path_inputs(
     input_path: Optional[Union[Path, str, List[Path], Tuple[Path]]]
 ) -> Optional[Tuple[Path, ...]]:

@@ -16,7 +16,7 @@ from demisto_sdk.commands.prepare_content.pack_readme_handler import (
 expected_urls_ret = {
     "test_pack": [
         {
-            "original_read_me_url": "https://raw.githubusercontent.com/crestdatasystems/content/"
+            "original_readme_url": "https://raw.githubusercontent.com/crestdatasystems/content/"
             "4f707f8922d7ef1fe234a194dcc6fa73f96a4a87/Packs/Lansweeper/doc_files/"
             "Retrieve_Asset_Details_-_Lansweeper.png",
             "final_dst_image_path": f"{GOOGLE_CLOUD_STORAGE_PUBLIC_BASE_PATH}/"

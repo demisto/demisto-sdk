@@ -503,7 +503,7 @@ class TestPlaybook:
         inc_filter.query = f"id: {inc_id}"
         if IS_XSIAM:
             # in xsiam `create_incident` response don`t return created incident id.
-            inc_filter.name = f'["{incident_name}"]'
+            inc_filter.name = f'[\'{incident_name}\']'
         # inc_filter.query
         search_filter.filter = inc_filter
 
@@ -511,8 +511,8 @@ class TestPlaybook:
 
         self.build_context.logging_module.info("search_filter:")
         self.build_context.logging_module.info(search_filter)
-        self.build_context.logging_module.info("search_filter.filter.query:")
-        self.build_context.logging_module.info(search_filter.filter.query)
+        self.build_context.logging_module.info("search_filter.filter.name:")
+        self.build_context.logging_module.info(search_filter.filter.name)
 
         found_incidents = 0
         # poll the incidents queue for a max time of 300 seconds

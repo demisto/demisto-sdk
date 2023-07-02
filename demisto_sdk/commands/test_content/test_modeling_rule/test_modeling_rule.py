@@ -304,13 +304,14 @@ def check_dataset_exists(
                     dataset_exist = True
                     results_exist = False
                     logger.info(
-                        f"[cyan]try to get results from the data set, there are not results for the {i+1}th time. continue.[/cyan]",
+                        f"[cyan]trying to get results from the dataset for the {i+1}th time. continuing to try to get the results.[/cyan]",
                         extra={"markup": True},
                     )
+            # If the dataset doesn't exist HTTPError exception is raised.
             except requests.exceptions.HTTPError:
                 pass
             sleep(interval)
-        # There are no results from the dataset but it exists. If the dataset doesn't exist HTTPError exception is raised.
+        # There are no results from the dataset but it exists.
         if not results:
             err = (
                 f"[red]Dataset {dataset} exists but no results were returned. This could mean that your testdata "

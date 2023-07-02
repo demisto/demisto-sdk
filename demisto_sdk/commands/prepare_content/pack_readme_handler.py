@@ -5,10 +5,10 @@ from urllib.parse import urlparse
 
 from demisto_sdk.commands.common.constants import (
     GOOGLE_CLOUD_STORAGE_PUBLIC_BASE_PATH,
+    MARKDOWN_IMAGE_LINK_REGEX,
     README_IMAGES,
     MarketplaceVersions,
     MarketplaceVersionToMarketplaceName,
-    MARKDOWN_IMAGE_LINK_REGEX,
 )
 from demisto_sdk.commands.common.logger import logger
 

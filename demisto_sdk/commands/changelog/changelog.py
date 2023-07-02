@@ -1,5 +1,6 @@
 import re
 import shutil
+import sys
 from pathlib import Path
 from typing import List
 
@@ -8,6 +9,7 @@ from pydantic import ValidationError
 
 from demisto_sdk.commands.changelog.changelog_obj import INITIAL_LOG, LogObject
 from demisto_sdk.commands.common.handlers import YAML_Handler
+from demisto_sdk.commands.common.hook_validations.base_validator import BaseValidator
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import get_yaml
@@ -21,19 +23,12 @@ yaml = YAML_Handler()
 
 class Changelog:
     def __init__(
-        self, pr_number: str, pr_name: str = None, release_version: str = None
+        self, pr_number: str, pr_name: str = '', release_version: str = None
     ) -> None:
         self.pr_number = pr_number
         self.pr_name = pr_name
         self.release_version = release_version
-
-    def is_release(self) -> bool:
-        return (
-            RELEASE_VERSION_REGEX.match(self.pr_name) is not None
-            if self.pr_name
-            else False
-        )
-
+        self.handle_error = ""
     """ VALIDATE """
 
     def validate(self) -> bool:
@@ -42,20 +37,27 @@ class Changelog:
         """
         if self.is_release():
             if not self.is_log_folder_empty():
-                logger.error("Something msg")
+                logger.error("Logs folder is not empty,\n"
+                             "It is not possible to release until the `changelog.md` "
+                             "file is updated, and the `.changelog` folder is empty")
                 return False
             if not self.is_changelog_changed():
-                logger.error("Something msg")
+                logger.error("The file `changelog.md` is not updated\n"
+                             "It is not possible to release until the `changelog.md` "
+                             "file is updated, and the `.changelog` folder is empty")
                 return False
         else:
             if self.is_changelog_changed():
-                logger.error("Something msg")
+                logger.error("It is not possible to make a change in the `changelog.md` file,\n"
+                             "run `demisto-sdk changelog --init -pn <pr number> -pt <pr name>` to create log file,\n"
+                             "and put the description of your changes there")
                 return False
             if not self.is_log_yml_exist():
-                logger.error("Something msg")
+                logger.error("There is no log file describing your change,\n"
+                             "Please run `demisto-sdk changelog --init -pn <pr number> -pt <pr name>` to create one, "
+                             "and put the description of your changes there")
                 return False
             if not self.validate_log_yml():
-                logger.error("Something msg")
                 return False
 
         return True
@@ -71,21 +73,22 @@ class Changelog:
                 "This PR is for release, please use in changelog release command"
             )
 
-        with Path(f"{git_path()}/.changelog/{self.pr_number}.yml").open("w") as f:
+        with (CHANGELOG_FOLDER / f"{self.pr_number}.yml").open("w") as f:
             yaml.dump(INITIAL_LOG, f)
 
-        logger.info("Something msg")
+        logger.info(f"The creation of the log file .changelog/{self.pr_number}.yml is complete,\n"
+                     "Please go to the file and edit the initial values.")
 
     """ RELEASE """
 
     def release(self) -> None:
         if not self.is_release():
-            logger.error("Something msg")
-            return
+            logger.error("The name of the PR is not valid for a release")
+            raise ValueError()
         logs = self.get_all_logs()
         self.extract_and_build_changelogs(logs)
         self.cleaning_changelogs_folder()
-        logger.info("end")
+        logger.info("The build of the changelog for the release is complete")
 
     """ HELPER FUNCTIONS """
 
@@ -96,10 +99,10 @@ class Changelog:
         return not any(CHANGELOG_FOLDER.iterdir())
 
     def is_log_yml_exist(self) -> bool:
-        return Path(f"{git_path()}/.changelog/{self.pr_number}.yml").is_file()
+        return (CHANGELOG_FOLDER / f"{self.pr_number}.yml").is_file()
 
     def validate_log_yml(self) -> bool:
-        data = get_yaml(Path(f"{git_path()}/.changelog/{self.pr_number}.yml"))
+        data = get_yaml(CHANGELOG_FOLDER / f"{self.pr_number}.yml")
         
         try:
             LogObject(**data)
@@ -115,14 +118,22 @@ class Changelog:
             try:
                 changelogs.append(LogObject(**changelog_data))
             except ValidationError as e:
-                logger.error(f"{path}: {e.json()}")
+                self.handle_error += f"{path}: {e.json()}\n"
 
         return changelogs
 
     def extract_and_build_changelogs(self, logs: List[LogObject]) -> None:
         all_logs_unreleased: List[str] = []
+        breaking_logs: List[str] = []
+        feature_logs: List[str] = []
+        fix_logs: List[str] = []
         for log in logs:
-            all_logs_unreleased.extend(log.build_log())
+            breaking_log, feature_log, fix_log = log.build_log()
+            breaking_logs.extend(breaking_log)
+            feature_logs.extend(feature_log)
+            fix_logs.extend(fix_log)
+        for type_log in (breaking_logs, feature_logs, fix_logs):
+            all_logs_unreleased.extend(type_log)
         with CHANGELOG_MD_FILE.open() as f:
             old_changelog = f.readlines()
 
@@ -152,5 +163,32 @@ class Changelog:
                 shutil.rmtree(item)
         logger.info("Something msg")
 
+    def is_release(self) -> bool:
+        return (
+            RELEASE_VERSION_REGEX.match(self.pr_name) is not None
+            if self.pr_name
+            else False
+        )
 
-Changelog("12345", "v2.0.0").release()
+
+def changelog_management(**kwargs):
+    pr_name = kwargs.get("pr_title", '')
+    pr_number = kwargs.get("pr_number", None)
+    validate = kwargs.get("validate", None)
+    init = kwargs.get("init", None)
+    release = kwargs.get("release", None)
+    
+    if not pr_number:
+        logger.error("")
+        sys.exit(1)
+
+    changelog = Changelog(pr_number, pr_name)
+    if validate:
+        return changelog.validate()
+    elif init:
+        return changelog.init()
+    elif release:
+        return changelog.release()
+    else:
+        logger.error("")
+        return 1

@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import List
+from typing import List, Tuple
 
 from pydantic import BaseModel, validator
 
@@ -45,14 +45,15 @@ class Log(BaseModel):
 class LogObject(BaseModel):
     logs: List[Log]
 
-    def build_log(cls) -> List[str]:
-        built_logs: List[str] = []
+    def build_log(cls) -> Tuple[List[str],...]:
+        breaking_logs: List[str] = []
+        feature_logs: List[str] = []
+        fix_logs: List[str] = []
         for log in cls.logs:
             if log.type == logType.breaking:
-                type_msg = ""
+                breaking_logs.append(f"* {log.description}\n")
             elif log.type == logType.feature:
-                type_msg = ""
+                feature_logs.append(f"* {log.description}\n")
             elif log.type == logType.fix:
-                type_msg = ""
-            built_logs.append(f"* {type_msg}: {log.description}\n")
-        return built_logs
+                fix_logs.append(f"* {log.description}\n")
+        return breaking_logs, feature_logs, fix_logs

@@ -1,0 +1,20 @@
+name: Validate Changelog
+on: pull_request
+
+jobs:
+  validate changelog:
+    runs-on: ubuntu-latest
+    if: github.repository == 'demisto/demisto-sdk'
+    steps:
+
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 2
+      - name: Validate Changelog
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          echo "Run validate changelog for PR: $PR_NUMBER with Name: $PR_NAME"
+          Utils/github_workflow_scripts/changelog_validation_scripts/validate_changelog.py --pr_number $PR_NUMBER --pr_title $PR_TITLE

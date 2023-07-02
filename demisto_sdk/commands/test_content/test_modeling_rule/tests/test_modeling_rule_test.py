@@ -605,6 +605,145 @@ class TestTheTestModelingRuleCommandSingleRule:
         except typer.Exit:
             assert False, "No exception should be raised in this scenario."
 
+    def test_the_test_modeling_rule_command_delayed_to_get_xql_query_results(
+        self, pack, monkeypatch, mocker
+    ):
+        """
+        Given:
+            - A test data file.
+
+        When:
+            - The pack is simulated to be on the tenant.
+            - The command is run in non-interactive mode.
+            - The push of the test data is simulated to succeed.
+            - Checking the dataset exists is simulated to succeed.
+            - Starting the XQL query is simulated to succeed.
+            - Getting the XQL query results is delayed.
+
+        Then:
+            - Verify we get a message saying the results match the expectations.
+            - The command returns with a zero exit code.
+        """
+        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+
+        from functools import partial
+
+        from demisto_sdk.commands.test_content.test_modeling_rule.test_modeling_rule import (
+            check_dataset_exists,
+        )
+
+        monkeypatch.setattr(
+            "demisto_sdk.commands.test_content.test_modeling_rule.test_modeling_rule.check_dataset_exists",
+            partial(check_dataset_exists),
+        )
+
+        from demisto_sdk.commands.test_content.test_modeling_rule.test_modeling_rule import (
+            app as test_modeling_rule_cmd,
+        )
+        from demisto_sdk.commands.test_content.xsiam_tools.test_data import TestData
+
+        runner = CliRunner()
+
+        # Create Test Data File
+        pack.create_modeling_rule(DEFAULT_MODELING_RULE_NAME, rules=ONE_MODEL_RULE_TEXT)
+        mrule_dir = Path(pack._modeling_rules_path / DEFAULT_MODELING_RULE_NAME)
+        test_data_file = mrule_dir / f"{DEFAULT_MODELING_RULE_NAME}_testdata.json"
+        path_to_fake_test_data_file = (
+            Path(__file__).parent / "test_data/fake_test_data_file.json"
+        )
+        fake_test_data = TestData.parse_file(path_to_fake_test_data_file.as_posix())
+        test_data_file.write_text(fake_test_data.json(indent=4))
+
+        # mocking Variables
+        id_key = f"{fake_test_data.data[0].dataset}.test_data_event_id"
+        event_id_1 = str(fake_test_data.data[0].test_data_event_id)
+        event_id_2 = str(fake_test_data.data[1].test_data_event_id)
+
+        try:
+            with requests_mock.Mocker() as m:
+                with SetFakeXsiamClientEnvironmentVars() as fake_env_vars:
+                    # installed_packs mock request
+                    m.get(
+                        f"{fake_env_vars.demisto_base_url}/xsoar/contentpacks/metadata/installed",
+                        json=[{"name": pack.name, "id": pack.name}],
+                    )
+                    # push_to_dataset mock request
+                    m.post(
+                        f"{fake_env_vars.demisto_base_url}/logs/v1/xsiam",
+                        json={},
+                        status_code=200,
+                    )
+                    # start_xql_query mocked request
+                    m.post(
+                        f"{fake_env_vars.demisto_base_url}/public_api/v1/xql/start_xql_query/",
+                        [
+                            {
+                                "json": {"reply": "fake-execution-id"},
+                                "status_code": 200,
+                            }
+                        ],
+                    )
+                    # get_xql_query_result mocked request
+                    m.post(
+                        f"{fake_env_vars.demisto_base_url}/public_api/v1/xql/get_query_results/",
+                        [
+                            {
+                                "json": {
+                                    "reply": {
+                                        "status": "SUCCESS",
+                                        "results": {"data": []},
+                                    }
+                                },
+                                "status_code": 200,
+                            },
+                            {
+                                "json": {
+                                    "reply": {
+                                        "status": "SUCCESS",
+                                        "results": {"data": []},
+                                    }
+                                },
+                                "status_code": 200,
+                            },
+                            {
+                                "json": {
+                                    "reply": {
+                                        "status": "SUCCESS",
+                                        "results": {
+                                            "data": [
+                                                {
+                                                    id_key: event_id_1,
+                                                    **fake_test_data.data[
+                                                        0
+                                                    ].expected_values,
+                                                },
+                                                {
+                                                    id_key: event_id_2,
+                                                    **fake_test_data.data[
+                                                        1
+                                                    ].expected_values,
+                                                },
+                                            ]
+                                        },
+                                    }
+                                },
+                                "status_code": 200,
+                            },
+                        ],
+                    )
+                    # Act
+                    result = runner.invoke(
+                        test_modeling_rule_cmd,
+                        [mrule_dir.as_posix(), "--non-interactive"],
+                    )
+                    # Assert
+                    assert result.exit_code == 0
+                    assert str_in_call_args_list(
+                        logger_info.call_args_list, "Mappings validated successfully"
+                    )
+        except typer.Exit:
+            assert False, "No exception should be raised in this scenario."
+
     def test_the_test_modeling_rule_command_results_match_expectations(
         self, pack, monkeypatch, mocker
     ):

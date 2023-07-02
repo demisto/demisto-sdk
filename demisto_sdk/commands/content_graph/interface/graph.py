@@ -132,6 +132,10 @@ class ContentGraphInterface(ABC):
         ...
 
     @abstractmethod
+    def find_items_using_deprecated_items(self, file_paths: List[str]) -> List[dict]:
+        pass
+
+    @abstractmethod
     def search(
         self,
         marketplace: MarketplaceVersions = None,

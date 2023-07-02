@@ -2208,6 +2208,9 @@ def process_test_playbook_path(
     try:
         if print_logs:
             logger.info(f"adding {file_path} to id_set")
+        if Path(file_path).is_dir():
+            logger.info("file path is actually dir.")
+            return None, None
         if should_skip_item_by_mp(
             file_path, marketplace, {}, packs=packs, print_logs=print_logs
         ):

@@ -102,7 +102,7 @@ class ContentType(str, enum.Enum):
         elif self == ContentType.LAYOUT:
             return "layoutscontainer"
         elif self == ContentType.PREPROCESS_RULE:
-            return "pre-process-rule"
+            return "preprocessrule"
         elif self == ContentType.TEST_PLAYBOOK:
             return ContentType.PLAYBOOK.server_name
         elif self == ContentType.MAPPER:

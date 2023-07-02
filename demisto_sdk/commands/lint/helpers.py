@@ -164,6 +164,11 @@ def get_test_modules(
                 else:
                     modules_content[module] = (module_full_path).read_bytes()
             except FileNotFoundError:
+                if module.name == "CommonServerUserPython.py":
+                    logger.debug(
+                        "CommonServerUserPython.py was not found, skipping as it will be created later."
+                    )
+                    continue
                 module_not_found = True
                 logger.warning(
                     f"Module {module} was not found, possibly deleted due to being in a feature branch"

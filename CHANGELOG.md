@@ -1,10 +1,35 @@
 # Changelog
 ## Unreleased
+* Fixed an issue where `register_module_line()` was not removed from python scripts when the script had no trailing newline.
+* Fixed an issue where an integration containing a command without a description would fail to upload while using the **upload** command.
+* Fixed an issue where attempting to individually upload `Preprocess Rule` files raised an unclear error message. Note: preprocess rules can not be individually uploaded, but only as part of a pack.
+* Removed fields with default (false) value that used in the **validate** command.
+* Fixed an issue where Indicator Types would fail to upload when using the **upload** command.
+* Fixed an issue where the **upload** command return wrong error message when API key is invalid.
+* Fixed an issue where the **upload** command failed parsing input paths.
+* added support for `isfetcheventsandassets` flag in content graph.
+* Updated **validate** on changed *APIModules* to use graph instead of id_set.
+
+## 1.17.0
+* **validate** will only fail on docker related errors if the pack is supported by xsoar.
+* Added a validation that assures filename, id, and name have a correct suffix for modeling/parsing rules files.
 * Added new **validate** checks, preventing unwanted changes of the marketplaces (BC108,BC109), toversion (BC107)  and fromversion (BC106) fields.
-* Fixed an issue where lock integartions failed on FileNotFound.(PANW-internal only).
 * Removed the `timezone_offset` argument in the *modeling-rules test* command.
 * Fixed an issue where **lint** failed when importing functions from CommonServerUserPython.
-* Updated **update-release-notes** to use graph instead of id_set.
+* The **format** command now will sync hidden parameters with master branch.
+* Fixed an issue where lock integration failed on FileNotFound.(PANW-internal only).
+* Fixed an issue where **lint** falsely warned of using `demisto.results`.
+* Fixed an issue where **validate** always returned *XSIAM Dashboards* and *Correlation Rules* files as valid.
+* Added `GR107` validation to **validate** using the graph validations to check that no deprecated items are used by non-deprecated content.
+* Fixed an issue where the **modeling-rules test** command failed to get the existence of dataset in cases where the dataset takes more than 1 minute to get indexed.
+* Fixed an issue in **lint** where the container used for linting had dependency conflicts with the image used by content, and caused inconsistent results.
+* Fixed an issue where the **download** command failed when the playbook has different `name` and `id`.
+* Moved the **pre-commmit** command template to the `demisto/content` repository, where it's easier to maintain.
+* Fixed an issue where an internal method caused warning messages when reading md files.
+* Added support for Pre Process Rules in the **upload** command.
+* Fixed an issue where **upload** would not upload items whose `maketplaces` value was an empty list.
+* Added a prettyName key to the incident field schema.
+* Fixed an issue where **upload** command could not parse content items that are not unicode-encoded.
 
 ## 1.16.0
 * Added a check to **is_docker_image_latest_tag** to only fail the validation on non-latest image tag when the current tag is older than 3 days.

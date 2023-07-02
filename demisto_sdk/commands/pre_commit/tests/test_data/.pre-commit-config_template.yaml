@@ -58,6 +58,7 @@ repos:
             # `--python-version` argument is replaced in runtime
             --python-version=3.10,
           ]
+        exclude: "test_data|tests_data|.venv|.*_test.py$|infrastructure_tests"
 
       # enable with --test
       - id: run-unit-tests
@@ -73,3 +74,4 @@ repos:
         args: ["--ignore-entropy"]
 
       - id: no-implicit-optional
+        skip: true

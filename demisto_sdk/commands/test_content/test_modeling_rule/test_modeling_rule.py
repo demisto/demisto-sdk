@@ -275,6 +275,7 @@ def check_dataset_exists(
     dataset_set = {data.dataset for data in test_data.data}
     results = []
     for dataset in dataset_set:
+        results_exist = False
         dataset_exist = False
         logger.info(
             f'[cyan]Checking if dataset "{dataset}" exists on the tenant...[/cyan]',
@@ -295,19 +296,21 @@ def check_dataset_exists(
                         extra={"markup": True},
                     )
                     dataset_exist = True
+                    results_exist = True
                     break
                 # if we don't have results from the dataset immediately we will continue to try until the timeout.
                 # if we don't have any results until the timeout dataset_exist is set to False and we will raise an error.
                 else:
                     dataset_exist = True
+                    results_exist = False
                     logger.info(
-                        f"[cyan]try to get results from the data set, there are not results for the {i}th time. continue.[/cyan]",
+                        f"[cyan]try to get results from the data set, there are not results for the {i+1}th time. continue.[/cyan]",
                         extra={"markup": True},
                     )
             except requests.exceptions.HTTPError:
                 pass
             sleep(interval)
-        # there are no results from the dataset but it exists if the dataset doesn't exists we will catch it in except section.
+        # There are no results from the dataset but it exists. If the dataset doesn't exist HTTPError exception is raised.
         if not results:
             err = (
                 f"[red]Dataset {dataset} exists but no results were returned. This could mean that your testdata "
@@ -319,8 +322,8 @@ def check_dataset_exists(
         if not dataset_exist:
             err = f"[red]Dataset {dataset} does not exist after {timeout} seconds[/red]"
             logger.error(err, extra={"markup": True})
-        # OR statement between existence var of each data set, if we get dataset_exist = false from one dataset process_failed will be true.
-        process_failed |= not dataset_exist
+        # OR statement between existence var and results of each data set, if at least one of dataset_exist or results_exist are False process_failed will be true.
+        process_failed |= not (dataset_exist and results_exist)
 
     if process_failed:
         raise typer.Exit(1)

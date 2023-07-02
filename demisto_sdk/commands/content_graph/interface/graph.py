@@ -3,6 +3,10 @@ from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
 
+import requests
+from requests import JSONDecodeError
+from demisto_sdk.commands.common.logger import logger
+
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.git_util import GitUtil
@@ -48,15 +52,31 @@ class ContentGraphInterface(ABC):
             return self.metadata.get("commit")
         return None
 
+    @property
+    def content_parser_commit(self) -> Optional[str]:
+        if self.metadata:
+            return self.metadata.get("content_parser_commit")
+        return None
+    
     def dump_metadata(self) -> None:
         """Adds metadata to the graph."""
+        # I want to save the latest commit from this page: https://github.com/demisto/demisto-sdk/commits/master/demisto_sdk/commands/content_graph/parsers using API
+        parser_commit = self._get_content_parser_commit_hash()
         metadata = {
             "commit": GitUtil().get_current_commit_hash(),
+            "content_parser_commit": parser_commit,
         }
         with open(self.import_path / self.METADATA_FILE_NAME, "w") as f:
             json.dump(metadata, f)
         with open(self.import_path / self.SCHEMA_FILE_NAME, "w") as f:
             json.dump(ContentDTO.model_json_schema(), f)
+
+    def _get_content_parser_commit_hash(self) -> str:
+        try:
+            return requests.get("https://api.github.com/repos/demisto/demisto-sdk/commits?sha=master&path=demisto_sdk/commands/content_graph/parsers").json()[0]["sha"]
+        except (IndexError, JSONDecodeError) as e:
+            logger.warning(f"Failed to get content parser commit: {e}")
+            return ""
 
     def zip_import_dir(self, output_file: Path) -> None:
         shutil.make_archive(str(output_file), "zip", self.import_path)

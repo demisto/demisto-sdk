@@ -499,7 +499,11 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         with self.driver.session() as session:
             session.execute_write(remove_server_nodes)
 
-    def _has_schema_been_changed(self) -> bool:
+    def _has_infra_graph_been_changed(self) -> bool:
+        if self.content_parser_commit != self._get_content_parser_commit_hash():
+            logger.info("The content parser has been changed.")
+            return False
+        
         try:
             previous_schema = get_file(self.import_path / self.SCHEMA_FILE_NAME)
             if previous_schema == ContentDTO.model_json_schema():
@@ -514,7 +518,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
                 return True
 
             except ValidationError as e:
-                logger.warning("Failed to import the content graph")
+                logger.warning("Failed to load the content graph")
                 logger.debug(f"Validation Error: {e}")
                 return False
 
@@ -546,7 +550,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
                 session.execute_write(merge_duplicate_content_items)
                 session.execute_write(create_constraints)
                 session.execute_write(remove_empty_properties)
-        has_schema_changed = self._has_schema_been_changed()
+        has_schema_changed = self._has_infra_graph_been_changed()
         self._id_to_obj = {}
         return has_schema_changed
 

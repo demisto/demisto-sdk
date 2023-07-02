@@ -500,10 +500,13 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             session.execute_write(remove_server_nodes)
 
     def _has_infra_graph_been_changed(self) -> bool:
-        if self.content_parser_commit != self._get_content_parser_commit_hash():
+        if (
+            self.content_parser_commit
+            and self.content_parser_commit != self._get_content_parser_commit_hash()
+        ):
             logger.info("The content parser has been changed.")
             return False
-        
+
         try:
             previous_schema = get_file(self.import_path / self.SCHEMA_FILE_NAME)
             if previous_schema == ContentDTO.model_json_schema():

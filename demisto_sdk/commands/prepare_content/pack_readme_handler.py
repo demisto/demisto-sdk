@@ -8,6 +8,7 @@ from demisto_sdk.commands.common.constants import (
     README_IMAGES,
     MarketplaceVersions,
     MarketplaceVersionToMarketplaceName,
+    MARKDOWN_IMAGE_LINK_REGEX,
 )
 from demisto_sdk.commands.common.logger import logger
 
@@ -47,12 +48,15 @@ def collect_images_from_readme_and_replace_with_storage_path(
 
     Args:
         pack_readme_path (str): A path to the pack README file.
-        gcs_pack_path (str): A path to the pack in gcs
+        pack_name (str): A string of the pack name.
         marketplace (str): The marketplace this pack is going to be uploaded to.
 
     Returns:
         A dict of the pack name and all the image urls found in the README.md file with all related data
-        (original_url, new_gcs_path, image_name)
+        (original_url - The original url as found in the README.md file.
+         final_dst_image_path - The destination where the image will be stored on gcp.
+         relative_image_path - The relative path (from the pack name root) in the gcp.
+         image_name - the image name)
     """
     google_api_readme_images_url = (
         f"{GOOGLE_CLOUD_STORAGE_PUBLIC_BASE_PATH}/{MarketplaceVersionToMarketplaceName.get(marketplace)}"
@@ -61,19 +65,19 @@ def collect_images_from_readme_and_replace_with_storage_path(
     if marketplace in [
         MarketplaceVersions.XSOAR_SAAS,
         MarketplaceVersions.MarketplaceV2,
+        MarketplaceVersions.XPANSE,
     ]:
         to_replace = f"api/marketplace/file?name=content/packs/{pack_name}"
     else:
         to_replace = google_api_readme_images_url
 
-    url_regex = r"(\!\[.*?\])\((?P<url>[a-zA-Z_/\.0-9\- :%]*?)\)((].*)?)"
     urls_list = []
 
     with open(pack_readme_path, "r") as file:
         lines = file.readlines()
 
     for i, line in enumerate(lines):
-        if res := re.search(url_regex, line):
+        if res := re.search(MARKDOWN_IMAGE_LINK_REGEX, line):
             url = res["url"]
             parse_url = urlparse(url)
             url_path = Path(parse_url.path)
@@ -88,7 +92,7 @@ def collect_images_from_readme_and_replace_with_storage_path(
             relative_image_path = f"{pack_name}/{README_IMAGES}/{image_name}"
             urls_list.append(
                 {
-                    "original_read_me_url": url,
+                    "original_readme_url": url,
                     "final_dst_image_path": image_gcp_path,
                     "relative_image_path": relative_image_path,
                     "image_name": image_name,

@@ -18,6 +18,7 @@
 * Updated the **modeling-rules init & test** commands to support RULE section fields.
 * Stability improvements for **graph create** and **graph update** commands.
 * Fixed the *metadata* type in the XSIAM dashboard schema to *map*.
+* Fixed an issue where Incident Fields, Incident Types, Indicator Fields, and Indicator Types would fail to upload when using the **upload** command on Windows environments.
 
 ## 1.20.2
 * Updated the **pre-commit** command to run on all python versions in one run.

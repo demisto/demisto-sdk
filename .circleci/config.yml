@@ -298,7 +298,11 @@ jobs:
               CI_COMMIT_BRANCH: "master"
             command: |
               source $(poetry env info --path)/bin/activate
-
+              export SDK_PARSER_FILES_CHANGED=$(git diff master... --name-only -- demisto_sdk/commands/content_graph/parsers)
+              if [ -n "$SDK_PARSER_FILES_CHANGED" ]; then
+                echo "Parser files changed, will create a new graph"
+                export DEMISTO_SDK_FORCE_CREATE=true
+              fi
               cd content
               demisto-sdk -v
               export ARTIFACTS_FOLDER="/home/circleci/project/artifacts"

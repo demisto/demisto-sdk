@@ -84,7 +84,12 @@ class ContentGraphInterface(ABC):
                 "https://api.github.com/repos/demisto/demisto-sdk/commits?sha=master&path=demisto_sdk/commands/content_graph/parsers",
                 verify=False,
             ).json()[0]["sha"]
-        except (IndexError, JSONDecodeError, KeyError) as e:
+        except (
+            requests.exceptions.RequestException,
+            IndexError,
+            JSONDecodeError,
+            KeyError,
+        ) as e:
             logger.warning(f"Failed to get content parser commit: {e}")
             return None
 

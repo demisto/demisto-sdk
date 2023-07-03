@@ -1,5 +1,6 @@
 # Changelog
 ## Unreleased
+* Removed support for **cve_id** argument for **cve** reputation command.
 
 ## 1.17.1
 * Added the `aliasTo` key to the Incident Field schema.

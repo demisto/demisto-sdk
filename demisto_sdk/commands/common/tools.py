@@ -20,6 +20,7 @@ from pathlib import Path, PosixPath
 from subprocess import DEVNULL, PIPE, Popen, check_output
 from time import sleep
 from typing import (
+    TYPE_CHECKING,
     Any,
     Callable,
     Dict,
@@ -116,6 +117,9 @@ from demisto_sdk.commands.common.constants import (
 from demisto_sdk.commands.common.git_content_config import GitContentConfig, GitProvider
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
+
+if TYPE_CHECKING:
+    from demisto_sdk.commands.content_graph.interface.graph import ContentGraphInterface
 
 logger = logging.getLogger("demisto-sdk")
 
@@ -544,7 +548,7 @@ def get_file_details(
 ) -> Dict:
     if full_file_path.endswith("json"):
         file_details = json.loads(file_content)
-    elif full_file_path.endswith("yml"):
+    elif full_file_path.endswith(("yml", "yaml")):
         file_details = yaml.load(file_content)
     # if neither yml nor json then probably a CHANGELOG or README file.
     else:
@@ -572,7 +576,15 @@ def get_remote_file(
     tag = tag.replace("origin/", "").replace("demisto/", "")
     if not git_content_config:
         try:
-            return get_local_remote_file(full_file_path, tag, return_content)
+            if not (
+                local_origin_content := get_local_remote_file(
+                    full_file_path, tag, return_content
+                )
+            ):
+                raise ValueError(
+                    f"Got empty content from local-origin file {full_file_path}"
+                )
+            return local_origin_content
         except Exception as e:
             logger.debug(
                 f"Could not get local remote file because of: {str(e)}\n"
@@ -858,7 +870,7 @@ def get_file_or_remote(file_path: Path, clear_cache=False):
                 f"The file path provided {file_path} is not a subpath of {content_path}. could not fetch from remote."
             )
             raise
-        return get_remote_file(relative_file_path)
+        return get_remote_file(str(relative_file_path))
 
 
 def get_yaml(file_path, cache_clear=False):
@@ -2423,7 +2435,7 @@ def get_demisto_version(client: demisto_client) -> Version:
         return Version(Version(about_data.get("demistoVersion")).base_version)
     except Exception:
         logger.warning(
-            "Could not parse Xsoar version, please make sure the environment is properly configured."
+            "Could not parse server version, please make sure the environment is properly configured."
         )
         return Version("0")
 
@@ -3657,3 +3669,58 @@ def parse_marketplace_kwargs(kwargs: Dict[str, Any]) -> MarketplaceVersions:
         "neither marketplace nor is_xsiam provided, using default marketplace=XSOAR"
     )
     return MarketplaceVersions.XSOAR  # default
+
+
+def get_api_module_dependencies_from_graph(
+    changed_api_modules: Set[str], graph: "ContentGraphInterface"
+) -> List:
+    if changed_api_modules:
+        dependent_items = []
+        for changed_api_module in changed_api_modules:
+            logger.info(
+                f"Checking for packages dependent on the modified API module {changed_api_module}..."
+            )
+            api_module_nodes = graph.search(
+                object_id=changed_api_module, all_level_imports=True
+            )
+            # search return the one node of the changed_api_module
+            api_module_node = api_module_nodes[0] if api_module_nodes else None
+            if not api_module_node:
+                raise ValueError(
+                    f"The modified API module `{changed_api_module}` was not found in the "
+                    f"content graph."
+                )
+
+            dependent_items += [
+                dependency for dependency in api_module_node.imported_by
+            ]
+
+        if dependent_items:
+            logger.info(
+                f"Found [cyan]{len(dependent_items)}[/cyan] content items that import- {changed_api_module}. "
+                "Executing update-release-notes on those as well."
+            )
+        return dependent_items
+
+    logger.info("No dependent packages found.")
+    return []
+
+
+def parse_multiple_path_inputs(
+    input_path: Optional[Union[Path, str, List[Path], Tuple[Path]]]
+) -> Optional[Tuple[Path, ...]]:
+    if not input_path:
+        return ()
+
+    if isinstance(input_path, Path):
+        return (input_path,)
+
+    if isinstance(input_path, str):
+        return tuple(Path(path_str) for path_str in input_path.split(","))
+
+    if isinstance(input_path, (list, tuple)) and isinstance(
+        (result := tuple(input_path))[0], Path
+    ):
+        return result
+
+    raise ValueError(f"Cannot parse paths from {input_path}")

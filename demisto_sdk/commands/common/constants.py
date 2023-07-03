@@ -1727,11 +1727,16 @@ class MarketplaceVersions(str, Enum):
     XSOAR_SAAS = "xsoar_saas"
 
 
+MARKETPLACE_XSOAR_DIST = "marketplace-dist"
+MARKETPLACE_XSIAME_DIST = "marketplace-v2-dist"
+MARKETPLACE_XPANSE_DIST = "xpanse-dist"
+MARKETPLACE_XSOAR_SAAS_DIST = "marketplace-saas-dist"
+
 MarketplaceVersionToMarketplaceName = {
-    "xsoar": "marketplace-dist",
-    "marketplacev2": "marketplace-v2-dist",
-    "xpanse": "xpanse-dist",
-    "xsoar_saas": "marketplace-saas-dist",
+    MarketplaceVersions.XSOAR.value: MARKETPLACE_XSOAR_DIST,
+    MarketplaceVersions.MarketplaceV2.value: MARKETPLACE_XSIAME_DIST,
+    MarketplaceVersions.XPANSE.value: MARKETPLACE_XPANSE_DIST,
+    MarketplaceVersions.XSOAR_SAAS.value: MARKETPLACE_XSOAR_SAAS_DIST,
 }
 
 MARKETPLACE_TO_CORE_PACKS_FILE: Dict[MarketplaceVersions, str] = {

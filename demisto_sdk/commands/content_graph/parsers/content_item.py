@@ -174,8 +174,7 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
         if MarketplaceVersions.XSOAR in marketplaces_set:
             marketplaces_set.add(MarketplaceVersions.XSOAR_SAAS)
 
-        marketplaces = sorted(marketplaces_set)
-        return marketplaces
+        return sorted(marketplaces_set)
 
     @property
     @abstractmethod

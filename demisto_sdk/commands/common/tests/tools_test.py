@@ -2359,7 +2359,7 @@ class TestTagParser:
         prefix = "<>"
         suffix = "</>"
         text = "some text"
-        tag_parser = TagParser("XSOAR")
+        tag_parser = TagParser("FAKE_LABEL")
         for tag in (prefix, suffix):
             assert tag_parser.parse(text + tag) == text + tag
 
@@ -2481,7 +2481,7 @@ class TestMarketplaceTagParser:
         assert "xsiam" not in actual
         assert "XPANSE" not in actual
         assert "xpanse" not in actual
-        assert "XSOAR_SAAS" and "xsoar saas" not in actual
+        assert "XSOAR_SAAS" not in actual and "xsoar saas" not in actual
 
     def test_xsiam_marketplace_version(self):
         """
@@ -2503,7 +2503,7 @@ class TestMarketplaceTagParser:
         assert "xsoar" not in actual
         assert "XPANSE" not in actual
         assert "xpanse" not in actual
-        assert "XSOAR_SAAS" and "xsoar saas" not in actual
+        assert "XSOAR_SAAS" not in actual and "xsoar saas" not in actual
         assert self.XSOAR_PREFIX not in actual
         assert self.XSIAM_PREFIX not in actual
         assert self.XPANSE_PREFIX not in actual
@@ -2529,7 +2529,7 @@ class TestMarketplaceTagParser:
         assert "xsoar" not in actual
         assert "XSIAM" not in actual
         assert "xsiam" not in actual
-        assert "XSOAR_SAAS" and "xsoar saas" not in actual
+        assert "XSOAR_SAAS" not in actual and "xsoar saas" not in actual
         assert self.XSOAR_PREFIX not in actual
         assert self.XSIAM_PREFIX not in actual
         assert self.XPANSE_PREFIX not in actual
@@ -2549,12 +2549,12 @@ class TestMarketplaceTagParser:
         assert "### Inline:" in actual
         assert "XSIAM" not in actual
         assert "xsiam" not in actual
-        assert "XPANSE" and "xpanse" not in actual
+        assert "XPANSE" not in actual and "xpanse" not in actual
         assert self.XSOAR_PREFIX not in actual
         assert self.XSIAM_PREFIX not in actual
         assert self.XPANSE_PREFIX not in actual
         assert self.XSOAR_SAAS_PREFIX not in actual
-        assert "XSOAR_SAAS" and "xsoar_saas" in actual
+        assert "XSOAR_SAAS" in actual and "xsoar_saas" in actual
 
 
 @pytest.mark.parametrize(

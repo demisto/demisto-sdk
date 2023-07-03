@@ -9,6 +9,7 @@
 * Fixed an issue where the **upload** command failed parsing input paths.
 * added support for `isfetcheventsandassets` flag in content graph.
 * Updated **validate** on changed *APIModules* to use graph instead of id_set.
+* Fixed an issue where the **modeling-rules test** command failed to get the existence of result from dataset in cases where the results take time to load.
 * Added an aliasTo key to the incident field schema.
 
 ## 1.17.0

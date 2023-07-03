@@ -1,3 +1,5 @@
+import os
+import platform
 from tempfile import NamedTemporaryFile
 from typing import Union
 
@@ -29,12 +31,30 @@ class IncidentField(JSONContentObject):
         else:
             incident_fields_unified_data = {"incidentFields": self._as_dict}
 
-        with NamedTemporaryFile(suffix=".json") as incident_fields_unified_file:
+        is_win_os = platform.system() == "Windows"
+
+        # Set delete to False if a Windows operating system is detected
+        # On Windows operating systems, NamedTemporaryFile objects cannot be
+        # opened a second time while open in a context manager
+        with NamedTemporaryFile(
+            suffix=".json",
+            delete=not is_win_os,
+        ) as incident_fields_unified_file:
             incident_fields_unified_file.write(
                 bytes(json.dumps(incident_fields_unified_data), "utf-8")
             )
             incident_fields_unified_file.seek(0)
-            return client.import_incident_fields(file=incident_fields_unified_file.name)
+
+            filename = incident_fields_unified_file.name
+
+            if not is_win_os:
+                return client.import_incident_fields(file=filename)
+
+        # This section only runs if Windows is the detected operating system
+        res = client.import_incident_fields(file=filename)
+        # Delete the NamedTemporaryFile object
+        os.remove(filename)
+        return res
 
     def type(self):
         return FileType.INCIDENT_FIELD

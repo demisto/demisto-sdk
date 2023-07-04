@@ -1,3 +1,4 @@
+import gc
 from typing import List, Optional
 
 import more_itertools
@@ -69,7 +70,7 @@ class ContentGraphBuilder:
             repository_parser.parse(packs_batch)
             content_dtos.append(ContentDTO.from_orm(repository_parser))
             repository_parser.packs = []
-
+            gc.collect()
         return content_dtos
 
     def _collect_nodes_and_relationships_from_model(

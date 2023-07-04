@@ -3,12 +3,15 @@ import traceback
 from pathlib import Path
 from typing import Iterator, List, Optional
 
+import more_itertools
+
 from demisto_sdk.commands.common.constants import PACKS_FOLDER
 from demisto_sdk.commands.common.cpu_count import cpu_count
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.content_graph.parsers.pack import PackParser
 
 IGNORED_PACKS_FOR_PARSING = ["NonSupported"]
+PACKS_BATCH = 50
 
 
 class RepositoryParser:
@@ -31,10 +34,13 @@ class RepositoryParser:
         self.packs_to_parse: Optional[List[str]] = packs_to_parse
         try:
             logger.info("Parsing packs...")
-            with multiprocessing.Pool(processes=cpu_count()) as pool:
-                self.packs: List[PackParser] = list(
-                    pool.map(PackParser, self.iter_packs())
-                )
+            for packs_batch in more_itertools.chunked_even(
+                self.iter_packs(), PACKS_BATCH
+            ):
+                with multiprocessing.Pool(processes=cpu_count()) as pool:
+                    self.packs: List[PackParser] = list(
+                        pool.map(PackParser, packs_batch)
+                    )
         except Exception:
             logger.error(traceback.format_exc())
             raise

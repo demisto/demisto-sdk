@@ -27,14 +27,13 @@ class RepositoryParser:
             packs_to_parse (Optional[List[str]]): A list of packs to parse. If not provided, parses all packs.
         """
         self.path: Path = path
+        self.packs: List[PackParser] = []
 
     def parse(self, packs_to_parse: List[Path]):
         try:
             logger.info("Parsing packs...")
             with multiprocessing.Pool(processes=cpu_count()) as pool:
-                self.packs: List[PackParser] = list(
-                    pool.map(PackParser, packs_to_parse)
-                )
+                self.packs = list(pool.map(PackParser, packs_to_parse))
         except Exception:
             logger.error(traceback.format_exc())
             raise
@@ -66,3 +65,6 @@ class RepositoryParser:
             for path in packs_folder.iterdir():
                 if self.should_parse_pack(path):
                     yield path
+
+    def clear(self):
+        self.packs = []

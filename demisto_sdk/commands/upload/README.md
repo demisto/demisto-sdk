@@ -73,7 +73,7 @@ Uploading classifiers to Cortex XSOAR is available from version 6.0.0 and up.
 
 * **--override-existing**
 
-    If true will skip override confirmation prompt while uploading packs.
+    If true, will skip the override confirmation prompt while uploading packs.
 
 * **--insecure**
 

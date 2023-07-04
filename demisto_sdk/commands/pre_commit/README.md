@@ -25,7 +25,7 @@ It utilizes the [pre-commit](https://github.com/pre-commit/pre-commit) infrastru
 Runs Ruff, the extremely fast python linter, using the python version used in the container image set for the content item.
 
 This step uses the Ruff rules configured in the `pyproject.toml` at the root of the content repo. If such does not exist, it uses Ruff's default rules.
-The rules set under the official demisto/content repo [pyprojet.toml|https://github.com/demisto/content/blob/master/pyproject.toml] file were handpicked to ensure a high level of code quality, and prevent bugs often found in content.
+The rules set under the official demisto/content repo [pyprojet.toml](https://github.com/demisto/content/blob/master/pyproject.toml) file were handpicked to ensure a high level of code quality, and prevent bugs often found in content.
 
 This step may modify files (using Ruff's `--fix` flag). When files are modified, the step will fail, we recommend committing them into the repo.
 

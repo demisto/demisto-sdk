@@ -29,7 +29,9 @@ class RepositoryParser:
         self.path: Path = path
         self.packs: List[PackParser] = []
 
-    def parse(self, packs_to_parse: List[Path]):
+    def parse(self, packs_to_parse: Optional[List[Path]] = None):
+        if not packs_to_parse:
+            packs_to_parse = list(self.iter_packs())
         try:
             logger.info("Parsing packs...")
             with multiprocessing.Pool(processes=cpu_count()) as pool:
@@ -46,7 +48,7 @@ class RepositoryParser:
             and path.name not in IGNORED_PACKS_FOR_PARSING
         )
 
-    def iter_packs(self, packs_to_parse: Optional[List[str]]) -> Iterator[Path]:
+    def iter_packs(self, packs_to_parse: Optional[List[str]] = None) -> Iterator[Path]:
         """Iterates all packs in the repository.
 
         Yields:

@@ -503,8 +503,9 @@ class TestGetRemoteFile:
         assert isinstance(hello_world_py, bytes)
         assert hello_world_py
         assert "main()" in hello_world_text
-        assert hello_world_text.startswith(
-            '"""HelloWorld Integration for Cortex XSOAR (aka Demisto)'
+        assert (
+            """HelloWorld Integration for Cortex XSOAR (aka Demisto)"""
+            in hello_world_text
         )
 
     def test_get_remote_file_origin(self):

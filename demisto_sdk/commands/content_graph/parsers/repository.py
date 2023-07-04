@@ -19,7 +19,7 @@ class RepositoryParser:
         packs (List[PackParser]): A list of the repository's packs parser objects.
     """
 
-    def __init__(self, path: Path, packs_to_parse: Optional[List[str]] = None) -> None:
+    def __init__(self, path: Path) -> None:
         """Parsing all repository packs.
 
         Args:
@@ -28,33 +28,34 @@ class RepositoryParser:
         """
         self.path: Path = path
 
-        self.packs_to_parse: Optional[List[str]] = packs_to_parse
+    def parse(self, packs_to_parse: List[Path]):
         try:
             logger.info("Parsing packs...")
             with multiprocessing.Pool(processes=cpu_count()) as pool:
                 self.packs: List[PackParser] = list(
-                    pool.map(PackParser, self.iter_packs())
+                    pool.map(PackParser, packs_to_parse)
                 )
         except Exception:
             logger.error(traceback.format_exc())
             raise
 
-    def should_parse_pack(self, path: Path) -> bool:
+    @staticmethod
+    def should_parse_pack(path: Path) -> bool:
         return (
             path.is_dir()
             and not path.name.startswith(".")
             and path.name not in IGNORED_PACKS_FOR_PARSING
         )
 
-    def iter_packs(self) -> Iterator[Path]:
+    def iter_packs(self, packs_to_parse: Optional[List[str]]) -> Iterator[Path]:
         """Iterates all packs in the repository.
 
         Yields:
             Iterator[Path]: A pack path.
         """
         packs_folder: Path = self.path / PACKS_FOLDER
-        if self.packs_to_parse:
-            for pack in self.packs_to_parse:
+        if packs_to_parse:
+            for pack in packs_to_parse:
                 path = packs_folder / pack
                 if not path.is_dir():
                     raise FileNotFoundError(f"Pack {pack} does not exist.")

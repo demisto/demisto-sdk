@@ -37,10 +37,7 @@ class ContentGraphBuilder:
         """
         if not packs_to_update:
             return
-        for packs_batch in more_itertools.chunked_even(
-            packs_to_update, PACKS_PER_BATCH
-        ):
-            self._parse_and_model_content(packs_batch)
+        self._parse_and_model_content(packs_to_update)
         self._create_or_update_graph()
 
     def _preprepare_database(self) -> None:
@@ -50,20 +47,30 @@ class ContentGraphBuilder:
     def _parse_and_model_content(
         self, packs_to_parse: Optional[List[str]] = None
     ) -> None:
-        content_dto: ContentDTO = self._create_content_dto(packs_to_parse)
-        self._collect_nodes_and_relationships_from_model(content_dto)
 
-    def _create_content_dto(self, packs_to_parse: Optional[List[str]]) -> ContentDTO:
+        content_dtos: List[ContentDTO] = self._create_content_dtos(packs_to_parse)
+        for content_dto in content_dtos:
+            self._collect_nodes_and_relationships_from_model(content_dto)
+
+    def _create_content_dtos(
+        self, packs_to_parse: Optional[List[str]]
+    ) -> List[ContentDTO]:
         """Parses the repository, then creates and returns a repository model.
 
         Args:
             path (Path): The repository path.
             packs_to_parse (Optional[List[str]]): A list of packs to parse. If not provided, parses all packs.
         """
-        repository_parser = RepositoryParser(
-            self.content_graph.repo_path, packs_to_parse
-        )
-        return ContentDTO.from_orm(repository_parser)
+        content_dtos = []
+        repository_parser = RepositoryParser(self.content_graph.repo_path)
+        for packs_batch in more_itertools.chunked_even(
+            repository_parser.iter_packs(packs_to_parse), PACKS_PER_BATCH
+        ):
+            repository_parser.parse(packs_batch)
+            content_dtos.append(ContentDTO.from_orm(repository_parser))
+            repository_parser.packs = []
+
+        return content_dtos
 
     def _collect_nodes_and_relationships_from_model(
         self, content_dto: ContentDTO

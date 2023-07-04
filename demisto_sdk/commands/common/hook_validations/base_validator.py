@@ -27,7 +27,7 @@ from demisto_sdk.commands.common.tools import (
     get_json,
     get_pack_name,
     get_relative_path_from_packs_dir,
-    get_yaml,
+    get_yaml, str2bool,
 )
 
 json = JSON_Handler()
@@ -263,7 +263,8 @@ class BaseValidator:
 
         self.json_output(file_path, error_code, error_message, warning)
         self.add_to_report_error_list(error_code, file_path, FOUND_FILES_AND_ERRORS)
-        if os.getenv("GITHUB_ACTIONS"):
+        if str2bool(os.getenv("GITHUB_ACTIONS")):
+            print("In the condition")
             print(f"::notice file={file_path},line=1,endLine=1,title=Validation Error::{error_message}")
 
         return formatted_error

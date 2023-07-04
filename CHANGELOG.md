@@ -1,5 +1,6 @@
 # Changelog
 ## Unreleased
+* Added documentation for the flag **override-existing** used in upload
 
 ## 1.17.1
 * Added the `aliasTo` key to the Incident Field schema.

@@ -1,7 +1,7 @@
 ## Pre-commit
 
 This command enhances the content development experience, by running a variety of checks and linters.
-It utilizes the [pre-commit|https://github.com/pre-commit/pre-commit] infrastructure, and uses a template file saved under the content repo (locally, or remotely) to dynamically generate a `pre-commit-config.yaml` file, based on the content being run.
+It utilizes the [pre-commit](https://github.com/pre-commit/pre-commit) infrastructure, and uses a template file saved under the content repo (locally, or remotely) to dynamically generate a `pre-commit-config.yaml` file, based on the content being run.
 
 **Note**: An internet connection is required for using `demisto-sdk pre-commit`.
 ## Usage

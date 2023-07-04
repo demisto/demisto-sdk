@@ -6,6 +6,7 @@ import pytest
 from demisto_sdk.commands.common.constants import (
     GOOGLE_CLOUD_STORAGE_PUBLIC_BASE_PATH,
     README_IMAGES,
+    SERVER_API_TO_STORAGE,
     MarketplaceVersions,
     MarketplaceVersionToMarketplaceName,
 )
@@ -71,6 +72,9 @@ def test_collect_images_from_readme_and_replace_with_storage_path(
 
 
 def test_replace_readme_urls(mocker):
+    """
+    Given no urls were found in the pack readme return an empty dict.
+    """
     mocker.patch.object(
         pack_readme_handler,
         "collect_images_from_readme_and_replace_with_storage_path",
@@ -82,3 +86,29 @@ def test_replace_readme_urls(mocker):
         )
         == {}
     )
+
+
+@pytest.mark.parametrize(
+    "marketplace, expected_res",
+    [
+        (MarketplaceVersions.MarketplaceV2, True),
+        (MarketplaceVersions.XPANSE, True),
+        (MarketplaceVersions.XSOAR_SAAS, True),
+        (MarketplaceVersions.XSOAR, False),
+    ],
+)
+def test_collect_images_from_readme_and_replace_with_storage_path_different_marketplaces(
+    marketplace, expected_res
+):
+    import tempfile
+
+    with tempfile.NamedTemporaryFile(mode="w") as f:
+        f.write(
+            "![image](https://raw.githubusercontent.com/demisto/content/f808c78aa6c94a09450879c8702a1b7f023f1d4b/Packs/PrismaCloudCompute/doc_files/prisma_alert_raw_input.png)"
+        )
+        f.flush()
+        pack_readme_handler.collect_images_from_readme_and_replace_with_storage_path(
+            Path(f.name), "test_pack", marketplace
+        )
+        res = Path(f.name).read_text()
+        assert (SERVER_API_TO_STORAGE in res) == expected_res

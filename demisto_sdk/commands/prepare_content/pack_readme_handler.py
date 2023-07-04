@@ -7,6 +7,7 @@ from demisto_sdk.commands.common.constants import (
     GOOGLE_CLOUD_STORAGE_PUBLIC_BASE_PATH,
     MARKDOWN_IMAGE_LINK_REGEX,
     README_IMAGES,
+    SERVER_API_TO_STORAGE,
     MarketplaceVersions,
     MarketplaceVersionToMarketplaceName,
 )
@@ -67,7 +68,7 @@ def collect_images_from_readme_and_replace_with_storage_path(
         MarketplaceVersions.MarketplaceV2,
         MarketplaceVersions.XPANSE,
     ]:
-        to_replace = f"api/marketplace/file?name=content/packs/{pack_name}"
+        to_replace = f"{SERVER_API_TO_STORAGE}/{pack_name}"
     else:
         to_replace = google_api_readme_images_url
 

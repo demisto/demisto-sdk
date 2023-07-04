@@ -2866,7 +2866,6 @@ def get_approved_tags_from_branch() -> Dict[str, List[str]]:
                 "xsoar": [],
                 "marketplacev2": [],
                 "xpanse": [],
-                # omertodo: this is supposed to be like XSOAR check what we want to do here.
             }
 
         return approved_tags_json.get("approved_list", {})

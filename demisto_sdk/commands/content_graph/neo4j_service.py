@@ -133,19 +133,21 @@ def start():
         logger.debug(
             f"Could not start neo4j container, delete data folder and trying again. {e}"
         )
-        shutil.rmtree(REPO_PATH / NEO4J_FOLDER / NEO4J_DATA_FOLDER)
+        shutil.rmtree(REPO_PATH / NEO4J_FOLDER / NEO4J_DATA_FOLDER, ignore_errors=True)
         _docker_start()
 
 
-def stop():
+def stop(force: bool = False, clean: bool = False):
     """Stop the neo4j service"""
-    if not is_alive():
+    if not force and not is_alive():
         return
     if not is_running_on_docker():
         logger.debug("Neo4j is running locally. Stop with `neo4j stop`")
         return
     docker_client = init_global_docker_client()
     _stop_neo4j_service_docker(docker_client)
+    if clean:
+        shutil.rmtree(REPO_PATH / NEO4J_FOLDER / NEO4J_DATA_FOLDER, ignore_errors=True)
 
 
 def is_alive():

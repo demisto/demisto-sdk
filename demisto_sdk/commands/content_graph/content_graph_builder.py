@@ -1,5 +1,7 @@
 from typing import List, Optional
 
+import more_itertools
+
 from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.content_graph.common import Nodes, Relationships
 from demisto_sdk.commands.content_graph.interface.graph import ContentGraphInterface
@@ -7,6 +9,7 @@ from demisto_sdk.commands.content_graph.objects.repository import ContentDTO
 from demisto_sdk.commands.content_graph.parsers.repository import RepositoryParser
 
 json = JSON_Handler()
+PACKS_PER_BATCH = 50
 
 
 class ContentGraphBuilder:
@@ -34,7 +37,10 @@ class ContentGraphBuilder:
         """
         if not packs_to_update:
             return
-        self._parse_and_model_content(packs_to_update)
+        for packs_batch in more_itertools.chunked_even(
+            packs_to_update, PACKS_PER_BATCH
+        ):
+            self._parse_and_model_content(packs_batch)
         self._create_or_update_graph()
 
     def _preprepare_database(self) -> None:

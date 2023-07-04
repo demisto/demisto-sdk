@@ -31,6 +31,7 @@ class RepositoryParser:
 
     def parse(self, packs_to_parse: Optional[List[Path]] = None):
         if not packs_to_parse:
+            # if no packs to parse were provided, parse all packs
             packs_to_parse = list(self.iter_packs())
         try:
             logger.info("Parsing packs...")

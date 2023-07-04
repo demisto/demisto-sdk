@@ -14,7 +14,6 @@ repos:
   - id: poetry-export
     args: [--without-hashes, "-o", "requirements.txt"]
 
-# Uncomment when demisto-sdk is updated to 1.16.2
 - repo: https://github.com/demisto/demisto-sdk
   rev: v1.17.1
   hooks:

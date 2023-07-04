@@ -263,9 +263,10 @@ class BaseValidator:
 
         self.json_output(file_path, error_code, error_message, warning)
         self.add_to_report_error_list(error_code, file_path, FOUND_FILES_AND_ERRORS)
+        print("Here")
         if str2bool(os.getenv("GITHUB_ACTIONS")):
             logger.info("****************** In the condition ***************************")
-            print(f"::notice file={file_path},line=1,endLine=1,title=Validation Error::{error_message}")
+            print(f"::error file={file_path},line=1,endLine=1,title=Validation Error::{error_message}")
 
         return formatted_error
 

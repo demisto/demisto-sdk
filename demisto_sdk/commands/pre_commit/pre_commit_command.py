@@ -120,6 +120,8 @@ class PreCommitRunner:
     ) -> int:
         ret_val = 0
         precommit_env = os.environ.copy()
+        if IS_GITHUB_ACTIONS:
+            precommit_env["GITHUB_ACTIONS"] = "true"
         skipped_hooks: set = SKIPPED_HOOKS
         skipped_hooks |= set(skip_hooks or [])
         if not unit_test:

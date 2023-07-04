@@ -131,13 +131,6 @@ class XsiamApiClient(XsiamApiInterface):
         response.raise_for_status()
         return response.json()
 
-    @property
-    def tenant_timezone(self) -> str:
-        endpoint = urljoin(self.base_url, "system/timezone")
-        response = self._session.get(endpoint)
-        response.raise_for_status()
-        return response.json()
-
     def search_marketplace(self, filter_json: dict):
         endpoint = urljoin(self.base_url, "xsoar/contentpacks/marketplace/search")
         response = self._session.post(endpoint, json=filter_json)

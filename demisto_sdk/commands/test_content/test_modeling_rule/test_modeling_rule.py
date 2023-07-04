@@ -112,7 +112,6 @@ def verify_results(
     tested_dataset: str,
     results: List[dict],
     test_data: init_test_data.TestData,
-    tenant_timezone: str,
 ):
     """Verify that the results of the XQL query match the expected values.
 
@@ -120,7 +119,6 @@ def verify_results(
         tested_dataset (str): The dataset to verify result for.
         results (List[dict]): The results of the XQL query.
         test_data (init_test_data.TestData): The data parsed from the test data file.
-        tenant_timezone (str): The timezone of the XSIAM tenant.
 
     Returns:
         bool: True if the results are valid, False otherwise.
@@ -155,9 +153,11 @@ def verify_results(
         # get expected_values for the given query result
         td_event_id = result.pop(f"{tested_dataset}.test_data_event_id")
         expected_values = None
+        tenant_timezone: str = ""
         for e in test_data.data:
             if str(e.test_data_event_id) == td_event_id:
                 expected_values = e.expected_values
+                tenant_timezone = e.tenant_timezone
                 break
 
         if expected_values:
@@ -255,9 +255,7 @@ def validate_expected_values(
             )
             success = False
         else:
-            success &= verify_results(
-                rule.dataset, results, test_data, xsiam_client.tenant_timezone
-            )
+            success &= verify_results(rule.dataset, results, test_data)
     if success:
         logger.info(
             "[green]Mappings validated successfully[/green]", extra={"markup": True}

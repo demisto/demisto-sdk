@@ -6,6 +6,7 @@ import pytest
 
 import demisto_sdk.commands.content_graph.neo4j_service as neo4j_service
 from demisto_sdk.commands.common.constants import (
+    README_IMAGES_ARTIFACT_FILE_NAME,
     SKIP_PREPARE_SCRIPT_NAME,
     MarketplaceVersions,
 )
@@ -899,12 +900,68 @@ class TestCreateContentGraph:
         assert not (script_path / "script-setAlert.yml").exists()
 
 
-#  omertodo: complete this test to check the population of the artifact readme_images_data file.
-# def test_dump_pack_readme(mocker):
-#     import os
-#     from demisto_sdk.commands.prepare_content.pack_readme_handler import replace_readme_urls
-#     pack = mock_pack()
-#     with tempfile.TemporaryDirectory() as artifact_dir:
-#         mocker.patch.object(os, 'getenv' , return_value=artifact_dir)
-#         mocker.patch("pack.replace_readme_urls", side_affect)
-#         pack.replce_readme_urls_and_write_to_artifacts('fake_path', MarketplaceVersions.MarketplaceV2)
+def test_dump_pack_readme(mocker):
+    import os
+    from tempfile import TemporaryDirectory
+
+    from demisto_sdk.commands.common.tools import get_file
+
+    pack = mock_pack()
+    return_value1 = {
+        "PrismaCloudCompute": [
+            {
+                "original_readme_url": "https://user-images.githubusercontent.com/49071222/72906531-0e452a00-3d3b-11ea-8703-8b97ddf30be0.png",
+                "final_dst_image_path": "https://storage.googleapis.com/marketplace-saas-dist/content/packs/PrismaCloudCompute/readme_images/72906531-0e452a00-3d3b-11ea-8703-8b97ddf30be0.png",
+                "relative_image_path": "PrismaCloudCompute/readme_images/72906531-0e452a00-3d3b-11ea-8703-8b97ddf30be0.png",
+                "image_name": "72906531-0e452a00-3d3b-11ea-8703-8b97ddf30be0.png",
+            },
+            {
+                "original_readme_url": "https://raw.githubusercontent.com/demisto/content/f808c78aa6c94a09450879c8702a1b7f023f1d4b/Packs/PrismaCloudCompute/doc_files/prisma_alert_raw_input.png",
+                "final_dst_image_path": "https://storage.googleapis.com/marketplace-saas-dist/content/packs/PrismaCloudCompute/readme_images/prisma_alert_raw_input.png",
+                "relative_image_path": "PrismaCloudCompute/readme_images/prisma_alert_raw_input.png",
+                "image_name": "prisma_alert_raw_input.png",
+            },
+            {
+                "original_readme_url": "https://raw.githubusercontent.com/demisto/content/f808c78aa6c94a09450879c8702a1b7f023f1d4b/Packs/PrismaCloudCompute/doc_files/prisma_alert_outputs.png",
+                "final_dst_image_path": "https://storage.googleapis.com/marketplace-saas-dist/content/packs/PrismaCloudCompute/readme_images/prisma_alert_outputs.png",
+                "relative_image_path": "PrismaCloudCompute/readme_images/prisma_alert_outputs.png",
+                "image_name": "prisma_alert_outputs.png",
+            },
+            {
+                "original_readme_url": "https://raw.githubusercontent.com/demisto/content/f808c78aa6c94a09450879c8702a1b7f023f1d4b/Packs/PrismaCloudCompute/doc_files/prisma_instance.png",
+                "final_dst_image_path": "https://storage.googleapis.com/marketplace-saas-dist/content/packs/PrismaCloudCompute/readme_images/prisma_instance.png",
+                "relative_image_path": "PrismaCloudCompute/readme_images/prisma_instance.png",
+                "image_name": "prisma_instance.png",
+            },
+        ]
+    }
+
+    return_value2 = {
+        "CVE_2022_30190": [
+            {
+                "original_readme_url": "https://raw.githubusercontent.com/demisto/content/8895e8b967ee7d664276bd31df5af849e2c9a603/Packs/CVE_2022_30190/doc_files/CVE-2022-30190_-_MSDT_RCE.png",
+                "final_dst_image_path": "https://storage.googleapis.com/marketplace-saas-dist/content/packs/CVE_2022_30190/readme_images/CVE-2022-30190_-_MSDT_RCE.png",
+                "relative_image_path": "CVE_2022_30190/readme_images/CVE-2022-30190_-_MSDT_RCE.png",
+                "image_name": "CVE-2022-30190_-_MSDT_RCE.png",
+            }
+        ]
+    }
+    excepted_res = return_value1.copy()
+    excepted_res.update(return_value2)
+    with TemporaryDirectory() as artifact_dir:
+        mocker.patch.object(os, "getenv", return_value=artifact_dir)
+        # mocker.patch("demisto_sdk.commands.prepare_content.pack_readme_handler.replace_readme_urls", side_affect=[return_value1, return_value2])
+        mocker.patch(
+            "demisto_sdk.commands.content_graph.objects.pack.replace_readme_urls",
+            side_effect=[return_value1, return_value2],
+        )
+        pack.replace_readme_urls_and_write_to_artifacts(
+            "fake_path", MarketplaceVersions.MarketplaceV2
+        )
+        pack.replace_readme_urls_and_write_to_artifacts(
+            "fake_path", MarketplaceVersions.MarketplaceV2
+        )
+        res = get_file(
+            f"{artifact_dir}/{README_IMAGES_ARTIFACT_FILE_NAME}", type_of_file="json"
+        )
+        assert res == excepted_res

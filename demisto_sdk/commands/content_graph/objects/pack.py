@@ -14,12 +14,13 @@ from demisto_sdk.commands.common.constants import (
     BASE_PACK,
     CONTRIBUTORS_README_TEMPLATE,
     MARKETPLACE_MIN_VERSION,
+    README_IMAGES_ARTIFACT_FILE_NAME,
     MarketplaceVersions,
 )
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.logger import logger
-from demisto_sdk.commands.common.tools import MarketplaceTagParser
+from demisto_sdk.commands.common.tools import MarketplaceTagParser, get_file
 from demisto_sdk.commands.content_graph.common import (
     PACK_METADATA_FILENAME,
     ContentType,
@@ -357,16 +358,17 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: i
             artifacts_folder
         ).exists():
             artifacts_readme_images_path = Path(
-                f"{artifacts_folder}/readme_images.json"
+                f"{artifacts_folder}/{README_IMAGES_ARTIFACT_FILE_NAME}"
             )
             if not artifacts_readme_images_path.exists():
                 with open(artifacts_readme_images_path, "w") as f:
                     # If this is the first pack init the file with an empty dict.
                     json.dump({}, f)
 
-            with open(artifacts_readme_images_path, "r") as readme_images_data_file:
-                readme_images_data_dict: dict = json.load(readme_images_data_file)
-                readme_images_data_dict.update(pack_readme_images_data)
+            readme_images_data_dict = get_file(
+                artifacts_readme_images_path, type_of_file="json"
+            )
+            readme_images_data_dict.update(pack_readme_images_data)
 
             with open(artifacts_readme_images_path, "w") as fp:
                 json.dump(readme_images_data_dict, fp, indent=4)

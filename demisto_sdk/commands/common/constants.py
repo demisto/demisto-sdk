@@ -1881,3 +1881,4 @@ XSOAR_SAAS_INLINE_PREFIX_TAG = "<~XSOAR_SAAS>"
 XSOAR_SAAS_INLINE_SUFFIX_TAG = "</~XSOAR_SAAS>"
 
 MARKDOWN_IMAGE_LINK_REGEX = r"(\!\[.*?\])\((?P<url>[a-zA-Z_/\.0-9\- :%]*?)\)((].*)?)"
+README_IMAGES_ARTIFACT_FILE_NAME = "readme_images.json"

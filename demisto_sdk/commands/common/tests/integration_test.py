@@ -680,7 +680,7 @@ class TestIntegrationValidator:
         (DEFAULT_ARGS_INVALID_COMMAND, False),
         (DEFAULT_ARGS_MISSING_DEFAULT_PARAM_WHEN_NOT_ALLOWED, False),
         (DEFAULT_ARGS_NOT_ARRAY, False),
-        (DEFAULT_ARGS_SAME_ARG_NAME, True)
+        (DEFAULT_ARGS_SAME_ARG_NAME, True),
     ]
 
     @pytest.mark.parametrize("current, answer", DEFAULT_ARGS_INPUTS)

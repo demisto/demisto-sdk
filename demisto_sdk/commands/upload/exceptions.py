@@ -17,7 +17,7 @@ class NotUploadableException(NotImplementedError):
 
 class NotIndivitudallyUploadableException(NotUploadableException):
     """
-    Some XSIAM items must be uploaded as part of a pack.
+    Some content items must be uploaded as part of a pack.
     """
 
     def __init__(self, item: "BaseContent"):
@@ -29,6 +29,7 @@ class NotIndivitudallyUploadableException(NotUploadableException):
 
 class IncompatibleUploadVersionException(NotUploadableException):
     def __init__(self, item: "ContentItem", target: Version) -> None:
+        self.item = item
         if target > Version(item.toversion):
             message = f"to_version={item.toversion}"
         elif target < Version(item.fromversion):

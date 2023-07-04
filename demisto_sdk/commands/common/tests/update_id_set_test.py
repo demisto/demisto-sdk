@@ -2843,9 +2843,19 @@ class TestGenericFunctions:
         },
     }
 
+    EXAMPLE_TASK_WITH_CUSTOM_FIELDS_SCRIPT_ARGUMENTS_DICT = {
+        "id": "ID",
+        "scriptarguments": {
+            "customFields": {
+                "simple": '{"field_name": "${inputs.IndicatorTagName}", "field_name2": "${inputs.IndicatorTagName2}"}'
+            }
+        },
+    }
+
     TASK_INPUTS = [
         # EXAMPLE_TASK_WITH_SIMPLE_SCRIPT_ARGUMENTS,
-        EXAMPLE_TASK_WITH_CUSTOM_FIELDS_SCRIPT_ARGUMENTS
+        EXAMPLE_TASK_WITH_CUSTOM_FIELDS_SCRIPT_ARGUMENTS,
+        EXAMPLE_TASK_WITH_CUSTOM_FIELDS_SCRIPT_ARGUMENTS_DICT,
     ]
 
     @staticmethod

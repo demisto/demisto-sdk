@@ -135,7 +135,7 @@ def start_local_MDX_server(
         A context manager
 
     """
-    logger.info("Starting local mdx server")
+    logger.debug("Starting local mdx server")
 
     logger.debug(subprocess.check_output(["npm", "list", "--json"]))
     process = subprocess.Popen(
@@ -160,5 +160,5 @@ def start_local_MDX_server(
 
 def terminate_process(process):
     if process:
-        logger.info("Stopping local mdx server")
+        logger.debug("Stopping local mdx server")
         process.terminate()

@@ -27,14 +27,26 @@ from TestSuite.test_tools import ChangeCWD, str_in_call_args_list
 
 default_additional_info = load_default_additional_info_dict()
 
-FEED_REQUIRED_PARAMS_STRUCTURE = [
-    dict(
-        required_param.get("must_equal"),
-        **required_param.get("must_contain"),
-        name=required_param.get("name"),
-    )
-    for required_param in FEED_REQUIRED_PARAMS
-]
+
+def build_feed_required_params():
+    params = []
+    for required_param in FEED_REQUIRED_PARAMS:
+        must_be_one_of = {
+            key: val[-1] if isinstance(val, list) else val
+            for key, val in required_param.get("must_be_one_of").items()
+        }
+        params.append(
+            dict(
+                required_param.get("must_equal"),
+                **required_param.get("must_contain"),
+                name=required_param.get("name"),
+                **must_be_one_of,
+            )
+        )
+    return params
+
+
+FEED_REQUIRED_PARAMS_STRUCTURE = build_feed_required_params()
 
 
 def mock_structure(
@@ -381,7 +393,7 @@ class TestIntegrationValidator:
                     "arguments": [{"name": "argument_test_name_2", "required": True}],
                 },
             ],
-            "[ERROR]: : [BC104] - Possible backwards compatibility break, Your updates to this file contains changes"
+            "[BC104] - Possible backwards compatibility break, Your updates to this file contains changes"
             " to a name or an argument of an existing command(s).\nPlease undo you changes to the following command(s):\ntest1\ntest2",
         )
     ]
@@ -503,9 +515,9 @@ class TestIntegrationValidator:
             warning_message, warning_code = Errors.non_default_additional_info(
                 ["API key"]
             )
-            expected_warning = f"[WARNING]: : [{warning_code}] - {warning_message}"
+            expected_message = f"[{warning_code}] - {warning_message}"
             assert str_in_call_args_list(
-                logger_warning.call_args_list, expected_warning
+                logger_warning.call_args_list, expected_message
             )
 
     NO_INCIDENT_INPUT = [
@@ -1782,17 +1794,21 @@ class TestIntegrationValidator:
         assert validator.is_unskipped_integration(conf_dict) is answer
 
     VERIFY_REPUTATION_COMMANDS = [
-        (["test1", "test2"], False, True),
-        (["test1", "url"], False, False),
-        (["test1", "url"], True, True),
-        (["domain", "url"], True, True),
+        # Test feed integration validation
+        (["test1", "test2"], True, False, False),
+        (["test3", "test4"], True, True, True),
+        # Test reputation commands validation
+        (["test5", "test6"], False, False, True),
+        (["test7", "url"], False, False, False),
+        (["test8", "url"], False, True, True),
+        (["domain", "url"], False, True, True),
     ]
 
     @pytest.mark.parametrize(
-        "commands, has_reliability, result", VERIFY_REPUTATION_COMMANDS
+        "commands, is_feed, has_reliability, result", VERIFY_REPUTATION_COMMANDS
     )
     def test_verify_reputation_commands_has_reliability(
-        self, commands, has_reliability, result
+        self, commands, is_feed, has_reliability, result
     ):
         """
         Given
@@ -1802,22 +1818,18 @@ class TestIntegrationValidator:
         Then
             - Ensure the command fails when there is a reputation command without reliability parameter.
         """
+        current = {"script": {"commands": [{"name": command} for command in commands]}}
 
-        current = (
-            {
-                "script": {"commands": [{"name": command} for command in commands]},
-                "configuration": [{"name": "integrationReliability"}],
-            }
-            if has_reliability
-            else {"script": {"commands": [{"name": command} for command in commands]}}
-        )
+        if is_feed:
+            current["script"]["feed"] = True
+
+        if has_reliability:
+            current["configuration"] = [{"name": "integrationReliability"}]
+
         structure = mock_structure("", current)
         validator = IntegrationValidator(structure)
         validator.current_file = current
-        assert (
-            validator.verify_reputation_commands_has_reliability(is_modified=True)
-            is result
-        )
+        assert validator.verify_reputation_commands_has_reliability() is result
 
     @pytest.mark.parametrize(
         "hidden_value,is_valid",
@@ -1910,6 +1922,7 @@ class TestIsFetchParamsExist:
 
     def test_missing_max_fetch_text(self, mocker, caplog, capsys):
         logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+        logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
         # missing param in configuration
         self.validator.current_file["configuration"] = [
             t
@@ -1921,7 +1934,7 @@ class TestIsFetchParamsExist:
             logger_info.call_args_list, "display: Incident type"
         )
         assert str_in_call_args_list(
-            logger_info.call_args_list,
+            logger_error.call_args_list,
             """A required parameter "incidentType" is missing from the YAML file.""",
         )
 
@@ -1937,7 +1950,7 @@ class TestIsFetchParamsExist:
 
     def test_malformed_field(self, mocker):
         # incorrect param
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+        logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
         config = self.validator.current_file["configuration"]
         self.validator.current_file["configuration"] = []
         for t in config:
@@ -1951,11 +1964,11 @@ class TestIsFetchParamsExist:
         assert all(
             [
                 str_in_call_args_list(
-                    logger_info.call_args_list, "display: Incident type"
+                    logger_error.call_args_list, "display: Incident type"
                 ),
-                str_in_call_args_list(logger_info.call_args_list, "name: incidentType"),
-                str_in_call_args_list(logger_info.call_args_list, "required: false"),
-                str_in_call_args_list(logger_info.call_args_list, "required: false"),
+                str_in_call_args_list(
+                    logger_error.call_args_list, "name: incidentType"
+                ),
             ]
         )
 

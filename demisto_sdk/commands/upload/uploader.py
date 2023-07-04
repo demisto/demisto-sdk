@@ -182,7 +182,8 @@ class Uploader:
                 path=path,
                 client=self.client,
                 target_demisto_version=Version(str(self.demisto_version)),
-                skip_validations=True,  # TODO
+                skip_validations=True,
+                marketplace=self.marketplace,
             ):
                 self._successfully_uploaded_zipped_packs.extend(pack_names)
                 return True
@@ -195,9 +196,9 @@ class Uploader:
 
     def upload(self):
         """Upload the pack / directory / file to the remote Cortex XSOAR instance."""
-        if self.demisto_version == "0":
+        if self.demisto_version.base_version == "0":
             logger.info(
-                "[red]Could not connect to XSOAR server. Try checking your connection configurations.[/red]"
+                "[red]Could not connect to the server. Try checking your connection configurations.[/red]"
             )
             return ERROR_RETURN_CODE
 
@@ -304,7 +305,7 @@ class Uploader:
         except IncompatibleUploadVersionException:
             assert isinstance(
                 content_item, ContentItem
-            ), "Cannot compare version for Pack items, only ContentItems"
+            ), "This exception should only be raised for content items"
             self._failed_upload_version_mismatch.append(content_item)
             return False
 
@@ -315,7 +316,7 @@ class Uploader:
             return False
 
         except FailedUploadMultipleException as e:
-            for failure in e.failures:
+            for failure in e.upload_failures:
                 failure_str = failure.additional_info or str(failure)
 
                 _failed_content_item: Union[
@@ -330,6 +331,10 @@ class Uploader:
                     self._failed_upload_content_items.append(
                         (_failed_content_item, failure_str)
                     )
+            for failure_mismatch in e.incompatible_versions_items:
+                self._failed_upload_version_mismatch.append(failure_mismatch.item)
+
+            self._successfully_uploaded_content_items.extend(e.uploaded_successfully)
             return False
 
         except (FailedUploadException, NotUploadableException, Exception) as e:
@@ -401,16 +406,26 @@ class Uploader:
                 (
                     itertools.chain(
                         (
-                            (item.path.name, item.content_type)
+                            (
+                                item.path.name,
+                                item.content_type,
+                                item.pack_name,
+                                item.pack_version,
+                            )
                             for item in self._successfully_uploaded_content_items
                         ),
                         (
-                            (item, "Pack")
+                            (
+                                item,
+                                "Pack",
+                                item,
+                                "",  # When uploading zips we are not aware of the version
+                            )
                             for item in self._successfully_uploaded_zipped_packs
                         ),
                     )
                 ),
-                headers=["NAME", "TYPE"],
+                headers=["NAME", "TYPE", "PACK NAME", "PACK VERSION"],
                 tablefmt="fancy_grid",
             )
 
@@ -479,7 +494,7 @@ class ConfigFileParser:
             self.content = json.load(f)
 
         self.custom_packs_paths: Tuple[Path, ...] = tuple(
-            Path(pack.get["url"]) for pack in self.content.get("custom_packs", ())
+            Path(pack["url"]) for pack in self.content.get("custom_packs", ())
         )
 
 

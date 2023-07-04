@@ -16,6 +16,9 @@ mapping:
     required: True
   name_x2:
     type: str
+  prettyName:
+    type: str
+    required: False
   ownerOnly:
     type: bool
   placeholder:
@@ -106,6 +109,8 @@ mapping:
     sequence:
       - include: aliases_schema
   x2_fields:
+    type: str
+  aliasTo:
     type: str
 
 schema;aliases_schema:

@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Callable, List
+from typing import TYPE_CHECKING, Callable, List, Optional
 
 import demisto_client
 
@@ -23,7 +23,7 @@ class Command(BaseContent, content_type=ContentType.COMMAND):  # type: ignore[ca
 
     # From HAS_COMMAND relationship
     deprecated: bool = False
-    description: str = ""
+    description: Optional[str] = ""
 
     # missing attributes in DB
     node_id: str = ""
@@ -44,6 +44,7 @@ class Command(BaseContent, content_type=ContentType.COMMAND):  # type: ignore[ca
 class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # type: ignore[call-arg]
     is_fetch: bool = False
     is_fetch_events: bool = False
+    is_fetch_events_and_assets: bool = False
     is_feed: bool = False
     category: str
     commands: List[Command] = []

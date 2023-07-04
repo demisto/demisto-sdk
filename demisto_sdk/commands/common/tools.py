@@ -20,6 +20,7 @@ from pathlib import Path, PosixPath
 from subprocess import DEVNULL, PIPE, Popen, check_output
 from time import sleep
 from typing import (
+    TYPE_CHECKING,
     Any,
     Callable,
     Dict,
@@ -83,6 +84,7 @@ from demisto_sdk.commands.common.constants import (
     PACKAGE_YML_FILE_REGEX,
     PACKS_DIR,
     PACKS_DIR_REGEX,
+    PACKS_FOLDER,
     PACKS_PACK_IGNORE_FILE_NAME,
     PACKS_PACK_META_FILE_NAME,
     PACKS_README_FILE_NAME,
@@ -115,6 +117,9 @@ from demisto_sdk.commands.common.constants import (
 from demisto_sdk.commands.common.git_content_config import GitContentConfig, GitProvider
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
+
+if TYPE_CHECKING:
+    from demisto_sdk.commands.content_graph.interface.graph import ContentGraphInterface
 
 logger = logging.getLogger("demisto-sdk")
 
@@ -543,7 +548,7 @@ def get_file_details(
 ) -> Dict:
     if full_file_path.endswith("json"):
         file_details = json.loads(file_content)
-    elif full_file_path.endswith("yml"):
+    elif full_file_path.endswith(("yml", "yaml")):
         file_details = yaml.load(file_content)
     # if neither yml nor json then probably a CHANGELOG or README file.
     else:
@@ -571,7 +576,15 @@ def get_remote_file(
     tag = tag.replace("origin/", "").replace("demisto/", "")
     if not git_content_config:
         try:
-            return get_local_remote_file(full_file_path, tag, return_content)
+            if not (
+                local_origin_content := get_local_remote_file(
+                    full_file_path, tag, return_content
+                )
+            ):
+                raise ValueError(
+                    f"Got empty content from local-origin file {full_file_path}"
+                )
+            return local_origin_content
         except Exception as e:
             logger.debug(
                 f"Could not get local remote file because of: {str(e)}\n"
@@ -791,36 +804,73 @@ def safe_write_unicode(
 
 
 @lru_cache
-def get_file(file_path: Union[str, Path], type_of_file: str, clear_cache: bool = False):
+def get_file(
+    file_path: Union[str, Path],
+    type_of_file: Optional[str] = None,
+    clear_cache: bool = False,
+    return_content: bool = False,
+):
     if clear_cache:
         get_file.cache_clear()
-
     file_path = Path(file_path)  # type: ignore[arg-type]
+    if not type_of_file:
+        type_of_file = file_path.suffix.lower()
+        logger.debug(f"Inferred type {type_of_file} for file {file_path.name}.")
+
     if not file_path.exists():
         file_path = Path(get_content_path()) / file_path  # type: ignore[arg-type]
 
     if not file_path.exists():
         raise FileNotFoundError(file_path)
 
-    if type_of_file in file_path.suffix:  # e.g. 'yml' in '.yml'
+    try:
         file_content = _read_file(file_path)
+        if return_content:
+            return file_content
+    except IOError as e:
+        logger.error(f"Could not read file {file_path}.\nError: {e}")
+        return {}
+    try:
+        if type_of_file.lstrip(".") in {"yml", "yaml"}:
+            replaced = re.sub(r"(simple: \s*\n*)(=)(\s*\n)", r'\1"\2"\3', file_content)
+            return yaml.load(io.StringIO(replaced))
+        else:
+            result = json.load(io.StringIO(file_content))
+            # It's possible to that the result will be `str` after loading it. In this case, we need to load it again.
+            return json.loads(result) if isinstance(result, str) else result
+    except Exception as e:
+        logger.error(
+            f"{file_path} has a structure issue of file type {type_of_file}\n{e}"
+        )
+        return {}
+
+
+def get_file_or_remote(file_path: Path, clear_cache=False):
+    content_path = get_content_path()
+    relative_file_path = None
+    if file_path.is_absolute():
+        absolute_file_path = file_path
         try:
-            if type_of_file in {"yml", ".yml"}:
-                replaced = re.sub(
-                    r"(simple: \s*\n*)(=)(\s*\n)", r'\1"\2"\3', file_content
-                )
-                result = yaml.load(io.StringIO(replaced))
-            else:
-                result = json.load(io.StringIO(file_content))
-
-        except Exception as e:
-            raise ValueError(
-                f"{file_path} has a structure issue of file type {type_of_file}\n{e}"
+            relative_file_path = file_path.relative_to(content_path)
+        except ValueError:
+            logger.debug(
+                f"{file_path} is not a subpath of {content_path}. If the file does not exists locally, it could not be fetched."
             )
-
-        if isinstance(result, (dict, list)):
-            return result
-    return {}
+    else:
+        absolute_file_path = content_path / file_path
+        relative_file_path = file_path
+    try:
+        return get_file(absolute_file_path, clear_cache=clear_cache)
+    except FileNotFoundError:
+        logger.warning(
+            f"Could not read/find {absolute_file_path} locally, fetching from remote"
+        )
+        if not relative_file_path:
+            logger.error(
+                f"The file path provided {file_path} is not a subpath of {content_path}. could not fetch from remote."
+            )
+            raise
+        return get_remote_file(str(relative_file_path))
 
 
 def get_yaml(file_path, cache_clear=False):
@@ -973,6 +1023,9 @@ def get_to_version(file_path):
 
 
 def str2bool(v):
+    if not v:
+        return False
+
     if isinstance(v, bool):
         return v
     if v.lower() in ("yes", "true", "t", "y", "1"):
@@ -1280,9 +1333,9 @@ def get_pack_name(file_path):
     """
     file_path = Path(file_path)
     parts = file_path.parts
-    if "Packs" not in parts:
+    if PACKS_FOLDER not in parts:
         return None
-    pack_name_index = parts.index("Packs") + 1
+    pack_name_index = parts.index(PACKS_FOLDER) + 1
     if len(parts) <= pack_name_index:
         return None
     return parts[pack_name_index]
@@ -1978,7 +2031,7 @@ def get_latest_upload_flow_commit_hash() -> str:
     return last_commit
 
 
-def get_content_path() -> Union[str, PathLike, None]:
+def get_content_path() -> Path:
     """Get abs content path, from any CWD
     Returns:
         str: Absolute content path
@@ -1996,13 +2049,15 @@ def get_content_path() -> Union[str, PathLike, None]:
 
         if not is_fork_repo and not is_external_repo:
             raise git.InvalidGitRepositoryError
-        return git_repo.working_dir
+        if not git_repo.working_dir:
+            return Path.cwd()
+        return Path(git_repo.working_dir)
     except (git.InvalidGitRepositoryError, git.NoSuchPathError):
         if not os.getenv("DEMISTO_SDK_IGNORE_CONTENT_WARNING"):
             logger.info(
                 "[yellow]Please run demisto-sdk in content repository![/yellow]"
             )
-    return ""
+    return Path(".")
 
 
 def run_command_os(
@@ -2366,7 +2421,7 @@ def open_id_set_file(id_set_path):
         return id_set
 
 
-def get_demisto_version(client: demisto_client) -> Union[Version, LegacyVersion]:
+def get_demisto_version(client: demisto_client) -> Version:
     """
     Args:
         demisto_client: A configured demisto_client instance
@@ -2377,12 +2432,12 @@ def get_demisto_version(client: demisto_client) -> Union[Version, LegacyVersion]
     try:
         resp = client.generic_request("/about", "GET")
         about_data = json.loads(resp[0].replace("'", '"'))
-        return parse(about_data.get("demistoVersion"))  # type: ignore
+        return Version(Version(about_data.get("demistoVersion")).base_version)
     except Exception:
         logger.warning(
-            "Could not parse Xsoar version, please make sure the environment is properly configured."
+            "Could not parse server version, please make sure the environment is properly configured."
         )
-        return parse("0")
+        return Version("0")
 
 
 def arg_to_list(arg: Union[str, List[str]], separator: str = ",") -> List[str]:
@@ -2874,9 +2929,17 @@ def get_current_categories() -> list:
     """
     if is_external_repository():
         return []
-    approved_categories_json, _ = get_dict_from_file(
-        "Tests/Marketplace/approved_categories.json"
-    )
+    try:
+        approved_categories_json, _ = get_dict_from_file(
+            "Tests/Marketplace/approved_categories.json"
+        )
+    except FileNotFoundError:
+        logger.warning(
+            "File approved_categories.json was not found. Getting from remote."
+        )
+        approved_categories_json = get_remote_file(
+            "Tests/Marketplace/approved_categories.json"
+        )
     return approved_categories_json.get("approved_list", [])
 
 
@@ -3581,11 +3644,11 @@ def get_id(file_content: Dict) -> Union[str, None]:
 
 def parse_marketplace_kwargs(kwargs: Dict[str, Any]) -> MarketplaceVersions:
     """
-    Supports both the `marketplace` argument and `is_xsiam`.
+    Supports both the `marketplace` argument and `xsiam`.
     Raises an error when both are supplied.
     """
     marketplace = kwargs.pop("marketplace", None)  # removing to not pass it twice later
-    is_xsiam = kwargs.get("is_xsiam")
+    is_xsiam = kwargs.get("xsiam")
 
     if (
         marketplace
@@ -3593,7 +3656,7 @@ def parse_marketplace_kwargs(kwargs: Dict[str, Any]) -> MarketplaceVersions:
         and MarketplaceVersions(marketplace) != MarketplaceVersions.MarketplaceV2
     ):
         raise ValueError(
-            "The arguments `marketplace` and `is_xsiam` cannot be used at the same time, remove one of them."
+            "The arguments `marketplace` and `xsiam` cannot be used at the same time, remove one of them."
         )
 
     if is_xsiam:
@@ -3606,3 +3669,58 @@ def parse_marketplace_kwargs(kwargs: Dict[str, Any]) -> MarketplaceVersions:
         "neither marketplace nor is_xsiam provided, using default marketplace=XSOAR"
     )
     return MarketplaceVersions.XSOAR  # default
+
+
+def get_api_module_dependencies_from_graph(
+    changed_api_modules: Set[str], graph: "ContentGraphInterface"
+) -> List:
+    if changed_api_modules:
+        dependent_items = []
+        for changed_api_module in changed_api_modules:
+            logger.info(
+                f"Checking for packages dependent on the modified API module {changed_api_module}..."
+            )
+            api_module_nodes = graph.search(
+                object_id=changed_api_module, all_level_imports=True
+            )
+            # search return the one node of the changed_api_module
+            api_module_node = api_module_nodes[0] if api_module_nodes else None
+            if not api_module_node:
+                raise ValueError(
+                    f"The modified API module `{changed_api_module}` was not found in the "
+                    f"content graph."
+                )
+
+            dependent_items += [
+                dependency for dependency in api_module_node.imported_by
+            ]
+
+        if dependent_items:
+            logger.info(
+                f"Found [cyan]{len(dependent_items)}[/cyan] content items that import- {changed_api_module}. "
+                "Executing update-release-notes on those as well."
+            )
+        return dependent_items
+
+    logger.info("No dependent packages found.")
+    return []
+
+
+def parse_multiple_path_inputs(
+    input_path: Optional[Union[Path, str, List[Path], Tuple[Path]]]
+) -> Optional[Tuple[Path, ...]]:
+    if not input_path:
+        return ()
+
+    if isinstance(input_path, Path):
+        return (input_path,)
+
+    if isinstance(input_path, str):
+        return tuple(Path(path_str) for path_str in input_path.split(","))
+
+    if isinstance(input_path, (list, tuple)) and isinstance(
+        (result := tuple(input_path))[0], Path
+    ):
+        return result
+
+    raise ValueError(f"Cannot parse paths from {input_path}")

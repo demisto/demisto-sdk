@@ -1,6 +1,9 @@
+from pathlib import Path
 from typing import List, Optional
 
+from demisto_sdk.commands.common.content.content import Content
 from demisto_sdk.commands.common.errors import Errors
+from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.hook_validations.base_validator import (
     BaseValidator,
     error_codes,
@@ -26,8 +29,10 @@ class GraphValidator(BaseValidator):
         git_files: list = None,
         input_files: list = None,
         should_update: bool = True,
+        include_optional_deps: bool = False,
     ):
         super().__init__(specific_validations=specific_validations)
+        self.include_optional = include_optional_deps
         self.graph = ContentGraphInterface(should_update=should_update)
         self.file_paths: List[str] = git_files or get_all_content_objects_paths_in_dir(
             input_files
@@ -54,6 +59,7 @@ class GraphValidator(BaseValidator):
             self.is_file_display_name_already_exists(),
             self.validate_duplicate_ids(),
             self.validate_unique_script_name(),
+            self.validate_deprecated_items_usage(),
         )
         return all(is_valid)
 
@@ -215,6 +221,7 @@ class GraphValidator(BaseValidator):
         self, content_item: ContentItem, warning: bool = False
     ):
         """Handles a single invalid toversion query result"""
+        is_valid = True
         used_content_items = [
             relationship.content_item_to.object_id for relationship in content_item.uses
         ]
@@ -226,6 +233,39 @@ class GraphValidator(BaseValidator):
         ):
             is_valid = False
 
+        return is_valid
+
+    @error_codes("GR107")
+    def validate_deprecated_items_usage(self):
+        """Validates there are no items used deprecated items.
+        For existing content, a warning is raised.
+        """
+        is_valid = True
+        new_files = GitUtil(repo=Content.git()).added_files()
+        items: List[dict] = self.graph.find_items_using_deprecated_items(
+            self.file_paths
+        )
+        for item in items:
+            deprecated_command = item.get("deprecated_command")
+            deprecated_content = item.get("deprecated_content")
+
+            items_using_deprecated = item.get("object_using_deprecated") or []
+            for item_using_deprecated in items_using_deprecated:
+                item_using_deprecated_path = Path(item_using_deprecated)
+                error_message, error_code = Errors.deprecated_items_usage(
+                    deprecated_command or deprecated_content,
+                    str(item_using_deprecated_path.absolute()),
+                    item.get("deprecated_content_type"),
+                )
+                if self.handle_error(
+                    error_message,
+                    error_code,
+                    str(item_using_deprecated_path.absolute()),
+                    warning=(
+                        item_using_deprecated_path not in new_files
+                    ),  # we raise error only for new content
+                ):
+                    is_valid &= False
         return is_valid
 
     @error_codes("GR103")
@@ -240,18 +280,30 @@ class GraphValidator(BaseValidator):
             self._find_unknown_content_uses(raises_error=False),
             self._find_unknown_content_uses(raises_error=True),
         ]
+        if self.include_optional:
+            is_valid.append(
+                self._find_unknown_content_uses(
+                    raises_error=True, include_optional=True
+                )
+            )
+
         return all(is_valid)
 
-    def _find_unknown_content_uses(self, raises_error: bool) -> bool:
+    def _find_unknown_content_uses(
+        self, raises_error: bool, include_optional: bool = False
+    ) -> bool:
         """Validates that there is no usage of unknown content items.
         Note: if self.file_paths is empty, the validation runs on all files - in this case, returns a warning.
         otherwise, returns an error iff raises_error is True.
         """
 
         is_valid = True
+
         content_item: ContentItem
         for content_item in self.graph.get_unknown_content_uses(
-            self.file_paths, raises_error=raises_error
+            self.file_paths,
+            raises_error=raises_error,
+            include_optional=include_optional,
         ):
             unknown_content_names = [
                 relationship.content_item_to.object_id or relationship.content_item_to.name  # type: ignore
@@ -260,11 +312,12 @@ class GraphValidator(BaseValidator):
             error_message, error_code = Errors.using_unknown_content(
                 content_item.name, unknown_content_names
             )
+
             if self.handle_error(
                 error_message,
                 error_code,
                 content_item.path,
-                warning=not bool(self.file_paths) or not raises_error,
+                warning=not include_optional or not raises_error,
             ):
                 is_valid = False
 

@@ -355,5 +355,7 @@ class YmlSplitter:
         """
         script = re.sub(r"(?:###|//) pack version: (\d+\.\d+\.\d+)", "", script)
         return re.sub(
-            r"register_module_line\('.+', '(?:start|end)', __line__\(\)\)\n", "", script
+            r"register_module_line\('.+', '(?:start|end)', __line__\(\)\)(\n|$)",
+            "",
+            script,
         )

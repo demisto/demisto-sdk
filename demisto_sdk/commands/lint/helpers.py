@@ -127,6 +127,7 @@ def get_test_modules(
             Path("demistomock.py"),
             Path("dev_envs/pytest/conftest.py"),
             Path("CommonServerPython.py"),
+            Path("CommonServerUserPython.py"),
             Path("demistomock.ps1"),
             Path("CommonServerPowerShell.ps1"),
         ]
@@ -163,6 +164,11 @@ def get_test_modules(
                 else:
                     modules_content[module] = (module_full_path).read_bytes()
             except FileNotFoundError:
+                if module.name == "CommonServerUserPython.py":
+                    logger.debug(
+                        "CommonServerUserPython.py was not found, skipping as it will be created later."
+                    )
+                    continue
                 module_not_found = True
                 logger.warning(
                     f"Module {module} was not found, possibly deleted due to being in a feature branch"
@@ -182,8 +188,6 @@ def get_test_modules(
                     break
                 elif trial == 2:
                     raise requests.exceptions.ConnectionError
-
-    modules_content[Path("CommonServerUserPython.py")] = b""
 
     return modules_content
 

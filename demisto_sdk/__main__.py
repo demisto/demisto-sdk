@@ -5,7 +5,7 @@ import logging
 import os
 import sys
 from pathlib import Path
-from typing import IO, Any, Dict, Iterable, Tuple
+from typing import IO, Any, Dict, Iterable, Tuple, Union
 
 import click
 import git
@@ -1198,10 +1198,11 @@ def coverage_analyze(ctx, **kwargs):
     is_flag=True,
 )
 @click.option(
-    "-y",
-    "--assume-yes",
-    help="Automatic yes to prompts; assume 'yes' as answer to all prompts and run non-interactively",
+    "-y/-n",
+    "--assume-yes/--assume-no",
+    help="Automatic yes/no to prompts; assume 'yes'/'no' as answer to all prompts and run non-interactively",
     is_flag=True,
+    default=None,
 )
 @click.option(
     "-d",
@@ -1246,7 +1247,7 @@ def format(
     from_version: str,
     no_validate: bool,
     update_docker: bool,
-    assume_yes: bool,
+    assume_yes: Union[None, bool],
     deprecate: bool,
     use_git: bool,
     prev_ver: str,
@@ -1272,7 +1273,7 @@ def format(
             from_version=from_version,
             no_validate=no_validate,
             update_docker=update_docker,
-            assume_yes=assume_yes,
+            assume_answer=assume_yes,
             deprecate=deprecate,
             use_git=use_git,
             prev_ver=prev_ver,
@@ -1309,10 +1310,11 @@ def format(
     required=False,
 )
 @click.option(
-    "-z",
-    "--zip",
+    "-z/-nz",
+    "--zip/--no-zip",
     help="Compress the pack to zip before upload, this flag is relevant only for packs.",
     is_flag=True,
+    default=True,
 )
 @click.option(
     "-x",
@@ -1324,7 +1326,6 @@ def format(
     "-mp",
     "--marketplace",
     help="The marketplace to which the content will be uploaded.",
-    default=MarketplaceVersions.XSOAR.value,
 )
 @click.option(
     "--keep-zip",
@@ -1437,6 +1438,18 @@ def upload(ctx, **kwargs):
         case_sensitive=False,
     ),
 )
+@click.option(
+    "--init",
+    help="Create a directory structure and download the items to it",
+    is_flag=True,
+    default=False,
+)
+@click.option(
+    "--keep-empty-folders",
+    help="Keep empty folders when using the --init flag",
+    is_flag=True,
+    default=False,
+)
 @click.pass_context
 @logging_setup_decorator
 def download(ctx, **kwargs):
@@ -1524,6 +1537,11 @@ def xsoar_config_file_update(ctx, **kwargs):
 @click.help_option("-h", "--help")
 @click.option("-q", "--query", help="The query to run", required=True)
 @click.option("--insecure", help="Skip certificate validation", is_flag=True)
+@click.option(
+    "-id",
+    "--incident-id",
+    help="The incident to run the query on, if not specified the playground will be used.",
+)
 @click.option(
     "-D",
     "--debug",
@@ -3263,8 +3281,9 @@ def update_content_graph(
     "-i",
     "--input",
     help="The path to the input file to run the command on.",
-    multiple=True,
-    type=click.Path(path_type=Path),
+    type=PathsParamType(
+        exists=True, resolve_path=True
+    ),  # PathsParamType allows passing a list of paths
 )
 @click.option(
     "-s",
@@ -3339,7 +3358,7 @@ def update_content_graph(
 @logging_setup_decorator
 def pre_commit(
     ctx,
-    input: Iterable[Path],
+    input: str,
     staged_only: bool,
     git_diff: bool,
     all_files: bool,
@@ -3360,11 +3379,14 @@ def pre_commit(
         logger.info(
             "Both `--input` parameter and `file_paths` arguments were provided. Will use the `--input` parameter."
         )
-    input_files = input
-    if file_paths and not input_files:
-        input_files = file_paths
+    input_files = []
+    if input:
+        input_files = [Path(i) for i in input.split(",")]
+    elif file_paths:
+        input_files = list(file_paths)
     if skip:
         skip = skip.split(",")  # type: ignore[assignment]
+
     sys.exit(
         pre_commit_manager(
             input_files,

@@ -269,7 +269,7 @@ def validate_expected_values(
 def check_dataset_exists(
     xsiam_client: XsiamApiClient,
     test_data: init_test_data.TestData,
-    timeout: int = 120,
+    timeout: int = 300,
     interval: int = 5,
 ):
     """Check if the dataset in the test data file exists in the tenant.
@@ -285,7 +285,9 @@ def check_dataset_exists(
     """
     process_failed = False
     dataset_set = {data.dataset for data in test_data.data}
+    results = []
     for dataset in dataset_set:
+        results_exist = False
         dataset_exist = False
         logger.info(
             f'[cyan]Checking if dataset "{dataset}" exists on the tenant...[/cyan]',
@@ -299,28 +301,42 @@ def check_dataset_exists(
                     query, print_req_error=(i + 1 == timeout // interval)
                 )
                 results = xsiam_client.get_xql_query_result(execution_id)
+                # if we got result we will break from the loop
                 if results:
                     logger.info(
                         f"[green]Dataset {dataset} exists[/green]",
                         extra={"markup": True},
                     )
                     dataset_exist = True
+                    results_exist = True
+                    break
+                # if we don't have results from the dataset immediately we will continue to try until the timeout.
+                # if we don't have any results until the timeout dataset_exist is set to False and we will raise an error.
                 else:
-                    err = (
-                        f"[red]Dataset {dataset} exists but no results were returned. This could mean that your testdata "
-                        "does not meet the criteria for an associated Parsing Rule and is therefore being dropped from "
-                        "the dataset. Check to see if a Parsing Rule exists for your dataset and that your testdata "
-                        "meets the criteria for that rule.[/red]"
+                    dataset_exist = True
+                    results_exist = False
+                    logger.info(
+                        f"[cyan]trying to get results from the dataset for the {i+1}th time. continuing to try to get the results.[/cyan]",
+                        extra={"markup": True},
                     )
-                    logger.error(err, extra={"markup": True})
-                break
+            # If the dataset doesn't exist HTTPError exception is raised.
             except requests.exceptions.HTTPError:
                 pass
             sleep(interval)
+        # There are no results from the dataset but it exists.
+        if not results:
+            err = (
+                f"[red]Dataset {dataset} exists but no results were returned. This could mean that your testdata "
+                "does not meet the criteria for an associated Parsing Rule and is therefore being dropped from "
+                "the dataset. Check to see if a Parsing Rule exists for your dataset and that your testdata "
+                "meets the criteria for that rule.[/red]"
+            )
+            logger.error(err, extra={"markup": True})
         if not dataset_exist:
             err = f"[red]Dataset {dataset} does not exist after {timeout} seconds[/red]"
             logger.error(err, extra={"markup": True})
-        process_failed |= not dataset_exist
+        # OR statement between existence var and results of each data set, if at least one of dataset_exist or results_exist are False process_failed will be true.
+        process_failed |= not (dataset_exist and results_exist)
 
     if process_failed:
         raise typer.Exit(1)

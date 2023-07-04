@@ -893,13 +893,11 @@ class TestFormatting:
         assert {
             "display": "Incident type",
             "name": "incidentType",
-            "required": False,
             "type": 13,
         } not in configuration_params
         assert {
             "display": "Incident type",
             "name": "incidentType",
-            "required": False,
             "type": 13,
             "defaultvalue": "",
         } in configuration_params

@@ -52,6 +52,7 @@
 - id: update-additional-dependencies
   name: update-additional-dependencies
   entry: update-additional-dependencies
+  args: []
   language: python
   require_serial: true
   pass_filenames: false

@@ -20,6 +20,7 @@ from pathlib import Path, PosixPath
 from subprocess import DEVNULL, PIPE, Popen, check_output
 from time import sleep
 from typing import (
+    TYPE_CHECKING,
     Any,
     Callable,
     Dict,
@@ -116,6 +117,9 @@ from demisto_sdk.commands.common.constants import (
 from demisto_sdk.commands.common.git_content_config import GitContentConfig, GitProvider
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
+
+if TYPE_CHECKING:
+    from demisto_sdk.commands.content_graph.interface.graph import ContentGraphInterface
 
 logger = logging.getLogger("demisto-sdk")
 
@@ -3665,3 +3669,58 @@ def parse_marketplace_kwargs(kwargs: Dict[str, Any]) -> MarketplaceVersions:
         "neither marketplace nor is_xsiam provided, using default marketplace=XSOAR"
     )
     return MarketplaceVersions.XSOAR  # default
+
+
+def get_api_module_dependencies_from_graph(
+    changed_api_modules: Set[str], graph: "ContentGraphInterface"
+) -> List:
+    if changed_api_modules:
+        dependent_items = []
+        for changed_api_module in changed_api_modules:
+            logger.info(
+                f"Checking for packages dependent on the modified API module {changed_api_module}..."
+            )
+            api_module_nodes = graph.search(
+                object_id=changed_api_module, all_level_imports=True
+            )
+            # search return the one node of the changed_api_module
+            api_module_node = api_module_nodes[0] if api_module_nodes else None
+            if not api_module_node:
+                raise ValueError(
+                    f"The modified API module `{changed_api_module}` was not found in the "
+                    f"content graph."
+                )
+
+            dependent_items += [
+                dependency for dependency in api_module_node.imported_by
+            ]
+
+        if dependent_items:
+            logger.info(
+                f"Found [cyan]{len(dependent_items)}[/cyan] content items that import- {changed_api_module}. "
+                "Executing update-release-notes on those as well."
+            )
+        return dependent_items
+
+    logger.info("No dependent packages found.")
+    return []
+
+
+def parse_multiple_path_inputs(
+    input_path: Optional[Union[Path, str, List[Path], Tuple[Path]]]
+) -> Optional[Tuple[Path, ...]]:
+    if not input_path:
+        return ()
+
+    if isinstance(input_path, Path):
+        return (input_path,)
+
+    if isinstance(input_path, str):
+        return tuple(Path(path_str) for path_str in input_path.split(","))
+
+    if isinstance(input_path, (list, tuple)) and isinstance(
+        (result := tuple(input_path))[0], Path
+    ):
+        return result
+
+    raise ValueError(f"Cannot parse paths from {input_path}")

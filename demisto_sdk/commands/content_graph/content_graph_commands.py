@@ -17,6 +17,30 @@ from demisto_sdk.commands.content_graph.content_graph_builder import ContentGrap
 from demisto_sdk.commands.content_graph.interface.graph import ContentGraphInterface
 
 
+def recover_if_fails(func):
+    def func_wrapper(*args, **kwargs):
+        try:
+            return func(*args, **kwargs)
+        except Exception:
+            if not neo4j_service.is_running_on_docker():
+
+                logger.error(
+                    "Either start the Docker service or install Neo4j locally with this guide: https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/content_graph/README.md",
+                    exc_info=True,
+                )
+                raise
+            logger.warning(
+                "Failed to build content graph, retrying with a clean environment.",
+                exc_info=True,
+            )
+            neo4j_service.stop(force=True, clean=True)
+            neo4j_service.start()
+            return func(*args, **kwargs)
+
+    return func_wrapper
+
+
+@recover_if_fails
 def create_content_graph(
     content_graph_interface: ContentGraphInterface,
     marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR,
@@ -41,8 +65,10 @@ def create_content_graph(
         f"Successfully created the content graph. UI representation is available at {NEO4J_DATABASE_HTTP} "
         f"(username: {NEO4J_USERNAME}, password: {NEO4J_PASSWORD})"
     )
+    return
 
 
+@recover_if_fails
 def update_content_graph(
     content_graph_interface: ContentGraphInterface,
     marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR,

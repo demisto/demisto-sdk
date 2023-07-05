@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
 
 import requests
+from pydantic import ValidationError
 from requests import JSONDecodeError
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
@@ -53,9 +54,9 @@ class ContentGraphInterface(ABC):
         return None
 
     @property
-    def content_parser_commit(self) -> Optional[str]:
+    def content_parser_latest_commit(self) -> Optional[str]:
         if self.metadata:
-            return self.metadata.get("content_parser_commit")
+            return self.metadata.get("content_parser_latest_commit")
         return None
 
     @property
@@ -67,18 +68,16 @@ class ContentGraphInterface(ABC):
 
     def dump_metadata(self) -> None:
         """Adds metadata to the graph."""
-        # I want to save the latest commit from this page: https://github.com/demisto/demisto-sdk/commits/master/demisto_sdk/commands/content_graph/parsers using API
-        parser_commit = self._get_content_parser_commit_hash()
         metadata = {
             "commit": GitUtil().get_current_commit_hash(),
-            "content_parser_commit": parser_commit,
+            "content_parser_latest_commit": self._get_latest_content_parser_commit_hash(),
         }
         with open(self.import_path / self.METADATA_FILE_NAME, "w") as f:
             json.dump(metadata, f)
         with open(self.import_path / self.SCHEMA_FILE_NAME, "w") as f:
             json.dump(ContentDTO.model_json_schema(), f)
 
-    def _get_content_parser_commit_hash(self) -> Optional[str]:
+    def _get_latest_content_parser_commit_hash(self) -> Optional[str]:
         try:
             return requests.get(
                 "https://api.github.com/repos/demisto/demisto-sdk/commits?sha=master&path=demisto_sdk/commands/content_graph/parsers",
@@ -92,6 +91,32 @@ class ContentGraphInterface(ABC):
         ) as e:
             logger.warning(f"Failed to get content parser commit: {e}")
             return None
+
+    def _has_infra_graph_been_changed(self) -> bool:
+        if not self.content_parser_latest_commit:
+            logger.warning("The content parser commit hash is missing.")
+        elif (
+            self.content_parser_latest_commit
+            != self._get_latest_content_parser_commit_hash()
+        ):
+            logger.warning("The content parser has been changed.")
+            return True
+        schema = self.schema
+        if not self.schema:
+            logger.warning("The graph schema file is missing, trying to marshal it.")
+            try:
+                self.marshal_graph(MarketplaceVersions.XSOAR)
+                return False
+
+            except ValidationError as e:
+                logger.warning("Failed to load the content graph.")
+                logger.debug(f"Validation Error: {e}")
+                return True
+
+        if schema == ContentDTO.model_json_schema():
+            return False
+        logger.warning("The graph infra files has been changed.")
+        return True
 
     def zip_import_dir(self, output_file: Path) -> None:
         shutil.make_archive(str(output_file), "zip", self.import_path)

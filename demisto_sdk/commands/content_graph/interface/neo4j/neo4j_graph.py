@@ -4,7 +4,6 @@ from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional, Set, Tuple
 
 from neo4j import Driver, GraphDatabase, Session, graph
-from pydantic import ValidationError
 
 import demisto_sdk.commands.content_graph.neo4j_service as neo4j_service
 from demisto_sdk.commands.common.constants import MarketplaceVersions
@@ -75,7 +74,6 @@ from demisto_sdk.commands.content_graph.objects.base_content import (
 from demisto_sdk.commands.content_graph.objects.integration import Integration
 from demisto_sdk.commands.content_graph.objects.pack import Pack
 from demisto_sdk.commands.content_graph.objects.relationship import RelationshipData
-from demisto_sdk.commands.content_graph.objects.repository import ContentDTO
 
 
 class NoModelException(Exception):
@@ -498,29 +496,6 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         with self.driver.session() as session:
             session.execute_write(remove_server_nodes)
 
-    def _has_infra_graph_been_changed(self) -> bool:
-        if not self.content_parser_commit:
-            logger.warning("The content parser commit hash is missing.")
-        elif self.content_parser_commit != self._get_content_parser_commit_hash():
-            logger.warning("The content parser has been changed.")
-            return False
-        schema = self.schema
-        if not self.schema:
-            logger.warning("The graph schema file is missing, trying to marshal it.")
-            try:
-                self.marshal_graph(MarketplaceVersions.XSOAR)
-                return True
-
-            except ValidationError as e:
-                logger.warning("Failed to load the content graph.")
-                logger.debug(f"Validation Error: {e}")
-                return False
-
-        if schema == ContentDTO.model_json_schema():
-            return True
-        logger.warning("The graph infra files has been changed.")
-        return False
-
     def import_graph(self, imported_path: Optional[Path] = None) -> bool:
         """Imports GraphML files to neo4j, by:
         1. Preparing the GraphML files for import
@@ -551,7 +526,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
                 session.execute_write(remove_empty_properties)
         has_infra_graph_been_changed = self._has_infra_graph_been_changed()
         self._id_to_obj = {}
-        return has_infra_graph_been_changed
+        return not has_infra_graph_been_changed
 
     def export_graph(self, output_path: Optional[Path] = None) -> None:
         self.clean_import_dir()

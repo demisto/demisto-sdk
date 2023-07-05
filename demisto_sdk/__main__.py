@@ -133,12 +133,12 @@ def logging_setup_decorator(func, *args, **kwargs):
     @click.option(
         "--console_log_threshold",
         help="Minimum logging threshold for the console logger."
-        " Pssible values: DEBUG, INFO, WARNING, ERROR.",
+        " Possible values: DEBUG, INFO, WARNING, ERROR.",
     )
     @click.option(
         "--file_log_threshold",
         help="Minimum logging threshold for the file logger."
-        " Pssible values: DEBUG, INFO, WARNING, ERROR.",
+        " Possible values: DEBUG, INFO, WARNING, ERROR.",
     )
     @click.option(
         "--log_file_path",

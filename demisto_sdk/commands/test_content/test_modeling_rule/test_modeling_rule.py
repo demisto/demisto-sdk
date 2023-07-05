@@ -22,7 +22,6 @@ from demisto_sdk.commands.common.logger import (
     logger,
     logging_setup,
 )
-from demisto_sdk.commands.common.tools import get_file
 from demisto_sdk.commands.test_content.test_modeling_rule import init_test_data
 from demisto_sdk.commands.test_content.xsiam_tools.xsiam_client import (
     XsiamApiClient,
@@ -462,7 +461,7 @@ def verify_test_data_exists(test_data_path: Path) -> Tuple[List[str], List[str]]
             ids that do not have expected_values to check.
     """
     missing_event_data, missing_expected_values_data = [], []
-    test_data = init_test_data.TestData.model_validate_json(get_file(test_data_path))
+    test_data = init_test_data.TestData.parse_file(test_data_path)
     for event_log in test_data.data:
         if not event_log.event_data:
             missing_event_data.append(event_log.test_data_event_id)
@@ -604,9 +603,7 @@ def validate_modeling_rule(
         )
         xsiam_client = XsiamApiClient(xsiam_client_cfg)
         verify_pack_exists_on_tenant(xsiam_client, mr_entity, interactive)
-        test_data = init_test_data.TestData.model_validate_json(
-            get_file(mr_entity.testdata_path.as_posix())
-        )
+        test_data = init_test_data.TestData.parse_file(mr_entity.testdata_path)
 
         if push:
             if missing_event_data:

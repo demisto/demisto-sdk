@@ -7,6 +7,7 @@ from demisto_sdk.commands.common.constants import NATIVE_IMAGE_FILE_NAME
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.logger import logger
+from demisto_sdk.commands.common.singleton import Singleton
 from demisto_sdk.commands.common.tools import (
     extract_docker_image_from_text,
     get_dict_from_file,
@@ -15,7 +16,7 @@ from demisto_sdk.commands.common.tools import (
 json = JSON_Handler()
 
 
-class NativeImage(BaseModel):
+class NativeImage(BaseModel, Singleton):
     supported_docker_images: List[str]
     docker_ref: Optional[str] = None
 

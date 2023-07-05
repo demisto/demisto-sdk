@@ -28,11 +28,11 @@ def event_log_validator(v: EventLog):
     return v
 
 
-EventsLogList = Annotated[List[EventLog], AfterValidator(event_log_validator)]
+EventLogType = Annotated[EventLog, AfterValidator(event_log_validator)]
 
 
 class TestData(BaseModel):
-    data: EventsLogList = Field(default_factory=lambda: [EventLog()])
+    data: List[EventLogType] = Field(default_factory=lambda: [EventLog()])
 
 
 class CompletedTestData(TestData):

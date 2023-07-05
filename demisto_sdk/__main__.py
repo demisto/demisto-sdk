@@ -17,6 +17,7 @@ from demisto_sdk.commands.common.constants import (
     ENV_DEMISTO_SDK_MARKETPLACE,
     FileType,
     MarketplaceVersions,
+    ENV_SDK_WORKING_OFFLINE,
 )
 from demisto_sdk.commands.common.content_constant_paths import (
     ALL_PACKS_DEPENDENCIES_DEFAULT_PATH,
@@ -214,7 +215,11 @@ def main(ctx, config, version, release_notes, **kwargs):
                 "[yellow]Cound not find the version of the demisto-sdk. This usually happens when running in a development environment.[/yellow]"
             )
         else:
-            last_release = get_last_remote_release_version()
+            if os.getenv(ENV_SDK_WORKING_OFFLINE, "").lower() == "yes":
+                last_release = None
+            else:
+                last_release = get_last_remote_release_version()
+
             logger.info(f"[yellow]You are using demisto-sdk {__version__}.[/yellow]")
             if last_release and __version__ != last_release:
                 logger.info(
@@ -681,6 +686,12 @@ def zip_packs(ctx, **kwargs) -> int:
 def validate(ctx, config, file_paths: str, **kwargs):
     """Validate your content files. If no additional flags are given, will validated only committed files."""
     from demisto_sdk.commands.validate.validate_manager import ValidateManager
+
+    if os.getenv(ENV_SDK_WORKING_OFFLINE, "").lower() == "yes":
+        logger.info(
+            "[red]no connection[/red]"
+        )
+        sys.exit(1)
 
     if file_paths and not kwargs["input"]:
         # If file_paths is given as an argument, use it as the file_paths input (instead of the -i flag). If both, input wins.
@@ -1262,6 +1273,12 @@ def format(
     genericmodule/genericdefinition.
     """
     from demisto_sdk.commands.format.format_module import format_manager
+
+    if os.getenv(ENV_SDK_WORKING_OFFLINE, "").lower() == "yes":
+        logger.info(
+            "[red]no connection[/red]"
+        )
+        sys.exit(1)
 
     if file_paths and not input:
         input = ",".join(file_paths)
@@ -2310,6 +2327,12 @@ def update_release_notes(ctx, **kwargs):
     from demisto_sdk.commands.update_release_notes.update_rn_manager import (
         UpdateReleaseNotesManager,
     )
+
+    if os.getenv(ENV_SDK_WORKING_OFFLINE, "").lower() == "yes":
+        logger.info(
+            "[red]no connection[/red]"
+        )
+        sys.exit(1)
 
     check_configuration_file("update-release-notes", kwargs)
     if kwargs.get("force") and not kwargs.get("input"):

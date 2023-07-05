@@ -40,8 +40,8 @@ Pycln is a formatter for finding and removing unused import statements.
 
 
 ### SDK Commands
-The following SDK commands are automatically run. See their respective docs for more information.
-- validate
-- run-unit-tests
-- format
-- secrets
+The following SDK commands are automatically run
+- [validate](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/validate/README.md)https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/validate/README.md
+- [format](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/format/README.md)https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/format/README.md
+- [secrets](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/secrets/README.md)https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/secrets/README.md
+- run-unit-tests: Runs the unit tests in an environment matching the content.

@@ -652,7 +652,7 @@ class TestTheTestModelingRuleCommandSingleRule:
             Path(__file__).parent / "test_data/fake_test_data_file.json"
         )
         fake_test_data = TestData.parse_file(path_to_fake_test_data_file.as_posix())
-        test_data_file.write_text(fake_test_data.json(indent=4))
+        test_data_file.write_text(fake_test_data.model_dump_json(indent=4))
 
         # mocking Variables
         id_key = f"{fake_test_data.data[0].dataset}.test_data_event_id"

@@ -3,16 +3,14 @@ from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
 
-import requests
 from pydantic import ValidationError
-from requests import JSONDecodeError
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.logger import logger
-from demisto_sdk.commands.common.tools import get_file
+from demisto_sdk.commands.common.tools import get_file, md5_dir
 from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
@@ -54,9 +52,9 @@ class ContentGraphInterface(ABC):
         return None
 
     @property
-    def content_parser_latest_commit(self) -> Optional[str]:
+    def content_parser_latest_hash(self) -> Optional[str]:
         if self.metadata:
-            return self.metadata.get("content_parser_latest_commit")
+            return self.metadata.get("content_parser_latest_hash")
         return None
 
     @property
@@ -70,35 +68,21 @@ class ContentGraphInterface(ABC):
         """Adds metadata to the graph."""
         metadata = {
             "commit": GitUtil().get_current_commit_hash(),
-            "content_parser_latest_commit": self._get_latest_content_parser_commit_hash(),
+            "content_parser_latest_hash": self._get_latest_content_parser_hash(),
         }
         with open(self.import_path / self.METADATA_FILE_NAME, "w") as f:
             json.dump(metadata, f)
         with open(self.import_path / self.SCHEMA_FILE_NAME, "w") as f:
             json.dump(ContentDTO.model_json_schema(), f)
 
-    def _get_latest_content_parser_commit_hash(self) -> Optional[str]:
-        try:
-            return requests.get(
-                "https://api.github.com/repos/demisto/demisto-sdk/commits?sha=master&path=demisto_sdk/commands/content_graph/parsers",
-                verify=False,
-            ).json()[0]["sha"]
-        except (
-            requests.exceptions.RequestException,
-            IndexError,
-            JSONDecodeError,
-            KeyError,
-        ) as e:
-            logger.warning(f"Failed to get content parser commit: {e}")
-            return None
+    def _get_latest_content_parser_hash(self) -> Optional[str]:
+        parsers_path = Path(__file__).parent.parent / "parsers"
+        return md5_dir(parsers_path)
 
     def _has_infra_graph_been_changed(self) -> bool:
-        if not self.content_parser_latest_commit:
-            logger.warning("The content parser commit hash is missing.")
-        elif (
-            self.content_parser_latest_commit
-            != self._get_latest_content_parser_commit_hash()
-        ):
+        if not self.content_parser_latest_hash:
+            logger.warning("The content parser hash is missing.")
+        elif self.content_parser_latest_hash != self._get_latest_content_parser_hash():
             logger.warning("The content parser has been changed.")
             return True
         schema = self.schema

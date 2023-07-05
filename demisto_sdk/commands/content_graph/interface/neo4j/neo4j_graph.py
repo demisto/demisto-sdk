@@ -1,10 +1,10 @@
 import os
 from multiprocessing import Pool
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Optional, Set, Tuple
+from typing import Any, Dict, Iterable, List, Optional, Set, Tuple, Type
 
 from neo4j import Driver, GraphDatabase, Session, graph
-from pydantic import ValidationError
+from pydantic import BaseModel, ValidationError
 
 import demisto_sdk.commands.content_graph.neo4j_service as neo4j_service
 from demisto_sdk.commands.common.constants import MarketplaceVersions
@@ -88,14 +88,23 @@ def _parse_node(element_id: int, node: dict) -> BaseContent:
     """
     obj: BaseContent
     content_type = node.get("content_type", "")
+    model: Type[BaseModel]
     if node.get("not_in_repository"):
-        obj = UnknownContent.parse_obj(node)
+        model = UnknownContent
 
+    elif content_model := content_type_to_model.get(content_type):
+        model = content_model
+        node.pop("not_in_repository", None)
     else:
-        model = content_type_to_model.get(content_type)
-        if not model:
-            raise NoModelException(f"No model for {content_type}")
-        obj = model.parse_obj(node)
+        raise NoModelException(f"No model for {content_type}")
+
+    # as we create the models without validations, it is our responsibility to convert the types
+    node.pop("content_type", None)
+    if marketplaces := node.get("marketplaces"):
+        node["marketplaces"] = [MarketplaceVersions(mp) for mp in marketplaces]
+    if path := node.get("path"):
+        node["path"] = Path(path)
+    obj = model.construct(**node)
     obj.database_id = element_id
     return obj
 
@@ -214,10 +223,11 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         for node_to, rel in zip(nodes_to, relationships):
             if not rel.start_node or not rel.end_node:
                 raise ValueError("Relationships must have start and end nodes")
+            rel_type = RelationshipType(rel.type)
             obj.add_relationship(
-                RelationshipType(rel.type),
+                rel_type,
                 RelationshipData(
-                    relationship_type=rel.type,
+                    relationship_type=rel_type,
                     source_id=rel.start_node.id,
                     target_id=rel.end_node.id,
                     content_item_to=self._id_to_obj[node_to.id],
@@ -323,6 +333,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             relationships: Dict[int, Neo4jRelationshipResult] = session.execute_read(
                 _match_relationships, nodes_without_relationships, marketplace
             )
+
             self._add_relationships_to_objects(session, relationships, marketplace)
 
             pack_nodes = {

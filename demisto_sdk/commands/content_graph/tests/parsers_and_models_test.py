@@ -1552,6 +1552,7 @@ class TestParsersAndModels:
         pack2 = repo.create_pack("sample2")
         pack2.pack_metadata.write_json(load_json("pack_metadata.json"))
         parser = RepositoryParser(Path(repo.path))
+        parser.parse()
         model = ContentDTO.from_orm(parser)
         pack_ids = {pack.object_id for pack in model.packs}
         assert pack_ids == {"sample1", "sample2"}

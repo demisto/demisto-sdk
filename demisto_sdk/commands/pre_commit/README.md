@@ -7,12 +7,12 @@ It utilizes the [pre-commit](https://github.com/pre-commit/pre-commit) infrastru
 ## Usage
 
 ### Manually, using git (recommended)
-* In a terminal shell, change directory to the folder used as a content repo.
+* In a terminal shell, change the directory to the folder that is used as a the content repo.
 * Make sure you have the latest version of `demisto-sdk`.
 * Run `demisto-sdk pre-commit`.
 
 ### In a GitHub Action
-* Under the content repo, we have a GitHub Action that automatically runs `demisto-sdk pre-commit`, so it runs automatically after each commit.
+* Under the content repo, there is a GitHub Action that automatically runs `demisto-sdk pre-commit`, so it runs automatically after each commit.
 * Make sure to set the `GITHUB_ACTIONS` environment variable to `true`.
 
 ### Automatically, as a git hook
@@ -22,12 +22,12 @@ It utilizes the [pre-commit](https://github.com/pre-commit/pre-commit) infrastru
 
 ### External tools
 #### [Ruff](https://github.com/astral-sh/ruff)
-Runs Ruff, the extremely fast python linter, using the python version used in the container image set for the content item.
+Runs Ruff, the extremely fast Python linter, using the Python version used in the container image set for the content item.
 
-This step uses the Ruff rules configured in the `pyproject.toml` at the root of the content repo. If such does not exist, it uses Ruff's default rules.
+This step uses the Ruff rules configured in the `pyproject.toml` at the root of the content repo. If pyproject.toml does not exist, it uses Ruff's default rules.
 The rules set under the official demisto/content repo [pyproject.toml](https://github.com/demisto/content/blob/master/pyproject.toml) file were handpicked to ensure a high level of code quality, and prevent bugs often found in content.
 
-This step may modify files (using Ruff's `--fix` flag). When files are modified, the step will fail, we recommend committing them into the repo.
+This step may modify files (using Ruff's `--fix` flag). When files are modified, the step will fail. We recommend committing them into the repo.
 
 #### Check JSON/YAML/AST(py)
 Makes sure files in these extensions are in a proper structure.

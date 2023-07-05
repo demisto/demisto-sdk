@@ -140,7 +140,7 @@ class BaseContent(ABC, BaseModel, metaclass=BaseContentMetaclass):
             path.is_dir() and path.parent.name == PACKS_FOLDER
         ):  # if the path given is a pack
             try:
-                return content_type_to_model[ContentType.PACK].from_orm(
+                return content_type_to_model[ContentType.PACK].model_validate(
                     PackParser(path)
                 )
             except InvalidContentItemException:
@@ -175,7 +175,7 @@ class BaseContent(ABC, BaseModel, metaclass=BaseContentMetaclass):
             logger.error(f"Could not parse content item from path: {path}")
             return None
         try:
-            return model.from_orm(content_item_parser)
+            return model.model_validate(content_item_parser)
         except Exception as e:
             logger.error(
                 f"Could not parse content item from path: {path}: {e}. Parser class: {content_item_parser}"

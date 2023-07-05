@@ -1353,8 +1353,8 @@ def format(
     "--override-existing",
     is_flag=True,
     help="This value (True/False) determines if the user should be presented with a confirmation prompt when "
-         "attempting to upload a content pack that is already installed on the Cortex XSOAR server. This allows the upload "
-         "command to be used within non-interactive shells.",
+    "attempting to upload a content pack that is already installed on the Cortex XSOAR server. This allows the upload "
+    "command to be used within non-interactive shells.",
 )
 @click.pass_context
 @logging_setup_decorator

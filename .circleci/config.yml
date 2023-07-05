@@ -141,6 +141,8 @@ jobs:
               # remove the integration tests (integration tests as opposed to unit tests) from the list because those
               # tests shouldn't be parallelized.
               TEST_FILES=$(circleci tests glob "**/*_test.py")
+              # filter out files which are in .venv directory
+              TEST_FILES=$(echo "$TEST_FILES" | sed -E 's/\S*\.venv\S*\.py//g')
               TEST_FILES=$(echo "$TEST_FILES" | sed -E 's/\S*demisto_sdk\/commands\/init\/templates\S*\.py//g')
               TEST_FILES=$(echo "$TEST_FILES" | sed -E 's/\S*demisto_sdk\/tests\/integration_tests\S*\.py//g')
               TEST_FILES=$(echo "$TEST_FILES" | sed -E 's/\S*demisto_sdk\/commands\/content_graph\/tests\S*\.py//g')
@@ -397,10 +399,13 @@ jobs:
             neo4j start
             # poll for neo4j status until available
             while ! curl --fail http://127.0.0.1:7474 &> /dev/null; do sleep 1; done
+            # create content graph from scratch
+            demisto-sdk create-content-graph
 
-            # we run the update graph command twice to make sure the graph is updated correctly
+            # Update content graph from the bucket
             demisto-sdk update-content-graph -g -o ./tmp/content_graph
 
+            # Update content graph from the the previous content graph that was created/built
             demisto-sdk update-content-graph -i ./tmp/content_graph/xsoar.zip -o ./tmp/content_graph
       - store_artifacts:
           path: content/tmp

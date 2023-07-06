@@ -158,6 +158,11 @@ jobs:
               # For all the tests. 
               node demisto_sdk/commands/common/markdown_server/mdx-parse-server.js &
               node_pid=$!
+              
+              neo4j start
+              # poll for neo4j status until available
+              while ! curl --fail http://127.0.0.1:7474 &> /dev/null; do sleep 1; done
+
               poetry run pytest -v --cov=demisto_sdk --cov-report=html --junitxml=test-results/junit.xml .
               kill $node_pid
         - store_test_results:

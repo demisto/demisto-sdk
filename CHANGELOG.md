@@ -1,5 +1,7 @@
 # Changelog
 ## Unreleased
+
+## 1.1.14
 * Improved memory efficiency in **update-content-graph** and **create-content-graph** commands.
 * Updated *Pydantic* to v2.
 

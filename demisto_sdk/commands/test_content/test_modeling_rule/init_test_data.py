@@ -173,7 +173,7 @@ def init_test_data(
                     mr_entity.path.parent
                     / f"{mr_entity.path.parent.stem}{mr_entity.TESTDATA_FILE_SUFFIX}"
                 )
-            test_data_file.write_text(test_data.model_dump_json(indent=4))
+            test_data_file.write_text(test_data.json(indent=4))
             logger.info(
                 f"[green]Successfully {operation_mode}d {test_data_file}[/green]",
                 extra={"markup": True},

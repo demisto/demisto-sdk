@@ -1,7 +1,6 @@
 # Changelog
 ## Unreleased
 * Improved memory efficiency in **update-content-graph** and **create-content-graph** commands.
-* Updated *Pydantic* to v2.
 
 ## 1.17.1
 * Added the `aliasTo` key to the Incident Field schema.

@@ -1,9 +1,10 @@
 import os
-from multiprocessing.pool import ThreadPool
+from multiprocessing import Pool
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional, Set, Tuple
 
 from neo4j import Driver, GraphDatabase, Session, graph
+from pydantic import ValidationError
 
 import demisto_sdk.commands.content_graph.neo4j_service as neo4j_service
 from demisto_sdk.commands.common.constants import MarketplaceVersions
@@ -76,6 +77,29 @@ from demisto_sdk.commands.content_graph.objects.pack import Pack
 from demisto_sdk.commands.content_graph.objects.relationship import RelationshipData
 
 
+def _parse_node(element_id: int, node: dict) -> BaseContent:
+    """Parses nodes to content objects and adds it to mapping
+
+    Args:
+        nodes (Iterable[graph.Node]): List of nodes to parse
+
+    Raises:
+        NoModelException: If no model found to parse on
+    """
+    obj: BaseContent
+    content_type = node.get("content_type", "")
+    if node.get("not_in_repository"):
+        obj = UnknownContent.parse_obj(node)
+
+    else:
+        model = content_type_to_model.get(content_type)
+        if not model:
+            raise NoModelException(f"No model for {content_type}")
+        obj = model.parse_obj(node)
+    obj.database_id = element_id
+    return obj
+
+
 class NoModelException(Exception):
     pass
 
@@ -115,31 +139,6 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
     @property
     def import_path(self) -> Path:
         return self._import_handler.import_path
-
-    @staticmethod
-    def _parse_node(element_id: int, node: dict) -> BaseContent:
-        """Parses nodes to content objects and adds it to mapping
-
-        Args:
-            nodes (Iterable[graph.Node]): List of nodes to parse
-
-        Raises:
-            NoModelException: If no model found to parse on
-        """
-        obj: BaseContent
-        content_type = node.get("content_type", "")
-        if node.get("not_in_repository"):
-            obj = UnknownContent.model_validate(node)
-
-        else:
-            model = content_type_to_model.get(content_type)
-            if not model:
-                raise NoModelException(f"No model for {content_type}")
-            if model == Pack:
-                node["contentItems"] = {}
-            obj = model.model_validate(node)
-        obj.database_id = element_id
-        return obj
 
     def clean_import_dir(self) -> None:
         return self._import_handler.clean_import_dir()
@@ -288,9 +287,9 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
                 self._id_to_obj,
             )
             return
-        with ThreadPool(processes=cpu_count()) as pool:
+        with Pool(processes=cpu_count()) as pool:
             results = pool.starmap(
-                self._parse_node, ((node.id, dict(node.items())) for node in nodes)
+                _parse_node, ((node.id, dict(node.items())) for node in nodes)
             )
             for result in results:
                 assert result.database_id is not None
@@ -541,9 +540,17 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
                 session.execute_write(merge_duplicate_content_items)
                 session.execute_write(create_constraints)
                 session.execute_write(remove_empty_properties)
-        has_infra_graph_been_changed = self._has_infra_graph_been_changed()
+        try:
+            # Test that the imported graph is valid by marshaling it
+            self.marshal_graph(MarketplaceVersions.XSOAR)
+            result = True
+        except ValidationError as e:
+            logger.warning("Failed to import the content graph")
+            logger.debug(f"Validation Error: {e}")
+            result = False
+        # clear cache after loading the graph
         self._id_to_obj = {}
-        return not has_infra_graph_been_changed
+        return result
 
     def export_graph(self, output_path: Optional[Path] = None) -> None:
         self.clean_import_dir()

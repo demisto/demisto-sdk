@@ -1,5 +1,6 @@
 # Changelog
 ## Unreleased
+* Improved memory efficiency in **update-content-graph** and **create-content-graph** commands.
 * Added the `tenant_timezone` key to the test_modeling_rule file so that you can now control the timezone in the **modeling-rules test** command.
 
 ## 1.17.1

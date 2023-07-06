@@ -2809,6 +2809,14 @@ def test_parse_multiple_path_inputs_error(input_paths):
 
 
 def test_sha1_file():
+    """
+    Given:
+        - A file path
+    When:
+        - Checking the hash
+    Then:
+        Validate that the hash is correct, even after moving to a different location
+    """
     path_str = f"{GIT_ROOT}/demisto_sdk/commands/common/tests/test_files/test_sha1/content/file.txt"
     expected_hash = "c8c54e11b1cb27c3376fa82520d53ef9932a02c0"
     assert tools.sha1_file(path_str) == expected_hash
@@ -2820,13 +2828,19 @@ def test_sha1_file():
 
 
 def test_sha1_dir():
+    """
+    Given:
+        - A directory path
+    When:
+        - Checking the hash
+    Then:
+        Validate that the hash is correct, even after moving to a different location
+    """
     path_str = f"{GIT_ROOT}/demisto_sdk/commands/common/tests/test_files/test_sha1"
-    path = Path(path_str)
     expected_hash = "99c4adfe064f3b07cbe5c7f560f47490580b5028"
     assert tools.sha1_dir(path_str) == expected_hash
-    assert tools.sha1_dir(path) == expected_hash
+    assert tools.sha1_dir(Path(path_str)) == expected_hash
     # move dir to a different location and check that the hash is still the same
-    with TemporaryDirectory() as temp_file:
-        dest = Path(temp_file) / "dest"
-        shutil.copytree(path_str, dest)
+    with TemporaryDirectory() as temp_dir:
+        dest = Path(temp_dir, "dest")
         assert tools.sha1_dir(dest) == expected_hash

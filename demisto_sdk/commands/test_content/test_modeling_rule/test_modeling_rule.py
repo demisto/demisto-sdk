@@ -159,6 +159,8 @@ def verify_results(
                 expected_values = e.expected_values
                 tenant_timezone = e.tenant_timezone
                 break
+        if not tenant_timezone:
+            logger.warning("Could not find timezone")
 
         if expected_values:
             if (expected_time_value := expected_values.get("_time")) and (

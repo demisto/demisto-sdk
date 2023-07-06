@@ -2843,4 +2843,5 @@ def test_sha1_dir():
     # move dir to a different location and check that the hash is still the same
     with TemporaryDirectory() as temp_dir:
         dest = Path(temp_dir, "dest")
+        shutil.copytree(path_str, dest)
         assert tools.sha1_dir(dest) == expected_hash

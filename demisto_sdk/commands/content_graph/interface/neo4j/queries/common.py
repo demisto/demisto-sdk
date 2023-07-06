@@ -1,5 +1,5 @@
 import traceback
-from concurrent.futures import ProcessPoolExecutor
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict
@@ -9,6 +9,8 @@ from packaging.version import Version
 
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.content_graph.common import ContentType
+
+QUERY_TIMEOUT = 15
 
 
 def labels_of(content_type: ContentType) -> str:
@@ -58,12 +60,16 @@ def run_query(tx: Transaction, query: str, **kwargs: Dict[str, Any]) -> Result:
     try:
         start_time: datetime = datetime.now()
         logger.debug(f"Running query:\n{query}")
-        with ProcessPoolExecutor(max_workers=1) as executor:
+        with ThreadPoolExecutor(max_workers=1) as executor:
             try:
-                result = executor.submit(tx.run, query, **kwargs).result(timeout=30)
+                result = executor.submit(tx.run, query, **kwargs).result(
+                    timeout=QUERY_TIMEOUT
+                )
             except TimeoutError:
                 # retry
-                result = executor.submit(tx.run, query, **kwargs).result(timeout=30)
+                result = executor.submit(tx.run, query, **kwargs).result(
+                    timeout=QUERY_TIMEOUT
+                )
             logger.debug(
                 f"Took {(datetime.now() - start_time).total_seconds()} seconds"
             )

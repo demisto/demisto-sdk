@@ -3,6 +3,7 @@ import os
 import shutil
 from configparser import ConfigParser
 from pathlib import Path
+from tempfile import NamedTemporaryFile, TemporaryDirectory
 from typing import Callable, List, Optional, Tuple, Union
 
 import git
@@ -2805,3 +2806,28 @@ def test_parse_multiple_path_inputs_error(input_paths):
     """
     with pytest.raises(ValueError, match=f"Cannot parse paths from {input_paths}"):
         parse_multiple_path_inputs(input_paths)
+
+
+def test_sha1_file():
+    path_str = f"{GIT_ROOT}/demisto_sdk/commands/common/tests/test_files/test_sha1/content/file.txt"
+    path = Path(path_str)
+    expected_hash = "c8c54e11b1cb27c3376fa82520d53ef9932a02c0"
+    assert tools.sha1_file(path_str) == expected_hash
+    assert tools.sha1_file(path) == expected_hash
+    # move file to a different location and check that the hash is still the same
+    with NamedTemporaryFile() as temp_file:
+        shutil.copy(path_str, temp_file.name)
+        assert tools.sha1_file(temp_file.name) == expected_hash
+
+
+def test_sha1_dir():
+    path_str = f"{GIT_ROOT}/demisto_sdk/commands/common/tests/test_files/test_sha1"
+    path = Path(path_str)
+    expected_hash = "99c4adfe064f3b07cbe5c7f560f47490580b5028"
+    assert tools.sha1_dir(path_str) == expected_hash
+    assert tools.sha1_dir(path) == expected_hash
+    # move dir to a different location and check that the hash is still the same
+    with TemporaryDirectory() as temp_file:
+        dest = Path(temp_file) / "dest"
+        shutil.copytree(path_str, dest)
+        assert tools.sha1_dir(dest) == expected_hash

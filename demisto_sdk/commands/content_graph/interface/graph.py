@@ -10,7 +10,7 @@ from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.logger import logger
-from demisto_sdk.commands.common.tools import get_file, md5_dir
+from demisto_sdk.commands.common.tools import get_file, sha1_dir
 from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
@@ -77,7 +77,7 @@ class ContentGraphInterface(ABC):
 
     def _get_latest_content_parser_hash(self) -> Optional[str]:
         parsers_path = Path(__file__).parent.parent / "parsers"
-        return md5_dir(parsers_path)
+        return sha1_dir(parsers_path)
 
     def _has_infra_graph_been_changed(self) -> bool:
         if not self.content_parser_latest_hash:

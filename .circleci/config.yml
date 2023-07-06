@@ -109,7 +109,7 @@ references:
             - validate-files
             - create-content-artifacts
             - test-lint
-            - run-integration-tests
+            # - run-integration-tests
             - run-unit-tests
             - build
 
@@ -140,14 +140,14 @@ jobs:
               # argument in pytest.ini is itself ignored when explicitly passing tests to pytest. The second is to
               # remove the integration tests (integration tests as opposed to unit tests) from the list because those
               # tests shouldn't be parallelized.
-              TEST_FILES=$(circleci tests glob "**/*_test.py")
-              # filter out files which are in .venv directory
-              TEST_FILES=$(echo "$TEST_FILES" | sed -E 's/\S*\.venv\S*\.py//g')
-              TEST_FILES=$(echo "$TEST_FILES" | sed -E 's/\S*demisto_sdk\/commands\/init\/templates\S*\.py//g')
-              TEST_FILES=$(echo "$TEST_FILES" | sed -E 's/\S*demisto_sdk\/tests\/integration_tests\S*\.py//g')
-              TEST_FILES=$(echo "$TEST_FILES" | sed -E 's/\S*demisto_sdk\/commands\/content_graph\/tests\S*\.py//g')
+              # TEST_FILES=$(circleci tests glob "**/*_test.py")
+              # # filter out files which are in .venv directory
+              # TEST_FILES=$(echo "$TEST_FILES" | sed -E 's/\S*\.venv\S*\.py//g')
+              # TEST_FILES=$(echo "$TEST_FILES" | sed -E 's/\S*demisto_sdk\/commands\/init\/templates\S*\.py//g')
+              # TEST_FILES=$(echo "$TEST_FILES" | sed -E 's/\S*demisto_sdk\/tests\/integration_tests\S*\.py//g')
+              # TEST_FILES=$(echo "$TEST_FILES" | sed -E 's/\S*demisto_sdk\/commands\/content_graph\/tests\S*\.py//g')
 
-              TEST_FILES=$(echo "$TEST_FILES" | circleci tests split --split-by=timings)
+              # TEST_FILES=$(echo "$TEST_FILES" | circleci tests split --split-by=timings)
 
               mkdir test-results
               
@@ -158,7 +158,7 @@ jobs:
               # For all the tests. 
               node demisto_sdk/commands/common/markdown_server/mdx-parse-server.js &
               node_pid=$!
-              poetry run pytest -v --cov=demisto_sdk --cov-report=html --junitxml=test-results/junit.xml $TEST_FILES
+              poetry run pytest -v --cov=demisto_sdk --cov-report=html --junitxml=test-results/junit.xml .
               kill $node_pid
         - store_test_results:
             path: test-results
@@ -179,53 +179,53 @@ jobs:
               fi
 
 
-  run-integration-tests:
-      parameters:
-        pythonversion:
-          type: string
-      docker:
-        - image: cimg/python:<< parameters.pythonversion >>-node
-      steps:
-        - checkout
-        - <<: *install_neo4j
-        - <<: *install_poetry
-        - setup_remote_docker:
-            version: 20.10.12
-        - python/install-packages:
-            pkg-manager: "poetry"
-            cache-version: << pipeline.parameters.cache-version >>
+  # run-integration-tests:
+  #     parameters:
+  #       pythonversion:
+  #         type: string
+  #     docker:
+  #       - image: cimg/python:<< parameters.pythonversion >>-node
+  #     steps:
+  #       - checkout
+  #       - <<: *install_neo4j
+  #       - <<: *install_poetry
+  #       - setup_remote_docker:
+  #           version: 20.10.12
+  #       - python/install-packages:
+  #           pkg-manager: "poetry"
+  #           cache-version: << pipeline.parameters.cache-version >>
 
-        - <<: *install_node_ci
-        - run:
-            name: pytest - graph
-            no_output_timeout: 15m
-            command: |
-              shopt -u globstar
-              TEST_FILES=$(circleci tests glob "demisto_sdk/commands/content_graph/tests/*_test.py")
+  #       - <<: *install_node_ci
+  #       - run:
+  #           name: pytest - graph
+  #           no_output_timeout: 15m
+  #           command: |
+  #             shopt -u globstar
+  #             TEST_FILES=$(circleci tests glob "demisto_sdk/commands/content_graph/tests/*_test.py")
 
-              mkdir graph-test-results
-              neo4j start
-              # poll for neo4j status until available
-              while ! curl --fail http://127.0.0.1:7474 &> /dev/null; do sleep 1; done
+  #             mkdir graph-test-results
+  #             neo4j start
+  #             # poll for neo4j status until available
+  #             while ! curl --fail http://127.0.0.1:7474 &> /dev/null; do sleep 1; done
 
-              poetry run pytest -v --junitxml=graph-test-results/junit.xml $TEST_FILES
-        - store_test_results:
-            path: graph-test-results
-        - run:
-            name: pytest - integrations
-            no_output_timeout: 15m
-            command: |
-              shopt -u globstar
-              TEST_FILES=$(circleci tests glob "demisto_sdk/tests/integration_tests/**/*_test.py")
+  #             poetry run pytest -v --junitxml=graph-test-results/junit.xml $TEST_FILES
+  #       - store_test_results:
+  #           path: graph-test-results
+  #       - run:
+  #           name: pytest - integrations
+  #           no_output_timeout: 15m
+  #           command: |
+  #             shopt -u globstar
+  #             TEST_FILES=$(circleci tests glob "demisto_sdk/tests/integration_tests/**/*_test.py")
 
-              mkdir integration-test-results
+  #             mkdir integration-test-results
               
-              echo $(echo '{"node_version": "'$(node --version)'","npm_list":'$(npm list --json)'}') > node_versions_info.json
-              poetry run pytest -v --junitxml=integration-test-results/junit.xml $TEST_FILES
-        - store_test_results:
-            path: integration-test-results
-        - store_artifacts:
-            path: node_versions_info.json
+  #             echo $(echo '{"node_version": "'$(node --version)'","npm_list":'$(npm list --json)'}') > node_versions_info.json
+  #             poetry run pytest -v --junitxml=integration-test-results/junit.xml $TEST_FILES
+  #       - store_test_results:
+  #           path: integration-test-results
+  #       - store_artifacts:
+  #           path: node_versions_info.json
 
 
   precommit-checks:
@@ -478,12 +478,12 @@ workflows:
             parameters:
               pythonversion: ["3.8", "3.9", "3.10"]   
           name: run-unit-tests-<< matrix.pythonversion >>
-      - run-integration-tests:
-          <<: *tag_filter
-          matrix:
-            parameters:
-              pythonversion: ["3.8", "3.9", "3.10"]   
-          name: run-integration-tests-<< matrix.pythonversion >>
+      # - run-integration-tests:
+      #     <<: *tag_filter
+      #     matrix:
+      #       parameters:
+      #         pythonversion: ["3.8", "3.9", "3.10"]   
+      #     name: run-integration-tests-<< matrix.pythonversion >>
       - validate-files:
           <<: *tag_filter
           <<: *reqs_content_checkout

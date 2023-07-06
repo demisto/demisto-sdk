@@ -4,7 +4,7 @@ from multiprocessing.pool import Pool
 from pathlib import Path
 from typing import List
 
-from pydantic import BaseModel, DirectoryPath
+from pydantic import BaseModel, ConfigDict, DirectoryPath
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
@@ -18,6 +18,7 @@ USE_MULTIPROCESSING = False  # toggle this for better debugging
 class ContentDTO(BaseModel):
     path: DirectoryPath = Path(CONTENT_PATH)  # type: ignore
     packs: List[Pack]
+    model_config = ConfigDict(from_attributes=True, populate_by_name=True)
 
     def dump(
         self,
@@ -46,7 +47,3 @@ class ContentDTO(BaseModel):
         if zip:
             shutil.make_archive(str(dir.parent / output_stem), "zip", dir)
             shutil.rmtree(dir)
-
-    class Config:
-        orm_mode = True
-        allow_population_by_field_name = True

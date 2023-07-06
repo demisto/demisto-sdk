@@ -2808,7 +2808,14 @@ def test_parse_multiple_path_inputs_error(input_paths):
         parse_multiple_path_inputs(input_paths)
 
 
-def test_sha1_file():
+@pytest.mark.parametrize(
+    "file_name, expected_hash",
+    [
+        ("file.txt", "c8c54e11b1cb27c3376fa82520d53ef9932a02c0"),
+        ("file2.txt", "f1e01f0882e1f08f00f38d0cd60a850dc9288188"),
+    ],
+)
+def test_sha1_file(file_name, expected_hash):
     """
     Given:
         - A file path
@@ -2817,8 +2824,7 @@ def test_sha1_file():
     Then:
         Validate that the hash is correct, even after moving to a different location
     """
-    path_str = f"{GIT_ROOT}/demisto_sdk/commands/common/tests/test_files/test_sha1/content/file.txt"
-    expected_hash = "c8c54e11b1cb27c3376fa82520d53ef9932a02c0"
+    path_str = f"{GIT_ROOT}/demisto_sdk/commands/common/tests/test_files/test_sha1/content/{file_name}"
     assert tools.sha1_file(path_str) == expected_hash
     assert tools.sha1_file(Path(path_str)) == expected_hash
     # move file to a different location and check that the hash is still the same
@@ -2837,7 +2843,7 @@ def test_sha1_dir():
         Validate that the hash is correct, even after moving to a different location
     """
     path_str = f"{GIT_ROOT}/demisto_sdk/commands/common/tests/test_files/test_sha1"
-    expected_hash = "99c4adfe064f3b07cbe5c7f560f47490580b5028"
+    expected_hash = "70feabcd73ccbcb14201453942edf4a5fb4c4aac"
     assert tools.sha1_dir(path_str) == expected_hash
     assert tools.sha1_dir(Path(path_str)) == expected_hash
     # move dir to a different location and check that the hash is still the same

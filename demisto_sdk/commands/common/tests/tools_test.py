@@ -2810,14 +2810,13 @@ def test_parse_multiple_path_inputs_error(input_paths):
 
 def test_sha1_file():
     path_str = f"{GIT_ROOT}/demisto_sdk/commands/common/tests/test_files/test_sha1/content/file.txt"
-    path = Path(path_str)
     expected_hash = "c8c54e11b1cb27c3376fa82520d53ef9932a02c0"
     assert tools.sha1_file(path_str) == expected_hash
-    assert tools.sha1_file(path) == expected_hash
+    assert tools.sha1_file(Path(path_str)) == expected_hash
     # move file to a different location and check that the hash is still the same
-    with NamedTemporaryFile() as temp_file:
-        shutil.copy(path_str, temp_file.name)
-        assert tools.sha1_file(temp_file.name) == expected_hash
+    with NamedTemporaryFile() as temp_dir:
+        shutil.copy(path_str, temp_dir.name)
+        assert tools.sha1_file(temp_dir.name) == expected_hash
 
 
 def test_sha1_dir():

@@ -1,6 +1,6 @@
 # Changelog
 ## Unreleased
-* Added documentation for the flag **override-existing** used in upload 
+* Added documentation for the flag **override-existing** used in upload.
 * Improved memory efficiency in **update-content-graph** and **create-content-graph** commands.
 
 ## 1.17.1

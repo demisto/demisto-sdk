@@ -1,6 +1,6 @@
 # Changelog
 ## Unreleased
-* Added the tenant timezone to the **modeling-rules test** command.
+* Added the `tenant_timezone` key to the test_modeling_rule file so that you can now control the timezone in the **modeling-rules test** command.
 
 ## 1.17.1
 * Added the `aliasTo` key to the Incident Field schema.

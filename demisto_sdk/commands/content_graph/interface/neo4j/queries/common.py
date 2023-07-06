@@ -1,4 +1,5 @@
 import traceback
+from concurrent.futures import ProcessPoolExecutor
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict
@@ -57,9 +58,16 @@ def run_query(tx: Transaction, query: str, **kwargs: Dict[str, Any]) -> Result:
     try:
         start_time: datetime = datetime.now()
         logger.debug(f"Running query:\n{query}")
-        result = tx.run(query, **kwargs)
-        logger.debug(f"Took {(datetime.now() - start_time).total_seconds()} seconds")
-        return result
+        with ProcessPoolExecutor(max_workers=1) as executor:
+            try:
+                result = executor.submit(tx.run, query, **kwargs).result(timeout=30)
+            except TimeoutError:
+                # retry
+                result = executor.submit(tx.run, query, **kwargs).result(timeout=30)
+            logger.debug(
+                f"Took {(datetime.now() - start_time).total_seconds()} seconds"
+            )
+            return result
     except Exception as e:
         logger.error(traceback.format_exc())
         raise e

@@ -1,5 +1,7 @@
 # Changelog
 ## Unreleased
+
+## 1.1.12
 * Improved memory efficiency in **update-content-graph** and **create-content-graph** commands.
 
 ## 1.17.1

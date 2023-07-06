@@ -3730,6 +3730,7 @@ def parse_multiple_path_inputs(
 
 
 def sha1_update_from_file(filename: Union[str, Path], hash):
+    """This will iterate the file and update the hash object"""
     assert Path(filename).is_file()
     with open(str(filename), "rb") as f:
         for chunk in iter(lambda: f.read(4096), b""):
@@ -3738,10 +3739,12 @@ def sha1_update_from_file(filename: Union[str, Path], hash):
 
 
 def sha1_file(filename: Union[str, Path]) -> str:
+    """Return the sha1 hash of a directory"""
     return str(sha1_update_from_file(filename, hashlib.sha1()).hexdigest())
 
 
 def sha1_update_from_dir(directory: Union[str, Path], hash_):
+    """This will recursivly iterate all the files in the directory and update the hash object"""
     assert Path(directory).is_dir()
     for path in sorted(Path(directory).iterdir(), key=lambda p: str(p).lower()):
         hash_.update(path.name.encode())
@@ -3753,4 +3756,5 @@ def sha1_update_from_dir(directory: Union[str, Path], hash_):
 
 
 def sha1_dir(directory: Union[str, Path]) -> str:
+    """Return the sha1 hash of a directory"""
     return str(sha1_update_from_dir(directory, hashlib.sha1()).hexdigest())

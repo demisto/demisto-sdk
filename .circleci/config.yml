@@ -123,6 +123,7 @@ jobs:
       steps:
         - checkout
         - <<: *install_poetry
+        - <<: *install_neo4j
         - setup_remote_docker:
             version: 20.10.12
         - python/install-packages:

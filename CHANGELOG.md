@@ -1,7 +1,7 @@
 # Changelog
 ## Unreleased
 * Improved memory efficiency in **update-content-graph** and **create-content-graph** commands.
-* Added the `tenant_timezone` key to the test_modeling_rule file so that you can now control the timezone in the **modeling-rules test** command.
+* Added `tenant_timezone` handling to the **modeling-rules init** command, allowing usage with tenants in various timezones.
 
 ## 1.17.1
 * Added the `aliasTo` key to the Incident Field schema.

@@ -22,7 +22,7 @@ from demisto_sdk.commands.content_graph.interface.neo4j.neo4j_graph import (
 )
 from demisto_sdk.commands.content_graph.objects.classifier import Classifier
 from demisto_sdk.commands.content_graph.objects.integration import Command, Integration
-from demisto_sdk.commands.content_graph.objects.pack import Pack
+from demisto_sdk.commands.content_graph.objects.pack import Pack, PackContentItems
 from demisto_sdk.commands.content_graph.objects.playbook import Playbook
 from demisto_sdk.commands.content_graph.objects.repository import ContentDTO
 from demisto_sdk.commands.content_graph.objects.script import Script
@@ -356,8 +356,8 @@ def repository(mocker) -> ContentDTO:
     pack4.content_items.playbook.append(mock_playbook("SamplePlaybook"))
     repository.packs.extend([pack1, pack2, pack3, pack4])
     mocker.patch(
-        "demisto_sdk.commands.content_graph.content_graph_builder.ContentGraphBuilder._create_content_dto",
-        return_value=repository,
+        "demisto_sdk.commands.content_graph.content_graph_builder.ContentGraphBuilder._create_content_dtos",
+        return_value=[repository],
     )
     return repository
 
@@ -410,7 +410,7 @@ def mock_pack(name, marketplaces):
         categories=[],
         useCases=[],
         keywords=[],
-        contentItems=[],
+        contentItems=PackContentItems(),
         excluded_dependencies=[],
     )
 

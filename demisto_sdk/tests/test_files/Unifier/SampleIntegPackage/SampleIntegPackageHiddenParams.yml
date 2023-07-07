@@ -20,8 +20,8 @@ configuration:
   name: proxy
   required: false
   type: 8
-- display: Should be hidden on XSOAR only
-  name: hidden_on_xsoar
+- display: Should be hidden on all XSOAR only
+  name: hidden_in_all_xsoar
   required: false
   hidden:
     - xsoar
@@ -37,7 +37,7 @@ configuration:
   required: false
   hidden: true
   type: 8
-- display: Should be hidden on both XSOAR and marketplaceV2 - attribute lists both marketplaces
+- display: Should be hidden on all XSOAR and marketplaceV2 - attribute lists both marketplaces
   name: attribute_lists_both
   required: false
   hidden:
@@ -65,6 +65,12 @@ configuration:
   hidden:
     - xsoar_saas
     - marketplacev2
+  type: 8
+- display: Should be hidden on XSOAR_ON_PREM only
+  name: hidden_on_xsoar_on_prem
+  required: false
+  hidden:
+    - xsoar_on_prem
   type: 8
 description: This is the Hello World integration for getting started.
 display: TestIntegPackage

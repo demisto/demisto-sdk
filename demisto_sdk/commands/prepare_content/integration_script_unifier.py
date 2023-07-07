@@ -141,6 +141,16 @@ class IntegrationScriptUnifier(Unifier):
         for i, param in enumerate(data.get("configuration", ())):
             if isinstance(hidden := (param.get("hidden")), list):
                 # converts list to bool
+                if MarketplaceVersions.XSOAR.value in hidden:
+                    hidden.extend(
+                        [
+                            MarketplaceVersions.XSOAR_SAAS,
+                            MarketplaceVersions.XSOAR_ON_PREM,
+                        ]
+                    )
+                if MarketplaceVersions.XSOAR_ON_PREM.value in hidden:
+                    hidden.append(MarketplaceVersions.XSOAR)
+
                 data["configuration"][i]["hidden"] = marketplace in hidden
 
     @staticmethod

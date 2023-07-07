@@ -159,6 +159,7 @@ class MarketplaceTagParser:
     XSIAM_TAG = "XSIAM"
     XPANSE_TAG = "XPANSE"
     XSOAR_SAAS_TAG = "XSOAR_SAAS"
+    XSOAR_ON_PREM_TAG = "XSOAR_ON_PREM"
 
     def __init__(self, marketplace: str = MarketplaceVersions.XSOAR.value):
 
@@ -168,6 +169,7 @@ class MarketplaceTagParser:
         self._xsiam_parser = TagParser(marketplace_tag=self.XSIAM_TAG)
         self._xpanse_parser = TagParser(marketplace_tag=self.XPANSE_TAG)
         self._xsoar_saas_parser = TagParser(marketplace_tag=self.XSOAR_SAAS_TAG)
+        self._xsoar_on_prem_parser = TagParser(marketplace_tag=self.XSOAR_ON_PREM_TAG)
 
     @property
     def marketplace(self):
@@ -176,7 +178,11 @@ class MarketplaceTagParser:
     @marketplace.setter
     def marketplace(self, marketplace):
         self._marketplace = marketplace
-        self._should_remove_xsoar_text = marketplace != MarketplaceVersions.XSOAR.value
+        self._should_remove_xsoar_text = marketplace not in [
+            MarketplaceVersions.XSOAR.value,
+            MarketplaceVersions.XSOAR_ON_PREM.value,
+            MarketplaceVersions.XSOAR_SAAS.value,
+        ]
         self._should_remove_xsiam_text = (
             marketplace != MarketplaceVersions.MarketplaceV2.value
         )
@@ -185,6 +191,9 @@ class MarketplaceTagParser:
         )
         self._should_remove_xsoar_saas_text = (
             marketplace != MarketplaceVersions.XSOAR_SAAS.value
+        )
+        self._should_remove_xsoar_on_prem_text = (
+            marketplace != MarketplaceVersions.XSOAR_ON_PREM.value
         )
 
     def parse_text(self, text):
@@ -197,6 +206,9 @@ class MarketplaceTagParser:
         )
         text = self._xsiam_parser.parse(
             remove_tag=self._should_remove_xsiam_text, text=text
+        )
+        text = self._xsoar_on_prem_parser.parse(
+            remove_tag=self._should_remove_xsoar_on_prem_text, text=text
         )
         return self._xpanse_parser.parse(
             remove_tag=self._should_remove_xpanse_text, text=text

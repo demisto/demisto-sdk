@@ -1725,6 +1725,7 @@ class MarketplaceVersions(str, Enum):
     MarketplaceV2 = "marketplacev2"
     XPANSE = "xpanse"
     XSOAR_SAAS = "xsoar_saas"
+    XSOAR_ON_PREM = "xsoar_on_prem"
 
 
 MARKETPLACE_XSOAR_DIST = "marketplace-dist"
@@ -1742,6 +1743,7 @@ MarketplaceVersionToMarketplaceName = {
 MARKETPLACE_TO_CORE_PACKS_FILE: Dict[MarketplaceVersions, str] = {
     MarketplaceVersions.XSOAR: "Tests/Marketplace/core_packs_list.json",
     MarketplaceVersions.XSOAR_SAAS: "Tests/Marketplace/core_packs_list.json",
+    MarketplaceVersions.XSOAR_ON_PREM: "Tests/Marketplace/core_packs_list.json",
     MarketplaceVersions.MarketplaceV2: "Tests/Marketplace/core_packs_mpv2_list.json",
     MarketplaceVersions.XPANSE: "Tests/Marketplace/core_packs_xpanse_list.json",
 }
@@ -1865,6 +1867,16 @@ XSOAR_SUFFIX_TAG = "\n</~XSOAR>\n"
 XSOAR_INLINE_PREFIX_TAG = "<~XSOAR>"
 XSOAR_INLINE_SUFFIX_TAG = "</~XSOAR>"
 
+XSOAR_SAAS_PREFIX_TAG = "<~XSOAR_SAAS>\n"
+XSOAR_SAAS_SUFFIX_TAG = "\n</~XSOAR_SAAS>\n"
+XSOAR_SAAS_INLINE_PREFIX_TAG = "<~XSOAR_SAAS>"
+XSOAR_SAAS_INLINE_SUFFIX_TAG = "</~XSOAR_SAAS>"
+
+XSOAR_ON_PREM_PREFIX_TAG = "<~XSOAR_ON_PREM>\n"
+XSOAR_ON_PREM_SUFFIX_TAG = "\n</~XSOAR_ON_PREM>\n"
+XSOAR_ON_PREM_INLINE_PREFIX_TAG = "<~XSOAR_ON_PREM>"
+XSOAR_ON_PREM_INLINE_SUFFIX_TAG = "</~XSOAR_ON_PREM>"
+
 XSIAM_PREFIX_TAG = "<~XSIAM>\n"
 XSIAM_SUFFIX_TAG = "\n</~XSIAM>\n"
 XSIAM_INLINE_PREFIX_TAG = "<~XSIAM>"
@@ -1875,10 +1887,6 @@ XPANSE_SUFFIX_TAG = "\n</~XPANSE>\n"
 XPANSE_INLINE_PREFIX_TAG = "<~XPANSE>"
 XPANSE_INLINE_SUFFIX_TAG = "</~XPANSE>"
 
-XSOAR_SAAS_PREFIX_TAG = "<~XSOAR_SAAS>\n"
-XSOAR_SAAS_SUFFIX_TAG = "\n</~XSOAR_SAAS>\n"
-XSOAR_SAAS_INLINE_PREFIX_TAG = "<~XSOAR_SAAS>"
-XSOAR_SAAS_INLINE_SUFFIX_TAG = "</~XSOAR_SAAS>"
 
 MARKDOWN_IMAGE_LINK_REGEX = r"(\!\[.*?\])\((?P<url>[a-zA-Z_/\.0-9\- :%]*?)\)((].*)?)"
 README_IMAGES_ARTIFACT_FILE_NAME = "readme_images.json"

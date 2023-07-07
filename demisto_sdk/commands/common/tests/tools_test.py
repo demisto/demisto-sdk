@@ -1,6 +1,5 @@
 import glob
 import os
-import re
 import shutil
 from configparser import ConfigParser
 from pathlib import Path
@@ -38,6 +37,10 @@ from demisto_sdk.commands.common.constants import (
     XSOAR_CONFIG_FILE,
     XSOAR_INLINE_PREFIX_TAG,
     XSOAR_INLINE_SUFFIX_TAG,
+    XSOAR_ON_PREM_INLINE_PREFIX_TAG,
+    XSOAR_ON_PREM_INLINE_SUFFIX_TAG,
+    XSOAR_ON_PREM_PREFIX_TAG,
+    XSOAR_ON_PREM_SUFFIX_TAG,
     XSOAR_PREFIX_TAG,
     XSOAR_SAAS_INLINE_PREFIX_TAG,
     XSOAR_SAAS_INLINE_SUFFIX_TAG,
@@ -2420,17 +2423,51 @@ class TestMarketplaceTagParser:
     XSOAR_SAAS_INLINE_PREFIX = XSOAR_SAAS_INLINE_PREFIX_TAG
     XSOAR_SAAS_INLINE_SUFFIX = XSOAR_SAAS_INLINE_SUFFIX_TAG
 
+    XSOAR_ON_PREM_PREFIX = XSOAR_ON_PREM_PREFIX_TAG
+    XSOAR_ON_PREM_SUFFIX = XSOAR_ON_PREM_SUFFIX_TAG
+    XSOAR_ON_PREM_INLINE_PREFIX = XSOAR_ON_PREM_INLINE_PREFIX_TAG
+    XSOAR_ON_PREM_INLINE_SUFFIX = XSOAR_ON_PREM_INLINE_SUFFIX_TAG
+
     TEXT_WITH_TAGS = f"""
 ### Sections:
-{XSOAR_PREFIX} - XSOAR PARAGRAPH {XSOAR_SUFFIX}
+{XSOAR_PREFIX} - ALL XSOAR MARKETPLACE PARAGRAPH {XSOAR_SUFFIX}
 {XSIAM_PREFIX} - XSIAM PARAGRAPH {XSIAM_SUFFIX}
 {XPANSE_PREFIX} - XPANSE PARAGRAPH {XPANSE_SUFFIX}
-{XSOAR_SAAS_PREFIX} - XSOAR_SAAS {XSOAR_SAAS_SUFFIX}
+{XSOAR_SAAS_PREFIX} - ONLY XSOAR_SAAS PARAGRAPH {XSOAR_SAAS_SUFFIX}
+{XSOAR_ON_PREM_PREFIX} - ONLY XSOAR_ON_PREM PARAGRAPH {XSOAR_ON_PREM_SUFFIX}
 ### Inline:
-{XSOAR_INLINE_PREFIX} xsoar inline text {XSOAR_INLINE_SUFFIX}
+{XSOAR_INLINE_PREFIX} all xsoar marketplaces inline text {XSOAR_INLINE_SUFFIX}
 {XSIAM_INLINE_PREFIX} xsiam inline text {XSIAM_INLINE_SUFFIX}
 {XPANSE_INLINE_PREFIX} xpanse inline text {XPANSE_INLINE_SUFFIX}
-{XSOAR_SAAS_INLINE_PREFIX} xsoar_saas inline test {XSOAR_SAAS_INLINE_SUFFIX}"""
+{XSOAR_SAAS_INLINE_PREFIX} xsoar_saas inline test {XSOAR_SAAS_INLINE_SUFFIX}
+{XSOAR_ON_PREM_INLINE_PREFIX} xsoar_on_prem inline test {XSOAR_ON_PREM_INLINE_SUFFIX}"""
+
+    def check_prefix_not_in_text(self, actual):
+        assert self.XSOAR_PREFIX not in actual
+        assert self.XSIAM_PREFIX not in actual
+        assert self.XPANSE_PREFIX not in actual
+        assert self.XSOAR_SAAS_PREFIX not in actual
+        assert self.XSOAR_ON_PREM_PREFIX not in actual
+
+    def check_xsiam_not_in_text(self, actual):
+        assert "XSIAM" not in actual
+        assert "xsiam" not in actual
+
+    def check_xpanse_not_in_text(self, actual):
+        assert "XPANSE" not in actual
+        assert "xpanse" not in actual
+
+    def check_xsoar_saas_not_in_text(self, actual):
+        assert "XSOAR_SAAS" not in actual
+        assert "XSOAR saas" not in actual
+
+    def check_xsoar_on_prem_no_in_text(self, actual):
+        assert "XSOAR_ON_PREM" not in actual
+        assert "xsoar_on_prem" not in actual
+
+    def check_all_xsoar_not_in_text(self, actual):
+        assert "ALL XSOAR MARKETPLACE PARAGRAPH" not in actual
+        assert "all xsoar marketplaces inline text" not in actual
 
     def test_invalid_marketplace_version(self):
         """
@@ -2446,18 +2483,12 @@ class TestMarketplaceTagParser:
         actual = self.MARKETPLACE_TAG_PARSER.parse_text(self.TEXT_WITH_TAGS)
         assert "### Sections:" in actual
         assert "### Inline:" in actual
-        assert self.XSOAR_PREFIX not in actual
-        assert self.XSIAM_PREFIX not in actual
-        assert self.XPANSE_PREFIX not in actual
-        assert self.XSOAR_SAAS_PREFIX not in actual
-        assert "XSOAR" not in actual
-        assert "xsoar" not in actual
-        assert "XSIAM" not in actual
-        assert "xsiam" not in actual
-        assert "XPANSE" not in actual
-        assert "xpanse" not in actual
-        assert "XSOAR_SAAS" not in actual
-        assert "XSOAR saas" not in actual
+        self.check_prefix_not_in_text(actual)
+        self.check_xsiam_not_in_text(actual)
+        self.check_xpanse_not_in_text(actual)
+        self.check_xsoar_saas_not_in_text(actual)
+        self.check_xsoar_on_prem_no_in_text(actual)
+        self.check_all_xsoar_not_in_text(actual)
 
     def test_xsoar_marketplace_version(self):
         """
@@ -2473,17 +2504,13 @@ class TestMarketplaceTagParser:
         actual = self.MARKETPLACE_TAG_PARSER.parse_text(self.TEXT_WITH_TAGS)
         assert "### Sections:" in actual
         assert "### Inline:" in actual
-        assert "XSOAR" in actual
-        assert "xsoar" in actual
-        assert self.XSOAR_PREFIX not in actual
-        assert self.XSIAM_PREFIX not in actual
-        assert self.XPANSE_PREFIX not in actual
-        assert self.XSOAR_SAAS_PREFIX not in actual
-        assert "XSIAM" not in actual
-        assert "xsiam" not in actual
-        assert "XPANSE" not in actual
-        assert "xpanse" not in actual
-        assert "XSOAR_SAAS" not in actual and "xsoar saas" not in actual
+        assert "ALL XSOAR MARKETPLACE PARAGRAPH" in actual
+        assert "all xsoar marketplaces inline text" in actual
+        self.check_prefix_not_in_text(actual)
+        self.check_xsiam_not_in_text(actual)
+        self.check_xpanse_not_in_text(actual)
+        self.check_xsoar_saas_not_in_text(actual)
+        self.check_xsoar_on_prem_no_in_text(actual)
 
     def test_xsiam_marketplace_version(self):
         """
@@ -2501,17 +2528,13 @@ class TestMarketplaceTagParser:
         actual = self.MARKETPLACE_TAG_PARSER.parse_text(self.TEXT_WITH_TAGS)
         assert "### Sections:" in actual
         assert "### Inline:" in actual
-        assert "XSOAR" not in actual
-        assert "xsoar" not in actual
-        assert "XPANSE" not in actual
-        assert "xpanse" not in actual
-        assert "XSOAR_SAAS" not in actual and "xsoar saas" not in actual
-        assert self.XSOAR_PREFIX not in actual
-        assert self.XSIAM_PREFIX not in actual
-        assert self.XPANSE_PREFIX not in actual
-        assert self.XSOAR_SAAS_PREFIX not in actual
         assert "XSIAM" in actual
         assert "xsiam" in actual
+        self.check_all_xsoar_not_in_text(actual)
+        self.check_xpanse_not_in_text(actual)
+        self.check_xsoar_on_prem_no_in_text(actual)
+        self.check_xsoar_saas_not_in_text(actual)
+        self.check_prefix_not_in_text(actual)
 
     def test_xpanse_marketplace_version(self):
         """
@@ -2527,36 +2550,49 @@ class TestMarketplaceTagParser:
         actual = self.MARKETPLACE_TAG_PARSER.parse_text(self.TEXT_WITH_TAGS)
         assert "### Sections:" in actual
         assert "### Inline:" in actual
-        assert "XSOAR" not in actual
-        assert "xsoar" not in actual
-        assert "XSIAM" not in actual
-        assert "xsiam" not in actual
-        assert "XSOAR_SAAS" not in actual and "xsoar saas" not in actual
-        assert self.XSOAR_PREFIX not in actual
-        assert self.XSIAM_PREFIX not in actual
-        assert self.XPANSE_PREFIX not in actual
-        assert self.XSOAR_SAAS_PREFIX not in actual
         assert "XPANSE" in actual
         assert "xpanse" in actual
+        self.check_prefix_not_in_text(actual)
+        self.check_all_xsoar_not_in_text(actual)
+        self.check_xsiam_not_in_text(actual)
+        self.check_xsoar_on_prem_no_in_text(actual)
+        self.check_xsoar_saas_not_in_text(actual)
 
     def test_xsoar_saas_marketplace_version(self):
+        """
+        Check that xsoar_saas text and xsoar text is in text
+        """
         self.MARKETPLACE_TAG_PARSER.marketplace = MarketplaceVersions.XSOAR_SAAS.value
         actual = self.MARKETPLACE_TAG_PARSER.parse_text(self.TEXT_WITH_TAGS)
-
-        pattern = r"\bxsoar\b"
-        match = re.search(pattern, actual, re.IGNORECASE)
-        assert not match
-
         assert "### Sections:" in actual
         assert "### Inline:" in actual
-        assert "XSIAM" not in actual
-        assert "xsiam" not in actual
-        assert "XPANSE" not in actual and "xpanse" not in actual
-        assert self.XSOAR_PREFIX not in actual
-        assert self.XSIAM_PREFIX not in actual
-        assert self.XPANSE_PREFIX not in actual
-        assert self.XSOAR_SAAS_PREFIX not in actual
-        assert "XSOAR_SAAS" in actual and "xsoar_saas" in actual
+        assert "xsoar_saas" in actual
+        assert "XSOAR_SAAS" in actual
+        assert "ALL XSOAR MARKETPLACE PARAGRAPH" in actual
+        assert "all xsoar marketplaces inline text" in actual
+        self.check_prefix_not_in_text(actual)
+        self.check_xsiam_not_in_text(actual)
+        self.check_xpanse_not_in_text(actual)
+        self.check_xsoar_on_prem_no_in_text(actual)
+
+    def test_xsoar_on_prem_marketplace_version(self):
+        """
+        Check that xsoar_saas text and xsoar text is in text
+        """
+        self.MARKETPLACE_TAG_PARSER.marketplace = (
+            MarketplaceVersions.XSOAR_ON_PREM.value
+        )
+        actual = self.MARKETPLACE_TAG_PARSER.parse_text(self.TEXT_WITH_TAGS)
+        assert "### Sections:" in actual
+        assert "### Inline:" in actual
+        assert "xsoar_on_prem" in actual
+        assert "XSOAR_ON_PREM" in actual
+        assert "ALL XSOAR MARKETPLACE PARAGRAPH" in actual
+        assert "all xsoar marketplaces inline text" in actual
+        self.check_prefix_not_in_text(actual)
+        self.check_xsiam_not_in_text(actual)
+        self.check_xpanse_not_in_text(actual)
+        self.check_xsoar_saas_not_in_text(actual)
 
 
 @pytest.mark.parametrize(

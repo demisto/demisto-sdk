@@ -394,24 +394,26 @@ class Downloader:
 
     def fetch_custom_content(self) -> bool:
         """
-        Fetches the custom content from Demisto into a temporary dir.
-        :return: True if fetched successfully, False otherwise
+        Download content bundle (a tar.gz file containing all custom content) from the API,
+        and create an ID (UUID) to name mapping dict.
+
+        Returns:
+            bool: True if fetch was successful, False otherwise
         """
         try:
             verify = (
                 (not self.insecure) if self.insecure else None
-            )  # set to None so demisto_client will use env var DEMISTO_VERIFY_SSL
+            )  # Set to None so that 'demisto_client' will use the environment variable 'DEMISTO_VERIFY_SSL'.
             logger.info("Fetching custom content data from server...")
 
             self.client = demisto_client.configure(verify_ssl=verify)
-            api_response: tuple = demisto_client.generic_request_func(
+            api_response, _ = demisto_client.generic_request_func(
                 self.client, "/content/bundle", "GET"
             )
-            logger.debug(f"Received data bundle size (bytes): {len(api_response[0])}")
-            body: bytes = ast.literal_eval(api_response[0])
+            logger.debug(f"Received data bundle size (bytes): {len(api_response)}")
+            body: bytes = ast.literal_eval(api_response)
             io_bytes = io.BytesIO(body)
 
-            # Demisto's custom content file is of type tar.gz
             tar = tarfile.open(fileobj=io_bytes, mode="r")
 
             (

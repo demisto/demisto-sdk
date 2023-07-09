@@ -1,6 +1,8 @@
 # Changelog
 ## Unreleased
 * Improved memory efficiency in **update-content-graph** and **create-content-graph** commands.
+* Removed support for the `cve_id` name for the default-argument for **cve** reputation commands in **validate**. Now, only `cve` may be used for such commands.
+* Updated *Pydantic* to v2.
 * Added `tenant_timezone` handling to the **modeling-rules init** command, allowing usage with tenants in various timezones.
 
 ## 1.17.1

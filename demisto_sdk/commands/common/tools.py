@@ -113,6 +113,7 @@ from demisto_sdk.commands.common.constants import (
     IdSetKeys,
     MarketplaceVersions,
     urljoin,
+    ENV_SDK_WORKING_OFFLINE,
 )
 from demisto_sdk.commands.common.git_content_config import GitContentConfig, GitProvider
 from demisto_sdk.commands.common.git_util import GitUtil
@@ -3724,3 +3725,8 @@ def parse_multiple_path_inputs(
         return result
 
     raise ValueError(f"Cannot parse paths from {input_path}")
+
+def is_sdk_defined_working_offline() -> bool:
+    return str2bool(os.getenv(ENV_SDK_WORKING_OFFLINE))
+
+

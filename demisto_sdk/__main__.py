@@ -17,7 +17,6 @@ from demisto_sdk.commands.common.constants import (
     ENV_DEMISTO_SDK_MARKETPLACE,
     FileType,
     MarketplaceVersions,
-    ENV_SDK_WORKING_OFFLINE,
 )
 from demisto_sdk.commands.common.content_constant_paths import (
     ALL_PACKS_DEPENDENCIES_DEFAULT_PATH,
@@ -33,7 +32,7 @@ from demisto_sdk.commands.common.tools import (
     get_release_note_entries,
     is_external_repository,
     parse_marketplace_kwargs,
-    str2bool,
+    is_sdk_defined_working_offline,
 )
 from demisto_sdk.commands.content_graph.interface.neo4j.neo4j_graph import (
     Neo4jContentGraphInterface,
@@ -49,6 +48,9 @@ from demisto_sdk.commands.test_content.test_modeling_rule import (
 )
 from demisto_sdk.commands.upload.upload import upload_content_entity
 from demisto_sdk.utils.utils import check_configuration_file
+
+SDK_OFFLINE_ERROR_MESSAGE = '[red]An internet connection is required for this command. Please connect to the ' \
+                            'network and set the DEMISTO_SDK_OFFLINE_ENV variable value to False.[/red]'
 
 logger = logging.getLogger("demisto-sdk")
 
@@ -216,7 +218,7 @@ def main(ctx, config, version, release_notes, **kwargs):
                 "[yellow]Cound not find the version of the demisto-sdk. This usually happens when running in a development environment.[/yellow]"
             )
         else:
-            if str2bool(os.getenv(ENV_SDK_WORKING_OFFLINE)):
+            if is_sdk_defined_working_offline():
                 last_release = None
             else:
                 last_release = get_last_remote_release_version()
@@ -688,10 +690,8 @@ def validate(ctx, config, file_paths: str, **kwargs):
     """Validate your content files. If no additional flags are given, will validated only committed files."""
     from demisto_sdk.commands.validate.validate_manager import ValidateManager
 
-    if str2bool(os.getenv(ENV_SDK_WORKING_OFFLINE)):
-        logger.error(
-            "[red]no connection[/red]"
-        )
+    if is_sdk_defined_working_offline():
+        logger.error(SDK_OFFLINE_ERROR_MESSAGE)
         sys.exit(1)
 
     if file_paths and not kwargs["input"]:
@@ -1048,6 +1048,10 @@ def lint(ctx, **kwargs):
     """
     from demisto_sdk.commands.lint.lint_manager import LintManager
 
+    if is_sdk_defined_working_offline():
+        logger.error(SDK_OFFLINE_ERROR_MESSAGE)
+        sys.exit(1)
+
     check_configuration_file("lint", kwargs)
     lint_manager = LintManager(
         input=kwargs.get("input"),  # type: ignore[arg-type]
@@ -1275,10 +1279,8 @@ def format(
     """
     from demisto_sdk.commands.format.format_module import format_manager
 
-    if str2bool(os.getenv(ENV_SDK_WORKING_OFFLINE)):
-        logger.error(
-            "[red]no connection[/red]"
-        )
+    if is_sdk_defined_working_offline():
+        logger.error(SDK_OFFLINE_ERROR_MESSAGE)
         sys.exit(1)
 
     if file_paths and not input:
@@ -1476,6 +1478,10 @@ def download(ctx, **kwargs):
     DEMISTO_API_KEY environment variable should contain a valid Demisto API Key.
     """
     from demisto_sdk.commands.download.downloader import Downloader
+
+    if is_sdk_defined_working_offline():
+        logger.error(SDK_OFFLINE_ERROR_MESSAGE)
+        sys.exit(1)
 
     check_configuration_file("download", kwargs)
     downloader: Downloader = Downloader(**kwargs)
@@ -2328,10 +2334,8 @@ def update_release_notes(ctx, **kwargs):
     from demisto_sdk.commands.update_release_notes.update_rn_manager import (
         UpdateReleaseNotesManager,
     )
-    if str2bool(os.getenv(ENV_SDK_WORKING_OFFLINE)):
-        logger.error(
-            "[red]no connection[/red]"
-        )
+    if is_sdk_defined_working_offline():
+        logger.error(SDK_OFFLINE_ERROR_MESSAGE)
         sys.exit(1)
 
     check_configuration_file("update-release-notes", kwargs)

@@ -5,7 +5,6 @@
 * Updated *Pydantic* to v2.
 * Fixed an issue where **zip_packs** failed uploadaing content.
 
-
 ## 1.17.1
 * Added the `aliasTo` key to the Incident Field schema.
 * Modified **validate** to not require fields whose value is always `False`.

@@ -1,9 +1,7 @@
 from typing import Any, Dict, List, Optional
 from uuid import UUID, uuid4
 
-from pydantic import BaseModel, Field, ValidationError, field_validator
-from pydantic.functional_validators import AfterValidator
-from typing_extensions import Annotated
+from pydantic import BaseModel, Field, validator
 
 
 class EventLog(BaseModel):
@@ -16,29 +14,22 @@ class EventLog(BaseModel):
     expected_values: Optional[Dict[str, Any]] = {}
 
 
-def event_log_validator(v: EventLog):
-    if not v.expected_values:
-        err = "The expected values mapping is required for each test data event"
-        raise ValidationError(err)
-    for k in v.expected_values.keys():
-        if k == "_time":
-            continue
-        if not k.casefold().startswith("xdm."):
-            err = "The expected values mapping keys are expected to start with 'xdm.' (case insensitive)"
-            raise ValidationError(err)
-    return v
-
-
-EventLogType = Annotated[EventLog, AfterValidator(event_log_validator)]
-
-
 class TestData(BaseModel):
-    data: List[EventLogType] = Field(default_factory=lambda: [EventLog()])
+    data: List[EventLog] = Field(default_factory=lambda: [EventLog()])
+
+    @validator("data", each_item=True)
+    def validate_expected_values(cls, v):
+        for k in v.expected_values.keys():
+            if k == "_time":  # '_time' is a special field without the 'xdm.' prefix.
+                continue
+            if not k.casefold().startswith("xdm."):
+                err = "The expected values mapping keys are expected to start with 'xdm.' (case insensitive)"
+                raise ValueError(err)
+        return v
 
 
 class CompletedTestData(TestData):
-    @field_validator("data")
-    @classmethod
+    @validator("data")
     def validate_expected_values(cls, v):
         for test_data_event in v:
             if not test_data_event.expected_values or not any(
@@ -53,8 +44,7 @@ class CompletedTestData(TestData):
                 raise ValueError(err)
         return v
 
-    @field_validator("data")
-    @classmethod
+    @validator("data")
     def validate_event_data(cls, v):
         for test_data_event in v:
             if not test_data_event.event_data:

@@ -496,7 +496,8 @@ class TestPlaybook:
         # get incident
         search_filter = demisto_client.demisto_api.SearchIncidentsData()
         inc_filter = demisto_client.demisto_api.IncidentFilter()
-        inc_filter.query = f"id: {inc_id}"
+        if inc_id:
+            inc_filter.query = f"id: {inc_id}"
         if IS_XSIAM:
             # in xsiam `create_incident` response don`t return created incident id.
             inc_filter.name = [incident_name]

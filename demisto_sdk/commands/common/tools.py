@@ -2235,6 +2235,7 @@ def is_test_config_match(
         )
     else:
         integration_match = test_integrations == integration_id
+
     # If both playbook id and integration id are given
     if integration_id and test_playbook_id:
         return test_playbook_match and integration_match
@@ -2250,6 +2251,101 @@ def is_test_config_match(
     return False
 
 
+def is_content_item_dependent_in_conf(test_config, file_type):
+    """Check if a line from conf have multiple integration/scripts dependent on the TPB.
+
+    Args:
+        test_config (int): The dict in the conf file.
+        file_type (str): The file type, can be integrations, scripts or playbook.
+
+    Returns:
+        bool: The return value. True for dependence, False otherwise.
+    """
+    integrations_from_dict = test_config.get("integrations", [])
+    integrations_list: list = (
+        integrations_from_dict
+        if isinstance(integrations_from_dict, list)
+        else [integrations_from_dict]
+    )
+    if file_type == "integration":
+        if len(integrations_list) > 1:
+            return True
+        return False
+    # if the file_type is playbook or testplaybook in the conf.json it does not dependent on any other content
+    elif file_type == "playbook" or file_type == "testplaybook":
+        return False
+    return True
+
+
+def search_and_delete_from_conf(
+    conf_json_tests: list,
+    content_item_id: str,
+    file_type: str,
+    test_playbooks: list,
+    no_test_playbooks_explicitly: bool,
+):
+    """Return all test section from conf.json file without the deprecated content item.
+
+    Args:
+        conf_json_tests (int): The dict in the conf file.
+        content_item_id (str): The  content item id.
+        file_type (str): The file type, can be integrations, scripts or playbook.
+        test_playbooks (list): A list of related test playbooks.
+        no_test_playbooks_explicitly (bool): True if there are related TPB, False otherwise.
+
+    Returns:
+        bool: The return value. True for dependence, False otherwise.
+    """
+    test_registered_in_conf_json = []
+    # if the file time that we are deprected is a integration there are TBP related to the yml
+    if file_type == "integration":
+        test_registered_in_conf_json.extend(
+            [
+                test_config
+                for test_config in conf_json_tests
+                if is_test_config_match(test_config, integration_id=content_item_id)
+            ]
+        )
+    # the type of the file is "playbook"
+    elif file_type == "playbook" or file_type == "testplaybook":
+        test_registered_in_conf_json.extend(
+            [
+                test_config
+                for test_config in conf_json_tests
+                if is_test_config_match(test_config, test_playbook_id=content_item_id)
+            ]
+        )
+    if not no_test_playbooks_explicitly:
+        for test in test_playbooks:
+            if test not in list(
+                map(lambda x: x["playbookID"], test_registered_in_conf_json)
+            ):
+                test_registered_in_conf_json.extend(
+                    [
+                        test_config
+                        for test_config in conf_json_tests
+                        if is_test_config_match(test_config, test_playbook_id=test)
+                    ]
+                )
+    # remove the line from conf.json
+    if test_registered_in_conf_json:
+        for test_config in test_registered_in_conf_json:
+            if (
+                file_type == "playbook" or file_type == "testplaybook"
+            ) and test_config in conf_json_tests:
+                conf_json_tests.remove(test_config)
+            elif (
+                test_config in conf_json_tests
+                and not is_content_item_dependent_in_conf(test_config, file_type)
+            ):
+                conf_json_tests.remove(test_config)
+            elif test_config in conf_json_tests:
+                if content_item_id in (test_config.get("integrations")):
+                    test_config.get("integrations").remove(content_item_id)
+
+    return conf_json_tests
+
+
 def get_not_registered_tests(
     conf_json_tests: list, content_item_id: str, file_type: str, test_playbooks: list
 ) -> list:
@@ -2259,7 +2355,7 @@ def get_not_registered_tests(
         conf_json_tests: the 'tests' value of 'conf.json file
         content_item_id: A content item ID, could be a script, an integration or a playbook.
         file_type: The file type, could be an integration or a playbook.
-        test_playbooks: The yml file's list of test playbooks
+        test_playbooks: The yml file's list of test playbooks.
 
     Returns:
         A list of TestPlaybooks not configured

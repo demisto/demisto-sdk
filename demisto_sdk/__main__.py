@@ -33,6 +33,7 @@ from demisto_sdk.commands.common.tools import (
     get_release_note_entries,
     is_external_repository,
     parse_marketplace_kwargs,
+    str2bool,
 )
 from demisto_sdk.commands.content_graph.interface.neo4j.neo4j_graph import (
     Neo4jContentGraphInterface,
@@ -215,7 +216,7 @@ def main(ctx, config, version, release_notes, **kwargs):
                 "[yellow]Cound not find the version of the demisto-sdk. This usually happens when running in a development environment.[/yellow]"
             )
         else:
-            if os.getenv(ENV_SDK_WORKING_OFFLINE, "").lower() == "yes":
+            if str2bool(os.getenv(ENV_SDK_WORKING_OFFLINE)):
                 last_release = None
             else:
                 last_release = get_last_remote_release_version()
@@ -687,8 +688,8 @@ def validate(ctx, config, file_paths: str, **kwargs):
     """Validate your content files. If no additional flags are given, will validated only committed files."""
     from demisto_sdk.commands.validate.validate_manager import ValidateManager
 
-    if os.getenv(ENV_SDK_WORKING_OFFLINE, "").lower() == "yes":
-        logger.info(
+    if str2bool(os.getenv(ENV_SDK_WORKING_OFFLINE)):
+        logger.error(
             "[red]no connection[/red]"
         )
         sys.exit(1)
@@ -1274,8 +1275,8 @@ def format(
     """
     from demisto_sdk.commands.format.format_module import format_manager
 
-    if os.getenv(ENV_SDK_WORKING_OFFLINE, "").lower() == "yes":
-        logger.info(
+    if str2bool(os.getenv(ENV_SDK_WORKING_OFFLINE)):
+        logger.error(
             "[red]no connection[/red]"
         )
         sys.exit(1)
@@ -2327,9 +2328,8 @@ def update_release_notes(ctx, **kwargs):
     from demisto_sdk.commands.update_release_notes.update_rn_manager import (
         UpdateReleaseNotesManager,
     )
-
-    if os.getenv(ENV_SDK_WORKING_OFFLINE, "").lower() == "yes":
-        logger.info(
+    if str2bool(os.getenv(ENV_SDK_WORKING_OFFLINE)):
+        logger.error(
             "[red]no connection[/red]"
         )
         sys.exit(1)

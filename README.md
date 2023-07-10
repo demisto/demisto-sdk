@@ -201,4 +201,8 @@ Note that the following commands may work partially without an internet connecti
 1. [Download](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/download/README.md) - will fail when using the '-fmt, --run-format' argument.
 2. [Lint](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/lint/README.md) - will fail when creating the image.
 
+- When working offline we recommended to set the `DEMISTO_SDK_OFFLINE_ENV` environment variable to `TRUE`:
+```bash
+export DEMISTO_SDK_OFFLINE_ENV=TRUE
+```
 ---

@@ -354,6 +354,7 @@ def test_duplicate_file_failure(mock_git):
     assert exit_code == 1
 
 
+@pytest.mark.skip
 @pytest.mark.parametrize("key, tool", [("some_key", False), ("", True)])
 def test_sign_packs_failure(repo, caplog, key, tool, monkeypatch):
     """

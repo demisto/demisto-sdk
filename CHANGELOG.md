@@ -1,5 +1,6 @@
 # Changelog
 ## Unreleased
+* Fixed an issue where the **validate** command failed on a `Incident Field` with a `template` value.
 * Improved memory efficiency in **update-content-graph** and **create-content-graph** commands.
 * Removed support for the `cve_id` name for the default-argument for **cve** reputation commands in **validate**. Now, only `cve` may be used for such commands.
 * Fixed an issue where **zip_packs** failed uploading content.

@@ -120,7 +120,6 @@ jobs:
           type: string
       docker:
         - image: cimg/python:<< parameters.pythonversion >>-node
-      parallelism: 0
       steps:
         - checkout
         - <<: *install_poetry

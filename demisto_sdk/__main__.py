@@ -31,8 +31,8 @@ from demisto_sdk.commands.common.tools import (
     get_last_remote_release_version,
     get_release_note_entries,
     is_external_repository,
-    parse_marketplace_kwargs,
     is_sdk_defined_working_offline,
+    parse_marketplace_kwargs,
 )
 from demisto_sdk.commands.content_graph.interface.neo4j.neo4j_graph import (
     Neo4jContentGraphInterface,
@@ -49,8 +49,10 @@ from demisto_sdk.commands.test_content.test_modeling_rule import (
 from demisto_sdk.commands.upload.upload import upload_content_entity
 from demisto_sdk.utils.utils import check_configuration_file
 
-SDK_OFFLINE_ERROR_MESSAGE = '[red]An internet connection is required for this command. Please connect to the ' \
-                            'network and set the DEMISTO_SDK_OFFLINE_ENV variable value to False.[/red]'
+SDK_OFFLINE_ERROR_MESSAGE = (
+    "[red]An internet connection is required for this command. Please connect to the "
+    "network and set the DEMISTO_SDK_OFFLINE_ENV variable value to False.[/red]"
+)
 
 logger = logging.getLogger("demisto-sdk")
 
@@ -2334,6 +2336,7 @@ def update_release_notes(ctx, **kwargs):
     from demisto_sdk.commands.update_release_notes.update_rn_manager import (
         UpdateReleaseNotesManager,
     )
+
     if is_sdk_defined_working_offline():
         logger.error(SDK_OFFLINE_ERROR_MESSAGE)
         sys.exit(1)

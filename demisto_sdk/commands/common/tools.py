@@ -3726,7 +3726,6 @@ def parse_multiple_path_inputs(
 
     raise ValueError(f"Cannot parse paths from {input_path}")
 
+
 def is_sdk_defined_working_offline() -> bool:
     return str2bool(os.getenv(ENV_SDK_WORKING_OFFLINE))
-
-

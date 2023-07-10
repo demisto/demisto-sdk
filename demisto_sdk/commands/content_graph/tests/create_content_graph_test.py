@@ -901,6 +901,15 @@ class TestCreateContentGraph:
 
 
 def test_dump_pack_readme(mocker):
+    """
+    Given:
+        - pack readmes with images
+    When:
+        - After the readme images were parsed and data was collected for each url
+    Then:
+        - Validate that the data stored in the file that gathers all the pake readme
+            images data is created succesfully.
+    """
     import os
     from tempfile import TemporaryDirectory
 
@@ -950,7 +959,6 @@ def test_dump_pack_readme(mocker):
     excepted_res.update(return_value2)
     with TemporaryDirectory() as artifact_dir:
         mocker.patch.object(os, "getenv", return_value=artifact_dir)
-        # mocker.patch("demisto_sdk.commands.prepare_content.pack_readme_handler.replace_readme_urls", side_affect=[return_value1, return_value2])
         mocker.patch(
             "demisto_sdk.commands.content_graph.objects.pack.replace_readme_urls",
             side_effect=[return_value1, return_value2],
@@ -964,4 +972,4 @@ def test_dump_pack_readme(mocker):
         res = get_file(
             f"{artifact_dir}/{README_IMAGES_ARTIFACT_FILE_NAME}", type_of_file="json"
         )
-        assert res == excepted_res
+    assert res == excepted_res

@@ -170,10 +170,12 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
         else:
             marketplaces = self.pack_marketplaces
 
-        marketplaces_set = set(marketplaces) & self.supported_marketplaces
+        marketplaces_set = set(marketplaces).intersection(self.supported_marketplaces)
         if MarketplaceVersions.XSOAR in marketplaces_set:
             marketplaces_set.add(MarketplaceVersions.XSOAR_SAAS)
 
+        if MarketplaceVersions.XSOAR_ON_PREM in marketplaces_set:
+            marketplaces_set.add(MarketplaceVersions.XSOAR)
         return sorted(marketplaces_set)
 
     @property

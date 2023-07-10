@@ -2,7 +2,7 @@
 ## Unreleased
 * Improved memory efficiency in **update-content-graph** and **create-content-graph** commands.
 * Removed support for the `cve_id` name for the default-argument for **cve** reputation commands in **validate**. Now, only `cve` may be used for such commands.
-* Updated *Pydantic* to v2.
+* Fixed an issue where **zip_packs** failed uploading content.
 * Fixed an issue where the *upload* command would upload a pack metadata with wrong display names.
 
 ## 1.17.1

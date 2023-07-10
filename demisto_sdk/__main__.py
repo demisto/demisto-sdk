@@ -516,7 +516,7 @@ def zip_packs(ctx, **kwargs) -> int:
 
     if should_upload and zip_path:
         return Uploader(
-            input=zip_path, pack_names=unified_pack_names, marketplace=marketplace
+            input=Path(zip_path), pack_names=unified_pack_names, marketplace=marketplace
         ).upload()
 
     return EX_SUCCESS if zip_path is not None else EX_FAIL

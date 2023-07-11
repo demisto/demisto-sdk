@@ -117,6 +117,7 @@ def update_content_graph(
                 return
     if not content_graph_interface.import_graph(imported_path):
         # if the import failed, we need to create a new graph
+        logger.warning("Failed to import the content graph, will create a new graph")
         create_content_graph(
             content_graph_interface, marketplace, dependencies, output_path
         )

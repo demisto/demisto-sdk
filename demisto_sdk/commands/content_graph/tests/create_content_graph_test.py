@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 from zipfile import ZipFile
 
 import pytest
@@ -22,7 +22,7 @@ from demisto_sdk.commands.content_graph.objects.integration import Command, Inte
 from demisto_sdk.commands.content_graph.objects.integration_script import (
     IntegrationScript,
 )
-from demisto_sdk.commands.content_graph.objects.pack import Pack
+from demisto_sdk.commands.content_graph.objects.pack import Pack, PackContentItems
 from demisto_sdk.commands.content_graph.objects.playbook import Playbook
 from demisto_sdk.commands.content_graph.objects.repository import ContentDTO
 from demisto_sdk.commands.content_graph.objects.script import Script
@@ -59,14 +59,20 @@ def repository(mocker):
     return repository
 
 
-def mock_pack(name: str = "SamplePack", path: Path = Path("Packs")) -> Pack:
+def mock_pack(
+    name: str = "SamplePack",
+    path: Path = Path("Packs"),
+    marketplaces: Optional[List[MarketplaceVersions]] = None,
+) -> Pack:
+    if marketplaces is None:
+        marketplaces = [MarketplaceVersions.XSOAR]
     return Pack(
         object_id=name,
         content_type=ContentType.PACK,
         node_id=f"{ContentType.PACK}:{name}",
         path=path,
         name=name,
-        marketplaces=[MarketplaceVersions.XSOAR],
+        marketplaces=marketplaces,
         hidden=False,
         server_min_version="5.5.0",
         current_version="1.0.0",
@@ -74,12 +80,16 @@ def mock_pack(name: str = "SamplePack", path: Path = Path("Packs")) -> Pack:
         categories=[],
         useCases=[],
         keywords=[],
-        contentItems=[],
+        contentItems=PackContentItems(),
         excluded_dependencies=[],
     )
 
 
-def mock_integration(name: str = "SampleIntegration", path: Path = Path("Packs")):
+def mock_integration(
+    name: str = "SampleIntegration",
+    path: Path = Path("Packs"),
+    deprecated: bool = False,
+):
     return Integration(
         id=name,
         content_type=ContentType.INTEGRATION,
@@ -90,7 +100,7 @@ def mock_integration(name: str = "SampleIntegration", path: Path = Path("Packs")
         display_name=name,
         name=name,
         marketplaces=[MarketplaceVersions.XSOAR],
-        deprecated=False,
+        deprecated=deprecated,
         type="python3",
         docker_image="mock:docker",
         category="blabla",
@@ -144,14 +154,16 @@ def mock_classifier(name: str = "SampleClassifier"):
 def mock_playbook(
     name: str = "SamplePlaybook",
     marketplaces: List[MarketplaceVersions] = [MarketplaceVersions.XSOAR],
+    fromversion="5.0.0",
+    toversion="99.99.99",
 ):
     return Playbook(
         id=name,
         content_type=ContentType.PLAYBOOK,
         node_id=f"{ContentType.PLAYBOOK}:{name}",
         path=Path("Packs"),
-        fromversion="5.0.0",
-        toversion="99.99.99",
+        fromversion=fromversion,
+        toversion=toversion,
         display_name=name,
         name=name,
         marketplaces=marketplaces,
@@ -434,10 +446,9 @@ class TestCreateContentGraph:
             # make sure that the extracted files are all .csv
             extracted_files = list(tmp_path.glob("extracted/*"))
             assert extracted_files
-            assert all(
-                file.suffix == ".graphml" or file.name == "metadata.json"
-                for file in extracted_files
-            )
+            assert any(file.suffix == ".graphml" for file in extracted_files)
+            assert any(file.name == "metadata.json" for file in extracted_files)
+            assert any(file.name == "schema.json" for file in extracted_files)
 
     def test_create_content_graph_relationships(
         self,

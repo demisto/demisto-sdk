@@ -68,7 +68,7 @@ class ContentGraphBuilder:
             repository_parser.iter_packs(packs_to_parse), PACKS_PER_BATCH
         ):
             repository_parser.parse(packs_batch)
-            content_dtos.append(ContentDTO.from_orm(repository_parser))
+            content_dtos.append(ContentDTO.model_validate(repository_parser))
             repository_parser.clear()
             gc.collect()
         return content_dtos

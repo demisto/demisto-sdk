@@ -603,9 +603,7 @@ def validate_modeling_rule(
         )
         xsiam_client = XsiamApiClient(xsiam_client_cfg)
         verify_pack_exists_on_tenant(xsiam_client, mr_entity, interactive)
-        test_data = init_test_data.TestData.parse_file(
-            mr_entity.testdata_path.as_posix()
-        )
+        test_data = init_test_data.TestData.parse_file(mr_entity.testdata_path)
 
         if push:
             if missing_event_data:

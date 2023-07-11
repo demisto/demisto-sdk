@@ -1435,7 +1435,7 @@ class Linter:
         Returns (None): None
         """
         native_image_config = (
-            NativeImageConfig()
+            NativeImageConfig.from_path()
         )  # parsed docker_native_image_config.json file (a singleton obj)
 
         if native_image := native_image_config.flags_versions_mapping.get(
@@ -1498,7 +1498,7 @@ class Linter:
         )
 
         native_image_config = (
-            NativeImageConfig()
+            NativeImageConfig.from_path()
         )  # parsed docker_native_image_config.json file (a singleton obj)
 
         return native_image_config.get_native_image_reference(native_image)
@@ -1530,7 +1530,7 @@ class Linter:
 
         # Get native images:
         native_image_config = (
-            NativeImageConfig()
+            NativeImageConfig.from_path()
         )  # parsed docker_native_image_config.json file (a singleton obj)
 
         for native_image in native_image_config.native_images:
@@ -1605,7 +1605,7 @@ class Linter:
         di_from_yml = script_obj.get("dockerimage")
         # If the 'dockerimage' key does not exist in yml - run on native image checks will be skipped
         native_image_config = (
-            NativeImageConfig()
+            NativeImageConfig.from_path()
         )  # parsed docker_native_image_config.json file (a singleton obj)
         supported_native_images_obj = ScriptIntegrationSupportedNativeImages(
             _id=script_id,

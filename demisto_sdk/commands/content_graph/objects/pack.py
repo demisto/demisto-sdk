@@ -7,7 +7,13 @@ from typing import TYPE_CHECKING, Any, Generator, List, Optional
 import demisto_client
 from demisto_client.demisto_api.rest import ApiException
 from packaging.version import Version, parse
-from pydantic import BaseModel, DirectoryPath, Field, validator
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    DirectoryPath,
+    Field,
+    field_validator,
+)
 
 from demisto_sdk.commands.common.constants import (
     BASE_PACK,
@@ -188,47 +194,45 @@ class PackContentItems(BaseModel):
         """Used for easier determination of content items existence in a pack."""
         return bool(list(self))
 
-    class Config:
-        arbitrary_types_allowed = True
-        orm_mode = True
-        allow_population_by_field_name = True
+    model_config = ConfigDict(
+        arbitrary_types_allowed=True,
+        from_attributes=True,
+        populate_by_name=True,
+    )
 
 
 class PackMetadata(BaseModel):
     name: str
-    description: Optional[str]
-    created: Optional[str]
-    updated: Optional[str]
-    support: Optional[str]
-    email: Optional[str]
-    url: Optional[str]
-    author: Optional[str]
-    certification: Optional[str]
-    hidden: Optional[bool]
-    server_min_version: Optional[str] = Field(alias="serverMinVersion")
-    current_version: Optional[str] = Field(alias="currentVersion")
-    tags: Optional[List[str]]
-    categories: Optional[List[str]]
-    use_cases: Optional[List[str]] = Field(alias="useCases")
-    keywords: Optional[List[str]]
+    description: Optional[str] = None
+    created: Optional[str] = None
+    updated: Optional[str] = None
+    support: Optional[str] = None
+    email: Optional[str] = None
+    url: str = ""
+    author: str = ""
+    certification: str = ""
+    hidden: Optional[bool] = None
+    server_min_version: Optional[str] = Field(None, alias="serverMinVersion")
+    current_version: Optional[str] = Field(None, alias="currentVersion")
+    tags: Optional[List[str]] = None
+    categories: Optional[List[str]] = None
+    use_cases: Optional[List[str]] = Field(None, alias="useCases")
+    keywords: Optional[List[str]] = None
     price: Optional[int] = None
     premium: Optional[bool] = None
     vendor_id: Optional[str] = Field(None, alias="vendorId")
     vendor_name: Optional[str] = Field(None, alias="vendorName")
     preview_only: Optional[bool] = Field(None, alias="previewOnly")
-    excluded_dependencies: Optional[List[str]]
+    excluded_dependencies: Optional[List[str]] = None
 
 
 class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: ignore[call-arg]
     path: Path
     contributors: Optional[List[str]] = None
-    relationships: Relationships = Field(Relationships(), exclude=True)
+    relationships: Any = Field(Relationships(), exclude=True)
+    content_items: PackContentItems = Field(alias="contentItems", exclude=True)
 
-    content_items: PackContentItems = Field(
-        PackContentItems(), alias="contentItems", exclude=True
-    )
-
-    @validator("path", always=True)
+    @field_validator("path")
     def validate_path(cls, v: Path) -> Path:
         if v.is_absolute():
             return v
@@ -296,7 +300,7 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: i
 
     def dump_metadata(self, path: Path, marketplace: MarketplaceVersions) -> None:
         self.server_min_version = self.server_min_version or MARKETPLACE_MIN_VERSION
-        metadata = self.dict(
+        metadata = self.model_dump(
             exclude={"path", "node_id", "content_type", "excluded_dependencies"},
             by_alias=True,
         )

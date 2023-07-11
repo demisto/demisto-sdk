@@ -8,8 +8,8 @@ from typing import Any, Dict, List, Optional
 from urllib.parse import urljoin
 
 import requests
-from pydantic import BaseModel, Field, HttpUrl, SecretStr, validator
-from pydantic.fields import ModelField
+from pydantic import BaseModel, Field, HttpUrl, SecretStr, field_validator
+from pydantic_core.core_schema import FieldValidationInfo
 
 from demisto_sdk.commands.common.logger import logger
 
@@ -32,22 +32,22 @@ class XsiamApiClientConfig(BaseModel):
         description="XSIAM HTTP Collector Token",
     )
 
-    @validator("base_url", "api_key", "auth_id", always=True)
-    def validate_client_config(cls, v, field: ModelField):
+    @field_validator("base_url", "api_key", "auth_id")
+    def validate_client_config(cls, v, info: FieldValidationInfo):
         if not v:
             raise ValueError(
-                f"XSIAM client configuration is not complete: value was not passed for {field.name} and"
-                f" the associated environment variable for {field.name} is not set"
+                f"XSIAM client configuration is not complete: value was not passed for {info.field_name} and"
+                f" the associated environment variable for {info.field_name} is not set"
             )
         return v
 
-    @validator("collector_token", always=True)
-    def validate_client_config_token(cls, v, values, field: ModelField):
+    @field_validator("collector_token")
+    def validate_client_config_token(cls, v, info: FieldValidationInfo):
         if not v:
             other_token_name = "token"
-            if not values.get(other_token_name):
+            if not info.data.get(other_token_name):
                 raise ValueError(
-                    f'XSIAM client configuration is not complete: you must set one of "{field.name}" or '
+                    f'XSIAM client configuration is not complete: you must set one of "{info.field_name}" or '
                     f'"{other_token_name}" either explicitly on the command line or via their associated '
                     "environment variables"
                 )
@@ -88,7 +88,7 @@ class XsiamApiInterface(ABC):
 
 class XsiamApiClient(XsiamApiInterface):
     def __init__(self, config: XsiamApiClientConfig):
-        self.base_url = config.base_url
+        self.base_url = str(config.base_url)
         self.api_key = (
             config.api_key.get_secret_value()
             if isinstance(config.api_key, SecretStr)

@@ -3,10 +3,14 @@ from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
 
+from pydantic import ValidationError
+
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import JSON_Handler
+from demisto_sdk.commands.common.logger import logger
+from demisto_sdk.commands.common.tools import get_file, sha1_dir
 from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
@@ -14,11 +18,12 @@ from demisto_sdk.commands.content_graph.objects.pack import Pack
 from demisto_sdk.commands.content_graph.objects.repository import ContentDTO
 
 json = JSON_Handler()
-METADATA_FILE_NAME = "metadata.json"
 
 
 class ContentGraphInterface(ABC):
     repo_path = CONTENT_PATH  # type: ignore
+    METADATA_FILE_NAME = "metadata.json"
+    SCHEMA_FILE_NAME = "schema.json"
 
     @property
     @abstractmethod
@@ -36,8 +41,7 @@ class ContentGraphInterface(ABC):
     @property
     def metadata(self) -> Optional[dict]:
         try:
-            with (self.import_path / METADATA_FILE_NAME).open() as f:
-                return json.load(f)
+            return get_file(self.import_path / self.METADATA_FILE_NAME)
         except FileNotFoundError:
             return None
 
@@ -47,13 +51,56 @@ class ContentGraphInterface(ABC):
             return self.metadata.get("commit")
         return None
 
+    @property
+    def content_parser_latest_hash(self) -> Optional[str]:
+        if self.metadata:
+            return self.metadata.get("content_parser_latest_hash")
+        return None
+
+    @property
+    def schema(self) -> Optional[dict]:
+        try:
+            return get_file(self.import_path / self.SCHEMA_FILE_NAME)
+        except FileNotFoundError:
+            return None
+
     def dump_metadata(self) -> None:
         """Adds metadata to the graph."""
         metadata = {
             "commit": GitUtil().get_current_commit_hash(),
+            "content_parser_latest_hash": self._get_latest_content_parser_hash(),
         }
-        with open(self.import_path / METADATA_FILE_NAME, "w") as f:
+        with open(self.import_path / self.METADATA_FILE_NAME, "w") as f:
             json.dump(metadata, f)
+        with open(self.import_path / self.SCHEMA_FILE_NAME, "w") as f:
+            json.dump(ContentDTO.model_json_schema(), f)
+
+    def _get_latest_content_parser_hash(self) -> Optional[str]:
+        parsers_path = Path(__file__).parent.parent / "parsers"
+        return sha1_dir(parsers_path)
+
+    def _has_infra_graph_been_changed(self) -> bool:
+        if not self.content_parser_latest_hash:
+            logger.warning("The content parser hash is missing.")
+        elif self.content_parser_latest_hash != self._get_latest_content_parser_hash():
+            logger.warning("The content parser has been changed.")
+            return True
+        schema = self.schema
+        if not self.schema:
+            logger.warning("The graph schema file is missing, trying to marshal it.")
+            try:
+                self.marshal_graph(MarketplaceVersions.XSOAR)
+                return False
+
+            except ValidationError as e:
+                logger.warning("Failed to load the content graph.")
+                logger.debug(f"Validation Error: {e}")
+                return True
+
+        if schema == ContentDTO.model_json_schema():
+            return False
+        logger.warning("The graph infra files has been changed.")
+        return True
 
     def zip_import_dir(self, output_file: Path) -> None:
         shutil.make_archive(str(output_file), "zip", self.import_path)

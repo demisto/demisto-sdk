@@ -310,7 +310,7 @@ class TestParsersAndModels:
                 "getField": ContentType.SCRIPT,
             },
         )
-        model = Classifier.from_orm(parser)
+        model = Classifier.model_validate(parser)
         ContentItemModelVerifier.run(
             model,
             expected_id="Github_Classifier_v1",
@@ -349,7 +349,7 @@ class TestParsersAndModels:
             colrrelation_rule_path, list(MarketplaceVersions)
         )
         assert not parser.relationships
-        model = CorrelationRule.from_orm(parser)
+        model = CorrelationRule.model_validate(parser)
         ContentItemModelVerifier.run(
             model,
             expected_id="correlation_rule_id",
@@ -384,7 +384,7 @@ class TestParsersAndModels:
                 "DetectionsData": ContentType.SCRIPT,
             },
         )
-        model = Dashboard.from_orm(parser)
+        model = Dashboard.model_validate(parser)
         ContentItemModelVerifier.run(
             model,
             expected_id="Confluera Dashboard",
@@ -421,7 +421,7 @@ class TestParsersAndModels:
             generic_definition_path, list(MarketplaceVersions)
         )
         assert not parser.relationships
-        model = GenericDefinition.from_orm(parser)
+        model = GenericDefinition.model_validate(parser)
         ContentItemModelVerifier.run(
             model,
             expected_id="ThreatIntelReport",
@@ -456,7 +456,7 @@ class TestParsersAndModels:
         generic_module_path = Path(generic_module.path)
         parser = GenericModuleParser(generic_module_path, list(MarketplaceVersions))
         assert not parser.relationships
-        model = GenericModule.from_orm(parser)
+        model = GenericModule.model_validate(parser)
         ContentItemModelVerifier.run(
             model,
             expected_id="threatIntel",
@@ -493,7 +493,7 @@ class TestParsersAndModels:
             parser.relationships,
             dependency_ids={"Malware Report": ContentType.LAYOUT},
         )
-        model = GenericType.from_orm(parser)
+        model = GenericType.model_validate(parser)
         ContentItemModelVerifier.run(
             model,
             expected_id="ThreatIntelReport_Malware",
@@ -535,7 +535,7 @@ class TestParsersAndModels:
                 "Malware": ContentType.INCIDENT_TYPE,
             },
         )
-        model = IncidentField.from_orm(parser)
+        model = IncidentField.model_validate(parser)
         ContentItemModelVerifier.run(
             model,
             expected_id="cve",
@@ -579,7 +579,7 @@ class TestParsersAndModels:
                 "Palo Alto Networks - Endpoint Malware Investigation": ContentType.PLAYBOOK,
             },
         )
-        model = IncidentType.from_orm(parser)
+        model = IncidentType.model_validate(parser)
         ContentItemModelVerifier.run(
             model,
             expected_id="Traps",
@@ -624,7 +624,7 @@ class TestParsersAndModels:
                 "User Profile": ContentType.INDICATOR_TYPE,
             },
         )
-        model = IndicatorField.from_orm(parser)
+        model = IndicatorField.model_validate(parser)
         ContentItemModelVerifier.run(
             model,
             expected_id="email",
@@ -669,7 +669,7 @@ class TestParsersAndModels:
                 "urlRep": ContentType.LAYOUT,
             },
         )
-        model = IndicatorType.from_orm(parser)
+        model = IndicatorType.model_validate(parser)
         ContentItemModelVerifier.run(
             model,
             expected_id="urlRep",
@@ -711,7 +711,7 @@ class TestParsersAndModels:
             imports=["MicrosoftApiModule"],
             tests=["test_playbook"],
         )
-        model = Integration.from_orm(parser)
+        model = Integration.model_validate(parser)
         ContentItemModelVerifier.run(
             model,
             expected_id="TestIntegration",
@@ -751,7 +751,7 @@ class TestParsersAndModels:
                 "malwr-detonate",
             ],
         )
-        model = Integration.from_orm(parser)
+        model = Integration.model_validate(parser)
         ContentItemModelVerifier.run(
             model,
             expected_id="malwr",
@@ -790,7 +790,7 @@ class TestParsersAndModels:
                 "job-TestJob_playbook": ContentType.PLAYBOOK,
             },
         )
-        model = Job.from_orm(parser)
+        model = Job.model_validate(parser)
         ContentItemModelVerifier.run(
             model,
             expected_id="TestJob",
@@ -851,7 +851,7 @@ class TestParsersAndModels:
                 "owner": ContentType.INCIDENT_FIELD,
             },
         )
-        model = Layout.from_orm(parser)
+        model = Layout.model_validate(parser)
         ContentItemModelVerifier.run(
             model,
             expected_id="Cortex XDR Device Control Violations",
@@ -890,7 +890,7 @@ class TestParsersAndModels:
         layout = pack.create_layoutcontainer(
             "TestLayoutscontainer", load_json("layoutscontainer.json")
         )
-        model = Layout.from_orm(
+        model = Layout.model_validate(
             LayoutParser(Path(layout.path), list(MarketplaceVersions))
         )
         model.group = override_group
@@ -923,7 +923,7 @@ class TestParsersAndModels:
         list_path = Path(list_.path)
         parser = ListParser(list_path, list(MarketplaceVersions))
         assert not parser.relationships
-        model = ListObject.from_orm(parser)
+        model = ListObject.model_validate(parser)
         ContentItemModelVerifier.run(
             model,
             expected_id="checked integrations",
@@ -966,7 +966,7 @@ class TestParsersAndModels:
                 "DevSecOps Repository Organization": ContentType.INCIDENT_FIELD,
             },
         )
-        model = Mapper.from_orm(parser)
+        model = Mapper.model_validate(parser)
         ContentItemModelVerifier.run(
             model,
             expected_id="GitHub Mapper",
@@ -1009,7 +1009,7 @@ class TestParsersAndModels:
                 "Azure DevOps": ContentType.INCIDENT_TYPE,
             },
         )
-        model = Mapper.from_orm(parser)
+        model = Mapper.model_validate(parser)
         ContentItemModelVerifier.run(
             model,
             expected_id="Azure DevOps Outgoing Mapper",
@@ -1046,7 +1046,7 @@ class TestParsersAndModels:
         modeling_rule_path = Path(modeling_rule.path)
         parser = ModelingRuleParser(modeling_rule_path, list(MarketplaceVersions))
         assert not parser.relationships
-        model = ModelingRule.from_orm(parser)
+        model = ModelingRule.model_validate(parser)
         ContentItemModelVerifier.run(
             model,
             expected_id="duo_modeling_rule",
@@ -1078,7 +1078,7 @@ class TestParsersAndModels:
         parsing_rule_path = Path(parsing_rule.path)
         parser = ParsingRuleParser(parsing_rule_path, list(MarketplaceVersions))
         assert not parser.relationships
-        model = ParsingRule.from_orm(parser)
+        model = ParsingRule.model_validate(parser)
         ContentItemModelVerifier.run(
             model,
             expected_id="_parsing_rule_id",
@@ -1114,7 +1114,7 @@ class TestParsersAndModels:
                 "DeleteContext": ContentType.SCRIPT,
             },
         )
-        model = Playbook.from_orm(parser)
+        model = Playbook.model_validate(parser)
         ContentItemModelVerifier.run(
             model,
             expected_id="sample",
@@ -1150,7 +1150,7 @@ class TestParsersAndModels:
                 "ProofpointTapTopClickers": ContentType.SCRIPT,
             },
         )
-        model = Report.from_orm(parser)
+        model = Report.model_validate(parser)
         ContentItemModelVerifier.run(
             model,
             expected_id="ProofpointTAPWeeklyReport",
@@ -1184,7 +1184,7 @@ class TestParsersAndModels:
             parser.relationships,
             commands_or_scripts_executions=["dummy-command"],
         )
-        model = Script.from_orm(parser)
+        model = Script.model_validate(parser)
         ContentItemModelVerifier.run(
             model,
             expected_id="sample_script",
@@ -1227,7 +1227,7 @@ class TestParsersAndModels:
                 "DeleteContext": ContentType.SCRIPT,
             },
         )
-        model = TestPlaybook.from_orm(parser)
+        model = TestPlaybook.model_validate(parser)
         ContentItemModelVerifier.run(
             model,
             expected_id="sample",
@@ -1261,7 +1261,7 @@ class TestParsersAndModels:
                 "NGFW Scan": ContentType.PLAYBOOK,
             },
         )
-        model = Trigger.from_orm(parser)
+        model = Trigger.model_validate(parser)
         ContentItemModelVerifier.run(
             model,
             expected_id="73545719a1bdeba6ba91f6a16044c021",
@@ -1297,7 +1297,7 @@ class TestParsersAndModels:
                 "test_layout": ContentType.LAYOUT,
             },
         )
-        model = LayoutRule.from_orm(parser)
+        model = LayoutRule.model_validate(parser)
         ContentItemModelVerifier.run(
             model,
             expected_id="rule_test",
@@ -1330,7 +1330,7 @@ class TestParsersAndModels:
                 "FeedIntegrationErrorWidget": ContentType.SCRIPT,
             },
         )
-        model = Widget.from_orm(parser)
+        model = Widget.model_validate(parser)
         ContentItemModelVerifier.run(
             model,
             expected_id="Feed Integrations Errors",
@@ -1372,7 +1372,7 @@ class TestParsersAndModels:
         wizard_path = Path(wizard.path)
         parser = WizardParser(wizard_path, list(MarketplaceVersions))
         assert not parser.relationships
-        model = Wizard.from_orm(parser)
+        model = Wizard.model_validate(parser)
         ContentItemModelVerifier.run(
             model,
             expected_id="TestWizard",
@@ -1419,7 +1419,7 @@ class TestParsersAndModels:
         xsiam_dashboard_path = Path(xsiam_dashboard.path)
         parser = XSIAMDashboardParser(xsiam_dashboard_path, list(MarketplaceVersions))
         assert not parser.relationships
-        model = XSIAMDashboard.from_orm(parser)
+        model = XSIAMDashboard.model_validate(parser)
         ContentItemModelVerifier.run(
             model,
             expected_id="ce27311ce69c41b1b4a84c7888b34852",
@@ -1452,7 +1452,7 @@ class TestParsersAndModels:
         xsiam_report_path = Path(xsiam_report.path)
         parser = XSIAMReportParser(xsiam_report_path, list(MarketplaceVersions))
         assert not parser.relationships
-        model = XSIAMReport.from_orm(parser)
+        model = XSIAMReport.model_validate(parser)
         ContentItemModelVerifier.run(
             model,
             expected_id="sample",
@@ -1507,7 +1507,7 @@ class TestParsersAndModels:
             parser.relationships,
             expected_content_items=expected_content_items,
         )
-        model = PackModel.from_orm(parser)
+        model = PackModel.model_validate(parser)
         PackModelVerifier.run(
             model,
             expected_id="HelloWorld",
@@ -1552,7 +1552,7 @@ class TestParsersAndModels:
         pack2.pack_metadata.write_json(load_json("pack_metadata.json"))
         parser = RepositoryParser(Path(repo.path))
         parser.parse()
-        model = ContentDTO.from_orm(parser)
+        model = ContentDTO.model_validate(parser)
         pack_ids = {pack.object_id for pack in model.packs}
         assert pack_ids == {"sample1", "sample2"}
 

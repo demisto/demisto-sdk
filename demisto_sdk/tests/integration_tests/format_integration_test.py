@@ -2035,7 +2035,7 @@ def test_verify_deletion_from_conf_pack_format_with_deprecate_flag(
     )
     # Run
     runner = CliRunner()
-    with ChangeCWD(tmp_path):
+    with ChangeCWD(pack.repo_path):
         result = runner.invoke(
             main, [FORMAT_CMD, "-i", f"{pack_path}", "-d"], input="\n"
         )
@@ -2098,7 +2098,7 @@ def test_verify_deletion_from_conf_script_format_with_deprecate_flag(
     mocker.patch.object(BaseUpdate, "set_fromVersion")
     # Run
     runner = CliRunner()
-    with ChangeCWD(tmp_path):
+    with ChangeCWD(pack.repo_path):
         result = runner.invoke(
             main, [FORMAT_CMD, "-i", f"{script_path}", "-d"], input="\n"
         )

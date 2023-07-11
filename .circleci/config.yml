@@ -158,7 +158,7 @@ jobs:
               node demisto_sdk/commands/common/markdown_server/mdx-parse-server.js &
               node_pid=$!˝
 
-              poetry run pytest -n auto -v --cov=demisto_sdk --cov-report=html --junitxml=test-results/junit.xml $TEST_FILES
+              poetry run pytest -n 4 -v --cov=demisto_sdk --cov-report=html --junitxml=test-results/junit.xml $TEST_FILES
               kill $node_pid
         - store_test_results:
             path: test-results
@@ -221,7 +221,7 @@ jobs:
               mkdir integration-test-results
               
               echo $(echo '{"node_version": "'$(node --version)'","npm_list":'$(npm list --json)'}') > node_versions_info.json
-              poetry run pytest -v --junitxml=integration-test-results/junit.xml $TEST_FILES
+              poetry run pytest -n 4 -v --junitxml=integration-test-results/junit.xml $TEST_FILES
         - store_test_results:
             path: integration-test-results
         - store_artifacts:

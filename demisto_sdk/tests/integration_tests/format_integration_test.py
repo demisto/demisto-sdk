@@ -2030,6 +2030,9 @@ def test_verify_deletion_from_conf_pack_format_with_deprecate_flag(
     mocker.patch.object(BaseUpdate, "set_default_from_version", return_value=None)
     mocker.patch.object(logging.getLogger("demisto-sdk"), "debug")
     mocker.patch.object(BaseUpdate, "set_fromVersion")
+    mocker.patch(
+        "demisto_sdk.commands.common.tools.get_remote_file_from_api", return_value=None
+    )
     # Run
     runner = CliRunner()
     with ChangeCWD(tmp_path):

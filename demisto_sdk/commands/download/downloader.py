@@ -680,23 +680,29 @@ class Downloader:
 
     def verify_output_path(self) -> bool:
         """
-        Assure that the output path entered by the user is an actual pack path in content repository.
+        Assure that the output path entered by the user is inside a "Packs" folder.
 
         Returns:
             bool: True if the output path is valid, False otherwise.
         """
-        output_pack_path = self.output_pack_path
+        output_pack_path = Path(self.output_pack_path)
 
-        if not (
-            Path(output_pack_path).is_dir()
-            and Path(output_pack_path).absolute().parent.name == "Packs"
-        ):
-            logger.info(
-                f"[red]Path {output_pack_path} is not a valid Path pack. The designated output pack's path is"
-                f" of format ~/.../Packs/$PACK_NAME[/red]"
+        if not output_pack_path.is_dir():
+            logger.error(
+                f"Error: Path '{output_pack_path.absolute()}' does not exist, or isn't a directory."
             )
-            return False
-        return True
+
+        elif not output_pack_path.parent.name == "Packs":
+            logger.error(
+                f"Error: Path '{output_pack_path.absolute()}' is invalid.\n"
+                f"The provided output path for the download must be inside a 'Packs' folder. e.g., 'Packs/MyPack'."
+            )
+
+        # All validations passed
+        else:
+            return True
+
+        return False
 
     def build_pack_content(self) -> None:
         """

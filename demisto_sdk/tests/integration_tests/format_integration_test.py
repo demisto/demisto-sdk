@@ -2104,7 +2104,7 @@ def test_verify_deletion_from_conf_script_format_with_deprecate_flag(
         result = runner.invoke(
             main, [FORMAT_CMD, "-i", f"{script_path}", "-d"], input="\n"
         )
-        assert not result.exception
+    assert not result.exception
     conf_content = get_dict_from_file(conf_path)[0]
     assert conf_content.get("tests") == [
         {"integrations": ["TestIntegration"], "playbookID": "New Integration Test"},

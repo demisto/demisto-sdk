@@ -155,8 +155,10 @@ jobs:
               # Due to race conditions in the tests bringing up and down the node server, have the server available 
               # For all the tests. 
               node demisto_sdk/commands/common/markdown_server/mdx-parse-server.js &
-              node_pid=$!
-              poetry run pytest -v --cov=demisto_sdk --cov-report=html --junitxml=test-results/junit.xml $TEST_FILES
+              node_pid=$!˝
+
+              poetry add pytest-xdist
+              poetry run pytest -n auto -v --cov=demisto_sdk --cov-report=html --junitxml=test-results/junit.xml $TEST_FILES
               kill $node_pid
         - store_test_results:
             path: test-results

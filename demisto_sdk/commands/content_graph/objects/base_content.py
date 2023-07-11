@@ -17,8 +17,8 @@ from typing import (
 
 import demisto_client
 from packaging.version import Version
-from pydantic import BaseModel, DirectoryPath, Field
-from pydantic.main import ModelMetaclass
+from pydantic import BaseModel, ConfigDict, DirectoryPath, Field
+from pydantic._internal._model_construction import ModelMetaclass
 
 import demisto_sdk.commands.content_graph.parsers.content_item
 from demisto_sdk.commands.common.constants import (
@@ -62,7 +62,9 @@ class BaseContentMetaclass(ModelMetaclass):
         Returns:
             BaseContent: The model class.
         """
-        super_cls: BaseContentMetaclass = super().__new__(cls, name, bases, namespace)
+        super_cls: Type[BaseContentMetaclass] = super().__new__(
+            cls, name, bases, namespace
+        )
         # for type checking
         model_cls: Type["BaseContent"] = cast(Type["BaseContent"], super_cls)
         if content_type:
@@ -81,38 +83,34 @@ class BaseContent(ABC, BaseModel, metaclass=BaseContentMetaclass):
     relationships_data: Dict[RelationshipType, Set["RelationshipData"]] = Field(
         defaultdict(set), exclude=True, repr=False
     )
+    model_config = ConfigDict(
+        arbitrary_types_allowed=True,  # allows having custom classes for properties in model
+        from_attributes=True,
+        populate_by_name=True,
+    )
 
-    class Config:
-        arbitrary_types_allowed = (
-            True  # allows having custom classes for properties in model
-        )
-        orm_mode = True  # allows using from_orm() method
-        allow_population_by_field_name = True  # when loading from orm, ignores the aliases and uses the property name
+    # def __getstate__(self):
+    #     state = super().__getstate__()
+    #     """Needed to for the object to be pickled correctly (to use multiprocessing)"""
+    #     if "relationships_data" not in self.__dict__:
+    #         # if we don't have relationships, we can use the default __getstate__ method
+    #         return state
 
-    def __getstate__(self):
-        """Needed to for the object to be pickled correctly (to use multiprocessing)"""
-        if "relationships_data" not in self.__dict__:
-            # if we don't have relationships, we can use the default __getstate__ method
-            return super().__getstate__()
-
-        dict_copy = self.__dict__.copy()
-        # This avoids circular references when pickling store only the first level relationships.
-        relationships_data_copy = dict_copy["relationships_data"].copy()
-        dict_copy["relationships_data"] = defaultdict(set)
-        for _, relationship_data in relationships_data_copy.items():
-            for r in relationship_data:
-                # override the relationships_data of the content item to avoid circular references
-                r: RelationshipData  # type: ignore[no-redef]
-                r_copy = r.copy()
-                content_item_to_copy = r_copy.content_item_to.copy()
-                r_copy.content_item_to = content_item_to_copy
-                content_item_to_copy.relationships_data = defaultdict(set)
-                dict_copy["relationships_data"][r.relationship_type].add(r_copy)
-
-        return {
-            "__dict__": dict_copy,
-            "__fields_set__": self.__fields_set__,
-        }
+    #     dict_copy = self.__dict__.copy()
+    #     # This avoids circular references when pickling store only the first level relationships.
+    #     relationships_data_copy = dict_copy["relationships_data"].copy()
+    #     dict_copy["relationships_data"] = defaultdict(set)
+    #     for _, relationship_data in relationships_data_copy.items():
+    #         for r in relationship_data:
+    #             # override the relationships_data of the content item to avoid circular references
+    #             r: RelationshipData  # type: ignore[no-redef]
+    #             r_copy = r.copy()
+    #             content_item_to_copy = r_copy.content_item_to.copy()
+    #             r_copy.content_item_to = content_item_to_copy
+    #             content_item_to_copy.relationships_data = defaultdict(set)
+    #             dict_copy["relationships_data"][r.relationship_type].add(r_copy)
+    #     state["__dict__"] = dict_copy
+    #     return state
 
     @property
     def normalize_name(self) -> str:
@@ -128,7 +126,7 @@ class BaseContent(ABC, BaseModel, metaclass=BaseContentMetaclass):
             Dict[str, Any]: _description_
         """
 
-        json_dct = json.loads(self.json(exclude={"commands", "database_id"}))
+        json_dct = json.loads(self.model_dump_json(exclude={"commands", "database_id"}))
         if "path" in json_dct and Path(json_dct["path"]).is_absolute():
             json_dct["path"] = (Path(json_dct["path"]).relative_to(CONTENT_PATH)).as_posix()  # type: ignore
         json_dct["content_type"] = self.content_type
@@ -142,7 +140,7 @@ class BaseContent(ABC, BaseModel, metaclass=BaseContentMetaclass):
             path.is_dir() and path.parent.name == PACKS_FOLDER
         ):  # if the path given is a pack
             try:
-                return content_type_to_model[ContentType.PACK].from_orm(
+                return content_type_to_model[ContentType.PACK].model_validate(
                     PackParser(path)
                 )
             except InvalidContentItemException:
@@ -177,7 +175,7 @@ class BaseContent(ABC, BaseModel, metaclass=BaseContentMetaclass):
             logger.error(f"Could not parse content item from path: {path}")
             return None
         try:
-            return model.from_orm(content_item_parser)
+            return model.model_validate(content_item_parser)
         except Exception as e:
             logger.error(
                 f"Could not parse content item from path: {path}: {e}. Parser class: {content_item_parser}"

@@ -99,6 +99,8 @@ mapping:
     type: str
   openEnded:
     type: bool
+  template:
+    type: str
   marketplaces:
     type: seq
     sequence:

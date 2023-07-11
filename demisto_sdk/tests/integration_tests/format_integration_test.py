@@ -2029,7 +2029,7 @@ def test_verify_deletion_from_conf_pack_format_with_deprecate_flag(
     mocker.patch("demisto_sdk.commands.format.update_generic_yml.CONF_PATH", conf_path)
     mocker.patch.object(BaseUpdate, "set_default_from_version", return_value=None)
     mocker.patch.object(logging.getLogger("demisto-sdk"), "debug")
-
+    mocker.patch.object(BaseUpdate, "set_fromVersion")
     # Run
     runner = CliRunner()
     with ChangeCWD(tmp_path):
@@ -2088,7 +2088,7 @@ def test_verify_deletion_from_conf_script_format_with_deprecate_flag(
     mocker.patch("demisto_sdk.commands.format.update_generic_yml.CONF_PATH", conf_path)
     mocker.patch.object(BaseUpdate, "set_default_from_version", return_value=None)
     mocker.patch.object(logging.getLogger("demisto-sdk"), "debug")
-
+    mocker.patch.object(BaseUpdate, "set_fromVersion")
     # Run
     runner = CliRunner()
     with ChangeCWD(tmp_path):

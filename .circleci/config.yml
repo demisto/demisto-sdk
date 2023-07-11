@@ -158,7 +158,6 @@ jobs:
               node demisto_sdk/commands/common/markdown_server/mdx-parse-server.js &
               node_pid=$!˝
 
-              poetry add pytest-xdist
               poetry run pytest -n auto -v --cov=demisto_sdk --cov-report=html --junitxml=test-results/junit.xml $TEST_FILES
               kill $node_pid
         - store_test_results:

@@ -401,13 +401,12 @@ class Downloader:
             bool: True if fetch was successful, False otherwise
         """
         try:
-            verify = (
-                (not self.insecure) if self.insecure else None
-            )  # Set to None so that 'demisto_client' will use the environment variable 'DEMISTO_VERIFY_SSL'.
+            # Set to 'verify' to None so that 'demisto_client' will use the environment variable 'DEMISTO_VERIFY_SSL'.
+            verify = not self.insecure if self.insecure else None
             logger.info("Fetching custom content data from server...")
 
             self.client = demisto_client.configure(verify_ssl=verify)
-            api_response, _ = demisto_client.generic_request_func(
+            api_response, _, _ = demisto_client.generic_request_func(
                 self.client, "/content/bundle", "GET"
             )
             logger.debug(f"Received data bundle size (bytes): {len(api_response)}")

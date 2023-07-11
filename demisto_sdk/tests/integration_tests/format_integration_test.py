@@ -2034,13 +2034,14 @@ def test_verify_deletion_from_conf_pack_format_with_deprecate_flag(
         "demisto_sdk.commands.common.tools.get_remote_file_from_api", return_value=None
     )
     # Run
-    runner = CliRunner()
     with ChangeCWD(pack.repo_path):
-        try:
-            runner.invoke(main, [FORMAT_CMD, "-i", f"{pack_path}", "-d"], input="\n")
-        except Exception as error:
-            raise error
-    # assert not result.exception
+
+        runner = CliRunner(mix_stderr=False)
+        result = runner.invoke(
+            main, [FORMAT_CMD, "-i", f"{pack_path}", "-d"], input="\n"
+        )
+
+    assert not result.exception
     conf_content = get_dict_from_file(conf_path)[0]
     assert conf_content.get("tests") == [
         {
@@ -2098,8 +2099,8 @@ def test_verify_deletion_from_conf_script_format_with_deprecate_flag(
     mocker.patch.object(logging.getLogger("demisto-sdk"), "debug")
     mocker.patch.object(BaseUpdate, "set_fromVersion")
     # Run
-    runner = CliRunner()
     with ChangeCWD(pack.repo_path):
+        runner = CliRunner(mix_stderr=False)
         result = runner.invoke(
             main, [FORMAT_CMD, "-i", f"{script_path}", "-d"], input="\n"
         )

@@ -282,7 +282,7 @@ def test_integration_format_configuring_conf_json_no_interactive_positive(
 
 
 @pytest.mark.parametrize(
-    "source_path,destination_path,formatter,yml_title,file_type",
+    "source_path,destination_path,formatter,yml _title,file_type",
     YML_FILES_WITH_TEST_PLAYBOOKS,
 )
 def test_integration_format_configuring_conf_json_positive(
@@ -2026,7 +2026,7 @@ def test_verify_deletion_from_conf_pack_format_with_deprecate_flag(
 
     # Prepare mockers
     monkeypatch.setenv("COLUMNS", "1000")
-    mocker.patch("demisto_sdk.commands.format.update_generic_yml.CONF_PATH", conf_path)
+    mocker.patch("demisto_sdk.commands.format.update_generic_yml.CONF_PATH", conf_file)
     mocker.patch.object(BaseUpdate, "set_default_from_version", return_value=None)
     mocker.patch.object(logging.getLogger("demisto-sdk"), "debug")
     mocker.patch.object(BaseUpdate, "set_fromVersion")
@@ -2096,8 +2096,9 @@ def test_verify_deletion_from_conf_script_format_with_deprecate_flag(
 
     # Prepare mockers
     monkeypatch.setenv("COLUMNS", "1000")
-    mocker.patch("demisto_sdk.commands.format.update_generic_yml.CONF_PATH", conf_path)
-    mocker.patch("demisto_sdk.commands.format.update_generic_yml.CONF_PATH", conf_path)
+    mocker.patch(
+        "demisto_sdk.commands.format.update_generic_yml.CONF_PATH", conf_json_path
+    )
     mocker.patch.object(BaseUpdate, "set_default_from_version", return_value=None)
     mocker.patch.object(logging.getLogger("demisto-sdk"), "debug")
     mocker.patch.object(BaseUpdate, "set_fromVersion")

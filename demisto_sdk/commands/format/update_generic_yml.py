@@ -161,12 +161,13 @@ class BaseUpdateYML(BaseUpdate):
         self.copy_tests_from_old_file()
         if self.deprecate:
             if (
-                file_type == "integration"
-                or file_type == "playbook"
-                or file_type == "testplaybook"
+                self.source_file_type.value == "integration"
+                or self.source_file_type.value == "playbook"
+                or self.source_file_type.value == "script"
             ):
                 self.remove_from_conf_json(
-                    file_type, _get_file_id(file_type, self.data)
+                    self.source_file_type.value,
+                    _get_file_id(self.source_file_type.value, self.data),
                 )
             self.update_deprecate(file_type=file_type)
         self.sync_data_to_master()
@@ -278,7 +279,9 @@ class BaseUpdateYML(BaseUpdate):
         """
         related_test_playbook = self.data.get("tests", [])
         no_test_playbooks_explicitly = any(
-            test for test in related_test_playbook if "no test" in test.lower()
+            test
+            for test in related_test_playbook
+            if ("no test" in test.lower()) or ("no tests" in test.lower())
         )
         try:
             conf_json_content = self._load_conf_file()

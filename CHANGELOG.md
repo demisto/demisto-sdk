@@ -3,7 +3,7 @@
 * Improved memory efficiency in **update-content-graph** and **create-content-graph** commands.
 * Removed support for the `cve_id` name for the default-argument for **cve** reputation commands in **validate**. Now, only `cve` may be used for such commands.
 * Updated *Pydantic* to v2.
-* Added support for **format** with the `-d` flag to delete TestPlaybooks from `conf.json`.
+* Calling **format** with the `-d` flag now removes test playbooks testing the deprecated content from conf.json.
 
 ## 1.17.1
 * Added the `aliasTo` key to the Incident Field schema.

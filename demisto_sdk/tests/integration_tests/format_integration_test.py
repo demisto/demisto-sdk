@@ -1986,3 +1986,113 @@ class TestFormatWithoutAddTestsFlag:
             logger_info.call_args_list,
             message1,
         )
+
+
+def test_verify_deletion_from_conf_pack_format_with_deprecate_flag(
+    mocker, monkeypatch, repo, tmp_path: PosixPath
+):
+    """
+    Given
+    - A pack with an integration and a TPB defined in the yml.
+
+    When
+    - Executing format with -d flag.
+
+    Then
+    -  Ensure deletion from test.conf
+    """
+
+    # Prepare content
+    # Create pack with integration and with test playbook in the yml.
+    pack = repo.create_pack("TestPack")
+    integration = pack.create_integration("TestIntegration")
+    integration.yml.update({"tests": ["test_playbook"]})
+    pack_path = pack.path
+
+    # Prepare conf
+    test_conf_data = {
+        "tests": [
+            {"integrations": ["TestIntegration"], "playbookID": "New Integration Test"},
+            {"integrations": ["TestIntegration"], "playbookID": "test_playbook"},
+            {
+                "integrations": ["AnotherTestIntegration"],
+                "playbookID": "another_test_playbook",
+            },
+        ]
+    }
+    conf_file = tmp_path / "conf.json"
+    conf_path = str(conf_file)
+    conf_file.write_text(json.dumps(test_conf_data))
+
+    # Prepare mockers
+    monkeypatch.setenv("COLUMNS", "1000")
+    mocker.patch("demisto_sdk.commands.format.update_generic_yml.CONF_PATH", conf_path)
+    mocker.patch.object(BaseUpdate, "set_default_from_version", return_value=None)
+    mocker.patch.object(logging.getLogger("demisto-sdk"), "debug")
+
+    # Run
+    runner = CliRunner()
+    with ChangeCWD(tmp_path):
+        result = runner.invoke(main, [FORMAT_CMD, "-i", pack_path, "-d"], input="\n")
+    assert not result.exception
+    conf_content = get_dict_from_file(conf_path)[0]
+    assert conf_content.get("tests") == [
+        {
+            "integrations": ["AnotherTestIntegration"],
+            "playbookID": "another_test_playbook",
+        }
+    ]
+
+
+def test_verify_deletion_from_conf_script_format_with_deprecate_flag(
+    mocker, monkeypatch, repo, tmp_path: PosixPath
+):
+    """
+    Given
+    - A pack with a script and a TPB defined in the yml.
+
+    When
+    - Executing format with -d flag.
+
+    Then
+    -  Ensure deletion from test.conf
+    """
+
+    # Prepare content
+    # Create pack with script and with test playbook in the yml.
+    pack = repo.create_pack("TestPack")
+    script = pack.create_script("TestScript")
+    script.yml.update({"tests": ["test_playbook_for_script"]})
+    script_path = script.path
+
+    # Prepare conf
+    test_conf_data = {
+        "tests": [
+            {"integrations": ["TestIntegration"], "playbookID": "New Integration Test"},
+            {"scripts": ["TestScript"], "playbookID": "test_playbook_for_script"},
+            {
+                "scripts": ["TestScript", "AnotherTestScript"],
+                "playbookID": "test_playbook_for_script",
+            },
+        ]
+    }
+    conf_file = tmp_path / "conf.json"
+    conf_path = str(conf_file)
+    conf_file.write_text(json.dumps(test_conf_data))
+
+    # Prepare mockers
+    monkeypatch.setenv("COLUMNS", "1000")
+    mocker.patch("demisto_sdk.commands.format.update_generic_yml.CONF_PATH", conf_path)
+    mocker.patch.object(BaseUpdate, "set_default_from_version", return_value=None)
+    mocker.patch.object(logging.getLogger("demisto-sdk"), "debug")
+
+    # Run
+    runner = CliRunner()
+    with ChangeCWD(tmp_path):
+        result = runner.invoke(main, [FORMAT_CMD, "-i", script_path, "-d"], input="\n")
+    assert not result.exception
+    conf_content = get_dict_from_file(conf_path)[0]
+    assert conf_content.get("tests") == [
+        {"integrations": ["TestIntegration"], "playbookID": "New Integration Test"},
+        {"scripts": ["AnotherTestScript"], "playbookID": "test_playbook_for_script"},
+    ]

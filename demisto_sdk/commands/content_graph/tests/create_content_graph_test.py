@@ -960,7 +960,7 @@ def test_dump_pack_readme(mocker):
     with TemporaryDirectory() as artifact_dir:
         mocker.patch.object(os, "getenv", return_value=artifact_dir)
         mocker.patch(
-            "demisto_sdk.commands.content_graph.objects.pack.replace_readme_urls",
+            "demisto_sdk.commands.content_graph.objects.pack.replace_markdown_urls",
             side_effect=[return_value1, return_value2],
         )
         pack.replace_readme_urls_and_write_to_artifacts(

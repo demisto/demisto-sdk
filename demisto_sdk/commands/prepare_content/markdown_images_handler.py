@@ -14,22 +14,22 @@ from demisto_sdk.commands.common.constants import (
 from demisto_sdk.commands.common.logger import logger
 
 
-def replace_readme_urls(
-    pack_readme_path: Path, marketplace: MarketplaceVersions, pack_name: str
+def replace_markdown_urls(
+    markdown_path: Path, marketplace: MarketplaceVersions, pack_name: str
 ) -> dict:
     """
     This function goes over the pack readme.md file and by the marketplace value.
     replaces the images url to the appropriate images urls.
     Args:
-        pack_readme_path (Path): The path of the pack readme file
+        markdown_path (Path): The path of the pack readme file
         marketplace (MarketplaceVersions): The marketplace version
         pack_name (str): The pack name
     Returns:
         - A dict in the form of {pack_name: [images_data]} or empty dict if no images urls were found in the README
     """
     readme_images_storage_data = (
-        collect_images_from_readme_and_replace_with_storage_path(
-            pack_readme_path, pack_name, marketplace=marketplace
+        collect_images_from_markdown_and_replace_with_storage_path(
+            markdown_path, pack_name, marketplace=marketplace
         )
     )
     # no external image urls were found in the readme file
@@ -41,14 +41,14 @@ def replace_readme_urls(
     return readme_images_storage_data
 
 
-def collect_images_from_readme_and_replace_with_storage_path(
-    pack_readme_path: Path, pack_name: str, marketplace: MarketplaceVersions
+def collect_images_from_markdown_and_replace_with_storage_path(
+    markdown_path: Path, pack_name: str, marketplace: MarketplaceVersions
 ) -> dict:
     """
     Replaces inplace all images links in the pack README.md with their new gcs location
 
     Args:
-        pack_readme_path (str): A path to the pack README file.
+        markdown_path (str): A path to the pack README file.
         pack_name (str): A string of the pack name.
         marketplace (str): The marketplace this pack is going to be uploaded to.
 
@@ -74,7 +74,7 @@ def collect_images_from_readme_and_replace_with_storage_path(
 
     urls_list = []
 
-    with open(pack_readme_path, "r") as file:
+    with open(markdown_path, "r") as file:
         lines = file.readlines()
 
     for i, line in enumerate(lines):
@@ -100,7 +100,7 @@ def collect_images_from_readme_and_replace_with_storage_path(
                 }
             )
 
-    with open(pack_readme_path, "w") as file:
+    with open(markdown_path, "w") as file:
         file.writelines(lines)
 
     return {pack_name: urls_list}

@@ -10,7 +10,7 @@ from demisto_sdk.commands.common.constants import (
     MarketplaceVersions,
     MarketplaceVersionToMarketplaceName,
 )
-from demisto_sdk.commands.prepare_content import pack_readme_handler
+from demisto_sdk.commands.prepare_content import markdown_images_handler
 
 expected_urls_ret = {
     "test_pack": [
@@ -56,7 +56,7 @@ def test_collect_images_from_readme_and_replace_with_storage_path(
     with open(path_readme_to_replace_url, "w") as to_replace:
         to_replace.write(data)
 
-    ret = pack_readme_handler.collect_images_from_readme_and_replace_with_storage_path(
+    ret = markdown_images_handler.collect_images_from_markdown_and_replace_with_storage_path(
         pack_readme_path=path_readme_to_replace_url,
         pack_name="test_pack",
         marketplace=marketplace,
@@ -76,12 +76,12 @@ def test_replace_readme_urls(mocker):
     Given no urls were found in the pack readme return an empty dict.
     """
     mocker.patch.object(
-        pack_readme_handler,
-        "collect_images_from_readme_and_replace_with_storage_path",
+        markdown_images_handler,
+        "collect_images_from_markdown_and_replace_with_storage_path",
         return_value={},
     )
     assert (
-        pack_readme_handler.replace_readme_urls(
+        markdown_images_handler.replace_markdown_urls(
             Path("fake_path"), MarketplaceVersions.XSOAR, "test_pack"
         )
         == {}
@@ -107,7 +107,7 @@ def test_collect_images_from_readme_and_replace_with_storage_path_different_mark
             "![image](https://raw.githubusercontent.com/demisto/content/f808c78aa6c94a09450879c8702a1b7f023f1d4b/Packs/PrismaCloudCompute/doc_files/prisma_alert_raw_input.png)"
         )
         f.flush()
-        pack_readme_handler.collect_images_from_readme_and_replace_with_storage_path(
+        markdown_images_handler.collect_images_from_markdown_and_replace_with_storage_path(
             Path(f.name), "test_pack", marketplace
         )
         res = Path(f.name).read_text()

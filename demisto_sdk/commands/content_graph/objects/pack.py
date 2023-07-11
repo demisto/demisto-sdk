@@ -71,7 +71,9 @@ from demisto_sdk.commands.content_graph.objects.wizard import Wizard
 from demisto_sdk.commands.content_graph.objects.xdrc_template import XDRCTemplate
 from demisto_sdk.commands.content_graph.objects.xsiam_dashboard import XSIAMDashboard
 from demisto_sdk.commands.content_graph.objects.xsiam_report import XSIAMReport
-from demisto_sdk.commands.prepare_content.pack_readme_handler import replace_readme_urls
+from demisto_sdk.commands.prepare_content.markdown_images_handler import (
+    replace_markdown_urls,
+)
 from demisto_sdk.commands.upload.constants import (
     CONTENT_TYPES_EXCLUDED_FROM_UPLOAD,
     MULTIPLE_ZIPPED_PACKS_FILE_NAME,
@@ -350,7 +352,7 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: i
         self.replace_readme_urls_and_write_to_artifacts(path, marketplace)
 
     def replace_readme_urls_and_write_to_artifacts(self, path, marketplace):
-        pack_readme_images_data: dict = replace_readme_urls(
+        pack_readme_images_data: dict = replace_markdown_urls(
             path, marketplace, self.object_id
         )
 

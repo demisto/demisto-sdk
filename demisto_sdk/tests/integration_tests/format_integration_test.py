@@ -2082,9 +2082,11 @@ def test_verify_deletion_from_conf_script_format_with_deprecate_flag(
             },
         ]
     }
-    conf_file = tmp_path / "conf.json"
-    conf_path = str(conf_file)
-    conf_file.write_text(json.dumps(test_conf_data))
+    conf_json_path = tmp_path / "conf.json"
+    conf_path = str(conf_json_path)
+    with open(conf_json_path, "w") as file:
+        json.dump(test_conf_data, file, indent=4)
+    # conf_file.write_text(json.dumps(test_conf_data))
 
     # Prepare mockers
     monkeypatch.setenv("COLUMNS", "1000")

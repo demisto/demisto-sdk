@@ -282,7 +282,7 @@ def test_integration_format_configuring_conf_json_no_interactive_positive(
 
 
 @pytest.mark.parametrize(
-    "source_path,destination_path,formatter,yml _title,file_type",
+    "source_path,destination_path,formatter,yml_title,file_type",
     YML_FILES_WITH_TEST_PLAYBOOKS,
 )
 def test_integration_format_configuring_conf_json_positive(

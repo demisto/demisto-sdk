@@ -3,6 +3,7 @@ import re
 from subprocess import PIPE, Popen
 
 from demisto_sdk.commands.common.handlers import JSON_Handler
+from demisto_sdk.commands.test_content.constants import SSH_USER
 
 json = JSON_Handler()
 
@@ -24,7 +25,6 @@ class Docker:
     DEFAULT_CONTAINER_PIDS_USAGE = 3
     DEFAULT_PWSH_CONTAINER_MEMORY_USAGE = 140
     DEFAULT_PWSH_CONTAINER_PIDS_USAGE = 24
-    REMOTE_MACHINE_USER = "ec2-user"
     SSH_OPTIONS = "ssh -o StrictHostKeyChecking=no"
 
     @classmethod
@@ -40,7 +40,7 @@ class Docker:
             str: full ssh command
 
         """
-        remote_server = f"{cls.REMOTE_MACHINE_USER}@{server_ip}"
+        remote_server = f"{SSH_USER}@{server_ip}"
         ssh_prefix = f"{cls.SSH_OPTIONS} {remote_server}"
         if force_tty:
             ssh_prefix += " -t"
@@ -239,6 +239,7 @@ class Docker:
             list: List of dictionaries with parsed container memory statistics.
         """
         cmd = cls._build_stats_cmd(server_ip, docker_images)
+        logging_module.info(f"docker stats command: {cmd}")
         stdout, stderr = cls.run_shell_command(cmd)
 
         if stderr:

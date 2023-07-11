@@ -184,7 +184,20 @@ class Pack:
         self.readme = TextBased(self._pack_path, "README.md")
 
         self.pack_metadata = JSONBased(self._pack_path, "pack_metadata", "")
-
+        self.pack_metadata.update(
+            {
+                "name": self.name,
+                "description": "here be description",
+                "support": "xsoar",
+                "url": "https://paloaltonetworks.com",
+                "author": "Cortex XSOAR",
+                "currentVersion": "1.0.0",
+                "tags": [],
+                "categories": [],
+                "useCases": [],
+                "keywords": [],
+            }
+        )
         self.author_image = File(
             tmp_path=self._pack_path / "Author_image.png", repo_path=repo.path
         )
@@ -251,6 +264,7 @@ class Pack:
         image: bytes = b"",
         docker_image: Optional[str] = None,
         create_unified=False,
+        skip_prepare=[],
     ) -> Script:
         if name is None:
             name = f"script{len(self.scripts)}"
@@ -263,6 +277,7 @@ class Pack:
                 "subtype": "python3",
                 "dockerimage": docker_image,
                 "script": "-",
+                "skipprepare": skip_prepare,
             }
         script = Script(
             self._scripts_path, name, self._repo, create_unified=create_unified
@@ -435,7 +450,9 @@ class Pack:
         self.layouts.append(layout)
         return layout
 
-    def create_layoutcontainer(self, name, content: dict = None) -> JSONBased:
+    def create_layoutcontainer(self, name, content: Optional[dict] = None) -> JSONBased:
+        if not content:
+            content = {"group": "default"}
         prefix = "layoutscontainer"
         layoutcontainer = self._create_json_based(
             name, prefix, content, dir_path=self._layout_path

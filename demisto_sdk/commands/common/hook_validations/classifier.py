@@ -246,7 +246,7 @@ class ClassifierValidator(ContentEntityValidator):
         invalid_inc_fields_list = []
         mapper = self.current_file.get("mapping", {})
         for incident_type, mapping in mapper.items():
-            incident_fields = mapping.get("internalMapping", {})
+            incident_fields = mapping.get("internalMapping") or {}
 
             for inc_name, _ in incident_fields.items():
                 if (

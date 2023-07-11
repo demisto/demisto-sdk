@@ -20,9 +20,9 @@ class XDRCTemplate(ContentItemXSIAM, content_type=ContentType.XDRC_TEMPLATE):
 
     def prepare_for_upload(
         self,
-        marketplace: MarketplaceVersions = MarketplaceVersions.MarketplaceV2,
+        current_marketplace: MarketplaceVersions = MarketplaceVersions.MarketplaceV2,
         **kwargs
     ) -> dict:
-        data = super().prepare_for_upload(marketplace)
-        data = XDRCTemplateUnifier.unify(self.path, data, marketplace)
+        data = super().prepare_for_upload(current_marketplace)
+        data = XDRCTemplateUnifier.unify(self.path, data, current_marketplace)
         return data

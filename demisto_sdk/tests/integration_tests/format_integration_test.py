@@ -2036,7 +2036,9 @@ def test_verify_deletion_from_conf_pack_format_with_deprecate_flag(
     # Run
     runner = CliRunner()
     with ChangeCWD(tmp_path):
-        result = runner.invoke(main, [FORMAT_CMD, "-i", pack_path, "-d"], input="\n")
+        result = runner.invoke(
+            main, [FORMAT_CMD, "-i", f"{pack_path}", "-d"], input="\n"
+        )
         assert not result.exception
     conf_content = get_dict_from_file(conf_path)[0]
     assert conf_content.get("tests") == [
@@ -2097,62 +2099,12 @@ def test_verify_deletion_from_conf_script_format_with_deprecate_flag(
     # Run
     runner = CliRunner()
     with ChangeCWD(tmp_path):
-        result = runner.invoke(main, [FORMAT_CMD, "-i", script_path, "-d"], input="\n")
+        result = runner.invoke(
+            main, [FORMAT_CMD, "-i", f"{script_path}", "-d"], input="\n"
+        )
         assert not result.exception
     conf_content = get_dict_from_file(conf_path)[0]
     assert conf_content.get("tests") == [
         {"integrations": ["TestIntegration"], "playbookID": "New Integration Test"},
         {"scripts": ["AnotherTestScript"], "playbookID": "test_playbook_for_script"},
     ]
-
-
-@pytest.mark.parametrize(
-    "source_path,destination_path,formatter,yml_title,file_type",
-    YML_FILES_WITH_TEST_PLAYBOOKS,
-)
-def test_integration_format_configuring_conf_json_negative2(
-    mocker,
-    tmp_path: PosixPath,
-    source_path: str,
-    destination_path: str,
-    formatter: BaseUpdateYML,
-    yml_title: str,
-    file_type: str,
-):
-    """
-    Given
-    - A yml file (integration, playbook or script) with no tests playbooks configured that are not configured
-        in conf.json
-
-    When
-    - Entering 'N' into the prompt message that asks the user if he wants to configure those test playbooks into
-        conf.json
-
-    Then
-    -  Ensure no exception is raised
-    -  Ensure conf.json is not modified
-    """
-    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
-    # Setting up conf.json
-    conf_json_path = tmp_path / "conf.json"
-    mocker.patch(
-        "demisto_sdk.commands.format.update_generic_yml.CONF_PATH", conf_json_path
-    )
-
-    with open(conf_json_path, "w") as file:
-        json.dump(CONF_JSON_ORIGINAL_CONTENT, file, indent=4)
-
-    saved_file_path = str(tmp_path / os.path.basename(destination_path))
-    runner = CliRunner()
-    # Running format in the first time
-    result = runner.invoke(
-        main, [FORMAT_CMD, "-i", source_path, "-o", saved_file_path], input="N"
-    )
-    assert not result.exception
-    assert str_in_call_args_list(
-        logger_info.call_args_list,
-        "Skipping test playbooks configuration",
-    )
-    with open(conf_json_path) as data_file:
-        conf_json_content = json.load(data_file)
-        assert conf_json_content == CONF_JSON_ORIGINAL_CONTENT

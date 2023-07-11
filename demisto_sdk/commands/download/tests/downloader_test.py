@@ -1163,7 +1163,7 @@ class TestVerifyPackPath:
         downloader = Downloader(
             output=f"{env.CONTENT_BASE_PATH}/{output_path}", input="", regex=""
         )
-        assert downloader.verify_output_pack_is_pack() is valid_ans
+        assert downloader.verify_output_path() is valid_ans
 
 
 @pytest.mark.parametrize(

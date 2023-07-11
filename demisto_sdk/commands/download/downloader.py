@@ -202,6 +202,9 @@ class Downloader:
         Manages all download command flows
         :return The exit code of each flow
         """
+        if not self.verify_output_path():
+            return 1
+
         if not self.verify_flags():
             return 1
 
@@ -217,9 +220,6 @@ class Downloader:
         self.handle_init_flag()
         self.handle_all_custom_content_flag()
         self.handle_regex_flag()
-
-        if not self.verify_output_pack_is_pack():
-            return 1
 
         self.build_pack_content()
         self.build_custom_content() if not self.download_system_item else self.build_system_content()
@@ -678,10 +678,12 @@ class Downloader:
             if folder_path.is_dir() and not any(folder_path.iterdir()):
                 folder_path.rmdir()
 
-    def verify_output_pack_is_pack(self) -> bool:
+    def verify_output_path(self) -> bool:
         """
-        Verifies the output path entered by the user is an actual pack path in content repository.
-        :return: The verification result
+        Assure that the output path entered by the user is an actual pack path in content repository.
+
+        Returns:
+            bool: True if the output path is valid, False otherwise.
         """
         output_pack_path = self.output_pack_path
 

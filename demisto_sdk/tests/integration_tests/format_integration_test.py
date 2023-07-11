@@ -2001,6 +2001,15 @@ def test_verify_deletion_from_conf_pack_format_with_deprecate_flag(
     Then
     -  Ensure deletion from test.conf
     """
+    # Prepare mockers
+    monkeypatch.setenv("COLUMNS", "1000")
+    mocker.patch.object(BaseUpdate, "set_default_from_version", return_value=None)
+    mocker.patch.object(logging.getLogger("demisto-sdk"), "debug")
+    mocker.patch.object(BaseUpdate, "set_fromVersion")
+    mocker.patch.object(BaseUpdateYML, "_save_to_conf_json", return_value=None)
+    mocker.patch(
+        "demisto_sdk.commands.common.tools.get_remote_file_from_api", return_value=None
+    )
 
     # Prepare content
     # Create pack with integration and with test playbook in the yml.
@@ -2023,17 +2032,8 @@ def test_verify_deletion_from_conf_pack_format_with_deprecate_flag(
     conf_file = tmp_path / "conf.json"
     conf_path = str(conf_file)
     conf_file.write_text(json.dumps(test_conf_data))
-
-    # Prepare mockers
-    monkeypatch.setenv("COLUMNS", "1000")
     mocker.patch("demisto_sdk.commands.format.update_generic_yml.CONF_PATH", conf_file)
-    mocker.patch.object(BaseUpdate, "set_default_from_version", return_value=None)
-    mocker.patch.object(logging.getLogger("demisto-sdk"), "debug")
-    mocker.patch.object(BaseUpdate, "set_fromVersion")
-    mocker.patch.object(BaseUpdateYML, "_save_to_conf_json", return_value=None)
-    mocker.patch(
-        "demisto_sdk.commands.common.tools.get_remote_file_from_api", return_value=None
-    )
+
     # Run
     with ChangeCWD(pack.repo_path):
 
@@ -2069,6 +2069,11 @@ def test_verify_deletion_from_conf_script_format_with_deprecate_flag(
     Then
     -  Ensure deletion from test.conf
     """
+    # Prepare mockers
+    monkeypatch.setenv("COLUMNS", "1000")
+    mocker.patch.object(BaseUpdate, "set_default_from_version", return_value=None)
+    mocker.patch.object(logging.getLogger("demisto-sdk"), "debug")
+    mocker.patch.object(BaseUpdate, "set_fromVersion")
 
     # Prepare content
     # Create pack with script and with test playbook in the yml.
@@ -2092,16 +2097,11 @@ def test_verify_deletion_from_conf_script_format_with_deprecate_flag(
     conf_path = str(conf_json_path)
     with open(conf_json_path, "w") as file:
         json.dump(test_conf_data, file, indent=4)
-    # conf_file.write_text(json.dumps(test_conf_data))
-
-    # Prepare mockers
-    monkeypatch.setenv("COLUMNS", "1000")
     mocker.patch(
         "demisto_sdk.commands.format.update_generic_yml.CONF_PATH", conf_json_path
     )
-    mocker.patch.object(BaseUpdate, "set_default_from_version", return_value=None)
-    mocker.patch.object(logging.getLogger("demisto-sdk"), "debug")
-    mocker.patch.object(BaseUpdate, "set_fromVersion")
+    # conf_file.write_text(json.dumps(test_conf_data))
+
     # Run
     with ChangeCWD(pack.repo_path):
         runner = CliRunner(mix_stderr=False)

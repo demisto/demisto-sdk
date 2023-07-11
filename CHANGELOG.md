@@ -5,6 +5,7 @@
 * Improved memory efficiency in **update-content-graph** and **create-content-graph** commands.
 * Removed support for the `cve_id` name for the default-argument for **cve** reputation commands in **validate**. Now, only `cve` may be used for such commands.
 * Fixed an issue where **zip_packs** failed uploading content.
+* Added `tenant_timezone` handling to the **modeling-rules init** command, allowing usage with tenants in various timezones.
 * decreased the timeout to check if the dataset exists.
 
 ## 1.17.1

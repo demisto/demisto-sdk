@@ -1,3 +1,4 @@
+from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, Iterator, List, Optional
 
@@ -14,11 +15,17 @@ from demisto_sdk.commands.content_graph.common import (
 from demisto_sdk.commands.content_graph.parsers.base_content import BaseContentParser
 from demisto_sdk.commands.content_graph.parsers.content_item import (
     ContentItemParser,
+    InvalidContentItemException,
     NotAContentItemException,
 )
 from demisto_sdk.commands.content_graph.parsers.content_items_list import (
     ContentItemsList,
 )
+
+DEFAULT_MARKETPLACES = [
+    MarketplaceVersions.XSOAR,
+    MarketplaceVersions.MarketplaceV2,
+]
 
 
 class PackContentItems:
@@ -62,28 +69,34 @@ class PackContentItems:
         self.xsiam_report = ContentItemsList(content_type=ContentType.XSIAM_REPORT)
         self.xdrc_template = ContentItemsList(content_type=ContentType.XDRC_TEMPLATE)
         self.layout_rule = ContentItemsList(content_type=ContentType.LAYOUT_RULE)
+        self.preprocess_rule = ContentItemsList(
+            content_type=ContentType.PREPROCESS_RULE
+        )
 
     def iter_lists(self) -> Iterator[ContentItemsList]:
         yield from vars(self).values()
 
     def append(self, obj: ContentItemParser) -> None:
-        """Appends a content item by iterating the content item lists
-        until the correct list is found, and appends to it.
+        """
+        Appends the object to the list with the same content_type.
 
         Args:
-            obj (ContentItemParser): The conten item to append.
+            obj (ContentItemParser): The content item to append.
 
         Raises:
             NotAContentItemException: If did not find any matching content item list.
         """
-        for content_item_list in self.iter_lists():
-            try:
-                content_item_list.append(obj)
-                break
-            except TypeError:
-                continue
-        else:
-            raise NotAContentItemException
+        for item_list in self.iter_lists():
+            if item_list.content_type == obj.content_type:
+                item_list.append(obj)
+                return
+
+        raise NotAContentItemException(
+            f"Could not find list of {obj.content_type} items"
+        )
+
+
+NOW = datetime.now().strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
 class PackMetadataParser:
@@ -92,8 +105,8 @@ class PackMetadataParser:
     def __init__(self, metadata: Dict[str, Any]) -> None:
         self.name: str = metadata["name"]
         self.description: str = metadata["description"]
-        self.created: str = metadata.get("created", "")
-        self.updated: str = metadata.get("updated", "")
+        self.created: str = metadata.get("created", NOW)
+        self.updated: str = metadata.get("updated", NOW)
         self.support: str = metadata["support"]
         self.email: str = metadata.get("email", "")
         self.url: str = metadata["url"]
@@ -113,8 +126,8 @@ class PackMetadataParser:
         self.vendor_id: Optional[str] = metadata.get("vendorId")
         self.vendor_name: Optional[str] = metadata.get("vendorName")
         self.preview_only: Optional[bool] = metadata.get("previewOnly")
-        self.marketplaces: List[MarketplaceVersions] = metadata.get(
-            "marketplaces", list(MarketplaceVersions)
+        self.marketplaces: List[MarketplaceVersions] = (
+            metadata.get("marketplaces") or DEFAULT_MARKETPLACES
         )
         self.excluded_dependencies: List[str] = metadata.get("excludedDependencies", [])
 
@@ -137,7 +150,12 @@ class PackParser(BaseContentParser, PackMetadataParser):
             path (Path): The pack path.
         """
         BaseContentParser.__init__(self, path)
-        metadata = get_json(path / PACK_METADATA_FILENAME)
+        try:
+            metadata = get_json(path / PACK_METADATA_FILENAME)
+        except FileNotFoundError:
+            raise InvalidContentItemException(
+                f"{PACK_METADATA_FILENAME} not found in pack in {path=}"
+            )
         PackMetadataParser.__init__(self, metadata)
         self.content_items: PackContentItems = PackContentItems()
         self.relationships: Relationships = Relationships()
@@ -178,9 +196,15 @@ class PackParser(BaseContentParser, PackMetadataParser):
         Args:
             content_item_path (Path): The content item path.
         """
-        if content_item := ContentItemParser.from_path(
-            content_item_path, self.marketplaces
-        ):
+        try:
+            content_item = ContentItemParser.from_path(
+                content_item_path, self.marketplaces
+            )
             content_item.add_to_pack(self.object_id)
             self.content_items.append(content_item)
             self.relationships.update(content_item.relationships)
+        except NotAContentItemException:
+            logger.debug(f"Skipping {content_item_path} - not a content item")
+        except InvalidContentItemException:
+            logger.error(f"{content_item_path} - invalid content item")
+            raise

@@ -22,23 +22,30 @@ from demisto_sdk.commands.common.docker_helper import get_python_version
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
 from demisto_sdk.commands.common.logger import logger
-from demisto_sdk.commands.common.tools import get_last_remote_release_version
+from demisto_sdk.commands.common.tools import (
+    get_file_or_remote,
+    get_last_remote_release_version,
+    str2bool,
+)
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.content_graph.objects.integration_script import (
     IntegrationScript,
 )
 from demisto_sdk.commands.pre_commit.hooks.mypy import MypyHook
+from demisto_sdk.commands.pre_commit.hooks.pep484 import PEP484Hook
 from demisto_sdk.commands.pre_commit.hooks.pycln import PyclnHook
 from demisto_sdk.commands.pre_commit.hooks.ruff import RuffHook
+from demisto_sdk.commands.pre_commit.hooks.validate_format import ValidateFormatHook
 
 yaml = YAML_Handler()
 json = JSON_Handler()
 
-IS_GITHUB_ACTIONS = os.getenv("GITHUB_ACTIONS", False)
+IS_GITHUB_ACTIONS = str2bool(os.getenv("GITHUB_ACTIONS"))
 
-PRECOMMIT_TEMPLATE_PATH = Path(__file__).parent / ".pre-commit-config_template.yaml"
+PRECOMMIT_TEMPLATE_PATH = CONTENT_PATH / ".pre-commit-config_template.yaml"
 PRECOMMIT_PATH = CONTENT_PATH / ".pre-commit-config-content.yaml"
 
+# UNSKIP no-implicit-optional once mypy is updated
 SKIPPED_HOOKS = {"format", "validate", "secrets"}
 
 INTEGRATION_SCRIPT_REGEX = re.compile(r"^Packs/.*/(?:Integrations|Scripts)/.*.yml$")
@@ -48,6 +55,7 @@ INTEGRATION_SCRIPT_REGEX = re.compile(r"^Packs/.*/(?:Integrations|Scripts)/.*.ym
 class PreCommitRunner:
     """This class is responsible of running pre-commit hooks."""
 
+    input_files: Optional[Iterable[Path]]
     python_version_to_files: Dict[str, Set[Path]]
     demisto_sdk_commit_hash: str
 
@@ -58,14 +66,17 @@ class PreCommitRunner:
         self.all_files = set(
             itertools.chain.from_iterable(self.python_version_to_files.values())
         )
-        with open(PRECOMMIT_TEMPLATE_PATH) as f:
-            self.precommit_template = yaml.load(f)
-
+        self.precommit_template = get_file_or_remote(PRECOMMIT_TEMPLATE_PATH)
+        if not isinstance(self.precommit_template, dict):
+            raise TypeError(
+                f"Pre-commit template in {PRECOMMIT_TEMPLATE_PATH} is not a dictionary."
+            )
         # changes the demisto-sdk revision to the latest release version (or the debug commit hash)
         # to debug, modify the DEMISTO_SDK_COMMIT_HASH_DEBUG variable to your demisto-sdk commit hash
         self._get_repos(self.precommit_template)[
             "https://github.com/demisto/demisto-sdk"
         ]["rev"] = self.demisto_sdk_commit_hash
+        self.hooks = self._get_hooks(self.precommit_template)
 
     @staticmethod
     def _get_repos(pre_commit_config: dict) -> dict:
@@ -80,17 +91,22 @@ class PreCommitRunner:
         for repo in pre_commit_config["repos"]:
             for hook in repo["hooks"]:
                 hooks[hook["id"]] = hook
+                # if the hook has a skip key, we add it to the SKIPPED_HOOKS set
+                if hook.pop("skip", None):
+                    SKIPPED_HOOKS.add(hook["id"])
         return hooks
 
     def prepare_hooks(
         self,
-        pre_commit_config: dict,
+        hooks: dict,
         python_version: str,
     ) -> None:
-        hooks = self._get_hooks(pre_commit_config)
         PyclnHook(hooks["pycln"]).prepare_hook(PYTHONPATH)
         RuffHook(hooks["ruff"]).prepare_hook(python_version, IS_GITHUB_ACTIONS)
         MypyHook(hooks["mypy"]).prepare_hook(python_version)
+        PEP484Hook(hooks["no-implicit-optional"]).prepare_hook(python_version)
+        ValidateFormatHook(hooks["validate"]).prepare_hook(self.input_files)
+        ValidateFormatHook(hooks["format"]).prepare_hook(self.input_files)
 
     def run(
         self,
@@ -106,9 +122,6 @@ class PreCommitRunner:
         precommit_env = os.environ.copy()
         skipped_hooks: set = SKIPPED_HOOKS
         skipped_hooks |= set(skip_hooks or [])
-        if os.getenv("CI"):
-            # No reason to update the docker-image on CI, as we don't commit from the CI
-            skipped_hooks.add("update-docker-image")
         if not unit_test:
             skipped_hooks.add("run-unit-tests")
         if validate and "validate" in skipped_hooks:
@@ -123,10 +136,15 @@ class PreCommitRunner:
         precommit_env["MYPYPATH"] = ":".join(
             str(path) for path in sorted(PYTHONPATH) if "site-packages" not in str(path)
         )
+        precommit_env["DEMISTO_SDK_CONTENT_PATH"] = str(CONTENT_PATH)
         for python_version, changed_files in self.python_version_to_files.items():
             precommit_config = deepcopy(self.precommit_template)
+            assert isinstance(precommit_config, dict)
+            changed_files_string = ", ".join(
+                sorted((str(changed_path) for changed_path in changed_files))
+            )
             logger.info(
-                f"Running pre-commit for {changed_files} with python version {python_version}"
+                f"Running pre-commit with Python {python_version} on {changed_files_string}"
             )
             if python_version.startswith("2"):
                 with open(PRECOMMIT_PATH, "w") as f:
@@ -149,7 +167,7 @@ class PreCommitRunner:
                     if response.returncode:
                         ret_val = response.returncode
                 continue
-            self.prepare_hooks(precommit_config, python_version)
+            self.prepare_hooks(self._get_hooks(precommit_config), python_version)
             with open(PRECOMMIT_PATH, "w") as f:
                 yaml.dump(precommit_config, f)
             # use chunks because OS does not support such large comments
@@ -219,6 +237,12 @@ def group_by_python_version(files: Set[Path]) -> Dict[str, set]:
             integration_script, IntegrationScript
         ):
             continue
+        if integration_script.deprecated:
+            logger.info(
+                f"Skipping pre-commit on deprecated integration {integration_script.name}"
+            )
+            continue
+
         code_file_path = integration_script.path.parent
         python_version = get_python_version(integration_script.docker_image)
         python_version_string = f"{python_version.major}.{python_version.minor}"
@@ -270,9 +294,15 @@ def pre_commit_manager(
         git_diff = True
 
     files_to_run = preprocess_files(input_files, staged_only, git_diff, all_files)
+    files_to_run_string = ", ".join(
+        sorted((str(changed_path) for changed_path in files_to_run))
+    )
+    logger.info(f"Running pre-commit on {files_to_run_string}")
     if not sdk_ref:
         sdk_ref = f"v{get_last_remote_release_version()}"
-    pre_commit_runner = PreCommitRunner(group_by_python_version(files_to_run), sdk_ref)
+    pre_commit_runner = PreCommitRunner(
+        input_files, group_by_python_version(files_to_run), sdk_ref
+    )
     return pre_commit_runner.run(
         unit_test,
         skip_hooks,

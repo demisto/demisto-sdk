@@ -16,6 +16,7 @@ from demisto_sdk.commands.common.constants import (
     IGNORED_PACK_NAMES,
     RN_CONTENT_ENTITY_WITH_STARS,
     RN_HEADER_BY_FILE_TYPE,
+    SIEM_ONLY_ENTITIES,
     XSIAM_DASHBOARDS_DIR,
     XSIAM_REPORTS_DIR,
     FileType,
@@ -742,9 +743,11 @@ class UpdateRN:
             if is_new_file:
                 rn_desc = f"##### New: {content_name}\n\n"
                 if desc:
-                    rn_desc += f"- {desc}"
-                if from_version:
+                    rn_desc += f"- New: {desc}"
+                if from_version and _type not in SIEM_ONLY_ENTITIES:
                     rn_desc += f" (Available from Cortex XSOAR {from_version})."
+                elif _type in SIEM_ONLY_ENTITIES:
+                    rn_desc += "(Available from Cortex XSIAM %%XSIAM_VERSION%%)."
                 rn_desc += "\n"
             else:
                 rn_desc = f"##### {content_name}\n\n"

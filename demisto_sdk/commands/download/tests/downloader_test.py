@@ -1,3 +1,4 @@
+import builtins
 import io
 import logging
 import os
@@ -8,7 +9,9 @@ from pathlib import Path
 from typing import Callable, Tuple
 from unittest.mock import patch
 
+import demisto_client
 import pytest
+from demisto_client.demisto_api.rest import ApiException
 
 from demisto_sdk.commands.common.constants import (
     CLASSIFIERS_DIR,
@@ -585,6 +588,25 @@ class TestFlagHandlers:
             custom_content_names = [cco["name"] for cco in env.CUSTOM_CONTENT]
             assert ordered(custom_content_names) == ordered(downloader.input_files)
 
+    def test_handle_init_flag(self, tmp_path, mocker):
+        env = Environment(tmp_path)
+        mock = mocker.patch.object(
+            builtins, "input", side_effect=("test_pack_name", "n", "n")
+        )
+
+        downloader = Downloader(env.CONTENT_BASE_PATH, "")
+        downloader.init = True
+        downloader.handle_init_flag()
+
+        assert mock.call_count == 3
+        assert downloader.output_pack_path == str(
+            Path(env.CONTENT_BASE_PATH) / "Packs" / "test_pack_name"
+        )
+        assert Path(downloader.output_pack_path, "pack_metadata.json").exists()
+        assert not Path(downloader.output_pack_path, "Integrations").exists()
+        for file in Path(downloader.output_pack_path).iterdir():
+            assert not file.is_dir()
+
     def test_handle_list_files_flag(self, tmp_path, mocker):
         logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
         env = Environment(tmp_path)
@@ -1155,7 +1177,7 @@ class TestVerifyPackPath:
             "Playbook",
             False,
             "/playbook/search",
-            "POST",
+            "GET",
             {"query": "name:PB1 or PB2"},
         ),
         (
@@ -1200,7 +1222,7 @@ def test_arrange_response():
         downloader = Downloader("", "")
 
         downloader.system_item_type = "Playbook"
-        system_items_list = downloader.arrange_response({"playbooks": []})
+        system_items_list = downloader.arrange_response([])
         assert system_items_list == []
 
         downloader.system_item_type = "Classifier"
@@ -1394,3 +1416,82 @@ download_tar.tar"
     ids = set(scripts_id_name.keys())
     assert ids.issubset(expected_UUIDs)
     assert ids.isdisjoint(strings_to_write)
+
+
+def test_get_system_playbook(mocker):
+    """
+    Given: a mock file raw_playbook.txt
+    When: calling get_system_playbook function.
+    Then:
+        - Ensure the playbook returns as valid json as expected
+        - Ensure a list is returned from the function
+    """
+
+    playbook_path = Path(
+        f"{git_path()}/demisto_sdk/commands/download/tests/tests_data/playbook-DummyPlaybook2.yml"
+    )
+
+    raw_playbook = playbook_path.read_bytes()
+
+    expected_pb = get_yaml(playbook_path)
+    mocker.patch.object(
+        demisto_client, "generic_request_func", return_value=[raw_playbook]
+    )
+
+    downloader = Downloader(input=["test"], output="test")
+    playbooks = downloader.get_system_playbook(req_type="GET")
+    assert isinstance(playbooks, list)
+    assert playbooks[0] == expected_pb
+    assert len(playbooks) == 1
+
+
+def test_get_system_playbook_item_does_not_exist_by_name(mocker):
+    """
+    Given: a mock file raw_playbook.txt
+    When: calling get_system_playbook function.
+    Then:
+        - Ensure the playbook returns as valid json as expected
+        - Ensure a list is returned from the function
+    """
+    playbook_path = Path(
+        f"{git_path()}/demisto_sdk/commands/download/tests/tests_data/playbook-DummyPlaybook2.yml"
+    )
+
+    playbook = get_yaml(playbook_path)
+    playbook["id"] = "dummy_-_playbook"
+    mocker.patch.object(
+        demisto_client,
+        "generic_request_func",
+        side_effect=(ApiException("Item not found"), [playbook_path.read_bytes()]),
+    )
+    mocker.patch.object(
+        Downloader, "get_playbook_id_by_playbook_name", return_value="test"
+    )
+    downloader = Downloader(input=["DummyPlaybook"], output="test")
+    playbooks = downloader.get_system_playbook(req_type="GET")
+    assert isinstance(playbooks, list)
+    assert len(playbooks) == 1
+
+
+@pytest.mark.parametrize(
+    "exception, mock_value, expected_call",
+    [(Exception, "test", 0), (ApiException, None, 1)],
+)
+def test_get_system_playbook_failure(mocker, exception, mock_value, expected_call):
+    """
+    Given: a mock exception
+    When: calling get_system_playbook function.
+    Then:
+        - Ensure that when the API call throws a non-ApiException error,
+          a second attempt is not made to retrieve the playbook by the ID.
+        - Ensure that when the API call throws an ApiException error and the id extraction fails,
+          the function raises the same error.
+    """
+    mocker.patch.object(demisto_client, "generic_request_func", side_effect=exception())
+    get_id_by_name_mock = mocker.patch.object(
+        Downloader, "get_playbook_id_by_playbook_name", return_value=mock_value
+    )
+    downloader = Downloader(input=["DummyPlaybook"], output="test")
+    with pytest.raises(exception):
+        downloader.get_system_playbook(req_type="GET")
+    assert get_id_by_name_mock.call_count == expected_call

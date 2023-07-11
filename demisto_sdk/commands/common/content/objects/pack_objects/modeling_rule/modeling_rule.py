@@ -52,6 +52,7 @@ class SingleModelingRule:
         r"^\s*filter\s*(?P<condition>(?!.*(\||alter)).+$(\s*(^\s*(?!\||alter).+$))*)",
         flags=re.M,
     )
+    TIME_FIELD = "_time"
 
     def __init__(self, rule_text: str):
         self.rule_text = rule_text
@@ -112,6 +113,7 @@ class SingleModelingRule:
     def fields(self):
         if not self._fields:
             uniq_fields = set(re.findall(self.RULE_FIELDS_REGEX, self.rule_text))
+            uniq_fields.add(self.TIME_FIELD)  # The '_time' field is always required.
             self.fields = uniq_fields
             if not self._fields:
                 raise ValueError(

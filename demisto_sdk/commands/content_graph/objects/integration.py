@@ -1,4 +1,6 @@
-from typing import TYPE_CHECKING, List
+from typing import TYPE_CHECKING, Callable, List, Optional
+
+import demisto_client
 
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 
@@ -21,7 +23,7 @@ class Command(BaseContent, content_type=ContentType.COMMAND):  # type: ignore[ca
 
     # From HAS_COMMAND relationship
     deprecated: bool = False
-    description: str = ""
+    description: Optional[str] = ""
 
     # missing attributes in DB
     node_id: str = ""
@@ -42,6 +44,7 @@ class Command(BaseContent, content_type=ContentType.COMMAND):  # type: ignore[ca
 class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # type: ignore[call-arg]
     is_fetch: bool = False
     is_fetch_events: bool = False
+    is_fetch_events_and_assets: bool = False
     is_feed: bool = False
     category: str
     commands: List[Command] = []
@@ -78,12 +81,14 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
         }
 
     def prepare_for_upload(
-        self, marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR, **kwargs
+        self,
+        current_marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR,
+        **kwargs,
     ) -> dict:
-        data = super().prepare_for_upload(marketplace, **kwargs)
+        data = super().prepare_for_upload(current_marketplace, **kwargs)
 
         if supported_native_images := self.get_supported_native_images(
-            marketplace=marketplace,
+            marketplace=current_marketplace,
             ignore_native_image=kwargs.get("ignore_native_image") or False,
         ):
             logger.debug(
@@ -92,3 +97,7 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
             data["script"]["nativeimage"] = supported_native_images
 
         return data
+
+    @classmethod
+    def _client_upload_method(cls, client: demisto_client) -> Callable:
+        return client.integration_upload

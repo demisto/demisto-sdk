@@ -1088,7 +1088,8 @@ def test_unify_partner_contributed_pack(mocker, monkeypatch, repo):
     Then
         - Ensure unify create unified file with partner support notes.
     """
-    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+    mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+    logger_debug = mocker.patch.object(logging.getLogger("demisto-sdk"), "debug")
     monkeypatch.setenv("COLUMNS", "1000")
 
     pack = repo.create_pack("PackName")
@@ -1123,12 +1124,7 @@ def test_unify_partner_contributed_pack(mocker, monkeypatch, repo):
             catch_exceptions=True,
         )
     # Verifying unified process
-    assert all(
-        [
-            str_in_call_args_list(logger_info.call_args_list, "Unifying package:"),
-            str_in_call_args_list(logger_info.call_args_list, "Created unified yml:"),
-        ]
-    )
+    assert str_in_call_args_list(logger_debug.call_args_list, "Created unified yml:")
 
     # Verifying the unified file data
     assert PARTNER_UNIFY["display"] == PARTNER_DISPLAY_NAME
@@ -1146,7 +1142,8 @@ def test_unify_partner_contributed_pack_no_email(mocker, monkeypatch, repo):
     Then
         - Ensure unify create unified file with partner support notes.
     """
-    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+    mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+    logger_debug = mocker.patch.object(logging.getLogger("demisto-sdk"), "debug")
     monkeypatch.setenv("COLUMNS", "1000")
 
     pack = repo.create_pack("PackName")
@@ -1181,12 +1178,7 @@ def test_unify_partner_contributed_pack_no_email(mocker, monkeypatch, repo):
             catch_exceptions=True,
         )
     # Verifying unified process
-    assert all(
-        [
-            str_in_call_args_list(logger_info.call_args_list, "Unifying package:"),
-            str_in_call_args_list(logger_info.call_args_list, "Created unified yml:"),
-        ]
-    )
+    assert str_in_call_args_list(logger_debug.call_args_list, "Created unified yml:")
 
     # Verifying the unified file data
     assert PARTNER_UNIFY_NO_EMAIL["display"] == PARTNER_DISPLAY_NAME
@@ -1254,7 +1246,8 @@ def test_unify_partner_contributed_pack_no_url(mocker, monkeypatch, repo):
     Then
         - Ensure unify create unified file with partner support notes.
     """
-    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+    mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+    logger_debug = mocker.patch.object(logging.getLogger("demisto-sdk"), "debug")
     monkeypatch.setenv("COLUMNS", "1000")
 
     pack = repo.create_pack("PackName")
@@ -1289,12 +1282,7 @@ def test_unify_partner_contributed_pack_no_url(mocker, monkeypatch, repo):
             catch_exceptions=True,
         )
     # Verifying unified process
-    assert all(
-        [
-            str_in_call_args_list(logger_info.call_args_list, "Unifying package:"),
-            str_in_call_args_list(logger_info.call_args_list, "Created unified yml:"),
-        ]
-    )
+    assert str_in_call_args_list(logger_debug.call_args_list, "Created unified yml:")
 
     # Verifying the unified file data
     assert PARTNER_UNIFY_NO_URL["display"] == PARTNER_DISPLAY_NAME
@@ -1312,7 +1300,8 @@ def test_unify_not_partner_contributed_pack(mocker, monkeypatch, repo):
     Then
         - Ensure unify create unified file without partner support notes.
     """
-    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+    mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+    logger_debug = mocker.patch.object(logging.getLogger("demisto-sdk"), "debug")
     monkeypatch.setenv("COLUMNS", "1000")
 
     pack = repo.create_pack("PackName")
@@ -1343,12 +1332,7 @@ def test_unify_not_partner_contributed_pack(mocker, monkeypatch, repo):
             catch_exceptions=True,
         )
     # Verifying unified process
-    assert all(
-        [
-            str_in_call_args_list(logger_info.call_args_list, "Unifying package:"),
-            str_in_call_args_list(logger_info.call_args_list, "Created unified yml:"),
-        ]
-    )
+    assert str_in_call_args_list(logger_debug.call_args_list, "Created unified yml:")
 
     # Verifying the unified file data
     assert "Partner" not in XSOAR_UNIFY["display"]
@@ -1364,7 +1348,8 @@ def test_unify_community_contributed(mocker, monkeypatch, repo):
     Then
         - Ensure unify create unified file with community detailed description.
     """
-    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+    mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+    logger_debug = mocker.patch.object(logging.getLogger("demisto-sdk"), "debug")
     monkeypatch.setenv("COLUMNS", "1000")
 
     pack = repo.create_pack("PackName")
@@ -1399,12 +1384,7 @@ def test_unify_community_contributed(mocker, monkeypatch, repo):
             catch_exceptions=True,
         )
     # Verifying unified process
-    assert all(
-        [
-            str_in_call_args_list(logger_info.call_args_list, "Unifying package:"),
-            str_in_call_args_list(logger_info.call_args_list, "Created unified yml:"),
-        ]
-    )
+    assert str_in_call_args_list(logger_debug.call_args_list, "Created unified yml:")
 
     # Verifying the unified file data
     assert COMMUNITY_UNIFY["display"] == COMMUNITY_DISPLAY_NAME

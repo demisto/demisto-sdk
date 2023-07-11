@@ -1,6 +1,6 @@
 import os
 import traceback
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple, Union
 
 import click
 
@@ -61,7 +61,7 @@ class BaseUpdateYML(BaseUpdate):
         path: str = "",
         from_version: str = "",
         no_validate: bool = False,
-        assume_yes: bool = False,
+        assume_answer: Union[bool, None] = None,
         deprecate: bool = False,
         add_tests: bool = True,
         interactive: bool = True,
@@ -73,7 +73,7 @@ class BaseUpdateYML(BaseUpdate):
             path=path,
             from_version=from_version,
             no_validate=no_validate,
-            assume_yes=assume_yes,
+            assume_answer=assume_answer,
             interactive=interactive,
             clear_cache=clear_cache,
         )
@@ -244,8 +244,10 @@ class BaseUpdateYML(BaseUpdate):
 
             if not test_playbook_ids:
                 # In case no_interactive flag was given - modify the tests without confirmation
-                if self.assume_yes or not self.add_tests:
+                if self.assume_answer or not self.add_tests:
                     should_modify_yml_tests = True
+                elif self.assume_answer is False:
+                    should_modify_yml_tests = False
                 else:
                     should_modify_yml_tests = click.confirm(
                         f"The file {self.source_file} has no test playbooks "
@@ -286,8 +288,10 @@ class BaseUpdateYML(BaseUpdate):
         )
         if not_registered_tests:
             not_registered_tests_string = "\n".join(not_registered_tests)
-            if self.assume_yes:
+            if self.assume_answer:
                 should_edit_conf_json = True
+            elif self.assume_answer is False:
+                should_edit_conf_json = False
             else:
                 should_edit_conf_json = click.confirm(
                     f"The following test playbooks are not configured in conf.json file "

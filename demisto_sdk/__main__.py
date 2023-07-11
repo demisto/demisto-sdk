@@ -5,7 +5,7 @@ import logging
 import os
 import sys
 from pathlib import Path
-from typing import IO, Any, Dict, Iterable, Tuple
+from typing import IO, Any, Dict, Iterable, Tuple, Union
 
 import click
 import git
@@ -31,6 +31,7 @@ from demisto_sdk.commands.common.tools import (
     get_last_remote_release_version,
     get_release_note_entries,
     is_external_repository,
+    parse_marketplace_kwargs,
 )
 from demisto_sdk.commands.content_graph.interface.neo4j.neo4j_graph import (
     Neo4jContentGraphInterface,
@@ -498,9 +499,7 @@ def zip_packs(ctx, **kwargs) -> int:
     # if upload is true - all zip packs will be compressed to one zip file
     should_upload = kwargs.pop("upload", False)
     zip_all = kwargs.pop("zip_all", False) or should_upload
-
-    if marketplace := kwargs.get("marketplace"):
-        os.environ[ENV_DEMISTO_SDK_MARKETPLACE] = marketplace.lower()
+    marketplace = parse_marketplace_kwargs(kwargs)
 
     packs_zipper = PacksZipper(
         zip_all=zip_all, pack_paths=kwargs.pop("input"), quiet_mode=zip_all, **kwargs
@@ -508,7 +507,9 @@ def zip_packs(ctx, **kwargs) -> int:
     zip_path, unified_pack_names = packs_zipper.zip_packs()
 
     if should_upload and zip_path:
-        return Uploader(input=zip_path, pack_names=unified_pack_names).upload()
+        return Uploader(
+            input=Path(zip_path), pack_names=unified_pack_names, marketplace=marketplace
+        ).upload()
 
     return EX_SUCCESS if zip_path is not None else EX_FAIL
 
@@ -1197,10 +1198,11 @@ def coverage_analyze(ctx, **kwargs):
     is_flag=True,
 )
 @click.option(
-    "-y",
-    "--assume-yes",
-    help="Automatic yes to prompts; assume 'yes' as answer to all prompts and run non-interactively",
+    "-y/-n",
+    "--assume-yes/--assume-no",
+    help="Automatic yes/no to prompts; assume 'yes'/'no' as answer to all prompts and run non-interactively",
     is_flag=True,
+    default=None,
 )
 @click.option(
     "-d",
@@ -1245,7 +1247,7 @@ def format(
     from_version: str,
     no_validate: bool,
     update_docker: bool,
-    assume_yes: bool,
+    assume_yes: Union[None, bool],
     deprecate: bool,
     use_git: bool,
     prev_ver: str,
@@ -1271,7 +1273,7 @@ def format(
             from_version=from_version,
             no_validate=no_validate,
             update_docker=update_docker,
-            assume_yes=assume_yes,
+            assume_answer=assume_yes,
             deprecate=deprecate,
             use_git=use_git,
             prev_ver=prev_ver,
@@ -1308,16 +1310,22 @@ def format(
     required=False,
 )
 @click.option(
-    "-z",
-    "--zip",
+    "-z/-nz",
+    "--zip/--no-zip",
     help="Compress the pack to zip before upload, this flag is relevant only for packs.",
     is_flag=True,
+    default=True,
 )
 @click.option(
     "-x",
     "--xsiam",
     help="Upload the pack to XSIAM server. Must be used together with -z",
     is_flag=True,
+)
+@click.option(
+    "-mp",
+    "--marketplace",
+    help="The marketplace to which the content will be uploaded.",
 )
 @click.option(
     "--keep-zip",
@@ -1344,7 +1352,9 @@ def format(
 @click.option(
     "--override-existing",
     is_flag=True,
-    help="If true will skip override confirmation prompt while uploading packs.",
+    help="This value (True/False) determines if the user should be presented with a confirmation prompt when "
+    "attempting to upload a content pack that is already installed on the Cortex XSOAR server. This allows the upload "
+    "command to be used within non-interactive shells.",
 )
 @click.pass_context
 @logging_setup_decorator
@@ -1429,6 +1439,18 @@ def upload(ctx, **kwargs):
         ],
         case_sensitive=False,
     ),
+)
+@click.option(
+    "--init",
+    help="Create a directory structure and download the items to it",
+    is_flag=True,
+    default=False,
+)
+@click.option(
+    "--keep-empty-folders",
+    help="Keep empty folders when using the --init flag",
+    is_flag=True,
+    default=False,
 )
 @click.pass_context
 @logging_setup_decorator
@@ -1517,6 +1539,11 @@ def xsoar_config_file_update(ctx, **kwargs):
 @click.help_option("-h", "--help")
 @click.option("-q", "--query", help="The query to run", required=True)
 @click.option("--insecure", help="Skip certificate validation", is_flag=True)
+@click.option(
+    "-id",
+    "--incident-id",
+    help="The incident to run the query on, if not specified the playground will be used.",
+)
 @click.option(
     "-D",
     "--debug",
@@ -3256,8 +3283,9 @@ def update_content_graph(
     "-i",
     "--input",
     help="The path to the input file to run the command on.",
-    multiple=True,
-    type=click.Path(path_type=Path),
+    type=PathsParamType(
+        exists=True, resolve_path=True
+    ),  # PathsParamType allows passing a list of paths
 )
 @click.option(
     "-s",
@@ -3332,7 +3360,7 @@ def update_content_graph(
 @logging_setup_decorator
 def pre_commit(
     ctx,
-    input: Iterable[Path],
+    input: str,
     staged_only: bool,
     git_diff: bool,
     all_files: bool,
@@ -3353,11 +3381,14 @@ def pre_commit(
         logger.info(
             "Both `--input` parameter and `file_paths` arguments were provided. Will use the `--input` parameter."
         )
-    input_files = input
-    if file_paths and not input_files:
-        input_files = file_paths
+    input_files = []
+    if input:
+        input_files = [Path(i) for i in input.split(",")]
+    elif file_paths:
+        input_files = list(file_paths)
     if skip:
         skip = skip.split(",")  # type: ignore[assignment]
+
     sys.exit(
         pre_commit_manager(
             input_files,

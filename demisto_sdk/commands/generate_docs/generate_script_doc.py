@@ -28,7 +28,6 @@ def generate_script_doc(
     permissions: str = None,
     limitations: str = None,
     insecure: bool = False,
-    verbose: bool = False,
 ):
     try:
         doc: list = []
@@ -168,12 +167,8 @@ def generate_script_doc(
                 logger.info(f"[yellow]{error}[/yellow]")
 
     except Exception as ex:
-        if verbose:
-            # TODO Handle this verbose
-            raise
-        else:
-            logger.info(f"[yellow]Error: {str(ex)}[/yellow]")
-            return
+        logger.info(f"[yellow]Error: {str(ex)}[/yellow]")
+        return
 
 
 def get_script_info(script_path: str, clear_cache: bool = False):
@@ -225,7 +220,9 @@ def get_inputs(script):
         inputs.append(
             {
                 "Argument Name": arg.get("name"),
-                "Description": string_escape_md(arg.get("description", "")),
+                "Description": string_escape_md(
+                    arg.get("description", ""), escape_html=False
+                ),
             }
         )
 
@@ -255,7 +252,9 @@ def get_outputs(script):
         outputs.append(
             {
                 "Path": arg.get("contextPath"),
-                "Description": string_escape_md(arg.get("description", "")),
+                "Description": string_escape_md(
+                    arg.get("description", ""), escape_html=False
+                ),
                 "Type": arg.get("type", "Unknown"),
             }
         )

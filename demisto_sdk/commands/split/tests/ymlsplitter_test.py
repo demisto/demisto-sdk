@@ -255,13 +255,28 @@ def test_extract_image(tmpdir):
 
 
 @pytest.mark.parametrize(
-    argnames="file_type", argvalues=[("integration"), ("betaintegration")]
+    argnames="file_path,file_type",
+    argvalues=[
+        (
+            f"{git_path()}/demisto_sdk/tests/test_files/integration-Zoom.yml",
+            "integration",
+        ),
+        (
+            f"{git_path()}/demisto_sdk/tests/test_files/integration-Zoom.yml",
+            "betaintegration",
+        ),
+        (
+            f"{git_path()}/demisto_sdk/tests/test_files/integration-Zoom-no-trailing-newline.yml",
+            "integration",
+        ),
+    ],
 )
-def test_extract_code(tmpdir, file_type):
+def test_extract_code(tmpdir, file_path, file_type):
     """
     Given
         Case 1: a unified integration file of python format.
         Case 2: a unified beta-integration file of python format.
+        Case 3: a unified integration file of python format without a trailing newline in the script.
 
     When
     - Running the YmlSplitter extract_code function.
@@ -270,7 +285,7 @@ def test_extract_code(tmpdir, file_type):
     - Ensure that all lines that should have been removed have been removed.
     """
     extractor = YmlSplitter(
-        input=f"{git_path()}/demisto_sdk/tests/test_files/integration-Zoom.yml",
+        input=file_path,
         output=str(tmpdir.join("temp_code.py")),
         file_type=file_type,
     )

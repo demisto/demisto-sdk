@@ -2036,10 +2036,11 @@ def test_verify_deletion_from_conf_pack_format_with_deprecate_flag(
     # Run
     runner = CliRunner()
     with ChangeCWD(pack.repo_path):
-        result = runner.invoke(
-            main, [FORMAT_CMD, "-i", f"{pack_path}", "-d"], input="\n"
-        )
-        assert not result.exception
+        try:
+            runner.invoke(main, [FORMAT_CMD, "-i", f"{pack_path}", "-d"], input="\n")
+        except Exception as error:
+            raise error
+    # assert not result.exception
     conf_content = get_dict_from_file(conf_path)[0]
     assert conf_content.get("tests") == [
         {

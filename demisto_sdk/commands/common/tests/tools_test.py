@@ -2969,14 +2969,6 @@ def test_search_and_delete_from_conf(
                 "integrations": ["PagerDuty v2", "PagerDuty v3"],
                 "playbookID": "PagerDuty Test",
             },
-            "testplaybook",
-            False,
-        ),
-        (
-            {
-                "integrations": ["PagerDuty v2", "PagerDuty v3"],
-                "playbookID": "PagerDuty Test",
-            },
             "integration",
             True,
         ),

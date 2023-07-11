@@ -1,6 +1,12 @@
 # Changelog
 ## Unreleased
+* Added documentation for the flag **override-existing** used in upload.
+* Fixed an issue where **validate** failed on Incident Field items with a `template` value.
 * Improved memory efficiency in **update-content-graph** and **create-content-graph** commands.
+* Removed support for the `cve_id` name for the default-argument for **cve** reputation commands in **validate**. Now, only `cve` may be used for such commands.
+* Fixed an issue where **zip_packs** failed uploading content.
+* Added `tenant_timezone` handling to the **modeling-rules init** command, allowing usage with tenants in various timezones.
+* Shortened the timeout when checking whether the dataset exists in **test-modeling-rule**.
 
 ## 1.17.1
 * Added the `aliasTo` key to the Incident Field schema.

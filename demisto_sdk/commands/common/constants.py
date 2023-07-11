@@ -1342,7 +1342,7 @@ BANG_COMMAND_ARGS_MAPPING_DICT: Dict[str, dict] = {
     "domain": {"default": ["domain"]},
     "url": {"default": ["url"]},
     "ip": {"default": ["ip"]},
-    "cve": {"default": ["cve", "cve_id"]},
+    "cve": {"default": ["cve"]},
     "endpoint": {"default": ["ip"], "required": False},
 }
 

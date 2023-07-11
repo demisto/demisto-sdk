@@ -24,7 +24,10 @@ def update_additional_dependencies(
         int: 1 if failed, 0 if succeeded
     """
     try:
-        if Path("poetry.lock") not in GitUtil()._get_all_changed_files():
+        if (
+            Path("poetry.lock")
+            not in GitUtil()._get_all_changed_files() | GitUtil()._get_staged_files()
+        ):
             logger.info(
                 "Skipping update of additional dependencies since poetry.lock was not changed"
             )

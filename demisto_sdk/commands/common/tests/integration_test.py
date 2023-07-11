@@ -609,6 +609,14 @@ class TestIntegrationValidator:
             ],
         }
     ]
+    DEFAULT_ARGS_SAME_ARG_NAME = [
+        {
+            "name": "cve",
+            "arguments": [
+                {"name": "cve", "required": False, "default": True, "isArray": True}
+            ],
+        }
+    ]
     DEFAULT_ARGS_MISSING_UNREQUIRED_DEFAULT_FIELD = [
         {
             "name": "email",
@@ -664,7 +672,7 @@ class TestIntegrationValidator:
         }
     ]
     DEFAULT_ARGS_INPUTS = [
-        (DEFAULT_ARGS_DIFFERENT_ARG_NAME, True),
+        (DEFAULT_ARGS_DIFFERENT_ARG_NAME, False),
         (DEFAULT_ARGS_MISSING_UNREQUIRED_DEFAULT_FIELD, True),
         (DEFAULT_ARGS_MISSING_DEFAULT_PARAM_WHEN_ALLOWED, True),
         (DEFAULT_ARGS_INVALID_PARMA_MISSING_DEFAULT, False),
@@ -672,6 +680,7 @@ class TestIntegrationValidator:
         (DEFAULT_ARGS_INVALID_COMMAND, False),
         (DEFAULT_ARGS_MISSING_DEFAULT_PARAM_WHEN_NOT_ALLOWED, False),
         (DEFAULT_ARGS_NOT_ARRAY, False),
+        (DEFAULT_ARGS_SAME_ARG_NAME, True),
     ]
 
     @pytest.mark.parametrize("current, answer", DEFAULT_ARGS_INPUTS)

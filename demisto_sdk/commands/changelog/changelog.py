@@ -9,7 +9,6 @@ from pydantic import ValidationError
 
 from demisto_sdk.commands.changelog.changelog_obj import INITIAL_LOG, LogObject
 from demisto_sdk.commands.common.handlers import YAML_Handler
-from demisto_sdk.commands.common.hook_validations.base_validator import BaseValidator
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import get_yaml
@@ -27,8 +26,9 @@ class Changelog:
     ) -> None:
         self.pr_number = pr_number
         self.pr_name = pr_name
-        self.release_version = release_version
         self.handle_error = ""
+
+
     """ VALIDATE """
 
     def validate(self) -> bool:

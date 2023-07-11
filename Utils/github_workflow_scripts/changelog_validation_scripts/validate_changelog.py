@@ -24,7 +24,7 @@ def arguments_handler():
 
     """
     parser = argparse.ArgumentParser(description="")
-    parser.add_argument("-pn", "--pr_number", help="The PR number.")
+    parser.add_argument("-pn", "--pr_number", help="The PR number.", required=True)
     parser.add_argument("-pt", "--pr_title", help="The PR title.")
     
     return parser.parse_args()

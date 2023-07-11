@@ -340,7 +340,10 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: i
                 )
         content_displays = {
             content_type: content_type_display
-            if len(content_items[content_type]) == 1
+            if (
+                content_items.get(content_type)
+                and len(content_items.get(content_type)) == 1
+            )
             else f"{content_type_display}s"
             for content_type, content_type_display in content_displays.items()
         }

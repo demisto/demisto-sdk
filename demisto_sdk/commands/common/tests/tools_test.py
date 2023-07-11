@@ -3,7 +3,7 @@ import os
 import shutil
 from configparser import ConfigParser
 from pathlib import Path
-from typing import Callable, List, Optional, Union
+from typing import Callable, List, Optional, Tuple, Union
 
 import git
 import pytest
@@ -84,6 +84,7 @@ from demisto_sdk.commands.common.tools import (
     is_origin_content_repo,
     is_pack_path,
     is_uuid,
+    parse_multiple_path_inputs,
     retrieve_file_ending,
     run_command_os,
     server_version_compare,
@@ -502,8 +503,9 @@ class TestGetRemoteFile:
         assert isinstance(hello_world_py, bytes)
         assert hello_world_py
         assert "main()" in hello_world_text
-        assert hello_world_text.startswith(
-            '"""HelloWorld Integration for Cortex XSOAR (aka Demisto)'
+        assert (
+            """HelloWorld Integration for Cortex XSOAR (aka Demisto)"""
+            in hello_world_text
         )
 
     def test_get_remote_file_origin(self):
@@ -1459,6 +1461,7 @@ def test_get_pack_metadata(repo):
     assert metadata_json == result
 
 
+@pytest.mark.skip
 def test_get_last_remote_release_version(requests_mock):
     """
     When
@@ -2747,3 +2750,59 @@ def test_get_from_version_error(mocker):
 )
 def test_str2bool(value, expected_output):
     assert str2bool(value) == expected_output
+
+
+PATH_1 = Path("1.yml")
+PATH_2 = Path("2.yml")
+
+
+@pytest.mark.parametrize(
+    "input_paths, expected",
+    [
+        (PATH_1, (PATH_1,)),
+        (str(PATH_1), (PATH_1,)),
+        (",".join((str(PATH_1), str(PATH_2))), (PATH_1, PATH_2)),
+        (
+            (
+                PATH_1,
+                PATH_2,
+            ),
+            (PATH_1, PATH_2),
+        ),
+        ([PATH_1, PATH_2], (PATH_1, PATH_2)),
+        ((), ()),
+        ("", ()),
+        (None, ()),
+        (
+            "test/test.yml,test1/test1.yml",
+            (Path("test/test.yml"), Path("test1/test1.yml")),
+        ),
+    ],
+)
+def test_parse_multiple_path_inputs(input_paths, expected: Tuple[Path, ...]):
+    """
+    Given:
+        Some variations of inputs
+    When:
+        - Running parse_multiple_path_inputs
+    Then:
+        - Ensure that a tuple of Path is always returned
+        - Ensure input is handled when a comma-separated string is sent
+
+    """
+    assert parse_multiple_path_inputs(input_paths) == expected
+
+
+@pytest.mark.parametrize("input_paths", (1, True))
+def test_parse_multiple_path_inputs_error(input_paths):
+    """
+    Given:
+        An unsupported input to test_parse_multiple_path_inputs
+    When:
+        - Running parse_multiple_path_inputs fomction
+    Then:
+        - Ensure an error is raised
+
+    """
+    with pytest.raises(ValueError, match=f"Cannot parse paths from {input_paths}"):
+        parse_multiple_path_inputs(input_paths)

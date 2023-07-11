@@ -108,6 +108,7 @@ Supported commands:
 20. [generate-integration](https://xsoar.pan.dev/docs/integrations/code-generator)
 21. [generate-yml-from-python](https://xsoar.pan.dev/docs/integrations/yml-from-python-code-gen)
 22. [generate-unit-tests](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/generate_unit_tests/README.md)
+23. [pre-commit (experimental)](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/pre_commit/README.md)
 ---
 
 ### Customizable command configuration

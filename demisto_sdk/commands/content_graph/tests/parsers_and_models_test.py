@@ -699,10 +699,10 @@ class TestParsersAndModels:
             IntegrationParser,
         )
 
-        integration = pack.create_integration()
-        integration.create_default_integration("TestIntegration")
+        integration = pack.create_integration(yml=load_yaml("integration.yml"))
         integration.code.write("from MicrosoftApiModule import *")
         integration.yml.update({"tests": ["test_playbook"]})
+
         integration_path = Path(integration.path)
         parser = IntegrationParser(integration_path, list(MarketplaceVersions))
         RelationshipsVerifier.run(
@@ -720,6 +720,8 @@ class TestParsersAndModels:
             expected_fromversion="5.0.0",
             expected_toversion=DEFAULT_CONTENT_ITEM_TO_VERSION,
         )
+        assert model.is_fetch_events is True
+        assert model.is_fetch_events_and_assets is True
 
     def test_unified_integration_parser(self, pack: Pack):
         """
@@ -1549,6 +1551,7 @@ class TestParsersAndModels:
         pack2 = repo.create_pack("sample2")
         pack2.pack_metadata.write_json(load_json("pack_metadata.json"))
         parser = RepositoryParser(Path(repo.path))
+        parser.parse()
         model = ContentDTO.from_orm(parser)
         pack_ids = {pack.object_id for pack in model.packs}
         assert pack_ids == {"sample1", "sample2"}

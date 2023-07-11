@@ -72,6 +72,3 @@ repos:
 
       - id: secrets
         args: ["--ignore-entropy"]
-
-      - id: no-implicit-optional
-        skip: true

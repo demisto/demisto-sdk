@@ -318,7 +318,7 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: i
                 content_item.content_type.metadata_name, []
             ).append(content_item.summary(marketplace))
 
-        metadata["ContentDisplays"] = self.get_content_display(metadata["contentItems"])
+        metadata["contentDisplays"] = self.get_content_display(metadata["contentItems"])
 
         with open(path, "w") as f:
             json.dump(metadata, f, indent=4, sort_keys=True)

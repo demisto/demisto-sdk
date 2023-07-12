@@ -1989,7 +1989,7 @@ class TestFormatWithoutAddTestsFlag:
 
 
 def test_verify_deletion_from_conf_pack_format_with_deprecate_flag(
-    mocker, monkeypatch, repo, tmp_path: PosixPath
+    mocker, monkeypatch, repo
 ):
     """
     Given
@@ -2003,24 +2003,27 @@ def test_verify_deletion_from_conf_pack_format_with_deprecate_flag(
     """
     # Prepare mockers
     monkeypatch.setenv("COLUMNS", "1000")
-    mocker.patch.object(BaseUpdate, "set_default_from_version", return_value=None)
-    mocker.patch.object(logging.getLogger("demisto-sdk"), "debug")
-    mocker.patch.object(BaseUpdate, "set_fromVersion")
-    mocker.patch.object(BaseUpdateYML, "_save_to_conf_json", return_value=None)
-    mocker.patch(
-        "demisto_sdk.commands.common.tools.get_remote_file_from_api", return_value=None
-    )
+    # mocker.patch.object(BaseUpdate, "set_default_from_version", return_value=None)
+    # mocker.patch.object(logging.getLogger("demisto-sdk"), "debug")
+    # mocker.patch.object(BaseUpdate, "set_fromVersion")
+    # mocker.patch.object(BaseUpdateYML, "_save_to_conf_json", return_value=None)
     mocker.patch(
         "demisto_sdk.commands.common.markdown_lint.run_markdownlint", return_value=None
     )
-
     # Prepare content
     # Create pack with integration and with test playbook in the yml.
     pack = repo.create_pack("TestPack")
     integration = pack.create_integration("TestIntegration")
     integration.yml.update({"tests": ["test_playbook"]})
     pack_path = pack.path
+    repo_path = repo.path
 
+    if os.path.exists(
+        f"{repo_path}/Packs/TestPack/Integrations/TestIntegration/README.md"
+    ):
+        os.remove(f"{repo_path}/Packs/TestPack/Integrations/TestIntegration/README.md")
+    if os.path.exists(f"{repo_path}/Packs/TestPack/README.md"):
+        os.remove(f"{repo_path}/Packs/TestPack/README.md")
     # Prepare conf
     test_conf_data = {
         "tests": [
@@ -2040,24 +2043,22 @@ def test_verify_deletion_from_conf_pack_format_with_deprecate_flag(
     with ChangeCWD(pack.repo_path):
 
         runner = CliRunner(mix_stderr=False)
-        result = runner.invoke(main, [FORMAT_CMD, "-i", f"{pack_path}"], input="\n")
+        result = runner.invoke(
+            main, [FORMAT_CMD, "-i", f"{pack_path}", "-d"], input="\n"
+        )
 
     assert not result.exception
     conf_content = get_dict_from_file(conf_json_path)[0]
-    assert conf_content.get("tests") == test_conf_data.get("tests")
-    # assert conf_content.get("tests") == [
-    #     {
-    #         "integrations": ["AnotherTestIntegration"],
-    #         "playbookID": "another_test_playbook",
-    #     }
-    # ]
+    assert conf_content.get("tests") == [
+        {
+            "integrations": ["AnotherTestIntegration"],
+            "playbookID": "another_test_playbook",
+        }
+    ]
 
 
 def test_verify_deletion_from_conf_script_format_with_deprecate_flag(
-    mocker,
-    monkeypatch,
-    repo,
-    tmp_path: PosixPath,
+    mocker, monkeypatch, repo
 ):
     """
     Given
@@ -2071,8 +2072,8 @@ def test_verify_deletion_from_conf_script_format_with_deprecate_flag(
     """
     # Prepare mockers
     monkeypatch.setenv("COLUMNS", "1000")
-    mocker.patch.object(BaseUpdate, "set_default_from_version", return_value=None)
-    mocker.patch.object(logging.getLogger("demisto-sdk"), "debug")
+    # mocker.patch.object(BaseUpdate, "set_default_from_version", return_value=None)
+    # mocker.patch.object(logging.getLogger("demisto-sdk"), "debug")
     mocker.patch.object(BaseUpdate, "set_fromVersion")
     mocker.patch(
         "demisto_sdk.commands.common.markdown_lint.run_markdownlint", return_value=None
@@ -2103,7 +2104,6 @@ def test_verify_deletion_from_conf_script_format_with_deprecate_flag(
     conf_json_path = f"{repo.path}/Tests/conf.json"
     with open(conf_json_path, "w") as file:
         json.dump(test_conf_data, file, indent=4)
-    # conf_file.write_text(json.dumps(test_conf_data))
 
     # Run
     with ChangeCWD(repo_path):

@@ -711,9 +711,14 @@ def validate_modeling_rule(
             mr_entity.testdata_path.as_posix()
         )
 
-        with open(mr_entity.schema_path) as schema:
-            validate_schema_aligned_with_test_data(
-                test_data=test_data, schema=json.load(schema)
+        if mr_entity.schema_path.exists():
+            with open(mr_entity.schema_path) as schema:
+                validate_schema_aligned_with_test_data(
+                    test_data=test_data, schema=json.load(schema)
+                )
+        else:
+            raise FileNotFoundError(
+                f"schema file does not exist in path {mr_entity.schema_path}"
             )
 
         if push:
@@ -740,10 +745,6 @@ def validate_modeling_rule(
             logger.info(
                 '[cyan]The command flag "--no-push" was passed - skipping pushing of test data[/cyan]',
                 extra={"markup": True},
-            )
-        with open(mr_entity.schema_path) as schema:
-            validate_schema_aligned_with_test_data(
-                test_data=test_data, schema=json.load(schema)
             )
         validate_expected_values(xsiam_client, mr_entity, test_data)
 

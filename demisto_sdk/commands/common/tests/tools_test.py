@@ -1577,7 +1577,7 @@ def test_get_release_note_entries(requests_mock, version, expected_result):
     Then:
         - Ensure that the result as expected.
     """
-    # test
+    # test22
     requests_mock.get("https://api.github.com/repos/demisto/demisto-sdk")
     #
     with open(

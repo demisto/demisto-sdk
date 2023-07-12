@@ -260,7 +260,7 @@ LAYOUT_CONTAINER_FIELDS = {
     "indicatorsQuickView",
     "indicatorsDetails",
 }
-SDK_PYPI_VERSION = r"https://test.org/pypi/demisto-sdk/json"
+SDK_PYPI_VERSION = r"https://test.org/pypi/demisto-sdk"
 
 SUFFIX_TO_REMOVE = ("_dev", "_copy")
 

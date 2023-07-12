@@ -20,7 +20,6 @@ from demisto_sdk.commands.common.hook_validations.integration import (
 )
 from demisto_sdk.commands.common.hook_validations.playbook import PlaybookValidator
 from demisto_sdk.commands.common.hook_validations.readme import ReadMeValidator
-from demisto_sdk.commands.common.markdown_lint import run_markdownlint
 from demisto_sdk.commands.common.tools import get_dict_from_file, is_test_config_match
 from demisto_sdk.commands.format import format_module, update_generic
 from demisto_sdk.commands.format.update_generic import BaseUpdate
@@ -2002,11 +2001,11 @@ def test_verify_deletion_from_conf_pack_format_with_deprecate_flag(
     Then
     -  Ensure deletion from test.conf
     """
+
     # Prepare mockers
     monkeypatch.setenv("COLUMNS", "1000")
-    mocker.patch.object(
-        "demisto_sdk.commands.common.markdown_lint", run_markdownlint, return_value=None
-    )
+    # We don't need to lint the readme markdown we have an empty readme files.
+    mocker.patch("demisto_sdk.commands.common.markdown_lint", return_value=None)
     # Prepare content
     # Create pack with integration and with test playbook in the yml.
     pack = repo.create_pack("TestPack")
@@ -2015,12 +2014,6 @@ def test_verify_deletion_from_conf_pack_format_with_deprecate_flag(
     pack_path = pack.path
     repo_path = repo.path
 
-    # if os.path.exists(
-    #     f"{repo_path}/Packs/TestPack/Integrations/TestIntegration/README.md"
-    # ):
-    #     os.remove(f"{repo_path}/Packs/TestPack/Integrations/TestIntegration/README.md")
-    # if os.path.exists(f"{repo_path}/Packs/TestPack/README.md"):
-    #     os.remove(f"{repo_path}/Packs/TestPack/README.md")
     # Prepare conf
     test_conf_data = {
         "tests": [
@@ -2068,11 +2061,10 @@ def test_verify_deletion_from_conf_script_format_with_deprecate_flag(
     Then
     -  Ensure deletion from test.conf
     """
+
     # Prepare mockers
     monkeypatch.setenv("COLUMNS", "1000")
-    mocker.patch.object(
-        "demisto_sdk.commands.common.markdown_lint", run_markdownlint, return_value=None
-    )
+    mocker.patch("demisto_sdk.commands.common.markdown_lint", return_value=None)
 
     # Prepare content
     # Create pack with script and with test playbook in the yml.
@@ -2081,10 +2073,7 @@ def test_verify_deletion_from_conf_script_format_with_deprecate_flag(
     script.yml.update({"tests": ["test_playbook_for_script"]})
     script_path = script.path
     repo_path = repo.path
-    # if os.path.exists(f"{repo_path}/Packs/TestPack/Scripts/TestScript/README.md"):
-    #     os.remove(f"{repo_path}/Packs/TestPack/Scripts/TestScript/README.md")
-    # if os.path.exists(f"{repo_path}/Packs/TestPack/README.md"):
-    #     os.remove(f"{repo_path}/Packs/TestPack/README.md")
+
     # Prepare conf
     test_conf_data = {
         "tests": [

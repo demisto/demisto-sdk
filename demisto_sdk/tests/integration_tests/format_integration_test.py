@@ -20,6 +20,7 @@ from demisto_sdk.commands.common.hook_validations.integration import (
 )
 from demisto_sdk.commands.common.hook_validations.playbook import PlaybookValidator
 from demisto_sdk.commands.common.hook_validations.readme import ReadMeValidator
+from demisto_sdk.commands.common.markdown_lint import run_markdownlint
 from demisto_sdk.commands.common.tools import get_dict_from_file, is_test_config_match
 from demisto_sdk.commands.format import format_module, update_generic
 from demisto_sdk.commands.format.update_generic import BaseUpdate
@@ -2003,8 +2004,8 @@ def test_verify_deletion_from_conf_pack_format_with_deprecate_flag(
     """
     # Prepare mockers
     monkeypatch.setenv("COLUMNS", "1000")
-    mocker.patch(
-        "demisto_sdk.commands.common.markdown_lint.run_markdownlint", return_value=None
+    mocker.patch.object(
+        "demisto_sdk.commands.common.markdown_lint", run_markdownlint, return_value=None
     )
     # Prepare content
     # Create pack with integration and with test playbook in the yml.
@@ -2069,8 +2070,8 @@ def test_verify_deletion_from_conf_script_format_with_deprecate_flag(
     """
     # Prepare mockers
     monkeypatch.setenv("COLUMNS", "1000")
-    mocker.patch(
-        "demisto_sdk.commands.common.markdown_lint.run_markdownlint", return_value=None
+    mocker.patch.object(
+        "demisto_sdk.commands.common.markdown_lint", run_markdownlint, return_value=None
     )
 
     # Prepare content

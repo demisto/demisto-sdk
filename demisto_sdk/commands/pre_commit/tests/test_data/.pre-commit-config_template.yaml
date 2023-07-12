@@ -72,3 +72,6 @@ repos:
 
       - id: secrets
         args: ["--ignore-entropy"]
+
+      - id: should_be_skipped # only for the unit test
+        skip: true

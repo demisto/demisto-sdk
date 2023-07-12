@@ -65,8 +65,9 @@ def test_config_files(mocker, repo: Repo, is_test: bool):
     mocker.patch.object(
         GitUtil,
         "get_all_files",
-        return_value=relative_paths | {Path("README.md")} | {Path("test.md")},
-    ) | {Path("fix.md")}
+        return_value=relative_paths
+        | {Path("README.md"), Path("test.md"), Path("fix.md")},
+    )
     files_to_run = preprocess_files([Path(pack1.path)])
     assert files_to_run == relative_paths
 
@@ -98,9 +99,9 @@ def test_config_files(mocker, repo: Repo, is_test: bool):
     pre_commit.run(unit_test=is_test)
 
     # precommit should not run on python2 files, unless test files
-    assert mock_subprocess.call_count == 3 if not is_test else 4
+    assert mock_subprocess.call_count == (4 if is_test else 3)
 
-    tests_we_should_skip = {"format", "validate", "secrets"}
+    tests_we_should_skip = {"format", "validate", "secrets", "should_be_skipped"}
     if not is_test:
         tests_we_should_skip.add("run-unit-tests")
     for m in mock_subprocess.call_args_list:

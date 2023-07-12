@@ -1050,10 +1050,6 @@ def lint(ctx, **kwargs):
     """
     from demisto_sdk.commands.lint.lint_manager import LintManager
 
-    if is_sdk_defined_working_offline():
-        logger.error(SDK_OFFLINE_ERROR_MESSAGE)
-        sys.exit(1)
-
     check_configuration_file("lint", kwargs)
     lint_manager = LintManager(
         input=kwargs.get("input"),  # type: ignore[arg-type]
@@ -1480,10 +1476,6 @@ def download(ctx, **kwargs):
     DEMISTO_API_KEY environment variable should contain a valid Demisto API Key.
     """
     from demisto_sdk.commands.download.downloader import Downloader
-
-    if is_sdk_defined_working_offline():
-        logger.error(SDK_OFFLINE_ERROR_MESSAGE)
-        sys.exit(1)
 
     check_configuration_file("download", kwargs)
     downloader: Downloader = Downloader(**kwargs)

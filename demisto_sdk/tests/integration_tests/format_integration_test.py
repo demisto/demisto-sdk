@@ -1989,7 +1989,7 @@ class TestFormatWithoutAddTestsFlag:
 
 
 def test_verify_deletion_from_conf_pack_format_with_deprecate_flag(
-    mocker, monkeypatch, repo, tmp_path: PosixPath
+    mocker, monkeypatch, requests_mock, repo, tmp_path: PosixPath
 ):
     """
     Given
@@ -2029,10 +2029,9 @@ def test_verify_deletion_from_conf_pack_format_with_deprecate_flag(
             },
         ]
     }
-    conf_file = tmp_path / "conf.json"
-    conf_path = str(conf_file)
-    conf_file.write_text(json.dumps(test_conf_data))
-    mocker.patch("demisto_sdk.commands.format.update_generic_yml.CONF_PATH", conf_file)
+    conf_json_path = f"{repo.path}/Tests/conf.json"
+    with open(conf_json_path, "w") as file:
+        json.dump(test_conf_data, file, indent=4)
 
     # Run
     with ChangeCWD(pack.repo_path):
@@ -2043,7 +2042,7 @@ def test_verify_deletion_from_conf_pack_format_with_deprecate_flag(
         )
 
     assert not result.exception
-    conf_content = get_dict_from_file(conf_path)[0]
+    conf_content = get_dict_from_file(conf_json_path)[0]
     assert conf_content.get("tests") == test_conf_data.get("tests")
     # assert conf_content.get("tests") == [
     #     {
@@ -2081,6 +2080,7 @@ def test_verify_deletion_from_conf_script_format_with_deprecate_flag(
     script = pack.create_script("TestScript")
     script.yml.update({"tests": ["test_playbook_for_script"]})
     script_path = script.path
+    repo_path = repo.path
 
     # Prepare conf
     test_conf_data = {
@@ -2093,23 +2093,19 @@ def test_verify_deletion_from_conf_script_format_with_deprecate_flag(
             },
         ]
     }
-    conf_json_path = tmp_path / "conf.json"
-    conf_path = str(conf_json_path)
+    conf_json_path = f"{repo.path}/Tests/conf.json"
     with open(conf_json_path, "w") as file:
         json.dump(test_conf_data, file, indent=4)
-    mocker.patch(
-        "demisto_sdk.commands.format.update_generic_yml.CONF_PATH", conf_json_path
-    )
     # conf_file.write_text(json.dumps(test_conf_data))
 
     # Run
-    with ChangeCWD(pack.repo_path):
+    with ChangeCWD(repo_path):
         runner = CliRunner(mix_stderr=False)
         result = runner.invoke(
             main, [FORMAT_CMD, "-i", f"{script_path}", "-d"], input="\n"
         )
     assert not result.exception
-    conf_content = get_dict_from_file(conf_path)[0]
+    conf_content = get_dict_from_file(conf_json_path)[0]
     assert conf_content.get("tests") == [
         {"integrations": ["TestIntegration"], "playbookID": "New Integration Test"},
         {"scripts": ["AnotherTestScript"], "playbookID": "test_playbook_for_script"},

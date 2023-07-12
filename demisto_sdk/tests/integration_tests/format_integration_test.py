@@ -2085,7 +2085,10 @@ def test_verify_deletion_from_conf_script_format_with_deprecate_flag(
     script.yml.update({"tests": ["test_playbook_for_script"]})
     script_path = script.path
     repo_path = repo.path
-
+    if os.path.exists(f"{repo_path}/Packs/TestPack/Scripts/TestScript/README.md"):
+        os.remove(f"{repo_path}/Packs/TestPack/Scripts/TestScript/README.md")
+    if os.path.exists(f"{repo_path}/Packs/TestPack/README.md"):
+        os.remove(f"{repo_path}/Packs/TestPack/README.md")
     # Prepare conf
     test_conf_data = {
         "tests": [

@@ -55,6 +55,7 @@ from demisto_sdk.commands.common.tools import (
     get_yml_paths_in_dir,
     retrieve_file_ending,
     safe_write_unicode,
+    is_sdk_defined_working_offline,
 )
 from demisto_sdk.commands.format.format_module import format_manager
 from demisto_sdk.commands.init.initiator import Initiator
@@ -184,6 +185,8 @@ class Downloader:
         self.num_added_files = 0
         self.init = init
         self.keep_empty_folders = keep_empty_folders
+        if is_sdk_defined_working_offline():
+            self.run_format = False
 
     def download(self) -> int:
         """

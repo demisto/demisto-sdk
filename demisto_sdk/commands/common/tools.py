@@ -266,6 +266,10 @@ SDK_PYPI_VERSION = r"https://pypi.org/pypi/demisto-sdk/json"
 SUFFIX_TO_REMOVE = ("_dev", "_copy")
 
 
+class NoInternetConnectionException(Exception):
+    pass
+
+
 def generate_xsiam_normalized_name(file_name, prefix):
     if file_name.startswith(f"external-{prefix}-"):
         return file_name
@@ -563,6 +567,7 @@ def get_remote_file(
     tag: str = "master",
     return_content: bool = False,
     git_content_config: Optional[GitContentConfig] = None,
+    default_value=None
 ):
     """
     Args:
@@ -570,10 +575,17 @@ def get_remote_file(
         tag: The branch name. default is 'master'
         return_content: Determines whether to return the file's raw content or the dict representation of it.
         git_content_config: The content config to take the file from
+        default_value: The default value to return when running sdk offline.
     Returns:
         The file content in the required format.
 
     """
+
+    if is_sdk_defined_working_offline():
+        if not default_value:
+            raise NoInternetConnectionException()
+        return default_value
+
     tag = tag.replace("origin/", "").replace("demisto/", "")
     if not git_content_config:
         try:

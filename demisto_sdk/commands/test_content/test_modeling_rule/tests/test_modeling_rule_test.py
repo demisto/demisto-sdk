@@ -1302,84 +1302,190 @@ def test_day_suffix(day, suffix):
     assert day_suffix(day) == suffix
 
 
-@pytest.mark.parametrize(
-    "event_data, schema_file",
-    [
-        (
-            {
-                "int": 1,
-                "string": "2",
-                "bool": True,
-                "float": 1.0,
-                "datetime": "Nov 9th 2022 15:46:30",
-                "json": {"1": "2"}
-            },
-            {
+class TestValidateSchemaAlignedWithTestData:
+    @pytest.mark.parametrize(
+        "event_data, schema_file",
+        [
+            (
+                {
+                    "int": 1,
+                    "string": "2",
+                    "bool": True,
+                    "float": 1.0,
+                    "datetime": "Nov 9th 2022 15:46:30",
+                    "json": {"1": "2"},
+                },
+                {
+                    "dataset": {
+                        "int": {"type": "int", "is_array": False},
+                        "string": {"type": "string", "is_array": False},
+                        "float": {"type": "float", "is_array": False},
+                        "datetime": {"type": "datetime", "is_array": False},
+                        "bool": {"type": "boolean", "is_array": False},
+                    }
+                },
+            ),
+            (
+                {
+                    "int": [1, 2],
+                    "string": ["1", "2"],
+                    "bool": [True, False],
+                    "float": [1.0, 2.0],
+                    "datetime": ["Nov 9th 2022 15:46:30", "Nov 9th 2022 15:46:30"],
+                    "json": [{"1": "2"}, {"1": "2"}],
+                },
+                {
+                    "dataset": {
+                        "int": {"type": "int", "is_array": False},
+                        "string": {"type": "string", "is_array": False},
+                        "float": {"type": "float", "is_array": False},
+                        "datetime": {"type": "datetime", "is_array": False},
+                        "bool": {"type": "boolean", "is_array": False},
+                    }
+                },
+            ),
+        ],
+    )
+    def test_validate_schema_aligned_with_test_data_positive(
+        self, mocker, event_data: dict, schema_file: dict
+    ):
+        """
+        Given:
+            - Case A: event data with all schema types and correct corresponding schema file
+            - Case B: event data with all schema types as lists and correct corresponding schema file
+
+        When:
+            - running validate_schema_aligned_with_test_data.
+
+        Then:
+            - verify no exception is raised.
+            - verify that there was not error raised
+            - verify not warning was raised
+        """
+        from demisto_sdk.commands.test_content.test_modeling_rule.test_modeling_rule import (
+            validate_schema_aligned_with_test_data,
+        )
+        from demisto_sdk.commands.test_content.xsiam_tools.test_data import (
+            EventLog,
+            TestData,
+        )
+
+        logger_error_mocker = mocker.patch.object(logger, "error")
+        logger_warning_mocker = mocker.patch.object(logger, "warning")
+
+        test_data = TestData(
+            data=[
+                EventLog(
+                    test_data_event_id=DEFAULT_TEST_EVENT_ID,
+                    vendor="vendor",
+                    product="product",
+                    dataset="dataset",
+                    event_data=event_data,
+                    expected_values={},
+                )
+            ]
+        )
+
+        validate_schema_aligned_with_test_data(test_data=test_data, schema=schema_file)
+        assert not logger_error_mocker.called
+        assert not logger_warning_mocker.called
+
+    def test_validate_schema_aligned_with_test_data_missing_fields_in_test_data(
+        self, mocker
+    ):
+        """
+        Given:
+            - Case A: event data that is missing one schema field.
+
+        When:
+            - running validate_schema_aligned_with_test_data.
+
+        Then:
+            - verify no exception is raised.
+            - verify that there was not error raised
+            - verify that warning was raised indicating that the test data is missing schema field
+        """
+        from demisto_sdk.commands.test_content.test_modeling_rule.test_modeling_rule import (
+            validate_schema_aligned_with_test_data,
+        )
+        from demisto_sdk.commands.test_content.xsiam_tools.test_data import (
+            EventLog,
+            TestData,
+        )
+
+        logger_error_mocker = mocker.patch.object(logger, "error")
+        logger_warning_mocker = mocker.patch.object(logger, "warning")
+
+        test_data = TestData(
+            data=[
+                EventLog(
+                    test_data_event_id=DEFAULT_TEST_EVENT_ID,
+                    vendor="vendor",
+                    product="product",
+                    dataset="dataset",
+                    event_data={"int": 1},
+                    expected_values={},
+                )
+            ]
+        )
+
+        validate_schema_aligned_with_test_data(
+            test_data=test_data,
+            schema={
                 "dataset": {
                     "int": {"type": "int", "is_array": False},
                     "string": {"type": "string", "is_array": False},
-                    "float": {"type": "float", "is_array": False},
-                    "datetime": {"type": "datetime", "is_array": False},
-                    "bool": {"type": "boolean", "is_array": False}
                 }
-            }
-        ),
-        (
-            {
-                "int": [1, 2],
-                "string": ["1", "2"],
-                "bool": [True, False],
-                "float": [1.0, 2.0],
-                "datetime": ["Nov 9th 2022 15:46:30", "Nov 9th 2022 15:46:30"],
-                "json": [{"1": "2"}, {"1": "2"}]
             },
-            {
+        )
+        assert not logger_error_mocker.called
+        assert logger_warning_mocker.called
+
+    def test_validate_schema_aligned_with_invalid_schema_mappings(self, mocker):
+        """
+        Given:
+            - Case A: event data that its mapping to schema is wrong.
+
+        When:
+            - running validate_schema_aligned_with_test_data.
+
+        Then:
+            - verify no exception is raised.
+            - verify that there was not warning raised
+            - verify that error was raised indicating that the test data is missing schema field
+        """
+        from demisto_sdk.commands.test_content.test_modeling_rule.test_modeling_rule import (
+            validate_schema_aligned_with_test_data,
+        )
+        from demisto_sdk.commands.test_content.xsiam_tools.test_data import (
+            EventLog,
+            TestData,
+        )
+
+        logger_error_mocker = mocker.patch.object(logger, "error")
+        logger_warning_mocker = mocker.patch.object(logger, "warning")
+
+        test_data = TestData(
+            data=[
+                EventLog(
+                    test_data_event_id=DEFAULT_TEST_EVENT_ID,
+                    vendor="vendor",
+                    product="product",
+                    dataset="dataset",
+                    event_data={"int": 1, "bool": True},
+                    expected_values={},
+                )
+            ]
+        )
+
+        validate_schema_aligned_with_test_data(
+            test_data=test_data,
+            schema={
                 "dataset": {
-                    "int": {"type": "int", "is_array": False},
-                    "string": {"type": "string", "is_array": False},
-                    "float": {"type": "float", "is_array": False},
-                    "datetime": {"type": "datetime", "is_array": False},
-                    "bool": {"type": "boolean", "is_array": False}
+                    "int": {"type": "string", "is_array": False},
+                    "bool": {"type": "float", "is_array": False},
                 }
-            }
-        ),
-    ],
-)
-def test_validate_schema_aligned_with_test_data(mocker, event_data, schema_file):
-    """
-    Given:
-        - Case A: event data with all schema types and correct corresponding schema file
-        - Case B: event data with all schema types as lists and correct corresponding schema file
-
-    When:
-        - running validate_schema_aligned_with_test_data.
-
-    Then:
-        - verify no exception is raised.
-        - Verify that there was not error raised
-    """
-    from demisto_sdk.commands.test_content.test_modeling_rule.test_modeling_rule import \
-        validate_schema_aligned_with_test_data
-
-    from demisto_sdk.commands.test_content.xsiam_tools.test_data import (
-        EventLog,
-        TestData,
-    )
-
-    logger_error_mocker = mocker.patch.object(logger, "error")
-
-    test_data = TestData(
-        data=[
-            EventLog(
-                test_data_event_id=DEFAULT_TEST_EVENT_ID,
-                vendor="vendor",
-                product="product",
-                dataset="dataset",
-                event_data=event_data,
-                expected_values={},
-            )
-        ]
-    )
-
-    validate_schema_aligned_with_test_data(test_data=test_data, schema=schema_file)
-    assert not logger_error_mocker.called
+            },
+        )
+        assert logger_error_mocker.called
+        assert not logger_warning_mocker.called

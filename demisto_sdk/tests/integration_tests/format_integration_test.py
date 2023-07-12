@@ -2003,10 +2003,6 @@ def test_verify_deletion_from_conf_pack_format_with_deprecate_flag(
     """
     # Prepare mockers
     monkeypatch.setenv("COLUMNS", "1000")
-    # mocker.patch.object(BaseUpdate, "set_default_from_version", return_value=None)
-    # mocker.patch.object(logging.getLogger("demisto-sdk"), "debug")
-    # mocker.patch.object(BaseUpdate, "set_fromVersion")
-    # mocker.patch.object(BaseUpdateYML, "_save_to_conf_json", return_value=None)
     mocker.patch(
         "demisto_sdk.commands.common.markdown_lint.run_markdownlint", return_value=None
     )
@@ -2018,12 +2014,12 @@ def test_verify_deletion_from_conf_pack_format_with_deprecate_flag(
     pack_path = pack.path
     repo_path = repo.path
 
-    if os.path.exists(
-        f"{repo_path}/Packs/TestPack/Integrations/TestIntegration/README.md"
-    ):
-        os.remove(f"{repo_path}/Packs/TestPack/Integrations/TestIntegration/README.md")
-    if os.path.exists(f"{repo_path}/Packs/TestPack/README.md"):
-        os.remove(f"{repo_path}/Packs/TestPack/README.md")
+    # if os.path.exists(
+    #     f"{repo_path}/Packs/TestPack/Integrations/TestIntegration/README.md"
+    # ):
+    #     os.remove(f"{repo_path}/Packs/TestPack/Integrations/TestIntegration/README.md")
+    # if os.path.exists(f"{repo_path}/Packs/TestPack/README.md"):
+    #     os.remove(f"{repo_path}/Packs/TestPack/README.md")
     # Prepare conf
     test_conf_data = {
         "tests": [
@@ -2035,18 +2031,19 @@ def test_verify_deletion_from_conf_pack_format_with_deprecate_flag(
             },
         ]
     }
-    conf_json_path = f"{repo.path}/Tests/conf.json"
+    conf_json_path = f"{repo_path}/Tests/conf.json"
     with open(conf_json_path, "w") as file:
         json.dump(test_conf_data, file, indent=4)
 
     # Run
-    with ChangeCWD(pack.repo_path):
+    with ChangeCWD(repo_path):
 
         runner = CliRunner(mix_stderr=False)
         result = runner.invoke(
             main, [FORMAT_CMD, "-i", f"{pack_path}", "-d"], input="\n"
         )
 
+    # Asserts
     assert not result.exception
     conf_content = get_dict_from_file(conf_json_path)[0]
     assert conf_content.get("tests") == [
@@ -2072,9 +2069,6 @@ def test_verify_deletion_from_conf_script_format_with_deprecate_flag(
     """
     # Prepare mockers
     monkeypatch.setenv("COLUMNS", "1000")
-    # mocker.patch.object(BaseUpdate, "set_default_from_version", return_value=None)
-    # mocker.patch.object(logging.getLogger("demisto-sdk"), "debug")
-    mocker.patch.object(BaseUpdate, "set_fromVersion")
     mocker.patch(
         "demisto_sdk.commands.common.markdown_lint.run_markdownlint", return_value=None
     )
@@ -2086,10 +2080,10 @@ def test_verify_deletion_from_conf_script_format_with_deprecate_flag(
     script.yml.update({"tests": ["test_playbook_for_script"]})
     script_path = script.path
     repo_path = repo.path
-    if os.path.exists(f"{repo_path}/Packs/TestPack/Scripts/TestScript/README.md"):
-        os.remove(f"{repo_path}/Packs/TestPack/Scripts/TestScript/README.md")
-    if os.path.exists(f"{repo_path}/Packs/TestPack/README.md"):
-        os.remove(f"{repo_path}/Packs/TestPack/README.md")
+    # if os.path.exists(f"{repo_path}/Packs/TestPack/Scripts/TestScript/README.md"):
+    #     os.remove(f"{repo_path}/Packs/TestPack/Scripts/TestScript/README.md")
+    # if os.path.exists(f"{repo_path}/Packs/TestPack/README.md"):
+    #     os.remove(f"{repo_path}/Packs/TestPack/README.md")
     # Prepare conf
     test_conf_data = {
         "tests": [
@@ -2101,7 +2095,7 @@ def test_verify_deletion_from_conf_script_format_with_deprecate_flag(
             },
         ]
     }
-    conf_json_path = f"{repo.path}/Tests/conf.json"
+    conf_json_path = f"{repo_path}/Tests/conf.json"
     with open(conf_json_path, "w") as file:
         json.dump(test_conf_data, file, indent=4)
 
@@ -2111,6 +2105,8 @@ def test_verify_deletion_from_conf_script_format_with_deprecate_flag(
         result = runner.invoke(
             main, [FORMAT_CMD, "-i", f"{script_path}", "-d"], input="\n"
         )
+
+    # Asserts
     assert not result.exception
     conf_content = get_dict_from_file(conf_json_path)[0]
     assert conf_content.get("tests") == [

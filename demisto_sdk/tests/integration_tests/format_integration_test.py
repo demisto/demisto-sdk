@@ -1989,7 +1989,7 @@ class TestFormatWithoutAddTestsFlag:
 
 
 def test_verify_deletion_from_conf_pack_format_with_deprecate_flag(
-    mocker, monkeypatch, requests_mock, repo, tmp_path: PosixPath
+    mocker, monkeypatch, repo, tmp_path: PosixPath
 ):
     """
     Given
@@ -2037,9 +2037,7 @@ def test_verify_deletion_from_conf_pack_format_with_deprecate_flag(
     with ChangeCWD(pack.repo_path):
 
         runner = CliRunner(mix_stderr=False)
-        result = runner.invoke(
-            main, [FORMAT_CMD, "-i", f"{pack_path}", "-d"], input="\n"
-        )
+        result = runner.invoke(main, [FORMAT_CMD, "-i", f"{pack_path}"], input="\n")
 
     assert not result.exception
     conf_content = get_dict_from_file(conf_json_path)[0]

@@ -2004,8 +2004,6 @@ def test_verify_deletion_from_conf_pack_format_with_deprecate_flag(
 
     # Prepare mockers
     monkeypatch.setenv("COLUMNS", "1000")
-    # We don't need to lint the readme markdown we have an empty readme files.
-    mocker.patch("demisto_sdk.commands.common.markdown_lint", return_value=None)
     # Prepare content
     # Create pack with integration and with test playbook in the yml.
     pack = repo.create_pack("TestPack")
@@ -2013,6 +2011,13 @@ def test_verify_deletion_from_conf_pack_format_with_deprecate_flag(
     integration.yml.update({"tests": ["test_playbook"]})
     pack_path = pack.path
     repo_path = repo.path
+    # We don't need to format empty readme files
+    if os.path.exists(
+        f"{repo_path}/Packs/TestPack/Integrations/TestIntegration/README.md"
+    ):
+        os.remove(f"{repo_path}/Packs/TestPack/Integrations/TestIntegration/README.md")
+    if os.path.exists(f"{repo_path}/Packs/TestPack/README.md"):
+        os.remove(f"{repo_path}/Packs/TestPack/README.md")
 
     # Prepare conf
     test_conf_data = {
@@ -2064,7 +2069,6 @@ def test_verify_deletion_from_conf_script_format_with_deprecate_flag(
 
     # Prepare mockers
     monkeypatch.setenv("COLUMNS", "1000")
-    mocker.patch("demisto_sdk.commands.common.markdown_lint", return_value=None)
 
     # Prepare content
     # Create pack with script and with test playbook in the yml.
@@ -2073,6 +2077,12 @@ def test_verify_deletion_from_conf_script_format_with_deprecate_flag(
     script.yml.update({"tests": ["test_playbook_for_script"]})
     script_path = script.path
     repo_path = repo.path
+
+    # We don't need to format empty readme files
+    if os.path.exists(f"{repo_path}/Packs/TestPack/Scripts/TestScript/README.md"):
+        os.remove(f"{repo_path}/Packs/TestPack/Scripts/TestScript/README.md")
+    if os.path.exists(f"{repo_path}/Packs/TestPack/README.md"):
+        os.remove(f"{repo_path}/Packs/TestPack/README.md")
 
     # Prepare conf
     test_conf_data = {

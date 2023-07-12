@@ -1469,8 +1469,8 @@ def test_get_last_remote_release_version(requests_mock):
     Then:
     - Ensure the returned version is as expected
     """
-    os.environ["DEMISTO_SDK_SKIP_VERSION_CHECK"] = ""
-    os.environ["CI"] = ""
+    # os.environ["DEMISTO_SDK_SKIP_VERSION_CHECK"] = ""
+    # os.environ["CI"] = ""
     expected_version = "1.3.8"
     # requests_mock.get(
     #     r"https://test.org/pypi/demisto-sdk/json",

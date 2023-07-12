@@ -7,6 +7,7 @@
 * Fixed an issue where **zip_packs** failed uploading content.
 * Added `tenant_timezone` handling to the **modeling-rules init** command, allowing usage with tenants in various timezones.
 * Shortened the timeout when checking whether the dataset exists in **test-modeling-rule**.
+* Cleaned up project dependencies.
 
 ## 1.17.1
 * Added the `aliasTo` key to the Incident Field schema.

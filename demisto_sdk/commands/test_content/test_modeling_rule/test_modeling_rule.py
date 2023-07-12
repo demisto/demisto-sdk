@@ -1,8 +1,10 @@
+import json
 from datetime import datetime
 from pathlib import Path
 from time import sleep
 from typing import Any, Dict, List, Optional, Tuple
 
+import dateparser
 import requests
 import typer
 from rich import print as printr
@@ -47,17 +49,18 @@ console = Console(theme=custom_theme)
 app = typer.Typer()
 
 
-def create_table(expected: Dict[str, Any], received: Dict[str, Any]) -> Table:
+def create_table(expected: Dict[str, Any], received: Dict[str, Any], field_name: str = 'Model Field') -> Table:
     """Create a table to display the expected and received values.
 
     Args:
         expected (Dict[str, Any]): mapping of keys to expected values
         received (Dict[str, Any]): mapping of keys to received values
+        field_name (str): the name of the field in the first column
 
     Returns:
         Table: Table object to display the expected and received values.
     """
-    table = Table("Model Field", "Expected Value", "Received Value")
+    table = Table(field_name, "Expected Value", "Received Value")
     for key, val in expected.items():
         table.add_row(key, str(val), str(received.get(key)))
     return table
@@ -252,6 +255,66 @@ def validate_expected_values(
         )
     else:
         raise typer.Exit(1)
+
+
+def validate_schema_aligned_with_test_data(test_data: init_test_data.TestData, schema: Dict):
+    """
+    Validates that the schema is aligned with the test-data types.
+
+    Args:
+        test_data: the test data object.
+        schema: the content of the schema file.
+
+    """
+    expected_schema_mappings = {
+        str: {"type": "string", "is_array": False},
+        dict: {"type": "string", "is_array": False},
+        int: {"type": "int", "is_array": False},
+        float: {"type": "float", "is_array": False},
+        datetime: {"type": "datetime", "is_array": False},
+        bool: {"type": "boolean", "is_array": False}
+    }
+    for schema_dataset, schema_mappings in schema.items():
+        received_testdata_values = {}
+        error_logs = []
+
+        events_data = [d.event_data for d in test_data.data if d.dataset == schema_dataset]
+        for event_data in events_data:
+            for response_key, response_val in event_data.items():
+                if actual_key_schema_mappings := schema_mappings.get(response_key):
+                    if isinstance(response_val, list):
+                        response_val = response_val[0]
+
+                    if isinstance(response_val, str) and dateparser.parse(
+                        response_val, settings={'STRICT_PARSING': True}
+                    ):
+                        val_type = datetime
+                    else:
+                        val_type = type(response_val)
+
+                    if expected_schema_mappings[val_type] != actual_key_schema_mappings:
+                        error_logs.append(
+                            f'[red][bold]{response_key}[/bold] --- "{expected_schema_mappings[val_type]}" '
+                            f'!= "{actual_key_schema_mappings}"\nReceived '
+                            f'{actual_key_schema_mappings} != Expected {expected_schema_mappings[val_type]}'
+                        )
+                    received_testdata_values[response_key] = expected_schema_mappings[val_type]
+
+        printr(
+            create_table(
+                schema_mappings, received_testdata_values, field_name=f'Schema Fields For {schema_dataset}'
+            )
+        )
+
+        if error_logs:
+            for _log in error_logs:
+                logger.error(_log, extra={"markup": True})
+            typer.Exit(1)
+        else:
+            logger.debug(
+                f'[cyan]Schema mappings and Testdata mapping are valid for dataset {schema_dataset}[/cyan]',
+                extra={"markup": True}
+            )
 
 
 def check_dataset_exists(
@@ -607,6 +670,11 @@ def validate_modeling_rule(
             mr_entity.testdata_path.as_posix()
         )
 
+        with open(mr_entity.schema_path) as schema:
+            validate_schema_aligned_with_test_data(test_data=test_data, schema=json.load(schema))
+
+        print()
+
         if push:
             if missing_event_data:
                 logger.warning(
@@ -632,6 +700,8 @@ def validate_modeling_rule(
                 '[cyan]The command flag "--no-push" was passed - skipping pushing of test data[/cyan]',
                 extra={"markup": True},
             )
+        with open(mr_entity.schema_path) as schema:
+            validate_schema_aligned_with_test_data(test_data=test_data, schema=json.load(schema))
         validate_expected_values(xsiam_client, mr_entity, test_data)
 
 

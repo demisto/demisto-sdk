@@ -286,6 +286,7 @@ def validate_schema_aligned_with_test_data(
     expected_schema_mappings = {
         str: {"type": "string", "is_array": False},
         dict: {"type": "string", "is_array": False},
+        list: {"type": "string", "is_array": False},
         int: {"type": "int", "is_array": False},
         float: {"type": "float", "is_array": False},
         datetime: {"type": "datetime", "is_array": False},
@@ -307,8 +308,6 @@ def validate_schema_aligned_with_test_data(
         for event in events:
             for event_key, event_val in event.items():
                 if actual_key_schema_mappings := schema_mappings.get(event_key):
-                    if isinstance(event_val, list) and event_val:
-                        event_val = event_val[0]
 
                     if isinstance(event_val, str) and dateparser.parse(
                         event_val, settings={"STRICT_PARSING": True}

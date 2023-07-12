@@ -1327,20 +1327,21 @@ class TestValidateSchemaAlignedWithTestData:
             ),
             (
                 {
-                    "int": [1, 2],
-                    "string": ["1", "2"],
-                    "bool": [True, False],
-                    "float": [1.0, 2.0],
-                    "datetime": ["Nov 9th 2022 15:46:30", "Nov 9th 2022 15:46:30"],
-                    "json": [{"1": "2"}, {"1": "2"}],
+                    "list_int": [1, 2],
+                    "list_string": ["1", "2"],
+                    "list_bool": [True, False],
+                    "list_float": [1.0, 2.0],
+                    "list_datetime": ["Nov 9th 2022 15:46:30", "Nov 9th 2022 15:46:30"],
+                    "list_json": [{"1": "2"}, {"1": "2"}],
                 },
                 {
                     "dataset": {
-                        "int": {"type": "int", "is_array": False},
-                        "string": {"type": "string", "is_array": False},
-                        "float": {"type": "float", "is_array": False},
-                        "datetime": {"type": "datetime", "is_array": False},
-                        "bool": {"type": "boolean", "is_array": False},
+                        "list_int": {"type": "string", "is_array": False},
+                        "list_string": {"type": "string", "is_array": False},
+                        "list_float": {"type": "string", "is_array": False},
+                        "list_datetime": {"type": "string", "is_array": False},
+                        "list_bool": {"type": "string", "is_array": False},
+                        "list_json": {"type": "string", "is_array": False},
                     }
                 },
             ),

@@ -7,6 +7,7 @@
 * Fixed an issue where **zip_packs** failed uploading content.
 * Added `tenant_timezone` handling to the **modeling-rules init** command, allowing usage with tenants in various timezones.
 * Shortened the timeout when checking whether the dataset exists in **test-modeling-rule**.
+* Added support for the **List** content item in **Xpanse** marketplace.
 * Calling **format** with the `-d` flag now removes test playbooks testing the deprecated content from conf.json.
 
 ## 1.17.1

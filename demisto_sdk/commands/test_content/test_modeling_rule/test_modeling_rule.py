@@ -323,7 +323,7 @@ def validate_schema_aligned_with_test_data(
                         != actual_key_schema_mappings
                     ):
                         error_logs.append(
-                            f'[red][bold]{event_key}[/bold] --- Received '
+                            f"[red][bold]{event_key}[/bold] --- Received "
                             f'"{actual_key_schema_mappings}" != Expected "{expected_schema_mappings[event_val_type]}"'
                         )
                         errors_occurred = True
@@ -346,7 +346,7 @@ def validate_schema_aligned_with_test_data(
             logger.warning(
                 f"[yellow]The following fields {missing_test_data_keys} are in schema for dataset {dataset}, "
                 f"but not in test-data, make sure to remove them from schema or add them to test-data[/yellow]",
-                extra={"markup": True}
+                extra={"markup": True},
             )
 
         if error_logs:
@@ -355,7 +355,7 @@ def validate_schema_aligned_with_test_data(
         else:
             logger.info(
                 f"[green]Schema mappings and Testdata mappings are valid for dataset {dataset}[/green]",
-                extra={"markup": True}
+                extra={"markup": True},
             )
     if errors_occurred:
         raise typer.Exit(1)

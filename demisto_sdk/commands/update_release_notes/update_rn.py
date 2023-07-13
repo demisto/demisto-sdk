@@ -1030,7 +1030,7 @@ def update_api_modules_dependents_rn(
         for integration in integrations:
             integration_pack_name = integration.pack_id
             integration_path = integration.path
-            integration_pack_path = integration.in_pack.path
+            integration_pack_path = pack_name_to_path(integration_pack_name)
             update_pack_rn = UpdateRN(
                 pack_path=integration_pack_path,
                 update_type=update_type,
@@ -1044,7 +1044,6 @@ def update_api_modules_dependents_rn(
             if updated:
                 total_updated_packs.add(integration_pack_name)
         return total_updated_packs
-
 
 def check_docker_image_changed(main_branch: str, packfile: str) -> Optional[str]:
     """Checks whether the docker image was changed in master.

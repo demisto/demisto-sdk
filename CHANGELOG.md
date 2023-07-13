@@ -1,6 +1,6 @@
 # Changelog
 ## Unreleased
-* Added support for the **modeling-rules test** command to validate whether the modeling rules schema is aligned with the test-data.
+* Added support for the **modeling-rules test** command to validate whether the modeling rules schema mappings are aligned with the test-data mappings.
 * Added documentation for the flag **override-existing** used in upload.
 * Fixed an issue where **validate** failed on Incident Field items with a `template` value.
 * Improved memory efficiency in **update-content-graph** and **create-content-graph** commands.

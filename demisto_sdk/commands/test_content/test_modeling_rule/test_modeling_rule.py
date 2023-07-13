@@ -346,16 +346,16 @@ def validate_schema_aligned_with_test_data(
             logger.warning(
                 f"[yellow]The following fields {missing_test_data_keys} are in schema for dataset {dataset}, "
                 f"but not in test-data, make sure to remove them from schema or add them to test-data[/yellow]",
-                extra={"markup": True},
+                extra={"markup": True}
             )
 
         if error_logs:
             for _log in error_logs:
                 logger.error(_log, extra={"markup": True})
         else:
-            logger.debug(
-                f"[cyan]Schema mappings and Testdata mappings are valid for dataset {dataset}[/cyan]",
-                extra={"markup": True},
+            logger.info(
+                f"[green]Schema mappings and Testdata mappings are valid for dataset {dataset}[/green]",
+                extra={"markup": True}
             )
     if errors_occurred:
         raise typer.Exit(1)

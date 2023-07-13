@@ -2208,8 +2208,8 @@ class ValidateManager:
                 api_module_set, graph_validator.graph
             )
             packs_that_should_have_new_rn_api_module_related = set(
-                map(lambda integration: integration.pack_id, integrations)
-            )
+            map(lambda integration: integration.pack_id, 
+                filter(lambda integration: not integration.deprecated, integrations)))
             packs_that_should_have_new_rn = packs_that_should_have_new_rn.union(
                 packs_that_should_have_new_rn_api_module_related
             )

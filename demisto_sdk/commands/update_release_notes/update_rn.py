@@ -1028,21 +1028,22 @@ def update_api_modules_dependents_rn(
     with Neo4jContentGraphInterface(should_update=True) as graph:
         integrations = get_api_module_dependencies_from_graph(api_module_set, graph)
         for integration in integrations:
-            integration_pack_name = integration.pack_id
-            integration_path = integration.path
-            integration_pack_path = pack_name_to_path(integration_pack_name)
-            update_pack_rn = UpdateRN(
-                pack_path=integration_pack_path,
-                update_type=update_type,
-                modified_files_in_pack={integration_path},
-                pre_release=pre_release,
-                added_files=set(),
-                pack=integration_pack_name,
-                text=text,
-            )
-            updated = update_pack_rn.execute_update()
-            if updated:
-                total_updated_packs.add(integration_pack_name)
+            if not integration.deprecated:
+                integration_pack_name = integration.pack_id
+                integration_path = integration.path
+                integration_pack_path = integration.in_pack.path
+                update_pack_rn = UpdateRN(
+                    pack_path=integration_pack_path,
+                    update_type=update_type,
+                    modified_files_in_pack={integration_path},
+                    pre_release=pre_release,
+                    added_files=set(),
+                    pack=integration_pack_name,
+                    text=text,
+                )
+                updated = update_pack_rn.execute_update()
+                if updated:
+                    total_updated_packs.add(integration_pack_name)
         return total_updated_packs
 
 

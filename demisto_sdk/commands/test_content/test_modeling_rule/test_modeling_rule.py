@@ -331,6 +331,14 @@ def validate_schema_aligned_with_test_data(
                         event_val_type
                     ]
 
+        printr(
+            create_table(
+                schema_mappings,
+                test_data_mappings,
+                field_name=f"Schema Fields For {dataset}",
+            )
+        )
+
         missing_test_data_keys = set(schema_mappings.keys()) - set(
             test_data_mappings.keys()
         )
@@ -340,14 +348,6 @@ def validate_schema_aligned_with_test_data(
                 f"but not in test-data, make sure to remove them from schema or add them to test-data[/yellow]",
                 extra={"markup": True},
             )
-
-        printr(
-            create_table(
-                schema_mappings,
-                test_data_mappings,
-                field_name=f"Schema Fields For {dataset}",
-            )
-        )
 
         if error_logs:
             for _log in error_logs:

@@ -9,6 +9,7 @@
 * Shortened the timeout when checking whether the dataset exists in **test-modeling-rule**.
 * Added support for the **List** content item in **Xpanse** marketplace.
 * Fixed an issue in **run-unit-tests** command when running Powershell tests.
+* Changed `pre-commit` to not run `validate` by default.
 
 ## 1.17.1
 * Added the `aliasTo` key to the Incident Field schema.

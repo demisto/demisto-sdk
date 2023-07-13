@@ -3321,7 +3321,7 @@ def update_content_graph(
 @click.option(
     "--validate/--no-validate",
     help="Whether to run demisto-sdk validate",
-    default=True,
+    default=False,
 )
 @click.option(
     "--format/--no-format",

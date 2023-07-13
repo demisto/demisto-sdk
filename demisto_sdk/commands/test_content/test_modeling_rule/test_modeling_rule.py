@@ -355,7 +355,7 @@ def validate_schema_aligned_with_test_data(
                 logger.error(_log, extra={"markup": True})
         else:
             logger.debug(
-                f"[cyan]Schema mappings and Testdata mapping are valid for dataset {dataset}[/cyan]",
+                f"[cyan]Schema mappings and Testdata mappings are valid for dataset {dataset}[/cyan]",
                 extra={"markup": True},
             )
     if errors_ocurrred:
@@ -715,15 +715,20 @@ def validate_modeling_rule(
             mr_entity.testdata_path.as_posix()
         )
 
-        if mr_entity.schema_path.exists():
-            with open(mr_entity.schema_path) as schema:
-                validate_schema_aligned_with_test_data(
-                    test_data=test_data, schema=json.load(schema)
-                )
+        if schema_path := mr_entity.schema_path:
+            with open(mr_entity.schema_path) as schema_file:
+                schema = json.load(schema_file)
         else:
             raise FileNotFoundError(
                 f"schema file does not exist in path {mr_entity.schema_path}"
             )
+
+        logger.info(
+            f"[green]Validating that the schema {schema_path} is aligned with TestData file.[/green]",
+            extra={"markup": True},
+        )
+
+        validate_schema_aligned_with_test_data(test_data=test_data, schema=schema)
 
         if push:
             if missing_event_data:

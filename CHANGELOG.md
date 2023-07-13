@@ -7,6 +7,7 @@
 * Fixed an issue where **zip_packs** failed uploading content.
 * Added `tenant_timezone` handling to the **modeling-rules init** command, allowing usage with tenants in various timezones.
 * Shortened the timeout when checking whether the dataset exists in **test-modeling-rule**.
+* Cleaned up project dependencies.
 * Added support for the **List** content item in **Xpanse** marketplace.
 * Fixed an issue in **run-unit-tests** command when running Powershell tests.
 

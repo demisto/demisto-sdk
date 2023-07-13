@@ -162,7 +162,7 @@ def unit_test_runner(file_paths: List[Path], verbose: bool = False) -> int:
                     ],
                     command=PWSH_COMMAND
                     if integration_script.type == "powershell"
-                    else PYTEST_COMMAND,
+                    else [PYTEST_COMMAND],
                     user=f"{os.getuid()}:{os.getgid()}",
                     working_dir=working_dir,
                     detach=True,

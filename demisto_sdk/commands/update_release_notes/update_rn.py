@@ -1022,7 +1022,7 @@ def update_api_modules_dependents_rn(
     api_module_set = get_api_module_ids(added)
     api_module_set = api_module_set.union(get_api_module_ids(modified))
     logger.info(
-        f"[yellow]Changes were found in the following APIModules: {api_module_set}, updating all dependent "
+        f"[yellow]Changes were found in the following APIModules : {api_module_set}, updating all dependent "
         f"integrations.[/yellow]"
     )
     with Neo4jContentGraphInterface(should_update=True) as graph:

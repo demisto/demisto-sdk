@@ -57,11 +57,6 @@ def run_query(tx: Transaction, query: str, **kwargs: Dict[str, Any]) -> Result:
     try:
         start_time: datetime = datetime.now()
         logger.debug(f"Running query:\n{query}")
-        query = f"""
-        CALL apoc.periodic.iterate(
-         {query},{{batchSize:10000, parallel:true}}
-        )
-        """
         result = tx.run(query, **kwargs)
         logger.debug(f"Took {(datetime.now() - start_time).total_seconds()} seconds")
         return result

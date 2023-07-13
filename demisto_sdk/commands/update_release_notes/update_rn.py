@@ -1045,6 +1045,7 @@ def update_api_modules_dependents_rn(
                 total_updated_packs.add(integration_pack_name)
         return total_updated_packs
 
+
 def check_docker_image_changed(main_branch: str, packfile: str) -> Optional[str]:
     """Checks whether the docker image was changed in master.
 

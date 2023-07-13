@@ -1451,7 +1451,7 @@ class TestValidateSchemaAlignedWithTestData:
             - running validate_schema_aligned_with_test_data.
 
         Then:
-            - verify no exception is raised.
+            - verify Typer.exception is raised.
             - verify that there was not warning raised
             - verify that error was raised indicating that the test data is missing schema field
         """
@@ -1479,14 +1479,15 @@ class TestValidateSchemaAlignedWithTestData:
             ]
         )
 
-        validate_schema_aligned_with_test_data(
-            test_data=test_data,
-            schema={
-                "dataset": {
-                    "int": {"type": "string", "is_array": False},
-                    "bool": {"type": "float", "is_array": False},
-                }
-            },
-        )
-        assert logger_error_mocker.called
-        assert not logger_warning_mocker.called
+        with pytest.raises(typer.Exit):
+            validate_schema_aligned_with_test_data(
+                test_data=test_data,
+                schema={
+                    "dataset": {
+                        "int": {"type": "string", "is_array": False},
+                        "bool": {"type": "float", "is_array": False},
+                    }
+                },
+            )
+            assert logger_error_mocker.called
+            assert not logger_warning_mocker.called

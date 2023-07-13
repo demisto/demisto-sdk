@@ -4,6 +4,7 @@ import os
 import re
 import shutil
 import tarfile
+import traceback
 from pathlib import Path
 from tempfile import mkdtemp
 from typing import Dict, List, Optional, Tuple, Union
@@ -202,41 +203,43 @@ class Downloader:
         Manages all download command flows
         :return The exit code of each flow
         """
-        if not self.verify_output_path():
-            return 1
-
-        if not self.verify_flags():
-            return 1
-
-        if not self.download_system_item:
-            try:
-                custom_content = self.fetch_custom_content()
-                self.handle_uuid_ids(custom_content)
-
-            except Exception:
+        try:
+            if not self.verify_output_path():
                 return 1
 
-        if self.download_system_item and not self.fetch_system_content():
-            return 1
-
-        if self.handle_list_files_flag():
-            return 0
-
-        self.handle_init_flag()
-        self.handle_all_custom_content_flag()
-        self.handle_regex_flag()
-
-        self.build_pack_content()
-        self.build_custom_content() if not self.download_system_item else self.build_system_content()
-        self.update_pack_hierarchy()
-        self.merge_into_pack()
-        self.log_files_downloaded()
-        self.log_files_not_downloaded()
-
-        for entry in self.files_not_downloaded:
-            file, reason = entry
-            if reason != FILE_EXIST_REASON:
+            if not self.verify_flags():
                 return 1
+
+            if not self.download_system_item:
+                custom_content_bundle_tar = self.fetch_custom_content()
+                self.handle_uuid_ids(custom_content_bundle_tar=custom_content_bundle_tar)
+
+            if self.download_system_item and not self.fetch_system_content():
+                return 1
+
+            if self.handle_list_files_flag():
+                return 0
+
+            self.handle_init_flag()
+            self.handle_all_custom_content_flag()
+            self.handle_regex_flag()
+
+            self.build_pack_content()
+            self.build_custom_content() if not self.download_system_item else self.build_system_content()
+            self.update_pack_hierarchy()
+            self.merge_into_pack()
+            self.log_files_downloaded()
+            self.log_files_not_downloaded()
+
+            for entry in self.files_not_downloaded:
+                file, reason = entry
+                if reason != FILE_EXIST_REASON:
+                    return 1
+
+        except Exception as e:
+            logger.error(f"Error occurred during download process: {e}")
+            logger.debug(traceback.format_exc())  # Print traceback in debug only
+            return 1
 
         return 0
 
@@ -311,7 +314,7 @@ class Downloader:
                 and self.client.api_client
                 and self.client.api_client.configuration
             ):
-                logger.debug(f"Fetching YAML file for playbook '{playbook_name}' using API call...")
+                logger.debug(f"Fetching YAML file for playbook '{playbook_name}'...")
                 api_resp = demisto_client.generic_request_func(
                     self.client, f"/playbook/{playbook_id}/yaml", "GET"
                 )
@@ -378,7 +381,7 @@ class Downloader:
         logger.debug("Finished writing custom content to disk.")
 
     def find_uuids_in_content_item(self, tar: tarfile.TarFile):
-        logger.info("Creating a mapping of UUID IDs to names for custom custom content...")
+        logger.info("Creating ID mapping for custom content...")
 
         scripts_id_to_name: dict = {}
         content_items_file_names_tuple: List[Tuple[str, str]] = []
@@ -401,29 +404,25 @@ class Downloader:
                 )
             content_items_file_names_tuple.append((string_to_write, file.name))
 
-        logger.info("UUID IDs mapping creation completed successfully.")
+        logger.info("Custom content IDs mapping completed successfully.")
         return content_items_file_names_tuple, scripts_id_to_name
 
-    def fetch_custom_content(self) -> io.BytesIO:
+    def fetch_custom_content(self) -> tarfile.TarFile:
         """
-        Download content bundle (a tar.gz file containing all custom content) from the API,
-        and create an ID (UUID) to name mapping dict.
+        Download content bundle (a tar.gz file containing all custom content) using server's API.
 
         Returns:
-            io.BytesIO: The content bundle data as a BytesIO object.
+            tarfile.TarFile: The content bundle data as a TarFile object.
         """
-        try:
-            # Set to 'verify' to None so that 'demisto_client' will use the environment variable 'DEMISTO_VERIFY_SSL'.
-            verify = not self.insecure if self.insecure else None
-            logger.info("Fetching custom content bundle from server...")
+        # Set to 'verify' to None so that 'demisto_client' will use the environment variable 'DEMISTO_VERIFY_SSL'.
+        verify = not self.insecure if self.insecure else None
+        logger.info("Fetching custom content bundle from server...")
 
+        try:
             self.client = demisto_client.configure(verify_ssl=verify)
             api_response, _, _ = demisto_client.generic_request_func(
                 self.client, "/content/bundle", "GET"
             )
-            logger.debug(f"Downloaded content bundle size (bytes): {len(api_response)}")
-            body: bytes = ast.literal_eval(api_response)
-            return io.BytesIO(body)
 
         except ApiException as e:
             self.handle_api_exception(e)
@@ -432,11 +431,15 @@ class Downloader:
         except MaxRetryError as e:
             self.handle_max_retry_error(e)
             raise e
-        except Exception as e:
-            logger.info(f"Exception raised when fetching custom content:\n{e}")
-            raise e
 
-    def handle_uuid_ids(self, content_bundle_data: io.BytesIO):
+        logger.info("Custom content bundle fetched successfully.")
+        logger.debug(f"Downloaded content bundle size (bytes): {len(api_response)}")
+        body: bytes = ast.literal_eval(api_response)
+        tar_obj = tarfile.open(fileobj=io.BytesIO(body), mode="r")
+        logger.debug(f"{len(tar_obj.getmembers())} items found in the bundle.")
+        return tar_obj
+
+    def handle_uuid_ids(self, custom_content_bundle_tar: tarfile.TarFile):
         """
         Find and replace UUID IDs of custom content items with their names.
         The method first creates a mapping of a UUID to a name, and then replaces all UUIDs using this mapping.
@@ -445,12 +448,10 @@ class Downloader:
             custom_content_bundle_tar (tarfile.TarFile): The custom content bundle that was fetched from the server,
                 as a TarFile object.
         """
-        tar = tarfile.open(fileobj=content_bundle_data, mode="r")
-
         (
             content_items_file_names_tuple,
             scripts_id_to_name,
-        ) = self.find_uuids_in_content_item(tar)
+        ) = self.find_uuids_in_content_item(tar=custom_content_bundle_tar)
         self.write_custom_content(
             content_items_file_names_tuple, scripts_id_to_name
         )

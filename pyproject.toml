@@ -181,3 +181,11 @@ max-complexity = 30
 [tool.ruff.flake8-tidy-imports]
 [tool.ruff.flake8-tidy-imports.banned-api]
 "logging".msg = "The logging framework is banned. Please use demisto_sdk.commands.common.logger."
+
+
+[tool.demisto-sdk.validate.git]
+ignore = []
+categories = ["a", "b"]
+
+[tool.demisto-sdk.validate.all]
+ignore = ["RM101, RM102"]

@@ -3,7 +3,7 @@ import re
 from abc import abstractmethod
 from distutils.version import LooseVersion
 from pathlib import Path
-from typing import Optional, Set, Union
+from typing import Optional, Set
 
 from packaging import version
 
@@ -211,7 +211,7 @@ class ContentEntityValidator(BaseValidator):
             (bool): Whether the files' marketplaces as been modified or not.
         """
 
-        def _get_old_pack_marketplaces() -> Union[Set[str], None]:
+        def _get_old_pack_marketplaces() -> Set[str]:
             """returns marketplaces that were on the pack previously
 
             Returns:
@@ -240,17 +240,14 @@ class ContentEntityValidator(BaseValidator):
         if (not marketplaces_old) and marketplaces_new:
             pack_name = get_pack_name(self.file_path)
             try:
-                pack_marketplaces_old = _get_old_pack_marketplaces()
-                if pack_marketplaces_old is not None and marketplaces_new.issubset(
-                    pack_marketplaces_old
-                ):
+                if marketplaces_new.issubset(_get_old_pack_marketplaces()):
                     logger.debug(
-                        f"adding marketplace {marketplaces_new} to content item {self.file_path} is allowed when the added marketplaces are subset"
+                        f"Adding marketplaces that were implicitly-supported previously ({marketplaces_new}) to content item {self.file_path} is allowed"
                     )
                     return True
             except Exception:
                 logger.debug(
-                    f"could not find previous marketplaces in pack_metadata for {self.file_path}",
+                    f"Failed finding previous pack_metadata marketplaces for {self.file_path}",
                     exc_info=True,
                 )
 

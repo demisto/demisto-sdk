@@ -131,6 +131,7 @@ urllib3.disable_warnings()
 
 
 GRAPH_SUPPORTED_FILE_TYPES = ["yml", "json"]
+OFFLINE_MODE = None
 
 
 class TagParser:
@@ -3740,4 +3741,7 @@ def parse_multiple_path_inputs(
 
 
 def is_sdk_defined_working_offline() -> bool:
-    return str2bool(os.getenv(ENV_SDK_WORKING_OFFLINE))
+    global OFFLINE_MODE
+    if OFFLINE_MODE is None:
+        OFFLINE_MODE = str2bool(os.getenv(ENV_SDK_WORKING_OFFLINE))
+    return OFFLINE_MODE

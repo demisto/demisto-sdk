@@ -211,6 +211,7 @@ def main(ctx, config, version, release_notes, **kwargs):
         not os.getenv("DEMISTO_SDK_SKIP_VERSION_CHECK")
         or not os.getenv("CI")
         or version
+        or is_sdk_defined_working_offline()
     ):  # If the key exists/called to version
         try:
             __version__ = get_distribution("demisto-sdk").version
@@ -220,11 +221,7 @@ def main(ctx, config, version, release_notes, **kwargs):
                 "[yellow]Cound not find the version of the demisto-sdk. This usually happens when running in a development environment.[/yellow]"
             )
         else:
-            if is_sdk_defined_working_offline():
-                last_release = None
-            else:
-                last_release = get_last_remote_release_version()
-
+            last_release = get_last_remote_release_version()
             logger.info(f"[yellow]You are using demisto-sdk {__version__}.[/yellow]")
             if last_release and __version__ != last_release:
                 logger.info(

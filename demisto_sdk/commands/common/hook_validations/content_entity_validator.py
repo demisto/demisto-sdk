@@ -3,7 +3,7 @@ import re
 from abc import abstractmethod
 from distutils.version import LooseVersion
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Set, Union
 
 from packaging import version
 
@@ -16,6 +16,7 @@ from demisto_sdk.commands.common.constants import (
     FEATURE_BRANCHES,
     FROM_TO_VERSION_REGEX,
     GENERIC_OBJECTS_OLDEST_SUPPORTED_VERSION,
+    MARKETPLACE_KEY_PACK_METADATA,
     MODELING_RULE,
     MODELING_RULE_ID_SUFFIX,
     MODELING_RULE_NAME_SUFFIX,
@@ -42,6 +43,9 @@ from demisto_sdk.commands.common.tools import (
     _get_file_id,
     find_type,
     get_file_displayed_name,
+    get_pack_metadata,
+    get_pack_name,
+    get_remote_file,
     get_yaml,
     is_test_config_match,
     run_command,
@@ -206,13 +210,50 @@ class ContentEntityValidator(BaseValidator):
         Returns:
             (bool): Whether the files' marketplaces as been modified or not.
         """
+
+        def _get_old_pack_marketplaces() -> Union[Set[str], None]:
+            """returns marketplaces that were on the pack previously
+
+            Returns:
+                Union[Set[str], None]: Set of marketplaces, or None on error
+            """
+            pack_metadata_old = get_remote_file(
+                f"Packs/{pack_name}/pack_metadata.json", tag=self.prev_ver
+            )
+            pack_marketplaces_old = set(
+                pack_metadata_old.get(MARKETPLACE_KEY_PACK_METADATA, ())
+            )
+
+            pack_metadata_new = get_pack_metadata(self.file_path)
+            pack_marketplaces_new = set(
+                pack_metadata_new.get(MARKETPLACE_KEY_PACK_METADATA, ())
+            )
+
+            return pack_marketplaces_old - pack_marketplaces_new
+
         if not self.old_file:
             return True
 
-        marketplaces_new = self.current_file.get("marketplaces", [])
-        marketplaces_old = self.old_file.get("marketplaces", [])
+        marketplaces_new = set(self.current_file.get("marketplaces", ()))
+        marketplaces_old = set(self.old_file.get("marketplaces", ()))
 
         if (not marketplaces_old) and marketplaces_new:
+            pack_name = get_pack_name(self.file_path)
+            try:
+                pack_marketplaces_old = _get_old_pack_marketplaces()
+                if pack_marketplaces_old is not None and marketplaces_new.issubset(
+                    pack_marketplaces_old
+                ):
+                    logger.debug(
+                        f"adding marketplace {marketplaces_new} to content item {self.file_path} is allowed when the added marketplaces are subset"
+                    )
+                    return True
+            except Exception:
+                logger.debug(
+                    f"could not find previous marketplaces in pack_metadata for {self.file_path}",
+                    exc_info=True,
+                )
+
             error_message, error_code = Errors.marketplaces_added()
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 self.is_valid = False
@@ -224,8 +265,8 @@ class ContentEntityValidator(BaseValidator):
                 self.is_valid = False
                 return False
 
-        if not (set(marketplaces_old).issubset(marketplaces_new)):
-            removed = set(marketplaces_old) - set(marketplaces_new)
+        if not (marketplaces_old.issubset(marketplaces_new)):
+            removed = marketplaces_old - marketplaces_new
             error_message, error_code = Errors.marketplaces_removed(removed)
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 self.is_valid = False

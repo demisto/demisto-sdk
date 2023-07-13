@@ -97,7 +97,7 @@ class StructureValidator(BaseValidator):
         else:
             self.old_file = get_remote_file(
                 old_file_path if old_file_path else file_path,
-                tag=tag,
+                tag=self.prev_ver,
             )
         self.configuration = configuration
 

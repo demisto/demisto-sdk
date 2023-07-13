@@ -208,8 +208,13 @@ class Downloader:
         if not self.verify_flags():
             return 1
 
-        if not self.download_system_item and not self.fetch_custom_content():
-            return 1
+        if not self.download_system_item:
+            try:
+                custom_content = self.fetch_custom_content()
+                self.handle_uuid_ids(custom_content)
+
+            except Exception:
+                return 1
 
         if self.download_system_item and not self.fetch_system_content():
             return 1
@@ -245,24 +250,23 @@ class Downloader:
             output_flag, input_flag = True, True
             if not self.output_pack_path:
                 output_flag = False
-                logger.info("[red]Error: Missing option '-o' / '--output'.[/red]")
+                logger.error("Error: Missing required parameter '-o' / '--output'.")
             if not self.input_files:
                 if not self.all_custom_content and not self.regex:
                     input_flag = False
-                    logger.info("[red]Error: Missing option '-i' / '--input'.[/red]")
+                    logger.error("Error: Missing required parameter '-i' / '--input'.")
             if not input_flag or not output_flag:
                 is_valid = False
 
         if self.download_system_item and not self.system_item_type:
-            logger.info(
-                "[red]Error: Missing option '-it' / '--item-type', "
-                "you should specify the system item type to download.[/red]"
+            logger.error(
+                "Error: Missing required parameter '-it' / '--item-type'."
             )
             is_valid = False
 
         if self.system_item_type and not self.download_system_item:
-            logger.info(
-                "[red]The item type option is just for downloading system items.[/red]"
+            logger.error(
+                "Error: The item-type parameter ('-it' / '--item-type') is only for downloading system items."
             )
             is_valid = False
 
@@ -270,17 +274,17 @@ class Downloader:
 
     def handle_api_exception(self, e):
         if e.status == 401:
-            logger.info(
-                "\n[red]Authentication error: please verify that the appropriate environment variables "
-                "(either DEMISTO_USERNAME and DEMISTO_PASSWORD, or just DEMISTO_API_KEY) are properly configured.[/red]\n"
+            logger.error(
+                "\nAuthentication Error: please verify that the appropriate environment variables "
+                "(either DEMISTO_USERNAME and DEMISTO_PASSWORD, or just DEMISTO_API_KEY) are properly configured.\n"
             )
-        logger.info(f"Exception raised when fetching custom content:\nStatus: {e}")
+        logger.error(f"Exception raised while fetching custom content:\nStatus: {e}")
 
     def handle_max_retry_error(self, e):
-        logger.info(
-            "\n[red]Verify that the environment variable DEMISTO_BASE_URL is configured properly.[/red]\n"
+        logger.error(
+            "\nVerify that the environment variable DEMISTO_BASE_URL is configured properly.\n"
         )
-        logger.info(f"Exception raised when fetching custom content:\n{e}")
+        logger.error(f"Exception raised while fetching custom content:\n{e}")
 
     def download_playbook_yaml(self, playbook_string) -> str:
         """
@@ -351,6 +355,8 @@ class Downloader:
     def write_custom_content(
         self, content_items_file_names: List[Tuple[str, str]], scripts_id_to_name: dict
     ):
+        logger.debug("Writing custom content to disk and applying ID changes...")
+
         for content_item_as_string, file_name in content_items_file_names:
             if self.should_download_playbook(file_name):
                 content_item_as_string = self.download_playbook_yaml(
@@ -369,10 +375,14 @@ class Downloader:
                     "Writing data to file failed. Re-attempting using UTF-8 encoding."
                 )
                 path.write_text(content_item_as_string, encoding="utf8")
+        logger.debug("Finished writing custom content to disk.")
 
     def find_uuids_in_content_item(self, tar: tarfile.TarFile):
+        logger.info("Creating a mapping of UUID IDs to names for custom custom content...")
+
         scripts_id_to_name: dict = {}
         content_items_file_names_tuple: List[Tuple[str, str]] = []
+
         for file in tar.getmembers():
             file_name: str = self.update_file_prefix(file.name.strip("/"))
             file_path: str = str(Path(self.custom_content_temp_dir, file_name))
@@ -390,49 +400,60 @@ class Downloader:
                     string_to_write, scripts_id_to_name, Path(file_name).suffix
                 )
             content_items_file_names_tuple.append((string_to_write, file.name))
+
+        logger.info("UUID IDs mapping creation completed successfully.")
         return content_items_file_names_tuple, scripts_id_to_name
 
-    def fetch_custom_content(self) -> bool:
+    def fetch_custom_content(self) -> io.BytesIO:
         """
         Download content bundle (a tar.gz file containing all custom content) from the API,
         and create an ID (UUID) to name mapping dict.
 
         Returns:
-            bool: True if fetch was successful, False otherwise
+            io.BytesIO: The content bundle data as a BytesIO object.
         """
         try:
             # Set to 'verify' to None so that 'demisto_client' will use the environment variable 'DEMISTO_VERIFY_SSL'.
             verify = not self.insecure if self.insecure else None
-            logger.info("Fetching custom content data from server...")
+            logger.info("Fetching custom content bundle from server...")
 
             self.client = demisto_client.configure(verify_ssl=verify)
             api_response, _, _ = demisto_client.generic_request_func(
                 self.client, "/content/bundle", "GET"
             )
-            logger.debug(f"Received data bundle size (bytes): {len(api_response)}")
+            logger.debug(f"Downloaded content bundle size (bytes): {len(api_response)}")
             body: bytes = ast.literal_eval(api_response)
-            io_bytes = io.BytesIO(body)
-
-            tar = tarfile.open(fileobj=io_bytes, mode="r")
-
-            (
-                content_items_file_names_tuple,
-                scripts_id_to_name,
-            ) = self.find_uuids_in_content_item(tar)
-            self.write_custom_content(
-                content_items_file_names_tuple, scripts_id_to_name
-            )
-            return True
+            return io.BytesIO(body)
 
         except ApiException as e:
             self.handle_api_exception(e)
-            return False
+            raise e
+
         except MaxRetryError as e:
             self.handle_max_retry_error(e)
-            return False
+            raise e
         except Exception as e:
             logger.info(f"Exception raised when fetching custom content:\n{e}")
-            return False
+            raise e
+
+    def handle_uuid_ids(self, content_bundle_data: io.BytesIO):
+        """
+        Find and replace UUID IDs of custom content items with their names.
+        The method first creates a mapping of a UUID to a name, and then replaces all UUIDs using this mapping.
+
+        Args:
+            custom_content_bundle_tar (tarfile.TarFile): The custom content bundle that was fetched from the server,
+                as a TarFile object.
+        """
+        tar = tarfile.open(fileobj=content_bundle_data, mode="r")
+
+        (
+            content_items_file_names_tuple,
+            scripts_id_to_name,
+        ) = self.find_uuids_in_content_item(tar)
+        self.write_custom_content(
+            content_items_file_names_tuple, scripts_id_to_name
+        )
 
     def build_req_params(self):
         endpoint = ITEM_TYPE_TO_ENDPOINT[self.system_item_type]
@@ -705,8 +726,10 @@ class Downloader:
 
     def build_pack_content(self) -> None:
         """
-        Build a data structure called custom content that holds basic data for each content entity within the given output pack.
-        For example check out the PACK_CONTENT variable in downloader_test.py
+        Update 'self.pack_content' - A data structure that holds basic metadata for every content entity
+        inside 'self.output_pack_path'.
+
+        For structure examples, see 'PACK_CONTENT' in 'downloader_test.py'.
         """
         for content_entity_path in get_child_directories(self.output_pack_path):
             raw_content_entity: str = Path(os.path.normpath(content_entity_path)).name
@@ -1041,7 +1064,6 @@ class Downloader:
         important fields deleted by Demisto will be kept. If no force is present, it will only download new files.
         """
         for custom_content_object in self.custom_content:
-
             file_entity: str = custom_content_object[
                 "entity"
             ]  # For example: Integrations

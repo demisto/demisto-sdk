@@ -1519,9 +1519,9 @@ def upload(ctx, **kwargs):
 @click.pass_context
 @logging_setup_decorator
 def download(ctx, **kwargs):
-    """Download custom content from Demisto instance.
-    DEMISTO_BASE_URL environment variable should contain the Demisto server base URL.
-    DEMISTO_API_KEY environment variable should contain a valid Demisto API Key.
+    """Download custom content from an XSOAR instance.
+    DEMISTO_BASE_URL environment variable should contain the server base URL.
+    DEMISTO_API_KEY environment variable should contain a valid API Key for the server.
     """
     from demisto_sdk.commands.download.downloader import Downloader
 

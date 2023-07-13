@@ -301,6 +301,8 @@ def validate_schema_aligned_with_test_data(
             d.event_data for d in test_data.data if d.dataset == dataset
         ]
 
+    errors_ocurrred = False
+
     for dataset, events in schema_dataset_to_events.items():
         schema_mappings = schema[dataset]
         test_data_mappings = {}
@@ -325,6 +327,7 @@ def validate_schema_aligned_with_test_data(
                             f'!= "{actual_key_schema_mappings}"\nReceived '
                             f"{actual_key_schema_mappings} != Expected {expected_schema_mappings[event_val_type]}"
                         )
+                        errors_ocurrred = True
                     test_data_mappings[event_key] = expected_schema_mappings[
                         event_val_type
                     ]
@@ -350,12 +353,13 @@ def validate_schema_aligned_with_test_data(
         if error_logs:
             for _log in error_logs:
                 logger.error(_log, extra={"markup": True})
-            typer.Exit(1)
         else:
             logger.debug(
                 f"[cyan]Schema mappings and Testdata mapping are valid for dataset {dataset}[/cyan]",
                 extra={"markup": True},
             )
+    if errors_ocurrred:
+        raise typer.Exit(1)
 
 
 def check_dataset_exists(

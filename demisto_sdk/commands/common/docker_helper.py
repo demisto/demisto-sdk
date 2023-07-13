@@ -498,8 +498,14 @@ def _get_python_version_from_image_client(image: str) -> Version:
     """
     docker_client = init_global_docker_client()
     try:
-        docker_client.images.pull(image)
-        image_model = docker_client.images.get(image)
+        try:
+            image_model = docker_client.images.get(image)
+            logger.info(f"Docker image '{image}' found locally.")
+        except docker.errors.ImageNotFound:
+            logger.info(f"Docker image '{image}' not found locally. Pulling...")
+            docker_client.images.pull(image)
+            image_model = docker_client.images.get(image)
+            logger.info(f"Successfully pulled Docker image: {image}")
         env = image_model.attrs["Config"]["Env"]
         logger.debug(f"Got {env=} from {image=}")
         return _get_python_version_from_env(env)

@@ -149,6 +149,7 @@ from demisto_sdk.commands.common.tools import (
     find_type,
     get_api_module_dependencies_from_graph,
     get_api_module_ids,
+    get_api_module_integrations_set,
     get_file,
     get_pack_ignore_content,
     get_pack_ignore_file_path,

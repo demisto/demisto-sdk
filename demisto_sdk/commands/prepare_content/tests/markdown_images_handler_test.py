@@ -17,7 +17,7 @@ expected_urls_ret = {
     "test_pack": {
         ImagesFolderNames.README_IMAGES.value: [
             {
-                "original_readme_url": "https://raw.githubusercontent.com/crestdatasystems/content/"
+                "original_markdown_url": "https://raw.githubusercontent.com/crestdatasystems/content/"
                 "4f707f8922d7ef1fe234a194dcc6fa73f96a4a87/Packs/Lansweeper/doc_files/"
                 "Retrieve_Asset_Details_-_Lansweeper.png",
                 "final_dst_image_path": f"{GOOGLE_CLOUD_STORAGE_PUBLIC_BASE_PATH}/"
@@ -125,25 +125,25 @@ def test_collect_images_from_readme_and_replace_with_storage_path_different_mark
 def image_data_one():
     return [
         {
-            "original_readme_url": "https://user-images.githubusercontent.com/49071222/72906531-0e452a00-3d3b-11ea-8703-8b97ddf30be0.png",
+            "original_markdown_url": "https://user-images.githubusercontent.com/49071222/72906531-0e452a00-3d3b-11ea-8703-8b97ddf30be0.png",
             "final_dst_image_path": "https://storage.googleapis.com/marketplace-saas-dist/content/packs/PrismaCloudCompute/readme_images/72906531-0e452a00-3d3b-11ea-8703-8b97ddf30be0.png",
             "relative_image_path": "PrismaCloudCompute/readme_images/72906531-0e452a00-3d3b-11ea-8703-8b97ddf30be0.png",
             "image_name": "72906531-0e452a00-3d3b-11ea-8703-8b97ddf30be0.png",
         },
         {
-            "original_readme_url": "https://raw.githubusercontent.com/demisto/content/f808c78aa6c94a09450879c8702a1b7f023f1d4b/Packs/PrismaCloudCompute/doc_files/prisma_alert_raw_input.png",
+            "original_markdown_url": "https://raw.githubusercontent.com/demisto/content/f808c78aa6c94a09450879c8702a1b7f023f1d4b/Packs/PrismaCloudCompute/doc_files/prisma_alert_raw_input.png",
             "final_dst_image_path": "https://storage.googleapis.com/marketplace-saas-dist/content/packs/PrismaCloudCompute/readme_images/prisma_alert_raw_input.png",
             "relative_image_path": "PrismaCloudCompute/readme_images/prisma_alert_raw_input.png",
             "image_name": "prisma_alert_raw_input.png",
         },
         {
-            "original_readme_url": "https://raw.githubusercontent.com/demisto/content/f808c78aa6c94a09450879c8702a1b7f023f1d4b/Packs/PrismaCloudCompute/doc_files/prisma_alert_outputs.png",
+            "original_markdown_url": "https://raw.githubusercontent.com/demisto/content/f808c78aa6c94a09450879c8702a1b7f023f1d4b/Packs/PrismaCloudCompute/doc_files/prisma_alert_outputs.png",
             "final_dst_image_path": "https://storage.googleapis.com/marketplace-saas-dist/content/packs/PrismaCloudCompute/readme_images/prisma_alert_outputs.png",
             "relative_image_path": "PrismaCloudCompute/readme_images/prisma_alert_outputs.png",
             "image_name": "prisma_alert_outputs.png",
         },
         {
-            "original_readme_url": "https://raw.githubusercontent.com/demisto/content/f808c78aa6c94a09450879c8702a1b7f023f1d4b/Packs/PrismaCloudCompute/doc_files/prisma_instance.png",
+            "original_markdown_url": "https://raw.githubusercontent.com/demisto/content/f808c78aa6c94a09450879c8702a1b7f023f1d4b/Packs/PrismaCloudCompute/doc_files/prisma_instance.png",
             "final_dst_image_path": "https://storage.googleapis.com/marketplace-saas-dist/content/packs/PrismaCloudCompute/readme_images/prisma_instance.png",
             "relative_image_path": "PrismaCloudCompute/readme_images/prisma_instance.png",
             "image_name": "prisma_instance.png",
@@ -155,7 +155,7 @@ def image_data_one():
 def image_data_two():
     [
         {
-            "original_readme_url": "https://raw.githubusercontent.com/demisto/content/8895e8b967ee7d664276bd31df5af849e2c9a603/Packs/CVE_2022_30190/doc_files/CVE-2022-30190_-_MSDT_RCE.png",
+            "original_markdown_url": "https://raw.githubusercontent.com/demisto/content/8895e8b967ee7d664276bd31df5af849e2c9a603/Packs/CVE_2022_30190/doc_files/CVE-2022-30190_-_MSDT_RCE.png",
             "final_dst_image_path": "https://storage.googleapis.com/marketplace-saas-dist/content/packs/CVE_2022_30190/readme_images/CVE-2022-30190_-_MSDT_RCE.png",
             "relative_image_path": "CVE_2022_30190/readme_images/CVE-2022-30190_-_MSDT_RCE.png",
             "image_name": "CVE-2022-30190_-_MSDT_RCE.png",

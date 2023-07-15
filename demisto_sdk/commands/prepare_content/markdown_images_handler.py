@@ -1,3 +1,4 @@
+import json
 import os
 import re
 from pathlib import Path
@@ -6,16 +7,21 @@ from urllib.parse import urlparse
 from demisto_sdk.commands.common.constants import (
     GOOGLE_CLOUD_STORAGE_PUBLIC_BASE_PATH,
     MARKDOWN_IMAGE_LINK_REGEX,
-    README_IMAGES,
+    MARKDOWN_IMAGES_ARTIFACT_FILE_NAME,
     SERVER_API_TO_STORAGE,
+    ImagesFolderNames,
     MarketplaceVersions,
     MarketplaceVersionToMarketplaceName,
 )
 from demisto_sdk.commands.common.logger import logger
+from demisto_sdk.commands.common.tools import get_file
 
 
-def replace_markdown_urls(
-    markdown_path: Path, marketplace: MarketplaceVersions, pack_name: str
+def replace_markdown_urls_and_upload_to_artifacts(
+    markdown_path: Path,
+    marketplace: MarketplaceVersions,
+    pack_name: str,
+    file_type: ImagesFolderNames,
 ) -> dict:
     """
     This function goes over the pack readme.md file and by the marketplace value.
@@ -29,20 +35,24 @@ def replace_markdown_urls(
     """
     readme_images_storage_data = (
         collect_images_from_markdown_and_replace_with_storage_path(
-            markdown_path, pack_name, marketplace=marketplace
+            markdown_path, pack_name, marketplace, file_type
         )
     )
     # no external image urls were found in the readme file
-    if not readme_images_storage_data:
+    if not readme_images_storage_data[pack_name]:
         logger.debug(f"no image links were found in {pack_name} readme file")
         return {}
 
+    upload_markdown_images_to_artifacts(readme_images_storage_data, pack_name)
     logger.info(f"{readme_images_storage_data=}")
     return readme_images_storage_data
 
 
 def collect_images_from_markdown_and_replace_with_storage_path(
-    markdown_path: Path, pack_name: str, marketplace: MarketplaceVersions
+    markdown_path: Path,
+    pack_name: str,
+    marketplace: MarketplaceVersions,
+    file_type: ImagesFolderNames,
 ) -> dict:
     """
     Replaces inplace all images links in the pack README.md with their new gcs location
@@ -83,14 +93,14 @@ def collect_images_from_markdown_and_replace_with_storage_path(
             parse_url = urlparse(url)
             url_path = Path(parse_url.path)
             image_name = url_path.name
-            new_replace_url = os.path.join(to_replace, README_IMAGES, image_name)
+            new_replace_url = os.path.join(to_replace, file_type.value, image_name)
             lines[i] = line.replace(url, new_replace_url)
             logger.debug(f"Replacing {url=} with new url {new_replace_url=}")
 
             image_gcp_path = (
-                f"{google_api_readme_images_url}/{README_IMAGES}/{image_name}"
+                f"{google_api_readme_images_url}/{file_type.value}/{image_name}"
             )
-            relative_image_path = f"{pack_name}/{README_IMAGES}/{image_name}"
+            relative_image_path = f"{pack_name}/{file_type.value}/{image_name}"
             urls_list.append(
                 {
                     "original_readme_url": url,
@@ -103,4 +113,28 @@ def collect_images_from_markdown_and_replace_with_storage_path(
     with open(markdown_path, "w") as file:
         file.writelines(lines)
 
-    return {pack_name: urls_list}
+    return {pack_name: {file_type.value: urls_list}}
+
+
+def upload_markdown_images_to_artifacts(images_dict: dict, pack_name: str):
+    if (artifacts_folder := os.getenv("ARTIFACTS_FOLDER")) and Path(
+        artifacts_folder
+    ).exists():
+        artifacts_readme_images_path = Path(
+            f"{artifacts_folder}/{MARKDOWN_IMAGES_ARTIFACT_FILE_NAME}"
+        )
+        if not artifacts_readme_images_path.exists():
+            with open(artifacts_readme_images_path, "w") as f:
+                # If this is the first pack init the file with an empty dict.
+                json.dump({}, f)
+
+        markdown_images_data_dict = get_file(
+            artifacts_readme_images_path, type_of_file="json"
+        )
+        if pack_name in markdown_images_data_dict:
+            markdown_images_data_dict[pack_name].update(images_dict[pack_name])
+        else:
+            markdown_images_data_dict.update(images_dict)
+
+        with open(artifacts_readme_images_path, "w") as fp:
+            json.dump(markdown_images_data_dict, fp, indent=4)

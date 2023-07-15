@@ -17,9 +17,6 @@ from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 from demisto_sdk.commands.prepare_content.integration_script_unifier import (
     IntegrationScriptUnifier,
 )
-from demisto_sdk.commands.prepare_content.markdown_images_handler import (
-    replace_markdown_urls,
-)
 
 yaml = YAML_Handler()
 
@@ -41,9 +38,7 @@ class IntegrationScript(ContentItem):
             if kwargs.get("unify_only")
             else super().prepare_for_upload(current_marketplace)
         )
-        replace_markdown_urls(
-            self.description_path, current_marketplace, self.pack_name
-        )
+
         data = IntegrationScriptUnifier.unify(
             self.path, data, current_marketplace, **kwargs
         )
@@ -62,7 +57,3 @@ class IntegrationScript(ContentItem):
                 native_image_config=file_to_native_image_config(),
             ).get_supported_native_image_versions(get_raw_version=True)
         return []
-
-    @property
-    def description_path(self):
-        return self.path / "description.md"

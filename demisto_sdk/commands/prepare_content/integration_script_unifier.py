@@ -3,6 +3,7 @@ import copy
 import glob
 import os
 import re
+import tempfile
 from pathlib import Path
 from typing import Dict, List, Union
 
@@ -14,6 +15,7 @@ from demisto_sdk.commands.common.constants import (
     DEFAULT_IMAGE_PREFIX,
     TYPE_TO_EXTENSION,
     FileType,
+    ImagesFolderNames,
     MarketplaceVersions,
 )
 from demisto_sdk.commands.common.handlers import JSON_Handler
@@ -27,6 +29,9 @@ from demisto_sdk.commands.common.tools import (
     get_pack_name,
     get_yaml,
     get_yml_paths_in_dir,
+)
+from demisto_sdk.commands.prepare_content.markdown_images_handler import (
+    replace_markdown_urls_and_upload_to_artifacts,
 )
 from demisto_sdk.commands.prepare_content.unifier import Unifier
 
@@ -95,7 +100,7 @@ class IntegrationScriptUnifier(Unifier):
                 package_path, yml_unified, is_script_package, image_prefix
             )
             yml_unified, _ = IntegrationScriptUnifier.insert_description_to_yml(
-                package_path, yml_unified, is_script_package
+                package_path, yml_unified, is_script_package, marketplace=marketplace
             )
             (
                 contributor_type,
@@ -197,16 +202,32 @@ class IntegrationScriptUnifier(Unifier):
 
     @staticmethod
     def insert_description_to_yml(
-        package_path: Path, yml_unified: dict, is_script_package: bool
+        package_path: Path,
+        yml_unified: dict,
+        is_script_package: bool,
+        marketplace: MarketplaceVersions = None,
     ):
         desc_data, found_desc_path = IntegrationScriptUnifier.get_data(
             package_path, "*_description.md", is_script_package
         )
-
         detailed_description = ""
         if desc_data:
+            desc_data = desc_data.decode("utf-8")
+            if not is_script_package and marketplace:
+                with tempfile.NamedTemporaryFile(mode="r+", delete=False) as tempf:
+                    tempf.write(desc_data)
+                    tempf.flush()
+                    replace_markdown_urls_and_upload_to_artifacts(
+                        Path(tempf.name),
+                        marketplace,
+                        package_path.name,
+                        file_type=ImagesFolderNames.INTEGRATION_DESCRIPTION_IMAGES,
+                    )
+                    tempf.seek(0)
+                    desc_data = tempf.read()
+
             detailed_description = get_mp_tag_parser().parse_text(
-                FoldedScalarString(desc_data.decode("utf-8"))
+                FoldedScalarString(desc_data)
             )
 
         integration_doc_link = ""

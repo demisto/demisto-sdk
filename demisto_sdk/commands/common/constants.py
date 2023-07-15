@@ -47,7 +47,6 @@ TRIGGER_DIR = "Triggers"
 WIZARDS_DIR = "Wizards"
 XDRC_TEMPLATE_DIR = "XDRCTemplates"
 LAYOUT_RULES_DIR = "LayoutRules"
-README_IMAGES = "readme_images"
 
 # NAMES OF ENTITIES
 
@@ -1889,5 +1888,10 @@ XPANSE_INLINE_SUFFIX_TAG = "</~XPANSE>"
 
 
 MARKDOWN_IMAGE_LINK_REGEX = r"(\!\[.*?\])\((?P<url>[a-zA-Z_/\.0-9\- :%]*?)\)((].*)?)"
-README_IMAGES_ARTIFACT_FILE_NAME = "readme_images.json"
+MARKDOWN_IMAGES_ARTIFACT_FILE_NAME = "markdown_images.json"
 SERVER_API_TO_STORAGE = "api/marketplace/file?name=content/packs"
+
+
+class ImagesFolderNames(Enum):
+    README_IMAGES = "readme_images"
+    INTEGRATION_DESCRIPTION_IMAGES = "integration_description_images"

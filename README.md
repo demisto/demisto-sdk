@@ -202,7 +202,10 @@ Note that the following commands may work partially without an internet connecti
 2. [Lint](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/lint/README.md) - will fail when creating the image.
 
 - When working offline we recommended to set the `DEMISTO_SDK_OFFLINE_ENV` environment variable to `TRUE`:
-```bash
-export DEMISTO_SDK_OFFLINE_ENV=TRUE
-```
+   ```bash
+   export DEMISTO_SDK_OFFLINE_ENV=TRUE
+   ```
+
+   When its set, the sdk will skip the places that internet connection is required for them instead of trying to do the requests.
+
 ---

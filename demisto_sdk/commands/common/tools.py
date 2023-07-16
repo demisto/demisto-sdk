@@ -576,7 +576,7 @@ def get_remote_file(
         tag: The branch name. default is 'master'
         return_content: Determines whether to return the file's raw content or the dict representation of it.
         git_content_config: The content config to take the file from
-        default_value: The default value to return when running sdk offline.
+        default_value: The default value to return when DEMISTO_SDK_OFFLINE_ENV environment variable is True.
     Returns:
         The file content in the required format.
 

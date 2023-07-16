@@ -1,7 +1,7 @@
 # Changelog
 ## Unreleased
 * Fixed an issue where **validate** failed on Incident Field items with a `template` value.
-* Add support for working with Demisto-SDK offline.
+* Add support for working with Demisto-SDK offline by using the `DEMISTO_SDK_OFFLINE_ENV` environment variable, see [this](https://github.com/demisto/demisto-sdk#internet-connection) for more information.
 * Improved memory efficiency in **update-content-graph** and **create-content-graph** commands.
 * Removed support for the `cve_id` name for the default-argument for **cve** reputation commands in **validate**. Now, only `cve` may be used for such commands.
 * Fixed an issue where **zip_packs** failed uploading content.

@@ -16,6 +16,7 @@ class EventLog(BaseModel):
 
 class TestData(BaseModel):
     data: List[EventLog] = Field(default_factory=lambda: [EventLog()])
+    ignored_errors: List[str] = []
 
     @validator("data", each_item=True)
     def validate_expected_values(cls, v):

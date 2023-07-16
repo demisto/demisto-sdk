@@ -51,20 +51,17 @@ app = typer.Typer()
 json = JSON_Handler()
 
 
-def create_table(
-    expected: Dict[str, Any], received: Dict[str, Any], field_name: str = "Model Field"
-) -> Table:
+def create_table(expected: Dict[str, Any], received: Dict[str, Any]) -> Table:
     """Create a table to display the expected and received values.
 
     Args:
         expected (Dict[str, Any]): mapping of keys to expected values
         received (Dict[str, Any]): mapping of keys to received values
-        field_name (str): the name of the field in the first column
 
     Returns:
         Table: Table object to display the expected and received values.
     """
-    table = Table(field_name, "Expected Value", "Received Value")
+    table = Table("Model Field", "Expected Value", "Received Value")
     for key, val in expected.items():
         table.add_row(key, str(val), str(received.get(key)))
     return table
@@ -307,6 +304,8 @@ def validate_schema_aligned_with_test_data(
         error_logs = []
         for event in events:
             for event_key, event_val in event.items():
+                if event_key == "_raw_log":  # do not check raw logs
+                    continue
                 if actual_key_schema_mappings := schema_mappings.get(event_key):
                     if isinstance(event_val, str) and dateparser.parse(
                         event_val, settings={"STRICT_PARSING": True}

@@ -1,7 +1,8 @@
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.content_graph.objects.pack import Pack
 from demisto_sdk.commands.validate_poc.validators.base_validator import BaseValidator
-
+import toml
+# print (toml.load("data.toml"))
 
 class ValidateManager:
     config: dict

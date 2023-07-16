@@ -1,0 +1,7 @@
+[tool.demisto-sdk.validate.git]
+ignore = []
+select = []
+
+[tool.demisto-sdk.validate.all]
+ignore = ["RM101, RM102"]
+select = []

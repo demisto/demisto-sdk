@@ -7,6 +7,10 @@
 * Fixed an issue where **zip_packs** failed uploading content.
 * Added `tenant_timezone` handling to the **modeling-rules init** command, allowing usage with tenants in various timezones.
 * Shortened the timeout when checking whether the dataset exists in **test-modeling-rule**.
+* Cleaned up project dependencies.
+* Added support for the **List** content item in **Xpanse** marketplace.
+* Fixed an issue in **run-unit-tests** command when running Powershell tests.
+* Fixed an issue where the *upload* command would upload a pack metadata with wrong display names.
 * Removed redundant errors and fields from `errors.py`
 
 ## 1.17.1
@@ -22,6 +26,7 @@
 * added support for the `isfetcheventsandassets` flag in content graph.
 * Fixed an issue where the **modeling-rules test** command failed to get the existence of result from dataset in cases where the results take time to load.
 * Added an aliasTo key to the incident field schema.
+* Updated **update-release-notes** to use graph instead of id_set.
 
 ## 1.17.0
 * **validate** will only fail on docker related errors if the pack is supported by xsoar.

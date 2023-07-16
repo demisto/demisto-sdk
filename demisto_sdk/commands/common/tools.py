@@ -551,9 +551,7 @@ def get_file_details(
     if full_file_path.endswith("json"):
         file_details = json.loads(file_content)
     elif full_file_path.endswith(("yml", "yaml")):
-        if keep_order:
-            file_details = yaml_ordered_load.load(file_content)
-        file_details = yaml.load(file_content)
+        file_details = yaml_ordered_load.load(file_content) if keep_order else yaml.load(file_content)
     # if neither yml nor json then probably a CHANGELOG or README file.
     else:
         file_details = {}

@@ -139,12 +139,12 @@ def logging_setup_decorator(func, *args, **kwargs):
     @click.option(
         "--console_log_threshold",
         help="Minimum logging threshold for the console logger."
-        " Pssible values: DEBUG, INFO, WARNING, ERROR.",
+        " Possible values: DEBUG, INFO, WARNING, ERROR.",
     )
     @click.option(
         "--file_log_threshold",
         help="Minimum logging threshold for the file logger."
-        " Pssible values: DEBUG, INFO, WARNING, ERROR.",
+        " Possible values: DEBUG, INFO, WARNING, ERROR.",
     )
     @click.option(
         "--log_file_path",
@@ -1367,7 +1367,9 @@ def format(
 @click.option(
     "--override-existing",
     is_flag=True,
-    help="If true will skip override confirmation prompt while uploading packs.",
+    help="This value (True/False) determines if the user should be presented with a confirmation prompt when "
+    "attempting to upload a content pack that is already installed on the Cortex XSOAR server. This allows the upload "
+    "command to be used within non-interactive shells.",
 )
 @click.pass_context
 @logging_setup_decorator

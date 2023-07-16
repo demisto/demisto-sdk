@@ -1,10 +1,17 @@
 # Changelog
 ## Unreleased
+* Added documentation for the flag **override-existing** used in upload.
 * Fixed an issue where **validate** failed on Incident Field items with a `template` value.
 * Add support for working with Demisto-SDK offline by using the `DEMISTO_SDK_OFFLINE_ENV` environment variable, see [this](https://github.com/demisto/demisto-sdk#internet-connection) for more information.
 * Improved memory efficiency in **update-content-graph** and **create-content-graph** commands.
 * Removed support for the `cve_id` name for the default-argument for **cve** reputation commands in **validate**. Now, only `cve` may be used for such commands.
 * Fixed an issue where **zip_packs** failed uploading content.
+* Added `tenant_timezone` handling to the **modeling-rules init** command, allowing usage with tenants in various timezones.
+* Shortened the timeout when checking whether the dataset exists in **test-modeling-rule**.
+* Cleaned up project dependencies.
+* Added support for the **List** content item in **Xpanse** marketplace.
+* Fixed an issue in **run-unit-tests** command when running Powershell tests.
+* Fixed an issue where the *upload* command would upload a pack metadata with wrong display names.
 
 ## 1.17.1
 * Added the `aliasTo` key to the Incident Field schema.
@@ -19,6 +26,7 @@
 * added support for the `isfetcheventsandassets` flag in content graph.
 * Fixed an issue where the **modeling-rules test** command failed to get the existence of result from dataset in cases where the results take time to load.
 * Added an aliasTo key to the incident field schema.
+* Updated **update-release-notes** to use graph instead of id_set.
 
 ## 1.17.0
 * **validate** will only fail on docker related errors if the pack is supported by xsoar.

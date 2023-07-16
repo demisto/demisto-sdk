@@ -321,20 +321,12 @@ def validate_schema_aligned_with_test_data(
 
                     if expected_val_schema_mappings != actual_key_schema_mappings:
                         error_logs.append(
-                            f"[red][bold]{event_key}[/bold] --- Received "
-                            f'"{actual_key_schema_mappings}" != Expected "{expected_val_schema_mappings}"'
+                            f"[red][bold]{event_key}[/bold] --- TestData Mapping "
+                            f'"{actual_key_schema_mappings}" != Schema Mapping "{expected_val_schema_mappings}"'
                         )
                         errors_occurred = True
 
                     test_data_mappings[event_key] = expected_val_schema_mappings
-
-        printr(
-            create_table(
-                schema_mappings,
-                test_data_mappings,
-                field_name=f"Schema Fields For {dataset}",
-            )
-        )
 
         missing_test_data_keys = set(schema_mappings.keys()) - set(
             test_data_mappings.keys()

@@ -456,7 +456,6 @@ class TestJsonOutput:
                 "severity": "error",
                 "errorCode": ui_applicable_error_code,
                 "message": ui_applicable_error_message,
-                "ui": True,
                 "relatedField": "<parameter-name>.display",
             }
         ]
@@ -471,7 +470,6 @@ class TestJsonOutput:
                 "severity": "error",
                 "errorCode": ui_applicable_error_code,
                 "message": ui_applicable_error_message,
-                "ui": True,
                 "relatedField": "<parameter-name>.display",
                 "linter": "validate",
             },

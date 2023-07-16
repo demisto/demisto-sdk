@@ -484,7 +484,6 @@ class TestJsonOutput:
                 "severity": "warning",
                 "errorCode": non_ui_applicable_error_code,
                 "message": non_ui_applicable_error_message,
-                "ui": False,
                 "relatedField": "subtype",
                 "linter": "validate",
             },

@@ -153,10 +153,7 @@ ERROR_CODE = {
         "code": "BA104",
         "related_field": "",
     },
-    "invalid_id_set": {
-        "code": "BA105",
-        "related_field": ""
-    },
+    "invalid_id_set": {"code": "BA105", "related_field": ""},
     "no_minimal_fromversion_in_file": {
         "code": "BA106",
         "related_field": "fromversion",
@@ -238,10 +235,7 @@ ERROR_CODE = {
         "code": "BC104",
         "related_field": "args",
     },
-    "file_id_changed": {
-        "code": "BC105",
-        "related_field": "id"
-    },
+    "file_id_changed": {"code": "BC105", "related_field": "id"},
     "from_version_modified": {
         "code": "BC106",
         "related_field": "fromversion",
@@ -271,10 +265,7 @@ ERROR_CODE = {
         "code": "CJ102",
         "related_field": "",
     },
-    "no_test_playbook": {
-        "code": "CJ103",
-        "related_field": ""
-    },
+    "no_test_playbook": {"code": "CJ103", "related_field": ""},
     "test_playbook_not_configured": {
         "code": "CJ104",
         "related_field": "",
@@ -430,14 +421,8 @@ ERROR_CODE = {
         "related_field": "unsearchable",
     },
     # ID - ID Set
-    "id_set_conflicts": {
-        "code": "ID100",
-        "related_field": ""
-    },
-    "no_id_set_file": {
-        "code": "ID103",
-        "related_field": ""
-    },
+    "id_set_conflicts": {"code": "ID100", "related_field": ""},
+    "no_id_set_file": {"code": "ID103", "related_field": ""},
     # IF - Incident Fields
     "invalid_incident_field_name": {
         "code": "IF100",
@@ -597,14 +582,8 @@ ERROR_CODE = {
         "code": "IN108",
         "related_field": "subtype",
     },
-    "beta_in_id": {
-        "code": "IN109",
-        "related_field": "id"
-    },
-    "beta_in_name": {
-        "code": "IN110",
-        "related_field": "name"
-    },
+    "beta_in_id": {"code": "IN109", "related_field": "id"},
+    "beta_in_name": {"code": "IN110", "related_field": "name"},
     "beta_field_not_found": {
         "code": "IN111",
         "related_field": "beta",
@@ -1165,14 +1144,8 @@ ERROR_CODE = {
         "related_field": "",
     },
     # RM - READMEs
-    "readme_error": {
-        "code": "RM100",
-        "related_field": ""
-    },
-    "image_path_error": {
-        "code": "RM101",
-        "related_field": ""
-    },
+    "readme_error": {"code": "RM100", "related_field": ""},
+    "image_path_error": {"code": "RM101", "related_field": ""},
     "readme_missing_output_context": {
         "code": "RM102",
         "related_field": "",
@@ -1361,10 +1334,7 @@ ERROR_CODE = {
         "code": "ST104",
         "related_field": "",
     },
-    "invalid_file_path": {
-        "code": "ST105",
-        "related_field": ""
-    },
+    "invalid_file_path": {"code": "ST105", "related_field": ""},
     "invalid_package_structure": {
         "code": "ST106",
         "related_field": "",
@@ -1393,10 +1363,7 @@ ERROR_CODE = {
         "code": "ST112",
         "related_field": "",
     },
-    "invalid_yml_file": {
-        "code": "ST113",
-        "related_field": ""
-    },
+    "invalid_yml_file": {"code": "ST113", "related_field": ""},
     # WD - Widgets
     "remove_field_from_widget": {
         "code": "WD100",
@@ -1478,10 +1445,7 @@ ERROR_CODE = {
         "code": "MR102",
         "related_field": "",
     },
-    "invalid_rule_name": {
-        "code": "MR103",
-        "related_field": ""
-    },
+    "invalid_rule_name": {"code": "MR103", "related_field": ""},
     "modeling_rule_schema_types_invalid": {
         "code": "MR106",
         "related_field": "",

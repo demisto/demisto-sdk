@@ -304,8 +304,12 @@ def validate_schema_aligned_with_test_data(
         error_logs = set()
         for event in events:
             for event_key, event_val in event.items():
-                if event_val is None:  # if event_val is None, warn and continue looping.
-                    logger.warning(f'{event_val=} for {event_key=} is null in {event.test_data_event_id} in {dataset=}')
+                if (
+                    event_val is None
+                ):  # if event_val is None, warn and continue looping.
+                    logger.warning(
+                        f"{event_val=} for {event_key=} is null in {event.test_data_event_id} in {dataset=}"
+                    )
                     continue
 
                 if actual_key_schema_mappings := schema_mappings.get(event_key):

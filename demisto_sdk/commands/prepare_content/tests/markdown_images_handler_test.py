@@ -34,7 +34,7 @@ expected_urls_ret = {
 @pytest.mark.parametrize(
     "marketplace, expected_res", [(MarketplaceVersions.XSOAR, expected_urls_ret)]
 )
-def test_collect_images_from_readme_and_replace_with_storage_path(
+def test_collect_images_from_markdown_and_replace_with_storage_path(
     marketplace, expected_res
 ):
     """
@@ -75,7 +75,7 @@ def test_collect_images_from_readme_and_replace_with_storage_path(
     assert replaced == expected
 
 
-def test_replace_readme_urls(mocker):
+def test_replace_markdown_urls(mocker):
     """
     Given no urls were found in the pack readme return an empty dict.
     """
@@ -104,7 +104,7 @@ def test_replace_readme_urls(mocker):
         (MarketplaceVersions.XSOAR, False),
     ],
 )
-def test_collect_images_from_readme_and_replace_with_storage_path_different_marketplaces(
+def test_collect_images_from_markdown_and_replace_with_storage_path_different_marketplaces(
     marketplace, expected_res
 ):
     import tempfile

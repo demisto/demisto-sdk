@@ -39,7 +39,7 @@ def replace_markdown_urls_and_upload_to_artifacts(
         )
     )
     # no external image urls were found in the readme file
-    if not readme_images_storage_data[pack_name]:
+    if not readme_images_storage_data or not readme_images_storage_data[pack_name]:
         logger.debug(f"no image links were found in {pack_name} readme file")
         return {}
 
@@ -103,7 +103,7 @@ def collect_images_from_markdown_and_replace_with_storage_path(
             relative_image_path = f"{pack_name}/{file_type.value}/{image_name}"
             urls_list.append(
                 {
-                    "original_image_url": url,
+                    "original_markdown_url": url,
                     "final_dst_image_path": image_gcp_path,
                     "relative_image_path": relative_image_path,
                     "image_name": image_name,

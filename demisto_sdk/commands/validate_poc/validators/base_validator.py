@@ -21,10 +21,12 @@ class BaseValidator(ABC, BaseModel):
     @classmethod
     def should_run(cls, content_item: BaseContent) -> bool:
         return True
+
     @abstractmethod
     @classmethod
     def is_valid(cls, content_item: BaseContent) -> ValidationResult:
         pass
+
     @abstractmethod
     @classmethod
     def fix(cls, content_item: BaseContent) -> None:

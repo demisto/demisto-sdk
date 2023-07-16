@@ -1,7 +1,41 @@
-[tool.demisto-sdk.validate.git]
+[use_git]
 ignore = []
 select = []
 
-[tool.demisto-sdk.validate.all]
+[validate_all]
 ignore = ["RM101, RM102"]
+select = []
+
+[categories_to_run]
+categories = []
+
+[ignorable_errors]
+ignorable_errors = []
+
+[support_level]
+
+[support_level.community]
+ignore = []
+select = []
+
+[support_level.partner]
+ignore = []
+select = []
+
+[support_level.xsoar]
+ignore = []
+select = []
+
+[servery_level]
+
+[servery_level.must]
+ignore = []
+select = []
+
+[servery_level.recommended]
+ignore = []
+select = []
+
+[servery_level.trivial]
+ignore = []
 select = []

@@ -2,7 +2,9 @@ import os
 from pathlib import Path
 from typing import Optional
 
-from ruamel.yaml.comments import CommentedSeq  # noqa:TID251 - only importing a type
+from ruamel.yaml.comments import (  # noqa:TID251 - only importing CommentedSeq
+    CommentedSeq,
+)
 
 from demisto_sdk.commands.common.constants import (
     PACK_METADATA_SUPPORT,

@@ -10,6 +10,7 @@
 * Cleaned up project dependencies.
 * Added support for the **List** content item in **Xpanse** marketplace.
 * Fixed an issue in **run-unit-tests** command when running Powershell tests.
+* Fixed an issue where the *upload* command would upload a pack metadata with wrong display names.
 
 ## 1.17.1
 * Added the `aliasTo` key to the Incident Field schema.

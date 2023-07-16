@@ -814,6 +814,7 @@ def get_file(
     type_of_file: Optional[str] = None,
     clear_cache: bool = False,
     return_content: bool = False,
+    keep_order: bool = False,
 ):
     if clear_cache:
         get_file.cache_clear()
@@ -838,6 +839,8 @@ def get_file(
     try:
         if type_of_file.lstrip(".") in {"yml", "yaml"}:
             replaced = re.sub(r"(simple: \s*\n*)(=)(\s*\n)", r'\1"\2"\3', file_content)
+            if keep_order:
+                return yaml_ordered_load.load(io.StringIO(replaced))
             return yaml.load(io.StringIO(replaced))
         else:
             result = json.load(io.StringIO(file_content))
@@ -878,10 +881,10 @@ def get_file_or_remote(file_path: Path, clear_cache=False):
         return get_remote_file(str(relative_file_path))
 
 
-def get_yaml(file_path, cache_clear=False):
+def get_yaml(file_path, cache_clear=False, keep_order: bool = False):
     if cache_clear:
         get_file.cache_clear()
-    return get_file(file_path, "yml", clear_cache=cache_clear)
+    return get_file(file_path, "yml", clear_cache=cache_clear, keep_order=keep_order)
 
 
 def get_json(file_path, cache_clear=False):

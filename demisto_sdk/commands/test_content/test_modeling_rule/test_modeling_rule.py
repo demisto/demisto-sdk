@@ -308,7 +308,6 @@ def validate_schema_aligned_with_test_data(
         for event in events:
             for event_key, event_val in event.items():
                 if actual_key_schema_mappings := schema_mappings.get(event_key):
-
                     if isinstance(event_val, str) and dateparser.parse(
                         event_val, settings={"STRICT_PARSING": True}
                     ):
@@ -316,18 +315,18 @@ def validate_schema_aligned_with_test_data(
                     else:
                         event_val_type = type(event_val)
 
-                    if (
-                        expected_schema_mappings[event_val_type]
-                        != actual_key_schema_mappings
-                    ):
-                        error_logs.append(
-                            f"[red][bold]{event_key}[/bold] --- Received "
-                            f'"{actual_key_schema_mappings}" != Expected "{expected_schema_mappings[event_val_type]}"'
-                        )
-                        errors_occurred = True
-                    test_data_mappings[event_key] = expected_schema_mappings[
+                    expected_val_schema_mappings = expected_schema_mappings[
                         event_val_type
                     ]
+
+                    if expected_val_schema_mappings != actual_key_schema_mappings:
+                        error_logs.append(
+                            f"[red][bold]{event_key}[/bold] --- Received "
+                            f'"{actual_key_schema_mappings}" != Expected "{expected_val_schema_mappings}"'
+                        )
+                        errors_occurred = True
+
+                    test_data_mappings[event_key] = expected_val_schema_mappings
 
         printr(
             create_table(

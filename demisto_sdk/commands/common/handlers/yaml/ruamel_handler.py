@@ -14,7 +14,7 @@ class RUAMEL_Handler(XSOAR_Handler):
 
     def __init__(
         self,
-        typ="safe",
+        typ="unsafe",
         preserve_quotes=True,
         allow_duplicate_keys=False,
         width=5000,

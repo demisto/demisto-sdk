@@ -126,6 +126,8 @@ logger = logging.getLogger("demisto-sdk")
 json = JSON_Handler()
 yaml = YAML_Handler()
 
+yaml_ordered_load = YAML_Handler(typ="rt")
+
 urllib3.disable_warnings()
 
 
@@ -466,7 +468,7 @@ def get_local_remote_file(
         if file_content:
             return file_content.encode()
         return file_content
-    return get_file_details(file_content, full_file_path)
+    return get_file_details(file_content, full_file_path, keep_order=True)
 
 
 def get_remote_file_from_api(
@@ -539,16 +541,19 @@ def get_remote_file_from_api(
     file_content = res.content
     if return_content:
         return file_content
-    return get_file_details(file_content, full_file_path)
+    return get_file_details(file_content, full_file_path, keep_order=True)
 
 
 def get_file_details(
     file_content,
     full_file_path: str,
+    keep_order: bool = False,
 ) -> Dict:
     if full_file_path.endswith("json"):
         file_details = json.loads(file_content)
     elif full_file_path.endswith(("yml", "yaml")):
+        if keep_order:
+            file_details = yaml_ordered_load.load(file_content)
         file_details = yaml.load(file_content)
     # if neither yml nor json then probably a CHANGELOG or README file.
     else:

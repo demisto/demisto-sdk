@@ -1567,27 +1567,6 @@ def get_pipenv_dir(py_version, envs_dirs_base):
     return f"{envs_dirs_base}{int(py_version)}"
 
 
-def get_dev_requirements(py_version, envs_dirs_base):
-    """
-    Get the requirements for the specified py version.
-
-    Arguments:
-        py_version {float} -- python version as float (2.7, 3.7)
-
-    Raises:
-        ValueError -- If can't detect python version
-
-    Returns:
-        string -- requirement required for the project
-    """
-    env_dir = get_pipenv_dir(py_version, envs_dirs_base)
-    requirements = check_output(
-        ["pipenv", "lock", "-r", "-d"], cwd=env_dir, text=True, stderr=DEVNULL
-    )
-    logger.debug(f"dev requirements:\n{requirements}")
-    return requirements
-
-
 def get_dict_from_file(
     path: str, raises_error: bool = True, clear_cache: bool = False
 ) -> Tuple[Dict, Union[str, None]]:

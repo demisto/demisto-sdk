@@ -1,5 +1,6 @@
 # Changelog
 ## Unreleased
+* Fixed an issue with **lint** and **validate** Commands on integrations and scripts that use docker images that are not available in the Docker Hub but exist locally.
 * Added documentation for the flag **override-existing** used in upload.
 * Fixed an issue where **validate** failed on Incident Field items with a `template` value.
 * Improved memory efficiency in **update-content-graph** and **create-content-graph** commands.

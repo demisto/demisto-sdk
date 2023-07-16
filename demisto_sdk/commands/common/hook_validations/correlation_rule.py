@@ -3,7 +3,9 @@ This module is designed to validate the correctness of generic definition entiti
 """
 
 
-from ruamel.yaml.comments import CommentedSeq  # noqa:TID251 # only importing as type
+from ruamel.yaml.comments import (  # noqa:TID251 # only importing CommentedSeq
+    CommentedSeq,
+)
 
 from demisto_sdk.commands.common.constants import (
     FILETYPE_TO_DEFAULT_FROMVERSION,

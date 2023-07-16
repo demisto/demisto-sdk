@@ -27,7 +27,7 @@ from demisto_sdk.commands.common.constants import (
     FileType,
 )
 from demisto_sdk.commands.common.content import Content
-from demisto_sdk.commands.common.content_constant_paths import CONF_PATH
+from demisto_sdk.commands.common.content_constant_paths import CONF_PATH, CONTENT_PATH
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
@@ -218,7 +218,8 @@ class ContentEntityValidator(BaseValidator):
                 Union[Set[str], None]: Set of marketplaces, or None on error
             """
             pack_metadata_old = get_remote_file(
-                f"Packs/{pack_name}/pack_metadata.json", tag=self.prev_ver
+                f"{CONTENT_PATH}/Packs/{pack_name}/pack_metadata.json",
+                tag=self.prev_ver,
             )
             pack_marketplaces_old = set(
                 pack_metadata_old.get(MARKETPLACE_KEY_PACK_METADATA, ())

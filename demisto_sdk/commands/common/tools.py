@@ -2265,7 +2265,7 @@ def is_test_config_match(
 
 def is_content_item_dependent_in_conf(test_config, file_type) -> bool:
     """Check if a line from conf have multiple integration/scripts dependent on the TPB.
-        - if the TPB checks only one integration/script it is dependent.
+        - if the TPB checks only one integration/script it is independent.
         - if the TPB checks more then one integration/script it is dependent.
     Args:
         test_config (dict): The dict in the conf file.

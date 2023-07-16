@@ -1,4 +1,5 @@
-from abc import ABC, abstractmethod
+from abc import ABC
+from typing import Tuple, Type
 
 from pydantic import BaseModel
 
@@ -10,24 +11,22 @@ class ValidationResult(BaseModel):
     is_valid: bool
     message: str
 
+
 class BaseValidator(ABC, BaseModel):
     error_code: str
     description: str
-    content_item: BaseContent
     is_auto_fixable: bool
     related_field: str
-    
-    @abstractmethod
+    content_types: Tuple[Type[BaseContent], ...]
+
     @classmethod
     def should_run(cls, content_item: BaseContent) -> bool:
-        return True
+        return isinstance(content_item, cls.content_types)
 
-    @abstractmethod
     @classmethod
     def is_valid(cls, content_item: BaseContent) -> ValidationResult:
-        pass
+        raise NotImplementedError
 
-    @abstractmethod
     @classmethod
     def fix(cls, content_item: BaseContent) -> None:
-        pass
+        raise NotImplementedError

@@ -456,6 +456,7 @@ def get_local_remote_file(
     full_file_path: str,
     tag: str = "master",
     return_content: bool = False,
+    keep_order: bool = False,
 ):
     repo = git.Repo(
         search_parent_directories=True
@@ -467,7 +468,7 @@ def get_local_remote_file(
         if file_content:
             return file_content.encode()
         return file_content
-    return get_file_details(file_content, full_file_path, keep_order=True)
+    return get_file_details(file_content, full_file_path, keep_order)
 
 
 def get_remote_file_from_api(
@@ -475,6 +476,7 @@ def get_remote_file_from_api(
     git_content_config: Optional[GitContentConfig],
     tag: str = "master",
     return_content: bool = False,
+    keep_order: bool = False,
 ):
     if not git_content_config:
         git_content_config = GitContentConfig()
@@ -540,7 +542,7 @@ def get_remote_file_from_api(
     file_content = res.content
     if return_content:
         return file_content
-    return get_file_details(file_content, full_file_path, keep_order=True)
+    return get_file_details(file_content, full_file_path, keep_order)
 
 
 def get_file_details(
@@ -551,7 +553,11 @@ def get_file_details(
     if full_file_path.endswith("json"):
         file_details = json.loads(file_content)
     elif full_file_path.endswith(("yml", "yaml")):
-        file_details = yaml_ordered_load.load(file_content) if keep_order else yaml.load(file_content)
+        file_details = (
+            yaml_ordered_load.load(file_content)
+            if keep_order
+            else yaml.load(file_content)
+        )
     # if neither yml nor json then probably a CHANGELOG or README file.
     else:
         file_details = {}
@@ -564,6 +570,7 @@ def get_remote_file(
     tag: str = "master",
     return_content: bool = False,
     git_content_config: Optional[GitContentConfig] = None,
+    keep_order: bool = False,
 ):
     """
     Args:
@@ -580,7 +587,7 @@ def get_remote_file(
         try:
             if not (
                 local_origin_content := get_local_remote_file(
-                    full_file_path, tag, return_content
+                    full_file_path, tag, return_content, keep_order
                 )
             ):
                 raise ValueError(
@@ -593,7 +600,7 @@ def get_remote_file(
                 f"Searching the remote file content with the API."
             )
     return get_remote_file_from_api(
-        full_file_path, git_content_config, tag, return_content
+        full_file_path, git_content_config, tag, return_content, keep_order
     )
 
 

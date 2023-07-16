@@ -581,9 +581,8 @@ def get_remote_file(
         The file content in the required format.
 
     """
-
     if is_sdk_defined_working_offline():
-        if not default_value:
+        if default_value is None:
             raise NoInternetConnectionException()
         return default_value
 
@@ -3741,6 +3740,12 @@ def parse_multiple_path_inputs(
 
 
 def is_sdk_defined_working_offline() -> bool:
+    """
+    This method returns True when sdk defined as offline - when DEMISTO_SDK_OFFLINE_ENV environment variable is True.
+
+    Returns:
+        bool: The value for DEMISTO_SDK_OFFLINE_ENV environment variable.
+    """
     global OFFLINE_MODE
     if OFFLINE_MODE is None:
         OFFLINE_MODE = str2bool(os.getenv(ENV_SDK_WORKING_OFFLINE))

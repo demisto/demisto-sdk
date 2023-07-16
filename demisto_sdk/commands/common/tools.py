@@ -2265,37 +2265,29 @@ def is_test_config_match(
 
 def is_content_item_dependent_in_conf(test_config, file_type) -> bool:
     """Check if a line from conf have multiple integration/scripts dependent on the TPB.
-        For example the dict
-        {"integrations": ["PagerDuty v2", "PagerDuty v3"], "playbookID": "PagerDuty Test"}
-        for file type integration is dependent
-        and for file type playbook or testplaybook is not dependent.
+        - if the TPB checks only one integration/script it is dependent.
+        - if the TPB checks more then one integration/script it is dependent.
     Args:
-        test_config (int): The dict in the conf file.
+        test_config (dict): The dict in the conf file.
         file_type (str): The file type, can be integrations, scripts or playbook.
 
     Returns:
         bool: The return value. True for dependence, False otherwise.
     """
-    integrations_from_dict = test_config.get("integrations", [])
-    integrations_list: list = (
-        integrations_from_dict
-        if isinstance(integrations_from_dict, list)
-        else [integrations_from_dict]
+    integrations_list = test_config.get("integrations", [])
+    integrations_list = (
+        integrations_list
+        if isinstance(integrations_list, list)
+        else [integrations_list]
     )
-    scripts_from_dict = test_config.get("scripts", [])
+    scripts_list = test_config.get("scripts", [])
     scripts_list: list = (
-        scripts_from_dict
-        if isinstance(scripts_from_dict, list)
-        else [scripts_from_dict]
+        scripts_list if isinstance(scripts_list, list) else [scripts_list]
     )
     if file_type == "integration":
-        if len(integrations_list) > 1:
-            return True
-        return False
+        return len(integrations_list) > 1
     if file_type == "script":
-        if len(scripts_list) > 1:
-            return True
-        return False
+        return len(scripts_list) > 1
     # if the file_type is playbook or testplaybook in the conf.json it does not dependent on any other content
     elif file_type == "playbook":
         return False
@@ -2321,34 +2313,26 @@ def search_and_delete_from_conf(
     Returns:
         bool: The return value. True for dependence, False otherwise.
     """
+    keyword = ""
     test_registered_in_conf_json = []
     # If the file type we are deprecating is a integration - there are TBP related to the yml
     if file_type == "integration":
-        test_registered_in_conf_json.extend(
-            [
-                test_config
-                for test_config in conf_json_tests
-                if is_test_config_match(test_config, integration_id=content_item_id)
-            ]
-        )
+        keyword = "integration_id"
     # the type of the file is "playbook"
     elif file_type == "playbook":
-        test_registered_in_conf_json.extend(
-            [
-                test_config
-                for test_config in conf_json_tests
-                if is_test_config_match(test_config, test_playbook_id=content_item_id)
-            ]
-        )
+        keyword = "test_playbook_id"
+
     # the type of the file is "script"
     elif file_type == "script":
-        test_registered_in_conf_json.extend(
-            [
-                test_config
-                for test_config in conf_json_tests
-                if is_test_config_match(test_config, script_id=content_item_id)
-            ]
-        )
+        keyword = "script_id"
+
+    test_registered_in_conf_json.extend(
+        [
+            test_config
+            for test_config in conf_json_tests
+            if is_test_config_match(test_config, **{keyword: content_item_id})
+        ]
+    )
     if not no_test_playbooks_explicitly:
         for test in test_playbooks:
             if test not in list(

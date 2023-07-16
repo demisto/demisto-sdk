@@ -6,10 +6,10 @@ import logging
 import os
 import re
 import string
+from pathlib import Path
 from typing import List, Optional, Tuple
 
 from pykwalify.core import Core
-
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import (
     ACCEPTED_FILE_EXTENSIONS,
@@ -20,16 +20,15 @@ from demisto_sdk.commands.common.constants import (
     FileType,
 )
 from demisto_sdk.commands.common.errors import Errors
-from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
+from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.hook_validations.base_validator import (
     BaseValidator,
     error_codes,
 )
 from demisto_sdk.commands.common.logger import logger
-from demisto_sdk.commands.common.tools import get_remote_file, is_file_path_in_pack
+from demisto_sdk.commands.common.tools import get_file, get_remote_file, is_file_path_in_pack
 
 json = JSON_Handler()
-yaml = YAML_Handler()
 
 
 class StructureValidator(BaseValidator):
@@ -47,11 +46,6 @@ class StructureValidator(BaseValidator):
     """
 
     SCHEMAS_PATH = "schemas"
-
-    FILE_SUFFIX_TO_LOAD_FUNCTION = {
-        ".yml": yaml.load,
-        ".json": json.load,
-    }
 
     def __init__(
         self,
@@ -248,17 +242,10 @@ class StructureValidator(BaseValidator):
         return True
 
     def load_data_from_file(self) -> dict:
-        """Loads data according to function defined in FILE_SUFFIX_TO_LOAD_FUNCTION
-        Returns:
-             (dict)
-        """
-        file_extension = os.path.splitext(self.file_path)[1]
+        file_extension = f".{Path(self.file_path).suffix()}"
         if file_extension in ACCEPTED_FILE_EXTENSIONS:
-            if file_extension in self.FILE_SUFFIX_TO_LOAD_FUNCTION:
-                load_function = self.FILE_SUFFIX_TO_LOAD_FUNCTION[file_extension]
-                with open(self.file_path) as file_obj:
-                    loaded_file_data = load_function(file_obj)  # type: ignore
-                    return loaded_file_data
+            if file_extension in (".yml", ".json"):
+                return get_file(self.file_path)
 
             # Ignore loading image and markdown
             elif file_extension in [".png", ".md"]:

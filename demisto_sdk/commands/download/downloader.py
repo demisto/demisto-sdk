@@ -212,7 +212,7 @@ class Downloader:
 
             if not self.download_system_item:
                 custom_content_bundle_tar = self.fetch_custom_content()
-                self.handle_uuid_ids(custom_content_bundle_tar=custom_content_bundle_tar)
+                self.handle_uuid_ids(custom_content_bundle_data=custom_content_bundle_tar)
 
             if self.download_system_item and not self.fetch_system_content():
                 return 1
@@ -407,12 +407,12 @@ class Downloader:
         logger.info("Custom content IDs mapping completed successfully.")
         return content_items_file_names_tuple, scripts_id_to_name
 
-    def fetch_custom_content(self) -> tarfile.TarFile:
+    def fetch_custom_content(self) -> io.BytesIO:
         """
         Download content bundle (a tar.gz file containing all custom content) using server's API.
 
         Returns:
-            tarfile.TarFile: The content bundle data as a TarFile object.
+            io.BytesIO: The content bundle data as a BytesIO object.
         """
         # Set to 'verify' to None so that 'demisto_client' will use the environment variable 'DEMISTO_VERIFY_SSL'.
         verify = not self.insecure if self.insecure else None
@@ -426,7 +426,7 @@ class Downloader:
 
         except ApiException as e:
             self.handle_api_exception(e)
-            raise e
+            raise
 
         except MaxRetryError as e:
             self.handle_max_retry_error(e)
@@ -435,26 +435,27 @@ class Downloader:
         logger.info("Custom content bundle fetched successfully.")
         logger.debug(f"Downloaded content bundle size (bytes): {len(api_response)}")
         body: bytes = ast.literal_eval(api_response)
-        tar_obj = tarfile.open(fileobj=io.BytesIO(body), mode="r")
-        logger.debug(f"{len(tar_obj.getmembers())} items found in the bundle.")
-        return tar_obj
 
-    def handle_uuid_ids(self, custom_content_bundle_tar: tarfile.TarFile):
+        return io.BytesIO(body)
+
+    def handle_uuid_ids(self, custom_content_bundle_data: io.BytesIO):
         """
         Find and replace UUID IDs of custom content items with their names.
         The method first creates a mapping of a UUID to a name, and then replaces all UUIDs using this mapping.
 
         Args:
-            custom_content_bundle_tar (tarfile.TarFile): The custom content bundle that was fetched from the server,
-                as a TarFile object.
+            custom_content_bundle_data (io.BytesIO): The custom content bundle that was fetched from the server,
+                as a BytesIO object.
         """
-        (
-            content_items_file_names_tuple,
-            scripts_id_to_name,
-        ) = self.find_uuids_in_content_item(tar=custom_content_bundle_tar)
-        self.write_custom_content(
-            content_items_file_names_tuple, scripts_id_to_name
-        )
+        with tarfile.open(fileobj=custom_content_bundle_data, mode="r") as tar:
+            logger.debug(f"{len(tar.getmembers())} items found in the bundle.")
+            (
+                content_items_file_names_tuple,
+                scripts_id_to_name,
+            ) = self.find_uuids_in_content_item(tar=tar)
+            self.write_custom_content(
+                content_items_file_names_tuple, scripts_id_to_name
+            )
 
     def build_req_params(self):
         endpoint = ITEM_TYPE_TO_ENDPOINT[self.system_item_type]
@@ -473,7 +474,7 @@ class Downloader:
 
     def get_system_automation(self, req_type):
         automation_list: list = []
-        logger.info("Fetching system automations data from server...")
+        logger.info("Fetching system automations data...")
 
         for script in self.input_files:
             endpoint = f"automation/load/{script}"
@@ -482,12 +483,12 @@ class Downloader:
             )
             automation_list.append(ast.literal_eval(api_response[0]))
 
-        logger.info(f"Received {len(automation_list)} system automations from server.")
+        logger.debug(f"Received {len(automation_list)} system automations.")
         return automation_list
 
     def get_system_playbook(self, req_type):
         playbook_list: list = []
-        logger.info("Fetching system playbooks data from server...")
+        logger.info("Fetching system playbooks data...")
 
         for playbook in self.input_files:
             endpoint = f"/playbook/{playbook}/yaml"
@@ -513,7 +514,7 @@ class Downloader:
                     raise err
             playbook_list.append(yaml.load(api_response[0].decode()))
 
-        logger.info(f"Received {len(playbook_list)} system playbooks from server.")
+        logger.debug(f"Received {len(playbook_list)} system playbooks.")
         return playbook_list
 
     def arrange_response(self, system_items_list):

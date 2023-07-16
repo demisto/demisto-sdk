@@ -315,15 +315,44 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: i
                 continue
             if content_item.is_incident_to_alert(marketplace):
                 metadata["contentItems"].setdefault(
-                    content_item.content_type.server_name, []
+                    content_item.content_type.metadata_name, []
                 ).append(content_item.summary(marketplace, incident_to_alert=True))
 
             metadata["contentItems"].setdefault(
-                content_item.content_type.server_name, []
+                content_item.content_type.metadata_name, []
             ).append(content_item.summary(marketplace))
 
+        metadata["contentDisplays"] = self.get_content_display(metadata["contentItems"])
+
         with open(path, "w") as f:
-            json.dump(metadata, f, indent=4)
+            json.dump(metadata, f, indent=4, sort_keys=True)
+
+    def get_content_display(self, content_items):
+
+        content_displays: dict = {}
+        for content_item in self.content_items:
+            try:
+                content_displays[
+                    content_item.content_type.metadata_name
+                ] = (
+                    content_item.content_type.metadata_display_name
+                )  # type: ignore[index]
+            except TypeError as e:
+                raise Exception(
+                    f"Could not set metadata_name of type {content_item.content_type.metadata_name} - "
+                    f"{content_item.content_type.metadata_display_name} in {content_displays}\n{e}"
+                )
+        content_displays = {
+            content_type: content_type_display
+            if (
+                content_items.get(content_type)
+                and len(content_items.get(content_type)) == 1
+            )
+            else f"{content_type_display}s"
+            for content_type, content_type_display in content_displays.items()
+        }
+
+        return content_displays
 
     def dump_readme(self, path: Path, marketplace: MarketplaceVersions) -> None:
 

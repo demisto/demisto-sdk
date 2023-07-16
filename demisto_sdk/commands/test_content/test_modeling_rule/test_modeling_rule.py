@@ -293,13 +293,10 @@ def validate_schema_aligned_with_test_data(
         bool: {"type": "boolean", "is_array": False},
     }
 
-    schema_dataset_to_events = {}
-
     # map each dataset from the schema to the correct events that has the same dataset
-    for dataset in schema.keys():
-        schema_dataset_to_events[dataset] = [
-            d.event_data for d in test_data.data if d.dataset == dataset
-        ]
+    schema_dataset_to_events = {
+        dataset: [d.event_data for d in test_data.data if d.dataset == dataset] for dataset in schema.keys()
+    }
 
     errors_occurred = False
 

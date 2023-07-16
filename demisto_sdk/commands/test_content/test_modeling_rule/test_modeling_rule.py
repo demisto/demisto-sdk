@@ -295,7 +295,8 @@ def validate_schema_aligned_with_test_data(
 
     # map each dataset from the schema to the correct events that has the same dataset
     schema_dataset_to_events = {
-        dataset: [d.event_data for d in test_data.data if d.dataset == dataset] for dataset in schema.keys()
+        dataset: [d.event_data for d in test_data.data if d.dataset == dataset]
+        for dataset in schema.keys()
     }
 
     errors_occurred = False

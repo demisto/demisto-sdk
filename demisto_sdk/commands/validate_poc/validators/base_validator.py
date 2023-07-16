@@ -1,7 +1,9 @@
-from abc import abstractmethod, ABC
+from abc import ABC, abstractmethod
+
 from pydantic import BaseModel
 
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
+
 
 class ValidationResult(BaseModel):
     error_code: str
@@ -10,9 +12,10 @@ class ValidationResult(BaseModel):
 
 class BaseValidator(ABC, BaseModel):
     error_code: str
-    error_message: str
     description: str
     content_item: BaseContent
+    is_auto_fixable: bool
+    related_field: str
     
     @abstractmethod
     @classmethod

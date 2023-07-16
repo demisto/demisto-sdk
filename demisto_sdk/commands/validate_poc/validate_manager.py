@@ -1,16 +1,17 @@
+import toml
+
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.content_graph.objects.pack import Pack
 from demisto_sdk.commands.validate_poc.validators.base_validator import BaseValidator
-import toml
-# print (toml.load("data.toml"))
+
 
 class ValidateManager:
-    config: dict
+    config: dict = toml.load("validation_conf.toml")
     def should_run(self):
         if self.config["all"]:
             return True
     def run(self):
-        # gather all files to run on
+        # gather all files to run on (will be based on the given flag)
         files_to_run = ["/Users/ierukhimovic/dev/demisto/content/Packs/QRadar/Integrations/QRadar_v3/QRadar_v3.py"]
         content_items_to_run = [BaseContent.from_path(file_to_run) for file_to_run in files_to_run]
         results = []

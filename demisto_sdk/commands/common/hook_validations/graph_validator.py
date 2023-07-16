@@ -13,11 +13,13 @@ from demisto_sdk.commands.common.tools import (
     get_marketplace_to_core_packs,
     get_pack_name,
     replace_incident_to_alert,
+    get_pack_metadata
 )
 from demisto_sdk.commands.content_graph.interface.neo4j.neo4j_graph import (
     Neo4jContentGraphInterface as ContentGraphInterface,
 )
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
+from demisto_sdk.commands.common.constants import PACKS_DIR
 
 
 class GraphValidator(BaseValidator):
@@ -368,3 +370,14 @@ class GraphValidator(BaseValidator):
                     is_valid = False
 
         return is_valid
+
+    @error_codes("GR107")
+    def validate_hidden_pack_is_not_mandatory_dependency(self):
+        is_valid = True
+        for pack_id in self.pack_ids:
+            if (pack_metadata := get_pack_metadata(PACKS_DIR / pack_id)) and pack_metadata.get('hidden', False):
+                pack_marketplaces = pack_metadata.get('marketplaces') or []
+                for marketplace in pack_marketplaces:
+                    if self.graph.find_mandatory_pack_dependencies(pack_id=pack_id, marketplace=marketplace):
+                        # handle error
+

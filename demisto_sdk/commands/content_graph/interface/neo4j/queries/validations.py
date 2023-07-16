@@ -269,6 +269,28 @@ def validate_core_packs_dependencies(
     }
 
 
+def validate_pack_dependencies(
+    tx: Transaction,
+    pack_id: str,
+    marketplace: MarketplaceVersions,
+):
+    query = f"""// Returns DEPENDS_ON relationships to content items who are not core packs
+        MATCH (pack1)-[r:DEPENDS_ON{{mandatorily:true}}]->(pack2)
+        WHERE pack2.object_id = {pack_id}
+        AND NOT r.is_test
+        AND "{marketplace}" IN pack1.marketplaces
+        AND "{marketplace}" IN pack2.marketplaces
+        RETURN pack1, collect(r) as relationships, collect(pack2) as nodes_to
+        """
+    return {
+        int(item.get("pack1").id): Neo4jRelationshipResult(
+            node_from=item.get("pack1"),
+            relationships=item.get("relationships"),
+            nodes_to=item.get("nodes_to"),
+        )
+        for item in run_query(tx, query)
+    }
+
 def validate_duplicate_ids(
     tx: Transaction, file_paths: List[str]
 ) -> List[Tuple[graph.Node, List[graph.Node]]]:

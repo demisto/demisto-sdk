@@ -1862,6 +1862,11 @@ ERROR_CODE = {
         "ui_applicable": False,
         "related_field": "",
     },
+    "hidden_pack_not_mandatory_dependency": {
+        "code": "GR108",
+        "ui_applicable": False,
+        "related_field": "",
+    }
 }
 
 

@@ -301,11 +301,9 @@ def validate_schema_aligned_with_test_data(
     for dataset, events in schema_dataset_to_events.items():
         schema_mappings = schema[dataset]
         test_data_mappings = {}
-        error_logs = []
+        error_logs = set()
         for event in events:
             for event_key, event_val in event.items():
-                if event_key == "_raw_log":  # do not check raw logs
-                    continue
                 if actual_key_schema_mappings := schema_mappings.get(event_key):
                     if isinstance(event_val, str) and dateparser.parse(
                         event_val, settings={"STRICT_PARSING": True}
@@ -319,7 +317,7 @@ def validate_schema_aligned_with_test_data(
                     ]
 
                     if expected_val_schema_mappings != actual_key_schema_mappings:
-                        error_logs.append(
+                        error_logs.add(
                             f"[red][bold]{event_key}[/bold] --- TestData Mapping "
                             f'"{actual_key_schema_mappings}" != Schema Mapping "{expected_val_schema_mappings}"'
                         )

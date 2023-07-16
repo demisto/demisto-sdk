@@ -43,7 +43,6 @@ from git.types import PathLike
 from packaging.version import LegacyVersion, Version, parse
 from pebble import ProcessFuture, ProcessPool
 from requests.exceptions import HTTPError
-from ruamel.yaml.comments import CommentedSeq
 from demisto_sdk.commands.common.cpu_count import cpu_count
 
 from demisto_sdk.commands.common.constants import (
@@ -1828,7 +1827,7 @@ def find_type(
                 return FileType.MODELING_RULE
 
         if "global_rule_id" in _dict or (
-            isinstance(_dict, CommentedSeq) and _dict and "global_rule_id" in _dict[0]
+            isinstance(_dict, list) and _dict and "global_rule_id" in _dict[0]
         ):
             return FileType.CORRELATION_RULE
 

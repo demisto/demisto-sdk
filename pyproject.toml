@@ -163,9 +163,10 @@ select = [
     "I",
     "PLE",
     "RUF100",
-    "T20",
-    "W",
     "T10",
+    "T20",
+    "TID251",
+    "W",
 ]
 
 target-version = "py38"
@@ -175,4 +176,6 @@ max-complexity = 30
 
 [tool.ruff.flake8-tidy-imports]
 [tool.ruff.flake8-tidy-imports.banned-api]
-"logging".msg = "The logging framework is banned. Please use demisto_sdk.commands.common.logger."
+# "logging".msg = "The logging framework is banned. Please use demisto_sdk.commands.common.logger."
+"json".msg = "use JSON_Handler instead"
+"ruamel.yaml".msg = "use YAML_Handler instead"

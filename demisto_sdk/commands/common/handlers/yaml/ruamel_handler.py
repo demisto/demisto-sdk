@@ -1,6 +1,6 @@
 from io import StringIO
 
-from ruamel.yaml import YAML
+from ruamel.yaml import YAML  # noqa:TID251 - only allowed in the handler
 
 from demisto_sdk.commands.common.handlers.handlers_utils import order_dict
 from demisto_sdk.commands.common.handlers.xsoar_handler import XSOAR_Handler

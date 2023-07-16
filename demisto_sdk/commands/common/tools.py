@@ -124,7 +124,7 @@ logger = logging.getLogger("demisto-sdk")
 
 json = JSON_Handler()
 yaml = YAML_Handler()
-yaml_ordered_load = YAML_Handler(typ="rt")
+yaml_safe_load = YAML_Handler(typ="safe")
 
 urllib3.disable_warnings()
 
@@ -455,7 +455,6 @@ def get_local_remote_file(
     full_file_path: str,
     tag: str = "master",
     return_content: bool = False,
-    keep_order: bool = False,
 ):
     repo = git.Repo(
         search_parent_directories=True
@@ -467,7 +466,7 @@ def get_local_remote_file(
         if file_content:
             return file_content.encode()
         return file_content
-    return get_file_details(file_content, full_file_path, keep_order)
+    return get_file_details(file_content, full_file_path)
 
 
 def get_remote_file_from_api(
@@ -475,7 +474,6 @@ def get_remote_file_from_api(
     git_content_config: Optional[GitContentConfig],
     tag: str = "master",
     return_content: bool = False,
-    keep_order: bool = False,
 ):
     if not git_content_config:
         git_content_config = GitContentConfig()
@@ -541,22 +539,17 @@ def get_remote_file_from_api(
     file_content = res.content
     if return_content:
         return file_content
-    return get_file_details(file_content, full_file_path, keep_order)
+    return get_file_details(file_content, full_file_path)
 
 
 def get_file_details(
     file_content,
     full_file_path: str,
-    keep_order: bool = False,
 ) -> Dict:
     if full_file_path.endswith("json"):
         file_details = json.loads(file_content)
     elif full_file_path.endswith(("yml", "yaml")):
-        file_details = (
-            yaml_ordered_load.load(file_content)
-            if keep_order
-            else yaml.load(file_content)
-        )
+        file_details = yaml.load(file_content)
     # if neither yml nor json then probably a CHANGELOG or README file.
     else:
         file_details = {}
@@ -569,7 +562,6 @@ def get_remote_file(
     tag: str = "master",
     return_content: bool = False,
     git_content_config: Optional[GitContentConfig] = None,
-    keep_order: bool = False,
 ):
     """
     Args:
@@ -586,7 +578,7 @@ def get_remote_file(
         try:
             if not (
                 local_origin_content := get_local_remote_file(
-                    full_file_path, tag, return_content, keep_order
+                    full_file_path, tag, return_content
                 )
             ):
                 raise ValueError(
@@ -599,7 +591,7 @@ def get_remote_file(
                 f"Searching the remote file content with the API."
             )
     return get_remote_file_from_api(
-        full_file_path, git_content_config, tag, return_content, keep_order
+        full_file_path, git_content_config, tag, return_content
     )
 
 
@@ -817,6 +809,7 @@ def get_file(
     type_of_file: Optional[str] = None,
     clear_cache: bool = False,
     return_content: bool = False,
+    keep_order: bool = True,
 ):
     if clear_cache:
         get_file.cache_clear()
@@ -840,8 +833,11 @@ def get_file(
         return {}
     try:
         if type_of_file.lstrip(".") in {"yml", "yaml"}:
-            replaced = re.sub(r"(simple: \s*\n*)(=)(\s*\n)", r'\1"\2"\3', file_content)
-            return yaml.load(io.StringIO(replaced))
+            replaced = io.StringIO(
+                re.sub(r"(simple: \s*\n*)(=)(\s*\n)", r'\1"\2"\3', file_content)
+            )
+
+            return yaml.load(replaced) if keep_order else yaml_safe_load.load(replaced)
         else:
             result = json.load(io.StringIO(file_content))
             # It's possible to that the result will be `str` after loading it. In this case, we need to load it again.
@@ -881,10 +877,10 @@ def get_file_or_remote(file_path: Path, clear_cache=False):
         return get_remote_file(str(relative_file_path))
 
 
-def get_yaml(file_path, cache_clear=False):
+def get_yaml(file_path, cache_clear=False, keep_order: bool = True):
     if cache_clear:
         get_file.cache_clear()
-    return get_file(file_path, "yml", clear_cache=cache_clear)
+    return get_file(file_path, "yml", clear_cache=cache_clear, keep_order=keep_order)
 
 
 def get_json(file_path, cache_clear=False):

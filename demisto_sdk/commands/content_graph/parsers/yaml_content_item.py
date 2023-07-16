@@ -90,4 +90,4 @@ class YAMLContentItemParser(ContentItemParser):
             raise NotAContentItemException
 
         self.path = Path(yaml_path)
-        return get_yaml(self.path.as_posix())
+        return get_yaml(self.path.as_posix(), keep_order=False)

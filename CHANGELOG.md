@@ -56,7 +56,6 @@
 * Added a prettyName key to the incident field schema.
 * Fixed an issue where **upload** command could not parse content items that are not unicode-encoded.
 
-
 ## 1.16.0
 * Added a check to **is_docker_image_latest_tag** to only fail the validation on non-latest image tag when the current tag is older than 3 days.
 * Fixed an issue where **upload** would not properly show the installed version in the UI.

@@ -43,7 +43,6 @@ from git.types import PathLike
 from packaging.version import LegacyVersion, Version, parse
 from pebble import ProcessFuture, ProcessPool
 from requests.exceptions import HTTPError
-from ruamel.yaml.comments import CommentedSeq
 from demisto_sdk.commands.common.cpu_count import cpu_count
 
 from demisto_sdk.commands.common.constants import (
@@ -125,6 +124,7 @@ logger = logging.getLogger("demisto-sdk")
 
 json = JSON_Handler()
 yaml = YAML_Handler()
+yaml_safe_load = YAML_Handler(typ="safe")
 
 urllib3.disable_warnings()
 
@@ -809,6 +809,7 @@ def get_file(
     type_of_file: Optional[str] = None,
     clear_cache: bool = False,
     return_content: bool = False,
+    keep_order: bool = True,
 ):
     if clear_cache:
         get_file.cache_clear()
@@ -832,8 +833,11 @@ def get_file(
         return {}
     try:
         if type_of_file.lstrip(".") in {"yml", "yaml"}:
-            replaced = re.sub(r"(simple: \s*\n*)(=)(\s*\n)", r'\1"\2"\3', file_content)
-            return yaml.load(io.StringIO(replaced))
+            replaced = io.StringIO(
+                re.sub(r"(simple: \s*\n*)(=)(\s*\n)", r'\1"\2"\3', file_content)
+            )
+
+            return yaml.load(replaced) if keep_order else yaml_safe_load.load(replaced)
         else:
             result = json.load(io.StringIO(file_content))
             # It's possible to that the result will be `str` after loading it. In this case, we need to load it again.
@@ -873,10 +877,10 @@ def get_file_or_remote(file_path: Path, clear_cache=False):
         return get_remote_file(str(relative_file_path))
 
 
-def get_yaml(file_path, cache_clear=False):
+def get_yaml(file_path, cache_clear=False, keep_order: bool = True):
     if cache_clear:
         get_file.cache_clear()
-    return get_file(file_path, "yml", clear_cache=cache_clear)
+    return get_file(file_path, "yml", clear_cache=cache_clear, keep_order=keep_order)
 
 
 def get_json(file_path, cache_clear=False):
@@ -1568,7 +1572,10 @@ def get_pipenv_dir(py_version, envs_dirs_base):
 
 
 def get_dict_from_file(
-    path: str, raises_error: bool = True, clear_cache: bool = False
+    path: str,
+    raises_error: bool = True,
+    clear_cache: bool = False,
+    keep_order: bool = True,
 ) -> Tuple[Dict, Union[str, None]]:
     """
     Get a dict representing the file
@@ -1584,7 +1591,10 @@ def get_dict_from_file(
     try:
         if path:
             if path.endswith(".yml"):
-                return get_yaml(path, cache_clear=clear_cache), "yml"
+                return (
+                    get_yaml(path, cache_clear=clear_cache, keep_order=keep_order),
+                    "yml",
+                )
             elif path.endswith(".json"):
                 res = get_json(path, cache_clear=clear_cache)
                 if isinstance(res, list) and len(res) == 1 and isinstance(res[0], dict):
@@ -1777,7 +1787,9 @@ def find_type(
         return type_by_path
     try:
         if not _dict and not file_type:
-            _dict, file_type = get_dict_from_file(path, clear_cache=clear_cache)
+            _dict, file_type = get_dict_from_file(
+                path, clear_cache=clear_cache, keep_order=False
+            )
 
     except FileNotFoundError:
         # unable to find the file - hence can't identify it
@@ -1819,7 +1831,7 @@ def find_type(
                 return FileType.MODELING_RULE
 
         if "global_rule_id" in _dict or (
-            isinstance(_dict, CommentedSeq) and _dict and "global_rule_id" in _dict[0]
+            isinstance(_dict, list) and _dict and "global_rule_id" in _dict[0]
         ):
             return FileType.CORRELATION_RULE
 

@@ -2245,7 +2245,9 @@ def is_test_config_match(
 def is_content_item_dependent_in_conf(test_config, file_type) -> bool:
     """Check if a line from conf have multiple integration/scripts dependent on the TPB.
         - if the TPB checks only one integration/script it is independent.
+          For example: {"integrations": ["PagerDuty v2"], "playbookID": "PagerDuty Test"}.
         - if the TPB checks more then one integration/script it is dependent.
+          For example: {"integrations": ["PagerDuty v2", "PagerDuty v3"], "playbookID": "PagerDuty Test"}.
     Args:
         test_config (dict): The dict in the conf file.
         file_type (str): The file type, can be integrations, scripts or playbook.
@@ -2254,15 +2256,9 @@ def is_content_item_dependent_in_conf(test_config, file_type) -> bool:
         bool: The return value. True for dependence, False otherwise.
     """
     integrations_list = test_config.get("integrations", [])
-    integrations_list = (
-        integrations_list
-        if isinstance(integrations_list, list)
-        else [integrations_list]
-    )
+    integrations_list = integrations_list if isinstance(integrations_list, list) else [integrations_list]
     scripts_list = test_config.get("scripts", [])
-    scripts_list: list = (
-        scripts_list if isinstance(scripts_list, list) else [scripts_list]
-    )
+    scripts_list: list = scripts_list if isinstance(scripts_list, list) else [scripts_list]
     if file_type == "integration":
         return len(integrations_list) > 1
     if file_type == "script":
@@ -2297,11 +2293,10 @@ def search_and_delete_from_conf(
     # If the file type we are deprecating is a integration - there are TBP related to the yml
     if file_type == "integration":
         keyword = "integration_id"
-    # the type of the file is "playbook"
+
     elif file_type == "playbook":
         keyword = "test_playbook_id"
 
-    # the type of the file is "script"
     elif file_type == "script":
         keyword = "script_id"
 

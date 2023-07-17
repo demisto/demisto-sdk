@@ -1,10 +1,10 @@
 # Changelog
 ## Unreleased
 * Calling **format** with the `-d` flag now removes test playbooks testing the deprecated content from conf.json.
+* The **modeling-rules test** command will now validate that the modeling rules schema mappings are aligned with the test-data mappings.
 
 ## 1.17.2
 * Fixed an issue where **lint** and **validate** commands failed on integrations and scripts that use docker images that are not available in the Docker Hub but exist locally.
-* The **modeling-rules test** command will now validate that the modeling rules schema mappings are aligned with the test-data mappings.
 * Added documentation for the flag **override-existing** used in upload.
 * Fixed an issue where **validate** failed on Incident Field items with a `template` value.
 * Improved memory efficiency in **update-content-graph** and **create-content-graph** commands.

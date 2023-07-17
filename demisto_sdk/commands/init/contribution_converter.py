@@ -174,7 +174,9 @@ class ContributionConverter:
             os.makedirs(str(self.pack_dir_path))
         self.readme_files: List[str] = []
         self.api_module_path: Optional[str] = None
-        self.working_dir_path = Path(working_dir_path) if working_dir_path else self.pack_dir_path
+        self.working_dir_path = (
+            Path(working_dir_path) if working_dir_path else self.pack_dir_path
+        )
 
     @staticmethod
     def format_pack_dir_name(name: str) -> str:
@@ -406,9 +408,9 @@ class ContributionConverter:
             # incidentfield directory may contain indicator-fields files
             if dir_name == FileType.INCIDENT_FIELD.value:
 
-                dst_ioc_fields_dir = str(Path(
-                    self.working_dir_path, FileType.INDICATOR_FIELD.value
-                ))
+                dst_ioc_fields_dir = str(
+                    Path(self.working_dir_path, FileType.INDICATOR_FIELD.value)
+                )
                 src_path = str(Path(self.working_dir_path, dir_name))
 
                 for file in os.listdir(src_path):
@@ -451,7 +453,9 @@ class ContributionConverter:
             self.unpack_contribution_to_dst_pack_directory()
             # convert
             self.rearranging_before_conversion()
-            unpacked_contribution_dirs = get_child_directories(str(self.working_dir_path))
+            unpacked_contribution_dirs = get_child_directories(
+                str(self.working_dir_path)
+            )
             for unpacked_contribution_dir in unpacked_contribution_dirs:
                 self.convert_contribution_dir_to_pack_contents(
                     unpacked_contribution_dir
@@ -592,10 +596,12 @@ class ContributionConverter:
                         autocreate_dir = containing_dir_name == ENTITY_TYPE_TO_DIR.get(
                             file_type, ""
                         )
-                        output_dir = str(Path(
-                            self.working_dir_path,
-                            ENTITY_TYPE_TO_DIR.get(file_type, ""),
-                        ))
+                        output_dir = str(
+                            Path(
+                                self.working_dir_path,
+                                ENTITY_TYPE_TO_DIR.get(file_type, ""),
+                            )
+                        )
                         if not autocreate_dir:
                             output_dir = os.path.join(output_dir, containing_dir_name)
                         os.makedirs(output_dir, exist_ok=True)

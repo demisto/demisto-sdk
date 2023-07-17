@@ -20,6 +20,7 @@ from demisto_sdk.__main__ import main, upload
 from demisto_sdk.commands.common.constants import (
     MarketplaceVersions,
 )
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.tools import src_root
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
@@ -60,8 +61,6 @@ from TestSuite.test_tools import flatten_call_args, str_in_call_args_list
 
 if TYPE_CHECKING:
     from demisto_sdk.commands.common.content.objects.pack_objects.pack import Pack
-
-from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 
 
 def mock_upload_method(mocker: Any, class_: ContentItem):

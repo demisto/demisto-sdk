@@ -5,7 +5,7 @@ from uuid import UUID, uuid4
 from pydantic import BaseModel, Field, validator
 
 
-class Validations(Enum):
+class Validations(str, Enum):
     SCHEMA_TYPES_ALIGNED_WITH_TEST_DATA = "schema_test_data_types"
 
     @classmethod

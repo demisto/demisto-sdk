@@ -936,7 +936,7 @@ class TestTheTestModelingRuleCommandSingleRule:
         test_data_file.update(
             {
                 "ignored_validations": [
-                    Validations.SCHEMA_TYPES_ALIGNED_WITH_TEST_DATA.value
+                    Validations.SCHEMA_TYPES_ALIGNED_WITH_TEST_DATA
                 ]
             }
         )
@@ -1607,7 +1607,7 @@ class TestValidateSchemaAlignedWithTestData:
     ):
         """
         Given:
-            - Case A: event data that is missing one schema field.
+            - event data that is missing one schema field.
 
         When:
             - running validate_schema_aligned_with_test_data.
@@ -1653,10 +1653,10 @@ class TestValidateSchemaAlignedWithTestData:
         assert not logger_error_mocker.called
         assert logger_warning_mocker.called
 
-    def test_validate_schema_aligned_with_invalid_schema_mappings(self, mocker):
+    def test_validate_schema_aligned_with_test_data_invalid_schema_mappings(self, mocker):
         """
         Given:
-            - Case A: event data that its mapping to schema is wrong.
+            - event data that its mapping to schema is wrong.
 
         When:
             - running validate_schema_aligned_with_test_data.
@@ -1700,5 +1700,64 @@ class TestValidateSchemaAlignedWithTestData:
                     }
                 },
             )
-            assert logger_error_mocker.called
-            assert not logger_warning_mocker.called
+        assert logger_error_mocker.called
+        assert not logger_warning_mocker.called
+
+    def test_validate_schema_aligned_with_test_data_events_have_same_key_with_different_types(self, mocker):
+        """
+        Given:
+            - 2 events that have the same key with two different types (int and string).
+
+        When:
+            - running validate_schema_aligned_with_test_data.
+
+        Then:
+            - verify Typer.exception is raised.
+            - verify that there was not warning raised
+            - verify that error was raised indicating that the testdata contains events that has the same key with
+              different types.
+        """
+        from demisto_sdk.commands.test_content.test_modeling_rule.test_modeling_rule import (
+            validate_schema_aligned_with_test_data,
+        )
+        from demisto_sdk.commands.test_content.xsiam_tools.test_data import (
+            EventLog,
+            TestData,
+        )
+
+        logger_error_mocker = mocker.patch.object(logger, "error")
+        logger_warning_mocker = mocker.patch.object(logger, "warning")
+
+        test_data = TestData(
+            data=[
+                EventLog(
+                    test_data_event_id=DEFAULT_TEST_EVENT_ID,
+                    vendor="vendor",
+                    product="product",
+                    dataset="dataset",
+                    event_data={"int": 1, "bool": True},
+                    expected_values={},
+                ),
+                EventLog(
+                    test_data_event_id=DEFAULT_TEST_EVENT_ID,
+                    vendor="vendor",
+                    product="product",
+                    dataset="dataset",
+                    event_data={"int": "1", "bool": True},
+                    expected_values={},
+                ),
+            ]
+        )
+
+        with pytest.raises(typer.Exit):
+            validate_schema_aligned_with_test_data(
+                test_data=test_data,
+                schema={
+                    "dataset": {
+                        "int": {"type": "int", "is_array": False},
+                        "bool": {"type": "boolean", "is_array": False},
+                    }
+                },
+            )
+        assert 'The testdata contains events with the same event_key' in logger_error_mocker.call_args_list[0].args[0]
+        assert not logger_warning_mocker.called

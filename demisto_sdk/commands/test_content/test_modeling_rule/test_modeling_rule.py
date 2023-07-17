@@ -300,7 +300,7 @@ def validate_schema_aligned_with_test_data(
     errors_occurred = False
 
     for dataset, events in schema_dataset_to_events.items():
-        schema_mappings = schema[dataset]
+        all_schema_dataset_mappings = schema[dataset]
         test_data_mappings = {}
         error_logs = set()
         for event in events:
@@ -313,7 +313,7 @@ def validate_schema_aligned_with_test_data(
                     )
                     continue
 
-                if actual_key_schema_mappings := schema_mappings.get(event_key):
+                if test_data_key_mappings := all_schema_dataset_mappings.get(event_key):
                     if isinstance(event_val, str) and dateparser.parse(
                         event_val, settings={"STRICT_PARSING": True}
                     ):
@@ -321,20 +321,30 @@ def validate_schema_aligned_with_test_data(
                     else:
                         event_val_type = type(event_val)
 
-                    expected_val_schema_mappings = expected_schema_mappings[
+                    schema_key_mappings = expected_schema_mappings[
                         event_val_type
                     ]
 
-                    if expected_val_schema_mappings != actual_key_schema_mappings:
+                    if (
+                        existing_testdata_key_mapping := test_data_mappings.get(event_key)
+                    ) and existing_testdata_key_mapping != schema_key_mappings:
+                        error_logs.add(
+                            f'The testdata contains events with the same {event_key=} '
+                            f'that have different types for dataset {dataset}'
+                        )
+                        errors_occurred = True
+                        continue
+                    else:
+                        test_data_mappings[event_key] = schema_key_mappings
+
+                    if schema_key_mappings != test_data_key_mappings:
                         error_logs.add(
                             f"[red][bold]{event_key}[/bold] --- TestData Mapping "
-                            f'"{actual_key_schema_mappings}" != Schema Mapping "{expected_val_schema_mappings}"'
+                            f'"{test_data_key_mappings}" != Schema Mapping "{schema_key_mappings}"'
                         )
                         errors_occurred = True
 
-                    test_data_mappings[event_key] = expected_val_schema_mappings
-
-        missing_test_data_keys = set(schema_mappings.keys()) - set(
+        missing_test_data_keys = set(all_schema_dataset_mappings.keys()) - set(
             test_data_mappings.keys()
         )
         if missing_test_data_keys:

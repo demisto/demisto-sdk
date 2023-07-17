@@ -353,7 +353,7 @@ class YmlSplitter:
         """
         remove the auto-generated section headers if they exist.
         """
-        script = re.sub(r"(?:###|//) pack version: (\d+\.\d+\.\d+)", "", script)
+        script = re.sub(r"(?:#|//)+ pack version: (\d+\.\d+\.\d+)(\n|$)", "", script, flags=re.MULTILINE)
         return re.sub(
             r"register_module_line\('.+', '(?:start|end)', __line__\(\)\)(\n|$)",
             "",

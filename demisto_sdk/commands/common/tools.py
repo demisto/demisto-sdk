@@ -2256,9 +2256,15 @@ def is_content_item_dependent_in_conf(test_config, file_type) -> bool:
         bool: The return value. True for dependence, False otherwise.
     """
     integrations_list = test_config.get("integrations", [])
-    integrations_list = integrations_list if isinstance(integrations_list, list) else [integrations_list]
+    integrations_list = (
+        integrations_list
+        if isinstance(integrations_list, list)
+        else [integrations_list]
+    )
     scripts_list = test_config.get("scripts", [])
-    scripts_list: list = scripts_list if isinstance(scripts_list, list) else [scripts_list]
+    scripts_list: list = (
+        scripts_list if isinstance(scripts_list, list) else [scripts_list]
+    )
     if file_type == "integration":
         return len(integrations_list) > 1
     if file_type == "script":

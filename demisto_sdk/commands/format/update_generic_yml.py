@@ -162,7 +162,6 @@ class BaseUpdateYML(BaseUpdate):
         if self.deprecate:
             if (
                 self.source_file_type.value == "integration"
-                or self.source_file_type.value == "playbook"
                 or self.source_file_type.value == "script"
             ):
                 self.remove_from_conf_json(

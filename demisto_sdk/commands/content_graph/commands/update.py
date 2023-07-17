@@ -14,6 +14,7 @@ from demisto_sdk.commands.common.logger import (
     logging_setup,
 )
 from demisto_sdk.commands.common.tools import download_content_graph
+from demisto_sdk.commands.content_graph.commands.common import recover_if_fails
 from demisto_sdk.commands.content_graph.commands.create import (
     create,
     create_content_graph,
@@ -31,6 +32,7 @@ from demisto_sdk.commands.content_graph.interface import ContentGraphInterface
 app = typer.Typer()
 
 
+@recover_if_fails
 def update_content_graph(
     content_graph_interface: ContentGraphInterface,
     marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR,
@@ -70,7 +72,7 @@ def update_content_graph(
                 )
                 return
     if not content_graph_interface.import_graph(imported_path):
-        # import failed - creates a new graph
+        logger.warning("Failed to import the content graph, will create a new graph")
         create_content_graph(
             content_graph_interface, marketplace, dependencies, output_path
         )

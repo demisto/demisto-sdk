@@ -11,6 +11,7 @@ from demisto_sdk.commands.common.logger import (
     logger,
     logging_setup,
 )
+from demisto_sdk.commands.content_graph.commands.common import recover_if_fails
 from demisto_sdk.commands.content_graph.common import (
     NEO4J_DATABASE_HTTP,
     NEO4J_PASSWORD,
@@ -24,6 +25,7 @@ from demisto_sdk.commands.content_graph.interface import ContentGraphInterface
 app = typer.Typer()
 
 
+@recover_if_fails
 def create_content_graph(
     content_graph_interface: ContentGraphInterface,
     marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR,

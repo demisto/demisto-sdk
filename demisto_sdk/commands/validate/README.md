@@ -149,5 +149,4 @@ ignore=BA101
 
 *Notes*: 
 * Currently only `BA101` is ignorable.
-* In external repositories (repos which are not demisto/content) **all** the validations are ignorable.
-
+* In external repositories (repos which contain the `.private-repo-settings` file in its root) **all** the validations are ignorable.

@@ -1,7 +1,4 @@
-from demisto_sdk.commands.common.handlers import JSON_Handler
-
-from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json, DEFAULT_YAML_HANDLER as yaml
-
+import json
 
 
 from typing import Any, Callable, Dict, Tuple

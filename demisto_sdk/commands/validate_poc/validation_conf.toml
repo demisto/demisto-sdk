@@ -39,3 +39,6 @@ select = []
 [servery_level.trivial]
 ignore = []
 select = []
+
+[throw_warnings]
+warnings_list = []

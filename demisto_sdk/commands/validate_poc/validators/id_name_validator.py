@@ -17,9 +17,9 @@ class IDNameValidator(BaseValidator):
     def is_valid(cls, content_item: ContentItem) -> ValidationResult:
         if content_item.object_id != content_item.name:
             return ValidationResult(
-                error_code=cls.error_code, is_valid=False, message=cls.error_message
+                error_code=cls.error_code, is_valid=False, message=cls.error_message, file_path=content_item.path
             )
-        return ValidationResult(error_code=cls.error_code, is_valid=True, message="")
+        return ValidationResult(error_code=cls.error_code, is_valid=True, message="", file_path=content_item.path)
 
     @classmethod
     def fix(cls, content_item: ContentItem) -> None:

@@ -8,8 +8,9 @@ from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 
 class ValidationResult(BaseModel):
     error_code: str
-    is_valid: bool
     message: str
+    file_path: str
+    is_valid: bool
 
 
 class BaseValidator(ABC, BaseModel):

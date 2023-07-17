@@ -3,9 +3,7 @@ from typing import Optional, Union
 from ruamel.yaml.scalarstring import FoldedScalarString
 
 import demisto_sdk.commands.common.tools as tools
-from demisto_sdk.commands.common.handlers import JSON_Handler
-
-json = JSON_Handler()
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 
 
 class XSOARIntegration:

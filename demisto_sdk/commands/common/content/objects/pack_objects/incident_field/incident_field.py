@@ -8,9 +8,7 @@ from demisto_sdk.commands.common.constants import INCIDENT_FIELD, FileType
 from demisto_sdk.commands.common.content.objects.pack_objects.abstract_pack_objects.json_content_object import (
     JSONContentObject,
 )
-from demisto_sdk.commands.common.handlers import JSON_Handler
-
-json = JSON_Handler()
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 
 
 class IncidentField(JSONContentObject):

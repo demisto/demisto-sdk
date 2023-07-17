@@ -39,7 +39,8 @@ from demisto_sdk.commands.common.git_content_config import (
     GitCredentials,
 )
 from demisto_sdk.commands.common.git_util import GitUtil
-from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
+from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.tools import (
     MarketplaceTagParser,
@@ -129,8 +130,7 @@ from TestSuite.repo import Repo
 from TestSuite.test_tools import ChangeCWD
 
 GIT_ROOT = git_path()
-yaml = YAML_Handler()
-json = JSON_Handler()
+
 
 SENTENCE_WITH_UMLAUTS = "Nett hier. Aber waren Sie schon mal in Baden-Württemberg?"
 

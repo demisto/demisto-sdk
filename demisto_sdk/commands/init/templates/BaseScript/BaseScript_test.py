@@ -10,7 +10,10 @@ MAKE SURE YOU REVIEW/REPLACE ALL THE COMMENTS MARKED AS "TODO"
 
 from demisto_sdk.commands.common.handlers import JSON_Handler
 
-json = JSON_Handler()
+from demisto_sdk.commands.common.handlers import (
+    DEFAULT_JSON_HANDLER as json,
+    DEFAULT_YAML_HANDLER as yaml,
+)
 
 
 def util_load_json(path):

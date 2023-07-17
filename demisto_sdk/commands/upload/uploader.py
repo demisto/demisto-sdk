@@ -18,7 +18,7 @@ from demisto_sdk.commands.common.constants import (
     FileType,
     MarketplaceVersions,
 )
-from demisto_sdk.commands.common.handlers import JSON_Handler
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     find_type,
@@ -43,9 +43,6 @@ from demisto_sdk.commands.upload.exceptions import (
     NotUploadableException,
 )
 from demisto_sdk.commands.upload.tools import parse_error_response
-
-json = JSON_Handler()
-
 
 SUCCESS_RETURN_CODE = 0
 ERROR_RETURN_CODE = 1

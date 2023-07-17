@@ -19,8 +19,6 @@ from demisto_sdk.commands.generate_yml_from_python.yml_metadata_collector import
 from TestSuite.test_tools import str_in_call_args_list
 from TestSuite.integration import Integration
 
-yaml = YAML_Handler()
-
 
 def dedent(code_line: str, spaces_num: int) -> str:
     """Dedent the code_line by spaces_num."""

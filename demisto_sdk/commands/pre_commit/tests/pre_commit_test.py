@@ -20,9 +20,6 @@ TEST_DATA_PATH = (
 )
 
 
-yaml = YAML_Handler()
-
-
 @pytest.mark.parametrize("is_test", [True, False])
 def test_config_files(mocker, repo: Repo, is_test: bool):
     """

@@ -116,15 +116,15 @@ from demisto_sdk.commands.common.constants import (
 )
 from demisto_sdk.commands.common.git_content_config import GitContentConfig, GitProvider
 from demisto_sdk.commands.common.git_util import GitUtil
-from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
+from demisto_sdk.commands.common.handlers import (
+    DEFAULT_JSON_HANDLER as json,
+    DEFAULT_YAML_HANDLER as yaml,
+)
 
 if TYPE_CHECKING:
     from demisto_sdk.commands.content_graph.interface.graph import ContentGraphInterface
 
 logger = logging.getLogger("demisto-sdk")
-
-json = JSON_Handler()
-yaml = YAML_Handler()
 
 urllib3.disable_warnings()
 

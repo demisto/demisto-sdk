@@ -10,7 +10,10 @@ https://xsoar.pan.dev/docs/integrations/unit-testing
 
 from demisto_sdk.commands.common.handlers import JSON_Handler
 
-json = JSON_Handler()
+from demisto_sdk.commands.common.handlers import (
+    DEFAULT_JSON_HANDLER as json,
+    DEFAULT_YAML_HANDLER as yaml,
+)
 
 
 def util_load_json(path):

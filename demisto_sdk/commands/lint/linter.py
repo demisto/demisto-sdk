@@ -30,7 +30,8 @@ from demisto_sdk.commands.common.docker_helper import (
     get_python_version,
     init_global_docker_client,
 )
-from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
+from demisto_sdk.commands.common.handlers import YAML_Handler
 from demisto_sdk.commands.common.hook_validations.docker import DockerImageValidator
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.native_image import (
@@ -72,9 +73,6 @@ from demisto_sdk.commands.lint.helpers import (
     split_warnings_errors,
     stream_docker_container_output,
 )
-
-json = JSON_Handler()
-
 
 # 3-rd party packages
 

@@ -15,6 +15,7 @@
 * Fixed an issue where the *upload* command would upload a pack metadata with wrong display names.
 * Performance enhancements when reading yaml files.
 * Removed redundant errors and fields from `errors.py`
+* Calling **format** with the `-d` flag now removes test playbooks testing the deprecated content from conf.json.
 
 ## 1.17.1
 * Added the `aliasTo` key to the Incident Field schema.

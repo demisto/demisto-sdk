@@ -114,6 +114,7 @@ from demisto_sdk.commands.common.constants import (
     MarketplaceVersions,
     urljoin,
     ENV_SDK_WORKING_OFFLINE,
+    OFFLINE_MODE,
 )
 from demisto_sdk.commands.common.git_content_config import GitContentConfig, GitProvider
 from demisto_sdk.commands.common.git_util import GitUtil
@@ -131,7 +132,6 @@ urllib3.disable_warnings()
 
 
 GRAPH_SUPPORTED_FILE_TYPES = ["yml", "json"]
-OFFLINE_MODE = None
 
 
 class TagParser:
@@ -267,6 +267,8 @@ SDK_PYPI_VERSION = r"https://pypi.org/pypi/demisto-sdk/json"
 SUFFIX_TO_REMOVE = ("_dev", "_copy")
 
 
+# This exception should be raise inside methods that reqiered internet connection
+# when the sdk defined working offline
 class NoInternetConnectionException(Exception):
     pass
 
@@ -583,7 +585,7 @@ def get_remote_file(
     """
     if is_sdk_defined_working_offline():
         if default_value is None:
-            raise NoInternetConnectionException()
+            raise NoInternetConnectionException
         return default_value
 
     tag = tag.replace("origin/", "").replace("demisto/", "")

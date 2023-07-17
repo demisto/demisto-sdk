@@ -8,7 +8,7 @@ from typing import Any, Callable, Optional
 
 import pytest
 
-from demisto_sdk.commands.common.handlers import YAML_Handler
+from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
 from demisto_sdk.commands.generate_yml_from_python.generate_yml import YMLGenerator
 from demisto_sdk.commands.generate_yml_from_python.yml_metadata_collector import (
     ConfKey,

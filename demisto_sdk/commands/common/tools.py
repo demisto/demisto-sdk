@@ -114,7 +114,6 @@ from demisto_sdk.commands.common.constants import (
     MarketplaceVersions,
     urljoin,
     ENV_SDK_WORKING_OFFLINE,
-    OFFLINE_MODE,
 )
 from demisto_sdk.commands.common.git_content_config import GitContentConfig, GitProvider
 from demisto_sdk.commands.common.git_util import GitUtil
@@ -3719,7 +3718,7 @@ def parse_multiple_path_inputs(
 
     raise ValueError(f"Cannot parse paths from {input_path}")
 
-
+@lru_cache
 def is_sdk_defined_working_offline() -> bool:
     """
     This method returns True when sdk defined as offline - when DEMISTO_SDK_OFFLINE_ENV environment variable is True.
@@ -3727,7 +3726,5 @@ def is_sdk_defined_working_offline() -> bool:
     Returns:
         bool: The value for DEMISTO_SDK_OFFLINE_ENV environment variable.
     """
-    global OFFLINE_MODE
-    if OFFLINE_MODE is None:
-        OFFLINE_MODE = str2bool(os.getenv(ENV_SDK_WORKING_OFFLINE))
-    return OFFLINE_MODE
+    return str2bool(os.getenv(ENV_SDK_WORKING_OFFLINE))
+

@@ -104,6 +104,49 @@ def test_integration_upload_pack_positive(demisto_client_mock, mocker):
     )
 
 
+METADATA_DISPLAYS = {
+    "automation": "Automation",
+    "classifier": "Classifiers",
+    "dashboard": "Dashboard",
+    "genericdefinition": "Generic Definition",
+    "genericfield": "Generic Field",
+    "genericmodule": "Generic Module",
+    "generictype": "Generic Type",
+    "incidentfield": "Incident Field",
+    "incidenttype": "Incident Type",
+    "indicatorfield": "Indicator Field",
+    "integration": "Integration",
+    "job": "Jobs",
+    "layoutscontainer": "Layouts Container",
+    "list": "List",
+    "playbook": "Test Playbooks",
+    "report": "Report",
+    "reputation": "Reputation",
+    "widget": "Widget",
+}
+
+METADATA_NAMES = [
+    "automation",
+    "classifier",
+    "dashboard",
+    "genericdefinition",
+    "genericfield",
+    "genericmodule",
+    "generictype",
+    "incidentfield",
+    "incidenttype",
+    "indicatorfield",
+    "integration",
+    "job",
+    "layoutscontainer",
+    "list",
+    "playbook",
+    "report",
+    "reputation",
+    "widget",
+]
+
+
 def test_zipped_pack_upload_positive(repo, mocker, tmpdir, demisto_client_mock):
     """
     Given
@@ -201,6 +244,16 @@ def test_zipped_pack_upload_positive(repo, mocker, tmpdir, demisto_client_mock):
                 # validate yml based content entities are being unified before getting zipped
                 assert "nativeimage" in yaml.load(integration).get("script", {})
 
+            with pack_zip.open("metadata.json") as metadata:
+                metadata = json.load(metadata)
+                assert "contentDisplays" in metadata
+                metadata_display = metadata.get("contentDisplays")
+                for content_item in METADATA_NAMES:
+                    assert (
+                        metadata_display[content_item]
+                        == METADATA_DISPLAYS[content_item]
+                    )
+
     logged = flatten_call_args(logger_info.call_args_list)
     assert mocked_get_installed.called_once_with(
         "/contentpacks/metadata/installed", "GET"
@@ -288,12 +341,13 @@ def test_integration_upload_pack_invalid_connection_params(mocker):
         "demisto_sdk.commands.upload.uploader.demisto_client", return_valure="object"
     )
     mocker.patch(
-        "demisto_sdk.commands.upload.uploader.get_demisto_version", return_value="0"
+        "demisto_sdk.commands.upload.uploader.get_demisto_version",
+        return_value=Version("0"),
     )
     runner = CliRunner(mix_stderr=False)
     result = runner.invoke(main, [UPLOAD_CMD, "-i", pack_path, "--insecure"])
     assert result.exit_code == 1
     assert str_in_call_args_list(
         logger_info.call_args_list,
-        "Could not connect to XSOAR server. Try checking your connection configurations.",
+        "Could not connect to the server. Try checking your connection configurations.",
     )

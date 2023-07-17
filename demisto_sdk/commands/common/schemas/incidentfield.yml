@@ -99,6 +99,8 @@ mapping:
     type: str
   openEnded:
     type: bool
+  template:
+    type: str
   marketplaces:
     type: seq
     sequence:
@@ -109,6 +111,8 @@ mapping:
     sequence:
       - include: aliases_schema
   x2_fields:
+    type: str
+  aliasTo:
     type: str
 
 schema;aliases_schema:

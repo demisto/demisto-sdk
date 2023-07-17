@@ -69,6 +69,9 @@ from demisto_sdk.commands.common.hook_validations.xsiam_dashboard import (
     XSIAMDashboardValidator,
 )
 from demisto_sdk.commands.common.legacy_git_tools import git_path
+from demisto_sdk.commands.content_graph.tests.create_content_graph_test import (
+    mock_integration,
+)
 from demisto_sdk.commands.prepare_content.integration_script_unifier import (
     IntegrationScriptUnifier,
 )
@@ -1284,6 +1287,7 @@ class TestValidators:
                     modified_files=modified_files,
                     old_format_files=old_format_files,
                     added_files=added_files,
+                    graph_validator=None,
                 )
                 is True
             )
@@ -1315,6 +1319,12 @@ class TestValidators:
             incident_field1.get_path_from_pack(),
             incident_field2.get_path_from_pack(),
         }
+        # Mock the graph and the get_api_module_dependencies_from_graph function
+        integration_mock = mock_integration("ApiDependent")
+        mocker.patch(
+            "demisto_sdk.commands.validate.validate_manager.get_api_module_dependencies_from_graph",
+            return_value=[integration_mock],
+        )
         added_files = {"Packs/PackName1/ReleaseNotes/1_0_0.md"}
         with ChangeCWD(repo.path):
             assert (
@@ -1322,6 +1332,7 @@ class TestValidators:
                     modified_files=modified_files,
                     old_format_files=set(),
                     added_files=added_files,
+                    graph_validator=mocker.MagicMock(),
                 )
                 is False
             )
@@ -1340,30 +1351,20 @@ class TestValidators:
         Then:
             - return a False as there are release notes missing
         """
-        mocker.patch.object(
-            BaseValidator, "update_checked_flags_by_support_level", return_value=""
-        )
         pack1 = repo.create_pack("ApiModules")
         api_script1 = pack1.create_script("APIScript")
         api_script1.create_default_script(name="APIScript")
-        pack2_name = "ApiDependent"
-        pack2 = repo.create_pack(pack2_name)
-        integration2 = pack2.create_integration(pack2_name)
-        id_set_content = {
-            "integrations": [
-                {
-                    "ApiDependent": {
-                        "name": integration2.name,
-                        "file_path": integration2.path,
-                        "pack": pack2_name,
-                        "api_modules": [api_script1.name],
-                    }
-                }
-            ]
-        }
-        id_set_f = tmpdir / "id_set.json"
-        id_set_f.write(json.dumps(id_set_content))
-        validate_manager = ValidateManager(id_set_path=id_set_f.strpath)
+        integration_mock = mock_integration("ApiDependent", "Packs/ApiDependent/")
+        validate_manager = ValidateManager()
+        mocker.patch(
+            "demisto_sdk.commands.validate.validate_manager.get_api_module_dependencies_from_graph",
+            return_value=[integration_mock],
+        )
+        mocker.patch.object(
+            BaseValidator, "update_checked_flags_by_support_level", return_value=""
+        )
+
+        validate_manager = ValidateManager()
         modified_files = {api_script1.yml.path}
         added_files = {"Packs/ApiModules/ReleaseNotes/1_0_0.md"}
         with ChangeCWD(repo.path):
@@ -1372,6 +1373,7 @@ class TestValidators:
                     modified_files=modified_files,
                     old_format_files=set(),
                     added_files=added_files,
+                    graph_validator=mocker.MagicMock(),
                 )
                 is False
             )
@@ -1395,24 +1397,7 @@ class TestValidators:
         )
         pack1 = repo.create_pack("ApiModules")
         api_script1 = pack1.create_script("APIScript")
-        pack2_name = "ApiDependent"
-        pack2 = repo.create_pack(pack2_name)
-        integration2 = pack2.create_integration(pack2_name)
-        id_set_content = {
-            "integrations": [
-                {
-                    "ApiDependent": {
-                        "name": integration2.name,
-                        "file_path": integration2.path,
-                        "pack": pack2_name,
-                        "api_modules": [api_script1.name],
-                    }
-                }
-            ]
-        }
-        id_set_f = tmpdir / "id_set.json"
-        id_set_f.write(json.dumps(id_set_content))
-        validate_manager = ValidateManager(id_set_path=id_set_f.strpath)
+        validate_manager = ValidateManager()
         modified_files = {api_script1.yml.rel_path}
         added_files = {
             "Packs/ApiModules/ReleaseNotes/1_0_0.md",
@@ -1424,6 +1409,7 @@ class TestValidators:
                     modified_files=modified_files,
                     old_format_files=set(),
                     added_files=added_files,
+                    graph_validator=mocker.MagicMock(),
                 )
                 is True
             )
@@ -1460,6 +1446,7 @@ class TestValidators:
                     modified_files=modified_files,
                     old_format_files=old_format_files,
                     added_files=added_files,
+                    graph_validator=mocker.MagicMock(),
                 )
                 is False
             )
@@ -1490,6 +1477,7 @@ class TestValidators:
                     modified_files=set(),
                     old_format_files=set(),
                     added_files=added_files,
+                    graph_validator=mocker.MagicMock(),
                 )
                 is False
             )
@@ -1521,6 +1509,7 @@ class TestValidators:
                     modified_files=set(),
                     old_format_files=set(),
                     added_files=added_files,
+                    graph_validator=mocker.MagicMock(),
                 )
                 is True
             )

@@ -1,5 +1,37 @@
 # Changelog
 ## Unreleased
+* Fixed an issue where **lint** and **validate** commands failed on integrations and scripts that use docker images that are not available in the Docker Hub but exist locally.
+* Added documentation for the flag **override-existing** used in upload.
+* Fixed an issue where **validate** failed on Incident Field items with a `template` value.
+* Improved memory efficiency in **update-content-graph** and **create-content-graph** commands.
+* Removed support for the `cve_id` name for the default-argument for **cve** reputation commands in **validate**. Now, only `cve` may be used for such commands.
+* Fixed an issue where **zip_packs** failed uploading content.
+* Added `tenant_timezone` handling to the **modeling-rules init** command, allowing usage with tenants in various timezones.
+* Shortened the timeout when checking whether the dataset exists in **test-modeling-rule**.
+* Cleaned up project dependencies.
+* Added support for the **List** content item in **Xpanse** marketplace.
+* Fixed an issue in **run-unit-tests** command when running Powershell tests.
+* Fixed an issue where **lint** failed running when a docker container would not init properly.
+* Fixed an issue where the *upload* command would upload a pack metadata with wrong display names.
+* Performance enhancements when reading yaml files.
+* Removed redundant errors and fields from `errors.py`
+
+## 1.17.1
+* Added the `aliasTo` key to the Incident Field schema.
+* Modified **validate** to not require fields whose value is always `False`.
+* Modified **validate** to use the graph instead of id_set on changed *APIModules*.
+* Fixed an issue where `register_module_line()` was not removed from python scripts when the script had no trailing newline.
+* Fixed an issue where an integration containing a command without a description would fail to upload while using the **upload** command.
+* Fixed an issue where attempting to individually upload `Preprocess Rule` files raised an unclear error message. Note: preprocess rules can not be individually uploaded, but only as part of a pack.
+* Fixed an issue where the **upload** command would fail on Indicator Types.
+* Fixed an issue where the **upload** command would return the wrong error message when connection credentials are invalid.
+* Fixed an issue where the **upload** command would fail parsing input paths.
+* added support for the `isfetcheventsandassets` flag in content graph.
+* Fixed an issue where the **modeling-rules test** command failed to get the existence of result from dataset in cases where the results take time to load.
+* Added an aliasTo key to the incident field schema.
+* Updated **update-release-notes** to use graph instead of id_set.
+
+## 1.17.0
 * **validate** will only fail on docker related errors if the pack is supported by xsoar.
 * Added a validation that assures filename, id, and name have a correct suffix for modeling/parsing rules files.
 * Added new **validate** checks, preventing unwanted changes of the marketplaces (BC108,BC109), toversion (BC107)  and fromversion (BC106) fields.

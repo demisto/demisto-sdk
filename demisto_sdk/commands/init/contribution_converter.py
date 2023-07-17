@@ -417,7 +417,7 @@ class ContributionConverter:
                         # At first time, create another dir for all indicator-fields files and move them there
                         if not os.path.exists(dst_ioc_fields_dir):
                             os.makedirs(dst_ioc_fields_dir)
-                        file_path = os.path.join(self.working_dir_path, dir_name, file)
+                        file_path = str(Path(self.working_dir_path, dir_name, file))
                         shutil.move(file_path, dst_ioc_fields_dir)  # type: ignore
 
                 # If there were only indicatorfiled files, the original folder will remain empty, so we will delete it

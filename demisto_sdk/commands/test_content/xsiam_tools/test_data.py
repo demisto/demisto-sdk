@@ -46,6 +46,7 @@ class TestData(BaseModel):
                 f"The following validation names {invalid_validation_names} are invalid, "
                 f"please make sure validations are named one of {valid_ignored_validations}"
             )
+        return v
 
 
 class CompletedTestData(TestData):

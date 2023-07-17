@@ -1,3 +1,4 @@
+import json
 import logging
 import os
 from pathlib import Path
@@ -10,6 +11,7 @@ from freezegun import freeze_time
 from typer.testing import CliRunner
 
 from TestSuite.test_tools import str_in_call_args_list
+from demisto_sdk.commands.test_content.xsiam_tools.test_data import Validations
 
 logger = logging.getLogger("demisto-sdk")
 
@@ -873,6 +875,206 @@ class TestTheTestModelingRuleCommandSingleRule:
                     )
         except typer.Exit:
             assert False, "No exception should be raised in this scenario."
+
+    def test_the_test_modeling_rule_command_results_with_ignored_validations(self, pack, monkeypatch, mocker):
+        """
+        Given:
+            - A test data file including ignoring a schema/testdata mapping validations.
+
+        When:
+            - The pack is simulated to be on the tenant.
+            - The command is run in non-interactive mode.
+            - The push of the test data is simulated to succeed.
+            - Checking the dataset exists is simulated to succeed.
+            - Starting the XQL query is simulated to succeed.
+            - Getting the XQL query results is simulated to succeed.
+            - The results match the expectations.
+
+        Then:
+            - Verify we get a message saying the results match the expectations.
+            - The command returns with a zero exit code.
+            - make sure that the schema/testdata mappings validation is skipped.
+        """
+        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+        monkeypatch.setenv("COLUMNS", "1000")
+
+        from functools import partial
+
+        from demisto_sdk.commands.test_content.test_modeling_rule.test_modeling_rule import (
+            check_dataset_exists,
+        )
+
+        from demisto_sdk.commands.test_content.test_modeling_rule.test_modeling_rule import (
+            app as test_modeling_rule_cmd,
+        )
+        from demisto_sdk.commands.test_content.xsiam_tools.test_data import TestData
+
+        func_path = (
+            "demisto_sdk.commands.test_content.test_modeling_rule."
+            "test_modeling_rule.check_dataset_exists"
+        )
+        # override the default timeout to 1 second so only one iteration of the loop will be executed
+        check_dataset_exists_with_timeout = partial(check_dataset_exists, timeout=5)
+        monkeypatch.setattr(func_path, check_dataset_exists_with_timeout)
+
+        # so the logged output when running the command will be printed with a width of 120 characters
+        monkeypatch.setenv("COLUMNS", "1000")
+
+        runner = CliRunner()
+
+        # Create Test Data File
+        pack.create_modeling_rule(DEFAULT_MODELING_RULE_NAME, rules=ONE_MODEL_RULE_TEXT)
+        mrule_dir = Path(pack._modeling_rules_path / DEFAULT_MODELING_RULE_NAME)
+        path_to_fake_test_data_file = (
+                Path(__file__).parent / "test_data/fake_test_data_file.json"
+        )
+
+        test_data_file = pack.modeling_rules[0].testdata
+
+        fake_test_data = TestData.parse_file(path_to_fake_test_data_file.as_posix())
+        test_data_file.write_as_text(fake_test_data.json(indent=4))
+        test_data_file.update({"ignored_validations": [Validations.SCHEMA_TYPES_ALIGNED_WITH_TEST_DATA.value]})
+
+        try:
+            with requests_mock.Mocker() as m:
+                with SetFakeXsiamClientEnvironmentVars() as fake_env_vars:
+                    # Arrange
+                    m.get(
+                        f"{fake_env_vars.demisto_base_url}/xsoar/contentpacks/metadata/installed",
+                        json=[{"name": pack.name, "id": pack.name}],
+                    )
+                    m.post(
+                        f"{fake_env_vars.demisto_base_url}/logs/v1/xsiam",
+                        json={},
+                        status_code=200,
+                    )
+                    m.post(
+                        f"{fake_env_vars.demisto_base_url}/public_api/v1/xql/start_xql_query/",
+                        json={"reply": "fake-execution-id"},
+                        status_code=200,
+                    )
+
+                    id_key = f"{fake_test_data.data[0].dataset}.test_data_event_id"
+                    event_id_1 = str(fake_test_data.data[0].test_data_event_id)
+                    event_id_2 = str(fake_test_data.data[1].test_data_event_id)
+                    m.post(
+                        f"{fake_env_vars.demisto_base_url}/public_api/v1/xql/get_query_results/",
+                        [
+                            {
+                                "json": {
+                                    "reply": {
+                                        "status": "SUCCESS",
+                                        "results": {"data": ["some-results"]},
+                                    }
+                                },
+                                "status_code": 200,
+                            },
+                            {
+                                "json": {
+                                    "reply": {
+                                        "status": "SUCCESS",
+                                        "results": {
+                                            "data": [
+                                                {
+                                                    id_key: event_id_1,
+                                                    **fake_test_data.data[
+                                                        0
+                                                    ].expected_values,
+                                                },
+                                                {
+                                                    id_key: event_id_2,
+                                                    **fake_test_data.data[
+                                                        1
+                                                    ].expected_values,
+                                                },
+                                            ]
+                                        },
+                                    }
+                                },
+                                "status_code": 200,
+                            },
+                        ],
+                    )
+                    # Act
+                    result = runner.invoke(
+                        test_modeling_rule_cmd,
+                        [mrule_dir.as_posix(), "--non-interactive"],
+                    )
+                    # Assert
+                    assert result.exit_code == 0
+                    assert str_in_call_args_list(
+                        logger_info.call_args_list, "Mappings validated successfully"
+                    )
+                    # make sure the schema validation was skipped.
+                    schema_path = pack.modeling_rules[0].schema.path
+                    assert str_in_call_args_list(
+                        logger_info.call_args_list,
+                        f"Skipping the validation to check that the schema {schema_path} is aligned with TestData file"
+                    )
+        except typer.Exit:
+            assert False, "No exception should be raised in this scenario."
+
+    def test_the_test_modeling_rule_command_results_with_non_existent_ignored_validations(
+        self, pack
+    ):
+        """
+        Given:
+            - A test data file including ignoring un-expected validation names.
+
+        When:
+            - The pack is simulated to be on the tenant.
+            - The command is run in non-interactive mode.
+            - The push of the test data is simulated to succeed.
+            - Checking the dataset exists is simulated to succeed.
+            - Starting the XQL query is simulated to succeed.
+            - Getting the XQL query results is simulated to succeed.
+            - The results match the expectations.
+
+        Then:
+            - Verify the code fails on ValidationError.
+            - Make sure the exist code will be 1 (meaning failure).
+        """
+        from demisto_sdk.commands.test_content.test_modeling_rule.test_modeling_rule import (
+            app as test_modeling_rule_cmd,
+        )
+        from demisto_sdk.commands.test_content.xsiam_tools.test_data import TestData
+
+        runner = CliRunner()
+
+        # Create Test Data File
+        pack.create_modeling_rule(DEFAULT_MODELING_RULE_NAME, rules=ONE_MODEL_RULE_TEXT)
+        mrule_dir = Path(pack._modeling_rules_path / DEFAULT_MODELING_RULE_NAME)
+        path_to_fake_test_data_file = (
+                Path(__file__).parent / "test_data/fake_test_data_file.json"
+        )
+
+        test_data_file = pack.modeling_rules[0].testdata
+
+        fake_test_data = TestData.parse_file(path_to_fake_test_data_file.as_posix())
+        test_data_file.write_as_text(fake_test_data.json(indent=4))
+        test_data_file.update({"ignored_validations": ["blabla"]})
+
+        with requests_mock.Mocker() as m:
+            with SetFakeXsiamClientEnvironmentVars() as fake_env_vars:
+                # Arrange
+                m.get(
+                    f"{fake_env_vars.demisto_base_url}/xsoar/contentpacks/metadata/installed",
+                    json=[{"name": pack.name, "id": pack.name}],
+                )
+                m.post(
+                    f"{fake_env_vars.demisto_base_url}/logs/v1/xsiam",
+                    json={},
+                    status_code=200,
+                )
+                # Act
+                result = runner.invoke(
+                    test_modeling_rule_cmd,
+                    [mrule_dir.as_posix(), "--non-interactive"],
+                )
+                # Assert
+                assert result.exit_code == 1
+                # make sure the schema validation was skipped.
+                assert "The following validation names {'blabla'} are invalid" in result.exception.errors()[0]['msg']
 
     def test_the_test_modeling_rule_command_results_do_not_match_expectations(
         self, pack, monkeypatch, mocker

@@ -1986,3 +1986,130 @@ class TestFormatWithoutAddTestsFlag:
             logger_info.call_args_list,
             message1,
         )
+
+
+def test_verify_deletion_from_conf_pack_format_with_deprecate_flag(
+    mocker, monkeypatch, repo
+):
+    """
+    Given
+    - A pack with an integration and a TPB defined in the yml.
+
+    When
+    - Executing format with -d flag.
+
+    Then
+    -  Ensure deletion from test.conf
+    """
+
+    # Prepare mockers
+    monkeypatch.setenv("COLUMNS", "1000")
+    # Prepare content
+    # Create pack with integration and with test playbook in the yml.
+    pack = repo.create_pack("TestPack")
+    integration = pack.create_integration("TestIntegration")
+    integration.yml.update({"tests": ["test_playbook"]})
+    pack_path = pack.path
+    repo_path = repo.path
+    # We don't need to format empty readme files
+    if os.path.exists(
+        f"{repo_path}/Packs/TestPack/Integrations/TestIntegration/README.md"
+    ):
+        os.remove(f"{repo_path}/Packs/TestPack/Integrations/TestIntegration/README.md")
+    if os.path.exists(f"{repo_path}/Packs/TestPack/README.md"):
+        os.remove(f"{repo_path}/Packs/TestPack/README.md")
+
+    # Prepare conf
+    test_conf_data = {
+        "tests": [
+            {"integrations": ["TestIntegration"], "playbookID": "New Integration Test"},
+            {"integrations": ["TestIntegration"], "playbookID": "test_playbook"},
+            {
+                "integrations": ["AnotherTestIntegration"],
+                "playbookID": "another_test_playbook",
+            },
+        ]
+    }
+    conf_json_path = f"{repo_path}/Tests/conf.json"
+    with open(conf_json_path, "w") as file:
+        json.dump(test_conf_data, file, indent=4)
+
+    # Run
+    with ChangeCWD(repo_path):
+
+        runner = CliRunner(mix_stderr=False)
+        result = runner.invoke(
+            main, [FORMAT_CMD, "-i", f"{pack_path}", "-d"], input="\n"
+        )
+
+    # Asserts
+    assert not result.exception
+    conf_content = get_dict_from_file(conf_json_path)[0]
+    assert conf_content.get("tests") == [
+        {
+            "integrations": ["AnotherTestIntegration"],
+            "playbookID": "another_test_playbook",
+        }
+    ]
+
+
+def test_verify_deletion_from_conf_script_format_with_deprecate_flag(
+    mocker, monkeypatch, repo
+):
+    """
+    Given
+    - A pack with a script and a TPB defined in the yml.
+
+    When
+    - Executing format with -d flag.
+
+    Then
+    -  Ensure deletion from test.conf
+    """
+
+    # Prepare mockers
+    monkeypatch.setenv("COLUMNS", "1000")
+
+    # Prepare content
+    # Create pack with script and with test playbook in the yml.
+    pack = repo.create_pack("TestPack")
+    script = pack.create_script("TestScript")
+    script.yml.update({"tests": ["test_playbook_for_script"]})
+    script_path = script.path
+    repo_path = repo.path
+
+    # We don't need to format empty readme files
+    if os.path.exists(f"{repo_path}/Packs/TestPack/Scripts/TestScript/README.md"):
+        os.remove(f"{repo_path}/Packs/TestPack/Scripts/TestScript/README.md")
+    if os.path.exists(f"{repo_path}/Packs/TestPack/README.md"):
+        os.remove(f"{repo_path}/Packs/TestPack/README.md")
+
+    # Prepare conf
+    test_conf_data = {
+        "tests": [
+            {"integrations": ["TestIntegration"], "playbookID": "New Integration Test"},
+            {"scripts": ["TestScript"], "playbookID": "test_playbook_for_script"},
+            {
+                "scripts": ["TestScript", "AnotherTestScript"],
+                "playbookID": "test_playbook_for_script",
+            },
+        ]
+    }
+    conf_json_path = f"{repo_path}/Tests/conf.json"
+    with open(conf_json_path, "w") as file:
+        json.dump(test_conf_data, file, indent=4)
+
+    # Run
+    with ChangeCWD(repo_path):
+        runner = CliRunner(mix_stderr=False)
+        result = runner.invoke(
+            main, [FORMAT_CMD, "-i", f"{script_path}", "-d"], input="\n"
+        )
+
+    # Asserts
+    assert not result.exception
+    conf_content = get_dict_from_file(conf_json_path)[0]
+    assert conf_content.get("tests") == [
+        {"integrations": ["TestIntegration"], "playbookID": "New Integration Test"},
+        {"scripts": ["AnotherTestScript"], "playbookID": "test_playbook_for_script"},
+    ]

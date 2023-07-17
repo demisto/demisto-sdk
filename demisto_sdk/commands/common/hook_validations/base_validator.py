@@ -357,7 +357,6 @@ class BaseValidator:
             "severity": "warning" if warning else "error",
             "errorCode": error_code,
             "message": error_message,
-            "ui": error_data.get("ui_applicable"),
             "relatedField": error_data.get("related_field"),
             "linter": "validate",
         }

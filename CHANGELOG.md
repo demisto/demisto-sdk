@@ -20,7 +20,6 @@
 * Removed redundant errors and fields from `errors.py`.
 * Updated **update-release-notes** to use graph instead of id_set.
 
-
 ## 1.17.1
 * Added the `aliasTo` key to the Incident Field schema.
 * Modified **validate** to not require fields whose value is always `False`.

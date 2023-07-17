@@ -293,27 +293,28 @@ def validate_schema_aligned_with_test_data(
 
     # map each dataset from the schema to the correct events that has the same dataset
     schema_dataset_to_events = {
-        dataset: [d.event_data for d in test_data.data if d.dataset == dataset]
+        dataset: [event_log for event_log in test_data.data if event_log.dataset == dataset]
         for dataset in schema.keys()
     }
 
     errors_occurred = False
 
-    for dataset, events in schema_dataset_to_events.items():
+    for dataset, event_logs in schema_dataset_to_events.items():
         all_schema_dataset_mappings = schema[dataset]
         test_data_mappings = {}
         error_logs = set()
-        for event in events:
-            for event_key, event_val in event.items():
+        for event_log in event_logs:
+            for event_key, event_val in event_log.event_data.items():
                 if (
                     event_val is None
                 ):  # if event_val is None, warn and continue looping.
                     logger.warning(
-                        f"{event_val=} for {event_key=} is null in {event.test_data_event_id} in {dataset=}"
+                        f"{event_val=} for {event_key=} is null on {event_log.test_data_event_id} for {dataset=}",
+                        extra={"markup": True}
                     )
                     continue
 
-                if test_data_key_mappings := all_schema_dataset_mappings.get(event_key):
+                if schema_key_mappings := all_schema_dataset_mappings.get(event_key):
                     if isinstance(event_val, str) and dateparser.parse(
                         event_val, settings={"STRICT_PARSING": True}
                     ):
@@ -321,13 +322,13 @@ def validate_schema_aligned_with_test_data(
                     else:
                         event_val_type = type(event_val)
 
-                    schema_key_mappings = expected_schema_mappings[
+                    test_data_key_mappings = expected_schema_mappings[
                         event_val_type
                     ]
 
                     if (
                         existing_testdata_key_mapping := test_data_mappings.get(event_key)
-                    ) and existing_testdata_key_mapping != schema_key_mappings:
+                    ) and existing_testdata_key_mapping != test_data_key_mappings:
                         error_logs.add(
                             f'The testdata contains events with the same {event_key=} '
                             f'that have different types for dataset {dataset}'
@@ -335,9 +336,9 @@ def validate_schema_aligned_with_test_data(
                         errors_occurred = True
                         continue
                     else:
-                        test_data_mappings[event_key] = schema_key_mappings
+                        test_data_mappings[event_key] = test_data_key_mappings
 
-                    if schema_key_mappings != test_data_key_mappings:
+                    if test_data_key_mappings != schema_key_mappings:
                         error_logs.add(
                             f"[red][bold]{event_key}[/bold] --- TestData Mapping "
                             f'"{test_data_key_mappings}" != Schema Mapping "{schema_key_mappings}"'

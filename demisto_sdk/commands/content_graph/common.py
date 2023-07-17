@@ -103,7 +103,7 @@ class ContentType(str, enum.Enum):
         elif self == ContentType.LAYOUT:
             return "layoutscontainer"
         elif self == ContentType.PREPROCESS_RULE:
-            return "pre-process-rule"
+            return "preprocessrule"
         elif self == ContentType.TEST_PLAYBOOK:
             return ContentType.PLAYBOOK.server_name
         elif self == ContentType.MAPPER:
@@ -139,6 +139,33 @@ class ContentType(str, enum.Enum):
 
     # def __hash__(self) -> int:
     #     return hash(self.value)
+
+    @property
+    def metadata_name(self) -> str:
+        if self == ContentType.SCRIPT:
+            return "automation"
+        elif self == ContentType.INDICATOR_TYPE:
+            return "reputation"
+        elif self == ContentType.LAYOUT:
+            return "layoutscontainer"
+        elif self == ContentType.TEST_PLAYBOOK:
+            return ContentType.PLAYBOOK.server_name
+        elif self == ContentType.MAPPER:
+            return "classifier"
+        return self.lower()
+
+    @property
+    def metadata_display_name(self) -> str:
+        if self == ContentType.SCRIPT:
+            return "Automation"
+        elif self == ContentType.INDICATOR_TYPE:
+            return "Reputation"
+        elif self == ContentType.MAPPER:
+            return "Classifier"
+        elif self == ContentType.LAYOUT:
+            return "Layouts Container"
+        else:
+            return re.sub(r"([a-z](?=[A-Z])|[A-Z](?=[A-Z][a-z]))", r"\1 ", self.value)
 
     @staticmethod
     def server_names() -> List[str]:

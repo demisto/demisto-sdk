@@ -64,6 +64,7 @@ from demisto_sdk.commands.content_graph.objects.mapper import Mapper
 from demisto_sdk.commands.content_graph.objects.modeling_rule import ModelingRule
 from demisto_sdk.commands.content_graph.objects.parsing_rule import ParsingRule
 from demisto_sdk.commands.content_graph.objects.playbook import Playbook
+from demisto_sdk.commands.content_graph.objects.pre_process_rule import PreProcessRule
 from demisto_sdk.commands.content_graph.objects.report import Report
 from demisto_sdk.commands.content_graph.objects.script import Script
 from demisto_sdk.commands.content_graph.objects.test_playbook import TestPlaybook
@@ -180,6 +181,9 @@ class PackContentItems(BaseModel):
     xsiam_report: List[XSIAMReport] = Field([], alias=ContentType.XSIAM_REPORT.value)
     xdrc_template: List[XDRCTemplate] = Field([], alias=ContentType.XDRC_TEMPLATE.value)
     layout_rule: List[LayoutRule] = Field([], alias=ContentType.LAYOUT_RULE.value)
+    preprocess_rule: List[PreProcessRule] = Field(
+        [], alias=ContentType.PREPROCESS_RULE.value
+    )
 
     def __iter__(self) -> Generator[ContentItem, Any, Any]:  # type: ignore
         """Defines the iteration of the object. Each iteration yields a single content item."""

@@ -794,11 +794,9 @@ ID_IN_ROOT = [  # entities in which 'id' key is in the root
 INTEGRATION_PREFIX = "integration"
 SCRIPT_PREFIX = "script"
 PARSING_RULE_PREFIX = "parsingrule"
-PARSING_RULE_FILE_SUFFIX_REGEX = r"ParsingRules([_\d]*)?\.yml$"
 PARSING_RULE_ID_SUFFIX = "ParsingRule"
 PARSING_RULE_NAME_SUFFIX = "Parsing Rule"
 MODELING_RULE_PREFIX = "modelingrule"
-MODELING_RULE_FILE_SUFFIX_REGEX = r"ModelingRules([_\d]*)?\.yml$"
 MODELING_RULE_ID_SUFFIX = "ModelingRule"
 MODELING_RULE_NAME_SUFFIX = "Modeling Rule"
 XDRC_TEMPLATE_PREFIX = "xdrctemplate"
@@ -1098,9 +1096,17 @@ REQUIRED_YML_FILE_TYPES = [
 
 TYPE_PWSH = "powershell"
 TYPE_PYTHON = "python"
+TYPE_PYTHON3 = "python3"
+TYPE_PYTHON2 = "python2"
 TYPE_JS = "javascript"
 
-TYPE_TO_EXTENSION = {TYPE_PYTHON: ".py", TYPE_JS: ".js", TYPE_PWSH: ".ps1"}
+TYPE_TO_EXTENSION = {
+    TYPE_PYTHON: ".py",
+    TYPE_PYTHON3: ".py",
+    TYPE_PYTHON2: ".py",
+    TYPE_JS: ".js",
+    TYPE_PWSH: ".ps1",
+}
 
 TESTS_AND_DOC_DIRECTORIES = [
     "testdata",
@@ -1333,7 +1339,7 @@ BANG_COMMAND_ARGS_MAPPING_DICT: Dict[str, dict] = {
     "domain": {"default": ["domain"]},
     "url": {"default": ["url"]},
     "ip": {"default": ["ip"]},
-    "cve": {"default": ["cve", "cve_id"]},
+    "cve": {"default": ["cve"]},
     "endpoint": {"default": ["ip"], "required": False},
 }
 
@@ -1392,7 +1398,7 @@ DEFAULT_PYTHON_VERSION = "3.10"
 DEFAULT_PYTHON2_VERSION = "2.7"
 
 # This constant below should always be two versions before the latest server version
-GENERAL_DEFAULT_FROMVERSION = "6.8.0"
+GENERAL_DEFAULT_FROMVERSION = "6.9.0"
 VERSION_5_5_0 = "5.5.0"
 DEFAULT_CONTENT_ITEM_FROM_VERSION = "0.0.0"
 DEFAULT_CONTENT_ITEM_TO_VERSION = "99.99.99"
@@ -1422,7 +1428,6 @@ FEED_REQUIRED_PARAMS = [
             "defaultvalue": "true",
             "display": "Fetch indicators",
             "type": 8,
-            "required": False,
         },
         "must_contain": {},
         "must_be_one_of": {},
@@ -1432,7 +1437,6 @@ FEED_REQUIRED_PARAMS = [
         "must_equal": {
             "display": "Indicator Reputation",
             "type": 18,
-            "required": False,
             "options": ["None", "Good", "Suspicious", "Bad"],
         },
         "must_contain": {
@@ -1465,7 +1469,6 @@ FEED_REQUIRED_PARAMS = [
         "must_equal": {
             "display": "",
             "type": 17,
-            "required": False,
             "options": ["never", "interval", "indicatorType", "suddenDeath"],
         },
         "must_contain": {},
@@ -1473,13 +1476,13 @@ FEED_REQUIRED_PARAMS = [
     },
     {
         "name": "feedExpirationInterval",
-        "must_equal": {"display": "", "type": 1, "required": False},
+        "must_equal": {"display": "", "type": 1},
         "must_contain": {},
         "must_be_one_of": {},
     },
     {
         "name": "feedFetchInterval",
-        "must_equal": {"display": "Feed Fetch Interval", "type": 19, "required": False},
+        "must_equal": {"display": "Feed Fetch Interval", "type": 19},
         "must_contain": {},
         "must_be_one_of": {},
     },
@@ -1488,7 +1491,6 @@ FEED_REQUIRED_PARAMS = [
         "must_equal": {
             "display": "Bypass exclusion list",
             "type": 8,
-            "required": False,
         },
         "must_contain": {
             "additionalinfo": "When selected, the exclusion list is ignored for indicators from this feed."
@@ -1499,7 +1501,7 @@ FEED_REQUIRED_PARAMS = [
     },
     {
         "name": "feedTags",
-        "must_equal": {"display": "Tags", "required": False, "type": 0},
+        "must_equal": {"display": "Tags", "type": 0},
         "must_contain": {"additionalinfo": "Supports CSV values."},
         "must_be_one_of": {},
     },
@@ -1507,7 +1509,6 @@ FEED_REQUIRED_PARAMS = [
         "name": "tlp_color",
         "must_equal": {
             "display": "Traffic Light Protocol Color",
-            "required": False,
             "type": 15,
         },
         "must_contain": {
@@ -1524,18 +1525,17 @@ FEED_REQUIRED_PARAMS = [
 ]
 
 INCIDENT_FETCH_REQUIRED_PARAMS = [
-    {"display": "Incident type", "name": "incidentType", "required": False, "type": 13},
-    {"display": "Fetch incidents", "name": "isFetch", "required": False, "type": 8},
+    {"display": "Incident type", "name": "incidentType", "type": 13},
+    {"display": "Fetch incidents", "name": "isFetch", "type": 8},
 ]
 
 ALERT_FETCH_REQUIRED_PARAMS = [
-    {"display": "Alert type", "name": "incidentType", "required": False, "type": 13},
-    {"display": "Fetch alerts", "name": "isFetch", "required": False, "type": 8},
+    {"display": "Alert type", "name": "incidentType", "type": 13},
+    {"display": "Fetch alerts", "name": "isFetch", "type": 8},
 ]
 
 MAX_FETCH_PARAM = {
     "name": "max_fetch",
-    "required": False,
     "type": 0,
     "defaultvalue": "50",
 }
@@ -1840,3 +1840,5 @@ TABLE_INCIDENT_TO_ALERT = {
 }
 
 NATIVE_IMAGE_DOCKER_NAME = "demisto/py3-native"
+
+FORMATTING_SCRIPT = "indicator-format"

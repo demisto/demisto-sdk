@@ -422,6 +422,62 @@ class TestStructureValidator:
             f'Missing the field "{missing_field}" in root',
         )
 
+    def test_validate_field_with_pretty_name(self, pack: Pack):
+        """
+        Given
+            Incident field with a prettyName field.
+        When
+            Validating the item.
+        Then
+            Ensures the schema is valid.
+        """
+        field_content = {
+            "cliName": "mainfield",
+            "name": "main field",
+            "id": "incident",
+            "prettyName": "Host",
+            "content": True,
+            "type": "longText",
+            "Aliases": [
+                {
+                    "cliName": "aliasfield",
+                    "type": "shortText",
+                    "name": "Alias Field",
+                }
+            ],
+        }
+        incident_field: JSONBased = pack.create_incident_field(
+            "incident-field-test",
+            content=field_content,
+        )
+        structure = StructureValidator(incident_field.path)
+        assert structure.is_valid_scheme()
+
+    def test_validate_field_with_alias_to(self, pack: Pack):
+        """
+        Given
+            Incident field with an aliasTo field.
+        When
+            Validating the item.
+        Then
+            Ensures the schema is valid.
+        """
+        field_content = {
+            "cliName": "mainfield",
+            "name": "main field",
+            "id": "incident",
+            "prettyName": "Host",
+            "content": True,
+            "type": "longText",
+            "aliasTo": "someotherfield",
+        }
+        incident_field: JSONBased = pack.create_incident_field(
+            "incident-field-test",
+            content=field_content,
+        )
+        structure = StructureValidator(incident_field.path)
+        assert structure.is_valid_scheme()
+
     def test_validate_field_with_aliases__valid(self, pack: Pack):
         """
         Given

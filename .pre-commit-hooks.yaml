@@ -48,3 +48,10 @@
   require_serial: true
   types: [python]
   exclude: tests/.*|demisto_sdk/commands/init/templates/.*
+
+- id: update-additional-dependencies
+  name: update-additional-dependencies
+  entry: update-additional-dependencies
+  language: python
+  require_serial: true
+  pass_filenames: false

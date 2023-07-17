@@ -2,6 +2,15 @@ from typing import Any, Dict, List, Optional
 from uuid import UUID, uuid4
 
 from pydantic import BaseModel, Field, validator
+from enum import Enum
+
+
+class Validations(Enum):
+    SCHEMA_TYPES_ALIGNED_WITH_TEST_DATA = "schema_test_data_types"
+
+    @classmethod
+    def as_set(cls):
+        return set(map(lambda attr: attr.value, cls))
 
 
 class EventLog(BaseModel):
@@ -31,11 +40,11 @@ class TestData(BaseModel):
     @validator("ignored_validations")
     def validate_ignored_validations(cls, v):
         provided_ignored_validations = set(v)
-        valid_validation_names = {"E1", "E2", "E3"}
-        if invalid_validation_names := provided_ignored_validations - valid_validation_names:
+        valid_ignored_validations = Validations.as_set()
+        if invalid_validation_names := provided_ignored_validations - valid_ignored_validations:
             raise ValueError(
                 f"The following validation names {invalid_validation_names} are invalid, "
-                f"please make sure validations are named one of {valid_validation_names}"
+                f"please make sure validations are named one of {valid_ignored_validations}"
             )
 
 

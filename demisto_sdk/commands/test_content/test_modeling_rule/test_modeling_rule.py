@@ -32,6 +32,7 @@ from demisto_sdk.commands.test_content.xsiam_tools.xsiam_client import (
 )
 from demisto_sdk.commands.upload.upload import upload_content_entity as upload_cmd
 from demisto_sdk.utils.utils import get_containing_pack
+from demisto_sdk.commands.test_content.xsiam_tools.test_data import Validations
 
 custom_theme = Theme(
     {
@@ -716,12 +717,19 @@ def validate_modeling_rule(
                 f"schema file does not exist in path {mr_entity.schema_path}"
             )
 
-        logger.info(
-            f"[green]Validating that the schema {schema_path} is aligned with TestData file.[/green]",
-            extra={"markup": True},
-        )
+        if Validations.SCHEMA_TYPES_ALIGNED_WITH_TEST_DATA.value not in test_data.ignored_validations:
+            logger.info(
+                f"[green]Validating that the schema {schema_path} is aligned with TestData file.[/green]",
+                extra={"markup": True},
+            )
 
-        validate_schema_aligned_with_test_data(test_data=test_data, schema=schema)
+            validate_schema_aligned_with_test_data(test_data=test_data, schema=schema)
+        else:
+            logger.info(
+                f'Skipping the validation to check that the schema {schema_path} '
+                f'is aligned with TestData file.[/green]',
+                extra={"markup": True}
+            )
 
         if push:
             if missing_event_data:

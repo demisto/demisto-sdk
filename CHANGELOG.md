@@ -1,6 +1,10 @@
 # Changelog
 ## Unreleased
 * Fixed an issue where **validate** falsely detected backwards-compatibility issues, and prevented adding the `marketplaces` key to content items.
+* Calling **format** with the `-d` flag now removes test playbooks testing the deprecated content from conf.json.
+
+## 1.17.2
+* Fixed an issue where **lint** and **validate** commands failed on integrations and scripts that use docker images that are not available in the Docker Hub but exist locally.
 * Added documentation for the flag **override-existing** used in upload.
 * Fixed an issue where **validate** failed on Incident Field items with a `template` value.
 * Improved memory efficiency in **update-content-graph** and **create-content-graph** commands.
@@ -11,6 +15,11 @@
 * Cleaned up project dependencies.
 * Added support for the **List** content item in **Xpanse** marketplace.
 * Fixed an issue in **run-unit-tests** command when running Powershell tests.
+* Fixed an issue where **lint** failed running when a docker container would not init properly.
+* Fixed an issue where the *upload* command would upload a pack metadata with wrong display names.
+* Performance enhancements when reading yaml files.
+* Removed redundant errors and fields from `errors.py`.
+* Updated **update-release-notes** to use graph instead of id_set.
 
 ## 1.17.1
 * Added the `aliasTo` key to the Incident Field schema.
@@ -25,7 +34,6 @@
 * added support for the `isfetcheventsandassets` flag in content graph.
 * Fixed an issue where the **modeling-rules test** command failed to get the existence of result from dataset in cases where the results take time to load.
 * Added an aliasTo key to the incident field schema.
-* Updated **update-release-notes** to use graph instead of id_set.
 
 ## 1.17.0
 * **validate** will only fail on docker related errors if the pack is supported by xsoar.

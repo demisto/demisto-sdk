@@ -289,7 +289,9 @@ def test_extract_code(tmpdir, file_path, file_type):
         output=str(tmpdir.join("temp_code.py")),
         file_type=file_type,
     )
-    script_before_split = yaml.load(Path(extractor.input).read_text())["script"]["script"]
+    script_before_split = yaml.load(Path(extractor.input).read_text())["script"][
+        "script"
+    ]
     assert "### pack version: 1.0.3" in script_before_split
     assert "# pack version: 1.0.3" in script_before_split
     assert "#### pack version: 1.0.3" in script_before_split

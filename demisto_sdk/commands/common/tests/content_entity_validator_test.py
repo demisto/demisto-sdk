@@ -376,40 +376,6 @@ def test_fromversion_update_validation_yml_structure(
         assert validator.is_valid_fromversion_on_modified() is answer, error
 
 
-INPUTS_VALID_MARKETPLACES_MODIFIED = [
-    (
-        VALID_TEST_PLAYBOOK_PATH,
-        VALID_TEST_PLAYBOOK_MARKETPLACES_PATH,
-        True,
-        "New marketplace was added to the supported marketplaces list",
-    ),
-    (
-        VALID_TEST_PLAYBOOK_MARKETPLACES_PATH,
-        VALID_TEST_PLAYBOOK_PATH,
-        False,
-        "Removing values from the list of supported marketplaces is not allowed",
-    ),
-    (
-        VALID_TEST_PLAYBOOK_MARKETPLACES_PATH,
-        INVALID_PLAYBOOK_PATH,
-        False,
-        "Adding a marketplaces field to existing content is not allowed.",
-    ),
-]
-
-
-@pytest.mark.parametrize(
-    "path, old_file_path, answer, error", INPUTS_VALID_MARKETPLACES_MODIFIED
-)
-def test_marketplaces_update_validation_yml_structure(
-    path, old_file_path, answer, error
-):
-    validator = ContentEntityValidator(StructureValidator(file_path=path))
-    with open(old_file_path) as f:
-        validator.old_file = yaml.load(f)
-        assert validator.is_valid_marketplaces_on_modified() is answer, error
-
-
 @pytest.mark.parametrize(
     "old_pack_marketplaces,new_pack_marketplaces,old_content_marketplaces,new_content_marketplaces,expected_valid",
     [
@@ -448,6 +414,22 @@ def test_marketplaces_update_validation_yml_structure(
             True,
             id="pack had 1, content had empty, added 2 to pack and 1 to content",
         ),
+        pytest.param(
+            ["1"],
+            ["1", "2"],
+            [],
+            ["2"],
+            False,
+            id="pack had 1, content had empty, added 2 to both",
+        ),
+        pytest.param(
+            ["1"],
+            ["1"],
+            ["1"],
+            [],
+            False,
+            id="pack&content had 1, now content has empty",
+        ),
     ],
 )
 def test_marketplaces_update_against_pack(
@@ -465,11 +447,16 @@ def test_marketplaces_update_against_pack(
     new_content = {"marketplaces": new_content_marketplaces}
 
     mocker.patch(
-        "demisto_sdk.commands.common.tools.get_remote_file", return_value=old_pack
+        "demisto_sdk.commands.common.hook_validations.content_entity_validator.get_remote_file",
+        return_value=old_pack,
     )
     mocker.patch(
         "demisto_sdk.commands.common.tools.get_pack_metadata", return_value=new_pack
     )
+    from demisto_sdk.commands.common.hook_validations.content_entity_validator import (
+        ContentEntityValidator,  # importing again to allow mocking get_remote_file
+    )
+
     with TemporaryDirectory() as dir, open(file := Path(dir, "test.json"), "w") as f:
         json.dump(new_content, f)
         f.flush()

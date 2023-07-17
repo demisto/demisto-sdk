@@ -1,5 +1,6 @@
 # Changelog
 ## Unreleased
+* Fixed an issue where **lint** and **validate** commands failed on integrations and scripts that use docker images that are not available in the Docker Hub but exist locally.
 * Added documentation for the flag **override-existing** used in upload.
 * Fixed an issue where **validate** failed on Incident Field items with a `template` value.
 * Improved memory efficiency in **update-content-graph** and **create-content-graph** commands.
@@ -10,7 +11,9 @@
 * Cleaned up project dependencies.
 * Added support for the **List** content item in **Xpanse** marketplace.
 * Fixed an issue in **run-unit-tests** command when running Powershell tests.
-* Fieed an issue where **lint** failed running when a docker container would not init properly.
+* Fixed an issue where **lint** failed running when a docker container would not init properly.
+* Fixed an issue where the *upload* command would upload a pack metadata with wrong display names.
+* Removed redundant errors and fields from `errors.py`
 
 ## 1.17.1
 * Added the `aliasTo` key to the Incident Field schema.

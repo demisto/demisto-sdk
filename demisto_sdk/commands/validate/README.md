@@ -147,4 +147,7 @@ If you wish to ignore errors for a specific file in the pack insert the followin
 ignore=BA101
 ```
 
-*Note*: Currently only `BA101` is ignorable.
+*Notes*: 
+* Currently only `BA101` is ignorable.
+* In external repositories (repos which are not demisto/content) **all** the validations are ignorable.
+

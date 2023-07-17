@@ -260,7 +260,7 @@ class ContributionConverter:
                 filename=self.contribution, extract_dir=self.working_dir_path
             )
             # remove metadata.json file
-            os.remove(os.path.join(self.working_dir_path, "metadata.json"))
+            Path(self.working_dir_path, "metadata.json").unlink()
         else:
             err_msg = (
                 "Tried unpacking contribution to destination directory but the instance variable"
@@ -310,8 +310,8 @@ class ContributionConverter:
         basename = os.path.basename(unpacked_contribution_dir)
         if basename in ENTITY_TYPE_TO_DIR:
             dst_name = ENTITY_TYPE_TO_DIR.get(basename, "")
-            src_path = os.path.join(self.working_dir_path, basename)
-            dst_path = os.path.join(self.working_dir_path, dst_name)
+            src_path = str(Path(self.working_dir_path, basename))
+            dst_path = str(Path(self.working_dir_path, dst_name))
             if os.path.exists(dst_path):
                 # move src folder files to dst folder
                 for _, _, files in os.walk(src_path, topdown=False):
@@ -409,7 +409,7 @@ class ContributionConverter:
                 dst_ioc_fields_dir = os.path.join(
                     self.working_dir_path, FileType.INDICATOR_FIELD.value
                 )
-                src_path = os.path.join(self.working_dir_path, dir_name)
+                src_path = str(Path(self.working_dir_path, dir_name))
 
                 for file in os.listdir(src_path):
 
@@ -664,14 +664,11 @@ class ContributionConverter:
         to be in the base directory of a pack
         """
         logger.info("Creating pack base files")
-        fp = open(os.path.join(self.working_dir_path, "README.md"), "a")
-        fp.close()
+        Path(self.working_dir_path, "README.md").touch()
 
-        fp = open(os.path.join(self.working_dir_path, ".secrets-ignore"), "a")
-        fp.close()
+        Path(self.working_dir_path, ".secrets-ignore").touch()
 
-        fp = open(os.path.join(self.working_dir_path, ".pack-ignore"), "a")
-        fp.close()
+        Path(self.working_dir_path, ".pack-ignore").touch()
 
     def create_metadata_file(self, zipped_metadata: Dict) -> None:
         """Create the pack_metadata.json file in the base directory of the pack

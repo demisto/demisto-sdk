@@ -11,6 +11,7 @@
 * Cleaned up project dependencies.
 * Added support for the **List** content item in **Xpanse** marketplace.
 * Fixed an issue in **run-unit-tests** command when running Powershell tests.
+* Fixed an issue where **lint** failed running when a docker container would not init properly.
 * Fixed an issue where the *upload* command would upload a pack metadata with wrong display names.
 * Performance enhancements when reading yaml files.
 * Removed redundant errors and fields from `errors.py`

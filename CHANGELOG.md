@@ -9,7 +9,7 @@
 * Added `tenant_timezone` handling to the **modeling-rules init** command, allowing usage with tenants in various timezones.
 * Shortened the timeout when checking whether the dataset exists in **test-modeling-rule**.
 * Cleaned up project dependencies.
-* Added the ability to ignore any validation in the **validate** command in case the repository is external.
+* Added the ability to ignore any validation in the **validate** command when running in an external (non-demisto/content) repo, using the <FILE_NAME> file.
 * Added support for the **List** content item in **Xpanse** marketplace.
 * Fixed an issue in **run-unit-tests** command when running Powershell tests.
 * Fixed an issue where **lint** failed running when a docker container would not init properly.

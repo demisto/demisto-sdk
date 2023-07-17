@@ -4899,8 +4899,8 @@ class TestValidationUsingGit:
                     "Running validation on modified files",
                     "Running validation on newly added files",
                     "Running validation on changed pack unique files",
-                    "Validating Packs/PackName1 unique pack files",
-                    "Validating Packs/PackName2 unique pack files",
+                    "Validating ./Packs/PackName1 unique pack files",
+                    "Validating ./Packs/PackName2 unique pack files",
                     f"Validating {integration.yml.rel_path} as integration",
                     f"Validating {incident_field.get_path_from_pack()} as incidentfield",
                     f"Validating {dashboard.get_path_from_pack()} as dashboard",
@@ -4991,8 +4991,8 @@ class TestValidationUsingGit:
                     "Running validation on modified files",
                     "Running validation on newly added files",
                     "Running validation on changed pack unique files",
-                    "Validating Packs/PackName1 unique pack files",
-                    "Validating Packs/PackName2 unique pack files",
+                    "Validating ./Packs/PackName1 unique pack files",
+                    "Validating ./Packs/PackName2 unique pack files",
                     f"Validating {integration.yml.rel_path} as integration",
                     f"Validating {incident_field.get_path_from_pack()} as incidentfield",
                     f"Validating {dashboard.get_path_from_pack()} as dashboard",
@@ -5024,7 +5024,9 @@ class TestValidationUsingGit:
         pack = repo.create_pack("FeedAzure")
         integration = pack.create_integration(
             name="FeedAzure",
-            yml=join(AZURE_FEED_PACK_PATH, "Integrations/FeedAzure/FeedAzure.yml"),
+            yml=get_yaml(
+                join(AZURE_FEED_PACK_PATH, "Integrations/FeedAzure/FeedAzure.yml")
+            ),
         )
         modified_files = {integration.yml.rel_path}
         mocker.patch.object(tools, "is_external_repository", return_value=False)
@@ -5072,7 +5074,7 @@ class TestValidationUsingGit:
                     "Running validation on modified files",
                     "Running validation on newly added files",
                     "Running validation on changed pack unique files",
-                    "Validating Packs/FeedAzure unique pack files",
+                    "Validating ./Packs/FeedAzure unique pack files",
                 ]
             ]
         )
@@ -5097,7 +5099,9 @@ class TestValidationUsingGit:
         pack = repo.create_pack("FeedAzure")
         integration = pack.create_integration(
             name="FeedAzure",
-            yml=join(AZURE_FEED_PACK_PATH, "Integrations/FeedAzure/FeedAzure.yml"),
+            yml=get_yaml(
+                join(AZURE_FEED_PACK_PATH, "Integrations/FeedAzure/FeedAzure.yml")
+            ),
         )
         modified_files = {integration.yml.rel_path}
         mocker.patch.object(tools, "is_external_repository", return_value=False)

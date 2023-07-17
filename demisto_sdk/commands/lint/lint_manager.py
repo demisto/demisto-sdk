@@ -203,25 +203,6 @@ class LintManager:
             )
             logger.warning(f"can't locate content repo {e}")
         # Get global requirements file
-        pipfile_dir = Path(__file__).parent / "resources"
-        try:
-            pipfile_lock_path = pipfile_dir / "pipfile_python3/Pipfile.lock"
-            with open(file=pipfile_lock_path) as f:
-                lock_file: dict = json.load(fp=f)["develop"]
-                facts["requirements_3"] = [
-                    key + value["version"]
-                    for key, value in lock_file.items()  # type: ignore
-                ]
-                logger.debug(
-                    "Test requirements successfully collected for python 3:\n"
-                    f" {facts['requirements_3']}"
-                )
-            python2_requirements = pipfile_dir / "pipfile_python2/dev-requirements.txt"
-            facts["requirements_2"] = python2_requirements.read_text().strip().split("\n")  # type: ignore
-        except (json.JSONDecodeError, OSError, FileNotFoundError, KeyError) as e:
-            logger.info("[red]Can't parse pipfile.lock - Aborting![/red]")
-            logger.critical(f"demisto-sdk-can't parse pipfile.lock {e}")
-            sys.exit(1)
         # ￿Get mandatory modulestest modules and Internet connection for docker usage
         try:
             facts["test_modules"] = get_test_modules(
@@ -500,8 +481,6 @@ class LintManager:
                         else Path(  # type: ignore
                             self._facts["content_repo"].working_dir
                         ),
-                        req_2=self._facts["requirements_2"],
-                        req_3=self._facts["requirements_3"],
                         docker_engine=self._facts["docker_engine"],
                         docker_timeout=docker_timeout,
                         docker_image_flag=docker_image_flag,

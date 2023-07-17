@@ -8,6 +8,32 @@ In the database, every content object has a unique **node** which contains its p
 
 ![Architecture](images/architecture.png)
 
+### Usage
+
+#### Docker (recommended)
+
+This commands will start a `neo4j` service on Docker by default. Docker application should be running on the machine, and the service will be configured automatically.
+
+#### Locally (advanced)
+
+If you prefer to manually install `neo4j` on your machine, install it from [here](https://neo4j.com/docs/operations-manual/current/installation/) and configure the following files in the [configuration](https://neo4j.com/docs/operations-manual/current/configuration/file-locations/) folder, based on your OS:
+
+* `neo4j.conf`
+
+```
+dbms.security.procedures.unrestricted=apoc.*
+dbms.security.procedures.allowlist=apoc.*
+```
+
+* `apoc.conf`
+
+```
+apoc.export.file.enabled=true
+apoc.import.file.enabled=true
+apoc.import.file.use_neo4j_config=true
+```
+
+
 #### Relationship Types
 * IN_PACK
 * USES

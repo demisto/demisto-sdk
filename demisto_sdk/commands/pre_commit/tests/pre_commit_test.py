@@ -5,7 +5,6 @@ import pytest
 import demisto_sdk.commands.pre_commit.pre_commit_command as pre_commit_command
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.pre_commit.hooks.mypy import MypyHook
-from demisto_sdk.commands.pre_commit.hooks.pep484 import PEP484Hook
 from demisto_sdk.commands.pre_commit.hooks.ruff import RuffHook
 from demisto_sdk.commands.pre_commit.pre_commit_command import (
     GitUtil,
@@ -36,6 +35,11 @@ def test_config_files(mocker, repo: Repo, is_test: bool):
     Then:
         Categorize the scripts and integration by python version, and make sure that pre-commit configuration is created for each
     """
+    mocker.patch.object(
+        pre_commit_command,
+        "PRECOMMIT_TEMPLATE_PATH",
+        TEST_DATA_PATH / ".pre-commit-config_template.yaml",
+    )
     pack1 = repo.create_pack("Pack1")
     mocker.patch.object(pre_commit_command, "CONTENT_PATH", Path(repo.path))
 
@@ -61,8 +65,9 @@ def test_config_files(mocker, repo: Repo, is_test: bool):
     mocker.patch.object(
         GitUtil,
         "get_all_files",
-        return_value=relative_paths | {Path("README.md")} | {Path("test.md")},
-    ) | {Path("fix.md")}
+        return_value=relative_paths
+        | {Path("README.md"), Path("test.md"), Path("fix.md")},
+    )
     files_to_run = preprocess_files([Path(pack1.path)])
     assert files_to_run == relative_paths
 
@@ -94,9 +99,9 @@ def test_config_files(mocker, repo: Repo, is_test: bool):
     pre_commit.run(unit_test=is_test)
 
     # precommit should not run on python2 files, unless test files
-    assert mock_subprocess.call_count == 3 if not is_test else 4
+    assert mock_subprocess.call_count == (4 if is_test else 3)
 
-    tests_we_should_skip = {"format", "validate", "secrets", "no-implicit-optional"}
+    tests_we_should_skip = {"format", "validate", "secrets", "should_be_skipped"}
     if not is_test:
         tests_we_should_skip.add("run-unit-tests")
     for m in mock_subprocess.call_args_list:
@@ -185,23 +190,3 @@ class TestPreprocessFiles:
         mocker.patch.object(GitUtil, "_get_staged_files", return_value=set())
         output = preprocess_files(all_files=True)
         assert output == expected_output
-
-
-@pytest.mark.parametrize("python_version", ["3.9"])
-def test_pep484_hook(python_version):
-    """
-    Testing pep484 hook created successfully (without any args)
-    """
-    pep484_hook = {}
-    PEP484Hook(pep484_hook).prepare_hook(python_version)
-    assert not pep484_hook
-
-
-@pytest.mark.parametrize("python_version", ["3.10", "3.11"])
-def test_pep484_hook_latest_versions(python_version):
-    """
-    Testing pep484 hook created successfully (with args)
-    """
-    pep484_hook = {}
-    PEP484Hook(pep484_hook).prepare_hook(python_version)
-    assert pep484_hook["args"] == ["--use-union-or"]

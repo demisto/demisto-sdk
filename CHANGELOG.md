@@ -1,12 +1,80 @@
 # Changelog
 ## Unreleased
+* Calling **format** with the `-d` flag now removes test playbooks testing the deprecated content from conf.json.
+
+## 1.17.2
+* Fixed an issue where **lint** and **validate** commands failed on integrations and scripts that use docker images that are not available in the Docker Hub but exist locally.
+* Added documentation for the flag **override-existing** used in upload.
+* Fixed an issue where **validate** failed on Incident Field items with a `template` value.
+* Improved memory efficiency in **update-content-graph** and **create-content-graph** commands.
+* Removed support for the `cve_id` name for the default-argument for **cve** reputation commands in **validate**. Now, only `cve` may be used for such commands.
+* Fixed an issue where **zip_packs** failed uploading content.
+* Added `tenant_timezone` handling to the **modeling-rules init** command, allowing usage with tenants in various timezones.
+* Shortened the timeout when checking whether the dataset exists in **test-modeling-rule**.
+* Cleaned up project dependencies.
+* Added support for the **List** content item in **Xpanse** marketplace.
+* Fixed an issue in **run-unit-tests** command when running Powershell tests.
+* Fixed an issue where **lint** failed running when a docker container would not init properly.
+* Fixed an issue where the *upload* command would upload a pack metadata with wrong display names.
+* Performance enhancements when reading yaml files.
+* Removed redundant errors and fields from `errors.py`.
+* Updated **update-release-notes** to use graph instead of id_set.
+
+## 1.17.1
+* Added the `aliasTo` key to the Incident Field schema.
+* Modified **validate** to not require fields whose value is always `False`.
+* Modified **validate** to use the graph instead of id_set on changed *APIModules*.
+* Fixed an issue where `register_module_line()` was not removed from python scripts when the script had no trailing newline.
+* Fixed an issue where an integration containing a command without a description would fail to upload while using the **upload** command.
+* Fixed an issue where attempting to individually upload `Preprocess Rule` files raised an unclear error message. Note: preprocess rules can not be individually uploaded, but only as part of a pack.
+* Fixed an issue where the **upload** command would fail on Indicator Types.
+* Fixed an issue where the **upload** command would return the wrong error message when connection credentials are invalid.
+* Fixed an issue where the **upload** command would fail parsing input paths.
+* added support for the `isfetcheventsandassets` flag in content graph.
+* Fixed an issue where the **modeling-rules test** command failed to get the existence of result from dataset in cases where the results take time to load.
+* Added an aliasTo key to the incident field schema.
+
+## 1.17.0
+* **validate** will only fail on docker related errors if the pack is supported by xsoar.
+* Added a validation that assures filename, id, and name have a correct suffix for modeling/parsing rules files.
+* Added new **validate** checks, preventing unwanted changes of the marketplaces (BC108,BC109), toversion (BC107)  and fromversion (BC106) fields.
+* Removed the `timezone_offset` argument in the *modeling-rules test* command.
+* Fixed an issue where **lint** failed when importing functions from CommonServerUserPython.
+* The **format** command now will sync hidden parameters with master branch.
+* Fixed an issue where lock integration failed on FileNotFound.(PANW-internal only).
+* Fixed an issue where **lint** falsely warned of using `demisto.results`.
+* Fixed an issue where **validate** always returned *XSIAM Dashboards* and *Correlation Rules* files as valid.
+* Added `GR107` validation to **validate** using the graph validations to check that no deprecated items are used by non-deprecated content.
+* Fixed an issue where the **modeling-rules test** command failed to get the existence of dataset in cases where the dataset takes more than 1 minute to get indexed.
+* Fixed an issue in **lint** where the container used for linting had dependency conflicts with the image used by content, and caused inconsistent results.
+* Fixed an issue where the **download** command failed when the playbook has different `name` and `id`.
+* Moved the **pre-commmit** command template to the `demisto/content` repository, where it's easier to maintain.
+* Fixed an issue where an internal method caused warning messages when reading md files.
+* Added support for Pre Process Rules in the **upload** command.
+* Fixed an issue where **upload** would not upload items whose `maketplaces` value was an empty list.
+* Added a prettyName key to the incident field schema.
+* Fixed an issue where **upload** command could not parse content items that are not unicode-encoded.
+
+## 1.16.0
 * Added a check to **is_docker_image_latest_tag** to only fail the validation on non-latest image tag when the current tag is older than 3 days.
 * Fixed an issue where **upload** would not properly show the installed version in the UI.
 * Fixed an issue where the `contribution_converter` failed replacing generated release notes with the contribution form release notes.
 * Fixed an issue where an extra levelname was added to a logging message.
+* Modified the `mypy` pre-commit hook to run in a virtual environment, rather than the local mypy version.
 * Added support to run **validate** with `--git` flag on detached HEAD.
 * Added a validation that the **validate** command will fail if the pack name is not prefixed on XSIAM dashboard images.
+* Fixed the **generate-test-playbook** which failed on an unexpected keyword argument - 'console_log_threshold'.
+* Fixed an issue where **prepare-content** would not properly parse the `fromVersion` and `toVersion` attributes of XSIAM-Dashbaord and XSIAM-Report content items.
 * Fixed an issue where **validate** command did not fail on non-existent dependency ids of non-mandatory dependant content.
+* Fixed pytest async io deprecation warning.
+* Added the `--incident-id` argument (optional) to the **run** command.
+* Fixed an issue in **run-unit-tests** and **update-content-graph** where running commands in a docker container was done with insufficient permissions.
+* Added the `_time` field to the output compare table of the **modeling-rules test** command.
+* Changed the endpoint **download** uses to get system content items.
+* Fixed an issue where graph-related tasks failed when files were deleted from the repo.
+* Added a **validate** check, and a **format** auto fix for the `fromversion` field in Correlation Rules and XSIAM Dashboards.
+* Update the format used for dev-dependencies in pyproject.toml to match modern versions of Poetry.
+* Added timestamps to logging messages when running in a CI build.
 
 ## 1.15.5
 * **Breaking Change**: The default of the **upload** command `--zip` argument is `true`. To upload packs as custom content items use the `--no-zip` argument.

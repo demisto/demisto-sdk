@@ -682,10 +682,12 @@ def get_fields_by_script_argument(task):
                 custom_field_value = list(field_value.values())[0]
                 if isinstance(custom_field_value, str):
                     custom_fields_list = json.loads(custom_field_value)
+                    if not isinstance(custom_fields_list, list):
+                        custom_fields_list = [custom_fields_list]
                     for custom_field in custom_fields_list:
-                        field_name = list(custom_field.keys())[0]
-                        if field_name not in BUILT_IN_FIELDS:
-                            dependent_incident_fields.add(field_name)
+                        for field_name in custom_field.keys():
+                            if field_name not in BUILT_IN_FIELDS:
+                                dependent_incident_fields.add(field_name)
     return dependent_incident_fields
 
 
@@ -2206,6 +2208,9 @@ def process_test_playbook_path(
     try:
         if print_logs:
             logger.info(f"adding {file_path} to id_set")
+        if Path(file_path).is_dir():
+            logger.info("file path is actually dir.")
+            return None, None
         if should_skip_item_by_mp(
             file_path, marketplace, {}, packs=packs, print_logs=print_logs
         ):

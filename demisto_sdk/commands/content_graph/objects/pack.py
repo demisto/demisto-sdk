@@ -59,6 +59,7 @@ from demisto_sdk.commands.content_graph.objects.mapper import Mapper
 from demisto_sdk.commands.content_graph.objects.modeling_rule import ModelingRule
 from demisto_sdk.commands.content_graph.objects.parsing_rule import ParsingRule
 from demisto_sdk.commands.content_graph.objects.playbook import Playbook
+from demisto_sdk.commands.content_graph.objects.pre_process_rule import PreProcessRule
 from demisto_sdk.commands.content_graph.objects.report import Report
 from demisto_sdk.commands.content_graph.objects.script import Script
 from demisto_sdk.commands.content_graph.objects.test_playbook import TestPlaybook
@@ -174,6 +175,9 @@ class PackContentItems(BaseModel):
     xsiam_report: List[XSIAMReport] = Field([], alias=ContentType.XSIAM_REPORT.value)
     xdrc_template: List[XDRCTemplate] = Field([], alias=ContentType.XDRC_TEMPLATE.value)
     layout_rule: List[LayoutRule] = Field([], alias=ContentType.LAYOUT_RULE.value)
+    preprocess_rule: List[PreProcessRule] = Field(
+        [], alias=ContentType.PREPROCESS_RULE.value
+    )
 
     def __iter__(self) -> Generator[ContentItem, Any, Any]:  # type: ignore
         """Defines the iteration of the object. Each iteration yields a single content item."""
@@ -307,15 +311,44 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: i
                 continue
             if content_item.is_incident_to_alert(marketplace):
                 metadata["contentItems"].setdefault(
-                    content_item.content_type.server_name, []
+                    content_item.content_type.metadata_name, []
                 ).append(content_item.summary(marketplace, incident_to_alert=True))
 
             metadata["contentItems"].setdefault(
-                content_item.content_type.server_name, []
+                content_item.content_type.metadata_name, []
             ).append(content_item.summary(marketplace))
 
+        metadata["contentDisplays"] = self.get_content_display(metadata["contentItems"])
+
         with open(path, "w") as f:
-            json.dump(metadata, f, indent=4)
+            json.dump(metadata, f, indent=4, sort_keys=True)
+
+    def get_content_display(self, content_items):
+
+        content_displays: dict = {}
+        for content_item in self.content_items:
+            try:
+                content_displays[
+                    content_item.content_type.metadata_name
+                ] = (
+                    content_item.content_type.metadata_display_name
+                )  # type: ignore[index]
+            except TypeError as e:
+                raise Exception(
+                    f"Could not set metadata_name of type {content_item.content_type.metadata_name} - "
+                    f"{content_item.content_type.metadata_display_name} in {content_displays}\n{e}"
+                )
+        content_displays = {
+            content_type: content_type_display
+            if (
+                content_items.get(content_type)
+                and len(content_items.get(content_type)) == 1
+            )
+            else f"{content_type_display}s"
+            for content_type, content_type_display in content_displays.items()
+        }
+
+        return content_displays
 
     def dump_readme(self, path: Path, marketplace: MarketplaceVersions) -> None:
         shutil.copyfile(self.path / "README.md", path)
@@ -394,7 +427,7 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: i
                 logger.debug(f'No such file {self.path / "Author_image.png"}')
 
             if self.object_id == BASE_PACK:
-                self._copy_base_pack_docs(path)
+                self._copy_base_pack_docs(path, marketplace)
 
             pack_files = "\n".join([str(f) for f in path.iterdir()])
             logger.info(f"Dumped pack {self.name}.")
@@ -535,14 +568,31 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: i
 
         return True
 
-    def _copy_base_pack_docs(self, destination_path: Path):
+    def _copy_base_pack_docs(
+        self, destination_path: Path, marketplace: MarketplaceVersions
+    ):
+
         documentation_path = CONTENT_PATH / "Documentation"
         documentation_output = destination_path / "Documentation"
         documentation_output.mkdir(exist_ok=True, parents=True)
-        shutil.copy(
-            documentation_path / "doc-howto.json",
-            documentation_output / "doc-howto.json",
-        )
+        if (
+            marketplace.value
+            and (documentation_path / f"doc-howto-{marketplace.value}.json").exists()
+        ):
+            shutil.copy(
+                documentation_path / f"doc-howto-{marketplace.value}.json",
+                documentation_output / "doc-howto.json",
+            )
+        elif (documentation_path / "doc-howto-xsoar.json").exists():
+            shutil.copy(
+                documentation_path / "doc-howto-xsoar.json",
+                documentation_output / "doc-howto.json",
+            )
+        else:
+            shutil.copy(
+                documentation_path / "doc-howto.json",
+                documentation_output / "doc-howto.json",
+            )
         if (documentation_path / "doc-CommonServer.json").exists():
             shutil.copy(
                 documentation_path / "doc-CommonServer.json",

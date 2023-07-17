@@ -21,6 +21,7 @@ from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     arg_to_list,
     find_type,
+    get_file,
     get_mp_tag_parser,
     get_pack_metadata,
     get_pack_name,
@@ -276,8 +277,7 @@ class IntegrationScriptUnifier(Unifier):
         is_script_package: bool,
     ):
         script_path = IntegrationScriptUnifier.get_code_file(package_path, script_type)
-        with open(script_path, encoding="utf-8") as script_file:
-            script_code = script_file.read()
+        script_code = get_file(script_path, return_content=True)
 
         # Check if the script imports an API module. If it does,
         # the API module code will be pasted in place of the import.
@@ -341,14 +341,15 @@ class IntegrationScriptUnifier(Unifier):
             )
 
         if find_type(yml_path) in (FileType.SCRIPT, FileType.TEST_SCRIPT):
-            code_type = get_yaml(yml_path).get("type")
+            code_type = get_yaml(yml_path, keep_order=False).get("type")
         else:
-            code_type = get_yaml(yml_path).get("script", {}).get("type")
+            code_type = (
+                get_yaml(yml_path, keep_order=False).get("script", {}).get("type")
+            )
         code_path = IntegrationScriptUnifier.get_code_file(
             package_path, TYPE_TO_EXTENSION[code_type]
         )
-        with open(code_path, encoding="utf-8") as code_file:
-            code = code_file.read()
+        code = get_file(code_path, return_content=True)
 
         return yml_path, code
 

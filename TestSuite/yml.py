@@ -14,7 +14,9 @@ class YAML(File):
             self.write_dict(yml)
 
     def write_dict(self, yml: dict):
-        yaml.dump(yml, self._tmp_path.open("w+"))
+        with open(self._tmp_path, "w+") as f:
+            yaml.dump(yml, f)
+            f.flush()
 
     def read_dict(self):
         return yaml.load(self._tmp_path.open())

@@ -1,7 +1,9 @@
+from datetime import datetime
 from pathlib import Path
 from time import sleep
 from typing import Any, Dict, List, Optional, Tuple
 
+import pytz
 import requests
 import typer
 from rich import print as printr
@@ -62,8 +64,54 @@ def create_table(expected: Dict[str, Any], received: Dict[str, Any]) -> Table:
     return table
 
 
+def day_suffix(day: int) -> str:
+    """
+    Returns a suffix string base on the day of the month.
+        for 1, 21, 31 => st
+        for 2, 22 => nd
+        for 3, 23 => rd
+        for to all the others => th
+
+        see here for more details: https://en.wikipedia.org/wiki/English_numerals#Ordinal_numbers
+
+    Args:
+        day: The day of the month represented by a number.
+
+    Returns:
+        suffix string (st, nd, rd, th).
+    """
+    return "th" if 11 <= day <= 13 else {1: "st", 2: "nd", 3: "rd"}.get(day % 10, "th")
+
+
+def convert_epoch_time_to_string_time(
+    epoch_time: int, with_ms: bool = False, tenant_timezone: str = "UTC"
+) -> str:
+    """
+    Converts epoch time with milliseconds to string time with timezone delta.
+
+    Args:
+        epoch_time: The received epoch time (with milliseconds).
+        with_ms: Whether to convert the epoch time with ms or not default is False.
+        tenant_timezone: The timezone of the XSIAM tenant.
+
+    Returns:
+        The string time with timezone delta.
+    """
+    datetime_object = datetime.fromtimestamp(
+        epoch_time / 1000, pytz.timezone(tenant_timezone)
+    )
+    time_format = f"%b %-d{day_suffix(datetime_object.day)} %Y %H:%M:%S"
+    if with_ms:
+        time_format = f"{time_format}.%f"
+    string_time = datetime_object.strftime(time_format)
+
+    return string_time
+
+
 def verify_results(
-    tested_dataset: str, results: List[dict], test_data: init_test_data.TestData
+    tested_dataset: str,
+    results: List[dict],
+    test_data: init_test_data.TestData,
 ):
     """Verify that the results of the XQL query match the expected values.
 
@@ -105,12 +153,23 @@ def verify_results(
         # get expected_values for the given query result
         td_event_id = result.pop(f"{tested_dataset}.test_data_event_id")
         expected_values = None
+        tenant_timezone: str = ""
         for e in test_data.data:
             if str(e.test_data_event_id) == td_event_id:
                 expected_values = e.expected_values
+                tenant_timezone = e.tenant_timezone
                 break
+        if not tenant_timezone:
+            logger.warning("Could not find timezone")
 
         if expected_values:
+            if (expected_time_value := expected_values.get("_time")) and (
+                time_value := result.get("_time")
+            ):
+                time_with_ms = "." in expected_time_value
+                result["_time"] = convert_epoch_time_to_string_time(
+                    time_value, time_with_ms, tenant_timezone
+                )
             printr(create_table(expected_values, result))
 
             for key, val in expected_values.items():
@@ -210,7 +269,7 @@ def validate_expected_values(
 def check_dataset_exists(
     xsiam_client: XsiamApiClient,
     test_data: init_test_data.TestData,
-    timeout: int = 60,
+    timeout: int = 120,
     interval: int = 5,
 ):
     """Check if the dataset in the test data file exists in the tenant.
@@ -218,7 +277,7 @@ def check_dataset_exists(
     Args:
         xsiam_client (XsiamApiClient): Xsiam API client.
         test_data (init_test_data.TestData): The data parsed from the test data file.
-        timeout (int, optional): The number of seconds to wait for the dataset to exist. Defaults to 60.
+        timeout (int, optional): The number of seconds to wait for the dataset to exist. Defaults to 120 seconds.
         interval (int, optional): The number of seconds to wait between checking for the dataset. Defaults to 5.
 
     Raises:
@@ -226,7 +285,9 @@ def check_dataset_exists(
     """
     process_failed = False
     dataset_set = {data.dataset for data in test_data.data}
+    results = []
     for dataset in dataset_set:
+        results_exist = False
         dataset_exist = False
         logger.info(
             f'[cyan]Checking if dataset "{dataset}" exists on the tenant...[/cyan]',
@@ -240,28 +301,42 @@ def check_dataset_exists(
                     query, print_req_error=(i + 1 == timeout // interval)
                 )
                 results = xsiam_client.get_xql_query_result(execution_id)
+                # if we got result we will break from the loop
                 if results:
                     logger.info(
                         f"[green]Dataset {dataset} exists[/green]",
                         extra={"markup": True},
                     )
                     dataset_exist = True
+                    results_exist = True
+                    break
+                # if we don't have results from the dataset immediately we will continue to try until the timeout.
+                # if we don't have any results until the timeout dataset_exist is set to False and we will raise an error.
                 else:
-                    err = (
-                        f"[red]Dataset {dataset} exists but no results were returned. This could mean that your testdata "
-                        "does not meet the criteria for an associated Parsing Rule and is therefore being dropped from "
-                        "the dataset. Check to see if a Parsing Rule exists for your dataset and that your testdata "
-                        "meets the criteria for that rule.[/red]"
+                    dataset_exist = True
+                    results_exist = False
+                    logger.info(
+                        f"[cyan]trying to get results from the dataset for the {i+1}th time. continuing to try to get the results.[/cyan]",
+                        extra={"markup": True},
                     )
-                    logger.error(err, extra={"markup": True})
-                break
+            # If the dataset doesn't exist HTTPError exception is raised.
             except requests.exceptions.HTTPError:
                 pass
             sleep(interval)
+        # There are no results from the dataset but it exists.
+        if not results:
+            err = (
+                f"[red]Dataset {dataset} exists but no results were returned. This could mean that your testdata "
+                "does not meet the criteria for an associated Parsing Rule and is therefore being dropped from "
+                "the dataset. Check to see if a Parsing Rule exists for your dataset and that your testdata "
+                "meets the criteria for that rule.[/red]"
+            )
+            logger.error(err, extra={"markup": True})
         if not dataset_exist:
             err = f"[red]Dataset {dataset} does not exist after {timeout} seconds[/red]"
             logger.error(err, extra={"markup": True})
-        process_failed |= not dataset_exist
+        # OR statement between existence var and results of each data set, if at least one of dataset_exist or results_exist are False process_failed will be true.
+        process_failed |= not (dataset_exist and results_exist)
 
     if process_failed:
         raise typer.Exit(1)

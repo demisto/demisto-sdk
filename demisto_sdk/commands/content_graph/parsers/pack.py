@@ -69,6 +69,9 @@ class PackContentItems:
         self.xsiam_report = ContentItemsList(content_type=ContentType.XSIAM_REPORT)
         self.xdrc_template = ContentItemsList(content_type=ContentType.XDRC_TEMPLATE)
         self.layout_rule = ContentItemsList(content_type=ContentType.LAYOUT_RULE)
+        self.preprocess_rule = ContentItemsList(
+            content_type=ContentType.PREPROCESS_RULE
+        )
 
     def iter_lists(self) -> Iterator[ContentItemsList]:
         yield from vars(self).values()
@@ -123,8 +126,8 @@ class PackMetadataParser:
         self.vendor_id: Optional[str] = metadata.get("vendorId")
         self.vendor_name: Optional[str] = metadata.get("vendorName")
         self.preview_only: Optional[bool] = metadata.get("previewOnly")
-        self.marketplaces: List[MarketplaceVersions] = metadata.get(
-            "marketplaces", DEFAULT_MARKETPLACES
+        self.marketplaces: List[MarketplaceVersions] = (
+            metadata.get("marketplaces") or DEFAULT_MARKETPLACES
         )
         self.excluded_dependencies: List[str] = metadata.get("excludedDependencies", [])
 
@@ -147,7 +150,12 @@ class PackParser(BaseContentParser, PackMetadataParser):
             path (Path): The pack path.
         """
         BaseContentParser.__init__(self, path)
-        metadata = get_json(path / PACK_METADATA_FILENAME)
+        try:
+            metadata = get_json(path / PACK_METADATA_FILENAME)
+        except FileNotFoundError:
+            raise InvalidContentItemException(
+                f"{PACK_METADATA_FILENAME} not found in pack in {path=}"
+            )
         PackMetadataParser.__init__(self, metadata)
         self.content_items: PackContentItems = PackContentItems()
         self.relationships: Relationships = Relationships()

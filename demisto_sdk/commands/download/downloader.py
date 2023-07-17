@@ -6,7 +6,7 @@ import shutil
 import tarfile
 from pathlib import Path
 from tempfile import mkdtemp
-from typing import Dict, List, Tuple, Union
+from typing import Dict, List, Optional, Tuple, Union
 
 import demisto_client.demisto_api
 from demisto_client.demisto_api.rest import ApiException
@@ -80,7 +80,7 @@ ITEM_TYPE_TO_REQUEST_TYPE = {
     "IndicatorType": "GET",
     "Field": "GET",
     "Layout": "GET",
-    "Playbook": "POST",
+    "Playbook": "GET",
     "Automation": "POST",
     "Classifier": "POST",
     "Mapper": "POST",
@@ -446,10 +446,29 @@ class Downloader:
             automation_list.append(ast.literal_eval(api_response[0]))
         return automation_list
 
-    def arrange_response(self, system_items_list):
-        if self.system_item_type == "Playbook":
-            system_items_list = system_items_list.get("playbooks")
+    def get_system_playbook(self, req_type):
+        playbook_list: list = []
+        for playbook in self.input_files:
+            endpoint = f"/playbook/{playbook}/yaml"
+            try:
+                api_response = demisto_client.generic_request_func(
+                    self.client, endpoint, req_type, response_type="object"
+                )
+            except ApiException as err:
+                # handling in case the id and name are not the same,
+                # trying to get the id by the name through a different api call
+                if playbook_id := self.get_playbook_id_by_playbook_name(playbook):
+                    endpoint = f"/playbook/{playbook_id}/yaml"
+                    api_response = demisto_client.generic_request_func(
+                        self.client, endpoint, req_type, response_type="object"
+                    )
+                else:
+                    raise err
+            playbook_list.append(yaml.load(api_response[0].decode()))
 
+        return playbook_list
+
+    def arrange_response(self, system_items_list):
         if self.system_item_type in ["Classifier", "Mapper"]:
             system_items_list = system_items_list.get("classifiers")
 
@@ -473,6 +492,9 @@ class Downloader:
 
             if self.system_item_type == "Automation":
                 system_items_list = self.get_system_automation(req_type)
+
+            elif self.system_item_type == "Playbook":
+                system_items_list = self.get_system_playbook(req_type)
 
             else:
                 api_response = demisto_client.generic_request_func(
@@ -701,6 +723,32 @@ class Downloader:
 
         return content_object
 
+    def get_playbook_id_by_playbook_name(self, playbook_name: str) -> Optional[str]:
+        """
+        extract the playbook id by name,
+        calling the api returns an object that cannot be parsed properly,
+        and its use is only for extracting the id.
+
+        Args:
+            playbook_name (str): The name of a playbook
+
+        Returns:
+            Optional[str]: The ID of a playbook
+        """
+        endpoint = "/playbook/search"
+        response = demisto_client.generic_request_func(
+            self.client,
+            endpoint,
+            "POST",
+            response_type="object",
+            body={"query": f"name:{playbook_name}"},
+        )
+        if not response:
+            return None
+        if not (playbooks := response[0].get("playbooks")):
+            return None
+        return playbooks[0]["id"]
+
     @staticmethod
     def get_main_file_details(content_entity: str, entity_instance_path: str) -> tuple:
         """
@@ -799,7 +847,8 @@ class Downloader:
             input_file_exist_in_cc: bool = False
             for system_content_object in system_content_objects:
                 name = system_content_object.get("name", "N/A")
-                if name == input_file_name:
+                id_ = system_content_object.get("id", "N/A")
+                if name == input_file_name or id_ == input_file_name:
                     system_content_object["exist_in_pack"] = self.exist_in_pack_content(
                         system_content_object
                     )

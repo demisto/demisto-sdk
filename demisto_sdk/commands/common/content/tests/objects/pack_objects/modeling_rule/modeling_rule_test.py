@@ -50,6 +50,7 @@ filter activity in ("SignInEvent","Logout","Login Attempt","Login Successful","L
         XDM.Auth.Client.user_agent = useragent;
 """
 PRE_UNIFIED_RULE1_FIELDS = {
+    "_time",
     "xdm.network.original_event_type",
     "xdm.network.destination.host.os_family",
     "xdm.network.destination.host.hostname",
@@ -65,6 +66,7 @@ PRE_UNIFIED_RULE1_FIELDS = {
     "xdm.network.http.user_agent",
 }
 PRE_UNIFIED_RULE2_FIELDS = {
+    "_time",
     "xdm.audit.threat.severity",
     "xdm.audit.event_timestamp",
     "xdm.audit.triggeredby.identity.name",
@@ -81,6 +83,7 @@ PRE_UNIFIED_RULE2_FIELDS = {
     "xdm.audit.triggeredby.user_agent",
 }
 PRE_UNIFIED_RULE3_FIELDS = {
+    "_time",
     "xdm.auth.auth_method",
     "xdm.auth.original_event_type",
     "xdm.auth.target.application.name",
@@ -142,6 +145,7 @@ filter
     xdm.network.source.ipv4 = "8.8.8.8";
 """
 UNIFIED_RULE_FIELDS = {
+    "_time",
     "xdm.event.description",
     "xdm.event.outcome",
     "xdm.target.resource.id",

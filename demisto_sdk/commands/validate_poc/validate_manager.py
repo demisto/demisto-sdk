@@ -1,8 +1,8 @@
 from typing import List
 
 import toml
-from demisto_sdk.commands.common.git_util import GitUtil
 
+from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.content_graph.objects.pack import Pack

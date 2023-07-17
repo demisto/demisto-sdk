@@ -1,6 +1,7 @@
 # Changelog
 ## Unreleased
 * Calling **format** with the `-d` flag now removes test playbooks testing the deprecated content from conf.json.
+* Added a working directory to the `contribution_converter` in order to support working on a temporary directory.
 
 ## 1.17.2
 * Fixed an issue where **lint** and **validate** commands failed on integrations and scripts that use docker images that are not available in the Docker Hub but exist locally.
@@ -54,7 +55,7 @@
 * Fixed an issue where **upload** would not upload items whose `maketplaces` value was an empty list.
 * Added a prettyName key to the incident field schema.
 * Fixed an issue where **upload** command could not parse content items that are not unicode-encoded.
-* Added a working directory to the `contribution_converter` in order to support working on a temporary directory.
+
 
 ## 1.16.0
 * Added a check to **is_docker_image_latest_tag** to only fail the validation on non-latest image tag when the current tag is older than 3 days.

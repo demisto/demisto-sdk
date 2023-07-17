@@ -537,7 +537,7 @@ class IDSetValidations(BaseValidator):
         playbook_integration_commands = self.get_commands_to_integration(
             playbook_name, file_path
         )
-        main_playbook_data = get_yaml(file_path)
+        main_playbook_data = get_yaml(file_path, keep_order=False)
 
         result, error = self.is_entity_version_match_playbook_version(
             sub_playbooks_list,

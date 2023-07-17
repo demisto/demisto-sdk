@@ -47,7 +47,7 @@ class ImageValidator(BaseValidator):
             self.file_path = file_path
         # For integrations that are not in a package format, the image is within the yml
         else:
-            data_dictionary = get_yaml(file_path)
+            data_dictionary = get_yaml(file_path, keep_order=False)
             if not data_dictionary:
                 return
             # For old integration in which image is inside the yml.
@@ -124,7 +124,7 @@ class ImageValidator(BaseValidator):
                     ):
                         self._is_valid = False
         else:
-            data_dictionary = get_yaml(self.file_path)
+            data_dictionary = get_yaml(self.file_path, keep_order=False)
 
             if not data_dictionary:
                 return
@@ -149,7 +149,7 @@ class ImageValidator(BaseValidator):
         is_image_in_yml = False
         is_image_in_package = False
 
-        data_dictionary = get_yaml(self.file_path)
+        data_dictionary = get_yaml(self.file_path, keep_order=False)
 
         if not data_dictionary:
             return False
@@ -179,7 +179,7 @@ class ImageValidator(BaseValidator):
 
     @error_codes("IM103,IM104,IM105")
     def load_image_from_yml(self):
-        data_dictionary = get_yaml(self.file_path)
+        data_dictionary = get_yaml(self.file_path, keep_order=False)
 
         if not data_dictionary:
             error_message, error_code = Errors.not_an_image_file()

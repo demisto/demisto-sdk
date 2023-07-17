@@ -47,7 +47,7 @@ class DescriptionValidator(BaseValidator):
             else file_path
         )
         self.data_dictionary = (
-            get_yaml(self.file_path)
+            get_yaml(self.file_path, keep_order=False)
             if find_type(self.file_path)
             in [FileType.INTEGRATION, FileType.BETA_INTEGRATION]
             else {}

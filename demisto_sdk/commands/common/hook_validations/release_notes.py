@@ -351,7 +351,7 @@ class ReleaseNotesValidator(BaseValidator):
                     f"\n{release_notes_categories.get(type)}"
                 )
                 for modified_yml_file in modified_yml_list:
-                    modified_yml_dict = get_yaml(modified_yml_file) or {}
+                    modified_yml_dict = get_yaml(modified_yml_file, keep_order=False) or {}
                     if modified_yml_dict.get(field) in splited_release_notes_entities:
                         entity_conent = (
                             splited_release_notes_entities.get(

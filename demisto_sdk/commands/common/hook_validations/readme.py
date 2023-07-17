@@ -731,7 +731,7 @@ class ReadMeValidator(BaseValidator):
             return False
 
         # get YML file's content:
-        yml_as_dict = get_yaml(yml_file_path)
+        yml_as_dict = get_yaml(yml_file_path, keep_order=False)
 
         difference_context_paths = compare_context_path_in_yml_and_readme(
             yml_as_dict, self.readme_content

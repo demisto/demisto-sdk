@@ -53,7 +53,7 @@ class DockerImageValidator(BaseValidator):
         self.is_modified_file = is_modified_file
         self.is_integration = is_integration
         self.file_path = yml_file_path
-        self.yml_file = get_yaml(yml_file_path)
+        self.yml_file = get_yaml(yml_file_path, keep_order=False)
         self.py_version = self.get_python_version()
         self.code_type = self.get_code_type()
         self.yml_docker_image = self.get_docker_image_from_yml()

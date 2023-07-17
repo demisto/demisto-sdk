@@ -742,7 +742,7 @@ class ContentEntityValidator(BaseValidator):
             1. The modeling/parsing rule id ends with 'MODELING/PARSING_RULE_ID_SUFFIX'.
             2. The modeling/parsing rule name ends with 'MODELING/PARSING_RULE_NAME_SUFFIX'.
         """
-        data = get_yaml(self.file_path)
+        data = get_yaml(self.file_path, keep_order=False)
         rule_id = data.get("id", "")
         rule_name = data.get("name", "")
 

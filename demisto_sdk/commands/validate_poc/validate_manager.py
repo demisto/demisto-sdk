@@ -1,9 +1,12 @@
 from typing import List
 
 import toml
+from demisto_sdk.commands.common.git_util import GitUtil
 
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
+from demisto_sdk.commands.content_graph.objects.pack import Pack
+from demisto_sdk.commands.content_graph.objects.repository import ContentDTO
 from demisto_sdk.commands.validate_poc.validators.base_validator import (
     BaseValidator,
     ValidationResult,
@@ -34,32 +37,33 @@ class ValidateManager:
             # if error in validation_codes the left = False if run_using_select = True then we get get False
             # if error in validation_codes the left = False if run_using_select = False then we get get True
             if (validator.error_code in self.validation_codes) == self.run_using_select:
-                for content_item in self.files_to_run:
+                for object_ in self.files_to_run:
+                    if isinstance(object_, Pack):
+                        for content_item in object_.content_items:
+                            if validator.should_run(content_item):
+                                if validator.error_code not in content_item.ignored_errors:
+                                    results.append(validator.is_valid(content_item))
                     if validator.error_code not in content_item.ignored_errors:
                         results.append(validator.is_valid(content_item))
         return self.post_results(results)
 
-    def gather_files_to_run(self, file_path, use_git, validate_all):
-        files_to_run = []
-        if file_path:
-            files_to_run = BaseContent.from_path(file_path)
-        elif validate_all:
-            files_to_run = BaseContent.from_path("content/Packs")
-        elif use_git:
-            pass
-            # gather all changed files
-        else:
-            raise Exception("must provide files to run.")
-        return self.eliminate_nulls_and_duplications(files_to_run)
+    def gather_files_to_run(self, file_paths, use_git, validate_all):
+        content_objects_to_run = set()
+        if use_git:
+            file_paths = GitUtil()._get_all_changed_files()
+
+        for file_path in file_paths:
+            content_object = BaseContent.from_path(file_path)
+            if content_object is None:
+                raise Exception(f"no content found in {file_path}")
+            content_objects_to_run.add(BaseContent.from_path(file_path))
+        if validate_all:
+            content_dto = BaseContent.from_path()
+            if not isinstance(content_dto, ContentDTO):
+                raise Exception("no content found")
+            content_objects_to_run = set(content_dto.packs)
+        return content_objects_to_run
     
-    def eliminate_nulls_and_duplications(self, files_to_run):
-        file_path_list = []
-        filtered_list = []
-        for file in files_to_run:
-            if file and file.path not in file_path_list:
-                file_path_list.append(file.path)
-                filtered_list.append(file)
-        return filtered_list
 
     def gather_validations_to_run(self, use_git, validate_all):
         flag = "use_git" if use_git else "validate_all"
@@ -77,11 +81,10 @@ class ValidateManager:
         is_valid = True
         for result in results:
             if not result.is_valid:
-                formatted_error_str = f"{result.file_path}: {result.error_code} - {result.message}"
                 if result.error_code in only_throw_warning:
-                    logger.warning(f"[yellow]{formatted_error_str}[/yellow]")
+                    logger.warning(f"[yellow]{result.format_message}[/yellow]")
                 else:
-                    logger.error(f"[red]{formatted_error_str}[/red]")
+                    logger.error(f"[red]{result.format_message}[/red]")
                     is_valid = False
         return is_valid
 

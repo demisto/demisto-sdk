@@ -12,6 +12,7 @@ from typing import (
     Optional,
     Set,
     Type,
+    Union,
     cast,
 )
 
@@ -19,6 +20,7 @@ import demisto_client
 from packaging.version import Version
 from pydantic import BaseModel, DirectoryPath, Field
 from pydantic.main import ModelMetaclass
+from demisto_sdk.commands.content_graph.objects.repository import ContentDTO
 
 import demisto_sdk.commands.content_graph.parsers.content_item
 from demisto_sdk.commands.common.constants import (
@@ -35,6 +37,7 @@ from demisto_sdk.commands.content_graph.parsers.content_item import (
     NotAContentItemException,
 )
 from demisto_sdk.commands.content_graph.parsers.pack import PackParser
+from demisto_sdk.commands.content_graph.parsers.repository import RepositoryParser
 
 if TYPE_CHECKING:
     from demisto_sdk.commands.content_graph.objects.relationship import RelationshipData
@@ -70,14 +73,12 @@ class BaseContentMetaclass(ModelMetaclass):
             model_cls.content_type = content_type
         return model_cls
 
-
-class BaseContent(ABC, BaseModel, metaclass=BaseContentMetaclass):
+class BaseContentModel(ABC, BaseModel):
     database_id: Optional[int] = Field(None)  # used for the database
     object_id: str = Field(alias="id")
     content_type: ClassVar[ContentType] = Field(include=True)
     node_id: str
     marketplaces: List[MarketplaceVersions] = list(MarketplaceVersions)
-
     relationships_data: Dict[RelationshipType, Set["RelationshipData"]] = Field(
         defaultdict(set), exclude=True, repr=False
     )
@@ -88,7 +89,7 @@ class BaseContent(ABC, BaseModel, metaclass=BaseContentMetaclass):
         )
         orm_mode = True  # allows using from_orm() method
         allow_population_by_field_name = True  # when loading from orm, ignores the aliases and uses the property name
-
+    
     def __getstate__(self):
         """Needed to for the object to be pickled correctly (to use multiprocessing)"""
         if "relationships_data" not in self.__dict__:
@@ -134,9 +135,21 @@ class BaseContent(ABC, BaseModel, metaclass=BaseContentMetaclass):
         json_dct["content_type"] = self.content_type
         return json_dct
 
+class BaseContent(BaseContentModel, metaclass=BaseContentMetaclass):
+    path: Path
+    ignored_errors: List[str] = []
+
+    def __hash__(self):
+        return hash(self.path)
+
     @staticmethod
     @lru_cache
-    def from_path(path: Path) -> Optional["BaseContent"]:
+    def from_path(path: Optional[Path] = None) -> Optional[Union[ContentDTO, "BaseContent"]]:
+        if not path:
+            # if not path is given, return all the repository
+            repository_parser = RepositoryParser(CONTENT_PATH)
+            repository_parser.parse()
+            return ContentDTO.from_orm(repository_parser)
         logger.debug(f"Loading content item from path: {path}")
         if (
             path.is_dir() and path.parent.name == PACKS_FOLDER
@@ -211,7 +224,7 @@ class BaseContent(ABC, BaseModel, metaclass=BaseContentMetaclass):
         self.relationships_data[relationship_type].add(relationship)
 
 
-class UnknownContent(BaseContent):
+class UnknownContent(BaseContentModel):
     """A model for non-existing content items used by existing content items."""
 
     not_in_repository: bool = True

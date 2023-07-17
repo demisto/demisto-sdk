@@ -11,6 +11,10 @@ class ValidationResult(BaseModel):
     message: str
     file_path: str
     is_valid: bool
+    
+    @property
+    def format_message(self):
+        return f"{self.file_path}: {self.error_code} - {self.message}"
 
 
 class BaseValidator(ABC, BaseModel):
@@ -22,7 +26,7 @@ class BaseValidator(ABC, BaseModel):
 
     @classmethod
     def should_run(cls, content_item: BaseContent) -> bool:
-        return isinstance(content_item, cls.content_types)
+        return isinstance(content_item, cls.content_types) and cls.error_code not in content_item.ignored_errors
 
     @classmethod
     def is_valid(cls, content_item: BaseContent) -> ValidationResult:

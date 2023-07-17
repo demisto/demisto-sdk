@@ -377,29 +377,19 @@ def test_fromversion_update_validation_yml_structure(
 
 
 @pytest.mark.parametrize(
-    "old_pack_marketplaces,new_pack_marketplaces,old_content_marketplaces,new_content_marketplaces,expected_valid",
+    "old_pack_marketplaces,old_content_marketplaces,new_content_marketplaces,expected_valid",
     [
         pytest.param(
-            ["1"], ["1"], ["1"], ["1"], True, id="sanity, both match and are unchanged"
+            ["1"], ["1"], ["1"], True, id="sanity, both match and are unchanged"
         ),
         pytest.param(
             ["1"],
-            ["1", "2"],
-            ["1"],
-            ["1"],
-            True,
-            id="pack&content had 1, added 2 to to pack",
-        ),
-        pytest.param(
-            ["1"],
-            ["1", "2"],
             ["1"],
             ["1", "2"],
             True,
             id="pack&content had 1, added 2 to both",
         ),
         pytest.param(
-            ["1"],
             ["1"],
             [],
             ["1"],
@@ -408,22 +398,12 @@ def test_fromversion_update_validation_yml_structure(
         ),
         pytest.param(
             ["1"],
-            ["1", "2"],
-            [],
-            ["1"],
-            True,
-            id="pack had 1, content had empty, added 2 to pack and 1 to content",
-        ),
-        pytest.param(
-            ["1"],
-            ["1", "2"],
             [],
             ["2"],
             False,
-            id="pack had 1, content had empty, added 2 to both",
+            id="pack had 1, content had empty, added 2 to content",
         ),
         pytest.param(
-            ["1"],
             ["1"],
             ["1"],
             [],
@@ -435,13 +415,11 @@ def test_fromversion_update_validation_yml_structure(
 def test_marketplaces_update_against_pack(
     mocker,
     old_pack_marketplaces: List[str],
-    new_pack_marketplaces: List[str],
     old_content_marketplaces: List[str],
     new_content_marketplaces: List[str],
     expected_valid: bool,
 ):
     old_pack = {"marketplaces": old_pack_marketplaces}
-    new_pack = {"marketplaces": new_pack_marketplaces}
 
     old_content = {"marketplaces": old_content_marketplaces}
     new_content = {"marketplaces": new_content_marketplaces}
@@ -449,9 +427,6 @@ def test_marketplaces_update_against_pack(
     mocker.patch(
         "demisto_sdk.commands.common.hook_validations.content_entity_validator.get_remote_file",
         return_value=old_pack,
-    )
-    mocker.patch(
-        "demisto_sdk.commands.common.tools.get_pack_metadata", return_value=new_pack
     )
     from demisto_sdk.commands.common.hook_validations.content_entity_validator import (
         ContentEntityValidator,  # importing again to allow mocking get_remote_file

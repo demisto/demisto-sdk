@@ -3,7 +3,7 @@ import re
 from abc import abstractmethod
 from distutils.version import LooseVersion
 from pathlib import Path
-from typing import Optional, Set
+from typing import Optional
 
 from packaging import version
 
@@ -43,7 +43,6 @@ from demisto_sdk.commands.common.tools import (
     _get_file_id,
     find_type,
     get_file_displayed_name,
-    get_pack_metadata,
     get_pack_name,
     get_remote_file,
     get_yaml,
@@ -211,27 +210,6 @@ class ContentEntityValidator(BaseValidator):
             (bool): Whether the files' marketplaces as been modified or not.
         """
 
-        def _get_old_pack_marketplaces() -> Set[str]:
-            """returns marketplaces that were on the pack previously
-
-            Returns:
-                Union[Set[str], None]: Set of marketplaces, or None on error
-            """
-            pack_metadata_old = get_remote_file(
-                f"{CONTENT_PATH}/Packs/{pack_name}/pack_metadata.json",
-                tag=self.prev_ver,
-            )
-            pack_marketplaces_old = set(
-                pack_metadata_old.get(MARKETPLACE_KEY_PACK_METADATA, ())
-            )
-
-            pack_metadata_new = get_pack_metadata(self.file_path)
-            pack_marketplaces_new = set(
-                pack_metadata_new.get(MARKETPLACE_KEY_PACK_METADATA, ())
-            )
-
-            return pack_marketplaces_old - pack_marketplaces_new
-
         if not self.old_file:
             return True
 
@@ -241,7 +219,13 @@ class ContentEntityValidator(BaseValidator):
         if (not marketplaces_old) and marketplaces_new:
             pack_name = get_pack_name(self.file_path)
             try:
-                if marketplaces_new.issubset(_get_old_pack_marketplaces()):
+                old_pack_marketplaces = set(
+                    get_remote_file(
+                        f"{CONTENT_PATH}/Packs/{pack_name}/pack_metadata.json",
+                        tag=self.prev_ver,
+                    ).get(MARKETPLACE_KEY_PACK_METADATA, ())
+                )
+                if marketplaces_new.issubset(old_pack_marketplaces):
                     logger.debug(
                         f"Adding marketplaces that were implicitly-supported previously ({marketplaces_new}) to content item {self.file_path} is allowed"
                     )

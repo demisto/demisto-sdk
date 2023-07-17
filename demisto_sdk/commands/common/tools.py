@@ -1572,7 +1572,10 @@ def get_pipenv_dir(py_version, envs_dirs_base):
 
 
 def get_dict_from_file(
-    path: str, raises_error: bool = True, clear_cache: bool = False
+    path: str,
+    raises_error: bool = True,
+    clear_cache: bool = False,
+    keep_order: bool = True,
 ) -> Tuple[Dict, Union[str, None]]:
     """
     Get a dict representing the file
@@ -1588,7 +1591,10 @@ def get_dict_from_file(
     try:
         if path:
             if path.endswith(".yml"):
-                return get_yaml(path, cache_clear=clear_cache), "yml"
+                return (
+                    get_yaml(path, cache_clear=clear_cache, keep_order=keep_order),
+                    "yml",
+                )
             elif path.endswith(".json"):
                 res = get_json(path, cache_clear=clear_cache)
                 if isinstance(res, list) and len(res) == 1 and isinstance(res[0], dict):
@@ -1781,7 +1787,9 @@ def find_type(
         return type_by_path
     try:
         if not _dict and not file_type:
-            _dict, file_type = get_dict_from_file(path, clear_cache=clear_cache)
+            _dict, file_type = get_dict_from_file(
+                path, clear_cache=clear_cache, keep_order=False
+            )
 
     except FileNotFoundError:
         # unable to find the file - hence can't identify it

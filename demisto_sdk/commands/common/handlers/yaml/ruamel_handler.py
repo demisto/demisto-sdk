@@ -21,7 +21,7 @@ class RUAMEL_Handler(XSOAR_Handler):
         ensure_ascii=False,
     ):
         """
-        typ: 'rt'/None -> RoundTripLoader/RoundTripDumper,  (default)
+        typ: 'rt'/None -> RoundTripLoader/RoundTripDumper,  (default, supports comments and formatting slower then the rest))
              'safe'    -> SafeLoader/SafeDumper,
              'unsafe'  -> normal/unsafe Loader/Dumper
              'base'    -> baseloader

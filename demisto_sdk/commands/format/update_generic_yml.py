@@ -26,6 +26,7 @@ from demisto_sdk.commands.common.tools import (
     get_yaml,
     is_uuid,
     listdir_fullpath,
+    search_and_delete_from_conf,
 )
 from demisto_sdk.commands.format.format_constants import (
     ERROR_RETURN_CODE,
@@ -157,8 +158,17 @@ class BaseUpdateYML(BaseUpdate):
             self.set_version_to_default(self.id_and_version_location)
         self.copy_tests_from_old_file()
         if self.deprecate:
+            if (
+                self.source_file_type.value == "integration"
+                or self.source_file_type.value == "script"
+            ):
+                self.remove_from_conf_json(
+                    self.source_file_type.value,
+                    _get_file_id(self.source_file_type.value, self.data),
+                )
             self.update_deprecate(file_type=file_type)
         self.sync_data_to_master()
+
         self.remove_nativeimage_tag_if_exist()
 
     def update_tests(self) -> None:
@@ -256,6 +266,36 @@ class BaseUpdateYML(BaseUpdate):
                     self.data["tests"] = ["No tests (auto formatted)"]
                 else:
                     logger.debug(f'Not formatting {self.source_file} with "No tests"')
+
+    def remove_from_conf_json(self, file_type, content_item_id) -> None:
+        """
+        Updates conf.json remove the file's test playbooks.
+        Args:
+            file_type: The typr of the file, can be integration, playbook or testplaybook.
+            content_item_id: The content item id.
+        """
+        related_test_playbook = self.data.get("tests", [])
+        no_test_playbooks_explicitly = any(
+            test
+            for test in related_test_playbook
+            if ("no test" in test.lower()) or ("no tests" in test.lower())
+        )
+        try:
+            conf_json_content = self._load_conf_file()
+        except FileNotFoundError:
+            logger.debug(
+                f"[yellow]Unable to find {CONF_PATH} - skipping update.[/yellow]"
+            )
+            return
+        conf_json_test_configuration = conf_json_content["tests"]
+        conf_json_content["tests"] = search_and_delete_from_conf(
+            conf_json_test_configuration,
+            content_item_id,
+            file_type,
+            related_test_playbook,
+            no_test_playbooks_explicitly,
+        )
+        self._save_to_conf_json(conf_json_content)
 
     def update_conf_json(self, file_type: str) -> None:
         """

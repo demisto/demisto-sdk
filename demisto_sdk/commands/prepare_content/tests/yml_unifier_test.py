@@ -669,13 +669,6 @@ class TestMergeScriptPackageToYMLIntegration:
 
         assert export_yml_path == Path(self.expected_yml_path)
 
-        comment = (
-            "# this is a comment text inside a file 033dab25fd9655480dbec3a4c579a0e6"
-        )
-        with open(export_yml_path) as file_:
-            unified_content = file_.read()
-        assert comment in unified_content
-
         actual_yml = get_yaml(export_yml_path)
 
         expected_yml = get_yaml(

@@ -25,6 +25,7 @@ from demisto_sdk.commands.common.constants import (
     MarketplaceVersions,
 )
 from demisto_sdk.commands.common.content_constant_paths import CONF_PATH
+from demisto_sdk.commands.common.tools import is_external_repository
 
 FOUND_FILES_AND_ERRORS: list = []
 FOUND_FILES_AND_IGNORED_ERRORS: list = []
@@ -1525,6 +1526,10 @@ ERROR_CODE = {
         "related_field": "",
     },
 }
+
+
+if is_external_repository():
+    ALLOWED_IGNORE_ERRORS = [err["code"] for err in ERROR_CODE.values()]
 
 
 def get_all_error_codes() -> List:

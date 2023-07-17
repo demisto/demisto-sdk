@@ -203,5 +203,5 @@ Note that the following commands may work partially without an internet connecti
 
 ---
 
-## XSOAR CI/CD 
+## XSOAR CI/CD
 For information regarding XSOAR CI/CD, please see [this article](https://xsoar.pan.dev/docs/reference/packs/content-management)

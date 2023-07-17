@@ -147,6 +147,6 @@ If you wish to ignore errors for a specific file in the pack insert the followin
 ignore=BA101
 ```
 
-*Notes*: 
+*Notes*:
 * Currently only `BA101` is ignorable.
 * In external repositories (repos which contain the `.private-repo-settings` file in its root) **all** the validations are ignorable.

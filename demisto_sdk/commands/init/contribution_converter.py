@@ -169,12 +169,12 @@ class ContributionConverter:
         if create_new:
             # make sure that it doesn't conflict with an existing pack directory
             self.dir_name = self.ensure_unique_pack_dir_name(self.dir_name)
-        self.pack_dir_path = os.path.join(self.packs_dir_path, self.dir_name)
-        if not os.path.isdir(self.pack_dir_path):
-            os.makedirs(self.pack_dir_path)
+        self.pack_dir_path = Path(self.packs_dir_path, self.dir_name)
+        if not self.pack_dir_path.is_dir():
+            os.makedirs(str(self.pack_dir_path))
         self.readme_files: List[str] = []
         self.api_module_path: Optional[str] = None
-        self.working_dir_path = working_dir_path or self.pack_dir_path
+        self.working_dir_path = Path(working_dir_path) if working_dir_path else self.pack_dir_path
 
     @staticmethod
     def format_pack_dir_name(name: str) -> str:
@@ -237,7 +237,7 @@ class ContributionConverter:
         Returns:
             str: A unique pack directory name
         """
-        while os.path.exists(os.path.join(self.packs_dir_path, pack_dir)):
+        while Path(self.packs_dir_path, pack_dir).exists():
             logger.info(
                 f"Modifying pack name because pack {pack_dir} already exists in the content repo"
             )
@@ -257,7 +257,7 @@ class ContributionConverter:
         """Unpacks the contribution zip's contents to the destination pack directory and performs some cleanup"""
         if self.contribution:
             shutil.unpack_archive(
-                filename=self.contribution, extract_dir=self.working_dir_path
+                filename=self.contribution, extract_dir=str(self.working_dir_path)
             )
             # remove metadata.json file
             Path(self.working_dir_path, "metadata.json").unlink()
@@ -368,7 +368,7 @@ class ContributionConverter:
         """
         Generate the readme files for a new content pack.
         """
-        for pack_subdir in get_child_directories(self.working_dir_path):
+        for pack_subdir in get_child_directories(str(self.working_dir_path)):
             basename = os.path.basename(pack_subdir)
             if basename in {SCRIPTS_DIR, INTEGRATIONS_DIR}:
                 directories = get_child_directories(pack_subdir)
@@ -398,7 +398,7 @@ class ContributionConverter:
         Rearrange content items that were mapped incorrectly by the server zip
           - indicatorfields rearranged to be under indicatorfield directory instead of incidentfields.
         """
-        unpacked_contribution_dirs = get_child_directories(self.working_dir_path)
+        unpacked_contribution_dirs = get_child_directories(str(self.working_dir_path))
         for unpacked_contribution_dir in unpacked_contribution_dirs:
 
             dir_name = os.path.basename(unpacked_contribution_dir)
@@ -406,9 +406,9 @@ class ContributionConverter:
             # incidentfield directory may contain indicator-fields files
             if dir_name == FileType.INCIDENT_FIELD.value:
 
-                dst_ioc_fields_dir = os.path.join(
+                dst_ioc_fields_dir = str(Path(
                     self.working_dir_path, FileType.INDICATOR_FIELD.value
-                )
+                ))
                 src_path = str(Path(self.working_dir_path, dir_name))
 
                 for file in os.listdir(src_path):
@@ -451,13 +451,13 @@ class ContributionConverter:
             self.unpack_contribution_to_dst_pack_directory()
             # convert
             self.rearranging_before_conversion()
-            unpacked_contribution_dirs = get_child_directories(self.working_dir_path)
+            unpacked_contribution_dirs = get_child_directories(str(self.working_dir_path))
             for unpacked_contribution_dir in unpacked_contribution_dirs:
                 self.convert_contribution_dir_to_pack_contents(
                     unpacked_contribution_dir
                 )
             # extract to package format
-            for pack_subdir in get_child_directories(self.working_dir_path):
+            for pack_subdir in get_child_directories(str(self.working_dir_path)):
                 basename = os.path.basename(pack_subdir)
                 if basename in {SCRIPTS_DIR, INTEGRATIONS_DIR}:
                     self.content_item_to_package_format(
@@ -592,10 +592,10 @@ class ContributionConverter:
                         autocreate_dir = containing_dir_name == ENTITY_TYPE_TO_DIR.get(
                             file_type, ""
                         )
-                        output_dir = os.path.join(
+                        output_dir = str(Path(
                             self.working_dir_path,
                             ENTITY_TYPE_TO_DIR.get(file_type, ""),
-                        )
+                        ))
                         if not autocreate_dir:
                             output_dir = os.path.join(output_dir, containing_dir_name)
                         os.makedirs(output_dir, exist_ok=True)
@@ -622,7 +622,7 @@ class ContributionConverter:
                             script = content_item.code
                             contributor_item_version = self.extract_pack_version(script)
                             current_pack_version = get_pack_metadata(
-                                file_path=self.pack_dir_path
+                                file_path=str(self.pack_dir_path)
                             ).get("currentVersion", "0.0.0")
                             if contributor_item_version != "0.0.0" and Version(
                                 current_pack_version
@@ -708,7 +708,7 @@ class ContributionConverter:
             zipped_metadata.get("marketplaces") or MARKETPLACES
         )
         metadata_dict = ContributionConverter.create_pack_metadata(data=metadata_dict)
-        metadata_path = os.path.join(self.working_dir_path, "pack_metadata.json")
+        metadata_path = str(Path(self.working_dir_path, "pack_metadata.json"))
         with open(metadata_path, "w") as pack_metadata_file:
             json.dump(metadata_dict, pack_metadata_file, indent=4)
 

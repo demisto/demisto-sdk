@@ -11,6 +11,7 @@ from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.cpu_count import cpu_count
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.content_graph.objects.pack import Pack
+from demisto_sdk.commands.content_graph.parsers.repository import RepositoryParser
 
 USE_MULTIPROCESSING = False  # toggle this for better debugging
 
@@ -18,7 +19,11 @@ USE_MULTIPROCESSING = False  # toggle this for better debugging
 class ContentDTO(BaseModel):
     path: DirectoryPath = Path(CONTENT_PATH)  # type: ignore
     packs: List[Pack]
-
+    @staticmethod
+    def from_path(path: DirectoryPath) -> "ContentDTO":
+        repo_parser = RepositoryParser(path)
+        repo_parser.parse()
+        return ContentDTO.from_orm(repo_parser)
     def dump(
         self,
         dir: DirectoryPath,

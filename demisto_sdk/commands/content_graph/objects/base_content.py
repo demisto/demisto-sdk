@@ -20,7 +20,7 @@ import demisto_client
 from packaging.version import Version
 from pydantic import BaseModel, DirectoryPath, Field
 from pydantic.main import ModelMetaclass
-from demisto_sdk.commands.content_graph.objects.repository import ContentDTO
+# from demisto_sdk.commands.content_graph.objects.repository import ContentDTO
 
 import demisto_sdk.commands.content_graph.parsers.content_item
 from demisto_sdk.commands.common.constants import (
@@ -73,7 +73,7 @@ class BaseContentMetaclass(ModelMetaclass):
             model_cls.content_type = content_type
         return model_cls
 
-class BaseContentModel(ABC, BaseModel):
+class BaseContentModel(ABC, BaseModel, metaclass=BaseContentMetaclass):
     database_id: Optional[int] = Field(None)  # used for the database
     object_id: str = Field(alias="id")
     content_type: ClassVar[ContentType] = Field(include=True)
@@ -135,7 +135,7 @@ class BaseContentModel(ABC, BaseModel):
         json_dct["content_type"] = self.content_type
         return json_dct
 
-class BaseContent(BaseContentModel, metaclass=BaseContentMetaclass):
+class BaseContent(BaseContentModel):
     path: Path
     ignored_errors: List[str] = []
 
@@ -144,12 +144,7 @@ class BaseContent(BaseContentModel, metaclass=BaseContentMetaclass):
 
     @staticmethod
     @lru_cache
-    def from_path(path: Optional[Path] = None) -> Optional[Union[ContentDTO, "BaseContent"]]:
-        if not path:
-            # if not path is given, return all the repository
-            repository_parser = RepositoryParser(CONTENT_PATH)
-            repository_parser.parse()
-            return ContentDTO.from_orm(repository_parser)
+    def from_path(path: Path) -> Optional["BaseContent"]:            
         logger.debug(f"Loading content item from path: {path}")
         if (
             path.is_dir() and path.parent.name == PACKS_FOLDER

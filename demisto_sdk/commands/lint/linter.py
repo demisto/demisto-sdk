@@ -1205,7 +1205,7 @@ class Linter:
             container = self._docker_client.containers.get(container_name)
             container.remove(force=True)
         except docker.errors.NotFound:
-            pass
+            passsupported_marketplaces
 
         # Run container
         exit_code = SUCCESS

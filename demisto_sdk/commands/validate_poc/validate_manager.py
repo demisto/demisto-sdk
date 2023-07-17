@@ -1,6 +1,7 @@
 from typing import List
 
 import toml
+from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.git_util import GitUtil
 
 from demisto_sdk.commands.common.logger import logger
@@ -58,7 +59,7 @@ class ValidateManager:
                 raise Exception(f"no content found in {file_path}")
             content_objects_to_run.add(BaseContent.from_path(file_path))
         if validate_all:
-            content_dto = BaseContent.from_path()
+            content_dto = ContentDTO.from_path(CONTENT_PATH)
             if not isinstance(content_dto, ContentDTO):
                 raise Exception("no content found")
             content_objects_to_run = set(content_dto.packs)

@@ -392,6 +392,8 @@ jobs:
           when: always
           command: |
             source $(poetry env info --path)/bin/activate
+            ARTIFACTS_FOLDER="/home/circleci/project/artifacts"
+            mkdir -p $ARTIFACTS_FOLDER
             export DEMISTO_SDK_LOG_FILE_PATH=$ARTIFACTS_FOLDER/demisto_sdk_debug.log
             cd content
             demisto-sdk -v

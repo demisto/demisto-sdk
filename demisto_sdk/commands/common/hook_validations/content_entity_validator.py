@@ -29,7 +29,8 @@ from demisto_sdk.commands.common.content import Content
 from demisto_sdk.commands.common.content_constant_paths import CONF_PATH
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.git_util import GitUtil
-from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
+from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
 from demisto_sdk.commands.common.hook_validations.base_validator import (
     BaseValidator,
     error_codes,
@@ -47,9 +48,6 @@ from demisto_sdk.commands.common.tools import (
     run_command,
 )
 from demisto_sdk.commands.format.format_constants import OLD_FILE_DEFAULT_1_FROMVERSION
-
-json = JSON_Handler()
-yaml = YAML_Handler()
 
 
 class ContentEntityValidator(BaseValidator):

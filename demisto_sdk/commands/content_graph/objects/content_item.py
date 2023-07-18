@@ -150,7 +150,7 @@ class ContentItem(BaseContent):
 
     @property
     def data(self) -> dict:
-        return get_file(self.path)
+        return get_file(self.path, keep_order=False)
 
     def prepare_for_upload(
         self,

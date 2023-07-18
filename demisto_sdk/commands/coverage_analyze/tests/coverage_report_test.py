@@ -5,7 +5,6 @@ from pathlib import Path
 
 import pytest
 
-from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.coverage_analyze.coverage_report import CoverageReport
 from demisto_sdk.commands.coverage_analyze.helpers import (
     fix_file_path,
@@ -23,8 +22,6 @@ from demisto_sdk.commands.coverage_analyze.tests.helpers_test import (
 from TestSuite.test_tools import flatten_call_args
 
 logger = logging.getLogger("demisto-sdk")
-
-json = JSON_Handler()
 
 
 DEFAULT_URL = TestCoverageSummary.TestGetFilesSummary.default_url

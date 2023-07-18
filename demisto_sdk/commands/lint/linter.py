@@ -1,6 +1,5 @@
 # STD python packages
 import copy
-import hashlib
 import os
 import platform
 import traceback
@@ -12,7 +11,6 @@ import docker.errors
 import docker.models.containers
 import git
 import requests.exceptions
-import urllib3.exceptions
 from packaging.version import parse
 from wcmatch.pathlib import NEGATE, Path
 
@@ -32,7 +30,8 @@ from demisto_sdk.commands.common.docker_helper import (
     get_python_version,
     init_global_docker_client,
 )
-from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
+from demisto_sdk.commands.common.handlers import YAML_Handler
 from demisto_sdk.commands.common.hook_validations.docker import DockerImageValidator
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.native_image import (
@@ -75,9 +74,6 @@ from demisto_sdk.commands.lint.helpers import (
     stream_docker_container_output,
 )
 
-json = JSON_Handler()
-
-
 # 3-rd party packages
 
 # Local packages
@@ -100,8 +96,6 @@ class Linter:
     Attributes:
         pack_dir(Path): Pack to run lint on.
         content_repo(Path): Git repo object of content repo.
-        req_2(list): requirements for docker using python2.
-        req_3(list): requirements for docker using python3.
         docker_engine(bool):  Whether docker engine detected by docker-sdk.
         docker_timeout(int): Timeout for docker requests.
         docker_image_flag(str): Indicates the desirable docker image to run lint on (default value is 'from-yml).
@@ -112,8 +106,6 @@ class Linter:
         self,
         pack_dir: Path,
         content_repo: Path,
-        req_3: list,
-        req_2: list,
         docker_engine: bool,
         docker_timeout: int,
         docker_image_flag: str = DockerImageFlagOption.FROM_YML.value,
@@ -121,8 +113,6 @@ class Linter:
         docker_image_target: str = "",
         use_git: bool = False,
     ):
-        self._req_3 = req_3
-        self._req_2 = req_2
         self._content_repo = content_repo
 
         # For covering the case when a path file is sent instead of a directory
@@ -947,71 +937,17 @@ class Linter:
         log_prompt = f"{self._pack_name} - Image create"
         docker_base = get_docker()
         # Get requirements file for image
-        requirements = []
-
+        py_ver = None
         if docker_base_image[1] != -1:
             py_ver = parse(docker_base_image[1]).major  # type: ignore
-            if py_ver == 2:
-                requirements = self._req_2
-            elif py_ver == 3:
-                requirements = self._req_3
-        # Using DockerFile template
-        pip_requirements = requirements + self._facts["additional_requirements"]
-        # Trying to pull image based on dockerfile hash, will check if something changed
-        errors = ""
-        identifier = hashlib.md5(
-            "\n".join(sorted(pip_requirements)).encode("utf-8")
-        ).hexdigest()
-        test_image_name = (
-            f'{docker_base_image[0].replace("demisto", "devtestdemisto")}-{identifier}'
+        test_image_name, errors = docker_base.pull_or_create_test_image(
+            docker_base_image[0],
+            additional_requirements=self._facts["additional_requirements"],
+            container_type=self._pkg_lint_status["pack_type"],
+            log_prompt=log_prompt,
+            python_version=py_ver,
+            push=self._docker_hub_login,
         )
-        test_image = None
-        try:
-            logger.info(
-                f"{log_prompt} - Trying to pull existing image {test_image_name}"
-            )
-            test_image = docker_base.pull_image(test_image_name)
-        except (docker.errors.APIError, docker.errors.ImageNotFound):
-            logger.info(f"{log_prompt} - Unable to find image {test_image_name}")
-        # Creatng new image if existing image isn't found
-        if not test_image:
-            logger.info(
-                f"{log_prompt} - Creating image based on {docker_base_image[0]} - Could take 2-3 minutes at first "
-                f"time"
-            )
-            try:
-                docker_base.create_image(
-                    docker_base_image[0],
-                    test_image_name,
-                    container_type=self._pkg_lint_status["pack_type"],
-                    install_packages=pip_requirements,
-                )
-
-                if self._docker_hub_login:
-                    for _ in range(2):
-                        try:
-                            test_image_name_to_push = test_image_name.replace(
-                                "docker-io.art.code.pan.run/", ""
-                            )
-                            docker_push_output = self._docker_client.images.push(
-                                test_image_name_to_push
-                            )
-                            logger.info(
-                                f"{log_prompt} - Trying to push Image {test_image_name_to_push} to repository. Output = {docker_push_output}"
-                            )
-                            break
-                        except (
-                            requests.exceptions.ConnectionError,
-                            urllib3.exceptions.ReadTimeoutError,
-                            requests.exceptions.ReadTimeout,
-                        ):
-                            logger.info(
-                                f"{log_prompt} - Unable to push image {test_image_name} to repository"
-                            )
-
-            except (docker.errors.BuildError, docker.errors.APIError, Exception) as e:
-                logger.critical(f"{log_prompt} - Build errors occurred {e}")
-                errors = str(e)
         return test_image_name, errors
 
     def _docker_remove_container(self, container_name: str):
@@ -1052,17 +988,24 @@ class Linter:
         # Run container
         exit_code = SUCCESS
         output = ""
+        command = [self._facts["lint_to_commands"][linter]]
         try:
             container: docker.models.containers.Container = (
                 get_docker().create_container(
                     name=container_name,
                     image=test_image,
-                    command=[self._facts["lint_to_commands"][linter]],
+                    command=command,
                     user=f"{os.getuid()}:4000",
                     files_to_push=[(self._pack_abs_dir, "/devwork")],
                     environment=self._facts["env_vars"],
                 )
             )
+        except Exception:
+            logger.exception(
+                f"{log_prompt} - could not create container: {container_name=}, {test_image=}, {command=}"
+            )
+            raise
+        try:
             container.start()
             stream_docker_container_output(container.logs(stream=True))
             # wait for container to finish

@@ -2,8 +2,6 @@ import os
 from pathlib import Path
 from typing import Optional
 
-from ruamel.yaml.comments import CommentedSeq
-
 from demisto_sdk.commands.common.constants import (
     PACK_METADATA_SUPPORT,
     PACKS_DIR,
@@ -19,7 +17,7 @@ from demisto_sdk.commands.common.errors import (
     get_all_error_codes,
     get_error_object,
 )
-from demisto_sdk.commands.common.handlers import JSON_Handler
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     find_type,
@@ -29,8 +27,6 @@ from demisto_sdk.commands.common.tools import (
     get_relative_path_from_packs_dir,
     get_yaml,
 )
-
-json = JSON_Handler()
 
 
 def error_codes(error_codes_str: str):
@@ -274,8 +270,8 @@ class BaseValidator:
     def check_deprecated(self, file_path):
         if file_path.endswith(".yml"):
             yml_dict = get_yaml(file_path)
-            if not isinstance(yml_dict, CommentedSeq) and yml_dict.get("deprecated"):
-                # yml files may be CommentedSeq ("list") or dict-like
+            if not isinstance(yml_dict, list) and yml_dict.get("deprecated"):
+                # yml files may be list or dict-like
                 self.add_flag_to_ignore_list(file_path, "deprecated")
 
     @staticmethod
@@ -359,7 +355,6 @@ class BaseValidator:
             "severity": "warning" if warning else "error",
             "errorCode": error_code,
             "message": error_message,
-            "ui": error_data.get("ui_applicable"),
             "relatedField": error_data.get("related_field"),
             "linter": "validate",
         }

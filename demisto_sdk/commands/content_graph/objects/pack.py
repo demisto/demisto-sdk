@@ -16,7 +16,7 @@ from demisto_sdk.commands.common.constants import (
     MarketplaceVersions,
 )
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
-from demisto_sdk.commands.common.handlers import JSON_Handler
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import MarketplaceTagParser
 from demisto_sdk.commands.content_graph.common import (
@@ -59,6 +59,7 @@ from demisto_sdk.commands.content_graph.objects.mapper import Mapper
 from demisto_sdk.commands.content_graph.objects.modeling_rule import ModelingRule
 from demisto_sdk.commands.content_graph.objects.parsing_rule import ParsingRule
 from demisto_sdk.commands.content_graph.objects.playbook import Playbook
+from demisto_sdk.commands.content_graph.objects.pre_process_rule import PreProcessRule
 from demisto_sdk.commands.content_graph.objects.report import Report
 from demisto_sdk.commands.content_graph.objects.script import Script
 from demisto_sdk.commands.content_graph.objects.test_playbook import TestPlaybook
@@ -82,7 +83,6 @@ from demisto_sdk.commands.upload.tools import (
 if TYPE_CHECKING:
     from demisto_sdk.commands.content_graph.objects.relationship import RelationshipData
 
-json = JSON_Handler()
 
 MINIMAL_UPLOAD_SUPPORTED_VERSION = Version("6.5.0")
 MINIMAL_ALLOWED_SKIP_VALIDATION_VERSION = Version("6.6.0")
@@ -174,6 +174,9 @@ class PackContentItems(BaseModel):
     xsiam_report: List[XSIAMReport] = Field([], alias=ContentType.XSIAM_REPORT.value)
     xdrc_template: List[XDRCTemplate] = Field([], alias=ContentType.XDRC_TEMPLATE.value)
     layout_rule: List[LayoutRule] = Field([], alias=ContentType.LAYOUT_RULE.value)
+    preprocess_rule: List[PreProcessRule] = Field(
+        [], alias=ContentType.PREPROCESS_RULE.value
+    )
 
     def __iter__(self) -> Generator[ContentItem, Any, Any]:  # type: ignore
         """Defines the iteration of the object. Each iteration yields a single content item."""
@@ -307,15 +310,44 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: i
                 continue
             if content_item.is_incident_to_alert(marketplace):
                 metadata["contentItems"].setdefault(
-                    content_item.content_type.server_name, []
+                    content_item.content_type.metadata_name, []
                 ).append(content_item.summary(marketplace, incident_to_alert=True))
 
             metadata["contentItems"].setdefault(
-                content_item.content_type.server_name, []
+                content_item.content_type.metadata_name, []
             ).append(content_item.summary(marketplace))
 
+        metadata["contentDisplays"] = self.get_content_display(metadata["contentItems"])
+
         with open(path, "w") as f:
-            json.dump(metadata, f, indent=4)
+            json.dump(metadata, f, indent=4, sort_keys=True)
+
+    def get_content_display(self, content_items):
+
+        content_displays: dict = {}
+        for content_item in self.content_items:
+            try:
+                content_displays[
+                    content_item.content_type.metadata_name
+                ] = (
+                    content_item.content_type.metadata_display_name
+                )  # type: ignore[index]
+            except TypeError as e:
+                raise Exception(
+                    f"Could not set metadata_name of type {content_item.content_type.metadata_name} - "
+                    f"{content_item.content_type.metadata_display_name} in {content_displays}\n{e}"
+                )
+        content_displays = {
+            content_type: content_type_display
+            if (
+                content_items.get(content_type)
+                and len(content_items.get(content_type)) == 1
+            )
+            else f"{content_type_display}s"
+            for content_type, content_type_display in content_displays.items()
+        }
+
+        return content_displays
 
     def dump_readme(self, path: Path, marketplace: MarketplaceVersions) -> None:
         shutil.copyfile(self.path / "README.md", path)

@@ -28,12 +28,12 @@ class GraphValidator(BaseValidator):
         specific_validations: list = None,
         git_files: list = None,
         input_files: list = None,
-        should_update: bool = True,
+        update_graph: bool = True,
         include_optional_deps: bool = False,
     ):
         super().__init__(specific_validations=specific_validations)
         self.include_optional = include_optional_deps
-        self.graph = ContentGraphInterface(should_update=should_update)
+        self.graph = ContentGraphInterface(update_graph=update_graph)
         self.file_paths: List[str] = git_files or get_all_content_objects_paths_in_dir(
             input_files
         )
@@ -221,6 +221,7 @@ class GraphValidator(BaseValidator):
         self, content_item: ContentItem, warning: bool = False
     ):
         """Handles a single invalid toversion query result"""
+        is_valid = True
         used_content_items = [
             relationship.content_item_to.object_id for relationship in content_item.uses
         ]

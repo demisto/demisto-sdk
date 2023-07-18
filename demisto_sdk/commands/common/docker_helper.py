@@ -496,10 +496,8 @@ def _get_python_version_from_image_client(image: str) -> Version:
     Returns:
         Version: Python version X.Y (3.7, 3.6, ..)
     """
-    docker_client = init_global_docker_client()
     try:
-        docker_client.images.pull(image)
-        image_model = docker_client.images.get(image)
+        image_model = DockerBase.pull_image(image)
         env = image_model.attrs["Config"]["Env"]
         logger.debug(f"Got {env=} from {image=}")
         return _get_python_version_from_env(env)

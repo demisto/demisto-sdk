@@ -373,9 +373,11 @@ class IntegrationScriptUnifier(Unifier):
             )
 
         if find_type(yml_path) in (FileType.SCRIPT, FileType.TEST_SCRIPT):
-            code_type = get_yaml(yml_path).get("type")
+            code_type = get_yaml(yml_path, keep_order=False).get("type")
         else:
-            code_type = get_yaml(yml_path).get("script", {}).get("type")
+            code_type = (
+                get_yaml(yml_path, keep_order=False).get("script", {}).get("type")
+            )
         code_path = IntegrationScriptUnifier.get_code_file(
             package_path, TYPE_TO_EXTENSION[code_type]
         )

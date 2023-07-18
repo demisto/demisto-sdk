@@ -2048,6 +2048,59 @@ def test_run_validation_using_git_on_only_metadata_changed(
     assert res
 
 
+def test_validate_using_git_on_changed_marketplaces(mocker, pack):
+    """
+    Given:
+        -   Modified marketplaces in pack_metadata
+        -   Other content items in the pack (specifically an integration)
+
+    When:
+        -   Running validate -g
+
+    Then:
+        -   Ensure the pack's content items are validated.
+    """
+    logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
+    old_pack_metadata = pack_metadata.copy()
+    old_pack_metadata["marketplaces"] = ["xsoar"]
+    new_pack_metadata = pack_metadata.copy()
+    new_pack_metadata["marketplaces"] = ["xsoar", "marketplacev2"]
+
+    pack.pack_metadata.write_json(new_pack_metadata)
+    some_integration = pack.create_integration("SomeIntegration")
+    some_integration.create_default_integration()
+    # Integration with invalid version
+    some_integration.yml.update(
+        {"commonfields": {"id": "some_integration", "version": 2}}
+    )
+    mocker.patch.object(ValidateManager, "setup_git_params", return_value=True)
+
+    # Integration was not modified, pack_metadata was
+    mocker.patch.object(
+        ValidateManager,
+        "get_changed_files_from_git",
+        return_value=(set(), set(), {pack.pack_metadata.path}, set(), True),
+    )
+    mocker.patch.object(GitUtil, "deleted_files", return_value=set())
+    mocker.patch('demisto_sdk.commands.common.tools.get_remote_file', return_value=old_pack_metadata)
+    validate_manager = ValidateManager(check_is_unskipped=False, skip_conf_json=True)
+
+    with ChangeCWD(pack.repo_path):
+        result = validate_manager.run_validation_using_git()
+
+    assert not result
+    assert len(validate_manager.packs_with_mp_change) == 1
+
+    expected_string, expected_code = Errors.wrong_version()
+    assert all(
+        [
+            str_in_call_args_list(logger_error.call_args_list, expected_string),
+            str_in_call_args_list(logger_error.call_args_list, expected_code),
+        ]
+    )
+
+
+
 def test_is_mapping_fields_command_exist(integration):
     """
     Given

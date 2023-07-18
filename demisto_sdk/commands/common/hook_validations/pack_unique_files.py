@@ -270,6 +270,16 @@ class PackUniqueFilesValidator(BaseValidator):
 
         return False
 
+    def check_metadata_for_marketplace_change(self):
+        metadata_file_path = self._get_pack_file_path(self.pack_meta_file)
+        old_meta_file_content = get_remote_file(metadata_file_path, tag=self.prev_ver)
+        current_meta_file_content = self._read_metadata_content()
+        old_mps = old_meta_file_content.get("marketplaces", [])
+        current_mps = current_meta_file_content.get("marketplaces", [])
+        if set(old_mps) == set(current_mps):
+            return False
+        return True
+
     @staticmethod
     def check_timestamp_format(timestamp):
         """Check that the timestamp is in ISO format"""

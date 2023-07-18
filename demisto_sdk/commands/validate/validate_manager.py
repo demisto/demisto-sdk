@@ -225,6 +225,7 @@ class ValidateManager:
         self.check_is_unskipped = check_is_unskipped
         self.conf_json_data = {}
         self.run_with_multiprocessing = multiprocessing
+        self.packs_with_mp_change = set()
         self.is_possible_validate_readme = (
             self.is_node_exist() or ReadMeValidator.is_docker_available()
         )
@@ -581,15 +582,19 @@ class ValidateManager:
 
         return all(all_packs_valid)
 
-    def run_validations_on_pack(self, pack_path):
+    def run_validations_on_pack(self, pack_path, skip_files=None):
         """Runs validation on all files in given pack. (i,g,a)
 
         Args:
             pack_path: the path to the pack.
+            skip_files: a list of files to skip.
 
         Returns:
             bool. true if all files in pack are valid, false otherwise.
         """
+        if not skip_files:
+            skip_files = set()
+
         pack_entities_validation_results = set()
         pack_error_ignore_list = self.get_error_ignore_list(os.path.basename(pack_path))
 
@@ -599,14 +604,15 @@ class ValidateManager:
 
         for content_dir in os.listdir(pack_path):
             content_entity_path = os.path.join(pack_path, content_dir)
-            if content_dir in CONTENT_ENTITIES_DIRS:
-                pack_entities_validation_results.add(
-                    self.run_validation_on_content_entities(
-                        content_entity_path, pack_error_ignore_list
+            if content_entity_path not in skip_files:
+                if content_dir in CONTENT_ENTITIES_DIRS:
+                    pack_entities_validation_results.add(
+                        self.run_validation_on_content_entities(
+                            content_entity_path, pack_error_ignore_list
+                        )
                     )
-                )
-            else:
-                self.ignored_files.add(content_entity_path)
+                else:
+                    self.ignored_files.add(content_entity_path)
 
         return all(pack_entities_validation_results), FOUND_FILES_AND_ERRORS
 
@@ -1311,14 +1317,15 @@ class ValidateManager:
                 self.validate_no_duplicated_release_notes(added_files)
             )
             logger.info(f"*** after adding validate_no_duplicated_release_notes")
+
+        all_files_set = list(
+            set().union(
+                modified_files, added_files, old_format_files, changed_meta_files
+            )
+        )
         if self.validate_graph:
             logger.info(
                 f"\n[cyan]================= Validating graph =================[/cyan]"
-            )
-            all_files_set = list(
-                set().union(
-                    modified_files, added_files, old_format_files, changed_meta_files
-                )
             )
             if all_files_set:
                 with GraphValidator(
@@ -1335,6 +1342,19 @@ class ValidateManager:
                             graph_validator,
                         )
                     )
+
+        if self.packs_with_mp_change:
+            logger.info(
+                f"\n[cyan]================= Running validation on Marketplace Changed Packs =================[/cyan]"
+            )
+            logger.debug(f"Found marketplace change in the following packs: {self.packs_with_mp_change}")
+
+            for mp_changed_metadata_pack in self.packs_with_mp_change:
+                # Running validation on the whole pack, excluding files that were already checked.
+                validation_results.add(
+                    self.run_validations_on_pack(mp_changed_metadata_pack, skip_files=all_files_set)[0])
+
+            logger.debug(f"Finished validating marketplace changed packs.")
 
         return all(validation_results)
 
@@ -1929,6 +1949,9 @@ class ValidateManager:
             author_valid = self.validate_author_image(
                 author_image_path, pack_error_ignore_list
             )
+
+        if pack_unique_files_validator.check_metadata_for_marketplace_change():
+            self.packs_with_mp_change = self.packs_with_mp_change.union({pack_path})
 
         return files_valid and author_valid
 

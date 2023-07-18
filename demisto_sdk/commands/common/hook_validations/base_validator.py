@@ -2,10 +2,6 @@ import os
 from pathlib import Path
 from typing import Optional
 
-from ruamel.yaml.comments import (  # noqa:TID251 - only importing CommentedSeq
-    CommentedSeq,
-)
-
 from demisto_sdk.commands.common.constants import (
     PACK_METADATA_SUPPORT,
     PACKS_DIR,
@@ -276,8 +272,8 @@ class BaseValidator:
     def check_deprecated(self, file_path):
         if file_path.endswith(".yml"):
             yml_dict = get_yaml(file_path)
-            if not isinstance(yml_dict, CommentedSeq) and yml_dict.get("deprecated"):
-                # yml files may be CommentedSeq ("list") or dict-like
+            if not isinstance(yml_dict, list) and yml_dict.get("deprecated"):
+                # yml files may be list or dict-like
                 self.add_flag_to_ignore_list(file_path, "deprecated")
 
     @staticmethod
@@ -361,7 +357,6 @@ class BaseValidator:
             "severity": "warning" if warning else "error",
             "errorCode": error_code,
             "message": error_message,
-            "ui": error_data.get("ui_applicable"),
             "relatedField": error_data.get("related_field"),
             "linter": "validate",
         }

@@ -194,7 +194,7 @@ def test_build_pwsh_analyze():
     from demisto_sdk.commands.lint.commands_builder import build_pwsh_analyze_command
 
     file = MagicMock()
-    command = f"pwsh -Command Invoke-ScriptAnalyzer -EnableExit -Path {file.name}"
+    command = f"pwsh -Command Invoke-ScriptAnalyzer -EnableExit -Severity Error -Path {file.name}"
     assert command == build_pwsh_analyze_command(file)
 
 

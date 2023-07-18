@@ -1,6 +1,6 @@
 # Changelog
 ## Unreleased
-* Added the ability to ignore any validation in the **validate** command when running in an external (non-demisto/content) repo, using the <FILE_NAME> file.
+* Added the ability to ignore any validation in the **validate** command when running in an external (non-demisto/content) repo, by placing a `.private-repo-settings` file at its root.
 * Calling **format** with the `-d` flag now removes test playbooks testing the deprecated content from conf.json.
 
 ## 1.17.2

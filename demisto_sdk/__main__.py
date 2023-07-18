@@ -23,7 +23,7 @@ from demisto_sdk.commands.common.content_constant_paths import (
     CONTENT_PATH,
 )
 from demisto_sdk.commands.common.cpu_count import cpu_count
-from demisto_sdk.commands.common.handlers import JSON_Handler
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.hook_validations.readme import ReadMeValidator
 from demisto_sdk.commands.common.logger import handle_deprecated_args, logging_setup
 from demisto_sdk.commands.common.tools import (
@@ -50,7 +50,6 @@ from demisto_sdk.utils.utils import check_configuration_file
 
 logger = logging.getLogger("demisto-sdk")
 
-json = JSON_Handler()
 
 # Third party packages
 
@@ -103,9 +102,6 @@ class VersionParamType(click.ParamType):
                 param,
                 ctx,
             )
-
-
-json = JSON_Handler()
 
 
 class DemistoSDK:

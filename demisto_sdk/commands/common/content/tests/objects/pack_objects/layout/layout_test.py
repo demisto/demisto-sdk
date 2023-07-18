@@ -4,15 +4,12 @@ import pytest
 
 from demisto_sdk.commands.common.content.objects.pack_objects import LayoutsContainer
 from demisto_sdk.commands.common.content.objects_factory import path_to_pack_object
-from demisto_sdk.commands.common.handlers import JSON_Handler
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.tools import src_root
 
 TEST_DATA = src_root() / "tests" / "test_files"
 TEST_CONTENT_REPO = TEST_DATA / "content_slim"
-
-
-json = JSON_Handler()
 
 
 class TestLayoutsContainer:

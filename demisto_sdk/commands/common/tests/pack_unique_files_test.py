@@ -19,7 +19,7 @@ from demisto_sdk.commands.common.constants import (
     XSOAR_SUPPORT,
 )
 from demisto_sdk.commands.common.errors import Errors
-from demisto_sdk.commands.common.handlers import JSON_Handler
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.hook_validations.base_validator import BaseValidator
 from demisto_sdk.commands.common.hook_validations.pack_unique_files import (
     PackUniqueFilesValidator,
@@ -29,8 +29,6 @@ from demisto_sdk.commands.validate.validate_manager import ValidateManager
 from TestSuite.test_tools import ChangeCWD, str_in_call_args_list
 
 logger = logging.getLogger("demisto-sdk")
-
-json = JSON_Handler()
 
 
 VALIDATE_CMD = "validate"

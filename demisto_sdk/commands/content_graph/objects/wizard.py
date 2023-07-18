@@ -17,4 +17,5 @@ class Wizard(ContentItem, content_type=ContentType.WIZARD):  # type: ignore[call
             "dependency_packs",
             "fromversion",
             "toversion",
+            "deprecated",
         }

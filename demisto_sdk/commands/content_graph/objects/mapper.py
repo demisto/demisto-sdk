@@ -14,7 +14,7 @@ class Mapper(ContentItem, content_type=ContentType.MAPPER):  # type: ignore[call
     )  # TODO decide if this should be optional or not
 
     def metadata_fields(self) -> Set[str]:
-        return {"object_id", "name", "description", "fromversion", "toversion"}
+        return {"object_id", "name", "description", "fromversion", "toversion", "deprecated"}
 
     @classmethod
     def _client_upload_method(cls, client: demisto_client) -> Callable:

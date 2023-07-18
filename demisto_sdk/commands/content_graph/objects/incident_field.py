@@ -32,6 +32,7 @@ class IncidentField(ContentItem, content_type=ContentType.INCIDENT_FIELD):  # ty
             "description",
             "fromversion",
             "toversion",
+            "deprecated",
         }
 
     def _upload(

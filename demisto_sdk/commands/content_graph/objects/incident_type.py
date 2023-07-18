@@ -31,6 +31,7 @@ class IncidentType(ContentItem, content_type=ContentType.INCIDENT_TYPE):  # type
             "weeks",
             "fromversion",
             "toversion",
+            "deprecated",
         }
 
     def _upload(

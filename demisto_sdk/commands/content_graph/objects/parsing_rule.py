@@ -10,7 +10,7 @@ from demisto_sdk.commands.prepare_content.rule_unifier import RuleUnifier
 
 class ParsingRule(ContentItemXSIAM, content_type=ContentType.PARSING_RULE):  # type: ignore[call-arg]
     def metadata_fields(self) -> Set[str]:
-        return {"object_id", "name", "fromversion", "toversion"}
+        return {"object_id", "name", "fromversion", "toversion", "deprecated"}
 
     def prepare_for_upload(
         self,

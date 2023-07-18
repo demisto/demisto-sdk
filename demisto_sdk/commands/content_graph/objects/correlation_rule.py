@@ -8,4 +8,4 @@ from demisto_sdk.commands.content_graph.objects.content_item_xsiam import (
 
 class CorrelationRule(ContentItemXSIAM, content_type=ContentType.CORRELATION_RULE):  # type: ignore[call-arg]
     def metadata_fields(self) -> Set[str]:
-        return {"object_id", "name", "description", "fromversion", "toversion"}
+        return {"object_id", "name", "description", "fromversion", "toversion", "deprecated"}

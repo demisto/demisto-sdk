@@ -27,6 +27,7 @@ class IndicatorType(ContentItem, content_type=ContentType.INDICATOR_TYPE):  # ty
             "enhancement_script_names",
             "fromversion",
             "toversion",
+            "deprecated",
         }
 
     def _upload(

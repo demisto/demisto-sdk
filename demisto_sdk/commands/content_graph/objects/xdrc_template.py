@@ -24,6 +24,7 @@ class XDRCTemplate(ContentItemXSIAM, content_type=ContentType.XDRC_TEMPLATE):
             "profile_type",
             "fromversion",
             "toversion",
+            "deprecated",
         }
 
     def prepare_for_upload(

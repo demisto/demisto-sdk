@@ -16,7 +16,7 @@ class List(ContentItem, content_type=ContentType.LIST):  # type: ignore[call-arg
     type: str
 
     def metadata_fields(self) -> Set[str]:
-        return {"object_id", "name", "fromversion", "toversion"}
+        return {"object_id", "name", "fromversion", "toversion", "deprecated"}
 
     def _upload(
         self,

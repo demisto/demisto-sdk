@@ -90,6 +90,9 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
             },  # for all commands, keep the name and description
             "fromversion": True,
             "toversion": True,
+            "isfetch": True,
+            "isfetchevents": True,
+            "deprecated": True,
         }
 
     def prepare_for_upload(

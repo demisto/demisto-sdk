@@ -19,6 +19,7 @@ class Widget(ContentItem, content_type=ContentType.WIDGET):  # type: ignore[call
             "widget_type",
             "fromversion",
             "toversion",
+            "deprecated",
         }
 
     @classmethod

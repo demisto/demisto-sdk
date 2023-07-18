@@ -10,4 +10,4 @@ class GenericModule(ContentItem, content_type=ContentType.GENERIC_MODULE):  # ty
     definition_ids: Optional[List[str]] = Field(alias="definitionIds")
 
     def metadata_fields(self) -> Set[str]:
-        return {"object_id", "name", "description", "fromversion", "toversion"}
+        return {"object_id", "name", "description", "fromversion", "toversion", "deprecated"}

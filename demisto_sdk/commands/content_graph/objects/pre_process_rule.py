@@ -8,7 +8,7 @@ from demisto_sdk.commands.upload.exceptions import NotIndivitudallyUploadableExc
 
 class PreProcessRule(ContentItem, content_type=ContentType.PREPROCESS_RULE):
     def metadata_fields(self) -> Set[str]:
-        return {"name", "description"}
+        return {"name", "description", "deprecated"}
 
     def _upload(self, client, marketplace: MarketplaceVersions) -> None:
         raise NotIndivitudallyUploadableException(self)

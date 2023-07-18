@@ -11,7 +11,10 @@ import requests
 from click.testing import CliRunner
 
 from demisto_sdk.__main__ import main
-from demisto_sdk.commands.common.constants import MarketplaceVersions
+from demisto_sdk.commands.common.constants import (
+    GOOGLE_CLOUD_STORAGE_PUBLIC_BASE_PATH,
+    MarketplaceVersions,
+)
 from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.tools import get_yaml
@@ -212,6 +215,44 @@ def test_insert_description_to_yml():
         == f"{git_path()}/demisto_sdk/tests/test_files/VulnDB/VulnDB_description.md"
     )
     assert (desc_data + integration_doc_link) == yml_unified["detaileddescription"]
+
+
+@pytest.fixture
+def description_as_bytes():
+    return b"""
+This is a desc with an image url link
+![image](https://raw.githubusercontent.com/demisto/content/master/Images/campaign-overview.png)
+"""
+
+
+@pytest.mark.parametrize("is_script, res", [(False, True), (True, False)])
+def test_insert_description_to_yml_with_markdown_image(
+    is_script, res, mocker, description_as_bytes
+):
+    """
+    Given:
+        - an integration path a unified yml and a marketplace
+        - a script path ..
+    When:
+        - Parsing and preparing the description file
+    Then
+        - Validate that the pack folder (test_files) and that the GCS are in the description path.
+        - Validate that the description did not change by the markdown_image_handler.
+    """
+    mocker.patch.object(
+        IntegrationScriptUnifier, "get_data", return_value=(description_as_bytes, True)
+    )
+    package_path = Path(f"{git_path()}/demisto_sdk/tests/test_files/VulnDB/")
+    yml_unified, _ = IntegrationScriptUnifier.insert_description_to_yml(
+        package_path,
+        {"commonfields": {"id": "VulnDB"}},
+        is_script,
+        MarketplaceVersions.XSOAR,
+    )
+    assert (
+        GOOGLE_CLOUD_STORAGE_PUBLIC_BASE_PATH in yml_unified["detaileddescription"]
+    ) == res
+    assert ("test_files" in yml_unified["detaileddescription"]) == res
 
 
 def test_insert_description_to_yml_with_no_detailed_desc(tmp_path):

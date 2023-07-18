@@ -411,14 +411,7 @@ def extract_code(ctx, config, **kwargs):
     help="The marketplace the content items are created for, that determines usage of marketplace "
     "unique text. Default is the XSOAR marketplace.",
     default="xsoar",
-    type=click.Choice(
-        [
-            MarketplaceVersions.XSOAR.value,
-            MarketplaceVersions.MarketplaceV2.value,
-            "v2",
-            MarketplaceVersions.XSOAR_SAAS.value,
-        ]
-    ),
+    type=click.Choice([mp.value for mp in list(MarketplaceVersions)] + ["v2"]),
 )
 @click.pass_context
 @logging_setup_decorator

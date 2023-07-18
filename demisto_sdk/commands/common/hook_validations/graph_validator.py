@@ -35,7 +35,7 @@ class GraphValidator(BaseValidator):
         super().__init__(specific_validations=specific_validations)
         self.include_optional = include_optional_deps
         self.graph = ContentGraphInterface()
-        if should_update:
+        if update_graph:
             update_content_graph(
                 self.graph,
                 use_git=True,

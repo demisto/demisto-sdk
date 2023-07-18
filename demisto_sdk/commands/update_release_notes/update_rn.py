@@ -1023,7 +1023,7 @@ def update_api_modules_dependents_rn(
         f"[yellow]Changes were found in the following APIModules : {api_module_set}, updating all dependent "
         f"integrations.[/yellow]"
     )
-    with Neo4jContentGraphInterface(should_update=True) as graph:
+    with Neo4jContentGraphInterface(update_graph=True) as graph:
         integrations = get_api_module_dependencies_from_graph(api_module_set, graph)
         for integration in integrations:
             integration_pack_name = integration.pack_id

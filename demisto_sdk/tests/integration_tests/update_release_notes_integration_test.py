@@ -487,7 +487,7 @@ def test_update_release_notes_modified_apimodule(demisto_client, repo, mocker):
         integration = taxii_feed_integration
 
     mocker.patch(
-        "demisto_sdk.commands.update_release_notes.update_rn.Neo4jContentGraphInterface",
+        "demisto_sdk.commands.update_release_notes.update_rn.ContentGraphInterface",
         return_value=MockedContentGraphInterface(),
     )
 

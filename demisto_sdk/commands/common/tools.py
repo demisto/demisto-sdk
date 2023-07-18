@@ -115,11 +115,9 @@ from demisto_sdk.commands.common.constants import (
 )
 from demisto_sdk.commands.common.git_content_config import GitContentConfig, GitProvider
 from demisto_sdk.commands.common.git_util import GitUtil
-from demisto_sdk.commands.common.handlers import (
-    DEFAULT_JSON_HANDLER as json,
-    DEFAULT_YAML_HANDLER as yaml,
-    YAML_Handler,
-)
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
+from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
+from demisto_sdk.commands.common.handlers import YAML_Handler
 
 if TYPE_CHECKING:
     from demisto_sdk.commands.content_graph.interface.graph import ContentGraphInterface

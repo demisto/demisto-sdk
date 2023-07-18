@@ -16,6 +16,7 @@ from demisto_sdk.commands.common.constants import (
     MarketplaceVersions,
 )
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import MarketplaceTagParser
 from demisto_sdk.commands.content_graph.common import (
@@ -82,7 +83,6 @@ from demisto_sdk.commands.upload.tools import (
 if TYPE_CHECKING:
     from demisto_sdk.commands.content_graph.objects.relationship import RelationshipData
 
-from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 
 MINIMAL_UPLOAD_SUPPORTED_VERSION = Version("6.5.0")
 MINIMAL_ALLOWED_SKIP_VALIDATION_VERSION = Version("6.6.0")

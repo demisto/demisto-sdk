@@ -11,7 +11,8 @@ from demisto_sdk.commands.common.constants import (
     MODELING_RULE,
     PARSING_RULE,
 )
-from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
+from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import (
     ContentEntityValidator,
 )
@@ -34,9 +35,6 @@ HAS_TESTS_KEY_UNPUTS = [
     (VALID_INTEGRATION_TEST_PATH, "integration", True),
     (INVALID_INTEGRATION_WITH_NO_TEST_PLAYBOOK, "integration", False),
 ]
-
-yaml = YAML_Handler()
-json = JSON_Handler()
 
 
 @pytest.mark.parametrize("file_path, schema, expected", HAS_TESTS_KEY_UNPUTS)

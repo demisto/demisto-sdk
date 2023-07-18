@@ -17,7 +17,7 @@ from demisto_sdk.commands.common.constants import (
 )
 from demisto_sdk.commands.common.content import Content
 from demisto_sdk.commands.common.git_util import GitUtil
-from demisto_sdk.commands.common.handlers import JSON_Handler
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     find_type,
@@ -25,9 +25,6 @@ from demisto_sdk.commands.common.tools import (
     is_file_path_in_pack,
     run_command,
 )
-
-json = JSON_Handler()
-
 
 # secrets settings
 # Entropy score is determined by shanon's entropy algorithm, most English words will score between 1.5 and 3.5

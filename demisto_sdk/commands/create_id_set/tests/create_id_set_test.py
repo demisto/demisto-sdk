@@ -4,7 +4,7 @@ from collections import OrderedDict
 from tempfile import mkdtemp
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
-from demisto_sdk.commands.common.handlers import JSON_Handler
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.update_id_set import (
     ID_SET_ENTITIES,
@@ -13,9 +13,6 @@ from demisto_sdk.commands.common.update_id_set import (
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
 from TestSuite.test_tools import ChangeCWD
 from TestSuite.utils import IsEqualFunctions
-
-json = JSON_Handler()
-
 
 TESTS_DIR = f"{git_path()}/demisto_sdk/tests"
 

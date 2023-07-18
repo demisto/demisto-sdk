@@ -17,7 +17,7 @@ from demisto_sdk.commands.common.errors import (
     get_all_error_codes,
     get_error_object,
 )
-from demisto_sdk.commands.common.handlers import JSON_Handler
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     find_type,
@@ -27,8 +27,6 @@ from demisto_sdk.commands.common.tools import (
     get_relative_path_from_packs_dir,
     get_yaml,
 )
-
-json = JSON_Handler()
 
 
 def error_codes(error_codes_str: str):

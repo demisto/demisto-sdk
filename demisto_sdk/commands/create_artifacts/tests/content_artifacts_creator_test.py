@@ -12,7 +12,8 @@ from demisto_sdk.commands.common.constants import (
     TEST_PLAYBOOKS_DIR,
     MarketplaceVersions,
 )
-from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
+from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
 from demisto_sdk.commands.common.tools import src_root
 from demisto_sdk.commands.prepare_content.prepare_upload_manager import (
     PrepareUploadManager,
@@ -20,8 +21,6 @@ from demisto_sdk.commands.prepare_content.prepare_upload_manager import (
 from TestSuite.test_tools import ChangeCWD
 
 logger = logging.getLogger("demisto-sdk")
-
-json = JSON_Handler()
 
 
 TEST_DATA = src_root() / "tests" / "test_files"
@@ -32,8 +31,6 @@ COMMON_SERVER = UNIT_TEST_DATA / "common_server"
 ARTIFACTS_EXPECTED_RESULTS = TEST_DATA / "artifacts"
 PARTIAL_ID_SET_PATH = UNIT_TEST_DATA / "id_set_missing_packs_and_items.json"
 ALTERNATIVE_FIELDS_ID_SET_PATH = UNIT_TEST_DATA / "id_set_alrenative_fields.json"
-
-yaml = YAML_Handler()
 
 
 def same_folders(src1, src2):

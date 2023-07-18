@@ -6,7 +6,7 @@ import autopep8
 from klara.contract import solver
 from klara.contract.solver import MANAGER, ContractSolver, nodes
 
-from demisto_sdk.commands.common.handlers import JSON_Handler
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.generate_docs.common import execute_command
 from demisto_sdk.commands.generate_docs.generate_integration_doc import (
@@ -17,8 +17,6 @@ from demisto_sdk.commands.generate_unit_tests.test_case_builder import (
     TestCase,
 )
 from demisto_sdk.commands.generate_unit_tests.test_module_builder import TestModule
-
-json = JSON_Handler()
 
 
 class UnitTestsGenerator:

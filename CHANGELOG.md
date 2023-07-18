@@ -1,7 +1,9 @@
 # Changelog
 ## Unreleased
+* Fixed an issue where **validate** falsely detected backwards-compatibility issues, and prevented adding the `marketplaces` key to content items.
 * Calling **format** with the `-d` flag now removes test playbooks testing the deprecated content from conf.json.
 * Fixed an issue where in some cases the **split** command did not remove pack version note from the script.
+* Fixed an issue where **validate** would not properly detect dependencies of core packs.
 * The **modeling-rules test** command will now validate that the modeling rules schema mappings are aligned with the test-data mappings.
 
 ## 1.17.2

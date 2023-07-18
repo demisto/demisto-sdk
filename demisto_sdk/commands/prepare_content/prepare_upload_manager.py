@@ -38,7 +38,7 @@ class PrepareUploadManager:
 
         if graph:
             # enrich the content item with the graph
-            with Neo4jContentGraphInterface(should_update=not skip_update) as interface:
+            with Neo4jContentGraphInterface(update_graph=not skip_update) as interface:
                 content_item = interface.from_path(
                     path=content_item.path,
                     marketplace=marketplace,

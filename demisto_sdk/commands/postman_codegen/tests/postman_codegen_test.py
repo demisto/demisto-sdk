@@ -9,7 +9,8 @@ from click.testing import CliRunner
 
 import demisto_sdk.commands.common.tools as tools
 from demisto_sdk.__main__ import main
-from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
+from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.generate_integration.code_generator import (
     IntegrationGeneratorArg,
@@ -26,11 +27,6 @@ from demisto_sdk.commands.postman_codegen.postman_codegen import (
     postman_to_autogen_configuration,
     update_min_unique_path,
 )
-
-json = JSON_Handler()
-
-
-yaml = YAML_Handler()
 
 
 class TestPostmanHelpers:

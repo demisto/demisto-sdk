@@ -1,6 +1,6 @@
 from typing import List, Tuple
 
-from demisto_sdk.commands.common.handlers import JSON_Handler
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     get_dict_from_file,
@@ -13,8 +13,6 @@ from demisto_sdk.commands.format.format_constants import (
     SUCCESS_RETURN_CODE,
 )
 from demisto_sdk.commands.format.update_generic_json import BaseUpdateJSON
-
-json = JSON_Handler()
 
 
 class IncidentFieldJSONFormat(BaseUpdateJSON):

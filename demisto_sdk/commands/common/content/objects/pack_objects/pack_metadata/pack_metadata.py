@@ -14,13 +14,10 @@ from demisto_sdk.commands.common.constants import (
     ContentItems,
 )
 from demisto_sdk.commands.common.content.objects.abstract_objects import JSONObject
-from demisto_sdk.commands.common.handlers import JSON_Handler
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import get_core_pack_list
 from demisto_sdk.commands.find_dependencies.find_dependencies import PackDependencies
-
-json = JSON_Handler()
-
 
 DATETIME_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
 PARTNER_SUPPORT = "partner"

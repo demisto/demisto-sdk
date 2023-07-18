@@ -5,7 +5,10 @@ import shutil
 from pathlib import Path
 from typing import Optional
 
-from ruamel.yaml.scalarstring import PlainScalarString, SingleQuotedScalarString
+from ruamel.yaml.scalarstring import (  # noqa: TID251
+    PlainScalarString,
+    SingleQuotedScalarString,
+)
 
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import (

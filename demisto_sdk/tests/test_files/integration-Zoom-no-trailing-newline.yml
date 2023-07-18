@@ -27,8 +27,10 @@ script:
   script: |-
     ### pack version: 1.0.3
     register_module_line('Zoom', 'start', __line__())
+    # pack version: 1.0.3
     import datetime
     import jwt
+    #### pack version: 1.0.3
     import requests
     import json
     import shutil

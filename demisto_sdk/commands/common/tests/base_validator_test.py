@@ -12,15 +12,12 @@ from demisto_sdk.commands.common.errors import (
     PRESET_ERROR_TO_IGNORE,
     Errors,
 )
-from demisto_sdk.commands.common.handlers import JSON_Handler
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.hook_validations.base_validator import BaseValidator
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.tools import get_yaml
 from TestSuite.pack import Pack
 from TestSuite.test_tools import ChangeCWD, str_in_call_args_list
-
-json = JSON_Handler()
-
 
 DEPRECATED_IGNORE_ERRORS_DEFAULT_LIST = (
     BaseValidator.create_reverse_ignored_errors_list(

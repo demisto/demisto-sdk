@@ -115,15 +115,15 @@ from demisto_sdk.commands.common.constants import (
 )
 from demisto_sdk.commands.common.git_content_config import GitContentConfig, GitProvider
 from demisto_sdk.commands.common.git_util import GitUtil
-from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
+from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
+from demisto_sdk.commands.common.handlers import YAML_Handler
 
 if TYPE_CHECKING:
     from demisto_sdk.commands.content_graph.interface.graph import ContentGraphInterface
 
 logger = logging.getLogger("demisto-sdk")
 
-json = JSON_Handler()
-yaml = YAML_Handler()
 yaml_safe_load = YAML_Handler(typ="safe")
 
 urllib3.disable_warnings()
@@ -588,7 +588,8 @@ def get_remote_file(
         except Exception as e:
             logger.debug(
                 f"Could not get local remote file because of: {str(e)}\n"
-                f"Searching the remote file content with the API."
+                f"Searching the remote file content with the API.",
+                exc_info=True,
             )
     return get_remote_file_from_api(
         full_file_path, git_content_config, tag, return_content
@@ -1325,7 +1326,7 @@ def get_scripts_names(file_path):
     return scripts_names
 
 
-def get_pack_name(file_path):
+def get_pack_name(file_path: Union[str, Path]):
     """
     extract pack name (folder name) from file path
 

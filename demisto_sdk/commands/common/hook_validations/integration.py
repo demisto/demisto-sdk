@@ -39,7 +39,8 @@ from demisto_sdk.commands.common.errors import (
     FOUND_FILES_AND_IGNORED_ERRORS,
     Errors,
 )
-from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
+from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
 from demisto_sdk.commands.common.hook_validations.base_validator import error_codes
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import (
     ContentEntityValidator,
@@ -64,8 +65,6 @@ from demisto_sdk.commands.common.tools import (
     string_to_bool,
 )
 
-json = JSON_Handler()
-yaml = YAML_Handler()
 default_additional_info = load_default_additional_info_dict()
 
 

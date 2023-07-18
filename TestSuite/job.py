@@ -1,4 +1,3 @@
-from json.decoder import JSONDecodeError
 from pathlib import Path
 from typing import List, Optional
 
@@ -6,7 +5,10 @@ from demisto_sdk.commands.common.constants import (
     FILETYPE_TO_DEFAULT_FROMVERSION,
     FileType,
 )
+from demisto_sdk.commands.common.handlers import JSON_Handler
 from TestSuite.json_based import JSONBased
+
+json = JSON_Handler()
 
 
 class Job(JSONBased):
@@ -45,5 +47,5 @@ class Job(JSONBased):
         try:
             return (self.read_json_as_dict() or {}).get("playbookId", default)
 
-        except JSONDecodeError:  # file not yet written
+        except json.JSONDecodeError:  # file not yet written
             return default

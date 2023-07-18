@@ -7,15 +7,12 @@ import click
 import pytest
 
 from demisto_sdk.__main__ import xsoar_config_file_update
-from demisto_sdk.commands.common.handlers import JSON_Handler
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.tools import src_root
 from demisto_sdk.commands.update_xsoar_config_file.update_xsoar_config_file import (
     XSOARConfigFileUpdater,
 )
 from TestSuite.test_tools import str_in_call_args_list
-
-json = JSON_Handler()
-
 
 UNIT_TEST_DATA = src_root() / "commands" / "update_xsoar_config_file" / "tests" / "data"
 

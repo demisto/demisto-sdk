@@ -289,10 +289,12 @@ def test_extract_code(tmpdir, file_path, file_type):
         output=str(tmpdir.join("temp_code.py")),
         file_type=file_type,
     )
-    assert (
-        "### pack version: 1.0.3"
-        in yaml.load(Path(extractor.input).read_text())["script"]["script"]
-    )
+    script_before_split = yaml.load(Path(extractor.input).read_text())["script"][
+        "script"
+    ]
+    assert "### pack version: 1.0.3" in script_before_split
+    assert "# pack version: 1.0.3" in script_before_split
+    assert "#### pack version: 1.0.3" in script_before_split
 
     extractor.extract_code(extractor.output)
     with open(extractor.output, "rb") as temp_code:
@@ -302,6 +304,8 @@ def test_extract_code(tmpdir, file_path, file_type):
         assert file_data[-1] == "\n"
         assert "register_module_line" not in file_data
         assert "### pack version: 1.0.3" not in file_data
+        assert "# pack version: 1.0.3" not in file_data
+        assert "#### pack version: 1.0.3" not in file_data
     os.remove(extractor.output)
 
     extractor.common_server = False
@@ -313,6 +317,8 @@ def test_extract_code(tmpdir, file_path, file_type):
         assert "from CommonServerPython import *  #" not in file_data
         assert "register_module_line" not in file_data
         assert "### pack version: 1.0.3" not in file_data
+        assert "# pack version: 1.0.3" not in file_data
+        assert "#### pack version: 1.0.3" not in file_data
         assert file_data[-1] == "\n"
 
 

@@ -582,7 +582,7 @@ class ValidateManager:
 
         return all(all_packs_valid)
 
-    def run_validations_on_pack(self, pack_path, skip_files=None):
+    def run_validations_on_pack(self, pack_path, skip_files: Optional[Set[str]] = None):
         """Runs validation on all files in given pack. (i,g,a)
 
         Args:
@@ -1347,12 +1347,17 @@ class ValidateManager:
             logger.info(
                 f"\n[cyan]================= Running validation on Marketplace Changed Packs =================[/cyan]"
             )
-            logger.debug(f"Found marketplace change in the following packs: {self.packs_with_mp_change}")
+            logger.debug(
+                f"Found marketplace change in the following packs: {self.packs_with_mp_change}"
+            )
 
             for mp_changed_metadata_pack in self.packs_with_mp_change:
                 # Running validation on the whole pack, excluding files that were already checked.
                 validation_results.add(
-                    self.run_validations_on_pack(mp_changed_metadata_pack, skip_files=all_files_set)[0])
+                    self.run_validations_on_pack(
+                        mp_changed_metadata_pack, skip_files=set(all_files_set)
+                    )[0]
+                )
 
             logger.debug(f"Finished validating marketplace changed packs.")
 

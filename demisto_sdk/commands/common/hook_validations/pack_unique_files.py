@@ -268,7 +268,12 @@ class PackUniqueFilesValidator(BaseValidator):
         return False
 
     def check_metadata_for_marketplace_change(self):
+        """Return True if pack_metadata's marketplaces field was changed."""
         metadata_file_path = self._get_pack_file_path(self.pack_meta_file)
+        if not os.path.isfile(metadata_file_path):
+            # No metadata file, No marketplace change.
+            return False
+
         old_meta_file_content = get_remote_file(metadata_file_path, tag=self.prev_ver)
         current_meta_file_content = self._read_metadata_content()
         old_mps = old_meta_file_content.get("marketplaces", [])

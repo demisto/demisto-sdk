@@ -2079,7 +2079,10 @@ def test_validate_using_git_on_changed_marketplaces(mocker, pack):
         return_value=(set(), set(), {pack.pack_metadata.path}, set(), True),
     )
     mocker.patch.object(GitUtil, "deleted_files", return_value=set())
-    mocker.patch('demisto_sdk.commands.common.tools.get_remote_file', return_value=old_pack_metadata)
+    mocker.patch(
+        "demisto_sdk.commands.common.tools.get_remote_file",
+        return_value=old_pack_metadata,
+    )
     validate_manager = ValidateManager(check_is_unskipped=False, skip_conf_json=True)
 
     with ChangeCWD(pack.repo_path):
@@ -2095,7 +2098,6 @@ def test_validate_using_git_on_changed_marketplaces(mocker, pack):
             str_in_call_args_list(logger_error.call_args_list, expected_code),
         ]
     )
-
 
 
 def test_is_mapping_fields_command_exist(integration):

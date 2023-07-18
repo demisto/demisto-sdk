@@ -22,7 +22,6 @@ from demisto_sdk.commands.common.content.content import Content
 from demisto_sdk.commands.common.content_constant_paths import CONF_PATH
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.git_util import GitUtil
-from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.hook_validations.base_validator import BaseValidator
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import (
     ContentEntityValidator,
@@ -150,8 +149,6 @@ from demisto_sdk.tests.test_files.validate_integration_test_valid_types import (
 )
 from TestSuite.pack import Pack
 from TestSuite.test_tools import ChangeCWD, str_in_call_args_list
-
-json = JSON_Handler()
 
 
 class MyRepo:

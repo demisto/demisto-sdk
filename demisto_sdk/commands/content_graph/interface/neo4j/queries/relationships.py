@@ -16,7 +16,7 @@ from demisto_sdk.commands.content_graph.interface.neo4j.queries.common import (
     run_query,
 )
 
-CHUNK_SIZE = 1000
+CHUNK_SIZE = 500
 
 
 def build_source_properties() -> str:

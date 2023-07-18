@@ -934,11 +934,7 @@ class TestTheTestModelingRuleCommandSingleRule:
         fake_test_data = TestData.parse_file(path_to_fake_test_data_file.as_posix())
         test_data_file.write_as_text(fake_test_data.json(indent=4))
         test_data_file.update(
-            {
-                "ignored_validations": [
-                    Validations.SCHEMA_TYPES_ALIGNED_WITH_TEST_DATA
-                ]
-            }
+            {"ignored_validations": [Validations.SCHEMA_TYPES_ALIGNED_WITH_TEST_DATA]}
         )
 
         try:
@@ -1653,7 +1649,9 @@ class TestValidateSchemaAlignedWithTestData:
         assert not logger_error_mocker.called
         assert logger_warning_mocker.called
 
-    def test_validate_schema_aligned_with_test_data_invalid_schema_mappings(self, mocker):
+    def test_validate_schema_aligned_with_test_data_invalid_schema_mappings(
+        self, mocker
+    ):
         """
         Given:
             - event data that its mapping to schema is wrong.
@@ -1703,7 +1701,9 @@ class TestValidateSchemaAlignedWithTestData:
         assert logger_error_mocker.called
         assert not logger_warning_mocker.called
 
-    def test_validate_schema_aligned_with_test_data_events_have_same_key_with_different_types(self, mocker):
+    def test_validate_schema_aligned_with_test_data_events_have_same_key_with_different_types(
+        self, mocker
+    ):
         """
         Given:
             - 2 events that have the same key with two different types (int and string).
@@ -1759,5 +1759,8 @@ class TestValidateSchemaAlignedWithTestData:
                     }
                 },
             )
-        assert 'The testdata contains events with the same event_key' in logger_error_mocker.call_args_list[0].args[0]
+        assert (
+            "The testdata contains events with the same event_key"
+            in logger_error_mocker.call_args_list[0].args[0]
+        )
         assert not logger_warning_mocker.called

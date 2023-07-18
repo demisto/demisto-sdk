@@ -293,7 +293,9 @@ def validate_schema_aligned_with_test_data(
 
     # map each dataset from the schema to the correct events that has the same dataset
     schema_dataset_to_events = {
-        dataset: [event_log for event_log in test_data.data if event_log.dataset == dataset]
+        dataset: [
+            event_log for event_log in test_data.data if event_log.dataset == dataset
+        ]
         for dataset in schema.keys()
     }
 
@@ -301,7 +303,7 @@ def validate_schema_aligned_with_test_data(
 
     for dataset, event_logs in schema_dataset_to_events.items():
         all_schema_dataset_mappings = schema[dataset]
-        test_data_mappings = {}
+        test_data_mappings: Dict = {}
         error_logs = set()
         for event_log in event_logs:
             for event_key, event_val in event_log.event_data.items():
@@ -310,7 +312,7 @@ def validate_schema_aligned_with_test_data(
                 ):  # if event_val is None, warn and continue looping.
                     logger.warning(
                         f"{event_val=} for {event_key=} is null on {event_log.test_data_event_id} for {dataset=}",
-                        extra={"markup": True}
+                        extra={"markup": True},
                     )
                     continue
 
@@ -322,16 +324,16 @@ def validate_schema_aligned_with_test_data(
                     else:
                         event_val_type = type(event_val)
 
-                    test_data_key_mappings = expected_schema_mappings[
-                        event_val_type
-                    ]
+                    test_data_key_mappings = expected_schema_mappings[event_val_type]
 
                     if (
-                        existing_testdata_key_mapping := test_data_mappings.get(event_key)
+                        existing_testdata_key_mapping := test_data_mappings.get(
+                            event_key
+                        )
                     ) and existing_testdata_key_mapping != test_data_key_mappings:
                         error_logs.add(
-                            f'The testdata contains events with the same {event_key=} '
-                            f'that have different types for dataset {dataset}'
+                            f"The testdata contains events with the same {event_key=} "
+                            f"that have different types for dataset {dataset}"
                         )
                         errors_occurred = True
                         continue

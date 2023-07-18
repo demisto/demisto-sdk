@@ -392,6 +392,7 @@ jobs:
           when: always
           command: |
             source $(poetry env info --path)/bin/activate
+            export DEMISTO_SDK_LOG_FILE_PATH=$ARTIFACTS_FOLDER/demisto_sdk_debug.log
             cd content
             demisto-sdk -v
             mkdir ./tmp
@@ -408,6 +409,8 @@ jobs:
             demisto-sdk update-content-graph -i ./tmp/content_graph/xsoar.zip -o ./tmp/content_graph
       - store_artifacts:
           path: content/tmp
+      - store_artifacts:
+          path: $ARTIFACTS_FOLDER
 
   build:
       docker:

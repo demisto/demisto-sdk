@@ -2,7 +2,6 @@
 ## Unreleased
 * Added the ability to ignore any validation in the **validate** command when running in an external (non-demisto/content) repo, by placing a `.private-repo-settings` file at its root.
 * Fixed an issue where **validate** falsely detected backwards-compatibility issues, and prevented adding the `marketplaces` key to content items.
-* Added the ability to ignore any validation in the **validate** command when running in an external (non-demisto/content) repo, using the <FILE_NAME> file.
 * Calling **format** with the `-d` flag now removes test playbooks testing the deprecated content from conf.json.
 * Fixed an issue where in some cases the **split** command did not remove pack version note from the script.
 * Fixed an issue where **validate** would not properly detect dependencies of core packs.

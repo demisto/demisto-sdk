@@ -48,8 +48,9 @@ from demisto_sdk.commands.common.tools import (
     pack_name_to_path,
     run_command,
 )
-from demisto_sdk.commands.content_graph.interface.neo4j.neo4j_graph import (
-    Neo4jContentGraphInterface,
+from demisto_sdk.commands.content_graph.commands.update import update_content_graph
+from demisto_sdk.commands.content_graph.interface import (
+    ContentGraphInterface,
 )
 
 json = JSON_Handler()
@@ -1025,7 +1026,8 @@ def update_api_modules_dependents_rn(
         f"[yellow]Changes were found in the following APIModules : {api_module_set}, updating all dependent "
         f"integrations.[/yellow]"
     )
-    with Neo4jContentGraphInterface(should_update=True) as graph:
+    with ContentGraphInterface() as graph:
+        update_content_graph(graph, use_git=True, dependencies=True)
         integrations = get_api_module_dependencies_from_graph(api_module_set, graph)
         for integration in integrations:
             integration_pack_name = integration.pack_id

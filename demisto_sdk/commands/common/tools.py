@@ -118,7 +118,7 @@ from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
 
 if TYPE_CHECKING:
-    from demisto_sdk.commands.content_graph.interface.graph import ContentGraphInterface
+    from demisto_sdk.commands.content_graph.interface import ContentGraphInterface
 
 logger = logging.getLogger("demisto-sdk")
 

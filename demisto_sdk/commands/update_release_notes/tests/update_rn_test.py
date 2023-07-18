@@ -18,8 +18,8 @@ from demisto_sdk.commands.common.hook_validations.readme import ReadMeValidator
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.markdown_lint import run_markdownlint
 from demisto_sdk.commands.common.tools import get_json
-from demisto_sdk.commands.content_graph.interface.neo4j.neo4j_graph import (
-    Neo4jContentGraphInterface,
+from demisto_sdk.commands.content_graph.interface import (
+    ContentGraphInterface,
 )
 from demisto_sdk.commands.content_graph.tests.create_content_graph_test import (
     mock_integration,
@@ -1973,13 +1973,13 @@ class TestRNUpdateUnit:
         added = {}
 
         integration_mock = mock_integration("SmapleIntegration")
-        mocker.patch.object(Neo4jContentGraphInterface, "__init__", return_value=None)
+        mocker.patch.object(ContentGraphInterface, "__init__", return_value=None)
         mocker.patch.object(
-            Neo4jContentGraphInterface,
+            ContentGraphInterface,
             "__enter__",
-            return_value=Neo4jContentGraphInterface,
+            return_value=ContentGraphInterface,
         )
-        mocker.patch.object(Neo4jContentGraphInterface, "__exit__", return_value=None)
+        mocker.patch.object(ContentGraphInterface, "__exit__", return_value=None)
         mocker.patch.object(UpdateRN, "get_master_version", return_value="0.0.0")
 
         mocker.patch(

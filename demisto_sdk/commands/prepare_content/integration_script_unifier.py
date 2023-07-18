@@ -18,7 +18,7 @@ from demisto_sdk.commands.common.constants import (
     FileType,
     MarketplaceVersions,
 )
-from demisto_sdk.commands.common.handlers import JSON_Handler
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     arg_to_list,
@@ -31,8 +31,6 @@ from demisto_sdk.commands.common.tools import (
     get_yml_paths_in_dir,
 )
 from demisto_sdk.commands.prepare_content.unifier import Unifier
-
-json = JSON_Handler()
 
 PACK_METADATA_PATH = "pack_metadata.json"
 CONTRIBUTOR_DISPLAY_NAME = " ({} Contribution)"

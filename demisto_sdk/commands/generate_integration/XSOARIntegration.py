@@ -5,9 +5,7 @@ from ruamel.yaml.scalarstring import (  # noqa: TID251 - only importing FoldedSc
 )
 
 import demisto_sdk.commands.common.tools as tools
-from demisto_sdk.commands.common.handlers import JSON_Handler
-
-json = JSON_Handler()
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 
 
 class XSOARIntegration:

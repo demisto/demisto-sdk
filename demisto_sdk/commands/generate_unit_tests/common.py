@@ -1,9 +1,7 @@
 import ast as ast_mod
 from typing import Union
 
-from demisto_sdk.commands.common.handlers import JSON_Handler
-
-json = JSON_Handler()
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 
 
 def ast_name(

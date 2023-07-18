@@ -16,7 +16,7 @@ from demisto_sdk.commands.content_graph.interface.neo4j.queries.common import (
     run_query,
 )
 
-CHUNK_SIZE = 500
+CHUNK_SIZE = 1000
 
 
 def build_source_properties() -> str:
@@ -212,7 +212,7 @@ def create_relationships_by_type(
         query = build_default_relationships_query(relationship)
     for chunk in more_itertools.chunked_even(data, CHUNK_SIZE):
         result = run_query(tx, query, data=chunk).single()
-        merged_relationships_count: int = result["relationships_merged"]
+        merged_relationships_count = result["relationships_merged"]
         logger.debug(
             f"Merged {merged_relationships_count} relationships of type {relationship}."
         )

@@ -1,6 +1,7 @@
 # Changelog
 ## Unreleased
 * Calling **format** with the `-d` flag now removes test playbooks testing the deprecated content from conf.json.
+* Fixed an issue where in some cases the **split** command did not remove pack version note from the script.
 * The **modeling-rules test** command will now validate that the modeling rules schema mappings are aligned with the test-data mappings.
 
 ## 1.17.2

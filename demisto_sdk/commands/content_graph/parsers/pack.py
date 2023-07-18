@@ -189,6 +189,9 @@ class PackParser(BaseContentParser, PackMetadataParser):
                 content_item_path
             ) in folder_path.iterdir():  # todo: consider multiprocessing
                 self.parse_content_item(content_item_path)
+        
+        # parse pack ignore and add to content items, and to current pack
+
 
     def parse_content_item(self, content_item_path: Path) -> None:
         """Potentially parses a single content item.

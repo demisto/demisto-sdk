@@ -41,4 +41,4 @@ ignore = []
 select = []
 
 [throw_warnings]
-warnings_list = []
+warnings_list = ["YV100"]

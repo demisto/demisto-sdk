@@ -1,4 +1,8 @@
+from typing import Tuple, Type
+from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
+from demisto_sdk.commands.content_graph.objects.classifier import Classifier
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
+from demisto_sdk.commands.content_graph.objects.integration import Integration
 from demisto_sdk.commands.validate_poc.validators.base_validator import (
     BaseValidator,
     ValidationResult,
@@ -11,7 +15,7 @@ class IDNameValidator(BaseValidator):
     error_message = "ID and name are not identical."
     is_auto_fixable = True
     related_field = "name"
-    content_types = (ContentItem,)
+    content_types = (Integration, Classifier)
 
     @classmethod
     def is_valid(cls, content_item: ContentItem) -> ValidationResult:

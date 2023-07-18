@@ -23,8 +23,8 @@ class ValidateManager:
         validate_all=False,
         file_path=None,
     ):
-        self.config: dict = toml.load("/Users/yhayun/dev/demisto/demisto-sdk/demisto_sdk/commands/validate_poc/validation_conf.toml")
-        self.files_to_run = self.gather_files_to_run(file_path, use_git, validate_all)
+        self.config: dict = toml.load("/Users/ierukhimovic/dev/demisto/demisto-sdk/demisto_sdk/commands/validate_poc/validation_conf.toml")
+        self.objects_to_run = self.gather_objects_to_run(file_path, use_git, validate_all)
         self.validation_codes, self.run_using_select = self.gather_validations_to_run(
             use_git
         )
@@ -40,22 +40,22 @@ class ValidateManager:
             # if error in validation_codes the left = False if run_using_select = True then we get get False
             # if error in validation_codes the left = False if run_using_select = False then we get get True
             if (validator.error_code in self.validation_codes) == self.run_using_select:
-                for object_ in self.files_to_run:
-                    if isinstance(object_, Pack):
-                        for content_item in object_.content_items:
-                            if validator.should_run(content_item):
-                                if validator.error_code not in content_item.ignored_errors:
-                                    results.append(validator.is_valid(content_item))
-                    if validator.error_code not in content_item.ignored_errors:
-                        results.append(validator.is_valid(content_item))
+                for content_object in self.objects_to_run:
+                    if validator.should_run(content_object):
+                        validation_result = validator.is_valid(content_object)
+                        if not validation_result.is_valid:
+                            validator.fix(content_object)
+                            
+                        results.append(validation_result)
+
         return self.post_results(results)
 
-    def gather_files_to_run(self, file_paths, use_git, validate_all):
+    def gather_objects_to_run(self, file_paths, use_git, validate_all):
         content_objects_to_run = set()
         if use_git:
             file_paths = GitUtil()._get_all_changed_files()
         elif file_paths:
-            for file_path in file_paths.split(","):
+            for file_path in file_paths:
                 content_object = BaseContent.from_path(Path(file_path))
                 if content_object is None:
                     raise Exception(f"no content found in {file_path}")
@@ -65,7 +65,13 @@ class ValidateManager:
             if not isinstance(content_dto, ContentDTO):
                 raise Exception("no content found")
             content_objects_to_run = set(content_dto.packs)
-        return content_objects_to_run
+        final_content_objects_to_run = set()
+        for content_object in content_objects_to_run:
+            if isinstance(content_object, Pack):
+                for content_item in content_object.content_items:
+                    final_content_objects_to_run.add(content_item)
+            final_content_objects_to_run.add(content_object)
+        return final_content_objects_to_run
     
 
     def gather_validations_to_run(self, use_git):

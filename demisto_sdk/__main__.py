@@ -739,6 +739,22 @@ def validate(ctx, config, file_paths: str, **kwargs):
             "Please run the command from content directory[red]"
         )
         sys.exit(1)
+        
+        
+# ====================== validate_poc ====================== #
+@main.command()
+@click.help_option("-h", "--help")
+@click.argument("file_paths", nargs=-1, type=click.Path(exists=True, resolve_path=True))
+# @pass_config
+# @click.pass_context
+# @logging_setup_decorator
+def validate_poc(file_paths: str):
+    """Validate your content files. If no additional flags are given, will validated only committed files."""
+    from demisto_sdk.commands.validate_poc.validate_manager import ValidateManager
+    validate_manager = ValidateManager(file_path=file_paths)
+    flag = validate_manager.run()
+
+
 
 
 # ====================== create-content-artifacts ====================== #

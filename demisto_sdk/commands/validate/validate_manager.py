@@ -202,6 +202,10 @@ class ValidateManager:
         multiprocessing=True,
         specific_validations=None,
     ):
+        import os
+        import sys
+        print(os.environ)
+        sys.exit(1)
         # General configuration
         self.skip_docker_checks = False
         self.no_configuration_prints = silence_init_prints

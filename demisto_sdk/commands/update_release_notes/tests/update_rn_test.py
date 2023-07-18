@@ -13,7 +13,7 @@ from demisto_sdk.commands.common.constants import (
     DEFAULT_CONTENT_ITEM_TO_VERSION,
     FileType,
 )
-from demisto_sdk.commands.common.handlers import JSON_Handler
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.hook_validations.readme import ReadMeValidator
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.markdown_lint import run_markdownlint
@@ -32,8 +32,6 @@ from demisto_sdk.commands.update_release_notes.update_rn import (
     get_deprecated_rn,
     get_file_description,
 )
-
-json = JSON_Handler()
 
 
 class TestRNUpdate:

@@ -31,7 +31,7 @@ from demisto_sdk.commands.common.content.objects.pack_objects.abstract_pack_obje
     YAMLContentObject,
 )
 from demisto_sdk.commands.common.git_util import GitUtil
-from demisto_sdk.commands.common.handlers import JSON_Handler
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     find_type,
@@ -52,8 +52,6 @@ from demisto_sdk.commands.content_graph.commands.update import update_content_gr
 from demisto_sdk.commands.content_graph.interface import (
     ContentGraphInterface,
 )
-
-json = JSON_Handler()
 
 CLASS_BY_FILE_TYPE = {
     FileType.INTEGRATION: Integration,

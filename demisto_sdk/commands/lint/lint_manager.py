@@ -25,7 +25,7 @@ from demisto_sdk.commands.common.constants import (
 )
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.docker_helper import init_global_docker_client
-from demisto_sdk.commands.common.handlers import JSON_Handler
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.timers import report_time_measurements
 from demisto_sdk.commands.common.tools import (
@@ -53,8 +53,6 @@ from demisto_sdk.commands.lint.helpers import (
     get_test_modules,
 )
 from demisto_sdk.commands.lint.linter import DockerImageFlagOption, Linter
-
-json = JSON_Handler()
 
 # Third party packages
 

@@ -29,7 +29,7 @@ class GraphValidator(BaseValidator):
         specific_validations: list = None,
         git_files: list = None,
         input_files: list = None,
-        should_update: bool = True,
+        update_graph: bool = True,
         include_optional_deps: bool = False,
     ):
         super().__init__(specific_validations=specific_validations)

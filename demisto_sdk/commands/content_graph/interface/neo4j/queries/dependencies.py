@@ -22,7 +22,7 @@ from demisto_sdk.commands.content_graph.interface.neo4j.queries.common import (
     to_neo4j_map,
 )
 
-IGNORED_PACKS_IN_DEPENDENCY_CALC = ["NonSupported", "Base", "ApiModules"]
+IGNORED_PACKS_IN_DEPENDENCY_CALC = ["NonSupported", "ApiModules"]
 
 MAX_DEPTH = 5
 

@@ -328,6 +328,7 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
             "content_type",
             "url",
             "email",
+            "database_id",
         }
         if not self.is_private:
             excluded_fields_from_metadata |= {
@@ -660,9 +661,6 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
                 else:
                     content_item_summary = content_item.summary(marketplace)
 
-                # if 'fromversion' in content_item_summary and content_item_summary['fromversion'] == DEFAULT_CONTENT_ITEM_FROM_VERSION:
-                #     content_item_summary['fromversion'] = self.server_min_version
-
                 content_items.setdefault(content_item.content_type.metadata_name, [])
 
                 if is_item_metadata_appended := [
@@ -719,6 +717,7 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
                 "certification": r.content_item_to.certification,  # type:ignore[attr-defined]
             }
             for r in self.depends_on
+            if r.is_direct
         }
 
     @staticmethod

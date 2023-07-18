@@ -20,6 +20,7 @@ class ValidationResult(BaseModel):
 class BaseValidator(ABC, BaseModel):
     error_code: str
     description: str
+    error_message: str
     is_auto_fixable: bool
     related_field: str
     content_types: Tuple[Type[BaseContent], ...]

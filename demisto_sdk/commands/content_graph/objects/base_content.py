@@ -20,8 +20,8 @@ import demisto_client
 from packaging.version import Version
 from pydantic import BaseModel, DirectoryPath, Field
 from pydantic.main import ModelMetaclass
-# from demisto_sdk.commands.content_graph.objects.repository import ContentDTO
 
+# from demisto_sdk.commands.content_graph.objects.repository import ContentDTO
 import demisto_sdk.commands.content_graph.parsers.content_item
 from demisto_sdk.commands.common.constants import (
     MARKETPLACE_MIN_VERSION,
@@ -144,7 +144,7 @@ class BaseContent(BaseContentModel):
 
     @staticmethod
     @lru_cache
-    def from_path(path: Path) -> Optional["BaseContent"]:            
+    def from_path(path: Path) -> Optional["BaseContent"]:
         logger.debug(f"Loading content item from path: {path}")
         if (
             path.is_dir() and path.parent.name == PACKS_FOLDER

@@ -7,10 +7,10 @@ from demisto_sdk.commands.validate_poc.validators.base_validator import (
 
 class IDNameValidator(BaseValidator):
     error_code = "YV100"
-    error_message = "ID and name are not identical."
     description = "Validate that the file id and name fields are identical."
-    related_field = "name"
+    error_message = "ID and name are not identical."
     is_auto_fixable = True
+    related_field = "name"
     content_types = (ContentItem,)
 
     @classmethod

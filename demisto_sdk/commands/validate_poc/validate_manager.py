@@ -1,3 +1,4 @@
+from pathlib import Path
 from typing import List
 
 import toml
@@ -12,6 +13,7 @@ from demisto_sdk.commands.validate_poc.validators.base_validator import (
     BaseValidator,
     ValidationResult,
 )
+from demisto_sdk.commands.validate_poc.validators.id_name_validator import *
 
 
 class ValidateManager:
@@ -21,11 +23,11 @@ class ValidateManager:
         validate_all=False,
         file_path=None,
     ):
+        self.config: dict = toml.load("/Users/yhayun/dev/demisto/demisto-sdk/demisto_sdk/commands/validate_poc/validation_conf.toml")
         self.files_to_run = self.gather_files_to_run(file_path, use_git, validate_all)
         self.validation_codes, self.run_using_select = self.gather_validations_to_run(
-            use_git, validate_all
+            use_git
         )
-        self.config: dict = toml.load("validation_conf.toml")
 
     def run(self):
         results: List[ValidationResult] = []
@@ -52,12 +54,12 @@ class ValidateManager:
         content_objects_to_run = set()
         if use_git:
             file_paths = GitUtil()._get_all_changed_files()
-
-        for file_path in file_paths:
-            content_object = BaseContent.from_path(file_path)
-            if content_object is None:
-                raise Exception(f"no content found in {file_path}")
-            content_objects_to_run.add(BaseContent.from_path(file_path))
+        elif file_paths:
+            for file_path in file_paths.split(","):
+                content_object = BaseContent.from_path(Path(file_path))
+                if content_object is None:
+                    raise Exception(f"no content found in {file_path}")
+                content_objects_to_run.add(content_object)
         if validate_all:
             content_dto = ContentDTO.from_path(CONTENT_PATH)
             if not isinstance(content_dto, ContentDTO):
@@ -66,7 +68,7 @@ class ValidateManager:
         return content_objects_to_run
     
 
-    def gather_validations_to_run(self, use_git, validate_all):
+    def gather_validations_to_run(self, use_git):
         flag = "use_git" if use_git else "validate_all"
         if select := self.config.get(flag, {}).get("select"):
             validation_codes, run_using_select = select, True

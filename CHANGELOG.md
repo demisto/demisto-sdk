@@ -1,6 +1,7 @@
 # Changelog
 ## Unreleased
 * Calling **format** with the `-d` flag now removes test playbooks testing the deprecated content from conf.json.
+* Fixed an issue where in some cases the **split** command did not remove pack version note from the script.
 
 ## 1.17.2
 * Fixed an issue where **lint** and **validate** commands failed on integrations and scripts that use docker images that are not available in the Docker Hub but exist locally.

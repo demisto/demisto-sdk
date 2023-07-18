@@ -412,7 +412,7 @@ jobs:
       - store_artifacts:
           path: content/tmp
       - store_artifacts:
-          path: $ARTIFACTS_FOLDER
+          path: /home/circleci/project/artifacts
 
   build:
       docker:

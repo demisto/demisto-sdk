@@ -15,6 +15,7 @@ from datetime import datetime
 from enum import Enum
 from functools import lru_cache
 from hashlib import sha1
+from io import StringIO
 from pathlib import Path, PosixPath
 from subprocess import PIPE, Popen
 from time import sleep
@@ -687,16 +688,25 @@ def filter_packagify_changes(
     return modified_files, updated_added_files, removed_files
 
 
-def get_child_directories(directory):
-    """Return a list of paths of immediate child directories of the 'directory' argument"""
-    if not os.path.isdir(directory):
-        return []
-    child_directories = [
-        os.path.join(directory, path)
-        for path in os.listdir(directory)
-        if os.path.isdir(os.path.join(directory, path))
-    ]
-    return child_directories
+def get_child_directories(directory: str | Path) -> list[str]:
+    """
+    Get a list of all directories within a directory.
+    Does not search recursively.
+
+    Args:
+        directory (str | Path): The directory to search in
+
+    Returns:
+        list[str]: A list of paths (in string format) of immediate child directories of the 'directory' argument
+    """
+    directory_path = Path(directory) if isinstance(directory, str) else directory
+
+    if directory_path.is_dir():
+        return [
+            str(path) for path in directory_path.iterdir() if path.is_dir()
+        ]
+
+    return []
 
 
 def get_child_files(directory):
@@ -765,7 +775,8 @@ def get_last_remote_release_version():
 
 
 def _read_file(file_path: Path) -> str:
-    """returns the body of a text-based file, after reading it as UTF8, or trying to guess its encoding.
+    """
+    Returns the body of a text-based file, after reading it as UTF8, or trying to guess its encoding.
 
     Args:
         file_path (Path): file to read
@@ -778,11 +789,34 @@ def _read_file(file_path: Path) -> str:
 
     except UnicodeDecodeError:
         try:
-            # guesses the original encoding
-            return UnicodeDammit(file_path.read_bytes()).unicode_markup
+            logger.debug(f"Could not read file '{file_path}' using UTF-8 encoding. Trying to auto-detect encoding...")
+            return UnicodeDammit(file_path.read_bytes()).unicode_markup  # Guess the original encoding
 
         except UnicodeDecodeError:
-            logger.info(f"could not auto-detect encoding for file {file_path}")
+            logger.debug(f"Could not auto-detect encoding for file '{file_path}'.")
+            raise
+
+
+def create_stringio_object(file_data: bytes) -> StringIO:
+    """
+    Create a StringIO object from file bytes, while considering different encodings (like the '_read_file' function).
+
+    Args:
+        file_data (bytes): file bytes
+
+    Returns:
+        StringIO: File data as StringIO object
+    """
+    try:
+        return StringIO(file_data.decode("utf-8"))
+
+    except UnicodeDecodeError:
+        try:
+            logger.debug(f"Could not read file using UTF-8 encoding. Trying to auto-detect encoding...")
+            return StringIO(UnicodeDammit(markup=file_data).unicode_markup)  # Guess the original encoding
+
+        except UnicodeDecodeError:
+            logger.debug(f"Could not auto-detect encoding.")
             raise
 
 
@@ -850,13 +884,13 @@ def get_file(
         return {}
     try:
         if type_of_file.lstrip(".") in {"yml", "yaml"}:
-            replaced = io.StringIO(
+            replaced = StringIO(
                 re.sub(r"(simple: \s*\n*)(=)(\s*\n)", r'\1"\2"\3', file_content)
             )
 
             return yaml.load(replaced) if keep_order else yaml_safe_load.load(replaced)
         else:
-            result = json.load(io.StringIO(file_content))
+            result = json.load(StringIO(file_content))
             # It's possible to that the result will be `str` after loading it. In this case, we need to load it again.
             return json.loads(result) if isinstance(result, str) else result
     except Exception as e:
@@ -896,13 +930,13 @@ def get_file_or_remote(file_path: Path, clear_cache=False):
         return get_remote_file(str(relative_file_path))
 
 
-def get_yaml(file_path, cache_clear=False, keep_order: bool = False):
+def get_yaml(file_path: str | Path, cache_clear=False, keep_order: bool = False):
     if cache_clear:
         get_file.cache_clear()
     return get_file(file_path, clear_cache=cache_clear, keep_order=keep_order)
 
 
-def get_json(file_path, cache_clear=False):
+def get_json(file_path: str | Path, cache_clear=False):
     if cache_clear:
         get_file.cache_clear()
     return get_file(file_path, clear_cache=cache_clear)
@@ -968,7 +1002,7 @@ def get_entity_id_by_entity_type(data: dict, content_entity: str):
         )
 
 
-def get_entity_name_by_entity_type(data: dict, content_entity: str):
+def get_entity_name_by_entity_type(data: dict, content_entity: str) -> str:
     """
     Returns the name of the content entity given its entity type
     :param data: The data of the file
@@ -976,16 +1010,13 @@ def get_entity_name_by_entity_type(data: dict, content_entity: str):
     :return: The file name
     """
     try:
-        if content_entity == LAYOUTS_DIR:
-            if "typeId" in data:
-                return data.get("typeId", "")
-            return data.get("name", "")  # for layoutscontainer
+        if content_entity == LAYOUTS_DIR and "typeId" in data:
+            return data.get("typeId", "")
         return data.get("name", "")
 
     except AttributeError:
         raise ValueError(
-            f"Could not retrieve name from file of type {content_entity} - make sure the file structure is "
-            f"valid"
+            f"Could not retrieve name from file of type '{content_entity}'. Make sure the file structure is valid."
         )
 
 
@@ -1761,7 +1792,7 @@ def find_type(
     ignore_sub_categories: bool = False,
     ignore_invalid_schema_file: bool = False,
     clear_cache: bool = False,
-):
+) -> FileType | None:
     """
     returns the content file type
 
@@ -1772,10 +1803,10 @@ def find_type(
         ignore_sub_categories (bool): ignore the sub categories, True to ignore, False otherwise.
         ignore_invalid_schema_file (bool): whether to ignore raising error on invalid schema files,
             True to ignore, False otherwise.
-        clear_cache (bool): wether to clear the cache
+        clear_cache (bool): whether to clear the cache
 
     Returns:
-        FileType: string representing of the content file type, None otherwise.
+        FileType: Enum representation of the content file type, None otherwise.
     """
     type_by_path = find_type_by_path(path)
     if type_by_path:
@@ -1889,6 +1920,9 @@ def find_type(
             and "readyNewEventFilters" in _dict
         ):
             return FileType.PRE_PROCESS_RULES
+
+        if "allRead" in _dict and "truncated" in _dict:  # TODO: Seems like "allRead" doesn't necessarily exist in lists
+            return FileType.LISTS
 
         if "definitionIds" in _dict and "views" in _dict:
             return FileType.GENERIC_MODULE
@@ -2195,20 +2229,6 @@ def should_file_skip_validation(file_path: str) -> bool:
     return False
 
 
-def retrieve_file_ending(file_path: str) -> str:
-    """
-    Retrieves the file ending (without the dot)
-    :param file_path: The file path
-    :return: The file ending
-    """
-    os_split: tuple = os.path.splitext(file_path)
-    if os_split:
-        file_ending: str = os_split[1]
-        if file_ending and "." in file_ending:
-            return file_ending[1:]
-    return ""
-
-
 def is_test_config_match(
     test_config: dict,
     test_playbook_id: str = "",
@@ -2506,7 +2526,7 @@ def get_parent_directory_name(path: str, abs_path: bool = False) -> str:
 
 def get_code_lang(file_data: dict, file_entity: str) -> str:
     """
-    Returns the code language by the file entity
+    Returns content item's code language (python / javascript)
     :param file_data: The file data
     :param file_entity: The file entity
     :return: The code language
@@ -3509,7 +3529,7 @@ def remove_copy_and_dev_suffixes_from_str(field_name: str) -> str:
     return field_name
 
 
-def get_display_name(file_path, file_data={}) -> str:
+def get_display_name(file_path: str, file_data: dict | None = None) -> str:
     """Gets the entity display name from the file.
 
     :param file_path: The entity file path
@@ -3752,7 +3772,7 @@ def get_id(file_content: Dict) -> Union[str, None]:
         file_content: the content of the file.
 
     Returns:
-        str: the ID of the content item in case found, None otherwise.
+        str | None: ID of the content item. None if not found.
     """
     if "commonfields" in file_content:
         return file_content["commonfields"].get("id")
@@ -3760,8 +3780,11 @@ def get_id(file_content: Dict) -> Union[str, None]:
         return file_content["dashboards_data"][0].get("global_id")
     elif "templates_data" in file_content:
         return file_content["templates_data"][0].get("global_id")
+    elif "layout" in file_content:
+        if found_id := file_content.get("id"):
+            return found_id
 
-    for key in ("global_rule_id", "trigger_id", "content_global_id", "rule_id"):
+    for key in ("global_rule_id", "trigger_id", "content_global_id", "rule_id", "typeId"):
         if key in file_content:
             return file_content[key]
 

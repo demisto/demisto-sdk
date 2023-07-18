@@ -1306,7 +1306,7 @@ DELETED_YML_FIELDS_BY_DEMISTO = [
     "defaultclassifier",
     "defaultmapperin",
     "defaultmapperout",
-]
+]  # TODO: Do we actually want to restore keep these fields for existing content if they're deleted from the server?
 
 DELETED_JSON_FIELDS_BY_DEMISTO = ["fromVersion", "toVersion"]
 

@@ -3259,7 +3259,7 @@ def find_dependencies_between_two_packs(
     args:
         input_paths: Packs paths to find dependencies.
         id_set_path: Path to id_set.json file.
-        output_path: The path for the outputs json.
+        file_to_update: The path for the outputs json.
         dependency: The pack to search the dependency for.
     """
     dependent_packs, _ = get_packs_dependent_on_given_packs(

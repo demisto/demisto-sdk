@@ -109,7 +109,6 @@ from demisto_sdk.commands.common.tools import (
     is_pack_path,
     is_uuid,
     parse_multiple_path_inputs,
-    retrieve_file_ending,
     run_command_os,
     search_and_delete_from_conf,
     server_version_compare,
@@ -480,10 +479,6 @@ class TestGenericFunctions:
         files = filter_files_by_type(files, types)
 
         assert files == output
-
-    @pytest.mark.parametrize("path, output", [("demisto.json", "json"), ("wow", "")])
-    def test_retrieve_file_ending(self, path, output):
-        assert retrieve_file_ending(path) == output
 
     @pytest.mark.parametrize(
         "data, entity, output",

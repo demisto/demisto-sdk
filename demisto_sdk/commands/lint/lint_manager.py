@@ -1315,11 +1315,11 @@ class LintManager:
         Returns:
             str. The path to the file
         """
-        file_ending = retrieve_file_ending(file_name)
-        if not file_ending:
+        file_extension = Path(file_name).suffix
+        if not file_extension:
             file_name = f"{file_name}.py"
-        elif file_ending != "py":
-            file_name = file_name.replace(file_ending, "py")
+        elif file_extension != ".py":
+            file_name = file_name.replace(file_extension, ".py")
         return find_file(content_path, file_name)
 
     def vulture_error_formatter(self, errors: Dict, json_contents: List) -> None:

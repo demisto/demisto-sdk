@@ -2,12 +2,12 @@
 ## Unreleased
 * Calling **format** with the `-d` flag now removes test playbooks testing the deprecated content from conf.json.
 * Fixed an issue where in some cases the **split** command did not remove pack version note from the script.
+* Added support for working with Demisto-SDK offline by using the `DEMISTO_SDK_OFFLINE_ENV` environment variable. See [this](https://github.com/demisto/demisto-sdk#internet-connection) for more information.
 
 ## 1.17.2
 * Fixed an issue where **lint** and **validate** commands failed on integrations and scripts that use docker images that are not available in the Docker Hub but exist locally.
 * Added documentation for the flag **override-existing** used in upload.
 * Fixed an issue where **validate** failed on Incident Field items with a `template` value.
-* Add support for working with Demisto-SDK offline by using the `DEMISTO_SDK_OFFLINE_ENV` environment variable, see [this](https://github.com/demisto/demisto-sdk#internet-connection) for more information.
 * Improved memory efficiency in **update-content-graph** and **create-content-graph** commands.
 * Removed support for the `cve_id` name for the default-argument for **cve** reputation commands in **validate**. Now, only `cve` may be used for such commands.
 * Fixed an issue where **zip_packs** failed uploading content.

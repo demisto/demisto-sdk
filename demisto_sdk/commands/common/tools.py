@@ -266,8 +266,8 @@ SDK_PYPI_VERSION = r"https://pypi.org/pypi/demisto-sdk/json"
 SUFFIX_TO_REMOVE = ("_dev", "_copy")
 
 
-# This exception should be raise inside methods that reqiered internet connection
-# when the sdk defined working offline
+# This exception should be raise inside methods that require an internet connection
+# when the SDK is defined as working offline.
 class NoInternetConnectionException(Exception):
     pass
 
@@ -3851,7 +3851,8 @@ def parse_multiple_path_inputs(
 @lru_cache
 def is_sdk_defined_working_offline() -> bool:
     """
-    This method returns True when sdk defined as offline - when DEMISTO_SDK_OFFLINE_ENV environment variable is True.
+    This method returns True when the SDK is defined as offline, i.e., when
+    the DEMISTO_SDK_OFFLINE_ENV environment variable is True.
 
     Returns:
         bool: The value for DEMISTO_SDK_OFFLINE_ENV environment variable.

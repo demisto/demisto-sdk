@@ -25,90 +25,10 @@ from demisto_sdk.commands.common.constants import (
     MarketplaceVersions,
 )
 from demisto_sdk.commands.common.content_constant_paths import CONF_PATH
+from demisto_sdk.commands.common.tools import is_external_repository
 
 FOUND_FILES_AND_ERRORS: list = []
 FOUND_FILES_AND_IGNORED_ERRORS: list = []
-# allowed errors to be ignored in any supported pack (XSOAR/Partner/Community) only if they appear in the .pack-ignore
-ALLOWED_IGNORE_ERRORS = [
-    "BA101",
-    "BA106",
-    "BA108",
-    "BA109",
-    "BA110",
-    "BA111",
-    "BA112",
-    "BA113",
-    "BA116",
-    "BA119",
-    "BA124",
-    "BA125",
-    "DS107",
-    "GF102",
-    "IF100",
-    "IF106",
-    "IF113",
-    "IF115",
-    "IF116",
-    "IN109",
-    "IN110",
-    "IN122",
-    "IN124",
-    "IN126",
-    "IN128",
-    "IN135",
-    "IN136",
-    "IN139",
-    "IN144",
-    "IN145",
-    "IN153",
-    "IN154",
-    "MP106",
-    "PA113",
-    "PA116",
-    "PA124",
-    "PA125",
-    "PA127",
-    "PA129",
-    "PB104",
-    "PB105",
-    "PB106",
-    "PB110",
-    "PB111",
-    "PB114",
-    "PB115",
-    "PB116",
-    "PB107",
-    "PB118",
-    "PB119",
-    "PB121",
-    "RM100",
-    "RM102",
-    "RM104",
-    "RM106",
-    "RM108",
-    "RM110",
-    "RM112",
-    "RM113",
-    "RP102",
-    "RP104",
-    "SC100",
-    "SC101",
-    "SC105",
-    "SC106",
-    "IM111",
-    "RN112",
-    "RN113",
-    "RN114",
-    "RN115",
-    "RN116",
-    "MR104",
-    "MR105",
-    "MR108",
-    "PR101",
-    "LO107",
-    "IN107",
-    "DB100",
-]
 
 # predefined errors to be ignored in partner/community supported packs even if they do not appear in .pack-ignore
 PRESET_ERROR_TO_IGNORE = {
@@ -1532,6 +1452,92 @@ ERROR_CODE = {
 }
 
 
+# allowed errors to be ignored in any supported pack (XSOAR/Partner/Community) only if they appear in the .pack-ignore
+ALLOWED_IGNORE_ERRORS = (
+    [err["code"] for err in ERROR_CODE.values()]
+    if is_external_repository()
+    else [
+        "BA101",
+        "BA106",
+        "BA108",
+        "BA109",
+        "BA110",
+        "BA111",
+        "BA112",
+        "BA113",
+        "BA116",
+        "BA119",
+        "BA124",
+        "DS107",
+        "GF102",
+        "IF100",
+        "IF106",
+        "IF113",
+        "IF115",
+        "IF116",
+        "IN109",
+        "IN110",
+        "IN122",
+        "IN124",
+        "IN126",
+        "IN128",
+        "IN135",
+        "IN136",
+        "IN139",
+        "IN144",
+        "IN145",
+        "IN153",
+        "IN154",
+        "MP106",
+        "PA113",
+        "PA116",
+        "PA124",
+        "PA125",
+        "PA127",
+        "PA129",
+        "PB104",
+        "PB105",
+        "PB106",
+        "PB110",
+        "PB111",
+        "PB114",
+        "PB115",
+        "PB116",
+        "PB107",
+        "PB118",
+        "PB119",
+        "PB121",
+        "RM100",
+        "RM102",
+        "RM104",
+        "RM106",
+        "RM108",
+        "RM110",
+        "RM112",
+        "RM113",
+        "RP102",
+        "RP104",
+        "SC100",
+        "SC101",
+        "SC105",
+        "SC106",
+        "IM111",
+        "RN112",
+        "RN113",
+        "RN114",
+        "RN115",
+        "RN116",
+        "MR104",
+        "MR105",
+        "MR108",
+        "PR101",
+        "LO107",
+        "IN107",
+        "DB100",
+    ]
+)
+
+
 def get_all_error_codes() -> List:
     error_codes = []
     for error in ERROR_CODE:
@@ -1687,12 +1693,24 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def unsearchable_key_should_be_true_incident_field():
-        return "The unsearchable key in indicator and incident fields should be set to true."
+        return (
+            "Warning: Indicator and incident fields should include the `unsearchable` key set to true. When missing"
+            " or set to false, the platform will index the data in this field. Unnecessary indexing of fields might"
+            " affect the performance and disk usage in environments."
+            "While considering the above mentioned warning, you can bypass this error by adding it to the"
+            " .pack-ignore file."
+        )
 
     @staticmethod
     @error_code_decorator
     def unsearchable_key_should_be_true_generic_field():
-        return "The unsearchable key in a generic field should be set to true."
+        return (
+            "Warning: Generic fields should include the `unsearchable` key set to true. When missing"
+            " or set to false, the platform will index the data in this field. Unnecessary indexing of fields might"
+            " affect the performance and disk usage in environments."
+            "While considering the above mentioned warning, you can bypass this error by adding it to the"
+            " .pack-ignore file."
+        )
 
     @staticmethod
     @error_code_decorator

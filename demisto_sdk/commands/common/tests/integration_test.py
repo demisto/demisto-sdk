@@ -318,7 +318,7 @@ class TestIntegrationValidator:
     def test_no_change_to_context_path(
         self, current, old, answer, changed_command_names, mocker
     ):
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+        logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
         current = {"script": {"commands": current}}
         old = {"script": {"commands": old}}
         structure = mock_structure("", current, old)
@@ -326,7 +326,7 @@ class TestIntegrationValidator:
         assert validator.no_change_to_context_path() is answer
         for changed_command_name in changed_command_names:
             assert str_in_call_args_list(
-                logger_info.call_args_list, changed_command_name
+                logger_error.call_args_list, changed_command_name
             )
         structure.quiet_bc = True
         assert (
@@ -420,13 +420,13 @@ class TestIntegrationValidator:
         Ensure that the error massage was created correctly.
         - Case 1: Should include both command_test_name_1 and command_test_name_2 in the commands list in the error as they both have BC break changes.
         """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+        logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
         current = {"script": {"commands": current}}
         old = {"script": {"commands": old}}
         structure = mock_structure("", current, old)
         validator = IntegrationValidator(structure)
         validator.no_changed_command_name_or_arg()
-        assert str_in_call_args_list(logger_info.call_args_list, expected_error_msg)
+        assert str_in_call_args_list(logger_error.call_args_list, expected_error_msg)
 
     WITHOUT_DUP = [{"name": "test"}, {"name": "test1"}]
     DUPLICATE_PARAMS_INPUTS = [(WITHOUT_DUP, True)]
@@ -1906,7 +1906,7 @@ class TestIntegrationValidator:
 
 
 class TestIsFetchParamsExist:
-    def setup(self):
+    def setup_method(self):
         config = {
             "configuration": deepcopy(INCIDENT_FETCH_REQUIRED_PARAMS),
             "script": {"isfetch": True},
@@ -2044,7 +2044,7 @@ class TestIsValidMaxFetchAndFirstFetch:
     - make sure max_fetch param has a default value
     """
 
-    def setup(self):
+    def setup_method(self):
         config = {
             "configuration": deepcopy([FIRST_FETCH_PARAM, MAX_FETCH_PARAM]),
             "script": {"isfetch": True},
@@ -2096,7 +2096,7 @@ class TestIsValidMaxFetchAndFirstFetch:
 
 
 class TestIsFeedParamsExist:
-    def setup(self):
+    def setup_method(self):
         config = {
             "configuration": deepcopy(FEED_REQUIRED_PARAMS_STRUCTURE),
             "script": {"feed": True},

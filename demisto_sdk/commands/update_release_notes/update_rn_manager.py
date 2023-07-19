@@ -13,10 +13,10 @@ from demisto_sdk.commands.common.tools import (
     filter_files_by_type,
     filter_files_on_pack,
     get_pack_name,
-    get_pack_names_from_files,
     pack_name_to_path,
     suppress_stdout,
 )
+from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.update_release_notes.update_rn import (
     UpdateRN,
     update_api_modules_dependents_rn,
@@ -66,13 +66,21 @@ class UpdateReleaseNotesManager:
         if self.given_pack and "/" in self.given_pack:
             self.given_pack = get_pack_name(self.given_pack)  # extract pack from path
 
+        packs = set()
+
         # Find which files were changed from git
         modified_files, added_files, old_format_files = self.get_git_changed_files()
-        self.changed_packs_from_git = (
-            get_pack_names_from_files(modified_files)
-            .union(get_pack_names_from_files(added_files))
-            .union(get_pack_names_from_files(old_format_files))
-        )
+        for file_path in modified_files:
+            pack = BaseContent.from_path(file_path)
+            packs.add(pack)
+        for file_path in added_files:
+            pack = BaseContent.from_path(file_path)
+            packs.add(pack)
+        for file_path in old_format_files:
+            pack = BaseContent.from_path(file_path)
+            packs.add(pack)
+
+        self.changed_packs_from_git = packs
         # Check whether the packs have some existing RNs already (created manually or by the command)
         self.check_existing_rn(added_files)
 

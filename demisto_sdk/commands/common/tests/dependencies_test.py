@@ -13,7 +13,7 @@ from TestSuite.playbook import Playbook
 from TestSuite.script import Script
 from TestSuite.test_tools import ChangeCWD
 
-# TODO: Remove this test file when CIAC-7485 is completed.
+# TODO: Remove this test file when CIAC-3905 is completed.
 # Currently this test uses the older dependencies creation, the content repo uses the newer graph method of creating
 # dependencies, but some other repos do not. We will remove this test when the other repos have been migrated to graph.
 

@@ -23,6 +23,7 @@ from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     arg_to_list,
     find_type,
+    get_content_path,
     get_file,
     get_mp_tag_parser,
     get_pack_metadata,
@@ -285,7 +286,7 @@ class IntegrationScriptUnifier(Unifier):
             script_code
         )
         script_code = IntegrationScriptUnifier.insert_module_code(
-            script_code, imports_to_names
+            script_code, imports_to_names, package_path
         )
         if pack_version := get_pack_metadata(file_path=str(package_path)).get(
             "currentVersion", ""
@@ -372,7 +373,9 @@ class IntegrationScriptUnifier(Unifier):
         }
 
     @staticmethod
-    def insert_module_code(script_code: str, import_to_name: Dict[str, str]) -> str:
+    def insert_module_code(
+        script_code: str, import_to_name: Dict[str, str], package_path: Path = Path(".")
+    ) -> str:
         """
         Inserts API module in place of an import to the module according to the module name
         :param script_code: The integration code
@@ -381,9 +384,13 @@ class IntegrationScriptUnifier(Unifier):
         :return: The integration script with the module code appended in place of the import
         """
         for module_import, module_name in import_to_name.items():
-
-            module_path = os.path.join(
-                "./Packs", "ApiModules", "Scripts", module_name, module_name + ".py"
+            module_path = Path(
+                get_content_path(package_path),
+                "Packs",
+                "ApiModules",
+                "Scripts",
+                module_name,
+                module_name + ".py",
             )
             module_code = IntegrationScriptUnifier._get_api_module_code(
                 module_name, module_path
@@ -394,7 +401,7 @@ class IntegrationScriptUnifier(Unifier):
                 module_code
             )
             module_code = IntegrationScriptUnifier.insert_module_code(
-                module_code, tmp_imports_to_names
+                module_code, tmp_imports_to_names, package_path
             )
 
             # the wrapper numbers represents the number of generated lines added

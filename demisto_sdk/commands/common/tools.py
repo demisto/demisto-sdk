@@ -2008,11 +2008,43 @@ def get_latest_upload_flow_commit_hash() -> str:
     return last_commit
 
 
-def get_content_path() -> Path:
+def find_pack_folder(path: Path) -> Path:
+    """
+    >>> find_pack_folder(Path('root/Packs/MyPack/Integrations/MyIntegration/MyIntegration.yml'))
+    PosixPath('root/Packs/MyPack')
+    >>> find_pack_folder(Path('Packs/MyPack1/Scripts/MyScript/MyScript.py')).name
+    'MyPack1'
+    >>> find_pack_folder(Path('Packs/MyPack2/Scripts/MyScript')).name
+    'MyPack2'
+    >>> find_pack_folder(Path('Packs/MyPack3/Scripts')).name
+    'MyPack3'
+    >>> find_pack_folder(Path('Packs/MyPack4')).name
+    'MyPack4'
+    """
+
+    if "Packs" not in path.parts:
+        raise Exception(f"Could not find a pack for {str(path)}")
+    if path.parent.name == "Packs":
+        return path
+    return path.parents[len(path.parts) - (path.parts.index("Packs")) - 3]
+
+
+def get_content_path(path: Path = None) -> Path:
     """Get abs content path, from any CWD
+    Args:
+        path (Path): Path to file or folder in content repo
     Returns:
         str: Absolute content path
+    >>> get_content_path(Path('/User/username/content/Packs/MyPack/Integrations/MyIntegration/MyIntegration.yml'))
+    'content'
+    >>> get_content_path(Path('/User/username/content/Packs'))
+    'content'
     """
+    if path:
+        if path.name == "Packs":
+            return path.absolute().parent
+        else:
+            return find_pack_folder(path.absolute()).parent.parent
     try:
         if content_path := os.getenv("DEMISTO_SDK_CONTENT_PATH"):
             git_repo = git.Repo(content_path)

@@ -11,6 +11,7 @@
 * **validate** will now run on all the pack content items when the pack supported marketplaces are modified.
 * Fixed an issue where **pre-commit** running when there was no change to the files
 * Fixed an issue where errors in **validate** were logged as `info`.
+* Fixed an issue where the **unify** command failed to unify a integration with a module, in cases where the cwd was not the root of the content repository.
 
 
 ## 1.17.2

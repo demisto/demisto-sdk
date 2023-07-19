@@ -90,7 +90,8 @@ def init_test_data(
                 )
                 test_data = TestData.parse_file(test_data_file)
                 dataset_to_fields_map = {
-                    mr.dataset: dict.fromkeys(mr.fields) for mr in mr_entity.rules
+                    mr.dataset: dict.fromkeys(sorted(mr.fields))
+                    for mr in mr_entity.rules
                 }
 
                 # set the default values from the first rule if there is only one, otherwise it should populated manually
@@ -108,7 +109,7 @@ def init_test_data(
                         event_log.dataset = default_dataset
 
                     new_mapping = dict(
-                        sorted(dataset_to_fields_map.get(event_log.dataset, {}).items())
+                        dataset_to_fields_map.get(event_log.dataset, {})
                     ).copy()
                     if not new_mapping:
                         logger.error(

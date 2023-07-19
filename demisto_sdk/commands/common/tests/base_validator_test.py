@@ -60,7 +60,7 @@ def test_handle_error_on_unignorable_error_codes(
     - Ensure that the un-ignorable errors are in FOUND_FILES_AND_ERRORS list.
     - Ensure that the un-ignorable errors are not in FOUND_FILES_AND_IGNORED_ERRORS list.
     """
-    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+    logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
     monkeypatch.setenv("COLUMNS", "1000")
 
     base_validator = BaseValidator(ignored_errors=ignored_errors)
@@ -73,7 +73,7 @@ def test_handle_error_on_unignorable_error_codes(
         suggested_fix="fix",
     )
     assert expected_error in result
-    assert str_in_call_args_list(logger_info.call_args_list, expected_error)
+    assert str_in_call_args_list(logger_error.call_args_list, expected_error)
     assert f"file_name - [{error_code}]" in FOUND_FILES_AND_ERRORS
     assert f"file_name - [{error_code}]" not in FOUND_FILES_AND_IGNORED_ERRORS
 

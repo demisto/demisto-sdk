@@ -1,10 +1,16 @@
 # Changelog
 ## Unreleased
+* Added the ability to ignore any validation in the **validate** command when running in an external (non-demisto/content) repo, by placing a `.private-repo-settings` file at its root.
 * Fixed an issue where **validate** falsely detected backwards-compatibility issues, and prevented adding the `marketplaces` key to content items.
 * Calling **format** with the `-d` flag now removes test playbooks testing the deprecated content from conf.json.
+* Fixed an issue where the SDK would fail pulling docker images.
 * Fixed an issue where in some cases the **split** command did not remove pack version note from the script.
+* Improved the content graph performance when calculating content relationships.
 * Fixed an issue where **validate** would not properly detect dependencies of core packs.
+* Removed usages of Random in unit tests to ensure the tests are deterministic.
 * **validate** will now run on all the pack content items when the pack supported marketplaces are modified.
+* Fixed an issue where **pre-commit** running when there was no change to the files
+* Fixed an issue where errors in **validate** were logged as `info`.
 * Added a validation that check that non ignorable errors are not used.
 
 ## 1.17.2

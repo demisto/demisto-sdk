@@ -899,8 +899,8 @@ class TestCreateContentGraph:
         assert not (script_path / "script-setAlert.yml").exists()
 
     def test_create_content_graph_relationships_from_metadata(
-            self,
-            repo: Repo,
+        self,
+        repo: Repo,
     ):
         """
         Given:
@@ -911,12 +911,10 @@ class TestCreateContentGraph:
             - Make sure the relationship's is_test is not null.
         """
         core_metadata = load_json("pack_metadata.json")
-        core_metadata['name'] = 'Core'
-        core_metadata['dependencies'].update({
-            "NonCorePack": {
-            "mandatory": True,
-            "display_name": "Non Core Pack"
-        }})
+        core_metadata["name"] = "Core"
+        core_metadata["dependencies"].update(
+            {"NonCorePack": {"mandatory": True, "display_name": "Non Core Pack"}}
+        )
         pack_core = repo.create_pack("Core")
         repo.create_pack("NonCorePack")
         pack_core.pack_metadata.write_json(core_metadata)
@@ -924,7 +922,8 @@ class TestCreateContentGraph:
         with ContentGraphInterface() as interface:
             create_content_graph(interface)
 
-            data = interface.run_single_query("MATCH p=()-[r:DEPENDS_ON]->() WHERE r.is_test IS NULL RETURN p")
+            data = interface.run_single_query(
+                "MATCH p=()-[r:DEPENDS_ON]->() WHERE r.is_test IS NULL RETURN p"
+            )
 
             assert not data
-

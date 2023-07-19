@@ -2882,7 +2882,7 @@ def test_content(ctx, **kwargs):
     help="Will find and load the known_words file from the pack. "
     "To use this option make sure you are running from the "
     "content directory.",
-    default=False,
+    default=True,
 )
 @click.pass_context
 @logging_setup_decorator

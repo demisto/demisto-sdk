@@ -19,6 +19,7 @@ from demisto_sdk.commands.common.constants import (
     AUTHOR_IMAGE_FILE_NAME,
     CONTENT_ENTITIES_DIRS,
     DEFAULT_CONTENT_ITEM_TO_VERSION,
+    DEPRECATED_CONTENT_PACK,
     FIRST_LEVEL_FOLDERS,
     FIRST_LEVEL_FOLDERS_ALLOWED_TO_CONTAIN_FILES,
     GENERIC_FIELDS_DIR,
@@ -2979,9 +2980,19 @@ class ValidateManager:
             )
 
         if PACKS_DIR not in path.parts:
-            return True  # non-content files are allowed anywhere, at least as much as this validation is concerned
+            logger.debug(
+                f"non-content files are excempt from is_valid_path checks, skipping them"
+            )
+            return True
 
         depth = depth_from_packs(path)
+        pack_name = path.parts[-depth]
+
+        if pack_name == DEPRECATED_CONTENT_PACK:
+            logger.debug(
+                f"files under {DEPRECATED_CONTENT_PACK} are excempt from is_valid_path checks, skipping them."
+            )
+            return True
 
         if depth == 1:  # Packs/<modified file>
             if _handle_outside_pack():

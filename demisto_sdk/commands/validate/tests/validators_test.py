@@ -151,7 +151,7 @@ from demisto_sdk.tests.test_files.validate_integration_test_valid_types import (
     INCIDENT_FIELD,
 )
 from TestSuite.pack import Pack
-from TestSuite.test_tools import ChangeCWD, str_in_call_args_list
+from TestSuite.test_tools import ChangeCWD, flatten_call_args, str_in_call_args_list
 
 
 class MyRepo:
@@ -3072,11 +3072,7 @@ def test_file_not_allowed_contain_folder__fail(repo, mocker, folder: str):
     validate_manager = ValidateManager(check_is_unskipped=False, skip_conf_json=True)
 
     pack = repo.create_pack()
-
-    std_output = StringIO()
-    with contextlib.redirect_stdout(std_output):
-        with ChangeCWD(pack.path):
-            assert not validate_manager.is_valid_path(Path(pack.path, folder, "file"))
+    assert not validate_manager.is_valid_path(Path(pack.path, folder, "file"))
 
     assert str_in_call_args_list(logger_info.call_args_list, "[BA120]")
 
@@ -3100,14 +3096,33 @@ def test_is_path_allowed__invalid_first_level(repo, mocker, nested: bool):
     pack = repo.create_pack()
     mid_path = (folder_name, "foo", "bar") if nested else (folder_name)
 
-    std_output = StringIO()
-    with contextlib.redirect_stdout(std_output):
-        with ChangeCWD(pack.path):
-            assert not validate_manager.is_valid_path(
-                Path(pack.path, *mid_path, "file")
-            )
+    assert not validate_manager.is_valid_path(Path(pack.path, *mid_path, "file"))
 
     assert str_in_call_args_list(logger_info.call_args_list, "[BA121]")
+
+
+@pytest.mark.parametrize(
+    "path",
+    (
+        pytest.param(Path("Packs/DeprecatedContent/foo"), id="DeprecatedContent"),
+        pytest.param(Path("foo/bar"), id="not under Packs"),
+    ),
+)
+def test_is_path_allowed__excempt(mocker, path):
+    """
+    Given
+            A file under a path excempt
+    When
+            Running validate
+    Then
+            Make sure the is_path_allowed is skipped, and the validation passes
+    """
+    logger_debug = mocker.patch.object(logging.getLogger("demisto-sdk"), "debug")
+    validate_manager = ValidateManager(check_is_unskipped=False, skip_conf_json=True)
+
+    assert validate_manager.is_valid_path(path)
+
+    assert "are excempt" in flatten_call_args(logger_debug.call_args)[0]
 
 
 def test_first_level_folders_subset():

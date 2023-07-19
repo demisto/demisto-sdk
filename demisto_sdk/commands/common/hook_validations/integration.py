@@ -50,6 +50,7 @@ from demisto_sdk.commands.common.hook_validations.description import (
 )
 from demisto_sdk.commands.common.hook_validations.docker import DockerImageValidator
 from demisto_sdk.commands.common.hook_validations.image import ImageValidator
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     _get_file_id,
     compare_context_path_in_yml_and_readme,
@@ -406,14 +407,13 @@ class IntegrationValidator(ContentEntityValidator):
                         err_msgs.append(formatted_message)
 
         if err_msgs:
-            server_version_compare(
+            logger.error(
                 "{} Received the following error for {} validation:\n{}\n {}\n".format(
                     self.file_path,
                     param_name,
                     "\n".join(err_msgs),
                     Errors.suggest_fix(file_path=self.file_path),
-                ),
-                "red",
+                )
             )
             self.is_valid = False
             return False
@@ -534,7 +534,7 @@ class IntegrationValidator(ContentEntityValidator):
                         flag = False
 
         if not flag:
-            server_version_compare(Errors.suggest_fix(self.file_path), "red")
+            logger.error(Errors.suggest_fix(self.file_path))
         return flag
 
     @error_codes("IN134")

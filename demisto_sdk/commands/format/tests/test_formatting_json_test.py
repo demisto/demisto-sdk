@@ -1,4 +1,4 @@
-import logging.  # noqa: TID251
+import logging  # noqa: TID251
 import os
 import shutil
 from typing import Optional

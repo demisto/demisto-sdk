@@ -1,4 +1,4 @@
-import logging.  # noqa: TID251
+import logging  # noqa: TID251
 from os import listdir
 from pathlib import Path
 

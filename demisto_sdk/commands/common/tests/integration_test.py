@@ -1,4 +1,4 @@
-import logging.  # noqa: TID251
+import logging  # noqa: TID251
 import os
 from copy import deepcopy
 from typing import Any, Dict, List, Optional

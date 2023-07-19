@@ -1,6 +1,6 @@
 import base64
 import copy
-import logging.  # noqa: TID251
+import logging  # noqa: TID251
 import os
 import re
 import shutil

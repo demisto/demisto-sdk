@@ -1,4 +1,4 @@
-import logging.  # noqa: TID251
+import logging  # noqa: TID251
 import os
 from contextlib import nullcontext as does_not_raise
 

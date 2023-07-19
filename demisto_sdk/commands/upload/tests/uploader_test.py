@@ -1,4 +1,4 @@
-import logging.  # noqa: TID251
+import logging  # noqa: TID251
 import shutil
 import zipfile
 from io import BytesIO

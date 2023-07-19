@@ -13,7 +13,6 @@ from collections import OrderedDict
 from concurrent.futures import as_completed
 from configparser import ConfigParser, MissingSectionHeaderError
 from contextlib import contextmanager
-from packaging.version import Version
 from enum import Enum
 from functools import lru_cache
 from pathlib import Path, PosixPath

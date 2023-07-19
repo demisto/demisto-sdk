@@ -6,7 +6,6 @@ import re
 import time
 from collections import OrderedDict
 from datetime import datetime
-from distutils.version import LooseVersion
 from enum import Enum
 from functools import partial
 from multiprocessing import Pool
@@ -15,6 +14,7 @@ from typing import Callable, Dict, List, Optional, Tuple
 
 import click
 import networkx
+from packaging.version import Version
 
 from demisto_sdk.commands.common.constants import (
     CLASSIFIERS_DIR,
@@ -3714,16 +3714,16 @@ def has_duplicate(
     for dup1, dup2 in itertools.combinations(duplicates, 2):
         dict1 = list(dup1.values())[0]
         dict2 = list(dup2.values())[0]
-        dict1_from_version = LooseVersion(
+        dict1_from_version = Version(
             dict1.get("fromversion", DEFAULT_CONTENT_ITEM_FROM_VERSION)
         )
-        dict2_from_version = LooseVersion(
+        dict2_from_version = Version(
             dict2.get("fromversion", DEFAULT_CONTENT_ITEM_FROM_VERSION)
         )
-        dict1_to_version = LooseVersion(
+        dict1_to_version = Version(
             dict1.get("toversion", DEFAULT_CONTENT_ITEM_TO_VERSION)
         )
-        dict2_to_version = LooseVersion(
+        dict2_to_version = Version(
             dict2.get("toversion", DEFAULT_CONTENT_ITEM_TO_VERSION)
         )
 

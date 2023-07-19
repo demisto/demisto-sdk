@@ -1,11 +1,11 @@
 import os
 import re
 from abc import abstractmethod
-from distutils.version import LooseVersion
 from pathlib import Path
 from typing import Optional
 
 from packaging import version
+from packaging.version import Version
 
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import (
@@ -577,9 +577,9 @@ class ContentEntityValidator(BaseValidator):
         else:
             return True
 
-        if LooseVersion(
+        if Version(
             self.current_file.get(from_version_field, DEFAULT_CONTENT_ITEM_FROM_VERSION)
-        ) < LooseVersion(self.oldest_supported_version):
+        ) < Version(self.oldest_supported_version):
             error_message, error_code = Errors.no_minimal_fromversion_in_file(
                 from_version_field, self.oldest_supported_version
             )
@@ -602,9 +602,9 @@ class ContentEntityValidator(BaseValidator):
         if not self.should_run_fromversion_validation():
             return True
 
-        if LooseVersion(
+        if Version(
             self.current_file.get("fromVersion", DEFAULT_CONTENT_ITEM_FROM_VERSION)
-        ) < LooseVersion(GENERIC_OBJECTS_OLDEST_SUPPORTED_VERSION):
+        ) < Version(GENERIC_OBJECTS_OLDEST_SUPPORTED_VERSION):
             error_message, error_code = Errors.no_minimal_fromversion_in_file(
                 "fromVersion", GENERIC_OBJECTS_OLDEST_SUPPORTED_VERSION
             )

@@ -13,7 +13,7 @@ from collections import OrderedDict
 from concurrent.futures import as_completed
 from configparser import ConfigParser, MissingSectionHeaderError
 from contextlib import contextmanager
-from distutils.version import LooseVersion
+from packaging.version import Version
 from enum import Enum
 from functools import lru_cache
 from pathlib import Path, PosixPath
@@ -1182,7 +1182,7 @@ def server_version_compare(v1, v2):
     v1 = format_version(v1)
     v2 = format_version(v2)
 
-    _v1, _v2 = LooseVersion(v1), LooseVersion(v2)
+    _v1, _v2 = Version(v1), Version(v2)
     if _v1 == _v2:
         return 0
     if _v1 > _v2:
@@ -2122,7 +2122,7 @@ def get_last_release_version():
     """
     tags = run_command("git tag").split("\n")
     tags = [tag for tag in tags if re.match(r"\d+\.\d+\.\d+", tag) is not None]
-    tags.sort(key=LooseVersion, reverse=True)
+    tags.sort(key=Version, reverse=True)
 
     return tags[0]
 

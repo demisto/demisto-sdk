@@ -5,9 +5,10 @@ import copy
 import errno
 import os
 import re
-from distutils.version import LooseVersion
 from pathlib import Path
 from typing import Any, Iterable, Optional, Tuple, Union
+
+from packaging.version import Version
 
 from demisto_sdk.commands.common.constants import (
     ALL_FILES_VALIDATION_IGNORE_WHITELIST,
@@ -441,9 +442,7 @@ class UpdateRN:
                 return False
             new_metadata = self.get_pack_metadata()
             new_version = new_metadata.get("currentVersion", "99.99.99")
-            if LooseVersion(self.master_version) >= LooseVersion(new_version):
-                return True
-            return False
+            return Version(self.master_version) >= Version(new_version)
         except RuntimeError as e:
             raise RuntimeError(
                 f"Unable to locate a pack with the name {self.pack} in the git diff.\n"

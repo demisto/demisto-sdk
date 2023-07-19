@@ -1,3 +1,4 @@
+import os
 import shutil
 import subprocess
 import venv
@@ -21,8 +22,6 @@ from demisto_sdk.commands.content_graph.objects.integration_script import (
 from demisto_sdk.commands.content_graph.objects.pack import Pack
 
 json = JSON5_Handler()
-PROJECT_ID = "123867976588"
-
 
 class IDE(Enum):
     VSCODE = "vscode"
@@ -31,6 +30,28 @@ class IDE(Enum):
 
 IDE_TO_FOLDER = {IDE.VSCODE: ".vscode", IDE.PYCHARM: ".idea"}
 
+
+def get_integration_params(project_id: str, secret_id: str):
+    # Create the Secret Manager client.
+    client = secretmanager.SecretManagerServiceClient()
+
+    # Build the resource name of the secret version.
+    name = f"projects/{project_id}/secrets/{secret_id}/versions/latest"
+
+    # Access the secret version.
+    try:
+        response = client.access_secret_version(name=name)
+    except google.api_core.exceptions.NotFound:
+        logger.warning("The secret is not found in the secret manager")
+        return {}
+    except google.api_core.exceptions.PermissionDenied:
+        logger.warning(
+            "Insufficient permissions for gcloud. If you have the correct permissions, run `gcloud auth application-default login`"
+        )
+        return {}
+    # Return the decoded payload.
+    payload = response.payload.data.decode("UTF-8")
+    return json.loads(payload).get("params")
 
 def configure_dotenv(ide_folder: Path):
     dotenv_path = CONTENT_PATH / ".env"
@@ -182,10 +203,12 @@ def configure(
                 except subprocess.CalledProcessError:
                     logger.warning(f"Could not install {req}, skipping...")
         secret_id = integration_script.object_id.replace(" ", "_")
-        params = get_integration_params(secret_id)
+        if project_id := os.getenv("GCP_PROJECT_ID"):
+            params = get_integration_params(project_id, secret_id)
+            with open(ide_folder / "params.json", "w") as f:
+                json.dump(params, f, quote_keys=True, indent=4)
+
         configure_dotenv(ide_folder)
-        with open(ide_folder / "params.json", "w") as f:
-            json.dump(params, f, quote_keys=True)
         if not docker_image:
             docker_image = DEF_DOCKER
         (
@@ -202,24 +225,3 @@ def configure(
             )
 
 
-def get_integration_params(secret_id):
-    # Create the Secret Manager client.
-    client = secretmanager.SecretManagerServiceClient()
-
-    # Build the resource name of the secret version.
-    name = f"projects/{PROJECT_ID}/secrets/{secret_id}/versions/latest"
-
-    # Access the secret version.
-    try:
-        response = client.access_secret_version(name=name)
-    except google.api_core.exceptions.NotFound:
-        logger.warning("The secret is not found in the secret manager")
-        return {}
-    except google.api_core.exceptions.PermissionDenied:
-        logger.warning(
-            "Insufficient permissions for gcloud. If you have the correct permissions, run `gcloud auth application-default login`"
-        )
-        return {}
-    # Return the decoded payload.
-    payload = response.payload.data.decode("UTF-8")
-    return json.loads(payload).get("params")

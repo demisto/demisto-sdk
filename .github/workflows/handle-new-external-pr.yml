@@ -36,5 +36,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          reviewers=$(curl -s "https://raw.githubusercontent.com/demisto/content/master/.github/content_roles.json" | jq -r '.CONTRIBUTION_TL')
+          echo $(reviewers)
           gh pr edit ${{ github.event.pull_request.html_url }} \
-              --add-reviewer $(curl -s "https://raw.githubusercontent.com/demisto/content/master/.github/content_roles.json" | jq -r '.CONTRIBUTION_TL')
+              --add-reviewer $(reviewers)

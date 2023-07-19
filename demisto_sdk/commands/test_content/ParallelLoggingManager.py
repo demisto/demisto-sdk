@@ -1,7 +1,7 @@
-import logging
+import logging  # noqa: TID251
 import os
 import sys
-from logging.handlers import QueueHandler, QueueListener
+from logging.handlers import QueueHandler, QueueListener  # noqa: TID251
 from queue import Queue
 from threading import Lock, currentThread
 from typing import Any, Dict, Set

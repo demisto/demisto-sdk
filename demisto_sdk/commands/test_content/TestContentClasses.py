@@ -1,5 +1,5 @@
 import ast
-import logging
+import logging  # noqa: TID251
 import os
 import re
 import subprocess

@@ -1,5 +1,5 @@
 import ast
-import logging
+import logging  # noqa: TID251
 from copy import deepcopy
 from pprint import pformat
 from subprocess import STDOUT, CalledProcessError, check_output

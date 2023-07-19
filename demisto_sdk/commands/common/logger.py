@@ -1,8 +1,8 @@
-import logging
-import logging.config
+import logging  # noqa: TID251
+import logging.config  # noqa: TID251
 import os.path
 import sys
-from logging.handlers import RotatingFileHandler
+from logging.handlers import RotatingFileHandler  # noqa: TID251
 from pathlib import Path
 
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH

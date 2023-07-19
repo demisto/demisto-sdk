@@ -1026,6 +1026,13 @@ def get_to_version(file_path):
     return DEFAULT_CONTENT_ITEM_TO_VERSION
 
 
+def str2bool(v):
+    """
+    Deprecated. Use string_to_bool instead
+    """
+    return string_to_bool(v, default_when_empty=False)
+
+
 def to_dict(obj):
     if isinstance(obj, Enum):
         return obj.name
@@ -3601,19 +3608,15 @@ def normalize_field_name(field: str) -> str:
 
 STRING_TO_BOOL_MAP = {
     "y": True,
-    1: True,
     "1": True,
     "yes": True,
     "true": True,
-    "True": True,
-    True: True,
     "n": False,
-    0: False,
     "0": False,
     "no": False,
     "false": False,
-    "False": False,
-    False: False,
+    "t": True,
+    "f": False,
 }
 
 
@@ -3622,7 +3625,7 @@ def string_to_bool(
     default_when_empty: Optional[bool] = None,
 ) -> bool:
     try:
-        return STRING_TO_BOOL_MAP[input_]
+        return STRING_TO_BOOL_MAP[str(input_).lower()]
     except (KeyError, TypeError):
         if input_ in ("", None) and default_when_empty is not None:
             return default_when_empty

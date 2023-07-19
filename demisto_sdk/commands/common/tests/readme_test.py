@@ -210,7 +210,7 @@ def test_is_image_path_valid(mocker):
             for current_str in raw_images_paths
         ]
         + [
-            not str_in_call_args_list(logger_info.call_args_list, current_str)
+            not str_in_call_args_list(logger_error.call_args_list, current_str)
             for current_str in assets_images_paths
         ]
     )

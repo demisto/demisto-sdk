@@ -1024,7 +1024,6 @@ def test_dependencies(mocker, repo, test_number):
     repo.setup_one_pack("CommonTypes")
 
     # Define fixed values or sequences
-    random.seed(1234)  # Set a fixed seed for reproducibility
     pack_to_verify = 3  # Choose a specific pack to verify
 
     number_of_methods_to_choose = 2  # Choose a fixed number of methods to run

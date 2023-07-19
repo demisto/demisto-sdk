@@ -3137,7 +3137,7 @@ def test_is_path_allowed__pass(repo, folder: str):
     When
             Running validate on a file created directly under the folder
     Then
-            Make sure the validation fails, and a proper message is shown
+            Make sure the validation does not fail
     """
     validate_manager = ValidateManager(check_is_unskipped=False, skip_conf_json=True)
 

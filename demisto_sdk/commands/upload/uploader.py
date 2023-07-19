@@ -18,7 +18,7 @@ from demisto_sdk.commands.common.constants import (
     FileType,
     MarketplaceVersions,
 )
-from demisto_sdk.commands.common.handlers import JSON_Handler
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     find_type,
@@ -43,9 +43,6 @@ from demisto_sdk.commands.upload.exceptions import (
     NotUploadableException,
 )
 from demisto_sdk.commands.upload.tools import parse_error_response
-
-json = JSON_Handler()
-
 
 SUCCESS_RETURN_CODE = 0
 ERROR_RETURN_CODE = 1
@@ -196,9 +193,9 @@ class Uploader:
 
     def upload(self):
         """Upload the pack / directory / file to the remote Cortex XSOAR instance."""
-        if self.demisto_version == "0":
+        if self.demisto_version.base_version == "0":
             logger.info(
-                "[red]Could not connect to XSOAR server. Try checking your connection configurations.[/red]"
+                "[red]Could not connect to the server. Try checking your connection configurations.[/red]"
             )
             return ERROR_RETURN_CODE
 

@@ -16,22 +16,22 @@ from demisto_sdk.commands.common.constants import (
     FEATURE_BRANCHES,
     FROM_TO_VERSION_REGEX,
     GENERIC_OBJECTS_OLDEST_SUPPORTED_VERSION,
+    MARKETPLACE_KEY_PACK_METADATA,
     MODELING_RULE,
-    MODELING_RULE_FILE_SUFFIX_REGEX,
     MODELING_RULE_ID_SUFFIX,
     MODELING_RULE_NAME_SUFFIX,
     OLDEST_SUPPORTED_VERSION,
     PARSING_RULE,
-    PARSING_RULE_FILE_SUFFIX_REGEX,
     PARSING_RULE_ID_SUFFIX,
     PARSING_RULE_NAME_SUFFIX,
     FileType,
 )
 from demisto_sdk.commands.common.content import Content
-from demisto_sdk.commands.common.content_constant_paths import CONF_PATH
+from demisto_sdk.commands.common.content_constant_paths import CONF_PATH, CONTENT_PATH
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.git_util import GitUtil
-from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
+from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
 from demisto_sdk.commands.common.hook_validations.base_validator import (
     BaseValidator,
     error_codes,
@@ -44,14 +44,13 @@ from demisto_sdk.commands.common.tools import (
     _get_file_id,
     find_type,
     get_file_displayed_name,
+    get_pack_name,
+    get_remote_file,
     get_yaml,
     is_test_config_match,
     run_command,
 )
 from demisto_sdk.commands.format.format_constants import OLD_FILE_DEFAULT_1_FROMVERSION
-
-json = JSON_Handler()
-yaml = YAML_Handler()
 
 
 class ContentEntityValidator(BaseValidator):
@@ -208,13 +207,33 @@ class ContentEntityValidator(BaseValidator):
         Returns:
             (bool): Whether the files' marketplaces as been modified or not.
         """
+
         if not self.old_file:
             return True
 
-        marketplaces_new = self.current_file.get("marketplaces", [])
-        marketplaces_old = self.old_file.get("marketplaces", [])
+        marketplaces_new = set(self.current_file.get("marketplaces", ()))
+        marketplaces_old = set(self.old_file.get("marketplaces", ()))
 
         if (not marketplaces_old) and marketplaces_new:
+            pack_name = get_pack_name(self.file_path)
+            try:
+                old_pack_marketplaces = set(
+                    get_remote_file(
+                        f"{CONTENT_PATH}/Packs/{pack_name}/pack_metadata.json",
+                        tag=self.prev_ver,
+                    ).get(MARKETPLACE_KEY_PACK_METADATA, ())
+                )
+                if marketplaces_new.issubset(old_pack_marketplaces):
+                    logger.debug(
+                        f"Adding marketplaces that were implicitly-supported previously ({marketplaces_new}) to content item {self.file_path} is allowed"
+                    )
+                    return True
+            except Exception:
+                logger.debug(
+                    f"Failed finding previous pack_metadata marketplaces for {self.file_path}",
+                    exc_info=True,
+                )
+
             error_message, error_code = Errors.marketplaces_added()
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 self.is_valid = False
@@ -226,8 +245,8 @@ class ContentEntityValidator(BaseValidator):
                 self.is_valid = False
                 return False
 
-        if not (set(marketplaces_old).issubset(marketplaces_new)):
-            removed = set(marketplaces_old) - set(marketplaces_new)
+        if not (marketplaces_old.issubset(marketplaces_new)):
+            removed = marketplaces_old - marketplaces_new
             error_message, error_code = Errors.marketplaces_removed(removed)
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 self.is_valid = False
@@ -741,27 +760,23 @@ class ContentEntityValidator(BaseValidator):
     def is_valid_rule_suffix(self, rule_type: str) -> bool:
         """
         Verifies the following::
-            1. The modeling/parsing rule file name ends with 'MODELING/PARSING_RULE_FILE_SUFFIX'.
-            2. The modeling/parsing rule id ends with 'MODELING/PARSING_RULE_ID_SUFFIX'.
-            3. The modeling/parsing rule name ends with 'MODELING/PARSING_RULE_NAME_SUFFIX'.
+            1. The modeling/parsing rule id ends with 'MODELING/PARSING_RULE_ID_SUFFIX'.
+            2. The modeling/parsing rule name ends with 'MODELING/PARSING_RULE_NAME_SUFFIX'.
         """
         data = get_yaml(self.file_path)
         rule_id = data.get("id", "")
         rule_name = data.get("name", "")
 
         if rule_type == MODELING_RULE:
-            file_suffix_regex = MODELING_RULE_FILE_SUFFIX_REGEX
             id_suffix = MODELING_RULE_ID_SUFFIX
             name_suffix = MODELING_RULE_NAME_SUFFIX
             invalid_suffix_function = Errors.invalid_modeling_rule_suffix_name
         if rule_type == PARSING_RULE:
-            file_suffix_regex = PARSING_RULE_FILE_SUFFIX_REGEX
             id_suffix = PARSING_RULE_ID_SUFFIX
             name_suffix = PARSING_RULE_NAME_SUFFIX
             invalid_suffix_function = Errors.invalid_parsing_rule_suffix_name
 
         invalid_suffix = {
-            "invalid_file_name": not re.search(file_suffix_regex, self.file_path),
             "invalid_id": not rule_id.endswith(id_suffix),
             "invalid_name": not rule_name.endswith(name_suffix),
         }

@@ -23,7 +23,7 @@ from demisto_sdk.commands.common.content_constant_paths import (
     CONTENT_PATH,
 )
 from demisto_sdk.commands.common.cpu_count import cpu_count
-from demisto_sdk.commands.common.handlers import JSON_Handler
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.hook_validations.readme import ReadMeValidator
 from demisto_sdk.commands.common.logger import handle_deprecated_args, logging_setup
 from demisto_sdk.commands.common.tools import (
@@ -50,7 +50,6 @@ from demisto_sdk.utils.utils import check_configuration_file
 
 logger = logging.getLogger("demisto-sdk")
 
-json = JSON_Handler()
 
 # Third party packages
 
@@ -105,9 +104,6 @@ class VersionParamType(click.ParamType):
             )
 
 
-json = JSON_Handler()
-
-
 class DemistoSDK:
     """
     The core class for the SDK.
@@ -133,12 +129,12 @@ def logging_setup_decorator(func, *args, **kwargs):
     @click.option(
         "--console_log_threshold",
         help="Minimum logging threshold for the console logger."
-        " Pssible values: DEBUG, INFO, WARNING, ERROR.",
+        " Possible values: DEBUG, INFO, WARNING, ERROR.",
     )
     @click.option(
         "--file_log_threshold",
         help="Minimum logging threshold for the file logger."
-        " Pssible values: DEBUG, INFO, WARNING, ERROR.",
+        " Possible values: DEBUG, INFO, WARNING, ERROR.",
     )
     @click.option(
         "--log_file_path",
@@ -508,7 +504,7 @@ def zip_packs(ctx, **kwargs) -> int:
 
     if should_upload and zip_path:
         return Uploader(
-            input=zip_path, pack_names=unified_pack_names, marketplace=marketplace
+            input=Path(zip_path), pack_names=unified_pack_names, marketplace=marketplace
         ).upload()
 
     return EX_SUCCESS if zip_path is not None else EX_FAIL
@@ -1352,7 +1348,9 @@ def format(
 @click.option(
     "--override-existing",
     is_flag=True,
-    help="If true will skip override confirmation prompt while uploading packs.",
+    help="This value (True/False) determines if the user should be presented with a confirmation prompt when "
+    "attempting to upload a content pack that is already installed on the Cortex XSOAR server. This allows the upload "
+    "command to be used within non-interactive shells.",
 )
 @click.pass_context
 @logging_setup_decorator

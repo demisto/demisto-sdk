@@ -8,7 +8,7 @@ from typing import Any, Callable, Optional
 
 import pytest
 
-from demisto_sdk.commands.common.handlers import YAML_Handler
+from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
 from demisto_sdk.commands.generate_yml_from_python.generate_yml import YMLGenerator
 from demisto_sdk.commands.generate_yml_from_python.yml_metadata_collector import (
     ConfKey,
@@ -18,8 +18,6 @@ from demisto_sdk.commands.generate_yml_from_python.yml_metadata_collector import
 )
 from TestSuite.test_tools import str_in_call_args_list
 from TestSuite.integration import Integration
-
-yaml = YAML_Handler()
 
 
 def dedent(code_line: str, spaces_num: int) -> str:

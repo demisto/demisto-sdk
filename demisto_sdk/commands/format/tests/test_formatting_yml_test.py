@@ -18,7 +18,7 @@ from demisto_sdk.commands.common.constants import (
     NO_TESTS_DEPRECATED,
     MarketplaceVersions,
 )
-from demisto_sdk.commands.common.handlers import YAML_Handler
+from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
 from demisto_sdk.commands.common.hook_validations.docker import DockerImageValidator
 from demisto_sdk.commands.common.hook_validations.integration import (
     IntegrationValidator,
@@ -67,8 +67,6 @@ from TestSuite.pack import Pack
 from TestSuite.playbook import Playbook
 from TestSuite.repo import Repo
 from TestSuite.test_tools import ChangeCWD, str_in_call_args_list
-
-yaml = YAML_Handler()
 
 INTEGRATION_TEST_ARGS = (
     SOURCE_FORMAT_INTEGRATION_COPY,
@@ -893,13 +891,11 @@ class TestFormatting:
         assert {
             "display": "Incident type",
             "name": "incidentType",
-            "required": False,
             "type": 13,
         } not in configuration_params
         assert {
             "display": "Incident type",
             "name": "incidentType",
-            "required": False,
             "type": 13,
             "defaultvalue": "",
         } in configuration_params

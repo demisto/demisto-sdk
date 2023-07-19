@@ -18,6 +18,7 @@ from demisto_sdk.tests.constants_test import (
     XSOAR_LINTER_PY3_INVALID,
     XSOAR_LINTER_PY3_INVALID_WARNINGS,
     XSOAR_LINTER_PY3_INVALID_WARNINGS_PARTNER,
+    XSOAR_LINTER_PY3_NO_DEMISTO_RESULTS_WARNINGS,
     XSOAR_LINTER_PY3_VALID,
 )
 
@@ -220,6 +221,18 @@ files = [
         ],
         [],
     ),
+    # ------------- For Warning file with support level certified partner with indicator format file -------------------
+    (
+        Path(f"{XSOAR_LINTER_PY3_NO_DEMISTO_RESULTS_WARNINGS}"),
+        "3.8",
+        "certified partner",
+        False,
+        4,
+        [
+            "Do not use return_outputs function. Please return CommandResults object instead."
+        ],
+        [],
+    ),
     # --------------------- For Warning file with support level xsoar------------- -----------------------------------
     (
         Path(f"{XSOAR_LINTER_PY3_INVALID_WARNINGS}"),
@@ -275,8 +288,6 @@ def test_xsoar_linter_errors(
     runner = linter.Linter(
         content_repo=test_path,
         pack_dir=test_path,
-        req_2=[],
-        req_3=[],
         docker_engine=True,
         docker_timeout=60,
     )

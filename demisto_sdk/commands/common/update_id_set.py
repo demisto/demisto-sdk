@@ -56,7 +56,7 @@ from demisto_sdk.commands.common.content_constant_paths import (
     XPANSE_ID_SET_PATH,
 )
 from demisto_sdk.commands.common.cpu_count import cpu_count
-from demisto_sdk.commands.common.handlers import JSON_Handler
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     find_type,
@@ -71,9 +71,6 @@ from demisto_sdk.commands.common.tools import (
 from demisto_sdk.commands.prepare_content.integration_script_unifier import (
     IntegrationScriptUnifier,
 )
-
-json = JSON_Handler()
-
 
 CONTENT_ENTITIES = [
     "Packs",
@@ -2208,6 +2205,9 @@ def process_test_playbook_path(
     try:
         if print_logs:
             logger.info(f"adding {file_path} to id_set")
+        if Path(file_path).is_dir():
+            logger.info("file path is actually dir.")
+            return None, None
         if should_skip_item_by_mp(
             file_path, marketplace, {}, packs=packs, print_logs=print_logs
         ):

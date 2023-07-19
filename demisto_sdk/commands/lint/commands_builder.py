@@ -95,12 +95,15 @@ def build_bandit_command(files: List[Path]) -> str:
     return command
 
 
-def build_xsoar_linter_command(files: List[Path], support_level: str = "base") -> str:
+def build_xsoar_linter_command(
+    files: List[Path], support_level: str = "base", formatting_script: bool = False
+) -> str:
     """Build command to execute with xsoar linter module
     Args:
         py_num(str): The python version in use
         files(List[Path]): files to execute lint
         support_level: Support level for the file
+        formatting_script: if the file being checked is a formatting script
 
     Returns:
        str: xsoar linter command using pylint load plugins
@@ -136,6 +139,8 @@ def build_xsoar_linter_command(files: List[Path], support_level: str = "base") -
         for checker in support:
             checker_path += f"{checker},"
             checker_msgs_list = Msg_XSOAR_linter.get(checker, {}).keys()
+            if formatting_script and "W9008" in checker_msgs_list:
+                checker_msgs_list = [msg for msg in checker_msgs_list if msg != "W9008"]
             for msg in checker_msgs_list:
                 message_enable += f"{msg},"
 
@@ -309,6 +314,8 @@ def build_pwsh_analyze_command(file: Path) -> str:
     command = "Invoke-ScriptAnalyzer"
     # Return exit code when finished
     command += " -EnableExit"
+    # Don't fail on warnings and information
+    command += " -Severity Error"
     # Lint Files paths
     command += f" -Path {file.name}"
 

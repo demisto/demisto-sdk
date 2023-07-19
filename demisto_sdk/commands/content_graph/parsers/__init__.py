@@ -29,6 +29,7 @@ __all__ = [
     "XSIAMReportParser",
     "XDRCTemplateParser",
     "LayoutRuleParser",
+    "PreProcessRuleParser",
 ]
 
 from demisto_sdk.commands.content_graph.parsers.classifier import ClassifierParser
@@ -63,6 +64,9 @@ from demisto_sdk.commands.content_graph.parsers.mapper import MapperParser
 from demisto_sdk.commands.content_graph.parsers.modeling_rule import ModelingRuleParser
 from demisto_sdk.commands.content_graph.parsers.parsing_rule import ParsingRuleParser
 from demisto_sdk.commands.content_graph.parsers.playbook import PlaybookParser
+from demisto_sdk.commands.content_graph.parsers.pre_process_rule import (
+    PreProcessRuleParser,
+)
 from demisto_sdk.commands.content_graph.parsers.report import ReportParser
 from demisto_sdk.commands.content_graph.parsers.script import ScriptParser
 from demisto_sdk.commands.content_graph.parsers.test_playbook import TestPlaybookParser

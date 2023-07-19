@@ -9,6 +9,9 @@ from git import InvalidGitRepositoryError
 from packaging import version
 
 from demisto_sdk.commands.common import tools
+from demisto_sdk.commands.common.content.objects.pack_objects.integration.integration import (
+    Integration,
+)
 from demisto_sdk.commands.common.cpu_count import cpu_count
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import (
@@ -147,8 +150,8 @@ from demisto_sdk.commands.common.logger import get_log_file, logger
 from demisto_sdk.commands.common.tools import (
     _get_file_id,
     find_type,
+    get_api_module_dependencies_from_graph,
     get_api_module_ids,
-    get_api_module_integrations_set,
     get_file,
     get_pack_ignore_content,
     get_pack_ignore_file_path,
@@ -225,6 +228,7 @@ class ValidateManager:
         self.check_is_unskipped = check_is_unskipped
         self.conf_json_data = {}
         self.run_with_multiprocessing = multiprocessing
+        self.packs_with_mp_change = set()
         self.is_possible_validate_readme = (
             self.is_node_exist() or ReadMeValidator.is_docker_available()
         )
@@ -580,15 +584,19 @@ class ValidateManager:
 
         return all(all_packs_valid)
 
-    def run_validations_on_pack(self, pack_path):
+    def run_validations_on_pack(self, pack_path, skip_files: Optional[Set[str]] = None):
         """Runs validation on all files in given pack. (i,g,a)
 
         Args:
             pack_path: the path to the pack.
+            skip_files: a list of files to skip.
 
         Returns:
             bool. true if all files in pack are valid, false otherwise.
         """
+        if not skip_files:
+            skip_files = set()
+
         pack_entities_validation_results = set()
         pack_error_ignore_list = self.get_error_ignore_list(os.path.basename(pack_path))
 
@@ -598,14 +606,15 @@ class ValidateManager:
 
         for content_dir in os.listdir(pack_path):
             content_entity_path = os.path.join(pack_path, content_dir)
-            if content_dir in CONTENT_ENTITIES_DIRS:
-                pack_entities_validation_results.add(
-                    self.run_validation_on_content_entities(
-                        content_entity_path, pack_error_ignore_list
+            if content_entity_path not in skip_files:
+                if content_dir in CONTENT_ENTITIES_DIRS:
+                    pack_entities_validation_results.add(
+                        self.run_validation_on_content_entities(
+                            content_entity_path, pack_error_ignore_list
+                        )
                     )
-                )
-            else:
-                self.ignored_files.add(content_entity_path)
+                else:
+                    self.ignored_files.add(content_entity_path)
 
         return all(pack_entities_validation_results), FOUND_FILES_AND_ERRORS
 
@@ -1313,19 +1322,15 @@ class ValidateManager:
                 self.validate_no_duplicated_release_notes(added_files)
             )
             logger.info(f"*** after adding validate_no_duplicated_release_notes")
-            validation_results.add(
-                self.validate_no_missing_release_notes(
-                    modified_files, old_format_files, added_files
-                )
+
+        all_files_set = list(
+            set().union(
+                modified_files, added_files, old_format_files, changed_meta_files
             )
+        )
         if self.validate_graph:
             logger.info(
                 f"\n[cyan]================= Validating graph =================[/cyan]"
-            )
-            all_files_set = list(
-                set().union(
-                    modified_files, added_files, old_format_files, changed_meta_files
-                )
             )
             if all_files_set:
                 with GraphValidator(
@@ -1334,6 +1339,32 @@ class ValidateManager:
                     include_optional_deps=True,
                 ) as graph_validator:
                     validation_results.add(graph_validator.is_valid_content_graph())
+                    validation_results.add(
+                        self.validate_no_missing_release_notes(
+                            modified_files,
+                            old_format_files,
+                            added_files,
+                            graph_validator,
+                        )
+                    )
+
+        if self.packs_with_mp_change:
+            logger.info(
+                f"\n[cyan]================= Running validation on Marketplace Changed Packs =================[/cyan]"
+            )
+            logger.debug(
+                f"Found marketplace change in the following packs: {self.packs_with_mp_change}"
+            )
+
+            for mp_changed_metadata_pack in self.packs_with_mp_change:
+                # Running validation on the whole pack, excluding files that were already checked.
+                validation_results.add(
+                    self.run_validations_on_pack(
+                        mp_changed_metadata_pack, skip_files=set(all_files_set)
+                    )[0]
+                )
+
+            logger.debug(f"Finished validating marketplace changed packs.")
 
         return all(validation_results)
 
@@ -1929,6 +1960,9 @@ class ValidateManager:
                 author_image_path, pack_error_ignore_list
             )
 
+        if pack_unique_files_validator.check_metadata_for_marketplace_change():
+            self.packs_with_mp_change = self.packs_with_mp_change.union({pack_path})
+
         return files_valid and author_valid
 
     def validate_job(self, structure_validator, pack_error_ignore_list):
@@ -2179,7 +2213,7 @@ class ValidateManager:
 
     @error_codes("RN106")
     def validate_no_missing_release_notes(
-        self, modified_files, old_format_files, added_files
+        self, modified_files, old_format_files, added_files, graph_validator
     ):
         """Validate that there are no missing RN for changed files
 
@@ -2187,6 +2221,7 @@ class ValidateManager:
             modified_files (set): a set of modified files.
             old_format_files (set): a set of old format files that were changed.
             added_files (set): a set of files that were added.
+            graph_validator : Content graph
 
         Returns:
             bool. True if no missing RN found, False otherwise
@@ -2202,11 +2237,11 @@ class ValidateManager:
         )
         if API_MODULES_PACK in packs_that_should_have_new_rn:
             api_module_set = get_api_module_ids(changed_files)
-            integrations = get_api_module_integrations_set(
-                api_module_set, self.id_set_file.get("integrations", [])
+            integrations = get_api_module_dependencies_from_graph(
+                api_module_set, graph_validator.graph
             )
             packs_that_should_have_new_rn_api_module_related = set(
-                map(lambda integration: integration.get("pack"), integrations)
+                map(lambda integration: integration.pack_id, integrations)
             )
             packs_that_should_have_new_rn = packs_that_should_have_new_rn.union(
                 packs_that_should_have_new_rn_api_module_related
@@ -2689,7 +2724,9 @@ class ValidateManager:
         return ignored_errors_list
 
     @staticmethod
-    def is_old_file_format(file_path, file_type):
+    def is_old_file_format(file_path: str, file_type: FileType):
+        if file_type not in {FileType.INTEGRATION, FileType.SCRIPT}:
+            return False
         file_yml = get_file(file_path)
         # check for unified integration
         if file_type == FileType.INTEGRATION and file_yml.get("script", {}).get(

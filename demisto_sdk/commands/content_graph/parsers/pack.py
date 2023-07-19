@@ -209,5 +209,6 @@ class PackParser(BaseContentParser, PackMetadataParser):
             logger.error(f"{content_item_path} - invalid content item")
             raise
 
+    @property
     def deprecated(self) -> bool:
         return self.name.endswith("(Deprecated)")

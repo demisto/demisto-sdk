@@ -10,6 +10,7 @@
 * **validate** will now run on all the pack content items when the pack supported marketplaces are modified.
 * Fixed an issue where errors in **validate** were logged as `info`.
 * Fixed an issue where parameters of type 9 could not be hidden in specific marketplaces.
+* Added an ability to provide list of marketplace names as a credentials-type (type 9) param attribute.
 
 ## 1.17.2
 * Fixed an issue where **lint** and **validate** commands failed on integrations and scripts that use docker images that are not available in the Docker Hub but exist locally.

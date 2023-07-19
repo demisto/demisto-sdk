@@ -603,3 +603,6 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: i
             self.to_dict(),
             *[content_item.to_dict() for content_item in self.content_items],
         )
+
+    def deprecated(self) -> bool:
+        return self.name.endswith('(Deprecated)')

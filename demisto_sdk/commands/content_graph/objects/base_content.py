@@ -78,6 +78,7 @@ class BaseContent(ABC, BaseModel, metaclass=BaseContentMetaclass):
     content_type: ClassVar[ContentType] = Field(include=True)
     node_id: str
     marketplaces: List[MarketplaceVersions] = list(MarketplaceVersions)
+    deprecated: bool
 
     relationships_data: Dict[RelationshipType, Set["RelationshipData"]] = Field(
         defaultdict(set), exclude=True, repr=False
@@ -119,6 +120,11 @@ class BaseContent(ABC, BaseModel, metaclass=BaseContentMetaclass):
     def normalize_name(self) -> str:
         # if has name attribute, return it, otherwise return the object id
         return self.object_id
+
+    @property
+    @abstractmethod
+    def deprecated(self) -> bool:
+        pass
 
     def to_dict(self) -> Dict[str, Any]:
         """

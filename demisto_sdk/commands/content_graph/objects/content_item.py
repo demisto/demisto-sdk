@@ -51,7 +51,6 @@ class ContentItem(BaseContent):
     fromversion: str
     toversion: str
     display_name: str
-    deprecated: bool
     description: Optional[str]
     is_test: bool = False
 

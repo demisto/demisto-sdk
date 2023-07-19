@@ -27,8 +27,3 @@ class BaseContentParser(ABC):
     @property
     def node_id(self) -> str:
         return f"{self.content_type}:{self.object_id}"
-
-    @property
-    @abstractmethod
-    def deprecated(self) -> bool:
-        return False

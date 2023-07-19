@@ -220,6 +220,7 @@ class UnknownContent(BaseContent):
     node_id: str = ""  # just because it's missing from the db
     object_id: str = ""
     name: str = ""
+    deprecated: bool = False
 
     def dump(self, _, __):
         ...

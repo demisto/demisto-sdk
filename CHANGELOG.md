@@ -11,7 +11,7 @@
 * **validate** will now run on all the pack content items when the pack supported marketplaces are modified.
 * **pre-commit** will stop running at the start when there was no change to any files.
 * Fixed an issue where errors in **validate** were logged as `info`.
-
+* Fixed an issue where the error messages were not log in **validate**
 
 ## 1.17.2
 * Fixed an issue where **lint** and **validate** commands failed on integrations and scripts that use docker images that are not available in the Docker Hub but exist locally.

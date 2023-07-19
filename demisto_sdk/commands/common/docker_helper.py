@@ -131,7 +131,7 @@ class DockerBase:
     @staticmethod
     def pull_image(image: str) -> docker.models.images.Image:
         """
-        Get a docker image, in case not found, will pull it.
+        Get a local docker image, or pull it when unavailable.
         """
         docker_client = init_global_docker_client(log_prompt="pull_image")
 

@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 from typing import Dict, List, Optional
 
@@ -259,7 +260,7 @@ class Pack:
         yml: Optional[dict] = None,
         code: Optional[str] = None,
         readme: str = "",
-        description: str = "",
+        description: Optional[str] = None,
         changelog: str = "",
         image: bytes = b"",
         docker_image: Optional[str] = None,
@@ -283,6 +284,7 @@ class Pack:
             self._scripts_path, name, self._repo, create_unified=create_unified
         )
         script.build(code, yml, readme, description, changelog, image)
+        os.remove(script.description.path)
         self.scripts.append(script)
         return script
 

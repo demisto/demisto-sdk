@@ -334,4 +334,3 @@ class DescriptionValidator(BaseValidator):
                 self._is_valid = False
                 return False
         return True
-

@@ -4334,13 +4334,10 @@ class Errors:
             "it will not be possible to create a script with the name `getAlert`)"
         )
 
-
     @staticmethod
     @error_code_decorator
-    def invalid_content_description_file():  # TODO
+    def invalid_content_description_file():
         return (
             "You should update the integration description file, for further details please visit "
             "https://xsoar.pan.dev/docs/documentation/integration-description."
         )
-
-

@@ -4711,7 +4711,9 @@ class TestAllFilesValidator:
         )
         valid_integration_yml = get_yaml(pack_integration_path, cache_clear=True)
         integration = pack1.create_integration(
-            "integration0", yml=valid_integration_yml
+            "integration0",
+            yml=valid_integration_yml,
+            description="integration0-description",
         )
         incident_field = pack1.create_incident_field(
             "incident-field", content=INCIDENT_FIELD

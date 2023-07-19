@@ -38,14 +38,14 @@ METADATA = {
 
 
 class TestIDSetCreator:
-    def setup(self):
+    def setup_method(self):
         self.id_set_full_path = os.path.join(
             TESTS_DIR, "test_files", "content_repo_example", "id_set.json"
         )
         self._test_dir = mkdtemp()
         self.file_path = os.path.join(self._test_dir, "id_set.json")
 
-    def teardown(self):
+    def teardown_method(self):
         # delete the id set file
         try:
             if os.path.isfile(self.file_path) or os.path.islink(self.file_path):

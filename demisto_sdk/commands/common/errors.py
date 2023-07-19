@@ -1689,20 +1689,24 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def unsearchable_key_should_be_true_incident_field():
-        return "Warning: Indicator and incident fields should include the `unsearchable` key set to true. When missing" \
-               " or set to false, the platform will index the data in this field. Unnecessary indexing of fields might" \
-               " affect the performance and disk usage in environments." \
-               "While considering the above mentioned warning, you can bypass this error by adding it to the" \
-               " .pack-ignore file."
+        return (
+            "Warning: Indicator and incident fields should include the `unsearchable` key set to true. When missing"
+            " or set to false, the platform will index the data in this field. Unnecessary indexing of fields might"
+            " affect the performance and disk usage in environments."
+            "While considering the above mentioned warning, you can bypass this error by adding it to the"
+            " .pack-ignore file."
+        )
 
     @staticmethod
     @error_code_decorator
     def unsearchable_key_should_be_true_generic_field():
-        return "Warning: Generic fields should include the `unsearchable` key set to true. When missing" \
-               " or set to false, the platform will index the data in this field. Unnecessary indexing of fields might" \
-               " affect the performance and disk usage in environments." \
-               "While considering the above mentioned warning, you can bypass this error by adding it to the" \
-               " .pack-ignore file."
+        return (
+            "Warning: Generic fields should include the `unsearchable` key set to true. When missing"
+            " or set to false, the platform will index the data in this field. Unnecessary indexing of fields might"
+            " affect the performance and disk usage in environments."
+            "While considering the above mentioned warning, you can bypass this error by adding it to the"
+            " .pack-ignore file."
+        )
 
     @staticmethod
     @error_code_decorator

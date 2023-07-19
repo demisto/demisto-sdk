@@ -22,7 +22,6 @@ from demisto_sdk.commands.format.update_connection import ConnectionJSONFormat
 from demisto_sdk.commands.format.update_dashboard import DashboardJSONFormat
 from demisto_sdk.commands.format.update_generic import BaseUpdate
 from demisto_sdk.commands.format.update_generic_json import BaseUpdateJSON
-from demisto_sdk.commands.format.update_genericfield import GenericFieldJSONFormat
 from demisto_sdk.commands.format.update_incidentfields import IncidentFieldJSONFormat
 from demisto_sdk.commands.format.update_incidenttype import IncidentTypesJSONFormat
 from demisto_sdk.commands.format.update_indicatorfields import IndicatorFieldJSONFormat

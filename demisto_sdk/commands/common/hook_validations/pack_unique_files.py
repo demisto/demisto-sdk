@@ -6,6 +6,7 @@ import os
 import re
 from datetime import datetime
 from distutils.version import LooseVersion
+from itertools import chain
 from pathlib import Path
 from typing import Dict, List, Set, Tuple
 
@@ -429,14 +430,21 @@ class PackUniqueFilesValidator(BaseValidator):
     def validate_non_ignorable_error(self):
         """Check if .pack-ignore structure is parse-able"""
         ignore_file = self._parse_file_into_list(self.pack_ignore_file)
-        errors = [ignore_error.replace('ignore=', '') for ignore_error in ignore_file if "ignore=" in ignore_error]
-        if errors:
-            errors_list = ','.join(errors).split(',')
-            nonignoable_errors = set(errors_list) - set(ALLOWED_IGNORE_ERRORS)
+        error_codes = set(
+            chain.from_iterable(
+                item.split("=")[1].split(",")
+                for item in ignore_file
+                if item.startswith("ignore=")
+            )
+        )
+
+        if error_codes:
+            nonignoable_errors = error_codes.difference(ALLOWED_IGNORE_ERRORS)
             if nonignoable_errors:
                 if self._add_error(
                     Errors.pack_have_nonignorable_error(nonignoable_errors),
-                    self.pack_ignore_file):
+                    self.pack_ignore_file,
+                ):
                     return False
         return True
 

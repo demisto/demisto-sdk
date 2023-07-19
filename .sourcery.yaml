@@ -19,3 +19,4 @@ rule_settings:
   - suggestion
   - comment
   python_version: '3.8'
+

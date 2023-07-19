@@ -3014,12 +3014,14 @@ class ValidateManager:
                 not in FIRST_LEVEL_FOLDERS_ALLOWED_TO_CONTAIN_FILES
                 and _handle_first_level_folder_does_not_allow_files()
             ):
+                # Packs/MyPack/SomeFolderThatShouldntHaveFilesDirectly/<modified file>
                 return False
 
             if (
                 first_level_folder not in FIRST_LEVEL_FOLDERS
                 and _handle_invalid_first_level_folder()
             ):
+                # Packs/MyPack/SomeFolderThatShouldntBeFirstLevel/<modified file>
                 return False
 
         return True  # this part is reached when a _hanlde method returns False

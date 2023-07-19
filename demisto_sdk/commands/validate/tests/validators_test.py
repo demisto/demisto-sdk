@@ -1,5 +1,5 @@
 import contextlib
-import logging
+import logging. # noqa: TID251 - Test
 import os
 import sys
 from io import StringIO

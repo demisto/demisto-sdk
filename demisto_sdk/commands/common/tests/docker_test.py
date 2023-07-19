@@ -1,4 +1,4 @@
-import logging
+import logging. # noqa: TID251 - Test
 import os
 from datetime import datetime
 from unittest import mock

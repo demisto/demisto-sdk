@@ -1,4 +1,4 @@
-import logging
+import logging. # noqa: TID251 - Test
 import shutil
 import tempfile
 from typing import Callable

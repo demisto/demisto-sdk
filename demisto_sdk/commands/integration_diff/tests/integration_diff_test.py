@@ -1,5 +1,5 @@
 import copy
-import logging
+import logging. # noqa: TID251 - Test
 
 from demisto_sdk.commands.integration_diff.integration_diff_detector import (
     IntegrationDiffDetector,

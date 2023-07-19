@@ -1,4 +1,4 @@
-import logging
+import logging. # noqa: TID251 - Test
 from distutils.version import LooseVersion
 from typing import Dict, List
 from unittest.mock import patch

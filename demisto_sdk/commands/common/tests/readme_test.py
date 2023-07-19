@@ -1,5 +1,5 @@
 import glob
-import logging
+import logging. # noqa: TID251 - Test
 import os
 import sys
 

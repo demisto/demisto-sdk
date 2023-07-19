@@ -1,5 +1,5 @@
 import ast
-import logging
+import logging. # noqa: TID251 - Test
 from functools import partial
 
 import pytest

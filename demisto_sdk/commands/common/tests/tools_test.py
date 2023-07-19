@@ -91,7 +91,6 @@ from demisto_sdk.commands.common.tools import (
     run_command_os,
     search_and_delete_from_conf,
     server_version_compare,
-    str2bool,
     string_to_bool,
     to_kebab_case,
 )

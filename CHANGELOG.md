@@ -11,7 +11,7 @@
 * **validate** will now run on all the pack content items when the pack supported marketplaces are modified.
 * Fixed an issue where **pre-commit** running when there was no change to the files
 * Fixed an issue where errors in **validate** were logged as `info`.
-
+* Added a new validation (`BA125`) to **validate** that assures internal function names aren't in use in customer-facing docs.
 
 ## 1.17.2
 * Fixed an issue where **lint** and **validate** commands failed on integrations and scripts that use docker images that are not available in the Docker Hub but exist locally.

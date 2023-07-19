@@ -6,6 +6,7 @@
 * Improved the content graph performance when calculating content relationships.
 * Fixed an issue where **validate** would not properly detect dependencies of core packs.
 * **validate** will now run on all the pack content items when the pack supported marketplaces are modified.
+* Code improvements, replacing deprecated `LooseVersion` class to the `Version` class.
 
 ## 1.17.2
 * Fixed an issue where **lint** and **validate** commands failed on integrations and scripts that use docker images that are not available in the Docker Hub but exist locally.

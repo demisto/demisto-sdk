@@ -11,7 +11,7 @@
 * **validate** will now run on all the pack content items when the pack supported marketplaces are modified.
 * Fixed an issue where **pre-commit** running when there was no change to the files
 * Fixed an issue where errors in **validate** were logged as `info`.
-* Added new validation that checks that if the integration is XSIAM it has only the `marketplacev2` value in the marketplaces field.
+* Added new validation that XSIAM integrations must have `marketplacev2` as the value of the marketplaces field.
 
 
 ## 1.17.2

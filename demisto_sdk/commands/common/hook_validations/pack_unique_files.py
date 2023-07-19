@@ -44,7 +44,7 @@ from demisto_sdk.commands.common.constants import (  # PACK_METADATA_PRICE,
 )
 from demisto_sdk.commands.common.content import Content
 from demisto_sdk.commands.common.content.objects.pack_objects.pack import Pack
-from demisto_sdk.commands.common.errors import Errors, ALLOWED_IGNORE_ERRORS
+from demisto_sdk.commands.common.errors import ALLOWED_IGNORE_ERRORS, Errors
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.hook_validations.base_validator import (
@@ -429,13 +429,18 @@ class PackUniqueFilesValidator(BaseValidator):
     def validate_non_ignorable_error(self):
         """Check if .pack-ignore structure is parse-able"""
         ignore_file = self._parse_file_into_list(self.pack_ignore_file)
-        errors = [ignore_error.replace('ignore=', '') for ignore_error in ignore_file if "ignore=" in ignore_error]
-        errors_list = ','.join(errors).split(',')
+        errors = [
+            ignore_error.replace("ignore=", "")
+            for ignore_error in ignore_file
+            if "ignore=" in ignore_error
+        ]
+        errors_list = ",".join(errors).split(",")
         nonignoable_errors = set(errors_list) - set(ALLOWED_IGNORE_ERRORS)
         if nonignoable_errors:
             if self._add_error(
                 Errors.pack_have_nonignorable_error(nonignoable_errors),
-                self.pack_ignore_file):
+                self.pack_ignore_file,
+            ):
                 return False
         return True
 

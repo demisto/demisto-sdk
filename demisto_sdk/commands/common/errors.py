@@ -4304,9 +4304,8 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def pack_have_nonignorable_error(
-        nonignorable_errors: List[str]
-    ):
-        return ("The following ignore errors are not allow:",
-                f"{', '.join(nonignorable_errors)},"
-                "Please remove this error codes")
+    def pack_have_nonignorable_error(nonignorable_errors: List[str]):
+        return (
+            "The following ignore errors are not allow:",
+            f"{', '.join(nonignorable_errors)}," "Please remove this error codes",
+        )

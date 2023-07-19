@@ -639,7 +639,7 @@ def filter_packagify_changes(modified_files, added_files, removed_files, tag="ma
             if PACKS_README_FILE_NAME in file_path:
                 updated_added_files.add(file_path)
                 continue
-            details = get_file(file_path)
+            details = get_yaml(file_path, return_content=True)
 
             uniq_identifier = "_".join(
                 [
@@ -869,10 +869,10 @@ def get_file_or_remote(file_path: Path, clear_cache=False):
         return get_remote_file(str(relative_file_path))
 
 
-def get_yaml(file_path, cache_clear=False, keep_order: bool = True):
+def get_yaml(file_path, cache_clear=False, keep_order: bool = True, return_content: bool = False):
     if cache_clear:
         get_file.cache_clear()
-    return get_file(file_path, "yml", clear_cache=cache_clear, keep_order=keep_order)
+    return get_file(file_path, "yml", clear_cache=cache_clear, keep_order=keep_order, return_content=return_content)
 
 
 def get_json(file_path, cache_clear=False, return_content: bool = False):

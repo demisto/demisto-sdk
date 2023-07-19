@@ -7,10 +7,8 @@ import pytest
 
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import DEFAULT_IMAGE_BASE64
-from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
-from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
 from demisto_sdk.commands.common.legacy_git_tools import git_path
-from demisto_sdk.commands.common.tools import get_file, get_json
+from demisto_sdk.commands.common.tools import get_yaml, get_json
 from demisto_sdk.commands.prepare_content.integration_script_unifier import (
     IntegrationScriptUnifier,
 )
@@ -179,7 +177,7 @@ def test_extract_to_package_format_modeling_rule(tmpdir):
     assert schema == get_json(file_json, return_content=True)
 
     yml_file = out.join("OktaModelingRule").join("OktaModelingRule.yml")
-    yaml_obj = get_file(yml_file, type_of_file='yml', return_content=True)
+    yaml_obj = get_yaml(yml_file, return_content=True)
     assert yaml_obj["fromversion"] == "6.8.0"
 
 
@@ -217,7 +215,7 @@ def test_extract_to_package_format_parsing_rule(tmpdir):
     assert sample == get_json(json_file, return_content=True)
 
     yml_file = out.join("MyRule").join("MyRule.yml")
-    yaml_obj = get_file(yml_file, type_of_file='yml', return_content=True)
+    yaml_obj = get_yaml(yml_file, return_content=True)
     assert yaml_obj["fromversion"] == "6.8.0"
 
 
@@ -279,7 +277,7 @@ def test_extract_code(tmpdir, file_path, file_type):
         output=str(tmpdir.join("temp_code.py")),
         file_type=file_type,
     )
-    script_before_split = get_file(Path(extractor.input), type_of_file='yml', return_content=True)["script"][
+    script_before_split = get_yaml(Path(extractor.input), return_content=True)["script"][
         "script"
     ]
     assert "### pack version: 1.0.3" in script_before_split
@@ -334,7 +332,7 @@ def test_extract_javascript_code(tmpdir, file_type):
     )
     assert (
         "// pack version: 1.0.3"
-        in get_file(Path(extractor.input), type_of_file='yml', return_content=True)["script"]["script"]
+        in get_yaml(Path(extractor.input), return_content=True)["script"]["script"]
     )
 
     extractor.extract_code(extractor.output)
@@ -364,7 +362,7 @@ def test_extract_powershell_code(tmpdir, file_type):
     )
     assert (
         "### pack version: 1.0.3"
-        in get_file(Path(extractor.input), type_of_file='yml', return_content=True)["script"]["script"]
+        in get_yaml(Path(extractor.input), return_content=True)["script"]["script"]
     )
 
     extractor.extract_code(extractor.output)
@@ -512,7 +510,7 @@ def test_extract_to_package_format_pwsh(tmpdir, file_type):
         file_data = f.read()
         assert "This is a sample test README" in file_data
     yml_file = out.join("PowerShellRemotingOverSSH").join("PowerShellRemotingOverSSH.yml")
-    yaml_obj = get_file(yml_file, type_of_file='yml', return_content=True)
+    yaml_obj = get_yaml(yml_file, return_content=True)
     assert yaml_obj["fromversion"] == "5.5.0"
     assert not yaml_obj["script"]["script"]
 

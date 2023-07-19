@@ -19,7 +19,7 @@ from demisto_sdk.commands.common.constants import (
 )
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
-from demisto_sdk.commands.common.tools import get_file
+from demisto_sdk.commands.common.tools import get_yaml
 from demisto_sdk.commands.init.initiator import Initiator
 from TestSuite.test_tools import ChangeCWD
 
@@ -381,7 +381,7 @@ def test_yml_reformatting(monkeypatch, tmp_path, initiator):
         current_suffix=initiator.HELLO_WORLD_INTEGRATION, integration=True
     )
     yml_file = full_output_path / f"{dir_name}.yml"
-    yml_dict = get_file(yml_file, type_of_file='yml', return_content=True)
+    yml_dict = get_yaml(yml_file, return_content=True)
     assert yml_dict == OrderedDict(
         {
             "commonfields": OrderedDict({"id": "HelloWorld"}),

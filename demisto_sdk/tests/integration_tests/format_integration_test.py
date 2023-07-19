@@ -12,7 +12,6 @@ from demisto_sdk.commands.common.constants import GENERAL_DEFAULT_FROMVERSION
 from demisto_sdk.commands.common.content.content import Content
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
-from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import (
     ContentEntityValidator,
 )
@@ -21,7 +20,7 @@ from demisto_sdk.commands.common.hook_validations.integration import (
 )
 from demisto_sdk.commands.common.hook_validations.playbook import PlaybookValidator
 from demisto_sdk.commands.common.hook_validations.readme import ReadMeValidator
-from demisto_sdk.commands.common.tools import get_dict_from_file, is_test_config_match, get_file, get_json
+from demisto_sdk.commands.common.tools import get_dict_from_file, is_test_config_match, get_yaml, get_json
 from demisto_sdk.commands.format import format_module, update_generic
 from demisto_sdk.commands.format.update_generic import BaseUpdate
 from demisto_sdk.commands.format.update_generic_yml import BaseUpdateYML
@@ -466,7 +465,7 @@ def test_integration_format_remove_playbook_sourceplaybookid(
         logger_debug.call_args_list,
         f'Not formatting {source_playbook_path} with "No tests"',
     )
-    yaml_content = get_file(playbook_path, type_of_file='yml', return_content=True)
+    yaml_content = get_yaml(playbook_path, return_content=True)
     assert "sourceplaybookid" not in yaml_content
 
     assert not result.exception
@@ -1225,7 +1224,7 @@ def test_format_incident_type_layout_id(repo, mocker, monkeypatch):
     layout_content = get_json(layout.path, return_content=True)
     assert layout_content["name"] == layout_content["id"]
 
-    playbook_content = get_file(playbook.yml.path, type_of_file='yml', return_content=True)
+    playbook_content = get_yaml(playbook.yml.path, return_content=True)
     assert playbook_content["name"] == playbook_content["id"]
 
     incident_type_content = get_json(incident_type.path, return_content=True)

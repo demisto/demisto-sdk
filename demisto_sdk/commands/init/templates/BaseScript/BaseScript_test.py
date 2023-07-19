@@ -10,9 +10,11 @@ MAKE SURE YOU REVIEW/REPLACE ALL THE COMMENTS MARKED AS "TODO"
 
 import json
 
+from demisto_sdk.commands.common.tools import get_json
+
 
 def util_load_json(path):
-    return get_json()
+    return get_json(path, return_content=True)
 
 
 # TODO: REMOVE the following dummy unit test function

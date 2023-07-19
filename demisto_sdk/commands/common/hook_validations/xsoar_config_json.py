@@ -5,7 +5,6 @@ from jsonschema import Draft7Validator, ValidationError
 from prettytable import PrettyTable
 
 from demisto_sdk.commands.common.errors import Errors
-from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.hook_validations.base_validator import (
     BaseValidator,
     error_codes,

@@ -3,7 +3,7 @@ from typing import Optional
 
 from demisto_sdk.commands.common.handlers import YAML_Handler
 from TestSuite.file import File
-from demisto_sdk.commands.common.tools import get_file
+from demisto_sdk.commands.common.tools import get_yaml
 
 yaml = YAML_Handler()
 
@@ -20,7 +20,7 @@ class YAML(File):
             f.flush()
 
     def read_dict(self):
-        return get_file(self._tmp_path, type_of_file='yml', return_content=True)
+        return get_yaml(self._tmp_path, return_content=True)
 
     def update(self, update_obj: dict):
         yml_contents = self.read_dict()

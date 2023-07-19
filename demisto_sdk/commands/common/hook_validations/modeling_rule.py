@@ -10,13 +10,11 @@ from demisto_sdk.commands.common.constants import (
     MODELING_RULE,
 )
 from demisto_sdk.commands.common.errors import Errors
-from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
-from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
 from demisto_sdk.commands.common.hook_validations.base_validator import error_codes
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import (
     ContentEntityValidator,
 )
-from demisto_sdk.commands.common.tools import get_files_in_dir, get_file, get_json
+from demisto_sdk.commands.common.tools import get_files_in_dir, get_yaml, get_json
 
 
 class ModelingRuleValidator(ContentEntityValidator):
@@ -152,7 +150,7 @@ class ModelingRuleValidator(ContentEntityValidator):
         """
         Check that the schema and rules keys are empty.
         """
-        yaml_obj = get_file(self.file_path, type_of_file='yml', return_content=True)
+        yaml_obj = get_yaml(self.file_path, return_content=True)
 
         # Check that the keys exists in yml
         if "rules" in yaml_obj and "schema" in yaml_obj:

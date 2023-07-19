@@ -4,7 +4,6 @@ import pytest
 
 from demisto_sdk.commands.common.content.objects.pack_objects import LayoutsContainer
 from demisto_sdk.commands.common.content.objects_factory import path_to_pack_object
-from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.tools import src_root, get_json
 

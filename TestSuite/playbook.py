@@ -5,7 +5,7 @@ from demisto_sdk.commands.common.handlers import YAML_Handler
 from TestSuite.file import File
 from TestSuite.test_tools import suite_join_path
 from TestSuite.yml import YAML
-from demisto_sdk.commands.common.tools import get_file
+from demisto_sdk.commands.common.tools import get_yaml
 
 yaml = YAML_Handler()
 
@@ -54,13 +54,13 @@ class Playbook:
         """
         default_playbook_dir = "assets/default_playbook"
         yml_file = suite_join_path(default_playbook_dir, "playbook-sample.yml")
-        yml = get_file(yml_file, type_of_file='yml', return_content=True)
+        yml = get_yaml(yml_file, return_content=True)
         yml["id"] = yml["name"] = name
         self.build(yml=yml)
 
     def create_default_test_playbook(self, name: str = "SamplePlaybookTest"):
         yml_file = suite_join_path(self.default_assets_dir, "default_playbook/playbook-sample.yml")
-        yml = get_file(yml_file, type_of_file='yml', return_content=True)
+        yml = get_yaml(yml_file, return_content=True)
         yml["id"] = yml["name"] = name
         self.build(yml=yml)
 
@@ -68,7 +68,7 @@ class Playbook:
         task = None
         task_filename = "default_playbook/tasks/task-sample.yml"
         yml_file = suite_join_path(self.default_assets_dir, task_filename)
-        task = get_file(yml_file, type_of_file='yml', return_content=True)
+        task = get_yaml(yml_file, return_content=True)
         if not task:
             print(  # noqa: T201
                 "Cannot read task from "

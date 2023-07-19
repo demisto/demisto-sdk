@@ -14,7 +14,7 @@ from demisto_sdk.__main__ import main
 from demisto_sdk.commands.common.constants import AUTHOR_IMAGE_FILE_NAME
 from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
 from TestSuite.test_tools import ChangeCWD
-from demisto_sdk.commands.common.tools import get_file
+from demisto_sdk.commands.common.tools import get_yaml
 
 
 class TestError(BaseException):
@@ -297,7 +297,7 @@ def modify_entity(content_repo: ContentGitRepo, monkeypatch: MonkeyPatch):
         content_repo.content / "Packs" / "HelloWorld" / "Scripts" / "HelloWorldScript"
     )
     # Modify the entity
-    script = get_file("./HelloWorldScript.yml", type_of_file='yml', return_content=True)
+    script = get_yaml("./HelloWorldScript.yml", return_content=True)
     script["args"][0]["description"] = "new description"
 
     yaml.dump(script, open("./HelloWorldScript.yml", "w"))

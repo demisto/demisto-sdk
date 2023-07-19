@@ -4,7 +4,7 @@ from pathlib import Path
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
 from demisto_sdk.commands.common.legacy_git_tools import git_path
-from demisto_sdk.commands.common.tools import get_file, get_json
+from demisto_sdk.commands.common.tools import get_yaml, get_json
 from demisto_sdk.commands.generate_integration.code_generator import (
     IntegrationGeneratorCommand,
     IntegrationGeneratorConfig,
@@ -146,7 +146,7 @@ class TestCodeGenerator:
 
         yaml_obj = autogen_config.generate_integration_yml().to_dict()
         yml_file = os.path.join(self.test_integration_dir, "VirusTotalTest.yml")
-        expected_yml = get_file(yml_file, type_of_file='yml', return_content=True)
+        expected_yml = get_yaml(yml_file, return_content=True)
 
         assert expected_yml == yaml_obj
 

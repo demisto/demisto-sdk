@@ -3,8 +3,7 @@ from pathlib import Path
 
 import pytest
 
-from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
-from demisto_sdk.commands.common.tools import get_file
+from demisto_sdk.commands.common.tools import get_yaml
 from demisto_sdk.commands.generate_modeling_rules.generate_modeling_rules import (
     MappingField,
     RawEventData,
@@ -246,9 +245,9 @@ def test_create_yml_file():
     with tempfile.TemporaryDirectory() as tmpdirname:
         created_yml_path = Path(tmpdirname, "test_test_modeling_rules.yml")
         create_yml_file(created_yml_path, "test", "test")
-        yml_created = get_file(created_yml_path, type_of_file='yml', return_content=True)
+        yml_created = get_yaml(created_yml_path, return_content=True)
 
-    yml_result = get_file(result_yml_path, type_of_file='yml', return_content=True)
+    yml_result = get_yaml(result_yml_path, return_content=True)
 
     assert yml_created == yml_result
 

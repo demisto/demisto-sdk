@@ -3,7 +3,7 @@ from pathlib import Path
 from typing import List, Optional
 
 from demisto_sdk.commands.common.handlers import YAML_Handler
-from demisto_sdk.commands.common.tools import get_file
+from demisto_sdk.commands.common.tools import get_yaml
 from demisto_sdk.commands.prepare_content.integration_script_unifier import (
     IntegrationScriptUnifier,
 )
@@ -115,7 +115,7 @@ class Integration:
         with open(suite_join_path(default_integration_dir, "sample.py")) as code_file:
             code = str(code_file.read())
         yml_file = suite_join_path(default_integration_dir, "sample.yml")
-        yml = get_file(yml_file, type_of_file='yml', return_content=True)
+        yml = get_yaml(yml_file, return_content=True)
         yml["name"] = yml["commonfields"]["id"] = name
         if commands:
             for command in commands:

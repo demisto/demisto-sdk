@@ -12,7 +12,6 @@ from demisto_sdk.commands.common.constants import (
 from demisto_sdk.commands.common.default_additional_info_loader import (
     load_default_additional_info_dict,
 )
-from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import get_yaml, get_json
 from demisto_sdk.commands.generate_docs.common import (

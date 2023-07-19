@@ -15,8 +15,8 @@ print = timestamped_print
 with open('../../../content/.github/contribution_team.json') as f:
     contribution_team = json.load(f)
 
-SECURITY_REVIEWER = contribution_team['SECURITY_REVIEWER']
-REVIEWERS = contribution_team['REVIEWERS']
+SECURITY_REVIEWER = contribution_team['CONTRIBUTION_SECURITY_REVIEWER']
+REVIEWERS = contribution_team['CONTRIBUTION_REVIEWERS']
 CONTRIBUTION_TL = contribution_team['CONTRIBUTION_TL']
 MARKETPLACE_CONTRIBUTION_PR_AUTHOR = 'xsoar-bot'
 WELCOME_MSG = 'Thank you for your contribution. Your generosity and caring are unrivaled! Rest assured - our demisto-sdk ' \

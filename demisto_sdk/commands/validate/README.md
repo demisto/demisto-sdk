@@ -2,6 +2,8 @@
 
 Makes sure your content repository files are in order and have valid yml file scheme.
 
+
+
 **Notes**
 
 In order to run the README validator:

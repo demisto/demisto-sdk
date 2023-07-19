@@ -25,6 +25,7 @@ from demisto_sdk.commands.common.constants import (
     TYPE_PYTHON,
     DemistoException,
 )
+from demisto_sdk.commands.common.docker_helper import CAN_MOUNT_FILES
 from demisto_sdk.commands.common.logger import logger
 
 # Python2 requirements
@@ -260,6 +261,9 @@ def add_tmp_lint_files(
     Raises:
         IOError: if can't write to files due permissions or other reasons
     """
+    if (test_data_dir := (pack_path / "test_data")).exists():
+        (test_data_dir / "__init__.py").touch()
+
     added_modules: List[Path] = []
     try:
         # Add mandatory test,lint modules
@@ -268,7 +272,19 @@ def add_tmp_lint_files(
             python_module = TYPE_PYTHON == pack_type and module.suffix == ".py"
             if pwsh_module or python_module:
                 copied_api_module_path = pack_path / module.name
-                if not copied_api_module_path.exists():
+                if (
+                    CAN_MOUNT_FILES
+                    and module.stem != "demistomock"
+                    and module.stem != "conftest"
+                    and pack_path.stem != "CommonServerPowerShell"
+                    and pack_path.stem != "CommonServerPython"
+                ):
+                    copied_api_module_path.unlink(missing_ok=True)
+                    copied_api_module_path.absolute().symlink_to(module.absolute())
+                else:
+                    if module.stem == "conftest" and copied_api_module_path.exists():
+                        # don't overwrite specific `conftest` fot the integration
+                        continue
                     copied_api_module_path.write_bytes(content)
                     added_modules.append(copied_api_module_path)
         if pack_type == TYPE_PYTHON:
@@ -310,7 +326,11 @@ def add_api_modules(
             copied_api_module_path = pack_path / f"{module_name}.py"
             if content_repo:  # if working in a repo
                 module_path = content_repo / api_module_path
-                shutil.copy(src=module_path, dst=copied_api_module_path)
+                if CAN_MOUNT_FILES:
+                    copied_api_module_path.unlink(missing_ok=True)
+                    copied_api_module_path.absolute().symlink_to(module_path.absolute())
+                else:
+                    shutil.copy(src=module_path, dst=copied_api_module_path)
             else:
                 api_content = get_remote_file(
                     full_file_path=f"https://raw.githubusercontent.com/demisto/content/master/{api_module_path}",

@@ -45,14 +45,6 @@ ARGUMENTS_DEFAULT_VALUES = {
             "GenericFieldJSONFormat",
         ],
     ),
-    "unsearchable": (
-        True,
-        [
-            "IncidentFieldJSONFormat",
-            "IndicatorFieldJSONFormat",
-            "GenericFieldJSONFormat",
-        ],
-    ),
 }
 GENERIC_OBJECTS_FILE_TYPES = [
     FileType.GENERIC_FIELD,

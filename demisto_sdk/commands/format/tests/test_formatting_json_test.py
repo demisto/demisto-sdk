@@ -220,29 +220,6 @@ class TestFormattingJson:
                 "  Please specify a correct output."
             )
 
-    @pytest.mark.parametrize(
-        "formatter",
-        [
-            GenericFieldJSONFormat,
-            IncidentFieldJSONFormat,
-            IndicatorFieldJSONFormat,
-        ],
-    )
-    def test_update_unsearchable_key(self, formatter):
-        """
-        Given
-            - A dictionary of file that the unsearchable is false
-        When
-            - Run format on file
-        Then
-            - Ensure unsearchable updated successfully
-        """
-
-        fields_formatter = formatter(input="test")
-        fields_formatter.data = {"unsearchable": False}
-        fields_formatter.set_default_values_as_needed()
-        assert fields_formatter.data["unsearchable"]
-
     @pytest.mark.parametrize("from_version", [None, "5.5.0", "6.2.0"])
     def test_indicator_field_format_html_type(self, pack, from_version: Optional[str]):
         """

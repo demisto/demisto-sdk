@@ -3160,7 +3160,7 @@ def error_code(ctx, config, **kwargs):
     "--no-python-version",
     is_flag=True,
     help="Whether or not to retrieve the python versions of the docker images of script/integration.",
-    default=True,
+    default=False,
 )
 @click.pass_context
 @logging_setup_decorator
@@ -3168,7 +3168,7 @@ def create_content_graph(
     ctx,
     marketplace: str = MarketplaceVersions.XSOAR,
     no_dependencies: bool = False,
-    no_python_version: bool = True,
+    no_python_version: bool = False,
     output_path: Path = None,
     **kwargs,
 ):
@@ -3248,7 +3248,7 @@ def create_content_graph(
     "--no-python-version",
     is_flag=True,
     help="Whether or not to retrieve the python versions of the docker images of script/integration.",
-    default=True,
+    default=False,
 )
 @click.option(
     "-o",
@@ -3267,7 +3267,7 @@ def update_content_graph(
     imported_path: Path = None,
     packs: list = None,
     no_dependencies: bool = False,
-    no_python_version: bool = True,
+    no_python_version: bool = False,
     output_path: Path = None,
     **kwargs,
 ):

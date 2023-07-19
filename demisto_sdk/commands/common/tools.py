@@ -588,7 +588,8 @@ def get_remote_file(
         except Exception as e:
             logger.debug(
                 f"Could not get local remote file because of: {str(e)}\n"
-                f"Searching the remote file content with the API."
+                f"Searching the remote file content with the API.",
+                exc_info=True,
             )
     return get_remote_file_from_api(
         full_file_path, git_content_config, tag, return_content
@@ -1325,7 +1326,7 @@ def get_scripts_names(file_path):
     return scripts_names
 
 
-def get_pack_name(file_path):
+def get_pack_name(file_path: Union[str, Path]):
     """
     extract pack name (folder name) from file path
 

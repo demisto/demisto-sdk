@@ -8,7 +8,7 @@ from copy import deepcopy
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, Iterable, List, Optional, Set
-
+import sys
 import more_itertools
 
 from demisto_sdk.commands.common.constants import (
@@ -35,12 +35,15 @@ from demisto_sdk.commands.pre_commit.hooks.mypy import MypyHook
 from demisto_sdk.commands.pre_commit.hooks.pycln import PyclnHook
 from demisto_sdk.commands.pre_commit.hooks.ruff import RuffHook
 from demisto_sdk.commands.pre_commit.hooks.validate_format import ValidateFormatHook
+from demisto_sdk.commands.pre_commit.hooks.sourcery import SourceryHook
 
 IS_GITHUB_ACTIONS = str2bool(os.getenv("GITHUB_ACTIONS"))
 
 PRECOMMIT_TEMPLATE_PATH = CONTENT_PATH / ".pre-commit-config_template.yaml"
 PRECOMMIT_PATH = CONTENT_PATH / ".pre-commit-config-content.yaml"
+SOURCERY_CONFIG_PATH = CONTENT_PATH / ".sourcery.yaml"
 
+CONTENT_PATH
 SKIPPED_HOOKS = {"format", "validate", "secrets"}
 
 INTEGRATION_SCRIPT_REGEX = re.compile(r"^Packs/.*/(?:Integrations|Scripts)/.*.yml$")
@@ -99,6 +102,8 @@ class PreCommitRunner:
         PyclnHook(hooks["pycln"]).prepare_hook(PYTHONPATH)
         RuffHook(hooks["ruff"]).prepare_hook(python_version, IS_GITHUB_ACTIONS)
         MypyHook(hooks["mypy"]).prepare_hook(python_version)
+        SourceryHook(hooks['sourcery']).prepare_hook(python_version,
+                                                     config_file_path=SOURCERY_CONFIG_PATH)
         ValidateFormatHook(hooks["validate"]).prepare_hook(self.input_files)
         ValidateFormatHook(hooks["format"]).prepare_hook(self.input_files)
 
@@ -146,6 +151,8 @@ class PreCommitRunner:
                 if unit_test:
                     response = subprocess.run(
                         [
+                            sys.executable,
+                            "-m"
                             "pre-commit",
                             "run",
                             "run-unit-tests",
@@ -168,6 +175,8 @@ class PreCommitRunner:
             for chunk in more_itertools.chunked_even(changed_files, 10_000):
                 response = subprocess.run(
                     [
+                        sys.executable,
+                        "-m"
                         "pre-commit",
                         "run",
                         "-c",

@@ -31,7 +31,7 @@ from demisto_sdk.commands.common.tools import (
     get_last_remote_release_version,
     get_release_note_entries,
     is_external_repository,
-    parse_marketplace_kwargs,
+    parse_marketplace_kwargs, get_json,
 )
 from demisto_sdk.commands.content_graph.interface.neo4j.neo4j_graph import (
     Neo4jContentGraphInterface,
@@ -2689,8 +2689,7 @@ def openapi_codegen(ctx, **kwargs):
     configuration = None
     if kwargs.get("config_file"):
         try:
-            with open(kwargs["config_file"]) as config_file:
-                configuration = json.load(config_file)
+            configuration = get_json(kwargs["config_file"], return_content=True)
         except Exception as e:
             logger.info(f"[red]Failed to load configuration file: {e}[/red]")
 

@@ -11,6 +11,7 @@ from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.tests.integration_test import mock_structure
 from TestSuite.file import File
 from TestSuite.test_tools import ChangeCWD
+from demisto_sdk.commands.common.tools import get_json
 
 
 def test_is_not_default_image():
@@ -189,12 +190,11 @@ def test_json_outputs_where_no_image_in_integration(repo):
         )
 
         # Check the outputs in the json file
-        with open(image_validator.json_file_path) as r:
-            json_outputs = json.loads(r.read())
+        json_outputs = get_json(image_validator.json_file_path, return_content=True)
 
-            assert json_outputs[0]["filePath"] == image_path
-            assert json_outputs[0]["fileType"] == "png"
-            assert json_outputs[0]["entityType"] == "image"
+        assert json_outputs[0]["filePath"] == image_path
+        assert json_outputs[0]["fileType"] == "png"
+        assert json_outputs[0]["entityType"] == "image"
 
 
 def test_is_valid_image_name_with_valid_name(repo):

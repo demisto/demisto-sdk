@@ -26,7 +26,7 @@ from demisto_sdk.commands.common.tools import (
     get_pack_name,
     is_external_repository,
     item_type_to_content_items_header,
-    wait_futures_complete,
+    wait_futures_complete, get_json,
 )
 from demisto_sdk.commands.common.update_id_set import (
     merge_id_sets,
@@ -137,8 +137,7 @@ def find_pack_display_name(pack_folder_name: str) -> str:
 
     pack_metadata_path = found_path_results[0]
 
-    with open(pack_metadata_path) as pack_metadata_file:
-        pack_metadata = json.load(pack_metadata_file)
+    pack_metadata = get_json(pack_metadata_path, return_content=True)
 
     pack_display_name = (
         pack_metadata.get("name") if pack_metadata.get("name") else pack_folder_name
@@ -173,7 +172,7 @@ def update_pack_metadata_with_dependencies(
         dependency_info.pop("depending_on_items_mandatorily", None)
 
     with open(pack_metadata_path, "r+") as pack_metadata_file:
-        pack_metadata = json.load(pack_metadata_file)
+        pack_metadata = get_json(pack_metadata_file, return_content=True)
         pack_metadata = {} if not isinstance(pack_metadata, dict) else pack_metadata
         pack_metadata["dependencies"] = first_level_dependencies
         pack_metadata["displayedImages"] = list(first_level_dependencies.keys())
@@ -2902,8 +2901,7 @@ class PackDependencies:
         """
 
         if id_set_path and os.path.isfile(id_set_path):
-            with open(id_set_path) as id_set_file:
-                id_set = json.load(id_set_file)
+            id_set = get_json(id_set_path, return_content=True)
         else:
             if skip_id_set_creation:
                 return {}
@@ -2976,8 +2974,7 @@ class PackDependencies:
             The pack metadata content.
         """
 
-        with open(find_pack_path(pack_name)[0]) as pack_metadata:
-            pack_meta_file_content = json.loads(pack_metadata.read())
+        pack_meta_file_content = get_json(find_pack_path(pack_name)[0], return_content=True)
 
         return pack_meta_file_content
 

@@ -24,7 +24,7 @@ from demisto_sdk.commands.common.tools import (
     find_type,
     get_demisto_version,
     get_file,
-    string_to_bool,
+    string_to_bool, get_json,
 )
 from demisto_sdk.commands.content_graph.objects.base_content import (
     BaseContent,
@@ -487,8 +487,7 @@ class ConfigFileParser:
     def __init__(self, path: Path):
         self.path = path
 
-        with self.path.open() as f:
-            self.content = json.load(f)
+        self.content = get_json(self.path, return_content=True)
 
         self.custom_packs_paths: Tuple[Path, ...] = tuple(
             Path(pack["url"]) for pack in self.content.get("custom_packs", ())

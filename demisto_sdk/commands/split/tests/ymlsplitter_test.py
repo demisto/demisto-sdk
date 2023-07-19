@@ -10,7 +10,7 @@ from demisto_sdk.commands.common.constants import DEFAULT_IMAGE_BASE64
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
 from demisto_sdk.commands.common.legacy_git_tools import git_path
-from demisto_sdk.commands.common.tools import get_file
+from demisto_sdk.commands.common.tools import get_file, get_json
 from demisto_sdk.commands.prepare_content.integration_script_unifier import (
     IntegrationScriptUnifier,
 )
@@ -91,9 +91,7 @@ def test_extract_modeling_rules_schema(tmpdir):
     )
 
     extractor.extract_rule_schema_and_samples(output)
-    with open(output, "rb") as temp_rules:
-        temp_rules = temp_rules.read()
-        assert schema == json.loads(temp_rules)
+    assert schema == get_json(output, return_content=True)
     os.remove(output)
 
 
@@ -144,9 +142,7 @@ def test_extract_parsing_rules_sampels(tmpdir):
     )
 
     extractor.extract_rule_schema_and_samples(output)
-    with open(output, "rb") as temp_rules:
-        temp_rules = temp_rules.read()
-        assert sample == json.loads(temp_rules)
+    assert sample == get_json(output, return_content=True)
     os.remove(output)
 
 
@@ -179,12 +175,8 @@ def test_extract_to_package_format_modeling_rule(tmpdir):
         file_data = f.read()
         assert "[MODEL: dataset=okta_okta_raw, model=Audit]" in file_data
 
-    with open(
-        out.join("OktaModelingRule").join("OktaModelingRule_schema.json"),
-        encoding="utf-8",
-    ) as f:
-        file_data = f.read()
-        assert schema == json.loads(file_data)
+    file_json = out.join("OktaModelingRule").join("OktaModelingRule_schema.json")
+    assert schema == get_json(file_json, return_content=True)
 
     yml_file = out.join("OktaModelingRule").join("OktaModelingRule.yml")
     yaml_obj = get_file(yml_file, type_of_file='yml', return_content=True)
@@ -221,9 +213,8 @@ def test_extract_to_package_format_parsing_rule(tmpdir):
         file_data = f.read()
         assert "[RULE:extract_hipmatch_only_fields]" in file_data
 
-    with open(out.join("MyRule").join("MyRule.json"), encoding="utf-8") as f:
-        file_data = f.read()
-        assert sample == json.loads(file_data)
+    json_file = out.join("MyRule").join("MyRule.json")
+    assert sample == get_json(json_file, return_content=True)
 
     yml_file = out.join("MyRule").join("MyRule.yml")
     yaml_obj = get_file(yml_file, type_of_file='yml', return_content=True)

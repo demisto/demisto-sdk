@@ -926,8 +926,7 @@ def test_generate_script_doc_passes_markdownlint(tmp_path, mocker):
     d.mkdir()
     in_script = os.path.join(FILES_PATH, "docs_test", "script-Set.yml")
     id_set_file = os.path.join(FILES_PATH, "docs_test", "id_set.json")
-    with open(id_set_file) as f:
-        id_set = json.load(f)
+    id_set = get_json(id_set_file, return_content=True)
     mocker.patch.object(IDSetCreator, "create_id_set", return_value=[id_set, {}, {}])
     mocker.patch.object(common, "execute_command", side_effect=handle_example)
     mocker.patch(
@@ -954,8 +953,7 @@ def test_generate_script_doc(tmp_path, mocker):
     in_script = os.path.join(FILES_PATH, "docs_test", "script-Set.yml")
     id_set_file = os.path.join(FILES_PATH, "docs_test", "id_set.json")
     expected_readme = os.path.join(FILES_PATH, "docs_test", "set_expected-README.md")
-    with open(id_set_file) as f:
-        id_set = json.load(f)
+    id_set = get_json(id_set_file, return_content=True)
     patched = mocker.patch.object(
         IDSetCreator, "create_id_set", return_value=[id_set, {}, {}]
     )

@@ -62,7 +62,7 @@ from demisto_sdk.commands.common.tools import (
     get_pack_name,
     is_iron_bank_pack,
     server_version_compare,
-    string_to_bool,
+    string_to_bool, get_json,
 )
 
 default_additional_info = load_default_additional_info_dict()
@@ -2127,12 +2127,8 @@ class IntegrationValidator(ContentEntityValidator):
 
     @error_codes("IN149")
     def are_common_outputs_with_description(self):
-        defaults = json.loads(
-            (
-                Path(__file__).absolute().parents[2]
-                / "common/default_output_descriptions.json"
-            ).read_text()
-        )
+        json_file = Path(__file__).absolute().parents[2]/"common/default_output_descriptions.json"
+        defaults = get_json(json_file, return_content=True)
 
         missing = {}
         for command in self.current_file.get("script", {}).get("commands", []):

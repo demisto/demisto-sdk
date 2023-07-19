@@ -6,6 +6,7 @@ from tempfile import mkdtemp
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.legacy_git_tools import git_path
+from demisto_sdk.commands.common.tools import get_json
 from demisto_sdk.commands.common.update_id_set import (
     ID_SET_ENTITIES,
     ID_SET_XPANSE_ENTITIES,
@@ -171,8 +172,7 @@ class TestIDSetCreator:
 
         id_set_creator.create_id_set()
 
-        with open(self.file_path) as id_set_file:
-            private_id_set = json.load(id_set_file)
+        private_id_set = get_json(self.file_path, return_content=True)
 
         assert len(private_id_set["integrations"]) == 1
         assert (
@@ -208,8 +208,7 @@ class TestIDSetCreator:
 
         id_set_creator.create_id_set()
 
-        with open(self.file_path) as id_set_file:
-            private_id_set = json.load(id_set_file)
+        private_id_set = get_json(self.file_path, return_content=True)
         for content_entity, content_entity_value_list in private_id_set.items():
             if content_entity != "Packs":
                 assert len(content_entity_value_list) == 0

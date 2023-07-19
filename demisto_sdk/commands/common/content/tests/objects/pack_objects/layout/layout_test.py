@@ -6,7 +6,7 @@ from demisto_sdk.commands.common.content.objects.pack_objects import LayoutsCont
 from demisto_sdk.commands.common.content.objects_factory import path_to_pack_object
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.legacy_git_tools import git_path
-from demisto_sdk.commands.common.tools import src_root
+from demisto_sdk.commands.common.tools import src_root, get_json
 
 TEST_DATA = src_root() / "tests" / "test_files"
 TEST_CONTENT_REPO = TEST_DATA / "content_slim"
@@ -33,8 +33,7 @@ class TestLayoutsContainer:
             layouts_container_to_upload_path = LayoutsContainer(layout_path)._unify(
                 _dir
             )[0]
-            with open(str(layouts_container_to_upload_path)) as f:
-                layouts_container_to_upload = json.load(f)
+            layouts_container_to_upload = get_json(str(layouts_container_to_upload_path), return_content=True)
             assert "fromVersion" in layouts_container_to_upload
             assert "fromServerVersion" in layouts_container_to_upload
             assert "toVersion" in layouts_container_to_upload

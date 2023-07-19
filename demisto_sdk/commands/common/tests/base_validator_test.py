@@ -15,7 +15,7 @@ from demisto_sdk.commands.common.errors import (
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.hook_validations.base_validator import BaseValidator
 from demisto_sdk.commands.common.legacy_git_tools import git_path
-from demisto_sdk.commands.common.tools import get_yaml
+from demisto_sdk.commands.common.tools import get_yaml, get_json
 from TestSuite.pack import Pack
 from TestSuite.test_tools import ChangeCWD, str_in_call_args_list
 
@@ -492,8 +492,7 @@ class TestJsonOutput:
                 ui_applicable_error_message,
                 False,
             )
-            with open(base.json_file_path) as f:
-                json_output = json.load(f)
+            json_output = get_json(base.json_file_path, return_content=test)
 
             assert json_output.sort() == expected_json_1.sort()
 
@@ -504,8 +503,7 @@ class TestJsonOutput:
                 non_ui_applicable_error_message,
                 True,
             )
-            with open(base.json_file_path) as f:
-                json_output = json.load(f)
+            json_output = get_json(base.json_file_path, return_content=True)
 
             assert json_output == expected_json_2
 
@@ -556,8 +554,7 @@ class TestJsonOutput:
                 ui_applicable_error_message,
                 False,
             )
-            with open(base.json_file_path) as f:
-                json_output = json.load(f)
+            json_output = get_json(base.json_file_path, return_content=True)
 
             assert json_output.sort() == expected_json_1.sort()
 
@@ -605,8 +602,7 @@ class TestJsonOutput:
                 ui_applicable_error_message,
                 False,
             )
-            with open(base.json_file_path) as f:
-                json_output = json.load(f)
+            json_output = get_json(base.json_file_path, return_content=True)
 
             assert json_output.sort() == expected_json_1.sort()
 

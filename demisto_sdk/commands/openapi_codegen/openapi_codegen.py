@@ -11,7 +11,7 @@ from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
 from demisto_sdk.commands.common.hook_validations.docker import DockerImageValidator
 from demisto_sdk.commands.common.logger import logger
-from demisto_sdk.commands.common.tools import camel_to_snake
+from demisto_sdk.commands.common.tools import camel_to_snake, get_json
 from demisto_sdk.commands.generate_integration.base_code import (
     BASE_ARGUMENT,
     BASE_BASIC_AUTH,
@@ -119,8 +119,7 @@ class OpenAPIIntegration:
         """
 
         try:
-            with open(self.file_path, "rb") as json_file:
-                self.json = json.load(json_file)
+            self.json = get_json(self.file_path, return_content=True)
         except Exception as e:
             logger.info(f"[red]Failed to load the swagger file: {e}[/red]")
             sys.exit(1)

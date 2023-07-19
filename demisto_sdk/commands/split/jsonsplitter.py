@@ -7,7 +7,7 @@ from demisto_sdk.commands.common.constants import (
 )
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.logger import logger
-from demisto_sdk.commands.common.tools import get_pack_name, is_external_repository
+from demisto_sdk.commands.common.tools import get_pack_name, is_external_repository, get_json
 
 
 class JsonSplitter:
@@ -35,8 +35,7 @@ class JsonSplitter:
         self.autocreate_dir = not no_auto_create_dir
         self.new_module_file = new_module_file
 
-        with open(self.input, "rb") as json_file:
-            self.module_json_data = json.load(json_file)
+        self.module_json_data = get_json(self.input, return_content=True)
 
     def split_json(self):
         logger.debug(

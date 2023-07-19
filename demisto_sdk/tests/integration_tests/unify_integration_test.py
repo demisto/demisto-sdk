@@ -10,7 +10,7 @@ from demisto_sdk.commands.common.constants import ENV_DEMISTO_SDK_MARKETPLACE
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
 from demisto_sdk.commands.common.legacy_git_tools import git_path
-from demisto_sdk.commands.common.tools import get_file
+from demisto_sdk.commands.common.tools import get_file, get_json
 from demisto_sdk.tests.test_files.validate_integration_test_valid_types import (
     DASHBOARD,
     GENERIC_MODULE,
@@ -56,8 +56,7 @@ class TestGenericModuleUnifier:
         assert result.exit_code == 0
         assert os.getenv(ENV_DEMISTO_SDK_MARKETPLACE) == "marketplacev2"
         assert os.path.isfile(saving_path)
-        with open(saving_path) as f:
-            saved_generic_module = json.load(f)
+        saved_generic_module = get_json(saving_path, return_content=True)
         assert saved_generic_module == UNIFIED_GENERIC_MODULE
 
 
@@ -303,10 +302,9 @@ class TestLayoutUnifer:
         pack = repo.create_pack("test")
         layout = pack.create_layoutcontainer(
             name="test",
-            content=json.load(
-                open(
-                    f"{git_path()}/demisto_sdk/tests/test_files/Packs/DummyPack/Layouts/layoutscontainer-test.json"
-                )
+            content=get_json(
+                f"{git_path()}/demisto_sdk/tests/test_files/Packs/DummyPack/Layouts/layoutscontainer-test.json",
+                return_content=True
             ),
         )
 
@@ -324,8 +322,7 @@ class TestLayoutUnifer:
             assert logger_warning.call_count == 0
             assert logger_error.call_count == 0
 
-            with open(Path(output).name) as updated_layout:
-                layout_data = json.load(updated_layout)
+            layout_data = get_json(Path(output).name, return_content=True)
             assert "fromVersion" in layout_data
             assert "fromServerVersion" in layout_data
             assert "toVersion" in layout_data

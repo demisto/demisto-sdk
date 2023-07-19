@@ -4,6 +4,7 @@ import os
 import pytest
 
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
+from demisto_sdk.commands.common.tools import get_json
 from demisto_sdk.commands.prepare_content.generic_module_unifier import (
     GenericModuleUnifier,
 )
@@ -154,8 +155,7 @@ def test_save_unified_generic_module(repo):
             f'{pack.generic_modules[0].name.rstrip(".json")}_unified.json',
         )
         assert os.path.isfile(saving_path)
-        with open(saving_path) as f:
-            saved_generic_module = json.load(f)
+        saved_generic_module = get_json(saving_path, return_content=True)
         assert saved_generic_module == UNIFIED_GENERIC_MODULE
 
 
@@ -183,8 +183,7 @@ def test_save_unified_generic_module_without_saving_path(repo):
             f'{pack.generic_modules[0].name.rstrip(".json")}_unified.json',
         )
         assert os.path.isfile(saving_path)
-        with open(saving_path) as f:
-            saved_generic_module = json.load(f)
+        saved_generic_module = get_json(saving_path, return_content=True)
         assert saved_generic_module == UNIFIED_GENERIC_MODULE
 
 
@@ -220,8 +219,7 @@ def test_save_unified_generic_module_file_is_already_exist(repo, capsys):
             pack._dashboards_path,
             f'{pack.generic_modules[0].name.rstrip(".json")}_unified.json',
         )
-        with open(saving_path) as f:
-            saved_generic_module = json.load(f)
+        saved_generic_module = get_json(saving_path, return_content=True)
         assert saved_generic_module == UNIFIED_GENERIC_MODULE
 
 
@@ -253,6 +251,5 @@ def test_save_unified_generic_module_file_is_already_exist_force(repo, capsys):
             pack._dashboards_path,
             f'{pack.generic_modules[0].name.rstrip(".json")}_unified.json',
         )
-        with open(saving_path) as f:
-            saved_generic_module = json.load(f)
+        saved_generic_module = get_json(saving_path, return_content=True)
         assert saved_generic_module == GENERIC_MODULE

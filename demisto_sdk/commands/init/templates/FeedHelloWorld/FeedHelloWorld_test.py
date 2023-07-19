@@ -59,13 +59,13 @@ from demisto_sdk.commands.common.handlers import JSON_Handler
 
 import json
 
+from demisto_sdk.commands.common.tools import get_json
 
 URL = "https://openphish.com/feed.txt"
 
 
 def util_load_json(path):
-    with open(path, encoding="utf-8") as f:
-        return json.loads(f.read())
+    return get_json(path, return_content=True)
 
 
 def test_build_iterator(requests_mock):

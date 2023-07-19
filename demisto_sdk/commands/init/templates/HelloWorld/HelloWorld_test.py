@@ -55,11 +55,11 @@ https://xsoar.pan.dev/docs/integrations/unit-testing
 from demisto_sdk.commands.common.handlers import JSON_Handler
 
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
+from demisto_sdk.commands.common.tools import get_json
 
 
 def util_load_json(path):
-    with open(path, encoding="utf-8") as f:
-        return json.loads(f.read())
+    return get_json(path, return_content=True)
 
 
 def test_say_hello():

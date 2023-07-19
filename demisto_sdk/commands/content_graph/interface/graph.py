@@ -7,6 +7,7 @@ from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
+from demisto_sdk.commands.common.tools import get_json
 from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
@@ -35,8 +36,7 @@ class ContentGraphInterface(ABC):
     @property
     def metadata(self) -> Optional[dict]:
         try:
-            with (self.import_path / METADATA_FILE_NAME).open() as f:
-                return json.load(f)
+            return get_json(self.import_path / METADATA_FILE_NAME, return_content=True)
         except FileNotFoundError:
             return None
 

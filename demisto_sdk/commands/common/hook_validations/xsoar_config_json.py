@@ -10,7 +10,7 @@ from demisto_sdk.commands.common.hook_validations.base_validator import (
     BaseValidator,
     error_codes,
 )
-from demisto_sdk.commands.common.tools import get_dict_from_file
+from demisto_sdk.commands.common.tools import get_dict_from_file, get_json
 
 
 class XSOARConfigJsonValidator(BaseValidator):
@@ -52,8 +52,7 @@ class XSOARConfigJsonValidator(BaseValidator):
             Dict[str, Any]. The contents of the configuration file.
         """
         try:
-            with open(self.configuration_file_path) as f:
-                config_json = json.load(f)
+            config_json = get_json(self.configuration_file_path, return_content=True)
         except Exception:
             error_message, error_code = Errors.xsoar_config_file_is_not_json(
                 self.configuration_file_path

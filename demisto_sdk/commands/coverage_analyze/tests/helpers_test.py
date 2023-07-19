@@ -11,6 +11,7 @@ from freezegun import freeze_time
 
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.logger import logging_setup
+from demisto_sdk.commands.common.tools import get_json
 from demisto_sdk.commands.coverage_analyze.helpers import (
     CoverageSummary,
     InvalidReportType,
@@ -33,8 +34,7 @@ PYTHON_FILE_PATH = os.path.join(
 
 
 def read_file(file_path):
-    with open(file_path) as file_obj:
-        return json.load(file_obj)
+    return get_json(file_path, return_content=True)
 
 
 def write_file(file_path, file_content):

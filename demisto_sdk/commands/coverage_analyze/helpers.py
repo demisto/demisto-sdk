@@ -10,6 +10,7 @@ import requests
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.logger import logger
+from demisto_sdk.commands.common.tools import get_json
 
 EXCLUDED_LINES = [
     "pragma: no cover",
@@ -165,8 +166,7 @@ class CoverageSummary:
             original_summary_path(str): The path to the original coverage.json file.
             min_summary_path(str): The path to the coverage-min.json
         """
-        with open(original_summary_path) as original_summary_file:
-            original_summary = json.load(original_summary_file)
+        original_summary = get_json(original_summary_path, return_content=True)
 
         min_summary_files = {}
         original_summary_files = original_summary["files"]
@@ -195,8 +195,7 @@ class CoverageSummary:
         )
         if self.use_cache and self.cache_dir:
             try:
-                with open(json_path) as coverage_summary_file:
-                    full_coverage_summary = json.load(coverage_summary_file)
+                full_coverage_summary = get_json(json_path, return_content=True)
                 last_updated = datetime.strptime(
                     full_coverage_summary["last_updated"], "%Y-%m-%dT%H:%M:%SZ"
                 )

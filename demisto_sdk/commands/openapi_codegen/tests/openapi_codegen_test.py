@@ -3,7 +3,7 @@ import os
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
 from demisto_sdk.commands.common.legacy_git_tools import git_path
-from demisto_sdk.commands.common.tools import get_file
+from demisto_sdk.commands.common.tools import get_file, get_json
 from demisto_sdk.commands.openapi_codegen.openapi_codegen import OpenAPIIntegration
 
 expected_command_function = """def get_pet_by_id_command(client: Client, args: Dict[str, Any]) -> CommandResults:
@@ -73,10 +73,8 @@ class TestOpenAPICodeGen:
         integration = self.init_integration()
         integration.generate_configuration()
 
-        with open(
-            os.path.join(self.test_files_path, "swagger_config.json"), "rb"
-        ) as config_path:
-            config = json.load(config_path)
+        json_file = os.path.join(self.test_files_path, "swagger_config.json"), "rb"
+        config = get_json(json_file, return_content=True)
 
         assert json.dumps(integration.configuration) == json.dumps(config)
 
@@ -252,11 +250,9 @@ class TestOpenAPICodeGen:
         - Ensure file does not overwrite given JSON file for open API code gen command.
         """
         integration = self.init_integration(base_name="swagger_pets")
-        with open(self.swagger_path) as f:
-            file_data_before_config_save = json.loads(f.read())
+        file_data_before_config_save = get_json(self.swagger_path, return_content=True)
         integration.save_config(integration.configuration, self.test_files_path)
-        with open(self.swagger_path) as f:
-            file_data_after_config_save = json.loads(f.read())
+        file_data_after_config_save = get_json(self.swagger_path, return_content=True)
         assert file_data_after_config_save == file_data_before_config_save
         os.remove(
             os.path.join(self.test_files_path, f"{integration.base_name}_config.json")

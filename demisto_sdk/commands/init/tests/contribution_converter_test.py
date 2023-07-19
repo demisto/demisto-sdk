@@ -13,7 +13,7 @@ from demisto_sdk.commands.common.constants import LAYOUT, LAYOUTS_CONTAINER
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.legacy_git_tools import git_path
-from demisto_sdk.commands.common.tools import get_child_directories
+from demisto_sdk.commands.common.tools import get_child_directories, get_json
 from demisto_sdk.commands.init.contribution_converter import (
     ContributionConverter,
     get_previous_nonempty_line,
@@ -514,14 +514,13 @@ def test_convert_contribution_zip_with_args(tmp_path, mocker):
 
     pack_metadata_path = converted_pack_path / "pack_metadata.json"
     assert pack_metadata_path.exists()
-    with open(pack_metadata_path) as pack_metadata:
-        metadata = json.load(pack_metadata)
-        assert metadata.get("name", "") == name
-        assert metadata.get("description", "") == description
-        assert metadata.get("author", "") == author
-        assert metadata.get("githubUser", []) == [gh_user]
-        assert metadata.get("marketplaces", []) == ["xsoar", "marketplacev2"]
-        assert not metadata.get("email")
+    metadata = get_json(pack_metadata_path)
+    assert metadata.get("name", "") == name
+    assert metadata.get("description", "") == description
+    assert metadata.get("author", "") == author
+    assert metadata.get("githubUser", []) == [gh_user]
+    assert metadata.get("marketplaces", []) == ["xsoar", "marketplacev2"]
+    assert not metadata.get("email")
 
 
 @pytest.mark.parametrize(
@@ -608,7 +607,7 @@ def test_convert_contribution_dir_to_pack_contents(tmp_path):
     cc = ContributionConverter()
     cc.pack_dir_path = tmp_path
     cc.convert_contribution_dir_to_pack_contents(fake_pack_extracted_dir)
-    assert json.loads(extant_file.read_text()) == new_json
+    assert get_json(extant_file, return_content=True) == new_json
     assert not fake_pack_extracted_dir.exists()
 
 

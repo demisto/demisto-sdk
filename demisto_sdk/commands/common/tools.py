@@ -466,7 +466,7 @@ def get_local_remote_file(
         if file_content:
             return file_content.encode()
         return file_content
-    return get_file_details(file_content, full_file_path)
+    return get_file_details(full_file_path)
 
 
 def get_remote_file_from_api(
@@ -539,21 +539,13 @@ def get_remote_file_from_api(
     file_content = res.content
     if return_content:
         return file_content
-    return get_file_details(file_content, full_file_path)
+    return get_file_details(full_file_path)
 
 
 def get_file_details(
-    file_content,
     full_file_path: str,
 ) -> Dict:
-    if full_file_path.endswith("json"):
-        file_details = json.loads(file_content)
-    elif full_file_path.endswith(("yml", "yaml")):
-        file_details = get_file(full_file_path, type_of_file='yml', return_content=True)
-    # if neither yml nor json then probably a CHANGELOG or README file.
-    else:
-        file_details = {}
-    return file_details
+    return get_file(full_file_path, return_content=True)
 
 
 @lru_cache(maxsize=128)
@@ -883,10 +875,10 @@ def get_yaml(file_path, cache_clear=False, keep_order: bool = True):
     return get_file(file_path, "yml", clear_cache=cache_clear, keep_order=keep_order)
 
 
-def get_json(file_path, cache_clear=False):
+def get_json(file_path, cache_clear=False, return_content: bool = False):
     if cache_clear:
         get_file.cache_clear()
-    return get_file(file_path, "json", clear_cache=cache_clear)
+    return get_file(file_path, "json", clear_cache=cache_clear, return_content=return_content)
 
 
 def get_script_or_integration_id(file_path):
@@ -2521,8 +2513,7 @@ def camel_to_snake(camel: str) -> str:
 def open_id_set_file(id_set_path):
     id_set = {}
     try:
-        with open(id_set_path) as id_set_file:
-            id_set = json.load(id_set_file)
+        id_set = get_json(id_set_path, return_content=True)
     except OSError:
         logger.info("[yellow]Could not open id_set file[/yellow]")
         raise
@@ -3238,12 +3229,11 @@ def get_mp_types_from_metadata_by_item(file_path):
         metadata_path = Path(*metadata_path_parts) / METADATA_FILE_NAME
 
     try:
-        with open(metadata_path) as metadata_file:
-            metadata = json.load(metadata_file)
-            marketplaces = metadata.get(MARKETPLACE_KEY_PACK_METADATA)
-            if not marketplaces:
-                return [MarketplaceVersions.XSOAR.value]
-            return marketplaces
+        metadata = get_json(metadata_path, return_content=True)
+        marketplaces = metadata.get(MARKETPLACE_KEY_PACK_METADATA)
+        if not marketplaces:
+            return [MarketplaceVersions.XSOAR.value]
+        return marketplaces
     except FileNotFoundError:
         return []
 

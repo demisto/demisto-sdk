@@ -22,7 +22,7 @@ from demisto_sdk.commands.common.constants import (
 )
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.legacy_git_tools import git_path
-from demisto_sdk.commands.common.tools import src_root
+from demisto_sdk.commands.common.tools import src_root, get_json
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 from demisto_sdk.commands.content_graph.objects.dashboard import Dashboard
 from demisto_sdk.commands.content_graph.objects.incident_field import IncidentField
@@ -299,8 +299,7 @@ def test_upload_incident_type_correct_file_change(demisto_client_configure, mock
     uploader.client.import_incident_types_handler = MagicMock(side_effect=save_file)
     uploader.upload()
 
-    with open(path) as json_file:
-        incident_type_data = json.load(json_file)
+    incident_type_data = get_json(path, return_content=True)
 
     assert json.loads(DATA)[0] == incident_type_data
 
@@ -347,8 +346,7 @@ def test_upload_incident_field_correct_file_change(demisto_client_configure, moc
     )
     assert uploader.upload() == SUCCESS_RETURN_CODE
 
-    with open(path) as json_file:
-        incident_field_data = json.load(json_file)
+    incident_field_data = get_json(path, return_content=True)
 
     assert json.loads(DATA)["incidentFields"][0] == incident_field_data
 

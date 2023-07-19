@@ -7,6 +7,7 @@ from click.testing import CliRunner
 from demisto_sdk.__main__ import main
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from TestSuite.test_tools import str_in_call_args_list
+from demisto_sdk.commands.common.tools import get_json
 
 INIT_CMD = "init"
 
@@ -87,25 +88,24 @@ def test_integration_init_integration_positive(monkeypatch, tmp_path, mocker):
     )
     assert result.stderr == ""
 
-    with open(tmp_pack_metadata_path) as f:
-        metadata_json = json.loads(f.read())
-        assert {
-            "name": pack_display_name,
-            "description": pack_desc,
-            "support": "partner",
-            "currentVersion": "1.0.0",
-            "author": pack_author,
-            "url": pack_url,
-            "email": pack_email,
-            "devEmail": ["mario1@super.com", "mario2@super.com"],
-            "categories": ["Endpoint"],
-            "tags": pack_tags.split(","),
-            "useCases": [],
-            "keywords": [],
-            "githubUser": ["GithubUser1", "GithubUser2"],
-            "marketplaces": ["xsoar", "marketplacev2"],
-            # testing for subset (<=) to avoid testing created and modified timestamps
-        }.items() <= metadata_json.items()
+    metadata_json = get_json(tmp_pack_metadata_path, return_content=True)
+    assert {
+        "name": pack_display_name,
+        "description": pack_desc,
+        "support": "partner",
+        "currentVersion": "1.0.0",
+        "author": pack_author,
+        "url": pack_url,
+        "email": pack_email,
+        "devEmail": ["mario1@super.com", "mario2@super.com"],
+        "categories": ["Endpoint"],
+        "tags": pack_tags.split(","),
+        "useCases": [],
+        "keywords": [],
+        "githubUser": ["GithubUser1", "GithubUser2"],
+        "marketplaces": ["xsoar", "marketplacev2"],
+        # testing for subset (<=) to avoid testing created and modified timestamps
+    }.items() <= metadata_json.items()
 
     integration_dir_files = {file for file in listdir(tmp_integration_path)}
     assert {
@@ -201,25 +201,24 @@ def test_integration_init_integration_positive_no_inline_pack_name(
         ]
     )
 
-    with open(tmp_pack_metadata_path) as f:
-        metadata_json = json.loads(f.read())
-        assert {
-            "name": pack_display_name,
-            "description": pack_desc,
-            "support": "partner",
-            "currentVersion": "1.0.0",
-            "author": pack_author,
-            "url": pack_url,
-            "email": pack_email,
-            "devEmail": ["mario1@super.com", "mario2@super.com"],
-            "categories": ["Endpoint"],
-            "tags": pack_tags.split(","),
-            "useCases": [],
-            "keywords": [],
-            "githubUser": ["GithubUser1", "GithubUser2"],
-            "marketplaces": ["xsoar", "marketplacev2"],
-            # testing for subset (<=) to avoid testing created and modified timestamps
-        }.items() <= metadata_json.items()
+    metadata_json = get_json(tmp_pack_metadata_path, return_content=True)
+    assert {
+        "name": pack_display_name,
+        "description": pack_desc,
+        "support": "partner",
+        "currentVersion": "1.0.0",
+        "author": pack_author,
+        "url": pack_url,
+        "email": pack_email,
+        "devEmail": ["mario1@super.com", "mario2@super.com"],
+        "categories": ["Endpoint"],
+        "tags": pack_tags.split(","),
+        "useCases": [],
+        "keywords": [],
+        "githubUser": ["GithubUser1", "GithubUser2"],
+        "marketplaces": ["xsoar", "marketplacev2"],
+        # testing for subset (<=) to avoid testing created and modified timestamps
+    }.items() <= metadata_json.items()
 
     integration_dir_files = {file for file in listdir(tmp_integration_path)}
     assert {

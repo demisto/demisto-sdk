@@ -80,6 +80,7 @@ import dateparser
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
 from demisto_sdk.commands.common.logger import logger
+from demisto_sdk.commands.common.tools import get_json
 
 
 def input_multiline():
@@ -274,8 +275,7 @@ def _parse_description_argument(descriptions: Optional[str]) -> Optional[dict]: 
 
     try:
         if os.path.exists(descriptions):  # file input
-            with open(descriptions, encoding="utf8") as f:
-                return json.load(f)
+            return get_json(descriptions, return_content=True)
 
         else:
             parsed = json.loads(descriptions)  # argument input

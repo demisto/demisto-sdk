@@ -6,7 +6,7 @@ from demisto_sdk.commands.common.constants import CONTRIBUTORS_README_TEMPLATE, 
 from demisto_sdk.commands.common.content.objects.abstract_objects import TextObject
 from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.logger import logger
-from demisto_sdk.commands.common.tools import get_mp_tag_parser
+from demisto_sdk.commands.common.tools import get_mp_tag_parser, get_json
 
 json = JSON_Handler()
 
@@ -33,8 +33,7 @@ class Readme(TextObject):
         """Mention contributors in pack readme"""
         try:
             if self.contributors:
-                with open(self.contributors.path) as contributors_file:
-                    contributor_list = json.load(contributors_file)
+                contributor_list = get_json(self.contributors.path, return_content=True)
                 contribution_data = self.prepare_contributors_text(contributor_list)
                 with open(self._path, "a+") as readme_file:
                     readme_file.write(contribution_data)

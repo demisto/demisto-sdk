@@ -4,7 +4,7 @@ from pathlib import Path
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
 from demisto_sdk.commands.common.legacy_git_tools import git_path
-from demisto_sdk.commands.common.tools import get_file
+from demisto_sdk.commands.common.tools import get_file, get_json
 from demisto_sdk.commands.generate_integration.code_generator import (
     IntegrationGeneratorCommand,
     IntegrationGeneratorConfig,
@@ -99,10 +99,9 @@ class TestCodeGenerator:
         )
 
         autogen_config = None
-        with open(self.autogen_config_path) as f:
-            config_dict = json.load(f)
-            config_dict["fix_code"] = True
-            autogen_config = IntegrationGeneratorConfig(**config_dict)
+        config_dict = get_json(self.autogen_config_path, return_content=True)
+        config_dict["fix_code"] = True
+        autogen_config = IntegrationGeneratorConfig(**config_dict)
 
         code = autogen_config.generate_integration_python_code()
 
@@ -141,10 +140,9 @@ class TestCodeGenerator:
             return_value="3.8.6.12176",
         )
 
-        with open(self.autogen_config_path) as f:
-            config_dict = json.load(f)
-            config_dict["fix_code"] = True
-            autogen_config = IntegrationGeneratorConfig(**config_dict)
+        config_dict = get_json(self.autogen_config_path, return_content=True)
+        config_dict["fix_code"] = True
+        autogen_config = IntegrationGeneratorConfig(**config_dict)
 
         yaml_obj = autogen_config.generate_integration_yml().to_dict()
         yml_file = os.path.join(self.test_integration_dir, "VirusTotalTest.yml")
@@ -175,10 +173,9 @@ class TestCodeGenerator:
             return_value="3.8.6.12176",
         )
 
-        with open(self.autogen_config_path) as f:
-            config_dict = json.load(f)
-            config_dict["fix_code"] = True
-            autogen_config = IntegrationGeneratorConfig(**config_dict)
+        config_dict = get_json(self.autogen_config_path, return_content=True)
+        config_dict["fix_code"] = True
+        autogen_config = IntegrationGeneratorConfig(**config_dict)
 
         autogen_config.generate_integration_package(output_dir=tmpdir)
 
@@ -209,10 +206,9 @@ class TestCodeGenerator:
         )
 
         autogen_config = None
-        with open(self.autogen_config_path) as f:
-            config_dict = json.load(f)
-            config_dict["fix_code"] = True
-            autogen_config = IntegrationGeneratorConfig(**config_dict)
+        config_dict = get_json(self.autogen_config_path, return_content=True)
+        config_dict["fix_code"] = True
+        autogen_config = IntegrationGeneratorConfig(**config_dict)
 
         assert autogen_config
         autogen_config.generate_integration_package(output_dir=tmpdir, is_unified=True)
@@ -237,10 +233,8 @@ class TestCodeGenerator:
         - ensure in the code we return response.get('scans')
         - ensure in yml, we generate outputs for scans object, and not to the whole response
         """
-        with open(
-            os.path.join(self.test_files_path, "VirusTotal-autogen-config.json")
-        ) as f:
-            config_dict = json.load(f)
+        json_file = os.path.join(self.test_files_path, "VirusTotal-autogen-config.json")
+        config_dict = get_json(json_file, return_content=True)
 
         config = IntegrationGeneratorConfig(**config_dict)
         test_command = _testutil_create_command(

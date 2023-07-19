@@ -7,7 +7,7 @@ from demisto_sdk.commands.common.content.errors import (
 )
 from demisto_sdk.commands.common.content.objects.abstract_objects import JSONObject
 from demisto_sdk.commands.common.handlers import JSON_Handler
-from demisto_sdk.commands.common.tools import src_root
+from demisto_sdk.commands.common.tools import src_root, get_json
 
 TEST_DATA = src_root() / "tests" / "test_files"
 TEST_CONTENT_REPO = TEST_DATA / "content_slim"
@@ -26,15 +26,13 @@ json = JSON_Handler()
 
 class TestValidJSON:
     def test_valid_json_file_path(self):
-        with open(TEST_VALID_JSON) as f:
-            assert JSONObject(TEST_VALID_JSON).to_dict() == json.load(f)
+        assert JSONObject(TEST_VALID_JSON).to_dict() == get_json(TEST_VALID_JSON, return_content=True)
 
     def test_get_item(self):
-        with open(TEST_VALID_JSON) as f:
-            assert (
-                JSONObject(TEST_VALID_JSON)["fromVersion"]
-                == json.load(f)["fromVersion"]
-            )
+        assert (
+            JSONObject(TEST_VALID_JSON)["fromVersion"]
+            == get_json(TEST_VALID_JSON, return_content=True)["fromVersion"]
+        )
 
     @pytest.mark.parametrize(argnames="default_value", argvalues=["test_value", ""])
     def test_get(self, default_value: str):
@@ -43,8 +41,7 @@ class TestValidJSON:
         if default_value:
             assert obj.get("no such key", default_value) == default_value
         else:
-            with open(TEST_VALID_JSON) as f:
-                assert obj["fromVersion"] == json.load(f)["fromVersion"]
+            assert obj["fromVersion"] == get_json(TEST_VALID_JSON, return_content=True)["fromVersion"]
 
     def test_dump(self):
         from pathlib import Path
@@ -52,8 +49,7 @@ class TestValidJSON:
         expected_file = Path(TEST_VALID_JSON).parent / f"prefix-{TEST_VALID_JSON.name}"
         obj = JSONObject(TEST_VALID_JSON, "prefix")
         assert obj.dump()[0] == expected_file
-        with open(expected_file) as f:
-            assert obj.to_dict() == json.load(f)
+        assert obj.to_dict() == get_json(expected_file, return_content=True)
         expected_file.unlink()
 
 

@@ -48,7 +48,7 @@ from demisto_sdk.commands.common.tools import (
     get_remote_file,
     get_yaml,
     is_test_config_match,
-    run_command,
+    run_command, get_json,
 )
 from demisto_sdk.commands.format.format_constants import OLD_FILE_DEFAULT_1_FROMVERSION
 
@@ -362,9 +362,8 @@ class ContentEntityValidator(BaseValidator):
 
         return True
 
-    def _load_conf_file(self):
-        with open(CONF_PATH) as data_file:
-            return json.load(data_file)
+    def _load_conf_file(self, get_jsondata_file=None):
+        return get_json(CONF_PATH, return_content=True)
 
     @error_codes("CJ104,CJ102")
     def are_tests_registered_in_conf_json_file_or_yml_file(

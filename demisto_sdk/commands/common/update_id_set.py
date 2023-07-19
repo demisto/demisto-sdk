@@ -2562,11 +2562,9 @@ def merge_id_sets_from_files(
     """
     Merges two id-sets. Loads them from files and saves the merged unified id_set into output_id_set_path.
     """
-    with open(first_id_set_path) as f1:
-        first_id_set = json.load(f1)
+    first_id_set = get_json(first_id_set_path, return_content=True)
 
-    with open(second_id_set_path) as f2:
-        second_id_set = json.load(f2)
+    second_id_set = get_json(second_id_set_path, return_content=True)
 
     unified_id_set, duplicates = merge_id_sets(first_id_set, second_id_set, print_logs)
 
@@ -2678,8 +2676,7 @@ def re_create_id_set(  # noqa: C901
                     "doesn't require a refresh. Will use current id-set. "
                     "If you rather force an id-set refresh, unset DEMISTO_SDK_ID_SET_REFRESH_INTERVAL or set it to -1.[/green]"
                 )
-                with open(id_set_path) as f:
-                    return json.load(f)
+                return get_json(id_set_path, return_content=True)
             else:
                 logger.info(
                     f"[green]The DEMISTO_SDK_ID_SET_REFRESH_INTERVAL env var is set, but current id_set: {id_set_path} "

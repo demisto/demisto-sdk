@@ -8,6 +8,7 @@ from pathlib import Path
 import pytest
 
 import demisto_sdk.commands.common.tools as tools
+from demisto_sdk.commands.common.tools import get_json
 import demisto_sdk.commands.common.update_id_set as uis
 from demisto_sdk.commands.common.constants import (
     FILETYPE_TO_DEFAULT_FROMVERSION,
@@ -3092,15 +3093,14 @@ class TestFlow(unittest.TestCase):
                 "IncidentFields",
             ],
         )
-        with open(json_path) as json_file:
-            data = json.load(json_file)
-            dup_data = find_duplicates(data)
-            assert any("temp-widget-dup-check" in i for i in dup_data)
-            assert any("temp-report-dup-check" in i for i in dup_data)
-            assert any("temp-widget-dup-check" in i for i in dup_data)
-            assert any("dup-check-dashbaord" in i for i in dup_data)
-            assert any("layout-dup-check-id" in i for i in dup_data)
-            assert any("incident_account_field_dup_check" in i for i in dup_data)
+        data = get_json(json_path, return_content=True)
+        dup_data = find_duplicates(data)
+        assert any("temp-widget-dup-check" in i for i in dup_data)
+        assert any("temp-report-dup-check" in i for i in dup_data)
+        assert any("temp-widget-dup-check" in i for i in dup_data)
+        assert any("dup-check-dashbaord" in i for i in dup_data)
+        assert any("layout-dup-check-id" in i for i in dup_data)
+        assert any("incident_account_field_dup_check" in i for i in dup_data)
 
 
 class TestGenericFields:

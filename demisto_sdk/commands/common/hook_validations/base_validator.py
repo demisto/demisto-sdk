@@ -279,10 +279,7 @@ class BaseValidator:
         if not os.path.exists(meta_file_path):
             return {}
 
-        with open(meta_file_path, encoding="utf-8") as file:
-            metadata_file_content = file.read()
-
-        return json.loads(metadata_file_content)
+        return get_json(meta_file_path, return_content=True)
 
     def update_checked_flags_by_support_level(self, file_path):
         pack_name = get_pack_name(file_path)

@@ -14,7 +14,7 @@ from demisto_sdk.commands.common.default_additional_info_loader import (
 )
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.logger import logger
-from demisto_sdk.commands.common.tools import get_yaml
+from demisto_sdk.commands.common.tools import get_yaml, get_json
 from demisto_sdk.commands.generate_docs.common import (
     add_lines,
     build_example_dict,
@@ -217,11 +217,10 @@ def generate_integration_doc(
 
 # Setup integration on Demisto
 
-with (Path(__file__).parent / "default_additional_information.json").open() as f:
-    # Case insensitive to catch both `API key` and `API Key`, giving both the same value.
-    default_additional_information: CaseInsensitiveDict = CaseInsensitiveDict(
-        json.load(f)
-    )
+# Case insensitive to catch both `API key` and `API Key`, giving both the same value.
+default_additional_information: CaseInsensitiveDict = CaseInsensitiveDict(
+    get_json(Path(__file__).parent / "default_additional_information.json", return_content=True)
+)
 
 
 def generate_setup_section(yaml_data: dict):

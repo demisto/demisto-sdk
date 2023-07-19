@@ -3,7 +3,7 @@ from pathlib import Path
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
 from demisto_sdk.commands.common.legacy_git_tools import git_path
-from demisto_sdk.commands.common.tools import get_file
+from demisto_sdk.commands.common.tools import get_file, get_json
 
 TEST_DATA_PATH = (
     Path(git_path())
@@ -17,8 +17,7 @@ TEST_DATA_PATH = (
 
 def load_json(file_path: str):
     full_path = (TEST_DATA_PATH / file_path).as_posix()
-    with open(full_path) as f:
-        return json.load(f)
+    return get_json(full_path, return_content=True)
 
 
 def load_yaml(file_path: str):

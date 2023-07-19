@@ -10,10 +10,11 @@ https://xsoar.pan.dev/docs/integrations/unit-testing
 
 import json
 
+from demisto_sdk.commands.common.tools import get_json
+
 
 def util_load_json(path):
-    with open(path, encoding="utf-8") as f:
-        return json.loads(f.read())
+    return get_json(path, return_content=True)
 
 
 def test_get_alert(requests_mock):

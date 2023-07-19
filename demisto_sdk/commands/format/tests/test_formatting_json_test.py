@@ -8,6 +8,7 @@ import pytest
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
+from demisto_sdk.commands.common.tools import get_json
 from demisto_sdk.commands.format import (
     update_dashboard,
     update_incidenttype,
@@ -481,8 +482,7 @@ def test_update_connection_removes_unnecessary_keys(tmpdir, monkeypatch):
     connection_formatter.assume_answer = True
     monkeypatch.setattr("builtins.input", lambda _: "N")
     connection_formatter.format_file()
-    with open(connection_file_path) as file:
-        formatted_connection = json.load(file)
+    formatted_connection = get_json(connection_file_path, return_content=True)
     for connection in formatted_connection["canvasContextConnections"]:
         assert "not_needed key" not in connection
 
@@ -517,8 +517,7 @@ def test_update_connection_updates_from_version(tmpdir):
         path=CONNECTION_SCHEMA_PATH,
     )
     connection_formatter.format_file()
-    with open(connection_file_path) as file:
-        formatted_connection = json.load(file)
+    formatted_connection = get_json(connection_file_path, return_content=True)
     assert formatted_connection["fromVersion"] == "6.0.0"
 
 

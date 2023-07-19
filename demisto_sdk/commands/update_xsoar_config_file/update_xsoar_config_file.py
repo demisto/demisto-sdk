@@ -5,6 +5,7 @@ import demisto_client
 
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.logger import logger
+from demisto_sdk.commands.common.tools import get_json
 
 XSOAR_CONFIG_FILE_JSON = "xsoar_config.json"
 MARKETPLACE_PACKS_SECTION = "marketplace_packs"
@@ -142,14 +143,7 @@ class XSOARConfigFileUpdater:
         self.set_xsoar_config_data(config_file_info=config_file_info)
 
     def get_xsoar_config_data(self):
-        config_file_info = {}
-        if os.path.exists(self.file_path):
-            with open(self.file_path) as config_file:
-                try:
-                    config_file_info = json.load(config_file)
-                except json.JSONDecodeError:  # In case that the file exits but empty
-                    pass
-        return config_file_info
+        return get_json(self.file_path, return_content=True)
 
     def set_xsoar_config_data(self, config_file_info):
         with open(self.file_path, "w") as config_file:

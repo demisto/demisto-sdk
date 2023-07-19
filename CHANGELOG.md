@@ -1,5 +1,6 @@
 # Changelog
 ## Unreleased
+* Improved the loading of YML and JSON files.
 * Added the ability to ignore any validation in the **validate** command when running in an external (non-demisto/content) repo, by placing a `.private-repo-settings` file at its root.
 * Fixed an issue where **validate** falsely detected backwards-compatibility issues, and prevented adding the `marketplaces` key to content items.
 * Calling **format** with the `-d` flag now removes test playbooks testing the deprecated content from conf.json.

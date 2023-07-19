@@ -9,7 +9,7 @@ from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.hook_validations.base_validator import error_codes
 from demisto_sdk.commands.common.hook_validations.image import ImageValidator
-from demisto_sdk.commands.common.tools import get_pack_name, os
+from demisto_sdk.commands.common.tools import get_pack_name, os, get_json
 
 
 class AuthorImageValidator(ImageValidator):
@@ -36,9 +36,8 @@ class AuthorImageValidator(ImageValidator):
 
     def get_support_level(self):
         metadata_path = os.path.join(self.pack_path, PACKS_PACK_META_FILE_NAME)
-        with open(metadata_path) as f:
-            metadata_content = json.load(f)
-            return metadata_content.get(PACK_METADATA_SUPPORT)
+        metadata_content = get_json(metadata_path, return_content=True)
+        return metadata_content.get(PACK_METADATA_SUPPORT)
 
     @error_codes("IM109")
     def is_valid(self) -> bool:

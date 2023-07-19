@@ -6,6 +6,7 @@ import pytest
 from demisto_sdk.commands.common.content.objects.pack_objects.pack import Pack
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.legacy_git_tools import git_path
+from demisto_sdk.commands.common.tools import get_json
 from demisto_sdk.commands.convert.converters.layout.layout_6_0_0_converter import (
     LayoutSixConverter,
 )
@@ -14,8 +15,7 @@ from TestSuite.repo import Repo
 
 
 def util_load_json(path):
-    with open(path, encoding="utf-8") as f:
-        return json.loads(f.read())
+    return get_json(path, return_content=True)
 
 
 class TestLayoutSixConverter:
@@ -213,8 +213,7 @@ class TestLayoutSixConverter:
         layout_converter.convert_dir()
         expected_new_layout_path = f"{str(layout_converter.pack.path)}/Layouts/layoutscontainer-ExtraHop_Detection.json"
         assert os.path.exists(expected_new_layout_path)
-        with open(expected_new_layout_path) as f:
-            layout_data = json.loads(f.read())
+        layout_data = get_json(expected_new_layout_path, return_content=True)
         test_data_json = util_load_json(
             os.path.join(
                 __file__,

@@ -16,6 +16,7 @@ from mitmproxy.http import HTTPFlow, Request
 from mitmproxy.script import concurrent
 
 from demisto_sdk.commands.common.handlers import JSON_Handler
+from demisto_sdk.commands.common.tools import get_json
 
 json = JSON_Handler()
 
@@ -493,11 +494,9 @@ class TimestampReplacer:
         if not path.exists(self.bad_keys_filepath) and path.exists(
             repo_bad_keys_filepath
         ):
-            with open(repo_bad_keys_filepath) as fp:
-                problem_keys = json.load(fp)
+            problem_keys = get_json(repo_bad_keys_filepath, return_content=True)
         elif path.exists(self.bad_keys_filepath):
-            with open(self.bad_keys_filepath) as fp:
-                problem_keys = json.load(fp)
+            problem_keys = get_json(self.bad_keys_filepath, return_content=True)
         else:
             problem_keys = {
                 "keys_to_replace": "",
@@ -523,7 +522,7 @@ class TimestampReplacer:
         if path.exists(self.bad_keys_filepath):
             logging.info(f'"{self.bad_keys_filepath}" path exists - loading bad keys')
 
-            problem_keys = json.load(open(self.bad_keys_filepath))
+            problem_keys = get_json(self.bad_keys_filepath, return_content=True)
 
             query_keys = problem_keys.get("server_replay_ignore_params")
             self.query_keys.update(

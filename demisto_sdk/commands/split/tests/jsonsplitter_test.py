@@ -1,6 +1,7 @@
 import os
 
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
+from demisto_sdk.commands.common.tools import get_json
 from demisto_sdk.commands.split.jsonsplitter import JsonSplitter
 from demisto_sdk.tests.test_files.validate_integration_test_valid_types import (
     GENERIC_MODULE,
@@ -39,12 +40,10 @@ def test_split_json(repo):
         assert res == 0
         assert os.path.isfile(expected_dashboard_path)
 
-        with open(expected_dashboard_path) as f:
-            result_dashboard = json.load(f)
+        result_dashboard = get_json(expected_dashboard_path, return_content=True)
 
         assert result_dashboard == EXTRACTED_DASHBOARD
 
-        with open(generic_module.path) as f:
-            result_generic_module = json.load(f)
+        result_generic_module = get_json(generic_module.path, return_content=True)
 
         assert result_generic_module == GENERIC_MODULE

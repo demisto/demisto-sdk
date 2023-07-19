@@ -7,6 +7,7 @@ from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from TestSuite.repo import Repo
 from TestSuite.test_tools import ChangeCWD
 from TestSuite.utils import IsEqualFunctions
+from demisto_sdk.commands.common.tools import get_file, get_json
 
 CREATE_ID_SET_CMD = "create-id-set"
 
@@ -14,8 +15,7 @@ CREATE_ID_SET_CMD = "create-id-set"
 class TestCreateIdSet:  # Use classes to speed up test - multi threaded py pytest
     @staticmethod
     def open_json_file(file_path):
-        with open(file_path) as json_file:
-            return json.load(json_file)
+        return get_json(file_path, return_content=True)
 
     def test_create_id_set_with_excluded_items(self, mocker, repo):
         """
@@ -278,6 +278,6 @@ class TestCreateIdSet:  # Use classes to speed up test - multi threaded py pytes
             )
             assert result.exit_code == 0
 
-        with open(os.path.join(repo.path, "id_set_result.json")) as file_:
-            id_set = json.load(file_)
+        json_file = os.path.join(repo.path, "id_set_result.json")
+        id_set = get_json(json_file, return_content=True)
         assert len(id_set["Mappers"]) == 1

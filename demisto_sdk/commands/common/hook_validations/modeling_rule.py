@@ -16,7 +16,7 @@ from demisto_sdk.commands.common.hook_validations.base_validator import error_co
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import (
     ContentEntityValidator,
 )
-from demisto_sdk.commands.common.tools import get_files_in_dir, get_file
+from demisto_sdk.commands.common.tools import get_files_in_dir, get_file, get_json
 
 
 class ModelingRuleValidator(ContentEntityValidator):
@@ -50,8 +50,7 @@ class ModelingRuleValidator(ContentEntityValidator):
         for file in files:
             if file.endswith("_schema.json"):
                 self.schema_path = file
-                with open(file) as sf:
-                    self.schema_content = json.load(sf)
+                self.schema_content = get_json(file, return_content=True)
             if file.endswith(".xif"):
                 self.xif_path = file
 

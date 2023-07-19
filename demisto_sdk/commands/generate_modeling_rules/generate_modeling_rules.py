@@ -18,7 +18,7 @@ from demisto_sdk.commands.common.logger import (
     logger,
     logging_setup,
 )
-from demisto_sdk.commands.common.tools import get_max_version
+from demisto_sdk.commands.common.tools import get_max_version, get_json
 
 app = typer.Typer()
 
@@ -123,8 +123,7 @@ def generate_modeling_rules(
 
         name_columen, xdm_one_data_model = read_mapping_file(mapping)
 
-        with open(raw_event_path) as f:
-            raw_event = json.load(f)
+        raw_event = get_json(raw_event_path, return_content=True)
 
         xdm_rule_to_dtype, xdm_rule_to_dclass = extract_data_from_all_xdm_schema(
             one_data_model_path

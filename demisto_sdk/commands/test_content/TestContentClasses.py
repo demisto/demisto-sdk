@@ -29,7 +29,7 @@ from demisto_sdk.commands.common.constants import (
     PB_Status,
 )
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
-from demisto_sdk.commands.common.tools import get_demisto_version
+from demisto_sdk.commands.common.tools import get_demisto_version, get_json
 from demisto_sdk.commands.test_content.Docker import Docker
 from demisto_sdk.commands.test_content.IntegrationsLock import acquire_test_lock
 from demisto_sdk.commands.test_content.mock_server import (
@@ -644,8 +644,7 @@ class BuildContext:
             kwargs["conf"], kwargs["secret"]
         )
         if self.is_xsiam:
-            with open(kwargs.get("xsiam_servers_api_keys_path")) as json_file:  # type: ignore[arg-type]
-                xsiam_servers_api_keys = json.loads(json_file.read())
+            xsiam_servers_api_keys = get_json(kwargs.get("xsiam_servers_api_keys_path"), return_content=True)
             self.xsiam_conf = self._load_xsiam_file(self.xsiam_servers_path)
             self.env_json = [self.xsiam_conf.get(self.xsiam_machine, {})]
             self.api_key = xsiam_servers_api_keys.get(self.xsiam_machine)
@@ -890,11 +889,7 @@ class BuildContext:
 
     @staticmethod
     def _load_env_results_json():
-        if not os.path.isfile(ENV_RESULTS_PATH):
-            return {}
-
-        with open(ENV_RESULTS_PATH) as json_file:
-            return json.load(json_file)
+        return get_json(ENV_RESULTS_PATH, return_content=True)
 
     def _get_server_numeric_version(self) -> str:
         """
@@ -946,20 +941,17 @@ class BuildContext:
     def _load_xsiam_file(xsiam_servers_path):
         conf = None
         if xsiam_servers_path:
-            with open(xsiam_servers_path) as data_file:
-                conf = json.load(data_file)
+            conf = get_json(xsiam_servers_path, return_content=True)
 
         return conf
 
     @staticmethod
     def _load_conf_files(conf_path, secret_conf_path):
-        with open(conf_path) as data_file:
-            conf = Conf(json.load(data_file))
+        conf = Conf(get_json(conf_path, return_content=True))
 
         secret_conf = None
         if secret_conf_path:
-            with open(secret_conf_path) as data_file:
-                secret_conf = SecretConf(json.load(data_file))
+            secret_conf = SecretConf(get_json(secret_conf_path, return_content=True))
 
         return conf, secret_conf
 

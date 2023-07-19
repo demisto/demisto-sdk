@@ -345,8 +345,7 @@ class UpdateRN:
         self.bc_path = bc_file_path
         bc_file_data: dict = dict()
         if os.path.exists(bc_file_path):
-            with open(bc_file_path) as f:
-                bc_file_data = json.loads(f.read())
+            bc_file_data = get_json(bc_file_path, return_content=True)
         bc_file_data["breakingChanges"] = True
         bc_file_data["breakingChangesNotes"] = bc_file_data.get("breakingChangesNotes")
         with open(bc_file_path, "w") as f:

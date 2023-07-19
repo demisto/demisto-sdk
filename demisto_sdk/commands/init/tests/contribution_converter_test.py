@@ -11,7 +11,7 @@ from _pytest.tmpdir import TempPathFactory, _mk_tmp
 
 from demisto_sdk.commands.common.constants import LAYOUT, LAYOUTS_CONTAINER
 from demisto_sdk.commands.common.git_util import GitUtil
-from demisto_sdk.commands.common.handlers import JSON_Handler
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.tools import get_child_directories
 from demisto_sdk.commands.init.contribution_converter import (
@@ -21,7 +21,6 @@ from demisto_sdk.commands.init.contribution_converter import (
 from TestSuite.contribution import Contribution
 from TestSuite.repo import Repo
 
-json = JSON_Handler()
 DEMISTO_SDK_PATH = join(git_path(), "demisto_sdk")
 CONTRIBUTION_TESTS = os.path.join(
     DEMISTO_SDK_PATH, "commands", "init", "tests", "test_files"

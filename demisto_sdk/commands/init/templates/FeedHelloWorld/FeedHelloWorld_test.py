@@ -57,7 +57,7 @@ from FeedHelloWorld import Client, fetch_indicators_command, get_indicators_comm
 from CommonServerPython import string_to_table_header, tableToMarkdown
 from demisto_sdk.commands.common.handlers import JSON_Handler
 
-json = JSON_Handler()
+import json
 
 
 URL = "https://openphish.com/feed.txt"

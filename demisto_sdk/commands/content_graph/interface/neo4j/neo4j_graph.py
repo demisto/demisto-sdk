@@ -112,7 +112,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
 
     def __init__(
         self,
-        should_update: bool = False,
+        update_graph: bool = False,
     ) -> None:
         self._id_to_obj: Dict[int, BaseContent] = {}
 
@@ -124,7 +124,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             NEO4J_DATABASE_URL,
             auth=(NEO4J_USERNAME, NEO4J_PASSWORD),
         )
-        if should_update:
+        if update_graph:
             output_path = None
             if artifacts_folder := os.getenv("ARTIFACTS_FOLDER"):
                 output_path = Path(artifacts_folder) / "content_graph"

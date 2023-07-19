@@ -12,13 +12,13 @@ from demisto_sdk.commands.common.hook_validations.base_validator import (
 from demisto_sdk.commands.common.tools import (
     get_all_content_objects_paths_in_dir,
     get_marketplace_to_core_packs,
-    get_pack_metadata,
     get_pack_name,
     replace_incident_to_alert,
 )
 from demisto_sdk.commands.content_graph.interface.neo4j.neo4j_graph import (
     Neo4jContentGraphInterface as ContentGraphInterface,
 )
+from demisto_sdk.commands.content_graph.objects import Pack
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 
 
@@ -376,11 +376,9 @@ class GraphValidator(BaseValidator):
     def validate_hidden_pack_is_not_mandatory_dependency(self):
         is_valid = True
         for pack_id in self.pack_ids:
-            if (
-                pack_metadata := get_pack_metadata(f"{PACKS_DIR}/{pack_id}")
-            ) and pack_metadata.get("hidden", False):
-                pack_marketplaces = pack_metadata.get("marketplaces") or []
-                for marketplace in pack_marketplaces:
+            pack = Pack.from_path(Path(f"{PACKS_DIR}/{pack_id}"))
+            if pack.hidden:
+                for marketplace in pack.marketplaces:
                     if dependant_packs := self.graph.find_mandatory_pack_dependencies(
                         pack_id=pack_id, marketplace=marketplace
                     ):
@@ -389,7 +387,7 @@ class GraphValidator(BaseValidator):
                             error_code,
                         ) = Errors.hidden_pack_not_mandatory_dependency(
                             pack_id=pack_id,
-                            dependant_packs=[
+                            dependant_pack_ids=[
                                 pack.object_id for pack in dependant_packs
                             ],
                             marketplace=marketplace,

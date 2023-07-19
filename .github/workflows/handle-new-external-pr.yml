@@ -3,9 +3,7 @@ on:
   pull_request_target:
     types: [opened]
 
-permissions:
-  contents: read
-  repository-projects: read
+permissions: write-all
 
 jobs:
   handle_new_external_pr:

@@ -17,11 +17,8 @@
 """
 
 import astroid
+from pylint.checkers import BaseChecker
 from pylint.interfaces import IAstroidChecker
-
-from demisto_sdk.commands.lint.resources.pylint_plugins.base_checker import (
-    CommonBaseChecker,
-)
 
 # --------------------------------------------------- Messages --------------------------------------------------------
 
@@ -55,7 +52,7 @@ partner_msg = {
 }
 
 
-class PartnerChecker(CommonBaseChecker):
+class PartnerChecker(BaseChecker):
     __implements__ = IAstroidChecker
     name = "partner-checker"
     priority = -1
@@ -76,8 +73,8 @@ class PartnerChecker(CommonBaseChecker):
 
     def visit_call(self, node):
         self._return_error_function_count(node)
-        self._return_outputs_checker(node, "return-outputs-exists")
-        self._demisto_results_checker(node, "demisto-results-exists")
+        self._return_outputs_checker(node)
+        self._demisto_results_checker(node)
 
     def visit_functiondef(self, node):
         self._try_except_in_main(node)
@@ -104,6 +101,36 @@ class PartnerChecker(CommonBaseChecker):
     """
 
     # -------------------------------------------- Call Node ---------------------------------------------
+
+    def _return_outputs_checker(self, node):
+        """
+        Args: node which is a Call Node.
+        Check:
+        - if return_outputs() statement exists in the current node.
+
+        Adds the relevant error message using `add_message` function if one of the above exists.
+        """
+        try:
+            if node.func.name == "return_outputs":
+                self.add_message("return-outputs-exists", node=node)
+
+        except Exception:
+            pass
+
+    def _demisto_results_checker(self, node):
+        """
+        Args: node which is a Call Node.
+        Check:
+        - if demisto.results() statement exists in the current node.
+
+        Adds the relevant error message using `add_message` function if one of the above exists.
+        """
+        try:
+            if node.func.attrname == "results" and node.func.expr.name == "demisto":
+                self.add_message("demisto-results-exists", node=node)
+
+        except Exception:
+            pass
 
     def _return_error_function_count(self, node):
         """

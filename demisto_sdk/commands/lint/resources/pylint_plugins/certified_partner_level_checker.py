@@ -16,11 +16,8 @@
 5. Add the check to the `xsoar_linter_integration_test.py` test suit.
 """
 import astroid
+from pylint.checkers import BaseChecker
 from pylint.interfaces import IAstroidChecker
-
-from demisto_sdk.commands.lint.resources.pylint_plugins.base_checker import (
-    CommonBaseChecker,
-)
 
 # -------------------------------------------- Messages ------------------------------------------------
 
@@ -34,16 +31,6 @@ cert_partner_msg = {
         "Main function wasnt found in the file, Please add main()",
         "main-func-doesnt-exist",
         "Please remove all prints from the code.",
-    ),
-    "E9008": (
-        "Do not use demisto.results function. Please return CommandResults object instead.",
-        "demisto-results-exists",
-        "Do not use demisto.results function.",
-    ),
-    "E9009": (
-        "Do not use return_outputs function. Please return CommandResults object instead.",
-        "return-outputs-exists",
-        "Do not use return_outputs function.",
     ),
     "W9016": (
         "Initialize of params was found outside of main function. Please use demisto.params() only inside main "
@@ -59,7 +46,7 @@ cert_partner_msg = {
 }
 
 
-class CertifiedPartnerChecker(CommonBaseChecker):
+class CertifiedPartnerChecker(BaseChecker):
     __implements__ = IAstroidChecker
     name = "certified-partner-checker"
     priority = -1
@@ -80,8 +67,6 @@ class CertifiedPartnerChecker(CommonBaseChecker):
 
     def visit_call(self, node):
         self._sys_exit_checker(node)
-        self._return_outputs_checker(node, "return-outputs-exists")
-        self._demisto_results_checker(node, "demisto-results-exists")
         self._init_params_checker(node)
         self._init_args_checker(node)
 

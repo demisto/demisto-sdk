@@ -100,41 +100,6 @@ BUILD_IN_COMMANDS = [
 ]
 
 
-class CommonBaseChecker(BaseChecker):
-    def __init__(self, linter=None):
-        super().__init__(linter)
-
-    def _return_outputs_checker(self, node, message_to_add):
-        """
-        Args: node which is a Call Node.
-        Check:
-        - if return_outputs() statement exists in the current node.
-
-        Adds the relevant error message using `add_message` function if one of the above exists.
-        """
-        try:
-            if node.func.name == "return_outputs":
-                self.add_message(message_to_add, node=node)
-
-        except Exception:
-            pass
-
-    def _demisto_results_checker(self, node, message_to_add):
-        """
-        Args: node which is a Call Node.
-        Check:
-        - if demisto.results() statement exists in the current node.
-
-        Adds the relevant error message using `add_message` function if one of the above exists.
-        """
-        try:
-            if node.func.attrname == "results" and node.func.expr.name == "demisto":
-                self.add_message(message_to_add, node=node)
-
-        except Exception:
-            pass
-
-
 class CustomBaseChecker(BaseChecker):
     __implements__ = IAstroidChecker
     name = "base-checker"

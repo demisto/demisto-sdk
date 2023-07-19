@@ -3,7 +3,8 @@ on:
   pull_request_target:
     types: [opened, edited]
 
-permissions: write-all
+permissions:
+  pull-requests: read
 
 jobs:
   handle_new_external_pr:
@@ -18,9 +19,11 @@ jobs:
       - name: Create PR review request
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_LINK: ${{ github.event.pull_request.html_url }}
+          BASE_REF: ${{ github.base_ref }}
+          HEAD_REF: ${{ github.head_ref }}
         run: |
-          reviewers=$(curl -s "https://raw.githubusercontent.com/demisto/content/master/.github/content_roles.json" | jq -r '.CONTRIBUTION_TL')
-          echo $reviewers
-          gh pr edit ${{ github.event.pull_request.html_url }} --add-assignee $reviewers
-          gh pr edit ${{ github.event.pull_request.html_url }} --add-reviewer $reviewers
-          echo done
+          echo "Updating External PR ${{ github.event.pull_request.html_url }}"
+          cd Utils/github_workflow_scripts
+          ./link_pr_to_jira_issue.sh
+          echo "Finished Handling External PR"

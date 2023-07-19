@@ -13,6 +13,7 @@ from google.cloud import secretmanager
 from demisto_sdk.commands.common import docker_helper
 from demisto_sdk.commands.common.constants import DEF_DOCKER
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH, PYTHONPATH
+from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.handlers.json.json5_handler import JSON5_Handler
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
@@ -21,7 +22,8 @@ from demisto_sdk.commands.content_graph.objects.integration_script import (
 )
 from demisto_sdk.commands.content_graph.objects.pack import Pack
 
-json = JSON5_Handler()
+json5 = JSON5_Handler()
+json = JSON_Handler()
 
 
 class IDE(Enum):
@@ -52,7 +54,7 @@ def get_integration_params(project_id: str, secret_id: str):
         return {}
     # Return the decoded payload.
     payload = response.payload.data.decode("UTF-8")
-    return json.loads(payload).get("params")
+    return json5.loads(payload).get("params")
 
 
 def copy_demistomock(integration_script: IntegrationScript):
@@ -68,6 +70,7 @@ def copy_demistomock(integration_script: IntegrationScript):
             CONTENT_PATH / "Tests" / "demistomock" / "demistomock.py",
             integration_script.path.parent / "demistomock.py",
         )
+
 
 def add_init_file_in_test_data(integration_script: IntegrationScript):
     if (integration_script.path.parent / "test_data").exists():
@@ -88,7 +91,7 @@ def configure_settings(
 ):
     shutil.copy(Path(__file__).parent / "settings.json", ide_folder / "settings.json")
     with open(ide_folder / "settings.json") as f:
-        settings = json.load(f)
+        settings = json5.load(f)
 
     settings["python.defaultInterpreterPath"] = str(interpreter_path)
     settings["python.testing.cwd"] = str(integration_script.path.parent)
@@ -115,7 +118,7 @@ def configure_vscode(
         script_path = integration_script.path.with_suffix(".ps1")
 
         with open(launch_json_path) as f:
-            launch_json = json.load(f)
+            launch_json = json5.load(f)
 
         launch_json["configurations"][0]["script"] = str(script_path)
         launch_json["configurations"][0]["cwd"] = str(CONTENT_PATH)
@@ -131,9 +134,9 @@ def configure_vscode(
         )
         tag = f"{integration_script.name}-pytest"
         with open(ide_folder / "launch.json") as f:
-            launch_json = json.load(f)
+            launch_json = json5.load(f)
         with open(ide_folder / "tasks.json") as f:
-            tasks_json = json.load(f)
+            tasks_json = json5.load(f)
         launch_json["configurations"][0][
             "name"
         ] = f"Docker: Debug ({integration_script.name})"
@@ -156,10 +159,17 @@ def configure_vscode(
             f"/app/{str(script_path.relative_to(CONTENT_PATH))}"
         )
         tasks_json["tasks"][1]["dockerRun"]["image"] = integration_script.docker_image
-        tasks_json["tasks"][1]["dockerRun"]["env"]["DEMISTO_PARAMS"] = f"/app/{demisto_params.relative_to(CONTENT_PATH)}"
-        
-        docker_python_path = [f"/app/{python_path.relative_to(CONTENT_PATH)}" for python_path in PYTHONPATH]
-        tasks_json["tasks"][1]["dockerRun"]["env"]["PYTHONPATH"] = ":".join(docker_python_path)
+        tasks_json["tasks"][1]["dockerRun"]["env"][
+            "DEMISTO_PARAMS"
+        ] = f"/app/{demisto_params.relative_to(CONTENT_PATH)}"
+
+        docker_python_path = [
+            f"/app/{python_path.relative_to(CONTENT_PATH)}"
+            for python_path in PYTHONPATH
+        ]
+        tasks_json["tasks"][1]["dockerRun"]["env"]["PYTHONPATH"] = ":".join(
+            docker_python_path
+        )
         tasks_json["tasks"][2]["python"]["args"] = [
             "-s",
             f"/app/{test_script_path.relative_to(CONTENT_PATH)}",
@@ -170,11 +180,13 @@ def configure_vscode(
         tasks_json["tasks"][2]["dockerRun"][
             "customOptions"
         ] = f"-w /app/{script_path.relative_to(CONTENT_PATH)}"
-        tasks_json["tasks"][2]["dockerRun"]["env"]["PYTHONPATH"] = ":".join(docker_python_path)
+        tasks_json["tasks"][2]["dockerRun"]["env"]["PYTHONPATH"] = ":".join(
+            docker_python_path
+        )
     with open(launch_json_path, "w") as f:
-        json.dump(launch_json, f, quote_keys=True, indent=4)
+        json.dump(launch_json, f, indent=4)
     with open(tasks_json_path, "w") as f:
-        json.dump(tasks_json, f, quote_keys=True, indent=4)
+        json.dump(tasks_json, f, indent=4)
 
 
 def setup(
@@ -234,7 +246,7 @@ def setup(
         if project_id := os.getenv("GCP_PROJECT_ID"):
             params = get_integration_params(project_id, secret_id)
             with open(ide_folder / "params.json", "w") as f:
-                json.dump(params, f, quote_keys=True, trailing_commas=False, indent=4)
+                json.dump(params, f)
 
         if not docker_image:
             docker_image = DEF_DOCKER

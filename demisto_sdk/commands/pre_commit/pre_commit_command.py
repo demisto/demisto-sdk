@@ -263,7 +263,7 @@ def pre_commit_manager(
     verbose: bool = False,
     show_diff_on_failure: bool = False,
     sdk_ref: Optional[str] = None,
-) -> int:
+) -> Optional[int]:
     """Run pre-commit hooks .
 
     Args:
@@ -288,10 +288,16 @@ def pre_commit_manager(
         git_diff = True
 
     files_to_run = preprocess_files(input_files, staged_only, git_diff, all_files)
+    if not files_to_run:
+        logger.info("No files were changed, skipping pre-commit.")
+        return None
+
     files_to_run_string = ", ".join(
         sorted((str(changed_path) for changed_path in files_to_run))
     )
+
     logger.info(f"Running pre-commit on {files_to_run_string}")
+
     if not sdk_ref:
         sdk_ref = f"v{get_last_remote_release_version()}"
     pre_commit_runner = PreCommitRunner(

@@ -1,4 +1,4 @@
-import logging. # noqa: TID251 - Test
+import logging.  # noqa: TID251 Test
 from io import BytesIO
 from os.path import join
 from pathlib import Path

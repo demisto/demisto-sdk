@@ -1,4 +1,4 @@
-import logging. # noqa: TID251 - Test
+import logging.  # noqa: TID251 Test
 from contextlib import contextmanager
 from pathlib import Path
 from shutil import rmtree

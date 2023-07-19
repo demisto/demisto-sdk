@@ -23,6 +23,7 @@ from demisto_sdk.commands.content_graph.objects.pack import Pack
 
 json = JSON5_Handler()
 
+
 class IDE(Enum):
     VSCODE = "vscode"
     PYCHARM = "pycharm"
@@ -52,6 +53,20 @@ def get_integration_params(project_id: str, secret_id: str):
     # Return the decoded payload.
     payload = response.payload.data.decode("UTF-8")
     return json.loads(payload).get("params")
+
+
+def copy_demistomock(integration_script: IntegrationScript):
+    if integration_script.type == "powershell":
+        shutil.copy(
+            CONTENT_PATH / "Tests" / "demistomock" / "demistomock.ps1",
+            integration_script.path.parent / "demistomock.ps1",
+        )
+    else:
+        shutil.copy(
+            CONTENT_PATH / "Tests" / "demistomock" / "demistomock.py",
+            integration_script.path.parent / "demistomock.py",
+        )
+
 
 def configure_dotenv(ide_folder: Path):
     dotenv_path = CONTENT_PATH / ".env"
@@ -165,6 +180,7 @@ def configure(
         assert isinstance(
             integration_script, IntegrationScript
         ), "Expected Integration Script"
+        copy_demistomock(integration_script)
         docker_image = integration_script.docker_image
         interpreter_path = CONTENT_PATH / ".venv" / "bin" / "python"
         if create_virtualenv and integration_script.type.startswith("python"):
@@ -223,5 +239,3 @@ def configure(
             configure_vscode(
                 ide_folder, integration_script, test_docker_image, interpreter_path
             )
-
-

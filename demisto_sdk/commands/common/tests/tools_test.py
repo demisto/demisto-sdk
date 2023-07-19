@@ -2532,7 +2532,7 @@ def test_string_to_bool_true(value: str):
 
 @pytest.mark.parametrize("value", ("", None))
 def test_string_to_bool_default_true(value: str):
-    assert string_to_bool(value)
+    assert string_to_bool(value, True)
 
 
 @pytest.mark.parametrize("value", ("false", "False", 0, "0", "n", "no"))

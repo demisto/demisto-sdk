@@ -3624,7 +3624,7 @@ def string_to_bool(
 ) -> bool:
     try:
         return STRING_TO_BOOL_MAP[input_]
-    except KeyError:
+    except (KeyError, TypeError):
         if input_ in ("", None) and default_when_empty is not None:
             return default_when_empty
 

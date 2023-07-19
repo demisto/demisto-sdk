@@ -1476,11 +1476,11 @@ def test_get_last_remote_release_version(requests_mock, mocker):
     #     r"https://test.org/pypi/demisto-sdk/json",
     #     json={"info": {"version": expected_version}},
     # )
-    requests_mock.get(
-        SDK_PYPI_VERSION,
-        json={"info": {"version": expected_version}},
-    )
-    # mocker.patch.object(requests, 'get', return_value={"info": {"version": expected_version}})
+    # requests_mock.get(
+    #     SDK_PYPI_VERSION,
+    #     json={"info": {"version": expected_version}},
+    # )
+    mocker.patch.object(requests, 'get', return_value={"info": {"version": expected_version}})
     assert get_last_remote_release_version() == expected_version
 
 

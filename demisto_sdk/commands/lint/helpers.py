@@ -17,7 +17,7 @@ import docker.errors
 import git
 import requests
 from docker.models.containers import Container
-from packaging.version import parse
+from packaging.version import Version
 
 # Local packages
 from demisto_sdk.commands.common.constants import (
@@ -209,11 +209,11 @@ def add_typing_module(lint_files: List[Path], python_version: str):
     back_lint_files: List[Path] = []
     try:
         # Add typing import if needed to python version 2 packages
-        py_ver = parse(python_version).major  # type: ignore
+        py_ver = Version(python_version).major
         if py_ver < 3:
+            typing_regex = "(from typing import|import typing)"
             for lint_file in lint_files:
                 data = lint_file.read_text(encoding="utf-8")
-                typing_regex = "(from typing import|import typing)"
                 module_match = re.search(typing_regex, data)
                 if not module_match:
                     original_file = lint_file

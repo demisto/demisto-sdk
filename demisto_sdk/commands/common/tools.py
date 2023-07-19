@@ -39,8 +39,7 @@ import giturlparse
 import requests
 import urllib3
 from bs4.dammit import UnicodeDammit
-from git.types import PathLike
-from packaging.version import LegacyVersion, Version, parse
+from packaging.version import Version
 from pebble import ProcessFuture, ProcessPool
 from requests.exceptions import HTTPError
 from demisto_sdk.commands.common.cpu_count import cpu_count

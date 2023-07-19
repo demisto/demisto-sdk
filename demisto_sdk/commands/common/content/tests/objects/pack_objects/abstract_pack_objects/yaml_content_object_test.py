@@ -20,19 +20,19 @@ TEST_YAML_NO_TO_VERSION = (
 
 
 def test_from_version_no_to_version(datadir):
-    from packaging.version import parse
+    from packaging.version import Version
 
     obj = YAMLContentObject(TEST_YAML_NO_TO_VERSION, "script")
-    assert obj.from_version == parse("6.0.0")
-    assert obj.to_version == parse(DEFAULT_CONTENT_ITEM_TO_VERSION)
+    assert obj.from_version == Version("6.0.0")
+    assert obj.to_version == Version(DEFAULT_CONTENT_ITEM_TO_VERSION)
 
 
 def test_to_version_no_from_version(datadir):
-    from packaging.version import parse
+    from packaging.version import Version
 
     obj = YAMLContentObject(TEST_YAML_NO_FROM_VERSION, "script")
-    assert obj.from_version == parse(DEFAULT_CONTENT_ITEM_FROM_VERSION)
-    assert obj.to_version == parse("5.0.0")
+    assert obj.from_version == Version(DEFAULT_CONTENT_ITEM_FROM_VERSION)
+    assert obj.to_version == Version("5.0.0")
 
 
 class TestFileWithStem:

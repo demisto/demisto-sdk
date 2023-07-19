@@ -4,6 +4,7 @@ import json
 import urllib3
 from blessings import Terminal
 from github import Github
+import requests
 
 from utils import get_env_var, timestamped_print
 
@@ -12,9 +13,15 @@ print = timestamped_print
 
 
 # Replace the Github Users of the reviewers and security reviewer according to the current contributions team
-with open('../../../content/.github/contribution_team.json') as f:
-    contribution_team = json.load(f)
+try:
+    contribution_team = requests.get('https://raw.githubusercontent.com/demisto/content/master/.github/content_roles.json').json()
+except requests.exceptions.SSLError:
+    terminal = Terminal()
 
+    def red(text):
+        return f"{terminal.red}{text}{terminal.normal}"
+    contribution_team = requests.get('https://raw.githubusercontent.com/demisto/content/master/.github/content_roles.json', verify=False).json()
+    print(red('SSLError occurred, ignoring certificate errors and continuing. '))
 SECURITY_REVIEWER = contribution_team['CONTRIBUTION_SECURITY_REVIEWER']
 REVIEWERS = contribution_team['CONTRIBUTION_REVIEWERS']
 CONTRIBUTION_TL = contribution_team['CONTRIBUTION_TL']

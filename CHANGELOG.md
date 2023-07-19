@@ -12,6 +12,8 @@
 * **pre-commit** no longer runs when there are no modified files (unless provided with input files).
 * Fixed an issue where errors in **validate** were logged as `info`.
 * Fixed an issue where **validate** error messages were not logged when an integration param, or the default argument in reputation commands is not valid.
+* Fixed an issue where the **format** command would change the value of the `unsearchable` key in fields.
+
 ## 1.17.2
 * Fixed an issue where **lint** and **validate** commands failed on integrations and scripts that use docker images that are not available in the Docker Hub but exist locally.
 * Added documentation for the flag **override-existing** used in upload.

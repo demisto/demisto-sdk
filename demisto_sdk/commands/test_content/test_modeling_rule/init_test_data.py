@@ -108,9 +108,7 @@ def init_test_data(
                     if not event_log.dataset:
                         event_log.dataset = default_dataset
 
-                    new_mapping = dict(
-                        dataset_to_fields_map.get(event_log.dataset, {})
-                    ).copy()
+                    new_mapping = dataset_to_fields_map.get(event_log.dataset, {}).copy()
                     if not new_mapping:
                         logger.error(
                             f"[red]Ignoring update the event log {event_log.test_data_event_id} as no dataset is provided for it[/red]",

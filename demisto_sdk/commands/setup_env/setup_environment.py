@@ -67,6 +67,10 @@ def copy_demistomock(integration_script: IntegrationScript):
             integration_script.path.parent / "demistomock.py",
         )
 
+def add_init_file_in_test_data(integration_script: IntegrationScript):
+    if (integration_script.path.parent / "test_data").exists():
+        (integration_script.path.parent / "test_data" / "__init__.py").touch()
+
 
 def configure_dotenv(ide_folder: Path):
     dotenv_path = CONTENT_PATH / ".env"
@@ -181,6 +185,7 @@ def setup(
             integration_script, IntegrationScript
         ), "Expected Integration Script"
         copy_demistomock(integration_script)
+        add_init_file_in_test_data(integration_script)
         docker_image = integration_script.docker_image
         interpreter_path = CONTENT_PATH / ".venv" / "bin" / "python"
         if create_virtualenv and integration_script.type.startswith("python"):

@@ -498,10 +498,7 @@ def _get_python_version_from_image_client(image: str) -> Version:
     """
     try:
         image_model = DockerBase.pull_image(image)
-        try:
-            my_env = image_model.attrs["Config"]["Env"]
-        except AttributeError:
-            raise
+        my_env = image_model.attrs["Config"]["Env"]
         logger.debug(f"Got {my_env=} from {image=}")
         return _get_python_version_from_env(my_env)
     except Exception:

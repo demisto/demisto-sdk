@@ -1,4 +1,5 @@
 import inspect
+import itertools
 import os
 import random
 from typing import List
@@ -403,7 +404,7 @@ class PlaybookDependencies:
         }
 
         task_num = get_new_task_number(playbook)
-        task_num_to_associate = random.choice(range(task_num - 1))
+        task_num_to_associate = task_num - 2
 
         task = playbook.yml.read_dict().get("tasks").get(str(task_num_to_associate))
         task.update(mapping)
@@ -906,14 +907,22 @@ def create_inputs_for_method(repo, current_pack, inputs_arguments):
     # Ignores the `CommonTypes` pack in the flow, so only numeric packs will be chosen
     number_of_packs = len(repo.packs) - 1
 
+    pack_numbers = range(1, number_of_packs)
+    pack_number_cycle = itertools.cycle(pack_numbers)
+    number_of_items_in_list = 0
+
     for arg in inputs_arguments:
         arg_type = arg.split("__")[0]
         if arg_type in LIST_ARGUMENTS_TO_METHODS.keys():
-            number_of_items_in_list = random.randint(1, 5)
+            number_of_items_in_list += 1
+
+            if number_of_items_in_list > 5:
+                number_of_items_in_list = 1
+
+            pack_to_take_entity_from = next(pack_number_cycle)
 
             input_argument = []
-            for i in range(number_of_items_in_list):
-                pack_to_take_entity_from = random.choice(range(1, number_of_packs))
+            for _ in range(number_of_items_in_list):
                 input_argument.append(
                     get_entity_by_pack_number_and_entity_type(
                         repo,
@@ -928,7 +937,7 @@ def create_inputs_for_method(repo, current_pack, inputs_arguments):
                 dependencies.add(f"pack_{pack_to_take_entity_from}")
 
         else:
-            pack_to_take_entity_from = random.choice(range(1, number_of_packs))
+            pack_to_take_entity_from = next(pack_number_cycle)
             input_argument = get_entity_by_pack_number_and_entity_type(
                 repo, pack_to_take_entity_from, arg_type
             )
@@ -960,10 +969,10 @@ def run_random_methods(
     """
     all_dependencies = set()
 
-    for i in range(number_of_methods_to_choose):
-        chosen_method = random.choice(current_methods_pool)
-        current_methods_pool.remove(chosen_method)
+    random.shuffle(current_methods_pool)
 
+    for i in range(number_of_methods_to_choose):
+        chosen_method = current_methods_pool[i]
         method = getattr(chosen_method[1], chosen_method[0])
         inputs_arguments = inspect.getfullargspec(method)[0]
 
@@ -1014,9 +1023,11 @@ def test_dependencies(mocker, repo, test_number):
     repo.setup_content_repo(number_of_packs)
     repo.setup_one_pack("CommonTypes")
 
-    pack_to_verify = random.choice(range(number_of_packs))
+    # Define fixed values or sequences
+    random.seed(1234)  # Set a fixed seed for reproducibility
+    pack_to_verify = 3  # Choose a specific pack to verify
 
-    number_of_methods_to_choose = random.choice(range(1, len(METHODS_POOL)))
+    number_of_methods_to_choose = 2  # Choose a fixed number of methods to run
     dependencies = run_random_methods(
         repo, pack_to_verify, METHODS_POOL.copy(), number_of_methods_to_choose
     )

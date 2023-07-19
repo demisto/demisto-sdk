@@ -187,5 +187,5 @@ optional = true
 
 [tool.poetry.group.ci.dependencies]
 blessings = "^1.7"
-PyGithub = "^1.54.1"
+PyGithub = "^1.59.0"
 slack_sdk = "^3.11.2"

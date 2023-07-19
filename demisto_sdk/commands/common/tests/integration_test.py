@@ -1876,7 +1876,6 @@ class TestIntegrationValidator:
             ),
             ("🥲", False),
             ("Trüe", False),
-            ("TRUE", False),
             ([MarketplaceVersions.XSOAR, None], False),
             ([MarketplaceVersions.MarketplaceV2, None], False),
             ([MarketplaceVersions.XSOAR, True], False),

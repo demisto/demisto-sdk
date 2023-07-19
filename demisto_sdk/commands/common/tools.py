@@ -34,7 +34,7 @@ from typing import (
 )
 
 import demisto_client
-import deprecated
+from .decorators import deprecated
 import git
 import giturlparse
 import requests

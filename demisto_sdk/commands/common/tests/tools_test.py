@@ -94,6 +94,7 @@ from demisto_sdk.commands.common.tools import (
     str2bool,
     string_to_bool,
     to_kebab_case,
+    get_pack_names_from_files,
 )
 from demisto_sdk.tests.constants_test import (
     DUMMY_SCRIPT_PATH,
@@ -2991,3 +2992,31 @@ def test_is_content_item_dependent_in_conf(test_config, file_type, expected_resu
     """
     result = is_content_item_dependent_in_conf(test_config, file_type)
     assert result == expected_result
+
+
+@pytest.mark.parametrize('file_paths, skip_file_types, expected_packs', [
+    (['Packs/PackA/pack_metadata.json',
+      'Tests/scripts/infrastructure_tests/tests_data/collect_tests/R/Packs/PackB/pack_metadata.json'],
+     None, {'PackA'}),
+    ([('Packs/PackA/pack_metadata.json',
+       'Packs/PackB/pack_metadata.json')],
+     None, {'PackB'}),
+    (['Packs/PackA/pack_metadata.json',
+      'Packs/PackB/ReleaseNotes/1_0_0.md'],
+     {FileType.RELEASE_NOTES}, {'PackA'})
+])
+def test_get_pack_names_from_files(file_paths, skip_file_types, expected_packs):
+    """
+    Given:
+        - Case A: Real packs paths and infra file paths.
+        - Case B: File paths in tuple.
+        - Case C: File paths and file types to skip.
+
+    When:
+        - Running get_pack_names_from_files.
+
+    Then:
+        - Ensure that the result is as expected.
+    """
+    packs_result = get_pack_names_from_files(file_paths, skip_file_types)
+    assert packs_result == expected_packs

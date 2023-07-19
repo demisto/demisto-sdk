@@ -1,3 +1,4 @@
+name: Validate Content infra tests
 on: pull_request
 
 jobs:

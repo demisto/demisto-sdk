@@ -1,4 +1,4 @@
-import logging  # - Type
+import logging  # noqa: TID251 - Type
 import subprocess
 from typing import Any, Dict, Iterator, Optional, Union
 
@@ -463,7 +463,7 @@ class Pack:
         self,
         logger: logging.Logger,
         dumped_pack_dir: Path,
-        sign_directory: Path,  # - Type
+        sign_directory: Path,
     ):
         """Signs pack folder and creates signature file.
 

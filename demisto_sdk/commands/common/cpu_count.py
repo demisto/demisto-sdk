@@ -1,10 +1,6 @@
-import logging
 import os
 
-logger = logging.getLogger(
-    "demisto-sdk"
-)  # not using the standard logger, due to circular import
-
+from demisto_sdk.commands.common.logger import logger
 
 DEMISTO_SDK_MAX_CPU_CORES = "DEMISTO_SDK_MAX_CPU_CORES"
 

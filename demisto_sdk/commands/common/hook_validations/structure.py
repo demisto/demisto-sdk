@@ -2,7 +2,7 @@
 
 Module contains validation of schemas, ids and paths.
 """
-import logging
+import logging  # noqa: TID251 - Suppress logs
 import os
 import re
 import string

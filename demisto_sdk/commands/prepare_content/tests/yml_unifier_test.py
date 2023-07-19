@@ -637,7 +637,7 @@ def create_test_package(
 
 class TestMergeScriptPackageToYMLIntegration:
     @pytest.fixture(autouse=True)
-    def setup(self, tmp_path):
+    def setup_method(self, tmp_path):
         self.test_dir_path = str(tmp_path / "Unifier" / "Testing" / "Integrations")
         os.makedirs(self.test_dir_path)
         self.package_name = "SampleIntegPackage"
@@ -850,7 +850,7 @@ final test: hi
 
 class TestMergeScriptPackageToYMLScript:
     @pytest.fixture(autouse=True)
-    def setup(self, tmp_path):
+    def setup_method(self, tmp_path):
         self.test_dir_path = str(tmp_path / "Unifier" / "Testing" / "Scripts")
         os.makedirs(self.test_dir_path)
         self.package_name = "SampleScriptPackage"

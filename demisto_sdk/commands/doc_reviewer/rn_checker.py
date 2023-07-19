@@ -188,7 +188,7 @@ class ReleaseNotesChecker:
         is_new_content_item = False
 
         line: str
-        for line in self.file_content:
+        for line_number, line in enumerate(self.file_content, start=1):
             for tag in self.MP_TAGS:
                 line = line.replace(tag, "")
 
@@ -212,7 +212,7 @@ class ReleaseNotesChecker:
                 show_template_message = True
                 self.add_note(
                     line,
-                    "Line is not using one of our templates, consider "
+                    f"Line #{line_number} is not using one of our templates, consider "
                     "changing it to fit our standard.",
                 )
 

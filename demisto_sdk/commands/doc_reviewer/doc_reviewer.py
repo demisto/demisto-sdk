@@ -95,7 +95,6 @@ class DocReviewer:
         self.known_pack_words_file_path = ""
 
         self.is_xsoar_supported_rn_only: bool = xsoar_only
-        self.current_pack = None
         self.files: List[str] = []
         self.spellchecker = SpellChecker()
         self.unknown_words: dict = {}

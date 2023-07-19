@@ -65,6 +65,7 @@ class DescriptionValidator(BaseValidator):
             # self.has_markdown_lint_errors()
             self.is_valid_description_name()
             self.contains_contrib_details()
+            self.is_valid_content_description_file()
 
         return self._is_valid
 
@@ -318,3 +319,19 @@ class DescriptionValidator(BaseValidator):
                     self._is_valid = False
                     return False
         return True
+
+    @error_codes("DS109")
+    def is_valid_content_description_file(self):
+        """
+        Validates the content description file.
+
+        Return:
+            True if the description file is not empty, False otherwise.
+        """
+        if os.stat(self.file_path).st_size == 0:
+            error_message, error_code = Errors.invalid_content_description_file()
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                self._is_valid = False
+                return False
+        return True
+

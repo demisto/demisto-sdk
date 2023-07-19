@@ -224,3 +224,26 @@ def test_demisto_not_in_description(repo):
         description_validator = DescriptionValidator(integration.description.path)
 
         assert description_validator.verify_demisto_in_description_content()
+
+
+def test_is_valid_content_description_file(repo):
+    """
+    Given
+        - An empty content description file.
+
+    When
+        - Calling the is_valid_content_description_file method.
+
+    Then
+        - Ensure that the validation fails and returns False.
+    """
+    pack = repo.create_pack("PackName")
+    integration = pack.create_integration("IntName")
+    integration.create_default_integration()
+
+    integration.description.write("")
+
+    with ChangeCWD(repo.path):
+        description_validator = DescriptionValidator(integration.description.path)
+
+        assert not description_validator.is_valid_content_description_file()

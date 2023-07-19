@@ -43,8 +43,9 @@ PRESET_ERROR_TO_IGNORE = {
         "IN125",
         "IN126",
         "IN140",
+        "DS109",
     ],
-    "partner": ["CJ", "IN140"],
+    "partner": ["CJ", "IN140", "DS109"],
 }
 
 # predefined errors to be ignored in deprecated content entities even if they do not appear in .pack-ignore
@@ -327,6 +328,10 @@ ERROR_CODE = {
     "description_contains_demisto_word": {
         "code": "DS107",
         "related_field": "detaileddescription",
+    },
+    "invalid_content_description_file": {
+        "code": "DS109",
+        "related_field": "",
     },
     # GF - Generic Fields
     "invalid_generic_field_group_value": {
@@ -4304,3 +4309,14 @@ class Errors:
             "is replaced by the word Incident/Incidents\nfor example: if there is a script `getIncident'"
             "it will not be possible to create a script with the name `getAlert`)"
         )
+
+
+    @staticmethod
+    @error_code_decorator
+    def invalid_content_description_file():  # TODO
+        return (
+            "You should update the integration description file, for further details please visit "
+            "https://xsoar.pan.dev/docs/documentation/integration-description."
+        )
+
+

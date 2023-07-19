@@ -118,6 +118,7 @@ from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
 from demisto_sdk.commands.common.handlers import YAML_Handler
+from deprecated import deprecated
 
 if TYPE_CHECKING:
     from demisto_sdk.commands.content_graph.interface.graph import ContentGraphInterface
@@ -1025,6 +1026,11 @@ def get_to_version(file_path):
         return to_version
 
     return DEFAULT_CONTENT_ITEM_TO_VERSION
+
+
+@deprecated
+def str2bool(v):
+    return string_to_bool(v, default_when_empty=False)
 
 
 def to_dict(obj):
@@ -3602,19 +3608,15 @@ def normalize_field_name(field: str) -> str:
 
 STRING_TO_BOOL_MAP = {
     "y": True,
-    1: True,
     "1": True,
     "yes": True,
     "true": True,
-    "True": True,
-    True: True,
     "n": False,
-    0: False,
     "0": False,
     "no": False,
     "false": False,
-    "False": False,
-    False: False,
+    "t": True,
+    "f": False,
 }
 
 
@@ -3623,7 +3625,7 @@ def string_to_bool(
     default_when_empty: Optional[bool] = None,
 ) -> bool:
     try:
-        return STRING_TO_BOOL_MAP[input_]
+        return STRING_TO_BOOL_MAP[str(input_).lower()]
     except (KeyError, TypeError):
         if input_ in ("", None) and default_when_empty is not None:
             return default_when_empty

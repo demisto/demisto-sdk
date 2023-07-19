@@ -7,7 +7,6 @@ from demisto_sdk.commands.common.constants import (
     LAYOUT_AND_MAPPER_BUILT_IN_FIELDS,
     FileType,
 )
-from demisto_sdk.commands.common.handlers import YAML_Handler
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     LAYOUT_CONTAINER_FIELDS,
@@ -26,8 +25,6 @@ from demisto_sdk.commands.format.format_constants import (
     VERSION_6_0_0,
 )
 from demisto_sdk.commands.format.update_generic_json import BaseUpdateJSON
-
-yaml = YAML_Handler()
 
 SCRIPT_QUERY_TYPE = "script"
 

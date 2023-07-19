@@ -6,8 +6,8 @@ Note that adding code to CommonServerUserPython can override functions in Common
 from __future__ import print_function
 
 import base64
-from demisto_sdk.commands.common.handlers import JSON_Handler
-json = JSON_Handler()
+import json
+
 
 import logging
 import os

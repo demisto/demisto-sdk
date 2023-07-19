@@ -29,7 +29,7 @@ from demisto_sdk.commands.common.errors import (
     Errors,
 )
 from demisto_sdk.commands.common.git_util import GitUtil
-from demisto_sdk.commands.common.handlers import JSON_Handler
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.hook_validations.base_validator import (
     BaseValidator,
     error_codes,
@@ -48,8 +48,6 @@ from demisto_sdk.commands.common.tools import (
     get_yml_paths_in_dir,
     run_command_os,
 )
-
-json = JSON_Handler()
 
 NO_HTML = "<!-- NOT_HTML_DOC -->"
 YES_HTML = "<!-- HTML_DOC -->"
@@ -300,7 +298,7 @@ class ReadMeValidator(BaseValidator):
             bool: True If all links are valid else False.
         """
         invalid_paths = re.findall(
-            r"(\!\[.*?\]|src\=)(\(|\")(https://github.com/demisto/content/(?!raw).*?)(\)|\")",
+            r"(\!\[.*?\]|src\=)(\(|\")(https://github.com/demisto/content/blob/.*?)(\)|\")",
             self.readme_content,
             re.IGNORECASE,
         )

@@ -12,7 +12,8 @@ from click.testing import CliRunner
 
 from demisto_sdk.__main__ import main
 from demisto_sdk.commands.common.constants import MarketplaceVersions
-from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
+from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.tools import get_yaml
 from demisto_sdk.commands.content_graph.objects.integration_script import (
@@ -25,9 +26,6 @@ from demisto_sdk.commands.prepare_content.prepare_upload_manager import (
     PrepareUploadManager,
 )
 from TestSuite.test_tools import ChangeCWD, str_in_call_args_list
-
-json = JSON_Handler()
-yaml = YAML_Handler()
 
 TEST_VALID_CODE = """import demistomock as demisto
 from CommonServerPython import *
@@ -639,7 +637,7 @@ def create_test_package(
 
 class TestMergeScriptPackageToYMLIntegration:
     @pytest.fixture(autouse=True)
-    def setup(self, tmp_path):
+    def setup_method(self, tmp_path):
         self.test_dir_path = str(tmp_path / "Unifier" / "Testing" / "Integrations")
         os.makedirs(self.test_dir_path)
         self.package_name = "SampleIntegPackage"
@@ -852,7 +850,7 @@ final test: hi
 
 class TestMergeScriptPackageToYMLScript:
     @pytest.fixture(autouse=True)
-    def setup(self, tmp_path):
+    def setup_method(self, tmp_path):
         self.test_dir_path = str(tmp_path / "Unifier" / "Testing" / "Scripts")
         os.makedirs(self.test_dir_path)
         self.package_name = "SampleScriptPackage"

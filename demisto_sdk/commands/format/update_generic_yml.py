@@ -14,7 +14,8 @@ from demisto_sdk.commands.common.constants import (
     FileType,
 )
 from demisto_sdk.commands.common.content_constant_paths import CONF_PATH
-from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
+from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     _get_file_id,
@@ -33,9 +34,6 @@ from demisto_sdk.commands.format.format_constants import (
     SUCCESS_RETURN_CODE,
 )
 from demisto_sdk.commands.format.update_generic import BaseUpdate
-
-json = JSON_Handler()
-yaml = YAML_Handler()
 
 
 class BaseUpdateYML(BaseUpdate):

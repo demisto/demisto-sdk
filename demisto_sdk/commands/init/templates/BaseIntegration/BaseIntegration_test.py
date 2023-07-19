@@ -12,7 +12,7 @@ you are implementing with your integration
 
 from demisto_sdk.commands.common.handlers import JSON_Handler
 
-json = JSON_Handler()
+import json
 
 
 def util_load_json(path):

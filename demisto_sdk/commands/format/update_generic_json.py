@@ -6,7 +6,7 @@ from demisto_sdk.commands.common.constants import (
     DEFAULT_CONTENT_ITEM_TO_VERSION,
     FILETYPE_TO_DEFAULT_FROMVERSION,
 )
-from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import is_uuid
 from demisto_sdk.commands.format.format_constants import (
@@ -17,9 +17,6 @@ from demisto_sdk.commands.format.format_constants import (
     TO_VERSION_5_9_9,
 )
 from demisto_sdk.commands.format.update_generic import BaseUpdate
-
-yaml = YAML_Handler()
-json = JSON_Handler()
 
 
 class BaseUpdateJSON(BaseUpdate):

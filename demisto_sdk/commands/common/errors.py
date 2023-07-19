@@ -1449,7 +1449,7 @@ ERROR_CODE = {
         "code": "GR108",
         "ui_applicable": False,
         "related_field": "",
-    }
+    },
 }
 
 
@@ -4309,3 +4309,10 @@ class Errors:
             "is replaced by the word Incident/Incidents\nfor example: if there is a script `getIncident'"
             "it will not be possible to create a script with the name `getAlert`)"
         )
+
+    @staticmethod
+    @error_code_decorator
+    def hidden_pack_not_mandatory_dependency(
+        pack_id: str, dependant_pack_ids: List[str], marketplace: MarketplaceVersions
+    ):
+        return f"The pack {pack_id} is a mandatory dependency for packs {dependant_pack_ids} in marketplace {marketplace}, hence it cannot be hidden"

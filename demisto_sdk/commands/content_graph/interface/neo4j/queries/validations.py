@@ -291,6 +291,7 @@ def validate_pack_dependencies(
         for item in run_query(tx, query)
     }
 
+
 def validate_duplicate_ids(
     tx: Transaction, file_paths: List[str]
 ) -> List[Tuple[graph.Node, List[graph.Node]]]:

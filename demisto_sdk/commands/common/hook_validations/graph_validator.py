@@ -1,6 +1,7 @@
 from pathlib import Path
 from typing import List, Optional
 
+from demisto_sdk.commands.common.constants import PACKS_DIR, PACKS_PACK_META_FILE_NAME
 from demisto_sdk.commands.common.content.content import Content
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.git_util import GitUtil
@@ -11,15 +12,14 @@ from demisto_sdk.commands.common.hook_validations.base_validator import (
 from demisto_sdk.commands.common.tools import (
     get_all_content_objects_paths_in_dir,
     get_marketplace_to_core_packs,
+    get_pack_metadata,
     get_pack_name,
     replace_incident_to_alert,
-    get_pack_metadata
 )
 from demisto_sdk.commands.content_graph.interface.neo4j.neo4j_graph import (
     Neo4jContentGraphInterface as ContentGraphInterface,
 )
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
-from demisto_sdk.commands.common.constants import PACKS_DIR
 
 
 class GraphValidator(BaseValidator):
@@ -372,14 +372,32 @@ class GraphValidator(BaseValidator):
 
         return is_valid
 
-    @error_codes("GR107")
+    @error_codes("GR108")
     def validate_hidden_pack_is_not_mandatory_dependency(self):
         is_valid = True
         for pack_id in self.pack_ids:
-            if (pack_metadata := get_pack_metadata(f'{PACKS_DIR}/{pack_id}')) and pack_metadata.get('hidden', False):
-                pack_marketplaces = pack_metadata.get('marketplaces') or []
+            if (
+                pack_metadata := get_pack_metadata(f"{PACKS_DIR}/{pack_id}")
+            ) and pack_metadata.get("hidden", False):
+                pack_marketplaces = pack_metadata.get("marketplaces") or []
                 for marketplace in pack_marketplaces:
-                    if self.graph.find_mandatory_pack_dependencies(pack_id=pack_id, marketplace=marketplace):
-                        pass
-                        # handle error
-
+                    if dependant_packs := self.graph.find_mandatory_pack_dependencies(
+                        pack_id=pack_id, marketplace=marketplace
+                    ):
+                        (
+                            error_message,
+                            error_code,
+                        ) = Errors.hidden_pack_not_mandatory_dependency(
+                            pack_id=pack_id,
+                            dependant_packs=[
+                                pack.object_id for pack in dependant_packs
+                            ],
+                            marketplace=marketplace,
+                        )
+                        if self.handle_error(
+                            error_message=error_message,
+                            error_code=error_code,
+                            file_path=f"{pack_id}/{PACKS_PACK_META_FILE_NAME}",
+                        ):
+                            is_valid = False
+        return is_valid

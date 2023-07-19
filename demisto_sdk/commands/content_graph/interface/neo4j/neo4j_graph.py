@@ -64,9 +64,9 @@ from demisto_sdk.commands.content_graph.interface.neo4j.queries.validations impo
     validate_marketplaces,
     validate_multiple_packs_with_same_display_name,
     validate_multiple_script_with_same_name,
+    validate_pack_dependencies,
     validate_toversion,
     validate_unknown_content,
-    validate_pack_dependencies
 )
 from demisto_sdk.commands.content_graph.objects.base_content import (
     BaseContent,
@@ -498,7 +498,9 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             self._add_relationships_to_objects(session, results)
             return [self._id_to_obj[result] for result in results]
 
-    def find_mandatory_pack_dependencies(self, pack_id, marketplace: MarketplaceVersions):
+    def find_mandatory_pack_dependencies(
+        self, pack_id, marketplace: MarketplaceVersions
+    ):
         with self.driver.session() as session:
             results: Dict[int, Neo4jRelationshipResult] = session.execute_read(
                 validate_pack_dependencies, pack_id, marketplace

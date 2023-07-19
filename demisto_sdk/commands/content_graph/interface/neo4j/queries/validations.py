@@ -276,7 +276,7 @@ def validate_pack_dependencies(
 ):
     query = f"""// Returns DEPENDS_ON relationships to content items who are not core packs
         MATCH (pack1)-[r:DEPENDS_ON{{mandatorily:true}}]->(pack2)
-        WHERE pack2.object_id = {pack_id}
+        WHERE pack2.object_id = "{pack_id}"
         AND NOT r.is_test
         AND "{marketplace}" IN pack1.marketplaces
         AND "{marketplace}" IN pack2.marketplaces

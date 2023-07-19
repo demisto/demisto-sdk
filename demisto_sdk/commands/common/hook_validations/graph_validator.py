@@ -53,6 +53,7 @@ class GraphValidator(BaseValidator):
 
     def is_valid_content_graph(self) -> bool:
         is_valid = (
+            self.validate_hidden_pack_is_not_mandatory_dependency(),
             self.validate_dependencies(),
             self.validate_marketplaces_fields(),
             self.validate_fromversion_fields(),
@@ -375,9 +376,10 @@ class GraphValidator(BaseValidator):
     def validate_hidden_pack_is_not_mandatory_dependency(self):
         is_valid = True
         for pack_id in self.pack_ids:
-            if (pack_metadata := get_pack_metadata(PACKS_DIR / pack_id)) and pack_metadata.get('hidden', False):
+            if (pack_metadata := get_pack_metadata(f'{PACKS_DIR}/{pack_id}')) and pack_metadata.get('hidden', False):
                 pack_marketplaces = pack_metadata.get('marketplaces') or []
                 for marketplace in pack_marketplaces:
                     if self.graph.find_mandatory_pack_dependencies(pack_id=pack_id, marketplace=marketplace):
+                        pass
                         # handle error
 

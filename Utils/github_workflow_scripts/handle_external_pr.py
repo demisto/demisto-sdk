@@ -13,15 +13,8 @@ print = timestamped_print
 
 
 # Replace the Github Users of the reviewers and security reviewer according to the current contributions team
-try:
-    contribution_team = requests.get('https://raw.githubusercontent.com/demisto/content/master/.github/content_roles.json').json()
-except requests.exceptions.SSLError:
-    terminal = Terminal()
+contribution_team = requests.get('https://raw.githubusercontent.com/demisto/content/master/.github/content_roles.json').json()
 
-    def red(text):
-        return f"{terminal.red}{text}{terminal.normal}"
-    contribution_team = requests.get('https://raw.githubusercontent.com/demisto/content/master/.github/content_roles.json', verify=False).json()
-    print(red('SSLError occurred, ignoring certificate errors and continuing. '))
 SECURITY_REVIEWER = contribution_team['CONTRIBUTION_SECURITY_REVIEWER']
 REVIEWERS = contribution_team['CONTRIBUTION_REVIEWERS']
 CONTRIBUTION_TL = contribution_team['CONTRIBUTION_TL']

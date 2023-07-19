@@ -2,6 +2,7 @@
 This is module to store the git configuration of the content repo
 """
 import enum
+import logging  # noqa: TID251 - Prevent circular import
 import os
 from functools import lru_cache
 from typing import Optional, Tuple
@@ -14,7 +15,8 @@ import requests
 
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
-from demisto_sdk.commands.common.logger import logger
+
+logger = logging.getLogger("demisto-sdk")
 
 
 class GitProvider(enum.Enum):

@@ -673,6 +673,10 @@ ERROR_CODE = {
         "code": "IN150",
         "related_field": "display",
     },
+    "invalid_siem_marketplaces_entry": {
+        "code": "IN151",
+        "related_field": "display",
+    },
     "empty_command_arguments": {
         "code": "IN151",
         "related_field": "arguments",
@@ -2061,6 +2065,14 @@ class Errors:
             f"The display name of this siem integration is incorrect , "
             f'should end with "Event Collector".\n'
             f"e.g: {display_name} Event Collector"
+        )
+
+    @staticmethod
+    @error_code_decorator
+    def invalid_siem_marketplaces_entry():
+        return (
+            "The marketplaces field of this XSIAM integration is incorrect.\n"
+            'This field should have only the "marketplacev2" value.'
         )
 
     @staticmethod

@@ -73,6 +73,7 @@ from demisto_sdk.commands.common.tools import (
     get_latest_release_notes_text,
     get_marketplace_to_core_packs,
     get_pack_metadata,
+    get_pack_names_from_files,
     get_relative_path_from_packs_dir,
     get_release_note_entries,
     get_release_notes_file_path,
@@ -93,7 +94,6 @@ from demisto_sdk.commands.common.tools import (
     server_version_compare,
     string_to_bool,
     to_kebab_case,
-    get_pack_names_from_files,
 )
 from demisto_sdk.tests.constants_test import (
     DUMMY_SCRIPT_PATH,
@@ -2914,17 +2914,29 @@ def test_is_content_item_dependent_in_conf(test_config, file_type, expected_resu
     assert result == expected_result
 
 
-@pytest.mark.parametrize('file_paths, skip_file_types, expected_packs', [
-    (['Packs/PackA/pack_metadata.json',
-      'Tests/scripts/infrastructure_tests/tests_data/collect_tests/R/Packs/PackB/pack_metadata.json'],
-     None, {'PackA'}),
-    ([('Packs/PackA/pack_metadata.json',
-       'Packs/PackB/pack_metadata.json')],
-     None, {'PackB'}),
-    (['Packs/PackA/pack_metadata.json',
-      'Packs/PackB/ReleaseNotes/1_0_0.md'],
-     {FileType.RELEASE_NOTES}, {'PackA'})
-])
+@pytest.mark.parametrize(
+    "file_paths, skip_file_types, expected_packs",
+    [
+        (
+            [
+                "Packs/PackA/pack_metadata.json",
+                "Tests/scripts/infrastructure_tests/tests_data/collect_tests/R/Packs/PackB/pack_metadata.json",
+            ],
+            None,
+            {"PackA"},
+        ),
+        (
+            [("Packs/PackA/pack_metadata.json", "Packs/PackB/pack_metadata.json")],
+            None,
+            {"PackB"},
+        ),
+        (
+            ["Packs/PackA/pack_metadata.json", "Packs/PackB/ReleaseNotes/1_0_0.md"],
+            {FileType.RELEASE_NOTES},
+            {"PackA"},
+        ),
+    ],
+)
 def test_get_pack_names_from_files(file_paths, skip_file_types, expected_packs):
     """
     Given:

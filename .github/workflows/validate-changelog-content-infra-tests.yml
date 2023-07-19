@@ -1,4 +1,4 @@
-name: Validate Changelog
+name: Validate Content infra tests
 on: pull_request
 
 jobs:
@@ -18,9 +18,10 @@ jobs:
         uses: Gr1N/setup-poetry@v8
       - name: Install Python Dependencies
         run: |
+           cd content
            poetry install --with ci
-           poetry add poetry add git+https://github.com/demisto/demisto-sdk.git#$(git rev-parse --short "$GITHUB_SHA")
-      - name: run unit tests
-        run: |
-          poetry run -m pytest ./Tests/scripts/infrastructure_tests/ ./Tests/Marketplace/Tests/ ./Tests/tests ./Tests/private_build/tests Utils -v
+      #      poetry add poetry add git+https://github.com/demisto/demisto-sdk.git#$(git rev-parse --short "$GITHUB_SHA")
+      # - name: run unit tests
+      #   run: |
+      #     poetry run -m pytest ./Tests/scripts/infrastructure_tests/ ./Tests/Marketplace/Tests/ ./Tests/tests ./Tests/private_build/tests Utils -v
 

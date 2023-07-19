@@ -789,7 +789,7 @@ class TestValidators:
         Then
             Ensure required_pack_file_does_not_exist fails if and only if PACKS_PACK_META_FILE_NAME doesn't exist
         """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+        logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
         monkeypatch.setenv("COLUMNS", "1000")
         pack = repo.create_pack("pack")
         validate_manager = ValidateManager(skip_conf_json=True)
@@ -800,8 +800,8 @@ class TestValidators:
         validate_manager.validate_pack_unique_files(
             pack.path, pack_error_ignore_list={}
         )
-        assert not str_in_call_args_list(logger_info.call_args_list, err_msg)
-        assert not str_in_call_args_list(logger_info.call_args_list, err_code)
+        assert not str_in_call_args_list(logger_error.call_args_list, err_msg)
+        assert not str_in_call_args_list(logger_error.call_args_list, err_code)
 
         os.remove(pack.pack_metadata.path)
         validate_manager.validate_pack_unique_files(
@@ -809,8 +809,8 @@ class TestValidators:
         )
         assert all(
             [
-                str_in_call_args_list(logger_info.call_args_list, err_msg),
-                str_in_call_args_list(logger_info.call_args_list, err_code),
+                str_in_call_args_list(logger_error.call_args_list, err_msg),
+                str_in_call_args_list(logger_error.call_args_list, err_code),
             ]
         )
 
@@ -2566,7 +2566,7 @@ def test_job_blank_name(repo, mocker, name: str, is_feed: bool, monkeypatch):
     Then
             Ensure an error is raised, and validation fails
     """
-    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+    logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
     monkeypatch.setenv("COLUMNS", "1000")
     pack = repo.create_pack()
     job = pack.create_job(is_feed=is_feed, name=name)
@@ -2586,8 +2586,8 @@ def test_job_blank_name(repo, mocker, name: str, is_feed: bool, monkeypatch):
     expected_string, expected_code = Errors.empty_or_missing_job_name()
     assert all(
         [
-            str_in_call_args_list(logger_info.call_args_list, expected_string),
-            str_in_call_args_list(logger_info.call_args_list, expected_code),
+            str_in_call_args_list(logger_error.call_args_list, expected_string),
+            str_in_call_args_list(logger_error.call_args_list, expected_code),
         ]
     )
 
@@ -2602,7 +2602,7 @@ def test_job_missing_name(repo, mocker, monkeypatch, is_feed: bool):
     Then
             Ensure an error is raised, and validation fails
     """
-    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+    logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
     monkeypatch.setenv("COLUMNS", "1000")
     pack = repo.create_pack()
     job = pack.create_job(is_feed=is_feed)
@@ -2622,8 +2622,8 @@ def test_job_missing_name(repo, mocker, monkeypatch, is_feed: bool):
     expected_string, expected_code = Errors.empty_or_missing_job_name()
     assert all(
         [
-            str_in_call_args_list(logger_info.call_args_list, expected_string),
-            str_in_call_args_list(logger_info.call_args_list, expected_code),
+            str_in_call_args_list(logger_error.call_args_list, expected_string),
+            str_in_call_args_list(logger_error.call_args_list, expected_code),
         ]
     )
 
@@ -2664,13 +2664,14 @@ def test_job_unexpected_field_values_in_non_feed_job(
 
 
 @pytest.mark.parametrize(
-    "file_set,expected_output,expected_result,added_files",
+    "file_set,expected_info_output,expected_error_output,expected_result,added_files",
     (
-        ({"Packs/Integration/mock_file_description.md"}, "[BA115]", False, set()),
-        (set(), "", True, set()),
-        ({"Packs/Integration/doc_files/image.png"}, "", True, set()),
+        ({"Packs/Integration/mock_file_description.md"}, "", "[BA115]", False, set()),
+        (set(), "", "", True, set()),
+        ({"Packs/Integration/doc_files/image.png"}, "", "", True, set()),
         (
             {"Packs/Integration/Playbooks/mock_playbook.yml"},
+            "",
             "",
             True,
             {"renamed_mock_playbook.yml"},
@@ -2678,14 +2679,21 @@ def test_job_unexpected_field_values_in_non_feed_job(
         (
             {Path("Packs/Integration/Playbooks/mock_playbook.yml")},
             "",
+            "",
             True,
             {Path("renamed_mock_playbook.yml")},
         ),
-        (({"non_content_item.txt"}, "[BA115]", False, set())),
+        (({"non_content_item.txt"}, "", "[BA115]", False, set())),
     ),
 )
 def test_validate_deleted_files(
-    mocker, monkeypatch, file_set, expected_output, expected_result, added_files
+    mocker,
+    monkeypatch,
+    file_set,
+    expected_info_output,
+    expected_error_output,
+    expected_result,
+    added_files,
 ):
     """
     Given
@@ -2696,6 +2704,7 @@ def test_validate_deleted_files(
             Assert the expected result (True or False) and the expected output (if there is an expected output).
     """
     logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+    logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
     monkeypatch.setenv("COLUMNS", "1000")
     validate_manager = ValidateManager(check_is_unskipped=False, skip_conf_json=True)
     if added_files:
@@ -2711,7 +2720,10 @@ def test_validate_deleted_files(
     result = validate_manager.validate_deleted_files(file_set, added_files)
 
     assert expected_result is result
-    assert str_in_call_args_list(logger_info.call_args_list, expected_output)
+    if expected_info_output:
+        assert str_in_call_args_list(logger_info.call_args_list, expected_info_output)
+    if expected_error_output:
+        assert str_in_call_args_list(logger_error.call_args_list, expected_error_output)
 
 
 def test_was_file_renamed_but_labeled_as_deleted(mocker):

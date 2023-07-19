@@ -12,6 +12,7 @@
 * Fixed an issue where **pre-commit** running when there was no change to the files
 * Fixed an issue where errors in **validate** were logged as `info`.
 * Fixed an issue where the **format** command would change the value of the `unsearchable` key in fields.
+* Added an ability to provide list of marketplace names as a credentials-type (type 9) param attribute.
 * **lint** will now fail on `demisto.results` and `return_outputs` usage, when a pack is `xsoar` or `partner` supported.
 * **lint** will now fail on `LOG` usage in python files.
 

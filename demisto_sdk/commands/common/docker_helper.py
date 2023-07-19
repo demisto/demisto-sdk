@@ -138,9 +138,9 @@ class DockerBase:
             return docker_client.images.get(image)
         except docker.errors.ImageNotFound:
             logger.debug(f"docker image {image} not found, pulling")
-            docker_client.images.pull(image)
+            docker_image = docker_client.images.pull(image)
             logger.debug(f"docker image {image} finished pulling")
-            return docker_client
+            return docker_image
 
     @staticmethod
     def copy_files_container(

@@ -196,7 +196,7 @@ class PackModelVerifier:
         expected_preview_only: Optional[bool] = None,
         expected_marketplaces: Optional[List[MarketplaceVersions]] = None,
         expected_content_items: Dict[str, ContentType] = {},
-        expected_deprecated: Optional[bool] = None
+        expected_deprecated: Optional[bool] = None,
     ) -> None:
         assert model.content_type == ContentType.PACK
         assert expected_id is None or model.object_id == expected_id
@@ -1532,7 +1532,7 @@ class TestParsersAndModels:
                 MarketplaceVersions.MarketplaceV2,
             ],
             expected_content_items=expected_content_items,
-            expected_deprecated=False
+            expected_deprecated=False,
         )
 
     def test_repo_parser(self, repo: Repo):

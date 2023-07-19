@@ -134,7 +134,7 @@ class Uploader:
                         logger.info(
                             "[red]Are you sure you want to continue? y/[N][/red]"
                         )
-                        return string_to_bool(str(input()), False)
+                        return string_to_bool(str(input()), default_when_empty=False)
             return True
 
         def _parse_internal_pack_names(zip_path: Path) -> Optional[Tuple[str, ...]]:

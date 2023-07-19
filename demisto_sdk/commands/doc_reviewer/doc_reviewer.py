@@ -35,8 +35,10 @@ from demisto_sdk.commands.doc_reviewer.known_words import KNOWN_WORDS
 from demisto_sdk.commands.doc_reviewer.rn_checker import ReleaseNotesChecker
 
 def remove_escape_characters(sentence: str) -> str:
-    return sentence.replace('\\n', ' ').replace('\\r', ' ').replace('\\b', ' ').replace('\\f', ' ').replace('\\t', ' ')
-
+    escape_chars = ['\\n', '\\r', '\\b', '\\f', '\\t']
+    for escape_char in escape_chars:
+        sentence = sentence.replace(escape_char, ' ')
+    return sentence
 
 class DocReviewer:
     """Perform a spell check on the given .yml or .md file."""

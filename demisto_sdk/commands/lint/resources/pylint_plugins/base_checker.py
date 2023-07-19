@@ -82,6 +82,11 @@ base_msg = {
         "LOG-exists",
         "Please remove all LOG usage and exchange it with demisto.info/demisto.debug",
     ),
+    "W9013": (
+        "Hardcoded http URL was found in the code, using https (when possible) is recommended.",
+        "http-usage",
+        "Please use the https method if possible",
+    ),
 }
 
 TEST_MODULE = "test-module"

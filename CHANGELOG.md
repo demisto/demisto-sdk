@@ -13,7 +13,7 @@
 * Fixed an issue where errors in **validate** were logged as `info`.
 * Fixed an issue where the **format** command would change the value of the `unsearchable` key in fields.
 * Added an ability to provide list of marketplace names as a credentials-type (type 9) param attribute.
-
+* **doc-review** will run with the `--use-packs-known-words` default to true.
 
 ## 1.17.2
 * Fixed an issue where **lint** and **validate** commands failed on integrations and scripts that use docker images that are not available in the Docker Hub but exist locally.

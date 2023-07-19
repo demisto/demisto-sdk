@@ -5,6 +5,7 @@ from typing import Optional
 from unittest.mock import patch
 
 import pytest
+from pathlib import Path
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
@@ -705,7 +706,7 @@ class TestFormattingLayoutscontainer:
         yield shutil.copyfile(
             SOURCE_FORMAT_LAYOUTS_CONTAINER, DESTINATION_FORMAT_LAYOUTS_CONTAINER_COPY
         )
-        if os.path.exists(DESTINATION_FORMAT_LAYOUTS_CONTAINER_COPY):
+        if Path(DESTINATION_FORMAT_LAYOUTS_CONTAINER_COPY).exists():
             os.remove(DESTINATION_FORMAT_LAYOUTS_CONTAINER_COPY)
         shutil.rmtree(LAYOUTS_CONTAINER_PATH, ignore_errors=True)
 

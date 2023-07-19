@@ -172,7 +172,7 @@ class TestValidators:
     @classmethod
     def setup_class(cls):
         for dir_to_create in DIR_LIST:
-            if not os.path.exists(dir_to_create):
+            if not Path(dir_to_create).exists():
                 cls.CREATED_DIRS.append(dir_to_create)
                 os.makedirs(dir_to_create)
         copyfile(CONF_JSON_MOCK_PATH, CONF_PATH)
@@ -181,7 +181,7 @@ class TestValidators:
     def teardown_class(cls):
         os.remove(CONF_PATH)
         for dir_to_delete in cls.CREATED_DIRS:
-            if os.path.exists(dir_to_delete):
+            if Path(dir_to_delete).exists():
                 os.rmdir(dir_to_delete)
 
     INPUTS_IS_VALID_VERSION = [

@@ -3040,14 +3040,32 @@ def test_run_validation_using_git_validation_calls(
     deleted_files_validation.assert_called_once_with(deleted_files, added_files)
 
 
-@pytest.mark.parametrize("file_content, expected_result", [
-    ("This is an example with the 'test-module' term within it.", False),
-    ("This is an example without the term in it", True),
-])
-def test_validate_no_disallowed_terms_in_customer_facing_docs_success(file_content: str, expected_result: bool):
+def test_validate_no_disallowed_terms_in_customer_facing_docs_success():
     """
     Given:
-    - Content of a customer-facing docs file
+    - Content of a customer-facing docs file (README, Release Notes, etc.)
+
+    When:
+    - Validating the content doesn't contain disallowed terms
+
+    Then:
+    - Ensure that if a disallowed term is found, False is returned, and True otherwise.
+    """
+    file_content = "This is an example with no disallowed terms within it."
+
+    base_validator = BaseValidator()
+    assert base_validator.validate_no_disallowed_terms_in_customer_facing_docs(file_content=file_content,
+                                                                               file_path="")
+
+
+@pytest.mark.parametrize("file_content", [
+    "This is an example with the 'test-module' term within it.",
+    "This is an example with the 'Test-Module' term within it",  # Assure case-insensitivity
+])
+def test_validate_no_disallowed_terms_in_customer_facing_docs_failure(file_content: str):
+    """
+    Given:
+    - Content of a customer-facing docs file (README, Release Notes, etc.)
 
     When:
     - Validating the content doesn't contain disallowed terms
@@ -3056,5 +3074,5 @@ def test_validate_no_disallowed_terms_in_customer_facing_docs_success(file_conte
     - Ensure that if a disallowed term is found, False is returned, and True otherwise.
     """
     base_validator = BaseValidator()
-    assert base_validator.validate_no_disallowed_terms_in_customer_facing_docs(file_content=file_content,
-                                                                               file_path="")
+    assert not base_validator.validate_no_disallowed_terms_in_customer_facing_docs(file_content=file_content,
+                                                                                   file_path="")

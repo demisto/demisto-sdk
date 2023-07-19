@@ -537,7 +537,7 @@ class ReleaseNotesValidator(BaseValidator):
             # self.has_no_markdown_lint_errors(),
             self.validate_release_notes_headers(),
             self.validate_no_disallowed_terms_in_customer_facing_docs(
-                file_cotent=self.latest_release_notes,
+                file_content=self.latest_release_notes,
                 file_path=self.release_notes_file_path,
             ),
         ]

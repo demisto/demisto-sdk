@@ -207,13 +207,30 @@ def setup(
         configure_dotenv()
         docker_image = integration_script.docker_image
         interpreter_path = CONTENT_PATH / ".venv" / "bin" / "python"
+        secret_id = integration_script.object_id.replace(" ", "_")
+        if project_id := os.getenv("GCP_PROJECT_ID"):
+            params = get_integration_params(project_id, secret_id)
+            with open(ide_folder / "params.json", "w") as f:
+                json.dump(params, f, indent=4)
+
+        if not docker_image:
+            docker_image = DEF_DOCKER
+        (
+            test_docker_image,
+            errors,
+        ) = docker_helper.get_docker().pull_or_create_test_image(
+            docker_image, integration_script.type
+        )
+        if errors:
+            raise RuntimeError(f"Failed to pull/create test docker image for {docker_image}: {errors}")
+
         if create_virtualenv and integration_script.type.startswith("python"):
             pack = integration_script.in_pack
             assert isinstance(pack, Pack), "Expected pack"
             ide_folder = pack.path / IDE_TO_FOLDER[ide]
             requirements = (
                 docker_client.containers.run(
-                    docker_image, command="pip list --format=freeze", remove=True
+                    test_docker_image, command="pip list --format=freeze", remove=True
                 )
                 .decode()
                 .split("\n")
@@ -242,24 +259,9 @@ def setup(
                     logger.info(f"Installed {req}")
                 except subprocess.CalledProcessError:
                     logger.warning(f"Could not install {req}, skipping...")
-        secret_id = integration_script.object_id.replace(" ", "_")
-        if project_id := os.getenv("GCP_PROJECT_ID"):
-            params = get_integration_params(project_id, secret_id)
-            with open(ide_folder / "params.json", "w") as f:
-                json.dump(params, f, indent=4)
 
-        if not docker_image:
-            docker_image = DEF_DOCKER
-        (
-            test_docker_image,
-            errors,
-        ) = docker_helper.get_docker().pull_or_create_test_image(
-            docker_image, integration_script.type
-        )
-        if errors:
-            raise Exception(f"Failed to pull/create docker image: {errors}")
         if ide == IDE.VSCODE:
             configure_vscode(
                 ide_folder, integration_script, test_docker_image, interpreter_path
             )
-        
+

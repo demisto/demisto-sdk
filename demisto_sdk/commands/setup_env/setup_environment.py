@@ -87,9 +87,7 @@ def configure_dotenv():
         dotenv.set_key(dotenv_path, key, value)
 
 
-def configure_settings(
-    ide_folder: Path, integration_script: IntegrationScript, interpreter_path: Path
-):
+def configure_settings(ide_folder: Path, integration_script: IntegrationScript, interpreter_path: Path):
     shutil.copy(Path(__file__).parent / "settings.json", ide_folder / "settings.json")
     with open(ide_folder / "settings.json") as f:
         settings = json5.load(f)
@@ -112,20 +110,15 @@ def configure_vscode(
     tasks_json_path = ide_folder / "tasks.json"
     launch_json: dict = {}
     tasks_json: dict = {}
+    launch_json_template = {}
+    tasks_json_template = {}
     if integration_script.type == "powershell":
         shutil.copyfile(Path(__file__).parent / "launch-powershell.json", launch_json_path)
         with open(launch_json_path) as f:
             launch_json_template = json5.load(f)
         tasks_json_template = {}
         script_path = integration_script.path.with_suffix(".ps1")
-        launch_json = {
-            "configurations": [
-                {
-                    "script": str(script_path),
-                    "cwd": str(CONTENT_PATH)
-                }
-            ]
-        }
+        launch_json = {"configurations": [{"script": str(script_path), "cwd": str(CONTENT_PATH)}]}
     elif integration_script.type.startswith("python"):
         shutil.copyfile(Path(__file__).parent / "tasks.json", tasks_json_path)
         shutil.copyfile(Path(__file__).parent / "launch-python.json", launch_json_path)
@@ -139,59 +132,52 @@ def configure_vscode(
             "configurations": [
                 {
                     "name": f"Docker: Debug ({integration_script.path.stem})",
-                    "python": {
-                        "pathMappings": [{"localRoot": str(CONTENT_PATH), "remoteRoot": "/app"}]
-                    }
+                    "python": {"pathMappings": [{"localRoot": str(CONTENT_PATH), "remoteRoot": "/app"}]},
                 },
                 {
                     "name": f"Docker: Debug tests ({integration_script.path.stem})",
-                    "python": {
-                        "pathMappings": [{"localRoot": str(CONTENT_PATH), "remoteRoot": "/app"}]
-                    }
+                    "python": {"pathMappings": [{"localRoot": str(CONTENT_PATH), "remoteRoot": "/app"}]},
                 },
                 {
                     "name": f"Python: Debug locally ({integration_script.path.stem})",
                     "program": str(script_path),
                     "cwd": str(CONTENT_PATH),
-                    "env": {"DEMISTO_PARAMS": str(demisto_params)}
-                }
+                    "env": {"DEMISTO_PARAMS": str(demisto_params)},
+                },
             ]
         }
         tasks_json = {
             "tasks": [
                 {
-                    "python": {
-                        "file": f"/app/{str(script_path.relative_to(CONTENT_PATH))}"
-                    },
+                    "python": {"file": f"/app/{str(script_path.relative_to(CONTENT_PATH))}"},
                     "dockerRun": {
                         "image": integration_script.docker_image,
                         "env": {"DEMISTO_PARAMS": f"/app/{demisto_params.relative_to(CONTENT_PATH)}"},
-                        "volumes": [{"localPath": str(CONTENT_PATH), "containerPath": "/app"}]
-                    }
+                        "volumes": [{"localPath": str(CONTENT_PATH), "containerPath": "/app"}],
+                    },
                 },
                 {
-                    "python": {
-                        "args": [
-                            "-s",
-                            f"/app/{test_script_path.relative_to(CONTENT_PATH)}",
-                            "-vv"
-                        ]
-                    },
+                    "python": {"args": ["-s", f"/app/{test_script_path.relative_to(CONTENT_PATH)}", "-vv"]},
                     "dockerRun": {
                         "image": test_docker_image,
                         "customOptions": f"-w /app/{script_path.relative_to(CONTENT_PATH)}",
-                        "env": {"PYTHONPATH": ":".join([f"/app/{python_path.relative_to(CONTENT_PATH)}" for python_path in PYTHONPATH])},
-                        "volumes": [{"localPath": str(CONTENT_PATH), "containerPath": "/app"}]
-                    }
-                }
+                        "env": {
+                            "PYTHONPATH": ":".join(
+                                [f"/app/{python_path.relative_to(CONTENT_PATH)}" for python_path in PYTHONPATH]
+                            )
+                        },
+                        "volumes": [{"localPath": str(CONTENT_PATH), "containerPath": "/app"}],
+                    },
+                },
             ]
         }
-    launch_json = launch_json_template.update(launch_json)
-    tasks_json = tasks_json_template.update(tasks_json)
+    launch_json_template.update(launch_json)
+    tasks_json_template.update(tasks_json)
     with open(launch_json_path, "w") as f:
-        json.dump(launch_json, f, indent=4)
+        json.dump(launch_json_template, f, indent=4)
     with open(tasks_json_path, "w") as f:
-        json.dump(tasks_json, f, indent=4)
+        json.dump(tasks_json_template, f, indent=4)
+
 
 def setup(
     file_paths: Tuple[Path, ...],
@@ -203,16 +189,14 @@ def setup(
     docker_client = docker_helper.init_global_docker_client()
     for file_path in file_paths:
         integration_script = BaseContent.from_path(Path(file_path))
-        assert isinstance(
-            integration_script, IntegrationScript
-        ), "Expected Integration Script"
+        assert isinstance(integration_script, IntegrationScript), "Expected Integration Script"
         copy_demistomock(integration_script)
         add_init_file_in_test_data(integration_script)
         configure_dotenv()
         docker_image = integration_script.docker_image
         interpreter_path = CONTENT_PATH / ".venv" / "bin" / "python"
         # replace " ", "(", ")" with "_"
-        secret_id = re.sub(r'[ ()]', '_', integration_script.name)
+        secret_id = re.sub(r"[ ()]", "_", integration_script.name)
         if project_id := os.getenv("GCP_PROJECT_ID"):
             params = get_integration_params(project_id, secret_id)
             with open(ide_folder / "params.json", "w") as f:
@@ -223,9 +207,7 @@ def setup(
         (
             test_docker_image,
             errors,
-        ) = docker_helper.get_docker().pull_or_create_test_image(
-            docker_image, integration_script.type
-        )
+        ) = docker_helper.get_docker().pull_or_create_test_image(docker_image, integration_script.type)
         if errors:
             raise RuntimeError(f"Failed to pull/create test docker image for {docker_image}: {errors}")
 
@@ -234,9 +216,7 @@ def setup(
             assert isinstance(pack, Pack), "Expected pack"
             ide_folder = pack.path / IDE_TO_FOLDER[ide]
             requirements = (
-                docker_client.containers.run(
-                    test_docker_image, command="pip list --format=freeze", remove=True
-                )
+                docker_client.containers.run(test_docker_image, command="pip list --format=freeze", remove=True)
                 .decode()
                 .split("\n")
             )
@@ -266,7 +246,4 @@ def setup(
                     logger.warning(f"Could not install {req}, skipping...")
 
         if ide == IDE.VSCODE:
-            configure_vscode(
-                ide_folder, integration_script, test_docker_image, interpreter_path
-            )
-
+            configure_vscode(ide_folder, integration_script, test_docker_image, interpreter_path)

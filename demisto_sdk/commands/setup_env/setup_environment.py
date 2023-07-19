@@ -57,11 +57,13 @@ def get_integration_params(project_id: str, secret_id: str):
 
 def copy_demistomock(integration_script: IntegrationScript):
     if integration_script.type == "powershell":
+        (integration_script.path.parent / "demistomock.ps1").unlink(missing_ok=True)
         shutil.copy(
             CONTENT_PATH / "Tests" / "demistomock" / "demistomock.ps1",
             integration_script.path.parent / "demistomock.ps1",
         )
     else:
+        (integration_script.path.parent / "demistomock.py").unlink(missing_ok=True)
         shutil.copy(
             CONTENT_PATH / "Tests" / "demistomock" / "demistomock.py",
             integration_script.path.parent / "demistomock.py",
@@ -155,6 +157,9 @@ def configure_vscode(
         )
         tasks_json["tasks"][1]["dockerRun"]["image"] = integration_script.docker_image
         tasks_json["tasks"][1]["dockerRun"]["env"]["DEMISTO_PARAMS"] = f"/app/{demisto_params.relative_to(CONTENT_PATH)}"
+        
+        docker_python_path = [f"/app/{python_path.relative_to(CONTENT_PATH)}" for python_path in PYTHONPATH]
+        tasks_json["tasks"][1]["dockerRun"]["env"]["PYTHONPATH"] = ":".join(docker_python_path)
         tasks_json["tasks"][2]["python"]["args"] = [
             "-s",
             f"/app/{test_script_path.relative_to(CONTENT_PATH)}",
@@ -165,7 +170,7 @@ def configure_vscode(
         tasks_json["tasks"][2]["dockerRun"][
             "customOptions"
         ] = f"-w /app/{script_path.relative_to(CONTENT_PATH)}"
-
+        tasks_json["tasks"][2]["dockerRun"]["env"]["PYTHONPATH"] = ":".join(docker_python_path)
     with open(launch_json_path, "w") as f:
         json.dump(launch_json, f, quote_keys=True, indent=4)
     with open(tasks_json_path, "w") as f:
@@ -187,6 +192,7 @@ def setup(
         ), "Expected Integration Script"
         copy_demistomock(integration_script)
         add_init_file_in_test_data(integration_script)
+        configure_dotenv()
         docker_image = integration_script.docker_image
         interpreter_path = CONTENT_PATH / ".venv" / "bin" / "python"
         if create_virtualenv and integration_script.type.startswith("python"):
@@ -230,7 +236,6 @@ def setup(
             with open(ide_folder / "params.json", "w") as f:
                 json.dump(params, f, quote_keys=True, trailing_commas=False, indent=4)
 
-        configure_dotenv()
         if not docker_image:
             docker_image = DEF_DOCKER
         (

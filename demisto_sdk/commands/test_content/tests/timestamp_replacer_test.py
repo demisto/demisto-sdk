@@ -40,7 +40,7 @@ def tz(request):
         if original_tz:
             os.environ["TZ"] = original_tz
 
-    request.addfinalizer(teardown)
+    request.addfinalizer(teardown_method)
     return request
 
 

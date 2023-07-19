@@ -50,7 +50,7 @@ class ValidateManager:
                         except NotImplementedError:
                             continue
                             
-        return post_results(results)
+        return post_results(results, self.config)
 
     def gather_objects_to_run(self, file_paths, use_git, validate_all):
         content_objects_to_run = set()

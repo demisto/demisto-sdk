@@ -154,6 +154,7 @@ class IntegrationValidator(ContentEntityValidator):
             self.is_valid_display_name(),
             self.is_valid_default_value_for_checkbox(),
             self.is_valid_display_name_for_siem(),
+            self.is_valid_xsiam_marketplace(),
             self.is_valid_pwsh(),
             self.is_valid_image(),
             self.is_valid_max_fetch_and_first_fetch(),
@@ -2335,4 +2336,18 @@ class IntegrationValidator(ContentEntityValidator):
             )
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 return False
+        return True
+
+    @error_codes("IN151")
+    def is_valid_xsiam_marketplace(self):
+        """Checks if XSIAM integration has only the marketplacev2 entry"""
+        is_siem = self.current_file.get("script", {}).get("isfetchevents")
+        marketplaces = self.current_file.get("marketplaces", [])
+        if is_siem:
+            # Should have only marketplacev2 entry
+            if not len(marketplaces) == 1 or "marketplacev2" not in marketplaces:
+                error_message, error_code = Errors.invalid_siem_marketplaces_entry()
+                if self.handle_error(error_message, error_code, self.file_path):
+                    return False
+
         return True

@@ -735,7 +735,7 @@ def get_last_remote_release_version():
     try:
         # pypi_request = requests.get(SDK_PYPI_VERSION, verify=False, timeout=5)
         pypi_request = requests.get(SDK_PYPI_VERSION)
-        pypi_request.raise_for_status()
+        # pypi_request.raise_for_status()
         pypi_json = pypi_request.json()
         version = pypi_json.get("info", {}).get("version", "")
         return version

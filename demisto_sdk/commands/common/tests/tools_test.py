@@ -1461,7 +1461,7 @@ def test_get_pack_metadata(repo):
     assert metadata_json == result
 
 
-def test_get_last_remote_release_version(requests_mock):
+def test_get_last_remote_release_version(requests_mock, mocker):
     """
     When
     - Get latest release tag from remote pypi api
@@ -1480,6 +1480,7 @@ def test_get_last_remote_release_version(requests_mock):
         SDK_PYPI_VERSION,
         json={"info": {"version": expected_version}},
     )
+    # mocker.patch.object(requests, 'get', return_value={"info": {"version": expected_version}})
     assert get_last_remote_release_version() == expected_version
 
 

@@ -1,7 +1,6 @@
 {
     "version": "0.2.0",
     "configurations": [
-        // here
         {
             "name": "Docker: Debug in docker",
             "type": "docker",
@@ -44,6 +43,7 @@
           "console": "integratedTerminal",
           "cwd": "${workspaceFolder}",
           "justMyCode": false,
+          "env": {}
       },
       {
         "name": "Python: Debug Tests",

@@ -11,8 +11,7 @@
 * **validate** will now run on all the pack content items when the pack supported marketplaces are modified.
 * **pre-commit** no longer runs when there are no modified files (unless provided with input files).
 * Fixed an issue where errors in **validate** were logged as `info`.
-* Fixed an issue where the error messages were not log in **validate**
-
+* Fixed an issue where **validate** error messages were not logged when the `param` is not valid or if the default field in reputation command is no valid
 ## 1.17.2
 * Fixed an issue where **lint** and **validate** commands failed on integrations and scripts that use docker images that are not available in the Docker Hub but exist locally.
 * Added documentation for the flag **override-existing** used in upload.

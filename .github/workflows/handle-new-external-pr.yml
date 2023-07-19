@@ -22,4 +22,5 @@ jobs:
           reviewers=$(curl -s "https://raw.githubusercontent.com/demisto/content/master/.github/content_roles.json" | jq -r '.CONTRIBUTION_TL')
           echo $reviewers
           gh pr edit ${{ github.event.pull_request.html_url }} --add-assignee $reviewers
+          gh pr edit ${{ github.event.pull_request.html_url }} --add-reviewer $reviewers
           echo done

@@ -119,7 +119,7 @@ class SingleModelingRule:
                 )
 
             uniq_fields.append(self.TIME_FIELD)  # The '_time' field is always required.
-            self.fields = list(sorted(uniq_fields))
+            self.fields = sorted(uniq_fields)
 
         return self._fields
 

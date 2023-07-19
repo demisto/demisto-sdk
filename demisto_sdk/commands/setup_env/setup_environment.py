@@ -132,7 +132,6 @@ def configure_vscode(
         test_script_path = (
             integration_script.path.parent / f"{integration_script.path.stem}_test.py"
         )
-        tag = f"{integration_script.name}-pytest"
         with open(ide_folder / "launch.json") as f:
             launch_json = json5.load(f)
         with open(ide_folder / "tasks.json") as f:
@@ -150,16 +149,12 @@ def configure_vscode(
         launch_json["configurations"][2]["cwd"] = str(CONTENT_PATH)
         launch_json["configurations"][2]["env"]["DEMISTO_PARAMS"] = str(demisto_params)
 
-        tasks_json["tasks"][0]["dockerBuild"]["buildArgs"][
-            "IMAGENAME"
-        ] = test_docker_image
-        tasks_json["tasks"][0]["dockerBuild"]["tag"] = tag
 
-        tasks_json["tasks"][1]["python"]["file"] = str(
+        tasks_json["tasks"][0]["python"]["file"] = str(
             f"/app/{str(script_path.relative_to(CONTENT_PATH))}"
         )
-        tasks_json["tasks"][1]["dockerRun"]["image"] = integration_script.docker_image
-        tasks_json["tasks"][1]["dockerRun"]["env"][
+        tasks_json["tasks"][0]["dockerRun"]["image"] = integration_script.docker_image
+        tasks_json["tasks"][0]["dockerRun"]["env"][
             "DEMISTO_PARAMS"
         ] = f"/app/{demisto_params.relative_to(CONTENT_PATH)}"
 
@@ -167,20 +162,19 @@ def configure_vscode(
             f"/app/{python_path.relative_to(CONTENT_PATH)}"
             for python_path in PYTHONPATH
         ]
-        tasks_json["tasks"][1]["dockerRun"]["env"]["PYTHONPATH"] = ":".join(
+        tasks_json["tasks"][0]["dockerRun"]["env"]["PYTHONPATH"] = ":".join(
             docker_python_path
         )
-        tasks_json["tasks"][2]["python"]["args"] = [
+        tasks_json["tasks"][1]["python"]["args"] = [
             "-s",
             f"/app/{test_script_path.relative_to(CONTENT_PATH)}",
             "-vv",
         ]
-        tasks_json["tasks"][2]["dockerRun"]["image"] = test_docker_image
-        tasks_json["tasks"][2]["dockerRun"]["tag"] = tag
-        tasks_json["tasks"][2]["dockerRun"][
+        tasks_json["tasks"][1]["dockerRun"]["image"] = test_docker_image
+        tasks_json["tasks"][1]["dockerRun"][
             "customOptions"
         ] = f"-w /app/{script_path.relative_to(CONTENT_PATH)}"
-        tasks_json["tasks"][2]["dockerRun"]["env"]["PYTHONPATH"] = ":".join(
+        tasks_json["tasks"][1]["dockerRun"]["env"]["PYTHONPATH"] = ":".join(
             docker_python_path
         )
     with open(launch_json_path, "w") as f:

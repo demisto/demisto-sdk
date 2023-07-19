@@ -6,6 +6,7 @@
 * Fixed an issue where in some cases the **split** command did not remove pack version note from the script.
 * Improved the content graph performance when calculating content relationships.
 * Fixed an issue where **validate** would not properly detect dependencies of core packs.
+* Removed usages of Random in unit tests to ensure the tests are deterministic.
 * **validate** will now run on all the pack content items when the pack supported marketplaces are modified.
 
 ## 1.17.2

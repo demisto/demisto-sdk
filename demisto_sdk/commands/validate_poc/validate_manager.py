@@ -5,7 +5,6 @@ import toml
 
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.git_util import GitUtil
-from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.content_graph.objects.pack import Pack
 from demisto_sdk.commands.content_graph.objects.repository import ContentDTO
@@ -14,6 +13,7 @@ from demisto_sdk.commands.validate_poc.validators.base_validator import (
     ValidationResult,
 )
 from demisto_sdk.commands.validate_poc.validators.id_name_validator import *
+from demisto_sdk.commands.validate_poc.validators.validation_results import post_results
 
 
 class ValidateManager:
@@ -23,7 +23,7 @@ class ValidateManager:
         validate_all=False,
         file_path=None,
     ):
-        self.config: dict = toml.load("/Users/ierukhimovic/dev/demisto/demisto-sdk/demisto_sdk/commands/validate_poc/validation_conf.toml")
+        self.config: dict = toml.load("/Users/yhayun/dev/demisto/demisto-sdk/demisto_sdk/commands/validate_poc/validation_conf.toml")
         self.objects_to_run = self.gather_objects_to_run(file_path, use_git, validate_all)
         self.validation_codes, self.run_using_select = self.gather_validations_to_run(
             use_git
@@ -43,12 +43,14 @@ class ValidateManager:
                 for content_object in self.objects_to_run:
                     if validator.should_run(content_object):
                         validation_result = validator.is_valid(content_object)
-                        if not validation_result.is_valid:
-                            validator.fix(content_object)
+                        try:
+                            if not validation_result.is_valid:
+                                results.append(validation_result)
+                                validator.fix(content_object)
+                        except NotImplementedError:
+                            continue
                             
-                        results.append(validation_result)
-
-        return self.post_results(results)
+        return post_results(results)
 
     def gather_objects_to_run(self, file_paths, use_git, validate_all):
         content_objects_to_run = set()
@@ -84,16 +86,3 @@ class ValidateManager:
                 False,
             )
         return validation_codes, run_using_select
-
-    def post_results(self, results: List[ValidationResult] = []):
-        only_throw_warning = self.config.get("throw_warnings", {}).get("warnings_list", [])
-        is_valid = True
-        for result in results:
-            if not result.is_valid:
-                if result.error_code in only_throw_warning:
-                    logger.warning(f"[yellow]{result.format_message}[/yellow]")
-                else:
-                    logger.error(f"[red]{result.format_message}[/red]")
-                    is_valid = False
-        return is_valid
-

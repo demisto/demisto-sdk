@@ -1362,7 +1362,7 @@ class TestValidators:
         )
 
         validate_manager = ValidateManager()
-        modified_files = {api_script1.yml.path}
+        modified_files = {api_script1.yml.rel_path}
         added_files = {"Packs/ApiModules/ReleaseNotes/1_0_0.md"}
         with ChangeCWD(repo.path):
             assert (

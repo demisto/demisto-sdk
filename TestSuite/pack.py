@@ -284,7 +284,8 @@ class Pack:
             self._scripts_path, name, self._repo, create_unified=create_unified
         )
         script.build(code, yml, readme, description, changelog, image)
-        os.remove(script.description.path)
+        if not create_unified:
+            os.remove(script.description.path)
         self.scripts.append(script)
         return script
 

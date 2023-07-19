@@ -139,13 +139,13 @@ def configure_vscode(
             tasks_json = json5.load(f)
         launch_json["configurations"][0][
             "name"
-        ] = f"Docker: Debug ({integration_script.name})"
+        ] = f"Docker: Debug ({integration_script.path.stem})"
         launch_json["configurations"][1][
             "name"
-        ] = f"Docker: Debug tests ({integration_script.name})"
+        ] = f"Docker: Debug tests ({integration_script.path.stem})"
         launch_json["configurations"][2][
             "name"
-        ] = f"Python: Debug locally ({integration_script.name})"
+        ] = f"Python: Debug locally ({integration_script.path.stem})"
         launch_json["configurations"][2]["program"] = str(script_path)
         launch_json["configurations"][2]["cwd"] = str(CONTENT_PATH)
         launch_json["configurations"][2]["env"]["DEMISTO_PARAMS"] = str(demisto_params)

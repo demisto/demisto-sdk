@@ -22,6 +22,7 @@ jobs:
         run: pwd
             cd ..
             cd ..
+            pwd
       - name: Downloding the last demisto-sdk version
         env:
           PULL: ${{ github.event.pull_request }}

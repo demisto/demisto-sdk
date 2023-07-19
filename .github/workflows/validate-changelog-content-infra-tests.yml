@@ -18,10 +18,7 @@ jobs:
         uses: Gr1N/setup-poetry@v8
       - name: Install Python Dependencies
         run: |
-           ls
-           poetry install --with ci
-           cd ..
-           ls
+           pwd
       #      poetry add poetry add git+https://github.com/demisto/demisto-sdk.git#$(git rev-parse --short "$GITHUB_SHA")
       # - name: run unit tests
       #   run: |

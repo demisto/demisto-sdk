@@ -1099,9 +1099,7 @@ class TestValidators:
         assert ignore_errors_list["file_name"] == [
             "BA101",
             "SC101",
-            "IN117",
             "BA106",
-            "IN100",
         ]
         assert "SC100" not in ignore_errors_list["file_name"]
 

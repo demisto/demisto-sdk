@@ -79,6 +79,7 @@ def init_test_data(
             all_mr_entity_fields: Set[str] = set()
             for mr in mr_entity.rules:
                 all_mr_entity_fields = all_mr_entity_fields.union(mr.fields)
+
             operation_mode = "create"
             test_data_file = mr_entity.testdata_path
 
@@ -90,8 +91,7 @@ def init_test_data(
                 )
                 test_data = TestData.parse_file(test_data_file)
                 dataset_to_fields_map = {
-                    mr.dataset: dict.fromkeys(sorted(mr.fields))
-                    for mr in mr_entity.rules
+                    mr.dataset: dict.fromkeys(mr.fields) for mr in mr_entity.rules
                 }
 
                 # set the default values from the first rule if there is only one, otherwise it should populated manually
@@ -140,7 +140,7 @@ def init_test_data(
                                     vendor=mr.vendor,
                                     product=mr.product,
                                     dataset=mr.dataset,
-                                    expected_values=dict.fromkeys(sorted(mr.fields)),
+                                    expected_values=dict.fromkeys(mr.fields),
                                 )
                                 for _ in range(
                                     int(
@@ -163,7 +163,7 @@ def init_test_data(
                                 vendor=mr.vendor,
                                 product=mr.product,
                                 dataset=mr.dataset,
-                                expected_values=dict.fromkeys(sorted(mr.fields)),
+                                expected_values=dict.fromkeys(mr.fields),
                             )
                             for _ in range(count)
                         ]

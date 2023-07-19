@@ -41,7 +41,8 @@ ALLOWED_IGNORE_ERRORS = [
     "BA116",
     "BA119",
     "BA124",
-    "BA125" "DS107",
+    "BA125",
+    "DS107",
     "GF102",
     "IF100",
     "IF106",
@@ -4032,8 +4033,8 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def description_missing_dot_at_the_end(lines_with_missing_dot):
-        return f"The following lines contains description with missing '.' at the end of the line:\n{lines_with_missing_dot}"
+    def description_missing_dot_at_the_end(details: str):
+        return f"Descriptions must end with a period ("."), fix the following:\n{details}"
 
     @staticmethod
     @error_code_decorator

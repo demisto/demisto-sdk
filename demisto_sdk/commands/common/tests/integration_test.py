@@ -2728,7 +2728,7 @@ class TestisContextChanged:
             ),
         ],
     )
-    def test_is_line_ends_with_dot(self, repo, yml_content, use_git, expected_results):
+    def test_is_line_ends_with_dot(self, repo, yml_content: dict, use_git: bool, expected_results: bool):
         """
         Given:
             A yml content, use_git flag, and expected_results.
@@ -2752,4 +2752,4 @@ class TestisContextChanged:
         integration_validator = IntegrationValidator(
             structure_validator, json_file_path=integration.yml.path, using_git=use_git
         )
-        assert integration_validator.is_line_ends_with_dot() == expected_results
+        assert integration_validator.is_line_ends_with_dot() is expected_results

@@ -630,7 +630,7 @@ class TestScriptValidator:
             ),
         ],
     )
-    def test_is_line_ends_with_dot(self, repo, yml_content, use_git, expected_results):
+    def test_is_line_ends_with_dot(self, repo, yml_content: dict, use_git: bool, expected_results: bool):
         """
         Given:
             A yml content, use_git flag, and expected_results.
@@ -652,4 +652,4 @@ class TestScriptValidator:
         script = pack.create_script(yml=yml_content)
         structure_validator = StructureValidator(script.yml.path)
         integration_validator = ScriptValidator(structure_validator, using_git=use_git)
-        assert integration_validator.is_line_ends_with_dot() == expected_results
+        assert integration_validator.is_line_ends_with_dot() in expected_results

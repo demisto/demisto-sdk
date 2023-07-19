@@ -2350,7 +2350,7 @@ class IntegrationValidator(ContentEntityValidator):
                     line_with_missing_dot += (
                         f"- In command {command.get('name')}:\n{current_command}"
                     )
-            if not self.current_file.get("description", "").endswith("."):
+            if (yml_description := self.current_file.get("description", "")) and not yml_description.endswith("."):
                 line_with_missing_dot += "The file's description field is missing a '.' in the end of the sentence."
             if line_with_missing_dot:
                 error_message, error_code = Errors.description_missing_dot_at_the_end(

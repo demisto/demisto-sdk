@@ -790,12 +790,12 @@ class ContentEntityValidator(BaseValidator):
 
         return True
 
-    def is_line_ends_with_dot(self, text_to_test, arg_field):
+    def is_line_ends_with_dot(self, dict_to_test: dict, arg_field: str):
         line_with_missing_dot = ""
-        for arg in text_to_test.get(arg_field, []):
+        for arg in dict_to_test.get(arg_field, []):
             if not arg.get("description", "").endswith("."):
-                line_with_missing_dot += f"The argument {arg.get('name')} is missing '.' at the end of the sentence.\n"
-        for output in text_to_test.get("outputs", []):
+                line_with_missing_dot += f"The argument {arg.get('name')} description should end with a period.\n"
+        for output in dict_to_test.get("outputs", []):
             if not output.get("description", "").endswith("."):
-                line_with_missing_dot += f"The context path {output.get('contextPath')} is missing '.' at the end of the sentence.\n"
+                line_with_missing_dot += f"The context path {output.get('contextPath')} description should end with a period.\n"
         return line_with_missing_dot

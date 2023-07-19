@@ -131,16 +131,17 @@ class DockerBase:
     @staticmethod
     def pull_image(image: str) -> docker.models.images.Image:
         """
-        Pulling an image if it dosnt exist localy.
+        Get a docker image, in case not found, will pull it.
         """
         docker_client = init_global_docker_client(log_prompt="pull_image")
+
         try:
             return docker_client.images.get(image)
         except docker.errors.ImageNotFound:
             logger.debug(f"docker image {image} not found, pulling")
             docker_client.images.pull(image)
             logger.debug(f"docker image {image} finished pulling")
-            return docker_client
+            return docker_client.images.get(image)
 
     @staticmethod
     def copy_files_container(

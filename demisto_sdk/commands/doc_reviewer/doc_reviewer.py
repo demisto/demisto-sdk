@@ -34,6 +34,9 @@ from demisto_sdk.commands.common.tools import (
 from demisto_sdk.commands.doc_reviewer.known_words import KNOWN_WORDS
 from demisto_sdk.commands.doc_reviewer.rn_checker import ReleaseNotesChecker
 
+def remove_escape_characters(sentence: str) -> str:
+    return sentence.replace('\\n', ' ').replace('\\r', ' ').replace('\\b', ' ').replace('\\f', ' ').replace('\\t', ' ')
+
 
 class DocReviewer:
     """Perform a spell check on the given .yml or .md file."""
@@ -170,12 +173,8 @@ class DocReviewer:
     @staticmethod
     def camel_case_split(camel):
         """split camel case word into sub-words"""
-        tokens = re.compile("([A-Z]?[a-z]+)").findall(camel)
-        for token in tokens:
-            # double space to handle capital words like IP/URL/DNS that not included in the regex
-            camel = camel.replace(token, f" {token} ")
-
-        return camel.split()
+        # Use regular expressions to split the CamelCase word into individual words
+        return re.findall(r'[A-Z](?:[a-z]+|[A-Z]*(?=[A-Z]|$))', camel)
 
     def get_all_md_and_yml_files_in_dir(self, dir_name):
         """recursively get all the supported files from a given dictionary"""
@@ -407,10 +406,22 @@ class DocReviewer:
             return candidates
         return None
 
+
+    def check_sentence(self, sentence):
+        if sentence:
+            for word in remove_escape_characters(sentence).split():
+                self.check_word(word)
+
     def check_word(self, word):
         """Check if a word is legal"""
-        # check camel cases
+        # First check if the word, as is exists in the dictionary.
+        if not self.spellchecker.unknown([word]):
+            return
+
         word = self.remove_punctuation(word)
+        if not self.spellchecker.unknown([word]):
+            return
+
         sub_words = []
         if "-" in word:
             if not self.spellchecker.unknown([word]):
@@ -441,8 +452,7 @@ class DocReviewer:
                 self.malformed_rn_files.add(file_path)
 
         for line in md_file_lines:
-            for word in line.split():
-                self.check_word(word)
+            self.check_sentence(line)
 
     def check_yaml(self, file_path):
         """Runs spell check on .yml file. Adds unknown words to given unknown_words set.
@@ -473,47 +483,25 @@ class DocReviewer:
     def check_params(self, param_list):
         """Check spelling in integration parameters"""
         for param_conf in param_list:
-            param_display = param_conf.get("display")
-            if param_display:
-                for word in param_display.split():
-                    self.check_word(word)
-
-            param_toolip = param_conf.get("additionalinfo")
-            if param_toolip:
-                for word in param_toolip.split():
-                    self.check_word(word)
+            self.check_sentence(param_conf.get("display"))
+            self.check_sentence(param_conf.get("additionalinfo"))
 
     def check_commands(self, command_list):
         """Check spelling in integration commands"""
         for command in command_list:
             command_arguments = command.get("arguments", [])
             for argument in command_arguments:
-                arg_description = argument.get("description")
-                if arg_description:
-                    for word in arg_description.split():
-                        self.check_word(word)
+                self.check_sentence(argument.get("description"))
 
-            command_description = command.get("description")
-            if command_description:
-                for word in command_description.split():
-                    self.check_word(word)
+            self.check_sentence(command.get("description"))
 
-            command_outputs = command.get("outputs", [])
-            for output in command_outputs:
-                output_description = output.get("description")
-                if output_description:
-                    for word in output_description.split():
-                        self.check_word(word)
+            for output in command.get("outputs", []):
+                self.check_sentence(output.get("description"))
 
     def check_display_and_description(self, display, description):
         """check integration display name and description"""
-        if display:
-            for word in display.split():
-                self.check_word(word)
-
-        if description:
-            for word in description.split():
-                self.check_word(word)
+        self.check_sentence(display)
+        self.check_sentence(description)
 
     def check_spelling_in_script(self, yml_file):
         """Check spelling in script file"""
@@ -524,24 +512,16 @@ class DocReviewer:
     def check_script_args(self, arg_list):
         """Check spelling in script arguments"""
         for argument in arg_list:
-            arg_description = argument.get("description")
-            if arg_description:
-                for word in arg_description.split():
-                    self.check_word(word)
+            self.check_sentence(argument.get("description"))
 
     def check_comment(self, comment):
         """Check spelling in script comment"""
-        if comment:
-            for word in comment.split():
-                self.check_word(word)
+        self.check_sentence(comment)
 
     def check_script_outputs(self, outputs_list):
         """Check spelling in script outputs"""
         for output in outputs_list:
-            output_description = output.get("description")
-            if output_description:
-                for word in output_description.split():
-                    self.check_word(word)
+            self.check_sentence(output.get("description"))
 
     def check_spelling_in_playbook(self, yml_file):
         """Check spelling in playbook file"""
@@ -552,25 +532,13 @@ class DocReviewer:
 
     def check_playbook_description_and_name(self, description, name):
         """Check spelling in playbook description and name"""
-        if name:
-            for word in name.split():
-                self.check_word(word)
-
-        if description:
-            for word in description.split():
-                self.check_word(word)
+        self.check_sentence(name)
+        self.check_sentence(description)
 
     def check_tasks(self, task_dict):
         """Check spelling in playbook tasks"""
         for task_key in task_dict.keys():
             task_info = task_dict[task_key].get("task")
             if task_info:
-                task_description = task_info.get("description")
-                if task_description:
-                    for word in task_description.split():
-                        self.check_word(word)
-
-                task_name = task_info.get("name")
-                if task_name:
-                    for word in task_name.split():
-                        self.check_word(word)
+                self.check_sentence(task_info.get("description"))
+                self.check_sentence(task_info.get("name"))

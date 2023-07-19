@@ -4049,7 +4049,7 @@ class Errors:
     @error_code_decorator
     def missing_unit_test_file(path: Path):
         return f"Missing {path.stem}_test.py unit test file for {path.name}."
-    
+
     @staticmethod
     @error_code_decorator
     def description_missing_dot_at_the_end(details: str):

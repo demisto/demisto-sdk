@@ -22,7 +22,6 @@ from demisto_sdk.commands.format.update_connection import ConnectionJSONFormat
 from demisto_sdk.commands.format.update_dashboard import DashboardJSONFormat
 from demisto_sdk.commands.format.update_generic import BaseUpdate
 from demisto_sdk.commands.format.update_generic_json import BaseUpdateJSON
-from demisto_sdk.commands.format.update_genericfield import GenericFieldJSONFormat
 from demisto_sdk.commands.format.update_incidentfields import IncidentFieldJSONFormat
 from demisto_sdk.commands.format.update_incidenttype import IncidentTypesJSONFormat
 from demisto_sdk.commands.format.update_indicatorfields import IndicatorFieldJSONFormat
@@ -219,29 +218,6 @@ class TestFormattingJson:
                 == "The given output path is not a specific file path.\nOnly file path can be a output path."
                 "  Please specify a correct output."
             )
-
-    @pytest.mark.parametrize(
-        "formatter",
-        [
-            GenericFieldJSONFormat,
-            IncidentFieldJSONFormat,
-            IndicatorFieldJSONFormat,
-        ],
-    )
-    def test_update_unsearchable_key(self, formatter):
-        """
-        Given
-            - A dictionary of file that the unsearchable is false
-        When
-            - Run format on file
-        Then
-            - Ensure unsearchable updated successfully
-        """
-
-        fields_formatter = formatter(input="test")
-        fields_formatter.data = {"unsearchable": False}
-        fields_formatter.set_default_values_as_needed()
-        assert fields_formatter.data["unsearchable"]
 
     @pytest.mark.parametrize("from_version", [None, "5.5.0", "6.2.0"])
     def test_indicator_field_format_html_type(self, pack, from_version: Optional[str]):

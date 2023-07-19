@@ -106,7 +106,7 @@ def configure_vscode(
     test_docker_image: str,
     interpreter_path: Path,
 ):
-    demisto_params = ide_folder / "params.json"
+    demisto_params = CONTENT_PATH / "params.json"
     configure_settings(ide_folder, integration_script, interpreter_path)
     launch_json_path = ide_folder / "launch.json"
     tasks_json_path = ide_folder / "tasks.json"
@@ -140,11 +140,11 @@ def configure_vscode(
         launch_json["configurations"][0][
             "name"
         ] = f"Docker: Debug ({integration_script.path.stem})"
-        launch_json["configurations"][0]["python"]["pathMappings"] = {"localRoot": str(CONTENT_PATH), "remoteRoot": "/app"}
+        launch_json["configurations"][0]["python"]["pathMappings"] = [{"localRoot": str(CONTENT_PATH), "remoteRoot": "/app"}]
         launch_json["configurations"][1][
             "name"
         ] = f"Docker: Debug tests ({integration_script.path.stem})"
-        launch_json["configurations"][1]["python"]["pathMappings"] = {"localRoot": str(CONTENT_PATH), "remoteRoot": "/app"}
+        launch_json["configurations"][1]["python"]["pathMappings"] = [{"localRoot": str(CONTENT_PATH), "remoteRoot": "/app"}]
 
         launch_json["configurations"][2][
             "name"

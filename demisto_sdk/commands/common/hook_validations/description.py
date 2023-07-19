@@ -68,9 +68,10 @@ class DescriptionValidator(BaseValidator):
             self.is_valid_description_name()
             # self.has_markdown_lint_errors(file_content=file_content)
             self.contains_contrib_details(file_content=file_content)
-            self.validate_no_disallowed_terms_in_customer_facing_docs(
+            if not self.validate_no_disallowed_terms_in_customer_facing_docs(
                 file_content=file_content, file_path=self.file_path
-            )
+            ):
+                self._is_valid = False
 
         return self._is_valid
 

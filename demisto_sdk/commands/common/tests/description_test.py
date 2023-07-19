@@ -101,7 +101,7 @@ def test_is_duplicate_description_unified_deprecated_integration(
     unified_integration_yml = integration_dir / "SomeIntegration.yml"
     yaml.dump(integration_obj, unified_integration_yml.open("w"))
     description_validator = DescriptionValidator(str(unified_integration_yml))
-    assert description_validator.is_duplicate_description()
+    assert description_validator.is_duplicate_description(is_description_in_package=False)
     assert not DescriptionValidator.handle_error.called
 
 
@@ -121,7 +121,7 @@ def test_is_duplicate_description_given(pack, mocker):
     integration = pack.create_integration()
     integration.create_default_integration()
     description_validator = DescriptionValidator(integration.description.path)
-    assert description_validator.is_duplicate_description()
+    assert description_validator.is_duplicate_description(is_description_in_package=True)
     assert not DescriptionValidator.handle_error.called
 
 

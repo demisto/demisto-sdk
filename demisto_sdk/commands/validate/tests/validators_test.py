@@ -2859,15 +2859,15 @@ def test_image_error(set_git_test_env, mocker, monkeypatch):
     Then
             Ensure an error is raised, and  the right error is given.
     """
-    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+    logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
     monkeypatch.setenv("COLUMNS", "1000")
     validate_manager = ValidateManager()
     validate_manager.run_validations_on_file(IGNORED_PNG, None)
     expected_string, expected_code = Errors.invalid_image_name_or_location()
     assert all(
         [
-            str_in_call_args_list(logger_info.call_args_list, expected_string),
-            str_in_call_args_list(logger_info.call_args_list, expected_code),
+            str_in_call_args_list(logger_error.call_args_list, expected_string),
+            str_in_call_args_list(logger_error.call_args_list, expected_code),
         ]
     )
 
@@ -2940,7 +2940,7 @@ def test_run_validation_using_git_on_metadata_with_invalid_tags(
     Then
         - Assert validation fails and the right error number is shown.
     """
-    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+    logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
     monkeypatch.setenv("COLUMNS", "1000")
 
     pack = repo.create_pack()
@@ -2962,7 +2962,7 @@ def test_run_validation_using_git_on_metadata_with_invalid_tags(
     with contextlib.redirect_stdout(std_output):
         with ChangeCWD(repo.path):
             res = validate_manager.run_validation_using_git()
-    assert str_in_call_args_list(logger_info.call_args_list, "[PA123]")
+    assert str_in_call_args_list(logger_error.call_args_list, "[PA123]")
     assert not res
 
 

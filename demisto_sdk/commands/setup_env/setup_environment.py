@@ -72,12 +72,11 @@ def add_init_file_in_test_data(integration_script: IntegrationScript):
         (integration_script.path.parent / "test_data" / "__init__.py").touch()
 
 
-def configure_dotenv(ide_folder: Path):
+def configure_dotenv():
     dotenv_path = CONTENT_PATH / ".env"
     env_vars = dotenv.dotenv_values(dotenv_path)
     env_vars["PYTHONPATH"] = ":".join([str(path) for path in PYTHONPATH])
     env_vars["MYPYPATH"] = ":".join([str(path) for path in PYTHONPATH])
-    env_vars["DEMISTO_PARAMS"] = str(ide_folder / "params.json")
     for key, value in env_vars.items():
         dotenv.set_key(dotenv_path, key, value)
 
@@ -101,6 +100,7 @@ def configure_vscode(
     test_docker_image: str,
     interpreter_path: Path,
 ):
+    demisto_params = ide_folder / "params.json"
     configure_settings(ide_folder, integration_script, interpreter_path)
     launch_json_path = ide_folder / "launch.json"
     tasks_json_path = ide_folder / "tasks.json"
@@ -143,6 +143,7 @@ def configure_vscode(
         ] = f"Python: Debug locally ({integration_script.name})"
         launch_json["configurations"][2]["program"] = str(script_path)
         launch_json["configurations"][2]["cwd"] = str(CONTENT_PATH)
+        launch_json["configurations"][2]["env"]["DEMISTO_PARAMS"] = str(demisto_params)
 
         tasks_json["tasks"][0]["dockerBuild"]["buildArgs"][
             "IMAGENAME"
@@ -153,10 +154,10 @@ def configure_vscode(
             f"/app/{str(script_path.relative_to(CONTENT_PATH))}"
         )
         tasks_json["tasks"][1]["dockerRun"]["image"] = integration_script.docker_image
-
+        tasks_json["tasks"][1]["dockerRun"]["env"]["DEMISTO_PARAMS"] = f"/app/{demisto_params.relative_to(CONTENT_PATH)}"
         tasks_json["tasks"][2]["python"]["args"] = [
             "-s",
-            f"/app/${test_script_path.relative_to(CONTENT_PATH)}",
+            f"/app/{test_script_path.relative_to(CONTENT_PATH)}",
             "-vv",
         ]
         tasks_json["tasks"][2]["dockerRun"]["image"] = test_docker_image
@@ -227,9 +228,9 @@ def setup(
         if project_id := os.getenv("GCP_PROJECT_ID"):
             params = get_integration_params(project_id, secret_id)
             with open(ide_folder / "params.json", "w") as f:
-                json.dump(params, f, quote_keys=True, indent=4)
+                json.dump(params, f, quote_keys=True, trailing_commas=False, indent=4)
 
-        configure_dotenv(ide_folder)
+        configure_dotenv()
         if not docker_image:
             docker_image = DEF_DOCKER
         (

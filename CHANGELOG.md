@@ -10,6 +10,7 @@
 * Removed usages of Random in unit tests to ensure the tests are deterministic.
 * **validate** will now run on all the pack content items when the pack supported marketplaces are modified.
 * Fixed an issue where errors in **validate** were logged as `info`.
+* Fixed an issue where **validate** failed on infrastructure test files.
 
 ## 1.17.2
 * Fixed an issue where **lint** and **validate** commands failed on integrations and scripts that use docker images that are not available in the Docker Hub but exist locally.

@@ -810,7 +810,7 @@ def get_file(
     type_of_file: Optional[str] = None,
     clear_cache: bool = False,
     return_content: bool = False,
-    keep_order: bool = True,
+    keep_order: bool = False,
 ):
     if clear_cache:
         get_file.cache_clear()

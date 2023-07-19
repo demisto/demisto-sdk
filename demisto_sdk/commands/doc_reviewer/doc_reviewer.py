@@ -409,7 +409,7 @@ class DocReviewer:
         return None
 
 
-    def check_sentence(self, sentence):
+    def check_sentence(self, sentence: str):
         if sentence:
             for word in remove_escape_characters(sentence).split():
                 self.check_word(word)

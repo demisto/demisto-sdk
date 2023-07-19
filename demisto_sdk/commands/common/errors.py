@@ -1534,6 +1534,7 @@ ALLOWED_IGNORE_ERRORS = (
         "LO107",
         "IN107",
         "DB100",
+        "auto-test",
     ]
 )
 

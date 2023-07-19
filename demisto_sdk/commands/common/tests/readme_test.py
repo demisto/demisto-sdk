@@ -193,6 +193,9 @@ def test_is_image_path_valid(mocker):
         "https://github.com/demisto/content/raw/123/Packs/AutoFocus/doc_files/AutoFocusPolling.png",
         "https://github.com/demisto/content/raw/123/Packs/FeedOffice365/doc_files/test.png",
     ]
+    assets_images_paths = [
+        "https://github.com/demisto/content/assets/91506078/7915b150-bd26-4aed-b4ba-8820226dfe32",
+    ]
     readme_validator = ReadMeValidator(INVALID_MD)
     result = readme_validator.is_image_path_valid()
 
@@ -205,6 +208,10 @@ def test_is_image_path_valid(mocker):
         + [
             str_in_call_args_list(logger_error.call_args_list, current_str)
             for current_str in raw_images_paths
+        ]
+        + [
+            not str_in_call_args_list(logger_info.call_args_list, current_str)
+            for current_str in assets_images_paths
         ]
     )
     assert not str_in_call_args_list(logger_error.call_args_list, raw_image_path)

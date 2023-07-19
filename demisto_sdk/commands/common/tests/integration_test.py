@@ -1906,7 +1906,7 @@ class TestIntegrationValidator:
 
 
 class TestIsFetchParamsExist:
-    def setup(self):
+    def setup_method(self):
         config = {
             "configuration": deepcopy(INCIDENT_FETCH_REQUIRED_PARAMS),
             "script": {"isfetch": True},
@@ -2044,7 +2044,7 @@ class TestIsValidMaxFetchAndFirstFetch:
     - make sure max_fetch param has a default value
     """
 
-    def setup(self):
+    def setup_method(self):
         config = {
             "configuration": deepcopy([FIRST_FETCH_PARAM, MAX_FETCH_PARAM]),
             "script": {"isfetch": True},
@@ -2096,7 +2096,7 @@ class TestIsValidMaxFetchAndFirstFetch:
 
 
 class TestIsFeedParamsExist:
-    def setup(self):
+    def setup_method(self):
         config = {
             "configuration": deepcopy(FEED_REQUIRED_PARAMS_STRUCTURE),
             "script": {"feed": True},

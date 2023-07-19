@@ -79,7 +79,6 @@ def init_test_data(
             all_mr_entity_fields: Set[str] = set()
             for mr in mr_entity.rules:
                 all_mr_entity_fields = all_mr_entity_fields.union(mr.fields)
-
             operation_mode = "create"
             test_data_file = mr_entity.testdata_path
 
@@ -108,8 +107,8 @@ def init_test_data(
                     if not event_log.dataset:
                         event_log.dataset = default_dataset
 
-                    new_mapping = dataset_to_fields_map.get(
-                        event_log.dataset, {}
+                    new_mapping = dict(
+                        sorted(dataset_to_fields_map.get(event_log.dataset, {}).items())
                     ).copy()
                     if not new_mapping:
                         logger.error(
@@ -140,7 +139,7 @@ def init_test_data(
                                     vendor=mr.vendor,
                                     product=mr.product,
                                     dataset=mr.dataset,
-                                    expected_values=dict.fromkeys(mr.fields),
+                                    expected_values=dict.fromkeys(sorted(mr.fields)),
                                 )
                                 for _ in range(
                                     int(
@@ -163,7 +162,7 @@ def init_test_data(
                                 vendor=mr.vendor,
                                 product=mr.product,
                                 dataset=mr.dataset,
-                                expected_values=dict.fromkeys(mr.fields),
+                                expected_values=dict.fromkeys(sorted(mr.fields)),
                             )
                             for _ in range(count)
                         ]

@@ -34,7 +34,7 @@ from typing import (
 )
 
 import demisto_client
-from .decorators import deprecated
+from typing import deprecated
 import git
 import giturlparse
 import requests
@@ -1028,7 +1028,7 @@ def get_to_version(file_path):
     return DEFAULT_CONTENT_ITEM_TO_VERSION
 
 
-@deprecated
+@deprecated("Use string_to_bool instead")
 def str2bool(v):
     return string_to_bool(v, default_when_empty=False)
 

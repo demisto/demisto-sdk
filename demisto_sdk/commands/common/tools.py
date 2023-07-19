@@ -34,6 +34,7 @@ from typing import (
 )
 
 import demisto_client
+import deprecated
 import git
 import giturlparse
 import requests
@@ -118,7 +119,6 @@ from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
 from demisto_sdk.commands.common.handlers import YAML_Handler
-from deprecated import deprecated
 
 if TYPE_CHECKING:
     from demisto_sdk.commands.content_graph.interface.graph import ContentGraphInterface

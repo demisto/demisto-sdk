@@ -43,8 +43,9 @@ PRESET_ERROR_TO_IGNORE = {
         "IN125",
         "IN126",
         "IN140",
+        "DS104"
     ],
-    "partner": ["CJ", "IN140"],
+    "partner": ["CJ", "IN140", "DS104"],
 }
 
 # predefined errors to be ignored in deprecated content entities even if they do not appear in .pack-ignore
@@ -312,7 +313,7 @@ ERROR_CODE = {
         "code": "DS103",
         "related_field": "",
     },
-    "no_description_file_warning": {
+    "no_description_file": {
         "code": "DS104",
         "related_field": "",
     },
@@ -2901,7 +2902,7 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def no_description_file_warning():
+    def no_description_file():
         return "No detailed description file was found. Consider adding one."
 
     @staticmethod

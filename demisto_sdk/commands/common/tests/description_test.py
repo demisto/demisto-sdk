@@ -11,6 +11,66 @@ from demisto_sdk.commands.common.hook_validations.readme import ReadMeValidator
 from TestSuite.test_tools import ChangeCWD
 
 
+def test_is_description_file_exist_description_given(pack, mocker):
+    """
+    Given:
+        - Description file path
+
+    When:
+        - Running detailed description validator on the integration.
+
+    Then:
+        - Ensure validation passes
+        - Ensure handle error is not called.
+    """
+    mocker.patch.object(DescriptionValidator, "handle_error")
+    integration = pack.create_integration()
+    integration.create_default_integration()
+    description_validator = DescriptionValidator(integration.description.path)
+    assert description_validator.is_description_file_exist()
+    assert not DescriptionValidator.handle_error.called
+
+
+def test_is_description_file_exist_yml_given(pack, mocker):
+    """
+    Given:
+        - YML file path
+
+    When:
+        - Running detailed description validator on the integration.
+
+    Then:
+        - Ensure validation passes
+        - Ensure handle error is not called.
+    """
+    mocker.patch.object(DescriptionValidator, "handle_error")
+    integration = pack.create_integration()
+    integration.create_default_integration()
+    description_validator = DescriptionValidator(integration.yml.path)
+    assert description_validator.is_description_file_exist()
+    assert not DescriptionValidator.handle_error.called
+
+
+def test_is_description_file_exist_deleted_file(pack, mocker):
+    """
+    Given:
+        - YML file path
+
+    When:
+        - Running detailed description validator on the integration.
+
+    Then:
+        - Ensure validation fails
+        - Ensure handle error is called.
+    """
+    mocker.patch.object(DescriptionValidator, "handle_error")
+    integration = pack.create_integration()
+    integration.create_default_integration()
+    os.remove(integration.description.path)
+    description_validator = DescriptionValidator(integration.yml.path)
+    assert not description_validator.is_description_file_exist()
+    assert DescriptionValidator.handle_error.called
+
 @pytest.mark.parametrize(
     "integration_obj",
     [

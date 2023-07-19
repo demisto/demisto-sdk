@@ -54,7 +54,8 @@ class DescriptionValidator(BaseValidator):
         )
 
     def is_valid_file(self):
-        self.is_duplicate_description()
+        is_description_exist = self.is_description_file_exist()
+        self.is_duplicate_description(is_description_exist)
         self.verify_demisto_in_description_content()
 
         # make sure the description is a seperate file
@@ -137,42 +138,44 @@ class DescriptionValidator(BaseValidator):
 
         return True
 
-    @error_codes("DS104,DS103")
-    def is_duplicate_description(self):
-        """Check if the integration has a non-duplicate description ."""
-        is_description_in_yml = False
-        is_description_in_package = False
-        package_path = None
-        md_file_path = None
+    @error_codes("DS104")
+    def is_description_file_exist(self) -> bool:
+        """Check if a description_md file exists."""
+        if self.file_path.endswith('_description.md'):
+            return True
 
-        if not re.match(PACKS_INTEGRATION_YML_REGEX, self.file_path, re.IGNORECASE):
-            package_path = os.path.dirname(self.file_path)
-            try:
-                base_name_without_extension: str = os.path.basename(
-                    os.path.splitext(self.file_path)[0].replace("_description", "")
-                )
-                dir_name: str = os.path.dirname(self.file_path)
-                expected_description_name: str = os.path.join(
-                    dir_name, f"{base_name_without_extension}_description.md"
-                )
-                md_file_path = glob.glob(expected_description_name)[0]
-            except IndexError:
+        elif self.file_path.endswith('.yml'):
+            base_name_without_extension: str = os.path.basename(
+                os.path.splitext(self.file_path)[0].replace("_description", "")
+            )
+            dir_name: str = os.path.dirname(self.file_path)
+            expected_description_name: str = os.path.join(
+                dir_name, f"{base_name_without_extension}_description.md"
+            )
+            if not os.path.exists(expected_description_name):
                 is_unified_integration = self.data_dictionary.get("script", {}).get(
                     "script", ""
                 ) not in {"-", ""}
                 if not (
                     self.data_dictionary.get("deprecated") or is_unified_integration
                 ):
-                    error_message, error_code = Errors.no_description_file_warning()
+                    error_message, error_code = Errors.no_description_file()
                     self.handle_error(
                         error_message,
                         error_code,
                         file_path=self.file_path,
-                        warning=True,
+                        warning=False,
                     )
+                    return False
+            else:
+                return True
+        return False
 
-            if md_file_path:
-                is_description_in_package = True
+    @error_codes("DS104")
+    def is_duplicate_description(self, is_description_in_package: bool):
+        """Check if a description_md file exists. if yes, check if the integration has a non-duplicate description ."""
+        is_description_in_yml = False
+        package_path = os.path.dirname(self.file_path)
 
         if not self.data_dictionary:
             return is_description_in_package
@@ -263,13 +266,6 @@ class DescriptionValidator(BaseValidator):
                 )
 
                 if not os.path.exists(description_path):
-                    error_message, error_code = Errors.no_description_file_warning()
-                    self.handle_error(
-                        error_message,
-                        error_code,
-                        file_path=self.file_path,
-                        warning=True,
-                    )
                     return True
 
         # running on a description file so the file path is the description path

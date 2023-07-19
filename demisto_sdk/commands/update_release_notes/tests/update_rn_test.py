@@ -1599,7 +1599,7 @@ class TestRNUpdateUnit:
     ]
 
     @pytest.fixture(autouse=True)
-    def setup(self, tmp_path):
+    def setup_method(self, tmp_path):
         """Tests below modify the file: 'demisto_sdk/commands/update_release_notes/tests_data/Packs/Test/pack_metadata.json'
         We back it up and restore when done.
 
@@ -1610,7 +1610,7 @@ class TestRNUpdateUnit:
             self.meta_backup,
         )
 
-    def teardown(self):
+    def teardown_method(self):
         if self.meta_backup:
             shutil.copy(
                 self.meta_backup,

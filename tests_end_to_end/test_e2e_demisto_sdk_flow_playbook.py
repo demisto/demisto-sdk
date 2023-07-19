@@ -1,5 +1,5 @@
 from pathlib import Path
-
+import this
 import e2e_tests_utils
 from demisto_client.demisto_api.rest import ApiException
 

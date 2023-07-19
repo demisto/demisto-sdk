@@ -8,6 +8,7 @@
 * Fixed an issue where **validate** would not properly detect dependencies of core packs.
 * Removed usages of Random in unit tests to ensure the tests are deterministic.
 * **validate** will now run on all the pack content items when the pack supported marketplaces are modified.
+* Fixed an issue where errors in **validate** were logged as `info`.
 * Added support to override the console log level with the **DEMISTO_SDK_CONSOLE_LOG_THRESHOLD** environment variable.
 * Added support to override the log file threshold level with the **DEMISTO_SDK_FILE_LOG_THRESHOLD** environment variable.
 

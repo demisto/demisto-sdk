@@ -246,7 +246,7 @@ def setup(
         if project_id := os.getenv("GCP_PROJECT_ID"):
             params = get_integration_params(project_id, secret_id)
             with open(ide_folder / "params.json", "w") as f:
-                json.dump(params, f)
+                json.dump(params, f, indent=4)
 
         if not docker_image:
             docker_image = DEF_DOCKER
@@ -262,3 +262,4 @@ def setup(
             configure_vscode(
                 ide_folder, integration_script, test_docker_image, interpreter_path
             )
+        

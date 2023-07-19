@@ -11,6 +11,7 @@
 * **validate** will now run on all the pack content items when the pack supported marketplaces are modified.
 * Fixed an issue where **pre-commit** running when there was no change to the files
 * Fixed an issue where errors in **validate** were logged as `info`.
+* Fixed an issue where the **format** command would change the value of the `unsearchable` key in fields.
 * **lint** will now fail on `demisto.results` and `return_outputs` usage, when pack is `xsoar` or `partner` supported.
 * **lint** will now fail on `LOG` usage in python files.
 

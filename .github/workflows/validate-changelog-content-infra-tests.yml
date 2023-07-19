@@ -20,6 +20,8 @@ jobs:
         run: |
            ls
            poetry install --with ci
+           cd ..
+           ls
       #      poetry add poetry add git+https://github.com/demisto/demisto-sdk.git#$(git rev-parse --short "$GITHUB_SHA")
       # - name: run unit tests
       #   run: |

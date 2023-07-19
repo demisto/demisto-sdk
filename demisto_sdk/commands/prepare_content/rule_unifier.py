@@ -2,7 +2,7 @@ import os
 from collections import defaultdict
 from pathlib import Path
 
-from ruamel.yaml.scalarstring import (  # noqa: TID251 - only importing FoldedScalarString is OK
+from ruamel.yaml.scalarstring import (  # noqa: TID251
     FoldedScalarString,
 )
 

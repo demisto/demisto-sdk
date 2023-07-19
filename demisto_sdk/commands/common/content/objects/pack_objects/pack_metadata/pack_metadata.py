@@ -1,4 +1,4 @@
-import logging  # noqa: TID251 - Type
+import logging  # noqa: TID251
 import os
 from datetime import datetime
 from typing import Dict, List, Union

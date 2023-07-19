@@ -1,6 +1,6 @@
 import builtins
 import io
-import logging.  # noqa: TID251 Test
+import logging.  # noqa: TID251
 import os
 import shutil
 import tarfile

@@ -2,7 +2,7 @@
 This is module to store the git configuration of the content repo
 """
 import enum
-import logging  # noqa: TID251 - Prevent circular import
+import logging  # noqa: TID251
 import os
 from functools import lru_cache
 from typing import Optional, Tuple

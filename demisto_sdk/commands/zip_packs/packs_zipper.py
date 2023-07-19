@@ -1,4 +1,4 @@
-import logging  # noqa: TID251 - Type
+import logging  # noqa: TID251
 import os
 import sys
 from contextlib import contextmanager

@@ -1,4 +1,4 @@
-import logging.  # noqa: TID251 Test
+import logging.  # noqa: TID251
 import os
 from os.path import isfile
 from shutil import copyfile

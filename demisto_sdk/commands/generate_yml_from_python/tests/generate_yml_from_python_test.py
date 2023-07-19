@@ -1,6 +1,6 @@
 import copy
 import inspect
-import logging.  # noqa: TID251 Test
+import logging.  # noqa: TID251
 from contextlib import nullcontext as does_not_raise
 from importlib import util
 from importlib.machinery import SourceFileLoader

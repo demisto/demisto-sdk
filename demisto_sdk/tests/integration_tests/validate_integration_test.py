@@ -1,5 +1,5 @@
 import copy
-import logging.  # noqa: TID251 Test
+import logging.  # noqa: TID251
 from copy import deepcopy
 from os.path import join
 from time import sleep

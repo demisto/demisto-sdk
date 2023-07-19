@@ -1,4 +1,4 @@
-import logging  # noqa: TID251 - Type
+import logging  # noqa: TID251
 import subprocess
 from typing import Any, Dict, Iterator, Optional, Union
 

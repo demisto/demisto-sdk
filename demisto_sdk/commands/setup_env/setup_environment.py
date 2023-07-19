@@ -1,4 +1,5 @@
 import os
+import re
 import shutil
 import subprocess
 import venv
@@ -201,8 +202,8 @@ def setup(
         configure_dotenv()
         docker_image = integration_script.docker_image
         interpreter_path = CONTENT_PATH / ".venv" / "bin" / "python"
-        secret_id = integration_script.name.replace(" ", "_")
-        secret_id = "".join([c for c in secret_id if c.isalpha() or c.isdigit() or c == "_"]).rstrip("_")
+        # replace " ", "(", ")" with "_"
+        secret_id = re.sub(r'[ ()]', '_', integration_script.name)
         if project_id := os.getenv("GCP_PROJECT_ID"):
             params = get_integration_params(project_id, secret_id)
             with open(ide_folder / "params.json", "w") as f:

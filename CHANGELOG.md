@@ -12,7 +12,7 @@
 * Fixed an issue where **pre-commit** running when there was no change to the files
 * Fixed an issue where errors in **validate** were logged as `info`.
 * Fixed an issue where **validate** failed on infrastructure test files.
-
+* Fixed an issue where the **format** command would change the value of the `unsearchable` key in fields.
 
 ## 1.17.2
 * Fixed an issue where **lint** and **validate** commands failed on integrations and scripts that use docker images that are not available in the Docker Hub but exist locally.

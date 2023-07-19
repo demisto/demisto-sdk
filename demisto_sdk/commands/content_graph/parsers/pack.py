@@ -210,4 +210,4 @@ class PackParser(BaseContentParser, PackMetadataParser):
             raise
 
     def deprecated(self) -> bool:
-        return self.name.endswith('(Deprecated)')
+        return self.name.endswith("(Deprecated)")

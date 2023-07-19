@@ -1029,6 +1029,10 @@ ERROR_CODE = {
         "code": "PA136",
         "related_field": "",
     },
+    "pack_have_nonignorable_error": {
+        "code": "PA137",
+        "related_field": "",
+    },
     # PB - Playbooks
     "playbook_cant_have_rolename": {
         "code": "PB100",
@@ -4297,3 +4301,12 @@ class Errors:
             "is replaced by the word Incident/Incidents\nfor example: if there is a script `getIncident'"
             "it will not be possible to create a script with the name `getAlert`)"
         )
+
+    @staticmethod
+    @error_code_decorator
+    def pack_have_nonignorable_error(
+        nonignorable_errors: List[str]
+    ):
+        return ("The following ignore errors are not allow:",
+                f"{', '.join(nonignorable_errors)},"
+                "Please remove this error codes")

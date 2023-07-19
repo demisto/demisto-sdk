@@ -55,25 +55,16 @@ name: Hello IAM World
 script:
   commands:
   - arguments:
-    - default: false
-      description: User Profile indicator details.
-      isArray: false
+    - description: User Profile indicator details.
       name: user-profile
       required: true
-      secret: false
     - auto: PREDEFINED
-      default: false
       defaultValue: 'true'
-      description: When set to true, after the command execution the status of the user in the 3rd-party
-        integration will be active.
-      isArray: false
+      description: When set to true, after the command execution the status of the user in the 3rd-party integration will be active.
       name: allow-enable
       predefined:
       - 'true'
       - 'false'
-      required: false
-      secret: false
-    deprecated: false
     description: Creates a user.
     execution: true
     name: iam-create-user
@@ -109,27 +100,17 @@ script:
       description: The employee's username in the app.
       type: String
   - arguments:
-    - default: false
-      description: A User Profile indicator.
-      isArray: false
+    - description: A User Profile indicator.
       name: user-profile
       required: true
-      secret: false
     - auto: PREDEFINED
-      default: false
       defaultValue: 'true'
-      description: When set to true, after the command execution the status of the user in the 3rd-party
-        integration will be active.
-      isArray: false
+      description: When set to true, after the command execution the status of the user in the 3rd-party integration will be active.
       name: allow-enable
       predefined:
       - 'true'
       - 'false'
-      required: false
-      secret: false
-    deprecated: false
-    description: Updates an existing user with the data passed in the user-profile
-      argument.
+    description: Updates an existing user with the data passed in the user-profile argument.
     execution: true
     name: iam-update-user
     outputs:
@@ -164,15 +145,10 @@ script:
       description: The employee's username in the app.
       type: String
   - arguments:
-    - default: false
-      description: A User Profile indicator.
-      isArray: false
+    - description: A User Profile indicator.
       name: user-profile
       required: true
-      secret: false
-    deprecated: false
     description: Retrieves a single user resource.
-    execution: false
     name: iam-get-user
     outputs:
     - contextPath: IAM.Vendor.active
@@ -206,13 +182,9 @@ script:
       description: The employee's username in the app.
       type: String
   - arguments:
-    - default: false
-      description: A User Profile indicator.
-      isArray: false
+    - description: A User Profile indicator.
       name: user-profile
       required: true
-      secret: false
-    deprecated: false
     description: Disable an active user.
     execution: true
     name: iam-disable-user
@@ -247,15 +219,9 @@ script:
     - contextPath: IAM.Vendor.username
       description: The employee's username in the app.
       type: String
-  - deprecated: false
-    description: Retrieves a User Profile schema, which holds all of the user fields within the application.
-      Used for outgoing-mapping through the Get Schema option.
-    execution: false
+  - description: Retrieves a User Profile schema, which holds all of the user fields within the application. Used for outgoing-mapping through the Get Schema option.
     name: get-mapping-fields
   dockerimage: demisto/python3:3.9.8.24399
-  isfetch: false
-  longRunning: false
-  longRunningPort: false
   runonce: false
   script: '-'
   subtype: python3

@@ -26,15 +26,10 @@ name: HelloWorldSlim
 script:
   commands:
   - arguments:
-    - default: false
-      description: Alert ID.
-      isArray: false
+    - description: Alert ID.
       name: alert_id
       required: true
-      secret: false
-    deprecated: false
     description: Retrieve alert extra data by ID.
-    execution: false
     name: helloworldslim-get-alert
     outputs:
     - contextPath: HelloWorldSlim.Alert.alert_id
@@ -59,25 +54,17 @@ script:
       description: User involved in the alert.
       type: String
   - arguments:
-    - default: false
-      description: Alert ID to update.
-      isArray: false
+    - description: Alert ID to update.
       name: alert_id
       required: true
-      secret: false
     - auto: PREDEFINED
-      default: false
       description: New status of the alert.
-      isArray: false
       name: status
       predefined:
       - ACTIVE
       - CLOSED
       required: true
-      secret: false
-    deprecated: false
     description: Update the status for an alert.
-    execution: false
     name: helloworldslim-update-alert-status
     outputs:
     - contextPath: HelloWorldSlim.Alert.alert_id
@@ -90,10 +77,6 @@ script:
       description: Alert status. Can be 'ACTIVE' or 'CLOSED'.
       type: String
   dockerimage: demisto/python3:3.9.5.21272
-  feed: false
-  isfetch: false
-  longRunning: false
-  longRunningPort: false
   runonce: false
   script: '-'
   subtype: python3

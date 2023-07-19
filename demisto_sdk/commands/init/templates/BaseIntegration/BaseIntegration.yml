@@ -27,27 +27,17 @@ name: BaseIntegration
 script:
   commands:
   - arguments:
-    - default: false
-      description: '[Enter a description of the argument, including any important information users need to know, for example, default values.]'
-      isArray: false
+    - description: '[Enter a description of the argument, including any important information users need to know, for example, default values.]'
       name: dummy
       required: true
-      secret: false
-    - default: false
-      description: '[Enter a description of the argument, including any important information users need to know, for example, default values.]'
-      isArray: false
+    - description: '[Enter a description of the argument, including any important information users need to know, for example, default values.]'
       name: dummy2
-      required: false
-      secret: false
-    deprecated: false
     description: '[Enter a description of the command, including any important information users need to know, for example required permissions.]'
-    execution: false
     name: baseintegration-dummy
     outputs:
     - contextPath: BaseIntegration.Output
       description: '[Enter a description of the data returned in this output.]'
       type: String
-  isfetch: false
   runonce: false
   script: '-'
   type: python

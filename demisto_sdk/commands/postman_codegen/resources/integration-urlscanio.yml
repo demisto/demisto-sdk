@@ -154,23 +154,16 @@ script:
   type: python
   subtype: python3
   dockerimage: demisto/python3:3.9.2.17957
-  isfetch: false
   commands:
   - name: urlscanio-submit-url
     description: ''
     arguments:
     - name: url
       description: ''
-      required: false
-      isArray: false
     - name: visibility
       description: ''
-      required: false
-      isArray: false
     - name: tags
       description: ''
-      required: false
-      isArray: false
     outputs:
     - type: String
       contextPath: urlscanio.SubmitUrl.message
@@ -198,12 +191,8 @@ script:
     arguments:
     - name: q
       description: ''
-      required: false
-      isArray: false
     - name: size
       description: ''
-      required: false
-      isArray: false
     outputs:
     - type: Date
       contextPath: urlscanio.Search.results.indexedAt
@@ -300,8 +289,6 @@ script:
     arguments:
     - name: uuid
       description: ''
-      required: false
-      isArray: false
     outputs:
     - type: String
       contextPath: urlscanio.ScanResults.data.requests.request.requestId

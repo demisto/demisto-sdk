@@ -90,10 +90,9 @@ class ClassifierValidator(ContentEntityValidator):
         Returns:
             bool. True if from version field is valid, else False.
         """
-        from_version = self.current_file.get(
+        if from_version := self.current_file.get(
             "fromVersion", ""
-        ) or self.current_file.get("fromversion", "")
-        if from_version:
+        ) or self.current_file.get("fromversion", ""):
             self.from_version = from_version
             if self.new_classifier_version:
                 if Version(from_version) < Version(FROM_VERSION_FOR_NEW_CLASSIFIER):
@@ -108,19 +107,18 @@ class ClassifierValidator(ContentEntityValidator):
                         suggested_fix=Errors.suggest_fix(self.file_path),
                     ):
                         return False
-            else:
-                if Version(from_version) >= Version(FROM_VERSION_FOR_NEW_CLASSIFIER):
-                    (
-                        error_message,
-                        error_code,
-                    ) = Errors.invalid_from_version_in_old_classifiers()
-                    if self.handle_error(
-                        error_message,
-                        error_code,
-                        file_path=self.file_path,
-                        suggested_fix=Errors.suggest_fix(self.file_path),
-                    ):
-                        return False
+            elif Version(from_version) >= Version(FROM_VERSION_FOR_NEW_CLASSIFIER):
+                (
+                    error_message,
+                    error_code,
+                ) = Errors.invalid_from_version_in_old_classifiers()
+                if self.handle_error(
+                    error_message,
+                    error_code,
+                    file_path=self.file_path,
+                    suggested_fix=Errors.suggest_fix(self.file_path),
+                ):
+                    return False
 
         elif not from_version and self.new_classifier_version:
             error_message, error_code = Errors.missing_from_version_in_new_classifiers()

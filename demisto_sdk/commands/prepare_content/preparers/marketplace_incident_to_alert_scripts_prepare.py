@@ -1,12 +1,9 @@
-import logging
-
 from demisto_sdk.commands.common.constants import MarketplaceVersions
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.prepare_content.preparers.incident_to_alert import (
     create_wrapper_script,
     prepare_script_access_fields,
 )
-
-logger = logging.getLogger("demisto-sdk")
 
 
 class MarketplaceIncidentToAlertScriptsPreparer:
@@ -45,6 +42,6 @@ class MarketplaceIncidentToAlertScriptsPreparer:
 
         # Handling the incident word in the script
         results.append(prepare_script_access_fields(data, incident_to_alert))
-        logging.debug(f"Script preparation {data['name']} completed")
+        logger.debug(f"Script preparation {data['name']} completed")
 
         return tuple(results)

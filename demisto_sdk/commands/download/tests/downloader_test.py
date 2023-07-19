@@ -112,7 +112,7 @@ class Environment:
         self.tmp_path = Path(tmp_path)
         self.setup()
 
-    def setup_method(self):
+    def setup(self):
         tests_path = self.tmp_path / "tests"
         tests_env_path = tests_path / "tests_env"
         tests_data_path = tests_path / "tests_data"

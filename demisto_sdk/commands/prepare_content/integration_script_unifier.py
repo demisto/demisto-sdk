@@ -147,7 +147,7 @@ class IntegrationScriptUnifier(Unifier):
                     data["configuration"][i]["hiddenusername"] = marketplace in hidden
                     data["configuration"][i]["hiddenpassword"] = marketplace in hidden
                     data["configuration"][i].pop("hidden")
-                else: # type-4 param
+                else:  # type-4 param
                     data["configuration"][i]["hidden"] = marketplace in hidden
 
     @staticmethod

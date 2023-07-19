@@ -201,7 +201,8 @@ def setup(
         configure_dotenv()
         docker_image = integration_script.docker_image
         interpreter_path = CONTENT_PATH / ".venv" / "bin" / "python"
-        secret_id = integration_script.object_id.replace(" ", "_")
+        secret_id = integration_script.name.replace(" ", "_")
+        secret_id = "".join([c for c in secret_id if c.isalpha() or c.isdigit() or c == "_"]).rstrip("_")
         if project_id := os.getenv("GCP_PROJECT_ID"):
             params = get_integration_params(project_id, secret_id)
             with open(ide_folder / "params.json", "w") as f:

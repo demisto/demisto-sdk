@@ -733,7 +733,6 @@ def get_last_remote_release_version():
 
     :return: tag
     """
-
     try:
         pypi_request = requests.get(SDK_PYPI_VERSION, verify=False, timeout=5)
         pypi_request.raise_for_status()

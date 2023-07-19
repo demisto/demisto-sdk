@@ -17,10 +17,11 @@ jobs:
       - name: Setup Poetry
         uses: Gr1N/setup-poetry@v8
       - name: Install Python Dependencies
+        run: pwd
+      - name: Downloding the last demisto-sdk version
         run: |
-           pwd
-      #      poetry add poetry add git+https://github.com/demisto/demisto-sdk.git#$(git rev-parse --short "$GITHUB_SHA")
-      # - name: run unit tests
-      #   run: |
-      #     poetry run -m pytest ./Tests/scripts/infrastructure_tests/ ./Tests/Marketplace/Tests/ ./Tests/tests ./Tests/private_build/tests Utils -v
+          poetry add poetry add git+https://github.com/demisto/demisto-sdk.git#$(git rev-parse --short "$GITHUB_SHA")
+      - name: run unit tests
+        run: |
+           poetry run -m pytest ./Tests/scripts/infrastructure_tests/ ./Tests/Marketplace/Tests/ ./Tests/tests ./Tests/private_build/tests Utils -v
 

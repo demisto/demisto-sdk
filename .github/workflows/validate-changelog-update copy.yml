@@ -1,0 +1,26 @@
+name: Validate Changelog
+on: pull_request
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+        name: checkout-content
+        with:
+          repo: demisto/content  
+      - name: Setup Python
+        uses: actions/setup-python@v3
+        with:
+          python-version: '3.10'
+      - name: Setup Poetry
+        uses: Gr1N/setup-poetry@v8
+      - name: Install Python Dependencies
+        run: |
+           poetry install --with ci
+           poetry add poetry add git+https://github.com/demisto/demisto-sdk.git#$(git rev-parse --short "$GITHUB_SHA")
+      - name: run unit tests
+        run: |
+          poetry run -m pytest ./Tests/scripts/infrastructure_tests/ ./Tests/Marketplace/Tests/ ./Tests/tests ./Tests/private_build/tests Utils -v
+

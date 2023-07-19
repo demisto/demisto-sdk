@@ -1,4 +1,3 @@
-import random
 from pathlib import Path
 
 import e2e_tests_utils
@@ -23,7 +22,7 @@ def test_e2e_demisto_sdk_flow_playbook_testsuite(tmpdir):
 
     repo = Repo(tmpdir)
 
-    unique_id = random.randint(1, 1000)
+    unique_id = 456
     pack_name = "foo_" + str(unique_id)
     pack = repo.create_pack(name=pack_name)
     playbook_name = "pb_" + pack_name
@@ -73,7 +72,7 @@ def test_e2e_demisto_sdk_flow_playbook_testsuite(tmpdir):
 
 
 def test_e2e_demisto_sdk_flow_playbook_client(tmpdir, insecure: bool = True):
-    unique_id = random.randint(1, 1000)
+    unique_id = 789
     pack_name = "foo_" + str(unique_id)
     playbook_name = "pb_" + str(unique_id)
 

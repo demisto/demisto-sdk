@@ -13,6 +13,7 @@ from demisto_sdk.__main__ import main
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.handlers import YAML_Handler
 from demisto_sdk.commands.common.legacy_git_tools import git_path
+from demisto_sdk.commands.common.tools import get_file
 from demisto_sdk.commands.content_graph.objects.incident_field import IncidentField
 from demisto_sdk.commands.content_graph.objects.integration import Integration
 from demisto_sdk.commands.content_graph.objects.playbook import Playbook
@@ -238,11 +239,8 @@ def test_zipped_pack_upload_positive(repo, mocker, tmpdir, demisto_client_mock):
                     json.load(layout).keys()
                 )
 
-            with pack_zip.open(
-                "Integrations/integration-test-pack_integration.yml"
-            ) as integration:
-                # validate yml based content entities are being unified before getting zipped
-                assert "nativeimage" in yaml.load(integration).get("script", {})
+            yml_file = "Integrations/integration-test-pack_integration.yml"
+            assert "nativeimage" in get_file(yml_file, type_of_file='yml', return_content=True).get("script", {})
 
             with pack_zip.open("metadata.json") as metadata:
                 metadata = json.load(metadata)

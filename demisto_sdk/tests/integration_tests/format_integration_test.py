@@ -21,7 +21,7 @@ from demisto_sdk.commands.common.hook_validations.integration import (
 )
 from demisto_sdk.commands.common.hook_validations.playbook import PlaybookValidator
 from demisto_sdk.commands.common.hook_validations.readme import ReadMeValidator
-from demisto_sdk.commands.common.tools import get_dict_from_file, is_test_config_match
+from demisto_sdk.commands.common.tools import get_dict_from_file, is_test_config_match, get_file
 from demisto_sdk.commands.format import format_module, update_generic
 from demisto_sdk.commands.format.update_generic import BaseUpdate
 from demisto_sdk.commands.format.update_generic_yml import BaseUpdateYML
@@ -468,9 +468,8 @@ def test_integration_format_remove_playbook_sourceplaybookid(
         logger_debug.call_args_list,
         f'Not formatting {source_playbook_path} with "No tests"',
     )
-    with open(playbook_path) as f:
-        yaml_content = yaml.load(f)
-        assert "sourceplaybookid" not in yaml_content
+    yaml_content = get_file(playbook_path, type_of_file='yml', return_content=True)
+    assert "sourceplaybookid" not in yaml_content
 
     assert not result.exception
 
@@ -1229,9 +1228,8 @@ def test_format_incident_type_layout_id(repo, mocker, monkeypatch):
         layout_content = json.loads(layout_file.read())
         assert layout_content["name"] == layout_content["id"]
 
-    with open(playbook.yml.path) as playbook_file:
-        playbook_content = yaml.load(playbook_file)
-        assert playbook_content["name"] == playbook_content["id"]
+    playbook_content = get_file(playbook.yml.path, type_of_file='yml', return_content=True)
+    assert playbook_content["name"] == playbook_content["id"]
 
     with open(incident_type.path) as incident_type_file:
         incident_type_content = json.loads(incident_type_file.read())

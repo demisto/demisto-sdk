@@ -10,6 +10,7 @@ from typing import Any, Callable, Optional
 import pytest
 
 from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
+from demisto_sdk.commands.common.tools import get_file
 from demisto_sdk.commands.generate_yml_from_python.generate_yml import YMLGenerator
 from demisto_sdk.commands.generate_yml_from_python.yml_metadata_collector import (
     ConfKey,
@@ -1851,8 +1852,7 @@ class TestYMLGeneration:
         yml_generator = YMLGenerator(filename=integration.code.path, force=True)
         yml_generator.generate()
         yml_generator.save_to_yml_file()
-        with open(str(integration.yml.path)) as generated_yml:
-            metadata_dict = yaml.load(generated_yml)
+        metadata_dict = get_file(str(integration.yml.path), type_of_file='yml', return_content=True)
 
         assert metadata_dict == yml_generator.get_metadata_dict()
 

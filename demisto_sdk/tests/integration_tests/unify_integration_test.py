@@ -10,6 +10,7 @@ from demisto_sdk.commands.common.constants import ENV_DEMISTO_SDK_MARKETPLACE
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
 from demisto_sdk.commands.common.legacy_git_tools import git_path
+from demisto_sdk.commands.common.tools import get_file
 from demisto_sdk.tests.test_files.validate_integration_test_valid_types import (
     DASHBOARD,
     GENERIC_MODULE,
@@ -84,12 +85,10 @@ class TestParsingRuleUnifier:
         )
 
         assert result.exit_code == 0
-        with open(
-            os.path.join(tmpdir, "parsingrule-parsingrule_0.yml")
-        ) as unified_rule_file:
-            unified_rule = yaml.load(unified_rule_file)
-            with open(pack.parsing_rules[0].rules.path) as rules_xif_file:
-                assert unified_rule["rules"] == rules_xif_file.read()
+        yml_file = os.path.join(tmpdir, "parsingrule-parsingrule_0.yml")
+        unified_rule = get_file(yml_file, type_of_file='yml', return_content=True)
+        with open(pack.parsing_rules[0].rules.path) as rules_xif_file:
+            assert unified_rule["rules"] == rules_xif_file.read()
 
     def test_unify_parsing_rule_with_samples(self, repo, tmpdir):
         """
@@ -125,13 +124,11 @@ class TestParsingRuleUnifier:
         )
 
         assert result.exit_code == 0
-        with open(
-            os.path.join(tmpdir, "parsingrule-parsingrule_0.yml")
-        ) as unified_rule_file:
-            unified_rule = yaml.load(unified_rule_file)
-            assert json.loads(unified_rule["samples"]) == {
-                f'{sample["vendor"]}_{sample["product"]}': sample["samples"]
-            }
+        yml_file = os.path.join(tmpdir, "parsingrule-parsingrule_0.yml")
+        unified_rule = get_file(yml_file, type_of_file='yml', return_content=True)
+        assert json.loads(unified_rule["samples"]) == {
+            f'{sample["vendor"]}_{sample["product"]}': sample["samples"]
+        }
 
 
 class TestModelingRuleUnifier:
@@ -158,12 +155,10 @@ class TestModelingRuleUnifier:
         )
 
         assert result.exit_code == 0
-        with open(
-            os.path.join(tmpdir, "modelingrule-modelingrule_0.yml")
-        ) as unified_rule_file:
-            unified_rule = yaml.load(unified_rule_file)
-            with open(pack.modeling_rules[0].rules.path) as rules_xif_file:
-                assert unified_rule["rules"] == rules_xif_file.read()
+        yml_file = os.path.join(tmpdir, "modelingrule-modelingrule_0.yml")
+        unified_rule = get_file(yml_file, type_of_file='yml', return_content=True)
+        with open(pack.modeling_rules[0].rules.path) as rules_xif_file:
+            assert unified_rule["rules"] == rules_xif_file.read()
 
 
 class TestIntegrationScriptUnifier:
@@ -195,19 +190,17 @@ class TestIntegrationScriptUnifier:
             else:
                 runner.invoke(main, [UNIFY_CMD, "-i", f"{integration.path}"])
 
-            with open(
-                os.path.join(integration.path, "integration-dummy-integration.yml")
-            ) as unified_yml:
-                unified_yml_data = yaml.load(unified_yml)
-                if flag:
-                    assert unified_yml_data.get("name") == "Sample - Test"
-                else:
-                    assert unified_yml_data.get("name") == "Sample"
-                assert unified_yml_data.get("script").get("nativeimage") == [
-                    "8.1",
-                    "8.2",
-                    "candidate",
-                ]
+            yml_file = os.path.join(integration.path, "integration-dummy-integration.yml")
+            unified_yml_data = get_file(yml_file, type_of_file='yml', return_content=True)
+            if flag:
+                assert unified_yml_data.get("name") == "Sample - Test"
+            else:
+                assert unified_yml_data.get("name") == "Sample"
+            assert unified_yml_data.get("script").get("nativeimage") == [
+                "8.1",
+                "8.2",
+                "candidate",
+            ]
 
     def test_add_custom_section_flag(self, repo):
         """
@@ -229,16 +222,14 @@ class TestIntegrationScriptUnifier:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             runner.invoke(main, [UNIFY_CMD, "-i", f"{script.path}", "-c", "Test"])
-            with open(
-                os.path.join(script.path, "script-dummy-script.yml")
-            ) as unified_yml:
-                unified_yml_data = yaml.load(unified_yml)
-                assert unified_yml_data.get("name") == "sample_scriptTest"
-                assert unified_yml_data.get("nativeimage") == [
-                    "8.1",
-                    "8.2",
-                    "candidate",
-                ]
+            yml_file = os.path.join(script.path, "script-dummy-script.yml")
+            unified_yml_data = get_file(yml_file, type_of_file='yml', return_content=True)
+            assert unified_yml_data.get("name") == "sample_scriptTest"
+            assert unified_yml_data.get("nativeimage") == [
+                "8.1",
+                "8.2",
+                "candidate",
+            ]
 
     def test_ignore_native_image_integration(self, repo):
         """
@@ -259,11 +250,9 @@ class TestIntegrationScriptUnifier:
             runner = CliRunner(mix_stderr=False)
             runner.invoke(main, [UNIFY_CMD, "-i", f"{integration.path}", "-ini"])
 
-            with open(
-                os.path.join(integration.path, "integration-dummy-integration.yml")
-            ) as unified_yml:
-                unified_yml_data = yaml.load(unified_yml)
-                assert "nativeimage" not in unified_yml_data.get("script")
+            yml_file = os.path.join(integration.path, "integration-dummy-integration.yml")
+            unified_yml_data = get_file(yml_file, type_of_file='yml', return_content=True)
+            assert "nativeimage" not in unified_yml_data.get("script")
 
     def test_ignore_native_image_script(self, repo):
         """
@@ -283,11 +272,9 @@ class TestIntegrationScriptUnifier:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             runner.invoke(main, [UNIFY_CMD, "-i", f"{script.path}", "-ini"])
-            with open(
-                os.path.join(script.path, "script-dummy-script.yml")
-            ) as unified_yml:
-                unified_yml_data = yaml.load(unified_yml)
-                assert "nativeimage" not in unified_yml_data
+            yml_file = os.path.join(script.path, "script-dummy-script.yml")
+            unified_yml_data = get_file(yml_file, type_of_file='yml', return_content=True)
+            assert "nativeimage" not in unified_yml_data
 
 
 class TestLayoutUnifer:

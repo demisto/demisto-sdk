@@ -5,6 +5,7 @@ from demisto_sdk.commands.common.handlers import YAML_Handler
 from TestSuite.file import File
 from TestSuite.test_tools import suite_join_path
 from TestSuite.yml import YAML
+from demisto_sdk.commands.common.tools import get_file
 
 yaml = YAML_Handler()
 
@@ -52,30 +53,22 @@ class Playbook:
 
         """
         default_playbook_dir = "assets/default_playbook"
-        with open(
-            suite_join_path(default_playbook_dir, "playbook-sample.yml")
-        ) as yml_file:
-            yml = yaml.load(yml_file)
-            yml["id"] = yml["name"] = name
-            self.build(yml=yml)
+        yml_file = suite_join_path(default_playbook_dir, "playbook-sample.yml")
+        yml = get_file(yml_file, type_of_file='yml', return_content=True)
+        yml["id"] = yml["name"] = name
+        self.build(yml=yml)
 
     def create_default_test_playbook(self, name: str = "SamplePlaybookTest"):
-        with open(
-            suite_join_path(
-                self.default_assets_dir, "default_playbook/playbook-sample.yml"
-            )
-        ) as yml_file:
-            yml = yaml.load(yml_file)
-            yml["id"] = yml["name"] = name
-            self.build(yml=yml)
+        yml_file = suite_join_path(self.default_assets_dir, "default_playbook/playbook-sample.yml")
+        yml = get_file(yml_file, type_of_file='yml', return_content=True)
+        yml["id"] = yml["name"] = name
+        self.build(yml=yml)
 
     def add_default_task(self):
         task = None
         task_filename = "default_playbook/tasks/task-sample.yml"
-        with open(
-            suite_join_path(self.default_assets_dir, task_filename)
-        ) as task_yml_file:
-            task = yaml.load(task_yml_file)
+        yml_file = suite_join_path(self.default_assets_dir, task_filename)
+        task = get_file(yml_file, type_of_file='yml', return_content=True)
         if not task:
             print(  # noqa: T201
                 "Cannot read task from "

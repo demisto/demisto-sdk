@@ -14,7 +14,7 @@ from demisto_sdk.commands.common.constants import (
 )
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
-from demisto_sdk.commands.common.tools import src_root
+from demisto_sdk.commands.common.tools import src_root, get_file
 from demisto_sdk.commands.prepare_content.prepare_upload_manager import (
     PrepareUploadManager,
 )
@@ -414,12 +414,7 @@ def mock_single_pack_git(mocker):
 
 def load_file(file_path: str) -> dict:
     path_str = str(file_path)
-    with open(path_str) as f:
-        if path_str.endswith("yml") or path_str.endswith("yaml"):
-            return yaml.load(f)
-        elif path_str.endswith("json"):
-            return json.load(f)
-        return {}
+    return get_file(path_str, return_content=True)
 
 
 def get_value_from_dict(object, path):

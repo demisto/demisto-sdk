@@ -5,7 +5,7 @@ import pytest
 
 from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
 from demisto_sdk.commands.common.legacy_git_tools import git_path
-from demisto_sdk.commands.common.tools import get_yaml
+from demisto_sdk.commands.common.tools import get_yaml, get_file
 from demisto_sdk.commands.generate_test_playbook.test_playbook_generator import (
     PlaybookTestsGenerator,
     get_command_examples,
@@ -57,7 +57,7 @@ class TestGenerateTestPlaybook:
         new_yml_path = (
             Path(TestGenerateTestPlaybook.TEMP_DIR) / "playbook-TestPlaybook_Test.yml"
         )
-        assert yaml.load(new_yml_path) == yaml.load(excepted_path)
+        assert get_file(new_yml_path, type_of_file='yml', return_content=True) == get_file(excepted_path, type_of_file='yml', return_content=True)
 
     def test_generate_test_playbook__integration_under_packs(self, tmpdir):
         """
@@ -93,8 +93,8 @@ class TestGenerateTestPlaybook:
         actual_test_playbook_path = (
             pack_folder / "TestPlaybooks" / "playbook-TestPlaybook_Test.yml"
         )
-        assert yaml.load(actual_test_playbook_path) == yaml.load(
-            expected_test_playbook_path
+        assert get_file(actual_test_playbook_path, type_of_file='yml', return_content=True) == get_file(
+            expected_test_playbook_path, type_of_file='yml', return_content=True
         )
 
     def test_generate_test_playbook__integration_not_under_packs(self):

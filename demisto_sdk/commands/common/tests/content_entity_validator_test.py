@@ -19,7 +19,7 @@ from demisto_sdk.commands.common.hook_validations.content_entity_validator impor
 from demisto_sdk.commands.common.hook_validations.structure import StructureValidator
 from demisto_sdk.commands.common.tools import (
     get_not_registered_tests,
-    is_test_config_match,
+    is_test_config_match, get_file,
 )
 from demisto_sdk.tests.constants_test import (
     INVALID_INTEGRATION_WITH_NO_TEST_PLAYBOOK,
@@ -369,9 +369,8 @@ def test_fromversion_update_validation_yml_structure(
     path, old_file_path, answer, error
 ):
     validator = ContentEntityValidator(StructureValidator(file_path=path))
-    with open(old_file_path) as f:
-        validator.old_file = yaml.load(f)
-        assert validator.is_valid_fromversion_on_modified() is answer, error
+    validator.old_file = get_file(old_file_path, type_of_file='yml', return_content=True)
+    assert validator.is_valid_fromversion_on_modified() is answer, error
 
 
 @pytest.mark.parametrize(
@@ -459,9 +458,8 @@ INPUTS_VALID_TOVERSION_MODIFIED = [
 )
 def test_toversion_update_validation_yml_structure(path, old_file_path, answer, error):
     validator = ContentEntityValidator(StructureValidator(file_path=path))
-    with open(old_file_path) as f:
-        validator.old_file = yaml.load(f)
-        assert validator.is_valid_toversion_on_modified() is answer, error
+    validator.old_file = get_file(old_file_path, type_of_file='yml', return_content=True)
+    assert validator.is_valid_toversion_on_modified() is answer, error
 
 
 INPUTS_IS_ID_MODIFIED = [
@@ -483,9 +481,8 @@ INPUTS_IS_ID_MODIFIED = [
 @pytest.mark.parametrize("current_file, old_file, answer, error", INPUTS_IS_ID_MODIFIED)
 def test_is_id_not_modified(current_file, old_file, answer, error):
     validator = ContentEntityValidator(StructureValidator(file_path=current_file))
-    with open(old_file) as f:
-        validator.old_file = yaml.load(f)
-        assert validator.is_id_not_modified() is answer, error
+    validator.old_file = get_file(old_file, type_of_file='yml', return_content=True)
+    assert validator.is_id_not_modified() is answer, error
 
 
 @pytest.mark.parametrize(
@@ -494,9 +491,8 @@ def test_is_id_not_modified(current_file, old_file, answer, error):
 )
 def test_is_backward_compatible(current_file, old_file, answer, error):
     validator = ContentEntityValidator(StructureValidator(file_path=current_file))
-    with open(old_file) as f:
-        validator.old_file = yaml.load(f)
-        assert validator.is_backward_compatible() is answer, error
+    validator.old_file = get_file(old_file, type_of_file='yml', return_content=True)
+    assert validator.is_backward_compatible() is answer, error
 
 
 def mock_handle_error(error_message, error_code, file_path):

@@ -16,7 +16,7 @@ from demisto_sdk.commands.common.hook_validations.base_validator import error_co
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import (
     ContentEntityValidator,
 )
-from demisto_sdk.commands.common.tools import get_files_in_dir
+from demisto_sdk.commands.common.tools import get_files_in_dir, get_file
 
 
 class ModelingRuleValidator(ContentEntityValidator):
@@ -153,8 +153,7 @@ class ModelingRuleValidator(ContentEntityValidator):
         """
         Check that the schema and rules keys are empty.
         """
-        with open(self.file_path) as yf:
-            yaml_obj = yaml.load(yf)
+        yaml_obj = get_file(self.file_path, type_of_file='yml', return_content=True)
 
         # Check that the keys exists in yml
         if "rules" in yaml_obj and "schema" in yaml_obj:

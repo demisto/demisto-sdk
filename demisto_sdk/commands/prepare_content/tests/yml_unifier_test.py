@@ -15,7 +15,7 @@ from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
 from demisto_sdk.commands.common.legacy_git_tools import git_path
-from demisto_sdk.commands.common.tools import get_yaml
+from demisto_sdk.commands.common.tools import get_yaml, get_file
 from demisto_sdk.commands.content_graph.objects.integration_script import (
     IntegrationScript,
 )
@@ -321,10 +321,8 @@ def test_insert_image_to_yml():
     ) as image_file:
         image_data = image_file.read()
         image_data = image_prefix + base64.b64encode(image_data).decode("utf-8")
-    with open(
-        f"{git_path()}/demisto_sdk/tests/test_files/VulnDB/VulnDB.yml", encoding="utf-8"
-    ) as yml_file:
-        yml_unified_test = yaml.load(yml_file)
+    yml_file = f"{git_path()}/demisto_sdk/tests/test_files/VulnDB/VulnDB.yml"
+    yml_unified_test = get_file(yml_file, type_of_file='yml', return_content=True)
     yml_unified, found_img_path = IntegrationScriptUnifier.insert_image_to_yml(
         package_path, yml_unified_test, False, image_prefix
     )
@@ -553,8 +551,8 @@ def test_insert_module_code__verify_offsets(mocker):
 )
 def test_insert_script_to_yml(package_path, dir_name, file_path):
     is_script_package = dir_name == "Scripts"
-    with open(file_path + ".yml") as yml:
-        test_yml_data = yaml.load(yml)
+    yml_file = file_path + ".yml"
+    test_yml_data = get_file(yml_file, type_of_file='yml', return_content=True)
 
     test_yml_unified = copy.deepcopy(test_yml_data)
 
@@ -597,8 +595,8 @@ def test_insert_script_to_yml(package_path, dir_name, file_path):
 )
 def test_insert_script_to_yml_exceptions(package_path, dir_name, file_path):
     is_script_package = dir_name == "Scripts"
-    with open(file_path + ".yml") as yml:
-        test_yml_data = yaml.load(yml)
+    yml_file = file_path + ".yml"
+    test_yml_data = get_file(yml_file, type_of_file='yml', return_content=True)
     if dir_name == "Scripts":
         test_yml_data["script"] = "blah"
     else:

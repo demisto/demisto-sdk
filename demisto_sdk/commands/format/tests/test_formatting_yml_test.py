@@ -24,7 +24,7 @@ from demisto_sdk.commands.common.hook_validations.integration import (
     IntegrationValidator,
 )
 from demisto_sdk.commands.common.legacy_git_tools import git_path
-from demisto_sdk.commands.common.tools import get_yaml, is_string_uuid
+from demisto_sdk.commands.common.tools import get_yaml, is_string_uuid, get_file
 from demisto_sdk.commands.format.format_module import format_manager
 from demisto_sdk.commands.format.update_generic import BaseUpdate
 from demisto_sdk.commands.format.update_generic_yml import BaseUpdateYML
@@ -520,8 +520,7 @@ class TestFormatting:
         else:
             format_obj = IntegrationYMLFormat(src_file, output=dest, path=schema_path)
         assert format_obj.run_format() == 0
-        with open(dest) as f:
-            data = yaml.load(f)
+        data = get_file(dest, type_of_file='yml', return_content=True)
         assert data["fromversion"] == "5.5.0"
         assert data["commonfields"]["version"] == -1
 
@@ -559,9 +558,8 @@ class TestFormatting:
         base_yml.save_yml_to_destination_file()
         assert os.path.isfile(saved_file_path)
 
-        with open(saved_file_path) as f:
-            yaml_content = yaml.load(f)
-            assert "yes" in yaml_content["tasks"]["27"]["nexttasks"]
+        yaml_content = get_file(saved_file_path, type_of_file='yml', return_content=True)
+        assert "yes" in yaml_content["tasks"]["27"]["nexttasks"]
         os.remove(saved_file_path)
 
     FORMAT_FILES = [
@@ -769,14 +767,13 @@ class TestFormatting:
         shutil.copyfile(source, target)
         monkeypatch.setattr("builtins.input", lambda _: "N")
         res = format_manager(input=target, assume_answer=True)
-        with open(target) as f:
-            yaml_content = yaml.load(f)
-            params = yaml_content["configuration"]
-            for param in params:
-                if "defaultvalue" in param and param["name"] != "feed":
-                    param.pop("defaultvalue")
-            for param in INCIDENT_FETCH_REQUIRED_PARAMS:
-                assert param in yaml_content["configuration"]
+        yaml_content = get_file(target, type_of_file='yml', return_content=True)
+        params = yaml_content["configuration"]
+        for param in params:
+            if "defaultvalue" in param and param["name"] != "feed":
+                param.pop("defaultvalue")
+        for param in INCIDENT_FETCH_REQUIRED_PARAMS:
+            assert param in yaml_content["configuration"]
         os.remove(target)
         os.rmdir(path)
         assert res is answer
@@ -815,19 +812,18 @@ class TestFormatting:
         os.makedirs(path, exist_ok=True)
         shutil.copyfile(source, target)
         res = format_manager(input=target, clear_cache=True, assume_answer=True)
-        with open(target) as f:
-            yaml_content = yaml.load(f)
-            params = yaml_content["configuration"]
-            for counter, param in enumerate(params):
-                if "defaultvalue" in param and param["name"] != "feed":
-                    params[counter].pop("defaultvalue")
-                if "hidden" in param:
-                    param.pop("hidden")
-            for param_details in FEED_REQUIRED_PARAMS:
-                param = {"name": param_details.get("name")}
-                param.update(param_details.get("must_equal", dict()))
-                param.update(param_details.get("must_contain", dict()))
-                assert param in params
+        yaml_content = get_file(target, type_of_file='yml', return_content=True)
+        params = yaml_content["configuration"]
+        for counter, param in enumerate(params):
+            if "defaultvalue" in param and param["name"] != "feed":
+                params[counter].pop("defaultvalue")
+            if "hidden" in param:
+                param.pop("hidden")
+        for param_details in FEED_REQUIRED_PARAMS:
+            param = {"name": param_details.get("name")}
+            param.update(param_details.get("must_equal", dict()))
+            param.update(param_details.get("must_contain", dict()))
+            assert param in params
         os.remove(target)
         os.rmdir(path)
         assert res is answer
@@ -1135,8 +1131,7 @@ class TestFormatting:
 
         # test example script file with version before 5.0.0
         src_file = f"{test_files_dir}/SlackAsk.yml"
-        with open(src_file) as f:
-            data = yaml.load(f)
+        data = get_file(src_file, type_of_file='yml', return_content=True)
         org_docker = data["dockerimage"]
         assert data["fromversion"] < "5.0.0"
         assert not data.get(
@@ -1153,8 +1148,7 @@ class TestFormatting:
         monkeypatch.setattr("builtins.input", lambda _: "N")
         mocker.patch.object(BaseUpdate, "set_fromVersion", return_value=None)
         assert format_obj.run_format() == 0
-        with open(dest) as f:
-            data = yaml.load(f)
+        data = get_file(dest, type_of_file='yml', return_content=True)
         assert data["dockerimage"].endswith(f":{test_tag}")
         assert data["dockerimage45"] == org_docker
 
@@ -1168,8 +1162,7 @@ class TestFormatting:
             update_docker=True,
         )
         assert format_obj.run_format() == 0
-        with open(dest) as f:
-            data = yaml.load(f)
+        data = get_file(dest, type_of_file='yml', return_content=True)
         assert data["script"]["dockerimage"].endswith(f":{test_tag}")
         assert not data["script"].get("dockerimage45")
 
@@ -1221,8 +1214,7 @@ class TestFormatting:
 
         format_obj = ScriptYMLFormat(str(integration_yml_file_1), update_docker=True)
         format_obj.update_docker_image()
-        with open(str(integration_yml_file_1)) as f:
-            data = yaml.load(f)
+        data = get_file(str(integration_yml_file_1), type_of_file='yml', return_content=True)
         assert data.get("dockerimage") == docker_image
 
     def test_recursive_extend_schema(self):
@@ -1578,8 +1570,7 @@ class TestFormatting:
             "Integrations",
             "integration-VMware.yml",
         )
-        with open(vmware_integration_yml_path) as f:
-            yml_example = yaml.load(f)
+        yml_example = get_file(vmware_integration_yml_path, type_of_file='yml', return_content=True)
         sorted_yml_file = tmp_path / "test.yml"
         with sorted_yml_file.open("w") as f:
             yaml.dump(
@@ -1616,15 +1607,13 @@ class TestFormatting:
             "Integrations",
             "integration-VMware.yml",
         )
-        with open(vmware_integration_yml_path) as f:
-            yml_example = yaml.load(f)
+        yml_example = get_file(vmware_integration_yml_path, type_of_file='yml', return_content=True)
         sorted_yml_file = tmp_path / "test.yml"
         with sorted_yml_file.open("w") as f:
             yaml.dump(
                 yml_example, f, sort_keys=True
             )  # sorting the keys to have different order
-        with sorted_yml_file.open() as f:
-            sorted_yml = yaml.load(f)
+        sorted_yml = get_file(sorted_yml_file, type_of_file='yml', return_content=True)
         sorted_yml["description"] = "test"
         sorted_yml["configuration"][0]["defaultvalue"] = "test"
         del sorted_yml["configuration"][1]["defaultvalue"]

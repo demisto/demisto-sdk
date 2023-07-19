@@ -549,7 +549,7 @@ def get_file_details(
     if full_file_path.endswith("json"):
         file_details = json.loads(file_content)
     elif full_file_path.endswith(("yml", "yaml")):
-        file_details = yaml.load(file_content)
+        file_details = get_file(full_file_path, type_of_file='yml', return_content=True)
     # if neither yml nor json then probably a CHANGELOG or README file.
     else:
         file_details = {}
@@ -647,8 +647,7 @@ def filter_packagify_changes(modified_files, added_files, removed_files, tag="ma
             if PACKS_README_FILE_NAME in file_path:
                 updated_added_files.add(file_path)
                 continue
-            with open(file_path) as f:
-                details = yaml.load(f)
+            details = get_file(file_path)
 
             uniq_identifier = "_".join(
                 [

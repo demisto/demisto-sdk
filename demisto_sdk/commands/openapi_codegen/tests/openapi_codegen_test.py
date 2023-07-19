@@ -3,6 +3,7 @@ import os
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
 from demisto_sdk.commands.common.legacy_git_tools import git_path
+from demisto_sdk.commands.common.tools import get_file
 from demisto_sdk.commands.openapi_codegen.openapi_codegen import OpenAPIIntegration
 
 expected_command_function = """def get_pet_by_id_command(client: Client, args: Dict[str, Any]) -> CommandResults:
@@ -103,10 +104,8 @@ class TestOpenAPICodeGen:
         )
         integration = self.init_integration()
 
-        with open(
-            os.path.join(self.test_files_path, "swagger_yaml.yml"), "rb"
-        ) as yaml_file:
-            expected_yaml = yaml.load(yaml_file)
+        yaml_file = os.path.join(self.test_files_path, "swagger_yaml.yml")
+        expected_yaml = get_file(yaml_file, type_of_file='yml', return_content=True)
 
         yaml_obj = integration.generate_yaml().to_dict()
 

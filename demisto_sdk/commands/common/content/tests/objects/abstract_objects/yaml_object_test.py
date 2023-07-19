@@ -7,7 +7,7 @@ from demisto_sdk.commands.common.content.errors import (
 )
 from demisto_sdk.commands.common.content.objects.abstract_objects import YAMLObject
 from demisto_sdk.commands.common.handlers import YAML_Handler
-from demisto_sdk.commands.common.tools import src_root
+from demisto_sdk.commands.common.tools import src_root, get_file
 
 TEST_DATA = src_root() / "tests" / "test_files"
 TEST_CONTENT_REPO = TEST_DATA / "content_slim"
@@ -26,12 +26,12 @@ yaml = YAML_Handler(width=50000)
 class TestValidYAML:
     def test_valid_yaml_file_path(self):
         obj = YAMLObject(TEST_VALID_YAML)
-        assert obj.to_dict() == yaml.load(TEST_VALID_YAML.open())
+        assert obj.to_dict() == get_file(TEST_VALID_YAML, type_of_file='yml', return_content=True)
 
     def test_get_item(self):
         obj = YAMLObject(TEST_VALID_YAML)
 
-        assert obj["fromversion"] == yaml.load(TEST_VALID_YAML.open())["fromversion"]
+        assert obj["fromversion"] == get_file(TEST_VALID_YAML, type_of_file='yml', return_content=True)["fromversion"]
 
     @pytest.mark.parametrize(argnames="default_value", argvalues=["test_value", ""])
     def test_get(self, default_value: str):
@@ -40,14 +40,14 @@ class TestValidYAML:
             assert obj.get("no such key", default_value) == default_value
         else:
             assert (
-                obj["fromversion"] == yaml.load(TEST_VALID_YAML.open())["fromversion"]
+                obj["fromversion"] == get_file(TEST_VALID_YAML, type_of_file='yml', return_content=True)["fromversion"]
             )
 
     def test_dump(self, datadir):
         expected_file = TEST_VALID_YAML.parent / f"prefix-{TEST_VALID_YAML.name}"
         obj = YAMLObject(TEST_VALID_YAML, "prefix")
         assert obj.dump()[0] == expected_file
-        assert obj.to_dict() == yaml.load(expected_file.open())
+        assert obj.to_dict() == get_file(expected_file, type_of_file='yml', return_content=True)
         expected_file.unlink()
 
 

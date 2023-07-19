@@ -5,6 +5,7 @@ from typing import Optional
 from demisto_sdk.commands.common.handlers import YAML_Handler
 from TestSuite.integration import Integration
 from TestSuite.test_tools import suite_join_path
+from demisto_sdk.commands.common.tools import get_file
 
 yaml = YAML_Handler()
 
@@ -27,9 +28,9 @@ class Script(Integration):
 
         with open(suite_join_path(default_script_dir, "sample_script.py")) as code_file:
             code = str(code_file.read())
-        with open(suite_join_path(default_script_dir, "sample_script.yml")) as yml_file:
-            yml = yaml.load(yml_file)
-            yml["name"] = yml["commonfields"]["id"] = name
+        yml_file = suite_join_path(default_script_dir, "sample_script.yml")
+        yml = get_file(yml_file, type_of_file='yml', return_content=True)
+        yml["name"] = yml["commonfields"]["id"] = name
         with open(
             suite_join_path(default_script_dir, "sample_script_image.png"), "rb"
         ) as image_file:

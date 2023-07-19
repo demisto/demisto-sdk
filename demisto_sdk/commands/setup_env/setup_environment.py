@@ -140,9 +140,12 @@ def configure_vscode(
         launch_json["configurations"][0][
             "name"
         ] = f"Docker: Debug ({integration_script.path.stem})"
+        launch_json["configurations"][0]["python"]["pathMappings"] = {"localRoot": str(CONTENT_PATH), "remoteRoot": "/app"}
         launch_json["configurations"][1][
             "name"
         ] = f"Docker: Debug tests ({integration_script.path.stem})"
+        launch_json["configurations"][1]["python"]["pathMappings"] = {"localRoot": str(CONTENT_PATH), "remoteRoot": "/app"}
+
         launch_json["configurations"][2][
             "name"
         ] = f"Python: Debug locally ({integration_script.path.stem})"
@@ -166,6 +169,7 @@ def configure_vscode(
         tasks_json["tasks"][0]["dockerRun"]["env"]["PYTHONPATH"] = ":".join(
             docker_python_path
         )
+        tasks_json["tasks"][0]["dockerRun"]["volumes"] = [{"localPath": str(CONTENT_PATH), "containerPath": "/app"}]
         tasks_json["tasks"][1]["python"]["args"] = [
             "-s",
             f"/app/{test_script_path.relative_to(CONTENT_PATH)}",
@@ -178,6 +182,8 @@ def configure_vscode(
         tasks_json["tasks"][1]["dockerRun"]["env"]["PYTHONPATH"] = ":".join(
             docker_python_path
         )
+        tasks_json["tasks"][1]["dockerRun"]["volumes"] = [{"localPath": str(CONTENT_PATH), "containerPath": "/app"}]
+
     with open(launch_json_path, "w") as f:
         json.dump(launch_json, f, indent=4)
     with open(tasks_json_path, "w") as f:

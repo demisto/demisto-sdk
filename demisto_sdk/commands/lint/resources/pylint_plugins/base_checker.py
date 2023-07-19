@@ -77,6 +77,11 @@ base_msg = {
         "demisto-log-exists",
         "Please remove all demisto.log usage and exchange it with demisto.info/demisto.debug",
     ),
+    "E9013": (
+        "LOG is found, Please replace all LOG usage with demisto.info or demisto.debug",
+        "LOG-exists",
+        "Please remove all LOG usage and exchange it with demisto.info/demisto.debug",
+    ),
     "W9013": (
         "Hardcoded http URL was found in the code, using https (when possible) is recommended.",
         "http-usage",
@@ -126,6 +131,7 @@ class CustomBaseChecker(BaseChecker):
         self._exit_checker(node)
         self._commandresults_indicator_check(node)
         self._demisto_log_checker(node)
+        self._LOG_checker(node)
 
     def visit_const(self, node):
         self._http_checker(node)
@@ -166,6 +172,20 @@ class CustomBaseChecker(BaseChecker):
     """
 
     # -------------------------------------------- Call Node ---------------------------------------------
+    def _LOG_checker(self, node):
+        """
+        Args: node which is a Call Node.
+        Check:
+        - if LOG() statement exists in the current node.
+
+        Adds the relevant error message using `add_message` function if one of the above exists.
+        """
+        try:
+            if node.func.name == "LOG":
+                self.add_message("LOG-exists", node=node)
+
+        except Exception:
+            pass
 
     def _print_checker(self, node):
         """

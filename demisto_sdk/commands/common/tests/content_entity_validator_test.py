@@ -13,7 +13,6 @@ from demisto_sdk.commands.common.constants import (
 )
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
-from demisto_sdk.commands.common.hook_validations.base_validator import BaseValidator
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import (
     ContentEntityValidator,
 )
@@ -292,35 +291,6 @@ def test_validate_unit_test_exists(
         path.with_name(f"{path.stem}_test.py").unlink(missing_ok=True)
     content_entity_validator = ContentEntityValidator(structure_validator)
     assert content_entity_validator.validate_unit_test_exists() == expected_result
-
-
-@pytest.mark.parametrize(
-    "file_content, expected_result",
-    [
-        ("This is an example with the 'test-module' term within it.", False),
-        ("This is an example without the term in it", True),
-    ],
-)
-def test_validate_no_disallowed_terms_in_customer_facing_docs(
-    file_content: str, expected_result: bool
-):
-    """
-    Given:
-    - Content of a customer-facing docs file
-
-    When:
-    - Validating the content doesn't contain disallowed terms
-
-    Then:
-    - Ensure that if a disallowed term is found, False is returned, and True otherwise.
-    """
-    base_validator = BaseValidator()
-    assert (
-        base_validator.validate_no_disallowed_terms_in_customer_facing_docs(
-            file_content=file_content, file_path=""
-        )
-        == expected_result
-    )
 
 
 FROM_AND_TO_VERSION_FOR_TEST = [

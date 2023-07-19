@@ -3038,3 +3038,23 @@ def test_run_validation_using_git_validation_calls(
         assert not no_old_format_validation.called
 
     deleted_files_validation.assert_called_once_with(deleted_files, added_files)
+
+
+@pytest.mark.parametrize("file_content, expected_result", [
+    ("This is an example with the 'test-module' term within it.", False),
+    ("This is an example without the term in it", True),
+])
+def test_validate_no_disallowed_terms_in_customer_facing_docs_success(file_content: str, expected_result: bool):
+    """
+    Given:
+    - Content of a customer-facing docs file
+
+    When:
+    - Validating the content doesn't contain disallowed terms
+
+    Then:
+    - Ensure that if a disallowed term is found, False is returned, and True otherwise.
+    """
+    base_validator = BaseValidator()
+    assert base_validator.validate_no_disallowed_terms_in_customer_facing_docs(file_content=file_content,
+                                                                               file_path="")

@@ -310,10 +310,12 @@ def validate_schema_aligned_with_test_data(
                 if (
                     event_val is None
                 ):  # if event_val is None, warn and continue looping.
-                    logger.warning(
-                        f"{event_val=} for {event_key=} is null on {event_log.test_data_event_id} for {dataset=}",
+                    logger.debug(
+                        f"{event_key=} is null on {event_log.test_data_event_id} for {dataset=}",
                         extra={"markup": True},
                     )
+                    # add the event key to the mapping to validate there isn't another key with a different type
+                    test_data_mappings[event_key] = None
                     continue
 
                 if schema_key_mappings := all_schema_dataset_mappings.get(event_key):

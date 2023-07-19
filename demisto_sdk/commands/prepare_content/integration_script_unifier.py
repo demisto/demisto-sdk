@@ -390,7 +390,7 @@ class IntegrationScriptUnifier(Unifier):
                 "ApiModules",
                 "Scripts",
                 module_name,
-                module_name + ".py",
+                f"{module_name}.py",
             )
             module_code = IntegrationScriptUnifier._get_api_module_code(
                 module_name, module_path

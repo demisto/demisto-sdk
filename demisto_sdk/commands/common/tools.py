@@ -2023,7 +2023,7 @@ def find_pack_folder(path: Path) -> Path:
     """
 
     if "Packs" not in path.parts:
-        raise Exception(f"Could not find a pack for {str(path)}")
+        raise ValueError(f"Could not find a pack for {str(path)}")
     if path.parent.name == "Packs":
         return path
     return path.parents[len(path.parts) - (path.parts.index("Packs")) - 3]
@@ -2036,15 +2036,17 @@ def get_content_path(path: Path = None) -> Path:
     Returns:
         str: Absolute content path
     >>> get_content_path(Path('/User/username/content/Packs/MyPack/Integrations/MyIntegration/MyIntegration.yml'))
-    'content'
+    PosixPath('/User/username/content')
     >>> get_content_path(Path('/User/username/content/Packs'))
-    'content'
+    PosixPath('/User/username/content')
     """
-    if path:
-        if path.name == "Packs":
-            return path.absolute().parent
-        else:
-            return find_pack_folder(path.absolute()).parent.parent
+    with contextlib.suppress(ValueError):
+        if path:
+            return (
+                path.absolute().parent
+                if path.name == "Packs"
+                else find_pack_folder(path.absolute()).parent.parent
+            )
     try:
         if content_path := os.getenv("DEMISTO_SDK_CONTENT_PATH"):
             git_repo = git.Repo(content_path)

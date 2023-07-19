@@ -31,7 +31,7 @@ WELCOME_MSG_WITH_GFORM = 'Thank you for your contribution. Your generosity and c
 CONTRIBUTION_LABEL = 'Contribution'
 EXTERNAL_LABEL = "External PR"
 SECURITY_LABEL = "Security Review"
-SECURITY_CONTENT_ITEMS = [
+SECURITY_ITEMS = [
     "Playbooks",
     "IncidentTypes",
     "IncidentFields",
@@ -56,7 +56,7 @@ def is_security_reviewer_required(pr_files: list[str]) -> bool:
     return any(
         item in pr_file
         for pr_file in pr_files
-        for item in SECURITY_CONTENT_ITEMS
+        for item in SECURITY_ITEMS
     )
 
 
@@ -85,12 +85,12 @@ def main():
     print(cyan('Processing PR started'))
 
     org_name = 'demisto'
-    repo_name = 'content'
+    repo_name = 'demisto-sdk'
     gh = Github(get_env_var('CONTENTBOT_GH_ADMIN_TOKEN'), verify=False)
-    content_repo = gh.get_repo(f'{org_name}/{repo_name}')
+    demisto_sdk_repo = gh.get_repo(f'{org_name}/{repo_name}')
 
     pr_number = payload.get('pull_request', {}).get('number')
-    pr = content_repo.get_pull(pr_number)
+    pr = demisto_sdk_repo.get_pull(pr_number)
 
     pr_files = [file.filename for file in pr.get_files()]
     print(f'{pr_files=} for {pr_number=}')
@@ -110,7 +110,7 @@ def main():
         print(cyan('Determining name for new base branch'))
         branch_prefix = 'contrib/'
         new_branch_name = f'{branch_prefix}{pr.head.label.replace(":", "_")}'
-        existant_branches = content_repo.get_git_matching_refs(f'heads/{branch_prefix}')
+        existant_branches = demisto_sdk_repo.get_git_matching_refs(f'heads/{branch_prefix}')
         potential_conflicting_branch_names = [branch.ref.removeprefix('refs/heads/') for branch in existant_branches]
         # make sure new branch name does not conflict with existing branch name
         while new_branch_name in potential_conflicting_branch_names:
@@ -120,10 +120,10 @@ def main():
             else:
                 digit = str(int(new_branch_name[-1]) + 1)
                 new_branch_name = f'{new_branch_name[:-1]}{digit}'
-        master_branch_commit_sha = content_repo.get_branch('master').commit.sha
+        master_branch_commit_sha = demisto_sdk_repo.get_branch('master').commit.sha
         # create new branch
         print(cyan(f'Creating new branch "{new_branch_name}"'))
-        content_repo.create_git_ref(f'refs/heads/{new_branch_name}', master_branch_commit_sha)
+        demisto_sdk_repo.create_git_ref(f'refs/heads/{new_branch_name}', master_branch_commit_sha)
         # update base branch of the PR
         pr.edit(base=new_branch_name)
         print(cyan(f'Updated base branch of PR "{pr_number}" to "{new_branch_name}"'))
@@ -132,7 +132,7 @@ def main():
     pr.add_to_assignees(CONTRIBUTION_TL)
     reviewers = [CONTRIBUTION_TL]
 
-    # Add a security architect reviewer if the PR contains security content items
+    # Add a security architect reviewer if the PR contains security demisto_sdk items
     if is_security_reviewer_required(pr_files):
         reviewers.append(SECURITY_REVIEWER)
         pr.add_to_assignees(SECURITY_REVIEWER)

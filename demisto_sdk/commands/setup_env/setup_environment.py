@@ -110,85 +110,88 @@ def configure_vscode(
     configure_settings(ide_folder, integration_script, interpreter_path)
     launch_json_path = ide_folder / "launch.json"
     tasks_json_path = ide_folder / "tasks.json"
-    launch_json = {}
-    tasks_json = {}
+    launch_json: dict = {}
+    tasks_json: dict = {}
     if integration_script.type == "powershell":
-        shutil.copyfile(
-            Path(__file__).parent / "launch-powershell.json", ide_folder / "launch.json"
-        )
-        script_path = integration_script.path.with_suffix(".ps1")
-
+        shutil.copyfile(Path(__file__).parent / "launch-powershell.json", launch_json_path)
         with open(launch_json_path) as f:
-            launch_json = json5.load(f)
-
-        launch_json["configurations"][0]["script"] = str(script_path)
-        launch_json["configurations"][0]["cwd"] = str(CONTENT_PATH)
-
-    if integration_script.type.startswith("python"):
-        shutil.copyfile(Path(__file__).parent / "tasks.json", ide_folder / "tasks.json")
-        shutil.copyfile(
-            Path(__file__).parent / "launch-python.json", ide_folder / "launch.json"
-        )
+            launch_json_template = json5.load(f)
+        tasks_json_template = {}
+        script_path = integration_script.path.with_suffix(".ps1")
+        launch_json = {
+            "configurations": [
+                {
+                    "script": str(script_path),
+                    "cwd": str(CONTENT_PATH)
+                }
+            ]
+        }
+    elif integration_script.type.startswith("python"):
+        shutil.copyfile(Path(__file__).parent / "tasks.json", tasks_json_path)
+        shutil.copyfile(Path(__file__).parent / "launch-python.json", launch_json_path)
+        with open(launch_json_path) as f:
+            launch_json_template = json5.load(f)
+        with open(tasks_json_path) as f:
+            tasks_json_template = json5.load(f)
         script_path = integration_script.path.with_suffix(".py")
-        test_script_path = (
-            integration_script.path.parent / f"{integration_script.path.stem}_test.py"
-        )
-        with open(ide_folder / "launch.json") as f:
-            launch_json = json5.load(f)
-        with open(ide_folder / "tasks.json") as f:
-            tasks_json = json5.load(f)
-        launch_json["configurations"][0][
-            "name"
-        ] = f"Docker: Debug ({integration_script.path.stem})"
-        launch_json["configurations"][0]["python"]["pathMappings"] = [{"localRoot": str(CONTENT_PATH), "remoteRoot": "/app"}]
-        launch_json["configurations"][1][
-            "name"
-        ] = f"Docker: Debug tests ({integration_script.path.stem})"
-        launch_json["configurations"][1]["python"]["pathMappings"] = [{"localRoot": str(CONTENT_PATH), "remoteRoot": "/app"}]
-
-        launch_json["configurations"][2][
-            "name"
-        ] = f"Python: Debug locally ({integration_script.path.stem})"
-        launch_json["configurations"][2]["program"] = str(script_path)
-        launch_json["configurations"][2]["cwd"] = str(CONTENT_PATH)
-        launch_json["configurations"][2]["env"]["DEMISTO_PARAMS"] = str(demisto_params)
-
-
-        tasks_json["tasks"][0]["python"]["file"] = str(
-            f"/app/{str(script_path.relative_to(CONTENT_PATH))}"
-        )
-        tasks_json["tasks"][0]["dockerRun"]["image"] = integration_script.docker_image
-        tasks_json["tasks"][0]["dockerRun"]["env"][
-            "DEMISTO_PARAMS"
-        ] = f"/app/{demisto_params.relative_to(CONTENT_PATH)}"
-
-        docker_python_path = [
-            f"/app/{python_path.relative_to(CONTENT_PATH)}"
-            for python_path in PYTHONPATH
-        ]
-        tasks_json["tasks"][0]["dockerRun"]["env"]["PYTHONPATH"] = ":".join(
-            docker_python_path
-        )
-        tasks_json["tasks"][0]["dockerRun"]["volumes"] = [{"localPath": str(CONTENT_PATH), "containerPath": "/app"}]
-        tasks_json["tasks"][1]["python"]["args"] = [
-            "-s",
-            f"/app/{test_script_path.relative_to(CONTENT_PATH)}",
-            "-vv",
-        ]
-        tasks_json["tasks"][1]["dockerRun"]["image"] = test_docker_image
-        tasks_json["tasks"][1]["dockerRun"][
-            "customOptions"
-        ] = f"-w /app/{script_path.relative_to(CONTENT_PATH)}"
-        tasks_json["tasks"][1]["dockerRun"]["env"]["PYTHONPATH"] = ":".join(
-            docker_python_path
-        )
-        tasks_json["tasks"][1]["dockerRun"]["volumes"] = [{"localPath": str(CONTENT_PATH), "containerPath": "/app"}]
-
+        test_script_path = integration_script.path.parent / f"{integration_script.path.stem}_test.py"
+        launch_json = {
+            "configurations": [
+                {
+                    "name": f"Docker: Debug ({integration_script.path.stem})",
+                    "python": {
+                        "pathMappings": [{"localRoot": str(CONTENT_PATH), "remoteRoot": "/app"}]
+                    }
+                },
+                {
+                    "name": f"Docker: Debug tests ({integration_script.path.stem})",
+                    "python": {
+                        "pathMappings": [{"localRoot": str(CONTENT_PATH), "remoteRoot": "/app"}]
+                    }
+                },
+                {
+                    "name": f"Python: Debug locally ({integration_script.path.stem})",
+                    "program": str(script_path),
+                    "cwd": str(CONTENT_PATH),
+                    "env": {"DEMISTO_PARAMS": str(demisto_params)}
+                }
+            ]
+        }
+        tasks_json = {
+            "tasks": [
+                {
+                    "python": {
+                        "file": f"/app/{str(script_path.relative_to(CONTENT_PATH))}"
+                    },
+                    "dockerRun": {
+                        "image": integration_script.docker_image,
+                        "env": {"DEMISTO_PARAMS": f"/app/{demisto_params.relative_to(CONTENT_PATH)}"},
+                        "volumes": [{"localPath": str(CONTENT_PATH), "containerPath": "/app"}]
+                    }
+                },
+                {
+                    "python": {
+                        "args": [
+                            "-s",
+                            f"/app/{test_script_path.relative_to(CONTENT_PATH)}",
+                            "-vv"
+                        ]
+                    },
+                    "dockerRun": {
+                        "image": test_docker_image,
+                        "customOptions": f"-w /app/{script_path.relative_to(CONTENT_PATH)}",
+                        "env": {"PYTHONPATH": ":".join([f"/app/{python_path.relative_to(CONTENT_PATH)}" for python_path in PYTHONPATH])},
+                        "volumes": [{"localPath": str(CONTENT_PATH), "containerPath": "/app"}]
+                    }
+                }
+            ]
+        }
+    launch_json = launch_json_template.update(launch_json)
+    tasks_json = tasks_json_template.update(tasks_json)
     with open(launch_json_path, "w") as f:
         json.dump(launch_json, f, indent=4)
     with open(tasks_json_path, "w") as f:
         json.dump(tasks_json, f, indent=4)
-
 
 def setup(
     file_paths: Tuple[Path, ...],

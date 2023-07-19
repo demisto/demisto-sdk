@@ -167,7 +167,7 @@ def configure_vscode(
         json.dump(tasks_json, f, quote_keys=True, indent=4)
 
 
-def configure(
+def setup(
     file_paths: Tuple[Path, ...],
     ide: IDE = IDE.VSCODE,
     create_virtualenv: bool = False,

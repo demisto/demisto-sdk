@@ -3443,12 +3443,12 @@ def run_unit_tests(
     help="Overwrite the virtualenv if it already exists. To use with `create-virtualenv` flag",
 )
 @click.argument("file_paths", nargs=-1, type=click.Path(exists=True, resolve_path=True))
-def configure_environment(file_paths, create_virtualenv, overwrite_virtualenv):
-    from demisto_sdk.commands.configure_environment.configure_environment import (
-        configure,
+def setup_env(file_paths, create_virtualenv, overwrite_virtualenv):
+    from demisto_sdk.commands.setup_env.setup_environment import (
+        setup,
     )
 
-    configure(
+    setup(
         file_paths,
         create_virtualenv=create_virtualenv,
         overwrite_virtualenv=overwrite_virtualenv,

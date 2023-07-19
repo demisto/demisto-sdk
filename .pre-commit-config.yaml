@@ -198,7 +198,7 @@ repos:
   - id: check-docstring-first
     exclude: demisto_sdk/commands/init/templates/.*
   - id: check-json
-    exclude: .vscode/.*|configure_environemnt/.*
+    exclude: .vscode/.*|setup_environemnt/.*
   - id: check-yaml
     language_version: python3
   - id: name-tests-test

@@ -181,3 +181,11 @@ max-complexity = 30
 "ujson".msg = "use JSON_Handler instead"
 "orjson".msg = "use JSON_Handler instead"
 "ruamel.yaml".msg = "use YAML_Handler instead"
+
+[tool.poetry.group.ci]
+optional = true
+
+[tool.poetry.group.ci.dependencies]
+blessings = "^1.7"
+PyGithub = "^1.59.0"
+slack_sdk = "^3.11.2"

@@ -31,4 +31,4 @@ class BaseContentParser(ABC):
     @property
     @abstractmethod
     def deprecated(self) -> bool:
-        pass
+        return False

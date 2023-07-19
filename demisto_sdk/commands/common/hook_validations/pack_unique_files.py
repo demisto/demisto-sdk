@@ -428,7 +428,7 @@ class PackUniqueFilesValidator(BaseValidator):
 
     @error_codes("PA137")
     def validate_non_ignorable_error(self):
-        """Check if .pack-ignore structure is parse-able"""
+        """Check if non ignorable error exist in .pack-ignore"""
         ignore_file = self._parse_file_into_list(self.pack_ignore_file)
         error_codes = set(
             chain.from_iterable(

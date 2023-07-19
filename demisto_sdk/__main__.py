@@ -3155,18 +3155,31 @@ def error_code(ctx, config, **kwargs):
     help="Whether or not to include dependencies.",
     default=False,
 )
+@click.option(
+    "-npv",
+    "--no-python-version",
+    is_flag=True,
+    help="Whether or not to retrieve the python versions of the docker images of script/integration.",
+    default=True,
+)
 @click.pass_context
 @logging_setup_decorator
 def create_content_graph(
     ctx,
     marketplace: str = MarketplaceVersions.XSOAR,
     no_dependencies: bool = False,
+    no_python_version: bool = True,
     output_path: Path = None,
     **kwargs,
 ):
     from demisto_sdk.commands.content_graph.content_graph_commands import (
         create_content_graph as create_content_graph_command,
     )
+
+    if not no_python_version:
+        # if no_python_version == False, need to retrieve the python version from each/script integration
+        # todo: need to think of a better way to pass in flags when creating the content graph
+        os.environ['GRAPH_GET_PYTHON_VERSION'] = 'true'
 
     with Neo4jContentGraphInterface() as content_graph_interface:
         create_content_graph_command(
@@ -3231,6 +3244,13 @@ def create_content_graph(
     default=False,
 )
 @click.option(
+    "-npv",
+    "--no-python-version",
+    is_flag=True,
+    help="Whether or not to retrieve the python versions of the docker images of script/integration.",
+    default=True,
+)
+@click.option(
     "-o",
     "--output-path",
     type=click.Path(resolve_path=True, path_type=Path, dir_okay=True, file_okay=False),
@@ -3247,6 +3267,7 @@ def update_content_graph(
     imported_path: Path = None,
     packs: list = None,
     no_dependencies: bool = False,
+    no_python_version: bool = True,
     output_path: Path = None,
     **kwargs,
 ):
@@ -3256,6 +3277,11 @@ def update_content_graph(
     from demisto_sdk.commands.content_graph.interface.neo4j.neo4j_graph import (
         Neo4jContentGraphInterface,
     )
+
+    if not no_python_version:
+        # if no_python_version == False, need to retrieve the python version from each/script integration
+        # todo: need to think of a better way to pass in flags when creating the content graph
+        os.environ['GRAPH_GET_PYTHON_VERSION'] = 'true'
 
     if packs and not isinstance(packs, list):
         # for some reason packs provided as tuple from click interface

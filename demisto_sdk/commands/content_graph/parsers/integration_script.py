@@ -1,3 +1,4 @@
+import os
 from abc import abstractmethod
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set
@@ -10,6 +11,8 @@ from demisto_sdk.commands.content_graph.parsers.yaml_content_item import (
 from demisto_sdk.commands.prepare_content.integration_script_unifier import (
     IntegrationScriptUnifier,
 )
+
+from demisto_sdk.commands.common.docker_helper import get_python_version
 
 
 class IntegrationScriptParser(YAMLContentItemParser):
@@ -53,3 +56,8 @@ class IntegrationScriptParser(YAMLContentItemParser):
             self.add_relationship(
                 RelationshipType.IMPORTS, api_module, ContentType.SCRIPT
             )
+
+    @property
+    def python_version(self):
+        if os.getenv('GRAPH_GET_PYTHON_VERSION'):
+            return get_python_version(self.docker_image)

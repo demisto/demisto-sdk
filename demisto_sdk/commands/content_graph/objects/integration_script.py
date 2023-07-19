@@ -16,6 +16,7 @@ from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 from demisto_sdk.commands.prepare_content.integration_script_unifier import (
     IntegrationScriptUnifier,
 )
+from packaging.version import Version
 
 
 class IntegrationScript(ContentItem):
@@ -24,6 +25,7 @@ class IntegrationScript(ContentItem):
     description: Optional[str]
     is_unified: bool = Field(False, exclude=True)
     code: Optional[str] = Field(None, exclude=True)
+    python_version: Optional[Version]
 
     def prepare_for_upload(
         self,

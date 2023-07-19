@@ -17,8 +17,11 @@
 """
 
 import astroid
-from pylint.checkers import BaseChecker
 from pylint.interfaces import IAstroidChecker
+
+from demisto_sdk.commands.lint.resources.pylint_plugins.base_checker import (
+    CommonBaseChecker,
+)
 
 # --------------------------------------------------- Messages --------------------------------------------------------
 
@@ -39,10 +42,20 @@ partner_msg = {
         "return-error-does-not-exist-in-main",
         "return_error should be used in main function",
     ),
+    "E9008": (
+        "Do not use demisto.results function. Please return CommandResults object instead.",
+        "demisto-results-exists",
+        "Do not use demisto.results function.",
+    ),
+    "E9009": (
+        "Do not use return_outputs function. Please return CommandResults object instead.",
+        "return-outputs-exists",
+        "Do not use return_outputs function.",
+    ),
 }
 
 
-class PartnerChecker(BaseChecker):
+class PartnerChecker(CommonBaseChecker):
     __implements__ = IAstroidChecker
     name = "partner-checker"
     priority = -1
@@ -63,6 +76,8 @@ class PartnerChecker(BaseChecker):
 
     def visit_call(self, node):
         self._return_error_function_count(node)
+        self._return_outputs_checker(node, "return-outputs-exists")
+        self._demisto_results_checker(node, "demisto-results-exists")
 
     def visit_functiondef(self, node):
         self._try_except_in_main(node)

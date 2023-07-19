@@ -77,10 +77,10 @@ base_msg = {
         "demisto-log-exists",
         "Please remove all demisto.log usage and exchange it with demisto.info/demisto.debug",
     ),
-    "W9013": (
-        "Hardcoded http URL was found in the code, using https (when possible) is recommended.",
-        "http-usage",
-        "Please use the https method if possible",
+    "E9013": (
+        "LOG is found, Please replace all LOG usage with demisto.info or demisto.debug",
+        "LOG-exists",
+        "Please remove all LOG usage and exchange it with demisto.info/demisto.debug",
     ),
 }
 
@@ -93,6 +93,41 @@ BUILD_IN_COMMANDS = [
     "deleteIndicators",
     "extractIndicators",
 ]
+
+
+class CommonBaseChecker(BaseChecker):
+    def __init__(self, linter=None):
+        super().__init__(linter)
+
+    def _return_outputs_checker(self, node, message_to_add):
+        """
+        Args: node which is a Call Node.
+        Check:
+        - if return_outputs() statement exists in the current node.
+
+        Adds the relevant error message using `add_message` function if one of the above exists.
+        """
+        try:
+            if node.func.name == "return_outputs":
+                self.add_message(message_to_add, node=node)
+
+        except Exception:
+            pass
+
+    def _demisto_results_checker(self, node, message_to_add):
+        """
+        Args: node which is a Call Node.
+        Check:
+        - if demisto.results() statement exists in the current node.
+
+        Adds the relevant error message using `add_message` function if one of the above exists.
+        """
+        try:
+            if node.func.attrname == "results" and node.func.expr.name == "demisto":
+                self.add_message(message_to_add, node=node)
+
+        except Exception:
+            pass
 
 
 class CustomBaseChecker(BaseChecker):
@@ -126,6 +161,7 @@ class CustomBaseChecker(BaseChecker):
         self._exit_checker(node)
         self._commandresults_indicator_check(node)
         self._demisto_log_checker(node)
+        self._LOG_checker(node)
 
     def visit_const(self, node):
         self._http_checker(node)
@@ -166,6 +202,20 @@ class CustomBaseChecker(BaseChecker):
     """
 
     # -------------------------------------------- Call Node ---------------------------------------------
+    def _LOG_checker(self, node):
+        """
+        Args: node which is a Call Node.
+        Check:
+        - if LOG() statement exists in the current node.
+
+        Adds the relevant error message using `add_message` function if one of the above exists.
+        """
+        try:
+            if node.func.name == "LOG":
+                self.add_message("LOG-exists", node=node)
+
+        except Exception:
+            pass
 
     def _print_checker(self, node):
         """

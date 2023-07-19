@@ -16,8 +16,11 @@
 5. Add the check to the `xsoar_linter_integration_test.py` test suit.
 """
 import astroid
-from pylint.checkers import BaseChecker
 from pylint.interfaces import IAstroidChecker
+
+from demisto_sdk.commands.lint.resources.pylint_plugins.base_checker import (
+    CommonBaseChecker,
+)
 
 # -------------------------------------------- Messages ------------------------------------------------
 
@@ -32,12 +35,12 @@ cert_partner_msg = {
         "main-func-doesnt-exist",
         "Please remove all prints from the code.",
     ),
-    "W9008": (
+    "E9008": (
         "Do not use demisto.results function. Please return CommandResults object instead.",
         "demisto-results-exists",
         "Do not use demisto.results function.",
     ),
-    "W9009": (
+    "E9009": (
         "Do not use return_outputs function. Please return CommandResults object instead.",
         "return-outputs-exists",
         "Do not use return_outputs function.",
@@ -56,7 +59,7 @@ cert_partner_msg = {
 }
 
 
-class CertifiedPartnerChecker(BaseChecker):
+class CertifiedPartnerChecker(CommonBaseChecker):
     __implements__ = IAstroidChecker
     name = "certified-partner-checker"
     priority = -1
@@ -77,8 +80,8 @@ class CertifiedPartnerChecker(BaseChecker):
 
     def visit_call(self, node):
         self._sys_exit_checker(node)
-        self._return_outputs_checker(node)
-        self._demisto_results_checker(node)
+        self._return_outputs_checker(node, "return-outputs-exists")
+        self._demisto_results_checker(node, "demisto-results-exists")
         self._init_params_checker(node)
         self._init_args_checker(node)
 
@@ -123,36 +126,6 @@ class CertifiedPartnerChecker(BaseChecker):
                 and node.args[0].value != 0
             ):
                 self.add_message("sys-exit-exists", node=node)
-
-        except Exception:
-            pass
-
-    def _return_outputs_checker(self, node):
-        """
-        Args: node which is a Call Node.
-        Check:
-        - if return_outputs() statement exists in the current node.
-
-        Adds the relevant error message using `add_message` function if one of the above exists.
-        """
-        try:
-            if node.func.name == "return_outputs":
-                self.add_message("return-outputs-exists", node=node)
-
-        except Exception:
-            pass
-
-    def _demisto_results_checker(self, node):
-        """
-        Args: node which is a Call Node.
-        Check:
-        - if demisto.results() statement exists in the current node.
-
-        Adds the relevant error message using `add_message` function if one of the above exists.
-        """
-        try:
-            if node.func.attrname == "results" and node.func.expr.name == "demisto":
-                self.add_message("demisto-results-exists", node=node)
 
         except Exception:
             pass

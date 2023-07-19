@@ -2920,65 +2920,6 @@ class ValidateManager:
                 "is_allowed_modified_file_path should not be run on folders"
             )
 
-        def _handle_outside_pack() -> bool:
-            # returns True if the validation should fail
-            (
-                error_message,
-                error_code,
-            ) = Errors.file_not_allowed_outside_pack(path)
-            return bool(
-                self.handle_error(
-                    error_message=error_message,
-                    error_code=error_code,
-                    file_path=str(path),
-                    drop_line=True,
-                )
-            )
-
-        def _handle_first_level_folder_does_not_allow_files() -> bool:
-            # returns True if the validation should fail
-            (
-                error_message,
-                error_code,
-            ) = Errors.files_not_allowed_directly_under_this_folder(path)
-            return bool(
-                self.handle_error(
-                    error_message=error_message,
-                    error_code=error_code,
-                    file_path=str(path),
-                    drop_line=True,
-                )
-            )
-
-        def _handle_directly_under_pack() -> bool:
-            # returns True if the validation should fail
-            (
-                error_message,
-                error_code,
-            ) = Errors.file_not_allowed_at_pack_root(path)
-            return bool(
-                self.handle_error(
-                    error_message=error_message,
-                    error_code=error_code,
-                    file_path=str(path),
-                    drop_line=True,
-                )
-            )
-
-        def _handle_invalid_first_level_folder() -> bool:
-            (
-                error_message,
-                error_code,
-            ) = Errors.invalid_first_level_folder(path)
-            return bool(
-                self.handle_error(
-                    error_message=error_message,
-                    error_code=error_code,
-                    file_path=str(path),
-                    drop_line=True,
-                )
-            )
-
         if PACKS_DIR not in path.parts:
             logger.debug(
                 f"non-content files are excempt from is_valid_path checks, skipping them"
@@ -2994,14 +2935,29 @@ class ValidateManager:
             )
             return True
 
-        if depth == 1:  # Packs/<modified file>
-            if _handle_outside_pack():
+        def _handle_error(error_method: Callable[[Path], Tuple[str, str]]) -> bool:
+            # returns True if the validation should fail
+            (
+                error_message,
+                error_code,
+            ) = error_method(path)
+            return bool(
+                self.handle_error(
+                    error_message=error_message,
+                    error_code=error_code,
+                    file_path=str(path),
+                    drop_line=True,
+                )
+            )
+
+        if depth == 1:  # Packs/<modified file, not under a pack>
+            if _handle_error(Errors.file_not_allowed_outside_pack):
                 return False
 
         elif depth == 2:  # Packs/MyPack/<modified file>
-            if (
-                path.name not in PACK_ROOT_FILE_NAMES
-            ) and _handle_directly_under_pack():
+            if (path.name not in PACK_ROOT_FILE_NAMES) and _handle_error(
+                Errors.file_not_allowed_at_pack_root
+            ):
                 return False
 
         else:
@@ -3012,14 +2968,13 @@ class ValidateManager:
                 depth == 3
                 and first_level_folder
                 not in FIRST_LEVEL_FOLDERS_ALLOWED_TO_CONTAIN_FILES
-                and _handle_first_level_folder_does_not_allow_files()
+                and _handle_error(Errors.files_not_allowed_directly_under_this_folder)
             ):
                 # Packs/MyPack/SomeFolderThatShouldntHaveFilesDirectly/<modified file>
                 return False
 
-            if (
-                first_level_folder not in FIRST_LEVEL_FOLDERS
-                and _handle_invalid_first_level_folder()
+            if first_level_folder not in FIRST_LEVEL_FOLDERS and _handle_error(
+                Errors.invalid_first_level_folder
             ):
                 # Packs/MyPack/SomeFolderThatShouldntBeFirstLevel/<modified file>
                 return False

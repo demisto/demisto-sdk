@@ -298,7 +298,7 @@ class ReadMeValidator(BaseValidator):
             bool: True If all links are valid else False.
         """
         invalid_paths = re.findall(
-            r"(\!\[.*?\]|src\=)(\(|\")(https://github.com/demisto/content/(?!raw).*?)(\)|\")",
+            r"(\!\[.*?\]|src\=)(\(|\")(https://github.com/demisto/content/blob/.*?)(\)|\")",
             self.readme_content,
             re.IGNORECASE,
         )

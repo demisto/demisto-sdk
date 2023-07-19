@@ -12,7 +12,6 @@
 * **pre-commit** no longer runs when there are no modified files (unless provided with input files).
 * **lint** will now fail on `demisto.results` and `return_outputs` usage, when a pack is `xsoar` or `partner` supported.
 * **lint** will now fail on `LOG` usage in python files.
-* Fixed an issue where **pre-commit** running when there was no change to the files
 * Fixed an issue where errors in **validate** were logged as `info`.
 * Fixed an issue where **validate** error messages were not logged when an integration param, or the default argument in reputation commands is not valid.
 * Fixed an issue where the **format** command would change the value of the `unsearchable` key in fields.

@@ -904,7 +904,7 @@ class TestCreateContentGraph:
     ):
         """
         Given:
-            - A mocked model of a repository with a pack Core, which dependce in NonCorePack
+            - A mocked model of a repository with a pack Core, which depends on NonCorePack according to the pack metadata
         When:
             - Running create_content_graph().
         Then:

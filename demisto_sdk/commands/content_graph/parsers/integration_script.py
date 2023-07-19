@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Set
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
+from demisto_sdk.commands.common.docker_helper import get_python_version
 from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
 from demisto_sdk.commands.content_graph.parsers.yaml_content_item import (
     YAMLContentItemParser,
@@ -11,8 +12,6 @@ from demisto_sdk.commands.content_graph.parsers.yaml_content_item import (
 from demisto_sdk.commands.prepare_content.integration_script_unifier import (
     IntegrationScriptUnifier,
 )
-
-from demisto_sdk.commands.common.docker_helper import get_python_version
 
 
 class IntegrationScriptParser(YAMLContentItemParser):
@@ -58,6 +57,7 @@ class IntegrationScriptParser(YAMLContentItemParser):
             )
 
     @property
-    def python_version(self) -> str:
-        if os.getenv('GRAPH_GET_PYTHON_VERSION'):
+    def python_version(self) -> Optional[str]:
+        if os.getenv("GRAPH_GET_PYTHON_VERSION"):
             return str(get_python_version(self.docker_image))
+        return None

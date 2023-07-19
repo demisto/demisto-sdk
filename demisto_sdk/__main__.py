@@ -3179,7 +3179,7 @@ def create_content_graph(
     if not no_python_version:
         # if no_python_version == False, need to retrieve the python version from each/script integration
         # todo: need to think of a better way to pass in flags when creating the content graph
-        os.environ['GRAPH_GET_PYTHON_VERSION'] = 'true'
+        os.environ["GRAPH_GET_PYTHON_VERSION"] = "true"
 
     with Neo4jContentGraphInterface() as content_graph_interface:
         create_content_graph_command(
@@ -3281,7 +3281,7 @@ def update_content_graph(
     if not no_python_version:
         # if no_python_version == False, need to retrieve the python version from each/script integration
         # todo: need to think of a better way to pass in flags when creating the content graph
-        os.environ['GRAPH_GET_PYTHON_VERSION'] = 'true'
+        os.environ["GRAPH_GET_PYTHON_VERSION"] = "true"
 
     if packs and not isinstance(packs, list):
         # for some reason packs provided as tuple from click interface

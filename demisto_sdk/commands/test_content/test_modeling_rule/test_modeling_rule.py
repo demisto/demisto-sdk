@@ -1,3 +1,4 @@
+import logging
 from datetime import datetime
 from pathlib import Path
 from time import sleep
@@ -22,6 +23,9 @@ from demisto_sdk.commands.common.logger import (
     handle_deprecated_args,
     logger,
     logging_setup,
+)
+from demisto_sdk.commands.common.tools import (
+    get_config_param_kwarg_env,
 )
 from demisto_sdk.commands.test_content.test_modeling_rule import init_test_data
 from demisto_sdk.commands.test_content.xsiam_tools.xsiam_client import (
@@ -776,9 +780,21 @@ def test_modeling_rule(
     Test a modeling rule against an XSIAM tenant
     """
     logging_setup(
-        console_log_threshold=console_log_threshold,
-        file_log_threshold=file_log_threshold,
-        log_file_path=log_file_path,
+        console_log_threshold=get_config_param_kwarg_env(
+            console_log_threshold,
+            "DEMISTO_SDK_CONSOLE_LOG_THRESHOLD",
+            logging.INFO,
+        ),
+        file_log_threshold=get_config_param_kwarg_env(
+            file_log_threshold,
+            "DEMISTO_SDK_FILE_LOG_THRESHOLD",
+            logging.DEBUG,
+        ),
+        log_file_path=get_config_param_kwarg_env(
+            log_file_path,
+            "DEMISTO_SDK_LOG_FILE_PATH",
+            None,
+        ),
     )
     handle_deprecated_args(ctx.args)
 

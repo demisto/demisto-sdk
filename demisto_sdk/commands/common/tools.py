@@ -3834,3 +3834,19 @@ def parse_multiple_path_inputs(
         return result
 
     raise ValueError(f"Cannot parse paths from {input_path}")
+
+
+def get_config_param_kwarg_env(kwargs_value, env_param_name, default_value):
+    if kwargs_value:
+        return kwargs_value
+    if env_value := os.getenv(env_param_name):
+        return env_value
+    return default_value
+
+
+def get_config_param_kwargs_env(
+    kwargs, kwarg_param_name, env_param_name, default_value
+):
+    return get_config_param_kwarg_env(
+        kwargs.get(kwarg_param_name), env_param_name, default_value
+    )

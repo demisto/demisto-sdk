@@ -1,4 +1,5 @@
 import csv
+import logging
 import traceback
 from io import StringIO
 from pathlib import Path
@@ -18,7 +19,10 @@ from demisto_sdk.commands.common.logger import (
     logger,
     logging_setup,
 )
-from demisto_sdk.commands.common.tools import get_max_version
+from demisto_sdk.commands.common.tools import (
+    get_config_param_kwarg_env,
+    get_max_version,
+)
 
 app = typer.Typer()
 
@@ -108,9 +112,21 @@ def generate_modeling_rules(
     ),
 ):
     logging_setup(
-        console_log_threshold=console_log_threshold,
-        file_log_threshold=file_log_threshold,
-        log_file_path=log_file_path,
+        console_log_threshold=get_config_param_kwarg_env(
+            console_log_threshold,
+            "DEMISTO_SDK_CONSOLE_LOG_THRESHOLD",
+            logging.INFO,
+        ),
+        file_log_threshold=get_config_param_kwarg_env(
+            file_log_threshold,
+            "DEMISTO_SDK_FILE_LOG_THRESHOLD",
+            logging.DEBUG,
+        ),
+        log_file_path=get_config_param_kwarg_env(
+            log_file_path,
+            "DEMISTO_SDK_LOG_FILE_PATH",
+            None,
+        ),
     )
     handle_deprecated_args(ctx.args)
     errors = False

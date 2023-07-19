@@ -121,11 +121,6 @@ class BaseContent(ABC, BaseModel, metaclass=BaseContentMetaclass):
         # if has name attribute, return it, otherwise return the object id
         return self.object_id
 
-    @property
-    @abstractmethod
-    def deprecated(self) -> bool:
-        pass
-
     def to_dict(self) -> Dict[str, Any]:
         """
         This returns a JSON dictionary representation of the class.

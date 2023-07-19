@@ -1,18 +1,16 @@
 from typing import Tuple
 
-from demisto_sdk.commands.common.constants import LAYOUT_AND_MAPPER_BUILT_IN_FIELDS
 from demisto_sdk.commands.common.logger import logger
-from demisto_sdk.commands.common.tools import (
-    get_all_incident_and_indicator_fields_from_id_set,
-    get_invalid_incident_fields_from_mapper,
-)
-from demisto_sdk.commands.common.update_id_set import BUILT_IN_FIELDS
+from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.format.format_constants import (
     ERROR_RETURN_CODE,
     SKIP_RETURN_CODE,
     SUCCESS_RETURN_CODE,
 )
 from demisto_sdk.commands.format.update_generic_json import BaseUpdateJSON
+from demisto_sdk.commands.content_graph.interface.neo4j.neo4j_graph import (
+    Neo4jContentGraphInterface as ContentGraphInterface,
+)
 
 
 class MapperJSONFormat(BaseUpdateJSON):
@@ -40,6 +38,8 @@ class MapperJSONFormat(BaseUpdateJSON):
             no_validate=no_validate,
             **kwargs,
         )
+
+        self.graph = ContentGraphInterface(should_update=True)  # TODO Remove the should_update
 
     def run_format(self) -> int:
         try:
@@ -78,22 +78,22 @@ class MapperJSONFormat(BaseUpdateJSON):
         """
         Remove non-existent fields from a mapper.
         """
-        if not self.id_set_file:
-            logger.warning(
-                f"Skipping formatting of non-existent-fields for {self.source_file} as id_set_path argument is missing"
-            )
-            return
+        # get the relevant content item from the graph
+        results = self.graph.search(object_id=self.data.get('id', ''))
+        mapper_node = {}
+        for result in results:
+            if result.content_type == ContentType.MAPPER and str(result.path) == self.source_file:
+                mapper_node = result
+                break
 
-        content_fields = (
-            get_all_incident_and_indicator_fields_from_id_set(
-                self.id_set_file, "mapper"
-            )
-            + [field.lower() for field in BUILT_IN_FIELDS]
-            + LAYOUT_AND_MAPPER_BUILT_IN_FIELDS
-        )
+        # find the fields that aren't in the content repo
+        fields_not_in_repo = []
+        for field in mapper_node.uses:
+            if field.content_item_to.not_in_repository:
+                fields_not_in_repo.append(field.content_item_to.name)
 
+        # remove the fields that aren't in the repo
         mapper = self.data.get("mapping", {})
-        mapping_type = self.data.get("type", {})
 
         for mapping_name in mapper.values():
             internal_mapping_fields = mapping_name.get("internalMapping") or {}
@@ -101,9 +101,5 @@ class MapperJSONFormat(BaseUpdateJSON):
                 inc_name: inc_info
                 for inc_name, inc_info in internal_mapping_fields.items()
                 if inc_name
-                not in get_invalid_incident_fields_from_mapper(
-                    mapper_incident_fields=internal_mapping_fields,
-                    mapping_type=mapping_type,
-                    content_fields=content_fields,
-                )
+                not in fields_not_in_repo
             }

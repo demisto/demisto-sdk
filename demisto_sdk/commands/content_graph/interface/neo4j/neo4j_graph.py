@@ -55,6 +55,7 @@ from demisto_sdk.commands.content_graph.interface.neo4j.queries.nodes import (
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.relationships import (
     _match_relationships,
     create_relationships,
+    get_items_by_cli_name
 )
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.validations import (
     get_items_using_deprecated,
@@ -613,3 +614,16 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             except Exception as e:
                 logger.error(f"Error when running query: {e}")
                 raise e
+
+    def get_content_items_by_cli_names(self, cli_name_list: List[str], item_type: str) -> list[tuple[str, str, list]]:
+        """
+            This searches the database for content items and returns a list of them, including their relationships
+            Args:
+                cli_name_list (List[str]): A list of cli_names of the wanted incident fields.
+                item_type (str): The type of the items to be fetched (IncidentField, IndicatorField etc.)
+            Returns:
+                list[tuple[str, str, list]: A list of tuples, each tuple represent an incident field.
+            In each tuple there are the incident field cli name, it's file path and a list of the marketplaces he is in.
+        """
+        with self.driver.session() as session:
+            return session.execute_read(get_items_by_cli_name, cli_name_list, 'IncidentField')

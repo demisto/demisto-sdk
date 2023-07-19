@@ -268,7 +268,7 @@ class ArtifactsManager:
             # Add suffix
             suffix_handler(self)
 
-        if os.path.exists("keyfile"):
+        if Path("keyfile").exists():
             os.remove("keyfile")
         logger.info(f"\nExecution time: {time.time() - self.execution_start} seconds")
 
@@ -684,7 +684,7 @@ def ProcessPoolHandler(artifact_manager: ArtifactsManager) -> ProcessPool:
             pool.close()
             pool.join()
         finally:
-            if os.path.exists("keyfile"):
+            if Path("keyfile").exists():
                 os.remove("keyfile")
 
 

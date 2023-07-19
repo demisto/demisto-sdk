@@ -1,5 +1,6 @@
 import glob
 from typing import List, Optional
+from pathlib import Path
 
 from demisto_sdk.commands.common.constants import (
     BETA_INTEGRATION_DISCLAIMER,
@@ -262,7 +263,7 @@ class DescriptionValidator(BaseValidator):
                     f"{os.path.splitext(self.file_path)[0]}_description.md"
                 )
 
-                if not os.path.exists(description_path):
+                if not Path(description_path).exists():
                     error_message, error_code = Errors.no_description_file_warning()
                     self.handle_error(
                         error_message,

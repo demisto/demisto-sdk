@@ -231,7 +231,7 @@ class ContributionConverter:
         Returns:
             str: A unique pack directory name
         """
-        while os.path.exists(os.path.join(self.packs_dir_path, pack_dir)):
+        while Path(os.path.join(self.packs_dir_path, pack_dir)).exists():
             logger.info(
                 f"Modifying pack name because pack {pack_dir} already exists in the content repo"
             )
@@ -306,7 +306,7 @@ class ContributionConverter:
             dst_name = ENTITY_TYPE_TO_DIR.get(basename, "")
             src_path = os.path.join(self.pack_dir_path, basename)
             dst_path = os.path.join(self.pack_dir_path, dst_name)
-            if os.path.exists(dst_path):
+            if Path(dst_path).exists():
                 # move src folder files to dst folder
                 for _, _, files in os.walk(src_path, topdown=False):
                     for name in files:
@@ -410,7 +410,7 @@ class ContributionConverter:
 
                     if file.startswith(FileType.INDICATOR_FIELD.value):
                         # At first time, create another dir for all indicator-fields files and move them there
-                        if not os.path.exists(dst_ioc_fields_dir):
+                        if not Path(dst_ioc_fields_dir).exists():
                             os.makedirs(dst_ioc_fields_dir)
                         file_path = os.path.join(self.pack_dir_path, dir_name, file)
                         shutil.move(file_path, dst_ioc_fields_dir)  # type: ignore
@@ -646,10 +646,10 @@ class ContributionConverter:
                         # Moving the unified file to its package.
                         shutil.move(content_item_file_path, output_path)
                     if del_unified:
-                        if os.path.exists(content_item_file_path):
-                            os.remove(content_item_file_path)
+                        if Path(content_item_file_path):
+                            os.remove(content_item_file_path).exists()
                         moved_unified_dst = os.path.join(output_path, child_file_name)
-                        if os.path.exists(moved_unified_dst):
+                        if Path(moved_unified_dst).exists():
                             os.remove(moved_unified_dst)
 
     def create_pack_base_files(self):

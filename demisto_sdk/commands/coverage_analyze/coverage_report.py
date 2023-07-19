@@ -2,6 +2,7 @@ import os
 from typing import Dict, Optional, Union
 
 import coverage
+from pathlib import Path
 
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.coverage_analyze.helpers import (
@@ -97,7 +98,7 @@ class CoverageReport:
         return self.default
 
     def coverage_report(self):
-        if not os.path.exists(self.cov.config.data_file):
+        if not Path(self.cov.config.data_file).exists():
             logger.debug(
                 f"coverage report {self.cov.config.data_file} file not found. "
             )

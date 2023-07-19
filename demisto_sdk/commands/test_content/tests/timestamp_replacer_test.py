@@ -36,7 +36,7 @@ def tz(request):
     original_tz = os.getenv("TZ")
     os.environ["TZ"] = "UTC"
 
-    def teardown():
+    def teardown_method():
         if original_tz:
             os.environ["TZ"] = original_tz
 

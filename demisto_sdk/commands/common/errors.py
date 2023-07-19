@@ -4041,8 +4041,10 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def customer_facing_docs_disallowed_terms(found_terms: List[str]):
-        return f"Found internal terms in a customer-facing documentation file: " \
-               f"{', '.join(found_terms)}"
+        return (
+            f"Found internal terms in a customer-facing documentation file: "
+            f"{', '.join(found_terms)}"
+        )
 
     @staticmethod
     @error_code_decorator

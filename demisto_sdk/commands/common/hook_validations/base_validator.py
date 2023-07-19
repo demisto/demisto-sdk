@@ -10,11 +10,11 @@ from demisto_sdk.commands.common.constants import (
 )
 from demisto_sdk.commands.common.errors import (
     ALLOWED_IGNORE_ERRORS,
-    Errors,
     FOUND_FILES_AND_ERRORS,
     FOUND_FILES_AND_IGNORED_ERRORS,
     PRESET_ERROR_TO_CHECK,
     PRESET_ERROR_TO_IGNORE,
+    Errors,
     get_all_error_codes,
     get_error_object,
 )
@@ -424,7 +424,9 @@ class BaseValidator:
         return True
 
     @error_codes("BA125")
-    def validate_no_disallowed_terms_in_customer_facing_docs(self, file_content: str, file_path: str) -> bool:
+    def validate_no_disallowed_terms_in_customer_facing_docs(
+        self, file_content: str, file_path: str
+    ) -> bool:
         """
         Validate that customer facing docs and fields don't contain any internal terms that aren't clear for customers.
 
@@ -435,11 +437,13 @@ class BaseValidator:
         Returns:
             bool: True if no such terms were found, False otherwise.
         """
-        disallowed_terms = [  # These terms are checked regardless for case (case-insensitive)
-            "test-module",
-            "test module",
-            "long-running-execution",
-        ]
+        disallowed_terms = (
+            [  # These terms are checked regardless for case (case-insensitive)
+                "test-module",
+                "test module",
+                "long-running-execution",
+            ]
+        )
 
         found_terms = []
 
@@ -450,7 +454,9 @@ class BaseValidator:
 
         # Raise error if disallowed terms found
         if found_terms:
-            error_message, error_code = Errors.customer_facing_docs_disallowed_terms(found_terms=found_terms)
+            error_message, error_code = Errors.customer_facing_docs_disallowed_terms(
+                found_terms=found_terms
+            )
 
             if self.handle_error(
                 error_message,

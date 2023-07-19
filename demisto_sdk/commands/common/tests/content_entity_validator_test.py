@@ -294,11 +294,16 @@ def test_validate_unit_test_exists(
     assert content_entity_validator.validate_unit_test_exists() == expected_result
 
 
-@pytest.mark.parametrize("file_content, expected_result", [
-    ("This is an example with the 'test-module' term within it.", False),
-    ("This is an example without the term in it", True),
-])
-def test_validate_no_disallowed_terms_in_customer_facing_docs(file_content: str, expected_result: bool):
+@pytest.mark.parametrize(
+    "file_content, expected_result",
+    [
+        ("This is an example with the 'test-module' term within it.", False),
+        ("This is an example without the term in it", True),
+    ],
+)
+def test_validate_no_disallowed_terms_in_customer_facing_docs(
+    file_content: str, expected_result: bool
+):
     """
     Given:
     - Content of a customer-facing docs file
@@ -310,8 +315,12 @@ def test_validate_no_disallowed_terms_in_customer_facing_docs(file_content: str,
     - Ensure that if a disallowed term is found, False is returned, and True otherwise.
     """
     base_validator = BaseValidator()
-    assert base_validator.validate_no_disallowed_terms_in_customer_facing_docs(file_content=file_content,
-                                                                               file_path="") == expected_result
+    assert (
+        base_validator.validate_no_disallowed_terms_in_customer_facing_docs(
+            file_content=file_content, file_path=""
+        )
+        == expected_result
+    )
 
 
 FROM_AND_TO_VERSION_FOR_TEST = [

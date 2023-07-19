@@ -630,7 +630,9 @@ class TestScriptValidator:
             ),
         ],
     )
-    def test_is_line_ends_with_dot(self, repo, yml_content: dict, use_git: bool, expected_results: bool):
+    def test_is_line_ends_with_dot(
+        self, repo, yml_content: dict, use_git: bool, expected_results: bool
+    ):
         """
         Given:
             A yml content, use_git flag, and expected_results.

@@ -3431,6 +3431,14 @@ def run_unit_tests(
 
 @main.command(short_help="Run unit tests in a docker for integrations and scripts")
 @click.option(
+    "-i",
+    "--input",
+    type=PathsParamType(
+        exists=True, resolve_path=True
+    ),  # PathsParamType allows passing a list of paths
+    help="The path of the content pack/file to validate specifically.",
+)
+@click.option(
     "--create-virtualenv",
     is_flag=True,
     default=False,
@@ -3443,10 +3451,12 @@ def run_unit_tests(
     help="Overwrite the virtualenv if it already exists. To use with `create-virtualenv` flag",
 )
 @click.argument("file_paths", nargs=-1, type=click.Path(exists=True, resolve_path=True))
-def setup_env(file_paths, create_virtualenv, overwrite_virtualenv):
+def setup_env(input, file_paths, create_virtualenv, overwrite_virtualenv):
     from demisto_sdk.commands.setup_env.setup_environment import (
         setup,
     )
+    if input:
+        file_paths = tuple(input.split(","))
 
     setup(
         file_paths,

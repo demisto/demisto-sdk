@@ -140,7 +140,7 @@ class DockerBase:
         except docker.errors.ImageNotFound:
             logger.debug(f"docker {=image} not found locally, pulling")
             docker_client.images.pull(image)
-            logger.debug(f"docker image {image} finished pulling")
+            logger.debug(f"pulled docker {image=} successfully")
             return docker_client.images.get(image)
 
     @staticmethod

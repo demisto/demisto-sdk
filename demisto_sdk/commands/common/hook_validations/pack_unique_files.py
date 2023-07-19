@@ -429,19 +429,15 @@ class PackUniqueFilesValidator(BaseValidator):
     def validate_non_ignorable_error(self):
         """Check if .pack-ignore structure is parse-able"""
         ignore_file = self._parse_file_into_list(self.pack_ignore_file)
-        errors = [
-            ignore_error.replace("ignore=", "")
-            for ignore_error in ignore_file
-            if "ignore=" in ignore_error
-        ]
-        errors_list = ",".join(errors).split(",")
-        nonignoable_errors = set(errors_list) - set(ALLOWED_IGNORE_ERRORS)
-        if nonignoable_errors:
-            if self._add_error(
-                Errors.pack_have_nonignorable_error(nonignoable_errors),
-                self.pack_ignore_file,
-            ):
-                return False
+        errors = [ignore_error.replace('ignore=', '') for ignore_error in ignore_file if "ignore=" in ignore_error]
+        if errors:
+            errors_list = ','.join(errors).split(',')
+            nonignoable_errors = set(errors_list) - set(ALLOWED_IGNORE_ERRORS)
+            if nonignoable_errors:
+                if self._add_error(
+                    Errors.pack_have_nonignorable_error(nonignoable_errors),
+                    self.pack_ignore_file):
+                    return False
         return True
 
     # pack metadata validation

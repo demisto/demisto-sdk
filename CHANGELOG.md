@@ -1,5 +1,6 @@
 # Changelog
 ## Unreleased
+* Added a validation to ensure there's a '.' in the end of each description field in integration and script yml files.
 * Fixed an issue where **validate** falsely detected backwards-compatibility issues, and prevented adding the `marketplaces` key to content items.
 * Calling **format** with the `-d` flag now removes test playbooks testing the deprecated content from conf.json.
 * Fixed an issue where in some cases the **split** command did not remove pack version note from the script.

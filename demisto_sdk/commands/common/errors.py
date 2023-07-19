@@ -41,7 +41,7 @@ ALLOWED_IGNORE_ERRORS = [
     "BA116",
     "BA119",
     "BA124",
-    "DS107",
+    "BA125" "DS107",
     "GF102",
     "IF100",
     "IF106",
@@ -213,6 +213,10 @@ ERROR_CODE = {
     "missing_unit_test_file": {
         "code": "BA124",
         "related_field": "",
+    },
+    "description_missing_dot_at_the_end": {
+        "code": "BA125",
+        "related_field": "description",
     },
     # BC - Backward Compatible
     "breaking_backwards_subtype": {
@@ -4025,6 +4029,11 @@ class Errors:
     @error_code_decorator
     def missing_unit_test_file(path: Path):
         return f"Missing {path.stem}_test.py unit test file for {path.name}."
+
+    @staticmethod
+    @error_code_decorator
+    def description_missing_dot_at_the_end(lines_with_missing_dot):
+        return f"The following lines contains description with missing '.' at the end of the line:\n{lines_with_missing_dot}"
 
     @staticmethod
     @error_code_decorator

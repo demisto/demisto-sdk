@@ -2641,3 +2641,115 @@ class TestisContextChanged:
             integration_validator.is_native_image_does_not_exist_in_yml()
             == is_validation_ok
         )
+
+    @pytest.mark.parametrize(
+        "yml_content, use_git, expected_results",
+        [
+            ({"description": "description without dot"}, False, True),
+            (
+                {
+                    "description": "a yml description with a dot at the end.",
+                    "script": {
+                        "commands": [
+                            {
+                                "arguments": [
+                                    {
+                                        "name": "test_arg",
+                                        "description": "description without dot",
+                                    }
+                                ]
+                            }
+                        ],
+                        "name": "test_command",
+                    },
+                },
+                True,
+                False,
+            ),
+            (
+                {
+                    "description": "a yml description with a dot at the end.",
+                    "script": {
+                        "commands": [
+                            {
+                                "outputs": [
+                                    {
+                                        "contextPath": "test.path",
+                                        "description": "description without dot",
+                                    }
+                                ]
+                            }
+                        ],
+                        "name": "test_command",
+                    },
+                },
+                True,
+                False,
+            ),
+            (
+                {
+                    "description": "a yml description with a dot at the end.",
+                    "script": {
+                        "commands": [
+                            {
+                                "arguments": [
+                                    {
+                                        "name": "test_arg",
+                                        "description": "description with dot.",
+                                    }
+                                ]
+                            }
+                        ],
+                        "name": "test_command",
+                    },
+                },
+                True,
+                True,
+            ),
+            (
+                {
+                    "description": "a yml description with a dot at the end.",
+                    "script": {
+                        "commands": [
+                            {
+                                "outputs": [
+                                    {
+                                        "contextPath": "test.path",
+                                        "description": "description with dot.",
+                                    }
+                                ]
+                            }
+                        ],
+                        "name": "test_command",
+                    },
+                },
+                True,
+                True,
+            ),
+        ],
+    )
+    def test_is_line_ends_with_dot(self, repo, yml_content, use_git, expected_results):
+        """
+        Given:
+            A yml content, use_git flag, and expected_results.
+            - Case 1: A yml content with a description without a dot at the end of the sentence, and use_git flag set to False.
+            - Case 2: A yml content with a command that an argument with a description without a dot at the end of the sentence, and use_git flag set to True.
+            - Case 3: A yml content with a command that a context path with a description without a dot at the end of the sentence, and use_git flag set to True.
+            - Case 4: A yml content with a command that an argument with a description with a dot at the end of the sentence, and use_git flag set to True.
+            - Case 5: A yml content with a command that a context path with a description with a dot at the end of the sentence, and use_git flag set to True.
+        When:
+            - when executing the is_line_ends_with_dot method
+        Then:
+            - Case 1: make sure the validation pass.
+            - Case 2: make sure the validation fails.
+            - Case 3: make sure the validation fails.
+            - Case 4: make sure the validation pass.
+            - Case 5: make sure the validation pass.
+        """
+        pack = repo.create_pack("test")
+        integration = pack.create_integration(yml=yml_content)
+        structure_validator = StructureValidator(integration.yml.path)
+        integration_validator = IntegrationValidator(
+            structure_validator, json_file_path=integration.yml.path, using_git=use_git
+        )
+        assert integration_validator.is_line_ends_with_dot() == expected_results

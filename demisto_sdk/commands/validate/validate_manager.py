@@ -1508,6 +1508,7 @@ class ValidateManager:
             json_file_path=self.json_file_path,
             validate_all=self.validate_all,
             deprecation_validator=self.deprecation_validator,
+            using_git=self.use_git,
         )
 
         deprecated_result = self.check_and_validate_deprecated(
@@ -1551,6 +1552,7 @@ class ValidateManager:
             json_file_path=self.json_file_path,
             validate_all=self.validate_all,
             deprecation_validator=self.deprecation_validator,
+            using_git=self.use_git,
         )
 
         deprecated_result = self.check_and_validate_deprecated(
@@ -1581,6 +1583,7 @@ class ValidateManager:
             skip_docker_check=self.skip_docker_checks,
             json_file_path=self.json_file_path,
             validate_all=self.validate_all,
+            using_git=self.use_git,
         )
         return integration_validator.is_valid_beta_integration()
 

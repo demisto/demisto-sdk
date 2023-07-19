@@ -38,6 +38,7 @@ class ScriptValidator(ContentEntityValidator):
         json_file_path=None,
         validate_all=False,
         deprecation_validator=None,
+        using_git=False,
     ):
         super().__init__(
             structure_validator,
@@ -45,6 +46,7 @@ class ScriptValidator(ContentEntityValidator):
             skip_docker_check=skip_docker_check,
             json_file_path=json_file_path,
         )
+        self.running_validations_using_git = using_git
         self.validate_all = validate_all
         self.deprecation_validator = deprecation_validator
 
@@ -107,6 +109,7 @@ class ScriptValidator(ContentEntityValidator):
                 self.is_script_deprecated_and_used(),
                 self.is_nativeimage_key_does_not_exist_in_yml(),
                 self.validate_unit_test_exists(),
+                self.is_line_ends_with_dot(),
             ]
         )
         # check only on added files
@@ -530,4 +533,27 @@ class ScriptValidator(ContentEntityValidator):
             )
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 return False
+        return True
+
+    @error_codes("BA125")
+    def is_line_ends_with_dot(self):
+        line_with_missing_dot = ""
+        if self.running_validations_using_git:
+            line_with_missing_dot = super().is_line_ends_with_dot(
+                self.current_file, "args"
+            )
+            if not self.current_file.get("comment", "").endswith("."):
+                line_with_missing_dot += "The file's description field is missing a '.' in the end of the sentence."
+
+            if line_with_missing_dot:
+                error_message, error_code = Errors.description_missing_dot_at_the_end(
+                    line_with_missing_dot
+                )
+                if self.handle_error(
+                    error_message,
+                    error_code,
+                    file_path=self.file_path,
+                    suggested_fix=Errors.suggest_fix(self.file_path),
+                ):
+                    return False
         return True

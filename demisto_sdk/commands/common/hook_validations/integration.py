@@ -84,6 +84,7 @@ class IntegrationValidator(ContentEntityValidator):
         json_file_path=None,
         validate_all=False,
         deprecation_validator=None,
+        using_git=False,
     ):
         super().__init__(
             structure_validator,
@@ -91,6 +92,7 @@ class IntegrationValidator(ContentEntityValidator):
             json_file_path=json_file_path,
             skip_docker_check=skip_docker_check,
         )
+        self.running_validations_using_git = using_git
         self.validate_all = validate_all
         self.deprecation_validator = deprecation_validator
 
@@ -171,6 +173,7 @@ class IntegrationValidator(ContentEntityValidator):
             self.are_common_outputs_with_description(),
             self.is_native_image_does_not_exist_in_yml(),
             self.validate_unit_test_exists(),
+            self.is_line_ends_with_dot(),
         ]
 
         return all(answers)
@@ -2335,4 +2338,29 @@ class IntegrationValidator(ContentEntityValidator):
             )
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 return False
+        return True
+
+    @error_codes("BA125")
+    def is_line_ends_with_dot(self):
+        line_with_missing_dot = ""
+        if self.running_validations_using_git:
+            for command in self.current_file.get("script", {}).get("commands", []):
+                current_command = super().is_line_ends_with_dot(command, "arguments")
+                if current_command:
+                    line_with_missing_dot += (
+                        f"- In command {command.get('name')}:\n{current_command}"
+                    )
+            if not self.current_file.get("description", "").endswith("."):
+                line_with_missing_dot += "The file's description field is missing a '.' in the end of the sentence."
+            if line_with_missing_dot:
+                error_message, error_code = Errors.description_missing_dot_at_the_end(
+                    line_with_missing_dot
+                )
+                if self.handle_error(
+                    error_message,
+                    error_code,
+                    file_path=self.file_path,
+                    suggested_fix=Errors.suggest_fix(self.file_path),
+                ):
+                    return False
         return True

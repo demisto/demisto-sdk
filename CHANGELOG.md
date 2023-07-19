@@ -12,6 +12,7 @@
 * Fixed an issue where **pre-commit** running when there was no change to the files
 * Fixed an issue where errors in **validate** were logged as `info`.
 * Fixed an issue where the **format** command would change the value of the `unsearchable` key in fields.
+* Added support for `ruff` check TID251 to prevent importing the `logging` framework directly.
 
 
 ## 1.17.2

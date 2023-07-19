@@ -4313,6 +4313,5 @@ class Errors:
     @error_code_decorator
     def pack_have_nonignorable_error(nonignorable_errors: List[str]):
         return (
-            "The following ignore errors are not allow:",
-            f"{', '.join(nonignorable_errors)}," "Please remove this error codes",
+            f"The following errors can not be ignored: {', '.join(nonignorable_errors)}, remove them from .pack-ignore files"
         )

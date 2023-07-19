@@ -211,7 +211,7 @@ def main(ctx, config, version, release_notes, **kwargs):
             last_release = ""
             if not os.environ.get(
                 "CI"
-            ):  # Check only when no on CI (e.g running locally).
+            ):  # Check only when not running in CI (e.g running locally).
                 last_release = get_last_remote_release_version()
             logger.info(f"[yellow]You are using demisto-sdk {__version__}.[/yellow]")
             if last_release and __version__ != last_release:

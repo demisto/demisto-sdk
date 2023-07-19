@@ -1,0 +1,61 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        // here
+        {
+            "name": "Docker: Debug in docker",
+            "type": "docker",
+            "request": "launch",
+            "preLaunchTask": "docker-run: debug",
+            "python": {
+              "pathMappings": [
+                {
+                  "localRoot": "${workspaceFolder}",
+                  "remoteRoot": "/app"
+                }
+              ],
+              "projectType": "general",
+              "justMyCode": false,
+            }
+          },
+          {
+            "name": "Docker: Debug tests in docker",
+            "type": "docker",
+            "request": "launch",
+            "preLaunchTask": "docker-run: test",
+            "python": {
+
+              "pathMappings": [
+                {
+                  "localRoot": "${workspaceFolder}",
+                  "remoteRoot": "/app",
+                },
+              ],
+              "projectType": "general",
+              "justMyCode": false
+
+            }
+        },
+        {
+          "name": "Python: Debug Integration locally",
+          "type": "python",
+          "request": "launch",
+          "program": "${file}",
+          "console": "integratedTerminal",
+          "cwd": "${workspaceFolder}",
+          "justMyCode": false,
+      },
+      {
+        "name": "Python: Debug Tests",
+        "type": "python",
+        "request": "launch",
+        "program": "${file}",
+        "purpose": ["debug-test"],
+        "console": "integratedTerminal",
+        "justMyCode": false
+      }
+
+
+
+    ]
+}

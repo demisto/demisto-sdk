@@ -3429,6 +3429,32 @@ def run_unit_tests(
     sys.exit(unit_test_runner(file_paths, verbose))
 
 
+@main.command(short_help="Run unit tests in a docker for integrations and scripts")
+@click.option(
+    "--create-virtualenv",
+    is_flag=True,
+    default=False,
+    help="Create a virtualenv for the environment",
+)
+@click.option(
+    "--overwrite-virtualenv",
+    is_flag=True,
+    default=False,
+    help="Overwrite the virtualenv if it already exists. To use with `create-virtualenv` flag",
+)
+@click.argument("file_paths", nargs=-1, type=click.Path(exists=True, resolve_path=True))
+def configure_environment(file_paths, create_virtualenv, overwrite_virtualenv):
+    from demisto_sdk.commands.configure_environment.configure_environment import (
+        configure,
+    )
+
+    configure(
+        file_paths,
+        create_virtualenv=create_virtualenv,
+        overwrite_virtualenv=overwrite_virtualenv,
+    )
+
+
 @main.result_callback()
 def exit_from_program(result=0, **kwargs):
     sys.exit(result)

@@ -1,0 +1,57 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+      {
+        "type": "docker-build",
+        "label": "docker-build",
+        "dockerBuild": {
+          "context": "${workspaceFolder}/.vscode",
+          "dockerfile": "${workspaceFolder}/.vscode/Dockerfile-pytest",
+          "tag": "devtestdemisto:${workspaceFolderBasename}-pytest",
+          "buildArgs": {
+            "IMAGENAME": "",
+          }
+        }
+      },
+      {
+        "type": "docker-run",
+        "label": "docker-run: debug",
+        "python": {
+          "file": ""
+        },
+        "dockerRun": {
+            "image": "",
+            "volumes": [
+                {
+                    "localPath": "${workspaceFolder}",
+                    "containerPath": "/app"
+
+                }
+            ],
+
+        },
+
+      },
+      {
+        "type": "docker-run",
+        "label": "docker-run: test",
+        "dependsOn":["docker-build"],
+        "python": {
+          "module": "pytest",
+          "args": ["-s", ""],
+        },
+
+        "dockerRun": {
+            "image": "devtestdemisto:${workspaceFolderBasename}-pytest",
+            "volumes": [
+                {
+                    "localPath": "${workspaceFolder}",
+                    "containerPath": "/app",
+                }
+            ],
+
+          }
+
+      }
+    ]
+  }

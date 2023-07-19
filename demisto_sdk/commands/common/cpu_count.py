@@ -1,4 +1,4 @@
-import logging
+import logging  # noqa: TID251 - Prevent circular import
 import os
 
 logger = logging.getLogger(

@@ -1,4 +1,4 @@
-import logging
+import logging  # noqa: TID251 - Prevent circular import
 from pathlib import Path
 
 from demisto_sdk.commands.common.tools import get_content_path

@@ -774,10 +774,10 @@ class TestMergeScriptPackageToYMLIntegration:
             if param["name"] == "credentials":
                 assert "hidden" not in param
                 assert (param["hiddenusername"]) == (
-                        marketplace == MarketplaceVersions.XSOAR
+                    marketplace == MarketplaceVersions.XSOAR
                 )
                 assert (param["hiddenpassword"]) == (
-                        marketplace == MarketplaceVersions.XSOAR
+                    marketplace == MarketplaceVersions.XSOAR
                 )
 
     def test_unify_integration__detailed_description_with_special_char(self, mocker):

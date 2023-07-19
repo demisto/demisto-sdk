@@ -143,7 +143,7 @@ class IntegrationScriptUnifier(Unifier):
         for i, param in enumerate(data.get("configuration", ())):
             if isinstance(hidden := (param.get("hidden")), list):
                 # converts list to bool
-                if param.get('name') == "credentials" and param.get("type") == 9:
+                if param.get("name") == "credentials" and param.get("type") == 9:
                     data["configuration"][i]["hiddenusername"] = marketplace in hidden
                     data["configuration"][i]["hiddenpassword"] = marketplace in hidden
                     data["configuration"][i].pop("hidden")

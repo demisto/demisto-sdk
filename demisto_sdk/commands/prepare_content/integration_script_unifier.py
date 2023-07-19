@@ -134,6 +134,8 @@ class IntegrationScriptUnifier(Unifier):
 
         This method replaces a list with a boolean, according to the self.marketplace value.
         Boolean values are left untouched.
+        when credentials of type 9 are hidden, the function will replace the hidden key with
+        hiddenusername and hiddenpassword.
         """
         if not marketplace:
             return
@@ -141,7 +143,12 @@ class IntegrationScriptUnifier(Unifier):
         for i, param in enumerate(data.get("configuration", ())):
             if isinstance(hidden := (param.get("hidden")), list):
                 # converts list to bool
-                data["configuration"][i]["hidden"] = marketplace in hidden
+                if param.get("name") == "credentials" and param.get("type") == 9:
+                    data["configuration"][i]["hiddenusername"] = marketplace in hidden
+                    data["configuration"][i]["hiddenpassword"] = marketplace in hidden
+                    data["configuration"][i].pop("hidden")
+                else:  # type-4 param
+                    data["configuration"][i]["hidden"] = marketplace in hidden
 
     @staticmethod
     def add_custom_section(

@@ -53,8 +53,8 @@ class DescriptionValidator(BaseValidator):
             else {}
         )
 
-    def is_valid_file(self):
-        is_description_exist = self.is_description_file_exist()
+    def is_valid_file(self, validate_all: bool = False):
+        is_description_exist = self.is_description_file_exist(validate_all)
         self.is_duplicate_description(is_description_exist)
         self.verify_demisto_in_description_content()
 
@@ -139,8 +139,18 @@ class DescriptionValidator(BaseValidator):
         return True
 
     @error_codes("DS104")
-    def is_description_file_exist(self) -> bool:
-        """Check if a description_md file exists."""
+    def is_description_file_exist(self, validate_all: bool = False) -> bool:
+        """
+        Validates if there is an integration description.md file in the same folder as the caller file.
+        The validation is processed only on added or modified files.
+
+        Args:
+            validate_all: (bool) is the validation being run with -a
+        Return:
+           True if the description file exits False with an error otherwise
+        """
+        if validate_all:
+            return False
         if self.file_path.endswith('_description.md'):
             return True
 
@@ -163,7 +173,7 @@ class DescriptionValidator(BaseValidator):
                     self.handle_error(
                         error_message,
                         error_code,
-                        file_path=self.file_path,
+                        file_path=expected_description_name,
                         warning=False,
                     )
                     return False
@@ -171,7 +181,7 @@ class DescriptionValidator(BaseValidator):
                 return True
         return False
 
-    @error_codes("DS104")
+    @error_codes("DS103")
     def is_duplicate_description(self, is_description_in_package: bool):
         """Check if a description_md file exists. if yes, check if the integration has a non-duplicate description ."""
         is_description_in_yml = False
@@ -224,7 +234,7 @@ class DescriptionValidator(BaseValidator):
 
         return True
 
-    @error_codes("DS104,DS107")
+    @error_codes("DS107")
     def verify_demisto_in_description_content(self):
         """
         Checks if there are the word 'Demisto' in the description content.

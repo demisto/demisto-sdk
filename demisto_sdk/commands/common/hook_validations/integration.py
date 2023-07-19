@@ -412,8 +412,7 @@ class IntegrationValidator(ContentEntityValidator):
                     param_name,
                     "\n".join(err_msgs),
                     Errors.suggest_fix(file_path=self.file_path),
-                ),
-                "red",
+                )
             )
             self.is_valid = False
             return False
@@ -534,7 +533,7 @@ class IntegrationValidator(ContentEntityValidator):
                         flag = False
 
         if not flag:
-            logger.error(Errors.suggest_fix(self.file_path), "red")
+            logger.error(Errors.suggest_fix(self.file_path))
         return flag
 
     @error_codes("IN134")

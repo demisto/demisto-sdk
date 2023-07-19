@@ -34,11 +34,13 @@ from demisto_sdk.commands.common.tools import (
 from demisto_sdk.commands.doc_reviewer.known_words import KNOWN_WORDS
 from demisto_sdk.commands.doc_reviewer.rn_checker import ReleaseNotesChecker
 
+
 def remove_escape_characters(sentence: str) -> str:
-    escape_chars = ['\\n', '\\r', '\\b', '\\f', '\\t']
+    escape_chars = ["\\n", "\\r", "\\b", "\\f", "\\t"]
     for escape_char in escape_chars:
-        sentence = sentence.replace(escape_char, ' ')
+        sentence = sentence.replace(escape_char, " ")
     return sentence
+
 
 class DocReviewer:
     """Perform a spell check on the given .yml or .md file."""
@@ -173,10 +175,13 @@ class DocReviewer:
         return False
 
     @staticmethod
-    def camel_case_split(camel):
+    def camel_case_split(camel: str):
         """split camel case word into sub-words"""
         # Use regular expressions to split the CamelCase word into individual words
-        return re.findall(r'[A-Z](?:[a-z]+|[A-Z]*(?=[A-Z]|$))', camel)
+        matches = re.finditer(
+            ".+?(?:(?<=[a-z])(?=[A-Z])|(?<=[A-Z])(?=[A-Z][a-z])|$)", camel
+        )
+        return [m.group(0) for m in matches]
 
     def get_all_md_and_yml_files_in_dir(self, dir_name):
         """recursively get all the supported files from a given dictionary"""
@@ -407,7 +412,6 @@ class DocReviewer:
             candidates.discard(word)
             return candidates
         return None
-
 
     def check_sentence(self, sentence: str):
         if sentence:

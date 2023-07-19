@@ -1,7 +1,6 @@
 import inspect
 import itertools
 import os
-import random
 from typing import List
 
 import pytest
@@ -13,6 +12,10 @@ from TestSuite.json_based import JSONBased
 from TestSuite.playbook import Playbook
 from TestSuite.script import Script
 from TestSuite.test_tools import ChangeCWD
+
+# TODO: Remove this test file when CIAC-7485 is completed.
+# Currently this test uses the older dependencies creation, the content repo uses the newer graph method of creating
+# dependencies, but some other repos do not. We will remove this test when the other repos have been migrated to graph.
 
 
 def update_id_set(repo):
@@ -952,24 +955,22 @@ def create_inputs_for_method(repo, current_pack, inputs_arguments):
     return inputs_values, dependencies
 
 
-def run_random_methods(
+def run_defined_methods(
     repo, current_pack, current_methods_pool, number_of_methods_to_choose
 ):
-    """Runs random set of methods with size number_of_methods_to_choose
+    """Runs over a set of methods with size number_of_methods_to_choose
         out of the current_methods_pool.
 
     Args:
         repo (Repo): Content repo object.
         current_pack (int): ID of the pack that its objects will depend on other packs.
-        current_methods_pool (list): The pool of methods to choose from.
+        current_methods_pool (list): The pool of methods to run.
         number_of_methods_to_choose (int): Amount of methods to choose.
 
     Returns:
         Set. All the packs' names that `current_pack` should depend on.
     """
     all_dependencies = set()
-
-    random.shuffle(current_methods_pool)
 
     for i in range(number_of_methods_to_choose):
         chosen_method = current_methods_pool[i]
@@ -1027,7 +1028,7 @@ def test_dependencies(mocker, repo, test_number):
     pack_to_verify = 3  # Choose a specific pack to verify
 
     number_of_methods_to_choose = 2  # Choose a fixed number of methods to run
-    dependencies = run_random_methods(
+    dependencies = run_defined_methods(
         repo, pack_to_verify, METHODS_POOL.copy(), number_of_methods_to_choose
     )
 
@@ -1072,7 +1073,7 @@ def test_specific_entity(mocker, repo, entity_class):
         if "_" != method_name[0]
     ]
 
-    dependencies = run_random_methods(repo, 0, methods_pool, len(methods_pool))
+    dependencies = run_defined_methods(repo, 0, methods_pool, len(methods_pool) // 2)
 
     run_find_dependencies(mocker, repo.path, "pack_0")
 

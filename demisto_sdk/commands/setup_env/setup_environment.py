@@ -273,7 +273,7 @@ def setup(
         secret_id = secret_id or re.sub(r"[ ()]", "_", integration_script.name)
         if project_id := os.getenv("DEMISTO_GCP_PROJECT_ID"):
             params = get_integration_params(project_id, secret_id)
-            with open(ide_folder / "params.json", "w") as f:
+            with open(CONTENT_PATH / ".vscode" / "params.json", "w") as f:
                 json.dump(params, f, indent=4)
         else:
             logger.info("Skipping searching in Google Secret Manager as DEMISTO_GCP_PROJECT_ID is not set")

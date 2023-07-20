@@ -1,4 +1,3 @@
-import json
 import os
 from pathlib import Path
 from typing import Dict, List
@@ -10,6 +9,7 @@ from demisto_sdk.commands.common.constants import (
     GENERIC_COMMANDS_NAMES,
     MarketplaceVersions,
 )
+from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.content_graph.common import (
     ContentType,
@@ -22,6 +22,7 @@ from demisto_sdk.commands.content_graph.interface.neo4j.queries.common import (
     to_neo4j_map,
 )
 
+json = JSON_Handler()
 IGNORED_PACKS_IN_DEPENDENCY_CALC = ["NonSupported", "ApiModules"]
 
 MAX_DEPTH = 5

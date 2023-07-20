@@ -36,7 +36,7 @@ from TestSuite.test_tools import ChangeCWD
 
 
 @pytest.fixture(autouse=True)
-def setup(mocker, repo: Repo):
+def setup_method(mocker, repo: Repo):
     """Auto-used fixture for setup before every test run"""
     import demisto_sdk.commands.content_graph.objects.base_content as bc
 
@@ -898,3 +898,33 @@ class TestCreateContentGraph:
         assert (script_path / "script-getAlert.yml").exists()
         assert (script_path / "script-setIncident.yml").exists()
         assert not (script_path / "script-setAlert.yml").exists()
+
+    def test_create_content_graph_relationships_from_metadata(
+        self,
+        repo: Repo,
+    ):
+        """
+        Given:
+            - A mocked model of a repository with a pack Core, which depends on NonCorePack according to the pack metadata
+        When:
+            - Running create_content_graph().
+        Then:
+            - Make sure the relationship's is_test is not null.
+        """
+        core_metadata = load_json("pack_metadata.json")
+        core_metadata["name"] = "Core"
+        core_metadata["dependencies"].update(
+            {"NonCorePack": {"mandatory": True, "display_name": "Non Core Pack"}}
+        )
+        pack_core = repo.create_pack("Core")
+        repo.create_pack("NonCorePack")
+        pack_core.pack_metadata.write_json(core_metadata)
+
+        with ContentGraphInterface() as interface:
+            create_content_graph(interface)
+
+            data = interface.run_single_query(
+                "MATCH p=()-[r:DEPENDS_ON]->() WHERE r.is_test IS NULL RETURN p"
+            )
+
+            assert not data

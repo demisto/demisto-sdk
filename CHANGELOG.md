@@ -10,9 +10,9 @@
 * Fixed an issue where **validate** would not properly detect dependencies of core packs.
 * Removed usages of Random in unit tests to ensure the tests are deterministic.
 * **validate** will now run on all the pack content items when the pack supported marketplaces are modified.
+* **pre-commit** no longer runs when there are no modified files (unless provided with input files).
 * **lint** will now fail on `demisto.results` and `return_outputs` usage, when a pack is `xsoar` or `partner` supported.
 * **lint** will now fail on `LOG` usage in python files.
-* Fixed an issue where **pre-commit** running when there was no change to the files
 * Added the *deprecated* field to the pack object for the content-graph metadata.
 * Fixed an issue where errors in **validate** were logged as `info`.
 * Fixed an issue where **validate** error messages were not logged when an integration param, or the default argument in reputation commands is not valid.

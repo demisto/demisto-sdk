@@ -275,13 +275,13 @@ def setup(
         secret_id = secret_id or re.sub(r"[ ()]", "_", integration_script.name)
         if (project_id := os.getenv("DEMISTO_GCP_PROJECT_ID")) and isinstance(integration_script, Integration):
             params = get_integration_params(project_id, secret_id)
-            if params and instance_name and instance_name[0]:
-                if instance_created := create_integration_instance(
+            if params and instance_name:
+                if (instance_created := create_integration_instance(
                     integration_script.name,
                     instance_name,
                     params,
                     params.get("byoi", True),
-                ):
+                )) and instance_created[0]:
                     logger.info(f"Created integration instance {instance_created[0]['name']}")
                 else:
                     logger.warning(f"Failed to create integration instance {instance_name}")

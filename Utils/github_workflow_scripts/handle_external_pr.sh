@@ -1,5 +1,7 @@
 #!/bin/bash
 
+git checkout "$HEAD"
+
 reviewers=$(curl -s "https://raw.githubusercontent.com/demisto/content/master/.github/content_roles.json")
 contribution_tl=$(echo "$reviewers" | jq -r '.CONTRIBUTION_TL')
 
@@ -9,7 +11,7 @@ echo "Adding contributions TL $contribution_tl as assignee and reviewer"
 gh pr edit --add-label "Contribution"
 gh pr comment --body "$(cat ./contribution_comment.md)"
 
-security_items="Playbooks|IncidentTypes|IncidentFields|IndicatorTypes|IndicatorFields|Layouts|Classifiers|sourcery"
+security_items="Playbooks|IncidentTypes|IncidentFields|IndicatorTypes|IndicatorFields|Layouts|Classifiers"
 
 if git diff --name-only $HEAD..$BASE | grep -E "$security_items"; then
     security_reviewer=$(echo "$reviewers" | jq -r '.CONTRIBUTION_SECURITY_REVIEWER')

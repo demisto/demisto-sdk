@@ -163,7 +163,7 @@ class IntegrationYMLFormat(BaseUpdateYML):
 
             # ignore optional fields
             for param in params:
-                for field in ("defaultvalue", "section", "advanced", "required"):
+                for field in ("defaultvalue", "section", "advanced"):
                     param.pop(field, None)
 
             # get the iten marketplaces to decide which are the required params

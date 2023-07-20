@@ -875,7 +875,6 @@ def get_yaml(
         get_file.cache_clear()
     return get_file(
         file_path,
-        "yml",
         clear_cache=cache_clear,
         keep_order=keep_order,
         return_content=return_content,
@@ -886,7 +885,7 @@ def get_json(file_path, cache_clear=False, return_content: bool = False):
     if cache_clear:
         get_file.cache_clear()
     return get_file(
-        file_path, "json", clear_cache=cache_clear, return_content=return_content
+        file_path, clear_cache=cache_clear, return_content=return_content
     )
 
 

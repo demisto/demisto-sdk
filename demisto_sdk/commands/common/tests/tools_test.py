@@ -68,7 +68,7 @@ from demisto_sdk.commands.common.tools import (
     get_ignore_pack_skipped_tests,
     get_item_marketplaces,
     get_last_release_version,
-    # get_last_remote_release_version,
+    get_last_remote_release_version,
     get_latest_release_notes_text,
     get_marketplace_to_core_packs,
     get_pack_metadata,
@@ -1489,7 +1489,7 @@ def test_test2(requests_mock):
         SDK_PYPI_VERSION,
         json={"info": {"version": expected_version}},
     )
-    assert tools.get_last_remote_release_version_new() == expected_version
+    assert tools.get_last_remote_release_version() == expected_version
 
 def test_test3(requests_mock):
     expected_version = "1.3.8"

@@ -726,7 +726,7 @@ def is_origin_content_repo():
 
 
 @lru_cache
-def get_last_remote_release_version_new():
+def get_last_remote_release_version():
     """
     Get latest release tag from PYPI.
 

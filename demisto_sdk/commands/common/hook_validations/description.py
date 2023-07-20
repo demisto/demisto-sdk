@@ -53,7 +53,7 @@ class DescriptionValidator(BaseValidator):
             else {}
         )
 
-    def is_valid_file(self):
+    def is_valid_file(self, validate_all: bool = False):
         self.is_duplicate_description()
         self.verify_demisto_in_description_content()
 
@@ -65,7 +65,7 @@ class DescriptionValidator(BaseValidator):
             # self.has_markdown_lint_errors()
             self.is_valid_description_name()
             self.contains_contrib_details()
-            self.is_valid_content_description_file()
+            self.is_valid_content_description_file(validate_all)
 
         return self._is_valid
 
@@ -321,13 +321,16 @@ class DescriptionValidator(BaseValidator):
         return True
 
     @error_codes("DS109")
-    def is_valid_content_description_file(self):
+    def is_valid_content_description_file(self, validate_all: bool = False) -> bool:
         """
         Validates the content description file.
-
+        Args:
+            validate_all: (bool) is the validation being run with -a
         Return:
             True if the description file is not empty, False otherwise.
         """
+        if validate_all:
+            return True
         if os.stat(self.file_path).st_size == 0:
             error_message, error_code = Errors.invalid_content_description_file()
             if self.handle_error(error_message, error_code, file_path=self.file_path):

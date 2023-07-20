@@ -20,7 +20,7 @@ from demisto_sdk.commands.content_graph.tests.create_content_graph_test import (
     mock_script,
     mock_test_playbook,
     repository,  # noqa: F401
-    setup,  # noqa: F401
+    setup_method,  # noqa: F401
 )
 
 
@@ -117,18 +117,18 @@ class TestGetRelationships:
                 RelationshipType.USES,
                 2,
                 {
-                    "Packs/SamplePack/Integrations/SampleIntegration/SampleIntegration.yml": {
-                        "mandatory": False,
-                        "paths_count": 1,
-                    },
-                    "Packs/SamplePack/Scripts/SampleScript/SampleScript.yml": {
-                        "mandatory": True,
+                    "Packs/SamplePack3/TestPlaybooks/SampleTestPlaybook/SampleTestPlaybook.yml": {
+                        "mandatorily": True,
                         "paths_count": 1,
                     },
                 },
                 {
-                    "Packs/SamplePack3/TestPlaybooks/SampleTestPlaybook/SampleTestPlaybook.yml": {
-                        "mandatory": True,
+                    "Packs/SamplePack/Integrations/SampleIntegration/SampleIntegration.yml": {
+                        "mandatorily": False,
+                        "paths_count": 1,
+                    },
+                    "Packs/SamplePack/Scripts/SampleScript/SampleScript.yml": {
+                        "mandatorily": True,
                         "paths_count": 1,
                     },
                 },

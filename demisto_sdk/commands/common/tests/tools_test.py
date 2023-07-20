@@ -91,6 +91,7 @@ from demisto_sdk.commands.common.tools import (
     run_command_os,
     search_and_delete_from_conf,
     server_version_compare,
+    str2bool,
     string_to_bool,
     to_kebab_case,
 )
@@ -2673,6 +2674,36 @@ def test_get_from_version_error(mocker):
         get_from_version("fake_file_path.yml")
 
     assert str(e.value) == "yml file returned is not of type dict"
+
+
+@pytest.mark.parametrize(
+    "value, expected_output",
+    [
+        (None, False),
+        (True, True),
+        (False, False),
+        ("yes", True),
+        ("Yes", True),
+        ("YeS", True),
+        ("True", True),
+        ("t", True),
+        ("y", True),
+        ("Y", True),
+        ("1", True),
+        ("no", False),
+        ("No", False),
+        ("nO", False),
+        ("NO", False),
+        ("false", False),
+        ("False", False),
+        ("F", False),
+        ("n", False),
+        ("N", False),
+        ("0", False),
+    ],
+)
+def test_str2bool(value, expected_output):
+    assert str2bool(value) == expected_output
 
 
 PATH_1 = Path("1.yml")

@@ -119,7 +119,7 @@ class OpenAPIIntegration:
         """
 
         try:
-            self.json = get_json(self.file_path, return_content=True)
+            self.json = get_json(self.file_path)
         except Exception as e:
             logger.info(f"[red]Failed to load the swagger file: {e}[/red]")
             sys.exit(1)

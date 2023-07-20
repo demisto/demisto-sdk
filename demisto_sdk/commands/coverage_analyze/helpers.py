@@ -166,7 +166,7 @@ class CoverageSummary:
             original_summary_path(str): The path to the original coverage.json file.
             min_summary_path(str): The path to the coverage-min.json
         """
-        original_summary = get_json(original_summary_path, return_content=True)
+        original_summary = get_json(original_summary_path)
 
         min_summary_files = {}
         original_summary_files = original_summary["files"]
@@ -195,7 +195,7 @@ class CoverageSummary:
         )
         if self.use_cache and self.cache_dir:
             try:
-                full_coverage_summary = get_json(json_path, return_content=True)
+                full_coverage_summary = get_json(json_path)
                 last_updated = datetime.strptime(
                     full_coverage_summary["last_updated"], "%Y-%m-%dT%H:%M:%SZ"
                 )

@@ -2101,7 +2101,7 @@ class TestRNUpdateUnit:
         )
 
         json_file = "demisto_sdk/commands/update_release_notes/tests_data/Packs/Test/pack_metadata.json"
-        pack_data = get_json(json_file, return_content=True)
+        pack_data = get_json(json_file)
         mocker.patch(
             "demisto_sdk.commands.update_release_notes.update_rn.run_command",
             return_value=expected_res,
@@ -2280,7 +2280,7 @@ class TestRNUpdateUnit:
         from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
 
         json_file = "demisto_sdk/commands/update_release_notes/tests_data/Packs/Test/pack_metadata.json"
-        pack_data = get_json(json_file, return_content=True)
+        pack_data = get_json(json_file)
         mocker.patch(
             "demisto_sdk.commands.update_release_notes.update_rn.run_command",
             return_value="+  dockerimage:python/test:1243",
@@ -2409,7 +2409,7 @@ class TestRNUpdateUnit:
         client.build_rn_config_file("1.0.1")
         if expected_conf_data:
             assert os.path.exists(conf_path)
-            assert get_json(conf_path, return_content=True) == expected_conf_data
+            assert get_json(conf_path) == expected_conf_data
         else:
             assert not os.path.exists(conf_path)
 

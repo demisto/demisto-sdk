@@ -48,7 +48,7 @@ class ModelingRuleValidator(ContentEntityValidator):
         for file in files:
             if file.endswith("_schema.json"):
                 self.schema_path = file
-                self.schema_content = get_json(file, return_content=True)
+                self.schema_content = get_json(file)
             if file.endswith(".xif"):
                 self.xif_path = file
 
@@ -150,7 +150,7 @@ class ModelingRuleValidator(ContentEntityValidator):
         """
         Check that the schema and rules keys are empty.
         """
-        yaml_obj = get_yaml(self.file_path, return_content=True)
+        yaml_obj = get_yaml(self.file_path)
 
         # Check that the keys exists in yml
         if "rules" in yaml_obj and "schema" in yaml_obj:

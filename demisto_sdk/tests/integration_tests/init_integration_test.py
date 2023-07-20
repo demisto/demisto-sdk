@@ -87,7 +87,7 @@ def test_integration_init_integration_positive(monkeypatch, tmp_path, mocker):
     )
     assert result.stderr == ""
 
-    metadata_json = get_json(tmp_pack_metadata_path, return_content=True)
+    metadata_json = get_json(tmp_pack_metadata_path)
     assert {
         "name": pack_display_name,
         "description": pack_desc,
@@ -200,7 +200,7 @@ def test_integration_init_integration_positive_no_inline_pack_name(
         ]
     )
 
-    metadata_json = get_json(tmp_pack_metadata_path, return_content=True)
+    metadata_json = get_json(tmp_pack_metadata_path)
     assert {
         "name": pack_display_name,
         "description": pack_desc,

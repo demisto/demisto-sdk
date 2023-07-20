@@ -545,7 +545,7 @@ def get_remote_file_from_api(
 def get_file_details(
     full_file_path: str,
 ) -> Dict:
-    return get_file(full_file_path, return_content=True)
+    return get_file(full_file_path)
 
 
 @lru_cache(maxsize=128)
@@ -639,7 +639,7 @@ def filter_packagify_changes(modified_files, added_files, removed_files, tag="ma
             if PACKS_README_FILE_NAME in file_path:
                 updated_added_files.add(file_path)
                 continue
-            details = get_yaml(file_path, return_content=True)
+            details = get_yaml(file_path)
 
             uniq_identifier = "_".join(
                 [
@@ -871,8 +871,6 @@ def get_file_or_remote(file_path: Path, clear_cache=False):
 def get_yaml(
     file_path, cache_clear=False, keep_order: bool = True, return_content: bool = False
 ):
-    if cache_clear:
-        get_file.cache_clear()
     return get_file(
         file_path,
         clear_cache=cache_clear,
@@ -882,8 +880,6 @@ def get_yaml(
 
 
 def get_json(file_path, cache_clear=False, return_content: bool = False):
-    if cache_clear:
-        get_file.cache_clear()
     return get_file(file_path, clear_cache=cache_clear, return_content=return_content)
 
 
@@ -2511,7 +2507,7 @@ def camel_to_snake(camel: str) -> str:
 def open_id_set_file(id_set_path):
     id_set = {}
     try:
-        id_set = get_json(id_set_path, return_content=True)
+        id_set = get_json(id_set_path)
     except OSError:
         logger.info("[yellow]Could not open id_set file[/yellow]")
         raise
@@ -3227,7 +3223,7 @@ def get_mp_types_from_metadata_by_item(file_path):
         metadata_path = Path(*metadata_path_parts) / METADATA_FILE_NAME
 
     try:
-        metadata = get_json(metadata_path, return_content=True)
+        metadata = get_json(metadata_path)
         marketplaces = metadata.get(MARKETPLACE_KEY_PACK_METADATA)
         if not marketplaces:
             return [MarketplaceVersions.XSOAR.value]

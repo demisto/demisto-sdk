@@ -412,7 +412,7 @@ def mock_single_pack_git(mocker):
 
 def load_file(file_path: str) -> dict:
     path_str = str(file_path)
-    return get_file(path_str, return_content=True)
+    return get_file(path_str)
 
 
 def get_value_from_dict(object, path):

@@ -54,7 +54,7 @@ class Playbook:
         """
         default_playbook_dir = "assets/default_playbook"
         yml_file = suite_join_path(default_playbook_dir, "playbook-sample.yml")
-        yml = get_yaml(yml_file, return_content=True)
+        yml = get_yaml(yml_file)
         yml["id"] = yml["name"] = name
         self.build(yml=yml)
 
@@ -62,7 +62,7 @@ class Playbook:
         yml_file = suite_join_path(
             self.default_assets_dir, "default_playbook/playbook-sample.yml"
         )
-        yml = get_yaml(yml_file, return_content=True)
+        yml = get_yaml(yml_file)
         yml["id"] = yml["name"] = name
         self.build(yml=yml)
 
@@ -70,7 +70,7 @@ class Playbook:
         task = None
         task_filename = "default_playbook/tasks/task-sample.yml"
         yml_file = suite_join_path(self.default_assets_dir, task_filename)
-        task = get_yaml(yml_file, return_content=True)
+        task = get_yaml(yml_file)
         if not task:
             print(  # noqa: T201
                 "Cannot read task from "

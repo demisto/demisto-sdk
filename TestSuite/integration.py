@@ -115,7 +115,7 @@ class Integration:
         with open(suite_join_path(default_integration_dir, "sample.py")) as code_file:
             code = str(code_file.read())
         yml_file = suite_join_path(default_integration_dir, "sample.yml")
-        yml = get_yaml(yml_file, return_content=True)
+        yml = get_yaml(yml_file)
         yml["name"] = yml["commonfields"]["id"] = name
         if commands:
             for command in commands:

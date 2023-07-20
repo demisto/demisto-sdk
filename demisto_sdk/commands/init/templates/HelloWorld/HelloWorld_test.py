@@ -59,7 +59,7 @@ from demisto_sdk.commands.common.tools import get_json
 
 
 def util_load_json(path):
-    return get_json(path, return_content=True)
+    return get_json(path)
 
 
 def test_say_hello():

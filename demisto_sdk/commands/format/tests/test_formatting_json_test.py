@@ -458,7 +458,7 @@ def test_update_connection_removes_unnecessary_keys(tmpdir, monkeypatch):
     connection_formatter.assume_answer = True
     monkeypatch.setattr("builtins.input", lambda _: "N")
     connection_formatter.format_file()
-    formatted_connection = get_json(connection_file_path, return_content=True)
+    formatted_connection = get_json(connection_file_path)
     for connection in formatted_connection["canvasContextConnections"]:
         assert "not_needed key" not in connection
 
@@ -493,7 +493,7 @@ def test_update_connection_updates_from_version(tmpdir):
         path=CONNECTION_SCHEMA_PATH,
     )
     connection_formatter.format_file()
-    formatted_connection = get_json(connection_file_path, return_content=True)
+    formatted_connection = get_json(connection_file_path)
     assert formatted_connection["fromVersion"] == "6.0.0"
 
 

@@ -33,7 +33,7 @@ def get_total_coverage(
     assert not (filename and date), "Provide either a filename or a date, not both."
     try:
         if filename:
-            result = get_json(filename, return_content=True)
+            result = get_json(filename)
             try:
                 return result[coverage_field]
             except KeyError:

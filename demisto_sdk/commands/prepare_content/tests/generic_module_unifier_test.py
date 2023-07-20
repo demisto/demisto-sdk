@@ -154,7 +154,7 @@ def test_save_unified_generic_module(repo):
             f'{pack.generic_modules[0].name.rstrip(".json")}_unified.json',
         )
         assert os.path.isfile(saving_path)
-        saved_generic_module = get_json(saving_path, return_content=True)
+        saved_generic_module = get_json(saving_path)
         assert saved_generic_module == UNIFIED_GENERIC_MODULE
 
 
@@ -182,7 +182,7 @@ def test_save_unified_generic_module_without_saving_path(repo):
             f'{pack.generic_modules[0].name.rstrip(".json")}_unified.json',
         )
         assert os.path.isfile(saving_path)
-        saved_generic_module = get_json(saving_path, return_content=True)
+        saved_generic_module = get_json(saving_path)
         assert saved_generic_module == UNIFIED_GENERIC_MODULE
 
 
@@ -218,7 +218,7 @@ def test_save_unified_generic_module_file_is_already_exist(repo, capsys):
             pack._dashboards_path,
             f'{pack.generic_modules[0].name.rstrip(".json")}_unified.json',
         )
-        saved_generic_module = get_json(saving_path, return_content=True)
+        saved_generic_module = get_json(saving_path)
         assert saved_generic_module == UNIFIED_GENERIC_MODULE
 
 
@@ -250,5 +250,5 @@ def test_save_unified_generic_module_file_is_already_exist_force(repo, capsys):
             pack._dashboards_path,
             f'{pack.generic_modules[0].name.rstrip(".json")}_unified.json',
         )
-        saved_generic_module = get_json(saving_path, return_content=True)
+        saved_generic_module = get_json(saving_path)
         assert saved_generic_module == GENERIC_MODULE

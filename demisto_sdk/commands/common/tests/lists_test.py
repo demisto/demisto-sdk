@@ -33,7 +33,7 @@ def mock_structure(file_path=None, current_file=None, old_file=None):
         structure.is_valid = True
         structure.scheme_name = "list"
         structure.file_path = file_path
-        structure.current_file = get_json(file_path, return_content=True)
+        structure.current_file = get_json(file_path)
         structure.old_file = old_file
         structure.prev_ver = "master"
         structure.branch_name = ""

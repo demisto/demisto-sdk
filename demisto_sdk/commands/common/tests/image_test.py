@@ -189,7 +189,7 @@ def test_json_outputs_where_no_image_in_integration(repo):
         )
 
         # Check the outputs in the json file
-        json_outputs = get_json(image_validator.json_file_path, return_content=True)
+        json_outputs = get_json(image_validator.json_file_path)
 
         assert json_outputs[0]["filePath"] == image_path
         assert json_outputs[0]["fileType"] == "png"

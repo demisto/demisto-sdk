@@ -275,7 +275,7 @@ def _parse_description_argument(descriptions: Optional[str]) -> Optional[dict]: 
 
     try:
         if os.path.exists(descriptions):  # file input
-            return get_json(descriptions, return_content=True)
+            return get_json(descriptions)
 
         else:
             parsed = json.loads(descriptions)  # argument input

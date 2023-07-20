@@ -322,7 +322,7 @@ def test_insert_image_to_yml():
         image_data = image_file.read()
         image_data = image_prefix + base64.b64encode(image_data).decode("utf-8")
     yml_file = f"{git_path()}/demisto_sdk/tests/test_files/VulnDB/VulnDB.yml"
-    yml_unified_test = get_yaml(yml_file, type_of_file="yml", return_content=True)
+    yml_unified_test = get_yaml(yml_file)
     yml_unified, found_img_path = IntegrationScriptUnifier.insert_image_to_yml(
         package_path, yml_unified_test, False, image_prefix
     )
@@ -552,7 +552,7 @@ def test_insert_module_code__verify_offsets(mocker):
 def test_insert_script_to_yml(package_path, dir_name, file_path):
     is_script_package = dir_name == "Scripts"
     yml_file = file_path + ".yml"
-    test_yml_data = get_yaml(yml_file, return_content=True)
+    test_yml_data = get_yaml(yml_file)
 
     test_yml_unified = copy.deepcopy(test_yml_data)
 
@@ -596,7 +596,7 @@ def test_insert_script_to_yml(package_path, dir_name, file_path):
 def test_insert_script_to_yml_exceptions(package_path, dir_name, file_path):
     is_script_package = dir_name == "Scripts"
     yml_file = file_path + ".yml"
-    test_yml_data = get_yaml(yml_file, return_content=True)
+    test_yml_data = get_yaml(yml_file)
     if dir_name == "Scripts":
         test_yml_data["script"] = "blah"
     else:

@@ -29,7 +29,7 @@ class Script(Integration):
         with open(suite_join_path(default_script_dir, "sample_script.py")) as code_file:
             code = str(code_file.read())
         yml_file = suite_join_path(default_script_dir, "sample_script.yml")
-        yml = get_yaml(yml_file, return_content=True)
+        yml = get_yaml(yml_file)
         yml["name"] = yml["commonfields"]["id"] = name
         with open(
             suite_join_path(default_script_dir, "sample_script_image.png"), "rb"

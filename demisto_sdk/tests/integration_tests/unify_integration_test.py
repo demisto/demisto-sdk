@@ -55,7 +55,7 @@ class TestGenericModuleUnifier:
         assert result.exit_code == 0
         assert os.getenv(ENV_DEMISTO_SDK_MARKETPLACE) == "marketplacev2"
         assert os.path.isfile(saving_path)
-        saved_generic_module = get_json(saving_path, return_content=True)
+        saved_generic_module = get_json(saving_path)
         assert saved_generic_module == UNIFIED_GENERIC_MODULE
 
 
@@ -84,7 +84,7 @@ class TestParsingRuleUnifier:
 
         assert result.exit_code == 0
         yml_file = os.path.join(tmpdir, "parsingrule-parsingrule_0.yml")
-        unified_rule = get_yaml(yml_file, return_content=True)
+        unified_rule = get_yaml(yml_file)
         with open(pack.parsing_rules[0].rules.path) as rules_xif_file:
             assert unified_rule["rules"] == rules_xif_file.read()
 
@@ -123,7 +123,7 @@ class TestParsingRuleUnifier:
 
         assert result.exit_code == 0
         yml_file = os.path.join(tmpdir, "parsingrule-parsingrule_0.yml")
-        unified_rule = get_yaml(yml_file, return_content=True)
+        unified_rule = get_yaml(yml_file)
         assert json.loads(unified_rule["samples"]) == {
             f'{sample["vendor"]}_{sample["product"]}': sample["samples"]
         }
@@ -154,7 +154,7 @@ class TestModelingRuleUnifier:
 
         assert result.exit_code == 0
         yml_file = os.path.join(tmpdir, "modelingrule-modelingrule_0.yml")
-        unified_rule = get_yaml(yml_file, return_content=True)
+        unified_rule = get_yaml(yml_file)
         with open(pack.modeling_rules[0].rules.path) as rules_xif_file:
             assert unified_rule["rules"] == rules_xif_file.read()
 
@@ -191,7 +191,7 @@ class TestIntegrationScriptUnifier:
             yml_file = os.path.join(
                 integration.path, "integration-dummy-integration.yml"
             )
-            unified_yml_data = get_yaml(yml_file, return_content=True)
+            unified_yml_data = get_yaml(yml_file)
             if flag:
                 assert unified_yml_data.get("name") == "Sample - Test"
             else:
@@ -223,7 +223,7 @@ class TestIntegrationScriptUnifier:
             runner = CliRunner(mix_stderr=False)
             runner.invoke(main, [UNIFY_CMD, "-i", f"{script.path}", "-c", "Test"])
             yml_file = os.path.join(script.path, "script-dummy-script.yml")
-            unified_yml_data = get_yaml(yml_file, return_content=True)
+            unified_yml_data = get_yaml(yml_file)
             assert unified_yml_data.get("name") == "sample_scriptTest"
             assert unified_yml_data.get("nativeimage") == [
                 "8.1",
@@ -253,7 +253,7 @@ class TestIntegrationScriptUnifier:
             yml_file = os.path.join(
                 integration.path, "integration-dummy-integration.yml"
             )
-            unified_yml_data = get_yaml(yml_file, return_content=True)
+            unified_yml_data = get_yaml(yml_file)
             assert "nativeimage" not in unified_yml_data.get("script")
 
     def test_ignore_native_image_script(self, repo):
@@ -275,7 +275,7 @@ class TestIntegrationScriptUnifier:
             runner = CliRunner(mix_stderr=False)
             runner.invoke(main, [UNIFY_CMD, "-i", f"{script.path}", "-ini"])
             yml_file = os.path.join(script.path, "script-dummy-script.yml")
-            unified_yml_data = get_yaml(yml_file, return_content=True)
+            unified_yml_data = get_yaml(yml_file)
             assert "nativeimage" not in unified_yml_data
 
 
@@ -325,7 +325,7 @@ class TestLayoutUnifer:
             assert logger_warning.call_count == 0
             assert logger_error.call_count == 0
 
-            layout_data = get_json(Path(output).name, return_content=True)
+            layout_data = get_json(Path(output).name)
             assert "fromVersion" in layout_data
             assert "fromServerVersion" in layout_data
             assert "toVersion" in layout_data

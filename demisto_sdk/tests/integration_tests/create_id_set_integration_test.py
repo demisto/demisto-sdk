@@ -14,7 +14,7 @@ CREATE_ID_SET_CMD = "create-id-set"
 class TestCreateIdSet:  # Use classes to speed up test - multi threaded py pytest
     @staticmethod
     def open_json_file(file_path):
-        return get_json(file_path, return_content=True)
+        return get_json(file_path)
 
     def test_create_id_set_with_excluded_items(self, mocker, repo):
         """
@@ -278,5 +278,5 @@ class TestCreateIdSet:  # Use classes to speed up test - multi threaded py pytes
             assert result.exit_code == 0
 
         json_file = os.path.join(repo.path, "id_set_result.json")
-        id_set = get_json(json_file, return_content=True)
+        id_set = get_json(json_file)
         assert len(id_set["Mappers"]) == 1

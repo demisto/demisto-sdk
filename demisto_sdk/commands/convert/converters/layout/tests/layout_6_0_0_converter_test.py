@@ -14,7 +14,7 @@ from TestSuite.repo import Repo
 
 
 def util_load_json(path):
-    return get_json(path, return_content=True)
+    return get_json(path)
 
 
 class TestLayoutSixConverter:
@@ -212,7 +212,7 @@ class TestLayoutSixConverter:
         layout_converter.convert_dir()
         expected_new_layout_path = f"{str(layout_converter.pack.path)}/Layouts/layoutscontainer-ExtraHop_Detection.json"
         assert os.path.exists(expected_new_layout_path)
-        layout_data = get_json(expected_new_layout_path, return_content=True)
+        layout_data = get_json(expected_new_layout_path)
         test_data_json = util_load_json(
             os.path.join(
                 __file__,

@@ -2132,7 +2132,7 @@ class IntegrationValidator(ContentEntityValidator):
             Path(__file__).absolute().parents[2]
             / "common/default_output_descriptions.json"
         )
-        defaults = get_json(json_file, return_content=True)
+        defaults = get_json(json_file)
 
         missing = {}
         for command in self.current_file.get("script", {}).get("commands", []):

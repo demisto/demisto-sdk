@@ -171,7 +171,7 @@ class TestIDSetCreator:
 
         id_set_creator.create_id_set()
 
-        private_id_set = get_json(self.file_path, return_content=True)
+        private_id_set = get_json(self.file_path)
 
         assert len(private_id_set["integrations"]) == 1
         assert (
@@ -207,7 +207,7 @@ class TestIDSetCreator:
 
         id_set_creator.create_id_set()
 
-        private_id_set = get_json(self.file_path, return_content=True)
+        private_id_set = get_json(self.file_path)
         for content_entity, content_entity_value_list in private_id_set.items():
             if content_entity != "Packs":
                 assert len(content_entity_value_list) == 0

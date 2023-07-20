@@ -220,7 +220,6 @@ def generate_integration_doc(
 default_additional_information: CaseInsensitiveDict = CaseInsensitiveDict(
     get_json(
         Path(__file__).parent / "default_additional_information.json",
-        return_content=True,
     )
 )
 

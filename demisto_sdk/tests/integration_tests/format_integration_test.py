@@ -399,7 +399,7 @@ def test_integration_format_configuring_conf_json_negative(
         logger_info.call_args_list,
         "Skipping test playbooks configuration",
     )
-    conf_json_content = get_json(conf_json_path, return_content=True)
+    conf_json_content = get_json(conf_json_path)
     assert conf_json_content == CONF_JSON_ORIGINAL_CONTENT
 
 
@@ -410,7 +410,7 @@ def _verify_conf_json_modified(
     Verifying all test playbooks are configured in conf.json file
     """
     try:
-        conf_json_content = get_json(conf_json_path, return_content=True)
+        conf_json_content = get_json(conf_json_path)
         for test_playbook in test_playbooks:
             assert any(
                 test_config
@@ -470,7 +470,7 @@ def test_integration_format_remove_playbook_sourceplaybookid(
         logger_debug.call_args_list,
         f'Not formatting {source_playbook_path} with "No tests"',
     )
-    yaml_content = get_yaml(playbook_path, return_content=True)
+    yaml_content = get_yaml(playbook_path)
     assert "sourceplaybookid" not in yaml_content
 
     assert not result.exception
@@ -1226,13 +1226,13 @@ def test_format_incident_type_layout_id(repo, mocker, monkeypatch):
         ]
     )
 
-    layout_content = get_json(layout.path, return_content=True)
+    layout_content = get_json(layout.path)
     assert layout_content["name"] == layout_content["id"]
 
-    playbook_content = get_yaml(playbook.yml.path, return_content=True)
+    playbook_content = get_yaml(playbook.yml.path)
     assert playbook_content["name"] == playbook_content["id"]
 
-    incident_type_content = get_json(incident_type.path, return_content=True)
+    incident_type_content = get_json(incident_type.path)
     assert incident_type_content["layout"] == "IncidentLayout"
     assert incident_type_content["playbookId"] == "PlaybookName"
 
@@ -1297,7 +1297,7 @@ def test_format_generic_field_wrong_values(
         assert result.exit_code == 0
 
         # check that sdk format did change the wrong fromVersion to '6.5.0':
-        updated_generic_field = get_json(generic_field_path, return_content=True)
+        updated_generic_field = get_json(generic_field_path)
         assert updated_generic_field[field_to_test] == expected_value_after_format
 
 
@@ -1352,7 +1352,7 @@ def test_format_generic_field_missing_from_version_key(mocker, repo):
         assert result.exit_code == 0
 
         # check that sdk format did add a fromVersion key with '6.5.0' as a value:
-        updated_generic_field = get_json(generic_field_path, return_content=True)
+        updated_generic_field = get_json(generic_field_path)
         assert updated_generic_field["fromVersion"] == GENERIC_FIELD["fromVersion"]
 
 
@@ -1407,7 +1407,7 @@ def test_format_generic_type_wrong_from_version(mocker, repo):
         assert result.exit_code == 0
 
         # check that sdk format did change the wrong fromVersion to '6.5.0':
-        updated_generic_type = get_json(generic_type_path, return_content=True)
+        updated_generic_type = get_json(generic_type_path)
         assert updated_generic_type["fromVersion"] == GENERIC_TYPE["fromVersion"]
 
 
@@ -1462,7 +1462,7 @@ def test_format_generic_type_missing_from_version_key(mocker, repo):
         assert result.exit_code == 0
 
         # check that sdk format did add a fromVersion key with '6.5.0' as a value:
-        updated_generic_type = get_json(generic_type_path, return_content=True)
+        updated_generic_type = get_json(generic_type_path)
         assert updated_generic_type["fromVersion"] == GENERIC_TYPE["fromVersion"]
 
 
@@ -1516,7 +1516,7 @@ def test_format_generic_module_wrong_from_version(mocker, repo):
         assert result.exit_code == 0
 
         # check that sdk format did change the wrong fromVersion to '6.5.0':
-        updated_generic_module = get_json(generic_module_path, return_content=True)
+        updated_generic_module = get_json(generic_module_path)
         assert updated_generic_module["fromVersion"] == GENERIC_MODULE["fromVersion"]
 
 
@@ -1571,7 +1571,7 @@ def test_format_generic_module_missing_from_version_key(mocker, repo):
         assert result.exit_code == 0
 
         # check that sdk format did add a fromVersion key with '6.5.0' as a value:
-        updated_generic_module = get_json(generic_module_path, return_content=True)
+        updated_generic_module = get_json(generic_module_path)
         assert updated_generic_module["fromVersion"] == GENERIC_MODULE["fromVersion"]
 
 
@@ -1626,7 +1626,7 @@ def test_format_generic_definition_wrong_from_version(mocker, repo):
 
         # check that sdk format did change the wrong fromVersion to '6.5.0':
         updated_generic_definition = get_json(
-            generic_definition_path, return_content=True
+            generic_definition_path
         )
         assert (
             updated_generic_definition["fromVersion"]
@@ -1686,7 +1686,7 @@ def test_format_generic_definition_missing_from_version_key(mocker, repo):
 
         # check that sdk format did add a fromVersion key with '6.5.0' as a value:
         updated_generic_definition = get_json(
-            generic_definition_path, return_content=True
+            generic_definition_path
         )
         assert (
             updated_generic_definition["fromVersion"]

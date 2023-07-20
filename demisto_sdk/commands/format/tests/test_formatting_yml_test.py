@@ -520,7 +520,7 @@ class TestFormatting:
         else:
             format_obj = IntegrationYMLFormat(src_file, output=dest, path=schema_path)
         assert format_obj.run_format() == 0
-        data = get_yaml(dest, return_content=True)
+        data = get_yaml(dest)
         assert data["fromversion"] == "5.5.0"
         assert data["commonfields"]["version"] == -1
 
@@ -558,7 +558,7 @@ class TestFormatting:
         base_yml.save_yml_to_destination_file()
         assert os.path.isfile(saved_file_path)
 
-        yaml_content = get_yaml(saved_file_path, return_content=True)
+        yaml_content = get_yaml(saved_file_path)
         assert "yes" in yaml_content["tasks"]["27"]["nexttasks"]
         os.remove(saved_file_path)
 
@@ -767,7 +767,7 @@ class TestFormatting:
         shutil.copyfile(source, target)
         monkeypatch.setattr("builtins.input", lambda _: "N")
         res = format_manager(input=target, assume_answer=True)
-        yaml_content = get_yaml(target, return_content=True)
+        yaml_content = get_yaml(target)
         params = yaml_content["configuration"]
         for param in params:
             if "defaultvalue" in param and param["name"] != "feed":
@@ -812,7 +812,7 @@ class TestFormatting:
         os.makedirs(path, exist_ok=True)
         shutil.copyfile(source, target)
         res = format_manager(input=target, clear_cache=True, assume_answer=True)
-        yaml_content = get_yaml(target, return_content=True)
+        yaml_content = get_yaml(target)
         params = yaml_content["configuration"]
         for counter, param in enumerate(params):
             if "defaultvalue" in param and param["name"] != "feed":
@@ -1131,7 +1131,7 @@ class TestFormatting:
 
         # test example script file with version before 5.0.0
         src_file = f"{test_files_dir}/SlackAsk.yml"
-        data = get_yaml(src_file, return_content=True)
+        data = get_yaml(src_file)
         org_docker = data["dockerimage"]
         assert data["fromversion"] < "5.0.0"
         assert not data.get(
@@ -1148,7 +1148,7 @@ class TestFormatting:
         monkeypatch.setattr("builtins.input", lambda _: "N")
         mocker.patch.object(BaseUpdate, "set_fromVersion", return_value=None)
         assert format_obj.run_format() == 0
-        data = get_yaml(dest, return_content=True)
+        data = get_yaml(dest)
         assert data["dockerimage"].endswith(f":{test_tag}")
         assert data["dockerimage45"] == org_docker
 
@@ -1162,7 +1162,7 @@ class TestFormatting:
             update_docker=True,
         )
         assert format_obj.run_format() == 0
-        data = get_yaml(dest, return_content=True)
+        data = get_yaml(dest)
         assert data["script"]["dockerimage"].endswith(f":{test_tag}")
         assert not data["script"].get("dockerimage45")
 
@@ -1214,7 +1214,7 @@ class TestFormatting:
 
         format_obj = ScriptYMLFormat(str(integration_yml_file_1), update_docker=True)
         format_obj.update_docker_image()
-        data = get_yaml(str(integration_yml_file_1), return_content=True)
+        data = get_yaml(str(integration_yml_file_1))
         assert data.get("dockerimage") == docker_image
 
     def test_recursive_extend_schema(self):
@@ -1570,7 +1570,7 @@ class TestFormatting:
             "Integrations",
             "integration-VMware.yml",
         )
-        yml_example = get_yaml(vmware_integration_yml_path, return_content=True)
+        yml_example = get_yaml(vmware_integration_yml_path)
         sorted_yml_file = tmp_path / "test.yml"
         with sorted_yml_file.open("w") as f:
             yaml.dump(
@@ -1607,13 +1607,13 @@ class TestFormatting:
             "Integrations",
             "integration-VMware.yml",
         )
-        yml_example = get_yaml(vmware_integration_yml_path, return_content=True)
+        yml_example = get_yaml(vmware_integration_yml_path)
         sorted_yml_file = tmp_path / "test.yml"
         with sorted_yml_file.open("w") as f:
             yaml.dump(
                 yml_example, f, sort_keys=True
             )  # sorting the keys to have different order
-        sorted_yml = get_yaml(sorted_yml_file, return_content=True)
+        sorted_yml = get_yaml(sorted_yml_file)
         sorted_yml["description"] = "test"
         sorted_yml["configuration"][0]["defaultvalue"] = "test"
         del sorted_yml["configuration"][1]["defaultvalue"]

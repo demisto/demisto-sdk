@@ -245,7 +245,7 @@ class TestPostmanHelpers:
         git_path(), "demisto_sdk", "commands", "postman_codegen", "tests", "test_files"
     )
     json_file = os.path.join(test_files_path, "shared_args_path.json")
-    shared_args_path_items = get_json(json_file, return_content=True)
+    shared_args_path_items = get_json(json_file)
 
     many_with_shared_paths = defaultdict(
         int, {"name": 2, "description": 3, "url": 3, "method": 3}
@@ -376,12 +376,12 @@ class TestPostmanCodeGen:
         arguments_check_collection_path = os.path.join(
             cls.test_files_path, "arguments_check_collection.json"
         )
-        cls.postman_collection = get_json(collection_path, return_content=True)
+        cls.postman_collection = get_json(collection_path)
 
-        cls.autogen_config = get_json(autogen_config_path, return_content=True)
+        cls.autogen_config = get_json(autogen_config_path)
 
         cls.arguments_check_collection = get_json(
-            arguments_check_collection_path, return_content=True
+            arguments_check_collection_path
         )
 
         cls.postman_collection_stream = open(collection_path)
@@ -545,7 +545,7 @@ class TestPostmanCodeGen:
         )
 
         config = postman_to_autogen_configuration(
-            collection=get_json(path, return_content=True),
+            collection=get_json(path),
             name="VirusTotal",
             context_path_prefix=None,
             command_prefix=None,
@@ -611,7 +611,7 @@ class TestPostmanCodeGen:
         )
 
         config = postman_to_autogen_configuration(
-            collection=get_json(path, return_content=True),
+            collection=get_json(path),
             name="VirusTotal",
             context_path_prefix=None,
             command_prefix=None,
@@ -681,7 +681,7 @@ class TestPostmanCodeGen:
         )
 
         config = postman_to_autogen_configuration(
-            collection=get_json(path, return_content=True),
+            collection=get_json(path),
             name=None,
             command_prefix=None,
             context_path_prefix=None,
@@ -770,7 +770,7 @@ class TestPostmanCodeGen:
         )
 
         config = postman_to_autogen_configuration(
-            collection=get_json(path, return_content=True),
+            collection=get_json(path),
             name=None,
             command_prefix=None,
             context_path_prefix=None,
@@ -903,7 +903,7 @@ def _testutil_create_postman_collection(
         "test_files",
         "VirusTotal.postman_collection.json",
     )
-    collection = get_json(default_collection_path, return_content=True)
+    collection = get_json(default_collection_path)
 
     if with_request:
         collection["item"].append(with_request)

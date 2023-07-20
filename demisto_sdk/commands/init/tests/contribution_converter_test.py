@@ -607,7 +607,7 @@ def test_convert_contribution_dir_to_pack_contents(tmp_path):
     cc = ContributionConverter()
     cc.pack_dir_path = tmp_path
     cc.convert_contribution_dir_to_pack_contents(fake_pack_extracted_dir)
-    assert get_json(extant_file, return_content=True) == new_json
+    assert get_json(extant_file) == new_json
     assert not fake_pack_extracted_dir.exists()
 
 

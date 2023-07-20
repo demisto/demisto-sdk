@@ -41,7 +41,7 @@ class RuleUnifier(Unifier):
             samples = defaultdict(list)
             for sample_file in os.listdir(samples_dir):
                 json_file = os.path.join(samples_dir, sample_file)
-                sample = get_json(json_file, return_content=True)
+                sample = get_json(json_file)
                 if data.get("id") in sample.get("rules", []):
                     samples[f'{sample.get("vendor")}_{sample.get("product")}'].extend(
                         sample.get("samples")
@@ -56,7 +56,7 @@ class RuleUnifier(Unifier):
     def _insert_schema(path: Path, data: dict):
         schema_path = str(path).replace(".yml", "_schema.json")
         if os.path.exists(schema_path):
-            schema = get_json(schema_path, return_content=True)
+            schema = get_json(schema_path)
             data["schema"] = FoldedScalarString(json.dumps(schema, indent=4))
         else:
             logger.info("No schema file was found.")

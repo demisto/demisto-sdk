@@ -47,7 +47,7 @@ class JSONObject(DictionaryBasedObject):
     def _deserialize(self) -> None:
         """Load json to dictionary"""
         try:
-            self._as_dict = get_json(self._path, return_content=True)
+            self._as_dict = get_json(self._path)
         except ValueError as e:
             raise exc.ContentSerializeError(self, self.path, str(e))
 

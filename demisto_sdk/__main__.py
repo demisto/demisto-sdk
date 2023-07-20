@@ -2692,7 +2692,7 @@ def openapi_codegen(ctx, **kwargs):
     configuration = None
     if kwargs.get("config_file"):
         try:
-            configuration = get_json(kwargs["config_file"], return_content=True)
+            configuration = get_json(kwargs["config_file"])
         except Exception as e:
             logger.info(f"[red]Failed to load configuration file: {e}[/red]")
 

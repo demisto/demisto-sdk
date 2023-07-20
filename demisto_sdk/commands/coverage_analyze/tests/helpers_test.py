@@ -34,7 +34,7 @@ PYTHON_FILE_PATH = os.path.join(
 
 
 def read_file(file_path):
-    return get_json(file_path, return_content=True)
+    return get_json(file_path)
 
 
 def write_file(file_path, file_content):

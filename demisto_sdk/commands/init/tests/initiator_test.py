@@ -381,7 +381,7 @@ def test_yml_reformatting(monkeypatch, tmp_path, initiator):
         current_suffix=initiator.HELLO_WORLD_INTEGRATION, integration=True
     )
     yml_file = full_output_path / f"{dir_name}.yml"
-    yml_dict = get_yaml(yml_file, return_content=True)
+    yml_dict = get_yaml(yml_file)
     assert yml_dict == OrderedDict(
         {
             "commonfields": OrderedDict({"id": "HelloWorld"}),

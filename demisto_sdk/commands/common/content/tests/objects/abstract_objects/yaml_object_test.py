@@ -26,14 +26,14 @@ yaml = YAML_Handler(width=50000)
 class TestValidYAML:
     def test_valid_yaml_file_path(self):
         obj = YAMLObject(TEST_VALID_YAML)
-        assert obj.to_dict() == get_yaml(TEST_VALID_YAML, return_content=True)
+        assert obj.to_dict() == get_yaml(TEST_VALID_YAML)
 
     def test_get_item(self):
         obj = YAMLObject(TEST_VALID_YAML)
 
         assert (
             obj["fromversion"]
-            == get_yaml(TEST_VALID_YAML, return_content=True)["fromversion"]
+            == get_yaml(TEST_VALID_YAML)["fromversion"]
         )
 
     @pytest.mark.parametrize(argnames="default_value", argvalues=["test_value", ""])
@@ -44,14 +44,14 @@ class TestValidYAML:
         else:
             assert (
                 obj["fromversion"]
-                == get_yaml(TEST_VALID_YAML, return_content=True)["fromversion"]
+                == get_yaml(TEST_VALID_YAML)["fromversion"]
             )
 
     def test_dump(self, datadir):
         expected_file = TEST_VALID_YAML.parent / f"prefix-{TEST_VALID_YAML.name}"
         obj = YAMLObject(TEST_VALID_YAML, "prefix")
         assert obj.dump()[0] == expected_file
-        assert obj.to_dict() == get_yaml(expected_file, return_content=True)
+        assert obj.to_dict() == get_yaml(expected_file)
         expected_file.unlink()
 
 

@@ -245,9 +245,9 @@ def test_create_yml_file():
     with tempfile.TemporaryDirectory() as tmpdirname:
         created_yml_path = Path(tmpdirname, "test_test_modeling_rules.yml")
         create_yml_file(created_yml_path, "test", "test")
-        yml_created = get_yaml(created_yml_path, return_content=True)
+        yml_created = get_yaml(created_yml_path)
 
-    yml_result = get_yaml(result_yml_path, return_content=True)
+    yml_result = get_yaml(result_yml_path)
 
     assert yml_created == yml_result
 

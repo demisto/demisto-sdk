@@ -364,7 +364,7 @@ class ContentEntityValidator(BaseValidator):
         return True
 
     def _load_conf_file(self):
-        return get_json(CONF_PATH, return_content=True)
+        return get_json(CONF_PATH)
 
     @error_codes("CJ104,CJ102")
     def are_tests_registered_in_conf_json_file_or_yml_file(

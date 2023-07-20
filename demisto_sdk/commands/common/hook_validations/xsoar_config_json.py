@@ -51,7 +51,7 @@ class XSOARConfigJsonValidator(BaseValidator):
             Dict[str, Any]. The contents of the configuration file.
         """
         try:
-            config_json = get_json(self.configuration_file_path, return_content=True)
+            config_json = get_json(self.configuration_file_path)
         except Exception:
             error_message, error_code = Errors.xsoar_config_file_is_not_json(
                 self.configuration_file_path

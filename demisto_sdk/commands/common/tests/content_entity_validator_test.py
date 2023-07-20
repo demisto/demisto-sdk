@@ -369,7 +369,7 @@ def test_fromversion_update_validation_yml_structure(
     path, old_file_path, answer, error
 ):
     validator = ContentEntityValidator(StructureValidator(file_path=path))
-    validator.old_file = get_yaml(old_file_path, return_content=True)
+    validator.old_file = get_yaml(old_file_path)
     assert validator.is_valid_fromversion_on_modified() is answer, error
 
 
@@ -458,7 +458,7 @@ INPUTS_VALID_TOVERSION_MODIFIED = [
 )
 def test_toversion_update_validation_yml_structure(path, old_file_path, answer, error):
     validator = ContentEntityValidator(StructureValidator(file_path=path))
-    validator.old_file = get_yaml(old_file_path, return_content=True)
+    validator.old_file = get_yaml(old_file_path)
     assert validator.is_valid_toversion_on_modified() is answer, error
 
 
@@ -481,7 +481,7 @@ INPUTS_IS_ID_MODIFIED = [
 @pytest.mark.parametrize("current_file, old_file, answer, error", INPUTS_IS_ID_MODIFIED)
 def test_is_id_not_modified(current_file, old_file, answer, error):
     validator = ContentEntityValidator(StructureValidator(file_path=current_file))
-    validator.old_file = get_yaml(old_file, return_content=True)
+    validator.old_file = get_yaml(old_file)
     assert validator.is_id_not_modified() is answer, error
 
 
@@ -491,7 +491,7 @@ def test_is_id_not_modified(current_file, old_file, answer, error):
 )
 def test_is_backward_compatible(current_file, old_file, answer, error):
     validator = ContentEntityValidator(StructureValidator(file_path=current_file))
-    validator.old_file = get_yaml(old_file, return_content=True)
+    validator.old_file = get_yaml(old_file)
     assert validator.is_backward_compatible() is answer, error
 
 

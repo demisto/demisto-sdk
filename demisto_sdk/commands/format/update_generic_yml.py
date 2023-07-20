@@ -87,7 +87,7 @@ class BaseUpdateYML(BaseUpdate):
         Returns:
             The content of the json file
         """
-        return get_json(CONF_PATH, return_content=True)
+        return get_json(CONF_PATH)
 
     def get_id_and_version_path_object(self):
         """Gets the dict that holds the id and version fields.

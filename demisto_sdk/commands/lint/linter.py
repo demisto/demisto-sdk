@@ -1274,7 +1274,7 @@ class Linter:
         )
         pack_metadata_file = pack_dir / PACKS_PACK_META_FILE_NAME
         logger.debug(f"Before reading content of {pack_metadata_file}")
-        pack_meta_content: Dict = get_json(pack_metadata_file, return_content=True)
+        pack_meta_content: Dict = get_json(pack_metadata_file)
         logger.debug(f"After reading content of {pack_metadata_file}")
         self._facts["support_level"] = pack_meta_content.get("support")
         if self._facts["support_level"] == "partner" and pack_meta_content.get(

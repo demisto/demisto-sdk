@@ -235,7 +235,7 @@ class TestGitContentConfig:
             The id of the repo should be returned
         """
 
-        gitlab_response = get_json(VALID_GITLAB_RESPONSE, return_content=True)
+        gitlab_response = get_json(VALID_GITLAB_RESPONSE)
         repo = "content-internal-dist"
         host = "code.pan.run"
         url = f"https://{host}/api/v4/projects?search={repo}"

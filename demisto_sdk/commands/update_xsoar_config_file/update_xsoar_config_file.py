@@ -142,7 +142,7 @@ class XSOARConfigFileUpdater:
         self.set_xsoar_config_data(config_file_info=config_file_info)
 
     def get_xsoar_config_data(self):
-        return get_json(self.file_path, return_content=True)
+        return get_json(self.file_path)
 
     def set_xsoar_config_data(self, config_file_info):
         with open(self.file_path, "w") as config_file:

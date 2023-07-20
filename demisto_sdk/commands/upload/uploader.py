@@ -481,7 +481,7 @@ class ConfigFileParser:
     def __init__(self, path: Path):
         self.path = path
 
-        self.content = get_json(self.path, return_content=True)
+        self.content = get_json(self.path)
 
         self.custom_packs_paths: Tuple[Path, ...] = tuple(
             Path(pack["url"]) for pack in self.content.get("custom_packs", ())

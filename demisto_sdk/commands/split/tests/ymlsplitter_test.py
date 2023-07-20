@@ -89,7 +89,7 @@ def test_extract_modeling_rules_schema(tmpdir):
     )
 
     extractor.extract_rule_schema_and_samples(output)
-    assert schema == get_json(output, return_content=True)
+    assert schema == get_json(output)
     os.remove(output)
 
 
@@ -140,7 +140,7 @@ def test_extract_parsing_rules_sampels(tmpdir):
     )
 
     extractor.extract_rule_schema_and_samples(output)
-    assert sample == get_json(output, return_content=True)
+    assert sample == get_json(output)
     os.remove(output)
 
 
@@ -174,10 +174,10 @@ def test_extract_to_package_format_modeling_rule(tmpdir):
         assert "[MODEL: dataset=okta_okta_raw, model=Audit]" in file_data
 
     file_json = out.join("OktaModelingRule").join("OktaModelingRule_schema.json")
-    assert schema == get_json(file_json, return_content=True)
+    assert schema == get_json(file_json)
 
     yml_file = out.join("OktaModelingRule").join("OktaModelingRule.yml")
-    yaml_obj = get_yaml(yml_file, return_content=True)
+    yaml_obj = get_yaml(yml_file)
     assert yaml_obj["fromversion"] == "6.8.0"
 
 
@@ -212,10 +212,10 @@ def test_extract_to_package_format_parsing_rule(tmpdir):
         assert "[RULE:extract_hipmatch_only_fields]" in file_data
 
     json_file = out.join("MyRule").join("MyRule.json")
-    assert sample == get_json(json_file, return_content=True)
+    assert sample == get_json(json_file)
 
     yml_file = out.join("MyRule").join("MyRule.yml")
-    yaml_obj = get_yaml(yml_file, return_content=True)
+    yaml_obj = get_yaml(yml_file)
     assert yaml_obj["fromversion"] == "6.8.0"
 
 
@@ -277,7 +277,7 @@ def test_extract_code(tmpdir, file_path, file_type):
         output=str(tmpdir.join("temp_code.py")),
         file_type=file_type,
     )
-    script_before_split = get_yaml(Path(extractor.input), return_content=True)[
+    script_before_split = get_yaml(Path(extractor.input))[
         "script"
     ]["script"]
     assert "### pack version: 1.0.3" in script_before_split
@@ -332,7 +332,7 @@ def test_extract_javascript_code(tmpdir, file_type):
     )
     assert (
         "// pack version: 1.0.3"
-        in get_yaml(Path(extractor.input), return_content=True)["script"]["script"]
+        in get_yaml(Path(extractor.input))["script"]["script"]
     )
 
     extractor.extract_code(extractor.output)
@@ -362,7 +362,7 @@ def test_extract_powershell_code(tmpdir, file_type):
     )
     assert (
         "### pack version: 1.0.3"
-        in get_yaml(Path(extractor.input), return_content=True)["script"]["script"]
+        in get_yaml(Path(extractor.input))["script"]["script"]
     )
 
     extractor.extract_code(extractor.output)
@@ -512,7 +512,7 @@ def test_extract_to_package_format_pwsh(tmpdir, file_type):
     yml_file = out.join("PowerShellRemotingOverSSH").join(
         "PowerShellRemotingOverSSH.yml"
     )
-    yaml_obj = get_yaml(yml_file, return_content=True)
+    yaml_obj = get_yaml(yml_file)
     assert yaml_obj["fromversion"] == "5.5.0"
     assert not yaml_obj["script"]["script"]
 

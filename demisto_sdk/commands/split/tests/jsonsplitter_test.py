@@ -39,10 +39,10 @@ def test_split_json(repo):
         assert res == 0
         assert os.path.isfile(expected_dashboard_path)
 
-        result_dashboard = get_json(expected_dashboard_path, return_content=True)
+        result_dashboard = get_json(expected_dashboard_path)
 
         assert result_dashboard == EXTRACTED_DASHBOARD
 
-        result_generic_module = get_json(generic_module.path, return_content=True)
+        result_generic_module = get_json(generic_module.path)
 
         assert result_generic_module == GENERIC_MODULE

@@ -98,7 +98,7 @@ class TestCodeGenerator:
         )
 
         autogen_config = None
-        config_dict = get_json(self.autogen_config_path, return_content=True)
+        config_dict = get_json(self.autogen_config_path)
         config_dict["fix_code"] = True
         autogen_config = IntegrationGeneratorConfig(**config_dict)
 
@@ -139,13 +139,13 @@ class TestCodeGenerator:
             return_value="3.8.6.12176",
         )
 
-        config_dict = get_json(self.autogen_config_path, return_content=True)
+        config_dict = get_json(self.autogen_config_path)
         config_dict["fix_code"] = True
         autogen_config = IntegrationGeneratorConfig(**config_dict)
 
         yaml_obj = autogen_config.generate_integration_yml().to_dict()
         yml_file = os.path.join(self.test_integration_dir, "VirusTotalTest.yml")
-        expected_yml = get_yaml(yml_file, return_content=True)
+        expected_yml = get_yaml(yml_file)
 
         assert expected_yml == yaml_obj
 
@@ -172,7 +172,7 @@ class TestCodeGenerator:
             return_value="3.8.6.12176",
         )
 
-        config_dict = get_json(self.autogen_config_path, return_content=True)
+        config_dict = get_json(self.autogen_config_path)
         config_dict["fix_code"] = True
         autogen_config = IntegrationGeneratorConfig(**config_dict)
 
@@ -205,7 +205,7 @@ class TestCodeGenerator:
         )
 
         autogen_config = None
-        config_dict = get_json(self.autogen_config_path, return_content=True)
+        config_dict = get_json(self.autogen_config_path)
         config_dict["fix_code"] = True
         autogen_config = IntegrationGeneratorConfig(**config_dict)
 
@@ -233,7 +233,7 @@ class TestCodeGenerator:
         - ensure in yml, we generate outputs for scans object, and not to the whole response
         """
         json_file = os.path.join(self.test_files_path, "VirusTotal-autogen-config.json")
-        config_dict = get_json(json_file, return_content=True)
+        config_dict = get_json(json_file)
 
         config = IntegrationGeneratorConfig(**config_dict)
         test_command = _testutil_create_command(

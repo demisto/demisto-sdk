@@ -36,7 +36,7 @@ class ContentGraphInterface(ABC):
     @property
     def metadata(self) -> Optional[dict]:
         try:
-            return get_json(self.import_path / METADATA_FILE_NAME, return_content=True)
+            return get_json(self.import_path / METADATA_FILE_NAME)
         except FileNotFoundError:
             return None
 

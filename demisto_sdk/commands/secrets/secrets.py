@@ -470,7 +470,7 @@ class SecretsValidator:
         final_white_list = []
         ioc_white_list = []
         files_while_list = []
-        secrets_white_list_file = get_json(whitelist_path, return_content=True)
+        secrets_white_list_file = get_json(whitelist_path)
         for name, white_list in secrets_white_list_file.items():  # type: ignore
             if name == "iocs":
                 for sublist in white_list:

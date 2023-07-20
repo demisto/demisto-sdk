@@ -80,7 +80,7 @@ class TestXSOARConfigFileUpdater:
 
             try:
                 config_file_info = get_json(
-                    f"{tmp_output_dir}/{expected_path}", return_content=True
+                    f"{tmp_output_dir}/{expected_path}"
                 )
             except IsADirectoryError:
                 config_file_info = {}
@@ -121,7 +121,7 @@ class TestXSOARConfigFileUpdater:
             expected_path_object = Path(tmp_output_dir) / "xsoar_config.json"
 
             if expected_path_object.is_file():
-                config_file_info = get_json(expected_path_object, return_content=True)
+                config_file_info = get_json(expected_path_object)
             elif not expected_path_object.is_file():
                 config_file_info = {}
 
@@ -155,7 +155,7 @@ class TestXSOARConfigFileUpdater:
 
             try:
                 config_file_info = get_json(
-                    f"{tmp_output_dir}/xsoar_config.json", return_content=True
+                    f"{tmp_output_dir}/xsoar_config.json"
                 )
             except IsADirectoryError:
                 config_file_info = {}
@@ -186,7 +186,7 @@ class TestXSOARConfigFileUpdater:
 
             try:
                 config_file_info = get_json(
-                    f"{tmp_output_dir}/xsoar_config.json", return_content=True
+                    f"{tmp_output_dir}/xsoar_config.json"
                 )
             except IsADirectoryError:
                 config_file_info = {}
@@ -238,7 +238,7 @@ class TestXSOARConfigFileUpdater:
 
             try:
                 config_file_info = get_json(
-                    f"{tmp_output_dir}/{expected_path}", return_content=True
+                    f"{tmp_output_dir}/{expected_path}"
                 )
             except IsADirectoryError:
                 config_file_info = {}
@@ -295,7 +295,7 @@ class TestXSOARConfigFileUpdater:
 
             try:
                 json_file = f"{tmp_output_dir}/{expected_path}"
-                config_file_info = get_json(json_file, return_content=True)
+                config_file_info = get_json(json_file)
             except IsADirectoryError:
                 config_file_info = {}
             assert config_file_info == expected_outputs

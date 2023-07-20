@@ -15,9 +15,9 @@ TEST_DATA_PATH = (
 
 def load_json(file_path: str):
     full_path = (TEST_DATA_PATH / file_path).as_posix()
-    return get_json(full_path, return_content=True)
+    return get_json(full_path)
 
 
 def load_yaml(file_path: str):
     full_path = (TEST_DATA_PATH / file_path).as_posix()
-    return get_yaml(full_path, return_content=True)
+    return get_yaml(full_path)

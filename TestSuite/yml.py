@@ -20,7 +20,7 @@ class YAML(File):
             f.flush()
 
     def read_dict(self):
-        return get_yaml(self._tmp_path, return_content=True)
+        return get_yaml(self._tmp_path)
 
     def update(self, update_obj: dict):
         yml_contents = self.read_dict()

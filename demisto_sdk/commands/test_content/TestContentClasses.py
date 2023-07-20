@@ -645,7 +645,7 @@ class BuildContext:
         )
         if self.is_xsiam:
             xsiam_servers_api_keys = get_json(
-                kwargs.get("xsiam_servers_api_keys_path"), return_content=True
+                kwargs.get("xsiam_servers_api_keys_path")
             )
             self.xsiam_conf = self._load_xsiam_file(self.xsiam_servers_path)
             self.env_json = [self.xsiam_conf.get(self.xsiam_machine, {})]
@@ -891,7 +891,7 @@ class BuildContext:
 
     @staticmethod
     def _load_env_results_json():
-        return get_json(ENV_RESULTS_PATH, return_content=True)
+        return get_json(ENV_RESULTS_PATH)
 
     def _get_server_numeric_version(self) -> str:
         """
@@ -943,17 +943,17 @@ class BuildContext:
     def _load_xsiam_file(xsiam_servers_path):
         conf = None
         if xsiam_servers_path:
-            conf = get_json(xsiam_servers_path, return_content=True)
+            conf = get_json(xsiam_servers_path)
 
         return conf
 
     @staticmethod
     def _load_conf_files(conf_path, secret_conf_path):
-        conf = Conf(get_json(conf_path, return_content=True))
+        conf = Conf(get_json(conf_path))
 
         secret_conf = None
         if secret_conf_path:
-            secret_conf = SecretConf(get_json(secret_conf_path, return_content=True))
+            secret_conf = SecretConf(get_json(secret_conf_path))
 
         return conf, secret_conf
 

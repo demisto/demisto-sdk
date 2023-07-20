@@ -35,7 +35,7 @@ class AuthorImageValidator(ImageValidator):
 
     def get_support_level(self):
         metadata_path = os.path.join(self.pack_path, PACKS_PACK_META_FILE_NAME)
-        metadata_content = get_json(metadata_path, return_content=True)
+        metadata_content = get_json(metadata_path)
         return metadata_content.get(PACK_METADATA_SUPPORT)
 
     @error_codes("IM109")

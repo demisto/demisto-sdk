@@ -138,7 +138,7 @@ def find_pack_display_name(pack_folder_name: str) -> str:
 
     pack_metadata_path = found_path_results[0]
 
-    pack_metadata = get_json(pack_metadata_path, return_content=True)
+    pack_metadata = get_json(pack_metadata_path)
 
     pack_display_name = (
         pack_metadata.get("name") if pack_metadata.get("name") else pack_folder_name
@@ -2902,7 +2902,7 @@ class PackDependencies:
         """
 
         if id_set_path and os.path.isfile(id_set_path):
-            id_set = get_json(id_set_path, return_content=True)
+            id_set = get_json(id_set_path)
         else:
             if skip_id_set_creation:
                 return {}
@@ -2976,7 +2976,7 @@ class PackDependencies:
         """
 
         pack_meta_file_content = get_json(
-            find_pack_path(pack_name)[0], return_content=True
+            find_pack_path(pack_name)[0]
         )
 
         return pack_meta_file_content

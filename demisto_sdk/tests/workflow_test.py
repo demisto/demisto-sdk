@@ -297,7 +297,7 @@ def modify_entity(content_repo: ContentGitRepo, monkeypatch: MonkeyPatch):
         content_repo.content / "Packs" / "HelloWorld" / "Scripts" / "HelloWorldScript"
     )
     # Modify the entity
-    script = get_yaml("./HelloWorldScript.yml", return_content=True)
+    script = get_yaml("./HelloWorldScript.yml")
     script["args"][0]["description"] = "new description"
 
     yaml.dump(script, open("./HelloWorldScript.yml", "w"))

@@ -249,7 +249,7 @@ class PackUniqueFilesValidator(BaseValidator):
             (Dict): Metadata JSON pack file content.
         """
         if not self.metadata_content:
-            self.metadata_content = get_json(self.pack_meta_file, return_content=True)
+            self.metadata_content = get_json(self.pack_meta_file)
         return self.metadata_content
 
     def _parse_file_into_list(self, file_name, delimiter="\n"):

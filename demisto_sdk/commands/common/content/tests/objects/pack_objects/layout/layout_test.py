@@ -33,7 +33,7 @@ class TestLayoutsContainer:
                 _dir
             )[0]
             layouts_container_to_upload = get_json(
-                str(layouts_container_to_upload_path), return_content=True
+                str(layouts_container_to_upload_path)
             )
             assert "fromVersion" in layouts_container_to_upload
             assert "fromServerVersion" in layouts_container_to_upload

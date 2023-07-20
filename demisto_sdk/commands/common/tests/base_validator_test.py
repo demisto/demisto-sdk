@@ -491,7 +491,7 @@ class TestJsonOutput:
                 ui_applicable_error_message,
                 False,
             )
-            json_output = get_json(base.json_file_path, return_content=True)
+            json_output = get_json(base.json_file_path)
 
             assert json_output.sort() == expected_json_1.sort()
 
@@ -502,7 +502,7 @@ class TestJsonOutput:
                 non_ui_applicable_error_message,
                 True,
             )
-            json_output = get_json(base.json_file_path, return_content=True)
+            json_output = get_json(base.json_file_path)
 
             assert json_output == expected_json_2
 
@@ -553,7 +553,7 @@ class TestJsonOutput:
                 ui_applicable_error_message,
                 False,
             )
-            json_output = get_json(base.json_file_path, return_content=True)
+            json_output = get_json(base.json_file_path)
 
             assert json_output.sort() == expected_json_1.sort()
 
@@ -601,7 +601,7 @@ class TestJsonOutput:
                 ui_applicable_error_message,
                 False,
             )
-            json_output = get_json(base.json_file_path, return_content=True)
+            json_output = get_json(base.json_file_path)
 
             assert json_output.sort() == expected_json_1.sort()
 

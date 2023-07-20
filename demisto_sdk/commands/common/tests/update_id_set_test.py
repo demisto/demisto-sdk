@@ -3093,7 +3093,7 @@ class TestFlow(unittest.TestCase):
                 "IncidentFields",
             ],
         )
-        data = get_json(json_path, return_content=True)
+        data = get_json(json_path)
         dup_data = find_duplicates(data)
         assert any("temp-widget-dup-check" in i for i in dup_data)
         assert any("temp-report-dup-check" in i for i in dup_data)

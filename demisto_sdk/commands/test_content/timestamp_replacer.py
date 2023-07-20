@@ -494,9 +494,9 @@ class TimestampReplacer:
         if not path.exists(self.bad_keys_filepath) and path.exists(
             repo_bad_keys_filepath
         ):
-            problem_keys = get_json(repo_bad_keys_filepath, return_content=True)
+            problem_keys = get_json(repo_bad_keys_filepath)
         elif path.exists(self.bad_keys_filepath):
-            problem_keys = get_json(self.bad_keys_filepath, return_content=True)
+            problem_keys = get_json(self.bad_keys_filepath)
         else:
             problem_keys = {
                 "keys_to_replace": "",
@@ -522,7 +522,7 @@ class TimestampReplacer:
         if path.exists(self.bad_keys_filepath):
             logging.info(f'"{self.bad_keys_filepath}" path exists - loading bad keys')
 
-            problem_keys = get_json(self.bad_keys_filepath, return_content=True)
+            problem_keys = get_json(self.bad_keys_filepath)
 
             query_keys = problem_keys.get("server_replay_ignore_params")
             self.query_keys.update(

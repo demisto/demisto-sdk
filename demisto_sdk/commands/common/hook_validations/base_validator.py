@@ -279,7 +279,7 @@ class BaseValidator:
         if not os.path.exists(meta_file_path):
             return {}
 
-        return get_json(meta_file_path, return_content=True)
+        return get_json(meta_file_path)
 
     def update_checked_flags_by_support_level(self, file_path):
         pack_name = get_pack_name(file_path)

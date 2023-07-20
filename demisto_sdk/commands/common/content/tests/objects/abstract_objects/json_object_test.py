@@ -27,13 +27,13 @@ json = JSON_Handler()
 class TestValidJSON:
     def test_valid_json_file_path(self):
         assert JSONObject(TEST_VALID_JSON).to_dict() == get_json(
-            TEST_VALID_JSON, return_content=True
+            TEST_VALID_JSON
         )
 
     def test_get_item(self):
         assert (
             JSONObject(TEST_VALID_JSON)["fromVersion"]
-            == get_json(TEST_VALID_JSON, return_content=True)["fromVersion"]
+            == get_json(TEST_VALID_JSON)["fromVersion"]
         )
 
     @pytest.mark.parametrize(argnames="default_value", argvalues=["test_value", ""])
@@ -45,7 +45,7 @@ class TestValidJSON:
         else:
             assert (
                 obj["fromVersion"]
-                == get_json(TEST_VALID_JSON, return_content=True)["fromVersion"]
+                == get_json(TEST_VALID_JSON)["fromVersion"]
             )
 
     def test_dump(self):
@@ -54,7 +54,7 @@ class TestValidJSON:
         expected_file = Path(TEST_VALID_JSON).parent / f"prefix-{TEST_VALID_JSON.name}"
         obj = JSONObject(TEST_VALID_JSON, "prefix")
         assert obj.dump()[0] == expected_file
-        assert obj.to_dict() == get_json(expected_file, return_content=True)
+        assert obj.to_dict() == get_json(expected_file)
         expected_file.unlink()
 
 

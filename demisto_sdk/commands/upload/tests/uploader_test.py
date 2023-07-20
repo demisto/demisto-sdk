@@ -299,7 +299,7 @@ def test_upload_incident_type_correct_file_change(demisto_client_configure, mock
     uploader.client.import_incident_types_handler = MagicMock(side_effect=save_file)
     uploader.upload()
 
-    incident_type_data = get_json(path, return_content=True)
+    incident_type_data = get_json(path)
 
     assert json.loads(DATA)[0] == incident_type_data
 
@@ -346,7 +346,7 @@ def test_upload_incident_field_correct_file_change(demisto_client_configure, moc
     )
     assert uploader.upload() == SUCCESS_RETURN_CODE
 
-    incident_field_data = get_json(path, return_content=True)
+    incident_field_data = get_json(path)
 
     assert json.loads(DATA)["incidentFields"][0] == incident_field_data
 

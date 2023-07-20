@@ -65,7 +65,7 @@ URL = "https://openphish.com/feed.txt"
 
 
 def util_load_json(path):
-    return get_json(path, return_content=True)
+    return get_json(path)
 
 
 def test_build_iterator(requests_mock):

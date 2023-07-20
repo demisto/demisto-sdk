@@ -1,6 +1,7 @@
+from pathlib import Path
+
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.pre_commit.hooks.hook import Hook
-from pathlib import Path
 
 
 class SourceryHook(Hook):

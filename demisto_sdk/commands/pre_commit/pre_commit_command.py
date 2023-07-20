@@ -8,7 +8,7 @@ from copy import deepcopy
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, Iterable, List, Optional, Set
-import sys
+
 import more_itertools
 
 from demisto_sdk.commands.common.constants import (
@@ -34,8 +34,8 @@ from demisto_sdk.commands.content_graph.objects.integration_script import (
 from demisto_sdk.commands.pre_commit.hooks.mypy import MypyHook
 from demisto_sdk.commands.pre_commit.hooks.pycln import PyclnHook
 from demisto_sdk.commands.pre_commit.hooks.ruff import RuffHook
-from demisto_sdk.commands.pre_commit.hooks.validate_format import ValidateFormatHook
 from demisto_sdk.commands.pre_commit.hooks.sourcery import SourceryHook
+from demisto_sdk.commands.pre_commit.hooks.validate_format import ValidateFormatHook
 
 IS_GITHUB_ACTIONS = string_to_bool(os.getenv("GITHUB_ACTIONS"), False)
 

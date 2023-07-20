@@ -46,50 +46,6 @@ class TestErrors(unittest.TestCase):
         result = Errors.pack_metadata_empty()
         assert result == expected_result
 
-    def test_might_need_rns(self):
-        """
-        Given: None
-        When: Returning an error message
-        Then: Return error message with the input value as a tuple containing error and error code.
-        """
-        expected_result = (
-            "You may need RN in this file, please verify if they are required."
-        )
-        result = Errors.might_need_release_notes()
-        assert result == expected_result
-
-    def test_unknown_file(self):
-        """
-        Given: None
-        When: Returning an error message
-        Then: Return error message with the input value as a string containing error.
-        """
-        expected_result = "File type is unknown, check it out."
-        result = Errors.unknown_file()
-        assert result == expected_result
-
-    def test_id_change(self):
-        """
-        Given: None
-        When: Returning an error message
-        Then: Return error message with the input value as a string containing error.
-        """
-        expected_result = "You've changed the ID of the file, please undo this change."
-        result = Errors.id_changed()
-        assert result == expected_result
-
-    def test_id_might_change(self):
-        """
-        Given: None
-        When: Returning an error message
-        Then: Return error message with the input value as a string containing error.
-        """
-        expected_result = (
-            "ID may have changed, please make sure to check you have the correct one."
-        )
-        result = Errors.id_might_changed()
-        assert result == expected_result
-
     def test_id_should_equal(self):
         """
         Given: File name and file ID

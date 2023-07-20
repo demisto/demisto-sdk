@@ -20,7 +20,7 @@
 * Added an ability to provide list of marketplace names as a credentials-type (type 9) param attribute.
 * **doc-review** will run with the `--use-packs-known-words` default to true.
 * Calling **modeling-rules init-test-data** will now return the XDM fields output in alphabetical order.
-* Removed a duplication in the validation of DS104, and created dedicated validation for it.
+* Removed a duplication in the validation of DS104, and created dedicated validation for it. Changed DS104 from warning to error.
 
 ## 1.17.2
 * Fixed an issue where **lint** and **validate** commands failed on integrations and scripts that use docker images that are not available in the Docker Hub but exist locally.

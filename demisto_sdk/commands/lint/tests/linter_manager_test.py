@@ -2,6 +2,7 @@ import logging
 import os
 from pathlib import PosixPath
 from unittest.mock import MagicMock
+from pathlib import Path
 
 import pytest
 
@@ -97,7 +98,7 @@ def test_create_failed_unit_tests_report_with_failed_tests():
         assert len(fail_list) == 2
         assert "HelloWorld" in fail_list
         assert "Infoblox" in fail_list
-    os.remove(file_path)
+    Path.unlink(Path(file_path))
 
 
 def test_create_failed_unit_tests_report_no_failed_tests():

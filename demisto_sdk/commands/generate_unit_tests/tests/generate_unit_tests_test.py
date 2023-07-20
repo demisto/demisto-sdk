@@ -111,7 +111,7 @@ class TestUnitTestsGenerator:
             assert compare_ast(parse(output_source), parse(output_desired))
         finally:
             if output_path.exists():
-                os.remove(output_path)
+                Path.unlink(Path(output_path))
 
 
 def test_get_client_init_args():

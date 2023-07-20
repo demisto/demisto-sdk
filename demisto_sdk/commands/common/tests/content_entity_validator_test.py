@@ -257,7 +257,7 @@ def test_validate_readme_exists_not_checking_on_api_modules(repo):
     """
     pack = repo.create_pack(API_MODULES_PACK)
     api_modules = pack.create_script("TestApiModule", readme=None)
-    os.remove(api_modules.readme.path)
+    Path.unlink(Path(api_modules.readme.path))
     structue_validator = StructureValidator(api_modules.yml.path)
     content_entity_validator = ContentEntityValidator(structue_validator)
     assert content_entity_validator.validate_readme_exists()

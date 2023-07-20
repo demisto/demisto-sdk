@@ -179,7 +179,7 @@ class TestValidators:
 
     @classmethod
     def teardown_class(cls):
-        os.remove(CONF_PATH)
+        Path.unlink(Path(CONF_PATH))
         for dir_to_delete in cls.CREATED_DIRS:
             if Path(dir_to_delete).exists():
                 os.rmdir(dir_to_delete)
@@ -260,7 +260,7 @@ class TestValidators:
             mocker.patch.object(validator, "is_script_id_valid", return_value=True)
             assert validator.is_valid_playbook(validate_rn=False)
         finally:
-            os.remove(PLAYBOOK_TARGET)
+            Path.unlink(Path(PLAYBOOK_TARGET))
 
     @pytest.mark.parametrize(
         "source, target, answer, validator", (INPUTS_IS_VALID_VERSION)
@@ -284,7 +284,7 @@ class TestValidators:
             res_validator = validator(structure)
             assert res_validator.is_valid_version() is answer
         finally:
-            os.remove(target)
+            Path.unlink(Path(target))
 
     @pytest.mark.parametrize(
         "source, target, answer, validator",
@@ -309,7 +309,7 @@ class TestValidators:
             res_validator = validator(structure)
             assert res_validator.is_valid_fromversion() is answer
         finally:
-            os.remove(target)
+            Path.unlink(Path(target))
 
     INPUTS_is_condition_branches_handled = [
         (INVALID_PLAYBOOK_CONDITION_1, False),
@@ -325,7 +325,7 @@ class TestValidators:
             validator = PlaybookValidator(structure)
             assert validator.is_condition_branches_handled() is answer
         finally:
-            os.remove(PLAYBOOK_TARGET)
+            Path.unlink(Path(PLAYBOOK_TARGET))
 
     INPUTS_is_condition_branches_handled = [
         (INVALID_PLAYBOOK_CONDITION_1, False),
@@ -341,7 +341,7 @@ class TestValidators:
             validator = PlaybookValidator(structure)
             assert validator.are_default_conditions_valid() is answer
         finally:
-            os.remove(PLAYBOOK_TARGET)
+            Path.unlink(Path(PLAYBOOK_TARGET))
 
     INPUTS_LOCKED_PATHS = [
         (VALID_REPUTATION_PATH, True, ReputationValidator),
@@ -382,7 +382,7 @@ class TestValidators:
             )
             assert res_validator.is_valid_file(validate_rn=False) is answer
         finally:
-            os.remove(target)
+            Path.unlink(Path(target))
 
     INPUTS_RELEASE_NOTES_EXISTS_VALIDATION = [
         (
@@ -446,8 +446,8 @@ class TestValidators:
             res_validator = OldReleaseNotesValidator(target_dummy)
             assert res_validator.validate_file_release_notes_exists() is answer
         finally:
-            os.remove(target_dummy)
-            os.remove(target_release_notes)
+            Path.unlink(Path(target_dummy))
+            Path.unlink(Path(target_release_notes))
 
     @staticmethod
     def create_release_notes_structure_test_package():
@@ -527,8 +527,8 @@ class TestValidators:
             res_validator = OldReleaseNotesValidator(target_dummy)
             assert res_validator.is_valid_release_notes_structure() is answer
         finally:
-            os.remove(target_dummy)
-            os.remove(target_release_notes)
+            Path.unlink(Path(target_dummy))
+            Path.unlink(Path(target_release_notes))
 
     @staticmethod
     def mock_get_master_diff():
@@ -559,7 +559,7 @@ class TestValidators:
             res_validator = validator(structure)
             assert res_validator.is_id_equals_name() is answer
         finally:
-            os.remove(target)
+            Path.unlink(Path(target))
 
     INPUTS_IS_CONNECTED_TO_ROOT = [
         (INVALID_PLAYBOOK_PATH_FROM_ROOT, False),
@@ -574,7 +574,7 @@ class TestValidators:
             validator = PlaybookValidator(structure)
             assert validator.is_root_connected_to_all_tasks() is answer
         finally:
-            os.remove(PLAYBOOK_TARGET)
+            Path.unlink(Path(PLAYBOOK_TARGET))
 
     INPUTS_STRUCTURE_VALIDATION = [
         (VALID_INTEGRATION_TEST_PATH, INTEGRATION_TARGET, "integration"),
@@ -595,7 +595,7 @@ class TestValidators:
                 file_path=source, predefined_scheme=file_type
             ).is_valid_file()
         finally:
-            os.remove(target)
+            Path.unlink(Path(target))
 
     FILES_PATHS_FOR_ALL_VALIDATIONS = [
         VALID_INTEGRATION_ID_PATH,
@@ -803,7 +803,7 @@ class TestValidators:
         assert not str_in_call_args_list(logger_error.call_args_list, err_msg)
         assert not str_in_call_args_list(logger_error.call_args_list, err_code)
 
-        os.remove(pack.pack_metadata.path)
+        Path.unlink(Path(pack.pack_metadata.path))
         validate_manager.validate_pack_unique_files(
             pack.path, pack_error_ignore_list={}
         )

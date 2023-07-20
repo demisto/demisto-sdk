@@ -466,7 +466,7 @@ def test_get_remote_templates__valid(mocker, initiator):
     assert res
     assert "Test im in file" in file_content
 
-    os.remove(os.path.join(PACK_NAME, "Test.py"))
+    Path.unlink(Path(PACK_NAME, "Test.py"))
     os.rmdir(PACK_NAME)
 
 
@@ -489,7 +489,7 @@ def test_get_remote_templates__invalid(mocker, initiator):
 
     assert not res
 
-    os.remove(os.path.join(PACK_NAME, "Test.py"))
+    Path.unlink(Path(PACK_NAME, "Test.py"))
     os.rmdir(PACK_NAME)
 
 

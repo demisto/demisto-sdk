@@ -3,6 +3,7 @@ import os
 from copy import deepcopy
 from typing import Any, Dict, List, Optional
 from unittest.mock import mock_open, patch
+from pathlib import Path
 
 import pytest
 
@@ -2642,7 +2643,7 @@ class TestisContextChanged:
             structure_validator, validate_all=validate_all
         )
         if remove_readme:
-            os.remove(integration.readme.path)
+            Path.unlink(Path(integration.readme.path))
         assert (
             integration_validator.validate_readme_exists(
                 integration_validator.validate_all

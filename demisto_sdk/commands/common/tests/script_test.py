@@ -1,5 +1,6 @@
 import os
 from unittest.mock import patch
+from pathlib import Path
 
 import pytest
 
@@ -542,7 +543,7 @@ class TestScriptValidator:
             structure_validator, validate_all=validate_all
         )
         if remove_readme:
-            os.remove(script.readme.path)
+            Path.unlink(Path(script.readme.path))
         assert (
             script_validator.validate_readme_exists(script_validator.validate_all)
             is expected_result

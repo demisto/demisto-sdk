@@ -1,6 +1,7 @@
 import os.path
 from typing import Optional
 from unittest.mock import patch
+from pathlib import Path
 
 import pytest
 
@@ -901,7 +902,7 @@ class TestPlaybookValidator:
             structure_validator, validate_all=validate_all
         )
         if remove_readme:
-            os.remove(playbook.readme.path)
+            Path.unlink(Path(playbook.readme.path))
         assert (
             playbook_validator.validate_readme_exists(playbook_validator.validate_all)
             is expected_result

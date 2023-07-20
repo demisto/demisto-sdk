@@ -14,7 +14,8 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
         with:
-          fetch-depth: 30
+          repository: ${{ github.base_ref }}
+          fetch-depth: 0
 
       - name: Create PR review request
         env:

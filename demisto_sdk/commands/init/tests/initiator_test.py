@@ -583,8 +583,6 @@ def test_template_integration_init(initiator, tmpdir, monkeypatch, mocker, templ
 
     integration_dir_files = set(listdir(integration_path))
     expected_files = {
-        "Pipfile",
-        "Pipfile.lock",
         "README.md",
         f"{INTEGRATION_NAME}.py",
         f"{INTEGRATION_NAME}.yml",

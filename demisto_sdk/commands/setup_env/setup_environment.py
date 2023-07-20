@@ -6,7 +6,7 @@ import venv
 from enum import Enum
 from pathlib import Path
 from typing import Optional, Tuple
-from demisto_sdk.commands.setup_env.test_integration import create_integration_instance
+
 import dotenv
 import google
 from google.cloud import secretmanager
@@ -23,6 +23,7 @@ from demisto_sdk.commands.content_graph.objects.integration_script import (
     IntegrationScript,
 )
 from demisto_sdk.commands.content_graph.objects.pack import Pack
+from demisto_sdk.commands.setup_env.test_integration import create_integration_instance
 
 json5 = JSON5_Handler()
 json = JSON_Handler()
@@ -134,7 +135,7 @@ def configure_vscode_tasks(
                         {"localPath": str(CONTENT_PATH), "containerPath": "/app"}
                     ],
                     "env": {
-                        "DEMISTO_PARAMS": "/app/.vscode/params.json",
+                        "DEMISTO_PARAMS": "${env:DEMISTO_PARAMS}",
                         "PYTHONPATH": ":".join(docker_python_path),
                     },
                 },
@@ -199,6 +200,7 @@ def configure_vscode_launch(ide_folder: Path, integration_script: IntegrationScr
                         "projectType": "general",
                         "justMyCode": False,
                     },
+                    "env": {"DEMISTO_PARAMS": "${env:DEMISTO_PARAMS}"},
                 },
                 {
                     "name": f"Docker: Debug tests ({integration_script.path.stem})",
@@ -274,22 +276,32 @@ def setup(
         if not secret_id:
             secret_id = integration_script.name.replace(" ", "_")
             secret_id = re.sub(r"[()]", "", secret_id)
-        if (project_id := os.getenv("DEMISTO_GCP_PROJECT_ID")) and isinstance(integration_script, Integration):
+        if (project_id := os.getenv("DEMISTO_GCP_PROJECT_ID")) and isinstance(
+            integration_script, Integration
+        ):
             params = get_integration_params(project_id, secret_id)
             if params and instance_name:
-                if (instance_created := create_integration_instance(
-                    integration_script.name,
-                    instance_name,
-                    params,
-                    params.get("byoi", True),
-                )) and instance_created[0]:
-                    logger.info(f"Created integration instance {instance_created[0]['name']}")
+                if (
+                    instance_created := create_integration_instance(
+                        integration_script.name,
+                        instance_name,
+                        params,
+                        params.get("byoi", True),
+                    )
+                ) and instance_created[0]:
+                    logger.info(
+                        f"Created integration instance {instance_created[0]['name']}"
+                    )
                 else:
-                    logger.warning(f"Failed to create integration instance {instance_name}")
-            with open(CONTENT_PATH / ".vscode" / "params.json", "w") as f:
-                json.dump(params, f, indent=4)
+                    logger.warning(
+                        f"Failed to create integration instance {instance_name}"
+                    )
+            if params:
+                os.environ["DEMISTO_PARAMS"] = json.dumps(params)
         else:
-            logger.info("Skipping searching in Google Secret Manager as DEMISTO_GCP_PROJECT_ID is not set")
+            logger.info(
+                "Skipping searching in Google Secret Manager as DEMISTO_GCP_PROJECT_ID is not set"
+            )
         if not docker_image:
             docker_image = DEF_DOCKER
         (
@@ -316,28 +328,27 @@ def setup(
             )
             venv_path = integration_script.path.parent / "venv"
             interpreter_path = venv_path / "bin" / "python"
-            if venv_path.exists() and not overwrite_virtualenv:
-                continue
-            logger.info(f"Creating virtualenv for {integration_script.name}")
-            shutil.rmtree(venv_path, ignore_errors=True)
-            venv.create(venv_path, with_pip=True)
-            for req in requirements:
-                try:
-                    if not req:
-                        continue
-                    subprocess.run(
-                        [
-                            f"{venv_path / 'bin' / 'pip'}",
-                            "-q",
-                            "--disable-pip-version-check",
-                            "install",
-                            req,
-                        ],
-                        check=True,
-                    )
-                    logger.info(f"Installed {req}")
-                except subprocess.CalledProcessError:
-                    logger.warning(f"Could not install {req}, skipping...")
+            if not venv_path.exists() or overwrite_virtualenv:
+                logger.info(f"Creating virtualenv for {integration_script.name}")
+                shutil.rmtree(venv_path, ignore_errors=True)
+                venv.create(venv_path, with_pip=True)
+                for req in requirements:
+                    try:
+                        if not req:
+                            continue
+                        subprocess.run(
+                            [
+                                f"{venv_path / 'bin' / 'pip'}",
+                                "-q",
+                                "--disable-pip-version-check",
+                                "install",
+                                req,
+                            ],
+                            check=True,
+                        )
+                        logger.info(f"Installed {req}")
+                    except subprocess.CalledProcessError:
+                        logger.warning(f"Could not install {req}, skipping...")
 
         if ide == IDE.VSCODE:
             configure_vscode(

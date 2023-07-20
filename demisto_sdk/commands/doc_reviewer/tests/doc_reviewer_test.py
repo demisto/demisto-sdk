@@ -1362,11 +1362,29 @@ def test_find_known_words_from_pack_ignore_commons_scripts_name(repo):
         assert "bla.md" not in found_known_words
 
 
+CAMELCASE_TEST_WORD = "".join(
+    [
+        "this",
+        "word",
+        "simulates",
+        "no",
+        "camel",
+        "case",
+        "split",
+        "and",
+        "should",
+        "remain",
+        "unchanged",
+    ]
+)
+
+
 @pytest.mark.parametrize(
     "word, parts",
     [
         ("ThisIsCamelCase", ["This", "Is", "Camel", "Case"]),
         ("thisIPIsAlsoCamelCase", ["this", "IP", "Is", "Also", "Camel", "Case"]),
+        (CAMELCASE_TEST_WORD, [CAMELCASE_TEST_WORD]),
     ],
 )
 def test_camel_case_split(word, parts):
@@ -1390,10 +1408,10 @@ def test_camel_case_split(word, parts):
 @pytest.mark.parametrize(
     "sentence, expected",
     [
-        ("\\tThisIs\\rCamelCase\\n", " ThisIs CamelCase "),
+        ("\\tthis\\rhas\\nescapes\\b", " this has escapes "),
         ("no escape sequence", "no escape sequence"),
     ],
 )
 def test_replace_escape_characters(sentence, expected):
     result = replace_escape_characters(sentence)
-    assert result == expected
+    assert result == expected, "The escape sequence was removed"

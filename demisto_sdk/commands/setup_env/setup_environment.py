@@ -133,7 +133,7 @@ def configure_vscode_tasks(
                         {"localPath": str(CONTENT_PATH), "containerPath": "/app"}
                     ],
                     "env": {
-                        "DEMISTO_PARAMS": str(CONTENT_PATH / ".vscode" / "params.json"),
+                        "DEMISTO_PARAMS": f"/app/{CONTENT_PATH / '.vscode' / 'params.json'}",
                         "PYTHONPATH": ":".join(docker_python_path),
                     },
                 },

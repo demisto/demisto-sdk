@@ -3122,14 +3122,6 @@ def test_validate_no_disallowed_terms_in_customer_facing_docs_end_to_end(repo, m
 
     validate_manager = ValidateManager()
 
-    # Mock all validations that aren't 'validate_no_disallowed_terms_in_customer_facing_docs' to return True
-    # mocker.patch.object(ReleaseNotesValidator, "has_release_notes_been_filled_out", return_value=True)
-    # mocker.patch.object(ReleaseNotesValidator, "are_release_notes_complete", return_value=True)
-    # mocker.patch.object(ReleaseNotesValidator, "is_docker_image_same_as_yml", return_value=True)
-    # mocker.patch.object(ReleaseNotesValidator, "validate_json_when_breaking_changes", return_value=True)
-    # mocker.patch.object(ReleaseNotesValidator, "has_no_markdown_lint_errors", return_value=True)
-    # mocker.patch.object(ReleaseNotesValidator, "validate_release_notes_headers", return_value=True)
-
     assert not validate_manager.run_validations_on_file(
         file_path=rn_file.path, pack_error_ignore_list=[]
     )
@@ -3143,6 +3135,6 @@ def test_validate_no_disallowed_terms_in_customer_facing_docs_end_to_end(repo, m
         file_path=playbook_readme_file.path, pack_error_ignore_list=[]
     )
 
-    # Assure an error was logged for each file
+    # Assure an errors were logged (1 error per validated file)
     assert count_str_in_call_args_list(logger_error.call_args_list, "BA125") == 4
     pass

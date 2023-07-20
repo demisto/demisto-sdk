@@ -19,7 +19,6 @@ class JSONBased:
 
         self._file_path = dir_path / self.name
         self.path = str(self._file_path)
-        self.rel_path = os.path.relpath(self.path, self._dir_path.parent.parent)
         self.write_json({})
 
     def write_json(self, obj: dict):

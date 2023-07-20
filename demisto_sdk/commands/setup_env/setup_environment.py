@@ -254,7 +254,7 @@ def setup(
     ide: IDE = IDE.VSCODE,
     create_virtualenv: bool = False,
     overwrite_virtualenv: bool = False,
-    secret_key: Optional[str] = None,
+    secret_id: Optional[str] = None,
 ):
     ide_folder = CONTENT_PATH / IDE_TO_FOLDER[ide]
     docker_client = docker_helper.init_global_docker_client()
@@ -269,7 +269,7 @@ def setup(
         docker_image = integration_script.docker_image
         interpreter_path = CONTENT_PATH / ".venv" / "bin" / "python"
         # replace " ", "(", ")" with "_"
-        secret_id = secret_key or re.sub(r"[ ()]", "_", integration_script.name)
+        secret_id = secret_id or re.sub(r"[ ()]", "_", integration_script.name)
         if project_id := os.getenv("GCP_PROJECT_ID"):
             params = get_integration_params(project_id, secret_id)
             with open(ide_folder / "params.json", "w") as f:

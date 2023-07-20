@@ -3451,13 +3451,13 @@ def run_unit_tests(
     help="Overwrite the virtualenv if it already exists. To use with `create-virtualenv` flag",
 )
 @click.option(
-    "--secret-key",
+    "--secret-id",
     help="Select a secret key from Google Secret Manager. Use only if you have access to Google Secret Manager",
     required=False,
 )
 @click.argument("file_paths", nargs=-1, type=click.Path(exists=True, resolve_path=True))
 def setup_env(
-    input, file_paths, create_virtualenv, overwrite_virtualenv, secret_key=None
+    input, file_paths, create_virtualenv, overwrite_virtualenv, secret_id=None
 ):
     from demisto_sdk.commands.setup_env.setup_environment import (
         setup,
@@ -3470,7 +3470,7 @@ def setup_env(
         file_paths,
         create_virtualenv=create_virtualenv,
         overwrite_virtualenv=overwrite_virtualenv,
-        secret_key=secret_key,
+        secret_key=secret_id,
     )
 
 

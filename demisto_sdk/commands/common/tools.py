@@ -466,7 +466,7 @@ def get_local_remote_file(
         if file_content:
             return file_content.encode()
         return file_content
-    return get_file_details(full_file_path)
+    return get_file_details(file_content, full_file_path)
 
 
 def get_remote_file_from_api(
@@ -539,13 +539,21 @@ def get_remote_file_from_api(
     file_content = res.content
     if return_content:
         return file_content
-    return get_file_details(full_file_path)
+    return get_file_details(file_content, full_file_path)
 
 
 def get_file_details(
+    file_content,
     full_file_path: str,
 ) -> Dict:
-    return get_file(full_file_path)
+    if full_file_path.endswith("json"):
+        file_details = json.loads(file_content)
+    elif full_file_path.endswith(("yml", "yaml")):
+        file_details = yaml.load(file_content)
+    # if neither yml nor json then probably a CHANGELOG or README file.
+    else:
+        file_details = {}
+    return file_details
 
 
 @lru_cache(maxsize=128)

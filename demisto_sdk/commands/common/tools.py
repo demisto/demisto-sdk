@@ -3182,7 +3182,7 @@ def get_item_marketplaces(
 
     if not item_data:
         file_type = Path(item_path).suffix
-        item_data = get_file(item_path, file_type)
+        item_data = get_file(item_path)
 
     # first check, check field 'marketplaces' in the item's file
     marketplaces = item_data.get("marketplaces", [])  # type: ignore
@@ -3465,7 +3465,7 @@ def get_display_name(file_path, file_data={}) -> str:
     if not file_data:
         file_extension = os.path.splitext(file_path)[1]
         if file_extension in [".yml", ".json"]:
-            file_data = get_file(file_path, file_extension)
+            file_data = get_file(file_path)
 
     if "display" in file_data:
         name = file_data.get("display", None)

@@ -26,7 +26,7 @@ jobs:
           HEAD=${{ github.event.pull_request.head.sha }}
           echo $BASE
           echo $HEAD
-          CHANGED_FILES=$(git diff --name-only $BASE $HEAD | xargs)
+          CHANGED_FILES=$(git diff --name-only $BASE..$HEAD | xargs)
           cd Utils/github_workflow_scripts
           ./handle_external_pr.sh
           echo "Finished Handling External PR"

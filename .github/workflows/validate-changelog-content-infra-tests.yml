@@ -1,4 +1,4 @@
-name: Validate Content infra tests
+name: Infra stracture tests
 on: pull_request
 
 jobs:
@@ -20,8 +20,6 @@ jobs:
           git clone https://github.com/demisto/content 
           cd content
           poetry install --with ci
-          poetry remove demisto-sdk
-          echo "removed default SDK"
           echo "GITHUB_SHA : $GITHUB_SHA"
           poetry add git+https://github.com/demisto/demisto-sdk.git#${{github.sha}}
           echo "added custom SDK"

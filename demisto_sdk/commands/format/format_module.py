@@ -120,8 +120,8 @@ def format_manager(
     include_untracked: bool = False,
     add_tests: bool = None,
     interactive: bool = True,
-    id_set_path: str = None,
     clear_cache: bool = False,
+    format_with_graph: bool = True
 ):
     """
     Format_manager is a function that activated format command on different type of files.
@@ -138,8 +138,8 @@ def format_manager(
         include_untracked (bool): Whether to include untracked files when checking against git
         interactive (bool): Whether to run the format interactively or not (usually for contribution management)
         add_tests (bool): Whether to exclude tests automatically.
-        id_set_path (str): The path of the id_set.json file.
         clear_cache (bool): wether to clear the cache
+        format_with_graph (bool): wheter to use the graph in format
     Returns:
         int 0 in case of success 1 otherwise
     """
@@ -197,7 +197,7 @@ def format_manager(
                     assume_answer=assume_answer,
                     deprecate=deprecate,
                     add_tests=add_tests,
-                    id_set_path=id_set_path,
+                    format_with_graph=format_with_graph
                 )
                 if err_res:
                     log_list.extend([(err_res, "red")])
@@ -346,10 +346,10 @@ def run_format_on_file(
             FileType.LAYOUT.value,
             FileType.MAPPER.value,
         )
-        and "id_set_path" in kwargs
+        and "format_with_graph" in kwargs
     ):
         # relevant only for incidentfield/layouts/mappers
-        del kwargs["id_set_path"]
+        del kwargs["format_with_graph"]
     updater_class = FILE_TYPE_AND_LINKED_CLASS.get(file_type)
     if not updater_class:  # fail format so long as xsiam entities dont have formatters
         logger.info(

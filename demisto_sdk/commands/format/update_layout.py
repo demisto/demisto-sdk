@@ -73,7 +73,8 @@ class LayoutBaseFormat(BaseUpdateJSON, ABC):
 
         # layoutscontainer kinds are unique fields to containers, and shouldn't be in layouts
         self.is_container = any(self.data.get(kind) for kind in LAYOUTS_CONTAINER_KINDS)
-        self.graph = ContentGraphInterface(should_update=True)  # TODO Remove the should_update
+        self.graph = ContentGraphInterface(update_graph=True)  # TODO Remove the should_update
+        self.format_with_graph = kwargs.get('format_with_graph')
 
     def format_file(self) -> Tuple[int, int]:
         """Manager function for the Layout JSON updater."""
@@ -306,6 +307,11 @@ class LayoutBaseFormat(BaseUpdateJSON, ABC):
         """
         Remove non-existent fields from a container layout.
         """
+        if not self.format_with_graph:
+            logger.warning(
+                f"Skipping formatting of non-existent-fields for {self.source_file} as the no-graph argument was given."
+            )
+            return
 
         layout_container_items = [
             layout_container_field

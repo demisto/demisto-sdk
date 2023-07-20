@@ -39,7 +39,8 @@ class MapperJSONFormat(BaseUpdateJSON):
             **kwargs,
         )
 
-        self.graph = ContentGraphInterface(should_update=True)  # TODO Remove the should_update
+        self.graph = ContentGraphInterface(update_graph=True)  # TODO Remove the should_update
+        self.format_with_graph = kwargs.get('format_with_graph')
 
     def run_format(self) -> int:
         try:
@@ -78,6 +79,12 @@ class MapperJSONFormat(BaseUpdateJSON):
         """
         Remove non-existent fields from a mapper.
         """
+        if not self.format_with_graph:
+            logger.warning(
+                f"Skipping formatting of non-existent-fields for {self.source_file} as the no-graph argument was given."
+            )
+            return
+
         # get the relevant content item from the graph
         results = self.graph.search(object_id=self.data.get('id', ''))
         mapper_node = {}

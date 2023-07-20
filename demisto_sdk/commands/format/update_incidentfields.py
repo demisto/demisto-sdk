@@ -40,7 +40,8 @@ class IncidentFieldJSONFormat(BaseUpdateJSON):
             no_validate=no_validate,
             **kwargs,
         )
-        self.graph = ContentGraphInterface(should_update=True)  # TODO Remove the should_update
+        self.graph = ContentGraphInterface(update_graph=True)  # TODO Remove the should_update
+        self.format_with_graph = kwargs.get('format_with_graph')
 
     def run_format(self) -> int:
         try:
@@ -66,6 +67,14 @@ class IncidentFieldJSONFormat(BaseUpdateJSON):
 
         aliases = self.data.get("Aliases", {})
         if aliases:
+
+            if not self.format_with_graph:
+                logger.warning(
+                    f"Skipping formatting of marketplaces field of aliases for {self.source_file} as the "
+                    f"no-graph argument was given."
+                )
+                return
+
             for (
                 alias_cli_name,
                 aliases_file_path,

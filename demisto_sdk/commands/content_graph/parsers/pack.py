@@ -218,9 +218,7 @@ class PackParser(BaseContentParser, PackMetadataParser):
 
     @property
     def deprecated(self) -> bool:
-        if regex.match(PACK_NAME_DEPRECATED_REGEX, self.name) and (
+        return regex.match(PACK_NAME_DEPRECATED_REGEX, self.name) and (
             regex.match(DEPRECATED_NO_REPLACE_DESC_REGEX, self.description)
             or regex.match(DEPRECATED_DESC_REGEX, self.description)
-        ):
-            return True
-        return False
+        )

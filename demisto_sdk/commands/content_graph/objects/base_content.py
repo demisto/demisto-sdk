@@ -78,7 +78,6 @@ class BaseContent(ABC, BaseModel, metaclass=BaseContentMetaclass):
     content_type: ClassVar[ContentType] = Field(include=True)
     node_id: str
     marketplaces: List[MarketplaceVersions] = list(MarketplaceVersions)
-    deprecated: bool = False
 
     relationships_data: Dict[RelationshipType, Set["RelationshipData"]] = Field(
         defaultdict(set), exclude=True, repr=False

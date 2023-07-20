@@ -2,7 +2,14 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, Iterator, List, Optional
 
-from demisto_sdk.commands.common.constants import MarketplaceVersions
+import regex
+
+from demisto_sdk.commands.common.constants import (
+    DEPRECATED_DESC_REGEX,
+    DEPRECATED_NO_REPLACE_DESC_REGEX,
+    PACK_NAME_DEPRECATED_REGEX,
+    MarketplaceVersions,
+)
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import get_json
 from demisto_sdk.commands.content_graph.common import (
@@ -211,4 +218,9 @@ class PackParser(BaseContentParser, PackMetadataParser):
 
     @property
     def deprecated(self) -> bool:
-        return self.name.endswith("(Deprecated)")
+        if regex.match(PACK_NAME_DEPRECATED_REGEX, self.name) and (
+            regex.match(DEPRECATED_NO_REPLACE_DESC_REGEX, self.description)
+            or regex.match(DEPRECATED_DESC_REGEX, self.description)
+        ):
+            return True
+        return False

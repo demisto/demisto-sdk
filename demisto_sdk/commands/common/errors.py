@@ -1692,7 +1692,7 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def select_values_cannot_contain_empty_values_in_multi_select_types():
-        return "Multiselect types cannot contain empty values in the field selectValues. Please remove."
+        return "Multiselect types cannot contain empty values in the selectValues field"
 
     @staticmethod
     @error_code_decorator

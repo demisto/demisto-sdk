@@ -652,7 +652,7 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
                 )
                 continue
 
-            replace_item_with_higher_toversion(
+            add_item_to_metadata_list(
                 collected_content_items=content_items,
                 content_item=content_item,
                 marketplace=marketplace,
@@ -784,16 +784,18 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
         )
 
 
-def replace_item_with_higher_toversion(
+def add_item_to_metadata_list(
     collected_content_items: dict,
     content_item: ContentItem,
     marketplace: MarketplaceVersions,
     incident_to_alert: bool = False
 ):
     """
-    Replace content item object in the metadata content items list if its `toversion` is higher than the existing metadata object.
-    If the content item name should be replaced from incident to alert, then the function will be called recursively
-    to replace also the item that its name was replaced from incident to alert.
+    Adds the given content item to the metadata content items list.
+    - Checks if the given content item was already added to the metadata content items list
+      and replaces the object if its `toversion` is higher than the existing metadata object's `toversion`.
+    - If the content item name should be replaced from incident to alert, then the function will be called recursively
+      to replace also the item that its name was replaced from incident to alert.
 
     Args:
         collected_content_items (dict): The content items metadata list that were already collected.
@@ -811,16 +813,13 @@ def replace_item_with_higher_toversion(
         item_type_key=content_item.content_type.metadata_name
     ):
         content_item_metadata = content_item_metadata[0]
-        logger.debug(f'Found content item with name "{content_item.name}" already appended to the list')
+        logger.debug(f'Found content item with name "{content_item.name}" that was already appended to the list')
 
-        if parse(content_item.toversion) > parse(
-            content_item_metadata["toversion"]
-            or DEFAULT_CONTENT_ITEM_TO_VERSION
-        ):
-            logger.debug(f'Current content item with name "{content_item.name}" has higher `toversion` than the existing object, '
-                         'updating its metadata.')
-            content_item_metadata.update(content_item_summary.items())
-            set_empty_toversion_if_default(content_item_metadata)
+        replace_item_if_has_higher_toversion(
+            content_item,
+            content_item_metadata,
+            content_item_summary
+        )
 
     else:
         logger.debug(f'Didn\'t find content item with name "{content_item.name}" in the list, appending.')
@@ -832,9 +831,29 @@ def replace_item_with_higher_toversion(
     # If incident_to_alert is True then stop recursive
     if not incident_to_alert and content_item.is_incident_to_alert(marketplace):
         logger.debug(f'Replacing incident to alert in content item with ID "{content_item.object_id}" and appending to metadata')
-        replace_item_with_higher_toversion(
+        add_item_to_metadata_list(
             collected_content_items, content_item, marketplace, incident_to_alert=True
         )
+
+
+def replace_item_if_has_higher_toversion(content_item: ContentItem, content_item_metadata: dict, content_item_summary: dict):
+    """
+    Replaces the content item metadata object in the content items metadata list
+    if the given content item's `toversion` is higher than the existing item's metadata `toversion`.
+
+    Args:
+        content_item (ContentItem): The current content item to check.
+        content_item_metadata (dict): The existing content item metadata object in the list.
+        content_item_summary (dict): The current content item summary to update if needed.
+    """
+    if parse(content_item.toversion) > parse(
+        content_item_metadata["toversion"]
+        or DEFAULT_CONTENT_ITEM_TO_VERSION
+    ):
+        logger.debug(f'Current content item with name "{content_item.name}" has higher `toversion` than the existing object, '
+                     'updating its metadata.')
+        content_item_metadata.update(content_item_summary.items())
+        set_empty_toversion_if_default(content_item_metadata)
 
 
 def set_empty_toversion_if_default(content_item_dict: dict):

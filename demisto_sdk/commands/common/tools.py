@@ -1030,7 +1030,6 @@ def str2bool(v):
     """
     Deprecated. Use string_to_bool instead
     """
-    assert false
     return string_to_bool(v, default_when_empty=False)
 
 

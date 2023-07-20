@@ -21,9 +21,12 @@ jobs:
           cd ../..
           git clone https://github.com/demisto/content 
           cd content
-          poetry install
+          poetry install --ci
+          poetry remove demisto-sdk
+          echo "removed default SDK"
           echo "GITHUB_SHA : $GITHUB_SHA"
           poetry add git+https://github.com/demisto/demisto-sdk.git#$GITHUB_SHA
+          echo "added custom SDK"
           poetry run pytest ./Tests/scripts/infrastructure_tests/ -v
           poetry run pytest ./Tests/Marketplace/Tests/ -v
           poetry run pytest ./Tests/tests -v

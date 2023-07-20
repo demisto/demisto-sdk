@@ -11,7 +11,7 @@ changed_files=$(git diff --name-only "$BASE_REF" "$HEAD_REF" )
 security_items=("*Playbooks*" "*IncidentTypes*" "*IncidentFields*" "*IndicatorTypes*" "*IndicatorFields*" "*Layouts*" "*Classifiers*" "*sourcery*")
 
 function is_security_needed() {
-    for file in $changed_files; do
+    for file in "${changed_files[@]}"; do
         echo $file
         for name in "${security_items[@]}"; do
             echo $name

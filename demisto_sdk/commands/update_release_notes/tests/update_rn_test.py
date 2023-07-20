@@ -1976,6 +1976,10 @@ class TestRNUpdateUnit:
         mocker.patch.object(UpdateRN, "get_master_version", return_value="0.0.0")
 
         mocker.patch(
+            "demisto_sdk.commands.update_release_notes.update_rn.update_content_graph",
+            return_value=None,
+        )
+        mocker.patch(
             "demisto_sdk.commands.update_release_notes.update_rn.get_api_module_dependencies_from_graph",
             return_value=[integration_mock],  # Mock the integration path
         )

@@ -22,8 +22,8 @@ jobs:
           PR_LINK: ${{ github.event.pull_request.html_url }}
         run: |
           echo "Updating External PR ${{ github.event.pull_request.html_url }}"
-          BASE=${{ github.event.pull_request.base.sha }}
-          HEAD=${{ github.event.pull_request.head.sha }}
+          BASE=${{ github.event.pull_request.base.ref }}
+          HEAD=${{ github.event.pull_request.head.ref }}
           echo $BASE
           echo $HEAD
           CHANGED_FILES=$(git diff --name-only $HEAD..$BASE | xargs)

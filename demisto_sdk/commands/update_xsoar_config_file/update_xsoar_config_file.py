@@ -144,8 +144,8 @@ class XSOARConfigFileUpdater:
 
     def get_xsoar_config_data(self):
         config_file_info = {}
-        if Path(self.file_path).exists():
-            with open(self.file_path) as config_file:
+        if (path := Path(self.file_path)).exists():
+            with open(path) as config_file:
                 try:
                     config_file_info = json.load(config_file)
                 except json.JSONDecodeError:  # In case that the file exits but empty

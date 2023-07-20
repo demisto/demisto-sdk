@@ -685,9 +685,8 @@ def ProcessPoolHandler(artifact_manager: ArtifactsManager) -> ProcessPool:
             pool.close()
             pool.join()
         finally:
-            keyfile_path = Path("keyfile")
-            if keyfile_path.exists():
-                Path.unlink(Path.unlink())
+            if (keyfile_path := Path("keyfile")).exists():
+                Path.unlink(keyfile_path)
 
 
 def wait_futures_complete(

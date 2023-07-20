@@ -344,8 +344,8 @@ class UpdateRN:
         )
         self.bc_path = bc_file_path
         bc_file_data: dict = dict()
-        if Path(bc_file_path).exists():
-            with open(bc_file_path) as f:
+        if (path := Path(bc_file_path)).exists():
+            with open(path) as f:
                 bc_file_data = json.loads(f.read())
         bc_file_data["breakingChanges"] = True
         bc_file_data["breakingChangesNotes"] = bc_file_data.get("breakingChangesNotes")
@@ -650,7 +650,7 @@ class UpdateRN:
         :param rn_path: The RN path to check/create
 
         """
-        if not Path(os.path.dirname(rn_path)).exists():
+        if not Path(rn_path).parent.exists():
             try:
                 os.makedirs(os.path.dirname(rn_path))
             except OSError as exc:  # Guard against race condition

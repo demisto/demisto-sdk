@@ -231,7 +231,7 @@ class ContributionConverter:
         Returns:
             str: A unique pack directory name
         """
-        while Path(os.path.join(self.packs_dir_path, pack_dir)).exists():
+        while Path(self.packs_dir_path, pack_dir).exists():
             logger.info(
                 f"Modifying pack name because pack {pack_dir} already exists in the content repo"
             )
@@ -254,8 +254,7 @@ class ContributionConverter:
                 filename=self.contribution, extract_dir=self.pack_dir_path
             )
             # remove metadata.json file
-            metadata_path = Path(os.path.join(self.pack_dir_path, "metadata.json"))
-            Path.unlink(metadata_path)
+            Path(self.pack_dir_path, "metadata.json").unlink()
         else:
             err_msg = (
                 "Tried unpacking contribution to destination directory but the instance variable"
@@ -380,8 +379,7 @@ class ContributionConverter:
                             self.generate_readme_for_pack_content_item(
                                 unified_file, is_contribution
                             )
-                            unified_file_path = Path(unified_file)
-                            Path.unlink(unified_file_path)
+                            Path(unified_file).unlink()
             elif basename == "Playbooks":
                 files = get_child_files(pack_subdir)
                 for file in files:

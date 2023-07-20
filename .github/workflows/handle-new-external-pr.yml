@@ -16,14 +16,16 @@ jobs:
         with:
           fetch-depth: 2
 
+      - id: files
+        uses: actions/get-changed-files@v1
+
       - name: Create PR review request
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_LINK: ${{ github.event.pull_request.html_url }}
-          BASE_REF: ${{ github.base_ref }}
-          HEAD_REF: ${{ github.head_ref }}
+          CHANGED_FILES: ${{ steps.files.outputs.all }}
         run: |
           echo "Updating External PR ${{ github.event.pull_request.html_url }}"
           cd Utils/github_workflow_scripts
-          ./link_pr_to_jira_issue.sh
+          ./handle_external_pr.sh
           echo "Finished Handling External PR"

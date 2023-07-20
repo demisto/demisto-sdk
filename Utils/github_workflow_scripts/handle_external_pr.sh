@@ -7,11 +7,10 @@ echo "Adding contribution TL $contribution_tl as assignee and reviewer"
 # gh pr edit "$PR_LINK" --add-assignee "$contribution_tl"
 # gh pr edit "$PR_LINK" --add-reviewer "$contribution_tl"
 
-changed_files=$(git diff --name-only "$BASE_REF" "$HEAD_REF" )
 security_items=("*Playbooks*" "*IncidentTypes*" "*IncidentFields*" "*IndicatorTypes*" "*IndicatorFields*" "*Layouts*" "*Classifiers*" "*sourcery*")
 
 function is_security_needed() {
-    for file in "${changed_files[@]}"; do
+    for file in "${CHANGED_FILES[@]}"; do
         echo $file
         for name in "${security_items[@]}"; do
             echo $name

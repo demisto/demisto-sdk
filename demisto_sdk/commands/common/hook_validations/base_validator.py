@@ -14,6 +14,7 @@ from demisto_sdk.commands.common.errors import (
     FOUND_FILES_AND_IGNORED_ERRORS,
     PRESET_ERROR_TO_CHECK,
     PRESET_ERROR_TO_IGNORE,
+    Errors,
     get_all_error_codes,
     get_error_object,
 )
@@ -416,5 +417,48 @@ class BaseValidator:
         elif file_type == FileType.MODELING_RULE_SCHEMA:
             schema_expected_name = f"{dir_name}_schema"
             if file_name != schema_expected_name:
+                return False
+        return True
+
+    @error_codes("BA125")
+    def validate_no_disallowed_terms_in_customer_facing_docs(
+        self, file_content: str, file_path: str
+    ) -> bool:
+        """
+        Validate that customer facing docs and fields don't contain any internal terms that aren't clear for customers.
+
+        Args:
+            file_content (str): The content of the file to check.
+            file_path (str): The path of the file the content belongs to.
+
+        Returns:
+            bool: True if no such terms were found, False otherwise.
+        """
+        disallowed_terms = (
+            [  # These terms are checked regardless for case (case-insensitive)
+                "test-module",
+                "test module",
+                "long-running-execution",
+            ]
+        )
+
+        found_terms = []
+
+        # Search for terms
+        for term in disallowed_terms:
+            if term.casefold() in file_content.casefold():
+                found_terms.append(term)
+
+        # Raise error if disallowed terms found
+        if found_terms:
+            error_message, error_code = Errors.customer_facing_docs_disallowed_terms(
+                found_terms=found_terms
+            )
+
+            if self.handle_error(
+                error_message,
+                error_code,
+                file_path=file_path,
+            ):
                 return False
         return True

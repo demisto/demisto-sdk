@@ -16,19 +16,13 @@ jobs:
         with:
           fetch-depth: 2
 
-      - name: Get changed files
-        id: files
-        uses: jitterbit/get-changed-files@v1
-        with:
-          format: space-delimited
-
       - name: Create PR review request
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_LINK: ${{ github.event.pull_request.html_url }}
-          CHANGED_FILES: ${{ steps.files.outputs.all }}
         run: |
           echo "Updating External PR ${{ github.event.pull_request.html_url }}"
+          CHANGED_FILES=$(git diff --name-only ${{ github.event.pull_request.base.sha }} ${{ github.sha }} | xargs)
           cd Utils/github_workflow_scripts
           ./handle_external_pr.sh
           echo "Finished Handling External PR"

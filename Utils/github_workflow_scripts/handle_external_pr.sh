@@ -1,7 +1,5 @@
 #!/bin/bash
 
-git checkout "$HEAD"
-
 reviewers=$(curl -s "https://raw.githubusercontent.com/demisto/content/master/.github/content_roles.json")
 contribution_tl=$(echo "$reviewers" | jq -r '.CONTRIBUTION_TL')
 

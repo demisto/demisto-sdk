@@ -8,7 +8,7 @@ class SourceryHook(Hook):
     def prepare_hook(self, python_version: str, config_file_path: Path, **kwargs):
         config_file = tools.get_file_or_remote(config_file_path)
         config_file["rule_settings"]["python_version"] = python_version
-        tmp_file_path = config_file_path.with_name("sourcery_tmp.yml")
+        tmp_file_path = config_file_path.with_name(".sourcery_tmp.yaml")
         self.hook["args"] = [
             f"--config={tmp_file_path}",
             "--no-summary",

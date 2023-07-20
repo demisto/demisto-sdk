@@ -145,7 +145,8 @@ class DescriptionValidator(BaseValidator):
         The validation is processed only on added or modified files.
 
         Args:
-            validate_all: (bool) is the validation being run with -a
+            validate_all: (bool) is the validation being run with -a.
+
         Return:
            True if the description file exits False with an error otherwise
         """

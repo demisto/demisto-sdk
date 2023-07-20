@@ -6,8 +6,6 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Clone content
-        run: git clone https://github.com/demisto/content 
       - name: Setup Python
         uses: actions/setup-python@v3
         with:
@@ -18,8 +16,10 @@ jobs:
         run: pwd
       - name: Install Python Dependencies
         run: |
+          cd ../..
+          git clone https://github.com/demisto/content 
           cd content
-          poetry install
+          poetry install -vv
       - name: ±±±±±±±±±  PWD2 ±±±±±±±±±±±±±±±
         run: |
             pwd

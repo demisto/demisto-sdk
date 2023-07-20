@@ -270,7 +270,7 @@ def setup(
         interpreter_path = CONTENT_PATH / ".venv" / "bin" / "python"
         # replace " ", "(", ")" with "_"
         secret_id = secret_id or re.sub(r"[ ()]", "_", integration_script.name)
-        if project_id := os.getenv("GCP_PROJECT_ID"):
+        if project_id := os.getenv("DEMISTO_GCP_PROJECT_ID"):
             params = get_integration_params(project_id, secret_id)
             with open(ide_folder / "params.json", "w") as f:
                 json.dump(params, f, indent=4)

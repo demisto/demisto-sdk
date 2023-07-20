@@ -1842,4 +1842,3 @@ TABLE_INCIDENT_TO_ALERT = {
 NATIVE_IMAGE_DOCKER_NAME = "demisto/py3-native"
 
 FORMATTING_SCRIPT = "indicator-format"
-

@@ -200,12 +200,6 @@ repos:
   rev: "v2.6"
   hooks:
   - id: vulture
-
-- repo: https://github.com/abravalheri/validate-pyproject
-  rev: v0.10.1
-  hooks:
-  - id: validate-pyproject
-
 - repo: https://github.com/abravalheri/validate-pyproject
   rev: v0.10.1
   hooks:

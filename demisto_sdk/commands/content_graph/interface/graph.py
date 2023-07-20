@@ -137,6 +137,15 @@ class ContentGraphInterface(ABC):
         pass
 
     @abstractmethod
+    def get_relationships_by_path(
+        self,
+        path: Path,
+        relationship_type: RelationshipType,
+        depth: int,
+    ) -> Tuple[Dict[str, Any], Dict[str, Any]]:
+        pass
+
+    @abstractmethod
     def search(
         self,
         marketplace: MarketplaceVersions = None,

@@ -52,7 +52,8 @@ from demisto_sdk.commands.content_graph.interface.neo4j.queries.nodes import (
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.relationships import (
     _match_relationships,
     create_relationships,
-    get_relationships_by_path,
+    get_sources_by_path,
+    get_targets_by_path,
 )
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.validations import (
     get_items_using_deprecated,
@@ -362,11 +363,21 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         path: Path,
         relationship_type: RelationshipType,
         depth: int,
-    ) -> Dict[str, Any]:
+    ) -> Tuple[Dict[str, Any], Dict[str, Any]]:
         with self.driver.session() as session:
-            return session.execute_read(
-                get_relationships_by_path, path, relationship_type, depth
+            sources = session.execute_read(
+                get_sources_by_path,
+                path,
+                relationship_type,
+                depth,
             )
+            targets = session.execute_read(
+                get_targets_by_path,
+                path,
+                relationship_type,
+                depth,
+            )
+            return sources, targets
 
     def get_unknown_content_uses(
         self, file_paths: List[str], raises_error: bool, include_optional: bool = False

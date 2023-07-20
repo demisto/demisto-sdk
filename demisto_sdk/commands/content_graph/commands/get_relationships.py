@@ -1,8 +1,7 @@
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Dict, Tuple
 
 import typer
-from tabulate import tabulate
 
 from demisto_sdk.commands.common.logger import (
     logger,
@@ -75,35 +74,142 @@ def get_relationships(
         log_file_path=log_file_path,
     )
     with ContentGraphInterface() as graph:
-        resp = graph.get_relationships_by_path(
+        sources, targets = get_relationships_by_path(
+            graph,
             input.relative_to(graph.repo_path),
             relationship,
             depth,
         )
-    obj_id, sources, targets = resp["obj_id"], resp["sources"], resp["targets"]
-    log_outputs(obj_id, relationship, sources, targets)
+        log_outputs(relationship, sources, targets)
+
+
+def add_source_record(
+    sources: Dict[str, Any],
+    record: Dict[str, Any],
+) -> None:
+    source_filepath = record["source_filepath"]
+    sources.setdefault(source_filepath, {}).setdefault("paths", []).append(
+        {
+            "depth": record["depth"],
+            "path": record["path"],
+        }
+    )
+    if (mandatorily := record["mandatorily"]) is not None:
+        sources[source_filepath]["mandatorily"] = (
+            sources[source_filepath].get("mandatorily") or mandatorily
+        )
+
+
+def add_target_record(
+    targets: Dict[str, Any],
+    record: Dict[str, Any],
+) -> None:
+    target_filepath = record["target_filepath"]
+    targets.setdefault(target_filepath, {}).setdefault("paths", []).append(
+        {
+            "depth": record["depth"],
+            "path": record["path"],
+        }
+    )
+    if (mandatorily := record["mandatorily"]) is not None:
+        targets[target_filepath]["mandatorily"] = (
+            targets[target_filepath].get("mandatorily") or mandatorily
+        )
+
+
+def get_relationships_by_path(
+    graph: ContentGraphInterface,
+    path: Path,
+    relationship: RelationshipType,
+    depth: int,
+) -> Tuple[Dict[str, Any], Dict[str, Any]]:
+    sources: Dict[str, Any] = {}
+    targets: Dict[str, Any] = {}
+    sources_data, targets_data = graph.get_relationships_by_path(
+        path,
+        relationship,
+        depth,
+    )
+    for record in sources_data:
+        add_source_record(sources, record)
+    for record in targets_data:
+        add_target_record(targets, record)
+    return sources, targets
+
+
+def log_single_path(
+    relationship: RelationshipType,
+    path: list,
+) -> None:
+    path_str = ""
+    for idx, path_element in enumerate(path):
+        if idx % 2 == 0:
+            path_str += f"({path_element})"
+        else:
+            rel_data = f"[{relationship}{path_element or ''}]"
+            spaces = " " * (len(rel_data) // 2 - 1)
+            path_str += f"\n{spaces}|\n"
+            path_str += f"{rel_data}\n"
+            path_str += f"{spaces}↓\n"
+    logger.info(f"\n{path_str}\n")
+
+
+def log_single_source_or_target(
+    source_or_target_filepath: str,
+    is_source: bool,
+    relationship: RelationshipType,
+    source_or_target_data: Dict[str, Any],
+) -> None:
+    logger.info(
+        f"[cyan]====== {'SOURCES' if is_source else 'TARGETS'} "
+        f"(RELATIONSHIP TYPE: {relationship}) ======\n[/cyan]"
+    )
+    if not source_or_target_data:
+        logger.info(
+            f"[yellow]No {relationship} {'sources' if is_source else 'targets'} found.[/yellow]"
+        )
+    else:
+        if (is_mandatory := source_or_target_data.get("mandatorily")) is not None:
+            mandatory_info = f" (mandatory: {is_mandatory})"
+        logger.info(
+            f"[yellow]Found {len(source_or_target_data['paths'])} {relationship} path(s) "
+            f"{'from source' if is_source else 'to target'} "
+            f"{source_or_target_filepath}{mandatory_info}[/yellow]"
+        )
+        for path_data in source_or_target_data["paths"]:
+            log_single_path(relationship, path_data["path"])
+
+
+def log_summary(
+    sources: Dict[str, Any],
+    targets: Dict[str, Any],
+) -> None:
+    if sources or targets:
+        logger.info("[cyan]====== SUMMARY ======[/cyan]")
+        log: str = ""
+        for filepath, data in sources.items():
+            log += f"\n- {filepath}"
+            if (is_mandatory := data.get("mandatorily")) is not None:
+                log += f" (mandatory: {is_mandatory})"
+        if log:
+            logger.info(f"Sources:[green]{log}[/green]")
+
+        log = ""
+        for filepath, data in targets.items():
+            log += f"\n- {filepath}"
+            if (is_mandatory := data.get("mandatorily")) is not None:
+                log += f" (mandatory: {is_mandatory})"
+        if log:
+            logger.info(f"Targets:[green]{log}[/green]")
 
 
 def log_outputs(
-    obj_id: str,
     relationship: RelationshipType,
-    sources: List[Dict[str, Any]],
-    targets: List[Dict[str, Any]],
+    sources: Dict[str, Any],
+    targets: Dict[str, Any],
 ) -> None:
-    headers = ["ID", "Content Type", "Path", "Relationship Data"]
-    if sources:
-        tabular_sources = [
-            [s["id"], s["content_type"], s["path"], s["rel_data"]] for s in sources
-        ]
-        logger.info(f"{relationship} relationships to {obj_id}:")
-        logger.info(f"{tabulate(tabular_sources, headers, tablefmt='grid')}\n")
-    else:
-        logger.info(f"No {relationship} relationships to {obj_id}.\n")
-    if targets:
-        tabular_targets = [
-            [t["id"], t["content_type"], t["path"], t["rel_data"]] for t in targets
-        ]
-        logger.info(f"{relationship} relationships from {obj_id}:")
-        logger.info(f"{tabulate(tabular_targets, headers, tablefmt='grid')}\n")
-    else:
-        logger.info(f"No {relationship} relationships from {obj_id}.")
+    for source_filepath, source_data in sources.items():
+        log_single_source_or_target(source_filepath, True, relationship, source_data)
+    for target_filepath, target_data in targets.items():
+        log_single_source_or_target(target_filepath, False, relationship, target_data)
+    log_summary(sources, targets)

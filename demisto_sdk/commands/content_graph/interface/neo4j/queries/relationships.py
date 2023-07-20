@@ -253,37 +253,60 @@ RETURN node_from, collect(relationship) AS relationships, collect(node_to) AS no
     }
 
 
-def get_relationships_by_path(
+def get_sources_by_path(
     tx: Transaction,
     path: Path,
     relationship: RelationshipType,
-    depth,
-) -> Tuple[str, List[Dict[str, Any]], List[Dict[str, Any]]]:
-    query = f"""// Returns relationships of a given node by its path.
+    depth: int,
+) -> Tuple[List[Dict[str, Any]], int]:
+    query = f"""// Returns all paths to a given node by relationship type and depth.
 MATCH (n{{path: "{path}"}})
-OPTIONAL MATCH (s)-[sr:{relationship}]->(n)
-OPTIONAL MATCH (n)-[tr:{relationship}]->(t)
+CALL apoc.path.expand(n, "<{relationship}", null, 1, {depth})
+YIELD path
 WITH
-    n.object_id AS obj_id,
-    collect(
-        CASE WHEN s IS NOT NULL THEN
-        {{
-            id: s.object_id,
-            content_type: s.content_type,
-            path: s.path,
-            rel_data: properties(sr)
-        }}
-        ELSE NULL END
-    ) AS sources,
-    collect(
-        CASE WHEN t IS NOT NULL THEN
-        {{
-            id: t.object_id,
-            content_type: t.content_type,
-            path: t.path,
-            rel_data: properties(tr)
-        }}
-        ELSE NULL END
-    ) AS targets
-RETURN obj_id, sources, targets"""
-    return run_query(tx, query).single()
+    // the paths are returned in reversed order, so we fix this here:
+    reverse([n IN nodes(path) | n.path]) AS nodes,
+    reverse([r IN relationships(path) | properties(r)]) AS rels,
+    length(path) AS depth
+WITH
+    nodes[0] AS source_filepath,
+    apoc.coll.flatten((apoc.coll.zip(rels, nodes[1..]))) AS path_from_source,
+    CASE WHEN all(r IN rels WHERE r.mandatorily) THEN TRUE ELSE
+    CASE WHEN any(r IN rels WHERE r.mandatorily IS NOT NULL) THEN FALSE END END AS mandatorily,
+    depth
+RETURN
+    source_filepath,
+    apoc.coll.insert(path_from_source, 0, source_filepath) AS path,
+    mandatorily,
+    depth
+ORDER BY depth"""
+    return run_query(tx, query).data()
+
+
+def get_targets_by_path(
+    tx: Transaction,
+    path: Path,
+    relationship: RelationshipType,
+    depth: int,
+) -> Tuple[List[Dict[str, Any]], int]:
+    query = f"""// Returns all paths from a given node by relationship type and depth.
+MATCH (n{{path: "{path}"}})
+CALL apoc.path.expand(n, "{relationship}>", null, 1, {depth})
+YIELD path
+WITH
+    [n IN nodes(path) | n.path] AS nodes,
+    [r IN relationships(path) | properties(r)] AS rels,
+    length(path) AS depth
+WITH
+    nodes[-1] AS target_filepath,
+    apoc.coll.flatten((apoc.coll.zip(nodes[..-1], rels))) AS path_to_target,
+    CASE WHEN all(r IN rels WHERE r.mandatorily) THEN TRUE ELSE
+    CASE WHEN any(r IN rels WHERE r.mandatorily IS NOT NULL) THEN FALSE END END AS mandatorily,
+    depth
+RETURN
+    target_filepath,
+    apoc.coll.insert(path_to_target, size(path_to_target), target_filepath) AS path,
+    mandatorily,
+    depth
+ORDER BY depth"""
+    return run_query(tx, query).data()

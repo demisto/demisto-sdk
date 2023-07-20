@@ -542,9 +542,9 @@ class ScriptValidator(ContentEntityValidator):
             line_with_missing_dot = super().is_line_ends_with_dot(
                 self.current_file, "args"
             )
-            if (
-                comment := self.current_file.get("comment", "")
-            ) and not comment.strip('\"').strip("\'").endswith("."):
+            if (comment := self.current_file.get("comment", "")) and not comment.strip(
+                '"'
+            ).strip("'").endswith("."):
                 line_with_missing_dot += "The comment field should end with a period."
 
             if line_with_missing_dot:

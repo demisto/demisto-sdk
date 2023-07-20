@@ -1347,6 +1347,9 @@ def get_pack_names_from_files(file_paths, skip_file_types=None):
         if isinstance(path, tuple):
             path = path[1]
 
+        if not path.startswith("Packs/"):
+            continue
+
         file_type = find_type(path)
         if file_type not in skip_file_types:
             pack = get_pack_name(path)

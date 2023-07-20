@@ -102,8 +102,9 @@ class PreCommitRunner:
         PyclnHook(hooks["pycln"]).prepare_hook(PYTHONPATH)
         RuffHook(hooks["ruff"]).prepare_hook(python_version, IS_GITHUB_ACTIONS)
         MypyHook(hooks["mypy"]).prepare_hook(python_version)
-        SourceryHook(hooks['sourcery']).prepare_hook(python_version,
-                                                     config_file_path=SOURCERY_CONFIG_PATH)
+        SourceryHook(hooks["sourcery"]).prepare_hook(
+            python_version, config_file_path=SOURCERY_CONFIG_PATH
+        )
         ValidateFormatHook(hooks["validate"]).prepare_hook(self.input_files)
         ValidateFormatHook(hooks["format"]).prepare_hook(self.input_files)
 

@@ -112,7 +112,7 @@ class TestGetRelationships:
     @pytest.mark.parametrize(
         "filepath, relationship, depth, expected_sources, expected_targets",
         [
-            (
+            pytest.param(
                 Path("Packs/SamplePack2/Scripts/SampleScript2/SampleScript2.yml"),
                 RelationshipType.USES,
                 2,
@@ -132,8 +132,9 @@ class TestGetRelationships:
                         "paths_count": 1,
                     },
                 },
+                id="Verify USES relationships, expecting sources and targets",
             ),
-            (
+            pytest.param(
                 Path(
                     "Packs/SamplePack3/TestPlaybooks/SampleTestPlaybook/SampleTestPlaybook.yml"
                 ),
@@ -154,8 +155,9 @@ class TestGetRelationships:
                         "paths_count": 1,
                     },
                 },
+                id="Verify USES relationships where depth=2 - 2 paths to SampleIntegration",
             ),
-            (
+            pytest.param(
                 Path(
                     "Packs/SamplePack3/TestPlaybooks/SampleTestPlaybook/SampleTestPlaybook.yml"
                 ),
@@ -167,17 +169,15 @@ class TestGetRelationships:
                         "mandatorily": True,
                         "paths_count": 1,
                     },
-                    "Packs/SamplePack/Scripts/SampleScript/SampleScript.yml": {
-                        "mandatorily": True,
-                        "paths_count": 1,
-                    },
                     "Packs/SamplePack2/Scripts/SampleScript2/SampleScript2.yml": {
                         "mandatorily": True,
                         "paths_count": 1,
                     },
                 },
+                id="Verify USES relationships where depth=1 - only 1 path to SampleIntegration,"
+                " no path to SampleScript",
             ),
-            (
+            pytest.param(
                 Path(
                     "Packs/SamplePack/Integrations/SampleIntegration/SampleIntegration.yml"
                 ),
@@ -189,8 +189,9 @@ class TestGetRelationships:
                         "paths_count": 1,
                     },
                 },
+                id="Verify IMPORTS relationship",
             ),
-            (
+            pytest.param(
                 Path(
                     "Packs/SamplePack/Integrations/SampleIntegration/SampleIntegration.yml"
                 ),
@@ -202,8 +203,9 @@ class TestGetRelationships:
                         "paths_count": 1,
                     },
                 },
+                id="Verify TESTED_BY relationship",
             ),
-            (
+            pytest.param(
                 Path("Packs/SamplePack3"),
                 RelationshipType.DEPENDS_ON,
                 2,
@@ -212,10 +214,11 @@ class TestGetRelationships:
                     "Packs/SamplePack2": {
                         "paths_count": 1,
                     },
-                    "Packs/SamplePack1": {
+                    "Packs/SamplePack": {
                         "paths_count": 2,
                     },
                 },
+                id="Verify DEPENDS_ON relationships",
             ),
         ],
     )

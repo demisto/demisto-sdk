@@ -622,16 +622,6 @@ class TestFieldValidator:
 
         Then
         - Ensure the right result is returned.
-        - Case 1: Should return False.
-        - Case 2: Should return False.
-        - Case 3: Should return True.
-        - Case 4: Should return True.
-        - Case 5: Should return True.
-        - Case 6: Should return False.
-        - Case 7: Should return True.
-        - Case 8: Should return False.
-        - Case 9: Should return True.
-        - Case 10: Should return True.
         """
         incident_field = pack.create_incident_field(
             "incident_1",

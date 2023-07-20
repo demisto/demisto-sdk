@@ -43,7 +43,6 @@ from git.types import PathLike
 from packaging.version import LegacyVersion, Version, parse
 from pebble import ProcessFuture, ProcessPool
 from requests.exceptions import HTTPError
-from ruamel.yaml.comments import CommentedSeq
 from demisto_sdk.commands.common.cpu_count import cpu_count
 
 from demisto_sdk.commands.common.constants import (
@@ -116,15 +115,16 @@ from demisto_sdk.commands.common.constants import (
 )
 from demisto_sdk.commands.common.git_content_config import GitContentConfig, GitProvider
 from demisto_sdk.commands.common.git_util import GitUtil
-from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
+from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
+from demisto_sdk.commands.common.handlers import YAML_Handler
 
 if TYPE_CHECKING:
     from demisto_sdk.commands.content_graph.interface.graph import ContentGraphInterface
 
 logger = logging.getLogger("demisto-sdk")
 
-json = JSON_Handler()
-yaml = YAML_Handler()
+yaml_safe_load = YAML_Handler(typ="safe")
 
 urllib3.disable_warnings()
 
@@ -588,7 +588,8 @@ def get_remote_file(
         except Exception as e:
             logger.debug(
                 f"Could not get local remote file because of: {str(e)}\n"
-                f"Searching the remote file content with the API."
+                f"Searching the remote file content with the API.",
+                exc_info=True,
             )
     return get_remote_file_from_api(
         full_file_path, git_content_config, tag, return_content
@@ -806,16 +807,16 @@ def safe_write_unicode(
 @lru_cache
 def get_file(
     file_path: Union[str, Path],
-    type_of_file: Optional[str] = None,
     clear_cache: bool = False,
     return_content: bool = False,
+    keep_order: bool = True,
 ):
     if clear_cache:
         get_file.cache_clear()
     file_path = Path(file_path)  # type: ignore[arg-type]
-    if not type_of_file:
-        type_of_file = file_path.suffix.lower()
-        logger.debug(f"Inferred type {type_of_file} for file {file_path.name}.")
+
+    type_of_file = file_path.suffix.lower()
+    logger.debug(f"Inferred type {type_of_file} for file {file_path.name}.")
 
     if not file_path.exists():
         file_path = Path(get_content_path()) / file_path  # type: ignore[arg-type]
@@ -832,8 +833,11 @@ def get_file(
         return {}
     try:
         if type_of_file.lstrip(".") in {"yml", "yaml"}:
-            replaced = re.sub(r"(simple: \s*\n*)(=)(\s*\n)", r'\1"\2"\3', file_content)
-            return yaml.load(io.StringIO(replaced))
+            replaced = io.StringIO(
+                re.sub(r"(simple: \s*\n*)(=)(\s*\n)", r'\1"\2"\3', file_content)
+            )
+
+            return yaml.load(replaced) if keep_order else yaml_safe_load.load(replaced)
         else:
             result = json.load(io.StringIO(file_content))
             # It's possible to that the result will be `str` after loading it. In this case, we need to load it again.
@@ -873,16 +877,16 @@ def get_file_or_remote(file_path: Path, clear_cache=False):
         return get_remote_file(str(relative_file_path))
 
 
-def get_yaml(file_path, cache_clear=False):
+def get_yaml(file_path, cache_clear=False, keep_order: bool = True):
     if cache_clear:
         get_file.cache_clear()
-    return get_file(file_path, "yml", clear_cache=cache_clear)
+    return get_file(file_path, clear_cache=cache_clear, keep_order=keep_order)
 
 
 def get_json(file_path, cache_clear=False):
     if cache_clear:
         get_file.cache_clear()
-    return get_file(file_path, "json", clear_cache=cache_clear)
+    return get_file(file_path, clear_cache=cache_clear)
 
 
 def get_script_or_integration_id(file_path):
@@ -1023,18 +1027,10 @@ def get_to_version(file_path):
 
 
 def str2bool(v):
-    if not v:
-        return False
-
-    if isinstance(v, bool):
-        return v
-    if v.lower() in ("yes", "true", "t", "y", "1"):
-        return True
-
-    if v.lower() in ("no", "false", "f", "n", "0"):
-        return False
-
-    raise argparse.ArgumentTypeError("Boolean value expected.")
+    """
+    Deprecated. Use string_to_bool instead
+    """
+    return string_to_bool(v, default_when_empty=False)
 
 
 def to_dict(obj):
@@ -1321,7 +1317,7 @@ def get_scripts_names(file_path):
     return scripts_names
 
 
-def get_pack_name(file_path):
+def get_pack_name(file_path: Union[str, Path]):
     """
     extract pack name (folder name) from file path
 
@@ -1567,29 +1563,11 @@ def get_pipenv_dir(py_version, envs_dirs_base):
     return f"{envs_dirs_base}{int(py_version)}"
 
 
-def get_dev_requirements(py_version, envs_dirs_base):
-    """
-    Get the requirements for the specified py version.
-
-    Arguments:
-        py_version {float} -- python version as float (2.7, 3.7)
-
-    Raises:
-        ValueError -- If can't detect python version
-
-    Returns:
-        string -- requirement required for the project
-    """
-    env_dir = get_pipenv_dir(py_version, envs_dirs_base)
-    requirements = check_output(
-        ["pipenv", "lock", "-r", "-d"], cwd=env_dir, text=True, stderr=DEVNULL
-    )
-    logger.debug(f"dev requirements:\n{requirements}")
-    return requirements
-
-
 def get_dict_from_file(
-    path: str, raises_error: bool = True, clear_cache: bool = False
+    path: str,
+    raises_error: bool = True,
+    clear_cache: bool = False,
+    keep_order: bool = True,
 ) -> Tuple[Dict, Union[str, None]]:
     """
     Get a dict representing the file
@@ -1605,7 +1583,10 @@ def get_dict_from_file(
     try:
         if path:
             if path.endswith(".yml"):
-                return get_yaml(path, cache_clear=clear_cache), "yml"
+                return (
+                    get_yaml(path, cache_clear=clear_cache, keep_order=keep_order),
+                    "yml",
+                )
             elif path.endswith(".json"):
                 res = get_json(path, cache_clear=clear_cache)
                 if isinstance(res, list) and len(res) == 1 and isinstance(res[0], dict):
@@ -1798,7 +1779,9 @@ def find_type(
         return type_by_path
     try:
         if not _dict and not file_type:
-            _dict, file_type = get_dict_from_file(path, clear_cache=clear_cache)
+            _dict, file_type = get_dict_from_file(
+                path, clear_cache=clear_cache, keep_order=False
+            )
 
     except FileNotFoundError:
         # unable to find the file - hence can't identify it
@@ -1840,7 +1823,7 @@ def find_type(
                 return FileType.MODELING_RULE
 
         if "global_rule_id" in _dict or (
-            isinstance(_dict, CommentedSeq) and _dict and "global_rule_id" in _dict[0]
+            isinstance(_dict, list) and _dict and "global_rule_id" in _dict[0]
         ):
             return FileType.CORRELATION_RULE
 
@@ -2205,7 +2188,10 @@ def retrieve_file_ending(file_path: str) -> str:
 
 
 def is_test_config_match(
-    test_config: dict, test_playbook_id: str = "", integration_id: str = ""
+    test_config: dict,
+    test_playbook_id: str = "",
+    integration_id: str = "",
+    script_id: str = "",
 ) -> bool:
     """
     Given a test configuration from conf.json file, this method checks if the configuration is configured for the
@@ -2217,13 +2203,15 @@ def is_test_config_match(
         test_config: A test configuration from conf.json file under 'tests' key.
         test_playbook_id: A test playbook ID.
         integration_id: An integration ID.
+        script_id: A script ID.
     If both test_playbook_id and integration_id are given will look for a match of both, else will look for match
-    of either test playbook id or integration id
+    of either test playbook id or integration id or script id.
     Returns:
         True if the test configuration contains the test playbook and the content item or False if not
     """
     test_playbook_match = test_playbook_id == test_config.get("playbookID")
     test_integrations = test_config.get("integrations")
+    test_scripts = test_config.get("scripts")
     if isinstance(test_integrations, list):
         integration_match = any(
             test_integration
@@ -2232,6 +2220,14 @@ def is_test_config_match(
         )
     else:
         integration_match = test_integrations == integration_id
+
+    if isinstance(test_scripts, list):
+        scripts_match = any(
+            test_script for test_script in test_scripts if test_script == script_id
+        )
+    else:
+        scripts_match = test_scripts == script_id
+
     # If both playbook id and integration id are given
     if integration_id and test_playbook_id:
         return test_playbook_match and integration_match
@@ -2244,7 +2240,112 @@ def is_test_config_match(
     if test_playbook_id:
         return test_playbook_match
 
+    if script_id:
+        return scripts_match
+
     return False
+
+
+def is_content_item_dependent_in_conf(test_config, file_type) -> bool:
+    """Check if a line from conf have multiple integration/scripts dependent on the TPB.
+        - if the TPB checks only one integration/script it is independent.
+          For example: {"integrations": ["PagerDuty v2"], "playbookID": "PagerDuty Test"}.
+        - if the TPB checks more then one integration/script it is dependent.
+          For example: {"integrations": ["PagerDuty v2", "PagerDuty v3"], "playbookID": "PagerDuty Test"}.
+    Args:
+        test_config (dict): The dict in the conf file.
+        file_type (str): The file type, can be integrations, scripts or playbook.
+
+    Returns:
+        bool: The return value. True for dependence, False otherwise.
+    """
+    integrations_list = test_config.get("integrations", [])
+    integrations_list = (
+        integrations_list
+        if isinstance(integrations_list, list)
+        else [integrations_list]
+    )
+    scripts_list = test_config.get("scripts", [])
+    scripts_list: list = (
+        scripts_list if isinstance(scripts_list, list) else [scripts_list]
+    )
+    if file_type == "integration":
+        return len(integrations_list) > 1
+    if file_type == "script":
+        return len(scripts_list) > 1
+    # if the file_type is playbook or testplaybook in the conf.json it does not dependent on any other content
+    elif file_type == "playbook":
+        return False
+    return True
+
+
+def search_and_delete_from_conf(
+    conf_json_tests: list,
+    content_item_id: str,
+    file_type: str,
+    test_playbooks: list,
+    no_test_playbooks_explicitly: bool,
+) -> List[dict]:
+    """Return all test section from conf.json file without the deprecated content item.
+
+    Args:
+        conf_json_tests (int): The dict in the conf file.
+        content_item_id (str): The  content item id.
+        file_type (str): The file type, can be integrations, scripts or playbook.
+        test_playbooks (list): A list of related test playbooks.
+        no_test_playbooks_explicitly (bool): True if there are related TPB, False otherwise.
+
+    Returns:
+        bool: The return value. True for dependence, False otherwise.
+    """
+    keyword = ""
+    test_registered_in_conf_json = []
+    # If the file type we are deprecating is a integration - there are TBP related to the yml
+    if file_type == "integration":
+        keyword = "integration_id"
+
+    elif file_type == "playbook":
+        keyword = "test_playbook_id"
+
+    elif file_type == "script":
+        keyword = "script_id"
+
+    test_registered_in_conf_json.extend(
+        [
+            test_config
+            for test_config in conf_json_tests
+            if is_test_config_match(test_config, **{keyword: content_item_id})
+        ]
+    )
+    if not no_test_playbooks_explicitly:
+        for test in test_playbooks:
+            if test not in list(
+                map(lambda x: x["playbookID"], test_registered_in_conf_json)
+            ):
+                test_registered_in_conf_json.extend(
+                    [
+                        test_config
+                        for test_config in conf_json_tests
+                        if is_test_config_match(test_config, test_playbook_id=test)
+                    ]
+                )
+    # remove the line from conf.json
+    if test_registered_in_conf_json:
+        for test_config in test_registered_in_conf_json:
+            if file_type == "playbook" and test_config in conf_json_tests:
+                conf_json_tests.remove(test_config)
+            elif (
+                test_config in conf_json_tests
+                and not is_content_item_dependent_in_conf(test_config, file_type)
+            ):
+                conf_json_tests.remove(test_config)
+            elif test_config in conf_json_tests:
+                if content_item_id in (test_config.get("integrations", [])):
+                    test_config.get("integrations").remove(content_item_id)
+                if content_item_id in (test_config.get("scripts", [])):
+                    test_config.get("scripts").remove(content_item_id)
+
+    return conf_json_tests
 
 
 def get_not_registered_tests(
@@ -2256,7 +2357,7 @@ def get_not_registered_tests(
         conf_json_tests: the 'tests' value of 'conf.json file
         content_item_id: A content item ID, could be a script, an integration or a playbook.
         file_type: The file type, could be an integration or a playbook.
-        test_playbooks: The yml file's list of test playbooks
+        test_playbooks: The yml file's list of test playbooks.
 
     Returns:
         A list of TestPlaybooks not configured
@@ -3505,54 +3606,31 @@ def normalize_field_name(field: str) -> str:
     return field.replace("incident_", "").replace("indicator_", "")
 
 
+STRING_TO_BOOL_MAP = {
+    "y": True,
+    "1": True,
+    "yes": True,
+    "true": True,
+    "n": False,
+    "0": False,
+    "no": False,
+    "false": False,
+    "t": True,
+    "f": False,
+}
+
+
 def string_to_bool(
-    input_: str,
-    accept_lower_case: bool = True,
-    accept_title: bool = True,
-    accept_upper_case: bool = False,
-    accept_yes_no: bool = False,
-    accept_int: bool = False,
-    accept_single_letter: bool = False,
-) -> Optional[bool]:
-    if not isinstance(input_, str):
-        raise ValueError("cannot convert non-string to bool")
+    input_: Any,
+    default_when_empty: Optional[bool] = None,
+) -> bool:
+    try:
+        return STRING_TO_BOOL_MAP[str(input_).lower()]
+    except (KeyError, TypeError):
+        if input_ in ("", None) and default_when_empty is not None:
+            return default_when_empty
 
-    _considered_true = ["true"]
-    _considered_false = ["false"]
-
-    for (condition, true_value, false_value) in (
-        (accept_yes_no, "yes", "no"),
-        (accept_int, "1", "0"),
-    ):
-        if condition:
-            _considered_true.append(true_value)
-            _considered_false.append(false_value)
-
-    considered_true: Set[str] = set()
-    considered_false: Set[str] = set()
-
-    for (condition, func) in (
-        (accept_lower_case, lambda x: x.lower()),
-        (accept_title, lambda x: x.title()),
-        (accept_upper_case, lambda x: x.upper()),
-    ):
-        if condition:
-            considered_true.update(map(func, _considered_true))
-            considered_false.update(map(func, _considered_false))
-
-    if accept_single_letter:
-        considered_true.update(
-            tuple(_[0] for _ in considered_true)
-        )  # note this takes considered_true as input
-        considered_false.update(tuple(_[0] for _ in considered_false))
-
-    if input_ in considered_true:
-        return True
-
-    if input_ in considered_false:
-        return False
-
-    raise ValueError(f"cannot convert string {input_} to bool")
+    raise ValueError(f"cannot convert {input_} to bool")
 
 
 def field_to_cli_name(field_name: str) -> str:

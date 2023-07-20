@@ -39,7 +39,8 @@ from demisto_sdk.commands.common.git_content_config import (
     GitCredentials,
 )
 from demisto_sdk.commands.common.git_util import GitUtil
-from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
+from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.tools import (
     MarketplaceTagParser,
@@ -80,6 +81,7 @@ from demisto_sdk.commands.common.tools import (
     get_to_version,
     get_yaml,
     has_remote_configured,
+    is_content_item_dependent_in_conf,
     is_object_in_id_set,
     is_origin_content_repo,
     is_pack_path,
@@ -87,6 +89,7 @@ from demisto_sdk.commands.common.tools import (
     parse_multiple_path_inputs,
     retrieve_file_ending,
     run_command_os,
+    search_and_delete_from_conf,
     server_version_compare,
     str2bool,
     string_to_bool,
@@ -129,8 +132,7 @@ from TestSuite.repo import Repo
 from TestSuite.test_tools import ChangeCWD
 
 GIT_ROOT = git_path()
-yaml = YAML_Handler()
-json = JSON_Handler()
+
 
 SENTENCE_WITH_UMLAUTS = "Nett hier. Aber waren Sie schon mal in Baden-Württemberg?"
 
@@ -2524,73 +2526,25 @@ def test_get_display_name(data, answer, tmpdir):
     assert get_display_name(file.path) == answer
 
 
-@pytest.mark.parametrize("value", ("true", "True"))
-def test_string_to_bool__default_params__true(value: str):
+@pytest.mark.parametrize("value", ("true", "True", 1, "1", "yes", "y"))
+def test_string_to_bool_true(value: str):
     assert string_to_bool(value)
 
 
-@pytest.mark.parametrize("value", ("false", "False"))
-def test_string_to_bool__default_params__false(value: str):
+@pytest.mark.parametrize("value", ("", None))
+def test_string_to_bool_default_true(value: str):
+    assert string_to_bool(value, True)
+
+
+@pytest.mark.parametrize("value", ("false", "False", 0, "0", "n", "no"))
+def test_string_to_bool_false(value: str):
     assert not string_to_bool(value)
 
 
-@pytest.mark.parametrize("value", ("1", 1, "", " ", "כן", None, "None"))
-def test_string_to_bool__default_params__error(value: str):
+@pytest.mark.parametrize("value", ("", " ", "כן", None, "None"))
+def test_string_to_bool_error(value: str):
     with pytest.raises(ValueError):
         string_to_bool(value)
-
-
-@pytest.mark.parametrize(
-    "value", ("true", "True", "TRUE", "t", "T", "yes", "Yes", "YES", "y", "Y", "1")
-)
-def test_string_to_bool__all_params_true__true(value: str):
-    assert string_to_bool(value, True, True, True, True, True, True)
-
-
-@pytest.mark.parametrize(
-    "value", ("false", "False", "FALSE", "f", "F", "no", "No", "NO", "n", "N", "0")
-)
-def test_string_to_bool__all_params_true__false(value: str):
-    assert not string_to_bool(value, True, True, True, True, True, True)
-
-
-@pytest.mark.parametrize(
-    "value",
-    (
-        "true",
-        "True",
-        "TRUE",
-        "t",
-        "T",
-        "yes",
-        "Yes",
-        "YES",
-        "y",
-        "Y",
-        "1",
-        "false",
-        "False",
-        "FALSE",
-        "f",
-        "F",
-        "no",
-        "No",
-        "NO",
-        "n",
-        "N",
-        "0",
-        "",
-        " ",
-        1,
-        True,
-        None,
-        "אולי",
-        "None",
-    ),
-)
-def test_string_to_bool__all_params_false__error(value: str):
-    with pytest.raises(ValueError):
-        assert string_to_bool(value, False, False, False, False, False, False)
 
 
 @pytest.mark.parametrize(
@@ -2806,3 +2760,185 @@ def test_parse_multiple_path_inputs_error(input_paths):
     """
     with pytest.raises(ValueError, match=f"Cannot parse paths from {input_paths}"):
         parse_multiple_path_inputs(input_paths)
+
+
+@pytest.mark.parametrize(
+    "content_item_id, file_type, test_playbooks, no_test_playbooks_explicitly, expected_test_list",
+    [
+        (
+            "PagerDuty v2",
+            "integration",
+            ["No tests"],
+            True,
+            [
+                {"integrations": ["PagerDuty v1"], "playbookID": "PagerDutyV1 Test"},
+                {"integrations": ["PagerDuty v1"], "playbookID": "PagerDuty Test"},
+                {
+                    "integrations": "Account Enrichment",
+                    "playbookID": "Account Enrichment Test",
+                },
+                {
+                    "integrations": "TestCreateDuplicates",
+                    "playbookID": "TestCreateDuplicates Test",
+                },
+            ],
+        ),
+        (
+            "PagerDuty v2",
+            "integration",
+            ["PagerDutyV2 Test"],
+            False,
+            [
+                {"integrations": ["PagerDuty v1"], "playbookID": "PagerDutyV1 Test"},
+                {"integrations": ["PagerDuty v1"], "playbookID": "PagerDuty Test"},
+                {
+                    "integrations": "Account Enrichment",
+                    "playbookID": "Account Enrichment Test",
+                },
+                {
+                    "integrations": "TestCreateDuplicates",
+                    "playbookID": "TestCreateDuplicates Test",
+                },
+            ],
+        ),
+        (
+            "Account Enrichment",
+            "integration",
+            ["No tests"],
+            False,
+            [
+                {"integrations": ["PagerDuty v1"], "playbookID": "PagerDutyV1 Test"},
+                {
+                    "integrations": ["PagerDuty v1", "PagerDuty v2"],
+                    "playbookID": "PagerDuty Test",
+                },
+                {"integrations": "PagerDuty v2", "playbookID": "PagerDutyV2 Test"},
+                {"integrations": "PagerDuty v2", "playbookID": "PagerDutyV2 Test"},
+                {
+                    "integrations": "TestCreateDuplicates",
+                    "playbookID": "TestCreateDuplicates Test",
+                },
+            ],
+        ),
+        (
+            "Account Enrichment Test",
+            "playbook",
+            ["No tests"],
+            False,
+            [
+                {"integrations": ["PagerDuty v1"], "playbookID": "PagerDutyV1 Test"},
+                {
+                    "integrations": ["PagerDuty v1", "PagerDuty v2"],
+                    "playbookID": "PagerDuty Test",
+                },
+                {"integrations": "PagerDuty v2", "playbookID": "PagerDutyV2 Test"},
+                {"integrations": "PagerDuty v2", "playbookID": "PagerDutyV2 Test"},
+                {
+                    "integrations": "TestCreateDuplicates",
+                    "playbookID": "TestCreateDuplicates Test",
+                },
+            ],
+        ),
+    ],
+)
+def test_search_and_delete_from_conf(
+    content_item_id,
+    file_type,
+    test_playbooks,
+    no_test_playbooks_explicitly,
+    expected_test_list,
+):
+    """
+    Given:
+          content_item_id, file_type, test_playbooks, no_test_playbooks_explicitly
+        - Case A: PagerDuty v2 integration without tests.
+        - Case B: PagerDuty v2 integration with tests.
+        - Case C: Account Enrichment integration without tests.
+        - Case D: Account Enrichment playbook without tests.
+
+    When:
+        - check that the test_search_and_delete_from_conf works as expected.
+
+    Then:
+        - Case A: Delete PagerDuty v2 integration.
+        - Case B: Delete PagerDuty v2 integration.
+        - Case C: Delete Account Enrichment integration.
+        - Case D: Delete Account Enrichment integration.
+    """
+    CONF_JSON_ORIGINAL_CONTENT = {
+        "tests": [
+            {"integrations": ["PagerDuty v1"], "playbookID": "PagerDutyV1 Test"},
+            {
+                "integrations": ["PagerDuty v1", "PagerDuty v2"],
+                "playbookID": "PagerDuty Test",
+            },
+            {"integrations": "PagerDuty v2", "playbookID": "PagerDutyV2 Test"},
+            {"integrations": "PagerDuty v2", "playbookID": "PagerDutyV2 Test"},
+            {
+                "integrations": "Account Enrichment",
+                "playbookID": "Account Enrichment Test",
+            },
+            {
+                "integrations": "TestCreateDuplicates",
+                "playbookID": "TestCreateDuplicates Test",
+            },
+        ]
+    }
+    conf_test = search_and_delete_from_conf(
+        CONF_JSON_ORIGINAL_CONTENT["tests"],
+        content_item_id,
+        file_type,
+        test_playbooks,
+        no_test_playbooks_explicitly,
+    )
+    assert conf_test == expected_test_list
+
+
+@pytest.mark.parametrize(
+    "test_config, file_type, expected_result",
+    [
+        (
+            {"integrations": "PagerDuty v2", "playbookID": "PagerDutyV2 Test"},
+            "integration",
+            False,
+        ),
+        (
+            {"integrations": ["PagerDuty v2"], "playbookID": "PagerDutyV2 Test"},
+            "integration",
+            False,
+        ),
+        (
+            {
+                "integrations": ["PagerDuty v2", "PagerDuty v3"],
+                "playbookID": "PagerDuty Test",
+            },
+            "playbook",
+            False,
+        ),
+        (
+            {
+                "integrations": ["PagerDuty v2", "PagerDuty v3"],
+                "playbookID": "PagerDuty Test",
+            },
+            "integration",
+            True,
+        ),
+    ],
+)
+def test_is_content_item_dependent_in_conf(test_config, file_type, expected_result):
+    """
+    Given:
+          test_config - A line from the conf.json and file_type.
+        - Case A: test_config with a string in the "integrations" key and integration file type.
+        - Case B: test_config with an array with len 1 in the "integrations" key and playbook file type.
+        - Case C: test_config with an array with len 2 in the "integrations" key and testplaybook file type.
+        - Case D: test_config with an array in the "integrations" key and integration file type.
+
+    When:
+        - check that the is_content_item_dependent_in_conf works as expected.
+
+    Then:
+        - Ensure that the result in correct.
+    """
+    result = is_content_item_dependent_in_conf(test_config, file_type)
+    assert result == expected_result

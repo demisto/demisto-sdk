@@ -18,7 +18,7 @@ from demisto_sdk.commands.common.constants import (
     FileType,
     MarketplaceVersions,
 )
-from demisto_sdk.commands.common.handlers import JSON_Handler
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     find_type,
@@ -43,9 +43,6 @@ from demisto_sdk.commands.upload.exceptions import (
     NotUploadableException,
 )
 from demisto_sdk.commands.upload.tools import parse_error_response
-
-json = JSON_Handler()
-
 
 SUCCESS_RETURN_CODE = 0
 ERROR_RETURN_CODE = 1
@@ -137,14 +134,7 @@ class Uploader:
                         logger.info(
                             "[red]Are you sure you want to continue? y/[N][/red]"
                         )
-                        try:
-                            return string_to_bool(
-                                str(input()),
-                                accept_yes_no=True,
-                                accept_single_letter=True,
-                            )
-                        except ValueError:
-                            return False
+                        return string_to_bool(str(input()), default_when_empty=False)
             return True
 
         def _parse_internal_pack_names(zip_path: Path) -> Optional[Tuple[str, ...]]:

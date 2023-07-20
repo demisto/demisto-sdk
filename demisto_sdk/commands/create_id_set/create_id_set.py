@@ -14,11 +14,9 @@ from demisto_sdk.commands.common.content_constant_paths import (
     MP_V2_ID_SET_PATH,
     XPANSE_ID_SET_PATH,
 )
-from demisto_sdk.commands.common.handlers import JSON_Handler
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.tools import open_id_set_file
 from demisto_sdk.commands.common.update_id_set import re_create_id_set
-
-json = JSON_Handler()
 
 
 class IDSetCreator:

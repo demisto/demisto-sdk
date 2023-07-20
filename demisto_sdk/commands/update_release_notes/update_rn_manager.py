@@ -221,7 +221,6 @@ class UpdateReleaseNotesManager:
                 self.update_type,
                 added_files,
                 modified_files,
-                self.id_set_path,
                 self.text,
             )
             self.total_updated_packs = self.total_updated_packs.union(updated_packs)

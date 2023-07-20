@@ -34,7 +34,7 @@ def test_build_xsoar_linter_py3_command(files):
     expected = (
         f"pylint --ignore=CommonServerPython.py,demistomock.py,CommonServerUserPython.py,"
         "conftest.py,.venv -E --disable=all --msg-template='{abspath}:{line}:{column}: {msg_id} {obj}: {msg}'"
-        " --enable=E9002,E9003,E9004,E9005,E9006,E9007,E9010,E9011,E9012,W9013, --load-plugins "
+        " --enable=E9002,E9003,E9004,E9005,E9006,E9007,E9010,E9011,E9012,E9013,W9013, --load-plugins "
         f"base_checker, {' '.join(files)}"
     )
     assert output == expected
@@ -50,7 +50,7 @@ def test_build_xsoar_linter_py2_command(files):
     expected = (
         f"pylint --ignore=CommonServerPython.py,demistomock.py,CommonServerUserPython.py,"
         "conftest.py,.venv -E --disable=all --msg-template='{abspath}:{line}:{column}: {msg_id} {obj}: {msg}' "
-        "--enable=E9002,E9003,E9004,E9005,E9006,E9007,E9010,E9011,E9012,W9013, --load-plugins "
+        "--enable=E9002,E9003,E9004,E9005,E9006,E9007,E9010,E9011,E9012,E9013,W9013, --load-plugins "
         f"base_checker, {' '.join(files)}"
     )
     assert output == expected
@@ -194,7 +194,7 @@ def test_build_pwsh_analyze():
     from demisto_sdk.commands.lint.commands_builder import build_pwsh_analyze_command
 
     file = MagicMock()
-    command = f"pwsh -Command Invoke-ScriptAnalyzer -EnableExit -Path {file.name}"
+    command = f"pwsh -Command Invoke-ScriptAnalyzer -EnableExit -Severity Error -Path {file.name}"
     assert command == build_pwsh_analyze_command(file)
 
 

@@ -17,12 +17,10 @@ from demisto_sdk.commands.common.constants import (
     XSOAR_SUPPORT,
     XSOAR_SUPPORT_URL,
 )
-from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
+from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
 from demisto_sdk.commands.init.initiator import Initiator
 from TestSuite.test_tools import ChangeCWD
-
-json = JSON_Handler()
-yaml = YAML_Handler()
 
 DIR_NAME = "DirName"
 PACK_NAME = "PackName"

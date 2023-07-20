@@ -1461,28 +1461,43 @@ def test_get_pack_metadata(repo):
     assert metadata_json == result
 
 
-def test_get_last_remote_release_version(requests_mock, mocker):
-    """
-    When
-    - Get latest release tag from remote pypi api
+# def test_get_last_remote_release_version(requests_mock, mocker):
+#     """
+#     When
+#     - Get latest release tag from remote pypi api
+#
+#     Then:
+#     - Ensure the returned version is as expected
+#     """
+#     # os.environ["DEMISTO_SDK_SKIP_VERSION_CHECK"] = ""
+#     # os.environ["CI"] = ""
+#     expected_version = "1.3.8"
+#     # requests_mock.get(
+#     #     r"https://test.org/pypi/demisto-sdk/json",
+#     #     json={"info": {"version": expected_version}},
+#     # )
+#     # requests_mock.get(
+#     #     SDK_PYPI_VERSION,
+#     #     json={"info": {"version": expected_version}},
+#     # )
+#     mocker.patch.object(requests, 'get', return_value={"info": {"version": expected_version}})
+#     assert get_last_remote_release_version() == expected_version
 
-    Then:
-    - Ensure the returned version is as expected
-    """
-    # os.environ["DEMISTO_SDK_SKIP_VERSION_CHECK"] = ""
-    # os.environ["CI"] = ""
+def test_test2(requests_mock):
     expected_version = "1.3.8"
-    # requests_mock.get(
-    #     r"https://test.org/pypi/demisto-sdk/json",
-    #     json={"info": {"version": expected_version}},
-    # )
-    # requests_mock.get(
-    #     SDK_PYPI_VERSION,
-    #     json={"info": {"version": expected_version}},
-    # )
-    mocker.patch.object(requests, 'get', return_value={"info": {"version": expected_version}})
+    requests_mock.get(
+        SDK_PYPI_VERSION,
+        json={"info": {"version": expected_version}},
+    )
     assert get_last_remote_release_version() == expected_version
 
+def test_test3(requests_mock):
+    expected_version = "1.3.8"
+    requests_mock.get(
+        SDK_PYPI_VERSION,
+        json={"info": {"version": expected_version}},
+    )
+    assert tools.ttt() == expected_version
 
 IS_PACK_PATH_INPUTS = [
     ("Packs/BitcoinAbuse", True),

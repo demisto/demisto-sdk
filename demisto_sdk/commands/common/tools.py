@@ -735,9 +735,9 @@ def get_last_remote_release_version():
     try:
         # pypi_request = requests.get(SDK_PYPI_VERSION, verify=False, timeout=5)
         pypi_request = requests.get(SDK_PYPI_VERSION)
-        # pypi_request.raise_for_status()
-        # pypi_json = pypi_request.json()
-        version = pypi_request.get("info", {}).get("version", "")
+        pypi_request.raise_for_status()
+        pypi_json = pypi_request.json()
+        version = pypi_json.get("info", {}).get("version", "")
         return version
     except Exception as exc:
         exc_msg = str(exc)
@@ -752,6 +752,16 @@ def get_last_remote_release_version():
         return ""
 
 
+def ttt():
+    try:
+        # pypi_request = requests.get(SDK_PYPI_VERSION, verify=False, timeout=5)
+        pypi_request = requests.get(SDK_PYPI_VERSION)
+        pypi_request.raise_for_status()
+        pypi_json = pypi_request.json()
+        version = pypi_json.get("info", {}).get("version", "")
+        return version
+    except Exception as exc:
+        return "test"
 def _read_file(file_path: Path) -> str:
     """returns the body of a text-based file, after reading it as UTF8, or trying to guess its encoding.
 

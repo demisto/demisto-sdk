@@ -22,8 +22,10 @@ jobs:
           PR_LINK: ${{ github.event.pull_request.html_url }}
           BASE: ${{ github.event.pull_request.base.sha }}
           HEAD: ${{ github.event.pull_request.head.sha }}
+          USER: ${{ github.event.pull_request.user.login }}
         run: |
           echo "Updating External PR ${{ github.event.pull_request.html_url }}"
           cd Utils/github_workflow_scripts
           ./handle_external_pr.sh
+          gh pr
           echo "Finished Handling External PR"

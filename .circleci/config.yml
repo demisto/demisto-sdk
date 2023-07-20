@@ -83,26 +83,22 @@ references:
             poetry --version
 
     install_demisto_sdk: &install_demisto_sdk
-      - python/install-packages:
-          pkg-manager: "poetry"
-          args: "--no-dev"
-          cache-version: << pipeline.parameters.cache-version >>
-          pre-install-steps:
-            - run:
-                name: export demisto-sdk to path
-                command: echo 'export PYTHONPATH="${PYTHONPATH}:${HOME}/project"' >> $BASH_ENV
+      - run:
+        name: export demisto-sdk to path
+        command: echo 'export PYTHONPATH="${PYTHONPATH}:${HOME}/project"' >> $BASH_ENV
+      - run:
+          name: Install Demisto-SDK
+          command: poetry install --no-dev
       - <<: *install_node_ci
 
     install_build_dependencies: &install_build_dependencies
-      - python/install-packages: 
-          pkg-manager: "poetry"
-          args: "--extras build"
-          cache-version: << pipeline.parameters.cache-version >>
-          pre-install-steps:
-            - run:
-                name: Check if pyproject.toml is consistent with poetry.lock
-                command: poetry lock --check
-    
+      - run:
+          name: Check if pyproject.toml is consistent with poetry.lock
+          command: poetry lock --check
+      - run:
+          name: Install Demisto-SDK
+          command: poetry install --with build
+
     requires_all: &requires_all
       requires:
             - precommit-checks
@@ -125,9 +121,7 @@ jobs:
         - <<: *install_poetry
         - setup_remote_docker:
             version: 20.10.12
-        - python/install-packages:
-            pkg-manager: "poetry"
-            cache-version: << pipeline.parameters.cache-version >>
+        - <<: *install_demisto_sdk
         - <<: *install_node_ci
         - run:
             name: pytest
@@ -190,10 +184,7 @@ jobs:
         - <<: *install_poetry
         - setup_remote_docker:
             version: 20.10.12
-        - python/install-packages:
-            pkg-manager: "poetry"
-            cache-version: << pipeline.parameters.cache-version >>
-
+        - <<: *install_demisto_sdk
         - <<: *install_node_ci
         - run:
             name: pytest - graph
@@ -459,9 +450,7 @@ jobs:
     steps:
       - checkout
       - <<: *install_poetry
-      - python/install-packages:
-          pkg-manager: "poetry"
-          cache-version: << pipeline.parameters.cache-version >>
+      - <<: *install_demisto_sdk
       - run:
           name: Run Slack Notifier
           command: |

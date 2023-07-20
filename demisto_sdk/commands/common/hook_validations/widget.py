@@ -18,6 +18,14 @@ class WidgetValidator(ContentEntityValidator):
         """
         return self._is_valid_version()
 
+    def is_id_equals_name(self) -> bool:
+        """Check whether the incident Type ID is equal to its name.
+
+        Returns:
+            bool. Whether the file id equals to its name
+        """
+        return super()._is_id_equals_name("widget")
+
     def is_valid_file(self, validate_rn: bool = False):
         """
         Check whether the widget is valid or not.
@@ -31,6 +39,8 @@ class WidgetValidator(ContentEntityValidator):
         answers = [
             super().is_valid_file(validate_rn),
             self._is_valid_fromversion(),
+            self.is_id_equals_name()
+
         ]
 
         return all(answers)

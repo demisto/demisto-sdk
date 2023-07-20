@@ -48,6 +48,7 @@ class WidgetJSONFormat(BaseUpdateJSON):
             self.set_isPredefined()
             self.set_from_version_for_type_metrics()
             self.save_json_to_destination_file()
+            self.update_id()
 
             return SUCCESS_RETURN_CODE
 

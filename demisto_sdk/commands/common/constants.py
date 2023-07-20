@@ -789,6 +789,7 @@ ID_IN_ROOT = [  # entities in which 'id' key is in the root
     JOB,
     WIZARD,
     "classifier",
+    "widget",
 ]
 
 INTEGRATION_PREFIX = "integration"

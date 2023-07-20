@@ -46,3 +46,23 @@ def test_is_valid_fromversion(current_file, answer):
     widget_validator.current_file = current_file
 
     assert widget_validator._is_valid_fromversion() == answer
+
+
+def test_is_valid_id_to_name():
+    """
+    Given:
+        A widget validator with mismatch name and id.
+
+    When:
+        Running is_id_equals_name.
+
+    Then:
+        Ensure that the answer as expected.
+    """
+    structure = mock_structure("test.json")
+    widget_validator = WidgetValidator(structure)
+
+    widget_validator.current_file = {"name": "test", "id": "12345"}
+
+    assert not widget_validator.is_id_equals_name()
+

@@ -25,9 +25,11 @@ jobs:
             cd ..
             pwd
       - name: Downloding the last demisto-sdk version
+        env: 
+          GITHUB_SHA: ${{github.event.pull_request.merge_commit_sha}}
         run: |
-            echo "${{github.event.pull_request.merge_commit_sha}}"
-            poetry add poetry add git+https://github.com/demisto/demisto-sdk.git#$(git rev-parse --short "$GITHUB_SHA")
+            echo "GITHUB_SHA : $GITHUB_SHA"
+            poetry add poetry add git+https://github.com/demisto/demisto-sdk.git#$GITHUB_SHA
       - name: run unit tests
         run: |
            poetry run -m pytest ./Tests/scripts/infrastructure_tests/ ./Tests/Marketplace/Tests/ ./Tests/tests ./Tests/private_build/tests Utils -v

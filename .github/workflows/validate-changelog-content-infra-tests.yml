@@ -18,6 +18,7 @@ jobs:
           git clone https://github.com/demisto/content
           cd content
           poetry install --with ci
+          cd ../../demisto-sdk
           export GIT_URL=$(git ls-remote --get-url origin | sed 's/\.git$//')
           echo GIT_URL
           echo "Last Commit: ${{ steps.last_commit.outputs.commit }}"

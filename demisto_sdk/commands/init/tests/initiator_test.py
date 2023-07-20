@@ -645,8 +645,6 @@ def test_integration_init_with_ignore_secrets(
 
     integration_dir_files = set(listdir(integration_path))
     expected_files = {
-        "Pipfile",
-        "Pipfile.lock",
         "README.md",
         f"{INTEGRATION_NAME}.py",
         f"{INTEGRATION_NAME}.yml",

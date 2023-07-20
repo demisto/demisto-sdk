@@ -210,8 +210,3 @@ repos:
   rev: v0.10.1
   hooks:
   - id: validate-pyproject
-
-- repo: https://github.com/sourcery-ai/sourcery
-  rev: "v1.6.0"
-  hooks:
-  - id: sourcery

@@ -271,8 +271,9 @@ def setup(
         configure_dotenv()
         docker_image = integration_script.docker_image
         interpreter_path = CONTENT_PATH / ".venv" / "bin" / "python"
-        # replace " ", "(", ")" with "_"
-        secret_id = secret_id or re.sub(r"[ ()]", "_", integration_script.name)
+        if not secret_id:
+            secret_id = integration_script.name.replace(" ", "_")
+            secret_id = re.sub(r"[()]", "", secret_id)
         if (project_id := os.getenv("DEMISTO_GCP_PROJECT_ID")) and isinstance(integration_script, Integration):
             params = get_integration_params(project_id, secret_id)
             if params and instance_name:

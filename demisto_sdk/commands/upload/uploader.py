@@ -550,7 +550,7 @@ class ItemDetacher:
         return "yml" if "Playbooks" in file_path or "Scripts" in file_path else "json"
 
     def find_item_id_to_detach(self):
-        file_type = self.find_item_type_to_detach(self.file_path)
+        self.find_item_type_to_detach(self.file_path)
         file_data = get_file(self.file_path)
         return file_data.get("id")
 

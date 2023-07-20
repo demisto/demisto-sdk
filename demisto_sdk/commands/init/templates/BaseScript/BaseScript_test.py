@@ -13,10 +13,6 @@ import json
 from demisto_sdk.commands.common.tools import get_json
 
 
-def util_load_json(path):
-    return get_json(path)
-
-
 # TODO: REMOVE the following dummy unit test function
 def test_basescript_dummy():
     """Tests helloworld-say-hello command function.
@@ -31,7 +27,7 @@ def test_basescript_dummy():
     args = {"dummy": "this is a dummy response"}
     response = basescript_dummy_command(args)
 
-    mock_response = util_load_json("test_data/basescript-dummy.json")
+    mock_response = get_json("test_data/basescript-dummy.json")
 
     assert response.outputs == mock_response
 

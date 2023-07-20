@@ -10,16 +10,6 @@ You must add at least a Unit Test function for every XSOAR command
 you are implementing with your integration
 """
 
-from demisto_sdk.commands.common.handlers import JSON_Handler
-
-import json
-
-from demisto_sdk.commands.common.tools import get_json
-
-
-def util_load_json(path):
-    return get_json(path)
-
 
 # TODO: REMOVE the following dummy unit test function
 def test_baseintegration_dummy():

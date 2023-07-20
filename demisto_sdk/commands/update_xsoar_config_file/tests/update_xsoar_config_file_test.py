@@ -35,10 +35,6 @@ def temp_dir():
         rmtree(temp)
 
 
-def json_file(config_file):
-    pass
-
-
 class TestXSOARConfigFileUpdater:
     @pytest.mark.parametrize(
         argnames="add_all_marketplace_packs, expected_path, expected_outputs",
@@ -286,8 +282,7 @@ class TestXSOARConfigFileUpdater:
                 assert str_in_call_args_list(logger_info.call_args_list, err)
 
             try:
-                json_file = f"{tmp_output_dir}/{expected_path}"
-                config_file_info = get_json(json_file)
+                config_file_info = get_json(f"{tmp_output_dir}/{expected_path}")
             except IsADirectoryError:
                 config_file_info = {}
             assert config_file_info == expected_outputs

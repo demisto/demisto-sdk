@@ -8,13 +8,7 @@ https://xsoar.pan.dev/docs/integrations/unit-testing
 
 """
 
-import json
-
 from demisto_sdk.commands.common.tools import get_json
-
-
-def util_load_json(path):
-    return get_json(path)
 
 
 def test_get_alert(requests_mock):
@@ -26,7 +20,7 @@ def test_get_alert(requests_mock):
     """
     from HelloWorldSlim import Client, get_alert_command
 
-    mock_response = util_load_json("test_data/get_alert.json")
+    mock_response = get_json("test_data/get_alert.json")
     requests_mock.get(
         "https://test.com/api/v1/get_alert_details?alert_id=695b3238-05d6-4934-86f5-9fff3201aeb0",
         json=mock_response,
@@ -62,7 +56,7 @@ def test_update_alert_status(requests_mock):
     """
     from HelloWorld import Client, update_alert_status_command
 
-    mock_response = util_load_json("test_data/update_alert_status.json")
+    mock_response = get_json("test_data/update_alert_status.json")
     requests_mock.get(
         "https://test.com/api/v1/change_alert_status?alert_id=695b3238-05d6-4934-86f5-9fff3201aeb0&alert_status=CLOSED",
         json=mock_response,

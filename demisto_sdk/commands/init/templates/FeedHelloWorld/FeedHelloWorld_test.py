@@ -64,10 +64,6 @@ from demisto_sdk.commands.common.tools import get_json
 URL = "https://openphish.com/feed.txt"
 
 
-def util_load_json(path):
-    return get_json(path)
-
-
 def test_build_iterator(requests_mock):
     """
 
@@ -110,10 +106,10 @@ def test_fetch_indicators(mocker):
     mocker.patch.object(
         Client,
         "build_iterator",
-        return_value=util_load_json("./test_data/build_iterator_results.json"),
+        return_value=get_json("./test_data/build_iterator_results.json"),
     )
     results = fetch_indicators_command(client, params={"tlp_color": "RED"})
-    assert results == util_load_json("./test_data/get_indicators_command_results.json")
+    assert results == get_json("./test_data/get_indicators_command_results.json")
 
 
 def test_get_indicators_command(mocker):
@@ -128,7 +124,7 @@ def test_get_indicators_command(mocker):
 
     """
     client = Client(base_url=URL)
-    indicators_list = util_load_json("./test_data/build_iterator_results.json")[:10]
+    indicators_list = get_json("./test_data/build_iterator_results.json")[:10]
     mocker.patch.object(Client, "build_iterator", return_value=indicators_list)
     results = get_indicators_command(
         client, params={"tlp_color": "RED"}, args={"limit": "10"}

@@ -51,15 +51,7 @@ More information about Unit Tests in Cortex XSOAR:
 https://xsoar.pan.dev/docs/integrations/unit-testing
 
 """
-
-from demisto_sdk.commands.common.handlers import JSON_Handler
-
-from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.tools import get_json
-
-
-def util_load_json(path):
-    return get_json(path)
 
 
 def test_say_hello():
@@ -171,7 +163,7 @@ def test_scan_results(requests_mock):
     from CommonServerPython import Common
     from HelloWorld import Client, scan_results_command
 
-    mock_response = util_load_json("test_data/scan_results.json")
+    mock_response = get_json("test_data/scan_results.json")
     requests_mock.get(
         "https://test.com/api/v1/get_scan_results?scan_id=100", json=mock_response
     )
@@ -205,7 +197,7 @@ def test_search_alerts(requests_mock):
     """
     from HelloWorld import Client, search_alerts_command
 
-    mock_response = util_load_json("test_data/search_alerts.json")
+    mock_response = get_json("test_data/search_alerts.json")
     requests_mock.get(
         "https://test.com/api/v1/get_alerts?alert_status=ACTIVE&severity=Critical&max_results=2&start_time=1581982463",
         json=mock_response["alerts"],
@@ -245,7 +237,7 @@ def test_get_alert(requests_mock):
     """
     from HelloWorld import Client, get_alert_command
 
-    mock_response = util_load_json("test_data/get_alert.json")
+    mock_response = get_json("test_data/get_alert.json")
     requests_mock.get(
         "https://test.com/api/v1/get_alert_details?alert_id=695b3238-05d6-4934-86f5-9fff3201aeb0",
         json=mock_response,
@@ -281,7 +273,7 @@ def test_update_alert_status(requests_mock):
     """
     from HelloWorld import Client, update_alert_status_command
 
-    mock_response = util_load_json("test_data/update_alert_status.json")
+    mock_response = get_json("test_data/update_alert_status.json")
     requests_mock.get(
         "https://test.com/api/v1/change_alert_status?alert_id=695b3238-05d6-4934-86f5-9fff3201aeb0&alert_status=CLOSED",
         json=mock_response,
@@ -317,7 +309,7 @@ def test_ip(requests_mock):
     from HelloWorld import Client, ip_reputation_command
 
     ip_to_check = "151.1.1.1"
-    mock_response = util_load_json("test_data/ip_reputation.json")
+    mock_response = get_json("test_data/ip_reputation.json")
     requests_mock.get(f"http://test.com/api/v1/ip?ip={ip_to_check}", json=mock_response)
 
     client = Client(
@@ -355,7 +347,7 @@ def test_domain(requests_mock):
     from HelloWorld import Client, domain_reputation_command
 
     domain_to_check = "google.com"
-    mock_response = util_load_json("test_data/domain_reputation.json")
+    mock_response = get_json("test_data/domain_reputation.json")
     requests_mock.get(
         f"http://test.com/api/v1/domain?domain={domain_to_check}", json=mock_response
     )
@@ -399,7 +391,7 @@ def test_fetch_incidents(requests_mock):
     """
     from HelloWorld import Client, fetch_incidents
 
-    mock_response = util_load_json("test_data/search_alerts.json")
+    mock_response = get_json("test_data/search_alerts.json")
     requests_mock.get(
         "https://test.com/api/v1/get_alerts?alert_status=ACTIVE"
         "&severity=Low%2CMedium%2CHigh%2CCritical&max_results=2"

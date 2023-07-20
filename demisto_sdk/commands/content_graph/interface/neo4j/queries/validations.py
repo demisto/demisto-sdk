@@ -52,7 +52,7 @@ def validate_unknown_content(
         RETURN content_item_from, collect(r) as relationships, collect(n) as nodes_to
         """
     return {
-        int(item.get("content_item_from").element_id): Neo4jRelationshipResult(
+        item.get("content_item_from").element_id: Neo4jRelationshipResult(
             node_from=item.get("content_item_from"),
             relationships=item.get("relationships"),
             nodes_to=item.get("nodes_to"),
@@ -84,7 +84,7 @@ WITH content_item_from, r, n, n2
 WHERE NOT exists((content_item_from)-[:{RelationshipType.USES}{{mandatorily:true}}]->(n2))
 RETURN content_item_from, collect(r) as relationships, collect(n) as nodes_to"""
     return {
-        int(item.get("content_item_from").element_id): Neo4jRelationshipResult(
+        item.get("content_item_from").element_id: Neo4jRelationshipResult(
             node_from=item.get("content_item_from"),
             relationships=item.get("relationships"),
             nodes_to=item.get("nodes_to"),
@@ -115,7 +115,7 @@ WITH content_item_from, r, n, n2
 WHERE NOT exists((content_item_from)-[:{RelationshipType.USES}{{mandatorily:true}}]->(n2))
 RETURN content_item_from, collect(r) as relationships, collect(n) as nodes_to"""
     return {
-        int(item.get("content_item_from").element_id): Neo4jRelationshipResult(
+        item.get("content_item_from").element_id: Neo4jRelationshipResult(
             node_from=item.get("content_item_from"),
             relationships=item.get("relationships"),
             nodes_to=item.get("nodes_to"),
@@ -181,7 +181,7 @@ WHERE NOT exists((content_item_from)-[:{RelationshipType.USES}{{mandatorily:true
 RETURN content_item_from, collect(r) as relationships, collect(n) as nodes_to
 """
     return {
-        int(item.get("content_item_from").element_id): Neo4jRelationshipResult(
+        item.get("content_item_from").element_id: Neo4jRelationshipResult(
             node_from=item.get("content_item_from"),
             relationships=item.get("relationships"),
             nodes_to=item.get("nodes_to"),

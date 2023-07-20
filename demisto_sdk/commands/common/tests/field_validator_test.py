@@ -475,59 +475,337 @@ class TestFieldValidator:
             == expected
         )
 
-    def test_validate_no_empty_selected_values_value_incident(self, pack):
+    @pytest.mark.parametrize(
+        "incident_content, expected_results",
+        [
+            (
+                {
+                    "type": "singleSelect",
+                    "cliName": "test_incident",
+                    "version": -1,
+                    "fromVersion": "5.0.0",
+                    "content": True,
+                    "group": INCIDENT_GROUP_NUMBER,
+                    "selectValues": [""],
+                },
+                False,
+            ),
+            (
+                {
+                    "type": "singleSelect",
+                    "cliName": "test_incident",
+                    "version": -1,
+                    "fromVersion": "5.0.0",
+                    "content": True,
+                    "group": INCIDENT_GROUP_NUMBER,
+                    "selectValues": ["", "option 1", ""],
+                },
+                False,
+            ),
+            (
+                {
+                    "type": "singleSelect",
+                    "cliName": "test_incident",
+                    "version": -1,
+                    "fromVersion": "5.0.0",
+                    "content": True,
+                    "group": INCIDENT_GROUP_NUMBER,
+                    "selectValues": ["", "option 1"],
+                },
+                True,
+            ),
+            (
+                {
+                    "type": "singleSelect",
+                    "cliName": "test_incident",
+                    "version": -1,
+                    "fromVersion": "5.0.0",
+                    "content": True,
+                    "group": INCIDENT_GROUP_NUMBER,
+                    "selectValues": [],
+                },
+                True,
+            ),
+            (
+                {
+                    "type": "singleSelect",
+                    "cliName": "test_incident",
+                    "version": -1,
+                    "fromVersion": "5.0.0",
+                    "content": True,
+                    "group": INCIDENT_GROUP_NUMBER,
+                    "selectValues": None,
+                },
+                True,
+            ),
+            (
+                {
+                    "type": "multiSelect",
+                    "cliName": "test_incident",
+                    "version": -1,
+                    "fromVersion": "5.0.0",
+                    "content": True,
+                    "group": INCIDENT_GROUP_NUMBER,
+                    "selectValues": [""],
+                },
+                False,
+            ),
+            (
+                {
+                    "type": "multiSelect",
+                    "cliName": "test_incident",
+                    "version": -1,
+                    "fromVersion": "5.0.0",
+                    "content": True,
+                    "group": INCIDENT_GROUP_NUMBER,
+                    "selectValues": ["option 1", "option 2"],
+                },
+                True,
+            ),
+            (
+                {
+                    "type": "multiSelect",
+                    "cliName": "test_incident",
+                    "version": -1,
+                    "fromVersion": "5.0.0",
+                    "content": True,
+                    "group": INCIDENT_GROUP_NUMBER,
+                    "selectValues": ["", "option 1"],
+                },
+                False,
+            ),
+            (
+                {
+                    "type": "multiSelect",
+                    "cliName": "test_incident",
+                    "version": -1,
+                    "fromVersion": "5.0.0",
+                    "content": True,
+                    "group": INCIDENT_GROUP_NUMBER,
+                    "selectValues": [],
+                },
+                True,
+            ),
+            (
+                {
+                    "type": "multiSelect",
+                    "cliName": "test_incident",
+                    "version": -1,
+                    "fromVersion": "5.0.0",
+                    "content": True,
+                    "group": INCIDENT_GROUP_NUMBER,
+                    "selectValues": None,
+                },
+                True,
+            ),
+        ],
+    )
+    def test_validate_no_empty_selected_values_value_incident(
+        self, pack, incident_content, expected_results
+    ):
         """
         Given
-        - An incident field.
+        - An incident field content and expected results.
+        - Case 1: singleSelect type incident field with only empty value in the selectValues field.
+        - Case 2: singleSelect type incident field with two empty values and a none-empty variable in the selectValues field.
+        - Case 3: singleSelect type incident field with one empty value and a none-empty variable in the selectValues field.
+        - Case 4: singleSelect type incident field with an empty list in the selectValues field.
+        - Case 5: singleSelect type incident field with selectValues field set to None.
+        - Case 6: multiSelect type incident field with only empty value in the selectValues field.
+        - Case 7: multiSelect type incident field with two none-empty variables in the selectValues field.
+        - Case 8: multiSelect type incident field with one empty value and a none-empty variable in the selectValues field.
+        - Case 9: multiSelect type incident field with an empty list in the selectValues field.
+        - Case 10: multiSelect type incident field with selectValues field set to None.
 
         When
         - Validating its selectValues do no contain empty values.
 
         Then
-        - Ensure false is returned.
+        - Ensure the right result is returned.
+        - Case 1: Should return False.
+        - Case 2: Should return False.
+        - Case 3: Should return True.
+        - Case 4: Should return True.
+        - Case 5: Should return True.
+        - Case 6: Should return False.
+        - Case 7: Should return True.
+        - Case 8: Should return False.
+        - Case 9: Should return True.
+        - Case 10: Should return True.
         """
         incident_field = pack.create_incident_field(
             "incident_1",
-            {
-                "type": "some-type",
-                "cliName": "testincident",
-                "version": -1,
-                "fromVersion": "5.0.0",
-                "content": True,
-                "group": INCIDENT_GROUP_NUMBER,
-                "selectValues": [""],
-            },
+            incident_content,
         )
         structure = StructureValidator(incident_field.path)
         validator = FieldBaseValidator(structure, {"some-type"}, set())
-        assert not validator.does_not_have_empty_select_values()
+        assert validator.does_not_have_empty_select_values() is expected_results
 
-    def test_validate_no_empty_selected_values_value_indicator(self, pack):
+    @pytest.mark.parametrize(
+        "indicator_content, expected_results",
+        [
+            (
+                {
+                    "type": "singleSelect",
+                    "cliName": "test_indicator",
+                    "version": -1,
+                    "fromVersion": "5.0.0",
+                    "content": True,
+                    "group": INDICATOR_GROUP_NUMBER,
+                    "selectValues": [""],
+                },
+                False,
+            ),
+            (
+                {
+                    "type": "singleSelect",
+                    "cliName": "test_indicator",
+                    "version": -1,
+                    "fromVersion": "5.0.0",
+                    "content": True,
+                    "group": INDICATOR_GROUP_NUMBER,
+                    "selectValues": ["", "option 1", ""],
+                },
+                False,
+            ),
+            (
+                {
+                    "type": "singleSelect",
+                    "cliName": "test_indicator",
+                    "version": -1,
+                    "fromVersion": "5.0.0",
+                    "content": True,
+                    "group": INDICATOR_GROUP_NUMBER,
+                    "selectValues": ["", "option 1"],
+                },
+                True,
+            ),
+            (
+                {
+                    "type": "singleSelect",
+                    "cliName": "test_indicator",
+                    "version": -1,
+                    "fromVersion": "5.0.0",
+                    "content": True,
+                    "group": INDICATOR_GROUP_NUMBER,
+                    "selectValues": [],
+                },
+                True,
+            ),
+            (
+                {
+                    "type": "singleSelect",
+                    "cliName": "test_indicator",
+                    "version": -1,
+                    "fromVersion": "5.0.0",
+                    "content": True,
+                    "group": INDICATOR_GROUP_NUMBER,
+                    "selectValues": None,
+                },
+                True,
+            ),
+            (
+                {
+                    "type": "multiSelect",
+                    "cliName": "test_indicator",
+                    "version": -1,
+                    "fromVersion": "5.0.0",
+                    "content": True,
+                    "group": INDICATOR_GROUP_NUMBER,
+                    "selectValues": [""],
+                },
+                False,
+            ),
+            (
+                {
+                    "type": "multiSelect",
+                    "cliName": "test_indicator",
+                    "version": -1,
+                    "fromVersion": "5.0.0",
+                    "content": True,
+                    "group": INDICATOR_GROUP_NUMBER,
+                    "selectValues": ["option 1", "option 2"],
+                },
+                True,
+            ),
+            (
+                {
+                    "type": "multiSelect",
+                    "cliName": "test_indicator",
+                    "version": -1,
+                    "fromVersion": "5.0.0",
+                    "content": True,
+                    "group": INDICATOR_GROUP_NUMBER,
+                    "selectValues": ["", "option 1"],
+                },
+                False,
+            ),
+            (
+                {
+                    "type": "multiSelect",
+                    "cliName": "test_indicator",
+                    "version": -1,
+                    "fromVersion": "5.0.0",
+                    "content": True,
+                    "group": INDICATOR_GROUP_NUMBER,
+                    "selectValues": [],
+                },
+                True,
+            ),
+            (
+                {
+                    "type": "multiSelect",
+                    "cliName": "test_indicator",
+                    "version": -1,
+                    "fromVersion": "5.0.0",
+                    "content": True,
+                    "group": INDICATOR_GROUP_NUMBER,
+                    "selectValues": None,
+                },
+                True,
+            ),
+        ],
+    )
+    def test_validate_no_empty_selected_values_value_indicator(
+        self, pack, indicator_content, expected_results
+    ):
         """
         Given
-        - An indicator field.
+        - An indicator field content and expected results.
+        - Case 1: singleSelect type indicator field with only empty value in the selectValues field.
+        - Case 2: singleSelect type indicator field with two empty values and a none-empty variable in the selectValues field.
+        - Case 3: singleSelect type indicator field with one empty value and a none-empty variable in the selectValues field.
+        - Case 4: singleSelect type indicator field with an empty list in the selectValues field.
+        - Case 5: singleSelect type indicator field with selectValues field set to None.
+        - Case 6: multiSelect type indicator field with only empty value in the selectValues field.
+        - Case 7: multiSelect type indicator field with two none-empty variables in the selectValues field.
+        - Case 8: multiSelect type indicator field with one empty value and a none-empty variable in the selectValues field.
+        - Case 9: multiSelect type indicator field with an empty list in the selectValues field.
+        - Case 10: multiSelect type indicator field with selectValues field set to None.
 
         When
         - Validating its selectValues do no contain empty values.
 
         Then
-        - Ensure false is returned.
+        - Ensure the right result is returned.
+        - Case 1: Should return False.
+        - Case 2: Should return False.
+        - Case 3: Should return True.
+        - Case 4: Should return True.
+        - Case 5: Should return True.
+        - Case 6: Should return False.
+        - Case 7: Should return True.
+        - Case 8: Should return False.
+        - Case 9: Should return True.
+        - Case 10: Should return True.
         """
         indicator_field = pack.create_indicator_field(
             "ind_1",
-            {
-                "type": "some-type",
-                "cliName": "testindicator",
-                "version": -1,
-                "fromVersion": "5.0.0",
-                "content": True,
-                "group": INDICATOR_GROUP_NUMBER,
-                "selectValues": [""],
-            },
+            indicator_content,
         )
         structure = StructureValidator(indicator_field.path)
         validator = FieldBaseValidator(structure, {"some-type"}, set())
-        assert not validator.does_not_have_empty_select_values()
+        assert validator.does_not_have_empty_select_values() is expected_results
 
     @pytest.mark.parametrize(
         "marketplaces, expected",

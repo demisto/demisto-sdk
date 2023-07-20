@@ -464,23 +464,33 @@ class FieldBaseValidator(ContentEntityValidator):
         Returns:
             (bool): True if selectValues does not have empty values, false if contains empty value.
         """
-        is_valid = True
+        error_message, error_code = "", ""
         if self.current_file.get("type") == "singleSelect":
-            select_values = self.current_file.get("selectValues", [])
-            empty_string_appearance = sum([1 if select_value == "" else 0 for select_value in select_values])
-            if (empty_string_appearance and len(select_values) == 1) or empty_string_appearance > 1:
-                is_valid = False
+            select_values = self.current_file.get("selectValues") or []
+            empty_string_appearance = sum(
+                [1 if select_value == "" else 0 for select_value in select_values]
+            )
+            if (
+                empty_string_appearance and len(select_values) == 1
+            ) or empty_string_appearance > 1:
+                (
+                    error_message,
+                    error_code,
+                ) = (
+                    Errors.select_values_cannot_contain_multiple_or_only_empty_values_in_single_select_types()
+                )
         else:
             if any(
                 select_value == ""
                 for select_value in (self.current_file.get("selectValues") or [])
             ):
-                is_valid = False
-        if not is_valid:
-            (
-                error_message,
-                error_code,
-            ) = Errors.select_values_cannot_contain_empty_values()
+                (
+                    error_message,
+                    error_code,
+                ) = (
+                    Errors.select_values_cannot_contain_empty_values_in_multi_select_types()
+                )
+        if error_code and error_message:
             if self.handle_error(
                 error_message,
                 error_code,

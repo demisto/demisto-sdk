@@ -6,10 +6,8 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v3
-        name: checkout-content
-        with:
-          repo: demisto/content  
+      - name: Clone content
+        run: git clone https://github.com/demisto/content 
       - name: Setup Python
         uses: actions/setup-python@v3
         with:
@@ -20,9 +18,6 @@ jobs:
         run: poetry install
       - name: ±±±±±±±±±  PWD ±±±±±±±±±±±±±±±
         run: |
-            pwd
-            cd ..
-            cd ..
             pwd
       - name: Downloding the last demisto-sdk version
         env: 

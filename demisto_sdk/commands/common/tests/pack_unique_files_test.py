@@ -182,7 +182,7 @@ class TestPackUniqueFilesValidator:
         Then
         - Ensure validate found errors.
         """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+        logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
         monkeypatch.setenv("COLUMNS", "1000")
 
         pack_metadata_no_email_and_url = PACK_METADATA_PARTNER.copy()
@@ -216,7 +216,7 @@ class TestPackUniqueFilesValidator:
             runner = CliRunner(mix_stderr=False)
             runner.invoke(main, [VALIDATE_CMD, "-i", pack.path], catch_exceptions=False)
         assert str_in_call_args_list(
-            logger_info.call_args_list,
+            logger_error.call_args_list,
             "Contributed packs must include email or url",
         )
 
@@ -241,7 +241,7 @@ class TestPackUniqueFilesValidator:
         Then
         - Ensure validate finds errors accordingly.
         """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+        logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
         monkeypatch.setenv("COLUMNS", "1000")
 
         pack_metadata_changed_url = PACK_METADATA_PARTNER.copy()
@@ -278,9 +278,9 @@ class TestPackUniqueFilesValidator:
             "The metadata URL leads to a GitHub repo instead of a support page."
         )
         if is_valid:
-            assert not str_in_call_args_list(logger_info.call_args_list, error_text)
+            assert not str_in_call_args_list(logger_error.call_args_list, error_text)
         else:
-            assert str_in_call_args_list(logger_info.call_args_list, error_text)
+            assert str_in_call_args_list(logger_error.call_args_list, error_text)
 
     def test_validate_partner_contribute_pack_metadata_price_change(
         self, mocker, monkeypatch, repo
@@ -295,7 +295,7 @@ class TestPackUniqueFilesValidator:
         Then
         - Ensure validate found errors.
         """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+        logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
         monkeypatch.setenv("COLUMNS", "1000")
 
         pack_metadata_price_changed = PACK_METADATA_PARTNER.copy()
@@ -328,7 +328,7 @@ class TestPackUniqueFilesValidator:
             runner = CliRunner(mix_stderr=False)
             runner.invoke(main, [VALIDATE_CMD, "-i", pack.path], catch_exceptions=False)
         assert str_in_call_args_list(
-            logger_info.call_args_list,
+            logger_error.call_args_list,
             "The pack price was changed from 2 to 3 - revert the change",
         )
 

@@ -1,8 +1,8 @@
 from pathlib import Path
+from typing import Any, Dict
 
 import pytest
 
-from demisto_sdk.commands.content_graph import neo4j_service
 from demisto_sdk.commands.content_graph.commands.create import (
     create_content_graph,
 )
@@ -19,36 +19,38 @@ from demisto_sdk.commands.content_graph.tests.create_content_graph_test import (
     mock_pack,
     mock_script,
     mock_test_playbook,
+    repository,  # noqa: F401
+    setup,  # noqa: F401
 )
-from TestSuite.repo import Repo
 
 
-@pytest.fixture(autouse=True)
-def setup(mocker, repo: Repo):
-    """Auto-used fixture for setup before every test run"""
-    import demisto_sdk.commands.content_graph.objects.base_content as bc
-
-    bc.CONTENT_PATH = Path(repo.path)
-    mocker.patch.object(ContentGraphInterface, "repo_path", Path(repo.path))
-    mocker.patch.object(neo4j_service, "REPO_PATH", Path(repo.path))
-    neo4j_service.stop()
-
-
-@pytest.fixture
-def repository(mocker):
-    repository = ContentDTO(
-        path=Path(),
-        packs=[],
-    )
-    mocker.patch(
-        "demisto_sdk.commands.content_graph.content_graph_builder.ContentGraphBuilder._create_content_dtos",
-        return_value=[repository],
-    )
-    return repository
-
-
-def create_mini_content(repository: ContentDTO):
+def create_mini_content(repository: ContentDTO):  # noqa: F811
     """Creates a content repo with three packs and relationships
+
+              +-----+                        +-----+      +-----+
+              |Pack1|                        |Pack2|      |Pack3|
+              +-----+                        +-----+      +-----+
+                 ^                              ^            ^
+                 |  IN_PACK             IN_PACK |            |  IN_PACK
+             +---------                         |         ---------
+             |         |                        |        |         |
+             |         |                        |        |         |
+          +-----+   +-----+                     |      +-----+   +-----+
+      --> |Intg1|   |Scrp1|                     |      |ApiMd|   | TPB | --
+     |    +-----+   +-----+                     |      +-----+   +-----+   |
+     |    | |  ^       ^                        |         ^       ^   |    |     USES
+     |    | |  |       |                        |         |       |   |    | (mandatorily)
+     |    | |  |       | USES (mandatorily)  +-----+      |       |   |    |
+     |    | |  |        ---------------------|Scrp2|<-----|-------|---|----
+     |    | |   ---------------------------- +-----+      |       |   |
+     |    | |            USES (optionally)                |       |   |
+     |    | |                                             |       |   |
+     |    |  ---------------------------------------------        |   |
+     |    |                   IMPORTS                             |   |
+     |     -------------------------------------------------------    |
+     |                        TESTED_BY                               |
+      ----------------------------------------------------------------
+                            USES (optionally)
 
     Args:
         repository (ContentDTO): the content dto to populate
@@ -76,7 +78,7 @@ def create_mini_content(repository: ContentDTO):
         ),
         pack=pack1,
     )
-    mock_script(
+    pack1_script = mock_script(
         path=Path("Packs/SamplePack/Scripts/SampleScript/SampleScript.yml"),
         pack=pack1,
     )
@@ -86,7 +88,7 @@ def create_mini_content(repository: ContentDTO):
         "SampleScript2",
         path=Path("Packs/SamplePack2/Scripts/SampleScript2/SampleScript2.yml"),
         pack=pack2,
-        uses=[(pack1_integration, False)],
+        uses=[(pack1_integration, False), (pack1_script, True)],
     )
 
     # pack3 content items
@@ -107,31 +109,62 @@ def create_mini_content(repository: ContentDTO):
 
 
 class TestGetRelationships:
+    @pytest.mark.parametrize(
+        "filepath, relationship, depth, expected_sources, expected_targets",
+        [
+            (
+                Path("Packs/SamplePack2/Scripts/SampleScript2/SampleScript2.yml"),
+                RelationshipType.USES,
+                2,
+                {
+                    "Packs/SamplePack/Integrations/SampleIntegration/SampleIntegration.yml": {
+                        "mandatory": False,
+                        "paths_count": 1,
+                    },
+                    "Packs/SamplePack/Scripts/SampleScript/SampleScript.yml": {
+                        "mandatory": True,
+                        "paths_count": 1,
+                    },
+                },
+                {
+                    "Packs/SamplePack3/TestPlaybooks/SampleTestPlaybook/SampleTestPlaybook.yml": {
+                        "mandatory": True,
+                        "paths_count": 1,
+                    },
+                },
+            )
+        ],
+    )
     def test_get_relationships(
         self,
-        repository: ContentDTO,
-    ):
+        repository: ContentDTO,  # noqa: F811
+        filepath: Path,
+        relationship: RelationshipType,
+        depth: int,
+        expected_sources: Dict[str, Any],
+        expected_targets: Dict[str, Any],
+    ) -> None:
         """
         Given:
             - A mocked model of a repository.
-            - A path to a script SampleScript2 in SamplePack2 pack.
         When:
-            - Running get_relationships_by_path().
+            - Running get_relationships_by_path() for the above test cases.
         Then:
-            - Make sure the sources and targets of SampleScript2 are the expected.
+            - Make sure the resulted sources and targets are as expected.
         """
         create_mini_content(repository)
         with ContentGraphInterface() as interface:
             create_content_graph(interface)
-
-            sample_script_path = repository.packs[1].content_items.script[0].path
             sources, targets = get_relationships_by_path(
                 interface,
-                path=sample_script_path,
-                relationship=RelationshipType.USES,
-                depth=1,
+                path=filepath,
+                relationship=relationship,
+                depth=depth,
             )
-            test_playbook_path = repository.packs[2].content_items.test_playbook[0].path
-            assert str(test_playbook_path) in sources
-            integration_path = repository.packs[0].content_items.integration[0].path
-            assert str(integration_path) in targets
+        for res, expected in zip(
+            [sources, targets], [expected_sources, expected_targets]
+        ):
+            assert res.keys() == expected.keys()
+            for k in res:
+                assert res[k].get("mandatory") == expected[k].get("mandatory")
+                assert len(res[k]["paths"]) == expected[k]["paths_count"]

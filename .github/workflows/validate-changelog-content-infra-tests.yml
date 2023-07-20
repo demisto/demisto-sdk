@@ -1,4 +1,4 @@
-name: Infra stracture tests
+name: Run content infrastracture tests
 on: pull_request
 
 jobs:
@@ -16,13 +16,18 @@ jobs:
         run: pwd
       - name: Install Python Dependencies and downloding the last demisto-sdk version
         run: |
-          cd ../..
-          git clone https://github.com/demisto/content 
+          git clone https://github.com/demisto/content -- ../..
           cd content
           poetry install --with ci
           echo "GITHUB_SHA : $GITHUB_SHA"
           poetry add git+https://github.com/demisto/demisto-sdk.git#${{github.sha}}
           echo "added custom SDK"
+          pwd
+      - name: tests
+        run:
+          pwd
+          cd ../..
+          pwd
           poetry run pytest ./Tests/scripts/infrastructure_tests/ -v
           poetry run pytest ./Tests/Marketplace/Tests/ -v
           poetry run pytest ./Tests/tests -v

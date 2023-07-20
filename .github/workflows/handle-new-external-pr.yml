@@ -23,4 +23,5 @@ jobs:
           BASE: ${{ github.event.pull_request.base.sha }}
           HEAD: ${{ github.event.pull_request.head.sha }}
         run: |
-          ./Utils/github_workflow_scripts/handle_external_pr.sh
+          cd Utils/github_workflow_scripts
+          ./handle_external_pr.sh

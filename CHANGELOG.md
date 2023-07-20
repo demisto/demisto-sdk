@@ -13,7 +13,7 @@
 * **lint** will now fail on `LOG` usage in python files.
 * Fixed an issue where **pre-commit** running when there was no change to the files
 * Fixed an issue where errors in **validate** were logged as `info`.
-* Fixed an issue where the **unify** command failed to unify a integration with a module, in cases where the cwd was not the root of the content repository.
+* Fixed an issue where the **unify** command failed on integrations using an API a module, when not called from the content root.
 * Added new validation that XSIAM integrations must have `marketplacev2` as the value of the marketplaces field.
 * Fixed an issue where the **format** command would change the value of the `unsearchable` key in fields.
 * Added an ability to provide list of marketplace names as a credentials-type (type 9) param attribute.

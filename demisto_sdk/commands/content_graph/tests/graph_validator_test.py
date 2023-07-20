@@ -30,7 +30,7 @@ from demisto_sdk.commands.content_graph.tests.create_content_graph_test import (
     mock_relationship,
     mock_test_playbook,
 )
-from TestSuite.test_tools import str_in_call_args_list
+from TestSuite.test_tools import str_in_call_args_list, ChangeCWD
 
 GIT_PATH = Path(git_path())
 
@@ -768,3 +768,29 @@ def test_deprecated_usage__new_content(repository: ContentDTO, mocker):
         is_valid = validator.validate_deprecated_items_usage()
 
     assert not is_valid
+
+
+def test_validate_hidden_pack_is_not_mandatory_dependency(repository: ContentDTO, mocker, repo):
+
+    logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
+
+    create_mini_content(repository)
+
+    hidden_pack = repo.create_pack(name='hidden_pack')
+    hidden_pack.pack_metadata.update({"hidden": True})
+
+    dependant_pack = repo.create_pack(name='dependant_pack')
+    dependant_pack.pack_metadata.update(
+        {"dependencies": {"hidden_pack": {"mandatory": True, "display_name": "hidden_pack"}}}
+    )
+
+    with ChangeCWD(repo.path):
+        with GraphValidator(update_graph=False, git_files=[hidden_pack.path]) as graph_validator:
+            create_content_graph(graph_validator.graph)
+            is_valid = graph_validator.validate_hidden_pack_is_not_mandatory_dependency()
+
+    assert not is_valid
+    assert str_in_call_args_list(
+        logger_error.call_args_list,
+        "The core pack SamplePack cannot depend on non-core packs: ",
+    )

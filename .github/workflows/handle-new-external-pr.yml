@@ -19,8 +19,9 @@ jobs:
       - name: Create PR review request
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_LINK: ${{ github.event.pull_request.html_url }}
           BASE: ${{ github.event.pull_request.base.sha }}
           HEAD: ${{ github.event.pull_request.head.sha }}
         run: |
-          sudo ./Utils/github_workflow_scripts/handle_external_pr.sh
+          ./Utils/github_workflow_scripts/handle_external_pr.sh

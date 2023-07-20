@@ -33,7 +33,7 @@ class Neo4jImportHandler:
 
     def clean_import_dir(self) -> None:
         for file in self.import_path.iterdir():
-            os.remove(file)
+            Path.unlink(file)
 
     def get_graphml_filenames(self) -> List[str]:
         return [

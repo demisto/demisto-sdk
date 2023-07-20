@@ -4,6 +4,7 @@ import shutil
 from distutils.dir_util import copy_tree
 from distutils.version import LooseVersion
 from typing import Dict, List
+from pathlib import Path
 
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.configuration import Configuration
@@ -759,7 +760,8 @@ class Initiator:
         ) as f:
             yaml.dump(yml_dict, f)
 
-        os.remove(os.path.join(self.full_output_path, f"{current_suffix}.yml"))
+        yml_path = Path(os.path.join(self.full_output_path, f"{current_suffix}.yml"))
+        Path.unlink(yml_path)
 
     def change_template_name_script_py(
         self, current_suffix: str, current_template: str

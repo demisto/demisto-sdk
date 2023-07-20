@@ -254,7 +254,8 @@ class ContributionConverter:
                 filename=self.contribution, extract_dir=self.pack_dir_path
             )
             # remove metadata.json file
-            os.remove(os.path.join(self.pack_dir_path, "metadata.json"))
+            metadata_path = Path(os.path.join(self.pack_dir_path, "metadata.json"))
+            Path.unlink(metadata_path)
         else:
             err_msg = (
                 "Tried unpacking contribution to destination directory but the instance variable"
@@ -379,7 +380,8 @@ class ContributionConverter:
                             self.generate_readme_for_pack_content_item(
                                 unified_file, is_contribution
                             )
-                            os.remove(unified_file)
+                            unified_file_path = Path(unified_file)
+                            Path.unlink(unified_file_path)
             elif basename == "Playbooks":
                 files = get_child_files(pack_subdir)
                 for file in files:
@@ -646,11 +648,14 @@ class ContributionConverter:
                         # Moving the unified file to its package.
                         shutil.move(content_item_file_path, output_path)
                     if del_unified:
-                        if Path(content_item_file_path):
-                            os.remove(content_item_file_path).exists()
+                        content_item_path = Path(content_item_file_path)
+                        if content_item_path.exists():
+                            Path.unlink(content_item_path)
+
                         moved_unified_dst = os.path.join(output_path, child_file_name)
-                        if Path(moved_unified_dst).exists():
-                            os.remove(moved_unified_dst)
+                        moved_unified_dst_path = Path(moved_unified_dst)
+                        if moved_unified_dst_path.exists():
+                            Path.unlink(moved_unified_dst_path)
 
     def create_pack_base_files(self):
         """

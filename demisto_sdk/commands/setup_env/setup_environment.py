@@ -5,7 +5,7 @@ import subprocess
 import venv
 from enum import Enum
 from pathlib import Path
-from typing import Tuple
+from typing import Optional, Tuple
 
 import dotenv
 import google
@@ -51,6 +51,11 @@ def get_integration_params(project_id: str, secret_id: str):
     except google.api_core.exceptions.PermissionDenied:
         logger.warning(
             "Insufficient permissions for gcloud. If you have the correct permissions, run `gcloud auth application-default login`"
+        )
+        return {}
+    except Exception:
+        logger.warning(
+            f"Failed to get secret {secret_id} from secret manager, skipping"
         )
         return {}
     # Return the decoded payload.
@@ -120,7 +125,7 @@ def configure_vscode_tasks(
                 "type": "docker-run",
                 "label": "docker-run: debug",
                 "python": {
-                    "file": f"/app/{integration_script.path.relative_to(CONTENT_PATH)}"
+                    "file": f"/app/{integration_script.path.with_suffix('.py').relative_to(CONTENT_PATH)}"
                 },
                 "dockerRun": {
                     "image": integration_script.docker_image,
@@ -171,7 +176,7 @@ def configure_vscode_launch(ide_folder: Path, integration_script: IntegrationScr
                     "name": "PowerShell: Debug Integration",
                     "type": "PowerShell",
                     "request": "launch",
-                    "script": integration_script.path.with_suffix(".ps1"),
+                    "script": str(integration_script.path.with_suffix(".ps1")),
                     "cwd": "${workspaceFolder}",
                 }
             ],
@@ -213,7 +218,7 @@ def configure_vscode_launch(ide_folder: Path, integration_script: IntegrationScr
                     "name": "Python: Debug Integration locally",
                     "type": "python",
                     "request": "launch",
-                    "program": integration_script.path.with_suffix(".py"),
+                    "program": str(integration_script.path.with_suffix(".py")),
                     "console": "integratedTerminal",
                     "cwd": "${workspaceFolder}",
                     "justMyCode": False,
@@ -249,6 +254,7 @@ def setup(
     ide: IDE = IDE.VSCODE,
     create_virtualenv: bool = False,
     overwrite_virtualenv: bool = False,
+    secret_key: Optional[str] = None,
 ):
     ide_folder = CONTENT_PATH / IDE_TO_FOLDER[ide]
     docker_client = docker_helper.init_global_docker_client()
@@ -263,7 +269,7 @@ def setup(
         docker_image = integration_script.docker_image
         interpreter_path = CONTENT_PATH / ".venv" / "bin" / "python"
         # replace " ", "(", ")" with "_"
-        secret_id = re.sub(r"[ ()]", "_", integration_script.name)
+        secret_id = secret_key or re.sub(r"[ ()]", "_", integration_script.name)
         if project_id := os.getenv("GCP_PROJECT_ID"):
             params = get_integration_params(project_id, secret_id)
             with open(ide_folder / "params.json", "w") as f:

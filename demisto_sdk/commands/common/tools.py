@@ -798,7 +798,6 @@ def safe_write_unicode(
 @lru_cache
 def get_file(
     file_path: Union[str, Path],
-    type_of_file: Optional[str] = None,
     clear_cache: bool = False,
     return_content: bool = False,
     keep_order: bool = True,
@@ -1019,18 +1018,10 @@ def get_to_version(file_path):
 
 
 def str2bool(v):
-    if not v:
-        return False
-
-    if isinstance(v, bool):
-        return v
-    if v.lower() in ("yes", "true", "t", "y", "1"):
-        return True
-
-    if v.lower() in ("no", "false", "f", "n", "0"):
-        return False
-
-    raise argparse.ArgumentTypeError("Boolean value expected.")
+    """
+    Deprecated. Use string_to_bool instead
+    """
+    return string_to_bool(v, default_when_empty=False)
 
 
 def to_dict(obj):

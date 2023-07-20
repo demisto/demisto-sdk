@@ -9,7 +9,7 @@ echo "Adding contributions TL $contribution_tl as assignee and reviewer"
 # gh pr edit "$PR_LINK" --add-assignee "$contribution_tl"
 # gh pr edit "$PR_LINK" --add-reviewer "$contribution_tl"
 gh pr edit --add-label "Contribution"
-gh pr comment --body "$(cat ./contribution_comment.md)"
+gh pr comment --body "$(cat contribution_comment.md)"
 
 security_items="Playbooks|IncidentTypes|IncidentFields|IndicatorTypes|IndicatorFields|Layouts|Classifiers"
 

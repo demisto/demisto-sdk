@@ -11,10 +11,10 @@ jobs:
     runs-on: ubuntu-latest
     if: github.repository == 'demisto/demisto-sdk' && github.event.pull_request.head.repo.fork == true
     steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-        with:
-          fetch-depth: 2
+      # - name: Checkout
+      #   uses: actions/checkout@v3
+      #   with:
+      #     fetch-depth: 2
 
       - name: Create PR review request
         env:
@@ -23,7 +23,4 @@ jobs:
           BASE: ${{ github.event.pull_request.base.sha }}
           HEAD: ${{ github.event.pull_request.head.sha }}
         run: |
-          echo "Updating External PR ${{ github.event.pull_request.html_url }}"
-          cd Utils/github_workflow_scripts
-          ./handle_external_pr.sh
-          echo "Finished Handling External PR"
+          ./Utils/github_workflow_scripts/handle_external_pr.sh

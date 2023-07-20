@@ -3470,7 +3470,7 @@ def setup_env(
         file_paths,
         create_virtualenv=create_virtualenv,
         overwrite_virtualenv=overwrite_virtualenv,
-        secret_key=secret_id,
+        secret_id=secret_id,
     )
 
 

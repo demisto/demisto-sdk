@@ -20,6 +20,7 @@
 * Added an ability to provide list of marketplace names as a credentials-type (type 9) param attribute.
 * **doc-review** will run with the `--use-packs-known-words` default to true.
 * Calling **modeling-rules init-test-data** will now return the XDM fields output in alphabetical order.
+* Fixed an issue where **validate** failed on infrastructure test files.
 * Added sourcery hook to **pre-commit**.
 
 ## 1.17.2

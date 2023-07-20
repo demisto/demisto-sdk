@@ -653,5 +653,5 @@ class TestScriptValidator:
         pack = repo.create_pack("test")
         script = pack.create_script(yml=yml_content)
         structure_validator = StructureValidator(script.yml.path)
-        integration_validator = ScriptValidator(structure_validator, using_git=use_git)
-        assert integration_validator.is_line_ends_with_dot() in expected_results
+        script_validator = ScriptValidator(structure_validator, using_git=use_git)
+        assert script_validator.is_line_ends_with_dot() is expected_results

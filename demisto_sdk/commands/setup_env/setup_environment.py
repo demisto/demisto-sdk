@@ -158,6 +158,7 @@ def configure_vscode_tasks(
                             "containerPath": "/app",
                         }
                     ],
+                    "customOptions": f"-w /app/{integration_script.path.parent.relative_to(CONTENT_PATH)}",
                     "env": {"PYTHONPATH": ":".join(docker_python_path)},
                 },
             },

@@ -21,7 +21,7 @@ jobs:
           cd ../..
           git clone https://github.com/demisto/content 
           cd content
-          poetry install --ci
+          poetry install -ci
           poetry remove demisto-sdk
           echo "removed default SDK"
           echo "GITHUB_SHA : $GITHUB_SHA"

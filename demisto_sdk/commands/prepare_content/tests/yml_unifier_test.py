@@ -637,7 +637,7 @@ def create_test_package(
 
 class TestMergeScriptPackageToYMLIntegration:
     @pytest.fixture(autouse=True)
-    def setup(self, tmp_path):
+    def setup_method(self, tmp_path):
         self.test_dir_path = str(tmp_path / "Unifier" / "Testing" / "Integrations")
         os.makedirs(self.test_dir_path)
         self.package_name = "SampleIntegPackage"
@@ -736,6 +736,49 @@ class TestMergeScriptPackageToYMLIntegration:
         )
         assert "Should not be hidden - hidden attribute is False" in hidden_false
         assert "Should not be hidden - no hidden attribute" in missing_hidden_field
+
+    @pytest.mark.parametrize(
+        "marketplace", (MarketplaceVersions.XSOAR, MarketplaceVersions.MarketplaceV2)
+    )
+    def test_unify_integration__hidden_param_type9(
+        self, marketplace: MarketplaceVersions, mocker
+    ):
+        """
+        Given   an integration file with params that have credentials param of type 9 with valid values
+                for the `hidden` attribute
+        When    running unify
+        Then    make sure the list-type values are replaced with a boolean that matches the marketplace value
+                and `hidden` attribute is replaced with hiddenusername and hiddenpassword.
+                (see the update_hidden_parameters_value docstrings for more information)
+        """
+        create_test_package(
+            test_dir=self.test_dir_path,
+            package_name=self.package_name,
+            base_yml="demisto_sdk/tests/test_files/Unifier/SampleIntegPackage/SampleIntegPackageHiddenParams.yml",
+            script_code=TEST_VALID_CODE,
+            detailed_description=TEST_VALID_DETAILED_DESCRIPTION,
+            image_file="demisto_sdk/tests/test_files/Unifier/SampleIntegPackage/SampleIntegPackage_image.png",
+        )
+
+        mocker.patch.object(
+            IntegrationScript, "get_supported_native_images", return_value=[]
+        )
+        unified_yml = PrepareUploadManager.prepare_for_upload(
+            input=Path(self.export_dir_path),
+            output=Path(self.test_dir_path),
+            marketplace=marketplace,
+        )
+
+        for param in get_yaml(unified_yml)["configuration"]:
+            # updates the three sets
+            if param["name"] == "credentials":
+                assert "hidden" not in param
+                assert (param["hiddenusername"]) == (
+                    marketplace == MarketplaceVersions.XSOAR
+                )
+                assert (param["hiddenpassword"]) == (
+                    marketplace == MarketplaceVersions.XSOAR
+                )
 
     def test_unify_integration__detailed_description_with_special_char(self, mocker):
         """
@@ -850,7 +893,7 @@ final test: hi
 
 class TestMergeScriptPackageToYMLScript:
     @pytest.fixture(autouse=True)
-    def setup(self, tmp_path):
+    def setup_method(self, tmp_path):
         self.test_dir_path = str(tmp_path / "Unifier" / "Testing" / "Scripts")
         os.makedirs(self.test_dir_path)
         self.package_name = "SampleScriptPackage"

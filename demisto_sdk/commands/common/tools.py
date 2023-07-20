@@ -260,7 +260,7 @@ LAYOUT_CONTAINER_FIELDS = {
     "indicatorsQuickView",
     "indicatorsDetails",
 }
-SDK_PYPI_VERSION = r"https://test.org/pypi/demisto-sdk"
+SDK_PYPI_VERSION = r"https://pypi.org/pypi/demisto-sdk"
 
 SUFFIX_TO_REMOVE = ("_dev", "_copy")
 
@@ -726,15 +726,14 @@ def is_origin_content_repo():
 
 
 @lru_cache
-def get_last_remote_release_version():
+def get_last_remote_release_version_new():
     """
     Get latest release tag from PYPI.
 
     :return: tag
     """
     try:
-        # pypi_request = requests.get(SDK_PYPI_VERSION, verify=False, timeout=5)
-        pypi_request = requests.get(SDK_PYPI_VERSION)
+        pypi_request = requests.get(SDK_PYPI_VERSION, verify=False, timeout=5)
         pypi_request.raise_for_status()
         pypi_json = pypi_request.json()
         version = pypi_json.get("info", {}).get("version", "")

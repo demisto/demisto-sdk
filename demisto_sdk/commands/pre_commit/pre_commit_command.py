@@ -151,8 +151,6 @@ class PreCommitRunner:
                 if unit_test:
                     response = subprocess.run(
                         [
-                            sys.executable,
-                            "-m"
                             "pre-commit",
                             "run",
                             "run-unit-tests",
@@ -175,8 +173,6 @@ class PreCommitRunner:
             for chunk in more_itertools.chunked_even(changed_files, 10_000):
                 response = subprocess.run(
                     [
-                        sys.executable,
-                        "-m"
                         "pre-commit",
                         "run",
                         "-c",

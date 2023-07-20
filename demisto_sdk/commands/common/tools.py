@@ -807,7 +807,6 @@ def safe_write_unicode(
 @lru_cache
 def get_file(
     file_path: Union[str, Path],
-    type_of_file: Optional[str] = None,
     clear_cache: bool = False,
     return_content: bool = False,
     keep_order: bool = True,
@@ -815,9 +814,9 @@ def get_file(
     if clear_cache:
         get_file.cache_clear()
     file_path = Path(file_path)  # type: ignore[arg-type]
-    if not type_of_file:
-        type_of_file = file_path.suffix.lower()
-        logger.debug(f"Inferred type {type_of_file} for file {file_path.name}.")
+
+    type_of_file = file_path.suffix.lower()
+    logger.debug(f"Inferred type {type_of_file} for file {file_path.name}.")
 
     if not file_path.exists():
         file_path = Path(get_content_path()) / file_path  # type: ignore[arg-type]
@@ -881,13 +880,13 @@ def get_file_or_remote(file_path: Path, clear_cache=False):
 def get_yaml(file_path, cache_clear=False, keep_order: bool = True):
     if cache_clear:
         get_file.cache_clear()
-    return get_file(file_path, "yml", clear_cache=cache_clear, keep_order=keep_order)
+    return get_file(file_path, clear_cache=cache_clear, keep_order=keep_order)
 
 
 def get_json(file_path, cache_clear=False):
     if cache_clear:
         get_file.cache_clear()
-    return get_file(file_path, "json", clear_cache=cache_clear)
+    return get_file(file_path, clear_cache=cache_clear)
 
 
 def get_script_or_integration_id(file_path):
@@ -1025,6 +1024,13 @@ def get_to_version(file_path):
         return to_version
 
     return DEFAULT_CONTENT_ITEM_TO_VERSION
+
+
+def str2bool(v):
+    """
+    Deprecated. Use string_to_bool instead
+    """
+    return string_to_bool(v, default_when_empty=False)
 
 
 def to_dict(obj):
@@ -1340,6 +1346,9 @@ def get_pack_names_from_files(file_paths, skip_file_types=None):
         # renamed files are in a tuples - the second element is the new file name
         if isinstance(path, tuple):
             path = path[1]
+
+        if not path.startswith("Packs/"):
+            continue
 
         file_type = find_type(path)
         if file_type not in skip_file_types:
@@ -3183,7 +3192,7 @@ def get_item_marketplaces(
 
     if not item_data:
         file_type = Path(item_path).suffix
-        item_data = get_file(item_path, file_type)
+        item_data = get_file(item_path)
 
     # first check, check field 'marketplaces' in the item's file
     marketplaces = item_data.get("marketplaces", [])  # type: ignore
@@ -3467,7 +3476,7 @@ def get_display_name(file_path, file_data={}) -> str:
     if not file_data:
         file_extension = os.path.splitext(file_path)[1]
         if file_extension in [".yml", ".json"]:
-            file_data = get_file(file_path, file_extension)
+            file_data = get_file(file_path)
 
     if "display" in file_data:
         name = file_data.get("display", None)
@@ -3602,19 +3611,15 @@ def normalize_field_name(field: str) -> str:
 
 STRING_TO_BOOL_MAP = {
     "y": True,
-    1: True,
     "1": True,
     "yes": True,
     "true": True,
-    "True": True,
-    True: True,
     "n": False,
-    0: False,
     "0": False,
     "no": False,
     "false": False,
-    "False": False,
-    False: False,
+    "t": True,
+    "f": False,
 }
 
 
@@ -3623,7 +3628,7 @@ def string_to_bool(
     default_when_empty: Optional[bool] = None,
 ) -> bool:
     try:
-        return STRING_TO_BOOL_MAP[input_]
+        return STRING_TO_BOOL_MAP[str(input_).lower()]
     except (KeyError, TypeError):
         if input_ in ("", None) and default_when_empty is not None:
             return default_when_empty

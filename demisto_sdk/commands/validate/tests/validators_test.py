@@ -148,7 +148,11 @@ from demisto_sdk.tests.test_files.validate_integration_test_valid_types import (
     INCIDENT_FIELD,
 )
 from TestSuite.pack import Pack
-from TestSuite.test_tools import ChangeCWD, str_in_call_args_list
+from TestSuite.test_tools import (
+    ChangeCWD,
+    count_str_in_call_args_list,
+    str_in_call_args_list,
+)
 
 
 class MyRepo:
@@ -1362,7 +1366,7 @@ class TestValidators:
         )
 
         validate_manager = ValidateManager()
-        modified_files = {api_script1.yml.path}
+        modified_files = {api_script1.yml.rel_path}
         added_files = {"Packs/ApiModules/ReleaseNotes/1_0_0.md"}
         with ChangeCWD(repo.path):
             assert (
@@ -2076,7 +2080,13 @@ def test_validate_using_git_on_changed_marketplaces(mocker, pack):
     mocker.patch.object(
         ValidateManager,
         "get_changed_files_from_git",
-        return_value=(set(), set(), {pack.pack_metadata.path}, set(), True),
+        return_value=(
+            set(),
+            set(),
+            {tools.get_relative_path_from_packs_dir(pack.pack_metadata.path)},
+            set(),
+            True,
+        ),
     )
     mocker.patch.object(GitUtil, "deleted_files", return_value=set())
     mocker.patch(
@@ -2954,7 +2964,11 @@ def test_run_validation_using_git_on_metadata_with_invalid_tags(
     mocker.patch.object(
         ValidateManager,
         "get_unfiltered_changed_files_from_git",
-        return_value=({pack.pack_metadata.path}, set(), set()),
+        return_value=(
+            {tools.get_relative_path_from_packs_dir(pack.pack_metadata.path)},
+            set(),
+            set(),
+        ),
     )
     mocker.patch.object(GitUtil, "deleted_files", return_value=set())
     validate_manager = ValidateManager(check_is_unskipped=False, skip_conf_json=True)
@@ -3038,3 +3052,97 @@ def test_run_validation_using_git_validation_calls(
         assert not no_old_format_validation.called
 
     deleted_files_validation.assert_called_once_with(deleted_files, added_files)
+
+
+def test_validate_no_disallowed_terms_in_customer_facing_docs_success():
+    """
+    Given:
+    - Content of a customer-facing docs file (README, Release Notes, etc.)
+
+    When:
+    - Validating the content doesn't contain disallowed terms
+
+    Then:
+    - Ensure that if no disallowed terms are found, True is returned
+    """
+    file_content = "This is an example with no disallowed terms within it."
+
+    base_validator = BaseValidator()
+    assert base_validator.validate_no_disallowed_terms_in_customer_facing_docs(
+        file_content=file_content, file_path=""
+    )
+
+
+@pytest.mark.parametrize(
+    "file_content",
+    [
+        "This is an example with the 'test-module' term within it.",
+        "This is an example with the 'Test-Module' term within it",  # Assure case-insensitivity
+    ],
+)
+def test_validate_no_disallowed_terms_in_customer_facing_docs_failure(
+    file_content: str,
+):
+    """
+    Given:
+    - Content of a customer-facing docs file (README, Release Notes, etc.)
+
+    When:
+    - Validating the content doesn't contain disallowed terms
+
+    Then:
+    - Ensure that if a disallowed term is found, False is returned
+    """
+    base_validator = BaseValidator()
+    assert not base_validator.validate_no_disallowed_terms_in_customer_facing_docs(
+        file_content=file_content, file_path=""
+    )
+
+
+def test_validate_no_disallowed_terms_in_customer_facing_docs_end_to_end(repo, mocker):
+    """
+    Given:
+    - Content of a customer-facing docs file (README, Release Notes, etc.)
+
+    When:
+    - Validating the content doesn't contain disallowed terms
+
+    Then:
+    - Ensure that if a disallowed term is found, False is returned, and True otherwise.
+    """
+    logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
+    file_content = "This is an example with the 'test-module' term within it."
+
+    pack = repo.create_pack()
+    rn_file = pack.create_release_notes(version="1_0_0", content=file_content)
+    integration = pack.create_integration(readme=file_content, description=file_content)
+    integration_readme_file = integration.readme
+    integration_description_file = integration.description
+    playbook_readme_file = pack.create_playbook(readme=file_content).readme
+
+    validate_manager = ValidateManager()
+
+    # Mock all validations that aren't 'validate_no_disallowed_terms_in_customer_facing_docs' to return True
+    # mocker.patch.object(ReleaseNotesValidator, "has_release_notes_been_filled_out", return_value=True)
+    # mocker.patch.object(ReleaseNotesValidator, "are_release_notes_complete", return_value=True)
+    # mocker.patch.object(ReleaseNotesValidator, "is_docker_image_same_as_yml", return_value=True)
+    # mocker.patch.object(ReleaseNotesValidator, "validate_json_when_breaking_changes", return_value=True)
+    # mocker.patch.object(ReleaseNotesValidator, "has_no_markdown_lint_errors", return_value=True)
+    # mocker.patch.object(ReleaseNotesValidator, "validate_release_notes_headers", return_value=True)
+
+    assert not validate_manager.run_validations_on_file(
+        file_path=rn_file.path, pack_error_ignore_list=[]
+    )
+    assert not validate_manager.run_validations_on_file(
+        file_path=integration_readme_file.path, pack_error_ignore_list=[]
+    )
+    assert not validate_manager.run_validations_on_file(
+        file_path=integration_description_file.path, pack_error_ignore_list=[]
+    )
+    assert not validate_manager.run_validations_on_file(
+        file_path=playbook_readme_file.path, pack_error_ignore_list=[]
+    )
+
+    # Assure an error was logged for each file
+    assert count_str_in_call_args_list(logger_error.call_args_list, "BA125") == 4
+    pass

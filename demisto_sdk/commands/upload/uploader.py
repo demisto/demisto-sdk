@@ -526,7 +526,7 @@ class ItemDetacher:
         for file_path in all_files:
             if os.path.isfile(file_path) and self.is_valid_file_for_detach(file_path):
                 file_type = self.find_item_type_to_detach(file_path)
-                file_data = get_file(file_path, file_type)
+                file_data = get_file(file_path)
                 file_id = file_data.get("id", "")
                 if file_id:
                     detach_files_list.append(
@@ -550,8 +550,8 @@ class ItemDetacher:
         return "yml" if "Playbooks" in file_path or "Scripts" in file_path else "json"
 
     def find_item_id_to_detach(self):
-        file_type = self.find_item_type_to_detach(self.file_path)
-        file_data = get_file(self.file_path, file_type)
+        self.find_item_type_to_detach(self.file_path)
+        file_data = get_file(self.file_path)
         return file_data.get("id")
 
     def detach(self, upload_file: bool = False) -> List[str]:

@@ -1972,11 +1972,6 @@ class TestRNUpdateUnit:
 
         integration_mock = mock_integration("SmapleIntegration")
         mocker.patch.object(ContentGraphInterface, "__init__", return_value=None)
-        mocker.patch.object(
-            ContentGraphInterface,
-            "__enter__",
-            return_value=ContentGraphInterface,
-        )
         mocker.patch.object(ContentGraphInterface, "__exit__", return_value=None)
         mocker.patch.object(UpdateRN, "get_master_version", return_value="0.0.0")
 

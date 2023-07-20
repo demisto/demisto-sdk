@@ -3,9 +3,9 @@ from pathlib import Path
 from typing import Optional
 
 from demisto_sdk.commands.common.handlers import YAML_Handler
+from demisto_sdk.commands.common.tools import get_yaml
 from TestSuite.integration import Integration
 from TestSuite.test_tools import suite_join_path
-from demisto_sdk.commands.common.tools import get_yaml
 
 yaml = YAML_Handler()
 

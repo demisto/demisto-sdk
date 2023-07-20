@@ -2,7 +2,7 @@ import os
 
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.legacy_git_tools import git_path
-from demisto_sdk.commands.common.tools import get_yaml, get_json
+from demisto_sdk.commands.common.tools import get_json, get_yaml
 from demisto_sdk.commands.openapi_codegen.openapi_codegen import OpenAPIIntegration
 
 expected_command_function = """def get_pet_by_id_command(client: Client, args: Dict[str, Any]) -> CommandResults:

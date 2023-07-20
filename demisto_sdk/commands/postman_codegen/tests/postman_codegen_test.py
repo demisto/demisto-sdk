@@ -8,11 +8,11 @@ import pytest
 from click.testing import CliRunner
 
 import demisto_sdk.commands.common.tools as tools
-from demisto_sdk.commands.common.tools import get_json
 from demisto_sdk.__main__ import main
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
 from demisto_sdk.commands.common.legacy_git_tools import git_path
+from demisto_sdk.commands.common.tools import get_json
 from demisto_sdk.commands.generate_integration.code_generator import (
     IntegrationGeneratorArg,
     IntegrationGeneratorConfig,
@@ -380,7 +380,9 @@ class TestPostmanCodeGen:
 
         cls.autogen_config = get_json(autogen_config_path, return_content=True)
 
-        cls.arguments_check_collection = get_json(arguments_check_collection_path, return_content=True)
+        cls.arguments_check_collection = get_json(
+            arguments_check_collection_path, return_content=True
+        )
 
         cls.postman_collection_stream = open(collection_path)
         cls.autogen_config_stream = open(autogen_config_path)

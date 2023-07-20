@@ -12,10 +12,9 @@ from demisto_sdk.commands.common.errors import (
     PRESET_ERROR_TO_IGNORE,
     Errors,
 )
-from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.hook_validations.base_validator import BaseValidator
 from demisto_sdk.commands.common.legacy_git_tools import git_path
-from demisto_sdk.commands.common.tools import get_yaml, get_json
+from demisto_sdk.commands.common.tools import get_json, get_yaml
 from TestSuite.pack import Pack
 from TestSuite.test_tools import ChangeCWD, str_in_call_args_list
 
@@ -492,7 +491,7 @@ class TestJsonOutput:
                 ui_applicable_error_message,
                 False,
             )
-            json_output = get_json(base.json_file_path, return_content=test)
+            json_output = get_json(base.json_file_path, return_content=True)
 
             assert json_output.sort() == expected_json_1.sort()
 

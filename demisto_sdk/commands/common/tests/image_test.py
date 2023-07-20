@@ -2,16 +2,15 @@ import os
 
 import pytest
 
-from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.hook_validations import image
 from demisto_sdk.commands.common.hook_validations.integration import (
     IntegrationValidator,
 )
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.tests.integration_test import mock_structure
+from demisto_sdk.commands.common.tools import get_json
 from TestSuite.file import File
 from TestSuite.test_tools import ChangeCWD
-from demisto_sdk.commands.common.tools import get_json
 
 
 def test_is_not_default_image():

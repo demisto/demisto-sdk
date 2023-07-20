@@ -39,7 +39,6 @@ from demisto_sdk.commands.common.errors import (
     FOUND_FILES_AND_IGNORED_ERRORS,
     Errors,
 )
-from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
 from demisto_sdk.commands.common.hook_validations.base_validator import error_codes
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import (
@@ -60,10 +59,11 @@ from demisto_sdk.commands.common.tools import (
     get_file_version_suffix_if_exists,
     get_files_in_dir,
     get_item_marketplaces,
+    get_json,
     get_pack_name,
     is_iron_bank_pack,
     server_version_compare,
-    string_to_bool, get_json,
+    string_to_bool,
 )
 
 default_additional_info = load_default_additional_info_dict()
@@ -2128,7 +2128,10 @@ class IntegrationValidator(ContentEntityValidator):
 
     @error_codes("IN149")
     def are_common_outputs_with_description(self):
-        json_file = Path(__file__).absolute().parents[2]/"common/default_output_descriptions.json"
+        json_file = (
+            Path(__file__).absolute().parents[2]
+            / "common/default_output_descriptions.json"
+        )
         defaults = get_json(json_file, return_content=True)
 
         missing = {}

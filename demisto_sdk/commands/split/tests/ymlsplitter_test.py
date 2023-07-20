@@ -8,7 +8,7 @@ import pytest
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import DEFAULT_IMAGE_BASE64
 from demisto_sdk.commands.common.legacy_git_tools import git_path
-from demisto_sdk.commands.common.tools import get_yaml, get_json
+from demisto_sdk.commands.common.tools import get_json, get_yaml
 from demisto_sdk.commands.prepare_content.integration_script_unifier import (
     IntegrationScriptUnifier,
 )
@@ -277,9 +277,9 @@ def test_extract_code(tmpdir, file_path, file_type):
         output=str(tmpdir.join("temp_code.py")),
         file_type=file_type,
     )
-    script_before_split = get_yaml(Path(extractor.input), return_content=True)["script"][
+    script_before_split = get_yaml(Path(extractor.input), return_content=True)[
         "script"
-    ]
+    ]["script"]
     assert "### pack version: 1.0.3" in script_before_split
     assert "# pack version: 1.0.3" in script_before_split
     assert "#### pack version: 1.0.3" in script_before_split
@@ -509,7 +509,9 @@ def test_extract_to_package_format_pwsh(tmpdir, file_type):
     with open(out.join("PowerShellRemotingOverSSH").join("README.md")) as f:
         file_data = f.read()
         assert "This is a sample test README" in file_data
-    yml_file = out.join("PowerShellRemotingOverSSH").join("PowerShellRemotingOverSSH.yml")
+    yml_file = out.join("PowerShellRemotingOverSSH").join(
+        "PowerShellRemotingOverSSH.yml"
+    )
     yaml_obj = get_yaml(yml_file, return_content=True)
     assert yaml_obj["fromversion"] == "5.5.0"
     assert not yaml_obj["script"]["script"]

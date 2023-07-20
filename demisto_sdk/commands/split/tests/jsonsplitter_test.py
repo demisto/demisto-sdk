@@ -1,6 +1,5 @@
 import os
 
-from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.tools import get_json
 from demisto_sdk.commands.split.jsonsplitter import JsonSplitter
 from demisto_sdk.tests.test_files.validate_integration_test_valid_types import (

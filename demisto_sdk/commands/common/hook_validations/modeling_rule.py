@@ -14,7 +14,7 @@ from demisto_sdk.commands.common.hook_validations.base_validator import error_co
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import (
     ContentEntityValidator,
 )
-from demisto_sdk.commands.common.tools import get_files_in_dir, get_yaml, get_json
+from demisto_sdk.commands.common.tools import get_files_in_dir, get_json, get_yaml
 
 
 class ModelingRuleValidator(ContentEntityValidator):

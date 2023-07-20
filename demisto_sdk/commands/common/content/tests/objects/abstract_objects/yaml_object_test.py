@@ -7,7 +7,7 @@ from demisto_sdk.commands.common.content.errors import (
 )
 from demisto_sdk.commands.common.content.objects.abstract_objects import YAMLObject
 from demisto_sdk.commands.common.handlers import YAML_Handler
-from demisto_sdk.commands.common.tools import src_root, get_yaml
+from demisto_sdk.commands.common.tools import get_yaml, src_root
 
 TEST_DATA = src_root() / "tests" / "test_files"
 TEST_CONTENT_REPO = TEST_DATA / "content_slim"
@@ -31,7 +31,10 @@ class TestValidYAML:
     def test_get_item(self):
         obj = YAMLObject(TEST_VALID_YAML)
 
-        assert obj["fromversion"] == get_yaml(TEST_VALID_YAML, return_content=True)["fromversion"]
+        assert (
+            obj["fromversion"]
+            == get_yaml(TEST_VALID_YAML, return_content=True)["fromversion"]
+        )
 
     @pytest.mark.parametrize(argnames="default_value", argvalues=["test_value", ""])
     def test_get(self, default_value: str):
@@ -40,7 +43,8 @@ class TestValidYAML:
             assert obj.get("no such key", default_value) == default_value
         else:
             assert (
-                obj["fromversion"] == get_yaml(TEST_VALID_YAML, return_content=True)["fromversion"]
+                obj["fromversion"]
+                == get_yaml(TEST_VALID_YAML, return_content=True)["fromversion"]
             )
 
     def test_dump(self, datadir):

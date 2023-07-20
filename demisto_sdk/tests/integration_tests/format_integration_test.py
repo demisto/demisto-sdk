@@ -20,7 +20,12 @@ from demisto_sdk.commands.common.hook_validations.integration import (
 )
 from demisto_sdk.commands.common.hook_validations.playbook import PlaybookValidator
 from demisto_sdk.commands.common.hook_validations.readme import ReadMeValidator
-from demisto_sdk.commands.common.tools import get_dict_from_file, is_test_config_match, get_yaml, get_json
+from demisto_sdk.commands.common.tools import (
+    get_dict_from_file,
+    get_json,
+    get_yaml,
+    is_test_config_match,
+)
 from demisto_sdk.commands.format import format_module, update_generic
 from demisto_sdk.commands.format.update_generic import BaseUpdate
 from demisto_sdk.commands.format.update_generic_yml import BaseUpdateYML
@@ -1620,7 +1625,9 @@ def test_format_generic_definition_wrong_from_version(mocker, repo):
         assert result.exit_code == 0
 
         # check that sdk format did change the wrong fromVersion to '6.5.0':
-        updated_generic_definition = get_json(generic_definition_path, return_content=True)
+        updated_generic_definition = get_json(
+            generic_definition_path, return_content=True
+        )
         assert (
             updated_generic_definition["fromVersion"]
             == GENERIC_DEFINITION["fromVersion"]
@@ -1678,7 +1685,9 @@ def test_format_generic_definition_missing_from_version_key(mocker, repo):
         assert result.exit_code == 0
 
         # check that sdk format did add a fromVersion key with '6.5.0' as a value:
-        updated_generic_definition = get_json(generic_definition_path, return_content=True)
+        updated_generic_definition = get_json(
+            generic_definition_path, return_content=True
+        )
         assert (
             updated_generic_definition["fromVersion"]
             == GENERIC_DEFINITION["fromVersion"]

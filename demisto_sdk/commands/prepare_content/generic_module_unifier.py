@@ -5,7 +5,7 @@ from typing import Dict, Optional
 from demisto_sdk.commands.common.constants import PACKS_DIR, FileType
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.logger import logger
-from demisto_sdk.commands.common.tools import find_type, get_pack_name, get_json
+from demisto_sdk.commands.common.tools import find_type, get_json, get_pack_name
 
 
 class GenericModuleUnifier:
@@ -71,7 +71,7 @@ class GenericModuleUnifier:
                     return dashboard
         return None
 
-    def merge_generic_module_with_its_dashboards(self, get_jsonf=None) -> Dict:
+    def merge_generic_module_with_its_dashboards(self) -> Dict:
         """
         Unifies a GenericModule object with it's Dashboards
 

@@ -5,9 +5,8 @@ from pathlib import Path
 from click.testing import CliRunner
 
 from demisto_sdk.__main__ import main
-from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
-from TestSuite.test_tools import str_in_call_args_list
 from demisto_sdk.commands.common.tools import get_json
+from TestSuite.test_tools import str_in_call_args_list
 
 INIT_CMD = "init"
 

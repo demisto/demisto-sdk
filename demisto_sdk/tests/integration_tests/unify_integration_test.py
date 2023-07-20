@@ -9,7 +9,7 @@ from demisto_sdk.__main__ import main
 from demisto_sdk.commands.common.constants import ENV_DEMISTO_SDK_MARKETPLACE
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.legacy_git_tools import git_path
-from demisto_sdk.commands.common.tools import get_yaml, get_json
+from demisto_sdk.commands.common.tools import get_json, get_yaml
 from demisto_sdk.tests.test_files.validate_integration_test_valid_types import (
     DASHBOARD,
     GENERIC_MODULE,
@@ -188,7 +188,9 @@ class TestIntegrationScriptUnifier:
             else:
                 runner.invoke(main, [UNIFY_CMD, "-i", f"{integration.path}"])
 
-            yml_file = os.path.join(integration.path, "integration-dummy-integration.yml")
+            yml_file = os.path.join(
+                integration.path, "integration-dummy-integration.yml"
+            )
             unified_yml_data = get_yaml(yml_file, return_content=True)
             if flag:
                 assert unified_yml_data.get("name") == "Sample - Test"
@@ -248,7 +250,9 @@ class TestIntegrationScriptUnifier:
             runner = CliRunner(mix_stderr=False)
             runner.invoke(main, [UNIFY_CMD, "-i", f"{integration.path}", "-ini"])
 
-            yml_file = os.path.join(integration.path, "integration-dummy-integration.yml")
+            yml_file = os.path.join(
+                integration.path, "integration-dummy-integration.yml"
+            )
             unified_yml_data = get_yaml(yml_file, return_content=True)
             assert "nativeimage" not in unified_yml_data.get("script")
 
@@ -303,7 +307,7 @@ class TestLayoutUnifer:
             name="test",
             content=get_json(
                 f"{git_path()}/demisto_sdk/tests/test_files/Packs/DummyPack/Layouts/layoutscontainer-test.json",
-                return_content=True
+                return_content=True,
             ),
         )
 

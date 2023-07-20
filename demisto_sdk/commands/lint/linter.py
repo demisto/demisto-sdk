@@ -42,10 +42,11 @@ from demisto_sdk.commands.common.timers import timer
 from demisto_sdk.commands.common.tools import (
     get_docker_images_from_yml,
     get_id,
+    get_json,
     get_pack_ignore_content,
     get_pack_name,
     get_yaml,
-    run_command_os, get_json,
+    run_command_os,
 )
 from demisto_sdk.commands.lint.commands_builder import (
     build_bandit_command,

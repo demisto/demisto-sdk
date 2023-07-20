@@ -23,10 +23,11 @@ from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     ProcessPoolHandler,
     get_content_id_set,
+    get_json,
     get_pack_name,
     is_external_repository,
     item_type_to_content_items_header,
-    wait_futures_complete, get_json,
+    wait_futures_complete,
 )
 from demisto_sdk.commands.common.update_id_set import (
     merge_id_sets,
@@ -2974,7 +2975,9 @@ class PackDependencies:
             The pack metadata content.
         """
 
-        pack_meta_file_content = get_json(find_pack_path(pack_name)[0], return_content=True)
+        pack_meta_file_content = get_json(
+            find_pack_path(pack_name)[0], return_content=True
+        )
 
         return pack_meta_file_content
 

@@ -18,7 +18,7 @@ from demisto_sdk.commands.common.logger import (
     logger,
     logging_setup,
 )
-from demisto_sdk.commands.common.tools import get_max_version, get_json
+from demisto_sdk.commands.common.tools import get_json, get_max_version
 
 app = typer.Typer()
 

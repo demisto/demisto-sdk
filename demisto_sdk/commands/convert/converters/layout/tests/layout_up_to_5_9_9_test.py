@@ -8,7 +8,6 @@ from demisto_sdk.commands.common.content.objects.pack_objects.layout.layout impo
     Layout,
 )
 from demisto_sdk.commands.common.content.objects.pack_objects.pack import Pack
-from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.tools import get_json
 from demisto_sdk.commands.convert.converters.layout.layout_up_to_5_9_9_converter import (

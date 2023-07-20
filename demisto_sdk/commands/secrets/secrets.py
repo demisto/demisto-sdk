@@ -17,13 +17,13 @@ from demisto_sdk.commands.common.constants import (
 )
 from demisto_sdk.commands.common.content import Content
 from demisto_sdk.commands.common.git_util import GitUtil
-from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     find_type,
+    get_json,
     get_pack_name,
     is_file_path_in_pack,
-    run_command, get_json,
+    run_command,
 )
 
 # secrets settings
@@ -484,9 +484,7 @@ class SecretsValidator:
                 files_while_list = white_list
             else:
                 final_white_list += [
-                    white_item
-                    for white_item in white_list
-                    if len(white_item) > 4
+                    white_item for white_item in white_list if len(white_item) > 4
                 ]
 
         return final_white_list, ioc_white_list, files_while_list

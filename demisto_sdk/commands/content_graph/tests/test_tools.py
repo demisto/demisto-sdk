@@ -1,7 +1,7 @@
 from pathlib import Path
 
 from demisto_sdk.commands.common.legacy_git_tools import git_path
-from demisto_sdk.commands.common.tools import get_yaml, get_json
+from demisto_sdk.commands.common.tools import get_json, get_yaml
 
 TEST_DATA_PATH = (
     Path(git_path())

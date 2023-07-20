@@ -7,7 +7,11 @@ from demisto_sdk.commands.common.constants import (
 )
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.logger import logger
-from demisto_sdk.commands.common.tools import get_pack_name, is_external_repository, get_json
+from demisto_sdk.commands.common.tools import (
+    get_json,
+    get_pack_name,
+    is_external_repository,
+)
 
 
 class JsonSplitter:

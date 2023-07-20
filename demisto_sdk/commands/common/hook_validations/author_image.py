@@ -6,10 +6,9 @@ from demisto_sdk.commands.common.constants import (
     PACKS_PACK_META_FILE_NAME,
 )
 from demisto_sdk.commands.common.errors import Errors
-from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.hook_validations.base_validator import error_codes
 from demisto_sdk.commands.common.hook_validations.image import ImageValidator
-from demisto_sdk.commands.common.tools import get_pack_name, os, get_json
+from demisto_sdk.commands.common.tools import get_json, get_pack_name, os
 
 
 class AuthorImageValidator(ImageValidator):

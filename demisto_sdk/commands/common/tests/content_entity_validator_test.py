@@ -18,7 +18,8 @@ from demisto_sdk.commands.common.hook_validations.content_entity_validator impor
 from demisto_sdk.commands.common.hook_validations.structure import StructureValidator
 from demisto_sdk.commands.common.tools import (
     get_not_registered_tests,
-    is_test_config_match, get_yaml,
+    get_yaml,
+    is_test_config_match,
 )
 from demisto_sdk.tests.constants_test import (
     INVALID_INTEGRATION_WITH_NO_TEST_PLAYBOOK,

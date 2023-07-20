@@ -322,7 +322,7 @@ def test_insert_image_to_yml():
         image_data = image_file.read()
         image_data = image_prefix + base64.b64encode(image_data).decode("utf-8")
     yml_file = f"{git_path()}/demisto_sdk/tests/test_files/VulnDB/VulnDB.yml"
-    yml_unified_test = get_yaml(yml_file, type_of_file='yml', return_content=True)
+    yml_unified_test = get_yaml(yml_file, type_of_file="yml", return_content=True)
     yml_unified, found_img_path = IntegrationScriptUnifier.insert_image_to_yml(
         package_path, yml_unified_test, False, image_prefix
     )

@@ -1,10 +1,9 @@
 import os
 from pathlib import Path
 
-from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
 from demisto_sdk.commands.common.legacy_git_tools import git_path
-from demisto_sdk.commands.common.tools import get_yaml, get_json
+from demisto_sdk.commands.common.tools import get_json, get_yaml
 from demisto_sdk.commands.generate_integration.code_generator import (
     IntegrationGeneratorCommand,
     IntegrationGeneratorConfig,

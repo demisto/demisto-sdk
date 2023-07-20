@@ -43,9 +43,9 @@ class RuleUnifier(Unifier):
                 json_file = os.path.join(samples_dir, sample_file)
                 sample = get_json(json_file, return_content=True)
                 if data.get("id") in sample.get("rules", []):
-                    samples[
-                        f'{sample.get("vendor")}_{sample.get("product")}'
-                    ].extend(sample.get("samples"))
+                    samples[f'{sample.get("vendor")}_{sample.get("product")}'].extend(
+                        sample.get("samples")
+                    )
             if samples:
                 data["samples"] = FoldedScalarString(json.dumps(samples, indent=4))
                 logger.info(f"Added {len(samples)} samples.")

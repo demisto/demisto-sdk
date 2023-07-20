@@ -644,7 +644,9 @@ class BuildContext:
             kwargs["conf"], kwargs["secret"]
         )
         if self.is_xsiam:
-            xsiam_servers_api_keys = get_json(kwargs.get("xsiam_servers_api_keys_path"), return_content=True)
+            xsiam_servers_api_keys = get_json(
+                kwargs.get("xsiam_servers_api_keys_path"), return_content=True
+            )
             self.xsiam_conf = self._load_xsiam_file(self.xsiam_servers_path)
             self.env_json = [self.xsiam_conf.get(self.xsiam_machine, {})]
             self.api_key = xsiam_servers_api_keys.get(self.xsiam_machine)

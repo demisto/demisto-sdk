@@ -44,11 +44,12 @@ from demisto_sdk.commands.common.tools import (
     _get_file_id,
     find_type,
     get_file_displayed_name,
+    get_json,
     get_pack_name,
     get_remote_file,
     get_yaml,
     is_test_config_match,
-    run_command, get_json,
+    run_command,
 )
 from demisto_sdk.commands.format.format_constants import OLD_FILE_DEFAULT_1_FROMVERSION
 

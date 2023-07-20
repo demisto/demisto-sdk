@@ -21,12 +21,13 @@ from demisto_sdk.commands.common.tools import (
     _get_file_id,
     find_type,
     get_entity_id_by_entity_type,
+    get_json,
     get_not_registered_tests,
     get_scripts_and_commands_from_yml_data,
     get_yaml,
     is_uuid,
     listdir_fullpath,
-    search_and_delete_from_conf, get_json,
+    search_and_delete_from_conf,
 )
 from demisto_sdk.commands.format.format_constants import (
     ERROR_RETURN_CODE,

@@ -2,8 +2,8 @@ from pathlib import Path
 from typing import Optional
 
 from demisto_sdk.commands.common.handlers import YAML_Handler
-from TestSuite.file import File
 from demisto_sdk.commands.common.tools import get_yaml
+from TestSuite.file import File
 
 yaml = YAML_Handler()
 

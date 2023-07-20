@@ -8,7 +8,6 @@ from pathlib import Path
 import pytest
 
 import demisto_sdk.commands.common.tools as tools
-from demisto_sdk.commands.common.tools import get_json
 import demisto_sdk.commands.common.update_id_set as uis
 from demisto_sdk.commands.common.constants import (
     FILETYPE_TO_DEFAULT_FROMVERSION,
@@ -19,6 +18,7 @@ from demisto_sdk.commands.common.constants import (
 )
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.legacy_git_tools import git_path
+from demisto_sdk.commands.common.tools import get_json
 from demisto_sdk.commands.common.update_id_set import (
     add_item_to_exclusion_dict,
     does_dict_have_alternative_key,

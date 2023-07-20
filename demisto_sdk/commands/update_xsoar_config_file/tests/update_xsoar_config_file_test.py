@@ -8,7 +8,7 @@ import pytest
 
 from demisto_sdk.__main__ import xsoar_config_file_update
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
-from demisto_sdk.commands.common.tools import src_root, get_json
+from demisto_sdk.commands.common.tools import get_json, src_root
 from demisto_sdk.commands.update_xsoar_config_file.update_xsoar_config_file import (
     XSOARConfigFileUpdater,
 )
@@ -79,7 +79,9 @@ class TestXSOARConfigFileUpdater:
             assert Path(f"{tmp_output_dir}/{expected_path}").exists()
 
             try:
-                config_file_info = get_json(f"{tmp_output_dir}/{expected_path}", return_content=True)
+                config_file_info = get_json(
+                    f"{tmp_output_dir}/{expected_path}", return_content=True
+                )
             except IsADirectoryError:
                 config_file_info = {}
             assert config_file_info == expected_outputs
@@ -152,7 +154,9 @@ class TestXSOARConfigFileUpdater:
             assert Path(f"{tmp_output_dir}/xsoar_config.json").exists()
 
             try:
-                config_file_info = get_json(f"{tmp_output_dir}/xsoar_config.json", return_content=True)
+                config_file_info = get_json(
+                    f"{tmp_output_dir}/xsoar_config.json", return_content=True
+                )
             except IsADirectoryError:
                 config_file_info = {}
             assert config_file_info == {
@@ -181,7 +185,9 @@ class TestXSOARConfigFileUpdater:
             assert Path(f"{tmp_output_dir}/xsoar_config.json").exists()
 
             try:
-                config_file_info = get_json(f"{tmp_output_dir}/xsoar_config.json", return_content=True)
+                config_file_info = get_json(
+                    f"{tmp_output_dir}/xsoar_config.json", return_content=True
+                )
             except IsADirectoryError:
                 config_file_info = {}
             assert config_file_info == {
@@ -231,7 +237,9 @@ class TestXSOARConfigFileUpdater:
                 assert str_in_call_args_list(logger_info.call_args_list, err)
 
             try:
-                config_file_info = get_json(f"{tmp_output_dir}/{expected_path}", return_content=True)
+                config_file_info = get_json(
+                    f"{tmp_output_dir}/{expected_path}", return_content=True
+                )
             except IsADirectoryError:
                 config_file_info = {}
             assert config_file_info == expected_outputs

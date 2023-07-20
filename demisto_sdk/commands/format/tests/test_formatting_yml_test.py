@@ -24,7 +24,7 @@ from demisto_sdk.commands.common.hook_validations.integration import (
     IntegrationValidator,
 )
 from demisto_sdk.commands.common.legacy_git_tools import git_path
-from demisto_sdk.commands.common.tools import get_yaml, is_string_uuid, get_yaml
+from demisto_sdk.commands.common.tools import get_yaml, is_string_uuid
 from demisto_sdk.commands.format.format_module import format_manager
 from demisto_sdk.commands.format.update_generic import BaseUpdate
 from demisto_sdk.commands.format.update_generic_yml import BaseUpdateYML

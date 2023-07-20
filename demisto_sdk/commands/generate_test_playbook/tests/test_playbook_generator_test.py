@@ -56,7 +56,9 @@ class TestGenerateTestPlaybook:
         new_yml_path = (
             Path(TestGenerateTestPlaybook.TEMP_DIR) / "playbook-TestPlaybook_Test.yml"
         )
-        assert get_yaml(new_yml_path, return_content=True) == get_yaml(excepted_path, return_content=True)
+        assert get_yaml(new_yml_path, return_content=True) == get_yaml(
+            excepted_path, return_content=True
+        )
 
     def test_generate_test_playbook__integration_under_packs(self, tmpdir):
         """

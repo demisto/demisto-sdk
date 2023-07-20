@@ -7,7 +7,7 @@ from demisto_sdk.commands.common.content.errors import (
 )
 from demisto_sdk.commands.common.content.objects.abstract_objects import JSONObject
 from demisto_sdk.commands.common.handlers import JSON_Handler
-from demisto_sdk.commands.common.tools import src_root, get_json
+from demisto_sdk.commands.common.tools import get_json, src_root
 
 TEST_DATA = src_root() / "tests" / "test_files"
 TEST_CONTENT_REPO = TEST_DATA / "content_slim"
@@ -26,7 +26,9 @@ json = JSON_Handler()
 
 class TestValidJSON:
     def test_valid_json_file_path(self):
-        assert JSONObject(TEST_VALID_JSON).to_dict() == get_json(TEST_VALID_JSON, return_content=True)
+        assert JSONObject(TEST_VALID_JSON).to_dict() == get_json(
+            TEST_VALID_JSON, return_content=True
+        )
 
     def test_get_item(self):
         assert (
@@ -41,7 +43,10 @@ class TestValidJSON:
         if default_value:
             assert obj.get("no such key", default_value) == default_value
         else:
-            assert obj["fromVersion"] == get_json(TEST_VALID_JSON, return_content=True)["fromVersion"]
+            assert (
+                obj["fromVersion"]
+                == get_json(TEST_VALID_JSON, return_content=True)["fromVersion"]
+            )
 
     def test_dump(self):
         from pathlib import Path

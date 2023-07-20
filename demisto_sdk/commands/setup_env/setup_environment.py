@@ -18,6 +18,7 @@ from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.handlers.json.json5_handler import JSON5_Handler
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
+from demisto_sdk.commands.content_graph.objects.integration import Integration
 from demisto_sdk.commands.content_graph.objects.integration_script import (
     IntegrationScript,
 )
@@ -133,7 +134,7 @@ def configure_vscode_tasks(
                         {"localPath": str(CONTENT_PATH), "containerPath": "/app"}
                     ],
                     "env": {
-                        "DEMISTO_PARAMS": f"/app/{CONTENT_PATH / '.vscode' / 'params.json'}",
+                        "DEMISTO_PARAMS": "/app/.vscode/params.json",
                         "PYTHONPATH": ":".join(docker_python_path),
                     },
                 },
@@ -271,7 +272,7 @@ def setup(
         interpreter_path = CONTENT_PATH / ".venv" / "bin" / "python"
         # replace " ", "(", ")" with "_"
         secret_id = secret_id or re.sub(r"[ ()]", "_", integration_script.name)
-        if project_id := os.getenv("DEMISTO_GCP_PROJECT_ID"):
+        if (project_id := os.getenv("DEMISTO_GCP_PROJECT_ID")) and isinstance(integration_script, Integration):
             params = get_integration_params(project_id, secret_id)
             with open(CONTENT_PATH / ".vscode" / "params.json", "w") as f:
                 json.dump(params, f, indent=4)

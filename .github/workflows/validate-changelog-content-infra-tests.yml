@@ -23,6 +23,6 @@ jobs:
           cd content
           poetry install
           echo "GITHUB_SHA : $GITHUB_SHA"
-          poetry add poetry add git+https://github.com/demisto/demisto-sdk.git#$GITHUB_SHA
+          poetry add git+https://github.com/demisto/demisto-sdk.git#$GITHUB_SHA
           poetry run -m pytest ./Tests/scripts/infrastructure_tests/ ./Tests/Marketplace/Tests/ ./Tests/tests ./Tests/private_build/tests Utils -v
           

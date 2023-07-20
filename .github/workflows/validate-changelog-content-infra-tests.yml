@@ -22,7 +22,7 @@ jobs:
         run: |
           cd ../..
           echo "GITHUB_SHA : $GITHUB_SHA"
-          poetry add git+https://github.com/demisto/demisto-sdk.git#${{github.sha}}
+          poetry add git+https://github.com/demisto/demisto-sdk.git@${{ github.sha }}
           echo "added custom SDK"
       - name: tests
         run:

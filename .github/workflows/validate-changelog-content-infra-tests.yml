@@ -14,22 +14,18 @@ jobs:
         uses: Gr1N/setup-poetry@v8
       - name: ±±±±±±±±±  PWD1 ±±±±±±±±±±±±±±±
         run: pwd
-      - name: Install Python Dependencies
+      - name: Install Python Dependencies and downloding the last demisto-sdk version
+        env: 
+          GITHUB_SHA: ${{github.event.pull_request.merge_commit_sha}}
         run: |
           cd ../..
           git clone https://github.com/demisto/content 
           cd content
-          poetry install -vv
+          poetry install
+          echo "GITHUB_SHA : $GITHUB_SHA"
+          poetry add poetry add git+https://github.com/demisto/demisto-sdk.git#$GITHUB_SHA
+          poetry run -m pytest ./Tests/scripts/infrastructure_tests/ ./Tests/Marketplace/Tests/ ./Tests/tests ./Tests/private_build/tests Utils -v
+          pwd
       - name: ±±±±±±±±±  PWD2 ±±±±±±±±±±±±±±±
         run: |
             pwd
-      - name: Downloding the last demisto-sdk version
-        env: 
-          GITHUB_SHA: ${{github.event.pull_request.merge_commit_sha}}
-        run: |
-            echo "GITHUB_SHA : $GITHUB_SHA"
-            poetry add poetry add git+https://github.com/demisto/demisto-sdk.git#$GITHUB_SHA
-      - name: run unit tests
-        run: |
-           poetry run -m pytest ./Tests/scripts/infrastructure_tests/ ./Tests/Marketplace/Tests/ ./Tests/tests ./Tests/private_build/tests Utils -v
-

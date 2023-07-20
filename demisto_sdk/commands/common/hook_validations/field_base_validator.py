@@ -467,12 +467,12 @@ class FieldBaseValidator(ContentEntityValidator):
         error_message, error_code = "", ""
         if self.current_file.get("type") == "singleSelect":
             select_values = self.current_file.get("selectValues") or []
-            empty_string_appearance = sum(
+            empty_string_count = sum(
                 [1 if select_value == "" else 0 for select_value in select_values]
             )
             if (
-                empty_string_appearance and len(select_values) == 1
-            ) or empty_string_appearance > 1:
+                empty_string_count and len(select_values) == 1
+            ) or empty_string_count > 1:
                 (
                     error_message,
                     error_code,

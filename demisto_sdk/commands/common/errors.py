@@ -1697,7 +1697,7 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def select_values_cannot_contain_multiple_or_only_empty_values_in_single_select_types():
-        return "singleSelect types cannot contain only empty value or more than one empty value in the field selectValues. Please remove."
+        return "singleSelect types cannot contain only empty value or more than one empty values in the field selectValues. Please remove."
 
     @staticmethod
     @error_code_decorator

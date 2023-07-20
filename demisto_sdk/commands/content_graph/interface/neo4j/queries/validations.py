@@ -52,7 +52,7 @@ def validate_unknown_content(
         RETURN content_item_from, collect(r) as relationships, collect(n) as nodes_to
         """
     return {
-        int(item.get("content_item_from").id): Neo4jRelationshipResult(
+        int(item.get("content_item_from").element_id): Neo4jRelationshipResult(
             node_from=item.get("content_item_from"),
             relationships=item.get("relationships"),
             nodes_to=item.get("nodes_to"),
@@ -84,7 +84,7 @@ WITH content_item_from, r, n, n2
 WHERE NOT exists((content_item_from)-[:{RelationshipType.USES}{{mandatorily:true}}]->(n2))
 RETURN content_item_from, collect(r) as relationships, collect(n) as nodes_to"""
     return {
-        int(item.get("content_item_from").id): Neo4jRelationshipResult(
+        int(item.get("content_item_from").element_id): Neo4jRelationshipResult(
             node_from=item.get("content_item_from"),
             relationships=item.get("relationships"),
             nodes_to=item.get("nodes_to"),
@@ -115,7 +115,7 @@ WITH content_item_from, r, n, n2
 WHERE NOT exists((content_item_from)-[:{RelationshipType.USES}{{mandatorily:true}}]->(n2))
 RETURN content_item_from, collect(r) as relationships, collect(n) as nodes_to"""
     return {
-        int(item.get("content_item_from").id): Neo4jRelationshipResult(
+        int(item.get("content_item_from").element_id): Neo4jRelationshipResult(
             node_from=item.get("content_item_from"),
             relationships=item.get("relationships"),
             nodes_to=item.get("nodes_to"),
@@ -125,7 +125,6 @@ RETURN content_item_from, collect(r) as relationships, collect(n) as nodes_to"""
 
 
 def get_items_using_deprecated(tx: Transaction, file_paths: List[str]):
-
     return get_items_using_deprecated_commands(
         tx, file_paths
     ) + get_items_using_deprecated_content_items(tx, file_paths)
@@ -182,7 +181,7 @@ WHERE NOT exists((content_item_from)-[:{RelationshipType.USES}{{mandatorily:true
 RETURN content_item_from, collect(r) as relationships, collect(n) as nodes_to
 """
     return {
-        int(item.get("content_item_from").id): Neo4jRelationshipResult(
+        int(item.get("content_item_from").element_id): Neo4jRelationshipResult(
             node_from=item.get("content_item_from"),
             relationships=item.get("relationships"),
             nodes_to=item.get("nodes_to"),
@@ -249,7 +248,6 @@ def validate_core_packs_dependencies(
     marketplace: MarketplaceVersions,
     core_pack_list: List[str],
 ):
-
     query = f"""// Returns DEPENDS_ON relationships to content items who are not core packs
     MATCH (pack1)-[r:DEPENDS_ON{{mandatorily:true}}]->(pack2)
     WHERE pack1.object_id in {pack_ids}
@@ -260,7 +258,7 @@ def validate_core_packs_dependencies(
     RETURN pack1, collect(r) as relationships, collect(pack2) as nodes_to
     """
     return {
-        int(item.get("pack1").id): Neo4jRelationshipResult(
+        int(item.get("pack1").element_id): Neo4jRelationshipResult(
             node_from=item.get("pack1"),
             relationships=item.get("relationships"),
             nodes_to=item.get("nodes_to"),

@@ -176,7 +176,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             if isinstance(obj, Pack) and not obj.content_items:
                 packs.append(obj)
                 content_item_nodes.update(
-                    node.id
+                    node.element_id
                     for node, rel in zip(res.nodes_to, res.relationships)
                     if rel.type == RelationshipType.IN_PACK
                 )
@@ -218,9 +218,9 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
                 RelationshipType(rel.type),
                 RelationshipData(
                     relationship_type=rel.type,
-                    source_id=rel.start_node.id,
-                    target_id=rel.end_node.id,
-                    content_item_to=self._id_to_obj[node_to.id],
+                    source_id=rel.start_node.element_id,
+                    target_id=rel.end_node.element_id,
+                    content_item_to=self._id_to_obj[node_to.element_id],
                     is_direct=True,
                     **rel,
                 ),
@@ -255,12 +255,12 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         for content_item_id, content_item_relationship in relationships.items():
             obj = self._id_to_obj[content_item_id]
             for node in content_item_relationship.nodes_to:
-                target = self._id_to_obj[node.id]
+                target = self._id_to_obj[node.element_id]
                 source_id = content_item_id
-                target_id = node.id
+                target_id = node.element_id
                 if relationship_type == RelationshipType.IMPORTS:
                     # the import relationship is from the integration to the content item
-                    source_id = node.id
+                    source_id = node.element_id
                     target_id = content_item_id
                 obj.add_relationship(
                     relationship_type,
@@ -280,7 +280,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         Args:
             nodes (List[graph.Node]): list of nodes to add
         """
-        nodes = filter(lambda node: node.id not in self._id_to_obj, nodes)
+        nodes = filter(lambda node: node.element_id not in self._id_to_obj, nodes)
         if not nodes:
             logger.debug(
                 "No nodes to parse packs because all of them in mapping",
@@ -289,7 +289,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             return
         with Pool(processes=cpu_count()) as pool:
             results = pool.starmap(
-                _parse_node, ((node.id, dict(node.items())) for node in nodes)
+                _parse_node, ((node.element_id, dict(node.items())) for node in nodes)
             )
             for result in results:
                 assert result.database_id is not None
@@ -315,9 +315,9 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             self._add_nodes_to_mapping(results)
 
             nodes_without_relationships = {
-                result.id
+                result.element_id
                 for result in results
-                if not self._id_to_obj[result.id].relationships_data
+                if not self._id_to_obj[result.element_id].relationships_data
             }
 
             relationships: Dict[int, Neo4jRelationshipResult] = session.execute_read(
@@ -326,11 +326,11 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             self._add_relationships_to_objects(session, relationships, marketplace)
 
             pack_nodes = {
-                result.id
+                result.element_id
                 for result in results
-                if isinstance(self._id_to_obj[result.id], Pack)
+                if isinstance(self._id_to_obj[result.element_id], Pack)
             }
-            nodes = {result.id for result in results}
+            nodes = {result.element_id for result in results}
             if all_level_imports:
                 self._add_all_level_relationships(
                     session, nodes, RelationshipType.IMPORTS
@@ -339,7 +339,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
                 self._add_all_level_relationships(
                     session, pack_nodes, RelationshipType.DEPENDS_ON, marketplace
                 )
-            return [self._id_to_obj[result.id] for result in results]
+            return [self._id_to_obj[result.element_id] for result in results]
 
     def create_indexes_and_constraints(self) -> None:
         logger.info("Creating graph indexes and constraints...")
@@ -398,8 +398,8 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         self._add_nodes_to_mapping(all_nodes)
         duplicate_models = []
         for content_item, dups in duplicates:
-            dups = [self._id_to_obj[duplicate.id] for duplicate in dups]
-            duplicate_models.append((self._id_to_obj[content_item.id], dups))
+            dups = [self._id_to_obj[duplicate.element_id] for duplicate in dups]
+            duplicate_models.append((self._id_to_obj[content_item.element_id], dups))
         return duplicate_models
 
     def find_uses_paths_with_invalid_fromversion(

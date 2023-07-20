@@ -15,8 +15,6 @@ jobs:
       - name: ±±±±±±±±±  PWD1 ±±±±±±±±±±±±±±±
         run: pwd
       - name: Install Python Dependencies and downloding the last demisto-sdk version
-        env: 
-          GITHUB_SHA: ${{github.event.pull_request.merge_commit_sha}}
         run: |
           cd ../..
           git clone https://github.com/demisto/content 
@@ -25,7 +23,7 @@ jobs:
           poetry remove demisto-sdk
           echo "removed default SDK"
           echo "GITHUB_SHA : $GITHUB_SHA"
-          poetry add git+https://github.com/demisto/demisto-sdk.git#$GITHUB_SHA
+          poetry add git+https://github.com/demisto/demisto-sdk.git#${{github.sha}}
           echo "added custom SDK"
           poetry run pytest ./Tests/scripts/infrastructure_tests/ -v
           poetry run pytest ./Tests/Marketplace/Tests/ -v

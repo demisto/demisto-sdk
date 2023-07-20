@@ -1,4 +1,3 @@
-import logging
 import os
 import shutil
 from collections import defaultdict
@@ -19,6 +18,7 @@ from demisto_sdk.commands.common.constants import (
     MARKETPLACE_MIN_VERSION,
     MarketplaceVersions,
 )
+from demisto_sdk.commands.common.content.content import Content
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
@@ -658,13 +658,13 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
                 marketplace=marketplace,
             )
 
-            content_displays[content_item.content_type.metadata_name] = content_item.content_type.metadata_display_name
+            content_displays[
+                content_item.content_type.metadata_name
+            ] = content_item.content_type.metadata_display_name
 
         content_displays = {
             content_type: content_type_display
-            if (
-                content_items[content_type] and len(content_items[content_type]) == 1
-            )
+            if (content_items[content_type] and len(content_items[content_type]) == 1)
             else f"{content_type_display}s"
             for content_type, content_type_display in content_displays.items()
         }
@@ -686,7 +686,7 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
 
     @staticmethod
     def get_last_commit():
-        return GitUtil().get_current_commit_hash()
+        return GitUtil(repo=Content.git()).get_current_commit_hash()
 
     def get_pack_tags(self, marketplace):
         tags = self.get_tags_by_marketplace(marketplace)
@@ -788,7 +788,7 @@ def add_item_to_metadata_list(
     collected_content_items: dict,
     content_item: ContentItem,
     marketplace: MarketplaceVersions,
-    incident_to_alert: bool = False
+    incident_to_alert: bool = False,
 ):
     """
     Adds the given content item to the metadata content items list.
@@ -804,21 +804,21 @@ def add_item_to_metadata_list(
         incident_to_alert (bool, optional): Whether should replace incident to alert. Defaults to False.
     """
     collected_content_items.setdefault(content_item.content_type.metadata_name, [])
-    content_item_summary = content_item.summary(marketplace, incident_to_alert=incident_to_alert)
+    content_item_summary = content_item.summary(
+        marketplace, incident_to_alert=incident_to_alert
+    )
 
     if content_item_metadata := search_content_item_metadata_object(
         collected_content_items=collected_content_items,
-        item_id=content_item_summary['id'],
-        item_name=content_item_summary['name'],
-        item_type_key=content_item.content_type.metadata_name
+        item_id=content_item_summary["id"],
+        item_name=content_item_summary["name"],
+        item_type_key=content_item.content_type.metadata_name,
     ):
         content_item_metadata = content_item_metadata[0]
         logger.debug(f'Found content item with name "{content_item.name}" that was already appended to the list')
 
         replace_item_if_has_higher_toversion(
-            content_item,
-            content_item_metadata,
-            content_item_summary
+            content_item, content_item_metadata, content_item_summary
         )
 
     else:
@@ -836,7 +836,9 @@ def add_item_to_metadata_list(
         )
 
 
-def replace_item_if_has_higher_toversion(content_item: ContentItem, content_item_metadata: dict, content_item_summary: dict):
+def replace_item_if_has_higher_toversion(
+    content_item: ContentItem, content_item_metadata: dict, content_item_summary: dict
+):
     """
     Replaces the content item metadata object in the content items metadata list
     if the given content item's `toversion` is higher than the existing item's metadata `toversion`.
@@ -847,11 +849,12 @@ def replace_item_if_has_higher_toversion(content_item: ContentItem, content_item
         content_item_summary (dict): The current content item summary to update if needed.
     """
     if parse(content_item.toversion) > parse(
-        content_item_metadata["toversion"]
-        or DEFAULT_CONTENT_ITEM_TO_VERSION
+        content_item_metadata["toversion"] or DEFAULT_CONTENT_ITEM_TO_VERSION
     ):
-        logger.debug(f'Current content item with name "{content_item.name}" has higher `toversion` than the existing object, '
-                     'updating its metadata.')
+        logger.debug(
+            f'Current content item with name "{content_item.name}" has higher `toversion` than the existing object, '
+            "updating its metadata."
+        )
         content_item_metadata.update(content_item_summary.items())
         set_empty_toversion_if_default(content_item_metadata)
 
@@ -865,15 +868,16 @@ def set_empty_toversion_if_default(content_item_dict: dict):
     """
     content_item_dict["toversion"] = (
         content_item_dict["toversion"]
-        if content_item_dict["toversion"]
-        != DEFAULT_CONTENT_ITEM_TO_VERSION
+        if content_item_dict["toversion"] != DEFAULT_CONTENT_ITEM_TO_VERSION
         else ""
     )
 
 
 def search_content_item_metadata_object(
     collected_content_items: dict,
-    item_id: Optional[str], item_name: Optional[str], item_type_key: Optional[str]
+    item_id: Optional[str],
+    item_name: Optional[str],
+    item_type_key: Optional[str],
 ):
     """
     Search an content item object in the content items metadata list by its ID and name.

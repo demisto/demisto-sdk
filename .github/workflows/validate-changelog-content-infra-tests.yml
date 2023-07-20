@@ -21,11 +21,16 @@ jobs:
           echo ${{ github.sha }}
           poetry add git+https://github.com/demisto/demisto-sdk.git@${{ github.sha }}
           echo "added custom SDK"
-      - name: tests
+      - name: pwd check
         run:
           pwd
           cd ../..
-          pwd
+          echo pwd
+          cd demisto-sdk
+          echo pwd
+      - name: tests
+        run:
+          cd ../..
           poetry run pytest ./Tests/scripts/infrastructure_tests/ -v
           poetry run pytest ./Tests/Marketplace/Tests/ -v
           poetry run pytest ./Tests/tests -v

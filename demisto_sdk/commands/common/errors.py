@@ -42,10 +42,9 @@ PRESET_ERROR_TO_IGNORE = {
         "DS104",
         "IN125",
         "IN126",
-        "IN140",
-        "DS104"
+        "IN140"
     ],
-    "partner": ["CJ", "IN140", "DS104"],
+    "partner": ["CJ", "IN140"],
 }
 
 # predefined errors to be ignored in deprecated content entities even if they do not appear in .pack-ignore

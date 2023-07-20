@@ -101,6 +101,7 @@ def test_is_duplicate_description_unified_deprecated_integration(
     unified_integration_yml = integration_dir / "SomeIntegration.yml"
     yaml.dump(integration_obj, unified_integration_yml.open("w"))
     description_validator = DescriptionValidator(str(unified_integration_yml))
+    assert not description_validator.is_description_file_exist()
     assert description_validator.is_duplicate_description(is_description_in_package=False)
     assert not DescriptionValidator.handle_error.called
 

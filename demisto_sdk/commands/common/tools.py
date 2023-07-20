@@ -3846,5 +3846,5 @@ def is_epoch_datetime(string):
         epoch_timestamp = int(string)
         datetime.fromtimestamp(epoch_timestamp)
         return True
-    except (ValueError, TypeError):
+    except Exception:
         return False

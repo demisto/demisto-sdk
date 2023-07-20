@@ -25,6 +25,7 @@ from demisto_sdk.commands.common.logger import (
     logger,
     logging_setup,
 )
+from demisto_sdk.commands.common.tools import is_epoch_datetime
 from demisto_sdk.commands.test_content.test_modeling_rule import init_test_data
 from demisto_sdk.commands.test_content.xsiam_tools.test_data import Validations
 from demisto_sdk.commands.test_content.xsiam_tools.xsiam_client import (
@@ -33,7 +34,6 @@ from demisto_sdk.commands.test_content.xsiam_tools.xsiam_client import (
 )
 from demisto_sdk.commands.upload.upload import upload_content_entity as upload_cmd
 from demisto_sdk.utils.utils import get_containing_pack
-from demisto_sdk.commands.common.tools import is_epoch_datetime
 
 custom_theme = Theme(
     {
@@ -311,8 +311,9 @@ def validate_schema_aligned_with_test_data(
                 if (
                     event_val is None
                 ):  # if event_val is None, warn and continue looping.
-                    logger.debug(
-                        f"{event_key=} is null on {event_log.test_data_event_id} for {dataset=}",
+                    logger.warning(
+                        f"{event_key=} is null on {event_log.test_data_event_id} "
+                        f"event for {dataset=}, ignoring {event_key=}",
                         extra={"markup": True},
                     )
                     # add the event key to the mapping to validate there isn't another key with a different type
@@ -321,8 +322,12 @@ def validate_schema_aligned_with_test_data(
 
                 if schema_key_mappings := all_schema_dataset_mappings.get(event_key):
                     # we do not consider epochs as datetime in xsiam
-                    if isinstance(event_val, str) and not is_epoch_datetime(event_val) and dateparser.parse(
-                        event_val, settings={"STRICT_PARSING": True}
+                    if (
+                        isinstance(event_val, str)
+                        and not is_epoch_datetime(event_val)
+                        and dateparser.parse(
+                            event_val, settings={"STRICT_PARSING": True}
+                        )
                     ):
                         event_val_type = datetime
                     else:
@@ -346,7 +351,8 @@ def validate_schema_aligned_with_test_data(
 
                     if test_data_key_mappings != schema_key_mappings:
                         error_logs.add(
-                            f"[red][bold]{event_key}[/bold] --- TestData Mapping "
+                            f"[red][bold]the field {event_key} has mismatch on type or is_array between testdata"
+                            f" and schema[/bold] --- TestData Mapping "
                             f'"{test_data_key_mappings}" != Schema Mapping "{schema_key_mappings}"'
                         )
                         errors_occurred = True
@@ -357,7 +363,7 @@ def validate_schema_aligned_with_test_data(
         if missing_test_data_keys:
             logger.warning(
                 f"[yellow]The following fields {missing_test_data_keys} are in schema for dataset {dataset}, but not "
-                f"in test-data, make sure to remove them from schema or add them to test-data if nessecary[/yellow]",
+                f"in test-data, make sure to remove them from schema or add them to test-data if necessary[/yellow]",
                 extra={"markup": True},
             )
 
@@ -366,7 +372,7 @@ def validate_schema_aligned_with_test_data(
                 logger.error(_log, extra={"markup": True})
         else:
             logger.info(
-                f"[green]Schema mappings and Testdata mappings are valid for dataset {dataset}[/green]",
+                f"[green]Schema type mappings = Testdata type mappings for dataset {dataset}[/green]",
                 extra={"markup": True},
             )
     if errors_occurred:

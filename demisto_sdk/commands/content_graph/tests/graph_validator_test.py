@@ -39,7 +39,7 @@ GIT_PATH = Path(git_path())
 
 
 @pytest.fixture(autouse=True)
-def setup(mocker):
+def setup_method(mocker):
     """Auto-used fixture for setup before every test run"""
     import demisto_sdk.commands.content_graph.objects.base_content as bc
 
@@ -526,14 +526,14 @@ def test_are_fromversion_relationships_paths_valid(repository: ContentDTO, mocke
     Then
     - Validate the existance of invalid from_version relationships
     """
-    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+    logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
     with GraphValidator(update_graph=False) as graph_validator:
         create_content_graph(graph_validator.graph)
         is_valid = graph_validator.validate_fromversion_fields()
 
     assert not is_valid
     assert str_in_call_args_list(
-        logger_info.call_args_list,
+        logger_error.call_args_list,
         "Content item 'SamplePlaybook' whose from_version is '6.5.0' uses the content"
         " items: 'SamplePlaybook2' whose from_version is higher",
     )
@@ -569,7 +569,7 @@ def test_is_file_using_unknown_content(
     Then
     - Check whether the graph is valid or not, based on whether optional content dependencies were included.
     """
-    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+    logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
     logger_warning = mocker.patch.object(logging.getLogger("demisto-sdk"), "warning")
     with GraphValidator(
         update_graph=False, git_files=[], include_optional_deps=include_optional
@@ -577,7 +577,7 @@ def test_is_file_using_unknown_content(
         create_content_graph(graph_validator.graph)
         assert graph_validator.is_file_using_unknown_content() == is_valid
 
-    logger_to_search = logger_warning if is_valid else logger_info
+    logger_to_search = logger_warning if is_valid else logger_error
 
     assert str_in_call_args_list(
         logger_to_search.call_args_list,
@@ -595,7 +595,7 @@ def test_is_file_display_name_already_exists(repository: ContentDTO, mocker):
     Then
     - Validate the existance of duplicate display names
     """
-    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+    logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
     with GraphValidator(update_graph=False) as graph_validator:
         create_content_graph(graph_validator.graph)
         is_valid = graph_validator.is_file_display_name_already_exists()
@@ -603,7 +603,7 @@ def test_is_file_display_name_already_exists(repository: ContentDTO, mocker):
     assert not is_valid
     for i in range(1, 4):
         assert str_in_call_args_list(
-            logger_info.call_args_list,
+            logger_error.call_args_list,
             f"Pack 'SamplePack{i if i != 1 else ''}' has a duplicate display_name",
         )
 
@@ -617,7 +617,7 @@ def test_validate_unique_script_name(repository: ContentDTO, mocker):
     Then
         - Validate the existance of duplicate script names
     """
-    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+    logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
     with GraphValidator(update_graph=False) as graph_validator:
         create_content_graph(graph_validator.graph)
         is_valid = graph_validator.validate_unique_script_name()
@@ -625,20 +625,20 @@ def test_validate_unique_script_name(repository: ContentDTO, mocker):
     assert not is_valid
 
     assert str_in_call_args_list(
-        logger_info.call_args_list,
+        logger_error.call_args_list,
         "Cannot create a script with the name setAlert, "
         "because a script with the name setIncident already exists.\n",
     )
 
     assert not str_in_call_args_list(
-        logger_info.call_args_list,
+        logger_error.call_args_list,
         "Cannot create a script with the name getAlert, "
         "because a script with the name getIncident already exists.\n",
     )
 
     # Ensure that the script-name-incident-to-alert ignore is working
     assert not str_in_call_args_list(
-        logger_info.call_args_list,
+        logger_error.call_args_list,
         "Cannot create a script with the name getAlerts, "
         "because a script with the name getIncidents already exists.\n",
     )
@@ -655,14 +655,14 @@ def test_are_marketplaces_relationships_paths_valid(
     Then
     - Validate the existence invalid marketplaces uses
     """
-    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+    logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
     with GraphValidator(update_graph=False) as graph_validator:
         create_content_graph(graph_validator.graph)
         is_valid = graph_validator.validate_marketplaces_fields()
 
     assert not is_valid
     assert str_in_call_args_list(
-        logger_info.call_args_list,
+        logger_error.call_args_list,
         "Content item 'SamplePlaybook' can be used in the 'xsoar, xpanse' marketplaces"
         ", however it uses content items: 'SamplePlaybook2' which are not supported in"
         " all of the marketplaces of 'SamplePlaybook'",
@@ -678,7 +678,7 @@ def test_validate_dependencies(repository: ContentDTO, caplog, mocker):
     Then
     - Validate the existance invalid core pack dependency
     """
-    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+    logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
     mocker.patch(
         "demisto_sdk.commands.common.hook_validations.graph_validator.get_marketplace_to_core_packs",
         return_value={MarketplaceVersions.XSOAR: {"SamplePack"}},
@@ -689,7 +689,7 @@ def test_validate_dependencies(repository: ContentDTO, caplog, mocker):
 
     assert not is_valid
     assert str_in_call_args_list(
-        logger_info.call_args_list,
+        logger_error.call_args_list,
         "The core pack SamplePack cannot depend on non-core packs: ",
     )
 
@@ -703,7 +703,7 @@ def test_validate_duplicate_id(repository: ContentDTO, mocker):
     Then
     - Validate the existence of duplicate ids
     """
-    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+    logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
 
     with GraphValidator(update_graph=False) as graph_validator:
         create_content_graph(graph_validator.graph)
@@ -711,7 +711,7 @@ def test_validate_duplicate_id(repository: ContentDTO, mocker):
 
     assert not is_valid
     assert str_in_call_args_list(
-        logger_info.call_args_list,
+        logger_error.call_args_list,
         "[GR105] - The ID 'SamplePlaybook' already exists in",
     )
 

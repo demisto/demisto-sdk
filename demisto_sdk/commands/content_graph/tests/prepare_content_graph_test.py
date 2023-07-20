@@ -32,7 +32,7 @@ GIT_ROOT = git_path()
 
 
 @pytest.fixture(autouse=True)
-def setup(mocker, repo: Repo):
+def setup_method(mocker, repo: Repo):
     """Auto-used fixture for setup before every test run"""
     import demisto_sdk.commands.content_graph.objects.base_content as bc
 
@@ -56,7 +56,6 @@ def repository(mocker):
 
 
 def create_mini_content(repository: ContentDTO):
-
     relationships = {
         RelationshipType.IN_PACK: [
             mock_relationship(

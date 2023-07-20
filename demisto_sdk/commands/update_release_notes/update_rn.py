@@ -351,7 +351,7 @@ class UpdateRN:
         bc_file_data["breakingChanges"] = True
         bc_file_data["breakingChangesNotes"] = bc_file_data.get("breakingChangesNotes")
         with open(bc_file_path, "w") as f:
-            f.write(json.dumps(bc_file_data))
+            f.write(json.dumps(bc_file_data, indent=4))
         logger.info(
             f"[green]Finished creating config file for RN version {new_version}.\n"
             "If you wish only specific text to be shown as breaking changes, please fill the "

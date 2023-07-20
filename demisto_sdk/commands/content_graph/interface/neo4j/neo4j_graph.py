@@ -624,9 +624,11 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         with self.driver.session() as session:
             try:
                 tx = session.begin_transaction()
-                tx.run(query, **kwargs)
+                res = tx.run(query, **kwargs)
+                data = res.data()
                 tx.commit()
                 tx.close()
+                return data
             except Exception as e:
                 logger.error(f"Error when running query: {e}")
                 raise e

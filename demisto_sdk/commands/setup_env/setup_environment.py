@@ -187,7 +187,7 @@ def configure_vscode_launch(ide_folder: Path, integration_script: IntegrationScr
             "version": "0.2.0",
             "configurations": [
                 {
-                    "name": f"Docker: Debug in docker ({integration_script.path.stem})",
+                    "name": f"Docker: Debug ({integration_script.path.stem})",
                     "type": "docker",
                     "request": "launch",
                     "preLaunchTask": "docker-run: debug",
@@ -200,7 +200,7 @@ def configure_vscode_launch(ide_folder: Path, integration_script: IntegrationScr
                     },
                 },
                 {
-                    "name": f"Docker: Debug tests in docker ({integration_script.path.stem})",
+                    "name": f"Docker: Debug ({integration_script.path.stem})",
                     "type": "docker",
                     "request": "launch",
                     "preLaunchTask": "docker-run: test",

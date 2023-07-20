@@ -2076,7 +2076,7 @@ def test_validate_using_git_on_changed_marketplaces(mocker, pack):
     mocker.patch.object(
         ValidateManager,
         "get_changed_files_from_git",
-        return_value=(set(), set(), {pack.pack_metadata.path}, set(), True),
+        return_value=(set(), set(), {pack.pack_metadata.rel_path}, set(), True),
     )
     mocker.patch.object(GitUtil, "deleted_files", return_value=set())
     mocker.patch(
@@ -2954,7 +2954,7 @@ def test_run_validation_using_git_on_metadata_with_invalid_tags(
     mocker.patch.object(
         ValidateManager,
         "get_unfiltered_changed_files_from_git",
-        return_value=({pack.pack_metadata.path}, set(), set()),
+        return_value=({pack.pack_metadata.rel_path}, set(), set()),
     )
     mocker.patch.object(GitUtil, "deleted_files", return_value=set())
     validate_manager = ValidateManager(check_is_unskipped=False, skip_conf_json=True)

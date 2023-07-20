@@ -220,14 +220,16 @@ class ReleaseNotesChecker:
                 show_template_message = True
                 self.add_note(
                     line,
-                    "Line is using one of our banned templates, please change it to fit our standard.",
+                    f"Line #{line_number} is using one of our banned templates, please change it to fit our standard.",
                 )
 
             if line[0].isalpha() and not line[0].isupper():
-                self.add_note(line, "Line should start with capital letter.")
+                self.add_note(
+                    line, f"Line #{line_number} should start with capital letter."
+                )
 
             if line[-1] not in [".", ":"]:
-                self.add_note(line, "Line should end with a period (.)")
+                self.add_note(line, f"Line #{line_number} should end with a period (.)")
 
             if "bug" in line.lower():
                 self.add_note(

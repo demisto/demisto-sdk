@@ -20,6 +20,8 @@
 * Added an ability to provide list of marketplace names as a credentials-type (type 9) param attribute.
 * **doc-review** will run with the `--use-packs-known-words` default to true.
 * Calling **modeling-rules init-test-data** will now return the XDM fields output in alphabetical order.
+* Removed the Pipfile and Pipfile.lock from the templates in **demisto-sdk init** command.
+* Disabled the option to create an integration with Pipfile and Pipfile.lock files.
 
 ## 1.17.2
 * Fixed an issue where **lint** and **validate** commands failed on integrations and scripts that use docker images that are not available in the Docker Hub but exist locally.

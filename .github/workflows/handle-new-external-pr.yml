@@ -22,7 +22,9 @@ jobs:
           PR_LINK: ${{ github.event.pull_request.html_url }}
         run: |
           echo "Updating External PR ${{ github.event.pull_request.html_url }}"
-          CHANGED_FILES=$(git diff --name-only ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }} | xargs)
+          BASE=${{ github.event.pull_request.base.sha }}
+          HEAD=${{ github.event.pull_request.head.sha }}
+          CHANGED_FILES=$(git diff --name-only $BASE $HEAD | xargs)
           cd Utils/github_workflow_scripts
           ./handle_external_pr.sh
           echo "Finished Handling External PR"

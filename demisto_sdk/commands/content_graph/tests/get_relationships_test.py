@@ -1,5 +1,8 @@
 from pathlib import Path
 
+import pytest
+
+from demisto_sdk.commands.content_graph import neo4j_service
 from demisto_sdk.commands.content_graph.commands.create import (
     create_content_graph,
 )
@@ -16,9 +19,32 @@ from demisto_sdk.commands.content_graph.tests.create_content_graph_test import (
     mock_pack,
     mock_script,
     mock_test_playbook,
-    repository,
-    setup,
 )
+from TestSuite.repo import Repo
+
+
+@pytest.fixture(autouse=True)
+def setup(mocker, repo: Repo):
+    """Auto-used fixture for setup before every test run"""
+    import demisto_sdk.commands.content_graph.objects.base_content as bc
+
+    bc.CONTENT_PATH = Path(repo.path)
+    mocker.patch.object(ContentGraphInterface, "repo_path", Path(repo.path))
+    mocker.patch.object(neo4j_service, "REPO_PATH", Path(repo.path))
+    neo4j_service.stop()
+
+
+@pytest.fixture
+def repository(mocker):
+    repository = ContentDTO(
+        path=Path(),
+        packs=[],
+    )
+    mocker.patch(
+        "demisto_sdk.commands.content_graph.content_graph_builder.ContentGraphBuilder._create_content_dtos",
+        return_value=[repository],
+    )
+    return repository
 
 
 def create_mini_content(repository: ContentDTO):

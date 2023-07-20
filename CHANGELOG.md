@@ -2,6 +2,8 @@
 ## Unreleased
 * Calling **format** with the `-d` flag now removes test playbooks testing the deprecated content from conf.json.
 * Fixed an issue where in some cases the **split** command did not remove pack version note from the script.
+* Added the **graph** command group. The **create-content-graph** and **update-content-graph** commands were migrated to this command group, and named **create** and **update** respectively.
+* Added the **get-relationships** graph command.
 * Fixed an issue where **validate** would not properly detect dependencies of core packs.
 
 ## 1.17.2

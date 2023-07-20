@@ -16,7 +16,8 @@ jobs:
         run: pwd
       - name: Install Python Dependencies and downloding the last demisto-sdk version
         run: |
-          git clone https://github.com/demisto/content -- ../..
+          cd ../.. 
+          git clone https://github.com/demisto/content
           cd content
           poetry install --with ci
           echo "GITHUB_SHA : $GITHUB_SHA"

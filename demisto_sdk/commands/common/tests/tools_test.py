@@ -1489,7 +1489,7 @@ def test_test2(requests_mock):
         SDK_PYPI_VERSION,
         json={"info": {"version": expected_version}},
     )
-    assert get_last_remote_release_version() == expected_version
+    assert tools.ttt() == expected_version
 
 def test_test3(requests_mock):
     expected_version = "1.3.8"

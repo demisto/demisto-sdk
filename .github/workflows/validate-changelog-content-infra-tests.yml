@@ -12,21 +12,17 @@ jobs:
           python-version: '3.10'
       - name: Setup Poetry
         uses: Gr1N/setup-poetry@v8
-      - name: Install Python Dependencies
+      - name: Install Python Dependencies and downloding the last demisto-sdk version
         run: |
           cd ../.. 
           git clone https://github.com/demisto/content
           cd content
           poetry install --with ci
-      - name: Downloding the last demisto-sdk version
-        run: |
-          cd ../..
           echo ${{ github.sha }}
           poetry add git+https://github.com/demisto/demisto-sdk.git@${{ github.sha }}
           echo "added custom SDK"
       - name: tests
         run:
-          echo "what"
           pwd
           cd ../..
           pwd

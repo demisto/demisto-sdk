@@ -169,12 +169,12 @@ def __delete_integration_instance_if_determined_by_name(client, instance_name, l
 
 
 # return instance name if succeed, None otherwise
-def __create_integration_instance(integration_name, integration_instance_name,
+def create_integration_instance(integration_name, integration_instance_name,
                                   integration_params, is_byoi, logging_manager=logger, validate_test=True):
     failure_message = ''
     # get configuration config (used for later rest api
     integration_conf_client = demisto_client.configure()
-    configuration = __get_integration_config(integration_conf_client, integration_name, logging_manager)
+    configuration = __get_integration_config(integration_conf_client, integration_name)
     if not configuration:
         return None, 'No configuration'
 
@@ -186,7 +186,7 @@ def __create_integration_instance(integration_name, integration_instance_name,
         instance_name = integration_params['integrationInstanceName']
         __delete_integration_instance_if_determined_by_name(integration_conf_client, instance_name, logging_manager)
     else:
-        instance_name = f'{integration_instance_name.replace(" ", "_")}_test_{uuid.uuid4()}'
+        instance_name = f'{integration_instance_name.replace(" ", "_")}_test'
 
     logging_manager.info(
         f'Configuring instance for {integration_name} (instance name: {instance_name}, validate "Test": {validate_test})'
@@ -252,7 +252,7 @@ def __create_integration_instance(integration_name, integration_instance_name,
     # test integration
     refreshed_client = demisto_client.configure()
     if validate_test:
-        test_succeed, failure_message = test_integration_instance(refreshed_client, module_instance, logging_manager)
+        test_succeed, failure_message = test_integration_instance(refreshed_client, module_instance)
     else:
         logging_manager.debug(
             f"Skipping test validation for integration: {integration_name} (it has test_validate set to false)"
@@ -260,7 +260,7 @@ def __create_integration_instance(integration_name, integration_instance_name,
         test_succeed = True
 
     if not test_succeed:
-        __disable_integrations_instances(refreshed_client, [module_instance], logging_manager)
+        __disable_integrations_instances(refreshed_client, [module_instance])
         return None, failure_message
 
     return module_instance, ''
@@ -469,7 +469,7 @@ def check_integration(client, server_url, demisto_user, demisto_pass, integratio
         if is_mock_run:
             configure_proxy_unsecure(integration_params)
 
-        module_instance, failure_message = __create_integration_instance(server_url,
+        module_instance, failure_message = create_integration_instance(server_url,
                                                                          demisto_user,
                                                                          demisto_pass,
                                                                          integration_name,

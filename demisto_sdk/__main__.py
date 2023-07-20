@@ -3455,9 +3455,14 @@ def run_unit_tests(
     help="Select a secret key from Google Secret Manager. Use only if you have access to Google Secret Manager",
     required=False,
 )
+@click.option(
+    "--instance-name",
+    required=False,
+    help="The name of the instance to configure in XSOAR/XSIAM",
+)
 @click.argument("file_paths", nargs=-1, type=click.Path(exists=True, resolve_path=True))
 def setup_env(
-    input, file_paths, create_virtualenv, overwrite_virtualenv, secret_id=None
+    input, file_paths, create_virtualenv, overwrite_virtualenv, secret_id, instance_name
 ):
     from demisto_sdk.commands.setup_env.setup_environment import (
         setup,
@@ -3471,6 +3476,7 @@ def setup_env(
         create_virtualenv=create_virtualenv,
         overwrite_virtualenv=overwrite_virtualenv,
         secret_id=secret_id,
+        instance_name=instance_name,
     )
 
 

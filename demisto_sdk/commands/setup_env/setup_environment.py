@@ -6,7 +6,7 @@ import venv
 from enum import Enum
 from pathlib import Path
 from typing import Optional, Tuple
-
+from demisto_sdk.commands.setup_env.test_integration import create_integration_instance
 import dotenv
 import google
 from google.cloud import secretmanager
@@ -117,7 +117,7 @@ def configure_vscode_tasks(
     docker_python_path = [
         f"/app/{path.relative_to(CONTENT_PATH)}"
         for path in PYTHONPATH
-        if "site-packages" not in str(path)
+        if "demisto_sdk" not in str(path)
     ]
     tasks = {
         "version": "2.0.0",
@@ -257,6 +257,7 @@ def setup(
     create_virtualenv: bool = False,
     overwrite_virtualenv: bool = False,
     secret_id: Optional[str] = None,
+    instance_name: Optional[str] = None,
 ):
     ide_folder = CONTENT_PATH / IDE_TO_FOLDER[ide]
     docker_client = docker_helper.init_global_docker_client()
@@ -274,6 +275,16 @@ def setup(
         secret_id = secret_id or re.sub(r"[ ()]", "_", integration_script.name)
         if (project_id := os.getenv("DEMISTO_GCP_PROJECT_ID")) and isinstance(integration_script, Integration):
             params = get_integration_params(project_id, secret_id)
+            if params and instance_name and instance_name[0]:
+                if instance_created := create_integration_instance(
+                    integration_script.name,
+                    instance_name,
+                    params,
+                    params.get("byoi", True),
+                ):
+                    logger.info(f"Created integration instance {instance_created[0]['name']}")
+                else:
+                    logger.warning(f"Failed to create integration instance {instance_name}")
             with open(CONTENT_PATH / ".vscode" / "params.json", "w") as f:
                 json.dump(params, f, indent=4)
         else:

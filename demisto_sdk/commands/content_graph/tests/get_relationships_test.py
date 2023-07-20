@@ -50,7 +50,7 @@ def create_mini_content(repository: ContentDTO):  # noqa: F811
      |     -------------------------------------------------------    |
      |                        TESTED_BY                               |
       ----------------------------------------------------------------
-                            USES (optionally)
+                            USES (mandatorily)
 
     Args:
         repository (ContentDTO): the content dto to populate
@@ -103,7 +103,7 @@ def create_mini_content(repository: ContentDTO):  # noqa: F811
             "Packs/SamplePack3/TestPlaybooks/SampleTestPlaybook/SampleTestPlaybook.yml"
         ),
         pack=pack3,
-        uses=[(pack1_integration, False), (pack2_script, True)],
+        uses=[(pack1_integration, True), (pack2_script, True)],
         tested_items=[pack1_integration],
     )
 
@@ -132,7 +132,91 @@ class TestGetRelationships:
                         "paths_count": 1,
                     },
                 },
-            )
+            ),
+            (
+                Path(
+                    "Packs/SamplePack3/TestPlaybooks/SampleTestPlaybook/SampleTestPlaybook.yml"
+                ),
+                RelationshipType.USES,
+                2,
+                {},
+                {
+                    "Packs/SamplePack/Integrations/SampleIntegration/SampleIntegration.yml": {
+                        "mandatorily": True,
+                        "paths_count": 2,
+                    },
+                    "Packs/SamplePack/Scripts/SampleScript/SampleScript.yml": {
+                        "mandatorily": True,
+                        "paths_count": 1,
+                    },
+                    "Packs/SamplePack2/Scripts/SampleScript2/SampleScript2.yml": {
+                        "mandatorily": True,
+                        "paths_count": 1,
+                    },
+                },
+            ),
+            (
+                Path(
+                    "Packs/SamplePack3/TestPlaybooks/SampleTestPlaybook/SampleTestPlaybook.yml"
+                ),
+                RelationshipType.USES,
+                1,
+                {},
+                {
+                    "Packs/SamplePack/Integrations/SampleIntegration/SampleIntegration.yml": {
+                        "mandatorily": True,
+                        "paths_count": 1,
+                    },
+                    "Packs/SamplePack/Scripts/SampleScript/SampleScript.yml": {
+                        "mandatorily": True,
+                        "paths_count": 1,
+                    },
+                    "Packs/SamplePack2/Scripts/SampleScript2/SampleScript2.yml": {
+                        "mandatorily": True,
+                        "paths_count": 1,
+                    },
+                },
+            ),
+            (
+                Path(
+                    "Packs/SamplePack/Integrations/SampleIntegration/SampleIntegration.yml"
+                ),
+                RelationshipType.IMPORTS,
+                1,
+                {},
+                {
+                    "Packs/SamplePack3/Scripts/TestApiModule/TestApiModule.yml": {
+                        "paths_count": 1,
+                    },
+                },
+            ),
+            (
+                Path(
+                    "Packs/SamplePack/Integrations/SampleIntegration/SampleIntegration.yml"
+                ),
+                RelationshipType.TESTED_BY,
+                1,
+                {},
+                {
+                    "Packs/SamplePack3/TestPlaybooks/SampleTestPlaybook/SampleTestPlaybook.yml": {
+                        "paths_count": 1,
+                    },
+                },
+            ),
+            (
+                Path("Packs/SamplePack3"),
+                RelationshipType.DEPENDS_ON,
+                2,
+                {},
+                {
+                    "Packs/SamplePack2": {
+                        "paths_count": 1,
+                    },
+                    "Packs/SamplePack1": {
+                        "paths_count": 2,
+                    },
+                },
+            ),
         ],
     )
     def test_get_relationships(

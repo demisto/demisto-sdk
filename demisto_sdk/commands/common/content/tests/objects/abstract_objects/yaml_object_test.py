@@ -31,10 +31,7 @@ class TestValidYAML:
     def test_get_item(self):
         obj = YAMLObject(TEST_VALID_YAML)
 
-        assert (
-            obj["fromversion"]
-            == get_yaml(TEST_VALID_YAML)["fromversion"]
-        )
+        assert obj["fromversion"] == get_yaml(TEST_VALID_YAML)["fromversion"]
 
     @pytest.mark.parametrize(argnames="default_value", argvalues=["test_value", ""])
     def test_get(self, default_value: str):
@@ -42,10 +39,7 @@ class TestValidYAML:
         if default_value:
             assert obj.get("no such key", default_value) == default_value
         else:
-            assert (
-                obj["fromversion"]
-                == get_yaml(TEST_VALID_YAML)["fromversion"]
-            )
+            assert obj["fromversion"] == get_yaml(TEST_VALID_YAML)["fromversion"]
 
     def test_dump(self, datadir):
         expected_file = TEST_VALID_YAML.parent / f"prefix-{TEST_VALID_YAML.name}"

@@ -26,9 +26,7 @@ json = JSON_Handler()
 
 class TestValidJSON:
     def test_valid_json_file_path(self):
-        assert JSONObject(TEST_VALID_JSON).to_dict() == get_json(
-            TEST_VALID_JSON
-        )
+        assert JSONObject(TEST_VALID_JSON).to_dict() == get_json(TEST_VALID_JSON)
 
     def test_get_item(self):
         assert (
@@ -43,10 +41,7 @@ class TestValidJSON:
         if default_value:
             assert obj.get("no such key", default_value) == default_value
         else:
-            assert (
-                obj["fromVersion"]
-                == get_json(TEST_VALID_JSON)["fromVersion"]
-            )
+            assert obj["fromVersion"] == get_json(TEST_VALID_JSON)["fromVersion"]
 
     def test_dump(self):
         from pathlib import Path

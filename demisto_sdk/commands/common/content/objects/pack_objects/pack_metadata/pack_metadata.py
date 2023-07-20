@@ -551,9 +551,7 @@ class PackMetaData(JSONObject):
             return None
 
         try:
-            user_metadata = get_json(
-                user_metadata_path
-            )  # loading user metadata
+            user_metadata = get_json(user_metadata_path)  # loading user metadata
             # part of old packs are initialized with empty list
             if isinstance(user_metadata, list):
                 user_metadata = {}

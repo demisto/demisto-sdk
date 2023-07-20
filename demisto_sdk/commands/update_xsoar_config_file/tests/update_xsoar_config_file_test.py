@@ -79,9 +79,7 @@ class TestXSOARConfigFileUpdater:
             assert Path(f"{tmp_output_dir}/{expected_path}").exists()
 
             try:
-                config_file_info = get_json(
-                    f"{tmp_output_dir}/{expected_path}"
-                )
+                config_file_info = get_json(f"{tmp_output_dir}/{expected_path}")
             except IsADirectoryError:
                 config_file_info = {}
             assert config_file_info == expected_outputs
@@ -154,9 +152,7 @@ class TestXSOARConfigFileUpdater:
             assert Path(f"{tmp_output_dir}/xsoar_config.json").exists()
 
             try:
-                config_file_info = get_json(
-                    f"{tmp_output_dir}/xsoar_config.json"
-                )
+                config_file_info = get_json(f"{tmp_output_dir}/xsoar_config.json")
             except IsADirectoryError:
                 config_file_info = {}
             assert config_file_info == {
@@ -185,9 +181,7 @@ class TestXSOARConfigFileUpdater:
             assert Path(f"{tmp_output_dir}/xsoar_config.json").exists()
 
             try:
-                config_file_info = get_json(
-                    f"{tmp_output_dir}/xsoar_config.json"
-                )
+                config_file_info = get_json(f"{tmp_output_dir}/xsoar_config.json")
             except IsADirectoryError:
                 config_file_info = {}
             assert config_file_info == {
@@ -237,9 +231,7 @@ class TestXSOARConfigFileUpdater:
                 assert str_in_call_args_list(logger_info.call_args_list, err)
 
             try:
-                config_file_info = get_json(
-                    f"{tmp_output_dir}/{expected_path}"
-                )
+                config_file_info = get_json(f"{tmp_output_dir}/{expected_path}")
             except IsADirectoryError:
                 config_file_info = {}
             assert config_file_info == expected_outputs

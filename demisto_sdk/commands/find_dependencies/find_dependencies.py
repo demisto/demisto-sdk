@@ -2975,9 +2975,7 @@ class PackDependencies:
             The pack metadata content.
         """
 
-        pack_meta_file_content = get_json(
-            find_pack_path(pack_name)[0]
-        )
+        pack_meta_file_content = get_json(find_pack_path(pack_name)[0])
 
         return pack_meta_file_content
 

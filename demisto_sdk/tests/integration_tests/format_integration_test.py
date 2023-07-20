@@ -1625,9 +1625,7 @@ def test_format_generic_definition_wrong_from_version(mocker, repo):
         assert result.exit_code == 0
 
         # check that sdk format did change the wrong fromVersion to '6.5.0':
-        updated_generic_definition = get_json(
-            generic_definition_path
-        )
+        updated_generic_definition = get_json(generic_definition_path)
         assert (
             updated_generic_definition["fromVersion"]
             == GENERIC_DEFINITION["fromVersion"]
@@ -1685,9 +1683,7 @@ def test_format_generic_definition_missing_from_version_key(mocker, repo):
         assert result.exit_code == 0
 
         # check that sdk format did add a fromVersion key with '6.5.0' as a value:
-        updated_generic_definition = get_json(
-            generic_definition_path
-        )
+        updated_generic_definition = get_json(generic_definition_path)
         assert (
             updated_generic_definition["fromVersion"]
             == GENERIC_DEFINITION["fromVersion"]

@@ -380,9 +380,7 @@ class TestPostmanCodeGen:
 
         cls.autogen_config = get_json(autogen_config_path)
 
-        cls.arguments_check_collection = get_json(
-            arguments_check_collection_path
-        )
+        cls.arguments_check_collection = get_json(arguments_check_collection_path)
 
         cls.postman_collection_stream = open(collection_path)
         cls.autogen_config_stream = open(autogen_config_path)

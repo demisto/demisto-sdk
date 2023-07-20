@@ -277,9 +277,7 @@ def test_extract_code(tmpdir, file_path, file_type):
         output=str(tmpdir.join("temp_code.py")),
         file_type=file_type,
     )
-    script_before_split = get_yaml(Path(extractor.input))[
-        "script"
-    ]["script"]
+    script_before_split = get_yaml(Path(extractor.input))["script"]["script"]
     assert "### pack version: 1.0.3" in script_before_split
     assert "# pack version: 1.0.3" in script_before_split
     assert "#### pack version: 1.0.3" in script_before_split
@@ -331,8 +329,7 @@ def test_extract_javascript_code(tmpdir, file_type):
         file_type=file_type,
     )
     assert (
-        "// pack version: 1.0.3"
-        in get_yaml(Path(extractor.input))["script"]["script"]
+        "// pack version: 1.0.3" in get_yaml(Path(extractor.input))["script"]["script"]
     )
 
     extractor.extract_code(extractor.output)
@@ -361,8 +358,7 @@ def test_extract_powershell_code(tmpdir, file_type):
         file_type=file_type,
     )
     assert (
-        "### pack version: 1.0.3"
-        in get_yaml(Path(extractor.input))["script"]["script"]
+        "### pack version: 1.0.3" in get_yaml(Path(extractor.input))["script"]["script"]
     )
 
     extractor.extract_code(extractor.output)

@@ -2354,25 +2354,24 @@ class IntegrationValidator(ContentEntityValidator):
                     return False
 
         return True
-    
-    
+
     @error_codes("BA125")
     def is_line_ends_with_dot(self):
-        line_with_missing_dot = ""
+        lines_with_missing_dot = ""
         if self.running_validations_using_git:
             for command in self.current_file.get("script", {}).get("commands", []):
                 current_command = super().is_line_ends_with_dot(command, "arguments")
                 if current_command:
-                    line_with_missing_dot += (
+                    lines_with_missing_dot += (
                         f"- In command {command.get('name')}:\n{current_command}"
                     )
             if (
                 yml_description := self.current_file.get("description", "")
             ) and not yml_description.endswith("."):
-                line_with_missing_dot += "The file's description field is missing a '.' in the end of the sentence."
-            if line_with_missing_dot:
+                lines_with_missing_dot += "The file's description field is missing a '.' in the end of the sentence."
+            if lines_with_missing_dot:
                 error_message, error_code = Errors.description_missing_dot_at_the_end(
-                    line_with_missing_dot
+                    lines_with_missing_dot
                 )
                 if self.handle_error(
                     error_message,
@@ -2381,3 +2380,4 @@ class IntegrationValidator(ContentEntityValidator):
                     suggested_fix=Errors.suggest_fix(self.file_path),
                 ):
                     return False
+        return True

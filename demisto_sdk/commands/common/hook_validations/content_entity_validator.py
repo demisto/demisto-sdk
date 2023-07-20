@@ -795,7 +795,7 @@ class ContentEntityValidator(BaseValidator):
         for arg in dict_to_test.get(arg_field, []):
             if not arg.get("description", "").endswith("."):
                 line_with_missing_dot += f"The argument {arg.get('name')} description should end with a period.\n"
-        for output in dict_to_test.get("outputs", []):
+        for output in dict_to_test.get("outputs") or []:
             if not output.get("description", "").endswith("."):
                 line_with_missing_dot += f"The context path {output.get('contextPath')} description should end with a period.\n"
         return line_with_missing_dot

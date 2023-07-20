@@ -172,7 +172,7 @@ def update_pack_metadata_with_dependencies(
         dependency_info.pop("depending_on_items_mandatorily", None)
 
     with open(pack_metadata_path, "r+") as pack_metadata_file:
-        pack_metadata = get_json(pack_metadata_file, return_content=True)
+        pack_metadata = json.load(pack_metadata_file)
         pack_metadata = {} if not isinstance(pack_metadata, dict) else pack_metadata
         pack_metadata["dependencies"] = first_level_dependencies
         pack_metadata["displayedImages"] = list(first_level_dependencies.keys())

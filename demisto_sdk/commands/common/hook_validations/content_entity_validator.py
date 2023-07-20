@@ -362,7 +362,7 @@ class ContentEntityValidator(BaseValidator):
 
         return True
 
-    def _load_conf_file(self, get_jsondata_file=None):
+    def _load_conf_file(self):
         return get_json(CONF_PATH, return_content=True)
 
     @error_codes("CJ104,CJ102")

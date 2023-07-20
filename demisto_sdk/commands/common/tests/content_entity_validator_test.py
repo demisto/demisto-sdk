@@ -368,7 +368,7 @@ def test_fromversion_update_validation_yml_structure(
     path, old_file_path, answer, error
 ):
     validator = ContentEntityValidator(StructureValidator(file_path=path))
-    validator.old_file = get_yaml(old_file_path, type_of_file='yml', return_content=True)
+    validator.old_file = get_yaml(old_file_path, return_content=True)
     assert validator.is_valid_fromversion_on_modified() is answer, error
 
 

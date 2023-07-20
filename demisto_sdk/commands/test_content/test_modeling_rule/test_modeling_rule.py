@@ -33,6 +33,7 @@ from demisto_sdk.commands.test_content.xsiam_tools.xsiam_client import (
 )
 from demisto_sdk.commands.upload.upload import upload_content_entity as upload_cmd
 from demisto_sdk.utils.utils import get_containing_pack
+from demisto_sdk.commands.common.tools import is_epoch_datetime
 
 custom_theme = Theme(
     {
@@ -319,7 +320,8 @@ def validate_schema_aligned_with_test_data(
                     continue
 
                 if schema_key_mappings := all_schema_dataset_mappings.get(event_key):
-                    if isinstance(event_val, str) and dateparser.parse(
+                    # we do not consider epochs as datetime in xsiam
+                    if isinstance(event_val, str) and not is_epoch_datetime(event_val) and dateparser.parse(
                         event_val, settings={"STRICT_PARSING": True}
                     ):
                         event_val_type = datetime

@@ -13,6 +13,7 @@ from collections import OrderedDict
 from concurrent.futures import as_completed
 from configparser import ConfigParser, MissingSectionHeaderError
 from contextlib import contextmanager
+from datetime import datetime
 from distutils.version import LooseVersion
 from enum import Enum
 from functools import lru_cache
@@ -3834,3 +3835,16 @@ def parse_multiple_path_inputs(
         return result
 
     raise ValueError(f"Cannot parse paths from {input_path}")
+
+
+def is_epoch_datetime(string):
+    # Check if the input string contains only digits
+    if not string.isdigit():
+        return False
+    # Convert the string to an integer and attempt to parse it as a datetime
+    try:
+        epoch_timestamp = int(string)
+        datetime.fromtimestamp(epoch_timestamp)
+        return True
+    except (ValueError, TypeError):
+        return False

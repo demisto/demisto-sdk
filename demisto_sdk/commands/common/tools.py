@@ -884,9 +884,7 @@ def get_yaml(
 def get_json(file_path, cache_clear=False, return_content: bool = False):
     if cache_clear:
         get_file.cache_clear()
-    return get_file(
-        file_path, clear_cache=cache_clear, return_content=return_content
-    )
+    return get_file(file_path, clear_cache=cache_clear, return_content=return_content)
 
 
 def get_script_or_integration_id(file_path):

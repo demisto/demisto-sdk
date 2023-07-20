@@ -2367,7 +2367,7 @@ class IntegrationValidator(ContentEntityValidator):
                     )
             if (
                 yml_description := self.current_file.get("description", "")
-            ) and not yml_description.endswith("."):
+            ) and not yml_description.strip('\"').strip("\'").endswith("."):
                 lines_with_missing_dot += "The file's description field is missing a '.' in the end of the sentence."
             if lines_with_missing_dot:
                 error_message, error_code = Errors.description_missing_dot_at_the_end(

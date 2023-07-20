@@ -275,7 +275,8 @@ def setup(
             params = get_integration_params(project_id, secret_id)
             with open(ide_folder / "params.json", "w") as f:
                 json.dump(params, f, indent=4)
-
+        else:
+            logger.info("Skipping searching in Google Secret Manager as DEMISTO_GCP_PROJECT_ID is not set")
         if not docker_image:
             docker_image = DEF_DOCKER
         (

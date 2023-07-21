@@ -16,7 +16,7 @@ curl -X POST \
     -H "Authorization: Bearer $GITHUB_TOKEN"\
     -H "X-GitHub-Api-Version: 2022-11-28" \
     "$API_URL" \
-    -d "{\"reviewers\": \"$contribution_tl\"}"
+    -d "{\"reviewers\": [\"$contribution_tl\"]}"
 
 # security_items="Playbooks|IncidentTypes|IncidentFields|IndicatorTypes|IndicatorFields|Layouts|Classifiers"
 

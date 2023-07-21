@@ -6,6 +6,7 @@ on:
 permissions:
   pull-requests: write
   repository-projects: read
+  contents: read
 
 jobs:
   handle_new_external_pr:
@@ -22,7 +23,9 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_LINK: ${{ github.event.pull_request.html_url }}
+          TEMP: ${{ github.event.pull_request.diff_url }}
           # BASE: ${{ github.event.pull_request.base.sha }}
           # HEAD: ${{ github.event.pull_request.head.sha }}
         run: |
+          echo $TEMP
           ./Utils/github_workflow_scripts/handle_external_pr.sh

@@ -3,8 +3,9 @@ on:
   pull_request:
     # types: [opened, edited]
 
-permissions: write-all|read-all
-  # pull-requests: read
+permissions:
+  pull-requests: write
+  repository-projects: read
 
 jobs:
   handle_new_external_pr:

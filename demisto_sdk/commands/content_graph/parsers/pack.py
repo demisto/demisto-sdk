@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import Any, Dict, Iterator, List, Optional
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
+from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import get_json
 from demisto_sdk.commands.content_graph.common import (
@@ -133,7 +134,7 @@ class PackMetadataParser:
         self.server_min_version: str = metadata.get("serverMinVersion", "")
         self.current_version: str = metadata["currentVersion"]
         self.version_info: str = ""
-        self.commit: str = ""
+        self.commit: str = GitUtil().get_current_commit_hash() or ""
         self.downloads: int = 0
         self.tags: List[str] = metadata["tags"] or []
         self.categories: List[str] = [c.title() for c in metadata["categories"]]

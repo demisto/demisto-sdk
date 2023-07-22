@@ -18,9 +18,7 @@ from demisto_sdk.commands.common.constants import (
     MARKETPLACE_MIN_VERSION,
     MarketplaceVersions,
 )
-from demisto_sdk.commands.common.content.content import Content
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
-from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import MarketplaceTagParser
@@ -602,7 +600,6 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
 
     def enhance_pack_properties(self, marketplace: MarketplaceVersions):
         self.tags = self.get_pack_tags(marketplace)
-        self.commit = self.get_last_commit()
         self.version_info = os.environ.get("CI_PIPELINE_ID", "")
         self.server_min_version = (
             self.server_min_version
@@ -683,10 +680,6 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
             for r in self.depends_on
             if r.is_direct
         }
-
-    @staticmethod
-    def get_last_commit():
-        return GitUtil(repo=Content.git()).get_current_commit_hash()
 
     def get_pack_tags(self, marketplace):
         tags = self.get_tags_by_marketplace(marketplace)

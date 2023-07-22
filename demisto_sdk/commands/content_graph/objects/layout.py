@@ -26,7 +26,14 @@ class Layout(ContentItem, content_type=ContentType.LAYOUT):  # type: ignore[call
     mobile: bool
 
     def metadata_fields(self) -> Set[str]:
-        return {"object_id", "name", "description", "fromversion", "toversion", "deprecated"}
+        return {
+            "object_id",
+            "name",
+            "description",
+            "fromversion",
+            "toversion",
+            "deprecated",
+        }
 
     def prepare_for_upload(
         self,

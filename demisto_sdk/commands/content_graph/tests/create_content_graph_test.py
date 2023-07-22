@@ -369,7 +369,6 @@ class TestCreateContentGraph:
         mocker.patch.object(
             IntegrationScript, "get_supported_native_images", return_value=[]
         )
-        mocker.patch.object(Pack, "get_last_commit", return_value="dummycommithash")
 
         pack = repo.create_pack("TestPack")
         pack.pack_metadata.write_json(load_json("pack_metadata.json"))

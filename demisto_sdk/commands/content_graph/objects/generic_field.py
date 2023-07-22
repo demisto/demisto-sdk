@@ -11,7 +11,14 @@ class GenericField(ContentItem, content_type=ContentType.GENERIC_FIELD):  # type
     definition_id: Optional[str] = Field(alias="definitionId")
 
     def metadata_fields(self) -> Set[str]:
-        return {"object_id", "name", "description", "fromversion", "toversion", "deprecated"}
+        return {
+            "object_id",
+            "name",
+            "description",
+            "fromversion",
+            "toversion",
+            "deprecated",
+        }
 
     def dump(
         self,

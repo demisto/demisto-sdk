@@ -808,14 +808,18 @@ def add_item_to_metadata_list(
         item_type_key=content_item.content_type.metadata_name,
     ):
         content_item_metadata = content_item_metadata[0]
-        logger.debug(f'Found content item with name "{content_item.name}" that was already appended to the list')
+        logger.debug(
+            f'Found content item with name "{content_item.name}" that was already appended to the list'
+        )
 
         replace_item_if_has_higher_toversion(
             content_item, content_item_metadata, content_item_summary
         )
 
     else:
-        logger.debug(f'Didn\'t find content item with name "{content_item.name}" in the list, appending.')
+        logger.debug(
+            f'Didn\'t find content item with name "{content_item.name}" in the list, appending.'
+        )
         set_empty_toversion_if_default(content_item_summary)
         collected_content_items[content_item.content_type.metadata_name].append(
             content_item_summary
@@ -823,7 +827,9 @@ def add_item_to_metadata_list(
 
     # If incident_to_alert is True then stop recursive
     if not incident_to_alert and content_item.is_incident_to_alert(marketplace):
-        logger.debug(f'Replacing incident to alert in content item with ID "{content_item.object_id}" and appending to metadata')
+        logger.debug(
+            f'Replacing incident to alert in content item with ID "{content_item.object_id}" and appending to metadata'
+        )
         add_item_to_metadata_list(
             collected_content_items, content_item, marketplace, incident_to_alert=True
         )

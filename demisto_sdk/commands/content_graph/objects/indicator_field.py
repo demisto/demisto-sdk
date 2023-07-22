@@ -23,7 +23,15 @@ class IndicatorField(ContentItem, content_type=ContentType.INDICATOR_FIELD):  # 
         return summary
 
     def metadata_fields(self) -> Set[str]:
-        return {"object_id", "name", "type", "description", "fromversion", "toversion", "deprecated"}
+        return {
+            "object_id",
+            "name",
+            "type",
+            "description",
+            "fromversion",
+            "toversion",
+            "deprecated",
+        }
 
     @classmethod
     def _client_upload_method(cls, client: demisto_client) -> Callable:

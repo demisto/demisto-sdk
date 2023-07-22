@@ -12,7 +12,14 @@ from demisto_sdk.commands.prepare_content.preparers.marketplace_incident_to_aler
 
 class Playbook(ContentItem, content_type=ContentType.PLAYBOOK):  # type: ignore[call-arg]
     def metadata_fields(self) -> Set[str]:
-        return {"object_id", "name", "description", "fromversion", "toversion", "deprecated"}
+        return {
+            "object_id",
+            "name",
+            "description",
+            "fromversion",
+            "toversion",
+            "deprecated",
+        }
 
     def prepare_for_upload(
         self,

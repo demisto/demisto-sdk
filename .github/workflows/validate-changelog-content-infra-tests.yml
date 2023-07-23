@@ -16,12 +16,11 @@ jobs:
       
       - name:  Get commit hash
         id: get-commit
-        run: echo commit=$(git rev-parse HEAD) >> $GITHUB_ENV
+        run: echo commit=$(git rev-parse HEAD) >> $GITHUB_OUTPUT
 
       - name: Checkout
         uses: actions/checkout@v3
         with:
-          fetch-depth: 0
           repository: demisto/content
           path: content
   

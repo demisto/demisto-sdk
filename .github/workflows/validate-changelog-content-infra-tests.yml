@@ -1,7 +1,5 @@
 name: Run content infrastracture tests
 on: pull_request
-env: 
-  PYTHONPATH: $GITHUB_WORKSPACE/content
 
 jobs:
   build:
@@ -42,6 +40,8 @@ jobs:
           echo "added custom SDK"
 
       - name: tests
+        env: 
+          PYTHONPATH: ${{ github.workspace }}/content
         run: |
           cd content
           poetry run pytest ./Tests/scripts/infrastructure_tests/ -v

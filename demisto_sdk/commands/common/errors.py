@@ -135,6 +135,10 @@ ERROR_CODE = {
         "code": "BA124",
         "related_field": "",
     },
+    "customer_facing_docs_disallowed_terms": {
+        "code": "BA125",
+        "related_field": "description",
+    },
     # BC - Backward Compatible
     "breaking_backwards_subtype": {
         "code": "BC100",
@@ -1468,6 +1472,7 @@ ALLOWED_IGNORE_ERRORS = (
         "BA116",
         "BA119",
         "BA124",
+        "BA125",
         "DS107",
         "GF102",
         "IF100",
@@ -4056,6 +4061,14 @@ class Errors:
     @error_code_decorator
     def missing_unit_test_file(path: Path):
         return f"Missing {path.stem}_test.py unit test file for {path.name}."
+
+    @staticmethod
+    @error_code_decorator
+    def customer_facing_docs_disallowed_terms(found_terms: List[str]):
+        return (
+            f"Found internal terms in a customer-facing documentation file: "
+            f"{', '.join(found_terms)}"
+        )
 
     @staticmethod
     @error_code_decorator

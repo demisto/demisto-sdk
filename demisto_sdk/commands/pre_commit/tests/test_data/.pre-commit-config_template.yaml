@@ -80,3 +80,4 @@ repos:
     rev: "v1.6.0"
     hooks:
     - id: sourcery
+      args: ["--no-summary"]

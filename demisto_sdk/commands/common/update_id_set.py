@@ -311,9 +311,9 @@ def should_skip_item_by_mp(
         return False
 
     # first check, check field 'marketplaces' in the item's file
-    file_type = Path(file_path).suffix
+    Path(file_path).suffix
     try:
-        item_data = get_file(file_path, file_type)
+        item_data = get_file(file_path)
     except (ValueError, FileNotFoundError, IsADirectoryError):
         return True
 

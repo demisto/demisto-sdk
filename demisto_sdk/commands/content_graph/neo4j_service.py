@@ -113,7 +113,7 @@ def _docker_start():
                 bind_propagation="rshared",
             )
             
-        ]
+        ],
         # volumes=[
         #     f"{REPO_PATH / NEO4J_FOLDER / NEO4J_DATA_FOLDER}:/{NEO4J_DATA_FOLDER}",
         #     f"{REPO_PATH / NEO4J_FOLDER / NEO4J_IMPORT_FOLDER}:{LOCAL_NEO4J_PATH / NEO4J_IMPORT_FOLDER}",

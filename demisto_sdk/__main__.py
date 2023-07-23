@@ -50,8 +50,8 @@ from demisto_sdk.commands.upload.upload import upload_content_entity
 from demisto_sdk.utils.utils import check_configuration_file
 
 SDK_OFFLINE_ERROR_MESSAGE = (
-    "[red]An internet connection is required for this command. Please connect to the "
-    "network and set the DEMISTO_SDK_OFFLINE_ENV variable value to False.[/red]"
+    "[red]An internet connection is required for this command. If connected to the "
+    "internet, un-set the DEMISTO_SDK_OFFLINE_ENV environment variable.[/red]"
 )
 
 logger = logging.getLogger("demisto-sdk")

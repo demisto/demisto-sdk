@@ -22,7 +22,7 @@
 * Calling **modeling-rules init-test-data** will now return the XDM fields output in alphabetical order.
 * Fixed an issue where **validate** failed on infrastructure test files.
 * Added a new validation (`BA125`) to **validate** that assures internal function names aren't in use in customer-facing docs.
-* Added support for working with Demisto-SDK offline by using the `DEMISTO_SDK_OFFLINE_ENV` environment variable. See [this](https://github.com/demisto/demisto-sdk#internet-connection) for more information.
+* Added support for working with Demisto-SDK offline by using the `DEMISTO_SDK_OFFLINE_ENV` environment variable. See https://github.com/demisto/demisto-sdk#internet-connection for more information.
 
 ## 1.17.2
 * Fixed an issue where **lint** and **validate** commands failed on integrations and scripts that use docker images that are not available in the Docker Hub but exist locally.

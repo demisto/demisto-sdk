@@ -1,10 +1,10 @@
 from __future__ import annotations
 
-from packaging.version import Version
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
 import decorator
+from packaging.version import Version
 from requests import Response
 
 from demisto_sdk.commands.common.constants import (

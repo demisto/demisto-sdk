@@ -1,4 +1,5 @@
 import re
+
 from packaging.version import Version
 
 from demisto_sdk.commands.common.constants import DEFAULT_CONTENT_ITEM_FROM_VERSION

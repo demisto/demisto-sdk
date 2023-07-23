@@ -1,8 +1,9 @@
 import re
-from packaging.version import Version
 from enum import Enum
 from functools import reduce
 from typing import Dict, List
+
+from packaging.version import Version
 
 CAN_START_WITH_DOT_SLASH = "(?:./)?"
 NOT_TEST = "(?!Test)"

@@ -2,9 +2,10 @@
 This module is designed to validate the correctness of incident field entities in content.
 """
 import re
-from packaging.version import Version
 from enum import IntEnum
 from typing import List, Set
+
+from packaging.version import Version
 
 from demisto_sdk.commands.common.constants import (
     DEFAULT_CONTENT_ITEM_FROM_VERSION,

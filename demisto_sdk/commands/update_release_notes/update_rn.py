@@ -5,9 +5,10 @@ import copy
 import errno
 import os
 import re
-from packaging.version import Version
 from pathlib import Path
 from typing import Any, Iterable, Optional, Tuple, Union
+
+from packaging.version import Version
 
 from demisto_sdk.commands.common.constants import (
     ALL_FILES_VALIDATION_IGNORE_WHITELIST,

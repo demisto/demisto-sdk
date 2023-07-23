@@ -8,7 +8,6 @@ import time
 import urllib.parse
 import uuid
 from copy import deepcopy
-from packaging.version import Version
 from math import ceil
 from pprint import pformat
 from queue import Empty, Queue
@@ -20,6 +19,7 @@ import requests
 import urllib3
 from demisto_client.demisto_api import DefaultApi, Incident
 from demisto_client.demisto_api.rest import ApiException
+from packaging.version import Version
 from slack_sdk import WebClient as SlackClient
 
 from demisto_sdk.commands.common.constants import (

@@ -1,9 +1,9 @@
 import logging
-from packaging.version import Version
 from typing import Dict, List
 from unittest.mock import patch
 
 import pytest
+from packaging.version import Version
 
 from demisto_sdk.commands.common.hook_validations.field_base_validator import (
     FieldBaseValidator,

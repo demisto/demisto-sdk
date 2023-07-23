@@ -5,13 +5,12 @@ import glob
 import os
 import re
 from datetime import datetime
-from packaging.version import Version
 from pathlib import Path
 from typing import Dict, List, Set, Tuple
 
 from dateutil import parser
 from git import GitCommandError, Repo
-from packaging.version import parse
+from packaging.version import Version, parse
 
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import (  # PACK_METADATA_PRICE,

@@ -6,7 +6,6 @@ import re
 import time
 from collections import OrderedDict
 from datetime import datetime
-from packaging.version import Version
 from enum import Enum
 from functools import partial
 from multiprocessing import Pool
@@ -15,6 +14,7 @@ from typing import Callable, Dict, List, Optional, Tuple
 
 import click
 import networkx
+from packaging.version import Version
 
 from demisto_sdk.commands.common.constants import (
     CLASSIFIERS_DIR,

@@ -2,8 +2,9 @@ import glob
 import os
 import shutil
 from distutils.dir_util import copy_tree
-from packaging.version import Version
 from typing import Dict, List
+
+from packaging.version import Version
 
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.configuration import Configuration

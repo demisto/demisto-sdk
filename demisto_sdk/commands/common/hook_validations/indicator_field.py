@@ -1,8 +1,9 @@
 """
 This module is designed to validate the correctness of incident field entities in content.
 """
-from packaging.version import Version
 from typing import Optional
+
+from packaging.version import Version
 
 from demisto_sdk.commands.common.constants import INDICATOR_FIELD_TYPE_TO_MIN_VERSION
 from demisto_sdk.commands.common.hook_validations.field_base_validator import (

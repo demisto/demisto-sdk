@@ -1,11 +1,11 @@
 import os
 import re
 from abc import abstractmethod
-from packaging.version import Version
 from pathlib import Path
 from typing import Optional
 
 from packaging import version
+from packaging.version import Version
 
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import (

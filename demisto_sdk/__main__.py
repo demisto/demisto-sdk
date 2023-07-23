@@ -47,6 +47,7 @@ from demisto_sdk.commands.test_content.test_modeling_rule import (
 )
 from demisto_sdk.commands.upload.upload import upload_content_entity
 from demisto_sdk.utils.utils import check_configuration_file
+from demisto_sdk.commands.content_graph.objects.repository import from_path
 
 logger = logging.getLogger("demisto-sdk")
 
@@ -362,9 +363,15 @@ def extract_code(ctx, config, **kwargs):
 @click.option(
     "-i",
     "--input",
-    help="The directory path to the files or path to the file to unify",
-    required=True,
-    type=click.Path(dir_okay=True),
+    help="The directory path to the files or path to the file to unify. Supports a comma separated list.",
+    required=False,
+    type=PathsParamType(dir_okay=True, exists=True),
+)
+@click.option(
+    "-a",
+    "--all",
+    is_flag=True,
+    help="Run prepare-content on all content packs."
 )
 @click.option(
     "-g",
@@ -417,25 +424,45 @@ def prepare_content(ctx, **kwargs):
     """
     This command is used to prepare the content to be used in the platform.
     """
-    if click.get_current_context().info_name == "unify":
-        kwargs["unify_only"] = True
+    assert any([kwargs["all"], kwargs["input"]]), "Either '-a' or '-i' parameters must be provided."
+    assert not all([kwargs["all"], kwargs["input"]]), "Only one of '-a' and '-i' parameters should be provided."
 
-    check_configuration_file("unify", kwargs)
-    # Input is of type Path.
-    kwargs["input"] = str(kwargs["input"])
-    file_type = find_type(kwargs["input"])
-    if marketplace := kwargs.get("marketplace"):
-        os.environ[ENV_DEMISTO_SDK_MARKETPLACE] = marketplace.lower()
-    if file_type == FileType.GENERIC_MODULE:
-        from demisto_sdk.commands.prepare_content.generic_module_unifier import (
-            GenericModuleUnifier,
-        )
+    if kwargs["all"]:
+        content_DTO = from_path()
+        content_DTO.dump(dir=Path(os.path.join(kwargs["output"], "tmp")),
+                         marketplace=MarketplaceVersions(kwargs["marketplace"]))
+        return 0
 
-        # pass arguments to GenericModule unifier and call the command
-        generic_module_unifier = GenericModuleUnifier(**kwargs)
-        generic_module_unifier.merge_generic_module_with_its_dashboards()
-    else:
-        PrepareUploadManager.prepare_for_upload(**kwargs)
+    inputs = []
+    if kwargs["input"]:
+        inputs = kwargs["input"].split(",")
+
+    output_path = kwargs["output"]
+
+    for input in inputs:
+        if output_path and len(inputs) > 1:
+            path_name = os.path.basename(input)
+            kwargs["output"] = os.path.join(output_path, path_name)
+
+        if click.get_current_context().info_name == "unify":
+            kwargs["unify_only"] = True
+
+        check_configuration_file("unify", kwargs)
+        # Input is of type Path.
+        kwargs["input"] = str(input)
+        file_type = find_type(kwargs["input"])
+        if marketplace := kwargs.get("marketplace"):
+            os.environ[ENV_DEMISTO_SDK_MARKETPLACE] = marketplace.lower()
+        if file_type == FileType.GENERIC_MODULE:
+            from demisto_sdk.commands.prepare_content.generic_module_unifier import (
+                GenericModuleUnifier,
+            )
+
+            # pass arguments to GenericModule unifier and call the command
+            generic_module_unifier = GenericModuleUnifier(**kwargs)
+            generic_module_unifier.merge_generic_module_with_its_dashboards()
+        else:
+            PrepareUploadManager.prepare_for_upload(**kwargs)
     return 0
 
 

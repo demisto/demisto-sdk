@@ -258,7 +258,7 @@ def validate_core_packs_dependencies(
     RETURN pack1, collect(r) as relationships, collect(pack2) as nodes_to
     """
     return {
-        int(item.get("pack1").element_id): Neo4jRelationshipResult(
+        item.get("pack1").element_id: Neo4jRelationshipResult(
             node_from=item.get("pack1"),
             relationships=item.get("relationships"),
             nodes_to=item.get("nodes_to"),

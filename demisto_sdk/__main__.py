@@ -441,6 +441,7 @@ def prepare_content(ctx, **kwargs):
         inputs = input_.split(",")
 
     output_path = kwargs["output"]
+    os.makedirs(output_path, exist_ok=True)
 
     for input_content in inputs:
         if output_path and len(inputs) > 1:

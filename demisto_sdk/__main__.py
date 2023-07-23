@@ -431,20 +431,20 @@ def prepare_content(ctx, **kwargs):
     if kwargs["all"]:
         content_DTO = from_path()
         content_DTO.dump(
-            dir=Path(os.path.join(kwargs["output"], "tmp")),
-            marketplace=MarketplaceVersions(kwargs["marketplace"]),
+            dir=Path(kwargs["output"], "tmp"),
+            marketplace=parse_marketplace_kwargs(kwargs),
         )
         return 0
 
     inputs = []
-    if kwargs["input"]:
-        inputs = kwargs["input"].split(",")
+    if input_ := kwargs["input"]:
+        inputs = input_.split(",")
 
     output_path = kwargs["output"]
 
-    for input in inputs:
+    for input_content in inputs:
         if output_path and len(inputs) > 1:
-            path_name = os.path.basename(input)
+            path_name = Path(input_content).name
             kwargs["output"] = os.path.join(output_path, path_name)
 
         if click.get_current_context().info_name == "unify":
@@ -452,7 +452,7 @@ def prepare_content(ctx, **kwargs):
 
         check_configuration_file("unify", kwargs)
         # Input is of type Path.
-        kwargs["input"] = str(input)
+        kwargs["input"] = str(input_content)
         file_type = find_type(kwargs["input"])
         if marketplace := kwargs.get("marketplace"):
             os.environ[ENV_DEMISTO_SDK_MARKETPLACE] = marketplace.lower()

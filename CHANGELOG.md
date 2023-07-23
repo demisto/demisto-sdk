@@ -10,7 +10,7 @@
 * Fixed an issue where **validate** would not properly detect dependencies of core packs.
 * Removed usages of Random in unit tests to ensure the tests are deterministic.
 * **validate** will now run on all the pack content items when the pack supported marketplaces are modified.
-* Added a separated handling for single select and multi select types for incident fields and indicators in **does_not_have_empty_select_values** validation.
+* Fixed an issue where **validate** failed on single-select types incident and indicator fields when given empty value as a select value option.
 * **pre-commit** no longer runs when there are no modified files (unless provided with input files).
 * **lint** will now fail on `demisto.results` and `return_outputs` usage, when a pack is `xsoar` or `partner` supported.
 * **lint** will now fail on `LOG` usage in python files.

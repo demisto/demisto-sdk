@@ -1,4 +1,3 @@
-import json
 import os
 import re
 from pathlib import Path
@@ -13,8 +12,11 @@ from demisto_sdk.commands.common.constants import (
     MarketplaceVersions,
     MarketplaceVersionToMarketplaceName,
 )
+from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import get_file
+
+json = JSON_Handler()
 
 
 def replace_markdown_urls_and_upload_to_artifacts(
@@ -128,9 +130,7 @@ def upload_markdown_images_to_artifacts(images_dict: dict, pack_name: str):
                 # If this is the first pack init the file with an empty dict.
                 json.dump({}, f)
 
-        markdown_images_data_dict = get_file(
-            artifacts_readme_images_path, type_of_file="json"
-        )
+        markdown_images_data_dict = get_file(artifacts_readme_images_path)
         if pack_name in markdown_images_data_dict:
             markdown_images_data_dict[pack_name].update(images_dict[pack_name])
         else:

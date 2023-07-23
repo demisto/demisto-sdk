@@ -196,9 +196,7 @@ def test_dump_pack_readme(mocker, image_data_one, image_data_two):
         mocker.patch.object(os, "getenv", return_value=artifact_dir)
         upload_markdown_images_to_artifacts(return_value1, "PrismaCloudCompute")
         upload_markdown_images_to_artifacts(return_value2, "CVE_2022_30190")
-        res = get_file(
-            f"{artifact_dir}/{MARKDOWN_IMAGES_ARTIFACT_FILE_NAME}", type_of_file="json"
-        )
+        res = get_file(f"{artifact_dir}/{MARKDOWN_IMAGES_ARTIFACT_FILE_NAME}")
     assert res == excepted_res
 
 
@@ -238,7 +236,5 @@ def test_dump_same_pack_images_in_desc_and_readme(
         mocker.patch.object(os, "getenv", return_value=artifact_dir)
         upload_markdown_images_to_artifacts(return_value1, packe_name)
         upload_markdown_images_to_artifacts(return_value2, packe_name)
-        res = get_file(
-            f"{artifact_dir}/{MARKDOWN_IMAGES_ARTIFACT_FILE_NAME}", type_of_file="json"
-        )
+        res = get_file(f"{artifact_dir}/{MARKDOWN_IMAGES_ARTIFACT_FILE_NAME}")
     assert res == excepted_res

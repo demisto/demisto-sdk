@@ -114,7 +114,7 @@ def _docker_start():
             "timeout": 15 * 1000000000,
             "retries": 10,
         },
-        user=f"{os.getuid()}:{os.getgid()}",
+        # user=f"{os.getuid()}:{os.getgid()}",
     )
     logger.info("Neo4j service started successfully")
     import time

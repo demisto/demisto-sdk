@@ -181,7 +181,7 @@ class TestCodeGenerator:
 
         autogen_config.generate_integration_package(output_dir=tmpdir)
 
-        assert Path(tmpdir, "VirusTotalTest").is_file()
+        assert os.path.isdir(Path(tmpdir, "VirusTotalTest"))
         assert Path(tmpdir, "VirusTotalTest", "VirusTotalTest.py").is_file()
         assert Path(tmpdir, "VirusTotalTest", "VirusTotalTest.yml").is_file()
 

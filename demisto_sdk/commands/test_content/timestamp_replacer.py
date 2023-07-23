@@ -14,6 +14,7 @@ from mitmproxy.addonmanager import Loader
 from mitmproxy.addons.serverplayback import ServerPlayback
 from mitmproxy.http import HTTPFlow, Request
 from mitmproxy.script import concurrent
+from pathlib import Path
 
 from demisto_sdk.commands.common.handlers import JSON_Handler
 
@@ -490,12 +491,12 @@ class TimestampReplacer:
         logging.info(
             f'reading in problematic keys data from "{repo_bad_keys_filepath}"'
         )
-        if not path.exists(self.bad_keys_filepath) and path.exists(
+        if not Path(self.bad_keys_filepath).exists() and Path(
             repo_bad_keys_filepath
-        ):
+        ).exists():
             with open(repo_bad_keys_filepath) as fp:
                 problem_keys = json.load(fp)
-        elif path.exists(self.bad_keys_filepath):
+        elif Path(self.bad_keys_filepath).exists():
             with open(self.bad_keys_filepath) as fp:
                 problem_keys = json.load(fp)
         else:
@@ -520,7 +521,7 @@ class TimestampReplacer:
         mitmdump in playback mode. Resets command line options with the key value pairs from the loaded dictionary.
         """
         logging.info('executing "load_problematic_keys" method')
-        if path.exists(self.bad_keys_filepath):
+        if Path(self.bad_keys_filepath).exists():
             logging.info(f'"{self.bad_keys_filepath}" path exists - loading bad keys')
 
             problem_keys = json.load(open(self.bad_keys_filepath))

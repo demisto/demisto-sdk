@@ -139,7 +139,7 @@ ERROR_CODE = {
         "code": "BA125",
         "related_field": "description",
     },
-    "description_missing_dot_at_the_end":{
+    "description_missing_dot_at_the_end": {
         "code": "BA126",
         "related_field": "description",
     },

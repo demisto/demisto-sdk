@@ -36,6 +36,7 @@ from demisto_sdk.commands.common.tools import (
 from demisto_sdk.commands.content_graph.interface.neo4j.neo4j_graph import (
     Neo4jContentGraphInterface,
 )
+from demisto_sdk.commands.content_graph.objects.repository import from_path
 from demisto_sdk.commands.generate_modeling_rules import generate_modeling_rules
 from demisto_sdk.commands.prepare_content.prepare_upload_manager import (
     PrepareUploadManager,
@@ -47,7 +48,6 @@ from demisto_sdk.commands.test_content.test_modeling_rule import (
 )
 from demisto_sdk.commands.upload.upload import upload_content_entity
 from demisto_sdk.utils.utils import check_configuration_file
-from demisto_sdk.commands.content_graph.objects.repository import from_path
 
 logger = logging.getLogger("demisto-sdk")
 
@@ -368,10 +368,7 @@ def extract_code(ctx, config, **kwargs):
     type=PathsParamType(dir_okay=True, exists=True),
 )
 @click.option(
-    "-a",
-    "--all",
-    is_flag=True,
-    help="Run prepare-content on all content packs."
+    "-a", "--all", is_flag=True, help="Run prepare-content on all content packs."
 )
 @click.option(
     "-g",
@@ -424,13 +421,19 @@ def prepare_content(ctx, **kwargs):
     """
     This command is used to prepare the content to be used in the platform.
     """
-    assert any([kwargs["all"], kwargs["input"]]), "Either '-a' or '-i' parameters must be provided."
-    assert not all([kwargs["all"], kwargs["input"]]), "Only one of '-a' and '-i' parameters should be provided."
+    assert any(
+        [kwargs["all"], kwargs["input"]]
+    ), "Either '-a' or '-i' parameters must be provided."
+    assert not all(
+        [kwargs["all"], kwargs["input"]]
+    ), "Only one of '-a' and '-i' parameters should be provided."
 
     if kwargs["all"]:
         content_DTO = from_path()
-        content_DTO.dump(dir=Path(os.path.join(kwargs["output"], "tmp")),
-                         marketplace=MarketplaceVersions(kwargs["marketplace"]))
+        content_DTO.dump(
+            dir=Path(os.path.join(kwargs["output"], "tmp")),
+            marketplace=MarketplaceVersions(kwargs["marketplace"]),
+        )
         return 0
 
     inputs = []

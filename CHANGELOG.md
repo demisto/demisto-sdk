@@ -23,6 +23,8 @@
 * Calling **modeling-rules init-test-data** will now return the XDM fields output in alphabetical order.
 * Fixed an issue where **validate** failed on infrastructure test files.
 * Added a new validation (`BA125`) to **validate** that assures internal function names aren't in use in customer-facing docs.
+* Added the '--all' input option for the **prepare-content** command, to support running on all content packs.
+* Updated the '-i' input option of the **prepare-content** command to support multiple inputs as a comma-separated list.
 
 ## 1.17.2
 * Fixed an issue where **lint** and **validate** commands failed on integrations and scripts that use docker images that are not available in the Docker Hub but exist locally.

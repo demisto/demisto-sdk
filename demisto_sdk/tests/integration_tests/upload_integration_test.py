@@ -167,7 +167,7 @@ def test_zipped_pack_upload_positive(repo, mocker, tmpdir, demisto_client_mock):
     mocked_get_installed = mocker.patch.object(
         API_CLIENT, "generic_request", return_value=({}, 200, None)
     )
-    mocker.patch.object(Path, 'cwd', return_value=Path.cwd())
+    mocker.patch.object(Path, "cwd", return_value=Path.cwd())
 
     pack = repo.setup_one_pack(name="test-pack")
     runner = CliRunner(mix_stderr=False)

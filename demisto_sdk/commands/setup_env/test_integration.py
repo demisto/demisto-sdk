@@ -37,14 +37,17 @@ ENTRY_TYPE_ERROR = 4
 def __get_integration_config(client, integration_name):
     body = {"page": 0, "size": 100, "query": "name:" + integration_name}
     try:
-        res_raw = demisto_client.generic_request_func(
-            self=client, path="/settings/integration/search", method="POST", body=body
+        res = demisto_client.generic_request_func(
+            self=client,
+            path="/settings/integration/search",
+            method="POST",
+            body=body,
+            response_type="object",
         )
     except ApiException:
         logger.exception(f"failed to get integration {integration_name} configuration")
         return None
 
-    res = ast.literal_eval(res_raw[0])
     TIMEOUT = 180
     SLEEP_INTERVAL = 5
     total_sleep = 0
@@ -166,21 +169,21 @@ def __delete_integration_instance_if_determined_by_name(
 
     """
     try:
-        int_resp = demisto_client.generic_request_func(
+        int_instances = demisto_client.generic_request_func(
             self=client,
             method="POST",
             path="/settings/integration/search",
             body={"size": 1000},
+            response_type="object"
         )
-        int_instances = ast.literal_eval(int_resp[0])
     except ApiException:
         logging_manager.exception(
             "Failed to delete integrations instance, error trying to communicate with demisto server"
         )
         return
-    if int(int_resp[1]) != 200:
+    if int(int_instances[1]) != 200:
         logging_manager.error(
-            f"Get integration instance failed with status code: {int_resp[1]}"
+            f"Get integration instance failed with status code: {int_instances[1]}"
         )
         return
     if "instances" not in int_instances:
@@ -215,16 +218,12 @@ def create_integration_instance(
     if not module_configuration:
         module_configuration = []
 
-    if "integrationInstanceName" in integration_params:
-        instance_name = integration_params["integrationInstanceName"]
-        __delete_integration_instance_if_determined_by_name(
-            integration_conf_client, instance_name, logging_manager
-        )
-    else:
-        instance_name = f'{integration_instance_name.replace(" ", "_")}_test'
+    __delete_integration_instance_if_determined_by_name(
+        integration_conf_client, integration_instance_name, logging_manager
+    )
 
     logging_manager.info(
-        f'Configuring instance for {integration_name} (instance name: {instance_name}, validate "Test": {validate_test})'
+        f'Configuring instance for {integration_name} (instance name: {integration_instance_name}, validate "Test": {validate_test})'
     )
     # define module instance
     module_instance = {
@@ -236,7 +235,7 @@ def create_integration_instance(
         "engine": "",
         "id": "",
         "isIntegrationScript": is_byoi,
-        "name": instance_name,
+        "name": integration_instance_name,
         "passwordProtected": False,
         "version": 0,
     }
@@ -284,6 +283,7 @@ def create_integration_instance(
             method="PUT",
             path="/settings/integration",
             body=module_instance,
+            response_type="object",
         )
     except ApiException:
         error_message = (
@@ -298,7 +298,7 @@ def create_integration_instance(
         logging_manager.error(pformat(res[0]))
         return None, error_message
 
-    integration_config = ast.literal_eval(res[0])
+    integration_config = res[0]
     module_instance["id"] = integration_config["id"]
 
     # test integration

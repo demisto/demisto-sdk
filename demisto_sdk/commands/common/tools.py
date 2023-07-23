@@ -113,10 +113,7 @@ from demisto_sdk.commands.common.constants import (
     MarketplaceVersions,
     urljoin,
 )
-from demisto_sdk.commands.common.tools_paths import (
-    get_content_path,
-    is_external_repository,
-)
+import demisto_sdk.commands.common.tools_paths as tools_paths
 from demisto_sdk.commands.common.git_content_config import GitContentConfig, GitProvider
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
@@ -408,7 +405,7 @@ def get_marketplace_to_core_packs() -> Dict[MarketplaceVersions, Set[str]]:
     Returns:
         A mapping from marketplace versions to their core packs.
     """
-    if is_external_repository():
+    if tools_paths.is_external_repository():
         return {}  # no core packs in external repos.
 
     mp_to_core_packs: Dict[MarketplaceVersions, Set[str]] = {}
@@ -443,7 +440,7 @@ def get_core_pack_list(marketplaces: List[MarketplaceVersions] = None) -> list:
         The core packs list.
     """
     result: Set[str] = set()
-    if is_external_repository():
+    if tools_paths.is_external_repository():
         return []  # no core packs in external repos.
 
     if marketplaces is None:
@@ -524,7 +521,7 @@ def get_remote_file_from_api(
             str(exc).replace(github_token, "XXX") if github_token else str(exc)
         )
         err_msg = err_msg.replace(gitlab_token, "XXX") if gitlab_token else err_msg
-        if is_external_repository():
+        if tools_paths.is_external_repository():
             logger.debug(
                 f'[yellow]You are working in a private repository: "{git_content_config.current_repository}".\n'
                 f"The github/gitlab token in your environment is undefined.\n"
@@ -823,7 +820,7 @@ def get_file(
     logger.debug(f"Inferred type {type_of_file} for file {file_path.name}.")
 
     if not file_path.exists():
-        file_path = Path(get_content_path()) / file_path  # type: ignore[arg-type]
+        file_path = Path(tools_paths.get_content_path()) / file_path  # type: ignore[arg-type]
 
     if not file_path.exists():
         raise FileNotFoundError(file_path)
@@ -854,7 +851,7 @@ def get_file(
 
 
 def get_file_or_remote(file_path: Path, clear_cache=False):
-    content_path = get_content_path()
+    content_path = tools_paths.get_content_path()
     relative_file_path = None
     if file_path.is_absolute():
         absolute_file_path = file_path
@@ -1386,7 +1383,7 @@ def filter_files_by_type(file_paths=None, skip_file_types=None) -> set:
 
 
 def pack_name_to_path(pack_name):
-    return os.path.join(get_content_path(), PACKS_DIR, pack_name)  # type: ignore
+    return os.path.join(tools_paths.get_content_path(), PACKS_DIR, pack_name)  # type: ignore
 
 
 def pack_name_to_posix_path(pack_name):
@@ -1394,7 +1391,7 @@ def pack_name_to_posix_path(pack_name):
 
 
 def get_pack_ignore_file_path(pack_name):
-    return os.path.join(get_content_path(), PACKS_DIR, pack_name, PACKS_PACK_IGNORE_FILE_NAME)  # type: ignore
+    return os.path.join(tools_paths.get_content_path(), PACKS_DIR, pack_name, PACKS_PACK_IGNORE_FILE_NAME)  # type: ignore
 
 
 def get_test_playbook_id(test_playbooks_list: list, tpb_path: str) -> Tuple:  # type: ignore
@@ -2095,7 +2092,7 @@ def is_file_from_content_repo(file_path: str) -> Tuple[bool, str]:
         git_repo = git.Repo(os.getcwd(), search_parent_directories=True)
         remote_url = git_repo.remote().urls.__next__()
         is_fork_repo = "content" in remote_url
-        is_external_repo = is_external_repository()
+        is_external_repo = tools_paths.is_external_repository()
 
         if not is_fork_repo and not is_external_repo:
             return False, ""
@@ -2953,7 +2950,7 @@ def get_current_usecases() -> list:
     Returns:
         List of approved usecases from current branch
     """
-    if not is_external_repository():
+    if not tools_paths.is_external_repository():
         approved_usecases_json, _ = get_dict_from_file(
             "Tests/Marketplace/approved_usecases.json"
         )
@@ -2967,7 +2964,7 @@ def get_approved_tags_from_branch() -> Dict[str, List[str]]:
     Returns:
         Dict of approved tags from current branch
     """
-    if not is_external_repository():
+    if not tools_paths.is_external_repository():
         approved_tags_json, _ = get_dict_from_file(
             "Tests/Marketplace/approved_tags.json"
         )
@@ -2993,7 +2990,7 @@ def get_current_categories() -> list:
     Returns:
         List of approved categories from current branch
     """
-    if is_external_repository():
+    if tools_paths.is_external_repository():
         return []
     try:
         approved_categories_json, _ = get_dict_from_file(

@@ -31,9 +31,9 @@ from demisto_sdk.commands.common.tools import (
     get_config_param_kwargs_env,
     get_last_remote_release_version,
     get_release_note_entries,
-    is_external_repository,
     parse_marketplace_kwargs,
 )
+from demisto_sdk.commands.common.tools_paths import is_external_repository
 from demisto_sdk.commands.content_graph.interface.neo4j.neo4j_graph import (
     Neo4jContentGraphInterface,
 )

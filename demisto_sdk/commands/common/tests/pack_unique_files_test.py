@@ -8,7 +8,7 @@ from click.testing import CliRunner
 from git import GitCommandError
 
 from demisto_sdk.__main__ import main
-from demisto_sdk.commands.common import tools
+from demisto_sdk.commands.common import tools, tools_paths
 from demisto_sdk.commands.common.constants import (
     PACK_METADATA_DESC,
     PACK_METADATA_SUPPORT,
@@ -189,7 +189,7 @@ class TestPackUniqueFilesValidator:
         mocker.patch.object(ValidateManager, "setup_git_params", return_value=True)
         pack_metadata_no_email_and_url["email"] = ""
         pack_metadata_no_email_and_url["url"] = ""
-        mocker.patch.object(tools, "is_external_repository", return_value=True)
+        mocker.patch.object(tools_paths, "is_external_repository", return_value=True)
         mocker.patch.object(
             PackUniqueFilesValidator, "_is_pack_file_exists", return_value=True
         )
@@ -246,7 +246,7 @@ class TestPackUniqueFilesValidator:
 
         pack_metadata_changed_url = PACK_METADATA_PARTNER.copy()
         pack_metadata_changed_url["url"] = url
-        mocker.patch.object(tools, "is_external_repository", return_value=True)
+        mocker.patch.object(tools_paths, "is_external_repository", return_value=True)
         mocker.patch.object(
             PackUniqueFilesValidator, "_is_pack_file_exists", return_value=True
         )
@@ -300,7 +300,7 @@ class TestPackUniqueFilesValidator:
 
         pack_metadata_price_changed = PACK_METADATA_PARTNER.copy()
         pack_metadata_price_changed["price"] = 3
-        mocker.patch.object(tools, "is_external_repository", return_value=True)
+        mocker.patch.object(tools_paths, "is_external_repository", return_value=True)
         mocker.patch.object(
             PackUniqueFilesValidator, "_is_pack_file_exists", return_value=True
         )
@@ -477,7 +477,7 @@ class TestPackUniqueFilesValidator:
                 PACK_METADATA_TAGS: [],
             }
         )
-        mocker.patch.object(tools, "is_external_repository", return_value=False)
+        mocker.patch.object(tools_paths, "is_external_repository", return_value=False)
         mocker.patch.object(
             tools,
             "get_dict_from_file",
@@ -564,7 +564,7 @@ class TestPackUniqueFilesValidator:
                 PACK_METADATA_TAGS: tags,
             }
         )
-        mocker.patch.object(tools, "is_external_repository", return_value=False)
+        mocker.patch.object(tools_paths, "is_external_repository", return_value=False)
         mocker.patch.object(
             tools,
             "get_dict_from_file",
@@ -612,7 +612,7 @@ class TestPackUniqueFilesValidator:
             }
         )
 
-        mocker.patch.object(tools, "is_external_repository", return_value=False)
+        mocker.patch.object(tools_paths, "is_external_repository", return_value=False)
         mocker.patch.object(
             tools,
             "get_dict_from_file",
@@ -649,7 +649,7 @@ class TestPackUniqueFilesValidator:
                 PACK_METADATA_TAGS: tags,
             }
         )
-        mocker.patch.object(tools, "is_external_repository", return_value=False)
+        mocker.patch.object(tools_paths, "is_external_repository", return_value=False)
         self.validator.pack_path = pack.path
 
         with ChangeCWD(repo.path):

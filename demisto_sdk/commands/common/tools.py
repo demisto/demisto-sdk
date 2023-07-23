@@ -270,6 +270,7 @@ class NoInternetConnectionException(Exception):
     """
     This exception is raised in methods that require an internet connection, when the SDK is defined as working offline.
     """
+
     pass
 
 
@@ -570,7 +571,7 @@ def get_remote_file(
     tag: str = "master",
     return_content: bool = False,
     git_content_config: Optional[GitContentConfig] = None,
-    default_value=None
+    default_value=None,
 ):
     """
     Args:
@@ -3822,6 +3823,7 @@ def parse_multiple_path_inputs(
 
     raise ValueError(f"Cannot parse paths from {input_path}")
 
+
 @lru_cache
 def is_sdk_defined_working_offline() -> bool:
     """
@@ -3832,4 +3834,3 @@ def is_sdk_defined_working_offline() -> bool:
         bool: The value for DEMISTO_SDK_OFFLINE_ENV environment variable.
     """
     return str2bool(os.getenv(ENV_SDK_WORKING_OFFLINE))
-

@@ -1,5 +1,7 @@
 name: Run content infrastracture tests
 on: pull_request
+env: 
+  PYTHONPATH: $GITHUB_WORKSPACE/content
 
 jobs:
   build:
@@ -32,7 +34,10 @@ jobs:
         run: |
           cd content 
           poetry install --with ci
+          echo "starting uninstall of demisto-sdk .. "
           pip uninstall -y demisto-sdk
+          echo "uninstall of demisto-sdk is done .. "
+          echo "starting installing custom demisto-sdk of commit: ${{ steps.get-commit.outputs.commit }} "
           pip install git+https://github.com/demisto/demisto-sdk@${{ steps.get-commit.outputs.commit }}
           echo "added custom SDK"
 

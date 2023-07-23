@@ -47,8 +47,8 @@ from demisto_sdk.commands.common.tools import (
     get_common_server_path,
     get_pack_name,
     get_yaml,
-    is_external_repository,
 )
+from demisto_sdk.commands.common.tools_paths import is_external_repository
 from demisto_sdk.commands.secrets.secrets import SecretsValidator
 
 

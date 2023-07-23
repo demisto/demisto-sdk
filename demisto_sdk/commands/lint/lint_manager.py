@@ -33,9 +33,9 @@ from demisto_sdk.commands.common.tools import (
     find_type,
     get_file_displayed_name,
     get_json,
-    is_external_repository,
     retrieve_file_ending,
 )
+from demisto_sdk.commands.common.tools_paths import is_external_repository
 from demisto_sdk.commands.content_graph.content_graph_commands import (
     update_content_graph,
 )

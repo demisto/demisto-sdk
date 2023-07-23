@@ -2355,7 +2355,7 @@ class IntegrationValidator(ContentEntityValidator):
 
         return True
 
-    @error_codes("BA125")
+    @error_codes("BA126")
     def is_line_ends_with_dot(self):
         lines_with_missing_dot = ""
         if self.running_validations_using_git:

@@ -1,11 +1,46 @@
 # Changelog
 ## Unreleased
+* Fixed an issue where the *DEMISTO_SDK_SKIP_VERSION_CHECK* was ignored when running on non CI environments.
+* Added the ability to ignore any validation in the **validate** command when running in an external (non-demisto/content) repo, by placing a `.private-repo-settings` file at its root.
+* Fixed an issue where **validate** falsely detected backwards-compatibility issues, and prevented adding the `marketplaces` key to content items.
+* Calling **format** with the `-d` flag now removes test playbooks testing the deprecated content from conf.json.
+* Fixed an issue where the SDK would fail pulling docker images.
+* Fixed an issue where in some cases the **split** command did not remove pack version note from the script.
+* Improved the content graph performance when calculating content relationships.
+* Fixed an issue where **validate** would not properly detect dependencies of core packs.
+* Removed usages of Random in unit tests to ensure the tests are deterministic.
+* **validate** will now run on all the pack content items when the pack supported marketplaces are modified.
+* Fixed an issue where **validate** failed on single-select types incident and indicator fields when given empty value as a select value option.
+* **pre-commit** no longer runs when there are no modified files (unless provided with input files).
+* Fixed an issue where errors in **validate** were logged as `info`.
+* Fixed an issue where **validate** error messages were not logged when an integration param, or the default argument in reputation commands is not valid.
+* Added new validation that XSIAM integrations must have `marketplacev2` as the value of the marketplaces field.
+* Fixed an issue where the **format** command would change the value of the `unsearchable` key in fields.
+* Added an ability to provide list of marketplace names as a credentials-type (type 9) param attribute.
+* **doc-review** will run with the `--use-packs-known-words` default to true.
+* Calling **modeling-rules init-test-data** will now return the XDM fields output in alphabetical order.
+* Fixed an issue where **validate** failed on infrastructure test files.
+* Added a new validation (`BA125`) to **validate** that assures internal function names aren't in use in customer-facing docs.
+* Removed the Pipfile and Pipfile.lock from the templates in **demisto-sdk init** command.
+* Disabled the option to create an integration with Pipfile and Pipfile.lock files.
+
+## 1.17.2
+* Fixed an issue where **lint** and **validate** commands failed on integrations and scripts that use docker images that are not available in the Docker Hub but exist locally.
 * Added documentation for the flag **override-existing** used in upload.
 * Fixed an issue where **validate** failed on Incident Field items with a `template` value.
 * Improved memory efficiency in **update-content-graph** and **create-content-graph** commands.
 * Removed support for the `cve_id` name for the default-argument for **cve** reputation commands in **validate**. Now, only `cve` may be used for such commands.
 * Fixed an issue where **zip_packs** failed uploading content.
 * Added `tenant_timezone` handling to the **modeling-rules init** command, allowing usage with tenants in various timezones.
+* Shortened the timeout when checking whether the dataset exists in **test-modeling-rule**.
+* Cleaned up project dependencies.
+* Added support for the **List** content item in **Xpanse** marketplace.
+* Fixed an issue in **run-unit-tests** command when running Powershell tests.
+* Fixed an issue where **lint** failed running when a docker container would not init properly.
+* Fixed an issue where the *upload* command would upload a pack metadata with wrong display names.
+* Performance enhancements when reading yaml files.
+* Removed redundant errors and fields from `errors.py`.
+* Updated **update-release-notes** to use graph instead of id_set.
 
 ## 1.17.1
 * Added the `aliasTo` key to the Incident Field schema.

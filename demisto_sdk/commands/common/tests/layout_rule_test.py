@@ -1,9 +1,6 @@
-from demisto_sdk.commands.common.handlers import YAML_Handler
 from demisto_sdk.commands.common.hook_validations.layout_rule import LayoutRuleValidator
 from demisto_sdk.commands.common.hook_validations.structure import StructureValidator
 from TestSuite.test_tools import ChangeCWD
-
-yaml = YAML_Handler()
 
 
 def test_is_valid_file(repo):

@@ -314,6 +314,8 @@ def build_pwsh_analyze_command(file: Path) -> str:
     command = "Invoke-ScriptAnalyzer"
     # Return exit code when finished
     command += " -EnableExit"
+    # Don't fail on warnings and information
+    command += " -Severity Error"
     # Lint Files paths
     command += f" -Path {file.name}"
 

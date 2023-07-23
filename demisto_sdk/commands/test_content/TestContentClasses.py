@@ -28,7 +28,7 @@ from demisto_sdk.commands.common.constants import (
     FILTER_CONF,
     PB_Status,
 )
-from demisto_sdk.commands.common.handlers import JSON_Handler
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.tools import get_demisto_version
 from demisto_sdk.commands.test_content.Docker import Docker
 from demisto_sdk.commands.test_content.IntegrationsLock import acquire_test_lock
@@ -45,8 +45,6 @@ from demisto_sdk.commands.test_content.tools import (
     is_redhat_instance,
     update_server_configuration,
 )
-
-json = JSON_Handler()
 
 ENV_RESULTS_PATH = "./artifacts/env_results.json"
 FAILED_MATCH_INSTANCE_MSG = (
@@ -496,10 +494,11 @@ class TestPlaybook:
         # get incident
         search_filter = demisto_client.demisto_api.SearchIncidentsData()
         inc_filter = demisto_client.demisto_api.IncidentFilter()
-        inc_filter.query = f"id: {inc_id}"
+        if inc_id:
+            inc_filter.query = f"id: {inc_id}"
         if IS_XSIAM:
             # in xsiam `create_incident` response don`t return created incident id.
-            inc_filter.query = f'name:"{incident_name}"'
+            inc_filter.name = [incident_name]
         # inc_filter.query
         search_filter.filter = inc_filter
 
@@ -511,7 +510,7 @@ class TestPlaybook:
         while found_incidents < 1:
             try:
                 incidents = client.search_incidents(filter=search_filter)
-                found_incidents = incidents.total
+                found_incidents = len(incidents.data)
                 incident_search_responses.append(incidents)
             except ApiException:
                 if IS_XSIAM:

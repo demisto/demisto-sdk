@@ -46,7 +46,8 @@ from demisto_sdk.commands.common.constants import (
     XSOAR_SUPPORT_URL,
 )
 from demisto_sdk.commands.common.git_content_config import GitContentConfig
-from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
+from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     get_common_server_path,
@@ -54,9 +55,6 @@ from demisto_sdk.commands.common.tools import (
     get_yaml,
 )
 from demisto_sdk.commands.secrets.secrets import SecretsValidator
-
-json = JSON_Handler()
-yaml = YAML_Handler()
 
 
 def extract_values_from_nested_dict_to_a_set(given_dictionary: dict, return_set: set):
@@ -117,8 +115,6 @@ class Initiator:
         f"{TEMPLATE_INTEGRATION_NAME}_description.md",
         f"{TEMPLATE_INTEGRATION_NAME}_image.png",
         f"{TEMPLATE_INTEGRATION_NAME}_test.py",
-        "Pipfile",
-        "Pipfile.lock",
         "README.md",
         "command_examples",
     }

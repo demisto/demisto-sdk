@@ -1,4 +1,3 @@
-import json
 from abc import ABC, abstractmethod
 from collections import defaultdict
 from functools import lru_cache
@@ -27,6 +26,7 @@ from demisto_sdk.commands.common.constants import (
     MarketplaceVersions,
 )
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
+from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
 from demisto_sdk.commands.content_graph.parsers.content_item import (
@@ -40,6 +40,7 @@ if TYPE_CHECKING:
     from demisto_sdk.commands.content_graph.objects.relationship import RelationshipData
 
 content_type_to_model: Dict[ContentType, Type["BaseContent"]] = {}
+json = JSON_Handler()
 
 
 class BaseContentMetaclass(ModelMetaclass):

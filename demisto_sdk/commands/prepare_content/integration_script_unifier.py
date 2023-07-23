@@ -7,7 +7,9 @@ from pathlib import Path
 from typing import Dict, List, Union
 
 from inflection import dasherize, underscore
-from ruamel.yaml.scalarstring import FoldedScalarString
+from ruamel.yaml.scalarstring import (  # noqa: TID251 - only importing FoldedScalarString is OK
+    FoldedScalarString,
+)
 
 from demisto_sdk.commands.common.constants import (
     API_MODULE_FILE_SUFFIX,
@@ -16,7 +18,7 @@ from demisto_sdk.commands.common.constants import (
     FileType,
     MarketplaceVersions,
 )
-from demisto_sdk.commands.common.handlers import JSON_Handler
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     arg_to_list,
@@ -29,8 +31,6 @@ from demisto_sdk.commands.common.tools import (
     get_yml_paths_in_dir,
 )
 from demisto_sdk.commands.prepare_content.unifier import Unifier
-
-json = JSON_Handler()
 
 PACK_METADATA_PATH = "pack_metadata.json"
 CONTRIBUTOR_DISPLAY_NAME = " ({} Contribution)"
@@ -134,6 +134,8 @@ class IntegrationScriptUnifier(Unifier):
 
         This method replaces a list with a boolean, according to the self.marketplace value.
         Boolean values are left untouched.
+        when credentials of type 9 are hidden, the function will replace the hidden key with
+        hiddenusername and hiddenpassword.
         """
         if not marketplace:
             return
@@ -141,7 +143,12 @@ class IntegrationScriptUnifier(Unifier):
         for i, param in enumerate(data.get("configuration", ())):
             if isinstance(hidden := (param.get("hidden")), list):
                 # converts list to bool
-                data["configuration"][i]["hidden"] = marketplace in hidden
+                if param.get("name") == "credentials" and param.get("type") == 9:
+                    data["configuration"][i]["hiddenusername"] = marketplace in hidden
+                    data["configuration"][i]["hiddenpassword"] = marketplace in hidden
+                    data["configuration"][i].pop("hidden")
+                else:  # type-4 param
+                    data["configuration"][i]["hidden"] = marketplace in hidden
 
     @staticmethod
     def add_custom_section(
@@ -341,9 +348,11 @@ class IntegrationScriptUnifier(Unifier):
             )
 
         if find_type(yml_path) in (FileType.SCRIPT, FileType.TEST_SCRIPT):
-            code_type = get_yaml(yml_path).get("type")
+            code_type = get_yaml(yml_path, keep_order=False).get("type")
         else:
-            code_type = get_yaml(yml_path).get("script", {}).get("type")
+            code_type = (
+                get_yaml(yml_path, keep_order=False).get("script", {}).get("type")
+            )
         code_path = IntegrationScriptUnifier.get_code_file(
             package_path, TYPE_TO_EXTENSION[code_type]
         )

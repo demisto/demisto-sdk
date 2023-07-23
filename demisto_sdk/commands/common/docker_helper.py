@@ -131,16 +131,17 @@ class DockerBase:
     @staticmethod
     def pull_image(image: str) -> docker.models.images.Image:
         """
-        Pulling an image if it dosnt exist localy.
+        Get a local docker image, or pull it when unavailable.
         """
         docker_client = init_global_docker_client(log_prompt="pull_image")
+
         try:
             return docker_client.images.get(image)
         except docker.errors.ImageNotFound:
-            logger.debug(f"docker image {image} not found, pulling")
+            logger.debug(f"docker {image=} not found locally, pulling")
             docker_client.images.pull(image)
-            logger.debug(f"docker image {image} finished pulling")
-            return docker_client
+            logger.debug(f"pulled docker {image=} successfully")
+            return docker_client.images.get(image)
 
     @staticmethod
     def copy_files_container(
@@ -496,10 +497,8 @@ def _get_python_version_from_image_client(image: str) -> Version:
     Returns:
         Version: Python version X.Y (3.7, 3.6, ..)
     """
-    docker_client = init_global_docker_client()
     try:
-        docker_client.images.pull(image)
-        image_model = docker_client.images.get(image)
+        image_model = DockerBase.pull_image(image)
         env = image_model.attrs["Config"]["Env"]
         logger.debug(f"Got {env=} from {image=}")
         return _get_python_version_from_env(env)

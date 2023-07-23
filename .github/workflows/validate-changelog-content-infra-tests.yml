@@ -6,24 +6,39 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
       - name: Setup Python
         uses: actions/setup-python@v3
         with:
           python-version: '3.10'
+      
+      - name:  Get commit hash
+        id: get-commit
+        run: echo commit=$(git rev-parse HEAD) >> $GITHUB_ENV
+
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          repository: demisto/content
+          path: content
+  
+
       - name: Setup Poetry
         uses: Gr1N/setup-poetry@v8
-      - name: Install Python Dependencies and downloding the last demisto-sdk version
+
+      - name: Downloding the last demisto-sdk version
         run: |
-          commit=$(git rev-parse HEAD)
-          cd ../.. 
-          git clone https://github.com/demisto/content
-          cd content
+          cd content 
           poetry install --with ci
-          poetry add git+https://github.com/demisto/demisto-sdk@$commit
+          poetry add git+https://github.com/demisto/demisto-sdk@${{ steps.get-commit.outputs.commit }}
           echo "added custom SDK"
+
       - name: tests
         run:
-          cd ../..
+          cd content
           poetry run pytest ./Tests/scripts/infrastructure_tests/ -v
           poetry run pytest ./Tests/Marketplace/Tests/ -v
           poetry run pytest ./Tests/tests -v

@@ -32,11 +32,12 @@ jobs:
         run: |
           cd content 
           poetry install --with ci
-          poetry add git+https://github.com/demisto/demisto-sdk@${{ steps.get-commit.outputs.commit }}
+          pip uninstall -y demisto-sdk
+          pip install git+https://github.com/demisto/demisto-sdk@${{ steps.get-commit.outputs.commit }}
           echo "added custom SDK"
 
       - name: tests
-        run:
+        run: |
           cd content
           poetry run pytest ./Tests/scripts/infrastructure_tests/ -v
           poetry run pytest ./Tests/Marketplace/Tests/ -v

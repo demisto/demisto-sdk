@@ -1,5 +1,6 @@
 from typing import Any, Dict, List
 
+import more_itertools
 from neo4j import Transaction
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
@@ -14,6 +15,8 @@ from demisto_sdk.commands.content_graph.interface.neo4j.queries.common import (
     node_map,
     run_query,
 )
+
+CHUNK_SIZE = 500
 
 
 def build_source_properties() -> str:
@@ -144,7 +147,8 @@ MATCH (p1:{ContentType.PACK}{{object_id: rel_data.source}}),
 // Create the relationship, and mark as "from_metadata"
 CREATE (p1)-[r:{RelationshipType.DEPENDS_ON}{{
     mandatorily: rel_data.mandatorily,
-    from_metadata: true
+    from_metadata: true,
+    is_test: false
 }}]->(p2)
 RETURN count(r) AS relationships_merged"""
 
@@ -207,12 +211,12 @@ def create_relationships_by_type(
         query = build_depends_on_relationships_query()
     else:
         query = build_default_relationships_query(relationship)
-
-    result = run_query(tx, query, data=data).single()
-    merged_relationships_count: int = result["relationships_merged"]
-    logger.debug(
-        f"Merged {merged_relationships_count} relationships of type {relationship}."
-    )
+    for chunk in more_itertools.chunked_even(data, CHUNK_SIZE):
+        result = run_query(tx, query, data=chunk).single()
+        merged_relationships_count = result["relationships_merged"]
+        logger.debug(
+            f"Merged {merged_relationships_count} relationships of type {relationship}."
+        )
 
 
 def _match_relationships(

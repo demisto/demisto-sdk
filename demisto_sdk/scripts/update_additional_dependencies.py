@@ -3,11 +3,9 @@ from pathlib import Path
 from typing import Optional, Sequence
 
 from demisto_sdk.commands.common.git_util import GitUtil
-from demisto_sdk.commands.common.handlers import YAML_Handler
+from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import get_file
-
-yaml = YAML_Handler()
 
 
 def update_additional_dependencies(

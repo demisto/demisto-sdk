@@ -46,7 +46,7 @@ from demisto_sdk.commands.common.content import Content
 from demisto_sdk.commands.common.content.objects.pack_objects.pack import Pack
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.git_util import GitUtil
-from demisto_sdk.commands.common.handlers import JSON_Handler
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.hook_validations.base_validator import (
     BaseValidator,
     error_codes,
@@ -61,9 +61,6 @@ from demisto_sdk.commands.common.tools import (
     pack_name_to_path,
 )
 from demisto_sdk.commands.find_dependencies.find_dependencies import PackDependencies
-
-json = JSON_Handler()
-
 
 CONTRIBUTORS_LIST = ["partner", "developer", "community"]
 SUPPORTED_CONTRIBUTORS_LIST = ["partner", "developer"]
@@ -269,6 +266,19 @@ class PackUniqueFilesValidator(BaseValidator):
                 return True
 
         return False
+
+    def check_metadata_for_marketplace_change(self):
+        """Return True if pack_metadata's marketplaces field was changed."""
+        metadata_file_path = self._get_pack_file_path(self.pack_meta_file)
+        if not Path(metadata_file_path).is_file():
+            # No metadata file, No marketplace change.
+            return False
+
+        old_meta_file_content = get_remote_file(metadata_file_path, tag=self.prev_ver)
+        current_meta_file_content = self._read_metadata_content()
+        old_marketplaces = old_meta_file_content.get("marketplaces", [])
+        current_marketplaces = current_meta_file_content.get("marketplaces", [])
+        return set(old_marketplaces) != set(current_marketplaces)
 
     @staticmethod
     def check_timestamp_format(timestamp):

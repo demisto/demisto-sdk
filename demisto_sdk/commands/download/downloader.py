@@ -1268,7 +1268,7 @@ class Downloader:
             splitter="dot",
         )
 
-        file_data = get_file(output_path, type_of_file=file_ending, clear_cache=True)
+        file_data = get_file(output_path, clear_cache=True)
         if pack_obj_data:
             merge(file_data, preserved_data)
 

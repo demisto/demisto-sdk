@@ -199,9 +199,7 @@ def main(ctx, config, version, release_notes, **kwargs):
     dotenv.load_dotenv(CONTENT_PATH / ".env", override=True)  # type: ignore # load .env file from the cwd
     if (
         not os.getenv("DEMISTO_SDK_SKIP_VERSION_CHECK")
-        or not os.getenv("CI")
-        or version
-    ):  # If the key exists/called to version
+    ) or version:  # If the key exists/called to version
         try:
             __version__ = get_distribution("demisto-sdk").version
         except DistributionNotFound:
@@ -210,7 +208,11 @@ def main(ctx, config, version, release_notes, **kwargs):
                 "[yellow]Cound not find the version of the demisto-sdk. This usually happens when running in a development environment.[/yellow]"
             )
         else:
-            last_release = get_last_remote_release_version()
+            last_release = ""
+            if not os.environ.get(
+                "CI"
+            ):  # Check only when not running in CI (e.g running locally).
+                last_release = get_last_remote_release_version()
             logger.info(f"[yellow]You are using demisto-sdk {__version__}.[/yellow]")
             if last_release and __version__ != last_release:
                 logger.info(

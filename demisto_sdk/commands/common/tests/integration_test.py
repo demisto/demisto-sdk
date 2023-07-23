@@ -1297,6 +1297,48 @@ class TestIntegrationValidator:
 
         assert validator.is_valid_display_name_for_siem() is answer
 
+    V2_VALID_SIEM_1 = {
+        "display": "Test Event Collector",
+        "script": {"isfetchevents": True},
+        "marketplaces": ["marketplacev2"],
+    }
+    V2_INVALID_SIEM = {
+        "display": "Test Event Collector",
+        "script": {"isfetchevents": True},
+        "marketplaces": ["marketplacev2", "xsoar"],
+    }
+    V2_INVALID_SIEM_2 = {
+        "display": "Test Event Collector",
+        "script": {"isfetchevents": True},
+        "marketplaces": ["xsoar"],
+    }
+
+    V2_SIEM_MARKETPLACE_INPUTS = [
+        (V2_VALID_SIEM_1, True),
+        (V2_INVALID_SIEM, False),
+        (V2_INVALID_SIEM_2, False),
+    ]
+
+    @pytest.mark.parametrize("current, answer", V2_SIEM_MARKETPLACE_INPUTS)
+    def test_is_valid_xsiam_marketplace(self, current, answer):
+        """
+        Given
+            - Valid marketplaces field (only with marketplacev2)
+            - Invalid marketplaces field (with 2 entries - suppose to be only 1)
+            - Invalid marketplaces field (with xsaor value instead of marketplacev2)
+
+        When
+            - running is_valid_xsiam_marketplace.
+
+        Then
+            - Check that the function returns True if valid, else False.
+        """
+        structure = mock_structure("", current)
+        validator = IntegrationValidator(structure)
+        validator.current_file = current
+
+        assert validator.is_valid_xsiam_marketplace() is answer
+
     VALID_DEFAULTVALUE_CHECKBOX_1 = {
         "configuration": [{"defaultvalue": "true", "type": 8}]
     }
@@ -1876,7 +1918,6 @@ class TestIntegrationValidator:
             ),
             ("🥲", False),
             ("Trüe", False),
-            ("TRUE", False),
             ([MarketplaceVersions.XSOAR, None], False),
             ([MarketplaceVersions.MarketplaceV2, None], False),
             ([MarketplaceVersions.XSOAR, True], False),

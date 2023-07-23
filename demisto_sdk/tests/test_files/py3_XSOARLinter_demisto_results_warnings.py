@@ -74,6 +74,7 @@ def parse_incidents(
 
 
 def fetch_incidents():
+    params = demisto.params()
     return []
 
 
@@ -96,16 +97,16 @@ def main():
         proxy=proxy,
     )
     command = demisto.command()
-    LOG(f"Command being called is {command}")
+    demisto.info(f"Command being called is {command}")
     # Commands dict
     commands: Dict[str, Callable[[Client, Dict[str, str]], Tuple[str, dict, dict]]] = {
         "test-module": test_module,
     }
     if command in commands:
-        return_outputs(*commands[command](client, demisto.args()))
+        return_results(*commands[command](client, demisto.args()))
     elif command == "fetch-incidents":
         incidents = fetch_incidents()
         demisto.incidents(incidents)
-        demisto.results(incidents)
+        return_results(incidents)
     else:
         raise NotImplementedError(f"{command} is not an existing QuestKace command")

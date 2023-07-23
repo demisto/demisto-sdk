@@ -1,6 +1,7 @@
 import os
 import sys
 from typing import Dict, Optional
+from pathlib import Path
 
 from demisto_sdk.commands.common.constants import PACKS_DIR, FileType
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
@@ -33,7 +34,7 @@ class GenericModuleUnifier:
         self.pack_name = get_pack_name(file_path=self.input_path)
         self.pack_path = os.path.join(PACKS_DIR, self.pack_name)
 
-        self.input_file_name = os.path.basename(self.input_path).rstrip(".json")
+        self.input_file_name = Path(self.input_path).rstrip(".json").name
         self.use_force = force
         self.marketplace = marketplace
 

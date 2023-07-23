@@ -154,9 +154,9 @@ class DescriptionValidator(BaseValidator):
         if not re.match(PACKS_INTEGRATION_YML_REGEX, self.file_path, re.IGNORECASE):
             package_path = os.path.dirname(self.file_path)
             try:
-                base_name_without_extension: str = os.path.basename(
+                base_name_without_extension: str = Path(
                     os.path.splitext(self.file_path)[0].replace("_description", "")
-                )
+                ).name
                 dir_name: str = os.path.dirname(self.file_path)
                 expected_description_name: str = os.path.join(
                     dir_name, f"{base_name_without_extension}_description.md"
@@ -203,8 +203,8 @@ class DescriptionValidator(BaseValidator):
         md_paths = glob.glob(os.path.join(os.path.dirname(self.file_path), "*.md"))
 
         description_file_path = self.file_path
-        integrations_folder = os.path.basename(os.path.dirname(description_file_path))
-        description_file = os.path.basename(description_file_path)
+        integrations_folder = Path(os.path.dirname(description_file_path)).name
+        description_file = Path(description_file_path).name
 
         # drop file extension
         description_file_base_name = description_file.rsplit("_", 1)[0]

@@ -179,7 +179,7 @@ def format_manager(
             dirname = os.path.dirname(file_path)
             if dirname.endswith("CommonServerPython"):
                 current_excluded_files.remove("CommonServerPython.py")
-            if os.path.basename(file_path) in current_excluded_files:
+            if Path(file_path).name in current_excluded_files:
                 continue
             if any(test_dir in str(dirname) for test_dir in TESTS_AND_DOC_DIRECTORIES):
                 continue

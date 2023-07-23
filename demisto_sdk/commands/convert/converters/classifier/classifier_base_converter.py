@@ -1,6 +1,7 @@
 import os
 from abc import abstractmethod
 from typing import Optional, Set
+from pathlib import Path
 
 from demisto_sdk.commands.common.constants import FileType
 from demisto_sdk.commands.common.content.objects.pack_objects.classifier.classifier import (
@@ -79,7 +80,7 @@ class ClassifierBaseConverter(BaseConverter):
             - (str): If file name followed the file naming convention.
             - (None): If file had unexpected naming.
         """
-        file_name = os.path.basename(classifier.path)
+        file_name = Path(classifier.path).name
         if not file_name.startswith("classifier-") or not file_name.endswith(
             "_5_9_9.json"
         ):

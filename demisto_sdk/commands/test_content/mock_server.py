@@ -8,6 +8,7 @@ from pprint import pformat
 from subprocess import STDOUT, CalledProcessError, call, check_call, check_output
 from threading import Lock
 from typing import Dict, Iterator
+from pathlib import Path
 
 import demisto_client.demisto_api
 import urllib3
@@ -122,7 +123,7 @@ class AMIConnection:
             stdout="null",
             **kwargs,
         )
-        return os.path.join(dst, os.path.basename(src))
+        return os.path.join(dst, Path(src).name)
 
     def run_script(self, script, *args):
         """Copy a script to the AMI and run it.

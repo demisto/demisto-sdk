@@ -4,6 +4,7 @@ from copy import deepcopy
 from typing import Any, Dict, Set, Union
 
 import dictdiffer
+from pathlib import Path
 
 from demisto_sdk.commands.common.constants import (
     GENERAL_DEFAULT_FROMVERSION,
@@ -115,7 +116,7 @@ class BaseUpdate:
         """
         if not output_file_path:
             source_dir = os.path.dirname(self.source_file)
-            file_name = os.path.basename(self.source_file)
+            file_name = Path(self.source_file).name
             if self.__class__.__name__ == "PlaybookYMLFormat":
                 if "Pack" not in source_dir:
                     if not file_name.startswith("playbook-"):

@@ -28,18 +28,17 @@ jobs:
       - name: Setup Poetry
         uses: Gr1N/setup-poetry@v8
 
-      - name: Downloding the last demisto-sdk version
+      - name: Install demisto-SDK from branch
         run: |
           cd content
           poetry install --with ci
-          echo "starting uninstall of demisto-sdk .. "
+          echo "uninstalling content-master version of demisto-sdk"
           pip uninstall -y demisto-sdk
-          echo "uninstall of demisto-sdk is done .. "
-          echo "starting installing custom demisto-sdk of commit: ${{ steps.get-commit.outputs.commit }} "
+          echo "uninstalled content-master demisto-sdk"
+          echo "installing branch version of demisto-sdk (${{ steps.get-commit.outputs.commit }} )"
           pip install git+https://github.com/demisto/demisto-sdk@${{ steps.get-commit.outputs.commit }}
-          echo "added custom SDK"
 
-      - name: tests
+      - name: Content Unit Tests 
         env:
           PYTHONPATH: ${{ github.workspace }}/content
         run: |

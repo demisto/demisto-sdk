@@ -1,4 +1,3 @@
-from abc import abstractmethod
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import TYPE_CHECKING, Callable, List, Optional, Set
@@ -197,9 +196,15 @@ class ContentItem(BaseContent):
 
         return summary_res
 
-    @abstractmethod
     def metadata_fields(self) -> Set[str]:
-        raise NotImplementedError("Should be implemented in subclasses")
+        return {
+            "object_id",
+            "name",
+            "description",
+            "fromversion",
+            "toversion",
+            "deprecated",
+        }
 
     @property
     def normalize_name(self) -> str:

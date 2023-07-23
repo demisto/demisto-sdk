@@ -1,5 +1,4 @@
 import shutil
-from typing import Set
 
 from pydantic import DirectoryPath
 
@@ -11,16 +10,6 @@ from demisto_sdk.commands.content_graph.objects.content_item_xsiam import (
 
 
 class XSIAMDashboard(ContentItemXSIAM, content_type=ContentType.XSIAM_DASHBOARD):  # type: ignore[call-arg]
-    def metadata_fields(self) -> Set[str]:
-        return {
-            "object_id",
-            "name",
-            "description",
-            "fromversion",
-            "toversion",
-            "deprecated",
-        }
-
     def dump(
         self,
         dir: DirectoryPath,

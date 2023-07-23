@@ -1,4 +1,3 @@
-import os
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, Iterator, List, Optional
@@ -106,7 +105,6 @@ class PackMetadataParser:
 
     def __init__(self, path: Path, metadata: Dict[str, Any]) -> None:
         self.name: str = metadata["name"]
-        self.id: str = path.name
         self.description: str = metadata["description"]
         self.created: str = metadata.get("created", NOW)
         self.updated: str = metadata.get("updated", NOW)
@@ -124,8 +122,8 @@ class PackMetadataParser:
         self.eulaLink: str = metadata.get(
             "eulaLink", "https://github.com/demisto/content/blob/master/LICENSE"
         )
-        self.author: str = metadata["author"]
-        self.authorImage: str = self.get_author_image(path=path)
+        self.author: str = metadata["author"] or "Cortex XSOAR"
+        self.authorImage: str = self.get_author_image_filepath(path=path)
         self.certification: str = self.get_certification(
             certification=metadata.get("certification")
         )
@@ -142,8 +140,8 @@ class PackMetadataParser:
         self.keywords: List[str] = metadata["keywords"] or []
         self.search_rank: int = 0
         self.videos: List[str] = metadata.get("videos", [])
-        self.marketplaces: List[MarketplaceVersions] = metadata.get(
-            "marketplaces", DEFAULT_MARKETPLACES
+        self.marketplaces: List[MarketplaceVersions] = (
+            metadata.get("marketplaces") or DEFAULT_MARKETPLACES
         )
         self.excluded_dependencies: List[str] = metadata.get("excludedDependencies", [])
         self.modules: List[str] = metadata.get("modules", [])
@@ -156,8 +154,8 @@ class PackMetadataParser:
         self.preview_only: Optional[bool] = metadata.get("previewOnly")
         self.disable_monthly: Optional[bool] = metadata.get("disableMonthly")
 
-    def get_author_image(self, path: Path):
-        if os.path.exists(path / "Author_image.png"):
+    def get_author_image_filepath(self, path: Path) -> str:
+        if (path / "Author_image.png").is_file():
             return f"content/packs/{path.name}/Author_image.png"
         elif self.support == "xsoar":
             return "content/packs/Base/Author_image.png"
@@ -166,10 +164,7 @@ class PackMetadataParser:
     def get_certification(self, certification=None):
         if self.support in ["xsoar", "partner"]:
             return "certified"
-        elif certification:
-            return certification
-        else:
-            return ""
+        return certification or ""
 
 
 class PackParser(BaseContentParser, PackMetadataParser):

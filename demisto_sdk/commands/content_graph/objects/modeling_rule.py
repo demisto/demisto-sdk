@@ -10,14 +10,15 @@ from demisto_sdk.commands.prepare_content.rule_unifier import RuleUnifier
 
 class ModelingRule(ContentItemXSIAM, content_type=ContentType.MODELING_RULE):  # type: ignore[call-arg]
     def metadata_fields(self) -> Set[str]:
-        return {
-            "object_id",
-            "name",
-            "datasets",
-            "fromversion",
-            "toversion",
-            "deprecated",
-        }
+        return (
+            super()
+            .metadata_fields()
+            .union(
+                {
+                    "datasets",
+                }
+            )
+        )
 
     def prepare_for_upload(
         self,

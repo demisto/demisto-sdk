@@ -199,7 +199,6 @@ class PackContentItems(BaseModel):
 
 class PackMetadata(BaseModel):
     name: str
-    id: Optional[str]
     description: Optional[str]
     created: Optional[str]
     updated: Optional[str] = Field("")
@@ -208,7 +207,7 @@ class PackMetadata(BaseModel):
     url: Optional[str]
     email: Optional[str]
     eulaLink: Optional[str]
-    author: Optional[str]
+    author: str
     authorImage: Optional[str]
     certification: Optional[str]
     price: Optional[int]
@@ -252,7 +251,7 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
         return CONTENT_PATH / v
 
     @property
-    def is_private(self) -> Optional[bool]:
+    def is_private(self) -> bool:
         return self.premium or False
 
     @property
@@ -316,6 +315,12 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
         self.content_items = PackContentItems(**content_item_dct)
 
     def dump_metadata(self, path: Path, marketplace: MarketplaceVersions) -> None:
+        """Dumps the pack metadata file.
+
+        Args:
+            path (Path): The path of the file to dump the metadata.
+            marketplace (MarketplaceVersions): The marketplace to which the pack should belong to.
+        """
         self.server_min_version = self.server_min_version or MARKETPLACE_MIN_VERSION
         self.enhance_pack_properties(marketplace)
 
@@ -599,7 +604,22 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
         )
 
     def enhance_pack_properties(self, marketplace: MarketplaceVersions):
+        """
+        Enhancing the Pack object properties before dumping into a dictionary.
+        - Adding tags considering the pack content items and marketplace.
+        - Replacing the `author` property from XSOAR to XSIAM if the prepare is to marketplacev2.
+        - Getting into the `version_info` property the pipeline_id variable.
+        - Calculating the `server_min_version` by the pack's content items fromversion`.
+
+        Args:
+            marketplace (MarketplaceVersions): The marketplace to which the pack should belong to.
+        """
         self.tags = self.get_pack_tags(marketplace)
+        self.author = (
+            self.author
+            if marketplace == MarketplaceVersions.XSOAR
+            else self.author.replace("XSOAR", "XSIAM")
+        )
         self.version_info = os.environ.get("CI_PIPELINE_ID", "")
         self.server_min_version = (
             self.server_min_version
@@ -616,6 +636,19 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
         )
 
     def enhance_metadata(self, marketplace: MarketplaceVersions) -> dict:
+        """
+        Enhancing the pack metadata properties after dumping into a dictionary. (properties that can't be calculating before)
+        - Adding the pack's content items and calculating their from/to version before.
+        - Adding the content items display names.
+        - Gathering the pack dependencies and adding the metadata.
+        - Unifying the `url` and `email` into the `support_details` property.
+
+        Args:
+            marketplace (MarketplaceVersions): The marketplace to which the pack should belong to.
+
+        Returns:
+            dict: The update metadata dictionary.
+        """
         _metadata: dict = {}
 
         content_items, content_displays = self.get_content_items_and_displays_metadata(
@@ -629,7 +662,7 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
             {
                 "contentItems": content_items,
                 "contentDisplays": content_displays,
-                "dependencies": self.enhance_dependencies(),
+                "dependencies": self.enhance_dependencies(marketplace),
                 "supportDetails": support_details,
             }
         )
@@ -639,6 +672,17 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
     def get_content_items_and_displays_metadata(
         self, marketplace: MarketplaceVersions
     ) -> Tuple[Dict, Dict]:
+        """
+        Gets the pack content items and display names to add into the pack's metadata dictionary.
+        For each content item the function generates its `summary` and calculating the from/to version
+        on whether to add this item to the content items list.
+
+        Args:
+            marketplace (MarketplaceVersions): The marketplace to which the pack should belong to.
+
+        Returns:
+            Tuple[Dict, Dict]: The content items and display names dictionaries to add to the pack metadata.
+        """
         content_items: dict = {}
         content_displays: dict = {}
         for content_item in self.content_items:
@@ -668,20 +712,47 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
 
         return content_items, content_displays
 
-    def enhance_dependencies(self):
+    def enhance_dependencies(self, marketplace):
+        """
+        Gathers the first level pack's dependencies details to a list to add to the pack's metadata.
+        For each dependency it adds the following pack's properties:
+        `mandatory`, `minVersion`, `author`, `name`, `certification`
+
+        Args:
+            marketplace (_type_): _description_
+
+        Returns:
+            _type_: _description_
+        """
         return {
             r.content_item_to.object_id: {
                 "mandatory": r.mandatorily,
                 "minVersion": r.content_item_to.current_version,  # type:ignore[attr-defined]
-                "author": r.content_item_to.author,  # type:ignore[attr-defined]
+                "author": r.content_item_to.author  # type:ignore[attr-defined]
+                if marketplace == MarketplaceVersions.XSOAR
+                else r.content_item_to.author.replace(  # type:ignore[attr-defined]
+                    "XSOAR", "XSIAM"
+                ),
                 "name": r.content_item_to.name,  # type:ignore[attr-defined]
-                "certification": r.content_item_to.certification,  # type:ignore[attr-defined]
+                "certification": r.content_item_to.certification  # type:ignore[attr-defined]
+                or "",
             }
             for r in self.depends_on
             if r.is_direct
         }
 
-    def get_pack_tags(self, marketplace):
+    def get_pack_tags(self, marketplace) -> list:
+        """
+        Gets the pack's tags considering the pack content item's properties.
+        For example, if the pack has a script which is a transformer or a filter,
+        then the pack will have the tags "Transformer" or "Filter" accordingly.
+
+        Args:
+            marketplace (MarketplaceVersions): The marketplace to which the pack should belong to.
+
+        Returns:
+            list: The list of tags to add to the pack's metadata.
+        """
         tags = self.get_tags_by_marketplace(marketplace)
         tags |= (
             {PackTags.TIM}
@@ -763,7 +834,8 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
 
         return tags
 
-    def is_data_source(self):
+    def is_data_source(self) -> bool:
+        """Returns a boolean result on whether the pack should considered as a "Data Source" pack."""
         return (
             len(
                 [
@@ -893,5 +965,5 @@ def search_content_item_metadata_object(
     return [
         content_item
         for content_item in collected_content_items[item_type_key]
-        if content_item.get("id") == item_id and content_item.get("name") == item_name
+        if content_item.get("id") == item_id or content_item.get("name") == item_name
     ]

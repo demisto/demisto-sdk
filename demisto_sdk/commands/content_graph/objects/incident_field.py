@@ -27,15 +27,7 @@ class IncidentField(ContentItem, content_type=ContentType.INCIDENT_FIELD):  # ty
         return summary
 
     def metadata_fields(self) -> Set[str]:
-        return {
-            "object_id",
-            "name",
-            "field_type",
-            "description",
-            "fromversion",
-            "toversion",
-            "deprecated",
-        }
+        return super().metadata_fields().union({"field_type"})
 
     def _upload(
         self,

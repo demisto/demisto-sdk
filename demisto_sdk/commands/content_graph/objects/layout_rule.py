@@ -10,4 +10,13 @@ class LayoutRule(ContentItemXSIAM, content_type=ContentType.LAYOUT_RULE):  # typ
     layout_id: str
 
     def metadata_fields(self) -> Set[str]:
-        return {"rule_name", "description", "fromversion", "toversion", "deprecated"}
+        return (
+            super()
+            .metadata_fields()
+            .union(
+                {
+                    "rule_name",
+                    "layout_id",
+                }
+            )
+        )

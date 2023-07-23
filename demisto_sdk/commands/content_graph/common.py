@@ -110,6 +110,9 @@ class ContentType(str, enum.Enum):
             return "classifier-mapper"
         return self.lower()
 
+    # def __hash__(self) -> int:
+    #     return hash(self.value)
+
     @property
     def metadata_name(self) -> str:
         if self == ContentType.SCRIPT:
@@ -136,9 +139,6 @@ class ContentType(str, enum.Enum):
             return "Layouts Container"
         else:
             return re.sub(r"([a-z](?=[A-Z])|[A-Z](?=[A-Z][a-z]))", r"\1 ", self.value)
-
-    # def __hash__(self) -> int:
-    #     return hash(self.value)
 
     @staticmethod
     def server_names() -> List[str]:

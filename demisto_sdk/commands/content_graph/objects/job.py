@@ -1,7 +1,6 @@
 import logging
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import Set
 
 import demisto_client
 from pydantic import Field
@@ -15,16 +14,6 @@ logger = logging.getLogger("demisto-sdk")
 
 class Job(ContentItem, content_type=ContentType.JOB):  # type: ignore[call-arg]
     description: str = Field(alias="details")
-
-    def metadata_fields(self) -> Set[str]:
-        return {
-            "object_id",
-            "name",
-            "description",
-            "fromversion",
-            "toversion",
-            "deprecated",
-        }
 
     def _upload(
         self,

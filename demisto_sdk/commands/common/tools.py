@@ -113,11 +113,11 @@ from demisto_sdk.commands.common.constants import (
     MarketplaceVersions,
     urljoin,
 )
-from demisto_sdk.commands.common.git_content_config import GitContentConfig, GitProvider
-from demisto_sdk.commands.common.get_content_path import (
+from demisto_sdk.commands.common.tools_paths import (
     get_content_path,
     is_external_repository,
 )
+from demisto_sdk.commands.common.git_content_config import GitContentConfig, GitProvider
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml

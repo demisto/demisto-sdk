@@ -9,7 +9,7 @@ import git
 import pytest
 import requests
 
-from demisto_sdk.commands.common import tools
+from demisto_sdk.commands.common import tools, tools_paths
 from demisto_sdk.commands.common.constants import (
     DEFAULT_CONTENT_ITEM_TO_VERSION,
     DOC_FILES_DIR,
@@ -199,7 +199,9 @@ class TestGenericFunctions:
         mocker.patch.object(
             GitUtil, "get_local_remote_file_content", return_value=content
         )
-        mocker.patch.object(tools, "get_content_path", return_value=Path(GIT_ROOT))
+        mocker.patch.object(
+            tools_paths, "get_content_path", return_value=Path(GIT_ROOT)
+        )
         relative_path = path.relative_to(GIT_ROOT)
 
         assert (result_non_relative := tools.get_file_or_remote(path))
@@ -225,7 +227,9 @@ class TestGenericFunctions:
         content = path.read_text()
         mocker.patch.object(tools, "get_file", side_effect=FileNotFoundError)
         mocker.patch.object(tools, "get_local_remote_file", side_effect=ValueError)
-        mocker.patch.object(tools, "get_content_path", return_value=Path(GIT_ROOT))
+        mocker.patch.object(
+            tools_paths, "get_content_path", return_value=Path(GIT_ROOT)
+        )
         relative_path = path.relative_to(GIT_ROOT)
         requests_mock.get("https://api.github.com/repos/demisto/demisto-sdk")
         requests_mock.get(
@@ -624,7 +628,7 @@ class TestGetRemoteFileLocally:
         example_repo.git.checkout("-b", self.main_branch)
 
     def test_get_file_from_master_when_in_private_repo(self, mocker):
-        mocker.patch.object(tools, "is_external_repository", return_value=True)
+        mocker.patch.object(tools_paths, "is_external_repository", return_value=True)
 
         class Response:
             ok = False

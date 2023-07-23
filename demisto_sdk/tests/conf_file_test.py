@@ -3,7 +3,7 @@ import logging
 from click.testing import CliRunner
 
 from demisto_sdk.__main__ import main
-from demisto_sdk.commands.common import tools
+from demisto_sdk.commands.common import get_content_path
 from demisto_sdk.commands.common.content.content import Content
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.hook_validations.integration import (
@@ -36,7 +36,7 @@ def test_conf_file_custom(mocker, monkeypatch, repo):
     logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
     monkeypatch.setenv("COLUMNS", "1000")
 
-    mocker.patch.object(tools, "is_external_repository", return_value=True)
+    mocker.patch.object(get_content_path, "is_external_repository", return_value=True)
     mocker.patch.object(IntegrationValidator, "is_valid_category", return_value=True)
     mocker.patch.object(ValidateManager, "setup_git_params", return_value=True)
     mocker.patch.object(Content, "git", return_value=MyRepo())

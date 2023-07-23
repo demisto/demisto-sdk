@@ -18,13 +18,13 @@ from demisto_sdk.commands.common.constants import (
     PACKS_DIR,
 )
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
+from demisto_sdk.commands.common.get_content_path import is_external_repository
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     ProcessPoolHandler,
     get_content_id_set,
     get_pack_name,
-    is_external_repository,
     item_type_to_content_items_header,
     wait_futures_complete,
 )

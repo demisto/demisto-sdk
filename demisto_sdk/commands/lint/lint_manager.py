@@ -25,6 +25,7 @@ from demisto_sdk.commands.common.constants import (
 )
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.docker_helper import init_global_docker_client
+from demisto_sdk.commands.common.get_content_path import is_external_repository
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.timers import report_time_measurements
@@ -33,7 +34,6 @@ from demisto_sdk.commands.common.tools import (
     find_type,
     get_file_displayed_name,
     get_json,
-    is_external_repository,
     retrieve_file_ending,
 )
 from demisto_sdk.commands.content_graph.content_graph_commands import (

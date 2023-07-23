@@ -39,6 +39,7 @@ from demisto_sdk.commands.common.errors import (
     FOUND_FILES_AND_IGNORED_ERRORS,
     Errors,
 )
+from demisto_sdk.commands.common.get_content_path import is_external_repository
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
 from demisto_sdk.commands.common.hook_validations.base_validator import error_codes
@@ -473,7 +474,7 @@ class IntegrationValidator(ContentEntityValidator):
     @error_codes("IN104")
     def is_valid_category(self) -> bool:
         """Check that the integration category is in the schema."""
-        if tools.is_external_repository():
+        if is_external_repository():
             return True
         category = self.current_file.get("category", None)
         approved_list = tools.get_current_categories()

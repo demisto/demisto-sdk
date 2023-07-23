@@ -39,6 +39,7 @@ from demisto_sdk.commands.common.constants import (
     XSOAR_SUPPORT,
     XSOAR_SUPPORT_URL,
 )
+from demisto_sdk.commands.common.get_content_path import is_external_repository
 from demisto_sdk.commands.common.git_content_config import GitContentConfig
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
@@ -345,7 +346,7 @@ class Initiator:
 
         # if in an external repo check for the existence of Packs directory
         # if it does not exist create it
-        elif tools.is_external_repository():
+        elif is_external_repository():
             if not os.path.isdir("Packs"):
                 logger.info("Creating 'Packs' directory")
                 os.mkdir("Packs")

@@ -30,6 +30,7 @@ from demisto_sdk.commands.common.content.objects.pack_objects import (
 from demisto_sdk.commands.common.content.objects.pack_objects.abstract_pack_objects.yaml_content_object import (
     YAMLContentObject,
 )
+from demisto_sdk.commands.common.get_content_path import get_content_path
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.logger import logger
@@ -37,7 +38,6 @@ from demisto_sdk.commands.common.tools import (
     find_type,
     get_api_module_dependencies_from_graph,
     get_api_module_ids,
-    get_content_path,
     get_display_name,
     get_from_version,
     get_json,

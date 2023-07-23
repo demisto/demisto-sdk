@@ -208,5 +208,5 @@ repos:
   rev: v1.6.0
   hooks:
     - id: sourcery
-      args: [--diff=git diff HEAD, --no-summary, --v]
+      args: [--no-summary]
       types: [python]

@@ -76,7 +76,6 @@ def mock_pack(name: str = "SamplePack", path: Path = Path("Packs")) -> Pack:
         keywords=[],
         contentItems=[],
         excluded_dependencies=[],
-        author="Cortex XSOAR",
     )
 
 

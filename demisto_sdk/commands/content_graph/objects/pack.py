@@ -207,7 +207,7 @@ class PackMetadata(BaseModel):
     url: Optional[str]
     email: Optional[str]
     eulaLink: Optional[str]
-    author: str
+    author: Optional[str]
     authorImage: Optional[str]
     certification: Optional[str]
     price: Optional[int]
@@ -618,7 +618,7 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
         self.author = (
             self.author
             if marketplace == MarketplaceVersions.XSOAR
-            else self.author.replace("XSOAR", "XSIAM")
+            else self.author.replace("XSOAR", "XSIAM")  # type:ignore[union-attr]
         )
         self.version_info = os.environ.get("CI_PIPELINE_ID", "")
         self.server_min_version = (

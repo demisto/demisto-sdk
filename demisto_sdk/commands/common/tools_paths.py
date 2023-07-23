@@ -1,5 +1,5 @@
-import logging
 import os
+from logging import getLogger
 from pathlib import Path
 from typing import (
     Any,
@@ -8,7 +8,7 @@ from typing import (
 
 import git
 
-logger = logging.getLogger("demisto-sdk")
+logger = getLogger("demisto-sdk")
 
 
 def is_external_repository() -> bool:

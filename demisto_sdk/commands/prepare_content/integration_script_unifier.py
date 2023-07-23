@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Dict, List, Union
 
 from inflection import dasherize, underscore
-from ruamel.yaml.scalarstring import (  # noqa: TID251 - only importing FoldedScalarString is OK
+from ruamel.yaml.scalarstring import (  # noqa: TID251
     FoldedScalarString,
 )
 

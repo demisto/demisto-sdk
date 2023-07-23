@@ -1,4 +1,4 @@
-import logging
+import logging  # noqa: TID251
 import os
 from typing import NamedTuple
 

@@ -1,5 +1,5 @@
 import functools
-import logging
+import logging  # noqa: TID251
 import urllib.parse
 from ast import literal_eval
 from collections import OrderedDict

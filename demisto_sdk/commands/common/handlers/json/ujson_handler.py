@@ -1,6 +1,6 @@
 from typing import IO, Any, AnyStr
 
-import ujson  # noqa: TID251 - this is the handler
+import ujson  # noqa: TID251
 
 from demisto_sdk.commands.common.handlers.xsoar_handler import XSOAR_Handler
 

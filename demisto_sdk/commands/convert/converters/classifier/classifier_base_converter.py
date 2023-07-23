@@ -1,7 +1,7 @@
 import os
 from abc import abstractmethod
-from typing import Optional, Set
 from pathlib import Path
+from typing import Optional, Set
 
 from demisto_sdk.commands.common.constants import FileType
 from demisto_sdk.commands.common.content.objects.pack_objects.classifier.classifier import (

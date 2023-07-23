@@ -71,10 +71,9 @@ outputs:
   description: ''
   type: String
 """
-import os
 import sys
-from typing import Dict, Optional
 from pathlib import Path
+from typing import Dict, Optional
 
 import dateparser
 

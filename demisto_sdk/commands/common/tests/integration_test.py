@@ -1,9 +1,9 @@
 import logging
 import os
 from copy import deepcopy
+from pathlib import Path
 from typing import Any, Dict, List, Optional
 from unittest.mock import mock_open, patch
-from pathlib import Path
 
 import pytest
 
@@ -2593,7 +2593,7 @@ class TestisContextChanged:
         """
         patcher = patch("pathlib.Path.exists")
         mock_thing = patcher.start()
-        mock_thing.side_effect = lambda : True
+        mock_thing.side_effect = lambda: True
         with patch("builtins.open", mock_open(read_data=readme)) as _:
             current = {"script": {}}
             structure = mock_structure("Pack/Test", current)

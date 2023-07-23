@@ -2,10 +2,10 @@ import logging
 import os
 import sys
 from logging.handlers import QueueHandler, QueueListener
+from pathlib import Path
 from queue import Queue
 from threading import Lock, currentThread
 from typing import Any, Dict, Set
-from pathlib import Path
 
 import coloredlogs
 

@@ -1,5 +1,5 @@
-from typing import Optional
 from pathlib import Path
+from typing import Optional
 
 from demisto_sdk.commands.common.constants import (
     PACK_METADATA_SUPPORT,

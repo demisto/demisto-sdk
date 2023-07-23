@@ -1,8 +1,8 @@
 import os
+from pathlib import Path
 from typing import Dict, Optional, Union
 
 import coverage
-from pathlib import Path
 
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.coverage_analyze.helpers import (

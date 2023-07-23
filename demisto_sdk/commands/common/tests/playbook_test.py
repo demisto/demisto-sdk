@@ -1,7 +1,6 @@
-import os.path
+from pathlib import Path
 from typing import Optional
 from unittest.mock import patch
-from pathlib import Path
 
 import pytest
 

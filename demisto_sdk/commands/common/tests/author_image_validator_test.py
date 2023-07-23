@@ -1,7 +1,7 @@
 import os
+from pathlib import Path
 
 import pytest
-from pathlib import Path
 
 from demisto_sdk.commands.common.hook_validations.author_image import (
     AuthorImageValidator,

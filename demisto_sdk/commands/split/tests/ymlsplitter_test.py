@@ -1,5 +1,4 @@
 import base64
-import os
 from pathlib import Path
 from unittest.mock import mock_open
 

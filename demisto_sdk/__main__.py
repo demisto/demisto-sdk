@@ -2070,7 +2070,9 @@ def _generate_docs_for_file(kwargs: Dict[str, Any]):
                 and (not Path(output_path, "README.md").is_file())
                 or (not output_path)
                 and (
-                    not Path(os.path.dirname(os.path.realpath(input_path)), "README.md").is_file()
+                    not Path(
+                        os.path.dirname(os.path.realpath(input_path)), "README.md"
+                    ).is_file()
                 )
             ):
                 raise Exception(

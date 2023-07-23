@@ -1,8 +1,6 @@
 import logging
-import os
-from pathlib import PosixPath
+from pathlib import Path, PosixPath
 from unittest.mock import MagicMock
-from pathlib import Path
 
 import pytest
 

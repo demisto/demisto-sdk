@@ -1,8 +1,7 @@
-import os
 from abc import ABC, abstractmethod
 from distutils.version import LooseVersion
-from typing import Dict, List
 from pathlib import Path
+from typing import Dict, List
 
 from demisto_sdk.commands.common.constants import (
     DEFAULT_CONTENT_ITEM_FROM_VERSION,

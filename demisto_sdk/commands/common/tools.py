@@ -2917,7 +2917,6 @@ def is_pack_path(input_path: str) -> bool:
     return Path(os.path.dirname(input_path)).name == PACKS_DIR
 
 
-
 def is_xsoar_supported_pack(file_path: str) -> bool:
     """
     Takes a path to a file and returns a boolean indicating

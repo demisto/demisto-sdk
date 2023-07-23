@@ -6,10 +6,10 @@ import logging
 import os
 import re
 import string
+from pathlib import Path
 from typing import List, Optional, Tuple
 
 from pykwalify.core import Core
-from pathlib import Path
 
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import (

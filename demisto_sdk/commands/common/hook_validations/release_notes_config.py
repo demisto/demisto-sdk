@@ -1,4 +1,3 @@
-import os
 from pathlib import Path
 
 from demisto_sdk.commands.common.errors import Errors

@@ -10,10 +10,10 @@ import uuid
 from copy import deepcopy
 from distutils.version import LooseVersion
 from math import ceil
+from pathlib import Path
 from pprint import pformat
 from queue import Empty, Queue
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
-from pathlib import Path
 
 import demisto_client
 import prettytable

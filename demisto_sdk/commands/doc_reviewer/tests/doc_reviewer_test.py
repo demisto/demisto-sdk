@@ -2,7 +2,6 @@ import logging
 import os
 import re
 from enum import Enum
-from os import path
 from pathlib import Path
 from typing import List
 

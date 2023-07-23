@@ -1,7 +1,7 @@
 import os
 import re
-from typing import Optional
 from pathlib import Path
+from typing import Optional
 
 from demisto_sdk.commands.common.constants import (
     API_MODULES_PACK,

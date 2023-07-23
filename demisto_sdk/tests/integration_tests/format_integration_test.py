@@ -1,6 +1,5 @@
 import logging
-import os
-from pathlib import PosixPath, Path
+from pathlib import Path, PosixPath
 from typing import List
 
 import pytest
@@ -2012,7 +2011,9 @@ def test_verify_deletion_from_conf_pack_format_with_deprecate_flag(
     if Path(
         f"{repo_path}/Packs/TestPack/Integrations/TestIntegration/README.md"
     ).exists():
-        Path.unlink(Path(f"{repo_path}/Packs/TestPack/Integrations/TestIntegration/README.md"))
+        Path.unlink(
+            Path(f"{repo_path}/Packs/TestPack/Integrations/TestIntegration/README.md")
+        )
     if Path(f"{repo_path}/Packs/TestPack/README.md").exists():
         Path.unlink(Path(f"{repo_path}/Packs/TestPack/README.md"))
 

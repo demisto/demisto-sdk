@@ -1,7 +1,7 @@
 import os
 import sys
-from typing import Dict, Optional
 from pathlib import Path
+from typing import Dict, Optional
 
 from demisto_sdk.commands.common.constants import PACKS_DIR, FileType
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json

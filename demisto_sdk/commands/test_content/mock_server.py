@@ -4,11 +4,11 @@ import string
 import time
 import unicodedata
 from contextlib import contextmanager
+from pathlib import Path
 from pprint import pformat
 from subprocess import STDOUT, CalledProcessError, call, check_call, check_output
 from threading import Lock
 from typing import Dict, Iterator
-from pathlib import Path
 
 import demisto_client.demisto_api
 import urllib3

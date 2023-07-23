@@ -6,10 +6,10 @@ import os
 import re
 import traceback
 from enum import Enum, EnumMeta
+from pathlib import Path
 from types import FunctionType
 from typing import Any, AnyStr, Callable, List, Optional, Tuple, Union
 from unittest import mock
-from pathlib import Path
 
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import write_yml

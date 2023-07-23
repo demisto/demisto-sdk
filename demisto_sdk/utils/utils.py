@@ -1,7 +1,6 @@
-import os
 from configparser import ConfigParser, MissingSectionHeaderError
-from typing import Union
 from pathlib import Path
+from typing import Union
 
 from demisto_sdk.commands.common.content.objects.pack_objects.abstract_pack_objects.json_content_object import (
     JSONContentObject,

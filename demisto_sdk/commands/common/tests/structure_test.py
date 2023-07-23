@@ -1,8 +1,8 @@
 import logging
 import os
+from pathlib import Path
 from shutil import copyfile
 from typing import List, Tuple
-from pathlib import Path
 
 import pytest
 

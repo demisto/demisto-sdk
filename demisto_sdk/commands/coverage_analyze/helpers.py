@@ -2,8 +2,8 @@ import io
 import os
 import sqlite3
 from datetime import datetime, timedelta
-from typing import Dict, Iterable, List, Optional
 from pathlib import Path
+from typing import Dict, Iterable, List, Optional
 
 import coverage
 import requests

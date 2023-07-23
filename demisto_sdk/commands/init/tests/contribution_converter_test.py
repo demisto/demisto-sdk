@@ -2,9 +2,9 @@ import os
 import re
 import shutil
 from os.path import join
+from pathlib import Path
 from typing import Union
 from zipfile import ZipFile
-from pathlib import Path
 
 import pytest
 from _pytest.fixtures import FixtureRequest

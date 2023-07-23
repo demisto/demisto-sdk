@@ -1,7 +1,7 @@
 from abc import abstractmethod
+from pathlib import Path
 
 from packaging.version import Version
-from pathlib import Path
 
 from demisto_sdk.commands.common.content.objects.pack_objects.pack import Pack
 from demisto_sdk.commands.common.logger import logger

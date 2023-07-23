@@ -1,8 +1,8 @@
 import logging
 import os
+from pathlib import Path
 
 import pytest
-from pathlib import Path
 
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.prepare_content.generic_module_unifier import (

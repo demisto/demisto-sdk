@@ -1,12 +1,12 @@
 import logging
 import os
 from contextlib import nullcontext as does_not_raise
+from pathlib import Path
 
 import pytest
 import requests_mock
 from click.testing import CliRunner
 from git import GitCommandError
-from pathlib import Path
 
 from demisto_sdk.__main__ import main
 from demisto_sdk.commands.common import tools

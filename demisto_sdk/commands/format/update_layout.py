@@ -1,8 +1,8 @@
 import os
 import re
 from abc import ABC
-from typing import Dict, List, Tuple
 from pathlib import Path
+from typing import Dict, List, Tuple
 
 from demisto_sdk.commands.common.constants import (
     LAYOUT_AND_MAPPER_BUILT_IN_FIELDS,

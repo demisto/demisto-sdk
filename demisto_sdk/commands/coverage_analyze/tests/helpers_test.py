@@ -3,12 +3,12 @@ import os
 import shutil
 import sqlite3
 from datetime import datetime
+from pathlib import Path
 
 import coverage
 import pytest
 import requests
 from freezegun import freeze_time
-from pathlib import Path
 
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.logger import logging_setup

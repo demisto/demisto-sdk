@@ -1,10 +1,10 @@
 import os
 import re
 from copy import deepcopy
+from pathlib import Path
 from typing import Any, Dict, Set, Union
 
 import dictdiffer
-from pathlib import Path
 
 from demisto_sdk.commands.common.constants import (
     GENERAL_DEFAULT_FROMVERSION,

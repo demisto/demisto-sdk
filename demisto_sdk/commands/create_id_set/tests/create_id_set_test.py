@@ -1,8 +1,8 @@
 import os
 import shutil
 from collections import OrderedDict
-from tempfile import mkdtemp
 from pathlib import Path
+from tempfile import mkdtemp
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json

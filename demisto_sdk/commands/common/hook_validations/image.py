@@ -1,8 +1,8 @@
 import base64
 import glob
+from pathlib import Path
 
 import imagesize
-from pathlib import Path
 
 from demisto_sdk.commands.common.constants import (
     DEFAULT_DBOT_IMAGE_BASE64,

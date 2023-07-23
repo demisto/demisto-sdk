@@ -1,11 +1,11 @@
 import logging
 from contextlib import contextmanager
 from datetime import datetime
+from pathlib import Path
 from shutil import rmtree
 
 import pytest
 from packaging.version import parse
-from pathlib import Path
 
 from demisto_sdk.commands.common.constants import (
     PACKS_DIR,

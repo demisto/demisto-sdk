@@ -1,11 +1,11 @@
 import logging
 import os
 import shutil
+from pathlib import Path
 from typing import Optional
 from unittest.mock import patch
 
 import pytest
-from pathlib import Path
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json

@@ -1,6 +1,6 @@
 import os
-from typing import Any, Dict, List, Optional, Tuple, Union
 from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import get_yaml
@@ -178,9 +178,7 @@ def get_playbook_dependencies(
                             ).name
                             # Case of old integrations without a package.
                             if integration_dependency == "Integrations":
-                                integrations.add(
-                                    Path(file_).name.replace(".yml", "")
-                                )
+                                integrations.add(Path(file_).name.replace(".yml", ""))
                             else:
                                 integrations.add(integration_dependency)
         else:

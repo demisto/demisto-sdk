@@ -44,7 +44,6 @@ custom_theme = Theme(
 )
 console = Console(theme=custom_theme)
 
-
 app = typer.Typer()
 
 
@@ -227,7 +226,10 @@ def generate_xql_query(rule: SingleModelingRule, test_data_event_ids: List[str])
 
 
 def validate_expected_values(
-    xsiam_client: XsiamApiClient, mr: ModelingRule, test_data: init_test_data.TestData
+    xsiam_client: XsiamApiClient,
+    mr: ModelingRule,
+    test_data: init_test_data.TestData,
+    verify_event_id: bool = False,
 ):
     """Validate the expected_values in the given test data file."""
     logger.info("[cyan]Validating expected_values...[/cyan]", extra={"markup": True})
@@ -257,11 +259,18 @@ def validate_expected_values(
             )
             success = False
         else:
-            success &= verify_results(rule.dataset, results, test_data)
+            success &= (
+                verify_results(rule.dataset, results, test_data)
+                if not verify_event_id
+                else verify_event_ids_does_not_exist_on_tenant(results)
+            )
     if success:
-        logger.info(
-            "[green]Mappings validated successfully[/green]", extra={"markup": True}
+        success_message = (
+            "[green]Mappings validated successfully[/green]"
+            if not verify_event_id
+            else "[green]Event IDs validated successfully[/green]"
         )
+        logger.info(success_message, extra={"markup": True})
     else:
         raise typer.Exit(1)
 
@@ -295,7 +304,7 @@ def check_dataset_exists(
         )
         query = f"config timeframe = 10y | dataset = {dataset}"
         for i in range(timeout // interval):
-            logger.debug(f"Check #{i+1}...")
+            logger.debug(f"Check #{i + 1}...")
             try:
                 execution_id = xsiam_client.start_xql_query(
                     query, print_req_error=(i + 1 == timeout // interval)
@@ -316,7 +325,7 @@ def check_dataset_exists(
                     dataset_exist = True
                     results_exist = False
                     logger.info(
-                        f"[cyan]trying to get results from the dataset for the {i+1}th time. continuing to try to get the results.[/cyan]",
+                        f"[cyan]trying to get results from the dataset for the {i + 1}th time. continuing to try to get the results.[/cyan]",
                         extra={"markup": True},
                     )
             # If the dataset doesn't exist HTTPError exception is raised.
@@ -482,6 +491,17 @@ def verify_test_data_exists(test_data_path: Path) -> Tuple[List[str], List[str]]
     return missing_event_data, missing_expected_values_data
 
 
+def verify_event_ids_does_not_exist_on_tenant(results: List[Dict[str, Any]]):
+    """
+    Verify that the event ids do not exist on the tenant.
+    Args:
+        results (List[Dict[str, Any]]): List of results from the xsiam client.
+    Returns:
+        None
+    """
+    return not results
+
+
 def validate_modeling_rule(
     mrule_dir: Path,
     xsiam_url: str,
@@ -637,6 +657,10 @@ def validate_modeling_rule(
                 )
                 printr(execd_cmd)
                 raise typer.Exit(1)
+            # Verify the event id does not exist on the tenant.
+            validate_expected_values(
+                xsiam_client, mr_entity, test_data, verify_event_id=True
+            )
             push_test_data_to_tenant(xsiam_client, mr_entity, test_data)
             check_dataset_exists(xsiam_client, test_data)
         else:

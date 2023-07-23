@@ -9,7 +9,7 @@ from click.testing import CliRunner
 from demisto_sdk.__main__ import main
 
 # from demisto_sdk.commands.common import get_content_path
-from demisto_sdk.commands.common import tools
+from demisto_sdk.commands.common import tools_paths
 from demisto_sdk.commands.common.constants import GENERAL_DEFAULT_FROMVERSION
 from demisto_sdk.commands.common.content.content import Content
 from demisto_sdk.commands.common.git_util import GitUtil
@@ -779,7 +779,7 @@ def test_format_on_relative_path_playbook(mocker, repo, monkeypatch):
         ContentEntityValidator, "validate_readme_exists", return_value=True
     )
 
-    mocker.patch.object(tools, "is_external_repository", return_value=True)
+    mocker.patch.object(tools_paths, "is_external_repository", return_value=True)
     monkeypatch.setattr("builtins.input", lambda _: "N")
     with ChangeCWD(playbook.path):
         runner = CliRunner(mix_stderr=False)

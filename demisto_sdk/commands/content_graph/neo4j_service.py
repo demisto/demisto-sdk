@@ -104,6 +104,8 @@ def _docker_start():
             "NEO4J_apoc_import_file_use__neo4j__config": "true",
             "NEO4J_dbms_security_procedures_unrestricted": "apoc.*",
             "NEO4J_dbms_security_procedures_allowlist": "apoc.*",
+            "NEO4J_dbms_connector_http_advertised__address": "localhost:7474",
+            "NEO4J_dbms_connector_bolt_advertised__address": "localhost:7687",
         },
         healthcheck={
             "test": f"curl --fail {NEO4J_DATABASE_HTTP} || exit 1",
@@ -114,6 +116,7 @@ def _docker_start():
         user=f"{os.getuid()}:{os.getgid()}",
     )
     import time
+
     time.sleep(50)
 
 

@@ -10,6 +10,7 @@
 * Fixed an issue where **validate** would not properly detect dependencies of core packs.
 * Removed usages of Random in unit tests to ensure the tests are deterministic.
 * **validate** will now run on all the pack content items when the pack supported marketplaces are modified.
+* Fixed an issue where **validate** failed on single-select types incident and indicator fields when given empty value as a select value option.
 * **pre-commit** no longer runs when there are no modified files (unless provided with input files).
 * **lint** will now fail on `demisto.results` and `return_outputs` usage, when a pack is `xsoar` or `partner` supported.
 * **lint** will now fail on `LOG` usage in python files.
@@ -21,6 +22,8 @@
 * **doc-review** will run with the `--use-packs-known-words` default to true.
 * Calling **modeling-rules init-test-data** will now return the XDM fields output in alphabetical order.
 * Improved performance when reading `yml` files.
+* Fixed an issue where **validate** failed on infrastructure test files.
+* Added a new validation (`BA125`) to **validate** that assures internal function names aren't in use in customer-facing docs.
 
 ## 1.17.2
 * Fixed an issue where **lint** and **validate** commands failed on integrations and scripts that use docker images that are not available in the Docker Hub but exist locally.

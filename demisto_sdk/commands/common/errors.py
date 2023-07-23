@@ -135,6 +135,10 @@ ERROR_CODE = {
         "code": "BA124",
         "related_field": "",
     },
+    "customer_facing_docs_disallowed_terms": {
+        "code": "BA125",
+        "related_field": "description",
+    },
     # BC - Backward Compatible
     "breaking_backwards_subtype": {
         "code": "BC100",
@@ -405,7 +409,7 @@ ERROR_CODE = {
         "code": "IF115",
         "related_field": "unsearchable",
     },
-    "select_values_cannot_contain_empty_values": {
+    "select_values_cannot_contain_empty_values_in_multi_select_types": {
         "code": "IF116",
         "related_field": "selectValues",
     },
@@ -416,6 +420,10 @@ ERROR_CODE = {
     "aliases_with_inner_alias": {
         "code": "IF118",
         "related_field": "Aliases",
+    },
+    "select_values_cannot_contain_multiple_or_only_empty_values_in_single_select_types": {
+        "code": "IF119",
+        "related_field": "selectValues",
     },
     # IM - Images
     "no_image_given": {
@@ -1468,6 +1476,7 @@ ALLOWED_IGNORE_ERRORS = (
         "BA116",
         "BA119",
         "BA124",
+        "BA125",
         "DS107",
         "GF102",
         "IF100",
@@ -1687,8 +1696,13 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def select_values_cannot_contain_empty_values():
-        return "the field selectValues cannot contain empty values. Please remove."
+    def select_values_cannot_contain_empty_values_in_multi_select_types():
+        return "Multiselect types cannot contain empty values in the selectValues field"
+
+    @staticmethod
+    @error_code_decorator
+    def select_values_cannot_contain_multiple_or_only_empty_values_in_single_select_types():
+        return "singleSelect types cannot contain only empty value or more than one empty values in the field selectValues. Please remove."
 
     @staticmethod
     @error_code_decorator
@@ -4056,6 +4070,14 @@ class Errors:
     @error_code_decorator
     def missing_unit_test_file(path: Path):
         return f"Missing {path.stem}_test.py unit test file for {path.name}."
+
+    @staticmethod
+    @error_code_decorator
+    def customer_facing_docs_disallowed_terms(found_terms: List[str]):
+        return (
+            f"Found internal terms in a customer-facing documentation file: "
+            f"{', '.join(found_terms)}"
+        )
 
     @staticmethod
     @error_code_decorator

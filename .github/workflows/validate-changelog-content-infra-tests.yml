@@ -14,17 +14,12 @@ jobs:
         uses: Gr1N/setup-poetry@v8
       - name: Install Python Dependencies and downloding the last demisto-sdk version
         run: |
+          export GIT_URL=$(git ls-remote --get-url origin | sed 's/\.git$//')
+          commit=$(git rev-parse HEAD)
           cd ../.. 
           git clone https://github.com/demisto/content
           cd content
           poetry install --with ci
-          echo pwd
-          cd ..
-          echo pwd
-          export GIT_URL=$(git ls-remote --get-url origin | sed 's/\.git$//')
-          echo GIT_URL
-          commit=$(git rev-parse HEAD)
-          echo "Last Commit: commit"
           poetry add git+https://github.com/demisto/demisto-sdk@$commit
           echo "added custom SDK"
       - name: tests

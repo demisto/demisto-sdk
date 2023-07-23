@@ -1,14 +1,27 @@
 # Changelog
 ## Unreleased
+* Fixed an issue where the *DEMISTO_SDK_SKIP_VERSION_CHECK* was ignored when running on non CI environments.
 * Added the ability to ignore any validation in the **validate** command when running in an external (non-demisto/content) repo, by placing a `.private-repo-settings` file at its root.
 * Fixed an issue where **validate** falsely detected backwards-compatibility issues, and prevented adding the `marketplaces` key to content items.
 * Calling **format** with the `-d` flag now removes test playbooks testing the deprecated content from conf.json.
+* Fixed an issue where the SDK would fail pulling docker images.
 * Fixed an issue where in some cases the **split** command did not remove pack version note from the script.
 * Improved the content graph performance when calculating content relationships.
 * Fixed an issue where **validate** would not properly detect dependencies of core packs.
 * Removed usages of Random in unit tests to ensure the tests are deterministic.
 * **validate** will now run on all the pack content items when the pack supported marketplaces are modified.
+* **pre-commit** no longer runs when there are no modified files (unless provided with input files).
+* **lint** will now fail on `demisto.results` and `return_outputs` usage, when a pack is `xsoar` or `partner` supported.
+* **lint** will now fail on `LOG` usage in python files.
 * Fixed an issue where errors in **validate** were logged as `info`.
+* Fixed an issue where **validate** error messages were not logged when an integration param, or the default argument in reputation commands is not valid.
+* Added new validation that XSIAM integrations must have `marketplacev2` as the value of the marketplaces field.
+* Fixed an issue where the **format** command would change the value of the `unsearchable` key in fields.
+* Added an ability to provide list of marketplace names as a credentials-type (type 9) param attribute.
+* **doc-review** will run with the `--use-packs-known-words` default to true.
+* Calling **modeling-rules init-test-data** will now return the XDM fields output in alphabetical order.
+* Fixed an issue where **validate** failed on infrastructure test files.
+* Added a new validation (`BA125`) to **validate** that assures internal function names aren't in use in customer-facing docs.
 * Added support to override the console log level with the **DEMISTO_SDK_CONSOLE_LOG_THRESHOLD** environment variable.
 * Added support to override the log file threshold level with the **DEMISTO_SDK_FILE_LOG_THRESHOLD** environment variable.
 

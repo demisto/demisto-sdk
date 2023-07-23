@@ -135,6 +135,10 @@ ERROR_CODE = {
         "code": "BA124",
         "related_field": "",
     },
+    "customer_facing_docs_disallowed_terms": {
+        "code": "BA125",
+        "related_field": "description",
+    },
     # BC - Backward Compatible
     "breaking_backwards_subtype": {
         "code": "BC100",
@@ -671,6 +675,10 @@ ERROR_CODE = {
     },
     "invalid_siem_integration_name": {
         "code": "IN150",
+        "related_field": "display",
+    },
+    "invalid_siem_marketplaces_entry": {
+        "code": "IN151",
         "related_field": "display",
     },
     "empty_command_arguments": {
@@ -1464,6 +1472,7 @@ ALLOWED_IGNORE_ERRORS = (
         "BA116",
         "BA119",
         "BA124",
+        "BA125",
         "DS107",
         "GF102",
         "IF100",
@@ -1689,12 +1698,24 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def unsearchable_key_should_be_true_incident_field():
-        return "The unsearchable key in indicator and incident fields should be set to true."
+        return (
+            "Warning: Indicator and incident fields should include the `unsearchable` key set to true. When missing"
+            " or set to false, the platform will index the data in this field. Unnecessary indexing of fields might"
+            " affect the performance and disk usage in environments."
+            "While considering the above mentioned warning, you can bypass this error by adding it to the"
+            " .pack-ignore file."
+        )
 
     @staticmethod
     @error_code_decorator
     def unsearchable_key_should_be_true_generic_field():
-        return "The unsearchable key in a generic field should be set to true."
+        return (
+            "Warning: Generic fields should include the `unsearchable` key set to true. When missing"
+            " or set to false, the platform will index the data in this field. Unnecessary indexing of fields might"
+            " affect the performance and disk usage in environments."
+            "While considering the above mentioned warning, you can bypass this error by adding it to the"
+            " .pack-ignore file."
+        )
 
     @staticmethod
     @error_code_decorator
@@ -2061,6 +2082,14 @@ class Errors:
             f"The display name of this siem integration is incorrect , "
             f'should end with "Event Collector".\n'
             f"e.g: {display_name} Event Collector"
+        )
+
+    @staticmethod
+    @error_code_decorator
+    def invalid_siem_marketplaces_entry():
+        return (
+            "The marketplaces field of this XSIAM integration is incorrect.\n"
+            'This field should have only the "marketplacev2" value.'
         )
 
     @staticmethod
@@ -4032,6 +4061,14 @@ class Errors:
     @error_code_decorator
     def missing_unit_test_file(path: Path):
         return f"Missing {path.stem}_test.py unit test file for {path.name}."
+
+    @staticmethod
+    @error_code_decorator
+    def customer_facing_docs_disallowed_terms(found_terms: List[str]):
+        return (
+            f"Found internal terms in a customer-facing documentation file: "
+            f"{', '.join(found_terms)}"
+        )
 
     @staticmethod
     @error_code_decorator

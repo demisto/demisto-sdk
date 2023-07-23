@@ -86,6 +86,7 @@ def test_init_test_data_create(pack):
     Then:
         - Ensure the test data file is created.
         - Ensure the test data file contains the correct number of events.
+        - Ensure the event fields are sorted.
     """
     from demisto_sdk.commands.test_content.test_modeling_rule.init_test_data import (
         app as init_test_data_app,
@@ -106,7 +107,9 @@ def test_init_test_data_create(pack):
     assert result.exit_code == 0
     assert test_data_file.exists() is True
     test_data = TestData.parse_file(test_data_file.as_posix())
+    event_fields: dict = test_data.data[0].expected_values or {}
     assert len(test_data.data) == count
+    assert dict(sorted(event_fields.items())) == test_data.data[0].expected_values
 
 
 def test_init_test_data_update_with_unchanged_modeling_rule(pack):
@@ -119,6 +122,7 @@ def test_init_test_data_update_with_unchanged_modeling_rule(pack):
         - The test data file exists.
     Then:
         - Ensure the test data file contains the correct number of events.
+        - Ensure the event fields are sorted.
     """
     from demisto_sdk.commands.test_content.test_modeling_rule.init_test_data import (
         app as init_test_data_app,
@@ -143,7 +147,9 @@ def test_init_test_data_update_with_unchanged_modeling_rule(pack):
     assert result.exit_code == 0
     assert test_data_file.exists() is True
     test_data = TestData.parse_file(test_data_file.as_posix())
+    first_event_fields: dict = test_data.data[0].expected_values or {}
     assert len(test_data.data) == count
+    assert dict(sorted(first_event_fields.items())) == test_data.data[0].expected_values
 
 
 def test_init_test_data_update_with_reduced_modeling_rule(pack):

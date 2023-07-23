@@ -88,11 +88,8 @@ def _docker_start():
     logger.info("Starting neo4j service")
     docker_client = init_global_docker_client()
     _stop_neo4j_service_docker(docker_client)
-    (REPO_PATH / NEO4J_FOLDER / NEO4J_DATA_FOLDER).mkdir(parents=True, exist_ok=True)
-    shutil.rmtree(REPO_PATH / NEO4J_FOLDER / NEO4J_IMPORT_FOLDER, ignore_errors=True)
-    (REPO_PATH / NEO4J_FOLDER / NEO4J_IMPORT_FOLDER).mkdir(parents=True, exist_ok=True)
     
-    user = None if os.getenv("CI") else f"{os.getuid()}:{os.getgid()}"
+    # user = None if os.getenv("CI") else f"{os.getuid()}:{os.getgid()}"
     docker_client.containers.run(
         image=NEO4J_SERVICE_IMAGE,
         name="neo4j-content",
@@ -119,7 +116,7 @@ def _docker_start():
             "timeout": 15 * 1000000000,
             "retries": 10,
         },
-        user=user,
+        user=f"{os.getuid()}:{os.getgid()}"
     )
     logger.info("Neo4j service started successfully")
 

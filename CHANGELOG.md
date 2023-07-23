@@ -23,6 +23,7 @@
 * Added a new validation (`BA125`) to **validate** that assures internal function names aren't in use in customer-facing docs.
 * Removed the Pipfile and Pipfile.lock from the templates in **demisto-sdk init** command.
 * Disabled the option to create an integration with Pipfile and Pipfile.lock files.
+* Added support for working with Demisto-SDK offline by using the `DEMISTO_SDK_OFFLINE_ENV` environment variable. See https://github.com/demisto/demisto-sdk#internet-connection for more information.
 
 ## 1.17.2
 * Fixed an issue where **lint** and **validate** commands failed on integrations and scripts that use docker images that are not available in the Docker Hub but exist locally.

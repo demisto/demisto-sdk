@@ -9,10 +9,5 @@ class SourceryHook(Hook):
         config_file = tools.get_file_or_remote(config_file_path)
         config_file["rule_settings"]["python_version"] = python_version
         tmp_file_path = config_file_path.with_name(".sourcery_tmp.yaml")
-        self.hook["args"] = [
-            f"--config={tmp_file_path}",
-            "--no-summary",
-            "--fix",
-            "--diff=git diff HEAD",
-        ]
+        self.hook["args"].append(f"--config={tmp_file_path}")
         tools.write_yml(str(tmp_file_path), config_file)

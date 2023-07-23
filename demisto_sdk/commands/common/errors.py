@@ -25,7 +25,7 @@ from demisto_sdk.commands.common.constants import (
     MarketplaceVersions,
 )
 from demisto_sdk.commands.common.content_constant_paths import CONF_PATH
-from demisto_sdk.commands.common.get_content_path import is_external_repository
+from demisto_sdk.commands.common.tools import is_external_repository
 
 FOUND_FILES_AND_ERRORS: list = []
 FOUND_FILES_AND_IGNORED_ERRORS: list = []

@@ -45,7 +45,6 @@ from demisto_sdk.commands.common.constants import (  # PACK_METADATA_PRICE,
 from demisto_sdk.commands.common.content import Content
 from demisto_sdk.commands.common.content.objects.pack_objects.pack import Pack
 from demisto_sdk.commands.common.errors import Errors
-from demisto_sdk.commands.common.get_content_path import is_external_repository
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.hook_validations.base_validator import (
@@ -59,6 +58,7 @@ from demisto_sdk.commands.common.tools import (
     get_json,
     get_local_remote_file,
     get_remote_file,
+    is_external_repository,
     pack_name_to_path,
 )
 from demisto_sdk.commands.find_dependencies.find_dependencies import PackDependencies

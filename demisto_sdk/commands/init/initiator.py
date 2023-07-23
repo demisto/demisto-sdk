@@ -39,7 +39,6 @@ from demisto_sdk.commands.common.constants import (
     XSOAR_SUPPORT,
     XSOAR_SUPPORT_URL,
 )
-from demisto_sdk.commands.common.get_content_path import is_external_repository
 from demisto_sdk.commands.common.git_content_config import GitContentConfig
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
@@ -48,6 +47,7 @@ from demisto_sdk.commands.common.tools import (
     get_common_server_path,
     get_pack_name,
     get_yaml,
+    is_external_repository,
 )
 from demisto_sdk.commands.secrets.secrets import SecretsValidator
 

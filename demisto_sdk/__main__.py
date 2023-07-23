@@ -23,7 +23,6 @@ from demisto_sdk.commands.common.content_constant_paths import (
     CONTENT_PATH,
 )
 from demisto_sdk.commands.common.cpu_count import cpu_count
-from demisto_sdk.commands.common.get_content_path import is_external_repository
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.hook_validations.readme import ReadMeValidator
 from demisto_sdk.commands.common.logger import handle_deprecated_args, logging_setup
@@ -32,6 +31,7 @@ from demisto_sdk.commands.common.tools import (
     get_config_param_kwargs_env,
     get_last_remote_release_version,
     get_release_note_entries,
+    is_external_repository,
     parse_marketplace_kwargs,
 )
 from demisto_sdk.commands.content_graph.interface.neo4j.neo4j_graph import (

@@ -39,7 +39,6 @@ from demisto_sdk.commands.common.errors import (
     FOUND_FILES_AND_IGNORED_ERRORS,
     Errors,
 )
-from demisto_sdk.commands.common.get_content_path import is_external_repository
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
 from demisto_sdk.commands.common.hook_validations.base_validator import error_codes
@@ -62,6 +61,7 @@ from demisto_sdk.commands.common.tools import (
     get_files_in_dir,
     get_item_marketplaces,
     get_pack_name,
+    is_external_repository,
     is_iron_bank_pack,
     server_version_compare,
     string_to_bool,

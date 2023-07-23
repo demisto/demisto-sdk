@@ -113,6 +113,8 @@ def _docker_start():
         },
         user=f"{os.getuid()}:{os.getgid()}",
     )
+    import time
+    time.sleep(50)
 
 
 def start():

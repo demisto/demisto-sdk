@@ -13,7 +13,7 @@ jobs:
         uses: actions/setup-python@v3
         with:
           python-version: '3.10'
-      
+
       - name:  Get commit hash
         id: get-commit
         run: echo commit=$(git rev-parse HEAD) >> $GITHUB_OUTPUT
@@ -23,14 +23,14 @@ jobs:
         with:
           repository: demisto/content
           path: content
-  
+
 
       - name: Setup Poetry
         uses: Gr1N/setup-poetry@v8
 
       - name: Downloding the last demisto-sdk version
         run: |
-          cd content 
+          cd content
           poetry install --with ci
           echo "starting uninstall of demisto-sdk .. "
           pip uninstall -y demisto-sdk
@@ -40,7 +40,7 @@ jobs:
           echo "added custom SDK"
 
       - name: tests
-        env: 
+        env:
           PYTHONPATH: ${{ github.workspace }}/content
         run: |
           cd content
@@ -49,4 +49,3 @@ jobs:
           poetry run pytest ./Tests/tests -v
           poetry run pytest ./Tests/private_build/tests -v
           poetry run pytest Utils -v
-          

@@ -38,7 +38,7 @@ jobs:
           echo "installing branch version of demisto-sdk (${{ steps.get-commit.outputs.commit }} )"
           pip install git+https://github.com/demisto/demisto-sdk@${{ steps.get-commit.outputs.commit }}
 
-      - name: Content Unit Tests 
+      - name: Content Unit Tests
         env:
           PYTHONPATH: ${{ github.workspace }}/content
         run: |

@@ -488,16 +488,19 @@ class Initiator:
             input("\nDo you want to create an integration in the pack? Y/N ")
         ).lower()
         if create_integration in ["y", "yes"]:
-            is_same_category = str(
-                input(
-                    "\nDo you want to set the integration category as you defined in the pack "
-                    "metadata? Y/N "
-                )
-            ).lower()
+            if not self.xsiam:
+                is_same_category = str(
+                    input(
+                        "\nDo you want to set the integration category as you defined in the pack "
+                        "metadata? Y/N "
+                    )
+                ).lower()
 
-            integration_category = (
-                self.category if is_same_category in ["y", "yes"] else ""
-            )
+                integration_category = (
+                    self.category if is_same_category in ["y", "yes"] else ""
+                )
+            else:
+                integration_category = INTEGRATION_CATEGORIES[0]
             integration_init = Initiator(
                 output=os.path.join(self.full_output_path, "Integrations"),
                 integration=True,
@@ -525,9 +528,15 @@ class Initiator:
             modeling_rules_template_files, dir=MODELING_RULES_DIR
         ):
             local_template_path = os.path.normpath(
-                os.path.join(__file__, "..", "templates", self.template)
+                os.path.join(
+                    __file__,
+                    "..",
+                    "templates",
+                    self.HELLO_WORLD_EVENT_COLLECTOR_INTEGRATION,
+                    "ModelingRules",
+                    self.template,
+                )
             )
-
             copy_tree(str(local_template_path), self.full_output_path)
 
         if self.id != self.template:
@@ -553,7 +562,14 @@ class Initiator:
             modeling_rules_template_files, dir=PARSING_RULES_DIR
         ):
             local_template_path = os.path.normpath(
-                os.path.join(__file__, "..", "templates", self.template)
+                os.path.join(
+                    __file__,
+                    "..",
+                    "templates",
+                    self.HELLO_WORLD_EVENT_COLLECTOR_INTEGRATION,
+                    "ParsingRules",
+                    self.template,
+                )
             )
             copy_tree(str(local_template_path), self.full_output_path)
 
@@ -898,8 +914,10 @@ class Initiator:
         id_from_yml: str = yml_dict["id"]
         name_from_yml: str = yml_dict["name"]
 
-        yml_dict["id"] = id_from_yml.replace(self.template, self.dir_name)
-        yml_dict["name"] = name_from_yml.replace(self.template, self.dir_name)
+        yml_dict["id"] = id_from_yml.replace(self.HELLO_WORLD_PACK_NAME, self.dir_name)
+        yml_dict["name"] = name_from_yml.replace(
+            self.HELLO_WORLD_PACK_NAME, self.dir_name
+        )
 
         content_item = "modeling rules" if self.is_modeling_rules else "parsing rules"
         if from_version := input(
@@ -1022,20 +1040,28 @@ class Initiator:
                 os.path.join(self.full_output_path, f"{current_suffix}_description.md"),
                 os.path.join(self.full_output_path, f"{self.dir_name}_description.md"),
             )
-        if self.is_modeling_rules:
+        if self.is_modeling_rules and os.path.exists(
+            os.path.join(self.full_output_path, f"{current_suffix}_schema.json")
+        ):
             os.rename(
                 os.path.join(self.full_output_path, f"{current_suffix}_schema.json"),
                 os.path.join(self.full_output_path, f"{self.dir_name}_schema.json"),
             )
         if self.is_modeling_rules or self.is_parsing_rules:
-            os.rename(
-                os.path.join(self.full_output_path, f"{current_suffix}.xif"),
-                os.path.join(self.full_output_path, f"{self.dir_name}.xif"),
-            )
-            os.rename(
-                os.path.join(self.full_output_path, f"{current_suffix}.yml"),
-                os.path.join(self.full_output_path, f"{self.dir_name}.yml"),
-            )
+            if os.path.exists(
+                os.path.join(self.full_output_path, f"{current_suffix}.xif")
+            ):
+                os.rename(
+                    os.path.join(self.full_output_path, f"{current_suffix}.xif"),
+                    os.path.join(self.full_output_path, f"{self.dir_name}.xif"),
+                )
+            if os.path.exists(
+                os.path.join(self.full_output_path, f"{current_suffix}.yml")
+            ):
+                os.rename(
+                    os.path.join(self.full_output_path, f"{current_suffix}.yml"),
+                    os.path.join(self.full_output_path, f"{self.dir_name}.yml"),
+                )
 
     def create_new_directory(
         self,
@@ -1191,12 +1217,12 @@ class Initiator:
             self.HELLO_WORLD_PARSING_RULES,
             self.HELLO_WORLD_MODELING_RULES,
         ]:
-            pack_name = self.HELLO_WORLD_EVENT_COLLECTOR_INTEGRATION
+            pack_name = self.HELLO_WORLD_PACK_NAME
         else:
             pack_name = self.template
 
         path = os.path.join("Packs", pack_name, dir, self.template)
-
+        # a list of files that unsuccessful to fetch from remote repo
         for file in files_list:
             try:
                 filename = file
@@ -1208,19 +1234,14 @@ class Initiator:
                     # is `README_example.md` - which happens when we do not want the readme
                     # files to appear in https://xsoar.pan.dev/docs/reference/index.
                     filename = file.replace("README.md", "README_example.md")
-                if self.xsiam and "EventCollector" in filename:
-                    file_content = tools.get_remote_file(
-                        os.path.join(path, filename), return_content=True
-                    )
-                else:
-                    file_content = tools.get_remote_file(
-                        os.path.join(path, filename),
-                        return_content=True,
-                        # Templates available only in the official repo
-                        git_content_config=GitContentConfig(
-                            repo_name=GitContentConfig.OFFICIAL_CONTENT_REPO_NAME
-                        ),
-                    )
+                file_content = tools.get_remote_file(
+                    os.path.join(path, filename),
+                    return_content=True,
+                    # Templates available only in the official repo
+                    git_content_config=GitContentConfig(
+                        repo_name=GitContentConfig.OFFICIAL_CONTENT_REPO_NAME
+                    ),
+                )
                 with open(os.path.join(self.full_output_path, file), "wb") as f:
                     f.write(file_content)
             except Exception:

@@ -3135,6 +3135,6 @@ def test_validate_no_disallowed_terms_in_customer_facing_docs_end_to_end(repo, m
         file_path=playbook_readme_file.path, pack_error_ignore_list=[]
     )
 
-    # Assure an errors were logged (1 error per validated file)
+    # Assure errors were logged (1 error per validated file)
     assert count_str_in_call_args_list(logger_error.call_args_list, "BA125") == 4
     pass

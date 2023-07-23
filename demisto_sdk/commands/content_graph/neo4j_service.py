@@ -88,7 +88,7 @@ def _docker_start():
     logger.info("Starting neo4j service")
     docker_client = init_global_docker_client()
     _stop_neo4j_service_docker(docker_client)
-    
+    github_actions_user = "1001:121"
     # user = None if os.getenv("CI") else f"{os.getuid()}:{os.getgid()}"
     docker_client.containers.run(
         image=NEO4J_SERVICE_IMAGE,
@@ -116,7 +116,7 @@ def _docker_start():
             "timeout": 15 * 1000000000,
             "retries": 10,
         },
-        user=f"{os.getuid()}:{os.getgid()}"
+        user=github_actions_user
     )
     logger.info("Neo4j service started successfully")
 

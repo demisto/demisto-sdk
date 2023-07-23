@@ -266,9 +266,10 @@ SDK_PYPI_VERSION = r"https://pypi.org/pypi/demisto-sdk/json"
 SUFFIX_TO_REMOVE = ("_dev", "_copy")
 
 
-# This exception should be raise inside methods that require an internet connection
-# when the SDK is defined as working offline.
 class NoInternetConnectionException(Exception):
+    """
+    This exception is raised in methods that require an internet connection, when the SDK is defined as working offline.
+    """
     pass
 
 

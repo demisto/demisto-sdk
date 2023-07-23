@@ -1,4 +1,4 @@
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Tuple
 
 import more_itertools
 from neo4j import Transaction
@@ -255,19 +255,18 @@ RETURN node_from, collect(relationship) AS relationships, collect(node_to) AS no
     }
 
 
-def get_items_by_cli_name(tx: Transaction, cli_name_list: List[str], item_type: str) -> list[tuple[str, str, list]]:
+def get_items_by_cli_name(tx: Transaction, cli_name_list: List[str]) -> List[Tuple[str, str, list]]:
     """Return a list of dictionaries representing the wanted incident fields.
         Args:
             tx (Transaction): The neo4j transaction.
             cli_name_list (List[str]): A list of cli_names of the wanted incident fields.
-            item_type (str): The type of the items to be fetched (IncidentField, IndicatorField etc.)
 
         Returns:
             list[tuple[str, str, list]: A list of tuples, each tuple represent an incident field.
             In each tuple there are the incident field cli name, it's file path and a list of the marketplaces he is in.
     """
-    query = f'MATCH (content_item:{item_type}) WHERE content_item.cli_name in {cli_name_list} ' \
+    query = f'MATCH (content_item:IncidentField) WHERE content_item.cli_name in {cli_name_list} ' \
             f'RETURN content_item.cli_name as cli_name, content_item.path as path, ' \
-            f'content_item.marketplaces as marketplaces '
+            f'content_item.marketplaces as marketplaces'
     result = run_query(tx, query)
     return [(item.get('cli_name'), item.get('path'), item.get('marketplaces')) for item in result]

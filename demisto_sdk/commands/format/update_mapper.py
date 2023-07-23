@@ -2,6 +2,8 @@ from typing import Tuple
 
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.content_graph.common import ContentType
+from demisto_sdk.commands.content_graph.objects import RelationshipData
+from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 from demisto_sdk.commands.format.format_constants import (
     ERROR_RETURN_CODE,
     SKIP_RETURN_CODE,
@@ -86,18 +88,17 @@ class MapperJSONFormat(BaseUpdateJSON):
             return
 
         # get the relevant content item from the graph
-        results = self.graph.search(object_id=self.data.get('id', ''))
-        mapper_node = {}
-        for result in results:
-            if result.content_type == ContentType.MAPPER and str(result.path) == self.source_file:
-                mapper_node = result
+        content_item: ContentItem
+        for content_item in self.graph.search(object_id=self.data.get('id', '')):
+            if content_item.content_type == ContentType.MAPPER and str(content_item.path) == self.source_file:
                 break
 
         # find the fields that aren't in the content repo
-        fields_not_in_repo = []
-        for field in mapper_node.uses:
-            if field.content_item_to.not_in_repository:
-                fields_not_in_repo.append(field.content_item_to.name)
+        fields_not_in_repo = [
+            field.content_item_to.name
+            for field in content_item.uses
+            if field.content_item_to.not_in_repository
+        ]
 
         # remove the fields that aren't in the repo
         mapper = self.data.get("mapping", {})

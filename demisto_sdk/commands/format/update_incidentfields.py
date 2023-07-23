@@ -106,7 +106,7 @@ class IncidentFieldJSONFormat(BaseUpdateJSON):
             it's path and it's marketplace.
         """
         alias_ids: set = {f'{alias.get("cliName")}' for alias in aliases}
-        return self.graph.get_content_items_by_cli_names(cli_name_list=list(alias_ids), item_type='IncidentField')
+        return self.graph.get_content_items_by_cli_names(cli_name_list=list(alias_ids))
 
     def _save_alias_field_file(
         self,

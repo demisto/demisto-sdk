@@ -1277,7 +1277,7 @@ def format(
             prev_ver=prev_ver,
             include_untracked=include_untracked,
             add_tests=add_tests,
-            format_with_graph=kwargs.get("graph")
+            format_with_graph=kwargs.get("graph", True)
         )
 
 

@@ -105,8 +105,6 @@ class Initiator:
         f"{TEMPLATE_INTEGRATION_NAME}_description.md",
         f"{TEMPLATE_INTEGRATION_NAME}_image.png",
         f"{TEMPLATE_INTEGRATION_NAME}_test.py",
-        "Pipfile",
-        "Pipfile.lock",
         "README.md",
         "command_examples",
     }

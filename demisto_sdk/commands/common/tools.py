@@ -2,7 +2,7 @@ import argparse
 import contextlib
 import glob
 import io
-import logging
+from demisto_sdk.commands.common.logger import logger
 
 import os
 import re
@@ -122,8 +122,6 @@ from demisto_sdk.commands.common.handlers import YAML_Handler
 
 if TYPE_CHECKING:
     from demisto_sdk.commands.content_graph.interface.graph import ContentGraphInterface
-
-logger = logging.getLogger("demisto-sdk")
 
 yaml_safe_load = YAML_Handler(typ="safe")
 
@@ -1031,7 +1029,7 @@ def str2bool(v):
     """
     Deprecated. Use string_to_bool instead
     """
-    return string_to_bool(v, default_when_empty=False)
+    return tools_paths.string_to_bool(v, default_when_empty=False)
 
 
 def to_dict(obj):
@@ -3566,33 +3564,6 @@ def normalize_field_name(field: str) -> str:
         field (str): the incident/indicator field.
     """
     return field.replace("incident_", "").replace("indicator_", "")
-
-
-STRING_TO_BOOL_MAP = {
-    "y": True,
-    "1": True,
-    "yes": True,
-    "true": True,
-    "n": False,
-    "0": False,
-    "no": False,
-    "false": False,
-    "t": True,
-    "f": False,
-}
-
-
-def string_to_bool(
-    input_: Any,
-    default_when_empty: Optional[bool] = None,
-) -> bool:
-    try:
-        return STRING_TO_BOOL_MAP[str(input_).lower()]
-    except (KeyError, TypeError):
-        if input_ in ("", None) and default_when_empty is not None:
-            return default_when_empty
-
-    raise ValueError(f"cannot convert {input_} to bool")
 
 
 def field_to_cli_name(field_name: str) -> str:

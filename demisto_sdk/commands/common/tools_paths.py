@@ -1,6 +1,10 @@
 import logging
 import os
 from pathlib import Path
+from typing import (
+    Any,
+    Optional,
+)
 
 import git
 
@@ -47,3 +51,30 @@ def get_content_path() -> Path:
                 "[yellow]Please run demisto-sdk in content repository![/yellow]"
             )
     return Path(".")
+
+
+STRING_TO_BOOL_MAP = {
+    "y": True,
+    "1": True,
+    "yes": True,
+    "true": True,
+    "n": False,
+    "0": False,
+    "no": False,
+    "false": False,
+    "t": True,
+    "f": False,
+}
+
+
+def string_to_bool(
+    input_: Any,
+    default_when_empty: Optional[bool] = None,
+) -> bool:
+    try:
+        return STRING_TO_BOOL_MAP[str(input_).lower()]
+    except (KeyError, TypeError):
+        if input_ in ("", None) and default_when_empty is not None:
+            return default_when_empty
+
+    raise ValueError(f"cannot convert {input_} to bool")

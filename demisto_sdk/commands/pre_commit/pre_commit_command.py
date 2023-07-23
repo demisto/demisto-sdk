@@ -25,8 +25,8 @@ from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     get_file_or_remote,
     get_last_remote_release_version,
-    string_to_bool,
 )
+from demisto_sdk.commands.common.tools_paths import string_to_bool
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.content_graph.objects.integration_script import (
     IntegrationScript,

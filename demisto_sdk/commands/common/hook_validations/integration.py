@@ -63,9 +63,11 @@ from demisto_sdk.commands.common.tools import (
     get_pack_name,
     is_iron_bank_pack,
     server_version_compare,
+)
+from demisto_sdk.commands.common.tools_paths import (
+    is_external_repository,
     string_to_bool,
 )
-from demisto_sdk.commands.common.tools_paths import is_external_repository
 
 default_additional_info = load_default_additional_info_dict()
 

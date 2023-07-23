@@ -23,7 +23,7 @@ from demisto_sdk.commands.common.content_constant_paths import (
     CONTENT_PATH,
 )
 from demisto_sdk.commands.common.cpu_count import cpu_count
-from demisto_sdk.commands.common.handlers import JSON_Handler
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.hook_validations.readme import ReadMeValidator
 from demisto_sdk.commands.common.logger import handle_deprecated_args, logging_setup
 from demisto_sdk.commands.common.tools import (
@@ -56,7 +56,6 @@ SDK_OFFLINE_ERROR_MESSAGE = (
 
 logger = logging.getLogger("demisto-sdk")
 
-json = JSON_Handler()
 
 # Third party packages
 
@@ -109,9 +108,6 @@ class VersionParamType(click.ParamType):
                 param,
                 ctx,
             )
-
-
-json = JSON_Handler()
 
 
 class DemistoSDK:
@@ -207,12 +203,9 @@ def main(ctx, config, version, release_notes, **kwargs):
         )
 
     dotenv.load_dotenv(CONTENT_PATH / ".env", override=True)  # type: ignore # load .env file from the cwd
-    if (
-        (not os.getenv("DEMISTO_SDK_SKIP_VERSION_CHECK")
-        or not os.getenv("CI")
-        or version)
-        and not is_sdk_defined_working_offline()
-    ):  # If the key exists/called to version
+    if ((
+        not os.getenv("DEMISTO_SDK_SKIP_VERSION_CHECK")
+    ) or version) and not is_sdk_defined_working_offline():  # If the key exists/called to version
         try:
             __version__ = get_distribution("demisto-sdk").version
         except DistributionNotFound:
@@ -221,7 +214,11 @@ def main(ctx, config, version, release_notes, **kwargs):
                 "[yellow]Cound not find the version of the demisto-sdk. This usually happens when running in a development environment.[/yellow]"
             )
         else:
-            last_release = get_last_remote_release_version()
+            last_release = ""
+            if not os.environ.get(
+                "CI"
+            ):  # Check only when not running in CI (e.g running locally).
+                last_release = get_last_remote_release_version()
             logger.info(f"[yellow]You are using demisto-sdk {__version__}.[/yellow]")
             if last_release and __version__ != last_release:
                 logger.info(
@@ -2905,7 +2902,7 @@ def test_content(ctx, **kwargs):
     help="Will find and load the known_words file from the pack. "
     "To use this option make sure you are running from the "
     "content directory.",
-    default=False,
+    default=True,
 )
 @click.pass_context
 @logging_setup_decorator

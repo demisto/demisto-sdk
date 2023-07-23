@@ -4,7 +4,7 @@ from collections import OrderedDict
 from tempfile import mkdtemp
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
-from demisto_sdk.commands.common.handlers import JSON_Handler
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.update_id_set import (
     ID_SET_ENTITIES,
@@ -13,9 +13,6 @@ from demisto_sdk.commands.common.update_id_set import (
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
 from TestSuite.test_tools import ChangeCWD
 from TestSuite.utils import IsEqualFunctions
-
-json = JSON_Handler()
-
 
 TESTS_DIR = f"{git_path()}/demisto_sdk/tests"
 
@@ -41,14 +38,14 @@ METADATA = {
 
 
 class TestIDSetCreator:
-    def setup(self):
+    def setup_method(self):
         self.id_set_full_path = os.path.join(
             TESTS_DIR, "test_files", "content_repo_example", "id_set.json"
         )
         self._test_dir = mkdtemp()
         self.file_path = os.path.join(self._test_dir, "id_set.json")
 
-    def teardown(self):
+    def teardown_method(self):
         # delete the id set file
         try:
             if os.path.isfile(self.file_path) or os.path.islink(self.file_path):

@@ -56,7 +56,7 @@ from demisto_sdk.commands.common.content_constant_paths import (
     XPANSE_ID_SET_PATH,
 )
 from demisto_sdk.commands.common.cpu_count import cpu_count
-from demisto_sdk.commands.common.handlers import JSON_Handler
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     find_type,
@@ -71,9 +71,6 @@ from demisto_sdk.commands.common.tools import (
 from demisto_sdk.commands.prepare_content.integration_script_unifier import (
     IntegrationScriptUnifier,
 )
-
-json = JSON_Handler()
-
 
 CONTENT_ENTITIES = [
     "Packs",
@@ -314,9 +311,9 @@ def should_skip_item_by_mp(
         return False
 
     # first check, check field 'marketplaces' in the item's file
-    file_type = Path(file_path).suffix
+    Path(file_path).suffix
     try:
-        item_data = get_file(file_path, file_type)
+        item_data = get_file(file_path)
     except (ValueError, FileNotFoundError, IsADirectoryError):
         return True
 

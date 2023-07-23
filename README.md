@@ -209,3 +209,6 @@ Note that the following commands may work partially without an internet connecti
    When it's set, the SDK will skip the places where an internet connection is required instead of trying to perform the requests.
 
 ---
+
+## XSOAR CI/CD
+For information regarding XSOAR CI/CD, please see [this article](https://xsoar.pan.dev/docs/reference/packs/content-management)

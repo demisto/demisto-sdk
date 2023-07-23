@@ -5,7 +5,10 @@ import shutil
 from pathlib import Path
 from typing import Optional
 
-from ruamel.yaml.scalarstring import PlainScalarString, SingleQuotedScalarString
+from ruamel.yaml.scalarstring import (  # noqa: TID251
+    PlainScalarString,
+    SingleQuotedScalarString,
+)
 
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import (
@@ -15,14 +18,12 @@ from demisto_sdk.commands.common.constants import (
     TYPE_PYTHON,
     TYPE_TO_EXTENSION,
 )
-from demisto_sdk.commands.common.handlers import YAML_Handler
+from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import get_yaml, pascal_case
 from demisto_sdk.commands.prepare_content.integration_script_unifier import (
     IntegrationScriptUnifier,
 )
-
-yaml = YAML_Handler()
 
 REGEX_MODULE = r"### GENERATED CODE ###((.|\s)+?)### END GENERATED CODE ###"
 INTEGRATIONS_DOCS_REFERENCE = "https://xsoar.pan.dev/docs/reference/integrations/"

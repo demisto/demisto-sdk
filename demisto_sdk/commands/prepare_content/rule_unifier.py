@@ -1,13 +1,17 @@
-import json
 import os
 from collections import defaultdict
 from pathlib import Path
 
-from ruamel.yaml.scalarstring import FoldedScalarString
+from ruamel.yaml.scalarstring import (  # noqa: TID251 - only importing FoldedScalarString is OK
+    FoldedScalarString,
+)
 
 from demisto_sdk.commands.common.constants import SAMPLES_DIR, MarketplaceVersions
+from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.prepare_content.unifier import Unifier
+
+json = JSON_Handler()
 
 
 class RuleUnifier(Unifier):

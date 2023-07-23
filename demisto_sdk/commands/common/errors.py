@@ -1476,6 +1476,7 @@ ALLOWED_IGNORE_ERRORS = (
         "BA116",
         "BA119",
         "BA124",
+        "BA125",
         "BA126",
         "DS107",
         "GF102",

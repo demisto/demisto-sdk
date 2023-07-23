@@ -1,6 +1,6 @@
 from typing import IO, Optional
 
-import orjson
+import orjson  # noqa: TID251 - this is the handler
 
 from demisto_sdk.commands.common.handlers.xsoar_handler import XSOAR_Handler
 

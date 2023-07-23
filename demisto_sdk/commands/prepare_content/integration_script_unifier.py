@@ -8,7 +8,9 @@ from pathlib import Path
 from typing import Dict, List, Union
 
 from inflection import dasherize, underscore
-from ruamel.yaml.scalarstring import FoldedScalarString
+from ruamel.yaml.scalarstring import (  # noqa: TID251 - only importing FoldedScalarString is OK
+    FoldedScalarString,
+)
 
 from demisto_sdk.commands.common.constants import (
     API_MODULE_FILE_SUFFIX,
@@ -18,7 +20,7 @@ from demisto_sdk.commands.common.constants import (
     ImagesFolderNames,
     MarketplaceVersions,
 )
-from demisto_sdk.commands.common.handlers import JSON_Handler
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     arg_to_list,
@@ -34,8 +36,6 @@ from demisto_sdk.commands.prepare_content.markdown_images_handler import (
     replace_markdown_urls_and_upload_to_artifacts,
 )
 from demisto_sdk.commands.prepare_content.unifier import Unifier
-
-json = JSON_Handler()
 
 PACK_METADATA_PATH = "pack_metadata.json"
 CONTRIBUTOR_DISPLAY_NAME = " ({} Contribution)"
@@ -139,6 +139,8 @@ class IntegrationScriptUnifier(Unifier):
 
         This method replaces a list with a boolean, according to the self.marketplace value.
         Boolean values are left untouched.
+        when credentials of type 9 are hidden, the function will replace the hidden key with
+        hiddenusername and hiddenpassword.
         """
         if not marketplace:
             return
@@ -156,7 +158,12 @@ class IntegrationScriptUnifier(Unifier):
                 if MarketplaceVersions.XSOAR_ON_PREM.value in hidden:
                     hidden.append(MarketplaceVersions.XSOAR)
 
-                data["configuration"][i]["hidden"] = marketplace in hidden
+                if param.get("name") == "credentials" and param.get("type") == 9:
+                    data["configuration"][i]["hiddenusername"] = marketplace in hidden
+                    data["configuration"][i]["hiddenpassword"] = marketplace in hidden
+                    data["configuration"][i].pop("hidden")
+                else:  # type-4 param
+                    data["configuration"][i]["hidden"] = marketplace in hidden
 
     @staticmethod
     def add_custom_section(

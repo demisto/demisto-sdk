@@ -1,5 +1,7 @@
 from demisto_sdk.commands.common.handlers import JSON_Handler
-json = JSON_Handler()
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
+
+
 
 import time
 from typing import Any, Callable, Dict, Optional, Tuple, Union
@@ -889,7 +891,7 @@ def main():
         verify=verify_certificate,
         proxy=proxy)
     command = demisto.command()
-    LOG(f'Command being called is {command}')
+    demisto.info(f'Command being called is {command}')
     # Commands dict
     commands: Dict[str, Callable[[Client, Dict[str, str]], Tuple[str, dict, dict]]] = {
         'test-module': test_module,
@@ -902,12 +904,12 @@ def main():
         'kace-ticket-delete': delete_ticket_command,
     }
     if command in commands:
-        return_outputs(*commands[command](client, demisto.args()))
+        return_results(*commands[command](client, demisto.args()))
     elif command == 'fetch-incidents':
         incidents = fetch_incidents(client, fetch_time=fetch_time, fetch_shaping=fetch_shaping,
                                     fetch_filter=fetch_filter, fetch_limit=fetch_limit,
                                     fetch_queue_id=fetch_queue_id, last_run=demisto.getLastRun())
         demisto.incidents(incidents)
-        demisto.results(incidents)
+        return_results(incidents)
     else:
         raise NotImplementedError(f'{command} is not an existing QuestKace command')

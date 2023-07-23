@@ -8,19 +8,16 @@ from demisto_sdk.commands.pre_commit.hooks.mypy import MypyHook
 from demisto_sdk.commands.pre_commit.hooks.ruff import RuffHook
 from demisto_sdk.commands.pre_commit.pre_commit_command import (
     GitUtil,
-    YAML_Handler,
     group_by_python_version,
     preprocess_files,
     subprocess,
+    yaml,
 )
 from TestSuite.repo import Repo
 
 TEST_DATA_PATH = (
     Path(git_path()) / "demisto_sdk" / "commands" / "pre_commit" / "tests" / "test_data"
 )
-
-
-yaml = YAML_Handler()
 
 
 @pytest.mark.parametrize("is_test", [True, False])
@@ -55,7 +52,7 @@ def test_config_files(mocker, repo: Repo, is_test: bool):
     script1 = pack1.create_script("script1", docker_image="demisto/python3:2.7.1.14969")
     incident_field = pack1.create_incident_field("incident_field")
     classifier = pack1.create_classifier("classifier")
-    mocker.patch.object(YAML_Handler, "dump", side_effect=lambda *args: [])
+    mocker.patch.object(yaml, "dump", side_effect=lambda *args: [])
     mock_subprocess = mocker.patch.object(subprocess, "run")
     relative_paths = {
         path.relative_to(repo.path)

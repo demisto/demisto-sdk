@@ -207,6 +207,9 @@ class ReadMeValidator(BaseValidator):
                 self.verify_template_not_in_readme(),
                 self.verify_copyright_section_in_readme_content(),
                 # self.has_no_markdown_lint_errors(),
+                self.validate_no_disallowed_terms_in_customer_facing_docs(
+                    file_content=self.readme_content, file_path=self.file_path_str
+                ),
             ]
         )
 
@@ -298,7 +301,7 @@ class ReadMeValidator(BaseValidator):
             bool: True If all links are valid else False.
         """
         invalid_paths = re.findall(
-            r"(\!\[.*?\]|src\=)(\(|\")(https://github.com/demisto/content/(?!raw).*?)(\)|\")",
+            r"(\!\[.*?\]|src\=)(\(|\")(https://github.com/demisto/content/blob/.*?)(\)|\")",
             self.readme_content,
             re.IGNORECASE,
         )

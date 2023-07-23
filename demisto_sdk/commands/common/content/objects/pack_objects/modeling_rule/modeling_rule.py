@@ -110,15 +110,17 @@ class SingleModelingRule:
         self._datamodel = value
 
     @property
-    def fields(self):
+    def fields(self) -> List[str]:
         if not self._fields:
-            uniq_fields = set(re.findall(self.RULE_FIELDS_REGEX, self.rule_text))
-            uniq_fields.add(self.TIME_FIELD)  # The '_time' field is always required.
-            self.fields = uniq_fields
-            if not self._fields:
+            uniq_fields = list(set(re.findall(self.RULE_FIELDS_REGEX, self.rule_text)))
+            if not uniq_fields:
                 raise ValueError(
                     f'could not parse datamodel fields from the rule text: "{self.rule_text}"'
                 )
+
+            uniq_fields.append(self.TIME_FIELD)  # The '_time' field is always required.
+            self.fields = sorted(uniq_fields)
+
         return self._fields
 
     @fields.setter

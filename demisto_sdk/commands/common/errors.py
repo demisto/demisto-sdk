@@ -413,7 +413,7 @@ ERROR_CODE = {
         "code": "IF115",
         "related_field": "unsearchable",
     },
-    "select_values_cannot_contain_empty_values": {
+    "select_values_cannot_contain_empty_values_in_multi_select_types": {
         "code": "IF116",
         "related_field": "selectValues",
     },
@@ -424,6 +424,10 @@ ERROR_CODE = {
     "aliases_with_inner_alias": {
         "code": "IF118",
         "related_field": "Aliases",
+    },
+    "select_values_cannot_contain_multiple_or_only_empty_values_in_single_select_types": {
+        "code": "IF119",
+        "related_field": "selectValues",
     },
     # IM - Images
     "no_image_given": {
@@ -1697,8 +1701,13 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def select_values_cannot_contain_empty_values():
-        return "the field selectValues cannot contain empty values. Please remove."
+    def select_values_cannot_contain_empty_values_in_multi_select_types():
+        return "Multiselect types cannot contain empty values in the selectValues field"
+
+    @staticmethod
+    @error_code_decorator
+    def select_values_cannot_contain_multiple_or_only_empty_values_in_single_select_types():
+        return "singleSelect types cannot contain only empty value or more than one empty values in the field selectValues. Please remove."
 
     @staticmethod
     @error_code_decorator

@@ -23,8 +23,9 @@ jobs:
           echo pwd
           export GIT_URL=$(git ls-remote --get-url origin | sed 's/\.git$//')
           echo GIT_URL
-          echo "Last Commit: ${{ steps.last_commit.outputs.commit }}"
-          poetry add git+https://github.com/demisto/demisto-sdk/pull/#${{ steps.last_commit.outputs.commit }}
+          commit=$(git rev-parse HEAD)
+          echo "Last Commit: commit"
+          poetry add git+https://github.com/demisto/demisto-sdk@$commit
           echo "added custom SDK"
       - name: tests
         run:

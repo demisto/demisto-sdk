@@ -128,14 +128,14 @@ class Initiator:
     }
 
     TEMPLATE_MODELING_RULES_FILES = {
-        "HelloWorldEventCollector_schema.json",
-        "HelloWorldEventCollector.xif",
-        "HelloWorldEventCollector.yml",
+        "HelloWorldModelingRules_schema.json",
+        "HelloWorldModelingRules.xif",
+        "HelloWorldModelingRules.yml",
     }
 
     TEMPLATE_PARSING_RULES_FILES = {
-        "HelloWorldEventCollector.xif",
-        "HelloWorldEventCollector.yml",
+        "HelloWorldParsingRules.xif",
+        "HelloWorldParsingRules.yml",
     }
 
     HELLO_WORLD_TEST_DATA_FILES = {
@@ -339,18 +339,24 @@ class Initiator:
         # if reached here it is a pack init - will be used again if user decides to create an integration
         return template
 
-    def create_empty_files(self, file_list: Set[str]):
-        """Creates empty files according to a given list.
+    def create_files_from_local_template_or_empty(
+        self, file_list: Set[str], path_of_template
+    ) -> None:
+        """Creates empty files according to a given list or from a template if exist.
 
         Args:
             file_list (List(str)): A list with path and names of the files.
         """
         for file in file_list:
             file_path = os.path.join(self.full_output_path, file)
-            _, file_extension = os.path.splitext(file_path)
-            with open(file_path, "w") as f:
-                if file_extension == ".json":
-                    f.write(json.dumps({}, indent=4))
+            template_path = os.path.join(path_of_template, file)
+            if os.path.exists(template_path) and not os.path.exists(file_path):
+                self.write_to_file_from_template(template_path, file_path)
+            elif not os.path.exists(file_path):
+                _, file_extension = os.path.splitext(file_path)
+                with open(file_path, "w") as f:
+                    if file_extension == ".json":
+                        f.write(json.dumps({}, indent=4))
 
     def get_created_dir_name(self, created_object: str):
         """Makes sure a name is given for the created object
@@ -516,7 +522,6 @@ class Initiator:
         Returns:
             bool. Returns True if the  modeling rule was created successfully and False otherwise
         """
-        # if an output directory given create the pack there
         self.full_output_path = os.path.join(self.output, self.dir_name)
         self.get_created_dir_name(created_object="modeling rules")
         modeling_rules_template_files = self.get_template_files()
@@ -534,28 +539,30 @@ class Initiator:
                 )
             )
             copy_tree(str(local_template_path), self.full_output_path)
+            self.create_files_from_local_template_or_empty(
+                modeling_rules_template_files, local_template_path
+            )
 
         if self.id != self.template:
             # note rename does not work on the yml file - that is done in the yml_reformatting function.
             self.rename(current_suffix=self.template)
             self.modeling_or_parsing_rules_yml_reformatting(
-                current_suffix=self.dir_name, integration=False
+                current_suffix=self.dir_name
             )
 
         return True
 
     def parsing_rules_init(self) -> bool:
-        """Creates a modeling rules directory tree.
+        """Creates a parsing rules directory tree.
 
         Returns:
-            bool. Returns True if the  modeling rule was created successfully and False otherwise
+            bool. Returns True if the parsing rules was created successfully and False otherwise
         """
-        # if an output directory given create the pack there
         self.full_output_path = os.path.join(self.output, self.dir_name)
         self.get_created_dir_name(created_object="parsing rules")
-        modeling_rules_template_files = self.get_template_files()
+        parsing_rules_template_files = self.get_template_files()
         if not self.get_remote_templates(
-            modeling_rules_template_files, dir=PARSING_RULES_DIR
+            parsing_rules_template_files, dir=PARSING_RULES_DIR
         ):
             local_template_path = os.path.normpath(
                 os.path.join(
@@ -568,12 +575,14 @@ class Initiator:
                 )
             )
             copy_tree(str(local_template_path), self.full_output_path)
-
+            self.create_files_from_local_template_or_empty(
+                parsing_rules_template_files, local_template_path
+            )
         if self.id != self.template:
             # note rename does not work on the yml file - that is done in the yml_reformatting function.
             self.rename(current_suffix=self.template)
             self.modeling_or_parsing_rules_yml_reformatting(
-                current_suffix=self.dir_name, integration=False
+                current_suffix=self.dir_name
             )
 
         return True
@@ -796,12 +805,14 @@ class Initiator:
         if not self.get_remote_templates(
             integration_template_files, dir=INTEGRATIONS_DIR
         ):
+            local_template_path = os.path.normpath(
+                os.path.join(__file__, "..", "templates", self.template)
+            )
             if self.xsiam:
-                self.create_empty_files(integration_template_files)
-            else:
-                local_template_path = os.path.normpath(
-                    os.path.join(__file__, "..", "templates", self.template)
+                self.create_files_from_local_template_or_empty(
+                    integration_template_files, local_template_path
                 )
+            else:
                 copy_tree(str(local_template_path), self.full_output_path)
 
         if self.id != self.template:
@@ -895,14 +906,11 @@ class Initiator:
 
         return True
 
-    def modeling_or_parsing_rules_yml_reformatting(
-        self, current_suffix: str, integration: bool = False
-    ):
-        """Formats the given yml to fit the newly created modeling/pursing rules
+    def modeling_or_parsing_rules_yml_reformatting(self, current_suffix: str):
+        """Formats the given yml to fit the newly created modeling/pursing rules.
 
         Args:
             current_suffix (str): The yml file name (HelloWorld or HelloWorldScript)
-            integration (bool): Indicates if integration yml is being reformatted.
         """
         yml_dict = get_yaml(
             os.path.join(self.full_output_path, f"{current_suffix}.yml")
@@ -1112,6 +1120,18 @@ class Initiator:
         ) as fp:
             fp.write(file_contents)
 
+    def write_to_file_from_template(self, template_path: str, output_path: str):
+        """Fixes the import statement in the _test.py file in the newly created initegration/script
+
+        Args:
+            name_to_change (str): The name of the former integration/script to replace in the import.
+        """
+        with open(os.path.join(template_path)) as fp:
+            file_contents = fp.read()
+
+        with open(os.path.join(output_path), "w") as fp:
+            fp.write(file_contents)
+
     def copy_common_server_python(self):
         """copy commonserverpython from the base pack"""
         if self.common_server:
@@ -1218,7 +1238,7 @@ class Initiator:
             pack_name = self.template
 
         path = os.path.join("Packs", pack_name, dir, self.template)
-        # a list of files that unsuccessful to fetch from remote repo
+
         for file in files_list:
             try:
                 filename = file

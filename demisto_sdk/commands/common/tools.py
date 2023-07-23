@@ -1825,8 +1825,10 @@ def find_type(
             if MODELING_RULES_DIR in Path(path).parts:
                 return FileType.MODELING_RULE
 
-        if "global_rule_id" in _dict or (
-            isinstance(_dict, list) and _dict and "global_rule_id" in _dict[0]
+        if (
+            _dict
+            and "global_rule_id" in _dict
+            or (isinstance(_dict, list) and _dict and "global_rule_id" in _dict[0])
         ):
             return FileType.CORRELATION_RULE
 

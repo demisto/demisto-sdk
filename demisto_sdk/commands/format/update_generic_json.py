@@ -1,5 +1,5 @@
 import traceback
-from distutils.version import LooseVersion
+from packaging.version import Version
 from typing import Optional, Tuple
 
 from demisto_sdk.commands.common.constants import (
@@ -95,7 +95,7 @@ class BaseUpdateJSON(BaseUpdate):
         """
         if (
             not self.data.get("toVersion")
-            or LooseVersion(self.data.get("toVersion", DEFAULT_CONTENT_ITEM_TO_VERSION))
+            or Version(self.data.get("toVersion", DEFAULT_CONTENT_ITEM_TO_VERSION))
             >= TO_VERSION_5_9_9
         ):
             logger.debug("Setting toVersion field")

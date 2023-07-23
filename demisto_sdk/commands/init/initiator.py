@@ -2,7 +2,7 @@ import glob
 import os
 import shutil
 from distutils.dir_util import copy_tree
-from distutils.version import LooseVersion
+from packaging.version import Version
 from typing import Dict, List
 
 from demisto_sdk.commands.common import tools
@@ -736,9 +736,9 @@ class Initiator:
         if from_version:
             yml_dict["fromversion"] = from_version
 
-        if LooseVersion(
+        if Version(
             yml_dict.get("fromversion", DEFAULT_CONTENT_ITEM_FROM_VERSION)
-        ) < LooseVersion(self.SUPPORTED_FROM_VERSION):
+        ) < Version(self.SUPPORTED_FROM_VERSION):
             yml_dict["fromversion"] = self.SUPPORTED_FROM_VERSION
 
         if integration:

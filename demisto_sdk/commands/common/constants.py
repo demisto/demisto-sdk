@@ -1,5 +1,5 @@
 import re
-from distutils.version import LooseVersion
+from packaging.version import Version
 from enum import Enum
 from functools import reduce
 from typing import Dict, List
@@ -1731,8 +1731,8 @@ MARKETPLACE_TO_CORE_PACKS_FILE: Dict[MarketplaceVersions, str] = {
 
 
 INDICATOR_FIELD_TYPE_TO_MIN_VERSION = {
-    "html": LooseVersion("6.1.0"),
-    "grid": LooseVersion("5.5.0"),
+    "html": Version("6.1.0"),
+    "grid": Version("5.5.0"),
 }
 
 

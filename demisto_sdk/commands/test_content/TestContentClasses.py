@@ -8,7 +8,7 @@ import time
 import urllib.parse
 import uuid
 from copy import deepcopy
-from distutils.version import LooseVersion
+from packaging.version import Version
 from math import ceil
 from pprint import pformat
 from queue import Empty, Queue
@@ -282,9 +282,9 @@ class TestPlaybook:
 
         def version_mismatch():
             if not (
-                LooseVersion(self.configuration.from_version)
-                <= LooseVersion(self.build_context.server_numeric_version)
-                <= LooseVersion(self.configuration.to_version)
+                Version(self.configuration.from_version)
+                <= Version(self.build_context.server_numeric_version)
+                <= Version(self.configuration.to_version)
             ):
                 self.build_context.logging_module.warning(
                     f"Test {self} ignored due to version mismatch "
@@ -2674,7 +2674,6 @@ class ServerContext:
         time.sleep(10)
 
     def execute_tests(self):
-
         try:
             self.build_context.logging_module.info(
                 f"Starts tests with server url - {get_ui_url(self.server_url)}",
@@ -2821,7 +2820,7 @@ def replace_external_playbook_configuration(
     # Checking server version
     server_version = get_demisto_version(client)
 
-    if LooseVersion(server_version.base_version) < LooseVersion("6.2.0"):  # type: ignore
+    if Version(server_version.base_version) < Version("6.2.0"):  # type: ignore
         logger_module.info(
             "External Playbook not supported in versions previous to 6.2.0, skipping re-configuration."
         )

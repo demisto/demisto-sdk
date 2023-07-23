@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from distutils.version import LooseVersion
+from packaging.version import Version
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
@@ -1685,8 +1685,8 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def field_version_is_not_correct(
-        from_version_set: LooseVersion,
-        expected_from_version: LooseVersion,
+        from_version_set: Version,
+        expected_from_version: Version,
         reason_for_version: str,
     ):
         return (

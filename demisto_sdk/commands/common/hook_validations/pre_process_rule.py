@@ -1,4 +1,4 @@
-from distutils.version import LooseVersion
+from packaging.version import Version
 from typing import List
 
 from demisto_sdk.commands.common.errors import Errors
@@ -69,9 +69,7 @@ class PreProcessRuleValidator(ContentEntityValidator):
             bool. True if from version field is valid, else False.
         """
         if self.from_version:
-            if LooseVersion(self.from_version) < LooseVersion(
-                FROM_VERSION_PRE_PROCESS_RULES
-            ):
+            if Version(self.from_version) < Version(FROM_VERSION_PRE_PROCESS_RULES):
                 (
                     error_message,
                     error_code,

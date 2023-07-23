@@ -1,5 +1,5 @@
 import logging
-from distutils.version import LooseVersion
+from packaging.version import Version
 from typing import Dict, List
 from unittest.mock import patch
 
@@ -438,20 +438,20 @@ class TestFieldValidator:
             assert validator.is_valid_field_name_prefix() == answer
 
     IS_VALID_FROM_VERSION_FIELD = [
-        (LooseVersion("5.5.0"), "5.5.0", True),
-        (LooseVersion("5.5.0"), "6.0.0", True),
-        (LooseVersion("6.0.0"), "6.0.0", True),
-        (LooseVersion("6.0.0"), "6.1.0", True),
-        (LooseVersion("6.2.0"), "6.0.0", False),
-        (LooseVersion("6.5.0"), "6.0.0", False),
-        (LooseVersion("6.5.0"), "6.0.0", False),
+        (Version("5.5.0"), "5.5.0", True),
+        (Version("5.5.0"), "6.0.0", True),
+        (Version("6.0.0"), "6.0.0", True),
+        (Version("6.0.0"), "6.1.0", True),
+        (Version("6.2.0"), "6.0.0", False),
+        (Version("6.5.0"), "6.0.0", False),
+        (Version("6.5.0"), "6.0.0", False),
     ]
 
     @pytest.mark.parametrize(
         "min_version, from_version, expected", IS_VALID_FROM_VERSION_FIELD
     )
     def test_is_valid_from_version_field(
-        self, pack, min_version: LooseVersion, from_version: str, expected: bool
+        self, pack, min_version: Version, from_version: str, expected: bool
     ):
         """
         Given

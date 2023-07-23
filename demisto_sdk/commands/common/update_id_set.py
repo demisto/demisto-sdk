@@ -1754,7 +1754,7 @@ def process_integration(
     res = []
     excluded_items_from_id_set: dict = {}
     try:
-        if os.path.isfile(file_path):
+        if Path(file_path).is_file():
             if should_skip_item_by_mp(
                 file_path,
                 marketplace,
@@ -1782,7 +1782,7 @@ def process_integration(
                 print_logs=print_logs,
             ):
                 return [], excluded_items_from_id_set
-            if os.path.isfile(file_path):
+            if Path(file_path).is_file():
                 # locally, might have leftover dirs without committed files
                 if print_logs:
                     logger.info(f"adding {file_path} to id_set")
@@ -1812,7 +1812,7 @@ def process_script(
     res = []
     excluded_items_from_id_set: dict = {}
     try:
-        if os.path.isfile(file_path):
+        if Path(file_path).is_file():
             if should_skip_item_by_mp(
                 file_path,
                 marketplace,
@@ -2146,7 +2146,7 @@ def process_general_items(
     res = []
     excluded_items_from_id_set: dict = {}
     try:
-        if os.path.isfile(file_path):
+        if Path(file_path).is_file():
             item_type = find_type(file_path)
             if item_type in expected_file_types:
                 if should_skip_item_by_mp(
@@ -2165,7 +2165,7 @@ def process_general_items(
             package_name = Path(file_path).name
             file_path = os.path.join(file_path, f"{package_name}.{suffix}")
             item_type = find_type(file_path)
-            if os.path.isfile(file_path) and item_type in expected_file_types:
+            if Path(file_path).is_file() and item_type in expected_file_types:
                 if should_skip_item_by_mp(
                     file_path,
                     marketplace,

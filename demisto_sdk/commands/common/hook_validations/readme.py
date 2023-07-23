@@ -493,9 +493,9 @@ class ReadMeValidator(BaseValidator):
                 )
             else:
                 # generates absolute path from relative and checks for the file existence.
-                if not os.path.isfile(
-                    os.path.join(self.file_path.parent, relative_path)
-                ):
+                if not Path(
+                    self.file_path.parent, relative_path
+                ).is_file():
                     error_message, error_code = Errors.invalid_readme_image_error(
                         prefix + f"({relative_path})",
                         error_type="general_readme_relative_error",

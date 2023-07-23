@@ -1,6 +1,7 @@
 import os
 from configparser import ConfigParser, MissingSectionHeaderError
 from typing import Union
+from pathlib import Path
 
 from demisto_sdk.commands.common.content.objects.pack_objects.abstract_pack_objects.json_content_object import (
     JSONContentObject,
@@ -34,7 +35,7 @@ def get_containing_pack(content_entity: ContentEntity) -> Pack:
 def check_configuration_file(command, args):
     config_file_path = ".demisto-sdk-conf"
     true_synonyms = ["true", "True", "t", "1"]
-    if os.path.isfile(config_file_path):
+    if Path(config_file_path).is_file():
         try:
             config = ConfigParser(allow_no_value=True)
             config.read(config_file_path)

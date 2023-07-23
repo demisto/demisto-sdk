@@ -216,7 +216,7 @@ class PackUniqueFilesValidator(BaseValidator):
         is_required is True means that absence of the file should block other tests from running
             (see BlockingValidationFailureException).
         """
-        if not os.path.isfile(self._get_pack_file_path(file_name)):
+        if not Path(self._get_pack_file_path(file_name)).is_file():
             error_function = (
                 Errors.required_pack_file_does_not_exist
                 if is_required

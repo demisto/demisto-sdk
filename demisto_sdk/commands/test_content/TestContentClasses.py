@@ -13,6 +13,7 @@ from math import ceil
 from pprint import pformat
 from queue import Empty, Queue
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
+from pathlib import Path
 
 import demisto_client
 import prettytable
@@ -890,7 +891,7 @@ class BuildContext:
 
     @staticmethod
     def _load_env_results_json():
-        if not os.path.isfile(ENV_RESULTS_PATH):
+        if not Path(ENV_RESULTS_PATH).is_file():
             return {}
 
         with open(ENV_RESULTS_PATH) as json_file:

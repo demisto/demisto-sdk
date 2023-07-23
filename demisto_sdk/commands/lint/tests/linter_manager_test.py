@@ -91,7 +91,7 @@ def test_create_failed_unit_tests_report_with_failed_tests():
     path = f"{git_path()}/demisto_sdk/commands/lint/tests"
     lint_manager.LintManager._create_failed_packs_report(lint_status, path)
     file_path = f"{path}/failed_lint_report.txt"
-    assert os.path.isfile(file_path)
+    assert Path(file_path).is_file()
     with open(file_path) as file:
         content = file.read()
         fail_list = content.split("\n")
@@ -129,7 +129,7 @@ def test_create_failed_unit_tests_report_no_failed_tests():
     path = f"{git_path()}/demisto_sdk/commands/lint/tests"
     lint_manager.LintManager._create_failed_packs_report(lint_status, path)
     file_path = f"{path}/failed_lint_report.txt"
-    assert not os.path.isfile(file_path)
+    assert not Path(file_path).is_file()
 
 
 def test_report_warning_lint_checks_not_packages_tests(mocker):

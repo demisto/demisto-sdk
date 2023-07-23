@@ -2901,7 +2901,7 @@ class PackDependencies:
 
         """
 
-        if id_set_path and os.path.isfile(id_set_path):
+        if id_set_path and Path(id_set_path).is_file():
             with open(id_set_path) as id_set_file:
                 id_set = json.load(id_set_file)
         else:

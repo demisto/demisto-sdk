@@ -54,7 +54,7 @@ class TestGenericModuleUnifier:
             )
         assert result.exit_code == 0
         assert os.getenv(ENV_DEMISTO_SDK_MARKETPLACE) == "marketplacev2"
-        assert os.path.isfile(saving_path)
+        assert Path(saving_path).is_file()
         with open(saving_path) as f:
             saved_generic_module = json.load(f)
         assert saved_generic_module == UNIFIED_GENERIC_MODULE

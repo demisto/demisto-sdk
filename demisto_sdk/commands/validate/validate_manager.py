@@ -407,7 +407,7 @@ class ValidateManager:
         Returns:
             PathLevel. File, ContentDir, ContentGenericDir, Pack or Package - depending on the file path level.
         """
-        if os.path.isfile(file_path):
+        if Path(file_path).is_file():
             return PathLevel.FILE
 
         file_path = file_path.rstrip("/")
@@ -630,7 +630,7 @@ class ValidateManager:
         ) or content_entity_dir_path.endswith(GENERIC_TYPES_DIR):
             for dir_name in os.listdir(content_entity_dir_path):
                 dir_path = os.path.join(content_entity_dir_path, dir_name)
-                if not os.path.isfile(dir_path):
+                if not Path(dir_path).is_file():
                     # should be only directories (not files) in generic types/fields directory
                     content_entities_validation_results.add(
                         self.run_validation_on_generic_entities(
@@ -642,7 +642,7 @@ class ValidateManager:
         else:
             for file_name in os.listdir(content_entity_dir_path):
                 file_path = os.path.join(content_entity_dir_path, file_name)
-                if os.path.isfile(file_path):
+                if Path(file_path).is_file():
                     if (
                         file_path.endswith(".json")
                         or file_path.endswith(".yml")
@@ -2830,7 +2830,7 @@ class ValidateManager:
             str: is_set file path
         """
         id_set = {}
-        if not os.path.isfile(id_set_path):
+        if not Path(id_set_path).is_file():
             if not skip_id_set_creation:
                 id_set, _, _ = IDSetCreator(print_logs=False).create_id_set()
 

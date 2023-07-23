@@ -94,7 +94,7 @@ def test_update_release_notes_new_integration(demisto_client, mocker):
         main, [UPDATE_RN_COMMAND, "-i", join("Packs", "FeedAzureValid")]
     )
     assert result.exit_code == 0
-    assert os.path.isfile(rn_path)
+    assert Path(rn_path).is_file()
     assert not result.exception
     assert all(
         [
@@ -168,7 +168,7 @@ def test_update_release_notes_modified_integration(demisto_client, mocker):
     )
 
     assert result.exit_code == 0
-    assert os.path.isfile(rn_path)
+    assert Path(rn_path).is_file()
     assert not result.exception
     assert all(
         [
@@ -234,7 +234,7 @@ def test_update_release_notes_incident_field(demisto_client, mocker):
     )
 
     assert result.exit_code == 0
-    assert os.path.isfile(rn_path)
+    assert Path(rn_path).is_file()
     assert not result.exception
     assert all(
         [
@@ -307,7 +307,7 @@ def test_update_release_notes_unified_yml_integration(demisto_client, mocker):
         ]
     )
 
-    assert os.path.isfile(rn_path)
+    assert Path(rn_path).is_file()
     with open(rn_path) as f:
         rn = f.read()
     assert expected_rn == rn

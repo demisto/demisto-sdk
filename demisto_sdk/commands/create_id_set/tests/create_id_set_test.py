@@ -2,6 +2,7 @@ import os
 import shutil
 from collections import OrderedDict
 from tempfile import mkdtemp
+from pathlib import Path
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
@@ -48,7 +49,7 @@ class TestIDSetCreator:
     def teardown_method(self):
         # delete the id set file
         try:
-            if os.path.isfile(self.file_path) or os.path.islink(self.file_path):
+            if Path(self.file_path).is_file() or os.path.islink(self.file_path):
                 os.unlink(self.file_path)
             elif os.path.isdir(self.file_path):
                 shutil.rmtree(self.file_path)

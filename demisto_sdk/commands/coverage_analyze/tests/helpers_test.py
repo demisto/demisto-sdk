@@ -8,6 +8,7 @@ import coverage
 import pytest
 import requests
 from freezegun import freeze_time
+from pathlib import Path
 
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.logger import logging_setup
@@ -363,7 +364,7 @@ class TestFixFilePath:
 
         fix_file_path(dot_cov_file_path, "some_path")
 
-        assert not os.path.exists(dot_cov_file_path)
+        assert not Path(dot_cov_file_path).exists()
         assert len(logger_debug.call_args_list) == 2
         assert all(
             [

@@ -110,7 +110,7 @@ class TestStructureValidator:
         # Creating directory for tests if they're not exists
 
         for directory in DIR_LIST:
-            if not os.path.exists(directory):
+            if not Path(directory).exists():
                 cls.CREATED_DIRS.append(directory)
                 os.makedirs(directory)
 
@@ -120,7 +120,7 @@ class TestStructureValidator:
             if isfile(target) is True:
                 Path.unlink(Path(target))
         for directory in cls.CREATED_DIRS:
-            if os.path.exists(directory):
+            if Path(directory).exists():
                 os.rmdir(directory)
 
     SCHEME_VALIDATION_INPUTS = [

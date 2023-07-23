@@ -867,7 +867,7 @@ class TestReleaseNotes:
     @pytest.fixture(autouse=True)
     def rn_file_copy(self):
         yield shutil.copyfile(SOURCE_RELEASE_NOTES_FILE, RELEASE_NOTES_COPY)
-        if os.path.exists(RELEASE_NOTES_COPY):
+        if Path(RELEASE_NOTES_COPY).exists():
             Path.unlink(Path(RELEASE_NOTES_COPY))
 
     @pytest.fixture(autouse=True)
@@ -875,7 +875,7 @@ class TestReleaseNotes:
         yield shutil.copyfile(
             NEW_ENTITY_SOURCE_RELEASE_NOTES_FILE, NEW_ENTITY_RELEASE_NOTES_COPY
         )
-        if os.path.exists(NEW_ENTITY_RELEASE_NOTES_COPY):
+        if Path(NEW_ENTITY_RELEASE_NOTES_COPY).exists():
             Path.unlink(Path(NEW_ENTITY_RELEASE_NOTES_COPY))
 
     @pytest.mark.parametrize(

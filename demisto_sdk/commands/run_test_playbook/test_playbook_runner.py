@@ -97,7 +97,7 @@ class TestPlaybookRunner:
                 )
                 is_path_valid = False
 
-            elif not os.path.exists(self.test_playbook_path):
+            elif not Path(self.test_playbook_path).exists():
                 logger.info(
                     f"[red]Error: Given input path: {self.test_playbook_path} does not exist[/red]"
                 )

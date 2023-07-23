@@ -88,7 +88,7 @@ def test_update_release_notes_new_integration(demisto_client, mocker):
     )
     mocker.patch.object(UpdateRN, "get_master_version", return_value="1.0.0")
 
-    if os.path.exists(rn_path):
+    if Path(rn_path).exists():
         Path.unlink(Path(rn_path))
     result = runner.invoke(
         main, [UPDATE_RN_COMMAND, "-i", join("Packs", "FeedAzureValid")]
@@ -160,7 +160,7 @@ def test_update_release_notes_modified_integration(demisto_client, mocker):
     )
     mocker.patch.object(UpdateRN, "get_master_version", return_value="1.0.0")
 
-    if os.path.exists(rn_path):
+    if Path(rn_path).exists():
         Path.unlink(Path(rn_path))
 
     result = runner.invoke(
@@ -226,7 +226,7 @@ def test_update_release_notes_incident_field(demisto_client, mocker):
     )
     mocker.patch.object(UpdateRN, "get_master_version", return_value="1.0.0")
 
-    if os.path.exists(rn_path):
+    if Path(rn_path).exists():
         Path.unlink(Path(rn_path))
 
     result = runner.invoke(
@@ -291,7 +291,7 @@ def test_update_release_notes_unified_yml_integration(demisto_client, mocker):
     )
     mocker.patch.object(UpdateRN, "get_master_version", return_value="1.0.0")
 
-    if os.path.exists(rn_path):
+    if Path(rn_path).exists():
         Path.unlink(Path(rn_path))
 
     result = runner.invoke(main, [UPDATE_RN_COMMAND, "-i", join("Packs", "VMware")])
@@ -423,7 +423,7 @@ def test_update_release_notes_existing(demisto_client, mocker):
     )
 
     assert result.exit_code == 0
-    assert os.path.exists(rn_path)
+    assert Path(rn_path).exists()
     assert not result.exception
     assert str_in_call_args_list(
         logger_info.call_args_list,
@@ -829,7 +829,7 @@ def test_force_update_release(demisto_client, mocker, repo):
     logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
 
     rn_path = join(THINKCANARY_RN_FOLDER, "1_0_1.md")
-    if os.path.exists(rn_path):
+    if Path(rn_path).exists():
         Path.unlink(Path(rn_path))
     mocker.patch.object(UpdateRN, "is_bump_required", return_value=True)
     mocker.patch.object(

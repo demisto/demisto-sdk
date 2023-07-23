@@ -1,5 +1,5 @@
-from pathlib import Path
 import tempfile
+from pathlib import Path
 
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.pre_commit.hooks.hook import Hook
@@ -13,4 +13,3 @@ class SourceryHook(Hook):
         tf = tempfile.NamedTemporaryFile(delete=False)
         tools.write_yml(tf.name, config_file)
         self.hook["args"] += [f"--config={tf.name}"]
-

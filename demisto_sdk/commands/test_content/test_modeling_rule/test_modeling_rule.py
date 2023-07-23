@@ -1,5 +1,5 @@
-import logging
 from datetime import datetime
+from logging import DEBUG, INFO
 from pathlib import Path
 from time import sleep
 from typing import Any, Dict, List, Optional, Tuple
@@ -783,12 +783,12 @@ def test_modeling_rule(
         console_log_threshold=get_config_param_kwarg_env(
             console_log_threshold,
             "DEMISTO_SDK_CONSOLE_LOG_THRESHOLD",
-            logging.INFO,
+            INFO,
         ),
         file_log_threshold=get_config_param_kwarg_env(
             file_log_threshold,
             "DEMISTO_SDK_FILE_LOG_THRESHOLD",
-            logging.DEBUG,
+            DEBUG,
         ),
         log_file_path=get_config_param_kwarg_env(
             log_file_path,

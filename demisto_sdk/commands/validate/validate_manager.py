@@ -2069,7 +2069,7 @@ class ValidateManager:
                         file_type = find_type(file)
                         if file_type == deleted_file_type:
                             file_suffix = Path(deleted_file_path).suffix
-                            file_dict = get_file(file, file_suffix)
+                            file_dict = get_file(file)
                             if deleted_file_id == _get_file_id(
                                 file_type.value, file_dict
                             ):

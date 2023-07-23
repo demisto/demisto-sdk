@@ -12,8 +12,6 @@
 * **validate** will now run on all the pack content items when the pack supported marketplaces are modified.
 * Fixed an issue where **validate** failed on single-select types incident and indicator fields when given empty value as a select value option.
 * **pre-commit** no longer runs when there are no modified files (unless provided with input files).
-* **lint** will now fail on `demisto.results` and `return_outputs` usage, when a pack is `xsoar` or `partner` supported.
-* **lint** will now fail on `LOG` usage in python files.
 * Fixed an issue where errors in **validate** were logged as `info`.
 * Fixed an issue where **validate** error messages were not logged when an integration param, or the default argument in reputation commands is not valid.
 * Added new validation that XSIAM integrations must have `marketplacev2` as the value of the marketplaces field.

@@ -1,5 +1,4 @@
 from datetime import datetime
-import csv
 from pathlib import Path
 from time import sleep
 from typing import Any, Dict, List, Optional, Tuple
@@ -273,7 +272,7 @@ def validate_expected_values(
 
 
 def validate_schema_aligned_with_test_data(
-    test_data: init_test_data.TestData, schema: Dict, modeling_rule: ModelingRule, csv_content: list
+    test_data: init_test_data.TestData, schema: Dict
 ):
     """
     Validates that the schema is aligned with the test-data types.
@@ -302,8 +301,6 @@ def validate_schema_aligned_with_test_data(
     }
 
     errors_occurred = False
-    if ["test data file path", "schema file path", "dataset", "event id", "field", "error"] not in csv_content:
-        csv_content = ["test data file path", "schema file path", "dataset", "event id", "field", "error"]
 
     for dataset, event_logs in schema_dataset_to_events.items():
         all_schema_dataset_mappings = schema[dataset]

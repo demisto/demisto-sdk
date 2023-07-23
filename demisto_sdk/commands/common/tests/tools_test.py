@@ -2988,39 +2988,17 @@ def test_get_pack_names_from_files(file_paths, skip_file_types, expected_packs):
 @pytest.mark.parametrize(
     "string, expected_result",
     [
-        (
-            "1", True
-        ),
-        (
-            "12345678", True
-        ),
-        (
-            "1689889076", True
-        ),
-        (
-            "1626858896", True
-        ),
-        (
-            "d", False
-        ),
-        (
-            "123d", False
-        ),
-        (
-            "123d", False
-        ),
-        (
-            "2023-07-21T12:34:56Z", False
-        ),
-        (
-            "07/21/23", False
-        ),
-        (
-            "21 July 2023", False
-        ),
-        (
-            "Thu, 21 Jul 2023 12:34:56 +0000", False
-        )
+        ("1", True),
+        ("12345678", True),
+        ("1689889076", True),
+        ("1626858896", True),
+        ("d", False),
+        ("123d", False),
+        ("123d", False),
+        ("2023-07-21T12:34:56Z", False),
+        ("07/21/23", False),
+        ("21 July 2023", False),
+        ("Thu, 21 Jul 2023 12:34:56 +0000", False),
     ],
 )
 def test_is_epoch_datetime(string: str, expected_result: bool):
@@ -3037,4 +3015,5 @@ def test_is_epoch_datetime(string: str, expected_result: bool):
         - Ensure that the result in correct.
     """
     from demisto_sdk.commands.common.tools import is_epoch_datetime
+
     assert is_epoch_datetime(string) == expected_result

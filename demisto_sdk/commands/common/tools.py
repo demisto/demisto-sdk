@@ -1814,33 +1814,39 @@ def find_type(
         if path.lower().endswith("_unified.yml"):
             return FileType.UNIFIED_YML
 
-        if "category" in _dict:
+        if _dict and "category" in _dict:
             if _dict.get("beta") and not ignore_sub_categories:
                 return FileType.BETA_INTEGRATION
 
             return FileType.INTEGRATION
 
-        if "script" in _dict:
+        if _dict and "script" in _dict:
             if TEST_PLAYBOOKS_DIR in Path(path).parts and not ignore_sub_categories:
                 return FileType.TEST_SCRIPT
 
             return FileType.SCRIPT
 
-        if "tasks" in _dict:
+        if _dict and "tasks" in _dict:
             if TEST_PLAYBOOKS_DIR in Path(path).parts:
                 return FileType.TEST_PLAYBOOK
 
             return FileType.PLAYBOOK
 
-        if "rules" in _dict:
+        if _dict and "rules" in _dict:
             if "samples" in _dict and PARSING_RULES_DIR in Path(path).parts:
                 return FileType.PARSING_RULE
 
             if MODELING_RULES_DIR in Path(path).parts:
                 return FileType.MODELING_RULE
 
-        if "global_rule_id" in _dict or (
-            isinstance(_dict, CommentedSeq) and _dict and "global_rule_id" in _dict[0]
+        if (
+            _dict
+            and "global_rule_id" in _dict
+            or (
+                isinstance(_dict, CommentedSeq)
+                and _dict
+                and "global_rule_id" in _dict[0]
+            )
         ):
             return FileType.CORRELATION_RULE
 

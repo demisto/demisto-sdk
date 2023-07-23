@@ -1875,6 +1875,12 @@ def generate_test_playbook(ctx, **kwargs):
 @click.option(
     "--script", is_flag=True, help="Create a Script based on BaseScript example"
 )
+@click.option(
+    "--xsiam",
+    is_flag=True,
+    help="Create an Event Collector based on EventCollector template with relevant folders"
+    "directory.",
+)
 @click.option("--pack", is_flag=True, help="Create pack and its sub directories")
 @click.option(
     "-t",

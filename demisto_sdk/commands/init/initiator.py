@@ -3,16 +3,18 @@ import os
 import shutil
 from distutils.dir_util import copy_tree
 from distutils.version import LooseVersion
-from typing import Dict, List
+from typing import Dict, List, Set
 
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import (
     CLASSIFIERS_DIR,
     CONNECTIONS_DIR,
+    CORRELATION_RULES_DIR,
     DASHBOARDS_DIR,
     DEFAULT_CONTENT_ITEM_FROM_VERSION,
     DOC_FILES_DIR,
+    EVENT_COLLECTOR,
     GENERIC_DEFINITIONS_DIR,
     GENERIC_FIELDS_DIR,
     GENERIC_MODULES_DIR,
@@ -27,14 +29,18 @@ from demisto_sdk.commands.common.constants import (
     LAYOUTS_DIR,
     MARKETPLACE_LIVE_DISCUSSIONS,
     MARKETPLACES,
+    MODELING_RULES_DIR,
     PACK_INITIAL_VERSION,
     PACK_SUPPORT_OPTIONS,
+    PARSING_RULES_DIR,
     PLAYBOOKS_DIR,
     REPORTS_DIR,
     SCRIPTS_DIR,
     TEST_PLAYBOOKS_DIR,
     WIDGETS_DIR,
     WIZARDS_DIR,
+    XSIAM_DASHBOARDS_DIR,
+    XSIAM_REPORTS_DIR,
     XSOAR_AUTHOR,
     XSOAR_SUPPORT,
     XSOAR_SUPPORT_URL,
@@ -91,8 +97,12 @@ class Initiator:
     HELLO_IAM_WORLD_INTEGRATION = "HelloIAMWorld"
     HELLO_WORLD_FEED_INTEGRATION = "FeedHelloWorld"
     HELLO_WORLD_SLIM_INTEGRATION = "HelloWorldSlim"
+    HELLO_WORLD_EVENT_COLLECTOR_INTEGRATION = "HelloWorldEventCollector"
+    HELLO_WORLD_PARSING_RULES = "HelloWorldParsingRules"
+    HELLO_WORLD_MODELING_RULES = "HelloWorldModelingRules"
 
     INTEGRATION_TEMPLATE_OPTIONS = [
+        HELLO_WORLD_EVENT_COLLECTOR_INTEGRATION,
         HELLO_WORLD_INTEGRATION,
         HELLO_IAM_WORLD_INTEGRATION,
         HELLO_WORLD_FEED_INTEGRATION,
@@ -115,6 +125,21 @@ class Initiator:
 
     DEFAULT_INTEGRATION_TEST_DATA_FILES = {
         os.path.join(TEST_DATA_DIR, "baseintegration-dummy.json")
+    }
+
+    DEFAULT_EVENT_COLLECTOR_TEST_DATA_FILES = {
+        os.path.join(TEST_DATA_DIR, "baseintegration-dummy.json")
+    }
+
+    TEMPLATE_MODELING_RULES_FILES = {
+        "HelloWorldEventCollector_schema.json",
+        "HelloWorldEventCollector.xif",
+        "HelloWorldEventCollector.yml",
+    }
+
+    TEMPLATE_PARSING_RULES_FILES = {
+        "HelloWorldEventCollector.xif",
+        "HelloWorldEventCollector.yml",
     }
 
     HELLO_WORLD_TEST_DATA_FILES = {
@@ -165,6 +190,7 @@ class Initiator:
     DATE_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
     PACK_INITIAL_VERSION = "1.0.0"
     SUPPORTED_FROM_VERSION = "5.5.0"
+    SUPPORTED_FROM_VERSION_XSIAM = "6.8.0"
 
     DIR_LIST = [
         INTEGRATIONS_DIR,
@@ -190,6 +216,8 @@ class Initiator:
         WIZARDS_DIR,
     ]
 
+    XSIAM_DIR = [CORRELATION_RULES_DIR, XSIAM_DASHBOARDS_DIR, XSIAM_REPORTS_DIR]
+
     def __init__(
         self,
         output: str,
@@ -200,14 +228,18 @@ class Initiator:
         category: str = "",
         script: bool = False,
         pack: bool = False,
+        xsiam: bool = False,
         author_image: str = "",
         demisto_mock: bool = False,
         common_server: bool = False,
+        is_modeling_rules: bool = False,
+        is_parsing_rules: bool = False,
+        from_version: str = "",
         **kwargs,
     ):
         self.output = output if output else ""
         self.id = id
-
+        self.xsiam = xsiam
         self.is_integration = integration
         self.is_script = script
         self.is_pack = pack
@@ -215,6 +247,9 @@ class Initiator:
         self.demisto_mock = demisto_mock
         self.common_server = common_server
         self.category = category
+        self.is_modeling_rules = is_modeling_rules
+        self.is_parsing_rules = is_parsing_rules
+        self.from_version = from_version
         self.configuration = Configuration()
 
         # if no flag given automatically create a pack.
@@ -233,6 +268,8 @@ class Initiator:
                 )
 
         self.dir_name = name
+        if self.xsiam:
+            name = f"{name}EventCollector"
 
         self.is_pack_creation = not all([self.is_script, self.is_integration])
 
@@ -252,6 +289,14 @@ class Initiator:
             self.get_created_dir_name(created_object="pack")
             return self.pack_init()
 
+        elif self.is_modeling_rules:
+            self.get_created_dir_name(created_object="ModelingRules")
+            return self.modeling_rules_init()
+
+        elif self.is_parsing_rules:
+            self.get_created_dir_name(created_object="ParsingRules")
+            return self.parsing_rules_init()
+
     def get_selected_template(self, template: str = "") -> str:
         """Makes sure a valid template is selected
 
@@ -270,7 +315,11 @@ class Initiator:
                         f" ({self.DEFAULT_INTEGRATION_TEMPLATE}).\nValid options: {options_str}\n"
                     )
                 )
-            return template if template else self.DEFAULT_INTEGRATION_TEMPLATE
+            return template or (
+                self.HELLO_WORLD_EVENT_COLLECTOR_INTEGRATION
+                if self.xsiam
+                else self.DEFAULT_INTEGRATION_TEMPLATE
+            )
 
         elif self.is_script:
             while template and template not in self.SCRIPT_TEMPLATE_OPTIONS:
@@ -283,8 +332,29 @@ class Initiator:
                 )
             return template if template else self.DEFAULT_SCRIPT_TEMPLATE
 
+        elif self.is_pack and self.xsiam:
+            if self.is_modeling_rules:
+                return self.HELLO_WORLD_MODELING_RULES
+            elif self.is_parsing_rules:
+                return self.HELLO_WORLD_PARSING_RULES
+            else:
+                return self.HELLO_WORLD_EVENT_COLLECTOR_INTEGRATION
+
         # if reached here it is a pack init - will be used again if user decides to create an integration
         return template
+
+    def create_empty_files(self, file_list: Set[str]):
+        """Creates empty files according to a given list.
+
+        Args:
+            file_list (List(str)): A list with path and names of the files.
+        """
+        for file in file_list:
+            file_path = os.path.join(self.full_output_path, file)
+            _, file_extension = os.path.splitext(file_path)
+            with open(file_path, "w") as f:
+                if file_extension == ".json":
+                    f.write(json.dumps({}, indent=4))
 
     def get_created_dir_name(self, created_object: str):
         """Makes sure a name is given for the created object
@@ -362,6 +432,33 @@ class Initiator:
         for directory in self.DIR_LIST:
             path = os.path.join(self.full_output_path, directory)
             os.mkdir(path=path)
+        # create the relevant folders for XSIAM content pack.
+        if self.xsiam:
+            for directory in self.XSIAM_DIR:
+                path = os.path.join(self.full_output_path, directory)
+                os.mkdir(path=path)
+            modeling_rules_initiator = Initiator(
+                output=os.path.join(self.full_output_path, MODELING_RULES_DIR),
+                common_server=self.common_server,
+                dir_name=self.dir_name,
+                demisto_mock=self.demisto_mock,
+                template=self.HELLO_WORLD_MODELING_RULES,
+                xsiam=self.xsiam,
+                is_modeling_rules=True,
+                name=self.dir_name,
+            )
+            modeling_rules_initiator.modeling_rules_init()
+            parsing_rules_initiator = Initiator(
+                output=os.path.join(self.full_output_path, PARSING_RULES_DIR),
+                common_server=self.common_server,
+                demisto_mock=self.demisto_mock,
+                template=self.template,
+                xsiam=self.xsiam,
+                is_parsing_rules=True,
+                dir_name=self.dir_name,
+                name=self.dir_name,
+            )
+            parsing_rules_initiator.parsing_rules_init()
 
         self.create_pack_base_files()
         logger.info(
@@ -408,8 +505,64 @@ class Initiator:
                 demisto_mock=self.demisto_mock,
                 template=self.template,
                 category=integration_category,
+                xsiam=self.xsiam,
             )
             return integration_init.init()
+
+        return True
+
+    def modeling_rules_init(self) -> bool:
+        """Creates a modeling rules directory tree.
+
+        Returns:
+            bool. Returns True if the  modeling rule was created successfully and False otherwise
+        """
+        # if an output directory given create the pack there
+        self.full_output_path = os.path.join(self.output, self.dir_name)
+        self.get_created_dir_name(created_object="modeling rules")
+        modeling_rules_template_files = self.get_template_files()
+        if not self.get_remote_templates(
+            modeling_rules_template_files, dir=MODELING_RULES_DIR
+        ):
+            local_template_path = os.path.normpath(
+                os.path.join(__file__, "..", "templates", self.template)
+            )
+
+            copy_tree(str(local_template_path), self.full_output_path)
+
+        if self.id != self.template:
+            # note rename does not work on the yml file - that is done in the yml_reformatting function.
+            self.rename(current_suffix=self.template)
+            self.modeling_or_parsing_rules_yml_reformatting(
+                current_suffix=self.dir_name, integration=False
+            )
+
+        return True
+
+    def parsing_rules_init(self) -> bool:
+        """Creates a modeling rules directory tree.
+
+        Returns:
+            bool. Returns True if the  modeling rule was created successfully and False otherwise
+        """
+        # if an output directory given create the pack there
+        self.full_output_path = os.path.join(self.output, self.dir_name)
+        self.get_created_dir_name(created_object="parsing rules")
+        modeling_rules_template_files = self.get_template_files()
+        if not self.get_remote_templates(
+            modeling_rules_template_files, dir=PARSING_RULES_DIR
+        ):
+            local_template_path = os.path.normpath(
+                os.path.join(__file__, "..", "templates", self.template)
+            )
+            copy_tree(str(local_template_path), self.full_output_path)
+
+        if self.id != self.template:
+            # note rename does not work on the yml file - that is done in the yml_reformatting function.
+            self.rename(current_suffix=self.template)
+            self.modeling_or_parsing_rules_yml_reformatting(
+                current_suffix=self.dir_name, integration=False
+            )
 
         return True
 
@@ -608,6 +761,10 @@ class Initiator:
         Returns:
             bool. True if the integration was created successfully, False otherwise.
         """
+        # if we want to create xsiam content we will create an eventcollector integration
+        if self.xsiam:
+            self.dir_name = f"{self.dir_name}{EVENT_COLLECTOR}"
+
         # if output directory given create the integration there
         if self.output:
             self.full_output_path = os.path.join(self.output, self.dir_name)
@@ -627,10 +784,13 @@ class Initiator:
         if not self.get_remote_templates(
             integration_template_files, dir=INTEGRATIONS_DIR
         ):
-            local_template_path = os.path.normpath(
-                os.path.join(__file__, "..", "templates", self.template)
-            )
-            copy_tree(str(local_template_path), self.full_output_path)
+            if self.xsiam:
+                self.create_empty_files(integration_template_files)
+            else:
+                local_template_path = os.path.normpath(
+                    os.path.join(__file__, "..", "templates", self.template)
+                )
+                copy_tree(str(local_template_path), self.full_output_path)
 
         if self.id != self.template:
             # note rename does not work on the yml file - that is done in the yml_reformatting function.
@@ -723,6 +883,39 @@ class Initiator:
 
         return True
 
+    def modeling_or_parsing_rules_yml_reformatting(
+        self, current_suffix: str, integration: bool = False
+    ):
+        """Formats the given yml to fit the newly created modeling/pursing rules
+
+        Args:
+            current_suffix (str): The yml file name (HelloWorld or HelloWorldScript)
+            integration (bool): Indicates if integration yml is being reformatted.
+        """
+        yml_dict = get_yaml(
+            os.path.join(self.full_output_path, f"{current_suffix}.yml")
+        )
+        id_from_yml: str = yml_dict["id"]
+        name_from_yml: str = yml_dict["name"]
+
+        yml_dict["id"] = id_from_yml.replace(self.template, self.dir_name)
+        yml_dict["name"] = name_from_yml.replace(self.template, self.dir_name)
+
+        content_item = "modeling rules" if self.is_modeling_rules else "parsing rules"
+        if from_version := input(
+            f"\nThe fromversion value that will be used for {content_item} (optional): "
+        ):
+            yml_dict["fromversion"] = from_version
+
+        if LooseVersion(
+            yml_dict.get("fromversion") or self.SUPPORTED_FROM_VERSION_XSIAM
+        ) < LooseVersion(self.SUPPORTED_FROM_VERSION_XSIAM):
+            yml_dict["fromversion"] = self.SUPPORTED_FROM_VERSION_XSIAM
+        with open(
+            os.path.join(self.full_output_path, f"{self.dir_name}.yml"), "w"
+        ) as f:
+            yaml.dump(yml_dict, f)
+
     def yml_reformatting(self, current_suffix: str, integration: bool = False):
         """Formats the given yml to fit the newly created integration/script
 
@@ -733,35 +926,56 @@ class Initiator:
         yml_dict = get_yaml(
             os.path.join(self.full_output_path, f"{current_suffix}.yml")
         )
-        yml_dict["commonfields"]["id"] = self.id
-        yml_dict["name"] = self.id
-
-        from_version = input("\nThe fromversion value that will be used (optional): ")
-        if from_version:
-            yml_dict["fromversion"] = from_version
-
-        if LooseVersion(
-            yml_dict.get("fromversion", DEFAULT_CONTENT_ITEM_FROM_VERSION)
-        ) < LooseVersion(self.SUPPORTED_FROM_VERSION):
-            yml_dict["fromversion"] = self.SUPPORTED_FROM_VERSION
-
-        if integration:
-            yml_dict["display"] = self.id
-            yml_dict["category"] = (
-                self.category
-                if self.category
-                else Initiator.get_valid_user_input(
-                    options_list=INTEGRATION_CATEGORIES,
-                    option_message="\nIntegration category options: \n",
-                )
+        if yml_dict:
+            yml_dict["commonfields"]["id"] = (
+                f"{self.id}{EVENT_COLLECTOR}"
+                if self.xsiam and self.is_integration
+                else self.id
             )
+            yml_dict["name"] = (
+                f"{self.id}{EVENT_COLLECTOR}"
+                if self.xsiam and self.is_integration
+                else self.id
+            )
+
+            from_version = input(
+                "\nThe fromversion value that will be used (optional): "
+            )
+            if from_version:
+                yml_dict["fromversion"] = from_version
+
+            if LooseVersion(
+                yml_dict.get("fromversion", DEFAULT_CONTENT_ITEM_FROM_VERSION)
+            ) < LooseVersion(self.SUPPORTED_FROM_VERSION):
+                if self.xsiam:
+                    yml_dict["fromversion"] = self.SUPPORTED_FROM_VERSION
+                else:
+                    yml_dict["fromversion"] = self.SUPPORTED_FROM_VERSION_XSIAM
+
+            if integration:
+                yml_dict["display"] = (
+                    f"{self.id}{EVENT_COLLECTOR}" if self.xsiam else self.id
+                )
+                yml_dict["category"] = (
+                    self.category
+                    if self.category
+                    else (
+                        INTEGRATION_CATEGORIES[0]
+                        if self.xsiam
+                        else Initiator.get_valid_user_input(
+                            options_list=INTEGRATION_CATEGORIES,
+                            option_message="\nIntegration category options: \n",
+                        )
+                    )
+                )
 
         with open(
             os.path.join(self.full_output_path, f"{self.dir_name}.yml"), "w"
         ) as f:
-            yaml.dump(yml_dict, f)
-
-        os.remove(os.path.join(self.full_output_path, f"{current_suffix}.yml"))
+            if yml_dict:
+                yaml.dump(yml_dict, f)
+        if os.path.exists(os.path.join(self.full_output_path, f"{current_suffix}.yml")):
+            os.remove(os.path.join(self.full_output_path, f"{current_suffix}.yml"))
 
     def change_template_name_script_py(
         self, current_suffix: str, current_template: str
@@ -787,14 +1001,18 @@ class Initiator:
         Args:
             current_suffix (str): The yml file name (HelloWorld or HelloWorldScript)
         """
-        os.rename(
-            os.path.join(self.full_output_path, f"{current_suffix}.py"),
-            os.path.join(self.full_output_path, f"{self.dir_name}.py"),
-        )
-        os.rename(
-            os.path.join(self.full_output_path, f"{current_suffix}_test.py"),
-            os.path.join(self.full_output_path, f"{self.dir_name}_test.py"),
-        )
+        if os.path.exists(os.path.join(self.full_output_path, f"{current_suffix}.py")):
+            os.rename(
+                os.path.join(self.full_output_path, f"{current_suffix}.py"),
+                os.path.join(self.full_output_path, f"{self.dir_name}.py"),
+            )
+        if os.path.exists(
+            os.path.join(self.full_output_path, f"{current_suffix}_test.py")
+        ):
+            os.rename(
+                os.path.join(self.full_output_path, f"{current_suffix}_test.py"),
+                os.path.join(self.full_output_path, f"{self.dir_name}_test.py"),
+            )
         if self.is_integration:
             os.rename(
                 os.path.join(self.full_output_path, f"{current_suffix}_image.png"),
@@ -803,6 +1021,20 @@ class Initiator:
             os.rename(
                 os.path.join(self.full_output_path, f"{current_suffix}_description.md"),
                 os.path.join(self.full_output_path, f"{self.dir_name}_description.md"),
+            )
+        if self.is_modeling_rules:
+            os.rename(
+                os.path.join(self.full_output_path, f"{current_suffix}_schema.json"),
+                os.path.join(self.full_output_path, f"{self.dir_name}_schema.json"),
+            )
+        if self.is_modeling_rules or self.is_parsing_rules:
+            os.rename(
+                os.path.join(self.full_output_path, f"{current_suffix}.xif"),
+                os.path.join(self.full_output_path, f"{self.dir_name}.xif"),
+            )
+            os.rename(
+                os.path.join(self.full_output_path, f"{current_suffix}.yml"),
+                os.path.join(self.full_output_path, f"{self.dir_name}.yml"),
             )
 
     def create_new_directory(
@@ -907,6 +1139,16 @@ class Initiator:
                 template_files = template_files.union(
                     self.DEFAULT_INTEGRATION_TEST_DATA_FILES
                 )
+            elif self.template == self.HELLO_WORLD_EVENT_COLLECTOR_INTEGRATION:
+                template_files = template_files.union(
+                    self.DEFAULT_EVENT_COLLECTOR_TEST_DATA_FILES
+                )
+        elif self.is_modeling_rules:
+            template_files = set(self.TEMPLATE_MODELING_RULES_FILES)
+
+        elif self.is_parsing_rules:
+            template_files = set(self.TEMPLATE_PARSING_RULES_FILES)
+
         else:
             template_files = {
                 filename.replace(self.TEMPLATE_SCRIPT_NAME, self.template)
@@ -930,18 +1172,26 @@ class Initiator:
         """
         # create test_data dir
         if self.template in [self.HELLO_WORLD_INTEGRATION] + self.DEFAULT_TEMPLATES + [
-            self.HELLO_WORLD_FEED_INTEGRATION
+            self.HELLO_WORLD_FEED_INTEGRATION,
+            self.HELLO_WORLD_EVENT_COLLECTOR_INTEGRATION,
         ]:
             os.mkdir(os.path.join(self.full_output_path, self.TEST_DATA_DIR))
 
-        if self.template in self.DEFAULT_TEMPLATES:
+        if (
+            self.template in self.DEFAULT_TEMPLATES
+            or self.template in self.HELLO_WORLD_EVENT_COLLECTOR_INTEGRATION
+        ):
             pack_name = self.DEFAULT_TEMPLATE_PACK_NAME
 
         elif self.template in self.HELLO_WORLD_BASE_TEMPLATES + [
             self.HELLO_WORLD_FEED_INTEGRATION
         ]:
             pack_name = self.HELLO_WORLD_PACK_NAME
-
+        elif self.template in [
+            self.HELLO_WORLD_PARSING_RULES,
+            self.HELLO_WORLD_MODELING_RULES,
+        ]:
+            pack_name = self.HELLO_WORLD_EVENT_COLLECTOR_INTEGRATION
         else:
             pack_name = self.template
 
@@ -958,14 +1208,19 @@ class Initiator:
                     # is `README_example.md` - which happens when we do not want the readme
                     # files to appear in https://xsoar.pan.dev/docs/reference/index.
                     filename = file.replace("README.md", "README_example.md")
-                file_content = tools.get_remote_file(
-                    os.path.join(path, filename),
-                    return_content=True,
-                    # Templates available only in the official repo
-                    git_content_config=GitContentConfig(
-                        repo_name=GitContentConfig.OFFICIAL_CONTENT_REPO_NAME
-                    ),
-                )
+                if self.xsiam and "EventCollector" in filename:
+                    file_content = tools.get_remote_file(
+                        os.path.join(path, filename), return_content=True
+                    )
+                else:
+                    file_content = tools.get_remote_file(
+                        os.path.join(path, filename),
+                        return_content=True,
+                        # Templates available only in the official repo
+                        git_content_config=GitContentConfig(
+                            repo_name=GitContentConfig.OFFICIAL_CONTENT_REPO_NAME
+                        ),
+                    )
                 with open(os.path.join(self.full_output_path, file), "wb") as f:
                     f.write(file_content)
             except Exception:

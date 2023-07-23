@@ -20,6 +20,7 @@
 * added support for the `isfetcheventsandassets` flag in content graph.
 * Fixed an issue where the **modeling-rules test** command failed to get the existence of result from dataset in cases where the results take time to load.
 * Added an aliasTo key to the incident field schema.
+* Added --xsiam flag to the **init** command in order to create XSIAM content.
 
 ## 1.17.0
 * **validate** will only fail on docker related errors if the pack is supported by xsoar.

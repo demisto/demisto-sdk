@@ -1377,7 +1377,7 @@ def test_safe_write_unicode_to_non_unicode(
     )
 
     # make sure the two files were merged correctly
-    result = get_file(dest, suffix)
+    result = get_file(dest)
     assert set(result.keys()) == set(fields)
     assert set(result.values()) == {SENTENCE_WITH_UMLAUTS}
 

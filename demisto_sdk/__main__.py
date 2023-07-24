@@ -3131,23 +3131,6 @@ def error_code(ctx, config, **kwargs):
     sys.exit(result)
 
 
-# ====================== start_content_graph ====================== #
-@main.command(
-    hidden=True,
-)
-@click.pass_context
-@logging_setup_decorator
-def start_content_graph(
-    ctx,
-    **kwargs,
-):
-    from demisto_sdk.commands.content_graph.content_graph_commands import (
-        start_content_graph as start_content_graph_command,
-    )
-
-    start_content_graph_command()
-
-
 # ====================== create-content-graph ====================== #
 @main.command(
     hidden=True,

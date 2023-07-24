@@ -93,32 +93,11 @@ def _docker_start():
         image=NEO4J_SERVICE_IMAGE,
         name="neo4j-content",
         ports={"7474/tcp": 7474, "7687/tcp": 7687, "7473/tcp": 7473},
-        mounts=[
-            docker.types.Mount(
-                type="bind",
-                source=REPO_PATH / NEO4J_FOLDER / NEO4J_DATA_FOLDER,
-                target=LOCAL_NEO4J_PATH / NEO4J_DATA_FOLDER,
-                bind_propagation="rshared",   
-            ),
-            docker.types.Mount(
-                type="bind",
-                source=REPO_PATH / NEO4J_FOLDER / NEO4J_IMPORT_FOLDER,
-                target=LOCAL_NEO4J_PATH / NEO4J_IMPORT_FOLDER,
-                bind_propagation="rshared",
-            ),
-            docker.types.Mount(
-                type="bind",
-                source=REPO_PATH / NEO4J_FOLDER / NEO4J_PLUGINS_FOLDER,
-                target=LOCAL_NEO4J_PATH / NEO4J_PLUGINS_FOLDER,
-                bind_propagation="rshared",
-            )
-            
+        volumes=[
+            f"{REPO_PATH / NEO4J_FOLDER / NEO4J_DATA_FOLDER}:/{NEO4J_DATA_FOLDER}:ro,z",
+            f"{REPO_PATH / NEO4J_FOLDER / NEO4J_IMPORT_FOLDER}:{LOCAL_NEO4J_PATH / NEO4J_IMPORT_FOLDER}:ro,z",
+            f"{REPO_PATH / NEO4J_FOLDER / NEO4J_PLUGINS_FOLDER}:/{NEO4J_PLUGINS_FOLDER}:ro,z",
         ],
-        # volumes=[
-        #     f"{REPO_PATH / NEO4J_FOLDER / NEO4J_DATA_FOLDER}:/{NEO4J_DATA_FOLDER}",
-        #     f"{REPO_PATH / NEO4J_FOLDER / NEO4J_IMPORT_FOLDER}:{LOCAL_NEO4J_PATH / NEO4J_IMPORT_FOLDER}",
-        #     f"{REPO_PATH / NEO4J_FOLDER / NEO4J_PLUGINS_FOLDER}:/{NEO4J_PLUGINS_FOLDER}",
-        # ],
         detach=True,
         environment={
             "NEO4J_AUTH": f"neo4j/{NEO4J_PASSWORD}",

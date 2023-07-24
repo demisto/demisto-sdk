@@ -24,6 +24,7 @@
 * Added a new validation (`BA125`) to **validate** that assures internal function names aren't in use in customer-facing docs.
 * Removed the Pipfile and Pipfile.lock from the templates in **demisto-sdk init** command.
 * Disabled the option to create an integration with Pipfile and Pipfile.lock files.
+* Fixed an issue in **update-content-graph** where the neo4j service was unaccessible for non-root users.
 * Added support to override the console log level with the **DEMISTO_SDK_CONSOLE_LOG_THRESHOLD** environment variable.
 * Added support to override the log file threshold level with the **DEMISTO_SDK_FILE_LOG_THRESHOLD** environment variable.
 

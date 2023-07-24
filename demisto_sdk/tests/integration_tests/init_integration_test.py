@@ -108,8 +108,6 @@ def test_integration_init_integration_positive(monkeypatch, tmp_path, mocker):
 
     integration_dir_files = {file for file in listdir(tmp_integration_path)}
     assert {
-        "Pipfile",
-        "Pipfile.lock",
         f"{integration_name}.py",
         f"{integration_name}.yml",
         f"{integration_name}_description.md",
@@ -221,8 +219,6 @@ def test_integration_init_integration_positive_no_inline_pack_name(
 
     integration_dir_files = {file for file in listdir(tmp_integration_path)}
     assert {
-        "Pipfile",
-        "Pipfile.lock",
         f"{integration_name}.py",
         f"{integration_name}.yml",
         f"{integration_name}_description.md",

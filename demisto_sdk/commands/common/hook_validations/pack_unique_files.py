@@ -5,13 +5,12 @@ import glob
 import os
 import re
 from datetime import datetime
-from distutils.version import LooseVersion
 from pathlib import Path
 from typing import Dict, List, Set, Tuple
 
 from dateutil import parser
 from git import GitCommandError, Repo
-from packaging.version import parse
+from packaging.version import Version, parse
 
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import (  # PACK_METADATA_PRICE,
@@ -204,7 +203,7 @@ class PackUniqueFilesValidator(BaseValidator):
             rn[: rn.rindex(".")].replace("_", ".") for rn in list_of_release_notes
         ]
         if list_of_versions:
-            list_of_versions.sort(key=LooseVersion)
+            list_of_versions.sort(key=Version)
             return list_of_versions[-1]
         else:
             return ""
@@ -455,7 +454,7 @@ class PackUniqueFilesValidator(BaseValidator):
         current_meta_file_content = get_json(metadata_file_path)
         old_version = old_meta_file_content.get("currentVersion", "0.0.0")
         current_version = current_meta_file_content.get("currentVersion", "0.0.0")
-        if LooseVersion(old_version) < LooseVersion(current_version):
+        if Version(old_version) < Version(current_version):
             return True
         elif self._add_error(
             Errors.pack_metadata_version_should_be_raised(self.pack, old_version),
@@ -1128,7 +1127,6 @@ class PackUniqueFilesValidator(BaseValidator):
 
     @error_codes("PA124")
     def validate_core_pack_dependencies(self, dependencies_packs):
-
         found_dependencies = []
         for dependency_pack in dependencies_packs:
             if dependencies_packs.get(dependency_pack, {}).get("mandatory"):

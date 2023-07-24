@@ -5,9 +5,10 @@ import copy
 import errno
 import os
 import re
-from distutils.version import LooseVersion
 from pathlib import Path
 from typing import Any, Iterable, Optional, Tuple, Union
+
+from packaging.version import Version
 
 from demisto_sdk.commands.common.constants import (
     ALL_FILES_VALIDATION_IGNORE_WHITELIST,
@@ -440,7 +441,7 @@ class UpdateRN:
                 return False
             new_metadata = self.get_pack_metadata()
             new_version = new_metadata.get("currentVersion", "99.99.99")
-            if LooseVersion(self.master_version) >= LooseVersion(new_version):
+            if Version(self.master_version) >= Version(new_version):
                 return True
             return False
         except RuntimeError as e:

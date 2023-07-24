@@ -1,11 +1,11 @@
 import os
 import re
 from abc import abstractmethod
-from distutils.version import LooseVersion
 from pathlib import Path
 from typing import Optional
 
 from packaging import version
+from packaging.version import Version
 
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import (
@@ -515,7 +515,6 @@ class ContentEntityValidator(BaseValidator):
 
     @error_codes("BA117")
     def are_fromversion_and_toversion_in_correct_format(self) -> bool:
-
         if self.file_path.endswith(".json"):
             from_version = (
                 self.current_file.get("fromVersion", "00.00.00") or "00.00.00"
@@ -540,7 +539,6 @@ class ContentEntityValidator(BaseValidator):
 
     @error_codes("BA118")
     def are_fromversion_toversion_synchronized(self) -> bool:
-
         if self.file_path.endswith(".json"):
             from_version = self.current_file.get("fromVersion", "")
             to_version = self.current_file.get("toVersion", "")
@@ -577,9 +575,9 @@ class ContentEntityValidator(BaseValidator):
         else:
             return True
 
-        if LooseVersion(
+        if Version(
             self.current_file.get(from_version_field, DEFAULT_CONTENT_ITEM_FROM_VERSION)
-        ) < LooseVersion(self.oldest_supported_version):
+        ) < Version(self.oldest_supported_version):
             error_message, error_code = Errors.no_minimal_fromversion_in_file(
                 from_version_field, self.oldest_supported_version
             )
@@ -602,9 +600,9 @@ class ContentEntityValidator(BaseValidator):
         if not self.should_run_fromversion_validation():
             return True
 
-        if LooseVersion(
+        if Version(
             self.current_file.get("fromVersion", DEFAULT_CONTENT_ITEM_FROM_VERSION)
-        ) < LooseVersion(GENERIC_OBJECTS_OLDEST_SUPPORTED_VERSION):
+        ) < Version(GENERIC_OBJECTS_OLDEST_SUPPORTED_VERSION):
             error_message, error_code = Errors.no_minimal_fromversion_in_file(
                 "fromVersion", GENERIC_OBJECTS_OLDEST_SUPPORTED_VERSION
             )
@@ -631,7 +629,6 @@ class ContentEntityValidator(BaseValidator):
         """
 
         for separator in ENTITY_NAME_SEPARATORS:
-
             if separator in base_name:
                 base_name = base_name.replace(separator, "")
 

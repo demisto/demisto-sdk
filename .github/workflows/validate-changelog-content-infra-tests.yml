@@ -32,9 +32,8 @@ jobs:
         run: |
           cd content
           poetry install --with ci
-          echo "uninstalling content-master version of demisto-sdk"
-          pip uninstall -y demisto-sdk
-          echo "uninstalled content-master demisto-sdk"
+          echo "Uninstalling demisto-sdk from content master"
+          poetry run pip uninstall demisto-sdk
           echo "installing branch version of demisto-sdk (${{ steps.get-commit.outputs.commit }} )"
           pip install git+https://github.com/demisto/demisto-sdk@${{ steps.get-commit.outputs.commit }}
 
@@ -43,6 +42,7 @@ jobs:
           PYTHONPATH: ${{ github.workspace }}/content
         run: |
           cd content
+          echo "Running all unit tests"
           poetry run pytest ./Tests/scripts/infrastructure_tests/ -v
           poetry run pytest ./Tests/Marketplace/Tests/ -v
           poetry run pytest ./Tests/tests -v

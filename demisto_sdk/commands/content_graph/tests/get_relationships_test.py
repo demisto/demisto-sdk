@@ -244,7 +244,7 @@ class TestGetRelationships:
             create_content_graph(interface)
             result = get_relationships_by_path(
                 interface,
-                path=filepath,
+                input_filepath=filepath,
                 relationship=relationship,
                 depth=depth,
             )

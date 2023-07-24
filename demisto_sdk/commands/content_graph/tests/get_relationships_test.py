@@ -242,12 +242,13 @@ class TestGetRelationships:
         create_mini_content(repository)
         with ContentGraphInterface() as interface:
             create_content_graph(interface)
-            sources, targets = get_relationships_by_path(
+            result = get_relationships_by_path(
                 interface,
                 path=filepath,
                 relationship=relationship,
                 depth=depth,
             )
+            sources, targets = result["sources"], result["targets"]
         for res, expected in zip(
             [sources, targets], [expected_sources, expected_targets]
         ):

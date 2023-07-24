@@ -272,17 +272,20 @@ WITH
     reverse([r IN relationships(path) | properties(r)]) AS rels,
     length(path) AS depth
 WITH
-    nodes[0] AS source_filepath,
+    nodes[0] AS filepath,
     apoc.coll.flatten((apoc.coll.zip(rels, nodes[1..]))) AS path_from_source,
     CASE WHEN all(r IN rels WHERE r.mandatorily) THEN TRUE ELSE
     CASE WHEN any(r IN rels WHERE r.mandatorily IS NOT NULL) THEN FALSE END END AS mandatorily,
     depth
+WHERE
+    filepath IS NOT NULL
 RETURN
-    source_filepath,
-    apoc.coll.insert(path_from_source, 0, source_filepath) AS path,
-    mandatorily,
-    depth
-ORDER BY depth"""
+    filepath,
+    collect({{
+        path: apoc.coll.insert(path_from_source, 0, filepath),
+        mandatorily: mandatorily,
+        depth: depth
+    }}) AS paths"""
     return run_query(tx, query).data()
 
 
@@ -301,15 +304,18 @@ WITH
     [r IN relationships(path) | properties(r)] AS rels,
     length(path) AS depth
 WITH
-    nodes[-1] AS target_filepath,
+    nodes[-1] AS filepath,
     apoc.coll.flatten((apoc.coll.zip(nodes[..-1], rels))) AS path_to_target,
     CASE WHEN all(r IN rels WHERE r.mandatorily) THEN TRUE ELSE
     CASE WHEN any(r IN rels WHERE r.mandatorily IS NOT NULL) THEN FALSE END END AS mandatorily,
     depth
+WHERE
+    filepath IS NOT NULL
 RETURN
-    target_filepath,
-    apoc.coll.insert(path_to_target, size(path_to_target), target_filepath) AS path,
-    mandatorily,
-    depth
-ORDER BY depth"""
+    filepath,
+    collect({{
+        path: apoc.coll.insert(path_to_target, size(path_to_target), filepath),
+        mandatorily: mandatorily,
+        depth: depth
+    }}) AS paths"""
     return run_query(tx, query).data()

@@ -2100,7 +2100,9 @@ class TestRNUpdateUnit:
             "longRunning: false\n"
         )
 
-        pack_data = get_json("demisto_sdk/commands/update_release_notes/tests_data/Packs/Test/pack_metadata.json")
+        pack_data = get_json(
+            "demisto_sdk/commands/update_release_notes/tests_data/Packs/Test/pack_metadata.json"
+        )
         mocker.patch(
             "demisto_sdk.commands.update_release_notes.update_rn.run_command",
             return_value=expected_res,
@@ -2152,7 +2154,9 @@ class TestRNUpdateUnit:
         """
         from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
 
-        pack_data = get_json("demisto_sdk/commands/update_release_notes/tests_data/Packs/Test/pack_metadata.json")
+        pack_data = get_json(
+            "demisto_sdk/commands/update_release_notes/tests_data/Packs/Test/pack_metadata.json"
+        )
         with open(
             "demisto_sdk/commands/update_release_notes/tests_data/Packs/release_notes/1_0_0.md",
             "w",
@@ -2222,7 +2226,9 @@ class TestRNUpdateUnit:
 
         from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
 
-        pack_data = get_json("demisto_sdk/commands/update_release_notes/tests_data/Packs/Test/pack_metadata.json")
+        pack_data = get_json(
+            "demisto_sdk/commands/update_release_notes/tests_data/Packs/Test/pack_metadata.json"
+        )
         mocker.patch(
             "demisto_sdk.commands.update_release_notes.update_rn.run_command",
             return_value="+  type:True",
@@ -2276,7 +2282,9 @@ class TestRNUpdateUnit:
 
         from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
 
-        pack_data = get_json("demisto_sdk/commands/update_release_notes/tests_data/Packs/Test/pack_metadata.json")
+        pack_data = get_json(
+            "demisto_sdk/commands/update_release_notes/tests_data/Packs/Test/pack_metadata.json"
+        )
         mocker.patch(
             "demisto_sdk.commands.update_release_notes.update_rn.run_command",
             return_value="+  dockerimage:python/test:1243",

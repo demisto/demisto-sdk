@@ -112,6 +112,7 @@ from demisto_sdk.commands.common.constants import (
     IdSetKeys,
     MarketplaceVersions,
     urljoin,
+    ENV_SDK_WORKING_OFFLINE,
 )
 from demisto_sdk.commands.common.git_content_config import GitContentConfig, GitProvider
 from demisto_sdk.commands.common.git_util import GitUtil
@@ -263,6 +264,14 @@ LAYOUT_CONTAINER_FIELDS = {
 SDK_PYPI_VERSION = r"https://pypi.org/pypi/demisto-sdk/json"
 
 SUFFIX_TO_REMOVE = ("_dev", "_copy")
+
+
+class NoInternetConnectionException(Exception):
+    """
+    This exception is raised in methods that require an internet connection, when the SDK is defined as working offline.
+    """
+
+    pass
 
 
 def generate_xsiam_normalized_name(file_name, prefix):
@@ -562,6 +571,7 @@ def get_remote_file(
     tag: str = "master",
     return_content: bool = False,
     git_content_config: Optional[GitContentConfig] = None,
+    default_value=None,
 ):
     """
     Args:
@@ -569,10 +579,17 @@ def get_remote_file(
         tag: The branch name. default is 'master'
         return_content: Determines whether to return the file's raw content or the dict representation of it.
         git_content_config: The content config to take the file from
+        default_value: The method returns this value if using the SDK in offline mode. default_value cannot be None,
+        as it will raise an exception.
     Returns:
         The file content in the required format.
 
     """
+    if is_sdk_defined_working_offline():
+        if default_value is None:
+            raise NoInternetConnectionException
+        return default_value
+
     tag = tag.replace("origin/", "").replace("demisto/", "")
     if not git_content_config:
         try:
@@ -3805,3 +3822,15 @@ def parse_multiple_path_inputs(
         return result
 
     raise ValueError(f"Cannot parse paths from {input_path}")
+
+
+@lru_cache
+def is_sdk_defined_working_offline() -> bool:
+    """
+    This method returns True when the SDK is defined as offline, i.e., when
+    the DEMISTO_SDK_OFFLINE_ENV environment variable is True.
+
+    Returns:
+        bool: The value for DEMISTO_SDK_OFFLINE_ENV environment variable.
+    """
+    return str2bool(os.getenv(ENV_SDK_WORKING_OFFLINE))

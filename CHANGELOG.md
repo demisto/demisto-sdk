@@ -20,9 +20,10 @@
 * **doc-review** will run with the `--use-packs-known-words` default to true.
 * Calling **modeling-rules init-test-data** will now return the XDM fields output in alphabetical order.
 * Fixed an issue where **validate** failed on infrastructure test files.
-* Added a new validation (`BA125`) to **validate** that assures internal function names aren't in use in customer-facing docs.
+* Added a new validation to **validate** that assures internal function names aren't in use in customer-facing docs.
 * Removed the Pipfile and Pipfile.lock from the templates in **demisto-sdk init** command.
 * Disabled the option to create an integration with Pipfile and Pipfile.lock files.
+* Added support for working with Demisto-SDK offline by using the `DEMISTO_SDK_OFFLINE_ENV` environment variable. See https://github.com/demisto/demisto-sdk#internet-connection for more information.
 * Added the '--all' input option for the **prepare-content** command, to support running on all content packs.
 * Updated the '-i' input option of the **prepare-content** command to support multiple inputs as a comma-separated list.
 

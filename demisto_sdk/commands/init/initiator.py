@@ -5,6 +5,8 @@ from distutils.dir_util import copy_tree
 from distutils.version import LooseVersion
 from typing import Dict, List, Set
 
+from packaging.version import Version
+
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import (
@@ -971,14 +973,14 @@ class Initiator:
             if from_version:
                 yml_dict["fromversion"] = from_version
 
-            if not self.xsiam and LooseVersion(
+            if not self.xsiam and Version(
                 yml_dict.get("fromversion", DEFAULT_CONTENT_ITEM_FROM_VERSION)
-            ) < LooseVersion(self.SUPPORTED_FROM_VERSION):
+            ) < Version(self.SUPPORTED_FROM_VERSION):
                 yml_dict["fromversion"] = self.SUPPORTED_FROM_VERSION_XSIAM
 
-            elif self.xsiam and LooseVersion(
+            elif self.xsiam and Version(
                 yml_dict.get("fromversion", DEFAULT_CONTENT_ITEM_FROM_VERSION)
-            ) < LooseVersion(self.SUPPORTED_FROM_VERSION_XSIAM):
+            ) < Version(self.SUPPORTED_FROM_VERSION_XSIAM):
                 yml_dict["fromversion"] = self.SUPPORTED_FROM_VERSION_XSIAM
 
             if integration:

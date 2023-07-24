@@ -18,11 +18,10 @@
 * Fixed an issue where the **format** command would change the value of the `unsearchable` key in fields.
 * Added an ability to provide list of marketplace names as a credentials-type (type 9) param attribute.
 * **doc-review** will run with the `--use-packs-known-words` default to true.
+* Fixed an issue in **doc-review** command where escape characters within Markdown files were detected as invalid words.
 * Calling **modeling-rules init-test-data** will now return the XDM fields output in alphabetical order.
 * Fixed an issue where **validate** failed on infrastructure test files.
-* Added a new validation (`BA125`) to **validate** that assures internal function names aren't in use in customer-facing docs.
-* Removed the Pipfile and Pipfile.lock from the templates in **demisto-sdk init** command.
-* Disabled the option to create an integration with Pipfile and Pipfile.lock files.
+* Fixed an issue in **update-content-graph** where the neo4j service was unaccessible for non-root users.
 
 ## 1.17.2
 * Fixed an issue where **lint** and **validate** commands failed on integrations and scripts that use docker images that are not available in the Docker Hub but exist locally.

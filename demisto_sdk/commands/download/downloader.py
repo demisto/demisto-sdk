@@ -54,6 +54,7 @@ from demisto_sdk.commands.common.tools import (
     get_json,
     get_yaml,
     get_yml_paths_in_dir,
+    is_sdk_defined_working_offline,
     retrieve_file_ending,
     safe_write_unicode,
 )
@@ -181,6 +182,11 @@ class Downloader:
         self.num_added_files = 0
         self.init = init
         self.keep_empty_folders = keep_empty_folders
+        if is_sdk_defined_working_offline() and self.run_format:
+            self.run_format = False
+            logger.info(
+                "format is not supported when the DEMISTO_SDK_OFFLINE_ENV environment variable is set, skipping it."
+            )
 
     def download(self) -> int:
         """

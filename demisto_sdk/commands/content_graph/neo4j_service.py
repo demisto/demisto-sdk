@@ -85,7 +85,7 @@ def _download_apoc():
 
 
 def _docker_start():
-    logger.info("Starting neo4j service")
+    logger.debug("Starting neo4j service")
     docker_client = init_global_docker_client()
     _stop_neo4j_service_docker(docker_client)
     (REPO_PATH / NEO4J_FOLDER / NEO4J_DATA_FOLDER).mkdir(parents=True, exist_ok=True)
@@ -120,7 +120,7 @@ def _docker_start():
         user=f"{os.getuid()}:{os.getgid()}",
     )
 
-    logger.info("Neo4j service started successfully")
+    logger.debug("Neo4j service started successfully")
 
 
 def start():
@@ -128,7 +128,11 @@ def start():
 
     Args:
     """
-    if is_alive() or not is_running_on_docker():
+    if is_alive():
+        logger.debug("Neo4j is already running")
+        return
+    if not is_running_on_docker():
+        logger.debug("Neo4j is running locally. Start manually")
         return
 
     Path.mkdir(REPO_PATH / NEO4J_FOLDER, exist_ok=True, parents=True)

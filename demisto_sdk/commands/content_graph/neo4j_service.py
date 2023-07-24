@@ -14,6 +14,7 @@ from demisto_sdk.commands.content_graph.common import (
     NEO4J_FOLDER,
     NEO4J_PASSWORD,
 )
+from demisto_sdk.commands.lint.helpers import stream_docker_container_output
 
 REPO_PATH = CONTENT_PATH.absolute()
 NEO4J_VERSION = "5.5.0"
@@ -117,6 +118,9 @@ def _docker_start():
         },
         user=user,
     )
+    container.start()
+    stream_docker_container_output(container.logs(stream=True))
+
     logger.info("Neo4j service started successfully")
 
 

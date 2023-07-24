@@ -88,7 +88,7 @@ def _docker_start():
     logger.info("Starting neo4j service")
     docker_client = init_global_docker_client()
     _stop_neo4j_service_docker(docker_client)
-    user = None if os.getenv("CI") else f"{os.getuid()}:{os.getgid()}"
+    user = f"{os.getuid()}:{os.getgid()}"
     container = docker_client.containers.run(
         image=NEO4J_SERVICE_IMAGE,
         name="neo4j-content",

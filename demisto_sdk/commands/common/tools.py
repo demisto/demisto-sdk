@@ -3769,7 +3769,7 @@ def get_config_param_kwargs_env(
         kwargs.get(kwarg_param_name), env_param_name, default_value
     )
 
-  
+
 @lru_cache
 def is_sdk_defined_working_offline() -> bool:
     """

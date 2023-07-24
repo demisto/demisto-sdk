@@ -33,7 +33,7 @@ jobs:
           cd content
           poetry install --with ci
           echo "Uninstalling demisto-sdk from content master"
-          poetry run pip uninstall demisto-sdk
+          poetry remove demisto-sdk
           echo "installing branch version of demisto-sdk (${{ steps.get-commit.outputs.commit }} )"
           pip install git+https://github.com/demisto/demisto-sdk@${{ steps.get-commit.outputs.commit }}
 

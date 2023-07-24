@@ -459,13 +459,13 @@ class Initiator:
                 output=os.path.join(self.full_output_path, PARSING_RULES_DIR),
                 common_server=self.common_server,
                 demisto_mock=self.demisto_mock,
-                template=self.template,
+                template=self.HELLO_WORLD_PARSING_RULES,
                 xsiam=self.xsiam,
                 is_parsing_rules=True,
                 dir_name=self.dir_name,
                 name=self.dir_name,
             )
-            if not parsing_rules_initiator.modeling_rules_init():
+            if not parsing_rules_initiator.parsing_rules_init():
                 return False
 
         self.create_pack_base_files()

@@ -116,7 +116,7 @@ def _docker_start():
             "timeout": 15 * 1000000000,
             "retries": 10,
         },
-        user=user,
+        user="1001:123",
     )
     container.start()
     stream_docker_container_output(container.logs(stream=True))

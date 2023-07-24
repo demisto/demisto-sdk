@@ -358,6 +358,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         self,
         path: Path,
         relationship_type: RelationshipType,
+        content_type: ContentType,
         depth: int,
     ) -> Tuple[Dict[str, Any], Dict[str, Any]]:
         with self.driver.session() as session:
@@ -365,12 +366,14 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
                 get_sources_by_path,
                 path,
                 relationship_type,
+                content_type,
                 depth,
             )
             targets = session.execute_read(
                 get_targets_by_path,
                 path,
                 relationship_type,
+                content_type,
                 depth,
             )
             return sources, targets

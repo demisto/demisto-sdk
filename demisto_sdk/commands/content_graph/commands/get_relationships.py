@@ -10,6 +10,7 @@ from demisto_sdk.commands.common.logger import (
     logging_setup,
 )
 from demisto_sdk.commands.content_graph.common import (
+    ContentType,
     RelationshipType,
 )
 from demisto_sdk.commands.content_graph.interface import ContentGraphInterface
@@ -41,6 +42,14 @@ def get_relationships(
         show_default=True,
         case_sensitive=False,
         help="The type of relationships to inspect.",
+    ),
+    content_type: ContentType = typer.Option(
+        ContentType.BASE_CONTENT,
+        "-ct",
+        "--content-type",
+        show_default=True,
+        case_sensitive=False,
+        help="The content type of the related object.",
     ),
     depth: int = typer.Option(
         1,
@@ -93,6 +102,7 @@ def get_relationships(
             graph,
             input.relative_to(graph.repo_path),
             relationship,
+            content_type,
             depth,
         )
         if output:
@@ -105,6 +115,7 @@ def get_relationships_by_path(
     graph: ContentGraphInterface,
     input_filepath: Path,
     relationship: RelationshipType,
+    content_type: ContentType,
     depth: int,
 ) -> Dict[str, Any]:
     sources_summary = []
@@ -112,6 +123,7 @@ def get_relationships_by_path(
     sources, targets = graph.get_relationships_by_path(
         input_filepath,
         relationship,
+        content_type,
         depth,
     )
     for record in sources:

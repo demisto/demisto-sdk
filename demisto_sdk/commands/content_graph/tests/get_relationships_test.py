@@ -9,7 +9,7 @@ from demisto_sdk.commands.content_graph.commands.create import (
 from demisto_sdk.commands.content_graph.commands.get_relationships import (
     get_relationships_by_path,
 )
-from demisto_sdk.commands.content_graph.common import RelationshipType
+from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
 from demisto_sdk.commands.content_graph.interface import (
     ContentGraphInterface,
 )
@@ -110,11 +110,12 @@ def create_mini_content(repository: ContentDTO):  # noqa: F811
 
 class TestGetRelationships:
     @pytest.mark.parametrize(
-        "filepath, relationship, depth, expected_sources, expected_targets",
+        "filepath, relationship, content_type, depth, expected_sources, expected_targets",
         [
             pytest.param(
                 Path("Packs/SamplePack2/Scripts/SampleScript2/SampleScript2.yml"),
                 RelationshipType.USES,
+                ContentType.BASE_CONTENT,
                 2,
                 {
                     "Packs/SamplePack3/TestPlaybooks/SampleTestPlaybook/SampleTestPlaybook.yml": {
@@ -139,6 +140,7 @@ class TestGetRelationships:
                     "Packs/SamplePack3/TestPlaybooks/SampleTestPlaybook/SampleTestPlaybook.yml"
                 ),
                 RelationshipType.USES,
+                ContentType.BASE_CONTENT,
                 2,
                 {},
                 {
@@ -162,6 +164,7 @@ class TestGetRelationships:
                     "Packs/SamplePack3/TestPlaybooks/SampleTestPlaybook/SampleTestPlaybook.yml"
                 ),
                 RelationshipType.USES,
+                ContentType.BASE_CONTENT,
                 1,
                 {},
                 {
@@ -182,6 +185,7 @@ class TestGetRelationships:
                     "Packs/SamplePack/Integrations/SampleIntegration/SampleIntegration.yml"
                 ),
                 RelationshipType.IMPORTS,
+                ContentType.BASE_CONTENT,
                 1,
                 {},
                 {
@@ -196,6 +200,7 @@ class TestGetRelationships:
                     "Packs/SamplePack/Integrations/SampleIntegration/SampleIntegration.yml"
                 ),
                 RelationshipType.TESTED_BY,
+                ContentType.BASE_CONTENT,
                 1,
                 {},
                 {
@@ -208,6 +213,7 @@ class TestGetRelationships:
             pytest.param(
                 Path("Packs/SamplePack3"),
                 RelationshipType.DEPENDS_ON,
+                ContentType.BASE_CONTENT,
                 2,
                 {},
                 {
@@ -227,6 +233,7 @@ class TestGetRelationships:
         repository: ContentDTO,  # noqa: F811
         filepath: Path,
         relationship: RelationshipType,
+        content_type: ContentType,
         depth: int,
         expected_sources: Dict[str, Any],
         expected_targets: Dict[str, Any],
@@ -246,6 +253,7 @@ class TestGetRelationships:
                 interface,
                 input_filepath=filepath,
                 relationship=relationship,
+                content_type=content_type,
                 depth=depth,
             )
             sources, targets = result["sources"], result["targets"]

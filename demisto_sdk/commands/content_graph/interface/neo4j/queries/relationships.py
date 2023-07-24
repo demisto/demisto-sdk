@@ -260,11 +260,18 @@ def get_sources_by_path(
     tx: Transaction,
     path: Path,
     relationship: RelationshipType,
+    content_type: ContentType,
     depth: int,
 ) -> Tuple[List[Dict[str, Any]], int]:
     query = f"""// Returns all paths to a given node by relationship type and depth.
 MATCH (n{{path: "{path}"}})
-CALL apoc.path.expand(n, "<{relationship}", null, 1, {depth})
+CALL apoc.path.expandConfig(n, {{
+    relationshipFilter: "<{relationship}",
+    labelFilter: ">{content_type}",
+    minLevel: 1,
+    maxLevel: {depth},
+    uniqueness: "NODE_GLOBAL"
+}})
 YIELD path
 WITH
     // the paths are returned in reversed order, so we fix this here:
@@ -293,11 +300,18 @@ def get_targets_by_path(
     tx: Transaction,
     path: Path,
     relationship: RelationshipType,
+    content_type: ContentType,
     depth: int,
 ) -> Tuple[List[Dict[str, Any]], int]:
     query = f"""// Returns all paths from a given node by relationship type and depth.
 MATCH (n{{path: "{path}"}})
-CALL apoc.path.expand(n, "{relationship}>", null, 1, {depth})
+CALL apoc.path.expandConfig(n, {{
+    relationshipFilter: "{relationship}>",
+    labelFilter: ">{content_type}",
+    minLevel: 1,
+    maxLevel: {depth},
+    uniqueness: "NODE_GLOBAL"
+}})
 YIELD path
 WITH
     [n IN nodes(path) | n.path] AS nodes,

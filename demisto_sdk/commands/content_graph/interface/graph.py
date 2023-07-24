@@ -141,6 +141,7 @@ class ContentGraphInterface(ABC):
         self,
         path: Path,
         relationship_type: RelationshipType,
+        content_type: ContentType,
         depth: int,
     ) -> Tuple[Dict[str, Any], Dict[str, Any]]:
         pass

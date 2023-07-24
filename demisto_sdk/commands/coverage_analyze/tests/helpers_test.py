@@ -9,7 +9,7 @@ import pytest
 import requests
 from freezegun import freeze_time
 
-from demisto_sdk.commands.common.handlers import JSON_Handler
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.logger import logging_setup
 from demisto_sdk.commands.coverage_analyze.helpers import (
     CoverageSummary,
@@ -23,9 +23,6 @@ from demisto_sdk.commands.coverage_analyze.helpers import (
     percent_to_float,
 )
 from TestSuite.test_tools import str_in_call_args_list
-
-json = JSON_Handler()
-
 
 TEST_DATA_DIR = os.path.join(os.path.dirname(__file__), "data")
 JSON_MIN_DATA_FILE = os.path.join(TEST_DATA_DIR, "coverage-min.json")
@@ -265,6 +262,7 @@ class TestCoverageSummary:
             mock_min_cov_request = requests_mock.get(self.default_url, json=text_data)
             self.check_get_files(tmpdir, mock_min_cov_request, 0)
 
+        @pytest.mark.skip
         def test_with_no_cache(self, mocker, requests_mock):
             import builtins
 

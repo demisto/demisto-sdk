@@ -23,7 +23,7 @@ from demisto_sdk.commands.common.content_constant_paths import (
     CONTENT_PATH,
 )
 from demisto_sdk.commands.common.cpu_count import cpu_count
-from demisto_sdk.commands.common.handlers import JSON_Handler
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.hook_validations.readme import ReadMeValidator
 from demisto_sdk.commands.common.logger import handle_deprecated_args, logging_setup
 from demisto_sdk.commands.common.tools import (
@@ -31,6 +31,7 @@ from demisto_sdk.commands.common.tools import (
     get_last_remote_release_version,
     get_release_note_entries,
     is_external_repository,
+    is_sdk_defined_working_offline,
     parse_marketplace_kwargs,
 )
 from demisto_sdk.commands.content_graph.interface.neo4j.neo4j_graph import (
@@ -48,9 +49,13 @@ from demisto_sdk.commands.test_content.test_modeling_rule import (
 from demisto_sdk.commands.upload.upload import upload_content_entity
 from demisto_sdk.utils.utils import check_configuration_file
 
+SDK_OFFLINE_ERROR_MESSAGE = (
+    "[red]An internet connection is required for this command. If connected to the "
+    "internet, un-set the DEMISTO_SDK_OFFLINE_ENV environment variable.[/red]"
+)
+
 logger = logging.getLogger("demisto-sdk")
 
-json = JSON_Handler()
 
 # Third party packages
 
@@ -105,9 +110,6 @@ class VersionParamType(click.ParamType):
             )
 
 
-json = JSON_Handler()
-
-
 class DemistoSDK:
     """
     The core class for the SDK.
@@ -133,12 +135,12 @@ def logging_setup_decorator(func, *args, **kwargs):
     @click.option(
         "--console_log_threshold",
         help="Minimum logging threshold for the console logger."
-        " Pssible values: DEBUG, INFO, WARNING, ERROR.",
+        " Possible values: DEBUG, INFO, WARNING, ERROR.",
     )
     @click.option(
         "--file_log_threshold",
         help="Minimum logging threshold for the file logger."
-        " Pssible values: DEBUG, INFO, WARNING, ERROR.",
+        " Possible values: DEBUG, INFO, WARNING, ERROR.",
     )
     @click.option(
         "--log_file_path",
@@ -202,10 +204,8 @@ def main(ctx, config, version, release_notes, **kwargs):
 
     dotenv.load_dotenv(CONTENT_PATH / ".env", override=True)  # type: ignore # load .env file from the cwd
     if (
-        not os.getenv("DEMISTO_SDK_SKIP_VERSION_CHECK")
-        or not os.getenv("CI")
-        or version
-    ):  # If the key exists/called to version
+        (not os.getenv("DEMISTO_SDK_SKIP_VERSION_CHECK")) or version
+    ) and not is_sdk_defined_working_offline():  # If the key exists/called to version
         try:
             __version__ = get_distribution("demisto-sdk").version
         except DistributionNotFound:
@@ -214,7 +214,11 @@ def main(ctx, config, version, release_notes, **kwargs):
                 "[yellow]Cound not find the version of the demisto-sdk. This usually happens when running in a development environment.[/yellow]"
             )
         else:
-            last_release = get_last_remote_release_version()
+            last_release = ""
+            if not os.environ.get(
+                "CI"
+            ):  # Check only when not running in CI (e.g running locally).
+                last_release = get_last_remote_release_version()
             logger.info(f"[yellow]You are using demisto-sdk {__version__}.[/yellow]")
             if last_release and __version__ != last_release:
                 logger.info(
@@ -508,7 +512,7 @@ def zip_packs(ctx, **kwargs) -> int:
 
     if should_upload and zip_path:
         return Uploader(
-            input=zip_path, pack_names=unified_pack_names, marketplace=marketplace
+            input=Path(zip_path), pack_names=unified_pack_names, marketplace=marketplace
         ).upload()
 
     return EX_SUCCESS if zip_path is not None else EX_FAIL
@@ -681,6 +685,10 @@ def zip_packs(ctx, **kwargs) -> int:
 def validate(ctx, config, file_paths: str, **kwargs):
     """Validate your content files. If no additional flags are given, will validated only committed files."""
     from demisto_sdk.commands.validate.validate_manager import ValidateManager
+
+    if is_sdk_defined_working_offline():
+        logger.error(SDK_OFFLINE_ERROR_MESSAGE)
+        sys.exit(1)
 
     if file_paths and not kwargs["input"]:
         # If file_paths is given as an argument, use it as the file_paths input (instead of the -i flag). If both, input wins.
@@ -1263,6 +1271,10 @@ def format(
     """
     from demisto_sdk.commands.format.format_module import format_manager
 
+    if is_sdk_defined_working_offline():
+        logger.error(SDK_OFFLINE_ERROR_MESSAGE)
+        sys.exit(1)
+
     if file_paths and not input:
         input = ",".join(file_paths)
 
@@ -1352,7 +1364,9 @@ def format(
 @click.option(
     "--override-existing",
     is_flag=True,
-    help="If true will skip override confirmation prompt while uploading packs.",
+    help="This value (True/False) determines if the user should be presented with a confirmation prompt when "
+    "attempting to upload a content pack that is already installed on the Cortex XSOAR server. This allows the upload "
+    "command to be used within non-interactive shells.",
 )
 @click.pass_context
 @logging_setup_decorator
@@ -2311,6 +2325,10 @@ def update_release_notes(ctx, **kwargs):
         UpdateReleaseNotesManager,
     )
 
+    if is_sdk_defined_working_offline():
+        logger.error(SDK_OFFLINE_ERROR_MESSAGE)
+        sys.exit(1)
+
     check_configuration_file("update-release-notes", kwargs)
     if kwargs.get("force") and not kwargs.get("input"):
         logger.info(
@@ -2884,7 +2902,7 @@ def test_content(ctx, **kwargs):
     help="Will find and load the known_words file from the pack. "
     "To use this option make sure you are running from the "
     "content directory.",
-    default=False,
+    default=True,
 )
 @click.pass_context
 @logging_setup_decorator

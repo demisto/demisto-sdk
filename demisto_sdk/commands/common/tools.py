@@ -3644,6 +3644,7 @@ def string_to_bool(
     input_: Any,
     default_when_empty: Optional[bool] = None,
 ) -> bool:
+    raise ValueError("here be error")
     try:
         return STRING_TO_BOOL_MAP[str(input_).lower()]
     except (KeyError, TypeError):

@@ -3620,19 +3620,6 @@ STRING_TO_BOOL_MAP = {
 }
 
 
-def string_to_bool(
-    input_: Any,
-    default_when_empty: Optional[bool] = None,
-) -> bool:
-    try:
-        return STRING_TO_BOOL_MAP[str(input_).lower()]
-    except (KeyError, TypeError):
-        if input_ in ("", None) and default_when_empty is not None:
-            return default_when_empty
-
-    raise ValueError(f"cannot convert {input_} to bool")
-
-
 def field_to_cli_name(field_name: str) -> str:
     """
     Returns the CLI name of an incident/indicator field by removing non letters/numbers

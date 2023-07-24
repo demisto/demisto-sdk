@@ -447,7 +447,11 @@ def prepare_content(ctx, **kwargs):
         inputs = input_.split(",")
 
     if output_path := kwargs["output"]:
-        os.makedirs(output_path, exist_ok=True)
+        if '.' in Path(output_path).name:  # check if the output path is a file
+            if len(inputs) > 1:
+                raise Exception('When passing multiple inputs, the output path should be a directory and not a file.')
+        else:
+            os.makedirs(output_path, exist_ok=True)
 
     for input_content in inputs:
         if output_path and len(inputs) > 1:

@@ -830,7 +830,9 @@ def test_integration_init_xsiam_files_content(mocker, monkeypatch, initiator, tm
     """
     # Prepare mockers
     mocker.patch.object(Initiator, "get_remote_templates", return_value=False)
-    monkeypatch.setattr("builtins.input", generate_multiple_inputs(deque(["6.0.0"])))
+    monkeypatch.setattr(
+        "builtins.input", generate_multiple_inputs(deque(["6.0.0", "Y"]))
+    )
     temp_pack_dir = os.path.join(tmpdir, PACK_NAME)
     os.makedirs(temp_pack_dir, exist_ok=True)
 

@@ -115,6 +115,7 @@ def _docker_start():
             "timeout": 15 * 1000000000,
             "retries": 10,
         },
+        user=user,
     )
     logger.info("Neo4j service started successfully")
 
@@ -124,7 +125,7 @@ def start():
 
     Args:
     """
-    if is_alive():
+    if is_alive() or not is_running_on_docker():
         return
 
     Path.mkdir(REPO_PATH / NEO4J_FOLDER, exist_ok=True, parents=True)

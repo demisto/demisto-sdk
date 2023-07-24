@@ -162,3 +162,10 @@ def stop_content_graph() -> None:
     This function stops the neo4j service if it is running.
     """
     neo4j_service.stop()
+
+def start_content_graph() -> None:
+    """
+    This function starts the neo4j service if it is running.
+    """
+    neo4j_service.start()
+

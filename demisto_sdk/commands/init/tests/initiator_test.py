@@ -8,6 +8,7 @@ import pytest
 
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import (
+    EVENT_COLLECTOR,
     INTEGRATION_CATEGORIES,
     MARKETPLACE_LIVE_DISCUSSIONS,
     MARKETPLACES,
@@ -775,3 +776,382 @@ def test_script_init_with_ignore_secrets(initiator, tmpdir, monkeypatch, mocker)
         not diff
     ), f"There are missing file's in the files you expected to create, The missing file's are {diff}"
     assert os.stat(secrets_ignore_path).st_size > 0
+
+
+def test_pack_init_for_xsiam_folders_existence(monkeypatch, mocker, tmpdir, initiator):
+    """
+    Given
+        - Pack init inputs, modeling rules version, parsing rules version.
+    When
+        - Creating new pack with XSIAM flag.
+    Then
+        - Ensure the function's return value is True
+        - Ensure pack directory created successfully with the correct sub-directories.
+    """
+
+    # Prepare mockers
+    monkeypatch.setattr(
+        "builtins.input",
+        generate_multiple_inputs(deque(["PackName", "6.8", "6.8", "N", "N"])),
+    )
+    mocker.patch.object(Initiator, "get_remote_templates", return_value=False)
+    # Prepare initiator set XSIAM flag to true
+    initiator.xsiam = True
+
+    # Prepare expected results
+    dir_list: list = initiator.DIR_LIST.copy()
+    dir_list.extend(initiator.XSIAM_DIR)
+    dir_list.extend(["ModelingRules", "ParsingRules"])
+
+    # Run
+    with ChangeCWD(tmpdir):
+        result = initiator.init()
+
+    # Asserts
+    assert result
+    assert all(Path(tmpdir / initiator.full_output_path / d).exists() for d in dir_list)
+
+
+def test_integration_init_xsiam_files_content(mocker, monkeypatch, initiator, tmpdir):
+    """
+    Tests `integration_init` function with xsiam flag.
+
+    Given
+        - Inputs to init integration in a given output.
+
+    When
+        - Running the init command with xsiam flag.
+
+    Then
+        - Ensure the function's return value is True.
+        - Ensure integration directory with the desired integration name is created successfully.
+        - Ensure integration directory contain all files.
+        - Ensure the file content.
+    """
+    # Prepare mockers
+    mocker.patch.object(Initiator, "get_remote_templates", return_value=False)
+    monkeypatch.setattr("builtins.input", generate_multiple_inputs(deque(["6.0.0"])))
+    temp_pack_dir = os.path.join(tmpdir, PACK_NAME)
+    os.makedirs(temp_pack_dir, exist_ok=True)
+
+    # Prepare initiator
+    initiator.output = temp_pack_dir
+    initiator.dir_name = INTEGRATION_NAME
+    initiator.id = INTEGRATION_NAME
+    initiator.is_integration = True
+    initiator.category = "Analytics & SIEM"
+    initiator.template = "HelloWorldEventCollector"
+    initiator.xsiam = True
+    integration_path = os.path.join(
+        temp_pack_dir, f"{INTEGRATION_NAME}{EVENT_COLLECTOR}"
+    )
+    yml_path = os.path.join(
+        integration_path, f"{INTEGRATION_NAME}{EVENT_COLLECTOR}.yml"
+    )
+    res = initiator.integration_init()
+    integration_dir_files = {file for file in listdir(integration_path)}
+    expected_files = {
+        "command_examples",
+        "test_data",
+        "README.md",
+        f"{INTEGRATION_NAME}{EVENT_COLLECTOR}.py",
+        f"{INTEGRATION_NAME}{EVENT_COLLECTOR}.yml",
+        f"{INTEGRATION_NAME}{EVENT_COLLECTOR}_description.md",
+        f"{INTEGRATION_NAME}{EVENT_COLLECTOR}_test.py",
+        f"{INTEGRATION_NAME}{EVENT_COLLECTOR}_image.png",
+    }
+
+    assert res
+    assert os.path.isdir(integration_path)
+    assert expected_files == integration_dir_files
+    with open(yml_path) as f:
+        yaml_content = yaml.load(f)
+        assert "6.8.0" == yaml_content["fromversion"]
+        assert "Analytics & SIEM" == yaml_content["category"]
+        assert (
+            f"{INTEGRATION_NAME}{EVENT_COLLECTOR}" == yaml_content["commonfields"]["id"]
+        )
+        assert f"{INTEGRATION_NAME}{EVENT_COLLECTOR}" == yaml_content["name"]
+    os.remove(yml_path)
+
+
+def test_integration_init_xsiam_files_existence(mocker, monkeypatch, initiator, tmpdir):
+    """
+    Tests `integration_init` function with xsiam flag.
+
+    Given
+        - Inputs to init integration in a given output.
+
+    When
+        - Running the init command with xsiam flag.
+
+    Then
+        - Ensure the function's return value is True.
+        - Ensure integration directory with the desired integration name is created successfully.
+        - Ensure integration directory contain all files.
+    """
+    # Prepare mockers
+    mocker.patch.object(Initiator, "get_remote_templates", return_value=False)
+    monkeypatch.setattr(
+        "builtins.input", generate_multiple_inputs(deque(["6.0.0", "Y"]))
+    )
+    temp_pack_dir = os.path.join(tmpdir, PACK_NAME)
+    os.makedirs(temp_pack_dir, exist_ok=True)
+
+    # Prepare initiator
+    initiator.output = temp_pack_dir
+    initiator.dir_name = INTEGRATION_NAME
+    initiator.is_integration = True
+    initiator.category = "Analytics & SIEM"
+    initiator.template = "HelloWorldEventCollector"
+    initiator.xsiam = True
+    integration_path = os.path.join(
+        temp_pack_dir, f"{INTEGRATION_NAME}{EVENT_COLLECTOR}"
+    )
+    res = initiator.integration_init()
+    integration_dir_files = set(listdir(integration_path))
+    expected_files = {
+        "command_examples",
+        "test_data",
+        "README.md",
+        f"{INTEGRATION_NAME}{EVENT_COLLECTOR}.py",
+        f"{INTEGRATION_NAME}{EVENT_COLLECTOR}.yml",
+        f"{INTEGRATION_NAME}{EVENT_COLLECTOR}_description.md",
+        f"{INTEGRATION_NAME}{EVENT_COLLECTOR}_test.py",
+        f"{INTEGRATION_NAME}{EVENT_COLLECTOR}_image.png",
+    }
+
+    assert res
+    assert os.path.isdir(integration_path)
+    assert expected_files == integration_dir_files
+
+
+def test_modeling_rules_init_xsiam_files_existence(
+    mocker, monkeypatch, initiator, tmpdir
+):
+    """
+    Tests `modeling_rules_init` function.
+
+    Given
+        - Inputs to init modeling rules in a given output.
+
+    When
+        - Running the init modeling rules function.
+
+    Then
+        - Ensure the function's return value is True
+        - Ensure modeling rules directory with the desired name is created successfully.
+        - Ensure modeling rules directory contain all files.
+    """
+    # Prepare mockers
+    mocker.patch.object(Initiator, "get_remote_templates", return_value=False)
+    monkeypatch.setattr("builtins.input", generate_multiple_inputs(deque(["6.0.0"])))
+    temp_pack_dir = os.path.join(tmpdir, PACK_NAME)
+    os.makedirs(temp_pack_dir, exist_ok=True)
+
+    # Prepare initiator
+    initiator.output = temp_pack_dir
+    initiator.dir_name = INTEGRATION_NAME
+    initiator.category = "Analytics & SIEM"
+    initiator.template = "HelloWorldModelingRules"
+    initiator.xsiam = True
+    initiator.is_modeling_rules = True
+
+    modeling_rules_path = os.path.join(temp_pack_dir, f"{INTEGRATION_NAME}")
+    res = initiator.modeling_rules_init()
+    modeling_rules_dir_files = set(listdir(modeling_rules_path))
+    expected_files = {
+        f"{INTEGRATION_NAME}_schema.json",
+        f"{INTEGRATION_NAME}.yml",
+        f"{INTEGRATION_NAME}.xif",
+    }
+
+    assert res
+    assert os.path.isdir(modeling_rules_path)
+    assert expected_files == modeling_rules_dir_files
+
+
+def test_parsing_rules_init_xsiam_files_existence(
+    mocker, monkeypatch, initiator, tmpdir
+):
+    """
+    Tests `parsing_rules_init` function.
+
+    Given
+        - Inputs to init parsing rules in a given output.
+
+    When
+        - Running the init parsing rules function.
+
+    Then
+        - Ensure the function's return value is True.
+        - Ensure parsing rules directory with the desired name is created successfully.
+        - Ensure parsing rules directory contain all files.
+    """
+    # Prepare mockers
+    mocker.patch.object(Initiator, "get_remote_templates", return_value=False)
+    monkeypatch.setattr("builtins.input", generate_multiple_inputs(deque(["6.0.0"])))
+    temp_pack_dir = os.path.join(tmpdir, PACK_NAME)
+    os.makedirs(temp_pack_dir, exist_ok=True)
+
+    # Prepare initiator
+    initiator.output = temp_pack_dir
+    initiator.dir_name = INTEGRATION_NAME
+    initiator.category = "Analytics & SIEM"
+    initiator.template = "HelloWorldParsingRules"
+    initiator.xsiam = True
+    initiator.is_parsing_rules = True
+
+    parsing_rules_path = os.path.join(temp_pack_dir, f"{INTEGRATION_NAME}")
+    res = initiator.parsing_rules_init()
+    parsing_rules_dir_files = set(listdir(parsing_rules_path))
+    expected_files = {
+        f"{INTEGRATION_NAME}.yml",
+        f"{INTEGRATION_NAME}.xif",
+    }
+
+    assert res
+    assert os.path.isdir(parsing_rules_path)
+    assert expected_files == parsing_rules_dir_files
+
+
+def test_modeling_rules_init_file_content_and_name(
+    mocker, monkeypatch, initiator, tmpdir
+):
+    """
+    Tests `modeling_rules_init` function.
+
+    Given
+        - Inputs to init modeling rules in a given output with unsupported version (6.0.0).
+
+    When
+        - Running the init modeling rules function.
+
+    Then
+        - Ensure modeling rules yml contains the correct version.
+        - Ensure that the id and the name are correct.
+    """
+    # Prepare mockers
+    mocker.patch.object(Initiator, "get_remote_templates", return_value=False)
+    monkeypatch.setattr("builtins.input", generate_multiple_inputs(deque(["6.0.0"])))
+
+    temp_pack_dir = os.path.join(tmpdir, PACK_NAME)
+    os.makedirs(temp_pack_dir, exist_ok=True)
+
+    # Prepare initiator
+    initiator.output = temp_pack_dir
+    initiator.dir_name = INTEGRATION_NAME
+    initiator.category = "Analytics & SIEM"
+    initiator.template = "HelloWorldModelingRules"
+    initiator.xsiam = True
+    initiator.is_modeling_rules = True
+
+    parsing_rules_path = os.path.join(temp_pack_dir, f"{INTEGRATION_NAME}")
+    res = initiator.modeling_rules_init()
+    yml_path = os.path.join(parsing_rules_path, f"{INTEGRATION_NAME}.yml")
+    assert res
+    assert os.path.exists(yml_path)
+    with open(yml_path) as f:
+        yaml_content = yaml.load(f)
+        assert "6.8.0" in yaml_content["fromversion"]
+        assert f"{INTEGRATION_NAME}_ModelingRule" == yaml_content["id"]
+        assert f"{INTEGRATION_NAME} Modeling Rule" == yaml_content["name"]
+        os.remove(yml_path)
+
+
+def test_parsing_rules_init_file_content_and_name(
+    mocker, monkeypatch, initiator, tmpdir
+):
+    """
+    Tests `parsing_rules_init` function.
+
+    Given
+        - Inputs to init parsing rules in a given output with unsupported version (6.0.0).
+
+    When
+        - Running the init parsing rules function.
+
+    Then
+        - Ensure parsing rules yml contains the correct version.
+        - Ensure that the id and the name are correct.
+    """
+    # Prepare mockers
+    mocker.patch.object(Initiator, "get_remote_templates", return_value=False)
+    monkeypatch.setattr("builtins.input", generate_multiple_inputs(deque(["6.0.0"])))
+
+    temp_pack_dir = os.path.join(tmpdir, PACK_NAME)
+    os.makedirs(temp_pack_dir, exist_ok=True)
+
+    # Prepare initiator
+    initiator.output = temp_pack_dir
+    initiator.dir_name = INTEGRATION_NAME
+    initiator.category = "Analytics & SIEM"
+    initiator.template = "HelloWorldParsingRules"
+    initiator.xsiam = True
+    initiator.is_parsing_rules = True
+
+    parsing_rules_path = os.path.join(temp_pack_dir, f"{INTEGRATION_NAME}")
+    res = initiator.parsing_rules_init()
+    yml_path = os.path.join(parsing_rules_path, f"{INTEGRATION_NAME}.yml")
+
+    assert res
+    assert os.path.exists(yml_path)
+    with open(yml_path) as f:
+        yaml_content = yaml.load(f)
+        assert "6.8.0" in yaml_content["fromversion"]
+        assert f"{INTEGRATION_NAME}_ParsingRule" == yaml_content["id"]
+        assert f"{INTEGRATION_NAME} Parsing Rule" == yaml_content["name"]
+        os.remove(yml_path)
+
+
+def test_modeling_or_parsing_rules_yml_reformatting_parsing_rules(
+    monkeypatch, tmp_path, initiator
+):
+    """
+    Tests `modeling_or_parsing_rules_yml_reformatting` function on parsing_rules.
+
+    Given
+        - Inputs to init parsing rules in a given output with unsupported version (6.0.0).
+
+    When
+        - Running the `modeling_or_parsing_rules_yml_reformatting` function.
+
+    Then
+        - Ensure parsing rules yml contains the correct version.
+    """
+    monkeypatch.setattr("builtins.input", generate_multiple_inputs(deque(["6.0.0"])))
+    hello_world_modeling_rules = "HelloWorldModelingRules"
+    d = tmp_path / hello_world_modeling_rules
+    d.mkdir()
+    dir_name = "HelloWorld"
+    initiator.dir_name = dir_name
+    p = d / f"{dir_name}.yml"
+    full_output_path = Path(d)
+    initiator.full_output_path = full_output_path
+    with p.open(mode="w") as f:
+        yaml.dump(
+            {
+                "fromversion": "6.10.0",
+                "id": "HelloWorld_modeling_rule",
+                "name": "HelloWorld Modeling Rule",
+                "rules": "",
+                "schema": "",
+                "tags": "",
+            },
+            f,
+        )
+
+    initiator.modeling_or_parsing_rules_yml_reformatting(current_suffix=dir_name)
+    with open(full_output_path / f"{dir_name}.yml") as f:
+        yml_dict = yaml.load(f)
+        assert yml_dict == OrderedDict(
+            {
+                "fromversion": "6.8.0",
+                "id": "HelloWorld_modeling_rule",
+                "name": "HelloWorld Modeling Rule",
+                "rules": "",
+                "schema": "",
+                "tags": "",
+            }
+        )
+        os.remove(full_output_path / f"{dir_name}.yml")

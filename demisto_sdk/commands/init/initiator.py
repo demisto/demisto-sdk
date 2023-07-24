@@ -349,10 +349,13 @@ class Initiator:
         """
         for file in file_list:
             file_path = os.path.join(self.full_output_path, file)
+            dir_path = os.path.dirname(file_path)
             template_path = os.path.join(path_of_template, file)
             if os.path.exists(template_path) and not os.path.exists(file_path):
                 self.write_to_file_from_template(template_path, file_path)
             elif not os.path.exists(file_path):
+                if not os.path.exists(dir_path):
+                    os.makedirs(dir_path, exist_ok=True)
                 _, file_extension = os.path.splitext(file_path)
                 with open(file_path, "w") as f:
                     if file_extension == ".json":
@@ -449,7 +452,8 @@ class Initiator:
                 is_modeling_rules=True,
                 name=self.dir_name,
             )
-            modeling_rules_initiator.modeling_rules_init()
+            if not modeling_rules_initiator.modeling_rules_init():
+                return False
             parsing_rules_initiator = Initiator(
                 output=os.path.join(self.full_output_path, PARSING_RULES_DIR),
                 common_server=self.common_server,
@@ -460,7 +464,8 @@ class Initiator:
                 dir_name=self.dir_name,
                 name=self.dir_name,
             )
-            parsing_rules_initiator.parsing_rules_init()
+            if not parsing_rules_initiator.modeling_rules_init():
+                return False
 
         self.create_pack_base_files()
         logger.info(
@@ -930,7 +935,7 @@ class Initiator:
             yml_dict["fromversion"] = from_version
 
         if LooseVersion(
-            yml_dict.get("fromversion") or self.SUPPORTED_FROM_VERSION_XSIAM
+            yml_dict.get("fromversion") or DEFAULT_CONTENT_ITEM_FROM_VERSION
         ) < LooseVersion(self.SUPPORTED_FROM_VERSION_XSIAM):
             yml_dict["fromversion"] = self.SUPPORTED_FROM_VERSION_XSIAM
         with open(
@@ -966,13 +971,15 @@ class Initiator:
             if from_version:
                 yml_dict["fromversion"] = from_version
 
-            if LooseVersion(
+            if not self.xsiam and LooseVersion(
                 yml_dict.get("fromversion", DEFAULT_CONTENT_ITEM_FROM_VERSION)
             ) < LooseVersion(self.SUPPORTED_FROM_VERSION):
-                if self.xsiam:
-                    yml_dict["fromversion"] = self.SUPPORTED_FROM_VERSION
-                else:
-                    yml_dict["fromversion"] = self.SUPPORTED_FROM_VERSION_XSIAM
+                yml_dict["fromversion"] = self.SUPPORTED_FROM_VERSION_XSIAM
+
+            elif self.xsiam and LooseVersion(
+                yml_dict.get("fromversion", DEFAULT_CONTENT_ITEM_FROM_VERSION)
+            ) < LooseVersion(self.SUPPORTED_FROM_VERSION_XSIAM):
+                yml_dict["fromversion"] = self.SUPPORTED_FROM_VERSION_XSIAM
 
             if integration:
                 yml_dict["display"] = (

@@ -9,6 +9,7 @@ gh pr comment "$PR_LINK" --body "$welcome_message"
 gh pr edit "$PR_LINK" --add-assignee "$contribution_tl"
 gh pr edit "$PR_LINK" --add-label "Contribution"
 
+# adds the contribution_tl as reviewer to the PR
 # should be a temporary fix until GH API supports "gh pr edit "$PR_LINK" --add-reviewer $contribution_tl", link: https://github.com/cli/cli/issues/4844
 curl -X POST \
     -H "Accept: application/vnd.github+json" \

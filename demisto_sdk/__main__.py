@@ -187,6 +187,7 @@ def main(ctx, config, version, release_notes, **kwargs):
     global logger
     logger = logging.getLogger("demisto-sdk")
     handle_deprecated_args(ctx.args)
+    logger.info("using local repo")
 
     config.configuration = Configuration()
     import dotenv

@@ -965,5 +965,5 @@ def search_content_item_metadata_object(
     return [
         content_item
         for content_item in collected_content_items[item_type_key]
-        if content_item.get("id") == item_id or content_item.get("name") == item_name
+        if content_item.get("id") == item_id and content_item.get("name") == item_name
     ]

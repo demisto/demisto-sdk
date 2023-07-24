@@ -31,8 +31,6 @@ from demisto_sdk.commands.common.tools import (
     get_config_param_kwargs_env,
     get_last_remote_release_version,
     get_release_note_entries,
-    logging-env-variables
-    is_external_repository,
     is_sdk_defined_working_offline,
     parse_marketplace_kwargs,
 )

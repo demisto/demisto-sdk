@@ -2,7 +2,6 @@ import glob
 import os
 import shutil
 from distutils.dir_util import copy_tree
-from distutils.version import LooseVersion
 from typing import Dict, List, Set
 
 from packaging.version import Version
@@ -936,9 +935,9 @@ class Initiator:
         ):
             yml_dict["fromversion"] = from_version
 
-        if LooseVersion(
+        if Version(
             yml_dict.get("fromversion") or DEFAULT_CONTENT_ITEM_FROM_VERSION
-        ) < LooseVersion(self.SUPPORTED_FROM_VERSION_XSIAM):
+        ) < Version(self.SUPPORTED_FROM_VERSION_XSIAM):
             yml_dict["fromversion"] = self.SUPPORTED_FROM_VERSION_XSIAM
         with open(
             os.path.join(self.full_output_path, f"{self.dir_name}.yml"), "w"

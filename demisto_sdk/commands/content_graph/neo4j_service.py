@@ -14,7 +14,6 @@ from demisto_sdk.commands.content_graph.common import (
     NEO4J_FOLDER,
     NEO4J_PASSWORD,
 )
-from demisto_sdk.commands.lint.helpers import stream_docker_container_output
 
 REPO_PATH = CONTENT_PATH.absolute()
 NEO4J_VERSION = "5.5.0"
@@ -89,7 +88,6 @@ def _docker_start():
     logger.info("Starting neo4j service")
     docker_client = init_global_docker_client()
     _stop_neo4j_service_docker(docker_client)
-    # shutil.rmtree(REPO_PATH / NEO4J_FOLDER, ignore_errors=True)
     (REPO_PATH / NEO4J_FOLDER / NEO4J_DATA_FOLDER).mkdir(parents=True, exist_ok=True)
     (REPO_PATH / NEO4J_FOLDER / NEO4J_IMPORT_FOLDER).mkdir(parents=True, exist_ok=True)
     (REPO_PATH / NEO4J_FOLDER / NEO4J_PLUGINS_FOLDER).mkdir(parents=True, exist_ok=True)

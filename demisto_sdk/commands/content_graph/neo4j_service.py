@@ -90,7 +90,7 @@ def _docker_start():
     docker_client = init_global_docker_client()
     _stop_neo4j_service_docker(docker_client)
     user = f"{os.getuid()}:{os.getgid()}"
-    shutil.rmtree(NEO4J_FOLDER, ignore_errors=True)
+    shutil.rmtree(REPO_PATH / NEO4J_FOLDER, ignore_errors=True)
     (REPO_PATH / NEO4J_FOLDER / NEO4J_DATA_FOLDER).mkdir(parents=True, exist_ok=True)
     (REPO_PATH / NEO4J_FOLDER / NEO4J_IMPORT_FOLDER).mkdir(parents=True, exist_ok=True)
     (REPO_PATH / NEO4J_FOLDER / NEO4J_PLUGINS_FOLDER).mkdir(parents=True, exist_ok=True)

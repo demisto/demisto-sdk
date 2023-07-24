@@ -63,11 +63,11 @@ class Neo4jImportHandler:
 
         # Set the prefix for each node
         for node in root.findall(f".//{{{xml_namespace}}}node"):
-            node.attrib["element_id"] = f"n{prefix}{node.attrib['element_id'][1:]}"
+            node.attrib["element_id"] = f"n{prefix}{node.attrib['id'][1:]}"
 
         # Set the prefix for each edge
         for edge in root.findall(f".//{{{xml_namespace}}}edge"):
-            edge.attrib["element_id"] = f"e{prefix}{edge.attrib['element_id'][1:]}"
+            edge.attrib["element_id"] = f"e{prefix}{edge.attrib['id'][1:]}"
             edge.attrib["source"] = f"n{prefix}{edge.attrib['source'][1:]}"
             edge.attrib["target"] = f"n{prefix}{edge.attrib['target'][1:]}"
 

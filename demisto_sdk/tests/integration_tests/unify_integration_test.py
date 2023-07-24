@@ -205,8 +205,7 @@ class TestIntegrationScriptUnifier:
                     assert unified_yml_data.get("name") == "Sample"
                 assert unified_yml_data.get("script").get("nativeimage") == [
                     "8.1",
-                    "8.2",
-                    "candidate",
+                    "8.2"
                 ]
 
     def test_add_custom_section_flag(self, repo):
@@ -236,8 +235,7 @@ class TestIntegrationScriptUnifier:
                 assert unified_yml_data.get("name") == "sample_scriptTest"
                 assert unified_yml_data.get("nativeimage") == [
                     "8.1",
-                    "8.2",
-                    "candidate",
+                    "8.2"
                 ]
 
     def test_ignore_native_image_integration(self, repo):

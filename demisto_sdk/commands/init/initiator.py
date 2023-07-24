@@ -2,9 +2,10 @@ import glob
 import os
 import shutil
 from distutils.dir_util import copy_tree
-from distutils.version import LooseVersion
 from pathlib import Path
 from typing import Dict, List
+
+from packaging.version import Version
 
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.configuration import Configuration
@@ -737,9 +738,9 @@ class Initiator:
         if from_version:
             yml_dict["fromversion"] = from_version
 
-        if LooseVersion(
+        if Version(
             yml_dict.get("fromversion", DEFAULT_CONTENT_ITEM_FROM_VERSION)
-        ) < LooseVersion(self.SUPPORTED_FROM_VERSION):
+        ) < Version(self.SUPPORTED_FROM_VERSION):
             yml_dict["fromversion"] = self.SUPPORTED_FROM_VERSION
 
         if integration:
@@ -758,8 +759,7 @@ class Initiator:
         ) as f:
             yaml.dump(yml_dict, f)
 
-        yml_path = Path(os.path.join(self.full_output_path, f"{current_suffix}.yml"))
-        Path.unlink(yml_path)
+        Path(self.full_output_path, f"{current_suffix}.yml").unlink()
 
     def change_template_name_script_py(
         self, current_suffix: str, current_template: str

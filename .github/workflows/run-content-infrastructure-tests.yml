@@ -1,4 +1,4 @@
-name: Run content infrastracture tests using SDK branch
+name: Test content infrastracture with current SDK branch
 on: pull_request
 
 jobs:

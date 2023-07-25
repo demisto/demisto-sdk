@@ -73,6 +73,7 @@ from demisto_sdk.commands.common.tools import (
     get_latest_release_notes_text,
     get_marketplace_to_core_packs,
     get_pack_metadata,
+    get_pack_names_from_files,
     get_relative_path_from_packs_dir,
     get_release_note_entries,
     get_release_notes_file_path,
@@ -253,7 +254,7 @@ class TestGenericFunctions:
             )
         )
         assert "ü" in path.read_text(encoding="latin-1")
-        assert get_file(path, suffix) == {"text": SENTENCE_WITH_UMLAUTS}
+        assert get_file(path) == {"text": SENTENCE_WITH_UMLAUTS}
 
     @pytest.mark.parametrize(
         "file_name, prefix, result",
@@ -2942,3 +2943,43 @@ def test_is_content_item_dependent_in_conf(test_config, file_type, expected_resu
     """
     result = is_content_item_dependent_in_conf(test_config, file_type)
     assert result == expected_result
+
+
+@pytest.mark.parametrize(
+    "file_paths, skip_file_types, expected_packs",
+    [
+        (
+            [
+                "Packs/PackA/pack_metadata.json",
+                "Tests/scripts/infrastructure_tests/tests_data/collect_tests/R/Packs/PackB/pack_metadata.json",
+            ],
+            None,
+            {"PackA"},
+        ),
+        (
+            [("Packs/PackA/pack_metadata.json", "Packs/PackB/pack_metadata.json")],
+            None,
+            {"PackB"},
+        ),
+        (
+            ["Packs/PackA/pack_metadata.json", "Packs/PackB/ReleaseNotes/1_0_0.md"],
+            {FileType.RELEASE_NOTES},
+            {"PackA"},
+        ),
+    ],
+)
+def test_get_pack_names_from_files(file_paths, skip_file_types, expected_packs):
+    """
+    Given:
+        - Case A: Real packs paths and infra file paths.
+        - Case B: File paths in tuple.
+        - Case C: File paths and file types to skip.
+
+    When:
+        - Running get_pack_names_from_files.
+
+    Then:
+        - Ensure that the result is as expected.
+    """
+    packs_result = get_pack_names_from_files(file_paths, skip_file_types)
+    assert packs_result == expected_packs

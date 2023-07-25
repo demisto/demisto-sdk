@@ -17,6 +17,9 @@ USE_MULTIPROCESSING = False  # toggle this for better debugging
 
 
 def from_path():
+    """
+    Returns a ContentDTO object with all the packs of the content repository.
+    """
     repo_parser = RepositoryParser(CONTENT_PATH)
     repo_parser.parse()
     return ContentDTO.from_orm(repo_parser)

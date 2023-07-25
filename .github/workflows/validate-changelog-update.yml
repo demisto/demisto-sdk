@@ -1,4 +1,4 @@
-name: Validate Changelog
+name: Validate Changelog v2
 on: pull_request
 
 jobs:

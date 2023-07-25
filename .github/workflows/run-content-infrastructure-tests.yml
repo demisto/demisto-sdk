@@ -9,11 +9,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
 
-      - name: Setup Python
-        uses: actions/setup-python@v3
-        with:
-          python-version: '3.10'
-
       - name:  Get commit hash
         id: get-commit
         run: echo commit=$(git rev-parse HEAD) >> $GITHUB_OUTPUT
@@ -24,10 +19,15 @@ jobs:
           repository: demisto/content
           path: content
 
+      - name: Setup Python
+              uses: actions/setup-python@v3
+              with:
+                python-version: '3.10'
+
       - name: Setup Poetry
         uses: Gr1N/setup-poetry@v8
 
-      - name: Install demisto-SDK from branch
+      - name: Install Demisto-SDK from branch
         run: |
           cd content
           poetry install --with ci
@@ -36,7 +36,7 @@ jobs:
           echo "installing branch version of demisto-sdk (${{ steps.get-commit.outputs.commit }} )"
           poetry run pip install git+https://github.com/demisto/demisto-sdk@${{ steps.get-commit.outputs.commit }}
 
-      - name: Content Unit Tests
+      - name: Run content unit tests
         env:
           PYTHONPATH: ${{ github.workspace }}/content
         run: |

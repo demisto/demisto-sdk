@@ -286,6 +286,9 @@ def check_dataset_exists(
     process_failed = False
     dataset_set = {data.dataset for data in test_data.data}
     results = []
+    logger.debug(f'Sleeping for 30 seconds to make sure the data set was installed correctly')
+    sleep(30)
+
     for dataset in dataset_set:
         results_exist = False
         dataset_exist = False

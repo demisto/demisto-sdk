@@ -69,7 +69,7 @@ class IncidentFieldJSONFormat(BaseUpdateJSON):
         if aliases:
 
             if not self.graph:
-                logger.warning(
+                logger.info(
                     f"Skipping formatting of marketplaces field of aliases for {self.source_file} as the "
                     f"no-graph argument was given."
                 )
@@ -106,7 +106,7 @@ class IncidentFieldJSONFormat(BaseUpdateJSON):
             it's path and it's marketplace.
         """
         alias_ids: set = {f'{alias.get("cliName")}' for alias in aliases}
-        return self.graph.get_content_items_by_cli_names(cli_name_list=list(alias_ids)) if self.graph else None
+        return self.graph.get_content_items_by_cli_names(cli_name_list=list(alias_ids)) if self.graph else []
 
     def _save_alias_field_file(
         self,

@@ -2222,7 +2222,7 @@ def test_format_incident_field_with_no_graph(mocker, monkeypatch, repo):
     Then
     -  Ensure that the marketplacev2 wasn't removed from the incident field marketplaces list.
     """
-    logger_warning = mocker.patch.object(logging.getLogger("demisto-sdk"), "warning")
+    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
     monkeypatch.setenv("COLUMNS", "1000")
 
     runner = CliRunner()
@@ -2263,7 +2263,7 @@ def test_format_incident_field_with_no_graph(mocker, monkeypatch, repo):
               f" as the no-graph argument was given."
     assert result.exit_code == 0
     assert not result.exception
-    assert str_in_call_args_list(logger_warning.call_args_list, message)
+    assert str_in_call_args_list(logger_info.call_args_list, message)
 
     # get_dict_from_file returns a tuple of 2 object. The first is the content of the file,
     # the second is the type of the file.
@@ -2374,7 +2374,7 @@ def test_format_mapper_with_ngr_flag(mocker, monkeypatch, repo):
     Then
     -  Ensure that the unknown field wasn't removed from the mapper.
     """
-    logger_warning = mocker.patch.object(logging.getLogger("demisto-sdk"), "warning")
+    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
     monkeypatch.setenv("COLUMNS", "1000")
     incident_field_name = "Unknown Incident Field"
     mapper_content = {
@@ -2408,7 +2408,7 @@ def test_format_mapper_with_ngr_flag(mocker, monkeypatch, repo):
     message = f"Skipping formatting of non-existent-fields for {mapper.path} as the no-graph argument was given."
     assert result.exit_code == 0
     assert not result.exception
-    assert str_in_call_args_list(logger_warning.call_args_list, message)
+    assert str_in_call_args_list(logger_info.call_args_list, message)
 
     # get_dict_from_file returns a tuple of 2 object. The first is the content of the file,
     # the second is the type of the file.
@@ -2547,7 +2547,7 @@ def test_format_on_layout_no_graph_flag(mocker, monkeypatch, repo):
     Then
     -  Ensure that the unknown field wasn't removed from the layout.
     """
-    logger_warning = mocker.patch.object(logging.getLogger("demisto-sdk"), "warning")
+    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
     monkeypatch.setenv("COLUMNS", "1000")
     incident_field_object_id = "unknown-incident-field"
     layout_content = {
@@ -2608,7 +2608,7 @@ def test_format_on_layout_no_graph_flag(mocker, monkeypatch, repo):
     message = f"Skipping formatting of non-existent-fields for {layout.path} as the no-graph argument was given."
     assert result.exit_code == 0
     assert not result.exception
-    assert str_in_call_args_list(logger_warning.call_args_list, message)
+    assert str_in_call_args_list(logger_info.call_args_list, message)
 
     # get_dict_from_file returns a tuple of 2 object. The first is the content of the file,
     # the second is the type of the file.

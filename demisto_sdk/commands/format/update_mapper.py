@@ -82,7 +82,7 @@ class MapperJSONFormat(BaseUpdateJSON):
         Remove non-existent fields from a mapper.
         """
         if not self.graph:
-            logger.warning(
+            logger.info(
                 f"Skipping formatting of non-existent-fields for {self.source_file} as the no-graph argument was given."
             )
             return

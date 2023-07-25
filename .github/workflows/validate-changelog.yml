@@ -2,7 +2,7 @@ name: Validate Changelog
 on: pull_request
 
 jobs:
-  validate changelog:
+  validate-changelog:
     runs-on: ubuntu-latest
     if: github.repository == 'demisto/demisto-sdk'
     steps:

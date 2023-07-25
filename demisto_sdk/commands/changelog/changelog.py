@@ -93,7 +93,7 @@ class Changelog:
     """ HELPER FUNCTIONS """
 
     def is_changelog_changed(self) -> bool:
-        return "CHANGELOG.md" in Repo(".").git.diff('HEAD..master', name_only=True).split()
+        return "CHANGELOG.md" in Repo(".").git.diff('HEAD..origin/master', name_only=True).split()
 
     def is_log_folder_empty(self) -> bool:
         return not any(CHANGELOG_FOLDER.iterdir())

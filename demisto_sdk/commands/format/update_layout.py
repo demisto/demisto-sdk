@@ -74,7 +74,7 @@ class LayoutBaseFormat(BaseUpdateJSON, ABC):
 
         # layoutscontainer kinds are unique fields to containers, and shouldn't be in layouts
         self.is_container = any(self.data.get(kind) for kind in LAYOUTS_CONTAINER_KINDS)
-        self.graph = ContentGraphInterface(update_graph=True)  # TODO Remove the should_update
+        self.graph = kwargs.get('graph')
         self.format_with_graph = kwargs.get('format_with_graph')
 
     def format_file(self) -> Tuple[int, int]:
@@ -308,7 +308,7 @@ class LayoutBaseFormat(BaseUpdateJSON, ABC):
         """
         Remove non-existent fields from a container layout.
         """
-        if not self.format_with_graph:
+        if not self.graph:
             logger.warning(
                 f"Skipping formatting of non-existent-fields for {self.source_file} as the no-graph argument was given."
             )
@@ -333,6 +333,10 @@ class LayoutBaseFormat(BaseUpdateJSON, ABC):
             if field.content_item_to.not_in_repository
         ]
 
+        if fields_not_in_repo:
+            logger.info(f"Removing the fields {fields_not_in_repo} from the layout {self.source_file} "
+                        f"because they aren't in the content repo.")
+
         # remove the fields that aren't in the repo
         for layout_container_item in layout_container_items:
             layout = self.data.get(layout_container_item, {})
@@ -349,7 +353,6 @@ class LayoutBaseFormat(BaseUpdateJSON, ABC):
             f"Skipping formatting of non-existent-fields for {self.source_file} as this content item is deprecated."
         )
         return
-
 
     def remove_non_existent_fields_from_tabs(
             self, layout_tabs: list, fields_to_remove: List[str]

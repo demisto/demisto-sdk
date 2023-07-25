@@ -11,7 +11,7 @@ from demisto_sdk.commands.format.format_constants import (
 )
 from demisto_sdk.commands.format.update_generic_json import BaseUpdateJSON
 from demisto_sdk.commands.content_graph.interface.neo4j.neo4j_graph import (
-    Neo4jContentGraphInterface as ContentGraphInterface,
+    Neo4jContentGraphInterface as ContentGraphInterface, Neo4jContentGraphInterface,
 )
 
 
@@ -41,7 +41,7 @@ class MapperJSONFormat(BaseUpdateJSON):
             **kwargs,
         )
 
-        self.graph = ContentGraphInterface(update_graph=True)  # TODO Remove the should_update
+        self.graph = kwargs.get('graph')
         self.format_with_graph = kwargs.get('format_with_graph')
 
     def run_format(self) -> int:
@@ -81,7 +81,7 @@ class MapperJSONFormat(BaseUpdateJSON):
         """
         Remove non-existent fields from a mapper.
         """
-        if not self.format_with_graph:
+        if not self.graph:
             logger.warning(
                 f"Skipping formatting of non-existent-fields for {self.source_file} as the no-graph argument was given."
             )
@@ -102,6 +102,10 @@ class MapperJSONFormat(BaseUpdateJSON):
 
         # remove the fields that aren't in the repo
         mapper = self.data.get("mapping", {})
+
+        if fields_not_in_repo:
+            logger.info(f"Removing the fields {fields_not_in_repo} from the mapper {self.source_file} "
+                        f"because they aren't in the content repo.")
 
         for mapping_name in mapper.values():
             internal_mapping_fields = mapping_name.get("internalMapping") or {}

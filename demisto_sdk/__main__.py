@@ -1230,6 +1230,12 @@ def coverage_analyze(ctx, **kwargs):
     help="Whether to answer manually to add tests configuration prompt when running interactively.",
 )
 @click.option(
+    "-s",
+    "--id-set-path",
+    help="The path of the id_set json file.",
+    type=click.Path(exists=True, resolve_path=True),
+)
+@click.option(
     "-gr/-ngr",
     "--graph/--no-graph",
     help="Whether to use the content graph or not.",
@@ -1252,6 +1258,7 @@ def format(
     prev_ver: str,
     include_untracked: bool,
     add_tests: bool,
+    id_set_path: str,
     file_paths: Tuple[str, ...],
     **kwargs,
 ):
@@ -1277,6 +1284,7 @@ def format(
             prev_ver=prev_ver,
             include_untracked=include_untracked,
             add_tests=add_tests,
+            id_set_path=id_set_path,
             format_with_graph=kwargs.get("graph", True)
         )
 

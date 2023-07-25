@@ -22,6 +22,10 @@ from demisto_sdk.commands.common.hook_validations.integration import (
 from demisto_sdk.commands.common.hook_validations.playbook import PlaybookValidator
 from demisto_sdk.commands.common.hook_validations.readme import ReadMeValidator
 from demisto_sdk.commands.common.tools import get_dict_from_file, is_test_config_match
+from demisto_sdk.commands.content_graph.common import ContentType
+from demisto_sdk.commands.content_graph.interface.neo4j.neo4j_graph import Neo4jContentGraphInterface
+from demisto_sdk.commands.content_graph.objects import RelationshipData
+from demisto_sdk.commands.content_graph.objects.base_content import UnknownContent
 from demisto_sdk.commands.format import format_module, update_generic
 from demisto_sdk.commands.format.update_generic import BaseUpdate
 from demisto_sdk.commands.format.update_generic_yml import BaseUpdateYML
@@ -44,6 +48,9 @@ from demisto_sdk.tests.test_files.validate_integration_test_valid_types import (
     GENERIC_TYPE,
 )
 from TestSuite.test_tools import ChangeCWD, str_in_call_args_list
+from demisto_sdk.commands.content_graph.tests.create_content_graph_test import (
+    mock_relationship,
+)
 
 with open(SOURCE_FORMAT_INTEGRATION_COPY) as of:
     SOURCE_FORMAT_INTEGRATION_YML = (
@@ -1207,6 +1214,7 @@ def test_format_incident_type_layout_id(repo, mocker, monkeypatch):
                 "-i",
                 str(pack.path),
                 "-y",
+                "-ngr"
             ],
             catch_exceptions=False,
         )
@@ -1935,7 +1943,7 @@ class TestFormatWithoutAddTestsFlag:
             },
         )
         layouts_path = layout.path
-        result = runner.invoke(main, [FORMAT_CMD, "-i", layouts_path, "-y"])
+        result = runner.invoke(main, [FORMAT_CMD, "-i", layouts_path, "-y", "-ngr"])
         message = f'Formatting {layouts_path} with "No tests"'
         message1 = f"Format Status   on file: {layouts_path} - Success"
 
@@ -1974,7 +1982,7 @@ class TestFormatWithoutAddTestsFlag:
             },
         )
         layouts_path = layout.path
-        result = runner.invoke(main, [FORMAT_CMD, "-i", layouts_path, "-at", "-y"])
+        result = runner.invoke(main, [FORMAT_CMD, "-i", layouts_path, "-at", "-y", "-ngr"])
         message = f'Formatting {layouts_path} with "No tests"'
         message1 = f"Format Status   on file: {layouts_path} - Success"
         assert not result.exception
@@ -2110,3 +2118,499 @@ def test_verify_deletion_from_conf_script_format_with_deprecate_flag(
         {"integrations": ["TestIntegration"], "playbookID": "New Integration Test"},
         {"scripts": ["AnotherTestScript"], "playbookID": "test_playbook_for_script"},
     ]
+
+
+def test_format_updating_aliases_marketplace_field(mocker, monkeypatch, repo):
+    """
+    Given
+    - An incident field.
+
+    When
+    - Running format command on it
+
+    Then
+    -  Ensure that the marketplacev2 was removed from the incident field marketplaces list.
+    """
+    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+    monkeypatch.setenv("COLUMNS", "1000")
+
+    runner = CliRunner()
+    pack = repo.create_pack("PackName")
+    incident_field = pack.create_incident_field(
+        name="incident_field",
+        content={
+            "cliName": "incidentfield",
+            "id": "incident_incidentfield",
+            "name": "Incident Field",
+            "Aliases": [
+                {
+                    "cliName": "aliasincidentfield",
+                    "type": "shortText",
+                    "name": "Alias Incident Field"
+                }
+            ],
+            "marketplaces": [
+                "marketplacev2"
+            ]
+        }
+    )
+    alias_incident_field_content = {
+            "cliName": "aliasincidentfield",
+            "id": "incident_aliasincidentfield",
+            "name": "Alias Incident Field",
+            "marketplaces": [
+                "marketplacev2", "xsoar"
+            ]
+        }
+    alias_incident_field = pack.create_incident_field(
+        name="alias_incident_field",
+        content=alias_incident_field_content
+    )
+
+    # Mock the behavior of Neo4jContentGraphInterface
+    class MockedContentGraphInterface:
+        def __enter__(self):
+            return self
+
+        def __exit__(self):
+            pass
+
+        def search(self, object_id):
+            # Simulate the graph search
+            if object_id == "aliasincidentfield":
+                return [MockedIncidentFieldNode()]
+            return []
+
+        def get_content_items_by_cli_names(self, cli_name_list):
+            # Simulate the graph search
+            if cli_name_list:
+                marketplaces = ["marketplacev2", "xsoar"]
+                return [('aliasincidentfield', alias_incident_field.path, marketplaces)]
+            return ()
+
+    class MockedIncidentFieldNode:
+        def __init__(self):
+            self.name = "Alias Incident Field"
+            self.not_in_repository = True
+            self.data = alias_incident_field_content
+
+    mocker.patch(
+        "demisto_sdk.commands.format.format_module.ContentGraphInterface",
+        return_value=MockedContentGraphInterface(),
+    )
+
+    result = runner.invoke(main, [FORMAT_CMD, "-i", incident_field.path, "-at", "-y"])
+    message = f"[blue]================= Updating file {alias_incident_field.path} =================[/blue]"
+    assert result.exit_code == 0
+    assert not result.exception
+    assert str_in_call_args_list(logger_info.call_args_list, message)
+
+    # get_dict_from_file returns a tuple of 2 object. The first is the content of the file,
+    # the second is the type of the file.
+    file_content = get_dict_from_file(alias_incident_field.path)[0]
+    assert file_content == alias_incident_field_content
+
+
+def test_format_incident_field_with_no_graph(mocker, monkeypatch, repo):
+    """
+    Given
+    - An incident field.
+
+    When
+    - Running format command on it with the flag -ngr.
+
+    Then
+    -  Ensure that the marketplacev2 wasn't removed from the incident field marketplaces list.
+    """
+    logger_warning = mocker.patch.object(logging.getLogger("demisto-sdk"), "warning")
+    monkeypatch.setenv("COLUMNS", "1000")
+
+    runner = CliRunner()
+    pack = repo.create_pack("PackName")
+    incident_field = pack.create_incident_field(
+        name="incident_field",
+        content={
+            "cliName": "incidentfield",
+            "id": "incident_incidentfield",
+            "name": "Incident Field",
+            "Aliases": [
+                {
+                    "cliName": "aliasincidentfield",
+                    "type": "shortText",
+                    "name": "Alias Incident Field"
+                }
+            ],
+            "marketplaces": [
+                "marketplacev2"
+            ]
+        }
+    )
+    alias_incident_field_content = {
+            "cliName": "aliasincidentfield",
+            "id": "incident_aliasincidentfield",
+            "name": "Alias Incident Field",
+            "marketplaces": [
+                "marketplacev2", "xsoar"
+            ]
+        }
+    alias_incident_field = pack.create_incident_field(
+        name="alias_incident_field",
+        content=alias_incident_field_content
+    )
+
+    result = runner.invoke(main, [FORMAT_CMD, "-i", incident_field.path, "-at", "-y", "-ngr"])
+    message = f"Skipping formatting of marketplaces field of aliases for {incident_field.path}" \
+              f" as the no-graph argument was given."
+    assert result.exit_code == 0
+    assert not result.exception
+    assert str_in_call_args_list(logger_warning.call_args_list, message)
+
+    # get_dict_from_file returns a tuple of 2 object. The first is the content of the file,
+    # the second is the type of the file.
+    file_content = get_dict_from_file(alias_incident_field.path)[0]
+    assert file_content == alias_incident_field_content
+
+
+def test_format_removing_fields_not_in_content_from_mapper(mocker, monkeypatch, repo):
+    """
+    Given
+    - A mapper.
+
+    When
+    - Running format command on it
+
+    Then
+    -  Ensure that the unknown field was removed from the mapper.
+    """
+    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+    monkeypatch.setenv("COLUMNS", "1000")
+    incident_field_name = "Unknown Incident Field"
+    mapper_content = {
+            "description": "",
+            "feed": False,
+            "id": "Mapper - Incoming Mapper",
+            "mapping": {
+                "Mapper Finding": {
+                    "dontMapEventToLabels": True,
+                    "internalMapping": {
+                        incident_field_name: {
+                            "simple": "Item"
+                        }
+                    }
+                },
+            },
+            "name": "Mapper - Incoming Mapper",
+            "type": "mapping-incoming",
+            "version": -1,
+            "fromVersion": "6.5.0"
+        }
+
+    runner = CliRunner()
+    pack = repo.create_pack("PackName")
+    mapper = pack.create_mapper(
+        name="mapper",
+        content=mapper_content
+    )
+
+    # Mock the behavior of Neo4jContentGraphInterface
+    class MockedContentGraphInterface:
+        def __enter__(self):
+            return self
+
+        def __exit__(self):
+            pass
+
+        def search(self, object_id):
+            # Simulate the graph search
+            if object_id == "Mapper - Incoming Mapper":
+                return [MockedMapperNode()]
+            return []
+
+    class MockedMapperNode:
+        def __init__(self):
+            self.content_type = ContentType.MAPPER
+            self.path = mapper.path
+            self.uses = [
+                MockedRelationshipDataNode(),
+            ]  # simulate a mapper that uses an incident field that isn't in content repo
+
+    class MockedRelationshipDataNode:
+        def __init__(self):
+            self.content_item_to = MockedIncidentFieldNode()
+
+    class MockedIncidentFieldNode:
+        def __init__(self):
+            self.name = incident_field_name
+            self.not_in_repository = True
+
+    mocker.patch(
+        "demisto_sdk.commands.format.format_module.ContentGraphInterface",
+        return_value=MockedContentGraphInterface(),
+    )
+
+    result = runner.invoke(main, [FORMAT_CMD, "-i", mapper.path, "-at", "-y"])
+    message = f"Removing the fields ['{incident_field_name}'] from the mapper {mapper.path} " \
+              f"because they aren't in the content repo."
+    assert result.exit_code == 0
+    assert not result.exception
+    assert str_in_call_args_list(logger_info.call_args_list, message)
+
+    # get_dict_from_file returns a tuple of 2 object. The first is the content of the file,
+    # the second is the type of the file.
+    file_content = get_dict_from_file(mapper.path)[0]
+    mapper_internal_content = mapper_content.get('mapping', {}).get('Mapper Finding', {}).get('internalMapping')
+    del mapper_internal_content[incident_field_name]
+    assert file_content.get("mapping") == mapper_content.get('mapping')
+
+
+def test_format_mapper_with_ngr_flag(mocker, monkeypatch, repo):
+    """
+    Given
+    - A mapper.
+
+    When
+    - Running format command on it with the flag -ngr (no graph)
+
+    Then
+    -  Ensure that the unknown field wasn't removed from the mapper.
+    """
+    logger_warning = mocker.patch.object(logging.getLogger("demisto-sdk"), "warning")
+    monkeypatch.setenv("COLUMNS", "1000")
+    incident_field_name = "Unknown Incident Field"
+    mapper_content = {
+            "description": "",
+            "feed": False,
+            "id": "Mapper - Incoming Mapper",
+            "mapping": {
+                "Mapper Finding": {
+                    "dontMapEventToLabels": True,
+                    "internalMapping": {
+                        incident_field_name: {
+                            "simple": "Item"
+                        }
+                    }
+                },
+            },
+            "name": "Mapper - Incoming Mapper",
+            "type": "mapping-incoming",
+            "version": -1,
+            "fromVersion": "6.5.0"
+        }
+
+    runner = CliRunner()
+    pack = repo.create_pack("PackName")
+    mapper = pack.create_mapper(
+        name="mapper",
+        content=mapper_content
+    )
+
+    result = runner.invoke(main, [FORMAT_CMD, "-i", mapper.path, "-at", "-y", "-ngr"])
+    message = f"Skipping formatting of non-existent-fields for {mapper.path} as the no-graph argument was given."
+    assert result.exit_code == 0
+    assert not result.exception
+    assert str_in_call_args_list(logger_warning.call_args_list, message)
+
+    # get_dict_from_file returns a tuple of 2 object. The first is the content of the file,
+    # the second is the type of the file.
+    file_content = get_dict_from_file(mapper.path)[0]
+    assert file_content.get("mapping") == mapper_content.get('mapping')
+
+
+def test_format_removing_fields_not_in_content_from_layout(mocker, monkeypatch, repo):
+    """
+    Given
+    - A layout.
+
+    When
+    - Running format command on it
+
+    Then
+    -  Ensure that the unknown field was removed from the layout.
+    """
+    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+    monkeypatch.setenv("COLUMNS", "1000")
+    incident_field_object_id = "unknown-incident-field"
+    layout_content = {
+        "detailsV2": {
+            "tabs": [
+                {
+                    "id": "caseinfoid",
+                    "name": "Incident Info",
+                    "sections": [
+                        {
+                            "displayType": "ROW",
+                            "h": 2,
+                            "i": "caseinfoid-fce71720-98b0-11e9-97d7-ed26ef9e46c8",
+                            "isVisible": True,
+                            "items": [
+                                {
+                                    "endCol": 2,
+                                    "fieldId": incident_field_object_id,
+                                    "height": 22,
+                                    "id": "id1",
+                                    "index": 0,
+                                    "sectionItemType": "field",
+                                    "startCol": 0
+                                },
+                                {
+                                    "endCol": 2,
+                                    "fieldId": "known-incident-field",
+                                    "height": 22,
+                                    "id": "id2",
+                                    "index": 0,
+                                    "sectionItemType": "field",
+                                    "startCol": 0
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        "group": "incident",
+        "id": "Layout",
+        "name": "Layout",
+        "system": False,
+        "version": -1,
+        "fromVersion": "6.9.0",
+        "description": "",
+        "marketplaces": ["xsoar"]
+    }
+
+    runner = CliRunner()
+    pack = repo.create_pack("PackName")
+    layout = pack.create_layoutcontainer(
+        name="Layout",
+        content=layout_content
+    )
+
+    # Mock the behavior of Neo4jContentGraphInterface
+    class MockedContentGraphInterface:
+        def __enter__(self):
+            return self
+
+        def __exit__(self):
+            pass
+
+        def search(self, object_id):
+            # Simulate the graph search
+            if object_id == "Layout":
+                return [MockedLayoutNode()]
+            return []
+
+    class MockedLayoutNode:
+        def __init__(self):
+            self.content_type = ContentType.LAYOUT
+            self.path = layout.path
+            self.uses = [
+                MockedRelationshipDataNode("Unknown Incident Field", incident_field_object_id, True),
+                MockedRelationshipDataNode("Known Incident Field", "known-incident-field", False)
+            ]  # simulate a mapper that uses an incident field that isn't in content repo
+
+    class MockedRelationshipDataNode:
+        def __init__(self, name: str, object_id: str, not_in_repository: bool):
+            self.content_item_to = MockedIncidentFieldNode(name, object_id, not_in_repository)
+
+    class MockedIncidentFieldNode:
+        def __init__(self, name: str, object_id: str, not_in_repository: bool):
+            self.name = name
+            self.object_id = object_id
+            self.not_in_repository = not_in_repository
+
+    mocker.patch(
+        "demisto_sdk.commands.format.format_module.ContentGraphInterface",
+        return_value=MockedContentGraphInterface(),
+    )
+
+    result = runner.invoke(main, [FORMAT_CMD, "-i", layout.path, "-at", "-y"])
+    message = f"Removing the fields ['{incident_field_object_id}'] from the layout {layout.path} " \
+              f"because they aren't in the content repo."
+    assert result.exit_code == 0
+    assert not result.exception
+    assert str_in_call_args_list(logger_info.call_args_list, message)
+
+    # get_dict_from_file returns a tuple of 2 object. The first is the content of the file,
+    # the second is the type of the file.
+    file_content = get_dict_from_file(layout.path)[0]
+    layout_content.get('detailsV2', {}).get('tabs', [])[0].get('sections', {})[0].get('items', []).pop(0)
+    assert file_content == layout_content
+
+
+def test_format_on_layout_no_graph_flag(mocker, monkeypatch, repo):
+    """
+    Given
+    - A layout.
+
+    When
+    - Running format command on it, with the flag -ngr (no graph)
+
+    Then
+    -  Ensure that the unknown field wasn't removed from the layout.
+    """
+    logger_warning = mocker.patch.object(logging.getLogger("demisto-sdk"), "warning")
+    monkeypatch.setenv("COLUMNS", "1000")
+    incident_field_object_id = "unknown-incident-field"
+    layout_content = {
+        "detailsV2": {
+            "tabs": [
+                {
+                    "id": "caseinfoid",
+                    "name": "Incident Info",
+                    "sections": [
+                        {
+                            "displayType": "ROW",
+                            "h": 2,
+                            "i": "caseinfoid-fce71720-98b0-11e9-97d7-ed26ef9e46c8",
+                            "isVisible": True,
+                            "items": [
+                                {
+                                    "endCol": 2,
+                                    "fieldId": incident_field_object_id,
+                                    "height": 22,
+                                    "id": "id1",
+                                    "index": 0,
+                                    "sectionItemType": "field",
+                                    "startCol": 0
+                                },
+                                {
+                                    "endCol": 2,
+                                    "fieldId": "known-incident-field",
+                                    "height": 22,
+                                    "id": "id2",
+                                    "index": 0,
+                                    "sectionItemType": "field",
+                                    "startCol": 0
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        "group": "incident",
+        "id": "Layout",
+        "name": "Layout",
+        "system": False,
+        "version": -1,
+        "fromVersion": "6.9.0",
+        "description": "",
+        "marketplaces": ["xsoar"]
+    }
+
+    runner = CliRunner()
+    pack = repo.create_pack("PackName")
+    layout = pack.create_layoutcontainer(
+        name="Layout",
+        content=layout_content
+    )
+
+    result = runner.invoke(main, [FORMAT_CMD, "-i", layout.path, "-at", "-y", "-ngr"])  # run format without the graph
+    message = f"Skipping formatting of non-existent-fields for {layout.path} as the no-graph argument was given."
+    assert result.exit_code == 0
+    assert not result.exception
+    assert str_in_call_args_list(logger_warning.call_args_list, message)
+
+    # get_dict_from_file returns a tuple of 2 object. The first is the content of the file,
+    # the second is the type of the file.
+    file_content = get_dict_from_file(layout.path)[0]
+    assert file_content == layout_content

@@ -10,6 +10,9 @@ from demisto_sdk.commands.common.constants import (
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import find_type, get_files_in_dir
+from demisto_sdk.commands.content_graph.interface.neo4j.neo4j_graph import (
+    Neo4jContentGraphInterface as ContentGraphInterface,
+)
 from demisto_sdk.commands.format.format_constants import SCHEMAS_PATH
 from demisto_sdk.commands.format.update_classifier import (
     ClassifierJSONFormat,
@@ -120,6 +123,7 @@ def format_manager(
     include_untracked: bool = False,
     add_tests: bool = None,
     interactive: bool = True,
+    id_set_path: str = None,
     clear_cache: bool = False,
     format_with_graph: bool = True
 ):
@@ -138,11 +142,16 @@ def format_manager(
         include_untracked (bool): Whether to include untracked files when checking against git
         interactive (bool): Whether to run the format interactively or not (usually for contribution management)
         add_tests (bool): Whether to exclude tests automatically.
+        id_set_path (str): The path of the id_set.json file.
         clear_cache (bool): wether to clear the cache
         format_with_graph (bool): wheter to use the graph in format
     Returns:
         int 0 in case of success 1 otherwise
     """
+
+    if id_set_path:
+        logger.error('The flag --id-set-path was added to the command, but the usage of the id_set is deprecated.'
+                     ' demisto-sdk format now uses the content graph.')
 
     prev_ver = prev_ver if prev_ver else "demisto/master"
     supported_file_types = ["json", "yml", "py", "md"]
@@ -171,6 +180,7 @@ def format_manager(
     log_list = []
     error_list: List[Tuple[int, int]] = []
     if files:
+        graph = ContentGraphInterface(update_graph=True) if format_with_graph else None
         for file in files:
             file_path = file.replace("\\", "/")
             file_type = find_type(file_path, clear_cache=clear_cache)
@@ -197,7 +207,7 @@ def format_manager(
                     assume_answer=assume_answer,
                     deprecate=deprecate,
                     add_tests=add_tests,
-                    format_with_graph=format_with_graph
+                    graph=graph
                 )
                 if err_res:
                     log_list.extend([(err_res, "red")])
@@ -224,7 +234,8 @@ def format_manager(
                         "red",
                     )
                 )
-
+        if graph:
+            graph.__exit__()
         update_content_entity_ids(files)
 
     else:
@@ -346,10 +357,10 @@ def run_format_on_file(
             FileType.LAYOUT.value,
             FileType.MAPPER.value,
         )
-        and "format_with_graph" in kwargs
+        and "graph" in kwargs
     ):
         # relevant only for incidentfield/layouts/mappers
-        del kwargs["format_with_graph"]
+        del kwargs["graph"]
     updater_class = FILE_TYPE_AND_LINKED_CLASS.get(file_type)
     if not updater_class:  # fail format so long as xsiam entities dont have formatters
         logger.info(

@@ -120,6 +120,8 @@ class Changelog:
             except ValidationError as e:
                 self.handle_error += f"{path}: {e.json()}\n"
 
+        if self.handle_error:
+            raise ValueError(f"The following log files are invalid:ֿֿ\n{self.handle_error}")
         return changelogs
 
     def extract_and_build_changelogs(self, logs: List[LogObject]) -> None:
@@ -139,9 +141,10 @@ class Changelog:
 
         new_changelog = self.prepare_new_changelog(all_logs_unreleased, old_changelog[1:])
         self.write_to_changelog_file(new_changelog)
-        logger.info("")
+        logger.info("The changelog.md file has been successfully updated")
 
     def prepare_new_changelog(self, new_logs: List[str], old_changelog: List[str]) -> str:
+        # self.get_current_version(old_changelog)
         new_changelog = "# Changelog\n"
         new_changelog += f"## {self.pr_name[1:]}\n"
         for log in new_logs:
@@ -150,6 +153,12 @@ class Changelog:
         for log in old_changelog:
             new_changelog += log
         return new_changelog
+
+    def get_current_version(self, old_changelog: List[str]) -> str:
+        for line in old_changelog:
+            if RELEASE_VERSION_REGEX.match(line) is not None:
+                return line
+        raise ValueError("Could not find the current version")
 
     def write_to_changelog_file(self, new_changelog: str) -> None:
         with CHANGELOG_MD_FILE.open('w') as f:
@@ -179,7 +188,7 @@ def changelog_management(**kwargs):
     release = kwargs.get("release", None)
     
     if not pr_number:
-        logger.error("")
+        logger.error("No provided the pr_number argument")
         sys.exit(1)
 
     changelog = Changelog(pr_number, pr_name)

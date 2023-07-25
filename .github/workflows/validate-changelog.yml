@@ -7,14 +7,24 @@ jobs:
     if: github.repository == 'demisto/demisto-sdk'
     steps:
 
+      - name: Setup Poetry
+        uses: Gr1N/setup-poetry@v8
+
       - name: Checkout
         uses: actions/checkout@v3
+
+      - name: Setup python
+        uses: actions/setup-python@v4
         with:
-          fetch-depth: 2
+          python-version: '3.10'
+
+      - name: Install dependencies
+        run: poetry install
+
       - name: Validate Changelog
         env:
           PR_NUMBER: ${{ github.event.pull_request.number }}
           PR_TITLE: ${{ github.event.pull_request.title }}
         run: |
           echo "Run validate changelog for PR: $PR_NUMBER with Name: $PR_NAME"
-          poetry Utils/github_workflow_scripts/changelog_validation_scripts/validate_changelog.py --pr_number $PR_NUMBER --pr_title $PR_TITLE
+          demisto-sdk changelog --validate --pr_number $PR_NUMBER --pr_title $PR_TITLE

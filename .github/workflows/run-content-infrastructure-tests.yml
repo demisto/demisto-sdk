@@ -1,4 +1,4 @@
-name: Run content infrastracture tests
+name: Run content infrastracture tests using SDK branch
 on: pull_request
 
 jobs:
@@ -24,7 +24,6 @@ jobs:
           repository: demisto/content
           path: content
 
-
       - name: Setup Poetry
         uses: Gr1N/setup-poetry@v8
 
@@ -35,7 +34,7 @@ jobs:
           echo "Uninstalling demisto-sdk from content master"
           poetry remove demisto-sdk
           echo "installing branch version of demisto-sdk (${{ steps.get-commit.outputs.commit }} )"
-          pip install git+https://github.com/demisto/demisto-sdk@${{ steps.get-commit.outputs.commit }}
+          poetry run pip install git+https://github.com/demisto/demisto-sdk@${{ steps.get-commit.outputs.commit }}
 
       - name: Content Unit Tests
         env:

@@ -1,5 +1,4 @@
 from pathlib import Path
-from typing import Any, Dict
 
 import pytest
 
@@ -108,6 +107,15 @@ def create_mini_content(repository: ContentDTO):  # noqa: F811
     )
 
 
+def compare(result: list, expected: list) -> None:
+    assert len(result) == len(expected)
+    result.sort(key=lambda r: r["filepath"])
+    expected.sort(key=lambda r: r["filepath"])
+    for actual, expected in zip(result, expected):
+        assert actual.get("mandatorily") == expected.get("mandatorily")
+        assert len(actual["paths"]) == expected["paths_count"]
+
+
 class TestGetRelationships:
     @pytest.mark.parametrize(
         "filepath, relationship, content_type, depth, expected_sources, expected_targets",
@@ -117,22 +125,25 @@ class TestGetRelationships:
                 RelationshipType.USES,
                 ContentType.BASE_CONTENT,
                 2,
-                {
-                    "Packs/SamplePack3/TestPlaybooks/SampleTestPlaybook/SampleTestPlaybook.yml": {
+                [
+                    {
+                        "filepath": "Packs/SamplePack3/TestPlaybooks/SampleTestPlaybook/SampleTestPlaybook.yml",
                         "mandatorily": True,
                         "paths_count": 1,
                     },
-                },
-                {
-                    "Packs/SamplePack/Integrations/SampleIntegration/SampleIntegration.yml": {
+                ],
+                [
+                    {
+                        "filepath": "Packs/SamplePack/Integrations/SampleIntegration/SampleIntegration.yml",
                         "mandatorily": False,
                         "paths_count": 1,
                     },
-                    "Packs/SamplePack/Scripts/SampleScript/SampleScript.yml": {
+                    {
+                        "filepath": "Packs/SamplePack/Scripts/SampleScript/SampleScript.yml",
                         "mandatorily": True,
                         "paths_count": 1,
                     },
-                },
+                ],
                 id="Verify USES relationships, expecting sources and targets",
             ),
             pytest.param(
@@ -142,21 +153,24 @@ class TestGetRelationships:
                 RelationshipType.USES,
                 ContentType.BASE_CONTENT,
                 2,
-                {},
-                {
-                    "Packs/SamplePack/Integrations/SampleIntegration/SampleIntegration.yml": {
+                [],
+                [
+                    {
+                        "filepath": "Packs/SamplePack/Integrations/SampleIntegration/SampleIntegration.yml",
                         "mandatorily": True,
                         "paths_count": 2,
                     },
-                    "Packs/SamplePack/Scripts/SampleScript/SampleScript.yml": {
+                    {
+                        "filepath": "Packs/SamplePack/Scripts/SampleScript/SampleScript.yml",
                         "mandatorily": True,
                         "paths_count": 1,
                     },
-                    "Packs/SamplePack2/Scripts/SampleScript2/SampleScript2.yml": {
+                    {
+                        "filepath": "Packs/SamplePack2/Scripts/SampleScript2/SampleScript2.yml",
                         "mandatorily": True,
                         "paths_count": 1,
                     },
-                },
+                ],
                 id="Verify USES relationships where depth=2 - 2 paths to SampleIntegration",
             ),
             pytest.param(
@@ -166,17 +180,19 @@ class TestGetRelationships:
                 RelationshipType.USES,
                 ContentType.BASE_CONTENT,
                 1,
-                {},
-                {
-                    "Packs/SamplePack/Integrations/SampleIntegration/SampleIntegration.yml": {
+                [],
+                [
+                    {
+                        "filepath": "Packs/SamplePack/Integrations/SampleIntegration/SampleIntegration.yml",
                         "mandatorily": True,
                         "paths_count": 1,
                     },
-                    "Packs/SamplePack2/Scripts/SampleScript2/SampleScript2.yml": {
+                    {
+                        "filepath": "Packs/SamplePack2/Scripts/SampleScript2/SampleScript2.yml",
                         "mandatorily": True,
                         "paths_count": 1,
                     },
-                },
+                ],
                 id="Verify USES relationships where depth=1 - only 1 path to SampleIntegration,"
                 " no path to SampleScript",
             ),
@@ -187,12 +203,13 @@ class TestGetRelationships:
                 RelationshipType.IMPORTS,
                 ContentType.BASE_CONTENT,
                 1,
-                {},
-                {
-                    "Packs/SamplePack3/Scripts/TestApiModule/TestApiModule.yml": {
+                [],
+                [
+                    {
+                        "filepath": "Packs/SamplePack3/Scripts/TestApiModule/TestApiModule.yml",
                         "paths_count": 1,
                     },
-                },
+                ],
                 id="Verify IMPORTS relationship",
             ),
             pytest.param(
@@ -202,12 +219,13 @@ class TestGetRelationships:
                 RelationshipType.TESTED_BY,
                 ContentType.BASE_CONTENT,
                 1,
-                {},
-                {
-                    "Packs/SamplePack3/TestPlaybooks/SampleTestPlaybook/SampleTestPlaybook.yml": {
+                [],
+                [
+                    {
+                        "filepath": "Packs/SamplePack3/TestPlaybooks/SampleTestPlaybook/SampleTestPlaybook.yml",
                         "paths_count": 1,
-                    },
-                },
+                    }
+                ],
                 id="Verify TESTED_BY relationship",
             ),
             pytest.param(
@@ -215,15 +233,19 @@ class TestGetRelationships:
                 RelationshipType.DEPENDS_ON,
                 ContentType.BASE_CONTENT,
                 2,
-                {},
-                {
-                    "Packs/SamplePack2": {
+                [],
+                [
+                    {
+                        "filepath": "Packs/SamplePack2",
                         "paths_count": 1,
+                        "mandatorily": True,
                     },
-                    "Packs/SamplePack": {
+                    {
+                        "filepath": "Packs/SamplePack",
                         "paths_count": 2,
+                        "mandatorily": True,
                     },
-                },
+                ],
                 id="Verify DEPENDS_ON relationships",
             ),
         ],
@@ -235,8 +257,8 @@ class TestGetRelationships:
         relationship: RelationshipType,
         content_type: ContentType,
         depth: int,
-        expected_sources: Dict[str, Any],
-        expected_targets: Dict[str, Any],
+        expected_sources: list,
+        expected_targets: list,
     ) -> None:
         """
         Given:
@@ -257,10 +279,5 @@ class TestGetRelationships:
                 depth=depth,
             )
             sources, targets = result["sources"], result["targets"]
-        for res, expected in zip(
-            [sources, targets], [expected_sources, expected_targets]
-        ):
-            assert res.keys() == expected.keys()
-            for k in res:
-                assert res[k].get("mandatory") == expected[k].get("mandatory")
-                assert len(res[k]["paths"]) == expected[k]["paths_count"]
+        compare(sources, expected_sources)
+        compare(targets, expected_targets)

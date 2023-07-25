@@ -270,7 +270,7 @@ CALL apoc.path.expandConfig(n, {{
     labelFilter: ">{content_type}",
     minLevel: 1,
     maxLevel: {depth},
-    uniqueness: "NODE_GLOBAL"
+    uniqueness: "NODE_PATH"
 }})
 YIELD path
 WITH
@@ -310,7 +310,7 @@ CALL apoc.path.expandConfig(n, {{
     labelFilter: ">{content_type}",
     minLevel: 1,
     maxLevel: {depth},
-    uniqueness: "NODE_GLOBAL"
+    uniqueness: "NODE_PATH"
 }})
 YIELD path
 WITH

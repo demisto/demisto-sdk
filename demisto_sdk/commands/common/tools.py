@@ -1043,11 +1043,6 @@ def get_to_version(file_path):
     return DEFAULT_CONTENT_ITEM_TO_VERSION
 
 
-def str2bool(v):
-    """
-    Deprecated. Use string_to_bool instead
-    """
-    return string_to_bool(v, default_when_empty=False)
 
 
 def to_dict(obj):
@@ -3833,4 +3828,4 @@ def is_sdk_defined_working_offline() -> bool:
     Returns:
         bool: The value for DEMISTO_SDK_OFFLINE_ENV environment variable.
     """
-    raise ValueError
+    return str2bool(os.getenv(ENV_SDK_WORKING_OFFLINE))

@@ -27,4 +27,4 @@ jobs:
           PR_TITLE: ${{ github.event.pull_request.title }}
         run: |
           echo "Run validate changelog for PR: $PR_NUMBER with Name: $PR_NAME"
-          demisto-sdk changelog --validate --pr_number $PR_NUMBER --pr_title $PR_TITLE
+          poetry Utils/github_workflow_scripts/changelog_validation_scripts/validate_changelog.py --pr_number $PR_NUMBER --pr_title $PR_TITLE

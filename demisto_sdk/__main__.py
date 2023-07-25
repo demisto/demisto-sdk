@@ -1474,6 +1474,13 @@ def upload(ctx, **kwargs):
     is_flag=True,
     default=False,
 )
+@click.option(
+    "-aruuids",
+    "--auto-replace-uuids",
+    help="Whether to run demisto-sdk format on downloaded files or not",
+    is_flag=True,
+)
+
 @click.pass_context
 @logging_setup_decorator
 def download(ctx, **kwargs):

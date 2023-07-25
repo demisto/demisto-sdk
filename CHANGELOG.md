@@ -17,6 +17,7 @@ Added a new validation (`PA137`) to **validate**, ensuring the absence of non-ig
 * Updated the **format** command to use the content graph instead of the id_set file.
 * Updated **format** command not to fail on unexpected values that returns from the graph, and just add it to the log.
 * Removed a redundant debug log on the `tools.get_file` function.
+* Adding a new boolean flag *auto-replace-uuids* to **download** command.
 
 ## 1.18.1
 * Fixed an issue where the coloring directives where showing in log messages.

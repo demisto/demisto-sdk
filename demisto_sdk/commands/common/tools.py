@@ -3208,7 +3208,6 @@ def get_item_marketplaces(
         return [MarketplaceVersions.MarketplaceV2.value]
 
     if not item_data:
-        file_type = Path(item_path).suffix
         item_data = get_file(item_path)
 
     # first check, check field 'marketplaces' in the item's file

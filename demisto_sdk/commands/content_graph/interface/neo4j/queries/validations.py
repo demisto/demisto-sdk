@@ -77,7 +77,7 @@ AND n.fromversion <> "{DEFAULT_CONTENT_ITEM_FROM_VERSION}"  // skips types with 
         )
     query += f"""
 OPTIONAL MATCH (n2{{object_id: n.object_id, content_type: n.content_type}})
-WHERE id(n) <> id(n2)
+WHERE elementId(n) <> elementId(n2)
 AND {versioned('content_item_from.fromversion')} >= {versioned('n2.fromversion')}
 
 WITH content_item_from, r, n, n2
@@ -108,7 +108,7 @@ AND {versioned('content_item_from.toversion')} {op} {versioned(GENERAL_DEFAULT_F
         )
     query += f"""
 OPTIONAL MATCH (n2{{object_id: n.object_id, content_type: n.content_type}})
-WHERE id(n) <> id(n2)
+WHERE elementId(n) <> elementId(n2)
 AND {versioned('content_item_from.toversion')} <= {versioned('n2.toversion')}
 
 WITH content_item_from, r, n, n2
@@ -137,7 +137,7 @@ def get_items_using_deprecated_commands(tx: Transaction, file_paths: List[str]):
     command_query = f"""// Returning all the items which using deprecated commands
 MATCH (p{{deprecated: false}})-[:USES]->(c:Command)<-[:HAS_COMMAND{{deprecated: true}}]-(i:Integration) WHERE NOT p.is_test
 OPTIONAL MATCH (i2:Integration)-[:HAS_COMMAND{{deprecated: false}}]->(c)
-WHERE id(i) <> id(i2)
+WHERE elementId(i) <> elementId(i2)
 WITH p, c, i2
 WHERE i2 IS NULL
 {files_filter}
@@ -173,7 +173,7 @@ WHERE not all(elem IN content_item_from.marketplaces WHERE elem IN n.marketplace
         query += f"AND (p1.object_id in {pack_ids} OR p2.object_id in {pack_ids})"
     query += f"""
 OPTIONAL MATCH (n2{{object_id: n.object_id, content_type: n.content_type}})
-WHERE id(n) <> id(n2)
+WHERE elementId(n) <> elementId(n2)
 AND all(elem IN content_item_from.marketplaces WHERE elem IN n2.marketplaces)
 
 WITH content_item_from, r, n, n2
@@ -200,7 +200,7 @@ WHERE a.name = b.name
     if file_paths:
         query += f"AND a.path in {file_paths}"
     query += """
-AND id(a) <> id(b)
+AND elementId(a) <> elementId(b)
 RETURN a.object_id AS a_object_id, collect(b.object_id) AS b_object_ids
 """
     return [
@@ -273,7 +273,7 @@ def validate_duplicate_ids(
     query = f"""// Returns duplicate content items with same id
     MATCH (content_item)
     MATCH (duplicate_content_item)
-    WHERE id(content_item) <> id(duplicate_content_item)
+    WHERE elementId(content_item) <> elementId(duplicate_content_item)
     AND content_item.object_id = duplicate_content_item.object_id
     AND content_item.content_type = duplicate_content_item.content_type
     AND {is_target_available('content_item', 'duplicate_content_item')}

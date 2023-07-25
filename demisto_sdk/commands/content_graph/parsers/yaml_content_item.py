@@ -10,6 +10,7 @@ from demisto_sdk.commands.common.tools import get_yaml, get_yml_paths_in_dir
 from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
 from demisto_sdk.commands.content_graph.parsers.content_item import (
     ContentItemParser,
+    InvalidContentItemException,
     NotAContentItemException,
 )
 
@@ -20,6 +21,11 @@ class YAMLContentItemParser(ContentItemParser):
     ) -> None:
         super().__init__(path, pack_marketplaces)
         self.yml_data: Dict[str, Any] = self.get_yaml()
+
+        if not isinstance(self.yml_data, dict):
+            raise InvalidContentItemException(
+                f"The content of {self.path} must be in a JSON dictionary format"
+            )
 
         if self.should_skip_parsing():
             raise NotAContentItemException
@@ -84,4 +90,4 @@ class YAMLContentItemParser(ContentItemParser):
             raise NotAContentItemException
 
         self.path = Path(yaml_path)
-        return get_yaml(self.path.as_posix())
+        return get_yaml(self.path.as_posix(), keep_order=False)

@@ -31,6 +31,7 @@ __all__ = [
     "XDRCTemplate",
     "RelationshipData",
     "LayoutRule",
+    "PreProcessRule",
 ]
 
 from demisto_sdk.commands.content_graph.objects.classifier import Classifier
@@ -56,6 +57,7 @@ from demisto_sdk.commands.content_graph.objects.modeling_rule import ModelingRul
 from demisto_sdk.commands.content_graph.objects.pack import Pack
 from demisto_sdk.commands.content_graph.objects.parsing_rule import ParsingRule
 from demisto_sdk.commands.content_graph.objects.playbook import Playbook
+from demisto_sdk.commands.content_graph.objects.pre_process_rule import PreProcessRule
 from demisto_sdk.commands.content_graph.objects.relationship import RelationshipData
 from demisto_sdk.commands.content_graph.objects.report import Report
 from demisto_sdk.commands.content_graph.objects.script import Script

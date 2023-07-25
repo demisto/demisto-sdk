@@ -77,11 +77,9 @@ from typing import Dict, Optional
 
 import dateparser
 
-from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
+from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
 from demisto_sdk.commands.common.logger import logger
-
-json = JSON_Handler()
-yaml = YAML_Handler()
 
 
 def input_multiline():
@@ -167,7 +165,6 @@ def parse_json(
     data,
     command_name,
     prefix,
-    verbose=False,
     interactive=False,
     descriptions: Optional[Dict] = None,
     return_object=False,
@@ -178,10 +175,7 @@ def parse_json(
     try:
         data = json.loads(data)
     except ValueError as ex:
-        if verbose:
-            # TODO Handle this verbose
-            logger.info(f"[red]{ex}[/red]")
-
+        logger.exception(f"[red]{ex}[/red]")
         raise ValueError("Invalid input JSON")
 
     # If data is a list of dictionaries [{'a': 'b', 'c': 'd'}, {'e': 'f'}] -> {'a': 'b', 'c': 'd', 'e': 'f'}.
@@ -227,7 +221,6 @@ def json_to_outputs(
     json,
     prefix,
     output=None,
-    verbose=False,
     interactive=False,
     descriptions=None,
 ):
@@ -240,7 +233,6 @@ def json_to_outputs(
         prefix: The prefix of the context, this prefix will appear for each output field - VirusTotal.IP,
             CortexXDR.Incident
         output: Full path to output file where to save the YAML
-        verbose: This used for debugging purposes - more logs
         interactive: by default all the output descriptions are empty, but if user sets this to True then the script
             will ask user input for each description
         descriptions: JSON or path to JSON file mapping field names to their context descriptions. (Optional)
@@ -258,9 +250,7 @@ def json_to_outputs(
             input_json = input_multiline()
 
         descriptions = _parse_description_argument(descriptions)
-        yaml_output = parse_json(
-            input_json, command, prefix, verbose, interactive, descriptions
-        )
+        yaml_output = parse_json(input_json, command, prefix, interactive, descriptions)
 
         if output:
             with open(output, "w") as yf:
@@ -272,11 +262,8 @@ def json_to_outputs(
             logger.info(yaml_output)
 
     except Exception as ex:
-        if verbose:
-            raise
-        else:
-            logger.info(f"[red]Error: {str(ex)}[/red]")
-            sys.exit(1)
+        logger.info(f"[red]Error: {str(ex)}[/red]")
+        sys.exit(1)
 
 
 def _parse_description_argument(descriptions: Optional[str]) -> Optional[dict]:  # type: ignore

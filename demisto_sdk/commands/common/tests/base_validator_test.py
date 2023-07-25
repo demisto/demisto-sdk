@@ -12,15 +12,12 @@ from demisto_sdk.commands.common.errors import (
     PRESET_ERROR_TO_IGNORE,
     Errors,
 )
-from demisto_sdk.commands.common.handlers import JSON_Handler
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.hook_validations.base_validator import BaseValidator
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.tools import get_yaml
 from TestSuite.pack import Pack
 from TestSuite.test_tools import ChangeCWD, str_in_call_args_list
-
-json = JSON_Handler()
-
 
 DEPRECATED_IGNORE_ERRORS_DEFAULT_LIST = (
     BaseValidator.create_reverse_ignored_errors_list(
@@ -63,13 +60,11 @@ def test_handle_error_on_unignorable_error_codes(
     - Ensure that the un-ignorable errors are in FOUND_FILES_AND_ERRORS list.
     - Ensure that the un-ignorable errors are not in FOUND_FILES_AND_IGNORED_ERRORS list.
     """
-    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+    logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
     monkeypatch.setenv("COLUMNS", "1000")
 
     base_validator = BaseValidator(ignored_errors=ignored_errors)
-    expected_error = (
-        f"[ERROR]: file_name: [{error_code}] can not be ignored in .pack-ignore\n"
-    )
+    expected_error = f"file_name: [{error_code}] can not be ignored in .pack-ignore\n"
 
     result = base_validator.handle_error(
         error_message="",
@@ -78,7 +73,7 @@ def test_handle_error_on_unignorable_error_codes(
         suggested_fix="fix",
     )
     assert expected_error in result
-    assert str_in_call_args_list(logger_info.call_args_list, expected_error)
+    assert str_in_call_args_list(logger_error.call_args_list, expected_error)
     assert f"file_name - [{error_code}]" in FOUND_FILES_AND_ERRORS
     assert f"file_name - [{error_code}]" not in FOUND_FILES_AND_IGNORED_ERRORS
 
@@ -106,16 +101,13 @@ def test_handle_error(mocker, caplog):
     base_validator.checked_files.union({"PATH", "file_name"})
 
     formatted_error = base_validator.handle_error("Error-message", "SC102", "PATH")
-    assert formatted_error == "[ERROR]: PATH: [SC102] - Error-message\n"
+    assert formatted_error == "PATH: [SC102] - Error-message\n"
     assert "PATH - [SC102]" in FOUND_FILES_AND_ERRORS
 
     formatted_error = base_validator.handle_error(
         "another-error-message", "IN101", "path/to/file_name"
     )
-    assert (
-        formatted_error
-        == "[ERROR]: path/to/file_name: [IN101] - another-error-message\n"
-    )
+    assert formatted_error == "path/to/file_name: [IN101] - another-error-message\n"
     assert "path/to/file_name - [IN101]" in FOUND_FILES_AND_ERRORS
 
     formatted_error = base_validator.handle_error(
@@ -124,14 +116,12 @@ def test_handle_error(mocker, caplog):
     assert formatted_error is None
     assert "path/to/file_name - [BA101]" not in FOUND_FILES_AND_ERRORS
     assert "path/to/file_name - [BA101]" in FOUND_FILES_AND_IGNORED_ERRORS
-    assert (
-        "[WARNING]: path/to/file_name: [BA101] - ignore-file-specific\n" in caplog.text
-    )
+    assert "path/to/file_name: [BA101] - ignore-file-specific\n" in caplog.text
 
     formatted_error = base_validator.handle_error(
         "Error-message", "ST109", "path/to/file_name"
     )
-    assert formatted_error == "[ERROR]: path/to/file_name: [ST109] - Error-message\n"
+    assert formatted_error == "path/to/file_name: [ST109] - Error-message\n"
     assert "path/to/file_name - [ST109]" in FOUND_FILES_AND_ERRORS
 
 
@@ -175,10 +165,7 @@ def test_handle_error_file_with_path(pack):
     formatted_error = base_validator.handle_error(
         "Error-message", "BA101", integration.readme.path
     )
-    assert (
-        formatted_error
-        == f"[ERROR]: {integration.readme.path}: [BA101] - Error-message\n"
-    )
+    assert formatted_error == f"{integration.readme.path}: [BA101] - Error-message\n"
     assert f"{integration.readme.path} - [BA101]" in FOUND_FILES_AND_ERRORS
 
     formatted_error = base_validator.handle_error(
@@ -191,7 +178,7 @@ def test_handle_error_file_with_path(pack):
     formatted_error = base_validator.handle_error(
         "Error-message", "PA113", pack.readme.path
     )
-    assert formatted_error == f"[ERROR]: {pack.readme.path}: [PA113] - Error-message\n"
+    assert formatted_error == f"{pack.readme.path}: [PA113] - Error-message\n"
     assert f"{pack.readme.path} - [PA113]" in FOUND_FILES_AND_ERRORS
 
     formatted_error = base_validator.handle_error(
@@ -466,7 +453,6 @@ class TestJsonOutput:
                 "severity": "error",
                 "errorCode": ui_applicable_error_code,
                 "message": ui_applicable_error_message,
-                "ui": True,
                 "relatedField": "<parameter-name>.display",
             }
         ]
@@ -481,7 +467,6 @@ class TestJsonOutput:
                 "severity": "error",
                 "errorCode": ui_applicable_error_code,
                 "message": ui_applicable_error_message,
-                "ui": True,
                 "relatedField": "<parameter-name>.display",
                 "linter": "validate",
             },
@@ -494,7 +479,6 @@ class TestJsonOutput:
                 "severity": "warning",
                 "errorCode": non_ui_applicable_error_code,
                 "message": non_ui_applicable_error_message,
-                "ui": False,
                 "relatedField": "subtype",
                 "linter": "validate",
             },

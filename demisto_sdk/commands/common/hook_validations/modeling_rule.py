@@ -1,21 +1,22 @@
 """
 This module is designed to validate the correctness of generic definition entities in content.
 """
-import json
 import os
 import re
 from pathlib import Path
 from typing import List
 
+from demisto_sdk.commands.common.constants import (
+    MODELING_RULE,
+)
 from demisto_sdk.commands.common.errors import Errors
-from demisto_sdk.commands.common.handlers import YAML_Handler
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
+from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
 from demisto_sdk.commands.common.hook_validations.base_validator import error_codes
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import (
     ContentEntityValidator,
 )
 from demisto_sdk.commands.common.tools import get_files_in_dir
-
-yaml = YAML_Handler()
 
 
 class ModelingRuleValidator(ContentEntityValidator):
@@ -36,7 +37,7 @@ class ModelingRuleValidator(ContentEntityValidator):
             ignored_errors=ignored_errors,
             json_file_path=json_file_path,
         )
-        self._is_valid = True
+        self._is_valid = self.is_valid_rule_suffix(MODELING_RULE)
         self.schema_path = None
         self.schema_content = None
         self.xif_path = None

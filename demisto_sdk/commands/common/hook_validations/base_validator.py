@@ -2,8 +2,6 @@ import os
 from pathlib import Path
 from typing import Optional
 
-from ruamel.yaml.comments import CommentedSeq
-
 from demisto_sdk.commands.common.constants import (
     PACK_METADATA_SUPPORT,
     PACKS_DIR,
@@ -16,10 +14,11 @@ from demisto_sdk.commands.common.errors import (
     FOUND_FILES_AND_IGNORED_ERRORS,
     PRESET_ERROR_TO_CHECK,
     PRESET_ERROR_TO_IGNORE,
+    Errors,
     get_all_error_codes,
     get_error_object,
 )
-from demisto_sdk.commands.common.handlers import JSON_Handler
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     find_type,
@@ -29,8 +28,6 @@ from demisto_sdk.commands.common.tools import (
     get_relative_path_from_packs_dir,
     get_yaml,
 )
-
-json = JSON_Handler()
 
 
 def error_codes(error_codes_str: str):
@@ -176,15 +173,8 @@ class BaseValidator:
                 # specific_validations list, we exit the function and return None
                 return None
 
-        def formatted_error_str(error_type):
-            if error_type not in {"ERROR", "WARNING"}:
-                raise ValueError(
-                    "Error type is not valid. Should be in {'ERROR', 'WARNING'}"
-                )
-
-            formatted_error_message_prefix = (
-                f"[{error_type}]: {file_path}: [{error_code}]"
-            )
+        def formatted_error_str():
+            formatted_error_message_prefix = f"{file_path}: [{error_code}]"
             if is_error_not_allowed_in_pack_ignore:
                 formatted = f"{formatted_error_message_prefix} can not be ignored in .pack-ignore\n"
             else:
@@ -244,16 +234,16 @@ class BaseValidator:
             or warning
         ):
             if self.print_as_warnings or warning:
-                logger.warning(f'[yellow]{formatted_error_str("WARNING")}[/yellow]')
+                logger.warning(f"[yellow]{formatted_error_str()}[/yellow]")
                 self.json_output(file_path, error_code, error_message, warning)
                 self.add_to_report_error_list(
                     error_code, file_path, FOUND_FILES_AND_IGNORED_ERRORS
                 )
             return None
 
-        formatted_error = formatted_error_str("ERROR")
+        formatted_error = formatted_error_str()
         if suggested_fix and not is_error_not_allowed_in_pack_ignore:
-            logger.info(f"[red]{formatted_error[:-1]}[/red]")
+            logger.error(f"[red]{formatted_error[:-1]}[/red]")
             if error_code == "ST109":
                 logger.info("[red]Please add to the root of the yml.[/red]\n")
             elif error_code == "ST107":
@@ -266,7 +256,7 @@ class BaseValidator:
                 logger.info(f"[red]{suggested_fix}[/red]\n")
 
         else:
-            logger.info(f"[red]{formatted_error}[/red]")
+            logger.error(f"[red]{formatted_error}[/red]")
 
         self.json_output(file_path, error_code, error_message, warning)
         self.add_to_report_error_list(error_code, file_path, FOUND_FILES_AND_ERRORS)
@@ -281,8 +271,8 @@ class BaseValidator:
     def check_deprecated(self, file_path):
         if file_path.endswith(".yml"):
             yml_dict = get_yaml(file_path)
-            if not isinstance(yml_dict, CommentedSeq) and yml_dict.get("deprecated"):
-                # yml files may be CommentedSeq ("list") or dict-like
+            if not isinstance(yml_dict, list) and yml_dict.get("deprecated"):
+                # yml files may be list or dict-like
                 self.add_flag_to_ignore_list(file_path, "deprecated")
 
     @staticmethod
@@ -366,7 +356,6 @@ class BaseValidator:
             "severity": "warning" if warning else "error",
             "errorCode": error_code,
             "message": error_message,
-            "ui": error_data.get("ui_applicable"),
             "relatedField": error_data.get("related_field"),
             "linter": "validate",
         }
@@ -431,5 +420,48 @@ class BaseValidator:
         elif file_type == FileType.MODELING_RULE_SCHEMA:
             schema_expected_name = f"{dir_name}_schema"
             if file_name != schema_expected_name:
+                return False
+        return True
+
+    @error_codes("BA125")
+    def validate_no_disallowed_terms_in_customer_facing_docs(
+        self, file_content: str, file_path: str
+    ) -> bool:
+        """
+        Validate that customer facing docs and fields don't contain any internal terms that aren't clear for customers.
+
+        Args:
+            file_content (str): The content of the file to check.
+            file_path (str): The path of the file the content belongs to.
+
+        Returns:
+            bool: True if no such terms were found, False otherwise.
+        """
+        disallowed_terms = (
+            [  # These terms are checked regardless for case (case-insensitive)
+                "test-module",
+                "test module",
+                "long-running-execution",
+            ]
+        )
+
+        found_terms = []
+
+        # Search for terms
+        for term in disallowed_terms:
+            if term.casefold() in file_content.casefold():
+                found_terms.append(term)
+
+        # Raise error if disallowed terms found
+        if found_terms:
+            error_message, error_code = Errors.customer_facing_docs_disallowed_terms(
+                found_terms=found_terms
+            )
+
+            if self.handle_error(
+                error_message,
+                error_code,
+                file_path=file_path,
+            ):
                 return False
         return True

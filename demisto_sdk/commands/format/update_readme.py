@@ -64,8 +64,10 @@ class ReadmeFormat(BaseUpdate):
         """
         old_url = str.strip(readme_url.get_url())
         new_address = None
-        if self.assume_yes:
+        if self.assume_answer:
             return f"https://{old_url}"
+        elif self.assume_answer is False:
+            return None
         else:
             logger.info(
                 f"[red]Should https:// be added to the following address? [Y/n]\n {readme_url.get_url()}[/red]"

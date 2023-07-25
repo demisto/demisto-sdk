@@ -1,7 +1,7 @@
 import re
 from typing import List, Optional, Union
 
-from packaging.version import Version, parse
+from packaging.version import Version
 from wcmatch.pathlib import Path
 
 from demisto_sdk.commands.common.constants import (
@@ -86,7 +86,7 @@ class JSONContentObject(JSONObject):
             1. Version object - https://github.com/pypa/packaging
             2. Attribute info - https://xsoar.pan.dev/docs/integrations/yaml-file#version-and-tests
         """
-        return parse(self.get("fromVersion") or DEFAULT_CONTENT_ITEM_FROM_VERSION)
+        return Version(self.get("fromVersion") or DEFAULT_CONTENT_ITEM_FROM_VERSION)
 
     @property
     def to_version(self) -> Version:
@@ -99,7 +99,7 @@ class JSONContentObject(JSONObject):
             1. Version object - https://github.com/pypa/packaging
             2. Attribute info - https://xsoar.pan.dev/docs/integrations/yaml-file#version-and-tests
         """
-        return parse(self.get("toVersion") or DEFAULT_CONTENT_ITEM_TO_VERSION)
+        return Version(self.get("toVersion") or DEFAULT_CONTENT_ITEM_TO_VERSION)
 
     def dump(
         self,

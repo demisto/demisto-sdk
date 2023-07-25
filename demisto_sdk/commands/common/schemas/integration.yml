@@ -88,6 +88,8 @@ mapping:
         type: bool
       isfetchevents:
         type: bool
+      isfetcheventsandassets:
+        type: bool
       longRunning:
         type: bool
       longRunningPort:

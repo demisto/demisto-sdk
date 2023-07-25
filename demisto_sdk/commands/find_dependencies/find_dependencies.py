@@ -17,12 +17,12 @@ from demisto_sdk.commands.common.constants import (
     IGNORED_PACKS_IN_DEPENDENCY_CALC,
     PACKS_DIR,
 )
-from demisto_sdk.commands.common.handlers import JSON_Handler
+from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     ProcessPoolHandler,
     get_content_id_set,
-    get_content_path,
     get_pack_name,
     is_external_repository,
     item_type_to_content_items_header,
@@ -34,15 +34,12 @@ from demisto_sdk.commands.common.update_id_set import (
 )
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator, get_id_set
 
-json = JSON_Handler()
-
-
 MINIMUM_DEPENDENCY_VERSION = Version("6.0.0")
 COMMON_TYPES_PACK = "CommonTypes"
 CORE_ALERT_FIELDS_PACK = "CoreAlertFields"
 
 # full path to Packs folder in content repo
-PACKS_FULL_PATH = os.path.join(get_content_path(), PACKS_DIR)  # type: ignore
+PACKS_FULL_PATH = os.path.join(CONTENT_PATH, PACKS_DIR)  # type: ignore
 
 
 def parse_for_pack_metadata(

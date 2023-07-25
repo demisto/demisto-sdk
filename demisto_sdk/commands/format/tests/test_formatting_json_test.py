@@ -7,7 +7,7 @@ from unittest.mock import patch
 import pytest
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
-from demisto_sdk.commands.common.handlers import JSON_Handler
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.format import (
     update_dashboard,
     update_incidenttype,
@@ -22,7 +22,6 @@ from demisto_sdk.commands.format.update_connection import ConnectionJSONFormat
 from demisto_sdk.commands.format.update_dashboard import DashboardJSONFormat
 from demisto_sdk.commands.format.update_generic import BaseUpdate
 from demisto_sdk.commands.format.update_generic_json import BaseUpdateJSON
-from demisto_sdk.commands.format.update_genericfield import GenericFieldJSONFormat
 from demisto_sdk.commands.format.update_incidentfields import IncidentFieldJSONFormat
 from demisto_sdk.commands.format.update_incidenttype import IncidentTypesJSONFormat
 from demisto_sdk.commands.format.update_indicatorfields import IndicatorFieldJSONFormat
@@ -98,8 +97,6 @@ from demisto_sdk.tests.constants_test import (
 )
 from TestSuite.json_based import JSONBased
 from TestSuite.test_tools import str_in_call_args_list
-
-json = JSON_Handler()
 
 
 @pytest.fixture()
@@ -221,29 +218,6 @@ class TestFormattingJson:
                 == "The given output path is not a specific file path.\nOnly file path can be a output path."
                 "  Please specify a correct output."
             )
-
-    @pytest.mark.parametrize(
-        "formatter",
-        [
-            GenericFieldJSONFormat,
-            IncidentFieldJSONFormat,
-            IndicatorFieldJSONFormat,
-        ],
-    )
-    def test_update_unsearchable_key(self, formatter):
-        """
-        Given
-            - A dictionary of file that the unsearchable is false
-        When
-            - Run format on file
-        Then
-            - Ensure unsearchable updated successfully
-        """
-
-        fields_formatter = formatter(input="test")
-        fields_formatter.data = {"unsearchable": False}
-        fields_formatter.set_default_values_as_needed()
-        assert fields_formatter.data["unsearchable"]
 
     @pytest.mark.parametrize("from_version", [None, "5.5.0", "6.2.0"])
     def test_indicator_field_format_html_type(self, pack, from_version: Optional[str]):
@@ -480,7 +454,7 @@ def test_update_connection_removes_unnecessary_keys(tmpdir, monkeypatch):
         output=connection_file_path,
         path=CONNECTION_SCHEMA_PATH,
     )
-    connection_formatter.assume_yes = True
+    connection_formatter.assume_answer = True
     monkeypatch.setattr("builtins.input", lambda _: "N")
     connection_formatter.format_file()
     with open(connection_file_path) as file:
@@ -1767,7 +1741,7 @@ class TestFormattingReport:
         pack.pack_metadata.update({"support": "partner", "currentVersion": "1.0.0"})
         incident_type = pack.create_incident_type(name="TestType", content={})
         bs = BaseUpdate(
-            input=incident_type.path, assume_yes=True, path=INCIDENTTYPE_SCHEMA_PATH
+            input=incident_type.path, assume_answer=True, path=INCIDENTTYPE_SCHEMA_PATH
         )
         bs.set_fromVersion()
         assert bs.data["fromVersion"] == GENERAL_DEFAULT_FROMVERSION
@@ -1809,7 +1783,7 @@ class TestFormattingReport:
                 LAYOUTS_CONTAINER_SCHEMA_PATH,
             ],
         ):
-            bs = BaseUpdate(input=path, assume_yes=True, path=schema_path)
+            bs = BaseUpdate(input=path, assume_answer=True, path=schema_path)
             bs.set_fromVersion()
             assert bs.data["fromVersion"] == GENERAL_DEFAULT_FROMVERSION
 
@@ -1830,7 +1804,7 @@ class TestFormattingReport:
 
         layout = pack.create_layout(name="TestType", content={})
         bs = LayoutBaseFormat(
-            input=layout.path, assume_yes=True, path=LAYOUTS_CONTAINER_SCHEMA_PATH
+            input=layout.path, assume_answer=True, path=LAYOUTS_CONTAINER_SCHEMA_PATH
         )
         bs.run_format()
         assert bs.data["fromVersion"] == VERSION_5_5_0
@@ -1864,7 +1838,7 @@ class TestFormattingReport:
                 "fromVersion": "",
             },
         )
-        bs = LayoutBaseFormat(input=layout.path, assume_yes=True)
+        bs = LayoutBaseFormat(input=layout.path, assume_answer=True)
         bs.remove_copy_and_dev_suffixes_from_layoutscontainer()
         assert bs.data["name"] == "SHA256_Indicator"
 
@@ -1885,7 +1859,7 @@ class TestFormattingReport:
 
         classifier = pack.create_classifier(name="TestType", content={})
         bs = OldClassifierJSONFormat(
-            input=classifier.path, assume_yes=True, path=CLASSIFIER_5_9_9_SCHEMA_PATH
+            input=classifier.path, assume_answer=True, path=CLASSIFIER_5_9_9_SCHEMA_PATH
         )
         bs.run_format()
         assert bs.data["fromVersion"] == VERSION_5_5_0

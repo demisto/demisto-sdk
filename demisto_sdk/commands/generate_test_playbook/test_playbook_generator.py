@@ -2,13 +2,11 @@ from pathlib import Path
 from typing import Dict, Optional
 
 from demisto_sdk.commands.common.constants import FileType
-from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
+from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import get_yaml
 from demisto_sdk.commands.upload.uploader import Uploader
-
-json = JSON_Handler()
-yaml = YAML_Handler()
 
 
 class ContentItemType:
@@ -286,6 +284,7 @@ class PlaybookTestsGenerator:
         commands: str = None,
         examples: str = None,
         upload: bool = False,
+        **kwargs,
     ):
         self.integration_yml_path = input
         self.output = output
@@ -429,6 +428,6 @@ class PlaybookTestsGenerator:
             )
 
         if self.upload:
-            return Uploader(input=self.test_playbook_yml_path).upload()
+            return Uploader(input=Path(self.test_playbook_yml_path)).upload()
 
         return True

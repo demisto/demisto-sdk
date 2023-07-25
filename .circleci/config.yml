@@ -17,7 +17,7 @@ parameters:
     default: "5.0.1"
   cache-version:
     type: string
-    default: v4  # Change this parameter to clear cache.
+    default: v5  # Change this parameter to clear cache.
   global-docker-image:
     type: string
     default: cimg/python:3.10-node  # TODO: change to 3.11 when content is updated
@@ -120,7 +120,6 @@ jobs:
           type: string
       docker:
         - image: cimg/python:<< parameters.pythonversion >>-node
-      parallelism: 8
       steps:
         - checkout
         - <<: *install_poetry
@@ -141,11 +140,13 @@ jobs:
               # remove the integration tests (integration tests as opposed to unit tests) from the list because those
               # tests shouldn't be parallelized.
               TEST_FILES=$(circleci tests glob "**/*_test.py")
+              # filter out files which are in .venv directory
+              TEST_FILES=$(echo "$TEST_FILES" | sed -E 's/\S*\.venv\S*\.py//g')
               TEST_FILES=$(echo "$TEST_FILES" | sed -E 's/\S*demisto_sdk\/commands\/init\/templates\S*\.py//g')
               TEST_FILES=$(echo "$TEST_FILES" | sed -E 's/\S*demisto_sdk\/tests\/integration_tests\S*\.py//g')
               TEST_FILES=$(echo "$TEST_FILES" | sed -E 's/\S*demisto_sdk\/commands\/content_graph\/tests\S*\.py//g')
 
-              TEST_FILES=$(echo "$TEST_FILES" | circleci tests split --split-by=timings)
+              TEST_FILES=$(echo "$TEST_FILES" | sed '/^$/d' | circleci tests split --split-by=timings)
 
               mkdir test-results
               
@@ -239,7 +240,7 @@ jobs:
             name: create cache key for pre-commit
             command: |
               cp .pre-commit-config.yaml pre-commit-cache-key.txt
-              poetry run python --version --version >> pre-commit-cache-key.txt
+              poetry run python --version >> pre-commit-cache-key.txt
         - restore_cache:
             keys:
             - v1-pc-cache-{{ checksum "pre-commit-cache-key.txt" }}
@@ -248,7 +249,6 @@ jobs:
             command: |
               poetry run pre-commit --version
               poetry run pre-commit run -a
-        
         - run:
             name: Run Pytest collection
             command: |
@@ -392,19 +392,27 @@ jobs:
           when: always
           command: |
             source $(poetry env info --path)/bin/activate
+            export ARTIFACTS_FOLDER="/home/circleci/project/artifacts"
+            mkdir -p $ARTIFACTS_FOLDER
+            export DEMISTO_SDK_LOG_FILE_PATH=$ARTIFACTS_FOLDER/demisto_sdk_debug.log
             cd content
             demisto-sdk -v
             mkdir ./tmp
             neo4j start
             # poll for neo4j status until available
             while ! curl --fail http://127.0.0.1:7474 &> /dev/null; do sleep 1; done
+            # create content graph from scratch
+            demisto-sdk create-content-graph
 
-            # we run the update graph command twice to make sure the graph is updated correctly
+            # Update content graph from the bucket
             demisto-sdk update-content-graph -g -o ./tmp/content_graph
 
+            # Update content graph from the the previous content graph that was created/built
             demisto-sdk update-content-graph -i ./tmp/content_graph/xsoar.zip -o ./tmp/content_graph
       - store_artifacts:
           path: content/tmp
+      - store_artifacts:
+          path: /home/circleci/project/artifacts
 
   build:
       docker:

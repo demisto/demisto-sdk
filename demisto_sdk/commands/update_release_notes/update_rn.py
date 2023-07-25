@@ -5,9 +5,10 @@ import copy
 import errno
 import os
 import re
-from distutils.version import LooseVersion
 from pathlib import Path
-from typing import Any, Optional, Tuple, Union
+from typing import Any, Iterable, Optional, Tuple, Union
+
+from packaging.version import Version
 
 from demisto_sdk.commands.common.constants import (
     ALL_FILES_VALIDATION_IGNORE_WHITELIST,
@@ -16,6 +17,7 @@ from demisto_sdk.commands.common.constants import (
     IGNORED_PACK_NAMES,
     RN_CONTENT_ENTITY_WITH_STARS,
     RN_HEADER_BY_FILE_TYPE,
+    SIEM_ONLY_ENTITIES,
     XSIAM_DASHBOARDS_DIR,
     XSIAM_REPORTS_DIR,
     FileType,
@@ -29,14 +31,13 @@ from demisto_sdk.commands.common.content.objects.pack_objects import (
 from demisto_sdk.commands.common.content.objects.pack_objects.abstract_pack_objects.yaml_content_object import (
     YAMLContentObject,
 )
-from demisto_sdk.commands.common.content_constant_paths import DEFAULT_ID_SET_PATH
 from demisto_sdk.commands.common.git_util import GitUtil
-from demisto_sdk.commands.common.handlers import JSON_Handler
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     find_type,
+    get_api_module_dependencies_from_graph,
     get_api_module_ids,
-    get_api_module_integrations_set,
     get_content_path,
     get_display_name,
     get_from_version,
@@ -48,8 +49,9 @@ from demisto_sdk.commands.common.tools import (
     pack_name_to_path,
     run_command,
 )
-
-json = JSON_Handler()
+from demisto_sdk.commands.content_graph.interface.neo4j.neo4j_graph import (
+    Neo4jContentGraphInterface,
+)
 
 CLASS_BY_FILE_TYPE = {
     FileType.INTEGRATION: Integration,
@@ -349,7 +351,7 @@ class UpdateRN:
         bc_file_data["breakingChanges"] = True
         bc_file_data["breakingChangesNotes"] = bc_file_data.get("breakingChangesNotes")
         with open(bc_file_path, "w") as f:
-            f.write(json.dumps(bc_file_data))
+            f.write(json.dumps(bc_file_data, indent=4))
         logger.info(
             f"[green]Finished creating config file for RN version {new_version}.\n"
             "If you wish only specific text to be shown as breaking changes, please fill the "
@@ -440,7 +442,7 @@ class UpdateRN:
                 return False
             new_metadata = self.get_pack_metadata()
             new_version = new_metadata.get("currentVersion", "99.99.99")
-            if LooseVersion(self.master_version) >= LooseVersion(new_version):
+            if Version(self.master_version) >= Version(new_version):
                 return True
             return False
         except RuntimeError as e:
@@ -742,9 +744,11 @@ class UpdateRN:
             if is_new_file:
                 rn_desc = f"##### New: {content_name}\n\n"
                 if desc:
-                    rn_desc += f"- {desc}"
-                if from_version:
+                    rn_desc += f"- New: {desc}"
+                if from_version and _type not in SIEM_ONLY_ENTITIES:
                     rn_desc += f" (Available from Cortex XSOAR {from_version})."
+                elif _type in SIEM_ONLY_ENTITIES:
+                    rn_desc += "(Available from Cortex XSIAM %%XSIAM_VERSION%%)."
                 rn_desc += "\n"
             else:
                 rn_desc = f"##### {content_name}\n\n"
@@ -996,15 +1000,13 @@ def get_file_description(path, file_type) -> str:
 def update_api_modules_dependents_rn(
     pre_release: bool,
     update_type: Union[str, None],
-    added: Union[list, set],
-    modified: Union[list, set],
-    id_set_path: Optional[Path] = None,
+    added: Iterable[str],
+    modified: Iterable[str],
     text: str = "",
 ) -> set:
     """Updates release notes for any pack that depends on API module that has changed.
-
     :param
-        pre_release: The file type
+        pre_release: Indicates whether the change should be designated as a pre-release version
         update_type: The update type
         added: The added files
         modified: The modified files
@@ -1016,42 +1018,31 @@ def update_api_modules_dependents_rn(
     A set of updated packs
     """
     total_updated_packs: set = set()
-    if not id_set_path:
-        if not os.path.isfile(DEFAULT_ID_SET_PATH):
-            logger.info(
-                "[red]Failed to update integrations dependent on the APIModule pack - no id_set.json is "
-                "available. Please run `demisto-sdk create-id-set` to generate it, and rerun this command.[/red]"
-            )
-            return total_updated_packs
-        id_set_path = DEFAULT_ID_SET_PATH
-    with open(id_set_path) as conf_file:
-        id_set = json.load(conf_file)
     api_module_set = get_api_module_ids(added)
     api_module_set = api_module_set.union(get_api_module_ids(modified))
     logger.info(
-        f"[yellow]Changes were found in the following APIModules: {api_module_set}, updating all dependent "
+        f"[yellow]Changes were found in the following APIModules : {api_module_set}, updating all dependent "
         f"integrations.[/yellow]"
     )
-    integrations = get_api_module_integrations_set(
-        api_module_set, id_set.get("integrations", [])
-    )
-    for integration in integrations:
-        integration_path = integration.get("file_path")
-        integration_pack = integration.get("pack")
-        integration_pack_path = pack_name_to_path(integration_pack)
-        update_pack_rn = UpdateRN(
-            pack_path=integration_pack_path,
-            update_type=update_type,
-            modified_files_in_pack={integration_path},
-            pre_release=pre_release,
-            added_files=set(),
-            pack=integration_pack,
-            text=text,
-        )
-        updated = update_pack_rn.execute_update()
-        if updated:
-            total_updated_packs.add(integration_pack)
-    return total_updated_packs
+    with Neo4jContentGraphInterface(update_graph=True) as graph:
+        integrations = get_api_module_dependencies_from_graph(api_module_set, graph)
+        for integration in integrations:
+            integration_pack_name = integration.pack_id
+            integration_path = integration.path
+            integration_pack_path = pack_name_to_path(integration_pack_name)
+            update_pack_rn = UpdateRN(
+                pack_path=integration_pack_path,
+                update_type=update_type,
+                modified_files_in_pack={integration_path},
+                pre_release=pre_release,
+                added_files=set(),
+                pack=integration_pack_name,
+                text=text,
+            )
+            updated = update_pack_rn.execute_update()
+            if updated:
+                total_updated_packs.add(integration_pack_name)
+        return total_updated_packs
 
 
 def check_docker_image_changed(main_branch: str, packfile: str) -> Optional[str]:

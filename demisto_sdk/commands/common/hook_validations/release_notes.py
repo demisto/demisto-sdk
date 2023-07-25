@@ -308,7 +308,10 @@ class ReleaseNotesValidator(BaseValidator):
                 error_message, error_code, file_path=self.release_notes_file_path
             ):
                 return False
-        elif "%%UPDATE_RN%%" in release_notes_comments:
+        elif any(
+            note in release_notes_comments
+            for note in ["%%UPDATE_RN%%", "%%XSIAM_VERSION%%"]
+        ):
             error_message, error_code = Errors.release_notes_not_finished()
             if self.handle_error(
                 error_message, error_code, file_path=self.release_notes_file_path
@@ -533,5 +536,9 @@ class ReleaseNotesValidator(BaseValidator):
             self.validate_json_when_breaking_changes(),
             # self.has_no_markdown_lint_errors(),
             self.validate_release_notes_headers(),
+            self.validate_no_disallowed_terms_in_customer_facing_docs(
+                file_content=self.latest_release_notes,
+                file_path=self.release_notes_file_path,
+            ),
         ]
         return all(validations)

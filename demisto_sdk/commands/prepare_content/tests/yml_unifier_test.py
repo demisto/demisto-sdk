@@ -12,7 +12,8 @@ from click.testing import CliRunner
 
 from demisto_sdk.__main__ import main
 from demisto_sdk.commands.common.constants import MarketplaceVersions
-from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
+from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.tools import get_yaml
 from demisto_sdk.commands.content_graph.objects.integration_script import (
@@ -25,9 +26,6 @@ from demisto_sdk.commands.prepare_content.prepare_upload_manager import (
     PrepareUploadManager,
 )
 from TestSuite.test_tools import ChangeCWD, str_in_call_args_list
-
-json = JSON_Handler()
-yaml = YAML_Handler()
 
 TEST_VALID_CODE = """import demistomock as demisto
 from CommonServerPython import *
@@ -639,7 +637,7 @@ def create_test_package(
 
 class TestMergeScriptPackageToYMLIntegration:
     @pytest.fixture(autouse=True)
-    def setup(self, tmp_path):
+    def setup_method(self, tmp_path):
         self.test_dir_path = str(tmp_path / "Unifier" / "Testing" / "Integrations")
         os.makedirs(self.test_dir_path)
         self.package_name = "SampleIntegPackage"
@@ -670,13 +668,6 @@ class TestMergeScriptPackageToYMLIntegration:
         )
 
         assert export_yml_path == Path(self.expected_yml_path)
-
-        comment = (
-            "# this is a comment text inside a file 033dab25fd9655480dbec3a4c579a0e6"
-        )
-        with open(export_yml_path) as file_:
-            unified_content = file_.read()
-        assert comment in unified_content
 
         actual_yml = get_yaml(export_yml_path)
 
@@ -745,6 +736,49 @@ class TestMergeScriptPackageToYMLIntegration:
         )
         assert "Should not be hidden - hidden attribute is False" in hidden_false
         assert "Should not be hidden - no hidden attribute" in missing_hidden_field
+
+    @pytest.mark.parametrize(
+        "marketplace", (MarketplaceVersions.XSOAR, MarketplaceVersions.MarketplaceV2)
+    )
+    def test_unify_integration__hidden_param_type9(
+        self, marketplace: MarketplaceVersions, mocker
+    ):
+        """
+        Given   an integration file with params that have credentials param of type 9 with valid values
+                for the `hidden` attribute
+        When    running unify
+        Then    make sure the list-type values are replaced with a boolean that matches the marketplace value
+                and `hidden` attribute is replaced with hiddenusername and hiddenpassword.
+                (see the update_hidden_parameters_value docstrings for more information)
+        """
+        create_test_package(
+            test_dir=self.test_dir_path,
+            package_name=self.package_name,
+            base_yml="demisto_sdk/tests/test_files/Unifier/SampleIntegPackage/SampleIntegPackageHiddenParams.yml",
+            script_code=TEST_VALID_CODE,
+            detailed_description=TEST_VALID_DETAILED_DESCRIPTION,
+            image_file="demisto_sdk/tests/test_files/Unifier/SampleIntegPackage/SampleIntegPackage_image.png",
+        )
+
+        mocker.patch.object(
+            IntegrationScript, "get_supported_native_images", return_value=[]
+        )
+        unified_yml = PrepareUploadManager.prepare_for_upload(
+            input=Path(self.export_dir_path),
+            output=Path(self.test_dir_path),
+            marketplace=marketplace,
+        )
+
+        for param in get_yaml(unified_yml)["configuration"]:
+            # updates the three sets
+            if param["name"] == "credentials":
+                assert "hidden" not in param
+                assert (param["hiddenusername"]) == (
+                    marketplace == MarketplaceVersions.XSOAR
+                )
+                assert (param["hiddenpassword"]) == (
+                    marketplace == MarketplaceVersions.XSOAR
+                )
 
     def test_unify_integration__detailed_description_with_special_char(self, mocker):
         """
@@ -859,7 +893,7 @@ final test: hi
 
 class TestMergeScriptPackageToYMLScript:
     @pytest.fixture(autouse=True)
-    def setup(self, tmp_path):
+    def setup_method(self, tmp_path):
         self.test_dir_path = str(tmp_path / "Unifier" / "Testing" / "Scripts")
         os.makedirs(self.test_dir_path)
         self.package_name = "SampleScriptPackage"
@@ -1088,7 +1122,8 @@ def test_unify_partner_contributed_pack(mocker, monkeypatch, repo):
     Then
         - Ensure unify create unified file with partner support notes.
     """
-    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+    mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+    logger_debug = mocker.patch.object(logging.getLogger("demisto-sdk"), "debug")
     monkeypatch.setenv("COLUMNS", "1000")
 
     pack = repo.create_pack("PackName")
@@ -1123,12 +1158,7 @@ def test_unify_partner_contributed_pack(mocker, monkeypatch, repo):
             catch_exceptions=True,
         )
     # Verifying unified process
-    assert all(
-        [
-            str_in_call_args_list(logger_info.call_args_list, "Unifying package:"),
-            str_in_call_args_list(logger_info.call_args_list, "Created unified yml:"),
-        ]
-    )
+    assert str_in_call_args_list(logger_debug.call_args_list, "Created unified yml:")
 
     # Verifying the unified file data
     assert PARTNER_UNIFY["display"] == PARTNER_DISPLAY_NAME
@@ -1146,7 +1176,8 @@ def test_unify_partner_contributed_pack_no_email(mocker, monkeypatch, repo):
     Then
         - Ensure unify create unified file with partner support notes.
     """
-    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+    mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+    logger_debug = mocker.patch.object(logging.getLogger("demisto-sdk"), "debug")
     monkeypatch.setenv("COLUMNS", "1000")
 
     pack = repo.create_pack("PackName")
@@ -1181,12 +1212,7 @@ def test_unify_partner_contributed_pack_no_email(mocker, monkeypatch, repo):
             catch_exceptions=True,
         )
     # Verifying unified process
-    assert all(
-        [
-            str_in_call_args_list(logger_info.call_args_list, "Unifying package:"),
-            str_in_call_args_list(logger_info.call_args_list, "Created unified yml:"),
-        ]
-    )
+    assert str_in_call_args_list(logger_debug.call_args_list, "Created unified yml:")
 
     # Verifying the unified file data
     assert PARTNER_UNIFY_NO_EMAIL["display"] == PARTNER_DISPLAY_NAME
@@ -1254,7 +1280,8 @@ def test_unify_partner_contributed_pack_no_url(mocker, monkeypatch, repo):
     Then
         - Ensure unify create unified file with partner support notes.
     """
-    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+    mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+    logger_debug = mocker.patch.object(logging.getLogger("demisto-sdk"), "debug")
     monkeypatch.setenv("COLUMNS", "1000")
 
     pack = repo.create_pack("PackName")
@@ -1289,12 +1316,7 @@ def test_unify_partner_contributed_pack_no_url(mocker, monkeypatch, repo):
             catch_exceptions=True,
         )
     # Verifying unified process
-    assert all(
-        [
-            str_in_call_args_list(logger_info.call_args_list, "Unifying package:"),
-            str_in_call_args_list(logger_info.call_args_list, "Created unified yml:"),
-        ]
-    )
+    assert str_in_call_args_list(logger_debug.call_args_list, "Created unified yml:")
 
     # Verifying the unified file data
     assert PARTNER_UNIFY_NO_URL["display"] == PARTNER_DISPLAY_NAME
@@ -1312,7 +1334,8 @@ def test_unify_not_partner_contributed_pack(mocker, monkeypatch, repo):
     Then
         - Ensure unify create unified file without partner support notes.
     """
-    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+    mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+    logger_debug = mocker.patch.object(logging.getLogger("demisto-sdk"), "debug")
     monkeypatch.setenv("COLUMNS", "1000")
 
     pack = repo.create_pack("PackName")
@@ -1343,12 +1366,7 @@ def test_unify_not_partner_contributed_pack(mocker, monkeypatch, repo):
             catch_exceptions=True,
         )
     # Verifying unified process
-    assert all(
-        [
-            str_in_call_args_list(logger_info.call_args_list, "Unifying package:"),
-            str_in_call_args_list(logger_info.call_args_list, "Created unified yml:"),
-        ]
-    )
+    assert str_in_call_args_list(logger_debug.call_args_list, "Created unified yml:")
 
     # Verifying the unified file data
     assert "Partner" not in XSOAR_UNIFY["display"]
@@ -1364,7 +1382,8 @@ def test_unify_community_contributed(mocker, monkeypatch, repo):
     Then
         - Ensure unify create unified file with community detailed description.
     """
-    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+    mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+    logger_debug = mocker.patch.object(logging.getLogger("demisto-sdk"), "debug")
     monkeypatch.setenv("COLUMNS", "1000")
 
     pack = repo.create_pack("PackName")
@@ -1399,12 +1418,7 @@ def test_unify_community_contributed(mocker, monkeypatch, repo):
             catch_exceptions=True,
         )
     # Verifying unified process
-    assert all(
-        [
-            str_in_call_args_list(logger_info.call_args_list, "Unifying package:"),
-            str_in_call_args_list(logger_info.call_args_list, "Created unified yml:"),
-        ]
-    )
+    assert str_in_call_args_list(logger_debug.call_args_list, "Created unified yml:")
 
     # Verifying the unified file data
     assert COMMUNITY_UNIFY["display"] == COMMUNITY_DISPLAY_NAME

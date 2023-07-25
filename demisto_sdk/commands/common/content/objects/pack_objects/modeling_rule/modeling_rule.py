@@ -45,11 +45,14 @@ class SingleModelingRule:
     RULE_HEADER_NEW_REGEX = re.compile(
         r"\[MODEL:\s*dataset\s*=\s*\"?(?P<dataset>\w+)\"?\s*\]"
     )
-    RULE_FIELDS_REGEX = re.compile(r"XDM\.[\w\.]+(?=\s*?=\s*?\w+)", flags=re.IGNORECASE)
+    RULE_FIELDS_REGEX = re.compile(
+        r"XDM\.[\w\.]+(?=\s*?=\s*?\"?\w+)", flags=re.IGNORECASE
+    )
     RULE_FILTER_REGEX = re.compile(
         r"^\s*filter\s*(?P<condition>(?!.*(\||alter)).+$(\s*(^\s*(?!\||alter).+$))*)",
         flags=re.M,
     )
+    TIME_FIELD = "_time"
 
     def __init__(self, rule_text: str):
         self.rule_text = rule_text
@@ -107,14 +110,17 @@ class SingleModelingRule:
         self._datamodel = value
 
     @property
-    def fields(self):
+    def fields(self) -> List[str]:
         if not self._fields:
-            uniq_fields = set(re.findall(self.RULE_FIELDS_REGEX, self.rule_text))
-            self.fields = uniq_fields
-            if not self._fields:
+            uniq_fields = list(set(re.findall(self.RULE_FIELDS_REGEX, self.rule_text)))
+            if not uniq_fields:
                 raise ValueError(
                     f'could not parse datamodel fields from the rule text: "{self.rule_text}"'
                 )
+
+            uniq_fields.append(self.TIME_FIELD)  # The '_time' field is always required.
+            self.fields = sorted(uniq_fields)
+
         return self._fields
 
     @fields.setter

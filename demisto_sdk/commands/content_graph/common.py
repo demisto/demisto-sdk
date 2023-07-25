@@ -1,9 +1,12 @@
 import enum
 import os
+import re
 from pathlib import Path
 from typing import Any, Dict, Iterator, List, NamedTuple, Set
 
 from neo4j import graph
+
+from demisto_sdk.commands.common.constants import PACKS_FOLDER
 
 NEO4J_ADMIN_DOCKER = ""
 
@@ -18,7 +21,6 @@ NEO4J_PASSWORD = os.getenv("DEMISTO_SDK_NEO4J_PASSWORD", "contentgraph")
 
 NEO4J_FOLDER = "neo4j-data"
 
-PACKS_FOLDER = "Packs"
 PACK_METADATA_FILENAME = "pack_metadata.json"
 PACK_CONTRIBUTORS_FILENAME = "CONTRIBUTORS.json"
 UNIFIED_FILES_SUFFIXES = [".yml", ".json"]
@@ -107,12 +109,42 @@ class ContentType(str, enum.Enum):
         elif self == ContentType.LAYOUT:
             return "layoutscontainer"
         elif self == ContentType.PREPROCESS_RULE:
-            return "pre-process-rule"
+            return "preprocessrule"
         elif self == ContentType.TEST_PLAYBOOK:
             return ContentType.PLAYBOOK.server_name
         elif self == ContentType.MAPPER:
             return "classifier-mapper"
         return self.lower()
+
+    # def __hash__(self) -> int:
+    #     return hash(self.value)
+
+    @property
+    def metadata_name(self) -> str:
+        if self == ContentType.SCRIPT:
+            return "automation"
+        elif self == ContentType.INDICATOR_TYPE:
+            return "reputation"
+        elif self == ContentType.LAYOUT:
+            return "layoutscontainer"
+        elif self == ContentType.TEST_PLAYBOOK:
+            return ContentType.PLAYBOOK.server_name
+        elif self == ContentType.MAPPER:
+            return "classifier"
+        return self.lower()
+
+    @property
+    def metadata_display_name(self) -> str:
+        if self == ContentType.SCRIPT:
+            return "Automation"
+        elif self == ContentType.INDICATOR_TYPE:
+            return "Reputation"
+        elif self == ContentType.MAPPER:
+            return "Classifier"
+        elif self == ContentType.LAYOUT:
+            return "Layouts Container"
+        else:
+            return re.sub(r"([a-z](?=[A-Z])|[A-Z](?=[A-Z][a-z]))", r"\1 ", self.value)
 
     @staticmethod
     def server_names() -> List[str]:

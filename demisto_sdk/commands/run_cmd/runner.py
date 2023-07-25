@@ -4,13 +4,11 @@ import tempfile
 
 import demisto_client
 
-from demisto_sdk.commands.common.handlers import JSON_Handler
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.generate_outputs.json_to_outputs.json_to_outputs import (
     json_to_outputs,
 )
-
-json = JSON_Handler()
 
 
 class DemistoRunTimeError(RuntimeError):
@@ -41,6 +39,7 @@ class Runner:
     def __init__(
         self,
         query: str,
+        incident_id: str = None,
         insecure: bool = False,
         debug: str = None,
         debug_path: str = None,
@@ -50,6 +49,7 @@ class Runner:
         **kwargs,
     ):
         self.query = query if query.startswith("!") else f"!{query}"
+        self.incident_id = incident_id
         self.debug = debug
         self.debug_path = debug_path
         verify = (
@@ -65,10 +65,11 @@ class Runner:
 
     def run(self):
         """Runs an integration command on Demisto and prints the result."""
-        playground_id = self._get_playground_id()
+        investigation_id = self.incident_id or self._get_playground_id()
+        logger.debug(f"running command in {investigation_id=}")
 
         try:
-            log_ids = self._run_query(playground_id)
+            log_ids = self._run_query(investigation_id)
         except DemistoRunTimeError as err:
             log_ids = None
             logger.info(f"[red]{err}[/red]")

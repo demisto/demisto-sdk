@@ -3,13 +3,10 @@ import os.path
 import re
 from typing import Dict, List, Tuple
 
-from demisto_sdk.commands.common.handlers import JSON_Handler
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import run_command
 from demisto_sdk.commands.run_cmd.runner import Runner
-
-json = JSON_Handler()
-
 
 STRING_TYPES = (str, bytes)  # type: ignore
 
@@ -146,9 +143,9 @@ def generate_table_section(
 
     for item in data:
         tmp_item = "    |" if numbered_section else "|"
-        escape_less_greater_signs = (
-            "First fetch time" in item
-        )  # instead of html escaping
+        escape_less_greater_signs = bool(
+            {"First fetch time", "First fetch timestamp"}.intersection(item.keys())
+        )  # instead of HTML escaping
         for key in item:
             escaped_string = string_escape_md(
                 str(item.get(key, "")),

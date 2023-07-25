@@ -12,7 +12,7 @@ from demisto_sdk.commands.common.constants import (
 from demisto_sdk.commands.common.default_additional_info_loader import (
     load_default_additional_info_dict,
 )
-from demisto_sdk.commands.common.handlers import JSON_Handler
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import get_yaml
 from demisto_sdk.commands.generate_docs.common import (
@@ -27,8 +27,6 @@ from demisto_sdk.commands.generate_docs.common import (
 from demisto_sdk.commands.integration_diff.integration_diff_detector import (
     IntegrationDiffDetector,
 )
-
-json = JSON_Handler()
 
 CREDENTIALS = 9
 
@@ -245,7 +243,8 @@ def generate_setup_section(yaml_data: dict):
                     "Parameter": conf.get("display"),
                     "Description": string_escape_md(
                         conf.get("additionalinfo", "")
-                        or default_additional_info.get(conf.get("name", ""), "")
+                        or default_additional_info.get(conf.get("name", ""), ""),
+                        escape_html=False,
                     ),
                     "Required": conf.get("required", ""),
                 }

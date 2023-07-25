@@ -1,8 +1,9 @@
 import re
-from distutils.version import LooseVersion
 from enum import Enum
 from functools import reduce
 from typing import Dict, List
+
+from packaging.version import Version
 
 CAN_START_WITH_DOT_SLASH = "(?:./)?"
 NOT_TEST = "(?!Test)"
@@ -59,6 +60,7 @@ LAYOUT = "layout"
 LAYOUTS_CONTAINER = "layoutscontainer"
 PRE_PROCESS_RULES = "pre-process-rules"
 LISTS = "list"  # singular, as it is the prefix of the file
+INCIDENT = "incident"  # prefix to identify any incident entity
 INCIDENT_TYPE = "incidenttype"
 INCIDENT_FIELD = "incidentfield"
 INDICATOR_FIELD = "indicatorfield"
@@ -793,7 +795,11 @@ ID_IN_ROOT = [  # entities in which 'id' key is in the root
 INTEGRATION_PREFIX = "integration"
 SCRIPT_PREFIX = "script"
 PARSING_RULE_PREFIX = "parsingrule"
+PARSING_RULE_ID_SUFFIX = "ParsingRule"
+PARSING_RULE_NAME_SUFFIX = "Parsing Rule"
 MODELING_RULE_PREFIX = "modelingrule"
+MODELING_RULE_ID_SUFFIX = "ModelingRule"
+MODELING_RULE_NAME_SUFFIX = "Modeling Rule"
 XDRC_TEMPLATE_PREFIX = "xdrctemplate"
 LAYOUT_RULE_PREFIX = "layoutrule"
 
@@ -805,6 +811,7 @@ PACKS_README_FILE_NAME = "README.md"
 PACKS_CONTRIBUTORS_FILE_NAME = "CONTRIBUTORS.json"
 AUTHOR_IMAGE_FILE_NAME = "Author_image.png"
 METADATA_FILE_NAME = "pack_metadata.json"
+PACKS_FOLDER = "Packs"
 
 CONF_JSON_FILE_NAME = "conf.json"
 
@@ -1090,9 +1097,17 @@ REQUIRED_YML_FILE_TYPES = [
 
 TYPE_PWSH = "powershell"
 TYPE_PYTHON = "python"
+TYPE_PYTHON3 = "python3"
+TYPE_PYTHON2 = "python2"
 TYPE_JS = "javascript"
 
-TYPE_TO_EXTENSION = {TYPE_PYTHON: ".py", TYPE_JS: ".js", TYPE_PWSH: ".ps1"}
+TYPE_TO_EXTENSION = {
+    TYPE_PYTHON: ".py",
+    TYPE_PYTHON3: ".py",
+    TYPE_PYTHON2: ".py",
+    TYPE_JS: ".js",
+    TYPE_PWSH: ".ps1",
+}
 
 TESTS_AND_DOC_DIRECTORIES = [
     "testdata",
@@ -1306,6 +1321,13 @@ ACCEPTED_FILE_EXTENSIONS = [
 ]
 ENDPOINT_COMMAND_NAME = "endpoint"
 
+RELIABILITY_PARAMETER_NAMES = [
+    "integration_reliability",  # First item in the list will be used in errors
+    "integrationReliability",
+    "feedReliability",
+    "reliability",
+]
+
 REPUTATION_COMMAND_NAMES = {"file", "email", "domain", "url", "ip", "cve"}
 
 BANG_COMMAND_NAMES = {"file", "email", "domain", "url", "ip", "cve", "endpoint"}
@@ -1318,7 +1340,7 @@ BANG_COMMAND_ARGS_MAPPING_DICT: Dict[str, dict] = {
     "domain": {"default": ["domain"]},
     "url": {"default": ["url"]},
     "ip": {"default": ["ip"]},
-    "cve": {"default": ["cve", "cve_id"]},
+    "cve": {"default": ["cve"]},
     "endpoint": {"default": ["ip"], "required": False},
 }
 
@@ -1370,13 +1392,14 @@ FILETYPE_TO_DEFAULT_FROMVERSION = {
     FileType.PARSING_RULE: "6.10.0",
     FileType.MODELING_RULE: "6.10.0",
     FileType.LAYOUT_RULE: "6.10.0",
+    FileType.XSIAM_DASHBOARD: "6.10.0",
 }
 
 DEFAULT_PYTHON_VERSION = "3.10"
 DEFAULT_PYTHON2_VERSION = "2.7"
 
 # This constant below should always be two versions before the latest server version
-GENERAL_DEFAULT_FROMVERSION = "6.8.0"
+GENERAL_DEFAULT_FROMVERSION = "6.9.0"
 VERSION_5_5_0 = "5.5.0"
 DEFAULT_CONTENT_ITEM_FROM_VERSION = "0.0.0"
 DEFAULT_CONTENT_ITEM_TO_VERSION = "99.99.99"
@@ -1406,21 +1429,21 @@ FEED_REQUIRED_PARAMS = [
             "defaultvalue": "true",
             "display": "Fetch indicators",
             "type": 8,
-            "required": False,
         },
         "must_contain": {},
+        "must_be_one_of": {},
     },
     {
         "name": "feedReputation",
         "must_equal": {
             "display": "Indicator Reputation",
             "type": 18,
-            "required": False,
             "options": ["None", "Good", "Suspicious", "Bad"],
         },
         "must_contain": {
             "additionalinfo": "Indicators from this integration instance will be marked with this reputation"
         },
+        "must_be_one_of": {},
     },
     {
         "name": "feedReliability",
@@ -1440,73 +1463,80 @@ FEED_REQUIRED_PARAMS = [
         "must_contain": {
             "additionalinfo": "Reliability of the source providing the intelligence data"
         },
+        "must_be_one_of": {},
     },
     {
         "name": "feedExpirationPolicy",
         "must_equal": {
             "display": "",
             "type": 17,
-            "required": False,
             "options": ["never", "interval", "indicatorType", "suddenDeath"],
         },
         "must_contain": {},
+        "must_be_one_of": {},
     },
     {
         "name": "feedExpirationInterval",
-        "must_equal": {"display": "", "type": 1, "required": False},
+        "must_equal": {"display": "", "type": 1},
         "must_contain": {},
+        "must_be_one_of": {},
     },
     {
         "name": "feedFetchInterval",
-        "must_equal": {"display": "Feed Fetch Interval", "type": 19, "required": False},
+        "must_equal": {"display": "Feed Fetch Interval", "type": 19},
         "must_contain": {},
+        "must_be_one_of": {},
     },
     {
         "name": "feedBypassExclusionList",
         "must_equal": {
             "display": "Bypass exclusion list",
             "type": 8,
-            "required": False,
         },
         "must_contain": {
             "additionalinfo": "When selected, the exclusion list is ignored for indicators from this feed."
             " This means that if an indicator from this feed is on the exclusion list,"
             " the indicator might still be added to the system."
         },
+        "must_be_one_of": {},
     },
     {
         "name": "feedTags",
-        "must_equal": {"display": "Tags", "required": False, "type": 0},
+        "must_equal": {"display": "Tags", "type": 0},
         "must_contain": {"additionalinfo": "Supports CSV values."},
+        "must_be_one_of": {},
     },
     {
         "name": "tlp_color",
         "must_equal": {
             "display": "Traffic Light Protocol Color",
-            "options": ["RED", "AMBER", "GREEN", "WHITE"],
-            "required": False,
             "type": 15,
         },
         "must_contain": {
             "additionalinfo": "The Traffic Light Protocol (TLP) designation to apply to indicators fetched from the "
             "feed"
         },
+        "must_be_one_of": {
+            "options": [
+                ["RED", "AMBER", "GREEN", "WHITE"],
+                ["RED", "AMBER+STRICT", "AMBER", "GREEN", "CLEAR"],
+            ]
+        },
     },
 ]
 
 INCIDENT_FETCH_REQUIRED_PARAMS = [
-    {"display": "Incident type", "name": "incidentType", "required": False, "type": 13},
-    {"display": "Fetch incidents", "name": "isFetch", "required": False, "type": 8},
+    {"display": "Incident type", "name": "incidentType", "type": 13},
+    {"display": "Fetch incidents", "name": "isFetch", "type": 8},
 ]
 
 ALERT_FETCH_REQUIRED_PARAMS = [
-    {"display": "Alert type", "name": "incidentType", "required": False, "type": 13},
-    {"display": "Fetch alerts", "name": "isFetch", "required": False, "type": 8},
+    {"display": "Alert type", "name": "incidentType", "type": 13},
+    {"display": "Fetch alerts", "name": "isFetch", "type": 8},
 ]
 
 MAX_FETCH_PARAM = {
     "name": "max_fetch",
-    "required": False,
     "type": 0,
     "defaultvalue": "50",
 }
@@ -1705,8 +1735,8 @@ MARKETPLACE_TO_CORE_PACKS_FILE: Dict[MarketplaceVersions, str] = {
 
 
 INDICATOR_FIELD_TYPE_TO_MIN_VERSION = {
-    "html": LooseVersion("6.1.0"),
-    "grid": LooseVersion("5.5.0"),
+    "html": Version("6.1.0"),
+    "grid": Version("5.5.0"),
 }
 
 
@@ -1797,3 +1827,24 @@ class ParameterType(Enum):
 NO_TESTS_DEPRECATED = "No tests (deprecated)"
 NATIVE_IMAGE_FILE_NAME = "docker_native_image_config.json"
 TESTS_REQUIRE_NETWORK_PACK_IGNORE = "tests_require_network"
+NATIVE_IMAGE_DOCKER_NAME = "demisto/py3-native"
+
+
+# SKIP PREPARE CONSTANTS
+SKIP_PREPARE_SCRIPT_NAME = "script-name-incident-to-alert"
+
+
+TABLE_INCIDENT_TO_ALERT = {
+    "incident": "alert",
+    "incidents": "alerts",
+    "Incident": "Alert",
+    "Incidents": "Alerts",
+    "INCIDENT": "ALERT",
+    "INCIDENTS": "ALERTS",
+}
+
+NATIVE_IMAGE_DOCKER_NAME = "demisto/py3-native"
+
+FORMATTING_SCRIPT = "indicator-format"
+
+ENV_SDK_WORKING_OFFLINE = "DEMISTO_SDK_OFFLINE_ENV"

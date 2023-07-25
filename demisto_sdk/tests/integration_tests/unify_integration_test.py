@@ -7,7 +7,8 @@ from click.testing import CliRunner
 
 from demisto_sdk.__main__ import main
 from demisto_sdk.commands.common.constants import ENV_DEMISTO_SDK_MARKETPLACE
-from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
+from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.tests.test_files.validate_integration_test_valid_types import (
     DASHBOARD,
@@ -16,11 +17,7 @@ from demisto_sdk.tests.test_files.validate_integration_test_valid_types import (
 )
 from TestSuite.test_tools import ChangeCWD
 
-json = JSON_Handler()
-
-
 UNIFY_CMD = "unify"
-yaml = YAML_Handler()
 
 
 class TestGenericModuleUnifier:
@@ -209,7 +206,6 @@ class TestIntegrationScriptUnifier:
                 assert unified_yml_data.get("script").get("nativeimage") == [
                     "8.1",
                     "8.2",
-                    "candidate",
                 ]
 
     def test_add_custom_section_flag(self, repo):
@@ -237,11 +233,7 @@ class TestIntegrationScriptUnifier:
             ) as unified_yml:
                 unified_yml_data = yaml.load(unified_yml)
                 assert unified_yml_data.get("name") == "sample_scriptTest"
-                assert unified_yml_data.get("nativeimage") == [
-                    "8.1",
-                    "8.2",
-                    "candidate",
-                ]
+                assert unified_yml_data.get("nativeimage") == ["8.1", "8.2"]
 
     def test_ignore_native_image_integration(self, repo):
         """

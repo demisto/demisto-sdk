@@ -12,15 +12,12 @@ from demisto_sdk.commands.common.errors import (
     PRESET_ERROR_TO_IGNORE,
     Errors,
 )
-from demisto_sdk.commands.common.handlers import JSON_Handler
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.hook_validations.base_validator import BaseValidator
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.tools import get_yaml
 from TestSuite.pack import Pack
 from TestSuite.test_tools import ChangeCWD, str_in_call_args_list
-
-json = JSON_Handler()
-
 
 DEPRECATED_IGNORE_ERRORS_DEFAULT_LIST = (
     BaseValidator.create_reverse_ignored_errors_list(
@@ -63,7 +60,7 @@ def test_handle_error_on_unignorable_error_codes(
     - Ensure that the un-ignorable errors are in FOUND_FILES_AND_ERRORS list.
     - Ensure that the un-ignorable errors are not in FOUND_FILES_AND_IGNORED_ERRORS list.
     """
-    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+    logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
     monkeypatch.setenv("COLUMNS", "1000")
 
     base_validator = BaseValidator(ignored_errors=ignored_errors)
@@ -76,7 +73,7 @@ def test_handle_error_on_unignorable_error_codes(
         suggested_fix="fix",
     )
     assert expected_error in result
-    assert str_in_call_args_list(logger_info.call_args_list, expected_error)
+    assert str_in_call_args_list(logger_error.call_args_list, expected_error)
     assert f"file_name - [{error_code}]" in FOUND_FILES_AND_ERRORS
     assert f"file_name - [{error_code}]" not in FOUND_FILES_AND_IGNORED_ERRORS
 
@@ -456,7 +453,6 @@ class TestJsonOutput:
                 "severity": "error",
                 "errorCode": ui_applicable_error_code,
                 "message": ui_applicable_error_message,
-                "ui": True,
                 "relatedField": "<parameter-name>.display",
             }
         ]
@@ -471,7 +467,6 @@ class TestJsonOutput:
                 "severity": "error",
                 "errorCode": ui_applicable_error_code,
                 "message": ui_applicable_error_message,
-                "ui": True,
                 "relatedField": "<parameter-name>.display",
                 "linter": "validate",
             },
@@ -484,7 +479,6 @@ class TestJsonOutput:
                 "severity": "warning",
                 "errorCode": non_ui_applicable_error_code,
                 "message": non_ui_applicable_error_message,
-                "ui": False,
                 "relatedField": "subtype",
                 "linter": "validate",
             },

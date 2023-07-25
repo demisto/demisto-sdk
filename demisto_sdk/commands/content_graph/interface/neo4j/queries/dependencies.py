@@ -1,4 +1,3 @@
-import json
 import os
 from pathlib import Path
 from typing import Dict, List
@@ -10,6 +9,7 @@ from demisto_sdk.commands.common.constants import (
     GENERIC_COMMANDS_NAMES,
     MarketplaceVersions,
 )
+from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.content_graph.common import (
     ContentType,
@@ -22,6 +22,7 @@ from demisto_sdk.commands.content_graph.interface.neo4j.queries.common import (
     to_neo4j_map,
 )
 
+json = JSON_Handler()
 IGNORED_PACKS_IN_DEPENDENCY_CALC = ["NonSupported", "Base", "ApiModules"]
 
 MAX_DEPTH = 5
@@ -30,7 +31,7 @@ MAX_DEPTH = 5
 def get_all_level_packs_relationships(
     tx: Transaction,
     relationship_type: RelationshipType,
-    ids_list: List[int],
+    ids_list: List[str],
     marketplace: MarketplaceVersions,
     mandatorily: bool = False,
     **properties,
@@ -41,7 +42,7 @@ def get_all_level_packs_relationships(
         query = f"""
             UNWIND $ids_list AS node_id
             MATCH path = shortestPath((p1:{ContentType.PACK}{params_str})-[r:{relationship_type}*..{MAX_DEPTH}]->(p2:{ContentType.PACK}))
-            WHERE id(p1) = node_id AND id(p1) <> id(p2)
+            WHERE elementId(p1) = node_id AND elementId(p1) <> elementId(p2)
             AND all(n IN nodes(path) WHERE "{marketplace}" IN n.marketplaces)
             AND all(r IN relationships(path) WHERE NOT r.is_test {"AND r.mandatorily = true)" if mandatorily else ""}
             RETURN node_id, collect(r) as relationships, collect(p2) AS nodes_to
@@ -50,7 +51,7 @@ def get_all_level_packs_relationships(
         # search all the content items that import the 'node_from' content item
         query = f"""UNWIND $ids_list AS node_id
             MATCH path=shortestPath((node_from) <- [relationship:{relationship_type}*..{MAX_DEPTH}] - (node_to))
-            WHERE id(node_from) = node_id and node_from <> node_to
+            WHERE elementId(node_from) = node_id and node_from <> node_to
             return node_id, node_from, collect(relationship) AS relationships,
             collect(node_to) AS nodes_to
         """
@@ -58,7 +59,7 @@ def get_all_level_packs_relationships(
     result = run_query(tx, query, ids_list=list(ids_list))
     logger.debug("Found dependencies.")
     return {
-        int(item.get("node_id")): Neo4jRelationshipResult(
+        item.get("node_id"): Neo4jRelationshipResult(
             node_from=item.get("node_from"),
             nodes_to=item.get("nodes_to"),
             relationships=item.get("relationships"),
@@ -157,7 +158,7 @@ def create_depends_on_relationships(tx: Transaction) -> None:
 MATCH (pack_a:{ContentType.BASE_CONTENT})<-[:{RelationshipType.IN_PACK}]-(a)
     -[r:{RelationshipType.USES}]->(b)-[:{RelationshipType.IN_PACK}]->(pack_b:{ContentType.BASE_CONTENT})
 WHERE ANY(marketplace IN pack_a.marketplaces WHERE marketplace IN pack_b.marketplaces)
-AND id(pack_a) <> id(pack_b)
+AND elementId(pack_a) <> elementId(pack_b)
 AND NOT pack_b.object_id IN pack_a.excluded_dependencies
 AND NOT pack_a.name IN {IGNORED_PACKS_IN_DEPENDENCY_CALC}
 AND NOT pack_b.name IN {IGNORED_PACKS_IN_DEPENDENCY_CALC}

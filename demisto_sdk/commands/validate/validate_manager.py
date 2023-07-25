@@ -1,6 +1,5 @@
 import os
 from concurrent.futures._base import Future, as_completed
-from configparser import ConfigParser, MissingSectionHeaderError
 from pathlib import Path
 from typing import Callable, List, Optional, Set, Tuple
 
@@ -9,10 +8,6 @@ from git import InvalidGitRepositoryError
 from packaging import version
 
 from demisto_sdk.commands.common import tools
-from demisto_sdk.commands.common.content.objects.pack_objects.integration.integration import (
-    Integration,
-)
-from demisto_sdk.commands.common.cpu_count import cpu_count
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import (
     API_MODULES_PACK,
@@ -27,16 +22,17 @@ from demisto_sdk.commands.common.constants import (
     PACKS_PACK_META_FILE_NAME,
     SKIP_RELEASE_NOTES_FOR_TYPES,
     VALIDATION_USING_GIT_IGNORABLE_DATA,
+    XSIAM_DASHBOARDS_DIR,
     FileType,
     FileType_ALLOWED_TO_DELETE,
     PathLevel,
-    XSIAM_DASHBOARDS_DIR,
 )
 from demisto_sdk.commands.common.content import Content
 from demisto_sdk.commands.common.content_constant_paths import (
     CONTENT_PATH,
     DEFAULT_ID_SET_PATH,
 )
+from demisto_sdk.commands.common.cpu_count import cpu_count
 from demisto_sdk.commands.common.errors import (
     FOUND_FILES_AND_ERRORS,
     FOUND_FILES_AND_IGNORED_ERRORS,
@@ -149,10 +145,8 @@ from demisto_sdk.commands.common.tools import (
     find_type,
     get_api_module_dependencies_from_graph,
     get_api_module_ids,
-    get_api_module_integrations_set,
     get_file,
     get_pack_ignore_content,
-    get_pack_ignore_file_path,
     get_pack_name,
     get_pack_names_from_files,
     get_relative_path_from_packs_dir,
@@ -226,6 +220,7 @@ class ValidateManager:
         self.check_is_unskipped = check_is_unskipped
         self.conf_json_data = {}
         self.run_with_multiprocessing = multiprocessing
+        self.packs_with_mp_change = set()
         self.is_possible_validate_readme = (
             self.is_node_exist() or ReadMeValidator.is_docker_available()
         )
@@ -477,7 +472,7 @@ class ValidateManager:
 
         if self.validate_graph:
             logger.info(
-                f"\n[cyan]================= Validating graph =================[/cyan]"
+                "\n[cyan]================= Validating graph =================[/cyan]"
             )
             with GraphValidator(
                 specific_validations=self.specific_validations,
@@ -567,7 +562,7 @@ class ValidateManager:
                 count += 1
         if self.validate_graph:
             logger.info(
-                f"\n[cyan]================= Validating graph =================[/cyan]"
+                "\n[cyan]================= Validating graph =================[/cyan]"
             )
             specific_validations_list = (
                 self.specific_validations if self.specific_validations else []
@@ -582,15 +577,19 @@ class ValidateManager:
 
         return all(all_packs_valid)
 
-    def run_validations_on_pack(self, pack_path):
+    def run_validations_on_pack(self, pack_path, skip_files: Optional[Set[str]] = None):
         """Runs validation on all files in given pack. (i,g,a)
 
         Args:
             pack_path: the path to the pack.
+            skip_files: a list of files to skip.
 
         Returns:
             bool. true if all files in pack are valid, false otherwise.
         """
+        if not skip_files:
+            skip_files = set()
+
         pack_entities_validation_results = set()
         pack_error_ignore_list = self.get_error_ignore_list(os.path.basename(pack_path))
 
@@ -600,14 +599,15 @@ class ValidateManager:
 
         for content_dir in os.listdir(pack_path):
             content_entity_path = os.path.join(pack_path, content_dir)
-            if content_dir in CONTENT_ENTITIES_DIRS:
-                pack_entities_validation_results.add(
-                    self.run_validation_on_content_entities(
-                        content_entity_path, pack_error_ignore_list
+            if content_entity_path not in skip_files:
+                if content_dir in CONTENT_ENTITIES_DIRS:
+                    pack_entities_validation_results.add(
+                        self.run_validation_on_content_entities(
+                            content_entity_path, pack_error_ignore_list
+                        )
                     )
-                )
-            else:
-                self.ignored_files.add(content_entity_path)
+                else:
+                    self.ignored_files.add(content_entity_path)
 
         return all(pack_entities_validation_results), FOUND_FILES_AND_ERRORS
 
@@ -1294,32 +1294,33 @@ class ValidateManager:
             )
         )
         validation_results.add(self.validate_deleted_files(deleted_files, added_files))
-        logger.debug(f"*** after adding validate_deleted_files")
+        logger.debug("*** after adding validate_deleted_files")
 
         logger.debug(
             f"*** Before ifs, {old_format_files=}, {self.skip_pack_rn_validation=}"
         )
         if old_format_files:
             logger.info(
-                f"\n[cyan]================= Running validation on old format files =================[/cyan]"
+                "\n[cyan]================= Running validation on old format files =================[/cyan]"
             )
             validation_results.add(self.validate_no_old_format(old_format_files))
-            logger.info(f"*** after adding validate_no_old_format")
+            logger.info("*** after adding validate_no_old_format")
 
         if not self.skip_pack_rn_validation:
-            logger.info(f"*** adding validate_no_duplicated_release_notes")
+            logger.info("*** adding validate_no_duplicated_release_notes")
             validation_results.add(
                 self.validate_no_duplicated_release_notes(added_files)
             )
-            logger.info(f"*** after adding validate_no_duplicated_release_notes")
+            logger.info("*** after adding validate_no_duplicated_release_notes")
+
+        all_files_set = list(
+            set().union(
+                modified_files, added_files, old_format_files, changed_meta_files
+            )
+        )
         if self.validate_graph:
             logger.info(
-                f"\n[cyan]================= Validating graph =================[/cyan]"
-            )
-            all_files_set = list(
-                set().union(
-                    modified_files, added_files, old_format_files, changed_meta_files
-                )
+                "\n[cyan]================= Validating graph =================[/cyan]"
             )
             if all_files_set:
                 with GraphValidator(
@@ -1336,6 +1337,24 @@ class ValidateManager:
                             graph_validator,
                         )
                     )
+
+        if self.packs_with_mp_change:
+            logger.info(
+                "\n[cyan]================= Running validation on Marketplace Changed Packs =================[/cyan]"
+            )
+            logger.debug(
+                f"Found marketplace change in the following packs: {self.packs_with_mp_change}"
+            )
+
+            for mp_changed_metadata_pack in self.packs_with_mp_change:
+                # Running validation on the whole pack, excluding files that were already checked.
+                validation_results.add(
+                    self.run_validations_on_pack(
+                        mp_changed_metadata_pack, skip_files=set(all_files_set)
+                    )[0]
+                )
+
+            logger.debug("Finished validating marketplace changed packs.")
 
         return all(validation_results)
 
@@ -1931,6 +1950,9 @@ class ValidateManager:
                 author_image_path, pack_error_ignore_list
             )
 
+        if pack_unique_files_validator.check_metadata_for_marketplace_change():
+            self.packs_with_mp_change = self.packs_with_mp_change.union({pack_path})
+
         return files_valid and author_valid
 
     def validate_job(self, structure_validator, pack_error_ignore_list):
@@ -1948,7 +1970,7 @@ class ValidateManager:
 
     def validate_modified_files(self, modified_files):
         logger.info(
-            f"\n[cyan]================= Running validation on modified files =================[/cyan]"
+            "\n[cyan]================= Running validation on modified files =================[/cyan]"
         )
         valid_files = set()
         for file_path in modified_files:
@@ -1973,7 +1995,7 @@ class ValidateManager:
 
     def validate_added_files(self, added_files, modified_files):
         logger.info(
-            f"\n[cyan]================= Running validation on newly added files =================[/cyan]"
+            "\n[cyan]================= Running validation on newly added files =================[/cyan]"
         )
 
         valid_files = set()
@@ -2038,8 +2060,7 @@ class ValidateManager:
                         file = str(file)
                         file_type = find_type(file)
                         if file_type == deleted_file_type:
-                            file_suffix = Path(deleted_file_path).suffix
-                            file_dict = get_file(file, file_suffix)
+                            file_dict = get_file(file)
                             if deleted_file_id == _get_file_id(
                                 file_type.value, file_dict
                             ):
@@ -2049,7 +2070,7 @@ class ValidateManager:
     @error_codes("BA115")
     def validate_deleted_files(self, deleted_files: set, added_files: set) -> bool:
         logger.info(
-            f"\n[cyan]================= Checking for prohibited deleted files =================[/cyan]"
+            "\n[cyan]================= Checking for prohibited deleted files =================[/cyan]"
         )
 
         is_valid = True
@@ -2088,7 +2109,7 @@ class ValidateManager:
         self, modified_files, added_files, old_format_files, changed_meta_files
     ):
         logger.info(
-            f"\n[cyan]================= Running validation on changed pack unique files =================[/cyan]"
+            "\n[cyan]================= Running validation on changed pack unique files =================[/cyan]"
         )
         valid_pack_files = set()
 
@@ -2157,7 +2178,7 @@ class ValidateManager:
             bool. True if no duplications found, false otherwise
         """
         logger.info(
-            f"\n[cyan]================= Verifying no duplicated release notes =================[/cyan]"
+            "\n[cyan]================= Verifying no duplicated release notes =================[/cyan]"
         )
         added_rn = set()
         for file in added_files:

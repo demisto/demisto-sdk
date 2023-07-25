@@ -5,13 +5,12 @@ import glob
 import os
 import re
 from datetime import datetime
-from distutils.version import LooseVersion
 from pathlib import Path
 from typing import Dict, List, Set, Tuple
 
 from dateutil import parser
 from git import GitCommandError, Repo
-from packaging.version import parse
+from packaging.version import Version, parse
 
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import (  # PACK_METADATA_PRICE,
@@ -46,7 +45,7 @@ from demisto_sdk.commands.common.content import Content
 from demisto_sdk.commands.common.content.objects.pack_objects.pack import Pack
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.git_util import GitUtil
-from demisto_sdk.commands.common.handlers import JSON_Handler
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.hook_validations.base_validator import (
     BaseValidator,
     error_codes,
@@ -61,9 +60,6 @@ from demisto_sdk.commands.common.tools import (
     pack_name_to_path,
 )
 from demisto_sdk.commands.find_dependencies.find_dependencies import PackDependencies
-
-json = JSON_Handler()
-
 
 CONTRIBUTORS_LIST = ["partner", "developer", "community"]
 SUPPORTED_CONTRIBUTORS_LIST = ["partner", "developer"]
@@ -207,7 +203,7 @@ class PackUniqueFilesValidator(BaseValidator):
             rn[: rn.rindex(".")].replace("_", ".") for rn in list_of_release_notes
         ]
         if list_of_versions:
-            list_of_versions.sort(key=LooseVersion)
+            list_of_versions.sort(key=Version)
             return list_of_versions[-1]
         else:
             return ""
@@ -269,6 +265,19 @@ class PackUniqueFilesValidator(BaseValidator):
                 return True
 
         return False
+
+    def check_metadata_for_marketplace_change(self):
+        """Return True if pack_metadata's marketplaces field was changed."""
+        metadata_file_path = self._get_pack_file_path(self.pack_meta_file)
+        if not Path(metadata_file_path).is_file():
+            # No metadata file, No marketplace change.
+            return False
+
+        old_meta_file_content = get_remote_file(metadata_file_path, tag=self.prev_ver)
+        current_meta_file_content = self._read_metadata_content()
+        old_marketplaces = old_meta_file_content.get("marketplaces", [])
+        current_marketplaces = current_meta_file_content.get("marketplaces", [])
+        return set(old_marketplaces) != set(current_marketplaces)
 
     @staticmethod
     def check_timestamp_format(timestamp):
@@ -446,7 +455,7 @@ class PackUniqueFilesValidator(BaseValidator):
         current_meta_file_content = get_json(metadata_file_path)
         old_version = old_meta_file_content.get("currentVersion", "0.0.0")
         current_version = current_meta_file_content.get("currentVersion", "0.0.0")
-        if LooseVersion(old_version) < LooseVersion(current_version):
+        if Version(old_version) < Version(current_version):
             return True
         elif self._add_error(
             Errors.pack_metadata_version_should_be_raised(self.pack, old_version),
@@ -1119,7 +1128,6 @@ class PackUniqueFilesValidator(BaseValidator):
 
     @error_codes("PA124")
     def validate_core_pack_dependencies(self, dependencies_packs):
-
         found_dependencies = []
         for dependency_pack in dependencies_packs:
             if dependencies_packs.get(dependency_pack, {}).get("mandatory"):

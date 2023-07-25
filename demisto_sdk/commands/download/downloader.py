@@ -37,7 +37,8 @@ from demisto_sdk.commands.common.constants import (
     TEST_PLAYBOOKS_DIR,
     UUID_REGEX,
 )
-from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
+from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     find_type,
@@ -53,16 +54,13 @@ from demisto_sdk.commands.common.tools import (
     get_json,
     get_yaml,
     get_yml_paths_in_dir,
+    is_sdk_defined_working_offline,
     retrieve_file_ending,
     safe_write_unicode,
 )
 from demisto_sdk.commands.format.format_module import format_manager
 from demisto_sdk.commands.init.initiator import Initiator
 from demisto_sdk.commands.split.ymlsplitter import YmlSplitter
-
-json = JSON_Handler()
-yaml = YAML_Handler()
-
 
 ITEM_TYPE_TO_ENDPOINT: dict = {
     "IncidentType": "/incidenttype",
@@ -184,6 +182,11 @@ class Downloader:
         self.num_added_files = 0
         self.init = init
         self.keep_empty_folders = keep_empty_folders
+        if is_sdk_defined_working_offline() and self.run_format:
+            self.run_format = False
+            logger.info(
+                "format is not supported when the DEMISTO_SDK_OFFLINE_ENV environment variable is set, skipping it."
+            )
 
     def download(self) -> int:
         """
@@ -1271,7 +1274,7 @@ class Downloader:
             splitter="dot",
         )
 
-        file_data = get_file(output_path, type_of_file=file_ending, clear_cache=True)
+        file_data = get_file(output_path, clear_cache=True)
         if pack_obj_data:
             merge(file_data, preserved_data)
 

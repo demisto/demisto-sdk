@@ -1,5 +1,7 @@
 import os
 from pathlib import Path
+from tempfile import TemporaryDirectory
+from typing import List
 
 import pytest
 
@@ -9,7 +11,8 @@ from demisto_sdk.commands.common.constants import (
     MODELING_RULE,
     PARSING_RULE,
 )
-from demisto_sdk.commands.common.handlers import YAML_Handler
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
+from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import (
     ContentEntityValidator,
 )
@@ -32,8 +35,6 @@ HAS_TESTS_KEY_UNPUTS = [
     (VALID_INTEGRATION_TEST_PATH, "integration", True),
     (INVALID_INTEGRATION_WITH_NO_TEST_PLAYBOOK, "integration", False),
 ]
-
-yaml = YAML_Handler()
 
 
 @pytest.mark.parametrize("file_path, schema, expected", HAS_TESTS_KEY_UNPUTS)
@@ -373,38 +374,68 @@ def test_fromversion_update_validation_yml_structure(
         assert validator.is_valid_fromversion_on_modified() is answer, error
 
 
-INPUTS_VALID_MARKETPLACES_MODIFIED = [
-    (
-        VALID_TEST_PLAYBOOK_PATH,
-        VALID_TEST_PLAYBOOK_MARKETPLACES_PATH,
-        True,
-        "New marketplace was added to the supported marketplaces list",
-    ),
-    (
-        VALID_TEST_PLAYBOOK_MARKETPLACES_PATH,
-        VALID_TEST_PLAYBOOK_PATH,
-        False,
-        "Removing values from the list of supported marketplaces is not allowed",
-    ),
-    (
-        VALID_TEST_PLAYBOOK_MARKETPLACES_PATH,
-        INVALID_PLAYBOOK_PATH,
-        False,
-        "Adding a marketplaces field to existing content is not allowed.",
-    ),
-]
-
-
 @pytest.mark.parametrize(
-    "path, old_file_path, answer, error", INPUTS_VALID_MARKETPLACES_MODIFIED
+    "old_pack_marketplaces,old_content_marketplaces,new_content_marketplaces,expected_valid",
+    [
+        pytest.param(
+            ["1"], ["1"], ["1"], True, id="sanity, both match and are unchanged"
+        ),
+        pytest.param(
+            ["1"],
+            ["1"],
+            ["1", "2"],
+            True,
+            id="pack&content had 1, added 2 to both",
+        ),
+        pytest.param(
+            ["1"],
+            [],
+            ["1"],
+            True,
+            id="pack had 1, content had empty, added 1 to content",
+        ),
+        pytest.param(
+            ["1"],
+            [],
+            ["2"],
+            False,
+            id="pack had 1, content had empty, added 2 to content",
+        ),
+        pytest.param(
+            ["1"],
+            ["1"],
+            [],
+            False,
+            id="pack&content had 1, now content has empty",
+        ),
+    ],
 )
-def test_marketplaces_update_validation_yml_structure(
-    path, old_file_path, answer, error
+def test_marketplaces_update_against_pack(
+    mocker,
+    old_pack_marketplaces: List[str],
+    old_content_marketplaces: List[str],
+    new_content_marketplaces: List[str],
+    expected_valid: bool,
 ):
-    validator = ContentEntityValidator(StructureValidator(file_path=path))
-    with open(old_file_path) as f:
-        validator.old_file = yaml.load(f)
-        assert validator.is_valid_marketplaces_on_modified() is answer, error
+    old_pack = {"marketplaces": old_pack_marketplaces}
+
+    old_content = {"marketplaces": old_content_marketplaces}
+    new_content = {"marketplaces": new_content_marketplaces}
+
+    mocker.patch(
+        "demisto_sdk.commands.common.hook_validations.content_entity_validator.get_remote_file",
+        return_value=old_pack,
+    )
+    from demisto_sdk.commands.common.hook_validations.content_entity_validator import (
+        ContentEntityValidator,  # importing again to allow mocking get_remote_file
+    )
+
+    with TemporaryDirectory() as dir, open(file := Path(dir, "test.json"), "w") as f:
+        json.dump(new_content, f)
+        f.flush()
+        validator = ContentEntityValidator(StructureValidator(file_path=str(file)))
+        validator.old_file = old_content
+        assert validator.is_valid_marketplaces_on_modified() is expected_valid
 
 
 INPUTS_VALID_TOVERSION_MODIFIED = [

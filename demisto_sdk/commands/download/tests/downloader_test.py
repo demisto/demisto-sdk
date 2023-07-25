@@ -48,7 +48,8 @@ from demisto_sdk.commands.common.constants import (
     XSIAM_DASHBOARDS_DIR,
     XSIAM_REPORTS_DIR,
 )
-from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
+from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.tests.tools_test import SENTENCE_WITH_UMLAUTS
 from demisto_sdk.commands.common.tools import (
@@ -59,9 +60,6 @@ from demisto_sdk.commands.common.tools import (
 )
 from demisto_sdk.commands.download.downloader import Downloader
 from TestSuite.test_tools import str_in_call_args_list
-
-yaml = YAML_Handler()
-json = JSON_Handler()
 
 
 def ordered(obj):
@@ -1379,7 +1377,7 @@ def test_safe_write_unicode_to_non_unicode(
     )
 
     # make sure the two files were merged correctly
-    result = get_file(dest, suffix)
+    result = get_file(dest)
     assert set(result.keys()) == set(fields)
     assert set(result.values()) == {SENTENCE_WITH_UMLAUTS}
 

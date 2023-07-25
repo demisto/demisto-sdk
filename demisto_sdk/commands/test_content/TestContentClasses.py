@@ -8,7 +8,6 @@ import time
 import urllib.parse
 import uuid
 from copy import deepcopy
-from distutils.version import LooseVersion
 from math import ceil
 from pprint import pformat
 from queue import Empty, Queue
@@ -20,6 +19,7 @@ import requests
 import urllib3
 from demisto_client.demisto_api import DefaultApi, Incident
 from demisto_client.demisto_api.rest import ApiException
+from packaging.version import Version
 from slack_sdk import WebClient as SlackClient
 
 from demisto_sdk.commands.common.constants import (
@@ -28,7 +28,7 @@ from demisto_sdk.commands.common.constants import (
     FILTER_CONF,
     PB_Status,
 )
-from demisto_sdk.commands.common.handlers import JSON_Handler
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.tools import get_demisto_version
 from demisto_sdk.commands.test_content.Docker import Docker
 from demisto_sdk.commands.test_content.IntegrationsLock import acquire_test_lock
@@ -45,8 +45,6 @@ from demisto_sdk.commands.test_content.tools import (
     is_redhat_instance,
     update_server_configuration,
 )
-
-json = JSON_Handler()
 
 ENV_RESULTS_PATH = "./artifacts/env_results.json"
 FAILED_MATCH_INSTANCE_MSG = (
@@ -284,9 +282,9 @@ class TestPlaybook:
 
         def version_mismatch():
             if not (
-                LooseVersion(self.configuration.from_version)
-                <= LooseVersion(self.build_context.server_numeric_version)
-                <= LooseVersion(self.configuration.to_version)
+                Version(self.configuration.from_version)
+                <= Version(self.build_context.server_numeric_version)
+                <= Version(self.configuration.to_version)
             ):
                 self.build_context.logging_module.warning(
                     f"Test {self} ignored due to version mismatch "
@@ -2676,7 +2674,6 @@ class ServerContext:
         time.sleep(10)
 
     def execute_tests(self):
-
         try:
             self.build_context.logging_module.info(
                 f"Starts tests with server url - {get_ui_url(self.server_url)}",
@@ -2823,7 +2820,7 @@ def replace_external_playbook_configuration(
     # Checking server version
     server_version = get_demisto_version(client)
 
-    if LooseVersion(server_version.base_version) < LooseVersion("6.2.0"):  # type: ignore
+    if Version(server_version.base_version) < Version("6.2.0"):  # type: ignore
         logger_module.info(
             "External Playbook not supported in versions previous to 6.2.0, skipping re-configuration."
         )

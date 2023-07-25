@@ -1043,6 +1043,11 @@ def get_to_version(file_path):
     return DEFAULT_CONTENT_ITEM_TO_VERSION
 
 
+def str2bool(v):
+    """
+    Deprecated. Use string_to_bool instead
+    """
+    return string_to_bool(v, default_when_empty=False)
 
 
 def to_dict(obj):

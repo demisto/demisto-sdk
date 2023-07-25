@@ -31,7 +31,7 @@ MAX_DEPTH = 5
 def get_all_level_packs_relationships(
     tx: Transaction,
     relationship_type: RelationshipType,
-    ids_list: List[int],
+    ids_list: List[str],
     marketplace: MarketplaceVersions,
     mandatorily: bool = False,
     **properties,

@@ -5,6 +5,7 @@
 * Fixed an issue where **validate** falsely detected backwards-compatibility issues, and prevented adding the `marketplaces` key to content items.
 * Calling **format** with the `-d` flag now removes test playbooks testing the deprecated content from conf.json.
 * Fixed an issue where the SDK would fail pulling docker images.
+* Fixed an issue where **prepare-content** command would add the string `candidate` to scripts and integrations for the *nativeimage* key.
 * Fixed an issue where in some cases the **split** command did not remove pack version note from the script.
 * Improved the content graph performance when calculating content relationships.
 * Fixed an issue where **validate** would not properly detect dependencies of core packs.
@@ -21,7 +22,9 @@
 * Fixed an issue in **doc-review** command where escape characters within Markdown files were detected as invalid words.
 * Calling **modeling-rules init-test-data** will now return the XDM fields output in alphabetical order.
 * Fixed an issue where **validate** failed on infrastructure test files.
+* Added a new validation (`BA125`) to **validate** that assures internal function names aren't in use in customer-facing docs.
 * Fixed an issue in **update-content-graph** where the neo4j service was unaccessible for non-root users.
+* Added a Sourcery hook to **pre-commit**.
 
 ## 1.17.2
 * Fixed an issue where **lint** and **validate** commands failed on integrations and scripts that use docker images that are not available in the Docker Hub but exist locally.

@@ -3833,4 +3833,4 @@ def is_sdk_defined_working_offline() -> bool:
     Returns:
         bool: The value for DEMISTO_SDK_OFFLINE_ENV environment variable.
     """
-    return str2bool(os.getenv(ENV_SDK_WORKING_OFFLINE))
+    raise ValueError

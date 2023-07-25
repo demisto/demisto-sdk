@@ -180,7 +180,8 @@ def format_manager(
     log_list = []
     error_list: List[Tuple[int, int]] = []
     if files:
-        graph = ContentGraphInterface(update_graph=True) if format_with_graph else None
+        graph = ContentGraphInterface(update_graph=True) if is_graph_related_files(files, clear_cache) and \
+                                                            format_with_graph else None
         for file in files:
             file_path = file.replace("\\", "/")
             file_type = find_type(file_path, clear_cache=clear_cache)
@@ -416,3 +417,25 @@ def format_output(
         info_list.append(f"Format Status   on file: {input} - Success")
         info_list.append(f"Validate Status on file: {input} - Success")
     return info_list, error_list, skipped_list
+
+
+def is_graph_related_files(files: List[str], clear_cache: bool) -> bool:
+    """
+        Check if the files that Format should check are of type mapper, layout or incident fields.
+        Otherwise, we don't need to start the graph.
+
+        Args:
+            files (List[str]): a list of the paths of the files Format should check.
+            clear_cache (bool): wether to clear the cache.
+
+        Returns:
+            True if the files are of type mapper, layout or incident fields, else False.
+        """
+    for file in files:
+        file_path = file.replace("\\", "/")
+        file_type = find_type(file_path, clear_cache=clear_cache)
+        if file_type and file_type.value not in UNFORMATTED_FILES:
+            file_type = file_type.value
+            if file_type in (FileType.INCIDENT_FIELD.value, FileType.LAYOUTS_CONTAINER.value, FileType.MAPPER.value):
+                return True
+    return False

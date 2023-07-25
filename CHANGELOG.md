@@ -1,5 +1,6 @@
 # Changelog
 ## Unreleased
+* Added support for Python 3.11.
 * Fixed an issue where the *DEMISTO_SDK_SKIP_VERSION_CHECK* was ignored when running on non CI environments.
 * Added the ability to ignore any validation in the **validate** command when running in an external (non-demisto/content) repo, by placing a `.private-repo-settings` file at its root.
 * Fixed an issue where **validate** falsely detected backwards-compatibility issues, and prevented adding the `marketplaces` key to content items.
@@ -282,7 +283,6 @@
 * Deprecated integrations and scripts will not run anymore when providing the **--all-packs** to the **lint** command.
 * Fixed an issue where a pack `serverMinVersion` would be calculated by the minimal fromVersion of its content items.
 * Added the `--docker-image-target` flag to **lint** for testing native supported content with new images.
-* Added support for Python 3.11.
 
 
 ## 1.10.5

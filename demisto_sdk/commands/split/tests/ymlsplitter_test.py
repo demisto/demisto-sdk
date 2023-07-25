@@ -7,7 +7,8 @@ import pytest
 
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import DEFAULT_IMAGE_BASE64
-from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
+from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.prepare_content.integration_script_unifier import (
     IntegrationScriptUnifier,
@@ -18,9 +19,6 @@ from demisto_sdk.commands.prepare_content.tests.yml_unifier_test import (
 )
 from demisto_sdk.commands.split.ymlsplitter import YmlSplitter
 from TestSuite.test_tools import ChangeCWD
-
-yaml = YAML_Handler()
-json = JSON_Handler()
 
 
 def test_extract_long_description(tmpdir):
@@ -289,10 +287,12 @@ def test_extract_code(tmpdir, file_path, file_type):
         output=str(tmpdir.join("temp_code.py")),
         file_type=file_type,
     )
-    assert (
-        "### pack version: 1.0.3"
-        in yaml.load(Path(extractor.input).read_text())["script"]["script"]
-    )
+    script_before_split = yaml.load(Path(extractor.input).read_text())["script"][
+        "script"
+    ]
+    assert "### pack version: 1.0.3" in script_before_split
+    assert "# pack version: 1.0.3" in script_before_split
+    assert "#### pack version: 1.0.3" in script_before_split
 
     extractor.extract_code(extractor.output)
     with open(extractor.output, "rb") as temp_code:
@@ -302,6 +302,8 @@ def test_extract_code(tmpdir, file_path, file_type):
         assert file_data[-1] == "\n"
         assert "register_module_line" not in file_data
         assert "### pack version: 1.0.3" not in file_data
+        assert "# pack version: 1.0.3" not in file_data
+        assert "#### pack version: 1.0.3" not in file_data
     os.remove(extractor.output)
 
     extractor.common_server = False
@@ -313,6 +315,8 @@ def test_extract_code(tmpdir, file_path, file_type):
         assert "from CommonServerPython import *  #" not in file_data
         assert "register_module_line" not in file_data
         assert "### pack version: 1.0.3" not in file_data
+        assert "# pack version: 1.0.3" not in file_data
+        assert "#### pack version: 1.0.3" not in file_data
         assert file_data[-1] == "\n"
 
 

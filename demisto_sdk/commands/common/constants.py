@@ -1,8 +1,9 @@
 import re
-from distutils.version import LooseVersion
 from enum import Enum
 from functools import reduce
 from typing import Dict, List
+
+from packaging.version import Version
 
 CAN_START_WITH_DOT_SLASH = "(?:./)?"
 NOT_TEST = "(?!Test)"
@@ -1339,7 +1340,7 @@ BANG_COMMAND_ARGS_MAPPING_DICT: Dict[str, dict] = {
     "domain": {"default": ["domain"]},
     "url": {"default": ["url"]},
     "ip": {"default": ["ip"]},
-    "cve": {"default": ["cve", "cve_id"]},
+    "cve": {"default": ["cve"]},
     "endpoint": {"default": ["ip"], "required": False},
 }
 
@@ -1731,8 +1732,8 @@ MARKETPLACE_TO_CORE_PACKS_FILE: Dict[MarketplaceVersions, str] = {
 
 
 INDICATOR_FIELD_TYPE_TO_MIN_VERSION = {
-    "html": LooseVersion("6.1.0"),
-    "grid": LooseVersion("5.5.0"),
+    "html": Version("6.1.0"),
+    "grid": Version("5.5.0"),
 }
 
 
@@ -1842,3 +1843,5 @@ TABLE_INCIDENT_TO_ALERT = {
 NATIVE_IMAGE_DOCKER_NAME = "demisto/py3-native"
 
 FORMATTING_SCRIPT = "indicator-format"
+
+ENV_SDK_WORKING_OFFLINE = "DEMISTO_SDK_OFFLINE_ENV"

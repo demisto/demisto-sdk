@@ -17,12 +17,10 @@ from demisto_sdk.commands.common.constants import (
     XSOAR_SUPPORT,
     XSOAR_SUPPORT_URL,
 )
-from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
+from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
 from demisto_sdk.commands.init.initiator import Initiator
 from TestSuite.test_tools import ChangeCWD
-
-json = JSON_Handler()
-yaml = YAML_Handler()
 
 DIR_NAME = "DirName"
 PACK_NAME = "PackName"
@@ -524,8 +522,6 @@ def test_integration_init(monkeypatch, initiator, tmpdir):
     res = initiator.integration_init()
     integration_dir_files = {file for file in listdir(integration_path)}
     expected_files = {
-        "Pipfile",
-        "Pipfile.lock",
         "command_examples",
         "test_data",
         "README.md",
@@ -587,8 +583,6 @@ def test_template_integration_init(initiator, tmpdir, monkeypatch, mocker, templ
 
     integration_dir_files = set(listdir(integration_path))
     expected_files = {
-        "Pipfile",
-        "Pipfile.lock",
         "README.md",
         f"{INTEGRATION_NAME}.py",
         f"{INTEGRATION_NAME}.yml",
@@ -651,8 +645,6 @@ def test_integration_init_with_ignore_secrets(
 
     integration_dir_files = set(listdir(integration_path))
     expected_files = {
-        "Pipfile",
-        "Pipfile.lock",
         "README.md",
         f"{INTEGRATION_NAME}.py",
         f"{INTEGRATION_NAME}.yml",

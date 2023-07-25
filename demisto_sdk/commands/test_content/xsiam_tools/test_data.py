@@ -9,6 +9,7 @@ class EventLog(BaseModel):
     vendor: Optional[str] = None
     product: Optional[str] = None
     dataset: Optional[str] = None
+    tenant_timezone: Optional[str] = "UTC"
     event_data: Optional[Dict[str, Any]] = {}
     expected_values: Optional[Dict[str, Any]] = {}
 

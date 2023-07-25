@@ -20,32 +20,30 @@ from demisto_sdk.commands.common.constants import (
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH, PYTHONPATH
 from demisto_sdk.commands.common.docker_helper import get_python_version
 from demisto_sdk.commands.common.git_util import GitUtil
-from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
+from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     get_file_or_remote,
     get_last_remote_release_version,
-    str2bool,
+    string_to_bool,
 )
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.content_graph.objects.integration_script import (
     IntegrationScript,
 )
 from demisto_sdk.commands.pre_commit.hooks.mypy import MypyHook
-from demisto_sdk.commands.pre_commit.hooks.pep484 import PEP484Hook
 from demisto_sdk.commands.pre_commit.hooks.pycln import PyclnHook
 from demisto_sdk.commands.pre_commit.hooks.ruff import RuffHook
+from demisto_sdk.commands.pre_commit.hooks.sourcery import SourceryHook
 from demisto_sdk.commands.pre_commit.hooks.validate_format import ValidateFormatHook
 
-yaml = YAML_Handler()
-json = JSON_Handler()
-
-IS_GITHUB_ACTIONS = str2bool(os.getenv("GITHUB_ACTIONS"))
+IS_GITHUB_ACTIONS = string_to_bool(os.getenv("GITHUB_ACTIONS"), False)
 
 PRECOMMIT_TEMPLATE_PATH = CONTENT_PATH / ".pre-commit-config_template.yaml"
 PRECOMMIT_PATH = CONTENT_PATH / ".pre-commit-config-content.yaml"
+SOURCERY_CONFIG_PATH = CONTENT_PATH / ".sourcery.yaml"
 
-# UNSKIP no-implicit-optional once mypy is updated
+CONTENT_PATH
 SKIPPED_HOOKS = {"format", "validate", "secrets"}
 
 INTEGRATION_SCRIPT_REGEX = re.compile(r"^Packs/.*/(?:Integrations|Scripts)/.*.yml$")
@@ -104,7 +102,9 @@ class PreCommitRunner:
         PyclnHook(hooks["pycln"]).prepare_hook(PYTHONPATH)
         RuffHook(hooks["ruff"]).prepare_hook(python_version, IS_GITHUB_ACTIONS)
         MypyHook(hooks["mypy"]).prepare_hook(python_version)
-        PEP484Hook(hooks["no-implicit-optional"]).prepare_hook(python_version)
+        SourceryHook(hooks["sourcery"]).prepare_hook(
+            python_version, config_file_path=SOURCERY_CONFIG_PATH
+        )
         ValidateFormatHook(hooks["validate"]).prepare_hook(self.input_files)
         ValidateFormatHook(hooks["format"]).prepare_hook(self.input_files)
 
@@ -271,7 +271,7 @@ def pre_commit_manager(
     verbose: bool = False,
     show_diff_on_failure: bool = False,
     sdk_ref: Optional[str] = None,
-) -> int:
+) -> Optional[int]:
     """Run pre-commit hooks .
 
     Args:
@@ -296,10 +296,16 @@ def pre_commit_manager(
         git_diff = True
 
     files_to_run = preprocess_files(input_files, staged_only, git_diff, all_files)
+    if not files_to_run:
+        logger.info("No files were changed, skipping pre-commit.")
+        return None
+
     files_to_run_string = ", ".join(
         sorted((str(changed_path) for changed_path in files_to_run))
     )
+
     logger.info(f"Running pre-commit on {files_to_run_string}")
+
     if not sdk_ref:
         sdk_ref = f"v{get_last_remote_release_version()}"
     pre_commit_runner = PreCommitRunner(

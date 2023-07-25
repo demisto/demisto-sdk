@@ -108,6 +108,7 @@ Supported commands:
 20. [generate-integration](https://xsoar.pan.dev/docs/integrations/code-generator)
 21. [generate-yml-from-python](https://xsoar.pan.dev/docs/integrations/yml-from-python-code-gen)
 22. [generate-unit-tests](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/generate_unit_tests/README.md)
+23. [pre-commit (experimental)](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/pre_commit/README.md)
 ---
 
 ### Customizable command configuration
@@ -200,4 +201,14 @@ Note that the following commands may work partially without an internet connecti
 1. [Download](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/download/README.md) - will fail when using the '-fmt, --run-format' argument.
 2. [Lint](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/lint/README.md) - will fail when creating the image.
 
+- When working offline (or in an airgapped environment), set the `DEMISTO_SDK_OFFLINE_ENV` environment variable to `true`:
+   ```bash
+   export DEMISTO_SDK_OFFLINE_ENV=TRUE
+   ```
+
+   When set, Demisto-SDK features requiring an internet connection will not be run, often saving some time and avoiding errors.
+
 ---
+
+## XSOAR CI/CD
+For information regarding XSOAR CI/CD, please see [this article](https://xsoar.pan.dev/docs/reference/packs/content-management)

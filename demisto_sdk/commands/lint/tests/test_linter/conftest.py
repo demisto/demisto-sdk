@@ -4,11 +4,9 @@ import pytest
 from packaging.version import Version
 from wcmatch.pathlib import Path
 
-from demisto_sdk.commands.common.handlers import YAML_Handler
+from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
 from demisto_sdk.commands.lint import linter
 from demisto_sdk.commands.lint.linter import Linter
-
-yaml = YAML_Handler()
 
 
 @pytest.fixture

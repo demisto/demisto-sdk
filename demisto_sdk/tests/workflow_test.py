@@ -12,10 +12,8 @@ from click.testing import CliRunner
 
 from demisto_sdk.__main__ import main
 from demisto_sdk.commands.common.constants import AUTHOR_IMAGE_FILE_NAME
-from demisto_sdk.commands.common.handlers import YAML_Handler
+from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
 from TestSuite.test_tools import ChangeCWD
-
-yaml = YAML_Handler()
 
 
 class TestError(BaseException):

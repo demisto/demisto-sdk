@@ -1,6 +1,6 @@
 from typing import Tuple
 
-from packaging.version import Version, parse
+from packaging.version import Version
 
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.format.format_constants import (
@@ -76,7 +76,7 @@ class WidgetJSONFormat(BaseUpdateJSON):
         widget_data_type = self.data.get("dataType", "")
         current_from_version = self.data.get("fromVersion", "")
 
-        if widget_data_type == "metrics" and parse(current_from_version) < Version(
+        if widget_data_type == "metrics" and Version(current_from_version) < Version(
             self.WIDGET_TYPE_METRICS_MIN_VERSION
         ):
             self.data["fromVersion"] = self.WIDGET_TYPE_METRICS_MIN_VERSION

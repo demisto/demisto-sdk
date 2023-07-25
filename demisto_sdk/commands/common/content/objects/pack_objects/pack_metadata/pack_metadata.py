@@ -48,8 +48,8 @@ class PackMetaData(JSONObject):
         self._vendorName: str = ""
         self._hidden: bool = False
         self._previewOnly: bool = False
-        self._serverMinVersion: Version = parse("0.0.0")  # type: ignore
-        self._currentVersion: Version = parse("0.0.0")  # type: ignore
+        self._serverMinVersion: Version = Version("0.0.0")  # type: ignore
+        self._currentVersion: Version = Version("0.0.0")  # type: ignore
         self._versionInfo: int = 0
         self._tags: List[str] = []
         self._categories: List[str] = []

@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, Any, Generator, List, Optional
 
 import demisto_client
 from demisto_client.demisto_api.rest import ApiException
-from packaging.version import Version, parse
+from packaging.version import Version
 from pydantic import BaseModel, DirectoryPath, Field, validator
 
 from demisto_sdk.commands.common.constants import (
@@ -288,7 +288,7 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: i
         min_content_items_version = MARKETPLACE_MIN_VERSION
         if content_items:
             min_content_items_version = str(
-                min(parse(content_item.fromversion) for content_item in content_items)
+                min(Version(content_item.fromversion) for content_item in content_items)
             )
         self.server_min_version = self.server_min_version or min_content_items_version
         self.content_items = PackContentItems(**content_item_dct)

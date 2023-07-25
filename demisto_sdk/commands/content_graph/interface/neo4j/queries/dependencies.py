@@ -59,7 +59,7 @@ def get_all_level_packs_relationships(
     result = run_query(tx, query, ids_list=list(ids_list))
     logger.debug("Found dependencies.")
     return {
-        int(item.get("node_id")): Neo4jRelationshipResult(
+        item.get("node_id"): Neo4jRelationshipResult(
             node_from=item.get("node_from"),
             nodes_to=item.get("nodes_to"),
             relationships=item.get("relationships"),

@@ -35,7 +35,7 @@ jobs:
       - name: Uninstsall content version of SDK
         run: |
           cd content
-          poetry remove demisto-sdk
+          poetry run pip uninstall demisto-sdk
 
       - name: Install current SDK branch
         run: |

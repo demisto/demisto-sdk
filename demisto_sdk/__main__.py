@@ -341,6 +341,23 @@ def split(ctx, config, **kwargs):
     default=False,
 )
 @click.option(
+    "--fix",
+    help="Description of the fix",
+    required=False,
+    is_flag=False
+)
+@click.option(
+    "--feature",
+    help="Description of the feature",
+    required=False,
+    is_flag=False
+)
+@click.option(
+    "--breaking",
+    help="Description of the breaking",
+    default=False
+)
+@click.option(
     "--validate",
     help="Checks whether there is a log file for the current PR, if so checks whether the log file is valid",
     is_flag=True,

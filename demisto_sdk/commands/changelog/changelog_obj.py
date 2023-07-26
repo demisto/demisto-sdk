@@ -1,9 +1,7 @@
 from enum import Enum
 from typing import List, Tuple
 
-from pydantic import BaseModel, ValidationError, validator
-
-from demisto_sdk.commands.common.logger import logger
+from pydantic import BaseModel, validator
 
 INITIAL_LOG = {
     "logs": [

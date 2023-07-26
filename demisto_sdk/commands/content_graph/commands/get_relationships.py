@@ -80,9 +80,9 @@ def get_relationships(
     ),
     include_tests: bool = typer.Option(
         False,
-        "--incude-tests-dependencies",
+        "--incude-test-dependencies",
         is_flag=True,
-        help="If true, includes tests in dependency calculation (relevant only for DEPENDS_ON relationships).",
+        help="If true, includes tests dependencies in outputs (relevant only for DEPENDS_ON relationships).",
     ),
     console_log_threshold: str = typer.Option(
         "INFO",

@@ -188,9 +188,7 @@ class TestIntegrationScriptUnifier:
             else:
                 runner.invoke(main, [UNIFY_CMD, "-i", f"{integration.path}"])
 
-            yml_file = os.path.join(
-                integration.path, "integration-dummy-integration.yml"
-            )
+            yml_file = os.path.join(integration.path, "integration-dummy-integration.yml")
             unified_yml_data = get_yaml(yml_file)
             if flag:
                 assert unified_yml_data.get("name") == "Sample - Test"
@@ -199,7 +197,6 @@ class TestIntegrationScriptUnifier:
             assert unified_yml_data.get("script").get("nativeimage") == [
                 "8.1",
                 "8.2",
-                "candidate",
             ]
 
     def test_add_custom_section_flag(self, repo):
@@ -303,7 +300,6 @@ class TestLayoutUnifer:
             name="test",
             content=get_json(
                 f"{git_path()}/demisto_sdk/tests/test_files/Packs/DummyPack/Layouts/layoutscontainer-test.json",
-                return_content=True,
             ),
         )
 

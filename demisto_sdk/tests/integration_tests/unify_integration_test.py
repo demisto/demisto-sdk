@@ -188,7 +188,9 @@ class TestIntegrationScriptUnifier:
             else:
                 runner.invoke(main, [UNIFY_CMD, "-i", f"{integration.path}"])
 
-            yml_file = os.path.join(integration.path, "integration-dummy-integration.yml")
+            yml_file = os.path.join(
+                integration.path, "integration-dummy-integration.yml"
+            )
             unified_yml_data = get_yaml(yml_file)
             if flag:
                 assert unified_yml_data.get("name") == "Sample - Test"

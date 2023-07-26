@@ -72,11 +72,17 @@ def get_relationships(
         help="A path to a directory in which to dump the outputs to.",
     ),
     update_graph: bool = typer.Option(
-        False,
-        "-u",
-        "--update-graph",
+        True,
+        "-u/-nu",
+        "--update-graph/--no-update-graph",
         is_flag=True,
         help="If true, runs an update on the graph before querying.",
+    ),
+    include_tests: bool = typer.Option(
+        False,
+        "--incude-tests-dependencies",
+        is_flag=True,
+        help="If true, includes tests in dependency calculation (relevant only for DEPENDS_ON relationships).",
     ),
     console_log_threshold: str = typer.Option(
         "INFO",
@@ -114,6 +120,7 @@ def get_relationships(
             relationship,
             content_type,
             depth,
+            include_tests,
         )
         if output:
             (output / COMMAND_OUTPUTS_FILENAME).write_text(
@@ -127,12 +134,14 @@ def get_relationships_by_path(
     relationship: RelationshipType,
     content_type: ContentType,
     depth: int,
+    include_tests: bool,
 ) -> Dict[str, Any]:
     sources, targets = graph.get_relationships_by_path(
         input_filepath,
         relationship,
         content_type,
         depth,
+        include_tests,
     )
     for record in sources + targets:
         log_record(record, relationship)

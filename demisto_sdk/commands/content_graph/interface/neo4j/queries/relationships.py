@@ -262,6 +262,7 @@ def get_sources_by_path(
     relationship: RelationshipType,
     content_type: ContentType,
     depth: int,
+    include_tests: bool,
 ) -> List[Dict[str, Any]]:
     query = f"""// Returns all paths to a given node by relationship type and depth.
 MATCH (n{{path: "{path}"}})
@@ -286,7 +287,7 @@ WITH
     CASE WHEN any(r IN rels WHERE r.mandatorily IS NOT NULL) THEN FALSE END END AS mandatorily,
     depth,
     CASE WHEN any(r IN rels WHERE r.is_test) THEN TRUE ELSE FALSE END AS is_test
-WHERE NOT is_test AND source.path IS NOT NULL
+WHERE {"NOT is_test AND" if not include_tests else ""} source.path IS NOT NULL
 WITH
     source,
     min(depth) AS minDepth,
@@ -314,6 +315,7 @@ def get_targets_by_path(
     relationship: RelationshipType,
     content_type: ContentType,
     depth: int,
+    include_tests: bool,
 ) -> List[Dict[str, Any]]:
     query = f"""// Returns all paths from a given node by relationship type and depth.
 MATCH (n{{path: "{path}"}})
@@ -337,7 +339,7 @@ WITH
     CASE WHEN any(r IN rels WHERE r.mandatorily IS NOT NULL) THEN FALSE END END AS mandatorily,
     depth,
     CASE WHEN any(r IN rels WHERE r.is_test) THEN TRUE ELSE FALSE END AS is_test
-WHERE NOT is_test AND target.path IS NOT NULL
+WHERE {"NOT is_test AND" if not include_tests else ""} target.path IS NOT NULL
 WITH
     target,
     min(depth) AS minDepth,

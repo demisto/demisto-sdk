@@ -118,13 +118,14 @@ def compare(result: list, expected: list) -> None:
 
 class TestGetRelationships:
     @pytest.mark.parametrize(
-        "filepath, relationship, content_type, depth, expected_sources, expected_targets",
+        "filepath, relationship, content_type, depth, include_tests, expected_sources, expected_targets",
         [
             pytest.param(
                 Path("Packs/SamplePack2/Scripts/SampleScript2/SampleScript2.yml"),
                 RelationshipType.USES,
                 ContentType.BASE_CONTENT,
                 2,
+                False,
                 [
                     {
                         "filepath": "Packs/SamplePack3/TestPlaybooks/SampleTestPlaybook/SampleTestPlaybook.yml",
@@ -147,12 +148,29 @@ class TestGetRelationships:
                 id="Verify USES relationships, expecting sources and targets",
             ),
             pytest.param(
+                Path("Packs/SamplePack2/Scripts/SampleScript2/SampleScript2.yml"),
+                RelationshipType.USES,
+                ContentType.INTEGRATION,
+                2,
+                False,
+                [],
+                [
+                    {
+                        "filepath": "Packs/SamplePack/Integrations/SampleIntegration/SampleIntegration.yml",
+                        "mandatorily": False,
+                        "paths_count": 1,
+                    },
+                ],
+                id="Verify USES relationships, integrations only",
+            ),
+            pytest.param(
                 Path(
                     "Packs/SamplePack3/TestPlaybooks/SampleTestPlaybook/SampleTestPlaybook.yml"
                 ),
                 RelationshipType.USES,
                 ContentType.BASE_CONTENT,
                 2,
+                False,
                 [],
                 [
                     {
@@ -180,6 +198,7 @@ class TestGetRelationships:
                 RelationshipType.USES,
                 ContentType.BASE_CONTENT,
                 1,
+                False,
                 [],
                 [
                     {
@@ -203,6 +222,7 @@ class TestGetRelationships:
                 RelationshipType.IMPORTS,
                 ContentType.BASE_CONTENT,
                 1,
+                False,
                 [],
                 [
                     {
@@ -219,6 +239,7 @@ class TestGetRelationships:
                 RelationshipType.TESTED_BY,
                 ContentType.BASE_CONTENT,
                 1,
+                False,
                 [],
                 [
                     {
@@ -233,6 +254,17 @@ class TestGetRelationships:
                 RelationshipType.DEPENDS_ON,
                 ContentType.BASE_CONTENT,
                 2,
+                False,
+                [],
+                [],
+                id="Verify DEPENDS_ON relationships - don't include tests",
+            ),
+            pytest.param(
+                Path("Packs/SamplePack3"),
+                RelationshipType.DEPENDS_ON,
+                ContentType.BASE_CONTENT,
+                2,
+                True,
                 [],
                 [
                     {
@@ -246,7 +278,7 @@ class TestGetRelationships:
                         "mandatorily": True,
                     },
                 ],
-                id="Verify DEPENDS_ON relationships",
+                id="Verify DEPENDS_ON relationships - include tests",
             ),
         ],
     )
@@ -257,6 +289,7 @@ class TestGetRelationships:
         relationship: RelationshipType,
         content_type: ContentType,
         depth: int,
+        include_tests: bool,
         expected_sources: list,
         expected_targets: list,
     ) -> None:
@@ -277,6 +310,7 @@ class TestGetRelationships:
                 relationship=relationship,
                 content_type=content_type,
                 depth=depth,
+                include_tests=include_tests,
             )
             sources, targets = result["sources"], result["targets"]
         compare(sources, expected_sources)

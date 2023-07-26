@@ -2,10 +2,12 @@ from pathlib import Path
 
 import pytest
 
+from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.commands.create import (
     create_content_graph,
 )
 from demisto_sdk.commands.content_graph.commands.get_relationships import (
+    Direction,
     get_relationships_by_path,
 )
 from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
@@ -118,13 +120,16 @@ def compare(result: list, expected: list) -> None:
 
 class TestGetRelationships:
     @pytest.mark.parametrize(
-        "filepath, relationship, content_type, depth, include_tests, expected_sources, expected_targets",
+        "filepath, relationship, content_type, depth, marketplace, direction, mandatory_only, include_tests, expected_sources, expected_targets",
         [
             pytest.param(
                 Path("Packs/SamplePack2/Scripts/SampleScript2/SampleScript2.yml"),
                 RelationshipType.USES,
                 ContentType.BASE_CONTENT,
                 2,
+                MarketplaceVersions.XSOAR,
+                Direction.BOTH,
+                False,
                 False,
                 [
                     {
@@ -150,8 +155,73 @@ class TestGetRelationships:
             pytest.param(
                 Path("Packs/SamplePack2/Scripts/SampleScript2/SampleScript2.yml"),
                 RelationshipType.USES,
+                ContentType.BASE_CONTENT,
+                2,
+                MarketplaceVersions.XSOAR,
+                Direction.SOURCES,
+                False,
+                False,
+                [
+                    {
+                        "filepath": "Packs/SamplePack3/TestPlaybooks/SampleTestPlaybook/SampleTestPlaybook.yml",
+                        "mandatorily": True,
+                        "paths_count": 1,
+                    },
+                ],
+                [],
+                id="Verify USES relationships, sources only",
+            ),
+            pytest.param(
+                Path("Packs/SamplePack2/Scripts/SampleScript2/SampleScript2.yml"),
+                RelationshipType.USES,
+                ContentType.BASE_CONTENT,
+                2,
+                MarketplaceVersions.XSOAR,
+                Direction.TARGETS,
+                False,
+                False,
+                [],
+                [
+                    {
+                        "filepath": "Packs/SamplePack/Integrations/SampleIntegration/SampleIntegration.yml",
+                        "mandatorily": False,
+                        "paths_count": 1,
+                    },
+                    {
+                        "filepath": "Packs/SamplePack/Scripts/SampleScript/SampleScript.yml",
+                        "mandatorily": True,
+                        "paths_count": 1,
+                    },
+                ],
+                id="Verify USES relationships, targets only",
+            ),
+            pytest.param(
+                Path("Packs/SamplePack2/Scripts/SampleScript2/SampleScript2.yml"),
+                RelationshipType.USES,
+                ContentType.BASE_CONTENT,
+                2,
+                MarketplaceVersions.XSOAR,
+                Direction.TARGETS,
+                True,
+                False,
+                [],
+                [
+                    {
+                        "filepath": "Packs/SamplePack/Scripts/SampleScript/SampleScript.yml",
+                        "mandatorily": True,
+                        "paths_count": 1,
+                    },
+                ],
+                id="Verify USES relationships, targets only, mandatory only",
+            ),
+            pytest.param(
+                Path("Packs/SamplePack2/Scripts/SampleScript2/SampleScript2.yml"),
+                RelationshipType.USES,
                 ContentType.INTEGRATION,
                 2,
+                MarketplaceVersions.XSOAR,
+                Direction.BOTH,
+                False,
                 False,
                 [],
                 [
@@ -170,6 +240,9 @@ class TestGetRelationships:
                 RelationshipType.USES,
                 ContentType.BASE_CONTENT,
                 2,
+                MarketplaceVersions.XSOAR,
+                Direction.BOTH,
+                False,
                 False,
                 [],
                 [
@@ -198,6 +271,9 @@ class TestGetRelationships:
                 RelationshipType.USES,
                 ContentType.BASE_CONTENT,
                 1,
+                MarketplaceVersions.XSOAR,
+                Direction.BOTH,
+                False,
                 False,
                 [],
                 [
@@ -222,6 +298,9 @@ class TestGetRelationships:
                 RelationshipType.IMPORTS,
                 ContentType.BASE_CONTENT,
                 1,
+                MarketplaceVersions.XSOAR,
+                Direction.BOTH,
+                False,
                 False,
                 [],
                 [
@@ -239,6 +318,9 @@ class TestGetRelationships:
                 RelationshipType.TESTED_BY,
                 ContentType.BASE_CONTENT,
                 1,
+                MarketplaceVersions.XSOAR,
+                Direction.BOTH,
+                False,
                 False,
                 [],
                 [
@@ -254,6 +336,9 @@ class TestGetRelationships:
                 RelationshipType.DEPENDS_ON,
                 ContentType.BASE_CONTENT,
                 2,
+                MarketplaceVersions.XSOAR,
+                Direction.BOTH,
+                False,
                 False,
                 [],
                 [],
@@ -264,6 +349,9 @@ class TestGetRelationships:
                 RelationshipType.DEPENDS_ON,
                 ContentType.BASE_CONTENT,
                 2,
+                MarketplaceVersions.XSOAR,
+                Direction.BOTH,
+                False,
                 True,
                 [],
                 [
@@ -289,6 +377,9 @@ class TestGetRelationships:
         relationship: RelationshipType,
         content_type: ContentType,
         depth: int,
+        marketplace: MarketplaceVersions,
+        direction: Direction,
+        mandatory_only: bool,
         include_tests: bool,
         expected_sources: list,
         expected_targets: list,
@@ -310,6 +401,9 @@ class TestGetRelationships:
                 relationship=relationship,
                 content_type=content_type,
                 depth=depth,
+                marketplace=marketplace,
+                direction=direction,
+                mandatory_only=mandatory_only,
                 include_tests=include_tests,
             )
             sources, targets = result["sources"], result["targets"]

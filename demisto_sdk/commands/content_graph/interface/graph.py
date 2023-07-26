@@ -144,6 +144,9 @@ class ContentGraphInterface(ABC):
         content_type: ContentType,
         depth: int,
         marketplace: MarketplaceVersions,
+        retrieve_sources: bool,
+        retrieve_targets: bool,
+        mandatory_only: bool,
         include_tests: bool,
     ) -> Tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
         pass

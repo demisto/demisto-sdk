@@ -263,6 +263,7 @@ def get_sources_by_path(
     content_type: ContentType,
     depth: int,
     marketplace: MarketplaceVersions,
+    mandatory_only: bool,
     include_tests: bool,
 ) -> List[Dict[str, Any]]:
     query = f"""// Returns all paths to a given node by relationship type and depth.
@@ -293,6 +294,7 @@ WHERE
     source.path IS NOT NULL
     AND all(n IN nodes WHERE "{marketplace}" IN n.marketplaces)
     {"AND NOT is_test" if not include_tests else ""}
+    {"AND mandatorily" if mandatory_only else ""}
 WITH
     source,
     min(depth) AS minDepth,
@@ -321,6 +323,7 @@ def get_targets_by_path(
     content_type: ContentType,
     depth: int,
     marketplace: MarketplaceVersions,
+    mandatory_only: bool,
     include_tests: bool,
 ) -> List[Dict[str, Any]]:
     query = f"""// Returns all paths from a given node by relationship type and depth.
@@ -350,6 +353,7 @@ WHERE
     target.path IS NOT NULL
     AND all(n IN nodes WHERE "{marketplace}" IN n.marketplaces)
     {"AND NOT is_test" if not include_tests else ""}
+    {"AND mandatorily" if mandatory_only else ""}
 WITH
     target,
     min(depth) AS minDepth,

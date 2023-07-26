@@ -360,26 +360,39 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         content_type: ContentType,
         depth: int,
         marketplace: MarketplaceVersions,
+        retrieve_sources: bool,
+        retrieve_targets: bool,
+        mandatory_only: bool,
         include_tests: bool,
     ) -> Tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
         with self.driver.session() as session:
-            sources = session.execute_read(
-                get_sources_by_path,
-                path,
-                relationship_type,
-                content_type,
-                depth,
-                marketplace,
-                include_tests,
+            sources = (
+                session.execute_read(
+                    get_sources_by_path,
+                    path,
+                    relationship_type,
+                    content_type,
+                    depth,
+                    marketplace,
+                    mandatory_only,
+                    include_tests,
+                )
+                if retrieve_sources
+                else []
             )
-            targets = session.execute_read(
-                get_targets_by_path,
-                path,
-                relationship_type,
-                content_type,
-                depth,
-                marketplace,
-                include_tests,
+            targets = (
+                session.execute_read(
+                    get_targets_by_path,
+                    path,
+                    relationship_type,
+                    content_type,
+                    depth,
+                    marketplace,
+                    mandatory_only,
+                    include_tests,
+                )
+                if retrieve_targets
+                else []
             )
             return sources, targets
 

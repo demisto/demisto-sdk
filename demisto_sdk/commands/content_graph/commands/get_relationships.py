@@ -1,10 +1,11 @@
+from enum import Enum
 from pathlib import Path
 from typing import Any, Dict, Optional
 
 import typer
 from tabulate import tabulate
-from demisto_sdk.commands.common.constants import MarketplaceVersions
 
+from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.logger import (
     logger,
@@ -21,6 +22,12 @@ app = typer.Typer()
 
 
 COMMAND_OUTPUTS_FILENAME = "get_relationships_outputs.json"
+
+
+class Direction(Enum):
+    SOURCES = "sources"
+    TARGETS = "targets"
+    BOTH = "both"
 
 
 @app.command(
@@ -83,13 +90,29 @@ def get_relationships(
         MarketplaceVersions.XSOAR,
         "-mp",
         "--marketplace",
+        show_default=True,
+        case_sensitive=False,
         help="The marketplace version.",
+    ),
+    mandatory_only: bool = typer.Option(
+        False,
+        "--mandatory-only",
+        is_flag=True,
+        help="If true, returns only mandatory relationships (relevant only for DEPENDS_ON/USES relationships).",
     ),
     include_tests: bool = typer.Option(
         False,
         "--incude-test-dependencies",
         is_flag=True,
         help="If true, includes tests dependencies in outputs (relevant only for DEPENDS_ON relationships).",
+    ),
+    direction: Direction = typer.Option(
+        Direction.BOTH,
+        "-dir",
+        "--direction",
+        show_default=True,
+        case_sensitive=False,
+        help="Specifies whether to return only sources, only targets or both.",
     ),
     console_log_threshold: str = typer.Option(
         "INFO",
@@ -128,6 +151,8 @@ def get_relationships(
             content_type,
             depth,
             marketplace,
+            direction,
+            mandatory_only,
             include_tests,
         )
         if output:
@@ -143,21 +168,31 @@ def get_relationships_by_path(
     content_type: ContentType,
     depth: int,
     marketplace: MarketplaceVersions,
+    direction: Direction,
+    mandatory_only: bool,
     include_tests: bool,
 ) -> Dict[str, Any]:
+    retrieve_sources: bool = direction != Direction.TARGETS
+    retrieve_targets: bool = direction != Direction.SOURCES
+
     sources, targets = graph.get_relationships_by_path(
         input_filepath,
         relationship,
         content_type,
         depth,
         marketplace,
+        retrieve_sources,
+        retrieve_targets,
+        mandatory_only,
         include_tests,
     )
     for record in sources + targets:
         log_record(record, relationship)
     logger.info("[cyan]====== SUMMARY ======[/cyan]")
-    logger.info(f"Sources:\n{to_tabulate(sources, relationship)}\n")
-    logger.info(f"Targets:\n{to_tabulate(targets, relationship)}\n")
+    if retrieve_sources:
+        logger.info(f"Sources:\n{to_tabulate(sources, relationship)}\n")
+    if retrieve_targets:
+        logger.info(f"Targets:\n{to_tabulate(targets, relationship)}\n")
     return {"sources": sources, "targets": targets}
 
 

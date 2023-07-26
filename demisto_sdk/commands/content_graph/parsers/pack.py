@@ -2,7 +2,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, Iterator, List, Optional
 
-from demisto_sdk.commands.common.constants import MarketplaceVersions
+from demisto_sdk.commands.common.constants import BASE_PACK, MarketplaceVersions
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import get_json
@@ -106,8 +106,8 @@ class PackMetadataParser:
     def __init__(self, path: Path, metadata: Dict[str, Any]) -> None:
         self.name: str = metadata["name"]
         self.description: str = metadata["description"]
-        self.created: str = metadata.get("created", NOW)
-        self.updated: str = metadata.get("updated", NOW)
+        self.created: str = metadata.get("created") or NOW
+        self.updated: str = metadata.get("updated") or NOW
         self.legacy: bool = metadata.get(
             "legacy", metadata.get("partnerId") is None
         )  # default: True, private default: False
@@ -145,6 +145,7 @@ class PackMetadataParser:
         )
         self.excluded_dependencies: List[str] = metadata.get("excludedDependencies", [])
         self.modules: List[str] = metadata.get("modules", [])
+        self.integrations: List[str] = []
 
         # For private packs
         self.premium: Optional[bool] = "partnerId" in metadata
@@ -218,6 +219,14 @@ class PackParser(BaseContentParser, PackMetadataParser):
                 source=self.object_id,
                 target=pack_id,
                 mandatorily=dependency.get("mandatory"),
+            )
+
+        if self.object_id != BASE_PACK:  # add Base pack dependency for all the packs except Base itself
+            self.relationships.add(
+                RelationshipType.DEPENDS_ON,
+                source=self.object_id,
+                target=BASE_PACK,
+                mandatorily=True,
             )
 
     def parse_pack_folders(self) -> None:

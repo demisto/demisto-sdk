@@ -225,6 +225,7 @@ class PackMetadata(BaseModel):
     excluded_dependencies: Optional[List[str]] = Field(alias="excludedDependencies")
     videos: Optional[List[str]] = Field([])
     modules: Optional[List[str]] = Field([])
+    integrations: Optional[List[str]] = Field([])
 
     # For private packs
     premium: Optional[bool]
@@ -719,10 +720,10 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
         `mandatory`, `minVersion`, `author`, `name`, `certification`
 
         Args:
-            marketplace (_type_): _description_
+            marketplace (MarketplaceVersions): The marketplace to which the pack should belong to.
 
         Returns:
-            _type_: _description_
+            dict: The dependencies of the pack.
         """
         return {
             r.content_item_to.object_id: {

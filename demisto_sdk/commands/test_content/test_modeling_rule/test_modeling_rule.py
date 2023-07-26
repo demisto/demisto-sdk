@@ -269,7 +269,7 @@ def validate_expected_values(
 def check_dataset_exists(
     xsiam_client: XsiamApiClient,
     test_data: init_test_data.TestData,
-    timeout: int = 120,
+    timeout: int = 90,
     interval: int = 5,
 ):
     """Check if the dataset in the test data file exists in the tenant.

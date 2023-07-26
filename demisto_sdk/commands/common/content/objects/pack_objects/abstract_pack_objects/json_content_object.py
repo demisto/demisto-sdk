@@ -76,7 +76,7 @@ class JSONContentObject(JSONObject):
         return self._readme
 
     @property
-    def from_version(self) -> Union[Version]:
+    def from_version(self) -> Version:
         """Object from_version attribute.
 
         Returns:
@@ -89,7 +89,7 @@ class JSONContentObject(JSONObject):
         return Version(self.get("fromVersion", DEFAULT_CONTENT_ITEM_FROM_VERSION))
 
     @property
-    def to_version(self) -> Union[Version]:
+    def to_version(self) -> Version:
         """Object to_version attribute.
 
         Returns:

@@ -35,7 +35,6 @@ class IntegrationScript(ContentItem):
             if kwargs.get("unify_only")
             else super().prepare_for_upload(current_marketplace)
         )
-
         data = IntegrationScriptUnifier.unify(
             self.path, data, current_marketplace, **kwargs
         )

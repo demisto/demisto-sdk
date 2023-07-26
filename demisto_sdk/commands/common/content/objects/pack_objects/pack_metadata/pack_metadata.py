@@ -3,7 +3,7 @@ import os
 from datetime import datetime
 from typing import Dict, List, Union
 
-from packaging.version import Version, parse
+from packaging.version import Version
 from wcmatch.pathlib import Path
 
 from demisto_sdk.commands.common.constants import (
@@ -571,7 +571,7 @@ class PackMetaData(JSONObject):
             self.url = user_metadata.get("url", "")
             self.email = user_metadata.get("email", "")
             self.certification = user_metadata.get("certification", "")
-            self.current_version = parse(user_metadata.get("currentVersion", "0.0.0"))  # type: ignore
+            self.current_version = Version(user_metadata.get("currentVersion", "0.0.0"))  # type: ignore
             self.author = user_metadata.get("author", "")
             self.hidden = user_metadata.get("hidden", False)
             self.tags = user_metadata.get("tags", [])

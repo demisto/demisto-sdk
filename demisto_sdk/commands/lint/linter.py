@@ -11,7 +11,7 @@ import docker.errors
 import docker.models.containers
 import git
 import requests.exceptions
-from packaging.version import parse
+from packaging.version import Version
 from wcmatch.pathlib import NEGATE, Path
 
 from demisto_sdk.commands.common.constants import (
@@ -567,7 +567,7 @@ class Linter:
                 elif (
                     lint_check == "mypy"
                     and not no_mypy
-                    and parse(self._facts["python_version"]).major >= 3  # type: ignore[union-attr]
+                    and Version(self._facts["python_version"]).major >= 3  # type: ignore[union-attr]
                 ):
                     # mypy does not support python2 now
                     exit_code, output = self._run_mypy(
@@ -618,7 +618,7 @@ class Linter:
             if self._facts["is_long_running"]:
                 myenv["LONGRUNNING"] = "True"
 
-            py_ver = parse(py_num).major  # type: ignore
+            py_ver = Version(py_num).major  # type: ignore
             if py_ver < 3:
                 myenv["PY2"] = "True"
             myenv["is_script"] = str(self._facts["is_script"])
@@ -939,7 +939,7 @@ class Linter:
         # Get requirements file for image
         py_ver = None
         if docker_base_image[1] != -1:
-            py_ver = parse(docker_base_image[1]).major  # type: ignore
+            py_ver = Version(docker_base_image[1]).major  # type: ignore
         test_image_name, errors = docker_base.pull_or_create_test_image(
             docker_base_image[0],
             additional_requirements=self._facts["additional_requirements"],
@@ -1635,7 +1635,6 @@ class Linter:
             if native_image := self._get_native_image_name_from_config_file(
                 image_support
             ):
-
                 if self._is_native_image_support_script(
                     native_image, supported_native_images, script_id
                 ):  # Integration/Script is supported by the requested native image

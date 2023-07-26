@@ -5,7 +5,7 @@ from datetime import datetime
 from shutil import rmtree
 
 import pytest
-from packaging.version import parse
+from packaging.version import Version
 
 from demisto_sdk.commands.common.constants import (
     PACKS_DIR,
@@ -234,7 +234,7 @@ def test_load_user_metadata_basic(repo):
     assert pack_1_metadata.url == "some url"
     assert pack_1_metadata.email == "some email"
     assert pack_1_metadata.certification == "certified"
-    assert pack_1_metadata.current_version == parse("1.1.1")
+    assert pack_1_metadata.current_version == Version("1.1.1")
     assert pack_1_metadata.author == "Cortex XSOAR"
     assert pack_1_metadata.tags == ["tag1"]
     assert pack_1_metadata.dependencies == [{"dependency": {"dependency": "1"}}]

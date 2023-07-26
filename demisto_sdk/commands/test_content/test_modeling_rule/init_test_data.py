@@ -1,7 +1,7 @@
 import traceback
 from io import StringIO
 from pathlib import Path
-from typing import List, Set
+from typing import List
 
 import typer
 
@@ -76,9 +76,6 @@ def init_test_data(
     for fp in input:
         try:
             mr_entity = ModelingRule(fp.as_posix())
-            all_mr_entity_fields: Set[str] = set()
-            for mr in mr_entity.rules:
-                all_mr_entity_fields = all_mr_entity_fields.union(mr.fields)
 
             operation_mode = "create"
             test_data_file = mr_entity.testdata_path

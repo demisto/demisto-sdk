@@ -39,7 +39,7 @@ GIT_PATH = Path(git_path())
 
 
 @pytest.fixture(autouse=True)
-def setup(mocker):
+def setup_method(mocker):
     """Auto-used fixture for setup before every test run"""
     import demisto_sdk.commands.content_graph.objects.base_content as bc
 
@@ -412,6 +412,7 @@ def mock_pack(name, marketplaces):
         keywords=[],
         contentItems=[],
         excluded_dependencies=[],
+        deprecated=False,
     )
 
 

@@ -1,10 +1,10 @@
 from __future__ import annotations
 
-from distutils.version import LooseVersion
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
 import decorator
+from packaging.version import Version
 from requests import Response
 
 from demisto_sdk.commands.common.constants import (
@@ -134,6 +134,10 @@ ERROR_CODE = {
     "missing_unit_test_file": {
         "code": "BA124",
         "related_field": "",
+    },
+    "customer_facing_docs_disallowed_terms": {
+        "code": "BA125",
+        "related_field": "description",
     },
     # BC - Backward Compatible
     "breaking_backwards_subtype": {
@@ -405,7 +409,7 @@ ERROR_CODE = {
         "code": "IF115",
         "related_field": "unsearchable",
     },
-    "select_values_cannot_contain_empty_values": {
+    "select_values_cannot_contain_empty_values_in_multi_select_types": {
         "code": "IF116",
         "related_field": "selectValues",
     },
@@ -416,6 +420,10 @@ ERROR_CODE = {
     "aliases_with_inner_alias": {
         "code": "IF118",
         "related_field": "Aliases",
+    },
+    "select_values_cannot_contain_multiple_or_only_empty_values_in_single_select_types": {
+        "code": "IF119",
+        "related_field": "selectValues",
     },
     # IM - Images
     "no_image_given": {
@@ -671,6 +679,10 @@ ERROR_CODE = {
     },
     "invalid_siem_integration_name": {
         "code": "IN150",
+        "related_field": "display",
+    },
+    "invalid_siem_marketplaces_entry": {
+        "code": "IN151",
         "related_field": "display",
     },
     "empty_command_arguments": {
@@ -1469,6 +1481,7 @@ ALLOWED_IGNORE_ERRORS = (
         "BA116",
         "BA119",
         "BA124",
+        "BA125",
         "DS107",
         "GF102",
         "IF100",
@@ -1677,8 +1690,8 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def field_version_is_not_correct(
-        from_version_set: LooseVersion,
-        expected_from_version: LooseVersion,
+        from_version_set: Version,
+        expected_from_version: Version,
         reason_for_version: str,
     ):
         return (
@@ -1688,18 +1701,35 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def select_values_cannot_contain_empty_values():
-        return "the field selectValues cannot contain empty values. Please remove."
+    def select_values_cannot_contain_empty_values_in_multi_select_types():
+        return "Multiselect types cannot contain empty values in the selectValues field"
+
+    @staticmethod
+    @error_code_decorator
+    def select_values_cannot_contain_multiple_or_only_empty_values_in_single_select_types():
+        return "singleSelect types cannot contain only empty value or more than one empty values in the field selectValues. Please remove."
 
     @staticmethod
     @error_code_decorator
     def unsearchable_key_should_be_true_incident_field():
-        return "The unsearchable key in indicator and incident fields should be set to true."
+        return (
+            "Warning: Indicator and incident fields should include the `unsearchable` key set to true. When missing"
+            " or set to false, the platform will index the data in this field. Unnecessary indexing of fields might"
+            " affect the performance and disk usage in environments."
+            "While considering the above mentioned warning, you can bypass this error by adding it to the"
+            " .pack-ignore file."
+        )
 
     @staticmethod
     @error_code_decorator
     def unsearchable_key_should_be_true_generic_field():
-        return "The unsearchable key in a generic field should be set to true."
+        return (
+            "Warning: Generic fields should include the `unsearchable` key set to true. When missing"
+            " or set to false, the platform will index the data in this field. Unnecessary indexing of fields might"
+            " affect the performance and disk usage in environments."
+            "While considering the above mentioned warning, you can bypass this error by adding it to the"
+            " .pack-ignore file."
+        )
 
     @staticmethod
     @error_code_decorator
@@ -2066,6 +2096,14 @@ class Errors:
             f"The display name of this siem integration is incorrect , "
             f'should end with "Event Collector".\n'
             f"e.g: {display_name} Event Collector"
+        )
+
+    @staticmethod
+    @error_code_decorator
+    def invalid_siem_marketplaces_entry():
+        return (
+            "The marketplaces field of this XSIAM integration is incorrect.\n"
+            'This field should have only the "marketplacev2" value.'
         )
 
     @staticmethod
@@ -4037,6 +4075,14 @@ class Errors:
     @error_code_decorator
     def missing_unit_test_file(path: Path):
         return f"Missing {path.stem}_test.py unit test file for {path.name}."
+
+    @staticmethod
+    @error_code_decorator
+    def customer_facing_docs_disallowed_terms(found_terms: List[str]):
+        return (
+            f"Found internal terms in a customer-facing documentation file: "
+            f"{', '.join(found_terms)}"
+        )
 
     @staticmethod
     @error_code_decorator

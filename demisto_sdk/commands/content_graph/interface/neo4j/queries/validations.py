@@ -276,6 +276,7 @@ def validate_pack_dependencies(
         MATCH (pack1)-[r:DEPENDS_ON{{mandatorily:true}}]->(pack2)
         WHERE pack2.object_id = "{pack_id}"
         AND NOT r.is_test
+        and NOT pack1.deprecated
         AND "{marketplace}" IN pack1.marketplaces
         AND "{marketplace}" IN pack2.marketplaces
         RETURN pack1, collect(r) as relationships, collect(pack2) as nodes_to

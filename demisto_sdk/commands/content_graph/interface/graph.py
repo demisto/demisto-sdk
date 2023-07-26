@@ -143,7 +143,7 @@ class ContentGraphInterface(ABC):
         relationship_type: RelationshipType,
         content_type: ContentType,
         depth: int,
-    ) -> Tuple[Dict[str, Any], Dict[str, Any]]:
+    ) -> Tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
         pass
 
     @abstractmethod

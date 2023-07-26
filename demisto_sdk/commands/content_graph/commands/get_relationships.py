@@ -9,6 +9,7 @@ from demisto_sdk.commands.common.logger import (
     logger,
     logging_setup,
 )
+from demisto_sdk.commands.content_graph.commands.update import update_content_graph
 from demisto_sdk.commands.content_graph.common import (
     ContentType,
     RelationshipType,
@@ -70,6 +71,13 @@ def get_relationships(
         show_default=False,
         help="A path to a directory in which to dump the outputs to.",
     ),
+    update_graph: bool = typer.Option(
+        False,
+        "-u",
+        "--update-graph",
+        is_flag=True,
+        help="If true, runs an update on the graph before querying.",
+    ),
     console_log_threshold: str = typer.Option(
         "INFO",
         "-clt",
@@ -98,6 +106,8 @@ def get_relationships(
         log_file_path=log_file_path,
     )
     with ContentGraphInterface() as graph:
+        if update_graph:
+            update_content_graph(graph)
         result = get_relationships_by_path(
             graph,
             input.relative_to(graph.repo_path),
@@ -118,62 +128,37 @@ def get_relationships_by_path(
     content_type: ContentType,
     depth: int,
 ) -> Dict[str, Any]:
-    sources_summary = []
-    targets_summary = []
     sources, targets = graph.get_relationships_by_path(
         input_filepath,
         relationship,
         content_type,
         depth,
     )
-    for record in sources:
-        sources_summary.append(
-            process_record(
-                record,
-                relationship,
-                is_source=True,
-            )
-        )
-    for record in targets:
-        targets_summary.append(
-            process_record(
-                record,
-                relationship,
-                is_source=False,
-            )
-        )
+    for record in sources + targets:
+        log_record(record, relationship)
     logger.info("[cyan]====== SUMMARY ======[/cyan]")
     logger.info(f"Sources:\n{to_tabulate(sources, relationship)}\n")
     logger.info(f"Targets:\n{to_tabulate(targets, relationship)}\n")
     return {"sources": sources, "targets": targets}
 
 
-def process_record(
+def log_record(
     record: Dict[str, Any],
     relationship: RelationshipType,
-    is_source: bool,
-) -> list:
-    paths = record["paths"]
-    record["minDepth"] = min(paths, key=lambda p: p["depth"])["depth"]
-    record["mandatorily"] = (
-        any([p["mandatorily"] for p in paths])
-        if relationship in [RelationshipType.USES, RelationshipType.DEPENDS_ON]
-        else None
-    )
-
-    for path in paths:
+) -> None:
+    is_source = record["is_source"]
+    for path in record["paths"]:
         mandatorily = (
             f" (mandatory: {path['mandatorily']})"
             if path["mandatorily"] is not None
             else ""
         )
-        logger.info(
+        logger.debug(
             f"[yellow]Found a {relationship} path{mandatorily}"
             f"{' from ' if is_source else ' to '}"
             f"{record['filepath']}[/yellow]\n"
             f"{path_to_str(relationship, path['path'])}\n"
         )
-    return [record["filepath"], record["minDepth"], record["mandatorily"]]
 
 
 def path_to_str(

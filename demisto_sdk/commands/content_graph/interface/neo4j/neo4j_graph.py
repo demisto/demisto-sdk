@@ -360,7 +360,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         relationship_type: RelationshipType,
         content_type: ContentType,
         depth: int,
-    ) -> Tuple[Dict[str, Any], Dict[str, Any]]:
+    ) -> Tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
         with self.driver.session() as session:
             sources = session.execute_read(
                 get_sources_by_path,

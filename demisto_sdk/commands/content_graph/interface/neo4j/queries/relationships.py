@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List
 
 import more_itertools
 from neo4j import Transaction
@@ -262,7 +262,7 @@ def get_sources_by_path(
     relationship: RelationshipType,
     content_type: ContentType,
     depth: int,
-) -> Tuple[List[Dict[str, Any]], int]:
+) -> List[Dict[str, Any]]:
     query = f"""// Returns all paths to a given node by relationship type and depth.
 MATCH (n{{path: "{path}"}})
 CALL apoc.path.expandConfig(n, {{
@@ -275,24 +275,36 @@ CALL apoc.path.expandConfig(n, {{
 YIELD path
 WITH
     // the paths are returned in reversed order, so we fix this here:
-    reverse([n IN nodes(path) | n.path]) AS nodes,
+    reverse([n IN nodes(path) | n.path]) AS node_paths,
+    reverse(nodes(path)) AS nodes,
     reverse([r IN relationships(path) | properties(r)]) AS rels,
     length(path) AS depth
 WITH
-    nodes[0] AS filepath,
-    apoc.coll.flatten((apoc.coll.zip(rels, nodes[1..]))) AS path_from_source,
+    nodes[0] AS source,
+    apoc.coll.flatten((apoc.coll.zip(rels, node_paths[1..]))) AS path_from_source,
     CASE WHEN all(r IN rels WHERE r.mandatorily) THEN TRUE ELSE
     CASE WHEN any(r IN rels WHERE r.mandatorily IS NOT NULL) THEN FALSE END END AS mandatorily,
-    depth
-WHERE
-    filepath IS NOT NULL
-RETURN
-    filepath,
+    depth,
+    CASE WHEN any(r IN rels WHERE r.is_test) THEN TRUE ELSE FALSE END AS is_test
+WHERE NOT is_test AND source.path IS NOT NULL
+WITH
+    source,
+    min(depth) AS minDepth,
     collect({{
-        path: apoc.coll.insert(path_from_source, 0, filepath),
+        path: apoc.coll.insert(path_from_source, 0, source.path),
         mandatorily: mandatorily,
         depth: depth
-    }}) AS paths"""
+    }}) AS paths
+RETURN
+    source.object_id AS object_id,
+    source.content_type AS content_type,
+    source.path AS filepath,
+    TRUE AS is_source,
+    paths,
+    CASE WHEN any(p IN paths WHERE p.mandatorily) THEN TRUE ELSE
+    CASE WHEN all(p IN paths WHERE p.mandatorily IS NOT NULL) THEN FALSE END END AS mandatorily,
+    minDepth
+ORDER BY minDepth"""
     return run_query(tx, query).data()
 
 
@@ -302,7 +314,7 @@ def get_targets_by_path(
     relationship: RelationshipType,
     content_type: ContentType,
     depth: int,
-) -> Tuple[List[Dict[str, Any]], int]:
+) -> List[Dict[str, Any]]:
     query = f"""// Returns all paths from a given node by relationship type and depth.
 MATCH (n{{path: "{path}"}})
 CALL apoc.path.expandConfig(n, {{
@@ -314,22 +326,34 @@ CALL apoc.path.expandConfig(n, {{
 }})
 YIELD path
 WITH
-    [n IN nodes(path) | n.path] AS nodes,
+    [n IN nodes(path) | n.path] AS node_paths,
+    nodes(path) AS nodes,
     [r IN relationships(path) | properties(r)] AS rels,
     length(path) AS depth
 WITH
-    nodes[-1] AS filepath,
-    apoc.coll.flatten((apoc.coll.zip(nodes[..-1], rels))) AS path_to_target,
+    nodes[-1] AS target,
+    apoc.coll.flatten((apoc.coll.zip(node_paths[..-1], rels))) AS path_to_target,
     CASE WHEN all(r IN rels WHERE r.mandatorily) THEN TRUE ELSE
     CASE WHEN any(r IN rels WHERE r.mandatorily IS NOT NULL) THEN FALSE END END AS mandatorily,
-    depth
-WHERE
-    filepath IS NOT NULL
-RETURN
-    filepath,
+    depth,
+    CASE WHEN any(r IN rels WHERE r.is_test) THEN TRUE ELSE FALSE END AS is_test
+WHERE NOT is_test AND target.path IS NOT NULL
+WITH
+    target,
+    min(depth) AS minDepth,
     collect({{
-        path: apoc.coll.insert(path_to_target, size(path_to_target), filepath),
+        path: apoc.coll.insert(path_to_target, size(path_to_target), target.path),
         mandatorily: mandatorily,
         depth: depth
-    }}) AS paths"""
+    }}) AS paths
+RETURN
+    target.object_id AS object_id,
+    target.content_type AS content_type,
+    target.path AS filepath,
+    FALSE AS is_source,
+    paths,
+    CASE WHEN any(p IN paths WHERE p.mandatorily) THEN TRUE ELSE
+    CASE WHEN all(p IN paths WHERE p.mandatorily IS NOT NULL) THEN FALSE END END AS mandatorily,
+    minDepth
+ORDER BY minDepth"""
     return run_query(tx, query).data()

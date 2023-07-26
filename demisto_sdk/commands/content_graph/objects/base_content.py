@@ -79,6 +79,7 @@ class BaseContent(ABC, BaseModel, metaclass=BaseContentMetaclass):
     node_id: str
     marketplaces: List[MarketplaceVersions] = list(MarketplaceVersions)
     not_in_repository: bool = False
+    name: str = ""
 
     relationships_data: Dict[RelationshipType, Set["RelationshipData"]] = Field(
         defaultdict(set), exclude=True, repr=False

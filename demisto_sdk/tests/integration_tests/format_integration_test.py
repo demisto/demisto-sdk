@@ -23,9 +23,6 @@ from demisto_sdk.commands.common.hook_validations.playbook import PlaybookValida
 from demisto_sdk.commands.common.hook_validations.readme import ReadMeValidator
 from demisto_sdk.commands.common.tools import get_dict_from_file, is_test_config_match
 from demisto_sdk.commands.content_graph.common import ContentType
-from demisto_sdk.commands.content_graph.interface.neo4j.neo4j_graph import Neo4jContentGraphInterface
-from demisto_sdk.commands.content_graph.objects import RelationshipData
-from demisto_sdk.commands.content_graph.objects.base_content import UnknownContent
 from demisto_sdk.commands.format import format_module, update_generic
 from demisto_sdk.commands.format.update_generic import BaseUpdate
 from demisto_sdk.commands.format.update_generic_yml import BaseUpdateYML
@@ -48,9 +45,7 @@ from demisto_sdk.tests.test_files.validate_integration_test_valid_types import (
     GENERIC_TYPE,
 )
 from TestSuite.test_tools import ChangeCWD, str_in_call_args_list
-from demisto_sdk.commands.content_graph.tests.create_content_graph_test import (
-    mock_relationship,
-)
+from demisto_sdk.commands.format.format_module import is_graph_related_files
 
 with open(SOURCE_FORMAT_INTEGRATION_COPY) as of:
     SOURCE_FORMAT_INTEGRATION_YML = (
@@ -149,7 +144,7 @@ def test_integration_format_yml_with_no_test_positive(
     runner = CliRunner()
     with ChangeCWD(tmp_path):
         result = runner.invoke(
-            main, [FORMAT_CMD, "-i", source_path, "-o", output_path, "-at"], input="Y"
+            main, [FORMAT_CMD, "-i", source_path, "-o", output_path, "-at", "-ngr"], input="Y"
         )
     assert not result.exception
     output_yml = get_dict_from_file(output_path)
@@ -158,7 +153,7 @@ def test_integration_format_yml_with_no_test_positive(
     assert str_in_call_args_list(logger_info.call_args_list, message)
 
     # Running format for the second time should raise no exception and should raise no prompt to the user
-    result = runner.invoke(main, [FORMAT_CMD, "-i", output_path, "-y"], input="Y")
+    result = runner.invoke(main, [FORMAT_CMD, "-i", output_path, "-y", "-ngr"], input="Y")
     assert not result.exception
     assert str_in_call_args_list(
         logger_info.call_args_list,
@@ -194,7 +189,7 @@ def test_integration_format_yml_with_no_test_negative(
     runner = CliRunner()
     with ChangeCWD(tmp_path):
         result = runner.invoke(
-            main, [FORMAT_CMD, "-i", source_path, "-o", output_path, "-at"], input="N"
+            main, [FORMAT_CMD, "-i", source_path, "-o", output_path, "-at", "-ngr"], input="N"
         )
     assert not result.exception
     assert str_in_call_args_list(
@@ -228,7 +223,7 @@ def test_integration_format_yml_with_no_test_no_interactive_positive(
     # Running format in the first time
     with ChangeCWD(tmp_path):
         result = runner.invoke(
-            main, [FORMAT_CMD, "-i", source_path, "-o", output_path, "-y"]
+            main, [FORMAT_CMD, "-i", source_path, "-o", output_path, "-y", "-ngr"]
         )
     assert not result.exception
     yml_content = get_dict_from_file(output_path)
@@ -276,7 +271,7 @@ def test_integration_format_configuring_conf_json_no_interactive_positive(
     runner = CliRunner()
     # Running format in the first time
     result = runner.invoke(
-        main, [FORMAT_CMD, "-i", source_path, "-o", saved_file_path, "-y"]
+        main, [FORMAT_CMD, "-i", source_path, "-o", saved_file_path, "-y", "-ngr"]
     )
     assert not result.exception
     if file_type == "playbook":
@@ -333,7 +328,7 @@ def test_integration_format_configuring_conf_json_positive(
     # Running format in the first time
     with ChangeCWD(tmp_path):
         result = runner.invoke(
-            main, [FORMAT_CMD, "-i", source_path, "-o", saved_file_path], input="Y"
+            main, [FORMAT_CMD, "-i", source_path, "-o", saved_file_path, "-ngr"], input="Y"
         )
     assert not result.exception
     assert str_in_call_args_list(
@@ -348,7 +343,7 @@ def test_integration_format_configuring_conf_json_positive(
     else:
         _verify_conf_json_modified(test_playbooks, yml_title, conf_json_path)
     # Running format for the second time should raise no exception and should raise no prompt to the user
-    result = runner.invoke(main, [FORMAT_CMD, "-i", saved_file_path], input="Y")
+    result = runner.invoke(main, [FORMAT_CMD, "-i", saved_file_path, "-ngr"], input="Y")
     assert not result.exception
     assert str_in_call_args_list(
         logger_debug.call_args_list, "No unconfigured test playbooks"
@@ -395,7 +390,7 @@ def test_integration_format_configuring_conf_json_negative(
     runner = CliRunner()
     # Running format in the first time
     result = runner.invoke(
-        main, [FORMAT_CMD, "-i", source_path, "-o", saved_file_path], input="N"
+        main, [FORMAT_CMD, "-i", source_path, "-o", saved_file_path, "-ngr"], input="N"
     )
     assert not result.exception
     assert str_in_call_args_list(
@@ -458,7 +453,7 @@ def test_integration_format_remove_playbook_sourceplaybookid(
     with ChangeCWD(tmp_path):
         result = runner.invoke(
             main,
-            [FORMAT_CMD, "-i", source_playbook_path, "-o", playbook_path, "-at"],
+            [FORMAT_CMD, "-i", source_playbook_path, "-o", playbook_path, "-at", "-ngr"],
             input="N",
         )
     # prompt = f'The file {source_playbook_path} has no test playbooks configured. Do you want to configure it with "No tests"'
@@ -515,6 +510,7 @@ def test_format_on_valid_py(mocker, repo):
                 integration.code.path,
                 "--console_log_threshold",
                 "DEBUG",
+                "-ngr"
             ],
             catch_exceptions=True,
         )
@@ -567,6 +563,7 @@ def test_format_on_invalid_py_empty_lines(mocker, repo):
                 integration.code.path,
                 "--console_log_threshold",
                 "DEBUG",
+                "-ngr"
             ],
             catch_exceptions=False,
         )
@@ -619,6 +616,7 @@ def test_format_on_invalid_py_dict(mocker, repo):
                 integration.code.path,
                 "--console_log_threshold",
                 "DEBUG",
+                "-ngr"
             ],
             catch_exceptions=False,
         )
@@ -675,6 +673,7 @@ def test_format_on_invalid_py_long_dict(mocker, repo, caplog, monkeypatch):
                 integration.code.path,
                 "--console_log_threshold",
                 "DEBUG",
+                "-ngr"
             ],
             catch_exceptions=False,
         )
@@ -732,6 +731,7 @@ def test_format_on_invalid_py_long_dict_no_verbose(mocker, repo, monkeypatch):
                 integration.code.path,
                 "--console_log_threshold",
                 "INFO",
+                "-ngr"
             ],
             catch_exceptions=False,
         )
@@ -795,6 +795,7 @@ def test_format_on_relative_path_playbook(mocker, repo, monkeypatch):
                 "-i",
                 "playbook.yml",
                 "-y",
+                "-ngr"
             ],
             catch_exceptions=False,
         )
@@ -809,6 +810,7 @@ def test_format_on_relative_path_playbook(mocker, repo, monkeypatch):
                     "--no-docker-checks",
                     "--no-conf-json",
                     "--allow-skipped",
+                    "-ngr"
                 ],
                 catch_exceptions=False,
             )
@@ -847,7 +849,7 @@ def test_format_integration_skipped_files(repo, mocker, monkeypatch):
     mocker.patch.object(ReadMeValidator, "is_docker_available", return_value=False)
 
     runner = CliRunner(mix_stderr=False)
-    runner.invoke(main, [FORMAT_CMD, "-i", str(pack.path)], catch_exceptions=False)
+    runner.invoke(main, [FORMAT_CMD, "-i", str(pack.path), "-ngr"], catch_exceptions=False)
 
     assert all(
         [
@@ -888,6 +890,7 @@ def test_format_commonserver_skipped_files(repo, mocker, monkeypatch):
             FORMAT_CMD,
             "-i",
             str(pack.path),
+            "-ngr"
         ],
         catch_exceptions=False,
     )
@@ -941,6 +944,7 @@ def test_format_playbook_without_fromversion_no_preset_flag(repo, mocker, monkey
             "-i",
             str(playbook.yml.path),
             "--assume-yes",
+            "-ngr"
         ],
     )
     assert str_in_call_args_list(logger_info.call_args_list, "Success")
@@ -984,6 +988,7 @@ def test_format_playbook_without_fromversion_with_preset_flag(
             "--assume-yes",
             "--from-version",
             "6.0.0",
+            "-ngr"
         ],
     )
     assert str_in_call_args_list(logger_info.call_args_list, "Success")
@@ -1026,6 +1031,7 @@ def test_format_playbook_without_fromversion_with_preset_flag_manual(
             str(playbook.yml.path),
             "--from-version",
             "6.0.0",
+            "-ngr"
         ],
         input="y",
     )
@@ -1066,6 +1072,7 @@ def test_format_playbook_without_fromversion_without_preset_flag_manual(
             FORMAT_CMD,
             "-i",
             str(playbook.yml.path),
+            "-ngr"
         ],
         input="y",
     )
@@ -1105,6 +1112,7 @@ def test_format_playbook_copy_removed_from_name_and_id(repo, mocker, monkeypatch
             FORMAT_CMD,
             "-i",
             str(playbook.yml.path),
+            "-ngr"
         ],
         input="y\n5.5.0",
     )
@@ -1149,6 +1157,7 @@ def test_format_playbook_no_input_specified(mocker, repo, monkeypatch):
         main,
         [
             FORMAT_CMD,
+            "-ngr"
         ],
         input="y\n5.5.0",
     )
@@ -1291,6 +1300,7 @@ def test_format_generic_field_wrong_values(
                 "-i",
                 generic_field_path,
                 "-y",
+                "-ngr"
             ],
             catch_exceptions=False,
         )
@@ -1347,6 +1357,7 @@ def test_format_generic_field_missing_from_version_key(mocker, repo):
                 "-i",
                 generic_field_path,
                 "-y",
+                "-ngr"
             ],
             catch_exceptions=False,
         )
@@ -1403,6 +1414,7 @@ def test_format_generic_type_wrong_from_version(mocker, repo):
                 "-i",
                 generic_type_path,
                 "-y",
+                "-ngr"
             ],
             catch_exceptions=False,
         )
@@ -1459,6 +1471,7 @@ def test_format_generic_type_missing_from_version_key(mocker, repo):
                 "-i",
                 generic_type_path,
                 "-y",
+                "-ngr"
             ],
             catch_exceptions=False,
         )
@@ -1514,6 +1527,7 @@ def test_format_generic_module_wrong_from_version(mocker, repo):
                 "-i",
                 generic_module_path,
                 "-y",
+                "-ngr"
             ],
             catch_exceptions=False,
         )
@@ -1570,6 +1584,7 @@ def test_format_generic_module_missing_from_version_key(mocker, repo):
                 "-i",
                 generic_module_path,
                 "-y",
+                "-ngr"
             ],
             catch_exceptions=False,
         )
@@ -1625,6 +1640,7 @@ def test_format_generic_definition_wrong_from_version(mocker, repo):
                 "-i",
                 generic_definition_path,
                 "-y",
+                "-ngr"
             ],
             catch_exceptions=False,
         )
@@ -1684,6 +1700,7 @@ def test_format_generic_definition_missing_from_version_key(mocker, repo):
                 "-i",
                 generic_definition_path,
                 "-y",
+                "-ngr"
             ],
             catch_exceptions=False,
         )
@@ -1734,7 +1751,7 @@ class TestFormatWithoutAddTestsFlag:
             IntegrationValidator, "is_valid_category", return_value=True
         )
 
-        result = runner.invoke(main, [FORMAT_CMD, "-i", integration_path, "-at"])
+        result = runner.invoke(main, [FORMAT_CMD, "-i", integration_path, "-at", "-ngr"])
         message = f'Formatting {integration_path} with "No tests"'
         assert not result.exception
         assert all(
@@ -1769,7 +1786,7 @@ class TestFormatWithoutAddTestsFlag:
         mocker.patch.object(
             IntegrationValidator, "is_valid_category", return_value=True
         )
-        result = runner.invoke(main, [FORMAT_CMD, "-i", integration_path], input="Y")
+        result = runner.invoke(main, [FORMAT_CMD, "-i", integration_path, "-ngr"], input="Y")
         prompt = (
             f"The file {integration_path} has no test playbooks configured."
             f' Do you want to configure it with "No tests"?'
@@ -1806,7 +1823,7 @@ class TestFormatWithoutAddTestsFlag:
         script_path = script.yml.path
         mocker.patch.object(BaseUpdate, "set_default_from_version", return_value=None)
 
-        result = runner.invoke(main, [FORMAT_CMD, "-i", script_path])
+        result = runner.invoke(main, [FORMAT_CMD, "-i", script_path, "-ngr"])
         message = f'Formatting {script_path} with "No tests"'
         assert not result.exception
         assert str_in_call_args_list(
@@ -1837,7 +1854,7 @@ class TestFormatWithoutAddTestsFlag:
         playbook.yml.update({"fromversion": "5.5.0"})
         playbooks_path = playbook.yml.path
         playbook.yml.delete_key("tests")
-        result = runner.invoke(main, [FORMAT_CMD, "-i", playbooks_path], input="N")
+        result = runner.invoke(main, [FORMAT_CMD, "-i", playbooks_path, "-ngr"], input="N")
         message = f'Formatting {playbooks_path} with "No tests"'
         assert not result.exception
         assert str_in_call_args_list(
@@ -1867,7 +1884,7 @@ class TestFormatWithoutAddTestsFlag:
         test_playbook.yml.update({"fromversion": "5.5.0"})
         test_playbooks_path = test_playbook.yml.path
         test_playbook.yml.delete_key("tests")
-        result = runner.invoke(main, [FORMAT_CMD, "-i", test_playbooks_path], input="N")
+        result = runner.invoke(main, [FORMAT_CMD, "-i", test_playbooks_path, "-ngr"], input="N")
         prompt = (
             f"The file {test_playbooks_path} has no test playbooks configured."
             f' Do you want to configure it with "No tests"?'
@@ -1900,7 +1917,7 @@ class TestFormatWithoutAddTestsFlag:
         test_playbooks_path = test_playbook.yml.path
         test_playbook.yml.delete_key("tests")
         result = runner.invoke(
-            main, [FORMAT_CMD, "-i", test_playbooks_path, "-at"], input="N"
+            main, [FORMAT_CMD, "-i", test_playbooks_path, "-at", "-ngr"], input="N"
         )
         prompt = (
             f"The file {test_playbooks_path} has no test playbooks configured."
@@ -2044,7 +2061,7 @@ def test_verify_deletion_from_conf_pack_format_with_deprecate_flag(
 
         runner = CliRunner(mix_stderr=False)
         result = runner.invoke(
-            main, [FORMAT_CMD, "-i", f"{pack_path}", "-d"], input="\n"
+            main, [FORMAT_CMD, "-i", f"{pack_path}", "-d", "-ngr"], input="\n"
         )
 
     # Asserts
@@ -2108,7 +2125,7 @@ def test_verify_deletion_from_conf_script_format_with_deprecate_flag(
     with ChangeCWD(repo_path):
         runner = CliRunner(mix_stderr=False)
         result = runner.invoke(
-            main, [FORMAT_CMD, "-i", f"{script_path}", "-d"], input="\n"
+            main, [FORMAT_CMD, "-i", f"{script_path}", "-d", "-ngr"], input="\n"
         )
 
     # Asserts
@@ -2614,3 +2631,92 @@ def test_format_on_layout_no_graph_flag(mocker, monkeypatch, repo):
     # the second is the type of the file.
     file_content = get_dict_from_file(layout.path)[0]
     assert file_content == layout_content
+
+
+def test_is_graph_related_files(repo):
+    """
+    Given
+    - Case A: A layout.
+    - Case B: An incident field.
+    - Case C: A mapper.
+    - Case D: A README.
+
+    When
+    - Running is_graph_related_files in order to understand if it is needed to start the graph in Format or not.
+
+    Then
+    - Case A: Assert True - the graph should be started for Layouts.
+    - Case B: Assert True - the graph should be started for Incident Fields.
+    - Case C: Assert True - the graph should be started for Mappers.
+    - Case D: Assert False - the graph should be started for a README.
+    """
+    pack = repo.create_pack("PackName")
+    layout = pack.create_layoutcontainer(name="layout", content={
+        "detailsV2": {
+            "tabs": [
+                {
+                    "id": "caseinfoid",
+                    "name": "Incident Info",
+                    "sections": [
+                        {
+                            "displayType": "ROW",
+                            "h": 2,
+                            "i": "caseinfoid-fce71720-98b0-11e9-97d7-ed26ef9e46c8",
+                            "isVisible": True,
+                            "items": [
+                                {
+                                    "endCol": 2,
+                                    "fieldId": "incident_field",
+                                    "height": 22,
+                                    "id": "id1",
+                                    "index": 0,
+                                    "sectionItemType": "field",
+                                    "startCol": 0
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        "group": "incident",
+        "id": "Layout",
+        "name": "Layout",
+        "system": False,
+        "version": -1,
+        "fromVersion": "6.9.0",
+        "description": "",
+        "marketplaces": ["xsoar"]
+    })
+    incident_field = pack.create_incident_field(name="incident_field", content={
+            "cliName": "incidentfield",
+            "id": "incident_incidentfield",
+            "name": "Incident Field",
+            "marketplaces": [
+                "xsoar"
+            ]
+        })
+    mapper = pack.create_mapper(name="mapper", content={
+            "description": "",
+            "feed": False,
+            "id": "Mapper - Incoming Mapper",
+            "mapping": {
+                "Mapper Finding": {
+                    "dontMapEventToLabels": True,
+                    "internalMapping": {
+                        "incident_field_name": {
+                            "simple": "Item"
+                        }
+                    }
+                },
+            },
+            "name": "Mapper - Incoming Mapper",
+            "type": "mapping-incoming",
+            "version": -1,
+            "fromVersion": "6.5.0"
+        })
+    readme = pack.create_doc_file(name="README")
+    assert is_graph_related_files([layout.path], True)
+    assert is_graph_related_files([incident_field.path], True)
+    assert is_graph_related_files([mapper.path], True)
+    assert not is_graph_related_files([readme.path], True)

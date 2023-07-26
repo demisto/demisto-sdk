@@ -240,7 +240,7 @@ def test_insert_description_to_yml_with_markdown_image(
     mocker.patch.object(
         IntegrationScriptUnifier, "get_data", return_value=(description_as_bytes, True)
     )
-    package_path = Path(f"{git_path()}/demisto_sdk/tests/test_files/VulnDB/")
+    package_path = Path("Packs/CybleEventsV2/Integrations/CybleEventsV2")
     yml_unified, _ = IntegrationScriptUnifier.insert_description_to_yml(
         package_path,
         {"commonfields": {"id": "VulnDB"}},
@@ -250,7 +250,7 @@ def test_insert_description_to_yml_with_markdown_image(
     assert (
         GOOGLE_CLOUD_STORAGE_PUBLIC_BASE_PATH in yml_unified["detaileddescription"]
     ) == res
-    assert ("test_files" in yml_unified["detaileddescription"]) == res
+    assert ("CybleEventsV2" in yml_unified["detaileddescription"]) == res
 
 
 def test_insert_description_to_yml_with_no_detailed_desc(tmp_path):

@@ -221,7 +221,7 @@ class IntegrationScriptUnifier(Unifier):
         if desc_data:
             desc_data = desc_data.decode("utf-8")
             if not is_script_package and marketplace:
-                pack_name = package_path.parent.name
+                pack_name = package_path.parents[1].name  # Get the name of the pack
                 with tempfile.NamedTemporaryFile(mode="r+", delete=False) as tempf:
                     tempf.write(desc_data)
                     tempf.flush()

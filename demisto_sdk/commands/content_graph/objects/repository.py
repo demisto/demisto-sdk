@@ -2,7 +2,7 @@ import shutil
 import time
 from multiprocessing.pool import Pool
 from pathlib import Path
-from typing import List
+from typing import List, Optional
 
 from pydantic import BaseModel, DirectoryPath
 
@@ -24,16 +24,20 @@ class ContentDTO(BaseModel):
         dir: DirectoryPath,
         marketplace: MarketplaceVersions,
         zip: bool = True,
+        packs_to_dump: Optional[list] = None,
         output_stem: str = "content_packs",  # without extension
     ):
         dir.mkdir(parents=True, exist_ok=True)
-        logger.debug("Starting repository dump")
+        logger.debug(f"Starting repository dump for packs: {packs_to_dump}")
+        packs_to_dump = [pack for pack in self.packs if pack.object_id in packs_to_dump] if packs_to_dump else self.packs
+
+        logger.debug("Starting repository dump for packs")
         start_time = time.time()
         if USE_MULTIPROCESSING:
             with Pool(processes=cpu_count()) as pool:
                 pool.starmap(
                     Pack.dump,
-                    ((pack, dir / pack.path.name, marketplace) for pack in self.packs),
+                    ((pack, dir / pack.path.name, marketplace) for pack in packs_to_dump),
                 )
 
         else:

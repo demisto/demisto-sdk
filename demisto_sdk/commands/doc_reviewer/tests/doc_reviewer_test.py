@@ -16,7 +16,10 @@ from demisto_sdk.commands.common.tools import (
     get_yaml,
     is_xsoar_supported_pack,
 )
-from demisto_sdk.commands.doc_reviewer.doc_reviewer import DocReviewer
+from demisto_sdk.commands.doc_reviewer.doc_reviewer import (
+    DocReviewer,
+    replace_escape_characters,
+)
 from demisto_sdk.tests.integration_tests.validate_integration_test import (
     AZURE_FEED_PACK_PATH,
 )
@@ -1359,7 +1362,32 @@ def test_find_known_words_from_pack_ignore_commons_scripts_name(repo):
         assert "bla.md" not in found_known_words
 
 
-def test_camel_case_split():
+CAMELCASE_TEST_WORD = "".join(
+    [
+        "this",
+        "word",
+        "simulates",
+        "no",
+        "camel",
+        "case",
+        "split",
+        "and",
+        "should",
+        "remain",
+        "unchanged",
+    ]
+)
+
+
+@pytest.mark.parametrize(
+    "word, parts",
+    [
+        ("ThisIsCamelCase", ["This", "Is", "Camel", "Case"]),
+        ("thisIPIsAlsoCamelCase", ["this", "IP", "Is", "Also", "Camel", "Case"]),
+        (CAMELCASE_TEST_WORD, [CAMELCASE_TEST_WORD]),
+    ],
+)
+def test_camel_case_split(word, parts):
     """
     Given
         - A CamelCase word
@@ -1370,18 +1398,20 @@ def test_camel_case_split():
     Then
         - Ensure result is a list of the split words in the camel case.
     """
-    camel_1 = "ThisIsCamelCase"
-    result = DocReviewer.camel_case_split(camel_1)
+    result = DocReviewer.camel_case_split(word)
     assert isinstance(result, List)
-    assert "This" in result
-    assert "Is" in result
-    assert "Camel" in result
-    assert "Case" in result
+    assert (
+        result == parts
+    ), "The split of the camel case doesn't match the expected parts"
 
-    camel_2 = "thisIPIsAlsoCamel"
-    result = DocReviewer.camel_case_split(camel_2)
-    assert "this" in result
-    assert "IP" in result
-    assert "Is" in result
-    assert "Also" in result
-    assert "Camel" in result
+
+@pytest.mark.parametrize(
+    "sentence, expected",
+    [
+        ("\\tthis\\rhas\\nescapes\\b", " this has escapes "),
+        ("no escape sequence", "no escape sequence"),
+    ],
+)
+def test_replace_escape_characters(sentence, expected):
+    result = replace_escape_characters(sentence)
+    assert result == expected, "The escape sequence was removed"

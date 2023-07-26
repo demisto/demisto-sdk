@@ -196,6 +196,7 @@ class PackModelVerifier:
         expected_preview_only: Optional[bool] = None,
         expected_marketplaces: Optional[List[MarketplaceVersions]] = None,
         expected_content_items: Dict[str, ContentType] = {},
+        expected_deprecated: Optional[bool] = None,
     ) -> None:
         assert model.content_type == ContentType.PACK
         assert expected_id is None or model.object_id == expected_id
@@ -206,6 +207,7 @@ class PackModelVerifier:
         assert expected_updated is None or model.updated == expected_updated
         assert expected_support is None or model.support == expected_support
         assert expected_email is None or model.email == expected_email
+        assert expected_deprecated is None or model.deprecated == expected_deprecated
         assert expected_url is None or model.url == expected_url
         assert expected_author is None or model.author == expected_author
         assert (
@@ -1531,6 +1533,7 @@ class TestParsersAndModels:
                 MarketplaceVersions.XSOAR_SAAS,
             ],
             expected_content_items=expected_content_items,
+            expected_deprecated=False,
         )
 
     def test_repo_parser(self, repo: Repo):

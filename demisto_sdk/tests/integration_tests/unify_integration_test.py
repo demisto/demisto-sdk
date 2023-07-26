@@ -225,11 +225,7 @@ class TestIntegrationScriptUnifier:
             yml_file = os.path.join(script.path, "script-dummy-script.yml")
             unified_yml_data = get_yaml(yml_file)
             assert unified_yml_data.get("name") == "sample_scriptTest"
-            assert unified_yml_data.get("nativeimage") == [
-                "8.1",
-                "8.2",
-                "candidate",
-            ]
+            assert unified_yml_data.get("nativeimage") == ["8.1", "8.2"]
 
     def test_ignore_native_image_integration(self, repo):
         """

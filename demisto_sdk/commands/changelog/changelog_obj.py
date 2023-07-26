@@ -1,7 +1,7 @@
 from enum import Enum
 from typing import List, Tuple
 
-from pydantic import BaseModel, validator
+from pydantic import BaseModel, ValidationError, validator
 
 from demisto_sdk.commands.common.logger import logger
 
@@ -33,13 +33,13 @@ class Log(BaseModel):
     @validator("type")
     def is_type_initial_mode(cls, value):
         if value == "<fix|feature|breaking>":
-            logger.error("One of the types is still not different from the initial value, please edit it")
+            raise ValueError("One of the types is still not different from the initial value, please edit it")
         return value
 
     @validator("description")
     def is_description_initial_mode(cls, value):
         if value == "enter description about this PR":
-            logger.error("One of the descriptions is still not different from the initial value, please edit it")
+            raise ValueError("One of the descriptions is still not different from the initial value, please edit it")
         return value
 
 class LogObject(BaseModel):

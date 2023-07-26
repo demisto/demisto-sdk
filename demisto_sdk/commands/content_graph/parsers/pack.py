@@ -2,7 +2,6 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, Iterator, List, Optional
 
-from demisto_sdk.commands.common.git_util import GitUtil
 import regex
 
 from demisto_sdk.commands.common.constants import (
@@ -12,6 +11,7 @@ from demisto_sdk.commands.common.constants import (
     PACK_NAME_DEPRECATED_REGEX,
     MarketplaceVersions,
 )
+from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import get_json
 from demisto_sdk.commands.content_graph.common import (
@@ -229,7 +229,9 @@ class PackParser(BaseContentParser, PackMetadataParser):
                 mandatorily=dependency.get("mandatory"),
             )
 
-        if self.object_id != BASE_PACK:  # add Base pack dependency for all the packs except Base itself
+        if (
+            self.object_id != BASE_PACK
+        ):  # add Base pack dependency for all the packs except Base itself
             self.relationships.add(
                 RelationshipType.DEPENDS_ON,
                 source=self.object_id,

@@ -29,7 +29,11 @@ class ContentDTO(BaseModel):
     ):
         dir.mkdir(parents=True, exist_ok=True)
         logger.debug(f"Starting repository dump for packs: {packs_to_dump}")
-        packs_to_dump = [pack for pack in self.packs if pack.object_id in packs_to_dump] if packs_to_dump else self.packs
+        packs_to_dump = (
+            [pack for pack in self.packs if pack.object_id in packs_to_dump]
+            if packs_to_dump
+            else self.packs
+        )
 
         logger.debug("Starting repository dump for packs")
         start_time = time.time()
@@ -37,7 +41,10 @@ class ContentDTO(BaseModel):
             with Pool(processes=cpu_count()) as pool:
                 pool.starmap(
                     Pack.dump,
-                    ((pack, dir / pack.path.name, marketplace) for pack in packs_to_dump),
+                    (
+                        (pack, dir / pack.path.name, marketplace)
+                        for pack in packs_to_dump
+                    ),
                 )
 
         else:

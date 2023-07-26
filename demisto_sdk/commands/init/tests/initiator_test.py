@@ -960,12 +960,12 @@ def test_modeling_rules_init_xsiam_files_existence(
     initiator.is_modeling_rules = True
 
     modeling_rules_path = os.path.join(temp_pack_dir, f"{INTEGRATION_NAME}")
-    res = initiator.modeling_rules_init()
+    res = initiator.modeling_parsing_rules_init(is_modeling_rules=True)
     modeling_rules_dir_files = set(listdir(modeling_rules_path))
     expected_files = {
         f"{INTEGRATION_NAME}_schema.json",
-        f"{INTEGRATION_NAME}.yml",
-        f"{INTEGRATION_NAME}.xif",
+        f"{INTEGRATION_NAME}_ModelingRule.yml",
+        f"{INTEGRATION_NAME}_ModelingRule.xif",
     }
 
     assert res
@@ -1005,11 +1005,11 @@ def test_parsing_rules_init_xsiam_files_existence(
     initiator.is_parsing_rules = True
 
     parsing_rules_path = os.path.join(temp_pack_dir, f"{INTEGRATION_NAME}")
-    res = initiator.parsing_rules_init()
+    res = initiator.modeling_parsing_rules_init(is_parsing_rules=True)
     parsing_rules_dir_files = set(listdir(parsing_rules_path))
     expected_files = {
-        f"{INTEGRATION_NAME}.yml",
-        f"{INTEGRATION_NAME}.xif",
+        f"{INTEGRATION_NAME}_ParsingRule.yml",
+        f"{INTEGRATION_NAME}_ParsingRule.xif",
     }
 
     assert res
@@ -1049,8 +1049,8 @@ def test_modeling_rules_init_file_content_and_name(
     initiator.is_modeling_rules = True
 
     parsing_rules_path = os.path.join(temp_pack_dir, f"{INTEGRATION_NAME}")
-    res = initiator.modeling_rules_init()
-    yml_path = os.path.join(parsing_rules_path, f"{INTEGRATION_NAME}.yml")
+    res = initiator.modeling_parsing_rules_init(is_modeling_rules=True)
+    yml_path = os.path.join(parsing_rules_path, f"{INTEGRATION_NAME}_ModelingRule.yml")
     assert res
     assert os.path.exists(yml_path)
     with open(yml_path) as f:
@@ -1090,11 +1090,10 @@ def test_parsing_rules_init_file_content_and_name(
     initiator.category = "Analytics & SIEM"
     initiator.template = "HelloWorldParsingRules"
     initiator.xsiam = True
-    initiator.is_parsing_rules = True
 
     parsing_rules_path = os.path.join(temp_pack_dir, f"{INTEGRATION_NAME}")
-    res = initiator.parsing_rules_init()
-    yml_path = os.path.join(parsing_rules_path, f"{INTEGRATION_NAME}.yml")
+    res = initiator.modeling_parsing_rules_init(is_parsing_rules=True)
+    yml_path = os.path.join(parsing_rules_path, f"{INTEGRATION_NAME}_ParsingRule.yml")
 
     assert res
     assert os.path.exists(yml_path)
@@ -1127,7 +1126,7 @@ def test_modeling_or_parsing_rules_yml_reformatting_parsing_rules(
     d.mkdir()
     dir_name = "HelloWorld"
     initiator.dir_name = dir_name
-    p = d / f"{dir_name}.yml"
+    p = d / f"{dir_name}_ModelingRule.yml"
     full_output_path = Path(d)
     initiator.full_output_path = full_output_path
     with p.open(mode="w") as f:
@@ -1143,8 +1142,10 @@ def test_modeling_or_parsing_rules_yml_reformatting_parsing_rules(
             f,
         )
 
-    initiator.modeling_or_parsing_rules_yml_reformatting(current_suffix=dir_name)
-    with open(full_output_path / f"{dir_name}.yml") as f:
+    initiator.modeling_or_parsing_rules_yml_reformatting(
+        current_suffix=dir_name, is_modeling_rules=True
+    )
+    with open(full_output_path / f"{dir_name}_ModelingRule.yml") as f:
         yml_dict = yaml.load(f)
         assert yml_dict == OrderedDict(
             {
@@ -1156,4 +1157,4 @@ def test_modeling_or_parsing_rules_yml_reformatting_parsing_rules(
                 "tags": "",
             }
         )
-        os.remove(full_output_path / f"{dir_name}.yml")
+        os.remove(full_output_path / f"{dir_name}_ModelingRule.yml")

@@ -1890,7 +1890,7 @@ def generate_test_playbook(ctx, **kwargs):
 @click.option(
     "--xsiam",
     is_flag=True,
-    help="Create an Event Collector based on EventCollector template with relevant folders"
+    help="Create an Event Collector based on EventCollector template and the relevant sub directories"
     "directory.",
 )
 @click.option("--pack", is_flag=True, help="Create pack and its sub directories")

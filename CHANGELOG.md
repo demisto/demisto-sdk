@@ -25,6 +25,7 @@
 * Added a new validation (`BA125`) to **validate** that assures internal function names aren't in use in customer-facing docs.
 * Fixed an issue in **update-content-graph** where the neo4j service was unaccessible for non-root users.
 * Added a Sourcery hook to **pre-commit**.
+* Added the *--xsiam* flag to the **init** command in order to create XSIAM content.
 
 ## 1.17.2
 * Fixed an issue where **lint** and **validate** commands failed on integrations and scripts that use docker images that are not available in the Docker Hub but exist locally.
@@ -57,7 +58,6 @@
 * added support for the `isfetcheventsandassets` flag in content graph.
 * Fixed an issue where the **modeling-rules test** command failed to get the existence of result from dataset in cases where the results take time to load.
 * Added an aliasTo key to the incident field schema.
-* Added --xsiam flag to the **init** command in order to create XSIAM content.
 
 ## 1.17.0
 * **validate** will only fail on docker related errors if the pack is supported by xsoar.

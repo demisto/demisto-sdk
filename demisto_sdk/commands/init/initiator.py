@@ -2,8 +2,9 @@ import glob
 import os
 import shutil
 from distutils.dir_util import copy_tree
-from distutils.version import LooseVersion
 from typing import Dict, List
+
+from packaging.version import Version
 
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.configuration import Configuration
@@ -105,8 +106,6 @@ class Initiator:
         f"{TEMPLATE_INTEGRATION_NAME}_description.md",
         f"{TEMPLATE_INTEGRATION_NAME}_image.png",
         f"{TEMPLATE_INTEGRATION_NAME}_test.py",
-        "Pipfile",
-        "Pipfile.lock",
         "README.md",
         "command_examples",
     }
@@ -738,9 +737,9 @@ class Initiator:
         if from_version:
             yml_dict["fromversion"] = from_version
 
-        if LooseVersion(
+        if Version(
             yml_dict.get("fromversion", DEFAULT_CONTENT_ITEM_FROM_VERSION)
-        ) < LooseVersion(self.SUPPORTED_FROM_VERSION):
+        ) < Version(self.SUPPORTED_FROM_VERSION):
             yml_dict["fromversion"] = self.SUPPORTED_FROM_VERSION
 
         if integration:

@@ -3,6 +3,7 @@ from typing import Any, Dict, Optional
 
 import typer
 from tabulate import tabulate
+from demisto_sdk.commands.common.constants import MarketplaceVersions
 
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.logger import (
@@ -78,6 +79,12 @@ def get_relationships(
         is_flag=True,
         help="If true, runs an update on the graph before querying.",
     ),
+    marketplace: MarketplaceVersions = typer.Option(
+        MarketplaceVersions.XSOAR,
+        "-mp",
+        "--marketplace",
+        help="The marketplace version.",
+    ),
     include_tests: bool = typer.Option(
         False,
         "--incude-test-dependencies",
@@ -120,6 +127,7 @@ def get_relationships(
             relationship,
             content_type,
             depth,
+            marketplace,
             include_tests,
         )
         if output:
@@ -134,6 +142,7 @@ def get_relationships_by_path(
     relationship: RelationshipType,
     content_type: ContentType,
     depth: int,
+    marketplace: MarketplaceVersions,
     include_tests: bool,
 ) -> Dict[str, Any]:
     sources, targets = graph.get_relationships_by_path(
@@ -141,6 +150,7 @@ def get_relationships_by_path(
         relationship,
         content_type,
         depth,
+        marketplace,
         include_tests,
     )
     for record in sources + targets:

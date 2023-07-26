@@ -143,6 +143,7 @@ class ContentGraphInterface(ABC):
         relationship_type: RelationshipType,
         content_type: ContentType,
         depth: int,
+        marketplace: MarketplaceVersions,
         include_tests: bool,
     ) -> Tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
         pass

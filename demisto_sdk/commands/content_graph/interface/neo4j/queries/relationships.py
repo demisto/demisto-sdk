@@ -262,6 +262,7 @@ def get_sources_by_path(
     relationship: RelationshipType,
     content_type: ContentType,
     depth: int,
+    marketplace: MarketplaceVersions,
     include_tests: bool,
 ) -> List[Dict[str, Any]]:
     query = f"""// Returns all paths to a given node by relationship type and depth.
@@ -281,13 +282,17 @@ WITH
     reverse([r IN relationships(path) | properties(r)]) AS rels,
     length(path) AS depth
 WITH
+    nodes,
     nodes[0] AS source,
     apoc.coll.flatten((apoc.coll.zip(rels, node_paths[1..]))) AS path_from_source,
     CASE WHEN all(r IN rels WHERE r.mandatorily) THEN TRUE ELSE
     CASE WHEN any(r IN rels WHERE r.mandatorily IS NOT NULL) THEN FALSE END END AS mandatorily,
     depth,
     CASE WHEN any(r IN rels WHERE r.is_test) THEN TRUE ELSE FALSE END AS is_test
-WHERE {"NOT is_test AND" if not include_tests else ""} source.path IS NOT NULL
+WHERE
+    source.path IS NOT NULL
+    AND all(n IN nodes WHERE "{marketplace}" IN n.marketplaces)
+    {"AND NOT is_test" if not include_tests else ""}
 WITH
     source,
     min(depth) AS minDepth,
@@ -315,6 +320,7 @@ def get_targets_by_path(
     relationship: RelationshipType,
     content_type: ContentType,
     depth: int,
+    marketplace: MarketplaceVersions,
     include_tests: bool,
 ) -> List[Dict[str, Any]]:
     query = f"""// Returns all paths from a given node by relationship type and depth.
@@ -333,13 +339,17 @@ WITH
     [r IN relationships(path) | properties(r)] AS rels,
     length(path) AS depth
 WITH
+    nodes,
     nodes[-1] AS target,
     apoc.coll.flatten((apoc.coll.zip(node_paths[..-1], rels))) AS path_to_target,
     CASE WHEN all(r IN rels WHERE r.mandatorily) THEN TRUE ELSE
     CASE WHEN any(r IN rels WHERE r.mandatorily IS NOT NULL) THEN FALSE END END AS mandatorily,
     depth,
     CASE WHEN any(r IN rels WHERE r.is_test) THEN TRUE ELSE FALSE END AS is_test
-WHERE {"NOT is_test AND" if not include_tests else ""} target.path IS NOT NULL
+WHERE
+    target.path IS NOT NULL
+    AND all(n IN nodes WHERE "{marketplace}" IN n.marketplaces)
+    {"AND NOT is_test" if not include_tests else ""}
 WITH
     target,
     min(depth) AS minDepth,

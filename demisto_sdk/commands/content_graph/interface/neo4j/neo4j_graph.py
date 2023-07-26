@@ -359,6 +359,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         relationship_type: RelationshipType,
         content_type: ContentType,
         depth: int,
+        marketplace: MarketplaceVersions,
         include_tests: bool,
     ) -> Tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
         with self.driver.session() as session:
@@ -368,6 +369,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
                 relationship_type,
                 content_type,
                 depth,
+                marketplace,
                 include_tests,
             )
             targets = session.execute_read(
@@ -376,6 +378,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
                 relationship_type,
                 content_type,
                 depth,
+                marketplace,
                 include_tests,
             )
             return sources, targets

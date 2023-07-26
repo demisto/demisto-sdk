@@ -1,5 +1,6 @@
 # Changelog
 ## Unreleased
+* Fixed an issue where the `.private-repo-settings` failure.
 * Fixed an issue where the *DEMISTO_SDK_SKIP_VERSION_CHECK* was ignored when running on non CI environments.
 * Added the ability to ignore any validation in the **validate** command when running in an external (non-demisto/content) repo, by placing a `.private-repo-settings` file at its root.
 * Fixed an issue where **validate** falsely detected backwards-compatibility issues, and prevented adding the `marketplaces` key to content items.

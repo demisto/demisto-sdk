@@ -19,7 +19,7 @@ from demisto_sdk.commands.content_graph.common import (
     RelationshipType,
 )
 from demisto_sdk.commands.content_graph.content_graph_commands import (
-    update_content_graph,
+    update_content_graph, create_content_graph
 )
 from demisto_sdk.commands.content_graph.interface.graph import ContentGraphInterface
 from demisto_sdk.commands.content_graph.interface.neo4j.import_utils import (
@@ -64,7 +64,7 @@ from demisto_sdk.commands.content_graph.interface.neo4j.queries.validations impo
     validate_marketplaces,
     validate_multiple_packs_with_same_display_name,
     validate_multiple_script_with_same_name,
-    validate_pack_dependencies,
+    validate_hidden_pack_dependencies,
     validate_toversion,
     validate_unknown_content,
 )
@@ -128,7 +128,8 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             if artifacts_folder := os.getenv("ARTIFACTS_FOLDER"):
                 output_path = Path(artifacts_folder) / "content_graph"
                 output_path.mkdir(parents=True, exist_ok=True)
-            update_content_graph(self, use_git=True, output_path=output_path)
+            # update_content_graph(self, use_git=True, output_path=output_path)
+            create_content_graph(self)
 
     def __enter__(self) -> "Neo4jContentGraphInterface":
         return self
@@ -497,12 +498,12 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             self._add_relationships_to_objects(session, results)
             return [self._id_to_obj[result] for result in results]
 
-    def find_mandatory_pack_dependencies(
-        self, pack_id, marketplace: MarketplaceVersions
+    def find_mandatory_hidden_packs_dependencies(
+        self, pack_ids
     ):
         with self.driver.session() as session:
-            results: Dict[int, Neo4jRelationshipResult] = session.execute_read(
-                validate_pack_dependencies, pack_id, marketplace
+            results = session.execute_read(
+                validate_hidden_pack_dependencies, pack_ids
             )
             self._add_nodes_to_mapping(result.node_from for result in results.values())
             self._add_relationships_to_objects(session, results)

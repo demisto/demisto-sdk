@@ -374,28 +374,33 @@ class GraphValidator(BaseValidator):
 
     @error_codes("GR108")
     def validate_hidden_pack_is_not_mandatory_dependency(self):
+        """
+        Validate that hidden pack(s) do not have dependant packs which the
+        hidden pack is a mandatory dependency for them.
+        """
         is_valid = True
-        for pack_id in self.pack_ids:
-            pack = Pack.from_path(Path(f"{PACKS_DIR}/{pack_id}"))
-            if pack.hidden:
-                for marketplace in pack.marketplaces:
-                    if dependant_packs := self.graph.find_mandatory_pack_dependencies(
-                        pack_id=pack_id, marketplace=marketplace
+        if dependant_packs := self.graph.find_mandatory_hidden_packs_dependencies(pack_ids=self.pack_ids):
+            hidden_pack_id_to_dependant_pack_ids = {pack_id: set() for pack_id in self.pack_ids}
+            for pack in dependant_packs:
+                for relationship in pack.depends_on:
+                    hidden_pack_id = relationship.content_item_to.object_id
+                    if hidden_pack_id in self.pack_ids:
+                        hidden_pack_id_to_dependant_pack_ids[hidden_pack_id].add(pack.object_id)
+
+            for pack_id in self.pack_ids:
+                if dependant_packs_ids := hidden_pack_id_to_dependant_pack_ids.get(pack_id):
+                    (
+                        error_message,
+                        error_code,
+                    ) = Errors.hidden_pack_not_mandatory_dependency(
+                        hidden_pack=pack_id,
+                        dependant_packs_ids=dependant_packs_ids
+                    )
+                    if self.handle_error(
+                        error_message=error_message,
+                        error_code=error_code,
+                        file_path=f'{PACKS_DIR}/{pack_id}/{PACKS_PACK_META_FILE_NAME}',
                     ):
-                        (
-                            error_message,
-                            error_code,
-                        ) = Errors.hidden_pack_not_mandatory_dependency(
-                            pack_id=pack_id,
-                            dependant_pack_ids=[
-                                pack.object_id for pack in dependant_packs
-                            ],
-                            marketplace=marketplace,
-                        )
-                        if self.handle_error(
-                            error_message=error_message,
-                            error_code=error_code,
-                            file_path=f"{pack_id}/{PACKS_PACK_META_FILE_NAME}",
-                        ):
-                            is_valid = False
+                        is_valid = False
+
         return is_valid

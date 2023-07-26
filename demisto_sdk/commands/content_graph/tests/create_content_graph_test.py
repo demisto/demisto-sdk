@@ -83,6 +83,7 @@ def mock_pack(
         keywords=[],
         contentItems=[],
         excluded_dependencies=[],
+        deprecated=False,
     )
     if repository:
         repository.packs.append(pack)

@@ -412,6 +412,7 @@ def mock_pack(name, marketplaces):
         keywords=[],
         contentItems=[],
         excluded_dependencies=[],
+        deprecated=False,
     )
 
 

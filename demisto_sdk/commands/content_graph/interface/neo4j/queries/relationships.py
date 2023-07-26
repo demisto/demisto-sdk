@@ -242,11 +242,11 @@ def _match_relationships(
     query = f"""// Match relationships of the given ids list
 UNWIND $ids_list AS id
 MATCH (node_from) - [relationship] - (node_to)
-WHERE id(node_from) = id
+WHERE elementId(node_from) = id
 {marketplace_where}
 RETURN node_from, collect(relationship) AS relationships, collect(node_to) AS nodes_to"""
     return {
-        int(item["node_from"].id): Neo4jRelationshipResult(
+        item["node_from"].element_id: Neo4jRelationshipResult(
             node_from=item.get("node_from"),
             relationships=item.get("relationships"),
             nodes_to=item.get("nodes_to"),

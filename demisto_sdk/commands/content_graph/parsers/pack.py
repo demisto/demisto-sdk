@@ -2,8 +2,16 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, Iterator, List, Optional
 
-from demisto_sdk.commands.common.constants import BASE_PACK, MarketplaceVersions
 from demisto_sdk.commands.common.git_util import GitUtil
+import regex
+
+from demisto_sdk.commands.common.constants import (
+    BASE_PACK,
+    DEPRECATED_DESC_REGEX,
+    DEPRECATED_NO_REPLACE_DESC_REGEX,
+    PACK_NAME_DEPRECATED_REGEX,
+    MarketplaceVersions,
+)
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import get_json
 from demisto_sdk.commands.content_graph.common import (
@@ -255,3 +263,12 @@ class PackParser(BaseContentParser, PackMetadataParser):
         except InvalidContentItemException:
             logger.error(f"{content_item_path} - invalid content item")
             raise
+
+    @property
+    def deprecated(self) -> bool:
+        if regex.match(PACK_NAME_DEPRECATED_REGEX, self.name) and (
+            regex.match(DEPRECATED_NO_REPLACE_DESC_REGEX, self.description)
+            or regex.match(DEPRECATED_DESC_REGEX, self.description)
+        ):
+            return True
+        return False

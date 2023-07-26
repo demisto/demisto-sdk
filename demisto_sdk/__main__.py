@@ -31,6 +31,7 @@ from demisto_sdk.commands.common.tools import (
     get_last_remote_release_version,
     get_release_note_entries,
     is_external_repository,
+    is_sdk_defined_working_offline,
     parse_marketplace_kwargs,
 )
 from demisto_sdk.commands.content_graph.interface.neo4j.neo4j_graph import (
@@ -47,6 +48,11 @@ from demisto_sdk.commands.test_content.test_modeling_rule import (
 )
 from demisto_sdk.commands.upload.upload import upload_content_entity
 from demisto_sdk.utils.utils import check_configuration_file
+
+SDK_OFFLINE_ERROR_MESSAGE = (
+    "[red]An internet connection is required for this command. If connected to the "
+    "internet, un-set the DEMISTO_SDK_OFFLINE_ENV environment variable.[/red]"
+)
 
 logger = logging.getLogger("demisto-sdk")
 
@@ -199,8 +205,8 @@ def main(ctx, config, version, release_notes, **kwargs):
 
     dotenv.load_dotenv(CONTENT_PATH / ".env", override=True)  # type: ignore # load .env file from the cwd
     if (
-        not os.getenv("DEMISTO_SDK_SKIP_VERSION_CHECK")
-    ) or version:  # If the key exists/called to version
+        (not os.getenv("DEMISTO_SDK_SKIP_VERSION_CHECK")) or version
+    ) and not is_sdk_defined_working_offline():  # If the key exists/called to version
         try:
             __version__ = get_distribution("demisto-sdk").version
         except DistributionNotFound:
@@ -680,6 +686,10 @@ def zip_packs(ctx, **kwargs) -> int:
 def validate(ctx, config, file_paths: str, **kwargs):
     """Validate your content files. If no additional flags are given, will validated only committed files."""
     from demisto_sdk.commands.validate.validate_manager import ValidateManager
+
+    if is_sdk_defined_working_offline():
+        logger.error(SDK_OFFLINE_ERROR_MESSAGE)
+        sys.exit(1)
 
     if file_paths and not kwargs["input"]:
         # If file_paths is given as an argument, use it as the file_paths input (instead of the -i flag). If both, input wins.
@@ -1261,6 +1271,10 @@ def format(
     genericmodule/genericdefinition.
     """
     from demisto_sdk.commands.format.format_module import format_manager
+
+    if is_sdk_defined_working_offline():
+        logger.error(SDK_OFFLINE_ERROR_MESSAGE)
+        sys.exit(1)
 
     if file_paths and not input:
         input = ",".join(file_paths)
@@ -2311,6 +2325,10 @@ def update_release_notes(ctx, **kwargs):
     from demisto_sdk.commands.update_release_notes.update_rn_manager import (
         UpdateReleaseNotesManager,
     )
+
+    if is_sdk_defined_working_offline():
+        logger.error(SDK_OFFLINE_ERROR_MESSAGE)
+        sys.exit(1)
 
     check_configuration_file("update-release-notes", kwargs)
     if kwargs.get("force") and not kwargs.get("input"):

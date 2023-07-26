@@ -809,8 +809,7 @@ def test_format_on_relative_path_playbook(mocker, repo, monkeypatch):
                     "Packs/PackName/Playbooks/playbook.yml",
                     "--no-docker-checks",
                     "--no-conf-json",
-                    "--allow-skipped",
-                    "-ngr"
+                    "--allow-skipped"
                 ],
                 catch_exceptions=False,
             )

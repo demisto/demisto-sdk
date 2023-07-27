@@ -27,6 +27,7 @@
 * Added a new validation (`BA125`) to **validate** that assures internal function names aren't in use in customer-facing docs.
 * Fixed an issue in **update-content-graph** where the neo4j service was unaccessible for non-root users.
 * Added a Sourcery hook to **pre-commit**.
+* Added a working directory to the `contribution_converter` in order to support working on a temporary directory.
 
 ## 1.17.2
 * Fixed an issue where **lint** and **validate** commands failed on integrations and scripts that use docker images that are not available in the Docker Hub but exist locally.

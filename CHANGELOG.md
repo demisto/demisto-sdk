@@ -19,12 +19,18 @@
 * Fixed an issue where the **format** command would change the value of the `unsearchable` key in fields.
 * Added an ability to provide list of marketplace names as a credentials-type (type 9) param attribute.
 * **doc-review** will run with the `--use-packs-known-words` default to true.
+* Fixed an issue where **lint** command failed to pull docker image in Gitlab environment.
+* Added the *deprecated* field to the pack object for the content-graph metadata.
 * Fixed an issue in **doc-review** command where escape characters within Markdown files were detected as invalid words.
 * Calling **modeling-rules init-test-data** will now return the XDM fields output in alphabetical order.
 * Fixed an issue where **validate** failed on infrastructure test files.
 * Added a new validation (`BA125`) to **validate** that assures internal function names aren't in use in customer-facing docs.
+* Removed the Pipfile and Pipfile.lock from the templates in **demisto-sdk init** command.
+* Disabled the option to create an integration with Pipfile and Pipfile.lock files.
 * Fixed an issue in **update-content-graph** where the neo4j service was unaccessible for non-root users.
 * Added a Sourcery hook to **pre-commit**.
+* Added a working directory to the `contribution_converter` in order to support working on a temporary directory.
+* Added a waiting period when checking whether the dataset exists in the **modeling-rule test** command.
 * Added the *--xsiam* flag to the **init** command in order to create XSIAM content.
 
 ## 1.17.2

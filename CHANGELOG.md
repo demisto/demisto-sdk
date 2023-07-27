@@ -19,6 +19,7 @@
 * Fixed an issue where the **format** command would change the value of the `unsearchable` key in fields.
 * Added an ability to provide list of marketplace names as a credentials-type (type 9) param attribute.
 * **doc-review** will run with the `--use-packs-known-words` default to true.
+* Fixed an issue where **lint** command failed to pull docker image in Gitlab environment.
 * Added the *deprecated* field to the pack object for the content-graph metadata.
 * Fixed an issue in **doc-review** command where escape characters within Markdown files were detected as invalid words.
 * Calling **modeling-rules init-test-data** will now return the XDM fields output in alphabetical order.

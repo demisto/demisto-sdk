@@ -351,9 +351,9 @@ def validate_schema_aligned_with_test_data(
 
                     if test_data_key_mappings != schema_key_mappings:
                         error_logs.add(
-                            f"[red][bold]the field {event_key} has mismatch on type or is_array between testdata in "
-                            f"event ID {event_log.test_data_event_id} dataset {dataset}"
-                            f" and schema[/bold] --- TestData Mapping "
+                            f"[red][bold]the field {event_key} has mismatch on type or is_array in "
+                            f"event ID {event_log.test_data_event_id} between testdata "
+                            f"and schema[/bold] --- TestData Mapping "
                             f'"{test_data_key_mappings}" != Schema Mapping "{schema_key_mappings}"'
                         )
                         errors_occurred = True

@@ -893,7 +893,7 @@ class TestFormattingLayout:
         for field in ["fromServerVersion", "quickView", "sortValues", "locked"]:
             assert field not in layouts_formatter.data
 
-    def test_remove_non_existent_fields(self, pack, id_set_file_mock):
+    def test_remove_non_existent_fields(self, mocker, pack, id_set_file_mock):
         """
         Given
             - a layout json file content.
@@ -917,21 +917,18 @@ class TestFormattingLayout:
                 ]
             }
         }
-
-        formatter = LayoutBaseFormat(
-            input=pack.create_layout(
+        layout = pack.create_layout(
                 name="layout-non-existent-fields-test", content=layout_content
-            ).path,
+            )
+        formatter = LayoutBaseFormat(
+            input=layout.path,
             id_set_path=id_set_file_mock.path,
         )
 
-        # remove the original container layout
-        layout_content["layout"]["sections"][0]["fields"] = [
-            {"fieldId": "incident-field-2"}
-        ]
-
+        logger_warning = mocker.patch.object(logging.getLogger("demisto-sdk"), "warning")
         formatter.remove_non_existent_fields_layout()
-        assert formatter.data == layout_content
+        message = f"Skipping formatting of non-existent-fields for {layout.path} as this content item is deprecated."
+        assert str_in_call_args_list(logger_warning.call_args_list, message)
 
     def test_set_description(self, layouts_formatter):
         """

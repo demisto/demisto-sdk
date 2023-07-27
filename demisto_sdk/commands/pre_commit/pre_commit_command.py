@@ -34,13 +34,16 @@ from demisto_sdk.commands.content_graph.objects.integration_script import (
 from demisto_sdk.commands.pre_commit.hooks.mypy import MypyHook
 from demisto_sdk.commands.pre_commit.hooks.pycln import PyclnHook
 from demisto_sdk.commands.pre_commit.hooks.ruff import RuffHook
+from demisto_sdk.commands.pre_commit.hooks.sourcery import SourceryHook
 from demisto_sdk.commands.pre_commit.hooks.validate_format import ValidateFormatHook
 
 IS_GITHUB_ACTIONS = string_to_bool(os.getenv("GITHUB_ACTIONS"), False)
 
 PRECOMMIT_TEMPLATE_PATH = CONTENT_PATH / ".pre-commit-config_template.yaml"
 PRECOMMIT_PATH = CONTENT_PATH / ".pre-commit-config-content.yaml"
+SOURCERY_CONFIG_PATH = CONTENT_PATH / ".sourcery.yaml"
 
+CONTENT_PATH
 SKIPPED_HOOKS = {"format", "validate", "secrets"}
 
 INTEGRATION_SCRIPT_REGEX = re.compile(r"^Packs/.*/(?:Integrations|Scripts)/.*.yml$")
@@ -99,6 +102,9 @@ class PreCommitRunner:
         PyclnHook(hooks["pycln"]).prepare_hook(PYTHONPATH)
         RuffHook(hooks["ruff"]).prepare_hook(python_version, IS_GITHUB_ACTIONS)
         MypyHook(hooks["mypy"]).prepare_hook(python_version)
+        SourceryHook(hooks["sourcery"]).prepare_hook(
+            python_version, config_file_path=SOURCERY_CONFIG_PATH
+        )
         ValidateFormatHook(hooks["validate"]).prepare_hook(self.input_files)
         ValidateFormatHook(hooks["format"]).prepare_hook(self.input_files)
 

@@ -74,22 +74,30 @@ class Changelog:
     def init(self, breaking: str = None, feature: str = None, fix: str = None) -> None:
         """
         Creates a new log file for the current PR
+        - if `fix` or `breaking` or `feature` is provided
+          it will create the file with the provided arguments
+        - if no argument is provided, it will create the file with initial values,
+          then the user has to change the values manually
         """
         if self.is_release():
             logger.error(
                 "This PR is for release, please use in changelog release command"
             )
+
+        msg = (
+            f"The creation of the log file .changelog/{self.pr_number}.yml is complete"
+        )
+
         if breaking or feature or fix:
             log = self.create_log(breaking, feature, fix)
         else:
+            msg += ",\nPlease go to the file and edit the initial values."
             log = INITIAL_LOG
+
         with (CHANGELOG_FOLDER / f"{self.pr_number}.yml").open("w") as f:
             yaml.dump(log, f)
 
-        logger.info(
-            f"The creation of the log file .changelog/{self.pr_number}.yml is complete,\n"
-            "Please go to the file and edit the initial values."
-        )
+        logger.info(msg)
 
     """ RELEASE """
 
@@ -200,14 +208,19 @@ class Changelog:
             else False
         )
 
-    def create_log(self, breaking: str = None, feature: str = None, fix: str = None) -> dict:
+    def create_log(
+        self, breaking: str = None, feature: str = None, fix: str = None
+    ) -> dict:
         log: dict = {"logs": []}
         if breaking:
-            log["logs"].append({"description": breaking, "type": "breaking"})
+            for breaking_log in breaking.split(" * "):
+                log["logs"].append({"description": breaking_log, "type": "breaking"})
         if feature:
-            log["logs"].append({"description": feature, "type": "feature"})
+            for feature_log in feature.split(" * "):
+                log["logs"].append({"description": feature_log, "type": "feature"})
         if fix:
-            log["logs"].append({"description": fix, "type": "fix"})
+            for fix_log in fix.split(" * "):
+                log["logs"].append({"description": fix_log, "type": "fix"})
 
         LogObject(**log)
         return log
@@ -228,11 +241,8 @@ def changelog_management(**kwargs):
     if validate:
         return changelog.validate()
     elif init:
-        
         return changelog.init(
-            kwargs.get("breaking"),
-            kwargs.get("feature"),
-            kwargs.get("fix")
+            kwargs.get("breaking"), kwargs.get("feature"), kwargs.get("fix")
         )
     elif release:
         return changelog.release()

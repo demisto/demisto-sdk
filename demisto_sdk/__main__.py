@@ -355,7 +355,7 @@ def split(ctx, config, **kwargs):
 @click.option(
     "--breaking",
     help="Description of the breaking",
-    default=False
+    required=False
 )
 @click.option(
     "--validate",

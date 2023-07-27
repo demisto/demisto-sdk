@@ -19,7 +19,7 @@ from demisto_sdk.commands.content_graph.common import (
     RelationshipType,
 )
 from demisto_sdk.commands.content_graph.content_graph_commands import (
-    create_content_graph,
+    update_content_graph,
 )
 from demisto_sdk.commands.content_graph.interface.graph import ContentGraphInterface
 from demisto_sdk.commands.content_graph.interface.neo4j.import_utils import (
@@ -128,8 +128,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             if artifacts_folder := os.getenv("ARTIFACTS_FOLDER"):
                 output_path = Path(artifacts_folder) / "content_graph"
                 output_path.mkdir(parents=True, exist_ok=True)
-            # update_content_graph(self, use_git=True, output_path=output_path)
-            create_content_graph(self)
+            update_content_graph(self, use_git=True, output_path=output_path)
 
     def __enter__(self) -> "Neo4jContentGraphInterface":
         return self

@@ -1350,45 +1350,6 @@ class TestFormattingMapper:
             input=mapper_copy, output=DESTINATION_FORMAT_MAPPER, path=MAPPER_SCHEMA_PATH
         )
 
-    @pytest.mark.parametrize("mapper_type", ["mapping-outgoing", "mapping-incoming"])
-    def test_remove_non_existent_fields(self, mapper_type, id_set_file_mock, pack):
-        """
-        Given
-            - outgoing json file content.
-            - incoming json file content.
-
-        When
-            - removing in-existent fields from the mapper.
-
-        Then
-            - Ensure incident fields which are not in the id set file are removed from the mapper.
-        """
-        mapper_content = {"mapping": {}, "type": mapper_type}
-        for i in range(1, 3):
-            mapper_content["mapping"][f"test-case-{i}"] = {
-                "internalMapping": {
-                    "Incident-Field-1": {"simple": "incident-field-1"},
-                    "Incident-Field-2": {"simple": "incident-field-2.dueDate"},
-                    f"not-existing-field-{i}": {"simple": "incident-field-3"},
-                }
-            }
-
-        formatter = MapperJSONFormat(
-            input=pack.create_classifier(
-                name=f"{mapper_type}-non-existent-fields-test", content=mapper_content
-            ).path,
-            id_set_path=id_set_file_mock.path,
-        )
-
-        formatter.remove_non_existent_fields()
-
-        for i in range(1, 3):
-            mapper_content["mapping"][f"test-case-{i}"]["internalMapping"].pop(
-                f"not-existing-field-{i}"
-            )
-
-        assert formatter.data == mapper_content
-
     def test_remove_unnecessary_keys(self, mapper_formatter):
         """
         Given

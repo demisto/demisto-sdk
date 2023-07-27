@@ -328,7 +328,9 @@ def logging_setup(
 
     set_demisto_logger(demisto_logger)
 
-    cli_args = [f'"{arg}"' if " " in arg else arg for arg in sys.argv[1:]]  # Add quotes to spaced arguments
+    cli_args = [
+        f'"{arg}"' if " " in arg else arg for arg in sys.argv[1:]
+    ]  # Add quotes to spaced arguments
     demisto_logger.debug(f"CLI command: demisto-sdk {' '.join(cli_args)}")
     demisto_logger.debug(f"Python version: {sys.version}")
     demisto_logger.debug(f"Working dir: {os.getcwd()}")

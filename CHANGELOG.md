@@ -5,23 +5,29 @@
 * Fixed an issue where **validate** falsely detected backwards-compatibility issues, and prevented adding the `marketplaces` key to content items.
 * Calling **format** with the `-d` flag now removes test playbooks testing the deprecated content from conf.json.
 * Fixed an issue where the SDK would fail pulling docker images.
+* Fixed an issue where **prepare-content** command would add the string `candidate` to scripts and integrations for the *nativeimage* key.
 * Fixed an issue where in some cases the **split** command did not remove pack version note from the script.
 * Improved the content graph performance when calculating content relationships.
 * Fixed an issue where **validate** would not properly detect dependencies of core packs.
 * Removed usages of Random in unit tests to ensure the tests are deterministic.
 * **validate** will now run on all the pack content items when the pack supported marketplaces are modified.
+* Fixed an issue where **validate** failed on single-select types incident and indicator fields when given empty value as a select value option.
 * **pre-commit** no longer runs when there are no modified files (unless provided with input files).
-* **lint** will now fail on `demisto.results` and `return_outputs` usage, when a pack is `xsoar` or `partner` supported.
-* **lint** will now fail on `LOG` usage in python files.
 * Fixed an issue where errors in **validate** were logged as `info`.
 * Fixed an issue where **validate** error messages were not logged when an integration param, or the default argument in reputation commands is not valid.
 * Added new validation that XSIAM integrations must have `marketplacev2` as the value of the marketplaces field.
 * Fixed an issue where the **format** command would change the value of the `unsearchable` key in fields.
 * Added an ability to provide list of marketplace names as a credentials-type (type 9) param attribute.
 * **doc-review** will run with the `--use-packs-known-words` default to true.
+* Fixed an issue where **lint** command failed to pull docker image in Gitlab environment.
+* Added the *deprecated* field to the pack object for the content-graph metadata.
+* Fixed an issue in **doc-review** command where escape characters within Markdown files were detected as invalid words.
 * Calling **modeling-rules init-test-data** will now return the XDM fields output in alphabetical order.
 * Fixed an issue where **validate** failed on infrastructure test files.
 * Added a new validation (`BA125`) to **validate** that assures internal function names aren't in use in customer-facing docs.
+* Fixed an issue in **update-content-graph** where the neo4j service was unaccessible for non-root users.
+* Added a Sourcery hook to **pre-commit**.
+* Added a working directory to the `contribution_converter` in order to support working on a temporary directory.
 
 ## 1.17.2
 * Fixed an issue where **lint** and **validate** commands failed on integrations and scripts that use docker images that are not available in the Docker Hub but exist locally.

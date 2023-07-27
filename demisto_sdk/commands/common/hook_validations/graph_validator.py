@@ -378,6 +378,7 @@ class GraphValidator(BaseValidator):
         hidden pack is a mandatory dependency for them.
         """
         is_valid = True
+
         if dependant_packs := self.graph.find_mandatory_hidden_packs_dependencies(
             pack_ids=self.pack_ids
         ):

@@ -28,7 +28,8 @@
 * Disabled the option to create an integration with Pipfile and Pipfile.lock files.
 * Fixed an issue in **update-content-graph** where the neo4j service was unaccessible for non-root users.
 * Added a Sourcery hook to **pre-commit**.
-* Added a waiting period when checking whether the dataset exists in **test-modeling-rule**.
+* Added a waiting period when checking whether the dataset exists in the **modeling-rule test** command.
+
 
 ## 1.17.2
 * Fixed an issue where **lint** and **validate** commands failed on integrations and scripts that use docker images that are not available in the Docker Hub but exist locally.

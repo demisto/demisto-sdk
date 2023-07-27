@@ -271,14 +271,16 @@ def check_dataset_exists(
     test_data: init_test_data.TestData,
     timeout: int = 90,
     interval: int = 5,
+    init_sleep_time: int = 30,
 ):
     """Check if the dataset in the test data file exists in the tenant.
 
     Args:
         xsiam_client (XsiamApiClient): Xsiam API client.
         test_data (init_test_data.TestData): The data parsed from the test data file.
-        timeout (int, optional): The number of seconds to wait for the dataset to exist. Defaults to 120 seconds.
+        timeout (int, optional): The number of seconds to wait for the dataset to exist. Defaults to 90 seconds.
         interval (int, optional): The number of seconds to wait between checking for the dataset. Defaults to 5.
+        init_sleep_time (int, optional): The number of seconds to wait for dataset installation. Defaults to 30.
 
     Raises:
         typer.Exit: If the dataset does not exist after the timeout.
@@ -286,8 +288,8 @@ def check_dataset_exists(
     process_failed = False
     dataset_set = {data.dataset for data in test_data.data}
     results = []
-    logger.debug(f'Sleeping for 30 seconds to make sure the data set was installed correctly')
-    sleep(30)
+    logger.debug(f'Sleeping for {init_sleep_time} seconds before query for the dataset, to make sure the dataset was installed correctly.')
+    sleep(init_sleep_time)
 
     for dataset in dataset_set:
         results_exist = False

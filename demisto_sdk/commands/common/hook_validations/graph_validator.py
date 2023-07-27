@@ -52,7 +52,7 @@ class GraphValidator(BaseValidator):
 
     def is_valid_content_graph(self) -> bool:
         is_valid = (
-            self.validate_hidden_pack_is_not_mandatory_dependency(),
+            self.validate_hidden_packs_do_not_have_mandatory_dependencies(),
             self.validate_dependencies(),
             self.validate_marketplaces_fields(),
             self.validate_fromversion_fields(),
@@ -372,7 +372,7 @@ class GraphValidator(BaseValidator):
         return is_valid
 
     @error_codes("GR108")
-    def validate_hidden_pack_is_not_mandatory_dependency(self):
+    def validate_hidden_packs_do_not_have_mandatory_dependencies(self):
         """
         Validate that hidden pack(s) do not have dependant packs which the
         hidden pack is a mandatory dependency for them.

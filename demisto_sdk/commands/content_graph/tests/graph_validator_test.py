@@ -781,7 +781,7 @@ def test_validate_hidden_pack_is_not_mandatory_dependency(
     ) as graph_validator:
         create_content_graph(graph_validator.graph)
 
-        is_valid = graph_validator.validate_hidden_pack_is_not_mandatory_dependency()
+        is_valid = graph_validator.validate_hidden_packs_do_not_have_mandatory_dependencies()
 
     assert not is_valid
     assert str_in_call_args_list(

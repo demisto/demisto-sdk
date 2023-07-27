@@ -13,7 +13,7 @@ from demisto_sdk.commands.format import (
     update_incidenttype,
     update_indicatortype,
 )
-from demisto_sdk.commands.format.format_module import format_manager
+from demisto_sdk.commands.format.format_module import format_manager, is_graph_related_files
 from demisto_sdk.commands.format.update_classifier import (
     ClassifierJSONFormat,
     OldClassifierJSONFormat,
@@ -176,7 +176,7 @@ class TestFormattingJson:
     def test_format_file(self, source, target, path, answer):
         os.makedirs(path, exist_ok=True)
         shutil.copyfile(source, target)
-        res = format_manager(input=target, output=target)
+        res = format_manager(input=target, output=target, format_with_graph=False)
         shutil.rmtree(target, ignore_errors=True)
         shutil.rmtree(path, ignore_errors=True)
 
@@ -201,7 +201,7 @@ class TestFormattingJson:
 
         monkeypatch.setattr("builtins.input", lambda _: "N")
 
-        res = format_manager(input=target, output=target)
+        res = format_manager(input=target, output=target, format_with_graph=False)
         shutil.rmtree(target, ignore_errors=True)
         shutil.rmtree(path, ignore_errors=True)
 
@@ -630,50 +630,6 @@ def test_remove_spaces_end_of_id_and_name(pack, name):
     assert base_update_json.data["name"] == "MyDashboard"
 
 
-@pytest.mark.parametrize(
-    argnames="marketplaces",
-    argvalues=[
-        [MarketplaceVersions.MarketplaceV2.value],
-        [MarketplaceVersions.XSOAR.value, MarketplaceVersions.MarketplaceV2.value],
-    ],
-)
-def test_set_marketplaces_xsoar_only_for_aliased_fields(mocker, pack, marketplaces):
-    """
-    Given
-        - An incident filed with aliases
-    When
-        - Run format command
-    Then
-        - Ensure that the marketplaces value in the aliased filed contain only the `xsoar` marketplace
-    """
-    mocked_field = {"marketplaces": marketplaces}
-
-    def mock_field_generator():
-        yield mocked_field, ""
-
-    mocker.patch.object(IncidentFieldJSONFormat, "_save_alias_field_file")
-    mocker.patch.object(
-        IncidentFieldJSONFormat,
-        "_get_incident_fields_by_aliases",
-        return_value=mock_field_generator(),
-    )
-
-    tested_filed = pack.create_incident_field(
-        name="tested_filed", content={"Aliases": [{"cliName": "aliased_field"}]}
-    )
-
-    incident_field_formatter = IncidentFieldJSONFormat(
-        input=tested_filed.path, id_set_path="mocked_path"
-    )
-    incident_field_formatter.format_marketplaces_field_of_aliases()
-    updated_marketplaces = incident_field_formatter._save_alias_field_file.call_args[1][
-        "field_data"
-    ]["marketplaces"]
-
-    assert len(updated_marketplaces) == 1
-    assert updated_marketplaces[0] == "xsoar"
-
-
 class TestFormattingLayoutscontainer:
     @pytest.fixture()
     def layoutscontainer_copy(self):
@@ -694,59 +650,6 @@ class TestFormattingLayoutscontainer:
             path=LAYOUTS_CONTAINER_SCHEMA_PATH,
         )
         yield layoutscontainer_formatter
-
-    @pytest.mark.parametrize(
-        "layout_key_field_1, layout_key_field_2",
-        [("detailsV2", "details"), ("close", "quickView")],
-    )
-    def test_remove_non_existent_fields(
-        self, layout_key_field_1, layout_key_field_2, pack, id_set_file_mock
-    ):
-        """
-        Given
-            - a layout container json file content
-
-        When
-            - removing in-existent fields from the container-layout.
-
-        Then
-            - Ensure incident fields which are not in the id set file are removed from the container-layout.
-        """
-        container_layout_content = {}
-        for layout_key in (layout_key_field_1, layout_key_field_2):
-            container_layout_content[layout_key] = {
-                "tabs": [
-                    {
-                        "sections": [
-                            {
-                                "items": [
-                                    {"fieldId": "incident-field-1"},
-                                    {"fieldId": "incident-field-3"},
-                                    {"fieldId": "incident-field-2"},
-                                ]
-                            }
-                        ]
-                    }
-                ]
-            }
-
-        formatter = LayoutBaseFormat(
-            input=pack.create_layoutcontainer(
-                name="layoutscontainer-in-existent-fields-test",
-                content=container_layout_content,
-            ).path,
-            id_set_path=id_set_file_mock.path,
-        )
-
-        # remove the original container layout
-        for layout_key in (layout_key_field_1, layout_key_field_2):
-            container_layout_content[layout_key]["tabs"][0]["sections"][0]["items"] = [
-                {"fieldId": "incident-field-1"},
-                {"fieldId": "incident-field-2"},
-            ]
-
-        formatter.remove_non_existent_fields_container_layout()
-        assert formatter.data == container_layout_content
 
     @patch("builtins.input", lambda *args: "incident")
     def test_set_group_field(self, layoutscontainer_formatter):
@@ -1906,3 +1809,92 @@ def test_not_updating_modified_id_in_old_json_file(repo):
     json_object.data["id"] = "new_name"
     json_object.update_id()
     assert json_object.data["id"] == "old_name"
+
+
+def test_is_graph_related_files(repo):
+    """
+    Given
+    - Case A: A layout.
+    - Case B: An incident field.
+    - Case C: A mapper.
+    - Case D: A README.
+
+    When
+    - Running is_graph_related_files in order to understand if it is needed to start the graph in Format or not.
+
+    Then
+    - Case A: Assert True - the graph should be started for Layouts.
+    - Case B: Assert True - the graph should be started for Incident Fields.
+    - Case C: Assert True - the graph should be started for Mappers.
+    - Case D: Assert False - the graph should be started for a README.
+    """
+    pack = repo.create_pack("PackName")
+    layout = pack.create_layoutcontainer(name="layout", content={
+        "detailsV2": {
+            "tabs": [
+                {
+                    "id": "caseinfoid",
+                    "name": "Incident Info",
+                    "sections": [
+                        {
+                            "displayType": "ROW",
+                            "h": 2,
+                            "i": "caseinfoid-fce71720-98b0-11e9-97d7-ed26ef9e46c8",
+                            "isVisible": True,
+                            "items": [
+                                {
+                                    "endCol": 2,
+                                    "fieldId": "incident_field",
+                                    "height": 22,
+                                    "id": "id1",
+                                    "index": 0,
+                                    "sectionItemType": "field",
+                                    "startCol": 0
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        "group": "incident",
+        "id": "Layout",
+        "name": "Layout",
+        "system": False,
+        "version": -1,
+        "fromVersion": "6.9.0",
+        "description": "",
+        "marketplaces": ["xsoar"]
+    })
+    incident_field = pack.create_incident_field(name="incident_field", content={
+            "cliName": "incidentfield",
+            "id": "incident_incidentfield",
+            "name": "Incident Field",
+            "marketplaces": [
+                "xsoar"
+            ]
+        })
+    mapper = pack.create_mapper(name="mapper", content={
+            "description": "",
+            "feed": False,
+            "id": "Mapper - Incoming Mapper",
+            "mapping": {
+                "Mapper Finding": {
+                    "dontMapEventToLabels": True,
+                    "internalMapping": {
+                        "incident_field_name": {
+                            "simple": "Item"
+                        }
+                    }
+                },
+            },
+            "name": "Mapper - Incoming Mapper",
+            "type": "mapping-incoming",
+            "version": -1,
+            "fromVersion": "6.5.0"
+        })
+    readme = pack.create_doc_file(name="README")
+    assert is_graph_related_files([layout.path], True)
+    assert is_graph_related_files([incident_field.path], True)
+    assert is_graph_related_files([mapper.path], True)
+    assert not is_graph_related_files([readme.path], True)

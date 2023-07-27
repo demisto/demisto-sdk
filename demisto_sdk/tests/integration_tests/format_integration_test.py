@@ -45,7 +45,6 @@ from demisto_sdk.tests.test_files.validate_integration_test_valid_types import (
     GENERIC_TYPE,
 )
 from TestSuite.test_tools import ChangeCWD, str_in_call_args_list
-from demisto_sdk.commands.format.format_module import is_graph_related_files
 
 with open(SOURCE_FORMAT_INTEGRATION_COPY) as of:
     SOURCE_FORMAT_INTEGRATION_YML = (
@@ -2163,6 +2162,11 @@ def test_format_updating_aliases_marketplace_field(mocker, monkeypatch, repo):
                     "cliName": "aliasincidentfield",
                     "type": "shortText",
                     "name": "Alias Incident Field"
+                },
+                {
+                    "cliName": "alias2incidentfield",
+                    "type": "shortText",
+                    "name": "Alias2 Incident Field"
                 }
             ],
             "marketplaces": [
@@ -2182,6 +2186,18 @@ def test_format_updating_aliases_marketplace_field(mocker, monkeypatch, repo):
         name="alias_incident_field",
         content=alias_incident_field_content
     )
+    alias2_incident_field_content = {
+        "cliName": "alias2incidentfield",
+        "id": "incident_alias2incidentfield",
+        "name": "Alias2 Incident Field",
+        "marketplaces": [
+            "xsoar"
+        ]
+    }
+    alias2_incident_field = pack.create_incident_field(
+        name="alias2_incident_field",
+        content=alias2_incident_field_content
+    )
 
     # Mock the behavior of Neo4jContentGraphInterface
     class MockedContentGraphInterface:
@@ -2200,8 +2216,8 @@ def test_format_updating_aliases_marketplace_field(mocker, monkeypatch, repo):
         def get_content_items_by_cli_names(self, cli_name_list):
             # Simulate the graph search
             if cli_name_list:
-                marketplaces = ["marketplacev2", "xsoar"]
-                return [('aliasincidentfield', alias_incident_field.path, marketplaces)]
+                return [('aliasincidentfield', alias_incident_field.path, ["marketplacev2", "xsoar"]),
+                        ('alias2incidentfield', alias2_incident_field.path, ["xsoar"])]
             return ()
 
     class MockedIncidentFieldNode:
@@ -2224,7 +2240,9 @@ def test_format_updating_aliases_marketplace_field(mocker, monkeypatch, repo):
     # get_dict_from_file returns a tuple of 2 object. The first is the content of the file,
     # the second is the type of the file.
     file_content = get_dict_from_file(alias_incident_field.path)[0]
-    assert file_content == alias_incident_field_content
+    alias2_content = get_dict_from_file(alias2_incident_field.path)[0]
+    assert file_content.get('marketplaces', []) == ['xsoar']
+    assert alias2_content.get('marketplaces', []) == ['xsoar']
 
 
 def test_format_incident_field_with_no_graph(mocker, monkeypatch, repo):
@@ -2284,7 +2302,7 @@ def test_format_incident_field_with_no_graph(mocker, monkeypatch, repo):
     # get_dict_from_file returns a tuple of 2 object. The first is the content of the file,
     # the second is the type of the file.
     file_content = get_dict_from_file(alias_incident_field.path)[0]
-    assert file_content == alias_incident_field_content
+    assert file_content.get('marketplaces', []) == ["marketplacev2", "xsoar"]
 
 
 def test_format_removing_fields_not_in_content_from_mapper(mocker, monkeypatch, repo):
@@ -2374,9 +2392,7 @@ def test_format_removing_fields_not_in_content_from_mapper(mocker, monkeypatch, 
     # get_dict_from_file returns a tuple of 2 object. The first is the content of the file,
     # the second is the type of the file.
     file_content = get_dict_from_file(mapper.path)[0]
-    mapper_internal_content = mapper_content.get('mapping', {}).get('Mapper Finding', {}).get('internalMapping')
-    del mapper_internal_content[incident_field_name]
-    assert file_content.get("mapping") == mapper_content.get('mapping')
+    assert file_content.get("mapping", {}).get('Mapper Finding', {}).get('internalMapping') == {}
 
 
 def test_format_mapper_with_ngr_flag(mocker, monkeypatch, repo):
@@ -2429,7 +2445,10 @@ def test_format_mapper_with_ngr_flag(mocker, monkeypatch, repo):
     # get_dict_from_file returns a tuple of 2 object. The first is the content of the file,
     # the second is the type of the file.
     file_content = get_dict_from_file(mapper.path)[0]
-    assert file_content.get("mapping") == mapper_content.get('mapping')
+    expected_internal_mapping = {
+        incident_field_name: {"simple": "Item"}
+    }
+    assert file_content.get("mapping", {}).get('Mapper Finding', {}).get('internalMapping') == expected_internal_mapping
 
 
 def test_format_removing_fields_not_in_content_from_layout(mocker, monkeypatch, repo):
@@ -2548,8 +2567,17 @@ def test_format_removing_fields_not_in_content_from_layout(mocker, monkeypatch, 
     # get_dict_from_file returns a tuple of 2 object. The first is the content of the file,
     # the second is the type of the file.
     file_content = get_dict_from_file(layout.path)[0]
-    layout_content.get('detailsV2', {}).get('tabs', [])[0].get('sections', {})[0].get('items', []).pop(0)
-    assert file_content == layout_content
+    expected_layout_content = [{
+                                    "endCol": 2,
+                                    "fieldId": "known-incident-field",
+                                    "height": 22,
+                                    "id": "id2",
+                                    "index": 0,
+                                    "sectionItemType": "field",
+                                    "startCol": 0
+                                }]
+    assert file_content.get('detailsV2', {}).get('tabs', [])[0].get('sections', {})[0].get('items', []) == \
+           expected_layout_content
 
 
 def test_format_on_layout_no_graph_flag(mocker, monkeypatch, repo):
@@ -2630,92 +2658,3 @@ def test_format_on_layout_no_graph_flag(mocker, monkeypatch, repo):
     # the second is the type of the file.
     file_content = get_dict_from_file(layout.path)[0]
     assert file_content == layout_content
-
-
-def test_is_graph_related_files(repo):
-    """
-    Given
-    - Case A: A layout.
-    - Case B: An incident field.
-    - Case C: A mapper.
-    - Case D: A README.
-
-    When
-    - Running is_graph_related_files in order to understand if it is needed to start the graph in Format or not.
-
-    Then
-    - Case A: Assert True - the graph should be started for Layouts.
-    - Case B: Assert True - the graph should be started for Incident Fields.
-    - Case C: Assert True - the graph should be started for Mappers.
-    - Case D: Assert False - the graph should be started for a README.
-    """
-    pack = repo.create_pack("PackName")
-    layout = pack.create_layoutcontainer(name="layout", content={
-        "detailsV2": {
-            "tabs": [
-                {
-                    "id": "caseinfoid",
-                    "name": "Incident Info",
-                    "sections": [
-                        {
-                            "displayType": "ROW",
-                            "h": 2,
-                            "i": "caseinfoid-fce71720-98b0-11e9-97d7-ed26ef9e46c8",
-                            "isVisible": True,
-                            "items": [
-                                {
-                                    "endCol": 2,
-                                    "fieldId": "incident_field",
-                                    "height": 22,
-                                    "id": "id1",
-                                    "index": 0,
-                                    "sectionItemType": "field",
-                                    "startCol": 0
-                                }
-                            ]
-                        }
-                    ]
-                }
-            ]
-        },
-        "group": "incident",
-        "id": "Layout",
-        "name": "Layout",
-        "system": False,
-        "version": -1,
-        "fromVersion": "6.9.0",
-        "description": "",
-        "marketplaces": ["xsoar"]
-    })
-    incident_field = pack.create_incident_field(name="incident_field", content={
-            "cliName": "incidentfield",
-            "id": "incident_incidentfield",
-            "name": "Incident Field",
-            "marketplaces": [
-                "xsoar"
-            ]
-        })
-    mapper = pack.create_mapper(name="mapper", content={
-            "description": "",
-            "feed": False,
-            "id": "Mapper - Incoming Mapper",
-            "mapping": {
-                "Mapper Finding": {
-                    "dontMapEventToLabels": True,
-                    "internalMapping": {
-                        "incident_field_name": {
-                            "simple": "Item"
-                        }
-                    }
-                },
-            },
-            "name": "Mapper - Incoming Mapper",
-            "type": "mapping-incoming",
-            "version": -1,
-            "fromVersion": "6.5.0"
-        })
-    readme = pack.create_doc_file(name="README")
-    assert is_graph_related_files([layout.path], True)
-    assert is_graph_related_files([incident_field.path], True)
-    assert is_graph_related_files([mapper.path], True)
-    assert not is_graph_related_files([readme.path], True)

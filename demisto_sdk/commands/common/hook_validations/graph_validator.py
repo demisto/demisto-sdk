@@ -382,7 +382,7 @@ class GraphValidator(BaseValidator):
         if dependant_packs := self.graph.find_mandatory_hidden_packs_dependencies(
             pack_ids=self.pack_ids
         ):
-            hidden_pack_id_to_dependant_pack_ids = {
+            hidden_pack_id_to_dependant_pack_ids: dict = {
                 pack_id: set() for pack_id in self.pack_ids
             }
             for pack in dependant_packs:

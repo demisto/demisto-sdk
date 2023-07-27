@@ -10,6 +10,7 @@
 * Improved the content graph performance when calculating content relationships.
 * Fixed an issue where **validate** would not properly detect dependencies of core packs.
 * Removed usages of Random in unit tests to ensure the tests are deterministic.
+* Added a new validation (`GR108`) to **validate** command that assures hidden packs do not have mandatory dependant packs.
 * **validate** will now run on all the pack content items when the pack supported marketplaces are modified.
 * Fixed an issue where **validate** failed on single-select types incident and indicator fields when given empty value as a select value option.
 * **pre-commit** no longer runs when there are no modified files (unless provided with input files).

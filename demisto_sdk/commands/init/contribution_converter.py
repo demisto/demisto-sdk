@@ -761,7 +761,7 @@ class ContributionConverter:
             rn_mng.manage_rn_update()
             if rn_mng.rn_path:
                 self.replace_RN_template_with_value(rn_mng.rn_path[0])
-        except Exception as e:
+        except Exception:
             logger.error("Failed updating release notes", exc_info=True)
 
     def format_user_input(self) -> Dict[str, str]:

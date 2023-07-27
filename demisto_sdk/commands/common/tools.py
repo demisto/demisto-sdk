@@ -11,7 +11,6 @@ from concurrent.futures import as_completed
 from configparser import ConfigParser, MissingSectionHeaderError
 from contextlib import contextmanager
 from datetime import datetime
-from distutils.version import LooseVersion
 from enum import Enum
 from functools import lru_cache
 from pathlib import Path, PosixPath
@@ -3832,7 +3831,7 @@ def is_sdk_defined_working_offline() -> bool:
     return str2bool(os.getenv(ENV_SDK_WORKING_OFFLINE))
 
 
-def is_epoch_datetime(string):
+def is_epoch_datetime(string: str) -> bool:
     # Check if the input string contains only digits
     if not string.isdigit():
         return False

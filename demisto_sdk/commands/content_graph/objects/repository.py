@@ -35,7 +35,7 @@ class ContentDTO(BaseModel):
             else self.packs
         )
 
-        logger.debug("Starting repository dump for packs")
+        logger.debug(f"Starting repository dump for packs: {packs_to_dump}")
         start_time = time.time()
         if USE_MULTIPROCESSING:
             with Pool(processes=cpu_count()) as pool:

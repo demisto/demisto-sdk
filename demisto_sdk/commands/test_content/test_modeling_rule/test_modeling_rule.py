@@ -288,7 +288,9 @@ def check_dataset_exists(
     process_failed = False
     dataset_set = {data.dataset for data in test_data.data}
     results = []
-    logger.debug(f'Sleeping for {init_sleep_time} seconds before query for the dataset, to make sure the dataset was installed correctly.')
+    logger.debug(
+        f"Sleeping for {init_sleep_time} seconds before query for the dataset, to make sure the dataset was installed correctly."
+    )
     sleep(init_sleep_time)
 
     for dataset in dataset_set:
@@ -359,7 +361,6 @@ def push_test_data_to_tenant(
     """
     error = False
     for rule in mr.rules:
-
         events_test_data = [
             {
                 **event_log.event_data,

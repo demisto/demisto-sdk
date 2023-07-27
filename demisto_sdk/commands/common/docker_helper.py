@@ -5,7 +5,6 @@ import re
 import shutil
 import tarfile
 import tempfile
-from distutils.util import strtobool
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple, Union
 

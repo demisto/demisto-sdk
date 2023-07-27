@@ -945,7 +945,6 @@ def test_generate_script_doc_passes_markdownlint(tmp_path, mocker):
             assert not run_markdownlint(file.read()).has_errors
 
 
-@pytest.mark.skip
 def test_generate_script_doc(tmp_path, mocker):
     import demisto_sdk.commands.generate_docs.common as common
 

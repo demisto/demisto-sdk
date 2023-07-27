@@ -5,6 +5,7 @@ import re
 import shutil
 import tarfile
 import tempfile
+from distutils.util import strtobool
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple, Union
 
@@ -28,7 +29,7 @@ from demisto_sdk.commands.common.logger import logger
 DOCKER_CLIENT = None
 FILES_SRC_TARGET = List[Tuple[os.PathLike, str]]
 # this will be used to determine if the system supports mounts
-CAN_MOUNT_FILES = bool(os.getenv("CONTENT_GITLAB_CI", False)) or (
+CAN_MOUNT_FILES = strtobool(os.getenv("CONTENT_GITLAB_CI", False)) or (
     (not os.getenv("CIRCLECI", False))
     and (
         (not os.getenv("DOCKER_HOST"))

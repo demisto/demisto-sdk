@@ -958,6 +958,7 @@ def test_generate_script_doc(tmp_path, mocker):
     patched = mocker.patch.object(
         IDSetCreator, "create_id_set", return_value=[id_set, {}, {}]
     )
+    mocker.patch('os.path.isfile', return_value=False)
     mocker.patch.object(common, "execute_command", side_effect=handle_example)
     # because used in is random
     mocker.patch(

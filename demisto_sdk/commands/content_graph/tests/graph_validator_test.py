@@ -774,13 +774,23 @@ def test_deprecated_usage__new_content(repository: ContentDTO, mocker):
 def test_validate_hidden_pack_is_not_mandatory_dependency(
     repository: ContentDTO, mocker
 ):
+    """
+    Given
+    - A content repo which contains SamplePack that is dependent on
+      SamplePack2 (which is hidden) as mandatory dependency
+
+    When
+    - running the validate_hidden_packs_do_not_have_mandatory_dependencies method
+
+    Then
+    - validate that an error occurs with a message stating that SamplePack2 cannot be hidden
+    """
     logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
 
     with GraphValidator(
         update_graph=False, git_files=[Path("Packs/SamplePack2")]
     ) as graph_validator:
         create_content_graph(graph_validator.graph)
-
         is_valid = graph_validator.validate_hidden_packs_do_not_have_mandatory_dependencies()
 
     assert not is_valid

@@ -500,9 +500,9 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
     def find_mandatory_hidden_packs_dependencies(self, pack_ids):
         with self.driver.session() as session:
             results = session.execute_read(validate_hidden_pack_dependencies, pack_ids)
-            self._add_nodes_to_mapping(result.node_from for result in results.values())
-            self._add_relationships_to_objects(session, results)
-            return [self._id_to_obj[result] for result in results]
+        self._add_nodes_to_mapping(result.node_from for result in results.values())
+        self._add_relationships_to_objects(session, results)
+        return [self._id_to_obj[result] for result in results]
 
     def create_relationships(
         self, relationships: Dict[RelationshipType, List[Dict[str, Any]]]

@@ -1,8 +1,9 @@
 import glob
 import os
+import re
 import shutil
 from distutils.dir_util import copy_tree
-from typing import Dict, List, Set
+from typing import Dict, List, Optional, Set, Tuple
 
 from packaging.version import Version
 
@@ -26,6 +27,7 @@ from demisto_sdk.commands.common.constants import (
     INDICATOR_TYPES_DIR,
     INTEGRATION_CATEGORIES,
     INTEGRATIONS_DIR,
+    INTEGRATIONS_DIR_REGEX,
     JOBS_DIR,
     LAYOUTS_DIR,
     MARKETPLACE_LIVE_DISCUSSIONS,
@@ -34,6 +36,7 @@ from demisto_sdk.commands.common.constants import (
     MODELING_RULES_DIR,
     PACK_INITIAL_VERSION,
     PACK_SUPPORT_OPTIONS,
+    PACKS_DIR,
     PARSING_RULE_ID_SUFFIX,
     PARSING_RULES_DIR,
     PLAYBOOKS_DIR,
@@ -54,6 +57,7 @@ from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     get_common_server_path,
+    get_json,
     get_pack_name,
     get_yaml,
 )
@@ -217,6 +221,8 @@ class Initiator:
 
     XSIAM_DIR = [CORRELATION_RULES_DIR, XSIAM_DASHBOARDS_DIR, XSIAM_REPORTS_DIR]
 
+    PACK_PATH_REGEX = rf"^(.*?{PACKS_DIR}/.*?/)"
+
     def __init__(
         self,
         output: str,
@@ -231,7 +237,6 @@ class Initiator:
         author_image: str = "",
         demisto_mock: bool = False,
         common_server: bool = False,
-        from_version: str = "",
         **kwargs,
     ):
         self.output = output if output else ""
@@ -244,11 +249,10 @@ class Initiator:
         self.demisto_mock = demisto_mock
         self.common_server = common_server
         self.category = category
-        self.from_version = from_version
         self.configuration = Configuration()
 
         # if no flag given automatically create a pack.
-        if not integration and not script:
+        if not integration and not script and not pack:
             self.is_pack = True
 
         self.template = self.get_selected_template(template)
@@ -387,6 +391,59 @@ class Initiator:
                         input(f"Please enter the id name for the {created_object}: ")
                     )
 
+    def get_pack_path(self) -> str:
+        """Gets the pack path from current path."""
+        if (
+            self.xsiam
+            and self.output
+            and re.search(INTEGRATIONS_DIR_REGEX, self.output)
+        ):
+            if result := re.search(self.PACK_PATH_REGEX, self.output):
+                return result[0]
+        return self.output
+
+    def create_initiators_and_init_modeling_parsing_rules(
+        self, product: Optional[str], vendor: Optional[str]
+    ) -> bool:
+        """Creates initiators object for modeling and parsing rules init and initialize them.
+
+        Args:
+            product (str): The product from the user.
+            vendor (str): The vendor from the user.
+        """
+        output_path = self.get_pack_path()
+        self.full_output_path = output_path
+        modeling_rules_initiator = Initiator(
+            output=os.path.join(self.full_output_path, MODELING_RULES_DIR),
+            common_server=self.common_server,
+            dir_name=str(self.dir_name),
+            template=self.HELLO_WORLD_MODELING_RULES,
+            script=False,
+            integration=False,
+            demisto_mock=self.demisto_mock,
+            xsiam=self.xsiam,
+            name=self.dir_name,
+        )
+        parsing_rules_initiator = Initiator(
+            output=os.path.join(self.full_output_path, PARSING_RULES_DIR),
+            common_server=self.common_server,
+            dir_name=str(self.dir_name),
+            template=self.HELLO_WORLD_PARSING_RULES,
+            is_pack=False,
+            script=False,
+            integration=False,
+            demisto_mock=self.demisto_mock,
+            xsiam=self.xsiam,
+            name=self.dir_name,
+        )
+        if not parsing_rules_initiator.modeling_parsing_rules_init(
+            is_parsing_rules=True,
+        ) or not modeling_rules_initiator.modeling_parsing_rules_init(
+            is_modeling_rules=True, product=product, vendor=vendor
+        ):
+            return False
+        return True
+
     def pack_init(self) -> bool:
         """Creates a pack directory tree.
 
@@ -424,35 +481,6 @@ class Initiator:
             for directory in self.XSIAM_DIR:
                 path = os.path.join(self.full_output_path, directory)
                 os.mkdir(path=path)
-            modeling_rules_initiator = Initiator(
-                output=os.path.join(self.full_output_path, MODELING_RULES_DIR),
-                common_server=self.common_server,
-                dir_name=self.dir_name,
-                template=self.HELLO_WORLD_MODELING_RULES,
-                script=False,
-                integration=False,
-                demisto_mock=self.demisto_mock,
-                xsiam=self.xsiam,
-                name=self.dir_name,
-            )
-            parsing_rules_initiator = Initiator(
-                output=os.path.join(self.full_output_path, PARSING_RULES_DIR),
-                common_server=self.common_server,
-                dir_name=self.dir_name,
-                template=self.HELLO_WORLD_PARSING_RULES,
-                is_pack=False,
-                script=False,
-                integration=False,
-                demisto_mock=self.demisto_mock,
-                xsiam=self.xsiam,
-                name=self.dir_name,
-            )
-            if not parsing_rules_initiator.modeling_parsing_rules_init(
-                is_parsing_rules=True
-            ) or not modeling_rules_initiator.modeling_parsing_rules_init(
-                is_modeling_rules=True
-            ):
-                return False
 
         self.create_pack_base_files()
         logger.info(
@@ -509,25 +537,37 @@ class Initiator:
         return True
 
     def modeling_parsing_rules_init(
-        self, is_parsing_rules: bool = False, is_modeling_rules: bool = False
+        self,
+        product: Optional[str] = None,
+        vendor: Optional[str] = None,
+        is_parsing_rules: bool = False,
+        is_modeling_rules: bool = False,
     ) -> bool:
         """Creates a parsing or modeling rules directory tree.
 
         Returns:
             bool. Returns True if the parsing rules was created successfully and False otherwise
         """
-        self.full_output_path = os.path.join(self.output, self.dir_name)
-        dir_name = "parsing rules" if is_parsing_rules else "modeling rules"
+        dirname = self.get_suffix_xsiam_content(
+            is_modeling_rules=is_modeling_rules,
+            is_parsing_rules=is_parsing_rules,
+            name=self.dir_name,
+        )
+
+        xsiam_content_dir_name = self.get_dir_name_for_xsiam_item(
+            is_parsing_rules, is_modeling_rules
+        )
+        self.full_output_path = os.path.join(self.output, dirname)
+
+        dir_name: str = "parsing rules" if is_parsing_rules else "modeling rules"
 
         self.get_created_dir_name(created_object=dir_name)
         rules_template_files = self.get_template_files()
         if not self.get_remote_templates(
             rules_template_files,
-            dir=PARSING_RULES_DIR if is_parsing_rules else MODELING_RULES_DIR,
+            dir=xsiam_content_dir_name,
         ):
-            local_template_dir = (
-                "ModelingRules" if is_modeling_rules else "ParsingRules"
-            )
+            local_template_dir = xsiam_content_dir_name
             local_template_path = os.path.normpath(
                 os.path.join(
                     __file__,
@@ -550,6 +590,8 @@ class Initiator:
                 current_suffix=self.dir_name,
                 is_modeling_rules=is_modeling_rules,
                 is_parsing_rules=is_parsing_rules,
+                product=product,
+                vendor=vendor,
             )
 
         return True
@@ -755,6 +797,28 @@ class Initiator:
                 "[yellow]Could not find the .secrets-ignore file - make sure your path is correct[/yellow]"
             )
 
+    def verify_output_path_for_xsiam_content(self) -> bool:
+        """Verify that there is a output path from the user
+
+        Returns:
+            bool. True if all the required inputs from the user are valid.
+        """
+        if self.xsiam and not self.output:
+            logger.error(
+                "[red]An output directory is required to utilize the --xsiam flag. Please attempt the operation again using the -o flag to specify the output directory.[/red]"
+            )
+            return False
+        if (
+            self.xsiam
+            and self.output
+            and not re.search(INTEGRATIONS_DIR_REGEX, self.output)
+        ):
+            logger.error(
+                "[red]An output directory is invalid - make sure the name looks like the following: Packs/**/Integrations [/red]"
+            )
+            return False
+        return True
+
     def integration_init(self) -> bool:
         """Creates a new integration according to a template.
 
@@ -764,6 +828,13 @@ class Initiator:
         # if we want to create xsiam content we will create an eventcollector integration
 
         # if output directory given create the integration there
+        if not self.verify_output_path_for_xsiam_content():
+            return False
+        product, vendor = self.get_product_and_vendor()
+        if self.xsiam and not self.create_initiators_and_init_modeling_parsing_rules(
+            product, vendor
+        ):
+            return False
         self.add_event_collector_suffix()
         if self.output:
             self.full_output_path = os.path.join(self.output, self.dir_name)
@@ -795,6 +866,7 @@ class Initiator:
             self.rename(current_suffix=self.template)
             self.yml_reformatting(current_suffix=self.template, integration=True)
             self.fix_test_file_import(name_to_change=self.template)
+            self.replace_vendor_and_product_py_file(vendor=vendor, product=product)
 
         self.copy_common_server_python()
         self.copy_demistotmock()
@@ -881,9 +953,46 @@ class Initiator:
 
         return True
 
+    def get_product_and_vendor(self) -> Tuple[Optional[str], Optional[str]]:
+        """Gets product vendor from the user.
+
+        Returns:
+            Tuple. The product and vendor.
+        """
+        vendor = None
+        product = None
+        if self.xsiam:
+            while vendor is None or vendor == "":
+                vendor = str(input("Please enter vendor: ").lower())
+            while product is None or product == "":
+                product = str(input("Please enter product: ").lower())
+        return product, vendor
+
+    def update_product_and_vendor(
+        self, json_file_name: str, product: Optional[str], vendor: Optional[str]
+    ) -> None:
+        """Addes the product and the vendor to the schema under modeling rules folder.
+
+        Args:
+            json_file_name (str): The current name of the json file.
+            product (str): The name of the product.
+            vendor (str):  The name of the vendor.
+        """
+        schema_json_path = os.path.join(
+            self.full_output_path, f"{json_file_name}_schema.json"
+        )
+        if os.path.exists(schema_json_path):
+            schema_json = get_json(schema_json_path)
+            hello_world_raw = schema_json["hello_world_raw"]
+            dict_for_schema = {f"{vendor}_{product}_raw": hello_world_raw}
+            with open(os.path.join(schema_json_path), "w") as f:
+                json.dump(dict_for_schema, f, indent=4)
+
     def modeling_or_parsing_rules_yml_reformatting(
         self,
         current_suffix: str,
+        product: Optional[str] = None,
+        vendor: Optional[str] = None,
         is_modeling_rules: bool = False,
         is_parsing_rules: bool = False,
     ):
@@ -894,10 +1003,13 @@ class Initiator:
             is_modeling_rules (bool): Indicates whether the file is modeling rules.
             is_parsing_rules (bool): Indicates whether the file is parsing rules.
         """
-        suffix = (
-            MODELING_RULE_ID_SUFFIX if is_modeling_rules else PARSING_RULE_ID_SUFFIX
+        yml_file_name = self.get_suffix_xsiam_content(
+            is_modeling_rules=is_modeling_rules,
+            is_parsing_rules=is_parsing_rules,
+            name=current_suffix,
         )
-        yml_path = os.path.join(self.full_output_path, f"{current_suffix}_{suffix}.yml")
+        yml_path = os.path.join(self.full_output_path, f"{yml_file_name}.yml")
+        self.update_product_and_vendor(yml_file_name, product, vendor)
         yml_dict = get_yaml(yml_path)
         id_from_yml: str = yml_dict["id"]
         name_from_yml: str = yml_dict["name"]
@@ -919,6 +1031,33 @@ class Initiator:
             yml_dict["fromversion"] = self.SUPPORTED_FROM_VERSION_XSIAM
         with open(yml_path, "w") as f:
             yaml.dump(yml_dict, f)
+
+    def replace_vendor_and_product_py_file(
+        self, vendor: Optional[str], product: Optional[str]
+    ) -> None:
+        """Replace the product and the vendor in the py event collector file.
+
+        Args:
+            product (str): The product.
+            vendor (str): The vendor.
+        """
+        if self.xsiam and os.path.exists(
+            os.path.join(self.full_output_path, f"{self.dir_name}.py")
+        ):
+            with open(os.path.join(self.full_output_path, f"{self.dir_name}.py")) as fp:
+                file_contents = fp.read()
+
+            file_contents = file_contents.replace(
+                "VENDOR = 'hello'", f"VENDOR = '{vendor}'"
+            )
+            file_contents = file_contents.replace(
+                "PRODUCT = 'world'", f"PRODUCT = '{product}'"
+            )
+
+            with open(
+                os.path.join(self.full_output_path, f"{self.dir_name}.py"), "w"
+            ) as fp:
+                fp.write(file_contents)
 
     def yml_reformatting(self, current_suffix: str, integration: bool = False):
         """Formats the given yml to fit the newly created integration/script
@@ -1019,34 +1158,34 @@ class Initiator:
                 os.path.join(self.full_output_path, f"{current_suffix}_description.md"),
                 os.path.join(self.full_output_path, f"{self.dir_name}_description.md"),
             )
-        if is_modeling_rules and os.path.exists(
-            os.path.join(self.full_output_path, f"{current_suffix}_schema.json")
-        ):
-            os.rename(
-                os.path.join(self.full_output_path, f"{current_suffix}_schema.json"),
-                os.path.join(self.full_output_path, f"{self.dir_name}_schema.json"),
-            )
         if is_parsing_rules or is_modeling_rules:
-            suffix = (
-                MODELING_RULE_ID_SUFFIX if is_modeling_rules else PARSING_RULE_ID_SUFFIX
+            name = self.get_suffix_xsiam_content(
+                is_modeling_rules=is_modeling_rules,
+                is_parsing_rules=is_parsing_rules,
+                name=self.dir_name,
             )
             if os.path.exists(
                 os.path.join(self.full_output_path, f"{current_suffix}.xif")
             ):
                 os.rename(
                     os.path.join(self.full_output_path, f"{current_suffix}.xif"),
-                    os.path.join(
-                        self.full_output_path, f"{self.dir_name}_{suffix}.xif"
-                    ),
+                    os.path.join(self.full_output_path, f"{name}.xif"),
                 )
             if os.path.exists(
                 os.path.join(self.full_output_path, f"{current_suffix}.yml")
             ):
                 os.rename(
                     os.path.join(self.full_output_path, f"{current_suffix}.yml"),
+                    os.path.join(self.full_output_path, f"{name}.yml"),
+                )
+            if is_modeling_rules and os.path.exists(
+                os.path.join(self.full_output_path, f"{current_suffix}_schema.json")
+            ):
+                os.rename(
                     os.path.join(
-                        self.full_output_path, f"{self.dir_name}_{suffix}.yml"
+                        self.full_output_path, f"{current_suffix}_schema.json"
                     ),
+                    os.path.join(self.full_output_path, f"{name}_schema.json"),
                 )
 
     def create_new_directory(
@@ -1101,6 +1240,34 @@ class Initiator:
             os.path.join(self.full_output_path, f"{self.dir_name}_test.py"), "w"
         ) as fp:
             fp.write(file_contents)
+
+    def get_suffix_xsiam_content(
+        self,
+        name: str,
+        is_parsing_rules: bool = False,
+        is_modeling_rules: bool = False,
+    ) -> str:
+        """Gets the correct suffix to the xsiam content item
+
+        Args:
+            is_parsing_rules (bool): indicating whether the content type is parsing rule.
+            is_modeling_rules (bool): indicating whether the content type is modeling rule.
+            name (str): a name to attached to the suffix.
+        """
+        if is_parsing_rules:
+            return f"{name}{PARSING_RULE_ID_SUFFIX}"
+        return f"{name}{MODELING_RULE_ID_SUFFIX}" if is_modeling_rules else ""
+
+    def get_dir_name_for_xsiam_item(
+        self, is_parsing_rules: bool = False, is_modeling_rules: bool = False
+    ):
+        """Gets the correct directory name to the xsiam content item
+
+        Args:
+            is_parsing_rules (bool): indicating whether the content type is parsing rule.
+            is_modeling_rules (bool): indicating whether the content type is modeling rule.
+        """
+        return PARSING_RULES_DIR if is_parsing_rules else MODELING_RULES_DIR
 
     def write_to_file_from_template(self, template_path: str, output_path: str):
         """Fixes the import statement in the _test.py file in the newly created initegration/script
@@ -1241,7 +1408,7 @@ class Initiator:
                     f.write(file_content)
             except Exception:
                 logger.info(
-                    f"[yellow]Could not fetch remote template - {file}. Using local templates instead.[/yellow]"
+                    f"[yellow]Could not fetch remote template - {path}. Using local templates instead.[/yellow]"
                 )
                 return False
 

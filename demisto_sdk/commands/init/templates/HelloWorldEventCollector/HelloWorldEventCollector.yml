@@ -79,7 +79,7 @@ script:
     description: Gets events from Hello World.
     execution: false
     name: hello-world-get-events
-  dockerimage: demisto/python3:3.10.5.31928
+  dockerimage: demisto/python3:3.10.12.66339
   isfetchevents: true
   runonce: false
   script: '-'
@@ -87,6 +87,6 @@ script:
   type: python
 marketplaces:
 - marketplacev2
-fromversion: 6.8.0
+fromversion: 8.3.0
 tests:
 - No tests (auto formatted)

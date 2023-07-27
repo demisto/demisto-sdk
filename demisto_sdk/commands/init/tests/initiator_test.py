@@ -12,6 +12,7 @@ from demisto_sdk.commands.common.constants import (
     INTEGRATION_CATEGORIES,
     MARKETPLACE_LIVE_DISCUSSIONS,
     MARKETPLACES,
+    MODELING_RULE_ID_SUFFIX,
     PACK_INITIAL_VERSION,
     PACK_SUPPORT_OPTIONS,
     XSOAR_AUTHOR,
@@ -830,14 +831,19 @@ def test_integration_init_xsiam_files_content(mocker, monkeypatch, initiator, tm
     """
     # Prepare mockers
     mocker.patch.object(Initiator, "get_remote_templates", return_value=False)
+    # The inputs are: Product, Vendor, Parsing-Rule Version, Modeling-Rule Version, Integration Version,
+    # Ignore secrets
     monkeypatch.setattr(
-        "builtins.input", generate_multiple_inputs(deque(["6.0.0", "Y"]))
+        "builtins.input",
+        generate_multiple_inputs(deque(["Product", "Vendor", "", "", "", "Y"])),
     )
-    temp_pack_dir = os.path.join(tmpdir, PACK_NAME)
+    temp_pack_dir = os.path.join(f"{tmpdir}/Packs", PACK_NAME)
     os.makedirs(temp_pack_dir, exist_ok=True)
+    temp_integration_dir = os.path.join(temp_pack_dir, "Integrations")
+    os.makedirs(temp_integration_dir, exist_ok=True)
 
     # Prepare initiator
-    initiator.output = temp_pack_dir
+    initiator.output = temp_integration_dir
     initiator.dir_name = INTEGRATION_NAME
     initiator.id = INTEGRATION_NAME
     initiator.is_integration = True
@@ -845,13 +851,12 @@ def test_integration_init_xsiam_files_content(mocker, monkeypatch, initiator, tm
     initiator.template = "HelloWorldEventCollector"
     initiator.xsiam = True
     integration_path = os.path.join(
-        temp_pack_dir, f"{INTEGRATION_NAME}{EVENT_COLLECTOR}"
+        temp_integration_dir, f"{INTEGRATION_NAME}{EVENT_COLLECTOR}"
     )
     yml_path = os.path.join(
         integration_path, f"{INTEGRATION_NAME}{EVENT_COLLECTOR}.yml"
     )
     res = initiator.integration_init()
-    integration_dir_files = {file for file in listdir(integration_path)}
     expected_files = {
         "command_examples",
         "test_data",
@@ -864,11 +869,12 @@ def test_integration_init_xsiam_files_content(mocker, monkeypatch, initiator, tm
     }
 
     assert res
+    integration_dir_files = {file for file in listdir(integration_path)}
     assert os.path.isdir(integration_path)
     assert expected_files == integration_dir_files
     with open(yml_path) as f:
         yaml_content = yaml.load(f)
-        assert "6.8.0" == yaml_content["fromversion"]
+        assert "8.3.0" == yaml_content["fromversion"]
         assert "Analytics & SIEM" == yaml_content["category"]
         assert (
             f"{INTEGRATION_NAME}{EVENT_COLLECTOR}" == yaml_content["commonfields"]["id"]
@@ -959,16 +965,18 @@ def test_modeling_rules_init_xsiam_files_existence(
     initiator.xsiam = True
     initiator.is_modeling_rules = True
 
-    modeling_rules_path = os.path.join(temp_pack_dir, f"{INTEGRATION_NAME}")
+    modeling_rules_path = os.path.join(
+        temp_pack_dir, f"{INTEGRATION_NAME}{MODELING_RULE_ID_SUFFIX}"
+    )
     res = initiator.modeling_parsing_rules_init(is_modeling_rules=True)
-    modeling_rules_dir_files = set(listdir(modeling_rules_path))
     expected_files = {
-        f"{INTEGRATION_NAME}_schema.json",
-        f"{INTEGRATION_NAME}_ModelingRule.yml",
-        f"{INTEGRATION_NAME}_ModelingRule.xif",
+        f"{INTEGRATION_NAME}{MODELING_RULE_ID_SUFFIX}_schema.json",
+        f"{INTEGRATION_NAME}{MODELING_RULE_ID_SUFFIX}.yml",
+        f"{INTEGRATION_NAME}{MODELING_RULE_ID_SUFFIX}.xif",
     }
 
     assert res
+    modeling_rules_dir_files = set(listdir(modeling_rules_path))
     assert os.path.isdir(modeling_rules_path)
     assert expected_files == modeling_rules_dir_files
 
@@ -1048,15 +1056,19 @@ def test_modeling_rules_init_file_content_and_name(
     initiator.xsiam = True
     initiator.is_modeling_rules = True
 
-    parsing_rules_path = os.path.join(temp_pack_dir, f"{INTEGRATION_NAME}")
+    parsing_rules_path = os.path.join(
+        temp_pack_dir, f"{INTEGRATION_NAME}{MODELING_RULE_ID_SUFFIX}"
+    )
     res = initiator.modeling_parsing_rules_init(is_modeling_rules=True)
-    yml_path = os.path.join(parsing_rules_path, f"{INTEGRATION_NAME}_ModelingRule.yml")
+    yml_path = os.path.join(
+        parsing_rules_path, f"{INTEGRATION_NAME}{MODELING_RULE_ID_SUFFIX}.yml"
+    )
     assert res
     assert os.path.exists(yml_path)
     with open(yml_path) as f:
         yaml_content = yaml.load(f)
         assert "6.8.0" in yaml_content["fromversion"]
-        assert f"{INTEGRATION_NAME}_ModelingRule" == yaml_content["id"]
+        assert f"{INTEGRATION_NAME}_{MODELING_RULE_ID_SUFFIX}" == yaml_content["id"]
         assert f"{INTEGRATION_NAME} Modeling Rule" == yaml_content["name"]
         os.remove(yml_path)
 
@@ -1126,7 +1138,7 @@ def test_modeling_or_parsing_rules_yml_reformatting_parsing_rules(
     d.mkdir()
     dir_name = "HelloWorld"
     initiator.dir_name = dir_name
-    p = d / f"{dir_name}_ModelingRule.yml"
+    p = d / f"{dir_name}ModelingRule.yml"
     full_output_path = Path(d)
     initiator.full_output_path = full_output_path
     with p.open(mode="w") as f:
@@ -1145,7 +1157,7 @@ def test_modeling_or_parsing_rules_yml_reformatting_parsing_rules(
     initiator.modeling_or_parsing_rules_yml_reformatting(
         current_suffix=dir_name, is_modeling_rules=True
     )
-    with open(full_output_path / f"{dir_name}_ModelingRule.yml") as f:
+    with open(full_output_path / f"{dir_name}ModelingRule.yml") as f:
         yml_dict = yaml.load(f)
         assert yml_dict == OrderedDict(
             {
@@ -1157,4 +1169,4 @@ def test_modeling_or_parsing_rules_yml_reformatting_parsing_rules(
                 "tags": "",
             }
         )
-        os.remove(full_output_path / f"{dir_name}_ModelingRule.yml")
+        os.remove(full_output_path / f"{dir_name}ModelingRule.yml")

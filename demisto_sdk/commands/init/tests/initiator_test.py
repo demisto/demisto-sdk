@@ -1067,7 +1067,7 @@ def test_modeling_rules_init_file_content_and_name(
     assert os.path.exists(yml_path)
     with open(yml_path) as f:
         yaml_content = yaml.load(f)
-        assert "6.8.0" in yaml_content["fromversion"]
+        assert "8.3.0" in yaml_content["fromversion"]
         assert f"{INTEGRATION_NAME}_{MODELING_RULE_ID_SUFFIX}" == yaml_content["id"]
         assert f"{INTEGRATION_NAME} Modeling Rule" == yaml_content["name"]
         os.remove(yml_path)
@@ -1161,7 +1161,7 @@ def test_modeling_or_parsing_rules_yml_reformatting_parsing_rules(
         yml_dict = yaml.load(f)
         assert yml_dict == OrderedDict(
             {
-                "fromversion": "6.8.0",
+                "fromversion": "8.3.0",
                 "id": "HelloWorld_modeling_rule",
                 "name": "HelloWorld Modeling Rule",
                 "rules": "",

@@ -18,7 +18,6 @@ from demisto_sdk.commands.common.tools import (
 from demisto_sdk.commands.content_graph.interface.neo4j.neo4j_graph import (
     Neo4jContentGraphInterface as ContentGraphInterface,
 )
-from demisto_sdk.commands.content_graph.objects import Pack
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 
 
@@ -379,27 +378,34 @@ class GraphValidator(BaseValidator):
         hidden pack is a mandatory dependency for them.
         """
         is_valid = True
-        if dependant_packs := self.graph.find_mandatory_hidden_packs_dependencies(pack_ids=self.pack_ids):
-            hidden_pack_id_to_dependant_pack_ids = {pack_id: set() for pack_id in self.pack_ids}
+        if dependant_packs := self.graph.find_mandatory_hidden_packs_dependencies(
+            pack_ids=self.pack_ids
+        ):
+            hidden_pack_id_to_dependant_pack_ids = {
+                pack_id: set() for pack_id in self.pack_ids
+            }
             for pack in dependant_packs:
                 for relationship in pack.depends_on:
                     hidden_pack_id = relationship.content_item_to.object_id
                     if hidden_pack_id in self.pack_ids:
-                        hidden_pack_id_to_dependant_pack_ids[hidden_pack_id].add(pack.object_id)
+                        hidden_pack_id_to_dependant_pack_ids[hidden_pack_id].add(
+                            pack.object_id
+                        )
 
             for pack_id in self.pack_ids:
-                if dependant_packs_ids := hidden_pack_id_to_dependant_pack_ids.get(pack_id):
+                if dependant_packs_ids := hidden_pack_id_to_dependant_pack_ids.get(
+                    pack_id
+                ):
                     (
                         error_message,
                         error_code,
                     ) = Errors.hidden_pack_not_mandatory_dependency(
-                        hidden_pack=pack_id,
-                        dependant_packs_ids=dependant_packs_ids
+                        hidden_pack=pack_id, dependant_packs_ids=dependant_packs_ids
                     )
                     if self.handle_error(
                         error_message=error_message,
                         error_code=error_code,
-                        file_path=f'{PACKS_DIR}/{pack_id}/{PACKS_PACK_META_FILE_NAME}',
+                        file_path=f"{PACKS_DIR}/{pack_id}/{PACKS_PACK_META_FILE_NAME}",
                     ):
                         is_valid = False
 

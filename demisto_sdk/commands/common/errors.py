@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union, Set
+from typing import Any, Dict, List, Optional, Set, Union
 
 import decorator
 from packaging.version import Version
@@ -4359,9 +4359,6 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def hidden_pack_not_mandatory_dependency(
-        hidden_pack: str,
-        dependant_packs_ids: Set[str]
+        hidden_pack: str, dependant_packs_ids: Set[str]
     ):
-        return f'Cannot hide pack {hidden_pack} because the pack {hidden_pack} is a mandatory dependency for packs {dependant_packs_ids}'
-
-
+        return f"Cannot hide pack {hidden_pack} because the pack {hidden_pack} is a mandatory dependency for packs {dependant_packs_ids}"

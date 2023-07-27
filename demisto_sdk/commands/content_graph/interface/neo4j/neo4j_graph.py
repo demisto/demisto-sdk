@@ -19,7 +19,7 @@ from demisto_sdk.commands.content_graph.common import (
     RelationshipType,
 )
 from demisto_sdk.commands.content_graph.content_graph_commands import (
-    update_content_graph, create_content_graph
+    create_content_graph,
 )
 from demisto_sdk.commands.content_graph.interface.graph import ContentGraphInterface
 from demisto_sdk.commands.content_graph.interface.neo4j.import_utils import (
@@ -61,10 +61,10 @@ from demisto_sdk.commands.content_graph.interface.neo4j.queries.validations impo
     validate_core_packs_dependencies,
     validate_duplicate_ids,
     validate_fromversion,
+    validate_hidden_pack_dependencies,
     validate_marketplaces,
     validate_multiple_packs_with_same_display_name,
     validate_multiple_script_with_same_name,
-    validate_hidden_pack_dependencies,
     validate_toversion,
     validate_unknown_content,
 )
@@ -498,13 +498,9 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             self._add_relationships_to_objects(session, results)
             return [self._id_to_obj[result] for result in results]
 
-    def find_mandatory_hidden_packs_dependencies(
-        self, pack_ids
-    ):
+    def find_mandatory_hidden_packs_dependencies(self, pack_ids):
         with self.driver.session() as session:
-            results = session.execute_read(
-                validate_hidden_pack_dependencies, pack_ids
-            )
+            results = session.execute_read(validate_hidden_pack_dependencies, pack_ids)
             self._add_nodes_to_mapping(result.node_from for result in results.values())
             self._add_relationships_to_objects(session, results)
             return [self._id_to_obj[result] for result in results]

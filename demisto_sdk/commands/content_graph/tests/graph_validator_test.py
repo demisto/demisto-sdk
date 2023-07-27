@@ -30,7 +30,7 @@ from demisto_sdk.commands.content_graph.tests.create_content_graph_test import (
     mock_relationship,
     mock_test_playbook,
 )
-from TestSuite.test_tools import ChangeCWD, str_in_call_args_list
+from TestSuite.test_tools import str_in_call_args_list
 
 GIT_PATH = Path(git_path())
 
@@ -281,7 +281,7 @@ def repository(mocker) -> ContentDTO:
     pack1 = mock_pack(
         "SamplePack", [MarketplaceVersions.XSOAR, MarketplaceVersions.MarketplaceV2]
     )
-    pack2 = mock_pack("SamplePack2", [MarketplaceVersions.XSOAR])
+    pack2 = mock_pack("SamplePack2", [MarketplaceVersions.XSOAR], hidden=True)
     pack3 = mock_pack(
         "SamplePack3",
         [
@@ -395,7 +395,7 @@ def _get_pack_by_id(repository: ContentDTO, pack_id: str) -> Pack:
     raise ValueError(f"Pack {pack_id} does not exist in the repository.")
 
 
-def mock_pack(name, marketplaces):
+def mock_pack(name, marketplaces, hidden=False):
     return Pack(
         object_id=name,
         content_type=ContentType.PACK,
@@ -403,7 +403,7 @@ def mock_pack(name, marketplaces):
         path=Path("Packs"),
         name="pack_name",
         marketplaces=marketplaces,
-        hidden=False,
+        hidden=hidden,
         server_min_version="5.5.0",
         current_version="1.0.0",
         tags=[],
@@ -771,16 +771,20 @@ def test_deprecated_usage__new_content(repository: ContentDTO, mocker):
     assert not is_valid
 
 
-def test_validate_hidden_pack_is_not_mandatory_dependency(repository: ContentDTO, mocker, repo):
-
+def test_validate_hidden_pack_is_not_mandatory_dependency(
+    repository: ContentDTO, mocker
+):
     logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
 
-    with GraphValidator(update_graph=False, git_files=[]) as graph_validator:
+    with GraphValidator(
+        update_graph=False, git_files=[Path("Packs/SamplePack2")]
+    ) as graph_validator:
         create_content_graph(graph_validator.graph)
+
         is_valid = graph_validator.validate_hidden_pack_is_not_mandatory_dependency()
 
     assert not is_valid
     assert str_in_call_args_list(
         logger_error.call_args_list,
-        "The core pack SamplePack cannot depend on non-core packs: ",
+        "[GR108] - Cannot hide pack SamplePack2 because the pack SamplePack2 is a mandatory dependency for packs {'SamplePack'}",
     )

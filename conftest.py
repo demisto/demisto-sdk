@@ -149,4 +149,3 @@ def mock_update_id_set_cpu_count() -> Generator:
 def clear_cache():
     tools.get_file.cache_clear()
     tools.get_last_remote_release_version.cache_clear()
-    helpers.CoverageSummary.get_files_summary.cache_clear()

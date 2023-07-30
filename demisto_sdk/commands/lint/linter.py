@@ -361,7 +361,8 @@ class Linter:
                 return True
             self._facts["images"] = [[image, -1] for image in images]
 
-            if os.getenv("GITLAB_CI", False):
+            # we want to use the docker-io.art.code.pan.run only if we run in content build (and not CI/CD for example)
+            if os.getenv("CONTENT_GITLAB_CI", False):
                 self._facts["images"] = [
                     [f"docker-io.art.code.pan.run/{image[0]}", -1]
                     for image in self._facts["images"]

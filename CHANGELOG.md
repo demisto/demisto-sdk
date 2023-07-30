@@ -1,5 +1,6 @@
 # Changelog
 ## Unreleased
+* Fixed an issue where the coloring directives where showing in log messages.
 
 ## 1.18.0
 * Added the ability to ignore any validation in the **validate** command when running in an external (non-demisto/content) repo, by placing a `.private-repo-settings` file at its root.

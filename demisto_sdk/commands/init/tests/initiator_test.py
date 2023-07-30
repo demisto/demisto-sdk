@@ -791,9 +791,10 @@ def test_pack_init_for_xsiam_folders_existence(monkeypatch, mocker, tmpdir, init
     """
 
     # Prepare mockers
+    # mock order: pack name, create metadata, create an integration.
     monkeypatch.setattr(
         "builtins.input",
-        generate_multiple_inputs(deque(["PackName", "6.8", "6.8", "N", "N"])),
+        generate_multiple_inputs(deque(["PackName", "N", "N"])),
     )
     mocker.patch.object(Initiator, "get_remote_templates", return_value=False)
     # Prepare initiator set XSIAM flag to true
@@ -802,7 +803,6 @@ def test_pack_init_for_xsiam_folders_existence(monkeypatch, mocker, tmpdir, init
     # Prepare expected results
     dir_list: list = initiator.DIR_LIST.copy()
     dir_list.extend(initiator.XSIAM_DIR)
-    dir_list.extend(["ModelingRules", "ParsingRules"])
 
     # Run
     with ChangeCWD(tmpdir):
@@ -1012,12 +1012,12 @@ def test_parsing_rules_init_xsiam_files_existence(
     initiator.xsiam = True
     initiator.is_parsing_rules = True
 
-    parsing_rules_path = os.path.join(temp_pack_dir, f"{INTEGRATION_NAME}")
+    parsing_rules_path = os.path.join(temp_pack_dir, f"{INTEGRATION_NAME}ParsingRule")
     res = initiator.modeling_parsing_rules_init(is_parsing_rules=True)
     parsing_rules_dir_files = set(listdir(parsing_rules_path))
     expected_files = {
-        f"{INTEGRATION_NAME}_ParsingRule.yml",
-        f"{INTEGRATION_NAME}_ParsingRule.xif",
+        f"{INTEGRATION_NAME}ParsingRule.yml",
+        f"{INTEGRATION_NAME}ParsingRule.xif",
     }
 
     assert res
@@ -1102,16 +1102,15 @@ def test_parsing_rules_init_file_content_and_name(
     initiator.category = "Analytics & SIEM"
     initiator.template = "HelloWorldParsingRules"
     initiator.xsiam = True
-
-    parsing_rules_path = os.path.join(temp_pack_dir, f"{INTEGRATION_NAME}")
+    parsing_rules_path = os.path.join(temp_pack_dir, f"{INTEGRATION_NAME}ParsingRule")
     res = initiator.modeling_parsing_rules_init(is_parsing_rules=True)
-    yml_path = os.path.join(parsing_rules_path, f"{INTEGRATION_NAME}_ParsingRule.yml")
+    yml_path = os.path.join(parsing_rules_path, f"{INTEGRATION_NAME}ParsingRule.yml")
 
     assert res
     assert os.path.exists(yml_path)
     with open(yml_path) as f:
         yaml_content = yaml.load(f)
-        assert "6.8.0" in yaml_content["fromversion"]
+        assert "8.3.0" in yaml_content["fromversion"]
         assert f"{INTEGRATION_NAME}_ParsingRule" == yaml_content["id"]
         assert f"{INTEGRATION_NAME} Parsing Rule" == yaml_content["name"]
         os.remove(yml_path)

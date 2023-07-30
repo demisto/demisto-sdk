@@ -796,5 +796,5 @@ def test_validate_hidden_pack_is_not_mandatory_dependency(
     assert not is_valid
     assert str_in_call_args_list(
         logger_error.call_args_list,
-        "[GR108] - Cannot hide pack SamplePack2 because the pack SamplePack2 is a mandatory dependency for packs SamplePack",
+        "[GR108] - Cannot hide pack SamplePack2 because it is a mandatory dependency for packs SamplePack",
     )

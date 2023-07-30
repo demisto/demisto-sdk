@@ -10,7 +10,7 @@
 * **pre-commit** no longer runs when there are no modified files (unless provided with input files).
 * Added new validation that XSIAM integrations must have `marketplacev2` as the value of the marketplaces field.
 * Added an ability to provide list of marketplace names as a credentials-type (type 9) param attribute.
-* **doc-review** will run with the `--use-packs-known-words` default to true.
+* **doc-review** will run with the `--use-packs-known-words` true by default.
 * Added the *deprecated* field to the pack object for the content-graph metadata.
 * Calling **modeling-rules init-test-data** will now return the XDM fields output in alphabetical order.
 * Added a new validation (`BA125`) to **validate**, assuring internal function names aren't used in customer-facing docs.

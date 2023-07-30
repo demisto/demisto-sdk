@@ -651,3 +651,95 @@ class TestUpdateContentGraph:
                 file.suffix == ".graphml" or file.name == "metadata.json"
                 for file in extracted_files
             )
+
+    def test_create_content_graph_if_needed(
+        self,
+        tmp_path,
+        repository: ContentDTO,
+        commit_func: Callable[[ContentDTO], List[Pack]],
+        expected_added_dependencies: List[Dict[str, Any]],
+        expected_removed_dependencies: List[Dict[str, Any]],
+        mocker,
+    ):
+        """
+        Given:
+            - A ContentDTO model representing the repository state on master branch.
+            - A function representing a commit (an update of certain packs in the repository).
+            - Lists of the expected added & removed pack dependencies after the update.
+        When:
+            - Running create_content_graph() on master.
+            - Pushing a commit with the pack updates.
+            - Running update_content_graph().
+        Then:
+            - Make sure the pack models from the interface are equal to the pack models from ContentDTO
+                before and after the update.
+            - Make sure the expected added dependencies actually don't exist before the update
+                and exist after the update.
+            - Make sure the expected removed dependencies actually exist before the update
+                and don't exist after the update.
+        """
+
+        create_content_graph_spy = mocker.spy(create_content_graph)
+
+        with ContentGraphInterface() as interface:
+            # create the graph with dependencies
+            create_content_graph(interface, dependencies=True, output_path=tmp_path)
+            packs_from_graph = interface.search(
+                marketplace=MarketplaceVersions.XSOAR,
+                content_type=ContentType.PACK,
+                all_level_dependencies=True,
+            )
+
+            file_added = parsers_path = (
+                Path(__file__).parent.parent / "parsers" / "content_graph_test.txt"
+            )
+            file_added.write_text(
+                "this file is created by a test in "
+                "demisto_sdk/commands/content_graph/tests/update_content_graph_test.py"
+                " and should be removed when the test passes"
+            )
+
+            compare(
+                repository.packs,
+                packs_from_graph,
+                expected_added_dependencies,
+                expected_removed_dependencies,
+                after_update=False,
+            )
+
+            # perform the update on ContentDTO
+            pack_ids_to_update = update_repository(repository, commit_func)
+
+            # update the graph accordingly
+            update_content_graph(
+                interface,
+                packs_to_update=pack_ids_to_update,
+                dependencies=True,
+                output_path=tmp_path,
+                use_current=True,
+            )
+            packs_from_graph = interface.search(
+                marketplace=MarketplaceVersions.XSOAR,
+                content_type=ContentType.PACK,
+                all_level_dependencies=True,
+            )
+            compare(
+                repository.packs,
+                packs_from_graph,
+                expected_added_dependencies,
+                expected_removed_dependencies,
+                after_update=True,
+            )
+        file_added.unlink()
+        assert create_content_graph_spy.call_count == 2
+        # make sure that the output file zip is created
+        assert Path.exists(tmp_path / "xsoar.zip")
+        with ZipFile(tmp_path / "xsoar.zip", "r") as zip_obj:
+            zip_obj.extractall(tmp_path / "extracted")
+            # make sure that the extracted files are all .csv
+            extracted_files = list(tmp_path.glob("extracted/*"))
+            assert extracted_files
+            assert all(
+                file.suffix == ".graphml" or file.name == "metadata.json"
+                for file in extracted_files
+            )

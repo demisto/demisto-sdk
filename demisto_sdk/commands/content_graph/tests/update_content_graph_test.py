@@ -701,7 +701,7 @@ class TestUpdateContentGraph:
                 all_level_dependencies=True,
             )
 
-            file_added = parsers_path = (
+            file_added = (
                 Path(__file__).parent.parent / "parsers" / "content_graph_test.txt"
             )
             file_added.write_text(

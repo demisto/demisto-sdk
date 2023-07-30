@@ -9,6 +9,7 @@ from _pytest.fixtures import FixtureRequest
 from _pytest.tmpdir import TempPathFactory, _mk_tmp
 
 import demisto_sdk.commands.common.tools as tools
+import demisto_sdk.commands.coverage_analyze.helpers as helpers
 from TestSuite.integration import Integration
 from TestSuite.json_based import JSONBased
 from TestSuite.pack import Pack
@@ -148,3 +149,4 @@ def mock_update_id_set_cpu_count() -> Generator:
 def clear_cache():
     tools.get_file.cache_clear()
     tools.get_last_remote_release_version.cache_clear()
+    helpers.CoverageSummary.get_files_summary.cache_clear()

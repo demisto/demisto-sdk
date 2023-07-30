@@ -269,7 +269,8 @@ class TestCoverageSummary:
                 self.default_url, json=read_file(JSON_MIN_DATA_FILE)
             )
             not_mocked_open = builtins.open
-            open_file_mocker = mocker.patch("builtins.open")
+            # open_file_mocker = mocker.patch("builtins.open")
+            open_file_mocker = mocker.patch.object(builtins, 'open')
             files_data = CoverageSummary(
                 previous_coverage_report_url=TestCoverageSummary.TestGetFilesSummary.default_url,
                 no_cache=True,

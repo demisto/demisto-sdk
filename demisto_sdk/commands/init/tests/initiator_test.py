@@ -10,11 +10,13 @@ from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import (
     EVENT_COLLECTOR,
     INTEGRATION_CATEGORIES,
+    INTEGRATIONS_DIR,
     MARKETPLACE_LIVE_DISCUSSIONS,
     MARKETPLACES,
     MODELING_RULE_ID_SUFFIX,
     PACK_INITIAL_VERSION,
     PACK_SUPPORT_OPTIONS,
+    PACKS_DIR,
     XSOAR_AUTHOR,
     XSOAR_SUPPORT,
     XSOAR_SUPPORT_URL,
@@ -837,9 +839,9 @@ def test_integration_init_xsiam_files_content(mocker, monkeypatch, initiator, tm
         "builtins.input",
         generate_multiple_inputs(deque(["Product", "Vendor", "", "", "", "Y"])),
     )
-    temp_pack_dir = os.path.join(f"{tmpdir}/Packs", PACK_NAME)
+    temp_pack_dir = os.path.join(f"{tmpdir}/{PACKS_DIR}", PACK_NAME)
     os.makedirs(temp_pack_dir, exist_ok=True)
-    temp_integration_dir = os.path.join(temp_pack_dir, "Integrations")
+    temp_integration_dir = os.path.join(temp_pack_dir, INTEGRATIONS_DIR)
     os.makedirs(temp_integration_dir, exist_ok=True)
 
     # Prepare initiator
@@ -900,22 +902,27 @@ def test_integration_init_xsiam_files_existence(mocker, monkeypatch, initiator, 
     """
     # Prepare mockers
     mocker.patch.object(Initiator, "get_remote_templates", return_value=False)
+    # Product, Vendor, from version parsing, from version modeling, from version yml, ignore secrets
     monkeypatch.setattr(
-        "builtins.input", generate_multiple_inputs(deque(["6.0.0", "Y"]))
+        "builtins.input",
+        generate_multiple_inputs(deque(["vendor", "product", "", "", "", "Y"])),
     )
-    temp_pack_dir = os.path.join(tmpdir, PACK_NAME)
+    temp_pack_dir = os.path.join(f"{tmpdir}/{PACKS_DIR}", PACK_NAME)
     os.makedirs(temp_pack_dir, exist_ok=True)
+    temp_integration_dir = os.path.join(temp_pack_dir, INTEGRATIONS_DIR)
+    os.makedirs(temp_integration_dir, exist_ok=True)
+    integration_path = os.path.join(
+        temp_integration_dir, f"{INTEGRATION_NAME}{EVENT_COLLECTOR}"
+    )
 
     # Prepare initiator
-    initiator.output = temp_pack_dir
+    initiator.output = temp_integration_dir
     initiator.dir_name = INTEGRATION_NAME
     initiator.is_integration = True
     initiator.category = "Analytics & SIEM"
     initiator.template = "HelloWorldEventCollector"
     initiator.xsiam = True
-    integration_path = os.path.join(
-        temp_pack_dir, f"{INTEGRATION_NAME}{EVENT_COLLECTOR}"
-    )
+
     res = initiator.integration_init()
     integration_dir_files = set(listdir(integration_path))
     expected_files = {

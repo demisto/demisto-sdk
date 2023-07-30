@@ -1729,13 +1729,13 @@ class MarketplaceVersions(str, Enum):
 
 
 MARKETPLACE_XSOAR_DIST = "marketplace-dist"
-MARKETPLACE_XSIAME_DIST = "marketplace-v2-dist"
+MARKETPLACE_XSIAM_DIST = "marketplace-v2-dist"
 MARKETPLACE_XPANSE_DIST = "xpanse-dist"
 MARKETPLACE_XSOAR_SAAS_DIST = "marketplace-saas-dist"
 
 MarketplaceVersionToMarketplaceName = {
     MarketplaceVersions.XSOAR.value: MARKETPLACE_XSOAR_DIST,
-    MarketplaceVersions.MarketplaceV2.value: MARKETPLACE_XSIAME_DIST,
+    MarketplaceVersions.MarketplaceV2.value: MARKETPLACE_XSIAM_DIST,
     MarketplaceVersions.XPANSE.value: MARKETPLACE_XPANSE_DIST,
     MarketplaceVersions.XSOAR_SAAS.value: MARKETPLACE_XSOAR_SAAS_DIST,
 }
@@ -1895,6 +1895,6 @@ MARKDOWN_IMAGES_ARTIFACT_FILE_NAME = "markdown_images.json"
 SERVER_API_TO_STORAGE = "api/marketplace/file?name=content/packs"
 
 
-class ImagesFolderNames(Enum):
+class ImagesFolderNames(str, Enum):
     README_IMAGES = "readme_images"
     INTEGRATION_DESCRIPTION_IMAGES = "integration_description_images"

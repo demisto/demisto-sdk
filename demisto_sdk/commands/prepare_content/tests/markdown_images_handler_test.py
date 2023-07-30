@@ -1,5 +1,7 @@
 import os
+from copy import deepcopy
 from pathlib import Path
+from tempfile import TemporaryDirectory
 
 import pytest
 
@@ -11,24 +13,24 @@ from demisto_sdk.commands.common.constants import (
     MarketplaceVersions,
     MarketplaceVersionToMarketplaceName,
 )
+from demisto_sdk.commands.common.tools import get_file
 from demisto_sdk.commands.prepare_content import markdown_images_handler
+from demisto_sdk.commands.prepare_content.markdown_images_handler import (
+    upload_markdown_images_to_artifacts,
+)
 
-expected_urls_ret = {
-    "test_pack": {
-        ImagesFolderNames.README_IMAGES.value: [
-            {
-                "original_markdown_url": "https://raw.githubusercontent.com/crestdatasystems/content/"
-                "4f707f8922d7ef1fe234a194dcc6fa73f96a4a87/Packs/Lansweeper/doc_files/"
-                "Retrieve_Asset_Details_-_Lansweeper.png",
-                "final_dst_image_path": f"{GOOGLE_CLOUD_STORAGE_PUBLIC_BASE_PATH}/"
-                f"{MarketplaceVersionToMarketplaceName.get(MarketplaceVersions.XSOAR)}/"
-                f"content/packs/test_pack/{ImagesFolderNames.README_IMAGES.value}/Retrieve_Asset_Details_-_Lansweeper.png",
-                "relative_image_path": f"test_pack/{ImagesFolderNames.README_IMAGES.value}/Retrieve_Asset_Details_-_Lansweeper.png",
-                "image_name": "Retrieve_Asset_Details_-_Lansweeper.png",
-            }
-        ]
+expected_urls_ret = [
+    {
+        "original_markdown_url": "https://raw.githubusercontent.com/crestdatasystems/content/"
+        "4f707f8922d7ef1fe234a194dcc6fa73f96a4a87/Packs/Lansweeper/doc_files/"
+        "Retrieve_Asset_Details_-_Lansweeper.png",
+        "final_dst_image_path": f"{GOOGLE_CLOUD_STORAGE_PUBLIC_BASE_PATH}/"
+        f"{MarketplaceVersionToMarketplaceName.get(MarketplaceVersions.XSOAR)}/"
+        f"content/packs/test_pack/{ImagesFolderNames.README_IMAGES.value}/Retrieve_Asset_Details_-_Lansweeper.png",
+        "relative_image_path": f"test_pack/{ImagesFolderNames.README_IMAGES.value}/Retrieve_Asset_Details_-_Lansweeper.png",
+        "image_name": "Retrieve_Asset_Details_-_Lansweeper.png",
     }
-}
+]
 
 
 @pytest.mark.parametrize(
@@ -153,7 +155,7 @@ def image_data_one():
 
 @pytest.fixture
 def image_data_two():
-    [
+    return [
         {
             "original_markdown_url": "https://raw.githubusercontent.com/demisto/content/8895e8b967ee7d664276bd31df5af849e2c9a603/Packs/CVE_2022_30190/doc_files/CVE-2022-30190_-_MSDT_RCE.png",
             "final_dst_image_path": "https://storage.googleapis.com/marketplace-saas-dist/content/packs/CVE_2022_30190/readme_images/CVE-2022-30190_-_MSDT_RCE.png",
@@ -161,6 +163,40 @@ def image_data_two():
             "image_name": "CVE-2022-30190_-_MSDT_RCE.png",
         }
     ]
+
+
+def test_dump_same_pack_images_in_desc_and_readme(
+    mocker, image_data_one, image_data_two
+):
+    """
+    Given:
+        - pack readmes with images and description with images for the same pack
+    When:
+        - After the readme images were parsed and data was collected for each url
+    Then:
+        - Validate that the data stored in the file that gathers all the pake readme
+            images data is created succesfully.
+    """
+    pack_name = "PrismaCloudCompute"
+    return_value1 = {pack_name: {ImagesFolderNames.README_IMAGES.value: image_data_one}}
+
+    return_value2 = {
+        pack_name: {
+            ImagesFolderNames.INTEGRATION_DESCRIPTION_IMAGES.value: image_data_two
+        }
+    }
+    excepted_res = deepcopy(return_value1)
+    excepted_res[pack_name].update(deepcopy(return_value2[pack_name]))
+    with TemporaryDirectory() as artifact_dir:
+        mocker.patch.object(os, "getenv", return_value=artifact_dir)
+        upload_markdown_images_to_artifacts(
+            return_value1, pack_name, ImagesFolderNames.README_IMAGES
+        )
+        upload_markdown_images_to_artifacts(
+            return_value2, pack_name, ImagesFolderNames.INTEGRATION_DESCRIPTION_IMAGES
+        )
+        res = get_file(f"{artifact_dir}/{MARKDOWN_IMAGES_ARTIFACT_FILE_NAME}")
+    assert res == excepted_res
 
 
 def test_dump_pack_readme(mocker, image_data_one, image_data_two):
@@ -173,14 +209,6 @@ def test_dump_pack_readme(mocker, image_data_one, image_data_two):
         - Validate that the data stored in the file that gathers all the pake readme
             images data is created succesfully.
     """
-    import os
-    from tempfile import TemporaryDirectory
-
-    from demisto_sdk.commands.common.tools import get_file
-    from demisto_sdk.commands.prepare_content.markdown_images_handler import (
-        upload_markdown_images_to_artifacts,
-    )
-
     return_value1 = {
         "PrismaCloudCompute": {ImagesFolderNames.README_IMAGES.value: image_data_one}
     }
@@ -190,51 +218,87 @@ def test_dump_pack_readme(mocker, image_data_one, image_data_two):
             ImagesFolderNames.INTEGRATION_DESCRIPTION_IMAGES.value: image_data_two
         }
     }
-    excepted_res = return_value1.copy()
-    excepted_res.update(return_value2)
+    excepted_res = deepcopy(return_value1)
+    excepted_res.update(deepcopy(return_value2))
     with TemporaryDirectory() as artifact_dir:
         mocker.patch.object(os, "getenv", return_value=artifact_dir)
-        upload_markdown_images_to_artifacts(return_value1, "PrismaCloudCompute")
-        upload_markdown_images_to_artifacts(return_value2, "CVE_2022_30190")
+        upload_markdown_images_to_artifacts(
+            return_value1, "PrismaCloudCompute", ImagesFolderNames.README_IMAGES
+        )
+        upload_markdown_images_to_artifacts(
+            return_value2,
+            "CVE_2022_30190",
+            ImagesFolderNames.INTEGRATION_DESCRIPTION_IMAGES,
+        )
         res = get_file(f"{artifact_dir}/{MARKDOWN_IMAGES_ARTIFACT_FILE_NAME}")
     assert res == excepted_res
 
 
-def test_dump_same_pack_images_in_desc_and_readme(
-    mocker, image_data_one, image_data_two
-):
-    """
-    Given:
-        - pack readmes with images
-    When:
-        - After the readme images were parsed and data was collected for each url
-    Then:
-        - Validate that the data stored in the file that gathers all the pake readme
-            images data is created succesfully.
-    """
-    import os
-    from tempfile import TemporaryDirectory
-
-    from demisto_sdk.commands.common.tools import get_file
-    from demisto_sdk.commands.prepare_content.markdown_images_handler import (
-        upload_markdown_images_to_artifacts,
-    )
-
-    packe_name = "PrismaCloudCompute"
+def test_dump_more_than_one_description_file_one_empty(mocker, image_data_one):
+    pack_name = "PrismaCloudCompute"
     return_value1 = {
-        packe_name: {ImagesFolderNames.README_IMAGES.value: image_data_one}
+        pack_name: {
+            ImagesFolderNames.INTEGRATION_DESCRIPTION_IMAGES.value: image_data_one
+        }
     }
 
-    return_value2 = {
-        packe_name: {
+    return_value2: dict = {
+        pack_name: {ImagesFolderNames.INTEGRATION_DESCRIPTION_IMAGES.value: []}
+    }
+    excepted_res = deepcopy(return_value1)
+    excepted_res[pack_name][
+        ImagesFolderNames.INTEGRATION_DESCRIPTION_IMAGES.value
+    ].append(
+        deepcopy(
+            return_value2[pack_name][
+                ImagesFolderNames.INTEGRATION_DESCRIPTION_IMAGES.value
+            ]
+        )
+    )
+    with TemporaryDirectory() as artifact_dir:
+        mocker.patch.object(os, "getenv", return_value=artifact_dir)
+        upload_markdown_images_to_artifacts(
+            return_value1, pack_name, ImagesFolderNames.INTEGRATION_DESCRIPTION_IMAGES
+        )
+        upload_markdown_images_to_artifacts(
+            return_value2, pack_name, ImagesFolderNames.INTEGRATION_DESCRIPTION_IMAGES
+        )
+        res = get_file(f"{artifact_dir}/{MARKDOWN_IMAGES_ARTIFACT_FILE_NAME}")
+    assert res == excepted_res
+
+
+def test_dump_more_than_one_description_file(mocker, image_data_one, image_data_two):
+    pack_name = "PrismaCloudCompute"
+    return_value1 = {
+        pack_name: {
+            ImagesFolderNames.INTEGRATION_DESCRIPTION_IMAGES.value: image_data_one
+        }
+    }
+
+    return_value2: dict = {
+        pack_name: {
             ImagesFolderNames.INTEGRATION_DESCRIPTION_IMAGES.value: image_data_two
         }
     }
-    excepted_res = return_value1.copy()
-    excepted_res[packe_name].update(return_value2[packe_name])
+    excepted_res = deepcopy(return_value1)
+    excepted_res[pack_name][
+        ImagesFolderNames.INTEGRATION_DESCRIPTION_IMAGES.value
+    ].append(
+        (
+            deepcopy(
+                return_value2[pack_name][
+                    ImagesFolderNames.INTEGRATION_DESCRIPTION_IMAGES.value
+                ]
+            )
+        )
+    )
     with TemporaryDirectory() as artifact_dir:
         mocker.patch.object(os, "getenv", return_value=artifact_dir)
-        upload_markdown_images_to_artifacts(return_value1, packe_name)
-        upload_markdown_images_to_artifacts(return_value2, packe_name)
+        upload_markdown_images_to_artifacts(
+            return_value1, pack_name, ImagesFolderNames.INTEGRATION_DESCRIPTION_IMAGES
+        )
+        upload_markdown_images_to_artifacts(
+            return_value2, pack_name, ImagesFolderNames.INTEGRATION_DESCRIPTION_IMAGES
+        )
         res = get_file(f"{artifact_dir}/{MARKDOWN_IMAGES_ARTIFACT_FILE_NAME}")
     assert res == excepted_res

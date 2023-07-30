@@ -684,15 +684,17 @@ class TestUpdateContentGraph:
             - Make sure the expected removed dependencies actually exist before the update
                 and don't exist after the update.
         """
+        import demisto_sdk.commands.content_graph.content_graph_commands as content_graph_commands
 
-        create_content_graph_spy = mocker.patch(
-            "demisto_sdk.commands.content_graph.content_graph_commands.create_content_graph",
-            new=None,
+        create_content_graph_spy = mocker.spy(
+            content_graph_commands, "create_content_graph"
         )
 
         with ContentGraphInterface() as interface:
             # create the graph with dependencies
-            create_content_graph(interface, dependencies=True, output_path=tmp_path)
+            content_graph_commands.create_content_graph(
+                interface, dependencies=True, output_path=tmp_path
+            )
             packs_from_graph = interface.search(
                 marketplace=MarketplaceVersions.XSOAR,
                 content_type=ContentType.PACK,
@@ -717,10 +719,12 @@ class TestUpdateContentGraph:
             )
 
             # perform the update on ContentDTO
-            pack_ids_to_update = update_repository(repository, commit_func)
+            pack_ids_to_update = content_graph_commands.update_repository(
+                repository, commit_func
+            )
 
             # update the graph accordingly
-            update_content_graph(
+            content_graph_commands.update_content_graph(
                 interface,
                 packs_to_update=pack_ids_to_update,
                 dependencies=True,

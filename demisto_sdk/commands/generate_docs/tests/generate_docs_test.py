@@ -528,15 +528,6 @@ def test_get_script_outputs():
     assert errors[0] == "Error! You are missing description in script output outputB"
 
 
-def test_get_used_in():
-    from demisto_sdk.commands.generate_docs.generate_script_doc import get_used_in
-
-    script = get_yaml(TEST_SCRIPT_PATH)
-    script_id = script.get("commonfields")["id"]
-    used_in = get_used_in(FAKE_ID_SET, script_id)
-    assert used_in == ["Fake playbook", "Fake script"]
-
-
 # integration tests
 
 

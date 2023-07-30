@@ -19,6 +19,10 @@ from demisto_sdk.commands.generate_docs.common import (
     save_output,
     string_escape_md,
 )
+from demisto_sdk.commands.content_graph.interface.neo4j.neo4j_graph import (
+    Neo4jContentGraphInterface as ContentGraphInterface,
+)
+from typing import List
 
 
 def generate_script_doc(
@@ -69,14 +73,10 @@ def generate_script_doc(
         # get script dependencies
         dependencies, _ = get_depends_on(script)
 
-        # get the script usages by the id set
-        if not os.path.isfile(DEFAULT_ID_SET_PATH):
-            id_set_creator = IDSetCreator(print_logs=False)
-            id_set, _, _ = id_set_creator.create_id_set()
-        else:
-            id_set = open_id_set_file(DEFAULT_ID_SET_PATH)
-
-        used_in = get_used_in(id_set, script_id)
+        used_in = []
+        with ContentGraphInterface(update_graph=True) as graph:
+            script_object = graph.search(object_id=script_id)[0]  # There will be only one object that matches the id.
+            used_in.extend(item.content_item_to.name for item in script_object.used_by)
 
         description = script.get("comment", "")
         # get inputs/outputs
@@ -260,31 +260,6 @@ def get_outputs(script):
         )
 
     return outputs, errors
-
-
-def get_used_in(id_set, script_id):
-    """
-    Gets the integrations, scripts and playbooks that used the input script, without test playbooks.
-    :param id_set: updated id_set object.
-    :param script_id: the script id.
-    :return: list of integrations, scripts and playbooks that used the input script
-    """
-    used_in_list = set()
-
-    id_set_sections = list(id_set.keys())
-    id_set_sections.remove("TestPlaybooks")
-    id_set_sections.remove("Packs") if "Packs" in id_set_sections else None
-
-    for key in id_set_sections:
-        items = id_set[key]
-        for item in items:
-            key = list(item.keys())[0]
-            scripts = item[key].get("implementing_scripts", [])
-            if scripts and script_id in scripts:
-                used_in_list.add(item[key].get("name", []))
-    used_in_list = list(used_in_list)
-    used_in_list.sort()
-    return used_in_list
 
 
 def generate_script_example(script_name, example=None):

@@ -528,52 +528,50 @@ class TestUpdateContentGraph:
             assert get_nodes_count_by_type(interface, ContentType.COMMAND) == 1
             assert get_nodes_count_by_type(interface, ContentType.CLASSIFIER) == 1
 
-    data_test_update_content_graph = (
-        [
-            pytest.param(
-                _testcase1__pack3_pack4__script2_uses_script4,
-                [mock_dependency("SamplePack3", "SamplePack4")],
-                [],
-                id="New pack with USES relationship, causing adding a dependency",
-            ),
-            pytest.param(
-                _testcase2__pack3__remove_relationship,
-                [],
-                [mock_dependency("SamplePack2", "SamplePack3")],
-                id="Remove USES relationship, causing removing a dependency",
-            ),
-            pytest.param(
-                _testcase3__no_change,
-                [],
-                [],
-                id="No change in repository",
-            ),
-            pytest.param(
-                _testcase4__new_integration_with_existing_command,
-                [],
-                [],
-                id="New integration with existing command test-command",
-            ),
-            pytest.param(
-                _testcase5__move_script_from_pack3_to_pack1,
-                [mock_dependency("SamplePack2", "SamplePack")],
-                [mock_dependency("SamplePack2", "SamplePack3")],
-                id="Moved script - dependency pack2 -> pack3 changed to pack2 -> pack1",
-            ),
-            pytest.param(
-                _testcase6__move_script_from_pack3_to_pack2,
-                [],
-                [mock_dependency("SamplePack2", "SamplePack3")],
-                id="Moved script - removed dependency between pack2 and pack3",
-            ),
-            pytest.param(
-                _testcase7__changed_script2_fromversion,
-                [],
-                [],
-                id="Changed fromversion of script",
-            ),
-        ],
-    )
+    data_test_update_content_graph = [
+        pytest.param(
+            _testcase1__pack3_pack4__script2_uses_script4,
+            [mock_dependency("SamplePack3", "SamplePack4")],
+            [],
+            id="New pack with USES relationship, causing adding a dependency",
+        ),
+        pytest.param(
+            _testcase2__pack3__remove_relationship,
+            [],
+            [mock_dependency("SamplePack2", "SamplePack3")],
+            id="Remove USES relationship, causing removing a dependency",
+        ),
+        pytest.param(
+            _testcase3__no_change,
+            [],
+            [],
+            id="No change in repository",
+        ),
+        pytest.param(
+            _testcase4__new_integration_with_existing_command,
+            [],
+            [],
+            id="New integration with existing command test-command",
+        ),
+        pytest.param(
+            _testcase5__move_script_from_pack3_to_pack1,
+            [mock_dependency("SamplePack2", "SamplePack")],
+            [mock_dependency("SamplePack2", "SamplePack3")],
+            id="Moved script - dependency pack2 -> pack3 changed to pack2 -> pack1",
+        ),
+        pytest.param(
+            _testcase6__move_script_from_pack3_to_pack2,
+            [],
+            [mock_dependency("SamplePack2", "SamplePack3")],
+            id="Moved script - removed dependency between pack2 and pack3",
+        ),
+        pytest.param(
+            _testcase7__changed_script2_fromversion,
+            [],
+            [],
+            id="Changed fromversion of script",
+        ),
+    ]
 
     @pytest.mark.parametrize(
         "commit_func, expected_added_dependencies, expected_removed_dependencies",
@@ -664,10 +662,10 @@ class TestUpdateContentGraph:
         self,
         tmp_path,
         repository: ContentDTO,
+        mocker,
         commit_func: Callable[[ContentDTO], List[Pack]],
         expected_added_dependencies: List[Dict[str, Any]],
         expected_removed_dependencies: List[Dict[str, Any]],
-        mocker,
     ):
         """
         Given:
@@ -687,7 +685,10 @@ class TestUpdateContentGraph:
                 and don't exist after the update.
         """
 
-        create_content_graph_spy = mocker.spy(create_content_graph)
+        create_content_graph_spy = mocker.patch(
+            "demisto_sdk.commands.content_graph.content_graph_commands.create_content_graph",
+            new=None,
+        )
 
         with ContentGraphInterface() as interface:
             # create the graph with dependencies

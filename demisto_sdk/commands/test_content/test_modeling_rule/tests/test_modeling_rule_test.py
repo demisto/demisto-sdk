@@ -1,5 +1,6 @@
 import logging
 import os
+import uuid
 from pathlib import Path
 from uuid import UUID
 
@@ -99,7 +100,7 @@ class SetFakeXsiamClientEnvironmentVars:
 
 
 class TestVerifyResults:
-    def test_verify_results_single_event_matching_expected_outputs(self):
+    def test_verify_results_single_event_matching_expected_outputs(self, mocker):
         """
         Given:
             - Simulated query results for one event.
@@ -129,6 +130,10 @@ class TestVerifyResults:
                 "xdm.field3": "value3",
             }
         ]
+        mocker.patch(
+            "demisto_sdk.commands.test_content.xsiam_tools.test_data.uuid4",
+            return_value=DEFAULT_TEST_EVENT_ID,
+        )
         test_data = TestData(
             data=[
                 EventLog(
@@ -276,6 +281,14 @@ class TestTheTestModelingRuleCommandSingleRule:
         """
         logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
         monkeypatch.setenv("COLUMNS", "1000")
+        mocker.patch(
+            "demisto_sdk.commands.test_content.xsiam_tools.test_data.uuid4",
+            return_value=DEFAULT_TEST_EVENT_ID,
+        )
+        mocker.patch(
+            "demisto_sdk.commands.test_content.test_modeling_rule.test_modeling_rule.validate_expected_values",
+            return_value=None,
+        )
 
         from demisto_sdk.commands.test_content.test_modeling_rule.test_modeling_rule import (
             app as test_modeling_rule_cmd,
@@ -337,6 +350,10 @@ class TestTheTestModelingRuleCommandSingleRule:
             - The command returns with a non-zero exit code.
         """
         logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
+        mocker.patch(
+            "demisto_sdk.commands.test_content.test_modeling_rule.test_modeling_rule.validate_expected_values",
+            return_value=None,
+        )
         monkeypatch.setenv("COLUMNS", "1000")
 
         from functools import partial
@@ -423,7 +440,10 @@ class TestTheTestModelingRuleCommandSingleRule:
         """
         logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
         monkeypatch.setenv("COLUMNS", "1000")
-
+        mocker.patch(
+            "demisto_sdk.commands.test_content.test_modeling_rule.test_modeling_rule.verify_event_ids_does_not_exist_on_tenant",
+            return_value=True,
+        )
         from functools import partial
 
         from demisto_sdk.commands.test_content.test_modeling_rule.test_modeling_rule import (
@@ -441,7 +461,9 @@ class TestTheTestModelingRuleCommandSingleRule:
         from demisto_sdk.commands.test_content.test_modeling_rule.test_modeling_rule import (
             app as test_modeling_rule_cmd,
         )
-        from demisto_sdk.commands.test_content.xsiam_tools.test_data import TestData
+        from demisto_sdk.commands.test_content.xsiam_tools.test_data import (
+            TestData,
+        )
 
         runner = CliRunner()
 
@@ -471,6 +493,10 @@ class TestTheTestModelingRuleCommandSingleRule:
                     m.post(
                         f"{fake_env_vars.demisto_base_url}/public_api/v1/xql/start_xql_query/",
                         [
+                            {
+                                "json": {"reply": "fake-execution-id"},
+                                "status_code": 200,
+                            },
                             {
                                 "json": {"reply": "fake-execution-id"},
                                 "status_code": 200,
@@ -521,6 +547,7 @@ class TestTheTestModelingRuleCommandSingleRule:
             - The command returns with a non-zero exit code.
         """
         logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
+
         monkeypatch.setenv("COLUMNS", "1000")
 
         from functools import partial
@@ -580,15 +607,6 @@ class TestTheTestModelingRuleCommandSingleRule:
                     m.post(
                         f"{fake_env_vars.demisto_base_url}/public_api/v1/xql/get_query_results/",
                         [
-                            {
-                                "json": {
-                                    "reply": {
-                                        "status": "SUCCESS",
-                                        "results": {"data": ["some-results"]},
-                                    }
-                                },
-                                "status_code": 200,
-                            },
                             {"json": {}, "status_code": 500},
                         ],
                     )
@@ -637,11 +655,18 @@ class TestTheTestModelingRuleCommandSingleRule:
             partial(check_dataset_exists),
         )
 
+        # Ignore creating uuids for testing.
+        import uuid
+
         from demisto_sdk.commands.test_content.test_modeling_rule.test_modeling_rule import (
             app as test_modeling_rule_cmd,
         )
         from demisto_sdk.commands.test_content.xsiam_tools.test_data import TestData
 
+        mocker.patch(
+            "demisto_sdk.commands.test_content.xsiam_tools.test_data.uuid4",
+            side_effect=[str(uuid.UUID(int=0)), str(uuid.UUID(int=1))] * 3,
+        )
         runner = CliRunner()
 
         # Create Test Data File
@@ -788,6 +813,16 @@ class TestTheTestModelingRuleCommandSingleRule:
 
         # so the logged output when running the command will be printed with a width of 120 characters
         monkeypatch.setenv("COLUMNS", "1000")
+        import uuid
+
+        mocker.patch(
+            "demisto_sdk.commands.test_content.xsiam_tools.test_data.uuid4",
+            side_effect=[str(uuid.UUID(int=0)), str(uuid.UUID(int=1))] * 3,
+        )
+        mocker.patch(
+            "demisto_sdk.commands.test_content.test_modeling_rule.test_modeling_rule.verify_event_ids_does_not_exist_on_tenant",
+            return_value=True,
+        )
 
         runner = CliRunner()
 
@@ -917,6 +952,14 @@ class TestTheTestModelingRuleCommandSingleRule:
         )
         from demisto_sdk.commands.test_content.xsiam_tools.test_data import TestData
 
+        mocker.patch(
+            "demisto_sdk.commands.test_content.xsiam_tools.test_data.uuid4",
+            side_effect=[str(uuid.UUID(int=0)), str(uuid.UUID(int=1))] * 3,
+        )
+        mocker.patch(
+            "demisto_sdk.commands.test_content.test_modeling_rule.test_modeling_rule.verify_event_ids_does_not_exist_on_tenant",
+            return_value=True,
+        )
         runner = CliRunner()
 
         # Create Test Data File
@@ -1031,7 +1074,16 @@ class TestTheTestModelingRuleCommandMultipleRules:
 
         # so the logged output when running the command will be printed with a width of 120 characters
         monkeypatch.setenv("COLUMNS", "1000")
+        import uuid
 
+        mocker.patch(
+            "demisto_sdk.commands.test_content.xsiam_tools.test_data.uuid4",
+            side_effect=[str(uuid.UUID(int=0)), str(uuid.UUID(int=1))] * 5,
+        )
+        mocker.patch(
+            "demisto_sdk.commands.test_content.test_modeling_rule.test_modeling_rule.verify_event_ids_does_not_exist_on_tenant",
+            return_value=True,
+        )
         runner = CliRunner()
 
         # Create Pack 1 with Modeling Rule

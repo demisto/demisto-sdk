@@ -58,7 +58,9 @@ class PackMetadata(BaseModel):
     preview_only: Optional[bool] = Field(None, alias="previewOnly")
     disable_monthly: Optional[bool] = Field(None, alias="disableMonthly")
 
-    def _enhance_pack_properties(self, marketplace: MarketplaceVersions, content_items: PackContentItems):
+    def _enhance_pack_properties(
+        self, marketplace: MarketplaceVersions, content_items: PackContentItems
+    ):
         """
         Enhancing the Pack object properties before dumping into a dictionary.
         - Adding tags considering the pack content items and marketplace.
@@ -73,20 +75,19 @@ class PackMetadata(BaseModel):
         self.tags = self._get_pack_tags(marketplace, content_items)
         self.author = get_author(self.author, marketplace)
         self.version_info = os.environ.get("CI_PIPELINE_ID", "")
-        self.server_min_version = (
-            self.server_min_version
-            or str(
-                max(
-                    (
-                        parse(content_item.fromversion)
-                        for content_item in content_items
-                    ),
-                    default=MARKETPLACE_MIN_VERSION,
-                )
+        self.server_min_version = self.server_min_version or str(
+            max(
+                (parse(content_item.fromversion) for content_item in content_items),
+                default=MARKETPLACE_MIN_VERSION,
             )
         )
 
-    def _format_metadata(self, marketplace: MarketplaceVersions, content_items: PackContentItems, dependencies: List[RelationshipData]) -> dict:
+    def _format_metadata(
+        self,
+        marketplace: MarketplaceVersions,
+        content_items: PackContentItems,
+        dependencies: List[RelationshipData],
+    ) -> dict:
         """
         Enhancing the pack metadata properties after dumping into a dictionary. (properties that can't be calculating before)
         - Adding the pack's content items and calculating their from/to version before.
@@ -104,9 +105,10 @@ class PackMetadata(BaseModel):
         """
         _metadata: dict = {}
 
-        collected_content_items, content_displays = self._get_content_items_and_displays_metadata(
-            marketplace, content_items
-        )
+        (
+            collected_content_items,
+            content_displays,
+        ) = self._get_content_items_and_displays_metadata(marketplace, content_items)
         support_details = {"url": self.url}
         if self.email:
             support_details["email"] = self.email
@@ -159,14 +161,19 @@ class PackMetadata(BaseModel):
 
         content_displays = {
             content_type: content_type_display
-            if (collected_content_items[content_type] and len(collected_content_items[content_type]) == 1)
+            if (
+                collected_content_items[content_type]
+                and len(collected_content_items[content_type]) == 1
+            )
             else f"{content_type_display}s"
             for content_type, content_type_display in content_displays.items()
         }
 
         return collected_content_items, content_displays
 
-    def _enhance_dependencies(self, marketplace: MarketplaceVersions, dependencies: List[RelationshipData]):
+    def _enhance_dependencies(
+        self, marketplace: MarketplaceVersions, dependencies: List[RelationshipData]
+    ):
         """
         Gathers the first level pack's dependencies details to a list to add to the pack's metadata.
         For each dependency it adds the following pack's properties:
@@ -182,9 +189,12 @@ class PackMetadata(BaseModel):
             r.content_item_to.object_id: {
                 "mandatory": r.mandatorily,
                 "minVersion": r.content_item_to.current_version,  # type:ignore[attr-defined]
-                "author": get_author(r.content_item_to.author, marketplace),  # type:ignore[attr-defined]
+                "author": get_author(
+                    r.content_item_to.author, marketplace  # type:ignore[attr-defined]
+                ),
                 "name": r.content_item_to.name,  # type:ignore[attr-defined]
-                "certification": r.content_item_to.certification or "",  # type:ignore[attr-defined]
+                "certification": r.content_item_to.certification  # type:ignore[attr-defined]
+                or "",
             }
             for r in dependencies
             if r.is_direct
@@ -205,9 +215,7 @@ class PackMetadata(BaseModel):
         tags = self._get_tags_by_marketplace(marketplace)
         tags |= (
             {PackTags.TIM}
-            if any(
-                [integration.is_feed for integration in content_items.integration]
-            )
+            if any([integration.is_feed for integration in content_items.integration])
             or any(
                 [
                     playbook.name.startswith("TIM ")
@@ -219,9 +227,7 @@ class PackMetadata(BaseModel):
         tags |= {PackTags.USE_CASE} if self.use_cases else set()
         tags |= (
             {PackTags.TRANSFORMER}
-            if any(
-                ["transformer" in script.tags for script in content_items.script]
-            )
+            if any(["transformer" in script.tags for script in content_items.script])
             else set()
         )
         tags |= (

@@ -28,14 +28,18 @@ class ContentDTO(BaseModel):
         output_stem: str = "content_packs",  # without extension
     ):
         dir.mkdir(parents=True, exist_ok=True)
-        logger.debug(f"Starting repository dump for packs: {packs_to_dump}")
+        logger.debug(f"(1) Starting repository dump for packs: {packs_to_dump}")
         packs_to_dump = (
             [pack for pack in self.packs if pack.object_id in packs_to_dump]
-            if packs_to_dump
+            if packs_to_dump is not None
             else self.packs
         )
 
-        logger.debug(f"Starting repository dump for packs: {packs_to_dump}")
+        if not packs_to_dump:
+            logger.debug("didn't got packs to dump, skipping")
+            return
+
+        logger.debug(f"(2) Starting repository dump for packs: {packs_to_dump}")
         start_time = time.time()
         if USE_MULTIPROCESSING:
             with Pool(processes=cpu_count()) as pool:
@@ -48,7 +52,7 @@ class ContentDTO(BaseModel):
                 )
 
         else:
-            for pack in self.packs:
+            for pack in packs_to_dump:
                 pack.dump(dir / pack.path.name, marketplace)
 
         time_taken = time.time() - start_time

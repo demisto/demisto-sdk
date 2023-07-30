@@ -4,7 +4,6 @@ from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional, Set, Tuple
 
 from neo4j import Driver, GraphDatabase, Session, graph
-from pydantic import ValidationError
 
 import demisto_sdk.commands.content_graph.neo4j_service as neo4j_service
 from demisto_sdk.commands.common.constants import MarketplaceVersions
@@ -539,17 +538,9 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
                 session.execute_write(merge_duplicate_content_items)
                 session.execute_write(create_constraints)
                 session.execute_write(remove_empty_properties)
-        try:
-            # Test that the imported graph is valid by marshaling it
-            self.marshal_graph(MarketplaceVersions.XSOAR)
-            result = True
-        except ValidationError as e:
-            logger.warning("Failed to import the content graph")
-            logger.debug(f"Validation Error: {e}")
-            result = False
-        # clear cache after loading the graph
+        has_infra_graph_been_changed = self._has_infra_graph_been_changed()
         self._id_to_obj = {}
-        return result
+        return not has_infra_graph_been_changed
 
     def export_graph(self, output_path: Optional[Path] = None) -> None:
         self.clean_import_dir()

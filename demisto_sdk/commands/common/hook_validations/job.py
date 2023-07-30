@@ -1,4 +1,4 @@
-from distutils.version import LooseVersion
+from packaging.version import Version, parse
 
 from demisto_sdk.commands.common.constants import (
     FILETYPE_TO_DEFAULT_FROMVERSION,
@@ -31,8 +31,8 @@ class JobValidator(ContentEntityValidator):
 
     @error_codes("JB100")
     def is_valid_fromversion(self):
-        if not self.from_version or LooseVersion(self.from_version) < LooseVersion(
-            FILETYPE_TO_DEFAULT_FROMVERSION.get(FileType.JOB)
+        if not self.from_version or Version(self.from_version) < parse(
+            FILETYPE_TO_DEFAULT_FROMVERSION.get(FileType.JOB, "")
         ):
             error_message, error_code = Errors.invalid_fromversion_in_job(
                 self.from_version

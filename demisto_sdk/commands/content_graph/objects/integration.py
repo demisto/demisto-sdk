@@ -80,20 +80,20 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
         return summary
 
     def metadata_fields(self):
-        return {
-            "object_id": True,
-            "name": True,
-            "description": True,
-            "category": True,
-            "commands": {
-                "__all__": {"name": True, "description": True}
-            },  # for all commands, keep the name and description
-            "fromversion": True,
-            "toversion": True,
-            "is_fetch": True,
-            "is_fetch_events": True,
-            "deprecated": True,
-        }
+        return (
+            super()
+            .metadata_fields()
+            .union(
+                {
+                    "category": True,
+                    "commands": {
+                        "__all__": {"name": True, "description": True}
+                    },  # for all commands, keep the name and description
+                    "is_fetch": True,
+                    "is_fetch_events": True,
+                }
+            )
+        )
 
     def prepare_for_upload(
         self,

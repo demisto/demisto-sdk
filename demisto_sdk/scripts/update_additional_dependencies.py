@@ -30,6 +30,11 @@ def update_additional_dependencies(
                 "Skipping update of additional dependencies since poetry.lock was not changed"
             )
             return 0
+        if not requirements_path.exists():
+            logger.info(
+                "Skipping update of additional dependencies since requirements.txt was not found"
+            )
+            return 0
         requirements = requirements_path.read_text().splitlines()
         pre_commit = get_file(pre_commit_config_path)
         for repo in pre_commit["repos"]:

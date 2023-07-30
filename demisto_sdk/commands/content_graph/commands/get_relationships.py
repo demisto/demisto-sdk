@@ -24,7 +24,7 @@ app = typer.Typer()
 COMMAND_OUTPUTS_FILENAME = "get_relationships_outputs.json"
 
 
-class Direction(Enum):
+class Direction(str, Enum):
     SOURCES = "sources"
     TARGETS = "targets"
     BOTH = "both"
@@ -141,6 +141,12 @@ def get_relationships(
         file_log_threshold=file_log_threshold,
         log_file_path=log_file_path,
     )
+    if relationship == RelationshipType.HAS_COMMAND:
+        raise ValueError(
+            f"Searching relationships of type {relationship} is not supported for this command."
+            "To find which integrations implement specific commands, please run "
+            "`demisto-sdk graph get-command-usage <COMMAND_NAME>`"
+        )
     with ContentGraphInterface() as graph:
         if update_graph:
             update_content_graph(graph)

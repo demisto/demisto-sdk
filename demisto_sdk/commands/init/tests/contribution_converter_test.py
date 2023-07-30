@@ -13,7 +13,7 @@ from demisto_sdk.commands.common.constants import LAYOUT, LAYOUTS_CONTAINER
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.legacy_git_tools import git_path
-from demisto_sdk.commands.common.tools import get_child_directories
+from demisto_sdk.commands.common.tools import get_child_directories, get_json
 from demisto_sdk.commands.init.contribution_converter import (
     ContributionConverter,
     get_previous_nonempty_line,

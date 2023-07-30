@@ -16,10 +16,7 @@ from mitmproxy.addons.serverplayback import ServerPlayback
 from mitmproxy.http import HTTPFlow, Request
 from mitmproxy.script import concurrent
 
-from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.tools import get_json
-
-json = JSON_Handler()
 
 logging.basicConfig(
     level=logging.DEBUG, format="[%(asctime)s] - [%(funcName)s] - %(message)s"

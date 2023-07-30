@@ -528,8 +528,7 @@ class TestUpdateContentGraph:
             assert get_nodes_count_by_type(interface, ContentType.COMMAND) == 1
             assert get_nodes_count_by_type(interface, ContentType.CLASSIFIER) == 1
 
-    @pytest.mark.parametrize(
-        "commit_func, expected_added_dependencies, expected_removed_dependencies",
+    data_test_update_content_graph = (
         [
             pytest.param(
                 _testcase1__pack3_pack4__script2_uses_script4,
@@ -574,6 +573,11 @@ class TestUpdateContentGraph:
                 id="Changed fromversion of script",
             ),
         ],
+    )
+
+    @pytest.mark.parametrize(
+        "commit_func, expected_added_dependencies, expected_removed_dependencies",
+        data_test_update_content_graph,
     )
     def test_update_content_graph(
         self,
@@ -652,6 +656,10 @@ class TestUpdateContentGraph:
                 for file in extracted_files
             )
 
+    @pytest.mark.parametrize(
+        "commit_func, expected_added_dependencies, expected_removed_dependencies",
+        data_test_update_content_graph,
+    )
     def test_create_content_graph_if_needed(
         self,
         tmp_path,

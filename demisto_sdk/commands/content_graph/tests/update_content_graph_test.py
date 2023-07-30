@@ -719,9 +719,7 @@ class TestUpdateContentGraph:
             )
 
             # perform the update on ContentDTO
-            pack_ids_to_update = content_graph_commands.update_repository(
-                repository, commit_func
-            )
+            pack_ids_to_update = update_repository(repository, commit_func)
 
             # update the graph accordingly
             content_graph_commands.update_content_graph(

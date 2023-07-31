@@ -82,7 +82,7 @@ class IntegrationScriptUnifier(Unifier):
             IntegrationScriptUnifier.get_code_file(package_path, script_type)
         except ValueError:
             logger.info(
-                f"[yellow]No code file found for {path}, assuming it is already unifiedyellow[/yellow]"
+                f"[yellow]No code file found for {path}, assuming it is already unified[/yellow]"
             )
             return data
         yml_unified = copy.deepcopy(data)
@@ -259,7 +259,7 @@ class IntegrationScriptUnifier(Unifier):
             return os.path.join(package_path, "CommonServerUserPowerShell.ps1")
         if package_path.endswith(API_MODULE_FILE_SUFFIX):
             return os.path.join(
-                package_path, os.path.basename(os.path.normpath(package_path)) + ".py"
+                package_path, Path(os.path.normpath(package_path)).name + ".py"
             )
 
         script_path_list = list(
@@ -596,7 +596,7 @@ class IntegrationScriptUnifier(Unifier):
         integration_doc_link = INTEGRATIONS_DOCS_REFERENCE + normalized_integration_id
 
         readme_path = os.path.join(package_path, "README.md")
-        if os.path.isfile(readme_path) and os.stat(readme_path).st_size != 0:
+        if Path(readme_path).is_file() and os.stat(readme_path).st_size != 0:
             # verify README file exists and is not empty
             return f"[View Integration Documentation]({integration_doc_link})"
         else:

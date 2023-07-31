@@ -1,5 +1,6 @@
 import base64
 import glob
+from pathlib import Path
 
 import imagesize
 
@@ -234,8 +235,8 @@ class ImageValidator(BaseValidator):
     def is_valid_image_name(self):
         """Check if the image name is valid"""
         image_path = self.file_path
-        integrations_folder = os.path.basename(os.path.dirname(image_path))
-        image_file = os.path.basename(image_path)
+        integrations_folder = Path(os.path.dirname(image_path)).name
+        image_file = Path(image_path).name
 
         # drop '_image' suffix and file extension
         image_file_base_name = image_file.rsplit("_", 1)[0]

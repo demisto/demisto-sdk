@@ -58,6 +58,4 @@ class IntegrationScriptParser(YAMLContentItemParser):
 
     @property
     def python_version(self) -> Optional[str]:
-        if os.getenv("GRAPH_GET_PYTHON_VERSION"):
-            return str(get_python_version(self.docker_image))
-        return None
+        return str(get_python_version(self.docker_image))

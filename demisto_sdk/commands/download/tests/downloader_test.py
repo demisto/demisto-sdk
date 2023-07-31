@@ -414,7 +414,7 @@ class TestHelperMethods:
         with patch.object(Downloader, "__init__", lambda a, b, c: None):
             downloader = Downloader("", "")
             downloader.custom_content_temp_dir = env.CUSTOM_CONTENT_BASE_PATH
-            custom_content_objects = downloader.parse_custom_content_data()
+            custom_content_objects = downloader.parse_content_data()
             assert ordered(custom_content_objects) == ordered(env.CUSTOM_CONTENT)
 
     @pytest.mark.parametrize(
@@ -1144,23 +1144,6 @@ def test_build_req_params(
         assert endpoint == res_endpoint
         assert req_type == res_req_type
         assert req_body == res_req_body
-
-
-def test_arrange_response():
-    with patch.object(Downloader, "__init__", lambda x, y, z: None):
-        downloader = Downloader("", "")
-
-        downloader.system_item_type = "Playbook"
-        system_items_list = downloader.arrange_response([])
-        assert system_items_list == []
-
-        downloader.system_item_type = "Classifier"
-        system_items_list = downloader.arrange_response({"classifiers": []})
-        assert system_items_list == []
-
-        downloader.system_item_type = "Automation"
-        system_items_list = downloader.arrange_response([])
-        assert system_items_list == []
 
 
 def test_build_file_name():

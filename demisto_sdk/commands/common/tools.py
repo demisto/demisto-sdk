@@ -797,17 +797,21 @@ def _read_file(file_path: Path) -> str:
             raise
 
 
-def create_stringio_object(file_data: bytes) -> StringIO:
+def create_stringio_object(file_data: bytes | str) -> StringIO:
     """
-    Create a StringIO object from file bytes, while considering different encodings (like the '_read_file' function).
+    Create a StringIO object from file bytes (while considering different encodings like the '_read_file' function),
+    or a string.
 
     Args:
-        file_data (bytes): file bytes
+        file_data (bytes | str): file bytes, or a string representing the content of the file
 
     Returns:
-        StringIO: File data as StringIO object
+        StringIO: A StringIO object representing the file data
     """
     try:
+        if isinstance(file_data, str):
+            return StringIO(file_data)
+
         return StringIO(file_data.decode("utf-8"))
 
     except UnicodeDecodeError:

@@ -1,4 +1,3 @@
-import ast
 import os
 import re
 import shutil
@@ -17,6 +16,7 @@ from demisto_client.demisto_api.rest import ApiException
 from dictor import dictor
 from flatten_dict import unflatten
 from tabulate import tabulate
+from urllib3 import HTTPResponse
 from urllib3.exceptions import MaxRetryError
 
 from demisto_sdk.commands.common.constants import (
@@ -182,53 +182,49 @@ class Downloader:
             if self.init:
                 self.initialize_output_path()
 
-            if not self.download_system_item or self.list_files:
+            # If listing files is used, we just ignore system-related download flags and list all files and exit.
+            if self.download_system_item and not self.list_files:
+                downloaded_content_objects = self.fetch_system_content()
+
+            else:
                 # We first parse and load all downloaded custom content, for 2 reasons:
                 # - The input files / regex for filtering what content to download use content names and not file names,
                 #   so we need to parse all content in order to find the content names that match the input.
                 #   (there can be different content types with the same name, so we can't stop after we found a match)
                 # - In order to replace UUID IDs with names within the downloaded files, we need to know to which name
                 #   each UUID corresponds.
-                custom_content_data = self.download_custom_content()
-                custom_content_objects = self.parse_custom_content_data(custom_content_data=custom_content_data)
+                all_custom_content_data = self.download_custom_content()
+                all_custom_content_objects = self.parse_custom_content_data(custom_content_data=all_custom_content_data)
 
                 # If we're in list-files mode, print the list of available files and exit
                 if self.list_files:
                     logger.info(f"list-files (-lf) mode detected. Listing available custom content files "
-                                f"({len(custom_content_objects)}):")
-                    table_str = self.create_custom_content_table(custom_content_objects=custom_content_objects)
+                                f"({len(all_custom_content_objects)}):")
+                    table_str = self.create_custom_content_table(custom_content_objects=all_custom_content_objects)
 
                     logger.info(
                         f"Custom content available to download from configured Cortex XSOAR instance:\n\n{table_str}"
                     )
                     return 0
 
-                uuid_mapping = self.create_uuid_to_name_mapping(custom_content_objects=custom_content_objects)
+                uuid_mapping = self.create_uuid_to_name_mapping(custom_content_objects=all_custom_content_objects)
 
                 # Now that we collected all the data we need from all custom content,
                 # we can continue the processing only on the files that are actually downloaded.
-                filtered_custom_content = self.filter_custom_content(custom_content_objects=custom_content_objects)
+                downloaded_content_objects = self.filter_custom_content(custom_content_objects=all_custom_content_objects)
 
                 # Replace UUID IDs with names in filtered content (only content we download)
                 changed_uuids_count = 0
-                for _, file_object in filtered_custom_content.items():
+                for _, file_object in downloaded_content_objects.items():
                     if self.replace_uuid_ids(custom_content_object=file_object, uuid_mapping=uuid_mapping):
                         changed_uuids_count += 1
 
                 if changed_uuids_count > 0:
                     logger.debug(f"Replaced UUID IDs in {changed_uuids_count} custom content items.")
 
-            if self.download_system_item:
-                if not self.fetch_system_content():
-                    return 1
-
             existing_pack_data = self.build_existing_pack_structure(existing_pack_path=Path(self.output_pack_path))
 
-            if self.download_system_item:
-                self.build_system_content()
-
-            # self.update_pack_hierarchy()  # TODO: Handle this within 'write_files_into_output_path'
-            result = self.write_files_into_output_path(downloaded_content_objects=filtered_custom_content,  # TODO: Handle system content as well
+            result = self.write_files_into_output_path(downloaded_content_objects=downloaded_content_objects,
                                                        existing_pack_structure=existing_pack_data)
 
             return 0 if result else 1  # Return 0 if download was successful, 1 otherwise
@@ -243,21 +239,34 @@ class Downloader:
         Verifies that the flags configuration given by the user is correct
         :return: The verification result
         """
-        if not self.list_files:
-            if not self.output_pack_path:
-                logger.error("Error: Missing required parameter '-o' / '--output'.")
-                return False
+        if self.list_files:  # If listing files, input / output flags are ignored, so we don't need to validate them.
+            return True
 
-            if not any((self.input_files, self.all_custom_content, self.regex)):
-                logger.error("Error: No input parameter has been provided "
-                             "('-i' / '--input', '-r' / '--regex', '-a' / '--all.")
-                return False
-
-        if self.download_system_item and not self.system_item_type:
-            logger.error(
-                "Error: Missing required parameter for downloading system items: '-it' / '--item-type'."
-            )
+        if not self.output_pack_path:
+            logger.error("Error: Missing required parameter '-o' / '--output'.")
             return False
+
+        if not any((self.input_files, self.all_custom_content, self.regex)):
+            logger.error("Error: No input parameter has been provided "
+                         "('-i' / '--input', '-r' / '--regex', '-a' / '--all.")
+            return False
+
+        if self.download_system_item:
+            if not self.system_item_type:
+                logger.error(
+                    "Error: Missing required parameter for downloading system items: '-it' / '--item-type'."
+                )
+                return False
+
+            if self.regex:
+                logger.error("Error: RegEx flag ('-r' / '--regex') can only be used for custom content. "
+                             "Use '-i' / '--input' to provide a list of system items to download.")
+                return False
+
+            if self.all_custom_content:
+                logger.error("Error: All custom content flag ('-a' / '--all') can only be used for custom content. "
+                             "Use '-i' / '--input' to provide a list of system items to download.")
+                return False
 
         return True
 
@@ -370,9 +379,9 @@ class Downloader:
 
         try:
             self.client = demisto_client.configure(verify_ssl=verify)
-            api_response, _, _ = demisto_client.generic_request_func(
-                self.client, "/content/bundle", "GET", response_type="object"
-            )
+            api_response: HTTPResponse = demisto_client.generic_request_func(
+                self.client, "/content/bundle", "GET",  _preload_content=False,
+            )[0]
 
         except ApiException as e:
             self.handle_api_exception(e)
@@ -383,11 +392,11 @@ class Downloader:
             raise
 
         logger.info("Custom content bundle fetched successfully.")
-        logger.debug(f"Downloaded content bundle size (bytes): {len(api_response)}")
+        logger.debug(f"Downloaded content bundle size (bytes): {len(api_response.data)}")
 
         loaded_files: dict[str, StringIO] = {}
 
-        with tarfile.open(fileobj=BytesIO(api_response), mode="r") as tar:
+        with tarfile.open(fileobj=BytesIO(api_response.data), mode="r") as tar:
             tar_members = tar.getmembers()
             logger.debug(f"Custom content bundle contains {len(tar_members)} items.")
 
@@ -437,7 +446,6 @@ class Downloader:
             custom_content_object["data"] = loaded_file_data
 
             return True
-
         return False
 
     def build_req_params(self) -> tuple[str, str, dict]:
@@ -455,50 +463,71 @@ class Downloader:
 
         return endpoint, req_type, req_body
 
-    def get_system_automation(self, req_type: str) -> list:
-        automation_list: list = []
-        logger.info("Fetching system automations data...")
+    def get_system_automation(self, content_items: list[str]) -> list[dict]:
+        """
+        Fetch system automations from server.
 
-        for script in self.input_files:
+        Args:
+            content_items (list[str]): A list of system automation names to fetch.
+
+        Returns:
+            list[dict]: A list of downloaded system automations represented as dictionaries.
+        """
+        downloaded_automations: list[dict] = []
+        logger.info("Fetching system automations...")
+
+        for script in content_items:
             endpoint = f"automation/load/{script}"
-            api_response = demisto_client.generic_request_func(
-                self.client, endpoint, req_type
-            )
-            automation_list.append(ast.literal_eval(api_response[0]))
+            api_response: dict = demisto_client.generic_request_func(
+                self.client, endpoint, "POST", response_type="object",
+            )[0]
+            downloaded_automations.append(api_response)
 
-        logger.debug(f"'{len(automation_list)}' system automations were downloaded successfully.")
-        return automation_list
+        logger.debug(f"{len(downloaded_automations)} system automations were successfully downloaded.")
+        return downloaded_automations
 
-    def get_system_playbook(self, req_type: str) -> list:
-        playbook_list: list = []
-        logger.info("Fetching system playbooks data...")
+    def get_system_playbook(self, content_items: list[str]) -> list[dict]:
+        """
+        Fetch system playbooks from server.
 
-        for playbook in self.input_files:
+        Args:
+            content_items (list[str]): A list of system automation names to fetch.
+
+        Returns:
+            list[dict]: A list of downloaded system playbooks represented as dictionaries.
+        """
+        downloaded_playbooks: list[dict] = []
+        logger.info("Fetching system playbooks...")
+
+        for playbook in content_items:
             endpoint = f"/playbook/{playbook}/yaml"
             try:
-                api_response = demisto_client.generic_request_func(
-                    self.client, endpoint, req_type, response_type="object"
-                )
+                api_response: dict = demisto_client.generic_request_func(
+                    self.client, endpoint, "GET", response_type="object",
+                )[0]
             except ApiException as err:
                 # handling in case the id and name are not the same,
                 # trying to get the id by the name through a different api call
                 logger.debug(f"API call using playbook's name failed:\n{err}\n"
-                             f"Attempting to fetch and use playbook's id...")
+                             f"Attempting to fetch using playbook's ID...")
 
-                if playbook_id := self.get_playbook_id_by_playbook_name(playbook):
-                    logger.debug(f"Successfully fetched playbook's id - '{playbook_id}'\n"
-                                 f"Attempting to fetch playbook's YAML file using the ID.")
+                playbook_id = self.get_playbook_id_by_playbook_name(playbook)
 
-                    endpoint = f"/playbook/{playbook_id}/yaml"
-                    api_response = demisto_client.generic_request_func(
-                        self.client, endpoint, req_type, response_type="object"
-                    )
-                else:
-                    raise err
-            playbook_list.append(yaml.load(api_response[0].decode()))
+                if not playbook_id:
+                    raise
 
-        logger.debug(f"'{len(playbook_list)}' system playbooks were downloaded successfully.")
-        return playbook_list
+                logger.debug(f"Found matching ID for '{playbook}' - {playbook_id}.\n"
+                             f"Attempting to fetch playbook's YAML file using the ID.")
+
+                endpoint = f"/playbook/{playbook_id}/yaml"
+                api_response = demisto_client.generic_request_func(
+                    self.client, endpoint, "GET",  _preload_content=False,
+                )[0]
+
+            downloaded_playbooks.append(api_response)
+
+        logger.debug(f"'{len(downloaded_playbooks)}' system playbooks were downloaded successfully.")
+        return downloaded_playbooks
 
     def arrange_response(self, system_items_list):
         if self.system_item_type in ["Classifier", "Mapper"]:
@@ -506,55 +535,57 @@ class Downloader:
 
         return system_items_list
 
-    def build_file_name(self, item) -> str:
-        item_name: str = item.get("name") or item.get("id")
+    def build_file_name(self, content_item: dict, content_item_type: str) -> str:
+        item_name: str = content_item.get("name") or content_item.get("id")
         return (
-            item_name.replace("/", " ").replace(" ", "_")
-            + ITEM_TYPE_TO_PREFIX[self.system_item_type]
+            item_name.replace("/", "_").replace(" ", "_")
+            + ITEM_TYPE_TO_PREFIX[content_item_type]
         )
 
-    def fetch_system_content(self) -> bool:
+    def fetch_system_content(self) -> dict[str, dict]:
         """
-        Fetch system content from XSOAR into a temporary dir.
-        :return: True if fetched successfully, False otherwise
+        Fetch system content from the server.
+
+        Returns:
+            dict[str, dict]: A dictionary mapping content item's file names, to dictionaries containing metadata
+                and content of the item.
         """
-        try:
-            endpoint, req_type, req_body = self.build_req_params()
+        endpoint, req_type, req_body = self.build_req_params()
+        downloaded_items: list[dict]
 
-            if self.system_item_type == "Automation":
-                system_items_list = self.get_system_automation(req_type)
+        if self.system_item_type == "Automation":
+            downloaded_items = self.get_system_automation(content_items=self.input_files)
 
-            elif self.system_item_type == "Playbook":
-                system_items_list = self.get_system_playbook(req_type)
+        elif self.system_item_type == "Playbook":
+            downloaded_items = self.get_system_playbook(content_items=self.input_files)
+
+        else:
+            logger.info(f"Fetching system items...")
+            api_response = demisto_client.generic_request_func(
+                self.client, endpoint, req_type, body=req_body, response_type="object",
+            )[0]
+
+            if self.system_item_type in ["Classifier", "Mapper"]:
+                downloaded_items = api_response.get("classifiers", [])
 
             else:
-                logger.info(f"Fetching system {self.system_item_type.lower()} data from server...")
-                api_response = demisto_client.generic_request_func(
-                    self.client, endpoint, req_type, body=req_body
-                )
-                system_items_list = ast.literal_eval(api_response[0])
-                logger.info(
-                    f"Fetched {len(system_items_list)} system {self.system_item_type.lower()} items from server."
-                )
+                downloaded_items = api_response
 
-            system_items_list = self.arrange_response(system_items_list)
+        logger.info(
+            f"Fetched {len(downloaded_items)} system items from server."
+        )
 
-            for item in system_items_list:  # type: ignore
-                file_name = self.build_file_name(item)
-                file_path = Path(self.system_content_temp_dir) / file_name
-                write_dict(file_path, data=item)
+        content_objects: dict[str, dict] = {}
 
-            return True
+        for content_item in downloaded_items:
+            file_name = self.build_file_name(content_item=content_item, content_item_type=self.system_item_type)
+            file_data = create_stringio_object(file_data=json.dumps(content_item))
+            content_object = self.create_content_item_object(file_name=file_name,
+                                                             file_data=file_data,
+                                                             _loaded_data=content_item)
+            content_objects[file_name] = content_object
 
-        except ApiException as e:
-            self.handle_api_exception(e)
-            return False
-        except MaxRetryError as e:
-            self.handle_max_retry_error(e)
-            return False
-        except Exception as e:
-            logger.info(f"Exception raised when fetching system content:\n{e}")
-            return False
+        return content_objects
 
     def parse_custom_content_data(self, custom_content_data: dict[str, StringIO]) -> dict[str, dict]:
         """
@@ -565,11 +596,11 @@ class Downloader:
             Custom content items with an empty 'type' key are not supported and will be omitted.
 
         Args:
-            custom_content_data (dict[str, StringIO]): A dictionary mapping file names to file data.
+            custom_content_data (dict[str, StringIO]): A dictionary mapping file names to their content.
 
         Returns:
             dict[str, dict]: A dictionary mapping content item's file names, to dictionaries containing metadata
-                and content of the item.
+                about the content item, and file data.
         """
         logger.info("Parsing downloaded custom content data into objects...")
         custom_content_objects: dict[str, dict] = {}
@@ -594,7 +625,7 @@ class Downloader:
                 logger.error(f"Error while parsing '{file_name}': {e}")
                 raise
 
-        logger.info(f"Successfully parsed '{len(custom_content_objects)}' custom content objects.")
+        logger.info(f"Successfully parsed {len(custom_content_objects)} custom content objects.")
         return custom_content_objects
 
     def get_existing_content_items_objects(self) -> List[dict]:
@@ -788,7 +819,7 @@ class Downloader:
 
         return content_item_name, content_item_files
 
-    def get_playbook_id_by_playbook_name(self, playbook_name: str) -> Optional[str]:
+    def get_playbook_id_by_playbook_name(self, playbook_name: str) -> str | None:
         """
         Extract the playbook id by name, calling the api returns an object that cannot be parsed properly,
         and its use is only for extracting the id.
@@ -812,7 +843,10 @@ class Downloader:
             return None
         if not (playbooks := response[0].get("playbooks")):
             return None
-        return playbooks[0]["id"]
+
+        playbook_id = playbooks[0]["id"]
+        logger.info(f"Found playbook ID '{playbook_id}' for '{playbook_name}'")
+        return playbook_id
 
     @staticmethod
     def get_main_file_details(content_entity: str, entity_instance_path: Path) -> tuple:
@@ -868,29 +902,6 @@ class Downloader:
         """
         return file_name.replace("automation-", "script-").replace("playbook-", "")
 
-    def build_system_content(self) -> None:
-        """
-        Build a data structure called pack content that holds basic data for each content entity instances downloaded from Demisto.
-        For example check out the CUSTOM_CONTENT variable in downloader_test.py
-        """
-        system_content_objects = self.get_existing_content_items_objects()
-        for input_file_name in self.input_files:
-            input_file_exist_in_cc: bool = False
-            for system_content_object in system_content_objects:
-                name = system_content_object.get("name", "N/A")
-                id_ = system_content_object.get("id", "N/A")
-                if name == input_file_name or id_ == input_file_name:
-                    system_content_object["exist_in_pack"] = self.exist_in_pack_content(
-                        system_content_object
-                    )
-                    self.custom_content.append(system_content_object)
-                    input_file_exist_in_cc = True
-            # If in input files and not in custom content files
-            if not input_file_exist_in_cc:
-                self.files_not_downloaded.append(
-                    [input_file_name, FILE_NOT_IN_CC_REASON]
-                )
-
     def exist_in_pack_content(self, custom_content_object: dict) -> bool:
         """
         Checks if the current custom content object already exists in custom content
@@ -907,24 +918,28 @@ class Downloader:
 
         return exist_in_pack
 
-    def create_content_item_object(self, file_name: str, file_data: StringIO) -> dict:
+    def create_content_item_object(self, file_name: str, file_data: StringIO, _loaded_data: dict) -> dict:
         """
         Convert a single custom content item to a content object.
 
         Args:
             file_name (str): The file name of the custom content item.
             file_data (StringIO): The file data of the custom content item.
+            _loaded_data (dict): The loaded data of the custom content item. If not provided, the file will be parsed.
 
         Returns:
             dict: The custom content object.
         """
-        file_extension = file_name.split(".")[-1]
-        loaded_file_data: dict
-        file_data.seek(0)  # Reset the StringIO cursor to the beginning of the file before parsing
-        loaded_file_data = get_file_details(file_content=file_data.getvalue(), full_file_path=file_name)
+        file_extension = Path(file_name).suffix
 
-        if not loaded_file_data:
-            raise ValueError(f"Unsupported file extension: {file_extension}")
+        if _loaded_data:
+            loaded_file_data = _loaded_data
+
+        else:
+            loaded_file_data = get_file_details(file_content=file_data.getvalue(), full_file_path=file_name)
+
+            if not loaded_file_data:
+                raise ValueError(f"Unsupported file extension: {file_extension}")
 
         if file_type_enum := find_type(path=file_name, _dict=loaded_file_data, file_type=file_extension):
             file_type = file_type_enum.value

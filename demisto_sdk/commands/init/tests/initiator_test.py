@@ -1109,14 +1109,17 @@ def test_parsing_rules_init_file_content_and_name(
 
     temp_pack_dir = Path(tmpdir).joinpath(PACK_NAME)
     temp_pack_dir.mkdir(exist_ok=True, parents=True)
+    parsing_rules_dir_path = temp_pack_dir.joinpath(PARSING_RULES_DIR)
+    parsing_rules_path = parsing_rules_dir_path.joinpath(
+        f"{INTEGRATION_NAME}ParsingRules"
+    )
 
     # Prepare initiator
-    initiator.output = str(temp_pack_dir)
+    initiator.output = str(parsing_rules_dir_path)
     initiator.dir_name = INTEGRATION_NAME
     initiator.category = "Analytics & SIEM"
     initiator.template = "HelloWorldParsingRules"
     initiator.marketplace = MarketplaceVersions.MarketplaceV2
-    parsing_rules_path = temp_pack_dir.joinpath(f"{INTEGRATION_NAME}ParsingRule")
     res = initiator.modeling_parsing_rules_init(is_parsing_rules=True)
     yml_path = Path(parsing_rules_path, f"{INTEGRATION_NAME}ParsingRules.yml")
 

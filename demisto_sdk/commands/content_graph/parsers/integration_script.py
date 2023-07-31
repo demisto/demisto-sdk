@@ -56,6 +56,6 @@ class IntegrationScriptParser(YAMLContentItemParser):
                 RelationshipType.IMPORTS, api_module, ContentType.SCRIPT
             )
 
-    @property
-    def python_version(self) -> Optional[str]:
-        return str(get_python_version(self.docker_image))
+    # @property
+    # def python_version(self) -> Optional[str]:
+    #     return str(get_python_version(self.docker_image))

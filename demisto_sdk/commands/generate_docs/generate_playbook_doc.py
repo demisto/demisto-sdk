@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 from demisto_sdk.commands.common.logger import logger
@@ -44,7 +45,7 @@ def generate_playbook_doc(
         )
         inputs, inputs_errors = get_inputs(playbook)
         outputs, outputs_errors = get_outputs(playbook)
-        playbook_filename = os.path.basename(input_path).replace(".yml", "")
+        playbook_filename = Path(input_path).name.replace(".yml", "")
 
         errors.extend(inputs_errors)
         errors.extend(outputs_errors)
@@ -172,14 +173,12 @@ def get_playbook_dependencies(
                     with open(file_) as f:
                         if command_name in f.read():
                             integration_dependency_path = os.path.dirname(file_)
-                            integration_dependency = os.path.basename(
+                            integration_dependency = Path(
                                 integration_dependency_path
-                            )
+                            ).name
                             # Case of old integrations without a package.
                             if integration_dependency == "Integrations":
-                                integrations.add(
-                                    os.path.basename(file_).replace(".yml", "")
-                                )
+                                integrations.add(Path(file_).name.replace(".yml", ""))
                             else:
                                 integrations.add(integration_dependency)
         else:

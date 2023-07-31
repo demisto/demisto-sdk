@@ -307,12 +307,12 @@ class ContributionConverter:
         Args:
             unpacked_contribution_dir (str): The directory to convert
         """
-        basename = os.path.basename(unpacked_contribution_dir)
+        basename = Path(unpacked_contribution_dir).name
         if basename in ENTITY_TYPE_TO_DIR:
             dst_name = ENTITY_TYPE_TO_DIR.get(basename, "")
             src_path = str(Path(self.working_dir_path, basename))
             dst_path = str(Path(self.working_dir_path, dst_name))
-            if os.path.exists(dst_path):
+            if Path(dst_path).exists():
                 # move src folder files to dst folder
                 for _, _, files in os.walk(src_path, topdown=False):
                     for name in files:
@@ -369,13 +369,13 @@ class ContributionConverter:
         Generate the readme files for a new content pack.
         """
         for pack_subdir in get_child_directories(str(self.working_dir_path)):
-            basename = os.path.basename(pack_subdir)
+            basename = Path(pack_subdir).name
             if basename in {SCRIPTS_DIR, INTEGRATIONS_DIR}:
                 directories = get_child_directories(pack_subdir)
                 for directory in directories:
                     files = get_child_files(directory)
                     for file in files:
-                        file_name = os.path.basename(file)
+                        file_name = Path(file).name
                         if (
                             file_name.startswith("integration-")
                             or file_name.startswith("script-")
@@ -385,11 +385,11 @@ class ContributionConverter:
                             self.generate_readme_for_pack_content_item(
                                 unified_file, is_contribution
                             )
-                            os.remove(unified_file)
+                            Path(unified_file).unlink()
             elif basename == "Playbooks":
                 files = get_child_files(pack_subdir)
                 for file in files:
-                    file_name = os.path.basename(file)
+                    file_name = Path(file).name
                     if file_name.startswith("playbook") and file_name.endswith(".yml"):
                         self.generate_readme_for_pack_content_item(file)
 
@@ -401,7 +401,7 @@ class ContributionConverter:
         unpacked_contribution_dirs = get_child_directories(str(self.working_dir_path))
         for unpacked_contribution_dir in unpacked_contribution_dirs:
 
-            dir_name = os.path.basename(unpacked_contribution_dir)
+            dir_name = Path(unpacked_contribution_dir).name
 
             # incidentfield directory may contain indicator-fields files
             if dir_name == FileType.INCIDENT_FIELD.value:
@@ -415,7 +415,7 @@ class ContributionConverter:
 
                     if file.startswith(FileType.INDICATOR_FIELD.value):
                         # At first time, create another dir for all indicator-fields files and move them there
-                        if not os.path.exists(dst_ioc_fields_dir):
+                        if not Path(dst_ioc_fields_dir).exists():
                             os.makedirs(dst_ioc_fields_dir)
                         file_path = str(Path(self.working_dir_path, dir_name, file))
                         shutil.move(file_path, dst_ioc_fields_dir)  # type: ignore
@@ -460,7 +460,7 @@ class ContributionConverter:
                 )
             # extract to package format
             for pack_subdir in get_child_directories(str(self.working_dir_path)):
-                basename = os.path.basename(pack_subdir)
+                basename = Path(pack_subdir).name
                 if basename in {SCRIPTS_DIR, INTEGRATIONS_DIR}:
                     self.content_item_to_package_format(
                         pack_subdir,
@@ -572,7 +572,7 @@ class ContributionConverter:
         """
         child_files = get_child_files(content_item_dir)
         for child_file in child_files:
-            cf_name_lower = os.path.basename(child_file).lower()
+            cf_name_lower = Path(child_file).name.lower()
             if cf_name_lower.startswith(
                 (SCRIPT, AUTOMATION, INTEGRATION)
             ) and cf_name_lower.endswith("yml"):
@@ -580,7 +580,7 @@ class ContributionConverter:
                 file_type = find_type(content_item_file_path)
                 file_type = file_type.value if file_type else file_type
                 try:
-                    child_file_name = os.path.basename(child_file)
+                    child_file_name = Path(child_file).name
                     if source_mapping and child_file_name in source_mapping.keys():
                         child_file_mapping = source_mapping.get(child_file_name, {})
                         base_name = child_file_mapping.get("base_name", "")
@@ -656,11 +656,14 @@ class ContributionConverter:
                         # Moving the unified file to its package.
                         shutil.move(content_item_file_path, output_path)
                     if del_unified:
-                        if os.path.exists(content_item_file_path):
-                            os.remove(content_item_file_path)
+                        content_item_path = Path(content_item_file_path)
+                        if content_item_path.exists():
+                            Path.unlink(content_item_path)
+
                         moved_unified_dst = os.path.join(output_path, child_file_name)
-                        if os.path.exists(moved_unified_dst):
-                            os.remove(moved_unified_dst)
+                        moved_unified_dst_path = Path(moved_unified_dst)
+                        if moved_unified_dst_path.exists():
+                            Path.unlink(moved_unified_dst_path)
 
     def create_pack_base_files(self):
         """

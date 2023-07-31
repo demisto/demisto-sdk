@@ -1,5 +1,5 @@
-import os
 import re
+from pathlib import Path
 
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.base_validator import (
@@ -173,7 +173,7 @@ class OldReleaseNotesValidator(BaseValidator):
             bool. True if release notes file exists, False otherwise.
         """
         # checks that release notes file exists and contains text
-        if not (os.path.isfile(self.release_notes_path) and self.latest_release_notes):
+        if not (Path(self.release_notes_path).is_file() and self.latest_release_notes):
             error_message, error_code = Errors.missing_release_notes(
                 self.release_notes_path
             )

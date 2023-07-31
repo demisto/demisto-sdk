@@ -1,9 +1,6 @@
-import argparse
-import contextlib
 import glob
 import io
 import logging
-
 import os
 import re
 import shlex
@@ -13,9 +10,9 @@ from collections import OrderedDict
 from concurrent.futures import as_completed
 from configparser import ConfigParser, MissingSectionHeaderError
 from contextlib import contextmanager
-from packaging.version import Version
 from enum import Enum
 from functools import lru_cache
+from hashlib import sha1
 from pathlib import Path, PosixPath
 from subprocess import DEVNULL, PIPE, Popen, check_output
 from time import sleep
@@ -39,11 +36,9 @@ import giturlparse
 import requests
 import urllib3
 from bs4.dammit import UnicodeDammit
-from git.types import PathLike
-from packaging.version import LegacyVersion, Version, parse
+from packaging.version import Version
 from pebble import ProcessFuture, ProcessPool
 from requests.exceptions import HTTPError
-from demisto_sdk.commands.common.cpu_count import cpu_count
 
 from demisto_sdk.commands.common.constants import (
     ALL_FILES_VALIDATION_IGNORE_WHITELIST,
@@ -58,6 +53,7 @@ from demisto_sdk.commands.common.constants import (
     DEFAULT_CONTENT_ITEM_TO_VERSION,
     DOC_FILES_DIR,
     ENV_DEMISTO_SDK_MARKETPLACE,
+    ENV_SDK_WORKING_OFFLINE,
     ID_IN_COMMONFIELDS,
     ID_IN_ROOT,
     INCIDENT_FIELDS_DIR,
@@ -112,8 +108,8 @@ from demisto_sdk.commands.common.constants import (
     IdSetKeys,
     MarketplaceVersions,
     urljoin,
-    ENV_SDK_WORKING_OFFLINE,
 )
+from demisto_sdk.commands.common.cpu_count import cpu_count
 from demisto_sdk.commands.common.git_content_config import GitContentConfig, GitProvider
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
@@ -514,7 +510,7 @@ def get_remote_file_from_api(
                 timeout=10,
                 headers={
                     "Authorization": f"Bearer {github_token}" if github_token else "",
-                    "Accept": f"application/vnd.github.VERSION.raw",
+                    "Accept": "application/vnd.github.VERSION.raw",
                 },
             )  # Sometime we need headers
             if not res.ok:  # sometime we need param token
@@ -805,7 +801,7 @@ def safe_write_unicode(
     try:
         _write()
 
-    except UnicodeError as e:
+    except UnicodeError:
         encoding = UnicodeDammit(path.read_bytes()).original_encoding
         if encoding == "utf-8":
             logger.error(
@@ -1446,7 +1442,7 @@ def get_pack_ignore_content(pack_name: str) -> Union[ConfigParser, None]:
             config = ConfigParser(allow_no_value=True)
             config.read(_pack_ignore_file_path)
             return config
-        except MissingSectionHeaderError as err:
+        except MissingSectionHeaderError:
             logger.exception(
                 f"Error when retrieving the content of {_pack_ignore_file_path}"
             )
@@ -1617,7 +1613,7 @@ def get_dict_from_file(
                 return {}, "py"
             elif path.endswith(".xif"):
                 return {}, "xif"
-    except FileNotFoundError as e:
+    except FileNotFoundError:
         if raises_error:
             raise
 
@@ -3208,7 +3204,6 @@ def get_item_marketplaces(
         return [MarketplaceVersions.MarketplaceV2.value]
 
     if not item_data:
-        file_type = Path(item_path).suffix
         item_data = get_file(item_path)
 
     # first check, check field 'marketplaces' in the item's file
@@ -3834,3 +3829,34 @@ def is_sdk_defined_working_offline() -> bool:
         bool: The value for DEMISTO_SDK_OFFLINE_ENV environment variable.
     """
     return str2bool(os.getenv(ENV_SDK_WORKING_OFFLINE))
+
+
+def sha1_update_from_file(filename: Union[str, Path], hash):
+    """This will iterate the file and update the hash object"""
+    assert Path(filename).is_file()
+    with open(str(filename), "rb") as f:
+        for chunk in iter(lambda: f.read(4096), b""):
+            hash.update(chunk)
+    return hash
+
+
+def sha1_file(filename: Union[str, Path]) -> str:
+    """Return the sha1 hash of a directory"""
+    return str(sha1_update_from_file(filename, sha1()).hexdigest())
+
+
+def sha1_update_from_dir(directory: Union[str, Path], hash_):
+    """This will recursivly iterate all the files in the directory and update the hash object"""
+    assert Path(directory).is_dir()
+    for path in sorted(Path(directory).iterdir(), key=lambda p: str(p).lower()):
+        hash_.update(path.name.encode())
+        if path.is_file():
+            hash_ = sha1_update_from_file(path, hash_)
+        elif path.is_dir():
+            hash_ = sha1_update_from_dir(path, hash_)
+    return hash_
+
+
+def sha1_dir(directory: Union[str, Path]) -> str:
+    """Return the sha1 hash of a directory"""
+    return str(sha1_update_from_dir(directory, sha1()).hexdigest())

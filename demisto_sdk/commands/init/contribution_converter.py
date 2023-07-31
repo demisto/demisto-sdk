@@ -101,6 +101,8 @@ class ContributionConverter:
         release_notes (str): The release note text. For exiting pack only.
         detected_content_items (List[str]):
             List of the detected content items objects in the contribution. For exiting pack only.
+        working_dir_path (str): This directory is where contributions are processed before they are copied to the
+            content pack directory.
     """
 
     DATE_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
@@ -118,6 +120,7 @@ class ContributionConverter:
         release_notes: str = "",
         detected_content_items: list = None,
         base_dir: Union[str] = None,
+        working_dir_path: str = "",
     ):
         """Initializes a ContributionConverter instance
 
@@ -164,11 +167,14 @@ class ContributionConverter:
         if create_new:
             # make sure that it doesn't conflict with an existing pack directory
             self.dir_name = self.ensure_unique_pack_dir_name(self.dir_name)
-        self.pack_dir_path = os.path.join(self.packs_dir_path, self.dir_name)
-        if not os.path.isdir(self.pack_dir_path):
-            os.makedirs(self.pack_dir_path)
+        self.pack_dir_path = Path(self.packs_dir_path, self.dir_name)
+        if not self.pack_dir_path.is_dir():
+            os.makedirs(str(self.pack_dir_path))
         self.readme_files: List[str] = []
         self.api_module_path: Optional[str] = None
+        self.working_dir_path = (
+            Path(working_dir_path) if working_dir_path else self.pack_dir_path
+        )
 
     @staticmethod
     def format_pack_dir_name(name: str) -> str:
@@ -251,10 +257,10 @@ class ContributionConverter:
         """Unpacks the contribution zip's contents to the destination pack directory and performs some cleanup"""
         if self.contribution:
             shutil.unpack_archive(
-                filename=self.contribution, extract_dir=self.pack_dir_path
+                filename=self.contribution, extract_dir=str(self.working_dir_path)
             )
             # remove metadata.json file
-            Path(self.pack_dir_path, "metadata.json").unlink()
+            Path(self.working_dir_path, "metadata.json").unlink()
         else:
             err_msg = (
                 "Tried unpacking contribution to destination directory but the instance variable"
@@ -304,8 +310,8 @@ class ContributionConverter:
         basename = Path(unpacked_contribution_dir).name
         if basename in ENTITY_TYPE_TO_DIR:
             dst_name = ENTITY_TYPE_TO_DIR.get(basename, "")
-            src_path = os.path.join(self.pack_dir_path, basename)
-            dst_path = os.path.join(self.pack_dir_path, dst_name)
+            src_path = str(Path(self.working_dir_path, basename))
+            dst_path = str(Path(self.working_dir_path, dst_name))
             if Path(dst_path).exists():
                 # move src folder files to dst folder
                 for _, _, files in os.walk(src_path, topdown=False):
@@ -362,7 +368,7 @@ class ContributionConverter:
         """
         Generate the readme files for a new content pack.
         """
-        for pack_subdir in get_child_directories(self.pack_dir_path):
+        for pack_subdir in get_child_directories(self.working_dir_path):
             basename = Path(pack_subdir).name
             if basename in {SCRIPTS_DIR, INTEGRATIONS_DIR}:
                 directories = get_child_directories(pack_subdir)
@@ -392,8 +398,7 @@ class ContributionConverter:
         Rearrange content items that were mapped incorrectly by the server zip
           - indicatorfields rearranged to be under indicatorfield directory instead of incidentfields.
         """
-        unpacked_contribution_dirs = get_child_directories(self.pack_dir_path)
-
+        unpacked_contribution_dirs = get_child_directories(str(self.working_dir_path))
         for unpacked_contribution_dir in unpacked_contribution_dirs:
 
             dir_name = Path(unpacked_contribution_dir).name
@@ -401,10 +406,10 @@ class ContributionConverter:
             # incidentfield directory may contain indicator-fields files
             if dir_name == FileType.INCIDENT_FIELD.value:
 
-                dst_ioc_fields_dir = os.path.join(
-                    self.pack_dir_path, FileType.INDICATOR_FIELD.value
+                dst_ioc_fields_dir = str(
+                    Path(self.working_dir_path, FileType.INDICATOR_FIELD.value)
                 )
-                src_path = os.path.join(self.pack_dir_path, dir_name)
+                src_path = str(Path(self.working_dir_path, dir_name))
 
                 for file in os.listdir(src_path):
 
@@ -412,7 +417,7 @@ class ContributionConverter:
                         # At first time, create another dir for all indicator-fields files and move them there
                         if not Path(dst_ioc_fields_dir).exists():
                             os.makedirs(dst_ioc_fields_dir)
-                        file_path = os.path.join(self.pack_dir_path, dir_name, file)
+                        file_path = str(Path(self.working_dir_path, dir_name, file))
                         shutil.move(file_path, dst_ioc_fields_dir)  # type: ignore
 
                 # If there were only indicatorfiled files, the original folder will remain empty, so we will delete it
@@ -446,13 +451,15 @@ class ContributionConverter:
             self.unpack_contribution_to_dst_pack_directory()
             # convert
             self.rearranging_before_conversion()
-            unpacked_contribution_dirs = get_child_directories(self.pack_dir_path)
+            unpacked_contribution_dirs = get_child_directories(
+                str(self.working_dir_path)
+            )
             for unpacked_contribution_dir in unpacked_contribution_dirs:
                 self.convert_contribution_dir_to_pack_contents(
                     unpacked_contribution_dir
                 )
             # extract to package format
-            for pack_subdir in get_child_directories(self.pack_dir_path):
+            for pack_subdir in get_child_directories(str(self.working_dir_path)):
                 basename = Path(pack_subdir).name
                 if basename in {SCRIPTS_DIR, INTEGRATIONS_DIR}:
                     self.content_item_to_package_format(
@@ -587,8 +594,11 @@ class ContributionConverter:
                         autocreate_dir = containing_dir_name == ENTITY_TYPE_TO_DIR.get(
                             file_type, ""
                         )
-                        output_dir = os.path.join(
-                            self.pack_dir_path, ENTITY_TYPE_TO_DIR.get(file_type, "")
+                        output_dir = str(
+                            Path(
+                                self.working_dir_path,
+                                ENTITY_TYPE_TO_DIR.get(file_type, ""),
+                            )
                         )
                         if not autocreate_dir:
                             output_dir = os.path.join(output_dir, containing_dir_name)
@@ -616,7 +626,7 @@ class ContributionConverter:
                             script = content_item.code
                             contributor_item_version = self.extract_pack_version(script)
                             current_pack_version = get_pack_metadata(
-                                file_path=content_item_file_path
+                                file_path=str(self.pack_dir_path)
                             ).get("currentVersion", "0.0.0")
                             if contributor_item_version != "0.0.0" and Version(
                                 current_pack_version
@@ -661,14 +671,11 @@ class ContributionConverter:
         to be in the base directory of a pack
         """
         logger.info("Creating pack base files")
-        fp = open(os.path.join(self.pack_dir_path, "README.md"), "a")
-        fp.close()
+        Path(self.working_dir_path, "README.md").touch()
 
-        fp = open(os.path.join(self.pack_dir_path, ".secrets-ignore"), "a")
-        fp.close()
+        Path(self.working_dir_path, ".secrets-ignore").touch()
 
-        fp = open(os.path.join(self.pack_dir_path, ".pack-ignore"), "a")
-        fp.close()
+        Path(self.working_dir_path, ".pack-ignore").touch()
 
     def create_metadata_file(self, zipped_metadata: Dict) -> None:
         """Create the pack_metadata.json file in the base directory of the pack
@@ -708,7 +715,7 @@ class ContributionConverter:
             zipped_metadata.get("marketplaces") or MARKETPLACES
         )
         metadata_dict = ContributionConverter.create_pack_metadata(data=metadata_dict)
-        metadata_path = os.path.join(self.pack_dir_path, "pack_metadata.json")
+        metadata_path = str(Path(self.working_dir_path, "pack_metadata.json"))
         with open(metadata_path, "w") as pack_metadata_file:
             json.dump(metadata_dict, pack_metadata_file, indent=4)
 
@@ -749,12 +756,16 @@ class ContributionConverter:
         and create a release-note file using the release-notes text.
 
         """
-        rn_mng = UpdateReleaseNotesManager(
-            user_input=self.dir_name,
-            update_type=self.update_type,
-        )
-        rn_mng.manage_rn_update()
-        self.replace_RN_template_with_value(rn_mng.rn_path[0])
+        try:
+            rn_mng = UpdateReleaseNotesManager(
+                user_input=self.dir_name,
+                update_type=self.update_type,
+            )
+            rn_mng.manage_rn_update()
+            if rn_mng.rn_path:
+                self.replace_RN_template_with_value(rn_mng.rn_path[0])
+        except Exception:
+            logger.error("Failed updating release notes", exc_info=True)
 
     def format_user_input(self) -> Dict[str, str]:
         """

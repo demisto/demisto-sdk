@@ -368,7 +368,7 @@ class ContributionConverter:
         """
         Generate the readme files for a new content pack.
         """
-        for pack_subdir in get_child_directories(self.working_dir_path):
+        for pack_subdir in get_child_directories(str(self.working_dir_path)):
             basename = Path(pack_subdir).name
             if basename in {SCRIPTS_DIR, INTEGRATIONS_DIR}:
                 directories = get_child_directories(pack_subdir)

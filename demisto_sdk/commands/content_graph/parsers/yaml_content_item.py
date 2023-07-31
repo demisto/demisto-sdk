@@ -1,3 +1,4 @@
+import re
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
@@ -47,9 +48,12 @@ class YAMLContentItemParser(ContentItemParser):
         description = self.yml_data.get("description") or ""
         description = description.replace("\\ ", " ")  # removes unwanted backslashes
         description = description.replace("\\\n", " ")  # removes unwanted backslashes
-        description = " ".join(
-            [sub for sub in description.split(" ") if sub != ""]  # avoid removing \n's
+        description = re.sub(
+            r"(?<=\S) +", " ", description
         )  # substitutes multiple spaces into one
+        # description = " ".join(
+        #     [sub for sub in description.split(" ") if sub != ""]  # avoid removing \n's
+        # )  # substitutes multiple spaces into one
         return description
 
     @property

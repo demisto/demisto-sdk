@@ -57,6 +57,7 @@ class PackMetadata(BaseModel):
     partner_name: Optional[str] = Field(None, alias="partnerName")
     preview_only: Optional[bool] = Field(None, alias="previewOnly")
     disable_monthly: Optional[bool] = Field(None, alias="disableMonthly")
+    content_commit_hash: Optional[str] = Field(None, alias="contentCommitHash")
 
     def _enhance_pack_properties(
         self, marketplace: MarketplaceVersions, content_items: PackContentItems

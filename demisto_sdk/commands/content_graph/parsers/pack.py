@@ -157,11 +157,14 @@ class PackMetadataParser:
 
         # For private packs
         self.premium: Optional[bool] = "partnerId" in metadata
-        self.vendor_id: Optional[str] = metadata.get("vendorId")
-        self.partner_id: Optional[str] = metadata.get("partnerId")
-        self.partner_name: Optional[str] = metadata.get("partnerName")
-        self.preview_only: Optional[bool] = metadata.get("previewOnly")
-        self.disable_monthly: Optional[bool] = metadata.get("disableMonthly")
+        self.vendor_id: Optional[str] = metadata.get("vendorId") or ""
+        self.partner_id: Optional[str] = metadata.get("partnerId") or ""
+        self.partner_name: Optional[str] = metadata.get("partnerName") or ""
+        self.preview_only: Optional[bool] = metadata.get("previewOnly") or False
+        self.disable_monthly: Optional[bool] = metadata.get("disableMonthly") or False
+        self.content_commit_hash: Optional[str] = (
+            metadata.get("contentCommitHash") or ""
+        )
 
     def get_author_image_filepath(self, path: Path) -> str:
         if (path / "Author_image.png").is_file():

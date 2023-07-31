@@ -1,7 +1,7 @@
 import os
 import re
 from abc import ABC
-from typing import Dict, List, Tuple, Any
+from typing import Dict, List, Tuple, Any, Set
 
 from demisto_sdk.commands.common.constants import (
     LAYOUT_AND_MAPPER_BUILT_IN_FIELDS,
@@ -17,6 +17,7 @@ from demisto_sdk.commands.common.tools import (
 )
 from demisto_sdk.commands.common.update_id_set import BUILT_IN_FIELDS
 from demisto_sdk.commands.content_graph.common import ContentType
+from demisto_sdk.commands.content_graph.objects.base_content import UnknownContent
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 from demisto_sdk.commands.format.format_constants import (
     DEFAULT_VERSION,
@@ -75,7 +76,6 @@ class LayoutBaseFormat(BaseUpdateJSON, ABC):
         # layoutscontainer kinds are unique fields to containers, and shouldn't be in layouts
         self.is_container = any(self.data.get(kind) for kind in LAYOUTS_CONTAINER_KINDS)
         self.graph = kwargs.get('graph')
-        self.format_with_graph = kwargs.get('format_with_graph')
 
     def format_file(self) -> Tuple[int, int]:
         """Manager function for the Layout JSON updater."""
@@ -321,20 +321,18 @@ class LayoutBaseFormat(BaseUpdateJSON, ABC):
         ]
 
         # get the relevant content item from the graph
-        content_item: ContentItem
-        for content_item in self.graph.search(object_id=self.data.get('id', '')):
-            if content_item.content_type == ContentType.LAYOUT and str(content_item.path) == self.source_file:
-                break
+        layout_object: ContentItem
+        layout_object = self.graph.search(path=self.relative_content_path)[0]
 
         # find the fields that aren't in the content repo
-        fields_not_in_repo = [
+        fields_not_in_repo = {
             field.content_item_to.object_id
-            for field in content_item.uses
-            if field.content_item_to.not_in_repository
-        ]
+            for field in layout_object.uses
+            if isinstance(field.content_item_to, UnknownContent)
+        }
 
         if fields_not_in_repo:
-            logger.info(f"Removing the fields {fields_not_in_repo} from the layout {self.source_file} "
+            logger.info(f"Removing the fields {fields_not_in_repo} from the layout {self.relative_content_path} "
                         f"because they aren't in the content repo.")
 
         # remove the fields that aren't in the repo
@@ -355,7 +353,7 @@ class LayoutBaseFormat(BaseUpdateJSON, ABC):
         return
 
     def remove_non_existent_fields_from_tabs(
-            self, layout_tabs: list, fields_to_remove: List[str]
+            self, layout_tabs: list, fields_to_remove: Set
     ):
         """
         Remove non-existent fields which are not part of the id json from tabs.

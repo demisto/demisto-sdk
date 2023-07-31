@@ -125,7 +125,7 @@ def format_manager(
     interactive: bool = True,
     id_set_path: str = None,
     clear_cache: bool = False,
-    format_with_graph: bool = True
+    use_graph: bool = True
 ):
     """
     Format_manager is a function that activated format command on different type of files.
@@ -144,14 +144,13 @@ def format_manager(
         add_tests (bool): Whether to exclude tests automatically.
         id_set_path (str): The path of the id_set.json file.
         clear_cache (bool): wether to clear the cache
-        format_with_graph (bool): wheter to use the graph in format
+        use_graph (bool): wheter to use the graph in format
     Returns:
         int 0 in case of success 1 otherwise
     """
 
     if id_set_path:
-        logger.error('The flag --id-set-path was added to the command, but the usage of the id_set is deprecated.'
-                     ' demisto-sdk format now uses the content graph.')
+        logger.error('The --id-set-path argument is deprecated.')
 
     prev_ver = prev_ver if prev_ver else "demisto/master"
     supported_file_types = ["json", "yml", "py", "md"]
@@ -181,9 +180,9 @@ def format_manager(
     error_list: List[Tuple[int, int]] = []
     if files:
         graph = ContentGraphInterface(update_graph=True) if is_graph_related_files(files, clear_cache) and \
-                                                            format_with_graph else None
+                                                            use_graph else None
         for file in files:
-            file_path = file.replace("\\", "/")
+            file_path = str(Path(file))
             file_type = find_type(file_path, clear_cache=clear_cache)
 
             current_excluded_files = excluded_files[:]
@@ -235,7 +234,7 @@ def format_manager(
                         "red",
                     )
                 )
-        if graph:
+        if graph:  # In case that the graph was activated, we need to call exit in order to close it.
             graph.__exit__()
         update_content_entity_ids(files)
 
@@ -432,7 +431,7 @@ def is_graph_related_files(files: List[str], clear_cache: bool) -> bool:
             True if the files are of type mapper, layout or incident fields, else False.
         """
     for file in files:
-        file_path = file.replace("\\", "/")
+        file_path = str(Path(file))
         file_type = find_type(file_path, clear_cache=clear_cache)
         if file_type and file_type.value not in UNFORMATTED_FILES:
             file_type = file_type.value

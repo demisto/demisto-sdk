@@ -4,9 +4,6 @@ from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.logger import logger
 
 from demisto_sdk.commands.content_graph.common import ContentType
-from demisto_sdk.commands.content_graph.interface.neo4j.neo4j_graph import (
-    Neo4jContentGraphInterface as ContentGraphInterface,
-)
 from demisto_sdk.commands.format.format_constants import (
     ERROR_RETURN_CODE,
     SKIP_RETURN_CODE,
@@ -41,7 +38,6 @@ class IncidentFieldJSONFormat(BaseUpdateJSON):
             **kwargs,
         )
         self.graph = kwargs.get('graph')
-        self.format_with_graph = kwargs.get('format_with_graph')
 
     def run_format(self) -> int:
         try:
@@ -75,23 +71,22 @@ class IncidentFieldJSONFormat(BaseUpdateJSON):
                 )
                 return
 
-            for (
-                alias_cli_name,
-                aliases_file_path,
-                alias_marketplaces,
-            ) in self._get_incident_fields_by_aliases(aliases):
+            for item in self._get_incident_fields_by_aliases(aliases):
+                alias_marketplaces = item.get('marketplaces', [])
+                alias_file_path = item.get('path', '')
 
                 if len(alias_marketplaces) != 1 or alias_marketplaces[0] != "xsoar":
                     # There will always be only one incident field in the list because the cliName is unique
-                    incident_field_node = self.graph.search(object_id=alias_cli_name)[0]
+                    incident_field_node = self.graph.search(path=self.relative_content_path)[0]
 
                     logger.info(
-                        f"\n[blue]================= Updating file {aliases_file_path} =================[/blue]"
+                        f"\n[blue]================= Updating file {alias_file_path} =================[/blue]"
                     )
 
                     incident_field_node.data['marketplaces'] = ["xsoar"]
+                    incident_field_node.marketplaces = ["xsoar"]
                     self._save_alias_field_file(
-                        dest_file_path=aliases_file_path, field_data=incident_field_node.data
+                        dest_file_path=alias_file_path, field_data=incident_field_node.data
                     )
 
     def _get_incident_fields_by_aliases(self, aliases: List[dict]) -> list:
@@ -102,11 +97,12 @@ class IncidentFieldJSONFormat(BaseUpdateJSON):
             aliases (list): The alias list.
 
         Returns:
-            A list of tuples. Each tuple represents an alias incident field and contains the incident field cli_name,
-            it's path and it's marketplace.
+            list: A list of dictionaries, each dictionary represent an incident field.
         """
         alias_ids: set = {f'{alias.get("cliName")}' for alias in aliases}
-        return self.graph.get_content_items_by_cli_names(cli_name_list=list(alias_ids)) if self.graph else []
+        return self.graph.get_content_items_by_identifier(identifier_values_list=list(alias_ids),
+                                                          content_type=ContentType.INCIDENT_FIELD,
+                                                          identifier='cli_name') if self.graph else []
 
     def _save_alias_field_file(
         self,

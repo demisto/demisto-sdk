@@ -176,7 +176,7 @@ class TestFormattingJson:
     def test_format_file(self, source, target, path, answer):
         os.makedirs(path, exist_ok=True)
         shutil.copyfile(source, target)
-        res = format_manager(input=target, output=target, format_with_graph=False)
+        res = format_manager(input=target, output=target, use_graph=False)
         shutil.rmtree(target, ignore_errors=True)
         shutil.rmtree(path, ignore_errors=True)
 
@@ -201,7 +201,7 @@ class TestFormattingJson:
 
         monkeypatch.setattr("builtins.input", lambda _: "N")
 
-        res = format_manager(input=target, output=target, format_with_graph=False)
+        res = format_manager(input=target, output=target, use_graph=False)
         shutil.rmtree(target, ignore_errors=True)
         shutil.rmtree(path, ignore_errors=True)
 

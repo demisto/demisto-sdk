@@ -50,12 +50,11 @@ from demisto_sdk.commands.content_graph.interface.neo4j.queries.nodes import (
     remove_empty_properties,
     remove_packs_before_creation,
     remove_server_nodes,
-    return_preserved_relationships,
+    return_preserved_relationships, get_items_by_type_and_identifier,
 )
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.relationships import (
     _match_relationships,
-    create_relationships,
-    get_items_by_cli_name
+    create_relationships
 )
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.validations import (
     get_items_using_deprecated,
@@ -616,14 +615,18 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
                 logger.error(f"Error when running query: {e}")
                 raise e
 
-    def get_content_items_by_cli_names(self, cli_name_list: List[str]) -> List[Tuple[str, str, list]]:
+    def get_content_items_by_identifier(self, identifier_values_list: List[str], content_type: str, identifier: str) \
+            -> List:
         """
             This searches the database for content items and returns a list of them, including their relationships
             Args:
-                cli_name_list (List[str]): A list of cli_names of the wanted incident fields.
+                identifier_values_list (List[str]): A list of identifier values of the wanted content items.
+                                                (The value of the object ids, cli_names etc.)
+                content_type (str): The type of the wanted content item (ContentType.LAYOUT etc.)
+                identifier (str): An identifier for the wanted content item (object_id, cli_name etc.)
             Returns:
-                list[tuple[str, str, list]: A list of tuples, each tuple represent an incident field.
-            In each tuple there are the incident field cli name, it's file path and a list of the marketplaces he is in.
+                list: A list of dictionaries, each dictionary represent an incident field.
         """
         with self.driver.session() as session:
-            return session.execute_read(get_items_by_cli_name, cli_name_list)
+            return session.execute_read(get_items_by_type_and_identifier, identifier_values_list, content_type,
+                                        identifier)

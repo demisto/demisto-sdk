@@ -3,6 +3,7 @@ from typing import Tuple
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.objects import RelationshipData
+from demisto_sdk.commands.content_graph.objects.base_content import UnknownContent
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 from demisto_sdk.commands.format.format_constants import (
     ERROR_RETURN_CODE,
@@ -42,7 +43,6 @@ class MapperJSONFormat(BaseUpdateJSON):
         )
 
         self.graph = kwargs.get('graph')
-        self.format_with_graph = kwargs.get('format_with_graph')
 
     def run_format(self) -> int:
         try:
@@ -88,23 +88,21 @@ class MapperJSONFormat(BaseUpdateJSON):
             return
 
         # get the relevant content item from the graph
-        content_item: ContentItem
-        for content_item in self.graph.search(object_id=self.data.get('id', '')):
-            if content_item.content_type == ContentType.MAPPER and str(content_item.path) == self.source_file:
-                break
+        mapper_object: ContentItem
+        mapper_object = self.graph.search(path=self.relative_content_path)[0]
 
         # find the fields that aren't in the content repo
-        fields_not_in_repo = [
+        fields_not_in_repo = {
             field.content_item_to.name
-            for field in content_item.uses
-            if field.content_item_to.not_in_repository
-        ]
+            for field in mapper_object.uses
+            if isinstance(field.content_item_to, UnknownContent)
+        }
 
         # remove the fields that aren't in the repo
         mapper = self.data.get("mapping", {})
 
         if fields_not_in_repo:
-            logger.info(f"Removing the fields {fields_not_in_repo} from the mapper {self.source_file} "
+            logger.info(f"Removing the fields {fields_not_in_repo} from the mapper {self.relative_content_path} "
                         f"because they aren't in the content repo.")
 
         for mapping_name in mapper.values():

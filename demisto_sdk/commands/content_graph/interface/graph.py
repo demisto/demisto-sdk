@@ -216,3 +216,8 @@ class ContentGraphInterface(ABC):
     @abstractmethod
     def run_single_query(self, query: str, **kwargs) -> Any:
         pass
+
+    @abstractmethod
+    def get_content_items_by_identifier(self, identifier_values_list: List[str], content_type: str, identifier: str) \
+            -> Any:
+        pass

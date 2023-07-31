@@ -2213,11 +2213,10 @@ def test_format_updating_aliases_marketplace_field(mocker, monkeypatch, repo):
                 return [MockedIncidentFieldNode()]
             return []
 
-        def get_content_items_by_cli_names(self, cli_name_list):
-            # Simulate the graph search
-            if cli_name_list:
-                return [('aliasincidentfield', alias_incident_field.path, ["marketplacev2", "xsoar"]),
-                        ('alias2incidentfield', alias2_incident_field.path, ["xsoar"])]
+        def get_content_items_by_identifier(self, identifier_values_list, content_type, identifier):
+            if identifier_values_list:
+                return [{'associated_to_all': True, 'toversion': '99.99.99', 'deprecated': False, 'description': 'description', 'marketplaces': ['xsoar', 'marketplacev2'], 'display_name': 'Alias Incident Field', 'object_id': 'aliasincidentfield', 'path': alias_incident_field.path, 'content_type': 'IncidentField', 'not_in_repository': False, 'name': 'Alias Incident Field', 'fromversion': '5.0.0', 'cli_name': 'aliasincidentfield', 'is_test': False, 'field_type': 'shortText', 'node_id': 'IncidentField:aliasincidentfield'},
+                        {'associated_to_all': True, 'toversion': '99.99.99', 'deprecated': False, 'description': 'description', 'marketplaces': ['xsoar'], 'display_name': 'Alert ID', 'object_id': 'alias2incidentfield', 'path': alias2_incident_field.path, 'content_type': 'IncidentField', 'not_in_repository': False, 'name': 'Alias2 Incident Field', 'fromversion': '5.0.0', 'cli_name': 'alias2incidentfield', 'is_test': False, 'field_type': 'shortText', 'node_id': 'IncidentField:alias2incidentfield'}]
             return ()
 
     class MockedIncidentFieldNode:
@@ -2383,7 +2382,7 @@ def test_format_removing_fields_not_in_content_from_mapper(mocker, monkeypatch, 
     )
 
     result = runner.invoke(main, [FORMAT_CMD, "-i", mapper.path, "-at", "-y"])
-    message = f"Removing the fields ['{incident_field_name}'] from the mapper {mapper.path} " \
+    message = "Removing the fields {'" + incident_field_name + "'}" + f" from the mapper {mapper.path} " \
               f"because they aren't in the content repo."
     assert result.exit_code == 0
     assert not result.exception
@@ -2558,7 +2557,7 @@ def test_format_removing_fields_not_in_content_from_layout(mocker, monkeypatch, 
     )
 
     result = runner.invoke(main, [FORMAT_CMD, "-i", layout.path, "-at", "-y"])
-    message = f"Removing the fields ['{incident_field_object_id}'] from the layout {layout.path} " \
+    message = "Removing the fields {'" + incident_field_object_id + "'}" + f" from the layout {layout.path} " \
               f"because they aren't in the content repo."
     assert result.exit_code == 0
     assert not result.exception

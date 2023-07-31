@@ -194,7 +194,6 @@ class CoverageSummary:
             os.path.join(self.cache_dir, "coverage-min.json") if self.cache_dir else ""
         )
         if self.use_cache and self.cache_dir:
-            raise Exception(f"here {self.use_cache=} {self.cache_dir=}")
             try:
                 with open(json_path) as coverage_summary_file:
                     full_coverage_summary = json.load(coverage_summary_file)

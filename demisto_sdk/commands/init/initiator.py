@@ -1208,7 +1208,7 @@ class Initiator:
             )
 
         if self.is_integration:
-            full_output_path.joinpath(f"{current_suffix}_image.png").with_suffix(
+            full_output_path.joinpath(f"{current_suffix}_image").with_suffix(
                 ".png"
             ).rename(
                 full_output_path.joinpath(f"{self.dir_name}_image").with_suffix(".png")

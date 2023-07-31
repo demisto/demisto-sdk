@@ -181,5 +181,5 @@ max-complexity = 30
 "ujson".msg = "use JSON_Handler instead"
 "orjson".msg = "use JSON_Handler instead"
 "ruamel.yaml".msg = "use YAML_Handler instead"
-"distutils.version".msg = "Use packaging.Version instead"
-"packaging.version.LooseVersion".msg = "Use packaging.Version instead"
+"distutils.version".msg = "Use packaging.version.Version instead"
+"packaging.version.LooseVersion".msg = "Use packaging.version.Version instead"

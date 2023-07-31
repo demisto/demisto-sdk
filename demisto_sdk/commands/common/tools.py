@@ -3790,8 +3790,7 @@ def get_api_module_dependencies_from_graph(
 
         if dependent_items:
             logger.info(
-                f"Found [cyan]{len(dependent_items)}[/cyan] content items that import- {changed_api_module}. "
-                "Executing update-release-notes on those as well."
+                f"Found [cyan]{len(dependent_items)}[/cyan] content items that import- {changed_api_modules}. "
             )
         return dependent_items
 

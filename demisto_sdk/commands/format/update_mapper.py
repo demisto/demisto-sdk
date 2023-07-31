@@ -1,3 +1,4 @@
+from pathlib import Path
 from typing import Tuple
 
 from demisto_sdk.commands.common.logger import logger
@@ -89,7 +90,7 @@ class MapperJSONFormat(BaseUpdateJSON):
 
         # get the relevant content item from the graph
         mapper_object: ContentItem
-        mapper_object = self.graph.search(path=self.relative_content_path)[0]
+        mapper_object = self.graph.search(path=Path(self.source_file).relative_to(self.graph.repo_path))[0]
 
         # find the fields that aren't in the content repo
         fields_not_in_repo = {
@@ -102,7 +103,7 @@ class MapperJSONFormat(BaseUpdateJSON):
         mapper = self.data.get("mapping", {})
 
         if fields_not_in_repo:
-            logger.info(f"Removing the fields {fields_not_in_repo} from the mapper {self.relative_content_path} "
+            logger.info(f"Removing the fields {fields_not_in_repo} from the mapper {self.source_file} "
                         f"because they aren't in the content repo.")
 
         for mapping_name in mapper.values():

@@ -1,6 +1,6 @@
 import logging
 import os
-from pathlib import PosixPath
+from pathlib import PosixPath, Path
 from typing import List
 
 import pytest
@@ -22,7 +22,10 @@ from demisto_sdk.commands.common.hook_validations.integration import (
 from demisto_sdk.commands.common.hook_validations.playbook import PlaybookValidator
 from demisto_sdk.commands.common.hook_validations.readme import ReadMeValidator
 from demisto_sdk.commands.common.tools import get_dict_from_file, is_test_config_match
+from demisto_sdk.commands.content_graph import neo4j_service
 from demisto_sdk.commands.content_graph.common import ContentType
+from demisto_sdk.commands.content_graph.interface.graph import ContentGraphInterface
+from demisto_sdk.commands.content_graph.objects.base_content import UnknownContent
 from demisto_sdk.commands.format import format_module, update_generic
 from demisto_sdk.commands.format.update_generic import BaseUpdate
 from demisto_sdk.commands.format.update_generic_yml import BaseUpdateYML
@@ -2207,9 +2210,9 @@ def test_format_updating_aliases_marketplace_field(mocker, monkeypatch, repo):
         def __exit__(self):
             pass
 
-        def search(self, object_id):
+        def search(self, path: str):
             # Simulate the graph search
-            if object_id == "aliasincidentfield":
+            if path:
                 return [MockedIncidentFieldNode()]
             return []
 
@@ -2347,15 +2350,17 @@ def test_format_removing_fields_not_in_content_from_mapper(mocker, monkeypatch, 
 
     # Mock the behavior of Neo4jContentGraphInterface
     class MockedContentGraphInterface:
+        repo_path = repo.path
+
         def __enter__(self):
             return self
 
         def __exit__(self):
             pass
 
-        def search(self, object_id):
+        def search(self, path):
             # Simulate the graph search
-            if object_id == "Mapper - Incoming Mapper":
+            if path:
                 return [MockedMapperNode()]
             return []
 
@@ -2369,12 +2374,7 @@ def test_format_removing_fields_not_in_content_from_mapper(mocker, monkeypatch, 
 
     class MockedRelationshipDataNode:
         def __init__(self):
-            self.content_item_to = MockedIncidentFieldNode()
-
-    class MockedIncidentFieldNode:
-        def __init__(self):
-            self.name = incident_field_name
-            self.not_in_repository = True
+            self.content_item_to = UnknownContent(name=incident_field_name)
 
     mocker.patch(
         "demisto_sdk.commands.format.format_module.ContentGraphInterface",
@@ -2520,15 +2520,16 @@ def test_format_removing_fields_not_in_content_from_layout(mocker, monkeypatch, 
 
     # Mock the behavior of Neo4jContentGraphInterface
     class MockedContentGraphInterface:
+        repo_path = repo.path
         def __enter__(self):
             return self
 
         def __exit__(self):
             pass
 
-        def search(self, object_id):
+        def search(self, path):
             # Simulate the graph search
-            if object_id == "Layout":
+            if path:
                 return [MockedLayoutNode()]
             return []
 
@@ -2543,13 +2544,15 @@ def test_format_removing_fields_not_in_content_from_layout(mocker, monkeypatch, 
 
     class MockedRelationshipDataNode:
         def __init__(self, name: str, object_id: str, not_in_repository: bool):
-            self.content_item_to = MockedIncidentFieldNode(name, object_id, not_in_repository)
+            if not_in_repository:
+                self.content_item_to = UnknownContent(name=name, object_id=object_id)
+            else:
+                self.content_item_to = MockedIncidentFieldNode(name, object_id)
 
     class MockedIncidentFieldNode:
-        def __init__(self, name: str, object_id: str, not_in_repository: bool):
+        def __init__(self, name: str, object_id: str):
             self.name = name
             self.object_id = object_id
-            self.not_in_repository = not_in_repository
 
     mocker.patch(
         "demisto_sdk.commands.format.format_module.ContentGraphInterface",

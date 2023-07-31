@@ -1,6 +1,7 @@
 import os
 import re
 from abc import ABC
+from pathlib import Path
 from typing import Dict, List, Tuple, Any, Set
 
 from demisto_sdk.commands.common.constants import (
@@ -322,7 +323,7 @@ class LayoutBaseFormat(BaseUpdateJSON, ABC):
 
         # get the relevant content item from the graph
         layout_object: ContentItem
-        layout_object = self.graph.search(path=self.relative_content_path)[0]
+        layout_object = self.graph.search(path=Path(self.source_file).relative_to(self.graph.repo_path))[0]
 
         # find the fields that aren't in the content repo
         fields_not_in_repo = {
@@ -332,7 +333,7 @@ class LayoutBaseFormat(BaseUpdateJSON, ABC):
         }
 
         if fields_not_in_repo:
-            logger.info(f"Removing the fields {fields_not_in_repo} from the layout {self.relative_content_path} "
+            logger.info(f"Removing the fields {fields_not_in_repo} from the layout {self.source_file} "
                         f"because they aren't in the content repo.")
 
         # remove the fields that aren't in the repo

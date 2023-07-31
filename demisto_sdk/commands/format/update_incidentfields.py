@@ -1,3 +1,4 @@
+from pathlib import Path
 from typing import List, Tuple
 
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
@@ -77,7 +78,7 @@ class IncidentFieldJSONFormat(BaseUpdateJSON):
 
                 if len(alias_marketplaces) != 1 or alias_marketplaces[0] != "xsoar":
                     # There will always be only one incident field in the list because the cliName is unique
-                    incident_field_node = self.graph.search(path=self.relative_content_path)[0]
+                    incident_field_node = self.graph.search(path=alias_file_path)[0]
 
                     logger.info(
                         f"\n[blue]================= Updating file {alias_file_path} =================[/blue]"

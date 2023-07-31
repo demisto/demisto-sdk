@@ -1890,8 +1890,7 @@ def generate_test_playbook(ctx, **kwargs):
 @click.option(
     "--xsiam",
     is_flag=True,
-    help="Create an Event Collector based on EventCollector template and the relevant sub directories"
-    "directory.",
+    help="Create an Event Collector based on a template, and create matching sub directories",
 )
 @click.option("--pack", is_flag=True, help="Create pack and its sub directories")
 @click.option(
@@ -1927,7 +1926,8 @@ def init(ctx, **kwargs):
     from demisto_sdk.commands.init.initiator import Initiator
 
     check_configuration_file("init", kwargs)
-    initiator = Initiator(**kwargs)
+    marketplace = parse_marketplace_kwargs(kwargs)
+    initiator = Initiator(marketplace=marketplace, **kwargs)
     initiator.init()
     return 0
 

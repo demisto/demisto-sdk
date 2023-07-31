@@ -3,6 +3,7 @@ import os
 import re
 import shutil
 from distutils.dir_util import copy_tree
+from pathlib import Path
 from typing import Dict, List, Optional, Set, Tuple
 
 from packaging.version import Version
@@ -10,6 +11,7 @@ from packaging.version import Version
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import (
+    ANALYTICS_AND_SIEM_CATEGORY,
     CLASSIFIERS_DIR,
     CONNECTIONS_DIR,
     CORRELATION_RULES_DIR,
@@ -36,7 +38,7 @@ from demisto_sdk.commands.common.constants import (
     MODELING_RULES_DIR,
     PACK_INITIAL_VERSION,
     PACK_SUPPORT_OPTIONS,
-    PACKS_DIR,
+    PACKS_DIR_REGEX,
     PARSING_RULE_ID_SUFFIX,
     PARSING_RULES_DIR,
     PLAYBOOKS_DIR,
@@ -50,6 +52,7 @@ from demisto_sdk.commands.common.constants import (
     XSOAR_AUTHOR,
     XSOAR_SUPPORT,
     XSOAR_SUPPORT_URL,
+    MarketplaceVersions,
 )
 from demisto_sdk.commands.common.git_content_config import GitContentConfig
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
@@ -57,9 +60,10 @@ from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     get_common_server_path,
-    get_json,
+    get_file,
     get_pack_name,
     get_yaml,
+    string_to_bool,
 )
 from demisto_sdk.commands.secrets.secrets import SecretsValidator
 
@@ -219,9 +223,16 @@ class Initiator:
         WIZARDS_DIR,
     ]
 
-    XSIAM_DIR = [CORRELATION_RULES_DIR, XSIAM_DASHBOARDS_DIR, XSIAM_REPORTS_DIR]
+    XSIAM_DIR = [
+        CORRELATION_RULES_DIR,
+        XSIAM_DASHBOARDS_DIR,
+        XSIAM_REPORTS_DIR,
+        MODELING_RULES_DIR,
+        PARSING_RULES_DIR,
+    ]
 
-    PACK_PATH_REGEX = rf"^(.*?{PACKS_DIR}/.*?/)"
+    # PACK_PATH_REGEX = rf"^(.*?{PACKS_DIR}/.*?/)"
+    PACK_PATH_REGEX = PACKS_DIR_REGEX
 
     def __init__(
         self,
@@ -237,11 +248,12 @@ class Initiator:
         author_image: str = "",
         demisto_mock: bool = False,
         common_server: bool = False,
+        marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR,
         **kwargs,
     ):
         self.output = output if output else ""
         self.id = id
-        self.xsiam = xsiam
+        self.marketplace = marketplace
         self.is_integration = integration
         self.is_script = script
         self.is_pack = pack
@@ -306,7 +318,7 @@ class Initiator:
                 )
             return template or (
                 self.HELLO_WORLD_EVENT_COLLECTOR_INTEGRATION
-                if self.xsiam
+                if self.marketplace == MarketplaceVersions.MarketplaceV2
                 else self.DEFAULT_INTEGRATION_TEMPLATE
             )
 
@@ -331,17 +343,17 @@ class Initiator:
             file_list (List(str)): A list with path and names of the files.
         """
         for file in file_list:
-            file_path = os.path.join(self.full_output_path, file)
-            template_path = os.path.join(path_of_template, file)
-            dir_path = os.path.dirname(file_path)
+            file_path = Path(self.full_output_path).joinpath(file)
+            template_path = Path(path_of_template).joinpath(file)
+            dir_path = file_path.parent
 
             # if the file path is not exist we create it from template.
-            if not os.path.exists(file_path) or os.stat(file_path).st_size == 0:
-                if os.path.exists(template_path):
+            if not file_path.exists() or os.stat(file_path).st_size == 0:
+                if template_path.exists():
                     self.write_to_file_from_template(template_path, file_path)
                 else:
-                    if not os.path.exists(dir_path):
-                        os.makedirs(dir_path, exist_ok=True)
+                    if not dir_path.exists():
+                        dir_path.mkdir(exist_ok=True)
                     _, file_extension = os.path.splitext(file_path)
                     with open(file_path, "w") as f:
                         if file_extension == ".json":
@@ -394,13 +406,43 @@ class Initiator:
     def get_pack_path(self) -> str:
         """Gets the pack path from current path."""
         if (
-            self.xsiam
+            self.marketplace == MarketplaceVersions.MarketplaceV2
             and self.output
             and re.search(INTEGRATIONS_DIR_REGEX, self.output)
         ):
             if result := re.search(self.PACK_PATH_REGEX, self.output):
                 return result[0]
         return self.output
+
+    def create_initiator(
+        self,
+        output: str,
+        template: str,
+        is_script: bool,
+        is_integration: bool,
+        is_pack: bool,
+    ):
+        """Creates initiator object and initialize it.
+
+        Args:
+            output (str): The output path.
+            template (str): The template.
+            is_script (bool): Indicates whether the content is a script.
+            is_integration (bool): Indicates whether the content is a integration.
+            is_pack (bool): Indicates whether the content is a pack.
+        """
+        return Initiator(
+            output=output,
+            common_server=self.common_server,
+            dir_name=self.dir_name,
+            template=template,
+            script=is_script,
+            integration=is_integration,
+            pack=is_pack,
+            demisto_mock=self.demisto_mock,
+            marketplace=self.marketplace,
+            name=self.dir_name,
+        )
 
     def create_initiators_and_init_modeling_parsing_rules(
         self, product: Optional[str], vendor: Optional[str]
@@ -411,30 +453,22 @@ class Initiator:
             product (str): The product from the user.
             vendor (str): The vendor from the user.
         """
-        output_path = self.get_pack_path()
-        self.full_output_path = output_path
-        modeling_rules_initiator = Initiator(
-            output=os.path.join(self.full_output_path, MODELING_RULES_DIR),
-            common_server=self.common_server,
-            dir_name=str(self.dir_name),
-            template=self.HELLO_WORLD_MODELING_RULES,
-            script=False,
-            integration=False,
-            demisto_mock=self.demisto_mock,
-            xsiam=self.xsiam,
-            name=self.dir_name,
+        # output_path= get_pack_paths_from_files([self.output])[0]
+        if not self.full_output_path and self.output:
+            self.full_output_path = self.output
+        modeling_rules_initiator = self.create_initiator(
+            os.path.join(self.full_output_path, MODELING_RULES_DIR),
+            self.HELLO_WORLD_MODELING_RULES,
+            False,
+            False,
+            False,
         )
-        parsing_rules_initiator = Initiator(
-            output=os.path.join(self.full_output_path, PARSING_RULES_DIR),
-            common_server=self.common_server,
-            dir_name=str(self.dir_name),
-            template=self.HELLO_WORLD_PARSING_RULES,
-            is_pack=False,
-            script=False,
-            integration=False,
-            demisto_mock=self.demisto_mock,
-            xsiam=self.xsiam,
-            name=self.dir_name,
+        parsing_rules_initiator = self.create_initiator(
+            os.path.join(self.full_output_path, PARSING_RULES_DIR),
+            self.HELLO_WORLD_PARSING_RULES,
+            False,
+            False,
+            False,
         )
         if not parsing_rules_initiator.modeling_parsing_rules_init(
             is_parsing_rules=True,
@@ -477,7 +511,7 @@ class Initiator:
             path = os.path.join(self.full_output_path, directory)
             os.mkdir(path=path)
         # create the relevant folders for XSIAM content pack.
-        if self.xsiam:
+        if self.marketplace == MarketplaceVersions.MarketplaceV2:
             for directory in self.XSIAM_DIR:
                 path = os.path.join(self.full_output_path, directory)
                 os.mkdir(path=path)
@@ -509,8 +543,8 @@ class Initiator:
         create_integration = str(
             input("\nDo you want to create an integration in the pack? Y/N ")
         ).lower()
-        if create_integration in {"y", "yes"}:
-            if not self.xsiam:
+        if string_to_bool(create_integration):
+            if not self.marketplace == MarketplaceVersions.MarketplaceV2:
                 is_same_category = str(
                     input(
                         "\nDo you want to set the integration category as you defined in the pack "
@@ -519,10 +553,10 @@ class Initiator:
                 ).lower()
 
                 integration_category = (
-                    self.category if is_same_category in {"y", "yes"} else ""
+                    self.category if string_to_bool(is_same_category) else ""
                 )
             else:
-                integration_category = "Analytics & SIEM"
+                integration_category = ANALYTICS_AND_SIEM_CATEGORY
             integration_init = Initiator(
                 output=os.path.join(self.full_output_path, "Integrations"),
                 integration=True,
@@ -530,7 +564,7 @@ class Initiator:
                 demisto_mock=self.demisto_mock,
                 template=self.template,
                 category=integration_category,
-                xsiam=self.xsiam,
+                marketplace=self.marketplace,
             )
             return integration_init.init()
 
@@ -548,35 +582,29 @@ class Initiator:
         Returns:
             bool. Returns True if the parsing rules was created successfully and False otherwise
         """
-        dirname = self.get_suffix_xsiam_content(
+        dirname = get_dir_name_for_xsiam_item(
             is_modeling_rules=is_modeling_rules,
             is_parsing_rules=is_parsing_rules,
-            name=self.dir_name,
+            name="",
         )
 
-        xsiam_content_dir_name = self.get_dir_name_for_xsiam_item(
-            is_parsing_rules, is_modeling_rules
+        xsiam_content_dir_name = get_dir_name_for_xsiam_item(
+            is_parsing_rules, is_modeling_rules, name=self.dir_name
         )
-        self.full_output_path = os.path.join(self.output, dirname)
+        self.full_output_path = str(Path(self.output).joinpath(xsiam_content_dir_name))
 
-        dir_name: str = "parsing rules" if is_parsing_rules else "modeling rules"
-
-        self.get_created_dir_name(created_object=dir_name)
         rules_template_files = self.get_template_files()
         if not self.get_remote_templates(
             rules_template_files,
-            dir=xsiam_content_dir_name,
+            dir=dirname,
         ):
-            local_template_dir = xsiam_content_dir_name
-            local_template_path = os.path.normpath(
-                os.path.join(
-                    __file__,
-                    "..",
-                    "templates",
-                    self.HELLO_WORLD_EVENT_COLLECTOR_INTEGRATION,
-                    local_template_dir,
-                    self.template,
-                )
+            local_template_dir = dirname
+            local_template_path = Path(
+                Path(__file__).parent,
+                "templates",
+                self.HELLO_WORLD_EVENT_COLLECTOR_INTEGRATION,
+                local_template_dir,
+                self.template,
             )
             copy_tree(str(local_template_path), self.full_output_path)
             self.process_files(rules_template_files, local_template_path)
@@ -756,10 +784,10 @@ class Initiator:
         Returns:
             bool. True if the integration was created successfully, False otherwise.
         """
-        if self.xsiam:
-            if EVENT_COLLECTOR.lower() not in self.dir_name.lower():
+        if self.marketplace == MarketplaceVersions.MarketplaceV2:
+            if not self.dir_name.lower().endswith(EVENT_COLLECTOR.lower()):
                 self.dir_name = f"{self.dir_name}{EVENT_COLLECTOR}"
-            if EVENT_COLLECTOR.lower() not in self.id.lower():
+            if not self.id.lower().endswith(EVENT_COLLECTOR.lower()):
                 self.id = f"{self.id}{EVENT_COLLECTOR}"
 
     def find_secrets(self):
@@ -803,21 +831,29 @@ class Initiator:
         Returns:
             bool. True if all the required inputs from the user are valid.
         """
-        if self.xsiam and not self.output:
+        if self.marketplace == MarketplaceVersions.MarketplaceV2 and not self.output:
             logger.error(
                 "[red]An output directory is required to utilize the --xsiam flag. Please attempt the operation again using the -o flag to specify the output directory.[/red]"
             )
             return False
         if (
-            self.xsiam
+            self.marketplace == MarketplaceVersions.MarketplaceV2
             and self.output
-            and not re.search(INTEGRATIONS_DIR_REGEX, self.output)
+            and re.search(INTEGRATIONS_DIR_REGEX, self.output)
         ):
+            return True
+        elif (
+            self.marketplace == MarketplaceVersions.MarketplaceV2
+            and self.output
+            and re.search(PACKS_DIR_REGEX, self.output)
+        ):
+            self.output = str(Path(self.output) / INTEGRATIONS_DIR)
+            return True
+        else:
             logger.error(
                 "[red]An output directory is invalid - make sure the name looks like the following: Packs/**/Integrations [/red]"
             )
-            return False
-        return True
+        return False
 
     def integration_init(self) -> bool:
         """Creates a new integration according to a template.
@@ -831,8 +867,11 @@ class Initiator:
         if not self.verify_output_path_for_xsiam_content():
             return False
         product, vendor = self.get_product_and_vendor()
-        if self.xsiam and not self.create_initiators_and_init_modeling_parsing_rules(
-            product, vendor
+        if (
+            self.marketplace == MarketplaceVersions.MarketplaceV2
+            and not self.create_initiators_and_init_modeling_parsing_rules(
+                product, vendor
+            )
         ):
             return False
         self.add_event_collector_suffix()
@@ -856,7 +895,7 @@ class Initiator:
             local_template_path = os.path.normpath(
                 os.path.join(__file__, "..", "templates", self.template)
             )
-            if self.xsiam:
+            if self.marketplace == MarketplaceVersions.MarketplaceV2:
                 self.process_files(integration_template_files, local_template_path)
             else:
                 copy_tree(str(local_template_path), self.full_output_path)
@@ -961,11 +1000,11 @@ class Initiator:
         """
         vendor = None
         product = None
-        if self.xsiam:
-            while vendor is None or vendor == "":
-                vendor = str(input("Please enter vendor: ").lower())
-            while product is None or product == "":
-                product = str(input("Please enter product: ").lower())
+        if self.marketplace == MarketplaceVersions.MarketplaceV2:
+            while not vendor:
+                vendor = str(input("Please enter vendor name: ").lower())
+            while not product:
+                product = str(input("Please enter product name: ").lower())
         return product, vendor
 
     def update_product_and_vendor(
@@ -978,14 +1017,16 @@ class Initiator:
             product (str): The name of the product.
             vendor (str):  The name of the vendor.
         """
-        schema_json_path = os.path.join(
-            self.full_output_path, f"{json_file_name}_schema.json"
+        schema_json_path = (
+            Path(self.full_output_path)
+            .joinpath(f"{json_file_name}_schema")
+            .with_suffix(".json")
         )
         if os.path.exists(schema_json_path):
-            schema_json = get_json(schema_json_path)
+            schema_json = get_file(schema_json_path)
             hello_world_raw = schema_json["hello_world_raw"]
             dict_for_schema = {f"{vendor}_{product}_raw": hello_world_raw}
-            with open(os.path.join(schema_json_path), "w") as f:
+            with open(schema_json_path, "w") as f:
                 json.dump(dict_for_schema, f, indent=4)
 
     def modeling_or_parsing_rules_yml_reformatting(
@@ -1003,12 +1044,14 @@ class Initiator:
             is_modeling_rules (bool): Indicates whether the file is modeling rules.
             is_parsing_rules (bool): Indicates whether the file is parsing rules.
         """
-        yml_file_name = self.get_suffix_xsiam_content(
+        yml_file_name = get_dir_name_for_xsiam_item(
             is_modeling_rules=is_modeling_rules,
             is_parsing_rules=is_parsing_rules,
             name=current_suffix,
         )
-        yml_path = os.path.join(self.full_output_path, f"{yml_file_name}.yml")
+        yml_path = (
+            Path(self.full_output_path).joinpath(yml_file_name).with_suffix(".yml")
+        )
         self.update_product_and_vendor(yml_file_name, product, vendor)
         yml_dict = get_yaml(yml_path)
         id_from_yml: str = yml_dict["id"]
@@ -1029,6 +1072,9 @@ class Initiator:
             yml_dict.get("fromversion") or DEFAULT_CONTENT_ITEM_FROM_VERSION
         ) < Version(self.SUPPORTED_FROM_VERSION_XSIAM):
             yml_dict["fromversion"] = self.SUPPORTED_FROM_VERSION_XSIAM
+            logger.info(
+                "[yellow]The selected version is lower than the supported version; the value will be set to the default version. [/yellow]"
+            )
         with open(yml_path, "w") as f:
             yaml.dump(yml_dict, f)
 
@@ -1036,15 +1082,20 @@ class Initiator:
         self, vendor: Optional[str], product: Optional[str]
     ) -> None:
         """Replace the product and the vendor in the py event collector file.
+           Used when creating an event collector.
 
         Args:
             product (str): The product.
             vendor (str): The vendor.
         """
-        if self.xsiam and os.path.exists(
-            os.path.join(self.full_output_path, f"{self.dir_name}.py")
+        python_file_path = (
+            Path(self.full_output_path).joinpath(self.dir_name).with_suffix(".py")
+        )
+        if (
+            self.marketplace == MarketplaceVersions.MarketplaceV2
+            and python_file_path.exists()
         ):
-            with open(os.path.join(self.full_output_path, f"{self.dir_name}.py")) as fp:
+            with open(python_file_path) as fp:
                 file_contents = fp.read()
 
             file_contents = file_contents.replace(
@@ -1054,9 +1105,7 @@ class Initiator:
                 "PRODUCT = 'world'", f"PRODUCT = '{product}'"
             )
 
-            with open(
-                os.path.join(self.full_output_path, f"{self.dir_name}.py"), "w"
-            ) as fp:
+            with open(python_file_path, "w") as fp:
                 fp.write(file_contents)
 
     def yml_reformatting(self, current_suffix: str, integration: bool = False):
@@ -1072,28 +1121,32 @@ class Initiator:
         yml_dict["commonfields"]["id"] = self.id
         yml_dict["name"] = self.id
 
-        from_version = input("\nThe fromversion value that will be used (optional): ")
+        from_version = input(
+            "\nThe fromversion value that will be used for the content yml (optional): "
+        )
         if from_version:
             yml_dict["fromversion"] = from_version
 
-        if not self.xsiam and Version(
+        if not self.marketplace == MarketplaceVersions.MarketplaceV2 and Version(
             yml_dict.get("fromversion", DEFAULT_CONTENT_ITEM_FROM_VERSION)
         ) < Version(self.SUPPORTED_FROM_VERSION):
             yml_dict["fromversion"] = self.SUPPORTED_FROM_VERSION
 
-        elif self.xsiam and Version(
+        elif self.marketplace == MarketplaceVersions.MarketplaceV2 and Version(
             yml_dict.get("fromversion", DEFAULT_CONTENT_ITEM_FROM_VERSION)
         ) < Version(self.SUPPORTED_FROM_VERSION_XSIAM):
             yml_dict["fromversion"] = self.SUPPORTED_FROM_VERSION_XSIAM
-
+            logger.info(
+                "[yellow]The selected version is lower than the supported version; the value will be set to the default version. [/yellow]"
+            )
         if integration:
             yml_dict["display"] = self.id
             yml_dict["category"] = (
                 self.category
                 if self.category
                 else (
-                    "Analytics & SIEM"
-                    if self.xsiam
+                    ANALYTICS_AND_SIEM_CATEGORY
+                    if self.marketplace == MarketplaceVersions.MarketplaceV2
                     else Initiator.get_valid_user_input(
                         options_list=INTEGRATION_CATEGORIES,
                         option_message="\nIntegration category options: \n",
@@ -1137,55 +1190,64 @@ class Initiator:
         Args:
             current_suffix (str): The yml file name (HelloWorld or HelloWorldScript)
         """
-        if os.path.exists(os.path.join(self.full_output_path, f"{current_suffix}.py")):
-            os.rename(
-                os.path.join(self.full_output_path, f"{current_suffix}.py"),
-                os.path.join(self.full_output_path, f"{self.dir_name}.py"),
-            )
-        if os.path.exists(
-            os.path.join(self.full_output_path, f"{current_suffix}_test.py")
+        full_output_path = Path(self.full_output_path)
+        current_file_path = full_output_path.joinpath(f"{current_suffix}")
+        file_path = full_output_path.joinpath(f"{self.dir_name}")
+        if current_file_path.with_suffix(".py").exists():
+            current_file_path.with_suffix(".py").rename(file_path.with_suffix(".py"))
+
+        if (
+            full_output_path.joinpath(f"{current_suffix}_test")
+            .with_suffix(".py")
+            .exists()
         ):
-            os.rename(
-                os.path.join(self.full_output_path, f"{current_suffix}_test.py"),
-                os.path.join(self.full_output_path, f"{self.dir_name}_test.py"),
+            full_output_path.joinpath(f"{current_suffix}_test").with_suffix(
+                ".py"
+            ).rename(
+                full_output_path.joinpath(f"{self.dir_name}_test").with_suffix(".py")
             )
+
         if self.is_integration:
-            os.rename(
-                os.path.join(self.full_output_path, f"{current_suffix}_image.png"),
-                os.path.join(self.full_output_path, f"{self.dir_name}_image.png"),
+            full_output_path.joinpath(f"{current_suffix}_image.png").with_suffix(
+                ".png"
+            ).rename(
+                full_output_path.joinpath(f"{self.dir_name}_image").with_suffix(".png")
             )
-            os.rename(
-                os.path.join(self.full_output_path, f"{current_suffix}_description.md"),
-                os.path.join(self.full_output_path, f"{self.dir_name}_description.md"),
+            full_output_path.joinpath(f"{current_suffix}_description").with_suffix(
+                ".md"
+            ).rename(
+                full_output_path.joinpath(f"{self.dir_name}_description").with_suffix(
+                    ".md"
+                )
             )
+
         if is_parsing_rules or is_modeling_rules:
-            name = self.get_suffix_xsiam_content(
+            name = get_dir_name_for_xsiam_item(
                 is_modeling_rules=is_modeling_rules,
                 is_parsing_rules=is_parsing_rules,
                 name=self.dir_name,
             )
-            if os.path.exists(
-                os.path.join(self.full_output_path, f"{current_suffix}.xif")
-            ):
-                os.rename(
-                    os.path.join(self.full_output_path, f"{current_suffix}.xif"),
-                    os.path.join(self.full_output_path, f"{name}.xif"),
+            current_file_path = full_output_path.joinpath(f"{current_suffix}")
+            file_path = full_output_path.joinpath(f"{name}")
+            if current_file_path.with_suffix(".xif").exists():
+                current_file_path.with_suffix(".xif").rename(
+                    file_path.with_suffix(".xif")
                 )
-            if os.path.exists(
-                os.path.join(self.full_output_path, f"{current_suffix}.yml")
-            ):
-                os.rename(
-                    os.path.join(self.full_output_path, f"{current_suffix}.yml"),
-                    os.path.join(self.full_output_path, f"{name}.yml"),
+
+            if current_file_path.with_suffix(".yml").exists():
+                current_file_path.with_suffix(".yml").rename(
+                    file_path.with_suffix(".yml")
                 )
-            if is_modeling_rules and os.path.exists(
-                os.path.join(self.full_output_path, f"{current_suffix}_schema.json")
+
+            if (
+                full_output_path.joinpath(f"{current_suffix}_schema")
+                .with_suffix(".json")
+                .exists()
             ):
-                os.rename(
-                    os.path.join(
-                        self.full_output_path, f"{current_suffix}_schema.json"
-                    ),
-                    os.path.join(self.full_output_path, f"{name}_schema.json"),
+                full_output_path.joinpath(f"{current_suffix}_schema").with_suffix(
+                    ".json"
+                ).rename(
+                    full_output_path.joinpath(f"{name}_schema").with_suffix(".json")
                 )
 
     def create_new_directory(
@@ -1241,45 +1303,18 @@ class Initiator:
         ) as fp:
             fp.write(file_contents)
 
-    def get_suffix_xsiam_content(
-        self,
-        name: str,
-        is_parsing_rules: bool = False,
-        is_modeling_rules: bool = False,
-    ) -> str:
-        """Gets the correct suffix to the xsiam content item
-
-        Args:
-            is_parsing_rules (bool): indicating whether the content type is parsing rule.
-            is_modeling_rules (bool): indicating whether the content type is modeling rule.
-            name (str): a name to attached to the suffix.
-        """
-        if is_parsing_rules:
-            return f"{name}{PARSING_RULE_ID_SUFFIX}"
-        return f"{name}{MODELING_RULE_ID_SUFFIX}" if is_modeling_rules else ""
-
-    def get_dir_name_for_xsiam_item(
-        self, is_parsing_rules: bool = False, is_modeling_rules: bool = False
-    ):
-        """Gets the correct directory name to the xsiam content item
-
-        Args:
-            is_parsing_rules (bool): indicating whether the content type is parsing rule.
-            is_modeling_rules (bool): indicating whether the content type is modeling rule.
-        """
-        return PARSING_RULES_DIR if is_parsing_rules else MODELING_RULES_DIR
-
-    def write_to_file_from_template(self, template_path: str, output_path: str):
+    def write_to_file_from_template(self, template_path: Path, output_path: Path):
         """Fixes the import statement in the _test.py file in the newly created initegration/script
 
         Args:
             name_to_change (str): The name of the former integration/script to replace in the import.
         """
-        with open(os.path.join(template_path)) as fp:
-            file_contents = fp.read()
+        shutil.copy(template_path, output_path)
+        # with open(os.path.join(template_path)) as fp:
+        #     file_contents = fp.read()
 
-        with open(os.path.join(output_path), "w") as fp:
-            fp.write(file_contents)
+        # with open(os.path.join(output_path), "w") as fp:
+        #     fp.write(file_contents)
 
     def copy_common_server_python(self):
         """copy commonserverpython from the base pack"""
@@ -1413,3 +1448,37 @@ class Initiator:
                 return False
 
         return True
+
+
+def get_suffix_xsiam_content(
+    name: str,
+    is_parsing_rules: bool = False,
+    is_modeling_rules: bool = False,
+) -> str:
+    """Gets the correct suffix to the xsiam content item
+
+    Args:
+        is_parsing_rules (bool): indicating whether the content type is parsing rule.
+        is_modeling_rules (bool): indicating whether the content type is modeling rule.
+        name (str): a name to attached to the suffix.
+    """
+    if is_parsing_rules:
+        return f"{name}{PARSING_RULE_ID_SUFFIX}"
+    return f"{name}{MODELING_RULE_ID_SUFFIX}" if is_modeling_rules else ""
+
+
+def get_dir_name_for_xsiam_item(
+    is_parsing_rules: bool = False, is_modeling_rules: bool = False, name: str = ""
+) -> str:
+    """Gets the correct directory name to the xsiam content item
+
+    Args:
+        is_parsing_rules (bool): indicating whether the content type is parsing rule.
+        is_modeling_rules (bool): indicating whether the content type is modeling rule.
+    """
+
+    return (
+        f"{name}{PARSING_RULES_DIR}"
+        if is_parsing_rules
+        else f"{name}{MODELING_RULES_DIR}"
+    )

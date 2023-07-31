@@ -8,21 +8,26 @@ import pytest
 
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import (
+    ANALYTICS_AND_SIEM_CATEGORY,
     EVENT_COLLECTOR,
     INTEGRATION_CATEGORIES,
     INTEGRATIONS_DIR,
     MARKETPLACE_LIVE_DISCUSSIONS,
     MARKETPLACES,
     MODELING_RULE_ID_SUFFIX,
+    MODELING_RULES_DIR,
     PACK_INITIAL_VERSION,
     PACK_SUPPORT_OPTIONS,
     PACKS_DIR,
+    PARSING_RULES_DIR,
     XSOAR_AUTHOR,
     XSOAR_SUPPORT,
     XSOAR_SUPPORT_URL,
+    MarketplaceVersions,
 )
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
+from demisto_sdk.commands.common.tools import get_file
 from demisto_sdk.commands.init.initiator import Initiator
 from TestSuite.test_tools import ChangeCWD
 
@@ -383,17 +388,16 @@ def test_yml_reformatting(monkeypatch, tmp_path, initiator):
     initiator.yml_reformatting(
         current_suffix=initiator.HELLO_WORLD_INTEGRATION, integration=True
     )
-    with open(full_output_path / f"{dir_name}.yml") as f:
-        yml_dict = yaml.load(f)
-        assert yml_dict == OrderedDict(
-            {
-                "commonfields": OrderedDict({"id": "HelloWorld"}),
-                "display": "HelloWorld",
-                "name": "HelloWorld",
-                "fromversion": "6.0.0",
-                "category": "Utilities",
-            }
-        )
+    yml_dict = get_file(full_output_path / f"{dir_name}.yml")
+    assert yml_dict == OrderedDict(
+        {
+            "commonfields": OrderedDict({"id": "HelloWorld"}),
+            "display": "HelloWorld",
+            "name": "HelloWorld",
+            "fromversion": "6.0.0",
+            "category": "Utilities",
+        }
+    )
 
 
 SCRIPT_TEMPLATE_DATA = """
@@ -800,7 +804,7 @@ def test_pack_init_for_xsiam_folders_existence(monkeypatch, mocker, tmpdir, init
     )
     mocker.patch.object(Initiator, "get_remote_templates", return_value=False)
     # Prepare initiator set XSIAM flag to true
-    initiator.xsiam = True
+    initiator.marketplace = MarketplaceVersions.MarketplaceV2
 
     # Prepare expected results
     dir_list: list = initiator.DIR_LIST.copy()
@@ -839,25 +843,25 @@ def test_integration_init_xsiam_files_content(mocker, monkeypatch, initiator, tm
         "builtins.input",
         generate_multiple_inputs(deque(["Product", "Vendor", "", "", "", "Y"])),
     )
-    temp_pack_dir = os.path.join(f"{tmpdir}/{PACKS_DIR}", PACK_NAME)
-    os.makedirs(temp_pack_dir, exist_ok=True)
-    temp_integration_dir = os.path.join(temp_pack_dir, INTEGRATIONS_DIR)
-    os.makedirs(temp_integration_dir, exist_ok=True)
+    temp_pack_dir = Path(tmpdir).joinpath(f"{PACKS_DIR}/{PACK_NAME}")
+    temp_pack_dir.mkdir(exist_ok=True, parents=True)
+
+    temp_integration_dir = temp_pack_dir.joinpath(INTEGRATIONS_DIR)
+    temp_integration_dir.mkdir(exist_ok=True, parents=True)
+    integration_path = temp_integration_dir.joinpath(
+        f"{INTEGRATION_NAME}{EVENT_COLLECTOR}"
+    )
+    temp_integration_dir.mkdir(exist_ok=True, parents=True)
 
     # Prepare initiator
-    initiator.output = temp_integration_dir
+    initiator.output = str(temp_integration_dir)
     initiator.dir_name = INTEGRATION_NAME
     initiator.id = INTEGRATION_NAME
     initiator.is_integration = True
-    initiator.category = "Analytics & SIEM"
+    initiator.category = ANALYTICS_AND_SIEM_CATEGORY
     initiator.template = "HelloWorldEventCollector"
-    initiator.xsiam = True
-    integration_path = os.path.join(
-        temp_integration_dir, f"{INTEGRATION_NAME}{EVENT_COLLECTOR}"
-    )
-    yml_path = os.path.join(
-        integration_path, f"{INTEGRATION_NAME}{EVENT_COLLECTOR}.yml"
-    )
+    initiator.marketplace = MarketplaceVersions.MarketplaceV2
+    yml_path = integration_path.joinpath(f"{INTEGRATION_NAME}{EVENT_COLLECTOR}.yml")
     res = initiator.integration_init()
     expected_files = {
         "command_examples",
@@ -871,18 +875,14 @@ def test_integration_init_xsiam_files_content(mocker, monkeypatch, initiator, tm
     }
 
     assert res
-    integration_dir_files = {file for file in listdir(integration_path)}
-    assert os.path.isdir(integration_path)
+    integration_dir_files = set(listdir(integration_path))
+    assert integration_path.is_dir()
     assert expected_files == integration_dir_files
-    with open(yml_path) as f:
-        yaml_content = yaml.load(f)
-        assert "8.3.0" == yaml_content["fromversion"]
-        assert "Analytics & SIEM" == yaml_content["category"]
-        assert (
-            f"{INTEGRATION_NAME}{EVENT_COLLECTOR}" == yaml_content["commonfields"]["id"]
-        )
-        assert f"{INTEGRATION_NAME}{EVENT_COLLECTOR}" == yaml_content["name"]
-    os.remove(yml_path)
+    yaml_content = get_file(yml_path)
+    assert "8.3.0" == yaml_content["fromversion"]
+    assert ANALYTICS_AND_SIEM_CATEGORY == yaml_content["category"]
+    assert f"{INTEGRATION_NAME}{EVENT_COLLECTOR}" == yaml_content["commonfields"]["id"]
+    assert f"{INTEGRATION_NAME}{EVENT_COLLECTOR}" == yaml_content["name"]
 
 
 def test_integration_init_xsiam_files_existence(mocker, monkeypatch, initiator, tmpdir):
@@ -907,21 +907,23 @@ def test_integration_init_xsiam_files_existence(mocker, monkeypatch, initiator, 
         "builtins.input",
         generate_multiple_inputs(deque(["vendor", "product", "", "", "", "Y"])),
     )
-    temp_pack_dir = os.path.join(f"{tmpdir}/{PACKS_DIR}", PACK_NAME)
-    os.makedirs(temp_pack_dir, exist_ok=True)
-    temp_integration_dir = os.path.join(temp_pack_dir, INTEGRATIONS_DIR)
-    os.makedirs(temp_integration_dir, exist_ok=True)
-    integration_path = os.path.join(
-        temp_integration_dir, f"{INTEGRATION_NAME}{EVENT_COLLECTOR}"
+    temp_pack_dir = Path(tmpdir).joinpath(f"{PACKS_DIR}/{PACK_NAME}")
+    temp_pack_dir.mkdir(exist_ok=True, parents=True)
+
+    temp_integration_dir = temp_pack_dir.joinpath(INTEGRATIONS_DIR)
+    temp_integration_dir.mkdir(exist_ok=True, parents=True)
+    integration_path = temp_integration_dir.joinpath(
+        f"{INTEGRATION_NAME}{EVENT_COLLECTOR}"
     )
+    os.makedirs(temp_integration_dir, exist_ok=True)
 
     # Prepare initiator
-    initiator.output = temp_integration_dir
+    initiator.output = str(temp_integration_dir)
     initiator.dir_name = INTEGRATION_NAME
     initiator.is_integration = True
-    initiator.category = "Analytics & SIEM"
+    initiator.category = ANALYTICS_AND_SIEM_CATEGORY
     initiator.template = "HelloWorldEventCollector"
-    initiator.xsiam = True
+    initiator.marketplace = MarketplaceVersions.MarketplaceV2
 
     res = initiator.integration_init()
     integration_dir_files = set(listdir(integration_path))
@@ -937,7 +939,7 @@ def test_integration_init_xsiam_files_existence(mocker, monkeypatch, initiator, 
     }
 
     assert res
-    assert os.path.isdir(integration_path)
+    assert integration_path.is_dir()
     assert expected_files == integration_dir_files
 
 
@@ -961,30 +963,30 @@ def test_modeling_rules_init_xsiam_files_existence(
     # Prepare mockers
     mocker.patch.object(Initiator, "get_remote_templates", return_value=False)
     monkeypatch.setattr("builtins.input", generate_multiple_inputs(deque(["6.0.0"])))
-    temp_pack_dir = os.path.join(tmpdir, PACK_NAME)
-    os.makedirs(temp_pack_dir, exist_ok=True)
+    modeling_rules_dir = Path(tmpdir).joinpath(PACK_NAME).joinpath(MODELING_RULES_DIR)
+    modeling_rules_dir.mkdir(exist_ok=True, parents=True)
 
     # Prepare initiator
-    initiator.output = temp_pack_dir
+    initiator.output = str(modeling_rules_dir)
     initiator.dir_name = INTEGRATION_NAME
-    initiator.category = "Analytics & SIEM"
+    initiator.category = ANALYTICS_AND_SIEM_CATEGORY
     initiator.template = "HelloWorldModelingRules"
-    initiator.xsiam = True
+    initiator.marketplace = MarketplaceVersions.MarketplaceV2
     initiator.is_modeling_rules = True
 
-    modeling_rules_path = os.path.join(
-        temp_pack_dir, f"{INTEGRATION_NAME}{MODELING_RULE_ID_SUFFIX}"
+    modeling_rules_path = modeling_rules_dir.joinpath(
+        f"{INTEGRATION_NAME}{MODELING_RULES_DIR}"
     )
     res = initiator.modeling_parsing_rules_init(is_modeling_rules=True)
     expected_files = {
-        f"{INTEGRATION_NAME}{MODELING_RULE_ID_SUFFIX}_schema.json",
-        f"{INTEGRATION_NAME}{MODELING_RULE_ID_SUFFIX}.yml",
-        f"{INTEGRATION_NAME}{MODELING_RULE_ID_SUFFIX}.xif",
+        f"{INTEGRATION_NAME}{MODELING_RULES_DIR}_schema.json",
+        f"{INTEGRATION_NAME}{MODELING_RULES_DIR}.yml",
+        f"{INTEGRATION_NAME}{MODELING_RULES_DIR}.xif",
     }
 
     assert res
     modeling_rules_dir_files = set(listdir(modeling_rules_path))
-    assert os.path.isdir(modeling_rules_path)
+    assert modeling_rules_path.is_dir()
     assert expected_files == modeling_rules_dir_files
 
 
@@ -1008,27 +1010,30 @@ def test_parsing_rules_init_xsiam_files_existence(
     # Prepare mockers
     mocker.patch.object(Initiator, "get_remote_templates", return_value=False)
     monkeypatch.setattr("builtins.input", generate_multiple_inputs(deque(["6.0.0"])))
-    temp_pack_dir = os.path.join(tmpdir, PACK_NAME)
-    os.makedirs(temp_pack_dir, exist_ok=True)
+    temp_pack_dir = Path(tmpdir).joinpath(PACK_NAME)
+    temp_pack_dir.mkdir(exist_ok=True, parents=True)
+    parsing_rules_path = temp_pack_dir.joinpath(PARSING_RULES_DIR)
+    parsing_rules_path.mkdir(exist_ok=True, parents=True)
 
     # Prepare initiator
-    initiator.output = temp_pack_dir
+    initiator.output = str(parsing_rules_path)
     initiator.dir_name = INTEGRATION_NAME
-    initiator.category = "Analytics & SIEM"
+    initiator.category = ANALYTICS_AND_SIEM_CATEGORY
     initiator.template = "HelloWorldParsingRules"
-    initiator.xsiam = True
+    initiator.marketplace = MarketplaceVersions.MarketplaceV2
     initiator.is_parsing_rules = True
 
-    parsing_rules_path = os.path.join(temp_pack_dir, f"{INTEGRATION_NAME}ParsingRule")
     res = initiator.modeling_parsing_rules_init(is_parsing_rules=True)
-    parsing_rules_dir_files = set(listdir(parsing_rules_path))
+    parsing_rules_dir_files = set(
+        listdir(parsing_rules_path.joinpath(f"{INTEGRATION_NAME}ParsingRules"))
+    )
     expected_files = {
-        f"{INTEGRATION_NAME}ParsingRule.yml",
-        f"{INTEGRATION_NAME}ParsingRule.xif",
+        f"{INTEGRATION_NAME}{PARSING_RULES_DIR}.yml",
+        f"{INTEGRATION_NAME}{PARSING_RULES_DIR}.xif",
     }
 
     assert res
-    assert os.path.isdir(parsing_rules_path)
+    assert parsing_rules_path.is_dir()
     assert expected_files == parsing_rules_dir_files
 
 
@@ -1052,32 +1057,34 @@ def test_modeling_rules_init_file_content_and_name(
     mocker.patch.object(Initiator, "get_remote_templates", return_value=False)
     monkeypatch.setattr("builtins.input", generate_multiple_inputs(deque(["6.0.0"])))
 
-    temp_pack_dir = os.path.join(tmpdir, PACK_NAME)
-    os.makedirs(temp_pack_dir, exist_ok=True)
+    temp_pack_dir = Path(tmpdir).joinpath(PACK_NAME)
+    temp_pack_dir.mkdir(exist_ok=True, parents=True)
+
+    modeling_rules_dir = Path(temp_pack_dir).joinpath(MODELING_RULES_DIR)
+    modeling_rules_dir.mkdir(exist_ok=True, parents=True)
 
     # Prepare initiator
-    initiator.output = temp_pack_dir
+    initiator.output = str(modeling_rules_dir)
     initiator.dir_name = INTEGRATION_NAME
-    initiator.category = "Analytics & SIEM"
+    initiator.category = ANALYTICS_AND_SIEM_CATEGORY
     initiator.template = "HelloWorldModelingRules"
-    initiator.xsiam = True
+    initiator.marketplace = MarketplaceVersions.MarketplaceV2
     initiator.is_modeling_rules = True
 
-    parsing_rules_path = os.path.join(
-        temp_pack_dir, f"{INTEGRATION_NAME}{MODELING_RULE_ID_SUFFIX}"
+    modeling_rules_path = Path(modeling_rules_dir).joinpath(
+        f"{INTEGRATION_NAME}{MODELING_RULES_DIR}"
+    )
+    yml_path = Path(modeling_rules_path).joinpath(
+        f"{INTEGRATION_NAME}{MODELING_RULES_DIR}.yml"
     )
     res = initiator.modeling_parsing_rules_init(is_modeling_rules=True)
-    yml_path = os.path.join(
-        parsing_rules_path, f"{INTEGRATION_NAME}{MODELING_RULE_ID_SUFFIX}.yml"
-    )
+
     assert res
-    assert os.path.exists(yml_path)
-    with open(yml_path) as f:
-        yaml_content = yaml.load(f)
-        assert "8.3.0" in yaml_content["fromversion"]
-        assert f"{INTEGRATION_NAME}_{MODELING_RULE_ID_SUFFIX}" == yaml_content["id"]
-        assert f"{INTEGRATION_NAME} Modeling Rule" == yaml_content["name"]
-        os.remove(yml_path)
+    assert Path(yml_path).exists()
+    yaml_content = get_file(yml_path)
+    assert "8.3.0" in yaml_content["fromversion"]
+    assert f"{INTEGRATION_NAME}_{MODELING_RULE_ID_SUFFIX}" == yaml_content["id"]
+    assert f"{INTEGRATION_NAME} Modeling Rule" == yaml_content["name"]
 
 
 def test_parsing_rules_init_file_content_and_name(
@@ -1100,27 +1107,25 @@ def test_parsing_rules_init_file_content_and_name(
     mocker.patch.object(Initiator, "get_remote_templates", return_value=False)
     monkeypatch.setattr("builtins.input", generate_multiple_inputs(deque(["6.0.0"])))
 
-    temp_pack_dir = os.path.join(tmpdir, PACK_NAME)
-    os.makedirs(temp_pack_dir, exist_ok=True)
+    temp_pack_dir = Path(tmpdir).joinpath(PACK_NAME)
+    temp_pack_dir.mkdir(exist_ok=True, parents=True)
 
     # Prepare initiator
-    initiator.output = temp_pack_dir
+    initiator.output = str(temp_pack_dir)
     initiator.dir_name = INTEGRATION_NAME
     initiator.category = "Analytics & SIEM"
     initiator.template = "HelloWorldParsingRules"
-    initiator.xsiam = True
-    parsing_rules_path = os.path.join(temp_pack_dir, f"{INTEGRATION_NAME}ParsingRule")
+    initiator.marketplace = MarketplaceVersions.MarketplaceV2
+    parsing_rules_path = temp_pack_dir.joinpath(f"{INTEGRATION_NAME}ParsingRule")
     res = initiator.modeling_parsing_rules_init(is_parsing_rules=True)
-    yml_path = os.path.join(parsing_rules_path, f"{INTEGRATION_NAME}ParsingRule.yml")
+    yml_path = Path(parsing_rules_path, f"{INTEGRATION_NAME}ParsingRules.yml")
 
     assert res
-    assert os.path.exists(yml_path)
-    with open(yml_path) as f:
-        yaml_content = yaml.load(f)
-        assert "8.3.0" in yaml_content["fromversion"]
-        assert f"{INTEGRATION_NAME}_ParsingRule" == yaml_content["id"]
-        assert f"{INTEGRATION_NAME} Parsing Rule" == yaml_content["name"]
-        os.remove(yml_path)
+    assert Path(yml_path).exists()
+    yaml_content = get_file(yml_path)
+    assert "8.3.0" in yaml_content["fromversion"]
+    assert f"{INTEGRATION_NAME}_ParsingRule" == yaml_content["id"]
+    assert f"{INTEGRATION_NAME} Parsing Rule" == yaml_content["name"]
 
 
 def test_modeling_or_parsing_rules_yml_reformatting_parsing_rules(
@@ -1144,7 +1149,7 @@ def test_modeling_or_parsing_rules_yml_reformatting_parsing_rules(
     d.mkdir()
     dir_name = "HelloWorld"
     initiator.dir_name = dir_name
-    p = d / f"{dir_name}ModelingRule.yml"
+    p = d / f"{dir_name}ModelingRules.yml"
     full_output_path = Path(d)
     initiator.full_output_path = full_output_path
     with p.open(mode="w") as f:
@@ -1163,16 +1168,14 @@ def test_modeling_or_parsing_rules_yml_reformatting_parsing_rules(
     initiator.modeling_or_parsing_rules_yml_reformatting(
         current_suffix=dir_name, is_modeling_rules=True
     )
-    with open(full_output_path / f"{dir_name}ModelingRule.yml") as f:
-        yml_dict = yaml.load(f)
-        assert yml_dict == OrderedDict(
-            {
-                "fromversion": "8.3.0",
-                "id": "HelloWorld_modeling_rule",
-                "name": "HelloWorld Modeling Rule",
-                "rules": "",
-                "schema": "",
-                "tags": "",
-            }
-        )
-        os.remove(full_output_path / f"{dir_name}ModelingRule.yml")
+    yml_dict = get_file(full_output_path / f"{dir_name}ModelingRules.yml")
+    assert yml_dict == OrderedDict(
+        {
+            "fromversion": "8.3.0",
+            "id": "HelloWorld_modeling_rule",
+            "name": "HelloWorld Modeling Rule",
+            "rules": "",
+            "schema": "",
+            "tags": "",
+        }
+    )

@@ -1,5 +1,6 @@
 from typing import Any, Dict, List
 
+import more_itertools
 from neo4j import Transaction
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
@@ -14,6 +15,8 @@ from demisto_sdk.commands.content_graph.interface.neo4j.queries.common import (
     node_map,
     run_query,
 )
+
+CHUNK_SIZE = 500
 
 
 def build_source_properties() -> str:
@@ -208,12 +211,12 @@ def create_relationships_by_type(
         query = build_depends_on_relationships_query()
     else:
         query = build_default_relationships_query(relationship)
-
-    result = run_query(tx, query, data=data).single()
-    merged_relationships_count: int = result["relationships_merged"]
-    logger.debug(
-        f"Merged {merged_relationships_count} relationships of type {relationship}."
-    )
+    for chunk in more_itertools.chunked_even(data, CHUNK_SIZE):
+        result = run_query(tx, query, data=chunk).single()
+        merged_relationships_count = result["relationships_merged"]
+        logger.debug(
+            f"Merged {merged_relationships_count} relationships of type {relationship}."
+        )
 
 
 def _match_relationships(
@@ -239,11 +242,11 @@ def _match_relationships(
     query = f"""// Match relationships of the given ids list
 UNWIND $ids_list AS id
 MATCH (node_from) - [relationship] - (node_to)
-WHERE id(node_from) = id
+WHERE elementId(node_from) = id
 {marketplace_where}
 RETURN node_from, collect(relationship) AS relationships, collect(node_to) AS nodes_to"""
     return {
-        int(item["node_from"].id): Neo4jRelationshipResult(
+        item["node_from"].element_id: Neo4jRelationshipResult(
             node_from=item.get("node_from"),
             relationships=item.get("relationships"),
             nodes_to=item.get("nodes_to"),

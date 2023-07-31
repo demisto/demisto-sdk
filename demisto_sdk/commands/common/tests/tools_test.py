@@ -3,6 +3,7 @@ import os
 import shutil
 from configparser import ConfigParser
 from pathlib import Path
+from tempfile import NamedTemporaryFile, TemporaryDirectory
 from typing import Callable, List, Optional, Tuple, Union
 
 import git
@@ -73,6 +74,7 @@ from demisto_sdk.commands.common.tools import (
     get_latest_release_notes_text,
     get_marketplace_to_core_packs,
     get_pack_metadata,
+    get_pack_names_from_files,
     get_relative_path_from_packs_dir,
     get_release_note_entries,
     get_release_notes_file_path,
@@ -253,7 +255,7 @@ class TestGenericFunctions:
             )
         )
         assert "ü" in path.read_text(encoding="latin-1")
-        assert get_file(path, suffix) == {"text": SENTENCE_WITH_UMLAUTS}
+        assert get_file(path) == {"text": SENTENCE_WITH_UMLAUTS}
 
     @pytest.mark.parametrize(
         "file_name, prefix, result",
@@ -2526,73 +2528,25 @@ def test_get_display_name(data, answer, tmpdir):
     assert get_display_name(file.path) == answer
 
 
-@pytest.mark.parametrize("value", ("true", "True"))
-def test_string_to_bool__default_params__true(value: str):
+@pytest.mark.parametrize("value", ("true", "True", 1, "1", "yes", "y"))
+def test_string_to_bool_true(value: str):
     assert string_to_bool(value)
 
 
-@pytest.mark.parametrize("value", ("false", "False"))
-def test_string_to_bool__default_params__false(value: str):
+@pytest.mark.parametrize("value", ("", None))
+def test_string_to_bool_default_true(value: str):
+    assert string_to_bool(value, True)
+
+
+@pytest.mark.parametrize("value", ("false", "False", 0, "0", "n", "no"))
+def test_string_to_bool_false(value: str):
     assert not string_to_bool(value)
 
 
-@pytest.mark.parametrize("value", ("1", 1, "", " ", "כן", None, "None"))
-def test_string_to_bool__default_params__error(value: str):
+@pytest.mark.parametrize("value", ("", " ", "כן", None, "None"))
+def test_string_to_bool_error(value: str):
     with pytest.raises(ValueError):
         string_to_bool(value)
-
-
-@pytest.mark.parametrize(
-    "value", ("true", "True", "TRUE", "t", "T", "yes", "Yes", "YES", "y", "Y", "1")
-)
-def test_string_to_bool__all_params_true__true(value: str):
-    assert string_to_bool(value, True, True, True, True, True, True)
-
-
-@pytest.mark.parametrize(
-    "value", ("false", "False", "FALSE", "f", "F", "no", "No", "NO", "n", "N", "0")
-)
-def test_string_to_bool__all_params_true__false(value: str):
-    assert not string_to_bool(value, True, True, True, True, True, True)
-
-
-@pytest.mark.parametrize(
-    "value",
-    (
-        "true",
-        "True",
-        "TRUE",
-        "t",
-        "T",
-        "yes",
-        "Yes",
-        "YES",
-        "y",
-        "Y",
-        "1",
-        "false",
-        "False",
-        "FALSE",
-        "f",
-        "F",
-        "no",
-        "No",
-        "NO",
-        "n",
-        "N",
-        "0",
-        "",
-        " ",
-        1,
-        True,
-        None,
-        "אולי",
-        "None",
-    ),
-)
-def test_string_to_bool__all_params_false__error(value: str):
-    with pytest.raises(ValueError):
-        assert string_to_bool(value, False, False, False, False, False, False)
 
 
 @pytest.mark.parametrize(
@@ -2896,7 +2850,6 @@ def test_search_and_delete_from_conf(
     no_test_playbooks_explicitly,
     expected_test_list,
 ):
-
     """
     Given:
           content_item_id, file_type, test_playbooks, no_test_playbooks_explicitly
@@ -2991,3 +2944,88 @@ def test_is_content_item_dependent_in_conf(test_config, file_type, expected_resu
     """
     result = is_content_item_dependent_in_conf(test_config, file_type)
     assert result == expected_result
+
+
+@pytest.mark.parametrize(
+    "file_paths, skip_file_types, expected_packs",
+    [
+        (
+            [
+                "Packs/PackA/pack_metadata.json",
+                "Tests/scripts/infrastructure_tests/tests_data/collect_tests/R/Packs/PackB/pack_metadata.json",
+            ],
+            None,
+            {"PackA"},
+        ),
+        (
+            [("Packs/PackA/pack_metadata.json", "Packs/PackB/pack_metadata.json")],
+            None,
+            {"PackB"},
+        ),
+        (
+            ["Packs/PackA/pack_metadata.json", "Packs/PackB/ReleaseNotes/1_0_0.md"],
+            {FileType.RELEASE_NOTES},
+            {"PackA"},
+        ),
+    ],
+)
+def test_get_pack_names_from_files(file_paths, skip_file_types, expected_packs):
+    """
+    Given:
+        - Case A: Real packs paths and infra file paths.
+        - Case B: File paths in tuple.
+        - Case C: File paths and file types to skip.
+
+    When:
+        - Running get_pack_names_from_files.
+
+    Then:
+        - Ensure that the result is as expected.
+    """
+    packs_result = get_pack_names_from_files(file_paths, skip_file_types)
+    assert packs_result == expected_packs
+
+
+@pytest.mark.parametrize(
+    "file_name, expected_hash",
+    [
+        ("file.txt", "c8c54e11b1cb27c3376fa82520d53ef9932a02c0"),
+        ("file2.txt", "f1e01f0882e1f08f00f38d0cd60a850dc9288188"),
+    ],
+)
+def test_sha1_file(file_name, expected_hash):
+    """
+    Given:
+        - A file path
+    When:
+        - Checking the hash
+    Then:
+        Validate that the hash is correct, even after moving to a different location
+    """
+    path_str = f"{GIT_ROOT}/demisto_sdk/commands/common/tests/test_files/test_sha1/content/{file_name}"
+    assert tools.sha1_file(path_str) == expected_hash
+    assert tools.sha1_file(Path(path_str)) == expected_hash
+    # move file to a different location and check that the hash is still the same
+    with NamedTemporaryFile() as temp_dir:
+        shutil.copy(path_str, temp_dir.name)
+        assert tools.sha1_file(temp_dir.name) == expected_hash
+
+
+def test_sha1_dir():
+    """
+    Given:
+        - A directory path
+    When:
+        - Checking the hash
+    Then:
+        Validate that the hash is correct, even after moving to a different location
+    """
+    path_str = f"{GIT_ROOT}/demisto_sdk/commands/common/tests/test_files/test_sha1"
+    expected_hash = "70feabcd73ccbcb14201453942edf4a5fb4c4aac"
+    assert tools.sha1_dir(path_str) == expected_hash
+    assert tools.sha1_dir(Path(path_str)) == expected_hash
+    # move dir to a different location and check that the hash is still the same
+    with TemporaryDirectory() as temp_dir:
+        dest = Path(temp_dir, "dest")
+        shutil.copytree(path_str, dest)
+        assert tools.sha1_dir(dest) == expected_hash

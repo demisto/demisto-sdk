@@ -75,3 +75,9 @@ repos:
 
       - id: should_be_skipped # only for the unit test
         skip: true
+
+  - repo: https://github.com/sourcery-ai/sourcery
+    rev: "v1.6.0"
+    hooks:
+    - id: sourcery
+      args: ["--no-summary"]

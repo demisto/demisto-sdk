@@ -1,9 +1,6 @@
-import argparse
-import contextlib
 import glob
 import io
 import logging
-
 import os
 import re
 import shlex
@@ -13,9 +10,9 @@ from collections import OrderedDict
 from concurrent.futures import as_completed
 from configparser import ConfigParser, MissingSectionHeaderError
 from contextlib import contextmanager
-from distutils.version import LooseVersion
 from enum import Enum
 from functools import lru_cache
+from hashlib import sha1
 from pathlib import Path, PosixPath
 from subprocess import DEVNULL, PIPE, Popen, check_output
 from time import sleep
@@ -39,11 +36,9 @@ import giturlparse
 import requests
 import urllib3
 from bs4.dammit import UnicodeDammit
-from git.types import PathLike
-from packaging.version import LegacyVersion, Version, parse
+from packaging.version import Version
 from pebble import ProcessFuture, ProcessPool
 from requests.exceptions import HTTPError
-from demisto_sdk.commands.common.cpu_count import cpu_count
 
 from demisto_sdk.commands.common.constants import (
     ALL_FILES_VALIDATION_IGNORE_WHITELIST,
@@ -58,6 +53,7 @@ from demisto_sdk.commands.common.constants import (
     DEFAULT_CONTENT_ITEM_TO_VERSION,
     DOC_FILES_DIR,
     ENV_DEMISTO_SDK_MARKETPLACE,
+    ENV_SDK_WORKING_OFFLINE,
     ID_IN_COMMONFIELDS,
     ID_IN_ROOT,
     INCIDENT_FIELDS_DIR,
@@ -113,6 +109,7 @@ from demisto_sdk.commands.common.constants import (
     MarketplaceVersions,
     urljoin,
 )
+from demisto_sdk.commands.common.cpu_count import cpu_count
 from demisto_sdk.commands.common.git_content_config import GitContentConfig, GitProvider
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
@@ -263,6 +260,14 @@ LAYOUT_CONTAINER_FIELDS = {
 SDK_PYPI_VERSION = r"https://pypi.org/pypi/demisto-sdk/json"
 
 SUFFIX_TO_REMOVE = ("_dev", "_copy")
+
+
+class NoInternetConnectionException(Exception):
+    """
+    This exception is raised in methods that require an internet connection, when the SDK is defined as working offline.
+    """
+
+    pass
 
 
 def generate_xsiam_normalized_name(file_name, prefix):
@@ -505,7 +510,7 @@ def get_remote_file_from_api(
                 timeout=10,
                 headers={
                     "Authorization": f"Bearer {github_token}" if github_token else "",
-                    "Accept": f"application/vnd.github.VERSION.raw",
+                    "Accept": "application/vnd.github.VERSION.raw",
                 },
             )  # Sometime we need headers
             if not res.ok:  # sometime we need param token
@@ -562,6 +567,7 @@ def get_remote_file(
     tag: str = "master",
     return_content: bool = False,
     git_content_config: Optional[GitContentConfig] = None,
+    default_value=None,
 ):
     """
     Args:
@@ -569,10 +575,17 @@ def get_remote_file(
         tag: The branch name. default is 'master'
         return_content: Determines whether to return the file's raw content or the dict representation of it.
         git_content_config: The content config to take the file from
+        default_value: The method returns this value if using the SDK in offline mode. default_value cannot be None,
+        as it will raise an exception.
     Returns:
         The file content in the required format.
 
     """
+    if is_sdk_defined_working_offline():
+        if default_value is None:
+            raise NoInternetConnectionException
+        return default_value
+
     tag = tag.replace("origin/", "").replace("demisto/", "")
     if not git_content_config:
         try:
@@ -788,7 +801,7 @@ def safe_write_unicode(
     try:
         _write()
 
-    except UnicodeError as e:
+    except UnicodeError:
         encoding = UnicodeDammit(path.read_bytes()).original_encoding
         if encoding == "utf-8":
             logger.error(
@@ -807,7 +820,6 @@ def safe_write_unicode(
 @lru_cache
 def get_file(
     file_path: Union[str, Path],
-    type_of_file: Optional[str] = None,
     clear_cache: bool = False,
     return_content: bool = False,
     keep_order: bool = True,
@@ -815,9 +827,9 @@ def get_file(
     if clear_cache:
         get_file.cache_clear()
     file_path = Path(file_path)  # type: ignore[arg-type]
-    if not type_of_file:
-        type_of_file = file_path.suffix.lower()
-        logger.debug(f"Inferred type {type_of_file} for file {file_path.name}.")
+
+    type_of_file = file_path.suffix.lower()
+    logger.debug(f"Inferred type {type_of_file} for file {file_path.name}.")
 
     if not file_path.exists():
         file_path = Path(get_content_path()) / file_path  # type: ignore[arg-type]
@@ -881,13 +893,13 @@ def get_file_or_remote(file_path: Path, clear_cache=False):
 def get_yaml(file_path, cache_clear=False, keep_order: bool = True):
     if cache_clear:
         get_file.cache_clear()
-    return get_file(file_path, "yml", clear_cache=cache_clear, keep_order=keep_order)
+    return get_file(file_path, clear_cache=cache_clear, keep_order=keep_order)
 
 
 def get_json(file_path, cache_clear=False):
     if cache_clear:
         get_file.cache_clear()
-    return get_file(file_path, "json", clear_cache=cache_clear)
+    return get_file(file_path, clear_cache=cache_clear)
 
 
 def get_script_or_integration_id(file_path):
@@ -1028,18 +1040,10 @@ def get_to_version(file_path):
 
 
 def str2bool(v):
-    if not v:
-        return False
-
-    if isinstance(v, bool):
-        return v
-    if v.lower() in ("yes", "true", "t", "y", "1"):
-        return True
-
-    if v.lower() in ("no", "false", "f", "n", "0"):
-        return False
-
-    raise argparse.ArgumentTypeError("Boolean value expected.")
+    """
+    Deprecated. Use string_to_bool instead
+    """
+    return string_to_bool(v, default_when_empty=False)
 
 
 def to_dict(obj):
@@ -1182,7 +1186,7 @@ def server_version_compare(v1, v2):
     v1 = format_version(v1)
     v2 = format_version(v2)
 
-    _v1, _v2 = LooseVersion(v1), LooseVersion(v2)
+    _v1, _v2 = Version(v1), Version(v2)
     if _v1 == _v2:
         return 0
     if _v1 > _v2:
@@ -1356,6 +1360,9 @@ def get_pack_names_from_files(file_paths, skip_file_types=None):
         if isinstance(path, tuple):
             path = path[1]
 
+        if not path.startswith("Packs/"):
+            continue
+
         file_type = find_type(path)
         if file_type not in skip_file_types:
             pack = get_pack_name(path)
@@ -1435,7 +1442,7 @@ def get_pack_ignore_content(pack_name: str) -> Union[ConfigParser, None]:
             config = ConfigParser(allow_no_value=True)
             config.read(_pack_ignore_file_path)
             return config
-        except MissingSectionHeaderError as err:
+        except MissingSectionHeaderError:
             logger.exception(
                 f"Error when retrieving the content of {_pack_ignore_file_path}"
             )
@@ -1606,7 +1613,7 @@ def get_dict_from_file(
                 return {}, "py"
             elif path.endswith(".xif"):
                 return {}, "xif"
-    except FileNotFoundError as e:
+    except FileNotFoundError:
         if raises_error:
             raise
 
@@ -2122,7 +2129,7 @@ def get_last_release_version():
     """
     tags = run_command("git tag").split("\n")
     tags = [tag for tag in tags if re.match(r"\d+\.\d+\.\d+", tag) is not None]
-    tags.sort(key=LooseVersion, reverse=True)
+    tags.sort(key=Version, reverse=True)
 
     return tags[0]
 
@@ -3197,8 +3204,7 @@ def get_item_marketplaces(
         return [MarketplaceVersions.MarketplaceV2.value]
 
     if not item_data:
-        file_type = Path(item_path).suffix
-        item_data = get_file(item_path, file_type)
+        item_data = get_file(item_path)
 
     # first check, check field 'marketplaces' in the item's file
     marketplaces = item_data.get("marketplaces", [])  # type: ignore
@@ -3482,7 +3488,7 @@ def get_display_name(file_path, file_data={}) -> str:
     if not file_data:
         file_extension = os.path.splitext(file_path)[1]
         if file_extension in [".yml", ".json"]:
-            file_data = get_file(file_path, file_extension)
+            file_data = get_file(file_path)
 
     if "display" in file_data:
         name = file_data.get("display", None)
@@ -3615,54 +3621,31 @@ def normalize_field_name(field: str) -> str:
     return field.replace("incident_", "").replace("indicator_", "")
 
 
+STRING_TO_BOOL_MAP = {
+    "y": True,
+    "1": True,
+    "yes": True,
+    "true": True,
+    "n": False,
+    "0": False,
+    "no": False,
+    "false": False,
+    "t": True,
+    "f": False,
+}
+
+
 def string_to_bool(
-    input_: str,
-    accept_lower_case: bool = True,
-    accept_title: bool = True,
-    accept_upper_case: bool = False,
-    accept_yes_no: bool = False,
-    accept_int: bool = False,
-    accept_single_letter: bool = False,
-) -> Optional[bool]:
-    if not isinstance(input_, str):
-        raise ValueError("cannot convert non-string to bool")
+    input_: Any,
+    default_when_empty: Optional[bool] = None,
+) -> bool:
+    try:
+        return STRING_TO_BOOL_MAP[str(input_).lower()]
+    except (KeyError, TypeError):
+        if input_ in ("", None) and default_when_empty is not None:
+            return default_when_empty
 
-    _considered_true = ["true"]
-    _considered_false = ["false"]
-
-    for (condition, true_value, false_value) in (
-        (accept_yes_no, "yes", "no"),
-        (accept_int, "1", "0"),
-    ):
-        if condition:
-            _considered_true.append(true_value)
-            _considered_false.append(false_value)
-
-    considered_true: Set[str] = set()
-    considered_false: Set[str] = set()
-
-    for (condition, func) in (
-        (accept_lower_case, lambda x: x.lower()),
-        (accept_title, lambda x: x.title()),
-        (accept_upper_case, lambda x: x.upper()),
-    ):
-        if condition:
-            considered_true.update(map(func, _considered_true))
-            considered_false.update(map(func, _considered_false))
-
-    if accept_single_letter:
-        considered_true.update(
-            tuple(_[0] for _ in considered_true)
-        )  # note this takes considered_true as input
-        considered_false.update(tuple(_[0] for _ in considered_false))
-
-    if input_ in considered_true:
-        return True
-
-    if input_ in considered_false:
-        return False
-
-    raise ValueError(f"cannot convert string {input_} to bool")
+    raise ValueError(f"cannot convert {input_} to bool")
 
 
 def field_to_cli_name(field_name: str) -> str:
@@ -3834,3 +3817,46 @@ def parse_multiple_path_inputs(
         return result
 
     raise ValueError(f"Cannot parse paths from {input_path}")
+
+
+@lru_cache
+def is_sdk_defined_working_offline() -> bool:
+    """
+    This method returns True when the SDK is defined as offline, i.e., when
+    the DEMISTO_SDK_OFFLINE_ENV environment variable is True.
+
+    Returns:
+        bool: The value for DEMISTO_SDK_OFFLINE_ENV environment variable.
+    """
+    return str2bool(os.getenv(ENV_SDK_WORKING_OFFLINE))
+
+
+def sha1_update_from_file(filename: Union[str, Path], hash):
+    """This will iterate the file and update the hash object"""
+    assert Path(filename).is_file()
+    with open(str(filename), "rb") as f:
+        for chunk in iter(lambda: f.read(4096), b""):
+            hash.update(chunk)
+    return hash
+
+
+def sha1_file(filename: Union[str, Path]) -> str:
+    """Return the sha1 hash of a directory"""
+    return str(sha1_update_from_file(filename, sha1()).hexdigest())
+
+
+def sha1_update_from_dir(directory: Union[str, Path], hash_):
+    """This will recursivly iterate all the files in the directory and update the hash object"""
+    assert Path(directory).is_dir()
+    for path in sorted(Path(directory).iterdir(), key=lambda p: str(p).lower()):
+        hash_.update(path.name.encode())
+        if path.is_file():
+            hash_ = sha1_update_from_file(path, hash_)
+        elif path.is_dir():
+            hash_ = sha1_update_from_dir(path, hash_)
+    return hash_
+
+
+def sha1_dir(directory: Union[str, Path]) -> str:
+    """Return the sha1 hash of a directory"""
+    return str(sha1_update_from_dir(directory, sha1()).hexdigest())

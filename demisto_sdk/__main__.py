@@ -2895,7 +2895,7 @@ def test_content(ctx, **kwargs):
 )
 @click.option(
     "-pkw/ -npkw",
-    "--use-packs-known-words/ --no-use-packs-known-words",
+    "--use-packs-known-words/ --skip-packs-known-words",
     is_flag=True,
     help="Will find and load the known_words file from the pack. "
     "To use this option make sure you are running from the "

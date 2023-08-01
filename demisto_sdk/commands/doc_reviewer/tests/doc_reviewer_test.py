@@ -1420,9 +1420,9 @@ def test_replace_escape_characters(sentence, expected):
     "use_pack_known_words, expected_param_value",
     [
         (["--use-packs-known-words"], True),
-        (["--no-use-packs-known-words"], False),
+        (["--skip-packs-known-words"], False),
         ([""], True),
-        (["--no-use-packs-known-words", "--use-packs-known-words"], True),
+        (["--skip-packs-known-words", "--use-packs-known-words"], True),
     ],
 )
 def test_pack_known_word_arg(use_pack_known_words, expected_param_value, mocker):
@@ -1433,9 +1433,9 @@ def test_pack_known_word_arg(use_pack_known_words, expected_param_value, mocker)
         - running the doc-review command
     Then:
         - Validate that given --use-packs-known-words" the load_known_words_from_pack is True
-        - Validate that given --no-use-packs-known-words" the load_known_words_from_pack is False
+        - Validate that given --skip-packs-known-words" the load_known_words_from_pack is False
         - Validate that no param the default load_known_words_from_pack is True
-        - Validate that given --use-packs-known-words and --no-use-packs-known-words the load_known_words_from_pack is True
+        - Validate that given --use-packs-known-words and --skip-packs-known-words the load_known_words_from_pack is True
     """
     runner = CliRunner()
     mock_doc_reviewer = mocker.MagicMock(name="DocReviewer")

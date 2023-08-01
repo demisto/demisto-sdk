@@ -1,5 +1,4 @@
 import os
-from pathlib import Path
 
 import pytest
 
@@ -179,8 +178,8 @@ def test_json_outputs_where_no_image_in_integration(repo):
 
     # Remove the integration image
     image_path = os.path.join(integration.path, "IntName_image.png")
-    if Path(image_path).exists():
-        Path.unlink(Path(image_path))
+    if os.path.exists(image_path):
+        os.remove(image_path)
 
     with ChangeCWD(repo.path):
         # Run the image validator with a json file path
@@ -239,8 +238,8 @@ def test_is_valid_image_name_with_invalid_name(repo, file_name):
     integration = pack.create_integration("IntName")
     integration.create_default_integration()
 
-    if Path(integration.image.path).exists():
-        Path.unlink(Path(integration.image.path))
+    if os.path.exists(integration.image.path):
+        os.remove(integration.image.path)
         integration.image = None
 
     integration.image = File(

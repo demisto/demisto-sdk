@@ -907,8 +907,8 @@ def test_get_ignore_pack_tests__no_ignore_pack(tmpdir):
     pack_ignore_path = os.path.join(pack.path, PACKS_PACK_IGNORE_FILE_NAME)
 
     # remove .pack-ignore if exists
-    if Path(pack_ignore_path).exists():
-        Path.unlink(Path(pack_ignore_path))
+    if os.path.exists(pack_ignore_path):
+        os.remove(pack_ignore_path)
 
     ignore_test_set = get_ignore_pack_skipped_tests(
         fake_pack_name, {fake_pack_name}, {}
@@ -1418,7 +1418,7 @@ def test_get_file_displayed_name__image(repo):
     integration.create_default_integration()
     with ChangeCWD(repo.path):
         display_name = get_file_displayed_name(integration.image.path)
-        assert display_name == Path(integration.image.rel_path).name
+        assert display_name == os.path.basename(integration.image.rel_path)
 
 
 INCIDENTS_TYPE_FILES_INPUTS = [

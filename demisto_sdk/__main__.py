@@ -2081,12 +2081,14 @@ def _generate_docs_for_file(kwargs: Dict[str, Any]):
         if command:
             if (
                 output_path
-                and (not Path(output_path, "README.md").is_file())
+                and (not os.path.isfile(os.path.join(output_path, "README.md")))
                 or (not output_path)
                 and (
-                    not Path(
-                        os.path.dirname(os.path.realpath(input_path)), "README.md"
-                    ).is_file()
+                    not os.path.isfile(
+                        os.path.join(
+                            os.path.dirname(os.path.realpath(input_path)), "README.md"
+                        )
+                    )
                 )
             ):
                 raise Exception(
@@ -2104,7 +2106,7 @@ def _generate_docs_for_file(kwargs: Dict[str, Any]):
                 "[red]File is not an Integration, Script, Playbook or a README.[/red]"
             )
 
-        if old_version and not Path(old_version).is_file():
+        if old_version and not os.path.isfile(old_version):
             raise Exception(
                 f"[red]Input old version file {old_version} was not found.[/red]"
             )
@@ -2671,7 +2673,7 @@ def openapi_codegen(ctx, **kwargs):
         output_dir = kwargs["output_dir"]
 
     # Check the directory exists and if not, try to create it
-    if not Path(output_dir).exists():
+    if not os.path.exists(output_dir):
         try:
             os.mkdir(output_dir)
         except Exception as err:

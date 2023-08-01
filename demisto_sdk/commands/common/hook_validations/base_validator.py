@@ -264,7 +264,7 @@ class BaseValidator:
         if str2bool(os.getenv("GITHUB_ACTIONS")):
             github_annotation_message = error_message
             if suggested_fix:
-                github_annotation_message += f".{suggested_fix}"
+                github_annotation_message += suggested_fix.replace('\n', '.')
                 logger.info(f"$$$${github_annotation_message=}$$$$")
             print(
                 f"::error file={file_path},line=1,endLine=1,title=Validation Error {error_code}::{github_annotation_message}")

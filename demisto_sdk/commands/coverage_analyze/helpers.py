@@ -215,7 +215,6 @@ class CoverageSummary:
         resp.raise_for_status()
         data = resp.json()
         if self.use_cache and self.cache_dir:
-            raise "here2"
             with open(json_path, "w") as fp:
                 json.dump(data, fp)
 

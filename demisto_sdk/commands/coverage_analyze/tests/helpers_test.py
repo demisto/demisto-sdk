@@ -3,6 +3,7 @@ import os
 import shutil
 import sqlite3
 from datetime import datetime
+from pathlib import Path
 
 import coverage
 import pytest
@@ -364,7 +365,7 @@ class TestFixFilePath:
 
         fix_file_path(dot_cov_file_path, "some_path")
 
-        assert not os.path.exists(dot_cov_file_path)
+        assert not Path(dot_cov_file_path).exists()
         assert len(logger_debug.call_args_list) == 2
         assert all(
             [

@@ -71,8 +71,8 @@ outputs:
   description: ''
   type: String
 """
-import os
 import sys
+from pathlib import Path
 from typing import Dict, Optional
 
 import dateparser
@@ -273,7 +273,7 @@ def _parse_description_argument(descriptions: Optional[str]) -> Optional[dict]: 
         return None
 
     try:
-        if os.path.exists(descriptions):  # file input
+        if Path(descriptions).exists():  # file input
             with open(descriptions, encoding="utf8") as f:
                 return json.load(f)
 

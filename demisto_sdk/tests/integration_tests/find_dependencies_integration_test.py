@@ -156,7 +156,7 @@ class TestFindDependencies:  # Use classes to speed up test - multi threaded py 
                 [
                     FIND_DEPENDENCIES_CMD,
                     "-i",
-                    "Packs/" + os.path.basename(repo.packs[0].path),
+                    "Packs/" + Path(repo.packs[0].path).name,
                     "-idp",
                     repo.id_set.path,
                     "--no-update",
@@ -279,7 +279,7 @@ class TestFindDependencies:  # Use classes to speed up test - multi threaded py 
                 [
                     FIND_DEPENDENCIES_CMD,
                     "-i",
-                    "Packs/" + os.path.basename(pack2.path),
+                    "Packs/" + Path(pack2.path).name,
                     "-idp",
                     repo.id_set.path,
                     # TODO Remove
@@ -309,7 +309,7 @@ class TestFindDependencies:  # Use classes to speed up test - multi threaded py 
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             pack.create_integration()
-            path = os.path.join("Packs", os.path.basename(pack.path), "Integrations")
+            path = os.path.join("Packs", Path(pack.path).name, "Integrations")
             result = runner.invoke(main, [FIND_DEPENDENCIES_CMD, "-i", path])
             assert result.exit_code == 1
             assert str_in_call_args_list(

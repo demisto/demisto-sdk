@@ -56,7 +56,7 @@ class RuleUnifier(Unifier):
     @staticmethod
     def _insert_schema(path: Path, data: dict):
         schema_path = str(path).replace(".yml", "_schema.json")
-        if os.path.exists(schema_path):
+        if Path(schema_path).exists():
             with open(schema_path, encoding="utf-8") as schema_file:
                 schema = json.loads(schema_file.read())
                 data["schema"] = FoldedScalarString(json.dumps(schema, indent=4))

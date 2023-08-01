@@ -1426,6 +1426,17 @@ def test_replace_escape_characters(sentence, expected):
     ],
 )
 def test_pack_known_word_arg(use_pack_known_words, expected_param_value, mocker):
+    """
+    Given:
+        - the --use-pack-known-words parameter
+    When:
+        - running the doc-review command
+    Then:
+        - Validate that given --use-packs-known-words" the load_known_words_from_pack is True
+        - Validate that given --no-use-packs-known-words" the load_known_words_from_pack is False
+        - Validate that no param the default load_known_words_from_pack is True
+        - Validate that given --use-packs-known-words and --no-use-packs-known-words the load_known_words_from_pack is True
+    """
     runner = CliRunner()
     mock_doc_reviewer = mocker.MagicMock(name="DocReviewer")
     mock_doc_reviewer.run_doc_review.return_value = True

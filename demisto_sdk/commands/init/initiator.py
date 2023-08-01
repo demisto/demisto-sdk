@@ -810,29 +810,27 @@ class Initiator:
             )
 
     def verify_output_path_for_xsiam_content(self) -> bool:
-        """Verify that there is a output path from the user
-
+        """Verify that there is an output path from the user.
         Returns:
             bool. True if all the required inputs from the user are valid.
         """
-        if not self.marketplace == MarketplaceVersions.MarketplaceV2:
+        if self.marketplace != MarketplaceVersions.MarketplaceV2:
             return True
-        else:
-            if not self.output:
-                logger.error(
-                    "[red]An output directory is required to utilize the --xsiam flag. Please attempt the operation again using the -o flag to specify the output directory.[/red]"
-                )
-                return False
-            if self.output and re.search(INTEGRATIONS_DIR_REGEX, self.output):
-                return True
-            # if Packs folder exists make sure we take the Integration dir.
-            if self.output and re.search(PACKS_DIR_REGEX, self.output):
-                return True
-            else:
-                logger.error(
-                    "[red]An output directory is invalid - make sure the name looks like the following: Packs/**/Integrations [/red]"
-                )
-                return False
+        if not self.output:
+            logger.error(
+                "[red]An output directory is required to utilize the --xsiam flag. Please attempt the operation again using the -o flag to specify the output directory.[/red]"
+            )
+            return False
+        # Check if the output path matches either the Integrations directory or a subdirectory under Packs
+        valid_output_path = re.search(INTEGRATIONS_DIR_REGEX, self.output) or re.search(
+            PACKS_DIR_REGEX, self.output
+        )
+        if not valid_output_path:
+            logger.error(
+                "[red]The output directory is invalid - make sure the name looks like one of the following: Packs/**/Integrations [/red]"
+            )
+            return False
+        return True
 
     def integration_init(self) -> bool:
         """Creates a new integration according to a template.
@@ -1059,7 +1057,7 @@ class Initiator:
         ):
             yml_dict["fromversion"] = from_version
 
-        if not self.is_version_above_supported_version(
+        if not self.is_version_bigger_then_supported_version(
             yml_dict.get("fromversion") or DEFAULT_CONTENT_ITEM_FROM_VERSION,
             self.SUPPORTED_FROM_VERSION_XSIAM,
         ):
@@ -1100,10 +1098,10 @@ class Initiator:
             with open(python_file_path, "w") as fp:
                 fp.write(file_contents)
 
-    def is_version_above_supported_version(
+    def is_version_bigger_then_supported_version(
         self, current_version: str, supported_from_version: str
     ) -> bool:
-        """Formats the given yml to fit the newly created integration/script
+        """Return bool false if the given version is above the supported version
 
         Args:
             current_version (str): The current version.
@@ -1135,7 +1133,7 @@ class Initiator:
             if self.marketplace != MarketplaceVersions.MarketplaceV2
             else self.SUPPORTED_FROM_VERSION_XSIAM
         )
-        if not self.is_version_above_supported_version(
+        if not self.is_version_bigger_then_supported_version(
             yml_dict.get("fromversion", DEFAULT_CONTENT_ITEM_FROM_VERSION),
             compared_version,
         ):

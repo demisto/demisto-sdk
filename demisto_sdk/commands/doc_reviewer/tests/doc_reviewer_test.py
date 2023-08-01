@@ -1414,3 +1414,23 @@ def test_camel_case_split(word, parts):
 def test_replace_escape_characters(sentence, expected):
     result = replace_escape_characters(sentence)
     assert result == expected, "The escape sequence was removed"
+
+
+@pytest.mark.parametrize(
+    "use_pack_known_words, expected_param_value",
+    [
+        ("--use-packs-known-words", True),
+        ("--no-use-packs-known-words", False),
+        ("", True),
+    ],
+)
+def test_pack_known_word_arg(use_pack_known_words, expected_param_value, mocker):
+    runner = CliRunner()
+    mock_doc_reviewer = mocker.MagicMock(name="DocReviewer")
+    mock_doc_reviewer.run_doc_review.return_value = True
+    m = mocker.patch(
+        "demisto_sdk.commands.doc_reviewer.doc_reviewer.DocReviewer",
+        return_value=mock_doc_reviewer,
+    )
+    runner.invoke(__main__.doc_review, [use_pack_known_words])
+    assert m.call_args.kwargs.get("load_known_words_from_pack") == expected_param_value

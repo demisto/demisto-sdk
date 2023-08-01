@@ -831,29 +831,24 @@ class Initiator:
         Returns:
             bool. True if all the required inputs from the user are valid.
         """
-        if self.marketplace == MarketplaceVersions.MarketplaceV2 and not self.output:
-            logger.error(
-                "[red]An output directory is required to utilize the --xsiam flag. Please attempt the operation again using the -o flag to specify the output directory.[/red]"
-            )
-            return False
-        if (
-            self.marketplace == MarketplaceVersions.MarketplaceV2
-            and self.output
-            and re.search(INTEGRATIONS_DIR_REGEX, self.output)
-        ):
-            return True
-        elif (
-            self.marketplace == MarketplaceVersions.MarketplaceV2
-            and self.output
-            and re.search(PACKS_DIR_REGEX, self.output)
-        ):
-            self.output = str(Path(self.output) / INTEGRATIONS_DIR)
+        if not self.marketplace == MarketplaceVersions.MarketplaceV2:
             return True
         else:
-            logger.error(
-                "[red]An output directory is invalid - make sure the name looks like the following: Packs/**/Integrations [/red]"
-            )
-        return False
+            if not self.output:
+                logger.error(
+                    "[red]An output directory is required to utilize the --xsiam flag. Please attempt the operation again using the -o flag to specify the output directory.[/red]"
+                )
+                return False
+            if self.output and re.search(INTEGRATIONS_DIR_REGEX, self.output):
+                return True
+            if self.output and re.search(PACKS_DIR_REGEX, self.output):
+                self.output = str(Path(self.output) / INTEGRATIONS_DIR)
+                return True
+            else:
+                logger.error(
+                    "[red]An output directory is invalid - make sure the name looks like the following: Packs/**/Integrations [/red]"
+                )
+                return False
 
     def integration_init(self) -> bool:
         """Creates a new integration according to a template.

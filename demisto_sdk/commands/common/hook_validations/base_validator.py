@@ -262,7 +262,6 @@ class BaseValidator:
         self.json_output(file_path, error_code, error_message, warning)
         self.add_to_report_error_list(error_code, file_path, FOUND_FILES_AND_ERRORS)
         if str2bool(os.getenv("GITHUB_ACTIONS")):
-            logger.info(f"$$$$$$$$$$$$$${file_path=}\n{error_code=}\n{error_message=}\n{suggested_fix=}\n$$$$$$$")
             github_annotation_message = error_message
             if suggested_fix:
                 github_annotation_message += f"\n{suggested_fix}"

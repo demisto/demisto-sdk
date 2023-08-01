@@ -11,13 +11,8 @@ from demisto_sdk.commands.common.constants import (
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     LAYOUT_CONTAINER_FIELDS,
-    get_all_incident_and_indicator_fields_from_id_set,
-    get_invalid_incident_fields_from_layout,
-    normalize_field_name,
     remove_copy_and_dev_suffixes_from_str,
 )
-from demisto_sdk.commands.common.update_id_set import BUILT_IN_FIELDS
-from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.objects.base_content import UnknownContent
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 from demisto_sdk.commands.format.format_constants import (
@@ -29,9 +24,6 @@ from demisto_sdk.commands.format.format_constants import (
     VERSION_6_0_0,
 )
 from demisto_sdk.commands.format.update_generic_json import BaseUpdateJSON
-from demisto_sdk.commands.content_graph.interface.neo4j.neo4j_graph import (
-    Neo4jContentGraphInterface as ContentGraphInterface,
-)
 
 SCRIPT_QUERY_TYPE = "script"
 
@@ -128,7 +120,7 @@ class LayoutBaseFormat(BaseUpdateJSON, ABC):
         self.remove_non_existent_fields_layout()
 
     def layout__set_output_path(self):
-        output_basename = os.path.basename(self.output_file)
+        output_basename = Path(self.output_file).name
         if not output_basename.startswith(LAYOUT_PREFIX):
             new_output_basename = (
                 LAYOUT_PREFIX + output_basename.split(LAYOUTS_CONTAINER_PREFIX)[-1]
@@ -154,7 +146,7 @@ class LayoutBaseFormat(BaseUpdateJSON, ABC):
         self.remove_non_existent_fields_container_layout()
 
     def layoutscontainer__set_output_path(self):
-        output_basename = os.path.basename(self.output_file)
+        output_basename = Path(self.output_file).name
         if not output_basename.startswith(LAYOUTS_CONTAINER_PREFIX):
             new_output_basename = (
                 LAYOUTS_CONTAINER_PREFIX + output_basename.split(LAYOUT_PREFIX)[-1]

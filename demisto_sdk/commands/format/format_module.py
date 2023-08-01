@@ -189,7 +189,7 @@ def format_manager(
             dirname = os.path.dirname(file_path)
             if dirname.endswith("CommonServerPython"):
                 current_excluded_files.remove("CommonServerPython.py")
-            if os.path.basename(file_path) in current_excluded_files:
+            if Path(file_path).name in current_excluded_files:
                 continue
             if any(test_dir in str(dirname) for test_dir in TESTS_AND_DOC_DIRECTORIES):
                 continue
@@ -283,7 +283,7 @@ def get_files_to_format_from_git(
 
         # get the file extension without the '.'
         file_extension = os.path.splitext(str_file_path)[1][1:]
-        if file_extension in supported_file_types and os.path.exists(str_file_path):
+        if file_extension in supported_file_types and Path(str_file_path).exists():
             filtered_files.append(str_file_path)
 
     if filtered_files:

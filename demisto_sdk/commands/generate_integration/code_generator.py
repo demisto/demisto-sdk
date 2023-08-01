@@ -696,7 +696,7 @@ class IntegrationGeneratorConfig:
             return path
 
         package_dir = Path(output_dir, self.name)
-        if not Path(package_dir).exists():
+        if not os.path.exists(package_dir):
             os.mkdir(package_dir)
 
         code = self.generate_integration_python_code()

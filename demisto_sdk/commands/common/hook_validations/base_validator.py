@@ -265,9 +265,9 @@ class BaseValidator:
             github_annotation_message = error_message
             if suggested_fix:
                 github_annotation_message += f".{suggested_fix}"
+                logger.info(f"$$$${github_annotation_message=}$$$$")
             print(
-                f"::error file={file_path},line=1,endLine=1,title=Validation Error {error_code}::"
-                f"{github_annotation_message}")
+                f"::error file={file_path},line=1,endLine=1,title=Validation Error {error_code}::{github_annotation_message}")
         return formatted_error
 
     def check_file_flags(self, file_name, file_path):

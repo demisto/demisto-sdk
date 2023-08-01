@@ -267,6 +267,8 @@ class BaseValidator:
                 suggested_fix = suggested_fix.replace('\n', '.')
                 github_annotation_message += suggested_fix
                 logger.info(f"$$$${github_annotation_message=}$$$$")
+                github_annotation_message = github_annotation_message.replace('\n', '.')
+                logger.info(f"$$$${github_annotation_message=}$$$$")
             print(
                 f"::error file={file_path},line=1,endLine=1,title=Validation Error {error_code}::{github_annotation_message}")
         return formatted_error

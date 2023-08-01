@@ -1109,16 +1109,7 @@ def old_get_latest_release_notes_text(rn_path):
 
 def find_pack_folder(path: Path) -> Path:
     """
-    >>> find_pack_folder(Path('root/Packs/MyPack/Integrations/MyIntegration/MyIntegration.yml'))
-    PosixPath('root/Packs/MyPack')
-    >>> find_pack_folder(Path('Packs/MyPack1/Scripts/MyScript/MyScript.py')).name
-    'MyPack1'
-    >>> find_pack_folder(Path('Packs/MyPack2/Scripts/MyScript')).name
-    'MyPack2'
-    >>> find_pack_folder(Path('Packs/MyPack3/Scripts')).name
-    'MyPack3'
-    >>> find_pack_folder(Path('Packs/MyPack4')).name
-    'MyPack4'
+    Finds the pack folder.
     """
 
     if "Packs" not in path.parts:

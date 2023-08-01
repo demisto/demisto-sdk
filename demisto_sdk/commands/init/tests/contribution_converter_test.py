@@ -2,6 +2,7 @@ import os
 import re
 import shutil
 from os.path import join
+from pathlib import Path
 from typing import Union
 from zipfile import ZipFile
 
@@ -102,7 +103,7 @@ def rename_file_in_zip(
         updated_file_name (str): The name the original file will be renamed to
     """
     modded_zip_file = os.path.join(
-        os.path.dirname(path_to_zip), "Edit" + os.path.basename(path_to_zip)
+        os.path.dirname(path_to_zip), "Edit" + Path(path_to_zip).name
     )
     tmp_zf = ZipFile(modded_zip_file, "w")
     with ZipFile(path_to_zip, "r") as zf:
@@ -605,9 +606,8 @@ def test_convert_contribution_dir_to_pack_contents(tmp_path):
     update_file = fake_pack_extracted_dir / "incidentfield-SomeIncidentField.json"
     new_json = {"field": "new_value"}
     update_file.write_text(json.dumps(new_json))
-    cc = ContributionConverter()
-    cc.pack_dir_path = tmp_path
-    cc.convert_contribution_dir_to_pack_contents(fake_pack_extracted_dir)
+    converter = ContributionConverter(working_dir_path=str(tmp_path))
+    converter.convert_contribution_dir_to_pack_contents(fake_pack_extracted_dir)
     assert json.loads(extant_file.read_text()) == new_json
     assert not fake_pack_extracted_dir.exists()
 
@@ -667,7 +667,7 @@ def test_rearranging_before_conversion(zip_path: str, expected_directories: set)
     )
     results = set()
     for directory in unpacked_contribution_dirs:
-        results.add(os.path.basename(directory))
+        results.add(Path(directory).name)
     assert expected_directories == results
 
 
@@ -866,16 +866,16 @@ class TestReleaseNotes:
     @pytest.fixture(autouse=True)
     def rn_file_copy(self):
         yield shutil.copyfile(SOURCE_RELEASE_NOTES_FILE, RELEASE_NOTES_COPY)
-        if os.path.exists(RELEASE_NOTES_COPY):
-            os.remove(RELEASE_NOTES_COPY)
+        if Path(RELEASE_NOTES_COPY).exists():
+            Path.unlink(Path(RELEASE_NOTES_COPY))
 
     @pytest.fixture(autouse=True)
     def new_entity_rn_file_copy(self):
         yield shutil.copyfile(
             NEW_ENTITY_SOURCE_RELEASE_NOTES_FILE, NEW_ENTITY_RELEASE_NOTES_COPY
         )
-        if os.path.exists(NEW_ENTITY_RELEASE_NOTES_COPY):
-            os.remove(NEW_ENTITY_RELEASE_NOTES_COPY)
+        if Path(NEW_ENTITY_RELEASE_NOTES_COPY).exists():
+            Path.unlink(Path(NEW_ENTITY_RELEASE_NOTES_COPY))
 
     @pytest.mark.parametrize(
         "index, expected_result",

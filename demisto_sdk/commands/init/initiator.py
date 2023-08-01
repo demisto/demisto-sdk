@@ -244,7 +244,6 @@ class Initiator:
         category: str = "",
         script: bool = False,
         pack: bool = False,
-        xsiam: bool = False,
         author_image: str = "",
         demisto_mock: bool = False,
         common_server: bool = False,
@@ -403,17 +402,6 @@ class Initiator:
                         input(f"Please enter the id name for the {created_object}: ")
                     )
 
-    def get_pack_path(self) -> str:
-        """Gets the pack path from current path."""
-        if (
-            self.marketplace == MarketplaceVersions.MarketplaceV2
-            and self.output
-            and re.search(INTEGRATIONS_DIR_REGEX, self.output)
-        ):
-            if result := re.search(self.PACK_PATH_REGEX, self.output):
-                return result[0]
-        return self.output
-
     def create_initiator(
         self,
         output: str,
@@ -453,7 +441,6 @@ class Initiator:
             product (str): The product from the user.
             vendor (str): The vendor from the user.
         """
-        # output_path= get_pack_paths_from_files([self.output])[0]
         if not self.full_output_path and self.output:
             self.full_output_path = self.output
         modeling_rules_initiator = self.create_initiator(
@@ -1103,6 +1090,17 @@ class Initiator:
             with open(python_file_path, "w") as fp:
                 fp.write(file_contents)
 
+    def is_version_above_supported_version(
+        self, current_version: str, supported_from_version: str
+    ) -> bool:
+        """Formats the given yml to fit the newly created integration/script
+
+        Args:
+            current_version (str): The current version.
+            supported_from_version (str): The supported from version.
+        """
+        return Version(current_version) >= Version(supported_from_version)
+
     def yml_reformatting(self, current_suffix: str, integration: bool = False):
         """Formats the given yml to fit the newly created integration/script
 
@@ -1122,18 +1120,20 @@ class Initiator:
         if from_version:
             yml_dict["fromversion"] = from_version
 
-        if not self.marketplace == MarketplaceVersions.MarketplaceV2 and Version(
-            yml_dict.get("fromversion", DEFAULT_CONTENT_ITEM_FROM_VERSION)
-        ) < Version(self.SUPPORTED_FROM_VERSION):
-            yml_dict["fromversion"] = self.SUPPORTED_FROM_VERSION
-
-        elif self.marketplace == MarketplaceVersions.MarketplaceV2 and Version(
-            yml_dict.get("fromversion", DEFAULT_CONTENT_ITEM_FROM_VERSION)
-        ) < Version(self.SUPPORTED_FROM_VERSION_XSIAM):
-            yml_dict["fromversion"] = self.SUPPORTED_FROM_VERSION_XSIAM
+        compared_version = (
+            self.SUPPORTED_FROM_VERSION
+            if self.marketplace != MarketplaceVersions.MarketplaceV2
+            else self.SUPPORTED_FROM_VERSION_XSIAM
+        )
+        if not self.is_version_above_supported_version(
+            yml_dict.get("fromversion", DEFAULT_CONTENT_ITEM_FROM_VERSION),
+            compared_version,
+        ):
+            yml_dict["fromversion"] = compared_version
             logger.info(
                 "[yellow]The selected version is lower than the supported version; the value will be set to the default version. [/yellow]"
             )
+
         if integration:
             yml_dict["display"] = self.id
             yml_dict["category"] = (
@@ -1305,11 +1305,6 @@ class Initiator:
             name_to_change (str): The name of the former integration/script to replace in the import.
         """
         shutil.copy(template_path, output_path)
-        # with open(os.path.join(template_path)) as fp:
-        #     file_contents = fp.read()
-
-        # with open(os.path.join(output_path), "w") as fp:
-        #     fp.write(file_contents)
 
     def copy_common_server_python(self):
         """copy commonserverpython from the base pack"""

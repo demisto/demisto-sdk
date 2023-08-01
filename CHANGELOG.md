@@ -3,7 +3,7 @@
 * Fixed an issue where the coloring directives where showing in log messages.
 * Fixed an issue where **create-content-graph** was not executed upon changes in the parser infra files.
 * Added the *--xsiam* flag to the **init** command in order to create XSIAM content.
-  
+
 ## 1.18.0
 * Added the ability to ignore any validation in the **validate** command when running in an external (non-demisto/content) repo, by placing a `.private-repo-settings` file at its root.
 * Calling **format** with the `-d` flag now removes test playbooks testing the deprecated content from conf.json.

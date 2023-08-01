@@ -2,7 +2,7 @@
 ## Unreleased
 * Fixed an issue where the coloring directives where showing in log messages.
 * Fixed an issue where **create-content-graph** was not executed upon changes in the parser infra files.
-* **doc-review** added the parameter `skip-pack-known-words` to disable running with pack-known-words.
+* Added a parameter `skip-packs-known-words` to the **doc-review** command, making sure that pack known words will not be added.
 
 ## 1.18.0
 * Added the ability to ignore any validation in the **validate** command when running in an external (non-demisto/content) repo, by placing a `.private-repo-settings` file at its root.

@@ -71,12 +71,12 @@ def generate_script_doc(
         script_id = script.get("commonfields")["id"]
 
         # get script dependencies
-        dependencies, _ = get_depends_on(script)
-
+        dependencies = []
         used_in = []
         with ContentGraphInterface(update_graph=True) as graph:
             script_object = graph.search(object_id=script_id)[0]  # There will be only one object that matches the id.
-            used_in.extend(item.content_item_to.name for item in script_object.used_by)
+            used_in.extend(item.content_item_to.object_id for item in script_object.used_by)
+            dependencies.extend(item.content_item_to.object_id for item in script_object.uses)
 
         description = script.get("comment", "")
         # get inputs/outputs

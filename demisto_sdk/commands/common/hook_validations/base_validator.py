@@ -262,13 +262,11 @@ class BaseValidator:
         self.json_output(file_path, error_code, error_message, warning)
         self.add_to_report_error_list(error_code, file_path, FOUND_FILES_AND_ERRORS)
         if str2bool(os.getenv("GITHUB_ACTIONS")):
-            github_annotation_message = error_message
-            logger.info(f"$$$$$ Before: {suggested_fix=} $$$$$")
-            if suggested_fix:
-                suggested_fix = suggested_fix.strip().replace('\n', '.')
-                github_annotation_message += suggested_fix
-                logger.info(f"$$$$$ After: {suggested_fix=} $$$$$")
-                logger.info(f"$$$$$ After: {github_annotation_message=} $$$$$")
+            github_annotation_message = (
+                f"{error_message}\n{suggested_fix}"
+                if suggested_fix
+                else error_message
+            ).replace("\n", "%0A")  # GitHub action syntax
             print(
                 f"::error file={file_path},line=1,endLine=1,title=Validation Error {error_code}::{github_annotation_message}")
         return formatted_error

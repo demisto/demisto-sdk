@@ -402,11 +402,11 @@ class ValidateManager:
         Returns:
             PathLevel. File, ContentDir, ContentGenericDir, Pack or Package - depending on the file path level.
         """
-        if Path(file_path).is_file():
+        if os.path.isfile(file_path):
             return PathLevel.FILE
 
         file_path = file_path.rstrip("/")
-        dir_name = Path(file_path).name
+        dir_name = os.path.basename(file_path)
         if dir_name in CONTENT_ENTITIES_DIRS:
             return PathLevel.CONTENT_ENTITY_DIR
 
@@ -415,7 +415,7 @@ class ValidateManager:
         ).endswith(GENERIC_FIELDS_DIR):
             return PathLevel.CONTENT_GENERIC_ENTITY_DIR
 
-        if Path(os.path.dirname(file_path)).name == PACKS_DIR:
+        if os.path.basename(os.path.dirname(file_path)) == PACKS_DIR:
             return PathLevel.PACK
 
         else:
@@ -591,7 +591,7 @@ class ValidateManager:
             skip_files = set()
 
         pack_entities_validation_results = set()
-        pack_error_ignore_list = self.get_error_ignore_list(Path(pack_path).name)
+        pack_error_ignore_list = self.get_error_ignore_list(os.path.basename(pack_path))
 
         pack_entities_validation_results.add(
             self.validate_pack_unique_files(pack_path, pack_error_ignore_list)
@@ -625,7 +625,7 @@ class ValidateManager:
         ) or content_entity_dir_path.endswith(GENERIC_TYPES_DIR):
             for dir_name in os.listdir(content_entity_dir_path):
                 dir_path = os.path.join(content_entity_dir_path, dir_name)
-                if not Path(dir_path).is_file():
+                if not os.path.isfile(dir_path):
                     # should be only directories (not files) in generic types/fields directory
                     content_entities_validation_results.add(
                         self.run_validation_on_generic_entities(
@@ -637,7 +637,7 @@ class ValidateManager:
         else:
             for file_name in os.listdir(content_entity_dir_path):
                 file_path = os.path.join(content_entity_dir_path, file_name)
-                if Path(file_path).is_file():
+                if os.path.isfile(file_path):
                     if (
                         file_path.endswith(".json")
                         or file_path.endswith(".yml")
@@ -1052,8 +1052,8 @@ class ValidateManager:
             logger.info(f"Validating {file_type.value} file: {file_path}")
             if self.validate_all:
                 error_ignore_list = pack_error_ignore_list.copy()
-                error_ignore_list.setdefault(Path(file_path).name, [])
-                error_ignore_list.get(Path(file_path).name).append("MR104")
+                error_ignore_list.setdefault(os.path.basename(file_path), [])
+                error_ignore_list.get(os.path.basename(file_path)).append("MR104")
                 return self.validate_modeling_rule(
                     structure_validator, error_ignore_list
                 )
@@ -1924,7 +1924,7 @@ class ValidateManager:
 
         logger.info(f"\nValidating {pack_path} unique pack files")
         pack_unique_files_validator = PackUniqueFilesValidator(
-            pack=Path(pack_path).name,
+            pack=os.path.basename(pack_path),
             pack_path=pack_path,
             ignored_errors=pack_error_ignore_list,
             should_version_raise=should_version_raise,
@@ -1944,7 +1944,7 @@ class ValidateManager:
 
         # check author image
         author_image_path = os.path.join(pack_path, AUTHOR_IMAGE_FILE_NAME)
-        if Path(author_image_path).exists():
+        if os.path.exists(author_image_path):
             logger.info("Validating pack author image")
             author_valid = self.validate_author_image(
                 author_image_path, pack_error_ignore_list
@@ -2824,7 +2824,7 @@ class ValidateManager:
             str: is_set file path
         """
         id_set = {}
-        if not Path(id_set_path).is_file():
+        if not os.path.isfile(id_set_path):
             if not skip_id_set_creation:
                 id_set, _, _ = IDSetCreator(print_logs=False).create_id_set()
 

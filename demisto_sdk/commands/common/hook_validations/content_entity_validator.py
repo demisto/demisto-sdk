@@ -706,7 +706,7 @@ class ContentEntityValidator(BaseValidator):
         else:
             return True
 
-        if Path(readme_path).is_file():
+        if os.path.isfile(readme_path):
             return True
 
         error_message, error_code = Errors.missing_readme_file(file_type)

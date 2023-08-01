@@ -11,7 +11,7 @@ import urllib.parse
 from ast import literal_eval
 from collections import OrderedDict
 from copy import deepcopy
-from pathlib import Path
+from os import path
 from time import ctime
 from typing import List, Union
 
@@ -493,15 +493,12 @@ class TimestampReplacer:
         logging.info(
             f'reading in problematic keys data from "{repo_bad_keys_filepath}"'
         )
-        if (
-            self.bad_keys_filepath
-            and not Path(self.bad_keys_filepath).exists()
-            and repo_bad_keys_filepath
-            and Path(repo_bad_keys_filepath).exists()
+        if not path.exists(self.bad_keys_filepath) and path.exists(
+            repo_bad_keys_filepath
         ):
             with open(repo_bad_keys_filepath) as fp:
                 problem_keys = json.load(fp)
-        elif self.bad_keys_filepath and Path(self.bad_keys_filepath).exists():
+        elif path.exists(self.bad_keys_filepath):
             with open(self.bad_keys_filepath) as fp:
                 problem_keys = json.load(fp)
         else:
@@ -526,7 +523,7 @@ class TimestampReplacer:
         mitmdump in playback mode. Resets command line options with the key value pairs from the loaded dictionary.
         """
         logging.info('executing "load_problematic_keys" method')
-        if self.bad_keys_filepath and Path(self.bad_keys_filepath).exists():
+        if path.exists(self.bad_keys_filepath):
             logging.info(f'"{self.bad_keys_filepath}" path exists - loading bad keys')
 
             problem_keys = json.load(open(self.bad_keys_filepath))

@@ -1107,6 +1107,27 @@ def old_get_latest_release_notes_text(rn_path):
     return new_rn if new_rn else None
 
 
+def find_pack_folder(path: Path) -> Path:
+    """
+    >>> find_pack_folder(Path('root/Packs/MyPack/Integrations/MyIntegration/MyIntegration.yml'))
+    PosixPath('root/Packs/MyPack')
+    >>> find_pack_folder(Path('Packs/MyPack1/Scripts/MyScript/MyScript.py')).name
+    'MyPack1'
+    >>> find_pack_folder(Path('Packs/MyPack2/Scripts/MyScript')).name
+    'MyPack2'
+    >>> find_pack_folder(Path('Packs/MyPack3/Scripts')).name
+    'MyPack3'
+    >>> find_pack_folder(Path('Packs/MyPack4')).name
+    'MyPack4'
+    """
+
+    if "Packs" not in path.parts:
+        raise ValueError(f"Could not find a pack for {str(path)}")
+    if path.parent.name == "Packs":
+        return path
+    return path.parents[len(path.parts) - (path.parts.index("Packs")) - 3]
+
+
 def get_release_notes_file_path(file_path):
     """
     Accepts file path which is alleged to contain release notes. Validates that the naming convention

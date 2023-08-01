@@ -59,6 +59,7 @@ from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
+    find_pack_folder,
     get_common_server_path,
     get_file,
     get_pack_name,
@@ -230,9 +231,6 @@ class Initiator:
         MODELING_RULES_DIR,
         PARSING_RULES_DIR,
     ]
-
-    # PACK_PATH_REGEX = rf"^(.*?{PACKS_DIR}/.*?/)"
-    PACK_PATH_REGEX = PACKS_DIR_REGEX
 
     def __init__(
         self,
@@ -442,7 +440,7 @@ class Initiator:
             vendor (str): The vendor from the user.
         """
         if not self.full_output_path and self.output:
-            self.full_output_path = self.output
+            self.full_output_path = str(find_pack_folder(Path(self.output)))
         modeling_rules_initiator = self.create_initiator(
             os.path.join(self.full_output_path, MODELING_RULES_DIR),
             self.HELLO_WORLD_MODELING_RULES,
@@ -828,8 +826,8 @@ class Initiator:
                 return False
             if self.output and re.search(INTEGRATIONS_DIR_REGEX, self.output):
                 return True
+            # if Packs folder exists make sure we take the Integration dir.
             if self.output and re.search(PACKS_DIR_REGEX, self.output):
-                self.output = str(Path(self.output) / INTEGRATIONS_DIR)
                 return True
             else:
                 logger.error(
@@ -845,7 +843,6 @@ class Initiator:
         """
         # if we want to create xsiam content we will create an eventcollector integration
 
-        # if output directory given create the integration there
         if not self.verify_output_path_for_xsiam_content():
             return False
         product, vendor = self.get_product_and_vendor()
@@ -857,8 +854,21 @@ class Initiator:
         ):
             return False
         self.add_event_collector_suffix()
+
+        # if output directory given create the integration there
         if self.output:
-            self.full_output_path = os.path.join(self.output, self.dir_name)
+            if (
+                self.output
+                and re.search(PACKS_DIR_REGEX, self.output)
+                and self.marketplace == MarketplaceVersions.MarketplaceV2
+            ):
+                self.full_output_path = str(
+                    find_pack_folder(Path(self.output))
+                    / INTEGRATIONS_DIR
+                    / self.dir_name
+                )
+            else:
+                self.full_output_path = os.path.join(self.output, self.dir_name)
 
         # will create the integration under the Integrations directory of the pack
         elif os.path.isdir(INTEGRATIONS_DIR):
@@ -1050,12 +1060,13 @@ class Initiator:
         ):
             yml_dict["fromversion"] = from_version
 
-        if Version(
-            yml_dict.get("fromversion") or DEFAULT_CONTENT_ITEM_FROM_VERSION
-        ) < Version(self.SUPPORTED_FROM_VERSION_XSIAM):
+        if not self.is_version_above_supported_version(
+            yml_dict.get("fromversion") or DEFAULT_CONTENT_ITEM_FROM_VERSION,
+            self.SUPPORTED_FROM_VERSION_XSIAM,
+        ):
             yml_dict["fromversion"] = self.SUPPORTED_FROM_VERSION_XSIAM
             logger.info(
-                "[yellow]The selected version is lower than the supported version; the value will be set to the default version. [/yellow]"
+                "[yellow]The version is not provided or is lower than the supported version; the value will be set to the default version. [/yellow]"
             )
         with open(yml_path, "w") as f:
             yaml.dump(yml_dict, f)

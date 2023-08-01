@@ -73,11 +73,11 @@ This will create a named "MyScript" under the "Scripts" directory and the yml fi
 This will create a new pack named "My_Pack" under the "Packs" directory in content repo, and add an author image that
 will be presented under PUBLISHER section in marketplace. Image file will be created under pack root directory.
 
-`demisto-sdk init --pack -n My_Pack -xsiam`
+`demisto-sdk init --pack -n My_Pack --xsiam`
 
 This will create a new pack named "My_Pack" under the "Packs" directory in content repo, and add the relevant empty XSIAM directories under "My_Pack" directory.
 
-`demisto-sdk init --integration -n MyNewIntegration -o path/Packs/My_Pack/Integration`
+`demisto-sdk init --integration -n MyNewIntegration -o path/Packs/My_Pack/Integration --xsiam`
 
 This will create a new integration named MyNewIntegrationEventCollector within "path/Packs/My_Pack/Integration" directory,
 In addition, this will create the relevant folders and files for parsing rules and modeling rules under My_Pack.

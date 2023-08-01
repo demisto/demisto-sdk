@@ -28,12 +28,6 @@
 * Fixed an issue where **prepare-content** command would add the string `candidate` to scripts and integrations for the *nativeimage* key.
 * Fixed an issue where in some cases the **split** command did not remove pack version note from the script.
 * Fixed an issue where **validate** would not properly detect dependencies of core packs.
-<<<<<<< HEAD
-* Removed usages of Random in unit tests to ensure the tests are deterministic.
-* Added a new validation (`GR108`) to **validate** command that assures hidden packs do not have mandatory dependant packs.
-* **validate** will now run on all the pack content items when the pack supported marketplaces are modified.
-=======
->>>>>>> 0e71ebba1252752130db98ca753cf08947dc0fa7
 * Fixed an issue where **validate** failed on single-select types incident and indicator fields when given empty value as a select value option.
 * Fixed an issue where errors in **validate** were logged as `info`.
 * Fixed an issue where **validate** error messages were not logged when an integration param, or the default argument in reputation commands is not valid.

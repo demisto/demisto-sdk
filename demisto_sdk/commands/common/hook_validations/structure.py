@@ -75,7 +75,7 @@ class StructureValidator(BaseValidator):
             specific_validations=specific_validations,
         )
         self.is_valid = True
-        self.valid_extensions = [".yml", ".json", ".md", ".png", ".py"]
+        self.valid_extensions = [".yml", ".json", ".md", ".png", ".py", ".svg"]
         self.file_path = file_path.replace("\\", "/")
         self.skip_schema_check = skip_schema_check
         self.pykwalify_logs = pykwalify_logs

@@ -577,7 +577,8 @@ class Initiator:
             is_parsing_rules, is_modeling_rules, name=self.dir_name
         )
         self.full_output_path = str(Path(self.output).joinpath(xsiam_content_dir_name))
-
+        if not self.create_new_directory():
+            return False
         rules_template_files = self.get_template_files()
         if not self.get_remote_templates(
             rules_template_files,

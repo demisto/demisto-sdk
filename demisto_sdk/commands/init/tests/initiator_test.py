@@ -8,7 +8,6 @@ import pytest
 
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import (
-    ANALYTICS_AND_SIEM_CATEGORY,
     EVENT_COLLECTOR,
     INTEGRATION_CATEGORIES,
     INTEGRATIONS_DIR,
@@ -28,7 +27,7 @@ from demisto_sdk.commands.common.constants import (
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
 from demisto_sdk.commands.common.tools import get_file
-from demisto_sdk.commands.init.initiator import Initiator
+from demisto_sdk.commands.init.initiator import ANALYTICS_AND_SIEM_CATEGORY, Initiator
 from TestSuite.test_tools import ChangeCWD
 
 DIR_NAME = "DirName"

@@ -1058,7 +1058,7 @@ class Initiator:
         ):
             yml_dict["fromversion"] = from_version
 
-        if not self.is_version_bigger_then_supported_version(
+        if not self.validate_version(
             yml_dict.get("fromversion") or DEFAULT_CONTENT_ITEM_FROM_VERSION,
             self.SUPPORTED_FROM_VERSION_XSIAM,
         ):
@@ -1099,10 +1099,10 @@ class Initiator:
             with open(python_file_path, "w") as fp:
                 fp.write(file_contents)
 
-    def is_version_bigger_then_supported_version(
+    def validate_version(
         self, current_version: str, supported_from_version: str
     ) -> bool:
-        """Return bool false if the given version is above the supported version
+        """Return bool True if the given version is bigger then the supported version
 
         Args:
             current_version (str): The current version.
@@ -1134,7 +1134,7 @@ class Initiator:
             if self.marketplace != MarketplaceVersions.MarketplaceV2
             else self.SUPPORTED_FROM_VERSION_XSIAM
         )
-        if not self.is_version_bigger_then_supported_version(
+        if not self.validate_version(
             yml_dict.get("fromversion", DEFAULT_CONTENT_ITEM_FROM_VERSION),
             compared_version,
         ):

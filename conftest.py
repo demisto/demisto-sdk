@@ -16,6 +16,8 @@ from TestSuite.pack import Pack
 from TestSuite.playbook import Playbook
 from TestSuite.repo import Repo
 from TestSuite.yml import YAML
+from demisto_sdk.commands.coverage_analyze.tests import helpers_test
+
 
 # Helper Functions
 
@@ -149,3 +151,4 @@ def mock_update_id_set_cpu_count() -> Generator:
 def clear_cache():
     tools.get_file.cache_clear()
     tools.get_last_remote_release_version.cache_clear()
+    helpers_test.TestCoverageSummary.TestGetFilesSummary.test_with_no_cache.cache_clear()

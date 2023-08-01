@@ -11,7 +11,6 @@ from packaging.version import Version
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import (
-    ANALYTICS_AND_SIEM_CATEGORY,
     CLASSIFIERS_DIR,
     CONNECTIONS_DIR,
     CORRELATION_RULES_DIR,
@@ -67,6 +66,8 @@ from demisto_sdk.commands.common.tools import (
     string_to_bool,
 )
 from demisto_sdk.commands.secrets.secrets import SecretsValidator
+
+ANALYTICS_AND_SIEM_CATEGORY = "Analytics & SIEM"
 
 
 def extract_values_from_nested_dict_to_a_set(given_dictionary: dict, return_set: set):

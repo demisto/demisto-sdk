@@ -506,7 +506,7 @@ def coverage_report_editor(coverage_file, code_file_absolute_path):
             sql_connection.commit()
         cursor.close()
     if not index == 1:
-        Path.unlink(coverage_file)
+        os.remove(coverage_file)
 
 
 def coverage_files():
@@ -530,7 +530,7 @@ def generate_coverage_report(
     cov_file = os.path.join(cov_dir, ".coverage")
     cov = coverage.Coverage(data_file=cov_file)
     cov.combine(coverage_files())
-    if not Path(cov_file).exists():
+    if not os.path.exists(cov_file):
         logger.warning(
             f"skipping coverage report {cov_file} file not found. "
             f"Should not expect this if code files were changed or when linting all with pytest."

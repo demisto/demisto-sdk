@@ -877,7 +877,7 @@ class TestMergeExistingFile:
                 file["path"] for file in env.INTEGRATION_PACK_OBJECT["Test Integration"]
             ]
             for path in paths:
-                assert Path(path).is_file()
+                assert os.path.isfile(path)
             yml_data = get_yaml(
                 env.INTEGRATION_PACK_OBJECT["Test Integration"][2]["path"]
             )
@@ -932,7 +932,7 @@ class TestMergeExistingFile:
                 downloader.merge_existing_file(
                     param["custom_content_object"], param["ending"]
                 )
-                assert Path(param["instance_path"]).is_file()
+                assert os.path.isfile(param["instance_path"])
                 file_data = param["method"](param["instance_path"], cache_clear=True)
                 for field in param["fields"]:
                     if file_data.get(field):
@@ -1141,10 +1141,10 @@ class TestMergeNewFile:
             output_dir_path = f"{temp_dir}/{entity}"
             os.mkdir(output_dir_path)
             old_file_path = param["custom_content_object"]["path"]
-            new_file_path = f"{output_dir_path}/{Path(old_file_path).name}"
+            new_file_path = f"{output_dir_path}/{os.path.basename(old_file_path)}"
             downloader = Downloader(output=temp_dir, input="", regex="")
             downloader.merge_new_file(param["custom_content_object"])
-            assert Path(new_file_path).is_file()
+            assert os.path.isfile(new_file_path)
 
 
 class TestVerifyPackPath:

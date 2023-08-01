@@ -9,7 +9,6 @@ import urllib.parse
 import uuid
 from copy import deepcopy
 from math import ceil
-from pathlib import Path
 from pprint import pformat
 from queue import Empty, Queue
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
@@ -891,7 +890,7 @@ class BuildContext:
 
     @staticmethod
     def _load_env_results_json():
-        if not Path(ENV_RESULTS_PATH).is_file():
+        if not os.path.isfile(ENV_RESULTS_PATH):
             return {}
 
         with open(ENV_RESULTS_PATH) as json_file:

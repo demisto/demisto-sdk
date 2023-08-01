@@ -1,6 +1,5 @@
 import os
 import random
-from pathlib import Path
 
 from demisto_sdk.commands.common.content_constant_paths import DEFAULT_ID_SET_PATH
 from demisto_sdk.commands.common.logger import logger
@@ -39,7 +38,7 @@ def generate_script_doc(
             output = os.path.dirname(os.path.realpath(input_path))
 
         if examples:
-            if Path(examples).is_file():
+            if os.path.isfile(examples):
                 with open(examples) as examples_file:
                     examples = examples_file.read().splitlines()
             else:
@@ -71,7 +70,7 @@ def generate_script_doc(
         dependencies, _ = get_depends_on(script)
 
         # get the script usages by the id set
-        if not Path(DEFAULT_ID_SET_PATH).is_file():
+        if not os.path.isfile(DEFAULT_ID_SET_PATH):
             id_set_creator = IDSetCreator(print_logs=False)
             id_set, _, _ = id_set_creator.create_id_set()
         else:

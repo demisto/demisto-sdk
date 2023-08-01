@@ -1,4 +1,4 @@
-from pathlib import Path
+import os
 from typing import Dict, List
 
 import demisto_client
@@ -143,8 +143,8 @@ class XSOARConfigFileUpdater:
 
     def get_xsoar_config_data(self):
         config_file_info = {}
-        if (path := Path(self.file_path)).exists():
-            with open(path) as config_file:
+        if os.path.exists(self.file_path):
+            with open(self.file_path) as config_file:
                 try:
                     config_file_info = json.load(config_file)
                 except json.JSONDecodeError:  # In case that the file exits but empty

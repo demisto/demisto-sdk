@@ -38,6 +38,7 @@ class IntegrationScriptParser(YAMLContentItemParser):
         pass
 
     @property
+    @abstractmethod
     def type(self) -> str:
         pass
 

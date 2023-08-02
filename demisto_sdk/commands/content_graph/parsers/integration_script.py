@@ -1,10 +1,10 @@
-import os
 from abc import abstractmethod
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.common.docker_helper import get_python_version
+from demisto_sdk.commands.common.docker_images_info import DockerImagesInfo
 from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
 from demisto_sdk.commands.content_graph.parsers.yaml_content_item import (
     YAMLContentItemParser,
@@ -56,6 +56,8 @@ class IntegrationScriptParser(YAMLContentItemParser):
                 RelationshipType.IMPORTS, api_module, ContentType.SCRIPT
             )
 
-    # @property
-    # def python_version(self) -> Optional[str]:
-    #     return str(get_python_version(self.docker_image))
+    @property
+    def python_version(self) -> Optional[str]:
+        if python_version := DockerImagesInfo().python_version(self.docker_image):
+            return python_version
+        return str(get_python_version(self.docker_image))

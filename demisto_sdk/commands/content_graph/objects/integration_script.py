@@ -24,7 +24,7 @@ class IntegrationScript(ContentItem):
     description: Optional[str]
     is_unified: bool = Field(False, exclude=True)
     code: Optional[str] = Field(None, exclude=True)
-    # python_version: Optional[str]
+    python_version: Optional[str]
 
     def prepare_for_upload(
         self,

@@ -14,7 +14,7 @@ from enum import Enum
 from functools import lru_cache
 from hashlib import sha1
 from pathlib import Path, PosixPath
-from subprocess import DEVNULL, PIPE, Popen, check_output
+from subprocess import PIPE, Popen
 from time import sleep
 from typing import (
     TYPE_CHECKING,
@@ -1528,44 +1528,6 @@ def get_docker_images_from_yml(script_obj) -> List[str]:
                 imgs.extend(script_obj.get(key))
 
     return imgs
-
-
-def get_python_version(docker_image):
-    """
-    Get the python version of a docker image
-    Arguments:
-        docker_image {string} -- Docker image being used by the project
-    Return:
-        python version as a float (2.7, 3.7)
-    Raises:
-        ValueError -- if version is not supported
-    """
-    py_ver = check_output(
-        [
-            "docker",
-            "run",
-            "--rm",
-            docker_image,
-            "python",
-            "-c",
-            "import sys;logger.info('{}.{}'.format(sys.version_info[0], sys.version_info[1]))",
-        ],
-        text=True,
-        stderr=DEVNULL,
-    ).strip()
-    logger.debug(
-        f"Detected python version: [{py_ver}] for docker image: {docker_image}"
-    )
-
-    py_num = float(py_ver)
-    if py_num < 2.7 or (3 < py_num < 3.4):  # pylint can only work on python 3.4 and up
-        raise ValueError(
-            "Python vesion for docker image: {} is not supported: {}. "
-            "We only support python 2.7.* and python3 >= 3.4.".format(
-                docker_image, py_num
-            )
-        )
-    return py_num
 
 
 def get_pipenv_dir(py_version, envs_dirs_base):

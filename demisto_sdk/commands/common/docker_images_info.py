@@ -1,3 +1,4 @@
+import functools
 from typing import Dict, Optional
 
 from pydantic import BaseModel
@@ -533,6 +534,7 @@ class DockerImagesInfo(Singleton, BaseModel):
         # super().__init__(**response.json())
         super().__init__(**a)
 
+    @functools.lru_cache
     def get_docker_image_metadata_value(
         self, docker_image: str, docker_metadata_key: str
     ) -> str:

@@ -27,6 +27,7 @@ from demisto_sdk.commands.test_content.test_modeling_rule import init_test_data
 from demisto_sdk.commands.test_content.xsiam_tools.xsiam_client import (
     XsiamApiClient,
     XsiamApiClientConfig,
+    XsiamApiQueryError,
 )
 from demisto_sdk.commands.upload.upload import upload_content_entity as upload_cmd
 from demisto_sdk.utils.utils import get_containing_pack
@@ -225,51 +226,67 @@ def generate_xql_query(rule: SingleModelingRule, test_data_event_ids: List[str])
     return query
 
 
+def build_query(rule, test_data) -> str:
+    """
+    Build an XQL query from the given rule and test data event IDs.
+    Args:
+        rule (SingleModelingRule): Rule object parsed from the modeling rule file.
+        test_data (init_test_data.TestData): The data parsed from the test data file.
+    Returns:
+        str: The XQL query.
+    """
+    query = generate_xql_query(
+        rule,
+        [
+            str(d.test_data_event_id)
+            for d in test_data.data
+            if d.dataset == rule.dataset
+        ],
+    )
+    logger.debug(query)
+    return query
+
+
+def run_query(xsiam_client, query) -> List[dict]:
+    """
+    Run the given XQL query and return the results.
+    Args:
+        xsiam_client (XsiamApiClient): The XsiamApiClient object.
+        query (str): The XQL query to run.
+    Returns:
+        List[dict]: The results of the query.
+    """
+    try:
+        execution_id = xsiam_client.start_xql_query(query)
+        results = xsiam_client.get_xql_query_result(execution_id)
+    except requests.exceptions.HTTPError:
+        logger.error(
+            (
+                "[red]Error executing XQL query, potential reasons could be:\n - mismatch between "
+                "dataset/vendor/product marked in the test data from what is in the modeling rule\n"
+                " - dataset was not created in the tenant\n - model fields in the query are invalid\n"
+                "Try manually querying your tenant to discover the exact problem.[/red]"
+            ),
+            extra={"markup": True},
+        )
+        raise requests.exceptions.HTTPError
+    return results
+
+
 def validate_expected_values(
     xsiam_client: XsiamApiClient,
     mr: ModelingRule,
     test_data: init_test_data.TestData,
-    verify_event_id: bool = False,
 ):
     """Validate the expected_values in the given test data file."""
     logger.info("[cyan]Validating expected_values...[/cyan]", extra={"markup": True})
     success = True
     for rule in mr.rules:
-        query = generate_xql_query(
-            rule,
-            [
-                str(d.test_data_event_id)
-                for d in test_data.data
-                if d.dataset == rule.dataset
-            ],
-        )
-        logger.debug(query)
-        try:
-            execution_id = xsiam_client.start_xql_query(query)
-            results = xsiam_client.get_xql_query_result(execution_id)
-        except requests.exceptions.HTTPError:
-            logger.error(
-                (
-                    "[red]Error executing XQL query, potential reasons could be:\n - mismatch between "
-                    "dataset/vendor/product marked in the test data from what is in the modeling rule\n"
-                    " - dataset was not created in the tenant\n - model fields in the query are invalid\n"
-                    "Try manually querying your tenant to discover the exact problem.[/red]"
-                ),
-                extra={"markup": True},
-            )
-            success = False
-        else:
-            success &= (
-                verify_results(rule.dataset, results, test_data)
-                if not verify_event_id
-                else verify_event_ids_does_not_exist_on_tenant(results)
-            )
+        query = build_query(rule, test_data)
+        result = run_query(xsiam_client, query)
+        success &= verify_results(rule.dataset, result, test_data)
     if success:
-        success_message = (
-            "[green]Mappings validated successfully[/green]"
-            if not verify_event_id
-            else "[green]Event IDs validated successfully[/green]"
-        )
+        success_message = "[green]Mappings validated successfully[/green]"
         logger.info(success_message, extra={"markup": True})
     else:
         raise typer.Exit(1)
@@ -401,6 +418,28 @@ def push_test_data_to_tenant(
     logger.info("[green]Test data pushed successfully[/green]", extra={"markup": True})
 
 
+def verify_event_id_does_not_exist_on_tenant(
+    xsiam_client: XsiamApiClient,
+    mr: ModelingRule,
+    test_data: init_test_data.TestData,
+):
+    """
+    Verify that the event ID does not exist on the tenant.
+    Args:
+        xsiam_client (XsiamApiClient): Xsiam API client.
+        mr (ModelingRule): Modeling rule object parsed from the modeling rule file.
+        test_data (init_test_data.TestData): Test data object parsed from the test data file.
+    """
+    for rule in mr.rules:
+        try:
+            query = build_query(rule, test_data)
+            run_query(xsiam_client, query)
+        except XsiamApiQueryError:
+            # If the query fails, it means that the event ID does not exist on the tenant.
+            return
+    raise typer.Exit(1)
+
+
 def verify_pack_exists_on_tenant(
     xsiam_client: XsiamApiClient, mr: ModelingRule, interactive: bool
 ):
@@ -495,17 +534,6 @@ def verify_test_data_exists(test_data_path: Path) -> Tuple[List[str], List[str]]
         if all([val is None for val in event_log.expected_values.values()]):
             missing_expected_values_data.append(event_log.test_data_event_id)
     return missing_event_data, missing_expected_values_data
-
-
-def verify_event_ids_does_not_exist_on_tenant(results: List[Dict[str, Any]]):
-    """
-    Verify that the event ids do not exist on the tenant.
-    Args:
-        results (List[Dict[str, Any]]): List of results from the xsiam client.
-    Returns:
-        None
-    """
-    return not results
 
 
 def validate_modeling_rule(
@@ -663,10 +691,7 @@ def validate_modeling_rule(
                 )
                 printr(execd_cmd)
                 raise typer.Exit(1)
-            # Verify the event id does not exist on the tenant.
-            validate_expected_values(
-                xsiam_client, mr_entity, test_data, verify_event_id=True
-            )
+            verify_event_id_does_not_exist_on_tenant(xsiam_client, mr_entity, test_data)
             push_test_data_to_tenant(xsiam_client, mr_entity, test_data)
             check_dataset_exists(xsiam_client, test_data)
         else:

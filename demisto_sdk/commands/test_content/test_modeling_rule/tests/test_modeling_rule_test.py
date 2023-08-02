@@ -319,6 +319,21 @@ class TestTheTestModelingRuleCommandSingleRule:
                         f"{fake_env_vars.demisto_base_url}/logs/v1/xsiam",
                         status_code=500,
                     )
+                    m.post(
+                        f"{fake_env_vars.demisto_base_url}/public_api/v1/xql/start_xql_query/",
+                        json={"reply": "fake-execution-id"},
+                        status_code=200,
+                    )
+                    m.post(
+                        f"{fake_env_vars.demisto_base_url}/public_api/v1/xql/get_query_results/",
+                        json={
+                            "reply": {
+                                "status": "FAILED",
+                                "results": {"data": ["some-results"]},
+                            }
+                        },
+                        status_code=200,
+                    )
                     # Act
                     result = runner.invoke(
                         test_modeling_rule_cmd,
@@ -402,8 +417,23 @@ class TestTheTestModelingRuleCommandSingleRule:
                     )
                     m.post(
                         f"{fake_env_vars.demisto_base_url}/public_api/v1/xql/start_xql_query/",
-                        json={},
-                        status_code=500,
+                        [
+                            {
+                                "json": {"reply": "fake-execution-id"},
+                                "status_code": 200,
+                            },
+                            {"json": {}, "status_code": 500},
+                        ],
+                    )
+                    m.post(
+                        f"{fake_env_vars.demisto_base_url}/public_api/v1/xql/get_query_results/",
+                        json={
+                            "reply": {
+                                "status": "FAILED",
+                                "results": {"data": ["some-results"]},
+                            }
+                        },
+                        status_code=200,
                     )
 
                     # Act
@@ -440,10 +470,7 @@ class TestTheTestModelingRuleCommandSingleRule:
         """
         logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
         monkeypatch.setenv("COLUMNS", "1000")
-        mocker.patch(
-            "demisto_sdk.commands.test_content.test_modeling_rule.test_modeling_rule.verify_event_ids_does_not_exist_on_tenant",
-            return_value=True,
-        )
+
         from functools import partial
 
         from demisto_sdk.commands.test_content.test_modeling_rule.test_modeling_rule import (
@@ -457,7 +484,6 @@ class TestTheTestModelingRuleCommandSingleRule:
         # override the default timeout to 1 second so only one iteration of the loop will be executed
         check_dataset_exists_with_timeout = partial(check_dataset_exists, timeout=5)
         monkeypatch.setattr(func_path, check_dataset_exists_with_timeout)
-
         from demisto_sdk.commands.test_content.test_modeling_rule.test_modeling_rule import (
             app as test_modeling_rule_cmd,
         )
@@ -493,14 +519,6 @@ class TestTheTestModelingRuleCommandSingleRule:
                     m.post(
                         f"{fake_env_vars.demisto_base_url}/public_api/v1/xql/start_xql_query/",
                         [
-                            {
-                                "json": {"reply": "fake-execution-id"},
-                                "status_code": 200,
-                            },
-                            {
-                                "json": {"reply": "fake-execution-id"},
-                                "status_code": 200,
-                            },
                             {"json": {}, "status_code": 500},
                         ],
                     )
@@ -597,16 +615,13 @@ class TestTheTestModelingRuleCommandSingleRule:
                     m.post(
                         f"{fake_env_vars.demisto_base_url}/public_api/v1/xql/start_xql_query/",
                         [
-                            {
-                                "json": {"reply": "fake-execution-id"},
-                                "status_code": 200,
-                            },
                             {"json": {}, "status_code": 500},
                         ],
                     )
                     m.post(
                         f"{fake_env_vars.demisto_base_url}/public_api/v1/xql/get_query_results/",
                         [
+                            {"json": {"reply": {"status": "Fail"}}, "status_code": 200},
                             {"json": {}, "status_code": 500},
                         ],
                     )
@@ -705,7 +720,11 @@ class TestTheTestModelingRuleCommandSingleRule:
                             {
                                 "json": {"reply": "fake-execution-id"},
                                 "status_code": 200,
-                            }
+                            },
+                            {
+                                "json": {"reply": "fake-execution-id"},
+                                "status_code": 200,
+                            },
                         ],
                     )
                     # get_xql_query_result mocked request
@@ -715,17 +734,23 @@ class TestTheTestModelingRuleCommandSingleRule:
                             {
                                 "json": {
                                     "reply": {
-                                        "status": "SUCCESS",
-                                        "results": {"data": []},
-                                    }
-                                },
-                                "status_code": 200,
-                            },
-                            {
-                                "json": {
-                                    "reply": {
-                                        "status": "SUCCESS",
-                                        "results": {"data": []},
+                                        "status": "FAILED",
+                                        "results": {
+                                            "data": [
+                                                {
+                                                    id_key: event_id_1,
+                                                    **fake_test_data.data[
+                                                        0
+                                                    ].expected_values,
+                                                },
+                                                {
+                                                    id_key: event_id_2,
+                                                    **fake_test_data.data[
+                                                        1
+                                                    ].expected_values,
+                                                },
+                                            ]
+                                        },
                                     }
                                 },
                                 "status_code": 200,
@@ -819,10 +844,6 @@ class TestTheTestModelingRuleCommandSingleRule:
             "demisto_sdk.commands.test_content.xsiam_tools.test_data.uuid4",
             side_effect=[str(uuid.UUID(int=0)), str(uuid.UUID(int=1))] * 3,
         )
-        mocker.patch(
-            "demisto_sdk.commands.test_content.test_modeling_rule.test_modeling_rule.verify_event_ids_does_not_exist_on_tenant",
-            return_value=True,
-        )
 
         runner = CliRunner()
 
@@ -851,8 +872,16 @@ class TestTheTestModelingRuleCommandSingleRule:
                     )
                     m.post(
                         f"{fake_env_vars.demisto_base_url}/public_api/v1/xql/start_xql_query/",
-                        json={"reply": "fake-execution-id"},
-                        status_code=200,
+                        [
+                            {
+                                "json": {"reply": "fake-execution-id"},
+                                "status_code": 200,
+                            },
+                            {
+                                "json": {"reply": "fake-execution-id"},
+                                "status_code": 200,
+                            },
+                        ],
                     )
 
                     id_key = f"{fake_test_data.data[0].dataset}.test_data_event_id"
@@ -864,8 +893,23 @@ class TestTheTestModelingRuleCommandSingleRule:
                             {
                                 "json": {
                                     "reply": {
-                                        "status": "SUCCESS",
-                                        "results": {"data": ["some-results"]},
+                                        "status": "FAILURE",
+                                        "results": {
+                                            "data": [
+                                                {
+                                                    id_key: event_id_1,
+                                                    **fake_test_data.data[
+                                                        0
+                                                    ].expected_values,
+                                                },
+                                                {
+                                                    id_key: event_id_2,
+                                                    **fake_test_data.data[
+                                                        1
+                                                    ].expected_values,
+                                                },
+                                            ]
+                                        },
                                     }
                                 },
                                 "status_code": 200,
@@ -956,10 +1000,7 @@ class TestTheTestModelingRuleCommandSingleRule:
             "demisto_sdk.commands.test_content.xsiam_tools.test_data.uuid4",
             side_effect=[str(uuid.UUID(int=0)), str(uuid.UUID(int=1))] * 3,
         )
-        mocker.patch(
-            "demisto_sdk.commands.test_content.test_modeling_rule.test_modeling_rule.verify_event_ids_does_not_exist_on_tenant",
-            return_value=True,
-        )
+
         runner = CliRunner()
 
         # Create Test Data File
@@ -987,8 +1028,16 @@ class TestTheTestModelingRuleCommandSingleRule:
                     )
                     m.post(
                         f"{fake_env_vars.demisto_base_url}/public_api/v1/xql/start_xql_query/",
-                        json={"reply": "fake-execution-id"},
-                        status_code=200,
+                        [
+                            {
+                                "json": {"reply": "fake-execution-id"},
+                                "status_code": 200,
+                            },
+                            {
+                                "json": {"reply": "fake-execution-id"},
+                                "status_code": 200,
+                            },
+                        ],
                     )
 
                     id_key = f"{fake_test_data.data[0].dataset}.test_data_event_id"
@@ -1002,8 +1051,18 @@ class TestTheTestModelingRuleCommandSingleRule:
                             {
                                 "json": {
                                     "reply": {
-                                        "status": "SUCCESS",
-                                        "results": {"data": ["some-results"]},
+                                        "status": "FAILURE",
+                                        "results": {
+                                            "data": [
+                                                {id_key: event_id_1, **query_results_1},
+                                                {
+                                                    id_key: event_id_2,
+                                                    **fake_test_data.data[
+                                                        1
+                                                    ].expected_values,
+                                                },
+                                            ]
+                                        },
                                     }
                                 },
                                 "status_code": 200,
@@ -1080,10 +1139,7 @@ class TestTheTestModelingRuleCommandMultipleRules:
             "demisto_sdk.commands.test_content.xsiam_tools.test_data.uuid4",
             side_effect=[str(uuid.UUID(int=0)), str(uuid.UUID(int=1))] * 5,
         )
-        mocker.patch(
-            "demisto_sdk.commands.test_content.test_modeling_rule.test_modeling_rule.verify_event_ids_does_not_exist_on_tenant",
-            return_value=True,
-        )
+
         runner = CliRunner()
 
         # Create Pack 1 with Modeling Rule
@@ -1133,8 +1189,16 @@ class TestTheTestModelingRuleCommandMultipleRules:
                     )
                     m.post(
                         f"{fake_env_vars.demisto_base_url}/public_api/v1/xql/start_xql_query/",
-                        json={"reply": "fake-execution-id"},
-                        status_code=200,
+                        [
+                            {
+                                "json": {"reply": "fake-execution-id"},
+                                "status_code": 200,
+                            },
+                            {
+                                "json": {"reply": "fake-execution-id"},
+                                "status_code": 200,
+                            },
+                        ],
                     )
 
                     id_key = f"{fake_test_data.data[0].dataset}.test_data_event_id"
@@ -1146,8 +1210,23 @@ class TestTheTestModelingRuleCommandMultipleRules:
                             {
                                 "json": {
                                     "reply": {
-                                        "status": "SUCCESS",
-                                        "results": {"data": ["some-results"]},
+                                        "status": "FAILURE",
+                                        "results": {
+                                            "data": [
+                                                {
+                                                    id_key: event_id_1,
+                                                    **fake_test_data.data[
+                                                        0
+                                                    ].expected_values,
+                                                },
+                                                {
+                                                    id_key: event_id_2,
+                                                    **fake_test_data.data[
+                                                        1
+                                                    ].expected_values,
+                                                },
+                                            ]
+                                        },
                                     }
                                 },
                                 "status_code": 200,

@@ -13,9 +13,10 @@ class EventLog(BaseModel):
     event_data: Optional[Dict[str, Any]] = {}
     expected_values: Optional[Dict[str, Any]] = {}
 
-    def __init__(self, **data):
-        data["test_data_event_id"] = uuid4()
-        super().__init__(**data)
+    @validator("test_data_event_id")
+    def validate_test_data(cls, v):
+        v = uuid4()
+        return v
 
 
 class TestData(BaseModel):

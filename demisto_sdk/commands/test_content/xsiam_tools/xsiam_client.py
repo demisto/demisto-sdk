@@ -16,6 +16,20 @@ from demisto_sdk.commands.common.logger import logger
 json = JSON_Handler()
 
 
+class XsiamApiError(BaseException):
+    def __init__(self, error_msg):
+        super().__init__(error_msg)
+
+
+class XsiamApiQueryError(XsiamApiError):
+    def __init__(self, execution_id, status_code, data):
+        err_msg = (
+            f'Failed to get xql query results for execution_id "{execution_id}"'
+            f" - with status code {status_code}. data:\n{pformat(data)}"
+        )
+        super().__init__(err_msg)
+
+
 class XsiamApiClientConfig(BaseModel):
     base_url: HttpUrl = Field(
         default=os.getenv("DEMISTO_BASE_URL"), description="XSIAM Tenant Base URL"
@@ -294,9 +308,5 @@ class XsiamApiClient(XsiamApiInterface):
             )
             return reply_results_data
         else:
-            err_msg = (
-                f'Failed to get xql query results for execution_id "{execution_id}"'
-                f" - with status code {response.status_code}. data:\n{pformat(data)}"
-            )
-            logger.error(err_msg)
             response.raise_for_status()
+            raise XsiamApiQueryError(execution_id, response.status_code, data)

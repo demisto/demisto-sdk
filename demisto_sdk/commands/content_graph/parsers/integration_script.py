@@ -38,6 +38,10 @@ class IntegrationScriptParser(YAMLContentItemParser):
         pass
 
     @property
+    def type(self) -> str:
+        pass
+
+    @property
     def supported_marketplaces(self) -> Set[MarketplaceVersions]:
         return {
             MarketplaceVersions.XSOAR,
@@ -58,7 +62,10 @@ class IntegrationScriptParser(YAMLContentItemParser):
 
     @property
     def python_version(self) -> Optional[str]:
-        if self.deprecated:
+        """
+        Get python version of scripts/integrations which are based on python images
+        """
+        if self.deprecated or 'python' not in self.type:
             return None
         if python_version := DockerImagesInfo().python_version(self.docker_image):
             return python_version

@@ -67,6 +67,13 @@ class ScriptParser(IntegrationScriptParser, content_type=ContentType.SCRIPT):
             self.path.parent
         )[1]
 
+    @property
+    def type(self) -> str:
+        _type = self.yml_data.get("subtype") or self.yml_data.get("type")
+        if _type == "python":
+            _type = f'{_type}2'
+        return _type
+
     def get_depends_on(self) -> Set[str]:
         depends_on: List[str] = self.yml_data.get("dependson", {}).get("must", [])
         return {cmd.split("|")[-1] for cmd in depends_on}

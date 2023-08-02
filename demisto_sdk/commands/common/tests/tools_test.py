@@ -1465,7 +1465,6 @@ def test_get_pack_metadata(repo):
     assert metadata_json == result
 
 
-@pytest.mark.skip
 def test_get_last_remote_release_version(requests_mock):
     """
     When

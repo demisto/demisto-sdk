@@ -262,7 +262,6 @@ class TestCoverageSummary:
             mock_min_cov_request = requests_mock.get(self.default_url, json=text_data)
             self.check_get_files(tmpdir, mock_min_cov_request, 0)
 
-        @pytest.mark.skip
         def test_with_no_cache(self, mocker, requests_mock):
             import builtins
 
@@ -274,7 +273,9 @@ class TestCoverageSummary:
             files_data = CoverageSummary(
                 previous_coverage_report_url=TestCoverageSummary.TestGetFilesSummary.default_url,
                 no_cache=True,
-            ).get_files_summary()
+            )
+            assert not files_data.use_cache
+            files_data.get_files_summary()
             assert open_file_mocker.call_count == 0
             builtins.open = not_mocked_open
             assert len(mock_min_cov_request.request_history) == 1

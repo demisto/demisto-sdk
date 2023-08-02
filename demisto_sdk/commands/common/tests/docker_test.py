@@ -313,8 +313,8 @@ class TestDockerImage:
             (datetime.now(), False, True),
         ],
     )
-    def test_not_latest_docker_older_than_3_days(
-        self, mocker, return_value, expected_latest_tag_value, expected_function_results
+    def test_latest_docker_within_age_threshold(
+        self, mocker, return_value: bool, expected: bool, expected_is_latest: bool
     ):
         """
         Given
@@ -324,8 +324,8 @@ class TestDockerImage:
         - The most updated docker image in docker-hub is '1.0.3'
 
         Then
-        -  Case 1: The current docker image is more than 3 days old and should fail the validation and set is_latest_tag to False.
-        -  Case 2: The current docker image is less than 3 days old and shouldn't fail the validation but set is_latest_tag to False.
+        -  Case 1: The current docker image is more than the allowed thresold and should fail the validation and set is_latest_tag to False.
+        -  Case 2: The current docker image is less than the allowed thresold old and shouldn't fail the validation but set is_latest_tag to False.
         """
         docker_image_validator = mock_docker_image_validator()
         docker_image_validator.docker_image_latest_tag = "1.0.3"
@@ -343,12 +343,8 @@ class TestDockerImage:
             "get_docker_image_creation_date",
             return_value=return_value,
         )
-        assert (
-            docker_image_validator.is_docker_image_latest_tag()
-            is expected_function_results
-        )
-        assert docker_image_validator.is_latest_tag is expected_latest_tag_value
-        assert True
+        assert docker_image_validator.is_docker_image_latest_tag() is expected_is_latest
+        assert docker_image_validator.is_latest_tag is expected
 
     def test_is_docker_image_latest_tag_with_numeric_but_not_most_updated(self):
         """

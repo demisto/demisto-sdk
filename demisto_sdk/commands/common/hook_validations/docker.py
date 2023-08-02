@@ -4,7 +4,6 @@ from functools import lru_cache
 from typing import Optional, Tuple, Union
 
 import requests
-from dateparser import parse
 from pkg_resources import parse_version
 
 from demisto_sdk.commands.common.constants import (
@@ -153,14 +152,13 @@ class DockerImageValidator(BaseValidator):
             suggested_fix = Errors.suggest_docker_fix(
                 self.docker_image_name, self.file_path, self.is_iron_bank
             )
-            if self.is_docker_older_than_three_days():
-                if self.handle_error(
-                    error_message,
-                    error_code,
-                    file_path=self.file_path,
-                    suggested_fix=suggested_fix,
-                ):
-                    return False
+            if self.is_image_age_within_threshold() and self.handle_error(
+                error_message,
+                error_code,
+                file_path=self.file_path,
+                suggested_fix=suggested_fix,
+            ):
+                return False
 
             # if this error is ignored - do print it as a warning
             self.handle_error(
@@ -182,18 +180,16 @@ class DockerImageValidator(BaseValidator):
 
         return is_latest_tag
 
-    def is_docker_older_than_three_days(self):
+    def is_image_age_within_threshold(self):
         """
-        Return True if the docker is more than 3 days old.
-
         Returns:
-            bool: True if the docker is more than 3 days old.
+            bool: Whether the docker image is older than the threshold days old.
         """
-        three_days_ago: Optional[datetime] = parse("3 days ago")
+        latest_allowed_last_update = datetime.now() - timedelta(days=3)
         last_updated = self.get_docker_image_creation_date(
             self.docker_image_name, self.docker_image_tag
         )
-        return not last_updated or three_days_ago > last_updated
+        return not last_updated or latest_allowed_last_update > last_updated
 
     def get_code_type(self):
         if self.is_integration:
@@ -322,7 +318,9 @@ class DockerImageValidator(BaseValidator):
 
     @staticmethod
     @lru_cache(256)
-    def get_docker_image_creation_date(docker_image_name: str, docker_image_tag: str):
+    def get_docker_image_creation_date(
+        docker_image_name: str, docker_image_tag: str
+    ) -> Optional[datetime]:
         """
         Get the last_updated field of the given docker.
         Args:

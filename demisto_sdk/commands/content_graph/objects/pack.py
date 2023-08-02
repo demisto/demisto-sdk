@@ -188,7 +188,7 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
             marketplace (MarketplaceVersions): The marketplace to which the pack should belong to.
         """
         self.server_min_version = self.server_min_version or MARKETPLACE_MIN_VERSION
-        self._enhance_pack_properties(marketplace, self.content_items)
+        self._enhance_pack_properties(marketplace, self.object_id, self.content_items)
 
         excluded_fields_from_metadata = {
             "path",

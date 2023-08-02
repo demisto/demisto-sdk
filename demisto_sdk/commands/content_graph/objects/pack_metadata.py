@@ -10,14 +10,21 @@ from demisto_sdk.commands.common.constants import (
     MARKETPLACE_MIN_VERSION,
     MarketplaceVersions,
 )
+from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.logger import logger
-from demisto_sdk.commands.content_graph.common import PackTags
+from demisto_sdk.commands.common.tools import get_json
+from demisto_sdk.commands.content_graph.common import (
+    LANDING_PAGE_SECTIONS_PATH,
+    PackTags,
+)
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 from demisto_sdk.commands.content_graph.objects.pack import PackContentItems
 from demisto_sdk.commands.content_graph.objects.relationship import RelationshipData
 
 MINIMAL_UPLOAD_SUPPORTED_VERSION = Version("6.5.0")
 MINIMAL_ALLOWED_SKIP_VALIDATION_VERSION = Version("6.6.0")
+
+json = JSON_Handler()
 
 
 class PackMetadata(BaseModel):
@@ -31,8 +38,8 @@ class PackMetadata(BaseModel):
     email: Optional[str]
     eulaLink: Optional[str]
     author: Optional[str]
-    authorImage: Optional[str]
-    certification: Optional[str]
+    author_image: Optional[str] = Field("", alias="authorImage")
+    certification: Optional[str] = Field("")
     price: Optional[int]
     hidden: Optional[bool]
     server_min_version: Optional[str] = Field(alias="serverMinVersion")
@@ -41,7 +48,7 @@ class PackMetadata(BaseModel):
     commit: Optional[str]
     downloads: Optional[int]
     tags: Optional[List[str]] = Field([])
-    categories: Optional[List[str]]
+    categories: Optional[List[str]] = Field([])
     use_cases: Optional[List[str]] = Field(alias="useCases")
     keywords: Optional[List[str]]
     search_rank: Optional[int] = Field(alias="searchRank")
@@ -60,7 +67,10 @@ class PackMetadata(BaseModel):
     content_commit_hash: Optional[str] = Field(None, alias="contentCommitHash")
 
     def _enhance_pack_properties(
-        self, marketplace: MarketplaceVersions, content_items: PackContentItems
+        self,
+        marketplace: MarketplaceVersions,
+        pack_id: str,
+        content_items: PackContentItems,
     ):
         """
         Enhancing the Pack object properties before dumping into a dictionary.
@@ -71,9 +81,10 @@ class PackMetadata(BaseModel):
 
         Args:
             marketplace (MarketplaceVersions): The marketplace to which the pack should belong to.
+            pack_id (str): The pack ID.
             content_items (PackContentItems): The pack content items object.
         """
-        self.tags = self._get_pack_tags(marketplace, content_items)
+        self.tags = self._get_pack_tags(marketplace, pack_id, content_items)
         self.author = get_author(self.author, marketplace)
         self.version_info = os.environ.get("CI_PIPELINE_ID", "")
         self.server_min_version = self.server_min_version or str(
@@ -201,7 +212,12 @@ class PackMetadata(BaseModel):
             if r.is_direct
         }
 
-    def _get_pack_tags(self, marketplace, content_items: PackContentItems) -> list:
+    def _get_pack_tags(
+        self,
+        marketplace: MarketplaceVersions,
+        pack_id: str,
+        content_items: PackContentItems,
+    ) -> list:
         """
         Gets the pack's tags considering the pack content item's properties.
         For example, if the pack has a script which is a transformer or a filter,
@@ -209,11 +225,14 @@ class PackMetadata(BaseModel):
 
         Args:
             marketplace (MarketplaceVersions): The marketplace to which the pack should belong to.
+            pack_id (str): The pack ID.
+            content_items (PackContentItems): The pack content items object.
 
         Returns:
             list: The list of tags to add to the pack's metadata.
         """
         tags = self._get_tags_by_marketplace(marketplace)
+        tags |= self._get_tags_from_landing_page(pack_id)
         tags |= (
             {PackTags.TIM}
             if any([integration.is_feed for integration in content_items.integration])
@@ -296,13 +315,32 @@ class PackMetadata(BaseModel):
             len(
                 [
                     MarketplaceVersions.MarketplaceV2 in integration.marketplaces
-                    and not integration.deprecated
                     and (integration.is_fetch or integration.is_fetch_events)
                     for integration in content_items.integration
                 ]
             )
             == 1
         )
+
+    def _get_tags_from_landing_page(self, pack_id: str) -> set:
+        """
+        Build the pack's tag list according to the landingPage sections file.
+
+        Args:
+            pack_id (str): The pack ID.
+
+        Returns:
+            set: Pack's tags.
+        """
+        tags = set()
+        landing_page_sections = get_json(f"./{LANDING_PAGE_SECTIONS_PATH}")
+        sections = landing_page_sections.get("sections") or []
+
+        for section in sections:
+            if pack_id in landing_page_sections.get(section, []):
+                tags.add(section)
+
+        return tags
 
 
 def get_author(author, marketplace):

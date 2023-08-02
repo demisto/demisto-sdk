@@ -131,7 +131,7 @@ class PackMetadataParser:
             "eulaLink", "https://github.com/demisto/content/blob/master/LICENSE"
         )
         self.author: str = metadata["author"] or "Cortex XSOAR"
-        self.authorImage: str = self.get_author_image_filepath(path=path)
+        self.author_image: str = self.get_author_image_filepath(path=path)
         self.certification: str = self.get_certification(
             certification=metadata.get("certification")
         )
@@ -143,7 +143,10 @@ class PackMetadataParser:
         self.commit: str = GitUtil().get_current_commit_hash() or ""
         self.downloads: int = 0
         self.tags: List[str] = metadata["tags"] or []
-        self.categories: List[str] = [c.title() for c in metadata["categories"]]
+        self.categories: List[str] = [
+            " ".join([w.title() if w.islower() else w for w in c.split()])
+            for c in metadata["categories"]
+        ]
         self.useCases: List[str] = metadata["useCases"] or []
         self.keywords: List[str] = metadata["keywords"] or []
         self.search_rank: int = 0

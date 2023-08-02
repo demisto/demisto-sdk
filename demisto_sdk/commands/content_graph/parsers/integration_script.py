@@ -58,6 +58,8 @@ class IntegrationScriptParser(YAMLContentItemParser):
 
     @property
     def python_version(self) -> Optional[str]:
+        if self.deprecated:
+            return None
         if python_version := DockerImagesInfo().python_version(self.docker_image):
             return python_version
         if python_version := get_python_version(self.docker_image):

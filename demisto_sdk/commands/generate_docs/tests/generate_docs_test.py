@@ -1024,8 +1024,8 @@ class TestGenerateIntegrationDoc:
         test_integration_readme = os.path.join(
             os.path.dirname(TEST_INTEGRATION_PATH), "README.md"
         )
-        if Path(test_integration_readme).is_file():
-            Path.unlink(Path(test_integration_readme))
+        if os.path.isfile(test_integration_readme):
+            os.remove(test_integration_readme)
 
     @classmethod
     def setup_class(cls):

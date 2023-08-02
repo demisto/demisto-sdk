@@ -4,7 +4,6 @@ import pathlib
 import shutil
 from collections import Counter
 from copy import deepcopy
-from pathlib import Path
 from typing import Dict, Optional
 from unittest import mock
 
@@ -603,7 +602,7 @@ class TestRNUpdate:
             pre_release=False, specific_version=None
         )
         assert version_number == expected_version
-        Path.unlink(Path(TestRNUpdate.FILES_PATH, "fake_pack/pack_metadata.json"))
+        os.remove(os.path.join(TestRNUpdate.FILES_PATH, "fake_pack/pack_metadata.json"))
         shutil.copy(
             src=os.path.join(TestRNUpdate.FILES_PATH, "fake_pack/_pack_metadata.json"),
             dst=os.path.join(TestRNUpdate.FILES_PATH, "fake_pack/pack_metadata.json"),
@@ -640,7 +639,7 @@ class TestRNUpdate:
             pre_release=False, specific_version=None
         )
         assert version_number == expected_version
-        Path.unlink(Path(TestRNUpdate.FILES_PATH, "fake_pack/pack_metadata.json"))
+        os.remove(os.path.join(TestRNUpdate.FILES_PATH, "fake_pack/pack_metadata.json"))
         shutil.copy(
             src=os.path.join(TestRNUpdate.FILES_PATH, "fake_pack/_pack_metadata.json"),
             dst=os.path.join(TestRNUpdate.FILES_PATH, "fake_pack/pack_metadata.json"),
@@ -677,7 +676,7 @@ class TestRNUpdate:
             pre_release=False, specific_version=None
         )
         assert version_number == expected_version
-        Path.unlink(Path(TestRNUpdate.FILES_PATH, "fake_pack/pack_metadata.json"))
+        os.remove(os.path.join(TestRNUpdate.FILES_PATH, "fake_pack/pack_metadata.json"))
         shutil.copy(
             src=os.path.join(TestRNUpdate.FILES_PATH, "fake_pack/_pack_metadata.json"),
             dst=os.path.join(TestRNUpdate.FILES_PATH, "fake_pack/pack_metadata.json"),
@@ -715,7 +714,7 @@ class TestRNUpdate:
             pre_release=False, specific_version="2.0.0"
         )
         assert version_number == expected_version
-        Path.unlink(Path(TestRNUpdate.FILES_PATH, "fake_pack/pack_metadata.json"))
+        os.remove(os.path.join(TestRNUpdate.FILES_PATH, "fake_pack/pack_metadata.json"))
         shutil.copy(
             src=os.path.join(TestRNUpdate.FILES_PATH, "fake_pack/_pack_metadata.json"),
             dst=os.path.join(TestRNUpdate.FILES_PATH, "fake_pack/pack_metadata.json"),
@@ -753,8 +752,10 @@ class TestRNUpdate:
         )
         with pytest.raises(ValueError):
             update_rn.bump_version_number()
-        Path.unlink(
-            Path(TestRNUpdate.FILES_PATH, "fake_pack_invalid/pack_metadata.json")
+        os.remove(
+            os.path.join(
+                TestRNUpdate.FILES_PATH, "fake_pack_invalid/pack_metadata.json"
+            )
         )
         shutil.copy(
             src=os.path.join(
@@ -797,8 +798,10 @@ class TestRNUpdate:
         )
         with pytest.raises(ValueError):
             update_rn.bump_version_number()
-        Path.unlink(
-            Path(TestRNUpdate.FILES_PATH, "fake_pack_invalid/pack_metadata.json")
+        os.remove(
+            os.path.join(
+                TestRNUpdate.FILES_PATH, "fake_pack_invalid/pack_metadata.json"
+            )
         )
         shutil.copy(
             src=os.path.join(
@@ -841,8 +844,10 @@ class TestRNUpdate:
         )
         with pytest.raises(ValueError):
             update_rn.bump_version_number()
-        Path.unlink(
-            Path(TestRNUpdate.FILES_PATH, "fake_pack_invalid/pack_metadata.json")
+        os.remove(
+            os.path.join(
+                TestRNUpdate.FILES_PATH, "fake_pack_invalid/pack_metadata.json"
+            )
         )
         shutil.copy(
             src=os.path.join(
@@ -1755,7 +1760,7 @@ class TestRNUpdateUnit:
         data_dict = get_json(TEMP_FILE)
         update_rn.metadata_path = TEMP_FILE
         update_rn.write_metadata_to_file(data_dict)
-        Path.unlink(Path(ORIGINAL))
+        os.remove(ORIGINAL)
         shutil.copy(src=TEMP_FILE, dst=ORIGINAL)
 
     def test_find_added_pack_files(self, mocker):
@@ -2076,6 +2081,7 @@ class TestRNUpdateUnit:
         Then
             - A new release notes is created. and it has a new record for updating docker image.
         """
+        import os
 
         from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
 
@@ -2132,10 +2138,8 @@ class TestRNUpdateUnit:
             "demisto_sdk/commands/update_release_notes/tests_data/Packs/release_notes/1_1_0.md"
         ) as file:
             RN = file.read()
-        Path.unlink(
-            Path(
-                "demisto_sdk/commands/update_release_notes/tests_data/Packs/release_notes/1_1_0.md"
-            )
+        os.remove(
+            "demisto_sdk/commands/update_release_notes/tests_data/Packs/release_notes/1_1_0.md"
         )
         assert "Updated the Docker image to: *demisto/python3:3.9.6.22914*." in RN
 
@@ -2220,6 +2224,7 @@ class TestRNUpdateUnit:
         Then
             - A new record with the updated docker image is added.
         """
+        import os
 
         from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
 
@@ -2261,10 +2266,8 @@ class TestRNUpdateUnit:
             "demisto_sdk/commands/update_release_notes/tests_data/Packs/release_notes/1_1_0.md"
         ) as file:
             RN = file.read()
-        Path.unlink(
-            Path(
-                "demisto_sdk/commands/update_release_notes/tests_data/Packs/release_notes/1_1_0.md"
-            )
+        os.remove(
+            "demisto_sdk/commands/update_release_notes/tests_data/Packs/release_notes/1_1_0.md"
         )
         assert "Updated the Docker image to: *dockerimage:python/test:1243*" not in RN
 
@@ -2278,6 +2281,7 @@ class TestRNUpdateUnit:
         Then
             - Docker is not indicated as updated.
         """
+        import os
 
         from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
 
@@ -2316,9 +2320,9 @@ class TestRNUpdateUnit:
             "demisto_sdk/commands/update_release_notes/tests_data/Packs/release_notes/1_1_0.md"
         ) as file:
             RN = file.read()
-        Path(
+        os.remove(
             "demisto_sdk/commands/update_release_notes/tests_data/Packs/release_notes/1_1_0.md"
-        ).unlink()
+        )
         assert "Updated the Docker image to: *dockerimage:python/test:1243*" not in RN
 
     docker_image_test_rn = (
@@ -2412,11 +2416,11 @@ class TestRNUpdateUnit:
                 f.write(json.dumps(existing_conf_data))
         client.build_rn_config_file("1.0.1")
         if expected_conf_data:
-            assert Path(conf_path).exists()
+            assert os.path.exists(conf_path)
             with open(conf_path) as f:
                 assert json.loads(f.read()) == expected_conf_data
         else:
-            assert not Path(conf_path).exists()
+            assert not os.path.exists(conf_path)
 
 
 def test_get_from_version_at_update_rn(integration):

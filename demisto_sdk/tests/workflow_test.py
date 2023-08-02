@@ -31,7 +31,7 @@ def list_files(path: Path) -> Generator[str, None, None]:
         file name
     """
     for file in os.listdir(path):
-        if Path(path / file).is_file():
+        if os.path.isfile(path / file):
             yield file
 
 

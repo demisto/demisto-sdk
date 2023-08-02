@@ -35,6 +35,8 @@
 * Fixed an issue where **lint** command failed to pull docker image in Gitlab environment.
 * Fixed an issue in **doc-review** command where escape characters within Markdown files were detected as invalid words.
 * Fixed an issue where **validate** failed on infrastructure test files.
+* **lint** will now fail on `demisto.results` and `return_outputs` usage, when a pack is `xsoar` or `partner` supported.
+* **lint** will now fail on `LOG` usage in python files.
 * Fixed an issue in **update-content-graph** where the neo4j service was unaccessible for non-root users.
 
 ## 1.17.2

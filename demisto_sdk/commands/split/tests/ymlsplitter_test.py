@@ -30,7 +30,7 @@ def test_extract_long_description(tmpdir):
         no_common_server=False,
         configuration=Configuration(),
     )
-    assert extractor.extract_long_description("file_to_update") == 0
+    assert extractor.extract_long_description("output_path") == 0
 
     # Test opening the file and writing to it
     extractor = YmlSplitter(
@@ -235,7 +235,7 @@ def test_extract_image(tmpdir):
         output="",
         file_type="script",
     )
-    assert extractor.extract_image("file_to_update") == 0
+    assert extractor.extract_image("output_path") == 0
 
     # Test opening the file and writing to it
     extractor = YmlSplitter(

@@ -512,11 +512,11 @@ class TestFlagHandlers:
         with patch.object(Downloader, "__init__", lambda x, y, z: None):
             downloader = Downloader("", "")
             downloader.list_files = lf
-            downloader.all_custom_content = a
+            downloader.download_all_custom_content = a
             downloader.output_pack_path = o
             downloader.input_files = i
             downloader.regex = r
-            downloader.download_system_item = system
+            downloader.download_system_items = system
             downloader.system_item_type = it
             answer = downloader.verify_flags()
             if err:
@@ -528,7 +528,7 @@ class TestFlagHandlers:
         with patch.object(Downloader, "__init__", lambda a, b, c: None):
             downloader = Downloader("", "")
             downloader.custom_content_temp_dir = env.CUSTOM_CONTENT_BASE_PATH
-            downloader.all_custom_content = True
+            downloader.download_all_custom_content = True
             downloader.handle_all_custom_content_flag()
             custom_content_names = [cco["name"] for cco in env.CUSTOM_CONTENT]
             assert ordered(custom_content_names) == ordered(downloader.input_files)
@@ -679,39 +679,6 @@ class TestBuildPackContent:
 
 
 class TestBuildCustomContent:
-    def test_exist_in_pack_content(self, tmp_path):
-        env = Environment(tmp_path)
-        parameters = [
-            {
-                "content_object": env.INTEGRATION_CUSTOM_CONTENT_OBJECT,
-                "exist_in_pack": True,
-            },
-            {
-                "content_object": env.SCRIPT_CUSTOM_CONTENT_OBJECT,
-                "exist_in_pack": True,
-            },
-            {
-                "content_object": env.PLAYBOOK_CUSTOM_CONTENT_OBJECT,
-                "exist_in_pack": True,
-            },
-            {
-                "content_object": env.LAYOUT_CUSTOM_CONTENT_OBJECT,
-                "exist_in_pack": True,
-            },
-            {
-                "content_object": env.FAKE_CUSTOM_CONTENT_OBJECT,
-                "exist_in_pack": False,
-            },
-        ]
-        with patch.object(Downloader, "__init__", lambda a, b, c: None):
-            downloader = Downloader("", "")
-            downloader.pack_content = env.PACK_CONTENT
-            for param in parameters:
-                assert (
-                    downloader.exist_in_pack_content(param["content_object"])
-                    is param["exist_in_pack"]
-                )
-
     def test_build_custom_content_object(self, tmp_path):
         env = Environment(tmp_path)
         parameters = [

@@ -1296,20 +1296,6 @@ DIR_TO_PREFIX = {
 }
 
 ENTITY_NAME_SEPARATORS = [" ", "_", "-"]
-
-DELETED_YML_FIELDS_BY_DEMISTO = [
-    "fromversion",
-    "toversion",
-    "alt_dockerimages",
-    "script.dockerimage45",
-    "tests",
-    "defaultclassifier",
-    "defaultmapperin",
-    "defaultmapperout",
-]  # TODO: Do we actually want to restore keep these fields for existing content if they're deleted from the server?
-
-DELETED_JSON_FIELDS_BY_DEMISTO = ["fromVersion", "toVersion"]
-
 FILE_EXIST_REASON = "File already exist"
 FILE_NOT_IN_CC_REASON = "File does not exist in Demisto instance"
 

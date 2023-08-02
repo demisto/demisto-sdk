@@ -808,19 +808,19 @@ def create_stringio_object(file_data: bytes | str) -> StringIO:
     Returns:
         StringIO: A StringIO object representing the file data
     """
-    try:
-        if isinstance(file_data, str):
-            return StringIO(file_data)
+    if isinstance(file_data, str):
+        return StringIO(file_data)
 
+    try:
         return StringIO(file_data.decode("utf-8"))
 
     except UnicodeDecodeError:
         try:
-            logger.debug(f"Could not read file using UTF-8 encoding. Trying to auto-detect encoding...")
+            logger.debug("Could not read file using UTF-8 encoding. Trying to auto-detect encoding...")
             return StringIO(UnicodeDammit(markup=file_data).unicode_markup)  # Guess the original encoding
 
         except UnicodeDecodeError:
-            logger.debug(f"Could not auto-detect encoding.")
+            logger.debug("Could not auto-detect encoding.")
             raise
 
 
@@ -1812,9 +1812,9 @@ def find_type(
     Returns:
         FileType: Enum representation of the content file type, None otherwise.
     """
-    type_by_path = find_type_by_path(path)
-    if type_by_path:
+    if type_by_path := find_type_by_path(path):
         return type_by_path
+
     try:
         if not _dict and not file_type:
             _dict, file_type = get_dict_from_file(
@@ -1925,7 +1925,7 @@ def find_type(
         ):
             return FileType.PRE_PROCESS_RULES
 
-        if "allRead" in _dict and "truncated" in _dict:  # TODO: Seems like "allRead" doesn't necessarily exist in lists
+        if "allRead" in _dict and "truncated" in _dict:
             return FileType.LISTS
 
         if "definitionIds" in _dict and "views" in _dict:

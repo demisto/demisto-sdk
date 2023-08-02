@@ -1,5 +1,7 @@
 # Changelog
 ## Unreleased
+
+## 1.18.1
 * Fixed an issue where the coloring directives where showing in log messages.
 * Fixed an issue where **create-content-graph** was not executed upon changes in the parser infra files.
 * Added a parameter `skip-packs-known-words` to the **doc-review** command, making sure that pack known words will not be added.

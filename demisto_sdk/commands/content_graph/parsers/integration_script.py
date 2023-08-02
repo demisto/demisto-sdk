@@ -60,4 +60,6 @@ class IntegrationScriptParser(YAMLContentItemParser):
     def python_version(self) -> Optional[str]:
         if python_version := DockerImagesInfo().python_version(self.docker_image):
             return python_version
-        return str(get_python_version(self.docker_image))
+        if python_version := get_python_version(self.docker_image):
+            return str(python_version)
+        return None

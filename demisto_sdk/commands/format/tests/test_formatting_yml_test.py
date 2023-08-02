@@ -259,14 +259,14 @@ class TestFormatting:
             )
         )
         saved_file_path = os.path.join(
-            os.path.dirname(source_path), Path(destination_path).name
+            os.path.dirname(source_path), os.path.basename(destination_path)
         )
         base_yml = formatter(
             input=source_path, output=saved_file_path, path=schema_path
         )
         base_yml.save_yml_to_destination_file()
-        assert Path(saved_file_path).is_file()
-        Path.unlink(Path(saved_file_path))
+        assert os.path.isfile(saved_file_path)
+        os.remove(saved_file_path)
 
     INTEGRATION_PROXY_SSL_PACK = [
         (
@@ -551,18 +551,18 @@ class TestFormatting:
             )
         )
         saved_file_path = os.path.join(
-            os.path.dirname(source_path), Path(destination_path).name
+            os.path.dirname(source_path), os.path.basename(destination_path)
         )
         base_yml = formatter(
             input=source_path, output=saved_file_path, path=schema_path
         )
         base_yml.save_yml_to_destination_file()
-        assert Path(saved_file_path).is_file()
+        assert os.path.isfile(saved_file_path)
 
         with open(saved_file_path) as f:
             yaml_content = yaml.load(f)
             assert "yes" in yaml_content["tasks"]["27"]["nexttasks"]
-        Path.unlink(Path(saved_file_path))
+        os.remove(saved_file_path)
 
     FORMAT_FILES = [
         (SOURCE_FORMAT_PLAYBOOK, DESTINATION_FORMAT_PLAYBOOK, PLAYBOOK_PATH, 0)
@@ -579,7 +579,7 @@ class TestFormatting:
         os.makedirs(path, exist_ok=True)
         shutil.copyfile(source, target)
         res = format_manager(input=target, output=target)
-        Path.unlink(Path(target))
+        os.remove(target)
         os.rmdir(path)
 
         assert res is answer
@@ -777,7 +777,7 @@ class TestFormatting:
                     param.pop("defaultvalue")
             for param in INCIDENT_FETCH_REQUIRED_PARAMS:
                 assert param in yaml_content["configuration"]
-        Path.unlink(Path(target))
+        os.remove(target)
         os.rmdir(path)
         assert res is answer
 
@@ -828,7 +828,7 @@ class TestFormatting:
                 param.update(param_details.get("must_equal", dict()))
                 param.update(param_details.get("must_contain", dict()))
                 assert param in params
-        Path.unlink(Path(target))
+        os.remove(target)
         os.rmdir(path)
         assert res is answer
 
@@ -963,7 +963,7 @@ class TestFormatting:
         res = formatter.run_format()
         assert res == 0
         assert formatter.data.get("fromversion") == GENERAL_DEFAULT_FROMVERSION
-        Path.unlink(Path(DESTINATION_FORMAT_TEST_PLAYBOOK))
+        os.remove(DESTINATION_FORMAT_TEST_PLAYBOOK)
         os.rmdir(TEST_PLAYBOOK_PATH)
 
     @pytest.mark.parametrize(

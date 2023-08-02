@@ -1,7 +1,6 @@
 import logging
 import os
 from contextlib import nullcontext as does_not_raise
-from pathlib import Path
 
 import pytest
 import requests_mock
@@ -1243,7 +1242,7 @@ class TestPackUniqueFilesValidator:
         self.validator.pack_path = pack.path
 
         with ChangeCWD(repo.path):
-            Path.unlink(Path(pack.readme.path))
+            os.remove(pack.readme.path)
             assert self.validator.validate_pack_readme_and_pack_description()
             assert (
                 '"README.md" file does not exist, create one in the root of the pack'
@@ -1340,7 +1339,7 @@ class TestPackUniqueFilesValidator:
         author_image_path = pack.author_image.path
 
         with ChangeCWD(repo.path):
-            Path.unlink(Path(author_image_path))
+            os.remove(author_image_path)
             res = self.validator.validate_author_image_exists()
             assert not res
             assert (

@@ -1,4 +1,4 @@
-from pathlib import Path
+import os
 
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import FileType, find_type
@@ -77,7 +77,7 @@ def validate_inputs_examples(input_path):
         )
         return 1
 
-    if input_path and not Path(input_path).is_file():
+    if input_path and not os.path.isfile(input_path):
         logger.info(f"[red]Input file {input_path} was not found.[/red]")
         return 1
 

@@ -1,7 +1,6 @@
 import os
 import re
 import time
-from pathlib import Path
 
 import demisto_client
 from demisto_client.demisto_api.rest import ApiException
@@ -79,7 +78,7 @@ class TestPlaybookRunner:
             )
 
         # Run specific test playbook
-        elif Path(self.test_playbook_path).is_file():
+        elif os.path.isfile(self.test_playbook_path):
             test_playbooks.append(self.test_playbook_path)
 
         return test_playbooks
@@ -97,7 +96,7 @@ class TestPlaybookRunner:
                 )
                 is_path_valid = False
 
-            elif not Path(self.test_playbook_path).exists():
+            elif not os.path.exists(self.test_playbook_path):
                 logger.info(
                     f"[red]Error: Given input path: {self.test_playbook_path} does not exist[/red]"
                 )

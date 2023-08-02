@@ -2,7 +2,6 @@ import io
 import os
 import sqlite3
 from datetime import datetime, timedelta
-from pathlib import Path
 from typing import Dict, Iterable, List, Optional
 
 import coverage
@@ -45,8 +44,7 @@ def fix_file_path(coverage_file: str, code_file_absolute_path: str):
         cursor.close()
     if not index == 1:
         logger.debug(f"removing coverage report for {code_file_absolute_path}")
-        coverage_file_path = Path(coverage_file)
-        Path.unlink(coverage_file_path)
+        os.remove(coverage_file)
 
 
 def get_coverage_obj(

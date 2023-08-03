@@ -306,7 +306,7 @@ class XsiamApiClient(XsiamApiInterface):
             reply_results_data = (
                 data.get("reply", {}).get("results", {}).get("data", [])
             )
-            return reply_results_data
-        else:
-            response.raise_for_status()
-            raise XsiamApiQueryError(execution_id, response.status_code, data)
+            if reply_results_data:
+                return reply_results_data
+        response.raise_for_status()
+        raise XsiamApiQueryError(execution_id, response.status_code, data)

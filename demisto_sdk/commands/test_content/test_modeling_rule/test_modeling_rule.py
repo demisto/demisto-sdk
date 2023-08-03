@@ -269,7 +269,7 @@ def run_query(xsiam_client, query) -> List[dict]:
             ),
             extra={"markup": True},
         )
-        raise requests.exceptions.HTTPError
+        raise typer.Exit(1)
     return results
 
 
@@ -278,18 +278,29 @@ def validate_expected_values(
     mr: ModelingRule,
     test_data: init_test_data.TestData,
 ):
-    """Validate the expected_values in the given test data file."""
+    """
+    Validate the expected_values in the given test data file.
+    Args:
+        xsiam_client (XsiamApiClient): The XsiamApiClient object.
+        mr (ModelingRule): The ModelingRule object.
+        test_data (init_test_data.TestData): The data parsed from the test data file.
+    """
     logger.info("[cyan]Validating expected_values...[/cyan]", extra={"markup": True})
     success = True
+    result = []
+
     for rule in mr.rules:
         query = build_query(rule, test_data)
-        result = run_query(xsiam_client, query)
+        try:
+            result = run_query(xsiam_client, query)
+        except XsiamApiQueryError:
+            success = False
         success &= verify_results(rule.dataset, result, test_data)
     if success:
         success_message = "[green]Mappings validated successfully[/green]"
         logger.info(success_message, extra={"markup": True})
-    else:
-        raise typer.Exit(1)
+        return
+    raise typer.Exit(1)
 
 
 def check_dataset_exists(

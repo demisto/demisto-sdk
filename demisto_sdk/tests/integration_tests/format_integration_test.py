@@ -2152,115 +2152,6 @@ def test_verify_deletion_from_conf_script_format_with_deprecate_flag(
     ]
 
 
-def test_format_updating_aliases_marketplace_field(mocker, monkeypatch, repo):
-    """
-    Given
-    - An incident field.
-
-    When
-    - Running format command on it
-
-    Then
-    -  Ensure that the marketplacev2 was removed from the incident field marketplaces list.
-    """
-    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
-    monkeypatch.setenv("COLUMNS", "1000")
-
-    runner = CliRunner()
-    pack = repo.create_pack("PackName")
-    incident_field = pack.create_incident_field(
-        name="incident_field",
-        content={
-            "cliName": "incidentfield",
-            "id": "incident_incidentfield",
-            "name": "Incident Field",
-            "Aliases": [
-                {
-                    "cliName": "aliasincidentfield",
-                    "type": "shortText",
-                    "name": "Alias Incident Field"
-                },
-                {
-                    "cliName": "alias2incidentfield",
-                    "type": "shortText",
-                    "name": "Alias2 Incident Field"
-                }
-            ],
-            "marketplaces": [
-                "marketplacev2"
-            ]
-        }
-    )
-    alias_incident_field_content = {
-            "cliName": "aliasincidentfield",
-            "id": "incident_aliasincidentfield",
-            "name": "Alias Incident Field",
-            "marketplaces": [
-                "marketplacev2", "xsoar"
-            ]
-        }
-    alias_incident_field = pack.create_incident_field(
-        name="alias_incident_field",
-        content=alias_incident_field_content
-    )
-    alias2_incident_field_content = {
-        "cliName": "alias2incidentfield",
-        "id": "incident_alias2incidentfield",
-        "name": "Alias2 Incident Field",
-        "marketplaces": [
-            "xsoar"
-        ]
-    }
-    alias2_incident_field = pack.create_incident_field(
-        name="alias2_incident_field",
-        content=alias2_incident_field_content
-    )
-
-    # Mock the behavior of Neo4jContentGraphInterface
-    class MockedContentGraphInterface:
-        def __enter__(self):
-            return self
-
-        def __exit__(self):
-            pass
-
-        def search(self, path: str):
-            # Simulate the graph search
-            if path:
-                return [MockedIncidentFieldNode()]
-            return []
-
-        def get_content_items_by_identifier(self, identifier_values_list, content_type, identifier):
-            if identifier_values_list:
-                return [{'associated_to_all': True, 'toversion': '99.99.99', 'deprecated': False, 'description': 'description', 'marketplaces': ['xsoar', 'marketplacev2'], 'display_name': 'Alias Incident Field', 'object_id': 'aliasincidentfield', 'path': alias_incident_field.path, 'content_type': 'IncidentField', 'not_in_repository': False, 'name': 'Alias Incident Field', 'fromversion': '5.0.0', 'cli_name': 'aliasincidentfield', 'is_test': False, 'field_type': 'shortText', 'node_id': 'IncidentField:aliasincidentfield'},
-                        {'associated_to_all': True, 'toversion': '99.99.99', 'deprecated': False, 'description': 'description', 'marketplaces': ['xsoar'], 'display_name': 'Alert ID', 'object_id': 'alias2incidentfield', 'path': alias2_incident_field.path, 'content_type': 'IncidentField', 'not_in_repository': False, 'name': 'Alias2 Incident Field', 'fromversion': '5.0.0', 'cli_name': 'alias2incidentfield', 'is_test': False, 'field_type': 'shortText', 'node_id': 'IncidentField:alias2incidentfield'}]
-            return ()
-
-    class MockedIncidentFieldNode:
-        def __init__(self):
-            self.name = "Alias Incident Field"
-            self.not_in_repository = True
-            self.data = alias_incident_field_content
-
-    mocker.patch(
-        "demisto_sdk.commands.format.format_module.ContentGraphInterface",
-        return_value=MockedContentGraphInterface(),
-    )
-
-    result = runner.invoke(main, [FORMAT_CMD, "-i", incident_field.path, "-at", "-y"])
-    message = f"[blue]================= Updating file {alias_incident_field.path} =================[/blue]"
-    assert result.exit_code == 0
-    assert not result.exception
-    assert str_in_call_args_list(logger_info.call_args_list, message)
-
-    # get_dict_from_file returns a tuple of 2 object. The first is the content of the file,
-    # the second is the type of the file.
-    file_content = get_dict_from_file(alias_incident_field.path)[0]
-    alias2_content = get_dict_from_file(alias2_incident_field.path)[0]
-    assert file_content.get('marketplaces', []) == ['xsoar']
-    assert alias2_content.get('marketplaces', []) == ['xsoar']
-
-
 def test_format_incident_field_with_no_graph(mocker, monkeypatch, repo):
     """
     Given
@@ -2538,6 +2429,29 @@ def repository(mocker, repo) -> ContentDTO:
         ],
     }
 
+    relationships2 = {
+        RelationshipType.IN_PACK: [
+            mock_relationship(
+                "originalincidentfield",
+                ContentType.INCIDENT_FIELD,
+                "SamplePack2",
+                ContentType.PACK,
+            ),
+            mock_relationship(
+                "alias1incidentfield",
+                ContentType.INCIDENT_FIELD,
+                "SamplePack2",
+                ContentType.PACK,
+            ),
+            mock_relationship(
+                "alias2incidentfield",
+                ContentType.INCIDENT_FIELD,
+                "SamplePack2",
+                ContentType.PACK,
+            ),
+        ]
+    }
+
     mapper_data = {
         "description": "",
         "feed": False,
@@ -2603,33 +2517,71 @@ def repository(mocker, repo) -> ContentDTO:
         "description": "",
         "marketplaces": ["xsoar"]
     }
-    incident_field_alias_content = {
+    incident_field_content = {
         "cliName": "incidentfield",
         "id": "incident_incidentfield",
         "name": "Incident Field",
+        "marketplaces": [
+            MarketplaceVersions.XSOAR
+        ]
+    }
+    original_incident_field_content = {
+        "cliName": "originalincidentfield",
+        "id": "incident_originalincidentfield",
+        "name": "Original Incident Field",
         "Aliases": [
             {
-                "cliName": "aliasincidentfield",
+                "cliName": "alias1incidentfield",
                 "type": "shortText",
-                "name": "Alias Incident Field"
+                "name": "Alias1 Incident Field"
             }
         ],
         "marketplaces": [
-            "xsoar"
+            MarketplaceVersions.MarketplaceV2
         ]
     }
-    pack = repo.create_pack("PackName")
-    mapper = pack.create_mapper(
+    alias1_incident_field_content = {
+        "cliName": "alias1incidentfield",
+        "id": "incident_alias1incidentfield",
+        "name": "Alias1 Incident Field",
+        "marketplaces": [
+            MarketplaceVersions.MarketplaceV2, MarketplaceVersions.XSOAR
+        ]
+    }
+    alias2_incident_field_content = {
+        "cliName": "alias2incidentfield",
+        "id": "incident_alias2incidentfield",
+        "name": "Alias2 Incident Field",
+        "marketplaces": [
+            MarketplaceVersions.XSOAR
+        ]
+    }
+    pack_1 = repo.create_pack("PackName")
+    mapper = pack_1.create_mapper(
         name="mapper",
         content=mapper_data
     )
-    layout = pack.create_layoutcontainer(
+    layout = pack_1.create_layoutcontainer(
         name="Layout",
         content=layout_content
     )
-    incident_field_alias = pack.create_incident_field(
+    incident_field = pack_1.create_incident_field(
         name="incidentfield",
-        content=incident_field_alias_content
+        content=incident_field_content
+    )
+
+    pack_2 = repo.create_pack("PackName2")
+    original_incident_field = pack_2.create_incident_field(
+        name='originalincidentfield',
+        content=original_incident_field_content
+    )
+    alias1_incident_field = pack_2.create_incident_field(
+        name='alias1incidentfield',
+        content=alias1_incident_field_content
+    )
+    alias2_incident_field = pack_2.create_incident_field(
+        name='alias2incidentfield',
+        content=alias2_incident_field_content
     )
 
     pack1 = mock_pack()
@@ -2638,11 +2590,29 @@ def repository(mocker, repo) -> ContentDTO:
     pack1.content_items.mapper.append(mock_mapper(name='Mapper - Incoming Mapper', data=mapper_data, path=mapper.path))
     pack1.content_items.layout.append(mock_layout(name='Layout', data=layout_content, path=layout.path))
     pack1.content_items.incident_field.append(mock_incident_field(cli_name='incidentfield',
-                                                                  path=incident_field_alias.path,
-                                                                  data=incident_field_alias_content,
+                                                                  path=incident_field.path,
+                                                                  data=incident_field_content,
                                                                   name='incidentfield',
                                                                   marketplaces=[MarketplaceVersions.XSOAR]))
-    repository.packs.extend([pack1])
+    pack2 = mock_pack('SamplePack2')
+    pack2.relationships = relationships2
+    pack2.content_items.incident_field.append(mock_incident_field(cli_name='originalincidentfield',
+                                                                  path=original_incident_field.path,
+                                                                  data=original_incident_field_content,
+                                                                  name='originalincidentfield',
+                                                                  marketplaces=[MarketplaceVersions.MarketplaceV2]))
+    pack2.content_items.incident_field.append(mock_incident_field(cli_name='alias1incidentfield',
+                                                                  path=alias1_incident_field.path,
+                                                                  data=alias1_incident_field_content,
+                                                                  name='alias1incidentfield',
+                                                                  marketplaces=[MarketplaceVersions.MarketplaceV2,
+                                                                                MarketplaceVersions.XSOAR]))
+    pack2.content_items.incident_field.append(mock_incident_field(cli_name='alias2incidentfield',
+                                                                  path=alias2_incident_field.path,
+                                                                  data=alias2_incident_field_content,
+                                                                  name='alias2incidentfield',
+                                                                  marketplaces=[MarketplaceVersions.XSOAR]))
+    repository.packs.extend([pack1, pack2])
 
     def mock__create_content_dto(packs_to_update: List[str]) -> List[ContentDTO]:
         if not packs_to_update:
@@ -2789,7 +2759,7 @@ def mock_incident_field(cli_name: str, path: str, marketplaces: List, data: Dict
     )
 
 
-def test_format_mapper_with_graph(mocker, monkeypatch, repository, repo):
+def test_format_mapper_with_graph_remove_unknown_content(mocker, monkeypatch, repository, repo):
     """
     Given
     - A mapper.
@@ -2829,7 +2799,7 @@ def test_format_mapper_with_graph(mocker, monkeypatch, repository, repo):
     assert file_content.get("mapping", {}).get('Mapper Finding', {}).get('internalMapping') == {}
 
 
-def test_format_layout_with_graph(mocker, monkeypatch, repository, repo):
+def test_format_layout_with_graph_remove_unknown_content(mocker, monkeypatch, repository, repo):
     """
     Given
     - A layout.
@@ -2857,7 +2827,7 @@ def test_format_layout_with_graph(mocker, monkeypatch, repository, repo):
     with ChangeCWD(repo.path):
         runner = CliRunner()
         result = runner.invoke(main, [FORMAT_CMD, "-i", layout_path, "-at", "-y"])
-    message = "Removing the fields {'Unknown Incident Field'}" + f" from the layout {layout.path} " \
+    message = "Removing the fields {'Unknown Incident Field'}" + f" from the layout {layout_path} " \
                                                                  f"because they aren't in the content repo."
     assert result.exit_code == 0
     assert not result.exception
@@ -2877,3 +2847,43 @@ def test_format_layout_with_graph(mocker, monkeypatch, repository, repo):
     }]
     assert file_content.get('detailsV2', {}).get('tabs', [])[0].get('sections', {})[0].get('items', []) == \
            expected_layout_content
+
+
+def test_format_incident_field_graph_fix_aliases_marketplace(mocker, monkeypatch, repository, repo):
+    """
+    Given
+    - An incident field.
+
+    When
+    - Running format command on it
+
+    Then
+    -  Ensure that the aliases incident fields marketplaces field contains only xsoar.
+    """
+
+    with ContentGraphInterface() as interface:
+        create_content_graph(interface)
+
+    monkeypatch.setenv("COLUMNS", "1000")
+
+    pack_graph_object = _get_pack_by_id(repository, "SamplePack2")
+    original_incident_field_path = str(pack_graph_object.content_items.incident_field[0].path)  # original incident field
+    alias1_incident_field_path = str(pack_graph_object.content_items.incident_field[1].path)
+    alias2_incident_field_path = str(pack_graph_object.content_items.incident_field[2].path)
+    mocker.patch(
+        "demisto_sdk.commands.format.format_module.ContentGraphInterface",
+        return_value=interface,
+    )
+    with ChangeCWD(repo.path):
+        runner = CliRunner()
+        result = runner.invoke(main, [FORMAT_CMD, "-i", original_incident_field_path, "-at", "-y"])
+
+    assert result.exit_code == 0
+    assert not result.exception
+
+    # get_dict_from_file returns a tuple of 2 object. The first is the content of the file,
+    # the second is the type of the file.
+    alias1_content = get_dict_from_file(alias1_incident_field_path)[0]
+    alias2_content = get_dict_from_file(alias2_incident_field_path)[0]
+    assert alias1_content.get('marketplaces', []) == ['xsoar']
+    assert alias2_content.get('marketplaces', []) == ['xsoar']

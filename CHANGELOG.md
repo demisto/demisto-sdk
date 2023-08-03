@@ -1,6 +1,9 @@
 # Changelog
 ## Unreleased
 * Added the *--xsiam* flag to the **init** command in order to create XSIAM content.
+* Added the '--all' input option for the **prepare-content** command, to support running on all content packs.
+* Updated the '-i' input option of the **prepare-content** command to support multiple inputs as a comma-separated list.
+
 
 ## 1.18.1
 * Fixed an issue where the coloring directives where showing in log messages.
@@ -39,8 +42,6 @@
 * Fixed an issue in **doc-review** command where escape characters within Markdown files were detected as invalid words.
 * Fixed an issue where **validate** failed on infrastructure test files.
 * Fixed an issue in **update-content-graph** where the neo4j service was unaccessible for non-root users.
-* Added the '--all' input option for the **prepare-content** command, to support running on all content packs.
-* Updated the '-i' input option of the **prepare-content** command to support multiple inputs as a comma-separated list.
 
 ## 1.17.2
 * Fixed an issue where **lint** and **validate** commands failed on integrations and scripts that use docker images that are not available in the Docker Hub but exist locally.

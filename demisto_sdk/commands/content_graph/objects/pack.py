@@ -175,7 +175,12 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
         min_content_items_version = MARKETPLACE_MIN_VERSION
         if content_items:
             min_content_items_version = str(
-                min(parse(content_item.fromversion) for content_item in content_items)
+                min(
+                    parse(content_item.fromversion)
+                    for content_item in content_items
+                    if content_item.content_type
+                    not in (ContentType.XDRC_TEMPLATE, ContentType.TRIGGER)
+                )
             )
         self.server_min_version = self.server_min_version or min_content_items_version
         self.content_items = PackContentItems(**content_item_dct)

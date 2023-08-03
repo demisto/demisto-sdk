@@ -16,7 +16,7 @@ from demisto_sdk.commands.common.content_constant_paths import (
 from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import get_json
-from demisto_sdk.commands.content_graph.common import PackTags
+from demisto_sdk.commands.content_graph.common import ContentType, PackTags
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 from demisto_sdk.commands.content_graph.objects.pack import PackContentItems
 from demisto_sdk.commands.content_graph.objects.relationship import RelationshipData
@@ -87,12 +87,20 @@ class PackMetadata(BaseModel):
         self.tags = self._get_pack_tags(marketplace, pack_id, content_items)
         self.author = get_author(self.author, marketplace)
         self.version_info = os.environ.get("CI_PIPELINE_ID", "")
-        self.server_min_version = self.server_min_version or str(
-            max(
-                (parse(content_item.fromversion) for content_item in content_items),
-                default=MARKETPLACE_MIN_VERSION,
+        self.server_min_version = self.server_min_version
+        if not self.server_min_version:
+            logger.info(
+                f"[TEST1] server_min_version is '{self.server_min_version}', checking content items again"
             )
-        )
+            self.server_min_version = str(
+                max(
+                    (parse(content_item.fromversion) for content_item in content_items),
+                    default=MARKETPLACE_MIN_VERSION,
+                )
+            )
+            logger.info(
+                f"[TEST2] server_min_version is now '{self.server_min_version}'"
+            )
 
     def _format_metadata(
         self,
@@ -121,16 +129,13 @@ class PackMetadata(BaseModel):
             collected_content_items,
             content_displays,
         ) = self._get_content_items_and_displays_metadata(marketplace, content_items)
-        support_details = {"url": self.url}
-        if self.email:
-            support_details["email"] = self.email
 
         _metadata.update(
             {
                 "contentItems": collected_content_items,
                 "contentDisplays": content_displays,
                 "dependencies": self._enhance_dependencies(marketplace, dependencies),
-                "supportDetails": support_details,
+                "supportDetails": self._get_support_details(),
             }
         )
 
@@ -342,6 +347,19 @@ class PackMetadata(BaseModel):
 
         return tags
 
+    def _get_support_details(self) -> dict:
+        """Gets the support details object for the metadata.
+
+        Returns:
+            dict: The support details object.
+        """
+        support_details = {}
+        if self.url:
+            support_details["url"] = self.url
+        if self.email:
+            support_details["email"] = self.email
+        return support_details
+
 
 def get_author(author, marketplace):
     if marketplace in [MarketplaceVersions.XSOAR, MarketplaceVersions.XPANSE]:
@@ -378,6 +396,7 @@ def add_item_to_metadata_list(
     if content_item_metadata := search_content_item_metadata_object(
         collected_content_items=collected_content_items,
         item_id=content_item_summary["id"],
+        item_name=content_item_summary["name"],
         item_type_key=content_item.content_type.metadata_name,
     ):
         logger.debug(
@@ -447,6 +466,7 @@ def set_empty_toversion_if_default(content_item_dict: dict):
 def search_content_item_metadata_object(
     collected_content_items: dict,
     item_id: Optional[str],
+    item_name: Optional[str],
     item_type_key: Optional[str],
 ) -> Optional[dict]:
     """
@@ -464,5 +484,9 @@ def search_content_item_metadata_object(
         content_item
         for content_item in collected_content_items[item_type_key]
         if content_item.get("id") == item_id
+        or (
+            content_item.get("name") == item_name
+            and item_type_key == ContentType.MODELING_RULE
+        )  # to avoid duplicate modeling rules with different versions and ids
     ]
     return filtered_content_items[0] if filtered_content_items else None

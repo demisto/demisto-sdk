@@ -24,6 +24,27 @@ class Playbook(ContentItem, content_type=ContentType.PLAYBOOK):  # type: ignore[
             supported_marketplaces=self.marketplaces,
         )
 
+    def is_incident_to_alert(self, marketplace: MarketplaceVersions) -> bool:
+        """
+        Checks whether the playbook needs the preparation
+        of an `incident to alert`,
+        and this affects the `metadata.json` and the `dump` process of the script.
+
+        Args:
+            marketplace (MarketplaceVersions): the destination marketplace.
+
+        Returns:
+            bool: True if all conditions are true otherwise False
+        """
+        return all(
+            (
+                marketplace == MarketplaceVersions.MarketplaceV2,
+                "incident" in self.name.lower(),
+                "incident" in self.object_id.lower(),
+                not self.deprecated,
+            )
+        )
+
     @classmethod
     def _client_upload_method(cls, client: demisto_client) -> Callable:
         return client.import_playbook

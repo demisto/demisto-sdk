@@ -181,10 +181,10 @@ class ContentItem(BaseContent):
             data = self.data
             if "id" in summary_res:
                 summary_res["id"] = (
-                    data.get("commonfields", {}).get("id_x2") or self.object_id
+                    data.get("commonfields", {}).get("id") or self.object_id
                 )
             if "name" in summary_res:
-                summary_res["name"] = data.get("name_x2") or self.name
+                summary_res["name"] = data.get("name") or self.name
 
             if incident_to_alert:
                 summary_res.update(

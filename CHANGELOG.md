@@ -1,5 +1,6 @@
 # Changelog
 ## Unreleased
+* Enhanced the pack metadata properties when dumping pack zips in **prepare-content** command.
 
 ## 1.18.1
 * Fixed an issue where the coloring directives where showing in log messages.

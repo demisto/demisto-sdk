@@ -1,6 +1,11 @@
 # Changelog
 ## Unreleased
+
+## 1.18.1
 * Fixed an issue where the coloring directives where showing in log messages.
+* Fixed an issue where **create-content-graph** was not executed upon changes in the parser infra files.
+* Added a parameter `skip-packs-known-words` to the **doc-review** command, making sure that pack known words will not be added.
+* Added the *--xsiam* flag to the **init** command in order to create XSIAM content.
 
 ## 1.18.0
 * Added the ability to ignore any validation in the **validate** command when running in an external (non-demisto/content) repo, by placing a `.private-repo-settings` file at its root.

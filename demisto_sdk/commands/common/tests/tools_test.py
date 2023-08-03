@@ -3128,3 +3128,21 @@ def test_sha1_dir():
         dest = Path(temp_dir, "dest")
         shutil.copytree(path_str, dest)
         assert tools.sha1_dir(dest) == expected_hash
+
+
+@pytest.mark.parametrize(
+    "input_path,expected_output",
+    [
+        (
+            Path("root/Packs/MyPack/Integrations/MyIntegration/MyIntegration.yml"),
+            "root/Packs/MyPack",
+        ),
+        (Path("Packs/MyPack1/Scripts/MyScript/MyScript.py"), "Packs/MyPack1"),
+        (Path("Packs/MyPack2/Scripts/MyScript"), "Packs/MyPack2"),
+        (Path("Packs/MyPack3/Scripts"), "Packs/MyPack3"),
+        (Path("Packs/MyPack4"), "Packs/MyPack4"),
+    ],
+)
+def test_find_pack_folder(input_path, expected_output):
+    output = tools.find_pack_folder(input_path)
+    assert expected_output == str(output)

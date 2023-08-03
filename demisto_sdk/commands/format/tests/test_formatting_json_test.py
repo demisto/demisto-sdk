@@ -1,7 +1,6 @@
 import logging
 import os
 import shutil
-from pathlib import Path
 from typing import Optional
 from unittest.mock import patch
 
@@ -638,8 +637,8 @@ class TestFormattingLayoutscontainer:
         yield shutil.copyfile(
             SOURCE_FORMAT_LAYOUTS_CONTAINER, DESTINATION_FORMAT_LAYOUTS_CONTAINER_COPY
         )
-        if Path(DESTINATION_FORMAT_LAYOUTS_CONTAINER_COPY).exists():
-            Path.unlink(Path(DESTINATION_FORMAT_LAYOUTS_CONTAINER_COPY))
+        if os.path.exists(DESTINATION_FORMAT_LAYOUTS_CONTAINER_COPY):
+            os.remove(DESTINATION_FORMAT_LAYOUTS_CONTAINER_COPY)
         shutil.rmtree(LAYOUTS_CONTAINER_PATH, ignore_errors=True)
 
     @pytest.fixture()
@@ -853,7 +852,7 @@ class TestFormattingLayoutscontainer:
         assert expected_path == layoutscontainer_formatter.output_file
 
         # since we are renaming the file, we need to clean it here
-        Path.unlink(Path(layoutscontainer_formatter.output_file))
+        os.remove(layoutscontainer_formatter.output_file)
 
 
 class TestFormattingLayout:
@@ -861,7 +860,7 @@ class TestFormattingLayout:
     def layouts_copy(self):
         os.makedirs(LAYOUT_PATH, exist_ok=True)
         yield shutil.copyfile(SOURCE_FORMAT_LAYOUT_COPY, DESTINATION_FORMAT_LAYOUT_COPY)
-        Path.unlink(Path(DESTINATION_FORMAT_LAYOUT_COPY))
+        os.remove(DESTINATION_FORMAT_LAYOUT_COPY)
         os.rmdir(LAYOUT_PATH)
 
     @pytest.fixture()
@@ -1009,7 +1008,7 @@ class TestFormattingPreProcessRule:
             SOURCE_FORMAT_PRE_PROCESS_RULES_COPY,
             DESTINATION_FORMAT_PRE_PROCESS_RULES_COPY,
         )
-        Path.unlink(Path(DESTINATION_FORMAT_PRE_PROCESS_RULES_COPY))
+        os.remove(DESTINATION_FORMAT_PRE_PROCESS_RULES_COPY)
         os.rmdir(PRE_PROCESS_RULES_PATH)
 
     @pytest.fixture(autouse=True)
@@ -1060,7 +1059,7 @@ class TestFormattingList:
     def lists_copy(self):
         os.makedirs(LISTS_PATH, exist_ok=True)
         yield shutil.copyfile(SOURCE_FORMAT_LISTS_COPY, DESTINATION_FORMAT_LISTS_COPY)
-        Path.unlink(Path(DESTINATION_FORMAT_LISTS_COPY))
+        os.remove(DESTINATION_FORMAT_LISTS_COPY)
         os.rmdir(LISTS_PATH)
 
     @pytest.fixture(autouse=True)
@@ -1103,7 +1102,7 @@ class TestFormattingClassifier:
     def classifier_copy(self):
         os.makedirs(CLASSIFIER_PATH, exist_ok=True)
         yield shutil.copyfile(SOURCE_FORMAT_CLASSIFIER, DESTINATION_FORMAT_CLASSIFIER)
-        Path.unlink(Path(DESTINATION_FORMAT_CLASSIFIER))
+        os.remove(DESTINATION_FORMAT_CLASSIFIER)
         os.rmdir(CLASSIFIER_PATH)
 
     @pytest.fixture(autouse=True)
@@ -1215,7 +1214,7 @@ class TestFormattingOldClassifier:
         yield shutil.copyfile(
             SOURCE_FORMAT_CLASSIFIER_5_9_9, DESTINATION_FORMAT_CLASSIFIER_5_9_9
         )
-        Path.unlink(Path(DESTINATION_FORMAT_CLASSIFIER_5_9_9))
+        os.remove(DESTINATION_FORMAT_CLASSIFIER_5_9_9)
         os.rmdir(CLASSIFIER_PATH)
 
     @pytest.fixture(autouse=True)
@@ -1342,7 +1341,7 @@ class TestFormattingMapper:
     def mapper_copy(self):
         os.makedirs(MAPPER_PATH, exist_ok=True)
         yield shutil.copyfile(SOURCE_FORMAT_MAPPER, DESTINATION_FORMAT_MAPPER)
-        Path.unlink(Path(DESTINATION_FORMAT_MAPPER))
+        os.remove(DESTINATION_FORMAT_MAPPER)
         os.rmdir(MAPPER_PATH)
 
     @pytest.fixture()
@@ -1400,7 +1399,7 @@ class TestFormattingWidget:
     def widget_copy(self):
         os.makedirs(WIDGET_PATH, exist_ok=True)
         yield shutil.copyfile(SOURCE_FORMAT_WIDGET, DESTINATION_FORMAT_WIDGET)
-        Path.unlink(Path(DESTINATION_FORMAT_WIDGET))
+        os.remove(DESTINATION_FORMAT_WIDGET)
         os.rmdir(WIDGET_PATH)
 
     @pytest.fixture(autouse=True)
@@ -1472,7 +1471,7 @@ class TestFormattingReport:
     def report_copy(self):
         os.makedirs(REPORT_PATH, exist_ok=True)
         yield shutil.copyfile(SOURCE_FORMAT_REPORT, DESTINATION_FORMAT_REPORT)
-        Path.unlink(Path(DESTINATION_FORMAT_REPORT))
+        os.remove(DESTINATION_FORMAT_REPORT)
         os.rmdir(REPORT_PATH)
 
     @pytest.fixture(autouse=True)

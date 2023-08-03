@@ -226,9 +226,9 @@ def generate_xql_query(rule: SingleModelingRule, test_data_event_ids: List[str])
     return query
 
 
-def build_query(rule, test_data) -> str:
+def build_event_id_query(rule, test_data) -> str:
     """
-    Build an XQL query from the given rule and test data event IDs.
+    Build an XQL query to get the event IDs of the test data events that match the given modeling rule.
     Args:
         rule (SingleModelingRule): Rule object parsed from the modeling rule file.
         test_data (init_test_data.TestData): The data parsed from the test data file.
@@ -290,7 +290,7 @@ def validate_expected_values(
     result = []
 
     for rule in mr.rules:
-        query = build_query(rule, test_data)
+        query = build_event_id_query(rule, test_data)
         try:
             result = run_query(xsiam_client, query)
         except XsiamApiQueryError:
@@ -443,7 +443,7 @@ def verify_event_id_does_not_exist_on_tenant(
     """
     for rule in mr.rules:
         try:
-            query = build_query(rule, test_data)
+            query = build_event_id_query(rule, test_data)
             run_query(xsiam_client, query)
         except XsiamApiQueryError:
             # If the query fails, it means that the event ID does not exist on the tenant.

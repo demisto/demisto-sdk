@@ -6,7 +6,7 @@ from typing import Any, Dict, Iterator, List, NamedTuple, Set
 
 from neo4j import graph
 
-from demisto_sdk.commands.common.constants import PACKS_FOLDER, TESTS_DIR
+from demisto_sdk.commands.common.constants import PACKS_FOLDER
 
 NEO4J_ADMIN_DOCKER = ""
 
@@ -24,10 +24,6 @@ NEO4J_FOLDER = "neo4j-data"
 PACK_METADATA_FILENAME = "pack_metadata.json"
 PACK_CONTRIBUTORS_FILENAME = "CONTRIBUTORS.json"
 UNIFIED_FILES_SUFFIXES = [".yml", ".json"]
-
-LANDING_PAGE_SECTIONS_PATH = os.path.join(
-    TESTS_DIR, "Marketplace/landingPage_sections.json'"
-)
 
 
 class Neo4jRelationshipResult(NamedTuple):

@@ -10,13 +10,13 @@ from demisto_sdk.commands.common.constants import (
     MARKETPLACE_MIN_VERSION,
     MarketplaceVersions,
 )
+from demisto_sdk.commands.common.content_constant_paths import (
+    LANDING_PAGE_SECTIONS_PATH,
+)
 from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import get_json
-from demisto_sdk.commands.content_graph.common import (
-    LANDING_PAGE_SECTIONS_PATH,
-    PackTags,
-)
+from demisto_sdk.commands.content_graph.common import PackTags
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 from demisto_sdk.commands.content_graph.objects.pack import PackContentItems
 from demisto_sdk.commands.content_graph.objects.relationship import RelationshipData
@@ -333,7 +333,7 @@ class PackMetadata(BaseModel):
             set: Pack's tags.
         """
         tags = set()
-        landing_page_sections = get_json(f"./{LANDING_PAGE_SECTIONS_PATH}")
+        landing_page_sections = get_json(LANDING_PAGE_SECTIONS_PATH)
         sections = landing_page_sections.get("sections") or []
 
         for section in sections:

@@ -224,7 +224,7 @@ def remove_empty_properties(tx: Transaction) -> None:
     run_query(tx, REMOVE_EMPTY_PROPERTIES)
 
 
-def get_items_by_type_and_identifier(tx: Transaction, identifier_values_list: List[str], content_type: str,
+def get_items_by_type_and_identifier(tx: Transaction, identifier_values_list: List[str], content_type: ContentType,
                                      identifier: str) -> List:
     """Return a list of dictionaries representing the wanted incident fields.
         Args:

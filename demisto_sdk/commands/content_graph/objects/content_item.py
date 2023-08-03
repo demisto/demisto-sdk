@@ -47,6 +47,7 @@ from demisto_sdk.commands.prepare_content.preparers.marketplace_suffix_preparer 
 class ContentItem(BaseContent):
     path: Path
     marketplaces: List[MarketplaceVersions]
+    name: str
     fromversion: str
     toversion: str
     display_name: str

@@ -78,7 +78,6 @@ class BaseContent(ABC, BaseModel, metaclass=BaseContentMetaclass):
     content_type: ClassVar[ContentType] = Field(include=True)
     node_id: str
     marketplaces: List[MarketplaceVersions] = list(MarketplaceVersions)
-    name: str = ""
 
     relationships_data: Dict[RelationshipType, Set["RelationshipData"]] = Field(
         defaultdict(set), exclude=True, repr=False
@@ -219,6 +218,7 @@ class UnknownContent(BaseContent):
     not_in_repository: bool = True
     node_id: str = ""  # just because it's missing from the db
     object_id: str = ""
+    name: str = ""
 
     def dump(self, _, __):
         ...

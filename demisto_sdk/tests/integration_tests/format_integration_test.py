@@ -1,13 +1,13 @@
 import logging
 from pathlib import Path, PosixPath
-from typing import List
+from typing import List, Any, Dict
 
 import pytest
 from click.testing import CliRunner
-
+from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.__main__ import main
 from demisto_sdk.commands.common import tools
-from demisto_sdk.commands.common.constants import GENERAL_DEFAULT_FROMVERSION
+from demisto_sdk.commands.common.constants import GENERAL_DEFAULT_FROMVERSION, MarketplaceVersions
 from demisto_sdk.commands.common.content.content import Content
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
@@ -22,9 +22,10 @@ from demisto_sdk.commands.common.hook_validations.playbook import PlaybookValida
 from demisto_sdk.commands.common.hook_validations.readme import ReadMeValidator
 from demisto_sdk.commands.common.tools import get_dict_from_file, is_test_config_match
 from demisto_sdk.commands.content_graph import neo4j_service
-from demisto_sdk.commands.content_graph.common import ContentType
+from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
 from demisto_sdk.commands.content_graph.interface.graph import ContentGraphInterface
-from demisto_sdk.commands.content_graph.objects.base_content import UnknownContent
+from demisto_sdk.commands.content_graph.objects.integration import Command
+from demisto_sdk.commands.content_graph.tests.update_content_graph_test import _get_pack_by_id
 from demisto_sdk.commands.format import format_module, update_generic
 from demisto_sdk.commands.format.update_generic import BaseUpdate
 from demisto_sdk.commands.format.update_generic_yml import BaseUpdateYML
@@ -47,6 +48,18 @@ from demisto_sdk.tests.test_files.validate_integration_test_valid_types import (
     GENERIC_TYPE,
 )
 from TestSuite.test_tools import ChangeCWD, str_in_call_args_list
+from demisto_sdk.commands.content_graph.content_graph_commands import (
+    create_content_graph,
+    stop_content_graph,
+    update_content_graph,
+)
+from demisto_sdk.commands.content_graph.objects.repository import ContentDTO
+from demisto_sdk.commands.content_graph.objects import Mapper, IncidentField, Integration, Layout
+from demisto_sdk.commands.content_graph.objects.base_content import UnknownContent
+from demisto_sdk.commands.content_graph.objects.pack import Pack
+from demisto_sdk.commands.content_graph.interface.neo4j.neo4j_graph import (
+    Neo4jContentGraphInterface as ContentGraphInterface,
+)
 
 with open(SOURCE_FORMAT_INTEGRATION_COPY) as of:
     SOURCE_FORMAT_INTEGRATION_YML = (
@@ -2308,93 +2321,6 @@ def test_format_incident_field_with_no_graph(mocker, monkeypatch, repo):
     assert file_content.get('marketplaces', []) == ["marketplacev2", "xsoar"]
 
 
-def test_format_removing_fields_not_in_content_from_mapper(mocker, monkeypatch, repo):
-    """
-    Given
-    - A mapper.
-
-    When
-    - Running format command on it
-
-    Then
-    -  Ensure that the unknown field was removed from the mapper.
-    """
-    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
-    monkeypatch.setenv("COLUMNS", "1000")
-    incident_field_name = "Unknown Incident Field"
-    mapper_content = {
-            "description": "",
-            "feed": False,
-            "id": "Mapper - Incoming Mapper",
-            "mapping": {
-                "Mapper Finding": {
-                    "dontMapEventToLabels": True,
-                    "internalMapping": {
-                        incident_field_name: {
-                            "simple": "Item"
-                        }
-                    }
-                },
-            },
-            "name": "Mapper - Incoming Mapper",
-            "type": "mapping-incoming",
-            "version": -1,
-            "fromVersion": "6.5.0"
-        }
-
-    runner = CliRunner()
-    pack = repo.create_pack("PackName")
-    mapper = pack.create_mapper(
-        name="mapper",
-        content=mapper_content
-    )
-
-    # Mock the behavior of Neo4jContentGraphInterface
-    class MockedContentGraphInterface:
-        repo_path = repo.path
-
-        def __enter__(self):
-            return self
-
-        def __exit__(self):
-            pass
-
-        def search(self, path):
-            # Simulate the graph search
-            if path:
-                return [MockedMapperNode()]
-            return []
-
-    class MockedMapperNode:
-        def __init__(self):
-            self.content_type = ContentType.MAPPER
-            self.path = mapper.path
-            self.uses = [
-                MockedRelationshipDataNode(),
-            ]  # simulate a mapper that uses an incident field that isn't in content repo
-
-    class MockedRelationshipDataNode:
-        def __init__(self):
-            self.content_item_to = UnknownContent(name=incident_field_name)
-
-    mocker.patch(
-        "demisto_sdk.commands.format.format_module.ContentGraphInterface",
-        return_value=MockedContentGraphInterface(),
-    )
-
-    result = runner.invoke(main, [FORMAT_CMD, "-i", mapper.path, "-at", "-y"])
-    message = "Removing the fields {'" + incident_field_name + "'}" + f" from the mapper {mapper.path} " \
-              f"because they aren't in the content repo."
-    assert result.exit_code == 0
-    assert not result.exception
-    assert str_in_call_args_list(logger_info.call_args_list, message)
-
-    # get_dict_from_file returns a tuple of 2 object. The first is the content of the file,
-    # the second is the type of the file.
-    file_content = get_dict_from_file(mapper.path)[0]
-    assert file_content.get("mapping", {}).get('Mapper Finding', {}).get('internalMapping') == {}
-
-
 def test_format_mapper_with_ngr_flag(mocker, monkeypatch, repo):
     """
     Given
@@ -2449,138 +2375,6 @@ def test_format_mapper_with_ngr_flag(mocker, monkeypatch, repo):
         incident_field_name: {"simple": "Item"}
     }
     assert file_content.get("mapping", {}).get('Mapper Finding', {}).get('internalMapping') == expected_internal_mapping
-
-
-def test_format_removing_fields_not_in_content_from_layout(mocker, monkeypatch, repo):
-    """
-    Given
-    - A layout.
-
-    When
-    - Running format command on it
-
-    Then
-    -  Ensure that the unknown field was removed from the layout.
-    """
-    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
-    monkeypatch.setenv("COLUMNS", "1000")
-    incident_field_object_id = "unknown-incident-field"
-    layout_content = {
-        "detailsV2": {
-            "tabs": [
-                {
-                    "id": "caseinfoid",
-                    "name": "Incident Info",
-                    "sections": [
-                        {
-                            "displayType": "ROW",
-                            "h": 2,
-                            "i": "caseinfoid-fce71720-98b0-11e9-97d7-ed26ef9e46c8",
-                            "isVisible": True,
-                            "items": [
-                                {
-                                    "endCol": 2,
-                                    "fieldId": incident_field_object_id,
-                                    "height": 22,
-                                    "id": "id1",
-                                    "index": 0,
-                                    "sectionItemType": "field",
-                                    "startCol": 0
-                                },
-                                {
-                                    "endCol": 2,
-                                    "fieldId": "known-incident-field",
-                                    "height": 22,
-                                    "id": "id2",
-                                    "index": 0,
-                                    "sectionItemType": "field",
-                                    "startCol": 0
-                                }
-                            ]
-                        }
-                    ]
-                }
-            ]
-        },
-        "group": "incident",
-        "id": "Layout",
-        "name": "Layout",
-        "system": False,
-        "version": -1,
-        "fromVersion": "6.9.0",
-        "description": "",
-        "marketplaces": ["xsoar"]
-    }
-
-    runner = CliRunner()
-    pack = repo.create_pack("PackName")
-    layout = pack.create_layoutcontainer(
-        name="Layout",
-        content=layout_content
-    )
-
-    # Mock the behavior of Neo4jContentGraphInterface
-    class MockedContentGraphInterface:
-        repo_path = repo.path
-        def __enter__(self):
-            return self
-
-        def __exit__(self):
-            pass
-
-        def search(self, path):
-            # Simulate the graph search
-            if path:
-                return [MockedLayoutNode()]
-            return []
-
-    class MockedLayoutNode:
-        def __init__(self):
-            self.content_type = ContentType.LAYOUT
-            self.path = layout.path
-            self.uses = [
-                MockedRelationshipDataNode("Unknown Incident Field", incident_field_object_id, True),
-                MockedRelationshipDataNode("Known Incident Field", "known-incident-field", False)
-            ]  # simulate a mapper that uses an incident field that isn't in content repo
-
-    class MockedRelationshipDataNode:
-        def __init__(self, name: str, object_id: str, not_in_repository: bool):
-            if not_in_repository:
-                self.content_item_to = UnknownContent(name=name, object_id=object_id)
-            else:
-                self.content_item_to = MockedIncidentFieldNode(name, object_id)
-
-    class MockedIncidentFieldNode:
-        def __init__(self, name: str, object_id: str):
-            self.name = name
-            self.object_id = object_id
-
-    mocker.patch(
-        "demisto_sdk.commands.format.format_module.ContentGraphInterface",
-        return_value=MockedContentGraphInterface(),
-    )
-
-    result = runner.invoke(main, [FORMAT_CMD, "-i", layout.path, "-at", "-y"])
-    message = "Removing the fields {'" + incident_field_object_id + "'}" + f" from the layout {layout.path} " \
-              f"because they aren't in the content repo."
-    assert result.exit_code == 0
-    assert not result.exception
-    assert str_in_call_args_list(logger_info.call_args_list, message)
-
-    # get_dict_from_file returns a tuple of 2 object. The first is the content of the file,
-    # the second is the type of the file.
-    file_content = get_dict_from_file(layout.path)[0]
-    expected_layout_content = [{
-                                    "endCol": 2,
-                                    "fieldId": "known-incident-field",
-                                    "height": 22,
-                                    "id": "id2",
-                                    "index": 0,
-                                    "sectionItemType": "field",
-                                    "startCol": 0
-                                }]
-    assert file_content.get('detailsV2', {}).get('tabs', [])[0].get('sections', {})[0].get('items', []) == \
-           expected_layout_content
 
 
 def test_format_on_layout_no_graph_flag(mocker, monkeypatch, repo):
@@ -2661,3 +2455,425 @@ def test_format_on_layout_no_graph_flag(mocker, monkeypatch, repo):
     # the second is the type of the file.
     file_content = get_dict_from_file(layout.path)[0]
     assert file_content == layout_content
+
+
+@pytest.fixture(autouse=True)
+def setup_method(mocker, repo):
+    """Auto-used fixture for setup before every test run"""
+    import demisto_sdk.commands.content_graph.objects.base_content as bc
+
+    bc.CONTENT_PATH = Path(repo.path)
+    mocker.patch.object(neo4j_service, "REPO_PATH", Path(repo.path))
+    mocker.patch.object(ContentGraphInterface, "repo_path", Path(repo.path))
+    stop_content_graph()
+
+
+@pytest.fixture
+def repository(mocker, repo) -> ContentDTO:
+    repository = ContentDTO(
+        path=Path(repo.path),
+        packs=[],
+    )
+    relationships = {
+        RelationshipType.IN_PACK: [
+            mock_relationship(
+                "SampleIntegration",
+                ContentType.INTEGRATION,
+                "SamplePack",
+                ContentType.PACK,
+            ),
+            mock_relationship(
+                "Mapper - Incoming Mapper",
+                ContentType.MAPPER,
+                "SamplePack",
+                ContentType.PACK,
+            ),
+            mock_relationship(
+                "Unknown Incident Field",
+                ContentType.INCIDENT_FIELD,
+                "SamplePack",
+                ContentType.PACK,
+            ),
+            mock_relationship(
+                "Layout",
+                ContentType.LAYOUT,
+                "SamplePack",
+                ContentType.PACK,
+            ),
+            mock_relationship(
+                "incidentfield",
+                ContentType.INCIDENT_FIELD,
+                "SamplePack",
+                ContentType.PACK,
+            ),
+        ],
+        RelationshipType.USES: [
+            mock_relationship(
+                "Mapper - Incoming Mapper",
+                ContentType.MAPPER,
+                "Unknown Incident Field",
+                ContentType.INCIDENT_FIELD,
+                name="Unknown Incident Field",
+                description="",
+                deprecated=False,
+            ),
+            mock_relationship(
+                "Layout",
+                ContentType.LAYOUT,
+                "Unknown Incident Field",
+                ContentType.INCIDENT_FIELD,
+                name="Unknown Incident Field",
+                description="",
+                deprecated=False,
+            ),
+            mock_relationship(
+                "Layout",
+                ContentType.LAYOUT,
+                "incidentfield",
+                ContentType.INCIDENT_FIELD,
+                name="Known Incident Field",
+                description="",
+                deprecated=False,
+            )
+        ],
+    }
+
+    mapper_data = {
+        "description": "",
+        "feed": False,
+        "id": "Mapper - Incoming Mapper",
+        "mapping": {
+            "Mapper Finding": {
+                "dontMapEventToLabels": True,
+                "internalMapping": {
+                    "Unknown Incident Field": {
+                        "simple": "Item"
+                    }
+                }
+            },
+        },
+        "name": "Mapper - Incoming Mapper",
+        "type": "mapping-incoming",
+        "version": -1,
+        "fromVersion": "6.5.0"
+    }
+    layout_content = {
+        "detailsV2": {
+            "tabs": [
+                {
+                    "id": "caseinfoid",
+                    "name": "Incident Info",
+                    "sections": [
+                        {
+                            "displayType": "ROW",
+                            "h": 2,
+                            "i": "caseinfoid-fce71720-98b0-11e9-97d7-ed26ef9e46c8",
+                            "isVisible": True,
+                            "items": [
+                                {
+                                    "endCol": 2,
+                                    "fieldId": "Unknown Incident Field",
+                                    "height": 22,
+                                    "id": "id1",
+                                    "index": 0,
+                                    "sectionItemType": "field",
+                                    "startCol": 0
+                                },
+                                {
+                                    "endCol": 2,
+                                    "fieldId": "incidentfield",
+                                    "height": 22,
+                                    "id": "id2",
+                                    "index": 0,
+                                    "sectionItemType": "field",
+                                    "startCol": 0
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        "group": "incident",
+        "id": "Layout",
+        "name": "Layout",
+        "system": False,
+        "version": -1,
+        "fromVersion": "6.9.0",
+        "description": "",
+        "marketplaces": ["xsoar"]
+    }
+    incident_field_alias_content = {
+        "cliName": "incidentfield",
+        "id": "incident_incidentfield",
+        "name": "Incident Field",
+        "Aliases": [
+            {
+                "cliName": "aliasincidentfield",
+                "type": "shortText",
+                "name": "Alias Incident Field"
+            }
+        ],
+        "marketplaces": [
+            "xsoar"
+        ]
+    }
+    pack = repo.create_pack("PackName")
+    mapper = pack.create_mapper(
+        name="mapper",
+        content=mapper_data
+    )
+    layout = pack.create_layoutcontainer(
+        name="Layout",
+        content=layout_content
+    )
+    incident_field_alias = pack.create_incident_field(
+        name="incidentfield",
+        content=incident_field_alias_content
+    )
+
+    pack1 = mock_pack()
+    pack1.relationships = relationships
+    pack1.content_items.integration.append(mock_integration())
+    pack1.content_items.mapper.append(mock_mapper(name='Mapper - Incoming Mapper', data=mapper_data, path=mapper.path))
+    pack1.content_items.layout.append(mock_layout(name='Layout', data=layout_content, path=layout.path))
+    pack1.content_items.incident_field.append(mock_incident_field(cli_name='incidentfield',
+                                                                  path=incident_field_alias.path,
+                                                                  data=incident_field_alias_content,
+                                                                  name='incidentfield',
+                                                                  marketplaces=[MarketplaceVersions.XSOAR]))
+    repository.packs.extend([pack1])
+
+    def mock__create_content_dto(packs_to_update: List[str]) -> List[ContentDTO]:
+        if not packs_to_update:
+            return [repository]
+        repo_copy = repository.copy()
+        repo_copy.packs = [p for p in repo_copy.packs if p.object_id in packs_to_update]
+        return [repo_copy]
+
+    mocker.patch(
+        "demisto_sdk.commands.content_graph.content_graph_builder.ContentGraphBuilder._create_content_dtos",
+        side_effect=mock__create_content_dto,
+    )
+
+    return repository
+
+
+def mock_relationship(
+    source: str,
+    source_type: ContentType,
+    target: str,
+    target_type: ContentType,
+    source_fromversion: str = "5.0.0",
+    source_marketplaces: List[str] = [MarketplaceVersions.XSOAR],
+    **kwargs,
+) -> Dict[str, Any]:
+    rel = {
+        "source_id": source,
+        "source_type": source_type,
+        "source_fromversion": source_fromversion,
+        "source_marketplaces": source_marketplaces,
+        "target": target,
+        "target_type": target_type,
+    }
+    rel.update(kwargs)
+    return rel
+
+
+def mock_pack(name: str = "SamplePack", path: Path = Path("Packs")) -> Pack:
+    return Pack(
+        object_id=name,
+        content_type=ContentType.PACK,
+        node_id=f"{ContentType.PACK}:{name}",
+        path=path,
+        name=name,
+        marketplaces=[MarketplaceVersions.XSOAR],
+        hidden=False,
+        server_min_version="5.5.0",
+        current_version="1.0.0",
+        tags=[],
+        categories=[],
+        useCases=[],
+        keywords=[],
+        contentItems=[],
+        excluded_dependencies=[],
+        deprecated=False,
+    )
+
+
+def mock_integration(name: str = "SampleIntegration", path: Path = Path("Packs")):
+    return Integration(
+        id=name,
+        content_type=ContentType.INTEGRATION,
+        node_id=f"{ContentType.INTEGRATION}:{name}",
+        path=path,
+        fromversion="5.0.0",
+        toversion="99.99.99",
+        display_name=name,
+        name=name,
+        marketplaces=[MarketplaceVersions.XSOAR],
+        deprecated=False,
+        type="python3",
+        docker_image="mock:docker",
+        category="blabla",
+        commands=[Command(name="test-command", description="")],
+    )
+
+
+def mock_mapper(path: str, name: str = "SampleMapper", data: Dict = {}):
+    return Mapper(
+        id=name,
+        content_type=ContentType.MAPPER,
+        node_id=f"{ContentType.MAPPER}:{name}",
+        path=path,
+        fromversion="5.0.0",
+        display_name=name,
+        toversion="99.99.99",
+        name=name,
+        marketplaces=[MarketplaceVersions.XSOAR],
+        deprecated=False,
+        type="python3",
+        docker_image="mock:docker",
+        tags=[],
+        is_test=False,
+        data=data
+    )
+
+def mock_layout(path: str, name: str = "SampleLayout", data: Dict = {}):
+    return Layout(
+        id=name,
+        content_type=ContentType.LAYOUT,
+        node_id=f"{ContentType.LAYOUT}:{name}",
+        path=path,
+        fromversion="5.0.0",
+        display_name=name,
+        toversion="99.99.99",
+        name=name,
+        marketplaces=[MarketplaceVersions.XSOAR],
+        deprecated=False,
+        type="python3",
+        docker_image="mock:docker",
+        tags=[],
+        is_test=False,
+        data=data,
+        group='incident',
+        edit=False,
+        indicators_details=False,
+        indicators_quick_view=False,
+        quick_view=False,
+        close=False,
+        details=False,
+        details_v2=True,
+        mobile=False
+    )
+
+
+def mock_incident_field(cli_name: str, path: str, marketplaces: List, data: Dict= {}, name: str = "SampleIncidentField"):
+    return IncidentField(
+        id=name,
+        content_type=ContentType.INCIDENT_FIELD,
+        node_id=f"{ContentType.INCIDENT_FIELD}:{name}",
+        path=path,
+        fromversion="5.0.0",
+        display_name=name,
+        toversion="99.99.99",
+        name=name,
+        marketplaces=marketplaces,
+        deprecated=False,
+        type="python3",
+        docker_image="mock:docker",
+        tags=[],
+        is_test=False,
+        data=data,
+        cli_name=cli_name
+    )
+
+
+def test_format_mapper_with_graph(mocker, monkeypatch, repository, repo):
+    """
+    Given
+    - A mapper.
+
+    When
+    - Running format command on it
+
+    Then
+    -  Ensure that the unknown field was removed from the mapper.
+    """
+
+    with ContentGraphInterface() as interface:
+        create_content_graph(interface)
+
+    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+    monkeypatch.setenv("COLUMNS", "1000")
+
+    pack_graph_object = _get_pack_by_id(repository, "SamplePack")
+    mapper_graph_object = pack_graph_object.content_items.mapper[0]
+    mapper_path = str(mapper_graph_object.path)
+    mocker.patch(
+        "demisto_sdk.commands.format.format_module.ContentGraphInterface",
+        return_value=interface,
+    )
+    with ChangeCWD(repo.path):
+        runner = CliRunner()
+        result = runner.invoke(main, [FORMAT_CMD, "-i", mapper_path, "-at", "-y"])
+    message = "Removing the fields {'Unknown Incident Field'}" + f" from the mapper {mapper_path} " \
+              f"because they aren't in the content repo."
+    assert result.exit_code == 0
+    assert not result.exception
+    assert str_in_call_args_list(logger_info.call_args_list, message)
+
+    # get_dict_from_file returns a tuple of 2 object. The first is the content of the file,
+    # the second is the type of the file.
+    file_content = get_dict_from_file(mapper_path)[0]
+    assert file_content.get("mapping", {}).get('Mapper Finding', {}).get('internalMapping') == {}
+
+
+def test_format_layout_with_graph(mocker, monkeypatch, repository, repo):
+    """
+    Given
+    - A layout.
+
+    When
+    - Running format command on it
+
+    Then
+    -  Ensure that the unknown field was removed from the layout.
+    """
+
+    with ContentGraphInterface() as interface:
+        create_content_graph(interface)
+
+    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+    monkeypatch.setenv("COLUMNS", "1000")
+
+    pack_graph_object = _get_pack_by_id(repository, "SamplePack")
+    layout_graph_object = pack_graph_object.content_items.layout[0]
+    layout_path = str(layout_graph_object.path)
+    mocker.patch(
+        "demisto_sdk.commands.format.format_module.ContentGraphInterface",
+        return_value=interface,
+    )
+    with ChangeCWD(repo.path):
+        runner = CliRunner()
+        result = runner.invoke(main, [FORMAT_CMD, "-i", layout_path, "-at", "-y"])
+    message = "Removing the fields {'Unknown Incident Field'}" + f" from the layout {layout.path} " \
+                                                                 f"because they aren't in the content repo."
+    assert result.exit_code == 0
+    assert not result.exception
+    assert str_in_call_args_list(logger_info.call_args_list, message)
+
+    # get_dict_from_file returns a tuple of 2 object. The first is the content of the file,
+    # the second is the type of the file.
+    file_content = get_dict_from_file(layout_path)[0]
+    expected_layout_content = [{
+        "endCol": 2,
+        "fieldId": "incidentfield",
+        "height": 22,
+        "id": "id2",
+        "index": 0,
+        "sectionItemType": "field",
+        "startCol": 0
+    }]
+    assert file_content.get('detailsV2', {}).get('tabs', [])[0].get('sections', {})[0].get('items', []) == \
+           expected_layout_content

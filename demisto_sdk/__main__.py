@@ -1242,7 +1242,7 @@ def coverage_analyze(ctx, **kwargs):
 @click.option(
     "-s",
     "--id-set-path",
-    help="The path of the id_set json file.",
+    help="Deprecated. The path of the id_set json file.",
     type=click.Path(exists=True, resolve_path=True),
 )
 @click.option(

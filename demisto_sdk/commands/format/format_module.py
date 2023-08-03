@@ -109,6 +109,9 @@ VALIDATE_RES_FAILED_CODE = 3
 
 CONTENT_ENTITY_IDS_TO_UPDATE: Dict = {}
 
+# The content items that use the graph in format
+CONTENT_ITEMS_WITH_GRAPH = [FileType.INCIDENT_FIELD.value, FileType.LAYOUTS_CONTAINER.value, FileType.MAPPER.value]
+
 
 def format_manager(
     input: str = None,
@@ -432,9 +435,8 @@ def is_graph_related_files(files: List[str], clear_cache: bool) -> bool:
         """
     for file in files:
         file_path = str(Path(file))
-        file_type = find_type(file_path, clear_cache=clear_cache)
-        if file_type and file_type.value not in UNFORMATTED_FILES:
+        if file_type := find_type(file_path, clear_cache=clear_cache):
             file_type = file_type.value
-            if file_type in (FileType.INCIDENT_FIELD.value, FileType.LAYOUTS_CONTAINER.value, FileType.MAPPER.value):
+            if file_type in CONTENT_ITEMS_WITH_GRAPH:
                 return True
     return False

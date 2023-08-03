@@ -117,7 +117,6 @@ class LayoutBaseFormat(BaseUpdateJSON, ABC):
         self.set_toVersion()
         self.layout__set_output_path()
         self.remove_copy_and_dev_suffixes_from_layout()
-        self.remove_non_existent_fields_layout()
 
     def layout__set_output_path(self):
         output_basename = Path(self.output_file).name
@@ -336,14 +335,6 @@ class LayoutBaseFormat(BaseUpdateJSON, ABC):
                 layout_tabs=layout_tabs, fields_to_remove=fields_not_in_repo
             )
 
-    def remove_non_existent_fields_layout(self):
-        """
-        Remove non-existent fields from a layout.
-        """
-        logger.warning(
-            f"Skipping formatting of non-existent-fields for {self.source_file} as this content item is deprecated."
-        )
-        return
 
     def remove_non_existent_fields_from_tabs(
             self, layout_tabs: list, fields_to_remove: Set

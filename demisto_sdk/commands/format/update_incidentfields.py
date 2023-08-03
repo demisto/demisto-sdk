@@ -1,6 +1,6 @@
 from pathlib import Path
 from typing import List, Tuple
-
+from packaging.version import Version
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.logger import logger
 
@@ -11,6 +11,10 @@ from demisto_sdk.commands.format.format_constants import (
     SUCCESS_RETURN_CODE,
 )
 from demisto_sdk.commands.format.update_generic_json import BaseUpdateJSON
+from demisto_sdk.commands.common.constants import (
+    OLDEST_SUPPORTED_VERSION,
+    DEFAULT_CONTENT_ITEM_TO_VERSION
+)
 
 
 class IncidentFieldJSONFormat(BaseUpdateJSON):
@@ -75,19 +79,21 @@ class IncidentFieldJSONFormat(BaseUpdateJSON):
             for item in self._get_incident_fields_by_aliases(aliases):
                 alias_marketplaces = item.get('marketplaces', [])
                 alias_file_path = item.get('path', '')
+                alias_toversion = Version(item.get('toversion', DEFAULT_CONTENT_ITEM_TO_VERSION))
 
-                if len(alias_marketplaces) != 1 or alias_marketplaces[0] != "xsoar":
-                    # There will always be only one incident field in the list because the cliName is unique
-                    incident_field_node = self.graph.search(path=alias_file_path)[0]
+                if alias_toversion > Version(OLDEST_SUPPORTED_VERSION) and \
+                        (len(alias_marketplaces) != 1 or alias_marketplaces[0] != "xsoar"):
 
                     logger.info(
                         f"\n[blue]================= Updating file {alias_file_path} =================[/blue]"
                     )
 
-                    incident_field_node.data['marketplaces'] = ["xsoar"]
-                    incident_field_node.marketplaces = ["xsoar"]
+                    with open(alias_file_path, 'r+') as f:
+                        alias_file_content = json.load(f)
+                        alias_file_content['marketplaces'] = ['xsoar']
+
                     self._save_alias_field_file(
-                        dest_file_path=alias_file_path, field_data=incident_field_node.data
+                        dest_file_path=alias_file_path, field_data=alias_file_content
                     )
 
     def _get_incident_fields_by_aliases(self, aliases: List[dict]) -> list:

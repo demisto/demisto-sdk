@@ -374,7 +374,7 @@ def extract_code(ctx, config, **kwargs):
     type=PathsParamType(dir_okay=True, exists=True),
 )
 @click.option(
-    "-a", "--all", is_flag=True, help="Run prepare-content on all content packs."
+    "-a", "--all", is_flag=True, help="Run prepare-content on all content packs. If no output path is given, will dump the result in the current working path."
 )
 @click.option(
     "-g",
@@ -433,8 +433,9 @@ def prepare_content(ctx, **kwargs):
 
     if kwargs["all"]:
         content_DTO = from_path()
+        output_path = kwargs.get("output") if kwargs.get("output") else "."
         content_DTO.dump(
-            dir=Path(kwargs["output"], "tmp"),
+            dir=Path(output_path, "prepare-content-tmp"),
             marketplace=parse_marketplace_kwargs(kwargs),
         )
         return 0

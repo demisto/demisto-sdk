@@ -5,8 +5,6 @@ import glob
 import os
 import re
 from datetime import datetime
-from distutils.version import LooseVersion
-from itertools import chain
 from pathlib import Path
 from typing import Dict, List, Set, Tuple
 
@@ -268,6 +266,17 @@ class PackUniqueFilesValidator(BaseValidator):
 
         return False
 
+    def _extract_error_codes_from_file(self, file_name):
+        file_content = self._read_file_content(file_name)
+        error_codes = []
+        if file_content:
+            lines = file_content.split("\n")
+            for line in lines:
+                if line.strip().startswith("ignore="):
+                    error_code = line.strip().split("=")[1].split(",")
+                    error_codes.extend(error_code)
+        return set(error_codes)
+
     def check_metadata_for_marketplace_change(self):
         """Return True if pack_metadata's marketplaces field was changed."""
         metadata_file_path = self._get_pack_file_path(self.pack_meta_file)
@@ -429,15 +438,7 @@ class PackUniqueFilesValidator(BaseValidator):
     @error_codes("PA137")
     def validate_non_ignorable_error(self):
         """Check if non ignorable error exist in .pack-ignore"""
-        ignore_file = self._parse_file_into_list(self.pack_ignore_file)
-        error_codes = set(
-            chain.from_iterable(
-                item.split("=")[1].split(",")
-                for item in ignore_file
-                if item.startswith("ignore=")
-            )
-        )
-
+        error_codes = self._extract_error_codes_from_file(self.pack_ignore_file)
         if error_codes:
             nonignoable_errors = error_codes.difference(ALLOWED_IGNORE_ERRORS)
             if nonignoable_errors:

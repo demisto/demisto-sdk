@@ -1,3 +1,4 @@
+import contextlib
 import glob
 import io
 import logging
@@ -2040,27 +2041,6 @@ def get_latest_upload_flow_commit_hash() -> str:
     if not last_commit:
         raise ValueError("The latest commit hash was not found in the index.json file")
     return last_commit
-
-
-def find_pack_folder(path: Path) -> Path:
-    """
-    >>> find_pack_folder(Path('root/Packs/MyPack/Integrations/MyIntegration/MyIntegration.yml'))
-    PosixPath('root/Packs/MyPack')
-    >>> find_pack_folder(Path('Packs/MyPack1/Scripts/MyScript/MyScript.py')).name
-    'MyPack1'
-    >>> find_pack_folder(Path('Packs/MyPack2/Scripts/MyScript')).name
-    'MyPack2'
-    >>> find_pack_folder(Path('Packs/MyPack3/Scripts')).name
-    'MyPack3'
-    >>> find_pack_folder(Path('Packs/MyPack4')).name
-    'MyPack4'
-    """
-
-    if "Packs" not in path.parts:
-        raise ValueError(f"Could not find a pack for {str(path)}")
-    if path.parent.name == "Packs":
-        return path
-    return path.parents[len(path.parts) - (path.parts.index("Packs")) - 3]
 
 
 def get_content_path(path: Path = None) -> Path:

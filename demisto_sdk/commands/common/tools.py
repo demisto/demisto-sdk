@@ -1107,6 +1107,18 @@ def old_get_latest_release_notes_text(rn_path):
     return new_rn if new_rn else None
 
 
+def find_pack_folder(path: Path) -> Path:
+    """
+    Finds the pack folder.
+    """
+
+    if "Packs" not in path.parts:
+        raise ValueError(f"Could not find a pack for {str(path)}")
+    if path.parent.name == "Packs":
+        return path
+    return path.parents[len(path.parts) - (path.parts.index("Packs")) - 3]
+
+
 def get_release_notes_file_path(file_path):
     """
     Accepts file path which is alleged to contain release notes. Validates that the naming convention
@@ -1673,7 +1685,7 @@ def find_type_by_path(path: Union[str, Path] = "") -> Optional[FileType]:
         elif LAYOUT_RULES_DIR in path.parts:
             return FileType.LAYOUT_RULE
 
-    elif path.name.endswith("_image.png"):
+    elif path.stem.endswith("_image") and path.suffix in (".png", ".svg"):
         if path.name.endswith("Author_image.png"):
             return FileType.AUTHOR_IMAGE
         elif XSIAM_DASHBOARDS_DIR in path.parts:

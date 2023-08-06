@@ -165,9 +165,17 @@ Returns relationships of a given content object.
 
     If true, returns only mandatory relationships (relevant only for DEPENDS_ON/USES relationships).
 
-* **--incude-tests**
+* **--include-tests**
 
     If true, includes tests in outputs (relevant only for DEPENDS_ON/USES relationships).
+
+* **--include-deprecated**
+
+    If true, includes deprecated in outputs.
+
+* **--include-hidden**
+
+    If true, includes hidden packs in outputs (relevant only for DEPENDS_ON relationships).
 
 * **-dir, --direction**
 

@@ -405,6 +405,8 @@ class TestGetRelationships:
                 direction=direction,
                 mandatory_only=mandatory_only,
                 include_tests=include_tests,
+                include_deprecated=False,
+                include_hidden=False,
             )
             sources, targets = result["sources"], result["targets"]
         compare(sources, expected_sources)

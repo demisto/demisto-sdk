@@ -265,6 +265,8 @@ def get_sources_by_path(
     marketplace: MarketplaceVersions,
     mandatory_only: bool,
     include_tests: bool,
+    include_deprecated: bool,
+    include_hidden: bool,
 ) -> List[Dict[str, Any]]:
     query = f"""// Returns all paths to a given node by relationship type and depth.
 MATCH (n{{path: "{path}"}})
@@ -294,11 +296,15 @@ WITH
     CASE WHEN all(r IN rels WHERE r.mandatorily) THEN TRUE ELSE
     CASE WHEN any(r IN rels WHERE r.mandatorily IS NOT NULL) THEN FALSE END END AS mandatorily,
     depth,
-    CASE WHEN any(r IN rels WHERE r.is_test) THEN TRUE ELSE FALSE END AS is_test
+    CASE WHEN any(r IN rels WHERE r.is_test) THEN TRUE ELSE FALSE END AS is_test,
+    CASE WHEN any(n IN nodes WHERE n.deprecated) THEN TRUE ELSE FALSE END AS deprecated,
+    CASE WHEN any(n IN nodes WHERE n.hidden) THEN TRUE ELSE FALSE END AS hidden
 WHERE
     source.path IS NOT NULL
     AND all(n IN nodes WHERE "{marketplace}" IN n.marketplaces)
     {"AND NOT is_test" if not include_tests else ""}
+    {"AND NOT deprecated" if not include_deprecated else ""}
+    {"AND NOT hidden" if not include_hidden else ""}
     {"AND mandatorily" if mandatory_only else ""}
 WITH
     source,
@@ -340,6 +346,8 @@ def get_targets_by_path(
     marketplace: MarketplaceVersions,
     mandatory_only: bool,
     include_tests: bool,
+    include_deprecated: bool,
+    include_hidden: bool,
 ) -> List[Dict[str, Any]]:
     query = f"""// Returns all paths from a given node by relationship type and depth.
 MATCH (n{{path: "{path}"}})
@@ -368,11 +376,15 @@ WITH
     CASE WHEN all(r IN rels WHERE r.mandatorily) THEN TRUE ELSE
     CASE WHEN any(r IN rels WHERE r.mandatorily IS NOT NULL) THEN FALSE END END AS mandatorily,
     depth,
-    CASE WHEN any(r IN rels WHERE r.is_test) THEN TRUE ELSE FALSE END AS is_test
+    CASE WHEN any(r IN rels WHERE r.is_test) THEN TRUE ELSE FALSE END AS is_test,
+    CASE WHEN any(n IN nodes WHERE n.deprecated) THEN TRUE ELSE FALSE END AS deprecated,
+    CASE WHEN any(n IN nodes WHERE n.hidden) THEN TRUE ELSE FALSE END AS hidden
 WHERE
     target.path IS NOT NULL
     AND all(n IN nodes WHERE "{marketplace}" IN n.marketplaces)
     {"AND NOT is_test" if not include_tests else ""}
+    {"AND NOT deprecated" if not include_deprecated else ""}
+    {"AND NOT hidden" if not include_hidden else ""}
     {"AND mandatorily" if mandatory_only else ""}
 WITH
     target,

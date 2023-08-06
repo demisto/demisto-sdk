@@ -174,6 +174,8 @@ class ContentGraphInterface(ABC):
         retrieve_targets: bool,
         mandatory_only: bool,
         include_tests: bool,
+        include_deprecated: bool,
+        include_hidden: bool,
     ) -> Tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
         pass
 

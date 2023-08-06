@@ -363,6 +363,8 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         retrieve_targets: bool,
         mandatory_only: bool,
         include_tests: bool,
+        include_deprecated: bool,
+        include_hidden: bool,
     ) -> Tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
         with self.driver.session() as session:
             sources = (
@@ -375,6 +377,8 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
                     marketplace,
                     mandatory_only,
                     include_tests,
+                    include_deprecated,
+                    include_hidden,
                 )
                 if retrieve_sources
                 else []
@@ -389,6 +393,8 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
                     marketplace,
                     mandatory_only,
                     include_tests,
+                    include_deprecated,
+                    include_hidden,
                 )
                 if retrieve_targets
                 else []

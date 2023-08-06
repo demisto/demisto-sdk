@@ -92,9 +92,21 @@ def get_relationships(
     ),
     include_tests: bool = typer.Option(
         False,
-        "--incude-tests",
+        "--include-tests",
         is_flag=True,
         help="If true, includes tests in outputs (relevant only for DEPENDS_ON/USES relationships).",
+    ),
+    include_deprecated: bool = typer.Option(
+        False,
+        "--include-deprecated",
+        is_flag=True,
+        help="If true, includes deprecated in outputs.",
+    ),
+    include_hidden: bool = typer.Option(
+        False,
+        "--include-hidden",
+        is_flag=True,
+        help="If true, includes hidden packs in outputs (relevant only for DEPENDS_ON relationships).",
     ),
     direction: Direction = typer.Option(
         Direction.BOTH,
@@ -160,6 +172,8 @@ def get_relationships(
             direction,
             mandatory_only,
             include_tests,
+            include_deprecated,
+            include_hidden,
         )
         if output:
             (output / COMMAND_OUTPUTS_FILENAME).write_text(
@@ -177,6 +191,8 @@ def get_relationships_by_path(
     direction: Direction,
     mandatory_only: bool,
     include_tests: bool,
+    include_deprecated: bool,
+    include_hidden: bool,
 ) -> Dict[str, Any]:
     retrieve_sources: bool = direction != Direction.TARGETS
     retrieve_targets: bool = direction != Direction.SOURCES
@@ -191,6 +207,8 @@ def get_relationships_by_path(
         retrieve_targets,
         mandatory_only,
         include_tests,
+        include_deprecated,
+        include_hidden,
     )
     for record in sources + targets:
         log_record(record, relationship)

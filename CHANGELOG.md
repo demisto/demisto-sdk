@@ -7,8 +7,6 @@
 * Fixed an issue where the SDK would fail pulling docker images.
 * Fixed an issue where **prepare-content** command would add the string `candidate` to scripts and integrations for the *nativeimage* key.
 * Fixed an issue where in some cases the **split** command did not remove pack version note from the script.
-* Added the **graph** command group. The **create-content-graph** and **update-content-graph** commands were migrated to this command group, and named **create** and **update** respectively.
-* Added the **get-relationships** graph command.
 * Improved the content graph performance when calculating content relationships.
 * Fixed an issue where **validate** would not properly detect dependencies of core packs.
 * Removed usages of Random in unit tests to ensure the tests are deterministic.

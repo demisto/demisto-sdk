@@ -18,6 +18,7 @@ from demisto_sdk.commands.common.tools import (
 from demisto_sdk.commands.content_graph.interface.neo4j.neo4j_graph import (
     Neo4jContentGraphInterface as ContentGraphInterface,
 )
+from collections import defaultdict
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 
 
@@ -382,18 +383,16 @@ class GraphValidator(BaseValidator):
         if dependant_packs := self.graph.find_mandatory_hidden_packs_dependencies(
             pack_ids=self.pack_ids
         ):
-            hidden_pack_id_to_dependant_pack_ids: dict = {
-                pack_id: set() for pack_id in self.pack_ids
-            }
+            hidden_pack_id_to_dependant_pack_ids: dict = defaultdict(set)
+
             for pack in dependant_packs:
                 for relationship in pack.depends_on:
                     hidden_pack_id = relationship.content_item_to.object_id
-                    if hidden_pack_id in self.pack_ids:
-                        hidden_pack_id_to_dependant_pack_ids[hidden_pack_id].add(
-                            pack.object_id
-                        )
-
-            for pack_id in self.pack_ids:
+                    hidden_pack_id_to_dependant_pack_ids[hidden_pack_id].add(
+                        pack.object_id
+                    )
+            
+            for pack_id in hidden_pack_id_to_dependant_pack_ids:
                 if dependant_packs_ids := hidden_pack_id_to_dependant_pack_ids.get(
                     pack_id
                 ):

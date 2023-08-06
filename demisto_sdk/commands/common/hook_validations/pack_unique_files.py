@@ -12,8 +12,7 @@ from dateutil import parser
 from git import GitCommandError, Repo
 from packaging.version import Version, parse
 
-import demisto_sdk.commands.common.tools_paths as tools_paths
-from demisto_sdk.commands.common import tools
+from demisto_sdk.commands.common import tools, tools_paths
 from demisto_sdk.commands.common.constants import (  # PACK_METADATA_PRICE,
     API_MODULES_PACK,
     EXCLUDED_DISPLAY_NAME_WORDS,

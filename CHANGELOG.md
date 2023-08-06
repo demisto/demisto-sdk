@@ -1,5 +1,7 @@
 # Changelog
 ## Unreleased
+* Added the **graph** command group. The **create-content-graph** and **update-content-graph** commands were migrated to this command group, and named **create** and **update** respectively.
+* Added the **get-relationships** graph command.
 * Added the *--xsiam* flag to the **init** command in order to create XSIAM content.
 
 ## 1.18.1

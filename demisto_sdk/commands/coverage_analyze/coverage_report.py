@@ -1,5 +1,4 @@
 import os
-from pathlib import Path
 from typing import Dict, Optional, Union
 
 import coverage
@@ -98,7 +97,7 @@ class CoverageReport:
         return self.default
 
     def coverage_report(self):
-        if not Path(self.cov.config.data_file).exists():
+        if not os.path.exists(self.cov.config.data_file):
             logger.debug(
                 f"coverage report {self.cov.config.data_file} file not found. "
             )

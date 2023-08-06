@@ -6,7 +6,6 @@ import logging
 import os
 import re
 import string
-from pathlib import Path
 from typing import List, Optional, Tuple
 
 from pykwalify.core import Core
@@ -75,7 +74,7 @@ class StructureValidator(BaseValidator):
             specific_validations=specific_validations,
         )
         self.is_valid = True
-        self.valid_extensions = [".yml", ".json", ".md", ".png", ".py"]
+        self.valid_extensions = [".yml", ".json", ".md", ".png", ".py", ".svg"]
         self.file_path = file_path.replace("\\", "/")
         self.skip_schema_check = skip_schema_check
         self.pykwalify_logs = pykwalify_logs
@@ -161,7 +160,7 @@ class StructureValidator(BaseValidator):
             or self.skip_schema_check
             or (
                 self.scheme_name == FileType.REPUTATION
-                and Path(self.file_path).name == OLD_REPUTATION
+                and os.path.basename(self.file_path) == OLD_REPUTATION
             )
         ):
             return True
@@ -506,7 +505,7 @@ class StructureValidator(BaseValidator):
 
     @error_codes("BA103")
     def check_for_spaces_in_file_name(self):
-        file_name = Path(self.file_path).name
+        file_name = os.path.basename(self.file_path)
         if file_name.count(" ") > 0:
             error_message, error_code = Errors.file_name_include_spaces_error(file_name)
             if self.handle_error(error_message, error_code, self.file_path):

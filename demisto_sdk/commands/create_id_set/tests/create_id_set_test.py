@@ -1,7 +1,6 @@
 import os
 import shutil
 from collections import OrderedDict
-from pathlib import Path
 from tempfile import mkdtemp
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
@@ -49,7 +48,7 @@ class TestIDSetCreator:
     def teardown_method(self):
         # delete the id set file
         try:
-            if Path(self.file_path).is_file() or os.path.islink(self.file_path):
+            if os.path.isfile(self.file_path) or os.path.islink(self.file_path):
                 os.unlink(self.file_path)
             elif os.path.isdir(self.file_path):
                 shutil.rmtree(self.file_path)
@@ -60,7 +59,7 @@ class TestIDSetCreator:
         id_set_creator = IDSetCreator(self.file_path)
 
         id_set_creator.create_id_set()
-        assert Path(self.file_path).exists()
+        assert os.path.exists(self.file_path)
 
     def test_create_id_set_on_specific_pack_output(self):
         """
@@ -78,7 +77,7 @@ class TestIDSetCreator:
         id_set_creator = IDSetCreator(self.file_path, input="Packs/AMP")
 
         id_set_creator.create_id_set()
-        assert Path(self.file_path).exists()
+        assert os.path.exists(self.file_path)
 
     def test_create_id_set_no_output(self, mocker):
         import demisto_sdk.commands.common.update_id_set as uis
@@ -87,7 +86,7 @@ class TestIDSetCreator:
         id_set_creator = IDSetCreator(output=None)
 
         id_set, _, _ = id_set_creator.create_id_set()
-        assert not Path(self.file_path).exists()
+        assert not os.path.exists(self.file_path)
         assert id_set is not None
 
         keys = set(id_set.keys())

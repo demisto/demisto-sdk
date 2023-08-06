@@ -1,4 +1,3 @@
-from pathlib import Path
 from typing import Optional
 
 from demisto_sdk.commands.common.constants import (
@@ -48,7 +47,7 @@ class AuthorImageValidator(ImageValidator):
         Returns:
             (bool): Whether author image is valid.
         """
-        if Path(self.file_path).exists():
+        if os.path.exists(self.file_path):
             self.validate_size(
                 allow_empty_image_file=False, maximum_size=self.maximum_image_size
             )

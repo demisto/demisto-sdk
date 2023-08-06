@@ -2225,7 +2225,7 @@ def test_format_mapper_with_ngr_flag(mocker, monkeypatch, repo):
             "name": "Mapper - Incoming Mapper",
             "type": "mapping-incoming",
             "version": -1,
-            "fromVersion": OLDEST_SUPPORTED_VERSION
+            "fromVersion": GENERAL_DEFAULT_FROMVERSION
         }
 
     runner = CliRunner()
@@ -2306,7 +2306,7 @@ def test_format_on_layout_no_graph_flag(mocker, monkeypatch, repo):
         "name": "Layout",
         "system": False,
         "version": -1,
-        "fromVersion": OLDEST_SUPPORTED_VERSION,
+        "fromVersion": GENERAL_DEFAULT_FROMVERSION,
         "description": "",
         "marketplaces": ["xsoar"]
     }

@@ -12,7 +12,7 @@ from demisto_sdk.commands.format.format_constants import (
 )
 from demisto_sdk.commands.format.update_generic_json import BaseUpdateJSON
 from demisto_sdk.commands.common.constants import (
-    OLDEST_SUPPORTED_VERSION,
+    OLDEST_INCIDENT_FIELD_SUPPORTED_VERSION,
     DEFAULT_CONTENT_ITEM_TO_VERSION
 )
 
@@ -81,7 +81,7 @@ class IncidentFieldJSONFormat(BaseUpdateJSON):
                 alias_file_path = item.get('path', '')
                 alias_toversion = Version(item.get('toversion', DEFAULT_CONTENT_ITEM_TO_VERSION))
 
-                if alias_toversion > Version(OLDEST_SUPPORTED_VERSION) and \
+                if alias_toversion > Version(OLDEST_INCIDENT_FIELD_SUPPORTED_VERSION) and \
                         (len(alias_marketplaces) != 1 or alias_marketplaces[0] != "xsoar"):
 
                     logger.info(

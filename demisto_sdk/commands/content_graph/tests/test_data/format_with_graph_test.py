@@ -17,7 +17,8 @@ from demisto_sdk.commands.content_graph.objects.pack import Pack
 from demisto_sdk.commands.content_graph.interface.neo4j.neo4j_graph import (
     Neo4jContentGraphInterface as ContentGraphInterface,
 )
-from demisto_sdk.commands.common.constants import MarketplaceVersions, OLDEST_SUPPORTED_VERSION
+from demisto_sdk.commands.common.constants import MarketplaceVersions, OLDEST_SUPPORTED_VERSION, \
+    GENERAL_DEFAULT_FROMVERSION
 from TestSuite.test_tools import ChangeCWD, str_in_call_args_list
 from click.testing import CliRunner
 from demisto_sdk.__main__ import main
@@ -148,7 +149,7 @@ def repository(mocker, repo) -> ContentDTO:
         "name": "Mapper - Incoming Mapper",
         "type": "mapping-incoming",
         "version": -1,
-        "fromVersion": OLDEST_SUPPORTED_VERSION
+        "fromVersion": GENERAL_DEFAULT_FROMVERSION
     }
     layout_content = {
         "detailsV2": {
@@ -192,7 +193,7 @@ def repository(mocker, repo) -> ContentDTO:
         "name": "Layout",
         "system": False,
         "version": -1,
-        "fromVersion": OLDEST_SUPPORTED_VERSION,
+        "fromVersion": GENERAL_DEFAULT_FROMVERSION,
         "description": "",
         "marketplaces": ["xsoar"]
     }
@@ -356,7 +357,7 @@ def mock_integration(name: str = "SampleIntegration", path: Path = Path("Packs")
         content_type=ContentType.INTEGRATION,
         node_id=f"{ContentType.INTEGRATION}:{name}",
         path=path,
-        fromversion=OLDEST_SUPPORTED_VERSION,
+        fromversion=GENERAL_DEFAULT_FROMVERSION,
         toversion="99.99.99",
         display_name=name,
         name=name,
@@ -375,7 +376,7 @@ def mock_mapper(path: str, name: str = "SampleMapper", data: Dict = {}):
         content_type=ContentType.MAPPER,
         node_id=f"{ContentType.MAPPER}:{name}",
         path=path,
-        fromversion=OLDEST_SUPPORTED_VERSION,
+        fromversion=GENERAL_DEFAULT_FROMVERSION,
         display_name=name,
         toversion="99.99.99",
         name=name,
@@ -394,7 +395,7 @@ def mock_layout(path: str, name: str = "SampleLayout", data: Dict = {}):
         content_type=ContentType.LAYOUT,
         node_id=f"{ContentType.LAYOUT}:{name}",
         path=path,
-        fromversion=OLDEST_SUPPORTED_VERSION,
+        fromversion=GENERAL_DEFAULT_FROMVERSION,
         display_name=name,
         toversion="99.99.99",
         name=name,
@@ -423,7 +424,7 @@ def mock_incident_field(cli_name: str, path: str, marketplaces: List, data: Dict
         content_type=ContentType.INCIDENT_FIELD,
         node_id=f"{ContentType.INCIDENT_FIELD}:{name}",
         path=path,
-        fromversion=OLDEST_SUPPORTED_VERSION,
+        fromversion=GENERAL_DEFAULT_FROMVERSION,
         display_name=name,
         toversion="99.99.99",
         name=name,
@@ -546,7 +547,7 @@ def test_format_incident_field_graph_fix_aliases_marketplace(mocker, monkeypatch
     monkeypatch.setenv("COLUMNS", "1000")
 
     pack_graph_object = _get_pack_by_id(repository, "SamplePack2")
-    original_incident_field_path = str(pack_graph_object.content_items.incident_field[0].path)  # original incident field
+    original_incident_field_path = str(pack_graph_object.content_items.incident_field[0].path)
     alias1_incident_field_path = str(pack_graph_object.content_items.incident_field[1].path)
     alias2_incident_field_path = str(pack_graph_object.content_items.incident_field[2].path)
     mocker.patch(

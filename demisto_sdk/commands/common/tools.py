@@ -1,6 +1,5 @@
 import glob
 import io
-from demisto_sdk.commands.common.logger import logger
 import os
 import re
 import shlex
@@ -40,6 +39,7 @@ from packaging.version import Version
 from pebble import ProcessFuture, ProcessPool
 from requests.exceptions import HTTPError
 
+import demisto_sdk.commands.common.tools_paths as tools_paths
 from demisto_sdk.commands.common.constants import (
     ALL_FILES_VALIDATION_IGNORE_WHITELIST,
     API_MODULES_PACK,
@@ -109,13 +109,13 @@ from demisto_sdk.commands.common.constants import (
     MarketplaceVersions,
     urljoin,
 )
-import demisto_sdk.commands.common.tools_paths as tools_paths
 from demisto_sdk.commands.common.cpu_count import cpu_count
 from demisto_sdk.commands.common.git_content_config import GitContentConfig, GitProvider
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
 from demisto_sdk.commands.common.handlers import YAML_Handler
+from demisto_sdk.commands.common.logger import logger
 
 if TYPE_CHECKING:
     from demisto_sdk.commands.content_graph.interface.graph import ContentGraphInterface

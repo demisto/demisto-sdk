@@ -1,8 +1,8 @@
 import functools
 from typing import Dict, Optional
 
-from pydantic import BaseModel
-
+from pydantic import BaseModel, validator
+import requests
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.singleton import Singleton
 
@@ -11,11 +11,17 @@ class DockerImageTagMetadata(BaseModel):
     python_version: Optional[str]
 
 
-class DockerImagesInfo(Singleton, BaseModel):
+class DockerImagesInfo(BaseModel):
     docker_images: Dict[str, Dict[str, DockerImageTagMetadata]]
+    # url: str = "https://github.com/demisto/dockerfiles-info/blob/7608b23e95707d3cee14320898316fd67d79dbbd/dockerfiles-metadata.json"
+
+    # @validator("docker_images")
+    # def validate_docker_images(cls, v):
+    #     if v:
+    #         return v
 
     def __init__(self, url: str = "https://github.com/demisto/dockerfiles-info/blob/7608b23e95707d3cee14320898316fd67d79dbbd/dockerfiles-metadata.json"):
-        response = requests.get(url)
+        response = requests.get(url, verify=False)
         super().__init__(**response.json())
 
     def get_docker_image_metadata_value(

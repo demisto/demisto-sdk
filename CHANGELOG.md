@@ -1,6 +1,7 @@
 # Changelog
 ## Unreleased
 * Added the *--xsiam* flag to the **init** command in order to create XSIAM content.
+* Removed the format execution step from the `contribution_converter` since it can be executed separately during the contribution process.
 
 ## 1.18.1
 * Fixed an issue where the coloring directives where showing in log messages.

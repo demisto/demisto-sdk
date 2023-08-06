@@ -244,5 +244,7 @@ class ContentGraphInterface(ABC):
         pass
 
     @abstractmethod
-    def find_mandatory_hidden_packs_dependencies(self, pack_ids: List[str]) -> List[BaseContent]:
+    def find_mandatory_hidden_packs_dependencies(
+        self, pack_ids: List[str]
+    ) -> List[BaseContent]:
         pass

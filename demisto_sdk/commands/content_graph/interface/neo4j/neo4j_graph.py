@@ -496,7 +496,9 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             self._add_relationships_to_objects(session, results)
             return [self._id_to_obj[result] for result in results]
 
-    def find_mandatory_hidden_packs_dependencies(self, pack_ids: List[str]) -> List[BaseContent]:
+    def find_mandatory_hidden_packs_dependencies(
+        self, pack_ids: List[str]
+    ) -> List[BaseContent]:
         """
         Retrieves all the packs that are dependent on hidden packs
 

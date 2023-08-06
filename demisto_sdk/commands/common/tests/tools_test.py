@@ -3,6 +3,7 @@ import os
 import shutil
 from configparser import ConfigParser
 from pathlib import Path
+from tempfile import NamedTemporaryFile, TemporaryDirectory
 from typing import Callable, List, Optional, Tuple, Union
 
 import git
@@ -2965,3 +2966,66 @@ def test_get_pack_names_from_files(file_paths, skip_file_types, expected_packs):
     """
     packs_result = get_pack_names_from_files(file_paths, skip_file_types)
     assert packs_result == expected_packs
+
+
+@pytest.mark.parametrize(
+    "file_name, expected_hash",
+    [
+        ("file.txt", "c8c54e11b1cb27c3376fa82520d53ef9932a02c0"),
+        ("file2.txt", "f1e01f0882e1f08f00f38d0cd60a850dc9288188"),
+    ],
+)
+def test_sha1_file(file_name, expected_hash):
+    """
+    Given:
+        - A file path
+    When:
+        - Checking the hash
+    Then:
+        Validate that the hash is correct, even after moving to a different location
+    """
+    path_str = f"{GIT_ROOT}/demisto_sdk/commands/common/tests/test_files/test_sha1/content/{file_name}"
+    assert tools.sha1_file(path_str) == expected_hash
+    assert tools.sha1_file(Path(path_str)) == expected_hash
+    # move file to a different location and check that the hash is still the same
+    with NamedTemporaryFile() as temp_dir:
+        shutil.copy(path_str, temp_dir.name)
+        assert tools.sha1_file(temp_dir.name) == expected_hash
+
+
+def test_sha1_dir():
+    """
+    Given:
+        - A directory path
+    When:
+        - Checking the hash
+    Then:
+        Validate that the hash is correct, even after moving to a different location
+    """
+    path_str = f"{GIT_ROOT}/demisto_sdk/commands/common/tests/test_files/test_sha1"
+    expected_hash = "70feabcd73ccbcb14201453942edf4a5fb4c4aac"
+    assert tools.sha1_dir(path_str) == expected_hash
+    assert tools.sha1_dir(Path(path_str)) == expected_hash
+    # move dir to a different location and check that the hash is still the same
+    with TemporaryDirectory() as temp_dir:
+        dest = Path(temp_dir, "dest")
+        shutil.copytree(path_str, dest)
+        assert tools.sha1_dir(dest) == expected_hash
+
+
+@pytest.mark.parametrize(
+    "input_path,expected_output",
+    [
+        (
+            Path("root/Packs/MyPack/Integrations/MyIntegration/MyIntegration.yml"),
+            "root/Packs/MyPack",
+        ),
+        (Path("Packs/MyPack1/Scripts/MyScript/MyScript.py"), "Packs/MyPack1"),
+        (Path("Packs/MyPack2/Scripts/MyScript"), "Packs/MyPack2"),
+        (Path("Packs/MyPack3/Scripts"), "Packs/MyPack3"),
+        (Path("Packs/MyPack4"), "Packs/MyPack4"),
+    ],
+)
+def test_find_pack_folder(input_path, expected_output):
+    output = tools.find_pack_folder(input_path)
+    assert expected_output == str(output)

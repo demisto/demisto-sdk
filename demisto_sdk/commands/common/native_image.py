@@ -106,6 +106,7 @@ class ScriptIntegrationSupportedNativeImages:
     """
 
     NATIVE_DEV = "native:dev"
+    NATIVE_CANDIDATE = "native:candidate"
 
     def __init__(
         self,
@@ -169,8 +170,11 @@ class ScriptIntegrationSupportedNativeImages:
                 if native_image not in ignored_native_images
             ]
 
-            if only_production_tags and self.NATIVE_DEV in native_images:
-                native_images.remove(self.NATIVE_DEV)
+            if only_production_tags:
+                if self.NATIVE_DEV in native_images:
+                    native_images.remove(self.NATIVE_DEV)
+                if self.NATIVE_CANDIDATE in native_images:
+                    native_images.remove(self.NATIVE_CANDIDATE)
 
             if get_raw_version:
                 return list(

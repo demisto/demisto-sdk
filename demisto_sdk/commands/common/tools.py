@@ -3536,17 +3536,19 @@ def get_display_name(file_path, file_data={}) -> str:
             file_data = get_file(file_path)
 
     if "display" in file_data:
-        name = file_data.get("display", None)
+        name = file_data.get("display")
     elif "layout" in file_data and isinstance(file_data["layout"], dict):
         name = file_data["layout"].get("id")
     elif "name" in file_data:
-        name = file_data.get("name", None)
+        name = file_data.get("name")
     elif "TypeName" in file_data:
-        name = file_data.get("TypeName", None)
+        name = file_data.get("TypeName")
     elif "brandName" in file_data:
-        name = file_data.get("brandName", None)
+        name = file_data.get("brandName")
+    elif "reputationCommand" in file_data:
+        name = file_data.get("details")
     elif "id" in file_data:
-        name = file_data.get("id", None)
+        name = file_data.get("id")
     elif "trigger_name" in file_data:
         name = file_data.get("trigger_name")
     elif "rule_name" in file_data:

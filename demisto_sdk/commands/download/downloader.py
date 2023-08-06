@@ -46,8 +46,8 @@ from demisto_sdk.commands.common.tools import (
     get_child_files,
     get_code_lang,
     get_dict_from_file,
+    get_display_name,
     get_entity_id_by_entity_type,
-    get_entity_name_by_entity_type,
     get_file,
     get_files_in_dir,
     get_id,
@@ -787,7 +787,7 @@ class Downloader:
                 main_file_data = get_json(entity_instance_path)
 
         main_id = get_entity_id_by_entity_type(main_file_data, content_entity)
-        main_name = get_entity_name_by_entity_type(main_file_data, content_entity)
+        main_name = get_display_name(file_path="", file_data=main_file_data)
 
         return main_id, main_name
 
@@ -904,7 +904,7 @@ class Downloader:
             existing, file_type
         )  # For example: Integrations
         file_id: str = get_entity_id_by_entity_type(existing, file_entity)
-        file_name: str = get_entity_name_by_entity_type(existing, file_entity)
+        file_name: str = get_display_name(file_path="", file_data=existing)
 
         if not file_name:
             file_name = existing.get("id", "")
@@ -933,7 +933,7 @@ class Downloader:
         :return: The file entity, for example: Integrations
         """
         if file_type and file_type == "playbook":
-            name: str = get_entity_name_by_entity_type(existing, PLAYBOOKS_DIR)
+            name: str = get_display_name(file_path="", file_data=existing)
             if name.endswith(
                 ("Test", "_test", "_Test", "-test", "-Test")
             ) or name.lower().startswith("test"):

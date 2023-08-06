@@ -141,7 +141,7 @@ class Downloader:
         **kwargs,
     ):
         self.output_pack_path = output
-        self.input_files = input if isinstance(input, list) else [input]
+        self.input_files = [input] if isinstance(input, str) else list(input)
         self.regex = regex
         self.force = force
         self.download_system_items = system
@@ -292,9 +292,7 @@ class Downloader:
             logger.debug("Filtering process has been skipped as all custom content should be downloaded.")
             for file_name, content_item_data in custom_content_objects.items():
                 content_item_name = file_name_to_content_name_map[file_name]
-
-                if content_item_name not in filtered_custom_content_objects:
-                    filtered_custom_content_objects[content_item_name] = content_item_data
+                filtered_custom_content_objects[content_item_name] = content_item_data
 
             return filtered_custom_content_objects
 
@@ -305,8 +303,7 @@ class Downloader:
             content_item_name = file_name_to_content_name_map[file_name]
 
             # Filter according input / regex flags
-            if ((self.regex and re.match(self.regex, content_item_name)) or (content_item_name in self.input_files)
-                    and content_item_name not in filtered_custom_content_objects):
+            if (self.regex and re.match(self.regex, content_item_name)) or (content_item_name in self.input_files):
                 filtered_custom_content_objects[content_item_name] = custom_content_objects[file_name]
 
         # Filter out content written in JavaScript since it is not support
@@ -319,7 +316,6 @@ class Downloader:
                 content_name = filtered_custom_content_object["name"]
                 logger.warning(f"Content item '{content_name}' is written in JavaScript which isn't supported, "
                                f"and will be skipped.")
-                self.input_files.remove(content_name)
                 del filtered_custom_content_objects[filtered_custom_content_name]
 
         logger.info(f"Filtering process completed ({len(filtered_custom_content_objects)}/{original_count}).")

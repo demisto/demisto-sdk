@@ -3872,3 +3872,25 @@ def sha1_update_from_dir(directory: Union[str, Path], hash_):
 def sha1_dir(directory: Union[str, Path]) -> str:
     """Return the sha1 hash of a directory"""
     return str(sha1_update_from_dir(directory, sha1()).hexdigest())
+
+
+def extract_error_codes_from_file(pack_name: str) -> set:
+    """
+    Args:
+        pack_name: a pack name from which to get the pack ignore errors.
+    Returns: error codes set  that in pack.ignore file
+    """
+    error_codes_list = []
+    if pack_name and (config := get_pack_ignore_content(pack_name)):
+        # go over every file in the config
+        for section in filter(
+            lambda section: section.startswith("file:"), config.sections()
+        ):
+            # given section is of type file
+            for key in config[section]:
+                if key == "ignore":
+                    # group ignore codes to a list
+                    error_codes = str(config[section][key]).split(",")
+                    error_codes_list.extend(error_codes)
+
+    return set(error_codes_list)

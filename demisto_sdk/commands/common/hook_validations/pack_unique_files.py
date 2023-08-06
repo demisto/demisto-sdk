@@ -53,6 +53,7 @@ from demisto_sdk.commands.common.hook_validations.base_validator import (
 from demisto_sdk.commands.common.hook_validations.readme import ReadMeValidator
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
+    extract_error_codes_from_file,
     get_core_pack_list,
     get_json,
     get_local_remote_file,
@@ -266,17 +267,6 @@ class PackUniqueFilesValidator(BaseValidator):
 
         return False
 
-    def _extract_error_codes_from_file(self, file_name):
-        file_content = self._read_file_content(file_name)
-        error_codes = []
-        if file_content:
-            lines = file_content.split("\n")
-            for line in lines:
-                if line.strip().startswith("ignore="):
-                    error_code = line.strip().split("=")[1].split(",")
-                    error_codes.extend(error_code)
-        return set(error_codes)
-
     def check_metadata_for_marketplace_change(self):
         """Return True if pack_metadata's marketplaces field was changed."""
         metadata_file_path = self._get_pack_file_path(self.pack_meta_file)
@@ -437,8 +427,12 @@ class PackUniqueFilesValidator(BaseValidator):
 
     @error_codes("PA137")
     def validate_non_ignorable_error(self):
-        """Check if non ignorable error exist in .pack-ignore"""
-        error_codes = self._extract_error_codes_from_file(self.pack_ignore_file)
+        """
+        Check if .pack-ignore includes error codes that cannot be ignored.
+        Returns False if an non-ignorable error code is found,
+        or True if all ignored errors are indeed ignorable.
+        """
+        error_codes = extract_error_codes_from_file(self.pack)
         if error_codes:
             nonignoable_errors = error_codes.difference(ALLOWED_IGNORE_ERRORS)
             if nonignoable_errors:

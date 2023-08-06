@@ -63,9 +63,11 @@ from demisto_sdk.commands.common.tools import (
     get_file,
     get_pack_name,
     get_yaml,
+)
+from demisto_sdk.commands.common.tools_paths import (
+    is_external_repository,
     string_to_bool,
 )
-from demisto_sdk.commands.common.tools_paths import is_external_repository
 from demisto_sdk.commands.secrets.secrets import SecretsValidator
 
 ANALYTICS_AND_SIEM_CATEGORY = "Analytics & SIEM"

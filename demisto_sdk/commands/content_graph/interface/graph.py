@@ -242,3 +242,7 @@ class ContentGraphInterface(ABC):
     @abstractmethod
     def run_single_query(self, query: str, **kwargs) -> Any:
         pass
+
+    @abstractmethod
+    def find_mandatory_hidden_packs_dependencies(self, pack_ids: List[str]) -> List[BaseContent]:
+        pass

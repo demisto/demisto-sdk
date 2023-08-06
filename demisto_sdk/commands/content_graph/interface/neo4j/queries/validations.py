@@ -272,12 +272,12 @@ def validate_hidden_pack_dependencies(
     pack_ids: List[str],
 ):
     query = f"""// Returns DEPENDS_ON relationships to packs which are hidden
-        MATCH (pack1)-[r:DEPENDS_ON{{mandatorily:true}}]->(pack2)
-        WHERE pack2.object_id IN {pack_ids} AND pack2.hidden
-        AND NOT r.is_test
-        and NOT pack1.hidden
-        and NOT pack1.deprecated
-        RETURN pack1, collect(r) as relationships, collect(pack2) as nodes_to
+MATCH (pack1)-[r:DEPENDS_ON{{mandatorily:true}}]->(pack2)
+WHERE pack2.object_id IN {pack_ids} AND pack2.hidden
+AND NOT r.is_test
+and NOT pack1.hidden
+and NOT pack1.deprecated
+RETURN pack1, collect(r) as relationships, collect(pack2) as nodes_to
         """
     return {
         item.get("pack1").element_id: Neo4jRelationshipResult(

@@ -1,10 +1,10 @@
 # Changelog
 ## Unreleased
 * Added the *--xsiam* flag to the **init** command in order to create XSIAM content.
+* Added a new validation (`GR108`) to **validate** command that assures hidden packs do not have mandatory dependant packs.
 
 ## 1.18.1
 * Fixed an issue where the coloring directives where showing in log messages.
-* Added a new validation (`GR108`) to **validate** command that assures hidden packs do not have mandatory dependant packs.
 * Fixed an issue where **create-content-graph** was not executed upon changes in the parser infra files.
 * Added support for `svg` integration images in content repo in **validate** command.
 * Added a parameter `skip-packs-known-words` to the **doc-review** command, making sure that pack known words will not be added.

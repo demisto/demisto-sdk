@@ -278,7 +278,12 @@ CALL apoc.path.expandConfig(n, {{
 YIELD path
 WITH
     // the paths are returned in reversed order, so we fix this here:
-    reverse([n IN nodes(path) | n.path]) AS node_paths,
+    reverse([n IN nodes(path) | {{
+        path: n.path,
+        name: n.name,
+        object_id: n.object_id,
+        content_type: n.content_type
+    }}]) AS node_paths,
     reverse(nodes(path)) AS nodes,
     reverse([r IN relationships(path) | properties(r)]) AS rels,
     length(path) AS depth
@@ -299,12 +304,22 @@ WITH
     source,
     min(depth) AS minDepth,
     collect({{
-        path: apoc.coll.insert(path_from_source, 0, source.path),
+        path: apoc.coll.insert(
+            path_from_source,
+            0,
+            {{
+                path: source.path,
+                name: source.name,
+                object_id: source.object_id,
+                content_type: source.content_type
+            }}
+        ),
         mandatorily: mandatorily,
         depth: depth
     }}) AS paths
 RETURN
     source.object_id AS object_id,
+    source.name AS name,
     source.content_type AS content_type,
     source.path AS filepath,
     TRUE AS is_source,
@@ -312,7 +327,7 @@ RETURN
     CASE WHEN any(p IN paths WHERE p.mandatorily) THEN TRUE ELSE
     CASE WHEN all(p IN paths WHERE p.mandatorily IS NOT NULL) THEN FALSE END END AS mandatorily,
     minDepth
-ORDER BY minDepth"""
+ORDER BY content_type, object_id"""
     return run_query(tx, query).data()
 
 
@@ -337,7 +352,12 @@ CALL apoc.path.expandConfig(n, {{
 }})
 YIELD path
 WITH
-    [n IN nodes(path) | n.path] AS node_paths,
+    [n IN nodes(path) | {{
+        path: n.path,
+        name: n.name,
+        object_id: n.object_id,
+        content_type: n.content_type
+    }}] AS node_paths,
     nodes(path) AS nodes,
     [r IN relationships(path) | properties(r)] AS rels,
     length(path) AS depth
@@ -358,12 +378,22 @@ WITH
     target,
     min(depth) AS minDepth,
     collect({{
-        path: apoc.coll.insert(path_to_target, size(path_to_target), target.path),
+        path: apoc.coll.insert(
+            path_to_target,
+            size(path_to_target),
+            {{
+                path: target.path,
+                name: target.name,
+                object_id: target.object_id,
+                content_type: target.content_type
+            }}
+        ),
         mandatorily: mandatorily,
         depth: depth
     }}) AS paths
 RETURN
     target.object_id AS object_id,
+    target.name AS name,
     target.content_type AS content_type,
     target.path AS filepath,
     FALSE AS is_source,
@@ -371,5 +401,5 @@ RETURN
     CASE WHEN any(p IN paths WHERE p.mandatorily) THEN TRUE ELSE
     CASE WHEN all(p IN paths WHERE p.mandatorily IS NOT NULL) THEN FALSE END END AS mandatorily,
     minDepth
-ORDER BY minDepth"""
+ORDER BY content_type, object_id"""
     return run_query(tx, query).data()

@@ -165,9 +165,9 @@ Returns relationships of a given content object.
 
     If true, returns only mandatory relationships (relevant only for DEPENDS_ON/USES relationships).
 
-* **--incude-test-dependencies**
+* **--incude-tests**
 
-    If true, includes tests dependencies in outputs (relevant only for DEPENDS_ON relationships).
+    If true, includes tests in outputs (relevant only for DEPENDS_ON/USES relationships).
 
 * **-dir, --direction**
 

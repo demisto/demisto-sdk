@@ -92,9 +92,9 @@ def get_relationships(
     ),
     include_tests: bool = typer.Option(
         False,
-        "--incude-test-dependencies",
+        "--incude-tests",
         is_flag=True,
-        help="If true, includes tests dependencies in outputs (relevant only for DEPENDS_ON relationships).",
+        help="If true, includes tests in outputs (relevant only for DEPENDS_ON/USES relationships).",
     ),
     direction: Direction = typer.Option(
         Direction.BOTH,
@@ -194,11 +194,12 @@ def get_relationships_by_path(
     )
     for record in sources + targets:
         log_record(record, relationship)
+        format_record_for_outputs(record, relationship)
     logger.info("[cyan]====== SUMMARY ======[/cyan]")
     if retrieve_sources:
-        logger.info(f"Sources:\n{to_tabulate(sources, relationship)}\n")
+        logger.info(f"Sources:\n{to_tabulate(sources)}\n")
     if retrieve_targets:
-        logger.info(f"Targets:\n{to_tabulate(targets, relationship)}\n")
+        logger.info(f"Targets:\n{to_tabulate(targets)}\n")
     return {"sources": sources, "targets": targets}
 
 
@@ -225,13 +226,14 @@ def path_to_str(
     relationship: RelationshipType,
     path: list,
 ) -> str:
-    def node_to_str(path: str) -> str:
-        return f"({path})"
+    def node_to_str(node_data: dict) -> str:
+        name = f"[cyan]{node_data['name']}[/cyan]"
+        content_type = f"[lightblue]{node_data['content_type']}[/lightblue]"
+        path = node_data["path"]
+        return f"• ({name}:{content_type} {{path: {path}}})\n"
 
     def rel_to_str(rel: RelationshipType, props: dict) -> str:
-        rel_data = f"[{rel}{props or ''}]"
-        spaces = " " * (len(rel_data) // 2 - 1)
-        return f"\n{spaces}|\n{rel_data}\n{spaces}↓\n"
+        return f"   └─ [[purple]{rel}[/purple]]{props or ''} ↴\n"
 
     path_str = ""
     for idx, path_element in enumerate(path):
@@ -242,20 +244,30 @@ def path_to_str(
     return path_str
 
 
+def format_record_for_outputs(
+    record: Dict[str, Any],
+    relationship: RelationshipType,
+) -> None:
+    del record["is_source"]  # unnecessary field in output
+    for path_data in record["paths"]:
+        formatted_path = []
+        for idx, path_element in enumerate(path_data["path"]):
+            if idx % 2 == 0:
+                formatted_path.append({f"node_{idx // 2}": path_element})
+            else:
+                formatted_path.append({relationship: path_element})
+        path_data["path"] = formatted_path
+
+
 def to_tabulate(
     data: list,
-    relationship: RelationshipType,
 ) -> str:
     if not data:
         return "No results."
 
-    headers = ["File Path", "Min Depth"]
-    fieldnames_to_collect = ["filepath", "minDepth"]
-    maxcolwidths = [70, None]
-    if relationship in [RelationshipType.USES, RelationshipType.DEPENDS_ON]:
-        headers.append("Mandatory")
-        fieldnames_to_collect.append("mandatorily")
-        maxcolwidths.append(None)
+    headers = ["Name", "Type", "Path", "Depth"]
+    fieldnames_to_collect = ["name", "content_type", "filepath", "minDepth"]
+    maxcolwidths = [50] * len(headers)
 
     tabulated_data = []
     for record in data:

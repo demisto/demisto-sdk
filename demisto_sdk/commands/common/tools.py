@@ -2043,23 +2043,19 @@ def get_latest_upload_flow_commit_hash() -> str:
     return last_commit
 
 
-def get_content_path(path: Path = None) -> Path:
+def get_content_path(relative_path: Optional[Path] = None) -> Path:
     """Get abs content path, from any CWD
     Args:
-        path (Path): Path to file or folder in content repo
+        Optional[Path]: Path to file or folder in content repo if not given will use env variable or cwd
     Returns:
         str: Absolute content path
-    >>> get_content_path(Path('/User/username/content/Packs/MyPack/Integrations/MyIntegration/MyIntegration.yml'))
-    PosixPath('/User/username/content')
-    >>> get_content_path(Path('/User/username/content/Packs'))
-    PosixPath('/User/username/content')
     """
     with contextlib.suppress(ValueError):
-        if path:
+        if relative_path:
             return (
-                path.absolute().parent
-                if path.name == "Packs"
-                else find_pack_folder(path.absolute()).parent.parent
+                relative_path.absolute().parent
+                if relative_path.name == "Packs"
+                else find_pack_folder(relative_path.absolute()).parent.parent
             )
     try:
         if content_path := os.getenv("DEMISTO_SDK_CONTENT_PATH"):

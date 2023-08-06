@@ -2,10 +2,9 @@ import os
 import re
 from abc import ABC
 from pathlib import Path
-from typing import Dict, List, Tuple, Any, Set
+from typing import Set, Tuple
 
 from demisto_sdk.commands.common.constants import (
-    LAYOUT_AND_MAPPER_BUILT_IN_FIELDS,
     FileType,
 )
 from demisto_sdk.commands.common.logger import logger
@@ -68,7 +67,7 @@ class LayoutBaseFormat(BaseUpdateJSON, ABC):
 
         # layoutscontainer kinds are unique fields to containers, and shouldn't be in layouts
         self.is_container = any(self.data.get(kind) for kind in LAYOUTS_CONTAINER_KINDS)
-        self.graph = kwargs.get('graph')
+        self.graph = kwargs.get("graph")
 
     def format_file(self) -> Tuple[int, int]:
         """Manager function for the Layout JSON updater."""
@@ -314,7 +313,9 @@ class LayoutBaseFormat(BaseUpdateJSON, ABC):
 
         # get the relevant content item from the graph
         layout_object: ContentItem
-        layout_object = self.graph.search(path=Path(self.source_file).relative_to(self.graph.repo_path))[0]
+        layout_object = self.graph.search(
+            path=Path(self.source_file).relative_to(self.graph.repo_path)
+        )[0]
 
         # find the fields that aren't in the content repo
         fields_not_in_repo = {
@@ -324,8 +325,10 @@ class LayoutBaseFormat(BaseUpdateJSON, ABC):
         }
 
         if fields_not_in_repo:
-            logger.info(f"Removing the fields {fields_not_in_repo} from the layout {self.source_file} "
-                        f"because they aren't in the content repo.")
+            logger.info(
+                f"Removing the fields {fields_not_in_repo} from the layout {self.source_file} "
+                f"because they aren't in the content repo."
+            )
 
         # remove the fields that aren't in the repo
         for layout_container_item in layout_container_items:
@@ -335,9 +338,8 @@ class LayoutBaseFormat(BaseUpdateJSON, ABC):
                 layout_tabs=layout_tabs, fields_to_remove=fields_not_in_repo
             )
 
-
     def remove_non_existent_fields_from_tabs(
-            self, layout_tabs: list, fields_to_remove: Set
+        self, layout_tabs: list, fields_to_remove: Set
     ):
         """
         Remove non-existent fields which are not part of the id json from tabs.
@@ -349,9 +351,9 @@ class LayoutBaseFormat(BaseUpdateJSON, ABC):
         for tab in layout_tabs:
             layout_sections = tab.get("sections", [])
             for section in layout_sections:
-                if items := section.get('items', []):
-                    section['items'] = [
+                if items := section.get("items", []):
+                    section["items"] = [
                         item
                         for item in items
-                        if item.get('fieldId', '') not in fields_to_remove
+                        if item.get("fieldId", "") not in fields_to_remove
                     ]

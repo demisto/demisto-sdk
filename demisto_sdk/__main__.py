@@ -1299,7 +1299,7 @@ def format(
             include_untracked=include_untracked,
             add_tests=add_tests,
             id_set_path=id_set_path,
-            use_graph=kwargs.get("graph", True)
+            use_graph=kwargs.get("graph", True),
         )
 
 

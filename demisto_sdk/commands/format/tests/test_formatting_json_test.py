@@ -6,14 +6,16 @@ from unittest.mock import patch
 
 import pytest
 
-from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.format import (
     update_dashboard,
     update_incidenttype,
     update_indicatortype,
 )
-from demisto_sdk.commands.format.format_module import format_manager, is_graph_related_files
+from demisto_sdk.commands.format.format_module import (
+    format_manager,
+    is_graph_related_files,
+)
 from demisto_sdk.commands.format.update_classifier import (
     ClassifierJSONFormat,
     OldClassifierJSONFormat,
@@ -918,14 +920,16 @@ class TestFormattingLayout:
             }
         }
         layout = pack.create_layout(
-                name="layout-non-existent-fields-test", content=layout_content
-            )
+            name="layout-non-existent-fields-test", content=layout_content
+        )
         formatter = LayoutBaseFormat(
             input=layout.path,
             id_set_path=id_set_file_mock.path,
         )
 
-        logger_warning = mocker.patch.object(logging.getLogger("demisto-sdk"), "warning")
+        logger_warning = mocker.patch.object(
+            logging.getLogger("demisto-sdk"), "warning"
+        )
         formatter.remove_non_existent_fields_layout()
         message = f"Skipping formatting of non-existent-fields for {layout.path} as this content item is deprecated."
         assert str_in_call_args_list(logger_warning.call_args_list, message)
@@ -1787,70 +1791,73 @@ def test_is_graph_related_files(repo):
     - Case D: Assert False - the graph should be started for a README.
     """
     pack = repo.create_pack("PackName")
-    layout = pack.create_layoutcontainer(name="layout", content={
-        "detailsV2": {
-            "tabs": [
-                {
-                    "id": "caseinfoid",
-                    "name": "Incident Info",
-                    "sections": [
-                        {
-                            "displayType": "ROW",
-                            "h": 2,
-                            "i": "caseinfoid-fce71720-98b0-11e9-97d7-ed26ef9e46c8",
-                            "isVisible": True,
-                            "items": [
-                                {
-                                    "endCol": 2,
-                                    "fieldId": "incident_field",
-                                    "height": 22,
-                                    "id": "id1",
-                                    "index": 0,
-                                    "sectionItemType": "field",
-                                    "startCol": 0
-                                }
-                            ]
-                        }
-                    ]
-                }
-            ]
+    layout = pack.create_layoutcontainer(
+        name="layout",
+        content={
+            "detailsV2": {
+                "tabs": [
+                    {
+                        "id": "caseinfoid",
+                        "name": "Incident Info",
+                        "sections": [
+                            {
+                                "displayType": "ROW",
+                                "h": 2,
+                                "i": "caseinfoid-fce71720-98b0-11e9-97d7-ed26ef9e46c8",
+                                "isVisible": True,
+                                "items": [
+                                    {
+                                        "endCol": 2,
+                                        "fieldId": "incident_field",
+                                        "height": 22,
+                                        "id": "id1",
+                                        "index": 0,
+                                        "sectionItemType": "field",
+                                        "startCol": 0,
+                                    }
+                                ],
+                            }
+                        ],
+                    }
+                ]
+            },
+            "group": "incident",
+            "id": "Layout",
+            "name": "Layout",
+            "system": False,
+            "version": -1,
+            "fromVersion": "6.9.0",
+            "description": "",
+            "marketplaces": ["xsoar"],
         },
-        "group": "incident",
-        "id": "Layout",
-        "name": "Layout",
-        "system": False,
-        "version": -1,
-        "fromVersion": "6.9.0",
-        "description": "",
-        "marketplaces": ["xsoar"]
-    })
-    incident_field = pack.create_incident_field(name="incident_field", content={
+    )
+    incident_field = pack.create_incident_field(
+        name="incident_field",
+        content={
             "cliName": "incidentfield",
             "id": "incident_incidentfield",
             "name": "Incident Field",
-            "marketplaces": [
-                "xsoar"
-            ]
-        })
-    mapper = pack.create_mapper(name="mapper", content={
+            "marketplaces": ["xsoar"],
+        },
+    )
+    mapper = pack.create_mapper(
+        name="mapper",
+        content={
             "description": "",
             "feed": False,
             "id": "Mapper - Incoming Mapper",
             "mapping": {
                 "Mapper Finding": {
                     "dontMapEventToLabels": True,
-                    "internalMapping": {
-                        "incident_field_name": {
-                            "simple": "Item"
-                        }
-                    }
+                    "internalMapping": {"incident_field_name": {"simple": "Item"}},
                 },
             },
             "name": "Mapper - Incoming Mapper",
             "type": "mapping-incoming",
             "version": -1,
-            "fromVersion": "6.5.0"
-        })
+            "fromVersion": "6.5.0",
+        },
+    )
     readme = pack.create_doc_file(name="README")
     assert is_graph_related_files([layout.path], True)
     assert is_graph_related_files([incident_field.path], True)

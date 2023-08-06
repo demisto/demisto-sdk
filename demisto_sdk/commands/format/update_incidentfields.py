@@ -1,9 +1,13 @@
-from pathlib import Path
 from typing import List, Tuple
+
 from packaging.version import Version
+
+from demisto_sdk.commands.common.constants import (
+    DEFAULT_CONTENT_ITEM_TO_VERSION,
+    OLDEST_INCIDENT_FIELD_SUPPORTED_VERSION,
+)
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.logger import logger
-
 from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.format.format_constants import (
     ERROR_RETURN_CODE,
@@ -11,10 +15,6 @@ from demisto_sdk.commands.format.format_constants import (
     SUCCESS_RETURN_CODE,
 )
 from demisto_sdk.commands.format.update_generic_json import BaseUpdateJSON
-from demisto_sdk.commands.common.constants import (
-    OLDEST_INCIDENT_FIELD_SUPPORTED_VERSION,
-    DEFAULT_CONTENT_ITEM_TO_VERSION
-)
 
 
 class IncidentFieldJSONFormat(BaseUpdateJSON):
@@ -42,7 +42,7 @@ class IncidentFieldJSONFormat(BaseUpdateJSON):
             no_validate=no_validate,
             **kwargs,
         )
-        self.graph = kwargs.get('graph')
+        self.graph = kwargs.get("graph")
 
     def run_format(self) -> int:
         try:
@@ -77,20 +77,25 @@ class IncidentFieldJSONFormat(BaseUpdateJSON):
                 return
 
             for item in self._get_incident_fields_by_aliases(aliases):
-                alias_marketplaces = item.get('marketplaces', [])
-                alias_file_path = item.get('path', '')
-                alias_toversion = Version(item.get('toversion', DEFAULT_CONTENT_ITEM_TO_VERSION))
+                alias_marketplaces = item.get("marketplaces", [])
+                alias_file_path = item.get("path", "")
+                alias_toversion = Version(
+                    item.get("toversion", DEFAULT_CONTENT_ITEM_TO_VERSION)
+                )
 
-                if alias_toversion > Version(OLDEST_INCIDENT_FIELD_SUPPORTED_VERSION) and \
-                        (len(alias_marketplaces) != 1 or alias_marketplaces[0] != "xsoar"):
+                if alias_toversion > Version(
+                    OLDEST_INCIDENT_FIELD_SUPPORTED_VERSION
+                ) and (
+                    len(alias_marketplaces) != 1 or alias_marketplaces[0] != "xsoar"
+                ):
 
                     logger.info(
                         f"\n[blue]================= Updating file {alias_file_path} =================[/blue]"
                     )
 
-                    with open(alias_file_path, 'r+') as f:
+                    with open(alias_file_path, "r+") as f:
                         alias_file_content = json.load(f)
-                        alias_file_content['marketplaces'] = ['xsoar']
+                        alias_file_content["marketplaces"] = ["xsoar"]
 
                     self._save_alias_field_file(
                         dest_file_path=alias_file_path, field_data=alias_file_content
@@ -107,9 +112,15 @@ class IncidentFieldJSONFormat(BaseUpdateJSON):
             list: A list of dictionaries, each dictionary represent an incident field.
         """
         alias_ids: set = {f'{alias.get("cliName")}' for alias in aliases}
-        return self.graph.get_content_items_by_identifier(identifier_values_list=list(alias_ids),
-                                                          content_type=ContentType.INCIDENT_FIELD,
-                                                          identifier='cli_name') if self.graph else []
+        return (
+            self.graph.get_content_items_by_identifier(
+                identifier_values_list=list(alias_ids),
+                content_type=ContentType.INCIDENT_FIELD,
+                identifier="cli_name",
+            )
+            if self.graph
+            else []
+        )
 
     def _save_alias_field_file(
         self,

@@ -2,8 +2,6 @@ from pathlib import Path
 from typing import Tuple
 
 from demisto_sdk.commands.common.logger import logger
-from demisto_sdk.commands.content_graph.common import ContentType
-from demisto_sdk.commands.content_graph.objects import RelationshipData
 from demisto_sdk.commands.content_graph.objects.base_content import UnknownContent
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 from demisto_sdk.commands.format.format_constants import (
@@ -12,9 +10,6 @@ from demisto_sdk.commands.format.format_constants import (
     SUCCESS_RETURN_CODE,
 )
 from demisto_sdk.commands.format.update_generic_json import BaseUpdateJSON
-from demisto_sdk.commands.content_graph.interface.neo4j.neo4j_graph import (
-    Neo4jContentGraphInterface as ContentGraphInterface, Neo4jContentGraphInterface,
-)
 
 
 class MapperJSONFormat(BaseUpdateJSON):
@@ -43,7 +38,7 @@ class MapperJSONFormat(BaseUpdateJSON):
             **kwargs,
         )
 
-        self.graph = kwargs.get('graph')
+        self.graph = kwargs.get("graph")
 
     def run_format(self) -> int:
         try:
@@ -90,7 +85,9 @@ class MapperJSONFormat(BaseUpdateJSON):
 
         # get the relevant content item from the graph
         mapper_object: ContentItem
-        mapper_object = self.graph.search(path=Path(self.source_file).relative_to(self.graph.repo_path))[0]
+        mapper_object = self.graph.search(
+            path=Path(self.source_file).relative_to(self.graph.repo_path)
+        )[0]
 
         # find the fields that aren't in the content repo
         fields_not_in_repo = {
@@ -103,14 +100,15 @@ class MapperJSONFormat(BaseUpdateJSON):
         mapper = self.data.get("mapping", {})
 
         if fields_not_in_repo:
-            logger.info(f"Removing the fields {fields_not_in_repo} from the mapper {self.source_file} "
-                        f"because they aren't in the content repo.")
+            logger.info(
+                f"Removing the fields {fields_not_in_repo} from the mapper {self.source_file} "
+                f"because they aren't in the content repo."
+            )
 
         for mapping_name in mapper.values():
             internal_mapping_fields = mapping_name.get("internalMapping") or {}
             mapping_name["internalMapping"] = {
                 inc_name: inc_info
                 for inc_name, inc_info in internal_mapping_fields.items()
-                if inc_name
-                not in fields_not_in_repo
+                if inc_name not in fields_not_in_repo
             }

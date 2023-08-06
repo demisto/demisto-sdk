@@ -110,7 +110,11 @@ VALIDATE_RES_FAILED_CODE = 3
 CONTENT_ENTITY_IDS_TO_UPDATE: Dict = {}
 
 # The content items that use the graph in format
-CONTENT_ITEMS_WITH_GRAPH = [FileType.INCIDENT_FIELD.value, FileType.LAYOUTS_CONTAINER.value, FileType.MAPPER.value]
+CONTENT_ITEMS_WITH_GRAPH = [
+    FileType.INCIDENT_FIELD.value,
+    FileType.LAYOUTS_CONTAINER.value,
+    FileType.MAPPER.value,
+]
 
 
 def format_manager(
@@ -128,7 +132,7 @@ def format_manager(
     interactive: bool = True,
     id_set_path: str = None,
     clear_cache: bool = False,
-    use_graph: bool = True
+    use_graph: bool = True,
 ):
     """
     Format_manager is a function that activated format command on different type of files.
@@ -153,7 +157,7 @@ def format_manager(
     """
 
     if id_set_path:
-        logger.error('The --id-set-path argument is deprecated.')
+        logger.error("The --id-set-path argument is deprecated.")
 
     prev_ver = prev_ver if prev_ver else "demisto/master"
     supported_file_types = ["json", "yml", "py", "md"]
@@ -182,8 +186,11 @@ def format_manager(
     log_list = []
     error_list: List[Tuple[int, int]] = []
     if files:
-        graph = ContentGraphInterface(update_graph=True) if is_graph_related_files(files, clear_cache) and \
-                                                            use_graph else None
+        graph = (
+            ContentGraphInterface(update_graph=True)
+            if is_graph_related_files(files, clear_cache) and use_graph
+            else None
+        )
         for file in files:
             file_path = str(Path(file))
             file_type = find_type(file_path, clear_cache=clear_cache)
@@ -210,7 +217,7 @@ def format_manager(
                     assume_answer=assume_answer,
                     deprecate=deprecate,
                     add_tests=add_tests,
-                    graph=graph
+                    graph=graph,
                 )
                 if err_res:
                     log_list.extend([(err_res, "red")])
@@ -237,7 +244,9 @@ def format_manager(
                         "red",
                     )
                 )
-        if graph:  # In case that the graph was activated, we need to call exit in order to close it.
+        if (
+            graph
+        ):  # In case that the graph was activated, we need to call exit in order to close it.
             graph.__exit__()
         update_content_entity_ids(files)
 
@@ -423,16 +432,16 @@ def format_output(
 
 def is_graph_related_files(files: List[str], clear_cache: bool) -> bool:
     """
-        Check if the files that Format should check are of type mapper, layout or incident fields.
-        Otherwise, we don't need to start the graph.
+    Check if the files that Format should check are of type mapper, layout or incident fields.
+    Otherwise, we don't need to start the graph.
 
-        Args:
-            files (List[str]): a list of the paths of the files Format should check.
-            clear_cache (bool): wether to clear the cache.
+    Args:
+        files (List[str]): a list of the paths of the files Format should check.
+        clear_cache (bool): wether to clear the cache.
 
-        Returns:
-            True if the files are of type mapper, layout or incident fields, else False.
-        """
+    Returns:
+        True if the files are of type mapper, layout or incident fields, else False.
+    """
     for file in files:
         file_path = str(Path(file))
         if file_type := find_type(file_path, clear_cache=clear_cache):

@@ -1,6 +1,7 @@
 # Changelog
 ## Unreleased
 * Added the *--xsiam* flag to the **init** command in order to create XSIAM content.
+* Fixed an issue where the `update-additional-dependencies` **pre-commit** step failed when not running in a content-like repo.
 
 ## 1.18.1
 * Fixed an issue where the coloring directives where showing in log messages.

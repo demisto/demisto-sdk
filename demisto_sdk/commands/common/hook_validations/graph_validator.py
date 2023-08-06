@@ -1,3 +1,4 @@
+from collections import defaultdict
 from pathlib import Path
 from typing import List, Optional
 
@@ -18,7 +19,6 @@ from demisto_sdk.commands.common.tools import (
 from demisto_sdk.commands.content_graph.interface.neo4j.neo4j_graph import (
     Neo4jContentGraphInterface as ContentGraphInterface,
 )
-from collections import defaultdict
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 
 
@@ -391,7 +391,7 @@ class GraphValidator(BaseValidator):
                     hidden_pack_id_to_dependant_pack_ids[hidden_pack_id].add(
                         pack.object_id
                     )
-            
+
             for pack_id in hidden_pack_id_to_dependant_pack_ids:
                 if dependant_packs_ids := hidden_pack_id_to_dependant_pack_ids.get(
                     pack_id

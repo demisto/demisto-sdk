@@ -1,5 +1,4 @@
 import os
-from pathlib import Path
 
 import pytest
 
@@ -70,7 +69,7 @@ class TestAuthorImageValidator:
         """
         # setup test pack and write the author image to test if exists
         pack = repo.create_pack("my_pack")
-        if Path(author_image_path).exists():
+        if os.path.exists(author_image_path):
             with open(author_image_path, "rb") as f:
                 pack.author_image.write_bytes(f.read())
 

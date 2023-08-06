@@ -1,5 +1,4 @@
 import os
-from pathlib import Path
 
 import pytest
 
@@ -422,7 +421,7 @@ def test_are_release_notes_complete_rn_config(pack):
     validator = ReleaseNotesValidator(
         rn.path,
         modified_files=[rn.path.replace("md", "json")],
-        pack_name=Path(pack.path).name,
+        pack_name=os.path.basename(pack.path),
     )
     assert validator.are_release_notes_complete()
 
@@ -567,7 +566,7 @@ def test_is_docker_image_same_as_yml(
     validator = ReleaseNotesValidator(
         rn.path,
         modified_files=[category.yml.path],
-        pack_name=Path(pack.path).name,
+        pack_name=os.path.basename(pack.path),
     )
     assert validator.is_docker_image_same_as_yml() == filled_expected_result
 

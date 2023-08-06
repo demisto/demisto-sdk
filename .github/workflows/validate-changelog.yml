@@ -1,4 +1,4 @@
-name: Validate Changelog
+name: validate-changelog
 on: pull_request
 
 jobs:
@@ -13,7 +13,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
         with:
-          fetch-depth: 0
+          fetch-depth: 1
 
       - name: Setup python
         uses: actions/setup-python@v4

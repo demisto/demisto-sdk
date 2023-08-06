@@ -8,7 +8,7 @@ from git import Repo
 from pydantic import ValidationError
 
 from demisto_sdk.commands.changelog.changelog_obj import INITIAL_LOG, LogObject
-from demisto_sdk.commands.common.handlers import YAML_Handler
+from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import get_yaml
@@ -17,7 +17,7 @@ CHANGELOG_FOLDER = Path(f"{git_path()}/.changelog")
 CHANGELOG_MD_FILE = Path(f"{git_path()}/CHANGELOG.md")
 RELEASE_VERSION_REGEX = re.compile(r"v\d{1,2}\.\d{1,2}\.\d{1,2}")
 
-yaml = YAML_Handler()
+yaml = DEFAULT_YAML_HANDLER
 
 
 class Changelog:
@@ -35,39 +35,9 @@ class Changelog:
         ...
         """
         if self.is_release():
-            if not self.is_log_folder_empty():
-                logger.error(
-                    "Logs folder is not empty,\n"
-                    "It is not possible to release until the `changelog.md` "
-                    "file is updated, and the `.changelog` folder is empty"
-                )
-                return False
-            if not self.is_changelog_changed():
-                logger.error(
-                    "The file `changelog.md` is not updated\n"
-                    "It is not possible to release until the `changelog.md` "
-                    "file is updated, and the `.changelog` folder is empty"
-                )
-                return False
+            return self._validate_release()
         else:
-            if self.is_changelog_changed():
-                logger.error(
-                    "It is not possible to make a change in the `changelog.md` file,\n"
-                    "run `demisto-sdk changelog --init -pn <pr number> -pt <pr name>` to create log file,\n"
-                    "and put the description of your changes there"
-                )
-                return False
-            if not self.is_log_yml_exist():
-                logger.error(
-                    "There is no log file describing your change,\n"
-                    "Please run `demisto-sdk changelog --init -pn <pr number> -pt <pr name>` to create one, "
-                    "and put the description of your changes there"
-                )
-                return False
-            if not self.validate_log_yml():
-                return False
-
-        return True
+            return self._validate_branch()
 
     """ INIT """
 
@@ -88,10 +58,10 @@ class Changelog:
             f"The creation of the log file .changelog/{self.pr_number}.yml is complete"
         )
 
-        if breaking or feature or fix:
+        if any((breaking, feature, fix)):
             log = self.create_log(breaking, feature, fix)
         else:
-            msg += ",\nPlease go to the file and edit the initial values."
+            msg += ",\nGo to the file and edit the initial values."
             log = INITIAL_LOG
 
         with (CHANGELOG_FOLDER / f"{self.pr_number}.yml").open("w") as f:
@@ -203,9 +173,8 @@ class Changelog:
 
     def is_release(self) -> bool:
         return (
-            RELEASE_VERSION_REGEX.match(self.pr_name) is not None
-            if self.pr_name
-            else False
+            self.pr_name is not None
+            and RELEASE_VERSION_REGEX.match(self.pr_name) is not None
         )
 
     def create_log(
@@ -224,6 +193,43 @@ class Changelog:
 
         LogObject(**log)
         return log
+
+    def _validate_release(self) -> bool:
+        if not self.is_log_folder_empty():
+            logger.error(
+                "Logs folder is not empty,\n"
+                "It is not possible to release until the `changelog.md` "
+                "file is updated, and the `.changelog` folder is empty"
+            )
+            return False
+        if not self.is_changelog_changed():
+            logger.error(
+                "The file `changelog.md` is not updated\n"
+                "It is not possible to release until the `changelog.md` "
+                "file is updated, and the `.changelog` folder is empty"
+            )
+            return False
+
+        return True
+
+    def _validate_branch(self) -> bool:
+        if self.is_changelog_changed():
+            logger.error(
+                "Do not modify changelog.md\n"
+                "run `demisto-sdk changelog --init -pn <pr number> -pt <pr name>`"
+                " to create a log file instead."
+            )
+            return False
+        if not self.is_log_yml_exist():
+            logger.error(
+                "Missing changelog file.\n"
+                "Run `demisto-sdk changelog --init -pn <pr number> -pt <pr name>` and fill it."
+            )
+            return False
+        if not self.validate_log_yml():
+            return False
+
+        return True
 
 
 def changelog_management(**kwargs):

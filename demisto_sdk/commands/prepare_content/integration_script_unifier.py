@@ -83,7 +83,7 @@ class IntegrationScriptUnifier(Unifier):
             IntegrationScriptUnifier.get_code_file(package_path, script_type)
         except ValueError:
             logger.info(
-                f"[yellow]No code file found for {path}, assuming it is already unifiedyellow[/yellow]"
+                f"[yellow]No code file found for {path}, assuming it is already unified[/yellow]"
             )
             return data
         yml_unified = copy.deepcopy(data)

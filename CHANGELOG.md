@@ -1,27 +1,46 @@
 # Changelog
 ## Unreleased
-* Fixed an issue where the *DEMISTO_SDK_SKIP_VERSION_CHECK* was ignored when running on non CI environments.
-* Added the ability to ignore any validation in the **validate** command when running in an external (non-demisto/content) repo, by placing a `.private-repo-settings` file at its root.
-* Fixed an issue where **validate** falsely detected backwards-compatibility issues, and prevented adding the `marketplaces` key to content items.
-* Calling **format** with the `-d` flag now removes test playbooks testing the deprecated content from conf.json.
-* Fixed an issue where the SDK would fail pulling docker images.
-* Fixed an issue where in some cases the **split** command did not remove pack version note from the script.
-* Improved the content graph performance when calculating content relationships.
-* Fixed an issue where **validate** would not properly detect dependencies of core packs.
-* Removed usages of Random in unit tests to ensure the tests are deterministic.
-* **validate** will now run on all the pack content items when the pack supported marketplaces are modified.
-* **pre-commit** no longer runs when there are no modified files (unless provided with input files).
-* **lint** will now fail on `demisto.results` and `return_outputs` usage, when a pack is `xsoar` or `partner` supported.
-* **lint** will now fail on `LOG` usage in python files.
-* Fixed an issue where errors in **validate** were logged as `info`.
-* Fixed an issue where **validate** error messages were not logged when an integration param, or the default argument in reputation commands is not valid.
-* Added new validation that XSIAM integrations must have `marketplacev2` as the value of the marketplaces field.
-* Fixed an issue where the **format** command would change the value of the `unsearchable` key in fields.
-* Added an ability to provide list of marketplace names as a credentials-type (type 9) param attribute.
-* **doc-review** will run with the `--use-packs-known-words` default to true.
-* Calling **modeling-rules init-test-data** will now return the XDM fields output in alphabetical order.
+* Added the *--xsiam* flag to the **init** command in order to create XSIAM content.
 * Fixed an issue where the **unify** command failed on integrations using an API a module, when not called from the content root.
 
+## 1.18.1
+* Fixed an issue where the coloring directives where showing in log messages.
+* Fixed an issue where **create-content-graph** was not executed upon changes in the parser infra files.
+* Added support for `svg` integration images in content repo in **validate** command.
+* Added a parameter `skip-packs-known-words` to the **doc-review** command, making sure that pack known words will not be added.
+
+## 1.18.0
+* Added the ability to ignore any validation in the **validate** command when running in an external (non-demisto/content) repo, by placing a `.private-repo-settings` file at its root.
+* Calling **format** with the `-d` flag now removes test playbooks testing the deprecated content from conf.json.
+* Improved the content graph performance when calculating content relationships.
+* Improved determinism of SDK unit tests.
+* **validate** will now run on all the pack content items when the pack supported marketplaces are modified.
+* **pre-commit** no longer runs when there are no modified files (unless provided with input files).
+* Added new validation that XSIAM integrations must have `marketplacev2` as the value of the marketplaces field.
+* Added an ability to provide list of marketplace names as a credentials-type (type 9) param attribute.
+* **doc-review** will run with the `--use-packs-known-words` true by default.
+* Added the *deprecated* field to the pack object for the content-graph metadata.
+* Calling **modeling-rules init-test-data** will now return the XDM fields output in alphabetical order.
+* Added a new validation (`BA125`) to **validate**, assuring internal function names aren't used in customer-facing docs.
+* Removed the Pipfile and Pipfile.lock from the templates in the **init** command.
+* Disabled the option to create an integration with `Pipfile` and `Pipfile.lock` files, as they are deprecated.
+* Added the Sourcery hook to **pre-commit**.
+* Added a working directory to the `contribution_converter` in order to support working on a temporary directory.
+* Added a waiting period when checking whether the dataset exists in the **modeling-rule test** command.
+* Fixed an issue where the *DEMISTO_SDK_SKIP_VERSION_CHECK* was ignored when running on non CI environments.
+* Fixed an issue where **validate** falsely detected backwards-compatibility issues, and prevented adding the `marketplaces` key to content items.
+* Fixed an issue where the SDK would fail pulling docker images.
+* Fixed an issue where **prepare-content** command would add the string `candidate` to scripts and integrations for the *nativeimage* key.
+* Fixed an issue where in some cases the **split** command did not remove pack version note from the script.
+* Fixed an issue where **validate** would not properly detect dependencies of core packs.
+* Fixed an issue where **validate** failed on single-select types incident and indicator fields when given empty value as a select value option.
+* Fixed an issue where errors in **validate** were logged as `info`.
+* Fixed an issue where **validate** error messages were not logged when an integration param, or the default argument in reputation commands is not valid.
+* Fixed an issue where the **format** command would change the value of the `unsearchable` key in fields.
+* Fixed an issue where **lint** command failed to pull docker image in Gitlab environment.
+* Fixed an issue in **doc-review** command where escape characters within Markdown files were detected as invalid words.
+* Fixed an issue where **validate** failed on infrastructure test files.
+* Fixed an issue in **update-content-graph** where the neo4j service was unaccessible for non-root users.
 
 ## 1.17.2
 * Fixed an issue where **lint** and **validate** commands failed on integrations and scripts that use docker images that are not available in the Docker Hub but exist locally.

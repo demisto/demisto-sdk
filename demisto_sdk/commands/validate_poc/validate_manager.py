@@ -22,35 +22,28 @@ class ValidateManager:
         use_git=False,
         validate_all=False,
         file_path=None,
+        config_file_category_to_run=None
     ):
         self.config: dict = toml.load("/Users/yhayun/dev/demisto/demisto-sdk/demisto_sdk/commands/validate_poc/validation_conf.toml")
         self.objects_to_run = self.gather_objects_to_run(file_path, use_git, validate_all)
-        self.validation_codes, self.run_using_select = self.gather_validations_to_run(
-            use_git
-        )
+        self.gather_validations_to_run(use_git, config_file_category_to_run)
+        self.validators = self.filter_validators()
 
     def run(self):
         results: List[ValidationResult] = []
-        # gather validator from validate_poc package
-        validators = BaseValidator.__subclasses__()
 
-        for validator in validators:
-            # if error in validation_codes the left = True if run_using_select = True then we get get True
-            # if error in validation_codes the left = True if run_using_select = False then we get get False
-            # if error in validation_codes the left = False if run_using_select = True then we get get False
-            # if error in validation_codes the left = False if run_using_select = False then we get get True
-            if (validator.error_code in self.validation_codes) == self.run_using_select:
-                for content_object in self.objects_to_run:
-                    if validator.should_run(content_object):
-                        validation_result = validator.is_valid(content_object)
-                        try:
-                            if not validation_result.is_valid:
-                                results.append(validation_result)
-                                validator.fix(content_object)
-                        except NotImplementedError:
-                            continue
+        for validator in self.validators:
+            for content_object in self.objects_to_run:
+                if validator.should_run(content_object, self.ignorable_errors, self.support_level_dict):
+                    validation_result = validator.is_valid(content_object)
+                    try:
+                        if not validation_result.is_valid:
+                            results.append(validation_result)
+                            validator.fix(content_object)
+                    except NotImplementedError:
+                        continue
                             
-        return post_results(results, self.config)
+        return post_results(results, self.warnings)
 
     def gather_objects_to_run(self, file_paths, use_git, validate_all):
         content_objects_to_run = set()
@@ -76,13 +69,32 @@ class ValidateManager:
         return final_content_objects_to_run
     
 
-    def gather_validations_to_run(self, use_git):
-        flag = "use_git" if use_git else "validate_all"
-        if select := self.config.get(flag, {}).get("select"):
-            validation_codes, run_using_select = select, True
-        else:
-            validation_codes, run_using_select = (
-                self.config.get(flag, {}).get("ignore"),
-                False,
-            )
-        return validation_codes, run_using_select
+    def gather_validations_to_run(self, use_git, config_file_category_to_run):
+        flag = config_file_category_to_run or "use_git" if use_git else "validate_all"
+        section = self.config.get(flag, {})
+        self.validations_to_run = section.get("select")
+        self.validations_to_ignore = section.get("ignore")
+        self.warnings = section.get("warning")
+        self.ignorable_errors = section.get("ignorable_errors")
+        self.support_level_dict = self.config.get("support_level", {})
+
+
+    def filter_validators(self):
+        # gather validator from validate_poc package
+        validators = BaseValidator.__subclasses__()
+        filtered_validators = []
+        for validator in validators:
+            run_validation = not self.validations_to_run
+            if not run_validation:
+                for validation_to_run in self.validations_to_run:
+                    if validator.error_code.startswith(validation_to_run):
+                        run_validation = True
+                        break
+            if run_validation:
+                for error_to_ignore in self.validations_to_ignore:
+                    if validator.error_code.startswith(error_to_ignore):
+                        run_validation = False
+                        break
+                if run_validation:
+                    filtered_validators.append(validator)
+        return filtered_validators

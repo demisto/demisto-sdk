@@ -5,8 +5,7 @@ from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.validate_poc.validators.base_validator import ValidationResult
 
 
-def post_results(self, results: List[ValidationResult] = [], config = {}):
-        only_throw_warning = config.get("throw_warnings", {}).get("warnings_list", [])
+def post_results(self, results: List[ValidationResult] = [], only_throw_warning = []):
         is_valid = True
         for result in results:
             if not result.is_valid:

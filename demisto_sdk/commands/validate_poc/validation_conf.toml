@@ -1,44 +1,29 @@
 [use_git]
 ignore = []
 select = []
+warning = []
+ignorable_errors = ["RM101"]
 
 [validate_all]
 ignore = ["RM101, RM102"]
 select = []
-
-[categories_to_run]
-categories = []
-
-[ignorable_errors]
+warning = []
 ignorable_errors = []
+
+[yuval_Categories]
+ignore = ["RM101, RM102"]
+select = []
+warning = []
+ignorable_errors = []
+
 
 [support_level]
 
 [support_level.community]
 ignore = []
-select = []
 
 [support_level.partner]
 ignore = []
-select = []
 
 [support_level.xsoar]
 ignore = []
-select = []
-
-[servery_level]
-
-[servery_level.must]
-ignore = []
-select = []
-
-[servery_level.recommended]
-ignore = []
-select = []
-
-[servery_level.trivial]
-ignore = []
-select = []
-
-[throw_warnings]
-warnings_list = ["YV100"]

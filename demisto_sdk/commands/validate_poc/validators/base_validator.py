@@ -27,8 +27,13 @@ class BaseValidator(ABC, BaseModel):
     content_types: ClassVar[Tuple[Type[BaseContent], ...]]
 
     @classmethod
-    def should_run(cls, content_item: BaseContent) -> bool:
-        return isinstance(content_item, cls.content_types) and cls.error_code not in content_item.ignored_errors
+    def should_run(cls, content_item: BaseContent, ignorable_errors: list, support_level_dict: dict) -> bool:
+        should_run = isinstance(content_item, cls.content_types)
+        if cls.error_code in content_item.ignored_errors and cls.error_code in ignorable_errors:
+            should_run = False
+        if cls.error_code in support_level_dict.get(content_item.support_level, {}).get("ignore", []):
+            should_run = False
+        return should_run
 
     @classmethod
     def is_valid(cls, content_item: BaseContent) -> ValidationResult:

@@ -136,6 +136,7 @@ class BaseContentModel(ABC, BaseModel, metaclass=BaseContentMetaclass):
 class BaseContent(BaseContentModel):
     path: Path
     ignored_errors: List[str] = []
+    support_level: str = ""
 
     def __hash__(self):
         return hash(self.path)

@@ -1,7 +1,7 @@
 import logging
 from pathlib import Path, PosixPath
 from typing import List, Any, Dict
-
+import os
 import pytest
 from click.testing import CliRunner
 from demisto_sdk.commands.common.legacy_git_tools import git_path

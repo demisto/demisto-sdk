@@ -17,7 +17,8 @@ class XSIAMDashboard(ContentItemXSIAM, content_type=ContentType.XSIAM_DASHBOARD)
         incident_to_alert: bool = False,
     ) -> dict:
         summary = super().summary(marketplace, incident_to_alert)
-        self.update_preview_image_gcs_path(content_item_summary=summary)
+        if preview := self.get_preview_image_gcs_path():
+            summary.update({"preview": preview})
         return summary
 
     def dump(

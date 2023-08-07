@@ -59,20 +59,14 @@ class ContentItemXSIAM(ContentItem, ABC):
         """
         raise NotIndivitudallyUploadableException(self)
 
-    def update_preview_image_gcs_path(self, content_item_summary: dict):
+    def get_preview_image_gcs_path(self):
         """
         Updates the summary object with the preview image path in GCS if there is such an image in the content repo.
         This is for XSIAM dashboards and reports.
-
-        Args:
-            item_summary (dict): The metadata summary object.
         """
         if (
             self.content_type in [ContentType.XSIAM_DASHBOARD, ContentType.XSIAM_REPORT]
             and (self.path.parent / f"{self.path.stem}_image.png").exists()
         ):
-            content_item_summary.update(
-                {
-                    "preview": f"content/packs/{self.pack_id}/{self.in_pack.current_version}/{self.content_type.as_folder}/{self.path.stem}_image.png"  # type:ignore[union-attr]
-                }
-            )
+            return f"content/packs/{self.pack_id}/{self.in_pack.current_version}/{self.content_type.as_folder}/{self.path.stem}_image.png"  # type:ignore[union-attr]
+        return ""

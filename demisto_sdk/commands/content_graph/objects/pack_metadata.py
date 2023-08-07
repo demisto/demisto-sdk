@@ -83,7 +83,7 @@ class PackMetadata(BaseModel):
             content_items (PackContentItems): The pack content items object.
         """
         self.tags = self._get_pack_tags(marketplace, pack_id, content_items)
-        self.author = get_author(self.author, marketplace)
+        self.author = self._get_author(self.author, marketplace)
         self.version_info = os.environ.get("CI_PIPELINE_ID", "")
 
     def _format_metadata(
@@ -150,7 +150,7 @@ class PackMetadata(BaseModel):
                 )
                 continue
 
-            add_item_to_metadata_list(
+            self._add_item_to_metadata_list(
                 collected_content_items=collected_content_items,
                 content_item=content_item,
                 marketplace=marketplace,
@@ -190,7 +190,7 @@ class PackMetadata(BaseModel):
             r.content_item_to.object_id: {
                 "mandatory": r.mandatorily,
                 "minVersion": r.content_item_to.current_version,  # type:ignore[attr-defined]
-                "author": get_author(
+                "author": self._get_author(
                     r.content_item_to.author, marketplace  # type:ignore[attr-defined]
                 ),
                 "name": r.content_item_to.name,  # type:ignore[attr-defined]
@@ -344,133 +344,138 @@ class PackMetadata(BaseModel):
             support_details["email"] = self.email
         return support_details
 
+    @staticmethod
+    def _get_author(author, marketplace):
+        if marketplace in [MarketplaceVersions.XSOAR, MarketplaceVersions.XPANSE]:
+            return author
+        elif marketplace == MarketplaceVersions.MarketplaceV2:
+            return author.replace("XSOAR", "XSIAM")
+        raise ValueError(f"Unknown marketplace version for author: {marketplace}")
 
-def get_author(author, marketplace):
-    if marketplace in [MarketplaceVersions.XSOAR, MarketplaceVersions.XPANSE]:
-        return author
-    elif marketplace == MarketplaceVersions.MarketplaceV2:
-        return author.replace("XSOAR", "XSIAM")
-    raise ValueError(f"Unknown marketplace version for author: {marketplace}")
-
-
-def add_item_to_metadata_list(
-    collected_content_items: dict,
-    content_item: ContentItem,
-    marketplace: MarketplaceVersions,
-    incident_to_alert: bool = False,
-):
-    """
-    Adds the given content item to the metadata content items list.
-    - Checks if the given content item was already added to the metadata content items list
-      and replaces the object if its `toversion` is higher than the existing metadata object's `toversion`.
-    - If the content item name should be replaced from incident to alert, then the function will be called recursively
-      to replace also the item that its name was replaced from incident to alert.
-
-    Args:
-        collected_content_items (dict): The content items metadata list that were already collected.
-        content_item (ContentItem): The current content item to check.
-        marketplace (MarketplaceVersions): The marketplace to prepare the pack to upload.
-        incident_to_alert (bool, optional): Whether should replace incident to alert. Defaults to False.
-    """
-    collected_content_items.setdefault(content_item.content_type.metadata_name, [])
-    content_item_summary = content_item.summary(
-        marketplace, incident_to_alert=incident_to_alert
-    )
-
-    if content_item_metadata := search_content_item_metadata_object(
-        collected_content_items=collected_content_items,
-        item_id=content_item_summary["id"],
-        item_name=content_item_summary["name"],
-        item_type_key=content_item.content_type.metadata_name,
+    def _add_item_to_metadata_list(
+        self,
+        collected_content_items: dict,
+        content_item: ContentItem,
+        marketplace: MarketplaceVersions,
+        incident_to_alert: bool = False,
     ):
-        logger.debug(
-            f'Found content item with name "{content_item.name}" that was already appended to the list'
+        """
+        Adds the given content item to the metadata content items list.
+        - Checks if the given content item was already added to the metadata content items list
+        and replaces the object if its `toversion` is higher than the existing metadata object's `toversion`.
+        - If the content item name should be replaced from incident to alert, then the function will be called recursively
+        to replace also the item that its name was replaced from incident to alert.
+
+        Args:
+            collected_content_items (dict): The content items metadata list that were already collected.
+            content_item (ContentItem): The current content item to check.
+            marketplace (MarketplaceVersions): The marketplace to prepare the pack to upload.
+            incident_to_alert (bool, optional): Whether should replace incident to alert. Defaults to False.
+        """
+        collected_content_items.setdefault(content_item.content_type.metadata_name, [])
+        content_item_summary = content_item.summary(
+            marketplace, incident_to_alert=incident_to_alert
         )
 
-        replace_item_if_has_higher_toversion(
-            content_item, content_item_metadata, content_item_summary
-        )
+        if content_item_metadata := self._search_content_item_metadata_object(
+            collected_content_items=collected_content_items,
+            item_id=content_item_summary["id"],
+            item_name=content_item_summary["name"],
+            item_type_key=content_item.content_type.metadata_name,
+        ):
+            logger.debug(
+                f'Found content item with name "{content_item.name}" that was already appended to the list'
+            )
 
-    else:
-        logger.debug(
-            f'Didn\'t find content item with name "{content_item.name}" in the list, appending.'
-        )
-        set_empty_toversion_if_default(content_item_summary)
-        collected_content_items[content_item.content_type.metadata_name].append(
-            content_item_summary
-        )
+            self._replace_item_if_has_higher_toversion(
+                content_item, content_item_metadata, content_item_summary
+            )
 
-    # If incident_to_alert is True then stop recursive
-    if not incident_to_alert and content_item.is_incident_to_alert(marketplace):
-        logger.debug(
-            f'Replacing incident to alert in content item with ID "{content_item.object_id}" and appending to metadata'
-        )
-        add_item_to_metadata_list(
-            collected_content_items, content_item, marketplace, incident_to_alert=True
-        )
+        else:
+            logger.debug(
+                f'Didn\'t find content item with name "{content_item.name}" in the list, appending.'
+            )
+            self._set_empty_toversion_if_default(content_item_summary)
+            collected_content_items[content_item.content_type.metadata_name].append(
+                content_item_summary
+            )
 
+        # If incident_to_alert is True then stop recursive
+        if not incident_to_alert and content_item.is_incident_to_alert(marketplace):
+            logger.debug(
+                f'Replacing incident to alert in content item with ID "{content_item.object_id}" and appending to metadata'
+            )
+            self._add_item_to_metadata_list(
+                collected_content_items,
+                content_item,
+                marketplace,
+                incident_to_alert=True,
+            )
 
-def replace_item_if_has_higher_toversion(
-    content_item: ContentItem, content_item_metadata: dict, content_item_summary: dict
-):
-    """
-    Replaces the content item metadata object in the content items metadata list
-    if the given content item's `toversion` is higher than the existing item's metadata `toversion`.
-
-    Args:
-        content_item (ContentItem): The current content item to check.
-        content_item_metadata (dict): The existing content item metadata object in the list.
-        content_item_summary (dict): The current content item summary to update if needed.
-    """
-    if parse(content_item.toversion) > parse(
-        content_item_metadata["toversion"] or DEFAULT_CONTENT_ITEM_TO_VERSION
+    def _replace_item_if_has_higher_toversion(
+        self,
+        content_item: ContentItem,
+        content_item_metadata: dict,
+        content_item_summary: dict,
     ):
-        logger.debug(
-            f'Current content item with name "{content_item.name}" has higher `toversion` than the existing object, '
-            "updating its metadata."
+        """
+        Replaces the content item metadata object in the content items metadata list
+        if the given content item's `toversion` is higher than the existing item's metadata `toversion`.
+
+        Args:
+            content_item (ContentItem): The current content item to check.
+            content_item_metadata (dict): The existing content item metadata object in the list.
+            content_item_summary (dict): The current content item summary to update if needed.
+        """
+        if parse(content_item.toversion) > parse(
+            content_item_metadata["toversion"] or DEFAULT_CONTENT_ITEM_TO_VERSION
+        ):
+            logger.debug(
+                f'Current content item with name "{content_item.name}" has higher `toversion` than the existing object, '
+                "updating its metadata."
+            )
+            content_item_metadata.update(content_item_summary)
+            self._set_empty_toversion_if_default(content_item_metadata)
+
+    @staticmethod
+    def _set_empty_toversion_if_default(content_item_dict: dict):
+        """
+        Sets the content item's `toversion` value to empty if it's the default value.
+
+        Args:
+            content_item_dict (dict): The content item object to set.
+        """
+        content_item_dict["toversion"] = (
+            content_item_dict["toversion"]
+            if content_item_dict["toversion"] != DEFAULT_CONTENT_ITEM_TO_VERSION
+            else ""
         )
-        content_item_metadata.update(content_item_summary)
-        set_empty_toversion_if_default(content_item_metadata)
 
+    @staticmethod
+    def _search_content_item_metadata_object(
+        collected_content_items: dict,
+        item_id: Optional[str],
+        item_name: Optional[str],
+        item_type_key: Optional[str],
+    ) -> Optional[dict]:
+        """
+        Search an content item object in the content items metadata list by its ID and name.
 
-def set_empty_toversion_if_default(content_item_dict: dict):
-    """
-    Sets the content item's `toversion` value to empty if it's the default value.
+        Args:
+            collected_content_items (dict): The content items metadata list that were already collected.
+            item_id (Optional[str]): The content item ID to search.
+            item_type_key (Optional[str]): The content item type key to search in its list value that exists in the collected_content_items dict.
 
-    Args:
-        content_item_dict (dict): The content item object to set.
-    """
-    content_item_dict["toversion"] = (
-        content_item_dict["toversion"]
-        if content_item_dict["toversion"] != DEFAULT_CONTENT_ITEM_TO_VERSION
-        else ""
-    )
-
-
-def search_content_item_metadata_object(
-    collected_content_items: dict,
-    item_id: Optional[str],
-    item_name: Optional[str],
-    item_type_key: Optional[str],
-) -> Optional[dict]:
-    """
-    Search an content item object in the content items metadata list by its ID and name.
-
-    Args:
-        collected_content_items (dict): The content items metadata list that were already collected.
-        item_id (Optional[str]): The content item ID to search.
-        item_type_key (Optional[str]): The content item type key to search in its list value that exists in the collected_content_items dict.
-
-    Returns:
-        Optional[dict]: The object of the found content item.
-    """
-    filtered_content_items = [
-        content_item
-        for content_item in collected_content_items[item_type_key]
-        if content_item.get("id") == item_id
-        or (
-            content_item.get("name") == item_name
-            and item_type_key == ContentType.MODELING_RULE
-        )  # to avoid duplicate modeling rules with different versions and ids
-    ]
-    return filtered_content_items[0] if filtered_content_items else None
+        Returns:
+            Optional[dict]: The object of the found content item.
+        """
+        filtered_content_items = [
+            content_item
+            for content_item in collected_content_items[item_type_key]
+            if content_item.get("id") == item_id
+            or (
+                content_item.get("name") == item_name
+                and item_type_key == ContentType.MODELING_RULE
+            )  # to avoid duplicate modeling rules with different versions and ids
+        ]
+        return filtered_content_items[0] if filtered_content_items else None

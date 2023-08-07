@@ -135,10 +135,6 @@ class PackMetadataParser:
         self.commit: str = GitUtil().get_current_commit_hash() or ""
         self.downloads: int = 0
         self.tags: List[str] = metadata.get("tags") or []
-        self.categories: List[str] = [
-            " ".join([w.title() if w.islower() else w for w in c.split()])
-            for c in metadata["categories"]
-        ]
         self.use_cases: List[str] = metadata["useCases"] or []
         self.keywords: List[str] = metadata["keywords"] or []
         self.search_rank: int = 0
@@ -176,6 +172,13 @@ class PackMetadataParser:
         if self.support in ["xsoar", "partner"]:
             return "certified"
         return self.pack_metadata.get("certification") or ""
+
+    @property
+    def categories(self):
+        return [
+            " ".join([w.title() if w.islower() else w for w in c.split()])
+            for c in self.pack_metadata["categories"]
+        ]
 
     def get_author_image_filepath(self, path: Path) -> str:
         if (path / "Author_image.png").is_file():

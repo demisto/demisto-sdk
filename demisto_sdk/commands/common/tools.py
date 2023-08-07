@@ -10,6 +10,7 @@ from collections import OrderedDict
 from concurrent.futures import as_completed
 from configparser import ConfigParser, MissingSectionHeaderError
 from contextlib import contextmanager
+from datetime import datetime
 from enum import Enum
 from functools import lru_cache
 from hashlib import sha1
@@ -3872,3 +3873,16 @@ def sha1_update_from_dir(directory: Union[str, Path], hash_):
 def sha1_dir(directory: Union[str, Path]) -> str:
     """Return the sha1 hash of a directory"""
     return str(sha1_update_from_dir(directory, sha1()).hexdigest())
+
+
+def is_epoch_datetime(string: str) -> bool:
+    # Check if the input string contains only digits
+    if not string.isdigit():
+        return False
+    # Convert the string to an integer and attempt to parse it as a datetime
+    try:
+        epoch_timestamp = int(string)
+        datetime.fromtimestamp(epoch_timestamp)
+        return True
+    except Exception:
+        return False

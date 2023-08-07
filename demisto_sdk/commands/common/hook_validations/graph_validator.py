@@ -37,12 +37,12 @@ class GraphValidator(BaseValidator):
         super().__init__(specific_validations=specific_validations)
         self.include_optional = include_optional_deps
         self.graph = ContentGraphInterface()
-        if update_graph:
-            update_content_graph(
-                self.graph,
-                use_git=True,
-                output_path=self.graph.output_path,
-            )
+        # if update_graph:
+            # update_content_graph(
+            #     self.graph,
+            #     use_git=True,
+            #     output_path=self.graph.output_path,
+            # )
         self.file_paths: List[str] = git_files or get_all_content_objects_paths_in_dir(
             input_files
         )

@@ -250,7 +250,7 @@ def repository(mocker, repo) -> ContentDTO:
             MarketplaceVersions.XSOAR
         ]
     }
-    pack_1 = repo.create_pack("PackName")
+    pack_1 = repo.create_pack("SamplePack")
     mapper = pack_1.create_mapper(
         name="mapper",
         content=mapper_data
@@ -264,7 +264,7 @@ def repository(mocker, repo) -> ContentDTO:
         content=incident_field_content
     )
 
-    pack_2 = repo.create_pack("PackName2")
+    pack_2 = repo.create_pack("SamplePack2")
     original_incident_field = pack_2.create_incident_field(
         name='originalincidentfield',
         content=original_incident_field_content
@@ -347,7 +347,7 @@ def test_format_mapper_with_graph_remove_unknown_content(mocker, monkeypatch, re
     )
     with ChangeCWD(repo.path):
         runner = CliRunner()
-        result = runner.invoke(main, [FORMAT_CMD, "-i", mapper_path, "-at", "-y"])
+        result = runner.invoke(main, [FORMAT_CMD, "-i", mapper_path, "-at", "-y", "-nv"])
     message = "Removing the fields {'Unknown Incident Field'}" + f" from the mapper {mapper_path} " \
               f"because they aren't in the content repo."
     assert result.exit_code == 0
@@ -385,7 +385,7 @@ def test_format_layout_with_graph_remove_unknown_content(mocker, monkeypatch, re
     )
     with ChangeCWD(repo.path):
         runner = CliRunner()
-        result = runner.invoke(main, [FORMAT_CMD, "-i", layout_path, "-at", "-y"])
+        result = runner.invoke(main, [FORMAT_CMD, "-i", layout_path, "-at", "-y", "-nv"])
     message = "Removing the fields {'Unknown Incident Field'}" + f" from the layout {layout_path} " \
                                                                  f"because they aren't in the content repo."
     assert result.exit_code == 0
@@ -433,7 +433,7 @@ def test_format_incident_field_graph_fix_aliases_marketplace(mocker, monkeypatch
     )
     with ChangeCWD(repo.path):
         runner = CliRunner()
-        result = runner.invoke(main, [FORMAT_CMD, "-i", original_incident_field_path, "-at", "-y"])
+        result = runner.invoke(main, [FORMAT_CMD, "-i", original_incident_field_path, "-at", "-y", "-nv"])
 
     assert result.exit_code == 0
     assert not result.exception

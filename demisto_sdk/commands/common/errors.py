@@ -4361,4 +4361,4 @@ class Errors:
     def hidden_pack_not_mandatory_dependency(
         hidden_pack: str, dependant_packs_ids: Set[str]
     ):
-        return f"{', '.join(dependant_packs_ids)} pack(s) cannot depend on hidden pack {hidden_pack}"
+        return f"{', '.join(dependant_packs_ids)} pack(s) cannot have a mandatory dependency on the hidden pack {hidden_pack}."

@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Tuple
 from zipfile import ZipFile
 
 import pytest
@@ -9,16 +9,19 @@ from demisto_sdk.commands.common.constants import (
     SKIP_PREPARE_SCRIPT_NAME,
     MarketplaceVersions,
 )
-from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
-from demisto_sdk.commands.content_graph.content_graph_commands import (
+from demisto_sdk.commands.content_graph.commands.create import (
     create_content_graph,
-    stop_content_graph,
 )
-from demisto_sdk.commands.content_graph.interface.neo4j.neo4j_graph import (
-    Neo4jContentGraphInterface as ContentGraphInterface,
+from demisto_sdk.commands.content_graph.common import (
+    ContentType,
+    RelationshipType,
+)
+from demisto_sdk.commands.content_graph.interface import (
+    ContentGraphInterface,
 )
 from demisto_sdk.commands.content_graph.objects import IncidentField, Layout, Mapper
 from demisto_sdk.commands.content_graph.objects.classifier import Classifier
+from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 from demisto_sdk.commands.content_graph.objects.integration import Command, Integration
 from demisto_sdk.commands.content_graph.objects.integration_script import (
     IntegrationScript,
@@ -44,7 +47,7 @@ def setup_method(mocker, repo: Repo):
     bc.CONTENT_PATH = Path(repo.path)
     mocker.patch.object(ContentGraphInterface, "repo_path", Path(repo.path))
     mocker.patch.object(neo4j_service, "REPO_PATH", Path(repo.path))
-    stop_content_graph()
+    neo4j_service.stop()
 
 
 @pytest.fixture
@@ -60,8 +63,12 @@ def repository(mocker):
     return repository
 
 
-def mock_pack(name: str = "SamplePack", path: Path = Path("Packs")) -> Pack:
-    return Pack(
+def mock_pack(
+    name: str = "SamplePack",
+    path: Path = Path("Packs"),
+    repository: ContentDTO = None,
+) -> Pack:
+    pack = Pack(
         object_id=name,
         content_type=ContentType.PACK,
         node_id=f"{ContentType.PACK}:{name}",
@@ -79,10 +86,18 @@ def mock_pack(name: str = "SamplePack", path: Path = Path("Packs")) -> Pack:
         excluded_dependencies=[],
         deprecated=False,
     )
+    if repository:
+        repository.packs.append(pack)
+    return pack
 
 
-def mock_integration(name: str = "SampleIntegration", path: Path = Path("Packs")):
-    return Integration(
+def mock_integration(
+    name: str = "SampleIntegration",
+    path: Path = Path("Packs"),
+    pack: Pack = None,
+    uses: List[Tuple[ContentItem, bool]] = None,
+) -> Integration:
+    integration = Integration(
         id=name,
         content_type=ContentType.INTEGRATION,
         node_id=f"{ContentType.INTEGRATION}:{name}",
@@ -98,18 +113,27 @@ def mock_integration(name: str = "SampleIntegration", path: Path = Path("Packs")
         category="blabla",
         commands=[Command(name="test-command", description="")],
     )
+    if pack is not None:
+        pack.content_items.integration.append(integration)
+        build_in_pack_relationship(pack, integration)
+        add_uses_relationships(pack, integration, uses)
+    return integration
 
 
 def mock_script(
     name: str = "SampleScript",
     marketplaces: List[MarketplaceVersions] = [MarketplaceVersions.XSOAR],
     skip_prepare: List[str] = [],
-):
-    return Script(
+    path: Path = Path("Packs"),
+    pack: Pack = None,
+    uses: List[Tuple[ContentItem, bool]] = None,
+    importing_items: List[ContentItem] = None,
+) -> Script:
+    script = Script(
         id=name,
         content_type=ContentType.SCRIPT,
         node_id=f"{ContentType.SCRIPT}:{name}",
-        path=Path("Packs"),
+        path=path,
         fromversion="5.0.0",
         display_name=name,
         toversion="99.99.99",
@@ -122,14 +146,40 @@ def mock_script(
         is_test=False,
         skip_prepare=skip_prepare,
     )
+    if pack:
+        pack.content_items.script.append(script)
+        build_in_pack_relationship(pack, script)
+        add_uses_relationships(pack, script, uses)
+        if importing_items is not None:
+            # Note: `importing_items` won't necessarily be actually of `pack`,
+            # But for mocking purposes it's enough.
+            pack.relationships.add_batch(
+                RelationshipType.IMPORTS,
+                [
+                    mock_relationship(
+                        ci.object_id,
+                        ci.content_type,
+                        script.object_id,
+                        script.content_type,
+                    )
+                    for ci in importing_items
+                ],
+            )
+
+    return script
 
 
-def mock_classifier(name: str = "SampleClassifier"):
-    return Classifier(
+def mock_classifier(
+    name: str = "SampleClassifier",
+    path: Path = Path("Packs"),
+    pack: Pack = None,
+    uses: List[Tuple[ContentItem, bool]] = None,
+) -> Classifier:
+    classifier = Classifier(
         id=name,
         content_type=ContentType.CLASSIFIER,
         node_id=f"{ContentType.CLASSIFIER}:{name}",
-        path=Path("Packs"),
+        path=path,
         fromversion="5.0.0",
         display_name=name,
         toversion="99.99.99",
@@ -141,17 +191,25 @@ def mock_classifier(name: str = "SampleClassifier"):
         tags=[],
         is_test=False,
     )
+    if pack:
+        pack.content_items.classifier.append(classifier)
+        build_in_pack_relationship(pack, classifier)
+        add_uses_relationships(pack, classifier, uses)
+    return classifier
 
 
 def mock_playbook(
     name: str = "SamplePlaybook",
+    path: Path = Path("Packs"),
     marketplaces: List[MarketplaceVersions] = [MarketplaceVersions.XSOAR],
-):
-    return Playbook(
+    pack: Pack = None,
+    uses: List[Tuple[ContentItem, bool]] = None,
+) -> Playbook:
+    playbook = Playbook(
         id=name,
         content_type=ContentType.PLAYBOOK,
         node_id=f"{ContentType.PLAYBOOK}:{name}",
-        path=Path("Packs"),
+        path=path,
         fromversion="5.0.0",
         toversion="99.99.99",
         display_name=name,
@@ -160,14 +218,25 @@ def mock_playbook(
         deprecated=False,
         is_test=False,
     )
+    if pack:
+        pack.content_items.playbook.append(playbook)
+        build_in_pack_relationship(pack, playbook)
+        add_uses_relationships(pack, playbook, uses)
+    return playbook
 
 
-def mock_test_playbook(name: str = "SampleTestPlaybook"):
-    return TestPlaybook(
+def mock_test_playbook(
+    name: str = "SampleTestPlaybook",
+    path: Path = Path("Packs"),
+    pack: Pack = None,
+    uses: List[Tuple[ContentItem, bool]] = None,
+    tested_items: List[ContentItem] = None,
+) -> TestPlaybook:
+    test_playbook = TestPlaybook(
         id=name,
         # content_type=ContentType.TEST_PLAYBOOK,
         node_id=f"{ContentType.PLAYBOOK}:{name}",
-        path=Path("Packs"),
+        path=path,
         fromversion="5.0.0",
         toversion="99.99.99",
         display_name=name,
@@ -176,14 +245,38 @@ def mock_test_playbook(name: str = "SampleTestPlaybook"):
         deprecated=False,
         is_test=True,
     )
+    if pack:
+        pack.content_items.test_playbook.append(test_playbook)
+        build_in_pack_relationship(pack, test_playbook)
+        add_uses_relationships(pack, test_playbook, uses)
+        if tested_items is not None:
+            pack.relationships.add_batch(
+                RelationshipType.TESTED_BY,
+                [
+                    mock_relationship(
+                        ci.object_id,
+                        ci.content_type,
+                        test_playbook.object_id,
+                        test_playbook.content_type,
+                    )
+                    for ci in tested_items
+                ],
+            )
+
+    return test_playbook
 
 
-def mock_widget(name: str = "SampleWidget"):
-    return Widget(
+def mock_widget(
+    name: str = "SampleWidget",
+    path: Path = Path("Packs"),
+    pack: Pack = None,
+    uses: List[Tuple[ContentItem, bool]] = None,
+) -> Widget:
+    widget = Widget(
         id=name,
         content_type=ContentType.WIDGET,
         node_id=f"{ContentType.WIDGET}:{name}",
-        path=Path("Packs"),
+        path=path,
         fromversion="5.0.0",
         toversion="99.99.99",
         display_name=name,
@@ -193,6 +286,11 @@ def mock_widget(name: str = "SampleWidget"):
         widget_type="number",
         data_type="roi",
     )
+    if pack:
+        pack.content_items.widget.append(widget)
+        build_in_pack_relationship(pack, widget)
+        add_uses_relationships(pack, widget, uses)
+    return widget
 
 
 def mock_mapper(path: str, name: str = "SampleMapper", data: Dict = {}):
@@ -293,6 +391,61 @@ def mock_relationship(
     }
     rel.update(kwargs)
     return rel
+
+
+def build_in_pack_relationship(
+    pack: Pack,
+    content_item: ContentItem,
+) -> None:
+    """Given a pack with content items,
+    creates the "in pack" and "has command" basic relationships.
+
+    Args:
+        pack (Pack): a pack for which to build basic relationships.
+    """
+    pack.relationships.add(
+        RelationshipType.IN_PACK,
+        **mock_relationship(
+            content_item.object_id,
+            content_item.content_type,
+            pack.object_id,
+            ContentType.PACK,
+        ),
+    )
+    if isinstance(content_item, Integration):
+        for command in content_item.commands:
+            pack.relationships.add(
+                RelationshipType.HAS_COMMAND,
+                **mock_relationship(
+                    content_item.object_id,
+                    content_item.content_type,
+                    command.object_id,
+                    ContentType.COMMAND,
+                    description="",
+                    deprecated=False,
+                ),
+            )
+
+
+def add_uses_relationships(
+    pack: Pack,
+    content_item: ContentItem,
+    used_content_items: List[Tuple[ContentItem, bool]] = None,
+) -> None:
+    if used_content_items is not None:
+        pack.relationships.add_batch(
+            RelationshipType.USES_BY_ID,
+            [
+                mock_relationship(
+                    content_item.object_id,
+                    content_item.content_type,
+                    ci.object_id,
+                    ci.content_type,
+                    mandatorily=mandatorily,
+                )
+                for ci, mandatorily in used_content_items
+            ],
+        )
 
 
 def find_model_for_id(packs: List[Pack], source_id: str):
@@ -921,11 +1074,11 @@ class TestCreateContentGraph:
         Given:
             - A running content graph service.
         When:
-            - Running stop_content_graph().
+            - Running neo4j_service.stop()
         Then:
             - Make sure no exception is raised.
         """
-        stop_content_graph()
+        neo4j_service.stop()
 
     def test_create_content_graph_incident_to_alert_scripts(
         self, repo: Repo, tmp_path: Path, mocker

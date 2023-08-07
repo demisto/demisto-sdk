@@ -3874,7 +3874,7 @@ def sha1_dir(directory: Union[str, Path]) -> str:
     return str(sha1_update_from_dir(directory, sha1()).hexdigest())
 
 
-def extract_error_codes_from_file(pack_name: str) -> set:
+def extract_error_codes_from_file(pack_name: str) -> Set[str]:
     """
     Args:
         pack_name: a pack name from which to get the pack ignore errors.

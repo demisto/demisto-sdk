@@ -770,8 +770,11 @@ def test_deprecated_usage__new_content(repository: ContentDTO, mocker):
     assert not is_valid
 
 
+@pytest.mark.parametrize(
+    "changed_pack", ["Packs/SamplePack", "Packs/SamplePack2"]
+)
 def test_validate_hidden_pack_is_not_mandatory_dependency(
-    repository: ContentDTO, mocker
+    repository: ContentDTO, mocker, changed_pack: str
 ):
     """
     Given
@@ -779,21 +782,22 @@ def test_validate_hidden_pack_is_not_mandatory_dependency(
       SamplePack2 (which is hidden) as mandatory dependency
 
     When
-    - running the validate_hidden_packs_do_not_have_mandatory_dependencies method
+    - Case A: the changed file was the hidden pack.
+    - Case B: the changed file was the hidden pack's mandatory dependency
 
     Then
-    - validate that an error occurs with a message stating that SamplePack2 cannot be hidden
+    - validate that an error occurs with a message stating that SamplePack2 is hidden and has mandatory dependencies
     """
     logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
 
     with GraphValidator(
-        update_graph=False, git_files=[Path("Packs/SamplePack2")]
+        update_graph=False, git_files=[Path(changed_pack)]
     ) as graph_validator:
         create_content_graph(graph_validator.graph)
         is_valid = (
             graph_validator.validate_hidden_packs_do_not_have_mandatory_dependencies()
         )
-        
+
     assert not is_valid
     assert str_in_call_args_list(
         logger_error.call_args_list,

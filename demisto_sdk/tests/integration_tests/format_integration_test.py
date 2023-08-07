@@ -1,7 +1,7 @@
 import logging
 import os
-from pathlib import PosixPath
-from typing import List
+from pathlib import PosixPath, Path
+from typing import List, Dict, Any
 
 import pytest
 from click.testing import CliRunner
@@ -9,7 +9,7 @@ from click.testing import CliRunner
 from demisto_sdk.__main__ import main
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import (
-    GENERAL_DEFAULT_FROMVERSION,
+    GENERAL_DEFAULT_FROMVERSION, MarketplaceVersions,
 )
 from demisto_sdk.commands.common.content.content import Content
 from demisto_sdk.commands.common.git_util import GitUtil
@@ -24,6 +24,12 @@ from demisto_sdk.commands.common.hook_validations.integration import (
 from demisto_sdk.commands.common.hook_validations.playbook import PlaybookValidator
 from demisto_sdk.commands.common.hook_validations.readme import ReadMeValidator
 from demisto_sdk.commands.common.tools import get_dict_from_file, is_test_config_match
+from demisto_sdk.commands.content_graph import neo4j_service
+from demisto_sdk.commands.content_graph.common import RelationshipType, ContentType
+from demisto_sdk.commands.content_graph.content_graph_commands import stop_content_graph, create_content_graph
+from demisto_sdk.commands.content_graph.objects import Mapper, Layout, Pack, Integration, IncidentField
+from demisto_sdk.commands.content_graph.objects.integration import Command
+from demisto_sdk.commands.content_graph.objects.repository import ContentDTO
 from demisto_sdk.commands.format import format_module, update_generic
 from demisto_sdk.commands.format.update_generic import BaseUpdate
 from demisto_sdk.commands.format.update_generic_yml import BaseUpdateYML
@@ -46,6 +52,10 @@ from demisto_sdk.tests.test_files.validate_integration_test_valid_types import (
     GENERIC_TYPE,
 )
 from TestSuite.test_tools import ChangeCWD, str_in_call_args_list
+from demisto_sdk.commands.content_graph.interface.neo4j.neo4j_graph import (
+    Neo4jContentGraphInterface as ContentGraphInterface,
+)
+from demisto_sdk.commands.content_graph.tests.update_content_graph_test import _get_pack_by_id
 
 with open(SOURCE_FORMAT_INTEGRATION_COPY) as of:
     SOURCE_FORMAT_INTEGRATION_YML = (

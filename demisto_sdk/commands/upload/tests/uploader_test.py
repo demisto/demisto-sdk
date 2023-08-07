@@ -1104,6 +1104,9 @@ def test_zip_multiple_packs(tmp_path: Path, integration, mocker):
     shutil.rmtree(pack_to_zip.path)  # leave only the zip
     zipped_pack_path = tmp_path / "zipped.zip"
     mocker.patch.object(BaseContent, "from_path", side_effect=[pack0, pack1, None])
+    mocker.patch.object(
+        PackMetadata, "_get_tags_from_landing_page", retrun_value={}
+    )
     zip_multiple_packs(
         [pack0.path, pack1.path, zipped_pack_path],
         MarketplaceVersions.XSOAR,

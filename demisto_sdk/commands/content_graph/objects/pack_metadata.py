@@ -76,7 +76,6 @@ class PackMetadata(BaseModel):
         - Adding tags considering the pack content items and marketplace.
         - Replacing the `author` property from XSOAR to XSIAM if the prepare is to marketplacev2.
         - Getting into the `version_info` property the pipeline_id variable.
-        - Calculating the `server_min_version` by the pack's content items fromversion`.
 
         Args:
             marketplace (MarketplaceVersions): The marketplace to which the pack should belong to.

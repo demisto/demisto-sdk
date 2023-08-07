@@ -51,9 +51,6 @@ class YAMLContentItemParser(ContentItemParser):
         description = re.sub(
             r"(?<=\S) +", " ", description
         )  # substitutes multiple spaces into one
-        # description = " ".join(
-        #     [sub for sub in description.split(" ") if sub != ""]  # avoid removing \n's
-        # )  # substitutes multiple spaces into one
         return description
 
     @property

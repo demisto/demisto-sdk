@@ -120,29 +120,18 @@ class PackMetadataParser:
             "legacy", metadata.get("partnerId") is None
         )  # default: True, private default: False
         self.support: str = metadata["support"]
-        self.url: str = metadata.get(
-            "url",
-            "https://www.paloaltonetworks.com/cortex"
-            if self.support == "xsoar"
-            else "",
-        )
-        self.email: str = metadata.get("email", "")
-        self.eulaLink: str = metadata.get(
-            "eulaLink", "https://github.com/demisto/content/blob/master/LICENSE"
-        )
-        self.author: str = metadata["author"] or "Cortex XSOAR"
+        self.email: str = metadata.get("email") or ""
+        self.eulaLink: str = metadata.get("eulaLink") or "https://github.com/demisto/content/blob/master/LICENSE"
+        self.author: str = metadata.get("author") or "Cortex XSOAR"
         self.author_image: str = self.get_author_image_filepath(path=path)
-        self.certification: str = self.get_certification(
-            certification=metadata.get("certification")
-        )
-        self.price: int = int(metadata.get("price", 0))
+        self.price: int = int(metadata.get("price") or 0)
         self.hidden: bool = metadata.get("hidden", False)
         self.server_min_version: str = metadata.get("serverMinVersion", "")
-        self.current_version: str = metadata["currentVersion"]
+        self.current_version: str = metadata.get("currentVersion", "")
         self.version_info: str = ""
         self.commit: str = GitUtil().get_current_commit_hash() or ""
         self.downloads: int = 0
-        self.tags: List[str] = metadata["tags"] or []
+        self.tags: List[str] = metadata.get("tags") or []
         self.categories: List[str] = [
             " ".join([w.title() if w.islower() else w for w in c.split()])
             for c in metadata["categories"]
@@ -169,17 +158,26 @@ class PackMetadataParser:
             metadata.get("contentCommitHash") or ""
         )
 
+        self.pack_metadata: dict = metadata
+
+    @property
+    def url(self) -> str:
+        if "url" in self.pack_metadata and self.pack_metadata["url"]:
+            return self.pack_metadata.get("url", "")
+        return "https://www.paloaltonetworks.com/cortex" if self.support == "xsoar" else ""
+
+    @property
+    def certification(self):
+        if self.support in ["xsoar", "partner"]:
+            return "certified"
+        return self.pack_metadata.get("certification") or ""
+
     def get_author_image_filepath(self, path: Path) -> str:
         if (path / "Author_image.png").is_file():
             return f"content/packs/{path.name}/Author_image.png"
         elif self.support == "xsoar":
             return "content/packs/Base/Author_image.png"
         return ""
-
-    def get_certification(self, certification=None):
-        if self.support in ["xsoar", "partner"]:
-            return "certified"
-        return certification or ""
 
 
 class PackParser(BaseContentParser, PackMetadataParser):

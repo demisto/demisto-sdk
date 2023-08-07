@@ -65,7 +65,7 @@ class ContentItemXSIAM(ContentItem, ABC):
         This is for XSIAM dashboards and reports.
 
         Args:
-            item_summary (dict): The XSIAM dashboard metadata summary object.
+            item_summary (dict): The metadata summary object.
         """
         if (
             self.content_type in [ContentType.XSIAM_DASHBOARD, ContentType.XSIAM_REPORT]

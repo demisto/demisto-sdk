@@ -315,6 +315,10 @@ def test_format_mapper_with_graph_remove_unknown_content(
         "demisto_sdk.commands.format.format_module.ContentGraphInterface",
         return_value=interface,
     )
+    mocker.patch(
+        "demisto_sdk.commands.format.format_module.update_content_graph",
+        return_value=interface,
+    )
     with ChangeCWD(repo.path):
         runner = CliRunner()
         result = runner.invoke(
@@ -361,6 +365,10 @@ def test_format_layout_with_graph_remove_unknown_content(
     layout_path = str(layout_graph_object.path)
     mocker.patch(
         "demisto_sdk.commands.format.format_module.ContentGraphInterface",
+        return_value=interface,
+    )
+    mocker.patch(
+        "demisto_sdk.commands.format.format_module.update_content_graph",
         return_value=interface,
     )
     with ChangeCWD(repo.path):
@@ -429,6 +437,10 @@ def test_format_incident_field_graph_fix_aliases_marketplace(
     )
     mocker.patch(
         "demisto_sdk.commands.format.format_module.ContentGraphInterface",
+        return_value=interface,
+    )
+    mocker.patch(
+        "demisto_sdk.commands.format.format_module.update_content_graph",
         return_value=interface,
     )
     with ChangeCWD(repo.path):

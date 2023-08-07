@@ -1,6 +1,6 @@
 {
     "name": "HelloWorld",
-    "description": "This is the Hello World integration for getting started.",
+    "description": "This  is the Hello World integration for getting started.",
     "support": "community",
     "currentVersion": "1.2.12",
     "author": "Cortex XSOAR",
@@ -11,8 +11,8 @@
     "categories": [
         "Utilities"
     ],
-    "tags": [],
-    "useCases": [],
+    "tags": ["TIM"],
+    "useCases": ["Identity and Access Management"],
     "keywords": [],
     "dependencies": {
         "CommonScripts": {

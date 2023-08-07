@@ -136,7 +136,7 @@ class PackMetadataParser:
             " ".join([w.title() if w.islower() else w for w in c.split()])
             for c in metadata["categories"]
         ]
-        self.useCases: List[str] = metadata["useCases"] or []
+        self.use_cases: List[str] = metadata["useCases"] or []
         self.keywords: List[str] = metadata["keywords"] or []
         self.search_rank: int = 0
         self.videos: List[str] = metadata.get("videos", [])

@@ -23,6 +23,7 @@ from demisto_sdk.commands.coverage_analyze.helpers import (
     percent_to_float,
 )
 from TestSuite.test_tools import str_in_call_args_list
+from demisto_sdk.commands.common.constants import TEST_COVERAGE_DEFAULT_URL 
 
 TEST_DATA_DIR = os.path.join(os.path.dirname(__file__), "data")
 JSON_MIN_DATA_FILE = os.path.join(TEST_DATA_DIR, "coverage-min.json")
@@ -167,8 +168,8 @@ class TestExportReport:
 
 class TestCoverageSummary:
     class TestGetFilesSummary:
-        default_url = "https://storage.googleapis.com/marketplace-dist-dev/code-coverage-reports/coverage-min.json"
-
+        default_url = TEST_COVERAGE_DEFAULT_URL
+        
         @staticmethod
         def check_get_files(cache_dir, mock_min_cov_request, request_count):
             CoverageSummary(

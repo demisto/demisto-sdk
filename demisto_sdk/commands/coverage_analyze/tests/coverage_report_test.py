@@ -15,16 +15,15 @@ from demisto_sdk.commands.coverage_analyze.tests.helpers_test import (
     JSON_MIN_DATA_FILE,
     PYTHON_FILE_PATH,
     TEST_DATA_DIR,
-    TestCoverageSummary,
     copy_file,
     read_file,
 )
 from TestSuite.test_tools import flatten_call_args
+from demisto_sdk.commands.common.constants import TEST_COVERAGE_DEFAULT_URL as DEFAULT_URL
 
 logger = logging.getLogger("demisto-sdk")
 
 
-DEFAULT_URL = TestCoverageSummary.TestGetFilesSummary.default_url
 REPORT_STR_FILE = os.path.join(TEST_DATA_DIR, "coverage.txt")
 
 

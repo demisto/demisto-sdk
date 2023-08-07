@@ -28,7 +28,7 @@ from demisto_sdk.commands.common.logger import (
 )
 from demisto_sdk.commands.common.tools import (
     get_config_param_kwarg_env,
-  is_epoch_datetime,
+    is_epoch_datetime,
 )
 from demisto_sdk.commands.test_content.test_modeling_rule import init_test_data
 from demisto_sdk.commands.test_content.xsiam_tools.test_data import Validations

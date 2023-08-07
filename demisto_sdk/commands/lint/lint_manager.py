@@ -36,11 +36,11 @@ from demisto_sdk.commands.common.tools import (
     retrieve_file_ending,
 )
 from demisto_sdk.commands.common.tools_core import is_external_repository
-from demisto_sdk.commands.content_graph.content_graph_commands import (
+from demisto_sdk.commands.content_graph.commands.update import (
     update_content_graph,
 )
-from demisto_sdk.commands.content_graph.interface.neo4j.neo4j_graph import (
-    Neo4jContentGraphInterface,
+from demisto_sdk.commands.content_graph.interface import (
+    ContentGraphInterface,
 )
 from demisto_sdk.commands.lint.helpers import (
     EXIT_CODES,
@@ -133,7 +133,7 @@ class LintManager:
                     f"Checking for packages dependent on the modified API module {changed_api_module}..."
                 )
 
-                with Neo4jContentGraphInterface() as graph:
+                with ContentGraphInterface() as graph:
                     logger.info("Updating graph...")
                     update_content_graph(graph, use_git=True, dependencies=True)
 

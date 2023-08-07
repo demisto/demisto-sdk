@@ -149,7 +149,9 @@ class ContentGraphInterface(ABC):
         pass
 
     @abstractmethod
-    def validate_duplicate_ids(self, file_paths: List[str]) -> None:
+    def validate_duplicate_ids(
+        self, file_paths: List[str]
+    ) -> List[Tuple[BaseContent, List[BaseContent]]]:
         pass
 
     @abstractmethod
@@ -158,6 +160,23 @@ class ContentGraphInterface(ABC):
 
     @abstractmethod
     def find_items_using_deprecated_items(self, file_paths: List[str]) -> List[dict]:
+        pass
+
+    @abstractmethod
+    def get_relationships_by_path(
+        self,
+        path: Path,
+        relationship_type: RelationshipType,
+        content_type: ContentType,
+        depth: int,
+        marketplace: MarketplaceVersions,
+        retrieve_sources: bool,
+        retrieve_targets: bool,
+        mandatory_only: bool,
+        include_tests: bool,
+        include_deprecated: bool,
+        include_hidden: bool,
+    ) -> Tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
         pass
 
     @abstractmethod

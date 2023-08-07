@@ -1,5 +1,6 @@
 import os
 import random
+from pathlib import Path
 
 from demisto_sdk.commands.common.content_constant_paths import DEFAULT_ID_SET_PATH
 from demisto_sdk.commands.common.logger import logger
@@ -9,6 +10,8 @@ from demisto_sdk.commands.common.tools import (
     open_id_set_file,
 )
 from demisto_sdk.commands.common.update_id_set import get_depends_on
+from demisto_sdk.commands.content_graph.commands.update import update_content_graph
+from demisto_sdk.commands.content_graph.objects import Script
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
 from demisto_sdk.commands.generate_docs.common import (
     build_example_dict,
@@ -73,8 +76,18 @@ def generate_script_doc(
         # get script dependencies
         dependencies = []
         used_in = []
-        with ContentGraphInterface(update_graph=True) as graph:
-            script_object = graph.search(object_id=script_id)[0]  # There will be only one object that matches the id.
+        with ContentGraphInterface() as graph:
+            update_content_graph(
+                graph,
+                use_git=True,
+                output_path=graph.output_path,
+            )
+            result = graph.search(object_id=script_id)
+            if not isinstance(result, List):
+                raise ValueError(f"The requested script {input_path} wasn't found in the graph")
+            script_object = result[0]
+            if not isinstance(script_object, Script):
+                raise ValueError("The object returned from the graph isn't a script.")
             used_in.extend(item.content_item_to.object_id for item in script_object.used_by)
             dependencies.extend(item.content_item_to.object_id for item in script_object.uses)
 

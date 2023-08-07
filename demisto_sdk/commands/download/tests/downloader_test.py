@@ -3,7 +3,6 @@ import io
 import logging
 import os
 import shutil
-import tarfile
 from io import TextIOWrapper
 from pathlib import Path
 from typing import Callable, Tuple
@@ -19,8 +18,6 @@ from demisto_sdk.commands.common.constants import (
     CONTENT_ENTITIES_DIRS,
     CORRELATION_RULES_DIR,
     DASHBOARDS_DIR,
-    DELETED_JSON_FIELDS_BY_DEMISTO,
-    DELETED_YML_FIELDS_BY_DEMISTO,
     GENERIC_DEFINITIONS_DIR,
     GENERIC_FIELDS_DIR,
     GENERIC_MODULES_DIR,
@@ -1047,7 +1044,7 @@ class TestMergeNewFile:
 
 class TestVerifyPackPath:
     @pytest.mark.parametrize(
-        "file_to_update, valid_ans",
+        "output_path, valid_ans",
         [
             ("Integrations", False),
             ("Packs/TestPack/", True),

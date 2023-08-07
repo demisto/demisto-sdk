@@ -153,8 +153,9 @@ class Downloader:
         self.keep_empty_folders = keep_empty_folders
         if is_sdk_defined_working_offline() and self.run_format:
             self.run_format = False
-            logger.info(
-                "Formatting is not supported when the DEMISTO_SDK_OFFLINE_ENV environment variable is set, Skipping..."
+            logger.warning(
+                "Formatting is not supported when 'DEMISTO_SDK_OFFLINE_ENV' environment variable is set.\n"
+                "Downloaded files will not be formatted."
             )
 
     def download(self) -> int:
@@ -475,6 +476,12 @@ class Downloader:
             api_response: dict = demisto_client.generic_request_func(
                 self.client, endpoint, "POST", response_type="object",
             )[0]
+
+            if not isinstance(api_response, dict):
+                # If there are API issues, it might return HTML, which is returned as a string.
+                raise ApiException(f"Unexpected response from server:\n"
+                                   f"'{api_response}'.")
+
             downloaded_automations.append(api_response)
 
         logger.debug(f"{len(downloaded_automations)} system automations were successfully downloaded.")
@@ -499,6 +506,7 @@ class Downloader:
                 api_response: dict = demisto_client.generic_request_func(
                     self.client, endpoint, "GET", response_type="object",
                 )[0]
+
             except ApiException as err:
                 # handling in case the id and name are not the same,
                 # trying to get the id by the name through a different api call
@@ -518,16 +526,15 @@ class Downloader:
                     self.client, endpoint, "GET",  _preload_content=False,
                 )[0]
 
+            if not isinstance(api_response, dict):
+                # If there are API issues, it might return HTML, which is returned as a string.
+                raise ApiException(f"Unexpected response from server:\n"
+                                   f"'{api_response}'.")
+
             downloaded_playbooks.append(api_response)
 
         logger.debug(f"'{len(downloaded_playbooks)}' system playbooks were downloaded successfully.")
         return downloaded_playbooks
-
-    def arrange_response(self, system_items_list):
-        if self.system_item_type in ["Classifier", "Mapper"]:
-            system_items_list = system_items_list.get("classifiers")
-
-        return system_items_list
 
     def build_file_name(self, content_item: dict, content_item_type: str) -> str:
         item_name: str = content_item.get("name") or content_item.get("id")

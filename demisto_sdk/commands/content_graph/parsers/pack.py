@@ -121,7 +121,10 @@ class PackMetadataParser:
         )  # default: True, private default: False
         self.support: str = metadata["support"]
         self.email: str = metadata.get("email") or ""
-        self.eulaLink: str = metadata.get("eulaLink") or "https://github.com/demisto/content/blob/master/LICENSE"
+        self.eulaLink: str = (
+            metadata.get("eulaLink")
+            or "https://github.com/demisto/content/blob/master/LICENSE"
+        )
         self.author: str = metadata.get("author") or "Cortex XSOAR"
         self.author_image: str = self.get_author_image_filepath(path=path)
         self.price: int = int(metadata.get("price") or 0)
@@ -164,7 +167,9 @@ class PackMetadataParser:
     def url(self) -> str:
         if "url" in self.pack_metadata and self.pack_metadata["url"]:
             return self.pack_metadata.get("url", "")
-        return "https://www.paloaltonetworks.com/cortex" if self.support == "xsoar" else ""
+        return (
+            "https://www.paloaltonetworks.com/cortex" if self.support == "xsoar" else ""
+        )
 
     @property
     def certification(self):

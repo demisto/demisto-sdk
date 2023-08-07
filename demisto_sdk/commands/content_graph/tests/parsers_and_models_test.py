@@ -211,7 +211,9 @@ class PackModelVerifier:
         assert expected_support is None or model.support == expected_support
         assert expected_legacy is None or model.legacy == expected_legacy
         assert expected_eulaLink is None or model.eulaLink == expected_eulaLink
-        assert expected_author_image is None or model.author_image == expected_author_image
+        assert (
+            expected_author_image is None or model.author_image == expected_author_image
+        )
         assert expected_email is None or model.email == expected_email
         assert expected_deprecated is None or model.deprecated == expected_deprecated
         assert expected_url is None or model.url == expected_url

@@ -35,6 +35,7 @@ from demisto_sdk.commands.content_graph.objects.integration_script import (
 )
 from demisto_sdk.commands.content_graph.objects.layout import Layout
 from demisto_sdk.commands.content_graph.objects.mapper import Mapper
+from demisto_sdk.commands.content_graph.objects.pack_metadata import PackMetadata
 from demisto_sdk.commands.content_graph.objects.playbook import Playbook
 from demisto_sdk.commands.content_graph.objects.script import Script
 from demisto_sdk.commands.content_graph.objects.widget import Widget
@@ -920,6 +921,9 @@ class TestZippedPackUpload:
         mock_api_client(mocker)
         mocker.patch.object(
             API_CLIENT, "upload_content_packs", return_value=({}, 200, None)
+        )
+        mocker.patch.object(
+            PackMetadata, "_get_tags_from_landing_page", retrun_value={}
         )
 
         with TemporaryDirectory() as dir:

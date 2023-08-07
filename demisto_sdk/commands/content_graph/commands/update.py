@@ -185,9 +185,6 @@ def update(
             marketplace=marketplace,
             no_dependencies=no_dependencies,
             output_path=output_path,
-            console_log_threshold=console_log_threshold,
-            file_log_threshold=file_log_threshold,
-            log_file_path=log_file_path,
         )
         return
     logging_setup(

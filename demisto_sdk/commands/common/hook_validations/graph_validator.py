@@ -2,7 +2,7 @@ from collections import defaultdict
 from pathlib import Path
 from typing import List, Optional
 
-from demisto_sdk.commands.common.constants import PACKS_DIR, PACKS_PACK_META_FILE_NAME
+from demisto_sdk.commands.common.constants import PACKS_DIR
 from demisto_sdk.commands.common.content.content import Content
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.git_util import GitUtil
@@ -16,7 +16,6 @@ from demisto_sdk.commands.common.tools import (
     get_pack_name,
     replace_incident_to_alert,
 )
-from demisto_sdk.commands.content_graph.commands.update import update_content_graph
 from demisto_sdk.commands.content_graph.interface import (
     ContentGraphInterface,
 )
@@ -38,11 +37,11 @@ class GraphValidator(BaseValidator):
         self.include_optional = include_optional_deps
         self.graph = ContentGraphInterface()
         # if update_graph:
-            # update_content_graph(
-            #     self.graph,
-            #     use_git=True,
-            #     output_path=self.graph.output_path,
-            # )
+        # update_content_graph(
+        #     self.graph,
+        #     use_git=True,
+        #     output_path=self.graph.output_path,
+        # )
         self.file_paths: List[str] = git_files or get_all_content_objects_paths_in_dir(
             input_files
         )

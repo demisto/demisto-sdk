@@ -280,6 +280,7 @@ class TestCoverageSummary:
             assert open_file_mocker.call_count == 0
             builtins.open = not_mocked_open
             assert len(mock_min_cov_request.request_history) == 1
+            raise Exception(str(files_data))
             assert files_data == read_file(JSON_MIN_DATA_FILE)["files"]
 
     class TestCreateCoverageSummaryFile:

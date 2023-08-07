@@ -13,12 +13,12 @@ from demisto_sdk.commands.common.constants import (
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.hook_validations.graph_validator import GraphValidator
 from demisto_sdk.commands.common.legacy_git_tools import git_path
-from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
-from demisto_sdk.commands.content_graph.content_graph_commands import (
+from demisto_sdk.commands.content_graph.commands.create import (
     create_content_graph,
 )
-from demisto_sdk.commands.content_graph.interface.neo4j.neo4j_graph import (
-    Neo4jContentGraphInterface as ContentGraphInterface,
+from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
+from demisto_sdk.commands.content_graph.interface import (
+    ContentGraphInterface,
 )
 from demisto_sdk.commands.content_graph.objects.classifier import Classifier
 from demisto_sdk.commands.content_graph.objects.integration import Command, Integration
@@ -572,7 +572,6 @@ def test_is_file_using_unknown_content(
     """
     logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
     logger_warning = mocker.patch.object(logging.getLogger("demisto-sdk"), "warning")
-
     with GraphValidator(
         update_graph=False, git_files=[], include_optional_deps=include_optional
     ) as graph_validator:

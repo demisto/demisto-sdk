@@ -117,7 +117,7 @@ from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
 from demisto_sdk.commands.common.handlers import YAML_Handler
 
 if TYPE_CHECKING:
-    from demisto_sdk.commands.content_graph.interface.graph import ContentGraphInterface
+    from demisto_sdk.commands.content_graph.interface import ContentGraphInterface
 
 logger = logging.getLogger("demisto-sdk")
 
@@ -1685,7 +1685,7 @@ def find_type_by_path(path: Union[str, Path] = "") -> Optional[FileType]:
         elif LAYOUT_RULES_DIR in path.parts:
             return FileType.LAYOUT_RULE
 
-    elif path.name.endswith("_image.png"):
+    elif path.stem.endswith("_image") and path.suffix in (".png", ".svg"):
         if path.name.endswith("Author_image.png"):
             return FileType.AUTHOR_IMAGE
         elif XSIAM_DASHBOARDS_DIR in path.parts:

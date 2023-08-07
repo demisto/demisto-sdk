@@ -12,7 +12,7 @@ from dateutil import parser
 from git import GitCommandError, Repo
 from packaging.version import Version, parse
 
-from demisto_sdk.commands.common import tools, tools_paths
+from demisto_sdk.commands.common import tools, tools_core
 from demisto_sdk.commands.common.constants import (  # PACK_METADATA_PRICE,
     API_MODULES_PACK,
     EXCLUDED_DISPLAY_NAME_WORDS,
@@ -755,7 +755,7 @@ class PackUniqueFilesValidator(BaseValidator):
         Return:
              bool: True if the usecases are approved, otherwise False
         """
-        if tools_paths.is_external_repository():
+        if tools_core.is_external_repository():
             return True
 
         non_approved_usecases = set()
@@ -802,7 +802,7 @@ class PackUniqueFilesValidator(BaseValidator):
         Return:
             bool: True if the tags are approved, otherwise False
         """
-        if tools_paths.is_external_repository():
+        if tools_core.is_external_repository():
             return True
 
         is_valid = True
@@ -830,7 +830,7 @@ class PackUniqueFilesValidator(BaseValidator):
         Return:
              bool: True if the tags are approved, otherwise False
         """
-        if tools_paths.is_external_repository():
+        if tools_core.is_external_repository():
             return True
 
         is_valid_tag_prefixes = True
@@ -1170,7 +1170,7 @@ class PackUniqueFilesValidator(BaseValidator):
         Returns:
             bool: True if pack contain only one category and the category is from the approved list. Otherwise, return False.
         """
-        if tools_paths.is_external_repository():
+        if tools_core.is_external_repository():
             return True
         categories = self._read_metadata_content().get("categories", [])
         approved_list = tools.get_current_categories()

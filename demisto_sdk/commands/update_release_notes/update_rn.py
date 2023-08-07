@@ -48,7 +48,7 @@ from demisto_sdk.commands.common.tools import (
     pack_name_to_path,
     run_command,
 )
-from demisto_sdk.commands.common.tools_paths import get_content_path
+from demisto_sdk.commands.common.tools_core import get_content_path
 from demisto_sdk.commands.content_graph.interface.neo4j.neo4j_graph import (
     Neo4jContentGraphInterface,
 )

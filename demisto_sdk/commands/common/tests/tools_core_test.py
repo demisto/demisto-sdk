@@ -1,6 +1,6 @@
 import pytest
 
-from demisto_sdk.commands.common.tools_paths import string_to_bool
+from demisto_sdk.commands.common.tools_core import string_to_bool
 
 
 @pytest.mark.parametrize("value", ("true", "True", 1, "1", "yes", "y"))

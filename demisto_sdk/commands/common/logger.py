@@ -6,7 +6,7 @@ from logging.handlers import RotatingFileHandler
 from pathlib import Path
 
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
-from demisto_sdk.commands.common.tools_paths import string_to_bool
+from demisto_sdk.commands.common.tools_core import string_to_bool
 
 logger: logging.Logger = logging.getLogger("demisto-sdk")
 

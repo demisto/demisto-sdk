@@ -1,6 +1,7 @@
 """
 This file has various utility methods needed by the logger.
 It's main purpose is to prevent culrcular dependencies, which happened when the methods were in tools.
+It is preferable that general utilities will be added to tools, rather than here.
 """
 
 import os

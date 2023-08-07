@@ -64,7 +64,7 @@ from demisto_sdk.commands.common.tools import (
     get_pack_name,
     get_yaml,
 )
-from demisto_sdk.commands.common.tools_paths import (
+from demisto_sdk.commands.common.tools_core import (
     is_external_repository,
     string_to_bool,
 )

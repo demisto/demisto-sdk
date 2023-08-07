@@ -34,7 +34,7 @@ from demisto_sdk.commands.common.tools import (
     is_sdk_defined_working_offline,
     parse_marketplace_kwargs,
 )
-from demisto_sdk.commands.common.tools_paths import is_external_repository
+from demisto_sdk.commands.common.tools_core import is_external_repository
 from demisto_sdk.commands.content_graph.interface.neo4j.neo4j_graph import (
     Neo4jContentGraphInterface,
 )

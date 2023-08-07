@@ -64,7 +64,7 @@ from demisto_sdk.commands.common.tools import (
     is_iron_bank_pack,
     server_version_compare,
 )
-from demisto_sdk.commands.common.tools_paths import (
+from demisto_sdk.commands.common.tools_core import (
     is_external_repository,
     string_to_bool,
 )

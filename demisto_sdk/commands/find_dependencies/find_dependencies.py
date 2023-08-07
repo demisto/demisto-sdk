@@ -27,7 +27,7 @@ from demisto_sdk.commands.common.tools import (
     item_type_to_content_items_header,
     wait_futures_complete,
 )
-from demisto_sdk.commands.common.tools_paths import is_external_repository
+from demisto_sdk.commands.common.tools_core import is_external_repository
 from demisto_sdk.commands.common.update_id_set import (
     merge_id_sets,
     update_excluded_items_dict,

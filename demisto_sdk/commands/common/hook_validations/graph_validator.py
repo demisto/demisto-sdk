@@ -16,6 +16,7 @@ from demisto_sdk.commands.common.tools import (
     get_pack_name,
     replace_incident_to_alert,
 )
+from demisto_sdk.commands.content_graph.commands.update import update_content_graph
 from demisto_sdk.commands.content_graph.interface import (
     ContentGraphInterface,
 )
@@ -36,12 +37,12 @@ class GraphValidator(BaseValidator):
         super().__init__(specific_validations=specific_validations)
         self.include_optional = include_optional_deps
         self.graph = ContentGraphInterface()
-        # if update_graph:
-        # update_content_graph(
-        #     self.graph,
-        #     use_git=True,
-        #     output_path=self.graph.output_path,
-        # )
+        if update_graph:
+            update_content_graph(
+                self.graph,
+                use_git=True,
+                output_path=self.graph.output_path,
+            )
         self.file_paths: List[str] = git_files or get_all_content_objects_paths_in_dir(
             input_files
         )

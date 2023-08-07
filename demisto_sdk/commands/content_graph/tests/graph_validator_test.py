@@ -797,9 +797,9 @@ def test_validate_hidden_pack_is_not_mandatory_dependency(
         is_valid = (
             graph_validator.validate_hidden_packs_do_not_have_mandatory_dependencies()
         )
-
+    
     assert not is_valid
     assert str_in_call_args_list(
         logger_error.call_args_list,
-        "[GR108] - hidden pack SamplePack2 has the following mandatory pack dependencies: SamplePack",
+        "[GR108] - SamplePack cannot depend on hidden pack SamplePack2",
     )

@@ -1481,7 +1481,7 @@ def upload(ctx, **kwargs):
 @click.option(
     "-fmt",
     "--run-format",
-    help="Format all downloaded files.",
+    help="Format downloaded files.",
     is_flag=True,
 )
 @click.option("--system", help="Download system items", is_flag=True, default=False)
@@ -2508,7 +2508,7 @@ def find_dependencies(ctx, **kwargs):
     use_pack_metadata = kwargs.get("use_pack_metadata", False)
     all_packs_dependencies = kwargs.get("all_packs_dependencies", False)
     get_dependent_on = kwargs.get("get_dependent_on", False)
-    output_path = kwargs.get("file_to_update", ALL_PACKS_DEPENDENCIES_DEFAULT_PATH)
+    output_path = kwargs.get("output_path", ALL_PACKS_DEPENDENCIES_DEFAULT_PATH)
     dependency = kwargs.get("dependency", "")
     try:
 

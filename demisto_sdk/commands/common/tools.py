@@ -699,7 +699,7 @@ def get_child_directories(directory: str | Path) -> list[str]:
     Returns:
         list[str]: A list of paths (in string format) of immediate child directories of the 'directory' argument
     """
-    directory_path = Path(directory) if isinstance(directory, str) else directory
+    directory_path = Path(directory)
 
     if directory_path.is_dir():
         return [
@@ -820,7 +820,7 @@ def create_stringio_object(file_data: bytes | str) -> StringIO:
             return StringIO(UnicodeDammit(markup=file_data).unicode_markup)  # Guess the original encoding
 
         except UnicodeDecodeError:
-            logger.debug("Could not auto-detect encoding.")
+            logger.debug("Could not auto-detect encoding.", exc_info=True)
             raise
 
 

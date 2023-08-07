@@ -206,7 +206,7 @@ class Downloader:
 
                 # Replace UUID IDs with names in filtered content (only content we download)
                 changed_uuids_count = 0
-                for _, file_object in downloaded_content_objects.items():
+                for file_object in downloaded_content_objects.values():
                     if self.replace_uuid_ids(custom_content_object=file_object, uuid_mapping=uuid_mapping):
                         changed_uuids_count += 1
 

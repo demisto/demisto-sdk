@@ -770,9 +770,7 @@ def test_deprecated_usage__new_content(repository: ContentDTO, mocker):
     assert not is_valid
 
 
-@pytest.mark.parametrize(
-    "changed_pack", ["Packs/SamplePack", "Packs/SamplePack2"]
-)
+@pytest.mark.parametrize("changed_pack", ["Packs/SamplePack", "Packs/SamplePack2"])
 def test_validate_hidden_pack_is_not_mandatory_dependency(
     repository: ContentDTO, mocker, changed_pack: str
 ):
@@ -797,7 +795,7 @@ def test_validate_hidden_pack_is_not_mandatory_dependency(
         is_valid = (
             graph_validator.validate_hidden_packs_do_not_have_mandatory_dependencies()
         )
-    
+
     assert not is_valid
     assert str_in_call_args_list(
         logger_error.call_args_list,

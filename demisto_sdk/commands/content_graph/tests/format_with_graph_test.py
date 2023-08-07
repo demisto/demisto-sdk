@@ -11,11 +11,8 @@ from demisto_sdk.commands.common.constants import (
 )
 from demisto_sdk.commands.common.tools import get_dict_from_file
 from demisto_sdk.commands.content_graph import neo4j_service
+from demisto_sdk.commands.content_graph.commands.create import create_content_graph
 from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
-from demisto_sdk.commands.content_graph.content_graph_commands import (
-    create_content_graph,
-    stop_content_graph,
-)
 from demisto_sdk.commands.content_graph.interface.neo4j.neo4j_graph import (
     Neo4jContentGraphInterface as ContentGraphInterface,
 )
@@ -44,7 +41,7 @@ def setup_method(mocker, repo):
     bc.CONTENT_PATH = Path(repo.path)
     mocker.patch.object(neo4j_service, "REPO_PATH", Path(repo.path))
     mocker.patch.object(ContentGraphInterface, "repo_path", Path(repo.path))
-    stop_content_graph()
+    neo4j_service.stop()
 
 
 @pytest.fixture

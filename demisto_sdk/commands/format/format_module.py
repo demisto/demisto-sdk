@@ -51,6 +51,7 @@ from demisto_sdk.commands.format.update_report import ReportJSONFormat
 from demisto_sdk.commands.format.update_script import ScriptYMLFormat
 from demisto_sdk.commands.format.update_widget import WidgetJSONFormat
 from demisto_sdk.commands.lint.commands_builder import excluded_files
+from demisto_sdk.commands.content_graph.commands.update import update_content_graph
 
 FILE_TYPE_AND_LINKED_CLASS = {
     "integration": IntegrationYMLFormat,
@@ -187,10 +188,16 @@ def format_manager(
     error_list: List[Tuple[int, int]] = []
     if files:
         graph = (
-            ContentGraphInterface(update_graph=True)
+            ContentGraphInterface()
             if is_graph_related_files(files, clear_cache) and use_graph
             else None
         )
+        if graph:
+            update_content_graph(
+                graph,
+                use_git=True,
+                output_path=graph.output_path,
+            )
         for file in files:
             file_path = str(Path(file))
             file_type = find_type(file_path, clear_cache=clear_cache)

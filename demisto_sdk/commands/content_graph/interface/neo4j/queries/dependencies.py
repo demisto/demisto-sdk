@@ -165,12 +165,12 @@ AND NOT pack_b.name IN {IGNORED_PACKS_IN_DEPENDENCY_CALC}
 WITH pack_a, a, r, b, pack_b
 MERGE (pack_a)-[dep:{RelationshipType.DEPENDS_ON}]->(pack_b)
 ON CREATE
-    SET dep.is_test = a.is_test
+    SET dep.is_test = a.is_test,
+        dep.from_metadata = false,
+        dep.mandatorily = r.mandatorily
 ON MATCH
-    SET dep.is_test = dep.is_test AND a.is_test
-
-WITH dep, pack_a, a, r, b, pack_b
-SET dep.mandatorily = CASE WHEN dep.from_metadata THEN dep.mandatorily
+    SET dep.is_test = dep.is_test AND a.is_test,
+        dep.mandatorily = CASE WHEN dep.from_metadata THEN dep.mandatorily
                 ELSE r.mandatorily OR dep.mandatorily END
 WITH
     pack_a.object_id AS pack_a,

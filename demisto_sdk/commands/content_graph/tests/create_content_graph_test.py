@@ -17,7 +17,7 @@ from demisto_sdk.commands.content_graph.content_graph_commands import (
 from demisto_sdk.commands.content_graph.interface.neo4j.neo4j_graph import (
     Neo4jContentGraphInterface as ContentGraphInterface,
 )
-from demisto_sdk.commands.content_graph.objects import Mapper, Layout, IncidentField
+from demisto_sdk.commands.content_graph.objects import IncidentField, Layout, Mapper
 from demisto_sdk.commands.content_graph.objects.classifier import Classifier
 from demisto_sdk.commands.content_graph.objects.integration import Command, Integration
 from demisto_sdk.commands.content_graph.objects.integration_script import (
@@ -211,7 +211,7 @@ def mock_mapper(path: str, name: str = "SampleMapper", data: Dict = {}):
         docker_image="mock:docker",
         tags=[],
         is_test=False,
-        data=data
+        data=data,
     )
 
 
@@ -232,7 +232,7 @@ def mock_layout(path: str, name: str = "SampleLayout", data: Dict = {}):
         tags=[],
         is_test=False,
         data=data,
-        group='incident',
+        group="incident",
         edit=False,
         indicators_details=False,
         indicators_quick_view=False,
@@ -240,11 +240,17 @@ def mock_layout(path: str, name: str = "SampleLayout", data: Dict = {}):
         close=False,
         details=False,
         details_v2=True,
-        mobile=False
+        mobile=False,
     )
 
 
-def mock_incident_field(cli_name: str, path: str, marketplaces: List, data: Dict= {}, name: str = "SampleIncidentField"):
+def mock_incident_field(
+    cli_name: str,
+    path: str,
+    marketplaces: List,
+    data: Dict = {},
+    name: str = "SampleIncidentField",
+):
     return IncidentField(
         id=name,
         content_type=ContentType.INCIDENT_FIELD,
@@ -261,7 +267,7 @@ def mock_incident_field(cli_name: str, path: str, marketplaces: List, data: Dict
         tags=[],
         is_test=False,
         data=data,
-        cli_name=cli_name
+        cli_name=cli_name,
     )
 
 

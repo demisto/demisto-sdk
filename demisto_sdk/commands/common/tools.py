@@ -265,7 +265,7 @@ def get_mp_tag_parser():
     return MARKETPLACE_TAG_PARSER
 
 
-def get_yml_paths_in_dir(project_dir: str, error_msg: str = "") -> Tuple[list, str]:
+def get_yml_paths_in_dir(project_dir: str | Path, error_msg: str = "") -> Tuple[list, str]:
     """
     Gets the project directory and returns the path of the first yml file in that directory
     :param project_dir: string path to the project_dir
@@ -273,12 +273,16 @@ def get_yml_paths_in_dir(project_dir: str, error_msg: str = "") -> Tuple[list, s
     :return: first returned argument is the list of all yml files paths in the directory, second returned argument is a
     string path to the first yml file in project_dir
     """
-    yml_files = glob.glob(os.path.join(project_dir, "*.yml"))
-    if not yml_files:
-        if error_msg:
-            logger.info(error_msg)
-        return [], ""
-    return yml_files, yml_files[0]
+    project_dir_path = Path(project_dir)
+    yml_files = [str(path) for path in project_dir_path.glob("*.yml")]
+
+    if yml_files:
+        return yml_files, yml_files[0]
+
+    if error_msg:
+        logger.info(error_msg)
+
+    return [], ""
 
 
 def get_files_in_dir(
@@ -1003,24 +1007,6 @@ def get_entity_id_by_entity_type(data: dict, content_entity: str):
         raise ValueError(
             f"Could not retrieve id from file of type {content_entity} - make sure the file structure is "
             f"valid"
-        )
-
-
-def get_entity_name_by_entity_type(data: dict, content_entity: str) -> str:
-    """
-    Returns the name of the content entity given its entity type
-    :param data: The data of the file
-    :param content_entity: The content entity type
-    :return: The file name
-    """
-    try:
-        if content_entity == LAYOUTS_DIR and "typeId" in data:
-            return data.get("typeId", "")
-        return data.get("name", "")
-
-    except AttributeError:
-        raise ValueError(
-            f"Could not retrieve name from file of type '{content_entity}'. Make sure the file structure is valid."
         )
 
 

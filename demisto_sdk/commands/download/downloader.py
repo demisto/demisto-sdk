@@ -39,8 +39,6 @@ from demisto_sdk.commands.common.tools import (
     get_code_lang,
     get_dict_from_file,
     get_display_name,
-    get_entity_id_by_entity_type,
-    get_entity_name_by_entity_type,
     get_file,
     get_file_details,
     get_files_in_dir,
@@ -104,6 +102,7 @@ KEEP_EXISTING_YAML_FIELDS = [
     "defaultmapperout",
 ]
 
+
 class Downloader:
     """
     A class for downloading content from an XSOAR server locally
@@ -123,7 +122,6 @@ class Downloader:
         init (bool): Whether to initialize a new Pack structure in the output path and download the items to it.
         keep_empty_folders (bool): Whether to keep empty folders when using init.
     """
-
     def __init__(
         self,
         output: str,
@@ -218,12 +216,11 @@ class Downloader:
             result = self.write_files_into_output_path(downloaded_content_objects=downloaded_content_objects,
                                                        existing_pack_structure=existing_pack_data)
 
-            if result:
-                logger.info(f"Content items downloaded successfully into {self.output_pack_path}.")
-                return 0
+            if not result:
+                logger.error(f"Download failed.")
+                return 1
 
-            logger.error(f"Download process failed.")
-            return 1
+            return 0
 
         except Exception as e:
             if not isinstance(e, HandledError):
@@ -289,10 +286,9 @@ class Downloader:
         filtered_custom_content_objects: dict[str, dict] = {}
 
         if self.download_all_custom_content:
-            logger.debug("Filtering process has been skipped as all custom content should be downloaded.")
+            logger.debug("Filtering process has been skipped as all custom content is downloaded.")
             for file_name, content_item_data in custom_content_objects.items():
-                content_item_name = file_name_to_content_name_map[file_name]
-                filtered_custom_content_objects[content_item_name] = content_item_data
+                filtered_custom_content_objects[file_name] = content_item_data
 
             return filtered_custom_content_objects
 
@@ -781,11 +777,13 @@ class Downloader:
         file_paths: list = get_files_in_dir(
             str(entity_instance_path), CONTENT_FILE_ENDINGS, recursive=False
         )
-        # If it's integration/script, all files under it should have the main details of the yml file,
-        # otherwise we'll use the file's details.
-        content_item_id, content_item_name = self.get_main_file_details(
+
+        metadata = self.get_metadata_file(
             content_entity, entity_instance_path
         )
+
+        content_item_id = get_id(file_content=metadata)
+        content_item_name = get_display_name(file_path="", file_data=metadata)
 
         # if main file doesn't exist/no entity instance path exist the content object won't be added to the pack content
         if not all((content_item_id, content_item_name, file_paths)):
@@ -836,45 +834,39 @@ class Downloader:
         return playbook_id
 
     @staticmethod
-    def get_main_file_details(content_entity: str, entity_instance_path: Path) -> tuple:
+    def get_metadata_file(content_type: str, content_path: Path) -> dict | None:
         """
-        Returns the details of the "main" file within an entity instance.
-        For example: In the HelloWorld integration under Packs/HelloWorld, the main file is the yml file.
-        It contains all relevant ids and names for all the files under the HelloWorld integration dir.
-        :param content_entity: The content entity, for example Integrations
-        :param entity_instance_path: For example: ~/.../content/Packs/TestPack/Integrations/HelloWorld
-        :return: The main file id & name
-        """
-        main_file_data: dict = {}
-        main_file_path: str = ""
+        Returns the data of the "main" file containing metadata for a content item's path.
+        For example, YAML file for integrations / scripts, playbook file for playbooks, etc.
 
-        # Entities which contain yml files
-        if content_entity in (
+        Args:
+            content_type (str): The type of the content item.
+            content_path (Path): The path to the content item.
+
+        Returns:
+            dict | None: The data of the "main" file. None if the file could not be found / parsed.
+        """
+        if content_type in (
             INTEGRATIONS_DIR,
             SCRIPTS_DIR,
             PLAYBOOKS_DIR,
             TEST_PLAYBOOKS_DIR,
         ):
-            if entity_instance_path.is_dir():
-                _, main_file_path = get_yml_paths_in_dir(str(entity_instance_path))
-            elif entity_instance_path.is_file():
-                main_file_path = str(entity_instance_path)
+            if content_path.is_dir():
+                main_file_path = get_yml_paths_in_dir(content_path)[1]
+                return get_yaml(main_file_path)
 
-            if main_file_path:
-                main_file_data = get_yaml(main_file_path)
+            elif content_path.is_file():
+                return get_yaml(content_path)
 
-        # Entities which are json files (md files are ignored - changelog/readme)
         else:
             if (
-                entity_instance_path.is_file()
-                and entity_instance_path.suffix == ".json"
+                content_path.is_file()
+                and content_path.suffix == ".json"
             ):
-                main_file_data = get_json(entity_instance_path)
+                return get_json(content_path)
 
-        content_item_id = get_entity_id_by_entity_type(main_file_data, content_entity)
-        content_item_name = get_entity_name_by_entity_type(main_file_data, content_entity)
-
-        return content_item_id, content_item_name
+        return None
 
     @staticmethod
     def update_file_prefix(file_name: str) -> str:
@@ -919,7 +911,7 @@ class Downloader:
         else:
             file_type = ""
 
-        content_id = get_id(loaded_file_data)
+        content_id = get_id(file_content=loaded_file_data)
         content_name = get_display_name(file_path=file_name, file_data=loaded_file_data)
         file_entity = self.file_type_to_entity(
             content_name=content_name,
@@ -1031,16 +1023,18 @@ class Downloader:
             else:
                 existing_files_skipped_count += 1
 
-        summary_log = f"{successful_downloads_count} files were downloaded successfully."
+        summary_log = ""
 
-        if failed_downloads_count:
-            summary_log += f"\n{failed_downloads_count} files failed to download."
+        if successful_downloads_count:  #
+            summary_log = f"Successful downloads: {successful_downloads_count}.\n"
 
         if existing_files_skipped_count:
-            summary_log += f"\n{existing_files_skipped_count} files that exist in the output pack were skipped. " \
-                           f"Use the '-f' / '--force' flag to override."
+            summary_log += f"Skipped downloads: {existing_files_skipped_count}.\n"
 
-        logger.info(summary_log)
+        if failed_downloads_count:
+            summary_log += f"Failed downloads: {failed_downloads_count}.\n"
+
+        logger.info(summary_log.rstrip("\n"))
 
         return not failed_downloads_count  # Return True if no downloads failed, False otherwise.
 
@@ -1068,7 +1062,7 @@ class Downloader:
         content_directory_name = self.create_directory_name(content_item_name)
 
         content_item_exists = (  # Content item already exists in output pack
-            content_object["name"] in existing_pack_structure.get(content_item_entity, {})
+            content_item_name in existing_pack_structure.get(content_item_entity, {})
         )
 
         if content_item_exists:
@@ -1183,7 +1177,7 @@ class Downloader:
         content_item_extension: str = content_object["file_extension"]
 
         content_item_exists = (  # Content item already exists in output pack
-            content_object["name"] in existing_pack_structure.get(content_item_entity, {})
+            content_item_name in existing_pack_structure.get(content_item_entity, {})
         )
 
         # If file exists, and we don't want to overwrite it, skip it.

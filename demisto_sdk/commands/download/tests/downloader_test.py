@@ -671,7 +671,7 @@ class TestBuildPackContent:
         ]
         downloader = Downloader(output="", input="", regex="")
         for param in parameters:
-            op_id, op_name = downloader.get_main_file_details(
+            op_id, op_name = downloader.get_metadata_file(
                 param["entity"], os.path.abspath(param["path"])
             )
             assert op_id == param["main_id"]

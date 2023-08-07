@@ -1525,8 +1525,7 @@ def download(ctx, **kwargs):
     from demisto_sdk.commands.download.downloader import Downloader
 
     check_configuration_file("download", kwargs)
-    downloader: Downloader = Downloader(**kwargs)
-    return downloader.download()
+    return Downloader(**kwargs).download()
 
 
 # ====================== update-xsoar-config-file ====================== #

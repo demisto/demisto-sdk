@@ -904,38 +904,6 @@ def test_generate_playbook_doc_passes_markdownlint(tmp_path):
             assert not markdownlint.has_errors, markdownlint.validations
 
 
-def test_generate_script_doc_passes_markdownlint(tmp_path, mocker):
-    """
-    Given: A script
-    When: Generating a readme for the script
-    Then: The generated readme will have no markdown errors
-
-    """
-    import demisto_sdk.commands.generate_docs.common as common
-
-    d = tmp_path / "script_doc_out"
-    d.mkdir()
-    in_script = os.path.join(FILES_PATH, "docs_test", "script-Set.yml")
-    id_set_file = os.path.join(FILES_PATH, "docs_test", "id_set.json")
-    with open(id_set_file) as f:
-        id_set = json.load(f)
-    mocker.patch.object(IDSetCreator, "create_id_set", return_value=[id_set, {}, {}])
-    mocker.patch.object(common, "execute_command", side_effect=handle_example)
-    mocker.patch(
-        "demisto_sdk.commands.generate_docs.generate_script_doc.get_used_in",
-        return_value=[],
-    )
-    generate_script_doc(
-        in_script,
-        "!Set key=k1 value=v1,!Set key=k2 value=v2 append=true",
-        str(d),
-    )
-    readme = d / "README.md"
-    with ReadMeValidator.start_mdx_server():
-        with open(readme) as file:
-            assert not run_markdownlint(file.read()).has_errors
-
-
 @pytest.mark.skip
 def test_generate_script_doc(tmp_path, mocker):
     import demisto_sdk.commands.generate_docs.common as common

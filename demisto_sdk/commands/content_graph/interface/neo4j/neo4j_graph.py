@@ -17,9 +17,6 @@ from demisto_sdk.commands.content_graph.common import (
     Neo4jRelationshipResult,
     RelationshipType,
 )
-from demisto_sdk.commands.content_graph.content_graph_commands import (
-    update_content_graph,
-)
 from demisto_sdk.commands.content_graph.interface.graph import ContentGraphInterface
 from demisto_sdk.commands.content_graph.interface.neo4j.import_utils import (
     Neo4jImportHandler,
@@ -54,6 +51,8 @@ from demisto_sdk.commands.content_graph.interface.neo4j.queries.nodes import (
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.relationships import (
     _match_relationships,
     create_relationships,
+    get_sources_by_path,
+    get_targets_by_path,
 )
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.validations import (
     get_items_using_deprecated,
@@ -110,7 +109,6 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
 
     def __init__(
         self,
-        update_graph: bool = False,
     ) -> None:
         self._id_to_obj: Dict[str, BaseContent] = {}
 
@@ -122,12 +120,10 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             NEO4J_DATABASE_URL,
             auth=(NEO4J_USERNAME, NEO4J_PASSWORD),
         )
-        if update_graph:
-            output_path = None
-            if artifacts_folder := os.getenv("ARTIFACTS_FOLDER"):
-                output_path = Path(artifacts_folder) / "content_graph"
-                output_path.mkdir(parents=True, exist_ok=True)
-            update_content_graph(self, use_git=True, output_path=output_path)
+        self.output_path = None
+        if artifacts_folder := os.getenv("ARTIFACTS_FOLDER"):
+            self.output_path = Path(artifacts_folder) / "content_graph"
+            self.output_path.mkdir(parents=True, exist_ok=True)
 
     def __enter__(self) -> "Neo4jContentGraphInterface":
         return self
@@ -356,6 +352,55 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             session.execute_write(remove_packs_before_creation, pack_ids)
             session.execute_write(create_nodes, nodes)
             session.execute_write(remove_empty_properties)
+
+    def get_relationships_by_path(
+        self,
+        path: Path,
+        relationship_type: RelationshipType,
+        content_type: ContentType,
+        depth: int,
+        marketplace: MarketplaceVersions,
+        retrieve_sources: bool,
+        retrieve_targets: bool,
+        mandatory_only: bool,
+        include_tests: bool,
+        include_deprecated: bool,
+        include_hidden: bool,
+    ) -> Tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
+        with self.driver.session() as session:
+            sources = (
+                session.execute_read(
+                    get_sources_by_path,
+                    path,
+                    relationship_type,
+                    content_type,
+                    depth,
+                    marketplace,
+                    mandatory_only,
+                    include_tests,
+                    include_deprecated,
+                    include_hidden,
+                )
+                if retrieve_sources
+                else []
+            )
+            targets = (
+                session.execute_read(
+                    get_targets_by_path,
+                    path,
+                    relationship_type,
+                    content_type,
+                    depth,
+                    marketplace,
+                    mandatory_only,
+                    include_tests,
+                    include_deprecated,
+                    include_hidden,
+                )
+                if retrieve_targets
+                else []
+            )
+            return sources, targets
 
     def get_unknown_content_uses(
         self, file_paths: List[str], raises_error: bool, include_optional: bool = False

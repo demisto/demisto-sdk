@@ -2,7 +2,7 @@ import os
 import re
 from abc import ABC
 from pathlib import Path
-from typing import Set, Tuple
+from typing import Set, Tuple, List
 
 from demisto_sdk.commands.common.constants import (
     FileType,
@@ -12,6 +12,7 @@ from demisto_sdk.commands.common.tools import (
     LAYOUT_CONTAINER_FIELDS,
     remove_copy_and_dev_suffixes_from_str,
 )
+from demisto_sdk.commands.content_graph.objects import Layout
 from demisto_sdk.commands.content_graph.objects.base_content import UnknownContent
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 from demisto_sdk.commands.format.format_constants import (
@@ -313,9 +314,14 @@ class LayoutBaseFormat(BaseUpdateJSON, ABC):
 
         # get the relevant content item from the graph
         layout_object: ContentItem
-        layout_object = self.graph.search(
+        result = self.graph.search(
             path=Path(self.source_file).relative_to(self.graph.repo_path)
-        )[0]
+        )
+        if not isinstance(result, List):
+            raise ValueError(f"The search failed to find the file {self.source_file}")
+        layout_object = result[0]
+        if not isinstance(layout_object, Layout):
+            raise ValueError(f"The file {self.source_file} object isn't a layout.")
 
         # find the fields that aren't in the content repo
         fields_not_in_repo = {

@@ -1,7 +1,8 @@
 from pathlib import Path
-from typing import Tuple
+from typing import Tuple, List
 
 from demisto_sdk.commands.common.logger import logger
+from demisto_sdk.commands.content_graph.objects import Mapper
 from demisto_sdk.commands.content_graph.objects.base_content import UnknownContent
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 from demisto_sdk.commands.format.format_constants import (
@@ -85,9 +86,14 @@ class MapperJSONFormat(BaseUpdateJSON):
 
         # get the relevant content item from the graph
         mapper_object: ContentItem
-        mapper_object = self.graph.search(
+        result = self.graph.search(
             path=Path(self.source_file).relative_to(self.graph.repo_path)
-        )[0]
+        )
+        if not isinstance(result, List):
+            raise ValueError(f"The search failed to find the file {self.source_file}")
+        mapper_object = result[0]
+        if not isinstance(mapper_object, Mapper):
+            raise ValueError(f"The file {self.source_file} object isn't a mapper.")
 
         # find the fields that aren't in the content repo
         fields_not_in_repo = {

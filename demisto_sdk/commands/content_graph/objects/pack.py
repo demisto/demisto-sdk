@@ -179,7 +179,11 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
                     parse(content_item.fromversion)
                     for content_item in content_items
                     if content_item.content_type
-                    not in (ContentType.XDRC_TEMPLATE, ContentType.TRIGGER)
+                    not in (
+                        ContentType.XDRC_TEMPLATE,
+                        ContentType.TRIGGER,
+                        ContentType.TEST_PLAYBOOK,
+                    )
                 )
             )
         self.server_min_version = self.server_min_version or min_content_items_version

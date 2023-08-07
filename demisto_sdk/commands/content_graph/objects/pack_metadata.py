@@ -7,7 +7,6 @@ from pydantic import BaseModel, Field
 
 from demisto_sdk.commands.common.constants import (
     DEFAULT_CONTENT_ITEM_TO_VERSION,
-    MARKETPLACE_MIN_VERSION,
     MarketplaceVersions,
 )
 from demisto_sdk.commands.common.content_constant_paths import (
@@ -87,20 +86,6 @@ class PackMetadata(BaseModel):
         self.tags = self._get_pack_tags(marketplace, pack_id, content_items)
         self.author = get_author(self.author, marketplace)
         self.version_info = os.environ.get("CI_PIPELINE_ID", "")
-        self.server_min_version = self.server_min_version
-        if not self.server_min_version:
-            logger.info(
-                f"[TEST1] server_min_version is '{self.server_min_version}', checking content items again"
-            )
-            self.server_min_version = str(
-                max(
-                    (parse(content_item.fromversion) for content_item in content_items),
-                    default=MARKETPLACE_MIN_VERSION,
-                )
-            )
-            logger.info(
-                f"[TEST2] server_min_version is now '{self.server_min_version}'"
-            )
 
     def _format_metadata(
         self,

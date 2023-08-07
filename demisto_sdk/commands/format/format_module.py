@@ -10,6 +10,7 @@ from demisto_sdk.commands.common.constants import (
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import find_type, get_files_in_dir
+from demisto_sdk.commands.content_graph.commands.update import update_content_graph
 from demisto_sdk.commands.content_graph.interface.neo4j.neo4j_graph import (
     Neo4jContentGraphInterface as ContentGraphInterface,
 )
@@ -51,7 +52,6 @@ from demisto_sdk.commands.format.update_report import ReportJSONFormat
 from demisto_sdk.commands.format.update_script import ScriptYMLFormat
 from demisto_sdk.commands.format.update_widget import WidgetJSONFormat
 from demisto_sdk.commands.lint.commands_builder import excluded_files
-from demisto_sdk.commands.content_graph.commands.update import update_content_graph
 
 FILE_TYPE_AND_LINKED_CLASS = {
     "integration": IntegrationYMLFormat,

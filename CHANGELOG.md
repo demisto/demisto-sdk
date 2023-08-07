@@ -1,11 +1,16 @@
 # Changelog
 ## Unreleased
-* Enhanced the pack metadata properties when dumping pack zips in **prepare-content** command.
+* Added the **graph** command group. The **create-content-graph** and **update-content-graph** commands were migrated to this command group, and named **create** and **update** respectively.
+* Added the **get-relationships** graph command.
+* The **modeling-rules test** command will now validate that the modeling rules schema mappings are aligned with the test-data mappings.
 * Added the *--xsiam* flag to the **init** command in order to create XSIAM content.
+* Removed the format execution step from the `contribution_converter` since it can be executed separately during the contribution process.
+* Enhanced the pack metadata properties when dumping pack zips in **prepare-content** command.
 
 ## 1.18.1
 * Fixed an issue where the coloring directives where showing in log messages.
 * Fixed an issue where **create-content-graph** was not executed upon changes in the parser infra files.
+* Added support for `svg` integration images in content repo in **validate** command.
 * Added a parameter `skip-packs-known-words` to the **doc-review** command, making sure that pack known words will not be added.
 
 ## 1.18.0

@@ -12,6 +12,7 @@ from configparser import ConfigParser, MissingSectionHeaderError
 from contextlib import contextmanager
 from enum import Enum
 from functools import lru_cache
+from hashlib import sha1
 from pathlib import Path, PosixPath
 from subprocess import DEVNULL, PIPE, Popen, check_output
 from time import sleep
@@ -116,7 +117,7 @@ from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
 from demisto_sdk.commands.common.handlers import YAML_Handler
 
 if TYPE_CHECKING:
-    from demisto_sdk.commands.content_graph.interface.graph import ContentGraphInterface
+    from demisto_sdk.commands.content_graph.interface import ContentGraphInterface
 
 logger = logging.getLogger("demisto-sdk")
 
@@ -1106,6 +1107,18 @@ def old_get_latest_release_notes_text(rn_path):
     return new_rn if new_rn else None
 
 
+def find_pack_folder(path: Path) -> Path:
+    """
+    Finds the pack folder.
+    """
+
+    if "Packs" not in path.parts:
+        raise ValueError(f"Could not find a pack for {str(path)}")
+    if path.parent.name == "Packs":
+        return path
+    return path.parents[len(path.parts) - (path.parts.index("Packs")) - 3]
+
+
 def get_release_notes_file_path(file_path):
     """
     Accepts file path which is alleged to contain release notes. Validates that the naming convention
@@ -1672,7 +1685,7 @@ def find_type_by_path(path: Union[str, Path] = "") -> Optional[FileType]:
         elif LAYOUT_RULES_DIR in path.parts:
             return FileType.LAYOUT_RULE
 
-    elif path.name.endswith("_image.png"):
+    elif path.stem.endswith("_image") and path.suffix in (".png", ".svg"):
         if path.name.endswith("Author_image.png"):
             return FileType.AUTHOR_IMAGE
         elif XSIAM_DASHBOARDS_DIR in path.parts:
@@ -3828,3 +3841,34 @@ def is_sdk_defined_working_offline() -> bool:
         bool: The value for DEMISTO_SDK_OFFLINE_ENV environment variable.
     """
     return str2bool(os.getenv(ENV_SDK_WORKING_OFFLINE))
+
+
+def sha1_update_from_file(filename: Union[str, Path], hash):
+    """This will iterate the file and update the hash object"""
+    assert Path(filename).is_file()
+    with open(str(filename), "rb") as f:
+        for chunk in iter(lambda: f.read(4096), b""):
+            hash.update(chunk)
+    return hash
+
+
+def sha1_file(filename: Union[str, Path]) -> str:
+    """Return the sha1 hash of a directory"""
+    return str(sha1_update_from_file(filename, sha1()).hexdigest())
+
+
+def sha1_update_from_dir(directory: Union[str, Path], hash_):
+    """This will recursivly iterate all the files in the directory and update the hash object"""
+    assert Path(directory).is_dir()
+    for path in sorted(Path(directory).iterdir(), key=lambda p: str(p).lower()):
+        hash_.update(path.name.encode())
+        if path.is_file():
+            hash_ = sha1_update_from_file(path, hash_)
+        elif path.is_dir():
+            hash_ = sha1_update_from_dir(path, hash_)
+    return hash_
+
+
+def sha1_dir(directory: Union[str, Path]) -> str:
+    """Return the sha1 hash of a directory"""
+    return str(sha1_update_from_dir(directory, sha1()).hexdigest())

@@ -10,6 +10,7 @@ from collections import OrderedDict
 from concurrent.futures import as_completed
 from configparser import ConfigParser, MissingSectionHeaderError
 from contextlib import contextmanager
+from datetime import datetime
 from enum import Enum
 from functools import lru_cache
 from hashlib import sha1
@@ -117,7 +118,7 @@ from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
 from demisto_sdk.commands.common.handlers import YAML_Handler
 
 if TYPE_CHECKING:
-    from demisto_sdk.commands.content_graph.interface.graph import ContentGraphInterface
+    from demisto_sdk.commands.content_graph.interface import ContentGraphInterface
 
 logger = logging.getLogger("demisto-sdk")
 
@@ -3874,6 +3875,19 @@ def sha1_dir(directory: Union[str, Path]) -> str:
     return str(sha1_update_from_dir(directory, sha1()).hexdigest())
 
 
+def is_epoch_datetime(string: str) -> bool:
+    # Check if the input string contains only digits
+    if not string.isdigit():
+        return False
+    # Convert the string to an integer and attempt to parse it as a datetime
+    try:
+        epoch_timestamp = int(string)
+        datetime.fromtimestamp(epoch_timestamp)
+        return True
+    except Exception:
+        return False
+
+      
 def extract_error_codes_from_file(pack_name: str) -> Set[str]:
     """
     Args:

@@ -412,7 +412,7 @@ class GraphValidator(BaseValidator):
                     if self.handle_error(
                         error_message=error_message,
                         error_code=error_code,
-                        file_path=f"{PACKS_DIR}/{pack_id}/{PACKS_PACK_META_FILE_NAME}",
+                        file_path=f"{PACKS_DIR}/{pack_id}",
                     ):
                         is_valid = False
 

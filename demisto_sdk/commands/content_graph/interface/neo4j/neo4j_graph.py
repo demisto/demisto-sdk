@@ -574,6 +574,8 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
 
     def remove_non_repo_items(self) -> None:
         with self.driver.session() as session:
+            # Removing content-private nodes should be a temporary workaround.
+            # For more details: https://jira-hq.paloaltonetworks.local/browse/CIAC-7149
             session.execute_write(remove_content_private_nodes)
             session.execute_write(remove_server_nodes)
 

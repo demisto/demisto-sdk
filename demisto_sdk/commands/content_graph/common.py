@@ -772,6 +772,8 @@ SERVER_CONTENT_ITEMS: dict = {
 }
 
 
+# Used to remove content-private nodes, as a temporary temporary workaround.
+# For more details: https://jira-hq.paloaltonetworks.local/browse/CIAC-7149
 CONTENT_PRIVATE_ITEMS: dict = {
     ContentType.INCIDENT_FIELD: [
         "Employee ID",

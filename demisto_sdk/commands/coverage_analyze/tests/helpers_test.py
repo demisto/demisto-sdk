@@ -275,7 +275,12 @@ class TestCoverageSummary:
                 previous_coverage_report_url=TestCoverageSummary.TestGetFilesSummary.default_url,
                 no_cache=True,
                 cache_dir=None
-            ).get_files_summary()
+            )
+            assert not files_data.use_cache
+                
+
+            files_data = files_data.get_files_summary()
+
             assert open_file_mocker.call_count == 0
             builtins.open = not_mocked_open
             assert len(mock_min_cov_request.request_history) == 1

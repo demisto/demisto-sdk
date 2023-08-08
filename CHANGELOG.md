@@ -1,7 +1,8 @@
 # Changelog
 ## Unreleased
-* Added the **graph** command group. The **create-content-graph** and **update-content-graph** commands were migrated to this command group, and named **create** and **update** respectively.
-* Added the **get-relationships** graph command.
+* Added the **graph** command group. The **create-content-graph** and **update-content-graph** commands were migrated to this command group, and named **graph create** and **graph update** respectively.
+* Added the **graph get-relationships** command.
+* The **graph create** command will now use a list of known content items from content-private, to avoid false-positives in validation `GR103`. Additionally, `GR103` was added to the **ALLOWED_IGNORE_ERRORS** list.
 * The **modeling-rules test** command will now validate that the modeling rules schema mappings are aligned with the test-data mappings.
 * Added the *--xsiam* flag to the **init** command in order to create XSIAM content.
 * Fixed an issue where the `update-additional-dependencies` **pre-commit** step failed when not running in a content-like repo.

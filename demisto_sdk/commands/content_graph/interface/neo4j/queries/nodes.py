@@ -5,6 +5,7 @@ from neo4j import Transaction, graph
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.content_graph.common import (
+    CONTENT_PRIVATE_ITEMS,
     SERVER_CONTENT_ITEMS,
     ContentType,
     RelationshipType,
@@ -39,13 +40,13 @@ SET n = node_data,  // override existing data
 RETURN count(n) AS nodes_created"""
 
 
-REMOVE_SERVER_NODES_BY_TYPE = """// Removes parsed server nodes of type {content_type} (according to constants)
+REMOVE_NODES_BY_TYPE = """// Removes parsed nodes of type {content_type} (according to constants)
 MATCH (a)
 WHERE (a:{label} OR a.content_type = "{content_type}")
 AND a.not_in_repository = true
 AND any(
     identifier IN [a.object_id, a.name]
-    WHERE toLower(identifier) IN {server_content_items}
+    WHERE toLower(identifier) IN {content_items_identifiers}
 )
 DETACH DELETE a"""
 
@@ -138,19 +139,27 @@ def create_nodes(
         create_nodes_by_type(tx, content_type, data)
 
 
-def remove_server_nodes(tx: Transaction) -> None:
-    for content_type, content_items in SERVER_CONTENT_ITEMS.items():
+def remove_nodes(tx: Transaction, content_type_to_identifiers: dict) -> None:
+    for content_type, content_items_identifiers in content_type_to_identifiers.items():
         if content_type in [ContentType.COMMAND, ContentType.SCRIPT]:
             label = ContentType.COMMAND_OR_SCRIPT
         else:
             label = ContentType.BASE_CONTENT
 
-        query = REMOVE_SERVER_NODES_BY_TYPE.format(
+        query = REMOVE_NODES_BY_TYPE.format(
             label=label,
             content_type=content_type,
-            server_content_items=[c.lower() for c in content_items],
+            content_items_identifiers=[c.lower() for c in content_items_identifiers],
         )
         run_query(tx, query)
+
+
+def remove_server_nodes(tx: Transaction) -> None:
+    remove_nodes(tx, SERVER_CONTENT_ITEMS)
+
+
+def remove_content_private_nodes(tx: Transaction) -> None:
+    remove_nodes(tx, CONTENT_PRIVATE_ITEMS)
 
 
 def create_nodes_by_type(

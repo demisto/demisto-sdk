@@ -1,3 +1,4 @@
+import functools
 import itertools
 import multiprocessing
 import os
@@ -10,6 +11,8 @@ from pathlib import Path
 from typing import Dict, Iterable, List, Optional, Set
 
 import more_itertools
+from docker.errors import DockerException
+from ruamel.yaml.scalarstring import LiteralScalarString
 
 from demisto_sdk.commands.common.constants import (
     DEFAULT_PYTHON2_VERSION,
@@ -18,13 +21,14 @@ from demisto_sdk.commands.common.constants import (
     SCRIPTS_DIR,
 )
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH, PYTHONPATH
-from demisto_sdk.commands.common.docker_helper import get_python_version
+from demisto_sdk.commands.common.docker_helper import get_docker, get_python_version
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     get_file_or_remote,
     get_last_remote_release_version,
+    get_yaml,
     string_to_bool,
 )
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
@@ -47,6 +51,82 @@ CONTENT_PATH
 SKIPPED_HOOKS = {"format", "validate", "secrets"}
 
 INTEGRATION_SCRIPT_REGEX = re.compile(r"^Packs/.*/(?:Integrations|Scripts)/.*.yml$")
+
+
+@functools.cache
+def docker_image_for_file(py_file) -> str:
+    # is this more expensive? Should use regex?
+    if not py_file.name.endswith(".py"):
+        return ""
+
+    yml_in_directory = [f for f in os.listdir(py_file.parent) if f.endswith(".yml")]
+    if (
+        len(yml_in_directory) == 1
+        and (yml_file := py_file.parent / yml_in_directory[0]).is_file()
+    ):
+
+        yml = get_yaml(yml_file)
+        return yml.get("dockerimage") or yml.get("script", {}).get("dockerimage", "")
+
+    else:
+        logger.debug(f"Yml file was not found for py file {py_file}")
+        return ""
+
+
+@functools.cache
+def devtest_image(param):
+    image, errors = get_docker().pull_or_create_test_image(param)
+    if errors:
+        raise DockerException(errors)
+    else:
+        return image
+
+
+def python_files_for_lint(files):
+    # any yml that has a corressponding py file should be linted. Any python file has a yml file
+    python_files = {file for file in files if file.suffix in (".py", ".yml")}
+
+    def python_file_from_yml(file):
+        return file.parent / file.name.replace(".yml", ".py")  # todo find unit tests
+
+    return {
+        python_file_from_yml(file)
+        for file in python_files
+        if python_file_from_yml(file).is_file()
+    }
+
+
+def file_exact_match_regex(files_to_run_on_hook: list[str]) -> str:
+    """
+    Creates a string to override a hooks 'files' property
+    Args:
+        files_to_run_on_hook: The files to match
+
+    Returns:
+        A string representing the regex to put into a precommit file to return exact file matching
+
+    """
+    return '(?x)^(\n' + '|\n'.join(files_to_run_on_hook) + '\n)$'
+
+
+def set_files_on_hook(hook, files):
+    """
+    Mutates a hook, setting a regex for file exact match on the hook
+    according to the file's *file* and *exclude* properties
+    Args:
+        hook: The hook to mutate
+        files: The files to set on the hook
+    """
+    if files_reg := hook.get("files"):
+        include_pattern = re.compile(files_reg)
+    if exclude_reg := hook.get("exclude"):
+        exclude_pattern = re.compile(exclude_reg)
+    files_to_run_on_hook = [file for file in
+                            [str(file) for file in files]
+                            if not files_reg or re.search(include_pattern, file) # include all if not defined
+                            and not (exclude_reg and re.search(exclude_pattern, file))] # only exclude if defined
+    hook['files'] = LiteralScalarString(file_exact_match_regex(files_to_run_on_hook))
+    del hook['exclude']
 
 
 @dataclass
@@ -94,11 +174,49 @@ class PreCommitRunner:
                     SKIPPED_HOOKS.add(hook["id"])
         return hooks
 
-    def prepare_hooks(
-        self,
-        hooks: dict,
-        python_version: str,
-    ) -> None:
+    def docker_tag_to_python_files(self) -> dict:
+
+        allfiles = set.union(*[x[1] for x in self.python_version_to_files.items()])
+        return {
+            devtest_image(image): list(group)
+            for image, group in itertools.groupby(
+                [
+                    file
+                    for file in python_files_for_lint(allfiles)
+                    if docker_image_for_file(file)
+                ],
+                lambda f: docker_image_for_file(f),
+            )
+        }
+
+    def prepare_docker_hooks(self, hooks) -> list:
+        all_hooks = []
+        tag_to_fies: dict[str, list] = self.docker_tag_to_python_files()
+        for hook in hooks:
+            counter = 0  # added for uniqueness
+            for tag, files in tag_to_fies.items():
+                counter = counter + 1
+                new_hook = hook.copy()
+                new_hook["id"] = f"{hook['id']}-{counter}"
+                new_hook["language"] = "docker_image"
+                new_hook["entry"] = f"--entrypoint '{hook['entry']}' {tag}"
+                set_files_on_hook(new_hook, files)
+                all_hooks.append(new_hook)
+        return all_hooks
+
+    def update_config_with_docker_hooks(self, hooks, config):
+        docker_hooks = [v for k, v in hooks.items() if k.endswith("in-docker")]
+        prepared_docker_hooks = self.prepare_docker_hooks(docker_hooks)
+        if local_repo := [r for r in config["repos"] if r["repo"] == "local"]:
+            local_repo = local_repo[0]
+
+            for i, hook in reversed(list(enumerate(local_repo["hooks"]))):
+                if hook["id"] in [hook.get("id") for hook in docker_hooks]:
+                    del local_repo["hooks"][i]
+
+            local_repo["hooks"].extend(prepared_docker_hooks)
+
+    def prepare_hooks(self, hooks: dict, python_version: str, precommit_config) -> None:
         PyclnHook(hooks["pycln"]).prepare_hook(PYTHONPATH)
         RuffHook(hooks["ruff"]).prepare_hook(python_version, IS_GITHUB_ACTIONS)
         MypyHook(hooks["mypy"]).prepare_hook(python_version)
@@ -107,6 +225,7 @@ class PreCommitRunner:
         )
         ValidateFormatHook(hooks["validate"]).prepare_hook(self.input_files)
         ValidateFormatHook(hooks["format"]).prepare_hook(self.input_files)
+        self.update_config_with_docker_hooks(hooks, precommit_config)
 
     def run(
         self,
@@ -167,7 +286,9 @@ class PreCommitRunner:
                     if response.returncode:
                         ret_val = response.returncode
                 continue
-            self.prepare_hooks(self._get_hooks(precommit_config), python_version)
+            self.prepare_hooks(
+                self._get_hooks(precommit_config), python_version, precommit_config
+            )
             with open(PRECOMMIT_PATH, "w") as f:
                 yaml.dump(precommit_config, f)
             # use chunks because OS does not support such large comments
@@ -249,7 +370,8 @@ def group_by_python_version(files: Set[Path]) -> Dict[str, set]:
         python_versions_to_files[
             python_version_string or DEFAULT_PYTHON2_VERSION
         ].update(
-            integrations_scripts_mapping[code_file_path] | {integration_script.path}
+            integrations_scripts_mapping[code_file_path]
+            | {integration_script.path}  # add the python including files here
         )
 
     python_versions_to_files[DEFAULT_PYTHON_VERSION].update(infra_files)

@@ -183,7 +183,6 @@ The development environment is connected to the branch you are currently using i
 
 Contributions are welcome and appreciated.
 For information regarding contributing, press [here](CONTRIBUTION.md).
-For release guide, press [here](docs/release_guide.md)
 
 ---
 

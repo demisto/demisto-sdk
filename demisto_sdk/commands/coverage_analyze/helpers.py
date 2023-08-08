@@ -194,7 +194,6 @@ class CoverageSummary:
             os.path.join(self.cache_dir, "coverage-min.json") if self.cache_dir else ""
         )
         if self.use_cache and self.cache_dir:
-            print("here 1")
             try:
                 with open(json_path) as coverage_summary_file:
                     full_coverage_summary = json.load(coverage_summary_file)
@@ -216,7 +215,6 @@ class CoverageSummary:
         resp.raise_for_status()
         data = resp.json()
         if self.use_cache and self.cache_dir:
-            print("here 2 ")
             with open(json_path, "w") as fp:
                 json.dump(data, fp)
 

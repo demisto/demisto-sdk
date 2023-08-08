@@ -3,6 +3,7 @@ import os
 import shutil
 import sqlite3
 from datetime import datetime
+from unittest.mock import mock_open
 
 import coverage
 import pytest
@@ -270,14 +271,13 @@ class TestCoverageSummary:
                 self.default_url, json=read_file(JSON_MIN_DATA_FILE)
             )
             not_mocked_open = builtins.open
-            open_file_mocker = mocker.patch("builtins.open")
+            open_file_mocker = mocker.patch("builtins.open", mock_open())
             files_data = CoverageSummary(
                 previous_coverage_report_url=TestCoverageSummary.TestGetFilesSummary.default_url,
                 no_cache=True,
                 cache_dir=None
             )
             assert not files_data.use_cache
-                
 
             files_data = files_data.get_files_summary()
 

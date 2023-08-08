@@ -213,7 +213,7 @@ class CoverageSummary:
 
         resp = requests.get(self.url)
         resp.raise_for_status()
-        data = resp.json()
+        data = {"files": "test"}
         if self.use_cache and self.cache_dir:
             with open(json_path, "w") as fp:
                 json.dump(data, fp)

@@ -114,6 +114,7 @@ CONTENT_ENTITY_IDS_TO_UPDATE: Dict = {}
 CONTENT_ITEMS_WITH_GRAPH = [
     FileType.INCIDENT_FIELD.value,
     FileType.LAYOUTS_CONTAINER.value,
+    FileType.LAYOUT.value,
     FileType.MAPPER.value,
 ]
 
@@ -368,6 +369,10 @@ def run_format_on_file(
     if file_type not in ("integration", "playbook", "script") and "add_tests" in kwargs:
         # adding tests is relevant only for integrations, playbooks and scripts.
         del kwargs["add_tests"]
+    if file_type not in CONTENT_ITEMS_WITH_GRAPH and "graph" in kwargs:
+        # relevant only for incidentfield/layouts/mappers
+        del kwargs["graph"]
+
     updater_class = FILE_TYPE_AND_LINKED_CLASS.get(file_type)
     if not updater_class:  # fail format so long as xsiam entities dont have formatters
         logger.info(

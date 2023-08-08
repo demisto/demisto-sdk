@@ -268,7 +268,7 @@ class Nodes(dict):
             self.add_batch(data)
 
 
-SERVER_CONTENT_ITEMS = {
+SERVER_CONTENT_ITEMS: dict = {
     ContentType.INCIDENT_FIELD: [
         "name",
         "details",
@@ -768,5 +768,50 @@ SERVER_CONTENT_ITEMS = {
         "kafka",
         "syslog",
         "fcm",
+    ],
+}
+
+
+CONTENT_PRIVATE_ITEMS: dict = {
+    ContentType.INCIDENT_FIELD: [
+        "employeeid",
+        "employeetype",
+        "employmentstatus",
+        "hiredate",
+        "lastdayofwork",
+        "prehireflag",
+        "rehiredemployee",
+        "terminationdate",
+        "userprofile",
+        "organization",
+        "actor",
+        "terminationtrigger",
+        "statename",
+        "employeenumber",
+        "profileid",
+        "timezonesidkey",
+        "localesidkey",
+    ],
+    ContentType.INCIDENT_TYPE: [
+        "IAM - AD User Activation",
+        "IAM - AD User Deactivation",
+        "IAM - New Hire",
+        "IAM - Rehire User",
+        "IAM - Sync User",
+        "IAM - Terminate User",
+        "IAM - Update User",
+        "User Profile - Create",
+        "User Profile - Update",
+        "User Profile",
+        "IAM - App Add",
+        "IAM - Group Membership Update",
+        "IAM - App Remove",
+        "IAM - App Update",
+    ],
+    ContentType.SCRIPT: [
+        "IAM-Init-AD-User",
+    ],
+    ContentType.LAYOUT: [
+        "MITRE Layout",
     ],
 }

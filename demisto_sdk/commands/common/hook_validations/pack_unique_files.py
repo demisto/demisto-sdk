@@ -436,10 +436,10 @@ class PackUniqueFilesValidator(BaseValidator):
         if error_codes:
             nonignoable_errors = error_codes.difference(ALLOWED_IGNORE_ERRORS)
             if nonignoable_errors and self._add_error(
-                    Errors.pack_have_nonignorable_error(nonignoable_errors),
-                    self.pack_ignore_file,
-                ):
-                    return False
+                Errors.pack_have_nonignorable_error(nonignoable_errors),
+                self.pack_ignore_file,
+            ):
+                return False
         return True
 
     # pack metadata validation

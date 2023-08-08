@@ -15,6 +15,7 @@
 * Fixed an issue where **create-content-graph** was not executed upon changes in the parser infra files.
 * Added support for `svg` integration images in content repo in **validate** command.
 * Added a parameter `skip-packs-known-words` to the **doc-review** command, making sure that pack known words will not be added.
+* Updated the **format** command to use the content graph instead of the id_set file.
 
 ## 1.18.0
 * Added the ability to ignore any validation in the **validate** command when running in an external (non-demisto/content) repo, by placing a `.private-repo-settings` file at its root.

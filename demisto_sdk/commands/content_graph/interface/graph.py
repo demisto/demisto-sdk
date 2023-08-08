@@ -264,6 +264,6 @@ class ContentGraphInterface(ABC):
 
     @abstractmethod
     def get_content_items_by_identifier(
-        self, identifier_values_list: List[str], content_type: str, identifier: str
+        self, identifier_values_list: List[str], content_type: ContentType, identifier: str
     ) -> Any:
         pass

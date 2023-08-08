@@ -2,7 +2,7 @@ import os
 import re
 from abc import ABC
 from pathlib import Path
-from typing import Set, Tuple, List
+from typing import List, Set, Tuple
 
 from demisto_sdk.commands.common.constants import (
     FileType,

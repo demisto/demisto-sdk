@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Tuple, List
+from typing import List, Tuple
 
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.content_graph.objects import Mapper

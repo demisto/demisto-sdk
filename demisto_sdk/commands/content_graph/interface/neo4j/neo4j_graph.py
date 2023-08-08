@@ -674,7 +674,10 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
                 raise e
 
     def get_content_items_by_identifier(
-        self, identifier_values_list: List[str], content_type: ContentType, identifier: str
+        self,
+        identifier_values_list: List[str],
+        content_type: ContentType,
+        identifier: str,
     ) -> List:
         """
         This searches the database for content items and returns a list of them, including their relationships

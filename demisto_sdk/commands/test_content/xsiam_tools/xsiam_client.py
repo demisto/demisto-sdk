@@ -16,6 +16,30 @@ from demisto_sdk.commands.common.logger import logger
 json = JSON_Handler()
 
 
+@abstractmethod
+class XsiamApiError(BaseException):
+    pass
+
+
+class XsiamApiQueryError(XsiamApiError):
+    pass
+
+
+class XsiamApiGetQueryError(XsiamApiQueryError):
+    def __init__(self, execution_id, status_code, data):
+        err_msg = (
+            f'Failed to get xql query results for execution_id "{execution_id}"'
+            f" - with status code {status_code}. data:\n{pformat(data)}"
+        )
+        super().__init__(err_msg)
+
+
+class XsiamApiStartQueryError(XsiamApiQueryError):
+    def __init__(self, query, status_code, data):
+        err_msg = f'Failed to start xql query "{query}" - with status code {status_code}\n{pformat(data)}'
+        super().__init__(err_msg)
+
+
 class XsiamApiClientConfig(BaseModel):
     base_url: HttpUrl = Field(
         default=os.getenv("DEMISTO_BASE_URL"), description="XSIAM Tenant Base URL"
@@ -247,7 +271,7 @@ class XsiamApiClient(XsiamApiInterface):
             )
             response.raise_for_status()
 
-    def start_xql_query(self, query: str, print_req_error: bool = True):
+    def start_xql_query(self, query: str):
         body = {"request_data": {"query": query}}
         endpoint = urljoin(self.base_url, "public_api/v1/xql/start_xql_query/")
         logger.info(f"Starting xql query:\nendpoint={endpoint}\n{query=}")
@@ -258,14 +282,7 @@ class XsiamApiClient(XsiamApiInterface):
         if response.status_code in range(200, 300):
             execution_id: str = data.get("reply", "")
             return execution_id
-        elif print_req_error:
-            logger.error(
-                f'Failed to start xql query "{query}" - with status code {response.status_code}\n{pformat(data)}'
-            )
-            response.raise_for_status()
-        else:
-            logger.info("Still processing. Please wait...")
-            response.raise_for_status()
+        raise XsiamApiStartQueryError(query, response.status_code, data)
 
     def get_xql_query_result(self, execution_id: str, timeout: int = 300):
         payload = json.dumps(
@@ -293,10 +310,11 @@ class XsiamApiClient(XsiamApiInterface):
                 data.get("reply", {}).get("results", {}).get("data", [])
             )
             return reply_results_data
-        else:
-            err_msg = (
-                f'Failed to get xql query results for execution_id "{execution_id}"'
-                f" - with status code {response.status_code}. data:\n{pformat(data)}"
-            )
-            logger.error(err_msg)
-            response.raise_for_status()
+        response.raise_for_status()
+        raise XsiamApiQueryError(execution_id, response.status_code, data)
+
+    def delete_dataset(self, dataset_id: str):
+        endpoint = urljoin(self.base_url, "public_api/v1/xql/delete_dataset")
+        body = {"dataset_name": dataset_id}
+        response = self._session.post(endpoint, json=body)
+        response.raise_for_status()

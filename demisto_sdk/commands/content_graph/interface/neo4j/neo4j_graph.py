@@ -60,6 +60,7 @@ from demisto_sdk.commands.content_graph.interface.neo4j.queries.validations impo
     validate_core_packs_dependencies,
     validate_duplicate_ids,
     validate_fromversion,
+    validate_hidden_pack_dependencies,
     validate_marketplaces,
     validate_multiple_packs_with_same_display_name,
     validate_multiple_script_with_same_name,
@@ -538,6 +539,25 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             results: Dict[str, Neo4jRelationshipResult] = session.execute_read(
                 validate_core_packs_dependencies, pack_ids, marketplace, core_pack_list
             )
+            self._add_nodes_to_mapping(result.node_from for result in results.values())
+            self._add_relationships_to_objects(session, results)
+            return [self._id_to_obj[result] for result in results]
+
+    def find_mandatory_hidden_packs_dependencies(
+        self, pack_ids: List[str]
+    ) -> List[BaseContent]:
+        """
+        Retrieves all the packs that are dependent on hidden packs
+
+        Args:
+            pack_ids (List[str]): A list of content items pack_ids to check.
+
+        Returns:
+            List[BaseContent]: Packs which depend on hidden packs in case exist.
+
+        """
+        with self.driver.session() as session:
+            results = session.execute_read(validate_hidden_pack_dependencies, pack_ids)
             self._add_nodes_to_mapping(result.node_from for result in results.values())
             self._add_relationships_to_objects(session, results)
             return [self._id_to_obj[result] for result in results]

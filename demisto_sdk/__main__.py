@@ -3202,7 +3202,7 @@ def create_content_graph(
 ):
     ctx.invoke(
         create,
-        ctx.obj,
+        ctx,
         marketplace=marketplace,
         no_dependencies=no_dependencies,
         output_path=output_path,
@@ -3285,7 +3285,7 @@ def update_content_graph(
 ):
     ctx.invoke(
         update,
-        ctx.obj,
+        ctx,
         use_git=use_git,
         marketplace=marketplace,
         use_current=use_current,

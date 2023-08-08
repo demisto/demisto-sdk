@@ -263,6 +263,12 @@ class ContentGraphInterface(ABC):
         pass
 
     @abstractmethod
+    def find_mandatory_hidden_packs_dependencies(
+            self, pack_ids: List[str]
+    ) -> List[BaseContent]:
+        pass
+
+    @abstractmethod
     def get_content_items_by_identifier(
         self, identifier_values_list: List[str], content_type: ContentType, identifier: str
     ) -> Any:

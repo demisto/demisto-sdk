@@ -8,6 +8,7 @@
 * Removed the format execution step from the `contribution_converter` since it can be executed separately during the contribution process.
 * Added a new validation (`GR108`) to **validate** command that assures hidden packs do not have mandatory dependant packs.
 * Added a validation that check that non ignorable errors are not used.
+* Updated the **generate-docs** command to use the content graph instead of the id_set file.
 
 ## 1.18.1
 * Fixed an issue where the coloring directives where showing in log messages.

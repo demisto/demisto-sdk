@@ -9,7 +9,7 @@
 * Removed the format execution step from the `contribution_converter` since it can be executed separately during the contribution process.
 * Added a new validation (`GR108`) to **validate** command that assures hidden packs do not have mandatory dependant packs.
 * Added a validation that check that non ignorable errors are not used.
-* Running **validate** in a GitHub Action flow will now show errors as annotations, visible in the `Files Changed` tab of the pull request. 
+* Running **validate** in a GitHub Action will now show errors as annotations, visible in the `Files Changed` tab of the pull request. 
 
 ## 1.18.1
 * Fixed an issue where the coloring directives where showing in log messages.

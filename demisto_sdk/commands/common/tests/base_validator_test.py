@@ -81,13 +81,23 @@ def test_handle_error_on_unignorable_error_codes(
 @pytest.mark.parametrize(
     "GITHUB_ACTIONS, suggested_fix, expected_result",
     [
-     (True, "fix", "::error file=PATH,line=1,endLine=1,title=Validation Error SC102::Error-message%0Afix\n"),
-     (True, None, "::error file=PATH,line=1,endLine=1,title=Validation Error SC102::Error-message\n"),
-     (False, "fix", ""),
-     (False, None,  "")
-     ]
+        (
+            True,
+            "fix",
+            "::error file=PATH,line=1,endLine=1,title=Validation Error SC102::Error-message%0Afix\n",
+        ),
+        (
+            True,
+            None,
+            "::error file=PATH,line=1,endLine=1,title=Validation Error SC102::Error-message\n",
+        ),
+        (False, "fix", ""),
+        (False, None, ""),
+    ],
 )
-def test_handle_error_github_annotation(monkeypatch, capsys, GITHUB_ACTIONS, suggested_fix, expected_result):
+def test_handle_error_github_annotation(
+    monkeypatch, capsys, GITHUB_ACTIONS, suggested_fix, expected_result
+):
     """
     Given
     - GITHUB_ACTIONS - True if ci/cd, otherwise False
@@ -101,12 +111,17 @@ def test_handle_error_github_annotation(monkeypatch, capsys, GITHUB_ACTIONS, sug
     - Ensure the message was printed if needed, and not if not
     - Ensure the message includes the suggested_fix if exists
     """
-    monkeypatch.setenv('GITHUB_ACTIONS', GITHUB_ACTIONS)
+    monkeypatch.setenv("GITHUB_ACTIONS", GITHUB_ACTIONS)
     base_validator = BaseValidator()
-    base_validator.handle_error(error_message="Error-message", error_code="SC102", file_path="PATH",
-                                suggested_fix=suggested_fix)
+    base_validator.handle_error(
+        error_message="Error-message",
+        error_code="SC102",
+        file_path="PATH",
+        suggested_fix=suggested_fix,
+    )
     captured = capsys.readouterr()
     assert captured.out == expected_result
+
 
 def test_handle_error(mocker, caplog):
     """

@@ -79,29 +79,33 @@ def test_handle_error_on_unignorable_error_codes(
 
 
 @pytest.mark.parametrize(
-    "github_actions_env_var, suggested_fix, expected_result",
+    "github_actions_env_var, suggested_fix, warning, expected_result",
     [
         (
             True,
             "fix",
+            False,
             "::error file=PATH,line=1,endLine=1,title=Validation Error SC102::Error-message%0Afix\n",
         ),
         (
             True,
             None,
+            False,
             "::error file=PATH,line=1,endLine=1,title=Validation Error SC102::Error-message\n",
         ),
-        (False, "fix", ""),
-        (False, None, ""),
+        (True, None, True, ""),
+        (False, "fix", False, ""),
+        (False, None, False, ""),
     ],
 )
 def test_handle_error_github_annotation(
-    monkeypatch, capsys, github_actions_env_var, suggested_fix, expected_result
+    monkeypatch, capsys, github_actions_env_var, suggested_fix, warning, expected_result
 ):
     """
     Given
     - github_actions_env_var - True if ci/cd, otherwise False
     - suggested_fix - a suggestion for fixing the error
+    - warning
     - expected_result
 
     When
@@ -118,6 +122,7 @@ def test_handle_error_github_annotation(
         error_code="SC102",
         file_path="PATH",
         suggested_fix=suggested_fix,
+        warning=warning
     )
     captured = capsys.readouterr()
     assert captured.out == expected_result

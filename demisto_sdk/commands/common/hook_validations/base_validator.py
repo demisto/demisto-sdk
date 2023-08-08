@@ -267,7 +267,7 @@ class BaseValidator:
             ).replace(
                 "\n", "%0A"
             )  # GitHub action syntax
-            print(
+            print(  # noqa: T201
                 f"::error file={file_path},line=1,endLine=1,title=Validation Error {error_code}::{github_annotation_message}"
             )
         return formatted_error

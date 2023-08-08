@@ -2,6 +2,7 @@
 ## Unreleased
 * Fixed an issue where the coloring directives where showing in log messages.
 * Fixed an issue where **create-content-graph** was not executed upon changes in the parser infra files.
+* Added a new github action for **validate** when running on CI environments.
 
 ## 1.18.0
 * Added the ability to ignore any validation in the **validate** command when running in an external (non-demisto/content) repo, by placing a `.private-repo-settings` file at its root.

@@ -46,7 +46,8 @@ WHERE (a:{label} OR a.content_type = "{content_type}")
 AND a.not_in_repository = true
 AND any(
     identifier IN [a.object_id, a.name]
-    WHERE toLower(identifier) IN {content_items_identifiers}
+    WHERE identifier IN {content_items_identifiers}
+    OR toLower(identifier) IN {content_items_identifiers}
 )
 DETACH DELETE a"""
 

@@ -13,12 +13,12 @@ from demisto_sdk.commands.common.constants import (
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.hook_validations.graph_validator import GraphValidator
 from demisto_sdk.commands.common.legacy_git_tools import git_path
-from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
-from demisto_sdk.commands.content_graph.content_graph_commands import (
+from demisto_sdk.commands.content_graph.commands.create import (
     create_content_graph,
 )
-from demisto_sdk.commands.content_graph.interface.neo4j.neo4j_graph import (
-    Neo4jContentGraphInterface as ContentGraphInterface,
+from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
+from demisto_sdk.commands.content_graph.interface import (
+    ContentGraphInterface,
 )
 from demisto_sdk.commands.content_graph.objects.classifier import Classifier
 from demisto_sdk.commands.content_graph.objects.integration import Command, Integration
@@ -281,7 +281,7 @@ def repository(mocker) -> ContentDTO:
     pack1 = mock_pack(
         "SamplePack", [MarketplaceVersions.XSOAR, MarketplaceVersions.MarketplaceV2]
     )
-    pack2 = mock_pack("SamplePack2", [MarketplaceVersions.XSOAR])
+    pack2 = mock_pack("SamplePack2", [MarketplaceVersions.XSOAR], hidden=True)
     pack3 = mock_pack(
         "SamplePack3",
         [
@@ -395,7 +395,7 @@ def _get_pack_by_id(repository: ContentDTO, pack_id: str) -> Pack:
     raise ValueError(f"Pack {pack_id} does not exist in the repository.")
 
 
-def mock_pack(name, marketplaces):
+def mock_pack(name, marketplaces, hidden=False):
     return Pack(
         object_id=name,
         content_type=ContentType.PACK,
@@ -403,7 +403,7 @@ def mock_pack(name, marketplaces):
         path=Path("Packs"),
         name="pack_name",
         marketplaces=marketplaces,
-        hidden=False,
+        hidden=hidden,
         server_min_version="5.5.0",
         current_version="1.0.0",
         tags=[],
@@ -572,7 +572,6 @@ def test_is_file_using_unknown_content(
     """
     logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
     logger_warning = mocker.patch.object(logging.getLogger("demisto-sdk"), "warning")
-
     with GraphValidator(
         update_graph=False, git_files=[], include_optional_deps=include_optional
     ) as graph_validator:
@@ -769,3 +768,36 @@ def test_deprecated_usage__new_content(repository: ContentDTO, mocker):
         is_valid = validator.validate_deprecated_items_usage()
 
     assert not is_valid
+
+
+@pytest.mark.parametrize("changed_pack", ["Packs/SamplePack", "Packs/SamplePack2"])
+def test_validate_hidden_pack_is_not_mandatory_dependency(
+    repository: ContentDTO, mocker, changed_pack: str
+):
+    """
+    Given
+    - A content repo which contains SamplePack that is dependent on
+      SamplePack2 (which is hidden) as mandatory dependency
+
+    When
+    - Case A: the changed file was the hidden pack.
+    - Case B: the changed file was the hidden pack's mandatory dependency
+
+    Then
+    - validate that an error occurs with a message stating that SamplePack2 is hidden and has mandatory dependencies
+    """
+    logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
+
+    with GraphValidator(
+        update_graph=False, git_files=[Path(changed_pack)]
+    ) as graph_validator:
+        create_content_graph(graph_validator.graph)
+        is_valid = (
+            graph_validator.validate_hidden_packs_do_not_have_mandatory_dependencies()
+        )
+
+    assert not is_valid
+    assert str_in_call_args_list(
+        logger_error.call_args_list,
+        "[GR108] - SamplePack pack(s) cannot have a mandatory dependency on the hidden pack SamplePack2",
+    )

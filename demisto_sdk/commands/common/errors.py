@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Set, Union
 
 import decorator
 from packaging.version import Version
@@ -52,7 +52,7 @@ PRESET_ERROR_TO_CHECK = {
     "deprecated": ["ST", "BC", "BA", "IN127", "IN128", "PB104", "SC101"],
 }
 
-ERROR_CODE = {
+ERROR_CODE: Dict = {
     # BA - Basic
     "wrong_version": {
         "code": "BA100",
@@ -1455,6 +1455,11 @@ ERROR_CODE = {
     },
     "deprecated_items_usage": {
         "code": "GR107",
+        "related_field": "",
+    },
+    "hidden_pack_not_mandatory_dependency": {
+        "code": "GR108",
+        "ui_applicable": False,
         "related_field": "",
     },
 }
@@ -4350,3 +4355,10 @@ class Errors:
             "is replaced by the word Incident/Incidents\nfor example: if there is a script `getIncident'"
             "it will not be possible to create a script with the name `getAlert`)"
         )
+
+    @staticmethod
+    @error_code_decorator
+    def hidden_pack_not_mandatory_dependency(
+        hidden_pack: str, dependant_packs_ids: Set[str]
+    ):
+        return f"{', '.join(dependant_packs_ids)} pack(s) cannot have a mandatory dependency on the hidden pack {hidden_pack}."

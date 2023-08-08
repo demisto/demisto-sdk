@@ -267,6 +267,28 @@ def validate_core_packs_dependencies(
     }
 
 
+def validate_hidden_pack_dependencies(
+    tx: Transaction,
+    pack_ids: List[str],
+):
+    query = f"""// Returns DEPENDS_ON relationships to packs which are hidden
+MATCH (pack1)-[r:{RelationshipType.DEPENDS_ON}{{mandatorily:true}}]->(pack2{{hidden: true}})
+WHERE (pack1.object_id in {pack_ids} OR pack2.object_id in {pack_ids})
+AND NOT r.is_test
+and NOT pack1.hidden
+and NOT pack1.deprecated
+RETURN pack1, collect(r) as relationships, collect(pack2) as nodes_to
+        """
+    return {
+        item.get("pack1").element_id: Neo4jRelationshipResult(
+            node_from=item.get("pack1"),
+            relationships=item.get("relationships"),
+            nodes_to=item.get("nodes_to"),
+        )
+        for item in run_query(tx, query)
+    }
+
+
 def validate_duplicate_ids(
     tx: Transaction, file_paths: List[str]
 ) -> List[Tuple[graph.Node, List[graph.Node]]]:

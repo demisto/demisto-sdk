@@ -2,8 +2,12 @@
 ## Unreleased
 * Added the **graph** command group. The **create-content-graph** and **update-content-graph** commands were migrated to this command group, and named **create** and **update** respectively.
 * Added the **get-relationships** graph command.
+* The **modeling-rules test** command will now validate that the modeling rules schema mappings are aligned with the test-data mappings.
 * Added the *--xsiam* flag to the **init** command in order to create XSIAM content.
+* Fixed an issue where the `update-additional-dependencies` **pre-commit** step failed when not running in a content-like repo.
 * Removed the format execution step from the `contribution_converter` since it can be executed separately during the contribution process.
+* Added a new validation (`GR108`) to **validate** command that assures hidden packs do not have mandatory dependant packs.
+* Added a validation that check that non ignorable errors are not used.
 
 ## 1.18.1
 * Fixed an issue where the coloring directives where showing in log messages.

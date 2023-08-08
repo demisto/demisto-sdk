@@ -231,6 +231,7 @@ def init_pack(content_repo: ContentGitRepo, monkeypatch: MonkeyPatch):
         Description: description
         Pack's type: 1 (xsoar)
         Category: 1 (Analytics & SIEM)
+        Marketplaces: ""
         Create integration: n
 
     When: Initiating a new pack with the init command
@@ -248,7 +249,7 @@ def init_pack(content_repo: ContentGitRepo, monkeypatch: MonkeyPatch):
     res = runner.invoke(
         main,
         f"init -a {author_image_abs_path} --pack --name Sample",
-        input="\n".join(["y", "Sample", "description", "1", "1", "n", "6.0.0"]),
+        input="\n".join(["y", "Sample", "description", "1", "1", "", "n", "6.0.0"]),
     )
     assert res.exit_code == 0, (
         f"Could not run the init command.\nstdout={res.stdout}\nstderr={res.stderr}\n"

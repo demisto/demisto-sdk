@@ -1,4 +1,5 @@
 import logging
+import os
 from os.path import join
 from pathlib import Path
 
@@ -87,13 +88,13 @@ def test_update_release_notes_new_integration(demisto_client, mocker):
     )
     mocker.patch.object(UpdateRN, "get_master_version", return_value="1.0.0")
 
-    if Path(rn_path).exists():
-        Path.unlink(Path(rn_path))
+    if os.path.exists(rn_path):
+        os.remove(rn_path)
     result = runner.invoke(
         main, [UPDATE_RN_COMMAND, "-i", join("Packs", "FeedAzureValid")]
     )
     assert result.exit_code == 0
-    assert Path(rn_path).is_file()
+    assert os.path.isfile(rn_path)
     assert not result.exception
     assert all(
         [
@@ -159,15 +160,15 @@ def test_update_release_notes_modified_integration(demisto_client, mocker):
     )
     mocker.patch.object(UpdateRN, "get_master_version", return_value="1.0.0")
 
-    if Path(rn_path).exists():
-        Path.unlink(Path(rn_path))
+    if os.path.exists(rn_path):
+        os.remove(rn_path)
 
     result = runner.invoke(
         main, [UPDATE_RN_COMMAND, "-i", join("Packs", "FeedAzureValid")]
     )
 
     assert result.exit_code == 0
-    assert Path(rn_path).is_file()
+    assert os.path.isfile(rn_path)
     assert not result.exception
     assert all(
         [
@@ -225,15 +226,15 @@ def test_update_release_notes_incident_field(demisto_client, mocker):
     )
     mocker.patch.object(UpdateRN, "get_master_version", return_value="1.0.0")
 
-    if Path(rn_path).exists():
-        Path.unlink(Path(rn_path))
+    if os.path.exists(rn_path):
+        os.remove(rn_path)
 
     result = runner.invoke(
         main, [UPDATE_RN_COMMAND, "-i", join("Packs", "FeedAzureValid")]
     )
 
     assert result.exit_code == 0
-    assert Path(rn_path).is_file()
+    assert os.path.isfile(rn_path)
     assert not result.exception
     assert all(
         [
@@ -290,8 +291,8 @@ def test_update_release_notes_unified_yml_integration(demisto_client, mocker):
     )
     mocker.patch.object(UpdateRN, "get_master_version", return_value="1.0.0")
 
-    if Path(rn_path).exists():
-        Path.unlink(Path(rn_path))
+    if os.path.exists(rn_path):
+        os.remove(rn_path)
 
     result = runner.invoke(main, [UPDATE_RN_COMMAND, "-i", join("Packs", "VMware")])
     assert result.exit_code == 0
@@ -306,7 +307,7 @@ def test_update_release_notes_unified_yml_integration(demisto_client, mocker):
         ]
     )
 
-    assert Path(rn_path).is_file()
+    assert os.path.isfile(rn_path)
     with open(rn_path) as f:
         rn = f.read()
     assert expected_rn == rn
@@ -422,7 +423,7 @@ def test_update_release_notes_existing(demisto_client, mocker):
     )
 
     assert result.exit_code == 0
-    assert Path(rn_path).exists()
+    assert os.path.exists(rn_path)
     assert not result.exception
     assert str_in_call_args_list(
         logger_info.call_args_list,
@@ -431,7 +432,7 @@ def test_update_release_notes_existing(demisto_client, mocker):
 
     with open(rn_path) as f:
         rn = f.read()
-    Path.unlink(Path(rn_path))
+    os.remove(rn_path)
     assert expected_rn == rn
 
 
@@ -486,10 +487,12 @@ def test_update_release_notes_modified_apimodule(demisto_client, repo, mocker):
         integration = taxii_feed_integration
 
     mocker.patch(
-        "demisto_sdk.commands.update_release_notes.update_rn.Neo4jContentGraphInterface",
+        "demisto_sdk.commands.update_release_notes.update_rn.ContentGraphInterface",
         return_value=MockedContentGraphInterface(),
     )
-
+    mocker.patch(
+        "demisto_sdk.commands.update_release_notes.update_rn.update_content_graph",
+    )
     modified_files = {api_module_script_path}
     runner = CliRunner(mix_stderr=False)
 
@@ -828,8 +831,8 @@ def test_force_update_release(demisto_client, mocker, repo):
     logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
 
     rn_path = join(THINKCANARY_RN_FOLDER, "1_0_1.md")
-    if Path(rn_path).exists():
-        Path.unlink(Path(rn_path))
+    if os.path.exists(rn_path):
+        os.remove(rn_path)
     mocker.patch.object(UpdateRN, "is_bump_required", return_value=True)
     mocker.patch.object(
         ValidateManager,

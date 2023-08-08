@@ -131,7 +131,7 @@ class DocReviewer:
                 "Packs", pack_name, PACKS_PACK_IGNORE_FILE_NAME
             )
             default_pack_known_words = add_default_pack_known_words(file_path)
-            if Path(packs_ignore_path).is_file():
+            if os.path.isfile(packs_ignore_path):
                 config = ConfigParser(allow_no_value=True)
                 config.read(packs_ignore_path)
                 if "known_words" in config.sections():
@@ -208,7 +208,7 @@ class DocReviewer:
         for file in self.gather_all_changed_files():
             file = str(file)
             if (
-                Path(file).is_file()
+                os.path.isfile(file)
                 and find_type(
                     file, ignore_invalid_schema_file=self.ignore_invalid_schema_file
                 )

@@ -268,9 +268,8 @@ class ArtifactsManager:
             # Add suffix
             suffix_handler(self)
 
-        keyfile_path = Path("keyfile")
-        if keyfile_path.exists():
-            Path.unlink(keyfile_path)
+        if os.path.exists("keyfile"):
+            os.remove("keyfile")
         logger.info(f"\nExecution time: {time.time() - self.execution_start} seconds")
 
         return self.exit_code
@@ -685,8 +684,8 @@ def ProcessPoolHandler(artifact_manager: ArtifactsManager) -> ProcessPool:
             pool.close()
             pool.join()
         finally:
-            if (keyfile_path := Path("keyfile")).exists():
-                Path.unlink(keyfile_path)
+            if os.path.exists("keyfile"):
+                os.remove("keyfile")
 
 
 def wait_futures_complete(

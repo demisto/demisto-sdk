@@ -1,7 +1,6 @@
 import os
 import re
 from abc import ABC
-from pathlib import Path
 from typing import Dict, List, Tuple
 
 from demisto_sdk.commands.common.constants import (
@@ -121,7 +120,7 @@ class LayoutBaseFormat(BaseUpdateJSON, ABC):
         self.remove_non_existent_fields_layout()
 
     def layout__set_output_path(self):
-        output_basename = Path(self.output_file).name
+        output_basename = os.path.basename(self.output_file)
         if not output_basename.startswith(LAYOUT_PREFIX):
             new_output_basename = (
                 LAYOUT_PREFIX + output_basename.split(LAYOUTS_CONTAINER_PREFIX)[-1]
@@ -147,7 +146,7 @@ class LayoutBaseFormat(BaseUpdateJSON, ABC):
         self.remove_non_existent_fields_container_layout()
 
     def layoutscontainer__set_output_path(self):
-        output_basename = Path(self.output_file).name
+        output_basename = os.path.basename(self.output_file)
         if not output_basename.startswith(LAYOUTS_CONTAINER_PREFIX):
             new_output_basename = (
                 LAYOUTS_CONTAINER_PREFIX + output_basename.split(LAYOUT_PREFIX)[-1]

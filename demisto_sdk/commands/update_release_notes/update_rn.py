@@ -49,8 +49,9 @@ from demisto_sdk.commands.common.tools import (
     pack_name_to_path,
     run_command,
 )
-from demisto_sdk.commands.content_graph.interface.neo4j.neo4j_graph import (
-    Neo4jContentGraphInterface,
+from demisto_sdk.commands.content_graph.commands.update import update_content_graph
+from demisto_sdk.commands.content_graph.interface import (
+    ContentGraphInterface,
 )
 
 CLASS_BY_FILE_TYPE = {
@@ -345,8 +346,8 @@ class UpdateRN:
         )
         self.bc_path = bc_file_path
         bc_file_data: dict = dict()
-        if (path := Path(bc_file_path)).exists():
-            with open(path) as f:
+        if os.path.exists(bc_file_path):
+            with open(bc_file_path) as f:
                 bc_file_data = json.loads(f.read())
         bc_file_data["breakingChanges"] = True
         bc_file_data["breakingChangesNotes"] = bc_file_data.get("breakingChangesNotes")
@@ -398,7 +399,7 @@ class UpdateRN:
         :return
             Whether the pack metadata exists
         """
-        if not Path(self.metadata_path).is_file():
+        if not os.path.isfile(self.metadata_path):
             logger.info(
                 f'[red]"{self.metadata_path}" file does not exist, create one in the root of the pack[/red]'
             )
@@ -651,7 +652,7 @@ class UpdateRN:
         :param rn_path: The RN path to check/create
 
         """
-        if not Path(rn_path).parent.exists():
+        if not os.path.exists(os.path.dirname(rn_path)):
             try:
                 os.makedirs(os.path.dirname(rn_path))
             except OSError as exc:  # Guard against race condition
@@ -905,7 +906,7 @@ class UpdateRN:
             docker_image_name: The docker image name
 
         """
-        if Path(release_notes_path).exists() and self.update_type is not None:
+        if os.path.exists(release_notes_path) and self.update_type is not None:
             logger.info(
                 f"[yellow]Release notes were found at {release_notes_path}. Skipping[/yellow]"
             )
@@ -962,7 +963,7 @@ def get_file_description(path, file_type) -> str:
     :return
     The file description if exists otherwise returns %%UPDATE_RN%%
     """
-    if not Path(path).is_file():
+    if not os.path.isfile(path):
         logger.info(
             f'[yellow]Cannot get file description: "{path}" file does not exist[/yellow]'
         )
@@ -1024,7 +1025,8 @@ def update_api_modules_dependents_rn(
         f"[yellow]Changes were found in the following APIModules : {api_module_set}, updating all dependent "
         f"integrations.[/yellow]"
     )
-    with Neo4jContentGraphInterface(update_graph=True) as graph:
+    with ContentGraphInterface() as graph:
+        update_content_graph(graph, use_git=True, dependencies=True)
         integrations = get_api_module_dependencies_from_graph(api_module_set, graph)
         for integration in integrations:
             integration_pack_name = integration.pack_id
@@ -1089,7 +1091,7 @@ def get_from_version_at_update_rn(path: str) -> Optional[str]:
         Fromversion if there is a fromversion key in the yml file
 
     """
-    if not Path(path).is_file():
+    if not os.path.isfile(path):
         logger.info(
             f'[yellow]Cannot get file fromversion: "{path}" file does not exist[/yellow]'
         )

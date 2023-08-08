@@ -191,7 +191,7 @@ class BaseValidator:
             if not isinstance(file_path, str):
                 file_path = str(file_path)
 
-            file_name = Path(file_path).name
+            file_name = os.path.basename(file_path)
             try:
                 self.check_file_flags(file_name, file_path)
             except FileNotFoundError:
@@ -286,7 +286,7 @@ class BaseValidator:
 
     @staticmethod
     def get_metadata_file_content(meta_file_path):
-        if not Path(meta_file_path).exists():
+        if not os.path.exists(meta_file_path):
             return {}
 
         with open(meta_file_path, encoding="utf-8") as file:
@@ -371,7 +371,7 @@ class BaseValidator:
 
         json_contents = []
         existing_json = ""
-        if Path(self.json_file_path).exists():
+        if os.path.exists(self.json_file_path):
             try:
                 existing_json = get_json(self.json_file_path)
             except ValueError:

@@ -904,47 +904,6 @@ def test_generate_playbook_doc_passes_markdownlint(tmp_path):
             assert not markdownlint.has_errors, markdownlint.validations
 
 
-@pytest.mark.skip
-def test_generate_script_doc(tmp_path, mocker):
-    import demisto_sdk.commands.generate_docs.common as common
-
-    d = tmp_path / "script_doc_out"
-    d.mkdir()
-    in_script = os.path.join(FILES_PATH, "docs_test", "script-Set.yml")
-    id_set_file = os.path.join(FILES_PATH, "docs_test", "id_set.json")
-    expected_readme = os.path.join(FILES_PATH, "docs_test", "set_expected-README.md")
-    with open(id_set_file) as f:
-        id_set = json.load(f)
-    patched = mocker.patch.object(
-        IDSetCreator, "create_id_set", return_value=[id_set, {}, {}]
-    )
-    mocker.patch.object(common, "execute_command", side_effect=handle_example)
-    # because used in is random
-    mocker.patch(
-        "demisto_sdk.commands.generate_docs.generate_script_doc.get_used_in",
-        return_value=[],
-    )
-    generate_script_doc(
-        in_script,
-        "!Set key=k1 value=v1,!Set key=k2 value=v2 append=true",
-        str(d),
-    )
-    patched.assert_called()
-    readme = d / "README.md"
-    with open(readme) as real_readme_file:
-        with open(expected_readme) as expected_readme_file:
-            assert real_readme_file.read() == expected_readme_file.read()
-
-    # Now try the same thing with a txt file
-    command_examples = d / "command_examples.txt"
-    with command_examples.open("w") as f:
-        f.write("!Set key=k1 value=v1\n!Set key=k2 value=v2 append=true")
-    generate_script_doc(in_script, command_examples, str(d))
-    with open(readme) as real_readme_file:
-        with open(expected_readme) as expected_readme_file:
-            assert real_readme_file.read() == expected_readme_file.read()
-
-
 class TestAppendOrReplaceCommandInDocs:
     positive_test_data_file = os.path.join(
         FILES_PATH, "docs_test", "positive_docs_section_end_with_eof.md"

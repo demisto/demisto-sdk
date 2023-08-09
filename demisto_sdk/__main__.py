@@ -333,7 +333,7 @@ def split(ctx, config, **kwargs):
         ignore_unknown_options=True,
         allow_extra_args=True,
     ),
-    short_help="""Generates a log file for the current PR"""
+    short_help="""Generates a log file for the current PR""",
 )
 @click.help_option("-h", "--help")
 @click.option(
@@ -341,23 +341,6 @@ def split(ctx, config, **kwargs):
     help="Generates a log file for the current PR",
     is_flag=True,
     default=False,
-)
-@click.option(
-    "--fix",
-    help="Description of the fix",
-    required=False,
-    is_flag=False
-)
-@click.option(
-    "--feature",
-    help="Description of the feature",
-    required=False,
-    is_flag=False
-)
-@click.option(
-    "--breaking",
-    help="Description of the breaking",
-    required=False
 )
 @click.option(
     "--validate",
@@ -372,20 +355,19 @@ def split(ctx, config, **kwargs):
     default=False,
 )
 @click.option(
-    "-pt",
+    "-t",
     "--pr-title",
     help="The PR title",
 )
 @click.option(
-    "-pn",
+    "-n",
     "--pr-number",
     help="The PR number",
 )
 @click.pass_context
 @logging_setup_decorator
 def changelog(ctx, **kwargs):
-    """
-    """
+    """ """
     changelog_management(**kwargs)
 
 

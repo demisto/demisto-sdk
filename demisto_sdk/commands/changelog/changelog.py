@@ -169,7 +169,7 @@ class Changelog:
                 item.unlink()
             elif item.is_dir():
                 shutil.rmtree(item)
-        logger.info("Something msg")
+        logger.info("Cleanup of `.changelog` folder completed successfully")
 
     def is_release(self) -> bool:
         return (

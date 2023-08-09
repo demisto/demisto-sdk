@@ -830,7 +830,6 @@ def get_file(
     file_path = Path(file_path)  # type: ignore[arg-type]
 
     type_of_file = file_path.suffix.lower()
-    logger.debug(f"Inferred type {type_of_file} for file {file_path.name}.")
 
     if not file_path.exists():
         file_path = Path(get_content_path()) / file_path  # type: ignore[arg-type]

@@ -1,9 +1,6 @@
-import argparse
-import contextlib
 import glob
 import io
 import logging
-
 import os
 import re
 import shlex
@@ -13,9 +10,10 @@ from collections import OrderedDict
 from concurrent.futures import as_completed
 from configparser import ConfigParser, MissingSectionHeaderError
 from contextlib import contextmanager
-from distutils.version import LooseVersion
+from datetime import datetime
 from enum import Enum
 from functools import lru_cache
+from hashlib import sha1
 from pathlib import Path, PosixPath
 from subprocess import DEVNULL, PIPE, Popen, check_output
 from time import sleep
@@ -39,11 +37,9 @@ import giturlparse
 import requests
 import urllib3
 from bs4.dammit import UnicodeDammit
-from git.types import PathLike
-from packaging.version import LegacyVersion, Version, parse
+from packaging.version import Version
 from pebble import ProcessFuture, ProcessPool
 from requests.exceptions import HTTPError
-from demisto_sdk.commands.common.cpu_count import cpu_count
 
 from demisto_sdk.commands.common.constants import (
     ALL_FILES_VALIDATION_IGNORE_WHITELIST,
@@ -58,6 +54,7 @@ from demisto_sdk.commands.common.constants import (
     DEFAULT_CONTENT_ITEM_TO_VERSION,
     DOC_FILES_DIR,
     ENV_DEMISTO_SDK_MARKETPLACE,
+    ENV_SDK_WORKING_OFFLINE,
     ID_IN_COMMONFIELDS,
     ID_IN_ROOT,
     INCIDENT_FIELDS_DIR,
@@ -113,6 +110,7 @@ from demisto_sdk.commands.common.constants import (
     MarketplaceVersions,
     urljoin,
 )
+from demisto_sdk.commands.common.cpu_count import cpu_count
 from demisto_sdk.commands.common.git_content_config import GitContentConfig, GitProvider
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
@@ -120,7 +118,7 @@ from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
 from demisto_sdk.commands.common.handlers import YAML_Handler
 
 if TYPE_CHECKING:
-    from demisto_sdk.commands.content_graph.interface.graph import ContentGraphInterface
+    from demisto_sdk.commands.content_graph.interface import ContentGraphInterface
 
 logger = logging.getLogger("demisto-sdk")
 
@@ -263,6 +261,14 @@ LAYOUT_CONTAINER_FIELDS = {
 SDK_PYPI_VERSION = r"https://pypi.org/pypi/demisto-sdk/json"
 
 SUFFIX_TO_REMOVE = ("_dev", "_copy")
+
+
+class NoInternetConnectionException(Exception):
+    """
+    This exception is raised in methods that require an internet connection, when the SDK is defined as working offline.
+    """
+
+    pass
 
 
 def generate_xsiam_normalized_name(file_name, prefix):
@@ -505,7 +511,7 @@ def get_remote_file_from_api(
                 timeout=10,
                 headers={
                     "Authorization": f"Bearer {github_token}" if github_token else "",
-                    "Accept": f"application/vnd.github.VERSION.raw",
+                    "Accept": "application/vnd.github.VERSION.raw",
                 },
             )  # Sometime we need headers
             if not res.ok:  # sometime we need param token
@@ -562,6 +568,7 @@ def get_remote_file(
     tag: str = "master",
     return_content: bool = False,
     git_content_config: Optional[GitContentConfig] = None,
+    default_value=None,
 ):
     """
     Args:
@@ -569,10 +576,17 @@ def get_remote_file(
         tag: The branch name. default is 'master'
         return_content: Determines whether to return the file's raw content or the dict representation of it.
         git_content_config: The content config to take the file from
+        default_value: The method returns this value if using the SDK in offline mode. default_value cannot be None,
+        as it will raise an exception.
     Returns:
         The file content in the required format.
 
     """
+    if is_sdk_defined_working_offline():
+        if default_value is None:
+            raise NoInternetConnectionException
+        return default_value
+
     tag = tag.replace("origin/", "").replace("demisto/", "")
     if not git_content_config:
         try:
@@ -788,7 +802,7 @@ def safe_write_unicode(
     try:
         _write()
 
-    except UnicodeError as e:
+    except UnicodeError:
         encoding = UnicodeDammit(path.read_bytes()).original_encoding
         if encoding == "utf-8":
             logger.error(
@@ -1094,6 +1108,18 @@ def old_get_latest_release_notes_text(rn_path):
     return new_rn if new_rn else None
 
 
+def find_pack_folder(path: Path) -> Path:
+    """
+    Finds the pack folder.
+    """
+
+    if "Packs" not in path.parts:
+        raise ValueError(f"Could not find a pack for {str(path)}")
+    if path.parent.name == "Packs":
+        return path
+    return path.parents[len(path.parts) - (path.parts.index("Packs")) - 3]
+
+
 def get_release_notes_file_path(file_path):
     """
     Accepts file path which is alleged to contain release notes. Validates that the naming convention
@@ -1173,7 +1199,7 @@ def server_version_compare(v1, v2):
     v1 = format_version(v1)
     v2 = format_version(v2)
 
-    _v1, _v2 = LooseVersion(v1), LooseVersion(v2)
+    _v1, _v2 = Version(v1), Version(v2)
     if _v1 == _v2:
         return 0
     if _v1 > _v2:
@@ -1429,7 +1455,7 @@ def get_pack_ignore_content(pack_name: str) -> Union[ConfigParser, None]:
             config = ConfigParser(allow_no_value=True)
             config.read(_pack_ignore_file_path)
             return config
-        except MissingSectionHeaderError as err:
+        except MissingSectionHeaderError:
             logger.exception(
                 f"Error when retrieving the content of {_pack_ignore_file_path}"
             )
@@ -1600,7 +1626,7 @@ def get_dict_from_file(
                 return {}, "py"
             elif path.endswith(".xif"):
                 return {}, "xif"
-    except FileNotFoundError as e:
+    except FileNotFoundError:
         if raises_error:
             raise
 
@@ -1660,7 +1686,7 @@ def find_type_by_path(path: Union[str, Path] = "") -> Optional[FileType]:
         elif LAYOUT_RULES_DIR in path.parts:
             return FileType.LAYOUT_RULE
 
-    elif path.name.endswith("_image.png"):
+    elif path.stem.endswith("_image") and path.suffix in (".png", ".svg"):
         if path.name.endswith("Author_image.png"):
             return FileType.AUTHOR_IMAGE
         elif XSIAM_DASHBOARDS_DIR in path.parts:
@@ -2116,7 +2142,7 @@ def get_last_release_version():
     """
     tags = run_command("git tag").split("\n")
     tags = [tag for tag in tags if re.match(r"\d+\.\d+\.\d+", tag) is not None]
-    tags.sort(key=LooseVersion, reverse=True)
+    tags.sort(key=Version, reverse=True)
 
     return tags[0]
 
@@ -3191,7 +3217,6 @@ def get_item_marketplaces(
         return [MarketplaceVersions.MarketplaceV2.value]
 
     if not item_data:
-        file_type = Path(item_path).suffix
         item_data = get_file(item_path)
 
     # first check, check field 'marketplaces' in the item's file
@@ -3805,3 +3830,81 @@ def parse_multiple_path_inputs(
         return result
 
     raise ValueError(f"Cannot parse paths from {input_path}")
+
+
+@lru_cache
+def is_sdk_defined_working_offline() -> bool:
+    """
+    This method returns True when the SDK is defined as offline, i.e., when
+    the DEMISTO_SDK_OFFLINE_ENV environment variable is True.
+
+    Returns:
+        bool: The value for DEMISTO_SDK_OFFLINE_ENV environment variable.
+    """
+    return str2bool(os.getenv(ENV_SDK_WORKING_OFFLINE))
+
+
+def sha1_update_from_file(filename: Union[str, Path], hash):
+    """This will iterate the file and update the hash object"""
+    assert Path(filename).is_file()
+    with open(str(filename), "rb") as f:
+        for chunk in iter(lambda: f.read(4096), b""):
+            hash.update(chunk)
+    return hash
+
+
+def sha1_file(filename: Union[str, Path]) -> str:
+    """Return the sha1 hash of a directory"""
+    return str(sha1_update_from_file(filename, sha1()).hexdigest())
+
+
+def sha1_update_from_dir(directory: Union[str, Path], hash_):
+    """This will recursivly iterate all the files in the directory and update the hash object"""
+    assert Path(directory).is_dir()
+    for path in sorted(Path(directory).iterdir(), key=lambda p: str(p).lower()):
+        hash_.update(path.name.encode())
+        if path.is_file():
+            hash_ = sha1_update_from_file(path, hash_)
+        elif path.is_dir():
+            hash_ = sha1_update_from_dir(path, hash_)
+    return hash_
+
+
+def sha1_dir(directory: Union[str, Path]) -> str:
+    """Return the sha1 hash of a directory"""
+    return str(sha1_update_from_dir(directory, sha1()).hexdigest())
+
+
+def is_epoch_datetime(string: str) -> bool:
+    # Check if the input string contains only digits
+    if not string.isdigit():
+        return False
+    # Convert the string to an integer and attempt to parse it as a datetime
+    try:
+        epoch_timestamp = int(string)
+        datetime.fromtimestamp(epoch_timestamp)
+        return True
+    except Exception:
+        return False
+
+
+def extract_error_codes_from_file(pack_name: str) -> Set[str]:
+    """
+    Args:
+        pack_name: a pack name from which to get the pack ignore errors.
+    Returns: error codes set  that in pack.ignore file
+    """
+    error_codes_list = []
+    if pack_name and (config := get_pack_ignore_content(pack_name)):
+        # go over every file in the config
+        for section in filter(
+            lambda section: section.startswith("file:"), config.sections()
+        ):
+            # given section is of type file
+            for key in config[section]:
+                if key == "ignore":
+                    # group ignore codes to a list
+                    error_codes = str(config[section][key]).split(",")
+                    error_codes_list.extend(error_codes)
+
+    return set(error_codes_list)

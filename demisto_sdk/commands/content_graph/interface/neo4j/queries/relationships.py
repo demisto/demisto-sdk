@@ -1,3 +1,4 @@
+from pathlib import Path
 from typing import Any, Dict, List
 
 import more_itertools
@@ -242,14 +243,175 @@ def _match_relationships(
     query = f"""// Match relationships of the given ids list
 UNWIND $ids_list AS id
 MATCH (node_from) - [relationship] - (node_to)
-WHERE id(node_from) = id
+WHERE elementId(node_from) = id
 {marketplace_where}
 RETURN node_from, collect(relationship) AS relationships, collect(node_to) AS nodes_to"""
     return {
-        int(item["node_from"].id): Neo4jRelationshipResult(
+        item["node_from"].element_id: Neo4jRelationshipResult(
             node_from=item.get("node_from"),
             relationships=item.get("relationships"),
             nodes_to=item.get("nodes_to"),
         )
         for item in run_query(tx, query, ids_list=list(ids_list) if ids_list else None)
     }
+
+
+def get_sources_by_path(
+    tx: Transaction,
+    path: Path,
+    relationship: RelationshipType,
+    content_type: ContentType,
+    depth: int,
+    marketplace: MarketplaceVersions,
+    mandatory_only: bool,
+    include_tests: bool,
+    include_deprecated: bool,
+    include_hidden: bool,
+) -> List[Dict[str, Any]]:
+    query = f"""// Returns all paths to a given node by relationship type and depth.
+MATCH (n{{path: "{path}"}})
+CALL apoc.path.expandConfig(n, {{
+    relationshipFilter: "<{relationship}",
+    labelFilter: ">{content_type}",
+    minLevel: 1,
+    maxLevel: {depth},
+    uniqueness: "NODE_PATH"
+}})
+YIELD path
+WITH
+    // the paths are returned in reversed order, so we fix this here:
+    reverse([n IN nodes(path) | {{
+        path: n.path,
+        name: n.name,
+        object_id: n.object_id,
+        content_type: n.content_type
+    }}]) AS node_paths,
+    reverse(nodes(path)) AS nodes,
+    reverse([r IN relationships(path) | properties(r)]) AS rels,
+    length(path) AS depth
+WITH
+    nodes,
+    nodes[0] AS source,
+    apoc.coll.flatten((apoc.coll.zip(rels, node_paths[1..]))) AS path_from_source,
+    CASE WHEN all(r IN rels WHERE r.mandatorily) THEN TRUE ELSE
+    CASE WHEN any(r IN rels WHERE r.mandatorily IS NOT NULL) THEN FALSE END END AS mandatorily,
+    depth,
+    CASE WHEN any(r IN rels WHERE r.is_test) THEN TRUE ELSE FALSE END AS is_test,
+    CASE WHEN any(n IN nodes WHERE n.deprecated) THEN TRUE ELSE FALSE END AS deprecated,
+    CASE WHEN any(n IN nodes WHERE n.hidden) THEN TRUE ELSE FALSE END AS hidden
+WHERE
+    source.path IS NOT NULL
+    AND all(n IN nodes WHERE "{marketplace}" IN n.marketplaces)
+    {"AND NOT is_test" if not include_tests else ""}
+    {"AND NOT deprecated" if not include_deprecated else ""}
+    {"AND NOT hidden" if not include_hidden else ""}
+    {"AND mandatorily" if mandatory_only else ""}
+WITH
+    source,
+    min(depth) AS minDepth,
+    collect({{
+        path: apoc.coll.insert(
+            path_from_source,
+            0,
+            {{
+                path: source.path,
+                name: source.name,
+                object_id: source.object_id,
+                content_type: source.content_type
+            }}
+        ),
+        mandatorily: mandatorily,
+        depth: depth
+    }}) AS paths
+RETURN
+    source.object_id AS object_id,
+    source.name AS name,
+    source.content_type AS content_type,
+    source.path AS filepath,
+    TRUE AS is_source,
+    paths,
+    CASE WHEN any(p IN paths WHERE p.mandatorily) THEN TRUE ELSE
+    CASE WHEN all(p IN paths WHERE p.mandatorily IS NOT NULL) THEN FALSE END END AS mandatorily,
+    minDepth
+ORDER BY content_type, object_id"""
+    return run_query(tx, query).data()
+
+
+def get_targets_by_path(
+    tx: Transaction,
+    path: Path,
+    relationship: RelationshipType,
+    content_type: ContentType,
+    depth: int,
+    marketplace: MarketplaceVersions,
+    mandatory_only: bool,
+    include_tests: bool,
+    include_deprecated: bool,
+    include_hidden: bool,
+) -> List[Dict[str, Any]]:
+    query = f"""// Returns all paths from a given node by relationship type and depth.
+MATCH (n{{path: "{path}"}})
+CALL apoc.path.expandConfig(n, {{
+    relationshipFilter: "{relationship}>",
+    labelFilter: ">{content_type}",
+    minLevel: 1,
+    maxLevel: {depth},
+    uniqueness: "NODE_PATH"
+}})
+YIELD path
+WITH
+    [n IN nodes(path) | {{
+        path: n.path,
+        name: n.name,
+        object_id: n.object_id,
+        content_type: n.content_type
+    }}] AS node_paths,
+    nodes(path) AS nodes,
+    [r IN relationships(path) | properties(r)] AS rels,
+    length(path) AS depth
+WITH
+    nodes,
+    nodes[-1] AS target,
+    apoc.coll.flatten((apoc.coll.zip(node_paths[..-1], rels))) AS path_to_target,
+    CASE WHEN all(r IN rels WHERE r.mandatorily) THEN TRUE ELSE
+    CASE WHEN any(r IN rels WHERE r.mandatorily IS NOT NULL) THEN FALSE END END AS mandatorily,
+    depth,
+    CASE WHEN any(r IN rels WHERE r.is_test) THEN TRUE ELSE FALSE END AS is_test,
+    CASE WHEN any(n IN nodes WHERE n.deprecated) THEN TRUE ELSE FALSE END AS deprecated,
+    CASE WHEN any(n IN nodes WHERE n.hidden) THEN TRUE ELSE FALSE END AS hidden
+WHERE
+    target.path IS NOT NULL
+    AND all(n IN nodes WHERE "{marketplace}" IN n.marketplaces)
+    {"AND NOT is_test" if not include_tests else ""}
+    {"AND NOT deprecated" if not include_deprecated else ""}
+    {"AND NOT hidden" if not include_hidden else ""}
+    {"AND mandatorily" if mandatory_only else ""}
+WITH
+    target,
+    min(depth) AS minDepth,
+    collect({{
+        path: apoc.coll.insert(
+            path_to_target,
+            size(path_to_target),
+            {{
+                path: target.path,
+                name: target.name,
+                object_id: target.object_id,
+                content_type: target.content_type
+            }}
+        ),
+        mandatorily: mandatorily,
+        depth: depth
+    }}) AS paths
+RETURN
+    target.object_id AS object_id,
+    target.name AS name,
+    target.content_type AS content_type,
+    target.path AS filepath,
+    FALSE AS is_source,
+    paths,
+    CASE WHEN any(p IN paths WHERE p.mandatorily) THEN TRUE ELSE
+    CASE WHEN all(p IN paths WHERE p.mandatorily IS NOT NULL) THEN FALSE END END AS mandatorily,
+    minDepth
+ORDER BY content_type, object_id"""
+    return run_query(tx, query).data()

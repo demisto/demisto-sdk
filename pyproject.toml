@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "demisto-sdk"
-version = "1.17.2"
+version = "1.18.1"
 description = "\"A Python library for the Demisto SDK\""
 authors = ["Demisto"]
 license = "MIT"
@@ -181,3 +181,5 @@ max-complexity = 30
 "ujson".msg = "use JSON_Handler instead"
 "orjson".msg = "use JSON_Handler instead"
 "ruamel.yaml".msg = "use YAML_Handler instead"
+"distutils.version".msg = "Use packaging.version.Version instead"
+"packaging.version.LooseVersion".msg = "Use packaging.version.Version instead"

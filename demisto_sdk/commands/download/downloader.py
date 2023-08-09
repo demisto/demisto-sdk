@@ -215,7 +215,7 @@ class Downloader:
                         changed_uuids_count += 1
 
                 if changed_uuids_count > 0:
-                    logger.debug(f"Replaced UUID IDs in {changed_uuids_count} custom content items.")
+                    logger.info(f"Replaced UUID IDs with names in {changed_uuids_count} custom content items.")
 
             existing_pack_data = self.build_existing_pack_structure(existing_pack_path=output_path)
 
@@ -759,6 +759,7 @@ class Downloader:
                         ... (more files, like README and description)
                     ]
         """
+        logger.info(f"Parsing existing content in '{existing_pack_path}'...")
         pack_structure: DefaultDict[str, dict[str, list]] = defaultdict(dict)
 
         for content_entity_path in existing_pack_path.iterdir():
@@ -781,6 +782,7 @@ class Downloader:
                         content_name, content_object = content_data
                         pack_structure[directory_name][content_name] = content_object
 
+        logger.info("Parsing of existing content completed.")
         return dict(pack_structure)
 
     def build_pack_content_object(

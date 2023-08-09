@@ -962,6 +962,10 @@ ERROR_CODE: Dict = {
         "code": "PA136",
         "related_field": "",
     },
+    "pack_have_nonignorable_error": {
+        "code": "PA137",
+        "related_field": "",
+    },
     # PB - Playbooks
     "playbook_cant_have_rolename": {
         "code": "PB100",
@@ -1548,6 +1552,7 @@ ALLOWED_IGNORE_ERRORS = (
         "LO107",
         "IN107",
         "DB100",
+        "GR103",
     ]
 )
 
@@ -4362,3 +4367,8 @@ class Errors:
         hidden_pack: str, dependant_packs_ids: Set[str]
     ):
         return f"{', '.join(dependant_packs_ids)} pack(s) cannot have a mandatory dependency on the hidden pack {hidden_pack}."
+
+    @staticmethod
+    @error_code_decorator
+    def pack_have_nonignorable_error(nonignorable_errors: List[str]):
+        return f"The following errors can not be ignored: {', '.join(nonignorable_errors)}, remove them from .pack-ignore files"

@@ -1244,8 +1244,15 @@ def coverage_analyze(ctx, **kwargs):
 @click.option(
     "-s",
     "--id-set-path",
-    help="The path of the id_set json file.",
+    help="Deprecated. The path of the id_set json file.",
     type=click.Path(exists=True, resolve_path=True),
+)
+@click.option(
+    "-gr/-ngr",
+    "--graph/--no-graph",
+    help="Whether to use the content graph or not.",
+    is_flag=True,
+    default=True,
 )
 @click.argument("file_paths", nargs=-1, type=click.Path(exists=True, resolve_path=True))
 @click.pass_context
@@ -1294,6 +1301,7 @@ def format(
             include_untracked=include_untracked,
             add_tests=add_tests,
             id_set_path=id_set_path,
+            use_graph=kwargs.get("graph", True),
         )
 
 

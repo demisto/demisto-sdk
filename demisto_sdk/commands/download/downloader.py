@@ -291,38 +291,29 @@ class Downloader:
             key: value["name"] for key, value in custom_content_objects.items()
         }
         filtered_custom_content_objects: dict[str, dict] = {}
-
-        if self.download_all_custom_content:
-            logger.debug("Filtering process has been skipped as all custom content is downloaded.")
-            for file_name, content_item_data in custom_content_objects.items():
-                filtered_custom_content_objects[file_name] = content_item_data
-
-            return filtered_custom_content_objects
-
         original_count = len(custom_content_objects)
         logger.debug(f"Filtering custom content data ({original_count})...")
 
-        for file_name in custom_content_objects:
+        for file_name, content_item_data in custom_content_objects.items():
             content_item_name = file_name_to_content_name_map[file_name]
 
             # Filter according input / regex flags
-            if (self.regex and re.match(self.regex, content_item_name)) or (content_item_name in self.input_files):
-                filtered_custom_content_objects[content_item_name] = custom_content_objects[file_name]
+            if (
+                    self.download_all_custom_content or
+                    self.regex and re.match(self.regex, content_item_name) or
+                    content_item_name in self.input_files
+            ):
+                # Filter out content written in JavaScript since it is not support
+                # TODO: Check if we actually need this (why don't we allow downloading JS content?) and remove if not.
+                if (content_item_data["type"] in ("integration", "script") and
+                        content_item_data.get("code_lang") in ("javascript", None)):
+                    logger.warning(f"Content item '{content_item_name}' is written in JavaScript which isn't supported,"
+                                   f" and will be skipped.")
+                    continue
 
-        # Filter out content written in JavaScript since it is not support
-        # TODO: Check if we actually need this (why don't we allow downloading JS content?) and remove if not.
-        for filtered_custom_content_name, filtered_custom_content_object in filtered_custom_content_objects.items():
-            code_language: str = filtered_custom_content_object.get("code_lang")
-            content_type: str = filtered_custom_content_object["type"]
-
-            if content_type in ("integration", "script") and code_language in ("javascript", None):
-                content_name = filtered_custom_content_object["name"]
-                logger.warning(f"Content item '{content_name}' is written in JavaScript which isn't supported, "
-                               f"and will be skipped.")
-                del filtered_custom_content_objects[filtered_custom_content_name]
+                filtered_custom_content_objects[content_item_name] = content_item_data
 
         logger.info(f"Filtering process completed ({len(filtered_custom_content_objects)}/{original_count}).")
-
         return filtered_custom_content_objects
 
     def create_uuid_to_name_mapping(self, custom_content_objects: dict[str, dict]) -> dict[str, str]:

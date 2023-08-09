@@ -1,9 +1,10 @@
 import json
 import os
+import sys
 from pathlib import Path
-from typing import Dict, FrozenSet, Iterable, List, Set, Tuple, Union
+from typing import Dict, FrozenSet, Iterable, List, NoReturn, Set, Tuple, Union
 
-from git import Repo
+from git.repo import Repo
 from unidiff import PatchSet
 
 from demisto_sdk.commands.common.logger import logger
@@ -13,19 +14,22 @@ from demisto_sdk.commands.pre_commit.linter_parser import LinterViolation, RuffP
 def run(files: List[str], fail_autofixable: bool):
     ruff_command = f"ruff {','.join(files)} --format=json"  # TODO provide args
     logger.info(f"running {ruff_command}")
-    str(str("a"))
+
     try:
-        raw_ruff_result = os.popen(ruff_command).read()  # TODO exit status
+        process = os.popen(ruff_command)
+        ruff_result_raw = process.read()
+        ruff_exit_code = process.close()
+
+        logger.debug(f"{ruff_result_raw=}")
+        logger.debug(f"{ruff_exit_code=}")
     except Exception:
-        logger.exception("Failed running ruff")
+        logger.error("Failed running ruff")
         raise
 
-    logger.debug(f"{raw_ruff_result=}")
-
     try:
-        raw_violations = json.loads(raw_ruff_result)
+        raw_violations = json.loads(ruff_result_raw)
     except json.JSONDecodeError:
-        logger.exception(f"failed parsing json from ruff output:\n{raw_violations}")
+        logger.error("failed parsing json from ruff output")
         raise
 
     all_violations = tuple(
@@ -41,21 +45,30 @@ def run(files: List[str], fail_autofixable: bool):
     if filtered_violations := filter_violations(
         all_violations, changed_lines, fail_autofixable
     ):
-        if all(
-            violation.is_autofixable for violation in filtered_violations
-        ):  # TODO design
-            logger.error(
-                "All violations found were autofixed - commit the changes and the step will pass"
-            )
-            return
-
-        logger.error(f"Found {len(filtered_violations)} Ruff vioations:")
-        logger.error(
-            "\n".join(_violations_to_string(filtered_violations))
-        )  # TODO Github Annotation format
-        exit(1)
-
+        exit_code(filtered_violations, fail_autofixable)
     logger.info("Done! No ruff violations were found.")
+
+
+def exit_code(
+    filtered_violations: Tuple[LinterViolation, ...], fail_autofixable: bool
+) -> NoReturn:
+    violation_count = len(filtered_violations)
+    autofixable_count = sum(
+        (bool(violation.is_autofixable) for violation in filtered_violations)
+    )
+
+    logger.info(f"Found {len(filtered_violations)} Ruff vioations")
+
+    if (not fail_autofixable) and autofixable_count == violation_count:
+        logger.info(
+            "All violations found were autofixed - commit the changes and the step will pass"
+        )
+        sys.exit(0)
+
+    logger.info(
+        "\n".join(_violations_to_string(filtered_violations))
+    )  # TODO Github Annotation forma
+    sys.exit(1)
 
 
 def filter_violations(

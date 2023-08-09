@@ -636,6 +636,10 @@ def verify_event_id_does_not_exist_on_tenant(
             )
         except XsiamApiQueryError:
             # If the query fails, it means that the event ID does not exist on the tenant.
+            logger.info(
+                "[green]The event ids does not exists on the tenant[/green]",
+                extra={"markup": True},
+            )
             return
     logger.error(
         ("[red]The event id already exists in the tenant[/red]"),

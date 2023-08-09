@@ -370,6 +370,7 @@ def test_sign_packs_failure(repo, mocker, key, tool, monkeypatch):
         ArtifactsManager,
         sign_packs,
     )
+
     logger = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
     cca.logger = logger
     monkeypatch.setenv("COLUMNS", "1000")

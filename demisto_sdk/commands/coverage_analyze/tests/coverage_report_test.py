@@ -5,6 +5,9 @@ from pathlib import Path
 
 import pytest
 
+from demisto_sdk.commands.common.constants import (
+    TEST_COVERAGE_DEFAULT_URL as DEFAULT_URL,
+)
 from demisto_sdk.commands.coverage_analyze.coverage_report import CoverageReport
 from demisto_sdk.commands.coverage_analyze.helpers import (
     fix_file_path,
@@ -19,7 +22,6 @@ from demisto_sdk.commands.coverage_analyze.tests.helpers_test import (
     read_file,
 )
 from TestSuite.test_tools import flatten_call_args
-from demisto_sdk.commands.common.constants import TEST_COVERAGE_DEFAULT_URL as DEFAULT_URL
 
 logger = logging.getLogger("demisto-sdk")
 

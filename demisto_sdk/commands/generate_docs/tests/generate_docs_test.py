@@ -959,7 +959,7 @@ def test_generate_script_doc(tmp_path, mocker):
         IDSetCreator, "create_id_set", return_value=[id_set, {}, {}]
     )
     mocker.patch.object(common, "execute_command", side_effect=handle_example)
-    mocker.patch('os.path.isfile', return_value=False)
+    mocker.patch("os.path.isfile", return_value=False)
     # because used in is random
     mocker.patch(
         "demisto_sdk.commands.generate_docs.generate_script_doc.get_used_in",

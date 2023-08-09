@@ -490,7 +490,7 @@ def get_python_version(image: Optional[str]) -> Optional[Version]:
             f"Could not get the python version for image {image=} from client. Trying with API",
             exc_info=True,
         )
-        return _get_python_version_from_dockerhub_api(image)
+        return get_python_version_from_dockerhub_api(image)
 
 
 def _get_python_version_from_image_client(image: str) -> Version:
@@ -512,7 +512,13 @@ def _get_python_version_from_image_client(image: str) -> Version:
         raise
 
 
-def _get_python_version_from_dockerhub_api(image: str):
+@functools.lru_cache
+def get_python_version_from_dockerhub_api(image: str) -> Optional[Version]:
+    if "pwsh" in image or "powershell" in image:
+        logger.debug(
+            f"The image {image} is a powershell image, does not have python version"
+        )
+        return None
     if ":" not in image:
         repo = image
         tag = "latest"

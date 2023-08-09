@@ -3,7 +3,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Set
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
-from demisto_sdk.commands.common.docker_helper import get_python_version
+from demisto_sdk.commands.common.docker_helper import get_python_version_from_dockerhub_api
 from demisto_sdk.commands.common.docker_images_info import DockerImagesInfo
 from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
 from demisto_sdk.commands.content_graph.parsers.yaml_content_item import (
@@ -66,10 +66,8 @@ class IntegrationScriptParser(YAMLContentItemParser):
         """
         Get python version of scripts/integrations which are based on python images
         """
-        if self.deprecated or 'python' not in self.type:
-            return None
         if python_version := DockerImagesInfo().python_version(self.docker_image):
             return python_version
-        if python_version := get_python_version(self.docker_image):
+        if python_version := get_python_version_from_dockerhub_api(self.docker_image):
             return str(python_version)
         return None

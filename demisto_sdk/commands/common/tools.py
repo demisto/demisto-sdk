@@ -6,6 +6,7 @@ import os
 import re
 import shlex
 import sys
+import traceback
 import urllib.parse
 from collections import OrderedDict
 from concurrent.futures import as_completed
@@ -888,7 +889,8 @@ def get_file(
         if return_content:
             return file_content
     except IOError as e:
-        logger.error(f"Could not read file {file_path}.\nError: {e}")
+        logger.error(f"Could not read file '{file_path}': {e}")
+        logger.debug("Traceback:\n" + traceback.format_exc())
         return {}
     try:
         if type_of_file.lstrip(".") in {"yml", "yaml"}:

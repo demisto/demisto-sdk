@@ -208,6 +208,10 @@ class Downloader:
                 downloaded_content_objects = self.filter_custom_content(
                     custom_content_objects=all_custom_content_objects)
 
+                if not downloaded_content_objects:
+                    logger.info(f"No custom content matching the provided input filters was found.")
+                    return 0
+
                 # Replace UUID IDs with names in filtered content (only content we download)
                 changed_uuids_count = 0
                 for file_object in downloaded_content_objects.values():
@@ -773,7 +777,7 @@ class Downloader:
                         content_name, content_object = content_data
                         pack_structure[directory_name][content_name] = content_object
 
-        logger.info("Parsing of existing content completed.")
+        logger.info("Parsing of existing content items completed.")
         return dict(pack_structure)
 
     def build_pack_content_object(
@@ -799,6 +803,12 @@ class Downloader:
         metadata = self.get_metadata_file(
             content_entity, entity_instance_path
         )
+
+        if not metadata:
+            logger.warning(
+                f"Could not find main metadata file for '{entity_instance_path}'. Skipping..."
+            )
+            return None
 
         content_item_id = get_id(file_content=metadata)
         content_item_name = get_display_name(file_path="", file_data=metadata)
@@ -872,6 +882,10 @@ class Downloader:
         ):
             if content_path.is_dir():
                 main_file_path = get_yml_paths_in_dir(content_path)[1]
+
+                if not main_file_path:
+                    return None
+
                 return get_yaml(main_file_path)
 
             elif content_path.is_file():
@@ -1007,6 +1021,7 @@ class Downloader:
         Returns:
             bool: True if all files were downloaded successfully, False otherwise.
         """
+        logger.info("Saving downloaded files to output path...")
         successful_downloads_count = 0
         existing_files_skipped_count = 0
         failed_downloads_count = 0
@@ -1047,14 +1062,20 @@ class Downloader:
 
         summary_log = ""
 
-        if successful_downloads_count:  #
+        if successful_downloads_count:
             summary_log = f"Successful downloads: {successful_downloads_count}.\n"
 
+        # Files that were skipped due to already existing in the output path.
         if existing_files_skipped_count:
             summary_log += f"Skipped downloads: {existing_files_skipped_count}.\n"
 
         if failed_downloads_count:
             summary_log += f"Failed downloads: {failed_downloads_count}.\n"
+
+        # If for there was nothing to attempt to download at all.
+        # Can occur if files are skipped due to unexpected errors.
+        if not summary_log:
+            summary_log = "No files were downloaded."
 
         logger.info(summary_log.rstrip("\n"))
 

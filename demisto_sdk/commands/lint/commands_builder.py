@@ -1,7 +1,7 @@
 # STD python packages
 import os
 from pathlib import Path
-from typing import List, Optional
+from typing import List, Literal, Optional
 
 from packaging.version import parse
 
@@ -103,7 +103,9 @@ def build_bandit_command(files: List[Path]) -> str:
 
 def build_xsoar_linter_command(
     files: List[Path],
-    support_level: str = "base",
+    support_level: Literal[
+        "base", "community", "partner", "certified partner", "xsoar"
+    ] = "base",
     formatting_script: bool = False,
     all_packs: bool = False,
 ) -> str:
@@ -113,6 +115,7 @@ def build_xsoar_linter_command(
         files(List[Path]): files to execute lint
         support_level: Support level for the file
         formatting_script: if the file being checked is a formatting script
+        all_packs (bool): Should be true if lint is running on all packs, False otherwise.
 
     Returns:
        str: xsoar linter command using pylint load plugins

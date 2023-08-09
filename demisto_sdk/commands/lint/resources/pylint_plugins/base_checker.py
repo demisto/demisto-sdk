@@ -166,6 +166,7 @@ class CustomBaseChecker(BaseChecker):
     """
 
     # -------------------------------------------- Call Node ---------------------------------------------
+
     def _print_checker(self, node):
         """
         Args: node which is a Call Node.

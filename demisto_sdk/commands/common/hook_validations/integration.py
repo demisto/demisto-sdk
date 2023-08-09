@@ -62,6 +62,7 @@ from demisto_sdk.commands.common.tools import (
     get_item_marketplaces,
     get_pack_name,
     is_iron_bank_pack,
+    is_string_ends_with_url,
     server_version_compare,
     string_to_bool,
 )
@@ -2365,9 +2366,13 @@ class IntegrationValidator(ContentEntityValidator):
                     lines_with_missing_dot += (
                         f"- In command {command.get('name')}:\n{current_command}"
                     )
-            if (
-                yml_description := self.current_file.get("description", "")
-            ) and not yml_description.strip('"').strip("'").endswith("."):
+            stripped_description = (
+                self.current_file.get("description", "").strip('"').strip("'")
+            )
+
+            if not stripped_description.endswith(".") and not is_string_ends_with_url(
+                stripped_description
+            ):
                 lines_with_missing_dot += "The file's description field is missing a '.' in the end of the sentence."
             if lines_with_missing_dot:
                 error_message, error_code = Errors.description_missing_dot_at_the_end(

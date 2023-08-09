@@ -21,6 +21,7 @@ from demisto_sdk.commands.common.tools import (
     get_file_version_suffix_if_exists,
     get_files_in_dir,
     get_pack_name,
+    is_string_ends_with_url,
     server_version_compare,
 )
 
@@ -542,9 +543,12 @@ class ScriptValidator(ContentEntityValidator):
             line_with_missing_dot = super().is_line_ends_with_dot(
                 self.current_file, "args"
             )
-            if (comment := self.current_file.get("comment", "")) and not comment.strip(
-                '"'
-            ).strip("'").endswith("."):
+            stripped_comment = (
+                self.current_file.get("comment", "").strip('"').strip("'")
+            )
+            if not stripped_comment.endswith(".") and not is_string_ends_with_url(
+                stripped_comment
+            ):
                 line_with_missing_dot += "The comment field should end with a period."
 
             if line_with_missing_dot:

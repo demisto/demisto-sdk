@@ -1,7 +1,6 @@
 # Changelog
 ## Unreleased
 * Added a validation to ensure there's a '.' in the end of each description field in integration and script yml files.
-* Fixed an issue where the *DEMISTO_SDK_SKIP_VERSION_CHECK* was ignored when running on non CI environments.
 * Added the **graph** command group. The **create-content-graph** and **update-content-graph** commands were migrated to this command group, and named **graph create** and **graph update** respectively.
 * Added the **graph get-relationships** command.
 * The **graph create** command will now use a list of known content items from content-private, to avoid false-positives in validation `GR103`. Additionally, `GR103` was added to the **ALLOWED_IGNORE_ERRORS** list.
@@ -20,7 +19,6 @@
 * Updated the **format** command to use the content graph instead of the id_set file.
 
 ## 1.18.0
->>>>>>> master
 * Added the ability to ignore any validation in the **validate** command when running in an external (non-demisto/content) repo, by placing a `.private-repo-settings` file at its root.
 * Calling **format** with the `-d` flag now removes test playbooks testing the deprecated content from conf.json.
 * Improved the content graph performance when calculating content relationships.

@@ -628,6 +628,18 @@ class TestScriptValidator:
                 True,
                 True,
             ),
+            (
+                {"comment": "a yml with url and no dot at the end www.test.com"},
+                True,
+                True,
+            ),
+            (
+                {
+                    "comment": "a yml with a comment that has www.test.com in the middle of the sentence"
+                },
+                True,
+                False,
+            ),
         ],
     )
     def test_is_line_ends_with_dot(
@@ -641,6 +653,8 @@ class TestScriptValidator:
             - Case 3: A yml content with a context path with a description without a dot at the end of the sentence, and use_git flag set to True.
             - Case 4: A yml content with an argument with a description with a dot at the end of the sentence, and use_git flag set to True.
             - Case 5: A yml content with a context path with a description with a dot at the end of the sentence, and use_git flag set to True.
+            - Case 6: A yml content with a comment that ends with a url address and not dot, and use_git flag set to True.
+            - Case 7: A yml content with a comment that has a url in the middle of the sentence and no comment in the end, and use_git flag set to True.
         When:
             - when executing the is_line_ends_with_dot method
         Then:
@@ -649,6 +663,8 @@ class TestScriptValidator:
             - Case 3: make sure the validation fails.
             - Case 4: make sure the validation pass.
             - Case 5: make sure the validation pass.
+            - Case 6: make sure the validation pass.
+            - Case 7: make sure the validation fails.
         """
         pack = repo.create_pack("test")
         script = pack.create_script(yml=yml_content)

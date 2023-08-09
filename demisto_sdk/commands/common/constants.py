@@ -658,6 +658,7 @@ RELATIVE_HREF_URL_REGEX = r'(<.*?href\s*=\s*"((?!(?:https?:\/\/)|#|(?:mailto:)).
 RELATIVE_MARKDOWN_URL_REGEX = (
     r"(?<![!])(\[.*?\])\(((?!(?:https?:\/\/)|#|(?:mailto:)).*?)\)"
 )
+URL_REGEX = r"(((http|https)\:\/\/)?[a-zA-Z0-9\.\/\?\:@\-_=#]+\.([a-zA-Z]){2,6}([a-zA-Z0-9\.\&\/\?\:@\-_=#])*)"
 
 # old classifier structure
 _PACKS_CLASSIFIER_BASE_5_9_9_REGEX = (

@@ -31,6 +31,7 @@ from demisto_sdk.commands.test_content.xsiam_tools.test_data import Validations
 from demisto_sdk.commands.test_content.xsiam_tools.xsiam_client import (
     XsiamApiClient,
     XsiamApiClientConfig,
+    XsiamApiQueryError,
 )
 from demisto_sdk.commands.upload.upload import upload_content_entity as upload_cmd
 from demisto_sdk.utils.utils import get_containing_pack
@@ -47,7 +48,6 @@ custom_theme = Theme(
     }
 )
 console = Console(theme=custom_theme)
-
 
 app = typer.Typer()
 json = JSON_Handler()
@@ -231,25 +231,61 @@ def generate_xql_query(rule: SingleModelingRule, test_data_event_ids: List[str])
     return query
 
 
+def build_event_id_query(rule, test_data) -> str:
+    """
+    Build an XQL query to get the event IDs of the test data events that match the given modeling rule.
+    Args:
+        rule (SingleModelingRule): Rule object parsed from the modeling rule file.
+        test_data (init_test_data.TestData): The data parsed from the test data file.
+    Returns:
+        str: The XQL query.
+    """
+    query = generate_xql_query(
+        rule,
+        [
+            str(d.test_data_event_id)
+            for d in test_data.data
+            if d.dataset == rule.dataset
+        ],
+    )
+    logger.debug(query)
+    return query
+
+
+def run_query(xsiam_client, query) -> List[dict]:
+    """
+    Run the given XQL query and return the results.
+    Args:
+        xsiam_client (XsiamApiClient): The XsiamApiClient object.
+        query (str): The XQL query to run.
+    Returns:
+        List[dict]: The results of the query.
+    """
+    execution_id = xsiam_client.start_xql_query(query)
+    results = xsiam_client.get_xql_query_result(execution_id)
+    return results
+
+
 def validate_expected_values(
-    xsiam_client: XsiamApiClient, mr: ModelingRule, test_data: init_test_data.TestData
+    xsiam_client: XsiamApiClient,
+    mr: ModelingRule,
+    test_data: init_test_data.TestData,
 ):
-    """Validate the expected_values in the given test data file."""
+    """
+    Validate the expected_values in the given test data file.
+    Args:
+        xsiam_client (XsiamApiClient): The XsiamApiClient object.
+        mr (ModelingRule): The ModelingRule object.
+        test_data (init_test_data.TestData): The data parsed from the test data file.
+    """
     logger.info("[cyan]Validating expected_values...[/cyan]", extra={"markup": True})
     success = True
+    result = []
+
     for rule in mr.rules:
-        query = generate_xql_query(
-            rule,
-            [
-                str(d.test_data_event_id)
-                for d in test_data.data
-                if d.dataset == rule.dataset
-            ],
-        )
-        logger.debug(query)
+        query = build_event_id_query(rule, test_data)
         try:
-            execution_id = xsiam_client.start_xql_query(query)
-            results = xsiam_client.get_xql_query_result(execution_id)
+            result = run_query(xsiam_client, query)
         except requests.exceptions.HTTPError:
             logger.error(
                 (
@@ -260,15 +296,15 @@ def validate_expected_values(
                 ),
                 extra={"markup": True},
             )
+            raise typer.Exit(1)
+        except XsiamApiQueryError:
             success = False
-        else:
-            success &= verify_results(rule.dataset, results, test_data)
+        success &= verify_results(rule.dataset, result, test_data)
     if success:
-        logger.info(
-            "[green]Mappings validated successfully[/green]", extra={"markup": True}
-        )
-    else:
-        raise typer.Exit(1)
+        success_message = "[green]Mappings validated successfully[/green]"
+        logger.info(success_message, extra={"markup": True})
+        return
+    raise typer.Exit(1)
 
 
 def validate_schema_aligned_with_test_data(
@@ -386,7 +422,7 @@ def check_dataset_exists(
     timeout: int = 90,
     interval: int = 5,
     init_sleep_time: int = 30,
-):
+) -> bool:
     """Check if the dataset in the test data file exists in the tenant.
 
     Args:
@@ -398,54 +434,25 @@ def check_dataset_exists(
 
     Raises:
         typer.Exit: If the dataset does not exist after the timeout.
+    Return:
+        bool: True if the dataset exists otherwise False.
     """
     process_failed = False
     dataset_set = {data.dataset for data in test_data.data}
-    results = []
+
     logger.debug(
         f"Sleeping for {init_sleep_time} seconds before query for the dataset, to make sure the dataset was installed correctly."
     )
     sleep(init_sleep_time)
-
     for dataset in dataset_set:
-        results_exist = False
-        dataset_exist = False
-        logger.info(
-            f'[cyan]Checking if dataset "{dataset}" exists on the tenant...[/cyan]',
-            extra={"markup": True},
+        dataset_exist, results_exist = is_dataset_exists_with_results(
+            xsiam_client, dataset, timeout, interval
         )
-        query = f"config timeframe = 10y | dataset = {dataset}"
-        for i in range(timeout // interval):
-            logger.debug(f"Check #{i+1}...")
-            try:
-                execution_id = xsiam_client.start_xql_query(
-                    query, print_req_error=(i + 1 == timeout // interval)
-                )
-                results = xsiam_client.get_xql_query_result(execution_id)
-                # if we got result we will break from the loop
-                if results:
-                    logger.info(
-                        f"[green]Dataset {dataset} exists[/green]",
-                        extra={"markup": True},
-                    )
-                    dataset_exist = True
-                    results_exist = True
-                    break
-                # if we don't have results from the dataset immediately we will continue to try until the timeout.
-                # if we don't have any results until the timeout dataset_exist is set to False and we will raise an error.
-                else:
-                    dataset_exist = True
-                    results_exist = False
-                    logger.info(
-                        f"[cyan]trying to get results from the dataset for the {i+1}th time. continuing to try to get the results.[/cyan]",
-                        extra={"markup": True},
-                    )
-            # If the dataset doesn't exist HTTPError exception is raised.
-            except requests.exceptions.HTTPError:
-                pass
-            sleep(interval)
+        if not dataset_exist:
+            err = f"[red]Dataset {dataset} does not exist after {timeout} seconds[/red]"
+            logger.error(err, extra={"markup": True})
         # There are no results from the dataset but it exists.
-        if not results:
+        elif not results_exist:
             err = (
                 f"[red]Dataset {dataset} exists but no results were returned. This could mean that your testdata "
                 "does not meet the criteria for an associated Parsing Rule and is therefore being dropped from "
@@ -453,14 +460,12 @@ def check_dataset_exists(
                 "meets the criteria for that rule.[/red]"
             )
             logger.error(err, extra={"markup": True})
-        if not dataset_exist:
-            err = f"[red]Dataset {dataset} does not exist after {timeout} seconds[/red]"
-            logger.error(err, extra={"markup": True})
         # OR statement between existence var and results of each data set, if at least one of dataset_exist or results_exist are False process_failed will be true.
         process_failed |= not (dataset_exist and results_exist)
 
     if process_failed:
         raise typer.Exit(1)
+    return True
 
 
 def push_test_data_to_tenant(
@@ -602,6 +607,123 @@ def verify_test_data_exists(test_data_path: Path) -> Tuple[List[str], List[str]]
     return missing_event_data, missing_expected_values_data
 
 
+def verify_event_id_does_not_exist_on_tenant(
+    xsiam_client: XsiamApiClient,
+    mr: ModelingRule,
+    test_data: init_test_data.TestData,
+):
+    """
+    Verify that the event ID does not exist on the tenant.
+    Args:
+        xsiam_client (XsiamApiClient): Xsiam API client.
+        mr (ModelingRule): Modeling rule object parsed from the modeling rule file.
+        test_data (init_test_data.TestData): Test data object parsed from the test data file.
+    """
+    logger.debug("Verifying that the event ID does not exist on the tenant.")
+    for rule in mr.rules:
+        try:
+            query = build_event_id_query(rule, test_data)
+            run_query(xsiam_client, query)
+        except requests.exceptions.HTTPError:
+            logger.error(
+                (
+                    "[red]Error executing XQL query, potential reasons could be:\n - mismatch between "
+                    "dataset/vendor/product marked in the test data from what is in the modeling rule\n"
+                    " - dataset was not created in the tenant\n - model fields in the query are invalid\n"
+                    "Try manually querying your tenant to discover the exact problem.[/red]"
+                ),
+                extra={"markup": True},
+            )
+        except XsiamApiQueryError:
+            # If the query fails, it means that the event ID does not exist on the tenant.
+            return
+    logger.error(
+        ("[red]The event id already exists in the tenant[/red]"),
+        extra={"markup": True},
+    )
+    raise typer.Exit(1)
+
+
+def delete_dataset(
+    xsiam_client: XsiamApiClient,
+    dataset_name: str,
+):
+    logger.info(
+        f"[cyan]Deleting existing {dataset_name} dataset[/cyan]",
+        extra={"markup": True},
+    )
+    xsiam_client.delete_dataset(dataset_name)
+    logger.info(
+        f"[green]Dataset {dataset_name} deleted successfully[/green]",
+        extra={"markup": True},
+    )
+
+
+def is_dataset_exists_with_results(
+    xsiam_client, dataset, timeout=60, interval=5, ignore_errors=False
+) -> Tuple[bool, bool]:
+    """
+    Check if the given dataset exists on the tenant and has results.
+    Args:
+        xsiam_client (XsiamApiClient): The XsiamApiClient object.
+        dataset (str): The dataset to check.
+        timeout (int): The timeout in seconds.
+        interval (int): The interval in seconds.
+        ignore_errors (bool): Ignore errors.
+    """
+    logger.info(
+        f'[cyan]Checking if dataset "{dataset}" exists on the tenant...[/cyan]',
+        extra={"markup": True},
+    )
+    query = f"config timeframe = 10y | dataset = {dataset}"
+    for i in range(timeout // interval):
+        logger.debug(f"Check #{i + 1}...")
+        try:
+            results = run_query(xsiam_client, query)
+            # if we got result we will break from the loop
+            if results:
+                logger.info(
+                    f"[green]Dataset {dataset} exists[/green]",
+                    extra={"markup": True},
+                )
+                return True, True
+            # if we don't have results from the dataset immediately we will continue to try until the timeout.
+            else:
+                logger.info(
+                    f"[cyan]trying to get results from the dataset for the {i + 1}th time. continuing to try to get the results.[/cyan]",
+                    extra={"markup": True},
+                )
+        # If the dataset doesn't exist HTTPError exception is raised.
+        # except requests.exceptions.HTTPError:
+        except XsiamApiQueryError as e:
+            if i + 1 == timeout // interval:
+                if not ignore_errors:
+                    logger.error(e)
+                return False, False
+            else:
+                logger.info("Still processing. Please wait...")
+        sleep(interval)
+    return True, False
+
+
+def delete_existing_dataset_flow(xsiam_client: XsiamApiClient, test_data) -> None:
+    """
+    Delete existing dataset if it exists in the tenant.
+    Args:
+        xsiam_client (XsiamApiClient): Xsiam API client.
+        test_data (TestData): Test data object parsed from the test data file.
+    """
+    dataset_names_set = {data.dataset for data in test_data.data}
+    for dataset_name in dataset_names_set:
+        dataset_exists, _ = is_dataset_exists_with_results(
+            xsiam_client, dataset_name, timeout=1, interval=1, ignore_errors=True
+        )
+        if dataset_exists:
+            delete_dataset(xsiam_client, dataset_name)
+        else:
+            logger.info("[cyan]Dataset does not exists on tenant[/cyan]")
+
+
 def validate_modeling_rule(
     mrule_dir: Path,
     xsiam_url: str,
@@ -612,6 +734,7 @@ def validate_modeling_rule(
     push: bool,
     interactive: bool,
     ctx: typer.Context,
+    delete_existing_dataset: bool,
 ):
     """Validate a modeling rule.
 
@@ -625,6 +748,7 @@ def validate_modeling_rule(
         push (bool): Whether to push test event data to the tenant.
         interactive (bool): Whether command is being run in interactive mode.
         ctx (typer.Context): Typer context.
+        delete_existing_dataset (bool): Whether to delete the existing dataset in the tenant.
     """
     console.rule("[info]Test Modeling Rule[/info]")
     logger.info(f"[cyan]<<<< {mrule_dir} >>>>[/cyan]", extra={"markup": True})
@@ -738,6 +862,8 @@ def validate_modeling_rule(
         test_data = init_test_data.TestData.parse_file(
             mr_entity.testdata_path.as_posix()
         )
+        if delete_existing_dataset:
+            delete_existing_dataset_flow(xsiam_client, test_data)
 
         if schema_path := mr_entity.schema_path:
             with open(mr_entity.schema_path) as schema_file:
@@ -782,6 +908,7 @@ def validate_modeling_rule(
                 )
                 printr(execd_cmd)
                 raise typer.Exit(1)
+            verify_event_id_does_not_exist_on_tenant(xsiam_client, mr_entity, test_data)
             push_test_data_to_tenant(xsiam_client, mr_entity, test_data)
             check_dataset_exists(xsiam_client, test_data)
         else:
@@ -916,6 +1043,12 @@ def test_modeling_rule(
         "--log_file_path",
         help=("Path to the log file. Default: ./demisto_sdk_debug.log."),
     ),
+    delete_existing_dataset: bool = typer.Option(
+        False,
+        "--delete_existing_dataset",
+        "-dd",
+        help=("Deletion of the existing dataset from the tenant. Default: False."),
+    ),
 ):
     """
     Test a modeling rule against an XSIAM tenant
@@ -945,6 +1078,7 @@ def test_modeling_rule(
                 push,
                 interactive,
                 ctx,
+                delete_existing_dataset,
             )
         except typer.Exit as e:
             if e.exit_code != 0:

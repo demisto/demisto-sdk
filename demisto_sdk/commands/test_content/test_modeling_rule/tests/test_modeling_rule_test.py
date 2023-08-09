@@ -977,7 +977,10 @@ class TestTheTestModelingRuleCommandSingleRule:
         """
         logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
         monkeypatch.setenv("COLUMNS", "1000")
-
+        mocker.patch(
+            "demisto_sdk.commands.test_content.xsiam_tools.test_data.uuid4",
+            side_effect=[str(uuid.UUID(int=0)), str(uuid.UUID(int=1))] * 3,
+        )
         from functools import partial
 
         from demisto_sdk.commands.test_content.test_modeling_rule.test_modeling_rule import (
@@ -1041,6 +1044,15 @@ class TestTheTestModelingRuleCommandSingleRule:
                     m.post(
                         f"{fake_env_vars.demisto_base_url}/public_api/v1/xql/get_query_results/",
                         [
+                            {
+                                "json": {
+                                    "reply": {
+                                        "status": "FAILURE",
+                                        "results": {"data": ["some-results"]},
+                                    }
+                                },
+                                "status_code": 200,
+                            },
                             {
                                 "json": {
                                     "reply": {

@@ -1308,7 +1308,7 @@ class Downloader:
         Returns:
             str: The expected file name
         """
-        if file_extension in (".py", ".yml", ".yaml"):
+        if file_extension.lstrip('.') in ("py", "ps1", "js", "yml", "yaml"):
             return f"{self.create_directory_name(content_item_name)}.{file_extension.lstrip('.')}"
 
         else:  # Description & image files have their type within the file name

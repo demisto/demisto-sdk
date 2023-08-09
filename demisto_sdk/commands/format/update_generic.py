@@ -471,12 +471,7 @@ class BaseUpdate:
 
         def _is_url(value: str):
             str_to_check = value.split()[-1]
-            if str_to_check.startswith("http://") or str_to_check.startswith(
-                "https://"
-            ):
-                return True
-            else:
-                return False
+            return str_to_check.startswith(("http://", "https://"))
 
         def _add_period(value: Optional[str]) -> Optional[str]:
             if value and isinstance(value, str) and not value.endswith("."):
@@ -488,8 +483,7 @@ class BaseUpdate:
         if data_description := self.data.get("description", {}):
             self.data["description"] = _add_period(data_description)
 
-        script = self.data.get("script", {})
-        if script and isinstance(
+        if (script := self.data.get("script", {})) and isinstance(
             script, dict
         ):  # script could be a 'LiteralScalarString' object.
             for command in script.get("commands", []):

@@ -14,7 +14,10 @@ from demisto_sdk.commands.content_graph.commands.update import update_content_gr
 from demisto_sdk.commands.content_graph.interface.neo4j.neo4j_graph import (
     Neo4jContentGraphInterface as ContentGraphInterface,
 )
-from demisto_sdk.commands.format.format_constants import SCHEMAS_PATH
+from demisto_sdk.commands.format.format_constants import (
+    SCHEMAS_PATH,
+    SKIP_FORMATTING_DIRS,
+)
 from demisto_sdk.commands.format.update_classifier import (
     ClassifierJSONFormat,
     OldClassifierJSONFormat,
@@ -168,7 +171,13 @@ def format_manager(
     if input:
         files = []
         for i in input.split(","):
-            files.extend(get_files_in_dir(i, supported_file_types))
+            files.extend(
+                get_files_in_dir(
+                    project_dir=i,
+                    file_endings=supported_file_types,
+                    exclude_list=SKIP_FORMATTING_DIRS,
+                )
+            )
 
     elif use_git:
         files = get_files_to_format_from_git(

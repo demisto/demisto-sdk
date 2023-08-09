@@ -43,7 +43,7 @@ from demisto_sdk.commands.common.constants import (  # PACK_METADATA_PRICE,
 )
 from demisto_sdk.commands.common.content import Content
 from demisto_sdk.commands.common.content.objects.pack_objects.pack import Pack
-from demisto_sdk.commands.common.errors import Errors
+from demisto_sdk.commands.common.errors import ALLOWED_IGNORE_ERRORS, Errors
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.hook_validations.base_validator import (
@@ -53,6 +53,7 @@ from demisto_sdk.commands.common.hook_validations.base_validator import (
 from demisto_sdk.commands.common.hook_validations.readme import ReadMeValidator
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
+    extract_error_codes_from_file,
     get_core_pack_list,
     get_json,
     get_local_remote_file,
@@ -404,7 +405,8 @@ class PackUniqueFilesValidator(BaseValidator):
         if self._is_pack_file_exists(self.pack_ignore_file) and all(
             [self._is_pack_ignore_file_structure_valid()]
         ):
-            return True
+            if self.validate_non_ignorable_error():
+                return True
 
         return False
 
@@ -422,6 +424,23 @@ class PackUniqueFilesValidator(BaseValidator):
                 return True
 
         return False
+
+    @error_codes("PA137")
+    def validate_non_ignorable_error(self):
+        """
+        Check if .pack-ignore includes error codes that cannot be ignored.
+        Returns False if an non-ignorable error code is found,
+        or True if all ignored errors are indeed ignorable.
+        """
+        error_codes = extract_error_codes_from_file(self.pack)
+        if error_codes:
+            nonignoable_errors = error_codes.difference(ALLOWED_IGNORE_ERRORS)
+            if nonignoable_errors and self._add_error(
+                Errors.pack_have_nonignorable_error(nonignoable_errors),
+                self.pack_ignore_file,
+            ):
+                return False
+        return True
 
     # pack metadata validation
     def validate_pack_meta_file(self):

@@ -10,6 +10,7 @@ from collections import OrderedDict
 from concurrent.futures import as_completed
 from configparser import ConfigParser, MissingSectionHeaderError
 from contextlib import contextmanager
+from datetime import datetime
 from enum import Enum
 from functools import lru_cache
 from hashlib import sha1
@@ -117,7 +118,7 @@ from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
 from demisto_sdk.commands.common.handlers import YAML_Handler
 
 if TYPE_CHECKING:
-    from demisto_sdk.commands.content_graph.interface.graph import ContentGraphInterface
+    from demisto_sdk.commands.content_graph.interface import ContentGraphInterface
 
 logger = logging.getLogger("demisto-sdk")
 
@@ -3872,3 +3873,38 @@ def sha1_update_from_dir(directory: Union[str, Path], hash_):
 def sha1_dir(directory: Union[str, Path]) -> str:
     """Return the sha1 hash of a directory"""
     return str(sha1_update_from_dir(directory, sha1()).hexdigest())
+
+
+def is_epoch_datetime(string: str) -> bool:
+    # Check if the input string contains only digits
+    if not string.isdigit():
+        return False
+    # Convert the string to an integer and attempt to parse it as a datetime
+    try:
+        epoch_timestamp = int(string)
+        datetime.fromtimestamp(epoch_timestamp)
+        return True
+    except Exception:
+        return False
+
+
+def extract_error_codes_from_file(pack_name: str) -> Set[str]:
+    """
+    Args:
+        pack_name: a pack name from which to get the pack ignore errors.
+    Returns: error codes set  that in pack.ignore file
+    """
+    error_codes_list = []
+    if pack_name and (config := get_pack_ignore_content(pack_name)):
+        # go over every file in the config
+        for section in filter(
+            lambda section: section.startswith("file:"), config.sections()
+        ):
+            # given section is of type file
+            for key in config[section]:
+                if key == "ignore":
+                    # group ignore codes to a list
+                    error_codes = str(config[section][key]).split(",")
+                    error_codes_list.extend(error_codes)
+
+    return set(error_codes_list)

@@ -175,11 +175,16 @@ class Downloader:
             int: Exit code. 1 if failed, 0 if succeeded
         """
         try:
-            if not (self.verify_flags() and self.verify_output_path()):
+            if not self.verify_flags():
+                return 1
+
+            output_path = Path(self.output_pack_path)
+
+            if not self.verify_output_path(output_path=output_path):
                 return 1
 
             if self.init:
-                self.initialize_output_path()
+                output_path = self.initialize_output_path(root_folder=output_path)
 
             if self.download_system_items and not self.list_files:
                 downloaded_content_objects = self.fetch_system_content()
@@ -212,9 +217,10 @@ class Downloader:
                 if changed_uuids_count > 0:
                     logger.debug(f"Replaced UUID IDs in {changed_uuids_count} custom content items.")
 
-            existing_pack_data = self.build_existing_pack_structure(existing_pack_path=Path(self.output_pack_path))
+            existing_pack_data = self.build_existing_pack_structure(existing_pack_path=output_path)
 
             result = self.write_files_into_output_path(downloaded_content_objects=downloaded_content_objects,
+                                                       output_path=output_path,
                                                        existing_pack_structure=existing_pack_data)
 
             if not result:
@@ -653,53 +659,66 @@ class Downloader:
 
         return tabulate(tabulate_data, headers=["CONTENT NAME", "CONTENT TYPE"])
 
-    def initialize_output_path(self) -> None:
-        """Initialize output path with pack structure."""
+    def initialize_output_path(self, root_folder: Path) -> Path:
+        """
+        Initialize output path with pack structure.
+
+        Args:
+            root_folder (Path): The root folder to initialize the pack structure in.
+
+        Returns:
+            Path: Path to the initialized output path.
+        """
         logger.info("Initiating pack structure...")
-        root_folder = Path(self.output_pack_path)
+
         if root_folder.name != "Packs":
             root_folder = root_folder / "Packs"
+
             try:
                 root_folder.mkdir(exist_ok=True)
+
             except FileNotFoundError as e:
                 e.filename = str(Path(e.filename).parent)
                 raise
+
         initiator = Initiator(str(root_folder))
         initiator.init()
-        self.output_pack_path = initiator.full_output_path
 
         if not self.keep_empty_folders:
-            self.remove_empty_folders()
+            self.remove_empty_folders(pack_folder=root_folder)
 
-        logger.info(f"Initialized pack structure at '{self.output_pack_path}'.")
+        logger.info(f"Pack structure initialized at '{root_folder}'.")
+        return initiator.full_output_path
 
-    def remove_empty_folders(self) -> None:
+    def remove_empty_folders(self, pack_folder: Path) -> None:
         """
-        Removes empty folders from the output pack path
-        :return: None
+        Remove empty folders from the output path.
+
+        Args:
+            pack_folder (Path): The pack folder to remove empty folders from.
         """
-        pack_folder = Path(self.output_pack_path)
         for folder_path in pack_folder.glob("*"):
             if folder_path.is_dir() and not any(folder_path.iterdir()):
                 folder_path.rmdir()
 
-    def verify_output_path(self) -> bool:
+    def verify_output_path(self, output_path: Path) -> bool:
         """
         Assure that the output path entered by the user is inside a "Packs" folder.
+
+        Args:
+            output_path (Path): The output path to check.
 
         Returns:
             bool: True if the output path is valid, False otherwise.
         """
-        output_pack_path = Path(self.output_pack_path)
-
-        if not output_pack_path.is_dir():
+        if not output_path.is_dir():
             logger.error(
-                f"Error: Path '{output_pack_path.absolute()}' does not exist, or isn't a directory."
+                f"Error: Path '{output_path.absolute()}' does not exist, or isn't a directory."
             )
 
-        elif not output_pack_path.parent.name == "Packs":
+        elif not output_path.parent.name == "Packs":
             logger.error(
-                f"Error: Path '{output_pack_path.absolute()}' is invalid.\n"
+                f"Error: Path '{output_path.absolute()}' is invalid.\n"
                 f"The provided output path for the download must be inside a 'Packs' folder. e.g., 'Packs/MyPack'."
             )
 
@@ -740,10 +759,9 @@ class Downloader:
                         ... (more files, like README and description)
                     ]
         """
-        output_pack_path = Path(existing_pack_path)
         pack_structure: DefaultDict[str, dict[str, list]] = defaultdict(dict)
 
-        for content_entity_path in output_pack_path.iterdir():
+        for content_entity_path in existing_pack_path.iterdir():
             if content_entity_path.is_dir():
                 directory_name = content_entity_path.name
 
@@ -980,7 +998,8 @@ class Downloader:
         return content_item_name
 
     def write_files_into_output_path(self, downloaded_content_objects: dict[str, dict],
-                                     existing_pack_structure: dict[str, dict[str, list[dict]]]) -> bool:
+                                     existing_pack_structure: dict[str, dict[str, list[dict]]],
+                                     output_path: Path) -> bool:
         """
         Download the files after processing is done to the output directory.
         For integrations / scripts, YAML extraction is done.
@@ -990,6 +1009,7 @@ class Downloader:
         Args:
             downloaded_content_objects (dict[str, dict]): A dictionary of content objects to download.
             existing_pack_structure (dict[str, list]): A dictionary of existing content objects in the output path.
+            output_path (Path): The output path to write the files to.
 
         Returns:
             bool: True if all files were downloaded successfully, False otherwise.
@@ -1007,11 +1027,13 @@ class Downloader:
                 if content_item_entity in (INTEGRATIONS_DIR, SCRIPTS_DIR):
                     file_downloaded = self.download_unified_content(content_object=content_object,
                                                                     existing_pack_structure=existing_pack_structure,
+                                                                    output_path=output_path,
                                                                     overwrite_existing=self.force)
 
                 else:
                     file_downloaded = self.download_non_unified_content(content_object=content_object,
                                                                         existing_pack_structure=existing_pack_structure,
+                                                                        output_path=output_path,
                                                                         overwrite_existing=self.force)
 
                 # If even one file was skipped, we mark the file as skipped for the logs
@@ -1047,6 +1069,7 @@ class Downloader:
 
     def download_unified_content(self, content_object: dict,
                                  existing_pack_structure: dict[str, dict[str, list[dict]]],
+                                 output_path: Path,
                                  overwrite_existing: bool = False) -> bool:
         """
         Download unified content items.
@@ -1057,6 +1080,7 @@ class Downloader:
         Args:
             content_object (dict): The content object to download
             existing_pack_structure (list[dict]): A list of existing content item files in the output pack.
+            output_path (Path): The output path to write the files to.
             overwrite_existing (bool): Whether to overwrite existing files or not.
 
         Returns:
@@ -1082,16 +1106,16 @@ class Downloader:
             # If we overwrite existing files, we need to extract the existing files to a temp directory
             # for a "smart" merge.
             temp_dir = mkdtemp()
-            output_path = temp_dir
+            content_item_output_path = temp_dir
 
         else:
-            output_path = Path(self.output_pack_path, content_item_entity, content_directory_name)
-            output_path.mkdir(parents=True, exist_ok=True)  # Create path if it doesn't exist
-            output_path = str(output_path)
+            content_item_output_path = output_path / content_item_entity / content_directory_name
+            content_item_output_path.mkdir(parents=True, exist_ok=True)  # Create path if it doesn't exist
+            content_item_output_path = str(content_item_output_path)
 
         extractor = YmlSplitter(
             input=content_object["file_name"],
-            output=output_path,
+            output=content_item_output_path,
             loaded_data=content_object["data"],
             file_type=content_item_type,
             base_name=content_directory_name,
@@ -1099,7 +1123,7 @@ class Downloader:
             no_auto_create_dir=True,
         )
         extractor.extract_to_package_format()
-        extracted_file_paths: list[str] = get_child_files(output_path)
+        extracted_file_paths: list[str] = get_child_files(directory=content_item_output_path)
 
         for extracted_file_path in extracted_file_paths:
             if content_item_exists:
@@ -1124,12 +1148,10 @@ class Downloader:
                     corresponding_pack_file_path = corresponding_pack_file_object["path"]
 
                 else:
-                    corresponding_pack_file_path: str = os.path.join(
-                        self.output_pack_path,
-                        content_item_entity,
-                        self.create_directory_name(content_item_name),
-                        expected_filename,
-                    )
+                    corresponding_pack_file_path = str(output_path /
+                                                       content_item_entity /
+                                                       self.create_directory_name(content_item_name) /
+                                                       expected_filename)
 
                 if extracted_file_extension == ".yml":  # "smart" merge is relevant only for YAML files
                     self.update_data(  # Add existing fields that were removed by the server to the new file
@@ -1164,6 +1186,7 @@ class Downloader:
 
     def download_non_unified_content(self, content_object: dict,
                                      existing_pack_structure: dict[str, dict[str, list[dict]]],
+                                     output_path: Path,
                                      overwrite_existing: bool = False) -> bool:
         """
         Download non-unified content items.
@@ -1174,6 +1197,7 @@ class Downloader:
         Args:
             content_object (dict): The content object to download
             existing_pack_structure (list[dict]): A list of existing content item files in the output pack.
+            output_path (Path): The output path to write the files to.
             overwrite_existing (bool): Whether to overwrite existing files or not.
 
         Returns:
@@ -1215,13 +1239,13 @@ class Downloader:
                 corresponding_pack_file_path,
                 is_yaml=(content_item_extension == ".yml"))
 
-            output_path = corresponding_pack_file_path
+            content_item_output_path = corresponding_pack_file_path
 
         else:  # If the content item doesn't exist in the output pack, create a new directory for it
-            output_path = Path(self.output_pack_path, content_item_entity)
-            output_path.mkdir(parents=True, exist_ok=True)  # Create path if it doesn't exist
+            content_item_output_path = output_path / content_item_entity
+            content_item_output_path.mkdir(parents=True, exist_ok=True)  # Create path if it doesn't exist
 
-        shutil.move(src=file_path, dst=output_path)
+        shutil.move(src=file_path, dst=content_item_output_path)
 
         try:  # Clean up temp dir
             shutil.rmtree(temp_dir, ignore_errors=True)
@@ -1230,9 +1254,9 @@ class Downloader:
             logger.warning(f"Failed to remove temp dir '{temp_dir}': {e}")
             logger.debug(traceback.format_exc())
 
-            if self.run_format and output_path.suffix in (".yml", ".yaml", ".json"):
+            if self.run_format and content_item_output_path.suffix in (".yml", ".yaml", ".json"):
                 format_manager(
-                    input=str(output_path),
+                    input=str(content_item_output_path),
                     no_validate=False,
                     assume_answer=False,
                 )

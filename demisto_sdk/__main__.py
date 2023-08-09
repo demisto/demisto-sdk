@@ -34,9 +34,11 @@ from demisto_sdk.commands.common.tools import (
     is_sdk_defined_working_offline,
     parse_marketplace_kwargs,
 )
-from demisto_sdk.commands.content_graph.interface.neo4j.neo4j_graph import (
-    Neo4jContentGraphInterface,
+from demisto_sdk.commands.content_graph.commands.create import create
+from demisto_sdk.commands.content_graph.commands.get_relationships import (
+    get_relationships,
 )
+from demisto_sdk.commands.content_graph.commands.update import update
 from demisto_sdk.commands.generate_modeling_rules import generate_modeling_rules
 from demisto_sdk.commands.prepare_content.prepare_upload_manager import (
     PrepareUploadManager,
@@ -1242,8 +1244,15 @@ def coverage_analyze(ctx, **kwargs):
 @click.option(
     "-s",
     "--id-set-path",
-    help="The path of the id_set json file.",
+    help="Deprecated. The path of the id_set json file.",
     type=click.Path(exists=True, resolve_path=True),
+)
+@click.option(
+    "-gr/-ngr",
+    "--graph/--no-graph",
+    help="Whether to use the content graph or not.",
+    is_flag=True,
+    default=True,
 )
 @click.argument("file_paths", nargs=-1, type=click.Path(exists=True, resolve_path=True))
 @click.pass_context
@@ -1292,6 +1301,7 @@ def format(
             include_untracked=include_untracked,
             add_tests=add_tests,
             id_set_path=id_set_path,
+            use_graph=kwargs.get("graph", True),
         )
 
 
@@ -1887,6 +1897,11 @@ def generate_test_playbook(ctx, **kwargs):
 @click.option(
     "--script", is_flag=True, help="Create a Script based on BaseScript example"
 )
+@click.option(
+    "--xsiam",
+    is_flag=True,
+    help="Create an Event Collector based on a template, and create matching sub directories",
+)
 @click.option("--pack", is_flag=True, help="Create pack and its sub directories")
 @click.option(
     "-t",
@@ -1921,7 +1936,8 @@ def init(ctx, **kwargs):
     from demisto_sdk.commands.init.initiator import Initiator
 
     check_configuration_file("init", kwargs)
-    initiator = Initiator(**kwargs)
+    marketplace = parse_marketplace_kwargs(kwargs)
+    initiator = Initiator(marketplace=marketplace, **kwargs)
     initiator.init()
     return 0
 
@@ -3184,17 +3200,14 @@ def create_content_graph(
     output_path: Path = None,
     **kwargs,
 ):
-    from demisto_sdk.commands.content_graph.content_graph_commands import (
-        create_content_graph as create_content_graph_command,
+    ctx.invoke(
+        create,
+        ctx,
+        marketplace=marketplace,
+        no_dependencies=no_dependencies,
+        output_path=output_path,
+        **kwargs,
     )
-
-    with Neo4jContentGraphInterface() as content_graph_interface:
-        create_content_graph_command(
-            content_graph_interface,
-            marketplace=MarketplaceVersions(marketplace),
-            dependencies=not no_dependencies,
-            output_path=output_path,
-        )
 
 
 # ====================== update-content-graph ====================== #
@@ -3270,27 +3283,18 @@ def update_content_graph(
     output_path: Path = None,
     **kwargs,
 ):
-    from demisto_sdk.commands.content_graph.content_graph_commands import (
-        update_content_graph as update_content_graph_command,
+    ctx.invoke(
+        update,
+        ctx,
+        use_git=use_git,
+        marketplace=marketplace,
+        use_current=use_current,
+        imported_path=imported_path,
+        packs_to_update=packs,
+        no_dependencies=no_dependencies,
+        output_path=output_path,
+        **kwargs,
     )
-    from demisto_sdk.commands.content_graph.interface.neo4j.neo4j_graph import (
-        Neo4jContentGraphInterface,
-    )
-
-    if packs and not isinstance(packs, list):
-        # for some reason packs provided as tuple from click interface
-        packs = list(packs)
-    with Neo4jContentGraphInterface() as content_graph_interface:
-        update_content_graph_command(
-            content_graph_interface,
-            marketplace=MarketplaceVersions(marketplace),
-            use_git=use_git,
-            imported_path=imported_path,
-            use_current=use_current,
-            packs_to_update=packs or [],
-            dependencies=not no_dependencies,
-            output_path=output_path,
-        )
 
 
 @main.command(short_help="Runs pre-commit hooks on the files in the repository")
@@ -3454,6 +3458,8 @@ def exit_from_program(result=0, **kwargs):
     sys.exit(result)
 
 
+# ====================== modeling-rules command group ====================== #
+
 app = typer.Typer(name="modeling-rules", hidden=True, no_args_is_help=True)
 app.command("test", no_args_is_help=True)(test_modeling_rule.test_modeling_rule)
 app.command("init-test-data", no_args_is_help=True)(init_test_data.init_test_data)
@@ -3470,6 +3476,16 @@ app_generate_modeling_rules.command("generate-modeling-rules", no_args_is_help=T
 
 typer_click_object2 = typer.main.get_command(app_generate_modeling_rules)
 main.add_command(typer_click_object2, "generate-modeling-rules")
+
+
+# ====================== graph command group ====================== #
+
+graph_cmd_group = typer.Typer(name="graph", hidden=True, no_args_is_help=True)
+graph_cmd_group.command("create", no_args_is_help=True)(create)
+graph_cmd_group.command("update", no_args_is_help=True)(update)
+graph_cmd_group.command("get-relationships", no_args_is_help=True)(get_relationships)
+main.add_command(typer.main.get_command(graph_cmd_group), "graph")
+
 
 if __name__ == "__main__":
     main()

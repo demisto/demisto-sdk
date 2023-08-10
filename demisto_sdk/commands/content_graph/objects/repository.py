@@ -16,7 +16,7 @@ from demisto_sdk.commands.content_graph.parsers.repository import RepositoryPars
 USE_MULTIPROCESSING = False  # toggle this for better debugging
 
 
-def from_path():
+def all_content_repo():
     """
     Returns a ContentDTO object with all the packs of the content repository.
     """

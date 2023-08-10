@@ -67,7 +67,7 @@ class ScriptParser(IntegrationScriptParser, content_type=ContentType.SCRIPT):
     def type(self) -> str:
         _type = self.yml_data.get("subtype") or self.yml_data.get("type")
         if _type == "python":
-            _type = f'{_type}2'
+            _type = f"{_type}2"
         return _type
 
     def get_depends_on(self) -> Set[str]:

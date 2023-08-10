@@ -480,7 +480,7 @@ def get_remote_file_from_api(
     git_content_config: Optional[GitContentConfig],
     tag: str = "master",
     return_content: bool = False,
-    encoding: Optional[str] = None
+    encoding: Optional[str] = None,
 ):
     if not git_content_config:
         git_content_config = GitContentConfig()

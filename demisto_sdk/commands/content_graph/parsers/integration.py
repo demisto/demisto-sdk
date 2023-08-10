@@ -115,5 +115,5 @@ class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGR
     def type(self) -> str:
         _type = self.script_info.get("subtype") or self.script_info.get("type")
         if _type == "python":
-            _type = f'{_type}2'
+            _type = f"{_type}2"
         return _type

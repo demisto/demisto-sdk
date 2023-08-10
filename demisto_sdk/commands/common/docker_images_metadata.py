@@ -1,17 +1,13 @@
-import functools
 from typing import Dict, Optional
-import base64
-from pydantic import BaseModel, validator
-import requests
+
+from pydantic import BaseModel
+
+from demisto_sdk.commands.common.constants import DOCKERFILES_INFO_REPO
+from demisto_sdk.commands.common.git_content_config import GitContentConfig
+from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.singleton import Singleton
-from demisto_sdk.commands.common.git_util import GitUtil
-from git import Repo
-from demisto_sdk.commands.common.handlers import JSON_Handler
-import tempfile
-from pydantic import parse
 from demisto_sdk.commands.common.tools import get_remote_file_from_api
-from demisto_sdk.commands.common.git_content_config import GitContentConfig
 
 DOCKER_IMAGES_METADATA_NAME = "docker_images_metadata.json"
 
@@ -19,22 +15,25 @@ DOCKER_IMAGES_METADATA_NAME = "docker_images_metadata.json"
 json = JSON_Handler()
 
 
-class DockerImageTagMetadata(Singleton, BaseModel):
+class DockerImageTagMetadata(BaseModel):
     python_version: Optional[str]
 
 
-class DockerImagesMetadata(BaseModel):
+class DockerImagesMetadata(Singleton, BaseModel):
     docker_images: Dict[str, Dict[str, DockerImageTagMetadata]] = {}
 
-    def __init__(self):
+    @classmethod
+    def from_github(
+        cls, file_name: str = DOCKER_IMAGES_METADATA_NAME, tag: str = "master"
+    ):
+        tag = "aa6fa17889cea0bf5c0a982be637f00313a56743"
         docker_images_metadata_content = get_remote_file_from_api(
-            "docker_images_metadata.json",
-            tag="aa6fa17889cea0bf5c0a982be637f00313a56743",
-            git_content_config=GitContentConfig(repo_name="demisto/dockerfiles-info"),
-            encoding="utf-8-sig"
+            file_name,
+            tag=tag,
+            git_content_config=GitContentConfig(repo_name=DOCKERFILES_INFO_REPO),
+            encoding="utf-8-sig",
         )
-
-        super().__init__(**docker_images_metadata_content)
+        return cls.parse_obj(docker_images_metadata_content)
 
     def get_docker_image_metadata_value(
         self, docker_image: str, docker_metadata_key: str

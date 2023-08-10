@@ -318,7 +318,9 @@ class LayoutBaseFormat(BaseUpdateJSON, ABC):
             path=Path(self.source_file).relative_to(self.graph.repo_path)
         )
         if not isinstance(result, List) or result == []:
-            logger.error(f"The search failed to find the file {self.source_file} in the content graph.")
+            logger.error(
+                f"The search failed to find the file {self.source_file} in the content graph."
+            )
             return
         layout_object = result[0]
         if not isinstance(layout_object, Layout):

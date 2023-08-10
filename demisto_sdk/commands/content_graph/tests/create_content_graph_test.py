@@ -26,7 +26,6 @@ from demisto_sdk.commands.content_graph.objects.integration import Command, Inte
 from demisto_sdk.commands.content_graph.objects.integration_script import (
     IntegrationScript,
 )
-from demisto_sdk.commands.content_graph.parsers.integration_script import IntegrationScriptParser
 from demisto_sdk.commands.content_graph.objects.pack import Pack
 from demisto_sdk.commands.content_graph.objects.playbook import Playbook
 from demisto_sdk.commands.content_graph.objects.repository import ContentDTO

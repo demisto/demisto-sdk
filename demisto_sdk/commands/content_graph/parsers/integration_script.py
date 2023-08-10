@@ -72,7 +72,9 @@ class IntegrationScriptParser(YAMLContentItemParser):
         if "python" not in self.type:
             return None
 
-        if python_version := DockerImagesMetadata.from_github().python_version(self.docker_image):
+        if python_version := DockerImagesMetadata.from_github().python_version(
+            self.docker_image
+        ):
             return python_version
         logger.debug(
             f"Could not get python version for {self.object_id=} from dockerfiles-info, will retrieve from dockerhub api"

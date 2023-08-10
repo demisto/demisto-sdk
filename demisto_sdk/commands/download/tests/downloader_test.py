@@ -401,10 +401,6 @@ class TestHelperMethods:
             ({}, "integration", INTEGRATIONS_DIR),
         ],
     )
-    def test_file_type_to_entity(self, data, file_type, entity):
-        with patch.object(Downloader, "__init__", lambda a, b, c: None):
-            downloader = Downloader("", "")
-            assert downloader.file_type_to_entity(data, file_type) == entity
 
     def test_get_custom_content_objects(self, tmp_path):
         env = Environment(tmp_path)

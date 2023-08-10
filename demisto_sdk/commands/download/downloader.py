@@ -621,12 +621,16 @@ class Downloader:
                     file_name=file_name, file_data=file_data
                 )
 
-                # Add a content item only if we could detect its type
-                if custom_content_object.get("type"):
-                    custom_content_objects[file_name] = custom_content_object
+                # Add a content item only if detected all required fields
+                missing_field = False
+                for _field in ("id", "name", "entity", "type"):
+                    if not custom_content_object.get(_field):
+                        logger.warning(f"Content item's {_field} could not be detected for '{file_name}'. Skipping...")
+                        missing_field = True
+                        break
 
-                else:
-                    logger.warning(f"Content type of '{file_name}' could not be detected. Skipping...")
+                if not missing_field:
+                    custom_content_objects[file_name] = custom_content_object
 
             # Skip custom_content_objects with an invalid format
             except Exception as e:
@@ -945,27 +949,26 @@ class Downloader:
 
         # For integrations, 'get_display_name' returns the 'display' field, but we use the 'name' field.
         if file_type == FileType.INTEGRATION:
-            content_name = loaded_file_data["name"]
+            content_name = loaded_file_data.get("name")
 
         else:
             content_name = get_display_name(file_path=file_name, file_data=loaded_file_data)
 
-        if file_type:
-            file_entity = self.file_type_to_entity(
-                content_name=content_name,
-                file_type=file_type
-            )
+        if (file_type == FileType.PLAYBOOK and
+                (content_name.lower().endswith(("test", "_test", "-test")) or
+                 content_name.lower().startswith("test"))):
+            file_entity = TEST_PLAYBOOKS_DIR
 
         else:
-            file_entity = ""
+            file_entity = ENTITY_TYPE_TO_DIR.get(file_type)
 
         if not content_id:
             logger.warning(f"Could not find content ID for '{file_name}'.")
 
         custom_content_object: dict = {
-            "id": content_id,  # str
-            "name": content_name,  # str
-            "entity": file_entity,  # str
+            "id": content_id,  # str | None
+            "name": content_name,  # str | None
+            "entity": file_entity,  # str | None
             "type": file_type,  # FileType | None
             "file": file_data,  # StringIO
             "file_name": self.update_file_prefix(file_name),  # str
@@ -978,24 +981,6 @@ class Downloader:
 
         return custom_content_object
 
-    @staticmethod
-    def file_type_to_entity(content_name: str, file_type: FileType) -> str:
-        """
-        Given the file type returns the file entity.
-
-        Args:
-            content_name (str): Content item's name (not file name)
-            file_type (FileType): Content item's type
-
-        Returns:
-            str: File's entity. An empty string if not found.
-        """
-        if file_type == FileType.PLAYBOOK:
-            if content_name.endswith(
-                ("Test", "_test", "_Test", "-test", "-Test")
-            ) or content_name.lower().startswith("test"):
-                return TEST_PLAYBOOKS_DIR
-        return ENTITY_TYPE_TO_DIR.get(file_type, "")
 
     @staticmethod
     def create_directory_name(content_item_name: str) -> str:
@@ -1352,7 +1337,7 @@ class Downloader:
                     f"Unsupported file extension '{file_extension}'."
                 )
 
-            return f"{self.create_directory_name(content_item_name)}_{file_type}.{file_extension}"
+            return f"{self.create_directory_name(content_item_name)}_{file_type}.{file_extension.lstrip('.')}"
 
 
 class HandledError(Exception):

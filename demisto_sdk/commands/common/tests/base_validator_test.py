@@ -1,6 +1,7 @@
 import logging
 import os
 from os.path import join
+from typing import Optional
 
 import pytest
 
@@ -99,7 +100,12 @@ def test_handle_error_on_unignorable_error_codes(
     ],
 )
 def test_handle_error_github_annotation(
-    monkeypatch, capsys, github_actions_env_var, suggested_fix, warning, expected_result
+    monkeypatch,
+    capsys,
+    is_github_actions: bool,
+    suggested_fix: Optional[str],
+    is_warning: bool,
+    expected_result: str,
 ):
     """
     Given
@@ -115,14 +121,14 @@ def test_handle_error_github_annotation(
     - Ensure the message was printed if needed, and not if not
     - Ensure the message includes the suggested_fix if exists
     """
-    monkeypatch.setenv("GITHUB_ACTIONS", github_actions_env_var)
+    monkeypatch.setenv("GITHUB_ACTIONS", is_github_actions)
     base_validator = BaseValidator()
     base_validator.handle_error(
         error_message="Error-message",
         error_code="SC102",
         file_path="PATH",
         suggested_fix=suggested_fix,
-        warning=warning,
+        warning=is_warning,
     )
     captured = capsys.readouterr()
     assert captured.out == expected_result

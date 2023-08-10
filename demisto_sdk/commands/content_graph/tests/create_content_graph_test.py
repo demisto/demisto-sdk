@@ -19,6 +19,7 @@ from demisto_sdk.commands.content_graph.common import (
 from demisto_sdk.commands.content_graph.interface import (
     ContentGraphInterface,
 )
+from demisto_sdk.commands.content_graph.objects import IncidentField, Layout, Mapper
 from demisto_sdk.commands.content_graph.objects.classifier import Classifier
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 from demisto_sdk.commands.content_graph.objects.integration import Command, Integration
@@ -291,6 +292,82 @@ def mock_widget(
         build_in_pack_relationship(pack, widget)
         add_uses_relationships(pack, widget, uses)
     return widget
+
+
+def mock_mapper(path: str, name: str = "SampleMapper", data: Dict = {}):
+    return Mapper(
+        id=name,
+        content_type=ContentType.MAPPER,
+        node_id=f"{ContentType.MAPPER}:{name}",
+        path=path,
+        fromversion="5.0.0",
+        display_name=name,
+        toversion="99.99.99",
+        name=name,
+        marketplaces=[MarketplaceVersions.XSOAR],
+        deprecated=False,
+        type="python3",
+        docker_image="mock:docker",
+        tags=[],
+        is_test=False,
+        data=data,
+    )
+
+
+def mock_layout(path: str, name: str = "SampleLayout", data: Dict = {}):
+    return Layout(
+        id=name,
+        content_type=ContentType.LAYOUT,
+        node_id=f"{ContentType.LAYOUT}:{name}",
+        path=path,
+        fromversion="5.0.0",
+        display_name=name,
+        toversion="99.99.99",
+        name=name,
+        marketplaces=[MarketplaceVersions.XSOAR],
+        deprecated=False,
+        type="python3",
+        docker_image="mock:docker",
+        tags=[],
+        is_test=False,
+        data=data,
+        group="incident",
+        edit=False,
+        indicators_details=False,
+        indicators_quick_view=False,
+        quick_view=False,
+        close=False,
+        details=False,
+        details_v2=True,
+        mobile=False,
+    )
+
+
+def mock_incident_field(
+    cli_name: str,
+    path: str,
+    marketplaces: List,
+    data: Dict = {},
+    name: str = "SampleIncidentField",
+):
+    return IncidentField(
+        id=name,
+        content_type=ContentType.INCIDENT_FIELD,
+        node_id=f"{ContentType.INCIDENT_FIELD}:{name}",
+        path=path,
+        fromversion="5.0.0",
+        display_name=name,
+        toversion="99.99.99",
+        name=name,
+        marketplaces=marketplaces,
+        deprecated=False,
+        type="python3",
+        docker_image="mock:docker",
+        tags=[],
+        is_test=False,
+        data=data,
+        cli_name=cli_name,
+    )
 
 
 # HELPERS

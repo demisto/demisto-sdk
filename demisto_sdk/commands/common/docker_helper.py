@@ -514,6 +514,8 @@ def _get_python_version_from_image_client(image: str) -> Version:
 
 @functools.lru_cache
 def get_python_version_from_dockerhub_api(image: str) -> Optional[Version]:
+    if not image:
+        return None
     if "pwsh" in image or "powershell" in image:
         logger.debug(
             f"The image {image} is a powershell image, does not have python version"

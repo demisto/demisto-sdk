@@ -9,6 +9,7 @@
 * Removed the format execution step from the `contribution_converter` since it can be executed separately during the contribution process.
 * Added a new validation (`GR108`) to **validate** command that assures hidden packs do not have mandatory dependant packs.
 * Added a validation that check that non ignorable errors are not used.
+* Running **validate** in a GitHub Action will now show errors as annotations, visible in the `Files Changed` tab of the pull request.
 * **lint** will now fail on `demisto.results` and `return_outputs` usage, when a pack is `xsoar` or `partner` supported.
 * **lint** will now fail on `LOG` usage in python files.
 * Updated the **format** command to use the content graph instead of the id_set file.

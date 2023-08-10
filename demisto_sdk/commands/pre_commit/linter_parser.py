@@ -20,6 +20,7 @@ class LinterViolation(NamedTuple):
     path: Path
     row_start: int
     message: str
+    linter_name: str
     violation_type: Optional[ViolationType] = None
     is_autofixable: Optional[bool] = None
     fix_suggestion: Optional[str] = None
@@ -32,6 +33,14 @@ class LinterViolation(NamedTuple):
             f" (Fix: {self.fix_suggestion})" if self.fix_suggestion else ""
         )
         return f"{self.path}:{self.row_start} [{self.error_code}] {self.message}{fix_suggestion_suffix}"
+
+    def to_github_annotation(self) -> str:
+        prefix = "warning" if self.violation_type == ViolationType.WARNING else "error"
+        endline = self.row_end if self.row_end is not None else self.row_start
+        suffix = f"\n{self.fix_suggestion}" if self.fix_suggestion else ""
+        return f"::{prefix} file={self.path},line={self.row_start},endline={endline},title={self.linter_name}:{self.error_code}{suffix}".replace(
+            "\n", "%0A"
+        )
 
 
 class BaseParser:
@@ -51,6 +60,7 @@ class RuffParser(BaseParser):
             raise ValueError(f"input must be a dictionary, got {type(raw)} {raw}")
 
         return LinterViolation(
+            linter_name=RuffParser.linter_type,
             error_code=raw["code"],
             row_start=raw["location"]["row"],
             col_start=raw["location"]["column"],
@@ -58,8 +68,6 @@ class RuffParser(BaseParser):
             col_end=raw["end_location"]["column"],
             path=Path(raw["filename"]),
             message=raw["message"],
-            fix_suggestion=raw.get("fix", {})[
-                "message"
-            ],  # TODO too safe vs not safe enough
+            fix_suggestion=raw.get("fix", {}).get("message"),
             is_autofixable=bool(raw["fix"]),  # TODO check docs
         )

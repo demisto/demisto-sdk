@@ -12,3 +12,4 @@
     * Reports
     * Widgets
   * Fixed an issue where the download would fail when using the '-r' / '--regex' flag if there are multiple custom content items on the server using the same name.
+  * Fixed an issue where Integrations / Automations with a `.` in their name would not be named correctly (For example: `Test v1.1.py` would be renamed to `Test v1.py`)

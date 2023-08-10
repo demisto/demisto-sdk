@@ -261,7 +261,9 @@ class BaseValidator:
 
         self.json_output(file_path, error_code, error_message, warning)
         self.add_to_report_error_list(error_code, file_path, FOUND_FILES_AND_ERRORS)
-        if (not warning) and str2bool(os.getenv("GITHUB_ACTIONS")):  # warnings are not printed
+        if (not warning) and str2bool(
+            os.getenv("GITHUB_ACTIONS")
+        ):  # warnings are not printed
             github_annotation_message = (
                 f"{error_message}\n{suggested_fix}" if suggested_fix else error_message
             ).replace(

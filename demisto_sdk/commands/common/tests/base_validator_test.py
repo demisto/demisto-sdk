@@ -122,7 +122,7 @@ def test_handle_error_github_annotation(
         error_code="SC102",
         file_path="PATH",
         suggested_fix=suggested_fix,
-        warning=warning
+        warning=warning,
     )
     captured = capsys.readouterr()
     assert captured.out == expected_result

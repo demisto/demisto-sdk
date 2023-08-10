@@ -12,6 +12,7 @@ from pydantic import DirectoryPath, Field, validator
 from demisto_sdk.commands.common.constants import (
     BASE_PACK,
     CONTRIBUTORS_README_TEMPLATE,
+    DEFAULT_CONTENT_ITEM_FROM_VERSION,
     MARKETPLACE_MIN_VERSION,
     MarketplaceVersions,
 )
@@ -178,12 +179,8 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
                 min(
                     parse(content_item.fromversion)
                     for content_item in content_items
-                    if content_item.content_type
-                    not in (
-                        ContentType.XDRC_TEMPLATE,
-                        ContentType.TRIGGER,
-                        ContentType.TEST_PLAYBOOK,
-                    )
+                    if content_item.content_type != ContentType.TEST_PLAYBOOK
+                    and content_item.fromversion != DEFAULT_CONTENT_ITEM_FROM_VERSION
                 )
             )
         self.server_min_version = self.server_min_version or min_content_items_version

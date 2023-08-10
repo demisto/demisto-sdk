@@ -22,12 +22,13 @@ class Command(BaseContent, content_type=ContentType.COMMAND):  # type: ignore[ca
     name: str
 
     # From HAS_COMMAND relationship
-    deprecated: bool = False
-    description: Optional[str] = ""
+    deprecated: bool = Field(False)
+    description: Optional[str] = Field("")
 
     # missing attributes in DB
-    node_id: str = ""
-    object_id: str = Field("", alias="id")
+    node_id: str = Field("", exclude=True)
+    object_id: str = Field("", alias="id", exclude=True)
+    marketplaces: List[MarketplaceVersions] = Field([], exclude=True)
 
     @property
     def integrations(self) -> List["Integration"]:

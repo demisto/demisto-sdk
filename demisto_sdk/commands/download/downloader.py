@@ -304,7 +304,7 @@ class Downloader:
             # Filter according input / regex flags
             if (
                     self.download_all_custom_content or
-                    self.regex and re.match(self.regex, content_item_name) or
+                    (self.regex and re.match(self.regex, content_item_name)) or
                     content_item_name in self.input_files
             ):
                 # Filter out content written in JavaScript since it is not support
@@ -315,7 +315,7 @@ class Downloader:
                                    f" and will be skipped.")
                     continue
 
-                filtered_custom_content_objects[content_item_name] = content_item_data
+                filtered_custom_content_objects[file_name] = content_item_data
 
         logger.info(f"Filtering process completed ({len(filtered_custom_content_objects)}/{original_count}).")
         return filtered_custom_content_objects

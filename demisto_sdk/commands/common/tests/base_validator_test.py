@@ -80,7 +80,7 @@ def test_handle_error_on_unignorable_error_codes(
 
 
 @pytest.mark.parametrize(
-    "is_github_actions, suggested_fix, warning, expected_result",
+    "is_github_actions, suggested_fix, is_warning, expected_result",
     [
         (
             True,

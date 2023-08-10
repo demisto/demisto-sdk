@@ -23,6 +23,7 @@ from demisto_sdk.commands.common.constants import (
     CONTENT_FILE_ENDINGS,
     ENTITY_NAME_SEPARATORS,
     ENTITY_TYPE_TO_DIR,
+    FileType,
     INTEGRATIONS_DIR,
     PLAYBOOKS_DIR,
     SCRIPTS_DIR,
@@ -944,7 +945,14 @@ class Downloader:
             file_type = ""
 
         content_id = get_id(file_content=loaded_file_data)
-        content_name = get_display_name(file_path=file_name, file_data=loaded_file_data)
+
+        # For integrations, 'get_display_name' returns the 'display' field, but we use the 'name' field.
+        if file_type == FileType.INTEGRATION.value:
+            content_name = loaded_file_data["name"]
+
+        else:
+            content_name = get_display_name(file_path=file_name, file_data=loaded_file_data)
+
         file_entity = self.file_type_to_entity(
             content_name=content_name,
             file_type=file_type

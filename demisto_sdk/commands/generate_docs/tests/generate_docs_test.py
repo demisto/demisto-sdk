@@ -945,7 +945,6 @@ def test_generate_script_doc_passes_markdownlint(tmp_path, mocker):
             assert not run_markdownlint(file.read()).has_errors
 
 
-@pytest.mark.skip
 def test_generate_script_doc(tmp_path, mocker):
     import demisto_sdk.commands.generate_docs.common as common
 
@@ -960,6 +959,7 @@ def test_generate_script_doc(tmp_path, mocker):
         IDSetCreator, "create_id_set", return_value=[id_set, {}, {}]
     )
     mocker.patch.object(common, "execute_command", side_effect=handle_example)
+    mocker.patch("os.path.isfile", return_value=False)
     # because used in is random
     mocker.patch(
         "demisto_sdk.commands.generate_docs.generate_script_doc.get_used_in",

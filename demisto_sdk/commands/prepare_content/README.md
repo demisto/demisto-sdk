@@ -13,7 +13,7 @@ NOTE: The prepare-content command replaces the unify command.
 * **-c, --custom**
   Adds a custom label to the name/display/id of the unified yml (only for integrations/scripts).
 
-    **Examples**: 
+    **Examples**:
        <br/><br/>
     `​​demisto-sdk prepare-content -i Integrations/MyInt -o Integrations​​`
     Takes the integration components in ​Integrations/MyInt​ directory and unifies them to a single YAML file that is created

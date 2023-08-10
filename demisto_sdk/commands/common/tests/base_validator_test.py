@@ -80,7 +80,7 @@ def test_handle_error_on_unignorable_error_codes(
 
 
 @pytest.mark.parametrize(
-    "github_actions_env_var, suggested_fix, warning, expected_result",
+    "is_github_actions, suggested_fix, warning, expected_result",
     [
         (
             True,
@@ -109,7 +109,7 @@ def test_handle_error_github_annotation(
 ):
     """
     Given
-    - github_actions_env_var - True if ci/cd, otherwise False
+    - is_github_actions - True to mock running in CI
     - suggested_fix - a suggestion for fixing the error
     - warning
     - expected_result

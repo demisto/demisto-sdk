@@ -26,6 +26,7 @@ from demisto_sdk.commands.content_graph.objects.integration import Command, Inte
 from demisto_sdk.commands.content_graph.objects.integration_script import (
     IntegrationScript,
 )
+from demisto_sdk.commands.content_graph.parsers.integration_script import IntegrationScriptParser
 from demisto_sdk.commands.content_graph.objects.pack import Pack
 from demisto_sdk.commands.content_graph.objects.playbook import Playbook
 from demisto_sdk.commands.content_graph.objects.repository import ContentDTO
@@ -600,6 +601,9 @@ class TestCreateContentGraph:
         mocker.patch.object(
             IntegrationScript, "get_supported_native_images", return_value=[]
         )
+        mocker.patch.object(
+            IntegrationScriptParser, "python_version", return_value=None
+        )
 
         pack = repo.create_pack("TestPack")
         pack.pack_metadata.write_json(load_json("pack_metadata.json"))
@@ -1000,7 +1004,7 @@ class TestCreateContentGraph:
         When:
             - Running create_content_graph().
         Then:
-            - Make sure the the integrations are not recognized as duplicates and the command succeeds.
+            - Make sure the integrations are not recognized as duplicates and the command succeeds.
         """
         pack = mock_pack()
         integration = mock_integration()
@@ -1096,6 +1100,9 @@ class TestCreateContentGraph:
         """
         mocker.patch.object(
             IntegrationScript, "get_supported_native_images", return_value=[]
+        )
+        mocker.patch.object(
+            IntegrationScriptParser, "python_version", return_value=None
         )
 
         pack = repo.create_pack("TestPack")

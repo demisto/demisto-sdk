@@ -601,9 +601,6 @@ class TestCreateContentGraph:
         mocker.patch.object(
             IntegrationScript, "get_supported_native_images", return_value=[]
         )
-        mocker.patch.object(
-            IntegrationScriptParser, "python_version", return_value=None
-        )
 
         pack = repo.create_pack("TestPack")
         pack.pack_metadata.write_json(load_json("pack_metadata.json"))
@@ -925,7 +922,7 @@ class TestCreateContentGraph:
         When:
             - Running create_content_graph().
         Then:
-            - Make sure the the integrations are not recognized as duplicates and the command succeeds.
+            - Make sure the integrations are not recognized as duplicates and the command succeeds.
         """
         pack = mock_pack()
         integration = mock_integration()
@@ -1100,9 +1097,6 @@ class TestCreateContentGraph:
         """
         mocker.patch.object(
             IntegrationScript, "get_supported_native_images", return_value=[]
-        )
-        mocker.patch.object(
-            IntegrationScriptParser, "python_version", return_value=None
         )
 
         pack = repo.create_pack("TestPack")

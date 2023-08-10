@@ -480,6 +480,7 @@ def get_remote_file_from_api(
     git_content_config: Optional[GitContentConfig],
     tag: str = "master",
     return_content: bool = False,
+    encoding: Optional[str] = None
 ):
     if not git_content_config:
         git_content_config = GitContentConfig()
@@ -545,6 +546,8 @@ def get_remote_file_from_api(
     file_content = res.content
     if return_content:
         return file_content
+    if encoding:
+        return get_file_details(file_content.decode(encoding), full_file_path)
     return get_file_details(file_content, full_file_path)
 
 

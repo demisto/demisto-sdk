@@ -9,10 +9,11 @@ from demisto_sdk.commands.common.git_util import GitUtil
 from git import Repo
 from demisto_sdk.commands.common.handlers import JSON_Handler
 import tempfile
-
+from pydantic import parse
+from demisto_sdk.commands.common.tools import get_remote_file_from_api
+from demisto_sdk.commands.common.git_content_config import GitContentConfig
 
 DOCKER_IMAGES_METADATA_NAME = "docker_images_metadata.json"
-URL = f"https://api.github.com/repos/demisto/dockerfiles-info/contents/{DOCKER_IMAGES_METADATA_NAME}?ref=aa6fa17889cea0bf5c0a982be637f00313a56743"
 
 
 json = JSON_Handler()
@@ -25,32 +26,15 @@ class DockerImageTagMetadata(Singleton, BaseModel):
 class DockerImagesMetadata(BaseModel):
     docker_images: Dict[str, Dict[str, DockerImageTagMetadata]] = {}
 
-    @validator("docker_images", always=True)
-    def get_docker_images_metadata_content(cls, v: Dict) -> Dict:
-        try:
-            response = requests.get(URL, verify=False)
-            response.raise_for_status()
-        except requests.ConnectionError:
-            logger.debug(f'Got connection error when trying to get {DOCKER_IMAGES_METADATA_NAME}, retrying')
-            response = requests.get(URL, verify=False)
-            response.raise_for_status()
+    def __init__(self):
+        docker_images_metadata_content = get_remote_file_from_api(
+            "docker_images_metadata.json",
+            tag="aa6fa17889cea0bf5c0a982be637f00313a56743",
+            git_content_config=GitContentConfig(repo_name="demisto/dockerfiles-info"),
+            encoding="utf-8-sig"
+        )
 
-        try:
-            response_as_json = response.json()
-        except json.JSONDecodeError:
-            logger.error(f'Could not retrieve response from {URL=} in a json format')
-            return v
-
-        try:
-            file_content = base64.b64decode(response_as_json.get("content")).decode('utf-8-sig')
-        except Exception as e:
-            logger.error(f'Could not decode {DOCKER_IMAGES_METADATA_NAME} content, error: {e}')
-            return v
-
-        try:
-            return json.loads(file_content)
-        except json.JSONDecodeError:
-            return v
+        super().__init__(**docker_images_metadata_content)
 
     def get_docker_image_metadata_value(
         self, docker_image: str, docker_metadata_key: str

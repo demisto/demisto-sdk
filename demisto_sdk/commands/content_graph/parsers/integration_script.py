@@ -67,6 +67,9 @@ class IntegrationScriptParser(YAMLContentItemParser):
         """
         Get python version of scripts/integrations which are based on python images
         """
+        if 'python' not in self.type:
+            return None
+
         if python_version := DockerImagesMetadata().python_version(self.docker_image):
             return python_version
         logger.debug(

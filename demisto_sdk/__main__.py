@@ -38,8 +38,8 @@ from demisto_sdk.commands.content_graph.commands.create import create
 from demisto_sdk.commands.content_graph.commands.get_relationships import (
     get_relationships,
 )
-from demisto_sdk.commands.content_graph.objects.repository import all_content_repo
 from demisto_sdk.commands.content_graph.commands.update import update
+from demisto_sdk.commands.content_graph.objects.repository import all_content_repo
 from demisto_sdk.commands.generate_modeling_rules import generate_modeling_rules
 from demisto_sdk.commands.prepare_content.prepare_upload_manager import (
     PrepareUploadManager,

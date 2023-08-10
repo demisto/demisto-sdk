@@ -318,13 +318,13 @@ class LayoutBaseFormat(BaseUpdateJSON, ABC):
             path=Path(self.source_file).relative_to(self.graph.repo_path)
         )
         if not isinstance(result, List) or not result:
-            logger.error(
-                f"Failed finding {self.source_file} in the content graph."
-            )
+            logger.error(f"Failed finding {self.source_file} in the content graph.")
             return
         layout_object = result[0]
         if not isinstance(layout_object, Layout):
-            logger.error(f"File {self.source_file} object isn't a layout, but {type(layout_object)}.")
+            logger.error(
+                f"File {self.source_file} object isn't a layout, but {type(layout_object)}."
+            )
             return
 
         # find the fields that aren't in the content repo

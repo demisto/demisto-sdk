@@ -90,13 +90,13 @@ class MapperJSONFormat(BaseUpdateJSON):
             path=Path(self.source_file).relative_to(self.graph.repo_path)
         )
         if not isinstance(result, List) or not result:
-            logger.error(
-                f"Failed finding {self.source_file} in the content graph."
-            )
+            logger.error(f"Failed finding {self.source_file} in the content graph.")
             return
         mapper_object = result[0]
         if not isinstance(mapper_object, Mapper):
-            logger.error(f"The file {self.source_file} object isn't a mapper, but {type(mapper_object)}.")
+            logger.error(
+                f"The file {self.source_file} object isn't a mapper, but {type(mapper_object)}."
+            )
             return
 
         # find the fields that aren't in the content repo

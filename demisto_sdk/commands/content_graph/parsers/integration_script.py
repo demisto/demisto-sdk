@@ -4,7 +4,7 @@ from typing import Any, Dict, List, Optional, Set
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.common.docker_helper import get_python_version_from_dockerhub_api
-from demisto_sdk.commands.common.docker_images_info import DockerImagesInfo
+from demisto_sdk.commands.common.docker_images_metadata import DockerImagesMetadata
 from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
 from demisto_sdk.commands.content_graph.parsers.yaml_content_item import (
     YAMLContentItemParser,
@@ -12,6 +12,7 @@ from demisto_sdk.commands.content_graph.parsers.yaml_content_item import (
 from demisto_sdk.commands.prepare_content.integration_script_unifier import (
     IntegrationScriptUnifier,
 )
+from demisto_sdk.commands.common.logger import logger
 
 
 class IntegrationScriptParser(YAMLContentItemParser):
@@ -66,8 +67,16 @@ class IntegrationScriptParser(YAMLContentItemParser):
         """
         Get python version of scripts/integrations which are based on python images
         """
-        if python_version := DockerImagesInfo().python_version(self.docker_image):
+        if python_version := DockerImagesMetadata().python_version(self.docker_image):
             return python_version
+        logger.debug(
+            f'Could not get python version for {self.object_id=} from dockerfiles-info, will retrieve from dockerhub api'
+        )
+
         if python_version := get_python_version_from_dockerhub_api(self.docker_image):
             return str(python_version)
+        logger.debug(
+            f'Could not get python version for {self.object_id=} using {self.docker_image=} from dockerhub api'
+        )
+
         return None

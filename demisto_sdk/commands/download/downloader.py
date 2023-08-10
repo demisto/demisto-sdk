@@ -310,7 +310,7 @@ class Downloader:
             ):
                 # Filter out content written in JavaScript since it is not support
                 # TODO: Check if we actually need this (why don't we allow downloading JS content?) and remove if not.
-                if (content_item_data["type"] in ("integration", "script") and
+                if (content_item_data["type"] in (FileType.INTEGRATION, FileType.SCRIPT) and
                         content_item_data.get("code_lang") in ("javascript", None)):
                     logger.warning(f"Content item '{content_item_name}' is written in JavaScript which isn't supported,"
                                    f" and will be skipped.")
@@ -621,7 +621,8 @@ class Downloader:
                     file_name=file_name, file_data=file_data
                 )
 
-                if custom_content_object.get("type"):  # TODO: currently, this results in `list-` items to be skipped
+                # Add a content item only if we could detect its type
+                if custom_content_object.get("type"):
                     custom_content_objects[file_name] = custom_content_object
 
                 else:
@@ -651,7 +652,8 @@ class Downloader:
 
         for file_name, file_object in custom_content_objects.items():
             if item_name := file_object.get("name"):
-                tabulate_data.append([item_name, file_object["type"]])
+                file_type: FileType = file_object["type"]
+                tabulate_data.append([item_name, file_type.value])
 
         return tabulate(tabulate_data, headers=["CONTENT NAME", "CONTENT TYPE"])
 
@@ -938,25 +940,24 @@ class Downloader:
             if not loaded_file_data:
                 raise ValueError(f"Unsupported file extension: {file_extension}")
 
-        if file_type_enum := find_type(path=file_name, _dict=loaded_file_data, file_type=file_extension):
-            file_type = file_type_enum.value
-
-        else:
-            file_type = ""
-
+        file_type = find_type(path=file_name, _dict=loaded_file_data, file_type=file_extension)
         content_id = get_id(file_content=loaded_file_data)
 
         # For integrations, 'get_display_name' returns the 'display' field, but we use the 'name' field.
-        if file_type == FileType.INTEGRATION.value:
+        if file_type == FileType.INTEGRATION:
             content_name = loaded_file_data["name"]
 
         else:
             content_name = get_display_name(file_path=file_name, file_data=loaded_file_data)
 
-        file_entity = self.file_type_to_entity(
-            content_name=content_name,
-            file_type=file_type
-        )
+        if file_type:
+            file_entity = self.file_type_to_entity(
+                content_name=content_name,
+                file_type=file_type
+            )
+
+        else:
+            file_entity = ""
 
         if not content_id:
             logger.warning(f"Could not find content ID for '{file_name}'.")
@@ -965,7 +966,7 @@ class Downloader:
             "id": content_id,  # str
             "name": content_name,  # str
             "entity": file_entity,  # str
-            "type": file_type,  # str
+            "type": file_type,  # FileType | None
             "file": file_data,  # StringIO
             "file_name": self.update_file_prefix(file_name),  # str
             "file_extension": file_extension,  # str
@@ -978,18 +979,18 @@ class Downloader:
         return custom_content_object
 
     @staticmethod
-    def file_type_to_entity(content_name: str, file_type: str) -> str:
+    def file_type_to_entity(content_name: str, file_type: FileType) -> str:
         """
         Given the file type returns the file entity.
 
         Args:
             content_name (str): Content item's name (not file name)
-            file_type (str): Content file's type
+            file_type (FileType): Content item's type
 
         Returns:
             str: File's entity. An empty string if not found.
         """
-        if file_type == "playbook":
+        if file_type == FileType.PLAYBOOK:
             if content_name.endswith(
                 ("Test", "_test", "_Test", "-test", "-Test")
             ) or content_name.lower().startswith("test"):
@@ -1110,7 +1111,7 @@ class Downloader:
         """
         temp_dir: str | None = None
         content_item_name: str = content_object["name"]
-        content_item_type: str = content_object["type"]
+        content_item_type: FileType = content_object["type"]
         content_item_entity: str = content_object["entity"]
         content_directory_name = self.create_directory_name(content_item_name)
 
@@ -1139,7 +1140,7 @@ class Downloader:
             input=content_object["file_name"],
             output=content_item_output_path,
             loaded_data=content_object["data"],
-            file_type=content_item_type,
+            file_type=content_item_type.value,
             base_name=content_directory_name,
             no_readme=content_item_exists,  # If the content item exists, no need to download README.md file  # TODO: Change behavior? Why not download README.md in case it was changed?
             no_auto_create_dir=True,

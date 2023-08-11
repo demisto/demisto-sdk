@@ -177,10 +177,14 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
         if content_items:
             min_content_items_version = str(
                 min(
-                    parse(content_item.fromversion)
-                    for content_item in content_items
-                    if content_item.content_type != ContentType.TEST_PLAYBOOK
-                    and content_item.fromversion != DEFAULT_CONTENT_ITEM_FROM_VERSION
+                    [
+                        parse(content_item.fromversion)
+                        for content_item in content_items
+                        if content_item.content_type != ContentType.TEST_PLAYBOOK
+                        and content_item.fromversion
+                        != DEFAULT_CONTENT_ITEM_FROM_VERSION
+                    ],
+                    default=MARKETPLACE_MIN_VERSION,
                 )
             )
         self.server_min_version = self.server_min_version or min_content_items_version

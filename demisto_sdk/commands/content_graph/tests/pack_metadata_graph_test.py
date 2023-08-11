@@ -152,6 +152,7 @@ def test_pack_metadata_xsoar(repo: Repo, tmp_path: Path, mocker):
     assert metadata.get("videos") == []
     assert metadata.get("modules") == []
     assert metadata.get("integrations") == []
+    assert len(metadata.get("dependencies", [])) == 3
 
     metadata_integration = metadata.get("contentItems", {}).get("integration", [{}])[0]
     assert (
@@ -181,7 +182,6 @@ def test_pack_metadata_marketplacev2(repo: Repo, tmp_path: Path, mocker):
         - Dumping the pack and pack metadata.json for marketplace `marketplacev2`.
     Then:
         - Make sure the the metadata value as expected.
-        - Make sure the `serverMinVersion` is the minimum content item fromversion value except the test playbook.
         - Make sure that along 3 versions of a playbook, only the latest is in the metadata.
         - Make sure the script tags are in the pack metadata tags.
     """
@@ -282,7 +282,9 @@ def test_pack_metadata_marketplacev2(repo: Repo, tmp_path: Path, mocker):
     assert metadata_playbook.get("id") == "MyPlaybook"
     assert metadata_playbook.get("name") == "MyPlaybook"
 
-    metadata_playbook = metadata.get("contentItems", {}).get("modelingrule", [{}])[0]
-    assert metadata_playbook.get("fromversion") == "6.10.0"
-    assert metadata_playbook.get("id") == "my_ModelingRule"
-    assert metadata_playbook.get("name") == "My Modeling Rule"
+    metadata_modeling_rule = metadata.get("contentItems", {}).get("modelingrule", [{}])[
+        0
+    ]
+    assert metadata_modeling_rule.get("fromversion") == "6.10.0"
+    assert metadata_modeling_rule.get("id") == "my_ModelingRule"
+    assert metadata_modeling_rule.get("name") == "My Modeling Rule"

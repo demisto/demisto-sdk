@@ -109,7 +109,7 @@ def mock_integration(
         marketplaces=[MarketplaceVersions.XSOAR],
         deprecated=False,
         type="python3",
-        docker_image="mock:docker",
+        docker_image="demisto/python3:3.10.11.54799",
         category="blabla",
         commands=[Command(name="test-command", description="")],
     )
@@ -141,7 +141,7 @@ def mock_script(
         marketplaces=marketplaces,
         deprecated=False,
         type="python3",
-        docker_image="mock:docker",
+        docker_image="demisto/python3:3.10.11.54799",
         tags=[],
         is_test=False,
         skip_prepare=skip_prepare,

@@ -120,12 +120,12 @@ class BaseContent(ABC, BaseModel, metaclass=BaseContentMetaclass):
         # if has name attribute, return it, otherwise return the object id
         return self.object_id
 
-    def add_graph_metadata(self, json_dct: Dict):
+    def __add_metadata(self, json_dct: Dict):
         """
-        Add extra metadata to the graph which are not in the model objects.
+        Add extra metadata to the model.
 
         Args:
-            json_dct: dict representation of the graph
+            json_dct: dict representation of the object
 
         """
         if "path" in json_dct and Path(json_dct["path"]).is_absolute():
@@ -133,10 +133,9 @@ class BaseContent(ABC, BaseModel, metaclass=BaseContentMetaclass):
 
         json_dct["content_type"] = self.content_type
 
-        if self.content_type in (ContentType.SCRIPT, ContentType.INTEGRATION) and (
-            python_version := self.get_python_version()  # type: ignore[attr-defined]
-        ):
-            json_dct["python_version"] = python_version
+        if self.content_type in (ContentType.SCRIPT, ContentType.INTEGRATION):
+            python_version = self.get_python_version()  # type: ignore[attr-defined]
+            json_dct["python_version"] = str(python_version) if python_version else python_version
 
     def to_dict(self) -> Dict[str, Any]:
         """
@@ -148,7 +147,7 @@ class BaseContent(ABC, BaseModel, metaclass=BaseContentMetaclass):
         """
 
         json_dct = json.loads(self.json(exclude={"commands", "database_id"}))
-        self.add_graph_metadata(json_dct)
+        self.__add_metadata(json_dct)
         return json_dct
 
     @staticmethod

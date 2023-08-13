@@ -9,7 +9,7 @@ from demisto_sdk.commands.common.constants import (
     MarketplaceVersions,
 )
 from demisto_sdk.commands.common.docker_helper import (
-    get_python_version_from_dockerhub_api,
+    get_python_version,
 )
 from demisto_sdk.commands.common.docker_images_metadata import DockerImagesMetadata
 from demisto_sdk.commands.common.logger import logger
@@ -21,6 +21,13 @@ from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 from demisto_sdk.commands.prepare_content.integration_script_unifier import (
     IntegrationScriptUnifier,
 )
+from demisto_sdk.commands.common.constants import (
+    PYTHON_IMAGE_REGEX
+)
+
+
+def bla():
+    return "1" + "1"
 
 
 class IntegrationScript(ContentItem):
@@ -29,6 +36,7 @@ class IntegrationScript(ContentItem):
     description: Optional[str]
     is_unified: bool = Field(False, exclude=True)
     code: Optional[str] = Field(None, exclude=True)
+    python_version: Optional[str] = Field(exclude=True, default_factory=bla)
 
     def prepare_for_upload(
         self,
@@ -69,6 +77,9 @@ class IntegrationScript(ContentItem):
             )
             return None
 
+        if match := PYTHON_IMAGE_REGEX.match(self.docker_image):
+            return Version(match.group("python_version"))
+
         if python_version := DockerImagesMetadata.from_github().python_version(
             self.docker_image
         ):
@@ -77,7 +88,7 @@ class IntegrationScript(ContentItem):
             f"Could not get python version for {self.object_id=} from dockerfiles-info, will retrieve from dockerhub api"
         )
 
-        if python_version := get_python_version_from_dockerhub_api(self.docker_image):
+        if python_version := get_python_version(self.docker_image, use_only_api=True):
             return python_version
         logger.debug(
             f"Could not get python version for {self.object_id=} using {self.docker_image=} from dockerhub api"

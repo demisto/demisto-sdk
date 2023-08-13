@@ -23,17 +23,12 @@ from demisto_sdk.commands.prepare_content.integration_script_unifier import (
 )
 
 
-def bla():
-    return "1" + "1"
-
-
 class IntegrationScript(ContentItem):
     type: str
     docker_image: Optional[str]
     description: Optional[str]
     is_unified: bool = Field(False, exclude=True)
     code: Optional[str] = Field(None, exclude=True)
-    python_version: Optional[str] = Field(exclude=True, default_factory=bla)
 
     def prepare_for_upload(
         self,
@@ -68,9 +63,9 @@ class IntegrationScript(ContentItem):
         """
         Get the python version from the script/integration docker-image in case it's a python image
         """
-        if "python" not in self.type:
+        if "python" not in self.type or not self.docker_image:
             logger.debug(
-                f"{self.object_id=} using {self.docker_image} is not a python image"
+                f"{self.object_id=} using {self.docker_image=} is not a python image"
             )
             return None
 

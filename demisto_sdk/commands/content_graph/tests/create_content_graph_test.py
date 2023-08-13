@@ -60,6 +60,11 @@ def repository(mocker):
         "demisto_sdk.commands.content_graph.content_graph_builder.ContentGraphBuilder._create_content_dtos",
         return_value=[repository],
     )
+    mocker.patch(
+        'demisto_sdk.commands.common.docker_images_metadata.get_remote_file_from_api',
+        return_value={"docker_images": {"python3": {"3.10.11.54799": {"python_version": "3.10.11"},
+                                                    "3.10.12.63474": {"python_version": "3.10.11"}}}}
+    )
     return repository
 
 
@@ -462,7 +467,7 @@ def find_model_for_id(packs: List[Pack], source_id: str):
     return None
 
 
-def create_mini_content(repository: ContentDTO):
+def create_mini_content(repository: ContentDTO, mocker):
     """Created a content repo with three packs and relationships§
 
     Args:
@@ -583,6 +588,11 @@ def create_mini_content(repository: ContentDTO):
     pack2.content_items.test_playbook.append(mock_test_playbook())
     pack3.content_items.playbook.append(mock_playbook())
     pack3.content_items.script.append(mock_script("SampleScript2"))
+    mocker.patch(
+        'demisto_sdk.commands.common.docker_images_metadata.get_remote_file_from_api',
+        return_value={"docker_images": {"python3": {"3.10.11.54799": {"python_version": "3.10.11"},
+                                                    "3.10.12.63474": {"python_version": "3.10.11"}}}}
+    )
     repository.packs.extend([pack1, pack2, pack3])
 
 
@@ -1101,12 +1111,11 @@ class TestCreateContentGraph:
         pack = repo.create_pack("TestPack")
         pack.pack_metadata.write_json(load_json("pack_metadata.json"))
         pack.create_script(
-            name="getIncident", docker_image="demisto/python3:3.10.12.63474"
+            name="getIncident"
         )
         pack.create_script(
             name="setIncident",
             skip_prepare=[SKIP_PREPARE_SCRIPT_NAME],
-            docker_image="demisto/python3:3.10.12.63474",
         )
 
         with ContentGraphInterface() as interface:

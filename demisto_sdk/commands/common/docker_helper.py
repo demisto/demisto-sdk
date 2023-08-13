@@ -481,7 +481,16 @@ def _get_python_version_from_env(env: List[str]) -> Version:
 def get_python_version(
     image: Optional[str], use_only_api: bool = False
 ) -> Optional[Version]:
+    """
+    Get the python version of a docker image if exist.
 
+    Args:
+        image (str): the docker image
+        use_only_api (bool): whether to use only the dockerhub api when querying the python version if not found before
+
+    Returns:
+        Version: Python version X.Y (3.7, 3.6, ..)
+    """
     logger.debug(f"Get python version from image {image} - Start")
 
     if not image:
@@ -533,6 +542,15 @@ def _get_python_version_from_image_client(image: str) -> Version:
 
 
 def _get_python_version_from_dockerhub_api(image: str) -> Version:
+    """
+    Get python version for a docker image from the dockerhub api
+
+    Args:
+        image (str): the docker image.
+
+    Returns:
+        Version: Python version X.Y (3.7, 3.6, ..)
+    """
     if ":" not in image:
         repo = image
         tag = "latest"

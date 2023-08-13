@@ -84,7 +84,7 @@ def generate_script_doc(
                     use_git=True,
                     output_path=graph.output_path,
                 )
-                result = graph.search(object_id=script_id)
+                result = graph.search(path=input_path)
                 if not isinstance(result, List) or result == []:
                     logger.error(f"The requested script {input_path} wasn't found in the graph.")
                 else:
@@ -92,8 +92,9 @@ def generate_script_doc(
                     if not isinstance(script_object, Script):
                         logger.error("The object returned from the graph isn't a script.")
                     else:
-                        used_in.extend(item.content_item_to.object_id for item in script_object.used_by)
-                        dependencies.extend(item.content_item_to.object_id for item in script_object.uses)
+                        used_in.extend(relationship.content_item_to.object_id for relationship in script_object.used_by)
+                        dependencies.extend(relationship.content_item_to.object_id for relationship in
+                                            script_object.uses)
         else:
             logger.info(f"Skipping fetching dependencies and used_in for the script {input_path} "
                         f"as the no-graph argument was given.")

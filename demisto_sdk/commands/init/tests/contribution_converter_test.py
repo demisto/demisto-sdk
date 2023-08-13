@@ -21,10 +21,6 @@ from demisto_sdk.commands.init.contribution_converter import (
 )
 from TestSuite.contribution import Contribution
 from TestSuite.repo import Repo
-from demisto_sdk.commands.content_graph.interface import (
-    ContentGraphInterface,
-)
-from demisto_sdk.commands.content_graph.commands.create import create_content_graph
 
 DEMISTO_SDK_PATH = join(git_path(), "demisto_sdk")
 CONTRIBUTION_TESTS = os.path.join(
@@ -237,7 +233,7 @@ def test_convert_contribution_zip_outputs_structure(tmp_path, mocker):
         def __exit__(self, exc_type, exc_val, exc_tb):
             pass
 
-        def search(self, object_id):
+        def search(self, path):
             # Simulate the graph search
             return [mock_script()]
 

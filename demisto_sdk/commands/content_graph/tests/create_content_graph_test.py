@@ -48,9 +48,15 @@ def setup_method(mocker, repo: Repo):
     mocker.patch.object(ContentGraphInterface, "repo_path", Path(repo.path))
     mocker.patch.object(neo4j_service, "REPO_PATH", Path(repo.path))
     mocker.patch(
-        'demisto_sdk.commands.common.docker_images_metadata.get_remote_file_from_api',
-        return_value={"docker_images": {"python3": {"3.10.11.54799": {"python_version": "3.10.11"},
-                                                    "3.10.12.63474": {"python_version": "3.10.11"}}}}
+        "demisto_sdk.commands.common.docker_images_metadata.get_remote_file_from_api",
+        return_value={
+            "docker_images": {
+                "python3": {
+                    "3.10.11.54799": {"python_version": "3.10.11"},
+                    "3.10.12.63474": {"python_version": "3.10.11"},
+                }
+            }
+        },
     )
     neo4j_service.stop()
 
@@ -589,9 +595,15 @@ def create_mini_content(repository: ContentDTO, mocker):
     pack3.content_items.playbook.append(mock_playbook())
     pack3.content_items.script.append(mock_script("SampleScript2"))
     mocker.patch(
-        'demisto_sdk.commands.common.docker_images_metadata.get_remote_file_from_api',
-        return_value={"docker_images": {"python3": {"3.10.11.54799": {"python_version": "3.10.11"},
-                                                    "3.10.12.63474": {"python_version": "3.10.11"}}}}
+        "demisto_sdk.commands.common.docker_images_metadata.get_remote_file_from_api",
+        return_value={
+            "docker_images": {
+                "python3": {
+                    "3.10.11.54799": {"python_version": "3.10.11"},
+                    "3.10.12.63474": {"python_version": "3.10.11"},
+                }
+            }
+        },
     )
     repository.packs.extend([pack1, pack2, pack3])
 
@@ -1110,9 +1122,7 @@ class TestCreateContentGraph:
 
         pack = repo.create_pack("TestPack")
         pack.pack_metadata.write_json(load_json("pack_metadata.json"))
-        pack.create_script(
-            name="getIncident"
-        )
+        pack.create_script(name="getIncident")
         pack.create_script(
             name="setIncident",
             skip_prepare=[SKIP_PREPARE_SCRIPT_NAME],

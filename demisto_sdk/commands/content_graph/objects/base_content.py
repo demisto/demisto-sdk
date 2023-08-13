@@ -135,7 +135,9 @@ class BaseContent(ABC, BaseModel, metaclass=BaseContentMetaclass):
 
         if self.content_type in (ContentType.SCRIPT, ContentType.INTEGRATION):
             python_version = self.get_python_version()  # type: ignore[attr-defined]
-            json_dct["python_version"] = str(python_version) if python_version else python_version
+            json_dct["python_version"] = (
+                str(python_version) if python_version else python_version
+            )
 
     def to_dict(self) -> Dict[str, Any]:
         """

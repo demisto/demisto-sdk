@@ -21,9 +21,6 @@ from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 from demisto_sdk.commands.prepare_content.integration_script_unifier import (
     IntegrationScriptUnifier,
 )
-from demisto_sdk.commands.common.constants import (
-    PYTHON_IMAGE_REGEX
-)
 
 
 def bla():
@@ -76,9 +73,6 @@ class IntegrationScript(ContentItem):
                 f"{self.object_id=} using {self.docker_image} is not a python image"
             )
             return None
-
-        if match := PYTHON_IMAGE_REGEX.match(self.docker_image):
-            return Version(match.group("python_version"))
 
         if python_version := DockerImagesMetadata.from_github().python_version(
             self.docker_image

@@ -1,7 +1,6 @@
 import functools
 import hashlib
 import os
-import re
 import shutil
 import tarfile
 import tempfile
@@ -18,11 +17,11 @@ from requests import JSONDecodeError
 from demisto_sdk.commands.common.constants import (
     DEFAULT_PYTHON2_VERSION,
     DEFAULT_PYTHON_VERSION,
+    PYTHON_IMAGE_REGEX,
     TYPE_PWSH,
     TYPE_PYTHON,
     TYPE_PYTHON2,
     TYPE_PYTHON3,
-    PYTHON_IMAGE_REGEX
 )
 from demisto_sdk.commands.common.logger import logger
 
@@ -406,17 +405,6 @@ def get_docker():
 
 def _get_python_version_by_regex(image: str) -> Optional[Version]:
 
-    if not image:
-        # When no docker_image is specified, we use the default python version which is Python 2.7.18
-        logger.debug(
-            f"No docker image specified or a powershell image, using default python version: {DEFAULT_PYTHON2_VERSION}"
-        )
-        return Version(DEFAULT_PYTHON2_VERSION)
-    if "pwsh" in image or "powershell" in image:
-        logger.debug(
-            f"The image {image} is a powershell image, does not have python version"
-        )
-        return None
     if match := PYTHON_IMAGE_REGEX.match(image):
         return Version(match.group("python_version"))
 
@@ -490,15 +478,30 @@ def _get_python_version_from_env(env: List[str]) -> Version:
 
 
 @functools.lru_cache
-def get_python_version(image: Optional[str], use_only_api: bool = False) -> Optional[Version]:
+def get_python_version(
+    image: Optional[str], use_only_api: bool = False
+) -> Optional[Version]:
 
     logger.debug(f"Get python version from image {image} - Start")
+
+    if not image:
+        # When no docker_image is specified, we use the default python version which is Python 2.7.18
+        logger.debug(
+            f"No docker image specified or a powershell image, using default python version: {DEFAULT_PYTHON2_VERSION}"
+        )
+        return Version(DEFAULT_PYTHON2_VERSION)
+    if "pwsh" in image or "powershell" in image:
+        logger.debug(
+            f"The {image=} is a powershell image, does not have python version"
+        )
+        return None
 
     if python_version := _get_python_version_by_regex(image):
         return python_version
 
     if use_only_api:
         return _get_python_version_from_dockerhub_api(image)
+
     try:
         logger.debug(f"Getting python version from {image=} from client")
         return _get_python_version_from_image_client(image)
@@ -529,7 +532,7 @@ def _get_python_version_from_image_client(image: str) -> Version:
         raise
 
 
-def _get_python_version_from_dockerhub_api(image: str) -> Optional[Version]:
+def _get_python_version_from_dockerhub_api(image: str) -> Version:
     if ":" not in image:
         repo = image
         tag = "latest"

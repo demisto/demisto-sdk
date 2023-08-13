@@ -2,14 +2,7 @@ from abc import abstractmethod
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set
 
-import click
-
 from demisto_sdk.commands.common.constants import MarketplaceVersions
-from demisto_sdk.commands.common.docker_helper import (
-    get_python_version_from_dockerhub_api,
-)
-from demisto_sdk.commands.common.docker_images_metadata import DockerImagesMetadata
-from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
 from demisto_sdk.commands.content_graph.parsers.yaml_content_item import (
     YAMLContentItemParser,
@@ -40,11 +33,6 @@ class IntegrationScriptParser(YAMLContentItemParser):
     @property
     @abstractmethod
     def code(self) -> Optional[str]:
-        pass
-
-    @property
-    @abstractmethod
-    def type(self) -> str:
         pass
 
     @property

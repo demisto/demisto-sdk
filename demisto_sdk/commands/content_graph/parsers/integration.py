@@ -36,6 +36,9 @@ class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGR
             or self.is_fetch_events_and_assets
         )
         self.is_feed = self.script_info.get("feed", False)
+        self.type = self.script_info.get("subtype") or self.script_info.get("type")
+        if self.type == "python":
+            self.type += "2"
         self.commands: List[CommandParser] = []
         self.connect_to_commands()
         self.connect_to_dependencies()
@@ -110,10 +113,3 @@ class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGR
         return IntegrationScriptUnifier.get_script_or_integration_package_data(
             self.path.parent
         )[1]
-
-    @property
-    def type(self) -> str:
-        _type = self.script_info.get("subtype") or self.script_info.get("type")
-        if _type == "python":
-            _type = f"{_type}2"
-        return _type

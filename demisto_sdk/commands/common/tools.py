@@ -559,7 +559,7 @@ def get_remote_file_from_api(
     file_content = res.content
 
     if return_content:
-        return res.content
+        return file_content
     if encoding:
         file_content = file_content.decode(encoding)  # type: ignore[assignment]
 

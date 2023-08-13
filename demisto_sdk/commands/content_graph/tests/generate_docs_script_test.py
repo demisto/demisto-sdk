@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 from typing import List
 
@@ -5,6 +6,7 @@ import pytest
 
 from demisto_sdk.commands.common.hook_validations.readme import ReadMeValidator
 from demisto_sdk.commands.common.markdown_lint import run_markdownlint
+from demisto_sdk.commands.common.tests.docker_test import FILES_PATH
 from demisto_sdk.commands.common.tools import get_dict_from_file
 from demisto_sdk.commands.content_graph import neo4j_service
 from demisto_sdk.commands.content_graph.commands.create import create_content_graph
@@ -23,6 +25,7 @@ from demisto_sdk.commands.content_graph.tests.update_content_graph_test import (
     _get_pack_by_id,
 )
 from demisto_sdk.commands.generate_docs.generate_script_doc import generate_script_doc
+from demisto_sdk.commands.generate_docs.tests.generate_docs_test import handle_example
 
 INPUT_SCRIPT = "SampleScript"
 USES_SCRIPT = "UsesScript"
@@ -66,7 +69,11 @@ def repository(mocker, repo) -> ContentDTO:
     }
 
     repo_pack = repo.create_pack()
-    script = repo_pack.create_script(name=INPUT_SCRIPT)
+    in_script_yml = os.path.join(FILES_PATH, "docs_test", "script-Set.yml")
+    in_script_js = os.path.join(FILES_PATH, "docs_test", "script-set-code.js")
+    with open(in_script_yml) as in_script_yml_file:
+        script = repo_pack.create_script(name=INPUT_SCRIPT,
+                                         yml=in_script_yml_file.read())
 
     pack = mock_pack()
     pack.relationships = relationships
@@ -102,11 +109,13 @@ def test_generate_script_doc_passes_markdown_lint_graph(mocker, repository, tmp_
             2. will contain the names of the script that the input script uses, and the name of the playbook the uses
                 the script.
     """
+    import demisto_sdk.commands.generate_docs.common as common
+
     with ContentGraphInterface() as interface:
         create_content_graph(interface)
 
-    pack_graph_object = _get_pack_by_id(repository, "SamplePack")
-    input_script_object = pack_graph_object.content_items.script[0]  # INPUTSCRIPT
+    input_script = os.path.join(FILES_PATH, "docs_test", "script-Set.yml")
+    expected_readme = os.path.join(FILES_PATH, "docs_test", "set_expected-README.md")
     output_dir = tmp_path / "script_doc_out"
     output_dir.mkdir()
     mocker.patch(
@@ -117,7 +126,9 @@ def test_generate_script_doc_passes_markdown_lint_graph(mocker, repository, tmp_
         "demisto_sdk.commands.generate_docs.generate_script_doc.update_content_graph",
         return_value=interface,
     )
-    generate_script_doc(input_path=f"{str(input_script_object.path)}/{INPUT_SCRIPT}.yml",
+    mocker.patch.object(common, "execute_command", side_effect=handle_example)
+
+    generate_script_doc(input_path=input_script,
                         examples="!Set key=k1 value=v1,!Set key=k2 value=v2 append=true",
                         output=str(output_dir))
     readme = output_dir / "README.md"
@@ -125,5 +136,14 @@ def test_generate_script_doc_passes_markdown_lint_graph(mocker, repository, tmp_
     with ReadMeValidator.start_mdx_server():
         assert not run_markdownlint(readme_content).has_errors
 
-    assert USES_SCRIPT in readme_content
-    assert USED_BY_PLAYBOOK in readme_content
+    # check the readme content
+    with open(expected_readme) as expected_readme_file:
+        assert readme_content == expected_readme_file.read()
+
+    # Now try the same thing with a txt file
+    command_examples = output_dir / "command_examples.txt"
+    with command_examples.open("w") as f:
+        f.write("!Set key=k1 value=v1\n!Set key=k2 value=v2 append=true")
+    generate_script_doc(input_script, command_examples, str(output_dir))
+    with open(expected_readme) as expected_readme_file:
+        assert readme_content == expected_readme_file.read()

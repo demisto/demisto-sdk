@@ -9,8 +9,12 @@
 * Removed the format execution step from the `contribution_converter` since it can be executed separately during the contribution process.
 * Added a new validation (`GR108`) to **validate** command that assures hidden packs do not have mandatory dependant packs.
 * Added a validation that check that non ignorable errors are not used.
+* Running **validate** in a GitHub Action will now show errors as annotations, visible in the `Files Changed` tab of the pull request.
 * **lint** will now fail on `demisto.results` and `return_outputs` usage, when a pack is `xsoar` or `partner` supported.
 * **lint** will now fail on `LOG` usage in python files.
+* Updated the **format** command to use the content graph instead of the id_set file.
+* Updated **format** command not to fail on unexpected values that returns from the graph, and just add it to the log.
+* Removed a redundant debug log on the `tools.get_file` function.
 * Updated the **generate-docs** command to use the content graph instead of the id_set file.
 
 ## 1.18.1
@@ -18,7 +22,6 @@
 * Fixed an issue where **create-content-graph** was not executed upon changes in the parser infra files.
 * Added support for `svg` integration images in content repo in **validate** command.
 * Added a parameter `skip-packs-known-words` to the **doc-review** command, making sure that pack known words will not be added.
-* Updated the **format** command to use the content graph instead of the id_set file.
 
 ## 1.18.0
 * Added the ability to ignore any validation in the **validate** command when running in an external (non-demisto/content) repo, by placing a `.private-repo-settings` file at its root.

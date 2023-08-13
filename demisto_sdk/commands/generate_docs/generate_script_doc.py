@@ -84,7 +84,7 @@ def generate_script_doc(
                     use_git=True,
                     output_path=graph.output_path,
                 )
-                result = graph.search(path=input_path)
+                result = graph.search(object_id=script_id)
                 if not isinstance(result, List) or result == []:
                     logger.error(f"The requested script {input_path} wasn't found in the graph.")
                 else:

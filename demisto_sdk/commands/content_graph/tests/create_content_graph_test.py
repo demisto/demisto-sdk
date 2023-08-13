@@ -128,6 +128,7 @@ def mock_script(
     pack: Pack = None,
     uses: List[Tuple[ContentItem, bool]] = None,
     importing_items: List[ContentItem] = None,
+    data: str = ""
 ) -> Script:
     script = Script(
         id=name,
@@ -145,6 +146,7 @@ def mock_script(
         tags=[],
         is_test=False,
         skip_prepare=skip_prepare,
+        data=data
     )
     if pack:
         pack.content_items.script.append(script)

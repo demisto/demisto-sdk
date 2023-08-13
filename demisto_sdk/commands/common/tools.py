@@ -3424,11 +3424,12 @@ def get_url_with_retries(url: str, retries: int, backoff_factor: int = 1, **kwar
     kwargs["stream"] = True
     session = requests.Session()
     exception = Exception()
-    for _ in range(retries):
+    for i in range(retries):
         response = session.get(url, **kwargs)
         try:
             response.raise_for_status()
         except HTTPError as error:
+            logger.debug(f'Got error ({error}) trying to fetch {url}. {retries - i} retries left.')
             exception = error
         else:
             return response

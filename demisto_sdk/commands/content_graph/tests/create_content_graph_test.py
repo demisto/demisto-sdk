@@ -1100,8 +1100,14 @@ class TestCreateContentGraph:
 
         pack = repo.create_pack("TestPack")
         pack.pack_metadata.write_json(load_json("pack_metadata.json"))
-        pack.create_script(name="getIncident")
-        pack.create_script(name="setIncident", skip_prepare=[SKIP_PREPARE_SCRIPT_NAME])
+        pack.create_script(
+            name="getIncident", docker_image="demisto/python3:3.10.12.63474"
+        )
+        pack.create_script(
+            name="setIncident",
+            skip_prepare=[SKIP_PREPARE_SCRIPT_NAME],
+            docker_image="demisto/python3:3.10.12.63474",
+        )
 
         with ContentGraphInterface() as interface:
             create_content_graph(interface, output_path=tmp_path)

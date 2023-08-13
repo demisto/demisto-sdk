@@ -3429,7 +3429,9 @@ def get_url_with_retries(url: str, retries: int, backoff_factor: int = 1, **kwar
         try:
             response.raise_for_status()
         except HTTPError as error:
-            logger.debug(f'Got error ({error}) trying to fetch {url}. {retries - i} retries left.')
+            logger.debug(
+                f"Got error ({error}) trying to fetch {url}. {retries - i} retries left."
+            )
             exception = error
         else:
             return response

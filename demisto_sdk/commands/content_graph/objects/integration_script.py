@@ -1,12 +1,17 @@
 from pathlib import Path
 from typing import List, Optional
 
+from packaging.version import Version
 from pydantic import Field
 
 from demisto_sdk.commands.common.constants import (
     NATIVE_IMAGE_FILE_NAME,
     MarketplaceVersions,
 )
+from demisto_sdk.commands.common.docker_helper import (
+    get_python_version_from_dockerhub_api,
+)
+from demisto_sdk.commands.common.docker_images_metadata import DockerImagesMetadata
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.native_image import (
     ScriptIntegrationSupportedNativeImages,
@@ -16,11 +21,6 @@ from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 from demisto_sdk.commands.prepare_content.integration_script_unifier import (
     IntegrationScriptUnifier,
 )
-from demisto_sdk.commands.common.docker_helper import (
-    get_python_version_from_dockerhub_api,
-)
-from demisto_sdk.commands.common.docker_images_metadata import DockerImagesMetadata
-from packaging.version import Version
 
 
 class IntegrationScript(ContentItem):
@@ -63,8 +63,10 @@ class IntegrationScript(ContentItem):
         """
         Get the python version from the script/integration docker-image in case it's a python image
         """
-        if 'python' not in self.type:
-            logger.debug(f'{self.object_id=} using {self.docker_image} is not a python image')
+        if "python" not in self.type:
+            logger.debug(
+                f"{self.object_id=} using {self.docker_image} is not a python image"
+            )
             return None
 
         if python_version := DockerImagesMetadata.from_github().python_version(

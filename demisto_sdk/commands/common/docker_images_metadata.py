@@ -1,5 +1,6 @@
 from typing import Dict, Optional
 
+from packaging.version import Version
 from pydantic import BaseModel
 
 from demisto_sdk.commands.common.constants import DOCKERFILES_INFO_REPO
@@ -7,7 +8,6 @@ from demisto_sdk.commands.common.git_content_config import GitContentConfig
 from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.singleton import Singleton
-from packaging.version import Version
 from demisto_sdk.commands.common.tools import get_remote_file_from_api
 
 DOCKER_IMAGES_METADATA_NAME = "docker_images_metadata.json"
@@ -57,4 +57,6 @@ class DockerImagesMetadata(Singleton, BaseModel):
         """
         Get the python version of a docker image.
         """
-        return Version(self.get_docker_image_metadata_value(docker_image, "python_version"))
+        return Version(
+            self.get_docker_image_metadata_value(docker_image, "python_version")
+        )

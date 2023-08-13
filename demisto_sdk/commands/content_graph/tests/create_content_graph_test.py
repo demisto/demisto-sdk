@@ -473,7 +473,7 @@ def find_model_for_id(packs: List[Pack], source_id: str):
     return None
 
 
-def create_mini_content(repository: ContentDTO, mocker):
+def create_mini_content(repository: ContentDTO):
     """Created a content repo with three packs and relationships§
 
     Args:
@@ -594,17 +594,6 @@ def create_mini_content(repository: ContentDTO, mocker):
     pack2.content_items.test_playbook.append(mock_test_playbook())
     pack3.content_items.playbook.append(mock_playbook())
     pack3.content_items.script.append(mock_script("SampleScript2"))
-    mocker.patch(
-        "demisto_sdk.commands.common.docker_images_metadata.get_remote_file_from_api",
-        return_value={
-            "docker_images": {
-                "python3": {
-                    "3.10.11.54799": {"python_version": "3.10.11"},
-                    "3.10.12.63474": {"python_version": "3.10.11"},
-                }
-            }
-        },
-    )
     repository.packs.extend([pack1, pack2, pack3])
 
 

@@ -233,7 +233,7 @@ def test_convert_contribution_zip_outputs_structure(tmp_path, mocker):
         def __exit__(self, exc_type, exc_val, exc_tb):
             pass
 
-        def search(self, path):
+        def search(self, object_id):
             # Simulate the graph search
             return [mock_script()]
 

@@ -244,8 +244,12 @@ def group_by_python_version(files: Set[Path]) -> Dict[str, set]:
             continue
 
         code_file_path = integration_script.path.parent
-        python_version = get_python_version(integration_script.docker_image)
-        python_version_string = f"{python_version.major}.{python_version.minor}"
+        if python_version := get_python_version(integration_script.docker_image):
+            python_version_string = f"{python_version.major}.{python_version.minor}"
+        else:
+            raise RuntimeError(
+                f"Error getting python version for docker image {integration_script.docker_image}"
+            )
         python_versions_to_files[
             python_version_string or DEFAULT_PYTHON2_VERSION
         ].update(

@@ -561,7 +561,7 @@ def get_remote_file_from_api(
     if return_content:
         return res.content
     if encoding:
-        file_content = file_content.decode(encoding)
+        file_content = file_content.decode(encoding)  # type: ignore[assignment]
 
     return get_file_details(file_content, full_file_path)
 

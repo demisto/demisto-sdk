@@ -53,10 +53,13 @@ class DockerImagesMetadata(Singleton, BaseModel):
             )
             return None
 
-    def python_version(self, docker_image: str) -> Version:
+    def python_version(self, docker_image: str) -> Optional[Version]:
         """
         Get the python version of a docker image.
         """
-        return Version(
-            self.get_docker_image_metadata_value(docker_image, "python_version")
-        )
+        if python_version := self.get_docker_image_metadata_value(
+            docker_image, "python_version"
+        ):
+            return Version(python_version)
+
+        return None

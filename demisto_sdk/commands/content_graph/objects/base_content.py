@@ -134,7 +134,7 @@ class BaseContent(ABC, BaseModel, metaclass=BaseContentMetaclass):
         json_dct["content_type"] = self.content_type
 
         if self.content_type in (ContentType.SCRIPT, ContentType.INTEGRATION) and (
-            python_version := self.get_python_version()
+            python_version := self.get_python_version()  # type: ignore[attr-defined]
         ):
             json_dct["python_version"] = python_version
 

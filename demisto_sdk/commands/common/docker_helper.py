@@ -286,8 +286,12 @@ class DockerBase:
             The test image name and errors to create it if any
         """
         errors = ""
-        if not python_version and container_type != TYPE_PWSH:
-            python_version = get_python_version(base_image).major
+        if (
+            not python_version
+            and container_type != TYPE_PWSH
+            and (version := get_python_version(base_image))
+        ):
+            python_version = version.major
         python3_requirements = get_pip_requirements_from_file(
             TEST_REQUIREMENTS_DIR / "python3_requirements" / "dev-requirements.txt"
         )

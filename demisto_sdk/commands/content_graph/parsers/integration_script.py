@@ -65,29 +65,3 @@ class IntegrationScriptParser(YAMLContentItemParser):
             self.add_relationship(
                 RelationshipType.IMPORTS, api_module, ContentType.SCRIPT
             )
-
-    @property
-    def python_version(self) -> Optional[str]:
-        """
-        Get python version of scripts/integrations which are based on python images
-        """
-        if click.get_current_context().info_name not in (
-            "create-content-graph", "update-content-graph", "pre-commit"
-        ) or "python" not in self.type:
-            return None
-
-        if python_version := DockerImagesMetadata.from_github().python_version(
-            self.docker_image
-        ):
-            return python_version
-        logger.debug(
-            f"Could not get python version for {self.object_id=} from dockerfiles-info, will retrieve from dockerhub api"
-        )
-
-        if python_version := get_python_version_from_dockerhub_api(self.docker_image):
-            return str(python_version)
-        logger.debug(
-            f"Could not get python version for {self.object_id=} using {self.docker_image=} from dockerhub api"
-        )
-
-        return None

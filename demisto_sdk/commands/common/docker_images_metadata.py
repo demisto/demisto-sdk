@@ -7,8 +7,8 @@ from demisto_sdk.commands.common.git_content_config import GitContentConfig
 from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.singleton import Singleton
+from packaging.version import Version
 from demisto_sdk.commands.common.tools import get_remote_file_from_api
-
 
 DOCKER_IMAGES_METADATA_NAME = "docker_images_metadata.json"
 
@@ -33,7 +33,7 @@ class DockerImagesMetadata(Singleton, BaseModel):
                 file_name,
                 tag=tag,
                 git_content_config=GitContentConfig(repo_name=DOCKERFILES_INFO_REPO),
-                encoding="utf-8-sig"
+                encoding="utf-8-sig",
             )
         )
 
@@ -53,8 +53,8 @@ class DockerImagesMetadata(Singleton, BaseModel):
             )
             return None
 
-    def python_version(self, docker_image: str) -> str:
+    def python_version(self, docker_image: str) -> Version:
         """
         Get the python version of a docker image.
         """
-        return self.get_docker_image_metadata_value(docker_image, "python_version")
+        return Version(self.get_docker_image_metadata_value(docker_image, "python_version"))

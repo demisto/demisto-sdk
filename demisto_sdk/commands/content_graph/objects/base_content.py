@@ -120,6 +120,22 @@ class BaseContent(ABC, BaseModel, metaclass=BaseContentMetaclass):
         # if has name attribute, return it, otherwise return the object id
         return self.object_id
 
+    def add_graph_metadata(self, json_dct: Dict):
+        """
+        Add extra metadata to the graph which are not in the model objects.
+
+        Args:
+            json_dct: dict representation of the graph
+
+        """
+        if "path" in json_dct and Path(json_dct["path"]).is_absolute():
+            json_dct["path"] = (Path(json_dct["path"]).relative_to(CONTENT_PATH)).as_posix()  # type: ignore
+
+        json_dct["content_type"] = self.content_type
+
+        if self.content_type in (ContentType.SCRIPT, ContentType.INTEGRATION) and (python_version := self.get_python_version()):
+            json_dct["python_version"] = python_version
+
     def to_dict(self) -> Dict[str, Any]:
         """
         This returns a JSON dictionary representation of the class.
@@ -130,13 +146,11 @@ class BaseContent(ABC, BaseModel, metaclass=BaseContentMetaclass):
         """
 
         json_dct = json.loads(self.json(exclude={"commands", "database_id"}))
-        if "path" in json_dct and Path(json_dct["path"]).is_absolute():
-            json_dct["path"] = (Path(json_dct["path"]).relative_to(CONTENT_PATH)).as_posix()  # type: ignore
-        json_dct["content_type"] = self.content_type
+        self.add_graph_metadata(json_dct)
         return json_dct
 
     @staticmethod
-    @lru_cache
+    # @lru_cache
     def from_path(path: Path) -> Optional["BaseContent"]:
         logger.debug(f"Loading content item from path: {path}")
         if (

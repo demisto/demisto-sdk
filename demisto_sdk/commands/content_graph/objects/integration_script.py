@@ -16,6 +16,11 @@ from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 from demisto_sdk.commands.prepare_content.integration_script_unifier import (
     IntegrationScriptUnifier,
 )
+from demisto_sdk.commands.common.docker_helper import (
+    get_python_version_from_dockerhub_api,
+)
+from demisto_sdk.commands.common.docker_images_metadata import DockerImagesMetadata
+from packaging.version import Version
 
 
 class IntegrationScript(ContentItem):
@@ -24,7 +29,6 @@ class IntegrationScript(ContentItem):
     description: Optional[str]
     is_unified: bool = Field(False, exclude=True)
     code: Optional[str] = Field(None, exclude=True)
-    python_version: Optional[str]
 
     def prepare_for_upload(
         self,
@@ -54,3 +58,27 @@ class IntegrationScript(ContentItem):
                 native_image_config=file_to_native_image_config(),
             ).get_supported_native_image_versions(get_raw_version=True)
         return []
+
+    def get_python_version(self) -> Optional[Version]:
+        """
+        Get the python version from the script/integration docker-image in case it's a python image
+        """
+        if 'python' not in self.type:
+            logger.debug(f'{self.object_id=} using {self.docker_image} is not a python image')
+            return None
+
+        if python_version := DockerImagesMetadata.from_github().python_version(
+            self.docker_image
+        ):
+            return python_version
+        logger.debug(
+            f"Could not get python version for {self.object_id=} from dockerfiles-info, will retrieve from dockerhub api"
+        )
+
+        if python_version := get_python_version_from_dockerhub_api(self.docker_image):
+            return python_version
+        logger.debug(
+            f"Could not get python version for {self.object_id=} using {self.docker_image=} from dockerhub api"
+        )
+
+        return None

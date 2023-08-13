@@ -150,7 +150,7 @@ class BaseContent(ABC, BaseModel, metaclass=BaseContentMetaclass):
         return json_dct
 
     @staticmethod
-    # @lru_cache
+    @lru_cache
     def from_path(path: Path) -> Optional["BaseContent"]:
         logger.debug(f"Loading content item from path: {path}")
         if (

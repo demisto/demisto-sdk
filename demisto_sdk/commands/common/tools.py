@@ -492,7 +492,7 @@ def get_remote_file_from_api(
         encoding: whether to decode the remote file with special encoding
 
     Returns:
-
+        bytes | Dict: raw response of the file or as a dict
     """
     if not git_content_config:
         git_content_config = GitContentConfig()

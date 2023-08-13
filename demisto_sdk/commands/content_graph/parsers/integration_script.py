@@ -2,6 +2,8 @@ from abc import abstractmethod
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set
 
+import click
+
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.common.docker_helper import (
     get_python_version_from_dockerhub_api,
@@ -69,7 +71,9 @@ class IntegrationScriptParser(YAMLContentItemParser):
         """
         Get python version of scripts/integrations which are based on python images
         """
-        if "python" not in self.type:
+        if click.get_current_context().info_name not in (
+            "create-content-graph", "update-content-graph", "pre-commit"
+        ) or "python" not in self.type:
             return None
 
         if python_version := DockerImagesMetadata.from_github().python_version(

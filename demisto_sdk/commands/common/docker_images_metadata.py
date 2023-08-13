@@ -9,6 +9,7 @@ from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.singleton import Singleton
 from demisto_sdk.commands.common.tools import get_remote_file_from_api
 
+
 DOCKER_IMAGES_METADATA_NAME = "docker_images_metadata.json"
 
 
@@ -20,20 +21,21 @@ class DockerImageTagMetadata(BaseModel):
 
 
 class DockerImagesMetadata(Singleton, BaseModel):
-    docker_images: Dict[str, Dict[str, DockerImageTagMetadata]] = {}
+    docker_images: Dict[str, Dict[str, DockerImageTagMetadata]]
 
     @classmethod
     def from_github(
         cls, file_name: str = DOCKER_IMAGES_METADATA_NAME, tag: str = "master"
     ):
         tag = "aa6fa17889cea0bf5c0a982be637f00313a56743"
-        docker_images_metadata_content = get_remote_file_from_api(
-            file_name,
-            tag=tag,
-            git_content_config=GitContentConfig(repo_name=DOCKERFILES_INFO_REPO),
-            encoding="utf-8-sig",
+        return cls.parse_obj(
+            get_remote_file_from_api(
+                file_name,
+                tag=tag,
+                git_content_config=GitContentConfig(repo_name=DOCKERFILES_INFO_REPO),
+                encoding="utf-8-sig"
+            )
         )
-        return cls.parse_obj(docker_images_metadata_content)
 
     def get_docker_image_metadata_value(
         self, docker_image: str, docker_metadata_key: str
@@ -43,7 +45,7 @@ class DockerImagesMetadata(Singleton, BaseModel):
         """
         try:
             docker_name, tag = docker_image.replace("demisto/", "").split(":")
-            docker_image_metadata = self.docker_images.get(docker_name, {}).get(tag)
+            docker_image_metadata = (self.docker_images.get(docker_name) or {}).get(tag)
             return getattr(docker_image_metadata, docker_metadata_key)
         except (AttributeError, ValueError, TypeError) as err:
             logger.debug(

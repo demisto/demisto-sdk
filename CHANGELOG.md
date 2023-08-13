@@ -9,8 +9,8 @@
 * Added the *--xsiam* flag to the **init** command in order to create XSIAM content.
 * Fixed an issue where the `update-additional-dependencies` **pre-commit** step failed when not running in a content-like repo.
 * Removed the format execution step from the `contribution_converter` since it can be executed separately during the contribution process.
-* Added a new validation (`GR108`) to **validate** command that assures hidden packs do not have mandatory dependant packs.
-* Added a validation that check that non ignorable errors are not used.
+* Added a new validation (`GR108`) to **validate**, that assures hidden packs do not have mandatory dependant packs.
+Added a new validation (`PA137`) to **validate**, ensuring the absence of non-ignorable errors in `.pack-ignore`.
 * Running **validate** in a GitHub Action will now show errors as annotations, visible in the `Files Changed` tab of the pull request.
 * **lint** will now fail on `demisto.results` and `return_outputs` usage, when a pack is `xsoar` or `partner` supported.
 * **lint** will now fail on `LOG` usage in python files.

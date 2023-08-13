@@ -5,15 +5,11 @@ from pydantic import BaseModel
 
 from demisto_sdk.commands.common.constants import DOCKERFILES_INFO_REPO
 from demisto_sdk.commands.common.git_content_config import GitContentConfig
-from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.singleton import Singleton
 from demisto_sdk.commands.common.tools import get_remote_file_from_api
 
 DOCKER_IMAGES_METADATA_NAME = "docker_images_metadata.json"
-
-
-json = JSON_Handler()
 
 
 class DockerImageTagMetadata(BaseModel):

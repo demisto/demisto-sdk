@@ -106,7 +106,7 @@ def mock_integration(
     name: str = "SampleIntegration",
     path: Path = Path("Packs"),
     pack: Pack = None,
-    uses: List[Tuple[ContentItem, bool]] = None
+    uses: List[Tuple[ContentItem, bool]] = None,
 ) -> Integration:
     integration = Integration(
         id=name,
@@ -1173,21 +1173,48 @@ class TestCreateContentGraph:
 
             assert not data
 
+    @pytest.mark.parametrize(
+        "docker_image, expected_python_version, is_taken_form_dockerhub",
+        [
+            ("demisto/python3:3.10.11.54799", "3.10.11", False),
+            ("demisto/pan-os-python:1.0.0.68955", "3.10.5", True),
+        ],
+    )
+    def test_create_content_graph_with_python_version(
+        self,
+        mocker,
+        repo: Repo,
+        docker_image: str,
+        expected_python_version: str,
+        is_taken_form_dockerhub: bool,
+    ):
+        """
+        Given:
+            Case A: docker image that its python version exists in the dockerfiles metadata file
+            Case B: docker image that its python version does not exist in the dockerfiles metadata file
 
-    def test_create_content_graph_with_python_version(self, mocker, repo: Repo):
+        When:
+            - Running create_content_graph()
+
+        Then:
+            Case A: the python version was taken from the dockerfiles metadata file
+            Case B: the python version was taken from the dockerhub api
+        """
         from packaging.version import Version
-        mocker.patch(
-            'demisto_sdk.commands.common.docker_helper._get_python_version_from_dockerhub_api',
-            return_value=Version("3.10.5")
+
+        dockerhub_api_mocker = mocker.patch(
+            "demisto_sdk.commands.common.docker_helper._get_python_version_from_dockerhub_api",
+            return_value=Version(expected_python_version),
         )
+
         pack = repo.create_pack()
-        pack.create_integration(docker_image="demisto/pan-os-python:1.0.0.68955")
+        pack.create_integration(docker_image=docker_image)
+
         with ContentGraphInterface() as interface:
             create_content_graph(interface)
             integrations = interface.search(
                 marketplace=MarketplaceVersions.XSOAR,
                 content_type=ContentType.INTEGRATION,
             )
-            print()
-
-        print()
+        assert expected_python_version == integrations[0].to_dict()["python_version"]
+        assert dockerhub_api_mocker.called == is_taken_form_dockerhub

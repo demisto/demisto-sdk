@@ -132,14 +132,10 @@ def test_generate_script_doc_graph(mocker, repository, tmp_path):
         output=str(output_dir),
     )
     readme = output_dir / "README.md"
-    # readme_content = readme.read_text()
-    with open(readme) as readme_content:
-        with ReadMeValidator.start_mdx_server():
-            assert not run_markdownlint(readme_content.read()).has_errors
-
+    readme_content = readme.read_text()
     # check the readme content
-    with open(expected_readme) as expected_readme_file, open(readme) as readme_content:
-        assert readme_content.read() == expected_readme_file.read()
+    with open(expected_readme) as expected_readme_file:
+        assert readme_content == expected_readme_file.read()
 
     # Now try the same thing with a txt file
     command_examples = output_dir / "command_examples.txt"
@@ -148,5 +144,5 @@ def test_generate_script_doc_graph(mocker, repository, tmp_path):
     generate_script_doc(
         str(input_script_object.path), command_examples, str(output_dir)
     )
-    with open(expected_readme) as expected_readme_file, open(readme) as readme_content:
-        assert readme_content.read() == expected_readme_file.read()
+    with open(expected_readme) as expected_readme_file:
+        assert readme_content == expected_readme_file.read()

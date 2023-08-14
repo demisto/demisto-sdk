@@ -1,5 +1,6 @@
 # Changelog
 ## Unreleased
+* Fixed an issue where the (`GR108`) validation did not fail in the validate command with the `-a` flag. 
 
 ## 1.19.0
 * Added the **graph** command group. The **create-content-graph** and **update-content-graph** commands were migrated to this command group, and named **graph create** and **graph update** respectively.

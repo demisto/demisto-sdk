@@ -770,7 +770,9 @@ def test_deprecated_usage__new_content(repository: ContentDTO, mocker):
     assert not is_valid
 
 
-@pytest.mark.parametrize("changed_pack", ["Packs/SamplePack", "Packs/SamplePack2", None])
+@pytest.mark.parametrize(
+    "changed_pack", ["Packs/SamplePack", "Packs/SamplePack2", None]
+)
 def test_validate_hidden_pack_is_not_mandatory_dependency(
     repository: ContentDTO, mocker, changed_pack: Optional[str]
 ):
@@ -791,9 +793,7 @@ def test_validate_hidden_pack_is_not_mandatory_dependency(
 
     git_files = [Path(changed_pack)] if changed_pack else changed_pack
 
-    with GraphValidator(
-        update_graph=False, git_files=git_files
-    ) as graph_validator:
+    with GraphValidator(update_graph=False, git_files=git_files) as graph_validator:
         create_content_graph(graph_validator.graph)
         is_valid = (
             graph_validator.validate_hidden_packs_do_not_have_mandatory_dependencies()

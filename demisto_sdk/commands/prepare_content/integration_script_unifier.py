@@ -292,8 +292,9 @@ class IntegrationScriptUnifier(Unifier):
         imports_to_names = IntegrationScriptUnifier.check_api_module_imports(
             script_code
         )
+        content_path = get_content_path(package_path)
         script_code = IntegrationScriptUnifier.insert_module_code(
-            script_code, imports_to_names, package_path
+            script_code, imports_to_names, content_path
         )
         if pack_version := get_pack_metadata(file_path=str(package_path)).get(
             "currentVersion", ""
@@ -381,18 +382,19 @@ class IntegrationScriptUnifier(Unifier):
 
     @staticmethod
     def insert_module_code(
-        script_code: str, import_to_name: Dict[str, str], package_path: Path = Path(".")
+        script_code: str, import_to_name: Dict[str, str], content_path: Path
     ) -> str:
         """
         Inserts API module in place of an import to the module according to the module name
         :param script_code: The integration code
         :param import_to_name: A dictionary where the keys are The module import string to replace
         and the values are The module name
+        :param content_path: The path to the content repo
         :return: The integration script with the module code appended in place of the import
         """
         for module_import, module_name in import_to_name.items():
             module_path = Path(
-                get_content_path(package_path),
+                content_path,
                 "Packs",
                 "ApiModules",
                 "Scripts",
@@ -408,7 +410,7 @@ class IntegrationScriptUnifier(Unifier):
                 module_code
             )
             module_code = IntegrationScriptUnifier.insert_module_code(
-                module_code, tmp_imports_to_names, package_path
+                module_code, tmp_imports_to_names, content_path
             )
 
             # the wrapper numbers represents the number of generated lines added

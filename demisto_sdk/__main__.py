@@ -432,9 +432,9 @@ def prepare_content(ctx, **kwargs):
     """
     This command is used to prepare the content to be used in the platform.
     """
-    assert sum([bool(kwargs["all"]), bool(kwargs["input"])]) == 1, (
-        "Exactly one of the '-a' or '-i' parameters must be provided."
-    )
+    assert (
+        sum([bool(kwargs["all"]), bool(kwargs["input"])]) == 1
+    ), "Exactly one of the '-a' or '-i' parameters must be provided."
 
     if kwargs["all"]:
         content_DTO = all_content_repo()

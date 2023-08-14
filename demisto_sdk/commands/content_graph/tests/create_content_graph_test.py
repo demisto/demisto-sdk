@@ -106,7 +106,7 @@ def mock_integration(
     name: str = "SampleIntegration",
     path: Path = Path("Packs"),
     pack: Pack = None,
-    uses: List[Tuple[ContentItem, bool]] = None,
+    uses: List[Tuple[ContentItem, bool]] = None
 ) -> Integration:
     integration = Integration(
         id=name,
@@ -1172,3 +1172,22 @@ class TestCreateContentGraph:
             )
 
             assert not data
+
+
+    def test_create_content_graph_with_python_version(self, mocker, repo: Repo):
+        from packaging.version import Version
+        mocker.patch(
+            'demisto_sdk.commands.common.docker_helper._get_python_version_from_dockerhub_api',
+            return_value=Version("3.10.5")
+        )
+        pack = repo.create_pack()
+        pack.create_integration(docker_image="demisto/pan-os-python:1.0.0.68955")
+        with ContentGraphInterface() as interface:
+            create_content_graph(interface)
+            integrations = interface.search(
+                marketplace=MarketplaceVersions.XSOAR,
+                content_type=ContentType.INTEGRATION,
+            )
+            print()
+
+        print()

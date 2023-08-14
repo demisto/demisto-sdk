@@ -23,7 +23,7 @@ class DockerImagesMetadata(Singleton, BaseModel):
     def from_github(
         cls, file_name: str = DOCKER_IMAGES_METADATA_NAME, tag: str = "master"
     ):
-        tag = "aa6fa17889cea0bf5c0a982be637f00313a56743"
+        tag = "4c162e56174bec3ee7bb1b418ad2b20e4bdce3e0"
         return cls.parse_obj(
             get_remote_file_from_api(
                 file_name,

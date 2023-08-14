@@ -65,22 +65,26 @@ class IntegrationScript(ContentItem):
         """
         if "python" not in self.type or not self.docker_image:
             logger.debug(
-                f"{self.object_id=} using {self.docker_image=} is not a python image"
+                f"The {self.content_type} = {self.object_id=} that uses {self.docker_image=} is not a python image"
             )
             return None
+
+        logger.debug(
+            f"Getting docker image for the {self.content_type} = {self.object_id}"
+        )
 
         if python_version := DockerImagesMetadata.from_github().python_version(
             self.docker_image
         ):
             return python_version
         logger.debug(
-            f"Could not get python version for {self.object_id=} from dockerfiles-info, will retrieve from dockerhub api"
+            f"Could not get python version for {self.content_type} = {self.object_id} from dockerfiles-info, will retrieve from dockerhub api"
         )
 
         if python_version := get_python_version(self.docker_image, use_only_api=True):
             return python_version
         logger.debug(
-            f"Could not get python version for {self.object_id=} using {self.docker_image=} from dockerhub api"
+            f"Could not get python version for {self.content_type} = {self.object_id} using {self.docker_image=} from dockerhub api"
         )
 
         return None

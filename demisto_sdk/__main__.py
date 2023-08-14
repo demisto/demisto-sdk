@@ -225,7 +225,8 @@ def main(ctx, config, version, release_notes, **kwargs):
             if last_release and __version__ != last_release:
                 logger.info(
                     f"[yellow]however version {last_release} is available.\n"
-                    f"To update, run pip3 install --upgrade demisto-sdk[/yellow]"
+                    f"To update, run pip3 install --upgrade demisto-sdk "
+                    f"or poetry install (in case you work in a virtual environment)[/yellow]"
                 )
             if release_notes:
                 rn_entries = get_release_note_entries(__version__)

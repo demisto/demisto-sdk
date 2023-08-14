@@ -94,7 +94,7 @@ def repository(mocker, repo) -> ContentDTO:
     return repository
 
 
-def test_generate_script_doc_passes_markdown_lint_graph(mocker, repository, tmp_path):
+def test_generate_script_doc_graph(mocker, repository, tmp_path):
     """
     Given
     - A script (SampleScript) that uses another script (UsesScript)and is used by a playbook (SamplePlaybook).

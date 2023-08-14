@@ -481,9 +481,10 @@ def get_remote_file_from_api(
     tag: str = "master",
     return_content: bool = False,
     encoding: Optional[str] = None,
-) -> Union[bytes, Dict]:
+) -> Union[bytes, Dict, List]:
     """
     Returns a remote file from Github/Gitlab repo using the api
+
     Args:
         full_file_path: file path in the GitHub/Gitlab repository
         git_content_config: GitContentConfig config object
@@ -492,7 +493,7 @@ def get_remote_file_from_api(
         encoding: whether to decode the remote file with special encoding
 
     Returns:
-        bytes | Dict: raw response of the file or as a dict
+        bytes | Dict | List: raw response of the file or as a python object (list, dict)
     """
     if not git_content_config:
         git_content_config = GitContentConfig()

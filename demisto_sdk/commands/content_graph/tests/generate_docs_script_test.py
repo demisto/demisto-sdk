@@ -7,7 +7,6 @@ import pytest
 from demisto_sdk.commands.common.hook_validations.readme import ReadMeValidator
 from demisto_sdk.commands.common.markdown_lint import run_markdownlint
 from demisto_sdk.commands.common.tests.docker_test import FILES_PATH
-from demisto_sdk.commands.common.tools import get_dict_from_file
 from demisto_sdk.commands.content_graph import neo4j_service
 from demisto_sdk.commands.content_graph.commands.create import create_content_graph
 from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
@@ -70,14 +69,14 @@ def repository(mocker, repo) -> ContentDTO:
 
     repo_pack = repo.create_pack()
     in_script_yml = os.path.join(FILES_PATH, "docs_test", "script-Set.yml")
-    in_script_js = os.path.join(FILES_PATH, "docs_test", "script-set-code.js")
-    with open(in_script_yml) as in_script_yml_file:
-        script = repo_pack.create_script(name=INPUT_SCRIPT,
-                                         yml=in_script_yml_file.read())
+    script = repo_pack.create_script(name=INPUT_SCRIPT)
+    with open(in_script_yml) as original_yml, open(f"{script.path}/{INPUT_SCRIPT}.yml", 'w') as new_script_yml:
+        for line in original_yml:
+            new_script_yml.write(line)
 
     pack = mock_pack()
     pack.relationships = relationships
-    pack.content_items.script.append(mock_script(name=INPUT_SCRIPT, path=script.path))
+    pack.content_items.script.append(mock_script(name=INPUT_SCRIPT, path=Path(f"{script.path}/{INPUT_SCRIPT}.yml")))
     pack.content_items.script.append(mock_script(USES_SCRIPT))
     pack.content_items.playbook.append(mock_playbook(USED_BY_PLAYBOOK))
     repository.packs.extend([pack])
@@ -114,7 +113,8 @@ def test_generate_script_doc_passes_markdown_lint_graph(mocker, repository, tmp_
     with ContentGraphInterface() as interface:
         create_content_graph(interface)
 
-    input_script = os.path.join(FILES_PATH, "docs_test", "script-Set.yml")
+    pack_graph_object = _get_pack_by_id(repository, "SamplePack")
+    input_script_object = pack_graph_object.content_items.script[0]  # INPUTSCRIPT
     expected_readme = os.path.join(FILES_PATH, "docs_test", "set_expected-README.md")
     output_dir = tmp_path / "script_doc_out"
     output_dir.mkdir()
@@ -128,7 +128,7 @@ def test_generate_script_doc_passes_markdown_lint_graph(mocker, repository, tmp_
     )
     mocker.patch.object(common, "execute_command", side_effect=handle_example)
 
-    generate_script_doc(input_path=input_script,
+    generate_script_doc(input_path=str(input_script_object.path),
                         examples="!Set key=k1 value=v1,!Set key=k2 value=v2 append=true",
                         output=str(output_dir))
     readme = output_dir / "README.md"
@@ -144,6 +144,6 @@ def test_generate_script_doc_passes_markdown_lint_graph(mocker, repository, tmp_
     command_examples = output_dir / "command_examples.txt"
     with command_examples.open("w") as f:
         f.write("!Set key=k1 value=v1\n!Set key=k2 value=v2 append=true")
-    generate_script_doc(input_script, command_examples, str(output_dir))
+    generate_script_doc(str(input_script_object.path), command_examples, str(output_dir))
     with open(expected_readme) as expected_readme_file:
         assert readme_content == expected_readme_file.read()

@@ -7,7 +7,7 @@ from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     get_from_version,
     get_yaml,
-    open_id_set_file,
+    open_id_set_file, get_relative_path_from_packs_dir,
 )
 from demisto_sdk.commands.common.update_id_set import get_depends_on
 from demisto_sdk.commands.content_graph.commands.update import update_content_graph
@@ -84,7 +84,7 @@ def generate_script_doc(
                     use_git=True,
                     output_path=graph.output_path,
                 )
-                result = graph.search(object_id=script_id)
+                result = graph.search(path=get_relative_path_from_packs_dir(input_path))
                 if not isinstance(result, List) or result == []:
                     logger.error(f"The requested script {input_path} wasn't found in the graph.")
                 else:

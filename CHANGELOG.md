@@ -1,5 +1,6 @@
 # Changelog
 ## Unreleased
+* Updated the **generate-docs** command to use the content graph instead of the id_set file.
 
 ## 1.19.0
 * Added the **graph** command group. The **create-content-graph** and **update-content-graph** commands were migrated to this command group, and named **graph create** and **graph update** respectively.
@@ -17,7 +18,6 @@ Added a new validation (`PA137`) to **validate**, ensuring the absence of non-ig
 * Updated the **format** command to use the content graph instead of the id_set file.
 * Updated **format** command not to fail on unexpected values that returns from the graph, and just add it to the log.
 * Removed a redundant debug log on the `tools.get_file` function.
-* Updated the **generate-docs** command to use the content graph instead of the id_set file.
 
 ## 1.18.1
 * Fixed an issue where the coloring directives where showing in log messages.

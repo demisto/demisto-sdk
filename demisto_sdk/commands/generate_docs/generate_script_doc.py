@@ -1,18 +1,18 @@
 import os
 import random
-from pathlib import Path
+from typing import List
 
-from demisto_sdk.commands.common.content_constant_paths import DEFAULT_ID_SET_PATH
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     get_from_version,
+    get_relative_path_from_packs_dir,
     get_yaml,
-    open_id_set_file, get_relative_path_from_packs_dir,
 )
-from demisto_sdk.commands.common.update_id_set import get_depends_on
 from demisto_sdk.commands.content_graph.commands.update import update_content_graph
+from demisto_sdk.commands.content_graph.interface.neo4j.neo4j_graph import (
+    Neo4jContentGraphInterface as ContentGraphInterface,
+)
 from demisto_sdk.commands.content_graph.objects import Script
-from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
 from demisto_sdk.commands.generate_docs.common import (
     build_example_dict,
     generate_list_section,
@@ -22,10 +22,6 @@ from demisto_sdk.commands.generate_docs.common import (
     save_output,
     string_escape_md,
 )
-from demisto_sdk.commands.content_graph.interface.neo4j.neo4j_graph import (
-    Neo4jContentGraphInterface as ContentGraphInterface,
-)
-from typing import List
 
 
 def generate_script_doc(
@@ -35,7 +31,7 @@ def generate_script_doc(
     permissions: str = None,
     limitations: str = None,
     insecure: bool = False,
-    use_graph: bool = True
+    use_graph: bool = True,
 ):
     try:
         doc: list = []
@@ -72,11 +68,11 @@ def generate_script_doc(
 
         # get script data
         script_info = get_script_info(input_path)
-        script_id = script.get("commonfields")["id"]
+        script.get("commonfields")["id"]
 
         # get script dependencies
-        dependencies = []
-        used_in = []
+        dependencies: List = []
+        used_in: List = []
         if use_graph:
             with ContentGraphInterface() as graph:
                 update_content_graph(
@@ -86,18 +82,29 @@ def generate_script_doc(
                 )
                 result = graph.search(path=get_relative_path_from_packs_dir(input_path))
                 if not isinstance(result, List) or result == []:
-                    logger.error(f"The requested script {input_path} wasn't found in the graph.")
+                    logger.error(
+                        f"The requested script {input_path} wasn't found in the graph."
+                    )
                 else:
                     script_object = result[0]
                     if not isinstance(script_object, Script):
-                        logger.error("The object returned from the graph isn't a script.")
+                        logger.error(
+                            "The object returned from the graph isn't a script."
+                        )
                     else:
-                        used_in.extend(relationship.content_item_to.object_id for relationship in script_object.used_by)
-                        dependencies.extend(relationship.content_item_to.object_id for relationship in
-                                            script_object.uses)
+                        used_in.extend(
+                            relationship.content_item_to.object_id
+                            for relationship in script_object.used_by
+                        )
+                        dependencies.extend(
+                            relationship.content_item_to.object_id
+                            for relationship in script_object.uses
+                        )
         else:
-            logger.info(f"Skipping fetching dependencies and used_in for the script {input_path} "
-                        f"as the no-graph argument was given.")
+            logger.info(
+                f"Skipping fetching dependencies and used_in for the script {input_path} "
+                f"as the no-graph argument was given."
+            )
 
         description = script.get("comment", "")
         # get inputs/outputs

@@ -2166,7 +2166,7 @@ def _generate_docs_for_file(kwargs: Dict[str, Any]):
                 permissions=permissions,
                 limitations=limitations,
                 insecure=insecure,
-                use_graph=use_graph
+                use_graph=use_graph,
             )
         elif file_type == FileType.PLAYBOOK:
             logger.info(f"Generating {file_type.value.lower()} documentation")

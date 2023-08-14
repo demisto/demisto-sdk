@@ -4,12 +4,10 @@ from typing import Dict, List
 
 import pytest
 
-from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.hook_validations.readme import ReadMeValidator
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.markdown_lint import run_markdownlint
 from demisto_sdk.commands.common.tools import get_json, get_yaml
-from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
 from demisto_sdk.commands.generate_docs.generate_integration_doc import (
     append_or_replace_command_in_docs,
     disable_md_autolinks,
@@ -23,7 +21,6 @@ from demisto_sdk.commands.generate_docs.generate_integration_doc import (
 from demisto_sdk.commands.generate_docs.generate_playbook_doc import (
     generate_playbook_doc,
 )
-from demisto_sdk.commands.generate_docs.generate_script_doc import generate_script_doc
 from TestSuite.pack import Pack
 
 FILES_PATH = os.path.normpath(

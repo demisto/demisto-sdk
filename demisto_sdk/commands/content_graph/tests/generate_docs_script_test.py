@@ -53,30 +53,28 @@ def repository(mocker, repo) -> ContentDTO:
     relationships = {
         RelationshipType.USES: [
             mock_relationship(
-                INPUT_SCRIPT,
-                ContentType.SCRIPT,
-                USES_SCRIPT,
-                ContentType.SCRIPT
+                INPUT_SCRIPT, ContentType.SCRIPT, USES_SCRIPT, ContentType.SCRIPT
             ),
             mock_relationship(
-                USED_BY_PLAYBOOK,
-                ContentType.PLAYBOOK,
-                INPUT_SCRIPT,
-                ContentType.SCRIPT
-            )
+                USED_BY_PLAYBOOK, ContentType.PLAYBOOK, INPUT_SCRIPT, ContentType.SCRIPT
+            ),
         ]
     }
 
     repo_pack = repo.create_pack()
     in_script_yml = os.path.join(FILES_PATH, "docs_test", "script-Set.yml")
     script = repo_pack.create_script(name=INPUT_SCRIPT)
-    with open(in_script_yml) as original_yml, open(f"{script.path}/{INPUT_SCRIPT}.yml", 'w') as new_script_yml:
+    with open(in_script_yml) as original_yml, open(
+        f"{script.path}/{INPUT_SCRIPT}.yml", "w"
+    ) as new_script_yml:
         for line in original_yml:
             new_script_yml.write(line)
 
     pack = mock_pack()
     pack.relationships = relationships
-    pack.content_items.script.append(mock_script(name=INPUT_SCRIPT, path=Path(f"{script.path}/{INPUT_SCRIPT}.yml")))
+    pack.content_items.script.append(
+        mock_script(name=INPUT_SCRIPT, path=Path(f"{script.path}/{INPUT_SCRIPT}.yml"))
+    )
     pack.content_items.script.append(mock_script(USES_SCRIPT))
     pack.content_items.playbook.append(mock_playbook(USED_BY_PLAYBOOK))
     repository.packs.extend([pack])
@@ -98,15 +96,15 @@ def repository(mocker, repo) -> ContentDTO:
 
 def test_generate_script_doc_passes_markdown_lint_graph(mocker, repository, tmp_path):
     """
-        Given
-        - A script (SampleScript) that uses another script (UsesScript)and is used by a playbook (SamplePlaybook).
-        When
-        - Running generate-docs command on the script.
-        Then
-        -  The generated readme will have:
-            1. no markdown errors.
-            2. will contain the names of the script that the input script uses, and the name of the playbook the uses
-                the script.
+    Given
+    - A script (SampleScript) that uses another script (UsesScript)and is used by a playbook (SamplePlaybook).
+    When
+    - Running generate-docs command on the script.
+    Then
+    -  The generated readme will have:
+        1. no markdown errors.
+        2. will contain the names of the script that the input script uses, and the name of the playbook the uses
+            the script.
     """
     import demisto_sdk.commands.generate_docs.common as common
 
@@ -128,9 +126,11 @@ def test_generate_script_doc_passes_markdown_lint_graph(mocker, repository, tmp_
     )
     mocker.patch.object(common, "execute_command", side_effect=handle_example)
 
-    generate_script_doc(input_path=str(input_script_object.path),
-                        examples="!Set key=k1 value=v1,!Set key=k2 value=v2 append=true",
-                        output=str(output_dir))
+    generate_script_doc(
+        input_path=str(input_script_object.path),
+        examples="!Set key=k1 value=v1,!Set key=k2 value=v2 append=true",
+        output=str(output_dir),
+    )
     readme = output_dir / "README.md"
     readme_content = readme.read_text()
     with ReadMeValidator.start_mdx_server():
@@ -144,6 +144,8 @@ def test_generate_script_doc_passes_markdown_lint_graph(mocker, repository, tmp_
     command_examples = output_dir / "command_examples.txt"
     with command_examples.open("w") as f:
         f.write("!Set key=k1 value=v1\n!Set key=k2 value=v2 append=true")
-    generate_script_doc(str(input_script_object.path), command_examples, str(output_dir))
+    generate_script_doc(
+        str(input_script_object.path), command_examples, str(output_dir)
+    )
     with open(expected_readme) as expected_readme_file:
         assert readme_content == expected_readme_file.read()

@@ -1,5 +1,6 @@
 # Changelog
 ## Unreleased
+* Improved **update-release-notes** logs when changes in dependent API modules are detected.
 * Fixed an issue where the (`GR108`) validation did not fail in the validate command with the `-a` flag.
 
 ## 1.19.0

@@ -3060,7 +3060,7 @@ def test_find_pack_folder(input_path, expected_output):
         (Path("/User/username/content/Packs"), Path("/User/username/content")),
     ],
 )
-def test_get_content_path(relative_path, expected_output):
+def test_get_content_path(input_path, expected_output):
     """
     Given:
         - A path to a file or directory in the content repo
@@ -3069,7 +3069,7 @@ def test_get_content_path(relative_path, expected_output):
     Then:
         Validate that the given path is correct
     """
-    assert tools.get_content_path(relative_path) == expected_output
+    assert tools.get_content_path(input_path) == expected_output
 
 
 @pytest.mark.parametrize(

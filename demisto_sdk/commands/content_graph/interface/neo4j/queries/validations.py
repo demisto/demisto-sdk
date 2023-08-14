@@ -273,7 +273,7 @@ def validate_hidden_pack_dependencies(
 ):
     query = f"""// Returns DEPENDS_ON relationships to packs which are hidden
 MATCH (pack1)-[r:{RelationshipType.DEPENDS_ON}{{mandatorily:true}}]->(pack2{{hidden: true}})
-"WHERE {f"(pack1.object_id in {pack_ids} OR pack2.object_id in {pack_ids}) AND" if pack_ids else ""}
+"WHERE {f'(pack1.object_id in {pack_ids} OR pack2.object_id in {pack_ids}) AND' if pack_ids else ""}
 AND NOT r.is_test
 and NOT pack1.hidden
 and NOT pack1.deprecated

@@ -589,7 +589,9 @@ class TestDockerImagesCollection:
                 "native:maintenance": "",
             },
         }
-        repo.docker_native_image_config.write_native_image_config(native_image_config_mock)
+        repo.docker_native_image_config.write_native_image_config(
+            native_image_config_mock
+        )
 
         mocker.patch.object(linter, "get_python_version", return_value=Version("3.8"))
         log = mocker.patch.object(logger, "info")

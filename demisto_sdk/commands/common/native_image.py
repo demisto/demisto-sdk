@@ -37,7 +37,9 @@ class NativeImageConfig(PydanticSingleton, BaseModel):
         return cls.from_path(*args, **kwargs)
 
     @classmethod
-    def from_path(cls, native_image_config_file_path: str = f"Tests/{NATIVE_IMAGE_FILE_NAME}"):
+    def from_path(
+        cls, native_image_config_file_path: str = f"Tests/{NATIVE_IMAGE_FILE_NAME}"
+    ):
         native_image_config_content = get_file(native_image_config_file_path)
         native_image_config = cls.parse_obj(native_image_config_content)
         native_image_config.__docker_images_to_native_images_support()

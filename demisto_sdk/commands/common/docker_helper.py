@@ -38,7 +38,7 @@ CAN_MOUNT_FILES = bool(os.getenv("CONTENT_GITLAB_CI", False)) or (
     )
 )
 
-PYTHON_IMAGE_REGEX = re.compile(r"[\d\w]+/python3?:(?P<python_version>[23]\.\d+)")
+PYTHON_IMAGE_REGEX = re.compile(r"[\d\w]+/python3?:(?P<python_version>[23]\.\d+(\.\d+)?)")
 
 TEST_REQUIREMENTS_DIR = Path(__file__).parent.parent / "lint" / "resources"
 
@@ -509,17 +509,15 @@ def get_python_version(
         )
         return None
 
-    if python_version := _get_python_version_by_regex(image):
-        return python_version
-
-    logger.debug(f"Could not get python version for {image=} from regex")
-
     if python_version := DockerImagesMetadata.get_instance().python_version(image):
         return python_version
-
     logger.debug(
         f"Could not get python version for {image=} from {DOCKERFILES_INFO_REPO} repo"
     )
+
+    if python_version := _get_python_version_by_regex(image):
+        return python_version
+    logger.debug(f"Could not get python version for {image=} from regex")
 
     if not should_pull_image:
         return _get_python_version_from_dockerhub_api(image)

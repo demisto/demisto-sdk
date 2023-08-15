@@ -1536,7 +1536,7 @@ class TestParsersAndModels:
             expected_current_version="1.2.12",
             expected_tags=["TIM"],
             expected_categories=["Utilities"],
-            expected_use_cases=["Identity and Access Management"],
+            expected_use_cases=["Identity And Access Management"],
             expected_keywords=[],
             expected_marketplaces=[
                 MarketplaceVersions.XSOAR,

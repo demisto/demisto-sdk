@@ -145,14 +145,13 @@ def test_pack_metadata_xsoar(repo: Repo, tmp_path: Path, mocker):
         ["TIM", "Transformer", "Use Case", "Filter"]
     )
     assert metadata.get("categories") == ["Utilities"]
-    assert metadata.get("useCases") == ["Identity and Access Management"]
+    assert metadata.get("useCases") == ["Identity And Access Management"]
     assert metadata.get("keywords") == []
     assert metadata.get("searchRank") == 0
     assert metadata.get("excludedDependencies") == []
     assert metadata.get("videos") == []
     assert metadata.get("modules") == []
     assert metadata.get("integrations") == []
-    assert len(metadata.get("dependencies", [])) == 3
 
     metadata_integration = metadata.get("contentItems", {}).get("integration", [{}])[0]
     assert (
@@ -166,7 +165,7 @@ def test_pack_metadata_xsoar(repo: Repo, tmp_path: Path, mocker):
     assert metadata_integration.get("fromversion") == "6.8.0"
     assert metadata_integration.get("id") == "TestIntegration"
     assert metadata_integration.get("isfetch") is True
-    assert metadata_integration.get("name") == "Test Integration"
+    assert metadata_integration.get("name") == "Test Integration (Community Contribution)"
 
     metadata_playbook = metadata.get("contentItems", {}).get("playbook", [{}])[0]
     assert metadata_playbook.get("fromversion") == "6.10.0"

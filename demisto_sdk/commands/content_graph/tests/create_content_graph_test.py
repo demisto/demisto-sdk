@@ -1174,7 +1174,7 @@ class TestCreateContentGraph:
             assert not data
 
     @pytest.mark.parametrize(
-        "docker_image, expected_python_version, is_taken_form_dockerhub",
+        "docker_image, expected_python_version, is_taken_from_dockerhub",
         [
             ("demisto/python3:3.10.11.54799", "3.10.11", False),
             ("demisto/pan-os-python:1.0.0.68955", "3.10.5", True),
@@ -1186,7 +1186,7 @@ class TestCreateContentGraph:
         repo: Repo,
         docker_image: str,
         expected_python_version: str,
-        is_taken_form_dockerhub: bool,
+        is_taken_from_dockerhub: bool,
     ):
         """
         Given:
@@ -1217,4 +1217,4 @@ class TestCreateContentGraph:
                 content_type=ContentType.INTEGRATION,
             )
         assert expected_python_version == integrations[0].to_dict()["python_version"]
-        assert dockerhub_api_mocker.called == is_taken_form_dockerhub
+        assert dockerhub_api_mocker.called == is_taken_from_dockerhub

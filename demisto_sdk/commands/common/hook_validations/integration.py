@@ -2356,7 +2356,7 @@ class IntegrationValidator(ContentEntityValidator):
 
         return True
 
-    @error_codes("BA126")
+    @error_codes("DS108")
     def is_line_ends_with_dot(self):
         lines_with_missing_dot = ""
         if self.running_validations_using_git:
@@ -2367,7 +2367,7 @@ class IntegrationValidator(ContentEntityValidator):
                         f"- In command {command.get('name')}:\n{current_command}"
                     )
             stripped_description = (
-                self.current_file.get("description", "").strip('"').strip("'")
+                self.current_file.get("description", "").strip('"\'')
             )
 
             if not stripped_description.endswith(".") and not is_string_ends_with_url(

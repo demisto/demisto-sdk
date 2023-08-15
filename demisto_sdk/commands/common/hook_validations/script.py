@@ -536,7 +536,7 @@ class ScriptValidator(ContentEntityValidator):
                 return False
         return True
 
-    @error_codes("BA126")
+    @error_codes("DS108")
     def is_line_ends_with_dot(self):
         line_with_missing_dot = ""
         if self.running_validations_using_git:

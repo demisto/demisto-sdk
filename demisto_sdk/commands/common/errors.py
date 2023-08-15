@@ -139,10 +139,6 @@ ERROR_CODE: Dict = {
         "code": "BA125",
         "related_field": "description",
     },
-    "description_missing_dot_at_the_end": {
-        "code": "BA126",
-        "related_field": "description",
-    },
     # BC - Backward Compatible
     "breaking_backwards_subtype": {
         "code": "BC100",
@@ -335,6 +331,10 @@ ERROR_CODE: Dict = {
     "description_contains_demisto_word": {
         "code": "DS107",
         "related_field": "detaileddescription",
+    },
+    "description_missing_dot_at_the_end": {
+        "code": "DS108",
+        "related_field": "description",
     },
     # GF - Generic Fields
     "invalid_generic_field_group_value": {
@@ -1490,7 +1490,7 @@ ALLOWED_IGNORE_ERRORS = (
         "BA119",
         "BA124",
         "BA125",
-        "BA126",
+        "DS108",
         "DS107",
         "GF102",
         "IF100",

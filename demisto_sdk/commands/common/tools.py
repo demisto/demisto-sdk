@@ -2046,7 +2046,7 @@ def get_latest_upload_flow_commit_hash() -> str:
 def get_content_path(relative_path: Optional[Path] = None) -> Path:
     """Get abs content path, from any CWD
     Args:
-        Optional[Path]: Path to file or folder in content repo if not given will use env variable or cwd
+        Optional[Path]: Path to file or folder in content repo. If not provided, the environment variable or cwd will be used.
     Returns:
         str: Absolute content path
     """

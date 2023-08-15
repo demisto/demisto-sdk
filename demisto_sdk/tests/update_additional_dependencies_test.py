@@ -1,7 +1,7 @@
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
-from demisto_sdk.commands.common.tools import is_external_repository
+from demisto_sdk.commands.common.tools_core import is_external_repository
 from demisto_sdk.scripts.update_additional_dependencies import (
     update_additional_dependencies,
 )

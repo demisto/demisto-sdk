@@ -173,19 +173,20 @@ class PackMetadataParser:
 
     @property
     def author(self):
-        return self.pack_metadata.get("author", "Cortex XSOAR" if self.support == "xsoar" else "") or ""
+        return (
+            self.pack_metadata.get(
+                "author", "Cortex XSOAR" if self.support == "xsoar" else ""
+            )
+            or ""
+        )
 
     @property
     def categories(self):
-        return [
-            capital_case(c) for c in self.pack_metadata["categories"]
-        ]
+        return [capital_case(c) for c in self.pack_metadata["categories"]]
 
     @property
     def use_cases(self):
-        return [
-            capital_case(c) for c in self.pack_metadata["useCases"]
-        ]
+        return [capital_case(c) for c in self.pack_metadata["useCases"]]
 
     def get_author_image_filepath(self, path: Path) -> str:
         if (path / "Author_image.png").is_file():

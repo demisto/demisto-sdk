@@ -165,7 +165,9 @@ def test_pack_metadata_xsoar(repo: Repo, tmp_path: Path, mocker):
     assert metadata_integration.get("fromversion") == "6.8.0"
     assert metadata_integration.get("id") == "TestIntegration"
     assert metadata_integration.get("isfetch") is True
-    assert metadata_integration.get("name") == "Test Integration (Community Contribution)"
+    assert (
+        metadata_integration.get("name") == "Test Integration (Community Contribution)"
+    )
 
     metadata_playbook = metadata.get("contentItems", {}).get("playbook", [{}])[0]
     assert metadata_playbook.get("fromversion") == "6.10.0"

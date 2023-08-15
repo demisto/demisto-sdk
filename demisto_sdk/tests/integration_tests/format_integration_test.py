@@ -9,7 +9,6 @@ from click.testing import CliRunner
 from demisto_sdk.__main__ import main
 from demisto_sdk.commands.common import tools_core
 from demisto_sdk.commands.common.constants import GENERAL_DEFAULT_FROMVERSION
-from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.content.content import Content
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json

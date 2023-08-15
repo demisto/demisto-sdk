@@ -4,6 +4,7 @@
 * Added the **get-relationships** graph command.
 * Added the *--xsiam* flag to the **init** command in order to create XSIAM content.
 * Removed the format execution step from the `contribution_converter` since it can be executed separately during the contribution process.
+* **Validate** will now validate items which were edited in .pack-ignore.
 
 ## 1.18.1
 * Fixed an issue where the coloring directives where showing in log messages.

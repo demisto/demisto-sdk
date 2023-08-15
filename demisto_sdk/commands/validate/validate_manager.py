@@ -1,5 +1,6 @@
 import os
 from concurrent.futures._base import Future, as_completed
+from configparser import ConfigParser
 from pathlib import Path
 from typing import Callable, List, Optional, Set, Tuple
 
@@ -1968,11 +1969,9 @@ class ValidateManager:
 
         return is_valid
 
-    def validate_modified_files(self, modified_files):
-        logger.info(
-            "\n[cyan]================= Running validation on modified files =================[/cyan]"
-        )
-        valid_files = set()
+    def get_all_files_edited_in_pack_ignore(self, modified_files):
+        all_files = self.git_util.get_all_files()
+        all_files_edited_in_pack_ignore = set()
         for file_path in modified_files:
             # handle renamed files
             if isinstance(file_path, tuple):
@@ -1982,23 +1981,47 @@ class ValidateManager:
             else:
                 old_file_path = file_path
             # if file is pack-ignore
-            old_file_content = get_remote_file(file_path, tag="master")
-            from configparser import ConfigParser
+            old_file_content = get_remote_file(old_file_path, tag="master")
             config = ConfigParser(allow_no_value=True)
             config.read_string(old_file_content)
             old_file_content = self.get_error_ignore_list(config=config)
-            file_content = self.get_error_ignore_list(get_pack_name(str(file_path)))
+            pack_name = get_pack_name(str(file_path))
+            file_content = self.get_error_ignore_list(pack_name)
             files_to_test = set()
             for key, value in old_file_content.items():
-                if not (section_values := file_content.get(key, [])) or not set(section_values) == set(value):
+                if not (section_values := file_content.get(key, [])) or not set(
+                    section_values
+                ) == set(value):
                     files_to_test.add(key)
             for key, value in file_content.items():
-                if not (section_values := old_file_content.get(key, [])) or not set(section_values) == set(value):
+                if not (section_values := old_file_content.get(key, [])) or not set(
+                    section_values
+                ) == set(value):
                     files_to_test.add(key)
-            # if not file_content == old_file_content:
-            #     pass
-            # get all files with suffix from pack:
-        for file_path in modified_files:
+
+            def is_relevant_file(file, pack_name):
+                return len(file.parts) > 2 and file.parts[1] == pack_name
+
+            all_files_mapper = {
+                file.name: str(file)
+                for file in all_files
+                if is_relevant_file(file, pack_name)
+            }
+            for file in files_to_test:
+                if file in all_files_mapper.keys():
+                    all_files_edited_in_pack_ignore.add(all_files_mapper.get(file))
+        return all_files_edited_in_pack_ignore
+
+    def validate_modified_files(self, modified_files):
+        logger.info(
+            "\n[cyan]================= Running validation on modified files =================[/cyan]"
+        )
+        valid_files = set()
+        all_files_edited_in_pack_ignore = self.get_all_files_edited_in_pack_ignore(
+            modified_files
+        )
+        # modified_files = modified_files.union(all_files_edited_in_pack_ignore)
+        for file_path in modified_files.union(all_files_edited_in_pack_ignore):
             # handle renamed files
             if isinstance(file_path, tuple):
                 old_file_path = file_path[0]
@@ -2012,10 +2035,11 @@ class ValidateManager:
                 self.run_validations_on_file(
                     file_path,
                     self.get_error_ignore_list(pack_name),
-                    is_modified=True,
+                    is_modified=file_path in modified_files,
                     old_file_path=old_file_path,
                 )
             )
+
         return all(valid_files)
 
     def validate_added_files(self, added_files, modified_files):
@@ -2801,6 +2825,7 @@ class ValidateManager:
                 FileType.DOC_IMAGE,
                 FileType.AUTHOR_IMAGE,
                 FileType.CONTRIBUTORS,
+                FileType.PACK_IGNORE,
             },
         )
 

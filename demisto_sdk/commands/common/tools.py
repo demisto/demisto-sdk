@@ -4,7 +4,6 @@ import logging
 import os
 import re
 import shlex
-import toml
 import sys
 import urllib.parse
 from collections import OrderedDict

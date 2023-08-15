@@ -1,5 +1,7 @@
 # Changelog
 ## Unreleased
+
+## 1.19.1
 * Improved **update-release-notes** logs when changes in dependent API modules are detected.
 * Reverted changes released in version 1.19.0 in lint, lint will not fail on `demisto.results`, `return_outputs` and `LOG`.
 * Updated the **generate-docs** command to use the content graph instead of the id_set file.

@@ -371,7 +371,7 @@ def extract_code(ctx, config, **kwargs):
 @click.option(
     "-i",
     "--input",
-    help="The directory path to the files or path to the file to unify. Supports a comma separated list.",
+    help="Comma-separated list of paths to directories or files to unify.",
     required=False,
     type=PathsParamType(dir_okay=True, exists=True),
 )
@@ -452,7 +452,7 @@ def prepare_content(ctx, **kwargs):
     if output_path := kwargs["output"]:
         if "." in Path(output_path).name:  # check if the output path is a file
             if len(inputs) > 1:
-                raise Exception(
+                raise ValueError(
                     "When passing multiple inputs, the output path should be a directory and not a file."
                 )
         else:
@@ -462,7 +462,7 @@ def prepare_content(ctx, **kwargs):
     for input_content in inputs:
         if output_path and len(inputs) > 1:
             path_name = Path(input_content).name
-            kwargs["output"] = os.path.join(output_path, path_name)
+            kwargs["output"] = str(Path(output_path, path_name))
 
         if click.get_current_context().info_name == "unify":
             kwargs["unify_only"] = True

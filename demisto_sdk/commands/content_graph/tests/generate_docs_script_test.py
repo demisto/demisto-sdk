@@ -4,8 +4,6 @@ from typing import List
 
 import pytest
 
-from demisto_sdk.commands.common.hook_validations.readme import ReadMeValidator
-from demisto_sdk.commands.common.markdown_lint import run_markdownlint
 from demisto_sdk.commands.common.tests.docker_test import FILES_PATH
 from demisto_sdk.commands.content_graph import neo4j_service
 from demisto_sdk.commands.content_graph.commands.create import create_content_graph

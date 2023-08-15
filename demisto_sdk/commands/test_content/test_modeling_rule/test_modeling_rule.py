@@ -680,7 +680,8 @@ def is_dataset_exists_with_results(
         extra={"markup": True},
     )
     query = f"config timeframe = 10y | dataset = {dataset}"
-    for i in range(timeout // interval):
+    num_of_attempts = timeout // interval
+    for i in range(num_of_attempts):
         logger.debug(f"Check #{i + 1}...")
         try:
             results = run_query(xsiam_client, query)
@@ -700,7 +701,7 @@ def is_dataset_exists_with_results(
         # If the dataset doesn't exist HTTPError exception is raised.
         # except requests.exceptions.HTTPError:
         except XsiamApiQueryError as e:
-            if i + 1 == timeout // interval:
+            if i + 1 == num_of_attempts:
                 if not ignore_errors:
                     logger.error(e)
                 return False, False

@@ -311,7 +311,7 @@ class XsiamApiClient(XsiamApiInterface):
             )
             return reply_results_data
         response.raise_for_status()
-        raise XsiamApiQueryError(execution_id, response.status_code, data)
+        raise XsiamApiGetQueryError(execution_id, response.status_code, data)
 
     def delete_dataset(self, dataset_id: str):
         endpoint = urljoin(self.base_url, "public_api/v1/xql/delete_dataset")

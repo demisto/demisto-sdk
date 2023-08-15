@@ -7,6 +7,7 @@ from pydantic import Field
 from demisto_sdk.commands.common.constants import (
     NATIVE_IMAGE_FILE_NAME,
     MarketplaceVersions,
+    DOCKERFILES_INFO_REPO
 )
 from demisto_sdk.commands.common.docker_helper import (
     get_python_version,
@@ -70,15 +71,15 @@ class IntegrationScript(ContentItem):
             return None
 
         logger.debug(
-            f"Getting docker image for the {self.content_type} = {self.object_id}"
+            f"Getting python version for the {self.content_type} = {self.object_id}"
         )
 
-        if python_version := DockerImagesMetadata.from_github().python_version(
+        if python_version := DockerImagesMetadata.get_instance().python_version(
             self.docker_image
         ):
             return python_version
         logger.info(
-            f"Could not get python version for {self.content_type} = {self.object_id} from dockerfiles-info, will retrieve from dockerhub api"
+            f"Could not get python version for {self.content_type} = {self.object_id} from {DOCKERFILES_INFO_REPO} repo, will retrieve from dockerhub api"
         )
 
         if python_version := get_python_version(self.docker_image, use_only_api=True):

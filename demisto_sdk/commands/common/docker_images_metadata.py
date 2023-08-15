@@ -6,7 +6,6 @@ from pydantic import BaseModel
 from demisto_sdk.commands.common.constants import DOCKERFILES_INFO_REPO
 from demisto_sdk.commands.common.git_content_config import GitContentConfig
 from demisto_sdk.commands.common.logger import logger
-from demisto_sdk.commands.common.singleton import Singleton
 from demisto_sdk.commands.common.tools import get_remote_file_from_api
 
 DOCKER_IMAGES_METADATA_NAME = "docker_images_metadata.json"
@@ -16,16 +15,22 @@ class DockerImageTagMetadata(BaseModel):
     python_version: Optional[str]
 
 
-class DockerImagesMetadata(Singleton, BaseModel):
+class DockerImagesMetadata(BaseModel):
     docker_images: Dict[str, Dict[str, DockerImageTagMetadata]]
-    # cache: Dict[str, Version] = {}
+    _instance = None
+
+    @classmethod
+    def get_instance(cls, *args, **kwargs):
+        if cls._instance is None:
+            cls._instance = cls.from_github(*args, **kwargs)
+        return cls._instance
 
     @classmethod
     def from_github(
         cls, file_name: str = DOCKER_IMAGES_METADATA_NAME, tag: str = "master"
     ):
         tag = "4c162e56174bec3ee7bb1b418ad2b20e4bdce3e0"
-        logger.info(f'from github function')
+        logger.debug(f'loading the {DOCKER_IMAGES_METADATA_NAME} from {DOCKERFILES_INFO_REPO}')
         return cls.parse_obj(
             get_remote_file_from_api(
                 file_name,

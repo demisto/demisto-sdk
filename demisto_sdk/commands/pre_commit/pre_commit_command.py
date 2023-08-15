@@ -246,7 +246,7 @@ def group_by_python_version(files: Set[Path]) -> Dict[str, set]:
         if python_version := integration_script.get_python_version():
             python_version_string = f"{python_version.major}.{python_version.minor}"
         else:
-            raise RuntimeError(
+            raise ValueError(
                 f"Error getting python version for docker image {integration_script.docker_image}"
             )
         python_versions_to_files[

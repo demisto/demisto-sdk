@@ -385,7 +385,7 @@ class Linter:
                     if py_num_version := get_python_version(image=image[0]):
                         python_version_string = f"{py_num_version.major}.{py_num_version.minor}"
                     else:
-                        raise RuntimeError(
+                        raise ValueError(
                             f"Could not get python version from docker-image {image[0]}"
                         )
 

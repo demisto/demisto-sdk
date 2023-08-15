@@ -791,7 +791,7 @@ class ContentEntityValidator(BaseValidator):
     def is_line_ends_with_dot(self, dict_to_test: dict, arg_field: str):
         line_with_missing_dot = ""
         for arg in dict_to_test.get(arg_field, []):
-            stripped_description = arg.get("description", "").strip('"').strip("'")
+            stripped_description = arg.get("description", "").strip('"\'')
 
             if (
                 stripped_description

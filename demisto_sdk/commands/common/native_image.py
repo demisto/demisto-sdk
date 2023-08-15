@@ -40,21 +40,10 @@ class NativeImageConfig(PydanticSingleton, BaseModel):
     def from_path(cls, native_image_config_file_path: str):
         native_image_config_content = get_file(native_image_config_file_path)
         native_image_config = cls.parse_obj(native_image_config_content)
-        native_image_config.docker_images_to_native_images_mapping = (
-            cls.__docker_images_to_native_images_support()
-        )
+        native_image_config.__docker_images_to_native_images_support()
         return native_image_config
 
-    def __init__(
-        self, native_image_config_file_path: str = f"Tests/{NATIVE_IMAGE_FILE_NAME}"
-    ):
-        super().__init__(**self.load(native_image_config_file_path))
-        self.docker_images_to_native_images_mapping = (
-            self.__docker_images_to_native_images_support()
-        )
-
-    @classmethod
-    def __docker_images_to_native_images_support(cls):
+    def __docker_images_to_native_images_support(self):
         """
         Map all the docker images from the native image configuration file into the native-images which support it.
 
@@ -67,17 +56,13 @@ class NativeImageConfig(PydanticSingleton, BaseModel):
            chromium docker image is supported in both 8.1.0, 8.2.0 native images
            while tesseract is only supported in 8.1.0
         """
-        docker_images_to_native_images_mapping: Dict = {}
-
-        for native_image_name, native_image_obj in cls.native_images.items():
+        for native_image_name, native_image_obj in self.native_images.items():
             for supported_docker_image in native_image_obj.supported_docker_images:
-                if supported_docker_image not in docker_images_to_native_images_mapping:
-                    docker_images_to_native_images_mapping[supported_docker_image] = []
-                docker_images_to_native_images_mapping[supported_docker_image].append(
+                if supported_docker_image not in self.docker_images_to_native_images_mapping:
+                    self.docker_images_to_native_images_mapping[supported_docker_image] = []
+                self.docker_images_to_native_images_mapping[supported_docker_image].append(
                     native_image_name
                 )
-
-        return docker_images_to_native_images_mapping
 
     def get_native_image_reference(self, native_image) -> Optional[str]:
         """

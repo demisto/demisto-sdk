@@ -36,7 +36,7 @@ class PackMetadata(BaseModel):
     url: Optional[str]
     email: Optional[str]
     eulaLink: Optional[str]
-    author: Optional[str]
+    author: Optional[str] = Field("")
     author_image: Optional[str] = Field("", alias="authorImage")
     certification: Optional[str] = Field("")
     price: Optional[int]

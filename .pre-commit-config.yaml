@@ -210,3 +210,4 @@ repos:
     - id: sourcery
       args: [--no-summary]
       types: [python]
+      require_serial: true

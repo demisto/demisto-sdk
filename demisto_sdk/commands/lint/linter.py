@@ -383,18 +383,18 @@ class Linter:
                 # Getting python version from docker image - verifying if not valid docker image configured
                 for image in self._facts["images"]:
                     if py_num_version := get_python_version(image=image[0]):
-                        py_num = f"{py_num_version.major}.{py_num_version.minor}"
+                        python_version_string = f"{py_num_version.major}.{py_num_version.minor}"
                     else:
                         raise RuntimeError(
                             f"Could not get python version from docker-image {image[0]}"
                         )
 
-                    image[1] = py_num
+                    image[1] = python_version_string
                     logger.info(
-                        f"{self._pack_name} - Facts - {image[0]} - Python {py_num}"
+                        f"{self._pack_name} - Facts - {image[0]} - Python {python_version_string}"
                     )
                     if not self._facts["python_version"]:
-                        self._facts["python_version"] = py_num
+                        self._facts["python_version"] = python_version_string
 
                 # Checking whatever *test* exists in package
                 self._facts["test"] = (

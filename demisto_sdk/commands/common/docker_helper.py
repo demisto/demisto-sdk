@@ -1,6 +1,7 @@
 import functools
 import hashlib
 import os
+import re
 import shutil
 import tarfile
 import tempfile
@@ -17,7 +18,6 @@ from requests import JSONDecodeError
 from demisto_sdk.commands.common.constants import (
     DEFAULT_PYTHON2_VERSION,
     DEFAULT_PYTHON_VERSION,
-    PYTHON_IMAGE_REGEX,
     TYPE_PWSH,
     TYPE_PYTHON,
     TYPE_PYTHON2,
@@ -37,6 +37,7 @@ CAN_MOUNT_FILES = bool(os.getenv("CONTENT_GITLAB_CI", False)) or (
 )
 
 
+PYTHON_IMAGE_REGEX = re.compile(r"[\d\w]+/python3?:(?P<python_version>[23]\.\d+)")
 TEST_REQUIREMENTS_DIR = Path(__file__).parent.parent / "lint" / "resources"
 
 
@@ -512,11 +513,11 @@ def get_python_version(
         return _get_python_version_from_dockerhub_api(image)
 
     try:
-        logger.debug(f"Getting python version from {image=} from client")
+        logger.debug(f"Getting python version from {image=} by pulling its image and query its env")
         return _get_python_version_from_image_client(image)
     except Exception:
         logger.debug(
-            f"Could not get the python version for image {image=} from client. Trying with API",
+            f"Couldn't get the python version for image {image=} from client. Trying with API",
             exc_info=True,
         )
         return _get_python_version_from_dockerhub_api(image)

@@ -77,7 +77,7 @@ class IntegrationScript(ContentItem):
             self.docker_image
         ):
             return python_version
-        logger.debug(
+        logger.info(
             f"Could not get python version for {self.content_type} = {self.object_id} from dockerfiles-info, will retrieve from dockerhub api"
         )
 

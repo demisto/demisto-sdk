@@ -18,12 +18,14 @@ class DockerImageTagMetadata(BaseModel):
 
 class DockerImagesMetadata(Singleton, BaseModel):
     docker_images: Dict[str, Dict[str, DockerImageTagMetadata]]
+    # cache: Dict[str, Version] = {}
 
     @classmethod
     def from_github(
         cls, file_name: str = DOCKER_IMAGES_METADATA_NAME, tag: str = "master"
     ):
         tag = "4c162e56174bec3ee7bb1b418ad2b20e4bdce3e0"
+        logger.info(f'from github function')
         return cls.parse_obj(
             get_remote_file_from_api(
                 file_name,
@@ -56,6 +58,7 @@ class DockerImagesMetadata(Singleton, BaseModel):
         if python_version := self.get_docker_image_metadata_value(
             docker_image, "python_version"
         ):
+            logger.info(f'successfully got {python_version=} for {docker_image=} from {DOCKER_IMAGES_METADATA_NAME}')
             return Version(python_version)
 
         return None

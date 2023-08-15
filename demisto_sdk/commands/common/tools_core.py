@@ -4,6 +4,7 @@ It's main purpose is to prevent culrcular dependencies, which happened when the 
 It is preferable that general utilities will be added to tools, rather than here.
 """
 
+import contextlib
 import os
 from logging import getLogger
 from pathlib import Path
@@ -30,11 +31,33 @@ def is_external_repository() -> bool:
         return True
 
 
-def get_content_path() -> Path:
+def find_pack_folder(path: Path) -> Path:
+    """
+    Finds the pack folder.
+    """
+
+    if "Packs" not in path.parts:
+        raise ValueError(f"Could not find a pack for {str(path)}")
+    if path.parent.name == "Packs":
+        return path
+    return path.parents[len(path.parts) - (path.parts.index("Packs")) - 3]
+
+
+def get_content_path(relative_path: Optional[Path] = None) -> Path:
     """Get abs content path, from any CWD
+    Args:
+        Optional[Path]: Path to file or folder in content repo. If not provided, the environment variable or cwd will be used.
     Returns:
         str: Absolute content path
     """
+    # ValueError can be suppressed since as default, the environment variable or git.Repo can be used to find the content path.
+    with contextlib.suppress(ValueError):
+        if relative_path:
+            return (
+                relative_path.absolute().parent
+                if relative_path.name == "Packs"
+                else find_pack_folder(relative_path.absolute()).parent.parent
+            )
     try:
         if content_path := os.getenv("DEMISTO_SDK_CONTENT_PATH"):
             git_repo = git.Repo(content_path)

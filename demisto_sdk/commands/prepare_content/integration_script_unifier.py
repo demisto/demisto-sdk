@@ -23,7 +23,6 @@ from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     arg_to_list,
     find_type,
-    get_content_path,
     get_file,
     get_mp_tag_parser,
     get_pack_metadata,
@@ -31,6 +30,7 @@ from demisto_sdk.commands.common.tools import (
     get_yaml,
     get_yml_paths_in_dir,
 )
+from demisto_sdk.commands.common.tools_core import get_content_path
 from demisto_sdk.commands.prepare_content.unifier import Unifier
 
 PACK_METADATA_PATH = "pack_metadata.json"

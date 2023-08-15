@@ -1,5 +1,6 @@
 # Changelog
 ## Unreleased
+* Improved **update-release-notes** logs when changes in dependent API modules are detected.
 * Updated the **generate-docs** command to use the content graph instead of the id_set file.
 
 ## 1.19.0

@@ -4,10 +4,10 @@ from pydantic import BaseModel
 
 from demisto_sdk.commands.common.constants import NATIVE_IMAGE_FILE_NAME
 from demisto_sdk.commands.common.logger import logger
-from demisto_sdk.commands.common.singleton import Singleton
+from demisto_sdk.commands.common.pydanticsingleton import PydanticSingleton
 from demisto_sdk.commands.common.tools import (
     extract_docker_image_from_text,
-    get_dict_from_file,
+    get_file,
 )
 
 
@@ -26,11 +26,24 @@ def _extract_native_image_version_for_server(native_image: str) -> str:
     return native_image.replace("native:", "")
 
 
-class NativeImageConfig(Singleton, BaseModel):
+class NativeImageConfig(PydanticSingleton, BaseModel):
     native_images: Dict[str, NativeImage]
     ignored_content_items: List[IgnoredContentItem]
     flags_versions_mapping: Dict[str, str] = {}
     docker_images_to_native_images_mapping: Dict[str, List] = {}
+
+    @classmethod
+    def get_instance_from(cls, *args, **kwargs):
+        return cls.from_path(*args, **kwargs)
+
+    @classmethod
+    def from_path(cls, native_image_config_file_path: str):
+        native_image_config_content = get_file(native_image_config_file_path)
+        native_image_config = cls.parse_obj(native_image_config_content)
+        native_image_config.docker_images_to_native_images_mapping = (
+            cls.__docker_images_to_native_images_support()
+        )
+        return native_image_config
 
     def __init__(
         self, native_image_config_file_path: str = f"Tests/{NATIVE_IMAGE_FILE_NAME}"
@@ -40,7 +53,8 @@ class NativeImageConfig(Singleton, BaseModel):
             self.__docker_images_to_native_images_support()
         )
 
-    def __docker_images_to_native_images_support(self):
+    @classmethod
+    def __docker_images_to_native_images_support(cls):
         """
         Map all the docker images from the native image configuration file into the native-images which support it.
 
@@ -55,7 +69,7 @@ class NativeImageConfig(Singleton, BaseModel):
         """
         docker_images_to_native_images_mapping: Dict = {}
 
-        for native_image_name, native_image_obj in self.native_images.items():
+        for native_image_name, native_image_obj in cls.native_images.items():
             for supported_docker_image in native_image_obj.supported_docker_images:
                 if supported_docker_image not in docker_images_to_native_images_mapping:
                     docker_images_to_native_images_mapping[supported_docker_image] = []

@@ -503,7 +503,7 @@ DEFAULT_DBOT_IMAGE_BASE64 = (
     "jliiBUXY1lWWs9Hs+PgZlCMAXNBIRoRFMH1JDZzgeyl5/MFthk+FY4FyyyEqEzxKbI2DQxMv7MMJnQZDvovVqz"
     "A1HUzK9kdzt0/2+exnQr4g2hrAAAAABJRU5ErkJggg=="
 )
-DOCKER_IMAGE_REGEX= r'^demisto/([^\s:]+):(\d+(\.\d+)*)$'
+DOCKER_IMAGE_REGEX = r"^demisto/([^\s:]+):(\d+(\.\d+)*)$"
 # structure regex of the from and to version
 FROM_TO_VERSION_REGEX = re.compile(r"(?:\d{1,2}\.){2}\d{1,2}")
 # file types regexes

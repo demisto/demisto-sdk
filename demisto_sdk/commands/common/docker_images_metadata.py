@@ -1,11 +1,16 @@
-from typing import Dict, Optional
 import re
+from typing import Dict, Optional
+
 from packaging.version import Version
 from pydantic import BaseModel
 
-from demisto_sdk.commands.common.constants import DOCKERFILES_INFO_REPO, DOCKER_IMAGE_REGEX
+from demisto_sdk.commands.common.constants import (
+    DOCKER_IMAGE_REGEX,
+    DOCKERFILES_INFO_REPO,
+)
 from demisto_sdk.commands.common.git_content_config import GitContentConfig
 from demisto_sdk.commands.common.logger import logger
+from demisto_sdk.commands.common.pydanticsingleton import PydanticSingleton
 from demisto_sdk.commands.common.tools import get_remote_file_from_api
 
 DOCKER_IMAGES_METADATA_NAME = "docker_images_metadata.json"
@@ -15,22 +20,21 @@ class DockerImageTagMetadata(BaseModel):
     python_version: Optional[str]
 
 
-class DockerImagesMetadata(BaseModel):
+class DockerImagesMetadata(PydanticSingleton, BaseModel):
     docker_images: Dict[str, Dict[str, DockerImageTagMetadata]]
-    _instance = None
 
     @classmethod
-    def get_instance(cls, *args, **kwargs):
-        if cls._instance is None:
-            cls._instance = cls.from_github(*args, **kwargs)
-        return cls._instance
+    def get_instance_from(cls, *args, **kwargs):
+        return cls.from_github(*args, **kwargs)
 
     @classmethod
     def from_github(
         cls, file_name: str = DOCKER_IMAGES_METADATA_NAME, tag: str = "master"
     ):
         tag = "4c162e56174bec3ee7bb1b418ad2b20e4bdce3e0"
-        logger.debug(f'loading the {DOCKER_IMAGES_METADATA_NAME} from {DOCKERFILES_INFO_REPO}')
+        logger.debug(
+            f"loading the {DOCKER_IMAGES_METADATA_NAME} from {DOCKERFILES_INFO_REPO}"
+        )
         return cls.parse_obj(
             get_remote_file_from_api(
                 file_name,
@@ -49,7 +53,9 @@ class DockerImagesMetadata(BaseModel):
         try:
             match = re.match(DOCKER_IMAGE_REGEX, docker_image)
             docker_name, tag = match.group(1), match.group(2)
-            docker_image_metadata = (self.docker_images.get(docker_name) or {}).get(tag)
+            docker_image_metadata: DockerImageTagMetadata = (
+                self.docker_images.get(docker_name) or {}
+            ).get(tag)
             return getattr(docker_image_metadata, docker_metadata_key)
         except (AttributeError, ValueError, TypeError) as err:
             logger.debug(
@@ -64,7 +70,9 @@ class DockerImagesMetadata(BaseModel):
         if python_version := self.get_docker_image_metadata_value(
             docker_image, "python_version"
         ):
-            logger.info(f'successfully got {python_version=} for {docker_image=} from {DOCKER_IMAGES_METADATA_NAME}')
+            logger.info(
+                f"successfully got {python_version=} for {docker_image=} from {DOCKER_IMAGES_METADATA_NAME}"
+            )
             return Version(python_version)
 
         return None

@@ -139,6 +139,35 @@ class ContentItem(BaseContent):
         ]
 
     @property
+    def used_by(self) -> List["RelationshipData"]:
+        """
+        This returns the content items which this content item used by.
+        In addition, we can tell if it's a mandatorily use or not.
+
+        Returns:
+            List[RelationshipData]:
+                RelationshipData:
+                    relationship_type: RelationshipType
+                    source: BaseContent
+                    target: BaseContent
+
+                    # this is the attribute we're interested in when querying
+                    content_item: BaseContent
+
+                    # Whether the relationship between items is direct or not
+                    is_direct: bool
+
+                    # Whether using the command mandatorily (or optional)
+                    mandatorily: bool = False
+
+        """
+        return [
+            r
+            for r in self.relationships_data[RelationshipType.USES]
+            if r.content_item_to.database_id == r.source_id
+        ]
+
+    @property
     def handler(self) -> XSOAR_Handler:
         # we use a high value so the code lines will not break
         return (

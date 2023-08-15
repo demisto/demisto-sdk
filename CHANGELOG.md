@@ -1,6 +1,11 @@
 # Changelog
 ## Unreleased
+* Fixed an issue where **unify** failed on integrations using an API a module, when not called from the content root.
 * Improved **update-release-notes** logs when changes in dependent API modules are detected.
+* Reverted changes released in version 1.19.0 in lint, lint will not fail on `demisto.results`, `return_outputs` and `LOG`.
+* Updated the **generate-docs** command to use the content graph instead of the id_set file.
+* Added the '--all' input option for the **prepare-content** command, to support running on all content packs.
+* Updated the '-i' input option of the **prepare-content** command to support multiple inputs as a comma-separated list.
 * Enhanced the pack metadata properties when dumping pack zips in **prepare-content** command.
 
 ## 1.19.0
@@ -12,7 +17,7 @@
 * Fixed an issue where the `update-additional-dependencies` **pre-commit** step failed when not running in a content-like repo.
 * Removed the format execution step from the `contribution_converter` since it can be executed separately during the contribution process.
 * Added a new validation (`GR108`) to **validate**, that assures hidden packs do not have mandatory dependant packs.
-Added a new validation (`PA137`) to **validate**, ensuring the absence of non-ignorable errors in `.pack-ignore`.
+* Added a new validation (`PA137`) to **validate**, ensuring the absence of non-ignorable errors in `.pack-ignore`.
 * Running **validate** in a GitHub Action will now show errors as annotations, visible in the `Files Changed` tab of the pull request.
 * **lint** will now fail on `demisto.results` and `return_outputs` usage, when a pack is `xsoar` or `partner` supported.
 * **lint** will now fail on `LOG` usage in python files.

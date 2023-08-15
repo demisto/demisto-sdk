@@ -11,8 +11,18 @@ from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.cpu_count import cpu_count
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.content_graph.objects.pack import Pack
+from demisto_sdk.commands.content_graph.parsers.repository import RepositoryParser
 
 USE_MULTIPROCESSING = False  # toggle this for better debugging
+
+
+def all_content_repo():
+    """
+    Returns a ContentDTO object with all the packs of the content repository.
+    """
+    repo_parser = RepositoryParser(CONTENT_PATH)
+    repo_parser.parse()
+    return ContentDTO.from_orm(repo_parser)
 
 
 class ContentDTO(BaseModel):

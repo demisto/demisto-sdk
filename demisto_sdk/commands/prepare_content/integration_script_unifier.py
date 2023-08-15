@@ -292,9 +292,8 @@ class IntegrationScriptUnifier(Unifier):
         imports_to_names = IntegrationScriptUnifier.check_api_module_imports(
             script_code
         )
-        content_path = get_content_path(package_path)
         script_code = IntegrationScriptUnifier.insert_module_code(
-            script_code, imports_to_names, content_path
+            script_code, imports_to_names, get_content_path(package_path)
         )
         if pack_version := get_pack_metadata(file_path=str(package_path)).get(
             "currentVersion", ""

@@ -1,9 +1,9 @@
 from typing import Dict, Optional
-
+import re
 from packaging.version import Version
 from pydantic import BaseModel
 
-from demisto_sdk.commands.common.constants import DOCKERFILES_INFO_REPO
+from demisto_sdk.commands.common.constants import DOCKERFILES_INFO_REPO, DOCKER_IMAGE_REGEX
 from demisto_sdk.commands.common.git_content_config import GitContentConfig
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import get_remote_file_from_api
@@ -47,7 +47,8 @@ class DockerImagesMetadata(BaseModel):
         Get the content of the requested key in the metadata
         """
         try:
-            docker_name, tag = docker_image.replace("demisto/", "").split(":")
+            match = re.match(DOCKER_IMAGE_REGEX, docker_image)
+            docker_name, tag = match.group(1), match.group(2)
             docker_image_metadata = (self.docker_images.get(docker_name) or {}).get(tag)
             return getattr(docker_image_metadata, docker_metadata_key)
         except (AttributeError, ValueError, TypeError) as err:

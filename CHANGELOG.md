@@ -1,6 +1,6 @@
 # Changelog
 ## Unreleased
-* Fixed an issue where the **unify** command failed on integrations using an API a module, when not called from the content root.
+* Fixed an issue where **unify** failed on integrations using an API a module, when not called from the content root.
 
 ## 1.19.0
 * Added the **graph** command group. The **create-content-graph** and **update-content-graph** commands were migrated to this command group, and named **graph create** and **graph update** respectively.

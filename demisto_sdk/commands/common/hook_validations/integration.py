@@ -2367,7 +2367,7 @@ class IntegrationValidator(ContentEntityValidator):
                         f"- In command {command.get('name')}:\n{current_command}"
                     )
             stripped_description = (
-                self.current_file.get("description", "").strip('"\'')
+                self.current_file.get("description", "").strip('"').strip("'")
             )
 
             if not stripped_description.endswith(".") and not is_string_ends_with_url(

@@ -2928,6 +2928,13 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
+    def description_missing_dot_at_the_end(details: str):
+        return (
+            f'Description must end with a period ("."), fix the following:\n{details}'
+        )
+
+    @staticmethod
+    @error_code_decorator
     def no_beta_disclaimer_in_description():
         return (
             f"The detailed description in beta integration package "
@@ -4092,13 +4099,6 @@ class Errors:
         return (
             f"Found internal terms in a customer-facing documentation file: "
             f"{', '.join(found_terms)}"
-        )
-
-    @staticmethod
-    @error_code_decorator
-    def description_missing_dot_at_the_end(details: str):
-        return (
-            f'Description must end with a period ("."), fix the following:\n{details}'
         )
 
     @staticmethod

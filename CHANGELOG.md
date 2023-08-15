@@ -2,6 +2,7 @@
 ## Unreleased
 * Improved **update-release-notes** logs when changes in dependent API modules are detected.
 * Reverted changes released in version 1.19.0 in lint
+* Updated the **generate-docs** command to use the content graph instead of the id_set file.
 
 ## 1.19.0
 * Added the **graph** command group. The **create-content-graph** and **update-content-graph** commands were migrated to this command group, and named **graph create** and **graph update** respectively.

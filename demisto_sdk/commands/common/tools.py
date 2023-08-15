@@ -4,6 +4,7 @@ import logging
 import os
 import re
 import shlex
+import toml
 import sys
 import urllib.parse
 from collections import OrderedDict
@@ -555,6 +556,8 @@ def get_file_details(
         file_details = json.loads(file_content)
     elif full_file_path.endswith(("yml", "yaml")):
         file_details = yaml.load(file_content)
+    elif full_file_path.endswith(".pack-ignore"):
+        return file_content
     # if neither yml nor json then probably a CHANGELOG or README file.
     else:
         file_details = {}

@@ -1980,6 +1980,31 @@ class ValidateManager:
                 file_path = file_path[1]
 
             else:
+                old_file_path = file_path
+            # if file is pack-ignore
+            old_file_content = get_remote_file(file_path, tag="master")
+            from configparser import ConfigParser
+            config = ConfigParser(allow_no_value=True)
+            config.read_string(old_file_content)
+            old_file_content = self.get_error_ignore_list(config=config)
+            file_content = self.get_error_ignore_list(get_pack_name(str(file_path)))
+            files_to_test = set()
+            for key, value in old_file_content.items():
+                if not (section_values := file_content.get(key, [])) or not set(section_values) == set(value):
+                    files_to_test.add(key)
+            for key, value in file_content.items():
+                if not (section_values := old_file_content.get(key, [])) or not set(section_values) == set(value):
+                    files_to_test.add(key)
+            # if not file_content == old_file_content:
+            #     pass
+            # get all files with suffix from pack:
+        for file_path in modified_files:
+            # handle renamed files
+            if isinstance(file_path, tuple):
+                old_file_path = file_path[0]
+                file_path = file_path[1]
+
+            else:
                 old_file_path = None
 
             pack_name = get_pack_name(file_path)
@@ -2695,20 +2720,21 @@ class ValidateManager:
                 self.create_ignored_errors_list(PRESET_ERROR_TO_CHECK.get(key))
             )
 
-    def get_error_ignore_list(self, pack_name):
+    def get_error_ignore_list(self, pack_name="", config=None):
         ignored_errors_list: dict = {}
         if pack_name:
-            if config := get_pack_ignore_content(pack_name):
-                # create file specific ignored errors list
-                for section in filter(
-                    lambda section: section.startswith("file:"), config.sections()
-                ):
-                    file_name = section[5:]
-                    ignored_errors_list[file_name] = []
-                    for key in config[section]:
-                        self.add_ignored_errors_to_list(
-                            config, section, key, ignored_errors_list[file_name]
-                        )
+            config = get_pack_ignore_content(pack_name)
+        if config:
+            # create file specific ignored errors list
+            for section in filter(
+                lambda section: section.startswith("file:"), config.sections()
+            ):
+                file_name = section[5:]
+                ignored_errors_list[file_name] = []
+                for key in config[section]:
+                    self.add_ignored_errors_to_list(
+                        config, section, key, ignored_errors_list[file_name]
+                    )
 
         return ignored_errors_list
 

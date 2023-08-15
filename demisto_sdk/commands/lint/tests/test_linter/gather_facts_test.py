@@ -597,8 +597,7 @@ class TestDockerImagesCollection:
         # Crete integration to test on:
         integration_name = "TestIntegration"
 
-        pack = repo.create_pack()
-        test_integration = pack.create_integration("TestIntegration")
+        test_integration = repo.create_pack().create_integration(integration_name)
 
         # Run lint:
         docker_image_flag = "native:maintenance"

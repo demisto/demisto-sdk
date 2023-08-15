@@ -4098,7 +4098,7 @@ class Errors:
     @error_code_decorator
     def description_missing_dot_at_the_end(details: str):
         return (
-            f'Descriptions must end with a period ("."), fix the following:\n{details}'
+            f'Description must end with a period ("."), fix the following:\n{details}'
         )
 
     @staticmethod

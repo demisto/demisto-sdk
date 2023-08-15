@@ -213,6 +213,8 @@ files = [
         4,
         [
             "Main function wasnt found in the file, Please add main()",
+            "Do not use return_outputs function. Please return CommandResults object instead.",
+            "Do not use demisto.results function.",
             "Initialize of params was found outside of main function. Please use demisto.params() only inside main",
             "Initialize of args was found outside of main function. Please use demisto.args() only inside main func",
             "Hardcoded http URL was found in the code, using https (when possible) is recommended.",
@@ -227,7 +229,7 @@ files = [
         False,
         4,
         [
-            "Initialize of params was found outside of main function. Please use demisto.params() only inside main "
+            "Do not use return_outputs function. Please return CommandResults object instead."
         ],
         [],
     ),

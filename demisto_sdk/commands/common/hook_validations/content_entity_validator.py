@@ -800,7 +800,7 @@ class ContentEntityValidator(BaseValidator):
             ):
                 line_with_missing_dot += f"The argument {arg.get('name')} description should end with a period.\n"
         for output in dict_to_test.get("outputs") or []:
-            stripped_description = output.get("description", "").strip('"').strip("'")
+            stripped_description = output.get("description", "").strip('"\'')
             if not stripped_description.endswith(".") and not is_string_ends_with_url(
                 stripped_description
             ):

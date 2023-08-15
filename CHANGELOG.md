@@ -1,6 +1,7 @@
 # Changelog
 ## Unreleased
 * Improved **update-release-notes** logs when changes in dependent API modules are detected.
+* Updated the **generate-docs** command to use the content graph instead of the id_set file.
 * Added the '--all' input option for the **prepare-content** command, to support running on all content packs.
 * Updated the '-i' input option of the **prepare-content** command to support multiple inputs as a comma-separated list.
 

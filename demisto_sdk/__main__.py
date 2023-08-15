@@ -2062,6 +2062,13 @@ def init(ctx, **kwargs):
     help="The readme template that should be appended to the given README.md file",
     type=click.Choice(["syslog", "xdrc", "http-collector"]),
 )
+@click.option(
+    "-gr/-ngr",
+    "--graph/--no-graph",
+    help="Whether to use the content graph or not.",
+    is_flag=True,
+    default=True,
+)
 @click.pass_context
 @logging_setup_decorator
 def generate_docs(ctx, **kwargs):
@@ -2132,6 +2139,7 @@ def _generate_docs_for_file(kwargs: Dict[str, Any]):
     skip_breaking_changes: bool = kwargs.get("skip_breaking_changes", False)
     custom_image_path: str = kwargs.get("custom_image_path", "")
     readme_template: str = kwargs.get("readme_template", "")
+    use_graph = kwargs.get("graph", True)
 
     try:
         if command:
@@ -2198,6 +2206,7 @@ def _generate_docs_for_file(kwargs: Dict[str, Any]):
                 permissions=permissions,
                 limitations=limitations,
                 insecure=insecure,
+                use_graph=use_graph,
             )
         elif file_type == FileType.PLAYBOOK:
             logger.info(f"Generating {file_type.value.lower()} documentation")

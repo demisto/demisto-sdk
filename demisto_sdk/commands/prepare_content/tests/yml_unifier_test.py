@@ -409,7 +409,9 @@ def test_insert_module_code(mocker, import_to_module):
         expected_result = expected_result.replace(import_name, module_code)
         assert module_code in expected_result
 
-    code = IntegrationScriptUnifier.insert_module_code(DUMMY_SCRIPT, import_to_module)
+    code = IntegrationScriptUnifier.insert_module_code(
+        DUMMY_SCRIPT, import_to_module, Path()
+    )
 
     assert code == expected_result
 
@@ -439,7 +441,7 @@ def test_insert_hierarchy_api_module(mocker):
     )
 
     code = IntegrationScriptUnifier.insert_module_code(
-        "from SubApiModule import *", import_to_name
+        "from SubApiModule import *", import_to_name, Path()
     )
     assert (
         "register_module_line('MicrosoftApiModule', 'start', __line__(), wrapper=-3)\n"
@@ -511,7 +513,7 @@ def test_insert_module_code__verify_offsets(mocker):
     module_name = "MicrosoftApiModule"
 
     code = IntegrationScriptUnifier.insert_module_code(
-        DUMMY_SCRIPT, {import_name: module_name}
+        DUMMY_SCRIPT, {import_name: module_name}, Path()
     )
     # get only the generated ApiModule code
     code = code[len(before_api_import) : -len(after_api_import)]

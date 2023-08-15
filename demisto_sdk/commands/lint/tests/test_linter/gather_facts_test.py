@@ -10,7 +10,7 @@ from wcmatch.pathlib import Path
 from demisto_sdk.commands.common.hook_validations.docker import DockerImageValidator
 from demisto_sdk.commands.lint import linter
 from TestSuite.pack import Pack
-from TestSuite.test_tools import ChangeCWD
+from TestSuite.test_tools import ChangeCWD, str_in_call_args_list
 
 logger = logging.getLogger("demisto-sdk")
 
@@ -596,7 +596,7 @@ class TestDockerImagesCollection:
         mocker.patch.object(linter, "get_python_version", return_value=Version("3.8"))
         log = mocker.patch.object(logger, "info")
 
-        # Crete integration to test on:
+        # Create integration to test on:
         integration_name = "TestIntegration"
 
         test_integration = repo.create_pack().create_integration(integration_name)
@@ -614,14 +614,16 @@ class TestDockerImagesCollection:
 
         # Verify docker images:
         assert runner._facts["images"] == []
-        assert (
+        assert str_in_call_args_list(
+            log.call_args_list,
             f"Skipping checks on docker for '{docker_image_flag}' - The requested native image:"
             f" '{docker_image_flag}' is not supported. For supported native image versions please see:"
-            f" 'Tests/docker_native_image_config.json'" in log.call_args_list[-2][0][0]
+            f" 'Tests/docker_native_image_config.json'",
         )
-        assert (
+        assert str_in_call_args_list(
+            log.call_args_list,
             f"{integration_name} - Facts - No docker images to run on - "
-            f"Skipping run lint in host as well." in log.call_args_list[-1][0][0]
+            f"Skipping run lint in host as well.",
         )
 
 

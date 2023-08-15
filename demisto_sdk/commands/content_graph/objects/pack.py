@@ -180,7 +180,7 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
                     [
                         parse(content_item.fromversion)
                         for content_item in content_items
-                        if content_item.content_type != ContentType.TEST_PLAYBOOK
+                        if not content_item.is_test
                         and content_item.fromversion
                         != DEFAULT_CONTENT_ITEM_FROM_VERSION
                     ],

@@ -546,7 +546,7 @@ class TestDockerImagesCollection:
         )
 
     def test_docker_image_flag_version_not_exists_in_native_config_file(
-        self, mocker, pack
+        self, mocker, repo
     ):
         """
         This test checks that if a native docker image flag was given, and the flag doesn't have a mapped native
@@ -589,23 +589,22 @@ class TestDockerImagesCollection:
                 "native:maintenance": "",
             },
         }
+        repo.docker_native_image_config.write_native_image_config(native_image_config_mock)
 
         mocker.patch.object(linter, "get_python_version", return_value=Version("3.8"))
-        mocker.patch(
-            "demisto_sdk.commands.common.native_image.NativeImageConfig.from_path",
-            return_value=native_image_config_mock,
-        )
         log = mocker.patch.object(logger, "info")
 
         # Crete integration to test on:
         integration_name = "TestIntegration"
-        test_integration = pack.create_integration(name=integration_name)
+
+        pack = repo.create_pack()
+        test_integration = pack.create_integration("TestIntegration")
 
         # Run lint:
         docker_image_flag = "native:maintenance"
-        with ChangeCWD(pack.repo_path):
+        with ChangeCWD(repo.path):
             runner = initiate_linter(
-                pack.repo_path,
+                repo.path,
                 test_integration.path,
                 True,
                 docker_image_flag=docker_image_flag,

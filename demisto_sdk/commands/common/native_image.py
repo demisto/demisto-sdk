@@ -79,18 +79,6 @@ class NativeImageConfig(PydanticSingleton, BaseModel):
 
         return docker_images_to_native_images_mapping
 
-    @staticmethod
-    def load(
-        native_image_config_file_path: str = f"Tests/{NATIVE_IMAGE_FILE_NAME}",
-    ) -> Dict:
-        """
-        Load the native image configuration file
-        """
-        native_image_config_content, _ = get_dict_from_file(
-            native_image_config_file_path
-        )
-        return native_image_config_content
-
     def get_native_image_reference(self, native_image) -> Optional[str]:
         """
         Gets the docker reference of the given native image
@@ -197,11 +185,3 @@ class ScriptIntegrationSupportedNativeImages:
             return native_images
         return []
 
-
-def file_to_native_image_config(
-    native_image_config_file_path: str = f"Tests/{NATIVE_IMAGE_FILE_NAME}",
-) -> NativeImageConfig:
-    """
-    Converts the native image file to NativeImageConfig object.
-    """
-    return NativeImageConfig(native_image_config_file_path)

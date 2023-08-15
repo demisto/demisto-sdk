@@ -14,7 +14,7 @@ from demisto_sdk.commands.common.docker_helper import (
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.native_image import (
     ScriptIntegrationSupportedNativeImages,
-    file_to_native_image_config,
+    NativeImageConfig,
 )
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 from demisto_sdk.commands.prepare_content.integration_script_unifier import (
@@ -54,7 +54,7 @@ class IntegrationScript(ContentItem):
             return ScriptIntegrationSupportedNativeImages(
                 _id=self.object_id,
                 docker_image=self.docker_image,
-                native_image_config=file_to_native_image_config(),
+                native_image_config=NativeImageConfig.get_instance(),
             ).get_supported_native_image_versions(get_raw_version=True)
         return []
 

@@ -13,7 +13,7 @@ from demisto_sdk.commands.common.constants import (
 )
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.logger import logger
-from demisto_sdk.commands.common.tools import get_json
+from demisto_sdk.commands.common.tools import capital_case, get_json
 from demisto_sdk.commands.content_graph.common import (
     PACK_CONTRIBUTORS_FILENAME,
     PACK_METADATA_FILENAME,
@@ -125,7 +125,6 @@ class PackMetadataParser:
             metadata.get("eulaLink")
             or "https://github.com/demisto/content/blob/master/LICENSE"
         )
-        self.author: str = metadata.get("author") or "Cortex XSOAR"
         self.author_image: str = self.get_author_image_filepath(path=path)
         self.price: int = int(metadata.get("price") or 0)
         self.hidden: bool = metadata.get("hidden", False)
@@ -135,7 +134,6 @@ class PackMetadataParser:
         self.commit: str = GitUtil().get_current_commit_hash() or ""
         self.downloads: int = 0
         self.tags: List[str] = metadata.get("tags") or []
-        self.use_cases: List[str] = metadata["useCases"] or []
         self.keywords: List[str] = metadata["keywords"] or []
         self.search_rank: int = 0
         self.videos: List[str] = metadata.get("videos", [])
@@ -174,10 +172,19 @@ class PackMetadataParser:
         return self.pack_metadata.get("certification") or ""
 
     @property
+    def author(self):
+        return self.pack_metadata.get("author", "Cortex XSOAR" if self.support == "xsoar" else "") or ""
+
+    @property
     def categories(self):
         return [
-            " ".join([w.title() if w.islower() else w for w in c.split()])
-            for c in self.pack_metadata["categories"]
+            capital_case(c) for c in self.pack_metadata["categories"]
+        ]
+
+    @property
+    def use_cases(self):
+        return [
+            capital_case(c) for c in self.pack_metadata["useCases"]
         ]
 
     def get_author_image_filepath(self, path: Path) -> str:

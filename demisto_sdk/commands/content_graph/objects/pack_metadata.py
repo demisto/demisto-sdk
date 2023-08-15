@@ -349,7 +349,7 @@ class PackMetadata(BaseModel):
         if marketplace in [MarketplaceVersions.XSOAR, MarketplaceVersions.XPANSE]:
             return author
         elif marketplace == MarketplaceVersions.MarketplaceV2:
-            return author.replace("XSOAR", "XSIAM")
+            return author.replace("Cortex XSOAR", "Cortex XSIAM")
         raise ValueError(f"Unknown marketplace version for author: {marketplace}")
 
     def _add_item_to_metadata_list(
@@ -475,7 +475,7 @@ class PackMetadata(BaseModel):
             if content_item.get("id") == item_id
             or (
                 content_item.get("name") == item_name
-                and item_type_key == ContentType.MODELING_RULE
+                and item_type_key == ContentType.MODELING_RULE.metadata_name
             )  # to avoid duplicate modeling rules with different versions and ids
         ]
         return filtered_content_items[0] if filtered_content_items else None

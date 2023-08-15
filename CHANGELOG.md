@@ -1,6 +1,7 @@
 # Changelog
 ## Unreleased
 * Improved **update-release-notes** logs when changes in dependent API modules are detected.
+* Reverted changes released in version 1.19.0 in lint
 
 ## 1.19.0
 * Added the **graph** command group. The **create-content-graph** and **update-content-graph** commands were migrated to this command group, and named **graph create** and **graph update** respectively.
@@ -13,6 +14,8 @@
 * Added a new validation (`GR108`) to **validate**, that assures hidden packs do not have mandatory dependant packs.
 * Added a new validation (`PA137`) to **validate**, ensuring the absence of non-ignorable errors in `.pack-ignore`.
 * Running **validate** in a GitHub Action will now show errors as annotations, visible in the `Files Changed` tab of the pull request.
+* **lint** will now fail on `demisto.results` and `return_outputs` usage, when a pack is `xsoar` or `partner` supported.
+* **lint** will now fail on `LOG` usage in python files.
 * Updated the **format** command to use the content graph instead of the id_set file.
 * Updated **format** command not to fail on unexpected values that returns from the graph, and just add it to the log.
 * Removed a redundant debug log on the `tools.get_file` function.

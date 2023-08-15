@@ -10,7 +10,7 @@ from demisto_sdk.commands.common.constants import (
 )
 from demisto_sdk.commands.common.git_content_config import GitContentConfig
 from demisto_sdk.commands.common.logger import logger
-from demisto_sdk.commands.common.pydanticsingleton import PydanticSingleton
+from demisto_sdk.commands.common.singleton import PydanticSingleton
 from demisto_sdk.commands.common.tools import get_remote_file_from_api
 
 DOCKER_IMAGES_METADATA_NAME = "docker_images_metadata.json"

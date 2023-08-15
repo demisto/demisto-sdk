@@ -4,7 +4,7 @@ from pydantic import BaseModel
 
 from demisto_sdk.commands.common.constants import NATIVE_IMAGE_FILE_NAME
 from demisto_sdk.commands.common.logger import logger
-from demisto_sdk.commands.common.pydanticsingleton import PydanticSingleton
+from demisto_sdk.commands.common.singleton import PydanticSingleton
 from demisto_sdk.commands.common.tools import (
     extract_docker_image_from_text,
     get_file,

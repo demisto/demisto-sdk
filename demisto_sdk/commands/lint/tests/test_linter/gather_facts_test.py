@@ -561,6 +561,7 @@ class TestDockerImagesCollection:
         Then
             - Ensure that the docker images list is empty, and that a suitable log message (skipping) was written.
         """
+        from demisto_sdk.commands.common.native_image import NativeImageConfig
         # Mock:
         native_image_config_mock = {
             "native_images": {
@@ -589,17 +590,22 @@ class TestDockerImagesCollection:
                 "native:maintenance": "",
             },
         }
+
         repo.docker_native_image_config.write_native_image_config(
             native_image_config_mock
         )
+
+        # this needs to be done because the singleton is executed for the entire test class, and because of that
+        # we need to mock the get_instance with the updated native_image_config_mock
+        native_image_config = NativeImageConfig.from_path(repo.docker_native_image_config.path)
+        mocker.patch.object(NativeImageConfig, "get_instance", return_value=native_image_config)
 
         mocker.patch.object(linter, "get_python_version", return_value=Version("3.8"))
         log = mocker.patch.object(logger, "info")
 
         # Create integration to test on:
         integration_name = "TestIntegration"
-
-        test_integration = repo.create_pack().create_integration(integration_name)
+        test_integration = repo.create_pack().create_integration(name="TestIntegration")
 
         # Run lint:
         docker_image_flag = "native:maintenance"

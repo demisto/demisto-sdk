@@ -42,6 +42,7 @@ from demisto_sdk.commands.content_graph.interface.neo4j.queries.nodes import (
     _match,
     create_nodes,
     delete_all_graph_nodes,
+    get_items_by_type_and_identifier,
     get_relationships_to_preserve,
     remove_content_private_nodes,
     remove_empty_properties,
@@ -89,6 +90,7 @@ def _parse_node(element_id: str, node: dict) -> BaseContent:
     obj: BaseContent
     content_type = node.get("content_type", "")
     if node.get("not_in_repository"):
+        node["name"] = node.get("object_id", "")
         obj = UnknownContent.parse_obj(node)
 
     else:
@@ -674,3 +676,27 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             except Exception as e:
                 logger.error(f"Error when running query: {e}")
                 raise e
+
+    def get_content_items_by_identifier(
+        self,
+        identifier_values_list: List[str],
+        content_type: ContentType,
+        identifier: str,
+    ) -> List:
+        """
+        This searches the database for content items and returns a list of them, including their relationships
+        Args:
+            identifier_values_list (List[str]): A list of identifier values of the wanted content items.
+                                            (The value of the object ids, cli_names etc.)
+            content_type (ContentType): The type of the wanted content item (ContentType.LAYOUT etc.)
+            identifier (str): An identifier for the wanted content item (object_id, cli_name etc.)
+        Returns:
+            list: A list of dictionaries, each dictionary represent an incident field.
+        """
+        with self.driver.session() as session:
+            return session.execute_read(
+                get_items_by_type_and_identifier,
+                identifier_values_list,
+                content_type,
+                identifier,
+            )

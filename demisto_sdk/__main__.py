@@ -39,6 +39,7 @@ from demisto_sdk.commands.content_graph.commands.get_relationships import (
     get_relationships,
 )
 from demisto_sdk.commands.content_graph.commands.update import update
+from demisto_sdk.commands.content_graph.objects.repository import all_content_repo
 from demisto_sdk.commands.generate_modeling_rules import generate_modeling_rules
 from demisto_sdk.commands.prepare_content.prepare_upload_manager import (
     PrepareUploadManager,
@@ -370,9 +371,15 @@ def extract_code(ctx, config, **kwargs):
 @click.option(
     "-i",
     "--input",
-    help="The directory path to the files or path to the file to unify",
-    required=True,
-    type=click.Path(dir_okay=True),
+    help="Comma-separated list of paths to directories or files to unify.",
+    required=False,
+    type=PathsParamType(dir_okay=True, exists=True),
+)
+@click.option(
+    "-a",
+    "--all",
+    is_flag=True,
+    help="Run prepare-content on all content packs. If no output path is given, will dump the result in the current working path.",
 )
 @click.option(
     "-g",
@@ -425,29 +432,62 @@ def prepare_content(ctx, **kwargs):
     """
     This command is used to prepare the content to be used in the platform.
     """
-    if click.get_current_context().info_name == "unify":
-        kwargs["unify_only"] = True
+    assert (
+        sum([bool(kwargs["all"]), bool(kwargs["input"])]) == 1
+    ), "Exactly one of the '-a' or '-i' parameters must be provided."
 
-    check_configuration_file("unify", kwargs)
-    # Input is of type Path.
-    kwargs["input"] = str(kwargs["input"])
-    file_type = find_type(kwargs["input"])
-    if marketplace := kwargs.get("marketplace"):
-        os.environ[ENV_DEMISTO_SDK_MARKETPLACE] = marketplace.lower()
-    if file_type == FileType.GENERIC_MODULE:
-        from demisto_sdk.commands.prepare_content.generic_module_unifier import (
-            GenericModuleUnifier,
+    if kwargs["all"]:
+        content_DTO = all_content_repo()
+        output_path = kwargs.get("output", ".") or "."
+        content_DTO.dump(
+            dir=Path(output_path, "prepare-content-tmp"),
+            marketplace=parse_marketplace_kwargs(kwargs),
         )
+        return 0
 
-        # pass arguments to GenericModule unifier and call the command
-        generic_module_unifier = GenericModuleUnifier(**kwargs)
-        generic_module_unifier.merge_generic_module_with_its_dashboards()
-    else:
-        PrepareUploadManager.prepare_for_upload(**kwargs)
+    inputs = []
+    if input_ := kwargs["input"]:
+        inputs = input_.split(",")
+
+    if output_path := kwargs["output"]:
+        if "." in Path(output_path).name:  # check if the output path is a file
+            if len(inputs) > 1:
+                raise ValueError(
+                    "When passing multiple inputs, the output path should be a directory and not a file."
+                )
+        else:
+            dest_path = Path(output_path)
+            dest_path.mkdir(exist_ok=True)
+
+    for input_content in inputs:
+        if output_path and len(inputs) > 1:
+            path_name = Path(input_content).name
+            kwargs["output"] = str(Path(output_path, path_name))
+
+        if click.get_current_context().info_name == "unify":
+            kwargs["unify_only"] = True
+
+        check_configuration_file("unify", kwargs)
+        # Input is of type Path.
+        kwargs["input"] = str(input_content)
+        file_type = find_type(kwargs["input"])
+        if marketplace := kwargs.get("marketplace"):
+            os.environ[ENV_DEMISTO_SDK_MARKETPLACE] = marketplace.lower()
+        if file_type == FileType.GENERIC_MODULE:
+            from demisto_sdk.commands.prepare_content.generic_module_unifier import (
+                GenericModuleUnifier,
+            )
+
+            # pass arguments to GenericModule unifier and call the command
+            generic_module_unifier = GenericModuleUnifier(**kwargs)
+            generic_module_unifier.merge_generic_module_with_its_dashboards()
+        else:
+            PrepareUploadManager.prepare_for_upload(**kwargs)
     return 0
 
 
 main.add_command(prepare_content, name="unify")
+
 
 # ====================== zip-packs ====================== #
 
@@ -1244,8 +1284,15 @@ def coverage_analyze(ctx, **kwargs):
 @click.option(
     "-s",
     "--id-set-path",
-    help="The path of the id_set json file.",
+    help="Deprecated. The path of the id_set json file.",
     type=click.Path(exists=True, resolve_path=True),
+)
+@click.option(
+    "-gr/-ngr",
+    "--graph/--no-graph",
+    help="Whether to use the content graph or not.",
+    is_flag=True,
+    default=True,
 )
 @click.argument("file_paths", nargs=-1, type=click.Path(exists=True, resolve_path=True))
 @click.pass_context
@@ -1294,6 +1341,7 @@ def format(
             include_untracked=include_untracked,
             add_tests=add_tests,
             id_set_path=id_set_path,
+            use_graph=kwargs.get("graph", True),
         )
 
 
@@ -2014,6 +2062,13 @@ def init(ctx, **kwargs):
     help="The readme template that should be appended to the given README.md file",
     type=click.Choice(["syslog", "xdrc", "http-collector"]),
 )
+@click.option(
+    "-gr/-ngr",
+    "--graph/--no-graph",
+    help="Whether to use the content graph or not.",
+    is_flag=True,
+    default=True,
+)
 @click.pass_context
 @logging_setup_decorator
 def generate_docs(ctx, **kwargs):
@@ -2084,6 +2139,7 @@ def _generate_docs_for_file(kwargs: Dict[str, Any]):
     skip_breaking_changes: bool = kwargs.get("skip_breaking_changes", False)
     custom_image_path: str = kwargs.get("custom_image_path", "")
     readme_template: str = kwargs.get("readme_template", "")
+    use_graph = kwargs.get("graph", True)
 
     try:
         if command:
@@ -2150,6 +2206,7 @@ def _generate_docs_for_file(kwargs: Dict[str, Any]):
                 permissions=permissions,
                 limitations=limitations,
                 insecure=insecure,
+                use_graph=use_graph,
             )
         elif file_type == FileType.PLAYBOOK:
             logger.info(f"Generating {file_type.value.lower()} documentation")
@@ -3457,7 +3514,6 @@ app.command("test", no_args_is_help=True)(test_modeling_rule.test_modeling_rule)
 app.command("init-test-data", no_args_is_help=True)(init_test_data.init_test_data)
 typer_click_object = typer.main.get_command(app)
 main.add_command(typer_click_object, "modeling-rules")
-
 
 app_generate_modeling_rules = typer.Typer(
     name="generate-modeling-rules", no_args_is_help=True

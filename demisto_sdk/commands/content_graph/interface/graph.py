@@ -267,3 +267,12 @@ class ContentGraphInterface(ABC):
         self, pack_ids: List[str]
     ) -> List[BaseContent]:
         pass
+
+    @abstractmethod
+    def get_content_items_by_identifier(
+        self,
+        identifier_values_list: List[str],
+        content_type: ContentType,
+        identifier: str,
+    ) -> Any:
+        pass

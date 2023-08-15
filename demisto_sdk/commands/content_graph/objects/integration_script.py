@@ -13,8 +13,8 @@ from demisto_sdk.commands.common.docker_helper import (
 )
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.native_image import (
-    ScriptIntegrationSupportedNativeImages,
     NativeImageConfig,
+    ScriptIntegrationSupportedNativeImages,
 )
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 from demisto_sdk.commands.prepare_content.integration_script_unifier import (

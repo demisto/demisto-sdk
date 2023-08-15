@@ -52,10 +52,8 @@ class DockerImagesMetadata(PydanticSingleton, BaseModel):
         """
         try:
             match = re.match(DOCKER_IMAGE_REGEX, docker_image)
-            docker_name, tag = match.group(1), match.group(2)
-            docker_image_metadata: DockerImageTagMetadata = (
-                self.docker_images.get(docker_name) or {}
-            ).get(tag)
+            docker_name, tag = match.group(1), match.group(2)  # type: ignore[union-attr]
+            docker_image_metadata = (self.docker_images.get(docker_name) or {}).get(tag)
             return getattr(docker_image_metadata, docker_metadata_key)
         except (AttributeError, ValueError, TypeError) as err:
             logger.debug(

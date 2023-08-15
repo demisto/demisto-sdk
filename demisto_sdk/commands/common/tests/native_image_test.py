@@ -4,7 +4,7 @@ import pytest
 
 from demisto_sdk.commands.common.native_image import (
     NativeImageConfig,
-    ScriptIntegrationSupportedNativeImages
+    ScriptIntegrationSupportedNativeImages,
 )
 
 

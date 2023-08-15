@@ -2,7 +2,6 @@ from typing import Dict, List, Optional
 
 from pydantic import BaseModel
 
-from demisto_sdk.commands.common.constants import NATIVE_IMAGE_FILE_NAME
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.pydanticsingleton import PydanticSingleton
 from demisto_sdk.commands.common.tools import (
@@ -58,11 +57,16 @@ class NativeImageConfig(PydanticSingleton, BaseModel):
         """
         for native_image_name, native_image_obj in self.native_images.items():
             for supported_docker_image in native_image_obj.supported_docker_images:
-                if supported_docker_image not in self.docker_images_to_native_images_mapping:
-                    self.docker_images_to_native_images_mapping[supported_docker_image] = []
-                self.docker_images_to_native_images_mapping[supported_docker_image].append(
-                    native_image_name
-                )
+                if (
+                    supported_docker_image
+                    not in self.docker_images_to_native_images_mapping
+                ):
+                    self.docker_images_to_native_images_mapping[
+                        supported_docker_image
+                    ] = []
+                self.docker_images_to_native_images_mapping[
+                    supported_docker_image
+                ].append(native_image_name)
 
     def get_native_image_reference(self, native_image) -> Optional[str]:
         """
@@ -169,4 +173,3 @@ class ScriptIntegrationSupportedNativeImages:
                 )
             return native_images
         return []
-

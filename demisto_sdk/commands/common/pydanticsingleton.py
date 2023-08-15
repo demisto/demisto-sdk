@@ -14,12 +14,7 @@ class PydanticSingleton:
     @abstractmethod
     def get_instance_from(cls, *args, **kwargs):
         """
-
-        Args:
-            *args:
-            **kwargs:
-
-        Returns:
-
+        Initialize any Pydantic object with a class method, Each pydantic singleton
+        should implement this abstract method
         """
         pass

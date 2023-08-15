@@ -1,5 +1,7 @@
 # Changelog
 ## Unreleased
+
+## 1.19.1
 * Improved **update-release-notes** logs when changes in dependent API modules are detected.
 
 ## 1.19.0

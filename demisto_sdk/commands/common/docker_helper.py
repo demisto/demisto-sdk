@@ -509,17 +509,17 @@ def get_python_version(
         )
         return None
 
+    if python_version := _get_python_version_by_regex(image):
+        return python_version
+
+    logger.debug(f"Could not get python version for {image=} from regex")
+
     if python_version := DockerImagesMetadata.get_instance().python_version(image):
         return python_version
 
     logger.debug(
         f"Could not get python version for {image=} from {DOCKERFILES_INFO_REPO} repo"
     )
-
-    if python_version := _get_python_version_by_regex(image):
-        return python_version
-
-    logger.debug(f"Could not get python version for {image=} from regex")
 
     if not should_pull_image:
         return _get_python_version_from_dockerhub_api(image)

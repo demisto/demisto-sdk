@@ -334,7 +334,7 @@ class TestDockerImagesCollection:
             f"Skipping run lint in host as well." in log.call_args_list[-1][0][0]
         )
 
-    def test_invalid_docker_image_as_docker_image_flag(self, mocker, pack):
+    def test_invalid_docker_image_as_docker_image_flag(self, pack):
         """
         This test checks that if an invalid docker image was given as the docker image flag, the linter will try to
         run the unit test on it and will write suitable logs.
@@ -592,7 +592,7 @@ class TestDockerImagesCollection:
 
         mocker.patch.object(linter, "get_python_version", return_value=Version("3.8"))
         mocker.patch(
-            "demisto_sdk.commands.common.native_image.NativeImageConfig.load",
+            "demisto_sdk.commands.common.native_image.NativeImageConfig.from_path",
             return_value=native_image_config_mock,
         )
         log = mocker.patch.object(logger, "info")

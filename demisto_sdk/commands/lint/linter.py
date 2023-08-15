@@ -1447,9 +1447,8 @@ class Linter:
             docker_image_flag (str): Requested docker image flag.
         Returns (None): None
         """
-        native_image_config = (
-            NativeImageConfig()
-        )  # parsed docker_native_image_config.json file (a singleton obj)
+        native_image_config = NativeImageConfig.get_instance()
+        # parsed docker_native_image_config.json file (a singleton obj)
 
         if native_image := native_image_config.flags_versions_mapping.get(
             docker_image_flag
@@ -1510,9 +1509,8 @@ class Linter:
             f"{self._pack_name} - Get Versioned Native Image - {native_image} - Started"
         )
 
-        native_image_config = (
-            NativeImageConfig()
-        )  # parsed docker_native_image_config.json file (a singleton obj)
+        native_image_config = NativeImageConfig.get_instance()
+        # parsed docker_native_image_config.json file (a singleton obj)
 
         return native_image_config.get_native_image_reference(native_image)
 
@@ -1542,9 +1540,8 @@ class Linter:
         imgs = get_docker_images_from_yml(script_obj)
 
         # Get native images:
-        native_image_config = (
-            NativeImageConfig()
-        )  # parsed docker_native_image_config.json file (a singleton obj)
+        native_image_config = NativeImageConfig.get_instance()
+        # parsed docker_native_image_config.json file (a singleton obj)
 
         for native_image in native_image_config.native_images:
             if self._is_native_image_support_script(
@@ -1617,9 +1614,8 @@ class Linter:
 
         di_from_yml = script_obj.get("dockerimage")
         # If the 'dockerimage' key does not exist in yml - run on native image checks will be skipped
-        native_image_config = (
-            NativeImageConfig()
-        )  # parsed docker_native_image_config.json file (a singleton obj)
+        native_image_config = NativeImageConfig.get_instance()
+        # parsed docker_native_image_config.json file (a singleton obj)
         supported_native_images_obj = ScriptIntegrationSupportedNativeImages(
             _id=script_id,
             native_image_config=native_image_config,

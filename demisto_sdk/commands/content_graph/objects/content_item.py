@@ -165,6 +165,10 @@ class ContentItem(BaseContent):
             data, current_marketplace, self.marketplaces
         )
 
+    # def update_release_notes(self):
+    # Generic
+    # And if needed something extra like docker update - it should call the specific content_item like integration.py
+
     def summary(
         self,
         marketplace: Optional[MarketplaceVersions] = None,

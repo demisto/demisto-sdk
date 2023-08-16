@@ -101,3 +101,8 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
     @classmethod
     def _client_upload_method(cls, client: demisto_client) -> Callable:
         return client.integration_upload
+
+    # def update_release_notes(self):
+    #     [% rn, updated_docker_image, added_command]
+    #     ## Added new command shelly-test,
+    #     Updated rn

@@ -97,7 +97,7 @@ def test_create_failed_unit_tests_report_with_failed_tests():
         assert len(fail_list) == 2
         assert "HelloWorld" in fail_list
         assert "Infoblox" in fail_list
-    Path.unlink(Path(file_path))
+    Path(file_path).unlink()
 
 
 def test_create_failed_unit_tests_report_no_failed_tests():

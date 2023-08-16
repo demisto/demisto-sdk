@@ -1973,9 +1973,9 @@ def test_verify_deletion_from_conf_pack_format_with_deprecate_flag(
     if os.path.exists(
         f"{repo_path}/Packs/TestPack/Integrations/TestIntegration/README.md"
     ):
-        Path.unlink(Path(f"{repo_path}/Packs/TestPack/Integrations/TestIntegration/README.md"))
+        Path(f"{repo_path}/Packs/TestPack/Integrations/TestIntegration/README.md").unlink()
     if os.path.exists(f"{repo_path}/Packs/TestPack/README.md"):
-        Path.unlink(Path(f"{repo_path}/Packs/TestPack/README.md"))
+        Path(f"{repo_path}/Packs/TestPack/README.md").unlink()
 
     # Prepare conf
     test_conf_data = {
@@ -2038,9 +2038,9 @@ def test_verify_deletion_from_conf_script_format_with_deprecate_flag(
 
     # We don't need to format empty readme files
     if os.path.exists(f"{repo_path}/Packs/TestPack/Scripts/TestScript/README.md"):
-        Path.unlink(Path(f"{repo_path}/Packs/TestPack/Scripts/TestScript/README.md"))
+        Path(f"{repo_path}/Packs/TestPack/Scripts/TestScript/README.md").unlink()
     if os.path.exists(f"{repo_path}/Packs/TestPack/README.md"):
-        Path.unlink(Path(f"{repo_path}/Packs/TestPack/README.md"))
+        Path(f"{repo_path}/Packs/TestPack/README.md").unlink()
 
     # Prepare conf
     test_conf_data = {

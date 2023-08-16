@@ -506,7 +506,7 @@ def coverage_report_editor(coverage_file, code_file_absolute_path):
             sql_connection.commit()
         cursor.close()
     if not index == 1:
-        Path.unlink(Path(coverage_file))
+        Path(coverage_file).unlink()
 
 
 def coverage_files():

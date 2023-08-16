@@ -45,7 +45,7 @@ def fix_file_path(coverage_file: str, code_file_absolute_path: str):
         cursor.close()
     if not index == 1:
         logger.debug(f"removing coverage report for {code_file_absolute_path}")
-        Path.unlink(Path(coverage_file))
+        Path(coverage_file).unlink()
 
 
 def get_coverage_obj(

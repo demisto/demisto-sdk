@@ -1243,7 +1243,7 @@ class TestPackUniqueFilesValidator:
         self.validator.pack_path = pack.path
 
         with ChangeCWD(repo.path):
-            Path.unlink(Path(pack.readme.path))
+            Path(pack.readme.path).unlink()
             assert self.validator.validate_pack_readme_and_pack_description()
             assert (
                 '"README.md" file does not exist, create one in the root of the pack'
@@ -1340,7 +1340,7 @@ class TestPackUniqueFilesValidator:
         author_image_path = pack.author_image.path
 
         with ChangeCWD(repo.path):
-            Path.unlink(Path(author_image_path))
+            Path(author_image_path).unlink()
             res = self.validator.validate_author_image_exists()
             assert not res
             assert (

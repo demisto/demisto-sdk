@@ -901,7 +901,7 @@ class TestPlaybookValidator:
             structure_validator, validate_all=validate_all
         )
         if remove_readme:
-            Path.unlink(Path(playbook.readme.path))
+            Path(playbook.readme.path).unlink()
         assert (
             playbook_validator.validate_readme_exists(playbook_validator.validate_all)
             is expected_result

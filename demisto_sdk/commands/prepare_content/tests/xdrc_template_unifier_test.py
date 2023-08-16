@@ -46,4 +46,4 @@ def test_unify_xdrc_template():
     }
     assert get_file(expected_json_path) == expected_json_file
 
-    Path.unlink(Path(export_json_path))
+    Path(export_json_path).unlink()

@@ -224,4 +224,4 @@ class TestLayoutSixConverter:
             )
         )
         assert layout_data == test_data_json
-        Path.unlink(Path(expected_new_layout_path))
+        Path(expected_new_layout_path).unlink()

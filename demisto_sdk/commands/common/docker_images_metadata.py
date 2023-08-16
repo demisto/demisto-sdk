@@ -31,7 +31,6 @@ class DockerImagesMetadata(PydanticSingleton, BaseModel):
     def from_github(
         cls, file_name: str = DOCKER_IMAGES_METADATA_NAME, tag: str = "master"
     ):
-        tag = "4c162e56174bec3ee7bb1b418ad2b20e4bdce3e0"
         logger.debug(
             f"loading the {DOCKER_IMAGES_METADATA_NAME} from {DOCKERFILES_INFO_REPO}"
         )
@@ -43,10 +42,9 @@ class DockerImagesMetadata(PydanticSingleton, BaseModel):
             ),
             encoding="utf-8-sig",
         )
-        logger.info(f"{dockerfiles_metadata=}")
         if not dockerfiles_metadata:
             raise ValueError(
-                f"Could not retrieve the {DOCKERFILES_INFO_REPO} from {DOCKERFILES_INFO_REPO} repo"
+                f"Could not retrieve the {DOCKER_IMAGES_METADATA_NAME} from {DOCKERFILES_INFO_REPO} repo"
             )
 
         return cls.parse_obj(dockerfiles_metadata)

@@ -1791,7 +1791,6 @@ class TestValidators:
             "Packs/pack_id/Integrations/integration_id/command_examples",
             "Packs/pack_id/Integrations/integration_id/test.txt",
             "Packs/pack_id/.secrets-ignore",
-            "Packs/pack_id/.pack-ignore",
         ],
     )
     def test_ignore_files_irrelevant_for_validation_test_file(self, file_path: str):
@@ -3136,3 +3135,21 @@ def test_validate_no_disallowed_terms_in_customer_facing_docs_end_to_end(repo, m
     # Assure errors were logged (1 error per validated file)
     assert count_str_in_call_args_list(logger_error.call_args_list, "BA125") == 4
     pass
+
+@pytest.fixture(autouse=True)
+def set_git_test_env(mocker):
+    mocker.patch.object(ValidateManager, "setup_git_params", return_value=True)
+    mocker.patch.object(Content, "git", return_value=MyRepo())
+    mocker.patch.object(ValidateManager, "setup_prev_ver", return_value="origin/master")
+    mocker.patch.object(GitUtil, "get_all_files", return_value=[])
+
+@pytest.mark.parametrize(
+    "modified_files, expected_results",
+    [
+        "This is an example with the 'test-module' term within it.",
+        "This is an example with the 'Test-Module' term within it",  # Assure case-insensitivity
+    ],
+)
+def test_get_all_files_edited_in_pack_ignore(modified_files, expected_results):
+    validate_manager = ValidateManager()
+    assert validate_manager.get_all_files_edited_in_pack_ignore(modified_files) == expected_results

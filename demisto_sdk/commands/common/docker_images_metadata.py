@@ -36,14 +36,18 @@ class DockerImagesMetadata(PydanticSingleton, BaseModel):
             f"loading the {DOCKER_IMAGES_METADATA_NAME} from {DOCKERFILES_INFO_REPO}"
         )
         dockerfiles_metadata = get_remote_file_from_api(
-                file_name,
-                tag=tag,
-                git_content_config=GitContentConfig(repo_name=DOCKERFILES_INFO_REPO),
-                encoding="utf-8-sig",
-            )
-        logger.info(f'{dockerfiles_metadata=}')
+            file_name,
+            tag=tag,
+            git_content_config=GitContentConfig(
+                repo_name=DOCKERFILES_INFO_REPO, repo_hostname=GitContentConfig.GITHUB
+            ),
+            encoding="utf-8-sig",
+        )
+        logger.info(f"{dockerfiles_metadata=}")
         if not dockerfiles_metadata:
-            raise ValueError(f"Could not retrieve the {DOCKERFILES_INFO_REPO} from {DOCKERFILES_INFO_REPO} repo")
+            raise ValueError(
+                f"Could not retrieve the {DOCKERFILES_INFO_REPO} from {DOCKERFILES_INFO_REPO} repo"
+            )
 
         return cls.parse_obj(dockerfiles_metadata)
 

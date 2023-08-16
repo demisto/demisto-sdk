@@ -1,6 +1,5 @@
 import ast
 import itertools
-import os
 from ast import parse
 from pathlib import Path
 

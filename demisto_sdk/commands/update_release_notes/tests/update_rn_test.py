@@ -4,9 +4,9 @@ import pathlib
 import shutil
 from collections import Counter
 from copy import deepcopy
+from pathlib import Path
 from typing import Dict, Optional
 from unittest import mock
-from pathlib import Path
 
 import pytest
 
@@ -2069,7 +2069,6 @@ class TestRNUpdateUnit:
         Then
             - A new release notes is created. and it has a new record for updating docker image.
         """
-        import os
 
         from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
 
@@ -2126,7 +2125,9 @@ class TestRNUpdateUnit:
             "demisto_sdk/commands/update_release_notes/tests_data/Packs/release_notes/1_1_0.md"
         ) as file:
             RN = file.read()
-        Path("demisto_sdk/commands/update_release_notes/tests_data/Packs/release_notes/1_1_0.md").unlink()
+        Path(
+            "demisto_sdk/commands/update_release_notes/tests_data/Packs/release_notes/1_1_0.md"
+        ).unlink()
         assert "Updated the Docker image to: *demisto/python3:3.9.6.22914*." in RN
 
     def test_update_docker_image_in_yml_when_RN_aleady_exists(self, mocker):
@@ -2210,7 +2211,6 @@ class TestRNUpdateUnit:
         Then
             - A new record with the updated docker image is added.
         """
-        import os
 
         from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
 
@@ -2252,7 +2252,9 @@ class TestRNUpdateUnit:
             "demisto_sdk/commands/update_release_notes/tests_data/Packs/release_notes/1_1_0.md"
         ) as file:
             RN = file.read()
-        Path("demisto_sdk/commands/update_release_notes/tests_data/Packs/release_notes/1_1_0.md").unlink()
+        Path(
+            "demisto_sdk/commands/update_release_notes/tests_data/Packs/release_notes/1_1_0.md"
+        ).unlink()
         assert "Updated the Docker image to: *dockerimage:python/test:1243*" not in RN
 
     def test_new_integration_docker_not_updated(self, mocker):
@@ -2265,7 +2267,6 @@ class TestRNUpdateUnit:
         Then
             - Docker is not indicated as updated.
         """
-        import os
 
         from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
 
@@ -2304,7 +2305,9 @@ class TestRNUpdateUnit:
             "demisto_sdk/commands/update_release_notes/tests_data/Packs/release_notes/1_1_0.md"
         ) as file:
             RN = file.read()
-        Path("demisto_sdk/commands/update_release_notes/tests_data/Packs/release_notes/1_1_0.md").unlink()
+        Path(
+            "demisto_sdk/commands/update_release_notes/tests_data/Packs/release_notes/1_1_0.md"
+        ).unlink()
         assert "Updated the Docker image to: *dockerimage:python/test:1243*" not in RN
 
     docker_image_test_rn = (

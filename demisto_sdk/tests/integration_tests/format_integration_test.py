@@ -1973,7 +1973,9 @@ def test_verify_deletion_from_conf_pack_format_with_deprecate_flag(
     if os.path.exists(
         f"{repo_path}/Packs/TestPack/Integrations/TestIntegration/README.md"
     ):
-        Path(f"{repo_path}/Packs/TestPack/Integrations/TestIntegration/README.md").unlink()
+        Path(
+            f"{repo_path}/Packs/TestPack/Integrations/TestIntegration/README.md"
+        ).unlink()
     if os.path.exists(f"{repo_path}/Packs/TestPack/README.md"):
         Path(f"{repo_path}/Packs/TestPack/README.md").unlink()
 

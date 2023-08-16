@@ -199,7 +199,7 @@ class TestGenericFunctions:
         mocker.patch.object(
             GitUtil, "get_local_remote_file_content", return_value=content
         )
-        mocker.patch.object(tools_core, "get_content_path", return_value=Path(GIT_ROOT))
+        mocker.patch.object(tools, "get_content_path", return_value=Path(GIT_ROOT))
         relative_path = path.relative_to(GIT_ROOT)
 
         assert (result_non_relative := tools.get_file_or_remote(path))
@@ -225,7 +225,7 @@ class TestGenericFunctions:
         content = path.read_text()
         mocker.patch.object(tools, "get_file", side_effect=FileNotFoundError)
         mocker.patch.object(tools, "get_local_remote_file", side_effect=ValueError)
-        mocker.patch.object(tools_core, "get_content_path", return_value=Path(GIT_ROOT))
+        mocker.patch.object(tools, "get_content_path", return_value=Path(GIT_ROOT))
         relative_path = path.relative_to(GIT_ROOT)
         requests_mock.get("https://api.github.com/repos/demisto/demisto-sdk")
         requests_mock.get(

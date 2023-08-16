@@ -473,8 +473,6 @@ class ContributionConverter:
             if self.create_new:
                 self.generate_readmes_for_new_content_pack(is_contribution=True)
 
-            # format
-            self.format_converted_pack()
         except Exception as e:
             logger.info(
                 f"Creating a Pack from the contribution zip failed with error: {e}\n {traceback.format_exc()}",

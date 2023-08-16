@@ -1465,7 +1465,6 @@ def test_get_pack_metadata(repo):
     assert metadata_json == result
 
 
-@pytest.mark.skip
 def test_get_last_remote_release_version(requests_mock):
     """
     When
@@ -3047,6 +3046,30 @@ def test_sha1_dir():
 def test_find_pack_folder(input_path, expected_output):
     output = tools.find_pack_folder(input_path)
     assert expected_output == str(output)
+
+
+@pytest.mark.parametrize(
+    "input_path, expected_output",
+    [
+        (
+            Path(
+                "/User/username/content/Packs/MyPack/Integrations/MyIntegration/MyIntegration.yml"
+            ),
+            Path("/User/username/content"),
+        ),
+        (Path("/User/username/content/Packs"), Path("/User/username/content")),
+    ],
+)
+def test_get_content_path(input_path, expected_output):
+    """
+    Given:
+        - A path to a file or directory in the content repo
+    When:
+        - Running get_content_path
+    Then:
+        Validate that the given path is correct
+    """
+    assert tools.get_content_path(input_path) == expected_output
 
 
 @pytest.mark.parametrize(

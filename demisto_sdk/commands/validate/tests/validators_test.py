@@ -3136,20 +3136,15 @@ def test_validate_no_disallowed_terms_in_customer_facing_docs_end_to_end(repo, m
     assert count_str_in_call_args_list(logger_error.call_args_list, "BA125") == 4
     pass
 
-@pytest.fixture(autouse=True)
-def set_git_test_env(mocker):
-    mocker.patch.object(ValidateManager, "setup_git_params", return_value=True)
-    mocker.patch.object(Content, "git", return_value=MyRepo())
-    mocker.patch.object(ValidateManager, "setup_prev_ver", return_value="origin/master")
-    mocker.patch.object(GitUtil, "get_all_files", return_value=[])
 
-# @pytest.mark.parametrize(
-#     "modified_files, expected_results",
-#     [
-#         "This is an example with the 'test-module' term within it.",
-#         "This is an example with the 'Test-Module' term within it",  # Assure case-insensitivity
-#     ],
-# )
-# def test_get_all_files_edited_in_pack_ignore(modified_files, expected_results):
-#     validate_manager = ValidateManager()
-#     assert validate_manager.get_all_files_edited_in_pack_ignore(modified_files) == expected_results
+@pytest.mark.parametrize(
+    "modified_files, expected_results",
+    [
+        ({"Packs/test/Integrations/test/test.yml", "Packs/test/.pack-ignore"}, "")
+    ],
+)
+def test_get_all_files_edited_in_pack_ignore(mocker, modified_files, expected_results):
+    mocker.patch.object(GitUtil, "get_all_files", return_value=[])
+    mocker.path("get_remote_file", return_value="[file:AzureSecurityCenter_v2.yml]\nignore=BA108,BA109,DS107\n")
+    validate_manager = ValidateManager()
+    assert validate_manager.get_all_files_edited_in_pack_ignore(modified_files) == expected_results

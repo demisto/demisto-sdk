@@ -2776,7 +2776,14 @@ class TestisContextChanged:
             ),
             (
                 {
-                    "description": "a yml with a comment that has www.test.com in the middle of the sentence",
+                    "description": "a yml with a description that has www.test.com in the middle of the sentence",
+                },
+                True,
+                False,
+            ),
+            (
+                {
+                    "description": "a yml with a description that has an 'example without dot at the end of the string.'",
                 },
                 True,
                 False,
@@ -2796,6 +2803,7 @@ class TestisContextChanged:
             - Case 5: A yml content with a command that a context path with a description with a dot at the end of the sentence, and use_git flag set to True.
             - Case 6: A yml content with a description that ends with a url address and not dot, and use_git flag set to True.
             - Case 7: A yml content with a description that has a url in the middle of the sentence and no comment in the end, and use_git flag set to True.
+            - Case 8: A yml content with a description that ends with example quotes with a dot only inside the example quotes, and use_git flag set to True.
         When:
             - when executing the is_line_ends_with_dot method
         Then:
@@ -2806,6 +2814,7 @@ class TestisContextChanged:
             - Case 5: make sure the validation pass.
             - Case 6: make sure the validation pass.
             - Case 7: make sure the validation fails.
+            - Case 8: make sure the validation fails.
         """
         pack = repo.create_pack("test")
         integration = pack.create_integration(yml=yml_content)

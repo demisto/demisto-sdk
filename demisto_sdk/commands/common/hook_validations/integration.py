@@ -65,6 +65,7 @@ from demisto_sdk.commands.common.tools import (
     is_string_ends_with_url,
     server_version_compare,
     string_to_bool,
+    strip_description,
 )
 
 default_additional_info = load_default_additional_info_dict()
@@ -2366,8 +2367,8 @@ class IntegrationValidator(ContentEntityValidator):
                     lines_with_missing_dot += (
                         f"- In command {command.get('name')}:\n{current_command}"
                     )
-            stripped_description = (
-                self.current_file.get("description", "").strip('"').strip("'")
+            stripped_description = strip_description(
+                self.current_file.get("description", "")
             )
 
             if not stripped_description.endswith(".") and not is_string_ends_with_url(

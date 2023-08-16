@@ -477,6 +477,7 @@ class TestPackUniqueFilesValidator:
                 PACK_METADATA_TAGS: [],
             }
         )
+        mocker.patch.object(tools, "is_external_repository", return_value=False)
         mocker.patch.object(tools_core, "is_external_repository", return_value=False)
         mocker.patch.object(
             tools,
@@ -564,6 +565,7 @@ class TestPackUniqueFilesValidator:
                 PACK_METADATA_TAGS: tags,
             }
         )
+        mocker.patch.object(tools, "is_external_repository", return_value=False)
         mocker.patch.object(tools_core, "is_external_repository", return_value=False)
         mocker.patch.object(
             tools,

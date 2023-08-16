@@ -1,4 +1,5 @@
 import os
+import re
 from copy import deepcopy
 from pathlib import Path
 from tempfile import TemporaryDirectory
@@ -7,6 +8,7 @@ import pytest
 
 from demisto_sdk.commands.common.constants import (
     GOOGLE_CLOUD_STORAGE_PUBLIC_BASE_PATH,
+    MARKDOWN_IMAGE_LINK_REGEX,
     MARKDOWN_IMAGES_ARTIFACT_FILE_NAME,
     SERVER_API_TO_STORAGE,
     ImagesFolderNames,
@@ -302,3 +304,21 @@ def test_dump_more_than_one_description_file(mocker, image_data_one, image_data_
         )
         res = get_file(f"{artifact_dir}/{MARKDOWN_IMAGES_ARTIFACT_FILE_NAME}")
     assert res == excepted_res
+
+
+@pytest.mark.parametrize(
+    "line, expected_result",
+    [
+        (
+            "![image](https://github.com/demisto/content/raw/master/Packs/SplunkPy/doc_files/identify-fields-list.png)",
+            "https://github.com/demisto/content/raw/master/Packs/SplunkPy/doc_files/identify-fields-list.png",
+        ),
+        (
+            '[![Active Response in Cortex Xpanse](https://i.ytimg.com/vi/aIP1CCn9ST8/hq720.jpg)](https://www.youtube.com/watch?v=rryAQ23uuqw "Active Response in Cortex Xpanse")',
+            "https://i.ytimg.com/vi/aIP1CCn9ST8/hq720.jpg",
+        ),
+    ],
+)
+def test_markdown_regex(line, expected_result):
+    url = res["url"] if (res := re.search(MARKDOWN_IMAGE_LINK_REGEX, line)) else ""
+    assert url == expected_result

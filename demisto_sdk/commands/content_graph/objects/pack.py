@@ -223,7 +223,7 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: i
     path: Path
     contributors: Optional[List[str]] = None
     relationships: Relationships = Field(Relationships(), exclude=True)
-
+    deprecated: bool = False
     content_items: PackContentItems = Field(
         PackContentItems(), alias="contentItems", exclude=True
     )

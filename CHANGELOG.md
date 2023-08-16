@@ -1,5 +1,6 @@
 # Changelog
 ## Unreleased
+
 ## 1.19.1
 * Fixed an issue where **unify** failed on integrations using an API a module, when not called from the content root.
 * Improved **update-release-notes** logs when changes in dependent API modules are detected.

@@ -2,6 +2,7 @@ import os
 import re
 import shutil
 from os.path import join
+from pathlib import Path
 from typing import Union
 from zipfile import ZipFile
 
@@ -894,7 +895,7 @@ class TestReleaseNotes:
     def rn_file_copy(self):
         yield shutil.copyfile(SOURCE_RELEASE_NOTES_FILE, RELEASE_NOTES_COPY)
         if os.path.exists(RELEASE_NOTES_COPY):
-            os.remove(RELEASE_NOTES_COPY)
+            Path.unlink(Path(RELEASE_NOTES_COPY))
 
     @pytest.fixture(autouse=True)
     def new_entity_rn_file_copy(self):
@@ -902,7 +903,7 @@ class TestReleaseNotes:
             NEW_ENTITY_SOURCE_RELEASE_NOTES_FILE, NEW_ENTITY_RELEASE_NOTES_COPY
         )
         if os.path.exists(NEW_ENTITY_RELEASE_NOTES_COPY):
-            os.remove(NEW_ENTITY_RELEASE_NOTES_COPY)
+            Path.unlink(Path(NEW_ENTITY_RELEASE_NOTES_COPY))
 
     @pytest.mark.parametrize(
         "index, expected_result",

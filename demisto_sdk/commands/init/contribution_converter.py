@@ -385,7 +385,7 @@ class ContributionConverter:
                             self.generate_readme_for_pack_content_item(
                                 unified_file, is_contribution
                             )
-                            os.remove(unified_file)
+                            Path.unlink(Path(unified_file))
             elif basename == "Playbooks":
                 files = get_child_files(pack_subdir)
                 for file in files:
@@ -655,10 +655,10 @@ class ContributionConverter:
                         shutil.move(content_item_file_path, output_path)
                     if del_unified:
                         if os.path.exists(content_item_file_path):
-                            os.remove(content_item_file_path)
+                            Path.unlink(Path(content_item_file_path))
                         moved_unified_dst = os.path.join(output_path, child_file_name)
                         if os.path.exists(moved_unified_dst):
-                            os.remove(moved_unified_dst)
+                            Path.unlink(Path(moved_unified_dst))
 
     def create_pack_base_files(self):
         """

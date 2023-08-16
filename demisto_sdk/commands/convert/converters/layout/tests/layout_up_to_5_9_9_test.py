@@ -282,7 +282,7 @@ class TestLayoutBelowSixConverter:
             )
             assert os.path.exists(expected_new_layout_path)
             assert util_load_json(expected_new_layout_path) == layout_data
-            os.remove(expected_new_layout_path)
+            Path.unlink(Path(expected_new_layout_path))
 
     CALCULATE_FROM_VERSION_INPUTS = [
         ("ExtraHop Detection", "close", "5.5.0"),

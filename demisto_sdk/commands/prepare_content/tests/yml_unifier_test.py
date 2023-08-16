@@ -890,7 +890,7 @@ final test: hi
         )
 
         assert export_yml_path == Path(expected_yml_path)
-        os.remove(expected_yml_path)
+        Path.unlink(Path(expected_yml_path))
 
 
 class TestMergeScriptPackageToYMLScript:
@@ -961,7 +961,7 @@ class TestMergeScriptPackageToYMLScript:
         )
 
         assert export_yml_path == Path(expected_yml_path)
-        os.remove(expected_yml_path)
+        Path.unlink(Path(expected_yml_path))
 
 
 UNIFY_CMD = "unify"

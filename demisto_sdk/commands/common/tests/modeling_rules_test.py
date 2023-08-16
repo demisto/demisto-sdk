@@ -36,7 +36,7 @@ def test_is_invalid_modeling_rule(repo):
     structure_validator = StructureValidator(dummy_modeling_rule.yml.path)
     schema_path = dummy_modeling_rule.schema.path
     if os.path.exists(schema_path):
-        os.remove(schema_path)
+        Path.unlink(Path(schema_path))
 
     with ChangeCWD(repo.path):
         modeling_rule_validator = ModelingRuleValidator(structure_validator)

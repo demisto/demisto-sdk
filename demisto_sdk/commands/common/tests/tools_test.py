@@ -908,7 +908,7 @@ def test_get_ignore_pack_tests__no_ignore_pack(tmpdir):
 
     # remove .pack-ignore if exists
     if os.path.exists(pack_ignore_path):
-        os.remove(pack_ignore_path)
+        Path.unlink(Path(pack_ignore_path))
 
     ignore_test_set = get_ignore_pack_skipped_tests(
         fake_pack_name, {fake_pack_name}, {}

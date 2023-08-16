@@ -372,7 +372,7 @@ class IntegrationScriptUnifier(Unifier):
     @staticmethod
     def get_script_or_integration_package_data(package_path: Path):
         # should be static method
-        _, yml_path = get_yml_paths_in_dir(str(package_path), error_msg="")
+        _, yml_path = get_yml_paths_in_dir(str(package_path))
 
         if not yml_path:
             raise Exception(

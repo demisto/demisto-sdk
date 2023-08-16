@@ -1469,7 +1469,7 @@ def upload(ctx, **kwargs):
 @click.option(
     "-lf",
     "--list-files",
-    help="Print a list of all custom content items available for download and exit.",
+    help="List all custom content items available for download and exit.",
     is_flag=True,
 )
 @click.option(
@@ -1518,7 +1518,7 @@ def upload(ctx, **kwargs):
 @click.pass_context
 @logging_setup_decorator
 def download(ctx, **kwargs):
-    """Download custom content from an XSOAR instance.
+    """Download custom content from a Cortex XSOAR / XSIAM instance.
     DEMISTO_BASE_URL environment variable should contain the server base URL.
     DEMISTO_API_KEY environment variable should contain a valid API Key for the server.
     """

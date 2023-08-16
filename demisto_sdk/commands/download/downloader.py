@@ -161,16 +161,7 @@ class Downloader:
 
     def download(self) -> int:
         """
-        Downloads custom content data from XSOAR to the output path provided.
-
-        Returns:
-            int: Exit code. 1 if failed, 0 if succeeded
-        """
-        return self.download_manager()
-
-    def download_manager(self) -> int:
-        """
-        Manages all download command flows
+        Downloads content items (system or custom) from XSOAR / XSIAM to the provided output path.
 
         Returns:
             int: Exit code. 1 if failed, 0 if succeeded
@@ -286,18 +277,19 @@ class Downloader:
         The function also updates self.input_file with names of content matching the filter.
 
         Args:
-            custom_content_objects (dict[str, dict]): A dictionary mapping custom content names
-                to their corresponding objects to filter.
+            custom_content_objects (dict[str, dict]): A dictionary mapping custom content file names
+                to their corresponding objects, that will be filtered.
 
         Returns:
             dict[str, dict]: A new custom content objects dict with filtered items.
         """
         file_name_to_content_name_map = {
-            key: value["name"] for key, value in custom_content_objects.items()
+            file_name: content_object["name"]
+            for file_name, content_object in custom_content_objects.items()
         }
         filtered_custom_content_objects: dict[str, dict] = {}
         original_count = len(custom_content_objects)
-        logger.debug(f"Filtering custom content data ({original_count})...")
+        logger.debug(f"Filtering {original_count} custom content items...")
 
         for file_name, content_item_data in custom_content_objects.items():
             content_item_name = file_name_to_content_name_map[file_name]
@@ -312,13 +304,12 @@ class Downloader:
                 # TODO: Check if we actually need this (why don't we allow downloading JS content?) and remove if not.
                 if (content_item_data["type"] in (FileType.INTEGRATION, FileType.SCRIPT) and
                         content_item_data.get("code_lang") in ("javascript", None)):
-                    logger.warning(f"Content item '{content_item_name}' is written in JavaScript which isn't supported,"
-                                   f" and will be skipped.")
+                    logger.warning(f"Skipping '{content_item_name}' - JavaScript content isn't supported.")
                     continue
 
                 filtered_custom_content_objects[file_name] = content_item_data
 
-        logger.info(f"Filtering process completed ({len(filtered_custom_content_objects)}/{original_count}).")
+        logger.info(f"Filtering process completed, {len(filtered_custom_content_objects)}/{original_count} items remain.")
         return filtered_custom_content_objects
 
     def create_uuid_to_name_mapping(self, custom_content_objects: dict[str, dict]) -> dict[str, str]:
@@ -332,11 +323,11 @@ class Downloader:
         Returns:
             dict[str, str]: A dictionary mapping UUID IDs to corresponding names of custom content.
         """
-        logger.info("Creating ID mapping for custom content...")
+        logger.debug("Creating ID mapping for custom content...")
         mapping: dict[str, str] = {}
         duplicate_ids: list[str] = []
 
-        for _, content_object in custom_content_objects.items():
+        for content_object in custom_content_objects.values():
             content_item_id = content_object["id"]
 
             if re.match(UUID_REGEX, content_item_id) and content_item_id not in duplicate_ids:
@@ -351,7 +342,7 @@ class Downloader:
                     )
                     duplicate_ids.append(mapping.pop(content_item_id))
 
-        logger.info("Custom content IDs mapping created successfully.")
+        logger.debug("Custom content IDs mapping created successfully.")
         return mapping
 
     def download_custom_content(self) -> dict[str, StringIO]:
@@ -387,6 +378,7 @@ class Downloader:
             else:
                 logger.error(f"Error while fetching custom content: {e}")
 
+            logger.debug(traceback.format_exc())
             raise HandledError from e
 
         logger.info("Custom content bundle fetched successfully.")
@@ -404,7 +396,7 @@ class Downloader:
                 file_data = create_stringio_object(tar.extractfile(file).read())
                 loaded_files[file_name] = file_data
 
-        logger.info("Custom content items fetched successfully.")
+        logger.debug("Custom content items loaded to memory successfully.")
         return loaded_files
 
     def replace_uuid_ids(self, custom_content_object: dict, uuid_mapping: dict[str, str]) -> bool:
@@ -419,8 +411,7 @@ class Downloader:
         Returns:
             bool: True if the object was updated, False otherwise.
         """
-        file = custom_content_object["file"]
-        content_item_file_str = file.getvalue()
+        content_item_file_str = custom_content_object["file"].getvalue()
 
         uuid_matches = re.findall(UUID_REGEX, content_item_file_str)
         # TODO: Check if looping over all dict keys (recursively) is more efficient than dumping to string and then search that using a RegEx.
@@ -494,7 +485,7 @@ class Downloader:
         Fetch system playbooks from server.
 
         Args:
-            content_items (list[str]): A list of system automation names to fetch.
+            content_items (list[str]): A list of system playbook names to fetch.
 
         Returns:
             list[dict]: A list of downloaded system playbooks represented as dictionaries.
@@ -568,7 +559,7 @@ class Downloader:
                 self.client, endpoint, req_type, body=req_body, response_type="object",
             )[0]
 
-            if self.system_item_type in ["Classifier", "Mapper"]:
+            if self.system_item_type in ("Classifier", "Mapper"):
                 if classifiers_data := api_response.get("classifiers"):
                     downloaded_items = classifiers_data
 
@@ -1282,7 +1273,7 @@ class Downloader:
             original_file (str): Path to the original file to merge into 'file_to_update'.
             is_yaml (bool): True if the file is a yml file, False if it's a json file.
         """
-        file_to_update = Path(file_to_update) if isinstance(file_to_update, str) else file_to_update
+        file_to_update = Path(file_to_update)
 
         pack_obj_data, _ = get_dict_from_file(original_file)
         fields = (

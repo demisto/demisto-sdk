@@ -17,6 +17,8 @@ from demisto_sdk.commands.content_graph.interface.neo4j.neo4j_graph import (
 from demisto_sdk.commands.format.format_constants import (
     SCHEMAS_PATH,
     SKIP_FORMATTING_DIRS,
+    SKIP_FORMATTING_FILES,
+    UNSKIP_FORMATTING_FILES,
 )
 from demisto_sdk.commands.format.update_classifier import (
     ClassifierJSONFormat,
@@ -175,7 +177,7 @@ def format_manager(
                 get_files_in_dir(
                     project_dir=i,
                     file_endings=supported_file_types,
-                    exclude_list=SKIP_FORMATTING_DIRS,
+                    exclude_list=SKIP_FORMATTING_DIRS + TESTS_AND_DOC_DIRECTORIES,
                 )
             )
 
@@ -212,14 +214,11 @@ def format_manager(
             file_path = str(Path(file))
             file_type = find_type(file_path, clear_cache=clear_cache)
 
-            current_excluded_files = excluded_files[:]
-            dirname = os.path.dirname(file_path)
-            if dirname.endswith("CommonServerPython"):
-                current_excluded_files.remove("CommonServerPython.py")
-            if os.path.basename(file_path) in current_excluded_files:
-                continue
-            if any(test_dir in str(dirname) for test_dir in TESTS_AND_DOC_DIRECTORIES):
-                continue
+            # Check if this is an unskippable file
+            if not any([file_path.endswith(unskippable_file) for unskippable_file in UNSKIP_FORMATTING_FILES]):
+                # If it is not an unskippable file, skip if needed
+                if os.path.basename(file_path) in SKIP_FORMATTING_FILES:
+                    continue
 
             if file_type and file_type.value not in UNFORMATTED_FILES:
                 file_type = file_type.value

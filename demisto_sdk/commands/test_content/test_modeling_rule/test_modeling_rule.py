@@ -623,7 +623,7 @@ def verify_event_id_does_not_exist_on_tenant(
     for rule in mr.rules:
         try:
             query = build_event_id_query(rule, test_data)
-            run_query(xsiam_client, query)
+            result = run_query(xsiam_client, query)
         except requests.exceptions.HTTPError:
             logger.error(
                 (
@@ -641,6 +641,13 @@ def verify_event_id_does_not_exist_on_tenant(
                 extra={"markup": True},
             )
             return
+        else:
+            if not result:
+                logger.info(
+                    "[green]The event ids does not exists on the tenant[/green]",
+                    extra={"markup": True},
+                )
+                return
     logger.error(
         ("[red]The event id already exists in the tenant[/red]"),
         extra={"markup": True},
@@ -896,23 +903,6 @@ def validate_modeling_rule(
             )
 
         if push:
-            if missing_event_data:
-                logger.warning(
-                    "[yellow]Event log test data is missing for the following ids:[/yellow]",
-                    extra={"markup": True},
-                )
-                for test_data_event_id in missing_event_data:
-                    logger.warning(
-                        f"[yellow] - {test_data_event_id}[/yellow]",
-                        extra={"markup": True},
-                    )
-                logger.warning(
-                    f"[yellow]Please complete the test data file at {mr_entity.testdata_path} "
-                    "with test event(s) data and expected outputs and then rerun,[/yellow]",
-                    extra={"markup": True},
-                )
-                printr(execd_cmd)
-                raise typer.Exit(1)
             verify_event_id_does_not_exist_on_tenant(xsiam_client, mr_entity, test_data)
             push_test_data_to_tenant(xsiam_client, mr_entity, test_data)
             check_dataset_exists(xsiam_client, test_data)

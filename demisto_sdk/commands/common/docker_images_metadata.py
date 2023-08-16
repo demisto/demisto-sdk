@@ -35,14 +35,17 @@ class DockerImagesMetadata(PydanticSingleton, BaseModel):
         logger.debug(
             f"loading the {DOCKER_IMAGES_METADATA_NAME} from {DOCKERFILES_INFO_REPO}"
         )
-        return cls.parse_obj(
-            get_remote_file_from_api(
+        dockerfiles_metadata = get_remote_file_from_api(
                 file_name,
                 tag=tag,
                 git_content_config=GitContentConfig(repo_name=DOCKERFILES_INFO_REPO),
                 encoding="utf-8-sig",
             )
-        )
+        logger.info(f'{dockerfiles_metadata=}')
+        if not dockerfiles_metadata:
+            raise ValueError(f"Could not retrieve the {DOCKERFILES_INFO_REPO} from {DOCKERFILES_INFO_REPO} repo")
+
+        return cls.parse_obj(dockerfiles_metadata)
 
     def get_docker_image_metadata_value(
         self, docker_image: str, docker_metadata_key: str

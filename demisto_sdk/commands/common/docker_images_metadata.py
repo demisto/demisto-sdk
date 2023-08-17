@@ -34,6 +34,10 @@ class DockerImagesMetadata(PydanticSingleton, BaseModel):
         """
         Get the docker_images_metadata.json from the dockerfiles-info repo and load it to a pydnatic object.
 
+        Args:
+            file_name (str): the file path for the docker_images_metadata.json
+            tag (str): branch/commit to get a specific docker_images_metadata.json
+
         """
         logger.debug(
             f"Trying to load the {DOCKER_IMAGES_METADATA_NAME} from {DOCKERFILES_INFO_REPO}"
@@ -57,6 +61,10 @@ class DockerImagesMetadata(PydanticSingleton, BaseModel):
     ) -> Optional[str]:
         """
         Get the content of the requested key in the metadata
+
+        Args:
+            docker_image (str): the docker image from the script/integration yml
+            docker_metadata_key (str): the key in the DockerImageTagMetadata class
         """
         try:
             # if we were not able to load the file

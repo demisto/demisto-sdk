@@ -104,9 +104,6 @@ def create(
     relationships. Then, the parsed content objects are mapped to
     a Repository model and uploaded to the graph database.
     """
-    import time
-
-    start_time = time.time()
     logging_setup(
         console_log_threshold=console_log_threshold,
         file_log_threshold=file_log_threshold,
@@ -119,7 +116,6 @@ def create(
             dependencies=not no_dependencies,
             output_path=output_path,
         )
-    logger.info(f"Creating the graph took {time.time() - start_time} seconds")
 
 
 def stop_content_graph() -> None:

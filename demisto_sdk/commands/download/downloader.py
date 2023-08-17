@@ -304,7 +304,7 @@ class Downloader:
                 # TODO: Check if we actually need this (why don't we allow downloading JS content?) and remove if not.
                 if (content_item_data["type"] in (FileType.INTEGRATION, FileType.SCRIPT) and
                         content_item_data.get("code_lang") in ("javascript", None)):
-                    logger.warning(f"Skipping '{content_item_name}' - JavaScript content isn't supported.")
+                    logger.warning(f"Skipping '{content_item_name}' as JavaScript content is not supported.")
                     continue
 
                 filtered_custom_content_objects[file_name] = content_item_data
@@ -616,7 +616,7 @@ class Downloader:
                 missing_field = False
                 for _field in ("id", "name", "entity", "type"):
                     if not custom_content_object.get(_field):
-                        logger.warning(f"Content item's {_field} could not be detected for '{file_name}'. Skipping...")
+                        logger.warning(f"{_field} could not be detected for '{file_name}' and it will be skipped.")
                         missing_field = True
                         break
 
@@ -775,7 +775,7 @@ class Downloader:
                         content_name, content_object = content_data
                         pack_structure[directory_name][content_name] = content_object
 
-        logger.info("Parsing of existing content items completed.")
+        logger.debug("Parsing of existing content items completed.")
         return dict(pack_structure)
 
     def build_pack_content_object(
@@ -804,7 +804,7 @@ class Downloader:
 
         if not metadata:
             logger.warning(
-                f"Could not find main metadata file for '{entity_instance_path}'. Skipping..."
+                f"Skipping '{entity_instance_path}' as its metadata file could not be found."
             )
             return None
 
@@ -813,7 +813,7 @@ class Downloader:
 
         # if main file doesn't exist/no entity instance path exist the content object won't be added to the pack content
         if not all((content_item_id, content_item_name, file_paths)):
-            logger.debug(f"Existing content item '{content_item_name}' could not be parsed. Skipping...")
+            logger.debug(f"Existing content item '{content_item_name}' could not be parsed.")
             return None
 
         content_item_files = []
@@ -954,7 +954,7 @@ class Downloader:
             file_entity = ENTITY_TYPE_TO_DIR.get(file_type)
 
         if not content_id:
-            logger.warning(f"Could not find content ID for '{file_name}'.")
+            logger.warning(f"Could not find the ID of '{file_name}'.")
 
         custom_content_object: dict = {
             "id": content_id,  # str | None
@@ -1048,14 +1048,14 @@ class Downloader:
         summary_log = ""
 
         if successful_downloads_count:
-            summary_log = f"Successful downloads: {successful_downloads_count}.\n"
+            summary_log = f"Successful downloads: {successful_downloads_count}\n"
 
         # Files that were skipped due to already existing in the output path.
         if existing_files_skipped_count:
-            summary_log += f"Skipped downloads: {existing_files_skipped_count}.\n"
+            summary_log += f"Skipped downloads: {existing_files_skipped_count}\n"
 
         if failed_downloads_count:
-            summary_log += f"Failed downloads: {failed_downloads_count}.\n"
+            summary_log += f"Failed downloads: {failed_downloads_count}\n"
 
         # If for there was nothing to attempt to download at all.
         # Can occur if files are skipped due to unexpected errors.
@@ -1098,7 +1098,7 @@ class Downloader:
         if content_item_exists:
             if not overwrite_existing:  # If file exists, and we don't want to overwrite it, skip it.
                 logger.debug(
-                    f"Content item '{content_item_name}' already exists in output pack. Skipping..."
+                    f"Content item '{content_item_name}' will be skipped as it already exists in output pack."
                 )
                 return False
 
@@ -1130,7 +1130,7 @@ class Downloader:
                 extracted_file_extension = extracted_file_path.suffix
 
                 # Get the file name to search for in the existing output pack
-                expected_filename: str = self.get_expected_filename(
+                expected_filename: str = self.get_split_item_expected_filename(
                     content_item_name=content_item_name,
                     file_extension=extracted_file_extension,
                 )
@@ -1213,7 +1213,7 @@ class Downloader:
         # If file exists, and we don't want to overwrite it, skip it.
         if content_item_exists and not overwrite_existing:
             logger.debug(
-                f"File '{content_item_name}' already exists in output pack. Skipping..."
+                f"File '{content_item_name}'  will be skipped as it already exists in output pack."
             )
             return False
 
@@ -1303,7 +1303,7 @@ class Downloader:
             write_dict(file_to_update, data=file_data, handler=json, indent=4)
 
 
-    def get_expected_filename(self, content_item_name: str, file_extension: str) -> str:
+    def get_split_item_expected_filename(self, content_item_name: str, file_extension: str) -> str:
         """
         Creates a file name to search for in the existing pack.
 

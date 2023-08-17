@@ -1,6 +1,6 @@
 # Changelog
 ## Unreleased
-* Fixed an issue in calculating content graph hash when running **graph create** and **graph update** commands.
+* Fixed an issue in calculating content graph hash when creating or updating it.
 * Fixed an issue where running **graph create** and **graph update** commands without arguments invoked `help` command.
 
 ## 1.19.1

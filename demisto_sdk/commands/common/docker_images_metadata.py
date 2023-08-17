@@ -65,7 +65,7 @@ class DockerImagesMetadata(PydanticSingleton, BaseModel):
             docker_image_metadata = (self.docker_images.get(docker_name) or {}).get(tag)
             return getattr(docker_image_metadata, docker_metadata_key)
         except (AttributeError, ValueError, TypeError) as err:
-            logger.info(
+            logger.debug(
                 f"Could not get {docker_metadata_key} for {docker_image=} because {err=} occurred"
             )
             return None
@@ -77,7 +77,7 @@ class DockerImagesMetadata(PydanticSingleton, BaseModel):
         if python_version := self.get_docker_image_metadata_value(
             docker_image, "python_version"
         ):
-            logger.info(
+            logger.debug(
                 f"successfully got {python_version=} for {docker_image=} from {DOCKER_IMAGES_METADATA_NAME}"
             )
             return Version(python_version)

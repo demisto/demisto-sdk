@@ -45,7 +45,9 @@ class DockerImagesMetadata(PydanticSingleton, BaseModel):
             encoding="utf-8-sig",
         )
         if not dockerfiles_metadata:
-            logger.error(f"Could not retrieve the {DOCKER_IMAGES_METADATA_NAME} from {DOCKERFILES_INFO_REPO} repo")
+            logger.error(
+                f"Could not retrieve the {DOCKER_IMAGES_METADATA_NAME} from {DOCKERFILES_INFO_REPO} repo"
+            )
             return cls.parse_obj({"docker_images": {}})
 
         return cls.parse_obj(dockerfiles_metadata)

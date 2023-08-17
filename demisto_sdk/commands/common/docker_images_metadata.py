@@ -37,9 +37,7 @@ class DockerImagesMetadata(PydanticSingleton, BaseModel):
         dockerfiles_metadata = get_remote_file_from_api(
             file_name,
             tag=tag,
-            git_content_config=GitContentConfig(
-                repo_name=DOCKERFILES_INFO_REPO, repo_hostname=GitContentConfig.GITHUB
-            ),
+            git_content_config=GitContentConfig(repo_name=DOCKERFILES_INFO_REPO),
             encoding="utf-8-sig",
         )
         if not dockerfiles_metadata:

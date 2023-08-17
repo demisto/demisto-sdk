@@ -31,8 +31,12 @@ class DockerImagesMetadata(PydanticSingleton, BaseModel):
     def from_github(
         cls, file_name: str = DOCKER_IMAGES_METADATA_NAME, tag: str = "master"
     ):
+        """
+        Get the docker_images_metadata.json from the dockerfiles-info repo and load it to a pydnatic object.
+
+        """
         logger.debug(
-            f"loading the {DOCKER_IMAGES_METADATA_NAME} from {DOCKERFILES_INFO_REPO}"
+            f"Trying to load the {DOCKER_IMAGES_METADATA_NAME} from {DOCKERFILES_INFO_REPO}"
         )
         dockerfiles_metadata = get_remote_file_from_api(
             file_name,
@@ -41,9 +45,8 @@ class DockerImagesMetadata(PydanticSingleton, BaseModel):
             encoding="utf-8-sig",
         )
         if not dockerfiles_metadata:
-            raise ValueError(
-                f"Could not retrieve the {DOCKER_IMAGES_METADATA_NAME} from {DOCKERFILES_INFO_REPO} repo"
-            )
+            logger.error(f"Could not retrieve the {DOCKER_IMAGES_METADATA_NAME} from {DOCKERFILES_INFO_REPO} repo")
+            return cls.parse_obj({"docker_images": {}})
 
         return cls.parse_obj(dockerfiles_metadata)
 
@@ -71,7 +74,7 @@ class DockerImagesMetadata(PydanticSingleton, BaseModel):
         if python_version := self.get_docker_image_metadata_value(
             docker_image, "python_version"
         ):
-            logger.info(
+            logger.debug(
                 f"successfully got {python_version=} for {docker_image=} from {DOCKER_IMAGES_METADATA_NAME}"
             )
             return Version(python_version)

@@ -29,6 +29,7 @@ def test_init_global_docker_client():
         ("alpine-310", "3.10.11", "3.10.11"),
         ("demisto/python3:3.9.8.24399", "", "3.9.8"),
         ("demisto/python:2.7.18.24398", "", "2.7.18"),
+        ("demisto/pan-os-python:1.0.0.68955", "3.10.12", "3.10.12"),
     ],
 )
 def test_get_python_version_from_image(image: str, output: str, expected: str, mocker):

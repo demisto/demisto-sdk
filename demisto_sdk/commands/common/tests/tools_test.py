@@ -10,7 +10,7 @@ import git
 import pytest
 import requests
 
-from demisto_sdk.commands.common import tools
+from demisto_sdk.commands.common import tools, tools_core
 from demisto_sdk.commands.common.constants import (
     DEFAULT_CONTENT_ITEM_TO_VERSION,
     DOC_FILES_DIR,
@@ -94,7 +94,6 @@ from demisto_sdk.commands.common.tools import (
     search_and_delete_from_conf,
     server_version_compare,
     str2bool,
-    string_to_bool,
     to_kebab_case,
 )
 from demisto_sdk.tests.constants_test import (
@@ -625,7 +624,7 @@ class TestGetRemoteFileLocally:
         example_repo.git.checkout("-b", self.main_branch)
 
     def test_get_file_from_master_when_in_private_repo(self, mocker):
-        mocker.patch.object(tools, "is_external_repository", return_value=True)
+        mocker.patch.object(tools_core, "is_external_repository", return_value=True)
 
         class Response:
             ok = False
@@ -2526,27 +2525,6 @@ def test_get_display_name(data, answer, tmpdir):
     assert get_display_name(file.path) == answer
 
 
-@pytest.mark.parametrize("value", ("true", "True", 1, "1", "yes", "y"))
-def test_string_to_bool_true(value: str):
-    assert string_to_bool(value)
-
-
-@pytest.mark.parametrize("value", ("", None))
-def test_string_to_bool_default_true(value: str):
-    assert string_to_bool(value, True)
-
-
-@pytest.mark.parametrize("value", ("false", "False", 0, "0", "n", "no"))
-def test_string_to_bool_false(value: str):
-    assert not string_to_bool(value)
-
-
-@pytest.mark.parametrize("value", ("", " ", "כן", None, "None"))
-def test_string_to_bool_error(value: str):
-    with pytest.raises(ValueError):
-        string_to_bool(value)
-
-
 @pytest.mark.parametrize(
     "path,expected_type",
     (
@@ -3027,48 +3005,6 @@ def test_sha1_dir():
         dest = Path(temp_dir, "dest")
         shutil.copytree(path_str, dest)
         assert tools.sha1_dir(dest) == expected_hash
-
-
-@pytest.mark.parametrize(
-    "input_path,expected_output",
-    [
-        (
-            Path("root/Packs/MyPack/Integrations/MyIntegration/MyIntegration.yml"),
-            "root/Packs/MyPack",
-        ),
-        (Path("Packs/MyPack1/Scripts/MyScript/MyScript.py"), "Packs/MyPack1"),
-        (Path("Packs/MyPack2/Scripts/MyScript"), "Packs/MyPack2"),
-        (Path("Packs/MyPack3/Scripts"), "Packs/MyPack3"),
-        (Path("Packs/MyPack4"), "Packs/MyPack4"),
-    ],
-)
-def test_find_pack_folder(input_path, expected_output):
-    output = tools.find_pack_folder(input_path)
-    assert expected_output == str(output)
-
-
-@pytest.mark.parametrize(
-    "input_path, expected_output",
-    [
-        (
-            Path(
-                "/User/username/content/Packs/MyPack/Integrations/MyIntegration/MyIntegration.yml"
-            ),
-            Path("/User/username/content"),
-        ),
-        (Path("/User/username/content/Packs"), Path("/User/username/content")),
-    ],
-)
-def test_get_content_path(input_path, expected_output):
-    """
-    Given:
-        - A path to a file or directory in the content repo
-    When:
-        - Running get_content_path
-    Then:
-        Validate that the given path is correct
-    """
-    assert tools.get_content_path(input_path) == expected_output
 
 
 @pytest.mark.parametrize(

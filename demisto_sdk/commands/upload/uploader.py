@@ -24,8 +24,8 @@ from demisto_sdk.commands.common.tools import (
     find_type,
     get_demisto_version,
     get_file,
-    string_to_bool,
 )
+from demisto_sdk.commands.common.tools_core import string_to_bool
 from demisto_sdk.commands.content_graph.objects.base_content import (
     BaseContent,
 )

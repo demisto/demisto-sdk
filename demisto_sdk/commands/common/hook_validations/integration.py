@@ -63,6 +63,9 @@ from demisto_sdk.commands.common.tools import (
     get_pack_name,
     is_iron_bank_pack,
     server_version_compare,
+)
+from demisto_sdk.commands.common.tools_core import (
+    is_external_repository,
     string_to_bool,
 )
 
@@ -473,7 +476,7 @@ class IntegrationValidator(ContentEntityValidator):
     @error_codes("IN104")
     def is_valid_category(self) -> bool:
         """Check that the integration category is in the schema."""
-        if tools.is_external_repository():
+        if is_external_repository():
             return True
         category = self.current_file.get("category", None)
         approved_list = tools.get_current_categories()

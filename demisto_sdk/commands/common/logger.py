@@ -6,7 +6,7 @@ from logging.handlers import RotatingFileHandler
 from pathlib import Path
 
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
-from demisto_sdk.commands.common.tools import string_to_bool
+from demisto_sdk.commands.common.tools_core import string_to_bool
 
 logger: logging.Logger = logging.getLogger("demisto-sdk")
 
@@ -291,12 +291,9 @@ def logging_setup(
         console_log_threshold if console_log_threshold else logging.INFO
     )
 
-    if custom_log_path := os.getenv("DEMISTO_SDK_LOG_FILE_PATH"):
-        current_log_file_path = Path(custom_log_path)
-    else:
-        current_log_file_path = log_file_path or LOG_FILE_PATH
-        if Path(current_log_file_path).is_dir():
-            current_log_file_path = current_log_file_path / LOG_FILE_NAME
+    current_log_file_path = log_file_path or LOG_FILE_PATH
+    if Path(current_log_file_path).is_dir():
+        current_log_file_path = current_log_file_path / LOG_FILE_NAME
     file_handler = RotatingFileHandler(
         filename=current_log_file_path,
         mode="a",

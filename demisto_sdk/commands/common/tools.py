@@ -1,7 +1,5 @@
-import contextlib
 import glob
 import io
-import logging
 import os
 import re
 import shlex
@@ -117,11 +115,15 @@ from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
 from demisto_sdk.commands.common.handlers import YAML_Handler
+from demisto_sdk.commands.common.logger import logger
+from demisto_sdk.commands.common.tools_core import (
+    get_content_path,
+    is_external_repository,
+    string_to_bool,
+)
 
 if TYPE_CHECKING:
     from demisto_sdk.commands.content_graph.interface import ContentGraphInterface
-
-logger = logging.getLogger("demisto-sdk")
 
 yaml_safe_load = YAML_Handler(typ="safe")
 
@@ -1108,18 +1110,6 @@ def old_get_latest_release_notes_text(rn_path):
     return new_rn if new_rn else None
 
 
-def find_pack_folder(path: Path) -> Path:
-    """
-    Finds the pack folder.
-    """
-
-    if "Packs" not in path.parts:
-        raise ValueError(f"Could not find a pack for {str(path)}")
-    if path.parent.name == "Packs":
-        return path
-    return path.parents[len(path.parts) - (path.parts.index("Packs")) - 3]
-
-
 def get_release_notes_file_path(file_path):
     """
     Accepts file path which is alleged to contain release notes. Validates that the naming convention
@@ -1996,19 +1986,6 @@ def get_common_server_dir_pwsh(env_dir):
     return _get_common_server_dir_general(env_dir, "CommonServerPowerShell")
 
 
-def is_external_repository() -> bool:
-    """
-    Returns True if script executed from private repository
-
-    """
-    try:
-        git_repo = git.Repo(os.getcwd(), search_parent_directories=True)
-        private_settings_path = os.path.join(git_repo.working_dir, ".private-repo-settings")  # type: ignore
-        return os.path.exists(private_settings_path)
-    except git.InvalidGitRepositoryError:
-        return True
-
-
 def get_content_id_set() -> dict:
     """Getting the ID Set from official content's bucket"""
     return requests.get(OFFICIAL_CONTENT_ID_SET_PATH).json()
@@ -2041,45 +2018,6 @@ def get_latest_upload_flow_commit_hash() -> str:
     if not last_commit:
         raise ValueError("The latest commit hash was not found in the index.json file")
     return last_commit
-
-
-def get_content_path(relative_path: Optional[Path] = None) -> Path:
-    """Get abs content path, from any CWD
-    Args:
-        Optional[Path]: Path to file or folder in content repo. If not provided, the environment variable or cwd will be used.
-    Returns:
-        str: Absolute content path
-    """
-    # ValueError can be suppressed since as default, the environment variable or git.Repo can be used to find the content path.
-    with contextlib.suppress(ValueError):
-        if relative_path:
-            return (
-                relative_path.absolute().parent
-                if relative_path.name == "Packs"
-                else find_pack_folder(relative_path.absolute()).parent.parent
-            )
-    try:
-        if content_path := os.getenv("DEMISTO_SDK_CONTENT_PATH"):
-            git_repo = git.Repo(content_path)
-            logger.debug(f"Using content path: {content_path}")
-        else:
-            git_repo = git.Repo(Path.cwd(), search_parent_directories=True)
-
-        remote_url = git_repo.remote().urls.__next__()
-        is_fork_repo = "content" in remote_url
-        is_external_repo = is_external_repository()
-
-        if not is_fork_repo and not is_external_repo:
-            raise git.InvalidGitRepositoryError
-        if not git_repo.working_dir:
-            return Path.cwd()
-        return Path(git_repo.working_dir)
-    except (git.InvalidGitRepositoryError, git.NoSuchPathError):
-        if not os.getenv("DEMISTO_SDK_IGNORE_CONTENT_WARNING"):
-            logger.info(
-                "[yellow]Please run demisto-sdk in content repository![/yellow]"
-            )
-    return Path(".")
 
 
 def run_command_os(
@@ -3649,33 +3587,6 @@ def normalize_field_name(field: str) -> str:
     return field.replace("incident_", "").replace("indicator_", "")
 
 
-STRING_TO_BOOL_MAP = {
-    "y": True,
-    "1": True,
-    "yes": True,
-    "true": True,
-    "n": False,
-    "0": False,
-    "no": False,
-    "false": False,
-    "t": True,
-    "f": False,
-}
-
-
-def string_to_bool(
-    input_: Any,
-    default_when_empty: Optional[bool] = None,
-) -> bool:
-    try:
-        return STRING_TO_BOOL_MAP[str(input_).lower()]
-    except (KeyError, TypeError):
-        if input_ in ("", None) and default_when_empty is not None:
-            return default_when_empty
-
-    raise ValueError(f"cannot convert {input_} to bool")
-
-
 def field_to_cli_name(field_name: str) -> str:
     """
     Returns the CLI name of an incident/indicator field by removing non letters/numbers
@@ -3844,6 +3755,22 @@ def parse_multiple_path_inputs(
         return result
 
     raise ValueError(f"Cannot parse paths from {input_path}")
+
+
+def get_config_param_kwarg_env(kwargs_value, env_param_name, default_value) -> str:
+    if kwargs_value:
+        return kwargs_value
+    if env_value := os.getenv(env_param_name):
+        return env_value
+    return default_value
+
+
+def get_config_param_kwargs_env(
+    kwargs, kwarg_param_name, env_param_name, default_value
+) -> str:
+    return get_config_param_kwarg_env(
+        kwargs.get(kwarg_param_name), env_param_name, default_value
+    )
 
 
 @lru_cache

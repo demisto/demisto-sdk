@@ -58,11 +58,14 @@ from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
-    find_pack_folder,
     get_common_server_path,
     get_file,
     get_pack_name,
     get_yaml,
+)
+from demisto_sdk.commands.common.tools_core import (
+    find_pack_folder,
+    is_external_repository,
     string_to_bool,
 )
 from demisto_sdk.commands.secrets.secrets import SecretsValidator
@@ -481,7 +484,7 @@ class Initiator:
 
         # if in an external repo check for the existence of Packs directory
         # if it does not exist create it
-        elif tools.is_external_repository():
+        elif is_external_repository():
             if not os.path.isdir("Packs"):
                 logger.info("Creating 'Packs' directory")
                 os.mkdir("Packs")

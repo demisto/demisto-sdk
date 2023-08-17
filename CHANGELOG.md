@@ -8,6 +8,8 @@
 * Updated the **generate-docs** command to use the content graph instead of the id_set file.
 * Added the '--all' input option for the **prepare-content** command, to support running on all content packs.
 * Updated the '-i' input option of the **prepare-content** command to support multiple inputs as a comma-separated list.
+* Added support to override the console log level with the **DEMISTO_SDK_CONSOLE_LOG_THRESHOLD** environment variable.
+* Added support to override the log file threshold level with the **DEMISTO_SDK_FILE_LOG_THRESHOLD** environment variable.
 
 ## 1.19.0
 * Added the **graph** command group. The **create-content-graph** and **update-content-graph** commands were migrated to this command group, and named **graph create** and **graph update** respectively.

@@ -28,12 +28,13 @@ from demisto_sdk.commands.common.hook_validations.readme import ReadMeValidator
 from demisto_sdk.commands.common.logger import handle_deprecated_args, logging_setup
 from demisto_sdk.commands.common.tools import (
     find_type,
+    get_config_param_kwargs_env,
     get_last_remote_release_version,
     get_release_note_entries,
-    is_external_repository,
     is_sdk_defined_working_offline,
     parse_marketplace_kwargs,
 )
+from demisto_sdk.commands.common.tools_core import is_external_repository
 from demisto_sdk.commands.content_graph.commands.create import create
 from demisto_sdk.commands.content_graph.commands.get_relationships import (
     get_relationships,
@@ -152,9 +153,24 @@ def logging_setup_decorator(func, *args, **kwargs):
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
         logging_setup(
-            console_log_threshold=kwargs.get("console_log_threshold") or logging.INFO,
-            file_log_threshold=kwargs.get("file_log_threshold") or logging.DEBUG,
-            log_file_path=kwargs.get("log_file_path") or None,
+            console_log_threshold=get_config_param_kwargs_env(
+                kwargs,
+                "console_log_threshold",
+                "DEMISTO_SDK_CONSOLE_LOG_THRESHOLD",
+                logging.INFO,
+            ),
+            file_log_threshold=get_config_param_kwargs_env(
+                kwargs,
+                "file_log_threshold",
+                "DEMISTO_SDK_FILE_LOG_THRESHOLD",
+                logging.DEBUG,
+            ),
+            log_file_path=get_config_param_kwargs_env(
+                kwargs,
+                "log_file_path",
+                "DEMISTO_SDK_LOG_FILE_PATH",
+                None,
+            ),
         )
 
         handle_deprecated_args(get_context_arg(args).args)
@@ -189,9 +205,24 @@ def logging_setup_decorator(func, *args, **kwargs):
 @click.pass_context
 def main(ctx, config, version, release_notes, **kwargs):
     logging_setup(
-        console_log_threshold=kwargs.get("console_log_threshold", logging.INFO),
-        file_log_threshold=kwargs.get("file_log_threshold", logging.DEBUG),
-        log_file_path=kwargs.get("log_file_path"),
+        console_log_threshold=get_config_param_kwargs_env(
+            kwargs,
+            "console_log_threshold",
+            "DEMISTO_SDK_CONSOLE_LOG_THRESHOLD",
+            logging.INFO,
+        ),
+        file_log_threshold=get_config_param_kwargs_env(
+            kwargs,
+            "file_log_threshold",
+            "DEMISTO_SDK_FILE_LOG_THRESHOLD",
+            logging.DEBUG,
+        ),
+        log_file_path=get_config_param_kwargs_env(
+            kwargs,
+            "log_file_path",
+            "DEMISTO_SDK_LOG_FILE_PATH",
+            None,
+        ),
     )
     global logger
     logger = logging.getLogger("demisto-sdk")
@@ -1176,9 +1207,24 @@ def lint(ctx, **kwargs):
 @click.pass_context
 def coverage_analyze(ctx, **kwargs):
     logger = logging_setup(
-        console_log_threshold=kwargs.get("console_log_threshold") or logging.INFO,
-        file_log_threshold=kwargs.get("file_log_threshold") or logging.DEBUG,
-        log_file_path=kwargs.get("log_file_path") or None,
+        console_log_threshold=get_config_param_kwargs_env(
+            kwargs,
+            "console_log_threshold",
+            "DEMISTO_SDK_CONSOLE_LOG_THRESHOLD",
+            logging.INFO,
+        ),
+        file_log_threshold=get_config_param_kwargs_env(
+            kwargs,
+            "file_log_threshold",
+            "DEMISTO_SDK_FILE_LOG_THRESHOLD",
+            logging.DEBUG,
+        ),
+        log_file_path=get_config_param_kwargs_env(
+            kwargs,
+            "log_file_path",
+            "DEMISTO_SDK_LOG_FILE_PATH",
+            None,
+        ),
     )
     from demisto_sdk.commands.coverage_analyze.coverage_report import CoverageReport
 
@@ -2589,9 +2635,24 @@ def postman_codegen(
 ):
     """Generates a Cortex XSOAR integration given a Postman collection 2.1 JSON file."""
     logger = logging_setup(
-        console_log_threshold=kwargs.get("console_log_threshold") or logging.INFO,
-        file_log_threshold=kwargs.get("file_log_threshold") or logging.DEBUG,
-        log_file_path=kwargs.get("log_file_path") or None,
+        console_log_threshold=get_config_param_kwargs_env(
+            kwargs,
+            "console_log_threshold",
+            "DEMISTO_SDK_CONSOLE_LOG_THRESHOLD",
+            logging.INFO,
+        ),
+        file_log_threshold=get_config_param_kwargs_env(
+            kwargs,
+            "file_log_threshold",
+            "DEMISTO_SDK_FILE_LOG_THRESHOLD",
+            logging.DEBUG,
+        ),
+        log_file_path=get_config_param_kwargs_env(
+            kwargs,
+            "log_file_path",
+            "DEMISTO_SDK_LOG_FILE_PATH",
+            None,
+        ),
     )
     from demisto_sdk.commands.postman_codegen.postman_codegen import (
         postman_to_autogen_configuration,

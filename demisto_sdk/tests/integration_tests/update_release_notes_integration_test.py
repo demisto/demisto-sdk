@@ -88,8 +88,7 @@ def test_update_release_notes_new_integration(demisto_client, mocker):
     )
     mocker.patch.object(UpdateRN, "get_master_version", return_value="1.0.0")
 
-    if os.path.exists(rn_path):
-        os.remove(rn_path)
+    Path(rn_path).unlink(missing_ok=True)
     result = runner.invoke(
         main, [UPDATE_RN_COMMAND, "-i", join("Packs", "FeedAzureValid")]
     )
@@ -160,8 +159,7 @@ def test_update_release_notes_modified_integration(demisto_client, mocker):
     )
     mocker.patch.object(UpdateRN, "get_master_version", return_value="1.0.0")
 
-    if os.path.exists(rn_path):
-        os.remove(rn_path)
+    Path(rn_path).unlink(missing_ok=True)
 
     result = runner.invoke(
         main, [UPDATE_RN_COMMAND, "-i", join("Packs", "FeedAzureValid")]
@@ -226,8 +224,7 @@ def test_update_release_notes_incident_field(demisto_client, mocker):
     )
     mocker.patch.object(UpdateRN, "get_master_version", return_value="1.0.0")
 
-    if os.path.exists(rn_path):
-        os.remove(rn_path)
+    Path(rn_path).unlink(missing_ok=True)
 
     result = runner.invoke(
         main, [UPDATE_RN_COMMAND, "-i", join("Packs", "FeedAzureValid")]
@@ -291,8 +288,7 @@ def test_update_release_notes_unified_yml_integration(demisto_client, mocker):
     )
     mocker.patch.object(UpdateRN, "get_master_version", return_value="1.0.0")
 
-    if os.path.exists(rn_path):
-        os.remove(rn_path)
+    Path(rn_path).unlink(missing_ok=True)
 
     result = runner.invoke(main, [UPDATE_RN_COMMAND, "-i", join("Packs", "VMware")])
     assert result.exit_code == 0
@@ -432,7 +428,7 @@ def test_update_release_notes_existing(demisto_client, mocker):
 
     with open(rn_path) as f:
         rn = f.read()
-    os.remove(rn_path)
+    Path(rn_path).unlink()
     assert expected_rn == rn
 
 
@@ -831,8 +827,7 @@ def test_force_update_release(demisto_client, mocker, repo):
     logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
 
     rn_path = join(THINKCANARY_RN_FOLDER, "1_0_1.md")
-    if os.path.exists(rn_path):
-        os.remove(rn_path)
+    Path(rn_path).unlink(missing_ok=True)
     mocker.patch.object(UpdateRN, "is_bump_required", return_value=True)
     mocker.patch.object(
         ValidateManager,

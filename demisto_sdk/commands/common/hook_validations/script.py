@@ -23,6 +23,7 @@ from demisto_sdk.commands.common.tools import (
     get_pack_name,
     is_string_ends_with_url,
     server_version_compare,
+    strip_description,
 )
 
 
@@ -543,9 +544,7 @@ class ScriptValidator(ContentEntityValidator):
             line_with_missing_dot = super().is_line_ends_with_dot(
                 self.current_file, "args"
             )
-            stripped_comment = (
-                self.current_file.get("comment", "").strip('"').strip("'")
-            )
+            stripped_comment = strip_description(self.current_file.get("comment", ""))
             if not stripped_comment.endswith(".") and not is_string_ends_with_url(
                 stripped_comment
             ):

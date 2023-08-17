@@ -57,12 +57,15 @@ class DockerImagesMetadata(PydanticSingleton, BaseModel):
         Get the content of the requested key in the metadata
         """
         try:
+            # if we were not able to load the file
+            if not self.docker_images:
+                return None
             match = re.match(DOCKER_IMAGE_REGEX, docker_image)
             docker_name, tag = match.group(1), match.group(2)  # type: ignore[union-attr]
             docker_image_metadata = (self.docker_images.get(docker_name) or {}).get(tag)
             return getattr(docker_image_metadata, docker_metadata_key)
         except (AttributeError, ValueError, TypeError) as err:
-            logger.debug(
+            logger.info(
                 f"Could not get {docker_metadata_key} for {docker_image=} because {err=} occurred"
             )
             return None
@@ -74,7 +77,7 @@ class DockerImagesMetadata(PydanticSingleton, BaseModel):
         if python_version := self.get_docker_image_metadata_value(
             docker_image, "python_version"
         ):
-            logger.debug(
+            logger.info(
                 f"successfully got {python_version=} for {docker_image=} from {DOCKER_IMAGES_METADATA_NAME}"
             )
             return Version(python_version)

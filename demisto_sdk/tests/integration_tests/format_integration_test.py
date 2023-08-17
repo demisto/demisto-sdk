@@ -1,6 +1,6 @@
 import logging
 import os
-from pathlib import PosixPath
+from pathlib import Path, PosixPath
 from typing import List
 
 import pytest
@@ -1970,12 +1970,11 @@ def test_verify_deletion_from_conf_pack_format_with_deprecate_flag(
     pack_path = pack.path
     repo_path = repo.path
     # We don't need to format empty readme files
-    if os.path.exists(
-        f"{repo_path}/Packs/TestPack/Integrations/TestIntegration/README.md"
-    ):
-        os.remove(f"{repo_path}/Packs/TestPack/Integrations/TestIntegration/README.md")
-    if os.path.exists(f"{repo_path}/Packs/TestPack/README.md"):
-        os.remove(f"{repo_path}/Packs/TestPack/README.md")
+    Path(f"{repo_path}/Packs/TestPack/Integrations/TestIntegration/README.md").unlink(
+        missing_ok=True
+    )
+
+    Path(f"{repo_path}/Packs/TestPack/README.md").unlink(missing_ok=True)
 
     # Prepare conf
     test_conf_data = {
@@ -2037,10 +2036,10 @@ def test_verify_deletion_from_conf_script_format_with_deprecate_flag(
     repo_path = repo.path
 
     # We don't need to format empty readme files
-    if os.path.exists(f"{repo_path}/Packs/TestPack/Scripts/TestScript/README.md"):
-        os.remove(f"{repo_path}/Packs/TestPack/Scripts/TestScript/README.md")
-    if os.path.exists(f"{repo_path}/Packs/TestPack/README.md"):
-        os.remove(f"{repo_path}/Packs/TestPack/README.md")
+    Path(f"{repo_path}/Packs/TestPack/Scripts/TestScript/README.md").unlink(
+        missing_ok=True
+    )
+    Path(f"{repo_path}/Packs/TestPack/README.md").unlink(missing_ok=True)
 
     # Prepare conf
     test_conf_data = {

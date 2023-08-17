@@ -1,7 +1,7 @@
 import logging
-import os
 from contextlib import contextmanager
 from datetime import datetime
+from pathlib import Path
 from shutil import rmtree
 
 import pytest
@@ -318,7 +318,7 @@ def test_load_user_metadata_no_metadata_file(repo, monkeypatch, caplog):
             "vendorName": "vendorName",
         }
     )
-    os.remove(pack_1.pack_metadata.path)
+    Path(pack_1.pack_metadata.path).unlink()
 
     content_object_pack = Pack(pack_1.path)
     pack_1_metadata = content_object_pack.metadata

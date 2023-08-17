@@ -1,5 +1,7 @@
 # Changelog
 ## Unreleased
+* Fixed an issue in calculating content graph hash when running **graph create** and **graph update** commands.
+* Fixed an issue where running **graph create** and **graph update** commands without arguments invoked `help` command.
 
 ## 1.19.1
 * Fixed an issue where **unify** failed on integrations using an API a module, when not called from the content root.

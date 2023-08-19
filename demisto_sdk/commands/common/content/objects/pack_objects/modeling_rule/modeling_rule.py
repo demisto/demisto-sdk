@@ -228,8 +228,7 @@ class ModelingRule(YAMLContentUnifiedObject):
                 else:
                     rules_text = self.get("rules", "")
                 matches = self.MODEL_RULE_REGEX.finditer(rules_text)
-                for match in matches:
-                    _rules.append(SingleModelingRule(match.group()))
+                _rules.extend(SingleModelingRule(match.group()) for match in matches)
                 self.rules = _rules
             except ValueError as ve:
                 rule_initialization_errs.append(ve)

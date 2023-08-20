@@ -1969,17 +1969,32 @@ class ValidateManager:
 
         return is_valid
 
+    def get_old_file_path(self, file_path):
+        """
+        Extract the old file path from the given file
+        Args:
+            file_path: the path to extract the old file path from.
+        """
+        if isinstance(file_path, tuple):
+            old_file_path = file_path[0]
+            file_path = file_path[1]
+
+        else:
+            old_file_path = file_path
+
+        return old_file_path, file_path
+
     def get_all_files_edited_in_pack_ignore(self, modified_files):
+        """
+        Extract all the files the file paths of files that there pack-ignore section was ignored somehow.
+        Args:
+            modified_files: The list of modified files.
+        """
         all_files = self.git_util.get_all_files()
         all_files_edited_in_pack_ignore = set()
         for file_path in modified_files:
             # handle renamed files
-            if isinstance(file_path, tuple):
-                old_file_path = file_path[0]
-                file_path = file_path[1]
-
-            else:
-                old_file_path = file_path
+            old_file_path, file_path = self.get_old_file_path(file_path)
             if not file_path.endswith(".pack-ignore"):
                 continue
             old_file_content = get_remote_file(old_file_path, tag="master")
@@ -2024,12 +2039,7 @@ class ValidateManager:
         # modified_files = modified_files.union(all_files_edited_in_pack_ignore)
         for file_path in modified_files.union(all_files_edited_in_pack_ignore):
             # handle renamed files
-            if isinstance(file_path, tuple):
-                old_file_path = file_path[0]
-                file_path = file_path[1]
-
-            else:
-                old_file_path = None
+            old_file_path, file_path = self.get_old_file_path(file_path)
 
             pack_name = get_pack_name(file_path)
             valid_files.add(

@@ -1,4 +1,3 @@
-import os
 import xml.etree.ElementTree as ET
 from pathlib import Path
 from typing import List, Optional, Set
@@ -33,7 +32,7 @@ class Neo4jImportHandler:
 
     def clean_import_dir(self) -> None:
         for file in self.import_path.iterdir():
-            os.remove(file)
+            Path(file).unlink()
 
     def get_graphml_filenames(self) -> List[str]:
         return [

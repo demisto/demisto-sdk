@@ -14,7 +14,7 @@ class PydanticSingleton:
     @abstractmethod
     def get_instance_from(cls, *args, **kwargs):
         """
-        Initialize any Pydantic object with a class method, Each pydantic singleton
-        should implement this abstract method
+        Pydantic objects should be initialized with class methods and not from the class constructor.
+        Each Singleton that is based on pydantic should implement this abstract method.
         """
         pass

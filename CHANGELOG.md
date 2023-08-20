@@ -1,6 +1,6 @@
 # Changelog
 ## Unreleased
-* The graph will now include the **python_version** field that each script/integration uses.
+* The content graph will now include the **python_version** field that each script/integration uses.
 
 ## 1.19.1
 * Fixed an issue where **unify** failed on integrations using an API a module, when not called from the content root.

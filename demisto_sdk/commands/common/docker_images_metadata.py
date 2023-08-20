@@ -1,8 +1,9 @@
 import re
+from enum import Enum
 from typing import Dict, Optional
 
 from packaging.version import Version
-from pydantic import BaseModel
+from pydantic import BaseModel, validator
 
 from demisto_sdk.commands.common.constants import (
     DOCKER_IMAGE_REGEX,
@@ -23,12 +24,15 @@ class DockerImageTagMetadata(BaseModel):
 class DockerImagesMetadata(PydanticSingleton, BaseModel):
     docker_images: Dict[str, Dict[str, DockerImageTagMetadata]]
 
-    @classmethod
-    def get_instance_from(cls, *args, **kwargs):
-        return cls.from_github(*args, **kwargs)
+    class MetadataValues(str, Enum):
+        PYTHON_VERSION = "python_version"
 
     @classmethod
-    def from_github(
+    def get_instance_from(cls, *args, **kwargs):
+        return cls.__from_github(*args, **kwargs)
+
+    @classmethod
+    def __from_github(
         cls, file_name: str = DOCKER_IMAGES_METADATA_NAME, tag: str = "master"
     ):
         """
@@ -52,11 +56,11 @@ class DockerImagesMetadata(PydanticSingleton, BaseModel):
             logger.error(
                 f"Could not retrieve the {DOCKER_IMAGES_METADATA_NAME} from {DOCKERFILES_INFO_REPO} repo"
             )
-            return cls.parse_obj({"docker_images": {}})
+            dockerfiles_metadata = {"docker_images": {}}
 
         return cls.parse_obj(dockerfiles_metadata)
 
-    def get_docker_image_metadata_value(
+    def __get_metadata_value(
         self, docker_image: str, docker_metadata_key: str
     ) -> Optional[str]:
         """
@@ -84,8 +88,8 @@ class DockerImagesMetadata(PydanticSingleton, BaseModel):
         """
         Get the python version of a docker image.
         """
-        if python_version := self.get_docker_image_metadata_value(
-            docker_image, "python_version"
+        if python_version := self.__get_metadata_value(
+            docker_image, self.MetadataValues.PYTHON_VERSION
         ):
             logger.debug(
                 f"successfully got {python_version=} for {docker_image=} from {DOCKER_IMAGES_METADATA_NAME}"

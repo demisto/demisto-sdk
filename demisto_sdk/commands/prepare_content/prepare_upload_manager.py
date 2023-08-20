@@ -36,7 +36,7 @@ class PrepareUploadManager:
             raise ValueError(
                 f"Unsupported input for {input}. Please provide a path to a content item or a pack."
             )
-        content_item.get_python_version()
+
         if graph:
             # enrich the content item with the graph
             with ContentGraphInterface() as interface:

@@ -3,10 +3,9 @@ from enum import Enum
 from typing import Dict, Optional
 
 from packaging.version import Version
-from pydantic import BaseModel, validator
+from pydantic import BaseModel
 
 from demisto_sdk.commands.common.constants import (
-    DOCKER_IMAGE_REGEX,
     DOCKERFILES_INFO_REPO,
 )
 from demisto_sdk.commands.common.git_content_config import GitContentConfig
@@ -15,6 +14,9 @@ from demisto_sdk.commands.common.singleton import PydanticSingleton
 from demisto_sdk.commands.common.tools import get_remote_file_from_api
 
 DOCKER_IMAGES_METADATA_NAME = "docker_images_metadata.json"
+
+# regex to extract docker-images that are specific to content / dockerfiles
+DOCKER_IMAGE_REGEX = r"^demisto/([^\s:]+):(\d+(\.\d+)*)$"
 
 
 class DockerImageTagMetadata(BaseModel):

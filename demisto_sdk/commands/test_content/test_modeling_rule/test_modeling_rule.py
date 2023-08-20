@@ -12,13 +12,9 @@ import pytz
 import requests
 import typer
 from junitparser import TestSuite, TestCase, Failure, Skipped, Error, JUnitXml
-from rich import print as printr
-from rich.console import Console, Group
-from rich.panel import Panel
-from rich.syntax import Syntax
-from rich.table import Table
-from rich.theme import Theme
+from tabulate import tabulate
 from typer.main import get_command_from_info
+
 
 from demisto_sdk.commands.common.content.objects.pack_objects.modeling_rule.modeling_rule import (
     ModelingRule,
@@ -42,21 +38,7 @@ from demisto_sdk.commands.test_content.xsiam_tools.xsiam_client import (
 from demisto_sdk.commands.upload.upload import upload_content_entity as upload_cmd
 from demisto_sdk.utils.utils import get_containing_pack
 
-BUILD_NUM = os.environ.get("CI_BUILD_ID")
-WORKFLOW_ID = os.environ.get("CI_PIPELINE_ID")
-
-CUSTOM_THEME = Theme(
-    {
-        "info": "cyan",
-        "info_h1": "cyan underline",
-        "warning": "yellow",
-        "error": "red",
-        "danger": "bold red",
-        "success": "green",
-        "em": "italic",
-    }
-)
-console = Console(theme=CUSTOM_THEME)
+CI_PIPELINE_ID = os.environ.get("CI_PIPELINE_ID")
 
 EXPECTED_SCHEMA_MAPPINGS = {
     str: {"type": "string", "is_array": False},
@@ -88,7 +70,7 @@ NOT_AVAILABLE = "N/A"
 app = typer.Typer()
 
 
-def create_table(expected: Dict[str, Any], received: Dict[str, Any]) -> Table:
+def create_table(expected: Dict[str, Any], received: Dict[str, Any]):
     """Create a table to display the expected and received values.
 
     Args:
@@ -96,11 +78,15 @@ def create_table(expected: Dict[str, Any], received: Dict[str, Any]) -> Table:
         received (Dict[str, Any]): mapping of keys to received values
 
     Returns:
-        Table: Table object to display the expected and received values.
+        Table object to display the expected and received values.
     """
-    table = Table("Model Field", "Expected Value", "Received Value")
-    for key, val in expected.items():
-        table.add_row(key, str(val), str(received.get(key)))
+    data = [(key, str(val), str(received.get(key))) for key, val in expected.items()]
+    table = tabulate(
+        data,
+        tablefmt="fancy_grid",
+        headers=["Model Field", "Expected Value", "Received Value"],
+    )
+
     return table
 
 
@@ -233,7 +219,7 @@ def verify_results(
                     time_value, "." in expected_time_value, tenant_timezone
                 )
             table_result = create_table(expected_values, result)
-            printr(table_result)
+            typer.echo(table_result)
             for key, val in expected_values.items():
                 if val:
                     result_val = result.get(key)
@@ -671,11 +657,12 @@ def verify_pack_exists_on_tenant(
                 "[red]Please install or upload the pack to the tenant and try again[/red]",
                 extra={"markup": True},
             )
-            cmd_group = Group(
-                Syntax(f"demisto-sdk upload -z -x -i {containing_pack.path}", "bash"),
-                Syntax(f"demisto-sdk modeling-rules test {mr.path.parent}", "bash"),
+            print_upload_cmd = f"demisto-sdk upload -z -x -i {containing_pack.path}"
+            print_modeling_rule_cmd = (
+                f"demisto-sdk modeling-rules test {mr.path.parent}"
             )
-            printr(Panel(cmd_group))
+            typer.echo(print_upload_cmd)
+            typer.echo(print_modeling_rule_cmd)
             return False
     return True
 
@@ -725,20 +712,22 @@ def validate_modeling_rule(
         interactive (bool): Whether command is being run in interactive mode.
         ctx (typer.Context): Typer context.
     """
-    console.rule("[info]Test Modeling Rule[/info]")
     logger.info(
-        f"[cyan]<<<< {modeling_rule_directory} >>>>[/cyan]", extra={"markup": True}
+        f"[cyan]<<<< Test Modeling Rule:{modeling_rule_directory} >>>>[/cyan]",
+        extra={"markup": True},
     )
     modeling_rule = ModelingRule(modeling_rule_directory.as_posix())
     containing_pack = get_containing_pack(modeling_rule)
-    executed_command = Panel(
-        Syntax(f"{ctx.command_path} {modeling_rule_directory}", "bash")
-    )
+    executed_command = f"{ctx.command_path} {modeling_rule_directory}"
+
     modeling_rule_test_suite = TestSuite(
         f"Modeling Rule Test Results {modeling_rule.path}"
     )
     modeling_rule_test_suite.filepath = modeling_rule.path
     modeling_rule_test_suite.add_property("modeling_rule_path", modeling_rule.path)
+    modeling_rule_test_suite.add_property(
+        "modeling_rule_file_name", Path(modeling_rule.path).name
+    )
     modeling_rule_test_suite.add_property(
         "test_data_path", modeling_rule.testdata_path or NOT_AVAILABLE
     )
@@ -749,6 +738,8 @@ def validate_modeling_rule(
     modeling_rule_test_suite.add_property("from_version", modeling_rule.from_version)
     modeling_rule_test_suite.add_property("to_version", modeling_rule.to_version)
     modeling_rule_test_suite.add_property("pack_id", containing_pack.id)
+    if CI_PIPELINE_ID:
+        modeling_rule_test_suite.add_property("ci_pipeline_id", CI_PIPELINE_ID)
     if modeling_rule.testdata_path:
         logger.info(
             f"[cyan]Test data file found at {modeling_rule.testdata_path}[/cyan]",
@@ -866,7 +857,8 @@ def validate_modeling_rule(
                 missing_event_data_test_case.system_err = "\n".join(system_errors)
                 modeling_rule_test_suite.add_testcase(missing_event_data_test_case)
 
-                printr(executed_command)
+                # printr(executed_command)
+                typer.echo(executed_command)
                 return False, modeling_rule_test_suite
 
             push_test_data_test_case = push_test_data_to_tenant(
@@ -959,7 +951,7 @@ def validate_modeling_rule(
                         "with test event(s) data and expected outputs and then rerun[/cyan]",
                         extra={"markup": True},
                     )
-                    printr(executed_command)
+                    typer.echo(executed_command)
                 else:
                     logger.error(
                         f"[red]Failed to generate test data file for {modeling_rule_directory}[/red]",
@@ -974,13 +966,13 @@ def validate_modeling_rule(
                     f"[red]Please create a test data file for {modeling_rule_directory} and then rerun[/red]",
                     extra={"markup": True},
                 )
-                printr(executed_command)
+                typer.echo(executed_command)
         else:
             logger.error(
                 f"[red]Please create a test data file for {modeling_rule_directory} and then rerun[/red]",
                 extra={"markup": True},
             )
-            printr(executed_command)
+            typer.echo(executed_command)
         return False, None
 
 
@@ -1128,6 +1120,7 @@ def test_modeling_rule(
     )
     errors = False
     xml = JUnitXml()
+    start_time = datetime.utcnow()
     for modeling_rule_directory in inputs:
         success, modeling_rule_test_suite = validate_modeling_rule(
             modeling_rule_directory,
@@ -1148,6 +1141,7 @@ def test_modeling_rule(
                 extra={"markup": True},
             )
         if modeling_rule_test_suite:
+            modeling_rule_test_suite.add_property("start_time", start_time)
             xml.add_testsuite(modeling_rule_test_suite)
 
     if output_junit_file:

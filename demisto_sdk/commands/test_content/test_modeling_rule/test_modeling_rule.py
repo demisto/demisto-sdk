@@ -4,7 +4,7 @@ from datetime import datetime
 from json import JSONDecodeError
 from pathlib import Path
 from time import sleep
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Tuple, Optional
 from uuid import UUID
 
 import dateparser
@@ -15,7 +15,7 @@ from junitparser import TestSuite, TestCase, Failure, Skipped, Error, JUnitXml
 from tabulate import tabulate
 from typer.main import get_command_from_info
 
-
+from commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.content.objects.pack_objects.modeling_rule.modeling_rule import (
     ModelingRule,
     SingleModelingRule,
@@ -55,7 +55,12 @@ SYNTAX_ERROR_IN_MODELING_RULE = (
     "modeling rule and that it did not install properly on the tenant"
 )
 
-FAILURE_TO_PUSH_EXPLANATION = 'Failed pushing test data to tenant, potential reasons could be:\n - an incorrect token\n - currently only http collectors configured with "Compression" as "gzip" and "Log Format" as "JSON" are supported, double check your collector is configured as such\n - the configured http collector on your tenant is disabled'
+FAILURE_TO_PUSH_EXPLANATION = (
+    "Failed pushing test data to tenant, potential reasons could be:\n - an incorrect token\n - "
+    'currently only http collectors configured with "Compression" as "gzip" and "Log Format" as'
+    ' "JSON" are supported, double check your collector is configured as such\n - the configured '
+    "http collector on your tenant is disabled"
+)
 
 XQL_QUERY_ERROR_EXPLANATION = (
     "Error executing XQL query, potential reasons could be:\n - mismatch between "
@@ -107,6 +112,22 @@ def day_suffix(day: int) -> str:
         suffix string (st, nd, rd, th).
     """
     return "th" if 11 <= day <= 13 else {1: "st", 2: "nd", 3: "rd"}.get(day % 10, "th")
+
+
+def get_relative_path_to_content(path: Path) -> Path:
+    """Get the relative path to the content directory.
+
+    Args:
+        path (Path): The path to the content directory.
+
+    Returns:
+        Path: The relative path to the content directory.
+    """
+    return (
+        path.relative_to(CONTENT_PATH)
+        if path.is_absolute() and path.is_relative_to(CONTENT_PATH)
+        else path
+    )
 
 
 def convert_epoch_time_to_string_time(
@@ -191,7 +212,8 @@ def verify_results(
         # get expected_values for the given query result
         td_event_id = result.pop(f"{tested_dataset}.test_data_event_id")
         result_test_case = TestCase(
-            f"Modeling rule - {modeling_rule.path} {i}/{len(results)} test_data_event_id:{td_event_id}",
+            f"Modeling rule - {get_relative_path_to_content(modeling_rule.path)} {i}/{len(results)} "
+            f"test_data_event_id:{td_event_id}",
             classname=f"test_data_event_id:{td_event_id}",
         )
         result_test_case_system_out = []
@@ -717,21 +739,27 @@ def validate_modeling_rule(
         extra={"markup": True},
     )
     modeling_rule = ModelingRule(modeling_rule_directory.as_posix())
+    modeling_rule_file_name = Path(modeling_rule.path).name
     containing_pack = get_containing_pack(modeling_rule)
     executed_command = f"{ctx.command_path} {modeling_rule_directory}"
 
     modeling_rule_test_suite = TestSuite(
-        f"Modeling Rule Test Results {modeling_rule.path}"
+        f"Modeling Rule Test Results {modeling_rule_file_name}"
     )
-    modeling_rule_test_suite.filepath = modeling_rule.path
-    modeling_rule_test_suite.add_property("modeling_rule_path", modeling_rule.path)
+    modeling_rule_test_suite.filepath = get_relative_path_to_content(modeling_rule.path)
     modeling_rule_test_suite.add_property(
-        "modeling_rule_file_name", Path(modeling_rule.path).name
+        "modeling_rule_path", get_relative_path_to_content(modeling_rule.path)
     )
     modeling_rule_test_suite.add_property(
-        "test_data_path", modeling_rule.testdata_path or NOT_AVAILABLE
+        "modeling_rule_file_name", modeling_rule_file_name
     )
-    modeling_rule_test_suite.add_property("schema_path", modeling_rule.schema_path)
+    modeling_rule_test_suite.add_property(
+        "test_data_path",
+        get_relative_path_to_content(modeling_rule.testdata_path) or NOT_AVAILABLE,
+    )
+    modeling_rule_test_suite.add_property(
+        "schema_path", get_relative_path_to_content(modeling_rule.schema_path)
+    )
     modeling_rule_test_suite.add_property("push", push)
     modeling_rule_test_suite.add_property("interactive", interactive)
     modeling_rule_test_suite.add_property("xsiam_url", xsiam_url)
@@ -810,7 +838,10 @@ def validate_modeling_rule(
             if not validate_schema_aligned_with_test_data(
                 test_data=test_data, schema=schema
             ):
-                err = f"The schema {schema_path} is not aligned with the test data file {modeling_rule.testdata_path}"
+                err = (
+                    f"The schema {get_relative_path_to_content(schema_path)} is not aligned with the test data file "
+                    f"{get_relative_path_to_content(modeling_rule.testdata_path)}"
+                )
                 logger.error(
                     f"[red]{err}[/red]",
                     extra={"markup": True},
@@ -820,7 +851,7 @@ def validate_modeling_rule(
                 modeling_rule_test_suite.add_testcase(schema_test_case)
                 return False, modeling_rule_test_suite
         else:
-            skipped = f"Skipping the validation to check that the schema {schema_path} "
+            skipped = f"Skipping the validation to check that the schema {get_relative_path_to_content(schema_path)} "
             f"is aligned with TestData file."
             logger.info(f"[green]{skipped}[/green]", extra={"markup": True})
             schema_test_case.result = [Skipped(skipped)]
@@ -846,7 +877,7 @@ def validate_modeling_rule(
                     )
                     system_errors.append(test_data_event_id)
                 suffix = (
-                    f"Please complete the test data file at {modeling_rule.testdata_path} "
+                    f"Please complete the test data file at {get_relative_path_to_content(modeling_rule.testdata_path)} "
                     f"with test event(s) data and expected outputs and then rerun"
                 )
                 logger.warning(
@@ -857,7 +888,6 @@ def validate_modeling_rule(
                 missing_event_data_test_case.system_err = "\n".join(system_errors)
                 modeling_rule_test_suite.add_testcase(missing_event_data_test_case)
 
-                # printr(executed_command)
                 typer.echo(executed_command)
                 return False, modeling_rule_test_suite
 
@@ -943,33 +973,39 @@ def validate_modeling_rule(
 
                 if modeling_rule.testdata_path:
                     logger.info(
-                        f"[green]Test data file generated for {modeling_rule_directory}[/green]",
+                        f"[green]Test data file generated for "
+                        f"{get_relative_path_to_content(modeling_rule_directory)}[/green]",
                         extra={"markup": True},
                     )
                     logger.info(
-                        f"[cyan]Please complete the test data file at {modeling_rule.testdata_path} "
+                        f"[cyan]Please complete the test data file at "
+                        f"{get_relative_path_to_content(modeling_rule.testdata_path)} "
                         "with test event(s) data and expected outputs and then rerun[/cyan]",
                         extra={"markup": True},
                     )
                     typer.echo(executed_command)
                 else:
                     logger.error(
-                        f"[red]Failed to generate test data file for {modeling_rule_directory}[/red]",
+                        f"[red]Failed to generate test data file for "
+                        f"{get_relative_path_to_content(modeling_rule_directory)}[/red]",
                         extra={"markup": True},
                     )
             else:
                 logger.warning(
-                    f"[yellow]Skipping test data file generation for {modeling_rule_directory}[/yellow]",
+                    f"[yellow]Skipping test data file generation for "
+                    f"{get_relative_path_to_content(modeling_rule_directory)}[/yellow]",
                     extra={"markup": True},
                 )
                 logger.error(
-                    f"[red]Please create a test data file for {modeling_rule_directory} and then rerun[/red]",
+                    f"[red]Please create a test data file for "
+                    f"{get_relative_path_to_content(modeling_rule_directory)} and then rerun[/red]",
                     extra={"markup": True},
                 )
                 typer.echo(executed_command)
         else:
             logger.error(
-                f"[red]Please create a test data file for {modeling_rule_directory} and then rerun[/red]",
+                f"[red]Please create a test data file for "
+                f"{get_relative_path_to_content(modeling_rule_directory)} and then rerun[/red]",
                 extra={"markup": True},
             )
             typer.echo(executed_command)

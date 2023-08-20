@@ -170,13 +170,15 @@ class Downloader:
             if not self.verify_flags():
                 return 1
 
-            output_path = Path(self.output_pack_path)
+            # If using list-files mode, output path input is not mandatory, as no files are downloaded
+            if not self.list_files:
+                output_path = Path(self.output_pack_path)
 
-            if not self.verify_output_path(output_path=output_path):
-                return 1
+                if not self.verify_output_path(output_path=output_path):
+                    return 1
 
-            if self.init:
-                output_path = self.initialize_output_path(root_folder=output_path)
+                if self.init:
+                    output_path = self.initialize_output_path(root_folder=output_path)
 
             if self.download_system_items and not self.list_files:
                 downloaded_content_objects = self.fetch_system_content()
@@ -373,7 +375,8 @@ class Downloader:
             elif isinstance(e, MaxRetryError):
                 logger.error(f"Failed connecting to server: {e}.\n"
                              "Please verify that the environment variable 'DEMISTO_BASE_URL' is properly configured, "
-                             "and that the server is accessible.")
+                             "and that the server is accessible.\n"
+                             "If the server is using a self-signed certificate, try using the '--insecure' flag.")
 
             else:
                 logger.error(f"Error while fetching custom content: {e}")
@@ -616,7 +619,7 @@ class Downloader:
                 missing_field = False
                 for _field in ("id", "name", "entity", "type"):
                     if not custom_content_object.get(_field):
-                        logger.warning(f"{_field} could not be detected for '{file_name}' and it will be skipped.")
+                        logger.warning(f"'{_field}' could not be detected for '{file_name}' and it will be skipped.")
                         missing_field = True
                         break
 

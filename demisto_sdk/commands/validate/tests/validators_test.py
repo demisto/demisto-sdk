@@ -3123,6 +3123,7 @@ def test_validate_no_disallowed_terms_in_customer_facing_docs_end_to_end(repo, m
     assert not validate_manager.run_validations_on_file(
         file_path=rn_file.path, pack_error_ignore_list=[]
     )
+    validate_manager.validate_all = True
     assert not validate_manager.run_validations_on_file(
         file_path=integration_readme_file.path, pack_error_ignore_list=[]
     )

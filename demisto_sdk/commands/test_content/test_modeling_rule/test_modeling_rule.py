@@ -10,7 +10,6 @@ import dateparser
 import pytz
 import requests
 import typer
-from commands.common.content_constant_paths import CONTENT_PATH
 from junitparser import Error, Failure, JUnitXml, Skipped, TestCase, TestSuite
 from tabulate import tabulate
 from typer.main import get_command_from_info
@@ -19,6 +18,7 @@ from demisto_sdk.commands.common.content.objects.pack_objects.modeling_rule.mode
     ModelingRule,
     SingleModelingRule,
 )
+from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.handlers import (
     DEFAULT_JSON_HANDLER as json,  # F401
 )

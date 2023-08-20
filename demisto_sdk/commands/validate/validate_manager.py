@@ -1980,7 +1980,8 @@ class ValidateManager:
 
             else:
                 old_file_path = file_path
-            # if file is pack-ignore
+            if not file_path.endswith(".pack-ignore"):
+                continue
             old_file_content = get_remote_file(old_file_path, tag="master")
             config = ConfigParser(allow_no_value=True)
             config.read_string(old_file_content)
@@ -2008,7 +2009,7 @@ class ValidateManager:
                 if is_relevant_file(file, pack_name)
             }
             for file in files_to_test:
-                if file in all_files_mapper.keys():
+                if file in all_files_mapper:
                     all_files_edited_in_pack_ignore.add(all_files_mapper.get(file))
         return all_files_edited_in_pack_ignore
 

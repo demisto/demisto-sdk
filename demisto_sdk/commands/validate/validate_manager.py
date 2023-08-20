@@ -2016,6 +2016,12 @@ class ValidateManager:
                     files_to_test.add(key)
 
             def is_relevant_file(file, pack_name):
+                """
+                Return wether the given file is under the given pack
+                Args:
+                    file: The file to check.
+                    pack_name: The name of the pack we want to ensure the given file is under.
+                """
                 return len(file.parts) > 2 and file.parts[0] == "Packs" and file.parts[1] == pack_name
 
             all_files_mapper = {

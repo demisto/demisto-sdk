@@ -635,7 +635,6 @@ class Linter:
                     files=lint_files,  # type: ignore
                     support_level=self._facts.get("support_level", "base"),
                     formatting_script=self._facts.get("formatting_script", False),
-                    all_packs=self._all_packs,
                 ),
                 cwd=self._pack_abs_dir,
                 env=myenv,

@@ -118,7 +118,7 @@ def get_relative_path_to_content(path: Path) -> Path:
     """Get the relative path to the content directory.
 
     Args:
-        path (Path): The path to the content directory.
+        path (Path): The path to the content item.
 
     Returns:
         Path: The relative path to the content directory.

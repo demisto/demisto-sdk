@@ -1,27 +1,26 @@
 import contextlib
 import os
 from datetime import datetime
-from json import JSONDecodeError
 from pathlib import Path
 from time import sleep
-from typing import Any, Dict, List, Tuple, Optional
+from typing import Any, Dict, List, Optional, Tuple, Union
 from uuid import UUID
 
 import dateparser
 import pytz
 import requests
 import typer
-from junitparser import TestSuite, TestCase, Failure, Skipped, Error, JUnitXml
+from commands.common.content_constant_paths import CONTENT_PATH
+from junitparser import Error, Failure, JUnitXml, Skipped, TestCase, TestSuite
 from tabulate import tabulate
 from typer.main import get_command_from_info
 
-from commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.content.objects.pack_objects.modeling_rule.modeling_rule import (
     ModelingRule,
     SingleModelingRule,
 )
 from demisto_sdk.commands.common.handlers import (
-    DEFAULT_JSON_HANDLER as json,  # noqa F401
+    DEFAULT_JSON_HANDLER as json,  # F401
 )
 from demisto_sdk.commands.common.logger import (
     handle_deprecated_args,
@@ -125,7 +124,7 @@ def get_relative_path_to_content(path: Path) -> Path:
     """
     return (
         path.relative_to(CONTENT_PATH)
-        if path.is_absolute() and path.is_relative_to(CONTENT_PATH)
+        if path.is_absolute() and path.is_relative_to(CONTENT_PATH)  # type: ignore[attr-defined]
         else path
     )
 
@@ -158,7 +157,7 @@ def verify_results(
     tested_dataset: str,
     results: List[dict],
     test_data: init_test_data.TestData,
-) -> list[TestCase]:
+) -> List[TestCase]:
     """Verify that the results of the XQL query match the expected values.
 
     Args:
@@ -168,7 +167,7 @@ def verify_results(
         test_data (init_test_data.TestData): The data parsed from the test data file.
 
     Returns:
-        list[TestCase]: Tuple of a boolean indicating whether the results match the expected values, and a TestCase
+        list[TestCase]: List of test cases for the results of the XQL query.
     """
 
     if not results:
@@ -322,7 +321,7 @@ def validate_expected_values(
     xsiam_client: XsiamApiClient,
     modeling_rule: ModelingRule,
     test_data: init_test_data.TestData,
-) -> list[TestCase]:
+) -> List[TestCase]:
     """Validate the expected_values in the given test data file."""
     validate_expected_values_test_cases = []
     for rule in modeling_rule.rules:
@@ -490,7 +489,7 @@ def check_dataset_exists(
     process_failed = False
     dataset_set = {data.dataset for data in test_data.data}
     dataset_set_test_case = TestCase(
-        f"Check if dataset exists in tenant", classname="Check dataset exists"
+        "Check if dataset exists in tenant", classname="Check dataset exists"
     )
     dataset_set_test_case_start_time = datetime.utcnow()
     test_case_results = []
@@ -565,6 +564,8 @@ def push_test_data_to_tenant(
         xsiam_client (XsiamApiClient): Xsiam API client.
         mr (ModelingRule): Modeling rule object parsed from the modeling rule file.
         test_data (init_test_data.TestData): Test data object parsed from the test data file.
+    Returns:
+        TestCase: Test case for pushing the test data to the tenant.
     """
     push_test_data_test_case = TestCase(
         f"Push test data to tenant {mr.path}",
@@ -679,12 +680,9 @@ def verify_pack_exists_on_tenant(
                 "[red]Please install or upload the pack to the tenant and try again[/red]",
                 extra={"markup": True},
             )
-            print_upload_cmd = f"demisto-sdk upload -z -x -i {containing_pack.path}"
-            print_modeling_rule_cmd = (
-                f"demisto-sdk modeling-rules test {mr.path.parent}"
+            typer.echo(
+                f"demisto-sdk upload -z -x -i {containing_pack.path}\ndemisto-sdk modeling-rules test {mr.path.parent}"
             )
-            typer.echo(print_upload_cmd)
-            typer.echo(print_modeling_rule_cmd)
             return False
     return True
 
@@ -720,7 +718,7 @@ def validate_modeling_rule(
     push: bool,
     interactive: bool,
     ctx: typer.Context,
-) -> Tuple[bool, TestSuite | None]:
+) -> Tuple[bool, Union[TestSuite, None]]:
     """Validate a modeling rule.
 
     Args:
@@ -805,7 +803,7 @@ def validate_modeling_rule(
             with open(modeling_rule.schema_path) as schema_file:
                 try:
                     schema = json.load(schema_file)
-                except JSONDecodeError as ex:
+                except json.JSONDecodeError as ex:
                     err = f"Failed to parse schema file {modeling_rule.schema_path} as JSON"
                     logger.error(
                         f"[red]{err}[/red]",
@@ -852,7 +850,7 @@ def validate_modeling_rule(
                 return False, modeling_rule_test_suite
         else:
             skipped = f"Skipping the validation to check that the schema {get_relative_path_to_content(schema_path)} "
-            f"is aligned with TestData file."
+            "is aligned with TestData file."
             logger.info(f"[green]{skipped}[/green]", extra={"markup": True})
             schema_test_case.result = [Skipped(skipped)]
             modeling_rule_test_suite.add_testcase(schema_test_case)
@@ -875,7 +873,7 @@ def validate_modeling_rule(
                         f"[yellow] - {test_data_event_id}[/yellow]",
                         extra={"markup": True},
                     )
-                    system_errors.append(test_data_event_id)
+                    system_errors.append(str(test_data_event_id))
                 suffix = (
                     f"Please complete the test data file at {get_relative_path_to_content(modeling_rule.testdata_path)} "
                     f"with test event(s) data and expected outputs and then rerun"

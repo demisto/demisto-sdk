@@ -2022,7 +2022,11 @@ class ValidateManager:
                     file: The file to check.
                     pack_name: The name of the pack we want to ensure the given file is under.
                 """
-                return len(file.parts) > 2 and file.parts[0] == "Packs" and file.parts[1] == pack_name
+                return (
+                    len(file.parts) > 2
+                    and file.parts[0] == "Packs"
+                    and file.parts[1] == pack_name
+                )
 
             all_files_mapper = {
                 file.name: str(file)

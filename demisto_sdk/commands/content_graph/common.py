@@ -268,6 +268,13 @@ class Nodes(dict):
             self.add_batch(data)
 
 
+class LazyProperty(property):
+    """
+    Used to define the properties which are lazy properties
+    """
+    pass
+
+
 def lazy_property(property_func: Callable):
     """
     lazy property: specifies that this property should be added to the pydantic model lazily
@@ -275,7 +282,6 @@ def lazy_property(property_func: Callable):
 
     Use this decorator on your property in case you need it to be added to the model only if its called directly
     """
-
     def _lazy_decorator(self):
         property_name = property_func.__name__
 
@@ -283,10 +289,11 @@ def lazy_property(property_func: Callable):
             return property_output
 
         property_output = property_func(self)
+
         self.__dict__[property_name] = property_output
         return property_output
 
-    return property(_lazy_decorator)
+    return LazyProperty(_lazy_decorator)
 
 
 SERVER_CONTENT_ITEMS: dict = {

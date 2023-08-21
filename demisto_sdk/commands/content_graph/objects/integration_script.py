@@ -1,7 +1,8 @@
 from pathlib import Path
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 
 from pydantic import Field
+from pydantic.fields import FieldInfo
 
 from demisto_sdk.commands.common.constants import (
     NATIVE_IMAGE_FILE_NAME,
@@ -22,7 +23,7 @@ from demisto_sdk.commands.prepare_content.integration_script_unifier import (
 )
 
 
-class IntegrationScript(ContentItem):
+class IntegrationScript(ContentItem, lazy_properties={"python_version"}):
     type: str
     docker_image: Optional[str]
     description: Optional[str]

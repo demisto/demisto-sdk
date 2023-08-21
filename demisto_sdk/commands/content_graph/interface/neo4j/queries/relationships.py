@@ -1,7 +1,6 @@
 from pathlib import Path
 from typing import Any, Dict, List
 
-import more_itertools
 from neo4j import Transaction
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions

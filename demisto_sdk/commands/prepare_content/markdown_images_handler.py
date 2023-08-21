@@ -46,7 +46,7 @@ def replace_markdown_urls_and_upload_to_artifacts(
     save_to_artifact = {pack_name: {file_type: urls_list}}
 
     upload_markdown_images_to_artifacts(save_to_artifact, pack_name, file_type)
-    logger.info(f"{save_to_artifact=}")
+    logger.debug(f"{save_to_artifact=}")
     return save_to_artifact
 
 

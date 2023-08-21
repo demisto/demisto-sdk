@@ -20,6 +20,8 @@ from demisto_sdk.commands.common.constants import (
     PACKS_DIR,
     RELATIVE_HREF_URL_REGEX,
     RELATIVE_MARKDOWN_URL_REGEX,
+    URL_IMAGE_LINK_REGEX,
+    HTML_IMAGE_LINK_REGEX
 )
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.docker_helper import init_global_docker_client
@@ -528,12 +530,12 @@ class ReadMeValidator(BaseValidator):
         except InvalidGitRepositoryError:
             pass
         absolute_links = re.findall(
-            r"(!\[.*\])\((https://.*)\)$",
+            URL_IMAGE_LINK_REGEX,
             self.readme_content,
             re.IGNORECASE | re.MULTILINE,
         )
         absolute_links += re.findall(
-            r'(<img.*?src\s*=\s*"(https://.*?)")',
+            HTML_IMAGE_LINK_REGEX,
             self.readme_content,
             re.IGNORECASE | re.MULTILINE,
         )

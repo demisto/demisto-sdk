@@ -15,7 +15,7 @@ NODE_INDEX_OPTIONS = [
     ["object_id", "content_type"],
     ["object_id", "content_type", "fromversion", "marketplaces"],
     ["name"],
-    ["path"]
+    ["path"],
 ]
 
 CREATE_REL_INDEX_TEMPLATE = (

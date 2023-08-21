@@ -93,9 +93,9 @@ ON CREATE
 
 // Get or create the relationship and set its "mandatorily" field based on relationship data
 WITH source, target, rel_data
-CALL apoc.merge.relationship(source, "{RelationshipType.USES}", {{mandatorily: rel_data.mandatorily}}, {{}}, target) YIELD r
-SET r.mandatorily = coalesce(r.mandatorily, false) OR rel_data.mandatorily
-RETURN count(r) AS relationships_merged"""
+CALL apoc.merge.relationship(source, "{RelationshipType.USES}", {{mandatorily: rel_data.mandatorily}}, {{}}, target) YIELD rel
+SET rel.mandatorily = coalesce(r.mandatorily, false) OR rel_data.mandatorily
+RETURN count(rel) AS relationships_merged"""
 
 
 def build_in_pack_relationships_query() -> str:

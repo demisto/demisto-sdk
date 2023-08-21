@@ -52,7 +52,7 @@ def update_additional_dependencies(
                 f"Detected changes in pre-commit config:{pre_commit_config_path}, updating it"
             )
             with pre_commit_config_path.open("w") as f:
-                yaml.dump(pre_commit, f)
+                yaml.dump(pre_commit, f, sort_keys=True)
         return 0
     except Exception:
         logger.exception("Failed to update additional dependencies")

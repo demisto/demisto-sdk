@@ -16,8 +16,6 @@ from demisto_sdk.commands.content_graph.interface.neo4j.queries.common import (
     run_query,
 )
 
-CHUNK_SIZE = 500
-
 
 def build_source_properties() -> str:
     return node_map(
@@ -94,12 +92,8 @@ ON CREATE
     SET target.not_in_repository = true
 
 // Get or create the relationship and set its "mandatorily" field based on relationship data
-MERGE (source)-[r:{RelationshipType.USES}]->(target)
-ON CREATE
-    SET r.mandatorily = rel_data.mandatorily
-ON MATCH
-    SET r.mandatorily = r.mandatorily OR rel_data.mandatorily
-
+CALL apoc.merge.relationship(source, {RelationshipType.USES}, {{mandatorily: rel_data.mandatorily}}, {{}}, target) YIELD rel
+SET rel.mandatorily = coalesce(rel.mandatorily, false) OR rel_data.mandatorily
 RETURN count(r) AS relationships_merged"""
 
 

@@ -220,7 +220,7 @@ class ModelingRule(YAMLContentUnifiedObject):
     @property
     def rules(self):
         if not self._rules:
-            _rules = []
+            _rules: List[SingleModelingRule] = []
             rule_initialization_errs = []
             try:
                 if self.rules_path:

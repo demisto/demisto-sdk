@@ -1,4 +1,3 @@
-import os
 import re
 import shutil
 import tarfile
@@ -7,7 +6,7 @@ from collections import defaultdict
 from io import BytesIO, StringIO
 from pathlib import Path
 from tempfile import mkdtemp
-from typing import Dict, List, Union, DefaultDict
+from typing import Dict, DefaultDict
 
 import mergedeep
 
@@ -125,16 +124,16 @@ class Downloader:
     """
     def __init__(
         self,
-        output: str,
-        input: Union[str, List[str]],
-        regex: str = "",
+        output: str | None = None,
+        input: tuple[str] = tuple(),
+        regex: str | None = None,
         force: bool = False,
         insecure: bool = False,
         list_files: bool = False,
         all_custom_content: bool = False,
         run_format: bool = False,
         system: bool = False,
-        item_type: str = "",
+        item_type: str | None = None,
         init: bool = False,
         keep_empty_folders: bool = False,
         **kwargs,
@@ -415,10 +414,7 @@ class Downloader:
             bool: True if the object was updated, False otherwise.
         """
         content_item_file_str = custom_content_object["file"].getvalue()
-
         uuid_matches = re.findall(UUID_REGEX, content_item_file_str)
-        # TODO: Check if looping over all dict keys (recursively) is more efficient than dumping to string and then search that using a RegEx.
-        # If we do run recursively, consider how we will want to update the StringIO object (if we need it at all?)
 
         if uuid_matches:
             for uuid in set(uuid_matches).intersection(uuid_mapping):
@@ -488,7 +484,7 @@ class Downloader:
         Fetch system playbooks from server.
 
         Args:
-            content_items (list[str]): A list of system playbook names to fetch.
+            content_items (list[str]): A list of names of system playbook to fetch.
 
         Returns:
             list[dict]: A list of downloaded system playbooks represented as dictionaries.
@@ -519,7 +515,7 @@ class Downloader:
 
                 endpoint = f"/playbook/{playbook_id}/yaml"
                 api_response = demisto_client.generic_request_func(
-                    self.client, endpoint, "GET",  _preload_content=False,
+                    self.client, endpoint, "GET",  response_type="object",
                 )[0]
 
             if not isinstance(api_response, dict):

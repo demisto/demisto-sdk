@@ -11,6 +11,7 @@ from unittest.mock import patch
 import demisto_client
 import pytest
 from demisto_client.demisto_api.rest import ApiException
+from urllib3.response import HTTPResponse
 
 from demisto_sdk.commands.common.constants import (
     CLASSIFIERS_DIR,
@@ -58,13 +59,14 @@ from demisto_sdk.commands.common.tools import (
 from demisto_sdk.commands.download.downloader import Downloader
 from TestSuite.test_tools import str_in_call_args_list
 
+TEST_DATA_FOLDER = Path.cwd() / "tests_data"
+
 
 class Environment:
     """
     Environment is class designed to spin up a virtual, temporary content repo and build all objects related to
     the Downloader (such as pack content & custom content)
     """
-
     def __init__(self, tmp_path):
         self.CONTENT_BASE_PATH = None
         self.CUSTOM_CONTENT_BASE_PATH = None
@@ -382,33 +384,13 @@ class Environment:
 
 
 class TestHelperMethods:
-    @pytest.mark.parametrize(
-        "data, file_type, entity",
-        [
-            ({"name": "test-pb"}, "playbook", TEST_PLAYBOOKS_DIR),
-            ({"name": "playbook_testing"}, "playbook", PLAYBOOKS_DIR),
-            ({"name": "playbook_test"}, "playbook", TEST_PLAYBOOKS_DIR),
-            ({"name": "playbookTest"}, "playbook", TEST_PLAYBOOKS_DIR),
-            ({"name": "Testplaybook"}, "playbook", TEST_PLAYBOOKS_DIR),
-            ({"name": "Test-playbook"}, "playbook", TEST_PLAYBOOKS_DIR),
-            ({"name": "playbook_Test"}, "playbook", TEST_PLAYBOOKS_DIR),
-            ({"name": "playbook-test"}, "playbook", TEST_PLAYBOOKS_DIR),
-            ({"name": "playbook-Test"}, "playbook", TEST_PLAYBOOKS_DIR),
-            ({"name": "Test123"}, "playbook", TEST_PLAYBOOKS_DIR),
-            ({"name": "test_123"}, "playbook", TEST_PLAYBOOKS_DIR),
-            ({"name": "test-123"}, "playbook", TEST_PLAYBOOKS_DIR),
-            ({"name": "Test_123"}, "playbook", TEST_PLAYBOOKS_DIR),
-            ({}, "integration", INTEGRATIONS_DIR),
-        ],
-    )
-
     def test_get_custom_content_objects(self, tmp_path):
         env = Environment(tmp_path)
         with patch.object(Downloader, "__init__", lambda a, b, c: None):
-            downloader = Downloader("", "")
+            downloader = Downloader()
             downloader.custom_content_temp_dir = env.CUSTOM_CONTENT_BASE_PATH
             custom_content_objects = downloader.parse_content_data()
-            assert ordered(custom_content_objects) == ordered(env.CUSTOM_CONTENT)
+            assert custom_content_objects == env.CUSTOM_CONTENT
 
     @pytest.mark.parametrize(
         "name, ending, detail, output",
@@ -1214,8 +1196,8 @@ def test_safe_write_unicode_to_non_unicode(
     Given: A format to check (yaml/json), with its writing method
     When: Calling Downloader.update_data
     Then:
-        1. Make sure that dowloading unicode content into a non-unicode file works (result should be all unicode)
-        2. Make sure that dowloading non-unicode content into a unicode file works (result should be all unicode)
+        1. Make sure that downloading unicode content into a non-unicode file works (result should be all unicode)
+        2. Make sure that downloading non-unicode content into a unicode file works (result should be all unicode)
     """
     from demisto_sdk.commands.download.downloader import Downloader
 
@@ -1247,7 +1229,7 @@ def test_safe_write_unicode_to_non_unicode(
     )
 
     Downloader.update_data(
-        file_to_update=str(dest), original_file=str(source), file_ending=suffix[1:]
+        file_to_update=dest, original_file=str(source), is_yaml=(suffix == ".yml")
     )
 
     # make sure the two files were merged correctly
@@ -1256,92 +1238,95 @@ def test_safe_write_unicode_to_non_unicode(
     assert set(result.values()) == {SENTENCE_WITH_UMLAUTS}
 
 
-def test_find_uuids_in_content_item(mocker):
+def test_uuids_find_and_replacement_in_content_items(mocker):
     """
-    Given: a mock tar file download_tar.tar
-    When: calling create_uuid_to_name_mapping on the mock tar
-    Then: Find all UUIDs in different content items:
-          playbook, automation, layout, incident
-          and replaces these UUIDs with the corresponding names in strings_to_write
+    Given:
+        A mock tar file download_tar.tar
+    When:
+        calling create_uuid_to_name_mapping on the mock tar
+    Then:
+        Assure UUIDs are properly mapped and replaced.
     """
-    expected_UUIDs = {
-        "a53a2f17-2f05-486d-867f-a36c9f5b88d4",
-        "e4c2306d-5d4b-4b19-8320-6fdad94595d4",
-        "de57b1f7-b754-43d2-8a8c-379d12bdddcd",
-        "84731e69-0e55-40f9-806a-6452f97a01a0",
-        "4d45f0d7-5fdd-4a4b-8f1e-5f2502f90a61",
+    expected_mapping = {
+        "e4c2306d-5d4b-4b19-8320-6fdad94595d4": "custom_automation",
+        "de57b1f7-b754-43d2-8a8c-379d12bdddcd": "custom_script",
+        "84731e69-0e55-40f9-806a-6452f97a01a0": "Custom Layout",
+        "4d45f0d7-5fdd-4a4b-8f1e-5f2502f90a61": "ExampleType",
+        "a53a2f17-2f05-486d-867f-a36c9f5b88d4": "custom_playbook"
     }
-    io_bytes = io.BytesIO(
-        Path(
-            f"{git_path()}/demisto_sdk/commands/download/tests/tests_data/custom_content/download_tar.tar.gz"
-        ).read_bytes()
-    )
+
+    mock_bundle_data = (TEST_DATA_FOLDER / "custom_content" / "download_tar.tar.gz").read_bytes()
+    mock_bundle_response = HTTPResponse(body=mock_bundle_data, status=200)
+
+    mocker.patch.object(demisto_client, "generic_request_func", return_value=(mock_bundle_response, None, None))
+
     downloader = Downloader(
-        output="",
-        input="",
-        regex="",
         all_custom_content=True,
     )
-    # mocker.patch.object(demisto_client, "generic_request_func", return_value=(io_bytes, None, None))
-    custom_content_data = downloader.download_custom_content()
-    mapping = downloader.create_uuid_to_name_mapping(custom_content_data)
 
-    # ids = set(scripts_id_name.keys())
-    # assert ids.issubset(expected_UUIDs)
-    # assert ids.isdisjoint(strings_to_write)
+    all_custom_content_data = downloader.download_custom_content()
+    all_custom_content_objects = downloader.parse_custom_content_data(
+        custom_content_data=all_custom_content_data
+    )
+
+    uuid_mapping = downloader.create_uuid_to_name_mapping(custom_content_objects=all_custom_content_objects)
+    assert uuid_mapping == expected_mapping
+
+    changed_uuids_count = 0
+    for file_object in all_custom_content_objects.values():
+        if downloader.replace_uuid_ids(
+            custom_content_object=file_object, uuid_mapping=uuid_mapping
+        ):
+            changed_uuids_count += 1
+
+    assert changed_uuids_count == 7
 
 
 def test_get_system_playbook(mocker):
     """
-    Given: a mock file raw_playbook.txt
-    When: calling get_system_playbook function.
+    Given:
+        A name of a playbook to download.
+    When:
+        Using the download command.
     Then:
-        - Ensure the playbook returns as valid json as expected
-        - Ensure a list is returned from the function
+        Ensure the function works as expected and returns the playbook.
     """
-
-    playbook_path = Path(
-        f"{git_path()}/demisto_sdk/commands/download/tests/tests_data/playbook-DummyPlaybook2.yml"
-    )
-
-    raw_playbook = playbook_path.read_bytes()
-
-    expected_pb = get_yaml(playbook_path)
+    playbook_path = TEST_DATA_FOLDER / "playbook-DummyPlaybook2.yml"
+    playbook_data = get_yaml(playbook_path)
     mocker.patch.object(
-        demisto_client, "generic_request_func", return_value=[raw_playbook]
+        demisto_client, "generic_request_func", return_value=[playbook_data]
     )
 
-    downloader = Downloader(input=["test"], output="test")
-    playbooks = downloader.get_system_playbook(req_type="GET")
+    downloader = Downloader(input=("test",), output="test")
+    playbooks = downloader.get_system_playbook(content_items=["DummyPlaybook"])
     assert isinstance(playbooks, list)
-    assert playbooks[0] == expected_pb
+    assert playbooks[0] == playbook_data
     assert len(playbooks) == 1
 
 
 def test_get_system_playbook_item_does_not_exist_by_name(mocker):
     """
-    Given: a mock file raw_playbook.txt
-    When: calling get_system_playbook function.
+    Given:
+        A name of a playbook to download using the API.
+    When:
+        Using the download command, but the API call returns "Item not found" error for the playbook.
     Then:
-        - Ensure the playbook returns as valid json as expected
-        - Ensure a list is returned from the function
+        Ensure that the function tries to retrieve the playbook its ID instead.
     """
-    playbook_path = Path(
-        f"{git_path()}/demisto_sdk/commands/download/tests/tests_data/playbook-DummyPlaybook2.yml"
-    )
+    playbook_path = TEST_DATA_FOLDER / "playbook-DummyPlaybook2.yml"
 
     playbook = get_yaml(playbook_path)
     playbook["id"] = "dummy_-_playbook"
     mocker.patch.object(
         demisto_client,
         "generic_request_func",
-        side_effect=(ApiException("Item not found"), [playbook_path.read_bytes()]),
+        side_effect=(ApiException("Item not found"), [playbook]),
     )
     mocker.patch.object(
         Downloader, "get_playbook_id_by_playbook_name", return_value="test"
     )
-    downloader = Downloader(input=["DummyPlaybook"], output="test")
-    playbooks = downloader.get_system_playbook(req_type="GET")
+    downloader = Downloader(input=("DummyPlaybook",), output="test")
+    playbooks = downloader.get_system_playbook(content_items=["DummyPlaybook"])
     assert isinstance(playbooks, list)
     assert len(playbooks) == 1
 
@@ -1364,7 +1349,44 @@ def test_get_system_playbook_failure(mocker, exception, mock_value, expected_cal
     get_id_by_name_mock = mocker.patch.object(
         Downloader, "get_playbook_id_by_playbook_name", return_value=mock_value
     )
-    downloader = Downloader(input=["DummyPlaybook"], output="test")
+    downloader = Downloader(input=("DummyPlaybook",), output="test")
     with pytest.raises(exception):
-        downloader.get_system_playbook(req_type="GET")
+        downloader.get_system_playbook(content_items=["DummyPlaybook"])
     assert get_id_by_name_mock.call_count == expected_call
+
+
+def test_list_files_flag(mocker):
+    """
+    Given:
+        list_files flag (-lf / --list-files) is set to True (and only that. Other flags are not required)
+    When:
+        Running the Download command
+    Then:
+        Ensure the command list all files available for download properly.
+    """
+    downloader = Downloader(list_files=True)
+    mock_bundle_data = (TEST_DATA_FOLDER / "custom_content" / "download_tar.tar.gz").read_bytes()
+    mock_bundle_response = HTTPResponse(body=mock_bundle_data, status=200)
+
+    mocker.patch.object(demisto_client, "generic_request_func", return_value=(mock_bundle_response, None, None))
+
+    # Mock "create_custom_content_table" just for spying, to get its return value
+    content_table_mock = mocker.spy(Downloader, "create_custom_content_table")
+    assert downloader.download() == 0
+
+    expected_table = ('CONTENT NAME                CONTENT TYPE\n'
+                      '--------------------------  ----------------\n'
+                      'CommonServerUserPowerShell  script\n'
+                      'CommonServerUserPython      script\n'
+                      'CommonUserServer            script\n'
+                      'custom_automation           script\n'
+                      'custom_script               script\n'
+                      'custom_incident             incidentfield\n'
+                      'Custom_Layout               incidenttype\n'
+                      'custom_integration          integration\n'
+                      'Custom Layout               layoutscontainer\n'
+                      'ExampleType                 layoutscontainer\n'
+                      'custom_playbook             playbook')
+
+    assert content_table_mock.call_count == 1
+    assert expected_table in content_table_mock.spy_return

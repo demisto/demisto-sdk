@@ -92,6 +92,7 @@ ON CREATE
     SET target.not_in_repository = true
 
 // Get or create the relationship and set its "mandatorily" field based on relationship data
+WITH source, target, rel_data
 CALL apoc.merge.relationship(source, "{RelationshipType.USES}", {{mandatorily: rel_data.mandatorily}}, {{}}, target) YIELD r
 SET r.mandatorily = coalesce(r.mandatorily, false) OR rel_data.mandatorily
 RETURN count(r) AS relationships_merged"""

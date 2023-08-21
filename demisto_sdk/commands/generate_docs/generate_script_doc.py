@@ -68,7 +68,6 @@ def generate_script_doc(
 
         # get script data
         script_info = get_script_info(input_path)
-        script.get("commonfields")["id"]
 
         # get script dependencies
         dependencies: List = []

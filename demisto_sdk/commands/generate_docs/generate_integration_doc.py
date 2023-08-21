@@ -147,7 +147,7 @@ def generate_integration_doc(
                 docs.extend(
                     [
                         f"This integration was integrated and tested with version xx of {yml_data['name']}.",
-                        ""
+                        "",
                     ]
                 )
             # Checks if the integration is a new version

@@ -3,11 +3,11 @@ import os
 from pathlib import Path
 from uuid import UUID
 
+import junitparser
 import pytest
 import requests_mock
 import typer
 from freezegun import freeze_time
-from junitparser import TestSuite
 from typer.testing import CliRunner
 
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
@@ -212,7 +212,7 @@ class TestVerifyResults:
         )
 
         modeling_rule = ModelingRuleMock()
-        test_suite = TestSuite("Testing")
+        test_suite = junitparser.TestSuite("Testing")
         test_suite.add_testcases(
             verify_results(modeling_rule, tested_dataset, query_results, test_data)
         )

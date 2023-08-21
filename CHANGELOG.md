@@ -11,6 +11,7 @@
 * Updated the **generate-docs** command to use the content graph instead of the id_set file.
 * Added the '--all' input option for the **prepare-content** command, to support running on all content packs.
 * Updated the '-i' input option of the **prepare-content** command to support multiple inputs as a comma-separated list.
+* Enhanced the pack metadata properties when dumping pack zips in **prepare-content** command.
 
 ## 1.19.0
 * Added the **graph** command group. The **create-content-graph** and **update-content-graph** commands were migrated to this command group, and named **graph create** and **graph update** respectively.

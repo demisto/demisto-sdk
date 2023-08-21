@@ -5,8 +5,7 @@
 * Added support for a new marketplace tag `xsoar_saas`.
 * Added support for yml hidden parameters for `xsoar_saas` marketplace, as part of the **prepare_content** command.
 * Added support for custom documentation that will appear only in `xsoar_saas` marketplace, as part of the **prepare_content** command.
-* Added support for the parsing pack readme and integration description markdown files in order to handle absolute image paths as part of the **prepare_content** command.
-
+* Modified **prepare_content** command to be platform specific. For xsoar-saas and XSIAM regarding pack readme and integration description images in markdown files.
 ## 1.19.1
 * Fixed an issue where **unify** failed on integrations using an API a module, when not called from the content root.
 * Improved **update-release-notes** logs when changes in dependent API modules are detected.

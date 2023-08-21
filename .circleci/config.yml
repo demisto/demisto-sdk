@@ -256,7 +256,7 @@ jobs:
             name: Pre-commit
             command: |
               poetry run pre-commit --version
-              poetry run pre-commit run -a
+              poetry run pre-commit run -a --verbose
         - run:
             name: Run Pytest collection
             command: |

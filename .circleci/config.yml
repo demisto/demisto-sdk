@@ -403,12 +403,17 @@ jobs:
             while ! curl --fail http://127.0.0.1:7474 &> /dev/null; do sleep 1; done
             # create content graph from scratch
             demisto-sdk create-content-graph
-
+            python ../tests_end_to_end/e2e_tests_graph.py
+            echo "Graph was created successfully from scratch"
             # Update content graph from the bucket
             demisto-sdk update-content-graph -g -o ./tmp/content_graph
-
+            python ../tests_end_to_end/e2e_tests_graph.py
+            echo "Graph was updated successfully from the bucket"
             # Update content graph from the the previous content graph that was created/built
             demisto-sdk update-content-graph -i ./tmp/content_graph/xsoar.zip -o ./tmp/content_graph
+            python ../tests_end_to_end/e2e_tests_graph.py
+            echo "Graph was updated successfully from the previous content graph"
+
       - store_artifacts:
           path: content/tmp
       - store_artifacts:

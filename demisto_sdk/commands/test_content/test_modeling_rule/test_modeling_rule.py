@@ -1,6 +1,6 @@
 import contextlib
 import os
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from time import sleep
 from typing import Any, Dict, List, Optional, Tuple, Union
@@ -85,13 +85,11 @@ def create_table(expected: Dict[str, Any], received: Dict[str, Any]):
         Table object to display the expected and received values.
     """
     data = [(key, str(val), str(received.get(key))) for key, val in expected.items()]
-    table = tabulate(
+    return tabulate(
         data,
         tablefmt="fancy_grid",
         headers=["Model Field", "Expected Value", "Received Value"],
     )
-
-    return table
 
 
 def day_suffix(day: int) -> str:
@@ -117,7 +115,7 @@ def get_relative_path_to_content(path: Path) -> Path:
     """Get the relative path to the content directory.
 
     Args:
-        path (Path): The path to the content item.
+        path: The path to the content item.
 
     Returns:
         Path: The relative path to the content directory.
@@ -305,16 +303,16 @@ def generate_xql_query(rule: SingleModelingRule, test_data_event_ids: List[str])
     Returns:
         str: The XQL query.
     """
-    fields = ", ".join([field for field in rule.fields])
+    fields = ", ".join(list(rule.fields))
     td_event_ids = ", ".join(
         [f'"{td_event_id}"' for td_event_id in test_data_event_ids]
     )
-    query = (
-        f"config timeframe = 10y | datamodel dataset in({rule.dataset}) | filter {rule.dataset}.test_data_event_id "
-        f"in({td_event_ids}) | dedup {rule.dataset}.test_data_event_id by desc _insert_time | fields "
-        f"{rule.dataset}.test_data_event_id, {fields}"
+    return (
+        f"config timeframe = 10y | datamodel dataset in({rule.dataset}) | "
+        f"filter {rule.dataset}.test_data_event_id in({td_event_ids}) | "
+        f"dedup {rule.dataset}.test_data_event_id by desc _insert_time | "
+        f"fields {rule.dataset}.test_data_event_id, {fields}"
     )
-    return query
 
 
 def validate_expected_values(
@@ -448,10 +446,9 @@ def validate_schema_aligned_with_test_data(
                         )
                         errors_occurred = True
 
-        missing_test_data_keys = set(all_schema_dataset_mappings.keys()) - set(
+        if missing_test_data_keys := set(all_schema_dataset_mappings.keys()) - set(
             test_data_mappings.keys()
-        )
-        if missing_test_data_keys:
+        ):
             logger.warning(
                 f"[yellow]The following fields {missing_test_data_keys} are in schema for dataset {dataset}, but not "
                 f"in test-data, make sure to remove them from schema or add them to test-data if necessary[/yellow]",
@@ -491,7 +488,7 @@ def check_dataset_exists(
     dataset_set_test_case = TestCase(
         "Check if dataset exists in tenant", classname="Check dataset exists"
     )
-    dataset_set_test_case_start_time = datetime.utcnow()
+    dataset_set_test_case_start_time = datetime.now(timezone.utc)
     test_case_results = []
     logger.debug(
         f"Sleeping for {init_sleep_time} seconds before query for the dataset, to make sure the dataset was installed correctly."
@@ -506,6 +503,7 @@ def check_dataset_exists(
             extra={"markup": True},
         )
         query = f"config timeframe = 10y | dataset = {dataset}"
+        results = None
         for i in range(timeout // interval):
             with contextlib.suppress(requests.exceptions.HTTPError):
                 # If the dataset doesn't exist HTTPError exception is raised.
@@ -550,7 +548,7 @@ def check_dataset_exists(
     if test_case_results:
         dataset_set_test_case.result = test_case_results
     dataset_set_test_case.time = (
-        datetime.utcnow() - dataset_set_test_case_start_time
+        datetime.now(timezone.utc) - dataset_set_test_case_start_time
     ).total_seconds()
     return dataset_set_test_case
 
@@ -571,7 +569,7 @@ def push_test_data_to_tenant(
         f"Push test data to tenant {mr.path}",
         classname="Push test data to tenant",
     )
-    push_test_data_test_case_start_time = datetime.utcnow()
+    push_test_data_test_case_start_time = datetime.now(timezone.utc)
     system_errors = []
     for rule in mr.rules:
         events_test_data = [
@@ -608,7 +606,7 @@ def push_test_data_to_tenant(
         push_test_data_test_case.system_out = system_out
         logger.info(f"[green]{system_out}[/green]", extra={"markup": True})
     push_test_data_test_case.time = (
-        datetime.utcnow() - push_test_data_test_case_start_time
+        datetime.now(timezone.utc) - push_test_data_test_case_start_time
     ).total_seconds()
     return push_test_data_test_case
 
@@ -629,12 +627,10 @@ def verify_pack_exists_on_tenant(
     containing_pack = get_containing_pack(mr)
     containing_pack_id = containing_pack.id
     installed_packs = xsiam_client.installed_packs
-    found_pack = None
-    for pack in installed_packs:
-        if containing_pack_id == pack.get("id"):
-            found_pack = pack
-            break
-    if found_pack:
+    if found_pack := next(
+        (pack for pack in installed_packs if containing_pack_id == pack.get("id")),
+        None,
+    ):
         logger.debug(
             f"[cyan]Found pack on tenant:\n{found_pack}[/cyan]", extra={"markup": True}
         )
@@ -646,11 +642,9 @@ def verify_pack_exists_on_tenant(
 
         upload_result = 0
         if interactive:
-            # interactively install pack
-            upload = typer.confirm(
+            if typer.confirm(
                 f"Would you like to upload {containing_pack_id} to the tenant?"
-            )
-            if upload:
+            ):
                 logger.info(
                     f'[cyan][underline]Upload "{containing_pack_id}"[/underline][/cyan]',
                     extra={"markup": True},
@@ -703,7 +697,7 @@ def verify_test_data_exists(test_data_path: Path) -> Tuple[List[UUID], List[UUID
     for event_log in test_data.data:
         if not event_log.event_data:
             missing_event_data.append(event_log.test_data_event_id)
-        if all([val is None for val in event_log.expected_values.values()]):
+        if all(val is None for val in event_log.expected_values.values()):
             missing_expected_values_data.append(event_log.test_data_event_id)
     return missing_event_data, missing_expected_values_data
 
@@ -753,7 +747,9 @@ def validate_modeling_rule(
     )
     modeling_rule_test_suite.add_property(
         "test_data_path",
-        get_relative_path_to_content(modeling_rule.testdata_path) or NOT_AVAILABLE,
+        get_relative_path_to_content(modeling_rule.testdata_path)
+        if modeling_rule.testdata_path
+        else NOT_AVAILABLE,
     )
     modeling_rule_test_suite.add_property(
         "schema_path", get_relative_path_to_content(modeling_rule.schema_path)
@@ -790,10 +786,11 @@ def validate_modeling_rule(
             test_case = TestCase(
                 "Pack not installed on tenant", classname="Modeling Rule"
             )
-            test_case.result = [Error("Pack not installed on tenant")]
-            modeling_rule_test_suite.add_testcase(test_case)
-            return False, modeling_rule_test_suite
-
+            return add_result_to_test_case(
+                "Pack not installed on tenant",
+                test_case,
+                modeling_rule_test_suite,
+            )
         test_data = init_test_data.TestData.parse_file(
             modeling_rule.testdata_path.as_posix()
         )
@@ -810,20 +807,14 @@ def validate_modeling_rule(
                         extra={"markup": True},
                     )
                     schema_test_case.system_err = str(ex)
-                    schema_test_case.result = [Error(err)]
-                    modeling_rule_test_suite.add_testcase(schema_test_case)
-                    return False, modeling_rule_test_suite
+                    return add_result_to_test_case(
+                        err, schema_test_case, modeling_rule_test_suite
+                    )
         else:
             err = f"Schema file does not exist in path {modeling_rule.schema_path}"
-            logger.error(
-                f"[red]{err}[/red]",
-                extra={"markup": True},
+            return log_error_to_test_case(
+                err, schema_test_case, modeling_rule_test_suite
             )
-            schema_test_case.system_err = err
-            schema_test_case.result = [Error(err)]
-            modeling_rule_test_suite.add_testcase(schema_test_case)
-            return False, modeling_rule_test_suite
-
         if (
             Validations.SCHEMA_TYPES_ALIGNED_WITH_TEST_DATA.value
             not in test_data.ignored_validations
@@ -840,55 +831,26 @@ def validate_modeling_rule(
                     f"The schema {get_relative_path_to_content(schema_path)} is not aligned with the test data file "
                     f"{get_relative_path_to_content(modeling_rule.testdata_path)}"
                 )
-                logger.error(
-                    f"[red]{err}[/red]",
-                    extra={"markup": True},
+                return log_error_to_test_case(
+                    err, schema_test_case, modeling_rule_test_suite
                 )
-                schema_test_case.system_err = err
-                schema_test_case.result = [Error(err)]
-                modeling_rule_test_suite.add_testcase(schema_test_case)
-                return False, modeling_rule_test_suite
         else:
-            skipped = f"Skipping the validation to check that the schema {get_relative_path_to_content(schema_path)} "
-            "is aligned with TestData file."
+            skipped = (
+                f"Skipping the validation to check that the schema {get_relative_path_to_content(schema_path)} "
+                "is aligned with TestData file."
+            )
             logger.info(f"[green]{skipped}[/green]", extra={"markup": True})
             schema_test_case.result = [Skipped(skipped)]
             modeling_rule_test_suite.add_testcase(schema_test_case)
 
         if push:
             if missing_event_data:
-                missing_event_data_test_case = TestCase(
-                    "Missing Event Data", classname="Modeling Rule"
+                return handle_missing_event_data_in_modeling_rule(
+                    missing_event_data,
+                    modeling_rule,
+                    modeling_rule_test_suite,
+                    executed_command,
                 )
-                err = f"Missing Event Data for the following test data event ids: {missing_event_data}"
-                missing_event_data_test_case.result = [Error(err)]
-                prefix = "Event log test data is missing for the following ids:"
-                system_errors = [prefix]
-                logger.warning(
-                    f"[yellow]{prefix}[/yellow]",
-                    extra={"markup": True},
-                )
-                for test_data_event_id in missing_event_data:
-                    logger.warning(
-                        f"[yellow] - {test_data_event_id}[/yellow]",
-                        extra={"markup": True},
-                    )
-                    system_errors.append(str(test_data_event_id))
-                suffix = (
-                    f"Please complete the test data file at {get_relative_path_to_content(modeling_rule.testdata_path)} "
-                    f"with test event(s) data and expected outputs and then rerun"
-                )
-                logger.warning(
-                    f"[yellow]{suffix}[/yellow]",
-                    extra={"markup": True},
-                )
-                system_errors.append(suffix)
-                missing_event_data_test_case.system_err = "\n".join(system_errors)
-                modeling_rule_test_suite.add_testcase(missing_event_data_test_case)
-
-                typer.echo(executed_command)
-                return False, modeling_rule_test_suite
-
             push_test_data_test_case = push_test_data_to_tenant(
                 xsiam_client, modeling_rule, test_data
             )
@@ -927,10 +889,9 @@ def validate_modeling_rule(
             extra={"markup": True},
         )
         if interactive:
-            generate = typer.confirm(
+            if typer.confirm(
                 f"Would you like to generate a test data file for {modeling_rule_directory}?"
-            )
-            if generate:
+            ):
                 logger.info(
                     "[cyan][underline]Generate Test Data File[/underline][/cyan]",
                     extra={"markup": True},
@@ -982,6 +943,7 @@ def validate_modeling_rule(
                         extra={"markup": True},
                     )
                     typer.echo(executed_command)
+                    return True, None
                 else:
                     logger.error(
                         f"[red]Failed to generate test data file for "
@@ -1008,6 +970,64 @@ def validate_modeling_rule(
             )
             typer.echo(executed_command)
         return False, None
+
+
+def handle_missing_event_data_in_modeling_rule(
+    missing_event_data: List[UUID],
+    modeling_rule: ModelingRule,
+    modeling_rule_test_suite: TestSuite,
+    executed_command: str,
+) -> Tuple[bool, TestSuite]:
+    missing_event_data_test_case = TestCase(
+        "Missing Event Data", classname="Modeling Rule"
+    )
+    err = f"Missing Event Data for the following test data event ids: {missing_event_data}"
+    missing_event_data_test_case.result = [Error(err)]
+    prefix = "Event log test data is missing for the following ids:"
+    system_errors = [prefix]
+    logger.warning(
+        f"[yellow]{prefix}[/yellow]",
+        extra={"markup": True},
+    )
+    for test_data_event_id in missing_event_data:
+        logger.warning(
+            f"[yellow] - {test_data_event_id}[/yellow]",
+            extra={"markup": True},
+        )
+        system_errors.append(str(test_data_event_id))
+    suffix = (
+        f"Please complete the test data file at {get_relative_path_to_content(modeling_rule.testdata_path)} "
+        f"with test event(s) data and expected outputs and then rerun"
+    )
+    logger.warning(
+        f"[yellow]{suffix}[/yellow]",
+        extra={"markup": True},
+    )
+    system_errors.append(suffix)
+    missing_event_data_test_case.system_err = "\n".join(system_errors)
+    modeling_rule_test_suite.add_testcase(missing_event_data_test_case)
+
+    typer.echo(executed_command)
+    return False, modeling_rule_test_suite
+
+
+def log_error_to_test_case(
+    err: str, schema_test_case: TestCase, modeling_rule_test_suite: TestSuite
+) -> Tuple[bool, TestSuite]:
+    logger.error(
+        f"[red]{err}[/red]",
+        extra={"markup": True},
+    )
+    schema_test_case.system_err = err
+    return add_result_to_test_case(err, schema_test_case, modeling_rule_test_suite)
+
+
+def add_result_to_test_case(
+    err: str, test_case: TestCase, modeling_rule_test_suite: TestSuite
+) -> Tuple[bool, TestSuite]:
+    test_case.result = [Error(err)]
+    modeling_rule_test_suite.add_testcase(test_case)
+    return False, modeling_rule_test_suite
 
 
 # ====================== test-modeling-rule ====================== #
@@ -1154,7 +1174,7 @@ def test_modeling_rule(
     )
     errors = False
     xml = JUnitXml()
-    start_time = datetime.utcnow()
+    start_time = datetime.now(timezone.utc)
     for modeling_rule_directory in inputs:
         success, modeling_rule_test_suite = validate_modeling_rule(
             modeling_rule_directory,

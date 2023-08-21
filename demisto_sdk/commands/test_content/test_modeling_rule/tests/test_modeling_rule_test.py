@@ -10,9 +10,7 @@ from freezegun import freeze_time
 from junitparser import TestSuite
 from typer.testing import CliRunner
 
-from commands.common.content.objects.pack_objects.modeling_rule.modeling_rule import (
-    ModelingRule,
-)
+from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.test_content.xsiam_tools.test_data import Validations
 from TestSuite.test_tools import str_in_call_args_list
 
@@ -55,6 +53,13 @@ DEFAULT_MODELING_RULE_NAME = "TestModelingRule"
 DEFAULT_MODELING_RULE_NAME_2 = "TestModelingRule2"
 DEFAULT_TEST_EVENT_ID = UUID("00000000-0000-0000-0000-000000000000")
 DEFAULT_TEST_EVENT_ID_2 = UUID("11111111-1111-1111-1111-111111111111")
+
+
+class ModelingRuleMock:
+    path = Path(CONTENT_PATH)
+
+    def normalize_file_name(self):
+        return "test_modeling_rule.yml"
 
 
 class SetFakeXsiamClientEnvironmentVars:
@@ -150,7 +155,7 @@ class TestVerifyResults:
                 )
             ]
         )
-        modeling_rule = ModelingRule(Path("."))
+        modeling_rule = ModelingRuleMock()
 
         try:
             assert verify_results(
@@ -206,7 +211,7 @@ class TestVerifyResults:
             ]
         )
 
-        modeling_rule = ModelingRule(Path("."))
+        modeling_rule = ModelingRuleMock()
         test_suite = TestSuite("Testing")
         test_suite.add_testcases(
             verify_results(modeling_rule, tested_dataset, query_results, test_data)
@@ -1754,7 +1759,7 @@ class TestValidateSchemaAlignedWithTestData:
             ]
         )
 
-        with pytest.raises(typer.Exit):
+        assert (
             validate_schema_aligned_with_test_data(
                 test_data=test_data,
                 schema={
@@ -1764,6 +1769,8 @@ class TestValidateSchemaAlignedWithTestData:
                     }
                 },
             )
+            is False
+        )
         assert logger_error_mocker.called
         assert not logger_warning_mocker.called
 
@@ -1815,7 +1822,7 @@ class TestValidateSchemaAlignedWithTestData:
             ]
         )
 
-        with pytest.raises(typer.Exit):
+        assert (
             validate_schema_aligned_with_test_data(
                 test_data=test_data,
                 schema={
@@ -1825,6 +1832,8 @@ class TestValidateSchemaAlignedWithTestData:
                     }
                 },
             )
+            is False
+        )
         assert (
             "The testdata contains events with the same event_key"
             in logger_error_mocker.call_args_list[0].args[0]

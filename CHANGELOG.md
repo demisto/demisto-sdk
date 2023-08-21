@@ -6,7 +6,7 @@
 * Calling **graph create** or **graph update** now run the commands with default arguments, instead of showing the command help.
 * Removed the use of chunks when calculating content relationships.
 * Fixed an issue where the url regex in the **validate** command was wrong.
-*
+
 ## 1.19.1
 * Fixed an issue where **unify** failed on integrations using an API a module, when not called from the content root.
 * Improved **update-release-notes** logs when changes in dependent API modules are detected.

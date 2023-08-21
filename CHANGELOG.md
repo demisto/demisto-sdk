@@ -1,5 +1,7 @@
 # Changelog
 ## Unreleased
+* Fixed an issue in calculating content graph hash when creating or updating it.
+* Calling **graph create** or **graph update** now run the commands with default arguments, instead of showing the command help.
 * Added support for a new marketplace tag `xsoar_saas`.
 * Added support for yml hidden parameters for `xsoar_saas` marketplace, as part of the **prepare_content** command.
 * Added support for custom documentation that will appear only in `xsoar_saas` marketplace, as part of the **prepare_content** command.

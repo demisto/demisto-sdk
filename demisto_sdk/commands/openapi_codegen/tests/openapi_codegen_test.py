@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
@@ -259,9 +260,7 @@ class TestOpenAPICodeGen:
         with open(self.swagger_path) as f:
             file_data_after_config_save = json.loads(f.read())
         assert file_data_after_config_save == file_data_before_config_save
-        os.remove(
-            os.path.join(self.test_files_path, f"{integration.base_name}_config.json")
-        )
+        Path(self.test_files_path, f"{integration.base_name}_config.json").unlink()
 
     def test_ref_props_non_dict_handling(self):
         """

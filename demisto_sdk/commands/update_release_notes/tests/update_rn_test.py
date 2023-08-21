@@ -4,6 +4,7 @@ import pathlib
 import shutil
 from collections import Counter
 from copy import deepcopy
+from pathlib import Path
 from typing import Dict, Optional
 from unittest import mock
 
@@ -18,8 +19,8 @@ from demisto_sdk.commands.common.hook_validations.readme import ReadMeValidator
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.markdown_lint import run_markdownlint
 from demisto_sdk.commands.common.tools import get_json
-from demisto_sdk.commands.content_graph.interface.neo4j.neo4j_graph import (
-    Neo4jContentGraphInterface,
+from demisto_sdk.commands.content_graph.interface import (
+    ContentGraphInterface,
 )
 from demisto_sdk.commands.content_graph.tests.create_content_graph_test import (
     mock_integration,
@@ -602,7 +603,7 @@ class TestRNUpdate:
             pre_release=False, specific_version=None
         )
         assert version_number == expected_version
-        os.remove(os.path.join(TestRNUpdate.FILES_PATH, "fake_pack/pack_metadata.json"))
+        Path(TestRNUpdate.FILES_PATH, "fake_pack/pack_metadata.json").unlink()
         shutil.copy(
             src=os.path.join(TestRNUpdate.FILES_PATH, "fake_pack/_pack_metadata.json"),
             dst=os.path.join(TestRNUpdate.FILES_PATH, "fake_pack/pack_metadata.json"),
@@ -639,7 +640,7 @@ class TestRNUpdate:
             pre_release=False, specific_version=None
         )
         assert version_number == expected_version
-        os.remove(os.path.join(TestRNUpdate.FILES_PATH, "fake_pack/pack_metadata.json"))
+        Path(TestRNUpdate.FILES_PATH, "fake_pack/pack_metadata.json").unlink()
         shutil.copy(
             src=os.path.join(TestRNUpdate.FILES_PATH, "fake_pack/_pack_metadata.json"),
             dst=os.path.join(TestRNUpdate.FILES_PATH, "fake_pack/pack_metadata.json"),
@@ -676,7 +677,7 @@ class TestRNUpdate:
             pre_release=False, specific_version=None
         )
         assert version_number == expected_version
-        os.remove(os.path.join(TestRNUpdate.FILES_PATH, "fake_pack/pack_metadata.json"))
+        Path(TestRNUpdate.FILES_PATH, "fake_pack/pack_metadata.json").unlink()
         shutil.copy(
             src=os.path.join(TestRNUpdate.FILES_PATH, "fake_pack/_pack_metadata.json"),
             dst=os.path.join(TestRNUpdate.FILES_PATH, "fake_pack/pack_metadata.json"),
@@ -714,7 +715,7 @@ class TestRNUpdate:
             pre_release=False, specific_version="2.0.0"
         )
         assert version_number == expected_version
-        os.remove(os.path.join(TestRNUpdate.FILES_PATH, "fake_pack/pack_metadata.json"))
+        Path(TestRNUpdate.FILES_PATH, "fake_pack/pack_metadata.json").unlink()
         shutil.copy(
             src=os.path.join(TestRNUpdate.FILES_PATH, "fake_pack/_pack_metadata.json"),
             dst=os.path.join(TestRNUpdate.FILES_PATH, "fake_pack/pack_metadata.json"),
@@ -752,11 +753,7 @@ class TestRNUpdate:
         )
         with pytest.raises(ValueError):
             update_rn.bump_version_number()
-        os.remove(
-            os.path.join(
-                TestRNUpdate.FILES_PATH, "fake_pack_invalid/pack_metadata.json"
-            )
-        )
+        Path(TestRNUpdate.FILES_PATH, "fake_pack_invalid/pack_metadata.json").unlink()
         shutil.copy(
             src=os.path.join(
                 TestRNUpdate.FILES_PATH, "fake_pack_invalid/_pack_metadata.json"
@@ -798,11 +795,7 @@ class TestRNUpdate:
         )
         with pytest.raises(ValueError):
             update_rn.bump_version_number()
-        os.remove(
-            os.path.join(
-                TestRNUpdate.FILES_PATH, "fake_pack_invalid/pack_metadata.json"
-            )
-        )
+        Path(TestRNUpdate.FILES_PATH, "fake_pack_invalid/pack_metadata.json").unlink()
         shutil.copy(
             src=os.path.join(
                 TestRNUpdate.FILES_PATH, "fake_pack_invalid/_pack_metadata.json"
@@ -844,11 +837,7 @@ class TestRNUpdate:
         )
         with pytest.raises(ValueError):
             update_rn.bump_version_number()
-        os.remove(
-            os.path.join(
-                TestRNUpdate.FILES_PATH, "fake_pack_invalid/pack_metadata.json"
-            )
-        )
+        Path(TestRNUpdate.FILES_PATH, "fake_pack_invalid/pack_metadata.json").unlink()
         shutil.copy(
             src=os.path.join(
                 TestRNUpdate.FILES_PATH, "fake_pack_invalid/_pack_metadata.json"
@@ -1760,7 +1749,7 @@ class TestRNUpdateUnit:
         data_dict = get_json(TEMP_FILE)
         update_rn.metadata_path = TEMP_FILE
         update_rn.write_metadata_to_file(data_dict)
-        os.remove(ORIGINAL)
+        Path(ORIGINAL).unlink()
         shutil.copy(src=TEMP_FILE, dst=ORIGINAL)
 
     def test_find_added_pack_files(self, mocker):
@@ -1971,15 +1960,14 @@ class TestRNUpdateUnit:
         added = {}
 
         integration_mock = mock_integration("SmapleIntegration")
-        mocker.patch.object(Neo4jContentGraphInterface, "__init__", return_value=None)
-        mocker.patch.object(
-            Neo4jContentGraphInterface,
-            "__enter__",
-            return_value=Neo4jContentGraphInterface,
-        )
-        mocker.patch.object(Neo4jContentGraphInterface, "__exit__", return_value=None)
+        mocker.patch.object(ContentGraphInterface, "__init__", return_value=None)
+        mocker.patch.object(ContentGraphInterface, "__exit__", return_value=None)
         mocker.patch.object(UpdateRN, "get_master_version", return_value="0.0.0")
 
+        mocker.patch(
+            "demisto_sdk.commands.update_release_notes.update_rn.update_content_graph",
+            return_value=None,
+        )
         mocker.patch(
             "demisto_sdk.commands.update_release_notes.update_rn.get_api_module_dependencies_from_graph",
             return_value=[integration_mock],  # Mock the integration path
@@ -2081,7 +2069,6 @@ class TestRNUpdateUnit:
         Then
             - A new release notes is created. and it has a new record for updating docker image.
         """
-        import os
 
         from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
 
@@ -2138,9 +2125,9 @@ class TestRNUpdateUnit:
             "demisto_sdk/commands/update_release_notes/tests_data/Packs/release_notes/1_1_0.md"
         ) as file:
             RN = file.read()
-        os.remove(
+        Path(
             "demisto_sdk/commands/update_release_notes/tests_data/Packs/release_notes/1_1_0.md"
-        )
+        ).unlink()
         assert "Updated the Docker image to: *demisto/python3:3.9.6.22914*." in RN
 
     def test_update_docker_image_in_yml_when_RN_aleady_exists(self, mocker):
@@ -2224,7 +2211,6 @@ class TestRNUpdateUnit:
         Then
             - A new record with the updated docker image is added.
         """
-        import os
 
         from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
 
@@ -2266,9 +2252,9 @@ class TestRNUpdateUnit:
             "demisto_sdk/commands/update_release_notes/tests_data/Packs/release_notes/1_1_0.md"
         ) as file:
             RN = file.read()
-        os.remove(
+        Path(
             "demisto_sdk/commands/update_release_notes/tests_data/Packs/release_notes/1_1_0.md"
-        )
+        ).unlink()
         assert "Updated the Docker image to: *dockerimage:python/test:1243*" not in RN
 
     def test_new_integration_docker_not_updated(self, mocker):
@@ -2281,7 +2267,6 @@ class TestRNUpdateUnit:
         Then
             - Docker is not indicated as updated.
         """
-        import os
 
         from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
 
@@ -2320,9 +2305,9 @@ class TestRNUpdateUnit:
             "demisto_sdk/commands/update_release_notes/tests_data/Packs/release_notes/1_1_0.md"
         ) as file:
             RN = file.read()
-        os.remove(
+        Path(
             "demisto_sdk/commands/update_release_notes/tests_data/Packs/release_notes/1_1_0.md"
-        )
+        ).unlink()
         assert "Updated the Docker image to: *dockerimage:python/test:1243*" not in RN
 
     docker_image_test_rn = (

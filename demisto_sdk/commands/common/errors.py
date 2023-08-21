@@ -1,10 +1,10 @@
 from __future__ import annotations
 
-from distutils.version import LooseVersion
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Set, Union
 
 import decorator
+from packaging.version import Version
 from requests import Response
 
 from demisto_sdk.commands.common.constants import (
@@ -52,7 +52,7 @@ PRESET_ERROR_TO_CHECK = {
     "deprecated": ["ST", "BC", "BA", "IN127", "IN128", "PB104", "SC101"],
 }
 
-ERROR_CODE = {
+ERROR_CODE: Dict = {
     # BA - Basic
     "wrong_version": {
         "code": "BA100",
@@ -962,6 +962,10 @@ ERROR_CODE = {
         "code": "PA136",
         "related_field": "",
     },
+    "pack_have_nonignorable_error": {
+        "code": "PA137",
+        "related_field": "",
+    },
     # PB - Playbooks
     "playbook_cant_have_rolename": {
         "code": "PB100",
@@ -1457,6 +1461,11 @@ ERROR_CODE = {
         "code": "GR107",
         "related_field": "",
     },
+    "hidden_pack_not_mandatory_dependency": {
+        "code": "GR108",
+        "ui_applicable": False,
+        "related_field": "",
+    },
 }
 
 
@@ -1543,6 +1552,7 @@ ALLOWED_IGNORE_ERRORS = (
         "LO107",
         "IN107",
         "DB100",
+        "GR103",
     ]
 )
 
@@ -1685,8 +1695,8 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def field_version_is_not_correct(
-        from_version_set: LooseVersion,
-        expected_from_version: LooseVersion,
+        from_version_set: Version,
+        expected_from_version: Version,
         reason_for_version: str,
     ):
         return (
@@ -4350,3 +4360,15 @@ class Errors:
             "is replaced by the word Incident/Incidents\nfor example: if there is a script `getIncident'"
             "it will not be possible to create a script with the name `getAlert`)"
         )
+
+    @staticmethod
+    @error_code_decorator
+    def hidden_pack_not_mandatory_dependency(
+        hidden_pack: str, dependant_packs_ids: Set[str]
+    ):
+        return f"{', '.join(dependant_packs_ids)} pack(s) cannot have a mandatory dependency on the hidden pack {hidden_pack}."
+
+    @staticmethod
+    @error_code_decorator
+    def pack_have_nonignorable_error(nonignorable_errors: List[str]):
+        return f"The following errors can not be ignored: {', '.join(nonignorable_errors)}, remove them from .pack-ignore files"

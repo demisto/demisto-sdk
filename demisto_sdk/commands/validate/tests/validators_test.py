@@ -183,7 +183,7 @@ class TestValidators:
 
     @classmethod
     def teardown_class(cls):
-        os.remove(CONF_PATH)
+        Path(CONF_PATH).unlink()
         for dir_to_delete in cls.CREATED_DIRS:
             if os.path.exists(dir_to_delete):
                 os.rmdir(dir_to_delete)
@@ -264,7 +264,7 @@ class TestValidators:
             mocker.patch.object(validator, "is_script_id_valid", return_value=True)
             assert validator.is_valid_playbook(validate_rn=False)
         finally:
-            os.remove(PLAYBOOK_TARGET)
+            Path(PLAYBOOK_TARGET).unlink()
 
     @pytest.mark.parametrize(
         "source, target, answer, validator", (INPUTS_IS_VALID_VERSION)
@@ -288,7 +288,7 @@ class TestValidators:
             res_validator = validator(structure)
             assert res_validator.is_valid_version() is answer
         finally:
-            os.remove(target)
+            Path(target).unlink()
 
     @pytest.mark.parametrize(
         "source, target, answer, validator",
@@ -313,7 +313,7 @@ class TestValidators:
             res_validator = validator(structure)
             assert res_validator.is_valid_fromversion() is answer
         finally:
-            os.remove(target)
+            Path(target).unlink()
 
     INPUTS_is_condition_branches_handled = [
         (INVALID_PLAYBOOK_CONDITION_1, False),
@@ -329,7 +329,7 @@ class TestValidators:
             validator = PlaybookValidator(structure)
             assert validator.is_condition_branches_handled() is answer
         finally:
-            os.remove(PLAYBOOK_TARGET)
+            Path(PLAYBOOK_TARGET).unlink()
 
     INPUTS_is_condition_branches_handled = [
         (INVALID_PLAYBOOK_CONDITION_1, False),
@@ -345,7 +345,7 @@ class TestValidators:
             validator = PlaybookValidator(structure)
             assert validator.are_default_conditions_valid() is answer
         finally:
-            os.remove(PLAYBOOK_TARGET)
+            Path(PLAYBOOK_TARGET).unlink()
 
     INPUTS_LOCKED_PATHS = [
         (VALID_REPUTATION_PATH, True, ReputationValidator),
@@ -386,7 +386,7 @@ class TestValidators:
             )
             assert res_validator.is_valid_file(validate_rn=False) is answer
         finally:
-            os.remove(target)
+            Path(target).unlink()
 
     INPUTS_RELEASE_NOTES_EXISTS_VALIDATION = [
         (
@@ -450,8 +450,8 @@ class TestValidators:
             res_validator = OldReleaseNotesValidator(target_dummy)
             assert res_validator.validate_file_release_notes_exists() is answer
         finally:
-            os.remove(target_dummy)
-            os.remove(target_release_notes)
+            Path(target_dummy).unlink()
+            Path(target_release_notes).unlink()
 
     @staticmethod
     def create_release_notes_structure_test_package():
@@ -531,8 +531,8 @@ class TestValidators:
             res_validator = OldReleaseNotesValidator(target_dummy)
             assert res_validator.is_valid_release_notes_structure() is answer
         finally:
-            os.remove(target_dummy)
-            os.remove(target_release_notes)
+            Path(target_dummy).unlink()
+            Path(target_release_notes).unlink()
 
     @staticmethod
     def mock_get_master_diff():
@@ -563,7 +563,7 @@ class TestValidators:
             res_validator = validator(structure)
             assert res_validator.is_id_equals_name() is answer
         finally:
-            os.remove(target)
+            Path(target).unlink()
 
     INPUTS_IS_CONNECTED_TO_ROOT = [
         (INVALID_PLAYBOOK_PATH_FROM_ROOT, False),
@@ -578,7 +578,7 @@ class TestValidators:
             validator = PlaybookValidator(structure)
             assert validator.is_root_connected_to_all_tasks() is answer
         finally:
-            os.remove(PLAYBOOK_TARGET)
+            Path(PLAYBOOK_TARGET).unlink()
 
     INPUTS_STRUCTURE_VALIDATION = [
         (VALID_INTEGRATION_TEST_PATH, INTEGRATION_TARGET, "integration"),
@@ -599,7 +599,7 @@ class TestValidators:
                 file_path=source, predefined_scheme=file_type
             ).is_valid_file()
         finally:
-            os.remove(target)
+            Path(target).unlink()
 
     FILES_PATHS_FOR_ALL_VALIDATIONS = [
         VALID_INTEGRATION_ID_PATH,
@@ -807,7 +807,7 @@ class TestValidators:
         assert not str_in_call_args_list(logger_error.call_args_list, err_msg)
         assert not str_in_call_args_list(logger_error.call_args_list, err_code)
 
-        os.remove(pack.pack_metadata.path)
+        Path(pack.pack_metadata.path).unlink()
         validate_manager.validate_pack_unique_files(
             pack.path, pack_error_ignore_list={}
         )
@@ -1103,9 +1103,7 @@ class TestValidators:
         assert ignore_errors_list["file_name"] == [
             "BA101",
             "SC101",
-            "IN117",
             "BA106",
-            "IN100",
         ]
         assert "SC100" not in ignore_errors_list["file_name"]
 
@@ -3122,14 +3120,6 @@ def test_validate_no_disallowed_terms_in_customer_facing_docs_end_to_end(repo, m
 
     validate_manager = ValidateManager()
 
-    # Mock all validations that aren't 'validate_no_disallowed_terms_in_customer_facing_docs' to return True
-    # mocker.patch.object(ReleaseNotesValidator, "has_release_notes_been_filled_out", return_value=True)
-    # mocker.patch.object(ReleaseNotesValidator, "are_release_notes_complete", return_value=True)
-    # mocker.patch.object(ReleaseNotesValidator, "is_docker_image_same_as_yml", return_value=True)
-    # mocker.patch.object(ReleaseNotesValidator, "validate_json_when_breaking_changes", return_value=True)
-    # mocker.patch.object(ReleaseNotesValidator, "has_no_markdown_lint_errors", return_value=True)
-    # mocker.patch.object(ReleaseNotesValidator, "validate_release_notes_headers", return_value=True)
-
     assert not validate_manager.run_validations_on_file(
         file_path=rn_file.path, pack_error_ignore_list=[]
     )
@@ -3143,6 +3133,6 @@ def test_validate_no_disallowed_terms_in_customer_facing_docs_end_to_end(repo, m
         file_path=playbook_readme_file.path, pack_error_ignore_list=[]
     )
 
-    # Assure an error was logged for each file
+    # Assure errors were logged (1 error per validated file)
     assert count_str_in_call_args_list(logger_error.call_args_list, "BA125") == 4
     pass

@@ -1,14 +1,14 @@
 import logging
 import os
-from pathlib import PosixPath
+from pathlib import Path, PosixPath
 from unittest.mock import MagicMock
 
 import pytest
 
 from demisto_sdk.commands.common.constants import TYPE_PWSH, TYPE_PYTHON, FileType
 from demisto_sdk.commands.common.legacy_git_tools import git_path
-from demisto_sdk.commands.content_graph.interface.neo4j.neo4j_graph import (
-    Neo4jContentGraphInterface,
+from demisto_sdk.commands.content_graph.interface import (
+    ContentGraphInterface,
 )
 from demisto_sdk.commands.lint.lint_manager import LintManager
 from demisto_sdk.commands.lint.linter import DockerImageFlagOption
@@ -97,7 +97,7 @@ def test_create_failed_unit_tests_report_with_failed_tests():
         assert len(fail_list) == 2
         assert "HelloWorld" in fail_list
         assert "Infoblox" in fail_list
-    os.remove(file_path)
+    Path(file_path).unlink()
 
 
 def test_create_failed_unit_tests_report_no_failed_tests():
@@ -975,15 +975,13 @@ def test_get_api_module_dependent_items(
     )
     mocker.patch.object(LintManager, "_gather_facts", return_value={"content_repo": ""})
 
-    mocker.patch.object(Neo4jContentGraphInterface, "__init__", return_value=None)
+    mocker.patch.object(ContentGraphInterface, "__init__", return_value=None)
     mocker.patch.object(
-        Neo4jContentGraphInterface, "__enter__", return_value=Neo4jContentGraphInterface
+        ContentGraphInterface, "__enter__", return_value=ContentGraphInterface
     )
-    mocker.patch.object(Neo4jContentGraphInterface, "__exit__", return_value=None)
+    mocker.patch.object(ContentGraphInterface, "__exit__", return_value=None)
     mocker.patch("demisto_sdk.commands.lint.lint_manager.update_content_graph")
-    mocker.patch.object(
-        Neo4jContentGraphInterface, "search", side_effect=api_module_nodes
-    )
+    mocker.patch.object(ContentGraphInterface, "search", side_effect=api_module_nodes)
     lint_manager = LintManager(
         input="",
         git=False,
@@ -1059,15 +1057,13 @@ def test_get_api_module_dependent_items_which_were_changed(
     )
     mocker.patch.object(LintManager, "_gather_facts", return_value={"content_repo": ""})
 
-    mocker.patch.object(Neo4jContentGraphInterface, "__init__", return_value=None)
+    mocker.patch.object(ContentGraphInterface, "__init__", return_value=None)
     mocker.patch.object(
-        Neo4jContentGraphInterface, "__enter__", return_value=Neo4jContentGraphInterface
+        ContentGraphInterface, "__enter__", return_value=ContentGraphInterface
     )
-    mocker.patch.object(Neo4jContentGraphInterface, "__exit__", return_value=None)
+    mocker.patch.object(ContentGraphInterface, "__exit__", return_value=None)
     mocker.patch("demisto_sdk.commands.lint.lint_manager.update_content_graph")
-    mocker.patch.object(
-        Neo4jContentGraphInterface, "search", side_effect=api_module_nodes
-    )
+    mocker.patch.object(ContentGraphInterface, "search", side_effect=api_module_nodes)
     lint_manager = LintManager(
         input="",
         git=False,

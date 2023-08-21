@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "demisto-sdk"
-version = "1.18.1"
+version = "1.19.1"
 description = "\"A Python library for the Demisto SDK\""
 authors = ["Demisto"]
 license = "MIT"
@@ -167,6 +167,7 @@ select = [
     "T20",
     "TID251",
     "W",
+    "PTH107",
 ]
 
 target-version = "py38"

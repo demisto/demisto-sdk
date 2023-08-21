@@ -2,6 +2,7 @@ import os
 import re
 import shutil
 from os.path import join
+from pathlib import Path
 from typing import Union
 from zipfile import ZipFile
 
@@ -14,6 +15,9 @@ from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.tools import get_child_directories
+from demisto_sdk.commands.content_graph.tests.create_content_graph_test import (
+    mock_script,
+)
 from demisto_sdk.commands.init.contribution_converter import (
     ContributionConverter,
     get_previous_nonempty_line,
@@ -221,6 +225,31 @@ def test_convert_contribution_zip_outputs_structure(tmp_path, mocker):
     mocker.patch.object(GitUtil, "__init__", return_value=None)
     mocker.patch.object(GitUtil, "added_files", return_value=set())
     mocker.patch.object(GitUtil, "modified_files", return_value=set())
+
+    # ### Mock the content graph ### #
+
+    class MockedContentGraphInterface:
+        output_path = ""
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, exc_type, exc_val, exc_tb):
+            pass
+
+        def search(self, path):
+            # Simulate the graph search
+            return [mock_script()]
+
+    mocker.patch(
+        "demisto_sdk.commands.generate_docs.generate_script_doc.ContentGraphInterface",
+        return_value=MockedContentGraphInterface(),
+    )
+    mocker.patch(
+        "demisto_sdk.commands.generate_docs.generate_script_doc.update_content_graph",
+        return_value=[],
+    )
+
     # ### SETUP ### #
     # Create all Necessary Temporary directories
     # create temp directory for the repo
@@ -865,16 +894,14 @@ class TestReleaseNotes:
     @pytest.fixture(autouse=True)
     def rn_file_copy(self):
         yield shutil.copyfile(SOURCE_RELEASE_NOTES_FILE, RELEASE_NOTES_COPY)
-        if os.path.exists(RELEASE_NOTES_COPY):
-            os.remove(RELEASE_NOTES_COPY)
+        Path(RELEASE_NOTES_COPY).unlink(missing_ok=True)
 
     @pytest.fixture(autouse=True)
     def new_entity_rn_file_copy(self):
         yield shutil.copyfile(
             NEW_ENTITY_SOURCE_RELEASE_NOTES_FILE, NEW_ENTITY_RELEASE_NOTES_COPY
         )
-        if os.path.exists(NEW_ENTITY_RELEASE_NOTES_COPY):
-            os.remove(NEW_ENTITY_RELEASE_NOTES_COPY)
+        Path(NEW_ENTITY_RELEASE_NOTES_COPY).unlink(missing_ok=True)
 
     @pytest.mark.parametrize(
         "index, expected_result",

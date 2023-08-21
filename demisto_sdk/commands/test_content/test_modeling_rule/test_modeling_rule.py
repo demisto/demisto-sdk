@@ -111,7 +111,7 @@ def day_suffix(day: int) -> str:
     return "th" if 11 <= day <= 13 else {1: "st", 2: "nd", 3: "rd"}.get(day % 10, "th")
 
 
-def get_relative_path_to_content(path: Path) -> Path:
+def get_relative_path_to_content(path: Path) -> str:
     """Get the relative path to the content directory.
 
     Args:
@@ -120,11 +120,9 @@ def get_relative_path_to_content(path: Path) -> Path:
     Returns:
         Path: The relative path to the content directory.
     """
-    return (
-        path.relative_to(CONTENT_PATH)
-        if path.is_absolute() and path.is_relative_to(CONTENT_PATH)  # type: ignore[attr-defined]
-        else path
-    )
+    if path.is_absolute() and path.as_posix().startswith(CONTENT_PATH.as_posix()):
+        return path.as_posix().replace(f"{CONTENT_PATH.as_posix()}{os.path.sep}", "")
+    return path.as_posix()
 
 
 def convert_epoch_time_to_string_time(
@@ -727,13 +725,15 @@ def validate_modeling_rule(
         ctx (typer.Context): Typer context.
     """
     logger.info(
-        f"[cyan]<<<< Test Modeling Rule:{modeling_rule_directory} >>>>[/cyan]",
+        f"[cyan]<<<< Test Modeling Rule:{get_relative_path_to_content(modeling_rule_directory)} >>>>[/cyan]",
         extra={"markup": True},
     )
     modeling_rule = ModelingRule(modeling_rule_directory.as_posix())
     modeling_rule_file_name = Path(modeling_rule.path).name
     containing_pack = get_containing_pack(modeling_rule)
-    executed_command = f"{ctx.command_path} {modeling_rule_directory}"
+    executed_command = (
+        f"{ctx.command_path} {get_relative_path_to_content(modeling_rule_directory)}"
+    )
 
     modeling_rule_test_suite = TestSuite(
         f"Modeling Rule Test Results {modeling_rule_file_name}"
@@ -820,7 +820,8 @@ def validate_modeling_rule(
             not in test_data.ignored_validations
         ):
             logger.info(
-                f"[green]Validating that the schema {schema_path} is aligned with TestData file.[/green]",
+                f"[green]Validating that the schema {get_relative_path_to_content(schema_path)} "
+                "is aligned with TestData file.[/green]",
                 extra={"markup": True},
             )
 
@@ -885,12 +886,12 @@ def validate_modeling_rule(
         return False, modeling_rule_test_suite
     else:
         logger.warning(
-            f"[yellow]No test data file found for {modeling_rule_directory}[/yellow]",
+            f"[yellow]No test data file found for {get_relative_path_to_content(modeling_rule_directory)}[/yellow]",
             extra={"markup": True},
         )
         if interactive:
             if typer.confirm(
-                f"Would you like to generate a test data file for {modeling_rule_directory}?"
+                f"Would you like to generate a test data file for {get_relative_path_to_content(modeling_rule_directory)}?"
             ):
                 logger.info(
                     "[cyan][underline]Generate Test Data File[/underline][/cyan]",
@@ -1191,7 +1192,7 @@ def test_modeling_rule(
         if not success:
             errors = True
             logger.error(
-                f"[red]Error testing modeling rule {modeling_rule_directory}[/red]",
+                f"[red]Error testing modeling rule {get_relative_path_to_content(modeling_rule_directory)}[/red]",
                 extra={"markup": True},
             )
         if modeling_rule_test_suite:

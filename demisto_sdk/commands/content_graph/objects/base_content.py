@@ -1,5 +1,3 @@
-import enum
-import inspect
 from abc import ABC, abstractmethod
 from collections import defaultdict
 from functools import lru_cache
@@ -30,13 +28,16 @@ from demisto_sdk.commands.common.constants import (
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.logger import logger
-from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
+from demisto_sdk.commands.content_graph.common import (
+    ContentType,
+    LazyProperty,
+    RelationshipType,
+)
 from demisto_sdk.commands.content_graph.parsers.content_item import (
     ContentItemParser,
     InvalidContentItemException,
     NotAContentItemException,
 )
-from demisto_sdk.commands.content_graph.common import LazyProperty
 from demisto_sdk.commands.content_graph.parsers.pack import PackParser
 
 if TYPE_CHECKING:
@@ -72,10 +73,14 @@ class BaseContentMetaclass(ModelMetaclass):
         if content_type:
             content_type_to_model[content_type] = model_cls
             model_cls.content_type = content_type
-        # validates if there are any lazy properties in the class model and if there is, add them as a class attribute
+        # validates that if there are any lazy properties in the class model, add them as a class attribute
         # so we would be able to load them during graph creation
-        if lazy_properties := {attr for attr in dir(super_cls) if isinstance(getattr(super_cls, attr), LazyProperty)}:
-            model_cls._lazy_properties = lazy_properties
+        if lazy_properties := {
+            attr
+            for attr in dir(super_cls)
+            if isinstance(getattr(super_cls, attr), LazyProperty)
+        }:
+            model_cls._lazy_properties = lazy_properties  # type: ignore[attr-defined]
         return model_cls
 
 
@@ -132,7 +137,7 @@ class BaseContent(ABC, BaseModel, metaclass=BaseContentMetaclass):
         This method would load the lazy properties into the model by calling their property methods
         """
         if hasattr(self, "_lazy_properties"):
-            for _property in self._lazy_properties:
+            for _property in self._lazy_properties:  # type: ignore[attr-defined]
                 getattr(self, _property)
 
     def to_dict(self) -> Dict[str, Any]:

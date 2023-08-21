@@ -11,7 +11,7 @@ import docker.errors
 import docker.models.containers
 import git
 import requests.exceptions
-from packaging.version import Version, parse
+from packaging.version import parse
 from wcmatch.pathlib import NEGATE, Path
 
 from demisto_sdk.commands.common.constants import (
@@ -383,7 +383,9 @@ class Linter:
                 # Getting python version from docker image - verifying if not valid docker image configured
                 for image in self._facts["images"]:
                     if py_num_version := get_python_version(image=image[0]):
-                        python_version_string = f"{py_num_version.major}.{py_num_version.minor}"
+                        python_version_string = (
+                            f"{py_num_version.major}.{py_num_version.minor}"
+                        )
                     else:
                         raise ValueError(
                             f"Could not get python version from docker-image {image[0]}"

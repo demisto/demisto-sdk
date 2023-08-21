@@ -1197,7 +1197,8 @@ class TestCreateContentGraph:
             - Running create_content_graph()
 
         Then:
-            - Make sure that in both cases the python_version was loaded into the Integration model.
+            - make sure that in both cases the python_version (lazy property) was loaded into the Integration
+              model because we want it in the graph metadata
             Case A: the python version was taken from the dockerfiles metadata file
             Case B: the python version was taken from the dockerhub api
         """

@@ -272,6 +272,7 @@ class LazyProperty(property):
     """
     Used to define the properties which are lazy properties
     """
+
     pass
 
 
@@ -282,6 +283,7 @@ def lazy_property(property_func: Callable):
 
     Use this decorator on your property in case you need it to be added to the model only if its called directly
     """
+
     def _lazy_decorator(self):
         property_name = property_func.__name__
 

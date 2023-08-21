@@ -1,8 +1,7 @@
 from pathlib import Path
-from typing import List, Optional, Dict, Any
+from typing import List, Optional
 
 from pydantic import Field
-from pydantic.fields import FieldInfo
 
 from demisto_sdk.commands.common.constants import (
     NATIVE_IMAGE_FILE_NAME,

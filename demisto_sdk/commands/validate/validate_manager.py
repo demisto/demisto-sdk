@@ -1975,14 +1975,7 @@ class ValidateManager:
         Args:
             file_path: the path to extract the old file path from.
         """
-        if isinstance(file_path, tuple):
-            old_file_path = file_path[0]
-            file_path = file_path[1]
-
-        else:
-            old_file_path = file_path
-
-        return old_file_path, file_path
+        return file_path[:2] if isinstance(file_path, tuple) else (file_path, file_path)
 
     def get_all_files_edited_in_pack_ignore(self, modified_files):
         """

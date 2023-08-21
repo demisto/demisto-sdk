@@ -17,11 +17,11 @@ from requests.exceptions import HTTPError
 from urllib3.util import Retry
 
 from demisto_sdk.commands.common.constants import (
+    HTML_IMAGE_LINK_REGEX,
     PACKS_DIR,
     RELATIVE_HREF_URL_REGEX,
     RELATIVE_MARKDOWN_URL_REGEX,
     URL_IMAGE_LINK_REGEX,
-    HTML_IMAGE_LINK_REGEX
 )
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.docker_helper import init_global_docker_client

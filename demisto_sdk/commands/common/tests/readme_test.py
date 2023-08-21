@@ -678,7 +678,11 @@ def test_verify_readme_image_paths(mocker):
             text="Test2",
         )
         m.get("https://github.com/demisto/test3.png", status_code=200, text="Test3")
-        m.get("https://raw.githubusercontent.com/demisto/content/master/Packs/132/some_image.png", status_code=200, text="Test4")
+        m.get(
+            "https://raw.githubusercontent.com/demisto/content/master/Packs/132/some_image.png",
+            status_code=200,
+            text="Test4",
+        )
         is_valid = readme_validator.verify_readme_image_paths()
 
     sys.stdout = sys.__stdout__  # reset stdout.

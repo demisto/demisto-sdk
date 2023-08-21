@@ -1850,4 +1850,4 @@ TEST_COVERAGE_DEFAULT_URL = "https://storage.googleapis.com/marketplace-dist-dev
 
 URL_IMAGE_LINK_REGEX = r"(\!\[.*?\])\((?P<url>[a-zA-Z_/\.0-9\- :%]*?)\)((].*)?)"
 
-HTML_IMAGE_LINK_REGEX =  r'(<img.*?src\s*=\s*"(https://.*?)")'
+HTML_IMAGE_LINK_REGEX = r'(<img.*?src\s*=\s*"(https://.*?)")'

@@ -1,3 +1,4 @@
+import inspect
 from abc import ABC, abstractmethod
 from collections import defaultdict
 from functools import lru_cache
@@ -120,24 +121,11 @@ class BaseContent(ABC, BaseModel, metaclass=BaseContentMetaclass):
         # if has name attribute, return it, otherwise return the object id
         return self.object_id
 
-    def __add_metadata(self, json_dct: Dict):
+    def __add_lazy_properties(self):
         """
-        Add extra metadata to the model.
-
-        Args:
-            json_dct: dict representation of the object
-
+        Inspects all the properties of a class, triggers automatically all the property functions of a class
         """
-        if "path" in json_dct and Path(json_dct["path"]).is_absolute():
-            json_dct["path"] = (Path(json_dct["path"]).relative_to(CONTENT_PATH)).as_posix()  # type: ignore
-
-        json_dct["content_type"] = self.content_type
-
-        if self.content_type in (ContentType.SCRIPT, ContentType.INTEGRATION):
-            python_version = self.get_python_version()  # type: ignore[attr-defined]
-            json_dct["python_version"] = (
-                str(python_version) if python_version else python_version
-            )
+        inspect.getmembers(self)
 
     def to_dict(self) -> Dict[str, Any]:
         """
@@ -147,9 +135,13 @@ class BaseContent(ABC, BaseModel, metaclass=BaseContentMetaclass):
         Returns:
             Dict[str, Any]: _description_
         """
+        self.__add_lazy_properties()
 
         json_dct = json.loads(self.json(exclude={"commands", "database_id"}))
-        self.__add_metadata(json_dct)
+        if "path" in json_dct and Path(json_dct["path"]).is_absolute():
+            json_dct["path"] = (Path(json_dct["path"]).relative_to(CONTENT_PATH)).as_posix()  # type: ignore
+        json_dct["content_type"] = self.content_type
+
         return json_dct
 
     @staticmethod

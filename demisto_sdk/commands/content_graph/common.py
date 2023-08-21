@@ -2,7 +2,7 @@ import enum
 import os
 import re
 from pathlib import Path
-from typing import Any, Dict, Iterator, List, NamedTuple, Set
+from typing import Any, Callable, Dict, Iterator, List, NamedTuple, Set
 
 from neo4j import graph
 
@@ -266,6 +266,27 @@ class Nodes(dict):
             if content_type not in ContentType or not isinstance(data, list):
                 raise TypeError
             self.add_batch(data)
+
+
+def lazy_property(property_func: Callable):
+    """
+    lazy property: specifies that this property should be added to the pydantic model lazily
+    only when the instance property is first accessed.
+
+    Use this decorator on your property in case you need it to be added to the model only if its called directly
+    """
+
+    def _lazy_decorator(self):
+        property_name = property_func.__name__
+
+        if property_output := self.__dict__.get(property_name):
+            return property_output
+
+        property_output = property_func(self)
+        self.__dict__[property_name] = property_output
+        return property_output
+
+    return property(_lazy_decorator)
 
 
 SERVER_CONTENT_ITEMS: dict = {

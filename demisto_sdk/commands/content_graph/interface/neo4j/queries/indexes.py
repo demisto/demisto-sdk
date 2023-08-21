@@ -14,6 +14,7 @@ NODE_INDEX_OPTIONS = [
     ["object_id"],
     ["object_id", "content_type"],
     ["object_id", "content_type", "fromversion", "marketplaces"],
+    ["name"],
     ["name", "content_type"],
     ["path"],
 ]

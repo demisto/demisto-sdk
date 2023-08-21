@@ -177,6 +177,9 @@ class PackModelVerifier:
         expected_description: Optional[str] = None,
         expected_created: Optional[str] = None,
         expected_updated: Optional[str] = None,
+        expected_legacy: Optional[bool] = None,
+        expected_eulaLink: Optional[str] = None,
+        expected_author_image: Optional[str] = None,
         expected_support: Optional[str] = None,
         expected_email: Optional[str] = None,
         expected_url: Optional[str] = None,
@@ -206,6 +209,11 @@ class PackModelVerifier:
         assert expected_created is None or model.created == expected_created
         assert expected_updated is None or model.updated == expected_updated
         assert expected_support is None or model.support == expected_support
+        assert expected_legacy is None or model.legacy == expected_legacy
+        assert expected_eulaLink is None or model.eulaLink == expected_eulaLink
+        assert (
+            expected_author_image is None or model.author_image == expected_author_image
+        )
         assert expected_email is None or model.email == expected_email
         assert expected_deprecated is None or model.deprecated == expected_deprecated
         assert expected_url is None or model.url == expected_url
@@ -1107,7 +1115,7 @@ class TestParsersAndModels:
 
         playbook = pack.create_playbook()
         playbook.create_default_playbook(name="sample")
-        playbook.yml.update({"description": "test\\ test2\\\n \\ test3"})
+        playbook.yml.update({"description": "test\\ test2\\\n \\  test3\n   - test4  "})
         playbook_path = Path(playbook.path)
         parser = PlaybookParser(playbook_path, list(MarketplaceVersions))
         RelationshipsVerifier.run(
@@ -1124,7 +1132,7 @@ class TestParsersAndModels:
             expected_content_type=ContentType.PLAYBOOK,
             expected_fromversion="5.0.0",
             expected_toversion=DEFAULT_CONTENT_ITEM_TO_VERSION,
-            expected_description="test test2 test3",
+            expected_description="test test2 test3\n   - test4 ",
         )
         assert not model.is_test
 
@@ -1517,15 +1525,18 @@ class TestParsersAndModels:
             expected_path=pack_path,
             expected_description="This is the Hello World integration for getting started.",
             expected_created="2020-03-10T08:37:18Z",
+            expected_author_image="content/packs/HelloWorld/Author_image.png",
+            expected_legacy=True,
+            expected_eulaLink="https://github.com/demisto/content/blob/master/LICENSE",
             expected_support="community",
             expected_url="https://www.paloaltonetworks.com/cortex",
             expected_author="Cortex XSOAR",
-            expected_certification="",
+            expected_certification="verified",
             expected_hidden=False,
             expected_current_version="1.2.12",
-            expected_tags=[],
+            expected_tags=["TIM"],
             expected_categories=["Utilities"],
-            expected_use_cases=[],
+            expected_use_cases=["Identity And Access Management"],
             expected_keywords=[],
             expected_marketplaces=[
                 MarketplaceVersions.XSOAR,

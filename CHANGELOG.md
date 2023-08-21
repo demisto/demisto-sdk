@@ -1,5 +1,10 @@
 # Changelog
 ## Unreleased
+* Added a period at the end of lines produced by the **generate-docs** command that state the tested version of the product.
+* Update `RN112` validation's docs reference link.
+* Fixed an issue in calculating content graph hash when creating or updating it.
+* Calling **graph create** or **graph update** now run the commands with default arguments, instead of showing the command help.
+* Removed the use of chunks when calculating content relationships.
 
 * Added the '--junit-path' flag to the **modeling-rules test** command, to allow saving the test results in a JUnit XML file.
 
@@ -10,6 +15,7 @@
 * Updated the **generate-docs** command to use the content graph instead of the id_set file.
 * Added the '--all' input option for the **prepare-content** command, to support running on all content packs.
 * Updated the '-i' input option of the **prepare-content** command to support multiple inputs as a comma-separated list.
+* Enhanced the pack metadata properties when dumping pack zips in **prepare-content** command.
 
 ## 1.19.0
 * Added the **graph** command group. The **create-content-graph** and **update-content-graph** commands were migrated to this command group, and named **graph create** and **graph update** respectively.

@@ -297,10 +297,11 @@ jobs:
               CI_COMMIT_BRANCH: "master"
             command: |
               source $(poetry env info --path)/bin/activate
-
+              export ARTIFACTS_FOLDER="/home/circleci/project/artifacts"
+              mkdir -p $ARTIFACTS_FOLDER
+              export DEMISTO_SDK_LOG_FILE_PATH=$ARTIFACTS_FOLDER/demisto_sdk_debug.log
               cd content
               demisto-sdk -v
-              export ARTIFACTS_FOLDER="/home/circleci/project/artifacts"
               echo $(echo '{"node_version": "'$(node --version)'","npm_list":'$(npm list --json)'}')
 
               neo4j start

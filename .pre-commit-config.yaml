@@ -208,6 +208,5 @@ repos:
   rev: v1.6.0
   hooks:
     - id: sourcery
-      args: [--no-summary]
-      types: [python]
+      args: [--diff=git diff HEAD, --fix, --no-summary]
       require_serial: true

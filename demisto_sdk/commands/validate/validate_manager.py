@@ -1977,14 +1977,14 @@ class ValidateManager:
         """
         return file_path[:2] if isinstance(file_path, tuple) else (file_path, file_path)
 
-    def get_all_files_edited_in_pack_ignore(self, modified_files):
+    def get_all_files_edited_in_pack_ignore(self, modified_files: set) -> set:
         """
         Extract all the files the file paths of files that there pack-ignore section was ignored somehow.
         Args:
             modified_files: The list of modified files.
         """
         all_files = self.git_util.get_all_files()
-        all_files_edited_in_pack_ignore = set()
+        all_files_edited_in_pack_ignore: set = set()
         for file_path in modified_files:
             # handle renamed files
             old_file_path, file_path = self.get_old_file_path(file_path)
@@ -2008,7 +2008,7 @@ class ValidateManager:
                 ) == set(value):
                     files_to_test.add(key)
 
-            def is_relevant_file(file, pack_name):
+            def is_relevant_file(file: Path, pack_name: str) -> bool:
                 """
                 Return wether the given file is under the given pack
                 Args:

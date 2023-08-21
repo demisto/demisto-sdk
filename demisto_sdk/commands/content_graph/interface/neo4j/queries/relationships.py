@@ -212,12 +212,11 @@ def create_relationships_by_type(
         query = build_depends_on_relationships_query()
     else:
         query = build_default_relationships_query(relationship)
-    for chunk in more_itertools.chunked_even(data, CHUNK_SIZE):
-        result = run_query(tx, query, data=chunk).single()
-        merged_relationships_count = result["relationships_merged"]
-        logger.debug(
-            f"Merged {merged_relationships_count} relationships of type {relationship}."
-        )
+    result = run_query(tx, query, data=data).single()
+    merged_relationships_count = result["relationships_merged"]
+    logger.debug(
+        f"Merged {merged_relationships_count} relationships of type {relationship}."
+    )
 
 
 def _match_relationships(

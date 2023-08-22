@@ -774,7 +774,7 @@ class Downloader:
         ):
             if os.path.isdir(entity_instance_path):
                 _, main_file_path = get_yml_paths_in_dir(entity_instance_path)
-            elif os.path.isfile(entity_instance_path):
+            elif Path(entity_instance_path).is_file():
                 main_file_path = entity_instance_path
 
             if main_file_path:
@@ -783,7 +783,7 @@ class Downloader:
         # Entities which are json files (md files are ignored - changelog/readme)
         else:
             if (
-                os.path.isfile(entity_instance_path)
+                Path(entity_instance_path).is_file()
                 and retrieve_file_ending(entity_instance_path) == "json"
             ):
                 main_file_data = get_json(entity_instance_path)

@@ -890,7 +890,7 @@ class BuildContext:
 
     @staticmethod
     def _load_env_results_json():
-        if not os.path.isfile(ENV_RESULTS_PATH):
+        if not Path(ENV_RESULTS_PATH).is_file():
             return {}
 
         with open(ENV_RESULTS_PATH) as json_file:

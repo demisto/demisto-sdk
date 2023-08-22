@@ -2767,7 +2767,7 @@ class ValidateManager:
             for section in filter(
                 lambda section: section.startswith("file:"), config.sections()
             ):
-                file_name = section[5:]
+                file_name = section[len("files"):]
                 ignored_errors_list[file_name] = []
                 for key in config[section]:
                     self.add_ignored_errors_to_list(

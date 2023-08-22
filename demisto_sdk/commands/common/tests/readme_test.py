@@ -736,8 +736,7 @@ def test_verify_readme_image_paths(mocker):
     )
     assert not str_in_call_args_list(
         logger_error.call_args_list,
-        "please repair it:\n"
-        "https://github.com/demisto/test3.png",
+        "please repair it:\n" "https://github.com/demisto/test3.png",
     )
 
 

@@ -8,6 +8,7 @@ import pebble
 from git import InvalidGitRepositoryError
 from packaging import version
 
+from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import (
     API_MODULES_PACK,
@@ -154,7 +155,6 @@ from demisto_sdk.commands.common.tools import (
     get_yaml,
     is_file_in_pack,
     open_id_set_file,
-    pack_name_to_path,
     run_command_os,
 )
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
@@ -2179,7 +2179,7 @@ class ValidateManager:
 
         for pack in changed_packs:
             raise_version = False
-            pack_path = pack_name_to_path(pack)
+            pack_path = tools.pack_name_to_path(pack)
             if pack in packs_that_should_have_version_raised:
                 raise_version = self.should_raise_pack_version(pack)
             valid_pack_files.add(

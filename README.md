@@ -183,7 +183,6 @@ The development environment is connected to the branch you are currently using i
 
 Contributions are welcome and appreciated.
 For information regarding contributing, press [here](CONTRIBUTION.md).
-For release guide, press [here](docs/release_guide.md)
 
 ---
 
@@ -201,4 +200,14 @@ Note that the following commands may work partially without an internet connecti
 1. [Download](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/download/README.md) - will fail when using the '-fmt, --run-format' argument.
 2. [Lint](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/lint/README.md) - will fail when creating the image.
 
+- When working offline (or in an airgapped environment), set the `DEMISTO_SDK_OFFLINE_ENV` environment variable to `true`:
+   ```bash
+   export DEMISTO_SDK_OFFLINE_ENV=TRUE
+   ```
+
+   When set, Demisto-SDK features requiring an internet connection will not be run, often saving some time and avoiding errors.
+
 ---
+
+## XSOAR CI/CD
+For information regarding XSOAR CI/CD, please see [this article](https://xsoar.pan.dev/docs/reference/packs/content-management)

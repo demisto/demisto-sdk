@@ -5,7 +5,7 @@ from typing import Optional, Sequence
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
 from demisto_sdk.commands.common.logger import logger
-from demisto_sdk.commands.common.tools import get_file
+from demisto_sdk.commands.common.tools import get_file, is_external_repository
 
 
 def update_additional_dependencies(
@@ -19,8 +19,11 @@ def update_additional_dependencies(
         hooks (Sequence[str]): The hooks to update
 
     Returns:
-        int: 1 if failed, 0 if succeeded
+        int: 1 if failed, 0 if succeeded (OR not in a content-likerepository)
     """
+    if is_external_repository():
+        logger.warning("Cannot detect repo, skipping update_additional_dependencies")
+        return 0
     try:
         if (
             Path("poetry.lock")
@@ -28,6 +31,11 @@ def update_additional_dependencies(
         ):
             logger.info(
                 "Skipping update of additional dependencies since poetry.lock was not changed"
+            )
+            return 0
+        if not requirements_path.exists():
+            logger.info(
+                "Skipping update of additional dependencies since requirements.txt was not found"
             )
             return 0
         requirements = requirements_path.read_text().splitlines()

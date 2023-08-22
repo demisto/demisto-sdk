@@ -23,7 +23,15 @@ class Script(IntegrationScript, content_type=ContentType.SCRIPT):  # type: ignor
     skip_prepare: List[str]
 
     def metadata_fields(self) -> Set[str]:
-        return {"name", "description", "tags"}
+        return (
+            super()
+            .metadata_fields()
+            .union(
+                {
+                    "tags",
+                }
+            )
+        )
 
     def prepare_for_upload(
         self,

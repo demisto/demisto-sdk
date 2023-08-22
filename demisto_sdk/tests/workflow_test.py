@@ -31,7 +31,7 @@ def list_files(path: Path) -> Generator[str, None, None]:
         file name
     """
     for file in os.listdir(path):
-        if os.path.isfile(path / file):
+        if Path(path / file).is_file():
             yield file
 
 
@@ -230,6 +230,7 @@ def init_pack(content_repo: ContentGitRepo, monkeypatch: MonkeyPatch):
         Description: description
         Pack's type: 1 (xsoar)
         Category: 1 (Analytics & SIEM)
+        Marketplaces: ""
         Create integration: n
 
     When: Initiating a new pack with the init command
@@ -247,7 +248,7 @@ def init_pack(content_repo: ContentGitRepo, monkeypatch: MonkeyPatch):
     res = runner.invoke(
         main,
         f"init -a {author_image_abs_path} --pack --name Sample",
-        input="\n".join(["y", "Sample", "description", "1", "1", "n", "6.0.0"]),
+        input="\n".join(["y", "Sample", "description", "1", "1", "", "n", "6.0.0"]),
     )
     assert res.exit_code == 0, (
         f"Could not run the init command.\nstdout={res.stdout}\nstderr={res.stderr}\n"
@@ -342,8 +343,6 @@ def rename_incident_field(content_repo: ContentGitRepo, monkeypatch: MonkeyPatch
 
 
 @pytest.mark.parametrize(
-    # TODO Uncomment
-    # "function", [init_pack, init_integration, modify_entity, rename_incident_field]
     "function",
     [init_pack, modify_entity, rename_incident_field],
 )

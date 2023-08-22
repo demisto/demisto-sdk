@@ -6,7 +6,7 @@ import more_itertools
 
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.content_graph.common import Nodes, Relationships
-from demisto_sdk.commands.content_graph.interface.graph import ContentGraphInterface
+from demisto_sdk.commands.content_graph.interface import ContentGraphInterface
 from demisto_sdk.commands.content_graph.objects.repository import ContentDTO
 from demisto_sdk.commands.content_graph.parsers.repository import RepositoryParser
 
@@ -104,3 +104,4 @@ class ContentGraphBuilder:
                     logger.debug(
                         f"Create or update graph timed out. Retrying... ({retry + 1}/3)"
                     )
+                    self.content_graph = ContentGraphInterface()

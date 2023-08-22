@@ -104,4 +104,5 @@ class ContentGraphBuilder:
                     logger.warning(
                         f"Create or update graph timed out. Retrying... ({retry + 1}/3)"
                     )
+                    self.content_graph.close()
                     self.content_graph = ContentGraphInterface()

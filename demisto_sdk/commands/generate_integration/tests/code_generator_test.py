@@ -182,8 +182,8 @@ class TestCodeGenerator:
         autogen_config.generate_integration_package(output_dir=tmpdir)
 
         assert os.path.isdir(Path(tmpdir, "VirusTotalTest"))
-        assert os.path.isfile(Path(tmpdir, "VirusTotalTest", "VirusTotalTest.py"))
-        assert os.path.isfile(Path(tmpdir, "VirusTotalTest", "VirusTotalTest.yml"))
+        assert Path(tmpdir, "VirusTotalTest", "VirusTotalTest.py").is_file()
+        assert Path(tmpdir, "VirusTotalTest", "VirusTotalTest.yml").is_file()
 
     def test_generate_unified_integration_yml(self, tmpdir, mocker):
         """
@@ -216,7 +216,7 @@ class TestCodeGenerator:
         assert autogen_config
         autogen_config.generate_integration_package(output_dir=tmpdir, is_unified=True)
 
-        assert os.path.isfile(Path(tmpdir, "integration-VirusTotalTest.yml"))
+        assert Path(tmpdir, "integration-VirusTotalTest.yml").is_file()
         with open(Path(tmpdir, "integration-VirusTotalTest.yml")) as f:
             actual_unified_yml = f.read()
             assert actual_unified_yml.find("class Client(BaseClient):")

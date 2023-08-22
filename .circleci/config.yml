@@ -255,8 +255,13 @@ jobs:
         - run:
             name: Pre-commit
             command: |
+              echo "before pre-commit"
+              cat ./.pre-commit-config.yaml
               poetry run pre-commit --version
               poetry run pre-commit run -a --verbose
+              echo "after pre-commit"
+              cat ./.pre-commit-config.yaml
+
         - run:
             name: Run Pytest collection
             command: |

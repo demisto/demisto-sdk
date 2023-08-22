@@ -38,7 +38,7 @@ CAN_MOUNT_FILES = bool(os.getenv("CONTENT_GITLAB_CI", False)) or (
     )
 )
 
-PYTHON_IMAGE_REGEX = re.compile(
+DEMISTO_PYTHON_BASE_IMAGE_REGEX = re.compile(
     r"[\d\w]+/python3?:(?P<python_version>[23]\.\d+(\.\d+)?)"
 )
 
@@ -410,7 +410,7 @@ def get_docker():
 
 def _get_python_version_from_tag_by_regex(image: str) -> Optional[Version]:
 
-    if match := PYTHON_IMAGE_REGEX.match(image):
+    if match := DEMISTO_PYTHON_BASE_IMAGE_REGEX.match(image):
         return Version(match.group("python_version"))
 
     return None

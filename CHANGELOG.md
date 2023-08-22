@@ -1,6 +1,64 @@
 # Changelog
 ## Unreleased
 * Improved performance when reading `yml` files.
+* Added a period at the end of lines produced by the **generate-docs** command that state the tested version of the product.
+* Update `RN112` validation's docs reference link.
+* Fixed an issue in calculating content graph hash when creating or updating it.
+* Calling **graph create** or **graph update** now run the commands with default arguments, instead of showing the command help.
+* Removed the use of chunks when calculating content relationships.
+* Fixed an issue where the url regex in the **validate** command was wrong.
+
+## 1.19.1
+* Fixed an issue where **unify** failed on integrations using an API a module, when not called from the content root.
+* Improved **update-release-notes** logs when changes in dependent API modules are detected.
+* Reverted changes released in version 1.19.0 in lint, lint will not fail on `demisto.results`, `return_outputs` and `LOG`.
+* Updated the **generate-docs** command to use the content graph instead of the id_set file.
+* **Validate** will now validate items which were edited in .pack-ignore.
+* Added the '--all' input option for the **prepare-content** command, to support running on all content packs.
+* Updated the '-i' input option of the **prepare-content** command to support multiple inputs as a comma-separated list.
+* Enhanced the pack metadata properties when dumping pack zips in **prepare-content** command.
+
+## 1.19.0
+* Added the **graph** command group. The **create-content-graph** and **update-content-graph** commands were migrated to this command group, and named **graph create** and **graph update** respectively.
+* Added the **graph get-relationships** command.
+* The **graph create** command will now use a list of known content items from content-private, to avoid false-positives in validation `GR103`. Additionally, `GR103` was added to the **ALLOWED_IGNORE_ERRORS** list.
+* The **modeling-rules test** command will now validate that the modeling rules schema mappings are aligned with the test-data mappings.
+* Added the *--xsiam* flag to the **init** command in order to create XSIAM content.
+* Fixed an issue where the `update-additional-dependencies` **pre-commit** step failed when not running in a content-like repo.
+* Removed the format execution step from the `contribution_converter` since it can be executed separately during the contribution process.
+* Added a new validation (`GR108`) to **validate**, that assures hidden packs do not have mandatory dependant packs.
+* Added a new validation (`PA137`) to **validate**, ensuring the absence of non-ignorable errors in `.pack-ignore`.
+* Running **validate** in a GitHub Action will now show errors as annotations, visible in the `Files Changed` tab of the pull request.
+* **lint** will now fail on `demisto.results` and `return_outputs` usage, when a pack is `xsoar` or `partner` supported.
+* **lint** will now fail on `LOG` usage in python files.
+* Updated the **format** command to use the content graph instead of the id_set file.
+* Updated **format** command not to fail on unexpected values that returns from the graph, and just add it to the log.
+* Removed a redundant debug log on the `tools.get_file` function.
+
+## 1.18.1
+* Fixed an issue where the coloring directives where showing in log messages.
+* Fixed an issue where **create-content-graph** was not executed upon changes in the parser infra files.
+* Added support for `svg` integration images in content repo in **validate** command.
+* Added a parameter `skip-packs-known-words` to the **doc-review** command, making sure that pack known words will not be added.
+
+## 1.18.0
+* Added the ability to ignore any validation in the **validate** command when running in an external (non-demisto/content) repo, by placing a `.private-repo-settings` file at its root.
+* Calling **format** with the `-d` flag now removes test playbooks testing the deprecated content from conf.json.
+* Improved the content graph performance when calculating content relationships.
+* Improved determinism of SDK unit tests.
+* **validate** will now run on all the pack content items when the pack supported marketplaces are modified.
+* **pre-commit** no longer runs when there are no modified files (unless provided with input files).
+* Added new validation that XSIAM integrations must have `marketplacev2` as the value of the marketplaces field.
+* Added an ability to provide list of marketplace names as a credentials-type (type 9) param attribute.
+* **doc-review** will run with the `--use-packs-known-words` true by default.
+* Added the *deprecated* field to the pack object for the content-graph metadata.
+* Calling **modeling-rules init-test-data** will now return the XDM fields output in alphabetical order.
+* Added a new validation (`BA125`) to **validate**, assuring internal function names aren't used in customer-facing docs.
+* Removed the Pipfile and Pipfile.lock from the templates in the **init** command.
+* Disabled the option to create an integration with `Pipfile` and `Pipfile.lock` files, as they are deprecated.
+* Added the Sourcery hook to **pre-commit**.
+* Added a working directory to the `contribution_converter` in order to support working on a temporary directory.
+* Added a waiting period when checking whether the dataset exists in the **modeling-rule test** command.
 * Fixed an issue where the *DEMISTO_SDK_SKIP_VERSION_CHECK* was ignored when running on non CI environments.
 * Added the ability to ignore any validation in the **validate** command when running in an external (non-demisto/content) repo, by placing a `.private-repo-settings` file at its root.
 * Fixed an issue where **validate** falsely detected backwards-compatibility issues, and prevented adding the `marketplaces` key to content items.

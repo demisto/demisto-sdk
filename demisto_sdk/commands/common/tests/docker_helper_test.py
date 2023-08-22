@@ -53,7 +53,7 @@ def test_get_python_version_from_image(image: str, output: str, expected: str, m
     )
     mocker.patch(
         "demisto_sdk.commands.common.docker_helper._get_python_version_from_dockerhub_api",
-        return_value=Exception("rate limit"),
+        side_effect=Exception("rate limit"),
     )
     docker_helper.init_global_docker_client().images.get.return_value = ImageMock(
         {"Config": {"Env": [f"PYTHON_VERSION={output}"]}}

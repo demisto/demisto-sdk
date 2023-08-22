@@ -518,27 +518,14 @@ def get_python_version(image: Optional[str]):
         return python_version
     logger.debug(f"Could not get python version for {image=} from regex")
 
-    if os.getenv("DOCKERHUB_USER") and os.getenv("DOCKERHUB_PASSWORD"):
-        try:
-            logger.debug(f"get python version for {image=} from dockerhub api")
-            return _get_python_version_from_dockerhub_api(image)
-        except Exception:
-            logger.debug(
-                f"Getting python version from {image=} by pulling its image and query its env"
-            )
-            return _get_python_version_from_image_client(image)
-    else:
-        try:
-            logger.debug(
-                f"Getting python version from {image=} by pulling its image and query its env"
-            )
-            return _get_python_version_from_image_client(image)
-        except Exception:
-            logger.debug(
-                f"Couldn't get the python version for image {image=} by pulling its image and query its env. Trying with API",
-                exc_info=True,
-            )
-            return _get_python_version_from_dockerhub_api(image)
+    try:
+        logger.debug(f"get python version for {image=} from dockerhub api")
+        return _get_python_version_from_dockerhub_api(image)
+    except Exception:
+        logger.debug(
+            f"Getting python version from {image=} by pulling its image and query its env"
+        )
+        return _get_python_version_from_image_client(image)
 
 
 def _get_python_version_from_image_client(image: str) -> Version:

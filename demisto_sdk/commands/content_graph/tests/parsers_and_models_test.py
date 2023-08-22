@@ -1569,19 +1569,19 @@ class TestParsersAndModels:
             - Verify that the lazy property (python_version) is not loaded into the model when parsing it
             - Verify that only when the lazy property (python_version) is called directly its added into the model
         """
-        from demisto_sdk.commands.content_graph.objects.integration import Integration
+
         from packaging.version import Version
+
+        from demisto_sdk.commands.content_graph.objects.integration import Integration
         from demisto_sdk.commands.content_graph.parsers.integration import (
             IntegrationParser,
         )
-        import os
 
         expected_python_version = "3.10.11"
         mocker.patch(
             "demisto_sdk.commands.common.docker_helper._get_python_version_from_dockerhub_api",
             return_value=Version(expected_python_version),
         )
-        mocker.patch.object(os, "getenv", return_value=lambda key: key)
 
         integration = pack.create_integration(yml=load_yaml("integration.yml"))
         integration.code.write("from MicrosoftApiModule import *")

@@ -1203,9 +1203,7 @@ class TestCreateContentGraph:
             Case B: the python version was taken from the dockerhub api
         """
         from packaging.version import Version
-        import os
 
-        mocker.patch.object(os, "getenv", return_value=lambda key: key)
         dockerhub_api_mocker = mocker.patch(
             "demisto_sdk.commands.common.docker_helper._get_python_version_from_dockerhub_api",
             return_value=Version(expected_python_version),

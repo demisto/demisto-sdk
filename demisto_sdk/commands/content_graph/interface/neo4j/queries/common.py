@@ -1,4 +1,5 @@
 import traceback
+from concurrent.futures import ThreadPoolExecutor, TimeoutError
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict
@@ -8,6 +9,9 @@ from packaging.version import Version
 
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.content_graph.common import ContentType
+
+MAX_RETRIES_QUERY = 3
+QUERY_TIMEOUT = 60
 
 
 def labels_of(content_type: ContentType) -> str:
@@ -54,10 +58,26 @@ def to_neo4j_map(properties: dict) -> str:
 
 
 def run_query(tx: Transaction, query: str, **kwargs) -> Result:
+    result = None
     try:
         start_time: datetime = datetime.now()
         logger.debug(f"Running query:\n{query}")
-        result = tx.run(query, **kwargs)
+        # invoke a new thread and execute `tx.run in a thread`
+        for retry in range(MAX_RETRIES_QUERY):
+            try:
+                with ThreadPoolExecutor(max_workers=1) as executor:
+                    future = executor.submit(tx.run, query, **kwargs)
+                    result = future.result(timeout=QUERY_TIMEOUT)
+                    break
+            except TimeoutError:
+                logger.debug(
+                    f"Query timed out, retrying. Retry {retry + 1} out of {MAX_RETRIES_QUERY}"
+                )
+                continue
+        if not result:
+            raise TimeoutError(
+                f"Query:\n {query} \n timed out after {MAX_RETRIES_QUERY} retries"
+            )
         logger.debug(f"Took {(datetime.now() - start_time).total_seconds()} seconds")
         return result
     except Exception as e:

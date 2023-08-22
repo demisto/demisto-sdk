@@ -16,6 +16,8 @@ from demisto_sdk.commands.content_graph.interface.neo4j.queries.common import (
     run_query,
 )
 
+BATCH_SIZE = 10000
+
 
 def build_source_properties() -> str:
     return node_map(
@@ -210,7 +212,7 @@ def create_relationships_by_type(
         query = build_depends_on_relationships_query()
     else:
         query = build_default_relationships_query(relationship)
-    run_query(tx, query, data=data)
+    run_query(tx, query, data=data, batch_size=BATCH_SIZE, parallel=False)
     logger.debug(f"Merged relationships of type {relationship}.")
 
 

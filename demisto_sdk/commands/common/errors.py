@@ -713,6 +713,10 @@ ERROR_CODE: Dict = {
         "code": "IN157",
         "related_field": "script",
     },
+    "command_output_is_invalid": {
+        "code": "IN158",
+        "related_field": "outputs",
+    },
     # IT - Incident Types
     "incident_type_integer_field": {
         "code": "IT100",
@@ -4372,3 +4376,11 @@ class Errors:
     @error_code_decorator
     def pack_have_nonignorable_error(nonignorable_errors: List[str]):
         return f"The following errors can not be ignored: {', '.join(nonignorable_errors)}, remove them from .pack-ignore files"
+
+    @staticmethod
+    @error_code_decorator
+    def command_output_is_invalid(command_name, invalid_outputs, context_outputs_url):
+        return (
+            f"the {command_name} command returns custom outputs: {invalid_outputs} spelled incorrectly. Fix according"
+            f" to context outputs standard {context_outputs_url}"
+        )

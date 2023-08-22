@@ -1331,6 +1331,18 @@ REPUTATION_COMMAND_NAMES = {"file", "email", "domain", "url", "ip", "cve"}
 
 BANG_COMMAND_NAMES = {"file", "email", "domain", "url", "ip", "cve", "endpoint"}
 
+CUSTOM_CONTEXT = {
+    "File",
+    "IP",
+    "Endpoint",
+    "Email",
+    "Domain",
+    "URL",
+    "CVE",
+    "InfoFile",
+    "Certificate",
+}
+
 BANG_COMMAND_ARGS_MAPPING_DICT: Dict[str, dict] = {
     "file": {
         "default": ["file"],
@@ -1368,6 +1380,9 @@ XSOAR_AUTHOR = "Cortex XSOAR"
 PACK_INITIAL_VERSION = "1.0.0"
 PACK_SUPPORT_OPTIONS = ["xsoar", "partner", "developer", "community"]
 XSOAR_CONTEXT_STANDARD_URL = "https://xsoar.pan.dev/docs/integrations/context-standards"
+XSOAR_CONTEXT_AND_OUTPUTS_URL = (
+    "https://xsoar.pan.dev/docs/integrations/context-and-outputs"
+)
 XSOAR_SUPPORT_URL = "https://www.paloaltonetworks.com/cortex"
 MARKETPLACE_LIVE_DISCUSSIONS = "https://live.paloaltonetworks.com/t5/cortex-xsoar-discussions/bd-p/Cortex_XSOAR_Discussions"
 EXCLUDED_DISPLAY_NAME_WORDS = ["partner", "community"]

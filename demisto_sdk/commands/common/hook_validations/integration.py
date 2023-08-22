@@ -8,6 +8,7 @@ from demisto_sdk.commands.common.constants import (
     ALERT_FETCH_REQUIRED_PARAMS,
     BANG_COMMAND_ARGS_MAPPING_DICT,
     BANG_COMMAND_NAMES,
+    CUSTOM_CONTEXT,
     DBOT_SCORES_DICT,
     DEFAULT_CONTENT_ITEM_FROM_VERSION,
     DEPRECATED_DESC_REGEX,
@@ -27,6 +28,7 @@ from demisto_sdk.commands.common.constants import (
     RELIABILITY_PARAMETER_NAMES,
     REPUTATION_COMMAND_NAMES,
     TYPE_PWSH,
+    XSOAR_CONTEXT_AND_OUTPUTS_URL,
     XSOAR_CONTEXT_STANDARD_URL,
     XSOAR_SUPPORT,
     MarketplaceVersions,
@@ -208,6 +210,7 @@ class IntegrationValidator(ContentEntityValidator):
             self.verify_reputation_commands_has_reliability(),
             self.is_integration_deprecated_and_used(),
             self.is_outputs_for_reputations_commands_valid(),
+            self.is_valid_command_custom_outputs(),
         ]
 
         if check_is_unskipped:
@@ -594,6 +597,47 @@ class IntegrationValidator(ContentEntityValidator):
                     # self.is_valid = False - Do not fail build over wrong description
 
         return missing_outputs, missing_descriptions
+
+    @error_codes("IN158")
+    def is_valid_command_custom_outputs(self) -> bool:
+        custom_outputs_url = XSOAR_CONTEXT_AND_OUTPUTS_URL
+        commands = self.current_file.get("script", {}).get("commands", [])
+        output_valid = True
+        for command in commands:
+            invalid_outputs = []
+            for output in command.get("outputs", []):
+                context_path = output.get("contextPath", "")
+                mandatory_context = list(
+                    filter(
+                        lambda context: context_path.lower().startswith(
+                            context.lower()
+                        ),
+                        CUSTOM_CONTEXT,
+                    )
+                )
+
+                if (
+                    mandatory_context
+                ):  # lower case of custom context is in the output_path
+                    if (
+                        mandatory_context[0] not in context_path
+                    ):  # the output is not spelled as expected
+                        invalid_outputs.append(context_path)
+
+            if invalid_outputs:
+                error_message, error_code = Errors.command_output_is_invalid(
+                    command.get("name"), invalid_outputs, custom_outputs_url
+                )
+                if self.handle_error(
+                    error_message,
+                    error_code,
+                    file_path=self.file_path,
+                    warning=self.structure_validator.quiet_bc,
+                ):
+                    self.is_valid = False
+                    output_valid = False
+
+        return output_valid
 
     @error_codes("DB100,DB101,IN107")
     def is_outputs_for_reputations_commands_valid(self) -> bool:

@@ -169,16 +169,17 @@ def create_relationships(
 ) -> None:
     if relationships.get(RelationshipType.HAS_COMMAND):
         data = relationships.pop(RelationshipType.HAS_COMMAND)
-        create_relationships_by_type(tx, RelationshipType.HAS_COMMAND, data)
+        create_relationships_by_type(tx, RelationshipType.HAS_COMMAND, data, timeout)
 
     for relationship, data in relationships.items():
-        create_relationships_by_type(tx, relationship, data)
+        create_relationships_by_type(tx, relationship, data, timeout)
 
 
 def create_relationships_by_type(
     tx: Transaction,
     relationship: RelationshipType,
     data: List[Dict[str, Any]],
+    timeout: Optional[int] = None,
 ) -> None:
     if relationship == RelationshipType.HAS_COMMAND:
         query = build_has_command_relationships_query()
@@ -210,7 +211,7 @@ def create_relationships_by_type(
         query = build_depends_on_relationships_query()
     else:
         query = build_default_relationships_query(relationship)
-    run_query(tx, query, data=data)
+    run_query(tx, query, data=data, timeout=timeout)
     logger.debug(f"Merged relationships of type {relationship}.")
 
 

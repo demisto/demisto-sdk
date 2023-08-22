@@ -695,20 +695,19 @@ def test_verify_readme_image_paths(mocker):
             ),
             str_in_call_args_list(
                 logger_error.call_args_list,
-                "![Identity with High Risk Score](../../default.png)",
+                "../../default.png",
             ),
             str_in_call_args_list(
                 logger_error.call_args_list,
                 "Branch name was found in the URL, please change it to the commit hash:\n",
             ),
-            str_in_call_args_list(logger_error.call_args_list, "![branch in url]"),
             str_in_call_args_list(
                 logger_error.call_args_list,
                 "\n".join(
                     (
                         "[RM108] - Error in readme image: got HTTP response code 404, reason = just because",
                         "The following image link seems to be broken, please repair it:",
-                        "![Identity with High Risk Score](https://github.com/demisto/test1.png)",
+                        "https://github.com/demisto/test1.png",
                     )
                 ),
             ),
@@ -718,7 +717,7 @@ def test_verify_readme_image_paths(mocker):
                     (
                         "[RM108] - Error in readme image: got HTTP response code 404 ",
                         "The following image link seems to be broken, please repair it:",
-                        "(https://github.com/demisto/content/raw/test2.png)",
+                        "https://github.com/demisto/content/raw/test2.png",
                     )
                 ),
             ),
@@ -728,17 +727,17 @@ def test_verify_readme_image_paths(mocker):
     assert not str_in_call_args_list(
         logger_error.call_args_list,
         "The following image relative path is not valid, please recheck it:\n"
-        "![Identity with High Risk Score](default.png)",
+        "default.png",
     )
     assert not str_in_call_args_list(
         logger_error.call_args_list,
         "Branch name was found in the URL, please change it to the commit hash:\n"
-        "![commit hash in url]",
+        "https://raw.githubusercontent.com/demisto/content/123456/Packs/CommonPlaybooks/doc_files/some_image.png",
     )
     assert not str_in_call_args_list(
         logger_error.call_args_list,
         "please repair it:\n"
-        "![Identity with High Risk Score](https://github.com/demisto/test3.png)",
+        "https://github.com/demisto/test3.png",
     )
 
 

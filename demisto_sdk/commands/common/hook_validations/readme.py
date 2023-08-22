@@ -486,11 +486,11 @@ class ReadMeValidator(BaseValidator):
                 # the line is generated automatically in playbooks readme, the user should replace it with
                 # an image or remove the line.
                 error_message, error_code = Errors.invalid_readme_image_error(
-                    prefix + f"({relative_path})", error_type="insert_image_link_error"
+                    relative_path, error_type="insert_image_link_error"
                 )
             elif is_pack_readme:
                 error_message, error_code = Errors.invalid_readme_image_error(
-                    prefix + f"({relative_path})",
+                    relative_path,
                     error_type="pack_readme_relative_error",
                 )
             else:
@@ -499,7 +499,7 @@ class ReadMeValidator(BaseValidator):
                     os.path.join(self.file_path.parent, relative_path)
                 ):
                     error_message, error_code = Errors.invalid_readme_image_error(
-                        prefix + f"({relative_path})",
+                        relative_path,
                         error_type="general_readme_relative_error",
                     )
             if error_code and error_message:  # error was found
@@ -556,7 +556,7 @@ class ReadMeValidator(BaseValidator):
                     and working_branch_name != "master"
                 ):
                     error_message, error_code = Errors.invalid_readme_image_error(
-                        prefix + f"({img_url})",
+                        img_url,
                         error_type="branch_name_readme_absolute_error",
                     )
                 else:
@@ -566,7 +566,7 @@ class ReadMeValidator(BaseValidator):
                         )
                     except HTTPError as error:
                         error_message, error_code = Errors.invalid_readme_image_error(
-                            prefix + f"({img_url})",
+                            img_url,
                             error_type="general_readme_absolute_error",
                             response=error.response,
                         )

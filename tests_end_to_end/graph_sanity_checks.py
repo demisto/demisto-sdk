@@ -5,7 +5,7 @@ from demisto_sdk.commands.content_graph.objects.integration import Integration
 from demisto_sdk.commands.content_graph.objects.pack import Pack
 
 
-def test_graph_e2e():
+def test_graph_sanity():
     with ContentGraphInterface() as graph:
         hello_world = graph.search(object_id="HelloWorld")
         hello_world_packs = [x for x in hello_world if isinstance(x, Pack)]
@@ -37,4 +37,4 @@ def test_graph_e2e():
 
 
 if __name__ == "__main__":
-    test_graph_e2e()
+    test_graph_sanity()

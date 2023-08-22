@@ -11,7 +11,7 @@ from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.content_graph.common import ContentType
 
 MAX_RETRIES_QUERY = 3
-QUERY_TIMEOUT = 60
+QUERY_TIMEOUT = 10
 
 
 def labels_of(content_type: ContentType) -> str:
@@ -62,7 +62,7 @@ def run_query(tx: Transaction, query: str, **kwargs) -> Result:
     try:
         start_time: datetime = datetime.now()
         logger.debug(f"Running query:\n{query}")
-        # invoke a new thread and execute `tx.run in a thread`
+        # invoke a new thread and execute `tx.run in a thread. If the query times out, retry.
         for retry in range(MAX_RETRIES_QUERY):
             try:
                 with ThreadPoolExecutor(max_workers=1) as executor:

@@ -1,4 +1,3 @@
-import os
 from configparser import ConfigParser, MissingSectionHeaderError
 from pathlib import Path
 from typing import Union

@@ -25,9 +25,10 @@ from demisto_sdk.commands.prepare_content.integration_script_unifier import (
 class IntegrationScript(ContentItem, lazy_properties={"python_version"}):
     type: str
     docker_image: Optional[str]
-    description: Optional[str]
+    description: Optional[str] = Field("")
     is_unified: bool = Field(False, exclude=True)
     code: Optional[str] = Field(None, exclude=True)
+    unified_data: dict = Field(None, exclude=True)
 
     @lazy_property
     def python_version(self) -> Optional[str]:
@@ -58,6 +59,7 @@ class IntegrationScript(ContentItem, lazy_properties={"python_version"}):
         data = IntegrationScriptUnifier.unify(
             self.path, data, current_marketplace, **kwargs
         )
+        self.unified_data = data
         return data
 
     def get_supported_native_images(

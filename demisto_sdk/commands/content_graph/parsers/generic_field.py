@@ -14,6 +14,7 @@ class GenericFieldParser(JSONContentItemParser, content_type=ContentType.GENERIC
     ) -> None:
         super().__init__(path, pack_marketplaces)
         self.definition_id = self.json_data.get("definitionId")
+        self.field_type = self.json_data.get("type") or ""
 
         self.connect_to_dependencies()
 

@@ -268,6 +268,19 @@ class Nodes(dict):
             self.add_batch(data)
 
 
+class PackTags:
+    """Pack tag constants"""
+
+    TRENDING = "Trending"
+    NEW = "New"
+    TIM = "TIM"
+    USE_CASE = "Use Case"
+    TRANSFORMER = "Transformer"
+    FILTER = "Filter"
+    COLLECTION = "Collection"
+    DATA_SOURCE = "Data Source"
+
+
 class LazyProperty(property):
     """
     Used to define the properties which are lazy properties

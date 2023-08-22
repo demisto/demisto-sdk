@@ -24,6 +24,10 @@ class XSIAMReportParser(JSONContentItemParser, content_type=ContentType.XSIAM_RE
         return self.json_data.get("report_name")
 
     @property
+    def description(self) -> Optional[str]:
+        return self.json_data.get("report_description")
+
+    @property
     def object_id(self) -> Optional[str]:
         return self.json_data.get("global_id")
 

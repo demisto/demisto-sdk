@@ -129,6 +129,9 @@ def set_git_test_env(mocker):
     mocker.patch.object(Content, "git", return_value=MyRepo())
     mocker.patch.object(ValidateManager, "setup_prev_ver", return_value="origin/master")
     mocker.patch.object(GitUtil, "_is_file_git_ignored", return_value=False)
+    mocker.patch.object(
+        ValidateManager, "get_all_files_edited_in_pack_ignore", return_value=set()
+    )
 
 
 class TestGenericFieldValidation:

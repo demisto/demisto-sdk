@@ -10,8 +10,8 @@ class RelationshipData(BaseModel):
     relationship_type: RelationshipType
 
     # These are the database ids of the relationships
-    source_id: int
-    target_id: int
+    source_id: str
+    target_id: str
 
     # this is the attribute we're interested in when querying
     content_item_to: BaseContent

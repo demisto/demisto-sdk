@@ -5,9 +5,10 @@ import copy
 import errno
 import os
 import re
-from distutils.version import LooseVersion
 from pathlib import Path
 from typing import Any, Iterable, Optional, Tuple, Union
+
+from packaging.version import Version
 
 from demisto_sdk.commands.common.constants import (
     ALL_FILES_VALIDATION_IGNORE_WHITELIST,
@@ -48,8 +49,9 @@ from demisto_sdk.commands.common.tools import (
     pack_name_to_path,
     run_command,
 )
-from demisto_sdk.commands.content_graph.interface.neo4j.neo4j_graph import (
-    Neo4jContentGraphInterface,
+from demisto_sdk.commands.content_graph.commands.update import update_content_graph
+from demisto_sdk.commands.content_graph.interface import (
+    ContentGraphInterface,
 )
 
 CLASS_BY_FILE_TYPE = {
@@ -397,7 +399,7 @@ class UpdateRN:
         :return
             Whether the pack metadata exists
         """
-        if not os.path.isfile(self.metadata_path):
+        if not Path(self.metadata_path).is_file():
             logger.info(
                 f'[red]"{self.metadata_path}" file does not exist, create one in the root of the pack[/red]'
             )
@@ -441,7 +443,7 @@ class UpdateRN:
                 return False
             new_metadata = self.get_pack_metadata()
             new_version = new_metadata.get("currentVersion", "99.99.99")
-            if LooseVersion(self.master_version) >= LooseVersion(new_version):
+            if Version(self.master_version) >= Version(new_version):
                 return True
             return False
         except RuntimeError as e:
@@ -961,7 +963,7 @@ def get_file_description(path, file_type) -> str:
     :return
     The file description if exists otherwise returns %%UPDATE_RN%%
     """
-    if not os.path.isfile(path):
+    if not Path(path).is_file():
         logger.info(
             f'[yellow]Cannot get file description: "{path}" file does not exist[/yellow]'
         )
@@ -1023,8 +1025,11 @@ def update_api_modules_dependents_rn(
         f"[yellow]Changes were found in the following APIModules : {api_module_set}, updating all dependent "
         f"integrations.[/yellow]"
     )
-    with Neo4jContentGraphInterface(update_graph=True) as graph:
+    with ContentGraphInterface() as graph:
+        update_content_graph(graph, use_git=True, dependencies=True)
         integrations = get_api_module_dependencies_from_graph(api_module_set, graph)
+        if integrations:
+            logger.info("Executing update-release-notes on those as well.")
         for integration in integrations:
             integration_pack_name = integration.pack_id
             integration_path = integration.path
@@ -1088,7 +1093,7 @@ def get_from_version_at_update_rn(path: str) -> Optional[str]:
         Fromversion if there is a fromversion key in the yml file
 
     """
-    if not os.path.isfile(path):
+    if not Path(path).is_file():
         logger.info(
             f'[yellow]Cannot get file fromversion: "{path}" file does not exist[/yellow]'
         )

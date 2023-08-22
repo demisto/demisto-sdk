@@ -1,8 +1,9 @@
 import re
-from distutils.version import LooseVersion
 from enum import Enum
 from functools import reduce
 from typing import Dict, List
+
+from packaging.version import Version
 
 CAN_START_WITH_DOT_SLASH = "(?:./)?"
 NOT_TEST = "(?!Test)"
@@ -93,7 +94,7 @@ WIZARD = "wizard"
 XDRC_TEMPLATE = "xdrctemplate"
 LAYOUT_RULE = "layoutrule"
 MARKETPLACE_KEY_PACK_METADATA = "marketplaces"
-
+EVENT_COLLECTOR = "EventCollector"
 # ENV VARIABLES
 
 ENV_DEMISTO_SDK_MARKETPLACE = "DEMISTO_SDK_MARKETPLACE"
@@ -1130,7 +1131,6 @@ VALIDATION_USING_GIT_IGNORABLE_DATA = (
     "doc_files",
     "doc_imgs",
     ".secrets-ignore",
-    ".pack-ignore",
 )
 
 FILE_TYPES_FOR_TESTING = [".py", ".js", ".yml", ".ps1"]
@@ -1273,7 +1273,6 @@ SCHEMA_TO_REGEX = {
     "xdrctemplate": [XDRC_TEMPLATE_JSON_REGEX],
     LAYOUT_RULE: JSON_ALL_LAYOUT_RULES_REGEXES,
 }
-
 EXTERNAL_PR_REGEX = r"^pull/(\d+)$"
 
 FILE_TYPES_PATHS_TO_VALIDATE = {"reports": JSON_ALL_REPORTS_REGEXES}
@@ -1405,6 +1404,7 @@ DEFAULT_CONTENT_ITEM_TO_VERSION = "99.99.99"
 MARKETPLACE_MIN_VERSION = "6.0.0"
 
 OLDEST_SUPPORTED_VERSION = "5.0.0"
+OLDEST_INCIDENT_FIELD_SUPPORTED_VERSION = GENERAL_DEFAULT_FROMVERSION
 LAYOUTS_CONTAINERS_OLDEST_SUPPORTED_VERSION = "6.0.0"
 GENERIC_OBJECTS_OLDEST_SUPPORTED_VERSION = "6.5.0"
 
@@ -1731,8 +1731,8 @@ MARKETPLACE_TO_CORE_PACKS_FILE: Dict[MarketplaceVersions, str] = {
 
 
 INDICATOR_FIELD_TYPE_TO_MIN_VERSION = {
-    "html": LooseVersion("6.1.0"),
-    "grid": LooseVersion("5.5.0"),
+    "html": Version("6.1.0"),
+    "grid": Version("5.5.0"),
 }
 
 
@@ -1842,3 +1842,11 @@ TABLE_INCIDENT_TO_ALERT = {
 NATIVE_IMAGE_DOCKER_NAME = "demisto/py3-native"
 
 FORMATTING_SCRIPT = "indicator-format"
+
+ENV_SDK_WORKING_OFFLINE = "DEMISTO_SDK_OFFLINE_ENV"
+
+TEST_COVERAGE_DEFAULT_URL = "https://storage.googleapis.com/marketplace-dist-dev/code-coverage-reports/coverage-min.json"
+
+URL_IMAGE_LINK_REGEX = r"(\!\[.*?\])\((?P<url>https://[a-zA-Z_/\.0-9\- :%]*?)\)((].*)?)"
+
+HTML_IMAGE_LINK_REGEX = r'(<img.*?src\s*=\s*"(https://.*?)")'

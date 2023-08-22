@@ -86,4 +86,4 @@ class ContentGraphBuilder:
         """Runs DB queries using the collected nodes and relationships to create or update the content graph."""
         self.content_graph.create_nodes(self.nodes)
         self.content_graph.create_relationships(self.relationships)
-        self.content_graph.remove_server_items()
+        self.content_graph.remove_non_repo_items()

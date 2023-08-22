@@ -23,6 +23,7 @@ from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     arg_to_list,
     find_type,
+    get_content_path,
     get_file,
     get_mp_tag_parser,
     get_pack_metadata,
@@ -82,7 +83,7 @@ class IntegrationScriptUnifier(Unifier):
             IntegrationScriptUnifier.get_code_file(package_path, script_type)
         except ValueError:
             logger.info(
-                f"[yellow]No code file found for {path}, assuming it is already unifiedyellow[/yellow]"
+                f"[yellow]No code file found for {path}, assuming it is already unified[/yellow]"
             )
             return data
         yml_unified = copy.deepcopy(data)
@@ -292,7 +293,7 @@ class IntegrationScriptUnifier(Unifier):
             script_code
         )
         script_code = IntegrationScriptUnifier.insert_module_code(
-            script_code, imports_to_names
+            script_code, imports_to_names, get_content_path(package_path)
         )
         if pack_version := get_pack_metadata(file_path=str(package_path)).get(
             "currentVersion", ""
@@ -379,18 +380,25 @@ class IntegrationScriptUnifier(Unifier):
         }
 
     @staticmethod
-    def insert_module_code(script_code: str, import_to_name: Dict[str, str]) -> str:
+    def insert_module_code(
+        script_code: str, import_to_name: Dict[str, str], content_path: Path
+    ) -> str:
         """
         Inserts API module in place of an import to the module according to the module name
         :param script_code: The integration code
         :param import_to_name: A dictionary where the keys are The module import string to replace
         and the values are The module name
+        :param content_path: The path to the content repo
         :return: The integration script with the module code appended in place of the import
         """
         for module_import, module_name in import_to_name.items():
-
-            module_path = os.path.join(
-                "./Packs", "ApiModules", "Scripts", module_name, module_name + ".py"
+            module_path = Path(
+                content_path,
+                "Packs",
+                "ApiModules",
+                "Scripts",
+                module_name,
+                f"{module_name}.py",
             )
             module_code = IntegrationScriptUnifier._get_api_module_code(
                 module_name, module_path
@@ -401,7 +409,7 @@ class IntegrationScriptUnifier(Unifier):
                 module_code
             )
             module_code = IntegrationScriptUnifier.insert_module_code(
-                module_code, tmp_imports_to_names
+                module_code, tmp_imports_to_names, content_path
             )
 
             # the wrapper numbers represents the number of generated lines added
@@ -596,7 +604,7 @@ class IntegrationScriptUnifier(Unifier):
         integration_doc_link = INTEGRATIONS_DOCS_REFERENCE + normalized_integration_id
 
         readme_path = os.path.join(package_path, "README.md")
-        if os.path.isfile(readme_path) and os.stat(readme_path).st_size != 0:
+        if Path(readme_path).is_file() and os.stat(readme_path).st_size != 0:
             # verify README file exists and is not empty
             return f"[View Integration Documentation]({integration_doc_link})"
         else:

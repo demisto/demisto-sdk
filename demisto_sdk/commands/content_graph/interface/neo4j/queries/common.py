@@ -1,5 +1,5 @@
 import traceback
-from concurrent.futures import ThreadPoolExecutor, TimeoutError
+from concurrent.futures import ProcessPoolExecutor, TimeoutError
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict
@@ -62,12 +62,11 @@ def run_query(tx: Transaction, query: str, **kwargs) -> Result:
     try:
         start_time: datetime = datetime.now()
         logger.debug(f"Running query:\n{query}")
-        # invoke a new thread and execute `tx.run in a thread. If the query times out, retry.
         for retry in range(MAX_RETRIES_QUERY):
             try:
-                with ThreadPoolExecutor(max_workers=1) as executor:
+                with ProcessPoolExecutor(max_workers=1) as executor:
                     future = executor.submit(tx.run, query, **kwargs)
-                    logger.debug("Query executed using thread")
+                    logger.debug("Query executed using process")
                     result = future.result(timeout=QUERY_TIMEOUT)
                     break
             except TimeoutError:

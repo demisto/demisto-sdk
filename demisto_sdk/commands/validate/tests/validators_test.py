@@ -2,6 +2,7 @@ import contextlib
 import logging
 import os
 import sys
+from configparser import ConfigParser
 from io import StringIO
 from pathlib import Path
 from shutil import copyfile
@@ -1791,7 +1792,6 @@ class TestValidators:
             "Packs/pack_id/Integrations/integration_id/command_examples",
             "Packs/pack_id/Integrations/integration_id/test.txt",
             "Packs/pack_id/.secrets-ignore",
-            "Packs/pack_id/.pack-ignore",
         ],
     )
     def test_ignore_files_irrelevant_for_validation_test_file(self, file_path: str):
@@ -3136,3 +3136,75 @@ def test_validate_no_disallowed_terms_in_customer_facing_docs_end_to_end(repo, m
     # Assure errors were logged (1 error per validated file)
     assert count_str_in_call_args_list(logger_error.call_args_list, "BA125") == 4
     pass
+
+
+@pytest.mark.parametrize(
+    "modified_files, new_file_content, remote_file_content, expected_results",
+    [
+        (
+            {"Packs/test/.pack-ignore"},
+            "[file:test.yml]\nignore=BA108,BA109\n",
+            "[file:test.yml]\nignore=BA108,BA109,DS107\n",
+            {"Packs/test/Integrations/test/test.yml"},
+        ),
+        (
+            {"Packs/test/.pack-ignore"},
+            "[file:test.yml]\nignore=BA108,BA109,DS107\n",
+            "[file:test.yml]\nignore=BA108,BA109,DS107\n",
+            set(),
+        ),
+        (
+            {"Packs/test1/.pack-ignore"},
+            "[file:test.yml]\nignore=BA108,BA109,DS107\n",
+            "[file:test2.yml]\nignore=BA108,BA109,DS107\n",
+            {
+                "Packs/test1/Integrations/test/test.yml",
+                "Packs/test1/Integrations/test2/test2.yml",
+            },
+        ),
+    ],
+)
+def test_get_all_files_edited_in_pack_ignore(
+    mocker, modified_files, new_file_content, remote_file_content, expected_results
+):
+    """
+    Given:
+    - modified files set, edited pack-ignore mock, and master's pack-ignore mock.
+    - Case 1: pack-ignore mocks which vary by 1 validation.
+    - Case 2: pack-ignore mocks which no differences.
+    - Case 3: pack-ignore mocks where each file is pointed to a different integration yml.
+
+    When:
+    - Running get_all_files_edited_in_pack_ignore.
+
+    Then:
+    - Ensure that the right files were returned.
+    - Case 1: Should return the file path only from the relevant pack (there's a similar file in a different pack)
+    - Case 2: Should return empty set of extra files to test.
+    - Case 3: Should return both file names.
+    """
+    mocker.patch.object(
+        GitUtil,
+        "get_all_files",
+        return_value={
+            Path("Packs/test/Integrations/test/test.yml"),
+            Path("Packs/test1/Integrations/test/test.yml"),
+            Path("Packs/test1/Integrations/test2/test2.yml"),
+        },
+    )
+    mocker.patch(
+        "demisto_sdk.commands.validate.validate_manager.get_remote_file",
+        return_value=remote_file_content,
+    )
+    validate_manager = ValidateManager()
+    config = ConfigParser(allow_no_value=True)
+    config.read_string(new_file_content)
+
+    mocker.patch(
+        "demisto_sdk.commands.validate.validate_manager.get_pack_ignore_content",
+        return_value=config,
+    )
+    assert (
+        validate_manager.get_all_files_edited_in_pack_ignore(modified_files)
+        == expected_results
+    )

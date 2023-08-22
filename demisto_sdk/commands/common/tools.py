@@ -557,6 +557,8 @@ def get_file_details(
         file_details = json.loads(file_content)
     elif full_file_path.endswith(("yml", "yaml")):
         file_details = yaml.load(file_content)
+    elif full_file_path.endswith(".pack-ignore"):
+        return file_content
     # if neither yml nor json then probably a CHANGELOG or README file.
     else:
         file_details = {}
@@ -709,7 +711,7 @@ def get_child_files(directory):
     child_files = [
         os.path.join(directory, path)
         for path in os.listdir(directory)
-        if os.path.isfile(os.path.join(directory, path))
+        if Path(directory, path).is_file()
     ]
     return child_files
 
@@ -1087,7 +1089,7 @@ def old_get_release_notes_file_path(file_path):
 
 
 def old_get_latest_release_notes_text(rn_path):
-    if not os.path.isfile(rn_path):
+    if not Path(rn_path).is_file():
         # releaseNotes were not provided
         return None
 
@@ -3924,3 +3926,15 @@ def extract_error_codes_from_file(pack_name: str) -> Set[str]:
                     error_codes_list.extend(error_codes)
 
     return set(error_codes_list)
+
+
+def is_file_in_pack(file: Path, pack_name: str) -> bool:
+    """
+    Return wether the given file is under the given pack.
+    Args:
+        file: The file to check.
+        pack_name: The name of the pack we want to ensure the given file is under.
+    """
+    return (
+        len(file.parts) > 2 and file.parts[0] == "Packs" and file.parts[1] == pack_name
+    )

@@ -2,6 +2,7 @@ import math
 import os
 import string
 from collections import defaultdict
+from pathlib import Path
 from typing import DefaultDict
 
 import PyPDF2
@@ -470,7 +471,7 @@ class SecretsValidator:
         final_white_list = []
         ioc_white_list = []
         files_while_list = []
-        if os.path.isfile(whitelist_path):
+        if Path(whitelist_path).is_file():
             with open(whitelist_path, encoding="utf-8") as secrets_white_list_file:
                 secrets_white_list_file = json.load(secrets_white_list_file)
                 for name, white_list in secrets_white_list_file.items():  # type: ignore
@@ -498,7 +499,7 @@ class SecretsValidator:
         final_white_list = []
         files_white_list = []
 
-        if os.path.isfile(whitelist_path):
+        if Path(whitelist_path).is_file():
             with open(whitelist_path, encoding="utf-8") as secrets_white_list_file:
                 temp_white_list = secrets_white_list_file.read().split("\n")
             for white_list_line in temp_white_list:
@@ -506,7 +507,7 @@ class SecretsValidator:
                     white_list_line = os.path.join(
                         PACKS_DIR, pack_name, white_list_line[5:]
                     )
-                    if not os.path.isfile(os.path.join(white_list_line)):
+                    if not Path(white_list_line).is_file():
                         logger.info(
                             f"[yellow]{white_list_line} not found.\n"
                             "please add the file name in the following format\n"

@@ -22,7 +22,7 @@ from demisto_sdk.commands.prepare_content.integration_script_unifier import (
 )
 
 
-class IntegrationScript(ContentItem, lazy_properties={"python_version"}):
+class IntegrationScript(ContentItem):
     type: str
     docker_image: Optional[str]
     description: Optional[str] = Field("")

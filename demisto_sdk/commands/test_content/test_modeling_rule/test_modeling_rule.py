@@ -88,7 +88,7 @@ def create_table(expected: Dict[str, Any], received: Dict[str, Any]):
     data = [(key, str(val), str(received.get(key))) for key, val in expected.items()]
     return tabulate(
         data,
-        tablefmt="presto",
+        tablefmt="fancy_grid",
         headers=["Model Field", "Expected Value", "Received Value"],
     )
 

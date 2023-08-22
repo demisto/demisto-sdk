@@ -507,7 +507,7 @@ class SecretsValidator:
                     white_list_line = os.path.join(
                         PACKS_DIR, pack_name, white_list_line[5:]
                     )
-                    if not Path(os.path.join(white_list_line)):
+                    if not Path(white_list_line).is_file():
                         logger.info(
                             f"[yellow]{white_list_line} not found.\n"
                             "please add the file name in the following format\n"

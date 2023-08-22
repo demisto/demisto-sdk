@@ -11,6 +11,7 @@ import pytz
 import requests
 import typer
 from junitparser import Error, Failure, JUnitXml, Skipped, TestCase, TestSuite
+from junitparser.junitparser import Result
 from tabulate import tabulate
 from typer.main import get_command_from_info
 
@@ -148,6 +149,30 @@ def convert_epoch_time_to_string_time(
     return datetime_object.strftime(time_format)
 
 
+def get_type_pretty_name(obj: Any) -> str:
+    """Get the pretty name of the type of the given object.
+
+    Args:
+        obj (Any): The object to get the type name for.
+
+    Returns:
+        str: The pretty name of the type of the given object.
+    """
+    return {
+        type(None): "null",
+        list: "list",
+        dict: "dict",
+        tuple: "tuple",
+        set: "set",
+        UUID: "UUID",
+        str: "string",
+        int: "int",
+        float: "float",
+        bool: "boolean",
+        datetime: "datetime",
+    }.get(type(obj), str(type(obj)))
+
+
 def verify_results(
     modeling_rule: ModelingRule,
     tested_dataset: str,
@@ -174,7 +199,7 @@ def verify_results(
             f"Modeling rule - {modeling_rule.normalize_file_name()}",
             classname="Modeling Rule Results",
         )
-        test_case.result = [Failure(SYNTAX_ERROR_IN_MODELING_RULE)]
+        test_case.result += [Failure(SYNTAX_ERROR_IN_MODELING_RULE)]
         test_case.system_err = SYNTAX_ERROR_IN_MODELING_RULE
         return [test_case]
 
@@ -191,7 +216,7 @@ def verify_results(
             f"Modeling rule - {modeling_rule.normalize_file_name()}",
             classname="Modeling Rule Results",
         )
-        test_case.result = [Failure(err)]
+        test_case.result += [Failure(err)]
         logger.error(f"[red]{err}[/red]", extra={"markup": True})
         return [test_case]
 
@@ -245,28 +270,30 @@ def verify_results(
                     result_test_case_system_out.append(out)
 
                     if type(result_val) == type(val) and result_val == val:
-                        out = f"Value and Type Matched for key {key}"
+                        out = f"Value:{result_val} and Type:{get_type_pretty_name(result_val)} Matched for key {key}"
                         result_test_case_system_out.append(out)
                         logger.debug(out)
                     else:
                         if type(result_val) == type(val):
                             err = (
                                 f"Expected value does not match for key {key}: - expected: {val} - received: {result_val} "
-                                f"Types match:{type(result_val)}"
+                                f"Types match:{get_type_pretty_name(result_val)}"
                             )
                             logger.error(
-                                f'[red][bold]{key}[/bold] --- "{result_val}" != "{val}" Types match:{type(result_val)}\n',
+                                f'[red][bold]{key}[/bold] --- "{result_val}" != "{val}" '
+                                f"Types match:{get_type_pretty_name(result_val)}[/red]",
                                 extra={"markup": True},
                             )
                         else:
                             err = (
-                                f"Expected value and type do not match for key {key}: - expected: {val} - received: "
-                                f"{result_val} expected type: {type(val)} received type: {type(result_val)}"
+                                f"Expected value and type do not match for key {key}: - expected: {val} - received: {result_val} "
+                                f"expected type: {get_type_pretty_name(val)} "
+                                f"received type: {get_type_pretty_name(result_val)}"
                             )
                             logger.error(
                                 f'[red][bold]{key}[/bold] --- "{result_val}" != "{val}"\n'
-                                f'[bold]{key}[/bold] --- Received value type: "{type(result_val)}" '
-                                f'!=  Expected value type: "{type(val)}"[/red]',
+                                f'[bold]{key}[/bold] --- Received value type: "{get_type_pretty_name(result_val)}" '
+                                f'!=  Expected value type: "{get_type_pretty_name(val)}"[/red]',
                                 extra={"markup": True},
                             )
                         result_test_case_system_err.append(err)
@@ -284,7 +311,7 @@ def verify_results(
         result_test_case.system_err = "\n".join(result_test_case_system_err)
         result_test_case.system_out = "\n".join(result_test_case_system_out)
         if result_test_case_results:
-            result_test_case.result = result_test_case_results
+            result_test_case.result += result_test_case_results
 
         test_cases.append(result_test_case)
 
@@ -350,7 +377,7 @@ def validate_expected_values(
                 extra={"markup": True},
             )
             validate_expected_values_test_case.system_err = XQL_QUERY_ERROR_EXPLANATION
-            validate_expected_values_test_case.result = [
+            validate_expected_values_test_case.result += [
                 Error("Failed to execute XQL query")
             ]
         else:
@@ -368,14 +395,15 @@ def validate_expected_values(
 
 def validate_schema_aligned_with_test_data(
     test_data: init_test_data.TestData, schema: Dict
-) -> bool:
+) -> Tuple[bool, List[Result]]:
     """
     Validates that the schema is aligned with the test-data types.
 
     Args:
         test_data: the test data object.
         schema: the content of the schema file.
-
+    Returns:
+        Tuple[bool, List[Result]]: if the schema is aligned with the test-data types and a list of the results.
     """
 
     # map each dataset from the schema to the correct events that has the same dataset
@@ -387,6 +415,7 @@ def validate_schema_aligned_with_test_data(
     }
 
     errors_occurred = False
+    results = []
 
     for dataset, event_logs in schema_dataset_to_events.items():
         all_schema_dataset_mappings = schema[dataset]
@@ -397,11 +426,10 @@ def validate_schema_aligned_with_test_data(
                 if (
                     event_val is None
                 ):  # if event_val is None, warn and continue looping.
-                    logger.warning(
-                        f"{event_key=} is null on {event_log.test_data_event_id} "
-                        f"event for {dataset=}, ignoring {event_key=}",
-                        extra={"markup": True},
-                    )
+
+                    info = f"{event_key=} is null on {event_log.test_data_event_id} event for {dataset=}, ignoring {event_key=}"
+                    logger.warning(f"[yellow]{info}[/yellow]", extra={"markup": True})
+                    results.append(Skipped(info))
                     # add the event key to the mapping to validate there isn't another key with a different type
                     test_data_mappings[event_key] = None
                     continue
@@ -426,32 +454,40 @@ def validate_schema_aligned_with_test_data(
                             event_key
                         )
                     ) and existing_testdata_key_mapping != test_data_key_mappings:
-                        error_logs.add(
+                        err = (
                             f"The testdata contains events with the same {event_key=} "
                             f"that have different types for dataset {dataset}"
                         )
+                        error_logs.add(err)
+                        results.append(Error(err))
                         errors_occurred = True
                         continue
                     else:
                         test_data_mappings[event_key] = test_data_key_mappings
 
                     if test_data_key_mappings != schema_key_mappings:
+                        err = (
+                            f"The field {event_key} has mismatch on type or is_array in "
+                            f"event ID {event_log.test_data_event_id} between testdata and schema --- "
+                            f'TestData Mapping "{test_data_key_mappings}" != Schema Mapping "{schema_key_mappings}"'
+                        )
+                        results.append(Error(err))
                         error_logs.add(
                             f"[red][bold]the field {event_key} has mismatch on type or is_array in "
-                            f"event ID {event_log.test_data_event_id} between testdata "
-                            f"and schema[/bold] --- TestData Mapping "
-                            f'"{test_data_key_mappings}" != Schema Mapping "{schema_key_mappings}"'
+                            f"event ID {event_log.test_data_event_id} between testdata and schema[/bold] --- "
+                            f'TestData Mapping "{test_data_key_mappings}" != Schema Mapping "{schema_key_mappings}"[/red]'
                         )
                         errors_occurred = True
 
         if missing_test_data_keys := set(all_schema_dataset_mappings.keys()) - set(
             test_data_mappings.keys()
         ):
-            logger.warning(
-                f"[yellow]The following fields {missing_test_data_keys} are in schema for dataset {dataset}, but not "
-                f"in test-data, make sure to remove them from schema or add them to test-data if necessary[/yellow]",
-                extra={"markup": True},
+            skipped = (
+                f"The following fields {missing_test_data_keys} are in schema for dataset {dataset}, but not "
+                "in test-data, make sure to remove them from schema or add them to test-data if necessary"
             )
+            logger.warning(f"[yellow]{skipped}[/yellow]", extra={"markup": True})
+            results.append(Skipped(skipped))
 
         if error_logs:
             for _log in error_logs:
@@ -461,7 +497,7 @@ def validate_schema_aligned_with_test_data(
                 f"[green]Schema type mappings = Testdata type mappings for dataset {dataset}[/green]",
                 extra={"markup": True},
             )
-    return not errors_occurred
+    return not errors_occurred, results
 
 
 def check_dataset_exists(
@@ -544,7 +580,7 @@ def check_dataset_exists(
         process_failed |= not (dataset_exist and results_exist)
 
     if test_case_results:
-        dataset_set_test_case.result = test_case_results
+        dataset_set_test_case.result += test_case_results
     dataset_set_test_case.time = (
         datetime.now(timezone.utc) - dataset_set_test_case_start_time
     ).total_seconds()
@@ -598,7 +634,7 @@ def push_test_data_to_tenant(
             extra={"markup": True},
         )
         push_test_data_test_case.system_err = "\n".join(system_errors)
-        push_test_data_test_case.result = [Failure(FAILURE_TO_PUSH_EXPLANATION)]
+        push_test_data_test_case.result += [Failure(FAILURE_TO_PUSH_EXPLANATION)]
     else:
         system_out = "Test data pushed successfully"
         push_test_data_test_case.system_out = system_out
@@ -738,6 +774,9 @@ def validate_modeling_rule(
     modeling_rule_test_suite = TestSuite(
         f"Modeling Rule Test Results {modeling_rule_file_name}"
     )
+    modeling_rule_test_suite.add_property(
+        "file_name", modeling_rule_file_name
+    )  # used in the convert to jira issue.
     modeling_rule_test_suite.filepath = get_relative_path_to_content(modeling_rule.path)
     modeling_rule_test_suite.add_property(
         "modeling_rule_path", get_relative_path_to_content(modeling_rule.path)
@@ -759,7 +798,9 @@ def validate_modeling_rule(
     modeling_rule_test_suite.add_property("xsiam_url", xsiam_url)
     modeling_rule_test_suite.add_property("from_version", modeling_rule.from_version)
     modeling_rule_test_suite.add_property("to_version", modeling_rule.to_version)
-    modeling_rule_test_suite.add_property("pack_id", containing_pack.id)
+    modeling_rule_test_suite.add_property(
+        "pack_id", containing_pack.id
+    )  # used in the convert to jira issue.
     if CI_PIPELINE_ID:
         modeling_rule_test_suite.add_property("ci_pipeline_id", CI_PIPELINE_ID)
     if modeling_rule.testdata_path:
@@ -825,9 +866,11 @@ def validate_modeling_rule(
                 extra={"markup": True},
             )
 
-            if not validate_schema_aligned_with_test_data(
+            success, results = validate_schema_aligned_with_test_data(
                 test_data=test_data, schema=schema
-            ):
+            )
+            schema_test_case.result += results
+            if not success:
                 err = (
                     f"The schema {get_relative_path_to_content(schema_path)} is not aligned with the test data file "
                     f"{get_relative_path_to_content(modeling_rule.testdata_path)}"
@@ -841,7 +884,7 @@ def validate_modeling_rule(
                 "is aligned with TestData file."
             )
             logger.info(f"[green]{skipped}[/green]", extra={"markup": True})
-            schema_test_case.result = [Skipped(skipped)]
+            schema_test_case.result += [Skipped(skipped)]
             modeling_rule_test_suite.add_testcase(schema_test_case)
 
         if push:
@@ -983,7 +1026,7 @@ def handle_missing_event_data_in_modeling_rule(
         "Missing Event Data", classname="Modeling Rule"
     )
     err = f"Missing Event Data for the following test data event ids: {missing_event_data}"
-    missing_event_data_test_case.result = [Error(err)]
+    missing_event_data_test_case.result += [Error(err)]
     prefix = "Event log test data is missing for the following ids:"
     system_errors = [prefix]
     logger.warning(
@@ -1026,7 +1069,7 @@ def log_error_to_test_case(
 def add_result_to_test_case(
     err: str, test_case: TestCase, modeling_rule_test_suite: TestSuite
 ) -> Tuple[bool, TestSuite]:
-    test_case.result = [Error(err)]
+    test_case.result += [Error(err)]
     modeling_rule_test_suite.add_testcase(test_case)
     return False, modeling_rule_test_suite
 
@@ -1200,7 +1243,7 @@ def test_modeling_rule(
             xml.add_testsuite(modeling_rule_test_suite)
 
     if output_junit_file:
-        xml.write(output_junit_file, pretty=True)
+        xml.write(output_junit_file.as_posix(), pretty=True)
 
     if errors:
         raise typer.Exit(1)

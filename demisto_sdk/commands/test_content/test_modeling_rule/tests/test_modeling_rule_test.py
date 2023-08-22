@@ -1759,18 +1759,16 @@ class TestValidateSchemaAlignedWithTestData:
             ]
         )
 
-        assert (
-            validate_schema_aligned_with_test_data(
-                test_data=test_data,
-                schema={
-                    "dataset": {
-                        "int": {"type": "string", "is_array": False},
-                        "bool": {"type": "float", "is_array": False},
-                    }
-                },
-            )
-            is False
+        success, _ = validate_schema_aligned_with_test_data(
+            test_data=test_data,
+            schema={
+                "dataset": {
+                    "int": {"type": "string", "is_array": False},
+                    "bool": {"type": "float", "is_array": False},
+                }
+            },
         )
+        assert success is False
         assert logger_error_mocker.called
         assert not logger_warning_mocker.called
 
@@ -1822,18 +1820,16 @@ class TestValidateSchemaAlignedWithTestData:
             ]
         )
 
-        assert (
-            validate_schema_aligned_with_test_data(
-                test_data=test_data,
-                schema={
-                    "dataset": {
-                        "int": {"type": "int", "is_array": False},
-                        "bool": {"type": "boolean", "is_array": False},
-                    }
-                },
-            )
-            is False
+        success, _ = validate_schema_aligned_with_test_data(
+            test_data=test_data,
+            schema={
+                "dataset": {
+                    "int": {"type": "int", "is_array": False},
+                    "bool": {"type": "boolean", "is_array": False},
+                }
+            },
         )
+        assert success is False
         assert (
             "The testdata contains events with the same event_key"
             in logger_error_mocker.call_args_list[0].args[0]

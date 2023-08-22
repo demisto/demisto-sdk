@@ -85,7 +85,7 @@ MATCH (source) - [r:{RelationshipType.USES}] -> (target) - [:{RelationshipType.I
 (:{ContentType.PACK}{{object_id: "{DEPRECATED_CONTENT_PACK}"}})
 DELETE r
 RETURN source.node_id AS source, target.node_id AS target"""
-    run_query(tx, query).data()
+    run_query(tx, query)
 
 
 def remove_existing_depends_on_relationships(tx: Transaction) -> None:

@@ -294,6 +294,9 @@ def lazy_property(property_func: Callable):
     lazy property: specifies that this property should be added to the pydantic model lazily
     only when the instance property is first accessed.
 
+    Note:
+        make sure that the lazy property returns only serializable objects.
+
     Use this decorator on your property in case you need it to be added to the model only if its called directly
     """
 

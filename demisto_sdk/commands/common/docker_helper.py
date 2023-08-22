@@ -408,7 +408,7 @@ def get_docker():
     return MountableDocker() if CAN_MOUNT_FILES else DockerBase()
 
 
-def _get_python_version_by_regex(image: str) -> Optional[Version]:
+def _get_python_version_from_tag_by_regex(image: str) -> Optional[Version]:
 
     if match := PYTHON_IMAGE_REGEX.match(image):
         return Version(match.group("python_version"))
@@ -514,7 +514,7 @@ def get_python_version(image: Optional[str]):
         f"Could not get python version for {image=} from {DOCKERFILES_INFO_REPO} repo"
     )
 
-    if python_version := _get_python_version_by_regex(image):
+    if python_version := _get_python_version_from_tag_by_regex(image):
         return python_version
     logger.debug(f"Could not get python version for {image=} from regex")
 

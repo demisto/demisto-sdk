@@ -9,6 +9,7 @@ import urllib.parse
 import uuid
 from copy import deepcopy
 from math import ceil
+from pathlib import Path
 from pprint import pformat
 from queue import Empty, Queue
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union

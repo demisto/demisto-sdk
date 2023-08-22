@@ -82,13 +82,14 @@ class PartnerChecker(BaseChecker):
     def leave_module(self, node):
         self._return_error_count_checker(node)
 
-    # ---------------------------------------------------- Checkers  ---------------------------------------------
+    # ---------------------------------------------------- Checkers  ------------------------------------------------------
     """
     Checker functions are the functions that have the logic of our check and should be activated in one or more
      visit/leave functions.
     """
 
     # -------------------------------------------- Call Node ---------------------------------------------
+
     def _return_error_function_count(self, node):
         """
         Args: node which is a Call Node.

@@ -1,6 +1,7 @@
 import logging
 import os
 from os.path import isfile
+from pathlib import Path
 from shutil import copyfile
 from typing import List, Tuple
 
@@ -116,8 +117,7 @@ class TestStructureValidator:
     @classmethod
     def teardown_class(cls):
         for target in cls.INPUTS_TARGETS:
-            if isfile(target) is True:
-                os.remove(target)
+            Path(target).unlink(missing_ok=True)
         for directory in cls.CREATED_DIRS:
             if os.path.exists(directory):
                 os.rmdir(directory)
@@ -225,7 +225,7 @@ class TestStructureValidator:
             structure = StructureValidator(target)
             assert structure.is_valid_file() is answer
         finally:
-            os.remove(target)
+            Path(target).unlink()
 
     pykwalify_error_1 = " - Cannot find required key 'category'. Path: ''.: Path: '/'>'"
     expected_error_1 = 'Missing the field "category" in root'

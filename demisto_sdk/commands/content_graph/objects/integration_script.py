@@ -40,9 +40,7 @@ class IntegrationScript(ContentItem, lazy_properties={"python_version"}):
             )
             return None
 
-        if python_version := get_python_version(
-            self.docker_image, should_pull_image=False
-        ):
+        if python_version := get_python_version(self.docker_image):
             return str(python_version)
 
         return None

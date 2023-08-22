@@ -146,9 +146,7 @@ def generate_integration_doc(
             if not is_contribution:
                 docs.extend(
                     [
-                        "This integration was integrated and tested with version xx of {}".format(
-                            yml_data["name"]
-                        ),
+                        f"This integration was integrated and tested with version xx of {yml_data['name']}.",
                         "",
                     ]
                 )

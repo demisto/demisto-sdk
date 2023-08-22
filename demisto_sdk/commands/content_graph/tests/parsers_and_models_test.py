@@ -1559,7 +1559,7 @@ class TestParsersAndModels:
         pack_ids = {pack.object_id for pack in model.packs}
         assert pack_ids == {"sample1", "sample2"}
 
-    def test_lazy_properties_not_loaded_to_model(self, mocker, pack):
+    def test_lazy_properties_in_the_model(self, mocker, pack):
         """
         Given:
             - an integration
@@ -1570,18 +1570,15 @@ class TestParsersAndModels:
             - Verify that only when the lazy property (python_version) is called directly its added into the model
         """
         from demisto_sdk.commands.content_graph.objects.integration import Integration
+        from packaging.version import Version
         from demisto_sdk.commands.content_graph.parsers.integration import (
             IntegrationParser,
         )
 
         expected_python_version = "3.10.11"
         mocker.patch(
-            "demisto_sdk.commands.common.docker_images_metadata.get_remote_file_from_api",
-            return_value={
-                "docker_images": {
-                    "bs4": {"1.0.0.7863": {"python_version": expected_python_version}}
-                }
-            },
+            "demisto_sdk.commands.common.docker_helper._get_python_version_from_dockerhub_api",
+            return_value=Version(expected_python_version),
         )
 
         integration = pack.create_integration(yml=load_yaml("integration.yml"))

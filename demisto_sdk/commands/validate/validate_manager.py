@@ -2039,7 +2039,6 @@ class ValidateManager:
         all_files_edited_in_pack_ignore = self.get_all_files_edited_in_pack_ignore(
             modified_files
         )
-        # modified_files = modified_files.union(all_files_edited_in_pack_ignore)
         for file_path in modified_files.union(all_files_edited_in_pack_ignore):
             # handle renamed files
             old_file_path, file_path = self.get_old_file_path(file_path)
@@ -2767,7 +2766,7 @@ class ValidateManager:
             for section in filter(
                 lambda section: section.startswith("file:"), config.sections()
             ):
-                file_name = section[len("files"):]
+                file_name = section[len("file:") :]
                 ignored_errors_list[file_name] = []
                 for key in config[section]:
                     self.add_ignored_errors_to_list(

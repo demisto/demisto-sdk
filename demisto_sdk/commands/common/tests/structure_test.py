@@ -1,6 +1,5 @@
 import logging
 import os
-from os.path import isfile
 from pathlib import Path
 from shutil import copyfile
 from typing import List, Tuple

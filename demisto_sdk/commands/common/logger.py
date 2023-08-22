@@ -4,6 +4,7 @@ import os.path
 import sys
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
+from typing import Any
 
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.tools import string_to_bool
@@ -36,7 +37,31 @@ DEPRECATED_PARAMETERS = {
     "no_logging": "--console-log-threshold or --file-log-threshold",
 }
 
+
+def parse_int_or_default(value: Any, default: int) -> int:
+    """
+    Parse int or return default value
+    Args:
+        value: value to parse
+        default: default value to return if parsing failed
+
+    Returns:
+        int: parsed value or default value
+
+    """
+    try:
+        return int(value)
+    except (ValueError, TypeError):
+        return default
+
+
 SUCCESS_LEVEL: int = 25
+DEMISTO_SDK_LOG_FILE_SIZE = parse_int_or_default(
+    os.getenv("DEMISTO_SDK_LOG_FILE_SIZE"), 1_048_576  # 1MB
+)
+DEMISTO_SDK_LOG_FILE_COUNT = parse_int_or_default(
+    os.getenv("DEMISTO_SDK_LOG_FILE_COUNT"), 10
+)
 
 
 def handle_deprecated_args(input_args):
@@ -97,10 +122,14 @@ escapes = {
 
 
 def get_handler_by_name(logger: logging.Logger, handler_name: str):
-    for current_handler in logger.handlers:
-        if current_handler.get_name == handler_name:
-            return current_handler
-    return None
+    return next(
+        (
+            current_handler
+            for current_handler in logger.handlers
+            if current_handler.get_name == handler_name
+        ),
+        None,
+    )
 
 
 def set_demisto_logger(demisto_logger: logging.Logger):
@@ -180,10 +209,7 @@ class ColorConsoleFormatter(logging.Formatter):
     @staticmethod
     def _record_contains_escapes(record: logging.LogRecord) -> bool:
         message = record.getMessage()
-        for key in escapes:
-            if not key.startswith("[/]") and key in message:
-                return True
-        return False
+        return any(not key.startswith("[/]") and key in message for key in escapes)
 
     @staticmethod
     def _string_starts_with_escapes(string: str) -> bool:
@@ -203,7 +229,7 @@ class ColorConsoleFormatter(logging.Formatter):
         while ColorConsoleFormatter._string_starts_with_escapes(current_message):
 
             # Record starts with escapes - Extract them
-            current_escape = current_message[0 : current_message.find("]") + 1]
+            current_escape = current_message[: current_message.find("]") + 1]
             ret_value += current_escape
             current_message = current_message[
                 len(current_escape) : current_message.find("]", len(current_escape)) + 1
@@ -287,9 +313,7 @@ def logging_setup(
 
     console_handler = logging.StreamHandler()
     console_handler.set_name(CONSOLE_HANDLER)
-    console_handler.setLevel(
-        console_log_threshold if console_log_threshold else logging.INFO
-    )
+    console_handler.setLevel(console_log_threshold or logging.INFO)
 
     if custom_log_path := os.getenv("DEMISTO_SDK_LOG_FILE_PATH"):
         current_log_file_path = Path(custom_log_path)
@@ -300,8 +324,8 @@ def logging_setup(
     file_handler = RotatingFileHandler(
         filename=current_log_file_path,
         mode="a",
-        maxBytes=1048576,
-        backupCount=10,
+        maxBytes=DEMISTO_SDK_LOG_FILE_SIZE,
+        backupCount=DEMISTO_SDK_LOG_FILE_COUNT,
     )
     file_handler.set_name(FILE_HANDLER)
     file_handler.setLevel(file_log_threshold if file_log_threshold else logging.DEBUG)
@@ -335,9 +359,10 @@ def logging_setup(
     demisto_logger.debug(f"Platform: {platform.system()}")
 
     if not log_file_name_notified:
-        demisto_logger.info(
-            f"[yellow]Log file location: {current_log_file_path}[/yellow]"
-        )
+        if string_to_bool(os.getenv("DEMISTO_SDK_LOG_NOTIFY_PATH", "True")):
+            demisto_logger.info(
+                f"[yellow]Log file location: {current_log_file_path}[/yellow]"
+            )
         log_file_name_notified = True
 
     logger = demisto_logger

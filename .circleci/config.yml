@@ -179,6 +179,8 @@ jobs:
 
 
   run-integration-tests:
+      environment:
+        DEMISTO_SDK_LOG_FILE_SIZE: 1073741824
       parameters:
         pythonversion:
           type: string
@@ -228,6 +230,8 @@ jobs:
 
 
   precommit-checks:
+      environment:
+        DEMISTO_SDK_LOG_FILE_SIZE: 1073741824
       docker:
         - image: << pipeline.parameters.global-docker-image >>
       steps:
@@ -260,6 +264,8 @@ jobs:
               - ~/.cache/pre-commit
 
   checkout-content:
+      environment:
+        DEMISTO_SDK_LOG_FILE_SIZE: 1073741824
       docker:
         - image: << pipeline.parameters.global-docker-image >>
       steps:
@@ -276,6 +282,8 @@ jobs:
             paths:
               - content
   validate-files:
+      environment:
+        DEMISTO_SDK_LOG_FILE_SIZE: 1073741824
       docker:
         - image: << pipeline.parameters.global-docker-image >>
       resource_class: large
@@ -315,6 +323,8 @@ jobs:
       
 
   test-lint:
+      environment:
+        DEMISTO_SDK_LOG_FILE_SIZE: 1073741824
       docker:
         - image: << pipeline.parameters.global-docker-image >>
       steps:
@@ -357,6 +367,8 @@ jobs:
         - store_artifacts:
             path: /tmp/lint_env_installation.log
   create-content-artifacts:
+      environment:
+        DEMISTO_SDK_LOG_FILE_SIZE: 1073741824
       docker:
         - image: << pipeline.parameters.global-docker-image >>
       steps:
@@ -378,6 +390,8 @@ jobs:
         - store_artifacts:
             path: content/tmp
   test-update-graph:
+    environment:
+      DEMISTO_SDK_LOG_FILE_SIZE: 1073741824
     docker:
       - image: << pipeline.parameters.global-docker-image >>
     resource_class: large
@@ -416,6 +430,8 @@ jobs:
           path: /home/circleci/project/artifacts
 
   build:
+      environment:
+        DEMISTO_SDK_LOG_FILE_SIZE: 1073741824
       docker:
         - image: << pipeline.parameters.global-docker-image >>
       steps:
@@ -431,6 +447,8 @@ jobs:
               path: dist
 
   deploy:
+      environment:
+        DEMISTO_SDK_LOG_FILE_SIZE: 1073741824
       docker:
         - image: << pipeline.parameters.global-docker-image >>
       steps:
@@ -443,6 +461,8 @@ jobs:
             command: poetry publish -u __token__ -p ${PYPI_TOKEN}
 
   waiter:
+    environment:
+      DEMISTO_SDK_LOG_FILE_SIZE: 1073741824
     docker:
       - image: circleci/node
     steps:
@@ -455,6 +475,8 @@ jobs:
       - run: echo "All required jobs have now completed"
 
   slack-notifier:
+    environment:
+      DEMISTO_SDK_LOG_FILE_SIZE: 1073741824
     docker:
       - image: cimg/python:<< pipeline.parameters.pythonversion_latest >>-node
     steps:

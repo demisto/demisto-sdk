@@ -1131,7 +1131,6 @@ VALIDATION_USING_GIT_IGNORABLE_DATA = (
     "doc_files",
     "doc_imgs",
     ".secrets-ignore",
-    ".pack-ignore",
 )
 
 FILE_TYPES_FOR_TESTING = [".py", ".js", ".yml", ".ps1"]
@@ -1405,6 +1404,7 @@ DEFAULT_CONTENT_ITEM_TO_VERSION = "99.99.99"
 MARKETPLACE_MIN_VERSION = "6.0.0"
 
 OLDEST_SUPPORTED_VERSION = "5.0.0"
+OLDEST_INCIDENT_FIELD_SUPPORTED_VERSION = GENERAL_DEFAULT_FROMVERSION
 LAYOUTS_CONTAINERS_OLDEST_SUPPORTED_VERSION = "6.0.0"
 GENERIC_OBJECTS_OLDEST_SUPPORTED_VERSION = "6.5.0"
 
@@ -1844,3 +1844,5 @@ NATIVE_IMAGE_DOCKER_NAME = "demisto/py3-native"
 FORMATTING_SCRIPT = "indicator-format"
 
 ENV_SDK_WORKING_OFFLINE = "DEMISTO_SDK_OFFLINE_ENV"
+
+TEST_COVERAGE_DEFAULT_URL = "https://storage.googleapis.com/marketplace-dist-dev/code-coverage-reports/coverage-min.json"

@@ -63,7 +63,9 @@ class ContentGraphInterface(ABC):
 
     def _get_latest_content_parser_hash(self) -> Optional[str]:
         parsers_path = Path(__file__).parent.parent / "parsers"
-        return sha1_dir(parsers_path)
+        parsers_sha1 = sha1_dir(parsers_path)
+        logger.debug(f"Content parser hash: {parsers_sha1}")
+        return parsers_sha1
 
     def _has_infra_graph_been_changed(self) -> bool:
         if not self.content_parser_latest_hash:
@@ -98,7 +100,7 @@ class ContentGraphInterface(ABC):
         pass
 
     @abstractmethod
-    def remove_server_items(self) -> None:
+    def remove_non_repo_items(self) -> None:
         pass
 
     @abstractmethod
@@ -260,4 +262,19 @@ class ContentGraphInterface(ABC):
 
     @abstractmethod
     def run_single_query(self, query: str, **kwargs) -> Any:
+        pass
+
+    @abstractmethod
+    def find_mandatory_hidden_packs_dependencies(
+        self, pack_ids: List[str]
+    ) -> List[BaseContent]:
+        pass
+
+    @abstractmethod
+    def get_content_items_by_identifier(
+        self,
+        identifier_values_list: List[str],
+        content_type: ContentType,
+        identifier: str,
+    ) -> Any:
         pass

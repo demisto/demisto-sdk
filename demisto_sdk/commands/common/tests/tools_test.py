@@ -907,8 +907,7 @@ def test_get_ignore_pack_tests__no_ignore_pack(tmpdir):
     pack_ignore_path = os.path.join(pack.path, PACKS_PACK_IGNORE_FILE_NAME)
 
     # remove .pack-ignore if exists
-    if os.path.exists(pack_ignore_path):
-        os.remove(pack_ignore_path)
+    Path(pack_ignore_path).unlink(missing_ok=True)
 
     ignore_test_set = get_ignore_pack_skipped_tests(
         fake_pack_name, {fake_pack_name}, {}
@@ -1465,7 +1464,6 @@ def test_get_pack_metadata(repo):
     assert metadata_json == result
 
 
-@pytest.mark.skip
 def test_get_last_remote_release_version(requests_mock):
     """
     When
@@ -3047,3 +3045,61 @@ def test_sha1_dir():
 def test_find_pack_folder(input_path, expected_output):
     output = tools.find_pack_folder(input_path)
     assert expected_output == str(output)
+
+
+@pytest.mark.parametrize(
+    "input_path, expected_output",
+    [
+        (
+            Path(
+                "/User/username/content/Packs/MyPack/Integrations/MyIntegration/MyIntegration.yml"
+            ),
+            Path("/User/username/content"),
+        ),
+        (Path("/User/username/content/Packs"), Path("/User/username/content")),
+    ],
+)
+def test_get_content_path(input_path, expected_output):
+    """
+    Given:
+        - A path to a file or directory in the content repo
+    When:
+        - Running get_content_path
+    Then:
+        Validate that the given path is correct
+    """
+    assert tools.get_content_path(input_path) == expected_output
+
+
+@pytest.mark.parametrize(
+    "string, expected_result",
+    [
+        ("1", True),
+        ("12345678", True),
+        ("1689889076", True),
+        ("1626858896", True),
+        ("d", False),
+        ("123d", False),
+        ("123d", False),
+        ("2023-07-21T12:34:56Z", False),
+        ("07/21/23", False),
+        ("21 July 2023", False),
+        ("Thu, 21 Jul 2023 12:34:56 +0000", False),
+    ],
+)
+def test_is_epoch_datetime(string: str, expected_result: bool):
+    """
+    Given:
+          test_config - A line from the conf.json and file_type.
+        - Case A + B + C + D: valid epoch_datetime
+        - Case E + F + G + H + I + J + K: ivalid epoch datetime
+
+    When:
+        - run test_is_epoch_datetime
+
+    Then:
+        - Ensure that the result in correct.
+    """
+    from demisto_sdk.commands.common.tools import is_epoch_datetime
+
+    assert is_epoch_datetime(string) == expected_result

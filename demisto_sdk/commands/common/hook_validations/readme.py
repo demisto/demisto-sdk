@@ -479,7 +479,6 @@ class ReadMeValidator(BaseValidator):
 
         for img in relative_images:
             # striping in case there are whitespaces at the beginning/ending of url.
-            "" if "src" in img[0] else img[0].strip()
             relative_path = img[1].strip()
 
             if "Insert the link to your image here" in relative_path:

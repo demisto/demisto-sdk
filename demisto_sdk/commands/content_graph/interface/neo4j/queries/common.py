@@ -67,6 +67,7 @@ def run_query(tx: Transaction, query: str, **kwargs) -> Result:
             try:
                 with ThreadPoolExecutor(max_workers=1) as executor:
                     future = executor.submit(tx.run, query, **kwargs)
+                    logger.debug("Query executed using thread")
                     result = future.result(timeout=QUERY_TIMEOUT)
                     break
             except TimeoutError:

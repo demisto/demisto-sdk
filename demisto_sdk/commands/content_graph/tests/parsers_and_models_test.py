@@ -1574,12 +1574,14 @@ class TestParsersAndModels:
         from demisto_sdk.commands.content_graph.parsers.integration import (
             IntegrationParser,
         )
+        import os
 
         expected_python_version = "3.10.11"
         mocker.patch(
             "demisto_sdk.commands.common.docker_helper._get_python_version_from_dockerhub_api",
             return_value=Version(expected_python_version),
         )
+        mocker.patch.object(os, "getenv", return_value=lambda key: key)
 
         integration = pack.create_integration(yml=load_yaml("integration.yml"))
         integration.code.write("from MicrosoftApiModule import *")

@@ -62,13 +62,13 @@ def run_query(
 ) -> Result:
     try:
         start_time: datetime = datetime.now()
-        logger.debug(f"Running query:\n{query}")
         if batch_size:
             query = f"""
             CALL apoc.periodic.iterate(
-                "{query}", {{batchSize: {batch_size}, retries: 3, parallel: {str(parallel).lower()}}}
+                "{query}", {{batchSize: {batch_size}, parallel: {str(parallel).lower()}, retries: 3}}
             )
             """
+        logger.debug(f"Running query:\n{query}")
         result = tx.run(query, **kwargs)
         logger.debug(f"Took {(datetime.now() - start_time).total_seconds()} seconds")
         return result

@@ -334,7 +334,7 @@ class TestDockerImagesCollection:
             f"Skipping run lint in host as well." in log.call_args_list[-1][0][0]
         )
 
-    def test_invalid_docker_image_as_docker_image_flag(self, pack):
+    def test_invalid_docker_image_as_docker_image_flag(self, mocker, pack):
         """
         This test checks that if an invalid docker image was given as the docker image flag, the linter will try to
         run the unit test on it and will write suitable logs.
@@ -349,6 +349,10 @@ class TestDockerImagesCollection:
         # Crete integration to test on:
         integration_name = "TestIntegration"
         test_integration = pack.create_integration(name=integration_name)
+        mocker.patch(
+            "demisto_sdk.commands.lint.linter.get_python_version",
+            return_value=None,
+        )
 
         # Run lint:
         invalid_docker_image = "demisto/blabla:1.0.0.40800"
@@ -359,7 +363,7 @@ class TestDockerImagesCollection:
                 True,
                 docker_image_flag=invalid_docker_image,
             )
-            with pytest.raises(RuntimeError) as e:
+            with pytest.raises(ValueError) as e:
                 runner._gather_facts(modules={})
                 assert "Failed detecting Python version for image" in str(e.value)
 
@@ -375,6 +379,10 @@ class TestDockerImagesCollection:
         Then
             - Ensure that a suitable log was written.
         """
+        mocker.patch(
+            "demisto_sdk.commands.lint.linter.get_python_version",
+            return_value=None,
+        )
         # Crete integration to test on:
         integration_name = "TestIntegration"
         docker_image_yml = "demisto/py3-tools:1.0.0.42258"
@@ -409,7 +417,7 @@ class TestDockerImagesCollection:
                 docker_image_flag=linter.DockerImageFlagOption.NATIVE_TARGET.value,
                 docker_image_target=invalid_docker_image,
             )
-            with pytest.raises(RuntimeError) as e:
+            with pytest.raises(ValueError) as e:
                 runner._gather_facts(modules={})
                 assert "Failed detecting Python version for image" in str(e.value)
 

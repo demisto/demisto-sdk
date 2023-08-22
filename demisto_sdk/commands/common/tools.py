@@ -711,7 +711,7 @@ def get_child_files(directory):
     child_files = [
         os.path.join(directory, path)
         for path in os.listdir(directory)
-        if os.path.isfile(os.path.join(directory, path))
+        if Path(directory, path).is_file()
     ]
     return child_files
 
@@ -1089,7 +1089,7 @@ def old_get_release_notes_file_path(file_path):
 
 
 def old_get_latest_release_notes_text(rn_path):
-    if not os.path.isfile(rn_path):
+    if not Path(rn_path).is_file():
         # releaseNotes were not provided
         return None
 

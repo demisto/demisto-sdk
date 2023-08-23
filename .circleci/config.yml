@@ -29,7 +29,7 @@ parameters:
 references:
     environment: &environment
       environment:
-        DEMISTO_SDK_LOG_FILE_SIZE: 1073741824  # 1GB
+        DEMISTO_SDK_LOG_FILE_SIZE: "1073741824"  # 1GB
 
     version_tag_regex: &version_tag_regex
       /^v\d+\.\d+\.\d+$/ # version regex vx.x.x (i.e. v1.2.3)

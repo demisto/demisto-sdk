@@ -27,6 +27,10 @@ parameters:
 
 
 references:
+    environment: &environment
+      environment:
+        DEMISTO_SDK_LOG_FILE_SIZE: 1073741824  # 1GB
+
     version_tag_regex: &version_tag_regex
       /^v\d+\.\d+\.\d+$/ # version regex vx.x.x (i.e. v1.2.3)
 
@@ -75,6 +79,7 @@ references:
 
     install_poetry: &install_poetry
       - run:
+          <<: *environment
           name: Install Poetry
           command: |
             # in old images we need to remove existing poetry
@@ -120,6 +125,7 @@ jobs:
           type: string
       docker:
         - image: cimg/python:<< parameters.pythonversion >>-node
+      <<: *environment
       steps:
         - checkout
         - <<: *install_poetry
@@ -135,7 +141,7 @@ jobs:
             command: |
               shopt -u globstar
               # The first sed expression is to remove test files from under the demisto_sdk/commands/init/templates
-              # directory from the globbed list of files. Need to manually remove them since the pytest 'ignore'
+              # directory from the globed list of files. Need to manually remove them since the pytest 'ignore'
               # argument in pytest.ini is itself ignored when explicitly passing tests to pytest. The second is to
               # remove the integration tests (integration tests as opposed to unit tests) from the list because those
               # tests shouldn't be parallelized.
@@ -179,13 +185,12 @@ jobs:
 
 
   run-integration-tests:
-      environment:
-        DEMISTO_SDK_LOG_FILE_SIZE: 1073741824
       parameters:
         pythonversion:
           type: string
       docker:
         - image: cimg/python:<< parameters.pythonversion >>-node
+      <<: *environment
       steps:
         - checkout
         - <<: *install_neo4j
@@ -230,10 +235,9 @@ jobs:
 
 
   precommit-checks:
-      environment:
-        DEMISTO_SDK_LOG_FILE_SIZE: 1073741824
       docker:
         - image: << pipeline.parameters.global-docker-image >>
+      <<: *environment
       steps:
         - checkout
         - <<: *install_poetry
@@ -264,10 +268,9 @@ jobs:
               - ~/.cache/pre-commit
 
   checkout-content:
-      environment:
-        DEMISTO_SDK_LOG_FILE_SIZE: 1073741824
       docker:
         - image: << pipeline.parameters.global-docker-image >>
+      <<: *environment
       steps:
         - checkout
         - run:
@@ -282,11 +285,10 @@ jobs:
             paths:
               - content
   validate-files:
-      environment:
-        DEMISTO_SDK_LOG_FILE_SIZE: 1073741824
       docker:
         - image: << pipeline.parameters.global-docker-image >>
       resource_class: large
+      <<: *environment
       steps:
         - checkout
         - <<: *install_poetry
@@ -304,6 +306,7 @@ jobs:
             environment:
               CI_COMMIT_BRANCH: "master"
             command: |
+              echo "DEMISTO_SDK_LOG_FILE_SIZE=${DEMISTO_SDK_LOG_FILE_SIZE}"
               source $(poetry env info --path)/bin/activate
               export ARTIFACTS_FOLDER="/home/circleci/project/artifacts"
               mkdir -p $ARTIFACTS_FOLDER
@@ -323,10 +326,9 @@ jobs:
       
 
   test-lint:
-      environment:
-        DEMISTO_SDK_LOG_FILE_SIZE: 1073741824
       docker:
         - image: << pipeline.parameters.global-docker-image >>
+      <<: *environment
       steps:
         - checkout
         - <<: *install_poetry
@@ -367,10 +369,9 @@ jobs:
         - store_artifacts:
             path: /tmp/lint_env_installation.log
   create-content-artifacts:
-      environment:
-        DEMISTO_SDK_LOG_FILE_SIZE: 1073741824
       docker:
         - image: << pipeline.parameters.global-docker-image >>
+      <<: *environment
       steps:
         - checkout
         - <<: *install_poetry
@@ -390,11 +391,10 @@ jobs:
         - store_artifacts:
             path: content/tmp
   test-update-graph:
-    environment:
-      DEMISTO_SDK_LOG_FILE_SIZE: 1073741824
     docker:
       - image: << pipeline.parameters.global-docker-image >>
     resource_class: large
+    <<: *environment
     steps:
       - checkout
       - <<: *install_poetry
@@ -430,14 +430,13 @@ jobs:
           path: /home/circleci/project/artifacts
 
   build:
-      environment:
-        DEMISTO_SDK_LOG_FILE_SIZE: 1073741824
       docker:
         - image: << pipeline.parameters.global-docker-image >>
+      <<: *environment
       steps:
           - checkout
           - run:
-              name: Build Distrubution
+              name: Build Distribution
               command: poetry build
           - persist_to_workspace:
               root: ~/project
@@ -447,10 +446,9 @@ jobs:
               path: dist
 
   deploy:
-      environment:
-        DEMISTO_SDK_LOG_FILE_SIZE: 1073741824
       docker:
         - image: << pipeline.parameters.global-docker-image >>
+      <<: *environment
       steps:
         - checkout
         - <<: *install_poetry
@@ -461,10 +459,9 @@ jobs:
             command: poetry publish -u __token__ -p ${PYPI_TOKEN}
 
   waiter:
-    environment:
-      DEMISTO_SDK_LOG_FILE_SIZE: 1073741824
     docker:
       - image: circleci/node
+    <<: *environment
     steps:
       - run: |
           while [[ $(curl --location --request GET "https://circleci.com/api/v2/workflow/$CIRCLE_WORKFLOW_ID/job" | jq -r '.items[]|select(.name != "waiter")|.status' | grep -c "running") -gt 0 ]]
@@ -475,10 +472,9 @@ jobs:
       - run: echo "All required jobs have now completed"
 
   slack-notifier:
-    environment:
-      DEMISTO_SDK_LOG_FILE_SIZE: 1073741824
     docker:
       - image: cimg/python:<< pipeline.parameters.pythonversion_latest >>-node
+    <<: *environment
     steps:
       - checkout
       - <<: *install_poetry

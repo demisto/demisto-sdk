@@ -306,7 +306,6 @@ jobs:
             environment:
               CI_COMMIT_BRANCH: "master"
             command: |
-              echo "DEMISTO_SDK_LOG_FILE_SIZE=${DEMISTO_SDK_LOG_FILE_SIZE}"
               source $(poetry env info --path)/bin/activate
               export ARTIFACTS_FOLDER="/home/circleci/project/artifacts"
               mkdir -p $ARTIFACTS_FOLDER

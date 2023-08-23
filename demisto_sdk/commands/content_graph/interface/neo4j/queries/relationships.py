@@ -88,7 +88,7 @@ CALL apoc.periodic.iterate(
   'RETURN r',
   {{batchSize: 10000, parallel: true, params: {{data: $data}}}}
 ) YIELD total
-RETURN total.relationships_merged AS relationships_merged
+RETURN total
 """
 
 

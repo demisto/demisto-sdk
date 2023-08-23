@@ -1,18 +1,14 @@
 import gc
-from concurrent.futures import ThreadPoolExecutor, TimeoutError
 from typing import List, Optional
 
 import more_itertools
 
-from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.content_graph.common import Nodes, Relationships
-from demisto_sdk.commands.content_graph.interface import ContentGraphInterface
+from demisto_sdk.commands.content_graph.interface.graph import ContentGraphInterface
 from demisto_sdk.commands.content_graph.objects.repository import ContentDTO
 from demisto_sdk.commands.content_graph.parsers.repository import RepositoryParser
 
 PACKS_PER_BATCH = 50
-RETRIES_CREATE_GRAPH = 3
-CREATE_GRAPH_TIMEOUT = 120
 
 
 class ContentGraphBuilder:
@@ -41,7 +37,7 @@ class ContentGraphBuilder:
         if not packs_to_update:
             return
         self._parse_and_model_content(packs_to_update)
-        self._create_or_update_graph_retries()
+        self._create_or_update_graph()
 
     def _preprepare_database(self) -> None:
         self.content_graph.clean_graph()
@@ -84,25 +80,10 @@ class ContentGraphBuilder:
 
     def create_graph(self) -> None:
         self._parse_and_model_content()
-        self._create_or_update_graph_retries()
+        self._create_or_update_graph()
 
     def _create_or_update_graph(self) -> None:
         """Runs DB queries using the collected nodes and relationships to create or update the content graph."""
         self.content_graph.create_nodes(self.nodes)
         self.content_graph.create_relationships(self.relationships)
         self.content_graph.remove_non_repo_items()
-
-    def _create_or_update_graph_retries(self) -> None:
-        for retry in range(RETRIES_CREATE_GRAPH):
-            with ThreadPoolExecutor(max_workers=1) as executor:
-                try:
-                    executor.submit(self._create_or_update_graph).result(
-                        timeout=CREATE_GRAPH_TIMEOUT
-                    )
-                    return
-                except TimeoutError:
-                    logger.warning(
-                        f"Create or update graph timed out. Retrying... ({retry + 1}/3)"
-                    )
-                    self.content_graph.close()
-                    self.content_graph = ContentGraphInterface()

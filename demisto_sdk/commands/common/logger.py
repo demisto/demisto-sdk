@@ -10,8 +10,8 @@ from demisto_sdk.commands.common.tools import string_to_bool
 
 logger: logging.Logger = logging.getLogger("demisto-sdk")
 
-# neo4j_log = logging.getLogger("neo4j")
-# neo4j_log.setLevel(logging.CRITICAL)
+neo4j_log = logging.getLogger("neo4j")
+neo4j_log.setLevel(logging.CRITICAL)
 
 CONSOLE_HANDLER = "console-handler"
 FILE_HANDLER = "file-handler"

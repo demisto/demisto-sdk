@@ -4,7 +4,7 @@ import os.path
 import sys
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
-from typing import Any
+from typing import Any, Optional, Union
 
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.tools import string_to_bool
@@ -289,16 +289,17 @@ class NoColorFileFormatter(logging.Formatter):
 
 
 def logging_setup(
-    console_log_threshold=logging.INFO,
-    file_log_threshold=logging.DEBUG,
-    log_file_path=LOG_FILE_PATH,
+    console_log_threshold: Union[int, str] = logging.INFO,
+    file_log_threshold: Union[int, str] = logging.DEBUG,
+    log_file_path: Optional[Union[str, Path]] = LOG_FILE_PATH,
 ) -> logging.Logger:
     """Init logger object for logging in demisto-sdk
         For more info - https://docs.python.org/3/library/logging.html
 
     Args:
-        console_log_threshold(int): Minimum console log threshold. Defaults to logging.INFO
-        file_log_threshold(int): Minimum console log threshold. Defaults to logging.INFO
+        console_log_threshold: Minimum console log threshold. Defaults to logging.INFO
+        file_log_threshold: Minimum console log threshold. Defaults to logging.INFO
+        log_file_path: Path to log file. Defaults to LOG_FILE_PATH
 
     Returns:
         logging.Logger: logger object
@@ -318,8 +319,8 @@ def logging_setup(
     if custom_log_path := os.getenv("DEMISTO_SDK_LOG_FILE_PATH"):
         current_log_file_path = Path(custom_log_path)
     else:
-        current_log_file_path = log_file_path or LOG_FILE_PATH
-        if Path(current_log_file_path).is_dir():
+        current_log_file_path = Path(log_file_path or LOG_FILE_PATH)
+        if current_log_file_path.is_dir():
             current_log_file_path = current_log_file_path / LOG_FILE_NAME
     file_handler = RotatingFileHandler(
         filename=current_log_file_path,

@@ -380,7 +380,7 @@ jobs:
   test-update-graph:
     docker:
       - image: << pipeline.parameters.global-docker-image >>
-    # resource_class: large
+    resource_class: xlarge
     steps:
       - checkout
       - <<: *install_poetry

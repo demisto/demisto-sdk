@@ -1,6 +1,5 @@
 import ast
 import itertools
-import os
 from ast import parse
 from pathlib import Path
 
@@ -110,8 +109,7 @@ class TestUnitTestsGenerator:
         try:
             assert compare_ast(parse(output_source), parse(output_desired))
         finally:
-            if output_path.exists():
-                os.remove(output_path)
+            Path(output_path).unlink(missing_ok=True)
 
 
 def test_get_client_init_args():

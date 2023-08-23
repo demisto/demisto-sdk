@@ -2145,14 +2145,12 @@ def _generate_docs_for_file(kwargs: Dict[str, Any]):
         if command:
             if (
                 output_path
-                and (not os.path.isfile(os.path.join(output_path, "README.md")))
+                and (not Path(output_path, "README.md").is_file())
                 or (not output_path)
                 and (
-                    not os.path.isfile(
-                        os.path.join(
-                            os.path.dirname(os.path.realpath(input_path)), "README.md"
-                        )
-                    )
+                    not Path(
+                        os.path.dirname(os.path.realpath(input_path)), "README.md"
+                    ).is_file()
                 )
             ):
                 raise Exception(
@@ -2170,7 +2168,7 @@ def _generate_docs_for_file(kwargs: Dict[str, Any]):
                 "[red]File is not an Integration, Script, Playbook or a README.[/red]"
             )
 
-        if old_version and not os.path.isfile(old_version):
+        if old_version and not Path(old_version).is_file():
             raise Exception(
                 f"[red]Input old version file {old_version} was not found.[/red]"
             )
@@ -3529,8 +3527,8 @@ main.add_command(typer_click_object2, "generate-modeling-rules")
 # ====================== graph command group ====================== #
 
 graph_cmd_group = typer.Typer(name="graph", hidden=True, no_args_is_help=True)
-graph_cmd_group.command("create", no_args_is_help=True)(create)
-graph_cmd_group.command("update", no_args_is_help=True)(update)
+graph_cmd_group.command("create", no_args_is_help=False)(create)
+graph_cmd_group.command("update", no_args_is_help=False)(update)
 graph_cmd_group.command("get-relationships", no_args_is_help=True)(get_relationships)
 main.add_command(typer.main.get_command(graph_cmd_group), "graph")
 

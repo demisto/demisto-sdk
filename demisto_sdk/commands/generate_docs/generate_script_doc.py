@@ -1,5 +1,6 @@
 import os
 import random
+from pathlib import Path
 from typing import List
 
 from demisto_sdk.commands.common.logger import logger
@@ -42,7 +43,7 @@ def generate_script_doc(
             output = os.path.dirname(os.path.realpath(input_path))
 
         if examples:
-            if os.path.isfile(examples):
+            if Path(examples).is_file():
                 with open(examples) as examples_file:
                     examples = examples_file.read().splitlines()
             else:
@@ -68,7 +69,6 @@ def generate_script_doc(
 
         # get script data
         script_info = get_script_info(input_path)
-        script.get("commonfields")["id"]
 
         # get script dependencies
         dependencies: List = []

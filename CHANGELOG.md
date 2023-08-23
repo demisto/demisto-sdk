@@ -1,6 +1,7 @@
 # Changelog
 ## Unreleased
 * Added a period at the end of lines produced by the **generate-docs** command that state the tested version of the product.
+* Added the '--junit-path' flag to the **modeling-rules test** command, to allow saving the test results in a JUnit XML file.
 * Update `RN112` validation's docs reference link.
 * Added support to control the maximum file size and log rotation files count in the sdk logger.
 * Fixed an issue with where passing the deprecated logging arguments to any command presented an incorrect recommendation for argument substitution.
@@ -9,7 +10,7 @@
 * Calling **graph create** or **graph update** now run the commands with default arguments, instead of showing the command help.
 * Removed the use of chunks when calculating content relationships.
 * Fixed an issue where the url regex in the **validate** command was wrong.
-* Added the '--junit-path' flag to the **modeling-rules test** command, to allow saving the test results in a JUnit XML file.
+* Fixes an issue in **format** command where the `-i` option included files in `.venv` directories.
 
 ## 1.19.1
 * Fixed an issue where **unify** failed on integrations using an API a module, when not called from the content root.

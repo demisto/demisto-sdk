@@ -392,8 +392,7 @@ jobs:
   test-update-graph:
     docker:
       - image: << pipeline.parameters.global-docker-image >>
-    resource_class: xlarge
-    <<: *environment
+    resource_class: large
     steps:
       - checkout
       - <<: *install_poetry
@@ -403,6 +402,7 @@ jobs:
       - <<: *install_demisto_sdk
       - run:
           name: Run Update Graph Twice
+          no_output_timeout: 20m
           when: always
           command: |
             source $(poetry env info --path)/bin/activate

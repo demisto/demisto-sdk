@@ -1,4 +1,3 @@
-import os
 from pathlib import Path
 
 from demisto_sdk.commands.common.legacy_git_tools import git_path
@@ -46,4 +45,4 @@ def test_unify_xdrc_template():
     }
     assert get_file(expected_json_path) == expected_json_file
 
-    os.remove(export_json_path)
+    Path(export_json_path).unlink()

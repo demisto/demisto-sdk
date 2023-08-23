@@ -17,7 +17,7 @@ class IndicatorTypeParser(
         super().__init__(path, pack_marketplaces)
         self.connect_to_dependencies()
         self.regex = self.json_data.get("regex")
-        self.reputation_script_name = self.json_data.get("reputationScriptName") or None
+        self.reputation_script_name = self.json_data.get("reputationScriptName") or ""
         self.enhancement_script_names = self.json_data.get("enhancementScriptNames")
 
     @property

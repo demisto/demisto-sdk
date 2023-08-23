@@ -1236,7 +1236,7 @@ class LintManager:
         mypy_errors: list = []
         gather_error: list = []
         for line in error_messages:
-            if os.path.isfile(line.split(":")[0]):
+            if Path(line.split(":")[0]).is_file():
                 if gather_error:
                     mypy_errors.append("\n".join(gather_error))
                     gather_error = []

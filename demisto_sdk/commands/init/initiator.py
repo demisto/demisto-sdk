@@ -476,7 +476,7 @@ class Initiator:
 
         # content-descriptor file indicates we are in "content" repository
         # thus we will create the pack under Packs directory
-        elif os.path.isfile("content-descriptor.json"):
+        elif Path("content-descriptor.json").is_file():
             self.full_output_path = os.path.join("Packs", self.dir_name)
 
         # if in an external repo check for the existence of Packs directory
@@ -787,7 +787,7 @@ class Initiator:
         files = [
             file
             for file in files_and_directories
-            if os.path.isfile(file) and sv.is_text_file(file)
+            if Path(file).is_file() and sv.is_text_file(file)
         ]
         # The search_potential_secrets method returns a nested dict with values of type list. The values are the secrets
         # {'a': {'b': ['secret1', 'secret2'], 'e': ['secret1']}, 'g': ['secret3']}
@@ -1163,7 +1163,7 @@ class Initiator:
         ) as f:
             yaml.dump(yml_dict, f)
 
-        os.remove(os.path.join(self.full_output_path, f"{current_suffix}.yml"))
+        Path(self.full_output_path, f"{current_suffix}.yml").unlink()
 
     def change_template_name_script_py(
         self, current_suffix: str, current_template: str

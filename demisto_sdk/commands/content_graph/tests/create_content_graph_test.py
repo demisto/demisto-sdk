@@ -27,6 +27,7 @@ from demisto_sdk.commands.content_graph.objects.integration_script import (
     IntegrationScript,
 )
 from demisto_sdk.commands.content_graph.objects.pack import Pack
+from demisto_sdk.commands.content_graph.objects.pack_metadata import PackMetadata
 from demisto_sdk.commands.content_graph.objects.playbook import Playbook
 from demisto_sdk.commands.content_graph.objects.repository import ContentDTO
 from demisto_sdk.commands.content_graph.objects.script import Script
@@ -600,6 +601,9 @@ class TestCreateContentGraph:
         mocker.patch.object(
             IntegrationScript, "get_supported_native_images", return_value=[]
         )
+        mocker.patch.object(
+            PackMetadata, "_get_tags_from_landing_page", retrun_value={}
+        )
 
         pack = repo.create_pack("TestPack")
         pack.pack_metadata.write_json(load_json("pack_metadata.json"))
@@ -1096,6 +1100,9 @@ class TestCreateContentGraph:
         """
         mocker.patch.object(
             IntegrationScript, "get_supported_native_images", return_value=[]
+        )
+        mocker.patch.object(
+            PackMetadata, "_get_tags_from_landing_page", retrun_value={}
         )
 
         pack = repo.create_pack("TestPack")

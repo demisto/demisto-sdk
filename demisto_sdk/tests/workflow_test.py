@@ -31,7 +31,7 @@ def list_files(path: Path) -> Generator[str, None, None]:
         file name
     """
     for file in os.listdir(path):
-        if os.path.isfile(path / file):
+        if Path(path / file).is_file():
             yield file
 
 
@@ -343,8 +343,6 @@ def rename_incident_field(content_repo: ContentGitRepo, monkeypatch: MonkeyPatch
 
 
 @pytest.mark.parametrize(
-    # TODO Uncomment
-    # "function", [init_pack, init_integration, modify_entity, rename_incident_field]
     "function",
     [init_pack, modify_entity, rename_incident_field],
 )

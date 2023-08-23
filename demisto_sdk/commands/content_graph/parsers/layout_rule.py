@@ -25,6 +25,10 @@ class LayoutRuleParser(JSONContentItemParser, content_type=ContentType.LAYOUT_RU
         return self.json_data.get("rule_name")
 
     @property
+    def layout_id(self) -> Optional[str]:
+        return self.json_data.get("layout_id")
+
+    @property
     def supported_marketplaces(self) -> Set[MarketplaceVersions]:
         return {MarketplaceVersions.MarketplaceV2}
 

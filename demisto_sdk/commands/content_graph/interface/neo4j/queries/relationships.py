@@ -75,30 +75,21 @@ def build_uses_relationships_query(
     target_identifier: str = "object_id",
     with_target_type: bool = True,
 ) -> str:
-    return f"""// Creates USES relationships between parsed nodes.
-// Note: if a target node is created, it means the node does not exist in the repository.
-UNWIND $data AS rel_data
-
-// Get all content items with the specified properties
-MATCH (source:{ContentType.BASE_CONTENT}{build_source_properties()})
-
-// Get or create the targets with the given properties
-MERGE (target:{target_type}{
-    build_target_properties(identifier=target_identifier, with_content_type=with_target_type)
-})
-
-// If created, mark "not in repository" (all repository nodes were created already)
-ON CREATE
-    SET target.not_in_repository = true
-
-// Get or create the relationship and set its "mandatorily" field based on relationship data
-MERGE (source)-[r:{RelationshipType.USES}]->(target)
-ON CREATE
-    SET r.mandatorily = rel_data.mandatorily
-ON MATCH
-    SET r.mandatorily = r.mandatorily OR rel_data.mandatorily
-
-RETURN count(r) AS relationships_merged"""
+    return f"""
+CALL apoc.periodic.iterate(
+  'UNWIND $data AS rel_data
+   MATCH (source:{ContentType.BASE_CONTENT}{build_source_properties()})
+   MERGE (target:{target_type}{build_target_properties(identifier=target_identifier, with_content_type=with_target_type)})
+   ON CREATE SET target.not_in_repository = true
+   MERGE (source)-[r:{RelationshipType.USES}]->(target)
+   ON CREATE SET r.mandatorily = rel_data.mandatorily
+   ON MATCH SET r.mandatorily = r.mandatorily OR rel_data.mandatorily
+   RETURN r',
+  'RETURN COUNT(*) AS relationships_merged',
+  {{batchSize: 10000, parallel: true, params: {{data: $data}}}}
+) YIELD total
+RETURN total.relationships_merged AS relationships_merged
+"""
 
 
 def build_in_pack_relationships_query() -> str:

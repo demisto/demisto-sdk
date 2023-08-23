@@ -153,7 +153,7 @@ def _add_logging_level(
     `logging` module or if the method name is already present
     Example
     -------
-    >>> addLoggingLevel('TRACE', logging.DEBUG - 5)
+    >>> _add_logging_level('TRACE', logging.DEBUG - 5)
     >>> logging.getLogger(__name__).setLevel("TRACE")
     >>> logging.getLogger(__name__).trace('that worked')
     >>> logging.trace('so did this')
@@ -173,17 +173,17 @@ def _add_logging_level(
     # This method was inspired by the answers to Stack Overflow post
     # http://stackoverflow.com/q/2183233/2988730, especially
     # http://stackoverflow.com/a/13638084/2988730
-    def logForLevel(self, message, *args, **kwargs):
+    def log_for_level(self, message, *args, **kwargs):
         if self.isEnabledFor(level_num):
             self._log(level_num, message, args, **kwargs)
 
-    def logToRoot(message, *args, **kwargs):
+    def log_to_root(message, *args, **kwargs):
         logging.log(level_num, message, *args, **kwargs)
 
     logging.addLevelName(level_num, level_name)
     setattr(logging, level_name, level_num)
-    setattr(logging.getLoggerClass(), method_name, logForLevel)
-    setattr(logging, method_name, logToRoot)
+    setattr(logging.getLoggerClass(), method_name, log_for_level)
+    setattr(logging, method_name, log_to_root)
 
 
 class ColorConsoleFormatter(logging.Formatter):
@@ -329,7 +329,7 @@ def logging_setup(
         backupCount=DEMISTO_SDK_LOG_FILE_COUNT,
     )
     file_handler.set_name(FILE_HANDLER)
-    file_handler.setLevel(file_log_threshold if file_log_threshold else logging.DEBUG)
+    file_handler.setLevel(file_log_threshold or logging.DEBUG)
 
     if string_to_bool(os.getenv("DEMISTO_SDK_LOG_NO_COLORS", "False")):
         console_handler.setFormatter(fmt=NoColorFileFormatter())

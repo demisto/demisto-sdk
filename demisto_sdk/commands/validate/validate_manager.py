@@ -809,15 +809,22 @@ class ValidateManager:
             file_type in self.skipped_file_types
             or self.is_skipped_file(file_path)
             or (self.git_util and self.git_util._is_file_git_ignored(file_path))
-            or self.detect_file_level(file_path)
-            in (PathLevel.PACKAGE, PathLevel.CONTENT_ENTITY_DIR)
         ):
             self.ignored_files.add(file_path)
             return True
-        elif not self.is_valid_file_type(file_type, file_path, pack_error_ignore_list):
-            return False
 
         if not self.is_valid_path(Path(file_path)):
+            return False
+
+        if self.detect_file_level(file_path) in (
+            PathLevel.PACKAGE,
+            PathLevel.CONTENT_ENTITY_DIR,
+        ):
+            # must come after the `is_valid_path` check
+            self.ignored_files.add(file_path)
+            return True
+
+        if not self.is_valid_file_type(file_type, file_path, pack_error_ignore_list):
             return False
 
         if file_type == FileType.XSOAR_CONFIG:
@@ -2973,7 +2980,7 @@ class ValidateManager:
             return True
 
         depth = depth_from_packs(path)
-        pack_name = path.parts[-depth]
+        pack_name = get_pack_name(path)
 
         if pack_name == DEPRECATED_CONTENT_PACK:
             logger.debug(

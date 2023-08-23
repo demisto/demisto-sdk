@@ -402,6 +402,7 @@ jobs:
       - <<: *install_demisto_sdk
       - run:
           name: Run Update Graph Twice
+          no_output_timeout: 20m
           when: always
           command: |
             source $(poetry env info --path)/bin/activate

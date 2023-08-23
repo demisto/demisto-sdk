@@ -10,6 +10,7 @@
 * Removed the use of chunks when calculating content relationships.
 * Fixed an issue where the url regex in the **validate** command was wrong.
 * Fixed an issue where **pre-commit** command failed when on global environment.
+* Fixes an issue in **format** command where the `-i` option included files in `.venv` directories.
 
 ## 1.19.1
 * Fixed an issue where **unify** failed on integrations using an API a module, when not called from the content root.

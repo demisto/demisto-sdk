@@ -2683,3 +2683,83 @@ class TestisContextChanged:
             integration_validator.is_native_image_does_not_exist_in_yml()
             == is_validation_ok
         )
+
+    VALID_COMMAND_OUTPUTS = [
+        {
+            "contextPath": "URL.Data",
+            "description": "test description.",
+            "type": "string",
+        },
+        {
+            "contextPath": "Domain.Metadata",
+            "description": "metadata",
+            "type": "string",
+        },
+        {
+            "contextPath": "InfoFile.Metadata",
+            "description": "metadata",
+            "type": "string",
+        },
+        {
+            "contextPath": "IP.Metadata",
+            "description": "metadata",
+            "type": "string",
+        },
+        {
+            "contextPath": "File.Metadata",
+            "description": "metadata",
+            "type": "string",
+        },
+        {
+            "contextPath": "CVE.Metadata",
+            "description": "metadata",
+            "type": "string",
+        },
+        {
+            "contextPath": "Email.Metadata",
+            "description": "metadata",
+            "type": "string",
+        },
+        {
+            "contextPath": "Endpoint.Metadata",
+            "description": "metadata",
+            "type": "string",
+        },
+        {
+            "contextPath": "Certificate.Metadata",
+            "description": "metadata",
+            "type": "string",
+        },
+    ]
+    INVALID_COMMAND_OUTPUTS = [
+        {
+            "contextPath": "Url.Data",
+            "description": "data.",
+            "type": "string",
+        },
+        {
+            "contextPath": "Domain.Metadata",
+            "description": "metadata.",
+            "type": "string",
+        },
+        {
+            "contextPath": "Cve.Metadata",
+            "description": "metadata",
+            "type": "string",
+        },
+    ]
+
+    IS_OUTPUT_FOR_REPUTATION_INPUTS = [
+        (VALID_COMMAND_OUTPUTS, True),
+        (INVALID_COMMAND_OUTPUTS, False),
+    ]
+
+    @pytest.mark.parametrize("outputs, result", IS_OUTPUT_FOR_REPUTATION_INPUTS)
+    def test_is_valid_command_custom_outputs(self, outputs, result):
+        content = {
+            "script": {"commands": [{"name": "command_name", "outputs": outputs}]}
+        }
+        structure = mock_structure("", content)
+        validator = IntegrationValidator(structure)
+        validator.current_file = content
+        assert validator.is_valid_command_custom_outputs() is result

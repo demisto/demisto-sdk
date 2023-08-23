@@ -2,6 +2,9 @@
 ## Unreleased
 * Added a period at the end of lines produced by the **generate-docs** command that state the tested version of the product.
 * Update `RN112` validation's docs reference link.
+* Added support to control the maximum file size and log rotation files count in the sdk logger.
+* Fixed an issue with where passing the deprecated logging arguments to any command presented an incorrect recommendation for argument substitution.
+* Fixed an issue where the documentation of logging arguments was incorrect.
 * Fixed an issue in calculating content graph hash when creating or updating it.
 * Calling **graph create** or **graph update** now run the commands with default arguments, instead of showing the command help.
 * Removed the use of chunks when calculating content relationships.

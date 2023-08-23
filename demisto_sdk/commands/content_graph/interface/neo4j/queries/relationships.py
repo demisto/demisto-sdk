@@ -85,7 +85,7 @@ CALL apoc.periodic.iterate(
    ON CREATE SET r.mandatorily = rel_data.mandatorily
    ON MATCH SET r.mandatorily = r.mandatorily OR rel_data.mandatorily
    RETURN r',
-  'RETURN COUNT(*) AS relationships_merged',
+  'RETURN r',
   {{batchSize: 10000, parallel: true, params: {{data: $data}}}}
 ) YIELD total
 RETURN total.relationships_merged AS relationships_merged

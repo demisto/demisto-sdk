@@ -56,7 +56,6 @@ from demisto_sdk.commands.format.update_readme import ReadmeFormat
 from demisto_sdk.commands.format.update_report import ReportJSONFormat
 from demisto_sdk.commands.format.update_script import ScriptYMLFormat
 from demisto_sdk.commands.format.update_widget import WidgetJSONFormat
-from demisto_sdk.commands.lint.commands_builder import excluded_files
 
 FILE_TYPE_AND_LINKED_CLASS = {
     "integration": IntegrationYMLFormat,
@@ -215,7 +214,12 @@ def format_manager(
             file_type = find_type(file_path, clear_cache=clear_cache)
 
             # Check if this is an unskippable file
-            if not any([file_path.endswith(unskippable_file) for unskippable_file in UNSKIP_FORMATTING_FILES]):
+            if not any(
+                [
+                    file_path.endswith(unskippable_file)
+                    for unskippable_file in UNSKIP_FORMATTING_FILES
+                ]
+            ):
                 # If it is not an unskippable file, skip if needed
                 if os.path.basename(file_path) in SKIP_FORMATTING_FILES:
                     continue

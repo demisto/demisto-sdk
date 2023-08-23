@@ -65,4 +65,3 @@ SKIP_FORMATTING_FILES = [
 
 # Only skip if we are checking CommonServerPython.py in a non CommonServerPython dir.
 UNSKIP_FORMATTING_FILES = ["CommonServerPython/CommonServerPython.py"]
-

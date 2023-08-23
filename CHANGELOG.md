@@ -6,6 +6,7 @@
 ## 1.19.1
 * Fixed an issue where **unify** failed on integrations using an API a module, when not called from the content root.
 * Improved **update-release-notes** logs when changes in dependent API modules are detected.
+* Added the **graph get-dependencies** command.
 * Reverted changes released in version 1.19.0 in lint, lint will not fail on `demisto.results`, `return_outputs` and `LOG`.
 * Updated the **generate-docs** command to use the content graph instead of the id_set file.
 * Added the '--all' input option for the **prepare-content** command, to support running on all content packs.

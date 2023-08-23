@@ -5,9 +5,9 @@ from urllib.parse import urlparse
 
 from demisto_sdk.commands.common.constants import (
     GOOGLE_CLOUD_STORAGE_PUBLIC_BASE_PATH,
-    MARKDOWN_IMAGE_LINK_REGEX,
     MARKDOWN_IMAGES_ARTIFACT_FILE_NAME,
     SERVER_API_TO_STORAGE,
+    URL_IMAGE_LINK_REGEX,
     ImagesFolderNames,
     MarketplaceVersions,
     MarketplaceVersionToMarketplaceName,
@@ -90,7 +90,7 @@ def collect_images_from_markdown_and_replace_with_storage_path(
         lines = file.readlines()
 
     for i, line in enumerate(lines):
-        if res := re.search(MARKDOWN_IMAGE_LINK_REGEX, line):
+        if res := re.search(URL_IMAGE_LINK_REGEX, line):
             url = res["url"]
             parse_url = urlparse(url)
             url_path = Path(parse_url.path)

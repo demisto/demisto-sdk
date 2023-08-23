@@ -1894,8 +1894,6 @@ XPANSE_SUFFIX_TAG = "\n</~XPANSE>\n"
 XPANSE_INLINE_PREFIX_TAG = "<~XPANSE>"
 XPANSE_INLINE_SUFFIX_TAG = "</~XPANSE>"
 
-
-MARKDOWN_IMAGE_LINK_REGEX = r"(\!\[.*?\])\((?P<url>[a-zA-Z_/\.0-9\- :%]*?)\)((].*)?)"
 MARKDOWN_IMAGES_ARTIFACT_FILE_NAME = "markdown_images.json"
 SERVER_API_TO_STORAGE = "api/marketplace/file?name=content/packs"
 

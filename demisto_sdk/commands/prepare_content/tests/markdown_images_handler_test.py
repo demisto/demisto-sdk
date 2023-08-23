@@ -8,9 +8,9 @@ import pytest
 
 from demisto_sdk.commands.common.constants import (
     GOOGLE_CLOUD_STORAGE_PUBLIC_BASE_PATH,
-    MARKDOWN_IMAGE_LINK_REGEX,
     MARKDOWN_IMAGES_ARTIFACT_FILE_NAME,
     SERVER_API_TO_STORAGE,
+    URL_IMAGE_LINK_REGEX,
     ImagesFolderNames,
     MarketplaceVersions,
     MarketplaceVersionToMarketplaceName,
@@ -320,5 +320,5 @@ def test_dump_more_than_one_description_file(mocker, image_data_one, image_data_
     ],
 )
 def test_markdown_regex(line, expected_result):
-    url = res["url"] if (res := re.search(MARKDOWN_IMAGE_LINK_REGEX, line)) else ""
+    url = res["url"] if (res := re.search(URL_IMAGE_LINK_REGEX, line)) else ""
     assert url == expected_result

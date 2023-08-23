@@ -26,15 +26,15 @@ current_log_file_path: Path = LOG_FILE_PATH
 DATE_FORMAT = "%Y-%m-%dT%H:%M:%S"
 
 DEPRECATED_PARAMETERS = {
-    "-v": "--console-log-threshold or --file-log-threshold",
-    "-vv": "--console-log-threshold or --file-log-threshold",
-    "-vvv": "--console-log-threshold or --file-log-threshold",
-    "--verbose": "--console-log-threshold or --file-log-threshold",
-    "-q": "--console-log-threshold or --file-log-threshold",
-    "--quiet": "--console-log-threshold or --file-log-threshold",
-    "-ln": "--log-path",
-    "--log-name": "--log-path",
-    "no_logging": "--console-log-threshold or --file-log-threshold",
+    "-v": "--console_log_threshold or --file_log_threshold",
+    "-vv": "--console_log_threshold or --file_log_threshold",
+    "-vvv": "--console_log_threshold or --file_log_threshold",
+    "--verbose": "--console_log_threshold or --file_log_threshold",
+    "-q": "--console_log_threshold or --file_log_threshold",
+    "--quiet": "--console_log_threshold or --file_log_threshold",
+    "-ln": "--log_file_path",
+    "--log-name": "--log_file_path",
+    "no_logging": "--console_log_threshold or --file_log_threshold",
 }
 
 

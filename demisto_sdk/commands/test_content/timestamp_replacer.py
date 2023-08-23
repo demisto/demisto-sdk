@@ -493,9 +493,10 @@ class TimestampReplacer:
         logging.info(
             f'reading in problematic keys data from "{repo_bad_keys_filepath}"'
         )
-        if not Path(self.bad_keys_filepath).exists() and Path(
-            repo_bad_keys_filepath
-        ).exists:
+        if (
+            not Path(self.bad_keys_filepath).exists()
+            and Path(repo_bad_keys_filepath).exists
+        ):
             with open(repo_bad_keys_filepath) as fp:
                 problem_keys = json.load(fp)
         elif Path(self.bad_keys_filepath).exists():

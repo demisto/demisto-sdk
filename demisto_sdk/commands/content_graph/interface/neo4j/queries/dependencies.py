@@ -95,7 +95,7 @@ RETURN source.node_id AS source, target.node_id AS target"""
 def remove_existing_depends_on_relationships(tx: Transaction) -> None:
     query = f"""// Removes all existing DEPENDS_ON relationships before recalculation
 MATCH ()-[r:{RelationshipType.DEPENDS_ON}]->()
-WHERE r.from_metadata = FALSE
+WHERE r.from_metadata = false
 DELETE r"""
     run_query(tx, query)
 

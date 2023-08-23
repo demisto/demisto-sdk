@@ -601,11 +601,12 @@ class IntegrationValidator(ContentEntityValidator):
     @error_codes("IN158")
     def is_valid_command_custom_outputs(self) -> bool:
         custom_outputs_url = XSOAR_CONTEXT_AND_OUTPUTS_URL
-        commands = self.current_file.get("script", {}).get("commands", [])
+        commands = self.current_file.get("script", {}).get("commands") or []
         output_valid = True
         for command in commands:
             invalid_outputs = []
-            for output in command.get("outputs", []):
+            outputs = command.get("outputs") or []
+            for output in outputs:
                 context_path = output.get("contextPath", "")
                 mandatory_context = list(
                     filter(

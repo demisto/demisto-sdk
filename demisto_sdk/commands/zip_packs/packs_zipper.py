@@ -104,7 +104,7 @@ class PacksManager(ArtifactsManager):
             ):  # relative path from Packs/...
                 path = self.content.path / path
 
-            if not os.path.exists(path):
+            if not Path(path).exists():
                 logger.info(
                     f"[red]Error: Given input path: {path} does not exist, ignored[/red]"
                 )

@@ -280,7 +280,7 @@ class TestLayoutBelowSixConverter:
                 f"{str(layout_converter.pack.path)}/Layouts/layout-{layout_field_name}-"
                 "ExtraHop_Detection.json"
             )
-            assert os.path.exists(expected_new_layout_path)
+            assert Path(expected_new_layout_path).exists()
             assert util_load_json(expected_new_layout_path) == layout_data
             Path(expected_new_layout_path).unlink()
 

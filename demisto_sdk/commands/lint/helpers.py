@@ -530,7 +530,7 @@ def generate_coverage_report(
     cov_file = os.path.join(cov_dir, ".coverage")
     cov = coverage.Coverage(data_file=cov_file)
     cov.combine(coverage_files())
-    if not os.path.exists(cov_file):
+    if not Path(cov_file).exists():
         logger.warning(
             f"skipping coverage report {cov_file} file not found. "
             f"Should not expect this if code files were changed or when linting all with pytest."

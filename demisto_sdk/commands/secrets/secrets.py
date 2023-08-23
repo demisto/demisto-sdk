@@ -373,7 +373,7 @@ class SecretsValidator:
         yml_file = os.path.join(
             integration_path, os.path.basename(integration_path) + ".yml"
         )
-        if os.path.exists(yml_file):
+        if Path(yml_file).exists():
             with open(yml_file, encoding="utf-8") as matching_yml_file:
                 matching_yml_file_contents = matching_yml_file.read()
         return matching_yml_file_contents

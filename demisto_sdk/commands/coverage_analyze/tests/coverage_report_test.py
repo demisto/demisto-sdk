@@ -90,7 +90,7 @@ class TestCoverageReport:
         with caplog.at_level(logging.INFO, logger="demisto-sdk"):
             cov_report.coverage_report()
         # assert re.fullmatch(self.patern('txt', 'coverage', 'txt'), caplog.records[1].msg)
-        assert os.path.exists(tmpdir.join("coverage.txt"))
+        assert Path(tmpdir.join("coverage.txt")).exists()
 
     def test_with_json_min_report(self, tmpdir, monkeypatch, caplog):
         monkeypatch.chdir(tmpdir)
@@ -108,7 +108,7 @@ class TestCoverageReport:
         with caplog.at_level(logging.INFO, logger="demisto-sdk"):
             cov_report.coverage_report()
         # assert re.fullmatch(self.patern('json-min', 'coverage-min', 'json'), caplog.records[2].msg)
-        assert os.path.exists(tmpdir.join("coverage-min.json"))
+        assert Path(tmpdir.join("coverage-min.json")).exists()
 
     def test_get_report_str(self, tmpdir, monkeypatch):
         monkeypatch.chdir(tmpdir)

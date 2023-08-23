@@ -419,7 +419,7 @@ def test_update_release_notes_existing(demisto_client, mocker):
     )
 
     assert result.exit_code == 0
-    assert os.path.exists(rn_path)
+    assert Path(rn_path).exists()
     assert not result.exception
     assert str_in_call_args_list(
         logger_info.call_args_list,

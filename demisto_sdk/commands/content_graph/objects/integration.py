@@ -77,7 +77,8 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
         incident_to_alert: bool = False,
     ) -> dict:
         summary = super().summary(marketplace, incident_to_alert)
-        summary["name"] = self.unified_data.get("display")
+        if self.unified_data:
+            summary["name"] = self.unified_data.get("display")
         return summary
 
     def metadata_fields(self):

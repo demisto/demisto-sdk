@@ -20,7 +20,11 @@ class GenericFieldParser(JSONContentItemParser, content_type=ContentType.GENERIC
 
     @property
     def supported_marketplaces(self) -> Set[MarketplaceVersions]:
-        return {MarketplaceVersions.XSOAR}
+        return {
+            MarketplaceVersions.XSOAR,
+            MarketplaceVersions.XSOAR_SAAS,
+            MarketplaceVersions.XSOAR_ON_PREM,
+        }
 
     def connect_to_dependencies(self) -> None:
         """Collects the generic types associated to the generic field as optional dependencies."""

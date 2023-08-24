@@ -145,7 +145,7 @@ class PackMetadataParser:
             self.marketplaces.append(MarketplaceVersions.XSOAR_SAAS.value)
 
         if MarketplaceVersions.XSOAR_ON_PREM.value in self.marketplaces:
-            self.marketplaces.append(MarketplaceVersions.XSOAR)
+            self.marketplaces.append(MarketplaceVersions.XSOAR.value)
 
         marketplaces_set = set(self.marketplaces)
         self.marketplaces = sorted(marketplaces_set)

@@ -18,7 +18,11 @@ class DashboardParser(JSONContentItemParser, content_type=ContentType.DASHBOARD)
 
     @property
     def supported_marketplaces(self) -> Set[MarketplaceVersions]:
-        return {MarketplaceVersions.XSOAR}
+        return {
+            MarketplaceVersions.XSOAR,
+            MarketplaceVersions.XSOAR_SAAS,
+            MarketplaceVersions.XSOAR_ON_PREM,
+        }
 
     def connect_to_dependencies(self) -> None:
         """Collects the scripts used in the dashboard as optional dependencies."""

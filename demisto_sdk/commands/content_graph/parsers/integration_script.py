@@ -41,6 +41,8 @@ class IntegrationScriptParser(YAMLContentItemParser):
             MarketplaceVersions.XSOAR,
             MarketplaceVersions.MarketplaceV2,
             MarketplaceVersions.XPANSE,
+            MarketplaceVersions.XSOAR_SAAS,
+            MarketplaceVersions.XSOAR_ON_PREM,
         }
 
     def connect_to_api_modules(self) -> None:

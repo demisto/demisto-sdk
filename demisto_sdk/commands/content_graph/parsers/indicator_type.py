@@ -26,7 +26,12 @@ class IndicatorTypeParser(
 
     @property
     def supported_marketplaces(self) -> Set[MarketplaceVersions]:
-        return {MarketplaceVersions.XSOAR, MarketplaceVersions.MarketplaceV2}
+        return {
+            MarketplaceVersions.XSOAR,
+            MarketplaceVersions.MarketplaceV2,
+            MarketplaceVersions.XSOAR_SAAS,
+            MarketplaceVersions.XSOAR_ON_PREM,
+        }
 
     @property
     def description(self) -> Optional[str]:

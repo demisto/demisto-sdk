@@ -191,9 +191,10 @@ class MarketplaceTagParser:
         self._should_remove_xsoar_saas_text = (
             marketplace != MarketplaceVersions.XSOAR_SAAS.value
         )
-        self._should_remove_xsoar_on_prem_text = (
-            marketplace != MarketplaceVersions.XSOAR_ON_PREM.value
-        )
+        self._should_remove_xsoar_on_prem_text = marketplace not in [
+            MarketplaceVersions.XSOAR_ON_PREM.value,
+            MarketplaceVersions.XSOAR.value,
+        ]
 
     def parse_text(self, text):
         # Remove the tags of the products if specified should_remove.

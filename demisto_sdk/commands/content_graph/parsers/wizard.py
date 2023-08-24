@@ -25,7 +25,11 @@ class WizardParser(JSONContentItemParser, content_type=ContentType.WIZARD):
 
     @property
     def supported_marketplaces(self) -> Set[MarketplaceVersions]:
-        return {MarketplaceVersions.XSOAR}
+        return {
+            MarketplaceVersions.XSOAR,
+            MarketplaceVersions.XSOAR_SAAS,
+            MarketplaceVersions.XSOAR_ON_PREM,
+        }
 
     def get_packs(self) -> List[str]:
         packs: List[str] = []

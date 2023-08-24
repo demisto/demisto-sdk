@@ -19,4 +19,8 @@ class GenericModuleParser(
 
     @property
     def supported_marketplaces(self) -> Set[MarketplaceVersions]:
-        return {MarketplaceVersions.XSOAR}
+        return {
+            MarketplaceVersions.XSOAR,
+            MarketplaceVersions.XSOAR_SAAS,
+            MarketplaceVersions.XSOAR_ON_PREM,
+        }

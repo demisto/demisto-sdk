@@ -36,7 +36,7 @@ def parse_function_parameters(sig: inspect.Signature):
             if get_origin(param.annotation) in [Union, Optional]:
                 param_type = get_args(param.annotation)[0]
 
-            if param_type is not str:
+            if param_type is not str and not isinstance(param_type, str):
                 value = TYPE_FILLER_MAPPING.get(param_type) or param_type()
 
         parameters[param.name] = value

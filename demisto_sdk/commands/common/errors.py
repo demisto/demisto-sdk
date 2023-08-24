@@ -4385,7 +4385,7 @@ class Errors:
         command_name: str, invalid_outputs: list[str], context_outputs_url: str
     ):
         return (
-            f"the {command_name} returns the following outputs:\n{invalid_outputs}\nwhich using custom objects "
+            f"the {command_name} command returns the following outputs:\n{invalid_outputs}\nwhich using custom objects "
             f"like:\n{CUSTOM_CONTEXT_OUTPUTS} spelled incorrectly. Please Fix according to the list mentioned in the"
             f" beginning.\nFor Further information: {context_outputs_url}"
         )

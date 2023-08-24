@@ -3,11 +3,11 @@ import multiprocessing
 import os
 import re
 import subprocess
+import sys
 from collections import defaultdict
 from copy import deepcopy
 from dataclasses import dataclass
 from pathlib import Path
-import sys
 from typing import Dict, Iterable, List, Optional, Set
 
 import more_itertools

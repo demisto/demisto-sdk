@@ -21,6 +21,7 @@ from demisto_sdk.commands.common.constants import (
     XSIAM_DASHBOARDS_DIR,
     XSIAM_REPORTS_DIR,
     FileType,
+    EVENT_COLLECTOR,
 )
 from demisto_sdk.commands.common.content import Content
 from demisto_sdk.commands.common.content.objects.pack_objects import (
@@ -746,10 +747,10 @@ class UpdateRN:
                 rn_desc = f"##### New: {content_name}\n\n"
                 if desc:
                     rn_desc += f"- New: {desc}"
-                if from_version and _type not in SIEM_ONLY_ENTITIES:
-                    rn_desc += f" (Available from Cortex XSOAR {from_version})."
-                elif _type in SIEM_ONLY_ENTITIES:
+                if _type in SIEM_ONLY_ENTITIES or content_name.lower().endswith(EVENT_COLLECTOR.lower()) and _type is FileType.INTEGRATION:
                     rn_desc += "(Available from Cortex XSIAM %%XSIAM_VERSION%%)."
+                elif from_version and _type not in SIEM_ONLY_ENTITIES:
+                    rn_desc += f" (Available from Cortex XSOAR {from_version})."
                 rn_desc += "\n"
             else:
                 rn_desc = f"##### {content_name}\n\n"

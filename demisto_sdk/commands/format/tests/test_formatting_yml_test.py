@@ -265,7 +265,7 @@ class TestFormatting:
             input=source_path, output=saved_file_path, path=schema_path
         )
         base_yml.save_yml_to_destination_file()
-        assert os.path.isfile(saved_file_path)
+        assert Path(saved_file_path).is_file()
         Path(saved_file_path).unlink()
 
     INTEGRATION_PROXY_SSL_PACK = [
@@ -557,7 +557,7 @@ class TestFormatting:
             input=source_path, output=saved_file_path, path=schema_path
         )
         base_yml.save_yml_to_destination_file()
-        assert os.path.isfile(saved_file_path)
+        assert Path(saved_file_path).is_file()
 
         with open(saved_file_path) as f:
             yaml_content = yaml.load(f)

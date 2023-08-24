@@ -2509,11 +2509,12 @@ class TestMarketplaceTagParser:
         assert "### Inline:" in actual
         assert "ALL XSOAR MARKETPLACE PARAGRAPH" in actual
         assert "all xsoar marketplaces inline text" in actual
+        assert "xsoar_on_prem" in actual
+        assert "XSOAR_ON_PREM" in actual
         self.check_prefix_not_in_text(actual)
         self.check_xsiam_not_in_text(actual)
         self.check_xpanse_not_in_text(actual)
         self.check_xsoar_saas_not_in_text(actual)
-        self.check_xsoar_on_prem_not_in_text(actual)
 
     def test_xsiam_marketplace_version(self):
         """
@@ -2603,7 +2604,7 @@ class TestMarketplaceTagParser:
         """
         mtp = MarketplaceTagParser(MarketplaceVersions.XSOAR.value)
         assert mtp._should_remove_xsoar_text is False
-        assert mtp._should_remove_xsoar_on_prem_text is True
+        assert mtp._should_remove_xsoar_on_prem_text is False
         assert mtp._should_remove_xsoar_saas_text is True
         mtp = MarketplaceTagParser(MarketplaceVersions.XSOAR_SAAS.value)
         assert mtp._should_remove_xsoar_text is False

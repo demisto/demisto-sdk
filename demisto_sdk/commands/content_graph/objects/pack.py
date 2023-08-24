@@ -245,6 +245,12 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
         with open(path, "r+") as f:
             try:
                 text = f.read()
+
+                if (
+                    marketplace == MarketplaceVersions.XSOAR
+                    and MarketplaceVersions.XSOAR_ON_PREM in self.marketplaces
+                ):
+                    marketplace = MarketplaceVersions.XSOAR_ON_PREM
                 parsed_text = MarketplaceTagParser(marketplace).parse_text(text)
                 if len(text) != len(parsed_text):
                     f.seek(0)

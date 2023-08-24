@@ -2464,7 +2464,7 @@ class TestMarketplaceTagParser:
         assert "XSOAR_SAAS" not in actual
         assert "XSOAR saas" not in actual
 
-    def check_xsoar_on_prem_no_in_text(self, actual):
+    def check_xsoar_on_prem_not_in_text(self, actual):
         assert "XSOAR_ON_PREM" not in actual
         assert "xsoar_on_prem" not in actual
 
@@ -2490,7 +2490,7 @@ class TestMarketplaceTagParser:
         self.check_xsiam_not_in_text(actual)
         self.check_xpanse_not_in_text(actual)
         self.check_xsoar_saas_not_in_text(actual)
-        self.check_xsoar_on_prem_no_in_text(actual)
+        self.check_xsoar_on_prem_not_in_text(actual)
         self.check_all_xsoar_not_in_text(actual)
 
     def test_xsoar_marketplace_version(self):
@@ -2513,7 +2513,7 @@ class TestMarketplaceTagParser:
         self.check_xsiam_not_in_text(actual)
         self.check_xpanse_not_in_text(actual)
         self.check_xsoar_saas_not_in_text(actual)
-        self.check_xsoar_on_prem_no_in_text(actual)
+        self.check_xsoar_on_prem_not_in_text(actual)
 
     def test_xsiam_marketplace_version(self):
         """
@@ -2535,7 +2535,7 @@ class TestMarketplaceTagParser:
         assert "xsiam" in actual
         self.check_all_xsoar_not_in_text(actual)
         self.check_xpanse_not_in_text(actual)
-        self.check_xsoar_on_prem_no_in_text(actual)
+        self.check_xsoar_on_prem_not_in_text(actual)
         self.check_xsoar_saas_not_in_text(actual)
         self.check_prefix_not_in_text(actual)
 
@@ -2558,7 +2558,7 @@ class TestMarketplaceTagParser:
         self.check_prefix_not_in_text(actual)
         self.check_all_xsoar_not_in_text(actual)
         self.check_xsiam_not_in_text(actual)
-        self.check_xsoar_on_prem_no_in_text(actual)
+        self.check_xsoar_on_prem_not_in_text(actual)
         self.check_xsoar_saas_not_in_text(actual)
 
     def test_xsoar_saas_marketplace_version(self):
@@ -2576,7 +2576,7 @@ class TestMarketplaceTagParser:
         self.check_prefix_not_in_text(actual)
         self.check_xsiam_not_in_text(actual)
         self.check_xpanse_not_in_text(actual)
-        self.check_xsoar_on_prem_no_in_text(actual)
+        self.check_xsoar_on_prem_not_in_text(actual)
 
     def test_xsoar_on_prem_marketplace_version(self):
         """
@@ -2596,6 +2596,25 @@ class TestMarketplaceTagParser:
         self.check_xsiam_not_in_text(actual)
         self.check_xpanse_not_in_text(actual)
         self.check_xsoar_saas_not_in_text(actual)
+
+    def test_xsoar_should_remove_text(self):
+        """
+        Check that if xsoar tag is specified all the xsoar-saas marketplaces will be should removed true.
+        """
+        mtp = MarketplaceTagParser(MarketplaceVersions.XSOAR.value)
+        assert mtp._should_remove_xsoar_text is False
+        assert mtp._should_remove_xsoar_on_prem_text is True
+        assert mtp._should_remove_xsoar_saas_text is True
+        mtp = MarketplaceTagParser(MarketplaceVersions.XSOAR_SAAS.value)
+        assert mtp._should_remove_xsoar_text is False
+        assert mtp._should_remove_xsoar_on_prem_text is True
+        assert mtp._should_remove_xsoar_saas_text is False
+        mtp = MarketplaceTagParser(MarketplaceVersions.XSOAR_ON_PREM.value)
+        assert mtp._should_remove_xsoar_text is False
+        assert mtp._should_remove_xsoar_on_prem_text is False
+        assert mtp._should_remove_xsoar_saas_text is True
+        mtp = MarketplaceTagParser(MarketplaceVersions.MarketplaceV2.value)
+        assert mtp._should_remove_xsoar_text is True
 
 
 @pytest.mark.parametrize(

@@ -1568,3 +1568,30 @@ def test_empty_yml(tmp_path):
         - Check that the function will not raise any errors.
     """
     IntegrationScriptUnifier.add_custom_section({})
+
+
+def test_update_hidden_parameters_value():
+    """
+    Given:
+        - An xsoar marketplace and yml dict data
+
+    When:
+        - Updatining the value of the hidden parameter
+
+    Then:
+        - Validate if xsoar_on_prem hidden tag the marketplace will be hidden in xsoar
+        - Validate if xsoar hidden tag the marketplace will be hidden in xsoar
+        - Validate if xsoar_saas tag the marketplace will not be hidden in xsoar"""
+    yml_data = {
+        "configuration": [
+            {"param1": "", "hidden": ["xsoar_on_prem"]},
+            {"param2": "", "hidden": ["xsoar"]},
+            {"param3": "", "hidden": ["xsoar_saas"]},
+        ]
+    }
+    IntegrationScriptUnifier.update_hidden_parameters_value(
+        yml_data, MarketplaceVersions.XSOAR
+    )
+    assert yml_data["configuration"][0]["hidden"] is True
+    assert yml_data["configuration"][1]["hidden"] is True
+    assert yml_data["configuration"][2]["hidden"] is False

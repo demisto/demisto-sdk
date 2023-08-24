@@ -3,6 +3,7 @@ from pathlib import Path
 from typing import Any, Dict, Iterator, List, Optional
 
 import regex
+from numpy import str_
 
 from demisto_sdk.commands.common.constants import (
     BASE_PACK,
@@ -137,7 +138,7 @@ class PackMetadataParser:
         self.keywords: List[str] = metadata["keywords"] or []
         self.search_rank: int = 0
         self.videos: List[str] = metadata.get("videos", [])
-        self.marketplaces: List[str] = (
+        self.marketplaces: List[str_] = (
             metadata.get("marketplaces") or DEFAULT_MARKETPLACES
         )
         if MarketplaceVersions.XSOAR.value in self.marketplaces:

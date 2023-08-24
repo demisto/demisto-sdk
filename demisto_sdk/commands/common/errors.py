@@ -4380,7 +4380,9 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def command_output_is_invalid(command_name, invalid_outputs, context_outputs_url):
+    def command_output_is_invalid(
+        command_name: str, invalid_outputs: List[str], context_outputs_url: str
+    ):
         return (
             f"the {command_name} command returns custom outputs: {invalid_outputs} spelled incorrectly. Fix according"
             f" to context outputs standard {context_outputs_url}"

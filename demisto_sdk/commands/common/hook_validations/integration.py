@@ -8,7 +8,7 @@ from demisto_sdk.commands.common.constants import (
     ALERT_FETCH_REQUIRED_PARAMS,
     BANG_COMMAND_ARGS_MAPPING_DICT,
     BANG_COMMAND_NAMES,
-    CUSTOM_CONTEXT,
+    CUSTOM_CONTEXT_OUTPUTS,
     DBOT_SCORES_DICT,
     DEFAULT_CONTENT_ITEM_FROM_VERSION,
     DEPRECATED_DESC_REGEX,
@@ -600,7 +600,6 @@ class IntegrationValidator(ContentEntityValidator):
 
     @error_codes("IN158")
     def is_valid_command_custom_outputs(self) -> bool:
-        custom_outputs_url = XSOAR_CONTEXT_AND_OUTPUTS_URL
         commands = self.current_file.get("script", {}).get("commands") or []
         output_valid = True
         for command in commands:
@@ -613,7 +612,7 @@ class IntegrationValidator(ContentEntityValidator):
                         lambda context: context_path.lower().startswith(
                             context.lower()
                         ),
-                        CUSTOM_CONTEXT,
+                        CUSTOM_CONTEXT_OUTPUTS,
                     )
                 )
 
@@ -627,7 +626,7 @@ class IntegrationValidator(ContentEntityValidator):
 
             if invalid_outputs:
                 error_message, error_code = Errors.command_output_is_invalid(
-                    command.get("name"), invalid_outputs, custom_outputs_url
+                    command.get("name"), invalid_outputs, XSOAR_CONTEXT_AND_OUTPUTS_URL
                 )
                 if self.handle_error(
                     error_message,

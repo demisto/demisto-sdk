@@ -36,7 +36,7 @@ class ScriptParser(IntegrationScriptParser, content_type=ContentType.SCRIPT):
 
     @property
     def description(self) -> Optional[str]:
-        return self.yml_data.get("comment")
+        return self.yml_data.get("comment") or ""
 
     @property
     def docker_image(self) -> str:

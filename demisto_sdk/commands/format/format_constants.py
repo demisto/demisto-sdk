@@ -53,3 +53,15 @@ GENERIC_OBJECTS_FILE_TYPES = [
     FileType.GENERIC_DEFINITION,
 ]
 OLD_FILE_TYPES = [FileType.LAYOUT.value, FileType.OLD_CLASSIFIER.value]
+
+SKIP_FORMATTING_DIRS = [".venv"]
+
+SKIP_FORMATTING_FILES = [
+    "CommonServerPython.py",
+    "demistomock.py",
+    "CommonServerUserPython.py",
+    "conftest.py",
+]
+
+# Only skip if we are checking CommonServerPython.py in a non CommonServerPython dir.
+UNSKIP_FORMATTING_FILES = ["CommonServerPython/CommonServerPython.py"]

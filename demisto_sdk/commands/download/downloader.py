@@ -301,13 +301,6 @@ class Downloader:
                     (self.regex and re.match(self.regex, content_item_name)) or
                     content_item_name in self.input_files
             ):
-                # Filter out content written in JavaScript since it is not support
-                # TODO: Check if we actually need this (why don't we allow downloading JS content?) and remove if not.
-                if (content_item_data["type"] in (FileType.INTEGRATION, FileType.SCRIPT) and
-                        content_item_data.get("code_lang") in ("javascript", None)):
-                    logger.warning(f"Skipping '{content_item_name}' as JavaScript content is not supported.")
-                    continue
-
                 filtered_custom_content_objects[file_name] = content_item_data
 
         logger.info(f"Filtering process completed, {len(filtered_custom_content_objects)}/{original_count} items remain.")
@@ -611,21 +604,32 @@ class Downloader:
                     file_name=file_name, file_data=file_data
                 )
 
-                # Add a content item only if detected all required fields
+                # Check if all required fields are present
                 missing_field = False
                 for _field in ("id", "name", "entity", "type"):
                     if not custom_content_object.get(_field):
-                        logger.warning(f"'{_field}' could not be detected for '{file_name}' and it will be skipped.")
+                        logger.warning(f"'{file_name}' will be skipped as its {_field} could not be detected.")
                         missing_field = True
                         break
 
-                if not missing_field:
-                    custom_content_objects[file_name] = custom_content_object
+                # If the content is missing a required field, skip it
+                if missing_field:
+                    continue
 
-            # Skip custom_content_objects with an invalid format
+                # If the content is written in JavaScript (not supported), skip it
+                if custom_content_object["type"] in (
+                    FileType.INTEGRATION,
+                    FileType.SCRIPT,
+                ) and custom_content_object.get("code_lang") in (None, "javascript"):
+                    logger.warning(
+                        f"Skipping '{file_name}' as JavaScript content is not supported."
+                    )
+                    continue
+
+                custom_content_objects[file_name] = custom_content_object
+
             except Exception as e:
-                # We fail the whole download process, since we might miss UUIDs to replace
-                #  TODO: Check if we want to replace this behavior and just skip the file. Can cause UUID replacement issues.
+                # We fail the whole download process, since we might miss UUIDs to replace if not.
                 logger.error(f"Error while parsing '{file_name}': {e}")
                 raise
 

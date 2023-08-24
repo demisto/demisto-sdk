@@ -15,6 +15,14 @@ from junitparser.junitparser import Result
 from tabulate import tabulate
 from typer.main import get_command_from_info
 
+from commands.test_content.test_modeling_rule.constants import (
+    EXPECTED_SCHEMA_MAPPINGS,
+    SYNTAX_ERROR_IN_MODELING_RULE,
+    FAILURE_TO_PUSH_EXPLANATION,
+    XQL_QUERY_ERROR_EXPLANATION,
+    TIME_ZONE_WARNING,
+    NOT_AVAILABLE,
+)
 from demisto_sdk.commands.common.content.objects.pack_objects.modeling_rule.modeling_rule import (
     ModelingRule,
     SingleModelingRule,
@@ -40,47 +48,27 @@ from demisto_sdk.utils.utils import get_containing_pack
 
 CI_PIPELINE_ID = os.environ.get("CI_PIPELINE_ID")
 
-EXPECTED_SCHEMA_MAPPINGS = {
-    str: {"type": "string", "is_array": False},
-    dict: {"type": "string", "is_array": False},
-    list: {"type": "string", "is_array": False},
-    int: {"type": "int", "is_array": False},
-    float: {"type": "float", "is_array": False},
-    datetime: {"type": "datetime", "is_array": False},
-    bool: {"type": "boolean", "is_array": False},
-}
-
-SYNTAX_ERROR_IN_MODELING_RULE = (
-    "No results were returned by the query - it's possible there is a syntax error with your "
-    "modeling rule and that it did not install properly on the tenant"
-)
-
-FAILURE_TO_PUSH_EXPLANATION = (
-    "Failed pushing test data to tenant, potential reasons could be:\n - an incorrect token\n - "
-    'currently only http collectors configured with "Compression" as "gzip" and "Log Format" as'
-    ' "JSON" are supported, double check your collector is configured as such\n - the configured '
-    "http collector on your tenant is disabled"
-)
-
-XQL_QUERY_ERROR_EXPLANATION = (
-    "Error executing XQL query, potential reasons could be:\n - mismatch between "
-    "dataset/vendor/product marked in the test data from what is in the modeling rule\n"
-    " - dataset was not created in the tenant\n - model fields in the query are invalid\n"
-    "Try manually querying your tenant to discover the exact problem."
-)
-TIME_ZONE_WARNING = "Could not find timezone"
-
-NOT_AVAILABLE = "N/A"
-
 app = typer.Typer()
 
 
-def create_table(expected: Dict[str, Any], received: Dict[str, Any]):
+def duration_since_start_time(start_time: datetime) -> float:
+    """Get the duration since the given start time.
+
+    Args:
+        start_time (datetime): Start time.
+
+    Returns:
+        float: Duration since the given start time.
+    """
+    return (datetime.now(timezone.utc) - start_time).total_seconds()
+
+
+def create_table(expected: Dict[str, Any], received: Dict[str, Any]) -> str:
     """Create a table to display the expected and received values.
 
     Args:
-        expected (Dict[str, Any]): mapping of keys to expected values
-        received (Dict[str, Any]): mapping of keys to received values
+        expected: mapping of keys to expected values
+        received: mapping of keys to received values
 
     Returns:
         Table object to display the expected and received values.
@@ -182,7 +170,7 @@ def verify_results(
     """Verify that the results of the XQL query match the expected values.
 
     Args:
-        modeling_rule (ModelingRule): The modeling rule object parsed from the modeling rule file.
+        modeling_rule: The modeling rule object parsed from the modeling rule file.
         tested_dataset (str): The dataset to verify result for.
         results (List[dict]): The results of the XQL query.
         test_data (init_test_data.TestData): The data parsed from the test data file.
@@ -222,100 +210,106 @@ def verify_results(
 
     test_cases = []
     for i, result in enumerate(results, start=1):
-        expected_values = None
-        tenant_timezone: str = ""
         logger.info(
             f"\n[cyan][underline]Result {i}/{len(results)}[/underline][/cyan]",
             extra={"markup": True},
         )
-
-        # get expected_values for the given query result
         td_event_id = result.pop(f"{tested_dataset}.test_data_event_id")
         result_test_case = TestCase(
-            f"Modeling rule - {get_relative_path_to_content(modeling_rule.path)} {i}/{len(results)} "
+            f"Modeling rule - {get_relative_path_to_content(modeling_rule.path)} {i}/{len(results)}"
             f"test_data_event_id:{td_event_id}",
             classname=f"test_data_event_id:{td_event_id}",
         )
-        result_test_case_system_out = []
-        result_test_case_system_err = []
-        result_test_case_results = []
-
-        for e in test_data.data:
-            if str(e.test_data_event_id) == td_event_id:
-                expected_values = e.expected_values
-                tenant_timezone = e.tenant_timezone
-                break
-        if not tenant_timezone:
-            result_test_case_system_out.append(TIME_ZONE_WARNING)
-            logger.warning(f"[yellow]{TIME_ZONE_WARNING}[/yellow]")
-
-        if expected_values:
-            if (
-                expected_time_value := expected_values.get(
-                    SingleModelingRule.TIME_FIELD
-                )
-            ) and (time_value := result.get(SingleModelingRule.TIME_FIELD)):
-                result[
-                    SingleModelingRule.TIME_FIELD
-                ] = convert_epoch_time_to_string_time(
-                    time_value, "." in expected_time_value, tenant_timezone
-                )
-            table_result = create_table(expected_values, result)
-            typer.echo(table_result)
-            for key, val in expected_values.items():
-                if val:
-                    result_val = result.get(key)
-                    out = f"Checking for key {key}:\n - expected: {val}\n - received: {result_val}"
-                    logger.debug(f"[cyan]{out}[/cyan]", extra={"markup": True})
-                    result_test_case_system_out.append(out)
-
-                    if type(result_val) == type(val) and result_val == val:
-                        out = f"Value:{result_val} and Type:{get_type_pretty_name(result_val)} Matched for key {key}"
-                        result_test_case_system_out.append(out)
-                        logger.debug(out)
-                    else:
-                        if type(result_val) == type(val):
-                            err = (
-                                f"Expected value does not match for key {key}: - expected: {val} - received: {result_val} "
-                                f"Types match:{get_type_pretty_name(result_val)}"
-                            )
-                            logger.error(
-                                f'[red][bold]{key}[/bold] --- "{result_val}" != "{val}" '
-                                f"Types match:{get_type_pretty_name(result_val)}[/red]",
-                                extra={"markup": True},
-                            )
-                        else:
-                            err = (
-                                f"Expected value and type do not match for key {key}: - expected: {val} - received: {result_val} "
-                                f"expected type: {get_type_pretty_name(val)} "
-                                f"received type: {get_type_pretty_name(result_val)}"
-                            )
-                            logger.error(
-                                f'[red][bold]{key}[/bold] --- "{result_val}" != "{val}"\n'
-                                f'[bold]{key}[/bold] --- Received value type: "{get_type_pretty_name(result_val)}" '
-                                f'!=  Expected value type: "{get_type_pretty_name(val)}"[/red]',
-                                extra={"markup": True},
-                            )
-                        result_test_case_system_err.append(err)
-                        result_test_case_results.append(Failure(err))
-                else:
-                    err = f"No mapping for this {key} - skipping checking match"
-                    result_test_case_system_out.append(err)
-                    result_test_case_results.append(Skipped(err))
-                    logger.debug(f"[cyan]{err}[/cyan]", extra={"markup": True})
-        else:
-            err = f"No matching expected_values found for test_data_event_id={td_event_id} in test_data {test_data}"
-            logger.error(f"[red]{err}[/red]", extra={"markup": True})
-            result_test_case_results.append(Failure(err))
-
-        result_test_case.system_err = "\n".join(result_test_case_system_err)
-        result_test_case.system_out = "\n".join(result_test_case_system_out)
-        if result_test_case_results:
-            result_test_case.result += result_test_case_results
+        verify_results_against_test_data(
+            result_test_case, result, test_data, td_event_id
+        )
 
         test_cases.append(result_test_case)
 
     return test_cases
+
+
+def verify_results_against_test_data(
+    result_test_case: TestCase,
+    result: Dict[str, Any],
+    test_data: init_test_data.TestData,
+    td_event_id: str,
+):
+    """Verify that the results of the XQL query match the expected values."""
+
+    result_test_case_system_out = []
+    result_test_case_system_err = []
+    result_test_case_results = []
+    tenant_timezone: str = ""
+    expected_values = None
+    # Find the expected values for the given test data event ID.
+    for e in test_data.data:
+        if str(e.test_data_event_id) == td_event_id:
+            expected_values = e.expected_values
+            tenant_timezone = e.tenant_timezone
+            break
+    if not tenant_timezone:
+        result_test_case_system_out.append(TIME_ZONE_WARNING)
+        logger.warning(f"[yellow]{TIME_ZONE_WARNING}[/yellow]")
+    if expected_values:
+        if (
+            expected_time_value := expected_values.get(SingleModelingRule.TIME_FIELD)
+        ) and (time_value := result.get(SingleModelingRule.TIME_FIELD)):
+            result[SingleModelingRule.TIME_FIELD] = convert_epoch_time_to_string_time(
+                time_value, "." in expected_time_value, tenant_timezone
+            )
+        table_result = create_table(expected_values, result)
+        typer.echo(table_result)
+        for key, val in expected_values.items():
+            if val:
+                result_val = result.get(key)
+                out = f"Checking for key {key}:\n - expected: {val}\n - received: {result_val}"
+                logger.debug(f"[cyan]{out}[/cyan]", extra={"markup": True})
+                result_test_case_system_out.append(out)
+
+                if type(result_val) == type(val) and result_val == val:
+                    out = f"Value:{result_val} and Type:{get_type_pretty_name(result_val)} Matched for key {key}"
+                    result_test_case_system_out.append(out)
+                    logger.debug(out)
+                else:
+                    if type(result_val) == type(val):
+                        err = (
+                            f"Expected value does not match for key {key}: - expected: {val} - received: {result_val} "
+                            f"Types match:{get_type_pretty_name(result_val)}"
+                        )
+                        logger.error(
+                            f'[red][bold]{key}[/bold] --- "{result_val}" != "{val}" '
+                            f"Types match:{get_type_pretty_name(result_val)}[/red]",
+                            extra={"markup": True},
+                        )
+                    else:
+                        err = (
+                            f"Expected value and type do not match for key {key}: - expected: {val} - received: {result_val} "
+                            f"expected type: {get_type_pretty_name(val)} "
+                            f"received type: {get_type_pretty_name(result_val)}"
+                        )
+                        logger.error(
+                            f'[red][bold]{key}[/bold] --- "{result_val}" != "{val}"\n'
+                            f'[bold]{key}[/bold] --- Received value type: "{get_type_pretty_name(result_val)}" '
+                            f'!=  Expected value type: "{get_type_pretty_name(val)}"[/red]',
+                            extra={"markup": True},
+                        )
+                    result_test_case_system_err.append(err)
+                    result_test_case_results.append(Failure(err))
+            else:
+                err = f"No mapping for this {key} - skipping checking match"
+                result_test_case_system_out.append(err)
+                result_test_case_results.append(Skipped(err))
+                logger.debug(f"[cyan]{err}[/cyan]", extra={"markup": True})
+    else:
+        err = f"No matching expected_values found for test_data_event_id={td_event_id} in test_data {test_data}"
+        logger.error(f"[red]{err}[/red]", extra={"markup": True})
+        result_test_case_results.append(Failure(err))
+    result_test_case.system_err = "\n".join(result_test_case_system_err)
+    result_test_case.system_out = "\n".join(result_test_case_system_out)
+    if result_test_case_results:
+        result_test_case.result += result_test_case_results
+    return result_test_case
 
 
 def generate_xql_query(rule: SingleModelingRule, test_data_event_ids: List[str]) -> str:
@@ -581,9 +575,9 @@ def check_dataset_exists(
 
     if test_case_results:
         dataset_set_test_case.result += test_case_results
-    dataset_set_test_case.time = (
-        datetime.now(timezone.utc) - dataset_set_test_case_start_time
-    ).total_seconds()
+    dataset_set_test_case.time = duration_since_start_time(
+        dataset_set_test_case_start_time
+    )
     return dataset_set_test_case
 
 
@@ -639,9 +633,9 @@ def push_test_data_to_tenant(
         system_out = "Test data pushed successfully"
         push_test_data_test_case.system_out = system_out
         logger.info(f"[green]{system_out}[/green]", extra={"markup": True})
-    push_test_data_test_case.time = (
-        datetime.now(timezone.utc) - push_test_data_test_case_start_time
-    ).total_seconds()
+    push_test_data_test_case.time = duration_since_start_time(
+        push_test_data_test_case_start_time
+    )
     return push_test_data_test_case
 
 
@@ -755,7 +749,7 @@ def validate_modeling_rule(
         api_key (str): xsiam API key.
         auth_id (str): xsiam auth ID.
         xsiam_token (str): xsiam token.
-        collector_token (str): collector token.
+        collector_token: collector token.
         push (bool): Whether to push test event data to the tenant.
         interactive (bool): Whether command is being run in interactive mode.
         ctx (typer.Context): Typer context.

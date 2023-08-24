@@ -1,16 +1,19 @@
 from pathlib import Path
-from typing import Optional
+from typing import Any, Dict, Optional
 
 import typer
+from tabulate import tabulate
 
 from demisto_sdk.commands.common.constants import PACKS_DIR, MarketplaceVersions
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.logger import (
+    logger,
     logging_setup,
 )
 from demisto_sdk.commands.content_graph.commands.get_relationships import (
     Direction,
-    get_relationships_by_path,
+    format_record_for_outputs,
+    log_record,
 )
 from demisto_sdk.commands.content_graph.commands.update import update_content_graph
 from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
@@ -68,6 +71,26 @@ def get_dependencies(
         is_flag=True,
         help="If true, includes tests dependencies in outputs.",
     ),
+    include_deprecated: bool = typer.Option(
+        False,
+        "--include-deprecated",
+        is_flag=True,
+        help="If true, includes deprecated in outputs.",
+    ),
+    include_hidden: bool = typer.Option(
+        False,
+        "--include-hidden",
+        is_flag=True,
+        help="If true, includes hidden packs in outputs (relevant only for DEPENDS_ON relationships).",
+    ),
+    direction: Direction = typer.Option(
+        Direction.TARGETS,
+        "-dir",
+        "--direction",
+        show_default=True,
+        case_sensitive=False,
+        help="Specifies whether to return only sources, only targets or both.",
+    ),
     output: Optional[Path] = typer.Option(
         None,
         "-o",
@@ -110,18 +133,82 @@ def get_dependencies(
         depth: int = MAX_DEPTH if all_level_dependencies else 1
         if update_graph:
             update_content_graph(graph)
-        result = get_relationships_by_path(
+        result = get_dependencies_by_pack_path(
             graph,
             path,
             RelationshipType.DEPENDS_ON,
             ContentType.PACK,
             depth,
             marketplace,
-            Direction.TARGETS,
+            direction,
             mandatory_only,
             include_tests,
+            include_deprecated,
+            include_hidden,
         )
         if output:
             (output / COMMAND_OUTPUTS_FILENAME).write_text(
                 json.dumps(result, indent=4),
             )
+
+
+def get_dependencies_by_pack_path(
+    graph: ContentGraphInterface,
+    input_filepath: Path,
+    relationship: RelationshipType,
+    content_type: ContentType,
+    depth: int,
+    marketplace: MarketplaceVersions,
+    direction: Direction,
+    mandatory_only: bool,
+    include_tests: bool,
+    include_deprecated: bool,
+    include_hidden: bool,
+) -> Dict[str, Any]:
+    retrieve_sources: bool = direction != Direction.TARGETS
+    retrieve_targets: bool = direction != Direction.SOURCES
+
+    dependents, dependencies = graph.get_relationships_by_path(
+        input_filepath,
+        relationship,
+        content_type,
+        depth,
+        marketplace,
+        retrieve_sources,
+        retrieve_targets,
+        mandatory_only,
+        include_tests,
+        include_deprecated,
+        include_hidden,
+    )
+    for record in dependents + dependencies:
+        log_record(record, relationship)
+        format_record_for_outputs(record, relationship)
+    logger.info("[cyan]====== SUMMARY ======[/cyan]")
+    if retrieve_sources:
+        logger.info(f"Dependents:\n{to_tabulate(dependents)}\n")
+    if retrieve_targets:
+        logger.info(f"Dependencies:\n{to_tabulate(dependencies)}\n")
+    return {"dependents": dependents, "dependencies": dependencies}
+
+
+def to_tabulate(
+    data: list,
+) -> str:
+    if not data:
+        return "No results."
+
+    headers = ["Pack", "Mandatory", "Depth"]
+    fieldnames_to_collect = ["name", "mandatorily", "minDepth"]
+    maxcolwidths = [50] * len(headers)
+
+    tabulated_data = []
+    for record in data:
+        tabulated_data.append([record[f] for f in fieldnames_to_collect])
+
+    return tabulate(
+        tabulated_data,
+        headers=headers,
+        tablefmt="fancy_grid",
+        maxcolwidths=maxcolwidths,
+    )

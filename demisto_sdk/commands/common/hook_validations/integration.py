@@ -604,10 +604,9 @@ class IntegrationValidator(ContentEntityValidator):
         output_valid = True
         for command in commands:
             invalid_outputs = []
-            outputs = command.get("outputs") or []
-            for output in outputs:
+            for output in command.get("outputs") or []:
                 context_path = output.get("contextPath", "")
-                mandatory_context = list(
+                custom_context_output = list(
                     filter(
                         lambda context: context_path.lower().startswith(
                             context.lower()
@@ -616,11 +615,9 @@ class IntegrationValidator(ContentEntityValidator):
                     )
                 )
 
-                if (
-                    mandatory_context
-                ):  # lower case of custom context is in the output_path
+                if custom_context_output:  # custom context output is used
                     if (
-                        mandatory_context[0] not in context_path
+                        custom_context_output[0] not in context_path
                     ):  # the output is not spelled as expected
                         invalid_outputs.append(context_path)
 
@@ -634,9 +631,9 @@ class IntegrationValidator(ContentEntityValidator):
                     file_path=self.file_path,
                     warning=self.structure_validator.quiet_bc,
                 ):
-                    self.is_valid = False
                     output_valid = False
 
+        self.is_valid = output_valid
         return output_valid
 
     @error_codes("DB100,DB101,IN107")

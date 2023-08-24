@@ -9,6 +9,7 @@ from requests import Response
 
 from demisto_sdk.commands.common.constants import (
     BETA_INTEGRATION_DISCLAIMER,
+    CUSTOM_CONTEXT_OUTPUTS,
     FILETYPE_TO_DEFAULT_FROMVERSION,
     INTEGRATION_CATEGORIES,
     MODELING_RULE_ID_SUFFIX,
@@ -4381,9 +4382,10 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def command_output_is_invalid(
-        command_name: str, invalid_outputs: List[str], context_outputs_url: str
+        command_name: str, invalid_outputs: list[str], context_outputs_url: str
     ):
         return (
-            f"the {command_name} command returns custom outputs: {invalid_outputs} spelled incorrectly. Fix according"
-            f" to context outputs standard {context_outputs_url}"
+            f"the {command_name} returns the following outputs:\n{invalid_outputs}\n which using custom objects "
+            f"like:\n{CUSTOM_CONTEXT_OUTPUTS} spelled incorrectly. Please Fix according to the list mentioned in the"
+            f" beginning.\n For Further information: {context_outputs_url}"
         )

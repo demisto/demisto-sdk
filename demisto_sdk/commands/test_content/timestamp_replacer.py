@@ -495,7 +495,7 @@ class TimestampReplacer:
         )
         if (
             not Path(self.bad_keys_filepath).exists()
-            and Path(repo_bad_keys_filepath).exists
+            and Path(repo_bad_keys_filepath).exists()
         ):
             with open(repo_bad_keys_filepath) as fp:
                 problem_keys = json.load(fp)

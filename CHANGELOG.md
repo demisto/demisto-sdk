@@ -1,15 +1,26 @@
 # Changelog
 ## Unreleased
+* Added a period at the end of lines produced by the **generate-docs** command that state the tested version of the product.
+* Update `RN112` validation's docs reference link.
+* Added support to control the maximum file size and log rotation files count in the sdk logger.
+* Fixed an issue with where passing the deprecated logging arguments to any command presented an incorrect recommendation for argument substitution.
+* Fixed an issue where the documentation of logging arguments was incorrect.
 * Fixed an issue in calculating content graph hash when creating or updating it.
 * Calling **graph create** or **graph update** now run the commands with default arguments, instead of showing the command help.
+* Removed the use of chunks when calculating content relationships.
+* Fixed an issue where the url regex in the **validate** command was wrong.
+* Fixed an issue where **pre-commit** command failed when using global environment.
+* Fixes an issue in **format** command where the `-i` option included files in `.venv` directories.
 
 ## 1.19.1
 * Fixed an issue where **unify** failed on integrations using an API a module, when not called from the content root.
 * Improved **update-release-notes** logs when changes in dependent API modules are detected.
 * Reverted changes released in version 1.19.0 in lint, lint will not fail on `demisto.results`, `return_outputs` and `LOG`.
 * Updated the **generate-docs** command to use the content graph instead of the id_set file.
+* **Validate** will now validate items which were edited in .pack-ignore.
 * Added the '--all' input option for the **prepare-content** command, to support running on all content packs.
 * Updated the '-i' input option of the **prepare-content** command to support multiple inputs as a comma-separated list.
+* Enhanced the pack metadata properties when dumping pack zips in **prepare-content** command.
 
 ## 1.19.0
 * Added the **graph** command group. The **create-content-graph** and **update-content-graph** commands were migrated to this command group, and named **graph create** and **graph update** respectively.

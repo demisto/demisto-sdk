@@ -159,7 +159,7 @@ Returns relationships of a given content object.
 
 * **-mp, --marketplace**
 
-    The marketplace to generate the graph for.
+    The marketplace version.
 
 * **--mandatory-only**
 
@@ -207,20 +207,16 @@ demisto-sdk graph get-relationships Packs/Jira -d 5 --relationship depends_on --
 
 
 ### get-dependencies
-Returns dependencies of a given content pack..
+Returns dependencies of a given content pack.
 
 #### Arguments
 * **input**
 
-    The path to a content item or a pack. [required]
+    The ID of the pack to check dependencies for. [required]
 
-* **-ct, --content-type**
+* **--all-level-deps/--first-level-deps**
 
-    The content type of the related object.
-
-* **-d, --depth**
-
-    Maximum depth (length) of the relationships paths.
+    Whether or not to retrieve all level or first level of dependencies only, default is all.
 
 * **-u/nu, --update-graph/--no-update-graph**
 
@@ -228,15 +224,15 @@ Returns dependencies of a given content pack..
 
 * **-mp, --marketplace**
 
-    The marketplace to generate the graph for.
+    The marketplace version.
 
 * **--mandatory-only**
 
-    If true, returns only mandatory relationships (relevant only for DEPENDS_ON/USES relationships).
+    If true, returns only mandatory dependencies.
 
 * **--include-tests**
 
-    If true, includes tests in outputs (relevant only for DEPENDS_ON/USES relationships).
+    If true, includes test dependencies in outputs.
 
 * **--include-deprecated**
 
@@ -248,7 +244,7 @@ Returns dependencies of a given content pack..
 
 * **-dir, --direction**
 
-    Specifies whether to return only sources, only targets or both.
+    Specifies whether to return only dependents (sources), only dependencies (targets) or both.
 
 * **-o, --output**
 
@@ -268,8 +264,8 @@ Returns dependencies of a given content pack..
 
 #### Examples
 ```
-demisto-sdk graph get-relationships Packs/SplunkPy/Integrations/SplunkPy/SplunkPy.yml
+demisto-sdk graph get-dependencies SplunkPy
 ```
 ```
-demisto-sdk graph get-relationships Packs/Jira -d 5 --relationship depends_on --mandatory-only --direction targets
+demisto-sdk graph get-dependencies Jira --all-level-deps --mandatory-only --direction both
 ```

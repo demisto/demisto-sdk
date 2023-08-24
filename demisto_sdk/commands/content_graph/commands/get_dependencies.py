@@ -36,7 +36,7 @@ def get_dependencies(
     ctx: typer.Context,
     input: str = typer.Argument(
         ...,
-        help="The pack to check dependencies for.",
+        help="The ID of the pack to check dependencies for.",
     ),
     update_graph: bool = typer.Option(
         True,
@@ -63,7 +63,7 @@ def get_dependencies(
         True,
         "--all-level-deps/--first-level-deps",
         is_flag=True,
-        help="Whether or not to retrieve all level  or first level of dependencies only, default is all.",
+        help="Whether or not to retrieve all level or first level of dependencies only, default is all.",
     ),
     include_tests: bool = typer.Option(
         False,
@@ -81,7 +81,7 @@ def get_dependencies(
         False,
         "--include-hidden",
         is_flag=True,
-        help="If true, includes hidden packs in outputs (relevant only for DEPENDS_ON relationships).",
+        help="If true, includes hidden packs in outputs.",
     ),
     direction: Direction = typer.Option(
         Direction.TARGETS,
@@ -89,7 +89,7 @@ def get_dependencies(
         "--direction",
         show_default=True,
         case_sensitive=False,
-        help="Specifies whether to return only sources, only targets or both.",
+        help="Specifies whether to return only dependents (sources), only dependencies (targets) or both.",
     ),
     output: Optional[Path] = typer.Option(
         None,
@@ -129,16 +129,12 @@ def get_dependencies(
         log_file_path=log_file_path,
     )
     with ContentGraphInterface() as graph:
-        path: Path = Path(PACKS_DIR) / input
-        depth: int = MAX_DEPTH if all_level_dependencies else 1
         if update_graph:
             update_content_graph(graph)
         result = get_dependencies_by_pack_path(
             graph,
-            path,
-            RelationshipType.DEPENDS_ON,
-            ContentType.PACK,
-            depth,
+            input,
+            all_level_dependencies,
             marketplace,
             direction,
             mandatory_only,
@@ -154,10 +150,8 @@ def get_dependencies(
 
 def get_dependencies_by_pack_path(
     graph: ContentGraphInterface,
-    input_filepath: Path,
-    relationship: RelationshipType,
-    content_type: ContentType,
-    depth: int,
+    pack_id: str,
+    all_level_dependencies: bool,
     marketplace: MarketplaceVersions,
     direction: Direction,
     mandatory_only: bool,
@@ -165,13 +159,15 @@ def get_dependencies_by_pack_path(
     include_deprecated: bool,
     include_hidden: bool,
 ) -> Dict[str, Any]:
+    pack_path: Path = Path(PACKS_DIR) / pack_id
+    depth: int = MAX_DEPTH if all_level_dependencies else 1
     retrieve_sources: bool = direction != Direction.TARGETS
     retrieve_targets: bool = direction != Direction.SOURCES
 
     dependents, dependencies = graph.get_relationships_by_path(
-        input_filepath,
-        relationship,
-        content_type,
+        pack_path,
+        RelationshipType.DEPENDS_ON,
+        ContentType.PACK,
         depth,
         marketplace,
         retrieve_sources,
@@ -182,8 +178,8 @@ def get_dependencies_by_pack_path(
         include_hidden,
     )
     for record in dependents + dependencies:
-        log_record(record, relationship)
-        format_record_for_outputs(record, relationship)
+        log_record(record, RelationshipType.DEPENDS_ON)
+        format_record_for_outputs(record, RelationshipType.DEPENDS_ON)
     logger.info("[cyan]====== SUMMARY ======[/cyan]")
     if retrieve_sources:
         logger.info(f"Dependents:\n{to_tabulate(dependents)}\n")

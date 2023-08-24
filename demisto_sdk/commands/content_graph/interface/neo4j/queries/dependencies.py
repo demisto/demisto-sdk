@@ -91,7 +91,7 @@ RETURN source.node_id AS source, target.node_id AS target"""
 def remove_existing_depends_on_relationships(tx: Transaction) -> None:
     query = f"""// Removes all existing DEPENDS_ON relationships before recalculation
 MATCH ()-[r:{RelationshipType.DEPENDS_ON}]->()
-WHERE r.from_metadata IS NULL
+WHERE r.from_metadata = false
 DELETE r"""
     run_query(tx, query)
 
@@ -150,12 +150,12 @@ AND NOT pack_b.name IN {IGNORED_PACKS_IN_DEPENDENCY_CALC}
 WITH pack_a, a, r, b, pack_b
 MERGE (pack_a)-[dep:{RelationshipType.DEPENDS_ON}]->(pack_b)
 ON CREATE
-    SET dep.is_test = a.is_test
+    SET dep.is_test = a.is_test,
+        dep.from_metadata = false,
+        dep.mandatorily = r.mandatorily
 ON MATCH
-    SET dep.is_test = dep.is_test AND a.is_test
-
-WITH dep, pack_a, a, r, b, pack_b
-SET dep.mandatorily = CASE WHEN dep.from_metadata THEN dep.mandatorily
+    SET dep.is_test = dep.is_test AND a.is_test,
+        dep.mandatorily = CASE WHEN dep.from_metadata THEN dep.mandatorily
                 ELSE r.mandatorily OR dep.mandatorily END
 WITH
     pack_a.object_id AS pack_a,

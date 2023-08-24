@@ -3,6 +3,7 @@ import multiprocessing
 import os
 import re
 import subprocess
+import sys
 from collections import defaultdict
 from copy import deepcopy
 from dataclasses import dataclass
@@ -152,7 +153,9 @@ class PreCommitRunner:
                 if unit_test:
                     response = subprocess.run(
                         [
-                            "pre-commit",
+                            sys.executable,
+                            "-m",
+                            "pre_commit",
                             "run",
                             "run-unit-tests",
                             "-c",
@@ -174,7 +177,9 @@ class PreCommitRunner:
             for chunk in more_itertools.chunked_even(changed_files, 10_000):
                 response = subprocess.run(
                     [
-                        "pre-commit",
+                        sys.executable,
+                        "-m",
+                        "pre_commit",
                         "run",
                         "-c",
                         str(PRECOMMIT_PATH),

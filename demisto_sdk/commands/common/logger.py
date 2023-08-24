@@ -4,10 +4,10 @@ import os.path
 import sys
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
-from typing import Any, Optional, Union
+from typing import Optional, Union
 
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
-from demisto_sdk.commands.common.tools import string_to_bool
+from demisto_sdk.commands.common.tools import string_to_bool, parse_int_or_default
 
 logger: logging.Logger = logging.getLogger("demisto-sdk")
 
@@ -37,24 +37,6 @@ DEPRECATED_PARAMETERS = {
     "no_logging": "--console_log_threshold or --file_log_threshold",
 }
 
-
-def parse_int_or_default(value: Any, default: int) -> int:
-    """
-    Parse int or return default value
-    Args:
-        value: value to parse
-        default: default value to return if parsing failed
-
-    Returns:
-        int: parsed value or default value
-
-    """
-    try:
-        return int(value)
-    except (ValueError, TypeError):
-        return default
-
-
 SUCCESS_LEVEL: int = 25
 DEMISTO_SDK_LOG_FILE_SIZE = parse_int_or_default(
     os.getenv("DEMISTO_SDK_LOG_FILE_SIZE"), 1_048_576  # 1MB
@@ -62,6 +44,72 @@ DEMISTO_SDK_LOG_FILE_SIZE = parse_int_or_default(
 DEMISTO_SDK_LOG_FILE_COUNT = parse_int_or_default(
     os.getenv("DEMISTO_SDK_LOG_FILE_COUNT"), 10
 )
+
+FILE_LOG_RECORD_FORMAT = "[%(asctime)s] - [%(threadName)s] - [%(levelname)s] - %(filename)s:%(lineno)d - %(message)s"
+CONSOLE_LOG_RECORD_FORMAT = (
+    "[%(asctime)s] [%(levelname)s] %(message)s"
+    if os.getenv("CI")
+    else "[%(levelname)s] %(message)s"
+)
+CONSOLE_LOG_RECORD_FORMAT_SHORT = (
+    "[%(asctime)s] [%(levelname)s] " if os.getenv("CI") else "[%(levelname)s] "
+)
+
+CONSOLE_RECORD_FORMATS = {
+    logging.DEBUG: "[lightgrey]%(message)s[/lightgrey]",
+    logging.INFO: "[lightgrey]%(message)s[/lightgrey]",
+    logging.WARNING: "[yellow]%(message)s[/yellow]",
+    logging.ERROR: "[red]%(message)s[/red]",
+    logging.CRITICAL: "[red][bold]%(message)s[/bold[/red]",
+    SUCCESS_LEVEL: "[green]%(message)s[/green]",
+}
+
+DEMISTO_LOG_ALLOWED_ESCAPES = [
+    ("[/black]", "\033[0m"),
+    ("[/blue]", "\033[0m"),
+    ("[/bold]", "\033[0m"),
+    ("[/cyan]", "\033[0m"),
+    ("[/darkgrey]", "\033[0m"),
+    ("[/darkred]", "\033[0m"),
+    ("[/disable]", "\033[0m"),
+    ("[/green]", "\033[0m"),
+    ("[/invisible]", "\033[0m"),
+    ("[/lightblue]", "\033[0m"),
+    ("[/lightcyan]", "\033[0m"),
+    ("[/lightgreen]", "\033[0m"),
+    ("[/lightgrey]", "\033[0m"),
+    ("[/lightred]", "\033[0m"),
+    ("[/orange]", "\033[0m"),
+    ("[/pink]", "\033[0m"),
+    ("[/purple]", "\033[0m"),
+    ("[/red]", "\033[0m"),
+    ("[/reverse]", "\033[0m"),
+    ("[/strikethrough]", "\033[0m"),
+    ("[/underline]", "\033[0m"),
+    ("[/yellow]", "\033[0m"),
+    ("[black]", "\033[30m"),
+    ("[blue]", "\033[34m"),
+    ("[bold]", "\033[01m"),
+    ("[cyan]", "\033[36m"),
+    ("[darkgrey]", "\033[90m"),
+    ("[darkred]", "\033[31m"),
+    ("[disable]", "\033[02m"),
+    ("[green]", "\033[32m"),
+    ("[invisible]", "\033[08m"),
+    ("[lightblue]", "\033[94m"),
+    ("[lightcyan]", "\033[96m"),
+    ("[lightgreen]", "\033[92m"),
+    ("[lightgrey]", "\033[37m"),
+    ("[lightred]", "\033[91m"),
+    ("[orange]", "\033[33m"),
+    ("[pink]", "\033[95m"),
+    ("[purple]", "\033[35m"),
+    ("[red]", "\033[91m"),
+    ("[reverse]", "\033[07m"),
+    ("[strikethrough]", "\033[09m"),
+    ("[underline]", "\033[04m"),
+    ("[yellow]", "\033[93m"),
+]
 
 
 def handle_deprecated_args(input_args):
@@ -71,54 +119,6 @@ def handle_deprecated_args(input_args):
             logging.getLogger("demisto-sdk").error(
                 f"[red]Argument {current_arg} is deprecated. Please use {substitute} instead.[/red]"
             )
-
-
-escapes = {
-    "[bold]": "\033[01m",
-    "[disable]": "\033[02m",
-    "[underline]": "\033[04m",
-    "[reverse]": "\033[07m",
-    "[strikethrough]": "\033[09m",
-    "[invisible]": "\033[08m",
-    "[/bold]": "\033[0m",
-    "[/disable]": "\033[0m",
-    "[/underline]": "\033[0m",
-    "[/reverse]": "\033[0m",
-    "[/strikethrough]": "\033[0m",
-    "[/invisible]": "\033[0m",
-    "[black]": "\033[30m",
-    "[red]": "\033[91m",
-    "[darkred]": "\033[31m",
-    "[lightred]": "\033[91m",
-    "[darkgrey]": "\033[90m",
-    "[lightgrey]": "\033[37m",
-    "[green]": "\033[32m",
-    "[orange]": "\033[33m",
-    "[lightgreen]": "\033[92m",
-    "[blue]": "\033[34m",
-    "[lightblue]": "\033[94m",
-    "[purple]": "\033[35m",
-    "[cyan]": "\033[36m",
-    "[lightcyan]": "\033[96m",
-    "[yellow]": "\033[93m",
-    "[pink]": "\033[95m",
-    "[/black]": "\033[0m",
-    "[/red]": "\033[0m",
-    "[/darkred]": "\033[0m",
-    "[/lightred]": "\033[0m",
-    "[/lightgrey]": "\033[0m",
-    "[/darkgrey]": "\033[0m",
-    "[/green]": "\033[0m",
-    "[/lightgreen]": "\033[0m",
-    "[/orange]": "\033[0m",
-    "[/blue]": "\033[0m",
-    "[/lightblue]": "\033[0m",
-    "[/purple]": "\033[0m",
-    "[/cyan]": "\033[0m",
-    "[/lightcyan]": "\033[0m",
-    "[/yellow]": "\033[0m",
-    "[/pink]": "\033[0m",
-}
 
 
 def get_handler_by_name(logger: logging.Logger, handler_name: str):
@@ -187,29 +187,27 @@ def _add_logging_level(
 
 
 class ColorConsoleFormatter(logging.Formatter):
-    FORMATS = {
-        logging.DEBUG: "[lightgrey]%(message)s[/lightgrey]",
-        logging.INFO: "[lightgrey]%(message)s[/lightgrey]",
-        logging.WARNING: "[yellow]%(message)s[/yellow]",
-        logging.ERROR: "[red]%(message)s[/red]",
-        logging.CRITICAL: "[red][bold]%(message)s[/bold[/red]",
-        SUCCESS_LEVEL: "[green]%(message)s[/green]",
-    }
-
     def __init__(
         self,
+        fmt: Optional[str] = CONSOLE_LOG_RECORD_FORMAT,
+        datefmt: Optional[str] = DATE_FORMAT,
+        short_fmt: Optional[str] = CONSOLE_LOG_RECORD_FORMAT_SHORT,
+        record_formats=None,
     ):
         super().__init__(
-            fmt="[%(asctime)s] [%(levelname)s] %(message)s"
-            if os.getenv("CI")
-            else "[%(levelname)s] %(message)s",
-            datefmt=DATE_FORMAT,
+            fmt=fmt,
+            datefmt=datefmt,
         )
+        self.short_fmt = short_fmt
+        self.record_formats = record_formats or CONSOLE_RECORD_FORMATS
 
     @staticmethod
     def _record_contains_escapes(record: logging.LogRecord) -> bool:
         message = record.getMessage()
-        return any(not key.startswith("[/]") and key in message for key in escapes)
+        return any(
+            not key.startswith("[/]") and key in message
+            for key, _ in DEMISTO_LOG_ALLOWED_ESCAPES
+        )
 
     @staticmethod
     def _string_starts_with_escapes(string: str) -> bool:
@@ -250,40 +248,41 @@ class ColorConsoleFormatter(logging.Formatter):
         if ColorConsoleFormatter._record_contains_escapes(record):
             message = ColorConsoleFormatter._insert_into_escapes(
                 record,
-                "[%(asctime)s] [%(levelname)s] "
-                if os.getenv("CI")
-                else "[%(levelname)s] ",
+                self.short_fmt,
             )
             message = logging.Formatter(message).format(record)
         else:
-            log_fmt = ColorConsoleFormatter.FORMATS.get(record.levelno)
+            log_fmt = self.record_formats.get(record.levelno)
             message = logging.Formatter(log_fmt).format(record)
         message = ColorConsoleFormatter.replace_escapes(message)
         return message
 
     @staticmethod
     def replace_escapes(message):
-        for key in escapes:
-            message = message.replace(key, escapes[key])
+        for key, value in DEMISTO_LOG_ALLOWED_ESCAPES:
+            message = message.replace(key, value)
         return message
 
 
 class NoColorFileFormatter(logging.Formatter):
     def __init__(
         self,
+        fmt: Optional[str] = FILE_LOG_RECORD_FORMAT,
+        datefmt: Optional[str] = DATE_FORMAT,
     ):
         super().__init__(
-            fmt="[%(asctime)s] - [%(threadName)s] - [%(levelname)s] - %(filename)s:%(lineno)d - %(message)s",
-            datefmt=DATE_FORMAT,
+            fmt=fmt,
+            datefmt=datefmt,
         )
 
     def format(self, record):
         message = logging.Formatter.format(self, record)
-        message = self.replace_escapes(message)
+        message = NoColorFileFormatter.replace_escapes(message)
         return message
 
-    def replace_escapes(self, message):
-        for key in escapes:
+    @staticmethod
+    def replace_escapes(message):
+        for key, _ in DEMISTO_LOG_ALLOWED_ESCAPES:
             message = message.replace(key, "")
         return message
 

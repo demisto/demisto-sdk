@@ -9,6 +9,7 @@
 * Calling **graph create** or **graph update** now run the commands with default arguments, instead of showing the command help.
 * Removed the use of chunks when calculating content relationships.
 * Fixed an issue where the url regex in the **validate** command was wrong.
+* Fixed an issue where **pre-commit** command failed when using global environment.
 * Fixes an issue in **format** command where the `-i` option included files in `.venv` directories.
 
 ## 1.19.1

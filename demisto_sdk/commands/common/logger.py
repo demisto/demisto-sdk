@@ -2,9 +2,11 @@ import logging
 import logging.config
 import os.path
 import sys
+import re
+import itertools
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
-from typing import Optional, Union
+from typing import Optional, Union, Dict
 
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.tools import string_to_bool, parse_int_or_default
@@ -64,52 +66,70 @@ CONSOLE_RECORD_FORMATS = {
     SUCCESS_LEVEL: "[green]%(message)s[/green]",
 }
 
-DEMISTO_LOG_ALLOWED_ESCAPES = [
-    ("[/black]", "\033[0m"),
-    ("[/blue]", "\033[0m"),
-    ("[/bold]", "\033[0m"),
-    ("[/cyan]", "\033[0m"),
-    ("[/darkgrey]", "\033[0m"),
-    ("[/darkred]", "\033[0m"),
-    ("[/disable]", "\033[0m"),
-    ("[/green]", "\033[0m"),
-    ("[/invisible]", "\033[0m"),
-    ("[/lightblue]", "\033[0m"),
-    ("[/lightcyan]", "\033[0m"),
-    ("[/lightgreen]", "\033[0m"),
-    ("[/lightgrey]", "\033[0m"),
-    ("[/lightred]", "\033[0m"),
-    ("[/orange]", "\033[0m"),
-    ("[/pink]", "\033[0m"),
-    ("[/purple]", "\033[0m"),
-    ("[/red]", "\033[0m"),
-    ("[/reverse]", "\033[0m"),
-    ("[/strikethrough]", "\033[0m"),
-    ("[/underline]", "\033[0m"),
-    ("[/yellow]", "\033[0m"),
-    ("[black]", "\033[30m"),
-    ("[blue]", "\033[34m"),
-    ("[bold]", "\033[01m"),
-    ("[cyan]", "\033[36m"),
-    ("[darkgrey]", "\033[90m"),
-    ("[darkred]", "\033[31m"),
-    ("[disable]", "\033[02m"),
-    ("[green]", "\033[32m"),
-    ("[invisible]", "\033[08m"),
-    ("[lightblue]", "\033[94m"),
-    ("[lightcyan]", "\033[96m"),
-    ("[lightgreen]", "\033[92m"),
-    ("[lightgrey]", "\033[37m"),
-    ("[lightred]", "\033[91m"),
-    ("[orange]", "\033[33m"),
-    ("[pink]", "\033[95m"),
-    ("[purple]", "\033[35m"),
-    ("[red]", "\033[91m"),
-    ("[reverse]", "\033[07m"),
-    ("[strikethrough]", "\033[09m"),
-    ("[underline]", "\033[04m"),
-    ("[yellow]", "\033[93m"),
-]
+NO_COLOR_ESCAPE_CHAR = "\033[0m"
+
+DEMISTO_LOG_ALLOWED_ESCAPES = {
+    "green": "32",
+    "red": "91",
+    "yellow": "93",
+    "cyan": "36",
+    "blue": "34",
+    "orange": "33",
+    "pink": "95",
+    "purple": "35",
+    "black": "30",
+    "invisible": "08",
+    "bold": "01",
+    "disable": "02",
+    "reverse": "07",
+    "strikethrough": "09",
+    "underline": "04",
+    "darkgrey": "90",
+    "darkred": "31",
+    "lightblue": "94",
+    "lightcyan": "96",
+    "lightgreen": "92",
+    "lightgrey": "37",
+    "lightred": "91",
+}
+
+DEMISTO_LOG_LOOKUP = dict(  # Convert the list of tuples to a dict
+    itertools.chain.from_iterable(  # flatten the list of lists
+        map(
+            lambda kv: [
+                (
+                    f"[{kv[0]}]",  # The color key (i.e. [green])
+                    f"\033[{kv[1]}m",  # The color escape sequence (i.e. \033[32m)
+                ),
+                (
+                    f"[/{kv[0]}]",  # The color closing key (i.e. [/green])
+                    NO_COLOR_ESCAPE_CHAR,  # The color closing escape sequence (i.e. \033[0m)
+                ),
+            ],
+            DEMISTO_LOG_ALLOWED_ESCAPES.items(),
+        )
+    )
+)
+
+DEMISTO_LOGGER_PATTERN = re.compile(
+    "|".join(rf"\[(\/)?{key}\]" for key in DEMISTO_LOG_ALLOWED_ESCAPES)
+)
+
+
+def replace_log_coloring_tags(
+    text: str, replacements: Optional[Dict[str, str]] = None
+) -> str:
+    result = []
+    last_index = 0
+    replacements = replacements if replacements is not None else DEMISTO_LOG_LOOKUP
+
+    for match in DEMISTO_LOGGER_PATTERN.finditer(text):
+        start, end = match.span()
+        result.extend((text[last_index:start], replacements.get(match.group(), "")))
+        last_index = end
+
+    result.append(text[last_index:])
+    return "".join(result)
 
 
 def handle_deprecated_args(input_args):
@@ -206,7 +226,7 @@ class ColorConsoleFormatter(logging.Formatter):
         message = record.getMessage()
         return any(
             not key.startswith("[/]") and key in message
-            for key, _ in DEMISTO_LOG_ALLOWED_ESCAPES
+            for key in DEMISTO_LOG_ALLOWED_ESCAPES
         )
 
     @staticmethod
@@ -254,13 +274,7 @@ class ColorConsoleFormatter(logging.Formatter):
         else:
             log_fmt = self.record_formats.get(record.levelno)
             message = logging.Formatter(log_fmt).format(record)
-        message = ColorConsoleFormatter.replace_escapes(message)
-        return message
-
-    @staticmethod
-    def replace_escapes(message):
-        for key, value in DEMISTO_LOG_ALLOWED_ESCAPES:
-            message = message.replace(key, value)
+        message = replace_log_coloring_tags(message)
         return message
 
 
@@ -277,13 +291,9 @@ class NoColorFileFormatter(logging.Formatter):
 
     def format(self, record):
         message = logging.Formatter.format(self, record)
-        message = NoColorFileFormatter.replace_escapes(message)
-        return message
-
-    @staticmethod
-    def replace_escapes(message):
-        for key, _ in DEMISTO_LOG_ALLOWED_ESCAPES:
-            message = message.replace(key, "")
+        message = replace_log_coloring_tags(
+            message, {}
+        )  # Remove all coloring tags, with supplying empty dict.
         return message
 
 

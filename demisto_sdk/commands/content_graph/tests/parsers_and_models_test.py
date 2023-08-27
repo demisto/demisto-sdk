@@ -1664,7 +1664,7 @@ def test_updated_marketplaces_set(marketplace, expected_market_place_set):
         - Check that XSOAR_SAAS was also added to the marketplace_set
         - Check the only XSAIM marketplace is on the list
         - Check the only XPANSE marketplace is on the list
-        - Check that only XSOAR_SAAS was added to the marketplace_set
+        - Check that XSOAR_ON_PREM and XSOAR was added to the marketplace_set
         - Check that XSAIM remains and XSOAR marketplace is added
         - remains empty
 

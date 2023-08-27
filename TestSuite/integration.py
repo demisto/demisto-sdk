@@ -141,8 +141,3 @@ class Integration:
             changelog=changelog,
             description=description,
         )
-
-    def add_file(self, file_name: str, file_content: str):
-        file_path = str(Path(self.path).joinpath(file_name))
-        with open(file_path, "w") as f:
-            f.write(file_content)

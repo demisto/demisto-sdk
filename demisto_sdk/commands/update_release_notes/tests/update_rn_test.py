@@ -1018,7 +1018,7 @@ class TestRNUpdate:
     def test_build_rn_desc_event_collector(self):
         """
         Given
-            - A new file
+            - A new event collector file
         When
             - Running the command build_rn_desc on a file in order to generate rn description.
         Then

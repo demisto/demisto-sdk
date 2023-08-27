@@ -7,6 +7,9 @@ from demisto_sdk.commands.common.constants import (
 )
 from demisto_sdk.commands.format.format_module import run_format_on_file
 
+from TestSuite.test_tools import (
+    ChangeCWD
+)
 
 @pytest.mark.parametrize("is_feed,all_feeds", ((True, True), (False, False)))
 def test_infer_selected_feeds(repo, is_feed: bool, all_feeds: bool):
@@ -19,23 +22,24 @@ def test_infer_selected_feeds(repo, is_feed: bool, all_feeds: bool):
             Ensure the selectedFeeds field is added, and is equal to []
     """
     pack = repo.create_pack()
-    job = pack.create_job(is_feed)
-    job_dict_before = job.read_json_as_dict()
-    assert is_feed == job_dict_before["isFeed"]
-    assert is_feed == job_dict_before["isAllFeeds"]
-    assert job_dict_before["selectedFeeds"] == []
+    with ChangeCWD(repo.path):
+        job = pack.create_job(is_feed)
+        job_dict_before = job.read_json_as_dict()
+        assert is_feed == job_dict_before["isFeed"]
+        assert is_feed == job_dict_before["isAllFeeds"]
+        assert job_dict_before["selectedFeeds"] == []
 
-    job.remove("selectedFeeds")
-    assert "selectedFeeds" not in job.read_json_as_dict()
+        job.remove("selectedFeeds")
+        assert "selectedFeeds" not in job.read_json_as_dict()
 
-    run_format_on_file(
-        job.path,
-        JOB,
-        FILETYPE_TO_DEFAULT_FROMVERSION.get(FileType.JOB),
-        interactive=True,
-    )
+        run_format_on_file(
+                job.path,
+                JOB,
+                FILETYPE_TO_DEFAULT_FROMVERSION.get(FileType.JOB),
+                interactive=True,
+        )
 
-    job_dict_after = job.read_json_as_dict()
+        job_dict_after = job.read_json_as_dict()
     assert "selectedFeeds" in job_dict_after
     assert job_dict_after["selectedFeeds"] == []
 

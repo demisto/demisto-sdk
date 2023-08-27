@@ -6,10 +6,8 @@ from demisto_sdk.commands.common.constants import (
     FileType,
 )
 from demisto_sdk.commands.format.format_module import run_format_on_file
+from TestSuite.test_tools import ChangeCWD
 
-from TestSuite.test_tools import (
-    ChangeCWD
-)
 
 @pytest.mark.parametrize("is_feed,all_feeds", ((True, True), (False, False)))
 def test_infer_selected_feeds(repo, is_feed: bool, all_feeds: bool):
@@ -33,10 +31,10 @@ def test_infer_selected_feeds(repo, is_feed: bool, all_feeds: bool):
         assert "selectedFeeds" not in job.read_json_as_dict()
 
         run_format_on_file(
-                job.path,
-                JOB,
-                FILETYPE_TO_DEFAULT_FROMVERSION.get(FileType.JOB),
-                interactive=True,
+            job.path,
+            JOB,
+            FILETYPE_TO_DEFAULT_FROMVERSION.get(FileType.JOB),
+            interactive=True,
         )
 
         job_dict_after = job.read_json_as_dict()

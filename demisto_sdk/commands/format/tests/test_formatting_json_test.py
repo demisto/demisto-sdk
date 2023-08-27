@@ -99,7 +99,7 @@ from demisto_sdk.tests.constants_test import (
     WIDGET_SCHEMA_PATH,
 )
 from TestSuite.json_based import JSONBased
-from TestSuite.test_tools import str_in_call_args_list, ChangeCWD
+from TestSuite.test_tools import ChangeCWD, str_in_call_args_list
 
 
 @pytest.fixture()

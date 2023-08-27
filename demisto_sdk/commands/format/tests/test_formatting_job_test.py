@@ -61,14 +61,14 @@ def test_add_default_fromversion(repo, is_feed: bool):
         )
 
         job.remove("fromVersion")
-    assert "fromVersion" not in job.read_json_as_dict()
+        assert "fromVersion" not in job.read_json_as_dict()
 
-    run_format_on_file(
-        job.path,
-        JOB,
-        FILETYPE_TO_DEFAULT_FROMVERSION.get(FileType.JOB),
-        interactive=True,
-    )
+        run_format_on_file(
+            job.path,
+            JOB,
+            FILETYPE_TO_DEFAULT_FROMVERSION.get(FileType.JOB),
+            interactive=True,
+        )
 
     job_dict_after = job.read_json_as_dict()
     assert "fromVersion" in job_dict_after

@@ -1695,7 +1695,7 @@ class TestValidators:
         """
         rn = pack.create_release_notes("1_0_1", is_bc=True)
         rn_config_path: str = str(rn.path).replace("md", "json")
-        with ChangeCWD(rn_config_path):
+        with ChangeCWD(rn.path):
             validate_manager: ValidateManager = ValidateManager()
             assert validate_manager.run_validations_on_file(rn_config_path, list())
 
@@ -3123,7 +3123,7 @@ def test_validate_no_disallowed_terms_in_customer_facing_docs_end_to_end(repo, m
     playbook_readme_file = pack.create_playbook(readme=file_content).readme
 
     validate_manager = ValidateManager()
-    with ChangeCWD(repo.path):
+    with ChangeCWD(pack.repo_pathpath):
         assert not validate_manager.run_validations_on_file(
             file_path=rn_file.path, pack_error_ignore_list=[]
         )

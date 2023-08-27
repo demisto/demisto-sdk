@@ -459,7 +459,7 @@ def test_update_connection_removes_unnecessary_keys(tmpdir, monkeypatch):
     )
     connection_formatter.assume_answer = True
     monkeypatch.setattr("builtins.input", lambda _: "N")
-    with ChangeCWD(connection_file_path):
+    with ChangeCWD(tmpdir):
         connection_formatter.format_file()
     with open(connection_file_path) as file:
         formatted_connection = json.load(file)
@@ -496,7 +496,7 @@ def test_update_connection_updates_from_version(tmpdir):
         from_version="6.0.0",
         path=CONNECTION_SCHEMA_PATH,
     )
-    with ChangeCWD(connection_file_path):
+    with ChangeCWD(tmpdir):
         connection_formatter.format_file()
     with open(connection_file_path) as file:
         formatted_connection = json.load(file)

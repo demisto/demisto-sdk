@@ -1807,7 +1807,7 @@ def find_type(
         clear_cache (bool): wether to clear the cache
 
     Returns:
-        FileType: string representing of the content file type, Unknown if the file can't be recognized.
+        FileType: string representing of the content file type, None otherwise.
     """
     type_by_path = find_type_by_path(path)
     if type_by_path:
@@ -1820,12 +1820,12 @@ def find_type(
 
     except FileNotFoundError:
         # unable to find the file - hence can't identify it
-        return FileType.UNKNOWN
+        return None
     except ValueError as err:
         if ignore_invalid_schema_file:
             # invalid file schema
             logger.debug(str(err))
-            return FileType.UNKNOWN
+            return None
         raise err
 
     if file_type == "yml" or path.lower().endswith(".yml"):
@@ -1975,7 +1975,7 @@ def find_type(
                     f'The file {path} could not be recognized, please update the "id" to be a string'
                 )
 
-    return FileType.UNKNOWN
+    return None
 
 
 def get_common_server_path(env_dir):

@@ -179,9 +179,6 @@ class FileType(str, Enum):
     PEM = "pem"
     UNKNOWN = "unknown-file"
 
-    def __bool__(self):
-        return self.value != self.UNKNOWN
-
 
 RN_HEADER_BY_FILE_TYPE = {
     FileType.PLAYBOOK: "Playbooks",

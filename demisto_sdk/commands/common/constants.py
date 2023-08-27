@@ -177,7 +177,6 @@ class FileType(str, Enum):
     UNIFIED_YML = "unified_yml"
     INI = "ini"
     PEM = "pem"
-    UNKNOWN = "unknown-file"
 
 
 RN_HEADER_BY_FILE_TYPE = {

@@ -824,9 +824,7 @@ class ValidateManager:
 
         if not self.check_only_schema:
             # if file_type = None, it means BA102 was ignored in an external repo.
-            if not file_type:
-                file_type = FileType.UNKNOWN
-            validation_print = f"\nValidating {file_path} as {file_type.value}"
+            validation_print = f"\nValidating {file_path} as {file_type.value if file_type else 'unknown-file'}"
             if self.print_percent:
                 if FOUND_FILES_AND_ERRORS:
                     validation_print += f" [red][{self.completion_percentage}%][/red]"

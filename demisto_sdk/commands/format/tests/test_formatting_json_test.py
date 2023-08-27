@@ -99,7 +99,7 @@ from demisto_sdk.tests.constants_test import (
     WIDGET_SCHEMA_PATH,
 )
 from TestSuite.json_based import JSONBased
-from TestSuite.test_tools import str_in_call_args_list
+from TestSuite.test_tools import str_in_call_args_list, ChangeCWD
 
 
 @pytest.fixture()
@@ -459,7 +459,8 @@ def test_update_connection_removes_unnecessary_keys(tmpdir, monkeypatch):
     )
     connection_formatter.assume_answer = True
     monkeypatch.setattr("builtins.input", lambda _: "N")
-    connection_formatter.format_file()
+    with ChangeCWD(connection_file_path):
+        connection_formatter.format_file()
     with open(connection_file_path) as file:
         formatted_connection = json.load(file)
     for connection in formatted_connection["canvasContextConnections"]:
@@ -495,7 +496,8 @@ def test_update_connection_updates_from_version(tmpdir):
         from_version="6.0.0",
         path=CONNECTION_SCHEMA_PATH,
     )
-    connection_formatter.format_file()
+    with ChangeCWD(connection_file_path):
+        connection_formatter.format_file()
     with open(connection_file_path) as file:
         formatted_connection = json.load(file)
     assert formatted_connection["fromVersion"] == "6.0.0"

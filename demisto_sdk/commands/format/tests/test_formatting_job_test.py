@@ -55,13 +55,14 @@ def test_add_default_fromversion(repo, is_feed: bool):
             Ensure the default value is added
     """
     pack = repo.create_pack()
-    job = pack.create_job(is_feed)
-    job_dict_before = job.read_json_as_dict()
-    assert job_dict_before["fromVersion"] == FILETYPE_TO_DEFAULT_FROMVERSION.get(
-        FileType.JOB
-    )
+    with ChangeCWD(repo.path):
+        job = pack.create_job(is_feed)
+        job_dict_before = job.read_json_as_dict()
+        assert job_dict_before["fromVersion"] == FILETYPE_TO_DEFAULT_FROMVERSION.get(
+            FileType.JOB
+        )
 
-    job.remove("fromVersion")
+        job.remove("fromVersion")
     assert "fromVersion" not in job.read_json_as_dict()
 
     run_format_on_file(
@@ -89,13 +90,14 @@ def test_update_id(repo, is_feed: bool):
             Ensure the updated id is equal to the job's name
     """
     pack = repo.create_pack()
-    job = pack.create_job(is_feed)
-    job.remove("id")
-    run_format_on_file(
-        job.path,
-        JOB,
-        FILETYPE_TO_DEFAULT_FROMVERSION.get(FileType.JOB),
-        interactive=True,
-    )
-    job_dict_after = job.read_json_as_dict()
+    with ChangeCWD(repo.path):
+        job = pack.create_job(is_feed)
+        job.remove("id")
+        run_format_on_file(
+            job.path,
+            JOB,
+            FILETYPE_TO_DEFAULT_FROMVERSION.get(FileType.JOB),
+            interactive=True,
+        )
+        job_dict_after = job.read_json_as_dict()
     assert job_dict_after["id"] == job.pure_name

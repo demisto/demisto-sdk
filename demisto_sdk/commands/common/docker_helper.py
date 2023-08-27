@@ -483,7 +483,7 @@ def _get_python_version_from_env(env: List[str]) -> Version:
 
 
 @functools.lru_cache
-def get_python_version(image: Optional[str]):
+def get_python_version(image: Optional[str]) -> Optional[Version]:
     """
     Get the python version of a docker image if exist.
 

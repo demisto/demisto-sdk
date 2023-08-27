@@ -55,6 +55,9 @@ class BaseContentMetaclass(ModelMetaclass):
         If `content_type` is passed as an argument of the class, we add a mapping between the content type
         and the model class object.
 
+        In case there are lazy properties in the class model, will add them as a class member so we would be able
+        to load them during graph creation
+
         After all the model classes are created, `content_type_to_model` has a full mapping between content types
         and models, and only then we are ready to determine which model class to use based on a content item's type.
 
@@ -73,8 +76,7 @@ class BaseContentMetaclass(ModelMetaclass):
         if content_type:
             content_type_to_model[content_type] = model_cls
             model_cls.content_type = content_type
-        # validates that if there are any lazy properties in the class model, add them as a class attribute
-        # so we would be able to load them during graph creation
+
         if lazy_properties := {
             attr
             for attr in dir(super_cls)
@@ -134,7 +136,8 @@ class BaseContent(ABC, BaseModel, metaclass=BaseContentMetaclass):
 
     def __add_lazy_properties(self):
         """
-        This method would load the lazy properties into the model by calling their property methods
+        This method would load the lazy properties into the model by calling their property methods.
+        Lazy properties are not loaded into the model until they are called directly.
         """
         if hasattr(self, "_lazy_properties"):
             for _property in self._lazy_properties:  # type: ignore[attr-defined]
@@ -142,11 +145,13 @@ class BaseContent(ABC, BaseModel, metaclass=BaseContentMetaclass):
 
     def to_dict(self) -> Dict[str, Any]:
         """
-        This returns a JSON dictionary representation of the class.
+        This function is used to create the graph nodes, we use this method when creating the graph.
+        when creating the graph we want to load the lazy properties into the model.
+
         We use it instead of `self.dict()` because sometimes we need only the primitive values.
 
         Returns:
-            Dict[str, Any]: _description_
+            Dict[str, Any]: JSON dictionary representation of the class.
         """
         self.__add_lazy_properties()
 

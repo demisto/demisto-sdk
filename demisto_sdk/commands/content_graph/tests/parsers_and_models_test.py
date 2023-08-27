@@ -1607,7 +1607,7 @@ class TestParsersAndModels:
             tests=["test_playbook"],
         )
         model = Integration.from_orm(parser)
-        # make sure that the python_version is not in the model because it was called directly
+        # make sure that the python_version is not in the model because it was not called directly
         assert "python_version" not in str(model)
 
         assert model.python_version == expected_python_version

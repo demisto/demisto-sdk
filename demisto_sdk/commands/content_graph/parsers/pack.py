@@ -26,6 +26,7 @@ from demisto_sdk.commands.content_graph.parsers.content_item import (
     ContentItemParser,
     InvalidContentItemException,
     NotAContentItemException,
+    NotInMarketplaceException,
 )
 from demisto_sdk.commands.content_graph.parsers.content_items_list import (
     ContentItemsList,
@@ -207,18 +208,25 @@ class PackParser(BaseContentParser, PackMetadataParser):
 
     content_type = ContentType.PACK
 
-    def __init__(self, path: Path) -> None:
+    def __init__(
+        self, path: Path, marketplace: Optional[MarketplaceVersions] = None
+    ) -> None:
         """Parses a pack and its content items.
 
         Args:
             path (Path): The pack path.
+            marketplace (Optional[MarketplaceVersions], optional): If provided, ignore every pack and content item which not belongs to marketplace.
         """
         BaseContentParser.__init__(self, path)
-
+        self.marketplace = marketplace
+        if marketplace and marketplace not in self.marketplaces:
+            raise NotInMarketplaceException(
+                f"Pack {self.object_id} is not in {marketplace}, only in {self.marketplaces}"
+            )
         try:
             metadata = get_json(path / PACK_METADATA_FILENAME)
         except FileNotFoundError:
-            raise InvalidContentItemException(
+            raise NotAContentItemException(
                 f"{PACK_METADATA_FILENAME} not found in pack in {path=}"
             )
 
@@ -275,11 +283,13 @@ class PackParser(BaseContentParser, PackMetadataParser):
         """
         try:
             content_item = ContentItemParser.from_path(
-                content_item_path, self.marketplaces
+                content_item_path, self.marketplaces, self.marketplace
             )
             content_item.add_to_pack(self.object_id)
             self.content_items.append(content_item)
             self.relationships.update(content_item.relationships)
+        except NotInMarketplaceException:
+            logger.debug(f"Skipping {content_item_path} - not in marketplace")
         except NotAContentItemException:
             logger.debug(f"Skipping {content_item_path} - not a content item")
         except InvalidContentItemException:

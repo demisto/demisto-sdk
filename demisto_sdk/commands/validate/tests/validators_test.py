@@ -1695,8 +1695,9 @@ class TestValidators:
         """
         rn = pack.create_release_notes("1_0_1", is_bc=True)
         rn_config_path: str = str(rn.path).replace("md", "json")
-        validate_manager: ValidateManager = ValidateManager()
-        assert validate_manager.run_validations_on_file(rn_config_path, list())
+        with ChangeCWD(pack.repo_path):
+            validate_manager: ValidateManager = ValidateManager()
+            assert validate_manager.run_validations_on_file(rn_config_path, list())
 
     @pytest.mark.parametrize(
         "answer, integration_id", [(True, "MyIntegration"), (False, "MyIntegration  ")]
@@ -2830,12 +2831,15 @@ def test_validate_contributors_file(repo):
     """
 
     pack = repo.create_pack()
-    contributors_file = pack.create_contributors_file('["- Test UserName"]')
+    with ChangeCWD(repo.path):
+        contributors_file = pack.create_contributors_file('["- Test UserName"]')
 
-    validate_manager = ValidateManager(
-        check_is_unskipped=False, file_path=contributors_file.path, skip_conf_json=True
-    )
-    assert validate_manager.run_validation_on_specific_files()
+        validate_manager = ValidateManager(
+            check_is_unskipped=False,
+            file_path=contributors_file.path,
+            skip_conf_json=True,
+        )
+        assert validate_manager.run_validation_on_specific_files()
 
 
 def test_validate_pack_name(repo):
@@ -3117,25 +3121,25 @@ def test_validate_no_disallowed_terms_in_customer_facing_docs_end_to_end(repo, m
     integration_readme_file = integration.readme
     integration_description_file = integration.description
     playbook_readme_file = pack.create_playbook(readme=file_content).readme
+    with ChangeCWD(pack.repo_path):
+        validate_manager = ValidateManager()
 
-    validate_manager = ValidateManager()
+        assert not validate_manager.run_validations_on_file(
+            file_path=rn_file.path, pack_error_ignore_list=[]
+        )
+        assert not validate_manager.run_validations_on_file(
+            file_path=integration_readme_file.path, pack_error_ignore_list=[]
+        )
+        assert not validate_manager.run_validations_on_file(
+            file_path=integration_description_file.path, pack_error_ignore_list=[]
+        )
+        assert not validate_manager.run_validations_on_file(
+            file_path=playbook_readme_file.path, pack_error_ignore_list=[]
+        )
 
-    assert not validate_manager.run_validations_on_file(
-        file_path=rn_file.path, pack_error_ignore_list=[]
-    )
-    assert not validate_manager.run_validations_on_file(
-        file_path=integration_readme_file.path, pack_error_ignore_list=[]
-    )
-    assert not validate_manager.run_validations_on_file(
-        file_path=integration_description_file.path, pack_error_ignore_list=[]
-    )
-    assert not validate_manager.run_validations_on_file(
-        file_path=playbook_readme_file.path, pack_error_ignore_list=[]
-    )
-
-    # Assure errors were logged (1 error per validated file)
-    assert count_str_in_call_args_list(logger_error.call_args_list, "BA125") == 4
-    pass
+        # Assure errors were logged (1 error per validated file)
+        assert count_str_in_call_args_list(logger_error.call_args_list, "BA125") == 4
+        pass
 
 
 @pytest.mark.parametrize(

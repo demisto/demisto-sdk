@@ -99,7 +99,7 @@ from demisto_sdk.tests.constants_test import (
     WIDGET_SCHEMA_PATH,
 )
 from TestSuite.json_based import JSONBased
-from TestSuite.test_tools import str_in_call_args_list
+from TestSuite.test_tools import ChangeCWD, str_in_call_args_list
 
 
 @pytest.fixture()
@@ -437,33 +437,36 @@ def test_update_connection_removes_unnecessary_keys(tmpdir, monkeypatch):
     Then
         - Ensure the key is deleted from the connection file
     """
-    connection_file_path = f"{tmpdir}canvas-context-connections.json"
-    connection_file_content = {
-        "canvasContextConnections": [
-            {
-                "contextKey1": "MD5",
-                "contextKey2": "SHA256",
-                "connectionDescription": "Belongs to the same file",
-                "parentContextKey": "File",
-                "not_needed key": "not needed value",
-            }
-        ],
-        "fromVersion": "5.0.0",
-    }
-    with open(connection_file_path, "w") as file:
-        json.dump(connection_file_content, file)
-    connection_formatter = ConnectionJSONFormat(
-        input=connection_file_path,
-        output=connection_file_path,
-        path=CONNECTION_SCHEMA_PATH,
-    )
-    connection_formatter.assume_answer = True
-    monkeypatch.setattr("builtins.input", lambda _: "N")
-    connection_formatter.format_file()
-    with open(connection_file_path) as file:
-        formatted_connection = json.load(file)
-    for connection in formatted_connection["canvasContextConnections"]:
-        assert "not_needed key" not in connection
+    with ChangeCWD(tmpdir):
+        connection_file_path = f"{tmpdir}canvas-context-connections.json"
+        connection_file_content = {
+            "canvasContextConnections": [
+                {
+                    "contextKey1": "MD5",
+                    "contextKey2": "SHA256",
+                    "connectionDescription": "Belongs to the same file",
+                    "parentContextKey": "File",
+                    "not_needed key": "not needed value",
+                }
+            ],
+            "fromVersion": "5.0.0",
+        }
+
+        with open(connection_file_path, "w") as file:
+            json.dump(connection_file_content, file)
+        connection_formatter = ConnectionJSONFormat(
+            input=connection_file_path,
+            output=connection_file_path,
+            path=CONNECTION_SCHEMA_PATH,
+        )
+        connection_formatter.assume_answer = True
+        monkeypatch.setattr("builtins.input", lambda _: "N")
+
+        connection_formatter.format_file()
+        with open(connection_file_path) as file:
+            formatted_connection = json.load(file)
+        for connection in formatted_connection["canvasContextConnections"]:
+            assert "not_needed key" not in connection
 
 
 def test_update_connection_updates_from_version(tmpdir):
@@ -475,30 +478,32 @@ def test_update_connection_updates_from_version(tmpdir):
     Then
         - Ensure fromVersion is updated accordingly
     """
-    connection_file_path = f"{tmpdir}canvas-context-connections.json"
-    connection_file_content = {
-        "canvasContextConnections": [
-            {
-                "contextKey1": "MD5",
-                "contextKey2": "SHA256",
-                "connectionDescription": "Belongs to the same file",
-                "parentContextKey": "File",
-            }
-        ],
-        "fromVersion": "5.0.0",
-    }
-    with open(connection_file_path, "w") as file:
-        json.dump(connection_file_content, file)
-    connection_formatter = ConnectionJSONFormat(
-        input=connection_file_path,
-        output=connection_file_path,
-        from_version="6.0.0",
-        path=CONNECTION_SCHEMA_PATH,
-    )
-    connection_formatter.format_file()
-    with open(connection_file_path) as file:
-        formatted_connection = json.load(file)
-    assert formatted_connection["fromVersion"] == "6.0.0"
+    with ChangeCWD(tmpdir):
+        connection_file_path = f"{tmpdir}canvas-context-connections.json"
+        connection_file_content = {
+            "canvasContextConnections": [
+                {
+                    "contextKey1": "MD5",
+                    "contextKey2": "SHA256",
+                    "connectionDescription": "Belongs to the same file",
+                    "parentContextKey": "File",
+                }
+            ],
+            "fromVersion": "5.0.0",
+        }
+        with open(connection_file_path, "w") as file:
+            json.dump(connection_file_content, file)
+        connection_formatter = ConnectionJSONFormat(
+            input=connection_file_path,
+            output=connection_file_path,
+            from_version="6.0.0",
+            path=CONNECTION_SCHEMA_PATH,
+        )
+
+        connection_formatter.format_file()
+        with open(connection_file_path) as file:
+            formatted_connection = json.load(file)
+        assert formatted_connection["fromVersion"] == "6.0.0"
 
 
 def test_update_id_indicatortype_positive(mocker, tmpdir):

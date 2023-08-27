@@ -1034,7 +1034,7 @@ class TestRNUpdate:
         )
 
         desc = update_rn.build_rn_desc(
-            content_name="HelloWorldEventCollector",
+            content_name="Hello World Event Collector",
             is_new_file=True,
             desc="Test description",
             text="",

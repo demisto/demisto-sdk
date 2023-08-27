@@ -14,10 +14,10 @@ from demisto_sdk.commands.prepare_content.integration_script_unifier import (
 
 class IntegrationScriptParser(YAMLContentItemParser):
     def __init__(
-        self, path: Path, pack_marketplaces: List[MarketplaceVersions]
+        self, path: Path, pack_marketplaces: List[MarketplaceVersions], **kwargs
     ) -> None:
         self.is_unified = YAMLContentItemParser.is_unified_file(path)
-        super().__init__(path, pack_marketplaces)
+        super().__init__(path, pack_marketplaces, **kwargs)
         self.script_info: Dict[str, Any] = self.yml_data.get("script", {})
         self.connect_to_api_modules()
 

@@ -16,10 +16,12 @@ from demisto_sdk.commands.content_graph.parsers.content_item import (
 
 class JSONContentItemParser(ContentItemParser):
     def __init__(
-        self, path: Path, pack_marketplaces: List[MarketplaceVersions]
+        self, path: Path, pack_marketplaces: List[MarketplaceVersions], **kwargs
     ) -> None:
-        super().__init__(path, pack_marketplaces)
+        super().__init__(path, pack_marketplaces, **kwargs)
         self.json_data: Dict[str, Any] = self.get_json()
+        self.validate_marketplace()
+
         self.original_json_data: Dict[str, Any] = self.get_json()
         if not isinstance(self.json_data, dict):
             raise InvalidContentItemException(

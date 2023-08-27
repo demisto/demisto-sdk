@@ -86,12 +86,15 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
         marketplace: Optional[MarketplaceVersions] = None,
     ) -> None:
         self.pack_marketplaces: List[MarketplaceVersions] = pack_marketplaces
+        self.marketplace = marketplace
         super().__init__(path)
-        if marketplace and marketplace not in self.marketplaces:
-            raise NotInMarketplaceException(
-                f"{self.node_id} is not in {marketplace}, only in {self.marketplaces}"
-            )
         self.relationships: Relationships = Relationships()
+
+    def validate_marketplace(self):
+        if self.marketplace and self.marketplace not in self.marketplaces:
+            raise NotInMarketplaceException(
+                f"{self.node_id} is not in {self.marketplace}, only in {self.marketplaces}"
+            )
 
     @staticmethod
     def from_path(
@@ -145,7 +148,8 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
         marketplace: Optional[MarketplaceVersions] = None,
         **kwargs,
     ) -> "ContentItemParser":
-        parser = parser_cls(path, pack_marketplaces, marketplace, **kwargs)
+        kwargs["marketplace"] = marketplace
+        parser = parser_cls(path, pack_marketplaces, **kwargs)
         logger.debug(f"Parsed {parser.node_id}")
         return parser
 

@@ -12,9 +12,9 @@ class IncidentFieldParser(
     JSONContentItemParser, content_type=ContentType.INCIDENT_FIELD
 ):
     def __init__(
-        self, path: Path, pack_marketplaces: List[MarketplaceVersions]
+        self, path: Path, pack_marketplaces: List[MarketplaceVersions], **kwargs
     ) -> None:
-        super().__init__(path, pack_marketplaces)
+        super().__init__(path, pack_marketplaces, **kwargs)
         self.cli_name = self.json_data.get("cliName")
         self.field_type = self.json_data.get("type")
         self.associated_to_all = self.json_data.get("associatedToAll")

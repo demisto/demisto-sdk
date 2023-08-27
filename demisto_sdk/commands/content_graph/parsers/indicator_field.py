@@ -12,7 +12,7 @@ class IndicatorFieldParser(
     JSONContentItemParser, content_type=ContentType.INDICATOR_FIELD
 ):
     def __init__(
-        self, path: Path, pack_marketplaces: List[MarketplaceVersions]
+        self, path: Path, pack_marketplaces: List[MarketplaceVersions], **kwargs
     ) -> None:
         super().__init__(path, pack_marketplaces)
         self.cli_name = self.json_data.get("cliName")

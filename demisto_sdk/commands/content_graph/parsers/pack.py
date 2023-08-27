@@ -219,10 +219,6 @@ class PackParser(BaseContentParser, PackMetadataParser):
         """
         BaseContentParser.__init__(self, path)
         self.marketplace = marketplace
-        if marketplace and marketplace not in self.marketplaces:
-            raise NotInMarketplaceException(
-                f"Pack {self.object_id} is not in {marketplace}, only in {self.marketplaces}"
-            )
         try:
             metadata = get_json(path / PACK_METADATA_FILENAME)
         except FileNotFoundError:
@@ -231,6 +227,11 @@ class PackParser(BaseContentParser, PackMetadataParser):
             )
 
         PackMetadataParser.__init__(self, path, metadata)
+
+        if marketplace and marketplace not in self.marketplaces:
+            raise NotInMarketplaceException(
+                f"Pack {self.object_id} is not in {marketplace}, only in {self.marketplaces}"
+            )
 
         self.content_items: PackContentItems = PackContentItems()
         self.relationships: Relationships = Relationships()

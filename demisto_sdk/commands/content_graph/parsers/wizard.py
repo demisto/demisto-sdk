@@ -13,9 +13,9 @@ json = JSON_Handler()
 
 class WizardParser(JSONContentItemParser, content_type=ContentType.WIZARD):
     def __init__(
-        self, path: Path, pack_marketplaces: List[MarketplaceVersions]
+        self, path: Path, pack_marketplaces: List[MarketplaceVersions], **kwargs
     ) -> None:
-        super().__init__(path, pack_marketplaces)
+        super().__init__(path, pack_marketplaces, **kwargs)
         self.dependency_packs: str = json.dumps(
             self.json_data.get("dependency_packs") or []
         )

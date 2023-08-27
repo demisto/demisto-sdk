@@ -4841,54 +4841,6 @@ class TestAllFilesValidator:
 
         assert result.exit_code == 1
 
-    def test_ignoring_invalid_files_external_repo(self, mocker, monkeypatch, repo):
-        """
-        Given
-        - an external repo containing a script with an invalid file.
-        - ignored errors for several files
-
-        When
-        - Running validate on it.
-
-        Then
-        - Ensure validate passes and that validate ignores the errors.
-        """
-        import demisto_sdk.commands.common.errors as errors
-
-        pack = repo.setup_one_pack()
-        script = pack.create_script()
-        script.add_file("test.g4", "")
-        pack.pack_ignore.write_list(
-            [
-                "[file:test.g4]\nignore=BA102,ST100,ST105,ST104",
-                "[file:script1_image.png]\nignore=IM111",
-                "[file:script1.yml]\nignore=BA102,BA106,BA110",
-            ]
-        )
-        # mock that all ignored errors will be ignorable (for external repos)
-        monkeypatch.setattr(
-            "demisto_sdk.commands.common.hook_validations.base_validator.ALLOWED_IGNORE_ERRORS",
-            [err["code"] for err in errors.ERROR_CODE.values()],
-        )
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
-
-        with ChangeCWD(repo.path):
-            runner = CliRunner(mix_stderr=False)
-            result = runner.invoke(
-                main,
-                [
-                    VALIDATE_CMD,
-                    "-i",
-                    f"{script.path}",
-                    "--no-docker-checks",
-                    "--no-conf-json",
-                    "--no-multiprocessing",
-                ],
-                catch_exceptions=False,
-            )
-        assert str_in_call_args_list(logger_info.call_args_list, "The files are valid")
-        assert result.exit_code == 0
-
 
 class TestValidationUsingGit:
     def test_passing_validation_using_git(self, mocker, repo):

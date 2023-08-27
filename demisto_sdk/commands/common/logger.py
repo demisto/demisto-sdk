@@ -1,15 +1,15 @@
+import itertools
 import logging
 import logging.config
 import os.path
-import sys
 import re
-import itertools
+import sys
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
-from typing import Optional, Union, Dict
+from typing import Dict, List, Optional, Union
 
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
-from demisto_sdk.commands.common.tools import string_to_bool, parse_int_or_default
+from demisto_sdk.commands.common.tools import parse_int_or_default, string_to_bool
 
 logger: logging.Logger = logging.getLogger("demisto-sdk")
 
@@ -68,58 +68,58 @@ CONSOLE_RECORD_FORMATS = {
 
 NO_COLOR_ESCAPE_CHAR = "\033[0m"
 
-DEMISTO_LOG_ALLOWED_ESCAPES = {
-    "green": "32",
-    "red": "91",
-    "yellow": "93",
-    "cyan": "36",
-    "blue": "34",
-    "orange": "33",
-    "pink": "95",
-    "purple": "35",
-    "black": "30",
-    "invisible": "08",
-    "bold": "01",
-    "disable": "02",
-    "reverse": "07",
-    "strikethrough": "09",
-    "underline": "04",
-    "darkgrey": "90",
-    "darkred": "31",
-    "lightblue": "94",
-    "lightcyan": "96",
-    "lightgreen": "92",
-    "lightgrey": "37",
-    "lightred": "91",
-}
+DEMISTO_LOG_ALLOWED_ESCAPES = [  # The order of the list is by priority.
+    ("green", 32),
+    ("red", 91),
+    ("yellow", 93),
+    ("cyan", 36),
+    ("blue", 34),
+    ("orange", 33),
+    ("pink", 95),
+    ("purple", 35),
+    ("black", 30),
+    ("invisible", 8),
+    ("bold", 1),
+    ("disable", 2),
+    ("reverse", 7),
+    ("strikethrough", 9),
+    ("underline", 4),
+    ("darkgrey", 90),
+    ("darkred", 31),
+    ("lightblue", 94),
+    ("lightcyan", 96),
+    ("lightgreen", 92),
+    ("lightgrey", 37),
+    ("lightred", 91),
+]
 
 DEMISTO_LOG_LOOKUP = dict(  # Convert the list of tuples to a dict
     itertools.chain.from_iterable(  # flatten the list of lists
         map(
-            lambda kv: [
+            lambda color_to_number: [
                 (
-                    f"[{kv[0]}]",  # The color key (i.e. [green])
-                    f"\033[{kv[1]}m",  # The color escape sequence (i.e. \033[32m)
+                    f"[{color_to_number[0]}]",  # The color key (i.e. [green])
+                    f"\033[{color_to_number[1]:>02}m",  # The color escape sequence (i.e. \033[32m)
                 ),
                 (
-                    f"[/{kv[0]}]",  # The color closing key (i.e. [/green])
+                    f"[/{color_to_number[0]}]",  # The color closing key (i.e. [/green])
                     NO_COLOR_ESCAPE_CHAR,  # The color closing escape sequence (i.e. \033[0m)
                 ),
             ],
-            DEMISTO_LOG_ALLOWED_ESCAPES.items(),
+            DEMISTO_LOG_ALLOWED_ESCAPES,
         )
     )
 )
 
 DEMISTO_LOGGER_PATTERN = re.compile(
-    "|".join(rf"\[(\/)?{key}\]" for key in DEMISTO_LOG_ALLOWED_ESCAPES)
+    "|".join(rf"\[(\/)?{key}\]" for key, _ in DEMISTO_LOG_ALLOWED_ESCAPES)
 )
 
 
 def replace_log_coloring_tags(
     text: str, replacements: Optional[Dict[str, str]] = None
 ) -> str:
-    result = []
+    result: List[str] = []
     last_index = 0
     replacements = replacements if replacements is not None else DEMISTO_LOG_LOOKUP
 
@@ -218,7 +218,7 @@ class ColorConsoleFormatter(logging.Formatter):
             fmt=fmt,
             datefmt=datefmt,
         )
-        self.short_fmt = short_fmt
+        self.short_fmt = short_fmt or CONSOLE_LOG_RECORD_FORMAT_SHORT
         self.record_formats = record_formats or CONSOLE_RECORD_FORMATS
 
     @staticmethod
@@ -226,7 +226,7 @@ class ColorConsoleFormatter(logging.Formatter):
         message = record.getMessage()
         return any(
             not key.startswith("[/]") and key in message
-            for key in DEMISTO_LOG_ALLOWED_ESCAPES
+            for key, _ in DEMISTO_LOG_ALLOWED_ESCAPES
         )
 
     @staticmethod

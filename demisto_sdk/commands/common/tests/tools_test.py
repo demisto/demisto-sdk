@@ -315,13 +315,13 @@ class TestGenericFunctions:
         (VALID_GENERIC_FIELD_PATH, FileType.GENERIC_FIELD),
         (VALID_GENERIC_MODULE_PATH, FileType.GENERIC_MODULE),
         (VALID_GENERIC_DEFINITION_PATH, FileType.GENERIC_DEFINITION),
-        (IGNORED_PNG, FileType.UNKNOWN),
+        (IGNORED_PNG, None),
         ("Author_image.png", FileType.AUTHOR_IMAGE),
         (FileType.PACK_IGNORE.value, FileType.PACK_IGNORE),
         (FileType.SECRET_IGNORE.value, FileType.SECRET_IGNORE),
         (Path(DOC_FILES_DIR) / "foo", FileType.DOC_FILE),
         (METADATA_FILE_NAME, FileType.METADATA),
-        ("", FileType.UNKNOWN),
+        ("", None),
     ]
 
     @pytest.mark.parametrize("path, _type", data_test_find_type)
@@ -349,12 +349,14 @@ class TestGenericFunctions:
         - Running find_type.
 
         Then
-        - Ensure no exception/error is raised and Unknown file is returned.
+        - Ensure no exception/error is raised and None is returned.
         """
-        assert find_type(
-            malformed_integration_yml.path, ignore_invalid_schema_file=True
-        ) == FileType.UNKNOWN
-
+        try:
+            assert not find_type(
+                malformed_integration_yml.path, ignore_invalid_schema_file=True
+            )
+        except ValueError as err:
+            assert False, str(err)
 
     def test_find_type_with_invalid_json(self, malformed_incident_field):
         """
@@ -365,11 +367,14 @@ class TestGenericFunctions:
         - Running find_type.
 
         Then
-        - Ensure no exception/error is raised and Unknown file is returned.
+        - Ensure no exception/error is raised and None is returned.
         """
-        assert find_type(
-            malformed_incident_field.path, ignore_invalid_schema_file=True
-        ) == FileType.UNKNOWN
+        try:
+            assert not find_type(
+                malformed_incident_field.path, ignore_invalid_schema_file=True
+            )
+        except ValueError as err:
+            assert False, str(err)
 
     def test_find_type_no_file(self):
         """

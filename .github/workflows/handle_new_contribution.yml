@@ -16,6 +16,7 @@ jobs:
           echo "$GITHUB_CONTEXT"
         env:
           GITHUB_CONTEXT: ${{ toJson(github) }}
-      - uses: kentaro-m/auto-assign-action@v1.2.5
+      - name: Assign The Contrib TL
+        uses: kentaro-m/auto-assign-action@v1.2.5
         with:
           configuration-path: '.github/auto_assign_contrib_tl.yml'

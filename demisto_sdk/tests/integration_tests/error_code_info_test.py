@@ -16,7 +16,7 @@ def test_error_code_info_end_to_end(mocker, error_code):
      - executing the error-code command via cli
 
     Then
-     - make sure the command does not fail and exists gracefully.
+     - make sure the command does not fail and exits gracefully.
     """
     logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
     runner = CliRunner(mix_stderr=False)

@@ -30,7 +30,7 @@ def test_init_global_docker_client():
         ("demisto/python3:3.9.8.24399", "", "3.9.8"),
         ("demisto/python:2.7.18.24398", "", "2.7.18"),
         ("demisto/pan-os-python:1.0.0.68955", "3.10.12", "3.10.12"),
-        ("demisto/powershell:7.1.3.22028", "", None)
+        ("demisto/powershell:7.1.3.22028", "", None),
     ],
 )
 def test_get_python_version_from_image(image: str, output: str, expected: str, mocker):

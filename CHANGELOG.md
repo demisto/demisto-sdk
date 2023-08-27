@@ -13,6 +13,7 @@
 * Fixed an issue where **pre-commit** command failed when using global environment.
 * Fixes an issue in **format** command where the `-i` option included files in `.venv` directories.
 * Updated the comment added to contribution PRs to old packs so it contains a link to the documentation of the **GitHub Codespaces** in xsoar.pan.dev.
+* Updated GitPython version to 3.1.32.
 
 ## 1.19.1
 * Fixed an issue where **unify** failed on integrations using an API a module, when not called from the content root.

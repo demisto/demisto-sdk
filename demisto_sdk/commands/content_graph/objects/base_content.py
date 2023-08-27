@@ -79,7 +79,7 @@ class BaseContentMetaclass(ModelMetaclass):
 
         if lazy_properties := {
             attr
-            for attr in dir(super_cls)
+            for attr in dir(model_cls)
             if isinstance(getattr(super_cls, attr), LazyProperty)
         }:
             model_cls._lazy_properties = lazy_properties  # type: ignore[attr-defined]

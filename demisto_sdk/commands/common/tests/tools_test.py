@@ -315,13 +315,13 @@ class TestGenericFunctions:
         (VALID_GENERIC_FIELD_PATH, FileType.GENERIC_FIELD),
         (VALID_GENERIC_MODULE_PATH, FileType.GENERIC_MODULE),
         (VALID_GENERIC_DEFINITION_PATH, FileType.GENERIC_DEFINITION),
-        (IGNORED_PNG, None),
+        (IGNORED_PNG, FileType.UNKNOWN),
         ("Author_image.png", FileType.AUTHOR_IMAGE),
         (FileType.PACK_IGNORE.value, FileType.PACK_IGNORE),
         (FileType.SECRET_IGNORE.value, FileType.SECRET_IGNORE),
         (Path(DOC_FILES_DIR) / "foo", FileType.DOC_FILE),
         (METADATA_FILE_NAME, FileType.METADATA),
-        ("", None),
+        ("", FileType.UNKNOWN),
     ]
 
     @pytest.mark.parametrize("path, _type", data_test_find_type)
@@ -349,12 +349,12 @@ class TestGenericFunctions:
         - Running find_type.
 
         Then
-        - Ensure no exception/error is raised and None is returned.
+        - Ensure no exception/error is raised and Unknown file is returned.
         """
         try:
-            assert not find_type(
+            assert find_type(
                 malformed_integration_yml.path, ignore_invalid_schema_file=True
-            )
+            ) == FileType.UNKNOWN
         except ValueError as err:
             assert False, str(err)
 
@@ -367,12 +367,12 @@ class TestGenericFunctions:
         - Running find_type.
 
         Then
-        - Ensure no exception/error is raised and None is returned.
+        - Ensure no exception/error is raised and Unknown file is returned.
         """
         try:
-            assert not find_type(
+            assert find_type(
                 malformed_incident_field.path, ignore_invalid_schema_file=True
-            )
+            ) == FileType.UNKNOWN
         except ValueError as err:
             assert False, str(err)
 
@@ -387,7 +387,7 @@ class TestGenericFunctions:
         Then
         - Ensure None is returned
         """
-        madeup_path = "some/path"
+        madeup_path = "some/path.yml"
         output = find_type(madeup_path)
         assert not output
 

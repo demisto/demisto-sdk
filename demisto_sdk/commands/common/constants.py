@@ -177,6 +177,10 @@ class FileType(str, Enum):
     UNIFIED_YML = "unified_yml"
     INI = "ini"
     PEM = "pem"
+    UNKNOWN = "unknown-file"
+
+    def __bool__(self):
+        return self.value != self.UNKNOWN
 
 
 RN_HEADER_BY_FILE_TYPE = {

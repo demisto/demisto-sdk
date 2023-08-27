@@ -351,12 +351,10 @@ class TestGenericFunctions:
         Then
         - Ensure no exception/error is raised and Unknown file is returned.
         """
-        try:
-            assert find_type(
-                malformed_integration_yml.path, ignore_invalid_schema_file=True
-            ) == FileType.UNKNOWN
-        except ValueError as err:
-            assert False, str(err)
+        assert find_type(
+            malformed_integration_yml.path, ignore_invalid_schema_file=True
+        ) == FileType.UNKNOWN
+
 
     def test_find_type_with_invalid_json(self, malformed_incident_field):
         """
@@ -369,12 +367,9 @@ class TestGenericFunctions:
         Then
         - Ensure no exception/error is raised and Unknown file is returned.
         """
-        try:
-            assert find_type(
-                malformed_incident_field.path, ignore_invalid_schema_file=True
-            ) == FileType.UNKNOWN
-        except ValueError as err:
-            assert False, str(err)
+        assert find_type(
+            malformed_incident_field.path, ignore_invalid_schema_file=True
+        ) == FileType.UNKNOWN
 
     def test_find_type_no_file(self):
         """
@@ -387,7 +382,7 @@ class TestGenericFunctions:
         Then
         - Ensure None is returned
         """
-        madeup_path = "some/path.yml"
+        madeup_path = "some/path"
         output = find_type(madeup_path)
         assert not output
 

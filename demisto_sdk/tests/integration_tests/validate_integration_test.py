@@ -4865,7 +4865,7 @@ class TestAllFilesValidator:
                 "[file:script1.yml]\nignore=BA102,BA106,BA110",
             ]
         )
-        # mock that all ignored errors will be ignorable (for exteral repos)
+        # mock that all ignored errors will be ignorable (for external repos)
         monkeypatch.setattr(
             "demisto_sdk.commands.common.hook_validations.base_validator.ALLOWED_IGNORE_ERRORS",
             [err["code"] for err in errors.ERROR_CODE.values()],
@@ -4886,8 +4886,8 @@ class TestAllFilesValidator:
                 ],
                 catch_exceptions=False,
             )
-        assert result.exit_code == 0
         assert str_in_call_args_list(logger_info.call_args_list, "The files are valid")
+        assert result.exit_code == 0
 
 
 class TestValidationUsingGit:

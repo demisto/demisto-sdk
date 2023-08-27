@@ -16,7 +16,7 @@ from demisto_sdk.commands.common.tools import get_remote_file_from_api
 DOCKER_IMAGES_METADATA_NAME = "docker_images_metadata.json"
 
 # regex to extract docker-images that are specific to content / dockerfiles
-DOCKER_IMAGE_REGEX = r"^demisto/([^\s:]+):(\d+(\.\d+)*)$"
+DOCKERFILES_INFO_IMAGE_REGEX = r"^demisto/([^\s:]+):(\d+(\.\d+)*)$"
 
 
 class DockerImageTagMetadata(BaseModel):
@@ -76,7 +76,7 @@ class DockerImagesMetadata(PydanticSingleton, BaseModel):
             # if we were not able to load the file
             if not self.docker_images:
                 return None
-            match = re.match(DOCKER_IMAGE_REGEX, docker_image)
+            match = re.match(DOCKERFILES_INFO_IMAGE_REGEX, docker_image)
             docker_name, tag = match.group(1), match.group(2)  # type: ignore[union-attr]
             docker_image_metadata = (self.docker_images.get(docker_name) or {}).get(tag)
             return getattr(docker_image_metadata, docker_metadata_key)

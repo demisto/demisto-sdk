@@ -48,14 +48,14 @@ DEMISTO_SDK_LOG_FILE_COUNT = parse_int_or_default(
 )
 
 FILE_LOG_RECORD_FORMAT = "[%(asctime)s] - [%(threadName)s] - [%(levelname)s] - %(filename)s:%(lineno)d - %(message)s"
-CONSOLE_LOG_RECORD_FORMAT = (
-    "[%(asctime)s] [%(levelname)s] %(message)s"
-    if os.getenv("CI")
-    else "[%(levelname)s] %(message)s"
-)
-CONSOLE_LOG_RECORD_FORMAT_SHORT = (
-    "[%(asctime)s] [%(levelname)s] " if os.getenv("CI") else "[%(levelname)s] "
-)
+
+if os.getenv("CI"):
+    CONSOLE_LOG_RECORD_FORMAT = "[%(asctime)s] [%(levelname)s] %(message)s"
+    CONSOLE_LOG_RECORD_FORMAT_SHORT = "[%(asctime)s] [%(levelname)s] "
+else:
+    CONSOLE_LOG_RECORD_FORMAT = "[%(levelname)s] %(message)s"
+    CONSOLE_LOG_RECORD_FORMAT_SHORT = "[%(levelname)s] "
+
 
 CONSOLE_RECORD_FORMATS = {
     logging.DEBUG: "[lightgrey]%(message)s[/lightgrey]",
@@ -212,7 +212,7 @@ class ColorConsoleFormatter(logging.Formatter):
         fmt: Optional[str] = CONSOLE_LOG_RECORD_FORMAT,
         datefmt: Optional[str] = DATE_FORMAT,
         short_fmt: Optional[str] = CONSOLE_LOG_RECORD_FORMAT_SHORT,
-        record_formats=None,
+        record_formats: Optional[Dict[int, str]] = None,
     ):
         super().__init__(
             fmt=fmt,

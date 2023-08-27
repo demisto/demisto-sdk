@@ -3942,3 +3942,20 @@ def is_file_in_pack(file: Path, pack_name: str) -> bool:
     return (
         len(file.parts) > 2 and file.parts[0] == "Packs" and file.parts[1] == pack_name
     )
+
+
+def parse_int_or_default(value: Any, default: int) -> int:
+    """
+    Parse int or return default value
+    Args:
+        value: value to parse
+        default: default value to return if parsing failed
+
+    Returns:
+        int: parsed value or default value
+
+    """
+    try:
+        return int(value)
+    except (ValueError, TypeError):
+        return default

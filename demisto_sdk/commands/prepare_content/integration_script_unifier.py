@@ -604,7 +604,7 @@ class IntegrationScriptUnifier(Unifier):
         integration_doc_link = INTEGRATIONS_DOCS_REFERENCE + normalized_integration_id
 
         readme_path = os.path.join(package_path, "README.md")
-        if os.path.isfile(readme_path) and os.stat(readme_path).st_size != 0:
+        if Path(readme_path).is_file() and os.stat(readme_path).st_size != 0:
             # verify README file exists and is not empty
             return f"[View Integration Documentation]({integration_doc_link})"
         else:

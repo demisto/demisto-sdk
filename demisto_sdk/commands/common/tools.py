@@ -311,6 +311,7 @@ def get_files_in_dir(
     file_endings: list,
     recursive: bool = True,
     ignore_test_files: bool = False,
+    exclude_list: Optional[list] = None,
 ) -> list:
     """
     Gets the project directory and returns the path of all yml, json and py files in it
@@ -318,10 +319,14 @@ def get_files_in_dir(
         project_dir: String path to the project_dir
         file_endings: List of file endings to search for in a given directory
         recursive: Indicates whether search should be recursive or not
+        exclude_list: List of file/directory names to exclude.
     :return: The path of files with file_endings in the current dir
     """
     files = []
     excludes = []
+    exclude_all_list = exclude_list.copy() if exclude_list else []
+    if ignore_test_files:
+        exclude_all_list.extend(TESTS_AND_DOC_DIRECTORIES)
 
     project_path = Path(project_dir)
     glob_function = project_path.rglob if recursive else project_path.glob
@@ -329,10 +334,9 @@ def get_files_in_dir(
         pattern = f"*.{file_type}"
         if project_dir.endswith(file_type):
             return [project_dir]
-        if ignore_test_files:
-            for test_dir in TESTS_AND_DOC_DIRECTORIES:
-                exclude_pattern = f"**/{test_dir}/" + pattern
-                excludes.extend([str(f) for f in glob_function(exclude_pattern)])
+        for exclude_item in exclude_all_list:
+            exclude_pattern = f"**/{exclude_item}/" + pattern
+            excludes.extend([str(f) for f in glob_function(exclude_pattern)])
         files.extend([str(f) for f in glob_function(pattern)])
     return list(set(files) - set(excludes))
 
@@ -557,6 +561,8 @@ def get_file_details(
         file_details = json.loads(file_content)
     elif full_file_path.endswith(("yml", "yaml")):
         file_details = yaml.load(file_content)
+    elif full_file_path.endswith(".pack-ignore"):
+        return file_content
     # if neither yml nor json then probably a CHANGELOG or README file.
     else:
         file_details = {}
@@ -709,7 +715,7 @@ def get_child_files(directory):
     child_files = [
         os.path.join(directory, path)
         for path in os.listdir(directory)
-        if os.path.isfile(os.path.join(directory, path))
+        if Path(directory, path).is_file()
     ]
     return child_files
 
@@ -1087,7 +1093,7 @@ def old_get_release_notes_file_path(file_path):
 
 
 def old_get_latest_release_notes_text(rn_path):
-    if not os.path.isfile(rn_path):
+    if not Path(rn_path).is_file():
         # releaseNotes were not provided
         return None
 
@@ -3924,3 +3930,32 @@ def extract_error_codes_from_file(pack_name: str) -> Set[str]:
                     error_codes_list.extend(error_codes)
 
     return set(error_codes_list)
+
+
+def is_file_in_pack(file: Path, pack_name: str) -> bool:
+    """
+    Return wether the given file is under the given pack.
+    Args:
+        file: The file to check.
+        pack_name: The name of the pack we want to ensure the given file is under.
+    """
+    return (
+        len(file.parts) > 2 and file.parts[0] == "Packs" and file.parts[1] == pack_name
+    )
+
+
+def parse_int_or_default(value: Any, default: int) -> int:
+    """
+    Parse int or return default value
+    Args:
+        value: value to parse
+        default: default value to return if parsing failed
+
+    Returns:
+        int: parsed value or default value
+
+    """
+    try:
+        return int(value)
+    except (ValueError, TypeError):
+        return default

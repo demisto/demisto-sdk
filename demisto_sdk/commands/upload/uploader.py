@@ -524,7 +524,7 @@ class ItemDetacher:
 
         all_files = glob.glob(f"{self.file_path}/**/*", recursive=True)
         for file_path in all_files:
-            if os.path.isfile(file_path) and self.is_valid_file_for_detach(file_path):
+            if Path(file_path).is_file() and self.is_valid_file_for_detach(file_path):
                 file_type = self.find_item_type_to_detach(file_path)
                 file_data = get_file(file_path)
                 file_id = file_data.get("id", "")
@@ -568,7 +568,7 @@ class ItemDetacher:
                         marketplace=self.marketplace,
                     ).upload()
 
-        elif os.path.isfile(self.file_path):
+        elif Path(self.file_path).is_file():
             file_id = self.find_item_id_to_detach()
             detach_files_list.append({"file_id": file_id, "file_path": self.file_path})
             self.detach_item(file_id=file_id, file_path=self.file_path)

@@ -1,6 +1,7 @@
 import os
 import re
 import time
+from pathlib import Path
 
 import demisto_client
 from demisto_client.demisto_api.rest import ApiException
@@ -78,7 +79,7 @@ class TestPlaybookRunner:
             )
 
         # Run specific test playbook
-        elif os.path.isfile(self.test_playbook_path):
+        elif Path(self.test_playbook_path).is_file():
             test_playbooks.append(self.test_playbook_path)
 
         return test_playbooks

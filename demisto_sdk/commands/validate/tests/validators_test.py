@@ -2,6 +2,7 @@ import contextlib
 import logging
 import os
 import sys
+from configparser import ConfigParser
 from io import StringIO
 from pathlib import Path
 from shutil import copyfile
@@ -1694,8 +1695,9 @@ class TestValidators:
         """
         rn = pack.create_release_notes("1_0_1", is_bc=True)
         rn_config_path: str = str(rn.path).replace("md", "json")
-        validate_manager: ValidateManager = ValidateManager()
-        assert validate_manager.run_validations_on_file(rn_config_path, list())
+        with ChangeCWD(pack.repo_path):
+            validate_manager: ValidateManager = ValidateManager()
+            assert validate_manager.run_validations_on_file(rn_config_path, list())
 
     @pytest.mark.parametrize(
         "answer, integration_id", [(True, "MyIntegration"), (False, "MyIntegration  ")]
@@ -1791,7 +1793,6 @@ class TestValidators:
             "Packs/pack_id/Integrations/integration_id/command_examples",
             "Packs/pack_id/Integrations/integration_id/test.txt",
             "Packs/pack_id/.secrets-ignore",
-            "Packs/pack_id/.pack-ignore",
         ],
     )
     def test_ignore_files_irrelevant_for_validation_test_file(self, file_path: str):
@@ -2830,12 +2831,15 @@ def test_validate_contributors_file(repo):
     """
 
     pack = repo.create_pack()
-    contributors_file = pack.create_contributors_file('["- Test UserName"]')
+    with ChangeCWD(repo.path):
+        contributors_file = pack.create_contributors_file('["- Test UserName"]')
 
-    validate_manager = ValidateManager(
-        check_is_unskipped=False, file_path=contributors_file.path, skip_conf_json=True
-    )
-    assert validate_manager.run_validation_on_specific_files()
+        validate_manager = ValidateManager(
+            check_is_unskipped=False,
+            file_path=contributors_file.path,
+            skip_conf_json=True,
+        )
+        assert validate_manager.run_validation_on_specific_files()
 
 
 def test_validate_pack_name(repo):
@@ -3117,22 +3121,94 @@ def test_validate_no_disallowed_terms_in_customer_facing_docs_end_to_end(repo, m
     integration_readme_file = integration.readme
     integration_description_file = integration.description
     playbook_readme_file = pack.create_playbook(readme=file_content).readme
+    with ChangeCWD(pack.repo_path):
+        validate_manager = ValidateManager()
 
+        assert not validate_manager.run_validations_on_file(
+            file_path=rn_file.path, pack_error_ignore_list=[]
+        )
+        assert not validate_manager.run_validations_on_file(
+            file_path=integration_readme_file.path, pack_error_ignore_list=[]
+        )
+        assert not validate_manager.run_validations_on_file(
+            file_path=integration_description_file.path, pack_error_ignore_list=[]
+        )
+        assert not validate_manager.run_validations_on_file(
+            file_path=playbook_readme_file.path, pack_error_ignore_list=[]
+        )
+
+        # Assure errors were logged (1 error per validated file)
+        assert count_str_in_call_args_list(logger_error.call_args_list, "BA125") == 4
+        pass
+
+
+@pytest.mark.parametrize(
+    "modified_files, new_file_content, remote_file_content, expected_results",
+    [
+        (
+            {"Packs/test/.pack-ignore"},
+            "[file:test.yml]\nignore=BA108,BA109\n",
+            "[file:test.yml]\nignore=BA108,BA109,DS107\n",
+            {"Packs/test/Integrations/test/test.yml"},
+        ),
+        (
+            {"Packs/test/.pack-ignore"},
+            "[file:test.yml]\nignore=BA108,BA109,DS107\n",
+            "[file:test.yml]\nignore=BA108,BA109,DS107\n",
+            set(),
+        ),
+        (
+            {"Packs/test1/.pack-ignore"},
+            "[file:test.yml]\nignore=BA108,BA109,DS107\n",
+            "[file:test2.yml]\nignore=BA108,BA109,DS107\n",
+            {
+                "Packs/test1/Integrations/test/test.yml",
+                "Packs/test1/Integrations/test2/test2.yml",
+            },
+        ),
+    ],
+)
+def test_get_all_files_edited_in_pack_ignore(
+    mocker, modified_files, new_file_content, remote_file_content, expected_results
+):
+    """
+    Given:
+    - modified files set, edited pack-ignore mock, and master's pack-ignore mock.
+    - Case 1: pack-ignore mocks which vary by 1 validation.
+    - Case 2: pack-ignore mocks which no differences.
+    - Case 3: pack-ignore mocks where each file is pointed to a different integration yml.
+
+    When:
+    - Running get_all_files_edited_in_pack_ignore.
+
+    Then:
+    - Ensure that the right files were returned.
+    - Case 1: Should return the file path only from the relevant pack (there's a similar file in a different pack)
+    - Case 2: Should return empty set of extra files to test.
+    - Case 3: Should return both file names.
+    """
+    mocker.patch.object(
+        GitUtil,
+        "get_all_files",
+        return_value={
+            Path("Packs/test/Integrations/test/test.yml"),
+            Path("Packs/test1/Integrations/test/test.yml"),
+            Path("Packs/test1/Integrations/test2/test2.yml"),
+        },
+    )
+    mocker.patch(
+        "demisto_sdk.commands.validate.validate_manager.get_remote_file",
+        return_value=remote_file_content,
+    )
     validate_manager = ValidateManager()
+    config = ConfigParser(allow_no_value=True)
+    config.read_string(new_file_content)
 
-    assert not validate_manager.run_validations_on_file(
-        file_path=rn_file.path, pack_error_ignore_list=[]
+    mocker.patch(
+        "demisto_sdk.commands.validate.validate_manager.get_pack_ignore_content",
+        return_value=config,
     )
-    assert not validate_manager.run_validations_on_file(
-        file_path=integration_readme_file.path, pack_error_ignore_list=[]
+    assert (
+        validate_manager.get_all_files_edited_in_pack_ignore(modified_files)
+        == expected_results
     )
-    assert not validate_manager.run_validations_on_file(
-        file_path=integration_description_file.path, pack_error_ignore_list=[]
-    )
-    assert not validate_manager.run_validations_on_file(
-        file_path=playbook_readme_file.path, pack_error_ignore_list=[]
-    )
-
-    # Assure errors were logged (1 error per validated file)
-    assert count_str_in_call_args_list(logger_error.call_args_list, "BA125") == 4
-    pass

@@ -214,7 +214,7 @@ def main(ctx, config, version, release_notes, **kwargs):
         except DistributionNotFound:
             __version__ = "dev"
             logger.info(
-                "[yellow]Cound not find the version of the demisto-sdk. This usually happens when running in a development environment.[/yellow]"
+                "[yellow]Could not find the version of the demisto-sdk. This usually happens when running in a development environment.[/yellow]"
             )
         else:
             last_release = ""
@@ -2145,14 +2145,12 @@ def _generate_docs_for_file(kwargs: Dict[str, Any]):
         if command:
             if (
                 output_path
-                and (not os.path.isfile(os.path.join(output_path, "README.md")))
+                and (not Path(output_path, "README.md").is_file())
                 or (not output_path)
                 and (
-                    not os.path.isfile(
-                        os.path.join(
-                            os.path.dirname(os.path.realpath(input_path)), "README.md"
-                        )
-                    )
+                    not Path(
+                        os.path.dirname(os.path.realpath(input_path)), "README.md"
+                    ).is_file()
                 )
             ):
                 raise Exception(
@@ -2170,7 +2168,7 @@ def _generate_docs_for_file(kwargs: Dict[str, Any]):
                 "[red]File is not an Integration, Script, Playbook or a README.[/red]"
             )
 
-        if old_version and not os.path.isfile(old_version):
+        if old_version and not Path(old_version).is_file():
             raise Exception(
                 f"[red]Input old version file {old_version} was not found.[/red]"
             )

@@ -399,7 +399,7 @@ class UpdateRN:
         :return
             Whether the pack metadata exists
         """
-        if not os.path.isfile(self.metadata_path):
+        if not Path(self.metadata_path).is_file():
             logger.info(
                 f'[red]"{self.metadata_path}" file does not exist, create one in the root of the pack[/red]'
             )
@@ -963,7 +963,7 @@ def get_file_description(path, file_type) -> str:
     :return
     The file description if exists otherwise returns %%UPDATE_RN%%
     """
-    if not os.path.isfile(path):
+    if not Path(path).is_file():
         logger.info(
             f'[yellow]Cannot get file description: "{path}" file does not exist[/yellow]'
         )
@@ -1093,7 +1093,7 @@ def get_from_version_at_update_rn(path: str) -> Optional[str]:
         Fromversion if there is a fromversion key in the yml file
 
     """
-    if not os.path.isfile(path):
+    if not Path(path).is_file():
         logger.info(
             f'[yellow]Cannot get file fromversion: "{path}" file does not exist[/yellow]'
         )

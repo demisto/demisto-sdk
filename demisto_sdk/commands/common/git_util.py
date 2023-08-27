@@ -820,4 +820,4 @@ class GitUtil:
         Returns:
             bool: True if the file is ignored. Otherwise, return False.
         """
-        return bool(self.repo.ignored([file_path]))
+        return bool(self.repo.ignored(file_path))

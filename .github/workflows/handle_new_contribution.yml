@@ -7,10 +7,11 @@ permissions:
   contents: read
 
 jobs:
-  handle_new_external_pr:
+  handle_new_contribution:
     runs-on: ubuntu-latest
     if: github.repository == 'demisto/demisto-sdk' && github.event.action == 'opened' && github.event.pull_request.head.repo.fork == true
     steps:
       - uses: kentaro-m/auto-assign-action@v1.2.5
         with:
           configuration-path: '.github/auto_assign_contrib_tl.yml'
+        run: echo "Updating Contribution PR ${{ github.event.pull_request.html_url }}"

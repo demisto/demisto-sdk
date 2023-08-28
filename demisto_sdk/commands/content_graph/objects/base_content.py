@@ -178,6 +178,7 @@ class BaseContent(ABC, BaseModel, metaclass=BaseContentMetaclass):
             logger.error(
                 f"The content item provided {str(path)} is not in the marketplace {marketplace}"
             )
+            return None
         except InvalidContentItemException:
             logger.error(
                 f"Invalid content path provided: {str(path)}. Please provide a valid content item or pack path."

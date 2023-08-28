@@ -3815,7 +3815,7 @@ def get_api_module_dependencies_from_graph(
             )
         for api_module_node in api_module_nodes:
             logger.info(
-                f"Checking for packages dependent on the modified API module {api_module_node}..."
+                f"Checking for packages dependent on the modified API module {api_module_node.object_id}..."
             )
             dependent_items += list(api_module_node.imported_by)
 

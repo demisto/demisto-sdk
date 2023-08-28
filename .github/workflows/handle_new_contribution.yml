@@ -4,7 +4,7 @@ on: pull_request
 jobs:
   handle_new_contribution:
     runs-on: ubuntu-latest
-    if: github.repository == 'demisto/demisto-sdk' && github.event.pull_request.head.repo.fork == true && github.event.action == 'opened'
+
     steps:
       - name: Print Context
         run: |

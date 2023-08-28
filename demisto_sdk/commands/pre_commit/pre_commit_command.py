@@ -179,12 +179,10 @@ class PreCommitRunner:
                 )
         changed_files: List[str] = []
         for files_of_python_version in self.python_version_to_files.values():
-            changed_files.extend(str(files_of_python_version))
+            changed_files.extend(str(file) for file in files_of_python_version)
         precommit_config = deepcopy(self.precommit_template)
         assert isinstance(precommit_config, dict)
-        changed_files_string = ", ".join(
-            sorted(changed_path for changed_path in changed_files)
-        )
+        changed_files_string = ", ".join(sorted(iter(changed_files)))
         logger.info(f"Running pre-commit on {changed_files_string}")
 
         self.prepare_hooks(self._get_repos(precommit_config))

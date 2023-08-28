@@ -1,5 +1,6 @@
 # Changelog
 ## Unreleased
+* Fixed an issue where **update-release-notes** generated "available from Cortex XSOAR" instead of "from XSIAM" when run on XSIAM event collectors.
 
 ## 1.19.2
 * Added a period at the end of lines produced by the **generate-docs** command that state the tested version of the product.
@@ -18,7 +19,6 @@
 * Fixes an issue in **format** command where the `-i` option included files in `.venv` directories.
 * Updated the comment added to contribution PRs to old packs so it contains a link to the documentation of the **GitHub Codespaces** in xsoar.pan.dev.
 * Updated GitPython version to 3.1.32.
-* Fixed an issue where **update-release-notes** generated "available from Cortex XSOAR" instead of "from XSIAM" when run on XSIAM event collectors.
 
 ## 1.19.1
 * Fixed an issue where **unify** failed on integrations using an API a module, when not called from the content root.

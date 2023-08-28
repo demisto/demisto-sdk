@@ -97,18 +97,25 @@ class PreCommitRunner:
 
     def prepare_hooks(
         self,
+        hooks: dict,
         repos: dict,
     ) -> None:
-        PyclnHook(repos["pycln"]).prepare_hook(PYTHONPATH)
-        RuffHook(repos["ruff-pre-commit"]).prepare_hook(
+        PyclnHook(hooks["pycln"], repos["pycln"]).prepare_hook(PYTHONPATH)
+        RuffHook(hooks["ruff"], repos["ruff-pre-commit"]).prepare_hook(
             self.python_version_to_files, IS_GITHUB_ACTIONS
         )
-        MypyHook(repos["mirrors-mypy"]).prepare_hook(self.python_version_to_files)
-        SourceryHook(repos["sourcery"]).prepare_hook(
+        MypyHook(hooks["mypy"], repos["mirrors-mypy"]).prepare_hook(
+            self.python_version_to_files
+        )
+        SourceryHook(hooks["sourcery"], repos["sourcery"]).prepare_hook(
             self.python_version_to_files, config_file_path=SOURCERY_CONFIG_PATH
         )
-        ValidateFormatHook(repos["demisto-sdk"]).prepare_hook(self.input_files)
-        # ValidateFormatHook(repos["format"]).prepare_hook(self.input_files)
+        ValidateFormatHook(hooks["validate"], repos["demisto-sdk"]).prepare_hook(
+            self.input_files
+        )
+        ValidateFormatHook(hooks["format"], repos["demisto-sdk"]).prepare_hook(
+            self.input_files
+        )
 
     def run(
         self,
@@ -185,7 +192,9 @@ class PreCommitRunner:
         changed_files_string = ", ".join(sorted(iter(changed_files)))
         logger.info(f"Running pre-commit on {changed_files_string}")
 
-        self.prepare_hooks(self._get_repos(precommit_config))
+        self.prepare_hooks(
+            self._get_hooks(precommit_config), self._get_repos(precommit_config)
+        )
         with open(PRECOMMIT_PATH, "w") as f:
             yaml.dump(precommit_config, f)
         # use chunks because OS does not support such large comments

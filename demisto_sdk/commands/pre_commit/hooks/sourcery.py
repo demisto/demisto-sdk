@@ -17,8 +17,10 @@ class SourceryHook(Hook):
     def prepare_hook(
         self, python_version_to_files: dict, config_file_path: Path, **kwargs
     ):
-        base_hook = self.repo["hooks"][0]
-        hooks = self.repo["hooks"] = []
+        hooks = self.repo["hooks"]
+        base_hook = deepcopy(self.hook)
+        hooks.remove(base_hook)
+
         for python_version in python_version_to_files.keys():
             hook = {"name": f"sourcery-py{python_version}"} | deepcopy(base_hook)
             hook["args"] += [

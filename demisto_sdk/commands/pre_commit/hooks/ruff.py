@@ -14,8 +14,10 @@ class RuffHook(Hook):
         github_actions: bool = False,
         **kwargs,
     ) -> None:
-        base_hook = self.repo["hooks"][0]
-        hooks = self.repo["hooks"] = []
+        hooks = self.repo["hooks"]
+        base_hook = deepcopy(self.hook)
+        hooks.remove(base_hook)
+
         for python_version in python_version_to_files.keys():
             hook = {"name": f"ruff-py{python_version}"} | deepcopy(base_hook)
             hook["args"] = [

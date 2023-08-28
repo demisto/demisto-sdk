@@ -199,19 +199,17 @@ def _match(
 
     content_type_str = f":{content_type}" if content_type else ""
     where = []
-    if where_clause or marketplace or ids_list:
-        where.append("WHERE")
     if where_clause:
         where.extend(where_clause)
     if ids_list:
         where.append("node_id = elementId(node)")
-        if marketplace:
-            where.append("AND")
     if marketplace:
         where.append(f"'{marketplace}' IN node.marketplaces")
+
+    where_str = "WHERE " + " AND ".join(where) if where else ""
     query = f"""// Retrieves nodes according to given parameters.
 MATCH (node{content_type_str}{params_str})
-    {" ".join(where)}
+{where_str}
 RETURN node"""
     if ids_list:
         query = "UNWIND $filter_list AS node_id\n" + query
@@ -233,28 +231,3 @@ DETACH DELETE n"""
 
 def remove_empty_properties(tx: Transaction) -> None:
     run_query(tx, REMOVE_EMPTY_PROPERTIES)
-
-
-def get_items_by_type_and_identifier(
-    tx: Transaction,
-    identifier_values_list: List[str],
-    content_type: ContentType,
-    identifier: str,
-) -> List:
-    """Return a list of dictionaries representing the wanted incident fields.
-    Args:
-        tx (Transaction): The neo4j transaction.
-        identifier_values_list (List[str]): A list of identifier values of the wanted content items.
-                                            (The value of the object ids, cli_names etc.)
-        content_type (str): The type of the wanted content item (ContentType.LAYOUT etc.)
-        identifier (str): An identifier for the wanted content item (object_id, cli_name etc.)
-
-    Returns:
-        list: A list of dictionaries, each dictionary represent an incident field.
-    """
-    query = f"""//Returns all the matching content items of type content_type where the content item identifier value
-                //is in the given list.
-MATCH (content_item:{content_type}) WHERE content_item.{identifier} in {identifier_values_list} RETURN content_item
-"""
-    results = run_query(tx, query).data()
-    return [item.get("content_item", {}) for item in results]

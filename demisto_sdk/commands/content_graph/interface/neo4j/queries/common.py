@@ -1,7 +1,7 @@
 import traceback
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, Tuple
+from typing import Any, Dict, Iterable, Tuple
 
 from neo4j import Result, Transaction
 from packaging.version import Version
@@ -50,8 +50,8 @@ def to_neo4j_map(properties: dict) -> Tuple[str, list]:
     for key, prop in properties.items():
         if isinstance(prop, (str, Path)):
             updated_properties[key] = f"'{prop}'"
-        elif isinstance(prop, list):
-            where_clause.append(f"{key} IN {str(prop)}")
+        elif isinstance(prop, Iterable):
+            where_clause.append(f"node.{key} IN {list(prop)}")
     params_str = ", ".join(f"{k}: {v}" for k, v in updated_properties.items())
     params_str = f"{{{params_str}}}" if params_str else ""
     return params_str, where_clause

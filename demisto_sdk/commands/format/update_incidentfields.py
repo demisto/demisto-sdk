@@ -117,7 +117,6 @@ class IncidentFieldJSONFormat(BaseUpdateJSON):
             self.graph.search(
                 cli_name=alias_ids,
                 content_type=ContentType.INCIDENT_FIELD,
-                identifier="cli_name",
             )
             if self.graph
             else []

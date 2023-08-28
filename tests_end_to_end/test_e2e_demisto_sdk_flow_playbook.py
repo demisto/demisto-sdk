@@ -9,6 +9,7 @@ from demisto_sdk.commands.format.format_module import format_manager
 from demisto_sdk.commands.generate_docs import generate_playbook_doc
 from demisto_sdk.commands.upload.uploader import Uploader
 from demisto_sdk.commands.validate.validate_manager import ValidateManager
+from TestSuite.test_tools import ChangeCWD
 
 
 def test_e2e_demisto_sdk_flow_playbook_testsuite(tmpdir):
@@ -57,18 +58,19 @@ def test_e2e_demisto_sdk_flow_playbook_testsuite(tmpdir):
     assert dest_playbook_path.with_name(f"{playbook_name}_README.md").exists()
 
     logger.info(f"Formating playbook {dest_playbook_path}")
-    format_manager(
-        input=str(dest_playbook_path),
-        assume_answer=True,
-    )
-    logger.info(f"Validating playbook {dest_playbook_path}")
-    ValidateManager(file_path=str(dest_playbook_path)).run_validation()
+    with ChangeCWD(pack.repo_path):
+        format_manager(
+            input=str(dest_playbook_path),
+            assume_answer=True,
+        )
+        logger.info(f"Validating playbook {dest_playbook_path}")
+        ValidateManager(file_path=str(dest_playbook_path)).run_validation()
 
-    logger.info(f"Uploading updated playbook {dest_playbook_path}")
-    Uploader(
-        input=dest_playbook_path,
-        insecure=True,
-    ).upload()
+        logger.info(f"Uploading updated playbook {dest_playbook_path}")
+        Uploader(
+            input=dest_playbook_path,
+            insecure=True,
+        ).upload()
 
 
 def test_e2e_demisto_sdk_flow_playbook_client(tmpdir, insecure: bool = True):
@@ -135,15 +137,17 @@ def test_e2e_demisto_sdk_flow_playbook_client(tmpdir, insecure: bool = True):
     ).exists()
 
     logger.info(f"Formating playbook {dest_playbook_path}")
-    format_manager(
-        input=str(dest_playbook_path),
-        assume_answer=True,
-    )
-    logger.info(f"Validating playbook {dest_playbook_path}")
-    ValidateManager(file_path=str(dest_playbook_path)).run_validation()
+    
+    with ChangeCWD(pack.repo_path):
+        format_manager(
+            input=str(dest_playbook_path),
+            assume_answer=True,
+        )
+        logger.info(f"Validating playbook {dest_playbook_path}")
+        ValidateManager(file_path=str(dest_playbook_path)).run_validation()
 
-    logger.info(f"Uploading updated playbook {dest_playbook_path}")
-    Uploader(
-        input=dest_playbook_path,
-        insecure=True,
-    ).upload()
+        logger.info(f"Uploading updated playbook {dest_playbook_path}")
+        Uploader(
+            input=dest_playbook_path,
+            insecure=True,
+        ).upload()

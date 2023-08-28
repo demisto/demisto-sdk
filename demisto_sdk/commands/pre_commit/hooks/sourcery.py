@@ -1,4 +1,5 @@
 import tempfile
+from copy import deepcopy
 from pathlib import Path
 
 from demisto_sdk.commands.common import tools
@@ -6,10 +7,24 @@ from demisto_sdk.commands.pre_commit.hooks.hook import Hook
 
 
 class SourceryHook(Hook):
-    def prepare_hook(self, python_version: str, config_file_path: Path, **kwargs):
+    def _get_temp_config_file(self, config_file_path: Path, python_version: str):
         config_file = tools.get_file_or_remote(config_file_path)
         config_file["rule_settings"]["python_version"] = python_version
-        # tmp_file_path = config_file_path.with_name(".sourcery_tmp.yaml")
         tf = tempfile.NamedTemporaryFile(delete=False)
         tools.write_yml(tf.name, config_file)
-        self.hook["args"] += [f"--config={tf.name}"]
+        return tf.name
+
+    def prepare_hook(
+        self, python_version_to_files: dict, config_file_path: Path, **kwargs
+    ):
+        base_hook = self.repo["hooks"][0]
+        hooks = self.repo["hooks"] = []
+        for python_version in python_version_to_files.keys():
+            hook = {"name": f"sourcery-py{python_version}"} | deepcopy(base_hook)
+            hook["args"] += [
+                f"--config={self._get_temp_config_file(config_file_path, python_version)}"
+            ]
+            hook["files"] = "|".join(
+                str(file) for file in python_version_to_files[python_version]
+            )
+            hooks.append(hook)

@@ -72,16 +72,16 @@ class PreCommitRunner:
             )
         # changes the demisto-sdk revision to the latest release version (or the debug commit hash)
         # to debug, modify the DEMISTO_SDK_COMMIT_HASH_DEBUG variable to your demisto-sdk commit hash
-        self._get_repos(self.precommit_template)[
-            "https://github.com/demisto/demisto-sdk"
-        ]["rev"] = self.demisto_sdk_commit_hash
+        self._get_repos(self.precommit_template)["demisto-sdk"][
+            "rev"
+        ] = self.demisto_sdk_commit_hash
         self.hooks = self._get_hooks(self.precommit_template)
 
     @staticmethod
     def _get_repos(pre_commit_config: dict) -> dict:
         repos = {}
         for repo in pre_commit_config["repos"]:
-            repos[repo["repo"]] = repo
+            repos[repo["repo"].split("/")[-1]] = repo
         return repos
 
     @staticmethod
@@ -97,17 +97,18 @@ class PreCommitRunner:
 
     def prepare_hooks(
         self,
-        hooks: dict,
-        python_version: str,
+        repos: dict,
     ) -> None:
-        PyclnHook(hooks["pycln"]).prepare_hook(PYTHONPATH)
-        RuffHook(hooks["ruff"]).prepare_hook(python_version, IS_GITHUB_ACTIONS)
-        MypyHook(hooks["mypy"]).prepare_hook(python_version)
-        SourceryHook(hooks["sourcery"]).prepare_hook(
-            python_version, config_file_path=SOURCERY_CONFIG_PATH
+        PyclnHook(repos["pycln"]).prepare_hook(PYTHONPATH)
+        RuffHook(repos["ruff-pre-commit"]).prepare_hook(
+            self.python_version_to_files, IS_GITHUB_ACTIONS
         )
-        ValidateFormatHook(hooks["validate"]).prepare_hook(self.input_files)
-        ValidateFormatHook(hooks["format"]).prepare_hook(self.input_files)
+        MypyHook(repos["mirrors-mypy"]).prepare_hook(self.python_version_to_files)
+        SourceryHook(repos["sourcery"]).prepare_hook(
+            self.python_version_to_files, config_file_path=SOURCERY_CONFIG_PATH
+        )
+        ValidateFormatHook(repos["demisto-sdk"]).prepare_hook(self.input_files)
+        # ValidateFormatHook(repos["format"]).prepare_hook(self.input_files)
 
     def run(
         self,
@@ -138,61 +139,77 @@ class PreCommitRunner:
             str(path) for path in sorted(PYTHONPATH) if "site-packages" not in str(path)
         )
         precommit_env["DEMISTO_SDK_CONTENT_PATH"] = str(CONTENT_PATH)
-        for python_version, changed_files in self.python_version_to_files.items():
-            precommit_config = deepcopy(self.precommit_template)
-            assert isinstance(precommit_config, dict)
-            changed_files_string = ", ".join(
-                sorted((str(changed_path) for changed_path in changed_files))
-            )
-            logger.info(
-                f"Running pre-commit with Python {python_version} on {changed_files_string}"
-            )
-            if python_version.startswith("2"):
+        if changed_files_python2 := self.python_version_to_files.pop(
+            DEFAULT_PYTHON2_VERSION, None
+        ):
+            if unit_test:
+                precommit_config = deepcopy(self.precommit_template)
+                assert isinstance(precommit_config, dict)
+                changed_files_string = ", ".join(
+                    sorted(
+                        (str(changed_path) for changed_path in changed_files_python2)
+                    )
+                )
+                logger.info(
+                    f"Running pre-commit with Python {DEFAULT_PYTHON2_VERSION} on {changed_files_string}"
+                )
                 with open(PRECOMMIT_PATH, "w") as f:
                     yaml.dump(precommit_config, f)
-                if unit_test:
-                    response = subprocess.run(
-                        [
-                            sys.executable,
-                            "-m",
-                            "pre_commit",
-                            "run",
-                            "run-unit-tests",
-                            "-c",
-                            str(PRECOMMIT_PATH),
-                            "--files",
-                            *changed_files,
-                            "-v" if verbose else "",
-                        ],
-                        env=precommit_env,
-                        cwd=CONTENT_PATH,
-                    )
-                    if response.returncode:
-                        ret_val = response.returncode
-                continue
-            self.prepare_hooks(self._get_hooks(precommit_config), python_version)
-            with open(PRECOMMIT_PATH, "w") as f:
-                yaml.dump(precommit_config, f)
-            # use chunks because OS does not support such large comments
-            for chunk in more_itertools.chunked_even(changed_files, 10_000):
                 response = subprocess.run(
                     [
                         sys.executable,
                         "-m",
                         "pre_commit",
                         "run",
+                        "run-unit-tests",
                         "-c",
                         str(PRECOMMIT_PATH),
-                        "--show-diff-on-failure" if show_diff_on_failure else "",
                         "--files",
-                        *chunk,
+                        *changed_files_python2,
                         "-v" if verbose else "",
                     ],
                     env=precommit_env,
                     cwd=CONTENT_PATH,
                 )
                 if response.returncode:
-                    ret_val = 1
+                    ret_val = response.returncode
+            else:
+                logger.info(
+                    f"Skipping pre-commit with Python {DEFAULT_PYTHON2_VERSION} because unit-tests were not selected"
+                )
+        changed_files: List[str] = []
+        for files_of_python_version in self.python_version_to_files.values():
+            changed_files.extend(str(files_of_python_version))
+        precommit_config = deepcopy(self.precommit_template)
+        assert isinstance(precommit_config, dict)
+        changed_files_string = ", ".join(
+            sorted(changed_path for changed_path in changed_files)
+        )
+        logger.info(f"Running pre-commit on {changed_files_string}")
+
+        self.prepare_hooks(self._get_repos(precommit_config))
+        with open(PRECOMMIT_PATH, "w") as f:
+            yaml.dump(precommit_config, f)
+        # use chunks because OS does not support such large comments
+        for chunk in more_itertools.chunked_even(changed_files, 10_000):
+            response = subprocess.run(
+                [
+                    sys.executable,
+                    "-m",
+                    "pre_commit",
+                    "run",
+                    "-c",
+                    str(PRECOMMIT_PATH),
+                    "--show-diff-on-failure" if show_diff_on_failure else "",
+                    "--files",
+                    *chunk,
+                    "-v" if verbose else "",
+                ],
+                env=precommit_env,
+                cwd=CONTENT_PATH,
+            )
+            if response.returncode:
+                ret_val = 1
 
         # remove the config file in the end of the flow
         PRECOMMIT_PATH.unlink(missing_ok=True)

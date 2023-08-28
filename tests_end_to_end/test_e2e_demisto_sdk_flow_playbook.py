@@ -137,7 +137,7 @@ def test_e2e_demisto_sdk_flow_playbook_client(tmpdir, insecure: bool = True):
     ).exists()
 
     logger.info(f"Formating playbook {dest_playbook_path}")
-    
+
     with ChangeCWD(pack.repo_path):
         format_manager(
             input=str(dest_playbook_path),

@@ -1,7 +1,7 @@
 import traceback
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any, Dict, Tuple
 
 from neo4j import Result, Transaction
 from packaging.version import Version
@@ -44,13 +44,17 @@ def node_map(properties: Dict[str, Any]) -> str:
     return f'{{{", ".join([f"{k}: {v}" for k, v in properties.items()])}}}'
 
 
-def to_neo4j_map(properties: dict) -> str:
-    properties = {
-        k: f'"{v}"' if isinstance(v, (str, Path)) else v for k, v in properties.items()
-    }
+def to_neo4j_map(properties: dict) -> Tuple[str, list]:
+    properties = {}
+    where_clause = []
+    for key, prop in properties.items():
+        if isinstance(prop, (str, Path)):
+            properties[key] = f"'{prop}'"
+        elif isinstance(prop, list):
+            where_clause.append(f"{str(prop)} IN {key}")
     params_str = ", ".join(f"{k}: {v}" for k, v in properties.items())
     params_str = f"{{{params_str}}}" if params_str else ""
-    return params_str
+    return params_str, where_clause
 
 
 def run_query(tx: Transaction, query: str, **kwargs) -> Result:

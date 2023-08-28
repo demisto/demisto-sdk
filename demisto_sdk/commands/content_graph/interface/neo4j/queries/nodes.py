@@ -195,18 +195,20 @@ def _match(
     Returns:
         List[graph.Node]: list of neo4j nodes.
     """
-    params_str = to_neo4j_map(properties)
+    params_str, where_clause = to_neo4j_map(properties)
 
     content_type_str = f":{content_type}" if content_type else ""
     where = []
-    if marketplace or ids_list:
+    if where_clause or marketplace or ids_list:
         where.append("WHERE")
-        if ids_list:
-            where.append("node_id = elementId(node)")
-        if ids_list and marketplace:
-            where.append("AND")
+    if where_clause:
+        where.extend(where_clause)
+    if ids_list:
+        where.append("node_id = elementId(node)")
         if marketplace:
-            where.append(f"'{marketplace}' IN node.marketplaces")
+            where.append("AND")
+    if marketplace:
+        where.append(f"'{marketplace}' IN node.marketplaces")
     query = f"""// Retrieves nodes according to given parameters.
 MATCH (node{content_type_str}{params_str})
     {" ".join(where)}

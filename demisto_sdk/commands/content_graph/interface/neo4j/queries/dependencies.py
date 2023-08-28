@@ -36,7 +36,7 @@ def get_all_level_packs_relationships(
     mandatorily: bool = False,
     **properties,
 ) -> Dict[int, Neo4jRelationshipResult]:
-    params_str = to_neo4j_map(properties)
+    params_str, _ = to_neo4j_map(properties)
 
     if relationship_type == RelationshipType.DEPENDS_ON:
         query = f"""

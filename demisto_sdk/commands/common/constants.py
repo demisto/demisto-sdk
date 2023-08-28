@@ -1131,7 +1131,6 @@ VALIDATION_USING_GIT_IGNORABLE_DATA = (
     "doc_files",
     "doc_imgs",
     ".secrets-ignore",
-    ".pack-ignore",
 )
 
 FILE_TYPES_FOR_TESTING = [".py", ".js", ".yml", ".ps1"]
@@ -1848,3 +1847,7 @@ ENV_SDK_WORKING_OFFLINE = "DEMISTO_SDK_OFFLINE_ENV"
 DOCKERFILES_INFO_REPO = "demisto/dockerfiles-info"
 
 TEST_COVERAGE_DEFAULT_URL = "https://storage.googleapis.com/marketplace-dist-dev/code-coverage-reports/coverage-min.json"
+
+URL_IMAGE_LINK_REGEX = r"(\!\[.*?\])\((?P<url>https://[a-zA-Z_/\.0-9\- :%]*?)\)((].*)?)"
+
+HTML_IMAGE_LINK_REGEX = r'(<img.*?src\s*=\s*"(https://.*?)")'

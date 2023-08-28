@@ -110,7 +110,7 @@ def generate_integration_doc(
 
         if permissions == "per-command":
             command_permissions_dict: Any = {}
-            if command_permissions and os.path.isfile(command_permissions):
+            if command_permissions and Path(command_permissions).is_file():
                 permission_list = get_command_permissions(command_permissions)
                 for command_permission in permission_list:
                     # get all the permissions after the command name
@@ -760,7 +760,7 @@ def get_command_examples(commands_examples_input, specific_commands):
     if not commands_examples_input:
         return []
 
-    if os.path.isfile(commands_examples_input):
+    if Path(commands_examples_input).is_file():
         with open(commands_examples_input) as examples_file:
             command_examples = examples_file.read().splitlines()
     else:
@@ -808,7 +808,7 @@ def get_command_permissions(commands_permissions_file_path) -> list:
     if commands_permissions_file_path is None:
         return commands_permissions
 
-    if os.path.isfile(commands_permissions_file_path):
+    if Path(commands_permissions_file_path).is_file():
         with open(commands_permissions_file_path) as permissions_file:
             permissions = permissions_file.read().splitlines()
     else:

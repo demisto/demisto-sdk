@@ -85,17 +85,13 @@ MATCH (source) - [r:{RelationshipType.USES}] -> (target) - [:{RelationshipType.I
 (:{ContentType.PACK}{{object_id: "{DEPRECATED_CONTENT_PACK}"}})
 DELETE r
 RETURN source.node_id AS source, target.node_id AS target"""
-    result = run_query(tx, query).data()
-    for row in result:
-        source = row["source"]
-        target = row["target"]
-        logger.debug(f"Deleted relationship USES between {source} and {target}")
+    run_query(tx, query)
 
 
 def remove_existing_depends_on_relationships(tx: Transaction) -> None:
     query = f"""// Removes all existing DEPENDS_ON relationships before recalculation
 MATCH ()-[r:{RelationshipType.DEPENDS_ON}]->()
-WHERE r.from_metadata IS NULL
+WHERE r.from_metadata = false
 DELETE r"""
     run_query(tx, query)
 
@@ -139,18 +135,7 @@ RETURN
     collect(integration.object_id) AS integrations,
     u.mandatorily AS is_integ_mandatory,
     command.name AS command"""
-    result = run_query(tx, query)
-    for row in result:
-        content_item = row["content_item"]
-        command = row["command"]
-        is_cmd_mandatory = "mandatory" if row["is_cmd_mandatory"] else "optional"
-        integrations = row["integrations"]
-        is_integ_mandatory = "mandatory" if row["is_integ_mandatory"] else "optional"
-        msg = (
-            f"{content_item} uses command {command} ({is_cmd_mandatory}), "
-            f"new {is_integ_mandatory} relationships to integrations: {integrations}"
-        )
-        logger.debug(msg)
+    run_query(tx, query)
 
 
 def create_depends_on_relationships(tx: Transaction) -> None:
@@ -165,12 +150,12 @@ AND NOT pack_b.name IN {IGNORED_PACKS_IN_DEPENDENCY_CALC}
 WITH pack_a, a, r, b, pack_b
 MERGE (pack_a)-[dep:{RelationshipType.DEPENDS_ON}]->(pack_b)
 ON CREATE
-    SET dep.is_test = a.is_test
+    SET dep.is_test = a.is_test,
+        dep.from_metadata = false,
+        dep.mandatorily = r.mandatorily
 ON MATCH
-    SET dep.is_test = dep.is_test AND a.is_test
-
-WITH dep, pack_a, a, r, b, pack_b
-SET dep.mandatorily = CASE WHEN dep.from_metadata THEN dep.mandatorily
+    SET dep.is_test = dep.is_test AND a.is_test,
+        dep.mandatorily = CASE WHEN dep.from_metadata THEN dep.mandatorily
                 ELSE r.mandatorily OR dep.mandatorily END
 WITH
     pack_a.object_id AS pack_a,
@@ -188,12 +173,6 @@ RETURN
         pack_a = row["pack_a"]
         pack_b = row["pack_b"]
         outputs.setdefault(pack_a, {}).setdefault(pack_b, []).extend(row["reasons"])
-    for pack_a, pack_b in outputs.items():
-        for pack_b, reasons in pack_b.items():
-            msg = f"Created a DEPENDS_ON relationship between {pack_a} and {pack_b}. Reasons:\n"
-            for idx, reason in enumerate(reasons, 1):
-                msg += f"{idx}. [{reason.get('source')}] -> [{reason.get('target')}] (mandatorily: {reason.get('mandatorily')})\n"
-            logger.debug(msg)
 
     if (artifacts_folder := os.getenv("ARTIFACTS_FOLDER")) and Path(
         artifacts_folder

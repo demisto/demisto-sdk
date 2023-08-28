@@ -71,7 +71,7 @@ When the graph creation is completed, it will be available in http://localhost:7
 
     Quiet output, only output results in the end.
 
-* **-lp, --log-path**
+* **-lp, --log_file_path**
 
     Path to store all levels of logs.
 
@@ -124,7 +124,7 @@ When the graph update is completed, it will be available in http://localhost:747
 
     Quiet output, only output results in the end.
 
-* **-lp, --log-path**
+* **-lp, --log_file_path**
 
     Path to store all levels of logs.
 

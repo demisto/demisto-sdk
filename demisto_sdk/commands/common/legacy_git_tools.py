@@ -353,7 +353,7 @@ def filter_changed_files(files_string, tag="master", print_ignored_files=False):
                 deleted_files.add(file_path)
 
             # ignore directories
-            elif not os.path.isfile(file_path):
+            elif not Path(file_path).is_file():
                 if print_ignored_files:
                     logger.info(
                         f"[yellow]Ignoring file path: {file_path} - directory[/yellow]"

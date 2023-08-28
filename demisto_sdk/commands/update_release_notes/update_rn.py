@@ -747,7 +747,9 @@ class UpdateRN:
                 rn_desc = f"##### New: {content_name}\n\n"
                 if desc:
                     rn_desc += f"- New: {desc}"
-                if _type in SIEM_ONLY_ENTITIES or content_name.replace(" ","").lower().endswith(EVENT_COLLECTOR.lower()):
+                if _type in SIEM_ONLY_ENTITIES or content_name.replace(
+                    " ", ""
+                ).lower().endswith(EVENT_COLLECTOR.lower()):
                     rn_desc += "(Available from Cortex XSIAM %%XSIAM_VERSION%%)."
                 elif from_version and _type not in SIEM_ONLY_ENTITIES:
                     rn_desc += f" (Available from Cortex XSOAR {from_version})."

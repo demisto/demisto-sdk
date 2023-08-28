@@ -1,8 +1,9 @@
+from pathlib import Path
 from typing import Dict, List, Optional
 
 from pydantic import BaseModel
 
-from demisto_sdk.commands.common.constants import NATIVE_IMAGE_FILE_NAME
+from demisto_sdk.commands.common.content_constant_paths import NATIVE_IMAGE_PATH
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.singleton import PydanticSingleton
 from demisto_sdk.commands.common.tools import extract_docker_image_from_text
@@ -35,7 +36,7 @@ class NativeImageConfig(PydanticSingleton, BaseModel):
 
     @classmethod
     def from_path(
-        cls, native_image_config_file_path: str = f"Tests/{NATIVE_IMAGE_FILE_NAME}"
+        cls, native_image_config_file_path: Path = Path(NATIVE_IMAGE_PATH)
     ):
         native_image_config = cls.parse_file(native_image_config_file_path)
         native_image_config.__docker_images_to_native_images_support()

@@ -295,7 +295,7 @@ def lazy_property(property_func: Callable):
     only when the instance property is first accessed.
 
     Note:
-        make sure that the lazy property returns only serializable objects.
+        make sure that the lazy property returns only primitive objects (bool, str, int, float, list).
 
     Use this decorator on your property in case you need it to be added to the model only if its called directly
     """

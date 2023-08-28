@@ -77,6 +77,13 @@ def test_e2e_demisto_sdk_flow_playbook_client(tmpdir, insecure: bool = True):
     unique_id = 789
     pack_name = "foo_" + str(unique_id)
     playbook_name = "pb_" + str(unique_id)
+    dest_playbook_path = Path(
+        f"{tmpdir}/Packs/{pack_name}_client/Playbooks/{playbook_name}.yml"
+    )
+     
+    unique_id = 789
+    pack_name = "foo_" + str(unique_id)
+    playbook_name = "pb_" + str(unique_id)
 
     demisto_client = e2e_tests_utils.connect_to_server(insecure=insecure)
     body = [
@@ -138,7 +145,7 @@ def test_e2e_demisto_sdk_flow_playbook_client(tmpdir, insecure: bool = True):
 
     logger.info(f"Formating playbook {dest_playbook_path}")
 
-    with ChangeCWD(pack.repo_path):
+    with ChangeCWD(str(dest_playbook_path.parent)):
         format_manager(
             input=str(dest_playbook_path),
             assume_answer=True,

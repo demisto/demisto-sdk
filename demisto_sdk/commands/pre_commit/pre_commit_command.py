@@ -89,7 +89,7 @@ class PreCommitRunner:
         hooks = {}
         for repo in pre_commit_config["repos"]:
             for hook in repo["hooks"]:
-                hooks[hook["id"]] = hook
+                hooks[hook["id"]] = {"repo": repo, "hook": hook}
                 # if the hook has a skip key, we add it to the SKIPPED_HOOKS set
                 if hook.pop("skip", None):
                     SKIPPED_HOOKS.add(hook["id"])
@@ -98,24 +98,17 @@ class PreCommitRunner:
     def prepare_hooks(
         self,
         hooks: dict,
-        repos: dict,
     ) -> None:
-        PyclnHook(hooks["pycln"], repos["pycln"]).prepare_hook(PYTHONPATH)
-        RuffHook(hooks["ruff"], repos["ruff-pre-commit"]).prepare_hook(
+        PyclnHook(**hooks["pycln"]).prepare_hook(PYTHONPATH)
+        RuffHook(**hooks["ruff"]).prepare_hook(
             self.python_version_to_files, IS_GITHUB_ACTIONS
         )
-        MypyHook(hooks["mypy"], repos["mirrors-mypy"]).prepare_hook(
-            self.python_version_to_files
-        )
-        SourceryHook(hooks["sourcery"], repos["sourcery"]).prepare_hook(
+        MypyHook(**hooks["mypy"]).prepare_hook(self.python_version_to_files)
+        SourceryHook(**hooks["sourcery"]).prepare_hook(
             self.python_version_to_files, config_file_path=SOURCERY_CONFIG_PATH
         )
-        ValidateFormatHook(hooks["validate"], repos["demisto-sdk"]).prepare_hook(
-            self.input_files
-        )
-        ValidateFormatHook(hooks["format"], repos["demisto-sdk"]).prepare_hook(
-            self.input_files
-        )
+        ValidateFormatHook(**hooks["validate"]).prepare_hook(self.input_files)
+        ValidateFormatHook(**hooks["format"]).prepare_hook(self.input_files)
 
     def run(
         self,
@@ -192,9 +185,7 @@ class PreCommitRunner:
         changed_files_string = ", ".join(sorted(iter(changed_files)))
         logger.info(f"Running pre-commit on {changed_files_string}")
 
-        self.prepare_hooks(
-            self._get_hooks(precommit_config), self._get_repos(precommit_config)
-        )
+        self.prepare_hooks(self._get_hooks(precommit_config))
         with open(PRECOMMIT_PATH, "w") as f:
             yaml.dump(precommit_config, f)
         # use chunks because OS does not support such large comments

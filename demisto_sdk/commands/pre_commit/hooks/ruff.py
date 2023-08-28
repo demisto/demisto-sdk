@@ -14,12 +14,8 @@ class RuffHook(Hook):
         github_actions: bool = False,
         **kwargs,
     ) -> None:
-        hooks = self.repo["hooks"]
-        base_hook = deepcopy(self.hook)
-        hooks.remove(base_hook)
-
         for python_version in python_version_to_files.keys():
-            hook = {"name": f"ruff-py{python_version}"} | deepcopy(base_hook)
+            hook = {"name": f"ruff-py{python_version}"} | deepcopy(self.base_hook)
             hook["args"] = [
                 f"--target-version={self._python_version_to_ruff(python_version)}",
                 "--fix",
@@ -29,4 +25,4 @@ class RuffHook(Hook):
             hook["files"] = "|".join(
                 str(file) for file in python_version_to_files[python_version]
             )
-            hooks.append(hook)
+            self.hooks.append(hook)

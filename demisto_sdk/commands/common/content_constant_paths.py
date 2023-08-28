@@ -1,7 +1,7 @@
 import logging
 from pathlib import Path
 
-from demisto_sdk.commands.common.constants import TESTS_DIR, NATIVE_IMAGE_FILE_NAME
+from demisto_sdk.commands.common.constants import NATIVE_IMAGE_FILE_NAME, TESTS_DIR
 from demisto_sdk.commands.common.tools import get_content_path
 
 logger = logging.getLogger("demisto-sdk")

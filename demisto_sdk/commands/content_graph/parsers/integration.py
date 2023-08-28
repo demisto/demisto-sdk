@@ -21,9 +21,9 @@ class CommandParser:
 
 class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGRATION):
     def __init__(
-        self, path: Path, pack_marketplaces: List[MarketplaceVersions]
+        self, path: Path, pack_marketplaces: List[MarketplaceVersions], **kwargs
     ) -> None:
-        super().__init__(path, pack_marketplaces)
+        super().__init__(path, pack_marketplaces, **kwargs)
         self.script_info: Dict[str, Any] = self.yml_data.get("script", {})
         self.category = self.yml_data["category"]
         self.is_fetch = self.script_info.get("isfetch", False)

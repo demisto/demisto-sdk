@@ -14,7 +14,7 @@ from demisto_sdk.commands.content_graph.parsers.mapper import MapperParser
 
 class ClassifierParser(JSONContentItemParser, content_type=ContentType.CLASSIFIER):
     def __init__(
-        self, path: Path, pack_marketplaces: List[MarketplaceVersions]
+        self, path: Path, pack_marketplaces: List[MarketplaceVersions], **kwargs
     ) -> None:
         """Parses the classifier.
 
@@ -24,7 +24,7 @@ class ClassifierParser(JSONContentItemParser, content_type=ContentType.CLASSIFIE
         Raises:
             IncorrectParserException: When detecting this content item is a mapper.
         """
-        super().__init__(path, pack_marketplaces)
+        super().__init__(path, pack_marketplaces, **kwargs)
 
         self.type = self.json_data.get("type")
         if self.type != "classification":

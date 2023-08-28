@@ -258,7 +258,7 @@ class Uploader:
             NotUploadableException
         """
         content_item: Union[ContentItem, Pack] = BaseContent.from_path(
-            path
+            path, self.marketplace
         )  # type:ignore[assignment]
         if content_item is None:
             reason = (

@@ -33,6 +33,7 @@ from demisto_sdk.commands.content_graph.parsers.content_item import (
     ContentItemParser,
     InvalidContentItemException,
     NotAContentItemException,
+    NotInMarketplaceException,
 )
 from demisto_sdk.commands.content_graph.parsers.pack import PackParser
 
@@ -137,14 +138,16 @@ class BaseContent(ABC, BaseModel, metaclass=BaseContentMetaclass):
 
     @staticmethod
     @lru_cache
-    def from_path(path: Path) -> Optional["BaseContent"]:
+    def from_path(
+        path: Path, marketplace: Optional[MarketplaceVersions] = None
+    ) -> Optional["BaseContent"]:
         logger.debug(f"Loading content item from path: {path}")
         if (
             path.is_dir() and path.parent.name == PACKS_FOLDER
         ):  # if the path given is a pack
             try:
                 return content_type_to_model[ContentType.PACK].from_orm(
-                    PackParser(path)
+                    PackParser(path, marketplace)
                 )
             except InvalidContentItemException:
                 logger.error(f"Could not parse content from {str(path)}")
@@ -166,6 +169,12 @@ class BaseContent(ABC, BaseModel, metaclass=BaseContentMetaclass):
             demisto_sdk.commands.content_graph.parsers.content_item.MARKETPLACE_MIN_VERSION = (
                 MARKETPLACE_MIN_VERSION
             )
+
+        except NotInMarketplaceException:
+            logger.error(
+                f"The content item provided {str(path)} is not in the marketplace {marketplace}"
+            )
+            return None
         except InvalidContentItemException:
             logger.error(
                 f"Invalid content path provided: {str(path)}. Please provide a valid content item or pack path."

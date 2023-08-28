@@ -31,7 +31,7 @@ class PrepareUploadManager:
 
         if force:
             kwargs["force"] = True
-        content_item = BaseContent.from_path(input)
+        content_item = BaseContent.from_path(input, marketplace)
         if not isinstance(content_item, (ContentItem, Pack)):
             raise ValueError(
                 f"Unsupported input for {input}. Please provide a path to a content item or a pack."

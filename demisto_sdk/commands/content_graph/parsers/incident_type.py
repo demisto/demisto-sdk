@@ -10,9 +10,9 @@ from demisto_sdk.commands.content_graph.parsers.json_content_item import (
 
 class IncidentTypeParser(JSONContentItemParser, content_type=ContentType.INCIDENT_TYPE):
     def __init__(
-        self, path: Path, pack_marketplaces: List[MarketplaceVersions]
+        self, path: Path, pack_marketplaces: List[MarketplaceVersions], **kwargs
     ) -> None:
-        super().__init__(path, pack_marketplaces)
+        super().__init__(path, pack_marketplaces, **kwargs)
         self.playbook = self.json_data.get("playbookId") or ""
         self.hours = self.json_data.get("hours")
         self.days = self.json_data.get("days")

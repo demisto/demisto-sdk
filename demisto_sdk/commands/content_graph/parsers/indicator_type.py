@@ -12,9 +12,9 @@ class IndicatorTypeParser(
     JSONContentItemParser, content_type=ContentType.INDICATOR_TYPE
 ):
     def __init__(
-        self, path: Path, pack_marketplaces: List[MarketplaceVersions]
+        self, path: Path, pack_marketplaces: List[MarketplaceVersions], **kwargs
     ) -> None:
-        super().__init__(path, pack_marketplaces)
+        super().__init__(path, pack_marketplaces, **kwargs)
         self.connect_to_dependencies()
         self.regex = self.json_data.get("regex")
         self.reputation_script_name = self.json_data.get("reputationScriptName") or ""

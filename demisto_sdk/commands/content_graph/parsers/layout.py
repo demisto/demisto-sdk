@@ -14,9 +14,9 @@ from demisto_sdk.commands.content_graph.parsers.json_content_item import (
 
 class LayoutParser(JSONContentItemParser, content_type=ContentType.LAYOUT):
     def __init__(
-        self, path: Path, pack_marketplaces: List[MarketplaceVersions]
+        self, path: Path, pack_marketplaces: List[MarketplaceVersions], **kwargs
     ) -> None:
-        super().__init__(path, pack_marketplaces)
+        super().__init__(path, pack_marketplaces, **kwargs)
         if "group" not in self.json_data:
             logger.debug(f"{path}: Not a layout container, skipping.")
             raise NotAContentItemException

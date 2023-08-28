@@ -16,9 +16,9 @@ class XSIAMDashboardParser(
     JSONContentItemParser, content_type=ContentType.XSIAM_DASHBOARD
 ):
     def __init__(
-        self, path: Path, pack_marketplaces: List[MarketplaceVersions]
+        self, path: Path, pack_marketplaces: List[MarketplaceVersions], **kwargs
     ) -> None:
-        super().__init__(path, pack_marketplaces)
+        super().__init__(path, pack_marketplaces, **kwargs)
         self.json_data: Dict[str, Any] = self.json_data.get("dashboards_data", [{}])[0]
 
     @property

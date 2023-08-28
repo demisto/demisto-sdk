@@ -10,9 +10,9 @@ from demisto_sdk.commands.content_graph.parsers.json_content_item import (
 
 class WidgetParser(JSONContentItemParser, content_type=ContentType.WIDGET):
     def __init__(
-        self, path: Path, pack_marketplaces: List[MarketplaceVersions]
+        self, path: Path, pack_marketplaces: List[MarketplaceVersions], **kwargs
     ) -> None:
-        super().__init__(path, pack_marketplaces)
+        super().__init__(path, pack_marketplaces, **kwargs)
         self.data_type = self.json_data.get("dataType") or ""
         self.widget_type = self.json_data.get("widgetType") or ""
 

@@ -45,14 +45,14 @@ def node_map(properties: Dict[str, Any]) -> str:
 
 
 def to_neo4j_map(properties: dict) -> Tuple[str, list]:
-    properties = {}
+    updated_properties = {}
     where_clause = []
     for key, prop in properties.items():
         if isinstance(prop, (str, Path)):
-            properties[key] = f"'{prop}'"
+            updated_properties[key] = f"'{prop}'"
         elif isinstance(prop, list):
             where_clause.append(f"{str(prop)} IN {key}")
-    params_str = ", ".join(f"{k}: {v}" for k, v in properties.items())
+    params_str = ", ".join(f"{k}: {v}" for k, v in updated_properties.items())
     params_str = f"{{{params_str}}}" if params_str else ""
     return params_str, where_clause
 

@@ -1,17 +1,10 @@
-name: Handle New Contribution
-on: pull_request
+name: 'Auto Assign'
+on:
+  pull_request:
+    types: [opened, ready_for_review]
 
 jobs:
-  handle_new_contribution:
+  add-reviews:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Print Context
-        run: |
-          echo "$GITHUB_CONTEXT"
-        env:
-          GITHUB_CONTEXT: ${{ toJson(github) }}
-      - name: Assign The Contrib TL
-        uses: kentaro-m/auto-assign-action@v1.2.5
-        with:
-          configuration-path: '.github/auto_assign_contrib_tl.yml'
+      - uses: kentaro-m/auto-assign-action@v1.2.5

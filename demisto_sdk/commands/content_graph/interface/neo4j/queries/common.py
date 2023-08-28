@@ -51,7 +51,7 @@ def to_neo4j_map(properties: dict) -> Tuple[str, list]:
         if isinstance(prop, (str, Path)):
             updated_properties[key] = f"'{prop}'"
         elif isinstance(prop, list):
-            where_clause.append(f"{str(prop)} IN {key}")
+            where_clause.append(f"{key} IN {str(prop)}")
     params_str = ", ".join(f"{k}: {v}" for k, v in updated_properties.items())
     params_str = f"{{{params_str}}}" if params_str else ""
     return params_str, where_clause

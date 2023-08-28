@@ -202,7 +202,7 @@ def _match(
     if where_clause:
         where.extend(where_clause)
     if ids_list:
-        where.append("node_id = elementId(node)")
+        where.append("elementId(node) IN $filter_list")
     if marketplace:
         where.append(f"'{marketplace}' IN node.marketplaces")
 
@@ -211,8 +211,6 @@ def _match(
 MATCH (node{content_type_str}{params_str})
 {where_str}
 RETURN node"""
-    if ids_list:
-        query = "UNWIND $filter_list AS node_id\n" + query
 
     return [
         item.get("node")

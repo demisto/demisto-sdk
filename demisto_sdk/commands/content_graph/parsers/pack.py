@@ -244,6 +244,15 @@ class PackParser(BaseContentParser, PackMetadataParser):
         self.parse_pack_folders()
         logger.debug(f"Successfully parsed {self.node_id}")
 
+    def __call__(
+        self, path: Path, marketplace: Optional[MarketplaceVersions] = None
+    ) -> Any:
+        try:
+            return type(self)(path, marketplace)
+        except NotInMarketplaceException:
+            logger.debug(f"Skipping {path} - not in marketplace")
+            return None
+
     @property
     def object_id(self) -> Optional[str]:
         return self.path.name

@@ -36,7 +36,7 @@ class RepositoryParser:
         try:
             logger.info("Parsing packs...")
             with multiprocessing.Pool(processes=cpu_count()) as pool:
-                self.packs = list(pool.map(PackParser, packs_to_parse))
+                self.packs = list(filter(None, pool.map(PackParser, packs_to_parse)))
         except Exception:
             logger.error(traceback.format_exc())
             raise

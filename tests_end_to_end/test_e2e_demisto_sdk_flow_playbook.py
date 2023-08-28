@@ -80,7 +80,7 @@ def test_e2e_demisto_sdk_flow_playbook_client(tmpdir, insecure: bool = True):
     dest_playbook_path = Path(
         f"{tmpdir}/Packs/{pack_name}_client/Playbooks/{playbook_name}.yml"
     )
-     
+
     unique_id = 789
     pack_name = "foo_" + str(unique_id)
     playbook_name = "pb_" + str(unique_id)

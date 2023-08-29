@@ -30,6 +30,7 @@ def update_additional_dependencies(
             )
             return 0
         requirements = requirements_path.read_text().splitlines()
+        logger.info(f"Updating additional dependencies of {hooks} to {requirements}")
         pre_commit = get_file(pre_commit_config_path)
         for repo in pre_commit["repos"]:
             for hook in repo["hooks"]:

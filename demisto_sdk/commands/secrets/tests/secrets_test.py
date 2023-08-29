@@ -59,7 +59,7 @@ class TestSecrets:
     @classmethod
     def setup_class(cls):
         print("Setups TestSecrets class")  # noqa: T201
-        Path(TestSecrets.TEMP_DIR).mkdir(exists_ok=True)
+        Path(TestSecrets.TEMP_DIR).mkdir(exist_ok=True)
 
     @classmethod
     def teardown_class(cls):

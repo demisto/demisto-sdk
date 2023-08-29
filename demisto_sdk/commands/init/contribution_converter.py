@@ -415,7 +415,7 @@ class ContributionConverter:
 
                     if file.startswith(FileType.INDICATOR_FIELD.value):
                         # At first time, create another dir for all indicator-fields files and move them there
-                        Path(dst_ioc_fields_dir).mkdir(parents=True, exists_ok=True)
+                        Path(dst_ioc_fields_dir).mkdir(parents=True, exist_ok=True)
                         file_path = str(Path(self.working_dir_path, dir_name, file))
                         shutil.move(file_path, dst_ioc_fields_dir)  # type: ignore
 

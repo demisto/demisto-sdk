@@ -9,6 +9,7 @@ from demisto_sdk.commands.common.constants import (
     MarketplaceVersions,
 )
 from demisto_sdk.commands.common.logger import logger
+from demisto_sdk.commands.common.tools import find_type
 from demisto_sdk.commands.content_graph.common import (
     UNIFIED_FILES_SUFFIXES,
     ContentType,
@@ -104,6 +105,8 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
         try:
             content_type: ContentType = ContentType.by_path(path)
         except ValueError as e:
+            find_type(str(path))
+
             logger.error(f"Could not determine content type for {path}: {e}")
             raise InvalidContentItemException from e
         if parser_cls := ContentItemParser.content_type_to_parser.get(content_type):

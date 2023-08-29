@@ -7,6 +7,7 @@ from typing import Any, Dict, Iterator, List, NamedTuple, Set
 from neo4j import graph
 
 from demisto_sdk.commands.common.constants import PACKS_FOLDER
+from demisto_sdk.commands.common.tools import FileType
 
 NEO4J_ADMIN_DOCKER = ""
 
@@ -840,4 +841,44 @@ CONTENT_PRIVATE_ITEMS: dict = {
     ContentType.LAYOUT: [
         "MITRE Layout",
     ],
+}
+
+# BASE_CONTENT = "BaseContent",
+# COMMAND = "Command"
+# COMMAND_OR_SCRIPT = "CommandOrScript"
+
+FileType2ContentType = {
+    FileType.INTEGRATION: ContentType.INTEGRATION,
+    FileType.CLASSIFIER: ContentType.CLASSIFIER,
+    FileType.DASHBOARD: ContentType.DASHBOARD,
+    FileType.CORRELATION_RULE: ContentType.CORRELATION_RULE,
+    FileType.GENERIC_DEFINITION: ContentType.GENERIC_DEFINITION,
+    FileType.GENERIC_FIELD: ContentType.GENERIC_FIELD,
+    FileType.GENERIC_MODULE: ContentType.GENERIC_MODULE,
+    FileType.GENERIC_TYPE: ContentType.GENERIC_TYPE,
+    FileType.INCIDENT_FIELD: ContentType.INCIDENT_FIELD,
+    FileType.INCIDENT_TYPE: ContentType.INCIDENT_TYPE,
+    FileType.INDICATOR_FIELD: ContentType.INCIDENT_FIELD,
+    FileType.INDICATOR_TYPE: ContentType.INDICATOR_TYPE,
+    FileType.INTEGRATION: ContentType.INTEGRATION,
+    FileType.JOB: ContentType.JOB,
+    FileType.LAYOUT: ContentType.LAYOUT,
+    FileType.LISTS: ContentType.LIST,
+    FileType.MAPPER: ContentType.MAPPER,
+    FileType.MODELING_RULE: ContentType.MODELING_RULE,
+    FileType.PACK: ContentType.PACK,
+    FileType.PARSING_RULE: ContentType.PARSING_RULE,
+    FileType.PLAYBOOK: ContentType.PLAYBOOK,
+    FileType.PRE_PROCESS_RULES: ContentType.PREPROCESS_RULE,
+    FileType.REPORT: ContentType.REPORT,
+    FileType.SCRIPT: ContentType.SCRIPT,
+    FileType.TEST_PLAYBOOK: ContentType.TEST_PLAYBOOK,
+    FileType.TRIGGER: ContentType.TRIGGER,
+    FileType.WIDGET: ContentType.WIDGET,
+    FileType.XSIAM_DASHBOARD: ContentType.XSIAM_DASHBOARD,
+    FileType.XSIAM_REPORT: ContentType.XSIAM_REPORT,
+    FileType.WIZARD: ContentType.WIZARD,
+    FileType.XDRC_TEMPLATE: ContentType.XDRC_TEMPLATE,
+    FileType.LAYOUT_RULE: ContentType.LAYOUT_RULE,
+    FileType.CONNECTION: ContentType.CONNECTION,
 }

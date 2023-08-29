@@ -2589,7 +2589,7 @@ class ValidateManager:
         :returns a tuple(string, string, bool) where
             - the first element is the path of the file that should be returned, if the file isn't relevant then returns an empty string
             - the second element is the old path in case the file was renamed, if the file wasn't renamed then return an empty string
-            - true if the file type is supported, false otherwise
+            - true if the file type is supported OR file type is not supported, but should be ignored, false otherwise
         """
         irrelevant_file_output = "", "", True
         if file_path.split(os.path.sep)[0] in (
@@ -2611,15 +2611,7 @@ class ValidateManager:
         ):
             return irrelevant_file_output
 
-        if not file_type:
-            if str(file_path).endswith(".png"):
-                error_message, error_code = Errors.invalid_image_name_or_location()
-            else:
-                error_message, error_code = Errors.file_type_not_supported(
-                    None, file_path
-                )
-
-            self.handle_error(error_message, error_code, file_path=file_path)
+        if not self.is_valid_file_type(file_type, file_path, self.get_error_ignore_list(get_pack_name(file_path))):
             return "", "", False
 
         # redirect non-test code files to the associated yml file

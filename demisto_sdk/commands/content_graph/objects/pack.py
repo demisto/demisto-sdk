@@ -14,6 +14,7 @@ from demisto_sdk.commands.common.constants import (
     CONTRIBUTORS_README_TEMPLATE,
     DEFAULT_CONTENT_ITEM_FROM_VERSION,
     MARKETPLACE_MIN_VERSION,
+    ImagesFolderNames,
     MarketplaceVersions,
 )
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
@@ -42,6 +43,9 @@ from demisto_sdk.commands.content_graph.objects.pack_content_items import (
     PackContentItems,
 )
 from demisto_sdk.commands.content_graph.objects.pack_metadata import PackMetadata
+from demisto_sdk.commands.prepare_content.markdown_images_handler import (
+    replace_markdown_urls_and_upload_to_artifacts,
+)
 from demisto_sdk.commands.upload.constants import (
     CONTENT_TYPES_EXCLUDED_FROM_UPLOAD,
     MULTIPLE_ZIPPED_PACKS_FILE_NAME,
@@ -227,6 +231,7 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
             json.dump(metadata, f, indent=4, sort_keys=True)
 
     def dump_readme(self, path: Path, marketplace: MarketplaceVersions) -> None:
+
         shutil.copyfile(self.path / "README.md", path)
         if self.contributors:
             fixed_contributor_names = [
@@ -240,6 +245,12 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
         with open(path, "r+") as f:
             try:
                 text = f.read()
+
+                if (
+                    marketplace == MarketplaceVersions.XSOAR
+                    and MarketplaceVersions.XSOAR_ON_PREM in self.marketplaces
+                ):
+                    marketplace = MarketplaceVersions.XSOAR_ON_PREM
                 parsed_text = MarketplaceTagParser(marketplace).parse_text(text)
                 if len(text) != len(parsed_text):
                     f.seek(0)
@@ -247,6 +258,10 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
                     f.truncate()
             except Exception as e:
                 logger.error(f"Failed dumping readme: {e}")
+
+        replace_markdown_urls_and_upload_to_artifacts(
+            path, marketplace, self.object_id, file_type=ImagesFolderNames.README_IMAGES
+        )
 
     def dump(
         self,

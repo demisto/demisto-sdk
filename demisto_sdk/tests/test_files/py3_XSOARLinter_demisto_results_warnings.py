@@ -1,6 +1,5 @@
-from demisto_sdk.commands.common.handlers import JSON_Handler
+import json
 
-json = JSON_Handler()
 
 from typing import Any, Callable, Dict, Tuple
 

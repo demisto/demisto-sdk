@@ -4,14 +4,12 @@ from typing import Dict, List, Union
 
 from ordered_set import OrderedSet
 
-from demisto_sdk.commands.common.handlers import JSON_Handler
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.generate_unit_tests.common import (
     ast_name,
     extract_outputs_from_command_run,
 )
-
-json = JSON_Handler()
 
 
 class ArgsBuilder:

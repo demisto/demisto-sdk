@@ -1,11 +1,11 @@
 import os
 import re
 from abc import abstractmethod
-from distutils.version import LooseVersion
 from pathlib import Path
 from typing import Optional
 
 from packaging import version
+from packaging.version import Version
 
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import (
@@ -16,6 +16,7 @@ from demisto_sdk.commands.common.constants import (
     FEATURE_BRANCHES,
     FROM_TO_VERSION_REGEX,
     GENERIC_OBJECTS_OLDEST_SUPPORTED_VERSION,
+    MARKETPLACE_KEY_PACK_METADATA,
     MODELING_RULE,
     MODELING_RULE_ID_SUFFIX,
     MODELING_RULE_NAME_SUFFIX,
@@ -26,10 +27,11 @@ from demisto_sdk.commands.common.constants import (
     FileType,
 )
 from demisto_sdk.commands.common.content import Content
-from demisto_sdk.commands.common.content_constant_paths import CONF_PATH
+from demisto_sdk.commands.common.content_constant_paths import CONF_PATH, CONTENT_PATH
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.git_util import GitUtil
-from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
+from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
 from demisto_sdk.commands.common.hook_validations.base_validator import (
     BaseValidator,
     error_codes,
@@ -42,14 +44,13 @@ from demisto_sdk.commands.common.tools import (
     _get_file_id,
     find_type,
     get_file_displayed_name,
+    get_pack_name,
+    get_remote_file,
     get_yaml,
     is_test_config_match,
     run_command,
 )
 from demisto_sdk.commands.format.format_constants import OLD_FILE_DEFAULT_1_FROMVERSION
-
-json = JSON_Handler()
-yaml = YAML_Handler()
 
 
 class ContentEntityValidator(BaseValidator):
@@ -206,13 +207,33 @@ class ContentEntityValidator(BaseValidator):
         Returns:
             (bool): Whether the files' marketplaces as been modified or not.
         """
+
         if not self.old_file:
             return True
 
-        marketplaces_new = self.current_file.get("marketplaces", [])
-        marketplaces_old = self.old_file.get("marketplaces", [])
+        marketplaces_new = set(self.current_file.get("marketplaces", ()))
+        marketplaces_old = set(self.old_file.get("marketplaces", ()))
 
         if (not marketplaces_old) and marketplaces_new:
+            pack_name = get_pack_name(self.file_path)
+            try:
+                old_pack_marketplaces = set(
+                    get_remote_file(
+                        f"{CONTENT_PATH}/Packs/{pack_name}/pack_metadata.json",
+                        tag=self.prev_ver,
+                    ).get(MARKETPLACE_KEY_PACK_METADATA, ())
+                )
+                if marketplaces_new.issubset(old_pack_marketplaces):
+                    logger.debug(
+                        f"Adding marketplaces that were implicitly-supported previously ({marketplaces_new}) to content item {self.file_path} is allowed"
+                    )
+                    return True
+            except Exception:
+                logger.debug(
+                    f"Failed finding previous pack_metadata marketplaces for {self.file_path}",
+                    exc_info=True,
+                )
+
             error_message, error_code = Errors.marketplaces_added()
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 self.is_valid = False
@@ -224,8 +245,8 @@ class ContentEntityValidator(BaseValidator):
                 self.is_valid = False
                 return False
 
-        if not (set(marketplaces_old).issubset(marketplaces_new)):
-            removed = set(marketplaces_old) - set(marketplaces_new)
+        if not (marketplaces_old.issubset(marketplaces_new)):
+            removed = marketplaces_old - marketplaces_new
             error_message, error_code = Errors.marketplaces_removed(removed)
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 self.is_valid = False
@@ -494,7 +515,6 @@ class ContentEntityValidator(BaseValidator):
 
     @error_codes("BA117")
     def are_fromversion_and_toversion_in_correct_format(self) -> bool:
-
         if self.file_path.endswith(".json"):
             from_version = (
                 self.current_file.get("fromVersion", "00.00.00") or "00.00.00"
@@ -519,7 +539,6 @@ class ContentEntityValidator(BaseValidator):
 
     @error_codes("BA118")
     def are_fromversion_toversion_synchronized(self) -> bool:
-
         if self.file_path.endswith(".json"):
             from_version = self.current_file.get("fromVersion", "")
             to_version = self.current_file.get("toVersion", "")
@@ -556,9 +575,9 @@ class ContentEntityValidator(BaseValidator):
         else:
             return True
 
-        if LooseVersion(
+        if Version(
             self.current_file.get(from_version_field, DEFAULT_CONTENT_ITEM_FROM_VERSION)
-        ) < LooseVersion(self.oldest_supported_version):
+        ) < Version(self.oldest_supported_version):
             error_message, error_code = Errors.no_minimal_fromversion_in_file(
                 from_version_field, self.oldest_supported_version
             )
@@ -581,9 +600,9 @@ class ContentEntityValidator(BaseValidator):
         if not self.should_run_fromversion_validation():
             return True
 
-        if LooseVersion(
+        if Version(
             self.current_file.get("fromVersion", DEFAULT_CONTENT_ITEM_FROM_VERSION)
-        ) < LooseVersion(GENERIC_OBJECTS_OLDEST_SUPPORTED_VERSION):
+        ) < Version(GENERIC_OBJECTS_OLDEST_SUPPORTED_VERSION):
             error_message, error_code = Errors.no_minimal_fromversion_in_file(
                 "fromVersion", GENERIC_OBJECTS_OLDEST_SUPPORTED_VERSION
             )
@@ -610,7 +629,6 @@ class ContentEntityValidator(BaseValidator):
         """
 
         for separator in ENTITY_NAME_SEPARATORS:
-
             if separator in base_name:
                 base_name = base_name.replace(separator, "")
 
@@ -688,7 +706,7 @@ class ContentEntityValidator(BaseValidator):
         else:
             return True
 
-        if os.path.isfile(readme_path):
+        if Path(readme_path).is_file():
             return True
 
         error_message, error_code = Errors.missing_readme_file(file_type)

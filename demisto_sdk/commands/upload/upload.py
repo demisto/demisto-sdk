@@ -3,7 +3,7 @@ import shutil
 import tempfile
 from contextlib import suppress
 from pathlib import Path
-from typing import Iterable, List, Optional, Sequence, Tuple
+from typing import Iterable, List, Sequence
 from zipfile import ZipFile
 
 from pydantic import DirectoryPath
@@ -11,7 +11,10 @@ from pydantic import DirectoryPath
 from demisto_sdk.commands.common.constants import (
     MarketplaceVersions,
 )
-from demisto_sdk.commands.common.tools import parse_marketplace_kwargs
+from demisto_sdk.commands.common.tools import (
+    parse_marketplace_kwargs,
+    parse_multiple_path_inputs,
+)
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.content_graph.objects.pack import Pack
 from demisto_sdk.commands.content_graph.objects.repository import ContentDTO
@@ -31,11 +34,7 @@ logger = logging.getLogger("demisto-sdk")
 def upload_content_entity(**kwargs):
     from demisto_sdk.commands.upload.uploader import ConfigFileParser, Uploader
 
-    inputs: Optional[Tuple[Path, ...]] = (
-        tuple(Path(input) for input in kwargs["input"].split(","))
-        if kwargs.get("input")
-        else None
-    )
+    inputs = parse_multiple_path_inputs(kwargs.get("input"))
 
     keep_zip = kwargs.pop("keep_zip", None)
     destination_zip_path = Path(keep_zip or tempfile.mkdtemp())

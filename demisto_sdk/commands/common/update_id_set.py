@@ -6,7 +6,6 @@ import re
 import time
 from collections import OrderedDict
 from datetime import datetime
-from distutils.version import LooseVersion
 from enum import Enum
 from functools import partial
 from multiprocessing import Pool
@@ -15,6 +14,7 @@ from typing import Callable, Dict, List, Optional, Tuple
 
 import click
 import networkx
+from packaging.version import Version
 
 from demisto_sdk.commands.common.constants import (
     CLASSIFIERS_DIR,
@@ -56,7 +56,7 @@ from demisto_sdk.commands.common.content_constant_paths import (
     XPANSE_ID_SET_PATH,
 )
 from demisto_sdk.commands.common.cpu_count import cpu_count
-from demisto_sdk.commands.common.handlers import JSON_Handler
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     find_type,
@@ -71,9 +71,6 @@ from demisto_sdk.commands.common.tools import (
 from demisto_sdk.commands.prepare_content.integration_script_unifier import (
     IntegrationScriptUnifier,
 )
-
-json = JSON_Handler()
-
 
 CONTENT_ENTITIES = [
     "Packs",
@@ -314,9 +311,9 @@ def should_skip_item_by_mp(
         return False
 
     # first check, check field 'marketplaces' in the item's file
-    file_type = Path(file_path).suffix
+    Path(file_path).suffix
     try:
-        item_data = get_file(file_path, file_type)
+        item_data = get_file(file_path)
     except (ValueError, FileNotFoundError, IsADirectoryError):
         return True
 
@@ -1034,7 +1031,6 @@ def get_layouts_scripts_ids(layout_tabs):
         if isinstance(tab, dict):
             tab_sections = tab.get("sections", [])
             for section in tab_sections:
-
                 # Find dynamic sections scripts:
                 query_type = section.get("queryType")
                 if query_type == "script":
@@ -1757,7 +1753,7 @@ def process_integration(
     res = []
     excluded_items_from_id_set: dict = {}
     try:
-        if os.path.isfile(file_path):
+        if Path(file_path).is_file():
             if should_skip_item_by_mp(
                 file_path,
                 marketplace,
@@ -1785,7 +1781,7 @@ def process_integration(
                 print_logs=print_logs,
             ):
                 return [], excluded_items_from_id_set
-            if os.path.isfile(file_path):
+            if Path(file_path).is_file():
                 # locally, might have leftover dirs without committed files
                 if print_logs:
                     logger.info(f"adding {file_path} to id_set")
@@ -1815,7 +1811,7 @@ def process_script(
     res = []
     excluded_items_from_id_set: dict = {}
     try:
-        if os.path.isfile(file_path):
+        if Path(file_path).is_file():
             if should_skip_item_by_mp(
                 file_path,
                 marketplace,
@@ -2149,7 +2145,7 @@ def process_general_items(
     res = []
     excluded_items_from_id_set: dict = {}
     try:
-        if os.path.isfile(file_path):
+        if Path(file_path).is_file():
             item_type = find_type(file_path)
             if item_type in expected_file_types:
                 if should_skip_item_by_mp(
@@ -2168,7 +2164,7 @@ def process_general_items(
             package_name = os.path.basename(file_path)
             file_path = os.path.join(file_path, f"{package_name}.{suffix}")
             item_type = find_type(file_path)
-            if os.path.isfile(file_path) and item_type in expected_file_types:
+            if Path(file_path).is_file() and item_type in expected_file_types:
                 if should_skip_item_by_mp(
                     file_path,
                     marketplace,
@@ -2740,7 +2736,6 @@ def re_create_id_set(  # noqa: C901
     with click.progressbar(
         length=len(objects_to_create), label="Creating id-set"
     ) as progress_bar:
-
         if "Packs" in objects_to_create:
             logger.info("\n[green]Starting iteration over Packs[/green]")
             for pack_data in pool.map(
@@ -2766,7 +2761,6 @@ def re_create_id_set(  # noqa: C901
                 ),
                 get_integrations_paths(pack_to_create),
             ):
-
                 for _id, data in (
                     arr[0].items() if arr and isinstance(arr, list) else {}
                 ):
@@ -3717,16 +3711,16 @@ def has_duplicate(
     for dup1, dup2 in itertools.combinations(duplicates, 2):
         dict1 = list(dup1.values())[0]
         dict2 = list(dup2.values())[0]
-        dict1_from_version = LooseVersion(
+        dict1_from_version = Version(
             dict1.get("fromversion", DEFAULT_CONTENT_ITEM_FROM_VERSION)
         )
-        dict2_from_version = LooseVersion(
+        dict2_from_version = Version(
             dict2.get("fromversion", DEFAULT_CONTENT_ITEM_FROM_VERSION)
         )
-        dict1_to_version = LooseVersion(
+        dict1_to_version = Version(
             dict1.get("toversion", DEFAULT_CONTENT_ITEM_TO_VERSION)
         )
-        dict2_to_version = LooseVersion(
+        dict2_to_version = Version(
             dict2.get("toversion", DEFAULT_CONTENT_ITEM_TO_VERSION)
         )
 

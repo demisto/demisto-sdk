@@ -48,7 +48,8 @@ from demisto_sdk.commands.common.constants import (
     XSIAM_DASHBOARDS_DIR,
     XSIAM_REPORTS_DIR,
 )
-from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
+from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.tests.tools_test import SENTENCE_WITH_UMLAUTS
 from demisto_sdk.commands.common.tools import (
@@ -59,9 +60,6 @@ from demisto_sdk.commands.common.tools import (
 )
 from demisto_sdk.commands.download.downloader import Downloader
 from TestSuite.test_tools import str_in_call_args_list
-
-yaml = YAML_Handler()
-json = JSON_Handler()
 
 
 def ordered(obj):
@@ -879,7 +877,7 @@ class TestMergeExistingFile:
                 file["path"] for file in env.INTEGRATION_PACK_OBJECT["Test Integration"]
             ]
             for path in paths:
-                assert os.path.isfile(path)
+                assert Path(path).is_file()
             yml_data = get_yaml(
                 env.INTEGRATION_PACK_OBJECT["Test Integration"][2]["path"]
             )
@@ -934,7 +932,7 @@ class TestMergeExistingFile:
                 downloader.merge_existing_file(
                     param["custom_content_object"], param["ending"]
                 )
-                assert os.path.isfile(param["instance_path"])
+                assert Path(param["instance_path"]).is_file()
                 file_data = param["method"](param["instance_path"], cache_clear=True)
                 for field in param["fields"]:
                     if file_data.get(field):
@@ -1146,7 +1144,7 @@ class TestMergeNewFile:
             new_file_path = f"{output_dir_path}/{os.path.basename(old_file_path)}"
             downloader = Downloader(output=temp_dir, input="", regex="")
             downloader.merge_new_file(param["custom_content_object"])
-            assert os.path.isfile(new_file_path)
+            assert Path(new_file_path).is_file()
 
 
 class TestVerifyPackPath:
@@ -1379,7 +1377,7 @@ def test_safe_write_unicode_to_non_unicode(
     )
 
     # make sure the two files were merged correctly
-    result = get_file(dest, suffix)
+    result = get_file(dest)
     assert set(result.keys()) == set(fields)
     assert set(result.values()) == {SENTENCE_WITH_UMLAUTS}
 

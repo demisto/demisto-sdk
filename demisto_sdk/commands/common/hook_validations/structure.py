@@ -20,16 +20,14 @@ from demisto_sdk.commands.common.constants import (
     FileType,
 )
 from demisto_sdk.commands.common.errors import Errors
-from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
+from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
 from demisto_sdk.commands.common.hook_validations.base_validator import (
     BaseValidator,
     error_codes,
 )
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import get_remote_file, is_file_path_in_pack
-
-json = JSON_Handler()
-yaml = YAML_Handler()
 
 
 class StructureValidator(BaseValidator):
@@ -76,7 +74,7 @@ class StructureValidator(BaseValidator):
             specific_validations=specific_validations,
         )
         self.is_valid = True
-        self.valid_extensions = [".yml", ".json", ".md", ".png", ".py"]
+        self.valid_extensions = [".yml", ".json", ".md", ".png", ".py", ".svg"]
         self.file_path = file_path.replace("\\", "/")
         self.skip_schema_check = skip_schema_check
         self.pykwalify_logs = pykwalify_logs
@@ -97,7 +95,7 @@ class StructureValidator(BaseValidator):
         else:
             self.old_file = get_remote_file(
                 old_file_path if old_file_path else file_path,
-                tag=tag,
+                tag=self.prev_ver,
             )
         self.configuration = configuration
 

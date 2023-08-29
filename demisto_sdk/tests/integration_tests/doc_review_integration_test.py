@@ -316,10 +316,10 @@ def test_review_release_notes_invalid(repo, mocker, monkeypatch):
                 for current_str in [
                     'Notes for the line: "fixed a bug where the ***ip*** commanda '
                     'failed when unknown categories were returned"',
-                    "Line is not using one of our templates,",
+                    "Line #4 is not using one of our templates,",
                     'Refrain from using the word "bug", use "issue" instead.',
-                    "Line should end with a period (.)",
-                    "Line should start with capital letter.",
+                    "Line #4 should end with a period (.)",
+                    "Line #4 should start with capital letter.",
                     "commanda - did you mean:",
                     "command",
                 ]

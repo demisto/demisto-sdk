@@ -28,7 +28,7 @@ from demisto_sdk.commands.common.logger import logger
 DOCKER_CLIENT = None
 FILES_SRC_TARGET = List[Tuple[os.PathLike, str]]
 # this will be used to determine if the system supports mounts
-CAN_MOUNT_FILES = bool(os.getenv("GITLAB_CI", False)) or (
+CAN_MOUNT_FILES = bool(os.getenv("CONTENT_GITLAB_CI", False)) or (
     (not os.getenv("CIRCLECI", False))
     and (
         (not os.getenv("DOCKER_HOST"))
@@ -131,16 +131,17 @@ class DockerBase:
     @staticmethod
     def pull_image(image: str) -> docker.models.images.Image:
         """
-        Pulling an image if it dosnt exist localy.
+        Get a local docker image, or pull it when unavailable.
         """
         docker_client = init_global_docker_client(log_prompt="pull_image")
+
         try:
             return docker_client.images.get(image)
         except docker.errors.ImageNotFound:
-            logger.debug(f"docker image {image} not found, pulling")
+            logger.debug(f"docker {image=} not found locally, pulling")
             docker_client.images.pull(image)
-            logger.debug(f"docker image {image} finished pulling")
-            return docker_client
+            logger.debug(f"pulled docker {image=} successfully")
+            return docker_client.images.get(image)
 
     @staticmethod
     def copy_files_container(
@@ -256,7 +257,7 @@ class DockerBase:
         container.commit(
             repository=repository, tag=tag, changes=self.changes[container_type]
         )
-        if os.getenv("GITLAB_CI"):
+        if os.getenv("CONTENT_GITLAB_CI"):
             container.commit(
                 repository=repository.replace("docker-io.art.code.pan.run/", ""),
                 tag=tag,
@@ -496,10 +497,8 @@ def _get_python_version_from_image_client(image: str) -> Version:
     Returns:
         Version: Python version X.Y (3.7, 3.6, ..)
     """
-    docker_client = init_global_docker_client()
     try:
-        docker_client.images.pull(image)
-        image_model = docker_client.images.get(image)
+        image_model = DockerBase.pull_image(image)
         env = image_model.attrs["Config"]["Env"]
         logger.debug(f"Got {env=} from {image=}")
         return _get_python_version_from_env(env)
@@ -516,7 +515,7 @@ def _get_python_version_from_dockerhub_api(image: str):
         raise ValueError(f"Invalid docker image: {image}")
     else:
         repo, tag = image.split(":")
-    if os.getenv("GITLAB_CI"):
+    if os.getenv("CONTENT_GITLAB_CI"):
         # we need to remove the gitlab prefix, as we query the API
         repo = repo.replace("docker-io.art.code.pan.run/", "")
     try:

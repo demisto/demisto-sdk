@@ -17,7 +17,7 @@ class IndicatorTypeParser(
         super().__init__(path, pack_marketplaces)
         self.connect_to_dependencies()
         self.regex = self.json_data.get("regex")
-        self.reputation_script_name = self.json_data.get("reputationScriptName") or None
+        self.reputation_script_name = self.json_data.get("reputationScriptName") or ""
         self.enhancement_script_names = self.json_data.get("enhancementScriptNames")
 
     @property
@@ -26,7 +26,12 @@ class IndicatorTypeParser(
 
     @property
     def supported_marketplaces(self) -> Set[MarketplaceVersions]:
-        return {MarketplaceVersions.XSOAR, MarketplaceVersions.MarketplaceV2}
+        return {
+            MarketplaceVersions.XSOAR,
+            MarketplaceVersions.MarketplaceV2,
+            MarketplaceVersions.XSOAR_SAAS,
+            MarketplaceVersions.XSOAR_ON_PREM,
+        }
 
     @property
     def description(self) -> Optional[str]:

@@ -12,7 +12,7 @@ from demisto_sdk.commands.common.constants import (
 from demisto_sdk.commands.common.default_additional_info_loader import (
     load_default_additional_info_dict,
 )
-from demisto_sdk.commands.common.handlers import JSON_Handler
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import get_yaml
 from demisto_sdk.commands.generate_docs.common import (
@@ -27,8 +27,6 @@ from demisto_sdk.commands.generate_docs.common import (
 from demisto_sdk.commands.integration_diff.integration_diff_detector import (
     IntegrationDiffDetector,
 )
-
-json = JSON_Handler()
 
 CREDENTIALS = 9
 
@@ -112,7 +110,7 @@ def generate_integration_doc(
 
         if permissions == "per-command":
             command_permissions_dict: Any = {}
-            if command_permissions and os.path.isfile(command_permissions):
+            if command_permissions and Path(command_permissions).is_file():
                 permission_list = get_command_permissions(command_permissions)
                 for command_permission in permission_list:
                     # get all the permissions after the command name
@@ -148,9 +146,7 @@ def generate_integration_doc(
             if not is_contribution:
                 docs.extend(
                     [
-                        "This integration was integrated and tested with version xx of {}".format(
-                            yml_data["name"]
-                        ),
+                        f"This integration was integrated and tested with version xx of {yml_data['name']}.",
                         "",
                     ]
                 )
@@ -764,7 +760,7 @@ def get_command_examples(commands_examples_input, specific_commands):
     if not commands_examples_input:
         return []
 
-    if os.path.isfile(commands_examples_input):
+    if Path(commands_examples_input).is_file():
         with open(commands_examples_input) as examples_file:
             command_examples = examples_file.read().splitlines()
     else:
@@ -812,7 +808,7 @@ def get_command_permissions(commands_permissions_file_path) -> list:
     if commands_permissions_file_path is None:
         return commands_permissions
 
-    if os.path.isfile(commands_permissions_file_path):
+    if Path(commands_permissions_file_path).is_file():
         with open(commands_permissions_file_path) as permissions_file:
             permissions = permissions_file.read().splitlines()
     else:

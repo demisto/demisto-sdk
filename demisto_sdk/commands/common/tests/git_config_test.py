@@ -10,11 +10,10 @@ from demisto_sdk.commands.common.git_content_config import (
     GitCredentials,
     GitProvider,
 )
-from demisto_sdk.commands.common.handlers import JSON_Handler
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from TestSuite.test_tools import str_in_call_args_list
 
-json = JSON_Handler()
 GIT_ROOT = git_path()
 VALID_GITLAB_RESPONSE = (
     f"{GIT_ROOT}/demisto_sdk/tests/test_files/valid_gitlab_search_response.json"

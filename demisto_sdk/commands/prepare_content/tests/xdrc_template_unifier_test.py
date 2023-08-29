@@ -1,8 +1,7 @@
-import json
-import os
 from pathlib import Path
 
 from demisto_sdk.commands.common.legacy_git_tools import git_path
+from demisto_sdk.commands.common.tools import get_file
 from demisto_sdk.commands.prepare_content.prepare_upload_manager import (
     PrepareUploadManager,
 )
@@ -44,7 +43,6 @@ def test_unify_xdrc_template():
         "profile_type": "STANDARD",
         "yaml_template": "dGVzdDogZHVtbXlfdGVzdA==",
     }
-    with open(expected_json_path) as real_file:
-        assert expected_json_file == json.load(real_file)
+    assert get_file(expected_json_path) == expected_json_file
 
-    os.remove(export_json_path)
+    Path(export_json_path).unlink()

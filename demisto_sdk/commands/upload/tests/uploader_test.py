@@ -20,7 +20,7 @@ from demisto_sdk.__main__ import main, upload
 from demisto_sdk.commands.common.constants import (
     MarketplaceVersions,
 )
-from demisto_sdk.commands.common.handlers import JSON_Handler
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.tools import src_root
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
@@ -35,6 +35,7 @@ from demisto_sdk.commands.content_graph.objects.integration_script import (
 )
 from demisto_sdk.commands.content_graph.objects.layout import Layout
 from demisto_sdk.commands.content_graph.objects.mapper import Mapper
+from demisto_sdk.commands.content_graph.objects.pack_metadata import PackMetadata
 from demisto_sdk.commands.content_graph.objects.playbook import Playbook
 from demisto_sdk.commands.content_graph.objects.script import Script
 from demisto_sdk.commands.content_graph.objects.widget import Widget
@@ -61,8 +62,6 @@ from TestSuite.test_tools import flatten_call_args, str_in_call_args_list
 
 if TYPE_CHECKING:
     from demisto_sdk.commands.common.content.objects.pack_objects.pack import Pack
-
-json = JSON_Handler()
 
 
 def mock_upload_method(mocker: Any, class_: ContentItem):
@@ -450,6 +449,10 @@ def test_upload_invalid_path(mocker):
     path = Path(
         f"{git_path()}/demisto_sdk/tests/test_files/content_repo_not_exists/Scripts/"
     )
+    mocker.patch(
+        "demisto_sdk.commands.upload.uploader.get_demisto_version",
+        return_value=Version("8.0.0"),
+    )
     uploader = Uploader(input=path, insecure=False)
     assert uploader.upload() == ERROR_RETURN_CODE
     assert not any(
@@ -475,6 +478,10 @@ def test_upload_single_unsupported_file(mocker):
     Then
         - Ensure uploaded failure message is printed as expected
     """
+    mocker.patch(
+        "demisto_sdk.commands.upload.uploader.get_demisto_version",
+        return_value=Version("8.0.0"),
+    )
     mocker.patch.object(demisto_client, "configure", return_value="object")
     path = Path(
         f"{git_path()}/demisto_sdk/tests/test_files/fake_pack/Integrations/test_data/results.json"
@@ -915,6 +922,9 @@ class TestZippedPackUpload:
         mocker.patch.object(
             API_CLIENT, "upload_content_packs", return_value=({}, 200, None)
         )
+        mocker.patch.object(
+            PackMetadata, "_get_tags_from_landing_page", retrun_value={}
+        )
 
         with TemporaryDirectory() as dir:
             click.Context(command=upload).invoke(
@@ -1094,6 +1104,7 @@ def test_zip_multiple_packs(tmp_path: Path, integration, mocker):
     shutil.rmtree(pack_to_zip.path)  # leave only the zip
     zipped_pack_path = tmp_path / "zipped.zip"
     mocker.patch.object(BaseContent, "from_path", side_effect=[pack0, pack1, None])
+    mocker.patch.object(PackMetadata, "_get_tags_from_landing_page", retrun_value={})
     zip_multiple_packs(
         [pack0.path, pack1.path, zipped_pack_path],
         MarketplaceVersions.XSOAR,

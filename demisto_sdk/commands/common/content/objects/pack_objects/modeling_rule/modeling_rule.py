@@ -110,15 +110,17 @@ class SingleModelingRule:
         self._datamodel = value
 
     @property
-    def fields(self):
+    def fields(self) -> List[str]:
         if not self._fields:
-            uniq_fields = set(re.findall(self.RULE_FIELDS_REGEX, self.rule_text))
-            uniq_fields.add(self.TIME_FIELD)  # The '_time' field is always required.
-            self.fields = uniq_fields
-            if not self._fields:
+            uniq_fields = list(set(re.findall(self.RULE_FIELDS_REGEX, self.rule_text)))
+            if not uniq_fields:
                 raise ValueError(
                     f'could not parse datamodel fields from the rule text: "{self.rule_text}"'
                 )
+
+            uniq_fields.append(self.TIME_FIELD)  # The '_time' field is always required.
+            self.fields = sorted(uniq_fields)
+
         return self._fields
 
     @fields.setter
@@ -194,6 +196,7 @@ class ModelingRule(YAMLContentUnifiedObject):
         flags=re.M,
     )
     TESTDATA_FILE_SUFFIX = "_testdata.json"
+    SCHEMA_FILE_SUFFIX = "_schema.json"
 
     def __init__(self, path: Union[Path, str]):
         super().__init__(path, FileType.MODELING_RULE, MODELING_RULE)
@@ -239,6 +242,10 @@ class ModelingRule(YAMLContentUnifiedObject):
     def rules(self, value):
         self._rules = value
 
+    def get_path_by_file_suffix(self, file_path: str) -> Optional[Path]:
+        patterns = [f"*{file_path}"]
+        return next(self.path.parent.glob(patterns=patterns, flags=IGNORECASE), None)  # type: ignore
+
     @property
     def testdata_path(self) -> Optional[Path]:
         """Modeling rule related testdata file path.
@@ -246,8 +253,11 @@ class ModelingRule(YAMLContentUnifiedObject):
         Returns:
             Testdata file path or None if testdata file is not found.
         """
-        patterns = [f"*{self.TESTDATA_FILE_SUFFIX}"]
-        return next(self.path.parent.glob(patterns=patterns, flags=IGNORECASE), None)  # type: ignore
+        return self.get_path_by_file_suffix(self.TESTDATA_FILE_SUFFIX)
+
+    @property
+    def schema_path(self) -> Optional[Path]:
+        return self.get_path_by_file_suffix(self.SCHEMA_FILE_SUFFIX)
 
     def type(self):
         return FileType.MODELING_RULE

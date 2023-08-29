@@ -4,8 +4,9 @@ from typing import Optional, Union
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.common.logger import logger
-from demisto_sdk.commands.content_graph.interface.neo4j.neo4j_graph import (
-    Neo4jContentGraphInterface,
+from demisto_sdk.commands.content_graph.commands.update import update_content_graph
+from demisto_sdk.commands.content_graph.interface import (
+    ContentGraphInterface,
 )
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
@@ -38,7 +39,11 @@ class PrepareUploadManager:
 
         if graph:
             # enrich the content item with the graph
-            with Neo4jContentGraphInterface(should_update=not skip_update) as interface:
+            with ContentGraphInterface() as interface:
+                if not skip_update:
+                    update_content_graph(
+                        interface, use_git=True, output_path=interface.output_path
+                    )
                 content_item = interface.from_path(
                     path=content_item.path,
                     marketplace=marketplace,

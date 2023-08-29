@@ -1,6 +1,7 @@
 import logging
 import os
 from os.path import join
+from typing import Optional
 
 import pytest
 
@@ -12,15 +13,12 @@ from demisto_sdk.commands.common.errors import (
     PRESET_ERROR_TO_IGNORE,
     Errors,
 )
-from demisto_sdk.commands.common.handlers import JSON_Handler
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.hook_validations.base_validator import BaseValidator
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.tools import get_yaml
 from TestSuite.pack import Pack
 from TestSuite.test_tools import ChangeCWD, str_in_call_args_list
-
-json = JSON_Handler()
-
 
 DEPRECATED_IGNORE_ERRORS_DEFAULT_LIST = (
     BaseValidator.create_reverse_ignored_errors_list(
@@ -63,7 +61,7 @@ def test_handle_error_on_unignorable_error_codes(
     - Ensure that the un-ignorable errors are in FOUND_FILES_AND_ERRORS list.
     - Ensure that the un-ignorable errors are not in FOUND_FILES_AND_IGNORED_ERRORS list.
     """
-    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+    logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
     monkeypatch.setenv("COLUMNS", "1000")
 
     base_validator = BaseValidator(ignored_errors=ignored_errors)
@@ -76,9 +74,64 @@ def test_handle_error_on_unignorable_error_codes(
         suggested_fix="fix",
     )
     assert expected_error in result
-    assert str_in_call_args_list(logger_info.call_args_list, expected_error)
+    assert str_in_call_args_list(logger_error.call_args_list, expected_error)
     assert f"file_name - [{error_code}]" in FOUND_FILES_AND_ERRORS
     assert f"file_name - [{error_code}]" not in FOUND_FILES_AND_IGNORED_ERRORS
+
+
+@pytest.mark.parametrize(
+    "is_github_actions, suggested_fix, is_warning, expected_result",
+    [
+        (
+            True,
+            "fix",
+            False,
+            "::error file=PATH,line=1,endLine=1,title=Validation Error SC102::Error-message%0Afix\n",
+        ),
+        (
+            True,
+            None,
+            False,
+            "::error file=PATH,line=1,endLine=1,title=Validation Error SC102::Error-message\n",
+        ),
+        (True, None, True, ""),
+        (False, "fix", False, ""),
+        (False, None, False, ""),
+    ],
+)
+def test_handle_error_github_annotation(
+    monkeypatch,
+    capsys,
+    is_github_actions: bool,
+    suggested_fix: Optional[str],
+    is_warning: bool,
+    expected_result: str,
+):
+    """
+    Given
+    - is_github_actions - True to mock running in CI
+    - suggested_fix - a suggestion for fixing the error
+    - warning
+    - expected_result
+
+    When
+    - executing handle_error function
+
+    Then
+    - Ensure the message was printed if needed, and not if not
+    - Ensure the message includes the suggested_fix if exists
+    """
+    monkeypatch.setenv("GITHUB_ACTIONS", is_github_actions)
+    base_validator = BaseValidator()
+    base_validator.handle_error(
+        error_message="Error-message",
+        error_code="SC102",
+        file_path="PATH",
+        suggested_fix=suggested_fix,
+        warning=is_warning,
+    )
+    captured = capsys.readouterr()
+    assert captured.out == expected_result
 
 
 def test_handle_error(mocker, caplog):
@@ -456,7 +509,6 @@ class TestJsonOutput:
                 "severity": "error",
                 "errorCode": ui_applicable_error_code,
                 "message": ui_applicable_error_message,
-                "ui": True,
                 "relatedField": "<parameter-name>.display",
             }
         ]
@@ -471,7 +523,6 @@ class TestJsonOutput:
                 "severity": "error",
                 "errorCode": ui_applicable_error_code,
                 "message": ui_applicable_error_message,
-                "ui": True,
                 "relatedField": "<parameter-name>.display",
                 "linter": "validate",
             },
@@ -484,7 +535,6 @@ class TestJsonOutput:
                 "severity": "warning",
                 "errorCode": non_ui_applicable_error_code,
                 "message": non_ui_applicable_error_message,
-                "ui": False,
                 "relatedField": "subtype",
                 "linter": "validate",
             },

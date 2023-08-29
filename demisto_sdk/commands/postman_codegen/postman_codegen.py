@@ -4,7 +4,7 @@ from typing import Any, Dict, List, Union
 
 import demisto_sdk.commands.common.tools as tools
 from demisto_sdk.commands.common.constants import DemistoException
-from demisto_sdk.commands.common.handlers import JSON_Handler
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.hook_validations.docker import DockerImageValidator
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.generate_integration.code_generator import (
@@ -19,8 +19,6 @@ from demisto_sdk.commands.generate_outputs.json_to_outputs.json_to_outputs impor
     determine_type,
     flatten_json,
 )
-
-json = JSON_Handler()
 
 
 def postman_headers_to_conf_headers(

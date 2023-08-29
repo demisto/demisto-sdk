@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "demisto-sdk"
-version = "1.16.0"
+version = "1.19.2"
 description = "\"A Python library for the Demisto SDK\""
 authors = ["Demisto"]
 license = "MIT"
@@ -18,6 +18,7 @@ exclude = ["TestSuite/**", "*/tests/*", "tests"]
 
 [tool.poetry.scripts]
 demisto-sdk = "demisto_sdk.__main__:main"
+update-additional-dependencies = "demisto_sdk.scripts.update_additional_dependencies:main"
 
 [tool.poetry.dependencies]
 python = ">=3.8,<3.11"
@@ -29,7 +30,6 @@ vulture = "^2.3"
 beautifulsoup4 = "^4.11.1"
 chardet = ">=4,<6"
 click = "^8.0.0"
-colorama = "^0.4.4"
 coloredlogs = "^15.0.1"
 configparser = "^5.2.0"
 coverage = "^7.2.1"
@@ -45,7 +45,6 @@ jsonschema = "^4.4.0"
 mergedeep = "^1.3.4"
 networkx = "^2.7.1"
 nltk = "^3.7"
-pipenv = "^2022.3.28"
 prettytable = "^3.2.0"
 pykwalify = "^1.8.0"
 pyspellchecker = "^0.6.3"
@@ -58,8 +57,7 @@ ujson = "^5.1.0"
 urllib3 = "^1.26.9"
 wcmatch = "^8.3"
 yamlordereddictloader = "^0.4.0"
-GitPython = "^3.1.27,<3.1.31"
-Jinja2 = "^3.1.1"
+GitPython = "^3.1.32"
 Pebble = ">=4.6.3,<6.0.0"
 PyPDF2 = "^1.28.6"
 giturlparse = "^0.10.0"
@@ -67,7 +65,6 @@ pytest-freezegun = "^0.4.2"
 python-dotenv = "^0.20.0"
 importlib-resources = "^5.6.0"
 dictdiffer = "^0.9.0"
-MarkupSafe = "^2.1.1"
 imagesize = "^1.3.0"
 cryptography = "^36.0.2"
 dateparser = "^1.1.1"
@@ -106,7 +103,6 @@ packaging = "<22"
 orjson = "^3.8.3"
 more-itertools = "^9.0.0"
 junitparser = "^2.8.0"
-no-implicit-optional = "^1.3"
 
 [tool.poetry.group.dev.dependencies]
 mitmproxy = "^8.0.0"
@@ -167,9 +163,12 @@ select = [
     "I",
     "PLE",
     "RUF100",
-    "T20",
-    "W",
     "T10",
+    "T20",
+    "TID251",
+    "W",
+    "PTH107",
+    "PTH113"
 ]
 
 target-version = "py38"
@@ -179,4 +178,10 @@ max-complexity = 30
 
 [tool.ruff.flake8-tidy-imports]
 [tool.ruff.flake8-tidy-imports.banned-api]
-"logging".msg = "The logging framework is banned. Please use demisto_sdk.commands.common.logger."
+# "logging".msg = "The logging framework is banned. Please use demisto_sdk.commands.common.logger."
+"json".msg = "use JSON_Handler instead"
+"ujson".msg = "use JSON_Handler instead"
+"orjson".msg = "use JSON_Handler instead"
+"ruamel.yaml".msg = "use YAML_Handler instead"
+"distutils.version".msg = "Use packaging.version.Version instead"
+"packaging.version.LooseVersion".msg = "Use packaging.version.Version instead"

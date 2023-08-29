@@ -3,7 +3,7 @@ from pathlib import Path
 
 import pytest
 
-from demisto_sdk.commands.common.handlers import YAML_Handler
+from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
 from demisto_sdk.commands.generate_modeling_rules.generate_modeling_rules import (
     MappingField,
     RawEventData,
@@ -26,8 +26,6 @@ from demisto_sdk.commands.generate_modeling_rules.generate_modeling_rules import
     to_number_wrap,
     to_string_wrap,
 )
-
-yaml = YAML_Handler()
 
 
 @pytest.mark.parametrize("s, res", (["hello,\n", "hello;\n"], ["", ""]))

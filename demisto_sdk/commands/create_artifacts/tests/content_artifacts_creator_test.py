@@ -12,16 +12,15 @@ from demisto_sdk.commands.common.constants import (
     TEST_PLAYBOOKS_DIR,
     MarketplaceVersions,
 )
-from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
+from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
 from demisto_sdk.commands.common.tools import src_root
 from demisto_sdk.commands.prepare_content.prepare_upload_manager import (
     PrepareUploadManager,
 )
-from TestSuite.test_tools import ChangeCWD
+from TestSuite.test_tools import ChangeCWD, flatten_call_args
 
 logger = logging.getLogger("demisto-sdk")
-
-json = JSON_Handler()
 
 
 TEST_DATA = src_root() / "tests" / "test_files"
@@ -32,8 +31,6 @@ COMMON_SERVER = UNIT_TEST_DATA / "common_server"
 ARTIFACTS_EXPECTED_RESULTS = TEST_DATA / "artifacts"
 PARTIAL_ID_SET_PATH = UNIT_TEST_DATA / "id_set_missing_packs_and_items.json"
 ALTERNATIVE_FIELDS_ID_SET_PATH = UNIT_TEST_DATA / "id_set_alrenative_fields.json"
-
-yaml = YAML_Handler()
 
 
 def same_folders(src1, src2):
@@ -355,7 +352,7 @@ def test_duplicate_file_failure(mock_git):
 
 
 @pytest.mark.parametrize("key, tool", [("some_key", False), ("", True)])
-def test_sign_packs_failure(repo, caplog, key, tool, monkeypatch):
+def test_sign_packs_failure(repo, mocker, key, tool, monkeypatch):
     """
     When:
         - Signing a pack.
@@ -374,6 +371,7 @@ def test_sign_packs_failure(repo, caplog, key, tool, monkeypatch):
         sign_packs,
     )
 
+    logger = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
     cca.logger = logger
     monkeypatch.setenv("COLUMNS", "1000")
 
@@ -396,10 +394,10 @@ def test_sign_packs_failure(repo, caplog, key, tool, monkeypatch):
                 artifact_manager.signDirectory = Path(temp / "tool")
 
     sign_packs(artifact_manager)
-
+    logged = flatten_call_args(logger.error.call_args_list)
     assert (
         "Failed to sign packs. In order to do so, you need to provide both signature_key and "
-        "sign_directory arguments." in caplog.text
+        "sign_directory arguments." in logged[0]
     )
 
 

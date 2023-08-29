@@ -2,6 +2,7 @@ import os
 import re
 import shutil
 from os.path import join
+from pathlib import Path
 from typing import Union
 from zipfile import ZipFile
 
@@ -11,9 +12,12 @@ from _pytest.tmpdir import TempPathFactory, _mk_tmp
 
 from demisto_sdk.commands.common.constants import LAYOUT, LAYOUTS_CONTAINER
 from demisto_sdk.commands.common.git_util import GitUtil
-from demisto_sdk.commands.common.handlers import JSON_Handler
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.tools import get_child_directories
+from demisto_sdk.commands.content_graph.tests.create_content_graph_test import (
+    mock_script,
+)
 from demisto_sdk.commands.init.contribution_converter import (
     ContributionConverter,
     get_previous_nonempty_line,
@@ -21,7 +25,6 @@ from demisto_sdk.commands.init.contribution_converter import (
 from TestSuite.contribution import Contribution
 from TestSuite.repo import Repo
 
-json = JSON_Handler()
 DEMISTO_SDK_PATH = join(git_path(), "demisto_sdk")
 CONTRIBUTION_TESTS = os.path.join(
     DEMISTO_SDK_PATH, "commands", "init", "tests", "test_files"
@@ -222,6 +225,31 @@ def test_convert_contribution_zip_outputs_structure(tmp_path, mocker):
     mocker.patch.object(GitUtil, "__init__", return_value=None)
     mocker.patch.object(GitUtil, "added_files", return_value=set())
     mocker.patch.object(GitUtil, "modified_files", return_value=set())
+
+    # ### Mock the content graph ### #
+
+    class MockedContentGraphInterface:
+        output_path = ""
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, exc_type, exc_val, exc_tb):
+            pass
+
+        def search(self, path):
+            # Simulate the graph search
+            return [mock_script()]
+
+    mocker.patch(
+        "demisto_sdk.commands.generate_docs.generate_script_doc.ContentGraphInterface",
+        return_value=MockedContentGraphInterface(),
+    )
+    mocker.patch(
+        "demisto_sdk.commands.generate_docs.generate_script_doc.update_content_graph",
+        return_value=[],
+    )
+
     # ### SETUP ### #
     # Create all Necessary Temporary directories
     # create temp directory for the repo
@@ -606,9 +634,8 @@ def test_convert_contribution_dir_to_pack_contents(tmp_path):
     update_file = fake_pack_extracted_dir / "incidentfield-SomeIncidentField.json"
     new_json = {"field": "new_value"}
     update_file.write_text(json.dumps(new_json))
-    cc = ContributionConverter()
-    cc.pack_dir_path = tmp_path
-    cc.convert_contribution_dir_to_pack_contents(fake_pack_extracted_dir)
+    converter = ContributionConverter(working_dir_path=str(tmp_path))
+    converter.convert_contribution_dir_to_pack_contents(fake_pack_extracted_dir)
     assert json.loads(extant_file.read_text()) == new_json
     assert not fake_pack_extracted_dir.exists()
 
@@ -730,12 +757,7 @@ def test_create_contribution_items_version_note():
  @
 > In case you are requested by your reviewer to improve the code or to make changes, submit them through the **GitHub Codespaces** and **Not through the XSOAR UI**.
 >
-> **To use the GitHub Codespaces, do the following:**
-> 1. Click the **'Code'** button in the right upper corner of this PR.
-> 2. Click **'Create codespace on Transformers'**.
-> 3. Click **'Authorize and continue'**.
-> 4. Wait until your Codespace environment is generated. When it is, you can edit your code.
-> 5. Commit and push your changes to the head branch of the PR.
+> **To use the GitHub Codespaces, see the following [link](https://xsoar.pan.dev/docs/tutorials/tut-setup-dev-codespace) for more information.**
 """
     )
 
@@ -867,16 +889,14 @@ class TestReleaseNotes:
     @pytest.fixture(autouse=True)
     def rn_file_copy(self):
         yield shutil.copyfile(SOURCE_RELEASE_NOTES_FILE, RELEASE_NOTES_COPY)
-        if os.path.exists(RELEASE_NOTES_COPY):
-            os.remove(RELEASE_NOTES_COPY)
+        Path(RELEASE_NOTES_COPY).unlink(missing_ok=True)
 
     @pytest.fixture(autouse=True)
     def new_entity_rn_file_copy(self):
         yield shutil.copyfile(
             NEW_ENTITY_SOURCE_RELEASE_NOTES_FILE, NEW_ENTITY_RELEASE_NOTES_COPY
         )
-        if os.path.exists(NEW_ENTITY_RELEASE_NOTES_COPY):
-            os.remove(NEW_ENTITY_RELEASE_NOTES_COPY)
+        Path(NEW_ENTITY_RELEASE_NOTES_COPY).unlink(missing_ok=True)
 
     @pytest.mark.parametrize(
         "index, expected_result",

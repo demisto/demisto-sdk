@@ -3,15 +3,12 @@ from typing import Dict, List, Optional
 from pydantic import BaseModel
 
 from demisto_sdk.commands.common.constants import NATIVE_IMAGE_FILE_NAME
-from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.singleton import Singleton
 from demisto_sdk.commands.common.tools import (
     extract_docker_image_from_text,
     get_dict_from_file,
 )
-
-json = JSON_Handler()
 
 
 class NativeImage(BaseModel):
@@ -109,6 +106,7 @@ class ScriptIntegrationSupportedNativeImages:
     """
 
     NATIVE_DEV = "native:dev"
+    NATIVE_CANDIDATE = "native:candidate"
 
     def __init__(
         self,
@@ -172,8 +170,11 @@ class ScriptIntegrationSupportedNativeImages:
                 if native_image not in ignored_native_images
             ]
 
-            if only_production_tags and self.NATIVE_DEV in native_images:
-                native_images.remove(self.NATIVE_DEV)
+            if only_production_tags:
+                if self.NATIVE_DEV in native_images:
+                    native_images.remove(self.NATIVE_DEV)
+                if self.NATIVE_CANDIDATE in native_images:
+                    native_images.remove(self.NATIVE_CANDIDATE)
 
             if get_raw_version:
                 return list(

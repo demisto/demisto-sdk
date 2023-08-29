@@ -3,7 +3,8 @@ import os
 import shutil
 from configparser import ConfigParser
 from pathlib import Path
-from typing import Callable, List, Optional, Union
+from tempfile import NamedTemporaryFile, TemporaryDirectory
+from typing import Callable, List, Optional, Tuple, Union
 
 import git
 import pytest
@@ -24,9 +25,29 @@ from demisto_sdk.commands.common.constants import (
     SCRIPTS_DIR,
     TEST_PLAYBOOKS_DIR,
     TRIGGER_DIR,
+    XPANSE_INLINE_PREFIX_TAG,
+    XPANSE_INLINE_SUFFIX_TAG,
+    XPANSE_PREFIX_TAG,
+    XPANSE_SUFFIX_TAG,
     XSIAM_DASHBOARDS_DIR,
+    XSIAM_INLINE_PREFIX_TAG,
+    XSIAM_INLINE_SUFFIX_TAG,
+    XSIAM_PREFIX_TAG,
     XSIAM_REPORTS_DIR,
+    XSIAM_SUFFIX_TAG,
     XSOAR_CONFIG_FILE,
+    XSOAR_INLINE_PREFIX_TAG,
+    XSOAR_INLINE_SUFFIX_TAG,
+    XSOAR_ON_PREM_INLINE_PREFIX_TAG,
+    XSOAR_ON_PREM_INLINE_SUFFIX_TAG,
+    XSOAR_ON_PREM_PREFIX_TAG,
+    XSOAR_ON_PREM_SUFFIX_TAG,
+    XSOAR_PREFIX_TAG,
+    XSOAR_SAAS_INLINE_PREFIX_TAG,
+    XSOAR_SAAS_INLINE_SUFFIX_TAG,
+    XSOAR_SAAS_PREFIX_TAG,
+    XSOAR_SAAS_SUFFIX_TAG,
+    XSOAR_SUFFIX_TAG,
     FileType,
     MarketplaceVersions,
 )
@@ -39,7 +60,8 @@ from demisto_sdk.commands.common.git_content_config import (
     GitCredentials,
 )
 from demisto_sdk.commands.common.git_util import GitUtil
-from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
+from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.tools import (
     MarketplaceTagParser,
@@ -72,6 +94,7 @@ from demisto_sdk.commands.common.tools import (
     get_latest_release_notes_text,
     get_marketplace_to_core_packs,
     get_pack_metadata,
+    get_pack_names_from_files,
     get_relative_path_from_packs_dir,
     get_release_note_entries,
     get_release_notes_file_path,
@@ -80,12 +103,15 @@ from demisto_sdk.commands.common.tools import (
     get_to_version,
     get_yaml,
     has_remote_configured,
+    is_content_item_dependent_in_conf,
     is_object_in_id_set,
     is_origin_content_repo,
     is_pack_path,
     is_uuid,
+    parse_multiple_path_inputs,
     retrieve_file_ending,
     run_command_os,
+    search_and_delete_from_conf,
     server_version_compare,
     str2bool,
     string_to_bool,
@@ -128,8 +154,7 @@ from TestSuite.repo import Repo
 from TestSuite.test_tools import ChangeCWD
 
 GIT_ROOT = git_path()
-yaml = YAML_Handler()
-json = JSON_Handler()
+
 
 SENTENCE_WITH_UMLAUTS = "Nett hier. Aber waren Sie schon mal in Baden-Württemberg?"
 
@@ -144,12 +169,93 @@ class TestGenericFunctions:
             ),
             tools.get_yaml,
         ),
-        (os.path.join(PATH_TO_HERE, "fake_json.json"), tools.get_json),
+        (
+            str(
+                Path(PATH_TO_HERE, "test_playbook_value_starting_with_equal_sign.yaml")
+            ),
+            tools.get_yaml,
+        ),
+        (str(Path(PATH_TO_HERE, "fake_json.json")), tools.get_json),
     ]
 
     @pytest.mark.parametrize("file_path, func", FILE_PATHS)
     def test_get_file(self, file_path, func):
         assert func(file_path)
+
+    @pytest.mark.parametrize("file_path, _", FILE_PATHS)
+    def test_get_file_or_remote_with_local(self, file_path: str, _):
+        """
+        Given:
+            file_path to a file
+
+        When:
+            Calling `get_file_or_remote` when the file exists locally
+
+        Then
+            Ensure that the file data is returned
+        """
+        absolute_path = Path(file_path)
+        relative_path = absolute_path.relative_to(GIT_ROOT)
+
+        assert (result_non_relative := tools.get_file_or_remote(absolute_path))
+        assert (result_relative := tools.get_file_or_remote(relative_path))
+        assert result_non_relative == result_relative
+
+    @pytest.mark.parametrize("file_path, _", FILE_PATHS)
+    def test_get_file_or_remote_with_origin(self, mocker, file_path: str, _):
+        """
+        Given:
+            file_path to a file
+
+        When:
+            Calling `get_file_or_remote` when the file doesn't exist locally, but exists on origin
+
+        Then
+            Ensure that the file data is returned
+        """
+        path = Path(file_path)
+        content = path.read_text()
+        mocker.patch.object(tools, "get_file", side_effect=FileNotFoundError)
+        mocker.patch.object(GitUtil, "get_local_remote_file_path")
+        mocker.patch.object(
+            GitUtil, "get_local_remote_file_content", return_value=content
+        )
+        mocker.patch.object(tools, "get_content_path", return_value=Path(GIT_ROOT))
+        relative_path = path.relative_to(GIT_ROOT)
+
+        assert (result_non_relative := tools.get_file_or_remote(path))
+        assert (result_relative := tools.get_file_or_remote(relative_path))
+        assert result_non_relative == result_relative
+
+    @pytest.mark.parametrize("file_path, _", FILE_PATHS)
+    def test_get_file_or_remote_with_api(
+        self, mocker, requests_mock, file_path: str, _
+    ):
+        """
+        Given:
+            file_path to a file
+
+        When:
+            Calling `get_file_or_remote` when the file doesn't exist locally, and not on origin, but exists GitHub
+
+        Then
+            Ensure that the file data is returned
+        """
+
+        path = Path(file_path)
+        content = path.read_text()
+        mocker.patch.object(tools, "get_file", side_effect=FileNotFoundError)
+        mocker.patch.object(tools, "get_local_remote_file", side_effect=ValueError)
+        mocker.patch.object(tools, "get_content_path", return_value=Path(GIT_ROOT))
+        relative_path = path.relative_to(GIT_ROOT)
+        requests_mock.get("https://api.github.com/repos/demisto/demisto-sdk")
+        requests_mock.get(
+            f"https://raw.githubusercontent.com/demisto/demisto-sdk/master/{relative_path}",
+            text=content,
+        )
+        assert (result_non_relative := tools.get_file_or_remote(path))
+        assert (result_relative := tools.get_file_or_remote(relative_path))
+        assert result_non_relative == result_relative
 
     @staticmethod
     @pytest.mark.parametrize(
@@ -169,7 +275,7 @@ class TestGenericFunctions:
             )
         )
         assert "ü" in path.read_text(encoding="latin-1")
-        assert get_file(path, suffix) == {"text": SENTENCE_WITH_UMLAUTS}
+        assert get_file(path) == {"text": SENTENCE_WITH_UMLAUTS}
 
     @pytest.mark.parametrize(
         "file_name, prefix, result",
@@ -421,8 +527,9 @@ class TestGetRemoteFile:
         assert isinstance(hello_world_py, bytes)
         assert hello_world_py
         assert "main()" in hello_world_text
-        assert hello_world_text.startswith(
-            '"""HelloWorld Integration for Cortex XSOAR (aka Demisto)'
+        assert (
+            """HelloWorld Integration for Cortex XSOAR (aka Demisto)"""
+            in hello_world_text
         )
 
     def test_get_remote_file_origin(self):
@@ -820,8 +927,7 @@ def test_get_ignore_pack_tests__no_ignore_pack(tmpdir):
     pack_ignore_path = os.path.join(pack.path, PACKS_PACK_IGNORE_FILE_NAME)
 
     # remove .pack-ignore if exists
-    if os.path.exists(pack_ignore_path):
-        os.remove(pack_ignore_path)
+    Path(pack_ignore_path).unlink(missing_ok=True)
 
     ignore_test_set = get_ignore_pack_skipped_tests(
         fake_pack_name, {fake_pack_name}, {}
@@ -2261,7 +2367,7 @@ class TestTagParser:
         prefix = "<>"
         suffix = "</>"
         text = "some text"
-        tag_parser = TagParser(prefix, suffix, remove_tag_text=False)
+        tag_parser = TagParser("FAKE_LABEL")
         for tag in (prefix, suffix):
             assert tag_parser.parse(text + tag) == text + tag
 
@@ -2276,12 +2382,10 @@ class TestTagParser:
         Then:
             - Text shouldn't have tags or their text
         """
-        prefix = "<>"
-        suffix = "</>"
-        text = "some text<>more text</>"
+        text = "some text<~>more text</~>"
         expected_text = "some text"
-        tag_parser = TagParser(prefix, suffix, remove_tag_text=True)
-        assert tag_parser.parse(text) == expected_text
+        tag_parser = TagParser("")
+        assert tag_parser.parse(text, True) == expected_text
 
     def test_remove_tags_only(self):
         """
@@ -2294,25 +2398,79 @@ class TestTagParser:
         Then:
             - Text shouldn't have tags, but keep the text
         """
-        prefix = "<>"
-        suffix = "</>"
-        text = "some text <>tag text</>"
+        text = "some text <~>tag text</~>"
         expected_text = "some text tag text"
-        tag_parser = TagParser(prefix, suffix, remove_tag_text=False)
+        tag_parser = TagParser("")
         assert tag_parser.parse(text) == expected_text
 
 
 class TestMarketplaceTagParser:
     MARKETPLACE_TAG_PARSER = MarketplaceTagParser()
+    XSOAR_PREFIX = XSOAR_PREFIX_TAG
+    XSOAR_SUFFIX = XSOAR_SUFFIX_TAG
+    XSOAR_INLINE_PREFIX = XSOAR_INLINE_PREFIX_TAG
+    XSOAR_INLINE_SUFFIX = XSOAR_INLINE_SUFFIX_TAG
+
+    XSIAM_PREFIX = XSIAM_PREFIX_TAG
+    XSIAM_SUFFIX = XSIAM_SUFFIX_TAG
+    XSIAM_INLINE_PREFIX = XSIAM_INLINE_PREFIX_TAG
+    XSIAM_INLINE_SUFFIX = XSIAM_INLINE_SUFFIX_TAG
+
+    XPANSE_PREFIX = XPANSE_PREFIX_TAG
+    XPANSE_SUFFIX = XPANSE_SUFFIX_TAG
+    XPANSE_INLINE_PREFIX = XPANSE_INLINE_PREFIX_TAG
+    XPANSE_INLINE_SUFFIX = XPANSE_INLINE_SUFFIX_TAG
+
+    XSOAR_SAAS_PREFIX = XSOAR_SAAS_PREFIX_TAG
+    XSOAR_SAAS_SUFFIX = XSOAR_SAAS_SUFFIX_TAG
+    XSOAR_SAAS_INLINE_PREFIX = XSOAR_SAAS_INLINE_PREFIX_TAG
+    XSOAR_SAAS_INLINE_SUFFIX = XSOAR_SAAS_INLINE_SUFFIX_TAG
+
+    XSOAR_ON_PREM_PREFIX = XSOAR_ON_PREM_PREFIX_TAG
+    XSOAR_ON_PREM_SUFFIX = XSOAR_ON_PREM_SUFFIX_TAG
+    XSOAR_ON_PREM_INLINE_PREFIX = XSOAR_ON_PREM_INLINE_PREFIX_TAG
+    XSOAR_ON_PREM_INLINE_SUFFIX = XSOAR_ON_PREM_INLINE_SUFFIX_TAG
+
     TEXT_WITH_TAGS = f"""
 ### Sections:
-{MARKETPLACE_TAG_PARSER.XSOAR_PREFIX} - XSOAR PARAGRAPH{MARKETPLACE_TAG_PARSER.XSOAR_SUFFIX}
-{MARKETPLACE_TAG_PARSER.XSIAM_PREFIX} - XSIAM PARAGRAPH{MARKETPLACE_TAG_PARSER.XSIAM_SUFFIX}
-{MARKETPLACE_TAG_PARSER.XPANSE_PREFIX} - XPANSE PARAGRAPH{MARKETPLACE_TAG_PARSER.XPANSE_SUFFIX}
+{XSOAR_PREFIX} - ALL XSOAR MARKETPLACE PARAGRAPH {XSOAR_SUFFIX}
+{XSIAM_PREFIX} - XSIAM PARAGRAPH {XSIAM_SUFFIX}
+{XPANSE_PREFIX} - XPANSE PARAGRAPH {XPANSE_SUFFIX}
+{XSOAR_SAAS_PREFIX} - ONLY XSOAR_SAAS PARAGRAPH {XSOAR_SAAS_SUFFIX}
+{XSOAR_ON_PREM_PREFIX} - ONLY XSOAR_ON_PREM PARAGRAPH {XSOAR_ON_PREM_SUFFIX}
 ### Inline:
-{MARKETPLACE_TAG_PARSER.XSOAR_INLINE_PREFIX}xsoar inline text{MARKETPLACE_TAG_PARSER.XSOAR_INLINE_SUFFIX}
-{MARKETPLACE_TAG_PARSER.XSIAM_INLINE_PREFIX}xsiam inline text{MARKETPLACE_TAG_PARSER.XSIAM_INLINE_SUFFIX}
-{MARKETPLACE_TAG_PARSER.XPANSE_INLINE_PREFIX}xpanse inline text{MARKETPLACE_TAG_PARSER.XPANSE_INLINE_SUFFIX}"""
+{XSOAR_INLINE_PREFIX} all xsoar marketplaces inline text {XSOAR_INLINE_SUFFIX}
+{XSIAM_INLINE_PREFIX} xsiam inline text {XSIAM_INLINE_SUFFIX}
+{XPANSE_INLINE_PREFIX} xpanse inline text {XPANSE_INLINE_SUFFIX}
+{XSOAR_SAAS_INLINE_PREFIX} xsoar_saas inline test {XSOAR_SAAS_INLINE_SUFFIX}
+{XSOAR_ON_PREM_INLINE_PREFIX} xsoar_on_prem inline test {XSOAR_ON_PREM_INLINE_SUFFIX}"""
+
+    def check_prefix_not_in_text(self, actual):
+        assert self.XSOAR_PREFIX not in actual
+        assert self.XSIAM_PREFIX not in actual
+        assert self.XPANSE_PREFIX not in actual
+        assert self.XSOAR_SAAS_PREFIX not in actual
+        assert self.XSOAR_ON_PREM_PREFIX not in actual
+
+    def check_xsiam_not_in_text(self, actual):
+        assert "XSIAM" not in actual
+        assert "xsiam" not in actual
+
+    def check_xpanse_not_in_text(self, actual):
+        assert "XPANSE" not in actual
+        assert "xpanse" not in actual
+
+    def check_xsoar_saas_not_in_text(self, actual):
+        assert "XSOAR_SAAS" not in actual
+        assert "XSOAR saas" not in actual
+
+    def check_xsoar_on_prem_not_in_text(self, actual):
+        assert "XSOAR_ON_PREM" not in actual
+        assert "xsoar_on_prem" not in actual
+
+    def check_all_xsoar_not_in_text(self, actual):
+        assert "ALL XSOAR MARKETPLACE PARAGRAPH" not in actual
+        assert "all xsoar marketplaces inline text" not in actual
 
     def test_invalid_marketplace_version(self):
         """
@@ -2328,15 +2486,12 @@ class TestMarketplaceTagParser:
         actual = self.MARKETPLACE_TAG_PARSER.parse_text(self.TEXT_WITH_TAGS)
         assert "### Sections:" in actual
         assert "### Inline:" in actual
-        assert self.MARKETPLACE_TAG_PARSER.XSOAR_PREFIX not in actual
-        assert self.MARKETPLACE_TAG_PARSER.XSIAM_PREFIX not in actual
-        assert self.MARKETPLACE_TAG_PARSER.XPANSE_PREFIX not in actual
-        assert "XSOAR" not in actual
-        assert "xsoar" not in actual
-        assert "XSIAM" not in actual
-        assert "xsiam" not in actual
-        assert "XPANSE" not in actual
-        assert "xpanse" not in actual
+        self.check_prefix_not_in_text(actual)
+        self.check_xsiam_not_in_text(actual)
+        self.check_xpanse_not_in_text(actual)
+        self.check_xsoar_saas_not_in_text(actual)
+        self.check_xsoar_on_prem_not_in_text(actual)
+        self.check_all_xsoar_not_in_text(actual)
 
     def test_xsoar_marketplace_version(self):
         """
@@ -2352,15 +2507,14 @@ class TestMarketplaceTagParser:
         actual = self.MARKETPLACE_TAG_PARSER.parse_text(self.TEXT_WITH_TAGS)
         assert "### Sections:" in actual
         assert "### Inline:" in actual
-        assert "XSOAR" in actual
-        assert "xsoar" in actual
-        assert self.MARKETPLACE_TAG_PARSER.XSOAR_PREFIX not in actual
-        assert self.MARKETPLACE_TAG_PARSER.XSIAM_PREFIX not in actual
-        assert self.MARKETPLACE_TAG_PARSER.XPANSE_PREFIX not in actual
-        assert "XSIAM" not in actual
-        assert "xsiam" not in actual
-        assert "XPANSE" not in actual
-        assert "xpanse" not in actual
+        assert "ALL XSOAR MARKETPLACE PARAGRAPH" in actual
+        assert "all xsoar marketplaces inline text" in actual
+        assert "xsoar_on_prem" in actual
+        assert "XSOAR_ON_PREM" in actual
+        self.check_prefix_not_in_text(actual)
+        self.check_xsiam_not_in_text(actual)
+        self.check_xpanse_not_in_text(actual)
+        self.check_xsoar_saas_not_in_text(actual)
 
     def test_xsiam_marketplace_version(self):
         """
@@ -2378,15 +2532,13 @@ class TestMarketplaceTagParser:
         actual = self.MARKETPLACE_TAG_PARSER.parse_text(self.TEXT_WITH_TAGS)
         assert "### Sections:" in actual
         assert "### Inline:" in actual
-        assert "XSOAR" not in actual
-        assert "xsoar" not in actual
-        assert "XPANSE" not in actual
-        assert "xpanse" not in actual
-        assert self.MARKETPLACE_TAG_PARSER.XSOAR_PREFIX not in actual
-        assert self.MARKETPLACE_TAG_PARSER.XSIAM_PREFIX not in actual
-        assert self.MARKETPLACE_TAG_PARSER.XPANSE_PREFIX not in actual
         assert "XSIAM" in actual
         assert "xsiam" in actual
+        self.check_all_xsoar_not_in_text(actual)
+        self.check_xpanse_not_in_text(actual)
+        self.check_xsoar_on_prem_not_in_text(actual)
+        self.check_xsoar_saas_not_in_text(actual)
+        self.check_prefix_not_in_text(actual)
 
     def test_xpanse_marketplace_version(self):
         """
@@ -2402,15 +2554,68 @@ class TestMarketplaceTagParser:
         actual = self.MARKETPLACE_TAG_PARSER.parse_text(self.TEXT_WITH_TAGS)
         assert "### Sections:" in actual
         assert "### Inline:" in actual
-        assert "XSOAR" not in actual
-        assert "xsoar" not in actual
-        assert "XSIAM" not in actual
-        assert "xsiam" not in actual
-        assert self.MARKETPLACE_TAG_PARSER.XSOAR_PREFIX not in actual
-        assert self.MARKETPLACE_TAG_PARSER.XSIAM_PREFIX not in actual
-        assert self.MARKETPLACE_TAG_PARSER.XPANSE_PREFIX not in actual
         assert "XPANSE" in actual
         assert "xpanse" in actual
+        self.check_prefix_not_in_text(actual)
+        self.check_all_xsoar_not_in_text(actual)
+        self.check_xsiam_not_in_text(actual)
+        self.check_xsoar_on_prem_not_in_text(actual)
+        self.check_xsoar_saas_not_in_text(actual)
+
+    def test_xsoar_saas_marketplace_version(self):
+        """
+        Check that xsoar_saas text and xsoar text is in text
+        """
+        self.MARKETPLACE_TAG_PARSER.marketplace = MarketplaceVersions.XSOAR_SAAS.value
+        actual = self.MARKETPLACE_TAG_PARSER.parse_text(self.TEXT_WITH_TAGS)
+        assert "### Sections:" in actual
+        assert "### Inline:" in actual
+        assert "xsoar_saas" in actual
+        assert "XSOAR_SAAS" in actual
+        assert "ALL XSOAR MARKETPLACE PARAGRAPH" in actual
+        assert "all xsoar marketplaces inline text" in actual
+        self.check_prefix_not_in_text(actual)
+        self.check_xsiam_not_in_text(actual)
+        self.check_xpanse_not_in_text(actual)
+        self.check_xsoar_on_prem_not_in_text(actual)
+
+    def test_xsoar_on_prem_marketplace_version(self):
+        """
+        Check that xsoar_saas text and xsoar text is in text
+        """
+        self.MARKETPLACE_TAG_PARSER.marketplace = (
+            MarketplaceVersions.XSOAR_ON_PREM.value
+        )
+        actual = self.MARKETPLACE_TAG_PARSER.parse_text(self.TEXT_WITH_TAGS)
+        assert "### Sections:" in actual
+        assert "### Inline:" in actual
+        assert "xsoar_on_prem" in actual
+        assert "XSOAR_ON_PREM" in actual
+        assert "ALL XSOAR MARKETPLACE PARAGRAPH" in actual
+        assert "all xsoar marketplaces inline text" in actual
+        self.check_prefix_not_in_text(actual)
+        self.check_xsiam_not_in_text(actual)
+        self.check_xpanse_not_in_text(actual)
+        self.check_xsoar_saas_not_in_text(actual)
+
+    def test_xsoar_should_remove_text(self):
+        """
+        Check that if xsoar tag is specified all the xsoar-saas marketplaces will be should removed true.
+        """
+        mtp = MarketplaceTagParser(MarketplaceVersions.XSOAR.value)
+        assert mtp._should_remove_xsoar_text is False
+        assert mtp._should_remove_xsoar_on_prem_text is False
+        assert mtp._should_remove_xsoar_saas_text is True
+        mtp = MarketplaceTagParser(MarketplaceVersions.XSOAR_SAAS.value)
+        assert mtp._should_remove_xsoar_text is False
+        assert mtp._should_remove_xsoar_on_prem_text is True
+        assert mtp._should_remove_xsoar_saas_text is False
+        mtp = MarketplaceTagParser(MarketplaceVersions.XSOAR_ON_PREM.value)
+        assert mtp._should_remove_xsoar_text is False
+        assert mtp._should_remove_xsoar_on_prem_text is False
+        assert mtp._should_remove_xsoar_saas_text is True
+        mtp = MarketplaceTagParser(MarketplaceVersions.MarketplaceV2.value)
+        assert mtp._should_remove_xsoar_text is True
 
 
 @pytest.mark.parametrize(
@@ -2440,73 +2645,25 @@ def test_get_display_name(data, answer, tmpdir):
     assert get_display_name(file.path) == answer
 
 
-@pytest.mark.parametrize("value", ("true", "True"))
-def test_string_to_bool__default_params__true(value: str):
+@pytest.mark.parametrize("value", ("true", "True", 1, "1", "yes", "y"))
+def test_string_to_bool_true(value: str):
     assert string_to_bool(value)
 
 
-@pytest.mark.parametrize("value", ("false", "False"))
-def test_string_to_bool__default_params__false(value: str):
+@pytest.mark.parametrize("value", ("", None))
+def test_string_to_bool_default_true(value: str):
+    assert string_to_bool(value, True)
+
+
+@pytest.mark.parametrize("value", ("false", "False", 0, "0", "n", "no"))
+def test_string_to_bool_false(value: str):
     assert not string_to_bool(value)
 
 
-@pytest.mark.parametrize("value", ("1", 1, "", " ", "כן", None, "None"))
-def test_string_to_bool__default_params__error(value: str):
+@pytest.mark.parametrize("value", ("", " ", "כן", None, "None"))
+def test_string_to_bool_error(value: str):
     with pytest.raises(ValueError):
         string_to_bool(value)
-
-
-@pytest.mark.parametrize(
-    "value", ("true", "True", "TRUE", "t", "T", "yes", "Yes", "YES", "y", "Y", "1")
-)
-def test_string_to_bool__all_params_true__true(value: str):
-    assert string_to_bool(value, True, True, True, True, True, True)
-
-
-@pytest.mark.parametrize(
-    "value", ("false", "False", "FALSE", "f", "F", "no", "No", "NO", "n", "N", "0")
-)
-def test_string_to_bool__all_params_true__false(value: str):
-    assert not string_to_bool(value, True, True, True, True, True, True)
-
-
-@pytest.mark.parametrize(
-    "value",
-    (
-        "true",
-        "True",
-        "TRUE",
-        "t",
-        "T",
-        "yes",
-        "Yes",
-        "YES",
-        "y",
-        "Y",
-        "1",
-        "false",
-        "False",
-        "FALSE",
-        "f",
-        "F",
-        "no",
-        "No",
-        "NO",
-        "n",
-        "N",
-        "0",
-        "",
-        " ",
-        1,
-        True,
-        None,
-        "אולי",
-        "None",
-    ),
-)
-def test_string_to_bool__all_params_false__error(value: str):
-    with pytest.raises(ValueError):
-        assert string_to_bool(value, False, False, False, False, False, False)
 
 
 @pytest.mark.parametrize(
@@ -2666,3 +2823,402 @@ def test_get_from_version_error(mocker):
 )
 def test_str2bool(value, expected_output):
     assert str2bool(value) == expected_output
+
+
+PATH_1 = Path("1.yml")
+PATH_2 = Path("2.yml")
+
+
+@pytest.mark.parametrize(
+    "input_paths, expected",
+    [
+        (PATH_1, (PATH_1,)),
+        (str(PATH_1), (PATH_1,)),
+        (",".join((str(PATH_1), str(PATH_2))), (PATH_1, PATH_2)),
+        (
+            (
+                PATH_1,
+                PATH_2,
+            ),
+            (PATH_1, PATH_2),
+        ),
+        ([PATH_1, PATH_2], (PATH_1, PATH_2)),
+        ((), ()),
+        ("", ()),
+        (None, ()),
+        (
+            "test/test.yml,test1/test1.yml",
+            (Path("test/test.yml"), Path("test1/test1.yml")),
+        ),
+    ],
+)
+def test_parse_multiple_path_inputs(input_paths, expected: Tuple[Path, ...]):
+    """
+    Given:
+        Some variations of inputs
+    When:
+        - Running parse_multiple_path_inputs
+    Then:
+        - Ensure that a tuple of Path is always returned
+        - Ensure input is handled when a comma-separated string is sent
+
+    """
+    assert parse_multiple_path_inputs(input_paths) == expected
+
+
+@pytest.mark.parametrize("input_paths", (1, True))
+def test_parse_multiple_path_inputs_error(input_paths):
+    """
+    Given:
+        An unsupported input to test_parse_multiple_path_inputs
+    When:
+        - Running parse_multiple_path_inputs fomction
+    Then:
+        - Ensure an error is raised
+
+    """
+    with pytest.raises(ValueError, match=f"Cannot parse paths from {input_paths}"):
+        parse_multiple_path_inputs(input_paths)
+
+
+@pytest.mark.parametrize(
+    "content_item_id, file_type, test_playbooks, no_test_playbooks_explicitly, expected_test_list",
+    [
+        (
+            "PagerDuty v2",
+            "integration",
+            ["No tests"],
+            True,
+            [
+                {"integrations": ["PagerDuty v1"], "playbookID": "PagerDutyV1 Test"},
+                {"integrations": ["PagerDuty v1"], "playbookID": "PagerDuty Test"},
+                {
+                    "integrations": "Account Enrichment",
+                    "playbookID": "Account Enrichment Test",
+                },
+                {
+                    "integrations": "TestCreateDuplicates",
+                    "playbookID": "TestCreateDuplicates Test",
+                },
+            ],
+        ),
+        (
+            "PagerDuty v2",
+            "integration",
+            ["PagerDutyV2 Test"],
+            False,
+            [
+                {"integrations": ["PagerDuty v1"], "playbookID": "PagerDutyV1 Test"},
+                {"integrations": ["PagerDuty v1"], "playbookID": "PagerDuty Test"},
+                {
+                    "integrations": "Account Enrichment",
+                    "playbookID": "Account Enrichment Test",
+                },
+                {
+                    "integrations": "TestCreateDuplicates",
+                    "playbookID": "TestCreateDuplicates Test",
+                },
+            ],
+        ),
+        (
+            "Account Enrichment",
+            "integration",
+            ["No tests"],
+            False,
+            [
+                {"integrations": ["PagerDuty v1"], "playbookID": "PagerDutyV1 Test"},
+                {
+                    "integrations": ["PagerDuty v1", "PagerDuty v2"],
+                    "playbookID": "PagerDuty Test",
+                },
+                {"integrations": "PagerDuty v2", "playbookID": "PagerDutyV2 Test"},
+                {"integrations": "PagerDuty v2", "playbookID": "PagerDutyV2 Test"},
+                {
+                    "integrations": "TestCreateDuplicates",
+                    "playbookID": "TestCreateDuplicates Test",
+                },
+            ],
+        ),
+        (
+            "Account Enrichment Test",
+            "playbook",
+            ["No tests"],
+            False,
+            [
+                {"integrations": ["PagerDuty v1"], "playbookID": "PagerDutyV1 Test"},
+                {
+                    "integrations": ["PagerDuty v1", "PagerDuty v2"],
+                    "playbookID": "PagerDuty Test",
+                },
+                {"integrations": "PagerDuty v2", "playbookID": "PagerDutyV2 Test"},
+                {"integrations": "PagerDuty v2", "playbookID": "PagerDutyV2 Test"},
+                {
+                    "integrations": "TestCreateDuplicates",
+                    "playbookID": "TestCreateDuplicates Test",
+                },
+            ],
+        ),
+    ],
+)
+def test_search_and_delete_from_conf(
+    content_item_id,
+    file_type,
+    test_playbooks,
+    no_test_playbooks_explicitly,
+    expected_test_list,
+):
+    """
+    Given:
+          content_item_id, file_type, test_playbooks, no_test_playbooks_explicitly
+        - Case A: PagerDuty v2 integration without tests.
+        - Case B: PagerDuty v2 integration with tests.
+        - Case C: Account Enrichment integration without tests.
+        - Case D: Account Enrichment playbook without tests.
+
+    When:
+        - check that the test_search_and_delete_from_conf works as expected.
+
+    Then:
+        - Case A: Delete PagerDuty v2 integration.
+        - Case B: Delete PagerDuty v2 integration.
+        - Case C: Delete Account Enrichment integration.
+        - Case D: Delete Account Enrichment integration.
+    """
+    CONF_JSON_ORIGINAL_CONTENT = {
+        "tests": [
+            {"integrations": ["PagerDuty v1"], "playbookID": "PagerDutyV1 Test"},
+            {
+                "integrations": ["PagerDuty v1", "PagerDuty v2"],
+                "playbookID": "PagerDuty Test",
+            },
+            {"integrations": "PagerDuty v2", "playbookID": "PagerDutyV2 Test"},
+            {"integrations": "PagerDuty v2", "playbookID": "PagerDutyV2 Test"},
+            {
+                "integrations": "Account Enrichment",
+                "playbookID": "Account Enrichment Test",
+            },
+            {
+                "integrations": "TestCreateDuplicates",
+                "playbookID": "TestCreateDuplicates Test",
+            },
+        ]
+    }
+    conf_test = search_and_delete_from_conf(
+        CONF_JSON_ORIGINAL_CONTENT["tests"],
+        content_item_id,
+        file_type,
+        test_playbooks,
+        no_test_playbooks_explicitly,
+    )
+    assert conf_test == expected_test_list
+
+
+@pytest.mark.parametrize(
+    "test_config, file_type, expected_result",
+    [
+        (
+            {"integrations": "PagerDuty v2", "playbookID": "PagerDutyV2 Test"},
+            "integration",
+            False,
+        ),
+        (
+            {"integrations": ["PagerDuty v2"], "playbookID": "PagerDutyV2 Test"},
+            "integration",
+            False,
+        ),
+        (
+            {
+                "integrations": ["PagerDuty v2", "PagerDuty v3"],
+                "playbookID": "PagerDuty Test",
+            },
+            "playbook",
+            False,
+        ),
+        (
+            {
+                "integrations": ["PagerDuty v2", "PagerDuty v3"],
+                "playbookID": "PagerDuty Test",
+            },
+            "integration",
+            True,
+        ),
+    ],
+)
+def test_is_content_item_dependent_in_conf(test_config, file_type, expected_result):
+    """
+    Given:
+          test_config - A line from the conf.json and file_type.
+        - Case A: test_config with a string in the "integrations" key and integration file type.
+        - Case B: test_config with an array with len 1 in the "integrations" key and playbook file type.
+        - Case C: test_config with an array with len 2 in the "integrations" key and testplaybook file type.
+        - Case D: test_config with an array in the "integrations" key and integration file type.
+
+    When:
+        - check that the is_content_item_dependent_in_conf works as expected.
+
+    Then:
+        - Ensure that the result in correct.
+    """
+    result = is_content_item_dependent_in_conf(test_config, file_type)
+    assert result == expected_result
+
+
+@pytest.mark.parametrize(
+    "file_paths, skip_file_types, expected_packs",
+    [
+        (
+            [
+                "Packs/PackA/pack_metadata.json",
+                "Tests/scripts/infrastructure_tests/tests_data/collect_tests/R/Packs/PackB/pack_metadata.json",
+            ],
+            None,
+            {"PackA"},
+        ),
+        (
+            [("Packs/PackA/pack_metadata.json", "Packs/PackB/pack_metadata.json")],
+            None,
+            {"PackB"},
+        ),
+        (
+            ["Packs/PackA/pack_metadata.json", "Packs/PackB/ReleaseNotes/1_0_0.md"],
+            {FileType.RELEASE_NOTES},
+            {"PackA"},
+        ),
+    ],
+)
+def test_get_pack_names_from_files(file_paths, skip_file_types, expected_packs):
+    """
+    Given:
+        - Case A: Real packs paths and infra file paths.
+        - Case B: File paths in tuple.
+        - Case C: File paths and file types to skip.
+
+    When:
+        - Running get_pack_names_from_files.
+
+    Then:
+        - Ensure that the result is as expected.
+    """
+    packs_result = get_pack_names_from_files(file_paths, skip_file_types)
+    assert packs_result == expected_packs
+
+
+@pytest.mark.parametrize(
+    "file_name, expected_hash",
+    [
+        ("file.txt", "c8c54e11b1cb27c3376fa82520d53ef9932a02c0"),
+        ("file2.txt", "f1e01f0882e1f08f00f38d0cd60a850dc9288188"),
+    ],
+)
+def test_sha1_file(file_name, expected_hash):
+    """
+    Given:
+        - A file path
+    When:
+        - Checking the hash
+    Then:
+        Validate that the hash is correct, even after moving to a different location
+    """
+    path_str = f"{GIT_ROOT}/demisto_sdk/commands/common/tests/test_files/test_sha1/content/{file_name}"
+    assert tools.sha1_file(path_str) == expected_hash
+    assert tools.sha1_file(Path(path_str)) == expected_hash
+    # move file to a different location and check that the hash is still the same
+    with NamedTemporaryFile() as temp_dir:
+        shutil.copy(path_str, temp_dir.name)
+        assert tools.sha1_file(temp_dir.name) == expected_hash
+
+
+def test_sha1_dir():
+    """
+    Given:
+        - A directory path
+    When:
+        - Checking the hash
+    Then:
+        Validate that the hash is correct, even after moving to a different location
+    """
+    path_str = f"{GIT_ROOT}/demisto_sdk/commands/common/tests/test_files/test_sha1"
+    expected_hash = "70feabcd73ccbcb14201453942edf4a5fb4c4aac"
+    assert tools.sha1_dir(path_str) == expected_hash
+    assert tools.sha1_dir(Path(path_str)) == expected_hash
+    # move dir to a different location and check that the hash is still the same
+    with TemporaryDirectory() as temp_dir:
+        dest = Path(temp_dir, "dest")
+        shutil.copytree(path_str, dest)
+        assert tools.sha1_dir(dest) == expected_hash
+
+
+@pytest.mark.parametrize(
+    "input_path,expected_output",
+    [
+        (
+            Path("root/Packs/MyPack/Integrations/MyIntegration/MyIntegration.yml"),
+            "root/Packs/MyPack",
+        ),
+        (Path("Packs/MyPack1/Scripts/MyScript/MyScript.py"), "Packs/MyPack1"),
+        (Path("Packs/MyPack2/Scripts/MyScript"), "Packs/MyPack2"),
+        (Path("Packs/MyPack3/Scripts"), "Packs/MyPack3"),
+        (Path("Packs/MyPack4"), "Packs/MyPack4"),
+    ],
+)
+def test_find_pack_folder(input_path, expected_output):
+    output = tools.find_pack_folder(input_path)
+    assert expected_output == str(output)
+
+
+@pytest.mark.parametrize(
+    "input_path, expected_output",
+    [
+        (
+            Path(
+                "/User/username/content/Packs/MyPack/Integrations/MyIntegration/MyIntegration.yml"
+            ),
+            Path("/User/username/content"),
+        ),
+        (Path("/User/username/content/Packs"), Path("/User/username/content")),
+    ],
+)
+def test_get_content_path(input_path, expected_output):
+    """
+    Given:
+        - A path to a file or directory in the content repo
+    When:
+        - Running get_content_path
+    Then:
+        Validate that the given path is correct
+    """
+    assert tools.get_content_path(input_path) == expected_output
+
+
+@pytest.mark.parametrize(
+    "string, expected_result",
+    [
+        ("1", True),
+        ("12345678", True),
+        ("1689889076", True),
+        ("1626858896", True),
+        ("d", False),
+        ("123d", False),
+        ("123d", False),
+        ("2023-07-21T12:34:56Z", False),
+        ("07/21/23", False),
+        ("21 July 2023", False),
+        ("Thu, 21 Jul 2023 12:34:56 +0000", False),
+    ],
+)
+def test_is_epoch_datetime(string: str, expected_result: bool):
+    """
+    Given:
+          test_config - A line from the conf.json and file_type.
+        - Case A + B + C + D: valid epoch_datetime
+        - Case E + F + G + H + I + J + K: ivalid epoch datetime
+
+    When:
+        - run test_is_epoch_datetime
+
+    Then:
+        - Ensure that the result in correct.
+    """
+    from demisto_sdk.commands.common.tools import is_epoch_datetime
+
+    assert is_epoch_datetime(string) == expected_result

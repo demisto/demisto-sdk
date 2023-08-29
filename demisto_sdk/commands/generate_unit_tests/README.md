@@ -13,12 +13,12 @@ Also supports generating unit tests for specific commands.
   Specific commands name to generate unit test for (e.g. xdr-get-incidents).
 * *-o, --output_dir*
   Directory to store the command output (generated test file) in (default is the input integration directory).
-* *-v, --verbose*
-  Verbose output - mainly for debugging purposes, logging level will be displayed accordingly.
-* *-q, --quiet*
-  Quiet output, only output results in the end.
-* *-lp, --log-path*
-  Path to store all levels of logs.
+* *-clt, --console_log_threshold*
+  Minimum logging threshold for the console logger.  [default: INFO]
+* *-flt --file_log_threshold*
+  Minimum logging threshold for the file logger. [default: DEBUG]
+* *-lp, --log_file_path*
+  Path to the log file. Default: ./demisto_sdk_debug.log. [default: ./demisto_sdk_debug.log]
 * *-e, --examples*
   One of the following:
   - A path for a file containing Integration command examples. Each command example should be in a separate line.

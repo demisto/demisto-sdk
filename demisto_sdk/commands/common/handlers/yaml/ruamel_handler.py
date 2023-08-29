@@ -1,6 +1,6 @@
 from io import StringIO
 
-from ruamel.yaml import YAML
+from ruamel.yaml import YAML  # noqa:TID251 - this is the handler
 
 from demisto_sdk.commands.common.handlers.handlers_utils import order_dict
 from demisto_sdk.commands.common.handlers.xsoar_handler import XSOAR_Handler
@@ -14,11 +14,20 @@ class RUAMEL_Handler(XSOAR_Handler):
 
     def __init__(
         self,
+        typ="rt",
         preserve_quotes=True,
         allow_duplicate_keys=False,
         width=5000,
         ensure_ascii=False,
     ):
+        """
+        typ: 'rt'/None -> RoundTripLoader/RoundTripDumper,  (default, preserves order, comments and formatting. slower then the rest))
+             'safe'    -> SafeLoader/SafeDumper,
+             'unsafe'  -> normal/unsafe Loader/Dumper
+             'base'    -> baseloader
+
+        """
+        self._typ = typ
         self._preserve_quotes = preserve_quotes
         self._allow_duplicate_keys = allow_duplicate_keys
         self._width = width
@@ -27,7 +36,7 @@ class RUAMEL_Handler(XSOAR_Handler):
     @property
     def yaml(self) -> YAML:
         """Creating an instance of ruamel for each command. Best practice by ruamel"""
-        yaml = YAML()
+        yaml = YAML(typ=self._typ)
         yaml.allow_duplicate_keys = self._allow_duplicate_keys
         yaml.preserve_quotes = self._preserve_quotes
         yaml.width = self._width

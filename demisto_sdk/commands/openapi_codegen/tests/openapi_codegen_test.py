@@ -1,13 +1,11 @@
 import os
+from pathlib import Path
 
-from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
+from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.openapi_codegen.openapi_codegen import OpenAPIIntegration
 
-json = JSON_Handler()
-
-
-yaml = YAML_Handler()
 expected_command_function = """def get_pet_by_id_command(client: Client, args: Dict[str, Any]) -> CommandResults:
     petId = args.get('petId', None)
 
@@ -262,9 +260,7 @@ class TestOpenAPICodeGen:
         with open(self.swagger_path) as f:
             file_data_after_config_save = json.loads(f.read())
         assert file_data_after_config_save == file_data_before_config_save
-        os.remove(
-            os.path.join(self.test_files_path, f"{integration.base_name}_config.json")
-        )
+        Path(self.test_files_path, f"{integration.base_name}_config.json").unlink()
 
     def test_ref_props_non_dict_handling(self):
         """

@@ -5,7 +5,7 @@ DO NOT import anything from custom packages, only use builtins.
 """
 
 import functools
-import json
+import json  # noqa: TID251
 import logging
 import urllib.parse
 from ast import literal_eval

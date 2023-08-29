@@ -1,10 +1,10 @@
 from __future__ import annotations
 
-from distutils.version import LooseVersion
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Set, Union
 
 import decorator
+from packaging.version import Version
 from requests import Response
 
 from demisto_sdk.commands.common.constants import (
@@ -25,89 +25,10 @@ from demisto_sdk.commands.common.constants import (
     MarketplaceVersions,
 )
 from demisto_sdk.commands.common.content_constant_paths import CONF_PATH
+from demisto_sdk.commands.common.tools import is_external_repository
 
 FOUND_FILES_AND_ERRORS: list = []
 FOUND_FILES_AND_IGNORED_ERRORS: list = []
-# allowed errors to be ignored in any supported pack (XSOAR/Partner/Community) only if they appear in the .pack-ignore
-ALLOWED_IGNORE_ERRORS = [
-    "BA101",
-    "BA106",
-    "BA108",
-    "BA109",
-    "BA110",
-    "BA111",
-    "BA112",
-    "BA113",
-    "BA116",
-    "BA119",
-    "BA124",
-    "DS107",
-    "GF102",
-    "IF100",
-    "IF106",
-    "IF113",
-    "IF115",
-    "IF116",
-    "IN109",
-    "IN110",
-    "IN122",
-    "IN124",
-    "IN126",
-    "IN128",
-    "IN135",
-    "IN136",
-    "IN139",
-    "IN144",
-    "IN145",
-    "IN153",
-    "IN154",
-    "MP106",
-    "PA113",
-    "PA116",
-    "PA124",
-    "PA125",
-    "PA127",
-    "PA129",
-    "PB104",
-    "PB105",
-    "PB106",
-    "PB110",
-    "PB111",
-    "PB114",
-    "PB115",
-    "PB116",
-    "PB107",
-    "PB118",
-    "PB119",
-    "PB121",
-    "RM100",
-    "RM102",
-    "RM104",
-    "RM106",
-    "RM108",
-    "RM110",
-    "RM112",
-    "RM113",
-    "RP102",
-    "RP104",
-    "SC100",
-    "SC101",
-    "SC105",
-    "SC106",
-    "IM111",
-    "RN112",
-    "RN113",
-    "RN114",
-    "RN115",
-    "RN116",
-    "MR104",
-    "MR105",
-    "MR108",
-    "PR101",
-    "LO107",
-    "IN107",
-    "DB100",
-]
 
 # predefined errors to be ignored in partner/community supported packs even if they do not appear in .pack-ignore
 PRESET_ERROR_TO_IGNORE = {
@@ -131,1738 +52,1509 @@ PRESET_ERROR_TO_CHECK = {
     "deprecated": ["ST", "BC", "BA", "IN127", "IN128", "PB104", "SC101"],
 }
 
-ERROR_CODE = {
+ERROR_CODE: Dict = {
     # BA - Basic
     "wrong_version": {
         "code": "BA100",
-        "ui_applicable": False,
         "related_field": "version",
     },
     "id_should_equal_name": {
         "code": "BA101",
-        "ui_applicable": False,
         "related_field": "id",
     },
     "file_type_not_supported": {
         "code": "BA102",
-        "ui_applicable": False,
         "related_field": "",
     },
     "file_name_include_spaces_error": {
         "code": "BA103",
-        "ui_applicable": False,
         "related_field": "",
     },
     "changes_may_fail_validation": {
         "code": "BA104",
-        "ui_applicable": False,
         "related_field": "",
     },
-    "invalid_id_set": {"code": "BA105", "ui_applicable": False, "related_field": ""},
+    "invalid_id_set": {"code": "BA105", "related_field": ""},
     "no_minimal_fromversion_in_file": {
         "code": "BA106",
-        "ui_applicable": False,
         "related_field": "fromversion",
     },
     "running_on_master_with_git": {
         "code": "BA107",
-        "ui_applicable": False,
         "related_field": "",
     },
     "folder_name_has_separators": {
         "code": "BA108",
-        "ui_applicable": False,
         "related_field": "",
     },
     "file_name_has_separators": {
         "code": "BA109",
-        "ui_applicable": False,
         "related_field": "",
     },
     "field_contain_forbidden_word": {
         "code": "BA110",
-        "ui_applicable": False,
         "related_field": "",
     },
     "entity_name_contains_excluded_word": {
         "code": "BA111",
-        "ui_applicable": False,
         "related_field": "",
     },
     "spaces_in_the_end_of_id": {
         "code": "BA112",
-        "ui_applicable": False,
         "related_field": "id",
     },
     "spaces_in_the_end_of_name": {
         "code": "BA113",
-        "ui_applicable": False,
         "related_field": "name",
     },
     "changed_pack_name": {
         "code": "BA114",
-        "ui_applicable": False,
         "related_field": "name",
     },
     "file_cannot_be_deleted": {
         "code": "BA115",
-        "ui_applicable": False,
         "related_field": "",
     },
     "cli_name_and_id_do_not_match": {
         "code": "BA116",
-        "ui_applicable": False,
         "related_field": "cliName",
     },
     "incorrect_from_to_version_format": {
         "code": "BA117",
-        "ui_applicable": False,
         "related_field": "",
     },
     "mismatching_from_to_versions": {
         "code": "BA118",
-        "ui_applicable": False,
         "related_field": "",
     },
     "copyright_section_in_python_error": {
         "code": "BA119",
-        "ui_applicable": False,
         "related_field": "",
     },
     "missing_unit_test_file": {
         "code": "BA124",
-        "ui_applicable": False,
         "related_field": "",
+    },
+    "customer_facing_docs_disallowed_terms": {
+        "code": "BA125",
+        "related_field": "description",
     },
     # BC - Backward Compatible
     "breaking_backwards_subtype": {
         "code": "BC100",
-        "ui_applicable": False,
         "related_field": "subtype",
     },
     "breaking_backwards_context": {
         "code": "BC101",
-        "ui_applicable": False,
         "related_field": "contextPath",
     },
     "breaking_backwards_command": {
         "code": "BC102",
-        "ui_applicable": False,
         "related_field": "contextPath",
     },
     "breaking_backwards_arg_changed": {
         "code": "BC103",
-        "ui_applicable": False,
         "related_field": "name",
     },
     "breaking_backwards_command_arg_changed": {
         "code": "BC104",
-        "ui_applicable": False,
         "related_field": "args",
     },
-    "file_id_changed": {"code": "BC105", "ui_applicable": False, "related_field": "id"},
+    "file_id_changed": {"code": "BC105", "related_field": "id"},
     "from_version_modified": {
         "code": "BC106",
-        "ui_applicable": False,
         "related_field": "fromversion",
     },
     "to_version_modified": {
         "code": "BC107",
-        "ui_applicable": False,
         "related_field": "toversion",
     },
     "marketplaces_removed": {
         "code": "BC108",
-        "ui_applicable": False,
         "related_field": "marketplaces",
     },
     "marketplaces_added": {
         "code": "BC109",
-        "ui_applicable": False,
         "related_field": "marketplaces",
     },
     # CJ - conf.json
     "description_missing_from_conf_json": {
         "code": "CJ100",
-        "ui_applicable": False,
         "related_field": "",
     },
     "test_not_in_conf_json": {
         "code": "CJ101",
-        "ui_applicable": False,
         "related_field": "",
     },
     "integration_not_registered": {
         "code": "CJ102",
-        "ui_applicable": False,
         "related_field": "",
     },
-    "no_test_playbook": {"code": "CJ103", "ui_applicable": False, "related_field": ""},
+    "no_test_playbook": {"code": "CJ103", "related_field": ""},
     "test_playbook_not_configured": {
         "code": "CJ104",
-        "ui_applicable": False,
         "related_field": "",
     },
     "all_entity_test_playbooks_are_skipped": {
         "code": "CJ105",
-        "ui_applicable": False,
         "related_field": "",
     },
     # CL - Classifiers
     "invalid_to_version_in_new_classifiers": {
         "code": "CL100",
-        "ui_applicable": False,
         "related_field": "toVersion",
     },
     "invalid_to_version_in_old_classifiers": {
         "code": "CL101",
-        "ui_applicable": False,
         "related_field": "toVersion",
     },
     "invalid_from_version_in_new_classifiers": {
         "code": "CL102",
-        "ui_applicable": False,
         "related_field": "fromVersion",
     },
     "invalid_from_version_in_old_classifiers": {
         "code": "CL103",
-        "ui_applicable": False,
         "related_field": "fromVersion",
     },
     "missing_from_version_in_new_classifiers": {
         "code": "CL104",
-        "ui_applicable": False,
         "related_field": "fromVersion",
     },
     "missing_to_version_in_old_classifiers": {
         "code": "CL105",
-        "ui_applicable": False,
         "related_field": "toVersion",
     },
     "from_version_higher_to_version": {
         "code": "CL106",
-        "ui_applicable": False,
         "related_field": "fromVersion",
     },
     "invalid_type_in_new_classifiers": {
         "code": "CL107",
-        "ui_applicable": False,
         "related_field": "type",
     },
     "classifier_non_existent_incident_types": {
         "code": "CL108",
-        "ui_applicable": False,
         "related_field": "incident_types",
     },
     # DA - Dashboards
     "remove_field_from_dashboard": {
         "code": "DA100",
-        "ui_applicable": False,
         "related_field": "",
     },
     "include_field_in_dashboard": {
         "code": "DA101",
-        "ui_applicable": False,
         "related_field": "",
     },
     # DB - DBot
     "dbot_invalid_output": {
         "code": "DB100",
-        "ui_applicable": True,
         "related_field": "contextPath",
     },
     "dbot_invalid_description": {
         "code": "DB101",
-        "ui_applicable": True,
         "related_field": "description",
     },
     # DO - Docker Images
     "default_docker_error": {
         "code": "DO100",
-        "ui_applicable": True,
         "related_field": "dockerimage",
     },
     "latest_docker_error": {
         "code": "DO101",
-        "ui_applicable": True,
         "related_field": "dockerimage",
     },
     "not_demisto_docker": {
         "code": "DO102",
-        "ui_applicable": True,
         "related_field": "dockerimage",
     },
     "docker_tag_not_fetched": {
         "code": "DO103",
-        "ui_applicable": True,
         "related_field": "dockerimage",
     },
     "no_docker_tag": {
         "code": "DO104",
-        "ui_applicable": True,
         "related_field": "dockerimage",
     },
     "docker_not_formatted_correctly": {
         "code": "DO105",
-        "ui_applicable": True,
         "related_field": "dockerimage",
     },
     "docker_not_on_the_latest_tag": {
         "code": "DO106",
-        "ui_applicable": True,
         "related_field": "dockerimage",
     },
     "non_existing_docker": {
         "code": "DO107",
-        "ui_applicable": True,
         "related_field": "dockerimage",
     },
     "dockerimage_not_in_yml_file": {
         "code": "DO108",
-        "ui_applicable": True,
         "related_field": "dockerimage",
     },
     "deprecated_docker_error": {
         "code": "DO109",
-        "ui_applicable": True,
         "related_field": "dockerimage",
     },
     "native_image_is_in_dockerimage_field": {
         "code": "DO110",
-        "ui_applicable": True,
         "related_field": "dockerimage",
     },
     # DS - Descriptions
     "description_missing_in_beta_integration": {
         "code": "DS100",
-        "ui_applicable": False,
         "related_field": "",
     },
     "no_beta_disclaimer_in_description": {
         "code": "DS101",
-        "ui_applicable": False,
         "related_field": "",
     },
     "no_beta_disclaimer_in_yml": {
         "code": "DS102",
-        "ui_applicable": False,
         "related_field": "",
     },
     "description_in_package_and_yml": {
         "code": "DS103",
-        "ui_applicable": False,
         "related_field": "",
     },
     "no_description_file_warning": {
         "code": "DS104",
-        "ui_applicable": False,
         "related_field": "",
     },
     "description_contains_contrib_details": {
         "code": "DS105",
-        "ui_applicable": False,
         "related_field": "detaileddescription",
     },
     "invalid_description_name": {
         "code": "DS106",
-        "ui_applicable": False,
         "related_field": "",
     },
     "description_contains_demisto_word": {
         "code": "DS107",
-        "ui_applicable": True,
         "related_field": "detaileddescription",
     },
     # GF - Generic Fields
     "invalid_generic_field_group_value": {
         "code": "GF100",
-        "ui_applicable": False,
         "related_field": "group",
     },
     "invalid_generic_field_id": {
         "code": "GF101",
-        "ui_applicable": False,
         "related_field": "id",
     },
     "unsearchable_key_should_be_true_generic_field": {
         "code": "GF102",
-        "ui_applicable": False,
         "related_field": "unsearchable",
     },
     # ID - ID Set
-    "id_set_conflicts": {"code": "ID100", "ui_applicable": False, "related_field": ""},
-    # missing 101
-    "no_id_set_file": {"code": "ID103", "ui_applicable": False, "related_field": ""},
+    "id_set_conflicts": {"code": "ID100", "related_field": ""},
+    "no_id_set_file": {"code": "ID103", "related_field": ""},
     # IF - Incident Fields
     "invalid_incident_field_name": {
         "code": "IF100",
-        "ui_applicable": True,
         "related_field": "name",
     },
     "invalid_field_content_key_value": {
         "code": "IF101",
-        "ui_applicable": False,
         "related_field": "content",
     },
     "invalid_incident_field_system_key_value": {
         "code": "IF102",
-        "ui_applicable": False,
         "related_field": "system",
     },
     "invalid_field_type": {
         "code": "IF103",
-        "ui_applicable": True,
         "related_field": "type",
     },
     "invalid_field_group_value": {
         "code": "IF104",
-        "ui_applicable": False,
         "related_field": "group",
     },
     "invalid_incident_field_cli_name_regex": {
         "code": "IF105",
-        "ui_applicable": False,
         "related_field": "cliName",
     },
     "invalid_incident_field_cli_name_value": {
         "code": "IF106",
-        "ui_applicable": True,
         "related_field": "cliName",
     },
-    # missing 107
     "invalid_incident_field_or_type_from_version": {
         "code": "IF108",
-        "ui_applicable": False,
         "related_field": "fromVersion",
     },
     "new_field_required": {
         "code": "IF109",
-        "ui_applicable": True,
         "related_field": "required",
     },
     "from_version_modified_after_rename": {
         "code": "IF110",
-        "ui_applicable": False,
         "related_field": "fromVersion",
     },
     "incident_field_type_change": {
         "code": "IF111",
-        "ui_applicable": False,
         "related_field": "type",
     },
     "field_version_is_not_correct": {
         "code": "IF112",
-        "ui_applicable": False,
         "related_field": "fromVersion",
     },
     "invalid_incident_field_prefix": {
         "code": "IF113",
-        "ui_applicable": False,
         "related_field": "name",
     },
     "incident_field_non_existent_script_id": {
         "code": "IF114",
-        "ui_applicable": False,
         "related_field": "",
     },
     "unsearchable_key_should_be_true_incident_field": {
         "code": "IF115",
-        "ui_applicable": False,
         "related_field": "unsearchable",
     },
-    "select_values_cannot_contain_empty_values": {
+    "select_values_cannot_contain_empty_values_in_multi_select_types": {
         "code": "IF116",
-        "ui_applicable": False,
         "related_field": "selectValues",
     },
     "invalid_marketplaces_in_alias": {
         "code": "IF117",
-        "ui_applicable": False,
         "related_field": "Aliases",
     },
     "aliases_with_inner_alias": {
         "code": "IF118",
-        "ui_applicable": False,
         "related_field": "Aliases",
+    },
+    "select_values_cannot_contain_multiple_or_only_empty_values_in_single_select_types": {
+        "code": "IF119",
+        "related_field": "selectValues",
     },
     # IM - Images
     "no_image_given": {
         "code": "IM100",
-        "ui_applicable": True,
         "related_field": "image",
     },
     "image_too_large": {
         "code": "IM101",
-        "ui_applicable": True,
         "related_field": "image",
     },
     "image_in_package_and_yml": {
         "code": "IM102",
-        "ui_applicable": False,
         "related_field": "image",
     },
     "not_an_image_file": {
         "code": "IM103",
-        "ui_applicable": False,
         "related_field": "image",
     },
     "no_image_field_in_yml": {
         "code": "IM104",
-        "ui_applicable": True,
         "related_field": "image",
     },
     "image_field_not_in_base64": {
         "code": "IM105",
-        "ui_applicable": True,
         "related_field": "image",
     },
     "default_image_error": {
         "code": "IM106",
-        "ui_applicable": True,
         "related_field": "image",
     },
     "invalid_image_name": {
         "code": "IM107",
-        "ui_applicable": False,
         "related_field": "image",
     },
     "image_is_empty": {
         "code": "IM108",
-        "ui_applicable": True,
         "related_field": "image",
     },
     "author_image_is_missing": {
         "code": "IM109",
-        "ui_applicable": True,
         "related_field": "image",
     },
     "invalid_image_name_or_location": {
         "code": "IM110",
-        "ui_applicable": True,
         "related_field": "image",
     },
     "invalid_image_dimensions": {
         "code": "IM111",
-        "ui_applicable": True,
         "related_field": "image",
     },
     # IN - Integrations
     "wrong_display_name": {
         "code": "IN100",
-        "ui_applicable": True,
         "related_field": "<parameter-name>.display",
     },
     "wrong_default_parameter_not_empty": {
         "code": "IN101",
-        "ui_applicable": True,
         "related_field": "<parameter-name>.default",
     },
     "wrong_required_value": {
         "code": "IN102",
-        "ui_applicable": True,
         "related_field": "<parameter-name>.required",
     },
     "wrong_required_type": {
         "code": "IN103",
-        "ui_applicable": True,
         "related_field": "<parameter-name>.type",
     },
     "wrong_category": {
         "code": "IN104",
-        "ui_applicable": True,
         "related_field": "category",
     },
     "wrong_default_argument": {
         "code": "IN105",
-        "ui_applicable": True,
         "related_field": "<argument-name>.default",
     },
     "no_default_arg": {
         "code": "IN106",
-        "ui_applicable": True,
         "related_field": "<argument-name>.default",
     },
     "missing_reputation": {
         "code": "IN107",
-        "ui_applicable": True,
         "related_field": "outputs",
     },
     "wrong_subtype": {
         "code": "IN108",
-        "ui_applicable": False,
         "related_field": "subtype",
     },
-    "beta_in_id": {"code": "IN109", "ui_applicable": False, "related_field": "id"},
-    "beta_in_name": {"code": "IN110", "ui_applicable": False, "related_field": "name"},
+    "beta_in_id": {"code": "IN109", "related_field": "id"},
+    "beta_in_name": {"code": "IN110", "related_field": "name"},
     "beta_field_not_found": {
         "code": "IN111",
-        "ui_applicable": False,
         "related_field": "beta",
     },
     "no_beta_in_display": {
         "code": "IN112",
-        "ui_applicable": False,
         "related_field": "display",
     },
     "duplicate_arg_in_file": {
         "code": "IN113",
-        "ui_applicable": True,
         "related_field": "arguments",
     },
     "duplicate_param": {
         "code": "IN114",
-        "ui_applicable": True,
         "related_field": "configuration",
     },
     "invalid_context_output": {
         "code": "IN115",
-        "ui_applicable": True,
         "related_field": "outputs",
     },
     "added_required_fields": {
         "code": "IN116",
-        "ui_applicable": False,
         "related_field": "<parameter-name>.required",
     },
     "not_used_display_name": {
         "code": "IN117",
-        "ui_applicable": True,
         "related_field": "<parameter-name>.display",
     },
     "empty_display_configuration": {
         "code": "IN118",
-        "ui_applicable": True,
         "related_field": "<parameter-name>.display",
     },
     "feed_wrong_from_version": {
         "code": "IN119",
-        "ui_applicable": False,
         "related_field": "fromversion",
     },
     "pwsh_wrong_version": {
         "code": "IN120",
-        "ui_applicable": False,
         "related_field": "fromversion",
     },
     "parameter_missing_from_yml": {
         "code": "IN121",
-        "ui_applicable": True,
         "related_field": "configuration",
     },
     "parameter_missing_for_feed": {
         "code": "IN122",
-        "ui_applicable": True,
         "related_field": "configuration",
     },
     "invalid_version_integration_name": {
         "code": "IN123",
-        "ui_applicable": True,
         "related_field": "display",
     },
     "param_not_allowed_to_hide": {
         "code": "IN124",
-        "ui_applicable": False,
         "related_field": "<parameter-name>.hidden",
     },
     "no_default_value_in_parameter": {
         "code": "IN125",
-        "ui_applicable": False,
         "related_field": "<parameter-name>.default",
     },
     "parameter_missing_from_yml_not_community_contributor": {
         "code": "IN126",
-        "ui_applicable": False,
         "related_field": "configuration",
     },
     "invalid_deprecated_integration_display_name": {
         "code": "IN127",
-        "ui_applicable": False,
         "related_field": "display",
     },
     "invalid_integration_deprecation__only_display_name_suffix": {
         "code": "IN157",
-        "ui_applicable": False,
         "related_field": "deprecated",
     },
     "invalid_deprecation__only_description_deprecated": {
         "code": "IN158",
-        "ui_applicable": False,
         "related_field": "deprecated",
     },
     "invalid_deprecated_integration_description": {
         "code": "IN128",
-        "ui_applicable": False,
         "related_field": "",
     },
     "removed_integration_parameters": {
         "code": "IN129",
-        "ui_applicable": False,
         "related_field": "configuration",
     },
     "integration_not_runnable": {
         "code": "IN130",
-        "ui_applicable": False,
         "related_field": "configuration",
     },
     "missing_get_mapping_fields_command": {
         "code": "IN131",
-        "ui_applicable": False,
         "related_field": "ismappable",
     },
     "integration_non_existent_classifier": {
         "code": "IN132",
-        "ui_applicable": False,
         "related_field": "classifiers",
     },
     "integration_non_existent_mapper": {
         "code": "IN133",
-        "ui_applicable": False,
         "related_field": "mappers",
     },
     "multiple_default_arg": {
         "code": "IN134",
-        "ui_applicable": True,
         "related_field": "arguments",
     },
     "invalid_integration_parameters_display_name": {
         "code": "IN135",
-        "ui_applicable": True,
         "related_field": "display",
     },
     "missing_output_context": {
         "code": "IN136",
-        "ui_applicable": True,
         "related_field": "contextOutput",
     },
     "is_valid_integration_file_path_in_folder": {
         "code": "IN137",
-        "ui_applicable": False,
         "related_field": "",
     },
     "is_valid_integration_file_path_in_integrations_folder": {
         "code": "IN138",
-        "ui_applicable": False,
         "related_field": "",
     },
     "incident_in_command_name_or_args": {
         "code": "IN139",
-        "ui_applicable": False,
         "related_field": "script.commands.name",
     },
     "integration_is_skipped": {
         "code": "IN140",
-        "ui_applicable": False,
         "related_field": "",
     },
     "reputation_missing_argument": {
         "code": "IN141",
-        "ui_applicable": True,
         "related_field": "<argument-name>.default",
     },
     "non_default_additional_info": {
         "code": "IN142",
-        "ui_applicable": True,
         "related_field": "additionalinfo",
     },
     "missing_default_additional_info": {
         "code": "IN143",
-        "ui_applicable": True,
         "related_field": "additionalinfo",
     },
     "wrong_is_array_argument": {
         "code": "IN144",
-        "ui_applicable": True,
         "related_field": "<argument-name>.default",
     },
     "api_token_is_not_in_credential_type": {
         "code": "IN145",
-        "ui_applicable": True,
         "related_field": "<argument-name>.type",
     },
     "fromlicense_in_parameters": {
         "code": "IN146",
-        "ui_applicable": True,
         "related_field": "<parameter-name>.fromlicense",
     },
     "changed_integration_yml_fields": {
         "code": "IN147",
-        "ui_applicable": False,
         "related_field": "script",
     },
     "parameter_is_malformed": {
         "code": "IN148",
-        "ui_applicable": False,
         "related_field": "configuration",
     },
     "empty_outputs_common_paths": {
         "code": "IN149",
-        "ui_applicable": False,
         "related_field": "contextOutput",
     },
     "invalid_siem_integration_name": {
         "code": "IN150",
-        "ui_applicable": True,
+        "related_field": "display",
+    },
+    "invalid_siem_marketplaces_entry": {
+        "code": "IN151",
         "related_field": "display",
     },
     "empty_command_arguments": {
         "code": "IN151",
-        "ui_applicable": False,
         "related_field": "arguments",
     },
     "invalid_defaultvalue_for_checkbox_field": {
         "code": "IN152",
-        "ui_applicable": True,
         "related_field": "defaultvalue",
     },
     "not_supported_integration_parameter_url_defaultvalue": {
         "code": "IN153",
-        "ui_applicable": False,
         "related_field": "defaultvalue",
     },
     "missing_reliability_parameter": {
         "code": "IN154",
-        "ui_applicable": False,
         "related_field": "configuration",
     },
     "integration_is_deprecated_and_used": {
         "code": "IN155",
-        "ui_applicable": True,
         "related_field": "deprecated",
     },
     "invalid_hidden_attribute_for_param": {
         "code": "IN156",
-        "ui_applicable": False,
         "related_field": "hidden",
     },
     "nativeimage_exist_in_integration_yml": {
         "code": "IN157",
-        "ui_applicable": False,
         "related_field": "script",
     },
     # IT - Incident Types
     "incident_type_integer_field": {
         "code": "IT100",
-        "ui_applicable": True,
         "related_field": "",
     },
     "incident_type_invalid_playbook_id_field": {
         "code": "IT101",
-        "ui_applicable": False,
         "related_field": "playbookId",
     },
     "incident_type_auto_extract_fields_invalid": {
         "code": "IT102",
-        "ui_applicable": False,
         "related_field": "extractSettings",
     },
     "incident_type_invalid_auto_extract_mode": {
         "code": "IT103",
-        "ui_applicable": True,
         "related_field": "mode",
     },
     "incident_type_non_existent_playbook_id": {
         "code": "IT104",
-        "ui_applicable": False,
         "related_field": "",
     },
     # LI - Lists
     "invalid_from_version_in_lists": {
         "code": "LI100",
-        "ui_applicable": False,
         "related_field": "fromVersion",
     },
     "missing_from_version_in_list": {
         "code": "LI101",
-        "ui_applicable": False,
         "related_field": "fromVersion",
     },
     # LO - Layouts
     "invalid_version_in_layout": {
         "code": "LO100",
-        "ui_applicable": False,
         "related_field": "version",
     },
     "invalid_version_in_layoutscontainer": {
         "code": "LO101",
-        "ui_applicable": False,
         "related_field": "version",
     },
     "invalid_file_path_layout": {
         "code": "LO102",
-        "ui_applicable": False,
         "related_field": "",
     },
     "invalid_file_path_layoutscontainer": {
         "code": "LO103",
-        "ui_applicable": False,
         "related_field": "",
     },
     "invalid_incident_field_in_layout": {
         "code": "LO104",
-        "ui_applicable": False,
         "related_field": "",
     },
     "layouts_container_non_existent_script_id": {
         "code": "LO105",
-        "ui_applicable": False,
         "related_field": "",
     },
     "layout_non_existent_script_id": {
         "code": "LO106",
-        "ui_applicable": False,
         "related_field": "",
     },
     "layout_container_contains_invalid_types": {
         "code": "LO107",
-        "ui_applicable": False,
         "related_field": "",
     },
     # MP - Mappers
     "invalid_from_version_in_mapper": {
         "code": "MP100",
-        "ui_applicable": False,
         "related_field": "fromVersion",
     },
     "invalid_to_version_in_mapper": {
         "code": "MP101",
-        "ui_applicable": False,
         "related_field": "toVersion",
     },
     "invalid_mapper_file_name": {
         "code": "MP102",
-        "ui_applicable": False,
         "related_field": "",
     },
     "missing_from_version_in_mapper": {
         "code": "MP103",
-        "ui_applicable": False,
         "related_field": "fromVersion",
     },
     "invalid_type_in_mapper": {
         "code": "MP104",
-        "ui_applicable": False,
         "related_field": "type",
     },
     "mapper_non_existent_incident_types": {
         "code": "MP105",
-        "ui_applicable": False,
         "related_field": "incident_types",
     },
     "invalid_incident_field_in_mapper": {
         "code": "MP106",
-        "ui_applicable": False,
         "related_field": "mapping",
     },
     "changed_incident_field_in_mapper": {
         "code": "MP107",
-        "ui_applicable": True,
         "related_field": "mapping",
     },
     "removed_incident_types": {
         "code": "MP108",
-        "ui_applicable": True,
         "related_field": "mapping",
     },
     # PA - Packs (unique files)
     "pack_file_does_not_exist": {
         "code": "PA100",
-        "ui_applicable": False,
         "related_field": "",
     },
     "cant_open_pack_file": {
         "code": "PA101",
-        "ui_applicable": False,
         "related_field": "",
     },
     "cant_read_pack_file": {
         "code": "PA102",
-        "ui_applicable": False,
         "related_field": "",
     },
     "cant_parse_pack_file_to_list": {
         "code": "PA103",
-        "ui_applicable": False,
         "related_field": "",
     },
     "pack_file_bad_format": {
         "code": "PA104",
-        "ui_applicable": False,
         "related_field": "",
     },
     "pack_metadata_empty": {
         "code": "PA105",
-        "ui_applicable": False,
         "related_field": "",
     },
     "pack_metadata_should_be_dict": {
         "code": "PA106",
-        "ui_applicable": False,
         "related_field": "",
     },
     "missing_field_iin_pack_metadata": {
         "code": "PA107",
-        "ui_applicable": False,
         "related_field": "",
     },
     "pack_metadata_name_not_valid": {
         "code": "PA108",
-        "ui_applicable": False,
         "related_field": "",
     },
     "pack_metadata_field_invalid": {
         "code": "PA109",
-        "ui_applicable": False,
         "related_field": "",
     },
     "dependencies_field_should_be_dict": {
         "code": "PA110",
-        "ui_applicable": False,
         "related_field": "",
     },
     "empty_field_in_pack_metadata": {
         "code": "PA111",
-        "ui_applicable": False,
         "related_field": "",
     },
     "pack_metadata_isnt_json": {
         "code": "PA112",
-        "ui_applicable": False,
         "related_field": "",
     },
     "pack_metadata_missing_url_and_email": {
         "code": "PA113",
-        "ui_applicable": False,
         "related_field": "",
     },
     "pack_metadata_version_should_be_raised": {
         "code": "PA114",
-        "ui_applicable": False,
         "related_field": "",
     },
     "pack_timestamp_field_not_in_iso_format": {
         "code": "PA115",
-        "ui_applicable": False,
         "related_field": "",
     },
     "invalid_package_dependencies": {
         "code": "PA116",
-        "ui_applicable": False,
         "related_field": "",
     },
     "pack_metadata_invalid_support_type": {
         "code": "PA117",
-        "ui_applicable": False,
         "related_field": "",
     },
     "pack_metadata_certification_is_invalid": {
         "code": "PA118",
-        "ui_applicable": False,
         "related_field": "",
     },
     "pack_metadata_non_approved_usecases": {
         "code": "PA119",
-        "ui_applicable": False,
         "related_field": "",
     },
     "pack_metadata_non_approved_tags": {
         "code": "PA120",
-        "ui_applicable": False,
         "related_field": "",
     },
     "pack_metadata_price_change": {
         "code": "PA121",
-        "ui_applicable": False,
         "related_field": "",
     },
     "pack_name_already_exists": {
         "code": "PA122",
-        "ui_applicable": False,
         "related_field": "",
     },
     "is_wrong_usage_of_usecase_tag": {
         "code": "PA123",
-        "ui_applicable": False,
         "related_field": "",
     },
     "invalid_core_pack_dependencies": {
         "code": "PA124",
-        "ui_applicable": True,
         "related_field": "",
     },
     "pack_name_is_not_in_xsoar_standards": {
         "code": "PA125",
-        "ui_applicable": False,
         "related_field": "",
     },
     "pack_metadata_long_description": {
         "code": "PA126",
-        "ui_applicable": False,
         "related_field": "",
     },
     "metadata_url_invalid": {
         "code": "PA127",
-        "ui_applicable": False,
         "related_field": "",
     },
     "required_pack_file_does_not_exist": {
         "code": "PA128",
-        "ui_applicable": False,
         "related_field": "",
     },
     "pack_metadata_missing_categories": {
         "code": "PA129",
-        "ui_applicable": False,
         "related_field": "",
     },
     "wrong_version_format": {
         "code": "PA130",
-        "ui_applicable": False,
         "related_field": "",
     },
     "pack_metadata_version_diff_from_rn": {
         "code": "PA131",
-        "ui_applicable": False,
         "related_field": "",
     },
     "pack_should_be_deprecated": {
         "code": "PA132",
-        "ui_applicable": False,
         "related_field": "",
     },
     "pack_metadata_non_approved_tag_prefix": {
         "code": "PA133",
-        "ui_applicable": False,
         "related_field": "",
     },
     "categories_field_does_not_match_standard": {
         "code": "PA134",
-        "ui_applicable": False,
         "related_field": "",
     },
     "pack_metadata_invalid_modules": {
         "code": "PA135",
-        "ui_applicable": False,
         "related_field": "",
     },
     "pack_metadata_modules_for_non_xsiam": {
         "code": "PA136",
-        "ui_applicable": False,
+        "related_field": "",
+    },
+    "pack_have_nonignorable_error": {
+        "code": "PA137",
         "related_field": "",
     },
     # PB - Playbooks
     "playbook_cant_have_rolename": {
         "code": "PB100",
-        "ui_applicable": True,
         "related_field": "rolename",
     },
     "playbook_unreachable_condition": {
         "code": "PB101",
-        "ui_applicable": True,
         "related_field": "tasks",
     },
     "playbook_unconnected_tasks": {
         "code": "PB103",
-        "ui_applicable": True,
         "related_field": "tasks",
     },
     "invalid_deprecated_playbook": {
         "code": "PB104",
-        "ui_applicable": False,
         "related_field": "description",
     },
     "playbook_cant_have_deletecontext_all": {
         "code": "PB105",
-        "ui_applicable": True,
         "related_field": "tasks",
     },
     "using_instance_in_playbook": {
         "code": "PB106",
-        "ui_applicable": True,
         "related_field": "tasks",
     },
     "invalid_script_id": {
         "code": "PB107",
-        "ui_applicable": False,
         "related_field": "tasks",
     },
     "invalid_uuid": {
         "code": "PB108",
-        "ui_applicable": False,
         "related_field": "taskid",
     },
     "taskid_different_from_id": {
         "code": "PB109",
-        "ui_applicable": False,
         "related_field": "taskid",
     },
     "content_entity_version_not_match_playbook_version": {
         "code": "PB110",
-        "ui_applicable": False,
         "related_field": "toVersion",
     },
     "integration_version_not_match_playbook_version": {
         "code": "PB111",
-        "ui_applicable": False,
         "related_field": "toVersion",
     },
     "invalid_subplaybook_name": {
         "code": "PB113",
-        "ui_applicable": False,
         "related_field": "tasks",
     },
     "playbook_not_quiet_mode": {
         "code": "PB114",
-        "ui_applicable": False,
         "related_field": "",
     },
     "playbook_tasks_not_quiet_mode": {
         "code": "PB115",
-        "ui_applicable": False,
         "related_field": "tasks",
     },
     "playbook_tasks_continue_on_error": {
         "code": "PB116",
-        "ui_applicable": False,
         "related_field": "tasks",
     },
     "content_entity_is_not_in_id_set": {
         "code": "PB117",
-        "ui_applicable": False,
         "related_field": "",
     },
     "input_key_not_in_tasks": {
         "code": "PB118",
-        "ui_applicable": False,
         "related_field": "",
     },
     "input_used_not_in_input_section": {
         "code": "PB119",
-        "ui_applicable": False,
         "related_field": "",
     },
     "playbook_is_deprecated_and_used": {
         "code": "PB120",
-        "ui_applicable": False,
         "related_field": "deprecated",
     },
     "incorrect_value_references": {
         "code": "PB121",
-        "ui_applicable": False,
         "related_field": "taskid",
     },
     "playbook_unhandled_task_branches": {
         "code": "PB122",
-        "ui_applicable": True,
         "related_field": "conditions",
     },
     "playbook_unhandled_reply_options": {
         "code": "PB123",
-        "ui_applicable": True,
         "related_field": "conditions",
     },
     "playbook_unhandled_script_condition_branches": {
         "code": "PB124",
-        "ui_applicable": True,
         "related_field": "conditions",
     },
     "playbook_only_default_next": {
         "code": "PB125",
-        "ui_applicable": True,
         "related_field": "conditions",
     },
     "playbook_only_default_reply_option": {
         "code": "PB126",
-        "ui_applicable": True,
         "related_field": "message",
     },
     # PP - Pre-Process Rules
     "invalid_from_version_in_pre_process_rules": {
         "code": "PP100",
-        "ui_applicable": False,
         "related_field": "fromVersion",
     },
     "invalid_incident_field_in_pre_process_rules": {
         "code": "PP101",
-        "ui_applicable": False,
         "related_field": "",
     },
     "unknown_fields_in_pre_process_rules": {
         "code": "PP102",
-        "ui_applicable": False,
         "related_field": "",
     },
     # RM - READMEs
-    "readme_error": {"code": "RM100", "ui_applicable": False, "related_field": ""},
-    "image_path_error": {"code": "RM101", "ui_applicable": False, "related_field": ""},
+    "readme_error": {"code": "RM100", "related_field": ""},
+    "image_path_error": {"code": "RM101", "related_field": ""},
     "readme_missing_output_context": {
         "code": "RM102",
-        "ui_applicable": False,
         "related_field": "",
     },
     "error_starting_mdx_server": {
         "code": "RM103",
-        "ui_applicable": False,
         "related_field": "",
     },
     "empty_readme_error": {
         "code": "RM104",
-        "ui_applicable": False,
         "related_field": "",
     },
     "readme_equal_description_error": {
         "code": "RM105",
-        "ui_applicable": False,
         "related_field": "",
     },
     "readme_contains_demisto_word": {
         "code": "RM106",
-        "ui_applicable": False,
         "related_field": "",
     },
     "template_sentence_in_readme": {
         "code": "RM107",
-        "ui_applicable": False,
         "related_field": "",
     },
     "invalid_readme_image_error": {
         "code": "RM108",
-        "ui_applicable": False,
         "related_field": "",
     },
     "missing_readme_file": {
         "code": "RM109",
-        "ui_applicable": False,
         "related_field": "",
     },
     "missing_commands_from_readme": {
         "code": "RM110",
-        "ui_applicable": False,
         "related_field": "",
     },
     "error_uninstall_node": {
         "code": "RM111",
-        "ui_applicable": False,
         "related_field": "",
     },
     "invalid_readme_relative_url_error": {
         "code": "RM112",
-        "ui_applicable": False,
         "related_field": "",
     },
     "copyright_section_in_readme_error": {
         "code": "RM113",
-        "ui_applicable": False,
         "related_field": "",
     },
     "image_does_not_exist": {
         "code": "RM114",
-        "ui_applicable": False,
         "related_field": "",
     },
     # RN - Release Notes
     "missing_release_notes": {
         "code": "RN100",
-        "ui_applicable": False,
         "related_field": "",
     },
     "no_new_release_notes": {
         "code": "RN101",
-        "ui_applicable": False,
         "related_field": "",
     },
     "release_notes_not_formatted_correctly": {
         "code": "RN102",
-        "ui_applicable": False,
         "related_field": "",
     },
     "release_notes_not_finished": {
         "code": "RN103",
-        "ui_applicable": False,
         "related_field": "",
     },
     "release_notes_file_empty": {
         "code": "RN104",
-        "ui_applicable": False,
         "related_field": "",
     },
     "multiple_release_notes_files": {
         "code": "RN105",
-        "ui_applicable": False,
         "related_field": "",
     },
     "missing_release_notes_for_pack": {
         "code": "RN106",
-        "ui_applicable": False,
         "related_field": "",
     },
     "missing_release_notes_entry": {
         "code": "RN107",
-        "ui_applicable": False,
         "related_field": "",
     },
     "added_release_notes_for_new_pack": {
         "code": "RN108",
-        "ui_applicable": False,
         "related_field": "",
     },
     "modified_existing_release_notes": {
         "code": "RN109",
-        "ui_applicable": False,
         "related_field": "",
     },
     "release_notes_config_file_missing_release_notes": {
         "code": "RN110",
-        "ui_applicable": False,
         "related_field": "",
     },
     "release_notes_docker_image_not_match_yaml": {
         "code": "RN111",
-        "ui_applicable": False,
         "related_field": "",
     },
     "release_notes_bc_json_file_missing": {
         "code": "RN112",
-        "ui_applicable": False,
         "related_field": "",
     },
     "release_notes_invalid_content_type_header": {
         "code": "RN113",
-        "ui_applicable": False,
         "related_field": "",
     },
     "release_notes_invalid_content_name_header": {
         "code": "RN114",
-        "ui_applicable": False,
         "related_field": "",
     },
     "release_notes_invalid_header_format": {
         "code": "RN115",
-        "ui_applicable": False,
         "related_field": "",
     },
     "first_level_is_header_missing": {
         "code": "RN116",
-        "ui_applicable": False,
         "related_field": "",
     },
     # RP - Reputations (Indicator Types)
     "wrong_version_reputations": {
         "code": "RP100",
-        "ui_applicable": False,
         "related_field": "version",
     },
     "reputation_expiration_should_be_numeric": {
         "code": "RP101",
-        "ui_applicable": True,
         "related_field": "expiration",
     },
     "reputation_id_and_details_not_equal": {
         "code": "RP102",
-        "ui_applicable": False,
         "related_field": "id",
     },
     "reputation_invalid_indicator_type_id": {
         "code": "RP103",
-        "ui_applicable": False,
         "related_field": "id",
     },
     "reputation_empty_required_fields": {
         "code": "RP104",
-        "ui_applicable": False,
         "related_field": "id",
     },
     # SC - Scripts
     "invalid_version_script_name": {
         "code": "SC100",
-        "ui_applicable": True,
         "related_field": "name",
     },
     "invalid_deprecated_script": {
         "code": "SC101",
-        "ui_applicable": False,
         "related_field": "comment",
     },
     "invalid_command_name_in_script": {
         "code": "SC102",
-        "ui_applicable": False,
         "related_field": "",
     },
     "is_valid_script_file_path_in_folder": {
         "code": "SC103",
-        "ui_applicable": False,
         "related_field": "",
     },
     "incident_in_script_arg": {
         "code": "SC105",
-        "ui_applicable": True,
         "related_field": "args.name",
     },
     "runas_is_dbotrole": {
         "code": "SC106",
-        "ui_applicable": False,
         "related_field": "runas",
     },
     "script_is_deprecated_and_used": {
         "code": "SC107",
-        "ui_applicable": True,
         "related_field": "deprecated",
     },
     "nativeimage_exist_in_script_yml": {
         "code": "SC108",
-        "ui_applicable": False,
         "related_field": "nativeimage",
     },
     # ST - Structures
     "structure_doesnt_match_scheme": {
         "code": "ST100",
-        "ui_applicable": False,
         "related_field": "",
     },
     "file_id_contains_slashes": {
         "code": "ST101",
-        "ui_applicable": False,
         "related_field": "id",
     },
     "wrong_file_extension": {
         "code": "ST104",
-        "ui_applicable": False,
         "related_field": "",
     },
-    "invalid_file_path": {"code": "ST105", "ui_applicable": False, "related_field": ""},
+    "invalid_file_path": {"code": "ST105", "related_field": ""},
     "invalid_package_structure": {
         "code": "ST106",
-        "ui_applicable": False,
         "related_field": "",
     },
     "pykwalify_missing_parameter": {
         "code": "ST107",
-        "ui_applicable": False,
         "related_field": "",
     },
     "pykwalify_field_undefined": {
         "code": "ST108",
-        "ui_applicable": False,
         "related_field": "",
     },
     "pykwalify_missing_in_root": {
         "code": "ST109",
-        "ui_applicable": False,
         "related_field": "",
     },
     "pykwalify_general_error": {
         "code": "ST110",
-        "ui_applicable": False,
         "related_field": "",
     },
     "pykwalify_field_undefined_with_path": {
         "code": "ST111",
-        "ui_applicable": False,
         "related_field": "",
     },
     "pykwalify_incorrect_enum": {
         "code": "ST112",
-        "ui_applicable": False,
         "related_field": "",
     },
-    "invalid_yml_file": {"code": "ST113", "ui_applicable": False, "related_field": ""},
+    "invalid_yml_file": {"code": "ST113", "related_field": ""},
     # WD - Widgets
     "remove_field_from_widget": {
         "code": "WD100",
-        "ui_applicable": False,
         "related_field": "",
     },
     "include_field_in_widget": {
         "code": "WD101",
-        "ui_applicable": False,
         "related_field": "",
     },
     "invalid_fromversion_for_type_metrics": {
         "code": "WD102",
-        "ui_applicable": False,
         "related_field": "",
     },
     # XC - XSOAR Config
     "xsoar_config_file_is_not_json": {
         "code": "XC100",
-        "ui_applicable": False,
         "related_field": "",
     },
     "xsoar_config_file_malformed": {
         "code": "XC101",
-        "ui_applicable": False,
         "related_field": "",
     },
     # JB - Jobs
     "invalid_fromversion_in_job": {
         "code": "JB100",
-        "ui_applicable": False,
         "related_field": "fromVersion",
     },
     "invalid_both_selected_and_all_feeds_in_job": {
         "code": "JB101",
-        "ui_applicable": False,
         "related_field": "isAllFields",
     },
     "unexpected_field_values_in_non_feed_job": {
         "code": "JB102",
-        "ui_applicable": False,
         "related_field": "isFeed",
     },
     "missing_field_values_in_feed_job": {
         "code": "JB103",
-        "ui_applicable": False,
         "related_field": "isFeed",
     },
     "empty_or_missing_job_name": {
         "code": "JB104",
-        "ui_applicable": False,
         "related_field": "name",
     },
     # WZ - Wizards
     "invalid_dependency_pack_in_wizard": {
         "code": "WZ100",
-        "ui_applicable": False,
         "related_field": "dependency_packs",
     },
     "missing_dependency_pack_in_wizard": {
         "code": "WZ101",
-        "ui_applicable": False,
         "related_field": "dependency_packs",
     },
     "invalid_integration_in_wizard": {
         "code": "WZ102",
-        "ui_applicable": False,
         "related_field": "wizard",
     },
     "invalid_playbook_in_wizard": {
         "code": "WZ103",
-        "ui_applicable": False,
         "related_field": "wizard",
     },
     "wrong_link_in_wizard": {
         "code": "WZ104",
-        "ui_applicable": False,
         "related_field": "wizard",
     },
     "wizard_integrations_without_playbooks": {
         "code": "WZ105",
-        "ui_applicable": False,
         "related_field": "wizard",
     },
     # MR - Modeling Rules
     "modeling_rule_missing_schema_file": {
         "code": "MR100",
-        "ui_applicable": False,
         "related_field": "",
     },
     "modeling_rule_keys_not_empty": {
         "code": "MR101",
-        "ui_applicable": False,
         "related_field": "",
     },
     "modeling_rule_keys_are_missing": {
         "code": "MR102",
-        "ui_applicable": False,
         "related_field": "",
     },
-    "invalid_rule_name": {"code": "MR103", "ui_applicable": False, "related_field": ""},
+    "invalid_rule_name": {"code": "MR103", "related_field": ""},
     "modeling_rule_schema_types_invalid": {
         "code": "MR106",
-        "ui_applicable": False,
         "related_field": "",
     },
     "modeling_rule_schema_xif_dataset_mismatch": {
         "code": "MR107",
-        "ui_applicable": False,
         "related_field": "",
     },
     "invalid_modeling_rule_suffix_name": {
         "code": "MR108",
-        "ui_applicable": False,
         "related_field": "",
     },
     # CR - Correlation Rules
     "correlation_rule_starts_with_hyphen": {
         "code": "CR100",
-        "ui_applicable": False,
         "related_field": "",
     },
     "correlation_rules_files_naming_error": {
         "code": "CR101",
-        "ui_applicable": False,
         "related_field": "",
     },
     # XR - XSIAM Reports
     "xsiam_report_files_naming_error": {
         "code": "XR100",
-        "ui_applicable": False,
         "related_field": "",
     },
     # PR - Parsing Rules
     "parsing_rules_files_naming_error": {
         "code": "PR100",
-        "ui_applicable": False,
         "related_field": "",
     },
     "invalid_parsing_rule_suffix_name": {
         "code": "PR101",
-        "ui_applicable": False,
         "related_field": "",
     },
     # XT - XDRC Templates
     "xdrc_templates_files_naming_error": {
         "code": "XT100",
-        "ui_applicable": False,
         "related_field": "",
     },
     # XD - XSIAM Dashboards
     "xsiam_dashboards_files_naming_error": {
         "code": "XD100",
-        "ui_applicable": False,
         "related_field": "",
     },
     # GR - Graph validations
     "uses_items_not_in_marketplaces": {
         "code": "GR100",
-        "ui_applicable": False,
         "related_field": "",
     },
     "uses_items_with_invalid_fromversion": {
         "code": "GR101",
-        "ui_applicable": False,
         "related_field": "",
     },
     "uses_items_with_invalid_toversion": {
         "code": "GR102",
-        "ui_applicable": False,
         "related_field": "",
     },
     "using_unknown_content": {
         "code": "GR103",
-        "ui_applicable": False,
         "related_field": "",
     },
     "multiple_packs_with_same_display_name": {
         "code": "GR104",
-        "ui_applicable": False,
         "related_field": "",
     },
     "duplicated_id": {
         "code": "GR105",
-        "ui_applicable": False,
         "related_field": "",
     },
     "duplicated_script_name": {
         "code": "GR106",
-        "ui_applicable": False,
         "related_field": "",
     },
     "deprecated_items_usage": {
         "code": "GR107",
+        "related_field": "",
+    },
+    "hidden_pack_not_mandatory_dependency": {
+        "code": "GR108",
         "ui_applicable": False,
         "related_field": "",
     },
 }
+
+
+# allowed errors to be ignored in any supported pack (XSOAR/Partner/Community) only if they appear in the .pack-ignore
+ALLOWED_IGNORE_ERRORS = (
+    [err["code"] for err in ERROR_CODE.values()]
+    if is_external_repository()
+    else [
+        "BA101",
+        "BA106",
+        "BA108",
+        "BA109",
+        "BA110",
+        "BA111",
+        "BA112",
+        "BA113",
+        "BA116",
+        "BA119",
+        "BA124",
+        "BA125",
+        "DS107",
+        "GF102",
+        "IF100",
+        "IF106",
+        "IF113",
+        "IF115",
+        "IF116",
+        "IN109",
+        "IN110",
+        "IN122",
+        "IN124",
+        "IN126",
+        "IN128",
+        "IN135",
+        "IN136",
+        "IN139",
+        "IN144",
+        "IN145",
+        "IN153",
+        "IN154",
+        "MP106",
+        "PA113",
+        "PA116",
+        "PA124",
+        "PA125",
+        "PA127",
+        "PA129",
+        "PB104",
+        "PB105",
+        "PB106",
+        "PB110",
+        "PB111",
+        "PB114",
+        "PB115",
+        "PB116",
+        "PB107",
+        "PB118",
+        "PB119",
+        "PB121",
+        "RM100",
+        "RM102",
+        "RM104",
+        "RM106",
+        "RM108",
+        "RM110",
+        "RM112",
+        "RM113",
+        "RP102",
+        "RP104",
+        "SC100",
+        "SC101",
+        "SC105",
+        "SC106",
+        "IM111",
+        "RN112",
+        "RN113",
+        "RN114",
+        "RN115",
+        "RN116",
+        "MR104",
+        "MR105",
+        "MR108",
+        "PR101",
+        "LO107",
+        "IN107",
+        "DB100",
+        "GR103",
+    ]
+)
 
 
 def get_all_error_codes() -> List:
@@ -2003,8 +1695,8 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def field_version_is_not_correct(
-        from_version_set: LooseVersion,
-        expected_from_version: LooseVersion,
+        from_version_set: Version,
+        expected_from_version: Version,
         reason_for_version: str,
     ):
         return (
@@ -2014,18 +1706,35 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def select_values_cannot_contain_empty_values():
-        return "the field selectValues cannot contain empty values. Please remove."
+    def select_values_cannot_contain_empty_values_in_multi_select_types():
+        return "Multiselect types cannot contain empty values in the selectValues field"
+
+    @staticmethod
+    @error_code_decorator
+    def select_values_cannot_contain_multiple_or_only_empty_values_in_single_select_types():
+        return "singleSelect types cannot contain only empty value or more than one empty values in the field selectValues. Please remove."
 
     @staticmethod
     @error_code_decorator
     def unsearchable_key_should_be_true_incident_field():
-        return "The unsearchable key in indicator and incident fields should be set to true."
+        return (
+            "Warning: Indicator and incident fields should include the `unsearchable` key set to true. When missing"
+            " or set to false, the platform will index the data in this field. Unnecessary indexing of fields might"
+            " affect the performance and disk usage in environments."
+            "While considering the above mentioned warning, you can bypass this error by adding it to the"
+            " .pack-ignore file."
+        )
 
     @staticmethod
     @error_code_decorator
     def unsearchable_key_should_be_true_generic_field():
-        return "The unsearchable key in a generic field should be set to true."
+        return (
+            "Warning: Generic fields should include the `unsearchable` key set to true. When missing"
+            " or set to false, the platform will index the data in this field. Unnecessary indexing of fields might"
+            " affect the performance and disk usage in environments."
+            "While considering the above mentioned warning, you can bypass this error by adding it to the"
+            " .pack-ignore file."
+        )
 
     @staticmethod
     @error_code_decorator
@@ -2392,6 +2101,14 @@ class Errors:
             f"The display name of this siem integration is incorrect , "
             f'should end with "Event Collector".\n'
             f"e.g: {display_name} Event Collector"
+        )
+
+    @staticmethod
+    @error_code_decorator
+    def invalid_siem_marketplaces_entry():
+        return (
+            "The marketplaces field of this XSIAM integration is incorrect.\n"
+            'This field should have only the "marketplacev2" value.'
         )
 
     @staticmethod
@@ -2952,7 +2669,8 @@ class Errors:
             f'A new release notes file contains the phrase "breaking changes" '
             "without a matching JSON file (with the same name as the release note file, e.g. 1_2_3.json). "
             f'Please run "demisto-sdk update-release-notes -i {json_path[:-4]}md -bc". '
-            "For more information, refer to the following documentation: https://xsoar.pan.dev/docs/documentation/release-notes"
+            "For more information, refer to the following documentation: "
+            "https://xsoar.pan.dev/docs/documentation/release-notes#breaking-changes-version"
         )
 
     @staticmethod
@@ -4040,7 +3758,7 @@ class Errors:
     @error_code_decorator
     def classifier_non_existent_incident_types(incident_types):
         return (
-            f"The Classifiers related incident types: {incident_types} where not found."
+            f"The Classifiers related incident types: {incident_types} were not found."
         )
 
     @staticmethod
@@ -4184,38 +3902,11 @@ class Errors:
         return f"{cls.BACKWARDS}\n{str(e)}, Could not find the old file."
 
     @staticmethod
-    def id_might_changed():
-        return (
-            "ID may have changed, please make sure to check you have the correct one."
-        )
-
-    @staticmethod
-    def id_changed():
-        return "You've changed the ID of the file, please undo this change."
-
-    @staticmethod
-    def might_need_release_notes():
-        return "You may need RN in this file, please verify if they are required."
-
-    @staticmethod
-    def unknown_file():
-        return "File type is unknown, check it out."
-
-    @staticmethod
     def no_common_server_python(path):
         return (
             "Could not get CommonServerPythonScript.py file. Please download it manually from {} and "
             "add it to the root of the repository.".format(path)
         )
-
-    @staticmethod
-    def no_yml_file(file_path):
-        return f"No yml files were found in {file_path} directory."
-
-    @staticmethod
-    @error_code_decorator
-    def playbook_condition_has_no_else_path(tasks_ids):
-        return f'Playbook conditional tasks with ids: {" ".join([str(id) for id in tasks_ids])} have no else path'
 
     @staticmethod
     @error_code_decorator
@@ -4390,6 +4081,14 @@ class Errors:
     @error_code_decorator
     def missing_unit_test_file(path: Path):
         return f"Missing {path.stem}_test.py unit test file for {path.name}."
+
+    @staticmethod
+    @error_code_decorator
+    def customer_facing_docs_disallowed_terms(found_terms: List[str]):
+        return (
+            f"Found internal terms in a customer-facing documentation file: "
+            f"{', '.join(found_terms)}"
+        )
 
     @staticmethod
     @error_code_decorator
@@ -4662,3 +4361,15 @@ class Errors:
             "is replaced by the word Incident/Incidents\nfor example: if there is a script `getIncident'"
             "it will not be possible to create a script with the name `getAlert`)"
         )
+
+    @staticmethod
+    @error_code_decorator
+    def hidden_pack_not_mandatory_dependency(
+        hidden_pack: str, dependant_packs_ids: Set[str]
+    ):
+        return f"{', '.join(dependant_packs_ids)} pack(s) cannot have a mandatory dependency on the hidden pack {hidden_pack}."
+
+    @staticmethod
+    @error_code_decorator
+    def pack_have_nonignorable_error(nonignorable_errors: List[str]):
+        return f"The following errors can not be ignored: {', '.join(nonignorable_errors)}, remove them from .pack-ignore files"

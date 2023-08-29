@@ -3,6 +3,7 @@ import os
 import pytest
 
 from demisto_sdk.commands.common.constants import FileType
+from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.hook_validations.release_notes import (
     ReleaseNotesValidator,
 )
@@ -11,6 +12,8 @@ from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.tools import get_dict_from_file
 from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
 from TestSuite.pack import Pack
+
+json = JSON_Handler()
 
 
 def get_validator(
@@ -630,8 +633,6 @@ def test_get_categories_from_rn(
 
 
 def update_json(path, key, value):
-    import json
-
     js = get_dict_from_file(path=path)[0]
     js[key] = value
     with open(path, "w") as f:

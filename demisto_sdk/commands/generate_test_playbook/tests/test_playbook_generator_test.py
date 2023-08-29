@@ -3,15 +3,13 @@ from pathlib import Path
 
 import pytest
 
-from demisto_sdk.commands.common.handlers import YAML_Handler
+from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.tools import get_yaml
 from demisto_sdk.commands.generate_test_playbook.test_playbook_generator import (
     PlaybookTestsGenerator,
     get_command_examples,
 )
-
-yaml = YAML_Handler()
 
 
 class TestGenerateTestPlaybook:

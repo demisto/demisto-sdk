@@ -247,7 +247,7 @@ from typing import Any, Dict, List, Optional, Tuple, Union, cast
 import traceback
 from demisto_sdk.commands.common.handlers import JSON_Handler
 
-json = JSON_Handler()
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 
 
 import demistomock as demisto  # noqa: E402 lgtm [py/polluting-import]

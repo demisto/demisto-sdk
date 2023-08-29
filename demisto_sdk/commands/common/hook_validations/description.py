@@ -57,24 +57,29 @@ class DescriptionValidator(BaseValidator):
         self.is_duplicate_description()
         self.verify_demisto_in_description_content()
 
-        # make sure the description is a seperate file
+        # Validations that will run only on Markdown file
         if (
             not self.data_dictionary.get("detaileddescription")
             and ".md" in self.file_path
         ):
-            # self.has_markdown_lint_errors()
+            with open(self.file_path) as f:
+                file_content = f.read()
+
             self.is_valid_description_name()
-            self.contains_contrib_details()
+            # self.has_markdown_lint_errors(file_content=file_content)
+            self.contains_contrib_details(file_content=file_content)
+            if not self.validate_no_disallowed_terms_in_customer_facing_docs(
+                file_content=file_content, file_path=self.file_path
+            ):
+                self._is_valid = False
 
         return self._is_valid
 
     @error_codes("DS105")
-    def contains_contrib_details(self):
+    def contains_contrib_details(self, file_content: str):
         """check if DESCRIPTION file contains contribution details"""
-        with open(self.file_path) as f:
-            description_content = f.read()
         contrib_details = re.findall(
-            rf"### .* {CONTRIBUTOR_DETAILED_DESC}", description_content
+            rf"### .* {CONTRIBUTOR_DETAILED_DESC}", file_content
         )
         if contrib_details:
             error_message, error_code = Errors.description_contains_contrib_details()
@@ -303,11 +308,9 @@ class DescriptionValidator(BaseValidator):
         return True
 
     # @error_codes("DS108")
-    def has_markdown_lint_errors(self):
-        with open(self.file_path) as f:
-            description_content = f.read()
+    def has_markdown_lint_errors(self, file_content: str):
         if mdx_server_is_up():
-            markdown_response = run_markdownlint(description_content)
+            markdown_response = run_markdownlint(file_content)
             if markdown_response.has_errors:
                 error_message, error_code = Errors.description_lint_errors(
                     self.file_path, markdown_response.validations

@@ -3,14 +3,11 @@ from pathlib import Path
 
 import pytest
 
-from demisto_sdk.commands.common.handlers import YAML_Handler
 from demisto_sdk.commands.common.hook_validations.modeling_rule import (
     ModelingRuleValidator,
 )
 from demisto_sdk.commands.common.hook_validations.structure import StructureValidator
 from TestSuite.test_tools import ChangeCWD
-
-yaml = YAML_Handler()
 
 
 def test_is_valid_modeling_rule(repo):
@@ -38,8 +35,7 @@ def test_is_invalid_modeling_rule(repo):
     dummy_modeling_rule = pack.create_modeling_rule("MyRule")
     structure_validator = StructureValidator(dummy_modeling_rule.yml.path)
     schema_path = dummy_modeling_rule.schema.path
-    if os.path.exists(schema_path):
-        os.remove(schema_path)
+    Path(schema_path).unlink(missing_ok=True)
 
     with ChangeCWD(repo.path):
         modeling_rule_validator = ModelingRuleValidator(structure_validator)

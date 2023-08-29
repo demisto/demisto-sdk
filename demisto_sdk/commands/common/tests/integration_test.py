@@ -1,6 +1,7 @@
 import logging
 import os
 from copy import deepcopy
+from pathlib import Path
 from typing import Any, Dict, List, Optional
 from unittest.mock import mock_open, patch
 
@@ -318,7 +319,7 @@ class TestIntegrationValidator:
     def test_no_change_to_context_path(
         self, current, old, answer, changed_command_names, mocker
     ):
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+        logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
         current = {"script": {"commands": current}}
         old = {"script": {"commands": old}}
         structure = mock_structure("", current, old)
@@ -326,7 +327,7 @@ class TestIntegrationValidator:
         assert validator.no_change_to_context_path() is answer
         for changed_command_name in changed_command_names:
             assert str_in_call_args_list(
-                logger_info.call_args_list, changed_command_name
+                logger_error.call_args_list, changed_command_name
             )
         structure.quiet_bc = True
         assert (
@@ -420,13 +421,13 @@ class TestIntegrationValidator:
         Ensure that the error massage was created correctly.
         - Case 1: Should include both command_test_name_1 and command_test_name_2 in the commands list in the error as they both have BC break changes.
         """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+        logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
         current = {"script": {"commands": current}}
         old = {"script": {"commands": old}}
         structure = mock_structure("", current, old)
         validator = IntegrationValidator(structure)
         validator.no_changed_command_name_or_arg()
-        assert str_in_call_args_list(logger_info.call_args_list, expected_error_msg)
+        assert str_in_call_args_list(logger_error.call_args_list, expected_error_msg)
 
     WITHOUT_DUP = [{"name": "test"}, {"name": "test1"}]
     DUPLICATE_PARAMS_INPUTS = [(WITHOUT_DUP, True)]
@@ -609,6 +610,14 @@ class TestIntegrationValidator:
             ],
         }
     ]
+    DEFAULT_ARGS_SAME_ARG_NAME = [
+        {
+            "name": "cve",
+            "arguments": [
+                {"name": "cve", "required": False, "default": True, "isArray": True}
+            ],
+        }
+    ]
     DEFAULT_ARGS_MISSING_UNREQUIRED_DEFAULT_FIELD = [
         {
             "name": "email",
@@ -664,7 +673,7 @@ class TestIntegrationValidator:
         }
     ]
     DEFAULT_ARGS_INPUTS = [
-        (DEFAULT_ARGS_DIFFERENT_ARG_NAME, True),
+        (DEFAULT_ARGS_DIFFERENT_ARG_NAME, False),
         (DEFAULT_ARGS_MISSING_UNREQUIRED_DEFAULT_FIELD, True),
         (DEFAULT_ARGS_MISSING_DEFAULT_PARAM_WHEN_ALLOWED, True),
         (DEFAULT_ARGS_INVALID_PARMA_MISSING_DEFAULT, False),
@@ -672,6 +681,7 @@ class TestIntegrationValidator:
         (DEFAULT_ARGS_INVALID_COMMAND, False),
         (DEFAULT_ARGS_MISSING_DEFAULT_PARAM_WHEN_NOT_ALLOWED, False),
         (DEFAULT_ARGS_NOT_ARRAY, False),
+        (DEFAULT_ARGS_SAME_ARG_NAME, True),
     ]
 
     @pytest.mark.parametrize("current, answer", DEFAULT_ARGS_INPUTS)
@@ -1288,6 +1298,48 @@ class TestIntegrationValidator:
 
         assert validator.is_valid_display_name_for_siem() is answer
 
+    V2_VALID_SIEM_1 = {
+        "display": "Test Event Collector",
+        "script": {"isfetchevents": True},
+        "marketplaces": ["marketplacev2"],
+    }
+    V2_INVALID_SIEM = {
+        "display": "Test Event Collector",
+        "script": {"isfetchevents": True},
+        "marketplaces": ["marketplacev2", "xsoar"],
+    }
+    V2_INVALID_SIEM_2 = {
+        "display": "Test Event Collector",
+        "script": {"isfetchevents": True},
+        "marketplaces": ["xsoar"],
+    }
+
+    V2_SIEM_MARKETPLACE_INPUTS = [
+        (V2_VALID_SIEM_1, True),
+        (V2_INVALID_SIEM, False),
+        (V2_INVALID_SIEM_2, False),
+    ]
+
+    @pytest.mark.parametrize("current, answer", V2_SIEM_MARKETPLACE_INPUTS)
+    def test_is_valid_xsiam_marketplace(self, current, answer):
+        """
+        Given
+            - Valid marketplaces field (only with marketplacev2)
+            - Invalid marketplaces field (with 2 entries - suppose to be only 1)
+            - Invalid marketplaces field (with xsaor value instead of marketplacev2)
+
+        When
+            - running is_valid_xsiam_marketplace.
+
+        Then
+            - Check that the function returns True if valid, else False.
+        """
+        structure = mock_structure("", current)
+        validator = IntegrationValidator(structure)
+        validator.current_file = current
+
+        assert validator.is_valid_xsiam_marketplace() is answer
+
     VALID_DEFAULTVALUE_CHECKBOX_1 = {
         "configuration": [{"defaultvalue": "true", "type": 8}]
     }
@@ -1862,12 +1914,13 @@ class TestIntegrationValidator:
                     MarketplaceVersions.XSOAR,
                     MarketplaceVersions.MarketplaceV2,
                     MarketplaceVersions.XPANSE,
+                    MarketplaceVersions.XSOAR_SAAS,
+                    MarketplaceVersions.XSOAR_ON_PREM,
                 ],
                 False,
             ),
             ("🥲", False),
             ("Trüe", False),
-            ("TRUE", False),
             ([MarketplaceVersions.XSOAR, None], False),
             ([MarketplaceVersions.MarketplaceV2, None], False),
             ([MarketplaceVersions.XSOAR, True], False),
@@ -1897,7 +1950,7 @@ class TestIntegrationValidator:
 
 
 class TestIsFetchParamsExist:
-    def setup(self):
+    def setup_method(self):
         config = {
             "configuration": deepcopy(INCIDENT_FETCH_REQUIRED_PARAMS),
             "script": {"isfetch": True},
@@ -1969,7 +2022,6 @@ class TestIsFetchParamsExist:
                 str_in_call_args_list(
                     logger_error.call_args_list, "name: incidentType"
                 ),
-                str_in_call_args_list(logger_error.call_args_list, "required: false"),
             ]
         )
 
@@ -2036,7 +2088,7 @@ class TestIsValidMaxFetchAndFirstFetch:
     - make sure max_fetch param has a default value
     """
 
-    def setup(self):
+    def setup_method(self):
         config = {
             "configuration": deepcopy([FIRST_FETCH_PARAM, MAX_FETCH_PARAM]),
             "script": {"isfetch": True},
@@ -2088,7 +2140,7 @@ class TestIsValidMaxFetchAndFirstFetch:
 
 
 class TestIsFeedParamsExist:
-    def setup(self):
+    def setup_method(self):
         config = {
             "configuration": deepcopy(FEED_REQUIRED_PARAMS_STRUCTURE),
             "script": {"feed": True},
@@ -2593,7 +2645,7 @@ class TestisContextChanged:
             structure_validator, validate_all=validate_all
         )
         if remove_readme:
-            os.remove(integration.readme.path)
+            Path(integration.readme.path).unlink()
         assert (
             integration_validator.validate_readme_exists(
                 integration_validator.validate_all

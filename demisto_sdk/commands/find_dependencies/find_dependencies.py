@@ -18,7 +18,7 @@ from demisto_sdk.commands.common.constants import (
     PACKS_DIR,
 )
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
-from demisto_sdk.commands.common.handlers import JSON_Handler
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     ProcessPoolHandler,
@@ -33,9 +33,6 @@ from demisto_sdk.commands.common.update_id_set import (
     update_excluded_items_dict,
 )
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator, get_id_set
-
-json = JSON_Handler()
-
 
 MINIMUM_DEPENDENCY_VERSION = Version("6.0.0")
 COMMON_TYPES_PACK = "CommonTypes"
@@ -2904,7 +2901,7 @@ class PackDependencies:
 
         """
 
-        if id_set_path and os.path.isfile(id_set_path):
+        if id_set_path and Path(id_set_path).is_file():
             with open(id_set_path) as id_set_file:
                 id_set = json.load(id_set_file)
         else:

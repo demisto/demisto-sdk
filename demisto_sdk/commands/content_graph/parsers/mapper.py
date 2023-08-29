@@ -26,7 +26,12 @@ class MapperParser(JSONContentItemParser, content_type=ContentType.MAPPER):
 
     @property
     def supported_marketplaces(self) -> Set[MarketplaceVersions]:
-        return {MarketplaceVersions.XSOAR, MarketplaceVersions.MarketplaceV2}
+        return {
+            MarketplaceVersions.XSOAR,
+            MarketplaceVersions.MarketplaceV2,
+            MarketplaceVersions.XSOAR_SAAS,
+            MarketplaceVersions.XSOAR_ON_PREM,
+        }
 
     def get_filters_and_transformers_from_complex_value(
         self, complex_value: dict

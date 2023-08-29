@@ -1,5 +1,6 @@
 import re
-from distutils.version import LooseVersion
+
+from packaging.version import Version
 
 from demisto_sdk.commands.common.constants import DEFAULT_CONTENT_ITEM_FROM_VERSION
 from demisto_sdk.commands.common.errors import Errors
@@ -59,7 +60,7 @@ class ReputationValidator(ContentEntityValidator):
         from_version = self.current_file.get(
             "fromVersion", DEFAULT_CONTENT_ITEM_FROM_VERSION
         )
-        if LooseVersion(from_version) >= LooseVersion("5.5.0"):
+        if Version(from_version) >= Version("5.5.0"):
             expiration = self.current_file.get("expiration", "")
             if not isinstance(expiration, int) or expiration < 0:
                 (

@@ -1,6 +1,6 @@
 import logging
 import os
-from os.path import isfile
+from pathlib import Path
 from shutil import copyfile
 from typing import List, Tuple
 
@@ -40,7 +40,7 @@ from demisto_sdk.commands.common.constants import (
     XSIAM_DASHBOARD_JSON_REGEX,
     XSIAM_REPORT_JSON_REGEX,
 )
-from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.hook_validations.base_validator import BaseValidator
 from demisto_sdk.commands.common.hook_validations.structure import (
     StructureValidator,
@@ -86,9 +86,6 @@ from TestSuite.json_based import JSONBased
 from TestSuite.pack import Pack
 from TestSuite.test_tools import ChangeCWD, str_in_call_args_list
 
-json = JSON_Handler()
-yaml = YAML_Handler()
-
 
 class TestStructureValidator:
     INPUTS_TARGETS = [
@@ -107,7 +104,7 @@ class TestStructureValidator:
     def setup_class(cls):
         # checking that the files in the test are not exists so they won't overwrites.
         for target in cls.INPUTS_TARGETS:
-            if isfile(target) is True:
+            if Path(target).is_file():
                 pytest.fail(f"{target} File in tests already exists!")
         # Creating directory for tests if they're not exists
 
@@ -119,8 +116,7 @@ class TestStructureValidator:
     @classmethod
     def teardown_class(cls):
         for target in cls.INPUTS_TARGETS:
-            if isfile(target) is True:
-                os.remove(target)
+            Path(target).unlink(missing_ok=True)
         for directory in cls.CREATED_DIRS:
             if os.path.exists(directory):
                 os.rmdir(directory)
@@ -228,7 +224,7 @@ class TestStructureValidator:
             structure = StructureValidator(target)
             assert structure.is_valid_file() is answer
         finally:
-            os.remove(target)
+            Path(target).unlink()
 
     pykwalify_error_1 = " - Cannot find required key 'category'. Path: ''.: Path: '/'>'"
     expected_error_1 = 'Missing the field "category" in root'
@@ -445,6 +441,31 @@ class TestStructureValidator:
                     "name": "Alias Field",
                 }
             ],
+        }
+        incident_field: JSONBased = pack.create_incident_field(
+            "incident-field-test",
+            content=field_content,
+        )
+        structure = StructureValidator(incident_field.path)
+        assert structure.is_valid_scheme()
+
+    def test_validate_field_with_alias_to(self, pack: Pack):
+        """
+        Given
+            Incident field with an aliasTo field.
+        When
+            Validating the item.
+        Then
+            Ensures the schema is valid.
+        """
+        field_content = {
+            "cliName": "mainfield",
+            "name": "main field",
+            "id": "incident",
+            "prettyName": "Host",
+            "content": True,
+            "type": "longText",
+            "aliasTo": "someotherfield",
         }
         incident_field: JSONBased = pack.create_incident_field(
             "incident-field-test",

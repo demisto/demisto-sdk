@@ -10,10 +10,12 @@ from click.testing import CliRunner
 from packaging.version import Version
 
 from demisto_sdk.__main__ import main
-from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
+from demisto_sdk.commands.common.handlers import YAML_Handler
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.content_graph.objects.incident_field import IncidentField
 from demisto_sdk.commands.content_graph.objects.integration import Integration
+from demisto_sdk.commands.content_graph.objects.pack_metadata import PackMetadata
 from demisto_sdk.commands.content_graph.objects.playbook import Playbook
 from demisto_sdk.commands.content_graph.objects.script import Script
 from demisto_sdk.commands.upload.tests.uploader_test import (
@@ -30,7 +32,6 @@ UPLOAD_CMD = "upload"
 DEMISTO_SDK_PATH = join(git_path(), "demisto_sdk")
 
 
-json = JSON_Handler()
 yaml = YAML_Handler()
 
 
@@ -104,6 +105,49 @@ def test_integration_upload_pack_positive(demisto_client_mock, mocker):
     )
 
 
+METADATA_DISPLAYS = {
+    "automation": "Automation",
+    "classifier": "Classifiers",
+    "dashboard": "Dashboard",
+    "genericdefinition": "Generic Definition",
+    "genericfield": "Generic Field",
+    "genericmodule": "Generic Module",
+    "generictype": "Generic Type",
+    "incidentfield": "Incident Field",
+    "incidenttype": "Incident Type",
+    "indicatorfield": "Indicator Field",
+    "integration": "Integration",
+    "job": "Jobs",
+    "layoutscontainer": "Layouts Container",
+    "list": "List",
+    "playbook": "Playbooks",
+    "report": "Report",
+    "reputation": "Reputation",
+    "widget": "Widget",
+}
+
+METADATA_NAMES = [
+    "automation",
+    "classifier",
+    "dashboard",
+    "genericdefinition",
+    "genericfield",
+    "genericmodule",
+    "generictype",
+    "incidentfield",
+    "incidenttype",
+    "indicatorfield",
+    "integration",
+    "job",
+    "layoutscontainer",
+    "list",
+    "playbook",
+    "report",
+    "reputation",
+    "widget",
+]
+
+
 def test_zipped_pack_upload_positive(repo, mocker, tmpdir, demisto_client_mock):
     """
     Given
@@ -124,6 +168,8 @@ def test_zipped_pack_upload_positive(repo, mocker, tmpdir, demisto_client_mock):
     mocked_get_installed = mocker.patch.object(
         API_CLIENT, "generic_request", return_value=({}, 200, None)
     )
+    mocker.patch.object(PackMetadata, "_get_tags_from_landing_page", retrun_value={})
+    mocker.patch.object(Path, "cwd", return_value=Path.cwd())
 
     pack = repo.setup_one_pack(name="test-pack")
     runner = CliRunner(mix_stderr=False)
@@ -200,6 +246,16 @@ def test_zipped_pack_upload_positive(repo, mocker, tmpdir, demisto_client_mock):
             ) as integration:
                 # validate yml based content entities are being unified before getting zipped
                 assert "nativeimage" in yaml.load(integration).get("script", {})
+
+            with pack_zip.open("metadata.json") as metadata:
+                metadata = json.load(metadata)
+                assert "contentDisplays" in metadata
+                metadata_display = metadata.get("contentDisplays")
+                for content_item in METADATA_NAMES:
+                    assert (
+                        metadata_display[content_item]
+                        == METADATA_DISPLAYS[content_item]
+                    )
 
     logged = flatten_call_args(logger_info.call_args_list)
     assert mocked_get_installed.called_once_with(
@@ -288,12 +344,13 @@ def test_integration_upload_pack_invalid_connection_params(mocker):
         "demisto_sdk.commands.upload.uploader.demisto_client", return_valure="object"
     )
     mocker.patch(
-        "demisto_sdk.commands.upload.uploader.get_demisto_version", return_value="0"
+        "demisto_sdk.commands.upload.uploader.get_demisto_version",
+        return_value=Version("0"),
     )
     runner = CliRunner(mix_stderr=False)
     result = runner.invoke(main, [UPLOAD_CMD, "-i", pack_path, "--insecure"])
     assert result.exit_code == 1
     assert str_in_call_args_list(
         logger_info.call_args_list,
-        "Could not connect to XSOAR server. Try checking your connection configurations.",
+        "Could not connect to the server. Try checking your connection configurations.",
     )

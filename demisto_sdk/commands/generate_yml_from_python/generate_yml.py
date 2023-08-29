@@ -10,7 +10,6 @@ from types import FunctionType
 from typing import Any, AnyStr, Callable, List, Optional, Tuple, Union
 from unittest import mock
 
-from demisto_sdk.commands.common.handlers import YAML_Handler
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import write_yml
 from demisto_sdk.commands.generate_yml_from_python.yml_metadata_collector import (
@@ -20,8 +19,6 @@ from demisto_sdk.commands.generate_yml_from_python.yml_metadata_collector import
     OutputArgument,
     YMLMetadataCollector,
 )
-
-yaml = YAML_Handler()
 
 
 class YMLGenerator:

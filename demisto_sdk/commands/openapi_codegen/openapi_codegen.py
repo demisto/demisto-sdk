@@ -7,7 +7,8 @@ from typing import Any, List, Optional, Union
 
 import autopep8
 
-from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
+from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
 from demisto_sdk.commands.common.hook_validations.docker import DockerImageValidator
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import camel_to_snake
@@ -27,11 +28,6 @@ from demisto_sdk.commands.generate_integration.base_code import (
     BASE_TOKEN,
 )
 from demisto_sdk.commands.generate_integration.XSOARIntegration import XSOARIntegration
-
-json = JSON_Handler()
-
-
-yaml = YAML_Handler()
 
 ILLEGAL_DESCRIPTION_CHARS = [
     "\n",

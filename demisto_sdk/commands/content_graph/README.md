@@ -8,6 +8,32 @@ In the database, every content object has a unique **node** which contains its p
 
 ![Architecture](images/architecture.png)
 
+### Usage
+
+#### Docker (recommended)
+
+This commands will start a `neo4j` service on Docker by default. Docker application should be running on the machine, and the service will be configured automatically.
+
+#### Locally (advanced)
+
+If you prefer to manually install `neo4j` on your machine, install it from [here](https://neo4j.com/docs/operations-manual/current/installation/) and configure the following files in the [configuration](https://neo4j.com/docs/operations-manual/current/configuration/file-locations/) folder, based on your OS:
+
+* `neo4j.conf`
+
+```
+dbms.security.procedures.unrestricted=apoc.*
+dbms.security.procedures.allowlist=apoc.*
+```
+
+* `apoc.conf`
+
+```
+apoc.export.file.enabled=true
+apoc.import.file.enabled=true
+apoc.import.file.use_neo4j_config=true
+```
+
+
 #### Relationship Types
 * IN_PACK
 * USES
@@ -16,7 +42,7 @@ In the database, every content object has a unique **node** which contains its p
 * IMPORTS
 * DEPENDS_ON
 
-### create-content-graph
+### create (formerly: create-content-graph)
 **Creates a content graph from a given repository.**
 This commands parses all content packs under the repository, including their relationships. Then, the parsed content objects are mapped to a Repository model and uploaded to the database.
 When the graph creation is completed, it will be available in http://localhost:7474 (the username is `neo4j` and the password is `contentgraph`).
@@ -45,12 +71,17 @@ When the graph creation is completed, it will be available in http://localhost:7
 
     Quiet output, only output results in the end.
 
-* **-lp, --log-path**
+* **-lp, --log_file_path**
 
     Path to store all levels of logs.
 
+#### Example
+```
+demisto-sdk graph create
+```
 
-### update-content-graph
+
+### update (formerly: update-content-graph)
 **Updates the content graph from the official content graph**
 This commands downloads the official content graph, imports it locally, and updates it with the changes in the given repository or by an argument of packs to update with.
 When the graph update is completed, it will be available in http://localhost:7474 (the username is `neo4j` and the password is `contentgraph`).
@@ -93,10 +124,83 @@ When the graph update is completed, it will be available in http://localhost:747
 
     Quiet output, only output results in the end.
 
-* **-lp, --log-path**
+* **-lp, --log_file_path**
 
     Path to store all levels of logs.
 
-## Environment Variables
+#### Environment Variables
 
 DEMISTO_SDK_GRAPH_FORCE_CREATE - Whether to create the content graph instead of updating it. Will be used in all commands which use the content graph.
+
+#### Example
+```
+demisto-sdk graph update -g
+```
+
+### get-relationships
+Returns relationships of a given content object.
+
+#### Arguments
+* **input**
+
+    The path to a content item or a pack. [required]
+
+* **-ct, --content-type**
+
+    The content type of the related object.
+
+* **-d, --depth**
+
+    Maximum depth (length) of the relationships paths.
+
+* **-u/nu, --update-graph/--no-update-graph**
+
+    If true, runs an update on the graph before querying.
+
+* **-mp, --marketplace**
+
+    The marketplace to generate the graph for.
+
+* **--mandatory-only**
+
+    If true, returns only mandatory relationships (relevant only for DEPENDS_ON/USES relationships).
+
+* **--include-tests**
+
+    If true, includes tests in outputs (relevant only for DEPENDS_ON/USES relationships).
+
+* **--include-deprecated**
+
+    If true, includes deprecated in outputs.
+
+* **--include-hidden**
+
+    If true, includes hidden packs in outputs (relevant only for DEPENDS_ON relationships).
+
+* **-dir, --direction**
+
+    Specifies whether to return only sources, only targets or both.
+
+* **-o, --output**
+
+    A path to a directory in which to dump the outputs to.
+
+* **-clt, --console_log_threshold**
+
+    Minimum logging threshold for the console logger.
+
+* **-flt, --file_log_threshold**
+
+    Minimum logging threshold for the file logger.
+
+* **-lp, --log_file_path**
+
+    Path to store all levels of logs.
+
+#### Examples
+```
+demisto-sdk graph get-relationships Packs/SplunkPy/Integrations/SplunkPy/SplunkPy.yml
+```
+```
+demisto-sdk graph get-relationships Packs/Jira -d 5 --relationship depends_on --mandatory-only --direction targets
+```

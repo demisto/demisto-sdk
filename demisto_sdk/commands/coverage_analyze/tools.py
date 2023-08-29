@@ -6,11 +6,8 @@ from typing import Optional
 
 import requests
 
-from demisto_sdk.commands.common.handlers import JSON_Handler
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.logger import logger
-
-json = JSON_Handler()
-
 
 ONE_DAY = timedelta(days=1)
 LATEST_URL = "https://storage.googleapis.com/marketplace-dist-dev/code-coverage-reports/coverage-min.json"

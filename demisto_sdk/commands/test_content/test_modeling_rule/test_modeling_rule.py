@@ -3,6 +3,8 @@ from pathlib import Path
 from time import sleep
 from typing import Any, Dict, List, Optional, Tuple
 
+import dateparser
+import pytz
 import requests
 import typer
 from rich import print as printr
@@ -17,12 +19,15 @@ from demisto_sdk.commands.common.content.objects.pack_objects.modeling_rule.mode
     ModelingRule,
     SingleModelingRule,
 )
+from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.logger import (
     handle_deprecated_args,
     logger,
     logging_setup,
 )
+from demisto_sdk.commands.common.tools import is_epoch_datetime
 from demisto_sdk.commands.test_content.test_modeling_rule import init_test_data
+from demisto_sdk.commands.test_content.xsiam_tools.test_data import Validations
 from demisto_sdk.commands.test_content.xsiam_tools.xsiam_client import (
     XsiamApiClient,
     XsiamApiClientConfig,
@@ -45,6 +50,7 @@ console = Console(theme=custom_theme)
 
 
 app = typer.Typer()
+json = JSON_Handler()
 
 
 def create_table(expected: Dict[str, Any], received: Dict[str, Any]) -> Table:
@@ -82,18 +88,23 @@ def day_suffix(day: int) -> str:
     return "th" if 11 <= day <= 13 else {1: "st", 2: "nd", 3: "rd"}.get(day % 10, "th")
 
 
-def convert_epoch_time_to_string_time(epoch_time: int, with_ms: bool = False) -> str:
+def convert_epoch_time_to_string_time(
+    epoch_time: int, with_ms: bool = False, tenant_timezone: str = "UTC"
+) -> str:
     """
     Converts epoch time with milliseconds to string time with timezone delta.
 
     Args:
         epoch_time: The received epoch time (with milliseconds).
         with_ms: Whether to convert the epoch time with ms or not default is False.
+        tenant_timezone: The timezone of the XSIAM tenant.
 
     Returns:
         The string time with timezone delta.
     """
-    datetime_object = datetime.fromtimestamp(epoch_time / 1000)
+    datetime_object = datetime.fromtimestamp(
+        epoch_time / 1000, pytz.timezone(tenant_timezone)
+    )
     time_format = f"%b %-d{day_suffix(datetime_object.day)} %Y %H:%M:%S"
     if with_ms:
         time_format = f"{time_format}.%f"
@@ -103,7 +114,9 @@ def convert_epoch_time_to_string_time(epoch_time: int, with_ms: bool = False) ->
 
 
 def verify_results(
-    tested_dataset: str, results: List[dict], test_data: init_test_data.TestData
+    tested_dataset: str,
+    results: List[dict],
+    test_data: init_test_data.TestData,
 ):
     """Verify that the results of the XQL query match the expected values.
 
@@ -145,10 +158,14 @@ def verify_results(
         # get expected_values for the given query result
         td_event_id = result.pop(f"{tested_dataset}.test_data_event_id")
         expected_values = None
+        tenant_timezone: str = ""
         for e in test_data.data:
             if str(e.test_data_event_id) == td_event_id:
                 expected_values = e.expected_values
+                tenant_timezone = e.tenant_timezone
                 break
+        if not tenant_timezone:
+            logger.warning("Could not find timezone")
 
         if expected_values:
             if (expected_time_value := expected_values.get("_time")) and (
@@ -156,7 +173,7 @@ def verify_results(
             ):
                 time_with_ms = "." in expected_time_value
                 result["_time"] = convert_epoch_time_to_string_time(
-                    time_value, time_with_ms
+                    time_value, time_with_ms, tenant_timezone
                 )
             printr(create_table(expected_values, result))
 
@@ -254,26 +271,144 @@ def validate_expected_values(
         raise typer.Exit(1)
 
 
+def validate_schema_aligned_with_test_data(
+    test_data: init_test_data.TestData, schema: Dict
+):
+    """
+    Validates that the schema is aligned with the test-data types.
+
+    Args:
+        test_data: the test data object.
+        schema: the content of the schema file.
+
+    """
+    expected_schema_mappings = {
+        str: {"type": "string", "is_array": False},
+        dict: {"type": "string", "is_array": False},
+        list: {"type": "string", "is_array": False},
+        int: {"type": "int", "is_array": False},
+        float: {"type": "float", "is_array": False},
+        datetime: {"type": "datetime", "is_array": False},
+        bool: {"type": "boolean", "is_array": False},
+    }
+
+    # map each dataset from the schema to the correct events that has the same dataset
+    schema_dataset_to_events = {
+        dataset: [
+            event_log for event_log in test_data.data if event_log.dataset == dataset
+        ]
+        for dataset in schema.keys()
+    }
+
+    errors_occurred = False
+
+    for dataset, event_logs in schema_dataset_to_events.items():
+        all_schema_dataset_mappings = schema[dataset]
+        test_data_mappings: Dict = {}
+        error_logs = set()
+        for event_log in event_logs:
+            for event_key, event_val in event_log.event_data.items():
+                if (
+                    event_val is None
+                ):  # if event_val is None, warn and continue looping.
+                    logger.warning(
+                        f"{event_key=} is null on {event_log.test_data_event_id} "
+                        f"event for {dataset=}, ignoring {event_key=}",
+                        extra={"markup": True},
+                    )
+                    # add the event key to the mapping to validate there isn't another key with a different type
+                    test_data_mappings[event_key] = None
+                    continue
+
+                if schema_key_mappings := all_schema_dataset_mappings.get(event_key):
+                    # we do not consider epochs as datetime in xsiam
+                    if (
+                        isinstance(event_val, str)
+                        and not is_epoch_datetime(event_val)
+                        and dateparser.parse(
+                            event_val, settings={"STRICT_PARSING": True}
+                        )
+                    ):
+                        event_val_type = datetime
+                    else:
+                        event_val_type = type(event_val)
+
+                    test_data_key_mappings = expected_schema_mappings[event_val_type]
+
+                    if (
+                        existing_testdata_key_mapping := test_data_mappings.get(
+                            event_key
+                        )
+                    ) and existing_testdata_key_mapping != test_data_key_mappings:
+                        error_logs.add(
+                            f"The testdata contains events with the same {event_key=} "
+                            f"that have different types for dataset {dataset}"
+                        )
+                        errors_occurred = True
+                        continue
+                    else:
+                        test_data_mappings[event_key] = test_data_key_mappings
+
+                    if test_data_key_mappings != schema_key_mappings:
+                        error_logs.add(
+                            f"[red][bold]the field {event_key} has mismatch on type or is_array in "
+                            f"event ID {event_log.test_data_event_id} between testdata "
+                            f"and schema[/bold] --- TestData Mapping "
+                            f'"{test_data_key_mappings}" != Schema Mapping "{schema_key_mappings}"'
+                        )
+                        errors_occurred = True
+
+        missing_test_data_keys = set(all_schema_dataset_mappings.keys()) - set(
+            test_data_mappings.keys()
+        )
+        if missing_test_data_keys:
+            logger.warning(
+                f"[yellow]The following fields {missing_test_data_keys} are in schema for dataset {dataset}, but not "
+                f"in test-data, make sure to remove them from schema or add them to test-data if necessary[/yellow]",
+                extra={"markup": True},
+            )
+
+        if error_logs:
+            for _log in error_logs:
+                logger.error(_log, extra={"markup": True})
+        else:
+            logger.info(
+                f"[green]Schema type mappings = Testdata type mappings for dataset {dataset}[/green]",
+                extra={"markup": True},
+            )
+    if errors_occurred:
+        raise typer.Exit(1)
+
+
 def check_dataset_exists(
     xsiam_client: XsiamApiClient,
     test_data: init_test_data.TestData,
-    timeout: int = 120,
+    timeout: int = 90,
     interval: int = 5,
+    init_sleep_time: int = 30,
 ):
     """Check if the dataset in the test data file exists in the tenant.
 
     Args:
         xsiam_client (XsiamApiClient): Xsiam API client.
         test_data (init_test_data.TestData): The data parsed from the test data file.
-        timeout (int, optional): The number of seconds to wait for the dataset to exist. Defaults to 120 seconds.
+        timeout (int, optional): The number of seconds to wait for the dataset to exist. Defaults to 90 seconds.
         interval (int, optional): The number of seconds to wait between checking for the dataset. Defaults to 5.
+        init_sleep_time (int, optional): The number of seconds to wait for dataset installation. Defaults to 30.
 
     Raises:
         typer.Exit: If the dataset does not exist after the timeout.
     """
     process_failed = False
     dataset_set = {data.dataset for data in test_data.data}
+    results = []
+    logger.debug(
+        f"Sleeping for {init_sleep_time} seconds before query for the dataset, to make sure the dataset was installed correctly."
+    )
+    sleep(init_sleep_time)
+
     for dataset in dataset_set:
+        results_exist = False
         dataset_exist = False
         logger.info(
             f'[cyan]Checking if dataset "{dataset}" exists on the tenant...[/cyan]',
@@ -287,28 +422,42 @@ def check_dataset_exists(
                     query, print_req_error=(i + 1 == timeout // interval)
                 )
                 results = xsiam_client.get_xql_query_result(execution_id)
+                # if we got result we will break from the loop
                 if results:
                     logger.info(
                         f"[green]Dataset {dataset} exists[/green]",
                         extra={"markup": True},
                     )
                     dataset_exist = True
+                    results_exist = True
+                    break
+                # if we don't have results from the dataset immediately we will continue to try until the timeout.
+                # if we don't have any results until the timeout dataset_exist is set to False and we will raise an error.
                 else:
-                    err = (
-                        f"[red]Dataset {dataset} exists but no results were returned. This could mean that your testdata "
-                        "does not meet the criteria for an associated Parsing Rule and is therefore being dropped from "
-                        "the dataset. Check to see if a Parsing Rule exists for your dataset and that your testdata "
-                        "meets the criteria for that rule.[/red]"
+                    dataset_exist = True
+                    results_exist = False
+                    logger.info(
+                        f"[cyan]trying to get results from the dataset for the {i+1}th time. continuing to try to get the results.[/cyan]",
+                        extra={"markup": True},
                     )
-                    logger.error(err, extra={"markup": True})
-                break
+            # If the dataset doesn't exist HTTPError exception is raised.
             except requests.exceptions.HTTPError:
                 pass
             sleep(interval)
+        # There are no results from the dataset but it exists.
+        if not results:
+            err = (
+                f"[red]Dataset {dataset} exists but no results were returned. This could mean that your testdata "
+                "does not meet the criteria for an associated Parsing Rule and is therefore being dropped from "
+                "the dataset. Check to see if a Parsing Rule exists for your dataset and that your testdata "
+                "meets the criteria for that rule.[/red]"
+            )
+            logger.error(err, extra={"markup": True})
         if not dataset_exist:
             err = f"[red]Dataset {dataset} does not exist after {timeout} seconds[/red]"
             logger.error(err, extra={"markup": True})
-        process_failed |= not dataset_exist
+        # OR statement between existence var and results of each data set, if at least one of dataset_exist or results_exist are False process_failed will be true.
+        process_failed |= not (dataset_exist and results_exist)
 
     if process_failed:
         raise typer.Exit(1)
@@ -326,7 +475,6 @@ def push_test_data_to_tenant(
     """
     error = False
     for rule in mr.rules:
-
         events_test_data = [
             {
                 **event_log.event_data,
@@ -590,6 +738,31 @@ def validate_modeling_rule(
         test_data = init_test_data.TestData.parse_file(
             mr_entity.testdata_path.as_posix()
         )
+
+        if schema_path := mr_entity.schema_path:
+            with open(mr_entity.schema_path) as schema_file:
+                schema = json.load(schema_file)
+        else:
+            raise FileNotFoundError(
+                f"schema file does not exist in path {mr_entity.schema_path}"
+            )
+
+        if (
+            Validations.SCHEMA_TYPES_ALIGNED_WITH_TEST_DATA.value
+            not in test_data.ignored_validations
+        ):
+            logger.info(
+                f"[green]Validating that the schema {schema_path} is aligned with TestData file.[/green]",
+                extra={"markup": True},
+            )
+
+            validate_schema_aligned_with_test_data(test_data=test_data, schema=schema)
+        else:
+            logger.info(
+                f"Skipping the validation to check that the schema {schema_path} "
+                f"is aligned with TestData file.[/green]",
+                extra={"markup": True},
+            )
 
         if push:
             if missing_event_data:

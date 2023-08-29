@@ -1,5 +1,4 @@
 import gzip
-import json
 import os
 from abc import ABC, abstractmethod
 from pathlib import Path
@@ -11,7 +10,10 @@ import requests
 from pydantic import BaseModel, Field, HttpUrl, SecretStr, validator
 from pydantic.fields import ModelField
 
+from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.logger import logger
+
+json = JSON_Handler()
 
 
 class XsiamApiClientConfig(BaseModel):

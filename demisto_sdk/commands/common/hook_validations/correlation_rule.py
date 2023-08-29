@@ -3,8 +3,6 @@ This module is designed to validate the correctness of generic definition entiti
 """
 
 
-from ruamel.yaml.comments import CommentedSeq
-
 from demisto_sdk.commands.common.constants import (
     FILETYPE_TO_DEFAULT_FROMVERSION,
     FileType,
@@ -66,7 +64,7 @@ class CorrelationRuleValidator(ContentEntityValidator):
         Returns: False if type of current file is CommentSeq, which means the yaml starts with hyphen, True otherwise.
 
         """
-        if isinstance(self.current_file, CommentedSeq):
+        if isinstance(self.current_file, list):
             error_message, error_code = Errors.correlation_rule_starts_with_hyphen()
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 self.is_valid = False

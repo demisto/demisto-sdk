@@ -16,7 +16,7 @@ from demisto_sdk.commands.common.constants import (
     FileType,
     MarketplaceVersions,
 )
-from demisto_sdk.commands.common.handlers import JSON_Handler
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.update_id_set import (
     add_item_to_exclusion_dict,
@@ -64,9 +64,6 @@ from demisto_sdk.commands.common.update_id_set import (
 )
 from TestSuite.test_tools import str_in_call_args_list
 from TestSuite.utils import IsEqualFunctions
-
-json = JSON_Handler()
-
 
 TESTS_DIR = f"{git_path()}/demisto_sdk/tests"
 

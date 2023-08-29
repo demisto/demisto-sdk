@@ -8,15 +8,13 @@ from demisto_sdk.commands.common.content.objects.pack_objects.layout.layout impo
     Layout,
 )
 from demisto_sdk.commands.common.content.objects.pack_objects.pack import Pack
-from demisto_sdk.commands.common.handlers import JSON_Handler
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.convert.converters.layout.layout_up_to_5_9_9_converter import (
     LayoutBelowSixConverter,
 )
 from TestSuite.pack import Pack as MockPack
 from TestSuite.repo import Repo
-
-json = JSON_Handler()
 
 
 def util_load_json(path):
@@ -284,7 +282,7 @@ class TestLayoutBelowSixConverter:
             )
             assert os.path.exists(expected_new_layout_path)
             assert util_load_json(expected_new_layout_path) == layout_data
-            os.remove(expected_new_layout_path)
+            Path(expected_new_layout_path).unlink()
 
     CALCULATE_FROM_VERSION_INPUTS = [
         ("ExtraHop Detection", "close", "5.5.0"),

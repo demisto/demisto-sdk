@@ -1,5 +1,6 @@
 import enum
 import os
+import re
 from pathlib import Path
 from typing import Any, Dict, Iterator, List, NamedTuple, Set
 
@@ -13,7 +14,7 @@ NEO4J_DATABASE_HTTP = os.getenv(
     "DEMISTO_SDK_NEO4J_DATABASE_HTTP", "http://127.0.0.1:7474"
 )
 NEO4J_DATABASE_URL = os.getenv(
-    "DEMISTO_SDK_NEO4J_DATABASE_URL", "bolt://127.0.0.1:7687"
+    "DEMISTO_SDK_NEO4J_DATABASE_URL", "neo4j://127.0.0.1:7687"
 )
 NEO4J_USERNAME = os.getenv("DEMISTO_SDK_NEO4J_USERNAME", "neo4j")
 NEO4J_PASSWORD = os.getenv("DEMISTO_SDK_NEO4J_PASSWORD", "contentgraph")
@@ -111,6 +112,33 @@ class ContentType(str, enum.Enum):
 
     # def __hash__(self) -> int:
     #     return hash(self.value)
+
+    @property
+    def metadata_name(self) -> str:
+        if self == ContentType.SCRIPT:
+            return "automation"
+        elif self == ContentType.INDICATOR_TYPE:
+            return "reputation"
+        elif self == ContentType.LAYOUT:
+            return "layoutscontainer"
+        elif self == ContentType.TEST_PLAYBOOK:
+            return ContentType.PLAYBOOK.server_name
+        elif self == ContentType.MAPPER:
+            return "classifier"
+        return self.lower()
+
+    @property
+    def metadata_display_name(self) -> str:
+        if self == ContentType.SCRIPT:
+            return "Automation"
+        elif self == ContentType.INDICATOR_TYPE:
+            return "Reputation"
+        elif self == ContentType.MAPPER:
+            return "Classifier"
+        elif self == ContentType.LAYOUT:
+            return "Layouts Container"
+        else:
+            return re.sub(r"([a-z](?=[A-Z])|[A-Z](?=[A-Z][a-z]))", r"\1 ", self.value)
 
     @staticmethod
     def server_names() -> List[str]:
@@ -240,7 +268,20 @@ class Nodes(dict):
             self.add_batch(data)
 
 
-SERVER_CONTENT_ITEMS = {
+class PackTags:
+    """Pack tag constants"""
+
+    TRENDING = "Trending"
+    NEW = "New"
+    TIM = "TIM"
+    USE_CASE = "Use Case"
+    TRANSFORMER = "Transformer"
+    FILTER = "Filter"
+    COLLECTION = "Collection"
+    DATA_SOURCE = "Data Source"
+
+
+SERVER_CONTENT_ITEMS: dict = {
     ContentType.INCIDENT_FIELD: [
         "name",
         "details",
@@ -740,5 +781,63 @@ SERVER_CONTENT_ITEMS = {
         "kafka",
         "syslog",
         "fcm",
+    ],
+}
+
+
+# Used to remove content-private nodes, as a temporary temporary workaround.
+# For more details: https://jira-hq.paloaltonetworks.local/browse/CIAC-7149
+CONTENT_PRIVATE_ITEMS: dict = {
+    ContentType.INCIDENT_FIELD: [
+        "Employee ID",
+        "employeeid",
+        "Employee Number",
+        "employeenumber",
+        "Employee Type",
+        "employeetype",
+        "Employment Status",
+        "employmentstatus",
+        "Hire Date",
+        "hiredate",
+        "Last Day of Work",
+        "lastdayofwork",
+        "Prehire Flag",
+        "prehireflag",
+        "Rehired Employee",
+        "rehiredemployee",
+        "Termination Date",
+        "terminationdate",
+        "userprofile",
+        "organization",
+        "actor",
+        "Termination Trigger",
+        "terminationtrigger",
+        "State Name",
+        "statename",
+        "profileid",
+        "timezonesidkey",
+        "localesidkey",
+    ],
+    ContentType.INCIDENT_TYPE: [
+        "IAM - AD User Activation",
+        "IAM - AD User Deactivation",
+        "IAM - New Hire",
+        "IAM - Rehire User",
+        "IAM - Sync User",
+        "IAM - Terminate User",
+        "IAM - Update User",
+        "User Profile - Create",
+        "User Profile - Update",
+        "User Profile",
+        "IAM - App Add",
+        "IAM - Group Membership Update",
+        "IAM - App Remove",
+        "IAM - App Update",
+    ],
+    ContentType.SCRIPT: [
+        "IAM-Init-AD-User",
+    ],
+    ContentType.LAYOUT: [
+        "MITRE Layout",
     ],
 }

@@ -30,7 +30,8 @@ from demisto_sdk.commands.common.docker_helper import (
     get_python_version,
     init_global_docker_client,
 )
-from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
+from demisto_sdk.commands.common.handlers import YAML_Handler
 from demisto_sdk.commands.common.hook_validations.docker import DockerImageValidator
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.native_image import (
@@ -72,9 +73,6 @@ from demisto_sdk.commands.lint.helpers import (
     split_warnings_errors,
     stream_docker_container_output,
 )
-
-json = JSON_Handler()
-
 
 # 3-rd party packages
 
@@ -362,7 +360,8 @@ class Linter:
                 return True
             self._facts["images"] = [[image, -1] for image in images]
 
-            if os.getenv("GITLAB_CI", False):
+            # we want to use the docker-io.art.code.pan.run only if we run in content build (and not CI/CD for example)
+            if os.getenv("CONTENT_GITLAB_CI", False):
                 self._facts["images"] = [
                     [f"docker-io.art.code.pan.run/{image[0]}", -1]
                     for image in self._facts["images"]
@@ -990,17 +989,24 @@ class Linter:
         # Run container
         exit_code = SUCCESS
         output = ""
+        command = [self._facts["lint_to_commands"][linter]]
         try:
             container: docker.models.containers.Container = (
                 get_docker().create_container(
                     name=container_name,
                     image=test_image,
-                    command=[self._facts["lint_to_commands"][linter]],
+                    command=command,
                     user=f"{os.getuid()}:4000",
                     files_to_push=[(self._pack_abs_dir, "/devwork")],
                     environment=self._facts["env_vars"],
                 )
             )
+        except Exception:
+            logger.exception(
+                f"{log_prompt} - could not create container: {container_name=}, {test_image=}, {command=}"
+            )
+            raise
+        try:
             container.start()
             stream_docker_container_output(container.logs(stream=True))
             # wait for container to finish

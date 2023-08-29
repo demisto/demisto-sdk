@@ -458,7 +458,7 @@ class TestDockerImage:
         assert docker_image_validator.is_docker_image_valid() is True
 
     def test_non_existing_docker(self, integration, requests_mock, mocker, monkeypatch):
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+        logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
         monkeypatch.setenv("COLUMNS", "1000")
         docker_image = "demisto/nonexistingdocker:1.4.0"
         integration.yml.write_dict(
@@ -492,8 +492,8 @@ class TestDockerImage:
             assert validator.is_valid is False
             assert all(
                 [
-                    str_in_call_args_list(logger_info.call_args_list, error),
-                    str_in_call_args_list(logger_info.call_args_list, code),
+                    str_in_call_args_list(logger_error.call_args_list, error),
+                    str_in_call_args_list(logger_error.call_args_list, code),
                 ]
             )
 

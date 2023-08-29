@@ -589,7 +589,7 @@ class DockerImageValidator(BaseValidator):
                     f"This may happen if you are not connected to the internet."
                 )
             raise Exception(
-                f"Could not get latest demisto-sdk version.\nEncountered error: {exc_msg}"
+                f"Could not get deprecated docker images from dockerfiles repo.\nEncountered error: {exc_msg}"
             )
 
     def is_docker_image_deprecated(

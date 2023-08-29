@@ -1,6 +1,6 @@
 from typing import IO, Any, AnyStr
 
-import ujson
+import ujson  # noqa: TID251 - this is the handler
 
 from demisto_sdk.commands.common.handlers.xsoar_handler import XSOAR_Handler
 
@@ -24,7 +24,7 @@ class UJSON_Handler(XSOAR_Handler):
         try:
             return ujson.loads(s)
         except ValueError as e:
-            raise JSONDecodeError(f"input: {s}, error: {e}")  # type: ignore
+            raise JSONDecodeError(f"input: {s!r}, error: {e}") from e
 
     def load(self, fp: IO[str]):
         try:

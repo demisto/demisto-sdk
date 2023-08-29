@@ -1,8 +1,9 @@
 import re
-from distutils.version import LooseVersion
 from enum import Enum
 from functools import reduce
 from typing import Dict, List
+
+from packaging.version import Version
 
 CAN_START_WITH_DOT_SLASH = "(?:./)?"
 NOT_TEST = "(?!Test)"
@@ -93,7 +94,7 @@ WIZARD = "wizard"
 XDRC_TEMPLATE = "xdrctemplate"
 LAYOUT_RULE = "layoutrule"
 MARKETPLACE_KEY_PACK_METADATA = "marketplaces"
-
+EVENT_COLLECTOR = "EventCollector"
 # ENV VARIABLES
 
 ENV_DEMISTO_SDK_MARKETPLACE = "DEMISTO_SDK_MARKETPLACE"
@@ -1130,7 +1131,6 @@ VALIDATION_USING_GIT_IGNORABLE_DATA = (
     "doc_files",
     "doc_imgs",
     ".secrets-ignore",
-    ".pack-ignore",
 )
 
 FILE_TYPES_FOR_TESTING = [".py", ".js", ".yml", ".ps1"]
@@ -1172,6 +1172,8 @@ OFFICIAL_INDEX_JSON_PATH = (
 # Run all test signal
 RUN_ALL_TESTS_FORMAT = "Run all tests"
 FILTER_CONF = "./artifacts/filter_file.txt"
+
+GOOGLE_CLOUD_STORAGE_PUBLIC_BASE_PATH = "https://storage.googleapis.com"
 
 
 class PB_Status:
@@ -1273,7 +1275,6 @@ SCHEMA_TO_REGEX = {
     "xdrctemplate": [XDRC_TEMPLATE_JSON_REGEX],
     LAYOUT_RULE: JSON_ALL_LAYOUT_RULES_REGEXES,
 }
-
 EXTERNAL_PR_REGEX = r"^pull/(\d+)$"
 
 FILE_TYPES_PATHS_TO_VALIDATE = {"reports": JSON_ALL_REPORTS_REGEXES}
@@ -1339,7 +1340,7 @@ BANG_COMMAND_ARGS_MAPPING_DICT: Dict[str, dict] = {
     "domain": {"default": ["domain"]},
     "url": {"default": ["url"]},
     "ip": {"default": ["ip"]},
-    "cve": {"default": ["cve", "cve_id"]},
+    "cve": {"default": ["cve"]},
     "endpoint": {"default": ["ip"], "required": False},
 }
 
@@ -1405,6 +1406,7 @@ DEFAULT_CONTENT_ITEM_TO_VERSION = "99.99.99"
 MARKETPLACE_MIN_VERSION = "6.0.0"
 
 OLDEST_SUPPORTED_VERSION = "5.0.0"
+OLDEST_INCIDENT_FIELD_SUPPORTED_VERSION = GENERAL_DEFAULT_FROMVERSION
 LAYOUTS_CONTAINERS_OLDEST_SUPPORTED_VERSION = "6.0.0"
 GENERIC_OBJECTS_OLDEST_SUPPORTED_VERSION = "6.5.0"
 
@@ -1428,7 +1430,6 @@ FEED_REQUIRED_PARAMS = [
             "defaultvalue": "true",
             "display": "Fetch indicators",
             "type": 8,
-            "required": False,
         },
         "must_contain": {},
         "must_be_one_of": {},
@@ -1438,7 +1439,6 @@ FEED_REQUIRED_PARAMS = [
         "must_equal": {
             "display": "Indicator Reputation",
             "type": 18,
-            "required": False,
             "options": ["None", "Good", "Suspicious", "Bad"],
         },
         "must_contain": {
@@ -1471,7 +1471,6 @@ FEED_REQUIRED_PARAMS = [
         "must_equal": {
             "display": "",
             "type": 17,
-            "required": False,
             "options": ["never", "interval", "indicatorType", "suddenDeath"],
         },
         "must_contain": {},
@@ -1479,13 +1478,13 @@ FEED_REQUIRED_PARAMS = [
     },
     {
         "name": "feedExpirationInterval",
-        "must_equal": {"display": "", "type": 1, "required": False},
+        "must_equal": {"display": "", "type": 1},
         "must_contain": {},
         "must_be_one_of": {},
     },
     {
         "name": "feedFetchInterval",
-        "must_equal": {"display": "Feed Fetch Interval", "type": 19, "required": False},
+        "must_equal": {"display": "Feed Fetch Interval", "type": 19},
         "must_contain": {},
         "must_be_one_of": {},
     },
@@ -1494,7 +1493,6 @@ FEED_REQUIRED_PARAMS = [
         "must_equal": {
             "display": "Bypass exclusion list",
             "type": 8,
-            "required": False,
         },
         "must_contain": {
             "additionalinfo": "When selected, the exclusion list is ignored for indicators from this feed."
@@ -1505,7 +1503,7 @@ FEED_REQUIRED_PARAMS = [
     },
     {
         "name": "feedTags",
-        "must_equal": {"display": "Tags", "required": False, "type": 0},
+        "must_equal": {"display": "Tags", "type": 0},
         "must_contain": {"additionalinfo": "Supports CSV values."},
         "must_be_one_of": {},
     },
@@ -1513,7 +1511,6 @@ FEED_REQUIRED_PARAMS = [
         "name": "tlp_color",
         "must_equal": {
             "display": "Traffic Light Protocol Color",
-            "required": False,
             "type": 15,
         },
         "must_contain": {
@@ -1530,18 +1527,17 @@ FEED_REQUIRED_PARAMS = [
 ]
 
 INCIDENT_FETCH_REQUIRED_PARAMS = [
-    {"display": "Incident type", "name": "incidentType", "required": False, "type": 13},
-    {"display": "Fetch incidents", "name": "isFetch", "required": False, "type": 8},
+    {"display": "Incident type", "name": "incidentType", "type": 13},
+    {"display": "Fetch incidents", "name": "isFetch", "type": 8},
 ]
 
 ALERT_FETCH_REQUIRED_PARAMS = [
-    {"display": "Alert type", "name": "incidentType", "required": False, "type": 13},
-    {"display": "Fetch alerts", "name": "isFetch", "required": False, "type": 8},
+    {"display": "Alert type", "name": "incidentType", "type": 13},
+    {"display": "Fetch alerts", "name": "isFetch", "type": 8},
 ]
 
 MAX_FETCH_PARAM = {
     "name": "max_fetch",
-    "required": False,
     "type": 0,
     "defaultvalue": "50",
 }
@@ -1727,18 +1723,34 @@ class MarketplaceVersions(str, Enum):
     XSOAR = "xsoar"
     MarketplaceV2 = "marketplacev2"
     XPANSE = "xpanse"
+    XSOAR_SAAS = "xsoar_saas"
+    XSOAR_ON_PREM = "xsoar_on_prem"
 
+
+MARKETPLACE_XSOAR_DIST = "marketplace-dist"
+MARKETPLACE_XSIAM_DIST = "marketplace-v2-dist"
+MARKETPLACE_XPANSE_DIST = "xpanse-dist"
+MARKETPLACE_XSOAR_SAAS_DIST = "marketplace-saas-dist"
+
+MarketplaceVersionToMarketplaceName = {
+    MarketplaceVersions.XSOAR.value: MARKETPLACE_XSOAR_DIST,
+    MarketplaceVersions.MarketplaceV2.value: MARKETPLACE_XSIAM_DIST,
+    MarketplaceVersions.XPANSE.value: MARKETPLACE_XPANSE_DIST,
+    MarketplaceVersions.XSOAR_SAAS.value: MARKETPLACE_XSOAR_SAAS_DIST,
+}
 
 MARKETPLACE_TO_CORE_PACKS_FILE: Dict[MarketplaceVersions, str] = {
     MarketplaceVersions.XSOAR: "Tests/Marketplace/core_packs_list.json",
+    MarketplaceVersions.XSOAR_SAAS: "Tests/Marketplace/core_packs_list.json",
+    MarketplaceVersions.XSOAR_ON_PREM: "Tests/Marketplace/core_packs_list.json",
     MarketplaceVersions.MarketplaceV2: "Tests/Marketplace/core_packs_mpv2_list.json",
     MarketplaceVersions.XPANSE: "Tests/Marketplace/core_packs_xpanse_list.json",
 }
 
 
 INDICATOR_FIELD_TYPE_TO_MIN_VERSION = {
-    "html": LooseVersion("6.1.0"),
-    "grid": LooseVersion("5.5.0"),
+    "html": Version("6.1.0"),
+    "grid": Version("5.5.0"),
 }
 
 
@@ -1848,3 +1860,44 @@ TABLE_INCIDENT_TO_ALERT = {
 NATIVE_IMAGE_DOCKER_NAME = "demisto/py3-native"
 
 FORMATTING_SCRIPT = "indicator-format"
+
+ENV_SDK_WORKING_OFFLINE = "DEMISTO_SDK_OFFLINE_ENV"
+
+TEST_COVERAGE_DEFAULT_URL = "https://storage.googleapis.com/marketplace-dist-dev/code-coverage-reports/coverage-min.json"
+
+URL_IMAGE_LINK_REGEX = r"(\!\[.*?\])\((?P<url>https://[a-zA-Z_/\.0-9\- :%]*?)\)((].*)?)"
+
+HTML_IMAGE_LINK_REGEX = r'(<img.*?src\s*=\s*"(https://.*?)")'
+
+XSOAR_PREFIX_TAG = "<~XSOAR>\n"
+XSOAR_SUFFIX_TAG = "\n</~XSOAR>\n"
+XSOAR_INLINE_PREFIX_TAG = "<~XSOAR>"
+XSOAR_INLINE_SUFFIX_TAG = "</~XSOAR>"
+
+XSOAR_SAAS_PREFIX_TAG = "<~XSOAR_SAAS>\n"
+XSOAR_SAAS_SUFFIX_TAG = "\n</~XSOAR_SAAS>\n"
+XSOAR_SAAS_INLINE_PREFIX_TAG = "<~XSOAR_SAAS>"
+XSOAR_SAAS_INLINE_SUFFIX_TAG = "</~XSOAR_SAAS>"
+
+XSOAR_ON_PREM_PREFIX_TAG = "<~XSOAR_ON_PREM>\n"
+XSOAR_ON_PREM_SUFFIX_TAG = "\n</~XSOAR_ON_PREM>\n"
+XSOAR_ON_PREM_INLINE_PREFIX_TAG = "<~XSOAR_ON_PREM>"
+XSOAR_ON_PREM_INLINE_SUFFIX_TAG = "</~XSOAR_ON_PREM>"
+
+XSIAM_PREFIX_TAG = "<~XSIAM>\n"
+XSIAM_SUFFIX_TAG = "\n</~XSIAM>\n"
+XSIAM_INLINE_PREFIX_TAG = "<~XSIAM>"
+XSIAM_INLINE_SUFFIX_TAG = "</~XSIAM>"
+
+XPANSE_PREFIX_TAG = "<~XPANSE>\n"
+XPANSE_SUFFIX_TAG = "\n</~XPANSE>\n"
+XPANSE_INLINE_PREFIX_TAG = "<~XPANSE>"
+XPANSE_INLINE_SUFFIX_TAG = "</~XPANSE>"
+
+MARKDOWN_IMAGES_ARTIFACT_FILE_NAME = "markdown_images.json"
+SERVER_API_TO_STORAGE = "api/marketplace/file?name=content/packs"
+
+
+class ImagesFolderNames(str, Enum):
+    README_IMAGES = "readme_images"
+    INTEGRATION_DESCRIPTION_IMAGES = "integration_description_images"

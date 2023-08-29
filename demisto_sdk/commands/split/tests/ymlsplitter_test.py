@@ -1,5 +1,4 @@
 import base64
-import os
 from pathlib import Path
 from unittest.mock import mock_open
 
@@ -7,7 +6,8 @@ import pytest
 
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import DEFAULT_IMAGE_BASE64
-from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
+from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.prepare_content.integration_script_unifier import (
     IntegrationScriptUnifier,
@@ -18,9 +18,6 @@ from demisto_sdk.commands.prepare_content.tests.yml_unifier_test import (
 )
 from demisto_sdk.commands.split.ymlsplitter import YmlSplitter
 from TestSuite.test_tools import ChangeCWD
-
-yaml = YAML_Handler()
-json = JSON_Handler()
 
 
 def test_extract_long_description(tmpdir):
@@ -45,7 +42,7 @@ def test_extract_long_description(tmpdir):
     extractor.extract_long_description(extractor.output)
     with open(extractor.output, "rb") as temp_description:
         assert temp_description.read().decode("utf-8") == "detaileddescription"
-    os.remove(extractor.output)
+    Path(extractor.output).unlink()
 
 
 def test_extract_modeling_rules(tmpdir):
@@ -67,7 +64,7 @@ def test_extract_modeling_rules(tmpdir):
     with open(output, "rb") as temp_rules:
         temp_rules = temp_rules.read()
         assert "[MODEL: dataset=okta_okta_raw, model=Audit]" in str(temp_rules)
-    os.remove(output)
+    Path(output).unlink()
 
 
 def test_extract_modeling_rules_schema(tmpdir):
@@ -95,7 +92,7 @@ def test_extract_modeling_rules_schema(tmpdir):
     with open(output, "rb") as temp_rules:
         temp_rules = temp_rules.read()
         assert schema == json.loads(temp_rules)
-    os.remove(output)
+    Path(output).unlink()
 
 
 def test_extract_parsing_rules(tmpdir):
@@ -117,7 +114,7 @@ def test_extract_parsing_rules(tmpdir):
     with open(output, "rb") as temp_rules:
         temp_rules = temp_rules.read()
         assert "[RULE:extract_hipmatch_only_fields]" in str(temp_rules)
-    os.remove(output)
+    Path(output).unlink()
 
 
 def test_extract_parsing_rules_sampels(tmpdir):
@@ -148,7 +145,7 @@ def test_extract_parsing_rules_sampels(tmpdir):
     with open(output, "rb") as temp_rules:
         temp_rules = temp_rules.read()
         assert sample == json.loads(temp_rules)
-    os.remove(output)
+    Path(output).unlink()
 
 
 def test_extract_to_package_format_modeling_rule(tmpdir):
@@ -255,13 +252,28 @@ def test_extract_image(tmpdir):
 
 
 @pytest.mark.parametrize(
-    argnames="file_type", argvalues=[("integration"), ("betaintegration")]
+    argnames="file_path,file_type",
+    argvalues=[
+        (
+            f"{git_path()}/demisto_sdk/tests/test_files/integration-Zoom.yml",
+            "integration",
+        ),
+        (
+            f"{git_path()}/demisto_sdk/tests/test_files/integration-Zoom.yml",
+            "betaintegration",
+        ),
+        (
+            f"{git_path()}/demisto_sdk/tests/test_files/integration-Zoom-no-trailing-newline.yml",
+            "integration",
+        ),
+    ],
 )
-def test_extract_code(tmpdir, file_type):
+def test_extract_code(tmpdir, file_path, file_type):
     """
     Given
         Case 1: a unified integration file of python format.
         Case 2: a unified beta-integration file of python format.
+        Case 3: a unified integration file of python format without a trailing newline in the script.
 
     When
     - Running the YmlSplitter extract_code function.
@@ -270,14 +282,16 @@ def test_extract_code(tmpdir, file_type):
     - Ensure that all lines that should have been removed have been removed.
     """
     extractor = YmlSplitter(
-        input=f"{git_path()}/demisto_sdk/tests/test_files/integration-Zoom.yml",
+        input=file_path,
         output=str(tmpdir.join("temp_code.py")),
         file_type=file_type,
     )
-    assert (
-        "### pack version: 1.0.3"
-        in yaml.load(Path(extractor.input).read_text())["script"]["script"]
-    )
+    script_before_split = yaml.load(Path(extractor.input).read_text())["script"][
+        "script"
+    ]
+    assert "### pack version: 1.0.3" in script_before_split
+    assert "# pack version: 1.0.3" in script_before_split
+    assert "#### pack version: 1.0.3" in script_before_split
 
     extractor.extract_code(extractor.output)
     with open(extractor.output, "rb") as temp_code:
@@ -287,7 +301,9 @@ def test_extract_code(tmpdir, file_type):
         assert file_data[-1] == "\n"
         assert "register_module_line" not in file_data
         assert "### pack version: 1.0.3" not in file_data
-    os.remove(extractor.output)
+        assert "# pack version: 1.0.3" not in file_data
+        assert "#### pack version: 1.0.3" not in file_data
+    Path(extractor.output).unlink()
 
     extractor.common_server = False
     extractor.demisto_mock = False
@@ -298,6 +314,8 @@ def test_extract_code(tmpdir, file_type):
         assert "from CommonServerPython import *  #" not in file_data
         assert "register_module_line" not in file_data
         assert "### pack version: 1.0.3" not in file_data
+        assert "# pack version: 1.0.3" not in file_data
+        assert "#### pack version: 1.0.3" not in file_data
         assert file_data[-1] == "\n"
 
 
@@ -527,7 +545,7 @@ def test_update_api_module_contribution(mocker):
     import_name = "from MicrosoftApiModule import *  # noqa: E402"
     module_name = "MicrosoftApiModule"
     code = IntegrationScriptUnifier.insert_module_code(
-        DUMMY_SCRIPT, {import_name: module_name}
+        DUMMY_SCRIPT, {import_name: module_name}, Path()
     )
     yml_splitter = YmlSplitter(
         input=f"{git_path()}/demisto_sdk/tests/test_files/modelingrule-OktaModelingRules.yml",

@@ -85,8 +85,12 @@ def _download_apoc():
 
 
 def _docker_start():
+    logger.debug("Starting neo4j service")
     docker_client = init_global_docker_client()
     _stop_neo4j_service_docker(docker_client)
+    (REPO_PATH / NEO4J_FOLDER / NEO4J_DATA_FOLDER).mkdir(parents=True, exist_ok=True)
+    (REPO_PATH / NEO4J_FOLDER / NEO4J_IMPORT_FOLDER).mkdir(parents=True, exist_ok=True)
+    (REPO_PATH / NEO4J_FOLDER / NEO4J_PLUGINS_FOLDER).mkdir(parents=True, exist_ok=True)
     docker_client.containers.run(
         image=NEO4J_SERVICE_IMAGE,
         name="neo4j-content",
@@ -104,6 +108,8 @@ def _docker_start():
             "NEO4J_apoc_import_file_use__neo4j__config": "true",
             "NEO4J_dbms_security_procedures_unrestricted": "apoc.*",
             "NEO4J_dbms_security_procedures_allowlist": "apoc.*",
+            "NEO4J_dbms_connector_http_advertised__address": "127.0.0.1:7474",
+            "NEO4J_dbms_connector_bolt_advertised__address": "127.0.0.1:7687",
         },
         healthcheck={
             "test": f"curl --fail {NEO4J_DATABASE_HTTP} || exit 1",
@@ -114,6 +120,8 @@ def _docker_start():
         user=f"{os.getuid()}:{os.getgid()}",
     )
 
+    logger.debug("Neo4j service started successfully")
+
 
 def start():
     """Starting the neo4j service
@@ -121,6 +129,10 @@ def start():
     Args:
     """
     if is_alive():
+        logger.debug("Neo4j is already running")
+        return
+    if not is_running_on_docker():
+        logger.debug("Neo4j is running locally. Start manually")
         return
 
     Path.mkdir(REPO_PATH / NEO4J_FOLDER, exist_ok=True, parents=True)
@@ -133,19 +145,21 @@ def start():
         logger.debug(
             f"Could not start neo4j container, delete data folder and trying again. {e}"
         )
-        shutil.rmtree(REPO_PATH / NEO4J_FOLDER / NEO4J_DATA_FOLDER)
+        shutil.rmtree(REPO_PATH / NEO4J_FOLDER / NEO4J_DATA_FOLDER, ignore_errors=True)
         _docker_start()
 
 
-def stop():
+def stop(force: bool = False, clean: bool = False):
     """Stop the neo4j service"""
-    if not is_alive():
+    if not force and not is_alive():
         return
     if not is_running_on_docker():
         logger.debug("Neo4j is running locally. Stop with `neo4j stop`")
         return
     docker_client = init_global_docker_client()
     _stop_neo4j_service_docker(docker_client)
+    if clean:
+        shutil.rmtree(REPO_PATH / NEO4J_FOLDER / NEO4J_DATA_FOLDER, ignore_errors=True)
 
 
 def is_alive():

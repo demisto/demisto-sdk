@@ -1,5 +1,5 @@
 import os
-from json.decoder import JSONDecodeError
+from json.decoder import JSONDecodeError  # noqa: TID251 - importing JSON in CI is OK
 from types import SimpleNamespace
 from typing import Dict, Optional
 

@@ -7,7 +7,6 @@ from demisto_sdk.commands.common.constants import (
     NATIVE_IMAGE_FILE_NAME,
     MarketplaceVersions,
 )
-from demisto_sdk.commands.common.handlers import YAML_Handler
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.native_image import (
     ScriptIntegrationSupportedNativeImages,
@@ -18,15 +17,14 @@ from demisto_sdk.commands.prepare_content.integration_script_unifier import (
     IntegrationScriptUnifier,
 )
 
-yaml = YAML_Handler()
-
 
 class IntegrationScript(ContentItem):
     type: str
     docker_image: Optional[str]
-    description: Optional[str]
+    description: Optional[str] = Field("")
     is_unified: bool = Field(False, exclude=True)
     code: Optional[str] = Field(None, exclude=True)
+    unified_data: dict = Field(None, exclude=True)
 
     def prepare_for_upload(
         self,
@@ -41,6 +39,7 @@ class IntegrationScript(ContentItem):
         data = IntegrationScriptUnifier.unify(
             self.path, data, current_marketplace, **kwargs
         )
+        self.unified_data = data
         return data
 
     def get_supported_native_images(

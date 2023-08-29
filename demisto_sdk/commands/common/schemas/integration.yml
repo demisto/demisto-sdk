@@ -88,6 +88,8 @@ mapping:
         type: bool
       isfetchevents:
         type: bool
+      isfetcheventsandassets:
+        type: bool
       longRunning:
         type: bool
       longRunningPort:
@@ -141,7 +143,7 @@ mapping:
     type: seq
     sequence:
       - type: str
-        enum: ['xsoar', 'marketplacev2', 'xpanse']
+        enum: ['xsoar', 'marketplacev2', 'xpanse', 'xsoar_saas', 'xsoar_on_prem']
 
 # integration->configuration
 schema;configuration_schema:

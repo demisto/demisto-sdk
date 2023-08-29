@@ -25,7 +25,7 @@ from demisto_sdk.commands.common.constants import (
 )
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.docker_helper import init_global_docker_client
-from demisto_sdk.commands.common.handlers import JSON_Handler
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.timers import report_time_measurements
 from demisto_sdk.commands.common.tools import (
@@ -36,11 +36,11 @@ from demisto_sdk.commands.common.tools import (
     is_external_repository,
     retrieve_file_ending,
 )
-from demisto_sdk.commands.content_graph.content_graph_commands import (
+from demisto_sdk.commands.content_graph.commands.update import (
     update_content_graph,
 )
-from demisto_sdk.commands.content_graph.interface.neo4j.neo4j_graph import (
-    Neo4jContentGraphInterface,
+from demisto_sdk.commands.content_graph.interface import (
+    ContentGraphInterface,
 )
 from demisto_sdk.commands.lint.helpers import (
     EXIT_CODES,
@@ -53,8 +53,6 @@ from demisto_sdk.commands.lint.helpers import (
     get_test_modules,
 )
 from demisto_sdk.commands.lint.linter import DockerImageFlagOption, Linter
-
-json = JSON_Handler()
 
 # Third party packages
 
@@ -135,7 +133,7 @@ class LintManager:
                     f"Checking for packages dependent on the modified API module {changed_api_module}..."
                 )
 
-                with Neo4jContentGraphInterface() as graph:
+                with ContentGraphInterface() as graph:
                     logger.info("Updating graph...")
                     update_content_graph(graph, use_git=True, dependencies=True)
 
@@ -1238,7 +1236,7 @@ class LintManager:
         mypy_errors: list = []
         gather_error: list = []
         for line in error_messages:
-            if os.path.isfile(line.split(":")[0]):
+            if Path(line.split(":")[0]).is_file():
                 if gather_error:
                     mypy_errors.append("\n".join(gather_error))
                     gather_error = []

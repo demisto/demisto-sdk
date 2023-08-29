@@ -39,7 +39,8 @@ from demisto_sdk.commands.common.errors import (
     FOUND_FILES_AND_IGNORED_ERRORS,
     Errors,
 )
-from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
+from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
 from demisto_sdk.commands.common.hook_validations.base_validator import error_codes
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import (
     ContentEntityValidator,
@@ -49,6 +50,7 @@ from demisto_sdk.commands.common.hook_validations.description import (
 )
 from demisto_sdk.commands.common.hook_validations.docker import DockerImageValidator
 from demisto_sdk.commands.common.hook_validations.image import ImageValidator
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     _get_file_id,
     compare_context_path_in_yml_and_readme,
@@ -64,8 +66,6 @@ from demisto_sdk.commands.common.tools import (
     string_to_bool,
 )
 
-json = JSON_Handler()
-yaml = YAML_Handler()
 default_additional_info = load_default_additional_info_dict()
 
 
@@ -154,6 +154,7 @@ class IntegrationValidator(ContentEntityValidator):
             self.is_valid_display_name(),
             self.is_valid_default_value_for_checkbox(),
             self.is_valid_display_name_for_siem(),
+            self.is_valid_xsiam_marketplace(),
             self.is_valid_pwsh(),
             self.is_valid_image(),
             self.is_valid_max_fetch_and_first_fetch(),
@@ -406,14 +407,13 @@ class IntegrationValidator(ContentEntityValidator):
                         err_msgs.append(formatted_message)
 
         if err_msgs:
-            server_version_compare(
+            logger.error(
                 "{} Received the following error for {} validation:\n{}\n {}\n".format(
                     self.file_path,
                     param_name,
                     "\n".join(err_msgs),
                     Errors.suggest_fix(file_path=self.file_path),
-                ),
-                "red",
+                )
             )
             self.is_valid = False
             return False
@@ -534,7 +534,7 @@ class IntegrationValidator(ContentEntityValidator):
                         flag = False
 
         if not flag:
-            server_version_compare(Errors.suggest_fix(self.file_path), "red")
+            logger.error(Errors.suggest_fix(self.file_path))
         return flag
 
     @error_codes("IN134")
@@ -1276,7 +1276,7 @@ class IntegrationValidator(ContentEntityValidator):
 
             # ignore optional fields
             for param in params:
-                for field in ["defaultvalue", "section", "advanced"]:
+                for field in ["defaultvalue", "section", "advanced", "required"]:
                     param.pop(field, None)
 
             for fetch_required_param in fetch_required_params:
@@ -2336,4 +2336,18 @@ class IntegrationValidator(ContentEntityValidator):
             )
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 return False
+        return True
+
+    @error_codes("IN151")
+    def is_valid_xsiam_marketplace(self):
+        """Checks if XSIAM integration has only the marketplacev2 entry"""
+        is_siem = self.current_file.get("script", {}).get("isfetchevents")
+        marketplaces = self.current_file.get("marketplaces", [])
+        if is_siem:
+            # Should have only marketplacev2 entry
+            if not len(marketplaces) == 1 or "marketplacev2" not in marketplaces:
+                error_message, error_code = Errors.invalid_siem_marketplaces_entry()
+                if self.handle_error(error_message, error_code, self.file_path):
+                    return False
+
         return True

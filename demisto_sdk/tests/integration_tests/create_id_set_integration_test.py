@@ -3,13 +3,10 @@ import os
 from click.testing import CliRunner
 
 from demisto_sdk.__main__ import main
-from demisto_sdk.commands.common.handlers import JSON_Handler
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from TestSuite.repo import Repo
 from TestSuite.test_tools import ChangeCWD
 from TestSuite.utils import IsEqualFunctions
-
-json = JSON_Handler()
-
 
 CREATE_ID_SET_CMD = "create-id-set"
 

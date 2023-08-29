@@ -13,12 +13,12 @@ from demisto_sdk.commands.common.constants import (
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.hook_validations.graph_validator import GraphValidator
 from demisto_sdk.commands.common.legacy_git_tools import git_path
-from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
-from demisto_sdk.commands.content_graph.content_graph_commands import (
+from demisto_sdk.commands.content_graph.commands.create import (
     create_content_graph,
 )
-from demisto_sdk.commands.content_graph.interface.neo4j.neo4j_graph import (
-    Neo4jContentGraphInterface as ContentGraphInterface,
+from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
+from demisto_sdk.commands.content_graph.interface import (
+    ContentGraphInterface,
 )
 from demisto_sdk.commands.content_graph.objects.classifier import Classifier
 from demisto_sdk.commands.content_graph.objects.integration import Command, Integration
@@ -39,7 +39,7 @@ GIT_PATH = Path(git_path())
 
 
 @pytest.fixture(autouse=True)
-def setup(mocker):
+def setup_method(mocker):
     """Auto-used fixture for setup before every test run"""
     import demisto_sdk.commands.content_graph.objects.base_content as bc
 
@@ -281,7 +281,7 @@ def repository(mocker) -> ContentDTO:
     pack1 = mock_pack(
         "SamplePack", [MarketplaceVersions.XSOAR, MarketplaceVersions.MarketplaceV2]
     )
-    pack2 = mock_pack("SamplePack2", [MarketplaceVersions.XSOAR])
+    pack2 = mock_pack("SamplePack2", [MarketplaceVersions.XSOAR], hidden=True)
     pack3 = mock_pack(
         "SamplePack3",
         [
@@ -356,8 +356,8 @@ def repository(mocker) -> ContentDTO:
     pack4.content_items.playbook.append(mock_playbook("SamplePlaybook"))
     repository.packs.extend([pack1, pack2, pack3, pack4])
     mocker.patch(
-        "demisto_sdk.commands.content_graph.content_graph_builder.ContentGraphBuilder._create_content_dto",
-        return_value=repository,
+        "demisto_sdk.commands.content_graph.content_graph_builder.ContentGraphBuilder._create_content_dtos",
+        return_value=[repository],
     )
     return repository
 
@@ -395,7 +395,7 @@ def _get_pack_by_id(repository: ContentDTO, pack_id: str) -> Pack:
     raise ValueError(f"Pack {pack_id} does not exist in the repository.")
 
 
-def mock_pack(name, marketplaces):
+def mock_pack(name, marketplaces, hidden=False):
     return Pack(
         object_id=name,
         content_type=ContentType.PACK,
@@ -403,7 +403,7 @@ def mock_pack(name, marketplaces):
         path=Path("Packs"),
         name="pack_name",
         marketplaces=marketplaces,
-        hidden=False,
+        hidden=hidden,
         server_min_version="5.5.0",
         current_version="1.0.0",
         tags=[],
@@ -412,6 +412,7 @@ def mock_pack(name, marketplaces):
         keywords=[],
         contentItems=[],
         excluded_dependencies=[],
+        deprecated=False,
     )
 
 
@@ -510,7 +511,7 @@ def test_are_toversion_relationships_paths_valid(repository: ContentDTO):
     - Validate the existance of invalid to_version relationships
     """
 
-    with GraphValidator(should_update=False) as graph_validator:
+    with GraphValidator(update_graph=False) as graph_validator:
         create_content_graph(graph_validator.graph)
         is_valid = graph_validator.validate_toversion_fields()
 
@@ -526,14 +527,14 @@ def test_are_fromversion_relationships_paths_valid(repository: ContentDTO, mocke
     Then
     - Validate the existance of invalid from_version relationships
     """
-    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
-    with GraphValidator(should_update=False) as graph_validator:
+    logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
+    with GraphValidator(update_graph=False) as graph_validator:
         create_content_graph(graph_validator.graph)
         is_valid = graph_validator.validate_fromversion_fields()
 
     assert not is_valid
     assert str_in_call_args_list(
-        logger_info.call_args_list,
+        logger_error.call_args_list,
         "Content item 'SamplePlaybook' whose from_version is '6.5.0' uses the content"
         " items: 'SamplePlaybook2' whose from_version is higher",
     )
@@ -569,16 +570,15 @@ def test_is_file_using_unknown_content(
     Then
     - Check whether the graph is valid or not, based on whether optional content dependencies were included.
     """
-    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+    logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
     logger_warning = mocker.patch.object(logging.getLogger("demisto-sdk"), "warning")
-
     with GraphValidator(
-        should_update=False, git_files=[], include_optional_deps=include_optional
+        update_graph=False, git_files=[], include_optional_deps=include_optional
     ) as graph_validator:
         create_content_graph(graph_validator.graph)
         assert graph_validator.is_file_using_unknown_content() == is_valid
 
-    logger_to_search = logger_warning if is_valid else logger_info
+    logger_to_search = logger_warning if is_valid else logger_error
 
     assert str_in_call_args_list(
         logger_to_search.call_args_list,
@@ -596,15 +596,15 @@ def test_is_file_display_name_already_exists(repository: ContentDTO, mocker):
     Then
     - Validate the existance of duplicate display names
     """
-    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
-    with GraphValidator(should_update=False) as graph_validator:
+    logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
+    with GraphValidator(update_graph=False) as graph_validator:
         create_content_graph(graph_validator.graph)
         is_valid = graph_validator.is_file_display_name_already_exists()
 
     assert not is_valid
     for i in range(1, 4):
         assert str_in_call_args_list(
-            logger_info.call_args_list,
+            logger_error.call_args_list,
             f"Pack 'SamplePack{i if i != 1 else ''}' has a duplicate display_name",
         )
 
@@ -618,28 +618,28 @@ def test_validate_unique_script_name(repository: ContentDTO, mocker):
     Then
         - Validate the existance of duplicate script names
     """
-    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
-    with GraphValidator(should_update=False) as graph_validator:
+    logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
+    with GraphValidator(update_graph=False) as graph_validator:
         create_content_graph(graph_validator.graph)
         is_valid = graph_validator.validate_unique_script_name()
 
     assert not is_valid
 
     assert str_in_call_args_list(
-        logger_info.call_args_list,
+        logger_error.call_args_list,
         "Cannot create a script with the name setAlert, "
         "because a script with the name setIncident already exists.\n",
     )
 
     assert not str_in_call_args_list(
-        logger_info.call_args_list,
+        logger_error.call_args_list,
         "Cannot create a script with the name getAlert, "
         "because a script with the name getIncident already exists.\n",
     )
 
     # Ensure that the script-name-incident-to-alert ignore is working
     assert not str_in_call_args_list(
-        logger_info.call_args_list,
+        logger_error.call_args_list,
         "Cannot create a script with the name getAlerts, "
         "because a script with the name getIncidents already exists.\n",
     )
@@ -656,14 +656,14 @@ def test_are_marketplaces_relationships_paths_valid(
     Then
     - Validate the existence invalid marketplaces uses
     """
-    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
-    with GraphValidator(should_update=False) as graph_validator:
+    logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
+    with GraphValidator(update_graph=False) as graph_validator:
         create_content_graph(graph_validator.graph)
         is_valid = graph_validator.validate_marketplaces_fields()
 
     assert not is_valid
     assert str_in_call_args_list(
-        logger_info.call_args_list,
+        logger_error.call_args_list,
         "Content item 'SamplePlaybook' can be used in the 'xsoar, xpanse' marketplaces"
         ", however it uses content items: 'SamplePlaybook2' which are not supported in"
         " all of the marketplaces of 'SamplePlaybook'",
@@ -679,18 +679,18 @@ def test_validate_dependencies(repository: ContentDTO, caplog, mocker):
     Then
     - Validate the existance invalid core pack dependency
     """
-    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+    logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
     mocker.patch(
         "demisto_sdk.commands.common.hook_validations.graph_validator.get_marketplace_to_core_packs",
         return_value={MarketplaceVersions.XSOAR: {"SamplePack"}},
     )
-    with GraphValidator(should_update=False) as graph_validator:
+    with GraphValidator(update_graph=False) as graph_validator:
         create_content_graph(graph_validator.graph)
         is_valid = graph_validator.validate_dependencies()
 
     assert not is_valid
     assert str_in_call_args_list(
-        logger_info.call_args_list,
+        logger_error.call_args_list,
         "The core pack SamplePack cannot depend on non-core packs: ",
     )
 
@@ -704,15 +704,15 @@ def test_validate_duplicate_id(repository: ContentDTO, mocker):
     Then
     - Validate the existence of duplicate ids
     """
-    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+    logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
 
-    with GraphValidator(should_update=False) as graph_validator:
+    with GraphValidator(update_graph=False) as graph_validator:
         create_content_graph(graph_validator.graph)
         is_valid = graph_validator.validate_duplicate_ids()
 
     assert not is_valid
     assert str_in_call_args_list(
-        logger_info.call_args_list,
+        logger_error.call_args_list,
         "[GR105] - The ID 'SamplePlaybook' already exists in",
     )
 
@@ -723,7 +723,7 @@ def test_pack_ids_collection():
         "Packs/MicrosoftExchangeOnline/Integrations/EwsExtension/README.md",
     ]
     expected_pack_ids = ["MicrosoftExchangeOnline"]
-    with GraphValidator(should_update=False, git_files=git_files) as graph_validator:
+    with GraphValidator(update_graph=False, git_files=git_files) as graph_validator:
         assert graph_validator.pack_ids == expected_pack_ids
 
 
@@ -738,7 +738,7 @@ def test_deprecated_usage__existing_content(repository: ContentDTO, mocker):
     """
 
     logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "warning")
-    with GraphValidator(should_update=False) as validator:
+    with GraphValidator(update_graph=False) as validator:
         create_content_graph(validator.graph)
         is_valid = validator.validate_deprecated_items_usage()
 
@@ -763,8 +763,41 @@ def test_deprecated_usage__new_content(repository: ContentDTO, mocker):
     - validate the files considered as invalid.
     """
     mocker.patch.object(GitUtil, "added_files", return_value=[Path("SamplePlaybook")])
-    with GraphValidator(should_update=False) as validator:
+    with GraphValidator(update_graph=False) as validator:
         create_content_graph(validator.graph)
         is_valid = validator.validate_deprecated_items_usage()
 
     assert not is_valid
+
+
+@pytest.mark.parametrize("changed_pack", ["Packs/SamplePack", "Packs/SamplePack2"])
+def test_validate_hidden_pack_is_not_mandatory_dependency(
+    repository: ContentDTO, mocker, changed_pack: str
+):
+    """
+    Given
+    - A content repo which contains SamplePack that is dependent on
+      SamplePack2 (which is hidden) as mandatory dependency
+
+    When
+    - Case A: the changed file was the hidden pack.
+    - Case B: the changed file was the hidden pack's mandatory dependency
+
+    Then
+    - validate that an error occurs with a message stating that SamplePack2 is hidden and has mandatory dependencies
+    """
+    logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
+
+    with GraphValidator(
+        update_graph=False, git_files=[Path(changed_pack)]
+    ) as graph_validator:
+        create_content_graph(graph_validator.graph)
+        is_valid = (
+            graph_validator.validate_hidden_packs_do_not_have_mandatory_dependencies()
+        )
+
+    assert not is_valid
+    assert str_in_call_args_list(
+        logger_error.call_args_list,
+        "[GR108] - SamplePack pack(s) cannot have a mandatory dependency on the hidden pack SamplePack2",
+    )

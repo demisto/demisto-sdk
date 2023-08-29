@@ -17,9 +17,11 @@ from requests.exceptions import HTTPError
 from urllib3.util import Retry
 
 from demisto_sdk.commands.common.constants import (
+    HTML_IMAGE_LINK_REGEX,
     PACKS_DIR,
     RELATIVE_HREF_URL_REGEX,
     RELATIVE_MARKDOWN_URL_REGEX,
+    URL_IMAGE_LINK_REGEX,
 )
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.docker_helper import init_global_docker_client
@@ -29,7 +31,7 @@ from demisto_sdk.commands.common.errors import (
     Errors,
 )
 from demisto_sdk.commands.common.git_util import GitUtil
-from demisto_sdk.commands.common.handlers import JSON_Handler
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.hook_validations.base_validator import (
     BaseValidator,
     error_codes,
@@ -48,8 +50,6 @@ from demisto_sdk.commands.common.tools import (
     get_yml_paths_in_dir,
     run_command_os,
 )
-
-json = JSON_Handler()
 
 NO_HTML = "<!-- NOT_HTML_DOC -->"
 YES_HTML = "<!-- HTML_DOC -->"
@@ -209,6 +209,9 @@ class ReadMeValidator(BaseValidator):
                 self.verify_template_not_in_readme(),
                 self.verify_copyright_section_in_readme_content(),
                 # self.has_no_markdown_lint_errors(),
+                self.validate_no_disallowed_terms_in_customer_facing_docs(
+                    file_content=self.readme_content, file_path=self.file_path_str
+                ),
             ]
         )
 
@@ -300,7 +303,7 @@ class ReadMeValidator(BaseValidator):
             bool: True If all links are valid else False.
         """
         invalid_paths = re.findall(
-            r"(\!\[.*?\]|src\=)(\(|\")(https://github.com/demisto/content/(?!raw).*?)(\)|\")",
+            r"(\!\[.*?\]|src\=)(\(|\")(https://github.com/demisto/content/blob/.*?)(\)|\")",
             self.readme_content,
             re.IGNORECASE,
         )
@@ -476,27 +479,24 @@ class ReadMeValidator(BaseValidator):
 
         for img in relative_images:
             # striping in case there are whitespaces at the beginning/ending of url.
-            prefix = "" if "src" in img[0] else img[0].strip()
             relative_path = img[1].strip()
 
             if "Insert the link to your image here" in relative_path:
                 # the line is generated automatically in playbooks readme, the user should replace it with
                 # an image or remove the line.
                 error_message, error_code = Errors.invalid_readme_image_error(
-                    prefix + f"({relative_path})", error_type="insert_image_link_error"
+                    relative_path, error_type="insert_image_link_error"
                 )
             elif is_pack_readme:
                 error_message, error_code = Errors.invalid_readme_image_error(
-                    prefix + f"({relative_path})",
+                    relative_path,
                     error_type="pack_readme_relative_error",
                 )
             else:
                 # generates absolute path from relative and checks for the file existence.
-                if not os.path.isfile(
-                    os.path.join(self.file_path.parent, relative_path)
-                ):
+                if not Path(self.file_path.parent, relative_path).is_file():
                     error_message, error_code = Errors.invalid_readme_image_error(
-                        prefix + f"({relative_path})",
+                        relative_path,
                         error_type="general_readme_relative_error",
                     )
             if error_code and error_message:  # error was found
@@ -527,19 +527,18 @@ class ReadMeValidator(BaseValidator):
         except InvalidGitRepositoryError:
             pass
         absolute_links = re.findall(
-            r"(!\[.*\])\((https://.*)\)$",
+            URL_IMAGE_LINK_REGEX,
             self.readme_content,
             re.IGNORECASE | re.MULTILINE,
         )
         absolute_links += re.findall(
-            r'(<img.*?src\s*=\s*"(https://.*?)")',
+            HTML_IMAGE_LINK_REGEX,
             self.readme_content,
             re.IGNORECASE | re.MULTILINE,
         )
         for link in absolute_links:
             error_message: str = ""
             error_code: str = ""
-            prefix = "" if "src" in link[0] else link[0].strip()
             img_url = link[
                 1
             ].strip()  # striping in case there are whitespaces at the beginning/ending of url.
@@ -553,7 +552,7 @@ class ReadMeValidator(BaseValidator):
                     and working_branch_name != "master"
                 ):
                     error_message, error_code = Errors.invalid_readme_image_error(
-                        prefix + f"({img_url})",
+                        img_url,
                         error_type="branch_name_readme_absolute_error",
                     )
                 else:
@@ -563,7 +562,7 @@ class ReadMeValidator(BaseValidator):
                         )
                     except HTTPError as error:
                         error_message, error_code = Errors.invalid_readme_image_error(
-                            prefix + f"({img_url})",
+                            img_url,
                             error_type="general_readme_absolute_error",
                             response=error.response,
                         )

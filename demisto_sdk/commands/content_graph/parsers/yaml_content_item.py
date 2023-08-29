@@ -1,3 +1,4 @@
+import re
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
@@ -44,11 +45,11 @@ class YAMLContentItemParser(ContentItemParser):
 
     @property
     def description(self) -> Optional[str]:
-        description = self.yml_data.get("description", "")
+        description = self.yml_data.get("description") or ""
         description = description.replace("\\ ", " ")  # removes unwanted backslashes
         description = description.replace("\\\n", " ")  # removes unwanted backslashes
-        description = " ".join(
-            description.split()
+        description = re.sub(
+            r"(?<=\S) +", " ", description
         )  # substitutes multiple spaces into one
         return description
 
@@ -62,11 +63,7 @@ class YAMLContentItemParser(ContentItemParser):
 
     @property
     def marketplaces(self) -> List[MarketplaceVersions]:
-        if file_marketplaces := [
-            MarketplaceVersions(mp) for mp in self.yml_data.get("marketplaces", [])
-        ]:
-            return file_marketplaces
-        return sorted(set(self.pack_marketplaces) & self.supported_marketplaces)
+        return self.get_marketplaces(self.yml_data)
 
     def connect_to_tests(self) -> None:
         """Iterates over the test playbooks registered to this content item,
@@ -90,4 +87,4 @@ class YAMLContentItemParser(ContentItemParser):
             raise NotAContentItemException
 
         self.path = Path(yaml_path)
-        return get_yaml(self.path.as_posix())
+        return get_yaml(self.path.as_posix(), keep_order=False)

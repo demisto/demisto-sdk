@@ -71,6 +71,10 @@ Uploading classifiers to Cortex XSOAR is available from version 6.0.0 and up.
 
     in case a pack was passed in the -i argument and -z is used, DIRECTORY_FOR_THE_ZIP is where to store the zip after creation.
 
+* **--override-existing**
+
+    If true, will skip the override confirmation prompt while uploading packs.
+
 * **--insecure**
 
     Skip certificate validation

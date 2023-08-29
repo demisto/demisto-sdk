@@ -1,6 +1,7 @@
 import logging
 import os
 from copy import deepcopy
+from pathlib import Path
 from typing import Any, Dict, List, Optional
 from unittest.mock import mock_open, patch
 
@@ -1913,6 +1914,8 @@ class TestIntegrationValidator:
                     MarketplaceVersions.XSOAR,
                     MarketplaceVersions.MarketplaceV2,
                     MarketplaceVersions.XPANSE,
+                    MarketplaceVersions.XSOAR_SAAS,
+                    MarketplaceVersions.XSOAR_ON_PREM,
                 ],
                 False,
             ),
@@ -2642,7 +2645,7 @@ class TestisContextChanged:
             structure_validator, validate_all=validate_all
         )
         if remove_readme:
-            os.remove(integration.readme.path)
+            Path(integration.readme.path).unlink()
         assert (
             integration_validator.validate_readme_exists(
                 integration_validator.validate_all

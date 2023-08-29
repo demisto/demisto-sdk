@@ -1,5 +1,40 @@
 # Changelog
 ## Unreleased
+* Fixed an issue where **update-release-notes** generated "available from Cortex XSOAR" instead of "from XSIAM" when run on XSIAM event collectors.
+* Added support for a new marketplace tag `xsoar_saas`.
+* Added support for yml hidden parameters for `xsoar_saas` marketplace, as part of the **prepare_content** command.
+* Added support for custom documentation that will appear only in `xsoar_saas` marketplace, as part of the **prepare_content** command.
+* Modified **prepare_content** command to be platform specific. For xsoar-saas and XSIAM regarding pack readme and integration description images in markdown files.
+
+## 1.19.2
+* Added a period at the end of lines produced by the **generate-docs** command that state the tested version of the product.
+* Update `RN112` validation's docs reference link.
+* Added support to control the maximum file size and log rotation files count in the sdk logger.
+* Fixed an issue with where passing the deprecated logging arguments to any command presented an incorrect recommendation for argument substitution.
+* Fixed an issue where the documentation of logging arguments was incorrect.
+* Fixed an issue in calculating content graph hash when creating or updating it.
+* Fixed an issue where the coloring of the logging messages was not working properly when mixing both Console log and Parallel log handlers.
+* Calling **graph create** or **graph update** now run the commands with default arguments, instead of showing the command help.
+* Removed the use of chunks when calculating content relationships.
+* Fixed an issue where the url regex in the **validate** command was wrong.
+* Fixed an issue where **pre-commit** command failed when using global environment.
+* Fixed an issue where **validate** would fail in external repos when trying to ignore `BA102`.
+* Fixed an issue where **error-code** failed on some error codes.
+* Fixes an issue in **format** command where the `-i` option included files in `.venv` directories.
+* Updated the comment added to contribution PRs to old packs so it contains a link to the documentation of the **GitHub Codespaces** in xsoar.pan.dev.
+* Updated GitPython version to 3.1.32.
+
+## 1.19.1
+* Fixed an issue where **unify** failed on integrations using an API a module, when not called from the content root.
+* Improved **update-release-notes** logs when changes in dependent API modules are detected.
+* Reverted changes released in version 1.19.0 in lint, lint will not fail on `demisto.results`, `return_outputs` and `LOG`.
+* Updated the **generate-docs** command to use the content graph instead of the id_set file.
+* **Validate** will now validate items which were edited in .pack-ignore.
+* Added the '--all' input option for the **prepare-content** command, to support running on all content packs.
+* Updated the '-i' input option of the **prepare-content** command to support multiple inputs as a comma-separated list.
+* Enhanced the pack metadata properties when dumping pack zips in **prepare-content** command.
+
+## 1.19.0
 * Added the **graph** command group. The **create-content-graph** and **update-content-graph** commands were migrated to this command group, and named **graph create** and **graph update** respectively.
 * Added the **graph get-relationships** command.
 * The **graph create** command will now use a list of known content items from content-private, to avoid false-positives in validation `GR103`. Additionally, `GR103` was added to the **ALLOWED_IGNORE_ERRORS** list.
@@ -7,17 +42,20 @@
 * Added the *--xsiam* flag to the **init** command in order to create XSIAM content.
 * Fixed an issue where the `update-additional-dependencies` **pre-commit** step failed when not running in a content-like repo.
 * Removed the format execution step from the `contribution_converter` since it can be executed separately during the contribution process.
-* Added a new validation (`GR108`) to **validate** command that assures hidden packs do not have mandatory dependant packs.
-* Added a validation that check that non ignorable errors are not used.
+* Added a new validation (`GR108`) to **validate**, that assures hidden packs do not have mandatory dependant packs.
+* Added a new validation (`PA137`) to **validate**, ensuring the absence of non-ignorable errors in `.pack-ignore`.
+* Running **validate** in a GitHub Action will now show errors as annotations, visible in the `Files Changed` tab of the pull request.
 * **lint** will now fail on `demisto.results` and `return_outputs` usage, when a pack is `xsoar` or `partner` supported.
 * **lint** will now fail on `LOG` usage in python files.
+* Updated the **format** command to use the content graph instead of the id_set file.
+* Updated **format** command not to fail on unexpected values that returns from the graph, and just add it to the log.
+* Removed a redundant debug log on the `tools.get_file` function.
 
 ## 1.18.1
 * Fixed an issue where the coloring directives where showing in log messages.
 * Fixed an issue where **create-content-graph** was not executed upon changes in the parser infra files.
 * Added support for `svg` integration images in content repo in **validate** command.
 * Added a parameter `skip-packs-known-words` to the **doc-review** command, making sure that pack known words will not be added.
-* Updated the **format** command to use the content graph instead of the id_set file.
 
 ## 1.18.0
 * Added the ability to ignore any validation in the **validate** command when running in an external (non-demisto/content) repo, by placing a `.private-repo-settings` file at its root.

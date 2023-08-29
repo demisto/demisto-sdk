@@ -163,6 +163,7 @@ XPANSE_MARKETPLACE_ITEMS_TO_DUMP = [
 
 MARKETPLACE_TO_ITEMS_MAPPING = {
     MarketplaceVersions.XSOAR.value: XSOAR_MARKETPLACE_ITEMS_TO_DUMP,
+    MarketplaceVersions.XSOAR_SAAS.value: XSOAR_MARKETPLACE_ITEMS_TO_DUMP,
     MarketplaceVersions.MarketplaceV2.value: XSIAM_MARKETPLACE_ITEMS_TO_DUMP,
     MarketplaceVersions.XPANSE.value: XPANSE_MARKETPLACE_ITEMS_TO_DUMP,
 }
@@ -268,8 +269,7 @@ class ArtifactsManager:
             # Add suffix
             suffix_handler(self)
 
-        if os.path.exists("keyfile"):
-            os.remove("keyfile")
+        Path("keyfile").unlink(missing_ok=True)
         logger.info(f"\nExecution time: {time.time() - self.execution_start} seconds")
 
         return self.exit_code
@@ -684,8 +684,7 @@ def ProcessPoolHandler(artifact_manager: ArtifactsManager) -> ProcessPool:
             pool.close()
             pool.join()
         finally:
-            if os.path.exists("keyfile"):
-                os.remove("keyfile")
+            Path("keyfile").unlink(missing_ok=True)
 
 
 def wait_futures_complete(

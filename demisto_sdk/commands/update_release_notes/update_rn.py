@@ -14,6 +14,7 @@ from demisto_sdk.commands.common.constants import (
     ALL_FILES_VALIDATION_IGNORE_WHITELIST,
     DEPRECATED_DESC_REGEX,
     DEPRECATED_NO_REPLACE_DESC_REGEX,
+    EVENT_COLLECTOR,
     IGNORED_PACK_NAMES,
     RN_CONTENT_ENTITY_WITH_STARS,
     RN_HEADER_BY_FILE_TYPE,
@@ -399,7 +400,7 @@ class UpdateRN:
         :return
             Whether the pack metadata exists
         """
-        if not os.path.isfile(self.metadata_path):
+        if not Path(self.metadata_path).is_file():
             logger.info(
                 f'[red]"{self.metadata_path}" file does not exist, create one in the root of the pack[/red]'
             )
@@ -746,10 +747,12 @@ class UpdateRN:
                 rn_desc = f"##### New: {content_name}\n\n"
                 if desc:
                     rn_desc += f"- New: {desc}"
-                if from_version and _type not in SIEM_ONLY_ENTITIES:
-                    rn_desc += f" (Available from Cortex XSOAR {from_version})."
-                elif _type in SIEM_ONLY_ENTITIES:
+                if _type in SIEM_ONLY_ENTITIES or content_name.replace(
+                    " ", ""
+                ).lower().endswith(EVENT_COLLECTOR.lower()):
                     rn_desc += "(Available from Cortex XSIAM %%XSIAM_VERSION%%)."
+                elif from_version and _type not in SIEM_ONLY_ENTITIES:
+                    rn_desc += f" (Available from Cortex XSOAR {from_version})."
                 rn_desc += "\n"
             else:
                 rn_desc = f"##### {content_name}\n\n"
@@ -963,7 +966,7 @@ def get_file_description(path, file_type) -> str:
     :return
     The file description if exists otherwise returns %%UPDATE_RN%%
     """
-    if not os.path.isfile(path):
+    if not Path(path).is_file():
         logger.info(
             f'[yellow]Cannot get file description: "{path}" file does not exist[/yellow]'
         )
@@ -1028,6 +1031,8 @@ def update_api_modules_dependents_rn(
     with ContentGraphInterface() as graph:
         update_content_graph(graph, use_git=True, dependencies=True)
         integrations = get_api_module_dependencies_from_graph(api_module_set, graph)
+        if integrations:
+            logger.info("Executing update-release-notes on those as well.")
         for integration in integrations:
             integration_pack_name = integration.pack_id
             integration_path = integration.path
@@ -1091,7 +1096,7 @@ def get_from_version_at_update_rn(path: str) -> Optional[str]:
         Fromversion if there is a fromversion key in the yml file
 
     """
-    if not os.path.isfile(path):
+    if not Path(path).is_file():
         logger.info(
             f'[yellow]Cannot get file fromversion: "{path}" file does not exist[/yellow]'
         )

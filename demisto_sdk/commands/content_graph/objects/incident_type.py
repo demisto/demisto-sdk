@@ -12,14 +12,26 @@ from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 
 
 class IncidentType(ContentItem, content_type=ContentType.INCIDENT_TYPE):  # type: ignore[call-arg]
-    playbook: Optional[str]
+    playbook: Optional[str] = Field("")
     hours: int
     days: int
     weeks: int
-    closure_script: Optional[str] = Field(alias="closureScript")
+    closure_script: Optional[str] = Field("", alias="closureScript")
 
     def metadata_fields(self) -> Set[str]:
-        return {"name", "playbook", "closure_script", "hours", "days", "week"}
+        return (
+            super()
+            .metadata_fields()
+            .union(
+                {
+                    "playbook",
+                    "closure_script",
+                    "hours",
+                    "days",
+                    "weeks",
+                }
+            )
+        )
 
     def _upload(
         self,

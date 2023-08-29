@@ -3,6 +3,7 @@ import copy
 import glob
 import os
 import re
+import tempfile
 from pathlib import Path
 from typing import Dict, List, Union
 
@@ -16,6 +17,7 @@ from demisto_sdk.commands.common.constants import (
     DEFAULT_IMAGE_PREFIX,
     TYPE_TO_EXTENSION,
     FileType,
+    ImagesFolderNames,
     MarketplaceVersions,
 )
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
@@ -23,12 +25,16 @@ from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     arg_to_list,
     find_type,
+    get_content_path,
     get_file,
     get_mp_tag_parser,
     get_pack_metadata,
     get_pack_name,
     get_yaml,
     get_yml_paths_in_dir,
+)
+from demisto_sdk.commands.prepare_content.markdown_images_handler import (
+    replace_markdown_urls_and_upload_to_artifacts,
 )
 from demisto_sdk.commands.prepare_content.unifier import Unifier
 
@@ -95,7 +101,7 @@ class IntegrationScriptUnifier(Unifier):
                 package_path, yml_unified, is_script_package, image_prefix
             )
             yml_unified, _ = IntegrationScriptUnifier.insert_description_to_yml(
-                package_path, yml_unified, is_script_package
+                package_path, yml_unified, is_script_package, marketplace=marketplace
             )
             (
                 contributor_type,
@@ -143,6 +149,16 @@ class IntegrationScriptUnifier(Unifier):
         for i, param in enumerate(data.get("configuration", ())):
             if isinstance(hidden := (param.get("hidden")), list):
                 # converts list to bool
+                if MarketplaceVersions.XSOAR.value in hidden:
+                    hidden.extend(
+                        [
+                            MarketplaceVersions.XSOAR_SAAS,
+                            MarketplaceVersions.XSOAR_ON_PREM,
+                        ]
+                    )
+                if MarketplaceVersions.XSOAR_ON_PREM.value in hidden:
+                    hidden.append(MarketplaceVersions.XSOAR)
+
                 if param.get("name") == "credentials" and param.get("type") == 9:
                     data["configuration"][i]["hiddenusername"] = marketplace in hidden
                     data["configuration"][i]["hiddenpassword"] = marketplace in hidden
@@ -194,16 +210,33 @@ class IntegrationScriptUnifier(Unifier):
 
     @staticmethod
     def insert_description_to_yml(
-        package_path: Path, yml_unified: dict, is_script_package: bool
+        package_path: Path,
+        yml_unified: dict,
+        is_script_package: bool,
+        marketplace: MarketplaceVersions = None,
     ):
         desc_data, found_desc_path = IntegrationScriptUnifier.get_data(
             package_path, "*_description.md", is_script_package
         )
-
         detailed_description = ""
         if desc_data:
+            desc_data = desc_data.decode("utf-8")
+            if not is_script_package and marketplace:
+                pack_name = package_path.parents[1].name  # Get the name of the pack
+                with tempfile.NamedTemporaryFile(mode="r+", delete=False) as tempf:
+                    tempf.write(desc_data)
+                    tempf.flush()
+                    replace_markdown_urls_and_upload_to_artifacts(
+                        Path(tempf.name),
+                        marketplace,
+                        pack_name,
+                        file_type=ImagesFolderNames.INTEGRATION_DESCRIPTION_IMAGES,
+                    )
+                    tempf.seek(0)
+                    desc_data = tempf.read()
+
             detailed_description = get_mp_tag_parser().parse_text(
-                FoldedScalarString(desc_data.decode("utf-8"))
+                FoldedScalarString(desc_data)
             )
 
         integration_doc_link = ""
@@ -292,7 +325,7 @@ class IntegrationScriptUnifier(Unifier):
             script_code
         )
         script_code = IntegrationScriptUnifier.insert_module_code(
-            script_code, imports_to_names
+            script_code, imports_to_names, get_content_path(package_path)
         )
         if pack_version := get_pack_metadata(file_path=str(package_path)).get(
             "currentVersion", ""
@@ -379,18 +412,25 @@ class IntegrationScriptUnifier(Unifier):
         }
 
     @staticmethod
-    def insert_module_code(script_code: str, import_to_name: Dict[str, str]) -> str:
+    def insert_module_code(
+        script_code: str, import_to_name: Dict[str, str], content_path: Path
+    ) -> str:
         """
         Inserts API module in place of an import to the module according to the module name
         :param script_code: The integration code
         :param import_to_name: A dictionary where the keys are The module import string to replace
         and the values are The module name
+        :param content_path: The path to the content repo
         :return: The integration script with the module code appended in place of the import
         """
         for module_import, module_name in import_to_name.items():
-
-            module_path = os.path.join(
-                "./Packs", "ApiModules", "Scripts", module_name, module_name + ".py"
+            module_path = Path(
+                content_path,
+                "Packs",
+                "ApiModules",
+                "Scripts",
+                module_name,
+                f"{module_name}.py",
             )
             module_code = IntegrationScriptUnifier._get_api_module_code(
                 module_name, module_path
@@ -401,7 +441,7 @@ class IntegrationScriptUnifier(Unifier):
                 module_code
             )
             module_code = IntegrationScriptUnifier.insert_module_code(
-                module_code, tmp_imports_to_names
+                module_code, tmp_imports_to_names, content_path
             )
 
             # the wrapper numbers represents the number of generated lines added
@@ -596,7 +636,7 @@ class IntegrationScriptUnifier(Unifier):
         integration_doc_link = INTEGRATIONS_DOCS_REFERENCE + normalized_integration_id
 
         readme_path = os.path.join(package_path, "README.md")
-        if os.path.isfile(readme_path) and os.stat(readme_path).st_size != 0:
+        if Path(readme_path).is_file() and os.stat(readme_path).st_size != 0:
             # verify README file exists and is not empty
             return f"[View Integration Documentation]({integration_doc_link})"
         else:

@@ -18,7 +18,7 @@ from demisto_sdk.commands.common.tools import src_root
 from demisto_sdk.commands.prepare_content.prepare_upload_manager import (
     PrepareUploadManager,
 )
-from TestSuite.test_tools import ChangeCWD
+from TestSuite.test_tools import ChangeCWD, flatten_call_args
 
 logger = logging.getLogger("demisto-sdk")
 
@@ -351,9 +351,8 @@ def test_duplicate_file_failure(mock_git):
     assert exit_code == 1
 
 
-@pytest.mark.skip
 @pytest.mark.parametrize("key, tool", [("some_key", False), ("", True)])
-def test_sign_packs_failure(repo, caplog, key, tool, monkeypatch):
+def test_sign_packs_failure(repo, mocker, key, tool, monkeypatch):
     """
     When:
         - Signing a pack.
@@ -372,6 +371,7 @@ def test_sign_packs_failure(repo, caplog, key, tool, monkeypatch):
         sign_packs,
     )
 
+    logger = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
     cca.logger = logger
     monkeypatch.setenv("COLUMNS", "1000")
 
@@ -394,10 +394,10 @@ def test_sign_packs_failure(repo, caplog, key, tool, monkeypatch):
                 artifact_manager.signDirectory = Path(temp / "tool")
 
     sign_packs(artifact_manager)
-
+    logged = flatten_call_args(logger.error.call_args_list)
     assert (
         "Failed to sign packs. In order to do so, you need to provide both signature_key and "
-        "sign_directory arguments." in caplog.text
+        "sign_directory arguments." in logged[0]
     )
 
 

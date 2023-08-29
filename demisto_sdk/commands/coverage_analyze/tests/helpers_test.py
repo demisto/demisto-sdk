@@ -9,6 +9,7 @@ import pytest
 import requests
 from freezegun import freeze_time
 
+from demisto_sdk.commands.common.constants import TEST_COVERAGE_DEFAULT_URL
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.logger import logging_setup
 from demisto_sdk.commands.coverage_analyze.helpers import (
@@ -167,7 +168,7 @@ class TestExportReport:
 
 class TestCoverageSummary:
     class TestGetFilesSummary:
-        default_url = "https://storage.googleapis.com/marketplace-dist-dev/code-coverage-reports/coverage-min.json"
+        default_url = TEST_COVERAGE_DEFAULT_URL
 
         @staticmethod
         def check_get_files(cache_dir, mock_min_cov_request, request_count):

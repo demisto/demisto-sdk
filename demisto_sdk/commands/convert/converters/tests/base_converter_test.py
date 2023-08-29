@@ -161,4 +161,4 @@ class TestBaseConverter:
         assert os.path.exists("test_layout")
         layout_data = util_load_json("test_layout")
         assert layout_data == {"id": "dummy_layout"}
-        os.remove("test_layout")
+        Path("test_layout").unlink()

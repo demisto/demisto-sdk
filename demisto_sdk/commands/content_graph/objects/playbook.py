@@ -1,4 +1,4 @@
-from typing import Callable, Set
+from typing import Callable, Optional
 
 import demisto_client
 
@@ -11,8 +11,16 @@ from demisto_sdk.commands.prepare_content.preparers.marketplace_incident_to_aler
 
 
 class Playbook(ContentItem, content_type=ContentType.PLAYBOOK):  # type: ignore[call-arg]
-    def metadata_fields(self) -> Set[str]:
-        return {"name", "description"}
+    def summary(
+        self,
+        marketplace: Optional[MarketplaceVersions] = None,
+        incident_to_alert: bool = False,
+    ) -> dict:
+        summary = super().summary(marketplace, incident_to_alert)
+        # taking the description from the data after preparing the playbook to upload
+        # this might be different when replacing incident to alert in the description for marketplacev2
+        summary["description"] = self.data.get("description") or ""
+        return summary
 
     def prepare_for_upload(
         self,

@@ -1,4 +1,5 @@
 import pytest
+from pytest_mock import MockerFixture
 
 from demisto_sdk.commands.common.constants import (
     FILETYPE_TO_DEFAULT_FROMVERSION,
@@ -273,76 +274,36 @@ def test_initiate_file_validator(mocker, is_old_file, function_validate):
 
 
 @pytest.mark.parametrize(
-    "test_yml_data, expected_yml_data",
+    "description, expected_description",
     [
         (
-            {
-                "description": "description without dot",
-                "script": {
-                    "commands": [
-                        {
-                            "arguments": [
-                                {
-                                    "description": "dot at the end.",
-                                    "name": "functionName",
-                                }
-                            ],
-                            "description": "description without dot",
-                            "name": "get-function",
-                            "outputs": [
-                                {
-                                    "contextPath": "",
-                                    "description": "a yml with url and no dot at the end https://www.test.com",
-                                },
-                                {
-                                    "contextPath": "",
-                                    "description": "a yml with a comment that has https://www.test.com in the middle of the sentence",
-                                },
-                                {
-                                    "contextPath": "",
-                                    "description": "a yml with a comment that has an 'example without dot at the end of the string'",
-                                },
-                            ],
-                        }
-                    ]
-                },
-            },
-            {
-                "description": "description without dot.",
-                "script": {
-                    "commands": [
-                        {
-                            "arguments": [
-                                {
-                                    "description": "dot at the end.",
-                                    "name": "functionName",
-                                }
-                            ],
-                            "description": "description without dot.",
-                            "name": "get-function",
-                            "outputs": [
-                                {
-                                    "contextPath": "",
-                                    "description": "a yml with url and no dot at the end https://www.test.com",
-                                },
-                                {
-                                    "contextPath": "",
-                                    "description": "a yml with a comment that has https://www.test.com in the middle of the sentence.",
-                                },
-                                {
-                                    "contextPath": "",
-                                    "description": "a yml with a comment that has an 'example without dot at the end of the string'.",
-                                },
-                            ],
-                        }
-                    ]
-                },
-            },
-        )
+            "description without dot",
+            "description without dot.",
+        ),
+        ("dot at the end.", "dot at the end."),
+        (
+            "a yml with url and no dot at the end https://www.test.com",
+            "a yml with url and no dot at the end https://www.test.com",
+        ),
+        (
+            "a yml with a description that has https://www.test.com in the middle of the sentence",
+            "a yml with a description that has https://www.test.com in the middle of the sentence.",
+        ),
+        (
+            "a yml with a description that has an 'example without dot at the end of the string'",
+            "a yml with a description that has an 'example without dot at the end of the string'.",
+        ),
+    ],
+    ids=[
+        "Without dot",
+        "with dot",
+        "url in the end",
+        "url in the middle",
+        "with single-quotes in double-quotes",
     ],
 )
 def test_adds_period_to_description(
-    mocker, test_yml_data: dict, expected_yml_data: dict
+    mocker: MockerFixture, description: str, expected_description: str
 ) -> None:
     """
     Testing the `adds_period_to_description` function.
@@ -356,10 +317,55 @@ def test_adds_period_to_description(
         test_yml_data (dict): The test YAML data.
         expected_yml_data (dict): The expected YAML data after applying the function.
     """
+    yml_data = {
+        "description": description,
+        "script": {
+            "commands": [
+                {
+                    "arguments": [
+                        {
+                            "description": description,
+                        }
+                    ],
+                    "description": description,
+                    "name": "get-function",
+                    "outputs": [
+                        {
+                            "contextPath": "",
+                            "description": description,
+                        }
+                    ],
+                }
+            ]
+        },
+    }
+    expected__yml_data = {
+        "description": expected_description,
+        "script": {
+            "commands": [
+                {
+                    "arguments": [
+                        {
+                            "description": expected_description,
+                        }
+                    ],
+                    "description": expected_description,
+                    "name": "get-function",
+                    "outputs": [
+                        {
+                            "contextPath": "",
+                            "description": expected_description,
+                        }
+                    ],
+                }
+            ]
+        },
+    }
+
     mocker.patch(
         "demisto_sdk.commands.format.update_generic.get_dict_from_file",
-        return_value=(test_yml_data, "mock_type"),
+        return_value=(yml_data, "mock_type"),
     )
     base_update = BaseUpdate(input="test")
     base_update.adds_period_to_description()
-    assert base_update.data == expected_yml_data
+    assert base_update.data == expected__yml_data

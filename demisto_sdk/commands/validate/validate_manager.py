@@ -823,7 +823,8 @@ class ValidateManager:
             return xsoar_config_validator.is_valid_xsoar_config_file()
 
         if not self.check_only_schema:
-            validation_print = f"\nValidating {file_path} as {file_type.value}"
+            # if file_type = None, it means BA102 was ignored in an external repo.
+            validation_print = f"\nValidating {file_path} as {file_type.value if file_type else 'unknown-file'}"
             if self.print_percent:
                 if FOUND_FILES_AND_ERRORS:
                     validation_print += f" [red][{self.completion_percentage}%][/red]"

@@ -1,16 +1,28 @@
 # Changelog
 ## Unreleased
+* Fixed an issue where **update-release-notes** generated "available from Cortex XSOAR" instead of "from XSIAM" when run on XSIAM event collectors.
+* Added support for a new marketplace tag `xsoar_saas`.
+* Added support for yml hidden parameters for `xsoar_saas` marketplace, as part of the **prepare_content** command.
+* Added support for custom documentation that will appear only in `xsoar_saas` marketplace, as part of the **prepare_content** command.
+* Modified **prepare_content** command to be platform specific. For xsoar-saas and XSIAM regarding pack readme and integration description images in markdown files.
+
+## 1.19.2
 * Added a period at the end of lines produced by the **generate-docs** command that state the tested version of the product.
 * Update `RN112` validation's docs reference link.
 * Added support to control the maximum file size and log rotation files count in the sdk logger.
 * Fixed an issue with where passing the deprecated logging arguments to any command presented an incorrect recommendation for argument substitution.
 * Fixed an issue where the documentation of logging arguments was incorrect.
 * Fixed an issue in calculating content graph hash when creating or updating it.
+* Fixed an issue where the coloring of the logging messages was not working properly when mixing both Console log and Parallel log handlers.
 * Calling **graph create** or **graph update** now run the commands with default arguments, instead of showing the command help.
 * Removed the use of chunks when calculating content relationships.
 * Fixed an issue where the url regex in the **validate** command was wrong.
 * Fixed an issue where **pre-commit** command failed when using global environment.
+* Fixed an issue where **validate** would fail in external repos when trying to ignore `BA102`.
+* Fixed an issue where **error-code** failed on some error codes.
 * Fixes an issue in **format** command where the `-i` option included files in `.venv` directories.
+* Updated the comment added to contribution PRs to old packs so it contains a link to the documentation of the **GitHub Codespaces** in xsoar.pan.dev.
+* Updated GitPython version to 3.1.32.
 
 ## 1.19.1
 * Fixed an issue where **unify** failed on integrations using an API a module, when not called from the content root.

@@ -470,13 +470,18 @@ class BaseUpdate:
         logger.info("Adds a period to the end of the description")
 
         def _is_url(value: str):
+            # after merge PR #3367 replace with is_string_ends_with_url from
+            # tools.py
             str_to_check = value.split()[-1]
             return str_to_check.startswith(("http://", "https://"))
 
         def _add_period(value: Optional[str]) -> Optional[str]:
-            if value and isinstance(value, str) and not value.endswith("."):
-                if _is_url(value):
-                    return f"{value} ."
+            if (
+                value
+                and isinstance(value, str)
+                and not value.endswith(".")
+                and not _is_url(value)
+            ):
                 return f"{value}."
             return value
 

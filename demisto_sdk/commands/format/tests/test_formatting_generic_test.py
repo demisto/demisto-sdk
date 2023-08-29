@@ -277,56 +277,66 @@ def test_initiate_file_validator(mocker, is_old_file, function_validate):
     [
         (
             {
-                "description": "",
-                "display": "Web",
-                "name": "Web",
+                "description": "description without dot",
                 "script": {
                     "commands": [
                         {
                             "arguments": [
                                 {
-                                    "description": "test two_words",
+                                    "description": "dot at the end.",
                                     "name": "functionName",
                                 }
                             ],
-                            "description": "test long des, bla bla bla",
+                            "description": "description without dot",
                             "name": "get-function",
                             "outputs": [
                                 {
-                                    "contextPath": "name.bla.bla",
-                                    "description": "test_one_word",
-                                }
+                                    "contextPath": "",
+                                    "description": "a yml with url and no dot at the end https://www.test.com",
+                                },
+                                {
+                                    "contextPath": "",
+                                    "description": "a yml with a comment that has https://www.test.com in the middle of the sentence",
+                                },
+                                {
+                                    "contextPath": "",
+                                    "description": "a yml with a comment that has an 'example without dot at the end of the string'",
+                                },
                             ],
                         }
                     ]
                 },
-                "fromversion": "6.8.0",
             },
             {
-                "description": "",
-                "display": "Web",
-                "name": "Web",
+                "description": "description without dot.",
                 "script": {
                     "commands": [
                         {
                             "arguments": [
                                 {
-                                    "description": "test two_words.",
+                                    "description": "dot at the end.",
                                     "name": "functionName",
                                 }
                             ],
-                            "description": "test long des, bla bla bla.",
+                            "description": "description without dot.",
                             "name": "get-function",
                             "outputs": [
                                 {
-                                    "contextPath": "name.bla.bla",
-                                    "description": "test_one_word.",
-                                }
+                                    "contextPath": "",
+                                    "description": "a yml with url and no dot at the end https://www.test.com",
+                                },
+                                {
+                                    "contextPath": "",
+                                    "description": "a yml with a comment that has https://www.test.com in the middle of the sentence.",
+                                },
+                                {
+                                    "contextPath": "",
+                                    "description": "a yml with a comment that has an 'example without dot at the end of the string'.",
+                                },
                             ],
                         }
                     ]
                 },
-                "fromversion": "6.8.0",
             },
         )
     ],

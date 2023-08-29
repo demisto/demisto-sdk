@@ -875,19 +875,6 @@ class TestTheTestModelingRuleCommandSingleRule:
         )
         from demisto_sdk.commands.test_content.xsiam_tools.test_data import TestData
 
-        # from functools import partial
-        #
-        # from demisto_sdk.commands.test_content.test_modeling_rule.test_modeling_rule import (
-        #     check_dataset_exists,
-        # )
-        # func_path = (
-        #     "demisto_sdk.commands.test_content.test_modeling_rule."
-        #     "test_modeling_rule.check_dataset_exists"
-        # )
-        # # override the default timeout to 1 second so only one iteration of the loop will be executed
-        # check_dataset_exists_with_timeout = partial(check_dataset_exists, timeout=5)
-        # monkeypatch.setattr(func_path, check_dataset_exists_with_timeout)
-
         # so the logged output when running the command will be printed with a width of 120 characters
         monkeypatch.setenv("COLUMNS", "1000")
 

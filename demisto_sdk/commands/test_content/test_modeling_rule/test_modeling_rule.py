@@ -986,7 +986,7 @@ def test_modeling_rule(
     handle_deprecated_args(ctx.args)
 
     logger.info(
-        f"[cyan]modeling rules directories to test: {input}[/cyan]",
+        f"[cyan]Modeling Rules directories to test: {input}[/cyan]",
         extra={"markup": True},
     )
 

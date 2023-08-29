@@ -1,4 +1,5 @@
-from pathlib import Path
+import itertools
+from pathlib import Path, PosixPath
 
 import pytest
 
@@ -18,6 +19,25 @@ from TestSuite.repo import Repo
 TEST_DATA_PATH = (
     Path(git_path()) / "demisto_sdk" / "commands" / "pre_commit" / "tests" / "test_data"
 )
+
+PYTHON_VERSION_TO_FILES = {
+    "3.8": {PosixPath("Packs/Pack1/Integrations/integration1/integration1.py")},
+    "3.9": {PosixPath("Packs/Pack1/Integrations/integration2/integration2.py")},
+    "3.10": {PosixPath("Packs/Pack1/Integrations/integration3/integration3.py")},
+}
+
+
+def create_hook(hook: dict):
+    """
+    This function mocks hook as he returns in _get_hooks() function
+    """
+    repo_and_hook: dict = {"repo": {"repo": "repo", "hooks": [hook]}}
+    repo_and_hook["hook"] = repo_and_hook["repo"]["hooks"][0]
+    return repo_and_hook
+
+
+def files_for_hook(files):
+    return "|".join(str(file) for file in files)
 
 
 @pytest.mark.parametrize("is_test", [True, False])
@@ -96,7 +116,7 @@ def test_config_files(mocker, repo: Repo, is_test: bool):
     pre_commit.run(unit_test=is_test)
 
     # precommit should not run on python2 files, unless test files
-    assert mock_subprocess.call_count == (4 if is_test else 3)
+    assert mock_subprocess.call_count == (2 if is_test else 1)
 
     tests_we_should_skip = {"format", "validate", "secrets", "should_be_skipped"}
     if not is_test:
@@ -105,12 +125,11 @@ def test_config_files(mocker, repo: Repo, is_test: bool):
         assert set(m.kwargs["env"]["SKIP"].split(",")) == tests_we_should_skip
 
 
-@pytest.mark.parametrize("python_version", ["3.8", "3.9", "3.10"])
-def test_mypy_hooks(python_version):
+def test_mypy_hooks():
     """
     Testing mypy hook created successfully (the python version is correct)
     """
-    mypy_hook = {
+    hook = {
         "args": [
             "--ignore-missing-imports",
             "--check-untyped-defs",
@@ -120,27 +139,37 @@ def test_mypy_hooks(python_version):
             "--python-version=3.10",
         ]
     }
+    mypy_hook = create_hook(hook)
 
-    MypyHook(mypy_hook).prepare_hook(python_version)
-    assert mypy_hook["args"][-1] == f"--python-version={python_version}"
+    MypyHook(**mypy_hook).prepare_hook(PYTHON_VERSION_TO_FILES)
+    for (hook, python_version) in itertools.zip_longest(
+        mypy_hook["repo"]["hooks"], PYTHON_VERSION_TO_FILES.keys()
+    ):
+        assert hook["args"][-1] == f"--python-version={python_version}"
+        assert hook["name"] == f"mypy-py{python_version}"
+        assert hook["files"] == files_for_hook(PYTHON_VERSION_TO_FILES[python_version])
 
 
-@pytest.mark.parametrize("python_version", ["3.8", "3.9", "3.10"])
 @pytest.mark.parametrize("github_actions", [True, False])
-def test_ruff_hook(python_version, github_actions):
+def test_ruff_hook(github_actions):
     """
     Testing mypy hook created successfully (the python version is correct and github action created successfully)
     """
-    ruff_hook = {}
-    RuffHook(ruff_hook).prepare_hook(python_version, github_actions)
+    ruff_hook = create_hook({})
+    RuffHook(**ruff_hook).prepare_hook(PYTHON_VERSION_TO_FILES, github_actions)
     python_version_to_ruff = {"3.8": "py38", "3.9": "py39", "3.10": "py310"}
-    assert (
-        ruff_hook["args"][0]
-        == f"--target-version={python_version_to_ruff[python_version]}"
-    )
-    assert ruff_hook["args"][1] == "--fix"
-    if github_actions:
-        assert ruff_hook["args"][2] == "--format=github"
+    for (hook, python_version) in itertools.zip_longest(
+        ruff_hook["repo"]["hooks"], PYTHON_VERSION_TO_FILES.keys()
+    ):
+        assert (
+            hook["args"][0]
+            == f"--target-version={python_version_to_ruff[python_version]}"
+        )
+        assert hook["args"][1] == "--fix"
+        assert hook["name"] == f"ruff-py{python_version}"
+        assert hook["files"] == files_for_hook(PYTHON_VERSION_TO_FILES[python_version])
+        if github_actions:
+            assert hook["args"][2] == "--format=github"
 
 
 class TestPreprocessFiles:

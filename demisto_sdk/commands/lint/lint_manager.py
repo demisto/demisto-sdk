@@ -294,8 +294,8 @@ class LintManager:
                 input = input.split(",")
             for item in input:
                 is_pack = (
-                    os.path.isdir(item)
-                    and Path(item, PACKS_PACK_META_FILE_NAME).exists()
+                    (item_path := Path(item)).exists()
+                    and item_path.is_dir()
                 )
                 if is_pack:
                     pkgs.extend(LintManager._get_all_packages(content_dir=item))

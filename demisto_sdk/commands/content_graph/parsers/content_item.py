@@ -13,6 +13,7 @@ from demisto_sdk.commands.common.tools import find_type
 from demisto_sdk.commands.content_graph.common import (
     UNIFIED_FILES_SUFFIXES,
     ContentType,
+    FileType2ContentType,
     Relationships,
     RelationshipType,
 )
@@ -105,10 +106,20 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
         try:
             content_type: ContentType = ContentType.by_path(path)
         except ValueError as e:
-            find_type(str(path))
+            if file_type := find_type(str(path)):
+                logger.error(f"Could not determine content type for {path}: {e}")
+                raise InvalidContentItemException from e
 
-            logger.error(f"Could not determine content type for {path}: {e}")
-            raise InvalidContentItemException from e
+            file_type_to_content_type = FileType2ContentType.get(file_type)
+            if not file_type_to_content_type:
+                logger.error(
+                    f"Could not convert from file type to cntent type {path}: {e}"
+                )
+                raise InvalidContentItemException from e
+
+            content_type = file_type_to_content_type
+            # get out of except and continue code
+
         if parser_cls := ContentItemParser.content_type_to_parser.get(content_type):
             try:
                 return ContentItemParser.parse(

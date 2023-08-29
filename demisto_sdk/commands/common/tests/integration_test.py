@@ -2691,43 +2691,8 @@ class TestisContextChanged:
             "type": "string",
         },
         {
-            "contextPath": "Domain.Metadata",
-            "description": "metadata",
-            "type": "string",
-        },
-        {
-            "contextPath": "InfoFile.Metadata",
-            "description": "metadata",
-            "type": "string",
-        },
-        {
-            "contextPath": "IP.Metadata",
-            "description": "metadata",
-            "type": "string",
-        },
-        {
-            "contextPath": "File.Metadata",
-            "description": "metadata",
-            "type": "string",
-        },
-        {
-            "contextPath": "CVE.Metadata",
-            "description": "metadata",
-            "type": "string",
-        },
-        {
-            "contextPath": "Email.Metadata",
-            "description": "metadata",
-            "type": "string",
-        },
-        {
-            "contextPath": "Endpoint.Metadata",
-            "description": "metadata",
-            "type": "string",
-        },
-        {
-            "contextPath": "Certificate.Metadata",
-            "description": "metadata",
+            "contextPath": "Domain.Name",
+            "description": "domain name",
             "type": "string",
         },
     ]
@@ -2748,10 +2713,17 @@ class TestisContextChanged:
             "type": "string",
         },
     ]
-
+    MISSING_COMMAND_OUTPUTS = [
+        {
+            "contextPath": "Endpoint.Hostname",
+            "description": "endpoint hostname",
+            "type": "string",
+        },
+    ]
     IS_OUTPUT_FOR_REPUTATION_INPUTS = [
         (VALID_COMMAND_OUTPUTS, True),
         (INVALID_COMMAND_OUTPUTS, False),
+        (MISSING_COMMAND_OUTPUTS, False),
     ]
 
     @pytest.mark.parametrize("outputs, result", IS_OUTPUT_FOR_REPUTATION_INPUTS)

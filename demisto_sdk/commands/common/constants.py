@@ -1374,6 +1374,7 @@ IOC_OUTPUTS_DICT = {
     "url": {"URL.Data"},
     "endpoint": {"Endpoint.Hostname", "Endpoint.IPAddress", "Endpoint.ID"},
 }
+
 XSOAR_SUPPORT = "xsoar"
 XSOAR_AUTHOR = "Cortex XSOAR"
 PACK_INITIAL_VERSION = "1.0.0"

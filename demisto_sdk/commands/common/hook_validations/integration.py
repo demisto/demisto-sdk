@@ -1,7 +1,7 @@
 import os
 import re
 from pathlib import Path
-from typing import Dict, Optional
+from typing import Dict, Optional, Tuple
 
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import (
@@ -598,32 +598,95 @@ class IntegrationValidator(ContentEntityValidator):
 
         return missing_outputs, missing_descriptions
 
+    def check_all_custom_outputs(
+        self, command_name: str, outputs: set, custom_objects: set
+    ) -> bool:
+        """check if all mandatory outputs for custom object do exist.
+
+        Returns:
+            bool: Weather all mandatory outputs of custom outputs exist or not
+        """
+        missing_outputs = []
+        objects_missing_outputs = set()
+        outputs_exist = True
+
+        for ioc in custom_objects:
+            mandatory_outputs = IOC_OUTPUTS_DICT.get(ioc.lower(), set())
+            for output in mandatory_outputs:
+                if output not in outputs:
+                    missing_outputs.append(output)
+                    objects_missing_outputs.add(ioc)
+
+        if missing_outputs:
+            error_message, error_code = Errors.command_output_is_missing(
+                command_name,
+                missing_outputs,
+                objects_missing_outputs,
+                XSOAR_CONTEXT_STANDARD_URL,
+            )
+            if self.handle_error(
+                error_message,
+                error_code,
+                file_path=self.file_path,
+                warning=self.structure_validator.quiet_bc,
+            ):
+                outputs_exist = False
+        return outputs_exist
+
+    @staticmethod
+    def get_outputs(command: dict) -> Tuple[set, list, set]:
+        """get outputs of a command, and find custom objects used in the command outputs.
+
+        Returns:
+            tuple: (all outputs of the command, all outputs using custom objects, and the custom object used
+             in outputs)
+        """
+        invalid_outputs = []
+        custom_objects = set()
+        context_outputs_paths = set()
+        for output in command.get("outputs") or []:
+            context_path = output.get("contextPath", "")
+            context_outputs_paths.add(context_path)
+            custom_context_outputs = list(
+                filter(
+                    lambda context: context_path.lower().startswith(context.lower()),
+                    CUSTOM_CONTEXT_OUTPUTS,
+                )
+            )
+
+            if custom_context_outputs:  # custom context output is used
+                custom_context_output = custom_context_outputs[0]
+                custom_objects.add(custom_context_output)
+                if (
+                    custom_context_output not in context_path
+                ):  # the output is not spelled as expected
+                    invalid_outputs.append(context_path)
+                    custom_objects.add(custom_context_output)
+        return context_outputs_paths, invalid_outputs, custom_objects
+
     @error_codes("IN158")
     def is_valid_command_custom_outputs(self) -> bool:
-        commands = self.current_file.get("script", {}).get("commands") or []
-        output_valid = True
-        for command in commands:
-            invalid_outputs = []
-            for output in command.get("outputs") or []:
-                context_path = output.get("contextPath", "")
-                custom_context_output = list(
-                    filter(
-                        lambda context: context_path.lower().startswith(
-                            context.lower()
-                        ),
-                        CUSTOM_CONTEXT_OUTPUTS,
-                    )
-                )
+        """Check if a a command is using custom objects (file, ip, endpoint, email, domain, url, cve,
+        infofile, certificate), if so, check if it using them with their outputs according to context standard
+        https://xsoar.pan.dev/docs/integrations/context-standards
 
-                if custom_context_output:  # custom context output is used
-                    if (
-                        custom_context_output[0] not in context_path
-                    ):  # the output is not spelled as expected
-                        invalid_outputs.append(context_path)
+        Returns:
+            bool. Whether a command is using the custom objects and their outputs according to the context standards or not
+        """
+        commands = self.current_file.get("script", {}).get("commands") or []
+        outputs_valid = True
+        outputs_exist = True
+        for command in commands:
+            context_outputs_paths, invalid_outputs, custom_objects = self.get_outputs(
+                command
+            )
 
             if invalid_outputs:
                 error_message, error_code = Errors.command_output_is_invalid(
-                    command.get("name"), invalid_outputs, XSOAR_CONTEXT_AND_OUTPUTS_URL
+                    command.get("name"),
+                    invalid_outputs,
+                    custom_objects,
+                    XSOAR_CONTEXT_AND_OUTPUTS_URL,
                 )
                 if self.handle_error(
                     error_message,
@@ -631,10 +694,11 @@ class IntegrationValidator(ContentEntityValidator):
                     file_path=self.file_path,
                     warning=self.structure_validator.quiet_bc,
                 ):
-                    output_valid = False
-
-        self.is_valid = output_valid
-        return output_valid
+                    outputs_valid = False
+            outputs_exist = self.check_all_custom_outputs(
+                command.get("name"), context_outputs_paths, custom_objects
+            )
+        return all([outputs_valid, outputs_exist])
 
     @error_codes("DB100,DB101,IN107")
     def is_outputs_for_reputations_commands_valid(self) -> bool:

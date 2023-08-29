@@ -9,7 +9,6 @@ from requests import Response
 
 from demisto_sdk.commands.common.constants import (
     BETA_INTEGRATION_DISCLAIMER,
-    CUSTOM_CONTEXT_OUTPUTS,
     FILETYPE_TO_DEFAULT_FROMVERSION,
     INTEGRATION_CATEGORIES,
     MODELING_RULE_ID_SUFFIX,
@@ -716,6 +715,10 @@ ERROR_CODE: Dict = {
     },
     "command_output_is_invalid": {
         "code": "IN158",
+        "related_field": "outputs",
+    },
+    "command_output_is_missing": {
+        "code": "IN159",
         "related_field": "outputs",
     },
     # IT - Incident Types
@@ -4383,10 +4386,24 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def command_output_is_invalid(
-        command_name: str, invalid_outputs: list[str], context_outputs_url: str
+        command_name: str,
+        invalid_outputs: list[str],
+        used_objects: set,
+        context_outputs_url: str,
     ):
         return (
             f"the {command_name} command returns the following outputs:\n{invalid_outputs}\nwhich using custom objects "
-            f"like:\n{CUSTOM_CONTEXT_OUTPUTS} spelled incorrectly. Please Fix according to the list mentioned in the"
+            f"like:\n{used_objects} spelled incorrectly. Please Fix according to the list mentioned previously"
             f" beginning.\nFor Further information: {context_outputs_url}"
+        )
+
+    @staticmethod
+    @error_code_decorator
+    def command_output_is_missing(
+        command_name, reputation_output, objects_missing_outputs, context_standard
+    ):
+        return (
+            f"the {command_name} command is returning a reputation command context objects: {objects_missing_outputs}."
+            f" Some mandstory outputs are missing, or might be spelled incorrectly: {reputation_output}."
+            f" Fix according to context standard {context_standard}"
         )

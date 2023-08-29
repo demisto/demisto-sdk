@@ -1992,22 +1992,28 @@ class ValidateManager:
             old_file_path, file_path = self.get_old_file_path(file_path)
             if not file_path.endswith(".pack-ignore"):
                 continue
-            old_file_content = get_remote_file(old_file_path, tag="master")
+            # if the repo is in Github, get the .pack-ignore content from the master branch in Github
+            # if the repo is not in Github / file cannot be found, try to take it from the latest commit on the default branch (usually master/main)
+            old_pack_ignore_content = get_remote_file(
+                old_file_path, "master"
+            ) or self.git_util.get_local_remote_file_content(
+                f"{self.git_util.get_default_branch()}:{old_file_path}"
+            )
             config = ConfigParser(allow_no_value=True)
-            config.read_string(old_file_content)
-            old_file_content = self.get_error_ignore_list(config=config)
+            config.read_string(old_pack_ignore_content)
+            old_pack_ignore_content = self.get_error_ignore_list(config=config)
             pack_name = get_pack_name(str(file_path))
             file_content = self.get_error_ignore_list(pack_name)
             files_to_test = set()
-            for key, value in old_file_content.items():
+            for key, value in old_pack_ignore_content.items():
                 if not (section_values := file_content.get(key, [])) or not set(
                     section_values
                 ) == set(value):
                     files_to_test.add(key)
             for key, value in file_content.items():
-                if not (section_values := old_file_content.get(key, [])) or not set(
-                    section_values
-                ) == set(value):
+                if not (
+                    section_values := old_pack_ignore_content.get(key, [])
+                ) or not set(section_values) == set(value):
                     files_to_test.add(key)
 
             all_files_mapper = {
@@ -2611,7 +2617,9 @@ class ValidateManager:
         ):
             return irrelevant_file_output
 
-        if not self.is_valid_file_type(file_type, file_path, self.get_error_ignore_list(get_pack_name(file_path))):
+        if not self.is_valid_file_type(
+            file_type, file_path, self.get_error_ignore_list(get_pack_name(file_path))
+        ):
             return "", "", False
 
         # redirect non-test code files to the associated yml file

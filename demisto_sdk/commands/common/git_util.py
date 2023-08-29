@@ -821,3 +821,12 @@ class GitUtil:
             bool: True if the file is ignored. Otherwise, return False.
         """
         return bool(self.repo.ignored(file_path))
+
+    def get_default_branch(self) -> str:
+        """
+        Returns the default branch name configured on the git repository dynamically, usually its main/master.
+
+        Returns:
+            str: the default branch name.
+        """
+        return self.repo.remote().refs["HEAD"].ref.remote_head

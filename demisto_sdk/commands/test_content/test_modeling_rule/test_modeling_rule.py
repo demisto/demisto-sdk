@@ -544,7 +544,6 @@ def verify_pack_exists_on_tenant(
     mr: ModelingRule,
     interactive: bool,
 ):
-    # sourcery skip: de-morgan, hoist-similar-statement-from-if, swap-nested-ifs, use-named-expression, use-next
     """Verify that the pack containing the modeling rule exists on the tenant.
 
     Args:
@@ -651,7 +650,6 @@ def validate_modeling_rule(
     interactive: bool,
     ctx: typer.Context,
 ):
-    # sourcery skip: extract-duplicate-method, extract-method, remove-unnecessary-else, swap-if-else-branches, use-named-expression
     """Validate a modeling rule.
 
     Args:

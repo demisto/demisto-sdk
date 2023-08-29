@@ -1,5 +1,8 @@
 # Changelog
 ## Unreleased
+* Fixed an issue where **update-release-notes** generated "available from Cortex XSOAR" instead of "from XSIAM" when run on XSIAM event collectors.
+
+## 1.19.2
 * Added a period at the end of lines produced by the **generate-docs** command that state the tested version of the product.
 * Update `RN112` validation's docs reference link.
 * Added support to control the maximum file size and log rotation files count in the sdk logger.

@@ -177,19 +177,27 @@ class PreCommitRunner:
                 logger.info(
                     f"Skipping pre-commit with Python {DEFAULT_PYTHON2_VERSION} because unit-tests were not selected"
                 )
-        changed_files: List[str] = []
-        for files_of_python_version in self.python_version_to_files.values():
-            changed_files.extend(str(file) for file in files_of_python_version)
         precommit_config = deepcopy(self.precommit_template)
         assert isinstance(precommit_config, dict)
-        changed_files_string = ", ".join(sorted(iter(changed_files)))
-        logger.info(f"Running pre-commit on {changed_files_string}")
+        for (
+            python_version,
+            changed_files_by_version,
+        ) in self.python_version_to_files.items():
+            changed_files_string = ", ".join(
+                sorted(str(file) for file in changed_files_by_version)
+            )
+            logger.info(
+                f"Running pre-commit with Python {python_version} on {changed_files_string}"
+            )
 
         self.prepare_hooks(self._get_hooks(precommit_config))
         with open(PRECOMMIT_PATH, "w") as f:
             yaml.dump(precommit_config, f)
+        all_changed_files: List[str] = []
+        for files_of_python_version in self.python_version_to_files.values():
+            all_changed_files.extend(str(file) for file in files_of_python_version)
         # use chunks because OS does not support such large comments
-        for chunk in more_itertools.chunked_even(changed_files, 10_000):
+        for chunk in more_itertools.chunked_even(all_changed_files, 10_000):
             response = subprocess.run(
                 [
                     sys.executable,

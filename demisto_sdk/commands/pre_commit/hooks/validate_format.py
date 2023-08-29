@@ -11,4 +11,4 @@ class ValidateFormatHook(Hook):
             self.base_hook["args"].remove("-g")
             self.base_hook["args"].append("-i")
             self.base_hook["args"].append(",".join(str(file) for file in input_files))
-            self.hooks.append(self.base_hook)
+        self.hooks.append(self.base_hook)

@@ -1015,6 +1015,33 @@ class TestRNUpdate:
         assert "(Available from Cortex XSOAR 5.5.0)." in desc
         assert "(Available from Cortex XSOAR 6.0.0)." in desc
 
+    def test_build_rn_desc_event_collector(self):
+        """
+        Given
+            - A new event collector file.
+        When
+            - Running the command build_rn_desc on a file in order to generate rn description.
+        Then
+            - Validate that XSIAM from-version added to the rn description.
+        """
+        from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
+
+        update_rn = UpdateRN(
+            pack_path="Packs/HelloWorldEventCollector",
+            update_type="minor",
+            modified_files_in_pack={"HelloWorldEventCollector"},
+            added_files=set(),
+        )
+
+        desc = update_rn.build_rn_desc(
+            content_name="Hello World Event Collector",
+            is_new_file=True,
+            desc="Test description",
+            text="",
+            docker_image=None,
+        )
+        assert "(Available from Cortex XSIAM %%XSIAM_VERSION%%)." in desc
+
     @mock.patch.object(UpdateRN, "bump_version_number")
     @mock.patch.object(UpdateRN, "is_bump_required")
     def test_execute_with_bump_version_raises_error(

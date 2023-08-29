@@ -492,14 +492,14 @@ class BaseUpdate:
         if (script := self.data.get("script", {})) and isinstance(
             script, dict
         ):  # script could be a 'LiteralScalarString' object.
-            for command in script.get("commands", []):
+            for command in script.get("commands", ()):
                 if command_description := command.get("description"):
                     command["description"] = _add_period(command_description)
 
-                for argument in command.get("arguments", []):
+                for argument in command.get("arguments", ()):
                     if argument_description := argument.get("description"):
                         argument["description"] = _add_period(argument_description)
 
-                for output in command.get("outputs", []):
+                for output in command.get("outputs", ()):
                     if output_description := output.get("description"):
                         output["description"] = _add_period(output_description)

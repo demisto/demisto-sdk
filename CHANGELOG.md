@@ -1,5 +1,7 @@
 # Changelog
 ## Unreleased
+
+## 1.19.5
 * Fixed an issue where **update-release-notes** generated "available from Cortex XSOAR" instead of "from XSIAM" when run on XSIAM event collectors.
 * Added support for a new marketplace tag `xsoar_saas`.
 * Added support for yml hidden parameters for `xsoar_saas` marketplace, as part of the **prepare_content** command.

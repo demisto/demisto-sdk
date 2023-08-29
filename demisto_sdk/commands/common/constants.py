@@ -1173,6 +1173,8 @@ OFFICIAL_INDEX_JSON_PATH = (
 RUN_ALL_TESTS_FORMAT = "Run all tests"
 FILTER_CONF = "./artifacts/filter_file.txt"
 
+GOOGLE_CLOUD_STORAGE_PUBLIC_BASE_PATH = "https://storage.googleapis.com"
+
 
 class PB_Status:
     NOT_SUPPORTED_VERSION = "Not supported version"
@@ -1721,10 +1723,26 @@ class MarketplaceVersions(str, Enum):
     XSOAR = "xsoar"
     MarketplaceV2 = "marketplacev2"
     XPANSE = "xpanse"
+    XSOAR_SAAS = "xsoar_saas"
+    XSOAR_ON_PREM = "xsoar_on_prem"
 
+
+MARKETPLACE_XSOAR_DIST = "marketplace-dist"
+MARKETPLACE_XSIAM_DIST = "marketplace-v2-dist"
+MARKETPLACE_XPANSE_DIST = "xpanse-dist"
+MARKETPLACE_XSOAR_SAAS_DIST = "marketplace-saas-dist"
+
+MarketplaceVersionToMarketplaceName = {
+    MarketplaceVersions.XSOAR.value: MARKETPLACE_XSOAR_DIST,
+    MarketplaceVersions.MarketplaceV2.value: MARKETPLACE_XSIAM_DIST,
+    MarketplaceVersions.XPANSE.value: MARKETPLACE_XPANSE_DIST,
+    MarketplaceVersions.XSOAR_SAAS.value: MARKETPLACE_XSOAR_SAAS_DIST,
+}
 
 MARKETPLACE_TO_CORE_PACKS_FILE: Dict[MarketplaceVersions, str] = {
     MarketplaceVersions.XSOAR: "Tests/Marketplace/core_packs_list.json",
+    MarketplaceVersions.XSOAR_SAAS: "Tests/Marketplace/core_packs_list.json",
+    MarketplaceVersions.XSOAR_ON_PREM: "Tests/Marketplace/core_packs_list.json",
     MarketplaceVersions.MarketplaceV2: "Tests/Marketplace/core_packs_mpv2_list.json",
     MarketplaceVersions.XPANSE: "Tests/Marketplace/core_packs_xpanse_list.json",
 }
@@ -1851,3 +1869,36 @@ TEST_COVERAGE_DEFAULT_URL = "https://storage.googleapis.com/marketplace-dist-dev
 URL_IMAGE_LINK_REGEX = r"(\!\[.*?\])\((?P<url>https://[a-zA-Z_/\.0-9\- :%]*?)\)((].*)?)"
 
 HTML_IMAGE_LINK_REGEX = r'(<img.*?src\s*=\s*"(https://.*?)")'
+
+XSOAR_PREFIX_TAG = "<~XSOAR>\n"
+XSOAR_SUFFIX_TAG = "\n</~XSOAR>\n"
+XSOAR_INLINE_PREFIX_TAG = "<~XSOAR>"
+XSOAR_INLINE_SUFFIX_TAG = "</~XSOAR>"
+
+XSOAR_SAAS_PREFIX_TAG = "<~XSOAR_SAAS>\n"
+XSOAR_SAAS_SUFFIX_TAG = "\n</~XSOAR_SAAS>\n"
+XSOAR_SAAS_INLINE_PREFIX_TAG = "<~XSOAR_SAAS>"
+XSOAR_SAAS_INLINE_SUFFIX_TAG = "</~XSOAR_SAAS>"
+
+XSOAR_ON_PREM_PREFIX_TAG = "<~XSOAR_ON_PREM>\n"
+XSOAR_ON_PREM_SUFFIX_TAG = "\n</~XSOAR_ON_PREM>\n"
+XSOAR_ON_PREM_INLINE_PREFIX_TAG = "<~XSOAR_ON_PREM>"
+XSOAR_ON_PREM_INLINE_SUFFIX_TAG = "</~XSOAR_ON_PREM>"
+
+XSIAM_PREFIX_TAG = "<~XSIAM>\n"
+XSIAM_SUFFIX_TAG = "\n</~XSIAM>\n"
+XSIAM_INLINE_PREFIX_TAG = "<~XSIAM>"
+XSIAM_INLINE_SUFFIX_TAG = "</~XSIAM>"
+
+XPANSE_PREFIX_TAG = "<~XPANSE>\n"
+XPANSE_SUFFIX_TAG = "\n</~XPANSE>\n"
+XPANSE_INLINE_PREFIX_TAG = "<~XPANSE>"
+XPANSE_INLINE_SUFFIX_TAG = "</~XPANSE>"
+
+MARKDOWN_IMAGES_ARTIFACT_FILE_NAME = "markdown_images.json"
+SERVER_API_TO_STORAGE = "api/marketplace/file?name=content/packs"
+
+
+class ImagesFolderNames(str, Enum):
+    README_IMAGES = "readme_images"
+    INTEGRATION_DESCRIPTION_IMAGES = "integration_description_images"

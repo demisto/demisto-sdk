@@ -1539,8 +1539,9 @@ class TestParsersAndModels:
             expected_use_cases=["Identity And Access Management"],
             expected_keywords=[],
             expected_marketplaces=[
-                MarketplaceVersions.XSOAR,
                 MarketplaceVersions.MarketplaceV2,
+                MarketplaceVersions.XSOAR,
+                MarketplaceVersions.XSOAR_SAAS,
             ],
             expected_content_items=expected_content_items,
             expected_deprecated=False,
@@ -1656,3 +1657,67 @@ def test_fix_layout_incident_to_alert(
         "name": expected_name,
         "type": type_,
     }
+
+
+@pytest.mark.parametrize(
+    "marketplace, expected_market_place_set",
+    [
+        (
+            {MarketplaceVersions.XSOAR},
+            {MarketplaceVersions.XSOAR, MarketplaceVersions.XSOAR_SAAS},
+        ),
+        ({MarketplaceVersions.MarketplaceV2}, {MarketplaceVersions.MarketplaceV2}),
+        ({MarketplaceVersions.XPANSE}, {MarketplaceVersions.XPANSE}),
+        (
+            {MarketplaceVersions.XSOAR_ON_PREM},
+            {MarketplaceVersions.XSOAR_ON_PREM, MarketplaceVersions.XSOAR},
+        ),
+        (
+            {MarketplaceVersions.XSOAR_ON_PREM, MarketplaceVersions.XSOAR_SAAS},
+            {
+                MarketplaceVersions.XSOAR_ON_PREM,
+                MarketplaceVersions.XSOAR_SAAS,
+                MarketplaceVersions.XSOAR,
+            },
+        ),
+        (
+            {MarketplaceVersions.XSOAR_ON_PREM, MarketplaceVersions.MarketplaceV2},
+            {
+                MarketplaceVersions.XSOAR_ON_PREM,
+                MarketplaceVersions.MarketplaceV2,
+                MarketplaceVersions.XSOAR,
+            },
+        ),
+        ({}, {}),
+    ],
+)
+def test_updated_marketplaces_set(marketplace, expected_market_place_set):
+    """
+    Given:
+        - XSOAR marketplace
+        - XSIAM marketplace
+        - XPANSE marketplace
+        - XSOAR_ON_PREM marketplace
+        - XSOAR_ON_PREM AND XSIAM
+        - empty marketplace set
+
+    When:
+        - Parsing the content item to determine if the content item should enter the marketplace
+
+    Then:
+        - Check that XSOAR_SAAS was also added to the marketplace_set
+        - Check the only XSAIM marketplace is on the list
+        - Check the only XPANSE marketplace is on the list
+        - Check that XSOAR_ON_PREM and XSOAR was added to the marketplace_set
+        - Check that XSAIM remains and XSOAR marketplace is added
+        - remains empty
+
+    """
+    from demisto_sdk.commands.content_graph.parsers.content_item import (
+        ContentItemParser,
+    )
+
+    assert (
+        expected_market_place_set
+        == ContentItemParser.update_marketplaces_set_with_xsoar_values(marketplace)
+    )

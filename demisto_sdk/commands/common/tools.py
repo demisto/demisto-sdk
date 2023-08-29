@@ -3810,12 +3810,12 @@ def get_api_module_dependencies_from_graph(
             node.object_id for node in api_module_nodes
         }:
             raise ValueError(
-                f"The modified API modules `{missing_api_modules}` were not found in the "
+                f"The modified API modules {','.join(missing_api_modules)} were not found in the "
                 f"content graph."
             )
         for api_module_node in api_module_nodes:
             logger.info(
-                f"Checking for packages dependent on the modified API module {api_module_node.object_id}..."
+                f"Checking for packages dependent on the modified API module {api_module_node.object_id}"
             )
             dependent_items += list(api_module_node.imported_by)
 

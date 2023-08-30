@@ -10,14 +10,6 @@ import dateparser
 import pytz
 import requests
 import typer
-from commands.test_content.test_modeling_rule.constants import (
-    EXPECTED_SCHEMA_MAPPINGS,
-    FAILURE_TO_PUSH_EXPLANATION,
-    NOT_AVAILABLE,
-    SYNTAX_ERROR_IN_MODELING_RULE,
-    TIME_ZONE_WARNING,
-    XQL_QUERY_ERROR_EXPLANATION,
-)
 from junitparser import Error, Failure, JUnitXml, Skipped, TestCase, TestSuite
 from junitparser.junitparser import Result
 from tabulate import tabulate
@@ -44,6 +36,14 @@ from demisto_sdk.commands.common.logger import (
     logging_setup,
 )
 from demisto_sdk.commands.common.tools import is_epoch_datetime, parse_int_or_default
+from demisto_sdk.commands.test_content.test_modeling_rule.constants import (
+    EXPECTED_SCHEMA_MAPPINGS,
+    FAILURE_TO_PUSH_EXPLANATION,
+    NOT_AVAILABLE,
+    SYNTAX_ERROR_IN_MODELING_RULE,
+    TIME_ZONE_WARNING,
+    XQL_QUERY_ERROR_EXPLANATION,
+)
 from demisto_sdk.commands.test_content.xsiam_tools.test_data import (
     TestData,
     Validations,

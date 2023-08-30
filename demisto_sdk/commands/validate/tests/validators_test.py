@@ -3210,7 +3210,7 @@ def test_get_all_files_edited_in_pack_ignore(
         return_value=remote_file_content,
     )
     mocker.patch.object(
-        GitUtil, "find_primary_branch", return_value="master"
+        GitUtil, "find_primary_branch", return_value="main"
     )
     mocker.patch.object(
         GitUtil, "get_local_remote_file_content", return_value=""

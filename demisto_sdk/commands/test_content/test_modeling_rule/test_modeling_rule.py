@@ -602,10 +602,14 @@ def check_dataset_exists(
             test_case_results.append(Error(err))
             logger.error(f"[red]{err}[/red]", extra={"markup": True})
         if not dataset_exist:
-            duration = datetime.now(tz=pytz.UTC) - start_time
-            err = f"[red]Dataset {dataset} does not exist after {duration.total_seconds():.2f} seconds[/red]"
+            err = f"[red]Dataset {dataset} does not exist[/red]"
             test_case_results.append(Error(err))
             logger.error(f"[red]{err}[/red]", extra={"markup": True})
+
+        duration = datetime.now(tz=pytz.UTC) - start_time
+        logger.info(
+            f"Processing Dataset {dataset} finished after {duration.total_seconds():.2f} seconds"
+        )
         # OR statement between existence var and results of each data set, if at least one of dataset_exist or results_exist are False process_failed will be true.
         process_failed |= not (dataset_exist and results_exist)
 

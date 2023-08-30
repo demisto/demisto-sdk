@@ -3166,6 +3166,14 @@ def test_validate_no_disallowed_terms_in_customer_facing_docs_end_to_end(repo, m
                 "Packs/test1/Integrations/test2/test2.yml",
             },
         ),
+        (
+            {"Packs/test/.pack-ignore"},
+            "[file:test.yml]\nignore=BA108\n",
+            b"",
+            {
+                "Packs/test/Integrations/test/test.yml",
+            },
+        )
     ],
 )
 def test_get_all_files_edited_in_pack_ignore(
@@ -3177,6 +3185,7 @@ def test_get_all_files_edited_in_pack_ignore(
     - Case 1: pack-ignore mocks which vary by 1 validation.
     - Case 2: pack-ignore mocks which no differences.
     - Case 3: pack-ignore mocks where each file is pointed to a different integration yml.
+    - Case 4: old .pack-ignore that is empty and current .pack-ignore that was updated with ignored validation
 
     When:
     - Running get_all_files_edited_in_pack_ignore.
@@ -3199,6 +3208,12 @@ def test_get_all_files_edited_in_pack_ignore(
     mocker.patch(
         "demisto_sdk.commands.validate.validate_manager.get_remote_file",
         return_value=remote_file_content,
+    )
+    mocker.patch.object(
+        GitUtil, "find_primary_branch", return_value="master"
+    )
+    mocker.patch.object(
+        GitUtil, "get_local_remote_file_content", return_value=""
     )
     validate_manager = ValidateManager()
     config = ConfigParser(allow_no_value=True)

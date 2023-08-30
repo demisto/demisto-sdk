@@ -293,8 +293,9 @@ class LintManager:
             if isinstance(input, str):
                 input = input.split(",")
             for item in input:
-                is_pack = os.path.isdir(item) and os.path.exists(
-                    os.path.join(item, PACKS_PACK_META_FILE_NAME)
+                is_pack = (
+                    Path(item).is_dir()
+                    and Path(item, PACKS_PACK_META_FILE_NAME).exists()
                 )
                 if is_pack:
                     pkgs.extend(LintManager._get_all_packages(content_dir=item))
@@ -1175,7 +1176,7 @@ class LintManager:
         if not self.json_file_path:
             return
 
-        if os.path.exists(self.json_file_path):
+        if Path(self.json_file_path).exists():
             json_contents = get_json(self.json_file_path)
             if not (isinstance(json_contents, list)):
                 json_contents = []
@@ -1236,7 +1237,7 @@ class LintManager:
         mypy_errors: list = []
         gather_error: list = []
         for line in error_messages:
-            if os.path.isfile(line.split(":")[0]):
+            if Path(line.split(":")[0]).is_file():
                 if gather_error:
                     mypy_errors.append("\n".join(gather_error))
                     gather_error = []

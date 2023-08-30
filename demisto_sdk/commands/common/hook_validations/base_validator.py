@@ -289,7 +289,7 @@ class BaseValidator:
 
     @staticmethod
     def get_metadata_file_content(meta_file_path):
-        if not os.path.exists(meta_file_path):
+        if not Path(meta_file_path).exists():
             return {}
 
         with open(meta_file_path, encoding="utf-8") as file:
@@ -374,7 +374,7 @@ class BaseValidator:
 
         json_contents = []
         existing_json = ""
-        if os.path.exists(self.json_file_path):
+        if Path(self.json_file_path).exists():
             try:
                 existing_json = get_json(self.json_file_path)
             except ValueError:

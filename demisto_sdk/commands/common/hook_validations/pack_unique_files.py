@@ -216,7 +216,7 @@ class PackUniqueFilesValidator(BaseValidator):
         is_required is True means that absence of the file should block other tests from running
             (see BlockingValidationFailureException).
         """
-        if not os.path.isfile(self._get_pack_file_path(file_name)):
+        if not Path(self._get_pack_file_path(file_name)).is_file():
             error_function = (
                 Errors.required_pack_file_does_not_exist
                 if is_required
@@ -345,7 +345,7 @@ class PackUniqueFilesValidator(BaseValidator):
     def validate_author_image_exists(self):
         if self.metadata_content.get(PACK_METADATA_SUPPORT) == "partner":
             author_image_path = os.path.join(self.pack_path, "Author_image.png")
-            if not os.path.exists(author_image_path):
+            if not Path(author_image_path).exists():
                 if self._add_error(
                     Errors.author_image_is_missing(author_image_path),
                     file_path=author_image_path,
@@ -361,7 +361,7 @@ class PackUniqueFilesValidator(BaseValidator):
         """
         playbooks_path = os.path.join(self.pack_path, "Playbooks")
         contains_playbooks = (
-            os.path.exists(playbooks_path) and len(os.listdir(playbooks_path)) != 0
+            Path(playbooks_path).exists() and len(os.listdir(playbooks_path)) != 0
         )
         if (
             self.support == "partner" or contains_playbooks
@@ -951,9 +951,9 @@ class PackUniqueFilesValidator(BaseValidator):
         layouts_path = os.path.join(self.pack_path, "Layouts")
 
         answers = [
-            os.path.exists(playbooks_path) and len(os.listdir(playbooks_path)) != 0,
-            os.path.exists(incidents_path) and len(os.listdir(incidents_path)) != 0,
-            os.path.exists(layouts_path) and len(os.listdir(layouts_path)) != 0,
+            Path(playbooks_path).exists() and len(os.listdir(playbooks_path)) != 0,
+            Path(incidents_path).exists() and len(os.listdir(incidents_path)) != 0,
+            Path(layouts_path).exists() and len(os.listdir(layouts_path)) != 0,
         ]
         return any(answers)
 

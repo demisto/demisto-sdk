@@ -4408,6 +4408,6 @@ class Errors:
     ):
         return (
             f"the {command_name} command is returning a reputation command context objects: {objects_missing_outputs}."
-            f" Some mandstory outputs are missing, or might be spelled incorrectly: {reputation_output}."
+            f" Some mandatory outputs are missing, or might be spelled incorrectly: {reputation_output}."
             f" Fix according to context standard {context_standard}"
         )

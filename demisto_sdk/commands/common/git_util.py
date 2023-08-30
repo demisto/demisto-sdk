@@ -12,6 +12,10 @@ from git.remote import Remote
 from demisto_sdk.commands.common.constants import PACKS_FOLDER
 
 
+class InitialBranchNotFoundError(Exception):
+    pass
+
+
 class GitUtil:
     repo: Repo
 
@@ -822,11 +826,18 @@ class GitUtil:
         """
         return bool(self.repo.ignored(file_path))
 
-    def get_default_branch(self) -> str:
+    def get_initial_branch(self) -> str:
         """
-        Returns the default branch name configured on the git repository dynamically, usually its main/master.
+        Returns the initial branch name configured on the git repository dynamically, usually its main/master.
 
         Returns:
             str: the default branch name.
         """
-        return self.repo.remote().refs["HEAD"].ref.remote_head
+        remotes = self.repo.remote()
+        for ref in ["HEAD", "main", "master"]:
+            try:
+                return remotes.refs[ref].ref.remote_head
+            except Exception:
+                if ref == "master":
+                    raise InitialBranchNotFoundError("Unable to identify the initial branch of the repository")
+

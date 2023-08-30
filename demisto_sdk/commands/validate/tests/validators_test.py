@@ -2341,19 +2341,23 @@ def test_check_file_relevance_and_format_path_type_missing_file(mocker):
     - file type is not supported
 
     Then
-    - return None, call error handler
+    - make sure that empty strings are returned
+    - make sure BA102 is returned as the file cannot be recognized
     """
     validator_obj = ValidateManager(is_external_repo=True, check_is_unskipped=False)
-    mocked_handler = mocker.patch.object(
-        validator_obj, "handle_error", return_value=False
-    )
+    logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
+
     mocker.patch(
         "demisto_sdk.commands.validate.validate_manager.find_type", return_value=None
     )
     assert validator_obj.check_file_relevance_and_format_path(
         "Packs/type_missing_filename", None, set()
     ) == ("", "", False)
-    mocked_handler.assert_called()
+
+    assert str_in_call_args_list(
+        logger_error.call_args_list,
+        "[BA102] - File Packs/type_missing_filename is not supported in the validate command",
+    )
 
 
 @pytest.mark.parametrize(

@@ -47,6 +47,7 @@ class CorrelationRuleValidator(ContentEntityValidator):
         answers = [
             self.no_leading_hyphen(),
             self.is_files_naming_correct(),
+            self.validate_execution_mode_search_window(),
             super().is_valid_fromversion(),
         ]
         return all(answers)
@@ -83,4 +84,17 @@ class CorrelationRuleValidator(ContentEntityValidator):
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 self._is_valid = False
                 return False
+        return True
+
+    @error_codes("CR102")
+    def validate_execution_mode_search_window(self):
+        """
+        Validates 'search_window' existence and non-emptiness for 'execution_mode' = 'SCHEDULED'.
+        """
+        if (not 'search_window' in self.current_file or
+                self.current_file['execution_mode'] == 'SCHEDULED' and not self.current_file['search_window']):
+                error_message, error_code = Errors.correlation_rules_execution_mode_error()
+                if self.handle_error(error_message, error_code, file_path=self.file_path):
+                    self._is_valid = False
+                    return False
         return True

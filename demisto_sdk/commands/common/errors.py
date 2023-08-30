@@ -1404,6 +1404,10 @@ ERROR_CODE: Dict = {
         "code": "CR101",
         "related_field": "",
     },
+    "correlation_rules_execution_mode_error": {
+        "code": "CR102",
+        "related_field": "",
+    },
     # XR - XSIAM Reports
     "xsiam_report_files_naming_error": {
         "code": "XR100",
@@ -4373,3 +4377,9 @@ class Errors:
     @error_code_decorator
     def pack_have_nonignorable_error(nonignorable_errors: List[str]):
         return f"The following errors can not be ignored: {', '.join(nonignorable_errors)}, remove them from .pack-ignore files"
+
+    @staticmethod
+    @error_code_decorator
+    def correlation_rules_execution_mode_error():
+        return "The 'search_window' key must exist and cannot be empty when the 'execution_mode' is set to 'SCHEDULED'."
+

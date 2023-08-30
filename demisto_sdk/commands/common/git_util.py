@@ -825,21 +825,3 @@ class GitUtil:
             bool: True if the file is ignored. Otherwise, return False.
         """
         return bool(self.repo.ignored(file_path))
-
-    def get_initial_branch(self) -> str:
-        """
-        Returns the initial branch name configured on the git repository dynamically, usually its main/master.
-
-        Returns:
-            str: the default branch name.
-        """
-        remotes = self.repo.remote()
-
-        for ref in ["HEAD", "main", "master"]:
-            try:
-                return remotes.refs[ref].ref.remote_head
-            except Exception:
-                if ref == "master":
-                    raise InitialBranchNotFoundError(
-                        "Unable to identify the initial branch of the repository"
-                    )

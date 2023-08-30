@@ -1997,7 +1997,7 @@ class ValidateManager:
             old_pack_ignore_content = get_remote_file(
                 old_file_path, "master"
             ) or self.git_util.get_local_remote_file_content(
-                f"{self.git_util.get_initial_branch()}:{old_file_path}"
+                f"{GitUtil.find_primary_branch(self.git_util.repo)}:{old_file_path}"
             )
             config = ConfigParser(allow_no_value=True)
             config.read_string(old_pack_ignore_content)

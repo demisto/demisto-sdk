@@ -63,6 +63,8 @@ def to_node_pattern(
     varname: str = "node",
     content_type: ContentType = ContentType.BASE_CONTENT,
 ) -> str:
+    if not content_type:
+        content_type = ContentType.BASE_CONTENT
     neo4j_primitive_types = (str, bool, Path)
     exact_match_properties = {
         k: v for k, v in properties.items() if isinstance(v, neo4j_primitive_types)

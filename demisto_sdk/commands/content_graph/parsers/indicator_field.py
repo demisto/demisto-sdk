@@ -27,7 +27,12 @@ class IndicatorFieldParser(
 
     @property
     def supported_marketplaces(self) -> Set[MarketplaceVersions]:
-        return {MarketplaceVersions.XSOAR, MarketplaceVersions.MarketplaceV2}
+        return {
+            MarketplaceVersions.XSOAR,
+            MarketplaceVersions.MarketplaceV2,
+            MarketplaceVersions.XSOAR_SAAS,
+            MarketplaceVersions.XSOAR_ON_PREM,
+        }
 
     def connect_to_dependencies(self) -> None:
         """Collects indicator types used by the field as optional dependencies, and scripts as mandatory dependencies."""

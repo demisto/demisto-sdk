@@ -14,6 +14,7 @@ from demisto_sdk.commands.common.constants import (
     ALL_FILES_VALIDATION_IGNORE_WHITELIST,
     DEPRECATED_DESC_REGEX,
     DEPRECATED_NO_REPLACE_DESC_REGEX,
+    EVENT_COLLECTOR,
     IGNORED_PACK_NAMES,
     RN_CONTENT_ENTITY_WITH_STARS,
     RN_HEADER_BY_FILE_TYPE,
@@ -746,10 +747,12 @@ class UpdateRN:
                 rn_desc = f"##### New: {content_name}\n\n"
                 if desc:
                     rn_desc += f"- New: {desc}"
-                if from_version and _type not in SIEM_ONLY_ENTITIES:
-                    rn_desc += f" (Available from Cortex XSOAR {from_version})."
-                elif _type in SIEM_ONLY_ENTITIES:
+                if _type in SIEM_ONLY_ENTITIES or content_name.replace(
+                    " ", ""
+                ).lower().endswith(EVENT_COLLECTOR.lower()):
                     rn_desc += "(Available from Cortex XSIAM %%XSIAM_VERSION%%)."
+                elif from_version and _type not in SIEM_ONLY_ENTITIES:
+                    rn_desc += f" (Available from Cortex XSOAR {from_version})."
                 rn_desc += "\n"
             else:
                 rn_desc = f"##### {content_name}\n\n"

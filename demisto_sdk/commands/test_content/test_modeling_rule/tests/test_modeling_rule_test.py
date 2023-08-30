@@ -246,6 +246,7 @@ class TestTheTestModelingRuleCommandSingleRule:
         from demisto_sdk.commands.test_content.xsiam_tools.test_data import TestData
 
         runner = CliRunner()
+        mocker.patch("time.sleep", return_value=None)
 
         # Create Test Data File
         pack.create_modeling_rule(DEFAULT_MODELING_RULE_NAME, rules=ONE_MODEL_RULE_TEXT)
@@ -272,7 +273,14 @@ class TestTheTestModelingRuleCommandSingleRule:
                     # Act
                     result = runner.invoke(
                         test_modeling_rule_cmd,
-                        [modeling_rule_directory.as_posix(), "--non-interactive"],
+                        [
+                            modeling_rule_directory.as_posix(),
+                            "--non-interactive",
+                            "--sleep_interval",
+                            "0",
+                            "--retry_attempts",
+                            "0",
+                        ],
                     )
                     # Assert
                     assert result.exit_code == 1
@@ -307,6 +315,7 @@ class TestTheTestModelingRuleCommandSingleRule:
         from demisto_sdk.commands.test_content.xsiam_tools.test_data import TestData
 
         runner = CliRunner()
+        mocker.patch("time.sleep", return_value=None)
 
         # Create Test Data File
         pack.create_modeling_rule(DEFAULT_MODELING_RULE_NAME, rules=ONE_MODEL_RULE_TEXT)
@@ -337,7 +346,14 @@ class TestTheTestModelingRuleCommandSingleRule:
                     # Act
                     result = runner.invoke(
                         test_modeling_rule_cmd,
-                        [modeling_rule_directory.as_posix(), "--non-interactive"],
+                        [
+                            modeling_rule_directory.as_posix(),
+                            "--non-interactive",
+                            "--sleep_interval",
+                            "0",
+                            "--retry_attempts",
+                            "0",
+                        ],
                     )
                     # Assert
                     assert result.exit_code == 1
@@ -367,26 +383,13 @@ class TestTheTestModelingRuleCommandSingleRule:
         logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
         monkeypatch.setenv("COLUMNS", "1000")
 
-        from functools import partial
-
-        from demisto_sdk.commands.test_content.test_modeling_rule.test_modeling_rule import (
-            check_dataset_exists,
-        )
-
-        func_path = (
-            "demisto_sdk.commands.test_content.test_modeling_rule."
-            "test_modeling_rule.check_dataset_exists"
-        )
-        # override the default timeout to 1 second so only one iteration of the loop will be executed
-        check_dataset_exists_with_timeout = partial(check_dataset_exists, timeout=5)
-        monkeypatch.setattr(func_path, check_dataset_exists_with_timeout)
-
         from demisto_sdk.commands.test_content.test_modeling_rule.test_modeling_rule import (
             app as test_modeling_rule_cmd,
         )
         from demisto_sdk.commands.test_content.xsiam_tools.test_data import TestData
 
         runner = CliRunner()
+        mocker.patch("time.sleep", return_value=None)
 
         # Create Test Data File
         pack.create_modeling_rule(DEFAULT_MODELING_RULE_NAME, rules=ONE_MODEL_RULE_TEXT)
@@ -424,7 +427,14 @@ class TestTheTestModelingRuleCommandSingleRule:
                     # Act
                     result = runner.invoke(
                         test_modeling_rule_cmd,
-                        [modeling_rule_directory.as_posix(), "--non-interactive"],
+                        [
+                            modeling_rule_directory.as_posix(),
+                            "--non-interactive",
+                            "--sleep_interval",
+                            "0",
+                            "--retry_attempts",
+                            "0",
+                        ],
                     )
                     # Assert
                     assert result.exit_code == 1
@@ -456,26 +466,13 @@ class TestTheTestModelingRuleCommandSingleRule:
         logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
         monkeypatch.setenv("COLUMNS", "1000")
 
-        from functools import partial
-
-        from demisto_sdk.commands.test_content.test_modeling_rule.test_modeling_rule import (
-            check_dataset_exists,
-        )
-
-        func_path = (
-            "demisto_sdk.commands.test_content.test_modeling_rule."
-            "test_modeling_rule.check_dataset_exists"
-        )
-        # override the default timeout to 1 second so only one iteration of the loop will be executed
-        check_dataset_exists_with_timeout = partial(check_dataset_exists, timeout=5)
-        monkeypatch.setattr(func_path, check_dataset_exists_with_timeout)
-
         from demisto_sdk.commands.test_content.test_modeling_rule.test_modeling_rule import (
             app as test_modeling_rule_cmd,
         )
         from demisto_sdk.commands.test_content.xsiam_tools.test_data import TestData
 
         runner = CliRunner()
+        mocker.patch("time.sleep", return_value=None)
 
         # Create Test Data File
         pack.create_modeling_rule(DEFAULT_MODELING_RULE_NAME, rules=ONE_MODEL_RULE_TEXT)
@@ -527,7 +524,14 @@ class TestTheTestModelingRuleCommandSingleRule:
                     # Act
                     result = runner.invoke(
                         test_modeling_rule_cmd,
-                        [modeling_rule_directory.as_posix(), "--non-interactive"],
+                        [
+                            modeling_rule_directory.as_posix(),
+                            "--non-interactive",
+                            "--sleep_interval",
+                            "0",
+                            "--retry_attempts",
+                            "0",
+                        ],
                     )
                     # Assert
                     assert result.exit_code == 1
@@ -559,26 +563,13 @@ class TestTheTestModelingRuleCommandSingleRule:
         logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
         monkeypatch.setenv("COLUMNS", "1000")
 
-        from functools import partial
-
-        from demisto_sdk.commands.test_content.test_modeling_rule.test_modeling_rule import (
-            check_dataset_exists,
-        )
-
-        func_path = (
-            "demisto_sdk.commands.test_content.test_modeling_rule."
-            "test_modeling_rule.check_dataset_exists"
-        )
-        # override the default timeout to 1 second so only one iteration of the loop will be executed
-        check_dataset_exists_with_timeout = partial(check_dataset_exists, timeout=5)
-        monkeypatch.setattr(func_path, check_dataset_exists_with_timeout)
-
         from demisto_sdk.commands.test_content.test_modeling_rule.test_modeling_rule import (
             app as test_modeling_rule_cmd,
         )
         from demisto_sdk.commands.test_content.xsiam_tools.test_data import TestData
 
         runner = CliRunner()
+        mocker.patch("time.sleep", return_value=None)
 
         # Create Test Data File
         pack.create_modeling_rule(DEFAULT_MODELING_RULE_NAME, rules=ONE_MODEL_RULE_TEXT)
@@ -635,7 +626,14 @@ class TestTheTestModelingRuleCommandSingleRule:
                     # Act
                     result = runner.invoke(
                         test_modeling_rule_cmd,
-                        [modeling_rule_directory.as_posix(), "--non-interactive"],
+                        [
+                            modeling_rule_directory.as_posix(),
+                            "--non-interactive",
+                            "--sleep_interval",
+                            "0",
+                            "--retry_attempts",
+                            "0",
+                        ],
                     )
                     # Assert
                     assert result.exit_code == 1
@@ -666,23 +664,13 @@ class TestTheTestModelingRuleCommandSingleRule:
         """
         logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
 
-        from functools import partial
-
-        from demisto_sdk.commands.test_content.test_modeling_rule.test_modeling_rule import (
-            check_dataset_exists,
-        )
-
-        monkeypatch.setattr(
-            "demisto_sdk.commands.test_content.test_modeling_rule.test_modeling_rule.check_dataset_exists",
-            partial(check_dataset_exists),
-        )
-
         from demisto_sdk.commands.test_content.test_modeling_rule.test_modeling_rule import (
             app as test_modeling_rule_cmd,
         )
         from demisto_sdk.commands.test_content.xsiam_tools.test_data import TestData
 
         runner = CliRunner()
+        mocker.patch("time.sleep", return_value=None)
 
         # Create Test Data File
         pack.create_modeling_rule(DEFAULT_MODELING_RULE_NAME, rules=ONE_MODEL_RULE_TEXT)
@@ -735,24 +723,6 @@ class TestTheTestModelingRuleCommandSingleRule:
                                 "json": {
                                     "reply": {
                                         "status": "SUCCESS",
-                                        "results": {"data": []},
-                                    }
-                                },
-                                "status_code": 200,
-                            },
-                            {
-                                "json": {
-                                    "reply": {
-                                        "status": "SUCCESS",
-                                        "results": {"data": []},
-                                    }
-                                },
-                                "status_code": 200,
-                            },
-                            {
-                                "json": {
-                                    "reply": {
-                                        "status": "SUCCESS",
                                         "results": {
                                             "data": [
                                                 {
@@ -778,7 +748,14 @@ class TestTheTestModelingRuleCommandSingleRule:
                     # Act
                     result = runner.invoke(
                         test_modeling_rule_cmd,
-                        [modeling_rule_directory.as_posix(), "--non-interactive"],
+                        [
+                            modeling_rule_directory.as_posix(),
+                            "--non-interactive",
+                            "--sleep_interval",
+                            "0",
+                            "--retry_attempts",
+                            "0",
+                        ],
                     )
                     # Assert
                     assert result.exit_code == 0
@@ -811,20 +788,6 @@ class TestTheTestModelingRuleCommandSingleRule:
         logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
         monkeypatch.setenv("COLUMNS", "1000")
 
-        from functools import partial
-
-        from demisto_sdk.commands.test_content.test_modeling_rule.test_modeling_rule import (
-            check_dataset_exists,
-        )
-
-        func_path = (
-            "demisto_sdk.commands.test_content.test_modeling_rule."
-            "test_modeling_rule.check_dataset_exists"
-        )
-        # override the default timeout to 1 second so only one iteration of the loop will be executed
-        check_dataset_exists_with_timeout = partial(check_dataset_exists, timeout=5)
-        monkeypatch.setattr(func_path, check_dataset_exists_with_timeout)
-
         from demisto_sdk.commands.test_content.test_modeling_rule.test_modeling_rule import (
             app as test_modeling_rule_cmd,
         )
@@ -834,6 +797,7 @@ class TestTheTestModelingRuleCommandSingleRule:
         monkeypatch.setenv("COLUMNS", "1000")
 
         runner = CliRunner()
+        mocker.patch("time.sleep", return_value=None)
 
         # Create Test Data File
         pack.create_modeling_rule(DEFAULT_MODELING_RULE_NAME, rules=ONE_MODEL_RULE_TEXT)
@@ -912,7 +876,14 @@ class TestTheTestModelingRuleCommandSingleRule:
                     # Act
                     result = runner.invoke(
                         test_modeling_rule_cmd,
-                        [modeling_rule_directory.as_posix(), "--non-interactive"],
+                        [
+                            modeling_rule_directory.as_posix(),
+                            "--non-interactive",
+                            "--sleep_interval",
+                            "0",
+                            "--retry_attempts",
+                            "0",
+                        ],
                     )
                     # Assert
                     assert result.exit_code == 0
@@ -946,28 +917,16 @@ class TestTheTestModelingRuleCommandSingleRule:
         logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
         monkeypatch.setenv("COLUMNS", "1000")
 
-        from functools import partial
-
         from demisto_sdk.commands.test_content.test_modeling_rule.test_modeling_rule import (
             app as test_modeling_rule_cmd,
         )
-        from demisto_sdk.commands.test_content.test_modeling_rule.test_modeling_rule import (
-            check_dataset_exists,
-        )
         from demisto_sdk.commands.test_content.xsiam_tools.test_data import TestData
-
-        func_path = (
-            "demisto_sdk.commands.test_content.test_modeling_rule."
-            "test_modeling_rule.check_dataset_exists"
-        )
-        # override the default timeout to 1 second so only one iteration of the loop will be executed
-        check_dataset_exists_with_timeout = partial(check_dataset_exists, timeout=5)
-        monkeypatch.setattr(func_path, check_dataset_exists_with_timeout)
 
         # so the logged output when running the command will be printed with a width of 120 characters
         monkeypatch.setenv("COLUMNS", "1000")
 
         runner = CliRunner()
+        mocker.patch("time.sleep", return_value=None)
 
         # Create Test Data File
         pack.create_modeling_rule(DEFAULT_MODELING_RULE_NAME, rules=ONE_MODEL_RULE_TEXT)
@@ -1049,7 +1008,14 @@ class TestTheTestModelingRuleCommandSingleRule:
                     # Act
                     result = runner.invoke(
                         test_modeling_rule_cmd,
-                        [modeling_rule_directory.as_posix(), "--non-interactive"],
+                        [
+                            modeling_rule_directory.as_posix(),
+                            "--non-interactive",
+                            "--sleep_interval",
+                            "0",
+                            "--retry_attempts",
+                            "0",
+                        ],
                     )
                     # Assert
                     assert result.exit_code == 0
@@ -1066,7 +1032,7 @@ class TestTheTestModelingRuleCommandSingleRule:
             assert False, "No exception should be raised in this scenario."
 
     def test_the_test_modeling_rule_command_results_with_non_existent_ignored_validations(
-        self, pack
+        self, pack, mocker
     ):
         """
         Given:
@@ -1091,6 +1057,7 @@ class TestTheTestModelingRuleCommandSingleRule:
         from demisto_sdk.commands.test_content.xsiam_tools.test_data import TestData
 
         runner = CliRunner()
+        mocker.patch("time.sleep", return_value=None)
 
         # Create Test Data File
         pack.create_modeling_rule(DEFAULT_MODELING_RULE_NAME, rules=ONE_MODEL_RULE_TEXT)
@@ -1122,7 +1089,14 @@ class TestTheTestModelingRuleCommandSingleRule:
                 # Act
                 result = runner.invoke(
                     test_modeling_rule_cmd,
-                    [modeling_rule_directory.as_posix(), "--non-interactive"],
+                    [
+                        modeling_rule_directory.as_posix(),
+                        "--non-interactive",
+                        "--sleep_interval",
+                        "0",
+                        "--retry_attempts",
+                        "0",
+                    ],
                 )
                 # Assert
                 assert result.exit_code == 1
@@ -1156,26 +1130,13 @@ class TestTheTestModelingRuleCommandSingleRule:
         logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
         monkeypatch.setenv("COLUMNS", "1000")
 
-        from functools import partial
-
-        from demisto_sdk.commands.test_content.test_modeling_rule.test_modeling_rule import (
-            check_dataset_exists,
-        )
-
-        func_path = (
-            "demisto_sdk.commands.test_content.test_modeling_rule."
-            "test_modeling_rule.check_dataset_exists"
-        )
-        # override the default timeout to 1 second so only one iteration of the loop will be executed
-        check_dataset_exists_with_timeout = partial(check_dataset_exists, timeout=5)
-        monkeypatch.setattr(func_path, check_dataset_exists_with_timeout)
-
         from demisto_sdk.commands.test_content.test_modeling_rule.test_modeling_rule import (
             app as test_modeling_rule_cmd,
         )
         from demisto_sdk.commands.test_content.xsiam_tools.test_data import TestData
 
         runner = CliRunner()
+        mocker.patch("time.sleep", return_value=None)
 
         # Create Test Data File
         pack.create_modeling_rule(DEFAULT_MODELING_RULE_NAME, rules=ONE_MODEL_RULE_TEXT)
@@ -1251,7 +1212,14 @@ class TestTheTestModelingRuleCommandSingleRule:
                     # Act
                     result = runner.invoke(
                         test_modeling_rule_cmd,
-                        [modeling_rule_directory.as_posix(), "--non-interactive"],
+                        [
+                            modeling_rule_directory.as_posix(),
+                            "--non-interactive",
+                            "--sleep_interval",
+                            "0",
+                            "--retry_attempts",
+                            "0",
+                        ],
                     )
                     # Assert
                     assert result.exit_code == 1
@@ -1295,6 +1263,7 @@ class TestTheTestModelingRuleCommandMultipleRules:
         monkeypatch.setenv("COLUMNS", "1000")
 
         runner = CliRunner()
+        mocker.patch("time.sleep", return_value=None)
 
         # Create Pack 1 with Modeling Rule
         pack_1 = repo.create_pack("Pack1")
@@ -1403,6 +1372,10 @@ class TestTheTestModelingRuleCommandMultipleRules:
                             modeling_rule_directory_1.as_posix(),
                             modeling_rule_directory_2.as_posix(),
                             "--non-interactive",
+                            "--sleep_interval",
+                            "0",
+                            "--retry_attempts",
+                            "0",
                         ],
                     )
                     # Assert
@@ -1452,6 +1425,7 @@ class TestTheTestModelingRuleCommandInteractive:
         monkeypatch.setenv("COLUMNS", "1000")
 
         runner = CliRunner()
+        mocker.patch("time.sleep", return_value=None)
 
         # Create Pack with Modeling Rule
         pack = repo.create_pack("Pack1")
@@ -1481,7 +1455,14 @@ class TestTheTestModelingRuleCommandInteractive:
                 # Act
                 result = runner.invoke(
                     test_modeling_rule_cmd,
-                    [modeling_rule_directory.as_posix(), "--interactive"],
+                    [
+                        modeling_rule_directory.as_posix(),
+                        "--interactive",
+                        "--sleep_interval",
+                        "0",
+                        "--retry_attempts",
+                        "0",
+                    ],
                 )
                 # Assert
 

@@ -346,7 +346,12 @@ class PackMetadata(BaseModel):
 
     @staticmethod
     def _get_author(author, marketplace):
-        if marketplace in [MarketplaceVersions.XSOAR, MarketplaceVersions.XPANSE]:
+        if marketplace in [
+            MarketplaceVersions.XSOAR,
+            MarketplaceVersions.XPANSE,
+            MarketplaceVersions.XSOAR_ON_PREM,
+            MarketplaceVersions.XSOAR_SAAS,
+        ]:
             return author
         elif marketplace == MarketplaceVersions.MarketplaceV2:
             return author.replace("Cortex XSOAR", "Cortex XSIAM")

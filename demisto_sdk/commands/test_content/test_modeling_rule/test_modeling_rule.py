@@ -13,6 +13,13 @@ import typer
 from junitparser import Error, Failure, JUnitXml, Skipped, TestCase, TestSuite
 from junitparser.junitparser import Result
 from tabulate import tabulate
+from tenacity import (
+    Retrying,
+    before_sleep_log,
+    retry_if_exception_type,
+    stop_after_attempt,
+    wait_fixed,
+)
 from typer.main import get_command_from_info
 
 from commands.test_content.test_modeling_rule.constants import (
@@ -36,7 +43,7 @@ from demisto_sdk.commands.common.logger import (
     logger,
     logging_setup,
 )
-from demisto_sdk.commands.common.tools import is_epoch_datetime
+from demisto_sdk.commands.common.tools import is_epoch_datetime, parse_int_or_default
 from demisto_sdk.commands.test_content.test_modeling_rule import init_test_data
 from demisto_sdk.commands.test_content.xsiam_tools.test_data import Validations
 from demisto_sdk.commands.test_content.xsiam_tools.xsiam_client import (
@@ -47,6 +54,8 @@ from demisto_sdk.commands.upload.upload import upload_content_entity as upload_c
 from demisto_sdk.utils.utils import get_containing_pack
 
 CI_PIPELINE_ID = os.environ.get("CI_PIPELINE_ID")
+XSIAM_CLIENT_SLEEP_INTERVAL = 60
+XSIAM_CLIENT_RETRY_ATTEMPTS = 5
 
 app = typer.Typer()
 
@@ -159,6 +168,45 @@ def get_type_pretty_name(obj: Any) -> str:
         bool: "boolean",
         datetime: "datetime",
     }.get(type(obj), str(type(obj)))
+
+def create_retrying_caller(retry_attempts: int, sleep_interval: int) -> Retrying:
+    """Create a Retrying object with the given retry_attempts and sleep_interval."""
+    sleep_interval = parse_int_or_default(sleep_interval, XSIAM_CLIENT_SLEEP_INTERVAL)
+    retry_attempts = parse_int_or_default(retry_attempts, XSIAM_CLIENT_RETRY_ATTEMPTS)
+    retry_params: Dict[str, Any] = {
+        "reraise": True,
+        "before_sleep": before_sleep_log(logger, logging.DEBUG),
+        "retry": retry_if_exception_type(requests.exceptions.HTTPError),
+        "stop": stop_after_attempt(retry_attempts),
+        "wait": wait_fixed(sleep_interval),
+    }
+    return Retrying(**retry_params)
+
+
+def xsiam_execute_query(
+    xsiam_client: XsiamApiClient, query: str, print_req_error: bool = True
+) -> List[dict]:
+    """Execute an XQL query and return the results.
+    Wrapper for XsiamApiClient.execute_query() with retry logic.
+    """
+    execution_id = xsiam_client.start_xql_query(query, print_req_error)
+    return xsiam_client.get_xql_query_result(execution_id)
+
+
+def xsiam_push_to_dataset(
+    xsiam_client: XsiamApiClient, events_test_data: List[dict], rule: SingleModelingRule
+) -> Dict[str, Any]:
+    """Push the test data to the XSIAM dataset.
+    Wrapper for XsiamApiClient.push_to_dataset() with retry logic.
+    """
+    return xsiam_client.push_to_dataset(events_test_data, rule.vendor, rule.product)
+
+
+def xsiam_get_installed_packs(xsiam_client: XsiamApiClient) -> List[Dict[str, Any]]:
+    """Get the list of installed packs from the XSIAM tenant.
+    Wrapper for XsiamApiClient.get_installed_packs() with retry logic.
+    """
+    return xsiam_client.installed_packs
 
 
 def verify_results(
@@ -336,6 +384,7 @@ def generate_xql_query(rule: SingleModelingRule, test_data_event_ids: List[str])
 
 def validate_expected_values(
     xsiam_client: XsiamApiClient,
+    retrying_caller: Retrying,
     modeling_rule: ModelingRule,
     test_data: init_test_data.TestData,
 ) -> List[TestCase]:
@@ -359,12 +408,7 @@ def validate_expected_values(
         logger.debug(query_info)
         validate_expected_values_test_case_system_out = [query_info]
         try:
-            execution_id = xsiam_client.start_xql_query(query)
-            results = xsiam_client.get_xql_query_result(execution_id)
-            validate_expected_values_test_case_system_out.append(
-                "Successfully executed XQL query"
-            )
-            logger.debug("Successfully executed XQL query")
+            results = retrying_caller(xsiam_execute_query, xsiam_client, query)
         except requests.exceptions.HTTPError:
             logger.error(
                 f"[red]{XQL_QUERY_ERROR_EXPLANATION}[/red]",
@@ -496,18 +540,16 @@ def validate_schema_aligned_with_test_data(
 
 def check_dataset_exists(
     xsiam_client: XsiamApiClient,
+    retrying_caller: Retrying,
     test_data: init_test_data.TestData,
-    timeout: int = 90,
-    interval: int = 5,
     init_sleep_time: int = 30,
 ) -> TestCase:
     """Check if the dataset in the test data file exists in the tenant.
 
     Args:
         xsiam_client (XsiamApiClient): Xsiam API client.
+        retrying_caller (tenacity.Retrying): The retrying caller object.
         test_data (init_test_data.TestData): The data parsed from the test data file.
-        timeout (int, optional): The number of seconds to wait for the dataset to exist. Defaults to 90 seconds.
-        interval (int, optional): The number of seconds to wait between checking for the dataset. Defaults to 5.
         init_sleep_time (int, optional): The number of seconds to wait for dataset installation. Defaults to 30.
 
     """
@@ -522,8 +564,8 @@ def check_dataset_exists(
         f"Sleeping for {init_sleep_time} seconds before query for the dataset, to make sure the dataset was installed correctly."
     )
     sleep(init_sleep_time)
-
     for dataset in dataset_set:
+        start_time = datetime.now(tz=pytz.UTC)
         results_exist = False
         dataset_exist = False
         logger.info(
@@ -531,30 +573,18 @@ def check_dataset_exists(
             extra={"markup": True},
         )
         query = f"config timeframe = 10y | dataset = {dataset}"
-        results = None
-        for i in range(timeout // interval):
-            with contextlib.suppress(requests.exceptions.HTTPError):
-                # If the dataset doesn't exist HTTPError exception is raised.
-                logger.debug(f"Check #{i+1}...")
-                execution_id = xsiam_client.start_xql_query(
-                    query, print_req_error=(i + 1 == timeout // interval)
+        try:
+            results = retrying_caller(xsiam_execute_query, xsiam_client, query)
+
+            dataset_exist = True
+            if results:
+                logger.info(
+                    f"[green]Dataset {dataset} exists[/green]",
+                    extra={"markup": True},
                 )
-                dataset_exist = True
-                # if we got result we will break from the loop
-                if results := xsiam_client.get_xql_query_result(execution_id):
-                    logger.info(
-                        f"[green]Dataset {dataset} exists[/green]",
-                        extra={"markup": True},
-                    )
-                    results_exist = True
-                    break
-                else:
-                    results_exist = False
-                    logger.info(
-                        f"[cyan]trying to get results from the dataset for the {day_suffix(i+1)} time. continuing to try to get the results.[/cyan]",
-                        extra={"markup": True},
-                    )
-                sleep(interval)
+                results_exist = True
+        except requests.exceptions.HTTPError:
+            results = []
 
         # There are no results from the dataset, but it exists.
         if not results:
@@ -567,10 +597,11 @@ def check_dataset_exists(
             test_case_results.append(Error(err))
             logger.error(f"[red]{err}[/red]", extra={"markup": True})
         if not dataset_exist:
-            err = f"Dataset {dataset} does not exist after {timeout} seconds."
+            duration = datetime.now(tz=pytz.UTC) - start_time
+            err = f"[red]Dataset {dataset} does not exist after {duration.total_seconds():.2f} seconds[/red]"
             test_case_results.append(Error(err))
             logger.error(f"[red]{err}[/red]", extra={"markup": True})
-
+        # OR statement between existence var and results of each data set, if at least one of dataset_exist or results_exist are False process_failed will be true.
         process_failed |= not (dataset_exist and results_exist)
 
     if test_case_results:
@@ -582,11 +613,15 @@ def check_dataset_exists(
 
 
 def push_test_data_to_tenant(
-    xsiam_client: XsiamApiClient, mr: ModelingRule, test_data: init_test_data.TestData
+    xsiam_client: XsiamApiClient,
+    retrying_caller: Retrying,
+    mr: ModelingRule,
+    test_data: init_test_data.TestData,
 ) -> TestCase:
     """Push the test data to the tenant.
 
     Args:
+        retrying_caller (tenacity.Retrying): The retrying caller object.
         xsiam_client (XsiamApiClient): Xsiam API client.
         mr (ModelingRule): Modeling rule object parsed from the modeling rule file.
         test_data (init_test_data.TestData): Test data object parsed from the test data file.
@@ -614,7 +649,7 @@ def push_test_data_to_tenant(
             extra={"markup": True},
         )
         try:
-            xsiam_client.push_to_dataset(events_test_data, rule.vendor, rule.product)
+            retrying_caller(xsiam_push_to_dataset, xsiam_client, events_test_data, rule)
         except requests.exceptions.HTTPError:
             system_err = (
                 f"Failed pushing test data to tenant for dataset {rule.dataset}"
@@ -640,11 +675,15 @@ def push_test_data_to_tenant(
 
 
 def verify_pack_exists_on_tenant(
-    xsiam_client: XsiamApiClient, mr: ModelingRule, interactive: bool
+    xsiam_client: XsiamApiClient,
+    retrying_caller: Retrying,
+    mr: ModelingRule,
+    interactive: bool,
 ) -> bool:
     """Verify that the pack containing the modeling rule exists on the tenant.
 
     Args:
+        retrying_caller (tenacity.Retrying): The retrying caller object.
         xsiam_client (XsiamApiClient): Xsiam API client.
         mr (ModelingRule): Modeling rule object parsed from the modeling rule file.
         interactive (bool): Whether command is being run in interactive mode.
@@ -654,7 +693,7 @@ def verify_pack_exists_on_tenant(
     )
     containing_pack = get_containing_pack(mr)
     containing_pack_id = containing_pack.id
-    installed_packs = xsiam_client.installed_packs
+    installed_packs = retrying_caller(xsiam_get_installed_packs, xsiam_client)
     if found_pack := next(
         (pack for pack in installed_packs if containing_pack_id == pack.get("id")),
         None,
@@ -733,6 +772,7 @@ def verify_test_data_exists(test_data_path: Path) -> Tuple[List[UUID], List[UUID
 def validate_modeling_rule(
     modeling_rule_directory: Path,
     xsiam_url: str,
+    retrying_caller: Retrying,
     api_key: str,
     auth_id: str,
     xsiam_token: str,
@@ -745,6 +785,7 @@ def validate_modeling_rule(
 
     Args:
         modeling_rule_directory (Path): Path to the modeling rule directory.
+        retrying_caller (tenacity.Retrying): The retrying caller object.
         xsiam_url (str): URL of the xsiam tenant.
         api_key (str): xsiam API key.
         auth_id (str): xsiam auth ID.
@@ -1068,6 +1109,7 @@ def add_result_to_test_case(
     return False, modeling_rule_test_suite
 
 
+
 # ====================== test-modeling-rule ====================== #
 
 
@@ -1176,6 +1218,21 @@ def test_modeling_rule(
     ),
     output_junit_file: Optional[Path] = typer.Option(
         None, "-jp", "--junit-path", help="Path to the output JUnit XML file."
+    sleep_interval: int = typer.Option(
+        XSIAM_CLIENT_SLEEP_INTERVAL,
+        "-si",
+        "--sleep_interval",
+        min=0,
+        show_default=True,
+        help="The number of seconds to wait between requests to the server.",
+    ),
+    retry_attempts: int = typer.Option(
+        XSIAM_CLIENT_RETRY_ATTEMPTS,
+        "-ra",
+        "--retry_attempts",
+        min=0,
+        show_default=True,
+        help="The number of times to retry the request against the server.",
     ),
     console_log_threshold: str = typer.Option(
         "INFO",
@@ -1207,9 +1264,12 @@ def test_modeling_rule(
     handle_deprecated_args(ctx.args)
 
     logger.info(
-        f"[cyan]modeling rules directories to test: {inputs}[/cyan]",
+        f"[cyan]Modeling Rules directories to test: {inputs}[/cyan]",
         extra={"markup": True},
     )
+
+    retrying_caller = create_retrying_caller(retry_attempts, sleep_interval)
+
     errors = False
     xml = JUnitXml()
     start_time = datetime.now(timezone.utc)
@@ -1218,6 +1278,7 @@ def test_modeling_rule(
             modeling_rule_directory,
             # can ignore the types since if they are not set to str values an error occurs
             xsiam_url,  # type: ignore[arg-type]
+            retrying_caller,
             api_key,  # type: ignore[arg-type]
             auth_id,  # type: ignore[arg-type]
             xsiam_token,  # type: ignore[arg-type]
@@ -1231,6 +1292,7 @@ def test_modeling_rule(
             logger.error(
                 f"[red]Error testing modeling rule {get_relative_path_to_content(modeling_rule_directory)}[/red]",
                 extra={"markup": True},
+
             )
         if modeling_rule_test_suite:
             modeling_rule_test_suite.add_property("start_time", start_time)

@@ -293,7 +293,10 @@ class LintManager:
             if isinstance(input, str):
                 input = input.split(",")
             for item in input:
-                is_pack = Path(item).is_dir() and Path(item, PACKS_PACK_META_FILE_NAME).exists()
+                is_pack = (
+                    Path(item).is_dir()
+                    and Path(item, PACKS_PACK_META_FILE_NAME).exists()
+                )
                 if is_pack:
                     pkgs.extend(LintManager._get_all_packages(content_dir=item))
                 else:

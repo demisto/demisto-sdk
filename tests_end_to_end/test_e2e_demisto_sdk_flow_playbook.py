@@ -158,21 +158,3 @@ def test_e2e_demisto_sdk_flow_playbook_client(tmpdir, insecure: bool = True):
             input=dest_playbook_path,
             insecure=True,
         ).upload()
-
-
-
-def test_12():
-    import filecmp
-    import yaml
-    # dirs_cmp = filecmp.dircmp('/Users/adaud/Downloads/1', '/Users/adaud/Downloads/2')
-    try:
-        with open('/Users/adaud/dev/demisto/content/Packs/AzureSecurityCenter/Integrations/MicrosoftDefenderForCloudEventCollector/MicrosoftDefenderForCloudEventCollector.yml', 'r') as yml_file:
-            data = yaml.safe_load(yml_file)
-        if not isinstance(data, dict):
-            raise ValueError()
-
-    except (ValueError, yaml.YAMLError):
-        return_error('Failed to open integration file')
-
-    return data
-    a=1

@@ -4401,7 +4401,10 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def command_output_is_missing(
-        command_name, reputation_output, objects_missing_outputs, context_standard
+        command_name: str,
+        reputation_output: list,
+        objects_missing_outputs: set[str],
+        context_standard: str,
     ):
         return (
             f"the {command_name} command is returning a reputation command context objects: {objects_missing_outputs}."

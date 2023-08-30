@@ -2,6 +2,9 @@
 ## Unreleased
 * Fixed an issue where **update-release-notes** generated "available from Cortex XSOAR" instead of "from XSIAM" when run on XSIAM event collectors.
 * Added support for a new marketplace tag `xsoar_saas`.
+* Fixed an issue where the **validate -g** failed on `BA102` in external repos.
+* Fixed an issue where the **validate -g** failed getting the content of `.pack-ignore` files when the external repository is not hosted in Github.
+* Fixed an issue where the **validate -g** failed when updating an empty `.pack-ignore` file.
 * Added support for yml hidden parameters for `xsoar_saas` marketplace, as part of the **prepare_content** command.
 * Added support for custom documentation that will appear only in `xsoar_saas` marketplace, as part of the **prepare_content** command.
 * Modified **prepare_content** command to be platform specific. For xsoar-saas and XSIAM regarding pack readme and integration description images in markdown files.

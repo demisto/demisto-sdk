@@ -12,10 +12,6 @@ from git.remote import Remote
 from demisto_sdk.commands.common.constants import PACKS_FOLDER
 
 
-class InitialBranchNotFoundError(Exception):
-    pass
-
-
 class GitUtil:
     repo: Repo
 

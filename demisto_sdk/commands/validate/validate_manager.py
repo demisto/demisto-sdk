@@ -1993,8 +1993,10 @@ class ValidateManager:
             if not file_path.endswith(".pack-ignore"):
                 continue
             # if the repo is in Github, get the .pack-ignore content from the master branch in Github
-            # if the repo is not in Github / file cannot be found, try to take it from the latest commit on the default branch (usually master/main)
-            old_pack_ignore_content = self.git_util.get_local_remote_file_content(
+            # if the repo is not in Github / file cannot be found, try to take it from the latest commit on the initial branch (usually master/main)
+            old_pack_ignore_content = get_remote_file(
+                old_file_path, "master"
+            ) or self.git_util.get_local_remote_file_content(
                 f"{self.git_util.get_initial_branch()}:{old_file_path}"
             )
             config = ConfigParser(allow_no_value=True)

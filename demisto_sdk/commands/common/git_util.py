@@ -834,10 +834,12 @@ class GitUtil:
             str: the default branch name.
         """
         remotes = self.repo.remote()
+
         for ref in ["HEAD", "main", "master"]:
             try:
                 return remotes.refs[ref].ref.remote_head
             except Exception:
                 if ref == "master":
-                    raise InitialBranchNotFoundError("Unable to identify the initial branch of the repository")
-
+                    raise InitialBranchNotFoundError(
+                        "Unable to identify the initial branch of the repository"
+                    )

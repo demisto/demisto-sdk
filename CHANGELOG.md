@@ -6,7 +6,7 @@
 * Added support for yml hidden parameters for `xsoar_saas` marketplace, as part of the **prepare_content** command.
 * Added support for custom documentation that will appear only in `xsoar_saas` marketplace, as part of the **prepare_content** command.
 * Modified **prepare_content** command to be platform specific. For xsoar-saas and XSIAM regarding pack readme and integration description images in markdown files.
-* Fixed an issue where *validate* would fail with modified pack-ignore files, that were originally empty files.
+* Fixed an issue where *validate* would fail checking `.pack-ignore` files that are empty on `master`.
 
 ## 1.19.2
 * Added a period at the end of lines produced by the **generate-docs** command that state the tested version of the product.

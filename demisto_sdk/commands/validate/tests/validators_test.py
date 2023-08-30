@@ -3166,6 +3166,14 @@ def test_validate_no_disallowed_terms_in_customer_facing_docs_end_to_end(repo, m
                 "Packs/test1/Integrations/test2/test2.yml",
             },
         ),
+        (
+            {"Packs/test/.pack-ignore"},
+            "[file:test.yml]\nignore=BA108\n",
+            b"",
+            {
+                "Packs/test/Integrations/test/test.yml",
+            },
+        ),
     ],
 )
 def test_get_all_files_edited_in_pack_ignore(

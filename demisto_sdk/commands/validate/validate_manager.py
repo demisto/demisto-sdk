@@ -1992,7 +1992,7 @@ class ValidateManager:
             old_file_path, file_path = self.get_old_file_path(file_path)
             if not file_path.endswith(".pack-ignore"):
                 continue
-            old_file_content = get_remote_file(old_file_path, tag="master")
+            old_file_content = get_remote_file(old_file_path, tag="master") or ""
             config = ConfigParser(allow_no_value=True)
             config.read_string(old_file_content)
             old_file_content = self.get_error_ignore_list(config=config)

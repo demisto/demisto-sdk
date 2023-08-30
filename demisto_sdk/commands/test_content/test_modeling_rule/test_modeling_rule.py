@@ -61,13 +61,13 @@ app = typer.Typer()
 
 
 def duration_since_start_time(start_time: datetime) -> float:
-    """Get the duration since the given start time.
+    """Get the duration since the given start time, in seconds.
 
     Args:
         start_time (datetime): Start time.
 
     Returns:
-        float: Duration since the given start time.
+        float: Duration since the given start time, in seconds.
     """
     return (datetime.now(timezone.utc) - start_time).total_seconds()
 
@@ -80,7 +80,7 @@ def create_table(expected: Dict[str, Any], received: Dict[str, Any]) -> str:
         received: mapping of keys to received values
 
     Returns:
-        Table object to display the expected and received values.
+        String representation of a table, to display the expected and received values.
     """
     data = [(key, str(val), str(received.get(key))) for key, val in expected.items()]
     return tabulate(
@@ -265,7 +265,7 @@ def verify_results(
         td_event_id = result.pop(f"{tested_dataset}.test_data_event_id")
         result_test_case = TestCase(
             f"Modeling rule - {get_relative_path_to_content(modeling_rule.path)} {i}/{len(results)}"
-            f"test_data_event_id:{td_event_id}",
+            f" test_data_event_id:{td_event_id}",
             classname=f"test_data_event_id:{td_event_id}",
         )
         verify_results_against_test_data(
@@ -299,7 +299,7 @@ def verify_results_against_test_data(
     if not tenant_timezone:
         result_test_case_system_out.append(TIME_ZONE_WARNING)
         logger.warning(f"[yellow]{TIME_ZONE_WARNING}[/yellow]")
-    if expected_values:
+    if expected_values:  # fixme, invert if
         if (
             expected_time_value := expected_values.get(SingleModelingRule.TIME_FIELD)
         ) and (time_value := result.get(SingleModelingRule.TIME_FIELD)):
@@ -307,7 +307,7 @@ def verify_results_against_test_data(
                 time_value, "." in expected_time_value, tenant_timezone
             )
         table_result = create_table(expected_values, result)
-        typer.echo(table_result)
+        typer.echo(table_result)  # fixme logger.info
         for key, val in expected_values.items():
             if val:
                 result_val = result.get(key)
@@ -338,8 +338,8 @@ def verify_results_against_test_data(
                         )
                         logger.error(
                             f'[red][bold]{key}[/bold] --- "{result_val}" != "{val}"\n'
-                            f'[bold]{key}[/bold] --- Received value type: "{get_type_pretty_name(result_val)}" '
-                            f'!=  Expected value type: "{get_type_pretty_name(val)}"[/red]',
+                            f' [bold]{key}[/bold] --- Received value type: "{get_type_pretty_name(result_val)}" '
+                            f'!= Expected value type: "{get_type_pretty_name(val)}"[/red]',
                             extra={"markup": True},
                         )
                     result_test_case_system_err.append(err)
@@ -522,7 +522,7 @@ def validate_schema_aligned_with_test_data(
         ):
             skipped = (
                 f"The following fields {missing_test_data_keys} are in schema for dataset {dataset}, but not "
-                "in test-data, make sure to remove them from schema or add them to test-data if necessary"
+                "in test-data, make sure to remove them from the schema or add them to test-data if necessary"
             )
             logger.warning(f"[yellow]{skipped}[/yellow]", extra={"markup": True})
             results.append(Skipped(skipped))
@@ -543,7 +543,7 @@ def check_dataset_exists(
     retrying_caller: Retrying,
     test_data: init_test_data.TestData,
     init_sleep_time: int = 30,
-) -> TestCase:
+) -> TestCase:  # fixme docstring, ret value
     """Check if the dataset in the test data file exists in the tenant.
 
     Args:
@@ -665,7 +665,7 @@ def push_test_data_to_tenant(
         push_test_data_test_case.system_err = "\n".join(system_errors)
         push_test_data_test_case.result += [Failure(FAILURE_TO_PUSH_EXPLANATION)]
     else:
-        system_out = "Test data pushed successfully"
+        system_out = "Test data pushed successfully"  # fixme add test data id
         push_test_data_test_case.system_out = system_out
         logger.info(f"[green]{system_out}[/green]", extra={"markup": True})
     push_test_data_test_case.time = duration_since_start_time(
@@ -738,7 +738,7 @@ def verify_pack_exists_on_tenant(
                 upload_result = 1
         if not interactive or upload_result != 0:
             logger.error(
-                "[red]Please install or upload the pack to the tenant and try again[/red]",
+                "[red]Pack does not exist on the tenant. Please install or upload the pack and try again[/red]",
                 extra={"markup": True},
             )
             typer.echo(
@@ -756,7 +756,7 @@ def verify_test_data_exists(test_data_path: Path) -> Tuple[List[UUID], List[UUID
 
     Returns:
         Tuple[List[str], List[str]]: Tuple of lists where the first list is test event
-            first list: ids that do not have example event data.
+            first list: ids that do not have example event data.  # fixme rename function is_test_data_exists_on_server
             second list is test event ids that do not have expected_values to check.
     """
     missing_event_data, missing_expected_values_data = [], []
@@ -796,7 +796,7 @@ def validate_modeling_rule(
         ctx (typer.Context): Typer context.
     """
     logger.info(
-        f"[cyan]<<<< Test Modeling Rule:{get_relative_path_to_content(modeling_rule_directory)} >>>>[/cyan]",
+        f"[cyan]<<<< Test Modeling Rule: {get_relative_path_to_content(modeling_rule_directory)} >>>>[/cyan]",
         extra={"markup": True},
     )
     modeling_rule = ModelingRule(modeling_rule_directory.as_posix())
@@ -839,7 +839,7 @@ def validate_modeling_rule(
     if CI_PIPELINE_ID:
         modeling_rule_test_suite.add_property("ci_pipeline_id", CI_PIPELINE_ID)
     if modeling_rule.testdata_path:
-        logger.info(
+        logger.info(  # fixme merge log lines
             f"[cyan]Test data file found at {modeling_rule.testdata_path}[/cyan]",
             extra={"markup": True},
         )
@@ -958,7 +958,7 @@ def validate_modeling_rule(
             and not modeling_rule_test_suite.failures
         ):
             logger.info(
-                "[green]Mappings validated successfully[/green]", extra={"markup": True}
+                "[green]All mappings validated successfully[/green]", extra={"markup": True}
             )
             return True, modeling_rule_test_suite
         return False, modeling_rule_test_suite
@@ -1009,7 +1009,7 @@ def validate_modeling_rule(
                 )
                 init_td_cmd.invoke(init_td_cmd_ctx)
 
-                if modeling_rule.testdata_path:
+                if modeling_rule.testdata_path:  # fixme merge log lines
                     logger.info(
                         f"[green]Test data file generated for "
                         f"{get_relative_path_to_content(modeling_rule_directory)}[/green]",
@@ -1051,7 +1051,7 @@ def validate_modeling_rule(
         return False, None
 
 
-def handle_missing_event_data_in_modeling_rule(
+def handle_missing_event_data_in_modeling_rule(  # fixme docstring
     missing_event_data: List[UUID],
     modeling_rule: ModelingRule,
     modeling_rule_test_suite: TestSuite,

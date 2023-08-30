@@ -760,7 +760,8 @@ class TestTheTestModelingRuleCommandSingleRule:
                     # Assert
                     assert result.exit_code == 0
                     assert str_in_call_args_list(
-                        logger_info.call_args_list, "Mappings validated successfully"
+                        logger_info.call_args_list,
+                        "All mappings validated successfully",
                     )
         except typer.Exit:
             assert False, "No exception should be raised in this scenario."
@@ -888,7 +889,8 @@ class TestTheTestModelingRuleCommandSingleRule:
                     # Assert
                     assert result.exit_code == 0
                     assert str_in_call_args_list(
-                        logger_info.call_args_list, "Mappings validated successfully"
+                        logger_info.call_args_list,
+                        "All mappings validated successfully",
                     )
         except typer.Exit:
             assert False, "No exception should be raised in this scenario."
@@ -1020,7 +1022,8 @@ class TestTheTestModelingRuleCommandSingleRule:
                     # Assert
                     assert result.exit_code == 0
                     assert str_in_call_args_list(
-                        logger_info.call_args_list, "Mappings validated successfully"
+                        logger_info.call_args_list,
+                        "All mappings validated successfully",
                     )
                     # make sure the schema validation was skipped.
                     schema_path = pack.modeling_rules[0].schema.path
@@ -1384,7 +1387,8 @@ class TestTheTestModelingRuleCommandMultipleRules:
                         logger_error.call_args_list, f"Pack {pack_1.name} was not found"
                     )
                     assert str_in_call_args_list(
-                        logger_info.call_args_list, "Mappings validated successfully"
+                        logger_info.call_args_list,
+                        "All mappings validated successfully",
                     )
         except typer.Exit:
             assert False, "No exception should be raised in this scenario."

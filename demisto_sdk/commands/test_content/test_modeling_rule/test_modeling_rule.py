@@ -1,4 +1,4 @@
-import contextlib
+import logging
 import os
 from datetime import datetime, timezone
 from pathlib import Path
@@ -10,6 +10,14 @@ import dateparser
 import pytz
 import requests
 import typer
+from commands.test_content.test_modeling_rule.constants import (
+    EXPECTED_SCHEMA_MAPPINGS,
+    FAILURE_TO_PUSH_EXPLANATION,
+    NOT_AVAILABLE,
+    SYNTAX_ERROR_IN_MODELING_RULE,
+    TIME_ZONE_WARNING,
+    XQL_QUERY_ERROR_EXPLANATION,
+)
 from junitparser import Error, Failure, JUnitXml, Skipped, TestCase, TestSuite
 from junitparser.junitparser import Result
 from tabulate import tabulate
@@ -22,21 +30,13 @@ from tenacity import (
 )
 from typer.main import get_command_from_info
 
-from commands.test_content.test_modeling_rule.constants import (
-    EXPECTED_SCHEMA_MAPPINGS,
-    SYNTAX_ERROR_IN_MODELING_RULE,
-    FAILURE_TO_PUSH_EXPLANATION,
-    XQL_QUERY_ERROR_EXPLANATION,
-    TIME_ZONE_WARNING,
-    NOT_AVAILABLE,
-)
 from demisto_sdk.commands.common.content.objects.pack_objects.modeling_rule.modeling_rule import (
     ModelingRule,
     SingleModelingRule,
 )
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.handlers import (
-    DEFAULT_JSON_HANDLER as json,  # F401
+    DEFAULT_JSON_HANDLER as json,
 )
 from demisto_sdk.commands.common.logger import (
     handle_deprecated_args,
@@ -44,8 +44,10 @@ from demisto_sdk.commands.common.logger import (
     logging_setup,
 )
 from demisto_sdk.commands.common.tools import is_epoch_datetime, parse_int_or_default
-from demisto_sdk.commands.test_content.test_modeling_rule import init_test_data
-from demisto_sdk.commands.test_content.xsiam_tools.test_data import Validations
+from demisto_sdk.commands.test_content.xsiam_tools.test_data import (
+    TestData,
+    Validations,
+)
 from demisto_sdk.commands.test_content.xsiam_tools.xsiam_client import (
     XsiamApiClient,
     XsiamApiClientConfig,
@@ -169,6 +171,7 @@ def get_type_pretty_name(obj: Any) -> str:
         datetime: "datetime",
     }.get(type(obj), str(type(obj)))
 
+
 def create_retrying_caller(retry_attempts: int, sleep_interval: int) -> Retrying:
     """Create a Retrying object with the given retry_attempts and sleep_interval."""
     sleep_interval = parse_int_or_default(sleep_interval, XSIAM_CLIENT_SLEEP_INTERVAL)
@@ -213,7 +216,7 @@ def verify_results(
     modeling_rule: ModelingRule,
     tested_dataset: str,
     results: List[dict],
-    test_data: init_test_data.TestData,
+    test_data: TestData,
 ) -> List[TestCase]:
     """Verify that the results of the XQL query match the expected values.
 
@@ -280,7 +283,7 @@ def verify_results(
 def verify_results_against_test_data(
     result_test_case: TestCase,
     result: Dict[str, Any],
-    test_data: init_test_data.TestData,
+    test_data: TestData,
     td_event_id: str,
 ):
     """Verify that the results of the XQL query match the expected values."""
@@ -299,7 +302,7 @@ def verify_results_against_test_data(
     if not tenant_timezone:
         result_test_case_system_out.append(TIME_ZONE_WARNING)
         logger.warning(f"[yellow]{TIME_ZONE_WARNING}[/yellow]")
-    if expected_values:  # fixme, invert if
+    if expected_values:
         if (
             expected_time_value := expected_values.get(SingleModelingRule.TIME_FIELD)
         ) and (time_value := result.get(SingleModelingRule.TIME_FIELD)):
@@ -307,7 +310,7 @@ def verify_results_against_test_data(
                 time_value, "." in expected_time_value, tenant_timezone
             )
         table_result = create_table(expected_values, result)
-        typer.echo(table_result)  # fixme logger.info
+        logger.info(f"\n{table_result}")
         for key, val in expected_values.items():
             if val:
                 result_val = result.get(key)
@@ -337,8 +340,8 @@ def verify_results_against_test_data(
                             f"received type: {get_type_pretty_name(result_val)}"
                         )
                         logger.error(
-                            f'[red][bold]{key}[/bold] --- "{result_val}" != "{val}"\n'
-                            f' [bold]{key}[/bold] --- Received value type: "{get_type_pretty_name(result_val)}" '
+                            f'[red][bold]{key}[/bold][red] --- "{result_val}" != "{val}"\n'
+                            f' [bold]{key}[/bold][red] --- Received value type: "{get_type_pretty_name(result_val)}" '
                             f'!= Expected value type: "{get_type_pretty_name(val)}"[/red]',
                             extra={"markup": True},
                         )
@@ -386,7 +389,7 @@ def validate_expected_values(
     xsiam_client: XsiamApiClient,
     retrying_caller: Retrying,
     modeling_rule: ModelingRule,
-    test_data: init_test_data.TestData,
+    test_data: TestData,
 ) -> List[TestCase]:
     """Validate the expected_values in the given test data file."""
     validate_expected_values_test_cases = []
@@ -432,7 +435,8 @@ def validate_expected_values(
 
 
 def validate_schema_aligned_with_test_data(
-    test_data: init_test_data.TestData, schema: Dict
+    test_data: TestData,
+    schema: Dict,
 ) -> Tuple[bool, List[Result]]:
     """
     Validates that the schema is aligned with the test-data types.
@@ -512,7 +516,7 @@ def validate_schema_aligned_with_test_data(
                         results.append(Error(err))
                         error_logs.add(
                             f"[red][bold]the field {event_key} has mismatch on type or is_array in "
-                            f"event ID {event_log.test_data_event_id} between testdata and schema[/bold] --- "
+                            f"event ID {event_log.test_data_event_id} between testdata and schema[/bold][red] --- "
                             f'TestData Mapping "{test_data_key_mappings}" != Schema Mapping "{schema_key_mappings}"[/red]'
                         )
                         errors_occurred = True
@@ -541,9 +545,9 @@ def validate_schema_aligned_with_test_data(
 def check_dataset_exists(
     xsiam_client: XsiamApiClient,
     retrying_caller: Retrying,
-    test_data: init_test_data.TestData,
+    test_data: TestData,
     init_sleep_time: int = 30,
-) -> TestCase:  # fixme docstring, ret value
+) -> TestCase:
     """Check if the dataset in the test data file exists in the tenant.
 
     Args:
@@ -551,7 +555,8 @@ def check_dataset_exists(
         retrying_caller (tenacity.Retrying): The retrying caller object.
         test_data (init_test_data.TestData): The data parsed from the test data file.
         init_sleep_time (int, optional): The number of seconds to wait for dataset installation. Defaults to 30.
-
+    Returns:
+        TestCase: Test case for checking if the dataset exists in the tenant.
     """
     process_failed = False
     dataset_set = {data.dataset for data in test_data.data}
@@ -616,7 +621,7 @@ def push_test_data_to_tenant(
     xsiam_client: XsiamApiClient,
     retrying_caller: Retrying,
     mr: ModelingRule,
-    test_data: init_test_data.TestData,
+    test_data: TestData,
 ) -> TestCase:
     """Push the test data to the tenant.
 
@@ -665,7 +670,7 @@ def push_test_data_to_tenant(
         push_test_data_test_case.system_err = "\n".join(system_errors)
         push_test_data_test_case.result += [Failure(FAILURE_TO_PUSH_EXPLANATION)]
     else:
-        system_out = "Test data pushed successfully"  # fixme add test data id
+        system_out = f"Test data pushed successfully for Modeling rule:{get_relative_path_to_content(mr.path)}"
         push_test_data_test_case.system_out = system_out
         logger.info(f"[green]{system_out}[/green]", extra={"markup": True})
     push_test_data_test_case.time = duration_since_start_time(
@@ -748,7 +753,9 @@ def verify_pack_exists_on_tenant(
     return True
 
 
-def verify_test_data_exists(test_data_path: Path) -> Tuple[List[UUID], List[UUID]]:
+def is_test_data_exists_on_server(
+    test_data_path: Path,
+) -> Tuple[List[UUID], List[UUID]]:
     """Verify that the test data exists and is valid.
 
     Args:
@@ -756,11 +763,11 @@ def verify_test_data_exists(test_data_path: Path) -> Tuple[List[UUID], List[UUID
 
     Returns:
         Tuple[List[str], List[str]]: Tuple of lists where the first list is test event
-            first list: ids that do not have example event data.  # fixme rename function is_test_data_exists_on_server
+            first list: ids that do not have example event data.
             second list is test event ids that do not have expected_values to check.
     """
     missing_event_data, missing_expected_values_data = [], []
-    test_data = init_test_data.TestData.parse_file(test_data_path)
+    test_data = TestData.parse_file(test_data_path)
     for event_log in test_data.data:
         if not event_log.event_data:
             missing_event_data.append(event_log.test_data_event_id)
@@ -839,15 +846,14 @@ def validate_modeling_rule(
     if CI_PIPELINE_ID:
         modeling_rule_test_suite.add_property("ci_pipeline_id", CI_PIPELINE_ID)
     if modeling_rule.testdata_path:
-        logger.info(  # fixme merge log lines
-            f"[cyan]Test data file found at {modeling_rule.testdata_path}[/cyan]",
-            extra={"markup": True},
-        )
         logger.info(
-            "[cyan]Checking that event data was added to the test data file[/cyan]",
+            f"[cyan]Test data file found at {modeling_rule.testdata_path}\n"
+            f"Checking that event data was added to the test data file[/cyan]",
             extra={"markup": True},
         )
-        missing_event_data, _ = verify_test_data_exists(modeling_rule.testdata_path)
+        missing_event_data, _ = is_test_data_exists_on_server(
+            modeling_rule.testdata_path
+        )
 
         # initialize xsiam client
         xsiam_client_cfg = XsiamApiClientConfig(
@@ -858,7 +864,9 @@ def validate_modeling_rule(
             collector_token=collector_token,  # type: ignore[arg-type]
         )
         xsiam_client = XsiamApiClient(xsiam_client_cfg)
-        if not verify_pack_exists_on_tenant(xsiam_client, modeling_rule, interactive):
+        if not verify_pack_exists_on_tenant(
+            xsiam_client, retrying_caller, modeling_rule, interactive
+        ):
             test_case = TestCase(
                 "Pack not installed on tenant", classname="Modeling Rule"
             )
@@ -867,9 +875,7 @@ def validate_modeling_rule(
                 test_case,
                 modeling_rule_test_suite,
             )
-        test_data = init_test_data.TestData.parse_file(
-            modeling_rule.testdata_path.as_posix()
-        )
+        test_data = TestData.parse_file(modeling_rule.testdata_path.as_posix())
 
         schema_test_case = TestCase("Validate Schema", classname="Modeling Rule")
         if schema_path := modeling_rule.schema_path:
@@ -931,13 +937,15 @@ def validate_modeling_rule(
                     executed_command,
                 )
             push_test_data_test_case = push_test_data_to_tenant(
-                xsiam_client, modeling_rule, test_data
+                xsiam_client, retrying_caller, modeling_rule, test_data
             )
             modeling_rule_test_suite.add_testcase(push_test_data_test_case)
             if not push_test_data_test_case.is_passed:
                 return False, modeling_rule_test_suite
 
-            dataset_set_test_case = check_dataset_exists(xsiam_client, test_data)
+            dataset_set_test_case = check_dataset_exists(
+                xsiam_client, retrying_caller, test_data
+            )
             modeling_rule_test_suite.add_testcase(dataset_set_test_case)
             if not dataset_set_test_case.is_passed:
                 return False, modeling_rule_test_suite
@@ -950,7 +958,7 @@ def validate_modeling_rule(
             "[cyan]Validating expected_values...[/cyan]", extra={"markup": True}
         )
         validate_expected_values_test_cases = validate_expected_values(
-            xsiam_client, modeling_rule, test_data
+            xsiam_client, retrying_caller, modeling_rule, test_data
         )
         modeling_rule_test_suite.add_testcases(validate_expected_values_test_cases)
         if (
@@ -958,7 +966,8 @@ def validate_modeling_rule(
             and not modeling_rule_test_suite.failures
         ):
             logger.info(
-                "[green]All mappings validated successfully[/green]", extra={"markup": True}
+                "[green]All mappings validated successfully[/green]",
+                extra={"markup": True},
             )
             return True, modeling_rule_test_suite
         return False, modeling_rule_test_suite
@@ -1009,26 +1018,20 @@ def validate_modeling_rule(
                 )
                 init_td_cmd.invoke(init_td_cmd_ctx)
 
-                if modeling_rule.testdata_path:  # fixme merge log lines
+                if modeling_rule.testdata_path:
                     logger.info(
                         f"[green]Test data file generated for "
-                        f"{get_relative_path_to_content(modeling_rule_directory)}[/green]",
+                        f"{get_relative_path_to_content(modeling_rule_directory)}"
+                        f"Please complete the test data file at {get_relative_path_to_content(modeling_rule.testdata_path)} "
+                        f"with test event(s) data and expected outputs and then run:\n[bold]{executed_command}[/bold][/green]",
                         extra={"markup": True},
                     )
-                    logger.info(
-                        f"[cyan]Please complete the test data file at "
-                        f"{get_relative_path_to_content(modeling_rule.testdata_path)} "
-                        "with test event(s) data and expected outputs and then rerun[/cyan]",
-                        extra={"markup": True},
-                    )
-                    typer.echo(executed_command)
                     return True, None
-                else:
-                    logger.error(
-                        f"[red]Failed to generate test data file for "
-                        f"{get_relative_path_to_content(modeling_rule_directory)}[/red]",
-                        extra={"markup": True},
-                    )
+                logger.error(
+                    f"[red]Failed to generate test data file for "
+                    f"{get_relative_path_to_content(modeling_rule_directory)}[/red]",
+                    extra={"markup": True},
+                )
             else:
                 logger.warning(
                     f"[yellow]Skipping test data file generation for "
@@ -1051,12 +1054,21 @@ def validate_modeling_rule(
         return False, None
 
 
-def handle_missing_event_data_in_modeling_rule(  # fixme docstring
+def handle_missing_event_data_in_modeling_rule(
     missing_event_data: List[UUID],
     modeling_rule: ModelingRule,
     modeling_rule_test_suite: TestSuite,
     executed_command: str,
 ) -> Tuple[bool, TestSuite]:
+    """Handle missing event data in the modeling rule.
+    Args:
+        missing_event_data (List[UUID]): List of event ids that do not have example event data.
+        modeling_rule (ModelingRule): Modeling rule object parsed from the modeling rule file.
+        modeling_rule_test_suite (TestSuite): Test suite for the modeling rule.
+        executed_command (str): The executed command.
+    Returns:
+        Tuple[bool, TestSuite]: Tuple of a boolean indicating whether the test passed and the test suite.
+    """
     missing_event_data_test_case = TestCase(
         "Missing Event Data", classname="Modeling Rule"
     )
@@ -1079,14 +1091,13 @@ def handle_missing_event_data_in_modeling_rule(  # fixme docstring
         f"with test event(s) data and expected outputs and then rerun"
     )
     logger.warning(
-        f"[yellow]{suffix}[/yellow]",
+        f"[yellow]{suffix}[/yellow]\n[bold][yellow]{executed_command}[/yellow][/bold]",
         extra={"markup": True},
     )
-    system_errors.append(suffix)
+    system_errors.extend([suffix, executed_command])
     missing_event_data_test_case.system_err = "\n".join(system_errors)
     modeling_rule_test_suite.add_testcase(missing_event_data_test_case)
 
-    typer.echo(executed_command)
     return False, modeling_rule_test_suite
 
 
@@ -1107,7 +1118,6 @@ def add_result_to_test_case(
     test_case.result += [Error(err)]
     modeling_rule_test_suite.add_testcase(test_case)
     return False, modeling_rule_test_suite
-
 
 
 # ====================== test-modeling-rule ====================== #
@@ -1218,6 +1228,7 @@ def test_modeling_rule(
     ),
     output_junit_file: Optional[Path] = typer.Option(
         None, "-jp", "--junit-path", help="Path to the output JUnit XML file."
+    ),
     sleep_interval: int = typer.Option(
         XSIAM_CLIENT_SLEEP_INTERVAL,
         "-si",
@@ -1292,7 +1303,6 @@ def test_modeling_rule(
             logger.error(
                 f"[red]Error testing modeling rule {get_relative_path_to_content(modeling_rule_directory)}[/red]",
                 extra={"markup": True},
-
             )
         if modeling_rule_test_suite:
             modeling_rule_test_suite.add_property("start_time", start_time)

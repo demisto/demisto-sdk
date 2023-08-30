@@ -3173,7 +3173,7 @@ def test_validate_no_disallowed_terms_in_customer_facing_docs_end_to_end(repo, m
             {
                 "Packs/test/Integrations/test/test.yml",
             },
-        )
+        ),
     ],
 )
 def test_get_all_files_edited_in_pack_ignore(
@@ -3209,12 +3209,8 @@ def test_get_all_files_edited_in_pack_ignore(
         "demisto_sdk.commands.validate.validate_manager.get_remote_file",
         return_value=remote_file_content,
     )
-    mocker.patch.object(
-        GitUtil, "find_primary_branch", return_value="main"
-    )
-    mocker.patch.object(
-        GitUtil, "get_local_remote_file_content", return_value=""
-    )
+    mocker.patch.object(GitUtil, "find_primary_branch", return_value="main")
+    mocker.patch.object(GitUtil, "get_local_remote_file_content", return_value="")
     validate_manager = ValidateManager()
     config = ConfigParser(allow_no_value=True)
     config.read_string(new_file_content)

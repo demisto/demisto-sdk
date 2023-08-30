@@ -60,7 +60,7 @@ class TestIDSetCreator:
         id_set_creator = IDSetCreator(self.file_path)
 
         id_set_creator.create_id_set()
-        assert os.path.exists(self.file_path)
+        assert Path(self.file_path).exists()
 
     def test_create_id_set_on_specific_pack_output(self):
         """
@@ -78,7 +78,7 @@ class TestIDSetCreator:
         id_set_creator = IDSetCreator(self.file_path, input="Packs/AMP")
 
         id_set_creator.create_id_set()
-        assert os.path.exists(self.file_path)
+        assert Path(self.file_path).exists()
 
     def test_create_id_set_no_output(self, mocker):
         import demisto_sdk.commands.common.update_id_set as uis
@@ -87,7 +87,7 @@ class TestIDSetCreator:
         id_set_creator = IDSetCreator(output=None)
 
         id_set, _, _ = id_set_creator.create_id_set()
-        assert not os.path.exists(self.file_path)
+        assert not Path(self.file_path).exists()
         assert id_set is not None
 
         keys = set(id_set.keys())

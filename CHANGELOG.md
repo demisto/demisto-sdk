@@ -1,6 +1,7 @@
 # Changelog
 ## Unreleased
 * Fixed an issue where **update-release-notes** generated "available from Cortex XSOAR" instead of "from XSIAM" when run on XSIAM event collectors.
+* Added support for controlling the sleep interval and retry count for **modeling-rules test** command.
 * Added support for a new marketplace tag `xsoar_saas`.
 * Added support for yml hidden parameters for `xsoar_saas` marketplace, as part of the **prepare_content** command.
 * Added support for custom documentation that will appear only in `xsoar_saas` marketplace, as part of the **prepare_content** command.

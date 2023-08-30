@@ -1562,6 +1562,7 @@ ALLOWED_IGNORE_ERRORS = (
         "DB100",
         "GR103",
         "IN158",
+        "IN159",
     ]
 )
 

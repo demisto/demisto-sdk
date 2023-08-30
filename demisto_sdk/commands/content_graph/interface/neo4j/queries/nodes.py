@@ -12,7 +12,7 @@ from demisto_sdk.commands.content_graph.common import (
 )
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.common import (
     run_query,
-    to_neo4j_map,
+    to_node_pattern,
 )
 
 NESTING_LEVEL = 5
@@ -180,7 +180,7 @@ def create_nodes_by_type(
 def _match(
     tx: Transaction,
     marketplace: MarketplaceVersions = None,
-    content_type: Optional[ContentType] = None,
+    content_type: ContentType = ContentType.BASE_CONTENT,
     ids_list: Optional[Iterable[int]] = None,
     **properties,
 ) -> List[graph.Node]:
@@ -195,12 +195,7 @@ def _match(
     Returns:
         List[graph.Node]: list of neo4j nodes.
     """
-    params_str, where_clause = to_neo4j_map(properties)
-
-    content_type_str = f":{content_type}" if content_type else ""
     where = []
-    if where_clause:
-        where.extend(where_clause)
     if ids_list:
         where.append("elementId(node) IN $filter_list")
     if marketplace:
@@ -208,7 +203,7 @@ def _match(
 
     where_str = "WHERE " + " AND ".join(where) if where else ""
     query = f"""// Retrieves nodes according to given parameters.
-MATCH (node{content_type_str}{params_str})
+MATCH {to_node_pattern(properties, content_type=content_type)}
 {where_str}
 RETURN node"""
 

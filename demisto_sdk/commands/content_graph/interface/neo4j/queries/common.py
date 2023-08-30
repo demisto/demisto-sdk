@@ -1,7 +1,7 @@
 import traceback
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, Iterable, Tuple
+from typing import Any, Dict, Iterable
 
 from neo4j import Result, Transaction
 from packaging.version import Version
@@ -44,32 +44,35 @@ def node_map(properties: Dict[str, Any]) -> str:
     return f'{{{", ".join([f"{k}: {v}" for k, v in properties.items()])}}}'
 
 
-def to_neo4j_map(
-    properties: dict, node_variable_name: str = "node"
-) -> Tuple[str, list]:
-    """This function is used to filter nodes by their properties.
+def to_neo4j_map(properties: dict) -> str:
+    properties = {
+        k: f'"{v}"' if isinstance(v, (str, Path)) else str(v).lower()
+        for k, v in properties.items()
+    }
+    params_str = ", ".join(f"{k}: {v}" for k, v in properties.items())
+    return f"{{{params_str}}}" if params_str else ""
 
-    Args:
-        properties (dict): The properties to filter by.
-        node_variable_name (str, optional): The variable name of the node in the neo4j query. Defaults to "node".
 
-    Returns:
-        Tuple[str, list]: The first value is a map of neo4j properties to filter in a query.
-                          The second value is a list of where clauses to filter in a query.
+def to_neo4j_predicates(properties: dict, varname: str = "node") -> str:
+    predicates = [f"{varname}.{k} IN {list(v)}" for k, v in properties.items()]
+    return f"WHERE {' AND '.join(predicates)}" if predicates else ""
 
-    """
-    updated_properties = {}
-    where_clause = []
-    for key, prop in properties.items():
-        if isinstance(prop, (str, Path)):
-            updated_properties[key] = f"'{prop}'"
-        elif isinstance(prop, bool):
-            updated_properties[key] = str(prop).lower()
-        elif isinstance(prop, Iterable):
-            where_clause.append(f"{node_variable_name}.{key} IN {list(prop)}")
-    params_str = ", ".join(f"{k}: {v}" for k, v in updated_properties.items())
-    params_str = f"{{{params_str}}}" if params_str else ""
-    return params_str, where_clause
+
+def to_node_pattern(
+    properties: dict,
+    varname: str = "node",
+    content_type: ContentType = ContentType.BASE_CONTENT,
+) -> str:
+    neo4j_primitive_types = (str, bool, Path)
+    exact_match_properties = {
+        k: v for k, v in properties.items() if isinstance(v, neo4j_primitive_types)
+    }
+    predicates_match_properties = {
+        k: v
+        for k, v in properties.items()
+        if not isinstance(v, neo4j_primitive_types) and isinstance(v, Iterable)
+    }
+    return f"({varname}:{labels_of(content_type)}{to_neo4j_map(exact_match_properties)} {to_neo4j_predicates(predicates_match_properties, varname)})"
 
 
 def run_query(tx: Transaction, query: str, **kwargs) -> Result:

@@ -5,6 +5,7 @@
 * Added support for a new marketplace tag `xsoar_saas`.
 * Added support for yml hidden parameters for `xsoar_saas` marketplace, as part of the **prepare_content** command.
 * Added support for custom documentation that will appear only in `xsoar_saas` marketplace, as part of the **prepare_content** command.
+* Fixed an issue where the (`GR108`) validation did not fail in the validate command with the `-a` flag.
 * Modified **prepare_content** command to be platform specific. For xsoar-saas and XSIAM regarding pack readme and integration description images in markdown files.
 
 ## 1.19.2
@@ -13,7 +14,6 @@
 * Added support to control the maximum file size and log rotation files count in the sdk logger.
 * Fixed an issue with where passing the deprecated logging arguments to any command presented an incorrect recommendation for argument substitution.
 * Fixed an issue where the documentation of logging arguments was incorrect.
-* Fixed an issue where the (`GR108`) validation did not fail in the validate command with the `-a` flag.
 * Fixed an issue in calculating content graph hash when creating or updating it.
 * Fixed an issue where the coloring of the logging messages was not working properly when mixing both Console log and Parallel log handlers.
 * Calling **graph create** or **graph update** now run the commands with default arguments, instead of showing the command help.

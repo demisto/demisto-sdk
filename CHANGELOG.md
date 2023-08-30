@@ -1,6 +1,7 @@
 # Changelog
 ## Unreleased
 * Fixed an issue where **update-release-notes** generated "available from Cortex XSOAR" instead of "from XSIAM" when run on XSIAM event collectors.
+* Added support for controlling the sleep interval and retry count for **modeling-rules test** command.
 * Added support for a new marketplace tag `xsoar_saas`.
 * Fixed an issue where the **validate -g** failed on `BA102` in external repos even when ignored.
 * Fixed an issue where the **validate -g** failed getting the content of `.pack-ignore` files when the external repository is not hosted in Github.

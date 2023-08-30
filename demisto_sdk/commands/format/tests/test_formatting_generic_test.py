@@ -306,16 +306,14 @@ def test_adds_period_to_description(
     mocker: MockerFixture, description: str, expected_description: str
 ) -> None:
     """
-    Testing the `adds_period_to_description` function.
+    Test case for the `adds_period_to_description`.
 
-    This test checks the formatting of the `adds_period_to_description` function.
-    Checks if the description has less than three words, in which case a period is not added.
-    Otherwise, a period is added if is missing...
-
-    Args:
-        mocker: The mocker object for patching.
-        test_yml_data (dict): The test YAML data.
-        expected_yml_data (dict): The expected YAML data after applying the function.
+    Given:
+        a description and its expected description with a period,
+    When:
+        the `adds_period_to_description` method is called,
+    Then:
+        the description in the YAML data should have a period added if is not end with url.
     """
     yml_data = {
         "description": description,

@@ -177,7 +177,7 @@ class TestValidators:
     @classmethod
     def setup_class(cls):
         for dir_to_create in DIR_LIST:
-            if not os.path.exists(dir_to_create):
+            if not Path(dir_to_create).exists():
                 cls.CREATED_DIRS.append(dir_to_create)
                 os.makedirs(dir_to_create)
         copyfile(CONF_JSON_MOCK_PATH, CONF_PATH)
@@ -186,7 +186,7 @@ class TestValidators:
     def teardown_class(cls):
         Path(CONF_PATH).unlink()
         for dir_to_delete in cls.CREATED_DIRS:
-            if os.path.exists(dir_to_delete):
+            if Path(dir_to_delete).exists():
                 os.rmdir(dir_to_delete)
 
     INPUTS_IS_VALID_VERSION = [
@@ -2341,19 +2341,23 @@ def test_check_file_relevance_and_format_path_type_missing_file(mocker):
     - file type is not supported
 
     Then
-    - return None, call error handler
+    - make sure that empty strings are returned
+    - make sure BA102 is returned as the file cannot be recognized
     """
     validator_obj = ValidateManager(is_external_repo=True, check_is_unskipped=False)
-    mocked_handler = mocker.patch.object(
-        validator_obj, "handle_error", return_value=False
-    )
+    logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
+
     mocker.patch(
         "demisto_sdk.commands.validate.validate_manager.find_type", return_value=None
     )
     assert validator_obj.check_file_relevance_and_format_path(
         "Packs/type_missing_filename", None, set()
     ) == ("", "", False)
-    mocked_handler.assert_called()
+
+    assert str_in_call_args_list(
+        logger_error.call_args_list,
+        "[BA102] - File Packs/type_missing_filename is not supported in the validate command",
+    )
 
 
 @pytest.mark.parametrize(
@@ -3143,33 +3147,57 @@ def test_validate_no_disallowed_terms_in_customer_facing_docs_end_to_end(repo, m
 
 
 @pytest.mark.parametrize(
-    "modified_files, new_file_content, remote_file_content, expected_results",
+    "modified_files, new_file_content, remote_file_content, local_file_content, expected_results",
     [
         (
             {"Packs/test/.pack-ignore"},
             "[file:test.yml]\nignore=BA108,BA109\n",
             "[file:test.yml]\nignore=BA108,BA109,DS107\n",
+            "",
             {"Packs/test/Integrations/test/test.yml"},
         ),
         (
             {"Packs/test/.pack-ignore"},
             "[file:test.yml]\nignore=BA108,BA109,DS107\n",
             "[file:test.yml]\nignore=BA108,BA109,DS107\n",
+            "",
             set(),
         ),
         (
             {"Packs/test1/.pack-ignore"},
             "[file:test.yml]\nignore=BA108,BA109,DS107\n",
             "[file:test2.yml]\nignore=BA108,BA109,DS107\n",
+            "",
             {
                 "Packs/test1/Integrations/test/test.yml",
                 "Packs/test1/Integrations/test2/test2.yml",
             },
         ),
+        (
+            {"Packs/test/.pack-ignore"},
+            "[file:test.yml]\nignore=BA108\n",
+            b"",
+            "",
+            {
+                "Packs/test/Integrations/test/test.yml",
+            },
+        ),
+        (
+            {"Packs/test1/.pack-ignore"},
+            "[file:test.yml]\nignore=BA108,BA109,DS107\n[file:test2.yml]\nignore=BA108,BA109,DS107\n",
+            "",
+            "[file:test.yml]\nignore=BA108,BA109,DS107\n",
+            {"Packs/test1/Integrations/test2/test2.yml"},
+        ),
     ],
 )
 def test_get_all_files_edited_in_pack_ignore(
-    mocker, modified_files, new_file_content, remote_file_content, expected_results
+    mocker,
+    modified_files,
+    new_file_content,
+    remote_file_content,
+    local_file_content,
+    expected_results,
 ):
     """
     Given:
@@ -3177,6 +3205,8 @@ def test_get_all_files_edited_in_pack_ignore(
     - Case 1: pack-ignore mocks which vary by 1 validation.
     - Case 2: pack-ignore mocks which no differences.
     - Case 3: pack-ignore mocks where each file is pointed to a different integration yml.
+    - Case 4: old .pack-ignore that is empty and current .pack-ignore that was updated with ignored validation
+    - Case 5: old .pack-ignore which is not in the remote branch repo, but only exist in the local branch
 
     When:
     - Running get_all_files_edited_in_pack_ignore.
@@ -3186,6 +3216,8 @@ def test_get_all_files_edited_in_pack_ignore(
     - Case 1: Should return the file path only from the relevant pack (there's a similar file in a different pack)
     - Case 2: Should return empty set of extra files to test.
     - Case 3: Should return both file names.
+    - Case 4: Ensure the file that was changed in the .pack-ignore is collected
+    - Case 5: Ensure the file that was changed in the .pack-ignore is collected from the local repo
     """
     mocker.patch.object(
         GitUtil,
@@ -3199,6 +3231,10 @@ def test_get_all_files_edited_in_pack_ignore(
     mocker.patch(
         "demisto_sdk.commands.validate.validate_manager.get_remote_file",
         return_value=remote_file_content,
+    )
+    mocker.patch.object(GitUtil, "find_primary_branch", return_value="main")
+    mocker.patch.object(
+        GitUtil, "get_local_remote_file_content", return_value=local_file_content
     )
     validate_manager = ValidateManager()
     config = ConfigParser(allow_no_value=True)

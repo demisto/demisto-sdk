@@ -2,6 +2,7 @@ import logging
 import os
 import sys
 from logging.handlers import QueueHandler, QueueListener
+from pathlib import Path
 from queue import Queue
 from threading import Lock, currentThread
 from typing import Any, Dict, Set
@@ -130,7 +131,7 @@ class ParallelLoggingManager:
         self.console_handler.setFormatter(formatter)
         log_file_path = (
             os.path.join(ARTIFACTS_PATH, "logs", log_file_name)
-            if os.path.exists(os.path.join(ARTIFACTS_PATH, "logs"))
+            if Path(ARTIFACTS_PATH, "logs").exists()
             else os.path.join(ARTIFACTS_PATH, log_file_name)
         )
         self.file_handler = logging.FileHandler(log_file_path)

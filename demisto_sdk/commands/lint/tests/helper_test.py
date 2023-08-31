@@ -285,7 +285,7 @@ class TestGenerateCoverageReport:
 
     @staticmethod
     def mock_path_exists(mocker):
-        mocker.patch("os.path.exists", return_value=True)
+        mocker.patch("pathlib.Path.exists", return_value=True)
 
     def test_generate_coverage_report_with_report(self, mocker):
         mock_report = mocker.patch.object(self.coverage.Coverage, "report")

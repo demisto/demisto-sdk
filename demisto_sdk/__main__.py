@@ -200,11 +200,6 @@ def main(ctx, config, version, release_notes, **kwargs):
     config.configuration = Configuration()
     import dotenv
 
-    if sys.version_info[:2] == (3, 8):
-        logger.info(
-            "[red]Demisto-SDK will soon stop supporting Python 3.8. Please update your python environment.[/red]"
-        )
-
     dotenv.load_dotenv(CONTENT_PATH / ".env", override=True)  # type: ignore # load .env file from the cwd
     if (
         (not os.getenv("DEMISTO_SDK_SKIP_VERSION_CHECK")) or version
@@ -2736,7 +2731,7 @@ def openapi_codegen(ctx, **kwargs):
         output_dir = kwargs["output_dir"]
 
     # Check the directory exists and if not, try to create it
-    if not os.path.exists(output_dir):
+    if not Path(output_dir).exists():
         try:
             os.mkdir(output_dir)
         except Exception as err:

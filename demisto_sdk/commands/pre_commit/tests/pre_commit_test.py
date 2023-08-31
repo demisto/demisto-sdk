@@ -215,3 +215,73 @@ class TestPreprocessFiles:
         mocker.patch.object(GitUtil, "_get_staged_files", return_value=set())
         output = preprocess_files(all_files=True)
         assert output == expected_output
+
+
+def test_handle_python2_files_with_unit_test(mocker, repo: Repo):
+    """
+    Given:
+        python_version_to_files with python 2.7 and python 3.8 files, and unit_test is True
+    When:
+        Calling handle_python2_files
+    Then:
+        1. python_version_to_files should contain only python 3.8 files
+        2. The logger should print that it is running pre-commit with python 2.7 on file1.py
+        3. The exclude field of the run-unit-tests hook should be None
+        4. The exclude field of the other hooks should be file1.py
+    """
+    mocker.patch.object(
+        pre_commit_command,
+        "PRECOMMIT_TEMPLATE_PATH",
+        TEST_DATA_PATH / ".pre-commit-config_template.yaml",
+    )
+    mocker.patch.object(pre_commit_command, "CONTENT_PATH", Path(repo.path))
+    mocker.patch.object(pre_commit_command, "logger")
+    python_version_to_files = {"2.7": {"file1.py"}, "3.8": {"file2.py"}}
+    pre_commit_runner = pre_commit_command.PreCommitRunner(
+        None, python_version_to_files, ""
+    )
+
+    pre_commit_runner.handle_python2_files(unit_test=True)
+
+    assert pre_commit_runner.python_version_to_files == {"3.8": {"file2.py"}}
+    assert (
+        pre_commit_command.logger.info.call_args[0][0]
+        == "Running pre-commit with Python 2.7 on file1.py"
+    )
+
+    for hook in pre_commit_runner.hooks.values():
+        if hook["hook"]["id"] == "run-unit-tests":
+            assert hook["hook"].get("exclude") is None
+            continue
+        assert hook["hook"]["exclude"] == "file1.py"
+
+
+def test_handle_python2_files_no_unit_test(mocker, repo: Repo):
+    """
+    Given:
+        python_version_to_files with python 2.7 and python 3.8 files, and unit_test is False
+    When:
+        Calling handle_python2_files
+    Then:
+        1. python_version_to_files should contain only python 3.8 files
+        2. The logger should print the message that unit-tests were not selected
+    """
+    mocker.patch.object(
+        pre_commit_command,
+        "PRECOMMIT_TEMPLATE_PATH",
+        TEST_DATA_PATH / ".pre-commit-config_template.yaml",
+    )
+    mocker.patch.object(pre_commit_command, "CONTENT_PATH", Path(repo.path))
+    mocker.patch.object(pre_commit_command, "logger")
+    python_version_to_files = {"2.7": {"file1.py"}, "3.8": {"file2.py"}}
+    pre_commit_runner = pre_commit_command.PreCommitRunner(
+        None, python_version_to_files, ""
+    )
+
+    pre_commit_runner.handle_python2_files(unit_test=False)
+
+    assert pre_commit_runner.python_version_to_files == {"3.8": {"file2.py"}}
+    assert (
+        pre_commit_command.logger.info.call_args[0][0]
+        == "Skipping pre-commit with Python 2.7 because unit-tests were not selected"
+    )

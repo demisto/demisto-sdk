@@ -4393,9 +4393,9 @@ class Errors:
         context_outputs_url: str,
     ):
         return (
-            f"the {command_name} command returns the following outputs:\n{invalid_outputs}\nwhich using custom objects "
-            f"like:\n{used_objects} spelled incorrectly. Please Fix according to the list mentioned previously"
-            f" beginning.\nFor Further information: {context_outputs_url}"
+            f"The {command_name} command returns the following outputs:\n{invalid_outputs}\nwhich is using mandatory "
+            f"objects:\n{used_objects} spelled incorrectly. Please fix accordingly."
+            f"\nFor further information: {context_outputs_url}"
         )
 
     @staticmethod
@@ -4407,7 +4407,7 @@ class Errors:
         context_standard: str,
     ):
         return (
-            f"the {command_name} command is returning a reputation command context objects: {objects_missing_outputs}."
-            f" Some mandatory outputs are missing, or might be spelled incorrectly: {reputation_output}."
-            f" Fix according to context standard {context_standard}"
+            f"The {command_name} command is using a reputation command context objects: {objects_missing_outputs},"
+            f" which is missing the following mandatory outputs: {reputation_output}. "
+            f"For further info: {context_standard}"
         )

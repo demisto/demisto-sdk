@@ -8,7 +8,6 @@ from demisto_sdk.commands.common.constants import (
     ALERT_FETCH_REQUIRED_PARAMS,
     BANG_COMMAND_ARGS_MAPPING_DICT,
     BANG_COMMAND_NAMES,
-    CUSTOM_CONTEXT_OUTPUTS,
     DBOT_SCORES_DICT,
     DEFAULT_CONTENT_ITEM_FROM_VERSION,
     DEPRECATED_DESC_REGEX,
@@ -20,6 +19,7 @@ from demisto_sdk.commands.common.constants import (
     FIRST_FETCH_PARAM,
     INCIDENT_FETCH_REQUIRED_PARAMS,
     IOC_OUTPUTS_DICT,
+    MANDATORY_CONTEXT_OBJECTS_NAMES,
     MAX_FETCH,
     MAX_FETCH_PARAM,
     PACKS_DIR,
@@ -604,7 +604,7 @@ class IntegrationValidator(ContentEntityValidator):
         """check if all mandatory outputs for custom object do exist.
 
         Returns:
-            bool: Weather all mandatory outputs of custom outputs exist or not
+            bool: Whether all mandatory outputs of custom outputs exist or not
         """
         missing_outputs = []
         objects_missing_outputs = set()
@@ -634,7 +634,7 @@ class IntegrationValidator(ContentEntityValidator):
         return outputs_exist
 
     @staticmethod
-    def get_outputs(command: dict) -> Tuple[set, list, set]:
+    def get_outputs(command: dict) -> Tuple[set, list, set, set]:
         """get outputs of a command, and find custom objects used in the command outputs.
 
         Returns:
@@ -644,25 +644,26 @@ class IntegrationValidator(ContentEntityValidator):
         invalid_outputs = []
         custom_objects = set()
         context_outputs_paths = set()
+        used_iocs = set()
         for output in command.get("outputs") or []:
             context_path = output.get("contextPath", "")
             context_outputs_paths.add(context_path)
             custom_context_outputs = list(
                 filter(
                     lambda context: context_path.lower().startswith(context.lower()),
-                    CUSTOM_CONTEXT_OUTPUTS,
+                    MANDATORY_CONTEXT_OBJECTS_NAMES,
                 )
             )
 
             if custom_context_outputs:  # custom context output is used
                 custom_context_output = custom_context_outputs[0]
-                custom_objects.add(custom_context_output)
+                used_iocs.add(custom_context_output)
                 if (
                     custom_context_output not in context_path
                 ):  # the output is not spelled as expected
                     invalid_outputs.append(context_path)
                     custom_objects.add(custom_context_output)
-        return context_outputs_paths, invalid_outputs, custom_objects
+        return context_outputs_paths, invalid_outputs, custom_objects, used_iocs
 
     @error_codes("IN158")
     def is_valid_command_custom_outputs(self) -> bool:
@@ -677,9 +678,12 @@ class IntegrationValidator(ContentEntityValidator):
         outputs_valid = True
         outputs_exist = True
         for command in commands:
-            context_outputs_paths, invalid_outputs, custom_objects = self.get_outputs(
-                command
-            )
+            (
+                context_outputs_paths,
+                invalid_outputs,
+                custom_objects,
+                used_iocs,
+            ) = self.get_outputs(command)
 
             if invalid_outputs:
                 error_message, error_code = Errors.command_output_is_invalid(
@@ -696,7 +700,7 @@ class IntegrationValidator(ContentEntityValidator):
                 ):
                     outputs_valid = False
             outputs_exist = self.check_all_custom_outputs(
-                command.get("name"), context_outputs_paths, custom_objects
+                command.get("name"), context_outputs_paths, used_iocs
             )
         return all([outputs_valid, outputs_exist])
 

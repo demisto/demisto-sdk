@@ -1785,7 +1785,7 @@ class IntegrationValidator(ContentEntityValidator):
         valid = True
 
         dir_path = os.path.dirname(self.file_path)
-        if not os.path.exists(os.path.join(dir_path, "README.md")):
+        if not Path(dir_path, "README.md").exists():
             return True
 
         # Only run validation if the validation has not run with is_context_different_in_yml on readme

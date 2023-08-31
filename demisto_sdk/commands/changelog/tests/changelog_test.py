@@ -72,13 +72,16 @@ def test_get_all_logs(tmpdir, changelog_mock: Changelog):
     folder_path = Path(tmpdir / ".changelog")
     os.makedirs(folder_path)
     changelog.CHANGELOG_FOLDER = folder_path
-    log_file = {"logs": [{"description": "fixed an issue where test", "type": "fix"}], "pr_number": "12345"}
+    log_file = {
+        "logs": [{"description": "fixed an issue where test", "type": "fix"}],
+        "pr_number": "12345",
+    }
     log_file2 = {
         "logs": [
             {"description": "added a feature that test", "type": "feature"},
             {"description": "breaking changes: test", "type": "breaking"},
         ],
-        "pr_number": "43524"
+        "pr_number": "43524",
     }
     with (folder_path / "12345.yml").open("w") as f:
         yaml.dump(log_file, f)
@@ -89,13 +92,7 @@ def test_get_all_logs(tmpdir, changelog_mock: Changelog):
     assert len(log_files[0].logs) == 2
 
 
-@pytest.mark.parametrize(
-    "pr_name",
-    [
-        "v2.2.2",
-        ""
-    ]
-)
+@pytest.mark.parametrize("pr_name", ["v2.2.2", ""])
 def test_validate(mocker, changelog_mock: Changelog, pr_name: str):
     mock_validate_release = mocker.patch.object(Changelog, "_validate_release")
     mock_validate_branch = mocker.patch.object(Changelog, "_validate_branch")

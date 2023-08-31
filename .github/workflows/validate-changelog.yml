@@ -13,7 +13,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
         with:
-          fetch-depth: 1
+          fetch-depth: 3
 
       - name: Setup python
         uses: actions/setup-python@v4
@@ -28,5 +28,5 @@ jobs:
           PR_NUMBER: ${{ github.event.pull_request.number }}
           PR_TITLE: ${{ github.event.pull_request.title }}
         run: |
-          echo "Run validate changelog for PR: $PR_NUMBER with Name: $PR_NAME"
+          echo "Run validate changelog for PR: $PR_NUMBER with Name: $PR_TITLE"
           poetry run python ./Utils/github_workflow_scripts/changelog_validation_scripts/validate_changelog.py -n "$PR_NUMBER" -t "$PR_TITLE"

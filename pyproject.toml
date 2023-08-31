@@ -169,7 +169,8 @@ select = [
     "TID251",
     "W",
     "PTH107",
-    "PTH113"
+    "PTH113",
+    "PTH110",
 ]
 
 target-version = "py38"

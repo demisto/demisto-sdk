@@ -2428,11 +2428,11 @@ class TestRNUpdateUnit:
                 f.write(json.dumps(existing_conf_data))
         client.build_rn_config_file("1.0.1")
         if expected_conf_data:
-            assert os.path.exists(conf_path)
+            assert Path(conf_path).exists()
             with open(conf_path) as f:
                 assert json.loads(f.read()) == expected_conf_data
         else:
-            assert not os.path.exists(conf_path)
+            assert not Path(conf_path).exists()
 
 
 def test_get_from_version_at_update_rn(integration):

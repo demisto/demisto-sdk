@@ -2653,7 +2653,7 @@ def re_create_id_set(  # noqa: C901
         else:
             objects_to_create = CONTENT_ENTITIES
 
-    if id_set_path and os.path.exists(id_set_path):
+    if id_set_path and Path(id_set_path).exists():
         try:
             refresh_interval = int(os.getenv("DEMISTO_SDK_ID_SET_REFRESH_INTERVAL", -1))
         except ValueError:

@@ -13,14 +13,18 @@ class WidgetParser(JSONContentItemParser, content_type=ContentType.WIDGET):
         self, path: Path, pack_marketplaces: List[MarketplaceVersions]
     ) -> None:
         super().__init__(path, pack_marketplaces)
-        self.data_type = self.json_data.get("dataType")
-        self.widget_type = self.json_data.get("widgetType")
+        self.data_type = self.json_data.get("dataType") or ""
+        self.widget_type = self.json_data.get("widgetType") or ""
 
         self.connect_to_dependencies()
 
     @property
     def supported_marketplaces(self) -> Set[MarketplaceVersions]:
-        return {MarketplaceVersions.XSOAR}
+        return {
+            MarketplaceVersions.XSOAR,
+            MarketplaceVersions.XSOAR_SAAS,
+            MarketplaceVersions.XSOAR_ON_PREM,
+        }
 
     def connect_to_dependencies(self) -> None:
         """Collects the playbook used in the widget as a mandatory dependency."""

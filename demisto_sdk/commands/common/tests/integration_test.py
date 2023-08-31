@@ -1,6 +1,7 @@
 import logging
 import os
 from copy import deepcopy
+from pathlib import Path
 from typing import Any, Dict, List, Optional
 from unittest.mock import mock_open, patch
 
@@ -1913,6 +1914,8 @@ class TestIntegrationValidator:
                     MarketplaceVersions.XSOAR,
                     MarketplaceVersions.MarketplaceV2,
                     MarketplaceVersions.XPANSE,
+                    MarketplaceVersions.XSOAR_SAAS,
+                    MarketplaceVersions.XSOAR_ON_PREM,
                 ],
                 False,
             ),
@@ -2590,9 +2593,9 @@ class TestisContextChanged:
         When: running validate on integration with at least one command
         Then: Validate it's synced with the README.
         """
-        patcher = patch("os.path.exists")
+        patcher = patch("pathlib.Path.exists")
         mock_thing = patcher.start()
-        mock_thing.side_effect = lambda x: True
+        mock_thing.side_effect = lambda: True
         with patch("builtins.open", mock_open(read_data=readme)) as _:
             current = {"script": {}}
             structure = mock_structure("Pack/Test", current)
@@ -2642,7 +2645,7 @@ class TestisContextChanged:
             structure_validator, validate_all=validate_all
         )
         if remove_readme:
-            os.remove(integration.readme.path)
+            Path(integration.readme.path).unlink()
         assert (
             integration_validator.validate_readme_exists(
                 integration_validator.validate_all

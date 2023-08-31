@@ -14,6 +14,7 @@ from demisto_sdk.commands.common.constants import (
     ALL_FILES_VALIDATION_IGNORE_WHITELIST,
     DEPRECATED_DESC_REGEX,
     DEPRECATED_NO_REPLACE_DESC_REGEX,
+    EVENT_COLLECTOR,
     IGNORED_PACK_NAMES,
     RN_CONTENT_ENTITY_WITH_STARS,
     RN_HEADER_BY_FILE_TYPE,
@@ -238,7 +239,7 @@ class UpdateRN:
                 f" is not versioned.[/yellow]"
             )
             return False
-        print("GOT HERE")
+
         new_version, new_metadata = self.get_new_version_and_metadata()
         rn_path = self.get_release_notes_path(new_version)
         self.check_rn_dir(rn_path)
@@ -340,7 +341,7 @@ class UpdateRN:
         )
         self.bc_path = bc_file_path
         bc_file_data: dict = dict()
-        if os.path.exists(bc_file_path):
+        if Path(bc_file_path).exists():
             with open(bc_file_path) as f:
                 bc_file_data = json.loads(f.read())
         bc_file_data["breakingChanges"] = True
@@ -392,7 +393,7 @@ class UpdateRN:
         :return
             Whether the pack metadata exists
         """
-        if not os.path.isfile(self.metadata_path):
+        if not Path(self.metadata_path).is_file():
             logger.info(
                 f'[red]"{self.metadata_path}" file does not exist, create one in the root of the pack[/red]'
             )
@@ -608,7 +609,7 @@ class UpdateRN:
         :param rn_path: The RN path to check/create
 
         """
-        if not os.path.exists(os.path.dirname(rn_path)):
+        if not Path(rn_path).parent.exists():
             try:
                 os.makedirs(os.path.dirname(rn_path))
             except OSError as exc:  # Guard against race condition
@@ -702,10 +703,12 @@ class UpdateRN:
                 rn_desc = f"##### New: {content_name}\n\n"
                 if desc:
                     rn_desc += f"- New: {desc}"
-                if from_version and _type not in SIEM_ONLY_ENTITIES:
-                    rn_desc += f" (Available from Cortex XSOAR {from_version})."
-                elif _type in SIEM_ONLY_ENTITIES:
+                if _type in SIEM_ONLY_ENTITIES or content_name.replace(
+                    " ", ""
+                ).lower().endswith(EVENT_COLLECTOR.lower()):
                     rn_desc += "(Available from Cortex XSIAM %%XSIAM_VERSION%%)."
+                elif from_version and _type not in SIEM_ONLY_ENTITIES:
+                    rn_desc += f" (Available from Cortex XSOAR {from_version})."
                 rn_desc += "\n"
             else:
                 rn_desc = f"##### {content_name}\n\n"
@@ -862,7 +865,7 @@ class UpdateRN:
             docker_image_name: The docker image name
 
         """
-        if os.path.exists(release_notes_path) and self.update_type:
+        if os.path.exists(release_notes_path) and self.update_type is not None:
             logger.info(
                 f"[yellow]Release notes were found at {release_notes_path}. Skipping[/yellow]"
             )

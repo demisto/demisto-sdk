@@ -1,6 +1,6 @@
 import logging
 import os
-from os.path import isfile
+from pathlib import Path
 from shutil import copyfile
 from typing import List, Tuple
 
@@ -104,22 +104,21 @@ class TestStructureValidator:
     def setup_class(cls):
         # checking that the files in the test are not exists so they won't overwrites.
         for target in cls.INPUTS_TARGETS:
-            if isfile(target) is True:
+            if Path(target).is_file():
                 pytest.fail(f"{target} File in tests already exists!")
         # Creating directory for tests if they're not exists
 
         for directory in DIR_LIST:
-            if not os.path.exists(directory):
+            if not Path(directory).exists():
                 cls.CREATED_DIRS.append(directory)
                 os.makedirs(directory)
 
     @classmethod
     def teardown_class(cls):
         for target in cls.INPUTS_TARGETS:
-            if isfile(target) is True:
-                os.remove(target)
+            Path(target).unlink(missing_ok=True)
         for directory in cls.CREATED_DIRS:
-            if os.path.exists(directory):
+            if Path(directory).exists():
                 os.rmdir(directory)
 
     SCHEME_VALIDATION_INPUTS = [
@@ -225,7 +224,7 @@ class TestStructureValidator:
             structure = StructureValidator(target)
             assert structure.is_valid_file() is answer
         finally:
-            os.remove(target)
+            Path(target).unlink()
 
     pykwalify_error_1 = " - Cannot find required key 'category'. Path: ''.: Path: '/'>'"
     expected_error_1 = 'Missing the field "category" in root'

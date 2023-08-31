@@ -14,7 +14,7 @@ NEO4J_DATABASE_HTTP = os.getenv(
     "DEMISTO_SDK_NEO4J_DATABASE_HTTP", "http://127.0.0.1:7474"
 )
 NEO4J_DATABASE_URL = os.getenv(
-    "DEMISTO_SDK_NEO4J_DATABASE_URL", "bolt://127.0.0.1:7687"
+    "DEMISTO_SDK_NEO4J_DATABASE_URL", "neo4j://127.0.0.1:7687"
 )
 NEO4J_USERNAME = os.getenv("DEMISTO_SDK_NEO4J_USERNAME", "neo4j")
 NEO4J_PASSWORD = os.getenv("DEMISTO_SDK_NEO4J_PASSWORD", "contentgraph")
@@ -266,6 +266,19 @@ class Nodes(dict):
             if content_type not in ContentType or not isinstance(data, list):
                 raise TypeError
             self.add_batch(data)
+
+
+class PackTags:
+    """Pack tag constants"""
+
+    TRENDING = "Trending"
+    NEW = "New"
+    TIM = "TIM"
+    USE_CASE = "Use Case"
+    TRANSFORMER = "Transformer"
+    FILTER = "Filter"
+    COLLECTION = "Collection"
+    DATA_SOURCE = "Data Source"
 
 
 SERVER_CONTENT_ITEMS: dict = {

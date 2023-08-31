@@ -2,6 +2,7 @@ import os
 import re
 import shutil
 from os.path import join
+from pathlib import Path
 from typing import Union
 from zipfile import ZipFile
 
@@ -756,12 +757,7 @@ def test_create_contribution_items_version_note():
  @
 > In case you are requested by your reviewer to improve the code or to make changes, submit them through the **GitHub Codespaces** and **Not through the XSOAR UI**.
 >
-> **To use the GitHub Codespaces, do the following:**
-> 1. Click the **'Code'** button in the right upper corner of this PR.
-> 2. Click **'Create codespace on Transformers'**.
-> 3. Click **'Authorize and continue'**.
-> 4. Wait until your Codespace environment is generated. When it is, you can edit your code.
-> 5. Commit and push your changes to the head branch of the PR.
+> **To use the GitHub Codespaces, see the following [link](https://xsoar.pan.dev/docs/tutorials/tut-setup-dev-codespace) for more information.**
 """
     )
 
@@ -893,16 +889,14 @@ class TestReleaseNotes:
     @pytest.fixture(autouse=True)
     def rn_file_copy(self):
         yield shutil.copyfile(SOURCE_RELEASE_NOTES_FILE, RELEASE_NOTES_COPY)
-        if os.path.exists(RELEASE_NOTES_COPY):
-            os.remove(RELEASE_NOTES_COPY)
+        Path(RELEASE_NOTES_COPY).unlink(missing_ok=True)
 
     @pytest.fixture(autouse=True)
     def new_entity_rn_file_copy(self):
         yield shutil.copyfile(
             NEW_ENTITY_SOURCE_RELEASE_NOTES_FILE, NEW_ENTITY_RELEASE_NOTES_COPY
         )
-        if os.path.exists(NEW_ENTITY_RELEASE_NOTES_COPY):
-            os.remove(NEW_ENTITY_RELEASE_NOTES_COPY)
+        Path(NEW_ENTITY_RELEASE_NOTES_COPY).unlink(missing_ok=True)
 
     @pytest.mark.parametrize(
         "index, expected_result",

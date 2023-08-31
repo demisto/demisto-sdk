@@ -200,11 +200,6 @@ def main(ctx, config, version, release_notes, **kwargs):
     config.configuration = Configuration()
     import dotenv
 
-    if sys.version_info[:2] == (3, 8):
-        logger.info(
-            "[red]Demisto-SDK will soon stop supporting Python 3.8. Please update your python environment.[/red]"
-        )
-
     dotenv.load_dotenv(CONTENT_PATH / ".env", override=True)  # type: ignore # load .env file from the cwd
     if (
         (not os.getenv("DEMISTO_SDK_SKIP_VERSION_CHECK")) or version
@@ -214,7 +209,7 @@ def main(ctx, config, version, release_notes, **kwargs):
         except DistributionNotFound:
             __version__ = "dev"
             logger.info(
-                "[yellow]Cound not find the version of the demisto-sdk. This usually happens when running in a development environment.[/yellow]"
+                "[yellow]Could not find the version of the demisto-sdk. This usually happens when running in a development environment.[/yellow]"
             )
         else:
             last_release = ""
@@ -424,7 +419,7 @@ def extract_code(ctx, config, **kwargs):
     help="The marketplace the content items are created for, that determines usage of marketplace "
     "unique text. Default is the XSOAR marketplace.",
     default="xsoar",
-    type=click.Choice(["xsoar", "marketplacev2", "v2"]),
+    type=click.Choice([mp.value for mp in list(MarketplaceVersions)] + ["v2"]),
 )
 @click.pass_context
 @logging_setup_decorator
@@ -2145,14 +2140,12 @@ def _generate_docs_for_file(kwargs: Dict[str, Any]):
         if command:
             if (
                 output_path
-                and (not os.path.isfile(os.path.join(output_path, "README.md")))
+                and (not Path(output_path, "README.md").is_file())
                 or (not output_path)
                 and (
-                    not os.path.isfile(
-                        os.path.join(
-                            os.path.dirname(os.path.realpath(input_path)), "README.md"
-                        )
-                    )
+                    not Path(
+                        os.path.dirname(os.path.realpath(input_path)), "README.md"
+                    ).is_file()
                 )
             ):
                 raise Exception(
@@ -2170,7 +2163,7 @@ def _generate_docs_for_file(kwargs: Dict[str, Any]):
                 "[red]File is not an Integration, Script, Playbook or a README.[/red]"
             )
 
-        if old_version and not os.path.isfile(old_version):
+        if old_version and not Path(old_version).is_file():
             raise Exception(
                 f"[red]Input old version file {old_version} was not found.[/red]"
             )
@@ -2737,7 +2730,7 @@ def openapi_codegen(ctx, **kwargs):
         output_dir = kwargs["output_dir"]
 
     # Check the directory exists and if not, try to create it
-    if not os.path.exists(output_dir):
+    if not Path(output_dir).exists():
         try:
             os.mkdir(output_dir)
         except Exception as err:
@@ -3528,8 +3521,8 @@ main.add_command(typer_click_object2, "generate-modeling-rules")
 # ====================== graph command group ====================== #
 
 graph_cmd_group = typer.Typer(name="graph", hidden=True, no_args_is_help=True)
-graph_cmd_group.command("create", no_args_is_help=True)(create)
-graph_cmd_group.command("update", no_args_is_help=True)(update)
+graph_cmd_group.command("create", no_args_is_help=False)(create)
+graph_cmd_group.command("update", no_args_is_help=False)(update)
 graph_cmd_group.command("get-relationships", no_args_is_help=True)(get_relationships)
 main.add_command(typer.main.get_command(graph_cmd_group), "graph")
 

@@ -312,7 +312,7 @@ class ContributionConverter:
             dst_name = ENTITY_TYPE_TO_DIR.get(basename, "")
             src_path = str(Path(self.working_dir_path, basename))
             dst_path = str(Path(self.working_dir_path, dst_name))
-            if os.path.exists(dst_path):
+            if Path(dst_path).exists():
                 # move src folder files to dst folder
                 for _, _, files in os.walk(src_path, topdown=False):
                     for name in files:
@@ -385,7 +385,7 @@ class ContributionConverter:
                             self.generate_readme_for_pack_content_item(
                                 unified_file, is_contribution
                             )
-                            os.remove(unified_file)
+                            Path(unified_file).unlink()
             elif basename == "Playbooks":
                 files = get_child_files(pack_subdir)
                 for file in files:
@@ -415,8 +415,7 @@ class ContributionConverter:
 
                     if file.startswith(FileType.INDICATOR_FIELD.value):
                         # At first time, create another dir for all indicator-fields files and move them there
-                        if not os.path.exists(dst_ioc_fields_dir):
-                            os.makedirs(dst_ioc_fields_dir)
+                        Path(dst_ioc_fields_dir).mkdir(parents=True, exist_ok=True)
                         file_path = str(Path(self.working_dir_path, dir_name, file))
                         shutil.move(file_path, dst_ioc_fields_dir)  # type: ignore
 
@@ -539,12 +538,8 @@ class ContributionConverter:
                 f"> In case you are requested by your reviewer to improve the code or to make changes, submit "
                 f"them through the **GitHub Codespaces** and **Not through the XSOAR UI**.\n"
                 f">\n"
-                f"> **To use the GitHub Codespaces, do the following:**\n"
-                f"> 1. Click the **'Code'** button in the right upper corner of this PR.\n"
-                f"> 2. Click **'Create codespace on Transformers'**.\n"
-                f"> 3. Click **'Authorize and continue'**.\n"
-                f"> 4. Wait until your Codespace environment is generated. When it is, you can edit your code.\n"
-                f"> 5. Commit and push your changes to the head branch of the PR.\n"
+                f"> **To use the GitHub Codespaces, see the following "
+                f"[link](https://xsoar.pan.dev/docs/tutorials/tut-setup-dev-codespace) for more information.**\n"
             )
 
     def content_item_to_package_format(
@@ -654,11 +649,9 @@ class ContributionConverter:
                         # Moving the unified file to its package.
                         shutil.move(content_item_file_path, output_path)
                     if del_unified:
-                        if os.path.exists(content_item_file_path):
-                            os.remove(content_item_file_path)
+                        Path(content_item_file_path).unlink(missing_ok=True)
                         moved_unified_dst = os.path.join(output_path, child_file_name)
-                        if os.path.exists(moved_unified_dst):
-                            os.remove(moved_unified_dst)
+                        Path(moved_unified_dst).unlink(missing_ok=True)
 
     def create_pack_base_files(self):
         """

@@ -568,7 +568,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
     ) -> None:
         logger.info("Creating graph relationships...")
         with self.driver.session() as session:
-            session.execute_write(create_relationships, relationships)
+            session.execute_write(create_relationships, relationships, timeout=120)
             if self._rels_to_preserve:
                 session.execute_write(
                     return_preserved_relationships, self._rels_to_preserve

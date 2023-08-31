@@ -12,3 +12,4 @@ jobs:
         with:
           assignees: RotemAmit
           reviewers: RotemAmit # if draft, assigned when draft is released
+          github-token: ${{ secrets.GITHUB_TOKEN }}

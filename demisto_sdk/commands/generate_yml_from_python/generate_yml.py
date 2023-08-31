@@ -6,6 +6,7 @@ import os
 import re
 import traceback
 from enum import Enum, EnumMeta
+from pathlib import Path
 from types import FunctionType
 from typing import Any, AnyStr, Callable, List, Optional, Tuple, Union
 from unittest import mock
@@ -200,7 +201,7 @@ class YMLGenerator:
         """Write the yml file based on the collected details."""
         yml_filename = self.get_yml_filename()
 
-        if os.path.exists(yml_filename) and not self.force:
+        if Path(yml_filename).exists() and not self.force:
             logger.warning(
                 f"[red]File {yml_filename} already exists, not writing. To override add --force.[/red]"
             )

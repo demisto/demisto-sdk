@@ -1,5 +1,6 @@
 import os
 import shutil
+from pathlib import Path
 
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.legacy_git_tools import git_path
@@ -58,13 +59,12 @@ class TestSecrets:
     @classmethod
     def setup_class(cls):
         print("Setups TestSecrets class")  # noqa: T201
-        if not os.path.exists(TestSecrets.TEMP_DIR):
-            os.mkdir(TestSecrets.TEMP_DIR)
+        Path(TestSecrets.TEMP_DIR).mkdir(exist_ok=True)
 
     @classmethod
     def teardown_class(cls):
         print("Tearing down TestSecrets class")  # noqa: T201
-        if os.path.exists(TestSecrets.TEMP_DIR):
+        if Path(TestSecrets.TEMP_DIR).exists():
             shutil.rmtree(TestSecrets.TEMP_DIR, ignore_errors=False, onerror=None)
 
     def test_get_diff_text_files(self):

@@ -1947,7 +1947,7 @@ class ValidateManager:
 
         # check author image
         author_image_path = os.path.join(pack_path, AUTHOR_IMAGE_FILE_NAME)
-        if os.path.exists(author_image_path):
+        if Path(author_image_path).exists():
             logger.info("Validating pack author image")
             author_valid = self.validate_author_image(
                 author_image_path, pack_error_ignore_list

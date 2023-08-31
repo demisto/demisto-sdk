@@ -347,7 +347,7 @@ class UpdateRN:
         )
         self.bc_path = bc_file_path
         bc_file_data: dict = dict()
-        if os.path.exists(bc_file_path):
+        if Path(bc_file_path).exists():
             with open(bc_file_path) as f:
                 bc_file_data = json.loads(f.read())
         bc_file_data["breakingChanges"] = True
@@ -653,7 +653,7 @@ class UpdateRN:
         :param rn_path: The RN path to check/create
 
         """
-        if not os.path.exists(os.path.dirname(rn_path)):
+        if not Path(rn_path).parent.exists():
             try:
                 os.makedirs(os.path.dirname(rn_path))
             except OSError as exc:  # Guard against race condition
@@ -909,7 +909,7 @@ class UpdateRN:
             docker_image_name: The docker image name
 
         """
-        if os.path.exists(release_notes_path) and self.update_type is not None:
+        if Path(release_notes_path).exists() and self.update_type is not None:
             logger.info(
                 f"[yellow]Release notes were found at {release_notes_path}. Skipping[/yellow]"
             )

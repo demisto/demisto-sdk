@@ -1978,7 +1978,7 @@ def is_external_repository() -> bool:
     try:
         git_repo = git.Repo(os.getcwd(), search_parent_directories=True)
         private_settings_path = os.path.join(git_repo.working_dir, ".private-repo-settings")  # type: ignore
-        return os.path.exists(private_settings_path)
+        return Path(private_settings_path).exists()
     except git.InvalidGitRepositoryError:
         return True
 

@@ -544,7 +544,7 @@ class PackMetaData(JSONObject):
             pack_path, PACKS_PACK_META_FILE_NAME
         )  # user metadata path before parsing
 
-        if not os.path.exists(user_metadata_path):
+        if not Path(user_metadata_path).exists():
             logger.error(
                 f"{pack_name} pack is missing {PACKS_PACK_META_FILE_NAME} file."
             )

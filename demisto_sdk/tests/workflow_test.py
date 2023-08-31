@@ -218,7 +218,7 @@ def function_setup():
         content_git_repo = ContentGitRepo()
     # Function setup
     content_git_repo.git_cleanup()
-    content_git_repo.run_command("npm install")
+    content_git_repo.run_command("npm install --no-fund --no-audit")
     content_git_repo.create_branch()
 
 

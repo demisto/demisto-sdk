@@ -199,6 +199,7 @@ def main(ctx, config, version, release_notes, **kwargs):
 
     config.configuration = Configuration()
     import dotenv
+
     dotenv.load_dotenv(CONTENT_PATH / ".env", override=True)  # type: ignore # load .env file from the cwd
     if (
         (not os.getenv("DEMISTO_SDK_SKIP_VERSION_CHECK")) or version

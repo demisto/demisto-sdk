@@ -3187,14 +3187,17 @@ def test_validate_no_disallowed_terms_in_customer_facing_docs_end_to_end(repo, m
             "[file:test.yml]\nignore=BA108,BA109,DS107\n[file:test2.yml]\nignore=BA108,BA109,DS107\n",
             "",
             "[file:test.yml]\nignore=BA108,BA109,DS107\n",
-            {
-                "Packs/test1/Integrations/test2/test2.yml"
-            },
+            {"Packs/test1/Integrations/test2/test2.yml"},
         ),
     ],
 )
 def test_get_all_files_edited_in_pack_ignore(
-    mocker, modified_files, new_file_content, remote_file_content, local_file_content, expected_results
+    mocker,
+    modified_files,
+    new_file_content,
+    remote_file_content,
+    local_file_content,
+    expected_results,
 ):
     """
     Given:
@@ -3230,7 +3233,9 @@ def test_get_all_files_edited_in_pack_ignore(
         return_value=remote_file_content,
     )
     mocker.patch.object(GitUtil, "find_primary_branch", return_value="main")
-    mocker.patch.object(GitUtil, "get_local_remote_file_content", return_value=local_file_content)
+    mocker.patch.object(
+        GitUtil, "get_local_remote_file_content", return_value=local_file_content
+    )
     validate_manager = ValidateManager()
     config = ConfigParser(allow_no_value=True)
     config.read_string(new_file_content)

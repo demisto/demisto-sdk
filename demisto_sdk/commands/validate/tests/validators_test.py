@@ -3147,24 +3147,27 @@ def test_validate_no_disallowed_terms_in_customer_facing_docs_end_to_end(repo, m
 
 
 @pytest.mark.parametrize(
-    "modified_files, new_file_content, remote_file_content, expected_results",
+    "modified_files, new_file_content, remote_file_content, local_file_content, expected_results",
     [
         (
             {"Packs/test/.pack-ignore"},
             "[file:test.yml]\nignore=BA108,BA109\n",
             "[file:test.yml]\nignore=BA108,BA109,DS107\n",
+            "",
             {"Packs/test/Integrations/test/test.yml"},
         ),
         (
             {"Packs/test/.pack-ignore"},
             "[file:test.yml]\nignore=BA108,BA109,DS107\n",
             "[file:test.yml]\nignore=BA108,BA109,DS107\n",
+            "",
             set(),
         ),
         (
             {"Packs/test1/.pack-ignore"},
             "[file:test.yml]\nignore=BA108,BA109,DS107\n",
             "[file:test2.yml]\nignore=BA108,BA109,DS107\n",
+            "",
             {
                 "Packs/test1/Integrations/test/test.yml",
                 "Packs/test1/Integrations/test2/test2.yml",
@@ -3174,14 +3177,27 @@ def test_validate_no_disallowed_terms_in_customer_facing_docs_end_to_end(repo, m
             {"Packs/test/.pack-ignore"},
             "[file:test.yml]\nignore=BA108\n",
             b"",
+            "",
             {
                 "Packs/test/Integrations/test/test.yml",
             },
         ),
+        (
+            {"Packs/test1/.pack-ignore"},
+            "[file:test.yml]\nignore=BA108,BA109,DS107\n[file:test2.yml]\nignore=BA108,BA109,DS107\n",
+            "",
+            "[file:test.yml]\nignore=BA108,BA109,DS107\n",
+            {"Packs/test1/Integrations/test2/test2.yml"},
+        ),
     ],
 )
 def test_get_all_files_edited_in_pack_ignore(
-    mocker, modified_files, new_file_content, remote_file_content, expected_results
+    mocker,
+    modified_files,
+    new_file_content,
+    remote_file_content,
+    local_file_content,
+    expected_results,
 ):
     """
     Given:
@@ -3190,6 +3206,7 @@ def test_get_all_files_edited_in_pack_ignore(
     - Case 2: pack-ignore mocks which no differences.
     - Case 3: pack-ignore mocks where each file is pointed to a different integration yml.
     - Case 4: old .pack-ignore that is empty and current .pack-ignore that was updated with ignored validation
+    - Case 5: old .pack-ignore which is not in the remote repo
 
     When:
     - Running get_all_files_edited_in_pack_ignore.
@@ -3199,6 +3216,8 @@ def test_get_all_files_edited_in_pack_ignore(
     - Case 1: Should return the file path only from the relevant pack (there's a similar file in a different pack)
     - Case 2: Should return empty set of extra files to test.
     - Case 3: Should return both file names.
+    - Case 4: Ensure the file that was changed in the .pack-ignore is collected
+    - Case 5: Ensure the file that was changed in the .pack-ignore is collected from the local repo
     """
     mocker.patch.object(
         GitUtil,
@@ -3214,7 +3233,9 @@ def test_get_all_files_edited_in_pack_ignore(
         return_value=remote_file_content,
     )
     mocker.patch.object(GitUtil, "find_primary_branch", return_value="main")
-    mocker.patch.object(GitUtil, "get_local_remote_file_content", return_value="")
+    mocker.patch.object(
+        GitUtil, "get_local_remote_file_content", return_value=local_file_content
+    )
     validate_manager = ValidateManager()
     config = ConfigParser(allow_no_value=True)
     config.read_string(new_file_content)

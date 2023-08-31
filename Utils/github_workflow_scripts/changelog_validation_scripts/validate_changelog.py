@@ -1,19 +1,20 @@
-
-
-
 import argparse
+import logging
 import sys
 
 from demisto_sdk.commands.changelog.changelog import Changelog
 
+logger = logging.getLogger("demisto-sdk")
+
 
 def validate_changelog_and_logs(pr_num: str, pr_name: str) -> bool:
-    if Changelog(pr_num, pr_name).validate():
+    try:
+        Changelog(pr_num, pr_name).validate()
         sys.exit(0)
-    sys.exit(1)
-    
-    
-    
+    except Exception as e:
+        logger.info(f"[red]{e}[/red]")
+        sys.exit(1)
+
 
 def arguments_handler():
     """Validates and parses script arguments.
@@ -25,7 +26,7 @@ def arguments_handler():
     parser = argparse.ArgumentParser(description="")
     parser.add_argument("-n", "--pr-number", help="The PR number.", required=True)
     parser.add_argument("-t", "--pr-title", help="The PR title.", required=False)
-    
+
     return parser.parse_args()
 
 

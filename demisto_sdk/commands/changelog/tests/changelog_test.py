@@ -5,7 +5,6 @@ import pytest
 
 from demisto_sdk.commands.changelog import changelog
 from demisto_sdk.commands.changelog.changelog import Changelog
-from demisto_sdk.commands.changelog.changelog_obj import INITIAL_LOG
 from demisto_sdk.commands.common.handlers import YAML_Handler
 
 yaml = YAML_Handler()
@@ -30,7 +29,7 @@ def test_is_release(changelog_mock):
     assert not changelog_mock.is_release()
     changelog_mock.pr_name = "v1.10.2"
     assert changelog_mock.is_release()
-    
+
 
 def test_is_log_folder_empty(tmpdir, changelog_mock: Changelog):
     """
@@ -71,29 +70,15 @@ def test_is_log_yml_exist(tmpdir, changelog_mock: Changelog):
 
 def test_get_all_logs(tmpdir, changelog_mock: Changelog):
     folder_path = Path(tmpdir / ".changelog")
-    # changelog_path = Path(tmpdir / "CHANGELOG.md")
     os.makedirs(folder_path)
     changelog.CHANGELOG_FOLDER = folder_path
-    # changelog.CHANGELOG_MD_FILE = changelog_path
-    log_file = {
-        "logs": [
-            {
-                "description": "fixed an issue where test",
-                "type": "fix"
-            }
-        ]
-    }
+    log_file = {"logs": [{"description": "fixed an issue where test", "type": "fix"}], "pr_number": "12345"}
     log_file2 = {
         "logs": [
-            {
-                "description": "added a feature that test",
-                "type": "feature"
-            },
-            {
-                "description": "breaking changes: test",
-                "type": "breaking"
-            }
-        ]
+            {"description": "added a feature that test", "type": "feature"},
+            {"description": "breaking changes: test", "type": "breaking"},
+        ],
+        "pr_number": "43524"
     }
     with (folder_path / "12345.yml").open("w") as f:
         yaml.dump(log_file, f)
@@ -103,3 +88,19 @@ def test_get_all_logs(tmpdir, changelog_mock: Changelog):
     assert len(log_files) == 2
     assert len(log_files[0].logs) == 2
 
+
+@pytest.mark.parametrize(
+    "pr_name",
+    [
+        "v2.2.2",
+        ""
+    ]
+)
+def test_validate(mocker, changelog_mock: Changelog, pr_name: str):
+    mock_validate_release = mocker.patch.object(Changelog, "_validate_release")
+    mock_validate_branch = mocker.patch.object(Changelog, "_validate_branch")
+    changelog_mock.pr_name = pr_name
+    changelog_mock.validate()
+
+    assert mock_validate_branch.call_count == int(not bool(pr_name))
+    assert mock_validate_release.call_count == int(bool(pr_name))

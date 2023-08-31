@@ -1,6 +1,5 @@
 import re
 import shutil
-import sys
 from pathlib import Path
 from typing import List
 

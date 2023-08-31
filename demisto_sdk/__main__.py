@@ -350,12 +350,7 @@ def split(ctx, config, **kwargs):
     is_flag=True,
     default=False,
 )
-@click.option(
-    "-t",
-    "--pr-title",
-    help="The PR title",
-    default=""
-)
+@click.option("-t", "--pr-title", help="The PR title", default="")
 @click.option(
     "-n",
     "--pr-number",

@@ -55,6 +55,9 @@ class ContentItem(BaseContent):
     description: Optional[str]
     is_test: bool = False
 
+    def __hash__(self):
+        return hash(self.path)
+
     @validator("path", always=True)
     def validate_path(cls, v: Path) -> Path:
         if v.is_absolute():
@@ -193,10 +196,6 @@ class ContentItem(BaseContent):
         return MarketplaceSuffixPreparer.prepare(
             data, current_marketplace, self.marketplaces
         )
-
-    # def update_release_notes(self):
-    # Generic
-    # And if needed something extra like docker update - it should call the specific content_item like integration.py
 
     def summary(
         self,

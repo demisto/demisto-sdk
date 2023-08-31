@@ -1,3 +1,4 @@
+import os
 import shutil
 from collections import defaultdict
 from pathlib import Path
@@ -69,7 +70,6 @@ from demisto_sdk.commands.content_graph.objects.wizard import Wizard
 from demisto_sdk.commands.content_graph.objects.xdrc_template import XDRCTemplate
 from demisto_sdk.commands.content_graph.objects.xsiam_dashboard import XSIAMDashboard
 from demisto_sdk.commands.content_graph.objects.xsiam_report import XSIAMReport
-from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
 from demisto_sdk.commands.upload.constants import (
     CONTENT_TYPES_EXCLUDED_FROM_UPLOAD,
     MULTIPLE_ZIPPED_PACKS_FILE_NAME,
@@ -610,26 +610,28 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: i
 
     def create_pack_release_notes(
         self,
+        modified_content,
+        added_content,
+        old_content,
         existing_rn_version,
         update_type,
         pre_release,
         specific_version,
-        text,
         is_force,
+        text,
         is_bc,
+        total_updated_packs,
+        packs_existing_rn,
     ):
-        print("im here")
-        # pack_modified = filter_files_on_pack(pack, filtered_modified_files)
-        # pack_added = filter_files_on_pack(pack, filtered_added_files)
-        # pack_old = filter_files_on_pack(pack, old_format_files)
+        from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
 
         # Checks if update is required
         update_pack_rn = UpdateRN(
             pack_path=str(self.path),
             update_type=update_type,
-            modified_files_in_pack=Pack.content_items,
+            modified_files_in_pack=modified_content + old_content,
             pre_release=pre_release,
-            added_files=pack_added,
+            added_files=added_content,
             specific_version=specific_version,
             text=text,
             is_force=is_force,
@@ -637,21 +639,19 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: i
             is_bc=is_bc,
         )
         updated = update_pack_rn.execute_update()
-        self.rn_path.append(update_pack_rn.rn_path)
+        # self.rn_path.append(update_pack_rn.rn_path)
 
         # If new release notes were created add it to the total number of packs that were updated.
         if updated:
-            self.total_updated_packs.add(pack)
+            total_updated_packs.add(self.pack_name)
             # If there is an outdated previous release notes, remove it (for example: User updated his version to
             # 1.0.4 and meanwhile the master version changed to 1.0.4, so we want to remove the user's 1_0_4 file
             # and add a 1_0_5 file.)
             if update_pack_rn.should_delete_existing_rn:
-                os.unlink(self.packs_existing_rn[pack])
-        # else:
-        #     logger.info(
-        #         f"[yellow]Either no changes were found in {pack} pack "
-        #         f"or the changes found should not be documented in the release notes file.\n"
-        #         f"If relevant changes were made, please commit the changes and rerun the command.[/yellow]"
-        #     )
-        # Need to call the function in content_item.py
-        return
+                os.unlink(packs_existing_rn[self.pack_name])
+        else:
+            logger.info(
+                f"[yellow]Either no changes were found in {self.pack_name} pack "
+                f"or the changes found should not be documented in the release notes file.\n"
+                f"If relevant changes were made, please commit the changes and rerun the command.[/yellow]"
+            )

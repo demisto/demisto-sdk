@@ -18,8 +18,6 @@ from demisto_sdk.commands.common.constants import (
     RN_CONTENT_ENTITY_WITH_STARS,
     RN_HEADER_BY_FILE_TYPE,
     SIEM_ONLY_ENTITIES,
-    XSIAM_DASHBOARDS_DIR,
-    XSIAM_REPORTS_DIR,
     FileType,
 )
 from demisto_sdk.commands.common.content import Content
@@ -39,13 +37,10 @@ from demisto_sdk.commands.common.tools import (
     get_api_module_dependencies_from_graph,
     get_api_module_ids,
     get_content_path,
-    get_display_name,
-    get_from_version,
     get_json,
     get_latest_release_notes_text,
     get_pack_name,
     get_remote_file,
-    get_yaml,
     pack_name_to_path,
     run_command,
 )
@@ -53,6 +48,7 @@ from demisto_sdk.commands.content_graph.commands.update import update_content_gr
 from demisto_sdk.commands.content_graph.interface import (
     ContentGraphInterface,
 )
+from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 
 CLASS_BY_FILE_TYPE = {
     FileType.INTEGRATION: Integration,
@@ -135,8 +131,8 @@ class UpdateRN:
         self,
         pack_path: str,
         update_type: Union[str, None],
-        modified_files_in_pack: set,
-        added_files: set,
+        modified_files_in_pack: list,
+        added_files: list,
         specific_version: str = None,
         pre_release: bool = False,
         pack: str = None,
@@ -150,19 +146,12 @@ class UpdateRN:
         self.update_type = update_type
         self.pack_path = pack_path
         # renamed files will appear in the modified list as a tuple: (old path, new path)
-        modified_files_in_pack = {
-            file_[1] if isinstance(file_, tuple) else file_
-            for file_ in modified_files_in_pack
-        }
-        self.modified_files_in_pack = set()
-        for file_path in modified_files_in_pack:
-            self.modified_files_in_pack.add(
-                self.change_image_or_desc_file_path(
-                    (self.CONTENT_PATH / file_path).as_posix()
-                )
-            )
-
-        self.added_files = added_files
+        # modified_files_in_pack = {
+        #     file_[1] if isinstance(file_, tuple) else file_
+        #     for file_ in modified_files_in_pack
+        # }
+        self.modified_files_in_pack = set(modified_files_in_pack)
+        self.added_files = set(added_files)
         self.pre_release = pre_release
         self.specific_version = specific_version
         self.existing_rn_changed = False
@@ -179,39 +168,39 @@ class UpdateRN:
         self.is_bc = is_bc
         self.bc_path = ""
 
-    @staticmethod
-    def change_image_or_desc_file_path(file_path: str) -> str:
-        """Changes image and description file paths to the corresponding yml file path.
-        if a non-image or description file path is given, it remains unchanged.
-
-        :param file_path: The file path to check
-
-        :rtype: ``str``
-        :return
-            The new file path if was changed
-        """
-
-        def validate_new_path(expected_path: str):
-            if not Path(expected_path).exists():
-                logger.info(
-                    f"[yellow]file {file_path} implies the existence of {str(expected_path)}, which is missing. "
-                    f"Did you mistype {file_path}?[/yellow]"
-                )
-
-        if file_path.endswith("_image.png"):
-            if Path(file_path).parent.name in (XSIAM_DASHBOARDS_DIR, XSIAM_REPORTS_DIR):
-                new_path = file_path.replace("_image.png", ".json")
-            else:
-                new_path = file_path.replace("_image.png", ".yml")
-            validate_new_path(new_path)
-            return new_path
-
-        elif file_path.endswith("_description.md"):
-            new_path = file_path.replace("_description.md", ".yml")
-            validate_new_path(new_path)
-            return new_path
-
-        return file_path
+    # @staticmethod
+    # def change_image_or_desc_file_path(content_item: ContentItem) -> ContentItem:
+    #     """Changes image and description file paths to the corresponding yml file path.
+    #     if a non-image or description file path is given, it remains unchanged.
+    #
+    #     :param content_item: The content item to check.
+    #
+    #     :rtype: ``ContentItem``
+    #     :return
+    #         The content item.
+    #     """
+    #     def validate_new_path(expected_path: str):
+    #         if not Path(expected_path).exists():
+    #             logger.info(
+    #                 f"[yellow]file {content_item.path} implies the existence of {str(expected_path)},
+    #                 which is missing. "
+    #                 f"Did you mistype {content_item.path}?[/yellow]"
+    #             )
+    #     file_path = str(content_item.path)
+    #     if file_path.endswith("_image.png"):
+    #         if Path(file_path).parent.name in (XSIAM_DASHBOARDS_DIR, XSIAM_REPORTS_DIR):
+    #             new_path = file_path.replace("_image.png", ".json")
+    #         else:
+    #             new_path = file_path.replace("_image.png", ".yml")
+    #         validate_new_path(new_path)
+    #         return new_path
+    #
+    #     elif file_path.endswith("_description.md"):
+    #         new_path = file_path.replace("_description.md", ".yml")
+    #         validate_new_path(new_path)
+    #         return new_path
+    #     print(file_path)
+    #     return content_item
 
     def handle_existing_rn_version_path(self, rn_path: str) -> str:
         """Checks whether the existing RN version path exists and return it's content.
@@ -249,20 +238,25 @@ class UpdateRN:
                 f" is not versioned.[/yellow]"
             )
             return False
-
+        print("GOT HERE")
         new_version, new_metadata = self.get_new_version_and_metadata()
         rn_path = self.get_release_notes_path(new_version)
         self.check_rn_dir(rn_path)
         self.rn_path = rn_path
         self.find_added_pack_files()
         changed_files = {}
+        added_files_paths = []
+        for item in self.added_files:
+            added_files_paths.append(str(item.path))
         for packfile in self.modified_files_in_pack:
-            file_name, file_type = self.get_changed_file_name_and_type(packfile)
+            file_name = packfile.name
+            file_path = str(packfile.path)
+            file_type = find_type(file_path)
             if (
-                "yml" in packfile
+                file_path.endswith("yml")
                 and file_type
                 in [FileType.INTEGRATION, FileType.BETA_INTEGRATION, FileType.SCRIPT]
-                and packfile not in self.added_files
+                and file_path not in added_files_paths
             ):
                 docker_image_name: Optional[str] = check_docker_image_changed(
                     main_branch=self.main_branch, packfile=packfile
@@ -270,11 +264,11 @@ class UpdateRN:
             else:
                 docker_image_name = None
             changed_files[(file_name, file_type)] = {
-                "description": get_file_description(packfile, file_type),
-                "is_new_file": packfile in self.added_files,
-                "fromversion": get_from_version_at_update_rn(packfile),
+                "description": packfile.description,
+                "is_new_file": file_path in added_files_paths,
+                "fromversion": packfile.fromversion,
                 "dockerimage": docker_image_name,
-                "path": packfile,
+                "path": file_path,
             }
         return self.create_pack_rn(rn_path, changed_files, new_metadata, new_version)
 
@@ -368,7 +362,7 @@ class UpdateRN:
         :return: The new version and new metadata dictionary
         """
         if self.is_bump_required():
-            if self.update_type is None:
+            if not self.update_type:
                 self.update_type = "revision"
             new_version, new_metadata = self.bump_version_number(
                 self.specific_version, self.pre_release
@@ -389,7 +383,6 @@ class UpdateRN:
             raise ValueError(
                 "Release notes do not need to be updated for version '1.0.0'."
             )
-
         return new_version, new_metadata
 
     def _does_pack_metadata_exist(self) -> bool:
@@ -479,15 +472,14 @@ class UpdateRN:
         pack.
         """
         for a_file in self.added_files:
-            if self.pack in a_file:
+            file_path = str(a_file.path)
+            if self.pack in file_path:
                 if any(
-                    item in a_file for item in ALL_FILES_VALIDATION_IGNORE_WHITELIST
+                    item in file_path for item in ALL_FILES_VALIDATION_IGNORE_WHITELIST
                 ):
                     continue
                 else:
-                    self.modified_files_in_pack.add(
-                        self.change_image_or_desc_file_path(a_file)
-                    )
+                    self.modified_files_in_pack.add(a_file)
 
     def get_release_notes_path(self, input_version: str) -> str:
         """Gets the release notes path.
@@ -502,43 +494,6 @@ class UpdateRN:
         new_version = _new_version.replace("_prerelease", "")
         return os.path.join(self.pack_path, "ReleaseNotes", f"{new_version}.md")
 
-    @staticmethod
-    def find_corresponding_yml(file_path) -> str:
-        """Gets the pack's corresponding yml file from the python/yml file.
-
-        :param file_path: The pack python/yml file
-
-        :rtype: ``str``
-        :return
-        The path to the pack's yml file
-        """
-        if file_path.endswith(".py"):
-            yml_filepath = file_path.replace(".py", ".yml")
-        else:
-            yml_filepath = file_path
-        return yml_filepath
-
-    def get_changed_file_name_and_type(
-        self, file_path
-    ) -> Tuple[str, Optional[FileType]]:
-        """Gets the changed file name and type.
-
-        :param file_path: The file path
-
-        :rtype: ``str, FileType``
-        :return
-        The changed file name and type
-        """
-        _file_type = None
-        file_name = "N/A"
-
-        if self.pack + "/" in file_path and ("README" not in file_path):
-            _file_path = self.find_corresponding_yml(file_path)
-            file_name = get_display_name(_file_path)
-            _file_type = find_type(_file_path)
-
-        return file_name, _file_type
-
     def get_pack_metadata(self) -> dict:
         """Gets the pack metadata.
 
@@ -550,7 +505,8 @@ class UpdateRN:
             data_dictionary = get_json(self.metadata_path, cache_clear=True)
         except FileNotFoundError as e:
             raise FileNotFoundError(
-                f"The metadata file of pack {self.pack} was not found. Please verify the pack name is correct, and that the file exists."
+                f"The metadata file of pack {self.pack} was not found. Please verify the pack name is correct, "
+                f"and that the file exists."
             ) from e
         return data_dictionary
 
@@ -906,7 +862,7 @@ class UpdateRN:
             docker_image_name: The docker image name
 
         """
-        if os.path.exists(release_notes_path) and self.update_type is not None:
+        if os.path.exists(release_notes_path) and self.update_type:
             logger.info(
                 f"[yellow]Release notes were found at {release_notes_path}. Skipping[/yellow]"
             )
@@ -952,52 +908,6 @@ class UpdateRN:
         return updated_rn
 
 
-def get_file_description(path, file_type) -> str:
-    """Gets the file description.
-
-    :param
-        path: The file path
-        file_type: The file type
-
-    :rtype: ``str``
-    :return
-    The file description if exists otherwise returns %%UPDATE_RN%%
-    """
-    if not os.path.isfile(path):
-        logger.info(
-            f'[yellow]Cannot get file description: "{path}" file does not exist[/yellow]'
-        )
-        return ""
-
-    elif file_type in (
-        FileType.PLAYBOOK,
-        FileType.INTEGRATION,
-        FileType.CORRELATION_RULE,
-        FileType.MODELING_RULE,
-        FileType.PARSING_RULE,
-    ):
-        yml_file = get_yaml(path)
-        return yml_file.get("description", "")
-
-    elif file_type == FileType.SCRIPT:
-        yml_file = get_yaml(path)
-        return yml_file.get("comment", "")
-
-    elif file_type in (
-        FileType.CLASSIFIER,
-        FileType.REPORT,
-        FileType.WIDGET,
-        FileType.DASHBOARD,
-        FileType.JOB,
-        FileType.TRIGGER,
-        FileType.WIZARD,
-    ):
-        json_file = get_json(path)
-        return json_file.get("description", "")
-
-    return "%%UPDATE_RN%%"
-
-
 def update_api_modules_dependents_rn(
     pre_release: bool,
     update_type: Union[str, None],
@@ -1011,7 +921,6 @@ def update_api_modules_dependents_rn(
         update_type: The update type
         added: The added files
         modified: The modified files
-        id_set_path: The id set path
         text: Text to add to the release notes files
 
     :rtype: ``set``
@@ -1032,14 +941,13 @@ def update_api_modules_dependents_rn(
             logger.info("Executing update-release-notes on those as well.")
         for integration in integrations:
             integration_pack_name = integration.pack_id
-            integration_path = integration.path
             integration_pack_path = pack_name_to_path(integration_pack_name)
             update_pack_rn = UpdateRN(
                 pack_path=integration_pack_path,
                 update_type=update_type,
-                modified_files_in_pack={integration_path},
+                modified_files_in_pack=[integration],
                 pre_release=pre_release,
-                added_files=set(),
+                added_files=[],
                 pack=integration_pack_name,
                 text=text,
             )
@@ -1049,19 +957,23 @@ def update_api_modules_dependents_rn(
         return total_updated_packs
 
 
-def check_docker_image_changed(main_branch: str, packfile: str) -> Optional[str]:
-    """Checks whether the docker image was changed in master.
+def check_docker_image_changed(
+    main_branch: str, packfile: ContentItem
+) -> Optional[str]:
+    """Checks whether the docker image was changed from master.
 
     :param
         main_branch: The git main branch
-        packfile: The added or modified yml path
+        packfile: The added or modified ContentItem
 
     :rtype: ``Optional[str]``
     :return
     The latest docker image
     """
     try:
-        diff = run_command(f"git diff {main_branch} -- {packfile}", exit_on_error=False)
+        diff = run_command(
+            f"git diff {main_branch} -- {str(packfile.path)}", exit_on_error=False
+        )
     except RuntimeError as e:
         if any(["is outside repository" in exp for exp in e.args]):
             return None
@@ -1081,21 +993,3 @@ def check_docker_image_changed(main_branch: str, packfile: str) -> Optional[str]
                 if split_line[0].startswith("+"):
                     return split_line[-1]
         return None
-
-
-def get_from_version_at_update_rn(path: str) -> Optional[str]:
-    """
-    param:
-        path (str): path to yml file, if exists
-
-    :rtype: ``Optional[str]``
-    :return:
-        Fromversion if there is a fromversion key in the yml file
-
-    """
-    if not os.path.isfile(path):
-        logger.info(
-            f'[yellow]Cannot get file fromversion: "{path}" file does not exist[/yellow]'
-        )
-        return None
-    return get_from_version(path)

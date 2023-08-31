@@ -2415,7 +2415,6 @@ def update_release_notes(ctx, **kwargs):
             is_all=kwargs.get("use_git"),
             text=kwargs.get("text"),
             specific_version=kwargs.get("version"),
-            id_set_path=kwargs.get("id_set_path"),
             prev_ver=kwargs.get("prev_ver"),
             is_force=kwargs.get("force", False),
             is_bc=kwargs.get("breaking_changes", False),

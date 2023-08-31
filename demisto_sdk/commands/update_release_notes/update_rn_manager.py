@@ -1,4 +1,3 @@
-import sys
 from pathlib import Path
 from typing import Optional, Tuple
 
@@ -30,7 +29,6 @@ class UpdateReleaseNotesManager:
         is_all: Optional[bool] = False,
         text: Optional[str] = None,
         specific_version: Optional[str] = None,
-        id_set_path: Optional[Path] = None,
         prev_ver: Optional[str] = None,
         is_force: bool = False,
         is_bc: bool = False,
@@ -44,7 +42,6 @@ class UpdateReleaseNotesManager:
         self.text: str = "" if text is None else text
         self.is_force = is_force
         self.specific_version = specific_version
-        self.id_set_path = id_set_path
         self.prev_ver = prev_ver
         self.packs_existing_rn: dict = {}
         self.total_updated_packs: set = set()
@@ -61,8 +58,6 @@ class UpdateReleaseNotesManager:
         if not isinstance(content_item, (ContentItem, Pack)):
             raise ValueError(f"Could not parse content_item from {file_path}")
 
-        # print(content_item.in_pack.update_release_notes())
-        # sys.exit(0)
         pack = content_item.in_pack
         content_items.append({pack: content_item})
 
@@ -88,18 +83,16 @@ class UpdateReleaseNotesManager:
 
         for modification_type, pack_items_list in content_items.items():
             for pack_items in pack_items_list:
-                for pack_name, content_item_list in pack_items.items():
+                for pack_name, content_item in pack_items.items():
                     if pack_name not in merged_dict:
-                        merged_dict[pack_name] = {modification_type: content_item_list}
+                        merged_dict[pack_name] = {modification_type: [content_item]}
                     else:
                         if modification_type in merged_dict[pack_name]:
                             merged_dict[pack_name][modification_type].extend(
-                                content_item_list
+                                [content_item]
                             )
                         else:
-                            merged_dict[pack_name][
-                                modification_type
-                            ] = content_item_list
+                            merged_dict[pack_name][modification_type] = [content_item]
         return merged_dict
 
     def manage_rn_update(self):
@@ -120,11 +113,9 @@ class UpdateReleaseNotesManager:
 
         content = self.merge_content_items(content_items)
 
-        self.changed_packs_from_git = content.keys()  # TODO: check if needed
-
         # Check whether the packs have some existing RNs already (created manually or by the command)
         self.check_existing_rn(added_files)
-        self.handle_api_module_change(modified_files, added_files)
+        self.handle_api_module_change(modified_files, added_files, content)
 
         self.create_release_notes(content)
         if len(self.total_updated_packs) > 1:
@@ -247,7 +238,9 @@ class UpdateReleaseNotesManager:
             if "ReleaseNotes" in file_path:
                 self.packs_existing_rn[get_pack_name(file_path)] = file_path
 
-    def handle_api_module_change(self, modified_files: set, added_files: set):
+    def handle_api_module_change(
+        self, modified_files: set, added_files: set, content: dict
+    ):
         """Checks whether the modified file is in the API modules pack and if so, updates every pack which depends
         on that API module.
 
@@ -259,12 +252,11 @@ class UpdateReleaseNotesManager:
         # (1) The user gave a path to the api module which was changed.
         # (2) The user did not give a specific path at all (is_all = True) but some ApiModules were changed.
         api_module_was_given = self.given_pack and API_MODULES_PACK in self.given_pack
-        api_module_changed_in_git = (
-            self.changed_packs_from_git
-            and API_MODULES_PACK in self.changed_packs_from_git
+        api_module_changed = any(
+            pack.name == API_MODULES_PACK for pack, _ in content.items()
         )
 
-        if api_module_was_given or (api_module_changed_in_git and self.is_all):
+        if api_module_was_given or (api_module_changed and self.is_all):
             updated_packs = update_api_modules_dependents_rn(
                 self.pre_release,
                 self.update_type,
@@ -283,146 +275,45 @@ class UpdateReleaseNotesManager:
             old_format_files: A set of old formatted files
         """
         if content:
-            for content_item in content.keys():
+            for pack, content_item in content.items():
                 if (
-                    content_item.name == API_MODULES_PACK
+                    pack.name == API_MODULES_PACK
                 ):  # We already handled Api Modules, so we can skip it.
                     continue
 
-                existing_rn_version = self.get_existing_rn(content_item.name)
+                existing_rn_version = self.get_existing_rn(pack.name)
                 if (
                     existing_rn_version is None
                 ):  # New release notes file already found for the pack
                     raise RuntimeError(
-                        f"New release notes file already found for {content_item.name}. "
+                        f"New release notes file already found for {pack.name}. "
                         f"Please update manually or run `demisto-sdk update-release-notes "
-                        f"-i {content_item.name}` without specifying the update_type."
+                        f"-i {pack.name}` without specifying the update_type."
                     )
 
-                print(content_item)
-                sys.exit(0)
+                modified_content = content_item.get("modified", [])
+                added_content = content_item.get("new", [])
+                old_content = content_item.get("old_format", [])
 
-                content_item.create_pack_release_notes(
+                pack.create_pack_release_notes(
+                    modified_content,
+                    added_content,
+                    old_content,
                     existing_rn_version,
                     self.update_type,
                     self.pre_release,
                     self.specific_version,
-                    self.pre_release,
                     self.is_force,
                     self.text,
                     self.is_bc,
+                    self.total_updated_packs,
+                    self.packs_existing_rn,
                 )
         else:
             logger.info(
                 "[yellow]No changes that require release notes were detected. If such changes were made, "
                 "please commit the changes and rerun the command.[/yellow]"
             )
-            # if (
-            #     API_MODULES_PACK in pack
-            # ):  # We already handled Api Modules so we can skip it.
-            #     continue
-            # self.create_pack_release_notes(
-            #     pack,
-            #     filtered_modified_files,
-            #     filtered_added_files,
-            #     old_format_files,
-            # )
-
-        # if self.given_pack:
-        #     for content_item in content.values():
-        #         test = Pack.update_release_notes()
-        #         print(test)
-        #         # print(content_item)
-        #         test = content[self.given_pack]
-        #         content_item.in_pack.update_release_notes()
-        # # Certain file types do not require release notes update
-        # filtered_modified_files = filter_files_by_type(
-        #     modified_files, skip_file_types=SKIP_RELEASE_NOTES_FOR_TYPES
-        # )
-        # filtered_added_files = filter_files_by_type(
-        #     added_files, skip_file_types=SKIP_RELEASE_NOTES_FOR_TYPES
-        # )
-        # if self.given_pack:  # A specific pack was chosen to update
-        #     self.create_pack_release_notes(
-        #         self.given_pack,
-        #         filtered_modified_files,
-        #         filtered_added_files,
-        #         old_format_files,
-        #     )
-        #
-        # elif self.changed_packs_from_git:  # update all changed packs
-        #     for pack in self.changed_packs_from_git:
-        #         if (
-        #             API_MODULES_PACK in pack
-        #         ):  # We already handled Api Modules so we can skip it.
-        #             continue
-        #         self.create_pack_release_notes(
-        #             pack,
-        #             filtered_modified_files,
-        #             filtered_added_files,
-        #             old_format_files,
-        #         )
-
-    # def create_pack_release_notes(
-    #     self,
-    #     pack: str,
-    #     filtered_modified_files: set,
-    #     filtered_added_files: set,
-    #     old_format_files: set,
-    # ):
-    #     """Creates the release notes for a given pack if was changed.
-    #
-    #     :param
-    #         pack: The pack to create release notes for
-    #         filtered_modified_files: A set of filtered modified files
-    #         filtered_added_files: A set of filtered added files
-    #         old_format_files: A set of old formatted files
-    #     """
-    #     existing_rn_version = self.get_existing_rn(pack)
-    #     if (
-    #         existing_rn_version is None
-    #     ):  # New release notes file already found for the pack
-    #         raise RuntimeError(
-    #             f"New release notes file already found for {pack}. "
-    #             f"Please update manually or run `demisto-sdk update-release-notes "
-    #             f"-i {pack}` without specifying the update_type."
-    #         )
-    #     pack_modified = filter_files_on_pack(pack, filtered_modified_files)
-    #     pack_added = filter_files_on_pack(pack, filtered_added_files)
-    #     pack_old = filter_files_on_pack(pack, old_format_files)
-    #
-    #     # Checks if update is required
-    #     if pack_modified or pack_added or pack_old or self.is_force:
-    #         pack_path = pack_name_to_path(pack)
-    #         update_pack_rn = UpdateRN(
-    #             pack_path=pack_path,
-    #             update_type=self.update_type,
-    #             modified_files_in_pack=pack_modified.union(pack_old),
-    #             pre_release=self.pre_release,
-    #             added_files=pack_added,
-    #             specific_version=self.specific_version,
-    #             text=self.text,
-    #             is_force=self.is_force,
-    #             existing_rn_version_path=existing_rn_version,
-    #             is_bc=self.is_bc,
-    #         )
-    #         updated = update_pack_rn.execute_update()
-    #         self.rn_path.append(update_pack_rn.rn_path)
-    #
-    #         # If new release notes were created add it to the total number of packs that were updated.
-    #         if updated:
-    #             self.total_updated_packs.add(pack)
-    #             # If there is an outdated previous release notes, remove it (for example: User updated his version to
-    #             # 1.0.4 and meanwhile the master version changed to 1.0.4, so we want to remove the user's 1_0_4 file
-    #             # and add a 1_0_5 file.)
-    #             if update_pack_rn.should_delete_existing_rn:
-    #                 os.unlink(self.packs_existing_rn[pack])
-    #     else:
-    #         logger.info(
-    #             f"[yellow]Either no changes were found in {pack} pack "
-    #             f"or the changes found should not be documented in the release notes file.\n"
-    #             f"If relevant changes were made, please commit the changes and rerun the command.[/yellow]"
-    #         )
 
     def get_existing_rn(self, pack) -> Optional[str]:
         """Gets the existing rn of the pack is exists.

@@ -1,9 +1,14 @@
-name: 'Auto Assign'
+name: Handle New Contribution
+
 on:
   pull_request:
+    types: [opened, ready_for_review]
 
 jobs:
-  add-reviews:
+  assign:
     runs-on: ubuntu-latest
     steps:
-      - uses: kentaro-m/auto-assign-action@v1.2.5
+      - uses: hkusu/review-assign-action@v1.3.1
+        with:
+          assignees: RotemAmit
+          reviewers: RotemAmit # if draft, assigned when draft is released

@@ -8,6 +8,18 @@ class Hook(ABC):
         self.base_hook = deepcopy(hook)
         self.hooks.remove(self.base_hook)
 
+    @staticmethod
+    def _join_files(files: list, separator: str = "|") -> str:
+        """
+        Joins a list of files into a single string using the specified separator.
+        Args:
+            files (list): A list of files to be joined.
+            separator (str, optional): The separator to use when joining the files. Defaults to "|".
+        Returns:
+            str: The joined string.
+        """
+        return separator.join(map(str, files))
+
     @abstractmethod
     def prepare_hook(self, **kwargs):
         """

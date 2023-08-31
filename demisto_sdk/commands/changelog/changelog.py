@@ -30,24 +30,21 @@ class Changelog:
 
     """ VALIDATE """
 
-    def validate(self) -> bool:
+    def validate(self) -> None:
         """
         ...
         """
         if self.is_release():
-            return self._validate_release()
+            self._validate_release()
         else:
-            return self._validate_branch()
+            self._validate_branch()
 
     """ INIT """
 
-    def init(self, breaking: str = None, feature: str = None, fix: str = None) -> None:
+    def init(self) -> None:
         """
-        Creates a new log file for the current PR
-        - if `fix` or `breaking` or `feature` is provided
-          it will create the file with the provided arguments
-        - if no argument is provided, it will create the file with initial values,
-          then the user has to change the values manually
+        Creates a new log file for the current PR with initial values,
+        then the user has to change the values manually
         """
         if self.is_release():
             logger.error(
@@ -55,14 +52,12 @@ class Changelog:
             )
 
         msg = (
-            f"The creation of the log file .changelog/{self.pr_number}.yml is complete"
+            f"The creation of the log file .changelog/{self.pr_number}.yml is complete,\n"
+            "Go to the file and edit the initial values."
         )
 
-        if any((breaking, feature, fix)):
-            log = self.create_log(breaking, feature, fix)
-        else:
-            msg += ",\nGo to the file and edit the initial values."
-            log = INITIAL_LOG
+        log = INITIAL_LOG
+        log["pr_number"] = self.pr_number
 
         with (CHANGELOG_FOLDER / f"{self.pr_number}.yml").open("w") as f:
             yaml.dump(log, f)
@@ -73,8 +68,7 @@ class Changelog:
 
     def release(self) -> None:
         if not self.is_release():
-            logger.error("The name of the PR is not valid for a release")
-            raise ValueError()
+            raise ValueError("The name of the PR is not valid for a release")
         logs = self.get_all_logs()
         self.extract_and_build_changelogs(logs)
         self.cleaning_changelogs_folder()
@@ -94,15 +88,13 @@ class Changelog:
     def is_log_yml_exist(self) -> bool:
         return (CHANGELOG_FOLDER / f"{self.pr_number}.yml").is_file()
 
-    def validate_log_yml(self) -> bool:
+    def validate_log_yml(self) -> None:
         data = get_yaml(CHANGELOG_FOLDER / f"{self.pr_number}.yml")
 
         try:
             LogObject(**data)
         except ValidationError as e:
-            logger.error(e.json())
-            return False
-        return True
+            raise ValueError(e.json())
 
     def get_all_logs(self) -> List[LogObject]:
         changelogs: List[LogObject] = []
@@ -143,7 +135,6 @@ class Changelog:
     def prepare_new_changelog(
         self, new_logs: List[str], old_changelog: List[str]
     ) -> str:
-        # self.get_current_version(old_changelog)
         new_changelog = "# Changelog\n"
         new_changelog += f"## {self.pr_name[1:]}\n"
         for log in new_logs:
@@ -194,42 +185,33 @@ class Changelog:
         LogObject(**log)
         return log
 
-    def _validate_release(self) -> bool:
+    def _validate_release(self) -> None:
         if not self.is_log_folder_empty():
-            logger.error(
+            raise ValueError(
                 "Logs folder is not empty,\n"
                 "It is not possible to release until the `changelog.md` "
                 "file is updated, and the `.changelog` folder is empty"
             )
-            return False
         if not self.is_changelog_changed():
-            logger.error(
+            raise ValueError(
                 "The file `changelog.md` is not updated\n"
                 "It is not possible to release until the `changelog.md` "
                 "file is updated, and the `.changelog` folder is empty"
             )
-            return False
 
-        return True
-
-    def _validate_branch(self) -> bool:
+    def _validate_branch(self) -> None:
         if self.is_changelog_changed():
-            logger.error(
+            raise ValueError(
                 "Do not modify changelog.md\n"
                 "run `demisto-sdk changelog --init -pn <pr number> -pt <pr name>`"
                 " to create a log file instead."
             )
-            return False
         if not self.is_log_yml_exist():
-            logger.error(
+            raise ValueError(
                 "Missing changelog file.\n"
                 "Run `demisto-sdk changelog --init -pn <pr number> -pt <pr name>` and fill it."
             )
-            return False
-        if not self.validate_log_yml():
-            return False
-
-        return True
+        self.validate_log_yml()
 
 
 def changelog_management(**kwargs):
@@ -240,18 +222,16 @@ def changelog_management(**kwargs):
     release = kwargs.get("release", None)
 
     if not pr_number:
-        logger.error("No provided the pr_number argument")
-        sys.exit(1)
+        raise ValueError("No provided the `pr_number` argument")
 
     changelog = Changelog(pr_number, pr_name)
     if validate:
         return changelog.validate()
     elif init:
-        return changelog.init(
-            kwargs.get("breaking"), kwargs.get("feature"), kwargs.get("fix")
-        )
+        return changelog.init()
     elif release:
         return changelog.release()
     else:
-        logger.error("")
-        return 1
+        raise ValueError(
+            "Missing arguments, run `demisto-sdk changelog --help` to see which arguments are required"
+        )

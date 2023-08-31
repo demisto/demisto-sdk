@@ -359,6 +359,7 @@ def split(ctx, config, **kwargs):
     "-t",
     "--pr-title",
     help="The PR title",
+    default=""
 )
 @click.option(
     "-n",
@@ -369,7 +370,11 @@ def split(ctx, config, **kwargs):
 @logging_setup_decorator
 def changelog(ctx, **kwargs):
     """ """
-    changelog_management(**kwargs)
+    try:
+        changelog_management(**kwargs)
+    except Exception as e:
+        logger.info(f"[red]{e}[/red]")
+        sys.exit(1)
 
 
 # ====================== extract-code ====================== #

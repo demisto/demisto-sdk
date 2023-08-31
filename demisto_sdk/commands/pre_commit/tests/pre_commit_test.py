@@ -115,8 +115,7 @@ def test_config_files(mocker, repo: Repo, is_test: bool):
 
     pre_commit.run(unit_test=is_test)
 
-    # precommit should not run on python2 files, unless test files
-    assert mock_subprocess.call_count == (2 if is_test else 1)
+    assert mock_subprocess.call_count == 1
 
     tests_we_should_skip = {"format", "validate", "secrets", "should_be_skipped"}
     if not is_test:

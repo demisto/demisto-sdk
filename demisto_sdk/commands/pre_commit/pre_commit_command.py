@@ -72,16 +72,16 @@ class PreCommitRunner:
             )
         # changes the demisto-sdk revision to the latest release version (or the debug commit hash)
         # to debug, modify the DEMISTO_SDK_COMMIT_HASH_DEBUG variable to your demisto-sdk commit hash
-        self._get_repos(self.precommit_template)["demisto-sdk"][
-            "rev"
-        ] = self.demisto_sdk_commit_hash
+        self._get_repos(self.precommit_template)[
+            "https://github.com/demisto/demisto-sdk"
+        ]["rev"] = self.demisto_sdk_commit_hash
         self.hooks = self._get_hooks(self.precommit_template)
 
     @staticmethod
     def _get_repos(pre_commit_config: dict) -> dict:
         repos = {}
         for repo in pre_commit_config["repos"]:
-            repos[repo["repo"].split("/")[-1]] = repo
+            repos[repo["repo"]] = repo
         return repos
 
     @staticmethod
@@ -94,6 +94,28 @@ class PreCommitRunner:
                 if hook.pop("skip", None):
                     SKIPPED_HOOKS.add(hook["id"])
         return hooks
+
+    def handle_python2_files(self, unit_test: bool) -> None:
+        """
+        This function handles the python2 files.
+        Files with python2 run only the "run-unit-tests" hook.
+        """
+        python2_files = self.python_version_to_files.pop(DEFAULT_PYTHON2_VERSION, None)
+        if not python2_files:
+            return
+        if not unit_test:
+            logger.info(
+                f"Skipping pre-commit with Python {DEFAULT_PYTHON2_VERSION} because unit-tests were not selected"
+            )
+            return
+        python2_files_string = [str(file) for file in python2_files]
+        for hook in self.hooks.values():
+            if hook["hook"]["id"] == "run-unit-tests":
+                continue
+            hook["hook"]["exclude"] = "|".join(python2_files_string)
+        logger.info(
+            f"Running pre-commit with Python {DEFAULT_PYTHON2_VERSION} on {', '.join(python2_files_string)}"
+        )
 
     def prepare_hooks(
         self,
@@ -123,7 +145,7 @@ class PreCommitRunner:
         ret_val = 0
         precommit_env = os.environ.copy()
         skipped_hooks: set = SKIPPED_HOOKS
-        skipped_hooks |= set(skip_hooks or [])
+        skipped_hooks.update(set(skip_hooks or []))
         if not unit_test:
             skipped_hooks.add("run-unit-tests")
         if validate and "validate" in skipped_hooks:
@@ -139,44 +161,9 @@ class PreCommitRunner:
             str(path) for path in sorted(PYTHONPATH) if "site-packages" not in str(path)
         )
         precommit_env["DEMISTO_SDK_CONTENT_PATH"] = str(CONTENT_PATH)
-        if changed_files_python2 := self.python_version_to_files.pop(
-            DEFAULT_PYTHON2_VERSION, None
-        ):
-            if unit_test:
-                precommit_config = deepcopy(self.precommit_template)
-                assert isinstance(precommit_config, dict)
-                changed_files_string = ", ".join(
-                    sorted(
-                        (str(changed_path) for changed_path in changed_files_python2)
-                    )
-                )
-                logger.info(
-                    f"Running pre-commit with Python {DEFAULT_PYTHON2_VERSION} on {changed_files_string}"
-                )
-                with open(PRECOMMIT_PATH, "w") as f:
-                    yaml.dump(precommit_config, f)
-                response = subprocess.run(
-                    [
-                        sys.executable,
-                        "-m",
-                        "pre_commit",
-                        "run",
-                        "run-unit-tests",
-                        "-c",
-                        str(PRECOMMIT_PATH),
-                        "--files",
-                        *changed_files_python2,
-                        "-v" if verbose else "",
-                    ],
-                    env=precommit_env,
-                    cwd=CONTENT_PATH,
-                )
-                if response.returncode:
-                    ret_val = response.returncode
-            else:
-                logger.info(
-                    f"Skipping pre-commit with Python {DEFAULT_PYTHON2_VERSION} because unit-tests were not selected"
-                )
+
+        self.handle_python2_files(unit_test)
+
         precommit_config = deepcopy(self.precommit_template)
         assert isinstance(precommit_config, dict)
         for (
@@ -254,7 +241,7 @@ def group_by_python_version(files: Set[Path]) -> Dict[str, set]:
         else:
             infra_files.append(file)
 
-    python_versions_to_files = defaultdict(set)
+    python_versions_to_files: Dict[str, Set] = defaultdict(set)
     with multiprocessing.Pool() as pool:
         integrations_scripts = pool.map(
             BaseContent.from_path, integrations_scripts_mapping.keys()
@@ -277,7 +264,7 @@ def group_by_python_version(files: Set[Path]) -> Dict[str, set]:
         python_versions_to_files[
             python_version_string or DEFAULT_PYTHON2_VERSION
         ].update(
-            integrations_scripts_mapping[code_file_path] | {integration_script.path}
+            integrations_scripts_mapping[code_file_path], {integration_script.path}
         )
 
     python_versions_to_files[DEFAULT_PYTHON_VERSION].update(infra_files)
@@ -330,7 +317,7 @@ def pre_commit_manager(
         sorted((str(changed_path) for changed_path in files_to_run))
     )
 
-    logger.info(f"Running pre-commit on {files_to_run_string}")
+    logger.info(f"pre-commit received the following files: {files_to_run_string}")
 
     if not sdk_ref:
         sdk_ref = f"v{get_last_remote_release_version()}"
@@ -356,13 +343,13 @@ def preprocess_files(
 ) -> Set[Path]:
     git_util = GitUtil()
     staged_files = git_util._get_staged_files()
-    all_git_files = git_util.get_all_files() | staged_files
+    all_git_files = git_util.get_all_files().union(staged_files)
     if input_files:
         raw_files = set(input_files)
     elif staged_only:
         raw_files = staged_files
     elif use_git:
-        raw_files = git_util._get_all_changed_files() | staged_files
+        raw_files = git_util._get_all_changed_files().union(staged_files)
     elif all_files:
         raw_files = all_git_files
     else:
@@ -372,7 +359,7 @@ def preprocess_files(
     files_to_run: Set[Path] = set()
     for file in raw_files:
         if file.is_dir():
-            files_to_run |= {file for file in file.rglob("*") if file.is_file()}
+            files_to_run.update({file for file in file.rglob("*") if file.is_file()})
         else:
             files_to_run.add(file)
 

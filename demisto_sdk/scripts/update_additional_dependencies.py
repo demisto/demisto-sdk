@@ -40,12 +40,19 @@ def update_additional_dependencies(
             return 0
         requirements = requirements_path.read_text().splitlines()
         pre_commit = get_file(pre_commit_config_path)
+        pre_commit_orig = pre_commit.copy()
         for repo in pre_commit["repos"]:
             for hook in repo["hooks"]:
                 if hook["id"] in hooks:
                     hook["additional_dependencies"] = requirements
-        with pre_commit_config_path.open("w") as f:
-            yaml.dump(pre_commit, f)
+        if yaml.dumps(pre_commit, sort_keys=True) != yaml.dumps(
+            pre_commit_orig, sort_keys=True
+        ):
+            logger.info(
+                f"Detected changes in pre-commit config:{pre_commit_config_path}, updating it"
+            )
+            with pre_commit_config_path.open("w") as f:
+                yaml.dump(pre_commit, f, sort_keys=True)
         return 0
     except Exception:
         logger.exception("Failed to update additional dependencies")

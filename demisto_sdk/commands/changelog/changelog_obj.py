@@ -53,6 +53,9 @@ class LogObject(BaseModel):
     pr_number: str
 
     def build_log(cls) -> Tuple[List[str], ...]:
+        """
+        Extracts all entries from the object and separates them by types
+        """
         breaking_logs: List[str] = []
         feature_logs: List[str] = []
         fix_logs: List[str] = []

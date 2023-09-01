@@ -143,12 +143,6 @@ class Changelog:
             new_changelog += log
         return new_changelog
 
-    def get_current_version(self, old_changelog: List[str]) -> str:
-        for line in old_changelog:
-            if RELEASE_VERSION_REGEX.match(line) is not None:
-                return line
-        raise ValueError("Could not find the current version")
-
     def write_to_changelog_file(self, new_changelog: str) -> None:
         with CHANGELOG_MD_FILE.open("w") as f:
             f.write(new_changelog)
@@ -166,23 +160,6 @@ class Changelog:
             self.pr_name is not None
             and RELEASE_VERSION_REGEX.match(self.pr_name) is not None
         )
-
-    def create_log(
-        self, breaking: str = None, feature: str = None, fix: str = None
-    ) -> dict:
-        log: dict = {"logs": []}
-        if breaking:
-            for breaking_log in breaking.split(" * "):
-                log["logs"].append({"description": breaking_log, "type": "breaking"})
-        if feature:
-            for feature_log in feature.split(" * "):
-                log["logs"].append({"description": feature_log, "type": "feature"})
-        if fix:
-            for fix_log in fix.split(" * "):
-                log["logs"].append({"description": fix_log, "type": "fix"})
-
-        LogObject(**log)
-        return log
 
     def _validate_release(self) -> None:
         if not self.is_log_folder_empty():

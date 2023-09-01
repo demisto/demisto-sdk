@@ -866,3 +866,38 @@ def test_force_update_release(demisto_client, mocker, repo):
     with open(rn_path) as f:
         rn = f.read()
     assert "##### ThinkCanary\n\n- %%UPDATE_RN%%\n" == rn
+
+
+def test_update_release_notes_only_pack_ignore_changed(mocker, pack):
+    """
+    Given
+    - only .pack-ignore file that was changed within a pack
+
+    When
+    - Running demisto-sdk update-release-notes command with -i flag
+
+    Then
+    - Ensure no release-notes need to be updated
+    """
+    mocker.patch.object(
+        UpdateReleaseNotesManager,
+        "get_git_changed_files",
+        return_value=({pack.pack_ignore.path}, set(), set()),
+    )
+    mocker.patch.object(UpdateRN, "is_bump_required", return_value=True)
+    mocker.patch.object(
+        UpdateRN,
+        "bump_version_number",
+        return_value=("1.2.3", {"currentVersion": "1.2.3"}),
+    )
+
+    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+
+    runner = CliRunner(mix_stderr=True)
+    result = runner.invoke(main, [UPDATE_RN_COMMAND, "-i", pack.path])
+    assert result.exit_code == 0
+    assert not result.exception
+    assert str_in_call_args_list(
+        logger_info.call_args_list,
+        f"Either no changes were found in {pack.name} pack or the changes found should not be documented in the release notes file.",
+    )

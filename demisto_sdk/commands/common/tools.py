@@ -450,7 +450,7 @@ def get_local_remote_file(
 
 def get_remote_file_from_api(
     full_file_path: str,
-    git_content_config: Optional[GitContentConfig],
+    git_content_config: Optional[GitContentConfig] = None,
     tag: str = "master",
     return_content: bool = False,
 ):

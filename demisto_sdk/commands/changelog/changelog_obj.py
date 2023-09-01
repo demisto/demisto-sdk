@@ -3,13 +3,14 @@ from typing import Dict, List, Tuple, Union
 
 from pydantic import BaseModel, validator
 
-INITIAL_TYPE_CONSTANT = "<fix|feature|breaking>"
+INITIAL_DESCRIPTION = "enter description about this PR"
+INITIAL_TYPE = "<fix|feature|breaking>"
 
 INITIAL_LOG: Dict[str, Union[str, List[dict]]] = {
     "logs": [
         {
-            "description": "enter description about this PR",
-            "type": INITIAL_TYPE_CONSTANT,
+            "description": INITIAL_DESCRIPTION,
+            "type": INITIAL_TYPE,
         }
     ]
 }
@@ -19,7 +20,7 @@ class LogType(str, Enum):
     fix = "fix"
     feature = "feature"
     breaking = "breaking"
-    initial = INITIAL_TYPE_CONSTANT
+    initial = INITIAL_TYPE
 
 
 class LogEntry(BaseModel):
@@ -33,7 +34,7 @@ class LogEntry(BaseModel):
 
     @validator("type")
     def is_type_initial_mode(cls, value):
-        if value == INITIAL_TYPE_CONSTANT:
+        if value == INITIAL_TYPE:
             raise ValueError(
                 "One of the types is still not different from the initial value, please edit it"
             )
@@ -41,7 +42,7 @@ class LogEntry(BaseModel):
 
     @validator("description")
     def is_description_initial_mode(cls, value):
-        if value == "enter description about this PR":
+        if value == INITIAL_DESCRIPTION:
             raise ValueError(
                 "One of the descriptions is still not different from the initial value, please edit it"
             )

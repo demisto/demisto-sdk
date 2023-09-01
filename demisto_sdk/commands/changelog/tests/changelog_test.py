@@ -44,8 +44,7 @@ def test_is_log_folder_empty(tmpdir, changelog_mock: Changelog):
     os.makedirs(folder_path)
     changelog.CHANGELOG_FOLDER = folder_path
     assert changelog_mock.is_log_folder_empty()
-    with (folder_path / "12345.yml").open("w") as f:
-        f.write("test: test")
+    (folder_path / "12345.yml").write_text("test: test")
     assert not changelog_mock.is_log_folder_empty()
 
 

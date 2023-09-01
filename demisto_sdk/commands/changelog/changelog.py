@@ -50,24 +50,25 @@ class Changelog:
                 "This PR is for release, please use in changelog release command"
             )
 
-        msg = (
-            f"The creation of the log file .changelog/{self.pr_number}.yml is complete,\n"
-            "Go to the file and edit the initial values."
-        )
-
         log = INITIAL_LOG
         log["pr_number"] = self.pr_number
 
         with (CHANGELOG_FOLDER / f"{self.pr_number}.yml").open("w") as f:
             yaml.dump(log, f)
 
-        logger.info(msg)
+        logger.info(
+            f"The creation of the log file .changelog/{self.pr_number}.yml is complete,\n"
+            "Go to the file and edit the initial values."
+        )
 
     """ RELEASE """
 
     def release(self) -> None:
         if not self.is_release():
-            raise ValueError("The name of the PR is not valid for a release")
+            raise ValueError(
+                "The name of the PR is not correct for a release,\n"
+                "The name of the PR should be like the following format: `v1.0.0`"
+            )
         logs = self.get_all_logs()
         self.extract_and_build_changelogs(logs)
         self.cleaning_changelogs_folder()

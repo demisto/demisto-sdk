@@ -8,6 +8,7 @@
 * Fixed an issue where the **validate -g** failed when updating an empty `.pack-ignore` file.
 * Added support for yml hidden parameters for `xsoar_saas` marketplace, as part of the **prepare_content** command.
 * Added support for custom documentation that will appear only in `xsoar_saas` marketplace, as part of the **prepare_content** command.
+* Fixed an issue where the (`GR108`) validation did not fail in the validate command with the `-a` flag.
 * Modified **prepare_content** command to be platform specific. For xsoar-saas and XSIAM regarding pack readme and integration description images in markdown files.
 * Fixed an issue where the **lint** command was parsing % that may exist in the log data.
 

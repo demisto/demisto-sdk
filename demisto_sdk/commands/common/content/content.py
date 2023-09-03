@@ -3,6 +3,7 @@ from __future__ import annotations
 import os
 from typing import Any, Iterator
 
+import git
 from git import InvalidGitRepositoryError
 from wcmatch.pathlib import Path
 
@@ -63,7 +64,7 @@ class Content:
         return content
 
     @staticmethod
-    def git() -> GitUtil | None:
+    def git() -> git.Repo | None:  # noqa: TID251
         """Git repository object.
 
         Returns:
@@ -81,11 +82,10 @@ class Content:
                 logger.debug(f"Using content path: {content_path}")
             else:
                 git_util = GitUtil(search_parent_directories=True)
+            return git_util.repo
         except InvalidGitRepositoryError:
             logger.debug("Git repo was not found.")
-            git_util = None
-
-        return git_util
+            return None
 
     @property
     def path(self) -> Path:

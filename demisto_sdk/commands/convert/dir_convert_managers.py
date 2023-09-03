@@ -1,4 +1,4 @@
-import os
+from pathlib import Path
 from abc import abstractmethod
 
 from packaging.version import Version
@@ -74,7 +74,7 @@ class AbstractDirConvertManager:
             - True if the path ends with 'entity_dir_name'.
             - False if path does not end with 'entity_dir_name'.
         """
-        return os.path.basename(self.input_path) == self.entity_dir_name
+        return Path(self.input_path).name == self.entity_dir_name
 
 
 class LayoutsDirConvertManager(AbstractDirConvertManager):

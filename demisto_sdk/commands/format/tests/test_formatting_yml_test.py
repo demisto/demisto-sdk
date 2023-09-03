@@ -259,7 +259,7 @@ class TestFormatting:
             )
         )
         saved_file_path = os.path.join(
-            os.path.dirname(source_path), os.path.basename(destination_path)
+            os.path.dirname(source_path), Path(destination_path).name
         )
         base_yml = formatter(
             input=source_path, output=saved_file_path, path=schema_path
@@ -551,7 +551,7 @@ class TestFormatting:
             )
         )
         saved_file_path = os.path.join(
-            os.path.dirname(source_path), os.path.basename(destination_path)
+            os.path.dirname(source_path), Path(destination_path).name
         )
         base_yml = formatter(
             input=source_path, output=saved_file_path, path=schema_path

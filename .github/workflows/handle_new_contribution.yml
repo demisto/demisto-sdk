@@ -16,4 +16,4 @@ jobs:
           GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
         run: |
           echo "Add an assignee"
-          gh pr --add-assignee RotemAmit
+          gh pr edit --add-assignee RotemAmit

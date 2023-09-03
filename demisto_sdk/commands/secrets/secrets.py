@@ -181,7 +181,7 @@ class SecretsValidator:
         if is_circle:
             prev_ver = self.prev_ver
             if not prev_ver:
-                self.git_util = GitUtil(repo=Content.git())
+                self.git_util = Content.git()
                 prev_ver = self.git_util.handle_prev_ver()[1]
             if not prev_ver.startswith("origin"):
                 prev_ver = "origin/" + prev_ver

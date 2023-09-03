@@ -1,11 +1,11 @@
 import os
 import re
 from pathlib import Path
-from typing import Set, Tuple, Union
+from typing import Set, Tuple, Union, Optional
 
 import click
 import gitdb
-from git import InvalidGitRepositoryError, Repo
+from git import InvalidGitRepositoryError, Repo  # noqa: TID251
 from git.diff import Lit_change_type
 from git.remote import Remote
 
@@ -15,16 +15,15 @@ from demisto_sdk.commands.common.constants import PACKS_FOLDER
 class GitUtil:
     repo: Repo
 
-    def __init__(self, repo: Repo = None):
-        if not repo:
-            try:
-                self.repo = Repo(Path.cwd(), search_parent_directories=True)
-            except InvalidGitRepositoryError:
-                raise InvalidGitRepositoryError(
-                    "Unable to find Repository from current working directory - aborting"
-                )
-        else:
-            self.repo = repo
+    def __init__(self, path: Optional[Path] = None, search_parent_directories: bool = True):
+        if not path:
+            path = Path.cwd()
+        try:
+            self.repo = Repo(path, search_parent_directories=search_parent_directories)
+        except InvalidGitRepositoryError:
+            raise InvalidGitRepositoryError(
+                "Unable to find Repository from current working directory - aborting"
+            )
 
     def get_all_files(self) -> Set[Path]:
         return set(map(Path, self.repo.git.ls_files().split("\n")))

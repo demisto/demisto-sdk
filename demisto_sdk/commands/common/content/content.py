@@ -3,7 +3,7 @@ from __future__ import annotations
 import os
 from typing import Any, Iterator
 
-from git import InvalidGitRepositoryError, Repo
+from git import InvalidGitRepositoryError
 from wcmatch.pathlib import Path
 
 from demisto_sdk.commands.common.constants import (
@@ -25,6 +25,7 @@ from demisto_sdk.commands.common.content.objects.root_objects import (
 )
 from demisto_sdk.commands.common.content.objects_factory import path_to_pack_object
 from demisto_sdk.commands.common.logger import logger
+from demisto_sdk.commands.common.git_util import GitUtil
 
 
 class Content:
@@ -53,7 +54,7 @@ class Content:
         TODO:
             1. Add attribute which init only changed objects by git.
         """
-        repo = cls.git()
+        repo = cls.git().repo
         if repo:
             content = Content(repo.working_tree_dir)  # type: ignore
         else:
@@ -62,7 +63,7 @@ class Content:
         return content
 
     @staticmethod
-    def git() -> Repo | None:
+    def git() -> GitUtil | None:
         """Git repository object.
 
         Returns:
@@ -76,15 +77,15 @@ class Content:
         """
         try:
             if content_path := os.getenv("DEMISTO_SDK_CONTENT_PATH"):
-                repo = Repo(content_path)
+                git_util = GitUtil(content_path)
                 logger.debug(f"Using content path: {content_path}")
             else:
-                repo = Repo(Path.cwd(), search_parent_directories=True)
+                git_util = GitUtil(search_parent_directories=True)
         except InvalidGitRepositoryError:
             logger.debug("Git repo was not found.")
-            repo = None
+            git_util = None
 
-        return repo
+        return git_util
 
     @property
     def path(self) -> Path:

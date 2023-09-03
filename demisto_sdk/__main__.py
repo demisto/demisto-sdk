@@ -3,7 +3,6 @@ import copy
 import functools
 import logging
 import os
-import subprocess
 import sys
 from pathlib import Path
 from typing import IO, Any, Dict, Iterable, Tuple, Union
@@ -195,21 +194,11 @@ def main(ctx, config, version, release_notes, **kwargs):
         log_file_path=kwargs.get("log_file_path"),
     )
     global logger
-
     logger = logging.getLogger("demisto-sdk")
     handle_deprecated_args(ctx.args)
 
     config.configuration = Configuration()
     import dotenv
-
-    # make sure that git is installed before using any command.
-    try:
-        subprocess.check_output(["git", "--version"])
-    except subprocess.CalledProcessError as error:
-        logger.error(
-            f"Git executable cannot be found, or is invalid, make sure to install Git to use the demisto-sdk: {error}"
-        )
-        sys.exit(1)
 
     dotenv.load_dotenv(CONTENT_PATH / ".env", override=True)  # type: ignore # load .env file from the cwd
     if (

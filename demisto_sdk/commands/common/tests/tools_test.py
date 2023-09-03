@@ -626,7 +626,7 @@ class TestGetRemoteFileLocally:
     FILE_NAME = "somefile.json"
     FILE_CONTENT = '{"id": "some_file"}'
 
-    git_util = GitUtil(repo=Content.git())
+    git_util = Content.git()
     main_branch = git_util.handle_prev_ver()[1]
 
     def setup_method(self):

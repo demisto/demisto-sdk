@@ -172,7 +172,7 @@ class UpdateRN:
         self.should_delete_existing_rn = False
         self.pack_metadata_only = pack_metadata_only
         self.is_force = is_force
-        git_util = GitUtil(repo=Content.git())
+        git_util = Content.git()
         self.main_branch = git_util.handle_prev_ver()[1]
         self.metadata_path = os.path.join(self.pack_path, "pack_metadata.json")
         self.master_version = self.get_master_version()

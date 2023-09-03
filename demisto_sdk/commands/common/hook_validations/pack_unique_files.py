@@ -135,7 +135,7 @@ class PackUniqueFilesValidator(BaseValidator):
         self.metadata_content: Dict = dict()
 
         if not prev_ver:
-            git_util = GitUtil(repo=Content.git())
+            git_util = Content.git()
             main_branch = git_util.handle_prev_ver()[1]
             self.prev_ver = (
                 f"origin/{main_branch}"

@@ -14,6 +14,7 @@ jobs:
       - name: Assign a reviewer and assignee
         env:
           GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
+          PR_URL: ${{github.event.pull_request.html_url}}
         run: |
           echo "Add an assignee"
-          gh pr edit --add-assignee RotemAmit
+          gh pr edit --add-assignee RotemAmit "$PR_URL"

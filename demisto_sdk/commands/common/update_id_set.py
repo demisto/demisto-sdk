@@ -1634,7 +1634,7 @@ def get_parsing_rule_data(path: str, packs: Dict[str, Dict] = None):
     if (
         not id_ and "marketplacev2" in marketplaces
     ):  # TODO: Should be removed after we have an agreed id field for parsing rule
-        id_ = f"{pack}-{Path(path).name.split('.')[0]}"
+        id_ = f"{pack}-{Path(path).stem}"
 
     data = create_common_entity_data(
         path=path,
@@ -1662,7 +1662,7 @@ def get_modeling_rule_data(path: str, packs: Dict[str, Dict] = None):
     if (
         not id_ and "marketplacev2" in marketplaces
     ):  # TODO: Should be removed after we have an agreed id field for modeling rule
-        id_ = f"{pack}-{Path(path).name.split('.')[0]}"
+        id_ = f"{pack}-{Path(path).stem}"
 
     data = create_common_entity_data(
         path=path,

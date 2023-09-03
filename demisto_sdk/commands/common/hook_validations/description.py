@@ -155,7 +155,7 @@ class DescriptionValidator(BaseValidator):
             package_path = os.path.dirname(self.file_path)
             try:
                 base_name_without_extension: str = Path(
-                    os.path.splitext(self.file_path)[0].replace("_description", "")
+                    Path(self.file_path).stem.replace("_description", "")
                 ).name
                 dir_name: str = os.path.dirname(self.file_path)
                 expected_description_name: str = os.path.join(

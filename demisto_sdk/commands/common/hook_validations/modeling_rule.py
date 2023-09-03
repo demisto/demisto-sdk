@@ -182,7 +182,7 @@ class ModelingRuleValidator(ContentEntityValidator):
         files_to_check = get_files_in_dir(
             os.path.dirname(self.file_path), ["json", "xif", "yml"], False
         )
-        integrations_folder = Path(os.path.dirname(self.file_path)).name
+        integrations_folder = Path(self.file_path).parent.name
         invalid_files = []
 
         for file_path in files_to_check:

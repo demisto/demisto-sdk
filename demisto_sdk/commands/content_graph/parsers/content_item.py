@@ -101,24 +101,24 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
         if not ContentItemParser.is_content_item(path):
             if ContentItemParser.is_content_item(path.parent):
                 path = path.parent
+                try:
+                    content_type: ContentType = ContentType.by_path(path)
+                except ValueError:
+                    raise InvalidContentItemException
+
             else:
-                raise NotAContentItemException
-        try:
-            content_type: ContentType = ContentType.by_path(path)
-        except ValueError as e:
-            if file_type := find_type(str(path)):
-                logger.error(f"Could not determine content type for {path}: {e}")
-                raise InvalidContentItemException from e
+                if file_type := find_type(str(path)):
+                    logger.error(f"Could not determine content type for {path}: {e}")
+                    raise InvalidContentItemException
 
-            file_type_to_content_type = FileType2ContentType.get(file_type)
-            if not file_type_to_content_type:
-                logger.error(
-                    f"Could not convert from file type to cntent type {path}: {e}"
-                )
-                raise InvalidContentItemException from e
+                file_type_to_content_type = FileType2ContentType.get(file_type)
+                if not file_type_to_content_type:
+                    logger.error(
+                        f"Could not convert from file type to cntent type {path}: {e}"
+                    )
+                    raise InvalidContentItemException
 
-            content_type = file_type_to_content_type
-            # get out of except and continue code
+                content_type = file_type_to_content_type
 
         if parser_cls := ContentItemParser.content_type_to_parser.get(content_type):
             try:

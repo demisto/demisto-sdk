@@ -1,7 +1,7 @@
 import traceback
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, Iterable
+from typing import Any, Dict, Iterable, List, Optional
 
 from neo4j import Result, Transaction
 from packaging.version import Version
@@ -53,16 +53,31 @@ def to_neo4j_map(properties: dict) -> str:
     return f"{{{params_str}}}" if params_str else ""
 
 
-def to_neo4j_predicates(properties: dict, varname: str = "node") -> str:
+def to_neo4j_predicates(
+    properties: dict, varname: str = "node", list_properties: Optional[List[str]] = None
+) -> str:
+    if not list_properties:
+        list_properties = []
     predicates = [f"{varname}.{k} IN {list(v)}" for k, v in properties.items()]
-    return f"WHERE {' AND '.join(predicates)}" if predicates else ""
+
+    list_predicates = [
+        f"{v} IN {varname}.{k}" for k, v in properties.items() if k in list_properties
+    ]
+    return (
+        f"WHERE {' AND '.join(predicates + list_predicates)}"
+        if predicates or list_predicates
+        else ""
+    )
 
 
 def to_node_pattern(
     properties: dict,
     varname: str = "node",
     content_type: ContentType = ContentType.BASE_CONTENT,
+    list_properties: Optional[List[str]] = None,
 ) -> str:
+    if not list_properties:
+        list_properties = []
     if not content_type:
         content_type = ContentType.BASE_CONTENT
     neo4j_primitive_types = (str, bool, Path)
@@ -72,7 +87,8 @@ def to_node_pattern(
     predicates_match_properties = {
         k: v
         for k, v in properties.items()
-        if not isinstance(v, neo4j_primitive_types) and isinstance(v, Iterable)
+        if k in list_properties
+        or (not isinstance(v, neo4j_primitive_types) and isinstance(v, Iterable))
     }
     return f"({varname}:{labels_of(content_type)}{to_neo4j_map(exact_match_properties)} {to_neo4j_predicates(predicates_match_properties, varname)})"
 

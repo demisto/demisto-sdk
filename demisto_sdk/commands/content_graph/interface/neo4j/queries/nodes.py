@@ -17,6 +17,8 @@ from demisto_sdk.commands.content_graph.interface.neo4j.queries.common import (
 
 NESTING_LEVEL = 5
 
+LIST_PROPERTIES = []
+
 CREATE_CONTENT_ITEM_NODES_BY_TYPE_TEMPLATE = """// Creates content items with labels {labels}
 UNWIND $data AS node_data
 CREATE (n:{labels}{{
@@ -213,6 +215,25 @@ RETURN node"""
             tx, query, filter_list=list(ids_list) if ids_list else None
         )
     ]
+
+
+def get_list_properties(tx: Transaction) -> List[str]:
+    """
+    Get all list properties in the graph
+    We will store the result in the global variable of LIST_PROPERTIES, so we will not need to run this query again
+    """
+    global LIST_PROPERTIES
+    query = """
+    CALL apoc.meta.schema()
+    YIELD value
+    UNWIND keys(value) AS label
+    UNWIND keys(value[label].properties) AS property
+    WITH label, property, value[label].properties[property] AS schema
+    WHERE schema.type = “LIST”
+    RETURN collect(distinct property) as list_properties
+    """
+    LIST_PROPERTIES = run_query(tx, query).data()["list_properties"]
+    return LIST_PROPERTIES
 
 
 def delete_all_graph_nodes(tx: Transaction) -> None:

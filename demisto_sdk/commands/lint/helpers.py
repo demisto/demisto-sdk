@@ -555,7 +555,8 @@ def generate_coverage_report(
                 return
             raise warning
         report_data.seek(0)
-        logger.info(report_data.read())
+        # avoid parsing % that may exist in the data
+        logger.info("%s", report_data.read())
 
     if html:
         html_dir = os.path.join(cov_dir, "html")

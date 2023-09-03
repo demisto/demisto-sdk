@@ -1,8 +1,10 @@
 name: Handle New Contribution
 
-on:
-  pull_request:
+on: pull_request
     # types: [opened, ready_for_review]
+
+permissions:
+  pull-requests: write
 
 jobs:
   assign:

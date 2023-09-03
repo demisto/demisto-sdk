@@ -370,9 +370,7 @@ class SecretsValidator:
     @staticmethod
     def retrieve_related_yml(integration_path):
         matching_yml_file_contents = None
-        yml_file = os.path.join(
-            integration_path, Path(integration_path).name + ".yml"
-        )
+        yml_file = os.path.join(integration_path, Path(integration_path).name + ".yml")
         if Path(yml_file).exists():
             with open(yml_file, encoding="utf-8") as matching_yml_file:
                 matching_yml_file_contents = matching_yml_file.read()

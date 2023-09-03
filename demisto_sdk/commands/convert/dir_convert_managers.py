@@ -1,5 +1,5 @@
-from pathlib import Path
 from abc import abstractmethod
+from pathlib import Path
 
 from packaging.version import Version
 

@@ -1,6 +1,6 @@
 import os
-from pathlib import Path
 from abc import abstractmethod
+from pathlib import Path
 from typing import Optional, Set
 
 from demisto_sdk.commands.common.constants import FileType

@@ -1,7 +1,7 @@
 import os
 import re
-from pathlib import Path
 from copy import deepcopy
+from pathlib import Path
 from typing import Any, Dict, Set, Union
 
 import dictdiffer

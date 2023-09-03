@@ -178,9 +178,7 @@ def get_playbook_dependencies(
                             ).name
                             # Case of old integrations without a package.
                             if integration_dependency == "Integrations":
-                                integrations.add(
-                                    Path(file_).name.replace(".yml", "")
-                                )
+                                integrations.add(Path(file_).name.replace(".yml", ""))
                             else:
                                 integrations.add(integration_dependency)
         else:

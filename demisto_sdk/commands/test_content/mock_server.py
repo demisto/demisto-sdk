@@ -3,8 +3,8 @@ import os
 import string
 import time
 import unicodedata
-from pathlib import Path
 from contextlib import contextmanager
+from pathlib import Path
 from pprint import pformat
 from subprocess import STDOUT, CalledProcessError, call, check_call, check_output
 from threading import Lock

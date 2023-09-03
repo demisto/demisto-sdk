@@ -653,8 +653,7 @@ class Downloader:
         output_pack_path = self.output_pack_path
         if not (
             os.path.isdir(output_pack_path)
-            and Path(os.path.dirname(os.path.abspath(output_pack_path))).name
-            == "Packs"
+            and Path(os.path.dirname(os.path.abspath(output_pack_path))).name == "Packs"
         ):
             logger.info(
                 f"[red]Path {output_pack_path} is not a valid Path pack. The designated output pack's path is"
@@ -669,9 +668,7 @@ class Downloader:
         For example check out the PACK_CONTENT variable in downloader_test.py
         """
         for content_entity_path in get_child_directories(self.output_pack_path):
-            raw_content_entity: str = Path(
-                os.path.normpath(content_entity_path)
-            ).name
+            raw_content_entity: str = Path(os.path.normpath(content_entity_path)).name
             content_entity: str = raw_content_entity
             if content_entity in (INTEGRATIONS_DIR, SCRIPTS_DIR):
                 # If entity is of type integration/script it will have dirs, otherwise files

@@ -12,7 +12,7 @@ def git_clone_demisto_sdk(destination_folder: str, sdk_git_branch: str = "master
     logger.info(f"Cloning demisto-sdk to {destination_folder}")
     import git
 
-    git.Repo.clone_from(
+    git.Repo.clone_from(  # noqa: TID251
         url="https://github.com/demisto/demisto-sdk.git",
         to_path=destination_folder,
         multi_options=[f"-b {sdk_git_branch}", "--single-branch", "--depth 1"],

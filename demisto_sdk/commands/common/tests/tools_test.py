@@ -6,7 +6,6 @@ from pathlib import Path
 from tempfile import NamedTemporaryFile, TemporaryDirectory
 from typing import Callable, List, Optional, Tuple, Union
 
-import git
 import pytest
 import requests
 
@@ -631,7 +630,7 @@ class TestGetRemoteFileLocally:
 
     def setup_method(self):
         # create local git repo
-        example_repo = git.Repo.init(self.REPO_NAME)
+        example_repo = GitUtil(Path(self.REPO_NAME)).repo
         origin_branch = self.main_branch
         if not origin_branch.startswith("origin"):
             origin_branch = "origin/" + origin_branch

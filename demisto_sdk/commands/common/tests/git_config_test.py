@@ -3,13 +3,13 @@ import os
 from typing import NamedTuple
 
 import pytest
-from git import Repo
 
 from demisto_sdk.commands.common.git_content_config import (
     GitContentConfig,
     GitCredentials,
     GitProvider,
 )
+from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from TestSuite.test_tools import str_in_call_args_list
@@ -53,7 +53,7 @@ class TestGitContentConfig:
             Validate the correct repo configuration got back
         """
         mocker.patch.object(GitContentConfig, "_search_gitlab_repo", return_value=None)
-        mocker.patch.object(Repo, "remote", return_value=Urls([url]))
+        mocker.patch.object(GitUtil.repo, "remote", return_value=Urls([url]))
         requests_mock.get(f"https://api.github.com/repos/{repo_name}")
         git_config = GitContentConfig()
         assert git_config.current_repository == repo_name
@@ -80,7 +80,7 @@ class TestGitContentConfig:
             Validate the correct repo configuration got back
         """
         requests_mock.get("https://code.pan.run/api/v4/projects", json=[{"id": 3606}])
-        mocker.patch.object(Repo, "remote", return_value=Urls([url]))
+        mocker.patch.object(GitUtil.repo, "remote", return_value=Urls([url]))
         git_config = GitContentConfig()
         assert (
             git_config.current_repository is None
@@ -115,14 +115,14 @@ class TestGitContentConfig:
         mocker.patch.dict(
             os.environ, {GitContentConfig.ENV_REPO_HOSTNAME_NAME: custom_github}
         )  # test with env var
-        mocker.patch.object(Repo, "remote", return_value=Urls([url]))
+        mocker.patch.object(GitUtil.repo, "remote", return_value=Urls([url]))
         git_config = GitContentConfig()
         assert git_config.git_provider == GitProvider.GitHub
         assert git_config.current_repository == "org/repo"
         assert git_config.base_api == f"https://raw.{custom_github}/org/repo"
 
         mocker.patch.dict(os.environ, {})
-        mocker.patch.object(Repo, "remote", return_value=Urls([url]))
+        mocker.patch.object(GitUtil.repo, "remote", return_value=Urls([url]))
         git_config = GitContentConfig(repo_hostname=custom_github)  # test with argument
         assert git_config.git_provider == GitProvider.GitHub
         assert git_config.current_repository == "org/repo"
@@ -151,7 +151,7 @@ class TestGitContentConfig:
         )
         requests_mock.get(f"https://api.github.com/repos/{repo_name}", status_code=404)
         url = f"https://{custom_github}/{repo_name}"
-        mocker.patch.object(Repo, "remote", return_value=Urls([url]))
+        mocker.patch.object(GitUtil.repo, "remote", return_value=Urls([url]))
         git_config = GitContentConfig()
         assert (
             git_config.current_repository == GitContentConfig.OFFICIAL_CONTENT_REPO_NAME
@@ -171,7 +171,7 @@ class TestGitContentConfig:
         monkeypatch.setenv("COLUMNS", "1000")
         mocker.patch.object(GitContentConfig, "_search_gitlab_repo", return_value=None)
         url = "https://code.pan.run/xsoar/very-private-repo"
-        mocker.patch.object(Repo, "remote", return_value=Urls([url]))
+        mocker.patch.object(GitUtil.repo, "remote", return_value=Urls([url]))
 
         git_config = GitContentConfig(git_provider=GitProvider.GitLab)
         assert git_config.git_provider == GitProvider.GitHub
@@ -200,7 +200,7 @@ class TestGitContentConfig:
             Ignore gitlab and get back to content (demisto/content)
         """
         url = "https://code.pan.run/xsoar/very-private-repo"
-        mocker.patch.object(Repo, "remote", return_value=Urls([url]))
+        mocker.patch.object(GitUtil.repo, "remote", return_value=Urls([url]))
 
         mocker.patch.object(GitContentConfig, "_search_gitlab_repo", return_value=None)
         git_config = GitContentConfig()
@@ -218,7 +218,7 @@ class TestGitContentConfig:
         Then:
             Validate the correct repo got back - demisto/content
         """
-        mocker.patch.object(Repo, "remote", return_value=Urls([""]))
+        mocker.patch.object(GitUtil.repo, "remote", return_value=Urls([""]))
         mocker.patch.object(GitContentConfig, "_search_github_repo", return_value=None)
         git_config = GitContentConfig()
         assert (
@@ -242,7 +242,7 @@ class TestGitContentConfig:
         url = f"https://{host}/api/v4/projects?search={repo}"
         requests_mock.get(url, json=gitlab_response)
         mocker.patch.object(
-            Repo,
+            GitUtil.repo,
             "remote",
             return_value=Urls(["https://code.pan.run/xsoar/content-internal-dist.git"]),
         )
@@ -272,7 +272,9 @@ class TestGitContentConfig:
         requests_mock.get(search_api_url1, json=[])
         requests_mock.get(search_api_url2, json=[])
         mocker.patch.object(
-            Repo, "remote", return_value=Urls(["https://code.pan.run/xsoar/test"])
+            GitUtil.repo,
+            "remote",
+            return_value=Urls(["https://code.pan.run/xsoar/test"]),
         )
         mocker.patch.object(GitContentConfig, "_search_github_repo", return_value=None)
         git_config = GitContentConfig()

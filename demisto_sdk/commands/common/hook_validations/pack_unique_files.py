@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import Dict, List, Set, Tuple
 
 from dateutil import parser
-from git import GitCommandError, Repo
+from git import GitCommandError
 from packaging.version import Version, parse
 
 from demisto_sdk.commands.common import tools
@@ -981,7 +981,7 @@ class PackUniqueFilesValidator(BaseValidator):
         return True
 
     def get_master_private_repo_meta_file(self, metadata_file_path: str):
-        current_repo = Repo(Path.cwd(), search_parent_directories=True)
+        current_repo = GitUtil().repo
 
         # if running on master branch in private repo - do not run the test
         if current_repo.active_branch == "master":

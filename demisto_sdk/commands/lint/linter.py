@@ -30,6 +30,7 @@ from demisto_sdk.commands.common.docker_helper import (
     get_python_version,
     init_global_docker_client,
 )
+from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.handlers import YAML_Handler
 from demisto_sdk.commands.common.hook_validations.docker import DockerImageValidator
@@ -513,7 +514,7 @@ class Linter:
 
         """
         try:
-            repo = git.Repo(self._content_repo)
+            repo = GitUtil(self._content_repo)
             files_to_ignore = repo.ignored(self._facts["lint_files"])
             for file in files_to_ignore:
                 logger.info(f"{log_prompt} - Skipping gitignore file {file}")

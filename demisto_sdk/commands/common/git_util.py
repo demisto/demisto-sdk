@@ -1,7 +1,7 @@
 import os
 import re
 from pathlib import Path
-from typing import Set, Tuple, Union, Optional
+from typing import Optional, Set, Tuple, Union
 
 import click
 import gitdb
@@ -15,11 +15,13 @@ from demisto_sdk.commands.common.constants import PACKS_FOLDER
 class GitUtil:
     repo: Repo
 
-    def __init__(self, path: Optional[Path] = None, search_parent_directories: bool = True):
-        if not path:
-            path = Path.cwd()
+    def __init__(
+        self, path: Optional[Path] = None, search_parent_directories: bool = True
+    ):
         try:
-            self.repo = Repo(path, search_parent_directories=search_parent_directories)
+            self.repo = Repo(
+                path or Path.cwd(), search_parent_directories=search_parent_directories
+            )
         except InvalidGitRepositoryError:
             raise InvalidGitRepositoryError(
                 "Unable to find Repository from current working directory - aborting"

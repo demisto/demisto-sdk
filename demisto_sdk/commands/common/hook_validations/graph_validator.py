@@ -5,7 +5,6 @@ from typing import List, Optional
 from demisto_sdk.commands.common.constants import PACKS_DIR
 from demisto_sdk.commands.common.content.content import Content
 from demisto_sdk.commands.common.errors import Errors
-from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.hook_validations.base_validator import (
     BaseValidator,
     error_codes,

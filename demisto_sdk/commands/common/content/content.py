@@ -24,8 +24,8 @@ from demisto_sdk.commands.common.content.objects.root_objects import (
     Documentation,
 )
 from demisto_sdk.commands.common.content.objects_factory import path_to_pack_object
-from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.git_util import GitUtil
+from demisto_sdk.commands.common.logger import logger
 
 
 class Content:

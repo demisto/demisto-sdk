@@ -5,6 +5,7 @@ on: pull_request
 
 permissions:
   pull-requests: write
+  contents: write
 
 jobs:
   assign:
@@ -15,3 +16,9 @@ jobs:
           assignees: RotemAmit
           reviewers: RotemAmit # if draft, assigned when draft is released
           github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Approve and auto-merge for docker update PRs
+        env:
+          PR_URL: ${{github.event.pull_request.html_url}}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "Test!"

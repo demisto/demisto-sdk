@@ -3445,7 +3445,7 @@ def pre_commit(
         )
     input_files = []
     if input:
-        input_files = [Path(i) for i in input.split(",")]
+        input_files = [Path(i) for i in input.split(",") if i]
     elif file_paths:
         input_files = list(file_paths)
     if skip:

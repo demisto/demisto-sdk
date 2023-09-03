@@ -27,6 +27,8 @@ class TestPlaybookRunner:
         base_link_to_workplan (str): the base link to see the full test playbook run in your xsoar instance.
     """
 
+    __test__ = False  # for pytest not a test class.
+
     def __init__(
         self,
         test_playbook_path: str = "",

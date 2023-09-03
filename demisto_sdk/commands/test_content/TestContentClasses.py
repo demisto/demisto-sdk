@@ -114,6 +114,8 @@ class SecretConf:
 
 
 class TestConfiguration:
+    __test__ = False  # for pytest not a test class.
+
     def __init__(self, test_configuration: dict, default_test_timeout: int):
         """
         Args:
@@ -194,6 +196,8 @@ class Conf:
 
 
 class TestPlaybook:
+    __test__ = False  # for pytest not a test class.
+
     def __init__(self, build_context, test_configuration: TestConfiguration):
         """
         This class has all the info related to a test playbook during test execution
@@ -1722,6 +1726,8 @@ class Integration:
 
 
 class TestContext:
+    __test__ = False  # for pytest not a test class.
+
     def __init__(
         self,
         build_context: BuildContext,

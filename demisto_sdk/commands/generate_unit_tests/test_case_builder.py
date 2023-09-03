@@ -110,6 +110,8 @@ class ArgsBuilder:
 
 
 class TestCase:
+    __test__ = False  # for pytest not a test class.
+
     def __init__(
         self,
         func: ast_mod.FunctionDef,

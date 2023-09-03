@@ -24,6 +24,7 @@ class EventLog(BaseModel):
 
 
 class TestData(BaseModel):
+    __test__ = False  # for pytest not a test class.
     data: List[EventLog] = Field(default_factory=lambda: [EventLog()])
     ignored_validations: List[str] = []
 

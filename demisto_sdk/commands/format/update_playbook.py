@@ -291,6 +291,8 @@ class TestPlaybookYMLFormat(BasePlaybookYMLFormat):
         output (str): the desired file name to save the updated version of the YML to.
     """
 
+    __test__ = False  # for pytest not a test class.
+
     def __init__(self, *args, **kwargs):
         kwargs["path"] = os.path.normpath(
             os.path.join(__file__, "..", "..", "common", SCHEMAS_PATH, "playbook.yml")

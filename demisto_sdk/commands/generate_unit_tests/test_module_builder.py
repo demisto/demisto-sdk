@@ -5,6 +5,8 @@ from demisto_sdk.commands.generate_unit_tests.common import ast_name
 
 
 class TestModule:
+    __test__ = False  # for pytest not a test class.
+
     def __init__(
         self,
         tree: ast_mod.Module,

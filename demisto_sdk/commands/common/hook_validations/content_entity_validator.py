@@ -54,6 +54,7 @@ from demisto_sdk.commands.format.format_constants import OLD_FILE_DEFAULT_1_FROM
 
 
 class ContentEntityValidator(BaseValidator):
+    __test__ = False  # for pytest not a test class.
     DEFAULT_VERSION = -1
 
     def __init__(

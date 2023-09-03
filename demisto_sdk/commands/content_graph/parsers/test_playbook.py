@@ -14,6 +14,8 @@ NON_CIRCLE_TESTS_DIRECTORY = "NonCircleTests"
 
 
 class TestPlaybookParser(PlaybookParser, content_type=ContentType.TEST_PLAYBOOK):
+    __test__ = False  # for pytest not a test class.
+
     def __init__(
         self, path: Path, pack_marketplaces: List[MarketplaceVersions]
     ) -> None:

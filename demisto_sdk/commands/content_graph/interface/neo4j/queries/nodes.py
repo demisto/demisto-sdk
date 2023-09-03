@@ -198,7 +198,7 @@ def _match(
         List[graph.Node]: list of neo4j nodes.
     """
     if marketplace:
-        properties["marketplaces"] = marketplace
+        properties["marketplaces"] = marketplace.value
     where = []
     if ids_list:
         where.append("elementId(node) IN $filter_list")
@@ -221,6 +221,8 @@ def get_list_properties(tx: Transaction) -> List[str]:
     """
     Get all list properties in the graph
     We will store the result in the global variable of LIST_PROPERTIES, so we will not need to run this query again
+
+    Note: The reason we don't use cache decorator is because we want to cache this data for different transactions.
     """
     global LIST_PROPERTIES
     if LIST_PROPERTIES:
@@ -234,7 +236,7 @@ def get_list_properties(tx: Transaction) -> List[str]:
     WHERE schema.type = "LIST"
     RETURN collect(distinct property) as list_properties
     """
-    LIST_PROPERTIES = run_query(tx, query).data()
+    LIST_PROPERTIES = run_query(tx, query).single()["list_properties"]
     return LIST_PROPERTIES
 
 

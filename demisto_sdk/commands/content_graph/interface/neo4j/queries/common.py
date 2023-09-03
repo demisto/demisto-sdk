@@ -58,10 +58,14 @@ def to_neo4j_predicates(
 ) -> str:
     if not list_properties:
         list_properties = []
-    predicates = [f"{varname}.{k} IN {list(v)}" for k, v in properties.items()]
+    predicates = [
+        f"{varname}.{k} IN {list(v)}"
+        for k, v in properties.items()
+        if k not in list_properties
+    ]
 
     list_predicates = [
-        f"{v} IN {varname}.{k}" for k, v in properties.items() if k in list_properties
+        f"'{v}' IN {varname}.{k}" for k, v in properties.items() if k in list_properties
     ]
     return (
         f"WHERE {' AND '.join(predicates + list_predicates)}"
@@ -82,7 +86,9 @@ def to_node_pattern(
         content_type = ContentType.BASE_CONTENT
     neo4j_primitive_types = (str, bool, Path)
     exact_match_properties = {
-        k: v for k, v in properties.items() if isinstance(v, neo4j_primitive_types)
+        k: v
+        for k, v in properties.items()
+        if k not in list_properties and isinstance(v, neo4j_primitive_types)
     }
     predicates_match_properties = {
         k: v
@@ -90,7 +96,7 @@ def to_node_pattern(
         if k in list_properties
         or (not isinstance(v, neo4j_primitive_types) and isinstance(v, Iterable))
     }
-    return f"({varname}:{labels_of(content_type)}{to_neo4j_map(exact_match_properties)} {to_neo4j_predicates(predicates_match_properties, varname)})"
+    return f"({varname}:{labels_of(content_type)}{to_neo4j_map(exact_match_properties)} {to_neo4j_predicates(predicates_match_properties, varname, list_properties)})"
 
 
 def run_query(tx: Transaction, query: str, **kwargs) -> Result:

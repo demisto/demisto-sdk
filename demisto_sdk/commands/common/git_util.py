@@ -9,7 +9,6 @@ import gitdb
 from git import InvalidGitRepositoryError, Repo  # noqa: TID251
 from git.diff import Lit_change_type
 from git.remote import Remote
-from demisto_sdk.commands.common.logger import logger
 
 from demisto_sdk.commands.common.constants import PACKS_FOLDER
 
@@ -29,8 +28,7 @@ class GitUtil:
                 "Unable to find Repository from current working directory - aborting"
             )
         except ImportError:
-            logger.error("Git executable cannot be found, or is invalid")
-            sys.exit(1)
+            raise SystemExit("Git executable cannot be found, or is invalid")
 
     def get_all_files(self) -> Set[Path]:
         return set(map(Path, self.repo.git.ls_files().split("\n")))

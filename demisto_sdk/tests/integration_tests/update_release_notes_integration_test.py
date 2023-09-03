@@ -894,10 +894,10 @@ def test_update_release_notes_only_pack_ignore_changed(mocker, pack):
     logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
 
     runner = CliRunner(mix_stderr=True)
-    result = runner.invoke(main, [UPDATE_RN_COMMAND, "-i", pack.path])
+    result = runner.invoke(main, [UPDATE_RN_COMMAND, "-g"])
     assert result.exit_code == 0
     assert not result.exception
     assert str_in_call_args_list(
         logger_info.call_args_list,
-        f"Either no changes were found in {pack.name} pack or the changes found should not be documented in the release notes file.",
+        "No changes that require release notes were detected. If such changes were made, please commit the changes and rerun the command",
     )

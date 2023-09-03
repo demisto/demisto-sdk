@@ -6,6 +6,7 @@
 * Fixed an issue where the **validate -g** failed on `BA102` in external repos even when ignored.
 * Fixed an issue where the **validate -g** failed getting the content of `.pack-ignore` files when the external repository is not hosted in Github.
 * Fixed an issue where the **validate -g** failed when updating an empty `.pack-ignore` file.
+* Fixed an issue where the **update-release-notes** failed when changing the `.pack-ignore` file.
 * Added support for yml hidden parameters for `xsoar_saas` marketplace, as part of the **prepare_content** command.
 * Added support for custom documentation that will appear only in `xsoar_saas` marketplace, as part of the **prepare_content** command.
 * Fixed an issue where the (`GR108`) validation did not fail in the validate command with the `-a` flag.

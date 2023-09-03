@@ -231,7 +231,7 @@ def get_list_properties(tx: Transaction) -> List[str]:
     UNWIND keys(value) AS label
     UNWIND keys(value[label].properties) AS property
     WITH label, property, value[label].properties[property] AS schema
-    WHERE schema.type = “LIST”
+    WHERE schema.type = "LIST"
     RETURN collect(distinct property) as list_properties
     """
     LIST_PROPERTIES = run_query(tx, query).data()["list_properties"]

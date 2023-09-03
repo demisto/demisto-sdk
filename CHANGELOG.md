@@ -3,13 +3,18 @@
 * Fixed an issue where **update-release-notes** generated "available from Cortex XSOAR" instead of "from XSIAM" when run on XSIAM event collectors.
 * Added support for controlling the sleep interval and retry count for **modeling-rules test** command.
 * Added support for a new marketplace tag `xsoar_saas`.
+* Fixed an issue where the **validate -g** failed on `BA102` in external repos even when ignored.
+* Fixed an issue where the **validate -g** failed getting the content of `.pack-ignore` files when the external repository is not hosted in Github.
+* Fixed an issue where the **validate -g** failed when updating an empty `.pack-ignore` file.
 * Added support for yml hidden parameters for `xsoar_saas` marketplace, as part of the **prepare_content** command.
 * Added support for custom documentation that will appear only in `xsoar_saas` marketplace, as part of the **prepare_content** command.
 * Modified **prepare_content** command to be platform specific. For xsoar-saas and XSIAM regarding pack readme and integration description images in markdown files.
+* Fixed an issue where the **lint** command was parsing % that may exist in the log data.
 * Added validation to check if custom outputs were used in a command outputs, then they should follow the mandatory context standards.
 
 ## 1.19.2
 * Added a period at the end of lines produced by the **generate-docs** command that state the tested version of the product.
+* Added the '--junit-path' flag to the **modeling-rules test** command, to allow saving the test results in a JUnit XML file.
 * Update `RN112` validation's docs reference link.
 * Added support to control the maximum file size and log rotation files count in the sdk logger.
 * Fixed an issue with where passing the deprecated logging arguments to any command presented an incorrect recommendation for argument substitution.

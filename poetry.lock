@@ -1957,13 +1957,13 @@ format-nongpl = ["fqdn", "idna", "isoduration", "jsonpointer (>1.13)", "rfc3339-
 
 [[package]]
 name = "junitparser"
-version = "2.8.0"
+version = "3.1.0"
 description = "Manipulates JUnit/xUnit Result XML files"
 optional = false
 python-versions = "*"
 files = [
-    {file = "junitparser-2.8.0-py2.py3-none-any.whl", hash = "sha256:e1a7d41e0c92ca032c46eed07a6268c478f90ec1f411ea8a76b69f245e57cfb6"},
-    {file = "junitparser-2.8.0.tar.gz", hash = "sha256:a8d4290ab9fb93f2015e0dbef61ef93b7ea110e99099087a453f55c8e1481adf"},
+    {file = "junitparser-3.1.0-py2.py3-none-any.whl", hash = "sha256:54ae88af9be07dd04d81b5caffac07c9b233aeb8b49eaf5e8ed38cc6f93507fd"},
+    {file = "junitparser-3.1.0.tar.gz", hash = "sha256:e69d14c61404f6193407bdb36adcae720e9a99ba3c1712ef78cccf0a21bb521d"},
 ]
 
 [package.dependencies]
@@ -4899,4 +4899,4 @@ build = ["gsutil"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.8,<3.11"
-content-hash = "5831ea9598135dbe48c75c8eb07216ffcc40d4f9569fd4ca1618fb784953dada"
+content-hash = "df0eb02451a6635aec58545a55af7869c2e584a722fbc0fd63a121e1d09dcf0b"

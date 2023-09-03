@@ -91,10 +91,13 @@ class CorrelationRuleValidator(ContentEntityValidator):
         """
         Validates 'search_window' existence and non-emptiness for 'execution_mode' = 'SCHEDULED'.
         """
-        if (not 'search_window' in self.current_file or
-                self.current_file['execution_mode'] == 'SCHEDULED' and not self.current_file['search_window']):
-                error_message, error_code = Errors.correlation_rules_execution_mode_error()
-                if self.handle_error(error_message, error_code, file_path=self.file_path):
-                    self._is_valid = False
-                    return False
+        if (
+            "search_window" not in self.current_file
+            or self.current_file["execution_mode"] == "SCHEDULED"
+            and not self.current_file["search_window"]
+        ):
+            error_message, error_code = Errors.correlation_rules_execution_mode_error()
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                self._is_valid = False
+                return False
         return True

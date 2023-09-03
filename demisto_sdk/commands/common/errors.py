@@ -4382,4 +4382,3 @@ class Errors:
     @error_code_decorator
     def correlation_rules_execution_mode_error():
         return "The 'search_window' key must exist and cannot be empty when the 'execution_mode' is set to 'SCHEDULED'."
-

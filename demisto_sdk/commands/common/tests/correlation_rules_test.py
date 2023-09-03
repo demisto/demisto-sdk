@@ -29,17 +29,20 @@ def test_no_leading_hyphen():
     assert not correlation_rule_validator.no_leading_hyphen()
 
 
-@pytest.mark.parametrize("execution_mode, search_window, expected_result", [
-    # Test case 1: Missing 'search_window' when execution_mode is 'SCHEDULED'
-    ('SCHEDULED', None, False),
-
-    # Test case 2: Missing 'search_window' when execution_mode is 'REAL_TIME'
-    ('REAL_TIME', None, True),
-
-    # Test case 3: Valid 'search_window' when execution_mode is 'SCHEDULED'
-    ('SCHEDULED', 'valid_window', True)
-])
-def test_validate_execution_mode_search_window(execution_mode, search_window, expected_result):
+@pytest.mark.parametrize(
+    "execution_mode, search_window, expected_result",
+    [
+        # Test case 1: Missing 'search_window' when execution_mode is 'SCHEDULED'
+        ("SCHEDULED", None, False),
+        # Test case 2: Missing 'search_window' when execution_mode is 'REAL_TIME'
+        ("REAL_TIME", None, True),
+        # Test case 3: Valid 'search_window' when execution_mode is 'SCHEDULED'
+        ("SCHEDULED", "valid_window", True),
+    ],
+)
+def test_validate_execution_mode_search_window(
+    execution_mode, search_window, expected_result
+):
     """
     Given: A correlation rule with execution_mode and search_window.
     When: running validate_execution_mode_search_window.
@@ -53,8 +56,8 @@ def test_validate_execution_mode_search_window(execution_mode, search_window, ex
     correlation_rule_validator = CorrelationRuleValidator(content_validator)
 
     # Set the execution_mode and search_window in the current_file
-    correlation_rule_validator.current_file['execution_mode'] = execution_mode
-    correlation_rule_validator.current_file['search_window'] = search_window
+    correlation_rule_validator.current_file["execution_mode"] = execution_mode
+    correlation_rule_validator.current_file["search_window"] = search_window
 
     result = correlation_rule_validator.validate_execution_mode_search_window()
     assert result == expected_result

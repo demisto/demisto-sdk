@@ -17,7 +17,7 @@ from demisto_sdk.commands.content_graph.interface.neo4j.queries.common import (
 
 NESTING_LEVEL = 5
 
-LIST_PROPERTIES = []
+LIST_PROPERTIES: List[str] = []
 
 CREATE_CONTENT_ITEM_NODES_BY_TYPE_TEMPLATE = """// Creates content items with labels {labels}
 UNWIND $data AS node_data
@@ -197,15 +197,15 @@ def _match(
     Returns:
         List[graph.Node]: list of neo4j nodes.
     """
+    if marketplace:
+        properties["marketplaces"] = marketplace
     where = []
     if ids_list:
         where.append("elementId(node) IN $filter_list")
-    if marketplace:
-        where.append(f"'{marketplace}' IN node.marketplaces")
 
     where_str = "WHERE " + " AND ".join(where) if where else ""
     query = f"""// Retrieves nodes according to given parameters.
-MATCH {to_node_pattern(properties, content_type=content_type)}
+MATCH {to_node_pattern(properties, content_type=content_type, list_properties=get_list_properties(tx))}
 {where_str}
 RETURN node"""
 
@@ -223,6 +223,8 @@ def get_list_properties(tx: Transaction) -> List[str]:
     We will store the result in the global variable of LIST_PROPERTIES, so we will not need to run this query again
     """
     global LIST_PROPERTIES
+    if LIST_PROPERTIES:
+        return LIST_PROPERTIES
     query = """
     CALL apoc.meta.schema()
     YIELD value

@@ -11,14 +11,9 @@ jobs:
   assign:
     runs-on: ubuntu-latest
     steps:
-      - uses: hkusu/review-assign-action@v1.3.1
-        with:
-          assignees: RotemAmit
-          reviewers: RotemAmit # if draft, assigned when draft is released
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-      - name: Approve and auto-merge for docker update PRs
+      - name: Assign a reviewer and assignee
         env:
-          PR_URL: ${{github.event.pull_request.html_url}}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
         run: |
-          echo "Test!"
+          echo "Add an assignee"
+          gh pr --add-assignee RotemAmit

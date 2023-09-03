@@ -212,7 +212,7 @@ class TestLayoutSixConverter:
         layout_converter = LayoutSixConverter(Pack(fake_pack_path))
         layout_converter.convert_dir()
         expected_new_layout_path = f"{str(layout_converter.pack.path)}/Layouts/layoutscontainer-ExtraHop_Detection.json"
-        assert os.path.exists(expected_new_layout_path)
+        assert Path(expected_new_layout_path).exists()
         with open(expected_new_layout_path) as f:
             layout_data = json.loads(f.read())
         test_data_json = util_load_json(
@@ -224,4 +224,4 @@ class TestLayoutSixConverter:
             )
         )
         assert layout_data == test_data_json
-        os.remove(expected_new_layout_path)
+        Path(expected_new_layout_path).unlink()

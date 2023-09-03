@@ -1,6 +1,5 @@
 import logging
-import os
-from pathlib import PosixPath
+from pathlib import Path, PosixPath
 from unittest.mock import MagicMock
 
 import pytest
@@ -90,14 +89,14 @@ def test_create_failed_unit_tests_report_with_failed_tests():
     path = f"{git_path()}/demisto_sdk/commands/lint/tests"
     lint_manager.LintManager._create_failed_packs_report(lint_status, path)
     file_path = f"{path}/failed_lint_report.txt"
-    assert os.path.isfile(file_path)
+    assert Path(file_path).is_file()
     with open(file_path) as file:
         content = file.read()
         fail_list = content.split("\n")
         assert len(fail_list) == 2
         assert "HelloWorld" in fail_list
         assert "Infoblox" in fail_list
-    os.remove(file_path)
+    Path(file_path).unlink()
 
 
 def test_create_failed_unit_tests_report_no_failed_tests():
@@ -128,7 +127,7 @@ def test_create_failed_unit_tests_report_no_failed_tests():
     path = f"{git_path()}/demisto_sdk/commands/lint/tests"
     lint_manager.LintManager._create_failed_packs_report(lint_status, path)
     file_path = f"{path}/failed_lint_report.txt"
-    assert not os.path.isfile(file_path)
+    assert not Path(file_path).is_file()
 
 
 def test_report_warning_lint_checks_not_packages_tests(mocker):

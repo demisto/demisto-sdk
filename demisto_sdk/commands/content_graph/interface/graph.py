@@ -63,7 +63,9 @@ class ContentGraphInterface(ABC):
 
     def _get_latest_content_parser_hash(self) -> Optional[str]:
         parsers_path = Path(__file__).parent.parent / "parsers"
-        return sha1_dir(parsers_path)
+        parsers_sha1 = sha1_dir(parsers_path)
+        logger.debug(f"Content parser hash: {parsers_sha1}")
+        return parsers_sha1
 
     def _has_infra_graph_been_changed(self) -> bool:
         if not self.content_parser_latest_hash:

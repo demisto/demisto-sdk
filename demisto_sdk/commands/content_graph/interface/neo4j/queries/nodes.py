@@ -234,7 +234,7 @@ def get_list_properties(tx: Transaction) -> List[str]:
     WHERE schema.type = "LIST"
     RETURN collect(distinct property) as list_properties
     """
-    LIST_PROPERTIES = run_query(tx, query).data()["list_properties"]
+    LIST_PROPERTIES = run_query(tx, query).data()
     return LIST_PROPERTIES
 
 

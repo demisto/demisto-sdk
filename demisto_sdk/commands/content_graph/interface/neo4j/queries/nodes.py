@@ -217,6 +217,22 @@ RETURN node"""
     ]
 
 
+def get_schema(tx: Transaction) -> dict:
+    """Get the schema of the graph.
+
+    Args:
+        tx: Neo4j transaction.
+
+    Returns:
+        dict: The schema of the graph.
+    """
+    query = """// Retrieves the schema of the graph.
+    CALL apoc.meta.schema()
+    RETURN value
+    """
+    return run_query(tx, query).single()["value"]
+
+
 def get_list_properties(tx: Transaction) -> List[str]:
     """
     Get all list properties in the graph

@@ -43,6 +43,7 @@ from demisto_sdk.commands.content_graph.interface.neo4j.queries.nodes import (
     create_nodes,
     delete_all_graph_nodes,
     get_relationships_to_preserve,
+    get_schema,
     remove_content_private_nodes,
     remove_empty_properties,
     remove_packs_before_creation,
@@ -617,6 +618,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         with self.driver.session() as session:
             session.execute_write(export_graphml, self.repo_path.name)
         self.dump_metadata()
+        self.dump_schema()
         if output_path:
             self.zip_import_dir(output_path)
 
@@ -662,6 +664,10 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         logger.info("Creating pack dependencies...")
         with self.driver.session() as session:
             session.execute_write(create_pack_dependencies)
+
+    def get_schema(self) -> dict:
+        with self.driver.session() as session:
+            return session.execute_read(get_schema)
 
     def run_single_query(self, query: str, **kwargs) -> Any:
         with self.driver.session() as session:

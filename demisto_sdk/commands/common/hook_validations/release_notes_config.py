@@ -1,4 +1,4 @@
-import os
+from pathlib import Path
 
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.base_validator import (
@@ -45,7 +45,7 @@ class ReleaseNotesConfigValidator(BaseValidator):
         Returns:
             (bool): True if does, false otherwise.
         """
-        if not os.path.exists(self.rn_config_path.replace(".json", ".md")):
+        if not Path(self.rn_config_path.replace(".json", ".md")).exists():
             (
                 error_message,
                 error_code,

@@ -312,7 +312,7 @@ class ContributionConverter:
             dst_name = ENTITY_TYPE_TO_DIR.get(basename, "")
             src_path = str(Path(self.working_dir_path, basename))
             dst_path = str(Path(self.working_dir_path, dst_name))
-            if os.path.exists(dst_path):
+            if Path(dst_path).exists():
                 # move src folder files to dst folder
                 for _, _, files in os.walk(src_path, topdown=False):
                     for name in files:
@@ -415,8 +415,7 @@ class ContributionConverter:
 
                     if file.startswith(FileType.INDICATOR_FIELD.value):
                         # At first time, create another dir for all indicator-fields files and move them there
-                        if not os.path.exists(dst_ioc_fields_dir):
-                            os.makedirs(dst_ioc_fields_dir)
+                        Path(dst_ioc_fields_dir).mkdir(parents=True, exist_ok=True)
                         file_path = str(Path(self.working_dir_path, dir_name, file))
                         shutil.move(file_path, dst_ioc_fields_dir)  # type: ignore
 

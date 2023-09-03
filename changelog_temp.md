@@ -13,3 +13,5 @@
     * Widgets
   * Fixed an issue where the download would fail when using the '-r' / '--regex' flag if there are multiple custom content items on the server using the same name.
   * Fixed an issue where Integrations / Automations with a `.` in their name would not be named correctly (For example: `Test v1.1.py` would be renamed to `Test v1.py`)
+
+**Note:** Due to some changes, playbooks might be formatted a bit differently than before when downloaded from the server. The playbooks should however function the same, and just not have

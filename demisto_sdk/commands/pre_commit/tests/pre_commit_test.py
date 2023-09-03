@@ -224,10 +224,11 @@ def test_handle_python2_files_with_unit_test(mocker, repo: Repo):
     When:
         Calling handle_python2_files
     Then:
-        1. python_version_to_files should contain only python 3.8 files
-        2. The logger should print that it is running pre-commit with python 2.7 on file1.py
-        3. The exclude field of the run-unit-tests hook should be None
-        4. The exclude field of the other hooks should be file1.py
+        1. python2_files contain the python 2.7 files
+        2. python_version_to_files should contain only python 3.8 files
+        3. The logger should print that it is running pre-commit with python 2.7 on file1.py
+        4. The exclude field of the run-unit-tests hook should be None
+        5. The exclude field of the other hooks should be file1.py
     """
     mocker.patch.object(
         pre_commit_command,
@@ -241,12 +242,13 @@ def test_handle_python2_files_with_unit_test(mocker, repo: Repo):
         None, python_version_to_files, ""
     )
 
-    pre_commit_runner.handle_python2_files(unit_test=True)
+    python2_files = pre_commit_runner.handle_python2_files(unit_test=True)
 
+    assert python2_files == ["file1.py"]
     assert pre_commit_runner.python_version_to_files == {"3.8": {"file2.py"}}
     assert (
         pre_commit_command.logger.info.call_args[0][0]
-        == "Running pre-commit with Python 2.7 on file1.py"
+        == "Running pre-commit run-unit-tests with Python 2.7 on file1.py"
     )
 
     for hook in pre_commit_runner.hooks.values():
@@ -263,8 +265,9 @@ def test_handle_python2_files_no_unit_test(mocker, repo: Repo):
     When:
         Calling handle_python2_files
     Then:
-        1. python_version_to_files should contain only python 3.8 files
-        2. The logger should print the message that unit-tests were not selected
+        1. python2_files contain an empty list
+        2. python_version_to_files should contain only python 3.8 files
+        3. The logger should print the message that unit-tests were not selected
     """
     mocker.patch.object(
         pre_commit_command,
@@ -278,8 +281,9 @@ def test_handle_python2_files_no_unit_test(mocker, repo: Repo):
         None, python_version_to_files, ""
     )
 
-    pre_commit_runner.handle_python2_files(unit_test=False)
+    python2_files = pre_commit_runner.handle_python2_files(unit_test=False)
 
+    assert python2_files == []
     assert pre_commit_runner.python_version_to_files == {"3.8": {"file2.py"}}
     assert (
         pre_commit_command.logger.info.call_args[0][0]

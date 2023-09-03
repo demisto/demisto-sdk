@@ -95,27 +95,28 @@ class PreCommitRunner:
                     SKIPPED_HOOKS.add(hook["id"])
         return hooks
 
-    def handle_python2_files(self, unit_test: bool) -> None:
+    def handle_python2_files(self, unit_test: bool) -> List[str]:
         """
         This function handles the python2 files.
         Files with python2 run only the "run-unit-tests" hook.
         """
         python2_files = self.python_version_to_files.pop(DEFAULT_PYTHON2_VERSION, None)
         if not python2_files:
-            return
+            return []
         if not unit_test:
             logger.info(
                 f"Skipping pre-commit with Python {DEFAULT_PYTHON2_VERSION} because unit-tests were not selected"
             )
-            return
+            return []
         python2_files_string = [str(file) for file in python2_files]
         for hook in self.hooks.values():
             if hook["hook"]["id"] == "run-unit-tests":
                 continue
             hook["hook"]["exclude"] = "|".join(python2_files_string)
         logger.info(
-            f"Running pre-commit with Python {DEFAULT_PYTHON2_VERSION} on {', '.join(python2_files_string)}"
+            f"Running pre-commit run-unit-tests with Python {DEFAULT_PYTHON2_VERSION} on {', '.join(python2_files_string)}"
         )
+        return python2_files_string
 
     def prepare_hooks(
         self,
@@ -162,7 +163,7 @@ class PreCommitRunner:
         )
         precommit_env["DEMISTO_SDK_CONTENT_PATH"] = str(CONTENT_PATH)
 
-        self.handle_python2_files(unit_test)
+        python2_files = self.handle_python2_files(unit_test)
 
         precommit_config = deepcopy(self.precommit_template)
         assert isinstance(precommit_config, dict)
@@ -180,7 +181,7 @@ class PreCommitRunner:
         self.prepare_hooks(self._get_hooks(precommit_config))
         with open(PRECOMMIT_PATH, "w") as f:
             yaml.dump(precommit_config, f)
-        all_changed_files: List[str] = []
+        all_changed_files: List[str] = python2_files.copy()
         for files_of_python_version in self.python_version_to_files.values():
             all_changed_files.extend(str(file) for file in files_of_python_version)
         # use chunks because OS does not support such large comments
@@ -267,7 +268,8 @@ def group_by_python_version(files: Set[Path]) -> Dict[str, set]:
             integrations_scripts_mapping[code_file_path], {integration_script.path}
         )
 
-    python_versions_to_files[DEFAULT_PYTHON_VERSION].update(infra_files)
+    if infra_files:
+        python_versions_to_files[DEFAULT_PYTHON_VERSION].update(infra_files)
     return python_versions_to_files
 
 

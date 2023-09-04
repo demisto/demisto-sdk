@@ -8,7 +8,11 @@ from pathlib import Path
 from typing import IO, Any, Dict, Iterable, Tuple, Union
 
 import click
-import git
+try:
+    import git
+except ImportError:
+    sys.exit("Git executable cannot be found, or is invalid")
+
 import typer
 from pkg_resources import DistributionNotFound, get_distribution
 

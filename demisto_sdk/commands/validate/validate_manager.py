@@ -4,9 +4,8 @@ from configparser import ConfigParser
 from pathlib import Path
 from typing import Callable, List, Optional, Set, Tuple
 
-import git
 import pebble
-from git import InvalidGitRepositoryError, GitCommandError
+from git import GitCommandError, InvalidGitRepositoryError
 from packaging import version
 
 from demisto_sdk.commands.common import tools
@@ -1995,12 +1994,12 @@ class ValidateManager:
                 continue
             # if the repo does not have remotes, get the .pack-ignore content from the master branch in Github
             # if the repo is not in remote / file cannot be found, try to take it from the latest commit on the default branch (usually master/main)
-            old_pack_ignore_content = get_remote_file(
-                old_file_path, "master"
-            )
+            old_pack_ignore_content = get_remote_file(old_file_path, "master")
             if not old_pack_ignore_content:
                 try:
-                    old_pack_ignore_content = self.git_util.get_local_remote_file_content(f"{GitUtil.find_primary_branch(self.git_util.repo)}:{old_file_path}")
+                    old_pack_ignore_content = self.git_util.get_local_remote_file_content(
+                        f"{GitUtil.find_primary_branch(self.git_util.repo)}:{old_file_path}"
+                    )
                 except GitCommandError:
                     old_pack_ignore_content = ""
 

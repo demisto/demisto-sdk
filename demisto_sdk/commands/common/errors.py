@@ -1404,7 +1404,7 @@ ERROR_CODE: Dict = {
         "code": "CR101",
         "related_field": "",
     },
-    "correlation_rules_execution_mode_error": {
+    "correlation_rules_missing_search_window": {
         "code": "CR102",
         "related_field": "",
     },
@@ -4380,5 +4380,5 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def correlation_rules_execution_mode_error():
+    def correlation_rules_missing_search_window():
         return "The 'search_window' key must exist and cannot be empty when the 'execution_mode' is set to 'SCHEDULED'."

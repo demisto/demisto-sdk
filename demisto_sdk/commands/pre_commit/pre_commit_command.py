@@ -146,7 +146,7 @@ class PreCommitRunner:
         ret_val = 0
         precommit_env = os.environ.copy()
         skipped_hooks: set = SKIPPED_HOOKS
-        skipped_hooks.update(set(skip_hooks or []))
+        skipped_hooks.update(set(skip_hooks or ()))
         if not unit_test:
             skipped_hooks.add("run-unit-tests")
         if validate and "validate" in skipped_hooks:

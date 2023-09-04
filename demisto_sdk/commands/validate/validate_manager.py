@@ -1054,9 +1054,10 @@ class ValidateManager:
         ):
             logger.info(f"Validating {file_type.value} file: {file_path}")
             if self.validate_all:
+                file_name = Path(file_path).name
                 error_ignore_list = pack_error_ignore_list.copy()
-                error_ignore_list.setdefault(Path(file_path).name, [])
-                error_ignore_list.get(Path(file_path).name).append("MR104")
+                error_ignore_list.setdefault(file_name, [])
+                error_ignore_list.get(file_name).append("MR104")
                 return self.validate_modeling_rule(
                     structure_validator, error_ignore_list
                 )

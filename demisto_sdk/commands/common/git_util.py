@@ -19,10 +19,9 @@ class GitUtil:
         self,
         path: Optional[Path] = None,
         search_parent_directories: bool = True,
-        repo: Repo = None,
     ):
         try:
-            self.repo = repo or Repo(
+            self.repo = Repo(
                 path or Path.cwd(), search_parent_directories=search_parent_directories
             )
         except InvalidGitRepositoryError:

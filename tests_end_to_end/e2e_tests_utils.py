@@ -9,10 +9,11 @@ from demisto_sdk.commands.common.tools import get_demisto_version
 
 def git_clone_demisto_sdk(destination_folder: str, sdk_git_branch: str = "master"):
     """Clone demisto-sdk from GitHub and add it to sys.path"""
-    logger.info(f"Cloning demisto-sdk to {destination_folder}")
-    import git
+    from demisto_sdk.commands.common.git_util import GitUtil
 
-    git.Repo.clone_from(  # noqa: TID251
+    logger.info(f"Cloning demisto-sdk to {destination_folder}")
+
+    GitUtil.repo.clone_from(
         url="https://github.com/demisto/demisto-sdk.git",
         to_path=destination_folder,
         multi_options=[f"-b {sdk_git_branch}", "--single-branch", "--depth 1"],

@@ -58,7 +58,7 @@ from demisto_sdk.commands.common.git_content_config import (
     GitContentConfig,
     GitCredentials,
 )
-from demisto_sdk.commands.common.git_util import GitUtil
+from demisto_sdk.commands.common.git_util import GitUtil, Repo
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
 from demisto_sdk.commands.common.legacy_git_tools import git_path
@@ -630,7 +630,7 @@ class TestGetRemoteFileLocally:
 
     def setup_method(self):
         # create local git repo
-        example_repo = GitUtil(Path(self.REPO_NAME)).repo
+        example_repo = GitUtil.repo.init(self.REPO_NAME)
         origin_branch = self.main_branch
         if not origin_branch.startswith("origin"):
             origin_branch = "origin/" + origin_branch

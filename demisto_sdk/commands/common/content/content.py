@@ -64,7 +64,7 @@ class Content:
         return content
 
     @staticmethod
-    def git() -> git.Repo | None:  # noqa: TID251
+    def git() -> GitUtil | None:
         """Git repository object.
 
         Returns:
@@ -82,10 +82,11 @@ class Content:
                 logger.debug(f"Using content path: {content_path}")
             else:
                 git_util = GitUtil(search_parent_directories=True)
-            return git_util.repo
         except InvalidGitRepositoryError:
             logger.debug("Git repo was not found.")
-            return None
+            git_util = None
+
+        return git_util
 
     @property
     def path(self) -> Path:

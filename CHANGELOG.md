@@ -3,7 +3,7 @@
 ## Unreleased
 * Added formatting for yml files when period is missing in the end of description field, in the **format** command.
 * Fixed an issue where logging arguments were not in the standard kebab-case. The new arguments are: **console-log-threshold**, **file-log-threshold**, **log-file-path**.
-* Added a validation to ensure there's a '.' in the end of each description field in integration and script yml files.
+* Added a new validation (`DS108`) to ensure that each description in the yml of script/integration ends with a dot.
 * Fixed an issue where the **validate -g** failed reading a `.pack-ignore` file that was previously empty.
 * Fixed an issue where the **update-release-notes** failed when changing the `.pack-ignore` file.
 * Fixed an issue where the **upload** command failed for private repositories while trying to find the landing_page.json file.

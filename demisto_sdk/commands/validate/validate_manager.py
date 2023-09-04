@@ -2007,7 +2007,7 @@ class ValidateManager:
                     )
                 except GitCommandError:
                     logger.warning(
-                        f"Could not get the the .pack-ignore from {_pack_ignore_path=}"
+                        f"Failed reading {_pack_ignore_path}"
                     )
                     old_pack_ignore_content = ""
 

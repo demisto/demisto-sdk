@@ -5,7 +5,6 @@ import copy
 import errno
 import os
 import re
-import sys
 from pathlib import Path
 from typing import Any, Iterable, Optional, Tuple, Union
 
@@ -746,8 +745,7 @@ class UpdateRN:
 
         elif self.is_force:
             rn_desc = f"## {content_name}\n\n"
-            if text:
-                rn_desc += f'- {text}'
+            rn_desc += f'- {text or "%%UPDATE_RN%%"}\n'
         else:
             if is_new_file:
                 rn_desc = f"##### New: {content_name}\n\n"

@@ -865,7 +865,7 @@ def test_force_update_release(demisto_client, mocker, repo):
 
     with open(rn_path) as f:
         rn = f.read()
-    assert "##### ThinkCanary\n\n- %%UPDATE_RN%%\n" == rn
+    assert "## ThinkCanary\n\n- %%UPDATE_RN%%\n" == rn
 
 
 def test_update_release_notes_only_pack_ignore_changed(mocker, pack):

@@ -7,7 +7,6 @@ from typing import Optional
 from packaging import version
 from packaging.version import Version
 
-from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import (
     API_MODULES_PACK,
     DEFAULT_CONTENT_ITEM_FROM_VERSION,
@@ -44,11 +43,14 @@ from demisto_sdk.commands.common.tools import (
     _get_file_id,
     find_type,
     get_file_displayed_name,
+    get_pack_metadata,
     get_pack_name,
     get_remote_file,
     get_yaml,
+    is_string_ends_with_url,
     is_test_config_match,
     run_command,
+    strip_description,
 )
 from demisto_sdk.commands.format.format_constants import OLD_FILE_DEFAULT_1_FROMVERSION
 
@@ -731,7 +733,7 @@ class ContentEntityValidator(BaseValidator):
         """
 
         # Validate just for xsoar and partner support
-        if tools.get_pack_metadata(self.file_path).get("support", "") == "community":
+        if get_pack_metadata(self.file_path).get("support", "") == "community":
             return True
 
         path = Path(self.file_path)
@@ -786,3 +788,21 @@ class ContentEntityValidator(BaseValidator):
                 return False
 
         return True
+
+    def is_line_ends_with_dot(self, dict_to_test: dict, arg_field: str):
+        line_with_missing_dot = ""
+        for arg in dict_to_test.get(arg_field, []):
+            stripped_description = strip_description(arg.get("description", ""))
+            if (
+                stripped_description
+                and not stripped_description.endswith(".")
+                and not is_string_ends_with_url(stripped_description)
+            ):
+                line_with_missing_dot += f"The argument {arg.get('name')} description should end with a period.\n"
+        for output in dict_to_test.get("outputs") or []:
+            stripped_description = strip_description(output.get("description", ""))
+            if not stripped_description.endswith(".") and not is_string_ends_with_url(
+                stripped_description
+            ):
+                line_with_missing_dot += f"The context path {output.get('contextPath')} description should end with a period.\n"
+        return line_with_missing_dot

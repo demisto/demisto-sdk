@@ -8,13 +8,11 @@ from pathlib import Path
 from typing import IO, Any, Dict, Iterable, Tuple, Union
 
 import click
-from demisto_sdk.commands.common import logger
 
 try:
     import git
 except ImportError:
-    logger.error("Git executable cannot be found, or is invalid")
-    sys.exit(1)
+    sys.exit(click.style("Git executable cannot be found, or is invalid", fg='red'))
 
 
 import typer

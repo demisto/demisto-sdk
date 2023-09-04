@@ -1,6 +1,3 @@
-import pytest
-
-
 def test_find_primary_branch():
     """
     Given
@@ -52,28 +49,3 @@ def test_find_primary_branch():
     refs_other.refs = ["a", "b"]
     repo_with_remotes_refs_other.remotes.append(refs_other)
     assert not GitUtil.find_primary_branch(repo_with_remotes_refs_other)
-
-
-def test_git_is_not_installed_proper_error(mocker):
-    """
-    Given
-        - git is not installed
-
-    When
-        - trying to init the GitUtil class
-
-    Then
-        - Ensure system exit is raised with the proper message
-    """
-    from git import Repo  # noqa: TID251
-
-    from demisto_sdk.commands.common.git_util import GitUtil
-
-    mocker.patch.object(
-        Repo, "__init__", side_effect=ImportError("git is not installed")
-    )
-
-    with pytest.raises(SystemExit) as exc:
-        GitUtil()
-
-    assert exc.value.args[0] == "Git executable cannot be found, or is invalid"

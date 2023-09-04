@@ -8,11 +8,14 @@ from pathlib import Path
 from typing import IO, Any, Dict, Iterable, Tuple, Union
 
 import click
+from demisto_sdk.commands.common import logger
 
 try:
     import git
 except ImportError:
-    sys.exit("Git executable cannot be found, or is invalid")
+    logger.error("Git executable cannot be found, or is invalid")
+    sys.exit(1)
+
 
 import typer
 from pkg_resources import DistributionNotFound, get_distribution
@@ -39,6 +42,7 @@ from demisto_sdk.commands.common.tools import (
     is_sdk_defined_working_offline,
     parse_marketplace_kwargs,
 )
+
 from demisto_sdk.commands.content_graph.commands.create import create
 from demisto_sdk.commands.content_graph.commands.get_relationships import (
     get_relationships,

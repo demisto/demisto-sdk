@@ -29,8 +29,6 @@ class GitUtil:
             raise InvalidGitRepositoryError(
                 "Unable to find Repository from current working directory - aborting"
             )
-        except ImportError:
-            raise SystemExit("Git executable cannot be found, or is invalid")
 
     def get_all_files(self) -> Set[Path]:
         return set(map(Path, self.repo.git.ls_files().split("\n")))

@@ -2590,7 +2590,7 @@ def test_handle_existing_rn_with_docker_image(
 
 @pytest.mark.parametrize(
     "text, expected_rn_string",
-    [("Testing the upload", "##### PackName\n\n- Testing the upload\n")],
+    [("Testing the upload", "## PackName\n\n- Testing the upload\n")],
 )
 def test_force_and_text_update_rn(repo, text, expected_rn_string):
     """

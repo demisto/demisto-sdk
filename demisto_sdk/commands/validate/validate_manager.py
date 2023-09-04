@@ -1996,11 +1996,14 @@ class ValidateManager:
             # if the repo is not in remote / file cannot be found, try to take it from the latest commit on the default branch (usually master/main)
             old_pack_ignore_content = get_remote_file(old_file_path, "master")
             if not old_pack_ignore_content:
+                primary_branch = GitUtil.find_primary_branch(self.git_util.repo)
+                _pack_ignore_path = f"{primary_branch}:{old_file_path}"
                 try:
                     old_pack_ignore_content = self.git_util.get_local_remote_file_content(
-                        f"{GitUtil.find_primary_branch(self.git_util.repo)}:{old_file_path}"
+                        _pack_ignore_path
                     )
                 except GitCommandError:
+                    logger.debug(f'Could not get the the .pack-ignore from {_pack_ignore_path=}')
                     old_pack_ignore_content = ""
 
             config = ConfigParser(allow_no_value=True)

@@ -66,6 +66,8 @@ class ContentGraphBuilder:
             total=len(packs_to_parse),
             unit="packs",
             desc="Parsing packs",
+            position=0,
+            leave=True,
         ) as pbar:
             for packs_batch in more_itertools.chunked(packs_to_parse, PACKS_PER_BATCH):
                 repository_parser.parse(packs_batch)

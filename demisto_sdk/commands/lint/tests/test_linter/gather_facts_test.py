@@ -719,6 +719,7 @@ class TestTestsCollection:
         - Case B: gather father should indicate script is not skipped
         """
         from demisto_sdk.commands.common.git_util import Repo
+
         script.yml.update({"deprecated": True})
         mocker.patch.object(Repo, "ignored", return_value=[])
         mocker.patch.object(linter.Linter, "_update_support_level")

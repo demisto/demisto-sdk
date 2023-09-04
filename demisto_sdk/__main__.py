@@ -3529,8 +3529,8 @@ main.add_command(typer_click_object2, "generate-modeling-rules")
 # ====================== graph command group ====================== #
 
 graph_cmd_group = typer.Typer(name="graph", hidden=True, no_args_is_help=True)
-graph_cmd_group.command("create", no_args_is_help=True)(create)
-graph_cmd_group.command("update", no_args_is_help=True)(update)
+graph_cmd_group.command("create", no_args_is_help=False)(create)
+graph_cmd_group.command("update", no_args_is_help=False)(update)
 graph_cmd_group.command("get-relationships", no_args_is_help=True)(get_relationships)
 main.add_command(typer.main.get_command(graph_cmd_group), "graph")
 

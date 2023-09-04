@@ -3877,6 +3877,8 @@ def sha1_update_from_dir(directory: Union[str, Path], hash_):
     """This will recursivly iterate all the files in the directory and update the hash object"""
     assert Path(directory).is_dir()
     for path in sorted(Path(directory).iterdir(), key=lambda p: str(p).lower()):
+        if path.name == "__pycache__":
+            continue
         hash_.update(path.name.encode())
         if path.is_file():
             hash_ = sha1_update_from_file(path, hash_)

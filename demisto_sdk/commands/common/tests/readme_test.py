@@ -365,7 +365,7 @@ def test_copyright_sections(integration, file_input):
             "FILL IN REQUIRED PERMISSIONS HERE",
         ),
         (
-            "This integration was integrated and tested with version xx of integration v2",
+            "This integration was integrated and tested with version xx of integration v2.",
             "version xx",
         ),
         (

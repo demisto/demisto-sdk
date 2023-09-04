@@ -1,7 +1,6 @@
 import logging
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import Set
 
 import demisto_client
 
@@ -14,9 +13,6 @@ logger = logging.getLogger("demisto-sdk")
 
 class List(ContentItem, content_type=ContentType.LIST):  # type: ignore[call-arg]
     type: str
-
-    def metadata_fields(self) -> Set[str]:
-        return {"name"}
 
     def _upload(
         self,

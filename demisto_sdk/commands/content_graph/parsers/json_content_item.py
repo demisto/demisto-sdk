@@ -47,7 +47,7 @@ class JSONContentItemParser(ContentItemParser):
 
     @property
     def description(self) -> Optional[str]:
-        return self.json_data.get("description")
+        return self.json_data.get("description") or ""
 
     @property
     def fromversion(self) -> str:

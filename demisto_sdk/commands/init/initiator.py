@@ -1163,7 +1163,7 @@ class Initiator:
         ) as f:
             yaml.dump(yml_dict, f)
 
-        os.remove(os.path.join(self.full_output_path, f"{current_suffix}.yml"))
+        Path(self.full_output_path, f"{current_suffix}.yml").unlink()
 
     def change_template_name_script_py(
         self, current_suffix: str, current_template: str

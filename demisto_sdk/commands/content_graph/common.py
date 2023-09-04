@@ -268,6 +268,19 @@ class Nodes(dict):
             self.add_batch(data)
 
 
+class PackTags:
+    """Pack tag constants"""
+
+    TRENDING = "Trending"
+    NEW = "New"
+    TIM = "TIM"
+    USE_CASE = "Use Case"
+    TRANSFORMER = "Transformer"
+    FILTER = "Filter"
+    COLLECTION = "Collection"
+    DATA_SOURCE = "Data Source"
+
+
 SERVER_CONTENT_ITEMS: dict = {
     ContentType.INCIDENT_FIELD: [
         "name",

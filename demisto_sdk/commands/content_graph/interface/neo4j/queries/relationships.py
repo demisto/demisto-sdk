@@ -1,7 +1,6 @@
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
-import more_itertools
 from neo4j import Transaction
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
@@ -16,8 +15,6 @@ from demisto_sdk.commands.content_graph.interface.neo4j.queries.common import (
     node_map,
     run_query,
 )
-
-CHUNK_SIZE = 500
 
 
 def build_source_properties() -> str:
@@ -168,6 +165,7 @@ RETURN count(r) AS relationships_merged"""
 def create_relationships(
     tx: Transaction,
     relationships: Dict[RelationshipType, List[Dict[str, Any]]],
+    timeout: Optional[int] = None,
 ) -> None:
     if relationships.get(RelationshipType.HAS_COMMAND):
         data = relationships.pop(RelationshipType.HAS_COMMAND)
@@ -212,12 +210,8 @@ def create_relationships_by_type(
         query = build_depends_on_relationships_query()
     else:
         query = build_default_relationships_query(relationship)
-    for chunk in more_itertools.chunked_even(data, CHUNK_SIZE):
-        result = run_query(tx, query, data=chunk).single()
-        merged_relationships_count = result["relationships_merged"]
-        logger.debug(
-            f"Merged {merged_relationships_count} relationships of type {relationship}."
-        )
+    run_query(tx, query, data=data)
+    logger.debug(f"Merged relationships of type {relationship}.")
 
 
 def _match_relationships(

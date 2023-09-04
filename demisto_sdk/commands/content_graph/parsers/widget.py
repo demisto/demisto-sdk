@@ -13,8 +13,8 @@ class WidgetParser(JSONContentItemParser, content_type=ContentType.WIDGET):
         self, path: Path, pack_marketplaces: List[MarketplaceVersions]
     ) -> None:
         super().__init__(path, pack_marketplaces)
-        self.data_type = self.json_data.get("dataType")
-        self.widget_type = self.json_data.get("widgetType")
+        self.data_type = self.json_data.get("dataType") or ""
+        self.widget_type = self.json_data.get("widgetType") or ""
 
         self.connect_to_dependencies()
 

@@ -2016,7 +2016,7 @@ class ValidateManager:
                     )
                 except GitCommandError:
                     logger.warning(
-                        f"could not retrieve {_pack_ignore_default_branch_path} from {primary_branch} because {primary_branch} is not a valid ref"
+                        f"could not retrieve {_pack_ignore_default_branch_path} from {primary_branch} because {primary_branch} is not a valid ref, assuming .pack-ignore is empty"
                     )
                     old_pack_ignore_content = ""
 

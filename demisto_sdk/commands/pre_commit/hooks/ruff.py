@@ -30,7 +30,7 @@ class RuffHook(Hook):
             python_version_to_files (Dict[str, Set[Path]]): dictionary mapping python version to files
             github_actions (bool, optional): Whether to use github actions format. Defaults to False.
         """
-        for python_version in python_version_to_files.keys():
+        for python_version in python_version_to_files:
             hook: Dict[str, Any] = {
                 "name": f"ruff-py{python_version}",
                 **deepcopy(self.base_hook),

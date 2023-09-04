@@ -3185,7 +3185,7 @@ def test_validate_no_disallowed_terms_in_customer_facing_docs_end_to_end(repo, m
         (
             {"Packs/test1/.pack-ignore"},
             "[file:test.yml]\nignore=BA108,BA109,DS107\n[file:test2.yml]\nignore=BA108,BA109,DS107\n",
-            "",
+            {},
             "[file:test.yml]\nignore=BA108,BA109,DS107\n",
             {"Packs/test1/Integrations/test2/test2.yml"},
         ),
@@ -3277,7 +3277,7 @@ def test_get_all_files_edited_in_pack_ignore_with_git_error(mocker):
 
     mocker.patch(
         "demisto_sdk.commands.validate.validate_manager.get_remote_file",
-        return_value=b"",
+        return_value={},
     )
     mocker.patch.object(GitUtil, "find_primary_branch", return_value="main")
     mocker.patch.object(

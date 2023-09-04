@@ -1998,18 +1998,26 @@ class ValidateManager:
             # if the repo does not have remotes, get the .pack-ignore content from the master branch in Github
             # if the repo is not in remote / file cannot be found, try to take it from the latest commit on the default branch (usually master/main)
             old_pack_ignore_content = get_remote_file(old_file_path, "master")
-            if old_pack_ignore_content == b'':
+            if old_pack_ignore_content == b"":
                 old_pack_ignore_content = ""
-            elif old_pack_ignore_content == {}:  # we were not able to retrieve the file at all from remote git
-                logger.debug(f'Could not get {old_file_path} from remote master branch, trying to get it from local branch')
+            elif (
+                old_pack_ignore_content == {}
+            ):  # we were not able to retrieve the file at all from remote git
+                logger.debug(
+                    f"Could not get {old_file_path} from remote master branch, trying to get it from local branch"
+                )
                 primary_branch = GitUtil.find_primary_branch(self.git_util.repo)
                 _pack_ignore_default_branch_path = f"{primary_branch}:{old_file_path}"
                 try:
                     old_pack_ignore_content = (
-                        self.git_util.get_local_remote_file_content(_pack_ignore_default_branch_path)
+                        self.git_util.get_local_remote_file_content(
+                            _pack_ignore_default_branch_path
+                        )
                     )
                 except GitCommandError:
-                    logger.warning(f"could not retrieve {_pack_ignore_default_branch_path} from {primary_branch} because {primary_branch} is not a valid ref")
+                    logger.warning(
+                        f"could not retrieve {_pack_ignore_default_branch_path} from {primary_branch} because {primary_branch} is not a valid ref"
+                    )
                     old_pack_ignore_content = ""
 
             config = ConfigParser(allow_no_value=True)

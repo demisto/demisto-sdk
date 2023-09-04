@@ -62,17 +62,18 @@ class ContentGraphBuilder:
         content_dtos = []
         repository_parser = RepositoryParser(self.content_graph.repo_path)
         packs_to_parse = tuple(repository_parser.iter_packs(packs))
-        for packs_batch in tqdm.tqdm(
-            more_itertools.chunked_even(packs_to_parse, PACKS_PER_BATCH),
+        with tqdm.tqdm(
             total=len(packs_to_parse),
             unit="packs",
             desc="Parsing packs",
-            unit_scale=True,
-        ):
-            repository_parser.parse(packs_batch)
-            content_dtos.append(ContentDTO.from_orm(repository_parser))
-            repository_parser.clear()
-            gc.collect()
+        ) as pbar:
+            for packs_batch in more_itertools.chunked(packs_to_parse, PACKS_PER_BATCH):
+                repository_parser.parse(packs_batch)
+                content_dtos.append(ContentDTO.from_orm(repository_parser))
+                pbar.update(len(packs_batch))
+
+                repository_parser.clear()
+                gc.collect()
         return content_dtos
 
     def _collect_nodes_and_relationships_from_model(

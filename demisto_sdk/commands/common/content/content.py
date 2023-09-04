@@ -54,7 +54,11 @@ class Content:
         TODO:
             1. Add attribute which init only changed objects by git.
         """
-        repo = cls.git().repo
+        if git_util := cls.git():
+            repo = git_util.repo
+        else:
+            repo = None
+
         if repo:
             content = Content(repo.working_tree_dir)  # type: ignore
         else:

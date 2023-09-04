@@ -116,13 +116,6 @@ CONF_JSON_MOCK = {
 }
 
 
-class MyRepo:
-    active_branch = "not-master"
-
-    def remote(self):
-        return "remote_path"
-
-
 @pytest.fixture(autouse=True)
 def set_git_test_env(mocker):
     mocker.patch.object(ValidateManager, "setup_git_params", return_value=True)

@@ -821,7 +821,7 @@ def test_remove_gitignore_files(mocker, demisto_content):
         def ignored(self, files):
             return files[-1:]
 
-    mocker.patch("git.Repo", return_value=GitMock())
+    mocker.patch("demisto_sdk.commands.common.git_util.Repo", return_value=GitMock())
     runner = initiate_linter(demisto_content, "")
     runner._facts["lint_files"] = files_paths
     assert files_paths[-1] in runner._facts["lint_files"]

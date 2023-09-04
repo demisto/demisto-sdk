@@ -13,13 +13,6 @@ from demisto_sdk.commands.validate.validate_manager import ValidateManager
 from TestSuite.test_tools import ChangeCWD, str_in_call_args_list
 
 
-class MyRepo:
-    active_branch = "not-master"
-
-    def remote(self):
-        return "remote_path"
-
-
 def test_conf_file_custom(mocker, monkeypatch, repo):
     """
     Given
@@ -39,7 +32,7 @@ def test_conf_file_custom(mocker, monkeypatch, repo):
     mocker.patch.object(tools, "is_external_repository", return_value=True)
     mocker.patch.object(IntegrationValidator, "is_valid_category", return_value=True)
     mocker.patch.object(ValidateManager, "setup_git_params", return_value=True)
-    mocker.patch.object(Content, "git", return_value=MyRepo())
+    mocker.patch.object(Content, "git", return_value=GitUtil())
     mocker.patch.object(ValidateManager, "setup_prev_ver", return_value="origin/master")
     mocker.patch.object(GitUtil, "_is_file_git_ignored", return_value=False)
     pack = repo.create_pack("tempPack")

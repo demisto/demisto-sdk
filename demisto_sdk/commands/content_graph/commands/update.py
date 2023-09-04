@@ -56,7 +56,7 @@ def update_content_graph(
     """
     packs_to_update = list(packs_to_update) if packs_to_update else []
     builder = ContentGraphBuilder(content_graph_interface)
-    if not use_current:
+    if not use_current:  # TODO: do we want to use the current graph?
         content_graph_interface.clean_import_dir()
         if not imported_path:
             # getting the graph from remote, so we need to clean the import dir
@@ -171,6 +171,12 @@ def update(
         "--log-file-path",
         help=("Path to the log file. Default: ./demisto_sdk_debug.log."),
     ),
+    repo_path: str = typer.Option(
+        None,
+        "-r",
+        "--repo",
+        help="A repository path to update its packs.",
+    ),
 ) -> None:
     """
     Downloads the official content graph, imports it locally,
@@ -195,6 +201,10 @@ def update(
         file_log_threshold=file_log_threshold,
         log_file_path=log_file_path,
     )
+    if repo_path:
+        packs_to_update = os.listdir(
+            repo_path[0] + "/Packs"
+        )  # TODO: consider the fact that the url for these packs is not content
     with ContentGraphInterface() as content_graph_interface:
         update_content_graph(
             content_graph_interface,

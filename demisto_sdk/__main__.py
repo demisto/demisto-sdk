@@ -593,6 +593,14 @@ def zip_packs(ctx, **kwargs) -> int:
     help="Perform validations on content graph.",
 )
 @click.option(
+    "-cgr",
+    "--use_current_graph",
+    is_flag=True,
+    default=False,
+    show_default=True,
+    help="Use the current graph.",
+)
+@click.option(
     "--prev-ver", help="Previous branch or SHA1 commit to run checks against."
 )
 @click.option(
@@ -757,6 +765,7 @@ def validate(ctx, config, file_paths: str, **kwargs):
             validate_all=kwargs.get("validate_all"),
             validate_id_set=kwargs["id_set"],
             validate_graph=kwargs.get("graph"),
+            update_graph=not kwargs.get("use_current_graph"),
             skip_pack_rn_validation=kwargs["skip_pack_release_notes"],
             print_ignored_errors=kwargs["print_ignored_errors"],
             is_external_repo=is_external_repo,
@@ -3312,6 +3321,13 @@ def create_content_graph(
     default=None,
     help="Output folder to place the zip file of the graph exported CSVs files",
 )
+@click.option(
+    "-r",
+    "--repo",
+    help="A repository path to update its packs.",
+    multiple=True,
+    default=None,
+)
 @click.pass_context
 @logging_setup_decorator
 def update_content_graph(
@@ -3323,6 +3339,7 @@ def update_content_graph(
     packs: list = None,
     no_dependencies: bool = False,
     output_path: Path = None,
+    repo: str = None,
     **kwargs,
 ):
     ctx.invoke(
@@ -3335,6 +3352,7 @@ def update_content_graph(
         packs_to_update=packs,
         no_dependencies=no_dependencies,
         output_path=output_path,
+        repo_path=repo,
         **kwargs,
     )
 

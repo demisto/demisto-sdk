@@ -176,6 +176,7 @@ class ValidateManager:
         print_ignored_files=False,
         skip_conf_json=True,
         validate_graph=False,
+        update_graph=True,
         validate_id_set=False,
         file_path=None,
         validate_all=False,
@@ -212,6 +213,7 @@ class ValidateManager:
         self.skip_dependencies = skip_dependencies or not use_git
         self.skip_id_set_creation = not create_id_set or skip_dependencies
         self.validate_graph = validate_graph
+        self.update_graph = update_graph
         self.compare_type = "..."
         self.staged = staged
         self.skip_schema_check = skip_schema_check
@@ -480,6 +482,7 @@ class ValidateManager:
                 specific_validations=self.specific_validations,
                 input_files=files_to_validate,
                 include_optional_deps=True,
+                update_graph=self.update_graph,
             ) as graph_validator:
                 files_validation_result.add(graph_validator.is_valid_content_graph())
 
@@ -574,6 +577,7 @@ class ValidateManager:
                 include_optional_deps=(
                     True if "GR103" in specific_validations_list else False
                 ),
+                update_graph=self.update_graph,
             ) as graph_validator:
                 all_packs_valid.add(graph_validator.is_valid_content_graph())
 
@@ -1330,6 +1334,7 @@ class ValidateManager:
                     specific_validations=self.specific_validations,
                     git_files=all_files_set,
                     include_optional_deps=True,
+                    update_graph=self.update_graph,
                 ) as graph_validator:
                     validation_results.add(graph_validator.is_valid_content_graph())
                     validation_results.add(

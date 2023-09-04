@@ -1252,20 +1252,20 @@ def test_modeling_rule(
     console_log_threshold: str = typer.Option(
         "INFO",
         "-clt",
-        "--console_log_threshold",
-        help="Minimum logging threshold for the console logger.",
+        "--console-log-threshold",
+        help=("Minimum logging threshold for the console logger."),
     ),
     file_log_threshold: str = typer.Option(
         "DEBUG",
         "-flt",
-        "--file_log_threshold",
-        help="Minimum logging threshold for the file logger.",
+        "--file-log-threshold",
+        help=("Minimum logging threshold for the file logger."),
     ),
     log_file_path: str = typer.Option(
         "demisto_sdk_debug.log",
         "-lp",
-        "--log_file_path",
-        help="Path to the log file. Default: ./demisto_sdk_debug.log.",
+        "--log-file-path",
+        help=("Path to the log file. Default: ./demisto_sdk_debug.log."),
     ),
 ):
     """

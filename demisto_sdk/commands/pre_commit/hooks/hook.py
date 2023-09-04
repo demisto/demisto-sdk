@@ -9,7 +9,7 @@ class Hook(ABC):
         self.hooks.remove(self.base_hook)
 
     @staticmethod
-    def _join_files(files: list, separator: str = "|") -> str:
+    def _join_files(files: List[str], separator: str = "|") -> str:
         """
         Joins a list of files into a single string using the specified separator.
         Args:

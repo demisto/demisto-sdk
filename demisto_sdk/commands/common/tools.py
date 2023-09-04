@@ -3924,6 +3924,7 @@ def strip_description(description):
         else description
     )
 
+
 def is_file_in_pack(file: Path, pack_name: str) -> bool:
     """
     Return wether the given file is under the given pack.

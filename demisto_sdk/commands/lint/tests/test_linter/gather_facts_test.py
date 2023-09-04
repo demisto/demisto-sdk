@@ -7,6 +7,7 @@ import pytest
 from packaging.version import Version
 from wcmatch.pathlib import Path
 
+import demisto_sdk.commands.common.git_util
 from demisto_sdk.commands.common.hook_validations.docker import DockerImageValidator
 from demisto_sdk.commands.lint import linter
 from TestSuite.pack import Pack
@@ -101,7 +102,11 @@ class TestPythonPack:
     def test_package_is_python_pack_api_module_script(
         self, demisto_content, pack, mocker
     ):
+        from demisto_sdk.commands.common.git_util import Repo
         script = pack.create_script(name="TestApiModule")
+        mocker.patch.object(
+            Repo, "ignored", return_value=[]
+        )
         mocker.patch.object(linter.Linter, "_update_support_level")
         runner = initiate_linter(demisto_content, script.path)
         assert not runner._gather_facts(modules={})

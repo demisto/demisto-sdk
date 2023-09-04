@@ -8,6 +8,7 @@ import pytest
 from _pytest.fixtures import FixtureRequest
 from _pytest.tmpdir import TempPathFactory, _mk_tmp
 
+import demisto_sdk.commands.common.tools as tools
 from TestSuite.integration import Integration
 from TestSuite.json_based import JSONBased
 from TestSuite.pack import Pack
@@ -141,3 +142,8 @@ def mock_update_id_set_cpu_count() -> Generator:
         "demisto_sdk.commands.common.update_id_set.cpu_count", return_value=2
     ) as _fixture:
         yield _fixture
+
+
+@pytest.fixture(autouse=True)
+def clear_cache():
+    tools.get_file.cache_clear()

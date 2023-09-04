@@ -1,8 +1,326 @@
 # Changelog
 
 ## Unreleased
+* Added formatting for yml files when period is missing in the end of description field, in the **format** command.
+* Fixed an issue where logging arguments were not in the standard kebab-case. The new arguments are: **console-log-threshold**, **file-log-threshold**, **log-file-path**.
+* Added a validation to ensure there's a '.' in the end of each description field in integration and script yml files.
+* Fixed an issue where the **validate -g** failed reading a `.pack-ignore` file that was previously empty.
+* Fixed an issue where the **update-release-notes** failed when changing the `.pack-ignore` file.
+* Fixed an issue where the **upload** command failed for private repositories while trying to find the landing_page.json file.
+
+## 1.20.0
+* Fixed an issue where **update-release-notes** generated "available from Cortex XSOAR" instead of "from XSIAM" when run on XSIAM event collectors.
+* Added support for controlling the sleep interval and retry count for **modeling-rules test** command.
+* Added support for a new marketplace tag `xsoar_saas`.
+* Fixed an issue where the **validate -g** failed on `BA102` in external repos even when ignored.
+* Fixed an issue where the **validate -g** failed getting the content of `.pack-ignore` files when the external repository is not hosted in Github.
+* Fixed an issue where the **validate -g** failed when updating an empty `.pack-ignore` file.
+* Added support for yml hidden parameters for `xsoar_saas` marketplace, as part of the **prepare_content** command.
+* Added support for custom documentation that will appear only in `xsoar_saas` marketplace, as part of the **prepare_content** command.
+* Fixed an issue where the (`GR108`) validation did not fail in the validate command with the `-a` flag.
+* Modified **prepare_content** command to be platform specific. For xsoar-saas and XSIAM regarding pack readme and integration description images in markdown files.
+* Fixed an issue where the **lint** command was parsing % that may exist in the log data.
+
+## 1.19.2
+* Added a period at the end of lines produced by the **generate-docs** command that state the tested version of the product.
+* Added the '--junit-path' flag to the **modeling-rules test** command, to allow saving the test results in a JUnit XML file.
+* Update `RN112` validation's docs reference link.
+* Added support to control the maximum file size and log rotation files count in the sdk logger.
+* Fixed an issue with where passing the deprecated logging arguments to any command presented an incorrect recommendation for argument substitution.
+* Fixed an issue where the documentation of logging arguments was incorrect.
+* Fixed an issue in calculating content graph hash when creating or updating it.
+* Fixed an issue where the coloring of the logging messages was not working properly when mixing both Console log and Parallel log handlers.
+* Calling **graph create** or **graph update** now run the commands with default arguments, instead of showing the command help.
+* Removed the use of chunks when calculating content relationships.
+* Fixed an issue where the url regex in the **validate** command was wrong.
+* Fixed an issue where **pre-commit** command failed when using global environment.
+* Fixed an issue where **validate** would fail in external repos when trying to ignore `BA102`.
+* Fixed an issue where **error-code** failed on some error codes.
+* Fixes an issue in **format** command where the `-i` option included files in `.venv` directories.
+* Updated the comment added to contribution PRs to old packs so it contains a link to the documentation of the **GitHub Codespaces** in xsoar.pan.dev.
+* Updated GitPython version to 3.1.32.
+
+## 1.19.1
+* Fixed an issue where **unify** failed on integrations using an API a module, when not called from the content root.
+* Improved **update-release-notes** logs when changes in dependent API modules are detected.
+* Reverted changes released in version 1.19.0 in lint, lint will not fail on `demisto.results`, `return_outputs` and `LOG`.
+* Updated the **generate-docs** command to use the content graph instead of the id_set file.
+* **Validate** will now validate items which were edited in .pack-ignore.
+* Added the '--all' input option for the **prepare-content** command, to support running on all content packs.
+* Updated the '-i' input option of the **prepare-content** command to support multiple inputs as a comma-separated list.
+* Enhanced the pack metadata properties when dumping pack zips in **prepare-content** command.
+
+## 1.19.0
+* Added the **graph** command group. The **create-content-graph** and **update-content-graph** commands were migrated to this command group, and named **graph create** and **graph update** respectively.
+* Added the **graph get-relationships** command.
+* The **graph create** command will now use a list of known content items from content-private, to avoid false-positives in validation `GR103`. Additionally, `GR103` was added to the **ALLOWED_IGNORE_ERRORS** list.
+* The **modeling-rules test** command will now validate that the modeling rules schema mappings are aligned with the test-data mappings.
+* Added the *--xsiam* flag to the **init** command in order to create XSIAM content.
+* Fixed an issue where the `update-additional-dependencies` **pre-commit** step failed when not running in a content-like repo.
+* Removed the format execution step from the `contribution_converter` since it can be executed separately during the contribution process.
+* Added a new validation (`GR108`) to **validate**, that assures hidden packs do not have mandatory dependant packs.
+* Added a new validation (`PA137`) to **validate**, ensuring the absence of non-ignorable errors in `.pack-ignore`.
+* Running **validate** in a GitHub Action will now show errors as annotations, visible in the `Files Changed` tab of the pull request.
+* **lint** will now fail on `demisto.results` and `return_outputs` usage, when a pack is `xsoar` or `partner` supported.
+* **lint** will now fail on `LOG` usage in python files.
+* Updated the **format** command to use the content graph instead of the id_set file.
+* Updated **format** command not to fail on unexpected values that returns from the graph, and just add it to the log.
+* Removed a redundant debug log on the `tools.get_file` function.
+
+## 1.18.1
+* Fixed an issue where the coloring directives where showing in log messages.
+* Fixed an issue where **create-content-graph** was not executed upon changes in the parser infra files.
+* Added support for `svg` integration images in content repo in **validate** command.
+* Added a parameter `skip-packs-known-words` to the **doc-review** command, making sure that pack known words will not be added.
+
+## 1.18.0
+* Added the ability to ignore any validation in the **validate** command when running in an external (non-demisto/content) repo, by placing a `.private-repo-settings` file at its root.
+* Calling **format** with the `-d` flag now removes test playbooks testing the deprecated content from conf.json.
+* Improved the content graph performance when calculating content relationships.
+* Improved determinism of SDK unit tests.
+* **validate** will now run on all the pack content items when the pack supported marketplaces are modified.
+* **pre-commit** no longer runs when there are no modified files (unless provided with input files).
+* Added new validation that XSIAM integrations must have `marketplacev2` as the value of the marketplaces field.
+* Added an ability to provide list of marketplace names as a credentials-type (type 9) param attribute.
+* **doc-review** will run with the `--use-packs-known-words` true by default.
+* Added the *deprecated* field to the pack object for the content-graph metadata.
+* Calling **modeling-rules init-test-data** will now return the XDM fields output in alphabetical order.
+* Added a new validation (`BA125`) to **validate**, assuring internal function names aren't used in customer-facing docs.
+* Removed the Pipfile and Pipfile.lock from the templates in the **init** command.
+* Disabled the option to create an integration with `Pipfile` and `Pipfile.lock` files, as they are deprecated.
+* Added the Sourcery hook to **pre-commit**.
+* Added a working directory to the `contribution_converter` in order to support working on a temporary directory.
+* Added a waiting period when checking whether the dataset exists in the **modeling-rule test** command.
+* Fixed an issue where the *DEMISTO_SDK_SKIP_VERSION_CHECK* was ignored when running on non CI environments.
+* Fixed an issue where **validate** falsely detected backwards-compatibility issues, and prevented adding the `marketplaces` key to content items.
+* Fixed an issue where the SDK would fail pulling docker images.
+* Fixed an issue where **prepare-content** command would add the string `candidate` to scripts and integrations for the *nativeimage* key.
+* Fixed an issue where in some cases the **split** command did not remove pack version note from the script.
+* Fixed an issue where **validate** would not properly detect dependencies of core packs.
+* Fixed an issue where **validate** failed on single-select types incident and indicator fields when given empty value as a select value option.
+* Fixed an issue where errors in **validate** were logged as `info`.
+* Fixed an issue where **validate** error messages were not logged when an integration param, or the default argument in reputation commands is not valid.
+* Fixed an issue where the **format** command would change the value of the `unsearchable` key in fields.
+* Fixed an issue where **lint** command failed to pull docker image in Gitlab environment.
+* Fixed an issue in **doc-review** command where escape characters within Markdown files were detected as invalid words.
+* Fixed an issue where **validate** failed on infrastructure test files.
+* Fixed an issue in **update-content-graph** where the neo4j service was unaccessible for non-root users.
+
+## 1.17.2
+* Fixed an issue where **lint** and **validate** commands failed on integrations and scripts that use docker images that are not available in the Docker Hub but exist locally.
+* Added documentation for the flag **override-existing** used in upload.
+* Fixed an issue where **validate** failed on Incident Field items with a `template` value.
+* Improved memory efficiency in **update-content-graph** and **create-content-graph** commands.
+* Removed support for the `cve_id` name for the default-argument for **cve** reputation commands in **validate**. Now, only `cve` may be used for such commands.
+* Fixed an issue where **zip_packs** failed uploading content.
+* Added `tenant_timezone` handling to the **modeling-rules init** command, allowing usage with tenants in various timezones.
+* Shortened the timeout when checking whether the dataset exists in **test-modeling-rule**.
+* Cleaned up project dependencies.
+* Added support for the **List** content item in **Xpanse** marketplace.
+* Fixed an issue in **run-unit-tests** command when running Powershell tests.
+* Fixed an issue where **lint** failed running when a docker container would not init properly.
+* Fixed an issue where the *upload* command would upload a pack metadata with wrong display names.
+* Performance enhancements when reading yaml files.
+* Removed redundant errors and fields from `errors.py`.
+* Updated **update-release-notes** to use graph instead of id_set.
+
+## 1.17.1
+* Added the `aliasTo` key to the Incident Field schema.
+* Modified **validate** to not require fields whose value is always `False`.
+* Modified **validate** to use the graph instead of id_set on changed *APIModules*.
+* Fixed an issue where `register_module_line()` was not removed from python scripts when the script had no trailing newline.
+* Fixed an issue where an integration containing a command without a description would fail to upload while using the **upload** command.
+* Fixed an issue where attempting to individually upload `Preprocess Rule` files raised an unclear error message. Note: preprocess rules can not be individually uploaded, but only as part of a pack.
+* Fixed an issue where the **upload** command would fail on Indicator Types.
+* Fixed an issue where the **upload** command would return the wrong error message when connection credentials are invalid.
+* Fixed an issue where the **upload** command would fail parsing input paths.
+* added support for the `isfetcheventsandassets` flag in content graph.
+* Fixed an issue where the **modeling-rules test** command failed to get the existence of result from dataset in cases where the results take time to load.
+* Added an aliasTo key to the incident field schema.
+
+## 1.17.0
+* **validate** will only fail on docker related errors if the pack is supported by xsoar.
+* Added a validation that assures filename, id, and name have a correct suffix for modeling/parsing rules files.
+* Added new **validate** checks, preventing unwanted changes of the marketplaces (BC108,BC109), toversion (BC107)  and fromversion (BC106) fields.
+* Removed the `timezone_offset` argument in the *modeling-rules test* command.
+* Fixed an issue where **lint** failed when importing functions from CommonServerUserPython.
+* The **format** command now will sync hidden parameters with master branch.
+* Fixed an issue where lock integration failed on FileNotFound.(PANW-internal only).
+* Fixed an issue where **lint** falsely warned of using `demisto.results`.
+* Fixed an issue where **validate** always returned *XSIAM Dashboards* and *Correlation Rules* files as valid.
+* Added `GR107` validation to **validate** using the graph validations to check that no deprecated items are used by non-deprecated content.
+* Fixed an issue where the **modeling-rules test** command failed to get the existence of dataset in cases where the dataset takes more than 1 minute to get indexed.
+* Fixed an issue in **lint** where the container used for linting had dependency conflicts with the image used by content, and caused inconsistent results.
+* Fixed an issue where the **download** command failed when the playbook has different `name` and `id`.
+* Moved the **pre-commmit** command template to the `demisto/content` repository, where it's easier to maintain.
+* Fixed an issue where an internal method caused warning messages when reading md files.
+* Added support for Pre Process Rules in the **upload** command.
+* Fixed an issue where **upload** would not upload items whose `maketplaces` value was an empty list.
+* Added a prettyName key to the incident field schema.
+* Fixed an issue where **upload** command could not parse content items that are not unicode-encoded.
+
+## 1.16.0
+* Added a check to **is_docker_image_latest_tag** to only fail the validation on non-latest image tag when the current tag is older than 3 days.
+* Fixed an issue where **upload** would not properly show the installed version in the UI.
+* Fixed an issue where the `contribution_converter` failed replacing generated release notes with the contribution form release notes.
+* Fixed an issue where an extra levelname was added to a logging message.
+* Modified the `mypy` pre-commit hook to run in a virtual environment, rather than the local mypy version.
+* Added support to run **validate** with `--git` flag on detached HEAD.
+* Added a validation that the **validate** command will fail if the pack name is not prefixed on XSIAM dashboard images.
+* Fixed the **generate-test-playbook** which failed on an unexpected keyword argument - 'console_log_threshold'.
+* Fixed an issue where **prepare-content** would not properly parse the `fromVersion` and `toVersion` attributes of XSIAM-Dashbaord and XSIAM-Report content items.
+* Fixed an issue where **validate** command did not fail on non-existent dependency ids of non-mandatory dependant content.
+* Fixed pytest async io deprecation warning.
+* Added the `--incident-id` argument (optional) to the **run** command.
+* Fixed an issue in **run-unit-tests** and **update-content-graph** where running commands in a docker container was done with insufficient permissions.
+* Added the `_time` field to the output compare table of the **modeling-rules test** command.
+* Changed the endpoint **download** uses to get system content items.
+* Fixed an issue where graph-related tasks failed when files were deleted from the repo.
+* Added a **validate** check, and a **format** auto fix for the `fromversion` field in Correlation Rules and XSIAM Dashboards.
+* Update the format used for dev-dependencies in pyproject.toml to match modern versions of Poetry.
+* Added timestamps to logging messages when running in a CI build.
+
+## 1.15.5
+* **Breaking Change**: The default of the **upload** command `--zip` argument is `true`. To upload packs as custom content items use the `--no-zip` argument.
+* Removed the `no-implicit-optional` hook from **pre-commit**.
+* Removed the `markdownlint` hook from **pre-commit**.
+* Fixed an issue in **run-unit-tests** to pass with warnings when no tests are collected.
+* Fixed an issue in **run-unit-tests** with the coverage calculation.
+* Fixed a notification about log file location appeared more than once.
+* Updated the error message when code coverage is below the threshold in **coverage-analyze** to be printed in a more noticeable red color.
+* Fixed an issue in **upload** that failed when a comma-separated list of paths is passed to the `--input` argument.
+* Running **validate** with the `--graph` flag will now run the graph validations after all other validations.
+* improved the generated release note for newly added XSIAM entities when running *update-release-notes* command.
+* Fixed an issue where in some cases validation failed when mapping null values.
+* Fixed an issue in **upload** command where the `--keep-zip` argument did not clean the working directory.
+* Fixed an issue where an extra levelname was added to a logging message.
+* Fixed an issue in **upload** where uploading packs to XSIAM failed due to version mismatch.
+
+## 1.15.4
+* Fixed an issue where *update-release-notes* and *doc-review* did not handle new content notes as expected.
+* Fixed an issue in PEP484 (no-implicit-optional) hook to **pre-commit**.
+* Fixed an issue in **upload** with `--input-config-file` where the content items weren't uploaded in the correct pack.
+* Added support to disable the default logging colors with the **DEMISTO_SDK_LOG_NO_COLORS** environment variable.
+
+## 1.15.3
+* Added the `--init` flag to **download**.
+* Added the `--keep-empty-folders` flag to **download**.
+* Added `markdown-lint` to **pre-commit**
+* Added the PEP484 (no-implicit-optional) hook to **pre-commit**.
+* Fixed an issue where the content-graph parsing failed on mappers with undefined mapping.
+* Fixed an issue in **validate** where `pack_metadata.json` files were not collected proplely in `--graph` option.
+* Fixed an issue where *validate* reputation commands outputs were not checked for new content.
+* Added *IN107* and *DB100* error codes to *ALLOWED_IGNORE_ERRORS* list.
+* Added a validation that assures feed integrations implement the `integration_reliability` configuration parameter.
+* Fixed an issue where the format command did not work as expected on pre-process rules files.
+* Fixed an issue where **upload** command failed to upload when the XSOAR version is beta.
+* Fixed an issue where **upload** command summary was inaccurate when uploading a `Pack` without the `-z` flag.
+* Added pack name and pack version to **upload** command summary.
+* Added support for modeling rules with multi datasets in ****modeling-rules test**** command.
+* Fixed an issue where **validate** didn't recognize layouts with incident fields missing from `id_set.json` even when `--post-commit` was indicated.
+
+## 1.15.2
+* Fixed an issue where **format** added default arguments to reputation commands which already have one.
+* Fixed an issue where **validate** fails when adding the *advance* field to the integration required fields.
+* Updated the integration Traffic Light Protocol (TLP) color list schema in the **validate** command.
+* Fixed an issue where **upload** would not read a repo configuration file properly.
+* Fixed an issue where **upload** would not handle the `-x`/`--xsiam` flag properly.
+* Fixed an issue where **format** failed to use input from the user, when asking about a `from_version`.
+* Added the `-n`/`--assume_no` flag to **format**.
+
+## 1.15.1
+* Fixed an issue where **generate-docs** generated fields with double html escaping.
+* Fixed an issue where **upload** failed when using the `-z` flag.
+
+## 1.15.0
+* **Breaking Change**: the **upload** command now only supports **XSOAR 6.5** or newer (and all XSIAM versions).
+* **upload** now uses content models, and calls the `prepare` method of each model before uploading (unless uploading a zipped pack).
+* Added a *playbook* modification to **prepare-content**, replacing `getIncident` calls with `getAlerts`, when uploading to XSIAM.
+* Added a *playbook* modification to **prepare-content**, replacing `${incident.fieldname}` context accessors with `${alert.fieldname}` when uploading to XSIAM.
+* Added a *playbook* modification to **prepare-content**, replacing `incident` to `alert` in task display names, when uploading to XSIAM.
+* Added a *layout* modification to **prepare-content**, replacing `Related/Child/Linked Incidents` to `... Alerts` when uploading to XSIAM.
+* Added a *script* modification to **prepare-content**, automatically replacing the word `incident` with `alert` when uploading to XSIAM.
+* Added a validation that the **validate** command will fail if the `dockerimage` field in scripts/integrations uses any py3-native docker image.
+* Updated the `ruff` version used in **pre-commit** to `0.0.269`.
+* Fixed an issue in **create-content-graph** which caused missing detection of duplicated content items.
+* Fixed an issue where **run-unit-tests** failed on python2 content items.
+* Fixed an issue in **validate** where core packs validations were checked against the core packs defined on master branch, rather than on the current branch.
+* Fixed an issue in **pre-commit** where `--input` flag was not filtered by the git files.
+* Skip reset containers for XSOAR NG and XSIAM(PANW-internal only).
+* Fixed an issue where **lint** failed fetching docker image details from a PANW GitLab CI environment. (PANW-internal only).
+
+## 1.14.5
+* Added logging in case the container fails to run in **run-unit-tests**.
+* Disabled **pre-commit** multiprocessing for `validate` and `format`, as they use a service.
+* **pre-commit** now calls `format` with `--assume-yes` and `--no-validate`.
+* Fixed an issue where **pre-commit** ran multiple times when checking out build related files.
+
+## 1.14.4
+* Added integration configuration for *Cortex REST API* integration.
+* Removed `Flake8` from **pre-commit**, as `ruff` covers its basic rules.
+* Improved log readability by silencing non-critical `neo4j` (content graph infrastructure) logs.
+* Fixed an issue where **run-unit-tests** failed on python2 content items.
+* Fixed an issue where **modeling-rules test** did not properly handle query fields that pointed to a string.
+* Fixed an issue when trying to fetch remote files when not under the content repo.
+* Fixed a validation that the **modeling-rules test** command will fail if no test data file exist.
+* Fixed an issue where **format** command failed while updating the `fromversion` entry.
+* Added support for mapping uuid to names for Layout files in the **download** command.
+
+## 1.14.3
+* Fixed an issue where **run-unit-tests** failed running on items with `test_data`.
+* Updated the demisto-py to v3.2.10 which now supports url decoding for the proxy authentication password.
+* Fixed an issue where **generate-outputs** did not generate context paths for empty lists or dictionaries in the response.
+
+## 1.14.2
+* Added the `--staged-only` flag to **pre-commit**.
+* Fixed an issue where **run-unit-tests** failed running on items with `test_data`.
+* Fixed an issue where **pre-commit** ran on unchanged files.
+* Add the ability to run **secrets** in **pre-commit** by passing a `--secrets` flag.
+* Added support to override the log file with the **DEMISTO_SDK_LOG_FILE_PATH** environment variable.
+
+## 1.14.1
+* Fixed an issue where **update-release-notes** command failed when running on a pack that contains deprecated integrations without the `commands` section.
+* Added toVersion and fromVersion to XSIAM content items schema.
+* Fixed an issue where **validate** failed when attempting to map null values in a classifier and layout.
+* Added search marketplace functionality to XSIAM client.
+* Fixed an issue in **pre-commit** command where `MYPYPATH` was not set properly.
+* Updated the integration category list in the **init** command.
+* Fixed an issue where in some environments docker errors were not caught.
+* Added a validation that the **validate** command will fail on README files if an image does not exist in the specified path.
+
+## 1.14.0
+* Added the `DEMISTO_SDK_GRAPH_FORCE_CREATE` environment variable. Use it to force the SDK to recreate the graph, rather than update it.
+* Added support for code importing multi-level ApiModules to **lint**.
+* Added a validation that the **modeling-rules test** command will fail if no test data file exist.
+* Added support for the `<~XPANSE>` marketplace tag in release notes.
+* Added support for marketplace tags in the **doc-review** command.
+* Added **generate-unit-tests** documentation to the repo README.
+* Added the `hiddenpassword` field to the integration schema, allowing **validate** to run on integrations with username-only inputs.
+* Improved logs and error handling in the **modeling-rules test** command.
+* Improved the warning message displayed for Contribution PRs editing outdated code.
+* Improved the clarity of error messages for cases where yml files cannot be parsed as a dictionary.
+* Updated the `XSIAMReport` schema.
+* Standardized repo-wide logging. All logs are now created in one logger instance.
+* **lint** now prevents unit-tests from accessing online resources in runtime.
+* Updated the logs shown during lint when running in docker.
+* Fixed an issue where **validate** showed errors twice.
+* Fixed an issue where **validate** did not fail when xif files had wrong naming.
+* Fixed an issue where **doc-review** required dot suffixes in release notes describing new content.
+* Fixed an issue where **download** command failed when running on a beta integration.
+* Fixed an issue where **update-release-notes** generated release notes for packs in their initial version (1.0.0).
+* Fixed an issue with **update-content-graph** where `--use-git` parameter was ignored when using `--imported-path` parameter.
+* Fixed an issue where **validate** failed on playbooks with valid inputs, since it did not collect the playbook inputs occurrences properly.
+
+## 1.13.0
 * Added the pack version to the code files when calling **unify**. The same value is removed when calling **split**.
+* Added a message showing the output path when **prepare-content** is called.
 * Contribution PRs that update outdated packs now display a warning message.
+* Fixed an issue when kebab-case has a misspelling in one of the sub words, the suggestion might be confusing.
+* Improved caching and stability for **lint**.
+* Added support for *.xif* files in the **secrets** command.
+* Fixed an issue where **validate** would fail when playbook inputs contain Transform Language (DT).
+* Added a new **validate** check, making sure a first level header exist in release notes (RN116)
+* Fixed an issue where **lint** would not properly handle multiple ApiModules imports.
 
 ## 1.12.0
 * Added the **pre-commit** command, to improve code quality of XSOAR content.
@@ -13,6 +331,7 @@
 * Fixed an issue where Demisto-SDK did not detect layout ID when using the **download** command.
 * Fixed an issue where the **lint** command ran on `native:dev` supported content when passing the `--docker-image all` flag, instead it will run on `native:candidate`.
 * Added support for `native:candidate` as a docker image flag for **lint** command.
+* Added a modification for layouts in **prepare-content**, replacing `Related Incidents`, `Linked Incidents` and `Child Incidents` with the suitable `... Alerts` name when uploading to XSIAM.
 * Fixed an issue where logs and messages would not show when using the **download** command.
 * Fixed an issue where the `server_min_version` field in metadata was an empty value when parsing packs without content items.
 * Fixed an issue where running **openapi-codegen** resulted in false-positive error messages.

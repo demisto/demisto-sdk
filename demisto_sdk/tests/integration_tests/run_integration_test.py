@@ -141,3 +141,38 @@ def test_json_to_outputs_flag_fail_no_prefix(
         logger_info.call_args_list,
         "A prefix for the outputs is needed for this command. Please provide one",
     )
+
+
+def test_incident_id_passed_to_run(mocker, monkeypatch, set_environment_variables):
+    """
+    Given
+    - kl-get-components command and --incident-id argument.
+
+    When
+    - Running `run` command on it.
+
+    Then
+    - Ensure the investigation-id is set from the incident-id.
+    """
+    logger_debug = mocker.patch.object(logging.getLogger("demisto-sdk"), "debug")
+    logger_warning = mocker.patch.object(logging.getLogger("demisto-sdk"), "warning")
+    logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
+    monkeypatch.setenv("COLUMNS", "1000")
+
+    # mocks to allow the command to run locally
+    mocker.patch.object(Runner, "_run_query", return_value=["123"])
+    # mock to get test log file
+    mocker.patch.object(DefaultApi, "download_file", return_value=DEBUG_FILE_PATH)
+    # mock to set prefix instead of getting it from input
+
+    command = "!kl-get-records"
+    run_result = CliRunner(
+        mix_stderr=False,
+    ).invoke(main, ["run", "-q", command, "--incident-id", "pg_id"])
+
+    assert run_result.exit_code == 0
+    assert str_in_call_args_list(
+        logger_debug.call_args_list, "running command in investigation_id='pg_id'"
+    )
+    assert logger_warning.call_count == 0
+    assert logger_error.call_count == 0

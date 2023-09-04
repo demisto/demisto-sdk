@@ -1,6 +1,7 @@
 import logging
 import os
 from copy import deepcopy
+from pathlib import Path
 from typing import Any, Dict, List, Optional
 from unittest.mock import mock_open, patch
 
@@ -27,14 +28,26 @@ from TestSuite.test_tools import ChangeCWD, str_in_call_args_list
 
 default_additional_info = load_default_additional_info_dict()
 
-FEED_REQUIRED_PARAMS_STRUCTURE = [
-    dict(
-        required_param.get("must_equal"),
-        **required_param.get("must_contain"),
-        name=required_param.get("name"),
-    )
-    for required_param in FEED_REQUIRED_PARAMS
-]
+
+def build_feed_required_params():
+    params = []
+    for required_param in FEED_REQUIRED_PARAMS:
+        must_be_one_of = {
+            key: val[-1] if isinstance(val, list) else val
+            for key, val in required_param.get("must_be_one_of").items()
+        }
+        params.append(
+            dict(
+                required_param.get("must_equal"),
+                **required_param.get("must_contain"),
+                name=required_param.get("name"),
+                **must_be_one_of,
+            )
+        )
+    return params
+
+
+FEED_REQUIRED_PARAMS_STRUCTURE = build_feed_required_params()
 
 
 def mock_structure(
@@ -306,7 +319,7 @@ class TestIntegrationValidator:
     def test_no_change_to_context_path(
         self, current, old, answer, changed_command_names, mocker
     ):
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+        logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
         current = {"script": {"commands": current}}
         old = {"script": {"commands": old}}
         structure = mock_structure("", current, old)
@@ -314,7 +327,7 @@ class TestIntegrationValidator:
         assert validator.no_change_to_context_path() is answer
         for changed_command_name in changed_command_names:
             assert str_in_call_args_list(
-                logger_info.call_args_list, changed_command_name
+                logger_error.call_args_list, changed_command_name
             )
         structure.quiet_bc = True
         assert (
@@ -381,7 +394,7 @@ class TestIntegrationValidator:
                     "arguments": [{"name": "argument_test_name_2", "required": True}],
                 },
             ],
-            "[ERROR]: : [BC104] - Possible backwards compatibility break, Your updates to this file contains changes"
+            "[BC104] - Possible backwards compatibility break, Your updates to this file contains changes"
             " to a name or an argument of an existing command(s).\nPlease undo you changes to the following command(s):\ntest1\ntest2",
         )
     ]
@@ -408,13 +421,13 @@ class TestIntegrationValidator:
         Ensure that the error massage was created correctly.
         - Case 1: Should include both command_test_name_1 and command_test_name_2 in the commands list in the error as they both have BC break changes.
         """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+        logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
         current = {"script": {"commands": current}}
         old = {"script": {"commands": old}}
         structure = mock_structure("", current, old)
         validator = IntegrationValidator(structure)
         validator.no_changed_command_name_or_arg()
-        assert str_in_call_args_list(logger_info.call_args_list, expected_error_msg)
+        assert str_in_call_args_list(logger_error.call_args_list, expected_error_msg)
 
     WITHOUT_DUP = [{"name": "test"}, {"name": "test1"}]
     DUPLICATE_PARAMS_INPUTS = [(WITHOUT_DUP, True)]
@@ -503,9 +516,9 @@ class TestIntegrationValidator:
             warning_message, warning_code = Errors.non_default_additional_info(
                 ["API key"]
             )
-            expected_warning = f"[WARNING]: : [{warning_code}] - {warning_message}"
+            expected_message = f"[{warning_code}] - {warning_message}"
             assert str_in_call_args_list(
-                logger_warning.call_args_list, expected_warning
+                logger_warning.call_args_list, expected_message
             )
 
     NO_INCIDENT_INPUT = [
@@ -597,6 +610,14 @@ class TestIntegrationValidator:
             ],
         }
     ]
+    DEFAULT_ARGS_SAME_ARG_NAME = [
+        {
+            "name": "cve",
+            "arguments": [
+                {"name": "cve", "required": False, "default": True, "isArray": True}
+            ],
+        }
+    ]
     DEFAULT_ARGS_MISSING_UNREQUIRED_DEFAULT_FIELD = [
         {
             "name": "email",
@@ -652,7 +673,7 @@ class TestIntegrationValidator:
         }
     ]
     DEFAULT_ARGS_INPUTS = [
-        (DEFAULT_ARGS_DIFFERENT_ARG_NAME, True),
+        (DEFAULT_ARGS_DIFFERENT_ARG_NAME, False),
         (DEFAULT_ARGS_MISSING_UNREQUIRED_DEFAULT_FIELD, True),
         (DEFAULT_ARGS_MISSING_DEFAULT_PARAM_WHEN_ALLOWED, True),
         (DEFAULT_ARGS_INVALID_PARMA_MISSING_DEFAULT, False),
@@ -660,6 +681,7 @@ class TestIntegrationValidator:
         (DEFAULT_ARGS_INVALID_COMMAND, False),
         (DEFAULT_ARGS_MISSING_DEFAULT_PARAM_WHEN_NOT_ALLOWED, False),
         (DEFAULT_ARGS_NOT_ARRAY, False),
+        (DEFAULT_ARGS_SAME_ARG_NAME, True),
     ]
 
     @pytest.mark.parametrize("current, answer", DEFAULT_ARGS_INPUTS)
@@ -1276,6 +1298,48 @@ class TestIntegrationValidator:
 
         assert validator.is_valid_display_name_for_siem() is answer
 
+    V2_VALID_SIEM_1 = {
+        "display": "Test Event Collector",
+        "script": {"isfetchevents": True},
+        "marketplaces": ["marketplacev2"],
+    }
+    V2_INVALID_SIEM = {
+        "display": "Test Event Collector",
+        "script": {"isfetchevents": True},
+        "marketplaces": ["marketplacev2", "xsoar"],
+    }
+    V2_INVALID_SIEM_2 = {
+        "display": "Test Event Collector",
+        "script": {"isfetchevents": True},
+        "marketplaces": ["xsoar"],
+    }
+
+    V2_SIEM_MARKETPLACE_INPUTS = [
+        (V2_VALID_SIEM_1, True),
+        (V2_INVALID_SIEM, False),
+        (V2_INVALID_SIEM_2, False),
+    ]
+
+    @pytest.mark.parametrize("current, answer", V2_SIEM_MARKETPLACE_INPUTS)
+    def test_is_valid_xsiam_marketplace(self, current, answer):
+        """
+        Given
+            - Valid marketplaces field (only with marketplacev2)
+            - Invalid marketplaces field (with 2 entries - suppose to be only 1)
+            - Invalid marketplaces field (with xsaor value instead of marketplacev2)
+
+        When
+            - running is_valid_xsiam_marketplace.
+
+        Then
+            - Check that the function returns True if valid, else False.
+        """
+        structure = mock_structure("", current)
+        validator = IntegrationValidator(structure)
+        validator.current_file = current
+
+        assert validator.is_valid_xsiam_marketplace() is answer
+
     VALID_DEFAULTVALUE_CHECKBOX_1 = {
         "configuration": [{"defaultvalue": "true", "type": 8}]
     }
@@ -1782,17 +1846,21 @@ class TestIntegrationValidator:
         assert validator.is_unskipped_integration(conf_dict) is answer
 
     VERIFY_REPUTATION_COMMANDS = [
-        (["test1", "test2"], False, True),
-        (["test1", "url"], False, False),
-        (["test1", "url"], True, True),
-        (["domain", "url"], True, True),
+        # Test feed integration validation
+        (["test1", "test2"], True, False, False),
+        (["test3", "test4"], True, True, True),
+        # Test reputation commands validation
+        (["test5", "test6"], False, False, True),
+        (["test7", "url"], False, False, False),
+        (["test8", "url"], False, True, True),
+        (["domain", "url"], False, True, True),
     ]
 
     @pytest.mark.parametrize(
-        "commands, has_reliability, result", VERIFY_REPUTATION_COMMANDS
+        "commands, is_feed, has_reliability, result", VERIFY_REPUTATION_COMMANDS
     )
     def test_verify_reputation_commands_has_reliability(
-        self, commands, has_reliability, result
+        self, commands, is_feed, has_reliability, result
     ):
         """
         Given
@@ -1802,22 +1870,18 @@ class TestIntegrationValidator:
         Then
             - Ensure the command fails when there is a reputation command without reliability parameter.
         """
+        current = {"script": {"commands": [{"name": command} for command in commands]}}
 
-        current = (
-            {
-                "script": {"commands": [{"name": command} for command in commands]},
-                "configuration": [{"name": "integrationReliability"}],
-            }
-            if has_reliability
-            else {"script": {"commands": [{"name": command} for command in commands]}}
-        )
+        if is_feed:
+            current["script"]["feed"] = True
+
+        if has_reliability:
+            current["configuration"] = [{"name": "integrationReliability"}]
+
         structure = mock_structure("", current)
         validator = IntegrationValidator(structure)
         validator.current_file = current
-        assert (
-            validator.verify_reputation_commands_has_reliability(is_modified=True)
-            is result
-        )
+        assert validator.verify_reputation_commands_has_reliability() is result
 
     @pytest.mark.parametrize(
         "hidden_value,is_valid",
@@ -1850,12 +1914,13 @@ class TestIntegrationValidator:
                     MarketplaceVersions.XSOAR,
                     MarketplaceVersions.MarketplaceV2,
                     MarketplaceVersions.XPANSE,
+                    MarketplaceVersions.XSOAR_SAAS,
+                    MarketplaceVersions.XSOAR_ON_PREM,
                 ],
                 False,
             ),
             ("🥲", False),
             ("Trüe", False),
-            ("TRUE", False),
             ([MarketplaceVersions.XSOAR, None], False),
             ([MarketplaceVersions.MarketplaceV2, None], False),
             ([MarketplaceVersions.XSOAR, True], False),
@@ -1885,7 +1950,7 @@ class TestIntegrationValidator:
 
 
 class TestIsFetchParamsExist:
-    def setup(self):
+    def setup_method(self):
         config = {
             "configuration": deepcopy(INCIDENT_FETCH_REQUIRED_PARAMS),
             "script": {"isfetch": True},
@@ -1910,6 +1975,7 @@ class TestIsFetchParamsExist:
 
     def test_missing_max_fetch_text(self, mocker, caplog, capsys):
         logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+        logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
         # missing param in configuration
         self.validator.current_file["configuration"] = [
             t
@@ -1921,7 +1987,7 @@ class TestIsFetchParamsExist:
             logger_info.call_args_list, "display: Incident type"
         )
         assert str_in_call_args_list(
-            logger_info.call_args_list,
+            logger_error.call_args_list,
             """A required parameter "incidentType" is missing from the YAML file.""",
         )
 
@@ -1930,14 +1996,14 @@ class TestIsFetchParamsExist:
         for i, t in enumerate(self.validator.current_file["configuration"]):
             if t["name"] == "incidentType":
                 del self.validator.current_file["configuration"][i]["name"]
-        print(self.validator.current_file["configuration"])
+        print(self.validator.current_file["configuration"])  # noqa: T201
         assert (
             self.validator.is_valid_fetch() is False
         ), "is_valid_fetch() returns True instead False"
 
     def test_malformed_field(self, mocker):
         # incorrect param
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+        logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
         config = self.validator.current_file["configuration"]
         self.validator.current_file["configuration"] = []
         for t in config:
@@ -1951,11 +2017,11 @@ class TestIsFetchParamsExist:
         assert all(
             [
                 str_in_call_args_list(
-                    logger_info.call_args_list, "display: Incident type"
+                    logger_error.call_args_list, "display: Incident type"
                 ),
-                str_in_call_args_list(logger_info.call_args_list, "name: incidentType"),
-                str_in_call_args_list(logger_info.call_args_list, "required: false"),
-                str_in_call_args_list(logger_info.call_args_list, "required: false"),
+                str_in_call_args_list(
+                    logger_error.call_args_list, "name: incidentType"
+                ),
             ]
         )
 
@@ -2022,7 +2088,7 @@ class TestIsValidMaxFetchAndFirstFetch:
     - make sure max_fetch param has a default value
     """
 
-    def setup(self):
+    def setup_method(self):
         config = {
             "configuration": deepcopy([FIRST_FETCH_PARAM, MAX_FETCH_PARAM]),
             "script": {"isfetch": True},
@@ -2074,7 +2140,7 @@ class TestIsValidMaxFetchAndFirstFetch:
 
 
 class TestIsFeedParamsExist:
-    def setup(self):
+    def setup_method(self):
         config = {
             "configuration": deepcopy(FEED_REQUIRED_PARAMS_STRUCTURE),
             "script": {"feed": True},
@@ -2527,9 +2593,9 @@ class TestisContextChanged:
         When: running validate on integration with at least one command
         Then: Validate it's synced with the README.
         """
-        patcher = patch("os.path.exists")
+        patcher = patch("pathlib.Path.exists")
         mock_thing = patcher.start()
-        mock_thing.side_effect = lambda x: True
+        mock_thing.side_effect = lambda: True
         with patch("builtins.open", mock_open(read_data=readme)) as _:
             current = {"script": {}}
             structure = mock_structure("Pack/Test", current)
@@ -2579,7 +2645,7 @@ class TestisContextChanged:
             structure_validator, validate_all=validate_all
         )
         if remove_readme:
-            os.remove(integration.readme.path)
+            Path(integration.readme.path).unlink()
         assert (
             integration_validator.validate_readme_exists(
                 integration_validator.validate_all
@@ -2619,3 +2685,144 @@ class TestisContextChanged:
             integration_validator.is_native_image_does_not_exist_in_yml()
             == is_validation_ok
         )
+
+    @pytest.mark.parametrize(
+        "yml_content, use_git, expected_results",
+        [
+            ({"description": "description without dot"}, False, True),
+            (
+                {
+                    "description": "a yml description with a dot at the end.",
+                    "script": {
+                        "commands": [
+                            {
+                                "arguments": [
+                                    {
+                                        "name": "test_arg",
+                                        "description": "description without dot",
+                                    }
+                                ]
+                            }
+                        ],
+                        "name": "test_command",
+                    },
+                },
+                True,
+                False,
+            ),
+            (
+                {
+                    "description": "a yml description with a dot at the end.",
+                    "script": {
+                        "commands": [
+                            {
+                                "outputs": [
+                                    {
+                                        "contextPath": "test.path",
+                                        "description": "description without dot",
+                                    }
+                                ]
+                            }
+                        ],
+                        "name": "test_command",
+                    },
+                },
+                True,
+                False,
+            ),
+            (
+                {
+                    "description": "a yml description with a dot at the end.",
+                    "script": {
+                        "commands": [
+                            {
+                                "arguments": [
+                                    {
+                                        "name": "test_arg",
+                                        "description": "description with dot.",
+                                    }
+                                ]
+                            }
+                        ],
+                        "name": "test_command",
+                    },
+                },
+                True,
+                True,
+            ),
+            (
+                {
+                    "description": "a yml description with a dot at the end.",
+                    "script": {
+                        "commands": [
+                            {
+                                "outputs": [
+                                    {
+                                        "contextPath": "test.path",
+                                        "description": "description with dot.",
+                                    }
+                                ]
+                            }
+                        ],
+                        "name": "test_command",
+                    },
+                },
+                True,
+                True,
+            ),
+            (
+                {
+                    "description": "a yml description that ends with a url www.test.com",
+                },
+                True,
+                True,
+            ),
+            (
+                {
+                    "description": "a yml with a description that has www.test.com in the middle of the sentence",
+                },
+                True,
+                False,
+            ),
+            (
+                {
+                    "description": "a yml with a description that has an 'example without dot at the end of the string.'",
+                },
+                True,
+                False,
+            ),
+        ],
+    )
+    def test_is_line_ends_with_dot(
+        self, repo, yml_content: dict, use_git: bool, expected_results: bool
+    ):
+        """
+        Given:
+            A yml content, use_git flag, and expected_results.
+            - Case 1: A yml content with a description without a dot at the end of the sentence, and use_git flag set to False.
+            - Case 2: A yml content with a command that an argument with a description without a dot at the end of the sentence, and use_git flag set to True.
+            - Case 3: A yml content with a command that a context path with a description without a dot at the end of the sentence, and use_git flag set to True.
+            - Case 4: A yml content with a command that an argument with a description with a dot at the end of the sentence, and use_git flag set to True.
+            - Case 5: A yml content with a command that a context path with a description with a dot at the end of the sentence, and use_git flag set to True.
+            - Case 6: A yml content with a description that ends with a url address and not dot, and use_git flag set to True.
+            - Case 7: A yml content with a description that has a url in the middle of the sentence and no comment in the end, and use_git flag set to True.
+            - Case 8: A yml content with a description that ends with example quotes with a dot only inside the example quotes, and use_git flag set to True.
+        When:
+            - when executing the is_line_ends_with_dot method
+        Then:
+            - Case 1: make sure the validation pass.
+            - Case 2: make sure the validation fails.
+            - Case 3: make sure the validation fails.
+            - Case 4: make sure the validation pass.
+            - Case 5: make sure the validation pass.
+            - Case 6: make sure the validation pass.
+            - Case 7: make sure the validation fails.
+            - Case 8: make sure the validation fails.
+        """
+        pack = repo.create_pack("test")
+        integration = pack.create_integration(yml=yml_content)
+        structure_validator = StructureValidator(integration.yml.path)
+        integration_validator = IntegrationValidator(
+            structure_validator, json_file_path=integration.yml.path, using_git=use_git
+        )
+        assert integration_validator.is_line_ends_with_dot() is expected_results

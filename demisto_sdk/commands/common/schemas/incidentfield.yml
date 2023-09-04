@@ -16,6 +16,9 @@ mapping:
     required: True
   name_x2:
     type: str
+  prettyName:
+    type: str
+    required: False
   ownerOnly:
     type: bool
   placeholder:
@@ -96,16 +99,20 @@ mapping:
     type: str
   openEnded:
     type: bool
+  template:
+    type: str
   marketplaces:
     type: seq
     sequence:
       - type: str
-        enum: [ 'xsoar', 'marketplacev2', 'xpanse'  ]
+        enum: [ 'xsoar', 'marketplacev2', 'xpanse', 'xsoar_saas', 'xsoar_on_prem'  ]
   Aliases:
     type: seq
     sequence:
       - include: aliases_schema
   x2_fields:
+    type: str
+  aliasTo:
     type: str
 
 schema;aliases_schema:

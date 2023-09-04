@@ -84,7 +84,7 @@ class Repo:
         shutil.rmtree(self.path, ignore_errors=True)
 
     def setup_one_pack(
-        self, name, marketplaces: List[str] = DEFAULT_MARKETPLACES
+        self, name: Optional[str] = None, marketplaces: List[str] = DEFAULT_MARKETPLACES
     ) -> Pack:
         """Sets up a new pack in the repo, and includes one per each content entity.
 
@@ -278,7 +278,7 @@ class Repo:
                 f"{name}_trigger",
                 {"trigger_id": "trigger_id", "trigger_name": "trigger_name"},
             )
-            print("parsing done")
+            print("parsing done")  # noqa: T201
         return pack
 
     def setup_content_repo(

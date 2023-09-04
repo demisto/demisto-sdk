@@ -1,18 +1,15 @@
 import ast as ast_mod
-import logging
 from pathlib import Path
 from typing import Dict, List, Union
 
 from ordered_set import OrderedSet
 
-from demisto_sdk.commands.common.handlers import JSON_Handler
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.generate_unit_tests.common import (
     ast_name,
     extract_outputs_from_command_run,
 )
-
-logger = logging.getLogger("demisto-sdk")
-json = JSON_Handler()
 
 
 class ArgsBuilder:
@@ -42,7 +39,6 @@ class ArgsBuilder:
               input: dictionary of mocked inputs from the user
         Returns: ast node of type assign 'args = {test:'mock'}'
         """
-        global logger
         if self.input_args:
             is_parametrize = (
                 True
@@ -228,7 +224,6 @@ class TestCase:
         """
         Creates an output file with command line example.
         """
-        global logger
         prefix = self.get_context_prefix()
 
         if prefix is not None:
@@ -289,7 +284,6 @@ class TestCase:
         Args: keywords: all the params passed to CommandResults object when created.
         Return: assertion for each of the CommandResults arg.
         """
-        global logger
         returned_value = self.get_return_values()
         if returned_value:
             keywords = returned_value.keywords
@@ -384,7 +378,6 @@ class TestCase:
                client_class_name: name of the client class.
         Return: the name of the local client instance.
         """
-        global logger
         if hasattr(self.func.args, "args"):
             for arg in self.func.args.args:
                 if (

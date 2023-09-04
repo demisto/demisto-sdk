@@ -37,6 +37,41 @@ alter
     xdm.observer.vendor = _vendor,
     xdm.target.process.executable.file_type = fileType;
 """
+MULTI_DATASETS_MODEL_RULE_TEXT = """
+[MODEL: dataset=fake_fakerson_raw]
+alter
+    xdm.session_context_id = externalId,
+    xdm.observer.action = act,
+    xdm.event.outcome = outcome,
+    xdm.event.outcome_reason = reason,
+    xdm.network.http.method = requestMethod,
+    xdm.network.http.url = request,
+    xdm.source.host.hostname = devicehostname,
+    xdm.source.host.ipv4_addresses = arraycreate(coalesce(src, "")),
+    xdm.target.host.ipv4_addresses = arraycreate(coalesce(dst, "")),
+    xdm.network.application_protocol_category = cat,
+    xdm.network.protocol_layers = arraycreate(coalesce(app, "")),
+    xdm.source.user.username = suser,
+    xdm.source.zone = spriv;
+[MODEL: dataset=fake_fakseset2_raw]
+alter
+    xdm.network.http.domain = dhost,
+    xdm.network.http.response_code = outcome,
+    xdm.target.sent_bytes = to_integer(out),
+    xdm.network.http.url_category = cs2,
+    xdm.network.http.content_type = contenttype,
+    xdm.alert.category = cs4,
+    xdm.alert.name = cs5,
+    xdm.alert.severity = to_string(cn1),
+    xdm.observer.name = _reporting_device_name,
+    xdm.source.user_agent = requestClientApplication,
+    xdm.target.interface = destinationServiceName,
+    xdm.source.ipv4 = sourceTranslatedAddress,
+    xdm.event.type = FakeFakersonURLClass,
+    xdm.observer.product = _product,
+    xdm.observer.vendor = _vendor,
+    xdm.target.process.executable.file_type = fileType;
+"""
 DEFAULT_MODELING_RULE_NAME = "TestModelingRule"
 DEFAULT_MODELING_RULE_NAME_2 = "TestModelingRule2"
 
@@ -51,6 +86,7 @@ def test_init_test_data_create(pack):
     Then:
         - Ensure the test data file is created.
         - Ensure the test data file contains the correct number of events.
+        - Ensure the event fields are sorted.
     """
     from demisto_sdk.commands.test_content.test_modeling_rule.init_test_data import (
         app as init_test_data_app,
@@ -71,7 +107,9 @@ def test_init_test_data_create(pack):
     assert result.exit_code == 0
     assert test_data_file.exists() is True
     test_data = TestData.parse_file(test_data_file.as_posix())
+    event_fields: dict = test_data.data[0].expected_values or {}
     assert len(test_data.data) == count
+    assert dict(sorted(event_fields.items())) == test_data.data[0].expected_values
 
 
 def test_init_test_data_update_with_unchanged_modeling_rule(pack):
@@ -84,6 +122,7 @@ def test_init_test_data_update_with_unchanged_modeling_rule(pack):
         - The test data file exists.
     Then:
         - Ensure the test data file contains the correct number of events.
+        - Ensure the event fields are sorted.
     """
     from demisto_sdk.commands.test_content.test_modeling_rule.init_test_data import (
         app as init_test_data_app,
@@ -108,7 +147,9 @@ def test_init_test_data_update_with_unchanged_modeling_rule(pack):
     assert result.exit_code == 0
     assert test_data_file.exists() is True
     test_data = TestData.parse_file(test_data_file.as_posix())
+    first_event_fields: dict = test_data.data[0].expected_values or {}
     assert len(test_data.data) == count
+    assert dict(sorted(first_event_fields.items())) == test_data.data[0].expected_values
 
 
 def test_init_test_data_update_with_reduced_modeling_rule(pack):
@@ -320,3 +361,33 @@ class TestInitTestDataMultiInput:
         assert test_data_file_2.exists() is False
         test_data = TestData.parse_file(test_data_file.as_posix())
         assert len(test_data.data) == count
+
+    def test_init_test_data_multi_datasets(self, pack):
+        """
+        Given:
+            - Paths to directories of modeling rule with two datasets.
+        When:
+            - The test data files do not exist.
+        Then:
+            - Ensure the test data file contained separated data for each dataset.
+        """
+        from demisto_sdk.commands.test_content.test_modeling_rule.init_test_data import (
+            app as init_test_data_app,
+        )
+
+        runner = CliRunner()
+        mr = pack.create_modeling_rule(
+            DEFAULT_MODELING_RULE_NAME, rules=MULTI_DATASETS_MODEL_RULE_TEXT
+        )
+        count_of_dataset = MULTI_DATASETS_MODEL_RULE_TEXT.count("dataset=")
+        mr.testdata._file_path.unlink()
+        mrule_dir = Path(pack._modeling_rules_path / DEFAULT_MODELING_RULE_NAME)
+        test_data_file = mrule_dir / f"{DEFAULT_MODELING_RULE_NAME}_testdata.json"
+        count = 1
+        result = runner.invoke(
+            init_test_data_app, [pack.path, mrule_dir.as_posix(), f"--count={count}"]
+        )
+        assert result.exit_code != 0
+        assert test_data_file.exists() is True
+        test_data = TestData.parse_file(test_data_file.as_posix())
+        assert len(test_data.data) == count * count_of_dataset

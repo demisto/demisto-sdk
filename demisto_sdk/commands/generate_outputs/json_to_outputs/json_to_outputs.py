@@ -71,19 +71,15 @@ outputs:
   description: ''
   type: String
 """
-import logging
-import os
 import sys
+from pathlib import Path
 from typing import Dict, Optional
 
 import dateparser
 
-from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
-
-logger = logging.getLogger("demisto-sdk")
-
-json = JSON_Handler()
-yaml = YAML_Handler()
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
+from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
+from demisto_sdk.commands.common.logger import logger
 
 
 def input_multiline():
@@ -101,10 +97,10 @@ def flatten_json(nested_json, camelize=False):
         except IndexError:
             name = name.title() if camelize else name
 
-        if isinstance(x, dict):
+        if isinstance(x, dict) and x:
             for a in x:
                 flatten(x[a], name + a + ".")
-        elif isinstance(x, list):
+        elif isinstance(x, list) and x:
             for a in x:
                 flatten(a, name[:-1] + ".")
         else:
@@ -169,7 +165,6 @@ def parse_json(
     data,
     command_name,
     prefix,
-    verbose=False,
     interactive=False,
     descriptions: Optional[Dict] = None,
     return_object=False,
@@ -180,10 +175,7 @@ def parse_json(
     try:
         data = json.loads(data)
     except ValueError as ex:
-        if verbose:
-            # TODO Handle this verbose
-            logger.info(f"[red]{ex}[/red]")
-
+        logger.exception(f"[red]{ex}[/red]")
         raise ValueError("Invalid input JSON")
 
     # If data is a list of dictionaries [{'a': 'b', 'c': 'd'}, {'e': 'f'}] -> {'a': 'b', 'c': 'd', 'e': 'f'}.
@@ -208,7 +200,7 @@ def parse_json(
         if descriptions and key in descriptions:
             description = descriptions[key]
         elif interactive:
-            print(f"Enter description for: [{key}]")
+            logger.info(f"Enter description for: [{key}]")
             description = input_multiline()
 
         arg_json.append(jsonise(key, value, description))
@@ -229,7 +221,6 @@ def json_to_outputs(
     json,
     prefix,
     output=None,
-    verbose=False,
     interactive=False,
     descriptions=None,
 ):
@@ -242,7 +233,6 @@ def json_to_outputs(
         prefix: The prefix of the context, this prefix will appear for each output field - VirusTotal.IP,
             CortexXDR.Incident
         output: Full path to output file where to save the YAML
-        verbose: This used for debugging purposes - more logs
         interactive: by default all the output descriptions are empty, but if user sets this to True then the script
             will ask user input for each description
         descriptions: JSON or path to JSON file mapping field names to their context descriptions. (Optional)
@@ -253,16 +243,14 @@ def json_to_outputs(
             with open(json) as json_file:
                 input_json = json_file.read()
         else:
-            print(
+            logger.info(
                 "Enter the command's output in JSON format.\n "
                 'As an example, If one of the command\'s output is `item_id`,\n enter {"item_id": 1234}'
             )
             input_json = input_multiline()
 
         descriptions = _parse_description_argument(descriptions)
-        yaml_output = parse_json(
-            input_json, command, prefix, verbose, interactive, descriptions
-        )
+        yaml_output = parse_json(input_json, command, prefix, interactive, descriptions)
 
         if output:
             with open(output, "w") as yf:
@@ -274,11 +262,8 @@ def json_to_outputs(
             logger.info(yaml_output)
 
     except Exception as ex:
-        if verbose:
-            raise
-        else:
-            logger.info(f"[red]Error: {str(ex)}[/red]")
-            sys.exit(1)
+        logger.info(f"[red]Error: {str(ex)}[/red]")
+        sys.exit(1)
 
 
 def _parse_description_argument(descriptions: Optional[str]) -> Optional[dict]:  # type: ignore
@@ -288,7 +273,7 @@ def _parse_description_argument(descriptions: Optional[str]) -> Optional[dict]: 
         return None
 
     try:
-        if os.path.exists(descriptions):  # file input
+        if Path(descriptions).exists():  # file input
             with open(descriptions, encoding="utf8") as f:
                 return json.load(f)
 

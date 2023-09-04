@@ -3,6 +3,7 @@ import os
 import pytest
 
 from demisto_sdk.commands.common.constants import FileType
+from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.hook_validations.release_notes import (
     ReleaseNotesValidator,
 )
@@ -11,6 +12,8 @@ from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.tools import get_dict_from_file
 from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
 from TestSuite.pack import Pack
+
+json = JSON_Handler()
 
 
 def get_validator(
@@ -55,7 +58,7 @@ rn_filled_out = "This are sample release notes"
 diff_package = [
     (nothing_in_rn, False),
     (rn_not_filled_out, False),
-    (rn_filled_out, True),
+    (rn_filled_out, False),
 ]
 
 
@@ -630,8 +633,6 @@ def test_get_categories_from_rn(
 
 
 def update_json(path, key, value):
-    import json
-
     js = get_dict_from_file(path=path)[0]
     js[key] = value
     with open(path, "w") as f:
@@ -834,3 +835,35 @@ def test_invalid_headers(mocker, repo, content, content_type, expected_result):
         ] == validator.validate_content_item_header(
             content_type=content_type, content_items=content_items
         )
+
+
+@pytest.mark.parametrize(
+    "rn_content, expected_result",
+    [
+        ("#### Scripts\n##### script_name\n- Some description.", True),
+        ("#### Scripts\n- Some description.", True),
+        ("##### script_name\n- Some description.", False),
+        ("- Some description.", False),
+    ],
+)
+def test_validate_first_level_header_exists(mocker, rn_content, expected_result):
+    """
+    Given
+    - A release notes content.
+    - Case 1: Release notes with both first level header and second level header and description.
+    - Case 2: Release notes with only first level header and description.
+    - Case 3: Release notes with only second level header and description.
+    - Case 4: Release notes only with description.
+    When
+    - Calling validate_first_level_header_exists.
+    Then
+    - Ensure that the validations return the expected result according to the test case.
+    - Case 1: Should return True.
+    - Case 2: Should return True.
+    - Case 3: Should return False.
+    - Case 4: Should return False.
+    """
+    mocker.patch.object(ReleaseNotesValidator, "__init__", lambda a, b: None)
+    validator = get_validator(rn_content)
+    results = validator.validate_first_level_header_exists()
+    expected_result == results

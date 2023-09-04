@@ -40,8 +40,6 @@ Whether the validation should run only on the current branch's committed changed
 Whether the validation should run only on the current branch's staged files. This applies only when the **-g** flag is supplied.
 * **-iu, --include-untracked**
 Whether to include untracked files in the validation. This applies only when the **-g** flag is supplied.
-* **-i, --input**
-Path of file to validate specifically.
 * **-a, --validate-all**
 Whether to run all validation on all files or not.
 * **-i, --input**
@@ -83,10 +81,6 @@ This will validate only changed files from content origin/master branch and will
 compatibility checks.
 <br><br>
 
-`demisto-sdk validate -j`
-This will validate all content repo files and including conf.json file.
-<br><br>
-
 `demisto-sdk validate --prev-ver SHA1-HASH`
 This will validate only changed files from the branch given (SHA1).
 <br><br>
@@ -114,6 +108,10 @@ This will validate all files under the content pack `HelloWorld` using only the 
 `demisto-sdk validate -i Packs/HelloWorld --run-specific-validations BA`
 This will validate all files under the content pack `HelloWorld` using only the validations from error type of BA.
 <br><br>
+
+### Notes
+* In external repositories (repos which contain the `.private-repo-settings` file in its root) **all** the validations are ignorable.
+
 
 ### Error Codes and Ignoring Them
 Starting in version 1.0.9 of Demisto-SDK, each error found by validate (excluding `pykwalify` errors) has an error
@@ -152,5 +150,3 @@ If you wish to ignore errors for a specific file in the pack insert the followin
 [file:FILE_NAME]
 ignore=BA101
 ```
-
-*Note*: Currently only `BA101` is ignorable.

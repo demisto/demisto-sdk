@@ -1,8 +1,29 @@
+from dataclasses import dataclass
+
 import pytest
 
 from demisto_sdk.commands.common.constants import TYPE_PWSH, TYPE_PYTHON
+from demisto_sdk.commands.common.docker_helper import DockerBase
 from demisto_sdk.commands.lint import linter
 from demisto_sdk.commands.lint.linter import Linter
+
+
+@dataclass
+class Container:
+    _wait: dict
+    _logs: bytes = "".encode("utf-8")
+
+    def start(self):
+        return
+
+    def logs(self, **kwargs):
+        return self._logs
+
+    def wait(self):
+        return self._wait
+
+    def remove(self, **kwargs):
+        return
 
 
 class TestPylint:
@@ -50,14 +71,16 @@ class TestPylint:
         exp_output: str,
     ):
         # Docker client mocking
-        mocker.patch.object(linter.get_docker(), "create_container")
-        linter_obj._linter_to_commands()
-        linter.get_docker().create_container().wait.return_value = {
-            "StatusCode": exp_container_exit_code
-        }
-        linter.get_docker().create_container().logs.return_value = (
-            exp_container_log.encode("utf-8")
+        mocker.patch.object(
+            DockerBase,
+            "create_container",
+            return_value=Container(
+                _wait={"StatusCode": exp_container_exit_code},
+                _logs=exp_container_log.encode("utf-8"),
+            ),
         )
+        linter_obj._linter_to_commands()
+
         act_exit_code, act_output = linter_obj._docker_run_linter(
             linter="pylint", test_image="test-image", keep_container=False
         )
@@ -92,10 +115,11 @@ class TestPytest:
         )
 
         # Docker client mocking
-        mocker.patch.object(linter.get_docker(), "create_container")
-        linter.get_docker().create_container().wait.return_value = {
-            "StatusCode": exp_container_exit_code
-        }
+        mocker.patch.object(
+            DockerBase,
+            "create_container",
+            return_value=Container(_wait={"StatusCode": exp_container_exit_code}),
+        )
 
         # Docker related mocking
         mocker.patch.object(linter, "json")
@@ -177,6 +201,7 @@ class TestRunLintInContainer:
             test_xml="",
             keep_container=False,
             no_coverage=True,
+            should_disable_network=True,
         )
         assert linter_obj._pkg_lint_status.get("exit_code") == 0b0
         if not no_test and pack_type == TYPE_PYTHON:

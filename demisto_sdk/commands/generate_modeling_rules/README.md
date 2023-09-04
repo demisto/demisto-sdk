@@ -14,10 +14,9 @@ $ generate-modeling-rules [OPTIONS]
 * `-o, --output PATH`: A path to the folder you want to generate the modeling rules in. Best practice is to put the working pack path here.  [required]
 * `-ve, --vendor TEXT`: The vendor name of the product in snake_case.
 * `-p, --product TEXT`: The name of the product in snake_case.
-* `-v, --verbose INTEGER RANGE`: Verbosity level -v / -vv / .. / -vvv  [Default: 0; x<=3]
-* `--quiet / --no-quiet`: Quiet output - sets verbosity to default.  [Default: no-quiet]
-* `-lp, --log-path PATH`: Path of the directory in which you would like to store all log levels. If not given, then the "log_file_name" command line option will be disregarded, and the log output will be to stdout.
-* `-ln, --log-name TEXT`: The file name (including extension) where the log output should be saved to.  [Default: generate_modeling_rules.log]
+* `-clt, --console_log_threshold`: Minimum logging threshold for the console logger.  [default: INFO]
+* `-flt --file_log_threshold`: Minimum logging threshold for the file logger. [default: DEBUG]
+* `-lp, --log_file_path`:  Path to the log file. Default: ./demisto_sdk_debug.log. [default: ./demisto_sdk_debug.log]
 * `--install-completion`: Install completion for the current shell.
 * `--show-completion`: Show completion for the current shell, to copy it or customize the installation.
 * `--help`: Show this message and exit.

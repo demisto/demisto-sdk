@@ -26,7 +26,12 @@ class MapperParser(JSONContentItemParser, content_type=ContentType.MAPPER):
 
     @property
     def supported_marketplaces(self) -> Set[MarketplaceVersions]:
-        return {MarketplaceVersions.XSOAR, MarketplaceVersions.MarketplaceV2}
+        return {
+            MarketplaceVersions.XSOAR,
+            MarketplaceVersions.MarketplaceV2,
+            MarketplaceVersions.XSOAR_SAAS,
+            MarketplaceVersions.XSOAR_ON_PREM,
+        }
 
     def get_filters_and_transformers_from_complex_value(
         self, complex_value: dict
@@ -59,12 +64,14 @@ class MapperParser(JSONContentItemParser, content_type=ContentType.MAPPER):
                 default_incident_type, content_type_to_map, is_mandatory=False
             )
 
-        for incident_type, mapping_data in self.json_data.get("mapping", {}).items():
+        for incident_type, mapping_data in (
+            self.json_data.get("mapping") or {}
+        ).items():
             if incident_type not in IGNORED_INCIDENT_TYPES:
                 add_dependency_func(
                     incident_type, content_type_to_map, is_mandatory=False
                 )
-            internal_mapping: Dict[str, Any] = mapping_data.get("internalMapping")
+            internal_mapping: Dict[str, Any] = mapping_data.get("internalMapping") or {}
 
             if self.type == "mapping-outgoing":
                 # incident fields are in the simple / complex.root key of each key

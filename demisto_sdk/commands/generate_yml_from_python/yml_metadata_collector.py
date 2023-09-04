@@ -1,13 +1,11 @@
 """This file is a part of the generating yml design. Generating a yml file from a python file."""
 import enum
-import logging
 import re
 from dataclasses import dataclass
 from typing import Any, Callable, List, Optional
 
 from demisto_sdk.commands.common.constants import ParameterType
-
-logger = logging.getLogger("demisto-sdk")
+from demisto_sdk.commands.common.logger import logger
 
 # This is done so the dependencies will not clash or be mocked.
 ParameterTypes = ParameterType

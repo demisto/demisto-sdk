@@ -1,15 +1,13 @@
-import logging
 from typing import Tuple
 
 from demisto_sdk.commands.common.constants import INDICATOR_FIELD_TYPE_TO_MIN_VERSION
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.format.format_constants import (
     ERROR_RETURN_CODE,
     SKIP_RETURN_CODE,
     SUCCESS_RETURN_CODE,
 )
 from demisto_sdk.commands.format.update_generic_json import BaseUpdateJSON
-
-logger = logging.getLogger("demisto-sdk")
 
 
 class IndicatorFieldJSONFormat(BaseUpdateJSON):
@@ -34,7 +32,7 @@ class IndicatorFieldJSONFormat(BaseUpdateJSON):
     def run_format(self) -> int:
         try:
             logger.info(
-                f"\n[blue]================= Updating file {self.source_file} =================[/bright_blue]"
+                f"\n[blue]================= Updating file {self.source_file} =================[/blue]"
             )
             self.update_from_version()
             super().update_json()

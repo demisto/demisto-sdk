@@ -1,7 +1,7 @@
-import logging
 import os
 from typing import Any, Dict, List, Optional, Tuple, Union
 
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import get_yaml
 from demisto_sdk.commands.generate_docs.common import (
     HEADER_TYPE,
@@ -12,8 +12,6 @@ from demisto_sdk.commands.generate_docs.common import (
     save_output,
     string_escape_md,
 )
-
-logger = logging.getLogger("demisto-sdk")
 
 
 def generate_playbook_doc(
@@ -214,7 +212,7 @@ def get_inputs(playbook: Dict[str, List[Dict]]) -> Tuple[List[Dict], List[str]]:
     playbook_inputs: List = playbook.get("inputs", [])
     for _input in playbook_inputs:
         name = _input.get("key")
-        description = string_escape_md(_input.get("description", ""))
+        description = string_escape_md(_input.get("description", ""), escape_html=False)
         required_status = "Required" if _input.get("required") else "Optional"
         _value: Optional[str] = get_input_data(_input)
 
@@ -273,7 +271,9 @@ def get_outputs(playbook):
         outputs.append(
             {
                 "Path": output.get("contextPath"),
-                "Description": string_escape_md(output.get("description", "")),
+                "Description": string_escape_md(
+                    output.get("description", ""), escape_html=False
+                ),
                 "Type": output_type,
             }
         )

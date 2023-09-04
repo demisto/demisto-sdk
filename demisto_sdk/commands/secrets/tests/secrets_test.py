@@ -1,11 +1,10 @@
 import os
 import shutil
+from pathlib import Path
 
-from demisto_sdk.commands.common.handlers import JSON_Handler
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.secrets.secrets import SecretsValidator
-
-json = JSON_Handler()
 
 
 def create_whitelist_secrets_file(
@@ -39,6 +38,7 @@ class TestSecrets:
     TEST_PY_FILE = TEST_BASE_PATH + "fake_integration.py"
     TEST_WHITELIST_FILE_PACKS = TEST_BASE_PATH + "fake.secrets-ignore"
     TEST_WHITELIST_FILE = TEST_BASE_PATH + "fake_secrets_white_list.json"
+    TEST_XIF_FILE = os.path.join(FILES_PATH, "modeling_rules.xif")
     TEST_BASE_64_STRING = "OCSn7JGqKehoyIyMCm7gPFjKXpawXvh2M32" * 20 + " sade"
     WHITE_LIST_FILE_NAME = "secrets_white_list.json"
     FILE_HASH_LIST = [
@@ -58,14 +58,13 @@ class TestSecrets:
 
     @classmethod
     def setup_class(cls):
-        print("Setups TestSecrets class")
-        if not os.path.exists(TestSecrets.TEMP_DIR):
-            os.mkdir(TestSecrets.TEMP_DIR)
+        print("Setups TestSecrets class")  # noqa: T201
+        Path(TestSecrets.TEMP_DIR).mkdir(exist_ok=True)
 
     @classmethod
     def teardown_class(cls):
-        print("Tearing down TestSecrets class")
-        if os.path.exists(TestSecrets.TEMP_DIR):
+        print("Tearing down TestSecrets class")  # noqa: T201
+        if Path(TestSecrets.TEMP_DIR).exists():
             shutil.rmtree(TestSecrets.TEMP_DIR, ignore_errors=False, onerror=None)
 
     def test_get_diff_text_files(self):
@@ -81,7 +80,7 @@ class TestSecrets:
 
     def test_search_potential_secrets__no_secrets_found(self):
         secret_to_location = self.validator.search_potential_secrets(
-            [self.TEST_YML_FILE]
+            [self.TEST_YML_FILE, self.TEST_XIF_FILE]
         )
         assert not secret_to_location
 

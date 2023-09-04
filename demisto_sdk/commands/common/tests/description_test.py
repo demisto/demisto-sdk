@@ -3,14 +3,12 @@ import os
 
 import pytest
 
-from demisto_sdk.commands.common.handlers import YAML_Handler
+from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
 from demisto_sdk.commands.common.hook_validations.description import (
     DescriptionValidator,
 )
 from demisto_sdk.commands.common.hook_validations.readme import ReadMeValidator
 from TestSuite.test_tools import ChangeCWD
-
-yaml = YAML_Handler()
 
 
 @pytest.mark.parametrize(

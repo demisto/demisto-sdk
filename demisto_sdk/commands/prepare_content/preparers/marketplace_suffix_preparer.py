@@ -1,9 +1,7 @@
-import logging
-from typing import Any, Dict
+from typing import Any, Dict, List, Optional
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
-
-logger = logging.getLogger("demisto-sdk")
+from demisto_sdk.commands.common.logger import logger
 
 
 class MarketplaceSuffixPreparer:
@@ -14,21 +12,25 @@ class MarketplaceSuffixPreparer:
     @staticmethod
     def prepare(
         data: dict,
-        marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR,
+        current_marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR,
+        supported_marketplaces: Optional[List] = None,
     ) -> dict:
         """
         Iterate over all of the given content item fields and if there is a field with an alternative name,
         then use that value as the value of the original field (the corresponding one without the suffix).
         Args:
             data: content item data
-            marketplace: Marketplace. Used to determine the specific suffix
+            supported_marketplaces: list of the marketplaces this content item supports.
+            current_marketplace: Marketplace. Used to determine the specific suffix
 
         Returns: A (possibliy) modified content item data
 
         """
+        if supported_marketplaces is None:
+            supported_marketplaces = list(MarketplaceVersions)
         if not (
             suffix := MarketplaceSuffixPreparer.MARKETPLACE_TO_SUFFIX.get(
-                marketplace, ""
+                current_marketplace, ""
             )
         ):
             return data

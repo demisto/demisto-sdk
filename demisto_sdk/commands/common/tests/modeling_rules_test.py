@@ -1,15 +1,13 @@
 import os
+from pathlib import Path
 
 import pytest
 
-from demisto_sdk.commands.common.handlers import YAML_Handler
 from demisto_sdk.commands.common.hook_validations.modeling_rule import (
     ModelingRuleValidator,
 )
 from demisto_sdk.commands.common.hook_validations.structure import StructureValidator
 from TestSuite.test_tools import ChangeCWD
-
-yaml = YAML_Handler()
 
 
 def test_is_valid_modeling_rule(repo):
@@ -37,8 +35,7 @@ def test_is_invalid_modeling_rule(repo):
     dummy_modeling_rule = pack.create_modeling_rule("MyRule")
     structure_validator = StructureValidator(dummy_modeling_rule.yml.path)
     schema_path = dummy_modeling_rule.schema.path
-    if os.path.exists(schema_path):
-        os.remove(schema_path)
+    Path(schema_path).unlink(missing_ok=True)
 
     with ChangeCWD(repo.path):
         modeling_rule_validator = ModelingRuleValidator(structure_validator)
@@ -134,7 +131,7 @@ files_to_rename = ["xif", "yml", "schema", "testdata"]
 
 
 @pytest.mark.parametrize("file_to_rename", files_to_rename)
-def test_is_invalid_rule_file_name(repo, file_to_rename):
+def test_is_invalid_rule_file_name(mocker, repo, file_to_rename):
     """
     Given: A modeling rule with invalid component file name
     When: running is_valid_rule_names
@@ -158,6 +155,7 @@ def test_is_invalid_rule_file_name(repo, file_to_rename):
     os.rename(path_to_replace, new_name)
 
     with ChangeCWD(repo.path):
+        mocker.patch.object(Path, "exists", return_value=True)
         modeling_rule_validator = ModelingRuleValidator(structure_validator)
         assert not modeling_rule_validator.is_valid_rule_names()
         assert not modeling_rule_validator._is_valid

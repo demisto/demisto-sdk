@@ -7,6 +7,7 @@ from shutil import make_archive
 
 from demisto_sdk.commands.common.constants import PACKS_DIR, MarketplaceVersions
 from demisto_sdk.commands.common.content.objects.pack_objects.pack import Pack
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import arg_to_list
 from demisto_sdk.commands.create_artifacts.content_artifacts_creator import (
     IGNORED_PACKS,
@@ -17,8 +18,6 @@ from demisto_sdk.commands.create_artifacts.content_artifacts_creator import (
     dump_pack,
     zip_packs,
 )
-
-logger = logging.getLogger("demisto-sdk")
 
 EX_SUCCESS = 0
 EX_FAIL = 1
@@ -31,7 +30,7 @@ class PacksZipper:
         output: str,
         content_version: str,
         zip_all: bool,
-        marketplace: str = MarketplaceVersions.XSOAR.value,
+        marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR,
         quiet_mode: bool = False,
         **kwargs,
     ):
@@ -41,7 +40,7 @@ class PacksZipper:
             content_version=content_version,
             all_in_one_zip=zip_all,
             quiet_mode=quiet_mode,
-            marketplace=marketplace,
+            marketplace=marketplace.value,
         )
 
     def zip_packs(self):
@@ -105,7 +104,7 @@ class PacksManager(ArtifactsManager):
             ):  # relative path from Packs/...
                 path = self.content.path / path
 
-            if not os.path.exists(path):
+            if not Path(path).exists():
                 logger.info(
                     f"[red]Error: Given input path: {path} does not exist, ignored[/red]"
                 )

@@ -172,6 +172,27 @@ class ReleaseNotesValidator(BaseValidator):
                 return False
         return True
 
+    @error_codes("RN116")
+    def validate_first_level_header_exists(self) -> bool:
+        """
+            Validate that the RN has a first level header.
+        Return:
+            True if the RN has a first level header, False otherwise.
+        """
+        first_level_header_index = re.search(
+            r"\s#{4}\B", f"\n{self.latest_release_notes}"
+        )
+        if not first_level_header_index:
+            (
+                error_message,
+                error_code,
+            ) = Errors.first_level_is_header_missing(pack_name=self.pack_name)
+            if self.handle_error(
+                error_message, error_code, self.release_notes_file_path
+            ):
+                return False
+        return True
+
     @error_codes("RN113,RN114")
     def validate_content_item_header(
         self, content_type: str, content_items: List
@@ -287,7 +308,10 @@ class ReleaseNotesValidator(BaseValidator):
                 error_message, error_code, file_path=self.release_notes_file_path
             ):
                 return False
-        elif "%%UPDATE_RN%%" in release_notes_comments:
+        elif any(
+            note in release_notes_comments
+            for note in ["%%UPDATE_RN%%", "%%XSIAM_VERSION%%"]
+        ):
             error_message, error_code = Errors.release_notes_not_finished()
             if self.handle_error(
                 error_message, error_code, file_path=self.release_notes_file_path
@@ -430,7 +454,7 @@ class ReleaseNotesValidator(BaseValidator):
         """
 
         validations = []
-
+        validations.append(self.validate_first_level_header_exists())
         headers = self.extract_rn_headers()
         self.filter_rn_headers(headers=headers)
         for content_type, content_items in headers.items():
@@ -512,5 +536,9 @@ class ReleaseNotesValidator(BaseValidator):
             self.validate_json_when_breaking_changes(),
             # self.has_no_markdown_lint_errors(),
             self.validate_release_notes_headers(),
+            self.validate_no_disallowed_terms_in_customer_facing_docs(
+                file_content=self.latest_release_notes,
+                file_path=self.release_notes_file_path,
+            ),
         ]
         return all(validations)

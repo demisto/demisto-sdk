@@ -1,4 +1,4 @@
-import os
+from pathlib import Path
 from unittest.mock import patch
 
 import pytest
@@ -542,7 +542,7 @@ class TestScriptValidator:
             structure_validator, validate_all=validate_all
         )
         if remove_readme:
-            os.remove(script.readme.path)
+            Path(script.readme.path).unlink()
         assert (
             script_validator.validate_readme_exists(script_validator.validate_all)
             is expected_result
@@ -577,3 +577,106 @@ class TestScriptValidator:
             integration_validator.is_nativeimage_key_does_not_exist_in_yml()
             == is_validation_ok
         )
+
+    @pytest.mark.parametrize(
+        "yml_content, use_git, expected_results",
+        [
+            ({"comment": "description without dot"}, False, True),
+            (
+                {
+                    "comment": "a yml comment with a dot at the end.",
+                    "args": [
+                        {"name": "test_arg", "description": "description without dot"}
+                    ],
+                },
+                True,
+                False,
+            ),
+            (
+                {
+                    "comment": "a yml comment with a dot at the end.",
+                    "outputs": [
+                        {
+                            "contextPath": "test.path",
+                            "description": "description without dot",
+                        }
+                    ],
+                },
+                True,
+                False,
+            ),
+            (
+                {
+                    "comment": "a yml comment with a dot at the end.",
+                    "args": [
+                        {"name": "test_arg", "description": "description with a dot."}
+                    ],
+                },
+                True,
+                True,
+            ),
+            (
+                {
+                    "comment": "a yml comment with a dot at the end.",
+                    "outputs": [
+                        {
+                            "contextPath": "test.path",
+                            "description": "description without dot.",
+                        }
+                    ],
+                },
+                True,
+                True,
+            ),
+            (
+                {"comment": "a yml with url and no dot at the end www.test.com"},
+                True,
+                True,
+            ),
+            (
+                {
+                    "comment": "a yml with a comment that has www.test.com in the middle of the sentence"
+                },
+                True,
+                False,
+            ),
+            (
+                {
+                    "comment": "a yml with a comment that has an 'example without dot at the end of the string.'",
+                },
+                True,
+                False,
+            ),
+        ],
+    )
+    def test_is_line_ends_with_dot(
+        self, repo, yml_content: dict, use_git: bool, expected_results: bool
+    ):
+        """
+        Given:
+            A yml content, use_git flag, and expected_results.
+            - Case 1: A yml content with a comment without a dot at the end of the sentence, and use_git flag set to False.
+            - Case 2: A yml content with an argument with a description without a dot at the end of the sentence, and use_git flag set to True.
+            - Case 3: A yml content with a context path with a description without a dot at the end of the sentence, and use_git flag set to True.
+            - Case 4: A yml content with an argument with a description with a dot at the end of the sentence, and use_git flag set to True.
+            - Case 5: A yml content with a context path with a description with a dot at the end of the sentence, and use_git flag set to True.
+            - Case 6: A yml content with a comment that ends with a url address and not dot, and use_git flag set to True.
+            - Case 7: A yml content with a comment that has a url in the middle of the sentence and no comment in the end, and use_git flag set to True.
+            - Case 8: A yml content with a comment that ends with example quotes with a dot only inside the example quotes, and use_git flag set to True.
+        When:
+            - when executing the is_line_ends_with_dot method
+        Then:
+            - Case 1: make sure the validation pass.
+            - Case 2: make sure the validation fails.
+            - Case 3: make sure the validation fails.
+            - Case 4: make sure the validation pass.
+            - Case 5: make sure the validation pass.
+            - Case 6: make sure the validation pass.
+            - Case 7: make sure the validation fails.
+            - Case 8: make sure the validation fails.
+        """
+        pack = repo.create_pack("test")
+        script = pack.create_script(yml=yml_content)
+        structure_validator = StructureValidator(script.yml.path)
+        script_validator = ScriptValidator(structure_validator, using_git=use_git)
+        assert script_validator.is_line_ends_with_dot() is expected_results

@@ -1,13 +1,12 @@
 import ast
 import io
-import logging
 import os
 import re
 import shutil
 import tarfile
 from pathlib import Path
 from tempfile import mkdtemp
-from typing import Dict, List, Tuple, Union
+from typing import Dict, List, Optional, Tuple, Union
 
 import demisto_client.demisto_api
 from demisto_client.demisto_api.rest import ApiException
@@ -18,6 +17,7 @@ from tabulate import tabulate
 from urllib3.exceptions import MaxRetryError
 
 from demisto_sdk.commands.common.constants import (
+    AUTOMATION,
     CONTENT_ENTITIES_DIRS,
     CONTENT_FILE_ENDINGS,
     DELETED_JSON_FIELDS_BY_DEMISTO,
@@ -26,16 +26,20 @@ from demisto_sdk.commands.common.constants import (
     ENTITY_TYPE_TO_DIR,
     FILE_EXIST_REASON,
     FILE_NOT_IN_CC_REASON,
-    INCIDENT_FIELD_FILE_NAME_REGEX,
+    INCIDENT,
+    INTEGRATION,
     INTEGRATIONS_DIR,
-    LAYOUT_FILE_NAME__REGEX,
+    LAYOUT,
+    PLAYBOOK,
     PLAYBOOK_REGEX,
     PLAYBOOKS_DIR,
     SCRIPTS_DIR,
     TEST_PLAYBOOKS_DIR,
     UUID_REGEX,
 )
-from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
+from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     find_type,
     get_child_directories,
@@ -46,20 +50,17 @@ from demisto_sdk.commands.common.tools import (
     get_entity_name_by_entity_type,
     get_file,
     get_files_in_dir,
+    get_id,
     get_json,
     get_yaml,
     get_yml_paths_in_dir,
+    is_sdk_defined_working_offline,
     retrieve_file_ending,
     safe_write_unicode,
 )
 from demisto_sdk.commands.format.format_module import format_manager
+from demisto_sdk.commands.init.initiator import Initiator
 from demisto_sdk.commands.split.ymlsplitter import YmlSplitter
-
-logger = logging.getLogger("demisto-sdk")
-
-json = JSON_Handler()
-yaml = YAML_Handler()
-
 
 ITEM_TYPE_TO_ENDPOINT: dict = {
     "IncidentType": "/incidenttype",
@@ -77,7 +78,7 @@ ITEM_TYPE_TO_REQUEST_TYPE = {
     "IndicatorType": "GET",
     "Field": "GET",
     "Layout": "GET",
-    "Playbook": "POST",
+    "Playbook": "GET",
     "Automation": "POST",
     "Classifier": "POST",
     "Mapper": "POST",
@@ -93,6 +94,29 @@ ITEM_TYPE_TO_PREFIX = {
     "Classifier": ".json",
     "Mapper": ".json",
 }
+
+
+def map_uuid_to_name(
+    content_item_string: str, scripts_mapper: dict, file_suffix: str
+) -> dict:
+    """
+    Gets id from content item, if the id is UUID it maps it
+    to the content items' name.
+    Args:
+        content_item_string (str): content item as a string.
+        scripts_mapper (dict): a mapper from id to name for content items.
+        file_suffix (str): suffix of the file.
+    Returns:
+        dict: scripts_mapper
+    """
+    if file_suffix == ".yml":
+        content_item = yaml.load(content_item_string)
+    else:
+        content_item = json.loads(content_item_string)
+    content_item_id = get_id(content_item)
+    if re.search(UUID_REGEX, str(content_item_id)):
+        scripts_mapper[content_item_id] = content_item.get("name")
+    return scripts_mapper
 
 
 class Downloader:
@@ -115,6 +139,8 @@ class Downloader:
         pack_content (dict): The pack content that maps the pack
         system (bool): whether to download system items
         item_type (str): The items type to download, use just when downloading system items.
+        init (bool): Initialize a new Pack and download the items to it. This will create an empty folder for each supported content item type.
+        keep_empty_folders (bool): Whether to keep empty folders when using init.
     """
 
     def __init__(
@@ -129,6 +155,8 @@ class Downloader:
         run_format: bool = False,
         system: bool = False,
         item_type: str = "",
+        init: bool = False,
+        keep_empty_folders: bool = False,
         **kwargs,
     ):
         self.output_pack_path = output
@@ -152,6 +180,13 @@ class Downloader:
         }
         self.num_merged_files = 0
         self.num_added_files = 0
+        self.init = init
+        self.keep_empty_folders = keep_empty_folders
+        if is_sdk_defined_working_offline() and self.run_format:
+            self.run_format = False
+            logger.info(
+                "format is not supported when the DEMISTO_SDK_OFFLINE_ENV environment variable is set, skipping it."
+            )
 
     def download(self) -> int:
         """
@@ -175,6 +210,7 @@ class Downloader:
             return 1
         if self.handle_list_files_flag():
             return 0
+        self.handle_init_flag()
         self.handle_all_custom_content_flag()
         self.handle_regex_flag()
         if not self.verify_output_pack_is_pack():
@@ -277,48 +313,9 @@ class Downloader:
 
         return playbook_string
 
-    def handle_incidentfield(
-        self, incidentfield_string: str, scripts_mapper: dict
+    def replace_uuids(
+        self, string_to_write: str, uuid_dict: dict, file_name: str
     ) -> str:
-        # In case the incident field uses a custom script, replace the id value of the script with its name
-        file_json_object = json.loads(incidentfield_string)
-        incidentfield_name = file_json_object.get("name")
-        script = file_json_object.get("script")
-        if incidentfield_name and (
-            incidentfield_name in self.input_files or self.all_custom_content
-        ):
-            if script and script in scripts_mapper:
-                incidentfield_string = incidentfield_string.replace(
-                    script, scripts_mapper[script]
-                )
-
-        return incidentfield_string
-
-    def handle_layout(self, layout_string, scripts_mapper):
-        # In case the layout uses a custom script, replace the id value of the script with its name
-        file_json_object = json.loads(layout_string)
-        layout_name = file_json_object.get("name")
-        if layout_name and (layout_name in self.input_files or self.all_custom_content):
-            for tab in (file_json_object.get("detailsV2") or {}).get("tabs", ()):
-                for section in tab.get("sections", ()):
-                    for item in section.get("items", ()):
-                        script_id = item.get("scriptId")
-                        if script_id and script_id in scripts_mapper:
-                            layout_string = layout_string.replace(
-                                script_id, scripts_mapper[script_id]
-                            )
-
-        return layout_string
-
-    @staticmethod
-    def map_script(script_string: str, scripts_mapper: dict) -> dict:
-        script_yml = yaml.load(script_string)
-        script_id = script_yml.get("commonfields").get("id")
-        if re.search(UUID_REGEX, script_id):
-            scripts_mapper[script_id] = script_yml.get("name")
-        return scripts_mapper
-
-    def replace_uuids(self, string_to_write: str, uuid_dict: dict) -> str:
         """
         Replace all occurrences of UUIDs in a string with their corresponding values from a dictionary.
 
@@ -332,31 +329,62 @@ class Downloader:
         uuids = re.findall(UUID_REGEX, string_to_write)
 
         for uuid in set(uuids).intersection(uuid_dict):
+            logger.debug(
+                f"Replacing UUID: {uuid} with the following:\
+ {uuid_dict[uuid]} in {file_name}"
+            )
             string_to_write = string_to_write.replace(uuid, uuid_dict[uuid])
         return string_to_write
 
-    def handle_file(
-        self, string_to_write: str, member_name: str, scripts_id_name: dict
+    def should_download_playbook(self, file_name: str) -> bool:
+        #  if the content item is playbook and list-file flag is true, we should download the
+        #  file via direct REST API because there are props like scriptName, that playbook from custom
+        #  content bundle don't contain
+        return bool(not self.list_files and re.search(PLAYBOOK_REGEX, file_name))
+
+    def write_custom_content(
+        self, content_items_file_names: List[Tuple[str, str]], scripts_id_to_name: dict
     ):
-
-        if not self.list_files and re.search(
-            INCIDENT_FIELD_FILE_NAME_REGEX, member_name
-        ):
-            string_to_write = self.handle_incidentfield(
-                string_to_write, scripts_id_name
+        for content_item_as_string, file_name in content_items_file_names:
+            if self.should_download_playbook(file_name):
+                content_item_as_string = self.download_playbook_yaml(
+                    content_item_as_string
+                )
+            content_item_as_string = self.replace_uuids(
+                content_item_as_string, scripts_id_to_name, file_name
             )
+            file_name = self.update_file_prefix(file_name.strip("/"))
+            path = Path(self.custom_content_temp_dir, file_name)
+            try:
+                path.write_text(content_item_as_string)
 
-        if not self.list_files and re.search(PLAYBOOK_REGEX, member_name):
-            #  if the content item is playbook and list-file flag is true, we should download the
-            #  file via direct REST API because there are props like scriptName, that playbook from custom
-            #  content bundle don't contain
+            except Exception:
+                logger.exception(
+                    "encountered exception, trying to write with encoding=utf8"
+                )
+                path.write_text(content_item_as_string, encoding="utf8")
 
-            string_to_write = self.download_playbook_yaml(string_to_write)
+    def find_uuids_in_content_item(self, tar: tarfile.TarFile):
+        scripts_id_to_name: dict = {}
+        content_items_file_names_tuple: List[Tuple[str, str]] = []
+        for file in tar.getmembers():
+            file_name: str = self.update_file_prefix(file.name.strip("/"))
+            file_path: str = str(Path(self.custom_content_temp_dir, file_name))
 
-        if not self.list_files and re.search(LAYOUT_FILE_NAME__REGEX, member_name):
-            string_to_write = self.handle_layout(string_to_write, scripts_id_name)
-
-        return string_to_write
+            if not (extracted_file := tar.extractfile(file)):
+                raise FileNotFoundError(
+                    f"Could not extract files from tar file: {file_path}"
+                )
+            string_to_write = extracted_file.read().decode("utf-8")
+            file_name = file.name.lower().lstrip("/")
+            if file_name.startswith(
+                (PLAYBOOK, AUTOMATION, INTEGRATION, LAYOUT, INCIDENT)
+            ):
+                scripts_id_to_name = map_uuid_to_name(
+                    string_to_write, scripts_id_to_name, Path(file_name).suffix
+                )
+            content_items_file_names_tuple.append((string_to_write, file.name))
+        return content_items_file_names_tuple, scripts_id_to_name
 
     def fetch_custom_content(self) -> bool:
         """
@@ -377,44 +405,13 @@ class Downloader:
             # Demisto's custom content file is of type tar.gz
             tar = tarfile.open(fileobj=io_bytes, mode="r")
 
-            scripts_id_name: dict = {}
-            strings_to_write: List[Tuple[str, str]] = []
-            for member in tar.getmembers():
-                file_name: str = self.update_file_prefix(member.name.strip("/"))
-                file_path: str = os.path.join(self.custom_content_temp_dir, file_name)
-
-                extracted_file = tar.extractfile(member)
-                if extracted_file:
-                    string_to_write = extracted_file.read().decode("utf-8")
-                    if (
-                        "automation-" in member.name.lower()
-                        or "integration-" in member.name.lower()
-                    ):
-                        scripts_id_name = self.map_script(
-                            string_to_write, scripts_id_name
-                        )
-                    strings_to_write.append((string_to_write, member.name))
-                else:
-                    raise FileNotFoundError(
-                        f"Could not extract files from tar file: {file_path}"
-                    )
-
-            for string_to_write, file_name in strings_to_write:
-                string_to_write = self.handle_file(
-                    string_to_write=string_to_write,
-                    member_name=file_name,
-                    scripts_id_name=scripts_id_name,
-                )
-                string_to_write = self.replace_uuids(string_to_write, scripts_id_name)
-                file_name = self.update_file_prefix(file_name.strip("/"))
-                path = Path(self.custom_content_temp_dir, file_name)
-                try:
-                    path.write_text(string_to_write)
-
-                except Exception as e:
-                    print(f"encountered exception {type(e)}: {e}")
-                    print("trying to write with encoding=utf8")
-                    path.write_text(string_to_write, encoding="utf8")
+            (
+                content_items_file_names_tuple,
+                scripts_id_to_name,
+            ) = self.find_uuids_in_content_item(tar)
+            self.write_custom_content(
+                content_items_file_names_tuple, scripts_id_to_name
+            )
             return True
 
         except ApiException as e:
@@ -452,10 +449,29 @@ class Downloader:
             automation_list.append(ast.literal_eval(api_response[0]))
         return automation_list
 
-    def arrange_response(self, system_items_list):
-        if self.system_item_type == "Playbook":
-            system_items_list = system_items_list.get("playbooks")
+    def get_system_playbook(self, req_type):
+        playbook_list: list = []
+        for playbook in self.input_files:
+            endpoint = f"/playbook/{playbook}/yaml"
+            try:
+                api_response = demisto_client.generic_request_func(
+                    self.client, endpoint, req_type, response_type="object"
+                )
+            except ApiException as err:
+                # handling in case the id and name are not the same,
+                # trying to get the id by the name through a different api call
+                if playbook_id := self.get_playbook_id_by_playbook_name(playbook):
+                    endpoint = f"/playbook/{playbook_id}/yaml"
+                    api_response = demisto_client.generic_request_func(
+                        self.client, endpoint, req_type, response_type="object"
+                    )
+                else:
+                    raise err
+            playbook_list.append(yaml.load(api_response[0].decode()))
 
+        return playbook_list
+
+    def arrange_response(self, system_items_list):
         if self.system_item_type in ["Classifier", "Mapper"]:
             system_items_list = system_items_list.get("classifiers")
 
@@ -479,6 +495,9 @@ class Downloader:
 
             if self.system_item_type == "Automation":
                 system_items_list = self.get_system_automation(req_type)
+
+            elif self.system_item_type == "Playbook":
+                system_items_list = self.get_system_playbook(req_type)
 
             else:
                 api_response = demisto_client.generic_request_func(
@@ -593,6 +612,39 @@ class Downloader:
                     input_files_regex_match.append(input_file)
             self.input_files = input_files_regex_match
 
+    def handle_init_flag(self) -> None:
+        """
+        Handles the case where the init flag is given
+        :return: None
+        """
+        if not self.init:
+            return
+
+        root_folder = Path(self.output_pack_path)
+        if root_folder.name != "Packs":
+            root_folder = root_folder / "Packs"
+            try:
+                root_folder.mkdir(exist_ok=True)
+            except FileNotFoundError as e:
+                e.filename = str(Path(e.filename).parent)
+                raise
+        initiator = Initiator(str(root_folder))
+        initiator.init()
+        self.output_pack_path = initiator.full_output_path
+
+        if not self.keep_empty_folders:
+            self.remove_empty_folders()
+
+    def remove_empty_folders(self) -> None:
+        """
+        Removes empty folders from the output pack path
+        :return: None
+        """
+        pack_folder = Path(self.output_pack_path)
+        for folder_path in pack_folder.glob("*"):
+            if folder_path.is_dir() and not any(folder_path.iterdir()):
+                folder_path.rmdir()
+
     def verify_output_pack_is_pack(self) -> bool:
         """
         Verifies the output path entered by the user is an actual pack path in content repository.
@@ -674,6 +726,32 @@ class Downloader:
 
         return content_object
 
+    def get_playbook_id_by_playbook_name(self, playbook_name: str) -> Optional[str]:
+        """
+        extract the playbook id by name,
+        calling the api returns an object that cannot be parsed properly,
+        and its use is only for extracting the id.
+
+        Args:
+            playbook_name (str): The name of a playbook
+
+        Returns:
+            Optional[str]: The ID of a playbook
+        """
+        endpoint = "/playbook/search"
+        response = demisto_client.generic_request_func(
+            self.client,
+            endpoint,
+            "POST",
+            response_type="object",
+            body={"query": f"name:{playbook_name}"},
+        )
+        if not response:
+            return None
+        if not (playbooks := response[0].get("playbooks")):
+            return None
+        return playbooks[0]["id"]
+
     @staticmethod
     def get_main_file_details(content_entity: str, entity_instance_path: str) -> tuple:
         """
@@ -696,7 +774,7 @@ class Downloader:
         ):
             if os.path.isdir(entity_instance_path):
                 _, main_file_path = get_yml_paths_in_dir(entity_instance_path)
-            elif os.path.isfile(entity_instance_path):
+            elif Path(entity_instance_path).is_file():
                 main_file_path = entity_instance_path
 
             if main_file_path:
@@ -705,7 +783,7 @@ class Downloader:
         # Entities which are json files (md files are ignored - changelog/readme)
         else:
             if (
-                os.path.isfile(entity_instance_path)
+                Path(entity_instance_path).is_file()
                 and retrieve_file_ending(entity_instance_path) == "json"
             ):
                 main_file_data = get_json(entity_instance_path)
@@ -772,7 +850,8 @@ class Downloader:
             input_file_exist_in_cc: bool = False
             for system_content_object in system_content_objects:
                 name = system_content_object.get("name", "N/A")
-                if name == input_file_name:
+                id_ = system_content_object.get("id", "N/A")
+                if name == input_file_name or id_ == input_file_name:
                     system_content_object["exist_in_pack"] = self.exist_in_pack_content(
                         system_content_object
                     )
@@ -1195,7 +1274,7 @@ class Downloader:
             splitter="dot",
         )
 
-        file_data = get_file(output_path, type_of_file=file_ending, clear_cache=True)
+        file_data = get_file(output_path, clear_cache=True)
         if pack_obj_data:
             merge(file_data, preserved_data)
 
@@ -1249,7 +1328,11 @@ class Downloader:
         :return: None
         """
         if self.run_format and file_ending in ("yml", "json"):
-            format_manager(input=os.path.abspath(file_path), no_validate=False)
+            format_manager(
+                input=str(Path(file_path).resolve()),
+                no_validate=False,
+                assume_answer=False,
+            )
 
     def remove_traces(self):
         """

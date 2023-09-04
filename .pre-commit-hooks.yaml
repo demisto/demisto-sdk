@@ -11,13 +11,48 @@
   name: validate
   description: validate content
   entry: demisto-sdk validate
-  pass_filenames: true
+  args: ["-g"]
+  pass_filenames: false
   language: python
-  files: *files
+  require_serial: true
 
 - id: format
   name: format
   description: Format non-code files, to comply with XSOAR standards.
   entry: demisto-sdk format
+  args: ["-ud", "-n", "--no-validate", "-g"]
   language: python
-  files: *files
+  pass_filenames: false
+  require_serial: true
+
+- id: secrets
+  name: secrets
+  description: Check for secrets in files.
+  entry: demisto-sdk secrets
+  args: ["--ignore-entropy"]
+  pass_filenames: false
+  language: python
+
+- id: no-implicit-optional
+  name: no implicit optional
+  description: Making code implicit-optional type hints PEP 484 compliant.
+  entry: no_implicit_optional
+  require_serial: true
+  language: python
+  types: [python]
+
+- id: mypy
+  name: mypy
+  entry: mypy
+  language: python
+  require_serial: true
+  types: [python]
+  exclude: tests/.*|demisto_sdk/commands/init/templates/.*
+
+- id: update-additional-dependencies
+  name: update-additional-dependencies
+  entry: update-additional-dependencies
+  language: python
+  files: poetry.lock
+  require_serial: true
+  pass_filenames: false

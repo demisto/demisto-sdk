@@ -1,5 +1,5 @@
 import functools
-import logging
+import hashlib
 import os
 import re
 import shutil
@@ -10,6 +10,7 @@ from typing import Dict, List, Optional, Tuple, Union
 
 import docker
 import requests
+import urllib3
 from docker.types import Mount
 from packaging.version import Version
 from requests import JSONDecodeError
@@ -19,13 +20,15 @@ from demisto_sdk.commands.common.constants import (
     DEFAULT_PYTHON_VERSION,
     TYPE_PWSH,
     TYPE_PYTHON,
+    TYPE_PYTHON2,
+    TYPE_PYTHON3,
 )
+from demisto_sdk.commands.common.logger import logger
 
 DOCKER_CLIENT = None
-logger = logging.getLogger("demisto-sdk")
 FILES_SRC_TARGET = List[Tuple[os.PathLike, str]]
 # this will be used to determine if the system supports mounts
-CAN_MOUNT_FILES = bool(os.getenv("GITLAB_CI", False)) or (
+CAN_MOUNT_FILES = bool(os.getenv("CONTENT_GITLAB_CI", False)) or (
     (not os.getenv("CIRCLECI", False))
     and (
         (not os.getenv("DOCKER_HOST"))
@@ -34,6 +37,8 @@ CAN_MOUNT_FILES = bool(os.getenv("GITLAB_CI", False)) or (
 )
 
 PYTHON_IMAGE_REGEX = re.compile(r"[\d\w]+/python3?:(?P<python_version>[23]\.\d+)")
+
+TEST_REQUIREMENTS_DIR = Path(__file__).parent.parent / "lint" / "resources"
 
 
 class DockerException(Exception):
@@ -45,11 +50,10 @@ def init_global_docker_client(timeout: int = 60, log_prompt: str = ""):
     global DOCKER_CLIENT
     if DOCKER_CLIENT is None:
         if log_prompt:
-            logger.info(f"{log_prompt} - init and login the docker client")
+            logger.debug(f"{log_prompt} - init and login the docker client")
         else:
-            logger.info("init and login the docker client")
-        ssh_client = os.getenv("DOCKER_SSH_CLIENT") is not None
-        if ssh_client:
+            logger.debug("init and login the docker client")
+        if ssh_client := os.getenv("DOCKER_SSH_CLIENT") is not None:
             logger.debug(f"{log_prompt} - Using ssh client setting: {ssh_client}")
         logger.debug(f"{log_prompt} - Using docker mounting: {CAN_MOUNT_FILES}")
         try:
@@ -61,7 +65,7 @@ def init_global_docker_client(timeout: int = 60, log_prompt: str = ""):
         docker_user = os.getenv("DOCKERHUB_USER")
         docker_pass = os.getenv("DOCKERHUB_PASSWORD")
         if docker_user and docker_pass:
-            logger.info(f"{log_prompt} - logging in to docker registry")
+            logger.debug(f"{log_prompt} - logging in to docker registry")
             try:
                 DOCKER_CLIENT.login(
                     username=docker_user,
@@ -76,6 +80,19 @@ def init_global_docker_client(timeout: int = 60, log_prompt: str = ""):
     return DOCKER_CLIENT
 
 
+@functools.lru_cache
+def get_pip_requirements_from_file(requirements_file: Path) -> List[str]:
+    """
+    Get the pip requirements from a requirements file.
+    Args:
+        requirements_file: The path to the requirements file.
+
+    Returns:
+        A list of pip requirements.
+    """
+    return requirements_file.read_text().strip().splitlines()
+
+
 class DockerBase:
     def __init__(self):
         self.tmp_dir_name = tempfile.TemporaryDirectory(
@@ -87,11 +104,15 @@ class DockerBase:
         )
         self.installation_scripts = {
             TYPE_PYTHON: installation_scripts / "python_image.sh",
+            TYPE_PYTHON2: installation_scripts / "python_image.sh",
+            TYPE_PYTHON3: installation_scripts / "python_image.sh",
             TYPE_PWSH: installation_scripts / "powershell_image.sh",
         }
         self.changes = {
             TYPE_PWSH: ["WORKDIR /devwork"],
             TYPE_PYTHON: ["WORKDIR /devwork", 'ENTRYPOINT ["/bin/sh", "-c"]'],
+            TYPE_PYTHON2: ["WORKDIR /devwork", 'ENTRYPOINT ["/bin/sh", "-c"]'],
+            TYPE_PYTHON3: ["WORKDIR /devwork", 'ENTRYPOINT ["/bin/sh", "-c"]'],
         }
         self.requirements = self.tmp_dir / "requirements.txt"
         self.requirements.touch()
@@ -110,16 +131,17 @@ class DockerBase:
     @staticmethod
     def pull_image(image: str) -> docker.models.images.Image:
         """
-        Pulling an image if it dosnt exist localy.
+        Get a local docker image, or pull it when unavailable.
         """
         docker_client = init_global_docker_client(log_prompt="pull_image")
+
         try:
             return docker_client.images.get(image)
         except docker.errors.ImageNotFound:
-            logger.debug(f"docker image {image} not found, pulling")
+            logger.debug(f"docker {image=} not found locally, pulling")
             docker_client.images.pull(image)
-            logger.debug(f"docker image {image} finished pulling")
-            return docker_client
+            logger.debug(f"pulled docker {image=} successfully")
+            return docker_client.images.get(image)
 
     @staticmethod
     def copy_files_container(
@@ -161,12 +183,44 @@ class DockerBase:
             self.copy_files_container(container, files_to_push)
         return container
 
+    def push_image(self, image: str, log_prompt: str = ""):
+        """This pushes the test image to dockerhub if the DOCKERHUB env variables are set
+
+        Args:
+            image (str): The image to push
+            log_prompt (str, optional): The log prompt to print. Defaults to "".
+        """
+        for _ in range(2):
+            try:
+
+                test_image_name_to_push = image.replace(
+                    "docker-io.art.code.pan.run/", ""
+                )
+                docker_push_output = init_global_docker_client().images.push(
+                    test_image_name_to_push
+                )
+                logger.info(
+                    f"{log_prompt} - Trying to push Image {test_image_name_to_push} to repository. Output = {docker_push_output}"
+                )
+                break
+            except (
+                requests.exceptions.ConnectionError,
+                urllib3.exceptions.ReadTimeoutError,
+                requests.exceptions.ReadTimeout,
+            ):
+                logger.warning(
+                    f"{log_prompt} - Unable to push image {image} to repository",
+                    exc_info=True,
+                )
+
     def create_image(
         self,
         base_image: str,
         image: str,
         container_type: str = TYPE_PYTHON,
         install_packages: Optional[List[str]] = None,
+        push: bool = False,
+        log_prompt: str = "",
     ) -> docker.models.images.Image:
         """
         this function is used to create a new image of devtestsdemisto docker images.
@@ -193,7 +247,7 @@ class DockerBase:
             command="/install.sh",
         )
         container.start()
-        if container.wait(condition="exited").get("StatusCode") != 0:
+        if container.wait().get("StatusCode") != 0:
             container_logs = container.logs()
             raise docker.errors.BuildError(
                 reason=f"Installation script failed to run on container '{container.id}', {container_logs=}",
@@ -203,7 +257,80 @@ class DockerBase:
         container.commit(
             repository=repository, tag=tag, changes=self.changes[container_type]
         )
+        if os.getenv("CONTENT_GITLAB_CI"):
+            container.commit(
+                repository=repository.replace("docker-io.art.code.pan.run/", ""),
+                tag=tag,
+                changes=self.changes[container_type],
+            )
+        if push:
+            self.push_image(image, log_prompt=log_prompt)
         return image
+
+    def pull_or_create_test_image(
+        self,
+        base_image: str,
+        container_type: str = TYPE_PYTHON,
+        python_version: Optional[int] = None,
+        additional_requirements: Optional[List[str]] = None,
+        push: bool = False,
+        log_prompt: str = "",
+    ) -> Tuple[str, str]:
+        """This will generate the test image for the given base image.
+
+        Args:
+            base_image (str): The base image to create the test image
+            container_type (str, optional): The container type (powershell or python). Defaults to TYPE_PYTHON.
+
+        Returns:
+            The test image name and errors to create it if any
+        """
+        errors = ""
+        if not python_version and container_type != TYPE_PWSH:
+            python_version = get_python_version(base_image).major
+        python3_requirements = get_pip_requirements_from_file(
+            TEST_REQUIREMENTS_DIR / "python3_requirements" / "dev-requirements.txt"
+        )
+        python2_requirements = get_pip_requirements_from_file(
+            TEST_REQUIREMENTS_DIR / "python2_requirements" / "dev-requirements.txt"
+        )
+        pip_requirements = []
+        if python_version:
+            pip_requirements = {3: python3_requirements, 2: python2_requirements}.get(
+                python_version, []
+            )
+
+        if additional_requirements:
+            pip_requirements.extend(additional_requirements)
+        identifier = hashlib.md5(
+            "\n".join(sorted(pip_requirements)).encode("utf-8")
+        ).hexdigest()
+        test_docker_image = (
+            f'{base_image.replace("demisto", "devtestdemisto")}-{identifier}'
+        )
+
+        try:
+            logger.debug(
+                f"{log_prompt} - Trying to pull existing image {test_docker_image}"
+            )
+            self.pull_image(test_docker_image)
+        except (docker.errors.APIError, docker.errors.ImageNotFound):
+            logger.info(
+                f"{log_prompt} - Unable to find image {test_docker_image}. Creating image based on {base_image} - Could take 2-3 minutes at first"
+            )
+            try:
+                self.create_image(
+                    base_image,
+                    test_docker_image,
+                    container_type,
+                    pip_requirements,
+                    push=push,
+                )
+            except (docker.errors.BuildError, docker.errors.APIError, Exception) as e:
+                errors = str(e)
+                logger.critical(f"{log_prompt} - Build errors occurred: {errors}")
+
+        return test_docker_image, errors
 
 
 class MountableDocker(DockerBase):
@@ -269,7 +396,6 @@ class MountableDocker(DockerBase):
             )
 
 
-@functools.lru_cache
 def get_docker():
     return MountableDocker() if CAN_MOUNT_FILES else DockerBase()
 
@@ -329,34 +455,74 @@ def _get_image_env(repo: str, digest: str, token: str) -> List[str]:
         raise RuntimeError(f"Failed to get docker image env: {response.text}") from e
 
 
+def _get_python_version_from_env(env: List[str]) -> Version:
+    python_version_envs = tuple(
+        filter(lambda env: env.startswith("PYTHON_VERSION="), env)
+    )
+    return (
+        Version(python_version_envs[0].split("=")[1])
+        if python_version_envs
+        else Version(DEFAULT_PYTHON_VERSION)
+    )
+
+
 @functools.lru_cache
-def get_python_version_from_image(image: Optional[str]) -> Optional[Version]:
-    if not image:
+def get_python_version(image: Optional[str]) -> Version:
+    log_prompt = f"Get python version from image {image}"
+    logger.debug(f"{log_prompt} - Start")
+    if not image or "pwsh" in image or "powershell" in image:
         # When no docker_image is specified, we use the default python version which is Python 2.7.18
         logger.debug(
-            f"No docker image specified, using default python version: {DEFAULT_PYTHON2_VERSION}"
+            f"No docker image specified or a powershell image, using default python version: {DEFAULT_PYTHON2_VERSION}"
         )
         return Version(DEFAULT_PYTHON2_VERSION)
     if match := PYTHON_IMAGE_REGEX.match(image):
         return Version(match.group("python_version"))
+    try:
+        return _get_python_version_from_image_client(image)
+    except Exception:
+        logger.debug(
+            "Could not get the python version from client. Trying with API",
+            exc_info=True,
+        )
+        return _get_python_version_from_dockerhub_api(image)
+
+
+def _get_python_version_from_image_client(image: str) -> Version:
+    """Get python version from docker image
+
+    Args:
+        image(str): Docker image id or name
+
+    Returns:
+        Version: Python version X.Y (3.7, 3.6, ..)
+    """
+    try:
+        image_model = DockerBase.pull_image(image)
+        env = image_model.attrs["Config"]["Env"]
+        logger.debug(f"Got {env=} from {image=}")
+        return _get_python_version_from_env(env)
+    except Exception:
+        logger.exception(f"Failed detecting Python version for {image=}")
+        raise
+
+
+def _get_python_version_from_dockerhub_api(image: str):
     if ":" not in image:
         repo = image
         tag = "latest"
+    elif image.count(":") > 1:
+        raise ValueError(f"Invalid docker image: {image}")
     else:
-        if image.count(":") > 1:
-            raise ValueError(f"Invalid docker image: {image}")
         repo, tag = image.split(":")
+    if os.getenv("CONTENT_GITLAB_CI"):
+        # we need to remove the gitlab prefix, as we query the API
+        repo = repo.replace("docker-io.art.code.pan.run/", "")
     try:
         token = _get_docker_hub_token(repo)
         digest = _get_image_digest(repo, tag, token)
         env = _get_image_env(repo, digest, token)
-        python_version_envs = [env for env in env if env.startswith("PYTHON_VERSION=")]
-        if not python_version_envs:
-            # no python version available, use the default python version (python 3)
-            return Version(DEFAULT_PYTHON_VERSION)
-        return Version(
-            python_version_envs[0].split("=")[1]
-        )  # we can assume that we have python version after the "="
+        return _get_python_version_from_env(env)
     except Exception as e:
         logger.error(
             f"Failed to get python version from docker hub for image {image}: {e}"

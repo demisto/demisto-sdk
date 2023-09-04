@@ -1,9 +1,8 @@
+import functools
 import os
 import re
 from pathlib import Path
 from typing import Callable, List
-
-import click
 
 from demisto_sdk.commands.common.constants import (
     KNOWN_FILE_STATUSES,
@@ -13,6 +12,7 @@ from demisto_sdk.commands.common.constants import (
 )
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.base_validator import BaseValidator
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     filter_packagify_changes,
     find_type,
@@ -24,6 +24,7 @@ from demisto_sdk.commands.common.tools import (
 from demisto_sdk.commands.validate.validate_manager import ValidateManager
 
 
+@functools.lru_cache()
 def git_path() -> str:
     git_path = run_command("git rev-parse --show-toplevel")
     return git_path.replace("\n", "")
@@ -119,9 +120,9 @@ def get_modified_and_added_files(
     base_validator = BaseValidator(ignored_errors=ignored_errors)
     if not no_configuration_prints:
         if staged:
-            click.echo("Collecting staged files only")
+            logger.info("Collecting staged files only")
         else:
-            click.echo("Collecting all committed files")
+            logger.info("Collecting all committed files")
 
     prev_ver = add_origin(branch_name, prev_ver)
     # all committed changes of the current branch vs the prev_ver
@@ -146,7 +147,7 @@ def get_modified_and_added_files(
         is_origin_demisto = is_origin_content_repo()
         if remote_configured and not is_origin_demisto:
             if not no_configuration_prints:
-                click.echo(
+                logger.info(
                     "Collecting all local changed files from fork against the content master"
                 )
 
@@ -197,7 +198,7 @@ def get_modified_and_added_files(
                 )
 
             if not no_configuration_prints and not staged:
-                click.echo(
+                logger.info(
                     "Collecting all local changed files against the content master"
                 )
 
@@ -332,8 +333,8 @@ def filter_changed_files(files_string, tag="master", print_ignored_files=False):
                 if file_path not in ignored_files:
                     ignored_files.add(file_path)
                     if print_ignored_files:
-                        click.secho(
-                            f"Ignoring file path: {file_path} - code file", fg="yellow"
+                        logger.info(
+                            f"[yellow]Ignoring file path: {file_path} - code file[/yellow]"
                         )
                 continue
 
@@ -342,8 +343,8 @@ def filter_changed_files(files_string, tag="master", print_ignored_files=False):
                 if file_path not in ignored_files:
                     ignored_files.add(file_path)
                     if print_ignored_files:
-                        click.secho(
-                            f"Ignoring file path: {file_path} - test file", fg="yellow"
+                        logger.info(
+                            f"[yellow]Ignoring file path: {file_path} - test file[/yellow]"
                         )
                 continue
 
@@ -352,10 +353,10 @@ def filter_changed_files(files_string, tag="master", print_ignored_files=False):
                 deleted_files.add(file_path)
 
             # ignore directories
-            elif not os.path.isfile(file_path):
+            elif not Path(file_path).is_file():
                 if print_ignored_files:
-                    click.secho(
-                        f"Ignoring file path: {file_path} - directory", fg="yellow"
+                    logger.info(
+                        f"[yellow]Ignoring file path: {file_path} - directory[/yellow]"
                     )
                 continue
 
@@ -390,11 +391,10 @@ def filter_changed_files(files_string, tag="master", print_ignored_files=False):
                     # file_data[1] = old name, file_data[2] = new name
                     modified_files_list.add((file_data[1], file_data[2]))
             elif file_status.lower() not in KNOWN_FILE_STATUSES:
-                click.secho(
-                    "{} file status is an unknown one, please check. File status was: {}".format(
+                logger.error(
+                    "[red]{} file status is an unknown one, please check. File status was: {}[/red]".format(
                         file_path, file_status
-                    ),
-                    fg="bright_red",
+                    )
                 )
             # handle meta data file changes
             elif file_path.endswith(PACKS_PACK_META_FILE_NAME):
@@ -408,15 +408,13 @@ def filter_changed_files(files_string, tag="master", print_ignored_files=False):
                     if file_path not in ignored_files:
                         ignored_files.add(file_path)
                         if print_ignored_files:
-                            click.secho(
-                                f"Ignoring file path: {file_path} - system file",
-                                fg="yellow",
+                            logger.info(
+                                f"[yellow]Ignoring file path: {file_path} - system file[/yellow]",
                             )
                     else:
                         if print_ignored_files:
-                            click.secho(
-                                f"Ignoring file path: {file_path} - system file",
-                                fg="yellow",
+                            logger.info(
+                                f"[yellow]Ignoring file path: {file_path} - system file[/yellow]"
                             )
 
         # handle a case where a file was deleted locally though recognised as added against master.
@@ -424,8 +422,8 @@ def filter_changed_files(files_string, tag="master", print_ignored_files=False):
             if file_path not in ignored_files:
                 ignored_files.add(file_path)
                 if print_ignored_files:
-                    click.secho(
-                        f"Ignoring file path: {file_path} - File not found", fg="yellow"
+                    logger.info(
+                        f"[yellow]Ignoring file path: {file_path} - File not found[/yellow]"
                     )
 
     modified_files_list, added_files_list, deleted_files = filter_packagify_changes(

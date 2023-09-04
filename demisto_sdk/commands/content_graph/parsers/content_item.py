@@ -1,4 +1,3 @@
-import logging
 from abc import ABCMeta, abstractmethod
 from pathlib import Path
 from typing import Dict, List, Optional, Set, Type, cast
@@ -9,6 +8,7 @@ from demisto_sdk.commands.common.constants import (
     MARKETPLACE_MIN_VERSION,
     MarketplaceVersions,
 )
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.content_graph.common import (
     UNIFIED_FILES_SUFFIXES,
     ContentType,
@@ -17,10 +17,12 @@ from demisto_sdk.commands.content_graph.common import (
 )
 from demisto_sdk.commands.content_graph.parsers.base_content import BaseContentParser
 
-logger = logging.getLogger("demisto-sdk")
-
 
 class NotAContentItemException(Exception):
+    pass
+
+
+class InvalidContentItemException(Exception):
     pass
 
 
@@ -86,7 +88,7 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
     def from_path(
         path: Path,
         pack_marketplaces: List[MarketplaceVersions] = list(MarketplaceVersions),
-    ) -> Optional["ContentItemParser"]:
+    ) -> "ContentItemParser":
         """Tries to parse a content item by its path.
         If during the attempt we detected the file is not a content item, `None` is returned.
 
@@ -98,12 +100,12 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
             if ContentItemParser.is_content_item(path.parent):
                 path = path.parent
             else:
-                return None
+                raise NotAContentItemException
         try:
             content_type: ContentType = ContentType.by_path(path)
         except ValueError as e:
-            logger.error(e)
-            return None
+            logger.error(f"Could not determine content type for {path}: {e}")
+            raise InvalidContentItemException from e
         if parser_cls := ContentItemParser.content_type_to_parser.get(content_type):
             try:
                 return ContentItemParser.parse(
@@ -115,7 +117,14 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
                 return ContentItemParser.parse(
                     e.correct_parser, path, pack_marketplaces, **e.kwargs
                 )
-        return None
+            except NotAContentItemException:
+                logger.debug(f"{path} is not a content item, skipping")
+                raise
+            except Exception as e:
+                logger.error(f"Failed to parse {path}: {e}")
+                raise InvalidContentItemException from e
+        logger.warning(f"Could not find parser for {content_type} of {path}")
+        raise NotAContentItemException
 
     @staticmethod
     def parse(
@@ -123,14 +132,10 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
         path: Path,
         pack_marketplaces: List[MarketplaceVersions],
         **kwargs,
-    ) -> Optional["ContentItemParser"]:
-        try:
-            parser = parser_cls(path, pack_marketplaces, **kwargs)
-            logger.debug(f"Parsed {parser.node_id}")
-            return parser
-        except NotAContentItemException:
-            logger.debug(f"Skipping {path}")
-            return None
+    ) -> "ContentItemParser":
+        parser = parser_cls(path, pack_marketplaces, **kwargs)
+        logger.debug(f"Parsed {parser.node_id}")
+        return parser
 
     @property
     @abstractmethod
@@ -156,6 +161,33 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
     @abstractmethod
     def marketplaces(self) -> List[MarketplaceVersions]:
         pass
+
+    def get_marketplaces(self, data: dict) -> List[MarketplaceVersions]:
+        if file_marketplaces := [
+            MarketplaceVersions(mp) for mp in data.get("marketplaces", [])
+        ]:
+            marketplaces = file_marketplaces
+        else:
+            marketplaces = self.pack_marketplaces
+
+        marketplaces_set = set(marketplaces).intersection(self.supported_marketplaces)
+        marketplaces_set = self.update_marketplaces_set_with_xsoar_values(
+            marketplaces_set
+        )
+        return sorted(marketplaces_set)
+
+    @staticmethod
+    def update_marketplaces_set_with_xsoar_values(marketplaces_set: set) -> set:
+        if (
+            MarketplaceVersions.XSOAR in marketplaces_set
+            and MarketplaceVersions.XSOAR_ON_PREM not in marketplaces_set
+        ):
+            marketplaces_set.add(MarketplaceVersions.XSOAR_SAAS)
+
+        if MarketplaceVersions.XSOAR_ON_PREM in marketplaces_set:
+            marketplaces_set.add(MarketplaceVersions.XSOAR)
+
+        return marketplaces_set
 
     @property
     @abstractmethod

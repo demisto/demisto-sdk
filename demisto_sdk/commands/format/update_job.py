@@ -1,10 +1,10 @@
-import logging
 import traceback
 
 from demisto_sdk.commands.common.constants import (
     FILETYPE_TO_DEFAULT_FROMVERSION,
     FileType,
 )
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.format.format_constants import (
     ERROR_RETURN_CODE,
     SKIP_RETURN_CODE,
@@ -15,8 +15,6 @@ from demisto_sdk.commands.format.update_generic_json import BaseUpdateJSON
 SELECTED_FEEDS = "selectedFeeds"
 IS_ALL_FEEDS = "isAllFeeds"
 IS_FEED = "isFeed"
-
-logger = logging.getLogger("demisto-sdk")
 
 
 class JobJSONFormat(BaseUpdateJSON):
@@ -65,7 +63,7 @@ class JobJSONFormat(BaseUpdateJSON):
             return SUCCESS_RETURN_CODE
 
         except Exception as err:
-            print(
+            logger.exception(
                 "".join(
                     traceback.format_exception(
                         etype=type(err), value=err, tb=err.__traceback__

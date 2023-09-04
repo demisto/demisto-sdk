@@ -203,9 +203,17 @@ inputs:
         field: ""
       fromdatelicenseval: 0001-01-01T00:00:00Z
     runFromLastJobTime: false
+- key: InputD
+  value:
+    simple: File.NameD
+  required: false
+  description: test & description
 outputs:
 - contextPath: Email.To
   description: The recipient of the email.
   type: string
 - contextPath: FileData
+  type: string
+- contextPath: Email.From
+  description: The sender & of the email.
   type: string

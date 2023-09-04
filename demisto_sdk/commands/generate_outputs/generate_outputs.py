@@ -1,6 +1,6 @@
-import logging
-import os
+from pathlib import Path
 
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import FileType, find_type
 from demisto_sdk.commands.generate_outputs.generate_context.generate_integration_context import (
     generate_integration_context,
@@ -11,8 +11,6 @@ from demisto_sdk.commands.generate_outputs.generate_descriptions.generate_descri
 from demisto_sdk.commands.generate_outputs.json_to_outputs.json_to_outputs import (
     json_to_outputs,
 )
-
-logger = logging.getLogger("demisto-sdk")
 
 
 def json_to_outputs_flow(kwargs):
@@ -66,7 +64,7 @@ def generate_ai_descriptions_flow(kwargs):
     input_path: str = kwargs.get("input", "")
     output_path: str = kwargs.get("output", False)
     if not output_path:
-        print("**AI Output set to out.yml**")
+        logger.info("**AI Output set to out.yml**")
         output_path = "out.yml"
     insecure: bool = kwargs.get("insecure", False)
     generate_ai_descriptions(input_path, output_path, True, insecure)
@@ -79,7 +77,7 @@ def validate_inputs_examples(input_path):
         )
         return 1
 
-    if input_path and not os.path.isfile(input_path):
+    if input_path and not Path(input_path).is_file():
         logger.info(f"[red]Input file {input_path} was not found.[/red]")
         return 1
 

@@ -1,5 +1,6 @@
-from demisto_sdk.commands.common.handlers import JSON_Handler
-json = JSON_Handler()
+from demisto_sdk.commands.common.logger import logger
+import json
+
 
 import time
 from typing import Any, Callable, Dict, Optional, Tuple, Union

@@ -1,8 +1,0 @@
-[flake8]
-# E203 space before ':' - handled by black in slice operators
-extend-ignore = E203
-# F403 unable to detect undefined names
-# F405 may be undefined, or defined from star imports
-ignore = F403, F405, W503, W504
-max-line-length = 160
-max-complexity = 30

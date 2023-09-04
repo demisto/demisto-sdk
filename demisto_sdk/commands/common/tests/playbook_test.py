@@ -1,4 +1,4 @@
-import os.path
+from pathlib import Path
 from typing import Optional
 from unittest.mock import patch
 
@@ -634,7 +634,6 @@ class TestPlaybookValidator:
     @pytest.mark.parametrize("playbook_json, expected_result", IS_CONDITIONAL_INPUTS)
     def test_is_condition_branches_handled(self, playbook_json, expected_result):
         structure = mock_structure("", playbook_json)
-        print(f"*** {playbook_json=}")
         validator = PlaybookValidator(structure)
         assert validator.is_condition_branches_handled() is expected_result
 
@@ -902,7 +901,7 @@ class TestPlaybookValidator:
             structure_validator, validate_all=validate_all
         )
         if remove_readme:
-            os.remove(playbook.readme.path)
+            Path(playbook.readme.path).unlink()
         assert (
             playbook_validator.validate_readme_exists(playbook_validator.validate_all)
             is expected_result

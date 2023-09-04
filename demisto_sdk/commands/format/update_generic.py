@@ -1,8 +1,7 @@
-import logging
 import os
 import re
 from copy import deepcopy
-from typing import Any, Dict, Set, Union
+from typing import Any, Dict, Optional, Set, Union
 
 import dictdiffer
 
@@ -11,6 +10,7 @@ from demisto_sdk.commands.common.constants import (
     VERSION_5_5_0,
 )
 from demisto_sdk.commands.common.handlers import YAML_Handler
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     find_type,
     get_dict_from_file,
@@ -18,6 +18,7 @@ from demisto_sdk.commands.common.tools import (
     get_remote_file,
     get_yaml,
     is_file_from_content_repo,
+    is_string_ends_with_url,
 )
 from demisto_sdk.commands.format.format_constants import (
     DEFAULT_VERSION,
@@ -29,8 +30,6 @@ from demisto_sdk.commands.format.format_constants import (
     VERSION_KEY,
 )
 from demisto_sdk.commands.validate.validate_manager import ValidateManager
-
-logger = logging.getLogger("demisto-sdk")
 
 yaml = YAML_Handler(allow_duplicate_keys=True)
 
@@ -48,7 +47,7 @@ class BaseUpdate:
         data (dict): Dictionary of loaded file.
         file_type (str): Whether the file is yml or json.
         from_version_key (str): The fromVersion key in file, different between yml and json files.
-        assume_yes (bool): Whether to assume "yes" as answer to all prompts and run non-interactively
+        assume_answer (bool | None): Whether to assume "yes" or "no" as answer to all prompts and run non-interactively
         interactive (bool): Whether to run the format interactively or not (usually for contribution management)
     """
 
@@ -60,7 +59,7 @@ class BaseUpdate:
         from_version: str = "",
         prev_ver: str = "master",
         no_validate: bool = False,
-        assume_yes: bool = False,
+        assume_answer: Union[bool, None] = None,
         interactive: bool = True,
         clear_cache: bool = False,
         **kwargs,
@@ -81,7 +80,7 @@ class BaseUpdate:
         self.extended_schema: dict = self.recursive_extend_schema(self.schema, self.schema)  # type: ignore
         self.from_version = from_version
         self.no_validate = no_validate
-        self.assume_yes = assume_yes
+        self.assume_answer = assume_answer
         self.interactive = interactive
         self.updated_ids: Dict = {}
         if not self.no_validate:
@@ -283,6 +282,9 @@ class BaseUpdate:
         return input()
 
     def ask_user(self, preserve_from_version_question=False):
+        if self.assume_answer is False:
+            return False
+
         if preserve_from_version_question:
             user_answer = self.get_answer(
                 f'Both "{self.from_version_key}" and "{self.json_from_server_version_key}" '
@@ -315,8 +317,8 @@ class BaseUpdate:
             current_fromversion_value: current from_version if exists in the file.
             file_type: the file type.
         """
-        print(
-            default_from_version, GENERAL_DEFAULT_FROMVERSION, current_fromversion_value
+        logger.info(
+            f"{default_from_version=}, {GENERAL_DEFAULT_FROMVERSION=}, {current_fromversion_value=}"
         )
         max_version = get_max_version(
             [
@@ -326,7 +328,7 @@ class BaseUpdate:
             ]
         )
         if max_version != current_fromversion_value and (
-            self.assume_yes or self.ask_user()
+            self.assume_answer or self.ask_user()
         ):
             self.data[self.from_version_key] = max_version
 
@@ -454,11 +456,43 @@ class BaseUpdate:
             if current_from_server_version == current_from_version:
                 self.data.pop(self.json_from_server_version_key)
             else:
-                preserve_from_version = self.ask_user(
+                preserve_from_version = self.assume_answer or self.ask_user(
                     preserve_from_version_question=True
                 )
-                if preserve_from_version or self.assume_yes:
+                if preserve_from_version:
                     self.data.pop(self.json_from_server_version_key)
                 else:
                     self.data[self.from_version_key] = current_from_server_version
                     self.data.pop(self.json_from_server_version_key)
+
+    def adds_period_to_description(self):
+        """Adds a period to the end of the descriptions
+        if it does not already end with a period."""
+
+        def _add_period(value: Optional[str]) -> Optional[str]:
+            if (
+                value
+                and isinstance(value, str)
+                and not value.endswith(".")
+                and not is_string_ends_with_url(value)
+            ):
+                return f"{value}."
+            return value
+
+        if data_description := self.data.get("description", {}):
+            self.data["description"] = _add_period(data_description)
+
+        if (script := self.data.get("script", {})) and isinstance(
+            script, dict
+        ):  # script could be a 'LiteralScalarString' object.
+            for command in script.get("commands", ()):
+                if command_description := command.get("description"):
+                    command["description"] = _add_period(command_description)
+
+                for argument in command.get("arguments", ()):
+                    if argument_description := argument.get("description"):
+                        argument["description"] = _add_period(argument_description)
+
+                for output in command.get("outputs", ()):
+                    if output_description := output.get("description"):
+                        output["description"] = _add_period(output_description)

@@ -19,5 +19,8 @@ pytest.ini @dorschw
 # Content graph
 demisto_sdk/commands/content_graph/** @dantavori @ilaner
 
+# Modeling rules
+demisto_sdk/commands/test_content/test_modeling_rule/ @daryakoval
+
 # Misc
 demisto_sdk/__main__.py @dorschw

@@ -1,7 +1,7 @@
+import logging
 import os
 from typing import NamedTuple
 
-import click
 import pytest
 from git import Repo
 
@@ -10,10 +10,10 @@ from demisto_sdk.commands.common.git_content_config import (
     GitCredentials,
     GitProvider,
 )
-from demisto_sdk.commands.common.handlers import JSON_Handler
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.legacy_git_tools import git_path
+from TestSuite.test_tools import str_in_call_args_list
 
-json = JSON_Handler()
 GIT_ROOT = git_path()
 VALID_GITLAB_RESPONSE = (
     f"{GIT_ROOT}/demisto_sdk/tests/test_files/valid_gitlab_search_response.json"
@@ -158,7 +158,7 @@ class TestGitContentConfig:
         )
         assert git_config.base_api == DEFAULT_GITHUB_BASE_API
 
-    def test_gitlab_id_not_found(self, mocker):
+    def test_gitlab_id_not_found(self, mocker, monkeypatch):
         """
         Given:
             Specify to use gitlab but cannot find the project id
@@ -167,19 +167,27 @@ class TestGitContentConfig:
         Then:
             Validate we got back original content
         """
+        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+        monkeypatch.setenv("COLUMNS", "1000")
         mocker.patch.object(GitContentConfig, "_search_gitlab_repo", return_value=None)
         url = "https://code.pan.run/xsoar/very-private-repo"
         mocker.patch.object(Repo, "remote", return_value=Urls([url]))
-        click_mock = mocker.patch.object(click, "secho")
+
         git_config = GitContentConfig(git_provider=GitProvider.GitLab)
         assert git_config.git_provider == GitProvider.GitHub
         assert (
             git_config.current_repository == GitContentConfig.OFFICIAL_CONTENT_REPO_NAME
         )
         assert git_config.base_api == DEFAULT_GITHUB_BASE_API
-        message = click_mock.call_args_list[1][0][0]
-        assert GitContentConfig.ENV_REPO_HOSTNAME_NAME in message
-        assert GitCredentials.ENV_GITLAB_TOKEN_NAME in message
+        assert all(
+            [
+                str_in_call_args_list(logger_info.call_args_list, current_str)
+                for current_str in [
+                    GitContentConfig.ENV_REPO_HOSTNAME_NAME,
+                    GitCredentials.ENV_GITLAB_TOKEN_NAME,
+                ]
+            ]
+        )
         assert GitContentConfig.NOTIFIED_PRIVATE_REPO
 
     def test_get_repo_name_gitlab_invalid(self, mocker):

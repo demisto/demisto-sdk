@@ -16,13 +16,23 @@ class XDRCTemplate(ContentItemXSIAM, content_type=ContentType.XDRC_TEMPLATE):
     profile_type: str
 
     def metadata_fields(self) -> Set[str]:
-        return {"name", "os_type", "profile_type"}
+        return (
+            super()
+            .metadata_fields()
+            .union(
+                {
+                    "content_global_id",
+                    "os_type",
+                    "profile_type",
+                }
+            )
+        )
 
     def prepare_for_upload(
         self,
-        marketplace: MarketplaceVersions = MarketplaceVersions.MarketplaceV2,
+        current_marketplace: MarketplaceVersions = MarketplaceVersions.MarketplaceV2,
         **kwargs
     ) -> dict:
-        data = super().prepare_for_upload(marketplace)
-        data = XDRCTemplateUnifier.unify(self.path, data, marketplace)
+        data = super().prepare_for_upload(current_marketplace)
+        data = XDRCTemplateUnifier.unify(self.path, data, current_marketplace)
         return data

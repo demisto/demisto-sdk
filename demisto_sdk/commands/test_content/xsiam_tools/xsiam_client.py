@@ -1,6 +1,4 @@
 import gzip
-import json
-import logging
 import os
 from abc import ABC, abstractmethod
 from pathlib import Path
@@ -12,7 +10,10 @@ import requests
 from pydantic import BaseModel, Field, HttpUrl, SecretStr, validator
 from pydantic.fields import ModelField
 
-logger = logging.getLogger("demisto-sdk")
+from demisto_sdk.commands.common.handlers import JSON_Handler
+from demisto_sdk.commands.common.logger import logger
+
+json = JSON_Handler()
 
 
 class XsiamApiClientConfig(BaseModel):
@@ -132,6 +133,18 @@ class XsiamApiClient(XsiamApiInterface):
         response.raise_for_status()
         return response.json()
 
+    def search_marketplace(self, filter_json: dict):
+        endpoint = urljoin(self.base_url, "xsoar/contentpacks/marketplace/search")
+        response = self._session.post(endpoint, json=filter_json)
+        response.raise_for_status()
+        return response.json()
+
+    def search_data_sources(self, filter_json: dict):
+        endpoint = urljoin(self.base_url, "xsoar/settings/datasourcepack/search")
+        response = self._session.post(endpoint, json=filter_json)
+        response.raise_for_status()
+        return response.json()
+
     def search_pack(self, pack_id):
         endpoint = urljoin(self.base_url, f"xsoar/contentpacks/marketplace/{pack_id}")
         response = self._session.get(endpoint)
@@ -154,7 +167,7 @@ class XsiamApiClient(XsiamApiInterface):
         files = {"file": file_path}
         response = self._session.post(endpoint, files=files, headers=header_params)
         response.raise_for_status()
-        logging.info(
+        logger.info(
             f"All packs from file {zip_path} were successfully installed on server {self.base_url}"
         )
 
@@ -234,7 +247,7 @@ class XsiamApiClient(XsiamApiInterface):
             )
             response.raise_for_status()
 
-    def start_xql_query(self, query: str):
+    def start_xql_query(self, query: str, print_req_error: bool = True):
         body = {"request_data": {"query": query}}
         endpoint = urljoin(self.base_url, "public_api/v1/xql/start_xql_query/")
         logger.info(f"Starting xql query:\nendpoint={endpoint}\n{query=}")
@@ -245,10 +258,13 @@ class XsiamApiClient(XsiamApiInterface):
         if response.status_code in range(200, 300):
             execution_id: str = data.get("reply", "")
             return execution_id
-        else:
+        elif print_req_error:
             logger.error(
                 f'Failed to start xql query "{query}" - with status code {response.status_code}\n{pformat(data)}'
             )
+            response.raise_for_status()
+        else:
+            logger.info("Still processing. Please wait...")
             response.raise_for_status()
 
     def get_xql_query_result(self, execution_id: str, timeout: int = 300):

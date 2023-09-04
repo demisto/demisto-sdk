@@ -1,14 +1,12 @@
 import os
 import sys
+from pathlib import Path
 from typing import Dict, Optional
 
-import click
-
 from demisto_sdk.commands.common.constants import PACKS_DIR, FileType
-from demisto_sdk.commands.common.handlers import JSON_Handler
-from demisto_sdk.commands.common.tools import find_type, get_pack_name, get_json
-
-json = JSON_Handler()
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
+from demisto_sdk.commands.common.logger import logger
+from demisto_sdk.commands.common.tools import find_type, get_pack_name
 
 
 class GenericModuleUnifier:
@@ -42,9 +40,7 @@ class GenericModuleUnifier:
 
         if output:
             if not os.path.isdir(output):
-                click.secho(
-                    "You have failed to provide a legal dir path", fg="bright_red"
-                )
+                logger.error("[red]You have failed to provide a legal dir path[/red]")
                 sys.exit(1)
 
             self.dest_dir = output
@@ -99,10 +95,9 @@ class GenericModuleUnifier:
                         tab["dashboard"] = dashboard_content
 
                     else:
-                        click.secho(
-                            f"Dashboard {dashboard_id} was not found in pack: {self.pack_name} "
-                            f"and therefore was not unified",
-                            fg="bright_red",
+                        logger.info(
+                            f"[red]Dashboard {dashboard_id} was not found in pack: {self.pack_name} "
+                            f"and therefore was not unified[/red]"
                         )
 
         self.save_unified_generic_module(generic_module)
@@ -116,7 +111,7 @@ class GenericModuleUnifier:
             unified_generic_module_json: unified GenericModule
 
         """
-        if os.path.isfile(self.dest_path) and self.use_force is False:
+        if Path(self.dest_path).is_file() and self.use_force is False:
             raise ValueError(
                 f"Output file already exists: {self.dest_path}."
                 " Make sure to remove this file from source control, set a different output dir or set the"

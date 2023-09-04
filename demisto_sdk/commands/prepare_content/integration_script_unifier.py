@@ -1,38 +1,42 @@
 import base64
 import copy
 import glob
-import logging
 import os
 import re
+import tempfile
 from pathlib import Path
 from typing import Dict, List, Union
 
-import click
 from inflection import dasherize, underscore
-from ruamel.yaml.scalarstring import FoldedScalarString
+from ruamel.yaml.scalarstring import (  # noqa: TID251 - only importing FoldedScalarString is OK
+    FoldedScalarString,
+)
 
 from demisto_sdk.commands.common.constants import (
     API_MODULE_FILE_SUFFIX,
     DEFAULT_IMAGE_PREFIX,
     TYPE_TO_EXTENSION,
     FileType,
+    ImagesFolderNames,
     MarketplaceVersions,
 )
-from demisto_sdk.commands.common.handlers import JSON_Handler
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     arg_to_list,
     find_type,
+    get_content_path,
+    get_file,
     get_mp_tag_parser,
     get_pack_metadata,
     get_pack_name,
     get_yaml,
     get_yml_paths_in_dir,
 )
+from demisto_sdk.commands.prepare_content.markdown_images_handler import (
+    replace_markdown_urls_and_upload_to_artifacts,
+)
 from demisto_sdk.commands.prepare_content.unifier import Unifier
-
-logger = logging.getLogger("demisto-sdk")
-
-json = JSON_Handler()
 
 PACK_METADATA_PATH = "pack_metadata.json"
 CONTRIBUTOR_DISPLAY_NAME = " ({} Contribution)"
@@ -67,7 +71,7 @@ class IntegrationScriptUnifier(Unifier):
         image_prefix: str = DEFAULT_IMAGE_PREFIX,
         **kwargs,
     ):
-        logger.info(f"Unifying package: {path}")
+        logger.debug(f"Unifying {path}")
         if path.parent.name in {"Integrations", "Scripts"}:
             return data
         package_path = path.parent
@@ -84,7 +88,7 @@ class IntegrationScriptUnifier(Unifier):
             IntegrationScriptUnifier.get_code_file(package_path, script_type)
         except ValueError:
             logger.info(
-                f"[yellow]No code file found for {path}, assuming it is already unifiedyellow[/yellow]"
+                f"[yellow]No code file found for {path}, assuming it is already unified[/yellow]"
             )
             return data
         yml_unified = copy.deepcopy(data)
@@ -97,7 +101,7 @@ class IntegrationScriptUnifier(Unifier):
                 package_path, yml_unified, is_script_package, image_prefix
             )
             yml_unified, _ = IntegrationScriptUnifier.insert_description_to_yml(
-                package_path, yml_unified, is_script_package
+                package_path, yml_unified, is_script_package, marketplace=marketplace
             )
             (
                 contributor_type,
@@ -123,7 +127,7 @@ class IntegrationScriptUnifier(Unifier):
                 yml_unified, custom, is_script_package
             )
 
-        logger.info(f"[green]Created unified yml: {path.name}[/green]")
+        logger.debug(f"[green]Created unified yml: {path.name}[/green]")
         return yml_unified
 
     @staticmethod
@@ -136,6 +140,8 @@ class IntegrationScriptUnifier(Unifier):
 
         This method replaces a list with a boolean, according to the self.marketplace value.
         Boolean values are left untouched.
+        when credentials of type 9 are hidden, the function will replace the hidden key with
+        hiddenusername and hiddenpassword.
         """
         if not marketplace:
             return
@@ -143,7 +149,22 @@ class IntegrationScriptUnifier(Unifier):
         for i, param in enumerate(data.get("configuration", ())):
             if isinstance(hidden := (param.get("hidden")), list):
                 # converts list to bool
-                data["configuration"][i]["hidden"] = marketplace in hidden
+                if MarketplaceVersions.XSOAR.value in hidden:
+                    hidden.extend(
+                        [
+                            MarketplaceVersions.XSOAR_SAAS,
+                            MarketplaceVersions.XSOAR_ON_PREM,
+                        ]
+                    )
+                if MarketplaceVersions.XSOAR_ON_PREM.value in hidden:
+                    hidden.append(MarketplaceVersions.XSOAR)
+
+                if param.get("name") == "credentials" and param.get("type") == 9:
+                    data["configuration"][i]["hiddenusername"] = marketplace in hidden
+                    data["configuration"][i]["hiddenpassword"] = marketplace in hidden
+                    data["configuration"][i].pop("hidden")
+                else:  # type-4 param
+                    data["configuration"][i]["hidden"] = marketplace in hidden
 
     @staticmethod
     def add_custom_section(
@@ -181,22 +202,41 @@ class IntegrationScriptUnifier(Unifier):
             image_data = image_prefix + base64.b64encode(image_data).decode("utf-8")
             yml_unified["image"] = image_data
         else:
-            click.secho(f"Failed getting image data for {package_path}", fg="yellow")
+            logger.warning(
+                f"[yellow]Failed getting image data for {package_path}[/yellow]"
+            )
 
         return yml_unified, found_img_path
 
     @staticmethod
     def insert_description_to_yml(
-        package_path: Path, yml_unified: dict, is_script_package: bool
+        package_path: Path,
+        yml_unified: dict,
+        is_script_package: bool,
+        marketplace: MarketplaceVersions = None,
     ):
         desc_data, found_desc_path = IntegrationScriptUnifier.get_data(
             package_path, "*_description.md", is_script_package
         )
-
         detailed_description = ""
         if desc_data:
+            desc_data = desc_data.decode("utf-8")
+            if not is_script_package and marketplace:
+                pack_name = package_path.parents[1].name  # Get the name of the pack
+                with tempfile.NamedTemporaryFile(mode="r+", delete=False) as tempf:
+                    tempf.write(desc_data)
+                    tempf.flush()
+                    replace_markdown_urls_and_upload_to_artifacts(
+                        Path(tempf.name),
+                        marketplace,
+                        pack_name,
+                        file_type=ImagesFolderNames.INTEGRATION_DESCRIPTION_IMAGES,
+                    )
+                    tempf.seek(0)
+                    desc_data = tempf.read()
+
             detailed_description = get_mp_tag_parser().parse_text(
-                FoldedScalarString(desc_data.decode("utf-8"))
+                FoldedScalarString(desc_data)
             )
 
         integration_doc_link = ""
@@ -240,7 +280,8 @@ class IntegrationScriptUnifier(Unifier):
             r"|CommonServerPowerShell\.ps1|CommonServerUserPowerShell\.ps1|demistomock\.ps1|\.Tests\.ps1"
         )
         if package_path.endswith("/"):
-            package_path = package_path[:-1]  # remove the last / as we use os.path.join
+            # remove the last / as we use os.path.join
+            package_path = package_path[:-1]
         if package_path.endswith(os.path.join("Scripts", "CommonServerPython")):
             return os.path.join(package_path, "CommonServerPython.py")
         if package_path.endswith(os.path.join("Scripts", "CommonServerUserPython")):
@@ -276,8 +317,7 @@ class IntegrationScriptUnifier(Unifier):
         is_script_package: bool,
     ):
         script_path = IntegrationScriptUnifier.get_code_file(package_path, script_type)
-        with open(script_path, encoding="utf-8") as script_file:
-            script_code = script_file.read()
+        script_code = get_file(script_path, return_content=True)
 
         # Check if the script imports an API module. If it does,
         # the API module code will be pasted in place of the import.
@@ -285,13 +325,13 @@ class IntegrationScriptUnifier(Unifier):
             script_code
         )
         script_code = IntegrationScriptUnifier.insert_module_code(
-            script_code, imports_to_names
+            script_code, imports_to_names, get_content_path(package_path)
         )
         if pack_version := get_pack_metadata(file_path=str(package_path)).get(
             "currentVersion", ""
         ):
             script_code = IntegrationScriptUnifier.insert_pack_version(
-                script_code, pack_version
+                script_type, script_code, pack_version
             )
 
         if script_type == ".py":
@@ -341,14 +381,15 @@ class IntegrationScriptUnifier(Unifier):
             )
 
         if find_type(yml_path) in (FileType.SCRIPT, FileType.TEST_SCRIPT):
-            code_type = get_yaml(yml_path).get("type")
+            code_type = get_yaml(yml_path, keep_order=False).get("type")
         else:
-            code_type = get_yaml(yml_path).get("script", {}).get("type")
+            code_type = (
+                get_yaml(yml_path, keep_order=False).get("script", {}).get("type")
+            )
         code_path = IntegrationScriptUnifier.get_code_file(
             package_path, TYPE_TO_EXTENSION[code_type]
         )
-        with open(code_path, encoding="utf-8") as code_file:
-            code = code_file.read()
+        code = get_file(code_path, return_content=True)
 
         return yml_path, code
 
@@ -360,7 +401,7 @@ class IntegrationScriptUnifier(Unifier):
         :return: The import string and the imported module name
         """
 
-        # General regex to find API module imports, for example: "from MicrosoftApiModule import *  # noqa: E402"
+        # General regex to find API module imports, for example: "from MicrosoftApiModule import *  # "
         module_regex = r"from ([\w\d]+ApiModule) import \*(?:  # noqa: E402)?"
 
         module_matches = re.finditer(module_regex, script_code)
@@ -371,18 +412,25 @@ class IntegrationScriptUnifier(Unifier):
         }
 
     @staticmethod
-    def insert_module_code(script_code: str, import_to_name: Dict[str, str]) -> str:
+    def insert_module_code(
+        script_code: str, import_to_name: Dict[str, str], content_path: Path
+    ) -> str:
         """
         Inserts API module in place of an import to the module according to the module name
         :param script_code: The integration code
         :param import_to_name: A dictionary where the keys are The module import string to replace
         and the values are The module name
+        :param content_path: The path to the content repo
         :return: The integration script with the module code appended in place of the import
         """
         for module_import, module_name in import_to_name.items():
-
-            module_path = os.path.join(
-                "./Packs", "ApiModules", "Scripts", module_name, module_name + ".py"
+            module_path = Path(
+                content_path,
+                "Packs",
+                "ApiModules",
+                "Scripts",
+                module_name,
+                f"{module_name}.py",
             )
             module_code = IntegrationScriptUnifier._get_api_module_code(
                 module_name, module_path
@@ -393,7 +441,7 @@ class IntegrationScriptUnifier(Unifier):
                 module_code
             )
             module_code = IntegrationScriptUnifier.insert_module_code(
-                module_code, tmp_imports_to_names
+                module_code, tmp_imports_to_names, content_path
             )
 
             # the wrapper numbers represents the number of generated lines added
@@ -411,16 +459,28 @@ class IntegrationScriptUnifier(Unifier):
         return script_code
 
     @staticmethod
-    def insert_pack_version(script_code: str, pack_version: str) -> str:
+    def insert_pack_version(
+        script_type: str, script_code: str, pack_version: str
+    ) -> str:
         """
         Inserts the pack version to the script so it will be easy to know what was the contribution original pack version.
         :param script_code: The integration code
         :param pack_version: The pack version
         :return: The integration script with the pack version appended if needed, otherwise returns the original script
         """
-        if "### pack version:" in script_code:
-            return script_code
-        return f"\n### pack version: {pack_version}\n{script_code}"
+        if script_type == ".js":
+            return (
+                script_code
+                if "// pack version:" in script_code
+                else f"// pack version: {pack_version}\n{script_code}"
+            )
+        elif script_type in {".py", ".ps1"}:
+            return (
+                script_code
+                if "### pack version:" in script_code
+                else f"### pack version: {pack_version}\n{script_code}"
+            )
+        return script_code
 
     @staticmethod
     def _get_api_module_code(module_name, module_path):
@@ -576,13 +636,12 @@ class IntegrationScriptUnifier(Unifier):
         integration_doc_link = INTEGRATIONS_DOCS_REFERENCE + normalized_integration_id
 
         readme_path = os.path.join(package_path, "README.md")
-        if os.path.isfile(readme_path) and os.stat(readme_path).st_size != 0:
+        if Path(readme_path).is_file() and os.stat(readme_path).st_size != 0:
             # verify README file exists and is not empty
             return f"[View Integration Documentation]({integration_doc_link})"
         else:
-            click.secho(
-                f"Did not find README in {package_path}, not adding integration doc link",
-                fg="bright_cyan",
+            logger.info(
+                f"[cyan]Did not find README in {package_path}, not adding integration doc link[/cyan]"
             )
             return ""
 

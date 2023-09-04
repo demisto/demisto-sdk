@@ -1,19 +1,30 @@
 from abc import ABC
+from pathlib import Path
+from typing import List
 
+import demisto_client
 from packaging.version import Version
 from pydantic import DirectoryPath
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
-from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
+from demisto_sdk.commands.content_graph.common import ContentType
+from demisto_sdk.commands.content_graph.objects.content_item import (
+    ContentItem,
+)
+from demisto_sdk.commands.upload.exceptions import (
+    NotIndivitudallyUploadableException,
+)
 
 
 class ContentItemXSIAM(ContentItem, ABC):
-    def dump(self, dir: DirectoryPath, marketplace: MarketplaceVersions) -> None:
+    def dump(
+        self,
+        dir: DirectoryPath,
+        marketplace: MarketplaceVersions,
+    ) -> None:
         dir.mkdir(exist_ok=True, parents=True)
 
-        output_paths = []
-        data = self.prepare_for_upload(marketplace)
-
+        output_paths: List[Path] = []
         if Version(self.fromversion) >= Version("6.10.0"):
             # export XSIAM 1.3 items only with the external prefix
             output_paths.append(dir / f"external-{self.normalize_name}")
@@ -26,6 +37,36 @@ class ContentItemXSIAM(ContentItem, ABC):
             output_paths.append(dir / f"external-{self.normalize_name}")
             output_paths.append(dir / self.normalize_name)
 
+        data = self.prepare_for_upload(
+            marketplace,
+        )
+
         for file in output_paths:
             with open(file, "w") as f:
-                self.handler.dump(data, f)
+                self.handler.dump(
+                    data,
+                    f,
+                )
+
+    def _upload(
+        self,
+        client: demisto_client,
+        marketplace: MarketplaceVersions,
+    ) -> None:
+        """
+        Uploadable XSIAM items should override this method.
+        The rest will raise as default.
+        """
+        raise NotIndivitudallyUploadableException(self)
+
+    def get_preview_image_gcs_path(self):
+        """
+        Updates the summary object with the preview image path in GCS if there is such an image in the content repo.
+        This is for XSIAM dashboards and reports.
+        """
+        if (
+            self.content_type in [ContentType.XSIAM_DASHBOARD, ContentType.XSIAM_REPORT]
+            and (self.path.parent / f"{self.path.stem}_image.png").exists()
+        ):
+            return f"content/packs/{self.pack_id}/{self.in_pack.current_version}/{self.content_type.as_folder}/{self.path.stem}_image.png"  # type:ignore[union-attr]
+        return ""

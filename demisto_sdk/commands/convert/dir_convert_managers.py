@@ -1,10 +1,10 @@
 import os
 from abc import abstractmethod
 
-import click
 from packaging.version import Version
 
 from demisto_sdk.commands.common.content.objects.pack_objects.pack import Pack
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import is_pack_path
 from demisto_sdk.commands.convert.converters.classifier.classifier_6_0_0_converter import (
     ClassifierSixConverter,
@@ -88,9 +88,8 @@ class LayoutsDirConvertManager(AbstractDirConvertManager):
             layout_converter = LayoutBelowSixConverter(self.pack)
         convert_result = layout_converter.convert_dir()
         if not convert_result:
-            click.secho(
-                f"Converted Layouts successfully in pack: {str(self.pack.path)}",
-                fg="green",
+            logger.info(
+                f"[green]Converted Layouts successfully in pack: {str(self.pack.path)}[/green]"
             )
         return convert_result
 
@@ -108,9 +107,8 @@ class ClassifiersDirConvertManager(AbstractDirConvertManager):
             )
             convert_result = classifier_converter.convert_dir()
             if not convert_result:
-                click.secho(
-                    f"Converted Classifiers successfully in pack: {str(self.pack.path)}",
-                    fg="green",
+                logger.info(
+                    f"[green]Converted Classifiers successfully in pack: {str(self.pack.path)}[/green]"
                 )
             return convert_result
         else:

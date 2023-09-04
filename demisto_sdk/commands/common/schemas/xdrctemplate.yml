@@ -18,3 +18,7 @@ mapping:
   yaml_template:
     type: str
     required: true
+  fromVersion:
+    type: str
+  toVersion:
+    type: str

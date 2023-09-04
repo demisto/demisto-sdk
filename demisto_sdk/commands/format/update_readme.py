@@ -1,4 +1,3 @@
-import logging
 from typing import Optional, Tuple
 
 from demisto_sdk.commands.common.hook_validations.readme import (
@@ -6,6 +5,7 @@ from demisto_sdk.commands.common.hook_validations.readme import (
     get_relative_urls,
     mdx_server_is_up,
 )
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.markdown_lint import run_markdownlint
 from demisto_sdk.commands.format.format_constants import (
     ERROR_RETURN_CODE,
@@ -13,8 +13,6 @@ from demisto_sdk.commands.format.format_constants import (
     SUCCESS_RETURN_CODE,
 )
 from demisto_sdk.commands.format.update_generic import BaseUpdate
-
-logger = logging.getLogger("demisto-sdk")
 
 
 class ReadmeFormat(BaseUpdate):
@@ -66,8 +64,10 @@ class ReadmeFormat(BaseUpdate):
         """
         old_url = str.strip(readme_url.get_url())
         new_address = None
-        if self.assume_yes:
+        if self.assume_answer:
             return f"https://{old_url}"
+        elif self.assume_answer is False:
+            return None
         else:
             logger.info(
                 f"[red]Should https:// be added to the following address? [Y/n]\n {readme_url.get_url()}[/red]"

@@ -1,12 +1,14 @@
-import json
-import logging
 from typing import List, Optional, Union
 
 from wcmatch.pathlib import Path
 
 from demisto_sdk.commands.common.constants import CONTRIBUTORS_README_TEMPLATE, FileType
 from demisto_sdk.commands.common.content.objects.abstract_objects import TextObject
+from demisto_sdk.commands.common.handlers import JSON_Handler
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import get_mp_tag_parser
+
+json = JSON_Handler()
 
 
 class Readme(TextObject):
@@ -37,7 +39,7 @@ class Readme(TextObject):
                 with open(self._path, "a+") as readme_file:
                     readme_file.write(contribution_data)
         except Exception as e:
-            print(e)
+            logger.error(e)
 
     def handle_marketplace_tags(self):
         """Remove marketplace tags depending on marketplace version"""
@@ -50,7 +52,7 @@ class Readme(TextObject):
                     f.write(parsed_text)
                     f.truncate()
         except Exception as e:
-            logging.error(e)
+            logger.error(e)
 
     def dump(self, dest_dir: Optional[Union[Path, str]] = None) -> List[Path]:
         self.mention_contributors_in_readme()

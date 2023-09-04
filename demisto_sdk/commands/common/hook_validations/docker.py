@@ -4,15 +4,19 @@ from functools import lru_cache
 from typing import Optional, Tuple, Union
 
 import requests
+from dateparser import parse
 from pkg_resources import parse_version
 
-from demisto_sdk.commands.common.constants import IronBankDockers
+from demisto_sdk.commands.common.constants import (
+    NATIVE_IMAGE_DOCKER_NAME,
+    IronBankDockers,
+)
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.base_validator import (
     BaseValidator,
     error_codes,
 )
-from demisto_sdk.commands.common.tools import get_yaml
+from demisto_sdk.commands.common.tools import get_pack_metadata, get_yaml
 
 # disable insecure warnings
 requests.packages.urllib3.disable_warnings()  # type: ignore
@@ -54,6 +58,9 @@ class DockerImageValidator(BaseValidator):
         self.code_type = self.get_code_type()
         self.yml_docker_image = self.get_docker_image_from_yml()
         self.from_version = self.yml_file.get("fromversion", "0")
+        self.is_pack_xsoar_supported = (
+            get_pack_metadata(yml_file_path).get("support", "xsoar").lower() == "xsoar"
+        )
         self.docker_image_name, self.docker_image_tag = self.parse_docker_image(
             self.yml_docker_image
         )
@@ -67,7 +74,7 @@ class DockerImageValidator(BaseValidator):
             self.docker_image_name, self.yml_docker_image, self.is_iron_bank
         )
 
-    @error_codes("DO108,DO107,DO109")
+    @error_codes("DO108,DO107,DO109,DO110")
     def is_docker_image_valid(self):
         # javascript code should not check docker
         if self.code_type == "javascript":
@@ -92,69 +99,101 @@ class DockerImageValidator(BaseValidator):
             error_message, error_code = Errors.non_existing_docker(
                 self.yml_docker_image
             )
-            if self.handle_error(error_message, error_code, file_path=self.file_path):
+            if self.handle_error(
+                error_message,
+                error_code,
+                file_path=self.file_path,
+                warning=not self.is_pack_xsoar_supported,
+            ):
                 self.is_valid = False
 
         elif not self.is_docker_image_latest_tag():
             self.is_valid = False
 
+        if self.is_native_image_in_dockerimage_field():
+            error_message, error_code = Errors.native_image_is_in_dockerimage_field(
+                self.yml_docker_image
+            )
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                self.is_valid = False
+
         return self.is_valid
 
     @error_codes("DO100,DO106,DO101")
     def is_docker_image_latest_tag(self):
+        is_latest_tag = True
         if (
             "demisto/python:1.3-alpine"
             == f"{self.docker_image_name}:{self.docker_image_tag}"
         ):
+            self.is_latest_tag = False
             # the docker image is the default one
             error_message, error_code = Errors.default_docker_error()
             if self.handle_error(error_message, error_code, file_path=self.file_path):
-                self.is_latest_tag = False
-
-            return self.is_latest_tag
+                is_latest_tag = False
 
         # ignore tag or non-demisto docker issues
-        if self.docker_image_latest_tag == "no-tag-required":
-            return self.is_latest_tag
+        elif self.docker_image_latest_tag == "no-tag-required":
+            return True
 
-        if not self.docker_image_name or not self.docker_image_latest_tag:
+        elif not self.docker_image_name or not self.docker_image_latest_tag:
             # If the docker image isn't in the format we expect it to be or we failed fetching the tag
             # We don't want to print any error msgs to user because they have already been printed
             # see parse_docker_image for the errors
-            self.is_latest_tag = False
-            return self.is_latest_tag
+            self.is_latest_tag, is_latest_tag = False, False
 
-        if self.docker_image_latest_tag != self.docker_image_tag:
+        elif self.docker_image_latest_tag != self.docker_image_tag:
             # If docker image tag is not the most updated one that exists in docker-hub
+            self.is_latest_tag = False
             error_message, error_code = Errors.docker_not_on_the_latest_tag(
-                self.docker_image_tag, self.docker_image_latest_tag, self.is_iron_bank
+                self.docker_image_tag,
+                self.docker_image_latest_tag,
+                self.is_iron_bank,
             )
             suggested_fix = Errors.suggest_docker_fix(
                 self.docker_image_name, self.file_path, self.is_iron_bank
             )
-            if self.handle_error(
+            if self.is_docker_older_than_three_days():
+                if self.handle_error(
+                    error_message,
+                    error_code,
+                    file_path=self.file_path,
+                    suggested_fix=suggested_fix,
+                ):
+                    return False
+
+            # if this error is ignored - do print it as a warning
+            self.handle_error(
                 error_message,
                 error_code,
                 file_path=self.file_path,
+                warning=True,
                 suggested_fix=suggested_fix,
-            ):
-                self.is_latest_tag = False
-
-            else:
-                # if this error is ignored - do print it as a warning
-                self.handle_error(
-                    error_message, error_code, file_path=self.file_path, warning=True
-                )
+            )
 
         # the most updated tag should be numeric and not labeled "latest"
         if self.docker_image_latest_tag == "latest":
+            self.is_latest_tag = False
             error_message, error_code = Errors.latest_docker_error(
                 self.docker_image_tag, self.docker_image_name
             )
             if self.handle_error(error_message, error_code, file_path=self.file_path):
-                self.is_latest_tag = False
+                is_latest_tag = False
 
-        return self.is_latest_tag
+        return is_latest_tag
+
+    def is_docker_older_than_three_days(self):
+        """
+        Return True if the docker is more than 3 days old.
+
+        Returns:
+            bool: True if the docker is more than 3 days old.
+        """
+        three_days_ago: Optional[datetime] = parse("3 days ago")
+        last_updated = self.get_docker_image_creation_date(
+            self.docker_image_name, self.docker_image_tag
+        )
+        return not last_updated or three_days_ago > last_updated
 
     def get_code_type(self):
         if self.is_integration:
@@ -283,6 +322,36 @@ class DockerImageValidator(BaseValidator):
 
     @staticmethod
     @lru_cache(256)
+    def get_docker_image_creation_date(docker_image_name: str, docker_image_tag: str):
+        """
+        Get the last_updated field of the given docker.
+        Args:
+            docker_image_name: The docker image name.
+            docker_image_tag: The docker image tag.
+
+        Returns:
+            The last_updated value of the docker
+        """
+        last_updated = None
+        auth_token = DockerImageValidator.docker_auth(
+            docker_image_name, False, DEFAULT_REGISTRY
+        )
+        headers = ACCEPT_HEADER.copy()
+        if auth_token:
+            headers["Authorization"] = f"Bearer {auth_token}"
+        # first try to get the docker image tags using normal http request
+        res = requests.get(
+            url=f"https://hub.docker.com/v2/repositories/{docker_image_name}/tags/{docker_image_tag}",
+            verify=False,
+            timeout=TIMEOUT,
+        )
+        if res.status_code == 200:
+            last_updated = res.json().get("last_updated", "")
+            last_updated = datetime.strptime(last_updated, "%Y-%m-%dT%H:%M:%S.%fZ")
+        return last_updated
+
+    @staticmethod
+    @lru_cache(256)
     def get_docker_image_latest_tag_request(docker_image_name: str) -> str:
         """
         Get the latest tag for a docker image by request to docker hub.
@@ -343,7 +412,10 @@ class DockerImageValidator(BaseValidator):
             if not yml_docker_image.startswith("demisto/"):
                 error_message, error_code = Errors.not_demisto_docker()
                 if self.handle_error(
-                    error_message, error_code, file_path=self.file_path
+                    error_message,
+                    error_code,
+                    file_path=self.file_path,
+                    warning=not self.is_pack_xsoar_supported,
                 ):
                     return ""
                 return "no-tag-required"
@@ -387,7 +459,10 @@ class DockerImageValidator(BaseValidator):
                 else:
                     error_message, error_code = Errors.no_docker_tag(docker_image)
                     self.handle_error(
-                        error_message, error_code, file_path=self.file_path
+                        error_message,
+                        error_code,
+                        file_path=self.file_path,
+                        warning=not self.is_pack_xsoar_supported,
                     )
 
             except IndexError:
@@ -514,7 +589,7 @@ class DockerImageValidator(BaseValidator):
                     f"This may happen if you are not connected to the internet."
                 )
             raise Exception(
-                f"Could not get latest demisto-sdk version.\nEncountered error: {exc_msg}"
+                f"Could not get deprecated docker images from dockerfiles repo.\nEncountered error: {exc_msg}"
             )
 
     def is_docker_image_deprecated(
@@ -532,3 +607,16 @@ class DockerImageValidator(BaseValidator):
                 deprecated_reason = docker_image.get("reason")
                 return docker_image_name, deprecated_reason
         return ""
+
+    def is_native_image_in_dockerimage_field(self) -> bool:
+        """
+        Checks if py3-native docker image is in the "dockerimage" yml field
+
+        Returns:
+            bool: True if py3-native docker image is configured in the "dockerimage" field, False otherwise.
+
+        """
+        if self.yml_docker_image:
+            return NATIVE_IMAGE_DOCKER_NAME in self.yml_docker_image
+
+        return False

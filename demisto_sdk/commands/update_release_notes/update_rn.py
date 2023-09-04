@@ -3,20 +3,22 @@ This script is used to create a release notes template
 """
 import copy
 import errno
-import logging
 import os
 import re
-from distutils.version import LooseVersion
 from pathlib import Path
-from typing import Any, Optional, Tuple, Union
+from typing import Any, Iterable, Optional, Tuple, Union
+
+from packaging.version import Version
 
 from demisto_sdk.commands.common.constants import (
     ALL_FILES_VALIDATION_IGNORE_WHITELIST,
     DEPRECATED_DESC_REGEX,
     DEPRECATED_NO_REPLACE_DESC_REGEX,
+    EVENT_COLLECTOR,
     IGNORED_PACK_NAMES,
     RN_CONTENT_ENTITY_WITH_STARS,
     RN_HEADER_BY_FILE_TYPE,
+    SIEM_ONLY_ENTITIES,
     XSIAM_DASHBOARDS_DIR,
     XSIAM_REPORTS_DIR,
     FileType,
@@ -30,13 +32,14 @@ from demisto_sdk.commands.common.content.objects.pack_objects import (
 from demisto_sdk.commands.common.content.objects.pack_objects.abstract_pack_objects.yaml_content_object import (
     YAMLContentObject,
 )
-from demisto_sdk.commands.common.content_constant_paths import DEFAULT_ID_SET_PATH
 from demisto_sdk.commands.common.git_util import GitUtil
-from demisto_sdk.commands.common.handlers import JSON_Handler
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     find_type,
+    get_api_module_dependencies_from_graph,
     get_api_module_ids,
-    get_api_module_integrations_set,
+    get_content_path,
     get_display_name,
     get_from_version,
     get_json,
@@ -47,10 +50,10 @@ from demisto_sdk.commands.common.tools import (
     pack_name_to_path,
     run_command,
 )
-
-logger = logging.getLogger("demisto-sdk")
-
-json = JSON_Handler()
+from demisto_sdk.commands.content_graph.commands.update import update_content_graph
+from demisto_sdk.commands.content_graph.interface import (
+    ContentGraphInterface,
+)
 
 CLASS_BY_FILE_TYPE = {
     FileType.INTEGRATION: Integration,
@@ -116,8 +119,8 @@ def get_deprecated_rn(path: str, file_type):
 
     # look for deprecated commands
     rn = ""
-    old_commands = deprecated_commands(old_yml.get("script", {}).get("commands"))
-    new_commands = deprecated_commands(new_yml.script.get("commands"))
+    old_commands = deprecated_commands(old_yml.get("script", {}).get("commands") or [])
+    new_commands = deprecated_commands(new_yml.script.get("commands") or [])
 
     for command_name in new_commands:
         # if command is deprecated in new yml, and not in old yml
@@ -127,6 +130,8 @@ def get_deprecated_rn(path: str, file_type):
 
 
 class UpdateRN:
+    CONTENT_PATH = Path(get_content_path())  # type: ignore[arg-type]
+
     def __init__(
         self,
         pack_path: str,
@@ -153,7 +158,9 @@ class UpdateRN:
         self.modified_files_in_pack = set()
         for file_path in modified_files_in_pack:
             self.modified_files_in_pack.add(
-                self.change_image_or_desc_file_path(file_path)
+                self.change_image_or_desc_file_path(
+                    (self.CONTENT_PATH / file_path).as_posix()
+                )
             )
 
         self.added_files = added_files
@@ -217,8 +224,8 @@ class UpdateRN:
             The content of the rn
         """
         if self.existing_rn_version_path:
-            existing_rn_abs_path = Path(self.existing_rn_version_path).absolute()
-            rn_path_abs_path = Path(rn_path).absolute()
+            existing_rn_abs_path = self.CONTENT_PATH / self.existing_rn_version_path
+            rn_path_abs_path = self.CONTENT_PATH / rn_path
             self.should_delete_existing_rn = str(existing_rn_abs_path) != str(
                 rn_path_abs_path
             )
@@ -296,19 +303,6 @@ class UpdateRN:
                 self.write_metadata_to_file(new_metadata)
             self.create_markdown(rn_path, rn_string, changed_files)
             self.build_rn_config_file(new_version)
-            try:
-                run_command(f"git add {rn_path}", exit_on_error=False)
-            except RuntimeError:
-                logger.info(
-                    f"[yellow]Could not add the release note files to git: {rn_path}[/yellow]"
-                )
-            if self.is_bc and self.bc_path:
-                try:
-                    run_command(f"git add {self.bc_path}", exit_on_error=False)
-                except RuntimeError:
-                    logger.info(
-                        f"[yellow]Could not add the release note config file to git: {rn_path}[/yellow]"
-                    )
             if self.existing_rn_changed:
                 logger.info(
                     f"[green]Finished updating release notes for {self.pack}.[/green]"
@@ -353,13 +347,13 @@ class UpdateRN:
         )
         self.bc_path = bc_file_path
         bc_file_data: dict = dict()
-        if os.path.exists(bc_file_path):
+        if Path(bc_file_path).exists():
             with open(bc_file_path) as f:
                 bc_file_data = json.loads(f.read())
         bc_file_data["breakingChanges"] = True
         bc_file_data["breakingChangesNotes"] = bc_file_data.get("breakingChangesNotes")
         with open(bc_file_path, "w") as f:
-            f.write(json.dumps(bc_file_data))
+            f.write(json.dumps(bc_file_data, indent=4))
         logger.info(
             f"[green]Finished creating config file for RN version {new_version}.\n"
             "If you wish only specific text to be shown as breaking changes, please fill the "
@@ -391,6 +385,12 @@ class UpdateRN:
         else:
             new_metadata = self.get_pack_metadata()
             new_version = new_metadata.get("currentVersion", "99.99.99")
+
+        if self.master_version == "0.0.0" and new_version == "1.0.0":
+            raise ValueError(
+                "Release notes do not need to be updated for version '1.0.0'."
+            )
+
         return new_version, new_metadata
 
     def _does_pack_metadata_exist(self) -> bool:
@@ -400,7 +400,7 @@ class UpdateRN:
         :return
             Whether the pack metadata exists
         """
-        if not os.path.isfile(self.metadata_path):
+        if not Path(self.metadata_path).is_file():
             logger.info(
                 f'[red]"{self.metadata_path}" file does not exist, create one in the root of the pack[/red]'
             )
@@ -421,10 +421,10 @@ class UpdateRN:
         master_metadata = None
         try:
             master_metadata = get_remote_file(self.metadata_path, tag=self.main_branch)
-        except Exception as e:
-            logger.info(
-                f"[red]master branch is unreachable.\n The reason is:{e} \n "
-                f"The updated version will be taken from local metadata file instead of master[/red]"
+        except Exception:
+            logger.exception(
+                f"[red]Failed fetching {self.metadata_path} from remote master branch."
+                "Using the local version (if exists), instead[/red]",
             )
         if master_metadata:
             master_current_version = master_metadata.get("currentVersion", "0.0.0")
@@ -444,7 +444,7 @@ class UpdateRN:
                 return False
             new_metadata = self.get_pack_metadata()
             new_version = new_metadata.get("currentVersion", "99.99.99")
-            if LooseVersion(self.master_version) >= LooseVersion(new_version):
+            if Version(self.master_version) >= Version(new_version):
                 return True
             return False
         except RuntimeError as e:
@@ -551,7 +551,7 @@ class UpdateRN:
             data_dictionary = get_json(self.metadata_path, cache_clear=True)
         except FileNotFoundError as e:
             raise FileNotFoundError(
-                f"Pack {self.pack} was not found. Please verify the pack name is correct."
+                f"The metadata file of pack {self.pack} was not found. Please verify the pack name is correct, and that the file exists."
             ) from e
         return data_dictionary
 
@@ -641,6 +641,10 @@ class UpdateRN:
                 logger.info(
                     f"[green]Updated pack metadata version at path : {self.metadata_path}[/green]"
                 )
+            try:
+                run_command(f"git add {self.metadata_path}", exit_on_error=False)
+            except RuntimeError:
+                logger.error(f"[red]Failed git-adding {self.metadata_path}[/red]")
 
     @staticmethod
     def check_rn_dir(rn_path: str):
@@ -649,7 +653,7 @@ class UpdateRN:
         :param rn_path: The RN path to check/create
 
         """
-        if not os.path.exists(os.path.dirname(rn_path)):
+        if not Path(rn_path).parent.exists():
             try:
                 os.makedirs(os.path.dirname(rn_path))
             except OSError as exc:  # Guard against race condition
@@ -742,8 +746,12 @@ class UpdateRN:
             if is_new_file:
                 rn_desc = f"##### New: {content_name}\n\n"
                 if desc:
-                    rn_desc += f"- {desc}"
-                if from_version:
+                    rn_desc += f"- New: {desc}"
+                if _type in SIEM_ONLY_ENTITIES or content_name.replace(
+                    " ", ""
+                ).lower().endswith(EVENT_COLLECTOR.lower()):
+                    rn_desc += "(Available from Cortex XSIAM %%XSIAM_VERSION%%)."
+                elif from_version and _type not in SIEM_ONLY_ENTITIES:
                     rn_desc += f" (Available from Cortex XSOAR {from_version})."
                 rn_desc += "\n"
             else:
@@ -901,7 +909,7 @@ class UpdateRN:
             docker_image_name: The docker image name
 
         """
-        if os.path.exists(release_notes_path) and self.update_type is not None:
+        if Path(release_notes_path).exists() and self.update_type is not None:
             logger.info(
                 f"[yellow]Release notes were found at {release_notes_path}. Skipping[/yellow]"
             )
@@ -958,7 +966,7 @@ def get_file_description(path, file_type) -> str:
     :return
     The file description if exists otherwise returns %%UPDATE_RN%%
     """
-    if not os.path.isfile(path):
+    if not Path(path).is_file():
         logger.info(
             f'[yellow]Cannot get file description: "{path}" file does not exist[/yellow]'
         )
@@ -996,15 +1004,13 @@ def get_file_description(path, file_type) -> str:
 def update_api_modules_dependents_rn(
     pre_release: bool,
     update_type: Union[str, None],
-    added: Union[list, set],
-    modified: Union[list, set],
-    id_set_path: Optional[Path] = None,
+    added: Iterable[str],
+    modified: Iterable[str],
     text: str = "",
 ) -> set:
     """Updates release notes for any pack that depends on API module that has changed.
-
     :param
-        pre_release: The file type
+        pre_release: Indicates whether the change should be designated as a pre-release version
         update_type: The update type
         added: The added files
         modified: The modified files
@@ -1016,42 +1022,34 @@ def update_api_modules_dependents_rn(
     A set of updated packs
     """
     total_updated_packs: set = set()
-    if not id_set_path:
-        if not os.path.isfile(DEFAULT_ID_SET_PATH):
-            logger.info(
-                "[red]Failed to update integrations dependent on the APIModule pack - no id_set.json is "
-                "available. Please run `demisto-sdk create-id-set` to generate it, and rerun this command.[/red]"
-            )
-            return total_updated_packs
-        id_set_path = DEFAULT_ID_SET_PATH
-    with open(id_set_path) as conf_file:
-        id_set = json.load(conf_file)
     api_module_set = get_api_module_ids(added)
     api_module_set = api_module_set.union(get_api_module_ids(modified))
     logger.info(
-        f"[yellow]Changes were found in the following APIModules: {api_module_set}, updating all dependent "
+        f"[yellow]Changes were found in the following APIModules : {api_module_set}, updating all dependent "
         f"integrations.[/yellow]"
     )
-    integrations = get_api_module_integrations_set(
-        api_module_set, id_set.get("integrations", [])
-    )
-    for integration in integrations:
-        integration_path = integration.get("file_path")
-        integration_pack = integration.get("pack")
-        integration_pack_path = pack_name_to_path(integration_pack)
-        update_pack_rn = UpdateRN(
-            pack_path=integration_pack_path,
-            update_type=update_type,
-            modified_files_in_pack={integration_path},
-            pre_release=pre_release,
-            added_files=set(),
-            pack=integration_pack,
-            text=text,
-        )
-        updated = update_pack_rn.execute_update()
-        if updated:
-            total_updated_packs.add(integration_pack)
-    return total_updated_packs
+    with ContentGraphInterface() as graph:
+        update_content_graph(graph, use_git=True, dependencies=True)
+        integrations = get_api_module_dependencies_from_graph(api_module_set, graph)
+        if integrations:
+            logger.info("Executing update-release-notes on those as well.")
+        for integration in integrations:
+            integration_pack_name = integration.pack_id
+            integration_path = integration.path
+            integration_pack_path = pack_name_to_path(integration_pack_name)
+            update_pack_rn = UpdateRN(
+                pack_path=integration_pack_path,
+                update_type=update_type,
+                modified_files_in_pack={integration_path},
+                pre_release=pre_release,
+                added_files=set(),
+                pack=integration_pack_name,
+                text=text,
+            )
+            updated = update_pack_rn.execute_update()
+            if updated:
+                total_updated_packs.add(integration_pack_name)
+        return total_updated_packs
 
 
 def check_docker_image_changed(main_branch: str, packfile: str) -> Optional[str]:
@@ -1098,7 +1096,7 @@ def get_from_version_at_update_rn(path: str) -> Optional[str]:
         Fromversion if there is a fromversion key in the yml file
 
     """
-    if not os.path.isfile(path):
+    if not Path(path).is_file():
         logger.info(
             f'[yellow]Cannot get file fromversion: "{path}" file does not exist[/yellow]'
         )

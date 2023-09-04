@@ -1,9 +1,7 @@
 import ast as ast_mod
-import logging
 
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.generate_unit_tests.common import ast_name
-
-logger = logging.getLogger("demisto-sdk")
 
 
 class TestModule:
@@ -160,7 +158,6 @@ class TestModule:
 
     @staticmethod
     def get_client_init_args(client_ast: ast_mod.ClassDef):
-        global logger
         for statement in client_ast.body:
             if "name" in statement._fields and statement.name == "__init__":
                 return statement.args.args

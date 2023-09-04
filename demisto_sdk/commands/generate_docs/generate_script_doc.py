@@ -1,15 +1,19 @@
-import logging
 import os
 import random
+from pathlib import Path
+from typing import List
 
-from demisto_sdk.commands.common.content_constant_paths import DEFAULT_ID_SET_PATH
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     get_from_version,
+    get_relative_path_from_packs_dir,
     get_yaml,
-    open_id_set_file,
 )
-from demisto_sdk.commands.common.update_id_set import get_depends_on
-from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
+from demisto_sdk.commands.content_graph.commands.update import update_content_graph
+from demisto_sdk.commands.content_graph.interface.neo4j.neo4j_graph import (
+    Neo4jContentGraphInterface as ContentGraphInterface,
+)
+from demisto_sdk.commands.content_graph.objects import Script
 from demisto_sdk.commands.generate_docs.common import (
     build_example_dict,
     generate_list_section,
@@ -20,8 +24,6 @@ from demisto_sdk.commands.generate_docs.common import (
     string_escape_md,
 )
 
-logger = logging.getLogger("demisto-sdk")
-
 
 def generate_script_doc(
     input_path,
@@ -30,7 +32,7 @@ def generate_script_doc(
     permissions: str = None,
     limitations: str = None,
     insecure: bool = False,
-    verbose: bool = False,
+    use_graph: bool = True,
 ):
     try:
         doc: list = []
@@ -41,7 +43,7 @@ def generate_script_doc(
             output = os.path.dirname(os.path.realpath(input_path))
 
         if examples:
-            if os.path.isfile(examples):
+            if Path(examples).is_file():
                 with open(examples) as examples_file:
                     examples = examples_file.read().splitlines()
             else:
@@ -67,19 +69,42 @@ def generate_script_doc(
 
         # get script data
         script_info = get_script_info(input_path)
-        script_id = script.get("commonfields")["id"]
 
         # get script dependencies
-        dependencies, _ = get_depends_on(script)
-
-        # get the script usages by the id set
-        if not os.path.isfile(DEFAULT_ID_SET_PATH):
-            id_set_creator = IDSetCreator(print_logs=False)
-            id_set, _, _ = id_set_creator.create_id_set()
+        dependencies: List = []
+        used_in: List = []
+        if use_graph:
+            with ContentGraphInterface() as graph:
+                update_content_graph(
+                    graph,
+                    use_git=True,
+                    output_path=graph.output_path,
+                )
+                result = graph.search(path=get_relative_path_from_packs_dir(input_path))
+                if not isinstance(result, List) or result == []:
+                    logger.error(
+                        f"The requested script {input_path} wasn't found in the graph."
+                    )
+                else:
+                    script_object = result[0]
+                    if not isinstance(script_object, Script):
+                        logger.error(
+                            "The object returned from the graph isn't a script."
+                        )
+                    else:
+                        used_in.extend(
+                            relationship.content_item_to.object_id
+                            for relationship in script_object.used_by
+                        )
+                        dependencies.extend(
+                            relationship.content_item_to.object_id
+                            for relationship in script_object.uses
+                        )
         else:
-            id_set = open_id_set_file(DEFAULT_ID_SET_PATH)
-
-        used_in = get_used_in(id_set, script_id)
+            logger.info(
+                f"Skipping fetching dependencies and used_in for the script {input_path} "
+                f"as the no-graph argument was given."
+            )
 
         description = script.get("comment", "")
         # get inputs/outputs
@@ -170,12 +195,8 @@ def generate_script_doc(
                 logger.info(f"[yellow]{error}[/yellow]")
 
     except Exception as ex:
-        if verbose:
-            # TODO Handle this verbose
-            raise
-        else:
-            logger.info(f"[yellow]Error: {str(ex)}[/yellow]")
-            return
+        logger.info(f"[yellow]Error: {str(ex)}[/yellow]")
+        return
 
 
 def get_script_info(script_path: str, clear_cache: bool = False):
@@ -227,7 +248,9 @@ def get_inputs(script):
         inputs.append(
             {
                 "Argument Name": arg.get("name"),
-                "Description": string_escape_md(arg.get("description", "")),
+                "Description": string_escape_md(
+                    arg.get("description", ""), escape_html=False
+                ),
             }
         )
 
@@ -257,37 +280,14 @@ def get_outputs(script):
         outputs.append(
             {
                 "Path": arg.get("contextPath"),
-                "Description": string_escape_md(arg.get("description", "")),
+                "Description": string_escape_md(
+                    arg.get("description", ""), escape_html=False
+                ),
                 "Type": arg.get("type", "Unknown"),
             }
         )
 
     return outputs, errors
-
-
-def get_used_in(id_set, script_id):
-    """
-    Gets the integrations, scripts and playbooks that used the input script, without test playbooks.
-    :param id_set: updated id_set object.
-    :param script_id: the script id.
-    :return: list of integrations, scripts and playbooks that used the input script
-    """
-    used_in_list = set()
-
-    id_set_sections = list(id_set.keys())
-    id_set_sections.remove("TestPlaybooks")
-    id_set_sections.remove("Packs") if "Packs" in id_set_sections else None
-
-    for key in id_set_sections:
-        items = id_set[key]
-        for item in items:
-            key = list(item.keys())[0]
-            scripts = item[key].get("implementing_scripts", [])
-            if scripts and script_id in scripts:
-                used_in_list.add(item[key].get("name", []))
-    used_in_list = list(used_in_list)
-    used_in_list.sort()
-    return used_in_list
 
 
 def generate_script_example(script_name, example=None):

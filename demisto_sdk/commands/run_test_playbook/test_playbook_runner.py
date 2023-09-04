@@ -1,15 +1,14 @@
-import logging
 import os
 import re
 import time
+from pathlib import Path
 
 import demisto_client
 from demisto_client.demisto_api.rest import ApiException
 
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import get_yaml
 from demisto_sdk.commands.upload.uploader import Uploader
-
-logger = logging.getLogger("demisto-sdk")
 
 SUCCESS_RETURN_CODE = 0
 ERROR_RETURN_CODE = 1
@@ -80,7 +79,7 @@ class TestPlaybookRunner:
             )
 
         # Run specific test playbook
-        elif os.path.isfile(self.test_playbook_path):
+        elif Path(self.test_playbook_path).is_file():
             test_playbooks.append(self.test_playbook_path)
 
         return test_playbooks
@@ -98,7 +97,7 @@ class TestPlaybookRunner:
                 )
                 is_path_valid = False
 
-            elif not os.path.exists(self.test_playbook_path):
+            elif not Path(self.test_playbook_path).exists():
                 logger.info(
                     f"[red]Error: Given input path: {self.test_playbook_path} does not exist[/red]"
                 )

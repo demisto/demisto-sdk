@@ -1,12 +1,17 @@
+import builtins
+import io
 import logging
 import os
 import shutil
+import tarfile
 from io import TextIOWrapper
 from pathlib import Path
 from typing import Callable, Tuple
 from unittest.mock import patch
 
+import demisto_client
 import pytest
+from demisto_client.demisto_api.rest import ApiException
 
 from demisto_sdk.commands.common.constants import (
     CLASSIFIERS_DIR,
@@ -43,7 +48,9 @@ from demisto_sdk.commands.common.constants import (
     XSIAM_DASHBOARDS_DIR,
     XSIAM_REPORTS_DIR,
 )
-from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
+from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
+from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.tests.tools_test import SENTENCE_WITH_UMLAUTS
 from demisto_sdk.commands.common.tools import (
     get_child_files,
@@ -53,9 +60,6 @@ from demisto_sdk.commands.common.tools import (
 )
 from demisto_sdk.commands.download.downloader import Downloader
 from TestSuite.test_tools import str_in_call_args_list
-
-yaml = YAML_Handler()
-json = JSON_Handler()
 
 
 def ordered(obj):
@@ -158,6 +162,7 @@ class Environment:
         self.CUSTOM_CONTENT_JS_INTEGRATION_PATH = (
             f"{self.CUSTOM_CONTENT_BASE_PATH}/integration-DummyJSIntegration.yml"
         )
+        self.CUSTOM_API_RESPONSE = f"{self.CUSTOM_CONTENT_BASE_PATH}/api-response"
 
         self.INTEGRATION_PACK_OBJECT = {
             "Test Integration": [
@@ -581,6 +586,25 @@ class TestFlagHandlers:
             custom_content_names = [cco["name"] for cco in env.CUSTOM_CONTENT]
             assert ordered(custom_content_names) == ordered(downloader.input_files)
 
+    def test_handle_init_flag(self, tmp_path, mocker):
+        env = Environment(tmp_path)
+        mock = mocker.patch.object(
+            builtins, "input", side_effect=("test_pack_name", "n", "n")
+        )
+
+        downloader = Downloader(env.CONTENT_BASE_PATH, "")
+        downloader.init = True
+        downloader.handle_init_flag()
+
+        assert mock.call_count == 3
+        assert downloader.output_pack_path == str(
+            Path(env.CONTENT_BASE_PATH) / "Packs" / "test_pack_name"
+        )
+        assert Path(downloader.output_pack_path, "pack_metadata.json").exists()
+        assert not Path(downloader.output_pack_path, "Integrations").exists()
+        for file in Path(downloader.output_pack_path).iterdir():
+            assert not file.is_dir()
+
     def test_handle_list_files_flag(self, tmp_path, mocker):
         logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
         env = Environment(tmp_path)
@@ -853,7 +877,7 @@ class TestMergeExistingFile:
                 file["path"] for file in env.INTEGRATION_PACK_OBJECT["Test Integration"]
             ]
             for path in paths:
-                assert os.path.isfile(path)
+                assert Path(path).is_file()
             yml_data = get_yaml(
                 env.INTEGRATION_PACK_OBJECT["Test Integration"][2]["path"]
             )
@@ -908,7 +932,7 @@ class TestMergeExistingFile:
                 downloader.merge_existing_file(
                     param["custom_content_object"], param["ending"]
                 )
-                assert os.path.isfile(param["instance_path"])
+                assert Path(param["instance_path"]).is_file()
                 file_data = param["method"](param["instance_path"], cache_clear=True)
                 for field in param["fields"]:
                     if file_data.get(field):
@@ -1120,7 +1144,7 @@ class TestMergeNewFile:
             new_file_path = f"{output_dir_path}/{os.path.basename(old_file_path)}"
             downloader = Downloader(output=temp_dir, input="", regex="")
             downloader.merge_new_file(param["custom_content_object"])
-            assert os.path.isfile(new_file_path)
+            assert Path(new_file_path).is_file()
 
 
 class TestVerifyPackPath:
@@ -1151,7 +1175,7 @@ class TestVerifyPackPath:
             "Playbook",
             False,
             "/playbook/search",
-            "POST",
+            "GET",
             {"query": "name:PB1 or PB2"},
         ),
         (
@@ -1196,7 +1220,7 @@ def test_arrange_response():
         downloader = Downloader("", "")
 
         downloader.system_item_type = "Playbook"
-        system_items_list = downloader.arrange_response({"playbooks": []})
+        system_items_list = downloader.arrange_response([])
         assert system_items_list == []
 
         downloader.system_item_type = "Classifier"
@@ -1226,57 +1250,30 @@ def test_build_file_name():
 
 
 @pytest.mark.parametrize(
-    "original_string, object_name, scripts_mapper, expected_string, expected_mapper",
+    "original_string, object_name, expected_string, should_download_expected_res",
     [
         (
             "name: TestingScript\ncommonfields:\n id: f1e4c6e5-0d44-48a0-8020-a9711243e918",
             "automation-Testing.yml",
-            {},
             "name: TestingScript\ncommonfields:\n id: f1e4c6e5-0d44-48a0-8020-a9711243e918",
-            {"f1e4c6e5-0d44-48a0-8020-a9711243e918": "TestingScript"},
+            False,
         ),
         (
-            '{\n\t"name":"TestingField",\n\t"script":"f1e4c6e5-0d44-48a0-8020-a9711243e918"\n}',
-            "incidentfield-TestingField.json",
-            {"f1e4c6e5-0d44-48a0-8020-a9711243e918": "TestingScript"},
-            '{\n\t"name":"TestingField",\n\t"script":"TestingScript"\n}',
-            {"f1e4c6e5-0d44-48a0-8020-a9711243e918": "TestingScript"},
-        ),
-        (
-            '{\n\t"name":"TestingLayout",\n\t"detailsV2":{\n\t\t"tabs":[\n\t\t\t{\n\t\t\t\t"sections":[\n\t\t\t\t\t{\n\t\t\t\t'
-            '\t\t"items":[\n\t\t\t\t\t\t\t{\n\t\t\t\t\t\t\t\t"scriptId":"f1e4c6e5-0d44-48a0-8020-a9711243e918"\n\t\t\t\t\t\t'
-            "\t}\n\t\t\t\t\t\t]\n\t\t\t\t\t}\n\t\t\t\t]\n\t\t\t}\n\t\t]\n\t}\n}",
-            "layoutcontainer-TestingLayout.json",
-            {"f1e4c6e5-0d44-48a0-8020-a9711243e918": "TestingScript"},
-            '{\n\t"name":"TestingLayout",\n\t"detailsV2":{\n\t\t"tabs":[\n\t\t\t{\n\t\t\t\t"sections":[\n\t\t\t\t\t{\n\t\t\t\t'
-            '\t\t"items":[\n\t\t\t\t\t\t\t{\n\t\t\t\t\t\t\t\t"scriptId":"TestingScript"\n\t\t\t\t\t\t'
-            "\t}\n\t\t\t\t\t\t]\n\t\t\t\t\t}\n\t\t\t\t]\n\t\t\t}\n\t\t]\n\t}\n}",
-            {"f1e4c6e5-0d44-48a0-8020-a9711243e918": "TestingScript"},
+            "name: Playbook\ncommonfields:\n id: f1e4c6e5-0d44-48a0-8020-a9711243e918",
+            "playbook-Testing.yml",
+            "name: Playbook\ncommonfields:\n id: f1e4c6e5-0d44-48a0-8020-a9711243e918",
+            True,
         ),
     ],
 )
-def test_handle_file(
-    original_string, object_name, scripts_mapper, expected_string, expected_mapper
+def test_download_playbook(
+    original_string, object_name, expected_string, should_download_expected_res
 ):
     downloader = Downloader(output="", input="", regex="", all_custom_content=True)
-    final_string = downloader.handle_file(original_string, object_name, scripts_mapper)
+    should_download_playbook = downloader.should_download_playbook(object_name)
+    final_string = downloader.download_playbook_yaml(original_string)
+    assert should_download_playbook == should_download_expected_res
     assert final_string == expected_string
-
-
-def test_download_playbook_yaml_is_called():
-    """
-    Test that the `download_playbook_yaml` method is called when `handle_file` is called,
-    if member name contains the word playbook.
-    """
-    downloader = Downloader(output="", input="", regex="", all_custom_content=True)
-    with patch.object(downloader, "download_playbook_yaml") as mock:
-        downloader.handle_file(
-            "name: TestingPlaybook\ncommonfields:\n id: f1e4c6e5-0d44-48a0-8020-a9711243e918",
-            "playbook-Testing.yml",
-            {},
-        )
-
-    mock.assert_called()
 
 
 @pytest.mark.parametrize(
@@ -1305,7 +1302,9 @@ def test_download_playbook_yaml_is_called():
 )
 def test_replace_uuids(original_string, uuids_to_name_map, expected_string):
     downloader = Downloader(output="", input="", regex="", all_custom_content=True)
-    final_string = downloader.replace_uuids(original_string, uuids_to_name_map)
+    final_string = downloader.replace_uuids(
+        original_string, uuids_to_name_map, "file_name"
+    )
     assert final_string == expected_string
 
 
@@ -1378,6 +1377,119 @@ def test_safe_write_unicode_to_non_unicode(
     )
 
     # make sure the two files were merged correctly
-    result = get_file(dest, suffix)
+    result = get_file(dest)
     assert set(result.keys()) == set(fields)
     assert set(result.values()) == {SENTENCE_WITH_UMLAUTS}
+
+
+def test_find_uuids_in_content_item():
+    """
+    Given: a mock tar file download_tar.tar
+    When: calling find_uuids_in_content_item on the mock tar
+    Then: Find all UUIDs in different content items:
+          playbook, automation, layout, incident
+          and replaces these UUIDs with the corresponding names in strings_to_write
+    """
+    expected_UUIDs = {
+        "a53a2f17-2f05-486d-867f-a36c9f5b88d4",
+        "e4c2306d-5d4b-4b19-8320-6fdad94595d4",
+        "de57b1f7-b754-43d2-8a8c-379d12bdddcd",
+        "84731e69-0e55-40f9-806a-6452f97a01a0",
+        "4d45f0d7-5fdd-4a4b-8f1e-5f2502f90a61",
+    }
+    io_bytes = io.BytesIO(
+        Path(
+            f"{git_path()}/demisto_sdk/commands/download/tests/tests_data/custom_content/\
+download_tar.tar"
+        ).read_bytes()
+    )
+    downloader = Downloader(
+        output="",
+        input="",
+        regex="",
+        all_custom_content=True,
+    )
+    with tarfile.open(fileobj=io_bytes, mode="r") as tar:
+        strings_to_write, scripts_id_name = downloader.find_uuids_in_content_item(tar)
+    ids = set(scripts_id_name.keys())
+    assert ids.issubset(expected_UUIDs)
+    assert ids.isdisjoint(strings_to_write)
+
+
+def test_get_system_playbook(mocker):
+    """
+    Given: a mock file raw_playbook.txt
+    When: calling get_system_playbook function.
+    Then:
+        - Ensure the playbook returns as valid json as expected
+        - Ensure a list is returned from the function
+    """
+
+    playbook_path = Path(
+        f"{git_path()}/demisto_sdk/commands/download/tests/tests_data/playbook-DummyPlaybook2.yml"
+    )
+
+    raw_playbook = playbook_path.read_bytes()
+
+    expected_pb = get_yaml(playbook_path)
+    mocker.patch.object(
+        demisto_client, "generic_request_func", return_value=[raw_playbook]
+    )
+
+    downloader = Downloader(input=["test"], output="test")
+    playbooks = downloader.get_system_playbook(req_type="GET")
+    assert isinstance(playbooks, list)
+    assert playbooks[0] == expected_pb
+    assert len(playbooks) == 1
+
+
+def test_get_system_playbook_item_does_not_exist_by_name(mocker):
+    """
+    Given: a mock file raw_playbook.txt
+    When: calling get_system_playbook function.
+    Then:
+        - Ensure the playbook returns as valid json as expected
+        - Ensure a list is returned from the function
+    """
+    playbook_path = Path(
+        f"{git_path()}/demisto_sdk/commands/download/tests/tests_data/playbook-DummyPlaybook2.yml"
+    )
+
+    playbook = get_yaml(playbook_path)
+    playbook["id"] = "dummy_-_playbook"
+    mocker.patch.object(
+        demisto_client,
+        "generic_request_func",
+        side_effect=(ApiException("Item not found"), [playbook_path.read_bytes()]),
+    )
+    mocker.patch.object(
+        Downloader, "get_playbook_id_by_playbook_name", return_value="test"
+    )
+    downloader = Downloader(input=["DummyPlaybook"], output="test")
+    playbooks = downloader.get_system_playbook(req_type="GET")
+    assert isinstance(playbooks, list)
+    assert len(playbooks) == 1
+
+
+@pytest.mark.parametrize(
+    "exception, mock_value, expected_call",
+    [(Exception, "test", 0), (ApiException, None, 1)],
+)
+def test_get_system_playbook_failure(mocker, exception, mock_value, expected_call):
+    """
+    Given: a mock exception
+    When: calling get_system_playbook function.
+    Then:
+        - Ensure that when the API call throws a non-ApiException error,
+          a second attempt is not made to retrieve the playbook by the ID.
+        - Ensure that when the API call throws an ApiException error and the id extraction fails,
+          the function raises the same error.
+    """
+    mocker.patch.object(demisto_client, "generic_request_func", side_effect=exception())
+    get_id_by_name_mock = mocker.patch.object(
+        Downloader, "get_playbook_id_by_playbook_name", return_value=mock_value
+    )
+    downloader = Downloader(input=["DummyPlaybook"], output="test")
+    with pytest.raises(exception):
+        downloader.get_system_playbook(req_type="GET")
+    assert get_id_by_name_mock.call_count == expected_call

@@ -2,6 +2,7 @@ from pathlib import Path
 from typing import List, Set
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.parsers.content_item import (
     NotAContentItemException,
@@ -15,10 +16,11 @@ class LayoutParser(JSONContentItemParser, content_type=ContentType.LAYOUT):
     def __init__(
         self, path: Path, pack_marketplaces: List[MarketplaceVersions]
     ) -> None:
-        if "layoutscontainer" not in path.name:
+        super().__init__(path, pack_marketplaces)
+        if "group" not in self.json_data:
+            logger.debug(f"{path}: Not a layout container, skipping.")
             raise NotAContentItemException
 
-        super().__init__(path, pack_marketplaces)
         self.kind = self.json_data.get("kind")
         self.tabs = self.json_data.get("tabs")
         self.definition_id = self.json_data.get("definitionId")
@@ -39,7 +41,12 @@ class LayoutParser(JSONContentItemParser, content_type=ContentType.LAYOUT):
 
     @property
     def supported_marketplaces(self) -> Set[MarketplaceVersions]:
-        return {MarketplaceVersions.XSOAR, MarketplaceVersions.MarketplaceV2}
+        return {
+            MarketplaceVersions.XSOAR,
+            MarketplaceVersions.MarketplaceV2,
+            MarketplaceVersions.XSOAR_SAAS,
+            MarketplaceVersions.XSOAR_ON_PREM,
+        }
 
     def connect_to_dependencies(self) -> None:
         """Collects the incident/indicator fields used as optional dependencies."""

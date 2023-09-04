@@ -8,13 +8,16 @@ from demisto_sdk.commands.common.constants import (
     DEFAULT_CONTENT_ITEM_TO_VERSION,
     MarketplaceVersions,
 )
+from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.content_graph.common import (
     ContentType,
     Relationships,
     RelationshipType,
 )
+from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 from demisto_sdk.commands.content_graph.objects.pack import Pack as PackModel
+from demisto_sdk.commands.content_graph.objects.pre_process_rule import PreProcessRule
 from demisto_sdk.commands.content_graph.parsers.content_item import (
     NotAContentItemException,
 )
@@ -174,6 +177,9 @@ class PackModelVerifier:
         expected_description: Optional[str] = None,
         expected_created: Optional[str] = None,
         expected_updated: Optional[str] = None,
+        expected_legacy: Optional[bool] = None,
+        expected_eulaLink: Optional[str] = None,
+        expected_author_image: Optional[str] = None,
         expected_support: Optional[str] = None,
         expected_email: Optional[str] = None,
         expected_url: Optional[str] = None,
@@ -193,6 +199,7 @@ class PackModelVerifier:
         expected_preview_only: Optional[bool] = None,
         expected_marketplaces: Optional[List[MarketplaceVersions]] = None,
         expected_content_items: Dict[str, ContentType] = {},
+        expected_deprecated: Optional[bool] = None,
     ) -> None:
         assert model.content_type == ContentType.PACK
         assert expected_id is None or model.object_id == expected_id
@@ -202,7 +209,13 @@ class PackModelVerifier:
         assert expected_created is None or model.created == expected_created
         assert expected_updated is None or model.updated == expected_updated
         assert expected_support is None or model.support == expected_support
+        assert expected_legacy is None or model.legacy == expected_legacy
+        assert expected_eulaLink is None or model.eulaLink == expected_eulaLink
+        assert (
+            expected_author_image is None or model.author_image == expected_author_image
+        )
         assert expected_email is None or model.email == expected_email
+        assert expected_deprecated is None or model.deprecated == expected_deprecated
         assert expected_url is None or model.url == expected_url
         assert expected_author is None or model.author == expected_author
         assert (
@@ -696,10 +709,10 @@ class TestParsersAndModels:
             IntegrationParser,
         )
 
-        integration = pack.create_integration()
-        integration.create_default_integration("TestIntegration")
+        integration = pack.create_integration(yml=load_yaml("integration.yml"))
         integration.code.write("from MicrosoftApiModule import *")
         integration.yml.update({"tests": ["test_playbook"]})
+
         integration_path = Path(integration.path)
         parser = IntegrationParser(integration_path, list(MarketplaceVersions))
         RelationshipsVerifier.run(
@@ -717,6 +730,8 @@ class TestParsersAndModels:
             expected_fromversion="5.0.0",
             expected_toversion=DEFAULT_CONTENT_ITEM_TO_VERSION,
         )
+        assert model.is_fetch_events is True
+        assert model.is_fetch_events_and_assets is True
 
     def test_unified_integration_parser(self, pack: Pack):
         """
@@ -855,6 +870,49 @@ class TestParsersAndModels:
             expected_content_type=ContentType.LAYOUT,
             expected_fromversion="6.0.0",
             expected_toversion=DEFAULT_CONTENT_ITEM_TO_VERSION,
+        )
+
+    @pytest.mark.parametrize("override_group", ("incident", "indicator"))
+    @pytest.mark.parametrize(
+        "marketplace",
+        (
+            MarketplaceVersions.XSOAR,
+            MarketplaceVersions.MarketplaceV2,
+            MarketplaceVersions.XPANSE,
+        ),
+    )
+    def test_layoutscontainer_parser_fixes(
+        self, pack: Pack, marketplace: MarketplaceVersions, override_group: str
+    ):
+        """
+        Given:
+            - A pack with a layout.
+            - The marketplace for which the item is prepared.
+        When:
+            - Preparing for upload.
+        Then:
+            - Verify a `Related Incidents` field's name is changed to `Related Alerts`
+                if and only if marketpalce==marketplacev2 and group=="indicator"
+        """
+        from demisto_sdk.commands.content_graph.objects.layout import Layout
+        from demisto_sdk.commands.content_graph.parsers.layout import LayoutParser
+
+        layout = pack.create_layoutcontainer(
+            "TestLayoutscontainer", load_json("layoutscontainer.json")
+        )
+        model = Layout.from_orm(
+            LayoutParser(Path(layout.path), list(MarketplaceVersions))
+        )
+        model.group = override_group
+        ready_for_upload = model.prepare_for_upload(current_marketplace=marketplace)
+        checked_dict = ready_for_upload["detailsV2"]["tabs"][5]
+
+        # these two are for sanity, to make sure we're checking the right value (and the test file hasn't been changed)
+        assert checked_dict["id"] == "relatedIncidents"
+        assert checked_dict["type"] == "relatedIncidents"
+        assert ("Alerts" in checked_dict["name"]) == (
+            override_group == "indicator"
+            and marketplace == MarketplaceVersions.MarketplaceV2
         )
 
     def test_list_parser(self, pack: Pack):
@@ -1057,7 +1115,7 @@ class TestParsersAndModels:
 
         playbook = pack.create_playbook()
         playbook.create_default_playbook(name="sample")
-        playbook.yml.update({"description": "test\\ test2\\\n \\ test3"})
+        playbook.yml.update({"description": "test\\ test2\\\n \\  test3\n   - test4  "})
         playbook_path = Path(playbook.path)
         parser = PlaybookParser(playbook_path, list(MarketplaceVersions))
         RelationshipsVerifier.run(
@@ -1074,7 +1132,7 @@ class TestParsersAndModels:
             expected_content_type=ContentType.PLAYBOOK,
             expected_fromversion="5.0.0",
             expected_toversion=DEFAULT_CONTENT_ITEM_TO_VERSION,
-            expected_description="test test2 test3",
+            expected_description="test test2 test3\n   - test4 ",
         )
         assert not model.is_test
 
@@ -1149,6 +1207,7 @@ class TestParsersAndModels:
         assert model.docker_image == "demisto/python3:3.8.3.8715"
         assert model.tags == ["transformer"]
         assert not model.is_test
+        assert not model.skip_prepare
 
     def test_test_playbook_parser(self, pack: Pack):
         """
@@ -1377,8 +1436,8 @@ class TestParsersAndModels:
             expected_name="New Import test ",
             expected_path=xsiam_dashboard_path,
             expected_content_type=ContentType.XSIAM_DASHBOARD,
-            expected_fromversion=DEFAULT_CONTENT_ITEM_FROM_VERSION,
-            expected_toversion=DEFAULT_CONTENT_ITEM_TO_VERSION,
+            expected_fromversion="8.1.0",
+            expected_toversion="8.3.0",
         )
 
     def test_xsiam_report_parser(self, pack: Pack):
@@ -1410,9 +1469,19 @@ class TestParsersAndModels:
             expected_name="sample",
             expected_path=xsiam_report_path,
             expected_content_type=ContentType.XSIAM_REPORT,
-            expected_fromversion=DEFAULT_CONTENT_ITEM_FROM_VERSION,
-            expected_toversion=DEFAULT_CONTENT_ITEM_TO_VERSION,
+            expected_fromversion="8.1.0",
+            expected_toversion="8.3.0",
         )
+
+    def test_preprocess_parser(self):
+        pre_process_rule = BaseContent.from_path(
+            Path(
+                f"{git_path()}/demisto_sdk/tests/test_files/content_slim/Packs/Sample01/PreProcessRules/preprocessrule-Drop.json"
+            )
+        )
+        assert isinstance(pre_process_rule, PreProcessRule)
+        assert pre_process_rule.name == "Drop"
+        assert pre_process_rule.object_id == "preprocessrule-Drop-id"
 
     def test_pack_parser(self, repo: Repo):
         """
@@ -1456,21 +1525,26 @@ class TestParsersAndModels:
             expected_path=pack_path,
             expected_description="This is the Hello World integration for getting started.",
             expected_created="2020-03-10T08:37:18Z",
+            expected_author_image="content/packs/HelloWorld/Author_image.png",
+            expected_legacy=True,
+            expected_eulaLink="https://github.com/demisto/content/blob/master/LICENSE",
             expected_support="community",
             expected_url="https://www.paloaltonetworks.com/cortex",
             expected_author="Cortex XSOAR",
-            expected_certification="",
+            expected_certification="verified",
             expected_hidden=False,
             expected_current_version="1.2.12",
-            expected_tags=[],
+            expected_tags=["TIM"],
             expected_categories=["Utilities"],
-            expected_use_cases=[],
+            expected_use_cases=["Identity And Access Management"],
             expected_keywords=[],
             expected_marketplaces=[
-                MarketplaceVersions.XSOAR,
                 MarketplaceVersions.MarketplaceV2,
+                MarketplaceVersions.XSOAR,
+                MarketplaceVersions.XSOAR_SAAS,
             ],
             expected_content_items=expected_content_items,
+            expected_deprecated=False,
         )
 
     def test_repo_parser(self, repo: Repo):
@@ -1492,6 +1566,114 @@ class TestParsersAndModels:
         pack2 = repo.create_pack("sample2")
         pack2.pack_metadata.write_json(load_json("pack_metadata.json"))
         parser = RepositoryParser(Path(repo.path))
+        parser.parse()
         model = ContentDTO.from_orm(parser)
         pack_ids = {pack.object_id for pack in model.packs}
         assert pack_ids == {"sample1", "sample2"}
+
+
+@pytest.mark.parametrize(
+    "name,type_,expected_change",
+    (
+        ("Child Incidents", "childInv", True),
+        ("Child Incident", "childInv", False),  # name should be Child Incidents
+        ("", "childInv", False),
+        ("Incidents", "", False),
+        ("Linked Incidents", "linkedIncidents", True),
+        (
+            "Related Incidents",
+            "linkedIncidents",
+            False,
+        ),  # type should be relatedIncidents
+        ("Related Incidents", "relatedIncidents", True),
+        ("Related Incidents", "", False),
+        ("Related Incident", "relatedIncidents", False),
+    ),
+)
+def test_fix_layout_incident_to_alert(
+    name: str,
+    type_: str,
+    expected_change: bool,
+):
+    """
+    Given:
+        - A layout body
+    When:
+        - change_incident_to_alert is called
+    Then:
+        - Make sure it replaces values as expected
+    """
+    from demisto_sdk.commands.content_graph.objects.layout import (
+        replace_layout_incident_alert,
+    )
+
+    expected_name = name.replace("Incident", "Alert") if expected_change else name
+
+    assert replace_layout_incident_alert({"name": name, "type": type_}) == {
+        "name": expected_name,
+        "type": type_,
+    }
+
+
+@pytest.mark.parametrize(
+    "marketplace, expected_market_place_set",
+    [
+        (
+            {MarketplaceVersions.XSOAR},
+            {MarketplaceVersions.XSOAR, MarketplaceVersions.XSOAR_SAAS},
+        ),
+        ({MarketplaceVersions.MarketplaceV2}, {MarketplaceVersions.MarketplaceV2}),
+        ({MarketplaceVersions.XPANSE}, {MarketplaceVersions.XPANSE}),
+        (
+            {MarketplaceVersions.XSOAR_ON_PREM},
+            {MarketplaceVersions.XSOAR_ON_PREM, MarketplaceVersions.XSOAR},
+        ),
+        (
+            {MarketplaceVersions.XSOAR_ON_PREM, MarketplaceVersions.XSOAR_SAAS},
+            {
+                MarketplaceVersions.XSOAR_ON_PREM,
+                MarketplaceVersions.XSOAR_SAAS,
+                MarketplaceVersions.XSOAR,
+            },
+        ),
+        (
+            {MarketplaceVersions.XSOAR_ON_PREM, MarketplaceVersions.MarketplaceV2},
+            {
+                MarketplaceVersions.XSOAR_ON_PREM,
+                MarketplaceVersions.MarketplaceV2,
+                MarketplaceVersions.XSOAR,
+            },
+        ),
+        ({}, {}),
+    ],
+)
+def test_updated_marketplaces_set(marketplace, expected_market_place_set):
+    """
+    Given:
+        - XSOAR marketplace
+        - XSIAM marketplace
+        - XPANSE marketplace
+        - XSOAR_ON_PREM marketplace
+        - XSOAR_ON_PREM AND XSIAM
+        - empty marketplace set
+
+    When:
+        - Parsing the content item to determine if the content item should enter the marketplace
+
+    Then:
+        - Check that XSOAR_SAAS was also added to the marketplace_set
+        - Check the only XSAIM marketplace is on the list
+        - Check the only XPANSE marketplace is on the list
+        - Check that XSOAR_ON_PREM and XSOAR was added to the marketplace_set
+        - Check that XSAIM remains and XSOAR marketplace is added
+        - remains empty
+
+    """
+    from demisto_sdk.commands.content_graph.parsers.content_item import (
+        ContentItemParser,
+    )
+
+    assert (
+        expected_market_place_set
+        == ContentItemParser.update_marketplaces_set_with_xsoar_values(marketplace)
+    )

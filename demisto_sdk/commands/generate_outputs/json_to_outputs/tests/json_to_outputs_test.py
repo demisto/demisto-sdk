@@ -3,16 +3,13 @@ from typing import Optional
 
 import pytest
 
-from demisto_sdk.commands.common.handlers import JSON_Handler
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.tools import run_command
 from demisto_sdk.commands.generate_outputs.json_to_outputs.json_to_outputs import (
     determine_type,
     json_to_outputs,
     parse_json,
 )
-
-json = JSON_Handler()
-
 
 DUMMY_FIELD_DESCRIPTION = "dummy field description"
 TEST_PATH = Path("demisto_sdk/commands/generate_outputs/json_to_outputs/tests")
@@ -360,3 +357,46 @@ def test_determine_type(value, type):
         - ensure the returned type is correct
     """
     assert determine_type(value) == type
+
+
+def test_json_to_outputs__empty_list_or_dict():
+    """
+        Given
+            - valid json file: {"empty_dict":{},"empty_list":[]}
+            - prefix: XDR.Incident
+            - command: xdr-get-incidents
+        When
+            - passed to json_to_outputs
+        Then
+            - ensure outputs generated in the following format
+
+    arguments: []
+    name: xdr-get-incidents
+    outputs:
+    - contextPath: XDR.Incident.empty_dict
+      description: ''
+      type: Unknown
+    - contextPath: XDR.Incident.empty_list
+      description: ''
+      type: Unknown
+
+    """
+    yaml_output = parse_json(
+        data='{"empty_dict":{},"empty_list":[]}',
+        command_name="xdr-get-incidents",
+        prefix="XDR.Incident",
+    )
+
+    assert (
+        yaml_output
+        == """arguments: []
+name: xdr-get-incidents
+outputs:
+- contextPath: XDR.Incident.empty_dict
+  description: ''
+  type: Unknown
+- contextPath: XDR.Incident.empty_list
+  description: ''
+  type: Unknown
+"""
+    )

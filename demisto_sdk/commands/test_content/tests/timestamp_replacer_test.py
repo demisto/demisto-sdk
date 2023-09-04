@@ -1,15 +1,14 @@
 import os
 import sys
+from pathlib import Path
 from unittest.mock import MagicMock, mock_open
 
 import mitmproxy
 import pytest
 from mitmproxy.http import Headers, HTTPFlow, Request
 
-from demisto_sdk.commands.common.handlers import JSON_Handler
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.test_content.timestamp_replacer import TimestampReplacer
-
-json = JSON_Handler()
 
 
 @pytest.fixture()
@@ -38,11 +37,11 @@ def tz(request):
     original_tz = os.getenv("TZ")
     os.environ["TZ"] = "UTC"
 
-    def teardown():
+    def teardown_method():
         if original_tz:
             os.environ["TZ"] = original_tz
 
-    request.addfinalizer(teardown)
+    request.addfinalizer(teardown_method)
     return request
 
 
@@ -105,7 +104,7 @@ class TestTimeStampReplacer:
             "server_replay_ignore_payload_params": "payload_key1 payload_key2",
             "keys_to_replace": "key_to_replace1 key_to_replace2",
         }
-        mocker.patch("os.path.exists", return_value=True)
+        mocker.patch("pathlib.Path.exists", return_value=True)
         mocker.patch("builtins.open", mock_open(read_data=json.dumps(problematic_keys)))
         time_stamp_replacer = TimestampReplacer()
         time_stamp_replacer.running()
@@ -335,3 +334,14 @@ class TestTimeStampReplacer:
             == b"--fixed_boundary\nContent-Disposision: form-data; "
             b'name="test"\n\nsomething\n--fixed_boundary--'
         )
+
+
+def test_demisto_sdk_imports():
+    code_file = Path(__file__).parent.parent / "timestamp_replacer.py"
+    assert (
+        code_file.exists()
+    ), "Do not move this file unless you understand where is this files used in the mock process."
+    assert (
+        "demisto_sdk" not in code_file.read_text()
+    ), "This file should be a stand alone file and should be cleaned up from any demisto_sdk references."
+    assert code_file.read_text().startswith('"""BEWARE:'), "Do not remove this warning."

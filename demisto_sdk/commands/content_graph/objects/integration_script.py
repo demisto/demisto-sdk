@@ -1,4 +1,3 @@
-import logging
 from pathlib import Path
 from typing import List, Optional
 
@@ -8,7 +7,7 @@ from demisto_sdk.commands.common.constants import (
     NATIVE_IMAGE_FILE_NAME,
     MarketplaceVersions,
 )
-from demisto_sdk.commands.common.handlers import YAML_Handler
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.native_image import (
     ScriptIntegrationSupportedNativeImages,
     file_to_native_image_config,
@@ -18,27 +17,29 @@ from demisto_sdk.commands.prepare_content.integration_script_unifier import (
     IntegrationScriptUnifier,
 )
 
-yaml = YAML_Handler()
-
-logger = logging.getLogger("demisto-sdk")
-
 
 class IntegrationScript(ContentItem):
     type: str
     docker_image: Optional[str]
-    description: Optional[str]
+    description: Optional[str] = Field("")
     is_unified: bool = Field(False, exclude=True)
     code: Optional[str] = Field(None, exclude=True)
+    unified_data: dict = Field(None, exclude=True)
 
     def prepare_for_upload(
-        self, marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR, **kwargs
+        self,
+        current_marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR,
+        **kwargs,
     ) -> dict:
-        if not kwargs.get("unify_only"):
-            data = super().prepare_for_upload(marketplace)
-        else:
-            data = self.data
-
-        data = IntegrationScriptUnifier.unify(self.path, data, marketplace, **kwargs)
+        data = (
+            self.data
+            if kwargs.get("unify_only")
+            else super().prepare_for_upload(current_marketplace)
+        )
+        data = IntegrationScriptUnifier.unify(
+            self.path, data, current_marketplace, **kwargs
+        )
+        self.unified_data = data
         return data
 
     def get_supported_native_images(

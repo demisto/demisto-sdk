@@ -1,6 +1,6 @@
 import inspect
+import itertools
 import os
-import random
 from typing import List
 
 import pytest
@@ -12,6 +12,10 @@ from TestSuite.json_based import JSONBased
 from TestSuite.playbook import Playbook
 from TestSuite.script import Script
 from TestSuite.test_tools import ChangeCWD
+
+# TODO: Remove this test file when CIAC-3905 is completed.
+# Currently this test uses the older dependencies creation, the content repo uses the newer graph method of creating
+# dependencies, but some other repos do not. We will remove this test when the other repos have been migrated to graph.
 
 
 def update_id_set(repo):
@@ -403,7 +407,7 @@ class PlaybookDependencies:
         }
 
         task_num = get_new_task_number(playbook)
-        task_num_to_associate = random.choice(range(task_num - 1))
+        task_num_to_associate = task_num - 2
 
         task = playbook.yml.read_dict().get("tasks").get(str(task_num_to_associate))
         task.update(mapping)
@@ -906,14 +910,22 @@ def create_inputs_for_method(repo, current_pack, inputs_arguments):
     # Ignores the `CommonTypes` pack in the flow, so only numeric packs will be chosen
     number_of_packs = len(repo.packs) - 1
 
+    pack_numbers = range(1, number_of_packs)
+    pack_number_cycle = itertools.cycle(pack_numbers)
+    number_of_items_in_list = 0
+
     for arg in inputs_arguments:
         arg_type = arg.split("__")[0]
         if arg_type in LIST_ARGUMENTS_TO_METHODS.keys():
-            number_of_items_in_list = random.randint(1, 5)
+            number_of_items_in_list += 1
+
+            if number_of_items_in_list > 5:
+                number_of_items_in_list = 1
+
+            pack_to_take_entity_from = next(pack_number_cycle)
 
             input_argument = []
-            for i in range(number_of_items_in_list):
-                pack_to_take_entity_from = random.choice(range(1, number_of_packs))
+            for _ in range(number_of_items_in_list):
                 input_argument.append(
                     get_entity_by_pack_number_and_entity_type(
                         repo,
@@ -928,7 +940,7 @@ def create_inputs_for_method(repo, current_pack, inputs_arguments):
                 dependencies.add(f"pack_{pack_to_take_entity_from}")
 
         else:
-            pack_to_take_entity_from = random.choice(range(1, number_of_packs))
+            pack_to_take_entity_from = next(pack_number_cycle)
             input_argument = get_entity_by_pack_number_and_entity_type(
                 repo, pack_to_take_entity_from, arg_type
             )
@@ -943,16 +955,16 @@ def create_inputs_for_method(repo, current_pack, inputs_arguments):
     return inputs_values, dependencies
 
 
-def run_random_methods(
+def run_defined_methods(
     repo, current_pack, current_methods_pool, number_of_methods_to_choose
 ):
-    """Runs random set of methods with size number_of_methods_to_choose
+    """Runs over a set of methods with size number_of_methods_to_choose
         out of the current_methods_pool.
 
     Args:
         repo (Repo): Content repo object.
         current_pack (int): ID of the pack that its objects will depend on other packs.
-        current_methods_pool (list): The pool of methods to choose from.
+        current_methods_pool (list): The pool of methods to run.
         number_of_methods_to_choose (int): Amount of methods to choose.
 
     Returns:
@@ -961,9 +973,7 @@ def run_random_methods(
     all_dependencies = set()
 
     for i in range(number_of_methods_to_choose):
-        chosen_method = random.choice(current_methods_pool)
-        current_methods_pool.remove(chosen_method)
-
+        chosen_method = current_methods_pool[i]
         method = getattr(chosen_method[1], chosen_method[0])
         inputs_arguments = inspect.getfullargspec(method)[0]
 
@@ -1014,10 +1024,11 @@ def test_dependencies(mocker, repo, test_number):
     repo.setup_content_repo(number_of_packs)
     repo.setup_one_pack("CommonTypes")
 
-    pack_to_verify = random.choice(range(number_of_packs))
+    # Define fixed values or sequences
+    pack_to_verify = 3  # Choose a specific pack to verify
 
-    number_of_methods_to_choose = random.choice(range(1, len(METHODS_POOL)))
-    dependencies = run_random_methods(
+    number_of_methods_to_choose = 2  # Choose a fixed number of methods to run
+    dependencies = run_defined_methods(
         repo, pack_to_verify, METHODS_POOL.copy(), number_of_methods_to_choose
     )
 
@@ -1062,7 +1073,7 @@ def test_specific_entity(mocker, repo, entity_class):
         if "_" != method_name[0]
     ]
 
-    dependencies = run_random_methods(repo, 0, methods_pool, len(methods_pool))
+    dependencies = run_defined_methods(repo, 0, methods_pool, len(methods_pool) // 2)
 
     run_find_dependencies(mocker, repo.path, "pack_0")
 

@@ -1,17 +1,15 @@
-import logging
 import os
-from json.decoder import JSONDecodeError
+from json.decoder import JSONDecodeError  # noqa: TID251 - importing JSON in CI is OK
 from types import SimpleNamespace
 from typing import Dict, Optional
 
 import requests
 from requests.auth import HTTPBasicAuth
 
+from demisto_sdk.commands.common.logger import logger
+
 API_BASE_URL = "https://circleci.com/api"
 PROJECT_SLUG = "github/demisto/demisto-sdk"
-
-
-logger = logging.getLogger("demisto-sdk")
 
 
 class CircleCIError(Exception):
@@ -39,7 +37,7 @@ class CircleCIResponse(SimpleNamespace):
         """
         in case a class attribute was not found, will trigger default values to be returned by attribute type.
         """
-        logging.debug(f"could not find attribute {attr}, hence returning default value")
+        logger.debug(f"could not find attribute {attr}, hence returning default value")
         return self.ATTRIBUTES_DEFAULT_MAPPING.get(attr)
 
 
@@ -120,7 +118,7 @@ class CircleCIClient:
         return requests.get(
             url=f"{self.base_url}/{api_version}/{url}",
             verify=self.verify,
-            auth=self.auth,
+            # auth=self.auth,
             params=params,
             stream=stream,
         )

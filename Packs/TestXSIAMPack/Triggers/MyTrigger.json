@@ -1,4 +1,5 @@
 {
+  "trigger_name": "bob",
   "trigger_id": "uuid-32-here-1",
   "playbook_id": "<ID_OF_PLAYBOOK-ALPHNUMERIC-STRING-1>",
   "suggestion_reason": "it is a good playbook for these alerts",

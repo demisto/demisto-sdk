@@ -2,6 +2,9 @@ from unittest.mock import patch
 
 import pytest
 
+from demisto_sdk.commands.common.hook_validations.content_entity_validator import (
+    ContentEntityValidator,
+)
 from demisto_sdk.commands.common.hook_validations.layout import (
     LayoutsContainerValidator,
     LayoutValidator,
@@ -174,3 +177,41 @@ class TestLayoutValidator:
         structure = mock_structure("layout.json", layout)
         validator = LayoutsContainerValidator(structure)
         assert not validator.is_valid_layout(validate_rn=False)
+
+    @pytest.mark.parametrize(
+        "layout_json, id_set_json, is_circle, expected_result", IS_INCIDENT_FIELD_EXIST
+    )
+    def test_is_valid_layout_container_with_incident_field(
+        self, mocker, repo, layout_json, id_set_json, is_circle, expected_result
+    ):
+        """
+        Given: A layouts container with incident_field (configured/not) in id_set.
+        When: Running is_valid_layout.
+        Then: Return True if configured and false otherwise. Ignore other checks.
+        """
+        repo.id_set.write_json(id_set_json)
+        structure = mock_structure("layout.json", layout_json)
+        mocker.patch.object(ContentEntityValidator, "is_valid_file", return_value=True)
+        mocker.patch.object(
+            LayoutsContainerValidator, "is_valid_version", return_value=True
+        )
+        mocker.patch.object(
+            LayoutsContainerValidator, "is_valid_from_version", return_value=True
+        )
+        mocker.patch.object(
+            LayoutsContainerValidator, "is_valid_to_version", return_value=True
+        )
+        mocker.patch.object(
+            LayoutsContainerValidator,
+            "is_to_version_higher_than_from_version",
+            return_value=True,
+        )
+        mocker.patch.object(
+            LayoutsContainerValidator, "is_valid_file_path", return_value=True
+        )
+        validator = LayoutsContainerValidator(structure)
+
+        assert (
+            validator.is_valid_layout(id_set_file=id_set_json, is_circle=is_circle)
+            == expected_result
+        )

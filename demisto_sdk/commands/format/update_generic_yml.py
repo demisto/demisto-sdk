@@ -1,7 +1,6 @@
-import logging
 import os
 import traceback
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple, Union
 
 import click
 
@@ -15,7 +14,9 @@ from demisto_sdk.commands.common.constants import (
     FileType,
 )
 from demisto_sdk.commands.common.content_constant_paths import CONF_PATH
-from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
+from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     _get_file_id,
     find_type,
@@ -25,6 +26,7 @@ from demisto_sdk.commands.common.tools import (
     get_yaml,
     is_uuid,
     listdir_fullpath,
+    search_and_delete_from_conf,
 )
 from demisto_sdk.commands.format.format_constants import (
     ERROR_RETURN_CODE,
@@ -32,11 +34,6 @@ from demisto_sdk.commands.format.format_constants import (
     SUCCESS_RETURN_CODE,
 )
 from demisto_sdk.commands.format.update_generic import BaseUpdate
-
-logger = logging.getLogger("demisto-sdk")
-
-json = JSON_Handler()
-yaml = YAML_Handler()
 
 
 class BaseUpdateYML(BaseUpdate):
@@ -63,7 +60,7 @@ class BaseUpdateYML(BaseUpdate):
         path: str = "",
         from_version: str = "",
         no_validate: bool = False,
-        assume_yes: bool = False,
+        assume_answer: Union[bool, None] = None,
         deprecate: bool = False,
         add_tests: bool = True,
         interactive: bool = True,
@@ -75,7 +72,7 @@ class BaseUpdateYML(BaseUpdate):
             path=path,
             from_version=from_version,
             no_validate=no_validate,
-            assume_yes=assume_yes,
+            assume_answer=assume_answer,
             interactive=interactive,
             clear_cache=clear_cache,
         )
@@ -151,6 +148,7 @@ class BaseUpdateYML(BaseUpdate):
         """Manager function for the generic YML updates."""
 
         self.remove_copy_and_dev_suffixes_from_name()
+        self.adds_period_to_description()
         self.remove_unnecessary_keys()
         self.remove_spaces_end_of_id_and_name()
         self.set_fromVersion(
@@ -161,8 +159,17 @@ class BaseUpdateYML(BaseUpdate):
             self.set_version_to_default(self.id_and_version_location)
         self.copy_tests_from_old_file()
         if self.deprecate:
+            if (
+                self.source_file_type.value == "integration"
+                or self.source_file_type.value == "script"
+            ):
+                self.remove_from_conf_json(
+                    self.source_file_type.value,
+                    _get_file_id(self.source_file_type.value, self.data),
+                )
             self.update_deprecate(file_type=file_type)
         self.sync_data_to_master()
+
         self.remove_nativeimage_tag_if_exist()
 
     def update_tests(self) -> None:
@@ -246,8 +253,10 @@ class BaseUpdateYML(BaseUpdate):
 
             if not test_playbook_ids:
                 # In case no_interactive flag was given - modify the tests without confirmation
-                if self.assume_yes or not self.add_tests:
+                if self.assume_answer or not self.add_tests:
                     should_modify_yml_tests = True
+                elif self.assume_answer is False:
+                    should_modify_yml_tests = False
                 else:
                     should_modify_yml_tests = click.confirm(
                         f"The file {self.source_file} has no test playbooks "
@@ -258,6 +267,36 @@ class BaseUpdateYML(BaseUpdate):
                     self.data["tests"] = ["No tests (auto formatted)"]
                 else:
                     logger.debug(f'Not formatting {self.source_file} with "No tests"')
+
+    def remove_from_conf_json(self, file_type, content_item_id) -> None:
+        """
+        Updates conf.json remove the file's test playbooks.
+        Args:
+            file_type: The typr of the file, can be integration, playbook or testplaybook.
+            content_item_id: The content item id.
+        """
+        related_test_playbook = self.data.get("tests", [])
+        no_test_playbooks_explicitly = any(
+            test
+            for test in related_test_playbook
+            if ("no test" in test.lower()) or ("no tests" in test.lower())
+        )
+        try:
+            conf_json_content = self._load_conf_file()
+        except FileNotFoundError:
+            logger.debug(
+                f"[yellow]Unable to find {CONF_PATH} - skipping update.[/yellow]"
+            )
+            return
+        conf_json_test_configuration = conf_json_content["tests"]
+        conf_json_content["tests"] = search_and_delete_from_conf(
+            conf_json_test_configuration,
+            content_item_id,
+            file_type,
+            related_test_playbook,
+            no_test_playbooks_explicitly,
+        )
+        self._save_to_conf_json(conf_json_content)
 
     def update_conf_json(self, file_type: str) -> None:
         """
@@ -277,7 +316,7 @@ class BaseUpdateYML(BaseUpdate):
         try:
             conf_json_content = self._load_conf_file()
         except FileNotFoundError:
-            logger.info(
+            logger.debug(
                 f"[yellow]Unable to find {CONF_PATH} - skipping update.[/yellow]"
             )
             return
@@ -288,8 +327,10 @@ class BaseUpdateYML(BaseUpdate):
         )
         if not_registered_tests:
             not_registered_tests_string = "\n".join(not_registered_tests)
-            if self.assume_yes:
+            if self.assume_answer:
                 should_edit_conf_json = True
+            elif self.assume_answer is False:
+                should_edit_conf_json = False
             else:
                 should_edit_conf_json = click.confirm(
                     f"The following test playbooks are not configured in conf.json file "

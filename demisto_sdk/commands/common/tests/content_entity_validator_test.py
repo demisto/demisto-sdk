@@ -1,13 +1,17 @@
-import os
 from pathlib import Path
+from tempfile import TemporaryDirectory
+from typing import List
 
 import pytest
 
 from demisto_sdk.commands.common.constants import (
     API_MODULES_PACK,
     EXCLUDED_DISPLAY_NAME_WORDS,
+    MODELING_RULE,
+    PARSING_RULE,
 )
-from demisto_sdk.commands.common.handlers import YAML_Handler
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
+from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import (
     ContentEntityValidator,
 )
@@ -21,15 +25,15 @@ from demisto_sdk.tests.constants_test import (
     INVALID_PLAYBOOK_PATH,
     VALID_INTEGRATION_TEST_PATH,
     VALID_PLAYBOOK_ID_PATH,
+    VALID_TEST_PLAYBOOK_MARKETPLACES_PATH,
     VALID_TEST_PLAYBOOK_PATH,
 )
+from TestSuite.test_tools import ChangeCWD
 
 HAS_TESTS_KEY_UNPUTS = [
     (VALID_INTEGRATION_TEST_PATH, "integration", True),
     (INVALID_INTEGRATION_WITH_NO_TEST_PLAYBOOK, "integration", False),
 ]
-
-yaml = YAML_Handler()
 
 
 @pytest.mark.parametrize("file_path, schema, expected", HAS_TESTS_KEY_UNPUTS)
@@ -252,7 +256,7 @@ def test_validate_readme_exists_not_checking_on_api_modules(repo):
     """
     pack = repo.create_pack(API_MODULES_PACK)
     api_modules = pack.create_script("TestApiModule", readme=None)
-    os.remove(api_modules.readme.path)
+    Path(api_modules.readme.path).unlink()
     structue_validator = StructureValidator(api_modules.yml.path)
     content_entity_validator = ContentEntityValidator(structue_validator)
     assert content_entity_validator.validate_readme_exists()
@@ -369,6 +373,96 @@ def test_fromversion_update_validation_yml_structure(
         assert validator.is_valid_fromversion_on_modified() is answer, error
 
 
+@pytest.mark.parametrize(
+    "old_pack_marketplaces,old_content_marketplaces,new_content_marketplaces,expected_valid",
+    [
+        pytest.param(
+            ["1"], ["1"], ["1"], True, id="sanity, both match and are unchanged"
+        ),
+        pytest.param(
+            ["1"],
+            ["1"],
+            ["1", "2"],
+            True,
+            id="pack&content had 1, added 2 to both",
+        ),
+        pytest.param(
+            ["1"],
+            [],
+            ["1"],
+            True,
+            id="pack had 1, content had empty, added 1 to content",
+        ),
+        pytest.param(
+            ["1"],
+            [],
+            ["2"],
+            False,
+            id="pack had 1, content had empty, added 2 to content",
+        ),
+        pytest.param(
+            ["1"],
+            ["1"],
+            [],
+            False,
+            id="pack&content had 1, now content has empty",
+        ),
+    ],
+)
+def test_marketplaces_update_against_pack(
+    mocker,
+    old_pack_marketplaces: List[str],
+    old_content_marketplaces: List[str],
+    new_content_marketplaces: List[str],
+    expected_valid: bool,
+):
+    old_pack = {"marketplaces": old_pack_marketplaces}
+
+    old_content = {"marketplaces": old_content_marketplaces}
+    new_content = {"marketplaces": new_content_marketplaces}
+
+    mocker.patch(
+        "demisto_sdk.commands.common.hook_validations.content_entity_validator.get_remote_file",
+        return_value=old_pack,
+    )
+    from demisto_sdk.commands.common.hook_validations.content_entity_validator import (
+        ContentEntityValidator,  # importing again to allow mocking get_remote_file
+    )
+
+    with TemporaryDirectory() as dir, open(file := Path(dir, "test.json"), "w") as f:
+        json.dump(new_content, f)
+        f.flush()
+        validator = ContentEntityValidator(StructureValidator(file_path=str(file)))
+        validator.old_file = old_content
+        assert validator.is_valid_marketplaces_on_modified() is expected_valid
+
+
+INPUTS_VALID_TOVERSION_MODIFIED = [
+    (
+        VALID_TEST_PLAYBOOK_PATH,
+        VALID_TEST_PLAYBOOK_MARKETPLACES_PATH,
+        False,
+        "change toversion field is not allowed",
+    ),
+    (
+        VALID_TEST_PLAYBOOK_PATH,
+        VALID_TEST_PLAYBOOK_PATH,
+        True,
+        "toversion was not changed.",
+    ),
+]
+
+
+@pytest.mark.parametrize(
+    "path, old_file_path, answer, error", INPUTS_VALID_TOVERSION_MODIFIED
+)
+def test_toversion_update_validation_yml_structure(path, old_file_path, answer, error):
+    validator = ContentEntityValidator(StructureValidator(file_path=path))
+    with open(old_file_path) as f:
+        validator.old_file = yaml.load(f)
+        assert validator.is_valid_toversion_on_modified() is answer, error
+
+
 INPUTS_IS_ID_MODIFIED = [
     (
         INVALID_PLAYBOOK_PATH,
@@ -402,3 +496,83 @@ def test_is_backward_compatible(current_file, old_file, answer, error):
     with open(old_file) as f:
         validator.old_file = yaml.load(f)
         assert validator.is_backward_compatible() is answer, error
+
+
+def mock_handle_error(error_message, error_code, file_path):
+    return error_message
+
+
+@pytest.mark.parametrize(
+    "rule_file_name, rule_type, rule_dict, expected_error, valid",
+    [
+        (
+            "MyRuleModelingRules",
+            MODELING_RULE,
+            {"id": "modeling-rule", "name": "Modeling Rule"},
+            "\nThe rule id should end with 'ModelingRule'",
+            False,
+        ),  # Wrong modeling rule id.
+        (
+            "MyRuleModelingRules",
+            MODELING_RULE,
+            {"id": "ModelingRule", "name": "Modeling-Rule"},
+            "\nThe rule name should end with 'Modeling Rule'",
+            False,
+        ),  # Wrong modeling rule name.
+        (
+            "MyRuleModelingRules",
+            MODELING_RULE,
+            {"id": "ModelingRule", "name": "Modeling Rule"},
+            "",
+            True,
+        ),  # Correct modeling rule id and name.
+        (
+            "MyRuleParsingRules",
+            PARSING_RULE,
+            {"id": "parsing-rule", "name": "Parsing Rule"},
+            "\nThe rule id should end with 'ParsingRule'",
+            False,
+        ),  # Wrong parsing rule id.
+        (
+            "MyRuleParsingRules",
+            PARSING_RULE,
+            {"id": "ParsingRule", "name": "Parsing-Rule"},
+            "\nThe rule name should end with 'Parsing Rule'",
+            False,
+        ),  # Wrong parsing rule name.
+        (
+            "MyRuleParsingRules",
+            PARSING_RULE,
+            {"id": "ParsingRule", "name": "Parsing Rule"},
+            "",
+            True,
+        ),  # Correct parsing rule id and name.
+    ],
+)
+def test_is_valid_rule_suffix(
+    mocker, repo, rule_type, rule_file_name, rule_dict, expected_error, valid
+):
+    """
+    Given: A modeling/parsing rule with valid/invalid file_name/id/name
+    When: running is_valid_rule_suffix_name.
+    Then: Validate that the modeling/parsing rule is valid/invalid and the message (in case of invalid) is as expected.
+    """
+    pack = repo.create_pack("TestPack")
+    create_rule_function = {
+        MODELING_RULE: pack.create_modeling_rule,
+        PARSING_RULE: pack.create_parsing_rule,
+    }[rule_type]
+    dummy_rule = create_rule_function(rule_file_name, rule_dict)
+    structure_validator = StructureValidator(dummy_rule.yml.path)
+    error_message = mocker.patch(
+        "demisto_sdk.commands.common.hook_validations.content_entity_validator.ContentEntityValidator.handle_error",
+        side_effect=mock_handle_error,
+    )
+
+    with ChangeCWD(repo.path):
+        rule_validator = ContentEntityValidator(structure_validator)
+        assert rule_validator.is_valid_rule_suffix(rule_type) == valid
+        if not valid:
+            assert (
+                error_message.call_args[0][0].split("is invalid:")[1] == expected_error
+            )

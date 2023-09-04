@@ -1,19 +1,21 @@
-import logging
 import traceback
 from io import StringIO
 from pathlib import Path
-from typing import List, Set
+from typing import List
 
 import typer
 
 from demisto_sdk.commands.common.content.objects.pack_objects.modeling_rule.modeling_rule import (
     ModelingRule,
 )
-from demisto_sdk.commands.common.logger import handle_deprecated_args, logging_setup
+from demisto_sdk.commands.common.logger import (
+    handle_deprecated_args,
+    logger,
+    logging_setup,
+)
 from demisto_sdk.commands.test_content.xsiam_tools.test_data import EventLog, TestData
 
 app = typer.Typer()
-logger = logging.getLogger("demisto-sdk")
 
 
 @app.command(
@@ -44,19 +46,19 @@ def init_test_data(
     console_log_threshold: str = typer.Option(
         "INFO",
         "-clt",
-        "--console_log_threshold",
+        "--console-log-threshold",
         help=("Minimum logging threshold for the console logger."),
     ),
     file_log_threshold: str = typer.Option(
         "DEBUG",
         "-flt",
-        "--file_log_threshold",
+        "--file-log-threshold",
         help=("Minimum logging threshold for the file logger."),
     ),
     log_file_path: str = typer.Option(
         "demisto_sdk_debug.log",
         "-lp",
-        "--log_file_path",
+        "--log-file-path",
         help=("Path to the log file. Default: ./demisto_sdk_debug.log."),
     ),
 ):
@@ -74,16 +76,10 @@ def init_test_data(
     for fp in input:
         try:
             mr_entity = ModelingRule(fp.as_posix())
-            all_mr_entity_fields: Set[str] = set()
-            for mr in mr_entity.rules:
-                all_mr_entity_fields = all_mr_entity_fields.union(mr.fields)
 
             operation_mode = "create"
-            default_event_mapping = dict.fromkeys(all_mr_entity_fields)
-            default_dataset = mr_entity.rules[0].dataset
-            default_vendor = mr_entity.rules[0].vendor
-            default_product = mr_entity.rules[0].product
             test_data_file = mr_entity.testdata_path
+
             if test_data_file:
                 operation_mode = "update"
                 logger.info(
@@ -91,6 +87,16 @@ def init_test_data(
                     extra={"markup": True},
                 )
                 test_data = TestData.parse_file(test_data_file)
+                dataset_to_fields_map = {
+                    mr.dataset: dict.fromkeys(mr.fields) for mr in mr_entity.rules
+                }
+
+                # set the default values from the first rule if there is only one, otherwise it should populated manually
+                default_rule = mr_entity.rules[0] if len(mr_entity.rules) == 1 else None
+                default_vendor = default_rule.vendor if default_rule else ""
+                default_product = default_rule.product if default_rule else ""
+                default_dataset = default_rule.dataset if default_rule else ""
+
                 for event_log in test_data.data:
                     if not event_log.vendor:
                         event_log.vendor = default_vendor
@@ -98,49 +104,68 @@ def init_test_data(
                         event_log.product = default_product
                     if not event_log.dataset:
                         event_log.dataset = default_dataset
-                    new_mapping = default_event_mapping.copy()
 
-                    # remove xdm expected_values fields that are no longer in the rule
+                    new_mapping = dataset_to_fields_map.get(
+                        event_log.dataset, {}
+                    ).copy()
+                    if not new_mapping:
+                        logger.error(
+                            f"[red]Ignoring update the event log {event_log.test_data_event_id} as no dataset is provided for it[/red]",
+                            extra={"markup": True},
+                        )
+                        continue
+                    # update existing values and remove fields from expected_values that are no longer in the rule
                     if event_log.expected_values:
-                        keys_to_remove = []
-                        for key in event_log.expected_values:
-                            if key not in new_mapping:
-                                keys_to_remove.append(key)
-                        for key in keys_to_remove:
-                            event_log.expected_values.pop(key)
-                        new_mapping.update(event_log.expected_values)
+                        new_mapping = {
+                            key: event_log.expected_values.get(key)
+                            for key in new_mapping.keys()
+                        }
 
                     event_log.expected_values = new_mapping
 
-                if count > len(test_data.data):
-                    # create the missing templated data and add it to the test data
-                    templated_event_data_to_add = [
-                        EventLog(
-                            vendor=default_vendor,
-                            product=default_product,
-                            dataset=default_dataset,
-                            expected_values=default_event_mapping.copy(),
-                        )
-                        for _ in range(count - len(test_data.data))
-                    ]
+                rules_count = len(mr_entity.rules)
+                data_entries_count = len(test_data.data)
+                expected_entries_count = count * rules_count
 
-                    test_data.data.extend(templated_event_data_to_add)
+                if expected_entries_count > data_entries_count:
+                    # create the missing templated data and add it to the test data
+
+                    for mr in mr_entity.rules:
+                        test_data.data.extend(
+                            [
+                                EventLog(
+                                    vendor=mr.vendor,
+                                    product=mr.product,
+                                    dataset=mr.dataset,
+                                    expected_values=dict.fromkeys(mr.fields),
+                                )
+                                for _ in range(
+                                    int(
+                                        (expected_entries_count - data_entries_count)
+                                        / rules_count
+                                    )
+                                )
+                            ]
+                        )
             else:
                 logger.info(
                     f"[cyan]Creating test data file for: {mr_entity.path.parent}[/cyan]",
                     extra={"markup": True},
                 )
-                test_data = TestData(
-                    data=[
-                        EventLog(
-                            vendor=default_vendor,
-                            product=default_product,
-                            dataset=default_dataset,
-                            expected_values=default_event_mapping.copy(),
-                        )
-                        for _ in range(count)
-                    ]
-                )
+                data: List[TestData] = []
+                for mr in mr_entity.rules:
+                    data.extend(
+                        [
+                            EventLog(
+                                vendor=mr.vendor,
+                                product=mr.product,
+                                dataset=mr.dataset,
+                                expected_values=dict.fromkeys(mr.fields),
+                            )
+                            for _ in range(count)
+                        ]
+                    )
+                test_data = TestData(data=data)
                 test_data_file = (
                     mr_entity.path.parent
                     / f"{mr_entity.path.parent.stem}{mr_entity.TESTDATA_FILE_SUFFIX}"

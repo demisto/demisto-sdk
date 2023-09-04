@@ -1,6 +1,5 @@
 # STD packages
 import concurrent.futures
-import logging
 import os
 import platform
 import re
@@ -16,6 +15,7 @@ import urllib3.exceptions
 from packaging.version import Version
 from wcmatch.pathlib import Path, PosixPath
 
+import demisto_sdk
 from demisto_sdk.commands.common.constants import (
     API_MODULES_PACK,
     PACKS_PACK_META_FILE_NAME,
@@ -23,23 +23,24 @@ from demisto_sdk.commands.common.constants import (
     TYPE_PYTHON,
     DemistoException,
 )
+from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.docker_helper import init_global_docker_client
-from demisto_sdk.commands.common.handlers import JSON_Handler
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.timers import report_time_measurements
 from demisto_sdk.commands.common.tools import (
     find_file,
     find_type,
-    get_content_path,
     get_file_displayed_name,
     get_json,
     is_external_repository,
     retrieve_file_ending,
 )
-from demisto_sdk.commands.content_graph.content_graph_commands import (
+from demisto_sdk.commands.content_graph.commands.update import (
     update_content_graph,
 )
-from demisto_sdk.commands.content_graph.interface.neo4j.neo4j_graph import (
-    Neo4jContentGraphInterface,
+from demisto_sdk.commands.content_graph.interface import (
+    ContentGraphInterface,
 )
 from demisto_sdk.commands.lint.helpers import (
     EXIT_CODES,
@@ -53,12 +54,9 @@ from demisto_sdk.commands.lint.helpers import (
 )
 from demisto_sdk.commands.lint.linter import DockerImageFlagOption, Linter
 
-json = JSON_Handler()
-
 # Third party packages
 
 # Local packages
-logger = logging.getLogger("demisto-sdk")
 
 sha1Regex = re.compile(r"\b[0-9a-fA-F]{40}\b", re.M)
 
@@ -135,7 +133,7 @@ class LintManager:
                     f"Checking for packages dependent on the modified API module {changed_api_module}..."
                 )
 
-                with Neo4jContentGraphInterface() as graph:
+                with ContentGraphInterface() as graph:
                     logger.info("Updating graph...")
                     update_content_graph(graph, use_git=True, dependencies=True)
 
@@ -203,25 +201,6 @@ class LintManager:
             )
             logger.warning(f"can't locate content repo {e}")
         # Get global requirements file
-        pipfile_dir = Path(__file__).parent / "resources"
-        try:
-            pipfile_lock_path = pipfile_dir / "pipfile_python3/Pipfile.lock"
-            with open(file=pipfile_lock_path) as f:
-                lock_file: dict = json.load(fp=f)["develop"]
-                facts["requirements_3"] = [
-                    key + value["version"]
-                    for key, value in lock_file.items()  # type: ignore
-                ]
-                logger.debug(
-                    "Test requirements successfully collected for python 3:\n"
-                    f" {facts[f'requirements_3']}"
-                )
-            python2_requirements = pipfile_dir / "pipfile_python2/dev-requirements.txt"
-            facts["requirements_2"] = python2_requirements.read_text().strip().split("\n")  # type: ignore
-        except (json.JSONDecodeError, OSError, FileNotFoundError, KeyError) as e:
-            logger.info("[red]Can't parse pipfile.lock - Aborting![/red]")
-            logger.critical(f"demisto-sdk-can't parse pipfile.lock {e}")
-            sys.exit(1)
         # ￿Get mandatory modulestest modules and Internet connection for docker usage
         try:
             facts["test_modules"] = get_test_modules(
@@ -258,13 +237,16 @@ class LintManager:
             sys.exit(1)
         # Validating docker engine connection
         logger.debug("creating docker client from env")
-        docker_client: docker.DockerClient = init_global_docker_client(
-            log_prompt="LintManager"
-        )
+
         try:
+            docker_client: docker.DockerClient = init_global_docker_client(
+                log_prompt="LintManager"
+            )
             logger.debug("pinging docker daemon")
             docker_client.ping()
         except (
+            docker.errors.DockerException,
+            demisto_sdk.commands.common.docker_helper.DockerException,
             requests.exceptions.ConnectionError,
             urllib3.exceptions.ProtocolError,
             docker.errors.APIError,
@@ -311,8 +293,9 @@ class LintManager:
             if isinstance(input, str):
                 input = input.split(",")
             for item in input:
-                is_pack = os.path.isdir(item) and os.path.exists(
-                    os.path.join(item, PACKS_PACK_META_FILE_NAME)
+                is_pack = (
+                    Path(item).is_dir()
+                    and Path(item, PACKS_PACK_META_FILE_NAME).exists()
                 )
                 if is_pack:
                     pkgs.extend(LintManager._get_all_packages(content_dir=item))
@@ -497,8 +480,6 @@ class LintManager:
                         else Path(  # type: ignore
                             self._facts["content_repo"].working_dir
                         ),
-                        req_2=self._facts["requirements_2"],
-                        req_3=self._facts["requirements_3"],
                         docker_engine=self._facts["docker_engine"],
                         docker_timeout=docker_timeout,
                         docker_image_flag=docker_image_flag,
@@ -1195,7 +1176,7 @@ class LintManager:
         if not self.json_file_path:
             return
 
-        if os.path.exists(self.json_file_path):
+        if Path(self.json_file_path).exists():
             json_contents = get_json(self.json_file_path)
             if not (isinstance(json_contents, list)):
                 json_contents = []
@@ -1256,7 +1237,7 @@ class LintManager:
         mypy_errors: list = []
         gather_error: list = []
         for line in error_messages:
-            if os.path.isfile(line.split(":")[0]):
+            if Path(line.split(":")[0]).is_file():
                 if gather_error:
                     mypy_errors.append("\n".join(gather_error))
                     gather_error = []
@@ -1345,7 +1326,7 @@ class LintManager:
         """
         error_messages = errors.get("messages", "")
         error_messages = error_messages.split("\n") if error_messages else []
-        content_path = get_content_path()
+        content_path = CONTENT_PATH
         for message in error_messages:
             if message:
                 file_name, line_number, error_contents = message.split(":", 2)

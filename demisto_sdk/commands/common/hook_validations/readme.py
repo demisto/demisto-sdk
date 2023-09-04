@@ -1,4 +1,3 @@
-import logging
 import os
 import re
 import socket
@@ -10,7 +9,6 @@ from threading import Lock
 from typing import Callable, List, Optional, Set
 from urllib.parse import urlparse
 
-import click
 import docker
 import requests
 from git import InvalidGitRepositoryError
@@ -19,9 +17,13 @@ from requests.exceptions import HTTPError
 from urllib3.util import Retry
 
 from demisto_sdk.commands.common.constants import (
+    HTML_IMAGE_LINK_REGEX,
+    PACKS_DIR,
     RELATIVE_HREF_URL_REGEX,
     RELATIVE_MARKDOWN_URL_REGEX,
+    URL_IMAGE_LINK_REGEX,
 )
+from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.docker_helper import init_global_docker_client
 from demisto_sdk.commands.common.errors import (
     FOUND_FILES_AND_ERRORS,
@@ -29,11 +31,12 @@ from demisto_sdk.commands.common.errors import (
     Errors,
 )
 from demisto_sdk.commands.common.git_util import GitUtil
-from demisto_sdk.commands.common.handlers import JSON_Handler
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.hook_validations.base_validator import (
     BaseValidator,
     error_codes,
 )
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.markdown_lint import run_markdownlint
 from demisto_sdk.commands.common.MDXServer import (
     start_docker_MDX_server,
@@ -41,14 +44,12 @@ from demisto_sdk.commands.common.MDXServer import (
 )
 from demisto_sdk.commands.common.tools import (
     compare_context_path_in_yml_and_readme,
-    get_content_path,
+    get_pack_name,
     get_url_with_retries,
     get_yaml,
     get_yml_paths_in_dir,
     run_command_os,
 )
-
-json = JSON_Handler()
 
 NO_HTML = "<!-- NOT_HTML_DOC -->"
 YES_HTML = "<!-- HTML_DOC -->"
@@ -60,7 +61,11 @@ SECTIONS = [
     "Additional Information",
 ]
 
-USER_FILL_SECTIONS = ["FILL IN REQUIRED PERMISSIONS HERE", "version xx"]
+USER_FILL_SECTIONS = [
+    "FILL IN REQUIRED PERMISSIONS HERE",
+    "version xx",
+    "%%UPDATE%%",
+]
 
 REQUIRED_MDX_PACKS = [
     "@mdx-js/mdx",
@@ -73,6 +78,8 @@ REQUIRED_MDX_PACKS = [
 PACKS_TO_IGNORE = ["HelloWorld", "HelloWorldPremium"]
 
 DEFAULT_SENTENCES = ["getting started and learn how to build an integration"]
+
+RETRIES_VERIFY_MDX = 2
 
 
 @dataclass(frozen=True)
@@ -173,7 +180,7 @@ class ReadMeValidator(BaseValidator):
             json_file_path=json_file_path,
             specific_validations=specific_validations,
         )
-        self.content_path = get_content_path()
+        self.content_path = CONTENT_PATH
         self.file_path_str = file_path
         self.file_path = Path(file_path)
         self.pack_path = self.file_path.parent
@@ -191,6 +198,7 @@ class ReadMeValidator(BaseValidator):
             [
                 self.verify_readme_relative_urls(),
                 self.is_image_path_valid(),
+                self.verify_image_exist(),
                 self.verify_readme_image_paths(),
                 self.is_mdx_file(),
                 self.verify_no_empty_sections(),
@@ -201,6 +209,9 @@ class ReadMeValidator(BaseValidator):
                 self.verify_template_not_in_readme(),
                 self.verify_copyright_section_in_readme_content(),
                 # self.has_no_markdown_lint_errors(),
+                self.validate_no_disallowed_terms_in_customer_facing_docs(
+                    file_content=self.readme_content, file_path=self.file_path_str
+                ),
             ]
         )
 
@@ -208,21 +219,29 @@ class ReadMeValidator(BaseValidator):
         server_started = mdx_server_is_up()
         if not server_started:
             return False
-        readme_content = self.fix_mdx()
-        retry = Retry(total=2)
-        adapter = HTTPAdapter(max_retries=retry)
-        session = requests.Session()
-        session.mount("http://", adapter)
-        response = session.request(
-            "POST",
-            "http://localhost:6161",
-            data=readme_content.encode("utf-8"),
-            timeout=20,
-        )
-        if response.status_code != 200:
-            error_message, error_code = Errors.readme_error(response.text)
-            if self.handle_error(error_message, error_code, file_path=self.file_path):
-                return False
+        for _ in range(RETRIES_VERIFY_MDX):
+            try:
+                readme_content = self.fix_mdx()
+                retry = Retry(total=2)
+                adapter = HTTPAdapter(max_retries=retry)
+                session = requests.Session()
+                session.mount("http://", adapter)
+                response = session.request(
+                    "POST",
+                    "http://localhost:6161",
+                    data=readme_content.encode("utf-8"),
+                    timeout=20,
+                )
+                if response.status_code != 200:
+                    error_message, error_code = Errors.readme_error(response.text)
+                    if self.handle_error(
+                        error_message, error_code, file_path=self.file_path
+                    ):
+                        return False
+                return True
+            except Exception as e:
+                logger.info(f"Starting MDX local server due to exception. Error: {e}")
+                start_local_MDX_server()
         return True
 
     def is_mdx_file(self) -> bool:
@@ -284,7 +303,7 @@ class ReadMeValidator(BaseValidator):
             bool: True If all links are valid else False.
         """
         invalid_paths = re.findall(
-            r"(\!\[.*?\]|src\=)(\(|\")(https://github.com/demisto/content/(?!raw).*?)(\)|\")",
+            r"(\!\[.*?\]|src\=)(\(|\")(https://github.com/demisto/content/blob/.*?)(\)|\")",
             self.readme_content,
             re.IGNORECASE,
         )
@@ -354,6 +373,29 @@ class ReadMeValidator(BaseValidator):
 
         return error_list
 
+    def verify_image_exist(self) -> bool:
+        """Validate README images are actually exits.
+
+        Returns:
+            bool: True If all image path's actually exist else False.
+
+        """
+        images_path = re.findall(
+            r"\.\./doc_files/[a-zA-Z0-9_-]+\.png",
+            self.readme_content,
+        )
+
+        for image_path in images_path:
+            image_file_path = Path(
+                PACKS_DIR, get_pack_name(self.file_path), image_path.replace("../", "")
+            )
+            if not image_file_path.is_file():
+                error_message, error_code = Errors.image_does_not_exist(image_path)
+                self.handle_error(error_message, error_code, file_path=self.file_path)
+                return False
+
+        return True
+
     @staticmethod
     @lru_cache(None)
     def is_docker_available():
@@ -385,7 +427,7 @@ class ReadMeValidator(BaseValidator):
         # Check node exist
         stdout, stderr, exit_code = run_command_os("node -v", cwd=content_path)
         if exit_code:
-            click.secho(
+            logger.error(
                 f"There is no node installed on the machine, error - {stderr}, {stdout}"
             )
             valid = False
@@ -403,7 +445,7 @@ class ReadMeValidator(BaseValidator):
                         missing_module.append(pack)
         if missing_module:
             valid = False
-            click.secho(
+            logger.error(
                 f"The npm modules: {missing_module} are not installed. To run the mdx server locally, use "
                 f"'npm install' to install all required node dependencies. Otherwise, if docker is installed, the server"
                 f"will run in a docker container"
@@ -437,27 +479,24 @@ class ReadMeValidator(BaseValidator):
 
         for img in relative_images:
             # striping in case there are whitespaces at the beginning/ending of url.
-            prefix = "" if "src" in img[0] else img[0].strip()
             relative_path = img[1].strip()
 
             if "Insert the link to your image here" in relative_path:
                 # the line is generated automatically in playbooks readme, the user should replace it with
                 # an image or remove the line.
                 error_message, error_code = Errors.invalid_readme_image_error(
-                    prefix + f"({relative_path})", error_type="insert_image_link_error"
+                    relative_path, error_type="insert_image_link_error"
                 )
             elif is_pack_readme:
                 error_message, error_code = Errors.invalid_readme_image_error(
-                    prefix + f"({relative_path})",
+                    relative_path,
                     error_type="pack_readme_relative_error",
                 )
             else:
                 # generates absolute path from relative and checks for the file existence.
-                if not os.path.isfile(
-                    os.path.join(self.file_path.parent, relative_path)
-                ):
+                if not Path(self.file_path.parent, relative_path).is_file():
                     error_message, error_code = Errors.invalid_readme_image_error(
-                        prefix + f"({relative_path})",
+                        relative_path,
                         error_type="general_readme_relative_error",
                     )
             if error_code and error_message:  # error was found
@@ -488,19 +527,18 @@ class ReadMeValidator(BaseValidator):
         except InvalidGitRepositoryError:
             pass
         absolute_links = re.findall(
-            r"(!\[.*\])\((https://.*)\)$",
+            URL_IMAGE_LINK_REGEX,
             self.readme_content,
             re.IGNORECASE | re.MULTILINE,
         )
         absolute_links += re.findall(
-            r'(<img.*?src\s*=\s*"(https://.*?)")',
+            HTML_IMAGE_LINK_REGEX,
             self.readme_content,
             re.IGNORECASE | re.MULTILINE,
         )
         for link in absolute_links:
             error_message: str = ""
             error_code: str = ""
-            prefix = "" if "src" in link[0] else link[0].strip()
             img_url = link[
                 1
             ].strip()  # striping in case there are whitespaces at the beginning/ending of url.
@@ -514,7 +552,7 @@ class ReadMeValidator(BaseValidator):
                     and working_branch_name != "master"
                 ):
                     error_message, error_code = Errors.invalid_readme_image_error(
-                        prefix + f"({img_url})",
+                        img_url,
                         error_type="branch_name_readme_absolute_error",
                     )
                 else:
@@ -524,13 +562,13 @@ class ReadMeValidator(BaseValidator):
                         )
                     except HTTPError as error:
                         error_message, error_code = Errors.invalid_readme_image_error(
-                            prefix + f"({img_url})",
+                            img_url,
                             error_type="general_readme_absolute_error",
                             response=error.response,
                         )
             except Exception as ex:
-                click.secho(
-                    f"Could not validate the image link: {img_url}\n {ex}", fg="yellow"
+                logger.exception(
+                    f"[yellow]Could not validate the image link: {img_url}\n {ex}[/yellow]"
                 )
                 continue
 
@@ -593,9 +631,8 @@ class ReadMeValidator(BaseValidator):
 
         current_pack_name = self.pack_path.name
         if ignore_packs and current_pack_name in ignore_packs:
-            click.secho(
-                f"Default sentences check - Pack {current_pack_name} is ignored.",
-                fg="yellow",
+            logger.info(
+                f"[yellow]Default sentences check - Pack {current_pack_name} is ignored.[/yellow]"
             )
             return errors  # returns empty string
 
@@ -863,9 +900,9 @@ class ReadMeValidator(BaseValidator):
 
         with ReadMeValidator._MDX_SERVER_LOCK:
             if mdx_server_is_up():  # this allows for this context to be reentrant
-                logging.debug("server is already up. Not restarting")
+                logger.debug("server is already up. Not restarting")
                 return empty_context_mgr(True)
-            if ReadMeValidator.are_modules_installed_for_verify(get_content_path()):  # type: ignore
+            if ReadMeValidator.are_modules_installed_for_verify(CONTENT_PATH):  # type: ignore
                 ReadMeValidator.add_node_env_vars()
                 return start_local_MDX_server(handle_error, file_path)
             elif ReadMeValidator.is_docker_available():
@@ -874,7 +911,7 @@ class ReadMeValidator(BaseValidator):
 
     @staticmethod
     def add_node_env_vars():
-        content_path = get_content_path()
+        content_path = CONTENT_PATH
         node_modules_path = content_path / Path("node_modules")  # type: ignore
         os.environ["NODE_PATH"] = (
             str(node_modules_path) + os.pathsep + os.getenv("NODE_PATH", "")

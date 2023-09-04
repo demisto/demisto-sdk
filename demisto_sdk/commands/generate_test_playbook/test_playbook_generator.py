@@ -1,18 +1,12 @@
-import logging
 from pathlib import Path
 from typing import Dict, Optional
 
-import click
-
 from demisto_sdk.commands.common.constants import FileType
-from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
+from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import get_yaml
 from demisto_sdk.commands.upload.uploader import Uploader
-
-logger = logging.getLogger("demisto-sdk")
-
-json = JSON_Handler()
-yaml = YAML_Handler()
 
 
 class ContentItemType:
@@ -290,6 +284,7 @@ class PlaybookTestsGenerator:
         commands: str = None,
         examples: str = None,
         upload: bool = False,
+        **kwargs,
     ):
         self.integration_yml_path = input
         self.output = output
@@ -368,7 +363,6 @@ class PlaybookTestsGenerator:
                 f"[red]File {self.integration_yml_path} was not found when trying to generate a test playbook[/red]"
             )
             if self.verbose:
-                # TODO Handle this verbose
                 raise FileNotFoundError()
             else:
                 return
@@ -421,21 +415,19 @@ class PlaybookTestsGenerator:
         test_playbook.add_task(create_end_task(test_playbook.task_counter))
 
         if Path(self.test_playbook_yml_path).exists():
-            click.secho(
-                f"Warning: There already exists a test playbook at {self.test_playbook_yml_path}, "
-                f"it will be overwritten.",
-                fg="yellow",
+            logger.info(
+                f"[yellow]Warning: There already exists a test playbook at {self.test_playbook_yml_path}, "
+                f"it will be overwritten.[/yellow]"
             )
 
         with open(self.test_playbook_yml_path, "w") as yf:
             yaml.dump(test_playbook.to_dict(), yf)
 
-            click.secho(
-                f"Test playbook yml was saved at:\n{self.test_playbook_yml_path}\n",
-                fg="green",
+            logger.info(
+                f"[green]Test playbook yml was saved at:\n{self.test_playbook_yml_path}[/green]\n"
             )
 
         if self.upload:
-            return Uploader(input=self.test_playbook_yml_path).upload()
+            return Uploader(input=Path(self.test_playbook_yml_path)).upload()
 
         return True

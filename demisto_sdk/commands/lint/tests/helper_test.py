@@ -1,9 +1,12 @@
 import importlib
 import os
+from pathlib import Path
 
 import pytest
 
+from demisto_sdk.commands.common.constants import TYPE_PYTHON
 from demisto_sdk.commands.lint.helpers import (
+    add_tmp_lint_files,
     generate_coverage_report,
     split_warnings_errors,
 )
@@ -75,51 +78,6 @@ def test_build_skipped_exit_code(
             no_pwsh_test,
             docker_engine,
         )
-
-
-@pytest.mark.parametrize(
-    argnames="image, output, expected",
-    argvalues=[
-        ("alpine", b"3.7\n", "3.7"),
-        ("alpine-3", b"2.7\n", "2.7"),
-        ("alpine-310", b"3.10\n", "3.10"),
-        ("demisto/python3:3.9.8.24399", "", "3.9"),
-        ("demisto/python:2.7.18.24398", "", "2.7"),
-    ],
-)
-def test_get_python_version_from_image(
-    image: str, output: bytes, expected: float, mocker
-):
-    from demisto_sdk.commands.lint import helpers
-
-    mocker.patch.object(helpers, "init_global_docker_client")
-    helpers.init_global_docker_client().containers.run.return_value = output
-    assert expected == helpers.get_python_version_from_image(image)
-
-
-def test_cache_of_get_python_version_from_image():
-    """
-    Given -
-        docker image that should be alrady cached
-
-    When -
-        Try to get python version from am docker image
-
-    Then -
-        Validate the value returned from the cache
-    """
-    from demisto_sdk.commands.lint import helpers
-
-    image = "demisto/python3:3.9.8.12345"
-
-    cache_info_before = helpers.get_python_version_from_image.cache_info()
-    helpers.get_python_version_from_image(image)
-    cache_info = helpers.get_python_version_from_image.cache_info()
-    assert cache_info.hits == cache_info_before.hits
-
-    helpers.get_python_version_from_image(image)
-    cache_info = helpers.get_python_version_from_image.cache_info()
-    assert cache_info.hits == cache_info_before.hits + 1
 
 
 @pytest.mark.parametrize(
@@ -253,12 +211,81 @@ def test_split_warnings_errors(
     assert other == output_other
 
 
+def test_add_tmp_lint_files(repo):
+    """
+    Given:
+        - A pack that contains two modules and an integration that imports those two modules.
+
+    When:
+        - Running add_tmp_lint_files on the given input.
+
+    Then:
+        - Ensure both modules are copied by the command shutil.copy.
+    """
+    pack = repo.create_pack(name="ApiModules")
+    pack.create_script(name="TEST1ApiModule", code="# TEST1ApiModule")
+    pack.create_script(name="TEST2ApiModule", code="# TEST2ApiModule")
+    integration_code = "from TEST1ApiModule import *\nfrom TEST2ApiModule import *"
+    integration = pack.create_integration(name="test", code=integration_code)
+
+    content_repo = Path(repo.path)
+    pack_path = Path(pack.path)
+    lint_files = [Path(integration.code.path)]
+
+    with add_tmp_lint_files(
+        content_repo=content_repo,
+        pack_path=pack_path,
+        lint_files=lint_files,
+        modules={},
+        pack_type=TYPE_PYTHON,
+    ):
+        assert all(
+            (pack_path / module).exists()
+            for module in ["TEST1ApiModule.py", "TEST2ApiModule.py"]
+        )
+
+
+def test_add_tmp_lint_files__multi_level_api_modules(repo):
+    """
+    Given:
+        - A pack that contains an integration that imports multi level ApiModules.
+
+    When:
+        - Running add_tmp_lint_files on the given input.
+
+    Then:
+        - Ensure entire hierarchy of the ApiModules are copied.
+    """
+    pack = repo.create_pack(name="ApiModules")
+    pack.create_script(name="BaseApiModule", code="# base ApiModule")
+    pack.create_script(name="SubApiModule", code="from BaseApiModule import *")
+    pack.create_script(name="SubSubApiModule", code="from SubApiModule import *")
+    integration_code = "from SubSubApiModule import *"
+    integration = pack.create_integration(name="test", code=integration_code)
+
+    content_repo = Path(repo.path)
+    pack_path = Path(pack.path)
+    lint_files = [Path(integration.code.path)]
+
+    with add_tmp_lint_files(
+        content_repo=content_repo,
+        pack_path=pack_path,
+        lint_files=lint_files,
+        modules={},
+        pack_type=TYPE_PYTHON,
+    ):
+        assert all(
+            (pack_path / module).exists()
+            for module in ["BaseApiModule.py", "SubApiModule.py", "SubSubApiModule.py"]
+        )
+
+
 class TestGenerateCoverageReport:
     coverage = importlib.import_module("coverage")
 
     @staticmethod
     def mock_path_exists(mocker):
-        mocker.patch("os.path.exists", return_value=True)
+        mocker.patch("pathlib.Path.exists", return_value=True)
 
     def test_generate_coverage_report_with_report(self, mocker):
         mock_report = mocker.patch.object(self.coverage.Coverage, "report")

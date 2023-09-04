@@ -1,29 +1,38 @@
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Tuple
 from zipfile import ZipFile
 
 import pytest
 
 import demisto_sdk.commands.content_graph.neo4j_service as neo4j_service
-from demisto_sdk.commands.common.constants import MarketplaceVersions
-from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
-from demisto_sdk.commands.content_graph.content_graph_commands import (
+from demisto_sdk.commands.common.constants import (
+    SKIP_PREPARE_SCRIPT_NAME,
+    MarketplaceVersions,
+)
+from demisto_sdk.commands.content_graph.commands.create import (
     create_content_graph,
-    stop_content_graph,
 )
-from demisto_sdk.commands.content_graph.interface.neo4j.neo4j_graph import (
-    Neo4jContentGraphInterface as ContentGraphInterface,
+from demisto_sdk.commands.content_graph.common import (
+    ContentType,
+    RelationshipType,
 )
+from demisto_sdk.commands.content_graph.interface import (
+    ContentGraphInterface,
+)
+from demisto_sdk.commands.content_graph.objects import IncidentField, Layout, Mapper
 from demisto_sdk.commands.content_graph.objects.classifier import Classifier
+from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 from demisto_sdk.commands.content_graph.objects.integration import Command, Integration
 from demisto_sdk.commands.content_graph.objects.integration_script import (
     IntegrationScript,
 )
 from demisto_sdk.commands.content_graph.objects.pack import Pack
+from demisto_sdk.commands.content_graph.objects.pack_metadata import PackMetadata
 from demisto_sdk.commands.content_graph.objects.playbook import Playbook
 from demisto_sdk.commands.content_graph.objects.repository import ContentDTO
 from demisto_sdk.commands.content_graph.objects.script import Script
 from demisto_sdk.commands.content_graph.objects.test_playbook import TestPlaybook
+from demisto_sdk.commands.content_graph.objects.widget import Widget
 from demisto_sdk.commands.content_graph.tests.test_tools import load_json
 from TestSuite.repo import Repo
 from TestSuite.test_tools import ChangeCWD
@@ -32,15 +41,14 @@ from TestSuite.test_tools import ChangeCWD
 
 
 @pytest.fixture(autouse=True)
-def setup(mocker, repo: Repo):
+def setup_method(mocker, repo: Repo):
     """Auto-used fixture for setup before every test run"""
-    mocker.patch(
-        "demisto_sdk.commands.content_graph.objects.base_content.get_content_path",
-        return_value=Path(repo.path),
-    )
+    import demisto_sdk.commands.content_graph.objects.base_content as bc
+
+    bc.CONTENT_PATH = Path(repo.path)
     mocker.patch.object(ContentGraphInterface, "repo_path", Path(repo.path))
     mocker.patch.object(neo4j_service, "REPO_PATH", Path(repo.path))
-    stop_content_graph()
+    neo4j_service.stop()
 
 
 @pytest.fixture
@@ -50,18 +58,22 @@ def repository(mocker):
         packs=[],
     )
     mocker.patch(
-        "demisto_sdk.commands.content_graph.content_graph_builder.ContentGraphBuilder._create_content_dto",
-        return_value=repository,
+        "demisto_sdk.commands.content_graph.content_graph_builder.ContentGraphBuilder._create_content_dtos",
+        return_value=[repository],
     )
     return repository
 
 
-def mock_pack(name: str = "SamplePack"):
-    return Pack(
+def mock_pack(
+    name: str = "SamplePack",
+    path: Path = Path("Packs"),
+    repository: ContentDTO = None,
+) -> Pack:
+    pack = Pack(
         object_id=name,
         content_type=ContentType.PACK,
         node_id=f"{ContentType.PACK}:{name}",
-        path=Path("Packs"),
+        path=path,
         name=name,
         marketplaces=[MarketplaceVersions.XSOAR],
         hidden=False,
@@ -73,15 +85,24 @@ def mock_pack(name: str = "SamplePack"):
         keywords=[],
         contentItems=[],
         excluded_dependencies=[],
+        deprecated=False,
     )
+    if repository:
+        repository.packs.append(pack)
+    return pack
 
 
-def mock_integration(name: str = "SampleIntegration"):
-    return Integration(
+def mock_integration(
+    name: str = "SampleIntegration",
+    path: Path = Path("Packs"),
+    pack: Pack = None,
+    uses: List[Tuple[ContentItem, bool]] = None,
+) -> Integration:
+    integration = Integration(
         id=name,
         content_type=ContentType.INTEGRATION,
         node_id=f"{ContentType.INTEGRATION}:{name}",
-        path=Path("Packs"),
+        path=path,
         fromversion="5.0.0",
         toversion="99.99.99",
         display_name=name,
@@ -93,33 +114,73 @@ def mock_integration(name: str = "SampleIntegration"):
         category="blabla",
         commands=[Command(name="test-command", description="")],
     )
+    if pack is not None:
+        pack.content_items.integration.append(integration)
+        build_in_pack_relationship(pack, integration)
+        add_uses_relationships(pack, integration, uses)
+    return integration
 
 
-def mock_script(name: str = "SampleScript"):
-    return Script(
+def mock_script(
+    name: str = "SampleScript",
+    marketplaces: List[MarketplaceVersions] = [MarketplaceVersions.XSOAR],
+    skip_prepare: List[str] = [],
+    path: Path = Path("Packs"),
+    pack: Pack = None,
+    uses: List[Tuple[ContentItem, bool]] = None,
+    importing_items: List[ContentItem] = None,
+) -> Script:
+    script = Script(
         id=name,
         content_type=ContentType.SCRIPT,
         node_id=f"{ContentType.SCRIPT}:{name}",
-        path=Path("Packs"),
+        path=path,
         fromversion="5.0.0",
         display_name=name,
         toversion="99.99.99",
         name=name,
-        marketplaces=[MarketplaceVersions.XSOAR],
+        marketplaces=marketplaces,
         deprecated=False,
         type="python3",
         docker_image="mock:docker",
         tags=[],
         is_test=False,
+        skip_prepare=skip_prepare,
     )
+    if pack:
+        pack.content_items.script.append(script)
+        build_in_pack_relationship(pack, script)
+        add_uses_relationships(pack, script, uses)
+        if importing_items is not None:
+            # Note: `importing_items` won't necessarily be actually of `pack`,
+            # But for mocking purposes it's enough.
+            pack.relationships.add_batch(
+                RelationshipType.IMPORTS,
+                [
+                    mock_relationship(
+                        ci.object_id,
+                        ci.content_type,
+                        script.object_id,
+                        script.content_type,
+                    )
+                    for ci in importing_items
+                ],
+            )
+
+    return script
 
 
-def mock_classifier(name: str = "SampleClassifier"):
-    return Classifier(
+def mock_classifier(
+    name: str = "SampleClassifier",
+    path: Path = Path("Packs"),
+    pack: Pack = None,
+    uses: List[Tuple[ContentItem, bool]] = None,
+) -> Classifier:
+    classifier = Classifier(
         id=name,
         content_type=ContentType.CLASSIFIER,
         node_id=f"{ContentType.CLASSIFIER}:{name}",
-        path=Path("Packs"),
+        path=path,
         fromversion="5.0.0",
         display_name=name,
         toversion="99.99.99",
@@ -131,30 +192,52 @@ def mock_classifier(name: str = "SampleClassifier"):
         tags=[],
         is_test=False,
     )
+    if pack:
+        pack.content_items.classifier.append(classifier)
+        build_in_pack_relationship(pack, classifier)
+        add_uses_relationships(pack, classifier, uses)
+    return classifier
 
 
-def mock_playbook(name: str = "SamplePlaybook"):
-    return Playbook(
+def mock_playbook(
+    name: str = "SamplePlaybook",
+    path: Path = Path("Packs"),
+    marketplaces: List[MarketplaceVersions] = [MarketplaceVersions.XSOAR],
+    pack: Pack = None,
+    uses: List[Tuple[ContentItem, bool]] = None,
+) -> Playbook:
+    playbook = Playbook(
         id=name,
         content_type=ContentType.PLAYBOOK,
         node_id=f"{ContentType.PLAYBOOK}:{name}",
-        path=Path("Packs"),
+        path=path,
         fromversion="5.0.0",
         toversion="99.99.99",
         display_name=name,
         name=name,
-        marketplaces=[MarketplaceVersions.XSOAR],
+        marketplaces=marketplaces,
         deprecated=False,
         is_test=False,
     )
+    if pack:
+        pack.content_items.playbook.append(playbook)
+        build_in_pack_relationship(pack, playbook)
+        add_uses_relationships(pack, playbook, uses)
+    return playbook
 
 
-def mock_test_playbook(name: str = "SampleTestPlaybook"):
-    return TestPlaybook(
+def mock_test_playbook(
+    name: str = "SampleTestPlaybook",
+    path: Path = Path("Packs"),
+    pack: Pack = None,
+    uses: List[Tuple[ContentItem, bool]] = None,
+    tested_items: List[ContentItem] = None,
+) -> TestPlaybook:
+    test_playbook = TestPlaybook(
         id=name,
         # content_type=ContentType.TEST_PLAYBOOK,
         node_id=f"{ContentType.PLAYBOOK}:{name}",
-        path=Path("Packs"),
+        path=path,
         fromversion="5.0.0",
         toversion="99.99.99",
         display_name=name,
@@ -162,6 +245,128 @@ def mock_test_playbook(name: str = "SampleTestPlaybook"):
         marketplaces=[MarketplaceVersions.XSOAR],
         deprecated=False,
         is_test=True,
+    )
+    if pack:
+        pack.content_items.test_playbook.append(test_playbook)
+        build_in_pack_relationship(pack, test_playbook)
+        add_uses_relationships(pack, test_playbook, uses)
+        if tested_items is not None:
+            pack.relationships.add_batch(
+                RelationshipType.TESTED_BY,
+                [
+                    mock_relationship(
+                        ci.object_id,
+                        ci.content_type,
+                        test_playbook.object_id,
+                        test_playbook.content_type,
+                    )
+                    for ci in tested_items
+                ],
+            )
+
+    return test_playbook
+
+
+def mock_widget(
+    name: str = "SampleWidget",
+    path: Path = Path("Packs"),
+    pack: Pack = None,
+    uses: List[Tuple[ContentItem, bool]] = None,
+) -> Widget:
+    widget = Widget(
+        id=name,
+        content_type=ContentType.WIDGET,
+        node_id=f"{ContentType.WIDGET}:{name}",
+        path=path,
+        fromversion="5.0.0",
+        toversion="99.99.99",
+        display_name=name,
+        name=name,
+        marketplaces=[MarketplaceVersions.XSOAR],
+        deprecated=False,
+        widget_type="number",
+        data_type="roi",
+    )
+    if pack:
+        pack.content_items.widget.append(widget)
+        build_in_pack_relationship(pack, widget)
+        add_uses_relationships(pack, widget, uses)
+    return widget
+
+
+def mock_mapper(path: str, name: str = "SampleMapper", data: Dict = {}):
+    return Mapper(
+        id=name,
+        content_type=ContentType.MAPPER,
+        node_id=f"{ContentType.MAPPER}:{name}",
+        path=path,
+        fromversion="5.0.0",
+        display_name=name,
+        toversion="99.99.99",
+        name=name,
+        marketplaces=[MarketplaceVersions.XSOAR],
+        deprecated=False,
+        type="python3",
+        docker_image="mock:docker",
+        tags=[],
+        is_test=False,
+        data=data,
+    )
+
+
+def mock_layout(path: str, name: str = "SampleLayout", data: Dict = {}):
+    return Layout(
+        id=name,
+        content_type=ContentType.LAYOUT,
+        node_id=f"{ContentType.LAYOUT}:{name}",
+        path=path,
+        fromversion="5.0.0",
+        display_name=name,
+        toversion="99.99.99",
+        name=name,
+        marketplaces=[MarketplaceVersions.XSOAR],
+        deprecated=False,
+        type="python3",
+        docker_image="mock:docker",
+        tags=[],
+        is_test=False,
+        data=data,
+        group="incident",
+        edit=False,
+        indicators_details=False,
+        indicators_quick_view=False,
+        quick_view=False,
+        close=False,
+        details=False,
+        details_v2=True,
+        mobile=False,
+    )
+
+
+def mock_incident_field(
+    cli_name: str,
+    path: str,
+    marketplaces: List,
+    data: Dict = {},
+    name: str = "SampleIncidentField",
+):
+    return IncidentField(
+        id=name,
+        content_type=ContentType.INCIDENT_FIELD,
+        node_id=f"{ContentType.INCIDENT_FIELD}:{name}",
+        path=path,
+        fromversion="5.0.0",
+        display_name=name,
+        toversion="99.99.99",
+        name=name,
+        marketplaces=marketplaces,
+        deprecated=False,
+        type="python3",
+        docker_image="mock:docker",
+        tags=[],
+        is_test=False,
+        data=data,
+        cli_name=cli_name,
     )
 
 
@@ -187,6 +392,61 @@ def mock_relationship(
     }
     rel.update(kwargs)
     return rel
+
+
+def build_in_pack_relationship(
+    pack: Pack,
+    content_item: ContentItem,
+) -> None:
+    """Given a pack with content items,
+    creates the "in pack" and "has command" basic relationships.
+
+    Args:
+        pack (Pack): a pack for which to build basic relationships.
+    """
+    pack.relationships.add(
+        RelationshipType.IN_PACK,
+        **mock_relationship(
+            content_item.object_id,
+            content_item.content_type,
+            pack.object_id,
+            ContentType.PACK,
+        ),
+    )
+    if isinstance(content_item, Integration):
+        for command in content_item.commands:
+            pack.relationships.add(
+                RelationshipType.HAS_COMMAND,
+                **mock_relationship(
+                    content_item.object_id,
+                    content_item.content_type,
+                    command.object_id,
+                    ContentType.COMMAND,
+                    description="",
+                    deprecated=False,
+                ),
+            )
+
+
+def add_uses_relationships(
+    pack: Pack,
+    content_item: ContentItem,
+    used_content_items: List[Tuple[ContentItem, bool]] = None,
+) -> None:
+    if used_content_items is not None:
+        pack.relationships.add_batch(
+            RelationshipType.USES_BY_ID,
+            [
+                mock_relationship(
+                    content_item.object_id,
+                    content_item.content_type,
+                    ci.object_id,
+                    ci.content_type,
+                    mandatorily=mandatorily,
+                )
+                for ci, mandatorily in used_content_items
+            ],
+        )
 
 
 def find_model_for_id(packs: List[Pack], source_id: str):
@@ -341,6 +601,9 @@ class TestCreateContentGraph:
         mocker.patch.object(
             IntegrationScript, "get_supported_native_images", return_value=[]
         )
+        mocker.patch.object(
+            PackMetadata, "_get_tags_from_landing_page", retrun_value={}
+        )
 
         pack = repo.create_pack("TestPack")
         pack.pack_metadata.write_json(load_json("pack_metadata.json"))
@@ -391,13 +654,13 @@ class TestCreateContentGraph:
         assert returned_scripts == {"SampleScript", "TestApiModule"}
         with ChangeCWD(repo.path):
             content_cto.dump(tmp_path, MarketplaceVersions.XSOAR, zip=False)
-        assert Path.exists(tmp_path / "TestPack")
-        assert Path.exists(tmp_path / "TestPack" / "metadata.json")
-        assert Path.exists(
+        assert (tmp_path / "TestPack").exists()
+        assert (tmp_path / "TestPack" / "metadata.json").exists()
+        assert (
             tmp_path / "TestPack" / "Integrations" / "integration-integration_0.yml"
-        )
-        assert Path.exists(tmp_path / "TestPack" / "Scripts" / "script-script0.yml")
-        assert Path.exists(tmp_path / "TestPack" / "Scripts" / "script-script1.yml")
+        ).exists()
+        assert (tmp_path / "TestPack" / "Scripts" / "script-script0.yml").exists()
+        assert (tmp_path / "TestPack" / "Scripts" / "script-script1.yml").exists()
 
         # make sure that the output file zip is created
         assert Path.exists(tmp_path / "xsoar.zip")
@@ -477,7 +740,6 @@ class TestCreateContentGraph:
                     # test dependency
                     assert p.is_test
                 else:
-
                     assert False
 
             # now with all levels
@@ -611,6 +873,46 @@ class TestCreateContentGraph:
             create_content_graph(interface)
             script = interface.search(object_id="TestScript")[0]
         assert script.not_in_repository
+
+    def test_create_content_graph_duplicate_widgets(
+        self,
+        repository: ContentDTO,
+    ):
+        """
+        Given:
+            - A mocked model of a repository with a pack TestPack, containing two widgets
+              with the exact same id, fromversion and marketplaces properties.
+        When:
+            - Running create_content_graph().
+        Then:
+            - Make sure both widgets exist in the graph.
+        """
+        pack = mock_pack()
+        widget = mock_widget()
+        widget2 = mock_widget()
+        relationships = {
+            RelationshipType.IN_PACK: [
+                mock_relationship(
+                    "SampleWidget",
+                    ContentType.WIDGET,
+                    "SamplePack",
+                    ContentType.PACK,
+                ),
+                mock_relationship(
+                    "SampleWidget",
+                    ContentType.WIDGET,
+                    "SamplePack",
+                    ContentType.PACK,
+                ),
+            ],
+        }
+        pack.relationships = relationships
+        pack.content_items.widget.append(widget)
+        pack.content_items.widget.append(widget2)
+        repository.packs.append(pack)
+        with ContentGraphInterface() as interface:
+            create_content_graph(interface)
+            assert len(interface.search(object_id="SampleWidget")) == 2
 
     def test_create_content_graph_duplicate_integrations_different_marketplaces(
         self,
@@ -776,8 +1078,90 @@ class TestCreateContentGraph:
         Given:
             - A running content graph service.
         When:
-            - Running stop_content_graph().
+            - Running neo4j_service.stop()
         Then:
             - Make sure no exception is raised.
         """
-        stop_content_graph()
+        neo4j_service.stop()
+
+    def test_create_content_graph_incident_to_alert_scripts(
+        self, repo: Repo, tmp_path: Path, mocker
+    ):
+        """
+        Given:
+            - A repository with a pack TestPack, containing two scripts,
+            one (getIncident) is set with skipping the preparation of incident to alert
+            and the other (setIncident) is not.
+        When:
+            - Running create_content_graph().
+        Then:
+            - Ensure that `getIncident` script has passed the prepare process as expected.
+            - Ensure the 'setIncident' script has not passed incident to alert preparation.
+        """
+        mocker.patch.object(
+            IntegrationScript, "get_supported_native_images", return_value=[]
+        )
+        mocker.patch.object(
+            PackMetadata, "_get_tags_from_landing_page", retrun_value={}
+        )
+
+        pack = repo.create_pack("TestPack")
+        pack.pack_metadata.write_json(load_json("pack_metadata.json"))
+        pack.create_script(name="getIncident")
+        pack.create_script(name="setIncident", skip_prepare=[SKIP_PREPARE_SCRIPT_NAME])
+
+        with ContentGraphInterface() as interface:
+            create_content_graph(interface, output_path=tmp_path)
+            packs = interface.search(
+                marketplace=MarketplaceVersions.MarketplaceV2,
+                content_type=ContentType.PACK,
+            )
+            scripts = interface.search(
+                marketplace=MarketplaceVersions.MarketplaceV2,
+                content_type=ContentType.SCRIPT,
+            )
+            all_content_items = interface.search(
+                marketplace=MarketplaceVersions.MarketplaceV2
+            )
+            content_cto = interface.marshal_graph(MarketplaceVersions.MarketplaceV2)
+
+        assert len(packs) == 1
+        assert len(scripts) == 2
+        assert len(all_content_items) == 3
+        with ChangeCWD(repo.path):
+            content_cto.dump(tmp_path, MarketplaceVersions.MarketplaceV2, zip=False)
+        script_path = tmp_path / "TestPack" / "Scripts"
+        assert (script_path / "script-getIncident.yml").exists()
+        assert (script_path / "script-getAlert.yml").exists()
+        assert (script_path / "script-setIncident.yml").exists()
+        assert not (script_path / "script-setAlert.yml").exists()
+
+    def test_create_content_graph_relationships_from_metadata(
+        self,
+        repo: Repo,
+    ):
+        """
+        Given:
+            - A mocked model of a repository with a pack Core, which depends on NonCorePack according to the pack metadata
+        When:
+            - Running create_content_graph().
+        Then:
+            - Make sure the relationship's is_test is not null.
+        """
+        core_metadata = load_json("pack_metadata.json")
+        core_metadata["name"] = "Core"
+        core_metadata["dependencies"].update(
+            {"NonCorePack": {"mandatory": True, "display_name": "Non Core Pack"}}
+        )
+        pack_core = repo.create_pack("Core")
+        repo.create_pack("NonCorePack")
+        pack_core.pack_metadata.write_json(core_metadata)
+
+        with ContentGraphInterface() as interface:
+            create_content_graph(interface)
+
+            data = interface.run_single_query(
+                "MATCH p=()-[r:DEPENDS_ON]->() WHERE r.is_test IS NULL RETURN p"
+            )
+
+            assert not data

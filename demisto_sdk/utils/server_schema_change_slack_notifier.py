@@ -9,6 +9,8 @@ from typing import Any, Dict, List, Tuple
 
 from slack_sdk import WebClient
 
+from demisto_sdk.commands.common.logger import logger
+
 SCHEMA_UPDATE_CHANNEL = "dmst-schema-change"
 GITHUB_BASE_URL = "https://github.com/demisto/server/commit/"
 PREFIX = "domain/"
@@ -49,7 +51,7 @@ def extract_changes_from_commit(commit_hash: str) -> Tuple[str, List[str], dict,
         f"git diff-tree --no-commit-id --name-only -r HEAD^ {commit_hash}"
     )
     changed_files = output_stream.read().split("\n")
-    print(f"all Changed files: {changed_files}")
+    logger.info(f"all Changed files: {changed_files}")
 
     change_diffs = {}
     for changed_file in changed_files:
@@ -123,7 +125,7 @@ def build_message(
 def main():
     try:
         options = options_handler()
-        print("Collecting data...")
+        logger.info("Collecting data...")
         (
             commit_github_url,
             changed_files,
@@ -131,16 +133,16 @@ def main():
             commit_author,
         ) = extract_changes_from_commit(options.commit)
         if len(changed_files) == 0:
-            print(
+            logger.info(
                 "Found no relevant schema files in commit. Not sending slack message."
             )
             return
         message = build_message(
             options.commit, commit_github_url, changed_files, diffs, commit_author
         )
-        print(f"Posting message...\n{pformat(message)}")
+        logger.info(f"Posting message...\n{pformat(message)}")
         notify_slack(options.slack_token, SCHEMA_UPDATE_CHANNEL, message)
-        print("Notified slack.")
+        logger.info("Notified slack.")
 
     except Exception as e:
         if "options" in locals() or "options" in globals():

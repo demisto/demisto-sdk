@@ -1,10 +1,11 @@
-import logging
 from typing import Any, Dict, Iterable, List, Optional
 
 from neo4j import Transaction, graph
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.content_graph.common import (
+    CONTENT_PRIVATE_ITEMS,
     SERVER_CONTENT_ITEMS,
     ContentType,
     RelationshipType,
@@ -14,18 +15,16 @@ from demisto_sdk.commands.content_graph.interface.neo4j.queries.common import (
     to_neo4j_map,
 )
 
-logger = logging.getLogger("demisto-sdk")
-
 NESTING_LEVEL = 5
 
-CREATE_CONTENT_ITEM_NODES_BY_TYPE_TEMPLATE = """// Creates/overrides existing content items with labels {labels}
+CREATE_CONTENT_ITEM_NODES_BY_TYPE_TEMPLATE = """// Creates content items with labels {labels}
 UNWIND $data AS node_data
-MERGE (n:{labels}{{
+CREATE (n:{labels}{{
     object_id: node_data.object_id,
     fromversion: node_data.fromversion,
     marketplaces: node_data.marketplaces
 }})
-SET n = node_data,  // override existing data
+SET n = node_data,
     n.not_in_repository = false
 WITH n
     OPTIONAL MATCH (n)-[r]->()
@@ -41,13 +40,13 @@ SET n = node_data,  // override existing data
 RETURN count(n) AS nodes_created"""
 
 
-REMOVE_SERVER_NODES_BY_TYPE = """// Removes parsed server nodes of type {content_type} (according to constants)
+REMOVE_NODES_BY_TYPE = """// Removes parsed nodes of type {content_type} (according to constants)
 MATCH (a)
 WHERE (a:{label} OR a.content_type = "{content_type}")
 AND a.not_in_repository = true
 AND any(
     identifier IN [a.object_id, a.name]
-    WHERE toLower(identifier) IN {server_content_items}
+    WHERE toLower(identifier) IN {content_items_identifiers}
 )
 DETACH DELETE a"""
 
@@ -67,25 +66,28 @@ def get_relationships_to_preserve(
     tx: Transaction,
     pack_ids: List[str],
 ) -> List[Dict[str, Any]]:
+    """
+    Get the relationships to preserve before removing packs
+    """
     query = f"""// Gets the relationships to preserve before removing packs
 MATCH (s)-[r]->(t)-[:{RelationshipType.IN_PACK}]->(p)
 WHERE NOT (s)-[:{RelationshipType.IN_PACK}]->(p)
 AND p.object_id in {pack_ids}
-RETURN id(s) as source_id, type(r) as r_type, properties(r) as r_properties, t as target
+RETURN elementId(s) as source_id, s as source, type(r) as r_type, properties(r) as r_properties, t as target
 
 UNION
 
 MATCH (s)-[r]->(t)<-[:{RelationshipType.HAS_COMMAND}]-()-[:{RelationshipType.IN_PACK}]->(p)
 WHERE NOT (s)-[:{RelationshipType.IN_PACK}]->(p)
 AND p.object_id in {pack_ids}
-RETURN id(s) as source_id, type(r) as r_type, properties(r) as r_properties, t as target
+RETURN elementId(s) as source_id, s as source, type(r) as r_type, properties(r) as r_properties, t as target
 
 UNION
 
 MATCH (s)-[r]->(t)
 WHERE NOT (s)-[:{RelationshipType.IN_PACK}]->(t)
 AND t.object_id in {pack_ids}
-RETURN id(s) as source_id, type(r) as r_type, properties(r) as r_properties, t as target"""
+RETURN elementId(s) as source_id, s as source, type(r) as r_type, properties(r) as r_properties, t as target"""
     return run_query(tx, query).data()
 
 
@@ -113,9 +115,10 @@ DETACH DELETE n, p"""
 def return_preserved_relationships(
     tx: Transaction, rels_to_preserve: List[Dict[str, Any]]
 ) -> None:
+    """We search for source nodes which are in the preserved relationships, and they are the same nodes (same object_id and content_type)"""
     query = f"""// Returns the preserved relationships
 UNWIND $rels_data AS rel_data
-MATCH (s) WHERE id(s) = rel_data.source_id
+MATCH (s) WHERE elementId(s) = rel_data.source_id AND s.object_id = rel_data.source.object_id AND s.content_type = rel_data.source.content_type
 OPTIONAL MATCH (t:{ContentType.BASE_CONTENT}{{
     object_id: rel_data.target.object_id,
     content_type: rel_data.target.content_type
@@ -136,19 +139,27 @@ def create_nodes(
         create_nodes_by_type(tx, content_type, data)
 
 
-def remove_server_nodes(tx: Transaction) -> None:
-    for content_type, content_items in SERVER_CONTENT_ITEMS.items():
+def remove_nodes(tx: Transaction, content_type_to_identifiers: dict) -> None:
+    for content_type, content_items_identifiers in content_type_to_identifiers.items():
         if content_type in [ContentType.COMMAND, ContentType.SCRIPT]:
             label = ContentType.COMMAND_OR_SCRIPT
         else:
             label = ContentType.BASE_CONTENT
 
-        query = REMOVE_SERVER_NODES_BY_TYPE.format(
+        query = REMOVE_NODES_BY_TYPE.format(
             label=label,
             content_type=content_type,
-            server_content_items=[c.lower() for c in content_items],
+            content_items_identifiers=[c.lower() for c in content_items_identifiers],
         )
         run_query(tx, query)
+
+
+def remove_server_nodes(tx: Transaction) -> None:
+    remove_nodes(tx, SERVER_CONTENT_ITEMS)
+
+
+def remove_content_private_nodes(tx: Transaction) -> None:
+    remove_nodes(tx, CONTENT_PRIVATE_ITEMS)
 
 
 def create_nodes_by_type(
@@ -191,7 +202,7 @@ def _match(
     if marketplace or ids_list:
         where.append("WHERE")
         if ids_list:
-            where.append("node_id = id(node)")
+            where.append("node_id = elementId(node)")
         if ids_list and marketplace:
             where.append("AND")
         if marketplace:
@@ -220,3 +231,28 @@ DETACH DELETE n"""
 
 def remove_empty_properties(tx: Transaction) -> None:
     run_query(tx, REMOVE_EMPTY_PROPERTIES)
+
+
+def get_items_by_type_and_identifier(
+    tx: Transaction,
+    identifier_values_list: List[str],
+    content_type: ContentType,
+    identifier: str,
+) -> List:
+    """Return a list of dictionaries representing the wanted incident fields.
+    Args:
+        tx (Transaction): The neo4j transaction.
+        identifier_values_list (List[str]): A list of identifier values of the wanted content items.
+                                            (The value of the object ids, cli_names etc.)
+        content_type (str): The type of the wanted content item (ContentType.LAYOUT etc.)
+        identifier (str): An identifier for the wanted content item (object_id, cli_name etc.)
+
+    Returns:
+        list: A list of dictionaries, each dictionary represent an incident field.
+    """
+    query = f"""//Returns all the matching content items of type content_type where the content item identifier value
+                //is in the given list.
+MATCH (content_item:{content_type}) WHERE content_item.{identifier} in {identifier_values_list} RETURN content_item
+"""
+    results = run_query(tx, query).data()
+    return [item.get("content_item", {}) for item in results]

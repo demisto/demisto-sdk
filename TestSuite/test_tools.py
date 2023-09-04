@@ -1,5 +1,7 @@
 import os
-from typing import List, Tuple
+from typing import Any, Generator, Iterable, List, Tuple, Union
+
+CallArgs = Iterable[Union[Tuple[Any], Tuple[Any, dict]]]
 
 
 def get_test_suite_path():
@@ -38,6 +40,28 @@ class ChangeCWD:
         os.chdir(self.current)
 
 
+def iter_flatten_call_args(
+    call_args: CallArgs,
+) -> Generator:
+    for arg in call_args:
+        if isinstance(arg, tuple):
+            if isinstance(arg[0], tuple):  # nested tuple
+                yield arg[0][0]
+            else:
+                yield arg[0]
+
+        elif isinstance(arg, str):
+            yield arg
+        elif isinstance(arg, dict) and not arg:
+            pass
+        else:
+            raise ValueError("Unexpected call arg type")
+
+
+def flatten_call_args(call_args: CallArgs) -> Tuple[Any, ...]:
+    return tuple(iter_flatten_call_args(call_args))
+
+
 def str_in_call_args_list(
     call_args_list: List[Tuple[Tuple[str], Tuple[str], Tuple[str]]], required_str: str
 ):
@@ -53,7 +77,7 @@ def str_in_call_args_list(
         for current_call in filter(None, call_args_list)
     )
     if not ret_value:
-        print(f"Could not find {required_str=}")
+        print(f"Could not find {required_str=}")  # noqa: T201
     return ret_value
 
 
@@ -61,7 +85,7 @@ def count_str_in_call_args_list(
     call_args_list: List[Tuple[Tuple[str], Tuple[str], Tuple[str]]], search_str: str
 ):
     """
-    Countes the number of times search_str appears in any of the call_args in call_args_list.
+    Counts the number of times search_str appears in any of the call_args in call_args_list.
     Several appearances in a single call_args_list counts as 1.
     Args:
         call_args_list: From a mocker

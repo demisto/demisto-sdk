@@ -9,9 +9,7 @@ from demisto_sdk.commands.common.content.objects.pack_objects.classifier.classif
 from demisto_sdk.commands.common.content.objects.pack_objects.layout.layout import (
     LayoutObject,
 )
-from demisto_sdk.commands.common.handlers import JSON_Handler
-
-json = JSON_Handler()
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 
 
 class BaseConverter:

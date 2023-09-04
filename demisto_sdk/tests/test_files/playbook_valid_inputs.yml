@@ -3,6 +3,7 @@ version: -1
 contentitemexportablefields:
   contentitemfields: {}
 name: Inputs Test
+description: "This playbook investigates and remediates a potential phishing incident. It engages with the user who triggered the incident while investigating the incident itself.\n\nNote: \n- Final remediation tasks are manual by default. can be managed by \"SearchAndDelete\" and \"BlockIndicators\" inputs.\n- Do not rerun this playbook inside a phishing incident since it can produce an unexpected result. Create a new incident instead if needed."
 starttaskid: '0'
 tasks:
   '0':
@@ -41,6 +42,72 @@ tasks:
           value:
             simple: 'True'
         ignorecase: true
+  '2':
+    id: '2'
+    task:
+    description: "This playbook identifies duplicate incidents using the Cortex\
+                \ XSOAR machine learning method (script).\n In this playbook, you can choose\
+                \ fields and/or indicators to be compared against other incidents in the Cortex\
+                \ XSOAR database. \n\n Note: To identify similar incidents you must must properly\
+                \ define the playbook inputs. "
+    condition:
+    - - operator: isEqualString
+        left:
+          value:
+            simple: ${inputs.ResourceName}
+          iscontext: true
+        right:
+          value:
+            simple: 'True'
+        ignorecase: true
+  '3':
+    id: '3'
+    type: condition
+    task:
+      id: ec91eb2d-9d4d-4a1a-8c47-a522d7489968
+      version: -1
+      name: Is there a DBotScore?
+      description: Checks if there is a "DBotScore" in the playbook inputs.
+      type: condition
+      iscommand: false
+      brand: ""
+  '4':
+    id: "4"
+    type: regular
+    task:
+      id: 66eaa232-f160-4fc8-8788-163874940a58
+      version: -1
+      name: PAN-OS query logs
+      description: The query logs in Panorama.
+      script: '|||pan-os-query-logs'
+      type: regular
+      iscommand: true
+      brand: ""
+    nexttasks:
+      '#none#':
+      - "35"
+    scriptarguments:
+      log-type:
+        simple: threat
+      query:
+        simple: (user.src eq ${inputs.ResourceName}) or (user.dst eq ${inputs.ResourceName}) and (time_generated in last-24-hrs)
+    separatecontext: false
+    continueonerror: true
+    continueonerrortype: ""
+    view: |-
+      {
+        "position": {
+          "x": 1600,
+          "y": 1050
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: true
+    quietmode: 2
+    isoversize: false
+    isautoswitchedtoquietmode: false
 inputs:
 - key: TestInput
   value:
@@ -49,6 +116,12 @@ inputs:
   description: ''
   playbookInputQuery:
 - key: Is automated blocking activated ?
+  value:
+    simple: Administrator
+  required: true
+  description: ''
+  playbookInputQuery:
+- key: ResourceName
   value:
     simple: Administrator
   required: true

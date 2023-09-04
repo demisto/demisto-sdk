@@ -1,5 +1,6 @@
 import logging
 import os
+from datetime import datetime
 from unittest import mock
 
 import pytest
@@ -70,7 +71,7 @@ TEST_INTEGRATION_FILE = os.path.join(FILES_PATH, "fake_integration.yml")
 TEST_SCRIPT_FILE = os.path.join(FILES_PATH, "fake-script.yml")
 
 
-def mock_docker_image_validator():
+def mock_docker_image_validator(is_pack_xsoar_supported=True):
     with mock.patch.object(DockerImageValidator, "__init__", lambda x, y, z, w: None):
         docker_image_validator = DockerImageValidator(None, None, None)
         docker_image_validator.yml_file = {}
@@ -81,6 +82,8 @@ def mock_docker_image_validator():
         docker_image_validator.specific_validations = None
         docker_image_validator.predefined_deprecated_ignored_errors = {}
         docker_image_validator.predefined_by_support_ignored_errors = {}
+        docker_image_validator.is_pack_xsoar_supported = is_pack_xsoar_supported
+        docker_image_validator.print_as_warnings = False
         return docker_image_validator
 
 
@@ -189,6 +192,33 @@ class TestDockerImage:
             docker_image="blah/blah:1.2.3.4"
         )
 
+    def test_parse_docker_image_error(self, mocker):
+        """
+        Given: a mock for docker_image_validator which should fail on DO102, DO104, and DO107 and that the pack isn't xsoar supported.
+
+        When Running parse_docker_image, is_docker_image_valid, get_docker_image_latest_tag validations
+
+        Ensure that the right error codes were thrown to the warning logs and that the docker validator is_valid flag is still True.
+        """
+        docker_image_validator = mock_docker_image_validator(
+            is_pack_xsoar_supported=False
+        )
+        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "warning")
+        expected_errors = ["DO104", "DO107", "DO102"]
+        docker_image_validator.docker_image_latest_tag = ""
+        docker_image_validator.code_type = "Python"
+        docker_image_validator.yml_docker_image = "yml_docker_image"
+        docker_image_validator.is_deprecated_image = False
+        docker_image_validator.is_valid = True
+        docker_image_validator.parse_docker_image("my_test_docker")
+        docker_image_validator.is_docker_image_valid()
+        docker_image_validator.get_docker_image_latest_tag(
+            docker_image_name="", yml_docker_image="test/python:1.3-alpine"
+        )
+        for error in expected_errors:
+            assert str_in_call_args_list(logger_info.call_args_list, error)
+        assert docker_image_validator.is_valid
+
     # disable-secrets-detection-end
     def test_is_docker_image_latest_tag_with_default_image(self):
         """
@@ -268,6 +298,57 @@ class TestDockerImage:
         assert docker_image_validator.is_docker_image_latest_tag() is True
         assert docker_image_validator.is_latest_tag is True
         assert docker_image_validator.is_docker_image_valid() is True
+
+    # disable-secrets-detection-end
+    @pytest.mark.parametrize(
+        "return_value, expected_latest_tag_value, expected_function_results",
+        [
+            (
+                datetime.strptime(
+                    "2023-05-19T15:06:52.316769Z", "%Y-%m-%dT%H:%M:%S.%fZ"
+                ),
+                False,
+                False,
+            ),
+            (datetime.now(), False, True),
+        ],
+    )
+    def test_not_latest_docker_older_than_3_days(
+        self, mocker, return_value, expected_latest_tag_value, expected_function_results
+    ):
+        """
+        Given
+        - The default docker image - 'demisto/python:1.3-alpine'
+
+        When
+        - The most updated docker image in docker-hub is '1.0.3'
+
+        Then
+        -  Case 1: The current docker image is more than 3 days old and should fail the validation and set is_latest_tag to False.
+        -  Case 2: The current docker image is less than 3 days old and shouldn't fail the validation but set is_latest_tag to False.
+        """
+        docker_image_validator = mock_docker_image_validator()
+        docker_image_validator.docker_image_latest_tag = "1.0.3"
+        docker_image_validator.docker_image_name = "demisto/python"
+        docker_image_validator.code_type = "python"
+        docker_image_validator.is_latest_tag = True
+        docker_image_validator.print_as_warnings = True
+        docker_image_validator.docker_image_tag = "1.0.2"
+        docker_image_validator.is_valid = True
+        docker_image_validator.yml_docker_image = "demisto/python:1.0.2"
+        docker_image_validator.is_iron_bank = False
+        docker_image_validator.is_deprecated_image = ""
+        mocker.patch.object(
+            docker_image_validator,
+            "get_docker_image_creation_date",
+            return_value=return_value,
+        )
+        assert (
+            docker_image_validator.is_docker_image_latest_tag()
+            is expected_function_results
+        )
+        assert docker_image_validator.is_latest_tag is expected_latest_tag_value
+        assert True
 
     def test_is_docker_image_latest_tag_with_numeric_but_not_most_updated(self):
         """
@@ -377,7 +458,7 @@ class TestDockerImage:
         assert docker_image_validator.is_docker_image_valid() is True
 
     def test_non_existing_docker(self, integration, requests_mock, mocker, monkeypatch):
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+        logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
         monkeypatch.setenv("COLUMNS", "1000")
         docker_image = "demisto/nonexistingdocker:1.4.0"
         integration.yml.write_dict(
@@ -411,10 +492,49 @@ class TestDockerImage:
             assert validator.is_valid is False
             assert all(
                 [
-                    str_in_call_args_list(logger_info.call_args_list, error),
-                    str_in_call_args_list(logger_info.call_args_list, code),
+                    str_in_call_args_list(logger_error.call_args_list, error),
+                    str_in_call_args_list(logger_error.call_args_list, code),
                 ]
             )
+
+    @pytest.mark.parametrize(
+        "native_image",
+        ["demisto/py3-native:8.2.0.58349", "devdemisto/py3-native:8.2.0.58349"],
+    )
+    def test_is_native_image_in_dockerimage_field(self, mocker, pack, native_image):
+        """
+        Given:
+            native image that is configured into the yml for the dockerimage field
+
+        When:
+            running is_docker_image_valid for both script/integration
+
+        Then:
+            make sure that validation for the integration/script with
+            native image configured in the dockerimage field fails
+        """
+        integration = pack.create_integration(docker_image=native_image)
+        script = pack.create_script(docker_image=native_image)
+
+        integration_docker_validator = DockerImageValidator(
+            yml_file_path=integration.yml.path,
+            is_modified_file=False,
+            is_integration=True,
+        )
+        integration_docker_validator.is_pack_xsoar_supported = True
+        script_docker_validator = DockerImageValidator(
+            yml_file_path=script.yml.path, is_modified_file=False, is_integration=False
+        )
+        script_docker_validator.is_pack_xsoar_supported = True
+        error_mocker = mocker.patch(
+            "demisto_sdk.commands.common.errors.Errors.native_image_is_in_dockerimage_field",
+            return_value=("test", "DO110"),
+        )
+
+        assert not integration_docker_validator.is_docker_image_valid()
+        assert not script_docker_validator.is_docker_image_valid()
+        assert error_mocker.called
+        assert error_mocker.call_args.args[0] == native_image
 
     class TestIronBankDockerParse:
         def test_get_latest_commit(self, integration, requests_mock):
@@ -673,7 +793,9 @@ class TestDockerImage:
                 ],
             )
             docker_image_validator = mock_docker_image_validator()
-            print(docker_image_validator.is_docker_image_deprecated("demisto/aiohttp"))
+            print(  # noqa: T201
+                docker_image_validator.is_docker_image_deprecated("demisto/aiohttp")
+            )
             assert (
                 "demisto/aiohttp",
                 "Use the demisto/py3-tools docker image instead.",

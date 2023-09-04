@@ -1,9 +1,8 @@
 import os
 from abc import ABC, abstractmethod
-from distutils.version import LooseVersion
 from typing import Dict, List
 
-import click
+from packaging.version import Version
 
 from demisto_sdk.commands.common.constants import (
     DEFAULT_CONTENT_ITEM_FROM_VERSION,
@@ -17,6 +16,7 @@ from demisto_sdk.commands.common.hook_validations.base_validator import error_co
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import (
     ContentEntityValidator,
 )
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     LAYOUT_CONTAINER_FIELDS,
     get_all_incident_and_indicator_fields_from_id_set,
@@ -78,7 +78,7 @@ class LayoutBaseValidator(ContentEntityValidator, ABC):
             bool. True if to version field is higher than from version field, else False.
         """
         if self.to_version and self.from_version:
-            if LooseVersion(self.to_version) <= LooseVersion(self.from_version):
+            if Version(self.to_version) <= Version(self.from_version):
                 error_message, error_code = Errors.from_version_higher_to_version()
                 if self.handle_error(
                     error_message, error_code, file_path=self.file_path
@@ -159,7 +159,11 @@ class LayoutsContainerValidator(LayoutBaseValidator):
     ) -> bool:
         return all(
             [
-                super().is_valid_layout(),
+                super().is_valid_layout(
+                    validate_rn=validate_rn,
+                    id_set_file=id_set_file,
+                    is_circle=is_circle,
+                ),
                 self.is_id_equals_name(),
                 self.is_valid_mpv2_layout(),
             ]
@@ -172,9 +176,7 @@ class LayoutsContainerValidator(LayoutBaseValidator):
         Returns:
             bool. True if from version field is valid, else False.
         """
-        if LooseVersion(self.from_version) < LooseVersion(
-            FROM_VERSION_LAYOUTS_CONTAINER
-        ):
+        if Version(self.from_version) < Version(FROM_VERSION_LAYOUTS_CONTAINER):
             error_message, error_code = Errors.invalid_version_in_layoutscontainer(
                 "fromVersion"
             )
@@ -189,7 +191,7 @@ class LayoutsContainerValidator(LayoutBaseValidator):
         Returns:
             bool. True if to version field is valid, else False.
         """
-        if self.to_version and LooseVersion(self.to_version) < LooseVersion(
+        if self.to_version and Version(self.to_version) < Version(
             FROM_VERSION_LAYOUTS_CONTAINER
         ):
             error_message, error_code = Errors.invalid_version_in_layoutscontainer(
@@ -229,9 +231,8 @@ class LayoutsContainerValidator(LayoutBaseValidator):
             return True
 
         if not id_set_file:
-            click.secho(
-                "Skipping mapper incident field validation. Could not read id_set.json.",
-                fg="yellow",
+            logger.info(
+                "[yellow]Skipping mapper incident field validation. Could not read id_set.json.[/yellow]"
             )
             return True
 
@@ -290,7 +291,7 @@ class LayoutsContainerValidator(LayoutBaseValidator):
 
         for key, val in self.current_file.items():
             if isinstance(val, dict):
-                for tab in val.get("tabs", []):
+                for tab in val.get("tabs", []) or []:
                     if "type" in tab.keys() and tab.get("type") in invalid_tabs:
                         invalid_types_contained.append(tab.get("type"))
                     sections = tab.get("sections", [])
@@ -319,9 +320,7 @@ class LayoutValidator(LayoutBaseValidator):
             bool. True if from version field is valid, else False.
         """
         if self.from_version:
-            if LooseVersion(self.from_version) >= LooseVersion(
-                FROM_VERSION_LAYOUTS_CONTAINER
-            ):
+            if Version(self.from_version) >= Version(FROM_VERSION_LAYOUTS_CONTAINER):
                 error_message, error_code = Errors.invalid_version_in_layout(
                     "fromVersion"
                 )
@@ -338,7 +337,7 @@ class LayoutValidator(LayoutBaseValidator):
         Returns:
             bool. True if to version field is valid, else False.
         """
-        if not self.to_version or LooseVersion(self.to_version) >= LooseVersion(
+        if not self.to_version or Version(self.to_version) >= Version(
             FROM_VERSION_LAYOUTS_CONTAINER
         ):
             error_message, error_code = Errors.invalid_version_in_layout("toVersion")
@@ -374,9 +373,8 @@ class LayoutValidator(LayoutBaseValidator):
             return True
 
         if not id_set_file:
-            click.secho(
-                "Skipping mapper incident field validation. Could not read id_set.json.",
-                fg="yellow",
+            logger.info(
+                "[yellow]Skipping mapper incident field validation. Could not read id_set.json.[/yellow]"
             )
             return True
 

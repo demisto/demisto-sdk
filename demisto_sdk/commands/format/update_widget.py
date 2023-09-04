@@ -1,17 +1,14 @@
-import logging
-from distutils.version import LooseVersion
 from typing import Tuple
 
-import click
+from packaging.version import Version, parse
 
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.format.format_constants import (
     ERROR_RETURN_CODE,
     SKIP_RETURN_CODE,
     SUCCESS_RETURN_CODE,
 )
 from demisto_sdk.commands.format.update_generic_json import BaseUpdateJSON
-
-logger = logging.getLogger("demisto-sdk")
 
 
 class WidgetJSONFormat(BaseUpdateJSON):
@@ -44,9 +41,8 @@ class WidgetJSONFormat(BaseUpdateJSON):
 
     def run_format(self) -> int:
         try:
-            click.secho(
-                f"\n================= Updating file {self.source_file} =================",
-                fg="bright_blue",
+            logger.info(
+                f"\n[blue]================= Updating file {self.source_file} =================[/blue]"
             )
             self.update_json()
             self.set_description()
@@ -77,11 +73,10 @@ class WidgetJSONFormat(BaseUpdateJSON):
             self.data["isPredefined"] = True
 
     def set_from_version_for_type_metrics(self):
-
         widget_data_type = self.data.get("dataType", "")
-        current_from_version = self.data.get("fromVersion")
+        current_from_version = self.data.get("fromVersion", "")
 
-        if widget_data_type == "metrics" and LooseVersion(
-            current_from_version
-        ) < LooseVersion(self.WIDGET_TYPE_METRICS_MIN_VERSION):
+        if widget_data_type == "metrics" and parse(current_from_version) < Version(
+            self.WIDGET_TYPE_METRICS_MIN_VERSION
+        ):
             self.data["fromVersion"] = self.WIDGET_TYPE_METRICS_MIN_VERSION

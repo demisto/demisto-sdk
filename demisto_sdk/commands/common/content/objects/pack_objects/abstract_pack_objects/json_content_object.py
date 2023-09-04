@@ -1,4 +1,3 @@
-import logging
 import re
 from typing import List, Optional, Union
 
@@ -16,12 +15,11 @@ from demisto_sdk.commands.common.content.objects.pack_objects.change_log.change_
 from demisto_sdk.commands.common.content.objects.pack_objects.readme.readme import (
     Readme,
 )
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import get_json
 from demisto_sdk.commands.prepare_content.prepare_upload_manager import (
     PrepareUploadManager,
 )
-
-logger = logging.getLogger("demisto-sdk")
 
 
 class JSONContentObject(JSONObject):

@@ -1,10 +1,8 @@
-import logging
 import subprocess
 from contextlib import contextmanager
 from pathlib import Path
 from typing import Callable, Optional
 
-import click
 import docker
 import docker.errors
 import docker.models.containers
@@ -15,6 +13,7 @@ from demisto_sdk.commands.common.docker_helper import (
     init_global_docker_client,
 )
 from demisto_sdk.commands.common.errors import Errors
+from demisto_sdk.commands.common.logger import logger
 
 EXPECTED_SUCCESS_MESSAGE = "MDX server is listening on port"
 
@@ -55,14 +54,14 @@ def start_docker_MDX_server(
         A context manager
 
     """
-    logging.info("Starting docker mdx server")
+    logger.info("Starting docker mdx server")
     get_docker().pull_image(MDX_SERVER_DOCKER_IMAGE)
     iteration_num = 1
     while mdx_container := init_global_docker_client().containers.list(
         filters={"name": DEMISTO_DEPS_DOCKER_NAME}
     ):
-        print(f"Found the following container(s): {mdx_container}")
-        print(f"{iteration_num=} when trying to remove {mdx_container}")
+        logger.info(f"Found the following container(s): {mdx_container}")
+        logger.info(f"{iteration_num=} when trying to remove {mdx_container}")
         remove_container(mdx_container[0])
         iteration_num += 1
     try:
@@ -73,10 +72,10 @@ def start_docker_MDX_server(
             ports={"6161/tcp": 6161},
         )
     except Exception as error:
-        print(
+        logger.info(
             f"Error occurred when trying to create {DEMISTO_DEPS_DOCKER_NAME} container, {error=}"
         )
-        print(
+        logger.info(
             f"all available containers: {[container.name for container in init_global_docker_client().containers.list(all=True)]}"
         )
         raise error
@@ -93,10 +92,10 @@ def start_docker_MDX_server(
     if not raised_successfully:
         try:
             remove_container(container)
-            logging.error("Docker for MDX server was not started correctly")
-            logging.error(f'docker logs:\n{container.logs().decode("utf-8")}')
+            logger.error("Docker for MDX server was not started correctly")
+            logger.error(f'docker logs:\n{container.logs().decode("utf-8")}')
         except docker.errors.NotFound:
-            click.secho(line)
+            logger.exception(line)
 
         error_message = Errors.error_starting_docker_mdx_server(line=line)
 
@@ -106,7 +105,7 @@ def start_docker_MDX_server(
         else:
             raise Exception(error_message)
     else:
-        click.secho("Successfully started node server in docker")
+        logger.info("Successfully started node server in docker")
 
     try:
         yield True
@@ -116,10 +115,10 @@ def start_docker_MDX_server(
 
 def remove_container(container):
     if container:
-        print("stopping and removing mdx server")
-        print(f"Removing container {container.name}")
+        logger.info("stopping and removing mdx server")
+        logger.info(f"Removing container {container.name}")
         container.remove(force=True)
-        print(f"Successfully removed container {container.name}")
+        logger.info(f"Successfully removed container {container.name}")
 
 
 @contextmanager
@@ -136,15 +135,15 @@ def start_local_MDX_server(
         A context manager
 
     """
-    click.secho("Starting local mdx server")
+    logger.debug("Starting local mdx server")
 
-    logging.debug(subprocess.check_output(["npm", "list", "--json"]))
+    logger.debug(subprocess.check_output(["npm", "list", "--json"]))
     process = subprocess.Popen(
         ["node", str(server_script_path())], stdout=subprocess.PIPE, text=True
     )
     line = process.stdout.readline()  # type: ignore
     if EXPECTED_SUCCESS_MESSAGE not in line:
-        logging.error(f"MDX local server couldnt be started: {line}")
+        logger.error(f"MDX local server couldnt be started: {line}")
         terminate_process(process)
         error_message, error_code = Errors.error_starting_mdx_server(line=line)
         if handle_error and file_path:
@@ -161,5 +160,5 @@ def start_local_MDX_server(
 
 def terminate_process(process):
     if process:
-        click.secho("Stopping local mdx server")
+        logger.debug("Stopping local mdx server")
         process.terminate()

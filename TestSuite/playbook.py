@@ -77,7 +77,7 @@ class Playbook:
         ) as task_yml_file:
             task = yaml.load(task_yml_file)
         if not task:
-            print(
+            print(  # noqa: T201
                 "Cannot read task from "
                 + task_filename
                 + ", not adding task to playbook"

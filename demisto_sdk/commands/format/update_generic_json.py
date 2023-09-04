@@ -1,13 +1,14 @@
-import logging
 import traceback
-from distutils.version import LooseVersion
 from typing import Optional, Tuple
+
+from packaging.version import Version
 
 from demisto_sdk.commands.common.constants import (
     DEFAULT_CONTENT_ITEM_TO_VERSION,
     FILETYPE_TO_DEFAULT_FROMVERSION,
 )
-from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import is_uuid
 from demisto_sdk.commands.format.format_constants import (
     ARGUMENTS_DEFAULT_VALUES,
@@ -17,11 +18,6 @@ from demisto_sdk.commands.format.format_constants import (
     TO_VERSION_5_9_9,
 )
 from demisto_sdk.commands.format.update_generic import BaseUpdate
-
-logger = logging.getLogger("demisto-sdk")
-
-yaml = YAML_Handler()
-json = JSON_Handler()
 
 
 class BaseUpdateJSON(BaseUpdate):
@@ -98,11 +94,9 @@ class BaseUpdateJSON(BaseUpdate):
         Sets toVersion key in file
         Relevant for old entities such as layouts and classifiers.
         """
-        if (
-            not self.data.get("toVersion")
-            or LooseVersion(self.data.get("toVersion", DEFAULT_CONTENT_ITEM_TO_VERSION))
-            >= TO_VERSION_5_9_9
-        ):
+        if not self.data.get("toVersion") or Version(
+            self.data.get("toVersion", DEFAULT_CONTENT_ITEM_TO_VERSION)
+        ) >= Version(TO_VERSION_5_9_9):
             logger.debug("Setting toVersion field")
             self.data["toVersion"] = TO_VERSION_5_9_9
 
@@ -182,14 +176,14 @@ class BaseUpdateJSON(BaseUpdate):
             self.save_json_to_destination_file()
             return SUCCESS_RETURN_CODE
         except Exception as err:
-            print(
+            logger.exception(
                 "".join(
                     traceback.format_exception(
                         type(err), value=err, tb=err.__traceback__
                     )
                 )
             )
-            logger.debug(
+            logger.error(
                 f"\n[red]Failed to update file {self.source_file}. Error: {err}[/red]"
             )
             return ERROR_RETURN_CODE

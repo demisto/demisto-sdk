@@ -1,10 +1,8 @@
 import inspect
 from typing import Any, Dict, List, Optional, Union, get_args, get_origin
 
-import click
-from colorama import Fore
-
 from demisto_sdk.commands.common import constants, errors
+from demisto_sdk.commands.common.logger import logger
 
 TEMPLATE = """
 Error Code: {code}
@@ -38,7 +36,8 @@ def parse_function_parameters(sig: inspect.Signature):
             if get_origin(param.annotation) in [Union, Optional]:
                 param_type = get_args(param.annotation)[0]
 
-            if param_type is not str:
+            # param_type = str or param_type = "Optional[Type]" or param_type = "Union[Type1, Type2]"
+            if param_type is not str and not isinstance(param_type, str):
                 value = TYPE_FILLER_MAPPING.get(param_type) or param_type()
 
         parameters[param.name] = value
@@ -49,8 +48,8 @@ def parse_function_parameters(sig: inspect.Signature):
 def print_error_information(func_name, error_data, func, sig: inspect.Signature):
     parameters = parse_function_parameters(sig)
 
-    click.secho(f"{Fore.GREEN}## Error Code Info ##{Fore.RESET}")
-    click.secho(
+    logger.info("[green]## Error Code Info ##[/green]")
+    logger.info(
         TEMPLATE.format(
             code=error_data["code"],
             func=f"{func_name}{sig}",
@@ -71,7 +70,7 @@ def find_error(error_code):
 def generate_error_code_information(error_code):
     func_name, error_data = find_error(error_code)
     if not func_name:
-        click.secho(f"{Fore.RED}No such error")
+        logger.info("[red]No such error[/red]")
         return 1
 
     func = getattr(errors.Errors, func_name)

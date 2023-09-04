@@ -1,10 +1,8 @@
 import os
 import re
 from collections import OrderedDict
-from distutils.version import LooseVersion
 from typing import Dict, Optional, Tuple
 
-import click
 from packaging.version import Version
 
 import demisto_sdk.commands.common.constants as constants
@@ -15,6 +13,7 @@ from demisto_sdk.commands.common.hook_validations.base_validator import (
     BaseValidator,
     error_codes,
 )
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     get_script_or_sub_playbook_tasks_from_playbook,
     get_yaml,
@@ -782,9 +781,9 @@ class IDSetValidations(BaseValidator):
             integration_from_valid_version_found = False
             for integration in implemented_integrations_list:
                 integration_version = self.get_integration_version(integration)
-                is_version_valid = not integration_version or LooseVersion(
+                is_version_valid = not integration_version or Version(
                     integration_version
-                ) <= LooseVersion(playbook_version)
+                ) <= Version(playbook_version)
                 if is_version_valid:
                     integration_from_valid_version_found = True
                     break
@@ -826,7 +825,7 @@ class IDSetValidations(BaseValidator):
         if (
             self.is_circle
         ):  # No need to check on local env because the id_set will contain this info after the commit
-            click.echo(f"id set validations for: {file_path}")
+            logger.info(f"id set validations for: {file_path}")
 
             if re.match(constants.PACKS_SCRIPT_YML_REGEX, file_path, re.IGNORECASE):
                 (
@@ -915,7 +914,7 @@ class IDSetValidations(BaseValidator):
         is_valid = True
         error = None
         if self.is_circle:
-            click.echo(f"id set validations for: {pack_path}")
+            logger.info(f"id set validations for: {pack_path}")
 
             is_valid, error = self._is_pack_display_name_already_exist(
                 get_pack_metadata_data(f"{pack_path}/pack_metadata.json", False)

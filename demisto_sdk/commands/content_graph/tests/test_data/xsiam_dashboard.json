@@ -1,4 +1,6 @@
 {
+    "fromVersion": "8.1.0",
+    "toVersion": "8.3.0",
     "dashboards_data": [
       {
         "name": "New Import test ",

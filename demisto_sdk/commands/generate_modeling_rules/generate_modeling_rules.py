@@ -1,5 +1,4 @@
 import csv
-import logging
 import traceback
 from io import StringIO
 from pathlib import Path
@@ -12,14 +11,17 @@ from demisto_sdk.commands.common.constants import (
     GENERAL_DEFAULT_FROMVERSION,
     FileType,
 )
-from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
-from demisto_sdk.commands.common.logger import handle_deprecated_args, logging_setup
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
+from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
+from demisto_sdk.commands.common.logger import (
+    handle_deprecated_args,
+    logger,
+    logging_setup,
+)
 from demisto_sdk.commands.common.tools import get_max_version
 
 app = typer.Typer()
-logger = logging.getLogger("demisto-sdk")
-json = JSON_Handler()
-yaml = YAML_Handler()
+
 
 SCHEMA_TYPE_STRING = "String"
 SCHEMA_TYPE_NUMBER = "Number"
@@ -89,19 +91,19 @@ def generate_modeling_rules(
     console_log_threshold: str = typer.Option(
         "INFO",
         "-clt",
-        "--console_log_threshold",
+        "--console-log-threshold",
         help=("Minimum logging threshold for the console logger."),
     ),
     file_log_threshold: str = typer.Option(
         "DEBUG",
         "-flt",
-        "--file_log_threshold",
+        "--file-log-threshold",
         help=("Minimum logging threshold for the file logger."),
     ),
     log_file_path: str = typer.Option(
         "demisto_sdk_debug.log",
         "-lp",
-        "--log_file_path",
+        "--log-file-path",
         help=("Path to the log file. Default: ./demisto_sdk_debug.log."),
     ),
 ):

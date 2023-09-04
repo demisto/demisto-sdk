@@ -5,7 +5,7 @@ import pytest
 
 from demisto_sdk.commands.common.constants import ENTITY_NAME_SEPARATORS, FileType
 from demisto_sdk.commands.common.content.objects.pack_objects.pack import Pack
-from demisto_sdk.commands.common.handlers import JSON_Handler
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.convert.converters.base_converter import BaseConverter
 from demisto_sdk.commands.convert.converters.layout.layout_6_0_0_converter import (
@@ -13,8 +13,6 @@ from demisto_sdk.commands.convert.converters.layout.layout_6_0_0_converter impor
 )
 from TestSuite.pack import Pack as MockPack
 from TestSuite.repo import Repo
-
-json = JSON_Handler()
 
 
 def util_load_json(path):
@@ -160,7 +158,7 @@ class TestBaseConverter:
         - Ensure the file is created in the expected path and expected data.
         """
         BaseConverter.dump_new_entity("test_layout", {"id": "dummy_layout"})
-        assert os.path.exists("test_layout")
+        assert Path("test_layout").exists()
         layout_data = util_load_json("test_layout")
         assert layout_data == {"id": "dummy_layout"}
-        os.remove("test_layout")
+        Path("test_layout").unlink()

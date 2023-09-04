@@ -8,6 +8,10 @@ mapping:
     type: seq
     sequence:
       - include: widgets_data_schema
+  fromVersion:
+    type: str
+  toVersion:
+    type: str
 
 
 schema;dashboards_data_schema:

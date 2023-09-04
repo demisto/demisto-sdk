@@ -1,0 +1,29 @@
+{
+    "name": "Phishing",
+    "description": "Your average phishing",
+    "support": "Cortex XSOAR",
+    "serverMinVersion": "6.8.0",
+    "currentVersion": "1.0.0",
+    "author": "Cortex XSOAR",
+    "url": "https://www.paloaltonetworks.com/cortex",
+    "email": "",
+    "categories": [
+        "Data Enrichment & Threat Intelligence"
+    ],
+    "tags": [],
+    "beta": false,
+    "deprecated": false,
+    "certification": "certified",
+    "useCases": [],
+    "keywords": [],
+    "price": 0,
+    "dependencies": {
+        "Base": {
+            "mandatory": true,
+            "minVersion": "1.0.0",
+            "name": "Base",
+            "certification": "certified",
+            "author": "Cortex XSOAR"
+        }
+    }
+}

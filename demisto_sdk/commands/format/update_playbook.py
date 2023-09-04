@@ -1,12 +1,16 @@
-import logging
 import os
 import uuid
-from typing import Tuple
+from typing import Tuple, Union
 
 from git import InvalidGitRepositoryError
 
-from demisto_sdk.commands.common.constants import PLAYBOOK, FileType
+from demisto_sdk.commands.common.constants import (
+    FILETYPE_TO_DEFAULT_FROMVERSION,
+    PLAYBOOK,
+    FileType,
+)
 from demisto_sdk.commands.common.git_util import GitUtil
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     find_type,
     get_yaml,
@@ -22,8 +26,6 @@ from demisto_sdk.commands.format.format_constants import (
 )
 from demisto_sdk.commands.format.update_generic_yml import BaseUpdateYML
 
-logger = logging.getLogger("demisto-sdk")
-
 
 class BasePlaybookYMLFormat(BaseUpdateYML):
     def __init__(
@@ -33,7 +35,7 @@ class BasePlaybookYMLFormat(BaseUpdateYML):
         path: str = "",
         from_version: str = "",
         no_validate: bool = False,
-        assume_yes: bool = False,
+        assume_answer: Union[bool, None] = None,
         deprecate: bool = False,
         add_tests: bool = False,
         interactive: bool = True,
@@ -46,7 +48,7 @@ class BasePlaybookYMLFormat(BaseUpdateYML):
             path=path,
             from_version=from_version,
             no_validate=no_validate,
-            assume_yes=assume_yes,
+            assume_answer=assume_answer,
             deprecate=deprecate,
             add_tests=add_tests,
             interactive=interactive,
@@ -60,7 +62,13 @@ class BasePlaybookYMLFormat(BaseUpdateYML):
             logger.info(
                 "[red]No description is specified for this playbook, would you like to add a description? [Y/n][/red]"
             )
-            user_answer = "y" if self.assume_yes else ""
+            user_answer = (
+                "y"
+                if self.assume_answer
+                else "n"
+                if self.assume_answer is False
+                else ""
+            )
             while not user_answer:
                 user_answer = input()
                 if user_answer in ["n", "N", "no", "No"]:
@@ -102,7 +110,10 @@ class BasePlaybookYMLFormat(BaseUpdateYML):
 
     def run_format(self) -> int:
         self.update_playbook_usages()
-        super().update_yml(file_type=PLAYBOOK)
+        super().update_yml(
+            default_from_version=FILETYPE_TO_DEFAULT_FROMVERSION[FileType.PLAYBOOK],
+            file_type=PLAYBOOK,
+        )
         self.add_description()
         self.update_task_uuid()
         self.save_yml_to_destination_file()

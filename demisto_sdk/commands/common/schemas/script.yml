@@ -106,7 +106,12 @@ mapping:
     type: seq
     sequence:
       - type: str
-        enum: ['xsoar', 'marketplacev2', 'xpanse']
+        enum: ['xsoar', 'marketplacev2', 'xpanse', 'xsoar_saas', 'xsoar_on_prem']
+  skipprepare:
+    type: seq
+    sequence:
+      - type: str
+        enum: ['script-name-incident-to-alert']
 
 # script->args
 schema;argument_schema:

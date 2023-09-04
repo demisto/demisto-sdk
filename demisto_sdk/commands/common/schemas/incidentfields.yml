@@ -24,6 +24,9 @@ schema;field_schema:
       required: True
     name_x2:
       type: str
+    prettyName:
+      type: str
+      required: False
     ownerOnly:
       type: bool
     placeholder:
@@ -92,11 +95,13 @@ schema;field_schema:
       type: seq
       sequence:
         - type: str
-          enum: [ 'xsoar', 'marketplacev2', 'xpanse' ]
+          enum: [ 'xsoar', 'marketplacev2', 'xpanse', 'xsoar_saas', 'xsoar_on_prem' ]
     Aliases:
       type: seq
       sequence:
         - include: aliases_schema
+    aliasTo:
+      type: str
 
 schema;aliases_schema:
   type: map

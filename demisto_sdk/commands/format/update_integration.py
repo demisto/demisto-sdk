@@ -1,4 +1,3 @@
-import logging
 from pathlib import Path
 from typing import Tuple
 
@@ -7,13 +6,15 @@ from demisto_sdk.commands.common.constants import (
     BANG_COMMAND_NAMES,
     BETA_INTEGRATION,
     FEED_REQUIRED_PARAMS,
+    FILETYPE_TO_DEFAULT_FROMVERSION,
     INCIDENT_FETCH_REQUIRED_PARAMS,
     INTEGRATION,
     TYPE_PWSH,
+    FileType,
     MarketplaceVersions,
     ParameterType,
 )
-from demisto_sdk.commands.common.handlers import JSON_Handler
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import find_type, get_item_marketplaces, get_json
 from demisto_sdk.commands.format.format_constants import (
     ERROR_RETURN_CODE,
@@ -22,9 +23,6 @@ from demisto_sdk.commands.format.format_constants import (
 )
 from demisto_sdk.commands.format.update_generic_yml import BaseUpdateYML
 from demisto_sdk.commands.format.update_script import ScriptYMLFormat
-
-logger = logging.getLogger("demisto-sdk")
-json = JSON_Handler()
 
 
 class IntegrationYMLFormat(BaseUpdateYML):
@@ -137,35 +135,21 @@ class IntegrationYMLFormat(BaseUpdateYML):
             command_name = command.get("name", "")
 
             if command_name in BANG_COMMAND_NAMES:
-                for argument in command.get(
-                    "arguments", []
-                ):  # If there're arguments under the command
-                    name = argument.get("name")
-                    if name == command_name:
-                        is_array = argument.get("isArray", False)
-                        if not is_array:
-                            logger.info(
-                                f"isArray field in {name} command is set to False. Fix the command to support that function and set it to True."
-                            )
-                        argument.update(
-                            {"default": True, "isArray": is_array, "required": True}
-                        )
-                        break
-                else:  # No arguments at all
-                    default_bang_args = {
-                        "default": True,
-                        "description": "",
-                        "isArray": True,
-                        "name": command_name,
-                        "required": True,
-                        "secret": False,
-                    }
-                    logger.info(
-                        f"Command {command_name} has no arguemnts. Setting them: {json.dumps(default_bang_args, indent=4)}"
-                    )
-                    argument_list: list = command.get("arguments", [])
-                    argument_list.append(default_bang_args)
-                    command["arguments"] = argument_list
+                if not (
+                    arguments := command.get("arguments")
+                ):  # command has no arguments
+                    return
+
+                if any(
+                    argument.get("default") for argument in arguments
+                ):  # command already has a default argument
+                    return
+
+                # if one of the arguments have the same name as command name, update him to be a default
+                for argument in arguments:
+                    if argument["name"] == command_name:
+                        argument.update({"default": True, "required": True})
+                        return
 
     def set_fetch_params_in_config(self):
         """
@@ -179,7 +163,7 @@ class IntegrationYMLFormat(BaseUpdateYML):
 
             # ignore optional fields
             for param in params:
-                for field in ("defaultvalue", "section", "advanced"):
+                for field in ("defaultvalue", "section", "advanced", "required"):
                     param.pop(field, None)
 
             # get the iten marketplaces to decide which are the required params
@@ -248,13 +232,41 @@ class IntegrationYMLFormat(BaseUpdateYML):
                     elif "false" == str(value).lower():
                         param["defaultvalue"] = "false"
 
+    def handle_hidden_marketplace_params(self):
+        """
+        During the upload flow, each marketplace interprets and converts the `hidden: <marketplace name>`
+        into a boolean - `hidden: <boolean>`, based on the marketplace.
+        When contributing an integration from the marketplace UI, the final yml file uses a boolean.
+        Since it's contributed to the marketplace repo, we need the value to be identical (marketplace),
+        rather than boolean. This function replaces booleans with marketplace values, if they exist.
+        """
+
+        current_configuration = self.data.get("configuration", [])
+        old_configuration = self.old_file.get("configuration", [])
+
+        for old_param_dict in old_configuration:
+            if "hidden" in old_param_dict:
+                for current_param_dict in current_configuration:
+                    if current_param_dict.get("name") == old_param_dict.get(
+                        "name"
+                    ) and (
+                        "hidden" not in current_param_dict
+                        or not current_param_dict.get("hidden")
+                    ):
+                        current_param_dict["hidden"] = old_param_dict["hidden"]
+                        break
+
     def run_format(self) -> int:
         try:
             logger.info(
                 f"\n[blue]================= Updating file {self.source_file} =================[/blue]"
             )
+            self.handle_hidden_marketplace_params()
             super().update_yml(
-                file_type=BETA_INTEGRATION if self.is_beta else INTEGRATION
+                default_from_version=FILETYPE_TO_DEFAULT_FROMVERSION[
+                    FileType.INTEGRATION
+                ],
+                file_type=BETA_INTEGRATION if self.is_beta else INTEGRATION,
             )
             self.update_tests()
             self.update_conf_json("integration")

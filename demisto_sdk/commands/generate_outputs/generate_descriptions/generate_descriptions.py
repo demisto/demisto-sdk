@@ -1,5 +1,4 @@
 import itertools
-import logging
 import math
 import os
 import os.path
@@ -9,17 +8,13 @@ from typing import Dict
 
 import requests
 
-from demisto_sdk.commands.common.handlers import JSON_Handler
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import get_yaml, write_yml
-
-json = JSON_Handler()
-
 
 CREDENTIALS = 9
 
 old_merge_environment_settings = requests.Session.merge_environment_settings
-
-logger = logging.getLogger("demisto-sdk")
 
 # Globals
 STOP_SEQS = ["\n", "\ncontextPath:"]
@@ -87,7 +82,7 @@ def animate():
     for c in itertools.cycle(["|", "/", "-", "\\"]):
         if LOADING_DONE:
             break
-        print(f"\r{INPUT_PREFIX} {c}", end="", flush=True)
+        logger.info(f"\r{INPUT_PREFIX} {c}")
         time.sleep(0.1)
 
 
@@ -102,7 +97,7 @@ def generate_desc_with_spinner(command_output_path, insecure, output):
 
 
 def generate_desc(input_ctx, prob_check=False, insecure=False):
-    # logger = logging.getLogger("demisto-sdk")
+    # from demisto_sdk.commands.common.logger import logger
     # logger.setLevel(logging.ERROR)
 
     prompt = get_current_prompt()
@@ -171,22 +166,22 @@ def write_desc(c_index, final_output, o_index, output_path, yml_data):
 
 
 def correct_interactively(command_output_path, final_output, output):
-    print("\r", end="", flush=True)
+    logger.info("\r")
     final_output = pinput(INPUT_PREFIX, final_output)
 
     # Learn from mistakes
     if final_output != output:
         y = input("Should we append to prompt (y/n)? ").lower()
         if y == "y" or y == "yes":
-            print(f"(Correcting prompt `{final_output}` instead of `{output}`)")
+            logger.info(f"(Correcting prompt `{final_output}` instead of `{output}`)")
             correct_prompt(command_output_path, final_output)
     return final_output
 
 
 def print_experimental():
-    print()
-    print("⚠" * 100)
-    print(
+    logger.info("\n")
+    logger.info("⚠" * 100)
+    logger.info(
         """    ███████ ██   ██ ██████  ███████ ██████  ██ ███    ███ ███████ ███    ██ ████████  █████  ██
     ██       ██ ██  ██   ██ ██      ██   ██ ██ ████  ████ ██      ████   ██    ██    ██   ██ ██
     █████     ███   ██████  █████   ██████  ██ ██ ████ ██ █████   ██ ██  ██    ██    ███████ ██
@@ -194,9 +189,9 @@ def print_experimental():
     ███████ ██   ██ ██      ███████ ██   ██ ██ ██      ██ ███████ ██   ████    ██    ██   ██ ███████
     """
     )
-    print("this feature is experimental, use with caution.")
-    print("⚠" * 100)
-    print()
+    logger.info("this feature is experimental, use with caution.")
+    logger.info("⚠" * 100)
+    logger.info("\n")
 
 
 def generate_ai_descriptions(
@@ -246,21 +241,21 @@ def generate_ai_descriptions(
 
                 # Match past paths automatically.
                 if command_output_path in similar_paths:
-                    print(
+                    logger.info(
                         f"\n--Already added description for exact path: {command_output_path}--"
                     )
                     final_output = similar_paths.get(command_output_path)
-                    print(f"Last output was: '{final_output}'")
+                    logger.info(f"Last output was: '{final_output}'")
                     y = input("Should we use it (y/n)? ").lower()
                     if y == "y" or y == "yes":
-                        print("Using last seen output.")
+                        logger.info("Using last seen output.")
                         yml_data["script"]["commands"][c_index]["outputs"][o_index][
                             "description"
                         ] = final_output
                         write_yml(output_path, yml_data)
                         continue
                     else:
-                        print("Asking again...")
+                        logger.info("Asking again...")
 
                 # Print the progress and current context path
                 if interactive:
@@ -279,7 +274,7 @@ def generate_ai_descriptions(
                         )
                         break
                     except requests.exceptions.RequestException as e:
-                        print("Failed AI description request: ", e)
+                        logger.error(f"Failed AI description request: {e}")
                         remove_last_prompt()
                         continue
 

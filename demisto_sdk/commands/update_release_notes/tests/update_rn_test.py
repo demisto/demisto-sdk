@@ -14,12 +14,17 @@ from demisto_sdk.commands.common.constants import (
     DEFAULT_CONTENT_ITEM_TO_VERSION,
     FileType,
 )
-from demisto_sdk.commands.common.handlers import JSON_Handler
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.hook_validations.readme import ReadMeValidator
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.markdown_lint import run_markdownlint
 from demisto_sdk.commands.common.tools import get_json
-from demisto_sdk.commands.common.update_id_set import DEFAULT_ID_SET_PATH
+from demisto_sdk.commands.content_graph.interface import (
+    ContentGraphInterface,
+)
+from demisto_sdk.commands.content_graph.tests.create_content_graph_test import (
+    mock_integration,
+)
 from demisto_sdk.commands.update_release_notes.update_rn import (
     CLASS_BY_FILE_TYPE,
     UpdateRN,
@@ -28,8 +33,6 @@ from demisto_sdk.commands.update_release_notes.update_rn import (
     get_deprecated_rn,
     get_file_description,
 )
-
-json = JSON_Handler()
 
 
 class TestRNUpdate:
@@ -236,7 +239,10 @@ class TestRNUpdate:
         Then:
             - return a markdown string
         """
-        expected_result = "\n#### Playbooks\n\n##### New: Hello World Playbook\n\n- Hello World Playbook description\n"
+        expected_result = (
+            "\n#### Playbooks\n\n##### New: Hello World Playbook\n\n"
+            "- New: Hello World Playbook description\n"
+        )
         from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
 
         mock_master.return_value = "1.0.0"
@@ -597,7 +603,7 @@ class TestRNUpdate:
             pre_release=False, specific_version=None
         )
         assert version_number == expected_version
-        os.remove(os.path.join(TestRNUpdate.FILES_PATH, "fake_pack/pack_metadata.json"))
+        Path(TestRNUpdate.FILES_PATH, "fake_pack/pack_metadata.json").unlink()
         shutil.copy(
             src=os.path.join(TestRNUpdate.FILES_PATH, "fake_pack/_pack_metadata.json"),
             dst=os.path.join(TestRNUpdate.FILES_PATH, "fake_pack/pack_metadata.json"),
@@ -634,7 +640,7 @@ class TestRNUpdate:
             pre_release=False, specific_version=None
         )
         assert version_number == expected_version
-        os.remove(os.path.join(TestRNUpdate.FILES_PATH, "fake_pack/pack_metadata.json"))
+        Path(TestRNUpdate.FILES_PATH, "fake_pack/pack_metadata.json").unlink()
         shutil.copy(
             src=os.path.join(TestRNUpdate.FILES_PATH, "fake_pack/_pack_metadata.json"),
             dst=os.path.join(TestRNUpdate.FILES_PATH, "fake_pack/pack_metadata.json"),
@@ -671,7 +677,7 @@ class TestRNUpdate:
             pre_release=False, specific_version=None
         )
         assert version_number == expected_version
-        os.remove(os.path.join(TestRNUpdate.FILES_PATH, "fake_pack/pack_metadata.json"))
+        Path(TestRNUpdate.FILES_PATH, "fake_pack/pack_metadata.json").unlink()
         shutil.copy(
             src=os.path.join(TestRNUpdate.FILES_PATH, "fake_pack/_pack_metadata.json"),
             dst=os.path.join(TestRNUpdate.FILES_PATH, "fake_pack/pack_metadata.json"),
@@ -709,7 +715,7 @@ class TestRNUpdate:
             pre_release=False, specific_version="2.0.0"
         )
         assert version_number == expected_version
-        os.remove(os.path.join(TestRNUpdate.FILES_PATH, "fake_pack/pack_metadata.json"))
+        Path(TestRNUpdate.FILES_PATH, "fake_pack/pack_metadata.json").unlink()
         shutil.copy(
             src=os.path.join(TestRNUpdate.FILES_PATH, "fake_pack/_pack_metadata.json"),
             dst=os.path.join(TestRNUpdate.FILES_PATH, "fake_pack/pack_metadata.json"),
@@ -747,11 +753,7 @@ class TestRNUpdate:
         )
         with pytest.raises(ValueError):
             update_rn.bump_version_number()
-        os.remove(
-            os.path.join(
-                TestRNUpdate.FILES_PATH, "fake_pack_invalid/pack_metadata.json"
-            )
-        )
+        Path(TestRNUpdate.FILES_PATH, "fake_pack_invalid/pack_metadata.json").unlink()
         shutil.copy(
             src=os.path.join(
                 TestRNUpdate.FILES_PATH, "fake_pack_invalid/_pack_metadata.json"
@@ -793,11 +795,7 @@ class TestRNUpdate:
         )
         with pytest.raises(ValueError):
             update_rn.bump_version_number()
-        os.remove(
-            os.path.join(
-                TestRNUpdate.FILES_PATH, "fake_pack_invalid/pack_metadata.json"
-            )
-        )
+        Path(TestRNUpdate.FILES_PATH, "fake_pack_invalid/pack_metadata.json").unlink()
         shutil.copy(
             src=os.path.join(
                 TestRNUpdate.FILES_PATH, "fake_pack_invalid/_pack_metadata.json"
@@ -839,11 +837,7 @@ class TestRNUpdate:
         )
         with pytest.raises(ValueError):
             update_rn.bump_version_number()
-        os.remove(
-            os.path.join(
-                TestRNUpdate.FILES_PATH, "fake_pack_invalid/pack_metadata.json"
-            )
-        )
+        Path(TestRNUpdate.FILES_PATH, "fake_pack_invalid/pack_metadata.json").unlink()
         shutil.copy(
             src=os.path.join(
                 TestRNUpdate.FILES_PATH, "fake_pack_invalid/_pack_metadata.json"
@@ -878,7 +872,8 @@ class TestRNUpdate:
         with pytest.raises(Exception) as execinfo:
             update_rn.bump_version_number()
         assert (
-            "Pack HelloWorld was not found. Please verify the pack name is correct."
+            "The metadata file of pack HelloWorld was not found."
+            " Please verify the pack name is correct, and that the file exists."
             in execinfo.value.args[0]
         )
 
@@ -910,7 +905,19 @@ class TestRNUpdate:
             "Received no update type when one was expected." in execinfo.value.args[0]
         )
 
-    def test_build_rn_desc_new_file(self):
+    new_file_test_params = [
+        (
+            FileType.TEST_SCRIPT.value,
+            "(Available from Cortex XSOAR 5.5.0).",
+        ),
+        (
+            FileType.MODELING_RULE.value,
+            "(Available from Cortex XSIAM %%XSIAM_VERSION%%).",
+        ),
+    ]
+
+    @pytest.mark.parametrize("file_type, expected_result", new_file_test_params)
+    def test_build_rn_desc_new_file(self, file_type, expected_result):
         """
         Given
             - A new file
@@ -929,7 +936,7 @@ class TestRNUpdate:
         )
 
         desc = update_rn.build_rn_desc(
-            _type=FileType.TEST_SCRIPT,
+            _type=file_type,
             content_name="Hello World Test",
             desc="Test description",
             is_new_file=True,
@@ -937,7 +944,7 @@ class TestRNUpdate:
             from_version="5.5.0",
             docker_image=None,
         )
-        assert "(Available from Cortex XSOAR 5.5.0)." in desc
+        assert expected_result in desc
 
     def test_build_rn_desc_old_file(self):
         """
@@ -1007,6 +1014,33 @@ class TestRNUpdate:
         assert "(Available from Cortex XSOAR 5.0.0)." in desc
         assert "(Available from Cortex XSOAR 5.5.0)." in desc
         assert "(Available from Cortex XSOAR 6.0.0)." in desc
+
+    def test_build_rn_desc_event_collector(self):
+        """
+        Given
+            - A new event collector file.
+        When
+            - Running the command build_rn_desc on a file in order to generate rn description.
+        Then
+            - Validate that XSIAM from-version added to the rn description.
+        """
+        from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
+
+        update_rn = UpdateRN(
+            pack_path="Packs/HelloWorldEventCollector",
+            update_type="minor",
+            modified_files_in_pack={"HelloWorldEventCollector"},
+            added_files=set(),
+        )
+
+        desc = update_rn.build_rn_desc(
+            content_name="Hello World Event Collector",
+            is_new_file=True,
+            desc="Test description",
+            text="",
+            docker_image=None,
+        )
+        assert "(Available from Cortex XSIAM %%XSIAM_VERSION%%)." in desc
 
     @mock.patch.object(UpdateRN, "bump_version_number")
     @mock.patch.object(UpdateRN, "is_bump_required")
@@ -1336,6 +1370,36 @@ class TestRNUpdate:
         res = get_deprecated_rn(path, file_type)
         assert res == expected_res
 
+    def test_deprecated_rn_yml_no_commands_section(self, mocker, pack):
+        """
+        Given:
+            - deprecated integration which does not have "commands" section
+        When:
+            - Calling get_deprecated_rn function
+        Then:
+            - Ensure the function returns a valid rn when the yml is deprecated without the "commands" section
+
+        """
+        integration = pack.create_integration(
+            name="test",
+            yml={
+                "commonfields": {"id": "test", "version": -1},
+                "name": "test",
+                "display": "test",
+                "description": "this is an integration test",
+                "category": "category",
+                "script": {
+                    "type": "python",
+                    "subtype": "python3",
+                    "script": "",
+                    "dockerimage": "",
+                },
+                "configuration": [],
+            },
+        )
+
+        assert get_deprecated_rn(integration.path, FileType.INTEGRATION) == ""
+
 
 def get_mock_yml_obj(path, file_type, deprecated) -> dict:
     new_yml_obj = CLASS_BY_FILE_TYPE[file_type](path)
@@ -1551,7 +1615,7 @@ class TestRNUpdateUnit:
     ]
 
     @pytest.fixture(autouse=True)
-    def setup(self, tmp_path):
+    def setup_method(self, tmp_path):
         """Tests below modify the file: 'demisto_sdk/commands/update_release_notes/tests_data/Packs/Test/pack_metadata.json'
         We back it up and restore when done.
 
@@ -1562,7 +1626,7 @@ class TestRNUpdateUnit:
             self.meta_backup,
         )
 
-    def teardown(self):
+    def teardown_method(self):
         if self.meta_backup:
             shutil.copy(
                 self.meta_backup,
@@ -1712,7 +1776,7 @@ class TestRNUpdateUnit:
         data_dict = get_json(TEMP_FILE)
         update_rn.metadata_path = TEMP_FILE
         update_rn.write_metadata_to_file(data_dict)
-        os.remove(ORIGINAL)
+        Path(ORIGINAL).unlink()
         shutil.copy(src=TEMP_FILE, dst=ORIGINAL)
 
     def test_find_added_pack_files(self, mocker):
@@ -1903,64 +1967,38 @@ class TestRNUpdateUnit:
         )
         assert yml_file_path == UpdateRN.change_image_or_desc_file_path(yml_file_path)
 
-    def test_update_api_modules_dependents_rn__no_id_set(self, mocker):
-        """
-        Given:
-            - The file system has no id_set.json in its root
-        When:
-            - update_api_modules_rn is called without an id_set.json
-        Then:
-            - Call print_error with the appropriate error message
-        """
-        import logging
-
-        from demisto_sdk.commands.update_release_notes.update_rn import (
-            update_api_modules_dependents_rn,
-        )
-
-        if os.path.exists(DEFAULT_ID_SET_PATH):
-            os.remove(DEFAULT_ID_SET_PATH)
-        print_error_mock = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
-        update_api_modules_dependents_rn(
-            pre_release="", update_type="", added="", modified="", id_set_path=None
-        )
-        assert "no id_set.json is available" in print_error_mock.call_args[0][0]
-
-    def test_update_api_modules_dependents_rn__happy_flow(self, mocker, tmpdir):
+    def test_update_api_modules_dependents_rn__happy_flow(self, mocker):
         """
         Given
-            - ApiModules_script.yml which is part of APIModules pack was changed.
-            - id_set.json indicates FeedTAXII uses APIModules
+        - ApiModules_script.yml which is part of APIModules pack was changed.
 
         When
-            - update_api_modules_rn is called with an id_set.json
+        - update_api_modules_rn is called
 
         Then
-            - Ensure execute_update_mock is called
+        - Ensure execute_update_mock is called
         """
         from demisto_sdk.commands.update_release_notes.update_rn import (
             UpdateRN,
             update_api_modules_dependents_rn,
         )
 
-        mocker.patch.object(UpdateRN, "get_master_version", return_value="0.0.0")
-
         modified = {"/Packs/ApiModules/Scripts/ApiModules_script/ApiModules_script.yml"}
         added = {}
-        id_set_content = {
-            "integrations": [
-                {
-                    "FeedTAXII_integration": {
-                        "name": "FeedTAXII_integration",
-                        "file_path": "/FeedTAXII_integration.yml",
-                        "pack": "FeedTAXII",
-                        "api_modules": ["ApiModules_script"],
-                    }
-                }
-            ]
-        }
-        id_set_f = tmpdir / "id_set.json"
-        id_set_f.write(json.dumps(id_set_content))
+
+        integration_mock = mock_integration("SmapleIntegration")
+        mocker.patch.object(ContentGraphInterface, "__init__", return_value=None)
+        mocker.patch.object(ContentGraphInterface, "__exit__", return_value=None)
+        mocker.patch.object(UpdateRN, "get_master_version", return_value="0.0.0")
+
+        mocker.patch(
+            "demisto_sdk.commands.update_release_notes.update_rn.update_content_graph",
+            return_value=None,
+        )
+        mocker.patch(
+            "demisto_sdk.commands.update_release_notes.update_rn.get_api_module_dependencies_from_graph",
+            return_value=[integration_mock],  # Mock the integration path
+        )
 
         execute_update_mock = mocker.patch.object(UpdateRN, "execute_update")
 
@@ -1969,7 +2007,6 @@ class TestRNUpdateUnit:
             update_type=None,
             added=added,
             modified=modified,
-            id_set_path=id_set_f.strpath,
         )
         assert execute_update_mock.call_count == 1
 
@@ -2059,7 +2096,6 @@ class TestRNUpdateUnit:
         Then
             - A new release notes is created. and it has a new record for updating docker image.
         """
-        import os
 
         from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
 
@@ -2116,9 +2152,9 @@ class TestRNUpdateUnit:
             "demisto_sdk/commands/update_release_notes/tests_data/Packs/release_notes/1_1_0.md"
         ) as file:
             RN = file.read()
-        os.remove(
+        Path(
             "demisto_sdk/commands/update_release_notes/tests_data/Packs/release_notes/1_1_0.md"
-        )
+        ).unlink()
         assert "Updated the Docker image to: *demisto/python3:3.9.6.22914*." in RN
 
     def test_update_docker_image_in_yml_when_RN_aleady_exists(self, mocker):
@@ -2202,7 +2238,6 @@ class TestRNUpdateUnit:
         Then
             - A new record with the updated docker image is added.
         """
-        import os
 
         from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
 
@@ -2244,9 +2279,9 @@ class TestRNUpdateUnit:
             "demisto_sdk/commands/update_release_notes/tests_data/Packs/release_notes/1_1_0.md"
         ) as file:
             RN = file.read()
-        os.remove(
+        Path(
             "demisto_sdk/commands/update_release_notes/tests_data/Packs/release_notes/1_1_0.md"
-        )
+        ).unlink()
         assert "Updated the Docker image to: *dockerimage:python/test:1243*" not in RN
 
     def test_new_integration_docker_not_updated(self, mocker):
@@ -2259,7 +2294,6 @@ class TestRNUpdateUnit:
         Then
             - Docker is not indicated as updated.
         """
-        import os
 
         from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
 
@@ -2298,9 +2332,9 @@ class TestRNUpdateUnit:
             "demisto_sdk/commands/update_release_notes/tests_data/Packs/release_notes/1_1_0.md"
         ) as file:
             RN = file.read()
-        os.remove(
+        Path(
             "demisto_sdk/commands/update_release_notes/tests_data/Packs/release_notes/1_1_0.md"
-        )
+        ).unlink()
         assert "Updated the Docker image to: *dockerimage:python/test:1243*" not in RN
 
     docker_image_test_rn = (
@@ -2394,11 +2428,11 @@ class TestRNUpdateUnit:
                 f.write(json.dumps(existing_conf_data))
         client.build_rn_config_file("1.0.1")
         if expected_conf_data:
-            assert os.path.exists(conf_path)
+            assert Path(conf_path).exists()
             with open(conf_path) as f:
                 assert json.loads(f.read()) == expected_conf_data
         else:
-            assert not os.path.exists(conf_path)
+            assert not Path(conf_path).exists()
 
 
 def test_get_from_version_at_update_rn(integration):
@@ -2694,9 +2728,7 @@ def test_handle_existing_rn_version_path(mocker, repo):
         Ensure the function does not sets should delete existing rn property to True when paths are identical.
     """
     pack = repo.create_pack("test")
-    mocker.patch.object(
-        Path, "absolute", return_value=f"{str(pack.path)}/ReleaseNotes/1_0_1.md"
-    )
+    mocker.patch.object(UpdateRN, "CONTENT_PATH", return_value=repo.path)
     pack.create_release_notes(version="1_0_1")
     client = UpdateRN(
         pack_path=str(pack.path),
@@ -2729,3 +2761,30 @@ def test_get_file_description(path, file_type, expected_results):
         Ensure the function extracted the information from the right field.
     """
     assert get_file_description(path, file_type) == expected_results
+
+
+def test_no_release_notes_for_first_version(mocker):
+    """
+    Given:
+        - Changes made in the content repo.
+    When:
+        - runing update release notes for the first version of the pack (1.0.0).
+    Then
+        - validate the a proper error message is raised.
+    """
+    mocker.patch.object(UpdateRN, "get_master_version", return_value="0.0.0")
+    mocker.patch.object(UpdateRN, "is_bump_required", return_value=False)
+    mocker.patch.object(
+        UpdateRN, "get_pack_metadata", return_value={"currentVersion": "1.0.0"}
+    )
+    update_rn = UpdateRN(
+        pack_path="Packs/HelloWorld",
+        update_type="minor",
+        modified_files_in_pack=set(),
+        added_files=set(),
+        pack_metadata_only=True,
+    )
+
+    with pytest.raises(ValueError) as e:
+        update_rn.get_new_version_and_metadata()
+        assert str(e) == "Release notes do not need to be updated for version '1.0.0'."

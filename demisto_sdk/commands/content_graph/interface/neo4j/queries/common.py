@@ -1,4 +1,3 @@
-import logging
 import traceback
 from datetime import datetime
 from pathlib import Path
@@ -7,9 +6,8 @@ from typing import Any, Dict
 from neo4j import Result, Transaction
 from packaging.version import Version
 
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.content_graph.common import ContentType
-
-logger = logging.getLogger("demisto-sdk")
 
 
 def labels_of(content_type: ContentType) -> str:
@@ -55,7 +53,7 @@ def to_neo4j_map(properties: dict) -> str:
     return params_str
 
 
-def run_query(tx: Transaction, query: str, **kwargs: Dict[str, Any]) -> Result:
+def run_query(tx: Transaction, query: str, **kwargs) -> Result:
     try:
         start_time: datetime = datetime.now()
         logger.debug(f"Running query:\n{query}")

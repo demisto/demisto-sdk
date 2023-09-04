@@ -1,7 +1,7 @@
 import logging
-import os
 from contextlib import contextmanager
 from datetime import datetime
+from pathlib import Path
 from shutil import rmtree
 
 import pytest
@@ -164,9 +164,7 @@ def test_dump_with_price(mocker):
 
     import builtins
 
-    from demisto_sdk.commands.common.handlers import JSON_Handler
-
-    json = JSON_Handler()
+    from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 
     obj = PackMetaData(PACK_METADATA)
     obj.price = 1
@@ -320,7 +318,7 @@ def test_load_user_metadata_no_metadata_file(repo, monkeypatch, caplog):
             "vendorName": "vendorName",
         }
     )
-    os.remove(pack_1.pack_metadata.path)
+    Path(pack_1.pack_metadata.path).unlink()
 
     content_object_pack = Pack(pack_1.path)
     pack_1_metadata = content_object_pack.metadata

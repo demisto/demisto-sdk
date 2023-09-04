@@ -1,5 +1,4 @@
 import glob
-import logging
 import os
 import sys
 from copy import deepcopy
@@ -18,11 +17,12 @@ from demisto_sdk.commands.common.constants import (
     IGNORED_PACKS_IN_DEPENDENCY_CALC,
     PACKS_DIR,
 )
-from demisto_sdk.commands.common.handlers import JSON_Handler
+from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     ProcessPoolHandler,
     get_content_id_set,
-    get_content_path,
     get_pack_name,
     is_external_repository,
     item_type_to_content_items_header,
@@ -34,16 +34,12 @@ from demisto_sdk.commands.common.update_id_set import (
 )
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator, get_id_set
 
-logger = logging.getLogger("demisto-sdk")
-json = JSON_Handler()
-
-
 MINIMUM_DEPENDENCY_VERSION = Version("6.0.0")
 COMMON_TYPES_PACK = "CommonTypes"
 CORE_ALERT_FIELDS_PACK = "CoreAlertFields"
 
 # full path to Packs folder in content repo
-PACKS_FULL_PATH = os.path.join(get_content_path(), PACKS_DIR)  # type: ignore
+PACKS_FULL_PATH = os.path.join(CONTENT_PATH, PACKS_DIR)  # type: ignore
 
 
 def parse_for_pack_metadata(
@@ -2905,7 +2901,7 @@ class PackDependencies:
 
         """
 
-        if id_set_path and os.path.isfile(id_set_path):
+        if id_set_path and Path(id_set_path).is_file():
             with open(id_set_path) as id_set_file:
                 id_set = json.load(id_set_file)
         else:
@@ -3093,7 +3089,7 @@ def get_all_packs_dependency_graph(id_set: dict, packs: list) -> Iterable:
     Returns:
         A graph with all packs dependencies
     """
-    print("Calculating all packs dependencies.")
+    logger.info("Calculating all packs dependencies.")
     # try:
     dependency_graph = PackDependencies.build_all_dependencies_graph(
         packs, id_set=id_set
@@ -3170,7 +3166,7 @@ def calculate_all_packs_dependencies(id_set_path: str, output_path: str) -> dict
                 )
             )
         wait_futures_complete(futures=futures, done_fn=add_pack_metadata_results)
-        print(
+        logger.info(
             f"Number of created pack dependencies entries: {len(pack_dependencies_result.keys())}"
         )
         # finished iteration over pack folders
@@ -3445,7 +3441,7 @@ def calculate_dependencies(
                     ).update(dependent_entities_list)
 
                     # for debug purposes
-                    print(
+                    logger.info(
                         f"Removing {dependent_entities_list} due to {entity_dependent_on}"
                     )
 

@@ -1,8 +1,8 @@
-import logging
 from abc import ABC
 from typing import Tuple
 
 from demisto_sdk.commands.common.constants import FileType
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.format.format_constants import (
     ERROR_RETURN_CODE,
     SKIP_RETURN_CODE,
@@ -10,8 +10,6 @@ from demisto_sdk.commands.format.format_constants import (
     VERSION_6_0_0,
 )
 from demisto_sdk.commands.format.update_generic_json import BaseUpdateJSON
-
-logger = logging.getLogger("demisto-sdk")
 
 
 class BaseClassifierJSONFormat(BaseUpdateJSON, ABC):

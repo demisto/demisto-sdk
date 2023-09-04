@@ -2,6 +2,7 @@ import contextlib
 import logging
 import os
 import sys
+from configparser import ConfigParser
 from io import StringIO
 from pathlib import Path
 from shutil import copyfile
@@ -22,10 +23,12 @@ from demisto_sdk.commands.common.content.content import Content
 from demisto_sdk.commands.common.content_constant_paths import CONF_PATH
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.git_util import GitUtil
-from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.hook_validations.base_validator import BaseValidator
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import (
     ContentEntityValidator,
+)
+from demisto_sdk.commands.common.hook_validations.correlation_rule import (
+    CorrelationRuleValidator,
 )
 from demisto_sdk.commands.common.hook_validations.dashboard import DashboardValidator
 from demisto_sdk.commands.common.hook_validations.description import (
@@ -52,6 +55,9 @@ from demisto_sdk.commands.common.hook_validations.pack_unique_files import (
     PackUniqueFilesValidator,
 )
 from demisto_sdk.commands.common.hook_validations.playbook import PlaybookValidator
+from demisto_sdk.commands.common.hook_validations.readme import (
+    ReadMeValidator,
+)
 from demisto_sdk.commands.common.hook_validations.release_notes import (
     ReleaseNotesValidator,
 )
@@ -59,7 +65,13 @@ from demisto_sdk.commands.common.hook_validations.reputation import ReputationVa
 from demisto_sdk.commands.common.hook_validations.script import ScriptValidator
 from demisto_sdk.commands.common.hook_validations.structure import StructureValidator
 from demisto_sdk.commands.common.hook_validations.widget import WidgetValidator
+from demisto_sdk.commands.common.hook_validations.xsiam_dashboard import (
+    XSIAMDashboardValidator,
+)
 from demisto_sdk.commands.common.legacy_git_tools import git_path
+from demisto_sdk.commands.content_graph.tests.create_content_graph_test import (
+    mock_integration,
+)
 from demisto_sdk.commands.prepare_content.integration_script_unifier import (
     IntegrationScriptUnifier,
 )
@@ -97,6 +109,8 @@ from demisto_sdk.tests.constants_test import (
     INVALID_REPUTATION_PATH,
     INVALID_SCRIPT_PATH,
     INVALID_WIDGET_PATH,
+    INVALID_XSIAM_CORRELATION_PATH,
+    INVALID_XSIAM_DASHBOARD_PATH,
     LAYOUT_TARGET,
     LAYOUTS_CONTAINER_TARGET,
     MODELING_RULES_SCHEMA_FILE,
@@ -128,14 +142,18 @@ from demisto_sdk.tests.constants_test import (
     VALID_TEST_PLAYBOOK_PATH,
     VALID_WIDGET_PATH,
     WIDGET_TARGET,
+    XSIAM_CORRELATION_TARGET,
+    XSIAM_DASHBOARD_TARGET,
 )
 from demisto_sdk.tests.test_files.validate_integration_test_valid_types import (
     INCIDENT_FIELD,
 )
 from TestSuite.pack import Pack
-from TestSuite.test_tools import ChangeCWD, str_in_call_args_list
-
-json = JSON_Handler()
+from TestSuite.test_tools import (
+    ChangeCWD,
+    count_str_in_call_args_list,
+    str_in_call_args_list,
+)
 
 
 class MyRepo:
@@ -159,16 +177,16 @@ class TestValidators:
     @classmethod
     def setup_class(cls):
         for dir_to_create in DIR_LIST:
-            if not os.path.exists(dir_to_create):
+            if not Path(dir_to_create).exists():
                 cls.CREATED_DIRS.append(dir_to_create)
                 os.makedirs(dir_to_create)
         copyfile(CONF_JSON_MOCK_PATH, CONF_PATH)
 
     @classmethod
     def teardown_class(cls):
-        os.remove(CONF_PATH)
+        Path(CONF_PATH).unlink()
         for dir_to_delete in cls.CREATED_DIRS:
-            if os.path.exists(dir_to_delete):
+            if Path(dir_to_delete).exists():
                 os.rmdir(dir_to_delete)
 
     INPUTS_IS_VALID_VERSION = [
@@ -209,6 +227,21 @@ class TestValidators:
         (INVALID_PLAYBOOK_PATH, PLAYBOOK_TARGET, False, PlaybookValidator),
     ]
 
+    XSIAM_IS_VALID_FROM_VERSION = [
+        (
+            INVALID_XSIAM_DASHBOARD_PATH,
+            XSIAM_DASHBOARD_TARGET,
+            False,
+            XSIAMDashboardValidator,
+        ),
+        (
+            INVALID_XSIAM_CORRELATION_PATH,
+            XSIAM_CORRELATION_TARGET,
+            False,
+            CorrelationRuleValidator,
+        ),
+    ]
+
     def test_validation_of_beta_playbooks(self, mocker):
         """
         Given
@@ -232,10 +265,10 @@ class TestValidators:
             mocker.patch.object(validator, "is_script_id_valid", return_value=True)
             assert validator.is_valid_playbook(validate_rn=False)
         finally:
-            os.remove(PLAYBOOK_TARGET)
+            Path(PLAYBOOK_TARGET).unlink()
 
     @pytest.mark.parametrize(
-        "source, target, answer, validator", INPUTS_IS_VALID_VERSION
+        "source, target, answer, validator", (INPUTS_IS_VALID_VERSION)
     )
     def test_is_valid_version(
         self, source: str, target: str, answer: Any, validator: ContentEntityValidator
@@ -256,10 +289,11 @@ class TestValidators:
             res_validator = validator(structure)
             assert res_validator.is_valid_version() is answer
         finally:
-            os.remove(target)
+            Path(target).unlink()
 
     @pytest.mark.parametrize(
-        "source, target, answer, validator", INPUTS_IS_VALID_VERSION
+        "source, target, answer, validator",
+        (XSIAM_IS_VALID_FROM_VERSION + INPUTS_IS_VALID_VERSION),
     )
     def test_is_valid_fromversion(
         self, source: str, target: str, answer: Any, validator: ContentEntityValidator
@@ -280,7 +314,7 @@ class TestValidators:
             res_validator = validator(structure)
             assert res_validator.is_valid_fromversion() is answer
         finally:
-            os.remove(target)
+            Path(target).unlink()
 
     INPUTS_is_condition_branches_handled = [
         (INVALID_PLAYBOOK_CONDITION_1, False),
@@ -296,7 +330,7 @@ class TestValidators:
             validator = PlaybookValidator(structure)
             assert validator.is_condition_branches_handled() is answer
         finally:
-            os.remove(PLAYBOOK_TARGET)
+            Path(PLAYBOOK_TARGET).unlink()
 
     INPUTS_is_condition_branches_handled = [
         (INVALID_PLAYBOOK_CONDITION_1, False),
@@ -312,7 +346,7 @@ class TestValidators:
             validator = PlaybookValidator(structure)
             assert validator.are_default_conditions_valid() is answer
         finally:
-            os.remove(PLAYBOOK_TARGET)
+            Path(PLAYBOOK_TARGET).unlink()
 
     INPUTS_LOCKED_PATHS = [
         (VALID_REPUTATION_PATH, True, ReputationValidator),
@@ -327,7 +361,8 @@ class TestValidators:
         assert validator.is_valid_version() is answer
 
     @pytest.mark.parametrize(
-        "source, target, answer, validator", INPUTS_IS_VALID_VERSION
+        "source, target, answer, validator",
+        (INPUTS_IS_VALID_VERSION + XSIAM_IS_VALID_FROM_VERSION),
     )
     def test_is_file_valid(
         self,
@@ -352,7 +387,7 @@ class TestValidators:
             )
             assert res_validator.is_valid_file(validate_rn=False) is answer
         finally:
-            os.remove(target)
+            Path(target).unlink()
 
     INPUTS_RELEASE_NOTES_EXISTS_VALIDATION = [
         (
@@ -416,8 +451,8 @@ class TestValidators:
             res_validator = OldReleaseNotesValidator(target_dummy)
             assert res_validator.validate_file_release_notes_exists() is answer
         finally:
-            os.remove(target_dummy)
-            os.remove(target_release_notes)
+            Path(target_dummy).unlink()
+            Path(target_release_notes).unlink()
 
     @staticmethod
     def create_release_notes_structure_test_package():
@@ -497,8 +532,8 @@ class TestValidators:
             res_validator = OldReleaseNotesValidator(target_dummy)
             assert res_validator.is_valid_release_notes_structure() is answer
         finally:
-            os.remove(target_dummy)
-            os.remove(target_release_notes)
+            Path(target_dummy).unlink()
+            Path(target_release_notes).unlink()
 
     @staticmethod
     def mock_get_master_diff():
@@ -529,7 +564,7 @@ class TestValidators:
             res_validator = validator(structure)
             assert res_validator.is_id_equals_name() is answer
         finally:
-            os.remove(target)
+            Path(target).unlink()
 
     INPUTS_IS_CONNECTED_TO_ROOT = [
         (INVALID_PLAYBOOK_PATH_FROM_ROOT, False),
@@ -544,7 +579,7 @@ class TestValidators:
             validator = PlaybookValidator(structure)
             assert validator.is_root_connected_to_all_tasks() is answer
         finally:
-            os.remove(PLAYBOOK_TARGET)
+            Path(PLAYBOOK_TARGET).unlink()
 
     INPUTS_STRUCTURE_VALIDATION = [
         (VALID_INTEGRATION_TEST_PATH, INTEGRATION_TARGET, "integration"),
@@ -565,7 +600,7 @@ class TestValidators:
                 file_path=source, predefined_scheme=file_type
             ).is_valid_file()
         finally:
-            os.remove(target)
+            Path(target).unlink()
 
     FILES_PATHS_FOR_ALL_VALIDATIONS = [
         VALID_INTEGRATION_ID_PATH,
@@ -627,6 +662,10 @@ class TestValidators:
         )
         mocker.patch.object(
             IntegrationValidator, "is_api_token_in_credential_type", return_value=True
+        )
+        mocker.patch.object(ReadMeValidator, "verify_image_exist", return_value=True)
+        mocker.patch.object(
+            ReadMeValidator, "verify_readme_image_paths", return_value=True
         )
         validate_manager = ValidateManager(file_path=file_path, skip_conf_json=True)
         assert validate_manager.run_validation_on_specific_files()
@@ -755,7 +794,7 @@ class TestValidators:
         Then
             Ensure required_pack_file_does_not_exist fails if and only if PACKS_PACK_META_FILE_NAME doesn't exist
         """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+        logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
         monkeypatch.setenv("COLUMNS", "1000")
         pack = repo.create_pack("pack")
         validate_manager = ValidateManager(skip_conf_json=True)
@@ -766,17 +805,17 @@ class TestValidators:
         validate_manager.validate_pack_unique_files(
             pack.path, pack_error_ignore_list={}
         )
-        assert not str_in_call_args_list(logger_info.call_args_list, err_msg)
-        assert not str_in_call_args_list(logger_info.call_args_list, err_code)
+        assert not str_in_call_args_list(logger_error.call_args_list, err_msg)
+        assert not str_in_call_args_list(logger_error.call_args_list, err_code)
 
-        os.remove(pack.pack_metadata.path)
+        Path(pack.pack_metadata.path).unlink()
         validate_manager.validate_pack_unique_files(
             pack.path, pack_error_ignore_list={}
         )
         assert all(
             [
-                str_in_call_args_list(logger_info.call_args_list, err_msg),
-                str_in_call_args_list(logger_info.call_args_list, err_code),
+                str_in_call_args_list(logger_error.call_args_list, err_msg),
+                str_in_call_args_list(logger_error.call_args_list, err_code),
             ]
         )
 
@@ -1055,7 +1094,7 @@ class TestValidators:
         test_file = os.path.join(files_path, "fake_pack/.pack-ignore")
 
         mocker.patch.object(
-            demisto_sdk.commands.validate.validate_manager,
+            demisto_sdk.commands.validate.validate_manager.tools,
             "get_pack_ignore_file_path",
             return_value=test_file,
         )
@@ -1065,9 +1104,7 @@ class TestValidators:
         assert ignore_errors_list["file_name"] == [
             "BA101",
             "SC101",
-            "IN117",
             "BA106",
-            "IN100",
         ]
         assert "SC100" not in ignore_errors_list["file_name"]
 
@@ -1250,6 +1287,7 @@ class TestValidators:
                     modified_files=modified_files,
                     old_format_files=old_format_files,
                     added_files=added_files,
+                    graph_validator=None,
                 )
                 is True
             )
@@ -1281,6 +1319,12 @@ class TestValidators:
             incident_field1.get_path_from_pack(),
             incident_field2.get_path_from_pack(),
         }
+        # Mock the graph and the get_api_module_dependencies_from_graph function
+        integration_mock = mock_integration("ApiDependent")
+        mocker.patch(
+            "demisto_sdk.commands.validate.validate_manager.get_api_module_dependencies_from_graph",
+            return_value=[integration_mock],
+        )
         added_files = {"Packs/PackName1/ReleaseNotes/1_0_0.md"}
         with ChangeCWD(repo.path):
             assert (
@@ -1288,6 +1332,7 @@ class TestValidators:
                     modified_files=modified_files,
                     old_format_files=set(),
                     added_files=added_files,
+                    graph_validator=mocker.MagicMock(),
                 )
                 is False
             )
@@ -1306,31 +1351,21 @@ class TestValidators:
         Then:
             - return a False as there are release notes missing
         """
-        mocker.patch.object(
-            BaseValidator, "update_checked_flags_by_support_level", return_value=""
-        )
         pack1 = repo.create_pack("ApiModules")
         api_script1 = pack1.create_script("APIScript")
         api_script1.create_default_script(name="APIScript")
-        pack2_name = "ApiDependent"
-        pack2 = repo.create_pack(pack2_name)
-        integration2 = pack2.create_integration(pack2_name)
-        id_set_content = {
-            "integrations": [
-                {
-                    "ApiDependent": {
-                        "name": integration2.name,
-                        "file_path": integration2.path,
-                        "pack": pack2_name,
-                        "api_modules": [api_script1.name],
-                    }
-                }
-            ]
-        }
-        id_set_f = tmpdir / "id_set.json"
-        id_set_f.write(json.dumps(id_set_content))
-        validate_manager = ValidateManager(id_set_path=id_set_f.strpath)
-        modified_files = {api_script1.yml.path}
+        integration_mock = mock_integration("ApiDependent", "Packs/ApiDependent/")
+        validate_manager = ValidateManager()
+        mocker.patch(
+            "demisto_sdk.commands.validate.validate_manager.get_api_module_dependencies_from_graph",
+            return_value=[integration_mock],
+        )
+        mocker.patch.object(
+            BaseValidator, "update_checked_flags_by_support_level", return_value=""
+        )
+
+        validate_manager = ValidateManager()
+        modified_files = {api_script1.yml.rel_path}
         added_files = {"Packs/ApiModules/ReleaseNotes/1_0_0.md"}
         with ChangeCWD(repo.path):
             assert (
@@ -1338,6 +1373,7 @@ class TestValidators:
                     modified_files=modified_files,
                     old_format_files=set(),
                     added_files=added_files,
+                    graph_validator=mocker.MagicMock(),
                 )
                 is False
             )
@@ -1361,24 +1397,7 @@ class TestValidators:
         )
         pack1 = repo.create_pack("ApiModules")
         api_script1 = pack1.create_script("APIScript")
-        pack2_name = "ApiDependent"
-        pack2 = repo.create_pack(pack2_name)
-        integration2 = pack2.create_integration(pack2_name)
-        id_set_content = {
-            "integrations": [
-                {
-                    "ApiDependent": {
-                        "name": integration2.name,
-                        "file_path": integration2.path,
-                        "pack": pack2_name,
-                        "api_modules": [api_script1.name],
-                    }
-                }
-            ]
-        }
-        id_set_f = tmpdir / "id_set.json"
-        id_set_f.write(json.dumps(id_set_content))
-        validate_manager = ValidateManager(id_set_path=id_set_f.strpath)
+        validate_manager = ValidateManager()
         modified_files = {api_script1.yml.rel_path}
         added_files = {
             "Packs/ApiModules/ReleaseNotes/1_0_0.md",
@@ -1390,6 +1409,7 @@ class TestValidators:
                     modified_files=modified_files,
                     old_format_files=set(),
                     added_files=added_files,
+                    graph_validator=mocker.MagicMock(),
                 )
                 is True
             )
@@ -1426,6 +1446,7 @@ class TestValidators:
                     modified_files=modified_files,
                     old_format_files=old_format_files,
                     added_files=added_files,
+                    graph_validator=mocker.MagicMock(),
                 )
                 is False
             )
@@ -1456,6 +1477,7 @@ class TestValidators:
                     modified_files=set(),
                     old_format_files=set(),
                     added_files=added_files,
+                    graph_validator=mocker.MagicMock(),
                 )
                 is False
             )
@@ -1487,6 +1509,7 @@ class TestValidators:
                     modified_files=set(),
                     old_format_files=set(),
                     added_files=added_files,
+                    graph_validator=mocker.MagicMock(),
                 )
                 is True
             )
@@ -1672,8 +1695,9 @@ class TestValidators:
         """
         rn = pack.create_release_notes("1_0_1", is_bc=True)
         rn_config_path: str = str(rn.path).replace("md", "json")
-        validate_manager: ValidateManager = ValidateManager()
-        assert validate_manager.run_validations_on_file(rn_config_path, list())
+        with ChangeCWD(pack.repo_path):
+            validate_manager: ValidateManager = ValidateManager()
+            assert validate_manager.run_validations_on_file(rn_config_path, list())
 
     @pytest.mark.parametrize(
         "answer, integration_id", [(True, "MyIntegration"), (False, "MyIntegration  ")]
@@ -1769,7 +1793,6 @@ class TestValidators:
             "Packs/pack_id/Integrations/integration_id/command_examples",
             "Packs/pack_id/Integrations/integration_id/test.txt",
             "Packs/pack_id/.secrets-ignore",
-            "Packs/pack_id/.pack-ignore",
         ],
     )
     def test_ignore_files_irrelevant_for_validation_test_file(self, file_path: str):
@@ -2025,6 +2048,67 @@ def test_run_validation_using_git_on_only_metadata_changed(
     assert res
 
 
+def test_validate_using_git_on_changed_marketplaces(mocker, pack):
+    """
+    Given:
+        -   Modified marketplaces in pack_metadata
+        -   Other content items in the pack (specifically an integration)
+
+    When:
+        -   Running validate -g
+
+    Then:
+        -   Ensure the pack's content items are validated.
+    """
+    logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
+    old_pack_metadata = pack_metadata.copy()
+    old_pack_metadata["marketplaces"] = ["xsoar"]
+    new_pack_metadata = pack_metadata.copy()
+    new_pack_metadata["marketplaces"] = ["xsoar", "marketplacev2"]
+
+    pack.pack_metadata.write_json(new_pack_metadata)
+    some_integration = pack.create_integration("SomeIntegration")
+    some_integration.create_default_integration()
+    # Integration with invalid version
+    some_integration.yml.update(
+        {"commonfields": {"id": "some_integration", "version": 2}}
+    )
+    mocker.patch.object(ValidateManager, "setup_git_params", return_value=True)
+
+    # Integration was not modified, pack_metadata was
+    mocker.patch.object(
+        ValidateManager,
+        "get_changed_files_from_git",
+        return_value=(
+            set(),
+            set(),
+            {tools.get_relative_path_from_packs_dir(pack.pack_metadata.path)},
+            set(),
+            True,
+        ),
+    )
+    mocker.patch.object(GitUtil, "deleted_files", return_value=set())
+    mocker.patch(
+        "demisto_sdk.commands.common.tools.get_remote_file",
+        return_value=old_pack_metadata,
+    )
+    validate_manager = ValidateManager(check_is_unskipped=False, skip_conf_json=True)
+
+    with ChangeCWD(pack.repo_path):
+        result = validate_manager.run_validation_using_git()
+
+    assert not result
+    assert len(validate_manager.packs_with_mp_change) == 1
+
+    expected_string, expected_code = Errors.wrong_version()
+    assert all(
+        [
+            str_in_call_args_list(logger_error.call_args_list, expected_string),
+            str_in_call_args_list(logger_error.call_args_list, expected_code),
+        ]
+    )
+
+
 def test_is_mapping_fields_command_exist(integration):
     """
     Given
@@ -2257,19 +2341,23 @@ def test_check_file_relevance_and_format_path_type_missing_file(mocker):
     - file type is not supported
 
     Then
-    - return None, call error handler
+    - make sure that empty strings are returned
+    - make sure BA102 is returned as the file cannot be recognized
     """
     validator_obj = ValidateManager(is_external_repo=True, check_is_unskipped=False)
-    mocked_handler = mocker.patch.object(
-        validator_obj, "handle_error", return_value=False
-    )
+    logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
+
     mocker.patch(
         "demisto_sdk.commands.validate.validate_manager.find_type", return_value=None
     )
     assert validator_obj.check_file_relevance_and_format_path(
         "Packs/type_missing_filename", None, set()
     ) == ("", "", False)
-    mocked_handler.assert_called()
+
+    assert str_in_call_args_list(
+        logger_error.call_args_list,
+        "[BA102] - File Packs/type_missing_filename is not supported in the validate command",
+    )
 
 
 @pytest.mark.parametrize(
@@ -2546,7 +2634,7 @@ def test_job_blank_name(repo, mocker, name: str, is_feed: bool, monkeypatch):
     Then
             Ensure an error is raised, and validation fails
     """
-    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+    logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
     monkeypatch.setenv("COLUMNS", "1000")
     pack = repo.create_pack()
     job = pack.create_job(is_feed=is_feed, name=name)
@@ -2566,8 +2654,8 @@ def test_job_blank_name(repo, mocker, name: str, is_feed: bool, monkeypatch):
     expected_string, expected_code = Errors.empty_or_missing_job_name()
     assert all(
         [
-            str_in_call_args_list(logger_info.call_args_list, expected_string),
-            str_in_call_args_list(logger_info.call_args_list, expected_code),
+            str_in_call_args_list(logger_error.call_args_list, expected_string),
+            str_in_call_args_list(logger_error.call_args_list, expected_code),
         ]
     )
 
@@ -2582,7 +2670,7 @@ def test_job_missing_name(repo, mocker, monkeypatch, is_feed: bool):
     Then
             Ensure an error is raised, and validation fails
     """
-    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+    logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
     monkeypatch.setenv("COLUMNS", "1000")
     pack = repo.create_pack()
     job = pack.create_job(is_feed=is_feed)
@@ -2602,8 +2690,8 @@ def test_job_missing_name(repo, mocker, monkeypatch, is_feed: bool):
     expected_string, expected_code = Errors.empty_or_missing_job_name()
     assert all(
         [
-            str_in_call_args_list(logger_info.call_args_list, expected_string),
-            str_in_call_args_list(logger_info.call_args_list, expected_code),
+            str_in_call_args_list(logger_error.call_args_list, expected_string),
+            str_in_call_args_list(logger_error.call_args_list, expected_code),
         ]
     )
 
@@ -2644,13 +2732,14 @@ def test_job_unexpected_field_values_in_non_feed_job(
 
 
 @pytest.mark.parametrize(
-    "file_set,expected_output,expected_result,added_files",
+    "file_set,expected_info_output,expected_error_output,expected_result,added_files",
     (
-        ({"Packs/Integration/mock_file_description.md"}, "[BA115]", False, set()),
-        (set(), "", True, set()),
-        ({"Packs/Integration/doc_files/image.png"}, "", True, set()),
+        ({"Packs/Integration/mock_file_description.md"}, "", "[BA115]", False, set()),
+        (set(), "", "", True, set()),
+        ({"Packs/Integration/doc_files/image.png"}, "", "", True, set()),
         (
             {"Packs/Integration/Playbooks/mock_playbook.yml"},
+            "",
             "",
             True,
             {"renamed_mock_playbook.yml"},
@@ -2658,14 +2747,21 @@ def test_job_unexpected_field_values_in_non_feed_job(
         (
             {Path("Packs/Integration/Playbooks/mock_playbook.yml")},
             "",
+            "",
             True,
             {Path("renamed_mock_playbook.yml")},
         ),
-        (({"non_content_item.txt"}, "[BA115]", False, set())),
+        (({"non_content_item.txt"}, "", "[BA115]", False, set())),
     ),
 )
 def test_validate_deleted_files(
-    mocker, monkeypatch, file_set, expected_output, expected_result, added_files
+    mocker,
+    monkeypatch,
+    file_set,
+    expected_info_output,
+    expected_error_output,
+    expected_result,
+    added_files,
 ):
     """
     Given
@@ -2676,6 +2772,7 @@ def test_validate_deleted_files(
             Assert the expected result (True or False) and the expected output (if there is an expected output).
     """
     logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+    logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
     monkeypatch.setenv("COLUMNS", "1000")
     validate_manager = ValidateManager(check_is_unskipped=False, skip_conf_json=True)
     if added_files:
@@ -2691,7 +2788,10 @@ def test_validate_deleted_files(
     result = validate_manager.validate_deleted_files(file_set, added_files)
 
     assert expected_result is result
-    assert str_in_call_args_list(logger_info.call_args_list, expected_output)
+    if expected_info_output:
+        assert str_in_call_args_list(logger_info.call_args_list, expected_info_output)
+    if expected_error_output:
+        assert str_in_call_args_list(logger_error.call_args_list, expected_error_output)
 
 
 def test_was_file_renamed_but_labeled_as_deleted(mocker):
@@ -2735,12 +2835,15 @@ def test_validate_contributors_file(repo):
     """
 
     pack = repo.create_pack()
-    contributors_file = pack.create_contributors_file('["- Test UserName"]')
+    with ChangeCWD(repo.path):
+        contributors_file = pack.create_contributors_file('["- Test UserName"]')
 
-    validate_manager = ValidateManager(
-        check_is_unskipped=False, file_path=contributors_file.path, skip_conf_json=True
-    )
-    assert validate_manager.run_validation_on_specific_files()
+        validate_manager = ValidateManager(
+            check_is_unskipped=False,
+            file_path=contributors_file.path,
+            skip_conf_json=True,
+        )
+        assert validate_manager.run_validation_on_specific_files()
 
 
 def test_validate_pack_name(repo):
@@ -2772,15 +2875,15 @@ def test_image_error(set_git_test_env, mocker, monkeypatch):
     Then
             Ensure an error is raised, and  the right error is given.
     """
-    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+    logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
     monkeypatch.setenv("COLUMNS", "1000")
     validate_manager = ValidateManager()
     validate_manager.run_validations_on_file(IGNORED_PNG, None)
     expected_string, expected_code = Errors.invalid_image_name_or_location()
     assert all(
         [
-            str_in_call_args_list(logger_info.call_args_list, expected_string),
-            str_in_call_args_list(logger_info.call_args_list, expected_code),
+            str_in_call_args_list(logger_error.call_args_list, expected_string),
+            str_in_call_args_list(logger_error.call_args_list, expected_code),
         ]
     )
 
@@ -2853,7 +2956,7 @@ def test_run_validation_using_git_on_metadata_with_invalid_tags(
     Then
         - Assert validation fails and the right error number is shown.
     """
-    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+    logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
     monkeypatch.setenv("COLUMNS", "1000")
 
     pack = repo.create_pack()
@@ -2867,7 +2970,11 @@ def test_run_validation_using_git_on_metadata_with_invalid_tags(
     mocker.patch.object(
         ValidateManager,
         "get_unfiltered_changed_files_from_git",
-        return_value=({pack.pack_metadata.path}, set(), set()),
+        return_value=(
+            {tools.get_relative_path_from_packs_dir(pack.pack_metadata.path)},
+            set(),
+            set(),
+        ),
     )
     mocker.patch.object(GitUtil, "deleted_files", return_value=set())
     validate_manager = ValidateManager(check_is_unskipped=False, skip_conf_json=True)
@@ -2875,7 +2982,7 @@ def test_run_validation_using_git_on_metadata_with_invalid_tags(
     with contextlib.redirect_stdout(std_output):
         with ChangeCWD(repo.path):
             res = validate_manager.run_validation_using_git()
-    assert str_in_call_args_list(logger_info.call_args_list, "[PA123]")
+    assert str_in_call_args_list(logger_error.call_args_list, "[PA123]")
     assert not res
 
 
@@ -2951,3 +3058,244 @@ def test_run_validation_using_git_validation_calls(
         assert not no_old_format_validation.called
 
     deleted_files_validation.assert_called_once_with(deleted_files, added_files)
+
+
+def test_validate_no_disallowed_terms_in_customer_facing_docs_success():
+    """
+    Given:
+    - Content of a customer-facing docs file (README, Release Notes, etc.)
+
+    When:
+    - Validating the content doesn't contain disallowed terms
+
+    Then:
+    - Ensure that if no disallowed terms are found, True is returned
+    """
+    file_content = "This is an example with no disallowed terms within it."
+
+    base_validator = BaseValidator()
+    assert base_validator.validate_no_disallowed_terms_in_customer_facing_docs(
+        file_content=file_content, file_path=""
+    )
+
+
+@pytest.mark.parametrize(
+    "file_content",
+    [
+        "This is an example with the 'test-module' term within it.",
+        "This is an example with the 'Test-Module' term within it",  # Assure case-insensitivity
+    ],
+)
+def test_validate_no_disallowed_terms_in_customer_facing_docs_failure(
+    file_content: str,
+):
+    """
+    Given:
+    - Content of a customer-facing docs file (README, Release Notes, etc.)
+
+    When:
+    - Validating the content doesn't contain disallowed terms
+
+    Then:
+    - Ensure that if a disallowed term is found, False is returned
+    """
+    base_validator = BaseValidator()
+    assert not base_validator.validate_no_disallowed_terms_in_customer_facing_docs(
+        file_content=file_content, file_path=""
+    )
+
+
+def test_validate_no_disallowed_terms_in_customer_facing_docs_end_to_end(repo, mocker):
+    """
+    Given:
+    - Content of a customer-facing docs file (README, Release Notes, etc.)
+
+    When:
+    - Validating the content doesn't contain disallowed terms
+
+    Then:
+    - Ensure that if a disallowed term is found, False is returned, and True otherwise.
+    """
+    logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
+    file_content = "This is an example with the 'test-module' term within it."
+
+    pack = repo.create_pack()
+    rn_file = pack.create_release_notes(version="1_0_0", content=file_content)
+    integration = pack.create_integration(readme=file_content, description=file_content)
+    integration_readme_file = integration.readme
+    integration_description_file = integration.description
+    playbook_readme_file = pack.create_playbook(readme=file_content).readme
+    with ChangeCWD(pack.repo_path):
+        validate_manager = ValidateManager()
+
+        assert not validate_manager.run_validations_on_file(
+            file_path=rn_file.path, pack_error_ignore_list=[]
+        )
+        assert not validate_manager.run_validations_on_file(
+            file_path=integration_readme_file.path, pack_error_ignore_list=[]
+        )
+        assert not validate_manager.run_validations_on_file(
+            file_path=integration_description_file.path, pack_error_ignore_list=[]
+        )
+        assert not validate_manager.run_validations_on_file(
+            file_path=playbook_readme_file.path, pack_error_ignore_list=[]
+        )
+
+        # Assure errors were logged (1 error per validated file)
+        assert count_str_in_call_args_list(logger_error.call_args_list, "BA125") == 4
+        pass
+
+
+@pytest.mark.parametrize(
+    "modified_files, new_file_content, remote_file_content, local_file_content, expected_results",
+    [
+        (
+            {"Packs/test/.pack-ignore"},
+            "[file:test.yml]\nignore=BA108,BA109\n",
+            "[file:test.yml]\nignore=BA108,BA109,DS107\n",
+            "",
+            {"Packs/test/Integrations/test/test.yml"},
+        ),
+        (
+            {"Packs/test/.pack-ignore"},
+            "[file:test.yml]\nignore=BA108,BA109,DS107\n",
+            "[file:test.yml]\nignore=BA108,BA109,DS107\n",
+            "",
+            set(),
+        ),
+        (
+            {"Packs/test1/.pack-ignore"},
+            "[file:test.yml]\nignore=BA108,BA109,DS107\n",
+            "[file:test2.yml]\nignore=BA108,BA109,DS107\n",
+            "",
+            {
+                "Packs/test1/Integrations/test/test.yml",
+                "Packs/test1/Integrations/test2/test2.yml",
+            },
+        ),
+        (
+            {"Packs/test/.pack-ignore"},
+            "[file:test.yml]\nignore=BA108\n",
+            b"",
+            "",
+            {
+                "Packs/test/Integrations/test/test.yml",
+            },
+        ),
+        (
+            {"Packs/test1/.pack-ignore"},
+            "[file:test.yml]\nignore=BA108,BA109,DS107\n[file:test2.yml]\nignore=BA108,BA109,DS107\n",
+            {},
+            "[file:test.yml]\nignore=BA108,BA109,DS107\n",
+            {"Packs/test1/Integrations/test2/test2.yml"},
+        ),
+    ],
+)
+def test_get_all_files_edited_in_pack_ignore(
+    mocker,
+    modified_files,
+    new_file_content,
+    remote_file_content,
+    local_file_content,
+    expected_results,
+):
+    """
+    Given:
+    - modified files set, edited pack-ignore mock, and master's pack-ignore mock.
+    - Case 1: pack-ignore mocks which vary by 1 validation.
+    - Case 2: pack-ignore mocks which no differences.
+    - Case 3: pack-ignore mocks where each file is pointed to a different integration yml.
+    - Case 4: old .pack-ignore that is empty and current .pack-ignore that was updated with ignored validation
+    - Case 5: old .pack-ignore which is not in the remote branch repo, but only exist in the local branch
+
+    When:
+    - Running get_all_files_edited_in_pack_ignore.
+
+    Then:
+    - Ensure that the right files were returned.
+    - Case 1: Should return the file path only from the relevant pack (there's a similar file in a different pack)
+    - Case 2: Should return empty set of extra files to test.
+    - Case 3: Should return both file names.
+    - Case 4: Ensure the file that was changed in the .pack-ignore is collected
+    - Case 5: Ensure the file that was changed in the .pack-ignore is collected from the local repo
+    """
+    mocker.patch.object(
+        GitUtil,
+        "get_all_files",
+        return_value={
+            Path("Packs/test/Integrations/test/test.yml"),
+            Path("Packs/test1/Integrations/test/test.yml"),
+            Path("Packs/test1/Integrations/test2/test2.yml"),
+        },
+    )
+    mocker.patch(
+        "demisto_sdk.commands.validate.validate_manager.get_remote_file",
+        return_value=remote_file_content,
+    )
+    mocker.patch.object(GitUtil, "find_primary_branch", return_value="main")
+    mocker.patch.object(
+        GitUtil, "get_local_remote_file_content", return_value=local_file_content
+    )
+    validate_manager = ValidateManager()
+    config = ConfigParser(allow_no_value=True)
+    config.read_string(new_file_content)
+
+    mocker.patch(
+        "demisto_sdk.commands.validate.validate_manager.get_pack_ignore_content",
+        return_value=config,
+    )
+    assert (
+        validate_manager.get_all_files_edited_in_pack_ignore(modified_files)
+        == expected_results
+    )
+
+
+def test_get_all_files_edited_in_pack_ignore_with_git_error(mocker):
+    """
+    Given:
+    - empty .pack-ignore returned from git api
+    - an exception raised when trying to retrieve the .pack-ignore locally
+
+    When:
+    - Running get_all_files_edited_in_pack_ignore.
+
+    Then:
+    - Ensure no exception is raised
+    - ensure that the updated file from the new .pack-ignore is found
+    """
+    from git import GitCommandError
+
+    logger_warning = mocker.patch.object(logging.getLogger("demisto-sdk"), "warning")
+
+    mocker.patch.object(
+        GitUtil,
+        "get_all_files",
+        return_value={
+            Path("Packs/test/Integrations/test/test.yml"),
+            Path("Packs/test1/Integrations/test/test.yml"),
+            Path("Packs/test1/Integrations/test2/test2.yml"),
+        },
+    )
+
+    mocker.patch(
+        "demisto_sdk.commands.validate.validate_manager.get_remote_file",
+        return_value={},
+    )
+    mocker.patch.object(GitUtil, "find_primary_branch", return_value="main")
+    mocker.patch.object(
+        GitUtil, "get_local_remote_file_content", side_effect=GitCommandError("error")
+    )
+
+    validate_manager = ValidateManager()
+    config = ConfigParser(allow_no_value=True)
+    config.read_string("[file:test.yml]\nignore=BA108,BA109,DS107")
+
+    mocker.patch(
+        "demisto_sdk.commands.validate.validate_manager.get_pack_ignore_content",
+        return_value=config,
+    )
+
+    assert validate_manager.get_all_files_edited_in_pack_ignore(
+        {"Packs/test/.pack-ignore"}
+    ) == {"Packs/test/Integrations/test/test.yml"}
+    assert logger_warning.called

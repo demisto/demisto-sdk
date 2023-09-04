@@ -1,4 +1,5 @@
 import pytest
+from pytest_mock import MockerFixture
 
 from demisto_sdk.commands.common.constants import (
     FILETYPE_TO_DEFAULT_FROMVERSION,
@@ -16,7 +17,7 @@ class TestFormattingFromVersionKey:
         base_update: BaseUpdate,
         version_to_set="",
         oldfile_version="",
-        assume_yes=True,
+        assume_answer=True,
         current_fromVersion="",
     ):
         base_update.verbose = False
@@ -26,7 +27,7 @@ class TestFormattingFromVersionKey:
             base_update.data[base_update.from_version_key] = current_fromVersion
         base_update.from_version = version_to_set
         base_update.old_file = {}
-        base_update.assume_yes = assume_yes
+        base_update.assume_answer = assume_answer
         if oldfile_version:
             base_update.old_file[base_update.from_version_key] = oldfile_version
 
@@ -129,7 +130,7 @@ class TestFormattingFromVersionKey:
         mocker.patch.object(BaseUpdate, "__init__", return_value=None)
         mocker.patch.object(BaseUpdate, "is_key_in_schema_root", return_value=True)
         base_update = BaseUpdate()
-        self.init_BaseUpdate(base_update, assume_yes=False)
+        self.init_BaseUpdate(base_update, assume_answer=None)
         mocker.patch.object(BaseUpdate, "get_answer", return_value="Y")
         base_update.set_fromVersion()
         assert (
@@ -149,8 +150,26 @@ class TestFormattingFromVersionKey:
         mocker.patch.object(BaseUpdate, "__init__", return_value=None)
         mocker.patch.object(BaseUpdate, "is_key_in_schema_root", return_value=True)
         base_update = BaseUpdate()
-        self.init_BaseUpdate(base_update, assume_yes=False)
+        self.init_BaseUpdate(base_update, assume_answer=None)
         mocker.patch.object(BaseUpdate, "get_answer", return_value="F")
+        base_update.set_fromVersion()
+        assert base_update.from_version_key not in base_update.data
+
+    def test_update_fromVersion_from_default_contentItem_assume_answer_False(
+        self, mocker
+    ):
+        """
+        Given
+            - A new content item.
+        When
+            - Calling set_fromVersion method.
+        Then
+            - Ensure that fromVersion key in the file data hasn't been generated.
+        """
+        mocker.patch.object(BaseUpdate, "__init__", return_value=None)
+        mocker.patch.object(BaseUpdate, "is_key_in_schema_root", return_value=True)
+        base_update = BaseUpdate()
+        self.init_BaseUpdate(base_update, assume_answer=False)
         base_update.set_fromVersion()
         assert base_update.from_version_key not in base_update.data
 
@@ -184,7 +203,7 @@ class TestFormattingFromVersionKey:
     ]
 
     @pytest.mark.parametrize(
-        "old_file, data, assume_yes",
+        "old_file, data, assume_answer",
         [
             (OLD_FILE[0], DATA[0], False),
             (OLD_FILE[1], DATA[1], False),
@@ -194,7 +213,7 @@ class TestFormattingFromVersionKey:
             (OLD_FILE[5], DATA[5], False),
         ],
     )
-    def test_check_server_version(self, mocker, old_file, data, assume_yes):
+    def test_check_server_version(self, mocker, old_file, data, assume_answer):
         """
         Given
             - An old file, data from current file, and a click.confirm result.
@@ -202,9 +221,9 @@ class TestFormattingFromVersionKey:
             Case 2: no old file, current file holds fromServerVersion key only.
             Case 3: no old file, current file holds both fromServerVersion and fromVersion keys with the same value.
             Case 4: no old file, current file holds both fromServerVersion and fromVersion keys with different value,
-                    assume_yes is True.
+                    assume_answer is True.
             Case 5: no old file, current file holds both fromServerVersion and fromVersion keys with different value,
-                    assume_yes is False.
+                    assume_answer is False.
             Case 6: old file holds fromServerVersion key, no current file.
 
         When
@@ -213,10 +232,10 @@ class TestFormattingFromVersionKey:
             - Ensure that the data holds the correct fromVersion value.
         """
         mocker.patch.object(BaseUpdate, "__init__", return_value=None)
-        mocker.patch.object(BaseUpdate, "ask_user", return_value=assume_yes)
+        mocker.patch.object(BaseUpdate, "ask_user", return_value=assume_answer)
         base_update = BaseUpdate()
         base_update.old_file = old_file
-        base_update.assume_yes = assume_yes
+        base_update.assume_answer = assume_answer
         base_update.data = data
         base_update.json_from_server_version_key = "fromServerVersion"
         base_update.from_version_key = "fromVersion"
@@ -252,3 +271,99 @@ def test_initiate_file_validator(mocker, is_old_file, function_validate):
 
     base_update.initiate_file_validator()
     assert result.call_count == 1
+
+
+@pytest.mark.parametrize(
+    "description, expected_description",
+    [
+        (
+            "description without dot",
+            "description without dot.",
+        ),
+        ("dot at the end.", "dot at the end."),
+        (
+            "a yml with url and no dot at the end https://www.test.com",
+            "a yml with url and no dot at the end https://www.test.com",
+        ),
+        (
+            "a yml with a description that has https://www.test.com in the middle of the sentence",
+            "a yml with a description that has https://www.test.com in the middle of the sentence.",
+        ),
+        (
+            "a yml with a description that has an 'example without dot at the end of the string'",
+            "a yml with a description that has an 'example without dot at the end of the string'.",
+        ),
+    ],
+    ids=[
+        "Without dot",
+        "with dot",
+        "url in the end",
+        "url in the middle",
+        "with single-quotes in double-quotes",
+    ],
+)
+def test_adds_period_to_description(
+    mocker: MockerFixture, description: str, expected_description: str
+) -> None:
+    """
+    Test case for the `adds_period_to_description`.
+
+    Given:
+        a description and its expected description with a period,
+    When:
+        the `adds_period_to_description` method is called,
+    Then:
+        the description in the YAML data should have a period added if is not end with url.
+    """
+    yml_data = {
+        "description": description,
+        "script": {
+            "commands": [
+                {
+                    "arguments": [
+                        {
+                            "description": description,
+                        }
+                    ],
+                    "description": description,
+                    "name": "get-function",
+                    "outputs": [
+                        {
+                            "contextPath": "",
+                            "description": description,
+                        }
+                    ],
+                }
+            ]
+        },
+    }
+    expected__yml_data = {
+        "description": expected_description,
+        "script": {
+            "commands": [
+                {
+                    "arguments": [
+                        {
+                            "description": expected_description,
+                        }
+                    ],
+                    "description": expected_description,
+                    "name": "get-function",
+                    "outputs": [
+                        {
+                            "contextPath": "",
+                            "description": expected_description,
+                        }
+                    ],
+                }
+            ]
+        },
+    }
+
+    mocker.patch(
+        "demisto_sdk.commands.format.update_generic.get_dict_from_file",
+        return_value=(yml_data, "mock_type"),
+    )
+    base_update = BaseUpdate(input="test")
+    base_update.adds_period_to_description()
+    assert base_update.data == expected__yml_data

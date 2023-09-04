@@ -1,90 +1,103 @@
 import pprint
 from typing import List
 
-import click
+from demisto_sdk.commands.common.constants import (
+    XPANSE_INLINE_PREFIX_TAG,
+    XPANSE_INLINE_SUFFIX_TAG,
+    XPANSE_PREFIX_TAG,
+    XPANSE_SUFFIX_TAG,
+    XSIAM_INLINE_PREFIX_TAG,
+    XSIAM_INLINE_SUFFIX_TAG,
+    XSIAM_PREFIX_TAG,
+    XSIAM_SUFFIX_TAG,
+    XSOAR_INLINE_PREFIX_TAG,
+    XSOAR_INLINE_SUFFIX_TAG,
+    XSOAR_PREFIX_TAG,
+    XSOAR_SAAS_INLINE_PREFIX_TAG,
+    XSOAR_SAAS_INLINE_SUFFIX_TAG,
+    XSOAR_SAAS_PREFIX_TAG,
+    XSOAR_SAAS_SUFFIX_TAG,
+    XSOAR_SUFFIX_TAG,
+)
+from demisto_sdk.commands.common.logger import logger
 
 
 def print_template_examples():
-    click.secho("\nGeneral Pointers About Release Notes:", fg="bright_cyan")
-    click.echo(
+    logger.info("\n[cyan]General Pointers About Release Notes:[/cyan]")
+    logger.info(
         " - The release notes need to be in simple language and informative. "
         "Think about what is the impact on the user and what they should know about this version."
     )
-    click.echo(
+    logger.info(
         " - Command names - should be wrapped with three stars - ***command-name***"
     )
-    click.echo(
+    logger.info(
         " - Packs/Integrations/scripts/playbooks and other content "
         "entities (incident fields, dashboards...) - should be wrapped with two stars - **entity_name**"
     )
-    click.echo(
+    logger.info(
         " - Parameters/arguments/functions/outputs names - "
         "should be wrapped with one star - *entity_name*"
     )
-    click.secho("\nEnhancements examples:", fg="bright_cyan")
-    click.echo("\n - You can now filter an event by attribute data fields.")
-    click.echo(
+    logger.info("\n[cyan]Enhancements examples:[/cyan]")
+    logger.info("\n - You can now filter an event by attribute data fields.")
+    logger.info(
         "\n - Added support for the *extend-context* argument in the ***ua-parse*** command."
     )
-    click.echo("\n - Added 2 commands:\n  - ***command-one***\n  - ***command-two***")
-    click.echo(
+    logger.info("\n - Added 2 commands:\n  - ***command-one***\n  - ***command-two***")
+    logger.info(
         "\n - Added the **reporter** and **reporter email** "
         "labels to incidents that are created by direct messages."
     )
-    click.echo(
+    logger.info(
         "\n - Improved implementation of the default value for the *fetch_time* parameter."
     )
-    click.secho("\n\nBug fixes examples:", fg="bright_cyan")
-    click.echo(
+    logger.info("\n\n[cyan]Bug fixes examples:[/cyan]")
+    logger.info(
         "\n - Fixed an issue where mirrored investigations contained mismatched user names."
     )
-    click.echo(
+    logger.info(
         "\n - Fixed an issue with ***fetch-incidents***, which caused incident duplication."
     )
-    click.echo(
+    logger.info(
         "\n - Fixed an issue in which the ***qradar-delete-reference-set-value*** command failed to "
         'delete reference sets with the "\\" character in their names.'
     )
-    click.secho("\n\nDocker Updates:", fg="bright_cyan")
-    click.echo("\n - Updated the Docker image to: *demisto/python3:3.9.1.15759*.")
-    click.secho("\n\nGeneral Changes:", fg="bright_cyan")
-    click.secho(
-        "Note: Use these if the change has no visible impact on the user, "
-        "but please try to refrain from using these if possible!",
-        fg="yellow",
+    logger.info("\n\n[cyan]Docker Updates:[/cyan]")
+    logger.info("\n - Updated the Docker image to: *demisto/python3:3.9.1.15759*.")
+    logger.info("\n\n[cyan]General Changes:[/cyan]")
+    logger.info(
+        "[yellow]Note: Use these if the change has no visible impact on the user, "
+        "but please try to refrain from using these if possible![/yellow]"
     )
-    click.echo("\n - Documentation and metadata improvements.")
-    click.secho("\n\nDeprecation examples:", fg="bright_cyan")
-    click.echo(
+    logger.info("\n - Documentation and metadata improvements.")
+    logger.info("\n\n[cyan]Deprecation examples:[/cyan]")
+    logger.info(
         "\n - Deprecated. The playbook uses an unsupported scraping API. Use Proofpoint Protection Server "
         "v2 playbook instead."
     )
-    click.echo(
+    logger.info(
         "\n - Deprecated the *ipname* argument from the ***checkpoint-block-ip*** command."
     )
-    click.secho("\n\nOut of beta examples:", fg="bright_cyan")
-    click.echo("\n - SaaS Security is now generally available.")
-    click.secho("\n\nThe available template prefixes are:\n", fg="cyan")
-    click.secho(
-        f" {pprint.pformat(ReleaseNotesChecker.RN_PREFIX_TEMPLATES)[1:-1]}",
-        fg="bright_green",
+    logger.info("\n\n[cyan]Out of beta examples:[/cyan]")
+    logger.info("\n - SaaS Security is now generally available.")
+    logger.info("\n\n[cyan]The available template prefixes are:[/cyan]\n")
+    logger.info(
+        f"[green] {pprint.pformat(ReleaseNotesChecker.RN_PREFIX_TEMPLATES)[1:-1]}[/green]"
     )
-    click.secho("\n\nThe available template suffixes are:\n", fg="cyan")
-    click.secho(
-        f" {pprint.pformat(ReleaseNotesChecker.RN_SUFFIX_TEMPLATES)[1:-1]}",
-        fg="bright_green",
+    logger.info("\n\n[cyan]The available template suffixes are:[/cyan]\n")
+    logger.info(
+        f"[green] {pprint.pformat(ReleaseNotesChecker.RN_SUFFIX_TEMPLATES)[1:-1]}[/green]"
     )
-    click.secho("\n\nThe available full line templates are:\n", fg="cyan")
-    click.secho(
-        f" {pprint.pformat(ReleaseNotesChecker.RN_FULL_LINE_TEMPLATES)[1:-1]}",
-        fg="bright_green",
+    logger.info("\n\n[cyan]The available full line templates are:[/cyan]\n")
+    logger.info(
+        f"[green] {pprint.pformat(ReleaseNotesChecker.RN_FULL_LINE_TEMPLATES)[1:-1]}[/green]"
     )
-    click.secho("\n\nThe BANNED line templates are:\n", fg="cyan")
-    click.secho(
-        f" {pprint.pformat(ReleaseNotesChecker.BANNED_TEMPLATES)[1:-1]}",
-        fg="bright_red",
+    logger.info("\n\n[cyan]The BANNED line templates are:[/cyan]\n")
+    logger.info(
+        f"[red] {pprint.pformat(ReleaseNotesChecker.BANNED_TEMPLATES)[1:-1]}[/red]"
     )
-    click.echo(
+    logger.info(
         "\n\nFor additional information see: https://xsoar.pan.dev/docs/documentation/release-notes"
     )
 
@@ -118,6 +131,25 @@ class ReleaseNotesChecker:
     BANNED_TEMPLATES = {
         "maintenance and stability enhancements.",
         "stability and maintenance enhancements.",
+    }
+
+    MP_TAGS = {
+        XSOAR_PREFIX_TAG,
+        XSOAR_SUFFIX_TAG,
+        XSOAR_INLINE_PREFIX_TAG,
+        XSOAR_INLINE_SUFFIX_TAG,
+        XSOAR_SAAS_PREFIX_TAG,
+        XSOAR_SAAS_SUFFIX_TAG,
+        XSOAR_SAAS_INLINE_PREFIX_TAG,
+        XSOAR_SAAS_INLINE_SUFFIX_TAG,
+        XSIAM_PREFIX_TAG,
+        XSIAM_SUFFIX_TAG,
+        XSIAM_INLINE_PREFIX_TAG,
+        XSIAM_INLINE_SUFFIX_TAG,
+        XPANSE_PREFIX_TAG,
+        XPANSE_SUFFIX_TAG,
+        XPANSE_INLINE_PREFIX_TAG,
+        XPANSE_INLINE_SUFFIX_TAG,
     }
 
     def __init__(
@@ -173,37 +205,41 @@ class ReleaseNotesChecker:
     def print_notes(self):
         """Print the review about the RN"""
         for line in self.notes:
-            click.secho(f'\n - Notes for the line: "{line}"', fg="bright_red")
+            logger.info(f'\n[red] - Notes for the line: "{line}"[/red]')
             for note in self.notes[line]:
-                click.secho(f"   - {note}", fg="bright_red")
+                logger.info(f"[red]   - {note}[/red]")
 
     def check_rn(self) -> bool:
         """Check if an RN file is up to our standards"""
         show_template_message = False
         is_new_content_item = False
 
-        for line in self.file_content:
+        line: str
+        for line_number, line in enumerate(self.file_content, start=1):
+            for tag in self.MP_TAGS:
+                line = line.replace(tag, "")
+
             line = line.lstrip(" -")
             line = line.rstrip()
 
-            if line.startswith(("##### New:", "- New: ")):
+            if line.startswith(("##### New:", "New:")):
                 is_new_content_item = True
                 continue
 
             # skip headers
-            if line.startswith(("#", "*")) or line.isspace() or not line:
+            if line.startswith(("#", "*")):
                 is_new_content_item = False
                 continue
 
-            if is_new_content_item:
-                # The description of new content items does not need to conform to templates
+            if is_new_content_item or not line or line.isspace():
+                # The description of new content items, or empty lines do not need to conform to templates
                 continue
 
             if not self.check_templates(line):
                 show_template_message = True
                 self.add_note(
                     line,
-                    "Line is not using one of our templates, consider "
+                    f"Line #{line_number} is not using one of our templates, consider "
                     "changing it to fit our standard.",
                 )
 
@@ -211,14 +247,16 @@ class ReleaseNotesChecker:
                 show_template_message = True
                 self.add_note(
                     line,
-                    "Line is using one of our banned templates, please change it to fit our standard.",
+                    f"Line #{line_number} is using one of our banned templates, please change it to fit our standard.",
                 )
 
             if line[0].isalpha() and not line[0].isupper():
-                self.add_note(line, "Line should start with capital letter.")
+                self.add_note(
+                    line, f"Line #{line_number} should start with capital letter."
+                )
 
             if line[-1] not in [".", ":"]:
-                self.add_note(line, "Line should end with a period (.)")
+                self.add_note(line, f"Line #{line_number} should end with a period (.)")
 
             if "bug" in line.lower():
                 self.add_note(
@@ -228,14 +266,13 @@ class ReleaseNotesChecker:
         if self.notes:
             self.print_notes()
             if show_template_message:
-                click.secho(
-                    "\n For more information about templates run: `demisto-sdk doc-review --templates` "
-                    "or view our documentation at: https://xsoar.pan.dev/docs/documentation/release-notes",
-                    fg="bright_red",
+                logger.info(
+                    "\n[red] For more information about templates run: `demisto-sdk doc-review --templates` "
+                    "or view our documentation at: https://xsoar.pan.dev/docs/documentation/release-notes[/red]"
                 )
             return False
         else:
-            click.secho(
-                f" - Release notes {self.file_path} match a known template.", fg="green"
+            logger.info(
+                f"[green] - Release notes {self.file_path} match a known template.[/green]"
             )
             return True

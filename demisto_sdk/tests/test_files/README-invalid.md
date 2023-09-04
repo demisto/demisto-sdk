@@ -31,6 +31,9 @@ For example, you can look at “Accessdata: Dump memory for malicious process”
 
 4.  Click **Test** to validate the URLs, token, and connection.
 
+![invalid-integration-image](../../doc_files/invalid.png)
+![invalid-playbook-image](../doc_files/invalid.png)
+
 ## Commands
 You can execute these commands from the Cortex XSOAR CLI, as part of an automation, or in a playbook. After you successfully execute a command, a DBot message appears in the War Room with the command details.
 
@@ -358,3 +361,6 @@ accessdata-get-processing-case-id
 
 ##### Valid image path
 <img width="500" src="https://github.com/demisto/content/raw/123/Packs/valid/doc_files/test.png" />
+
+##### Valid image path
+<img width="500" src="https://github.com/demisto/content/assets/91506078/7915b150-bd26-4aed-b4ba-8820226dfe32" />

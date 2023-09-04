@@ -1,4 +1,3 @@
-import logging
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
@@ -10,10 +9,9 @@ from demisto_sdk.commands.common.constants import (
 from demisto_sdk.commands.common.tools import get_files_in_dir, get_json
 from demisto_sdk.commands.content_graph.parsers.content_item import (
     ContentItemParser,
+    InvalidContentItemException,
     NotAContentItemException,
 )
-
-logger = logging.getLogger("demisto-sdk")
 
 
 class JSONContentItemParser(ContentItemParser):
@@ -22,6 +20,11 @@ class JSONContentItemParser(ContentItemParser):
     ) -> None:
         super().__init__(path, pack_marketplaces)
         self.json_data: Dict[str, Any] = self.get_json()
+        self.original_json_data: Dict[str, Any] = self.get_json()
+        if not isinstance(self.json_data, dict):
+            raise InvalidContentItemException(
+                f"The content of {self.path} must be in a JSON dictionary format"
+            )
 
         if self.should_skip_parsing():
             raise NotAContentItemException
@@ -44,7 +47,7 @@ class JSONContentItemParser(ContentItemParser):
 
     @property
     def description(self) -> Optional[str]:
-        return self.json_data.get("description")
+        return self.json_data.get("description") or ""
 
     @property
     def fromversion(self) -> str:
@@ -56,11 +59,7 @@ class JSONContentItemParser(ContentItemParser):
 
     @property
     def marketplaces(self) -> List[MarketplaceVersions]:
-        if file_marketplaces := [
-            MarketplaceVersions(mp) for mp in self.json_data.get("marketplaces", [])
-        ]:
-            return file_marketplaces
-        return sorted(set(self.pack_marketplaces) & self.supported_marketplaces)
+        return self.get_marketplaces(self.json_data)
 
     def get_json(self) -> Dict[str, Any]:
         if self.path.is_dir():

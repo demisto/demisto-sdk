@@ -1,4 +1,3 @@
-import logging
 import os
 import re
 import sys
@@ -67,6 +66,7 @@ from demisto_sdk.commands.common.content.objects.pack_objects import (
     YAMLContentObject,
     YAMLContentUnifiedObject,
 )
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import arg_to_list, open_id_set_file
 
 from .artifacts_report import ArtifactsReport, ObjectReport
@@ -82,7 +82,6 @@ IGNORED_TEST_PLAYBOOKS_DIR = "Deprecated"
 ContentObject = Union[
     YAMLContentUnifiedObject, YAMLContentObject, JSONContentObject, TextObject
 ]
-logger = logging.getLogger("demisto-sdk")
 EX_SUCCESS = 0
 EX_FAIL = 1
 
@@ -164,6 +163,7 @@ XPANSE_MARKETPLACE_ITEMS_TO_DUMP = [
 
 MARKETPLACE_TO_ITEMS_MAPPING = {
     MarketplaceVersions.XSOAR.value: XSOAR_MARKETPLACE_ITEMS_TO_DUMP,
+    MarketplaceVersions.XSOAR_SAAS.value: XSOAR_MARKETPLACE_ITEMS_TO_DUMP,
     MarketplaceVersions.MarketplaceV2.value: XSIAM_MARKETPLACE_ITEMS_TO_DUMP,
     MarketplaceVersions.XPANSE.value: XPANSE_MARKETPLACE_ITEMS_TO_DUMP,
 }
@@ -269,8 +269,7 @@ class ArtifactsManager:
             # Add suffix
             suffix_handler(self)
 
-        if os.path.exists("keyfile"):
-            os.remove("keyfile")
+        Path("keyfile").unlink(missing_ok=True)
         logger.info(f"\nExecution time: {time.time() - self.execution_start} seconds")
 
         return self.exit_code
@@ -685,8 +684,7 @@ def ProcessPoolHandler(artifact_manager: ArtifactsManager) -> ProcessPool:
             pool.close()
             pool.join()
         finally:
-            if os.path.exists("keyfile"):
-                os.remove("keyfile")
+            Path("keyfile").unlink(missing_ok=True)
 
 
 def wait_futures_complete(
@@ -1259,9 +1257,7 @@ def handle_author_image(pack, pack_report, artifact_manager, **kwargs):
         pack.author_image.dump(artifact_manager.content_packs_path / pack.id)
 
 
-def dump_pack(
-    artifact_manager: ArtifactsManager, pack: Pack
-) -> ArtifactsReport:  # noqa: C901
+def dump_pack(artifact_manager: ArtifactsManager, pack: Pack) -> ArtifactsReport:
     """Dumping content/Packs/<pack_id>/ into:
             1. content_test
             2. content_new

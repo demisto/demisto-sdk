@@ -2,10 +2,13 @@ from pathlib import Path
 from typing import List, Set
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
+from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.parsers.json_content_item import (
     JSONContentItemParser,
 )
+
+json = JSON_Handler()
 
 
 class WizardParser(JSONContentItemParser, content_type=ContentType.WIZARD):
@@ -13,13 +16,20 @@ class WizardParser(JSONContentItemParser, content_type=ContentType.WIZARD):
         self, path: Path, pack_marketplaces: List[MarketplaceVersions]
     ) -> None:
         super().__init__(path, pack_marketplaces)
+        self.dependency_packs: str = json.dumps(
+            self.json_data.get("dependency_packs") or []
+        )
         self.packs: List[str] = self.get_packs()
         self.integrations: List[str] = self.get_integrations()
         self.playbooks: List[str] = self.get_playbooks()
 
     @property
     def supported_marketplaces(self) -> Set[MarketplaceVersions]:
-        return {MarketplaceVersions.XSOAR}
+        return {
+            MarketplaceVersions.XSOAR,
+            MarketplaceVersions.XSOAR_SAAS,
+            MarketplaceVersions.XSOAR_ON_PREM,
+        }
 
     def get_packs(self) -> List[str]:
         packs: List[str] = []

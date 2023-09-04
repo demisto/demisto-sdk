@@ -1,14 +1,13 @@
-import logging
 from pathlib import Path
 from typing import List
 
 import astor
 import autopep8
-import click
 from klara.contract import solver
 from klara.contract.solver import MANAGER, ContractSolver, nodes
 
-from demisto_sdk.commands.common.handlers import JSON_Handler
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.generate_docs.common import execute_command
 from demisto_sdk.commands.generate_docs.generate_integration_doc import (
     get_command_examples,
@@ -18,10 +17,6 @@ from demisto_sdk.commands.generate_unit_tests.test_case_builder import (
     TestCase,
 )
 from demisto_sdk.commands.generate_unit_tests.test_module_builder import TestModule
-
-logger = logging.getLogger("demisto-sdk")
-
-json = JSON_Handler()
 
 
 class UnitTestsGenerator:
@@ -126,8 +121,8 @@ class UnitTestsGenerator:
                     {command_name_without_vendor: [command_dict]}
                 )
 
-        click.echo("Unit tests will be generated for the following commands:")
-        click.echo("\n".join(display_commands))
+        logger.info("Unit tests will be generated for the following commands:")
+        logger.info("\n".join(display_commands))
 
     def run_commands(self):
         """
@@ -260,7 +255,7 @@ def run_generate_unit_tests(
 ):
     global logger
 
-    click.echo("================= Running Unit Testing Generator ===================")
+    logger.info("================= Running Unit Testing Generator ===================")
     # validate inputs
     input_path_obj = Path(input_path)
     if not input_path:

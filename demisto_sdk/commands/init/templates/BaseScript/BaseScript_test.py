@@ -8,9 +8,7 @@ MAKE SURE YOU REVIEW/REPLACE ALL THE COMMENTS MARKED AS "TODO"
 
 """
 
-from demisto_sdk.commands.common.handlers import JSON_Handler
-
-json = JSON_Handler()
+import json
 
 
 def util_load_json(path):

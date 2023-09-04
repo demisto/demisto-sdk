@@ -1,13 +1,12 @@
 from typing import Callable, List
 
 import pytest
+from packaging.version import Version
 from wcmatch.pathlib import Path
 
-from demisto_sdk.commands.common.handlers import YAML_Handler
+from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
 from demisto_sdk.commands.lint import linter
 from demisto_sdk.commands.lint.linter import Linter
-
-yaml = YAML_Handler()
 
 
 @pytest.fixture
@@ -19,8 +18,6 @@ def linter_obj(mocker) -> Linter:
         / "Integrations"
         / "Sample_integration",
         content_repo=Path(__file__).parent / "data",
-        req_3=["pytest==3.0"],
-        req_2=["pytest==2.0"],
         docker_engine=True,
         docker_timeout=60,
     )
@@ -160,8 +157,8 @@ def create_integration(mocker) -> Callable:
                 yml_dict["dockerimage"] = image
             from demisto_sdk.commands.lint import linter
 
-            mocker.patch.object(linter, "get_python_version_from_image")
-            linter.get_python_version_from_image.return_value = image_py_num
+            mocker.patch.object(linter, "get_python_version")
+            linter.get_python_version.return_value = Version(image_py_num)
             yaml.dump(stream=yml_file.open(mode="w"), data=yml_dict)
 
         return integration_path

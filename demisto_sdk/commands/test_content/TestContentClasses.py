@@ -8,8 +8,8 @@ import time
 import urllib.parse
 import uuid
 from copy import deepcopy
-from distutils.version import LooseVersion
 from math import ceil
+from pathlib import Path
 from pprint import pformat
 from queue import Empty, Queue
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
@@ -20,6 +20,7 @@ import requests
 import urllib3
 from demisto_client.demisto_api import DefaultApi, Incident
 from demisto_client.demisto_api.rest import ApiException
+from packaging.version import Version
 from slack_sdk import WebClient as SlackClient
 
 from demisto_sdk.commands.common.constants import (
@@ -28,12 +29,8 @@ from demisto_sdk.commands.common.constants import (
     FILTER_CONF,
     PB_Status,
 )
-from demisto_sdk.commands.common.handlers import JSON_Handler
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.tools import get_demisto_version
-from demisto_sdk.commands.test_content.constants import (
-    CONTENT_BUILD_SSH_USER,
-    LOAD_BALANCER_DNS,
-)
 from demisto_sdk.commands.test_content.Docker import Docker
 from demisto_sdk.commands.test_content.IntegrationsLock import acquire_test_lock
 from demisto_sdk.commands.test_content.mock_server import (
@@ -49,8 +46,6 @@ from demisto_sdk.commands.test_content.tools import (
     is_redhat_instance,
     update_server_configuration,
 )
-
-json = JSON_Handler()
 
 ENV_RESULTS_PATH = "./artifacts/env_results.json"
 FAILED_MATCH_INSTANCE_MSG = (
@@ -288,9 +283,9 @@ class TestPlaybook:
 
         def version_mismatch():
             if not (
-                LooseVersion(self.configuration.from_version)
-                <= LooseVersion(self.build_context.server_numeric_version)
-                <= LooseVersion(self.configuration.to_version)
+                Version(self.configuration.from_version)
+                <= Version(self.build_context.server_numeric_version)
+                <= Version(self.configuration.to_version)
             ):
                 self.build_context.logging_module.warning(
                     f"Test {self} ignored due to version mismatch "
@@ -434,7 +429,7 @@ class TestPlaybook:
                     client=client,
                     server_configuration=server_context.prev_system_conf,
                     error_msg="Failed to set server keys",
-                    logging_manager=integration.build_context.logging_module,
+                    logging_manager=self.build_context.logging_module,
                 )
                 server_context.prev_system_conf = {}
                 updated = True
@@ -500,10 +495,11 @@ class TestPlaybook:
         # get incident
         search_filter = demisto_client.demisto_api.SearchIncidentsData()
         inc_filter = demisto_client.demisto_api.IncidentFilter()
-        inc_filter.query = f"id: {inc_id}"
+        if inc_id:
+            inc_filter.query = f"id: {inc_id}"
         if IS_XSIAM:
             # in xsiam `create_incident` response don`t return created incident id.
-            inc_filter.query = f'name:"{incident_name}"'
+            inc_filter.name = [incident_name]
         # inc_filter.query
         search_filter.filter = inc_filter
 
@@ -515,7 +511,7 @@ class TestPlaybook:
         while found_incidents < 1:
             try:
                 incidents = client.search_incidents(filter=search_filter)
-                found_incidents = incidents.total
+                found_incidents = len(incidents.data)
                 incident_search_responses.append(incidents)
             except ApiException:
                 if IS_XSIAM:
@@ -687,24 +683,23 @@ class BuildContext:
             self.instances_ips
         )
 
-    def _get_all_integration_config(self, instances_ips: dict) -> Optional[list]:
+    def _get_all_integration_config(self, instances_ips: list) -> Optional[list]:
         """
         Gets all integration configuration as it exists on the demisto server
         Since in all packs are installed the data returned from this request is very heavy and we want to avoid
         running it in multiple threads.
         Args:
-            instances_ips: The mapping of the urls to the ports used to tunnel it's traffic
-
+            instances_ips: the instances urls
         Returns:
             A dict containing the configuration for the integration if found, else empty list
         """
         if not self.is_nightly:
             return []
-        url, port = list(instances_ips.items())[0]
+        url = instances_ips[0]
         if IS_XSIAM:
             server_url = url
         else:
-            server_url = f"https://localhost:{port}" if port else f"https://{url}"
+            server_url = f"https://{url}"
         return self.get_all_installed_integrations_configurations(server_url)
 
     def get_all_installed_integrations_configurations(self, server_url: str) -> list:
@@ -867,47 +862,21 @@ class BuildContext:
         tests_records = self.conf.tests
         return [test for test in tests_records if test.playbook_id]
 
-    def _get_instances_ips(self) -> Dict[str, Any]:
+    def _get_instances_ips(self) -> List[str]:
         """
         Parses the env_results.json and extracts the instance ip from each server configured in it.
         Returns:
-            A dict contains a mapping from server internal ip to the port used to tunnel it.
+            A list contains server internal ips.
         """
         if self.server:
-            return {self.server: None}
+            return [self.server]
         if self.is_xsiam:
-            return {env.get("base_url"): None for env in self.env_json}
-        instances_ips = {
-            env.get("InstanceDNS"): env.get("TunnelPort")
+            return [env.get("base_url") for env in self.env_json]
+        return [
+            env.get("InstanceDNS")
             for env in self.env_json
             if env.get("Role") == self.server_version
-        }
-        return instances_ips
-
-    def get_public_ip_from_server_url(self, server_url: str) -> str:
-        """
-        Gets a tunnel server url in the form of https://localhost:<port>, from that url checks in self.instance_ips
-        if there is a url that is mapped into that port and return that url if found.
-        Args:
-            server_url: The server url to parse the port from.
-
-        Returns:
-            A URL with the private IP of the server.
-        """
-        port_pattern = re.compile(r"https://localhost:([0-9]+)")
-        port_match = port_pattern.findall(server_url)
-        if port_match:
-            port = int(port_match[0])
-        else:
-            # If the server URL has no port in the end - it means it's a local build or XSIAM, and we can return the
-            # server URL as is.
-            return server_url
-        for server_private_ip, tunnel_port in self.instances_ips.items():
-            if tunnel_port == port:
-                return f"https://{server_private_ip}"
-        raise Exception(
-            f"Could not find private ip for the server mapped to port {port}"
-        )
+        ]
 
     @staticmethod
     def _parse_tests_list_arg(tests_list: str):
@@ -922,7 +891,7 @@ class BuildContext:
 
     @staticmethod
     def _load_env_results_json():
-        if not os.path.isfile(ENV_RESULTS_PATH):
+        if not Path(ENV_RESULTS_PATH).is_file():
             return {}
 
         with open(ENV_RESULTS_PATH) as json_file:
@@ -960,6 +929,8 @@ class BuildContext:
             "Server 6.6": "6.6.0",
             "Server 6.8": "6.8.0",
             "Server 6.9": "6.9.0",
+            "Server 6.10": "6.10.0",
+            "Server 6.11": "6.11.0",
             "Server Master": default_version,
             "XSIAM 1.2": "6.9.0",
             "XSIAM Master": default_version,
@@ -1261,8 +1232,17 @@ class Integration:
             self._change_placeholders_to_values(server_url, conf)
             for conf in integration_params
         ]
-
-        if integration_params:
+        if self.name == "Core REST API":
+            self.configuration.params = {  # type: ignore
+                "url": server_url if IS_XSIAM else "https://localhost",
+                "creds_apikey": {
+                    "identifier": str(self.build_context.auth_id) if IS_XSIAM else "",
+                    "password": self.build_context.api_key,
+                },
+                "auth_method": "Standard",
+                "insecure": True,
+            }
+        elif integration_params:
             # If we have more then one configuration for this integration - we will try to filter by instance name
             if len(integration_params) != 1:
                 found_matching_instance = False
@@ -1288,18 +1268,6 @@ class Integration:
             else:
                 self.configuration = integration_params[0]
 
-        elif self.name == "Demisto REST API":
-            if IS_XSIAM:
-                self.build_context.logging_module.warning(
-                    'Trying to configure "Demisto REST API" for XSIAM server, '
-                    "this integration will not work on XSIAM, "
-                    "consider using CoreRestAPI."
-                )
-            self.configuration.params = {  # type: ignore
-                "url": "https://localhost",
-                "apikey": self.build_context.api_key,
-                "insecure": True,
-            }
         if is_mockable:
             self.build_context.logging_module.debug(
                 f"configuring {self} with proxy params"
@@ -1486,9 +1454,7 @@ class Integration:
         Returns:
             The integration configuration as it exists on the server after it was configured
         """
-        server_url = self.build_context.get_public_ip_from_server_url(
-            client.api_client.configuration.host
-        )
+        server_url = client.api_client.configuration.host
         self._set_integration_params(server_url, playbook_id, is_mockable)
         configuration = self._get_integration_config(
             client.api_client.configuration.host
@@ -1536,7 +1502,7 @@ class Integration:
                     if param_conf["display"] in params
                     else param_conf["name"]
                 )
-                if key == "credentials":
+                if key in {"credentials", "creds_apikey"}:
                     credentials = params[key]
                     param_value = {
                         "credential": "",
@@ -1777,14 +1743,6 @@ class TestContext:
         self.incident_id: Optional[str] = None
         self.test_docker_images: Set[str] = set()
         self.client: DefaultApi = client
-        if IS_XSIAM:
-            self.tunnel_command = ""
-        else:
-            self.tunnel_command = (
-                f"ssh -i ~/.ssh/oregon-ci.pem -4 -o StrictHostKeyChecking=no -f -N "
-                f'"{CONTENT_BUILD_SSH_USER}@{LOAD_BALANCER_DNS}" '
-                f'-L "{self.server_context.tunnel_port}:{self.server_context.server_ip}:443"'
-            )
 
     def _get_investigation_playbook_state(self) -> str:
         """
@@ -1820,7 +1778,7 @@ class TestContext:
         try:
             state = investigation_playbook["state"]
             return state
-        except Exception:  # noqa: E722
+        except Exception:
             # setting state to `in progress` in XSIAM build,
             # Because `investigation_playbook` returned empty if xsiam investigation is still in progress.
             if IS_XSIAM:
@@ -1927,10 +1885,6 @@ class TestContext:
             Empty string or
         """
         try:
-            if not self.build_context.is_xsiam:
-                self.build_context.logging_module.info(
-                    f"ssh tunnel command:\n{self.tunnel_command}"
-                )
             instance_configuration = self.playbook.configuration.instance_configuration
 
             if not self.playbook.configure_integrations(
@@ -2080,7 +2034,7 @@ class TestContext:
     def _notify_failed_test(self):
         text = (
             f"{self.build_context.build_name} - {self.playbook} Failed\n"
-            f"for more details run: `{self.tunnel_command}` and browse into the following link\n"
+            f"for more details browse into the following link\n"
             f"{get_ui_url(self.client.api_client.configuration.host)}"
         )
         text += f"/#/WorkPlan/{self.incident_id}" if self.incident_id else ""
@@ -2572,22 +2526,16 @@ class ServerContext:
         self,
         build_context: BuildContext,
         server_private_ip: str,
-        tunnel_port: int = None,
         use_retries_mechanism: bool = True,
     ):
         self.build_context = build_context
         self.server_ip = server_private_ip
-        self.tunnel_port = tunnel_port
         if IS_XSIAM:
             self.server_url = server_private_ip
             # we use client without demisto username
             os.environ.pop("DEMISTO_USERNAME", None)
         else:
-            self.server_url = (
-                f"https://localhost:{tunnel_port}"
-                if tunnel_port
-                else f"https://{self.server_ip}"
-            )
+            self.server_url = f"https://{self.server_ip}"
         self.client: Optional[DefaultApi] = None
         self._configure_new_client()
         # currently not supported on XSIAM (etc/#47851)
@@ -2707,6 +2655,12 @@ class ServerContext:
         )
 
     def _reset_containers(self):
+        if self.build_context.is_xsiam:
+            self.build_context.logging_module.info(
+                "Skip reset containers - this API is not supported.", real_time=True
+            )
+            return
+
         self.build_context.logging_module.info("Resetting containers\n", real_time=True)
 
         body, status_code, _ = demisto_client.generic_request_func(
@@ -2721,7 +2675,6 @@ class ServerContext:
         time.sleep(10)
 
     def execute_tests(self):
-
         try:
             self.build_context.logging_module.info(
                 f"Starts tests with server url - {get_ui_url(self.server_url)}",
@@ -2868,7 +2821,7 @@ def replace_external_playbook_configuration(
     # Checking server version
     server_version = get_demisto_version(client)
 
-    if LooseVersion(server_version.base_version) < LooseVersion("6.2.0"):  # type: ignore
+    if Version(server_version.base_version) < Version("6.2.0"):  # type: ignore
         logger_module.info(
             "External Playbook not supported in versions previous to 6.2.0, skipping re-configuration."
         )

@@ -50,6 +50,7 @@ filter activity in ("SignInEvent","Logout","Login Attempt","Login Successful","L
         XDM.Auth.Client.user_agent = useragent;
 """
 PRE_UNIFIED_RULE1_FIELDS = {
+    "_time",
     "xdm.network.original_event_type",
     "xdm.network.destination.host.os_family",
     "xdm.network.destination.host.hostname",
@@ -65,6 +66,7 @@ PRE_UNIFIED_RULE1_FIELDS = {
     "xdm.network.http.user_agent",
 }
 PRE_UNIFIED_RULE2_FIELDS = {
+    "_time",
     "xdm.audit.threat.severity",
     "xdm.audit.event_timestamp",
     "xdm.audit.triggeredby.identity.name",
@@ -81,6 +83,7 @@ PRE_UNIFIED_RULE2_FIELDS = {
     "xdm.audit.triggeredby.user_agent",
 }
 PRE_UNIFIED_RULE3_FIELDS = {
+    "_time",
     "xdm.auth.auth_method",
     "xdm.auth.original_event_type",
     "xdm.auth.target.application.name",
@@ -101,7 +104,8 @@ filter
     xdm.event.outcome = json_extract_scalar(kind, "$.value"),
     xdm.target.resource.id = to_string(json_extract(assigned_object, "$.id")),
     xdm.target.resource.name = json_extract_scalar(assigned_object, "$.name"),
-    xdm.target.resource.type = assigned_object_type;
+    xdm.target.resource.type = assigned_object_type,
+    xdm.network.source.ipv4 = "8.8.8.8";
 filter
     user != null
 | alter
@@ -137,9 +141,11 @@ filter
     xdm.target.resource.name = json_extract_scalar(changed_object, "$.display"),
     xdm.target.resource.type = changed_object_type,
     xdm.target.resource_before.name = json_extract_scalar(prechange_data, "$.name"),
-    xdm.source.user.username = user_name;
+    xdm.source.user.username = user_name,
+    xdm.network.source.ipv4 = "8.8.8.8";
 """
 UNIFIED_RULE_FIELDS = {
+    "_time",
     "xdm.event.description",
     "xdm.event.outcome",
     "xdm.target.resource.id",
@@ -149,6 +155,7 @@ UNIFIED_RULE_FIELDS = {
     "xdm.event.operation",
     "xdm.target.resource_before.name",
     "xdm.source.user.username",
+    "xdm.network.source.ipv4",
 }
 
 

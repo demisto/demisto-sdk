@@ -1,24 +1,20 @@
-import logging
 from typing import List, Tuple
 
-import click
+from packaging.version import Version
 
-from demisto_sdk.commands.common.handlers import JSON_Handler
-from demisto_sdk.commands.common.tools import (
-    get_dict_from_file,
-    get_item_marketplaces,
-    open_id_set_file,
+from demisto_sdk.commands.common.constants import (
+    DEFAULT_CONTENT_ITEM_TO_VERSION,
+    OLDEST_INCIDENT_FIELD_SUPPORTED_VERSION,
 )
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
+from demisto_sdk.commands.common.logger import logger
+from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.format.format_constants import (
     ERROR_RETURN_CODE,
     SKIP_RETURN_CODE,
     SUCCESS_RETURN_CODE,
 )
 from demisto_sdk.commands.format.update_generic_json import BaseUpdateJSON
-
-logger = logging.getLogger("demisto-sdk")
-
-json = JSON_Handler()
 
 
 class IncidentFieldJSONFormat(BaseUpdateJSON):
@@ -46,7 +42,7 @@ class IncidentFieldJSONFormat(BaseUpdateJSON):
             no_validate=no_validate,
             **kwargs,
         )
-        self.id_set_path = kwargs.get("id_set_path")
+        self.graph = kwargs.get("graph")
 
     def run_format(self) -> int:
         try:
@@ -70,53 +66,61 @@ class IncidentFieldJSONFormat(BaseUpdateJSON):
         the function will update the marketplaces in the fields mapped by the aliases to be XSOAR marketplace only.
         """
 
-        if not self.id_set_path:
-            click.secho(
-                'Skipping "Aliases" formatting as id_set_path argument is missing',
-                fg="yellow",
-            )
-
         aliases = self.data.get("Aliases", {})
         if aliases:
-            for (
-                alias_field,
-                alias_field_file_path,
-            ) in self._get_incident_fields_by_aliases(aliases):
 
-                marketplaces = get_item_marketplaces(
-                    item_path=alias_field_file_path, item_data=alias_field
+            if not self.graph:
+                logger.info(
+                    f"Skipping formatting of marketplaces field of aliases for {self.source_file} as the "
+                    f"no-graph argument was given."
+                )
+                return
+
+            for item in self._get_incident_fields_by_aliases(aliases):
+                alias_marketplaces = item.get("marketplaces", [])
+                alias_file_path = item.get("path", "")
+                alias_toversion = Version(
+                    item.get("toversion", DEFAULT_CONTENT_ITEM_TO_VERSION)
                 )
 
-                if len(marketplaces) != 1 or marketplaces[0] != "xsoar":
-                    alias_field["marketplaces"] = ["xsoar"]
+                if alias_toversion > Version(
+                    OLDEST_INCIDENT_FIELD_SUPPORTED_VERSION
+                ) and (
+                    len(alias_marketplaces) != 1 or alias_marketplaces[0] != "xsoar"
+                ):
+
                     logger.info(
-                        f"\n[blue]================= Updating file {alias_field_file_path} =================[/blue]"
-                    )
-                    self._save_alias_field_file(
-                        dest_file_path=alias_field_file_path, field_data=alias_field
+                        f"\n[blue]================= Updating file {alias_file_path} =================[/blue]"
                     )
 
-    def _get_incident_fields_by_aliases(self, aliases: List[dict]):
-        """Get from the id_set the actual fields for the given aliases
+                    with open(alias_file_path, "r+") as f:
+                        alias_file_content = json.load(f)
+                        alias_file_content["marketplaces"] = ["xsoar"]
+
+                    self._save_alias_field_file(
+                        dest_file_path=alias_file_path, field_data=alias_file_content
+                    )
+
+    def _get_incident_fields_by_aliases(self, aliases: List[dict]) -> list:
+        """
+        Get from the graph the actual fields for the given aliases
 
         Args:
             aliases (list): The alias list.
 
         Returns:
-            A generator that generates a tuple with the incident field and it's path for each alias in the given list.
+            list: A list of dictionaries, each dictionary represent an incident field.
         """
-        alias_ids: set = {f'incident_{alias.get("cliName")}' for alias in aliases}
-        id_set = open_id_set_file(self.id_set_path)
-        incident_field_list: list = id_set.get("IncidentFields")
-
-        for incident_field in incident_field_list:
-            field_id = list(incident_field.keys())[0]
-            if field_id in alias_ids:
-                alias_data = incident_field[field_id]
-                alias_file_path = alias_data.get("file_path")
-                aliased_field, _ = get_dict_from_file(path=alias_file_path)
-
-                yield aliased_field, alias_file_path
+        alias_ids: set = {f'{alias.get("cliName")}' for alias in aliases}
+        return (
+            self.graph.get_content_items_by_identifier(
+                identifier_values_list=list(alias_ids),
+                content_type=ContentType.INCIDENT_FIELD,
+                identifier="cli_name",
+            )
+            if self.graph
+            else []
+        )
 
     def _save_alias_field_file(
         self,

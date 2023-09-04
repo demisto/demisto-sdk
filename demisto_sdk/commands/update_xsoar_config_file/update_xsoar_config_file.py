@@ -1,15 +1,10 @@
-import logging
-import os
+from pathlib import Path
 from typing import Dict, List
 
 import demisto_client
 
-from demisto_sdk.commands.common.handlers import JSON_Handler
-
-logger = logging.getLogger("demisto-sdk")
-
-json = JSON_Handler()
-
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
+from demisto_sdk.commands.common.logger import logger
 
 XSOAR_CONFIG_FILE_JSON = "xsoar_config.json"
 MARKETPLACE_PACKS_SECTION = "marketplace_packs"
@@ -148,7 +143,7 @@ class XSOARConfigFileUpdater:
 
     def get_xsoar_config_data(self):
         config_file_info = {}
-        if os.path.exists(self.file_path):
+        if Path(self.file_path).exists():
             with open(self.file_path) as config_file:
                 try:
                     config_file_info = json.load(config_file)

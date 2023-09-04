@@ -1,6 +1,4 @@
-from distutils.version import LooseVersion
-
-import click
+from packaging.version import Version
 
 from demisto_sdk.commands.common.constants import LAYOUT_AND_MAPPER_BUILT_IN_FIELDS
 from demisto_sdk.commands.common.errors import Errors
@@ -8,6 +6,7 @@ from demisto_sdk.commands.common.hook_validations.base_validator import error_co
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import (
     ContentEntityValidator,
 )
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     get_all_incident_and_indicator_fields_from_id_set,
 )
@@ -97,9 +96,7 @@ class ClassifierValidator(ContentEntityValidator):
         if from_version:
             self.from_version = from_version
             if self.new_classifier_version:
-                if LooseVersion(from_version) < LooseVersion(
-                    FROM_VERSION_FOR_NEW_CLASSIFIER
-                ):
+                if Version(from_version) < Version(FROM_VERSION_FOR_NEW_CLASSIFIER):
                     (
                         error_message,
                         error_code,
@@ -112,9 +109,7 @@ class ClassifierValidator(ContentEntityValidator):
                     ):
                         return False
             else:
-                if LooseVersion(from_version) >= LooseVersion(
-                    FROM_VERSION_FOR_NEW_CLASSIFIER
-                ):
+                if Version(from_version) >= Version(FROM_VERSION_FOR_NEW_CLASSIFIER):
                     (
                         error_message,
                         error_code,
@@ -151,9 +146,7 @@ class ClassifierValidator(ContentEntityValidator):
         if to_version:
             self.to_version = to_version
             if self.new_classifier_version:
-                if LooseVersion(to_version) <= LooseVersion(
-                    FROM_VERSION_FOR_NEW_CLASSIFIER
-                ):
+                if Version(to_version) <= Version(FROM_VERSION_FOR_NEW_CLASSIFIER):
                     (
                         error_message,
                         error_code,
@@ -163,9 +156,7 @@ class ClassifierValidator(ContentEntityValidator):
                     ):
                         return False
             else:
-                if LooseVersion(to_version) > LooseVersion(
-                    TO_VERSION_FOR_OLD_CLASSIFIER
-                ):
+                if Version(to_version) > Version(TO_VERSION_FOR_OLD_CLASSIFIER):
                     (
                         error_message,
                         error_code,
@@ -197,7 +188,7 @@ class ClassifierValidator(ContentEntityValidator):
             bool. True if to version field is higher than from version field, else False.
         """
         if self.to_version and self.from_version:
-            if LooseVersion(self.to_version) <= LooseVersion(self.from_version):
+            if Version(self.to_version) <= Version(self.from_version):
                 error_message, error_code = Errors.from_version_higher_to_version()
                 if self.handle_error(
                     error_message, error_code, file_path=self.file_path
@@ -232,9 +223,8 @@ class ClassifierValidator(ContentEntityValidator):
             return True
 
         if not id_set_file:
-            click.secho(
-                "Skipping classifier incident field validation. Could not read id_set.json.",
-                fg="yellow",
+            logger.info(
+                "[yellow]Skipping classifier incident field validation. Could not read id_set.json.[/yellow]"
             )
             return True
 
@@ -248,7 +238,7 @@ class ClassifierValidator(ContentEntityValidator):
         invalid_inc_fields_list = []
         mapper = self.current_file.get("mapping", {})
         for incident_type, mapping in mapper.items():
-            incident_fields = mapping.get("internalMapping", {})
+            incident_fields = mapping.get("internalMapping") or {}
 
             for inc_name, _ in incident_fields.items():
                 if (

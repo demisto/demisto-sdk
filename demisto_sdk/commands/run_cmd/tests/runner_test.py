@@ -118,3 +118,69 @@ def test_return_raw_outputs_from_log_with_raw_response_flag(
     runner = Runner("Query", json_to_outputs=True, raw_response=True)
     temp = runner._return_context_dict_from_log(["123"])
     assert temp == expected_output
+
+
+class GetPlaygroundResMock:
+    def __init__(self, total, data):
+        self.total = total
+        self.data = data
+
+
+class PlaygroundObjMock:
+    def __init__(self, _id):
+        self.id = _id
+        self.creating_user_id = str(_id)
+
+
+def test_playground_not_exist(mocker, set_environment_variables):
+    """
+    Validates that the context of a log file is extracted correctly.
+
+    """
+    mocker.patch.object(
+        DefaultApi, "search_investigations", return_value=GetPlaygroundResMock(0, [])
+    )
+    runner = Runner("Query", json_to_outputs=True)
+    with pytest.raises(RuntimeError):
+        runner._get_playground_id()
+
+
+def test_single_playground_exist(mocker, set_environment_variables):
+    """
+    Validates that the context of a log file is extracted correctly.
+
+    """
+
+    mocker.patch.object(
+        DefaultApi,
+        "search_investigations",
+        return_value=GetPlaygroundResMock(1, [PlaygroundObjMock(1)]),
+    )
+    generic_request_mock = mocker.patch.object(DefaultApi, "generic_request")
+    runner = Runner("Query", json_to_outputs=True)
+    assert runner._get_playground_id() == 1
+    assert generic_request_mock.call_count == 0
+
+
+data_test_multiple_existing_playgrounds = ["15", "10", "5", "3"]
+
+
+@pytest.mark.parametrize("username", data_test_multiple_existing_playgrounds)
+def test_multiple_existing_playgrounds(mocker, set_environment_variables, username):
+    """
+    Validates that the context of a log file is extracted correctly.
+
+    """
+    responses = [PlaygroundObjMock(i) for i in range(1, 16)]
+
+    def helper(*_args, **_kwargs):
+        return GetPlaygroundResMock(15, [responses.pop(0) for _ in range(5)])
+
+    mocker.patch.object(DefaultApi, "search_investigations", new=helper)
+    generic_request_mock = mocker.patch.object(
+        DefaultApi, "generic_request", return_value=({"username": username}, 200, None)
+    )
+    runner = Runner("Query", json_to_outputs=True)
+    assert runner._get_playground_id() == int(username)
+    assert generic_request_mock.call_count == 1
+    assert len(responses) == 0

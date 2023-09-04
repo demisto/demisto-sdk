@@ -1,7 +1,7 @@
+import logging
 import os
 import re
 from enum import Enum
-from os import path
 from pathlib import Path
 from typing import List
 
@@ -15,13 +15,19 @@ from demisto_sdk.commands.common.tools import (
     get_yaml,
     is_xsoar_supported_pack,
 )
-from demisto_sdk.commands.doc_reviewer.doc_reviewer import DocReviewer
+from demisto_sdk.commands.doc_reviewer.doc_reviewer import (
+    DocReviewer,
+    replace_escape_characters,
+)
 from demisto_sdk.tests.integration_tests.validate_integration_test import (
     AZURE_FEED_PACK_PATH,
 )
 from TestSuite.json_based import JSONBased
 from TestSuite.pack import Pack
-from TestSuite.test_tools import ChangeCWD
+from TestSuite.test_tools import (
+    ChangeCWD,
+    str_in_call_args_list,
+)
 
 
 class TestDocReviewFilesAreFound:
@@ -59,7 +65,7 @@ class TestDocReviewFilesAreFound:
         doc_review = DocReviewer(file_paths=[valid_spelled_content_pack.path])
         doc_review.get_files_to_run_on(file_path=valid_spelled_content_pack.path)
         for file in doc_review.files:
-            assert path.exists(file)
+            assert Path(file).exists()
 
     def test_find_single_file(self, valid_spelled_content_pack):
         """
@@ -79,7 +85,7 @@ class TestDocReviewFilesAreFound:
             file_path=valid_spelled_content_pack.integrations[0].yml.path
         )
         for file in doc_review.files:
-            assert path.exists(file)
+            assert Path(file).exists()
 
     def test_find_files_from_git(self, mocker, valid_spelled_content_pack):
         """
@@ -506,20 +512,13 @@ class TestDocReviewPrinting:
         BOTH_INVALID_AND_VALID = "invalid_and_valid"
         INVALID_RELEASE_NOTES = "invalid_release_notes"
 
-    def get_file_report_mocker(self, mocker, files_type):
+    def get_file_report_mocker(self, files_type):
         """
         Returns a mock of the file report.
 
         Args:
-            mocker (MockerFixture): a mocker object.
             files_type (str): whether mock misspelled files or valid spelled files or both are required.
-
-
-        Returns:
-            MagicMock: a magic mock object of the click 'secho' function.
         """
-        import click
-
         doc_reviewer = DocReviewer()
 
         if files_type == self.SpelledFileType.VALID:
@@ -532,12 +531,9 @@ class TestDocReviewPrinting:
             doc_reviewer.files_with_misspells = self.MOCKED_FILES
             doc_reviewer.files_without_misspells = self.MOCKED_FILES
 
-        secho_mocker = mocker.patch.object(click, "secho")
         doc_reviewer.print_file_report()
 
-        return secho_mocker
-
-    def test_printing_of_valid_spelled_files(self, mocker):
+    def test_printing_of_valid_spelled_files(self, mocker, monkeypatch):
         """
         Given -
             Files reported as valid spelled files.
@@ -548,22 +544,26 @@ class TestDocReviewPrinting:
         Then -
             Ensure only the files without misspells are printed.
         """
-        secho_mocker = self.get_file_report_mocker(
-            mocker=mocker, files_type=self.SpelledFileType.VALID
+        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+        monkeypatch.setenv("COLUMNS", "1000")
+
+        self.get_file_report_mocker(files_type=self.SpelledFileType.VALID)
+
+        assert all(
+            [
+                str_in_call_args_list(logger_info.call_args_list, current_str)
+                for current_str in [
+                    "Files Without Misspells",
+                    "file1\nfile2",
+                ]
+            ]
         )
 
-        first_call = secho_mocker.mock_calls[0]
-        assert "Files Without Misspells" in first_call.args[0]
-        assert first_call.kwargs == self.GREEN_FG
+        assert not str_in_call_args_list(
+            logger_info.call_args_list, "Files With Misspells"
+        )
 
-        second_call = secho_mocker.mock_calls[1]
-        assert "file1\nfile2" in second_call.args[0]
-        assert second_call.kwargs == self.GREEN_FG
-
-        for i in range(2, len(secho_mocker.mock_calls)):
-            assert "Files With Misspells" not in secho_mocker.mock_calls[i].args
-
-    def test_printing_invalid_spelled_files(self, mocker):
+    def test_printing_invalid_spelled_files(self, mocker, monkeypatch):
         """
         Given -
             Files reported as invalid spelled files.
@@ -574,22 +574,26 @@ class TestDocReviewPrinting:
         Then -
             Ensure only the files with misspells are printed.
         """
-        secho_mocker = self.get_file_report_mocker(
-            mocker=mocker, files_type=self.SpelledFileType.INVALID
+        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+        monkeypatch.setenv("COLUMNS", "1000")
+
+        self.get_file_report_mocker(files_type=self.SpelledFileType.INVALID)
+
+        assert all(
+            [
+                str_in_call_args_list(logger_info.call_args_list, current_str)
+                for current_str in [
+                    "Files With Misspells",
+                    "file1\nfile2",
+                ]
+            ]
         )
 
-        first_call = secho_mocker.mock_calls[0]
-        assert "Files With Misspells" in first_call.args[0]
-        assert first_call.kwargs == self.BRIGHT_RED_FG
+        assert not str_in_call_args_list(
+            logger_info.call_args_list, "Files Without Misspells"
+        )
 
-        second_call = secho_mocker.mock_calls[1]
-        assert "file1\nfile2" in second_call.args[0]
-        assert second_call.kwargs == self.BRIGHT_RED_FG
-
-        for i in range(2, len(secho_mocker.mock_calls)):
-            assert "Files Without Misspells" not in secho_mocker.mock_calls[i].args
-
-    def test_printing_malformed_release_notes(self, mocker):
+    def test_printing_malformed_release_notes(self, mocker, monkeypatch):
         """
         Given -
             Malformed release-note.
@@ -600,19 +604,24 @@ class TestDocReviewPrinting:
         Then -
             Ensure 'Malformed Release Notes' is printed.
         """
-        secho_mocker = self.get_file_report_mocker(
-            mocker=mocker, files_type=self.SpelledFileType.INVALID_RELEASE_NOTES
+        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+        monkeypatch.setenv("COLUMNS", "1000")
+
+        self.get_file_report_mocker(
+            files_type=self.SpelledFileType.INVALID_RELEASE_NOTES
         )
 
-        first_call = secho_mocker.mock_calls[0]
-        assert "Malformed Release Notes" in first_call.args[0]
-        assert first_call.kwargs == self.BRIGHT_RED_FG
+        assert all(
+            [
+                str_in_call_args_list(logger_info.call_args_list, current_str)
+                for current_str in [
+                    "Malformed Release Notes",
+                    "file1\nfile2",
+                ]
+            ]
+        )
 
-        second_call = secho_mocker.mock_calls[1]
-        assert "file1\nfile2" in second_call.args[0]
-        assert second_call.kwargs == self.BRIGHT_RED_FG
-
-    def test_printing_mixed_report(self, mocker):
+    def test_printing_mixed_report(self, mocker, monkeypatch):
         """
         Given -
             Files reported as both valid/invalid spelled files.
@@ -623,25 +632,24 @@ class TestDocReviewPrinting:
         Then -
             Ensure both files misspelled and correctly spelled files are printed.
         """
-        secho_mocker = self.get_file_report_mocker(
-            mocker=mocker, files_type=self.SpelledFileType.BOTH_INVALID_AND_VALID
+        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+        monkeypatch.setenv("COLUMNS", "1000")
+
+        self.get_file_report_mocker(
+            files_type=self.SpelledFileType.BOTH_INVALID_AND_VALID
         )
 
-        first_call = secho_mocker.mock_calls[0]
-        assert "Files Without Misspells" in first_call.args[0]
-        assert first_call.kwargs == self.GREEN_FG
-
-        second_call = secho_mocker.mock_calls[1]
-        assert "file1\nfile2" in second_call.args[0]
-        assert second_call.kwargs == self.GREEN_FG
-
-        third_call = secho_mocker.mock_calls[2]
-        assert "Files With Misspells" in third_call.args[0]
-        assert third_call.kwargs == self.BRIGHT_RED_FG
-
-        forth_call = secho_mocker.mock_calls[3]
-        assert "file1\nfile2" in forth_call.args[0]
-        assert forth_call.kwargs == self.BRIGHT_RED_FG
+        assert all(
+            [
+                str_in_call_args_list(logger_info.call_args_list, current_str)
+                for current_str in [
+                    "Files Without Misspells",
+                    "file1\nfile2",
+                    "Files With Misspells",
+                    "file1\nfile2",
+                ]
+            ]
+        )
 
     def test_printing_skip_non_xsoar_supported_file(
         self, mix_invalid_packs: List[Pack], mocker
@@ -742,10 +750,11 @@ def test_check_word_functionality(word, is_invalid_word, no_camelcase):
     """
     doc_reviewer = DocReviewer(no_camel_case=no_camelcase)
     doc_reviewer.check_word(word=word)
+    unknown_words_set = {key_word[0] for key_word in doc_reviewer.unknown_words.keys()}
     if is_invalid_word:
-        assert word in doc_reviewer.unknown_words
+        assert word in unknown_words_set
     else:
-        assert word not in doc_reviewer.unknown_words
+        assert word not in unknown_words_set
 
 
 @pytest.mark.parametrize(
@@ -759,7 +768,7 @@ def test_check_word_functionality(word, is_invalid_word, no_camelcase):
         ),
         (
             "Added the nomnomone, nomnomtwo.",
-            {"nomnomtwo": set()},
+            {("nomnomtwo", None): set()},
             [{"nomnomone", "killaone"}],
             False,
         ),
@@ -779,7 +788,7 @@ def test_having_two_known_words_files(
     Then:
         - Ensure the review result is appropriate.
         - Make sure a review has taken place.
-        - Enusure the unknown words are as expected.
+        - Ensure the unknown words are as expected.
     """
     pack = repo.create_pack("test_pack")
     rn_file = pack.create_release_notes(version="1_0_0", content=file_content)
@@ -851,7 +860,7 @@ def test_adding_known_words_from_pack(
     Then:
         - Ensure the review result is appropriate.
         - Make sure a review has taken place.
-        - Enusure the unknown words are as expected.
+        - Ensure the unknown words are as expected.
     """
     pack = repo.create_pack("test_pack")
     rn_file = pack.create_release_notes(version="1_0_0", content=file_content)
@@ -870,7 +879,9 @@ def test_adding_known_words_from_pack(
         )
         assert doc_reviewer.run_doc_review() == review_success
         assert len(doc_reviewer.files) > 0
-        assert set(doc_reviewer.unknown_words.keys()) == unknown_words
+        assert {
+            key_word[0] for key_word in doc_reviewer.unknown_words.keys()
+        } == unknown_words
 
 
 @pytest.mark.parametrize(
@@ -890,7 +901,7 @@ def test_adding_known_words_from_pack(
         (
             "Added the nomnomone, nomnomtwo.",
             "Added the killa.",
-            [{"nomnomtwo": set()}],
+            [{("nomnomtwo", None): set()}],
             [["nomnomone", "killaone"]],
             False,
             1,
@@ -900,7 +911,7 @@ def test_adding_known_words_from_pack(
         (
             "Added the nomnomone, nomnomtwo.",
             "Added the killa, killatwo.",
-            [{"killatwo": set()}, {"nomnomtwo": set()}],
+            [{("killatwo", None): set()}, {("nomnomtwo", None): set()}],
             [["nomnomone", "killaone"]],
             False,
             2,
@@ -942,7 +953,7 @@ def test_having_two_file_paths_same_pack(
     Then:
         - Ensure the review result is appropriate.
         - Make sure a review has taken place.
-        - Enusure the unknown words are as expected for each file.
+        - Ensure the unknown words are as expected for each file.
     """
     pack = repo.create_pack("first_test_pack")
     first_rn_file = pack.create_release_notes(
@@ -997,7 +1008,7 @@ def test_having_two_file_paths_same_pack(
         (
             "Added the nomnomone, nomnomtwo.",
             "Added the killaone.",
-            [{"nomnomtwo": set()}],
+            [{("nomnomtwo", None): set()}],
             [["nomnomone", "killaone"]],
             False,
             1,
@@ -1008,7 +1019,7 @@ def test_having_two_file_paths_same_pack(
         (
             "Added the nomnomone, nomnomtwo.",
             "Added the killaone, killatwo.",
-            [{"killatwo": set()}, {"nomnomtwo": set()}],
+            [{("killatwo", None): set()}, {("nomnomtwo", None): set()}],
             [["nomnomone", "killaone"]],
             False,
             2,
@@ -1019,7 +1030,7 @@ def test_having_two_file_paths_same_pack(
         (
             "Added the nomnomone, nomnomtwo.",
             "Added the killaone, killatwo.",
-            [{"nomnomtwo": set()}, {"killaone": set()}],
+            [{("nomnomtwo", None): set()}, {("killaone", None): set()}],
             [],
             False,
             2,
@@ -1064,7 +1075,7 @@ def test_having_two_file_paths_different_pack(
     Then:
         - Ensure the review result is appropriate.
         - Make sure a review has taken place.
-        - Enusure the unknown words are as expected for each file.
+        - Ensure the unknown words are as expected for each file.
     """
     first_pack = repo.create_pack("first_test_pack")
     second_pack = repo.create_pack("second_test_pack")
@@ -1119,7 +1130,7 @@ def test_having_two_file_paths_different_pack(
         (
             "Added the nomnomone, nomnomtwo.",
             "Added the killa.",
-            [{"nomnomtwo": set()}],
+            [{("nomnomtwo", None): set()}],
             [["nomnomone", "killaone"]],
             False,
             1,
@@ -1129,7 +1140,7 @@ def test_having_two_file_paths_different_pack(
         (
             "Added the nomnomone, nomnomtwo.",
             "Added the killa, killatwo.",
-            [{"killatwo": set()}, {"nomnomtwo": set()}],
+            [{("killatwo", None): set()}, {("nomnomtwo", None): set()}],
             [["nomnomone", "killaone"]],
             False,
             2,
@@ -1161,7 +1172,7 @@ def test_having_two_file_paths_not_same_pack(
     Then:
         - Ensure the review result is appropriate.
         - Make sure a review has taken place.
-        - Enusure the unknown words are as expected for each file.
+        - Ensure the unknown words are as expected for each file.
     """
     pack = repo.create_pack("first_test_pack")
     first_rn_file = pack.create_release_notes(
@@ -1350,7 +1361,32 @@ def test_find_known_words_from_pack_ignore_commons_scripts_name(repo):
         assert "bla.md" not in found_known_words
 
 
-def test_camel_case_split():
+CAMELCASE_TEST_WORD = "".join(
+    [
+        "this",
+        "word",
+        "simulates",
+        "no",
+        "camel",
+        "case",
+        "split",
+        "and",
+        "should",
+        "remain",
+        "unchanged",
+    ]
+)
+
+
+@pytest.mark.parametrize(
+    "word, parts",
+    [
+        ("ThisIsCamelCase", ["This", "Is", "Camel", "Case"]),
+        ("thisIPIsAlsoCamelCase", ["this", "IP", "Is", "Also", "Camel", "Case"]),
+        (CAMELCASE_TEST_WORD, [CAMELCASE_TEST_WORD]),
+    ],
+)
+def test_camel_case_split(word, parts):
     """
     Given
         - A CamelCase word
@@ -1361,18 +1397,52 @@ def test_camel_case_split():
     Then
         - Ensure result is a list of the split words in the camel case.
     """
-    camel_1 = "ThisIsCamelCase"
-    result = DocReviewer.camel_case_split(camel_1)
+    result = DocReviewer.camel_case_split(word)
     assert isinstance(result, List)
-    assert "This" in result
-    assert "Is" in result
-    assert "Camel" in result
-    assert "Case" in result
+    assert (
+        result == parts
+    ), "The split of the camel case doesn't match the expected parts"
 
-    camel_2 = "thisIPIsAlsoCamel"
-    result = DocReviewer.camel_case_split(camel_2)
-    assert "this" in result
-    assert "IP" in result
-    assert "Is" in result
-    assert "Also" in result
-    assert "Camel" in result
+
+@pytest.mark.parametrize(
+    "sentence, expected",
+    [
+        ("\\tthis\\rhas\\nescapes\\b", " this has escapes "),
+        ("no escape sequence", "no escape sequence"),
+    ],
+)
+def test_replace_escape_characters(sentence, expected):
+    result = replace_escape_characters(sentence)
+    assert result == expected, "The escape sequence was removed"
+
+
+@pytest.mark.parametrize(
+    "use_pack_known_words, expected_param_value",
+    [
+        (["--use-packs-known-words"], True),
+        (["--skip-packs-known-words"], False),
+        ([""], True),
+        (["--skip-packs-known-words", "--use-packs-known-words"], True),
+    ],
+)
+def test_pack_known_word_arg(use_pack_known_words, expected_param_value, mocker):
+    """
+    Given:
+        - the --use-pack-known-words parameter
+    When:
+        - running the doc-review command
+    Then:
+        - Validate that given --use-packs-known-words" the load_known_words_from_pack is True
+        - Validate that given --skip-packs-known-words" the load_known_words_from_pack is False
+        - Validate that no param the default load_known_words_from_pack is True
+        - Validate that given --use-packs-known-words and --skip-packs-known-words the load_known_words_from_pack is True
+    """
+    runner = CliRunner()
+    mock_doc_reviewer = mocker.MagicMock(name="DocReviewer")
+    mock_doc_reviewer.run_doc_review.return_value = True
+    m = mocker.patch(
+        "demisto_sdk.commands.doc_reviewer.doc_reviewer.DocReviewer",
+        return_value=mock_doc_reviewer,
+    )
+    runner.invoke(__main__.doc_review, use_pack_known_words)
+    assert m.call_args.kwargs.get("load_known_words_from_pack") == expected_param_value

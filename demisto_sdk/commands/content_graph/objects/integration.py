@@ -1,5 +1,6 @@
-import logging
-from typing import TYPE_CHECKING, List
+from typing import TYPE_CHECKING, Callable, List, Optional
+
+import demisto_client
 
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 
@@ -10,24 +11,24 @@ if TYPE_CHECKING:
 from pydantic import Field
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
 from demisto_sdk.commands.content_graph.objects.integration_script import (
     IntegrationScript,
 )
-
-logger = logging.getLogger("demisto-sdk")
 
 
 class Command(BaseContent, content_type=ContentType.COMMAND):  # type: ignore[call-arg]
     name: str
 
     # From HAS_COMMAND relationship
-    deprecated: bool = False
-    description: str = ""
+    deprecated: bool = Field(False)
+    description: Optional[str] = Field("")
 
     # missing attributes in DB
-    node_id: str = ""
-    object_id: str = Field("", alias="id")
+    node_id: str = Field("", exclude=True)
+    object_id: str = Field("", alias="id", exclude=True)
+    marketplaces: List[MarketplaceVersions] = Field([], exclude=True)
 
     @property
     def integrations(self) -> List["Integration"]:
@@ -42,8 +43,9 @@ class Command(BaseContent, content_type=ContentType.COMMAND):  # type: ignore[ca
 
 
 class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # type: ignore[call-arg]
-    is_fetch: bool = False
-    is_fetch_events: bool = False
+    is_fetch: bool = Field(False, alias="isfetch")
+    is_fetch_events: bool = Field(False, alias="isfetchevents")
+    is_fetch_events_and_assets: bool = False
     is_feed: bool = False
     category: str
     commands: List[Command] = []
@@ -69,23 +71,41 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
         ]
         self.commands = commands
 
+    def summary(
+        self,
+        marketplace: Optional[MarketplaceVersions] = None,
+        incident_to_alert: bool = False,
+    ) -> dict:
+        summary = super().summary(marketplace, incident_to_alert)
+        if self.unified_data:
+            summary["name"] = self.unified_data.get("display")
+        return summary
+
     def metadata_fields(self):
-        return {
-            "name": True,
-            "description": True,
-            "category": True,
-            "commands": {
-                "__all__": {"name": True, "description": True}
-            },  # for all commands, keep the name and description
-        }
+        return (
+            super()
+            .metadata_fields()
+            .union(
+                {
+                    "category": True,
+                    "commands": {
+                        "__all__": {"name": True, "description": True}
+                    },  # for all commands, keep the name and description
+                    "is_fetch": True,
+                    "is_fetch_events": True,
+                }
+            )
+        )
 
     def prepare_for_upload(
-        self, marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR, **kwargs
+        self,
+        current_marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR,
+        **kwargs,
     ) -> dict:
-        data = super().prepare_for_upload(marketplace, **kwargs)
+        data = super().prepare_for_upload(current_marketplace, **kwargs)
 
         if supported_native_images := self.get_supported_native_images(
-            marketplace=marketplace,
+            marketplace=current_marketplace,
             ignore_native_image=kwargs.get("ignore_native_image") or False,
         ):
             logger.debug(
@@ -94,3 +114,7 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
             data["script"]["nativeimage"] = supported_native_images
 
         return data
+
+    @classmethod
+    def _client_upload_method(cls, client: demisto_client) -> Callable:
+        return client.integration_upload

@@ -14,12 +14,10 @@ from demisto_sdk.commands.common.constants import (
     ContentItems,
 )
 from demisto_sdk.commands.common.content.objects.abstract_objects import JSONObject
-from demisto_sdk.commands.common.handlers import JSON_Handler
-from demisto_sdk.commands.common.tools import get_core_pack_list, get_json
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
+from demisto_sdk.commands.common.logger import logger
+from demisto_sdk.commands.common.tools import get_core_pack_list
 from demisto_sdk.commands.find_dependencies.find_dependencies import PackDependencies
-
-json = JSON_Handler()
-
 
 DATETIME_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
 PARTNER_SUPPORT = "partner"
@@ -251,7 +249,7 @@ class PackMetaData(JSONObject):
             if not self._author:
                 return XSOAR_AUTHOR
             elif self._author != XSOAR_AUTHOR:
-                logging.warning(
+                logger.warning(
                     f"{self._author} author doest not match {XSOAR_AUTHOR} default value"
                 )
                 return self._author
@@ -546,7 +544,7 @@ class PackMetaData(JSONObject):
             pack_path, PACKS_PACK_META_FILE_NAME
         )  # user metadata path before parsing
 
-        if not os.path.exists(user_metadata_path):
+        if not Path(user_metadata_path).exists():
             logger.error(
                 f"{pack_name} pack is missing {PACKS_PACK_META_FILE_NAME} file."
             )

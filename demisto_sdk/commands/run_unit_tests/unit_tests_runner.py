@@ -1,7 +1,7 @@
-import logging
 import os
 import shutil
 import sqlite3
+import tempfile
 import traceback
 from pathlib import Path
 from typing import List
@@ -11,15 +11,13 @@ from junitparser import JUnitXml
 
 import demisto_sdk.commands.common.docker_helper as docker_helper
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH, PYTHONPATH
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.content_graph.objects.integration_script import (
     IntegrationScript,
 )
 from demisto_sdk.commands.coverage_analyze.helpers import coverage_files
 from demisto_sdk.commands.lint.helpers import stream_docker_container_output
-
-logger = logging.getLogger("demisto-sdk")
-
 
 DOCKER_PYTHONPATH = [
     f"/content/{path.relative_to(CONTENT_PATH)}"
@@ -29,85 +27,131 @@ DOCKER_PYTHONPATH = [
 
 DEFAULT_DOCKER_IMAGE = "demisto/python:1.3-alpine"
 
-PYTEST_RUNNER = f"{(Path(__file__).parent / 'pytest_runner.sh')}"
-POWERSHELL_RUNNER = f"{(Path(__file__).parent / 'pwsh_test_runner.sh')}"
+PYTEST_COMMAND = "python -m pytest . -v --rootdir=/content --override-ini='asyncio_mode=auto' --override-ini='junit_family=xunit1' --junitxml=.report_pytest.xml --cov-report= --cov=."
+PWSH_COMMAND = "pwsh -Command Invoke-Pester -Configuration '@{Run=@{Exit=$true}; Output=@{Verbosity=\"Detailed\"}}'"
+TEST_REQUIREMENTS_DIR = Path(__file__).parent.parent / "lint" / "resources"
 
 
-def fix_coverage_report_path(code_directory: Path):
+NO_TESTS_COLLECTED = 5
+
+
+def fix_coverage_report_path(coverage_file: Path) -> bool:
     """
 
     Args:
-        code_directory: The integration script (absolute file).
+        coverage_file: The coverage file to to fix (absolute file).
+
+    Returns:
+        True if the file was fixed, False otherwise.
 
     Notes:
         the .coverage files contain all the files list with their absolute path.
         but our tests (pytest step) are running inside a docker container.
         so we have to change the path to the correct one.
+
     """
-    coverage_file = code_directory / ".coverage"
-    if not coverage_file.exists():
-        logger.debug(
-            f"Skipping {code_directory} as it does not contain a coverage report."
-        )
+    try:
+        logger.debug(f"Editing coverage report for {coverage_file}")
+        with tempfile.NamedTemporaryFile() as temp_file:
+            # we use a tempfile because the original file could be readonly, this way we assure we can edit it.
+            shutil.copy(coverage_file, temp_file.name)
+            with sqlite3.connect(temp_file.name) as sql_connection:
+                cursor = sql_connection.cursor()
+                files = cursor.execute("SELECT * FROM file").fetchall()
+                for id_, file in files:
+                    if not file.startswith("/content"):
+                        # means that the .coverage file is already fixed
+                        continue
+                    file = Path(file).relative_to("/content")
+                    if (
+                        not (CONTENT_PATH / file).exists()
+                        or file.parent.name
+                        not in file.name  # For example, in `QRadar_v3` directory we only care for `QRadar_v3.py`
+                    ):
+                        logger.debug(f"Removing {file} from coverage report")
+                        cursor.execute(
+                            "DELETE FROM file WHERE id = ?", (id_,)
+                        )  # delete the file from the coverage report, as it is not relevant.
+                    else:
+                        cursor.execute(
+                            "UPDATE file SET path = ? WHERE id = ?",
+                            (str(CONTENT_PATH / file), id_),
+                        )
+                sql_connection.commit()
+                logger.debug("Done editing coverage report")
+            coverage_file.unlink()
+            shutil.copy(temp_file.name, coverage_file)
+            return True
+    except Exception:
+        logger.warning(f"Broken .coverage file found: {file}, deleting it")
+        file.unlink(missing_ok=True)
+        return False
+
+
+def merge_coverage_report():
+    coverage_path = CONTENT_PATH / ".coverage"
+    coverage_path.unlink(missing_ok=True)
+    cov = coverage.Coverage(data_file=coverage_path)
+    if not (files := coverage_files()):
+        logger.warning("No coverage files found, skipping coverage report.")
         return
-    logger.debug(f"Editing coverage report for {coverage_file}")
-    with sqlite3.connect(coverage_file) as sql_connection:
-        cursor = sql_connection.cursor()
-        files = cursor.execute("SELECT * FROM file").fetchall()
-        for id_, file in files:
-            file_name = Path(file).name
-            cursor.execute(
-                "UPDATE file SET path = ? WHERE id = ?",
-                (str(code_directory / file_name), id_),
-            )
-        sql_connection.commit()
-        logger.debug("Done editing coverage report")
+    fixed_files = [file for file in files if fix_coverage_report_path(Path(file))]
+    cov.combine(fixed_files, keep=True)
+    cov.xml_report(outfile=str(CONTENT_PATH / "coverage.xml"))
+    logger.info(f"Coverage report saved to {CONTENT_PATH / 'coverage.xml'}")
 
 
 def unit_test_runner(file_paths: List[Path], verbose: bool = False) -> int:
     docker_client = docker_helper.init_global_docker_client()
-
+    docker_base = docker_helper.get_docker()
     exit_code = 0
     for filename in file_paths:
         integration_script = BaseContent.from_path(Path(filename))
         if not isinstance(integration_script, IntegrationScript):
             logger.warning(f"Skipping {filename} as it is not a content item.")
             continue
-        working_dir = (
-            f"/content/{integration_script.path.parent.relative_to(CONTENT_PATH)}"
+
+        relative_integration_script_path = integration_script.path.relative_to(
+            CONTENT_PATH
         )
-        runner = (
-            POWERSHELL_RUNNER
-            if integration_script.type == "powershell"
-            else PYTEST_RUNNER
-        )
-        shutil.copy(runner, integration_script.path.parent / "test_runner.sh")
+
+        if (test_data_dir := (integration_script.path.parent / "test_data")).exists():
+            (test_data_dir / "__init__.py").touch()
+
+        working_dir = f"/content/{relative_integration_script_path.parent}"
         docker_images = [integration_script.docker_image or DEFAULT_DOCKER_IMAGE]
-        if os.getenv("GITLAB_CI"):
+        if os.getenv("CONTENT_GITLAB_CI"):
             docker_images = [
                 f"docker-io.art.code.pan.run/{docker_image}"
                 for docker_image in docker_images
             ]
         logger.debug(f"{docker_images=}")
         for docker_image in docker_images:
-            logger.info(f"Running test for {filename} using {docker_image=}")
             try:
-                docker_client.images.pull(docker_image)
-                shutil.copy(
-                    Path(__file__).parent / ".pytest.ini",
-                    integration_script.path.parent / ".pytest.ini",
+                test_docker_image, errors = docker_base.pull_or_create_test_image(
+                    docker_image,
+                    integration_script.type,
+                    log_prompt=f"Unit test {integration_script.name}",
                 )
-                shutil.copy(
-                    CONTENT_PATH
-                    / "Tests"
-                    / "scripts"
-                    / "dev_envs"
-                    / "pytest"
-                    / "conftest.py",
-                    integration_script.path.parent / "conftest.py",
+                if errors:
+                    raise RuntimeError(f"Creating docker failed due to {errors}")
+                (integration_script.path.parent / "conftest.py").unlink(missing_ok=True)
+                (integration_script.path.parent / "conftest.py").symlink_to(
+                    (
+                        CONTENT_PATH
+                        / "Tests"
+                        / "scripts"
+                        / "dev_envs"
+                        / "pytest"
+                        / "conftest.py"
+                    )
+                )
+
+                logger.info(
+                    f"Running test for {relative_integration_script_path} using {docker_image=} with {test_docker_image=}"
                 )
                 container = docker_client.containers.run(
-                    image=docker_image,
+                    image=test_docker_image,
                     environment={
                         "PYTHONPATH": ":".join(DOCKER_PYTHONPATH),
                         "REQUESTS_CA_BUNDLE": "/etc/ssl/certs/ca-certificates.crt",
@@ -115,10 +159,11 @@ def unit_test_runner(file_paths: List[Path], verbose: bool = False) -> int:
                     },
                     volumes=[
                         f"{CONTENT_PATH}:/content",
-                        "/etc/ssl/certs/ca-certificates.crt:/etc/ssl/certs/ca-certificates.crt",
-                        "/etc/pip.conf:/etc/pip.conf",
                     ],
-                    command="sh test_runner.sh",
+                    command=PWSH_COMMAND
+                    if integration_script.type == "powershell"
+                    else [PYTEST_COMMAND],
+                    user=f"{os.getuid()}:{os.getgid()}",
                     working_dir=working_dir,
                     detach=True,
                 )
@@ -128,14 +173,19 @@ def unit_test_runner(file_paths: List[Path], verbose: bool = False) -> int:
                     logger.info if verbose else logger.debug,
                 )
                 # wait for container to finish
-                container_exit_code = container.wait()["StatusCode"]
-                if container_exit_code:
+                if status_code := container.wait()["StatusCode"]:
+                    if status_code == NO_TESTS_COLLECTED:
+                        logger.warning(
+                            f"No test are collected for {relative_integration_script_path} using {docker_image}."
+                        )
+                        continue
                     if not (
                         integration_script.path.parent / ".report_pytest.xml"
                     ).exists():
                         raise Exception(
-                            f"No pytest report found in {integration_script.path.parent}. Logs: {container.logs()}"
+                            f"No pytest report found in {relative_integration_script_path.parent}. Logs: {container.logs()}"
                         )
+                    test_failed = False
                     for suite in JUnitXml.fromfile(
                         integration_script.path.parent / ".report_pytest.xml"
                     ):
@@ -144,24 +194,25 @@ def unit_test_runner(file_paths: List[Path], verbose: bool = False) -> int:
                                 logger.error(
                                     f"Test for {integration_script.object_id} failed in {case.name} with error {case.result[0].message}: {case.result[0].text}"
                                 )
+                                test_failed = True
+                    if not test_failed:
+                        logger.error(
+                            f"Error running unit tests for {relative_integration_script_path} using {docker_image=}. Container reports  {status_code=}, logs: {container.logs()}"
+                        )
                     exit_code = 1
                 else:
-                    logger.info(f"All tests passed for {filename} in {docker_image}")
+                    logger.info(
+                        f"[green]All tests passed for {relative_integration_script_path} in {docker_image}[/green]"
+                    )
                 container.remove(force=True)
-                fix_coverage_report_path(integration_script.path.parent)
             except Exception as e:
                 logger.error(
                     f"Failed to run test for {filename} in {docker_image}: {e}"
                 )
                 traceback.print_exc()
                 exit_code = 1
-            finally:
-                # remove pytest.ini no matter the results
-                shutil.rmtree(
-                    integration_script.path.parent / ".pytest.ini", ignore_errors=True
-                )
-    cov = coverage.Coverage(data_file=CONTENT_PATH / ".coverage")
-    cov.combine(coverage_files())
-    cov.xml_report(outfile=str(CONTENT_PATH / "coverage.xml"))
-
+    try:
+        merge_coverage_report()
+    except Exception as e:
+        logger.warning(f"Failed to merge coverage report: {e}")
     return exit_code

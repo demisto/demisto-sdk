@@ -1,17 +1,14 @@
 import ast
-import logging
 import re
 import tempfile
 
 import demisto_client
 
-from demisto_sdk.commands.common.handlers import JSON_Handler
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.generate_outputs.json_to_outputs.json_to_outputs import (
     json_to_outputs,
 )
-
-logger = logging.getLogger("demisto-sdk")
-json = JSON_Handler()
 
 
 class DemistoRunTimeError(RuntimeError):
@@ -42,6 +39,7 @@ class Runner:
     def __init__(
         self,
         query: str,
+        incident_id: str = None,
         insecure: bool = False,
         debug: str = None,
         debug_path: str = None,
@@ -51,6 +49,7 @@ class Runner:
         **kwargs,
     ):
         self.query = query if query.startswith("!") else f"!{query}"
+        self.incident_id = incident_id
         self.debug = debug
         self.debug_path = debug_path
         verify = (
@@ -66,10 +65,11 @@ class Runner:
 
     def run(self):
         """Runs an integration command on Demisto and prints the result."""
-        playground_id = self._get_playground_id()
+        investigation_id = self.incident_id or self._get_playground_id()
+        logger.debug(f"running command in {investigation_id=}")
 
         try:
-            log_ids = self._run_query(playground_id)
+            log_ids = self._run_query(investigation_id)
         except DemistoRunTimeError as err:
             log_ids = None
             logger.info(f"[red]{err}[/red]")
@@ -106,12 +106,16 @@ class Runner:
 
     def _get_playground_id(self):
         """Retrieves Playground ID from the remote Demisto instance."""
-        playground_filter = {"filter": {"type": [9]}}
-        answer = self.client.search_investigations(filter=playground_filter)
+
+        def playground_filter(page: int = 0):
+            return {"filter": {"type": [9], "page": page}}
+
+        answer = self.client.search_investigations(filter=playground_filter())
         if answer.total == 0:
             raise RuntimeError("No playgrounds were detected in the environment.")
-        playgrounds = answer.data
-        if len(playgrounds) > 1:
+        elif answer.total == 1:
+            result = answer.data[0].id
+        else:
             # if found more than one playground, try to filter to results against the current user
             user_data, response, _ = self.client.generic_request(
                 path="/user",
@@ -122,18 +126,28 @@ class Runner:
             if response != 200:
                 raise RuntimeError("Cannot find username")
             username = user_data.get("username")
-            playgrounds = [
-                playground
-                for playground in playgrounds
-                if playground.creating_user_id == username
-            ]
+
+            def filter_by_creating_user_id(playground):
+                return playground.creating_user_id == username
+
+            playgrounds = list(filter(filter_by_creating_user_id, answer.data))
+
+            for i in range(int((answer.total - 1) / len(answer.data))):
+                playgrounds.extend(
+                    filter(
+                        filter_by_creating_user_id,
+                        self.client.search_investigations(
+                            filter=playground_filter(i + 1)
+                        ).data,
+                    )
+                )
+
             if len(playgrounds) != 1:
                 raise RuntimeError(
                     f"There is more than one playground to the user. "
                     f"Number of playgrounds is: {len(playgrounds)}"
                 )
-
-        result = playgrounds[0].id
+            result = playgrounds[0].id
 
         logger.debug(f"Playground ID: {result}")
 
@@ -230,7 +244,7 @@ class Runner:
                             while not self.HUMAN_READABLE_HEADER.match(line):
                                 context = context + line
                                 line = log_info.readline()
-                            context = re.sub(r"\(val\..+\)", "", context)  # noqa: W605
+                            context = re.sub(r"\(val\..+\)", "", context)
                             try:
                                 temp_dict = json.loads(context)
                                 if temp_dict:

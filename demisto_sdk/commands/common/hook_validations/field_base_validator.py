@@ -1,11 +1,11 @@
 """
 This module is designed to validate the correctness of incident field entities in content.
 """
-import logging
 import re
-from distutils.version import LooseVersion
 from enum import IntEnum
 from typing import List, Set
+
+from packaging.version import Version
 
 from demisto_sdk.commands.common.constants import (
     DEFAULT_CONTENT_ITEM_FROM_VERSION,
@@ -16,13 +16,12 @@ from demisto_sdk.commands.common.hook_validations.base_validator import error_co
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import (
     ContentEntityValidator,
 )
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     get_core_pack_list,
     get_pack_metadata,
     get_pack_name,
 )
-
-logger = logging.getLogger("demisto-sdk")
 
 # Cortex XSOAR is using a Bleve DB, those keys cannot be the cliName
 BleveMapping = {
@@ -429,7 +428,7 @@ class FieldBaseValidator(ContentEntityValidator):
 
     @error_codes("IF112")
     def is_valid_from_version_field(
-        self, min_from_version: LooseVersion, reason_for_min_version: str
+        self, min_from_version: Version, reason_for_min_version: str
     ):
         """
         Validates that the from version field is set to the expected minimum.
@@ -437,13 +436,13 @@ class FieldBaseValidator(ContentEntityValidator):
         1) Indicator field has the grid type, where the from version field needs to be set to 5.5.0 at least.
         2) Indicator field has the html type, where the from version field needs to be set to 6.1.0 at least.
         Args:
-            min_from_version (LooseVersion): Minimum from version to the field.
+            min_from_version (Version): Minimum from version to the field.
             reason_for_min_version (str): Reason for the requested min version. Used for better error message.
 
         Returns:
             (bool): True if from version is equal or greater than `min_from_version`, false otherwise.
         """
-        current_version = LooseVersion(
+        current_version = Version(
             self.current_file.get("fromVersion", DEFAULT_CONTENT_ITEM_FROM_VERSION)
         )
         if current_version < min_from_version:
@@ -466,14 +465,28 @@ class FieldBaseValidator(ContentEntityValidator):
         Returns:
             (bool): True if selectValues does not have empty values, false if contains empty value.
         """
-        if any(
-            select_value == ""
-            for select_value in (self.current_file.get("selectValues") or [])
-        ):
-            (
-                error_message,
-                error_code,
-            ) = Errors.select_values_cannot_contain_empty_values()
+        error_message, error_code = "", ""
+        select_values = self.current_file.get("selectValues") or []
+        empty_string_count = sum(select_value == "" for select_value in select_values)
+        if self.current_file.get("type") == "singleSelect":
+            if (
+                empty_string_count and len(select_values) == 1
+            ) or empty_string_count > 1:
+                (
+                    error_message,
+                    error_code,
+                ) = (
+                    Errors.select_values_cannot_contain_multiple_or_only_empty_values_in_single_select_types()
+                )
+        else:
+            if empty_string_count:
+                (
+                    error_message,
+                    error_code,
+                ) = (
+                    Errors.select_values_cannot_contain_empty_values_in_multi_select_types()
+                )
+        if error_code and error_message:
             if self.handle_error(
                 error_message,
                 error_code,

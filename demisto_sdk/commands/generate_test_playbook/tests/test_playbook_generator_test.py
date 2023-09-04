@@ -3,15 +3,13 @@ from pathlib import Path
 
 import pytest
 
-from demisto_sdk.commands.common.handlers import YAML_Handler
+from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.tools import get_yaml
 from demisto_sdk.commands.generate_test_playbook.test_playbook_generator import (
     PlaybookTestsGenerator,
     get_command_examples,
 )
-
-yaml = YAML_Handler()
 
 
 class TestGenerateTestPlaybook:
@@ -22,12 +20,12 @@ class TestGenerateTestPlaybook:
 
     @classmethod
     def setup_class(cls):
-        print("Setups TestGenerateTestPlaybook class")
+        print("Setups TestGenerateTestPlaybook class")  # noqa: T201
         Path(TestGenerateTestPlaybook.TEMP_DIR).mkdir(exist_ok=True)
 
     @classmethod
     def teardown_class(cls):
-        print("Tearing down TestGenerateTestPlaybook class")
+        print("Tearing down TestGenerateTestPlaybook class")  # noqa: T201
         if Path(TestGenerateTestPlaybook.TEMP_DIR).exists():
             shutil.rmtree(
                 TestGenerateTestPlaybook.TEMP_DIR, ignore_errors=False, onerror=None

@@ -1,3 +1,4 @@
+from pathlib import Path
 from typing import Optional
 
 from demisto_sdk.commands.common.constants import (
@@ -6,12 +7,10 @@ from demisto_sdk.commands.common.constants import (
     PACKS_PACK_META_FILE_NAME,
 )
 from demisto_sdk.commands.common.errors import Errors
-from demisto_sdk.commands.common.handlers import JSON_Handler
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.hook_validations.base_validator import error_codes
 from demisto_sdk.commands.common.hook_validations.image import ImageValidator
 from demisto_sdk.commands.common.tools import get_pack_name, os
-
-json = JSON_Handler()
 
 
 class AuthorImageValidator(ImageValidator):
@@ -49,7 +48,7 @@ class AuthorImageValidator(ImageValidator):
         Returns:
             (bool): Whether author image is valid.
         """
-        if os.path.exists(self.file_path):
+        if Path(self.file_path).exists():
             self.validate_size(
                 allow_empty_image_file=False, maximum_size=self.maximum_image_size
             )

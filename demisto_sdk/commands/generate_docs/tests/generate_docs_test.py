@@ -4,12 +4,10 @@ from typing import Dict, List
 
 import pytest
 
-from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.hook_validations.readme import ReadMeValidator
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.markdown_lint import run_markdownlint
 from demisto_sdk.commands.common.tools import get_json, get_yaml
-from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
 from demisto_sdk.commands.generate_docs.generate_integration_doc import (
     append_or_replace_command_in_docs,
     disable_md_autolinks,
@@ -23,10 +21,7 @@ from demisto_sdk.commands.generate_docs.generate_integration_doc import (
 from demisto_sdk.commands.generate_docs.generate_playbook_doc import (
     generate_playbook_doc,
 )
-from demisto_sdk.commands.generate_docs.generate_script_doc import generate_script_doc
 from TestSuite.pack import Pack
-
-json = JSON_Handler()
 
 FILES_PATH = os.path.normpath(
     os.path.join(__file__, git_path(), "demisto_sdk", "tests", "test_files")
@@ -379,6 +374,12 @@ def test_get_inputs():
             "Default Value": expected_query,
             "Required": "Optional",
         },
+        {
+            "Name": "InputD",
+            "Description": "test & description",
+            "Default Value": "File.NameD",
+            "Required": "Optional",
+        },
     ]
 
     assert inputs == expected_inputs
@@ -399,6 +400,11 @@ def test_get_outputs():
             "Type": "string",
         },
         {"Path": "FileData", "Description": "", "Type": "string"},
+        {
+            "Path": "Email.From",
+            "Description": "The sender & of the email.",
+            "Type": "string",
+        },
     ]
 
     assert outputs == expected_outputs
@@ -517,15 +523,6 @@ def test_get_script_outputs():
 
     assert outputs == expected_outputs
     assert errors[0] == "Error! You are missing description in script output outputB"
-
-
-def test_get_used_in():
-    from demisto_sdk.commands.generate_docs.generate_script_doc import get_used_in
-
-    script = get_yaml(TEST_SCRIPT_PATH)
-    script_id = script.get("commonfields")["id"]
-    used_in = get_used_in(FAKE_ID_SET, script_id)
-    assert used_in == ["Fake playbook", "Fake script"]
 
 
 # integration tests
@@ -904,78 +901,6 @@ def test_generate_playbook_doc_passes_markdownlint(tmp_path):
             assert not markdownlint.has_errors, markdownlint.validations
 
 
-def test_generate_script_doc_passes_markdownlint(tmp_path, mocker):
-    """
-    Given: A script
-    When: Generating a readme for the script
-    Then: The generated readme will have no markdown errors
-
-    """
-    import demisto_sdk.commands.generate_docs.common as common
-
-    d = tmp_path / "script_doc_out"
-    d.mkdir()
-    in_script = os.path.join(FILES_PATH, "docs_test", "script-Set.yml")
-    id_set_file = os.path.join(FILES_PATH, "docs_test", "id_set.json")
-    with open(id_set_file) as f:
-        id_set = json.load(f)
-    mocker.patch.object(IDSetCreator, "create_id_set", return_value=[id_set, {}, {}])
-    mocker.patch.object(common, "execute_command", side_effect=handle_example)
-    mocker.patch(
-        "demisto_sdk.commands.generate_docs.generate_script_doc.get_used_in",
-        return_value=[],
-    )
-    generate_script_doc(
-        in_script,
-        "!Set key=k1 value=v1,!Set key=k2 value=v2 append=true",
-        str(d),
-    )
-    readme = d / "README.md"
-    with ReadMeValidator.start_mdx_server():
-        with open(readme) as file:
-            assert not run_markdownlint(file.read()).has_errors
-
-
-def test_generate_script_doc(tmp_path, mocker):
-    import demisto_sdk.commands.generate_docs.common as common
-
-    d = tmp_path / "script_doc_out"
-    d.mkdir()
-    in_script = os.path.join(FILES_PATH, "docs_test", "script-Set.yml")
-    id_set_file = os.path.join(FILES_PATH, "docs_test", "id_set.json")
-    expected_readme = os.path.join(FILES_PATH, "docs_test", "set_expected-README.md")
-    with open(id_set_file) as f:
-        id_set = json.load(f)
-    patched = mocker.patch.object(
-        IDSetCreator, "create_id_set", return_value=[id_set, {}, {}]
-    )
-    mocker.patch.object(common, "execute_command", side_effect=handle_example)
-    # because used in is random
-    mocker.patch(
-        "demisto_sdk.commands.generate_docs.generate_script_doc.get_used_in",
-        return_value=[],
-    )
-    generate_script_doc(
-        in_script,
-        "!Set key=k1 value=v1,!Set key=k2 value=v2 append=true",
-        str(d),
-    )
-    patched.assert_called()
-    readme = d / "README.md"
-    with open(readme) as real_readme_file:
-        with open(expected_readme) as expected_readme_file:
-            assert real_readme_file.read() == expected_readme_file.read()
-
-    # Now try the same thing with a txt file
-    command_examples = d / "command_examples.txt"
-    with command_examples.open("w") as f:
-        f.write("!Set key=k1 value=v1\n!Set key=k2 value=v2 append=true")
-    generate_script_doc(in_script, command_examples, str(d))
-    with open(readme) as real_readme_file:
-        with open(expected_readme) as expected_readme_file:
-            assert real_readme_file.read() == expected_readme_file.read()
-
-
 class TestAppendOrReplaceCommandInDocs:
     positive_test_data_file = os.path.join(
         FILES_PATH, "docs_test", "positive_docs_section_end_with_eof.md"
@@ -1014,8 +939,8 @@ class TestGenerateIntegrationDoc:
         test_integration_readme = os.path.join(
             os.path.dirname(TEST_INTEGRATION_PATH), "README.md"
         )
-        if os.path.isfile(test_integration_readme):
-            os.remove(test_integration_readme)
+        if Path(test_integration_readme).is_file():
+            Path(test_integration_readme).unlink()
 
     @classmethod
     def setup_class(cls):
@@ -1699,7 +1624,7 @@ def test_disable_md_autolinks():
     no_replace_str = "nohttp://test.com"
     assert disable_md_autolinks(no_replace_str) == no_replace_str
     # taken from here: https://github.com/demisto/content/pull/13423/files
-    big_str = """{'language': 'python', 'status': 'success', 'status-message': '11 fixed alerts', 'new': 0, 'fixed': 11, 'alerts': [{'query': {'id': 9980089, 'pack': 'com.lgtm/python-queries', 'name': 'Statement has no effect', 'language': 'python', 'properties': {'id': 'py/ineffectual-statement', 'name': 'Statement has no effect', 'severity': 'recommendation', 'tags': ['maintainability', 'useless-code', 'external/cwe/cwe-561']}, 'url': 'https://lgtm.com/rules/9980089'}, 'new': 0, 'fixed': 0}, {'query': {'id': 1510006386081, 'pack': 'com.lgtm/python-queries', 'name': 'Clear-text storage of sensitive information', 'language': 'python', 'properties': {'id': 'py/clear-text-storage-sensitive-data', 'name': 'Clear-text storage of sensitive information', 'severity': 'error', 'tags': ['security', 'external/cwe/cwe-312', 'external/cwe/cwe-315', 'external/cwe/cwe-359']}, 'url': 'https://lgtm.com/rules/1510006386081'}, 'new': 0, 'fixed': 1}, {'query': {'id': 6780086, 'pack': 'com.lgtm/python-queries', 'name': 'Unused local variable', 'language': 'python', 'properties': {'id': 'py/unused-local-variable', 'name': 'Unused local variable', 'severity': 'recommendation', 'tags': ['maintainability', 'useless-code', 'external/cwe/cwe-563']}, 'url': 'https://lgtm.com/rules/6780086'}, 'new': 0, 'fixed': 4}, {'query': {'id': 1800095, 'pack': 'com.lgtm/python-queries', 'name': 'Variable defined multiple times', 'language': 'python', 'properties': {'id': 'py/multiple-definition', 'name': 'Variable defined multiple times', 'severity': 'warning', 'tags': ['maintainability', 'useless-code', 'external/cwe/cwe-563']}, 'url': 'https://lgtm.com/rules/1800095'}, 'new': 0, 'fixed': 4}, {'query': {'id': 3960089, 'pack': 'com.lgtm/python-queries', 'name': 'Explicit returns mixed with implicit (fall through) returns', 'language': 'python', 'properties': {'id': 'py/mixed-returns', 'name': 'Explicit returns mixed with implicit (fall through) returns', 'severity': 'recommendation', 'tags': ['reliability', 'maintainability']}, 'url': 'https://lgtm.com/rules/3960089'}, 'new': 0, 'fixed': 0}, {'query': {'id': 1780094, 'pack': 'com.lgtm/python-queries', 'name': 'Wrong number of arguments in a call', 'language': 'python', 'properties': {'id': 'py/call/wrong-arguments', 'name': 'Wrong number of arguments in a call', 'severity': 'error', 'tags': ['reliability', 'correctness', 'external/cwe/cwe-685']}, 'url': 'https://lgtm.com/rules/1780094'}, 'new': 0, 'fixed': 2}, {'query': {'id': 10030095, 'pack': 'com.lgtm/python-queries', 'name': 'File is not always closed', 'language': 'python', 'properties': {'id': 'py/file-not-closed', 'name': 'File is not always closed', 'severity': 'warning', 'tags': ['efficiency', 'correctness', 'resources', 'external/cwe/cwe-772']}, 'url': 'https://lgtm.com/rules/10030095'}, 'new': 0, 'fixed': 0}]} | https://lgtm.com/projects/g/my-devsecops/moon/rev/pr- """  # noqa
+    big_str = """{'language': 'python', 'status': 'success', 'status-message': '11 fixed alerts', 'new': 0, 'fixed': 11, 'alerts': [{'query': {'id': 9980089, 'pack': 'com.lgtm/python-queries', 'name': 'Statement has no effect', 'language': 'python', 'properties': {'id': 'py/ineffectual-statement', 'name': 'Statement has no effect', 'severity': 'recommendation', 'tags': ['maintainability', 'useless-code', 'external/cwe/cwe-561']}, 'url': 'https://lgtm.com/rules/9980089'}, 'new': 0, 'fixed': 0}, {'query': {'id': 1510006386081, 'pack': 'com.lgtm/python-queries', 'name': 'Clear-text storage of sensitive information', 'language': 'python', 'properties': {'id': 'py/clear-text-storage-sensitive-data', 'name': 'Clear-text storage of sensitive information', 'severity': 'error', 'tags': ['security', 'external/cwe/cwe-312', 'external/cwe/cwe-315', 'external/cwe/cwe-359']}, 'url': 'https://lgtm.com/rules/1510006386081'}, 'new': 0, 'fixed': 1}, {'query': {'id': 6780086, 'pack': 'com.lgtm/python-queries', 'name': 'Unused local variable', 'language': 'python', 'properties': {'id': 'py/unused-local-variable', 'name': 'Unused local variable', 'severity': 'recommendation', 'tags': ['maintainability', 'useless-code', 'external/cwe/cwe-563']}, 'url': 'https://lgtm.com/rules/6780086'}, 'new': 0, 'fixed': 4}, {'query': {'id': 1800095, 'pack': 'com.lgtm/python-queries', 'name': 'Variable defined multiple times', 'language': 'python', 'properties': {'id': 'py/multiple-definition', 'name': 'Variable defined multiple times', 'severity': 'warning', 'tags': ['maintainability', 'useless-code', 'external/cwe/cwe-563']}, 'url': 'https://lgtm.com/rules/1800095'}, 'new': 0, 'fixed': 4}, {'query': {'id': 3960089, 'pack': 'com.lgtm/python-queries', 'name': 'Explicit returns mixed with implicit (fall through) returns', 'language': 'python', 'properties': {'id': 'py/mixed-returns', 'name': 'Explicit returns mixed with implicit (fall through) returns', 'severity': 'recommendation', 'tags': ['reliability', 'maintainability']}, 'url': 'https://lgtm.com/rules/3960089'}, 'new': 0, 'fixed': 0}, {'query': {'id': 1780094, 'pack': 'com.lgtm/python-queries', 'name': 'Wrong number of arguments in a call', 'language': 'python', 'properties': {'id': 'py/call/wrong-arguments', 'name': 'Wrong number of arguments in a call', 'severity': 'error', 'tags': ['reliability', 'correctness', 'external/cwe/cwe-685']}, 'url': 'https://lgtm.com/rules/1780094'}, 'new': 0, 'fixed': 2}, {'query': {'id': 10030095, 'pack': 'com.lgtm/python-queries', 'name': 'File is not always closed', 'language': 'python', 'properties': {'id': 'py/file-not-closed', 'name': 'File is not always closed', 'severity': 'warning', 'tags': ['efficiency', 'correctness', 'resources', 'external/cwe/cwe-772']}, 'url': 'https://lgtm.com/rules/10030095'}, 'new': 0, 'fixed': 0}]} | https://lgtm.com/projects/g/my-devsecops/moon/rev/pr- """
     res = disable_md_autolinks(big_str)
     assert "http://" not in res
     assert res.count("https:<span>//</span>") == 8

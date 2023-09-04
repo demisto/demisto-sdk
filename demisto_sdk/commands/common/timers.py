@@ -1,5 +1,5 @@
 # STD python packages
-import logging
+
 import time
 from collections import defaultdict, namedtuple
 from dataclasses import astuple, dataclass
@@ -13,9 +13,7 @@ from typing import Dict, Optional, Sequence
 from tabulate import tabulate
 
 # Local packages
-from demisto_sdk.commands.common.logger import Colors
-
-logger = logging.getLogger("demisto-sdk")
+from demisto_sdk.commands.common.logger import logger
 
 StatInfo = namedtuple("StatInfo", ["total_time", "call_count", "avg_time"])
 
@@ -208,9 +206,9 @@ def write_measure_to_logger(
     """
     sentence = f"Time measurements stat for {name}"
     output_msg = (
-        f"\n{Colors.Fg.cyan}{'#' * len(sentence)}\n"
+        f"\n[cyan]{'#' * len(sentence)}\n"
         f"{sentence}\n"
-        f"{'#' * len(sentence)}\n{Colors.reset}"
+        f"{'#' * len(sentence)}[/cyan]\n"
     )
     stat_info_table = tabulate(csv_data, headers=MEASURE_TYPE_TO_HEADERS[measure_type])
     output_msg += stat_info_table

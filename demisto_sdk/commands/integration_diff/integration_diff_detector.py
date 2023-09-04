@@ -1,28 +1,25 @@
-import os
-
-import click
+from pathlib import Path
 
 from demisto_sdk.commands.common.constants import (
     ARGUMENT_FIELDS_TO_CHECK,
     INTEGRATION_ARGUMENT_TYPES,
     PARAM_FIELDS_TO_CHECK,
 )
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import get_yaml
 
 
 class IntegrationDiffDetector:
     def __init__(self, new: str = "", old: str = "", docs_format: bool = False):
 
-        if not os.path.exists(new):
-            click.secho(
-                "No such file or directory for the new integration version.",
-                fg="bright_red",
+        if not Path(new).exists():
+            logger.error(
+                "[red]No such file or directory for the new integration version.[/red]"
             )
 
-        if not os.path.exists(old):
-            click.secho(
-                "No such file or directory for the old integration version.",
-                fg="bright_red",
+        if not Path(old).exists():
+            logger.error(
+                "[red]No such file or directory for the old integration version.[/red]"
             )
 
         self.new = new
@@ -407,21 +404,21 @@ class IntegrationDiffDetector:
         changed = []
 
         for missing_type in self.missing_items_report:
-            click.secho(f"Missing {missing_type}:\n", fg="bright_red")
+            logger.info(f"[red]Missing {missing_type}:[/red]\n")
 
             for item in self.missing_items_report[missing_type]:
                 if "changed_field" in item:
                     changed.append(item["message"])
 
                 else:
-                    click.secho(item["message"], fg="bright_red")
+                    logger.info(f'[red]{item["message"]}[/red]')
 
             if changed:
-                click.secho(f"\nChanged {missing_type}:\n", fg="bright_red")
-                click.secho("\n".join(changed), fg="bright_red")
+                logger.info(f"\n[red]Changed {missing_type}:[/red]\n")
+                logger.info("[red]" + "\n".join(changed) + "[/red]")
                 changed.clear()
 
-            click.secho("")
+            logger.info("")
 
     def print_items_in_docs_format(self, secho_result: bool = True) -> str:
         """
@@ -494,7 +491,7 @@ class IntegrationDiffDetector:
                 "\n## Additional Considerations for this version\n* Insert any API changes, "
                 "any behavioral changes, limitations, or restrictions that would be new to this version.\n"
             )
-            click.secho(result)
+            logger.info(result)
 
         return result
 
@@ -506,7 +503,7 @@ class IntegrationDiffDetector:
             bool. return true if found items to print and false if not.
         """
         if not self.missing_items_report:
-            click.secho("The integrations are backwards compatible", fg="green")
+            logger.info("[green]The integrations are backwards compatible[/green]")
             return False
 
         if self.docs_format_output:

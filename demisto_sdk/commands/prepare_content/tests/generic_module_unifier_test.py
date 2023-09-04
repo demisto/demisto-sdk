@@ -1,8 +1,10 @@
+import logging
 import os
+from pathlib import Path
 
 import pytest
 
-from demisto_sdk.commands.common.handlers import JSON_Handler
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.prepare_content.generic_module_unifier import (
     GenericModuleUnifier,
 )
@@ -11,9 +13,10 @@ from demisto_sdk.tests.test_files.validate_integration_test_valid_types import (
     GENERIC_MODULE,
     UNIFIED_GENERIC_MODULE,
 )
-from TestSuite.test_tools import ChangeCWD
-
-json = JSON_Handler()
+from TestSuite.test_tools import (
+    ChangeCWD,
+    str_in_call_args_list,
+)
 
 
 def test_find_dashboard_by_id_positive(repo):
@@ -91,7 +94,7 @@ def test_merge_generic_module_with_its_dashboards_positive(repo):
         assert unified_generic_module == UNIFIED_GENERIC_MODULE
 
 
-def test_merge_generic_module_with_its_dashboards_negative(repo, capsys):
+def test_merge_generic_module_with_its_dashboards_negative(repo, mocker, monkeypatch):
     """
     Given
     - A pack with a valid generic module, and no dashboard that it's id matches a dashboard in the generic module.
@@ -103,6 +106,9 @@ def test_merge_generic_module_with_its_dashboards_negative(repo, capsys):
     - Ensure the module wasn't unified.
     - Ensure a suitable error message was printed.
     """
+    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+    monkeypatch.setenv("COLUMNS", "1000")
+
     pack = repo.create_pack("PackName")
     pack.create_generic_module("generic-module", GENERIC_MODULE)
     generic_module_path = pack.generic_modules[0].path
@@ -117,10 +123,9 @@ def test_merge_generic_module_with_its_dashboards_negative(repo, capsys):
         unifier = GenericModuleUnifier(input=generic_module_path)
         non_unified_generic_module = unifier.merge_generic_module_with_its_dashboards()
         assert non_unified_generic_module == GENERIC_MODULE
-        err_msg = capsys.readouterr()
-        assert (
-            f"Dashboard {generic_module_dash_id} was not found in pack: PackName and therefore was not unified\n"
-            in err_msg
+        assert str_in_call_args_list(
+            logger_info.call_args_list,
+            f"Dashboard {generic_module_dash_id} was not found in pack: PackName and therefore was not unified",
         )
 
 
@@ -149,7 +154,7 @@ def test_save_unified_generic_module(repo):
             pack._dashboards_path,
             f'{pack.generic_modules[0].name.rstrip(".json")}_unified.json',
         )
-        assert os.path.isfile(saving_path)
+        assert Path(saving_path).is_file()
         with open(saving_path) as f:
             saved_generic_module = json.load(f)
         assert saved_generic_module == UNIFIED_GENERIC_MODULE
@@ -178,7 +183,7 @@ def test_save_unified_generic_module_without_saving_path(repo):
             pack._generic_modules_path,
             f'{pack.generic_modules[0].name.rstrip(".json")}_unified.json',
         )
-        assert os.path.isfile(saving_path)
+        assert Path(saving_path).is_file()
         with open(saving_path) as f:
             saved_generic_module = json.load(f)
         assert saved_generic_module == UNIFIED_GENERIC_MODULE

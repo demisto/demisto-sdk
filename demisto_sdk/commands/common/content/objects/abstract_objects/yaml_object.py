@@ -1,6 +1,6 @@
 from typing import Optional, Union
 
-from ruamel.yaml.scanner import ScannerError
+from ruamel.yaml.scanner import ScannerError  # noqa:TID251 # only importing error is ok
 from wcmatch.pathlib import EXTGLOB, NEGATE, Path
 
 import demisto_sdk.commands.common.content.errors as exc

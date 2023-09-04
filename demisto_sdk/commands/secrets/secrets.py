@@ -1,8 +1,8 @@
-import logging
 import math
 import os
 import string
 from collections import defaultdict
+from pathlib import Path
 from typing import DefaultDict
 
 import PyPDF2
@@ -18,18 +18,14 @@ from demisto_sdk.commands.common.constants import (
 )
 from demisto_sdk.commands.common.content import Content
 from demisto_sdk.commands.common.git_util import GitUtil
-from demisto_sdk.commands.common.handlers import JSON_Handler
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     find_type,
     get_pack_name,
     is_file_path_in_pack,
     run_command,
 )
-
-logger = logging.getLogger("demisto-sdk")
-
-json = JSON_Handler()
-
 
 # secrets settings
 # Entropy score is determined by shanon's entropy algorithm, most English words will score between 1.5 and 3.5
@@ -68,6 +64,7 @@ TEXT_FILE_TYPES = {
     ".pdf",
     ".html",
     ".ps1",
+    ".xif",
 }
 SKIP_FILE_TYPE_ENTROPY_CHECKS = {".eml"}
 SKIP_DEMISTO_TYPE_ENTROPY_CHECKS = {"playbook-"}
@@ -188,13 +185,13 @@ class SecretsValidator:
                 prev_ver = self.git_util.handle_prev_ver()[1]
             if not prev_ver.startswith("origin"):
                 prev_ver = "origin/" + prev_ver
-            print(f"Running secrets validation against {prev_ver}")
+            logger.info(f"Running secrets validation against {prev_ver}")
 
             changed_files_string = run_command(
                 f"git diff --name-status {prev_ver}...{branch_name}"
             )
         else:
-            print("Running secrets validation on all changes")
+            logger.info("Running secrets validation on all changes")
             changed_files_string = run_command(
                 "git diff --name-status --no-merges HEAD"
             )
@@ -258,7 +255,7 @@ class SecretsValidator:
             # Skip white listed files
 
             if file_path in files_white_list:
-                print(
+                logger.info(
                     f"Skipping secrets detection for file: {file_path} as it is white listed"
                 )
                 continue
@@ -376,7 +373,7 @@ class SecretsValidator:
         yml_file = os.path.join(
             integration_path, os.path.basename(integration_path) + ".yml"
         )
-        if os.path.exists(yml_file):
+        if Path(yml_file).exists():
             with open(yml_file, encoding="utf-8") as matching_yml_file:
                 matching_yml_file_contents = matching_yml_file.read()
         return matching_yml_file_contents
@@ -474,7 +471,7 @@ class SecretsValidator:
         final_white_list = []
         ioc_white_list = []
         files_while_list = []
-        if os.path.isfile(whitelist_path):
+        if Path(whitelist_path).is_file():
             with open(whitelist_path, encoding="utf-8") as secrets_white_list_file:
                 secrets_white_list_file = json.load(secrets_white_list_file)
                 for name, white_list in secrets_white_list_file.items():  # type: ignore
@@ -502,7 +499,7 @@ class SecretsValidator:
         final_white_list = []
         files_white_list = []
 
-        if os.path.isfile(whitelist_path):
+        if Path(whitelist_path).is_file():
             with open(whitelist_path, encoding="utf-8") as secrets_white_list_file:
                 temp_white_list = secrets_white_list_file.read().split("\n")
             for white_list_line in temp_white_list:
@@ -510,7 +507,7 @@ class SecretsValidator:
                     white_list_line = os.path.join(
                         PACKS_DIR, pack_name, white_list_line[5:]
                     )
-                    if not os.path.isfile(os.path.join(white_list_line)):
+                    if not Path(white_list_line).is_file():
                         logger.info(
                             f"[yellow]{white_list_line} not found.\n"
                             "please add the file name in the following format\n"
@@ -543,7 +540,7 @@ class SecretsValidator:
             file_contents = self.ignore_base64(file_contents)
             return file_contents
         except Exception as ex:
-            print(f"Failed opening file: {file_path}. Exception: {ex}")
+            logger.info(f"Failed opening file: {file_path}. Exception: {ex}")
             raise
 
     @staticmethod
@@ -555,7 +552,7 @@ class SecretsValidator:
             pdf_reader = PyPDF2.PdfFileReader(pdf_file_obj)
             num_pages = pdf_reader.numPages
         except PyPDF2.errors.PdfReadError:
-            print(
+            logger.error(
                 f"ERROR: Could not parse PDF file in path: {file_path} - ***Review Manually***"
             )
             return file_contents

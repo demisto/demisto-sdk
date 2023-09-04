@@ -1,10 +1,13 @@
-import logging
 from typing import Optional, Tuple
 
-import click
-
-from demisto_sdk.commands.common.constants import TYPE_JS, TYPE_PWSH
+from demisto_sdk.commands.common.constants import (
+    FILETYPE_TO_DEFAULT_FROMVERSION,
+    TYPE_JS,
+    TYPE_PWSH,
+    FileType,
+)
 from demisto_sdk.commands.common.hook_validations.docker import DockerImageValidator
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import is_iron_bank_pack, server_version_compare
 from demisto_sdk.commands.format.format_constants import (
     ERROR_RETURN_CODE,
@@ -12,8 +15,6 @@ from demisto_sdk.commands.format.format_constants import (
     SUCCESS_RETURN_CODE,
 )
 from demisto_sdk.commands.format.update_generic_yml import BaseUpdateYML
-
-logger = logging.getLogger("demisto-sdk")
 
 
 class ScriptYMLFormat(BaseUpdateYML):
@@ -81,27 +82,26 @@ class ScriptYMLFormat(BaseUpdateYML):
                     image_name
                 )
             if not latest_tag:
-                click.secho("Failed getting docker image latest tag", fg="yellow")
+                logger.info("[yellow]Failed getting docker image latest tag[/yellow]")
                 return
         except Exception as e:
-            click.secho(
-                f"Failed getting docker image latest tag. {e} - Invalid docker image",
-                fg="yellow",
+            logger.info(
+                f"[yellow]Failed getting docker image latest tag. {e} - Invalid docker image[/yellow]"
             )
             return
         full_name = f"{image_name}:{latest_tag}"
         if full_name != dockerimage:
-            print(f"Updating docker image to: {full_name}")
+            logger.info(f"Updating docker image to: {full_name}")
             script_obj["dockerimage"] = full_name
             if (not from_version) or server_version_compare("5.0.0", from_version) > 0:
                 # if this is a script that supports 4.5 and earlier. Make sure dockerimage45 is set
                 if not script_obj.get("dockerimage45"):
-                    print(
+                    logger.info(
                         f"Setting dockerimage45 to previous image value: {dockerimage} for 4.5 and earlier support"
                     )
                     script_obj["dockerimage45"] = dockerimage
         else:
-            print(
+            logger.info(
                 f"Already using latest docker image: {dockerimage}. Nothing to update."
             )
 
@@ -113,11 +113,12 @@ class ScriptYMLFormat(BaseUpdateYML):
 
     def run_format(self) -> int:
         try:
-            click.secho(
-                f"\n================= Updating file {self.source_file} =================",
-                fg="bright_blue",
+            logger.info(
+                f"\n[blue]================= Updating file {self.source_file} =================[/blue]"
             )
-            super().update_yml()
+            super().update_yml(
+                default_from_version=FILETYPE_TO_DEFAULT_FROMVERSION[FileType.SCRIPT],
+            )
             self.update_tests()
             self.update_docker_image()
             self.save_yml_to_destination_file()

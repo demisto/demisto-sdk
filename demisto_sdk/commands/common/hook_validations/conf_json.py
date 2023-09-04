@@ -3,14 +3,13 @@ from pathlib import Path
 from demisto_sdk.commands.common.constants import API_MODULES_PACK, FileType
 from demisto_sdk.commands.common.content_constant_paths import CONF_PATH
 from demisto_sdk.commands.common.errors import Errors
-from demisto_sdk.commands.common.handlers import JSON_Handler
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.hook_validations.base_validator import (
     BaseValidator,
     error_codes,
 )
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import _get_file_id, get_pack_name
-
-json = JSON_Handler()
 
 
 class ConfJsonValidator(BaseValidator):
@@ -43,7 +42,7 @@ class ConfJsonValidator(BaseValidator):
 
     def is_valid_conf_json(self):
         """Validate the fields skipped_tests, skipped_integrations and unmockable_integrations in conf.json file."""
-        print("\nValidating conf.json")
+        logger.info("\nValidating conf.json")
         skipped_tests_conf = self.conf_data["skipped_tests"]
         skipped_integrations_conf = self.conf_data["skipped_integrations"]
         unmockable_integrations_conf = self.conf_data["unmockable_integrations"]

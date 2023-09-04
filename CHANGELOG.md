@@ -2,7 +2,7 @@
 ## Unreleased
 * Fixed an issue where logging arguments were not in the standard kebab-case. The new arguments are: **console-log-threshold**, **file-log-threshold**, **log-file-path**.
    Added a validation to ensure there's a '.' in the end of each description field in integration and script yml files.
-* Fixed an issue where the **validate -g** failed when updating an empty `.pack-ignore` file when trying to retrieve its content from the local default branch.
+* Fixed an issue where the **validate -g** failed reading a `.pack-ignore` file that was previously empty.
 * Fixed an issue where the **update-release-notes** failed when changing the `.pack-ignore` file.
 * Fixed an issue where the **upload** command failed for private repositories while trying to find the landing_page.json file.
 

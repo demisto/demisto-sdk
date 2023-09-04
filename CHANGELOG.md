@@ -1,6 +1,7 @@
 # Changelog
 ## Unreleased
 * Fixed an issue where logging arguments were not in the standard kebab-case. The new arguments are: **console-log-threshold**, **file-log-threshold**, **log-file-path**.
+   Added a validation to ensure there's a '.' in the end of each description field in integration and script yml files.
 * Fixed an issue where the **upload** command failed for private repositories while trying to find the landing_page.json file.
 
 ## 1.20.0

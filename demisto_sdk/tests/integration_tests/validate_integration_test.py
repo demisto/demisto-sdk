@@ -2,7 +2,6 @@ import copy
 import logging
 from copy import deepcopy
 from os.path import join
-from pathlib import Path
 from time import sleep
 
 import pytest
@@ -123,15 +122,11 @@ class MyRepo:
     def remote(self):
         return "remote_path"
 
-    @property
-    def working_dir(self):
-        return Path()
-
 
 @pytest.fixture(autouse=True)
 def set_git_test_env(mocker):
     mocker.patch.object(ValidateManager, "setup_git_params", return_value=True)
-    mocker.patch("demisto_sdk.commands.common.git_util.Repo", return_value=MyRepo())
+    mocker.patch.object(Content, "git", return_value=GitUtil())
     mocker.patch.object(ValidateManager, "setup_prev_ver", return_value="origin/master")
     mocker.patch.object(GitUtil, "_is_file_git_ignored", return_value=False)
     mocker.patch.object(

@@ -3,7 +3,6 @@ from __future__ import annotations
 import os
 from typing import Any, Iterator
 
-import git
 from git import InvalidGitRepositoryError
 from wcmatch.pathlib import Path
 

@@ -1,5 +1,7 @@
 # Changelog
+
 ## Unreleased
+* Added formatting for yml files when period is missing in the end of description field, in the **format** command.
 * Fixed an issue where logging arguments were not in the standard kebab-case. The new arguments are: **console-log-threshold**, **file-log-threshold**, **log-file-path**.
 * Added a new validation (`DS108`) to ensure that each description in the yml of script/integration ends with a dot.
 * Fixed an issue where the **validate -g** failed reading a `.pack-ignore` file that was previously empty.

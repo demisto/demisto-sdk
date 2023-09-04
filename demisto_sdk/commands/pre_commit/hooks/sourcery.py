@@ -4,11 +4,11 @@ from pathlib import Path
 from typing import Any, Dict
 
 from demisto_sdk.commands.common import tools
-from demisto_sdk.commands.pre_commit.hooks.hook import Hook
+from demisto_sdk.commands.pre_commit.hooks.hook import Hook, join_files
 
 
 class SourceryHook(Hook):
-    def _get_temp_config_file(self, config_file_path: Path, python_version: str):
+    def _get_temp_config_file(self, config_file_path: Path, python_version):
         """
         Gets a temporary configuration file with the specified Python version.
         Args:
@@ -35,14 +35,14 @@ class SourceryHook(Hook):
         Returns:
             None
         """
-        for python_version in python_version_to_files.keys():
+        for python_version in python_version_to_files:
             hook: Dict[str, Any] = {
                 "name": f"sourcery-py{python_version}",
-                **deepcopy(self.base_hook),
             }
+            hook.update(deepcopy(self.base_hook))
             hook["args"].append(
                 f"--config={self._get_temp_config_file(config_file_path, python_version)}"
             )
-            hook["files"] = self._join_files(python_version_to_files[python_version])
+            hook["files"] = join_files(python_version_to_files[python_version])
 
             self.hooks.append(hook)

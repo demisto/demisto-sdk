@@ -5,6 +5,7 @@ import pytest
 
 import demisto_sdk.commands.pre_commit.pre_commit_command as pre_commit_command
 from demisto_sdk.commands.common.legacy_git_tools import git_path
+from demisto_sdk.commands.pre_commit.hooks.hook import join_files
 from demisto_sdk.commands.pre_commit.hooks.mypy import MypyHook
 from demisto_sdk.commands.pre_commit.hooks.ruff import RuffHook
 from demisto_sdk.commands.pre_commit.pre_commit_command import (
@@ -34,10 +35,6 @@ def create_hook(hook: dict):
     repo_and_hook: dict = {"repo": {"repo": "repo", "hooks": [hook]}}
     repo_and_hook["hook"] = repo_and_hook["repo"]["hooks"][0]
     return repo_and_hook
-
-
-def files_for_hook(files):
-    return "|".join(str(file) for file in files)
 
 
 @pytest.mark.parametrize("is_test", [True, False])
@@ -128,7 +125,7 @@ def test_mypy_hooks():
     """
     Testing mypy hook created successfully (the python version is correct)
     """
-    hook = {
+    mypy_hook = {
         "args": [
             "--ignore-missing-imports",
             "--check-untyped-defs",
@@ -138,7 +135,7 @@ def test_mypy_hooks():
             "--python-version=3.10",
         ]
     }
-    mypy_hook = create_hook(hook)
+    mypy_hook = create_hook(mypy_hook)
 
     MypyHook(**mypy_hook).prepare_hook(PYTHON_VERSION_TO_FILES)
     for (hook, python_version) in itertools.zip_longest(
@@ -146,7 +143,7 @@ def test_mypy_hooks():
     ):
         assert hook["args"][-1] == f"--python-version={python_version}"
         assert hook["name"] == f"mypy-py{python_version}"
-        assert hook["files"] == files_for_hook(PYTHON_VERSION_TO_FILES[python_version])
+        assert hook["files"] == join_files(PYTHON_VERSION_TO_FILES[python_version])
 
 
 @pytest.mark.parametrize("github_actions", [True, False])
@@ -166,7 +163,7 @@ def test_ruff_hook(github_actions):
         )
         assert hook["args"][1] == "--fix"
         assert hook["name"] == f"ruff-py{python_version}"
-        assert hook["files"] == files_for_hook(PYTHON_VERSION_TO_FILES[python_version])
+        assert hook["files"] == join_files(PYTHON_VERSION_TO_FILES[python_version])
         if github_actions:
             assert hook["args"][2] == "--format=github"
 
@@ -254,8 +251,8 @@ def test_handle_python2_files_with_unit_test(mocker, repo: Repo):
     for hook in pre_commit_runner.hooks.values():
         if hook["hook"]["id"] == "run-unit-tests":
             assert hook["hook"].get("exclude") is None
-            continue
-        assert hook["hook"]["exclude"] == "file1.py"
+        else:
+            assert hook["hook"]["exclude"] == "file1.py"
 
 
 def test_handle_python2_files_no_unit_test(mocker, repo: Repo):

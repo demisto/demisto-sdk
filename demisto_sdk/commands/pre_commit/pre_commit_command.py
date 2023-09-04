@@ -166,7 +166,6 @@ class PreCommitRunner:
         python2_files = self.handle_python2_files(unit_test)
 
         precommit_config = deepcopy(self.precommit_template)
-        assert isinstance(precommit_config, dict)
         for (
             python_version,
             changed_files_by_version,

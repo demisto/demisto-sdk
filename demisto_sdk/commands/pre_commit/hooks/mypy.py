@@ -1,7 +1,7 @@
 from copy import deepcopy
 from typing import Any, Dict
 
-from demisto_sdk.commands.pre_commit.hooks.hook import Hook
+from demisto_sdk.commands.pre_commit.hooks.hook import Hook, join_files
 
 
 class MypyHook(Hook):
@@ -14,13 +14,13 @@ class MypyHook(Hook):
         Returns:
             None
         """
-        for python_version in python_version_to_files.keys():
+        for python_version in python_version_to_files:
             hook: Dict[str, Any] = {
                 "name": f"mypy-py{python_version}",
-                **deepcopy(self.base_hook),
             }
+            hook.update(deepcopy(self.base_hook))
             hook["args"].remove("--python-version=3.10")
             hook["args"].append(f"--python-version={python_version}")
-            hook["files"] = self._join_files(python_version_to_files[python_version])
+            hook["files"] = join_files(python_version_to_files[python_version])
 
             self.hooks.append(hook)

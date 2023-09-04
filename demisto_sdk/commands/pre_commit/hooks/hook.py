@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from copy import deepcopy
+from typing import List
 
 
 class Hook(ABC):
@@ -7,18 +8,6 @@ class Hook(ABC):
         self.hooks = repo["hooks"]
         self.base_hook = deepcopy(hook)
         self.hooks.remove(self.base_hook)
-
-    @staticmethod
-    def _join_files(files: List[str], separator: str = "|") -> str:
-        """
-        Joins a list of files into a single string using the specified separator.
-        Args:
-            files (list): A list of files to be joined.
-            separator (str, optional): The separator to use when joining the files. Defaults to "|".
-        Returns:
-            str: The joined string.
-        """
-        return separator.join(map(str, files))
 
     @abstractmethod
     def prepare_hook(self, **kwargs):
@@ -28,3 +17,15 @@ class Hook(ABC):
         So "self.hooks.append(self.base_hook)" or copy of the "self.base_hook" should be added anyway.
         """
         ...
+
+
+def join_files(files: List[str], separator: str = "|") -> str:
+    """
+    Joins a list of files into a single string using the specified separator.
+    Args:
+        files (list): A list of files to be joined.
+        separator (str, optional): The separator to use when joining the files. Defaults to "|".
+    Returns:
+        str: The joined string.
+    """
+    return separator.join(map(str, files))

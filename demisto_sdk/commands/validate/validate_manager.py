@@ -2006,9 +2006,7 @@ class ValidateManager:
                         self.git_util.get_local_remote_file_content(_pack_ignore_path)
                     )
                 except GitCommandError:
-                    logger.warning(
-                        f"Failed reading {_pack_ignore_path}"
-                    )
+                    logger.warning(f"Failed reading {_pack_ignore_path}")
                     old_pack_ignore_content = ""
 
             config = ConfigParser(allow_no_value=True)

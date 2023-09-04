@@ -468,7 +468,6 @@ class BaseUpdate:
     def adds_period_to_description(self):
         """Adds a period to the end of the descriptions
         if it does not already end with a period."""
-        logger.info("Adds a period to the end of the description")
 
         def _add_period(value: Optional[str]) -> Optional[str]:
             if (

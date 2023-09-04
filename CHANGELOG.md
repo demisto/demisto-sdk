@@ -7,6 +7,7 @@
 * Fixed an issue where the **validate -g** failed reading a `.pack-ignore` file that was previously empty.
 * Fixed an issue where the **update-release-notes** failed when changing the `.pack-ignore` file.
 * Fixed an issue where the **upload** command failed for private repositories while trying to find the landing_page.json file.
+* Improved the speed of **validate**.
 
 ## 1.20.0
 * Fixed an issue where **update-release-notes** generated "available from Cortex XSOAR" instead of "from XSIAM" when run on XSIAM event collectors.

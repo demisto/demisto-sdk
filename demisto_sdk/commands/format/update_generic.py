@@ -18,6 +18,7 @@ from demisto_sdk.commands.common.tools import (
     get_remote_file,
     get_yaml,
     is_file_from_content_repo,
+    is_string_ends_with_url,
 )
 from demisto_sdk.commands.format.format_constants import (
     DEFAULT_VERSION,
@@ -469,19 +470,12 @@ class BaseUpdate:
         if it does not already end with a period."""
         logger.info("Adds a period to the end of the description")
 
-        def _is_url(value: str):
-            """only called after checking value isn't empty"""
-            # after merge PR #3367 replace with is_string_ends_with_url from
-            # tools.py
-            str_to_check = value.split()[-1]
-            return str_to_check.startswith(("http://", "https://"))
-
         def _add_period(value: Optional[str]) -> Optional[str]:
             if (
                 value
                 and isinstance(value, str)
                 and not value.endswith(".")
-                and not _is_url(value)
+                and not is_string_ends_with_url(value)
             ):
                 return f"{value}."
             return value

@@ -310,10 +310,7 @@ def add_api_modules(
             copied_api_module_path = pack_path / f"{module_name}.py"
             if content_repo:  # if working in a repo
                 module_path = content_repo / api_module_path
-                try:
-                    os.symlink(src=module_path, dst=copied_api_module_path)
-                except NotImplementedError:
-                    shutil.copy(src=module_path, dst=copied_api_module_path)
+                shutil.copy(src=module_path, dst=copied_api_module_path)
             else:
                 api_content = get_remote_file(
                     full_file_path=f"https://raw.githubusercontent.com/demisto/content/master/{api_module_path}",

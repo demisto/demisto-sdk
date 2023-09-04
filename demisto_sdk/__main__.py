@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import IO, Any, Dict, Iterable, Tuple, Union
 
 import click
+
 try:
     import git
 except ImportError:

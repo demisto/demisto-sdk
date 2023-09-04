@@ -2,6 +2,7 @@ import gc
 from typing import List, Optional
 
 import more_itertools
+import tqdm
 
 from demisto_sdk.commands.content_graph.common import Nodes, Relationships
 from demisto_sdk.commands.content_graph.interface.graph import ContentGraphInterface
@@ -51,9 +52,7 @@ class ContentGraphBuilder:
         for content_dto in content_dtos:
             self._collect_nodes_and_relationships_from_model(content_dto)
 
-    def _create_content_dtos(
-        self, packs_to_parse: Optional[List[str]]
-    ) -> List[ContentDTO]:
+    def _create_content_dtos(self, packs: Optional[List[str]]) -> List[ContentDTO]:
         """Parses the repository, then creates and returns a repository model.
 
         Args:
@@ -62,8 +61,12 @@ class ContentGraphBuilder:
         """
         content_dtos = []
         repository_parser = RepositoryParser(self.content_graph.repo_path)
-        for packs_batch in more_itertools.chunked_even(
-            repository_parser.iter_packs(packs_to_parse), PACKS_PER_BATCH
+        packs_to_parse = tuple(repository_parser.iter_packs(packs))
+        for packs_batch in tqdm.tqdm(
+            more_itertools.chunked_even(packs_to_parse, PACKS_PER_BATCH),
+            total=len(packs_to_parse),
+            unit="packs",
+            desc="Parsing packs",
         ):
             repository_parser.parse(packs_batch)
             content_dtos.append(ContentDTO.from_orm(repository_parser))

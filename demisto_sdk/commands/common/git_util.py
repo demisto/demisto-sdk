@@ -17,10 +17,10 @@ class GitUtil:
     repo: Repo
 
     def __init__(
-        self, path: Optional[Path] = None, search_parent_directories: bool = True
+        self, path: Optional[Path] = None, search_parent_directories: bool = True, repo: Repo = None
     ):
         try:
-            self.repo = Repo(
+            self.repo = repo or Repo(
                 path or Path.cwd(), search_parent_directories=search_parent_directories
             )
         except InvalidGitRepositoryError:

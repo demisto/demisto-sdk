@@ -1065,7 +1065,6 @@ class TestDeprecatedIntegration:
             "get_changed_files_from_git",
             return_value=(modified_files, set(), set(), set(), True),
         )
-        mocker.patch.object(GitUtil, "__init__", return_value=None)
         mocker.patch.object(
             GitUtil, "get_current_working_branch", return_value="MyBranch"
         )
@@ -1182,7 +1181,6 @@ class TestDeprecatedIntegration:
             "get_changed_files_from_git",
             return_value=(modified_files, set(), set(), set(), True),
         )
-        mocker.patch.object(GitUtil, "__init__", return_value=None)
         mocker.patch.object(
             GitUtil, "get_current_working_branch", return_value="MyBranch"
         )
@@ -3723,7 +3721,6 @@ class TestPlaybookValidateDeprecated:
             "get_changed_files_from_git",
             return_value=(modified_files, {}, set(), set(), True),
         )
-        mocker.patch.object(GitUtil, "__init__", return_value=None)
         mocker.patch.object(
             GitUtil, "get_current_working_branch", return_value="MyBranch"
         )
@@ -3825,7 +3822,6 @@ class TestPlaybookValidateDeprecated:
             "get_changed_files_from_git",
             return_value=(modified_files, {}, set(), set(), True),
         )
-        mocker.patch.object(GitUtil, "__init__", return_value=None)
         mocker.patch.object(
             GitUtil, "get_current_working_branch", return_value="MyBranch"
         )
@@ -4226,7 +4222,6 @@ class TestScriptDeprecatedValidation:
             "get_changed_files_from_git",
             return_value=(modified_files, {}, set(), set(), True),
         )
-        mocker.patch.object(GitUtil, "__init__", return_value=None)
         mocker.patch.object(
             GitUtil, "get_current_working_branch", return_value="MyBranch"
         )
@@ -4334,7 +4329,6 @@ class TestScriptDeprecatedValidation:
             "get_changed_files_from_git",
             return_value=(modified_files, {}, set(), set(), True),
         )
-        mocker.patch.object(GitUtil, "__init__", return_value=None)
         mocker.patch.object(
             GitUtil, "get_current_working_branch", return_value="MyBranch"
         )
@@ -4903,7 +4897,6 @@ class TestValidationUsingGit:
             "get_changed_files_from_git",
             return_value=(modified_files, added_files, set(), old_files, True),
         )
-        mocker.patch.object(GitUtil, "__init__", return_value=None)
         mocker.patch.object(
             GitUtil, "get_current_working_branch", return_value="MyBranch"
         )
@@ -4994,7 +4987,6 @@ class TestValidationUsingGit:
             "get_changed_files_from_git",
             return_value=(modified_files, added_files, set(), set(), True),
         )
-        mocker.patch.object(GitUtil, "__init__", return_value=None)
         mocker.patch.object(
             GitUtil, "get_current_working_branch", return_value="MyBranch"
         )
@@ -5078,7 +5070,6 @@ class TestValidationUsingGit:
             "get_changed_files_from_git",
             return_value=(modified_files, set(), set(), set(), True),
         )
-        mocker.patch.object(GitUtil, "__init__", return_value=None)
         mocker.patch.object(
             GitUtil, "get_current_working_branch", return_value="MyBranch"
         )
@@ -5155,7 +5146,6 @@ class TestValidationUsingGit:
             "get_changed_files_from_git",
             return_value=(modified_files, set(), set(), set(), True),
         )
-        mocker.patch.object(GitUtil, "__init__", return_value=None)
         mocker.patch.object(
             GitUtil, "get_current_working_branch", return_value="MyBranch"
         )
@@ -5301,7 +5291,6 @@ class TestValidationUsingGit:
             "get_changed_files_from_git",
             return_value=(modified_files, set(), set(), set(), True),
         )
-        mocker.patch.object(GitUtil, "__init__", return_value=None)
         mocker.patch.object(
             GitUtil, "get_current_working_branch", return_value="MyBranch"
         )
@@ -5378,7 +5367,6 @@ class TestValidationUsingGit:
             "get_changed_files_from_git",
             return_value=(modified_files, set(), set(), set(), True),
         )
-        mocker.patch.object(GitUtil, "__init__", return_value=None)
         mocker.patch.object(
             GitUtil, "get_current_working_branch", return_value="MyBranch"
         )
@@ -5466,7 +5454,6 @@ class TestValidationUsingGit:
             "get_changed_files_from_git",
             return_value=(modified_files, set(), set(), set(), True),
         )
-        mocker.patch.object(GitUtil, "__init__", return_value=None)
         mocker.patch.object(
             GitUtil, "get_current_working_branch", return_value="MyBranch"
         )
@@ -5697,7 +5684,6 @@ class TestBasicValidation:
             "get_changed_files_from_git",
             return_value=(modified_files, set(), set(), set(), True),
         )
-        mocker.patch.object(GitUtil, "__init__", return_value=None)
         mocker.patch.object(
             GitUtil, "get_current_working_branch", return_value="MyBranch"
         )

@@ -3265,6 +3265,8 @@ def test_get_all_files_edited_in_pack_ignore_with_git_error(mocker):
     """
     from git import GitCommandError
 
+    logger_warning = mocker.patch.object(logging.getLogger("demisto-sdk"), "warning")
+
     mocker.patch.object(
         GitUtil,
         "get_all_files",
@@ -3293,6 +3295,7 @@ def test_get_all_files_edited_in_pack_ignore_with_git_error(mocker):
         return_value=config,
     )
 
+    assert logger_warning.called
     assert validate_manager.get_all_files_edited_in_pack_ignore(
         {"Packs/test/.pack-ignore"}
     ) == {"Packs/test/Integrations/test/test.yml"}

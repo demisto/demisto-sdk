@@ -67,7 +67,7 @@ class Content:
         return content
 
     @staticmethod
-    def git() -> GitUtil | None:
+    def git() -> GitUtil:
         """Git repository object.
 
         Returns:
@@ -81,13 +81,13 @@ class Content:
         """
         try:
             if content_path := os.getenv("DEMISTO_SDK_CONTENT_PATH"):
-                git_util = GitUtil(content_path)
+                git_util = GitUtil(Path(content_path))
                 logger.debug(f"Using content path: {content_path}")
             else:
                 git_util = GitUtil(search_parent_directories=True)
         except InvalidGitRepositoryError:
             logger.debug("Git repo was not found.")
-            git_util = None
+            raise
 
         return git_util
 

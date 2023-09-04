@@ -1,6 +1,5 @@
 import os
 import re
-import sys
 from pathlib import Path
 from typing import Optional, Set, Tuple, Union
 
@@ -17,7 +16,10 @@ class GitUtil:
     repo: Repo
 
     def __init__(
-        self, path: Optional[Path] = None, search_parent_directories: bool = True, repo: Repo = None
+        self,
+        path: Optional[Path] = None,
+        search_parent_directories: bool = True,
+        repo: Repo = None,
     ):
         try:
             self.repo = repo or Repo(

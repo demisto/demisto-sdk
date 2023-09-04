@@ -65,12 +65,15 @@ def test_git_is_not_installed_proper_error(mocker):
     Then
         - Ensure system exit is raised with the proper message
     """
-    from demisto_sdk.commands.common.git_util import GitUtil
-    from git import Repo
+    from git import Repo  # noqa: TID251
 
-    mocker.patch.object(Repo, "__init__", side_effect=ImportError("git is not installed"))
+    from demisto_sdk.commands.common.git_util import GitUtil
+
+    mocker.patch.object(
+        Repo, "__init__", side_effect=ImportError("git is not installed")
+    )
 
     with pytest.raises(SystemExit) as exc:
         GitUtil()
 
-    assert exc.value.args[0] == 'Git executable cannot be found, or is invalid'
+    assert exc.value.args[0] == "Git executable cannot be found, or is invalid"

@@ -2031,7 +2031,7 @@ def get_content_path(relative_path: Optional[Path] = None) -> Path:
             )
     try:
         if content_path := os.getenv("DEMISTO_SDK_CONTENT_PATH"):
-            git_repo = GitUtil(content_path, search_parent_directories=False).repo
+            git_repo = GitUtil(Path(content_path), search_parent_directories=False).repo
             logger.debug(f"Using content path: {content_path}")
         else:
             git_repo = GitUtil().repo

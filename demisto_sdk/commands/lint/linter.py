@@ -514,7 +514,7 @@ class Linter:
 
         """
         try:
-            repo = GitUtil(self._content_repo)
+            repo = GitUtil(self._content_repo).repo
             files_to_ignore = repo.ignored(self._facts["lint_files"])
             for file in files_to_ignore:
                 logger.info(f"{log_prompt} - Skipping gitignore file {file}")

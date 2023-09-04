@@ -2003,7 +2003,7 @@ class ValidateManager:
                         self.git_util.get_local_remote_file_content(_pack_ignore_path)
                     )
                 except GitCommandError:
-                    logger.debug(
+                    logger.warning(
                         f"Could not get the the .pack-ignore from {_pack_ignore_path=}"
                     )
                     old_pack_ignore_content = ""

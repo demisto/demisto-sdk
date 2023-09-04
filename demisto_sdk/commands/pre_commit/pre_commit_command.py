@@ -361,7 +361,7 @@ def preprocess_files(
     files_to_run: Set[Path] = set()
     for file in raw_files:
         if file.is_dir():
-            files_to_run.update({file for file in file.rglob("*") if file.is_file()})
+            files_to_run.update({path for path in file.rglob("*") if path.is_file()})
         else:
             files_to_run.add(file)
 

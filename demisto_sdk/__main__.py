@@ -12,7 +12,7 @@ import click
 try:
     import git
 except ImportError:
-    sys.exit(click.style("Git executable cannot be found, or is invalid", fg='red'))
+    sys.exit(click.style("Git executable cannot be found, or is invalid", fg="red"))
 
 
 import typer
@@ -40,7 +40,6 @@ from demisto_sdk.commands.common.tools import (
     is_sdk_defined_working_offline,
     parse_marketplace_kwargs,
 )
-
 from demisto_sdk.commands.content_graph.commands.create import create
 from demisto_sdk.commands.content_graph.commands.get_relationships import (
     get_relationships,

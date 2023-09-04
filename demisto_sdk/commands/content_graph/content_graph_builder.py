@@ -69,11 +69,11 @@ class ContentGraphBuilder:
             desc="Parsing packs",
             position=0,
             leave=True,
-        ) as pbar:
+        ) as progress_bar:
             for packs_batch in more_itertools.chunked(packs_to_parse, PACKS_PER_BATCH):
                 repository_parser.parse(packs_batch)
                 content_dtos.append(ContentDTO.from_orm(repository_parser))
-                pbar.update(len(packs_batch))
+                progress_bar.update(len(packs_batch))
 
                 repository_parser.clear()
                 gc.collect()

@@ -34,7 +34,7 @@ class RepositoryParser:
             # if no packs to parse were provided, parse all packs
             packs_to_parse = list(self.iter_packs())
         try:
-            logger.info("Parsing packs...")
+            logger.debug("Parsing packs...")
             with multiprocessing.Pool(processes=cpu_count()) as pool:
                 self.packs = list(pool.map(PackParser, packs_to_parse))
         except Exception:

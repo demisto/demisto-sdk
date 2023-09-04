@@ -16,7 +16,6 @@ def recover_if_fails(func):
                 raise
             logger.warning(
                 "Failed to build content graph, retrying with a clean environment.",
-                exc_info=True,
             )
             neo4j_service.stop(force=True, clean=True)
             neo4j_service.start()

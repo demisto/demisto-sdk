@@ -93,7 +93,7 @@ class ContentGraphInterface(ABC):
                 return True
         else:
             try:
-                logger.warning("The content schema is missing")
+                logger.warning("The graph schema is missing")
                 self.marshal_graph(MarketplaceVersions.XSOAR)
             except Exception as e:
                 logger.warning("Failed to load the content graph.")

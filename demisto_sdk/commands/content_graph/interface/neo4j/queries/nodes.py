@@ -228,9 +228,11 @@ def get_schema(tx: Transaction) -> dict:
     """
     query = """// Retrieves the schema of the graph.
     CALL apoc.meta.schema()
-    RETURN value
+    YIELD value
+    UNWIND keys(value) AS label
+    RETURN label, keys(value[label].properties) as properties
     """
-    return run_query(tx, query).single()["value"]
+    return {item["label"]: item["properties"] for item in run_query(tx, query).data()}
 
 
 def get_list_properties(tx: Transaction) -> List[str]:

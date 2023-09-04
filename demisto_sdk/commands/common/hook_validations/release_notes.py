@@ -275,7 +275,7 @@ class ReleaseNotesValidator(BaseValidator):
                         pack_path=self.pack_path,
                         modified_files_in_pack=set(),
                         update_type=None,
-                        added_files=set(),
+                        added_files=[],
                         pack=self.pack_name,
                     )
                     (

@@ -31,7 +31,6 @@ from demisto_sdk.commands.update_release_notes.update_rn import (
     deprecated_commands,
     get_deprecated_comment_from_desc,
     get_deprecated_rn,
-    get_file_description,
 )
 
 
@@ -106,7 +105,7 @@ class TestRNUpdate:
             pack_path="Packs/HelloWorld",
             update_type="minor",
             modified_files_in_pack={"HelloWorld"},
-            added_files=set(),
+            added_files=[],
         )
         changed_items = {
             ("Hello World Integration", FileType.INTEGRATION): {
@@ -212,7 +211,7 @@ class TestRNUpdate:
             pack_path=pack_path,
             update_type="minor",
             modified_files_in_pack={"Sample"},
-            added_files=set(),
+            added_files=[],
         )
         changed_items = {
             ("Sample Generic Field", FileType.GENERIC_FIELD): {
@@ -250,7 +249,7 @@ class TestRNUpdate:
             pack_path="Packs/HelloWorld",
             update_type="minor",
             modified_files_in_pack={"HelloWorld"},
-            added_files=set(),
+            added_files=[],
         )
         changed_items = {
             ("Hello World Playbook", FileType.PLAYBOOK): {
@@ -278,7 +277,7 @@ class TestRNUpdate:
             pack_path="Packs/HelloWorld",
             update_type="minor",
             modified_files_in_pack={"HelloWorld"},
-            added_files=set(),
+            added_files=[],
         )
         changed_items = {
             ("Hello World Integration", FileType.INTEGRATION): {
@@ -328,7 +327,7 @@ class TestRNUpdate:
             pack_path="Packs/HelloWorld",
             update_type="minor",
             modified_files_in_pack={"HelloWorld"},
-            added_files=set(),
+            added_files=[],
         )
         changed_items = {
             ("Hello World Playbook", FileType.PLAYBOOK): {
@@ -358,7 +357,7 @@ class TestRNUpdate:
             pack_path="Packs/HelloWorld",
             update_type="minor",
             modified_files_in_pack={"HelloWorld"},
-            added_files=set(),
+            added_files=[],
         )
         changed_items = {
             ("Hello World IncidentField", FileType.INCIDENT_FIELD): {
@@ -391,7 +390,7 @@ class TestRNUpdate:
             pack_path="Packs/HelloWorld",
             update_type="documentation",
             modified_files_in_pack={"HelloWorld"},
-            added_files=set(),
+            added_files=[],
         )
         changed_items = {
             ("Hello World Integration", FileType.INTEGRATION): {
@@ -420,7 +419,7 @@ class TestRNUpdate:
             pack_path="Packs/HelloWorld",
             update_type="minor",
             modified_files_in_pack=set(),
-            added_files=set(),
+            added_files=[],
             pack_metadata_only=True,
         )
         changed_items = {}
@@ -452,7 +451,7 @@ class TestRNUpdate:
             pack_path="Packs/HelloWorld",
             update_type="minor",
             modified_files_in_pack={"HelloWorld/README.md"},
-            added_files=set(),
+            added_files=[],
         )
         assert update_rn.only_docs_changed()
 
@@ -480,7 +479,7 @@ class TestRNUpdate:
                 "HelloWorld/HelloWorld.yml",
                 "HelloWorld/README.md",
             },
-            added_files=set(),
+            added_files=[],
         )
         assert not update_rn.only_docs_changed()
 
@@ -520,33 +519,9 @@ class TestRNUpdate:
                 "HelloWorld/README.md",
                 "HelloWorld/HelloWorld.yml",
             },
-            added_files=set(),
+            added_files=[],
         )
         assert not update_rn.only_docs_changed()
-
-    @mock.patch.object(UpdateRN, "get_master_version")
-    def test_find_corresponding_yml(self, mock_master):
-        """
-        Given:
-            - a filepath containing a python file
-        When:
-            - determining the changed file
-        Then:
-            - return only the yml of the changed file
-        """
-        expected_result = "Integration/HelloWorld.yml"
-        from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
-
-        mock_master.return_value = "1.0.0"
-        update_rn = UpdateRN(
-            pack_path="Packs/HelloWorld",
-            update_type="minor",
-            modified_files_in_pack={"HelloWorld"},
-            added_files=set(),
-        )
-        filepath = "Integration/HelloWorld.py"
-        filename = update_rn.find_corresponding_yml(filepath)
-        assert expected_result == filename
 
     @mock.patch.object(UpdateRN, "get_master_version")
     def test_get_release_notes_path(self, mock_master):
@@ -566,7 +541,7 @@ class TestRNUpdate:
             pack_path="Packs/HelloWorld",
             update_type="minor",
             modified_files_in_pack={"HelloWorld"},
-            added_files=set(),
+            added_files=[],
         )
         input_version = "1.1.1"
         result = update_rn.get_release_notes_path(input_version)
@@ -594,7 +569,7 @@ class TestRNUpdate:
             pack_path="Packs/HelloWorld",
             update_type="minor",
             modified_files_in_pack={"HelloWorld"},
-            added_files=set(),
+            added_files=[],
         )
         update_rn.metadata_path = os.path.join(
             TestRNUpdate.FILES_PATH, "fake_pack/pack_metadata.json"
@@ -631,7 +606,7 @@ class TestRNUpdate:
             pack_path="Packs/HelloWorld",
             update_type="major",
             modified_files_in_pack={"HelloWorld"},
-            added_files=set(),
+            added_files=[],
         )
         update_rn.metadata_path = os.path.join(
             TestRNUpdate.FILES_PATH, "fake_pack/pack_metadata.json"
@@ -668,7 +643,7 @@ class TestRNUpdate:
             pack_path="Packs/HelloWorld",
             update_type="revision",
             modified_files_in_pack={"HelloWorld"},
-            added_files=set(),
+            added_files=[],
         )
         update_rn.metadata_path = os.path.join(
             TestRNUpdate.FILES_PATH, "fake_pack/pack_metadata.json"
@@ -706,7 +681,7 @@ class TestRNUpdate:
             update_type=None,
             specific_version="2.0.0",
             modified_files_in_pack={"HelloWorld"},
-            added_files=set(),
+            added_files=[],
         )
         update_rn.metadata_path = os.path.join(
             TestRNUpdate.FILES_PATH, "fake_pack/pack_metadata.json"
@@ -746,7 +721,7 @@ class TestRNUpdate:
             pack_path="Packs/HelloWorld",
             update_type="revision",
             modified_files_in_pack={"HelloWorld"},
-            added_files=set(),
+            added_files=[],
         )
         update_rn.metadata_path = os.path.join(
             TestRNUpdate.FILES_PATH, "fake_pack_invalid/pack_metadata.json"
@@ -788,7 +763,7 @@ class TestRNUpdate:
             pack_path="Packs/HelloWorld",
             update_type="minor",
             modified_files_in_pack={"HelloWorld"},
-            added_files=set(),
+            added_files=[],
         )
         update_rn.metadata_path = os.path.join(
             TestRNUpdate.FILES_PATH, "fake_pack_invalid/pack_metadata.json"
@@ -830,7 +805,7 @@ class TestRNUpdate:
             pack_path="Packs/HelloWorld",
             update_type="major",
             modified_files_in_pack={"HelloWorld"},
-            added_files=set(),
+            added_files=[],
         )
         update_rn.metadata_path = os.path.join(
             TestRNUpdate.FILES_PATH, "fake_pack_invalid/pack_metadata.json"
@@ -864,7 +839,7 @@ class TestRNUpdate:
             pack_path="Packs/HelloWorld",
             update_type="major",
             modified_files_in_pack={"HelloWorld"},
-            added_files=set(),
+            added_files=[],
         )
         update_rn.metadata_path = os.path.join(
             TestRNUpdate.FILES_PATH, "fake_pack_invalid/pack_metadata_.json"
@@ -894,7 +869,7 @@ class TestRNUpdate:
             pack_path="Packs/HelloWorld",
             update_type=None,
             modified_files_in_pack={"HelloWorld"},
-            added_files=set(),
+            added_files=[],
         )
         update_rn.metadata_path = os.path.join(
             TestRNUpdate.FILES_PATH, "fake_pack_invalid/pack_metadata.json"
@@ -932,7 +907,7 @@ class TestRNUpdate:
             pack_path="Packs/HelloWorld",
             update_type="minor",
             modified_files_in_pack={"HelloWorld"},
-            added_files=set(),
+            added_files=[],
         )
 
         desc = update_rn.build_rn_desc(
@@ -961,7 +936,7 @@ class TestRNUpdate:
             pack_path="Packs/HelloWorld",
             update_type="minor",
             modified_files_in_pack={"HelloWorld"},
-            added_files=set(),
+            added_files=[],
         )
 
         desc = update_rn.build_rn_desc(
@@ -1007,7 +982,7 @@ class TestRNUpdate:
             pack_path="Packs/HelloWorld",
             update_type="minor",
             modified_files_in_pack={"HelloWorld"},
-            added_files=set(),
+            added_files=[],
         )
 
         desc = update_rn.build_rn_template(changed_items=changed_items)
@@ -1030,7 +1005,7 @@ class TestRNUpdate:
             pack_path="Packs/HelloWorldEventCollector",
             update_type="minor",
             modified_files_in_pack={"HelloWorldEventCollector"},
-            added_files=set(),
+            added_files=[],
         )
 
         desc = update_rn.build_rn_desc(
@@ -1236,7 +1211,7 @@ class TestRNUpdate:
             pack_path="Packs/Test",
             update_type="minor",
             modified_files_in_pack={"Integration"},
-            added_files=set(),
+            added_files=[],
         )
         old_yml_obj, new_yml_obj = get_mock_yml_obj(
             NOT_DEP_INTEGRATION_PATH, FileType.INTEGRATION, False
@@ -1658,7 +1633,7 @@ class TestRNUpdateUnit:
             pack_path=pack_name,
             update_type="minor",
             modified_files_in_pack={"HelloWorld"},
-            added_files=set(),
+            added_files=[],
         )
         filepath = os.path.join(TestRNUpdate.FILES_PATH, path)
         mocker.patch.object(
@@ -1694,7 +1669,7 @@ class TestRNUpdateUnit:
             pack_path="Packs/VulnDB",
             update_type="minor",
             modified_files_in_pack={"HelloWorld"},
-            added_files=set(),
+            added_files=[],
         )
         update_rn.check_rn_dir(filepath)
 
@@ -1714,7 +1689,7 @@ class TestRNUpdateUnit:
             pack_path="Packs/VulnDB",
             update_type="minor",
             modified_files_in_pack={"HelloWorld"},
-            added_files=set(),
+            added_files=[],
         )
         filepath = os.path.join(TestRNUpdate.FILES_PATH, "ReleaseNotes/1_1_1.md")
         md_string = "### Test"
@@ -1743,7 +1718,7 @@ class TestRNUpdateUnit:
             pack_path="Packs/HelloWorld",
             update_type="minor",
             modified_files_in_pack={"HelloWorld"},
-            added_files=set(),
+            added_files=[],
         )
         new_rn = update_rn.update_existing_rn(self.CURRENT_RN, self.CHANGED_FILES)
         assert self.EXPECTED_RN_RES == new_rn
@@ -1770,7 +1745,7 @@ class TestRNUpdateUnit:
             pack_path="Packs/HelloWorld",
             update_type="minor",
             modified_files_in_pack={"HelloWorld"},
-            added_files=set(),
+            added_files=[],
         )
         shutil.copy(src=ORIGINAL, dst=TEMP_FILE)
         data_dict = get_json(TEMP_FILE)
@@ -1817,7 +1792,7 @@ class TestRNUpdateUnit:
             pack_path="Packs/HelloWorld",
             update_type="minor",
             modified_files_in_pack=set(),
-            added_files=set(),
+            added_files=[],
         )
         update_rn.metadata_path = "This/Doesnt/Exist"
         result = update_rn._does_pack_metadata_exist()
@@ -1839,7 +1814,7 @@ class TestRNUpdateUnit:
             pack_path="Packs/Legacy",
             update_type="minor",
             modified_files_in_pack=set(),
-            added_files=set(),
+            added_files=[],
         )
         update_rn.execute_update()
 
@@ -1887,7 +1862,7 @@ class TestRNUpdateUnit:
             pack_path="Packs/Base",
             update_type="minor",
             modified_files_in_pack=set(),
-            added_files=set(),
+            added_files=[],
         )
         mocker.patch.object(
             UpdateRN,
@@ -1922,7 +1897,7 @@ class TestRNUpdateUnit:
             pack_path="Packs/Base",
             update_type="minor",
             modified_files_in_pack=modified_files,
-            added_files=set(),
+            added_files=[],
         )
 
         assert "file1" in update_rn.modified_files_in_pack
@@ -2145,7 +2120,7 @@ class TestRNUpdateUnit:
             pack_path="demisto_sdk/commands/update_release_notes/tests_data/Packs/Test",
             update_type="minor",
             modified_files_in_pack={"Packs/Test/Integrations/Test.yml"},
-            added_files=set(),
+            added_files=[],
         )
         client.execute_update()
         with open(
@@ -2209,7 +2184,7 @@ class TestRNUpdateUnit:
             pack_path="Packs/Test",
             update_type=None,
             modified_files_in_pack={"Packs/Test/Integrations/Test.yml"},
-            added_files=set(),
+            added_files=[],
         )
         client.execute_update()
         client.execute_update()
@@ -2419,7 +2394,7 @@ class TestRNUpdateUnit:
             pack_path=pack.path,
             update_type=None,
             modified_files_in_pack=set(),
-            added_files=set(),
+            added_files=[],
             is_bc=is_bc,
         )
         conf_path: str = f"{pack.path}/ReleaseNotes/1_0_1.json"
@@ -2499,7 +2474,7 @@ def test_docker_image_is_added_for_every_integration(mocker, repo):
             f"{str(integration.path)}/integration.yml",
             f"{str(integration2.path)}/integration2.yml",
         },
-        added_files=set(),
+        added_files=[],
     )
     client.execute_update()
     with open(str(f"{pack.path}/ReleaseNotes/0_0_1.md")) as f:
@@ -2518,7 +2493,7 @@ def test_docker_image_is_added_for_every_integration(mocker, repo):
             f"{str(integration.path)}/integration.yml",
             f"{str(integration2.path)}/integration2.yml",
         },
-        added_files=set(),
+        added_files=[],
     )
     client.execute_update()
     with open(str(f"{pack.path}/ReleaseNotes/0_0_1.md")) as f:
@@ -2608,7 +2583,7 @@ def test_force_and_text_update_rn(repo, text, expected_rn_string):
         pack_path=str(pack.path),
         update_type=None,
         modified_files_in_pack=set(),
-        added_files=set(),
+        added_files=[],
         is_force=True,
         text=text,
     )
@@ -2657,7 +2632,7 @@ def test_create_md_if_currentversion_is_higher(
         pack_path=str(pack.path),
         update_type="revision",
         modified_files_in_pack={f"{str(integration.path)}/integration.yml"},
-        added_files=set(),
+        added_files=[],
     )
     client.execute_update()
     updated_rn_folder = glob.glob(pack.path + "/ReleaseNotes/*")
@@ -2734,33 +2709,11 @@ def test_handle_existing_rn_version_path(mocker, repo):
         pack_path=str(pack.path),
         update_type="revision",
         modified_files_in_pack=set(),
-        added_files=set(),
+        added_files=[],
     )
     client.existing_rn_version_path = "ReleaseNotes/1_0_1.md"
     client.handle_existing_rn_version_path(f"{str(pack.path)}/ReleaseNotes/1_0_1.md")
     assert not client.should_delete_existing_rn
-
-
-@pytest.mark.parametrize(
-    "path, file_type, expected_results",
-    [
-        (
-            "demisto_sdk/commands/update_release_notes/tests_data/modeling_rules_yml_mock.yml",
-            FileType.MODELING_RULE,
-            "testing modeling rules description extraction.",
-        )
-    ],
-)
-def test_get_file_description(path, file_type, expected_results):
-    """
-    Given:
-        - File type and file path.
-    When:
-        - Calling get_file_description function.
-    Then:
-        Ensure the function extracted the information from the right field.
-    """
-    assert get_file_description(path, file_type) == expected_results
 
 
 def test_no_release_notes_for_first_version(mocker):
@@ -2781,7 +2734,7 @@ def test_no_release_notes_for_first_version(mocker):
         pack_path="Packs/HelloWorld",
         update_type="minor",
         modified_files_in_pack=set(),
-        added_files=set(),
+        added_files=[],
         pack_metadata_only=True,
     )
 

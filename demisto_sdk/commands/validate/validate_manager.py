@@ -1999,10 +1999,12 @@ class ValidateManager:
             # if the repo is not in remote / file cannot be found, try to take it from the latest commit on the default branch (usually master/main)
             old_pack_ignore_content = get_remote_file(old_file_path, "master")
             if old_pack_ignore_content == b"":
+                # the .pack-ignore is empty in the remote
                 old_pack_ignore_content = ""
             elif (
                 old_pack_ignore_content == {}
-            ):  # we were not able to retrieve the file at all from remote master branch
+            ):
+                # we were not able to retrieve the file at all from remote master branch
                 logger.debug(
                     f"Could not get {old_file_path} from remote master branch, trying to get it from local branch"
                 )

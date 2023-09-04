@@ -67,6 +67,8 @@ class ContentGraphBuilder:
             total=len(packs_to_parse),
             unit="packs",
             desc="Parsing packs",
+            unit_scale=True,
+            unit_divisor=PACKS_PER_BATCH,
         ):
             repository_parser.parse(packs_batch)
             content_dtos.append(ContentDTO.from_orm(repository_parser))

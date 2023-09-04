@@ -62,6 +62,7 @@ class ContentGraphBuilder:
         content_dtos = []
         repository_parser = RepositoryParser(self.content_graph.repo_path)
         packs_to_parse = tuple(repository_parser.iter_packs(packs))
+        # parse the content packs with a progress bar
         with tqdm.tqdm(
             total=len(packs_to_parse),
             unit="packs",

@@ -1995,8 +1995,8 @@ class ValidateManager:
             old_file_path, file_path = self.get_old_file_path(file_path)
             if not file_path.endswith(".pack-ignore"):
                 continue
-            # if the repo does not have remotes, get the .pack-ignore content from the master branch in Github
-            # if the repo is not in remote / file cannot be found, try to take it from the latest commit on the default branch (usually master/main)
+            # if the repo does not have remotes, get the .pack-ignore content from the master branch in Github api
+            # if the repo is not in remote / file cannot be found from Github api, try to take it from the latest commit on the default branch (usually master/main)
             old_pack_ignore_content = get_remote_file(old_file_path, "master")
             if old_pack_ignore_content == b"":  # found as empty file in remote
                 old_pack_ignore_content = ""

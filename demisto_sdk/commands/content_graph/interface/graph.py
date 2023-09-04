@@ -19,7 +19,6 @@ from demisto_sdk.commands.content_graph.objects.repository import ContentDTO
 class ContentGraphInterface(ABC):
     repo_path = CONTENT_PATH  # type: ignore
     METADATA_FILE_NAME = "metadata.json"
-    SCHEMA_FILE_NAME = "schema.json"
 
     @property
     @abstractmethod
@@ -48,16 +47,15 @@ class ContentGraphInterface(ABC):
         return None
 
     @property
-    def schema(self) -> Optional[dict]:
-        try:
-            return get_file(self.import_path / self.SCHEMA_FILE_NAME)
-        except FileNotFoundError:
-            return None
-
-    @property
     def content_parser_latest_hash(self) -> Optional[str]:
         if self.metadata:
             return self.metadata.get("content_parser_latest_hash")
+        return None
+
+    @property
+    def schema(self) -> Optional[dict]:
+        if self.metadata:
+            return self.metadata.get("schema")
         return None
 
     def dump_metadata(self) -> None:
@@ -65,15 +63,10 @@ class ContentGraphInterface(ABC):
         metadata = {
             "commit": GitUtil().get_current_commit_hash(),
             "content_parser_latest_hash": self._get_latest_content_parser_hash(),
+            "schema": self.get_schema(),
         }
         with open(self.import_path / self.METADATA_FILE_NAME, "w") as f:
             json.dump(metadata, f)
-
-    def dump_schema(self) -> None:
-        """Adds schema to the graph."""
-        schema = self.get_schema()
-        with open(self.import_path / self.SCHEMA_FILE_NAME, "w") as f:
-            json.dump(schema, f)
 
     def _get_latest_content_parser_hash(self) -> Optional[str]:
         parsers_path = Path(__file__).parent.parent / "parsers"

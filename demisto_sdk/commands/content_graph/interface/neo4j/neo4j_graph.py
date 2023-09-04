@@ -618,7 +618,6 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         with self.driver.session() as session:
             session.execute_write(export_graphml, self.repo_path.name)
         self.dump_metadata()
-        self.dump_schema()
         if output_path:
             self.zip_import_dir(output_path)
 

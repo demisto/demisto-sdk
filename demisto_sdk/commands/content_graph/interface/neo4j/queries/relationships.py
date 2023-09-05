@@ -89,7 +89,9 @@ MERGE (target:{target_type}{
 
 // If created, mark "not in repository" (all repository nodes were created already)
 ON CREATE
-    SET target.not_in_repository = true
+    SET target.not_in_repository = true,
+        target.object_id = CASE WHEN target.object_id IS NULL THEN target.name ELSE target.object_id END,
+        target.name = CASE WHEN target.name IS NULL THEN target.object_id ELSE target.name END
 
 // Get or create the relationship and set its "mandatorily" field based on relationship data
 MERGE (source)-[r:{RelationshipType.USES}]->(target)
@@ -157,7 +159,9 @@ UNWIND $data AS rel_data
 MATCH (source:{ContentType.BASE_CONTENT}{build_source_properties()})
 MERGE (target:{ContentType.BASE_CONTENT}{build_target_properties()})
 ON CREATE
-    SET target.not_in_repository = true
+    SET target.not_in_repository = true,
+        target.object_id = CASE WHEN target.object_id IS NULL THEN target.name ELSE target.object_id END,
+        target.name = CASE WHEN target.name IS NULL THEN target.object_id ELSE target.name END
 MERGE (source)-[r:{relationship}]->(target)
 RETURN count(r) AS relationships_merged"""
 

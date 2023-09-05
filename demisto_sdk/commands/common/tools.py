@@ -16,7 +16,7 @@ from enum import Enum
 from functools import lru_cache
 from hashlib import sha1
 from pathlib import Path, PosixPath
-from subprocess import DEVNULL, PIPE, Popen, check_output
+from subprocess import PIPE, Popen
 from time import sleep
 from typing import (
     TYPE_CHECKING,
@@ -99,6 +99,7 @@ from demisto_sdk.commands.common.constants import (
     TRIGGER_DIR,
     TYPE_PWSH,
     UNRELEASE_HEADER,
+    URL_REGEX,
     UUID_REGEX,
     WIDGETS_DIR,
     XDRC_TEMPLATE_DIR,
@@ -453,7 +454,21 @@ def get_remote_file_from_api(
     git_content_config: Optional[GitContentConfig] = None,
     tag: str = "master",
     return_content: bool = False,
-):
+    encoding: Optional[str] = None,
+) -> Union[bytes, Dict, List]:
+    """
+    Returns a remote file from Github/Gitlab repo using the api
+
+    Args:
+        full_file_path: file path in the GitHub/Gitlab repository
+        git_content_config: GitContentConfig config object
+        tag: from which commit / branch to take the file in the remote repository
+        return_content: whether to return the raw content of the file (bytes)
+        encoding: whether to decode the remote file with special encoding
+
+    Returns:
+        bytes | Dict | List: raw response of the file or as a python object (list, dict)
+    """
     if not git_content_config:
         git_content_config = GitContentConfig()
     if git_content_config.git_provider == GitProvider.GitLab:
@@ -515,9 +530,14 @@ def get_remote_file_from_api(
             f"Reason: {err_msg}[/yellow]"
         )
         return {}
+
     file_content = res.content
+
     if return_content:
         return file_content
+    if encoding:
+        file_content = file_content.decode(encoding)  # type: ignore[assignment]
+
     return get_file_details(file_content, full_file_path)
 
 
@@ -1515,44 +1535,6 @@ def get_docker_images_from_yml(script_obj) -> List[str]:
                 imgs.extend(script_obj.get(key))
 
     return imgs
-
-
-def get_python_version(docker_image):
-    """
-    Get the python version of a docker image
-    Arguments:
-        docker_image {string} -- Docker image being used by the project
-    Return:
-        python version as a float (2.7, 3.7)
-    Raises:
-        ValueError -- if version is not supported
-    """
-    py_ver = check_output(
-        [
-            "docker",
-            "run",
-            "--rm",
-            docker_image,
-            "python",
-            "-c",
-            "import sys;logger.info('{}.{}'.format(sys.version_info[0], sys.version_info[1]))",
-        ],
-        text=True,
-        stderr=DEVNULL,
-    ).strip()
-    logger.debug(
-        f"Detected python version: [{py_ver}] for docker image: {docker_image}"
-    )
-
-    py_num = float(py_ver)
-    if py_num < 2.7 or (3 < py_num < 3.4):  # pylint can only work on python 3.4 and up
-        raise ValueError(
-            "Python vesion for docker image: {} is not supported: {}. "
-            "We only support python 2.7.* and python3 >= 3.4.".format(
-                docker_image, py_num
-            )
-        )
-    return py_num
 
 
 def get_pipenv_dir(py_version, envs_dirs_base):
@@ -3898,6 +3880,30 @@ def extract_error_codes_from_file(pack_name: str) -> Set[str]:
                     error_codes_list.extend(error_codes)
 
     return set(error_codes_list)
+
+
+def is_string_ends_with_url(str: str) -> bool:
+    """
+    Args:
+        str: a string to test.
+    Returns: True if the string ends with a url adress. Otherwise, return False.
+    """
+    return bool(re.search(f"{URL_REGEX}$", str))
+
+
+def strip_description(description):
+    """
+    Args:
+        description: a description string.
+    Returns: the description stripped from quotes mark if they appear both in the beggining and in the end of the string.
+    """
+    return (
+        description.strip('"')
+        if description.startswith('"') and description.endswith('"')
+        else description.strip("'")
+        if description.startswith("'") and description.endswith("'")
+        else description
+    )
 
 
 def is_file_in_pack(file: Path, pack_name: str) -> bool:

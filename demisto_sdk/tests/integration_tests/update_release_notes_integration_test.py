@@ -575,10 +575,10 @@ def test_update_release_on_matadata_change(demisto_client, mocker, repo):
     mocker.patch(
         "demisto_sdk.commands.common.tools.get_pack_name", return_value="FeedAzureValid"
     )
-    mocker.patch(
-        "demisto_sdk.commands.common.tools.get_pack_names_from_files",
-        return_value={"FeedAzureValid"},
-    )
+    # mocker.patch(
+    #     "demisto_sdk.commands.common.tools.get_pack_names_from_files",
+    #     return_value={"FeedAzureValid"},
+    # )
 
     with ChangeCWD(repo.path):
         runner = CliRunner(mix_stderr=False)
@@ -844,10 +844,10 @@ def test_force_update_release(demisto_client, mocker, repo):
         "demisto_sdk.commands.update_release_notes.update_rn_manager.get_pack_name",
         return_value="ThinkCanary",
     )
-    mocker.patch(
-        "demisto_sdk.commands.update_release_notes.update_rn_manager.get_pack_names_from_files",
-        return_value={"ThinkCanary"},
-    )
+    # mocker.patch(
+    #     "demisto_sdk.commands.update_release_notes.update_rn_manager.get_pack_names_from_files",
+    #     return_value={"ThinkCanary"},
+    # )
 
     runner = CliRunner(mix_stderr=True)
     runner.invoke(

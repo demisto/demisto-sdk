@@ -282,6 +282,7 @@ class ReleaseNotesValidator(BaseValidator):
                         file_name,
                         file_type,
                     ) = update_rn_util.get_changed_file_name_and_type(file)
+                    # file_type = find_type(file)
                     if file_name and file_type and file_type in RN_HEADER_BY_FILE_TYPE:
                         if (
                             RN_HEADER_BY_FILE_TYPE[file_type]

@@ -869,7 +869,7 @@ class UpdateRN:
             docker_image_name: The docker image name
 
         """
-        if os.path.exists(release_notes_path) and self.update_type is not None:
+        if Path(release_notes_path).exists() and self.update_type is not None:
             logger.info(
                 f"[yellow]Release notes were found at {release_notes_path}. Skipping[/yellow]"
             )

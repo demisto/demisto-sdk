@@ -58,7 +58,7 @@ class UpdateReleaseNotesManager:
         if not isinstance(content_item, (ContentItem, Pack)):
             raise ValueError(f"Could not parse content_item from {file_path}")
 
-        pack = content_item.in_pack
+        pack = content_item.in_pack  # type: ignore[union-attr]
         content_items.append({pack: content_item})
 
         return content_items
@@ -100,7 +100,7 @@ class UpdateReleaseNotesManager:
         Manages the entire update release notes process.
         """
         logger.info("Starting to update release notes.")
-        content_items = {"new": [], "modified": [], "old_format": []}
+        content_items: dict = {"new": [], "modified": [], "old_format": []}
         # Find which files were changed from git
         modified_files, added_files, old_format_files = self.get_git_changed_files()
 

@@ -658,6 +658,7 @@ RELATIVE_HREF_URL_REGEX = r'(<.*?href\s*=\s*"((?!(?:https?:\/\/)|#|(?:mailto:)).
 RELATIVE_MARKDOWN_URL_REGEX = (
     r"(?<![!])(\[.*?\])\(((?!(?:https?:\/\/)|#|(?:mailto:)).*?)\)"
 )
+URL_REGEX = r"(((http|https)\:\/\/)?[a-zA-Z0-9\.\/\?\:@\-_=#]+\.([a-zA-Z]){2,6}([a-zA-Z0-9\.\&\/\?\:@\-_=#])*)"
 
 # old classifier structure
 _PACKS_CLASSIFIER_BASE_5_9_9_REGEX = (
@@ -1595,6 +1596,7 @@ SKIP_RELEASE_NOTES_FOR_TYPES = (
     None,
     FileType.RELEASE_NOTES_CONFIG,
     FileType.CONTRIBUTORS,
+    FileType.PACK_IGNORE,
 )
 
 LAYOUT_AND_MAPPER_BUILT_IN_FIELDS = [

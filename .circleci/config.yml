@@ -392,6 +392,7 @@ jobs:
   test-update-graph:
     docker:
       - image: << pipeline.parameters.global-docker-image >>
+    <<: *environment
     resource_class: large
     steps:
       - checkout

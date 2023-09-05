@@ -226,7 +226,7 @@ class ColorConsoleFormatter(logging.Formatter):
         message = record.getMessage()
         return any(
             not key.startswith("[/]") and key in message
-            for key, _ in DEMISTO_LOG_ALLOWED_ESCAPES
+            for key in DEMISTO_LOG_LOOKUP
         )
 
     @staticmethod

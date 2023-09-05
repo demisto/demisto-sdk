@@ -145,7 +145,9 @@ class PackIgnore(dict):
         logger.warning(
             f"[red]Could not find .pack-ignore file at path {pack_ignore_path}[/red]"
         )
-        raise FileNotFoundError(f"Could not find the .pack-ignore path at {pack_ignore_path}")
+        raise FileNotFoundError(
+            f"Could not find the .pack-ignore path at {pack_ignore_path}"
+        )
 
     def __map_files_to_ignored_validations(self):
         for section in filter(

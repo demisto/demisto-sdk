@@ -11,6 +11,7 @@
 * Added a log when a content item is missing from the repo, in **graph create** and **graph update**.
 * Replaced logs with a progress bar in **graph create** and **graph update**.
 * Updated the **update-release-notes** command message structure when is run with **--force** flag.
+* The content graph will now include the **python_version** field that each script/integration uses.
 
 
 ## 1.20.0
@@ -20,7 +21,6 @@
 * Fixed an issue where the **validate -g** failed on `BA102` in external repos even when ignored.
 * Fixed an issue where the **validate -g** failed getting the content of `.pack-ignore` files when the external repository is not hosted in Github.
 * Fixed an issue where the **validate -g** failed when updating an empty `.pack-ignore` file.
-* The content graph will now include the **python_version** field that each script/integration uses.
 * Added support for yml hidden parameters for `xsoar_saas` marketplace, as part of the **prepare_content** command.
 * Added support for custom documentation that will appear only in `xsoar_saas` marketplace, as part of the **prepare_content** command.
 * Fixed an issue where the (`GR108`) validation did not fail in the validate command with the `-a` flag.

@@ -630,7 +630,7 @@ class TestGetRemoteFileLocally:
 
     def setup_method(self):
         # create local git repo
-        example_repo = GitUtil.git_repo.init(self.REPO_NAME)
+        example_repo = GitUtil.REPO_CLS.init(self.REPO_NAME)
         origin_branch = self.main_branch
         if not origin_branch.startswith("origin"):
             origin_branch = "origin/" + origin_branch

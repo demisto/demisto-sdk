@@ -14,7 +14,7 @@ from demisto_sdk.commands.common.constants import PACKS_FOLDER
 
 class GitUtil:
     # in order to use Repo class/static methods
-    git_repo = Repo
+    REPO_CLS = Repo
 
     def __init__(
         self,

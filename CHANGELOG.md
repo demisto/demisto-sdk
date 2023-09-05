@@ -1,6 +1,11 @@
 # Changelog
 
 ## Unreleased
+* The content graph will now include the **python_version** field that each script/integration uses.
+* Updated the **update-release-notes** command message structure when is run with **--force** flag.
+
+
+## 1.20.1
 * Added formatting for yml files when period is missing in the end of description field, in the **format** command.
 * Fixed an issue where logging arguments were not in the standard kebab-case. The new arguments are: **console-log-threshold**, **file-log-threshold**, **log-file-path**.
 * Added a new validation (`DS108`) to ensure that each description in the yml of script/integration ends with a dot.
@@ -10,8 +15,6 @@
 * Fixed an issue where the **upload** command failed for private repositories while trying to find the landing_page.json file.
 * Added a log when a content item is missing from the repo, in **graph create** and **graph update**.
 * Replaced logs with a progress bar in **graph create** and **graph update**.
-* Updated the **update-release-notes** command message structure when is run with **--force** flag.
-* The content graph will now include the **python_version** field that each script/integration uses.
 
 
 ## 1.20.0

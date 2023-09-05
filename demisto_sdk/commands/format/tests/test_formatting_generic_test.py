@@ -1,4 +1,5 @@
 import pytest
+from pytest_mock import MockerFixture
 
 from demisto_sdk.commands.common.constants import (
     FILETYPE_TO_DEFAULT_FROMVERSION,
@@ -270,3 +271,99 @@ def test_initiate_file_validator(mocker, is_old_file, function_validate):
 
     base_update.initiate_file_validator()
     assert result.call_count == 1
+
+
+@pytest.mark.parametrize(
+    "description, expected_description",
+    [
+        (
+            "description without dot",
+            "description without dot.",
+        ),
+        ("dot at the end.", "dot at the end."),
+        (
+            "a yml with url and no dot at the end https://www.test.com",
+            "a yml with url and no dot at the end https://www.test.com",
+        ),
+        (
+            "a yml with a description that has https://www.test.com in the middle of the sentence",
+            "a yml with a description that has https://www.test.com in the middle of the sentence.",
+        ),
+        (
+            "a yml with a description that has an 'example without dot at the end of the string'",
+            "a yml with a description that has an 'example without dot at the end of the string'.",
+        ),
+    ],
+    ids=[
+        "Without dot",
+        "with dot",
+        "url in the end",
+        "url in the middle",
+        "with single-quotes in double-quotes",
+    ],
+)
+def test_adds_period_to_description(
+    mocker: MockerFixture, description: str, expected_description: str
+) -> None:
+    """
+    Test case for the `adds_period_to_description`.
+
+    Given:
+        a description and its expected description with a period,
+    When:
+        the `adds_period_to_description` method is called,
+    Then:
+        the description in the YAML data should have a period added if is not end with url.
+    """
+    yml_data = {
+        "description": description,
+        "script": {
+            "commands": [
+                {
+                    "arguments": [
+                        {
+                            "description": description,
+                        }
+                    ],
+                    "description": description,
+                    "name": "get-function",
+                    "outputs": [
+                        {
+                            "contextPath": "",
+                            "description": description,
+                        }
+                    ],
+                }
+            ]
+        },
+    }
+    expected__yml_data = {
+        "description": expected_description,
+        "script": {
+            "commands": [
+                {
+                    "arguments": [
+                        {
+                            "description": expected_description,
+                        }
+                    ],
+                    "description": expected_description,
+                    "name": "get-function",
+                    "outputs": [
+                        {
+                            "contextPath": "",
+                            "description": expected_description,
+                        }
+                    ],
+                }
+            ]
+        },
+    }
+
+    mocker.patch(
+        "demisto_sdk.commands.format.update_generic.get_dict_from_file",
+        return_value=(yml_data, "mock_type"),
+    )
+    base_update = BaseUpdate(input="test")
+    base_update.adds_period_to_description()
+    assert base_update.data == expected__yml_data

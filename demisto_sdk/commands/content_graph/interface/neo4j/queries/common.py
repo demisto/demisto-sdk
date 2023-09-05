@@ -1,7 +1,7 @@
 import traceback
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 from neo4j import Result, Transaction
 from packaging.version import Version
@@ -53,9 +53,21 @@ def to_neo4j_map(properties: dict) -> str:
     return params_str
 
 
-def run_query(tx: Transaction, query: str, **kwargs) -> Result:
+def run_query(
+    tx: Transaction,
+    query: str,
+    batch_size: Optional[int] = None,
+    parallel: bool = True,
+    **kwargs,
+) -> Result:
     try:
         start_time: datetime = datetime.now()
+        if batch_size:
+            query = f"""
+            CALL apoc.periodic.iterate(
+                "{query}", {{batchSize: {batch_size}, parallel: {str(parallel).lower()}, retries: 3}}
+            )
+            """
         logger.debug(f"Running query:\n{query}")
         result = tx.run(query, **kwargs)
         logger.debug(f"Took {(datetime.now() - start_time).total_seconds()} seconds")

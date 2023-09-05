@@ -5,6 +5,7 @@ import copy
 import errno
 import os
 import re
+import sys
 from pathlib import Path
 from typing import Any, Iterable, Optional, Tuple, Union
 
@@ -430,6 +431,28 @@ class UpdateRN:
             master_current_version = master_metadata.get("currentVersion", "0.0.0")
         return master_current_version
 
+    def get_pack_display_name(self) -> str:
+        """
+        Gets the pack display name from the metadata file. If not found return the pack name.
+
+        :rtype: ``str``
+        :return
+            Pack display name
+
+        """
+        pack_display_name = self.pack
+        master_metadata = None
+        try:
+            master_metadata = get_remote_file(self.metadata_path)
+        except Exception:
+            logger.exception(
+                f"[red]Failed fetching {self.metadata_path} from remote master branch."
+                "Using the local version (if exists), instead[/red]",
+            )
+        if master_metadata:
+            pack_display_name = master_metadata.get("name")
+        return pack_display_name
+
     def is_bump_required(self) -> bool:
         """
         Checks if the currentVersion in the pack metadata has been changed or not. Additionally, it will verify
@@ -677,7 +700,8 @@ class UpdateRN:
             return rn_string
         rn_template_as_dict: dict = {}
         if self.is_force:
-            rn_string = self.build_rn_desc(content_name=self.pack, text=self.text)
+            pack_display_name = self.get_pack_display_name()
+            rn_string = self.build_rn_desc(content_name=pack_display_name, text=self.text)
         # changed_items.items() looks like that: [((name, type), {...}), (name, type), {...}] and we want to sort
         # them by type (x[0][1])
 
@@ -926,6 +950,10 @@ class UpdateRN:
             self.existing_rn_changed = True
             with open(release_notes_path, "w") as fp:
                 fp.write(rn_string)
+        try:
+            run_command(f'git add {release_notes_path}', exit_on_error=False)
+        except RuntimeError:
+            logger.warning(f'Could not add the release note files to git: {release_notes_path}')
 
     def rn_with_docker_image(self, rn_string: str, docker_image: Optional[str]) -> str:
         """

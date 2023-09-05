@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import Callable, List, Optional, Set, Tuple
 
 import pebble
-from git import InvalidGitRepositoryError
+from git import GitCommandError, InvalidGitRepositoryError
 from packaging import version
 
 from demisto_sdk.commands.common import tools
@@ -1511,6 +1511,7 @@ class ValidateManager:
             json_file_path=self.json_file_path,
             validate_all=self.validate_all,
             deprecation_validator=self.deprecation_validator,
+            using_git=self.use_git,
         )
 
         deprecated_result = self.check_and_validate_deprecated(
@@ -1554,6 +1555,7 @@ class ValidateManager:
             json_file_path=self.json_file_path,
             validate_all=self.validate_all,
             deprecation_validator=self.deprecation_validator,
+            using_git=self.use_git,
         )
 
         deprecated_result = self.check_and_validate_deprecated(
@@ -1584,6 +1586,7 @@ class ValidateManager:
             skip_docker_check=self.skip_docker_checks,
             json_file_path=self.json_file_path,
             validate_all=self.validate_all,
+            using_git=self.use_git,
         )
         return integration_validator.is_valid_beta_integration()
 
@@ -1997,13 +2000,29 @@ class ValidateManager:
             old_file_path, file_path = self.get_old_file_path(file_path)
             if not file_path.endswith(".pack-ignore"):
                 continue
-            # if the repo does not have remotes, get the .pack-ignore content from the master branch in Github
-            # if the repo is not in remote / file cannot be found, try to take it from the latest commit on the default branch (usually master/main)
-            old_pack_ignore_content = get_remote_file(
-                old_file_path, "master"
-            ) or self.git_util.get_local_remote_file_content(
-                f"{GitUtil.find_primary_branch(self.git_util.repo)}:{old_file_path}"
-            )
+            # if the repo does not have remotes, get the .pack-ignore content from the master branch in Github api
+            # if the repo is not in remote / file cannot be found from Github api, try to take it from the latest commit on the default branch (usually master/main)
+            old_pack_ignore_content = get_remote_file(old_file_path, "master")
+            if old_pack_ignore_content == b"":  # found as empty file in remote
+                old_pack_ignore_content = ""
+            elif old_pack_ignore_content == {}:  # not found in remote
+                logger.debug(
+                    f"Could not get {old_file_path} from remote master branch, trying to get it from local branch"
+                )
+                primary_branch = GitUtil.find_primary_branch(self.git_util.repo)
+                _pack_ignore_default_branch_path = f"{primary_branch}:{old_file_path}"
+                try:
+                    old_pack_ignore_content = (
+                        self.git_util.get_local_remote_file_content(
+                            _pack_ignore_default_branch_path
+                        )
+                    )
+                except GitCommandError:
+                    logger.warning(
+                        f"could not retrieve {_pack_ignore_default_branch_path} from {primary_branch} because {primary_branch} is not a valid ref, assuming .pack-ignore is empty"
+                    )
+                    old_pack_ignore_content = ""
+
             config = ConfigParser(allow_no_value=True)
             config.read_string(old_pack_ignore_content)
             old_pack_ignore_content = self.get_error_ignore_list(config=config)

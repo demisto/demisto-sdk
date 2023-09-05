@@ -1,4 +1,5 @@
 # Changelog
+* Fixed an issue where the **coverage-analyze** command was not parsing the logs correctly.
 
 ## Unreleased
 * Added formatting for yml files when period is missing in the end of description field, in the **format** command.

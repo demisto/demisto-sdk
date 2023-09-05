@@ -5,7 +5,6 @@ import copy
 import errno
 import os
 import re
-import sys
 from pathlib import Path
 from typing import Any, Iterable, Optional, Tuple, Union
 
@@ -701,7 +700,9 @@ class UpdateRN:
         rn_template_as_dict: dict = {}
         if self.is_force:
             pack_display_name = self.get_pack_display_name()
-            rn_string = self.build_rn_desc(content_name=pack_display_name, text=self.text)
+            rn_string = self.build_rn_desc(
+                content_name=pack_display_name, text=self.text
+            )
         # changed_items.items() looks like that: [((name, type), {...}), (name, type), {...}] and we want to sort
         # them by type (x[0][1])
 
@@ -951,9 +952,11 @@ class UpdateRN:
             with open(release_notes_path, "w") as fp:
                 fp.write(rn_string)
         try:
-            run_command(f'git add {release_notes_path}', exit_on_error=False)
+            run_command(f"git add {release_notes_path}", exit_on_error=False)
         except RuntimeError:
-            logger.warning(f'Could not add the release note files to git: {release_notes_path}')
+            logger.warning(
+                f"Could not add the release note files to git: {release_notes_path}"
+            )
 
     def rn_with_docker_image(self, rn_string: str, docker_image: Optional[str]) -> str:
         """

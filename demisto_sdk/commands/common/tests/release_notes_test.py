@@ -869,4 +869,4 @@ def test_validate_first_level_header_exists(mocker, rn_content, expected_result)
     mocker.patch.object(ReleaseNotesValidator, "__init__", lambda a, b: None)
     validator = get_validator(rn_content)
     results = validator.validate_first_level_header_exists()
-    assert  results == expected_result
+    assert results == expected_result

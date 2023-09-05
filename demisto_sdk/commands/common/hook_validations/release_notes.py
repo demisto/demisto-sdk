@@ -1,7 +1,6 @@
 import itertools
 import os
 import re
-import sys
 from typing import Dict, List, Tuple, Union
 
 from demisto_sdk.commands.common.constants import (

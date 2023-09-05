@@ -11,9 +11,6 @@
 * Added a log when a content item is missing from the repo, in **graph create** and **graph update**.
 * Replaced logs with a progress bar in **graph create** and **graph update**.
 * Updated the **update-release-notes** command message structure when is run with **--force** flag.
-* Added the '--repo' flag to the **update-content-graph** command, to be able to update the graph with a specific repository packs.
-* Added the '--use-current-graph' flag to the **validate** command, to run validation on the graph without updating it.
-
 
 ## 1.20.0
 * Fixed an issue where **update-release-notes** generated "available from Cortex XSOAR" instead of "from XSIAM" when run on XSIAM event collectors.

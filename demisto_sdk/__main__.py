@@ -594,11 +594,11 @@ def zip_packs(ctx, **kwargs) -> int:
 )
 @click.option(
     "-cgr",
-    "--use_current_graph",
+    "--use-current-graph",
     is_flag=True,
     default=False,
     show_default=True,
-    help="Use the current graph.",
+    help="Use the current graph. (used only when graph is true)",
 )
 @click.option(
     "--prev-ver", help="Previous branch or SHA1 commit to run checks against."

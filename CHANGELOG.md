@@ -10,6 +10,8 @@
 * Fixed an issue where the **upload** command failed for private repositories while trying to find the landing_page.json file.
 * Added a log when a content item is missing from the repo, in **graph create** and **graph update**.
 * Replaced logs with a progress bar in **graph create** and **graph update**.
+* Updated the **update-release-notes --force** flag to support general messages with the right template.
+
 
 ## 1.20.0
 * Fixed an issue where **update-release-notes** generated "available from Cortex XSOAR" instead of "from XSIAM" when run on XSIAM event collectors.

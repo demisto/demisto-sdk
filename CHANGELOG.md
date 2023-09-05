@@ -1,7 +1,7 @@
 # Changelog
-* Fixed an issue where the **coverage-analyze** command was not parsing the logs correctly.
-
 ## Unreleased
+* Fixed an issue where the **coverage-analyze** command was not parsing the logs correctly.
+* The content graph will now include the **python_version** field that each script/integration uses.
 * Updated the **update-release-notes** command message structure when is run with **--force** flag.
 
 ## 1.20.1

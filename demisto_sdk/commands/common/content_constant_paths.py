@@ -1,7 +1,7 @@
 import logging
 from pathlib import Path
 
-from demisto_sdk.commands.common.constants import TESTS_DIR
+from demisto_sdk.commands.common.constants import NATIVE_IMAGE_FILE_NAME, TESTS_DIR
 from demisto_sdk.commands.common.tools import get_content_path
 
 logger = logging.getLogger("demisto-sdk")
@@ -18,6 +18,7 @@ XPANSE_ID_SET_PATH = CONTENT_PATH / TESTS_DIR / "id_set_xpanse.json"
 LANDING_PAGE_SECTIONS_PATH = (
     CONTENT_PATH / TESTS_DIR / "Marketplace" / "landingPage_sections.json"
 )
+NATIVE_IMAGE_PATH = CONTENT_PATH / "Tests" / NATIVE_IMAGE_FILE_NAME
 
 
 PYTHONPATH = [

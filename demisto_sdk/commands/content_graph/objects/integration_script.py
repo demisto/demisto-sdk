@@ -7,11 +7,15 @@ from demisto_sdk.commands.common.constants import (
     NATIVE_IMAGE_FILE_NAME,
     MarketplaceVersions,
 )
+from demisto_sdk.commands.common.docker_helper import (
+    get_python_version,
+)
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.native_image import (
+    NativeImageConfig,
     ScriptIntegrationSupportedNativeImages,
-    file_to_native_image_config,
 )
+from demisto_sdk.commands.content_graph.common import lazy_property
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 from demisto_sdk.commands.prepare_content.integration_script_unifier import (
     IntegrationScriptUnifier,
@@ -25,6 +29,16 @@ class IntegrationScript(ContentItem):
     is_unified: bool = Field(False, exclude=True)
     code: Optional[str] = Field(None, exclude=True)
     unified_data: dict = Field(None, exclude=True)
+
+    @lazy_property
+    def python_version(self) -> Optional[str]:
+        """
+        Get the python version from the script/integration docker-image in case it's a python image
+        """
+        if python_version := get_python_version(self.docker_image):
+            return str(python_version)
+
+        return None
 
     def prepare_for_upload(
         self,
@@ -52,6 +66,6 @@ class IntegrationScript(ContentItem):
             return ScriptIntegrationSupportedNativeImages(
                 _id=self.object_id,
                 docker_image=self.docker_image,
-                native_image_config=file_to_native_image_config(),
+                native_image_config=NativeImageConfig.get_instance(),
             ).get_supported_native_image_versions(get_raw_version=True)
         return []

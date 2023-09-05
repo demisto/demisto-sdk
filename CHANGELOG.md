@@ -6,6 +6,7 @@
 * Added a new validation (`DS108`) to ensure that each description in the yml of script/integration ends with a dot.
 * Fixed an issue where the **validate -g** failed reading a `.pack-ignore` file that was previously empty.
 * Fixed an issue where the **update-release-notes** failed when changing the `.pack-ignore` file.
+* Fixed an issue where the **GR103** validation output was malformed.
 * Fixed an issue where the **upload** command failed for private repositories while trying to find the landing_page.json file.
 * Added a log when a content item is missing from the repo, in **graph create** and **graph update**.
 * Replaced logs with a progress bar in **graph create** and **graph update**.

@@ -5,7 +5,7 @@ import os.path
 import threading
 import time
 from typing import Dict
-
+from litellm import completion
 import requests
 
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
@@ -111,23 +111,10 @@ def ai21_api_request(prompt, options={}):
     if not ai21_key:
         logger.info("[red]No ai21 key provided, see docs and obtain one.[/red]")
         return
-
-    res = requests.post(
-        "https://api.ai21.com/studio/v1/j1-large/complete",
-        headers={"Authorization": f"Bearer {ai21_key}"},
-        json={
-            "prompt": prompt,
-            "numResults": 1,
-            "maxTokens": 8,
-            "stopSequences": STOP_SEQS,
-            "topKReturn": 0,
-            "temperature": 0.0,
-        },
-        verify=options.get("insecure", False),
-    )
-
-    data = res.json().get("completions")[0].get("data")
-    output = data.get("text")
+    
+    response = completion(model="j1-large", messages=[{"role": "user", "content": prompt}], max_tokens=1, n=1, stop=STOP_SEQS, top_k=0, temperature=0)
+    
+    output = response['choices'][0]['message']['content'] # follows the openai format
     prob_check = options.get("prob_check", False)
 
     if prob_check:

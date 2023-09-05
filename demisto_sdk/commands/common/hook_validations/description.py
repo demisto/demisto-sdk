@@ -154,15 +154,18 @@ class DescriptionValidator(BaseValidator):
         file_path = Path(self.file_path)
 
         if not re.match(PACKS_INTEGRATION_YML_REGEX, self.file_path, re.IGNORECASE):
-            package_path = file_path.parent.name
+            package_path = str(file_path.parent)
             try:
                 base_name_without_extension: str = file_path.stem.replace(
                     "_description", ""
                 )
 
-                expected_description_name: str = Path(
-                    package_path, f"{base_name_without_extension}_description.md"
-                ).name
+                expected_description_name: str = str(
+                    Path(
+                        str(file_path.parent),
+                        f"{base_name_without_extension}_description.md",
+                    )
+                )
                 md_file_path = glob.glob(expected_description_name)[0]
             except IndexError:
                 is_unified_integration = self.data_dictionary.get("script", {}).get(

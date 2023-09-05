@@ -1,6 +1,7 @@
 # Site packages
-import click
 import sys
+
+import click
 
 try:
     import git
@@ -13,7 +14,6 @@ import logging
 import os
 from pathlib import Path
 from typing import IO, Any, Dict, Iterable, Tuple, Union
-
 
 import typer
 from pkg_resources import DistributionNotFound, get_distribution

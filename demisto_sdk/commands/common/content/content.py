@@ -55,13 +55,13 @@ class Content:
             1. Add attribute which init only changed objects by git.
         """
         try:
-            return Content(str(cls.git().repo.working_tree_dir))
+            return Content(str(cls.git_util().repo.working_tree_dir))
         except InvalidGitRepositoryError:
             return Content(Path.cwd())
 
     @staticmethod
-    def git() -> GitUtil:
-        """Git repository object.
+    def git_util() -> GitUtil:
+        """Git Util object.
 
         Returns:
             Repo: Repo object of content repo if exists else retun None.

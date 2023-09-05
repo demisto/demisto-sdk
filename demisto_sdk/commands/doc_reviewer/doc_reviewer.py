@@ -84,7 +84,7 @@ class DocReviewer:
         self.git_util = None
 
         if use_git:
-            self.git_util = Content.git()
+            self.git_util = Content.git_util()
             self.prev_ver = self.git_util.handle_prev_ver()[1]
         else:
             self.prev_ver = prev_ver if prev_ver else "demisto/master"

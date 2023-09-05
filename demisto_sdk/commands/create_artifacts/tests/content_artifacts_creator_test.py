@@ -135,7 +135,7 @@ def mock_git(mocker):
 
     # Mock git working directory
     mocker.patch.object(Content, "git")
-    Content.git().repo.working_tree_dir = TEST_CONTENT_REPO
+    Content.git_util().repo.working_tree_dir = TEST_CONTENT_REPO
     yield
 
 
@@ -408,7 +408,7 @@ def mock_single_pack_git(mocker):
 
     # Mock git working directory
     mocker.patch.object(Content, "git")
-    Content.git().repo.working_tree_dir = (
+    Content.git_util().repo.working_tree_dir = (
         TEST_DATA / "content_repo_with_alternative_fields"
     )
     yield

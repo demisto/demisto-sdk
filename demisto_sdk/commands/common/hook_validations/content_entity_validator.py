@@ -300,7 +300,7 @@ class ContentEntityValidator(BaseValidator):
         Returns:
             (bool): is release branch
         """
-        git_util = Content.git()
+        git_util = Content.git_util()
         main_branch = git_util.handle_prev_ver()[1]
         if not main_branch.startswith("origin"):
             main_branch = "origin/" + main_branch

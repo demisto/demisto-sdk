@@ -5,7 +5,7 @@ from typing import Optional, Set, Tuple, Union
 
 import click
 import gitdb
-from git import InvalidGitRepositoryError, Repo  # noqa: TID251
+from git import InvalidGitRepositoryError, Repo  # noqa: TID251: required to create GitUtil
 from git.diff import Lit_change_type
 from git.remote import Remote
 
@@ -21,13 +21,15 @@ class GitUtil:
         path: Optional[Path] = None,
         search_parent_directories: bool = True,
     ):
+        repo_path = path or Path.cwd()
+
         try:
             self.repo = Repo(
-                path or Path.cwd(), search_parent_directories=search_parent_directories
+                repo_path, search_parent_directories=search_parent_directories
             )
         except InvalidGitRepositoryError:
             raise InvalidGitRepositoryError(
-                "Unable to find Repository from current working directory - aborting"
+                f"Unable to find Repository from current {path.resolve()} - aborting"
             )
 
     def get_all_files(self) -> Set[Path]:

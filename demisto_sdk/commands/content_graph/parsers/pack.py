@@ -228,7 +228,7 @@ class PackParser(BaseContentParser, PackMetadataParser):
         try:
             metadata = get_json(path / PACK_METADATA_FILENAME)
         except FileNotFoundError:
-            raise InvalidContentItemException(
+            raise NotAContentItemException(
                 f"{PACK_METADATA_FILENAME} not found in pack in {path=}"
             )
 
@@ -241,7 +241,7 @@ class PackParser(BaseContentParser, PackMetadataParser):
             self.contributors: List[str] = get_json(path / PACK_CONTRIBUTORS_FILENAME)
         except FileNotFoundError:
             logger.debug(f"No contributors file found in {path}")
-        logger.info(f"Parsing {self.node_id}")
+        logger.debug(f"Parsing {self.node_id}")
         self.parse_pack_folders()
         logger.debug(f"Successfully parsed {self.node_id}")
 

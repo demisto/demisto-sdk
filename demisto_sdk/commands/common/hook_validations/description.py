@@ -156,7 +156,9 @@ class DescriptionValidator(BaseValidator):
         if not re.match(PACKS_INTEGRATION_YML_REGEX, self.file_path, re.IGNORECASE):
             package_path = file_path.parent.name
             try:
-                base_name_without_extension: str = file_path.stem.replace("_description", "")
+                base_name_without_extension: str = file_path.stem.replace(
+                    "_description", ""
+                )
 
                 expected_description_name: str = Path(
                     package_path, f"{base_name_without_extension}_description.md"

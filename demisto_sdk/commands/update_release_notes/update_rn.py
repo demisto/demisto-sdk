@@ -698,6 +698,10 @@ class UpdateRN:
                 rn_desc = f"- New: **{content_name}**\n"
             else:
                 rn_desc = f"- **{content_name}**\n"
+
+        elif self.is_force:
+            rn_desc = f"## {content_name}\n\n"
+            rn_desc += f'- {text or "%%UPDATE_RN%%"}\n'
         else:
             if is_new_file:
                 rn_desc = f"##### New: {content_name}\n\n"

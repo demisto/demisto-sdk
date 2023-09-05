@@ -1,7 +1,7 @@
 import traceback
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 from neo4j import Result, Transaction
 from packaging.version import Version
@@ -53,11 +53,13 @@ def to_neo4j_map(properties: dict) -> str:
     return params_str
 
 
-def run_query(tx: Transaction, query: str, **kwargs) -> Result:
+def run_query(
+    tx: Transaction, query: str, timeout: Optional[int] = None, **kwargs
+) -> Result:
     try:
         start_time: datetime = datetime.now()
         logger.debug(f"Running query:\n{query}")
-        result = tx.run(query, **kwargs)
+        result = tx.run(query, **kwargs, timeout=timeout)
         logger.debug(f"Took {(datetime.now() - start_time).total_seconds()} seconds")
         return result
     except Exception as e:

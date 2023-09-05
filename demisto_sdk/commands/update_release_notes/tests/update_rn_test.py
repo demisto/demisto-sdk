@@ -2605,7 +2605,8 @@ def test_force_and_text_update_rn(repo, text, expected_rn_string):
     - Updating release notes with *--force* and without the *--text* flag
 
     Then:
-    - Ensure the release note includes the right text
+    - Ensure the release note includes the "Testing the upload" text
+    - Ensure the release note includes the "%%UPDATE_RN%%" text
     """
     pack = repo.create_pack("PackName")
     client = UpdateRN(

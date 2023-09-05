@@ -10,7 +10,7 @@
 * Fixed an issue where the **upload** command failed for private repositories while trying to find the landing_page.json file.
 * Added a log when a content item is missing from the repo, in **graph create** and **graph update**.
 * Replaced logs with a progress bar in **graph create** and **graph update**.
-* Updated the **update-release-notes --force** flag to support general messages with the right template.
+* Updated the **update-release-notes** command message structure when is ran with **--force** flag. 
 
 
 ## 1.20.0

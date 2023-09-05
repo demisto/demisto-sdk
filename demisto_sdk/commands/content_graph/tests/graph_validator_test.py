@@ -1,6 +1,6 @@
 import logging
 from pathlib import Path
-from typing import Any, Callable, Dict, List
+from typing import Any, Callable, Dict, List, Optional
 
 import pytest
 
@@ -46,6 +46,17 @@ def setup_method(mocker):
     bc.CONTENT_PATH = GIT_PATH
     mocker.patch.object(neo4j_service, "REPO_PATH", GIT_PATH)
     mocker.patch.object(ContentGraphInterface, "repo_path", GIT_PATH)
+    mocker.patch(
+        "demisto_sdk.commands.common.docker_images_metadata.get_remote_file_from_api",
+        return_value={
+            "docker_images": {
+                "python3": {
+                    "3.10.11.54799": {"python_version": "3.10.11"},
+                    "3.10.12.63474": {"python_version": "3.10.11"},
+                }
+            }
+        },
+    )
 
 
 @pytest.fixture
@@ -450,7 +461,7 @@ def mock_script(name, marketplaces=[MarketplaceVersions.XSOAR], skip_prepare=[])
         marketplaces=marketplaces,
         deprecated=False,
         type="python3",
-        docker_image="mock:docker",
+        docker_image="demisto/python3:3.10.11.54799",
         tags=[],
         is_test=False,
         skip_prepare=skip_prepare,
@@ -470,7 +481,7 @@ def mock_integration(name: str = "SampleIntegration", deprecated: bool = False):
         marketplaces=[MarketplaceVersions.XSOAR, MarketplaceVersions.MarketplaceV2],
         deprecated=deprecated,
         type="python3",
-        docker_image="mock:docker",
+        docker_image="demisto/python3:3.10.11.54799",
         category="blabla",
         commands=[
             Command(name="test-command", description=""),
@@ -770,9 +781,11 @@ def test_deprecated_usage__new_content(repository: ContentDTO, mocker):
     assert not is_valid
 
 
-@pytest.mark.parametrize("changed_pack", ["Packs/SamplePack", "Packs/SamplePack2"])
+@pytest.mark.parametrize(
+    "changed_pack", ["Packs/SamplePack", "Packs/SamplePack2", None]
+)
 def test_validate_hidden_pack_is_not_mandatory_dependency(
-    repository: ContentDTO, mocker, changed_pack: str
+    repository: ContentDTO, mocker, changed_pack: Optional[str]
 ):
     """
     Given
@@ -782,15 +795,16 @@ def test_validate_hidden_pack_is_not_mandatory_dependency(
     When
     - Case A: the changed file was the hidden pack.
     - Case B: the changed file was the hidden pack's mandatory dependency
+    - Case C: validate all triggered (no git files were sent)
 
     Then
     - validate that an error occurs with a message stating that SamplePack2 is hidden and has mandatory dependencies
     """
     logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
 
-    with GraphValidator(
-        update_graph=False, git_files=[Path(changed_pack)]
-    ) as graph_validator:
+    git_files = [Path(changed_pack)] if changed_pack else changed_pack
+
+    with GraphValidator(update_graph=False, git_files=git_files) as graph_validator:
         create_content_graph(graph_validator.graph)
         is_valid = (
             graph_validator.validate_hidden_packs_do_not_have_mandatory_dependencies()

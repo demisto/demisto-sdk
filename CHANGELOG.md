@@ -1,7 +1,38 @@
 # Changelog
 ## Unreleased
 * Improved performance when reading `yml` files.
-* Added a period at the end of lines produced by the **generate-docs** command that state the tested version of the product.
+* Fixed an issue where the **coverage-analyze** command was not parsing the logs correctly.
+* The content graph will now include the **python_version** field that each script/integration uses.
+* Updated the **update-release-notes** command message structure when is run with **--force** flag.
+
+## 1.20.1
+* Added formatting for yml files when period is missing in the end of description field, in the **format** command.
+* Fixed an issue where logging arguments were not in the standard kebab-case. The new arguments are: **console-log-threshold**, **file-log-threshold**, **log-file-path**.
+* Added a new validation (`DS108`) to ensure that each description in the yml of script/integration ends with a dot.
+* Fixed an issue where the **validate -g** failed reading a `.pack-ignore` file that was previously empty.
+* Fixed an issue where the **update-release-notes** failed when changing the `.pack-ignore` file.
+* Fixed an issue where the **GR103** validation output was malformed.
+* Fixed an issue where the **upload** command failed for private repositories while trying to find the landing_page.json file.
+* Added a log when a content item is missing from the repo, in **graph create** and **graph update**.
+* Replaced logs with a progress bar in **graph create** and **graph update**.
+
+
+## 1.20.0
+* Fixed an issue where **update-release-notes** generated "available from Cortex XSOAR" instead of "from XSIAM" when run on XSIAM event collectors.
+* Added support for controlling the sleep interval and retry count for **modeling-rules test** command.
+* Added support for a new marketplace tag `xsoar_saas`.
+* Fixed an issue where the **validate -g** failed on `BA102` in external repos even when ignored.
+* Fixed an issue where the **validate -g** failed getting the content of `.pack-ignore` files when the external repository is not hosted in Github.
+* Fixed an issue where the **validate -g** failed when updating an empty `.pack-ignore` file.
+* Added support for yml hidden parameters for `xsoar_saas` marketplace, as part of the **prepare_content** command.
+* Added support for custom documentation that will appear only in `xsoar_saas` marketplace, as part of the **prepare_content** command.
+* Fixed an issue where the (`GR108`) validation did not fail in the validate command with the `-a` flag.
+* Modified **prepare_content** command to be platform specific. For xsoar-saas and XSIAM regarding pack readme and integration description images in markdown files.
+* Fixed an issue where the **lint** command was parsing % that may exist in the log data.
+
+## 1.19.2
+* Added a period at the end of lines produced by the **generate-docs** command that state the tested version of the product.
+* Added the '--junit-path' flag to the **modeling-rules test** command, to allow saving the test results in a JUnit XML file.
 * Update `RN112` validation's docs reference link.
 * Fixed an issue in calculating content graph hash when creating or updating it.
 * Calling **graph create** or **graph update** now run the commands with default arguments, instead of showing the command help.

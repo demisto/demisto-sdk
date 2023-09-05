@@ -3,6 +3,7 @@ import multiprocessing
 import os
 import re
 import subprocess
+import sys
 from collections import defaultdict
 from copy import deepcopy
 from dataclasses import dataclass
@@ -10,6 +11,7 @@ from pathlib import Path
 from typing import Dict, Iterable, List, Optional, Set
 
 import more_itertools
+from packaging.version import Version
 
 from demisto_sdk.commands.common.constants import (
     DEFAULT_PYTHON2_VERSION,
@@ -18,7 +20,6 @@ from demisto_sdk.commands.common.constants import (
     SCRIPTS_DIR,
 )
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH, PYTHONPATH
-from demisto_sdk.commands.common.docker_helper import get_python_version
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
 from demisto_sdk.commands.common.logger import logger
@@ -152,7 +153,9 @@ class PreCommitRunner:
                 if unit_test:
                     response = subprocess.run(
                         [
-                            "pre-commit",
+                            sys.executable,
+                            "-m",
+                            "pre_commit",
                             "run",
                             "run-unit-tests",
                             "-c",
@@ -174,7 +177,9 @@ class PreCommitRunner:
             for chunk in more_itertools.chunked_even(changed_files, 10_000):
                 response = subprocess.run(
                     [
-                        "pre-commit",
+                        sys.executable,
+                        "-m",
+                        "pre_commit",
                         "run",
                         "-c",
                         str(PRECOMMIT_PATH),
@@ -244,8 +249,13 @@ def group_by_python_version(files: Set[Path]) -> Dict[str, set]:
             continue
 
         code_file_path = integration_script.path.parent
-        python_version = get_python_version(integration_script.docker_image)
-        python_version_string = f"{python_version.major}.{python_version.minor}"
+        if python_version := integration_script.python_version:
+            version = Version(python_version)
+            python_version_string = f"{version.major}.{version.minor}"
+        else:
+            raise ValueError(
+                f"Error getting python version for docker image {integration_script.docker_image}"
+            )
         python_versions_to_files[
             python_version_string or DEFAULT_PYTHON2_VERSION
         ].update(

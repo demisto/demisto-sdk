@@ -8,12 +8,18 @@ import typer
 from demisto_sdk.commands.common.constants import (
     MarketplaceVersions,
 )
+from demisto_sdk.commands.common.content_constant_paths import (
+    CONTENT_PATH,
+)
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.logger import (
     logger,
     logging_setup,
 )
-from demisto_sdk.commands.common.tools import download_content_graph
+from demisto_sdk.commands.common.tools import (
+    download_content_graph,
+    is_external_repository,
+)
 from demisto_sdk.commands.content_graph.commands.common import recover_if_fails
 from demisto_sdk.commands.content_graph.commands.create import (
     create,
@@ -71,7 +77,9 @@ def update_content_graph(
                     content_graph_interface, marketplace, dependencies, output_path
                 )
                 return
-    if not content_graph_interface.import_graph(imported_path):
+    up_to_date_graph = content_graph_interface.import_graph(imported_path)
+    # if the graph is not up to date, but the repo is external, then we won't create new graph
+    if not up_to_date_graph and not is_external_repository():
         logger.warning("Failed to import the content graph, will create a new graph")
         create_content_graph(
             content_graph_interface, marketplace, dependencies, output_path
@@ -171,12 +179,6 @@ def update(
         "--log-file-path",
         help=("Path to the log file. Default: ./demisto_sdk_debug.log."),
     ),
-    repo_path: str = typer.Option(
-        None,
-        "-r",
-        "--repo",
-        help="A repository path to update its packs.",
-    ),
 ) -> None:
     """
     Downloads the official content graph, imports it locally,
@@ -201,10 +203,8 @@ def update(
         file_log_threshold=file_log_threshold,
         log_file_path=log_file_path,
     )
-    if repo_path:
-        packs_to_update = os.listdir(
-            repo_path[0] + "/Packs"
-        )  # TODO: consider the fact that the url for these packs is not content
+    if is_external_repository():
+        packs_to_update = os.listdir(str(CONTENT_PATH) + "/Packs")
     with ContentGraphInterface() as content_graph_interface:
         update_content_graph(
             content_graph_interface,

@@ -177,8 +177,9 @@ class PackIgnore(dict):
             tag (str): the branch/commit to retrieve the file content.
         """
         pack_ignore_file_content: bytes = (
-            get_remote_file_from_api(remote_path, tag=tag) or b""
+            get_remote_file_from_api(remote_path, tag=tag, return_content=True) or b""  # type: ignore[assignment]
         )
+
         with tempfile.NamedTemporaryFile(
             prefix=f'{remote_path.replace("/", "_")}:{tag}-'
         ) as pack_ignore_path:

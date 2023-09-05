@@ -129,6 +129,9 @@ class PackIgnore(dict):
     @classmethod
     @lru_cache
     def __load(cls, pack_ignore_path: Path) -> "PackIgnore":
+        """
+        Load the .pack-ignore file into a ConfigParser from a given path
+        """
         if pack_ignore_path.exists():
             try:
                 config = ConfigParser(allow_no_value=True)
@@ -142,7 +145,7 @@ class PackIgnore(dict):
         logger.warning(
             f"[red]Could not find .pack-ignore file at path {pack_ignore_path}[/red]"
         )
-        raise FileNotFoundError(f"Could not find the path {pack_ignore_path}")
+        raise FileNotFoundError(f"Could not find the .pack-ignore path at {pack_ignore_path}")
 
     def __map_files_to_ignored_validations(self):
         for section in filter(
@@ -189,12 +192,17 @@ class PackIgnore(dict):
         pack_ignore.__map_files_to_ignored_validations()
         return pack_ignore
 
-    def add(self, key, section, cast_func: Callable = lambda x: x):
+    def add(self, key: str, section: Any, cast_func: Callable = lambda x: x):
         self.__setitem__(key, cast_func(section))
 
     def get(self, key: str, default: Any = None, cast_func: Callable = lambda x: x):
         """
-        Get a section from the .pack-ignore.
+        Get a section from the .pack-ignore, in case key does not exist, will add it for caching purposes
+
+        Args:
+            key (str): the key to add.
+            default (Any): in case any default value is needed
+            cast_func (Callable): cast to any type when adding the key
         """
         if self._content.has_section(key):
             section = self._content[key]

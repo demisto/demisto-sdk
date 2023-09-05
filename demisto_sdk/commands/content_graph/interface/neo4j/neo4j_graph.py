@@ -90,7 +90,6 @@ def _parse_node(element_id: str, node: dict) -> BaseContent:
     obj: BaseContent
     content_type = node.get("content_type", "")
     if node.get("not_in_repository"):
-        node["name"] = node.get("object_id", "")
         obj = UnknownContent.parse_obj(node)
 
     else:

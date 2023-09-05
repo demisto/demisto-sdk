@@ -2,7 +2,7 @@ import enum
 import os
 import re
 from pathlib import Path
-from typing import Any, Dict, Iterator, List, NamedTuple, Set
+from typing import Any, Callable, Dict, Iterator, List, NamedTuple, Set
 
 from neo4j import graph
 
@@ -14,7 +14,7 @@ NEO4J_DATABASE_HTTP = os.getenv(
     "DEMISTO_SDK_NEO4J_DATABASE_HTTP", "http://127.0.0.1:7474"
 )
 NEO4J_DATABASE_URL = os.getenv(
-    "DEMISTO_SDK_NEO4J_DATABASE_URL", "bolt://127.0.0.1:7687"
+    "DEMISTO_SDK_NEO4J_DATABASE_URL", "neo4j://127.0.0.1:7687"
 )
 NEO4J_USERNAME = os.getenv("DEMISTO_SDK_NEO4J_USERNAME", "neo4j")
 NEO4J_PASSWORD = os.getenv("DEMISTO_SDK_NEO4J_PASSWORD", "contentgraph")
@@ -279,6 +279,39 @@ class PackTags:
     FILTER = "Filter"
     COLLECTION = "Collection"
     DATA_SOURCE = "Data Source"
+
+
+class LazyProperty(property):
+    """
+    Used to define the properties which are lazy properties
+    """
+
+    pass
+
+
+def lazy_property(property_func: Callable):
+    """
+    lazy property: specifies that this property should be added to the pydantic model lazily
+    only when the instance property is first accessed.
+
+    Note:
+        make sure that the lazy property returns only primitive objects (bool, str, int, float, list).
+
+    Use this decorator on your property in case you need it to be added to the model only if its called directly
+    """
+
+    def _lazy_decorator(self):
+        property_name = property_func.__name__
+
+        if property_output := self.__dict__.get(property_name):
+            return property_output
+
+        property_output = property_func(self)
+
+        self.__dict__[property_name] = property_output
+        return property_output
+
+    return LazyProperty(_lazy_decorator)
 
 
 SERVER_CONTENT_ITEMS: dict = {

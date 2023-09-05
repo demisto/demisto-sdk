@@ -1,7 +1,7 @@
 # Changelog
 ## Unreleased
 * Fixed an issue where the **coverage-analyze** command was not parsing the logs correctly.
-* Fixed an issue where the validation failed in case of multi-lines descriptions.
+* Fixed an issue where sentence end with period validation failed in case of multi-lines descriptions.
 * The content graph will now include the **python_version** field that each script/integration uses.
 * Updated the **update-release-notes** command message structure when is run with **--force** flag.
 

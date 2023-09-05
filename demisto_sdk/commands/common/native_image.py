@@ -1,14 +1,12 @@
+from pathlib import Path
 from typing import Dict, List, Optional
 
 from pydantic import BaseModel
 
-from demisto_sdk.commands.common.constants import NATIVE_IMAGE_FILE_NAME
+from demisto_sdk.commands.common.content_constant_paths import NATIVE_IMAGE_PATH
 from demisto_sdk.commands.common.logger import logger
-from demisto_sdk.commands.common.singleton import Singleton
-from demisto_sdk.commands.common.tools import (
-    extract_docker_image_from_text,
-    get_dict_from_file,
-)
+from demisto_sdk.commands.common.singleton import PydanticSingleton
+from demisto_sdk.commands.common.tools import extract_docker_image_from_text
 
 
 class NativeImage(BaseModel):
@@ -26,19 +24,21 @@ def _extract_native_image_version_for_server(native_image: str) -> str:
     return native_image.replace("native:", "")
 
 
-class NativeImageConfig(Singleton, BaseModel):
+class NativeImageConfig(PydanticSingleton, BaseModel):
     native_images: Dict[str, NativeImage]
     ignored_content_items: List[IgnoredContentItem]
     flags_versions_mapping: Dict[str, str] = {}
     docker_images_to_native_images_mapping: Dict[str, List] = {}
 
-    def __init__(
-        self, native_image_config_file_path: str = f"Tests/{NATIVE_IMAGE_FILE_NAME}"
-    ):
-        super().__init__(**self.load(native_image_config_file_path))
-        self.docker_images_to_native_images_mapping = (
-            self.__docker_images_to_native_images_support()
-        )
+    @classmethod
+    def get_instance_from(cls, *args, **kwargs):
+        return cls.from_path(*args, **kwargs)
+
+    @classmethod
+    def from_path(cls, native_image_config_file_path: Path = Path(NATIVE_IMAGE_PATH)):
+        native_image_config = cls.parse_file(native_image_config_file_path)
+        native_image_config.__docker_images_to_native_images_support()
+        return native_image_config
 
     def __docker_images_to_native_images_support(self):
         """
@@ -53,29 +53,18 @@ class NativeImageConfig(Singleton, BaseModel):
            chromium docker image is supported in both 8.1.0, 8.2.0 native images
            while tesseract is only supported in 8.1.0
         """
-        docker_images_to_native_images_mapping: Dict = {}
-
         for native_image_name, native_image_obj in self.native_images.items():
             for supported_docker_image in native_image_obj.supported_docker_images:
-                if supported_docker_image not in docker_images_to_native_images_mapping:
-                    docker_images_to_native_images_mapping[supported_docker_image] = []
-                docker_images_to_native_images_mapping[supported_docker_image].append(
-                    native_image_name
-                )
-
-        return docker_images_to_native_images_mapping
-
-    @staticmethod
-    def load(
-        native_image_config_file_path: str = f"Tests/{NATIVE_IMAGE_FILE_NAME}",
-    ) -> Dict:
-        """
-        Load the native image configuration file
-        """
-        native_image_config_content, _ = get_dict_from_file(
-            native_image_config_file_path
-        )
-        return native_image_config_content
+                if (
+                    supported_docker_image
+                    not in self.docker_images_to_native_images_mapping
+                ):
+                    self.docker_images_to_native_images_mapping[
+                        supported_docker_image
+                    ] = []
+                self.docker_images_to_native_images_mapping[
+                    supported_docker_image
+                ].append(native_image_name)
 
     def get_native_image_reference(self, native_image) -> Optional[str]:
         """
@@ -182,12 +171,3 @@ class ScriptIntegrationSupportedNativeImages:
                 )
             return native_images
         return []
-
-
-def file_to_native_image_config(
-    native_image_config_file_path: str = f"Tests/{NATIVE_IMAGE_FILE_NAME}",
-) -> NativeImageConfig:
-    """
-    Converts the native image file to NativeImageConfig object.
-    """
-    return NativeImageConfig(native_image_config_file_path)

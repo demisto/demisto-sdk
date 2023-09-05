@@ -80,19 +80,6 @@ class ContentGraphInterface(ABC):
         elif self.content_parser_latest_hash != self._get_latest_content_parser_hash():
             logger.warning("The content parser has been changed.")
             return True
-        if current_schema := self.schema:
-            if current_schema != self.get_schema():
-                logger.warning("The content schema has been changed.")
-                return True
-        else:
-            try:
-                logger.warning("The graph schema is missing")
-                self.marshal_graph(MarketplaceVersions.XSOAR)
-            except Exception as e:
-                logger.warning("Failed to load the content graph.")
-                logger.debug(f"Validation Error: {e}")
-                return True
-
         return False
 
     def zip_import_dir(self, output_file: Path) -> None:

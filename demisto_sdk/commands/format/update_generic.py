@@ -1,6 +1,7 @@
 import os
 import re
 from copy import deepcopy
+from pathlib import Path
 from typing import Any, Dict, Optional, Set, Union
 
 import dictdiffer
@@ -116,7 +117,7 @@ class BaseUpdate:
         """
         if not output_file_path:
             source_dir = os.path.dirname(self.source_file)
-            file_name = os.path.basename(self.source_file)
+            file_name = Path(self.source_file).name
             if self.__class__.__name__ == "PlaybookYMLFormat":
                 if "Pack" not in source_dir:
                     if not file_name.startswith("playbook-"):

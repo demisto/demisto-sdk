@@ -1,5 +1,6 @@
 import os
 import re
+from pathlib import Path
 from typing import Optional
 
 from demisto_sdk.commands.common.constants import (
@@ -356,9 +357,8 @@ class ScriptValidator(ContentEntityValidator):
     @error_codes("SC104,SC103")
     def is_valid_script_file_path(self) -> bool:
         absolute_file_path = self.file_path
-        scripts_folder = os.path.basename(os.path.dirname(absolute_file_path))
-        script_file = os.path.basename(absolute_file_path)
-        script_file, _ = os.path.splitext(script_file)
+        scripts_folder = Path(os.path.dirname(absolute_file_path)).name
+        script_file = Path(absolute_file_path).stem
 
         if scripts_folder == "Scripts":
             if not script_file.startswith("script-"):
@@ -410,7 +410,7 @@ class ScriptValidator(ContentEntityValidator):
             true if the name is valid and there are no separators, and false if not.
         """
 
-        script_folder_name = os.path.basename(os.path.dirname(self.file_path))
+        script_folder_name = Path(self.file_path).parent.name
         valid_folder_name = self.remove_separators_from_name(script_folder_name)
 
         if valid_folder_name != script_folder_name:
@@ -441,7 +441,7 @@ class ScriptValidator(ContentEntityValidator):
 
         for file_path in files_to_check:
 
-            file_name = os.path.basename(file_path)
+            file_name = Path(file_path).name
 
             if file_name.endswith("_test.py") or file_name.endswith("_unified.yml"):
                 base_name = file_name.rsplit("_", 1)[0]

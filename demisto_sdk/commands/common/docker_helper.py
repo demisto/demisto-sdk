@@ -18,11 +18,13 @@ from requests import JSONDecodeError
 from demisto_sdk.commands.common.constants import (
     DEFAULT_PYTHON2_VERSION,
     DEFAULT_PYTHON_VERSION,
+    DOCKERFILES_INFO_REPO,
     TYPE_PWSH,
     TYPE_PYTHON,
     TYPE_PYTHON2,
     TYPE_PYTHON3,
 )
+from demisto_sdk.commands.common.docker_images_metadata import DockerImagesMetadata
 from demisto_sdk.commands.common.logger import logger
 
 DOCKER_CLIENT = None
@@ -36,7 +38,9 @@ CAN_MOUNT_FILES = bool(os.getenv("CONTENT_GITLAB_CI", False)) or (
     )
 )
 
-PYTHON_IMAGE_REGEX = re.compile(r"[\d\w]+/python3?:(?P<python_version>[23]\.\d+)")
+DEMISTO_PYTHON_BASE_IMAGE_REGEX = re.compile(
+    r"[\d\w]+/python3?:(?P<python_version>[23]\.\d+(\.\d+)?)"
+)
 
 TEST_REQUIREMENTS_DIR = Path(__file__).parent.parent / "lint" / "resources"
 
@@ -286,8 +290,12 @@ class DockerBase:
             The test image name and errors to create it if any
         """
         errors = ""
-        if not python_version and container_type != TYPE_PWSH:
-            python_version = get_python_version(base_image).major
+        if (
+            not python_version
+            and container_type != TYPE_PWSH
+            and (version := get_python_version(base_image))
+        ):
+            python_version = version.major
         python3_requirements = get_pip_requirements_from_file(
             TEST_REQUIREMENTS_DIR / "python3_requirements" / "dev-requirements.txt"
         )
@@ -400,6 +408,14 @@ def get_docker():
     return MountableDocker() if CAN_MOUNT_FILES else DockerBase()
 
 
+def _get_python_version_from_tag_by_regex(image: str) -> Optional[Version]:
+
+    if match := DEMISTO_PYTHON_BASE_IMAGE_REGEX.match(image):
+        return Version(match.group("python_version"))
+
+    return None
+
+
 def _get_docker_hub_token(repo: str) -> str:
     auth = None
 
@@ -467,25 +483,49 @@ def _get_python_version_from_env(env: List[str]) -> Version:
 
 
 @functools.lru_cache
-def get_python_version(image: Optional[str]) -> Version:
-    log_prompt = f"Get python version from image {image}"
-    logger.debug(f"{log_prompt} - Start")
-    if not image or "pwsh" in image or "powershell" in image:
+def get_python_version(image: Optional[str]) -> Optional[Version]:
+    """
+    Get the python version of a docker image if exist.
+
+    Args:
+        image (str): the docker image
+
+    Returns:
+        Version: Python version X.Y (3.7, 3.6, ..)
+    """
+    logger.debug(f"Get python version from image {image=}")
+
+    if not image:
         # When no docker_image is specified, we use the default python version which is Python 2.7.18
         logger.debug(
             f"No docker image specified or a powershell image, using default python version: {DEFAULT_PYTHON2_VERSION}"
         )
         return Version(DEFAULT_PYTHON2_VERSION)
-    if match := PYTHON_IMAGE_REGEX.match(image):
-        return Version(match.group("python_version"))
+
+    if "pwsh" in image or "powershell" in image:
+        logger.debug(
+            f"The {image=} is a powershell image, does not have python version"
+        )
+        return None
+
+    if python_version := DockerImagesMetadata.get_instance().python_version(image):
+        return python_version
+    logger.debug(
+        f"Could not get python version for {image=} from {DOCKERFILES_INFO_REPO} repo"
+    )
+
+    if python_version := _get_python_version_from_tag_by_regex(image):
+        return python_version
+    logger.debug(f"Could not get python version for {image=} from regex")
+
     try:
-        return _get_python_version_from_image_client(image)
+        logger.debug(f"get python version for {image=} from dockerhub api")
+        return _get_python_version_from_dockerhub_api(image)
     except Exception:
         logger.debug(
-            "Could not get the python version from client. Trying with API",
-            exc_info=True,
+            f"Getting python version from {image=} by pulling its image and query its env"
         )
-        return _get_python_version_from_dockerhub_api(image)
+        return _get_python_version_from_image_client(image)
 
 
 def _get_python_version_from_image_client(image: str) -> Version:
@@ -499,15 +539,24 @@ def _get_python_version_from_image_client(image: str) -> Version:
     """
     try:
         image_model = DockerBase.pull_image(image)
-        env = image_model.attrs["Config"]["Env"]
-        logger.debug(f"Got {env=} from {image=}")
-        return _get_python_version_from_env(env)
+        image_env = image_model.attrs["Config"]["Env"]
+        logger.debug(f"Got {image_env=} from {image=}")
+        return _get_python_version_from_env(image_env)
     except Exception:
         logger.exception(f"Failed detecting Python version for {image=}")
         raise
 
 
-def _get_python_version_from_dockerhub_api(image: str):
+def _get_python_version_from_dockerhub_api(image: str) -> Version:
+    """
+    Get python version for a docker image from the dockerhub api
+
+    Args:
+        image (str): the docker image.
+
+    Returns:
+        Version: Python version X.Y (3.7, 3.6, ..)
+    """
     if ":" not in image:
         repo = image
         tag = "latest"

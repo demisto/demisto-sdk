@@ -47,6 +47,17 @@ def setup_method(mocker):
     bc.CONTENT_PATH = GIT_PATH
     mocker.patch.object(neo4j_service, "REPO_PATH", GIT_PATH)
     mocker.patch.object(ContentGraphInterface, "repo_path", GIT_PATH)
+    mocker.patch(
+        "demisto_sdk.commands.common.docker_images_metadata.get_remote_file_from_api",
+        return_value={
+            "docker_images": {
+                "python3": {
+                    "3.10.11.54799": {"python_version": "3.10.11"},
+                    "3.10.12.63474": {"python_version": "3.10.11"},
+                }
+            }
+        },
+    )
     neo4j_service.stop()
 
 
@@ -186,7 +197,6 @@ def repository(mocker) -> ContentDTO:
         "demisto_sdk.commands.content_graph.content_graph_builder.ContentGraphBuilder._create_content_dtos",
         side_effect=mock__create_content_dto,
     )
-
     return repository
 
 

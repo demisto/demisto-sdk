@@ -161,7 +161,10 @@ class DescriptionValidator(BaseValidator):
                 )
 
                 expected_description_name: str = str(
-                    file_path.parent / "{base_name_without_extension}_description.md"
+                    Path(
+                        str(file_path.parent),
+                        f"{base_name_without_extension}_description.md",
+                    )
                 )
                 md_file_path = glob.glob(expected_description_name)[0]
             except IndexError:

@@ -64,6 +64,6 @@ class ConvertManager:
         pack_path = (
             self.input_path
             if is_pack_path(self.input_path)
-            else Path(self.input_path).parent.name
+            else Path(self.input_path).parent
         )
         return Pack(pack_path)

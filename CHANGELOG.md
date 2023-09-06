@@ -3,6 +3,7 @@
 
 ## Unreleased
 * Updated the **pre-commit** command to run on all python versions in one run.
+* Added the *--dry-run* flag to the **pre-commit** command, to create the config file without running the command.
 * Updated the **update-release-notes** command message structure when is run with **--force** flag.
 
 ## 1.20.1

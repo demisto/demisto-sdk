@@ -43,6 +43,8 @@ class SourceryHook(Hook):
             hook["args"].append(
                 f"--config={self._get_temp_config_file(config_file_path, python_version)}"
             )
+            if not self.all_files:
+                hook["args"].append("--fix")
             hook["files"] = join_files(python_version_to_files[python_version])
 
             self.hooks.append(hook)

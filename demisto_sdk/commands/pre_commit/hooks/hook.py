@@ -1,13 +1,15 @@
 from abc import ABC, abstractmethod
 from copy import deepcopy
-from typing import List
+from pathlib import Path
+from typing import Set
 
 
 class Hook(ABC):
-    def __init__(self, hook: dict, repo: dict) -> None:
+    def __init__(self, hook: dict, repo: dict, all_files: bool = False) -> None:
         self.hooks = repo["hooks"]
         self.base_hook = deepcopy(hook)
         self.hooks.remove(self.base_hook)
+        self.all_files = all_files
 
     @abstractmethod
     def prepare_hook(self, **kwargs):
@@ -19,7 +21,7 @@ class Hook(ABC):
         ...
 
 
-def join_files(files: List[str], separator: str = "|") -> str:
+def join_files(files: Set[Path], separator: str = "|") -> str:
     """
     Joins a list of files into a single string using the specified separator.
     Args:

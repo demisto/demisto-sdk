@@ -13,8 +13,11 @@ class ValidateFormatHook(Hook):
             input_files (Optional[Iterable[Path]]): The input files to validate. Defaults to None.
         """
         if input_files:
-            self.base_hook["args"].remove("-g")
             self.base_hook["args"].append("-i")
             self.base_hook["args"].append(join_files(input_files, ","))
+        elif self.all_files:
+            self.base_hook["args"].append("-a")
+        else:
+            self.base_hook["args"].append("-g")
 
         self.hooks.append(self.base_hook)

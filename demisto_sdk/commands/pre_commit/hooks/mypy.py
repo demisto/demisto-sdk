@@ -19,7 +19,6 @@ class MypyHook(Hook):
                 "name": f"mypy-py{python_version}",
             }
             hook.update(deepcopy(self.base_hook))
-            hook["args"].remove("--python-version=3.10")
             hook["args"].append(f"--python-version={python_version}")
             hook["files"] = join_files(python_version_to_files[python_version])
 

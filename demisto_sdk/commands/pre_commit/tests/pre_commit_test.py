@@ -239,7 +239,7 @@ def test_handle_python2_files_with_unit_test(mocker, repo: Repo):
         None, python_version_to_files, ""
     )
 
-    python2_files = pre_commit_runner.handle_python2_files(unit_test=True)
+    python2_files = pre_commit_runner.exclude_some_hooks_from_python2_files()
 
     assert python2_files == ["file1.py"]
     assert pre_commit_runner.python_version_to_files == {"3.8": {"file2.py"}}
@@ -278,7 +278,7 @@ def test_handle_python2_files_no_unit_test(mocker, repo: Repo):
         None, python_version_to_files, ""
     )
 
-    python2_files = pre_commit_runner.handle_python2_files(unit_test=False)
+    python2_files = pre_commit_runner.exclude_some_hooks_from_python2_files()
 
     assert python2_files == []
     assert pre_commit_runner.python_version_to_files == {"3.8": {"file2.py"}}

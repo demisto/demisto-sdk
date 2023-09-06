@@ -37,8 +37,9 @@ class RuffHook(Hook):
             hook.update(deepcopy(self.base_hook))
             hook["args"] = [
                 f"--target-version={self._python_version_to_ruff(python_version)}",
-                "--fix",
             ]
+            if not self.all_files:
+                hook["args"].append("--fix")
             if github_actions:
                 hook["args"].append("--format=github")
             hook["files"] = join_files(python_version_to_files[python_version])

@@ -5,6 +5,7 @@
 * The content graph will now include the **python_version** field that each script/integration uses.
 * Updated the **update-release-notes** command message structure when is run with **--force** flag.
 * Updated the **update-content-graph** command to work with external repositories.
+* Updated the **validate** command to work with external repositories when using the *-graph* flag.
 
 ## 1.20.1
 * Added formatting for yml files when period is missing in the end of description field, in the **format** command.

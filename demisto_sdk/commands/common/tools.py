@@ -3897,6 +3897,7 @@ def strip_description(description):
         description: a description string.
     Returns: the description stripped from quotes mark if they appear both in the beggining and in the end of the string.
     """
+    description = description.strip()
     return (
         description.strip('"')
         if description.startswith('"') and description.endswith('"')

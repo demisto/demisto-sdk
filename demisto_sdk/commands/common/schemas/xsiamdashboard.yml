@@ -21,7 +21,6 @@ mapping:
         required: false
 
 
-
 schema;dashboards_data_schema:
   type: map
   mapping:

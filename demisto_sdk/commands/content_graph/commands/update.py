@@ -60,7 +60,11 @@ def update_content_graph(
         dependencies (bool): Whether to create the dependencies.
         output_path (Path): The path to export the graph zip to.
     """
+    if is_external_repository():
+        packs_to_update = (CONTENT_PATH / "Packs").iterdir()  # type: ignore
+
     packs_to_update = list(packs_to_update) if packs_to_update else []
+
     builder = ContentGraphBuilder(content_graph_interface)
     if not use_current:
         content_graph_interface.clean_import_dir()
@@ -86,9 +90,12 @@ def update_content_graph(
         )
         return
 
-    if use_git and (commit := content_graph_interface.commit):
+    if (
+        not is_external_repository()
+        and use_git
+        and (commit := content_graph_interface.commit)
+    ):
         packs_to_update.extend(GitUtil().get_all_changed_pack_ids(commit))
-
     packs_str = "\n".join([f"- {p}" for p in packs_to_update])
     logger.info(f"Updating the following packs:\n{packs_str}")
     builder.update_graph(packs_to_update)
@@ -203,8 +210,6 @@ def update(
         file_log_threshold=file_log_threshold,
         log_file_path=log_file_path,
     )
-    if is_external_repository():
-        packs_to_update = os.listdir(str(CONTENT_PATH) + "/Packs")
     with ContentGraphInterface() as content_graph_interface:
         update_content_graph(
             content_graph_interface,

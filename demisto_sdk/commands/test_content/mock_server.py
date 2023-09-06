@@ -123,7 +123,7 @@ class AMIConnection:
             stdout="null",
             **kwargs,
         )
-        return os.path.join(dst, Path(src).name)
+        return str(Path(dst, Path(src).name))
 
     def run_script(self, script, *args):
         """Copy a script to the AMI and run it.

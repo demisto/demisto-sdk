@@ -652,8 +652,8 @@ class Downloader:
         """
         output_pack_path = self.output_pack_path
         if not (
-            os.path.isdir(output_pack_path)
-            and Path(os.path.dirname(os.path.abspath(output_pack_path))).name == "Packs"
+            Path(output_pack_path).is_dir()
+            and Path(output_pack_path).absolute().parent.name == "Packs"
         ):
             logger.info(
                 f"[red]Path {output_pack_path} is not a valid Path pack. The designated output pack's path is"

@@ -1895,8 +1895,7 @@ class IntegrationValidator(ContentEntityValidator):
         valid_files = []
 
         for file_path in files_to_check:
-            file_name = Path(file_path).name
-            if file_name.startswith("README"):
+            if Path(file_path).name.startswith("README"):
                 continue
 
             if (

@@ -358,8 +358,7 @@ class ScriptValidator(ContentEntityValidator):
     def is_valid_script_file_path(self) -> bool:
         absolute_file_path = self.file_path
         scripts_folder = Path(os.path.dirname(absolute_file_path)).name
-        script_file = Path(absolute_file_path).name
-        script_file, _ = os.path.splitext(script_file)
+        script_file = Path(absolute_file_path).stem
 
         if scripts_folder == "Scripts":
             if not script_file.startswith("script-"):

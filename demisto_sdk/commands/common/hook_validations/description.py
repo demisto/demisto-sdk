@@ -161,10 +161,7 @@ class DescriptionValidator(BaseValidator):
                 )
 
                 expected_description_name: str = str(
-                    Path(
-                        str(file_path.parent),
-                        f"{base_name_without_extension}_description.md",
-                    )
+                    file_path.parent / "{base_name_without_extension}_description.md"
                 )
                 md_file_path = glob.glob(expected_description_name)[0]
             except IndexError:
@@ -208,7 +205,7 @@ class DescriptionValidator(BaseValidator):
         md_paths = glob.glob(os.path.join(os.path.dirname(self.file_path), "*.md"))
 
         description_file_path = self.file_path
-        integrations_folder = Path(os.path.dirname(description_file_path)).name
+        integrations_folder = Path(description_file_path).parent.name
         description_file = Path(description_file_path).name
 
         # drop file extension

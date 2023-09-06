@@ -1333,7 +1333,7 @@ REPUTATION_COMMAND_NAMES = {"file", "email", "domain", "url", "ip", "cve"}
 
 BANG_COMMAND_NAMES = {"file", "email", "domain", "url", "ip", "cve", "endpoint"}
 
-MANDATORY_CONTEXT_OBJECTS_NAMES = {
+MANDATORY_REPUTATION_CONTEXT_OBJECTS_NAMES = {
     "File",
     "IP",
     "Endpoint",

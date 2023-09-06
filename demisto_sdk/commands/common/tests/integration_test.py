@@ -2870,11 +2870,13 @@ class TestisContextChanged:
     ]
 
     @pytest.mark.parametrize("outputs, result", IS_OUTPUT_FOR_REPUTATION_INPUTS)
-    def test_is_valid_command_custom_outputs(self, outputs, result):
+    def test_is_valid_command_custom_outputs(
+        self, outputs: List[dict[str]], result: bool
+    ):
         content = {
             "script": {"commands": [{"name": "command_name", "outputs": outputs}]}
         }
         structure = mock_structure("", content)
         validator = IntegrationValidator(structure)
         validator.current_file = content
-        assert validator.is_valid_command_custom_outputs() is result
+        assert validator.is_valid_reputation_command_outputs() is result

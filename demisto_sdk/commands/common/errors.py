@@ -717,11 +717,11 @@ ERROR_CODE: Dict = {
         "code": "IN157",
         "related_field": "script",
     },
-    "command_output_is_invalid": {
+    "command_reputation_output_is_invalid": {
         "code": "IN158",
         "related_field": "outputs",
     },
-    "command_output_is_missing": {
+    "command_reputation_output_is_missing": {
         "code": "IN159",
         "related_field": "outputs",
     },
@@ -4398,21 +4398,21 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def command_output_is_invalid(
+    def command_reputation_output_is_invalid(
         command_name: str,
         invalid_outputs: list[str],
         used_objects: set,
         context_outputs_url: str,
     ):
         return (
-            f"The {command_name} command returns the following outputs:\n{invalid_outputs}\nwhich is using mandatory "
-            f"objects:\n{used_objects} spelled incorrectly. Please fix accordingly."
+            f"The {command_name} command returns the following reputation outputs:\n{invalid_outputs}\nwhich is"
+            f" using mandatory objects:\n{used_objects} spelled incorrectly. Please fix accordingly."
             f"\nFor further information: {context_outputs_url}"
         )
 
     @staticmethod
     @error_code_decorator
-    def command_output_is_missing(
+    def command_reputation_output_is_missing(
         command_name: str,
         reputation_output: list,
         objects_missing_outputs: set[str],

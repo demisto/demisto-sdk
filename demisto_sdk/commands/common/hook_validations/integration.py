@@ -1676,12 +1676,11 @@ class IntegrationValidator(ContentEntityValidator):
 
     @error_codes("IN138,IN137")
     def is_valid_integration_file_path(self) -> bool:
-        absolute_file_path = self.file_path
-        integrations_folder = Path(os.path.dirname(absolute_file_path)).name
-        integration_file = Path(absolute_file_path).name
+        absolute_file_path = Path(self.file_path)
+        integrations_folder = absolute_file_path.parent.name
 
         # drop file extension
-        integration_file, _ = os.path.splitext(integration_file)
+        integration_file = Path(absolute_file_path.name).stem
 
         if integrations_folder == "Integrations":
             if not integration_file.startswith("integration-"):

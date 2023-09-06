@@ -12,11 +12,13 @@ mapping:
     type: str
   toVersion:
     type: str
-  time_frame:
-  mapping:
-    lazy_load:
-      type: bool
-      required: true
+  metadata:
+    type: map
+    required: false
+    mapping:
+      lazy_load:
+        type: bool
+        required: false
 
 
 

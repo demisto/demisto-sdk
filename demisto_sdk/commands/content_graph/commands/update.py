@@ -62,7 +62,7 @@ def update_content_graph(
     """
     packs_to_update = list(packs_to_update) if packs_to_update else []
     builder = ContentGraphBuilder(content_graph_interface)
-    if not use_current:  # TODO: do we want to use the current graph?
+    if not use_current:
         content_graph_interface.clean_import_dir()
         if not imported_path:
             # getting the graph from remote, so we need to clean the import dir

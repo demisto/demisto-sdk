@@ -502,7 +502,9 @@ class TestDockerImage:
         "native_image",
         ["demisto/py3-native:8.2.0.58349", "devdemisto/py3-native:8.2.0.58349"],
     )
-    def test_is_native_image_in_dockerimage_field(self, mocker, requests_mock, pack, native_image):
+    def test_is_native_image_in_dockerimage_field(
+        self, mocker, requests_mock, pack, native_image
+    ):
         """
         Given:
             native image that is configured into the yml for the dockerimage field
@@ -518,7 +520,6 @@ class TestDockerImage:
             DEPRECATED_IMAGES_URL,
             json=[],
         )
-
 
         integration = pack.create_integration(docker_image=native_image)
         script = pack.create_script(docker_image=native_image)

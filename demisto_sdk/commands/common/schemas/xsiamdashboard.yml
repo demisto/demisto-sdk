@@ -12,6 +12,13 @@ mapping:
     type: str
   toVersion:
     type: str
+  metadata:
+    type: map
+    required: false
+    mapping:
+      lazy_load:
+        type: bool
+        required: false
 
 
 schema;dashboards_data_schema:

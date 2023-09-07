@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import Callable, List, Optional, Set, Tuple
 
 import pebble
-from git import InvalidGitRepositoryError
+from git import GitCommandError, InvalidGitRepositoryError
 from packaging import version
 
 from demisto_sdk.commands.common import tools
@@ -408,7 +408,7 @@ class ValidateManager:
             return PathLevel.FILE
 
         file_path = file_path.rstrip("/")
-        dir_name = os.path.basename(file_path)
+        dir_name = Path(file_path).name
         if dir_name in CONTENT_ENTITIES_DIRS:
             return PathLevel.CONTENT_ENTITY_DIR
 
@@ -417,7 +417,7 @@ class ValidateManager:
         ).endswith(GENERIC_FIELDS_DIR):
             return PathLevel.CONTENT_GENERIC_ENTITY_DIR
 
-        if os.path.basename(os.path.dirname(file_path)) == PACKS_DIR:
+        if Path(file_path).parent.name == PACKS_DIR:
             return PathLevel.PACK
 
         else:
@@ -593,7 +593,7 @@ class ValidateManager:
             skip_files = set()
 
         pack_entities_validation_results = set()
-        pack_error_ignore_list = self.get_error_ignore_list(os.path.basename(pack_path))
+        pack_error_ignore_list = self.get_error_ignore_list(Path(pack_path).name)
 
         pack_entities_validation_results.add(
             self.validate_pack_unique_files(pack_path, pack_error_ignore_list)
@@ -1054,9 +1054,10 @@ class ValidateManager:
         ):
             logger.info(f"Validating {file_type.value} file: {file_path}")
             if self.validate_all:
+                file_name = Path(file_path).name
                 error_ignore_list = pack_error_ignore_list.copy()
-                error_ignore_list.setdefault(os.path.basename(file_path), [])
-                error_ignore_list.get(os.path.basename(file_path)).append("MR104")
+                error_ignore_list.setdefault(file_name, [])
+                error_ignore_list.get(file_name).append("MR104")
                 return self.validate_modeling_rule(
                     structure_validator, error_ignore_list
                 )
@@ -1506,6 +1507,7 @@ class ValidateManager:
             json_file_path=self.json_file_path,
             validate_all=self.validate_all,
             deprecation_validator=self.deprecation_validator,
+            using_git=self.use_git,
         )
 
         deprecated_result = self.check_and_validate_deprecated(
@@ -1549,6 +1551,7 @@ class ValidateManager:
             json_file_path=self.json_file_path,
             validate_all=self.validate_all,
             deprecation_validator=self.deprecation_validator,
+            using_git=self.use_git,
         )
 
         deprecated_result = self.check_and_validate_deprecated(
@@ -1579,6 +1582,7 @@ class ValidateManager:
             skip_docker_check=self.skip_docker_checks,
             json_file_path=self.json_file_path,
             validate_all=self.validate_all,
+            using_git=self.use_git,
         )
         return integration_validator.is_valid_beta_integration()
 
@@ -1927,7 +1931,7 @@ class ValidateManager:
 
         logger.info(f"\nValidating {pack_path} unique pack files")
         pack_unique_files_validator = PackUniqueFilesValidator(
-            pack=os.path.basename(pack_path),
+            pack=Path(pack_path).name,
             pack_path=pack_path,
             ignored_errors=pack_error_ignore_list,
             should_version_raise=should_version_raise,
@@ -1947,7 +1951,7 @@ class ValidateManager:
 
         # check author image
         author_image_path = os.path.join(pack_path, AUTHOR_IMAGE_FILE_NAME)
-        if os.path.exists(author_image_path):
+        if Path(author_image_path).exists():
             logger.info("Validating pack author image")
             author_valid = self.validate_author_image(
                 author_image_path, pack_error_ignore_list
@@ -1992,22 +1996,44 @@ class ValidateManager:
             old_file_path, file_path = self.get_old_file_path(file_path)
             if not file_path.endswith(".pack-ignore"):
                 continue
-            old_file_content = get_remote_file(old_file_path, tag="master")
+            # if the repo does not have remotes, get the .pack-ignore content from the master branch in Github api
+            # if the repo is not in remote / file cannot be found from Github api, try to take it from the latest commit on the default branch (usually master/main)
+            old_pack_ignore_content = get_remote_file(old_file_path, "master")
+            if old_pack_ignore_content == b"":  # found as empty file in remote
+                old_pack_ignore_content = ""
+            elif old_pack_ignore_content == {}:  # not found in remote
+                logger.debug(
+                    f"Could not get {old_file_path} from remote master branch, trying to get it from local branch"
+                )
+                primary_branch = GitUtil.find_primary_branch(self.git_util.repo)
+                _pack_ignore_default_branch_path = f"{primary_branch}:{old_file_path}"
+                try:
+                    old_pack_ignore_content = (
+                        self.git_util.get_local_remote_file_content(
+                            _pack_ignore_default_branch_path
+                        )
+                    )
+                except GitCommandError:
+                    logger.warning(
+                        f"could not retrieve {_pack_ignore_default_branch_path} from {primary_branch} because {primary_branch} is not a valid ref, assuming .pack-ignore is empty"
+                    )
+                    old_pack_ignore_content = ""
+
             config = ConfigParser(allow_no_value=True)
-            config.read_string(old_file_content)
-            old_file_content = self.get_error_ignore_list(config=config)
+            config.read_string(old_pack_ignore_content)
+            old_pack_ignore_content = self.get_error_ignore_list(config=config)
             pack_name = get_pack_name(str(file_path))
             file_content = self.get_error_ignore_list(pack_name)
             files_to_test = set()
-            for key, value in old_file_content.items():
+            for key, value in old_pack_ignore_content.items():
                 if not (section_values := file_content.get(key, [])) or not set(
                     section_values
                 ) == set(value):
                     files_to_test.add(key)
             for key, value in file_content.items():
-                if not (section_values := old_file_content.get(key, [])) or not set(
-                    section_values
-                ) == set(value):
+                if not (
+                    section_values := old_pack_ignore_content.get(key, [])
+                ) or not set(section_values) == set(value):
                     files_to_test.add(key)
 
             all_files_mapper = {
@@ -2589,7 +2615,7 @@ class ValidateManager:
         :returns a tuple(string, string, bool) where
             - the first element is the path of the file that should be returned, if the file isn't relevant then returns an empty string
             - the second element is the old path in case the file was renamed, if the file wasn't renamed then return an empty string
-            - true if the file type is supported, false otherwise
+            - true if the file type is supported OR file type is not supported, but should be ignored, false otherwise
         """
         irrelevant_file_output = "", "", True
         if file_path.split(os.path.sep)[0] in (
@@ -2611,15 +2637,9 @@ class ValidateManager:
         ):
             return irrelevant_file_output
 
-        if not file_type:
-            if str(file_path).endswith(".png"):
-                error_message, error_code = Errors.invalid_image_name_or_location()
-            else:
-                error_message, error_code = Errors.file_type_not_supported(
-                    None, file_path
-                )
-
-            self.handle_error(error_message, error_code, file_path=file_path)
+        if not self.is_valid_file_type(
+            file_type, file_path, self.get_error_ignore_list(get_pack_name(file_path))
+        ):
             return "", "", False
 
         # redirect non-test code files to the associated yml file

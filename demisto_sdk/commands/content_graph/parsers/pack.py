@@ -32,8 +32,8 @@ from demisto_sdk.commands.content_graph.parsers.content_items_list import (
 )
 
 DEFAULT_MARKETPLACES = [
-    MarketplaceVersions.XSOAR,
-    MarketplaceVersions.MarketplaceV2,
+    MarketplaceVersions.XSOAR.value,
+    MarketplaceVersions.MarketplaceV2.value,
 ]
 
 
@@ -137,9 +137,19 @@ class PackMetadataParser:
         self.keywords: List[str] = metadata["keywords"] or []
         self.search_rank: int = 0
         self.videos: List[str] = metadata.get("videos", [])
-        self.marketplaces: List[MarketplaceVersions] = (
+        self.marketplaces: List[str] = (
             metadata.get("marketplaces") or DEFAULT_MARKETPLACES
         )
+        if MarketplaceVersions.XSOAR.value in self.marketplaces:
+            # Since we want xsoar-saas and xsoar to contain the same content items.
+            self.marketplaces.append(MarketplaceVersions.XSOAR_SAAS.value)
+
+        if MarketplaceVersions.XSOAR_ON_PREM.value in self.marketplaces:
+            self.marketplaces.append(MarketplaceVersions.XSOAR.value)
+
+        marketplaces_set = set(self.marketplaces)
+        self.marketplaces = sorted(marketplaces_set)
+
         self.excluded_dependencies: List[str] = metadata.get("excludedDependencies", [])
         self.modules: List[str] = metadata.get("modules", [])
         self.integrations: List[str] = []
@@ -218,7 +228,7 @@ class PackParser(BaseContentParser, PackMetadataParser):
         try:
             metadata = get_json(path / PACK_METADATA_FILENAME)
         except FileNotFoundError:
-            raise InvalidContentItemException(
+            raise NotAContentItemException(
                 f"{PACK_METADATA_FILENAME} not found in pack in {path=}"
             )
 
@@ -231,7 +241,7 @@ class PackParser(BaseContentParser, PackMetadataParser):
             self.contributors: List[str] = get_json(path / PACK_CONTRIBUTORS_FILENAME)
         except FileNotFoundError:
             logger.debug(f"No contributors file found in {path}")
-        logger.info(f"Parsing {self.node_id}")
+        logger.debug(f"Parsing {self.node_id}")
         self.parse_pack_folders()
         logger.debug(f"Successfully parsed {self.node_id}")
 
@@ -275,7 +285,7 @@ class PackParser(BaseContentParser, PackMetadataParser):
         """
         try:
             content_item = ContentItemParser.from_path(
-                content_item_path, self.marketplaces
+                content_item_path, [MarketplaceVersions(mp) for mp in self.marketplaces]
             )
             content_item.add_to_pack(self.object_id)
             self.content_items.append(content_item)

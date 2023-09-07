@@ -4,8 +4,9 @@
 * Fixed an issue where **validate** falsly failed with error `DS108` on descriptions ending with a newline.
 * The content graph will now include the **python_version** field that each script/integration uses.
 * Updated the **update-release-notes** command message structure when is run with **--force** flag.
-* Fixed an issue where **validate** falsly failed with error `DS108` on empty descriptions.
+* Fixed an issue where **validate** falsely failed with error `DS108` on empty descriptions.
 * Added support for lazy loading the of widgets in XSIAM dashboards.
+* Added a **validate** check for correlation rules, making sure that `search_window` cannot be empty when `execution_mode` is set to `SCHEDULED`.
 
 ## 1.20.1
 * Added formatting for yml files when period is missing in the end of description field, in the **format** command.
@@ -31,7 +32,6 @@
 * Fixed an issue where the (`GR108`) validation did not fail in the validate command with the `-a` flag.
 * Modified **prepare_content** command to be platform specific. For xsoar-saas and XSIAM regarding pack readme and integration description images in markdown files.
 * Fixed an issue where the **lint** command was parsing % that may exist in the log data.
-* Added a **validate** check for correlation rules, making sure that `search_window` cannot be empty when `execution_mode` is set to `SCHEDULED`.
 
 ## 1.19.2
 * Added a period at the end of lines produced by the **generate-docs** command that state the tested version of the product.

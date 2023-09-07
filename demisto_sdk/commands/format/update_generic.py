@@ -477,7 +477,7 @@ class BaseUpdate:
                 if not strip_value.endswith(".") and not is_string_ends_with_url(
                     strip_value
                 ):
-                    return f"{value}."
+                    return f"{strip_value}."
             return value
 
         # script yml

@@ -260,7 +260,7 @@ class SecretsValidator:
                 )
                 continue
             # Init vars for current loop
-            file_name = os.path.basename(file_path)
+            file_name = Path(file_path).name
             _, file_extension = os.path.splitext(file_path)
             # get file contents
             file_contents = self.get_file_contents(file_path, file_extension)
@@ -370,9 +370,7 @@ class SecretsValidator:
     @staticmethod
     def retrieve_related_yml(integration_path):
         matching_yml_file_contents = None
-        yml_file = os.path.join(
-            integration_path, os.path.basename(integration_path) + ".yml"
-        )
+        yml_file = str(Path(integration_path, Path(integration_path).name + ".yml"))
         if Path(yml_file).exists():
             with open(yml_file, encoding="utf-8") as matching_yml_file:
                 matching_yml_file_contents = matching_yml_file.read()

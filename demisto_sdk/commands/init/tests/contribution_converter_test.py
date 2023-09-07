@@ -106,7 +106,7 @@ def rename_file_in_zip(
         updated_file_name (str): The name the original file will be renamed to
     """
     modded_zip_file = os.path.join(
-        os.path.dirname(path_to_zip), "Edit" + os.path.basename(path_to_zip)
+        os.path.dirname(path_to_zip), "Edit" + Path(path_to_zip).name
     )
     tmp_zf = ZipFile(modded_zip_file, "w")
     with ZipFile(path_to_zip, "r") as zf:
@@ -691,7 +691,7 @@ def test_rearranging_before_conversion(zip_path: str, expected_directories: set)
     )
     results = set()
     for directory in unpacked_contribution_dirs:
-        results.add(os.path.basename(directory))
+        results.add(Path(directory).name)
     assert expected_directories == results
 
 

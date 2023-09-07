@@ -182,11 +182,11 @@ class ModelingRuleValidator(ContentEntityValidator):
         files_to_check = get_files_in_dir(
             os.path.dirname(self.file_path), ["json", "xif", "yml"], False
         )
-        integrations_folder = os.path.basename(os.path.dirname(self.file_path))
+        integrations_folder = Path(self.file_path).parent.name
         invalid_files = []
 
         for file_path in files_to_check:
-            file_name = os.path.basename(file_path)
+            file_name = Path(file_path).name
             file_name_std = file_name.casefold()
             # The schema has _schema.json suffix and the testdata file has _testdata.json suffix
             # whereas the other content entity component files only has the .suffix

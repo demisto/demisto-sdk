@@ -383,15 +383,21 @@ class Linter:
             if self._facts["docker_engine"]:
                 # Getting python version from docker image - verifying if not valid docker image configured
                 for image in self._facts["images"]:
-                    py_num_version = get_python_version(image=image[0])
-                    py_num = f"{py_num_version.major}.{py_num_version.minor}"
+                    if py_num_version := get_python_version(image=image[0]):
+                        python_version_string = (
+                            f"{py_num_version.major}.{py_num_version.minor}"
+                        )
+                    else:
+                        raise ValueError(
+                            f"Could not get python version from docker-image {image[0]}"
+                        )
 
-                    image[1] = py_num
+                    image[1] = python_version_string
                     logger.info(
-                        f"{self._pack_name} - Facts - {image[0]} - Python {py_num}"
+                        f"{self._pack_name} - Facts - {image[0]} - Python {python_version_string}"
                     )
                     if not self._facts["python_version"]:
-                        self._facts["python_version"] = py_num
+                        self._facts["python_version"] = python_version_string
 
                 # Checking whatever *test* exists in package
                 self._facts["test"] = (
@@ -1441,9 +1447,8 @@ class Linter:
             docker_image_flag (str): Requested docker image flag.
         Returns (None): None
         """
-        native_image_config = (
-            NativeImageConfig()
-        )  # parsed docker_native_image_config.json file (a singleton obj)
+        native_image_config = NativeImageConfig.get_instance()
+        # parsed docker_native_image_config.json file (a singleton obj)
 
         if native_image := native_image_config.flags_versions_mapping.get(
             docker_image_flag
@@ -1504,9 +1509,8 @@ class Linter:
             f"{self._pack_name} - Get Versioned Native Image - {native_image} - Started"
         )
 
-        native_image_config = (
-            NativeImageConfig()
-        )  # parsed docker_native_image_config.json file (a singleton obj)
+        native_image_config = NativeImageConfig.get_instance()
+        # parsed docker_native_image_config.json file (a singleton obj)
 
         return native_image_config.get_native_image_reference(native_image)
 
@@ -1536,9 +1540,8 @@ class Linter:
         imgs = get_docker_images_from_yml(script_obj)
 
         # Get native images:
-        native_image_config = (
-            NativeImageConfig()
-        )  # parsed docker_native_image_config.json file (a singleton obj)
+        native_image_config = NativeImageConfig.get_instance()
+        # parsed docker_native_image_config.json file (a singleton obj)
 
         for native_image in native_image_config.native_images:
             if self._is_native_image_support_script(
@@ -1611,9 +1614,8 @@ class Linter:
 
         di_from_yml = script_obj.get("dockerimage")
         # If the 'dockerimage' key does not exist in yml - run on native image checks will be skipped
-        native_image_config = (
-            NativeImageConfig()
-        )  # parsed docker_native_image_config.json file (a singleton obj)
+        native_image_config = NativeImageConfig.get_instance()
+        # parsed docker_native_image_config.json file (a singleton obj)
         supported_native_images_obj = ScriptIntegrationSupportedNativeImages(
             _id=script_id,
             native_image_config=native_image_config,

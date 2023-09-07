@@ -7,6 +7,7 @@ try:
     import git
 except ImportError:
     from demisto_sdk.commands.common.logger import logger
+
     logger.error("Git executable cannot be found, or is invalid")
     sys.exit(1)
 

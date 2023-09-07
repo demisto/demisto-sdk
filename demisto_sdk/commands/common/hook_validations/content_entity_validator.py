@@ -801,7 +801,7 @@ class ContentEntityValidator(BaseValidator):
                 line_with_missing_dot += f"The context path {output.get('contextPath')} description should end with a period.\n"
         return line_with_missing_dot
 
-    def is_valid_description(self, stripped_description):
+    def is_valid_description(self, stripped_description: str) -> bool:
         """
         Args:
             stripped_description: (str) a description or comment section from script / integration yml.

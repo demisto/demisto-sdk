@@ -218,7 +218,7 @@ def function_setup():
         content_git_repo = ContentGitRepo()
     # Function setup
     content_git_repo.git_cleanup()
-    content_git_repo.run_command("npm install")
+    content_git_repo.run_command("npm install --no-fund --no-audit")
     content_git_repo.create_branch()
 
 
@@ -298,7 +298,7 @@ def modify_entity(content_repo: ContentGitRepo, monkeypatch: MonkeyPatch):
     )
     # Modify the entity
     script = yaml.load(open("./HelloWorldScript.yml"))
-    script["args"][0]["description"] = "new description"
+    script["args"][0]["description"] = "new description."
 
     yaml.dump(script, open("./HelloWorldScript.yml", "w"))
     content_repo.run_command("git add .")

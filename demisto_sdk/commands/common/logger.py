@@ -28,15 +28,18 @@ current_log_file_path: Path = LOG_FILE_PATH
 DATE_FORMAT = "%Y-%m-%dT%H:%M:%S"
 
 DEPRECATED_PARAMETERS = {
-    "-v": "--console_log_threshold or --file_log_threshold",
-    "-vv": "--console_log_threshold or --file_log_threshold",
-    "-vvv": "--console_log_threshold or --file_log_threshold",
-    "--verbose": "--console_log_threshold or --file_log_threshold",
-    "-q": "--console_log_threshold or --file_log_threshold",
-    "--quiet": "--console_log_threshold or --file_log_threshold",
-    "-ln": "--log_file_path",
-    "--log-name": "--log_file_path",
-    "no_logging": "--console_log_threshold or --file_log_threshold",
+    "-v": "--console-log-threshold or --file-log-threshold",
+    "-vv": "--console-log-threshold or --file-log-threshold",
+    "-vvv": "--console-log-threshold or --file-log-threshold",
+    "--verbose": "--console-log-threshold or --file-log-threshold",
+    "-q": "--console-log-threshold or --file-log-threshold",
+    "--quiet": "--console-log-threshold or --file-log-threshold",
+    "--console_log_threshold": "--console-log-threshold",
+    "--file_log_threshold": "--file-log-threshold",
+    "-ln": "--log-file-path",
+    "--log-name": "--log-file-path",
+    "--log_file_path": "--log-file-path",
+    "no_logging": "--console-log-threshold or --file-log-threshold",
 }
 
 SUCCESS_LEVEL: int = 25
@@ -225,8 +228,7 @@ class ColorConsoleFormatter(logging.Formatter):
     def _record_contains_escapes(record: logging.LogRecord) -> bool:
         message = record.getMessage()
         return any(
-            not key.startswith("[/]") and key in message
-            for key, _ in DEMISTO_LOG_ALLOWED_ESCAPES
+            not key.startswith("[/]") and key in message for key in DEMISTO_LOG_LOOKUP
         )
 
     @staticmethod

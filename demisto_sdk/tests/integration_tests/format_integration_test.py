@@ -1,5 +1,4 @@
 import logging
-import os
 from pathlib import Path, PosixPath
 from typing import List
 
@@ -273,7 +272,7 @@ def test_integration_format_configuring_conf_json_no_interactive_positive(
         json.dump(CONF_JSON_ORIGINAL_CONTENT, file, indent=4)
 
     test_playbooks = ["test1", "test2"]
-    saved_file_path = str(tmp_path / os.path.basename(destination_path))
+    saved_file_path = str(tmp_path / Path(destination_path).name)
     runner = CliRunner()
     # Running format in the first time
     result = runner.invoke(
@@ -329,7 +328,7 @@ def test_integration_format_configuring_conf_json_positive(
     mocker.patch.object(BaseUpdate, "set_default_from_version", return_value=None)
 
     test_playbooks = ["test1", "test2"]
-    saved_file_path = str(tmp_path / os.path.basename(destination_path))
+    saved_file_path = str(tmp_path / Path(destination_path).name)
     runner = CliRunner()
     # Running format in the first time
     with ChangeCWD(tmp_path):
@@ -394,7 +393,7 @@ def test_integration_format_configuring_conf_json_negative(
     with open(conf_json_path, "w") as file:
         json.dump(CONF_JSON_ORIGINAL_CONTENT, file, indent=4)
 
-    saved_file_path = str(tmp_path / os.path.basename(destination_path))
+    saved_file_path = str(tmp_path / Path(destination_path).name)
     runner = CliRunner()
     # Running format in the first time
     result = runner.invoke(
@@ -524,7 +523,7 @@ def test_format_on_valid_py(mocker, repo):
                 "-nv",
                 "-i",
                 integration.code.path,
-                "--console_log_threshold",
+                "--console-log-threshold",
                 "DEBUG",
                 "-ngr",
             ],
@@ -577,7 +576,7 @@ def test_format_on_invalid_py_empty_lines(mocker, repo):
                 "-nv",
                 "-i",
                 integration.code.path,
-                "--console_log_threshold",
+                "--console-log-threshold",
                 "DEBUG",
                 "-ngr",
             ],
@@ -630,7 +629,7 @@ def test_format_on_invalid_py_dict(mocker, repo):
                 "-nv",
                 "-i",
                 integration.code.path,
-                "--console_log_threshold",
+                "--console-log-threshold",
                 "DEBUG",
                 "-ngr",
             ],
@@ -687,7 +686,7 @@ def test_format_on_invalid_py_long_dict(mocker, repo, caplog, monkeypatch):
                 "-nv",
                 "-i",
                 integration.code.path,
-                "--console_log_threshold",
+                "--console-log-threshold",
                 "DEBUG",
                 "-ngr",
             ],
@@ -745,7 +744,7 @@ def test_format_on_invalid_py_long_dict_no_verbose(mocker, repo, monkeypatch):
                 "-nv",
                 "-i",
                 integration.code.path,
-                "--console_log_threshold",
+                "--console-log-threshold",
                 "INFO",
                 "-ngr",
             ],

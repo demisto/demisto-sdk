@@ -238,7 +238,7 @@ def test_is_valid_image_name_with_invalid_name(repo, file_name):
     integration = pack.create_integration("IntName")
     integration.create_default_integration()
 
-    if os.path.exists(integration.image.path):
+    if Path(integration.image.path).exists():
         Path(integration.image.path).unlink()
         integration.image = None
 

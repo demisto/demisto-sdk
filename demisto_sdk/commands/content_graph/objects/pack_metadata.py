@@ -321,8 +321,16 @@ class PackMetadata(BaseModel):
         Returns:
             set: Pack's tags.
         """
-        tags = set()
-        landing_page_sections = get_json(LANDING_PAGE_SECTIONS_PATH)
+        tags: set = set()
+
+        try:
+            landing_page_sections = get_json(LANDING_PAGE_SECTIONS_PATH)
+        except FileNotFoundError as e:
+            logger.warning(
+                f"Couldn't find the landing_page file in path {LANDING_PAGE_SECTIONS_PATH}. Skipping collecting tags by landing page sections.\n{e}"
+            )
+            return tags
+
         sections = landing_page_sections.get("sections") or []
 
         for section in sections:
@@ -346,7 +354,12 @@ class PackMetadata(BaseModel):
 
     @staticmethod
     def _get_author(author, marketplace):
-        if marketplace in [MarketplaceVersions.XSOAR, MarketplaceVersions.XPANSE]:
+        if marketplace in [
+            MarketplaceVersions.XSOAR,
+            MarketplaceVersions.XPANSE,
+            MarketplaceVersions.XSOAR_ON_PREM,
+            MarketplaceVersions.XSOAR_SAAS,
+        ]:
             return author
         elif marketplace == MarketplaceVersions.MarketplaceV2:
             return author.replace("Cortex XSOAR", "Cortex XSIAM")

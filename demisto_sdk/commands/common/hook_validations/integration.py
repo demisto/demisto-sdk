@@ -62,8 +62,10 @@ from demisto_sdk.commands.common.tools import (
     get_item_marketplaces,
     get_pack_name,
     is_iron_bank_pack,
+    is_string_ends_with_url,
     server_version_compare,
     string_to_bool,
+    strip_description,
 )
 
 default_additional_info = load_default_additional_info_dict()
@@ -85,6 +87,7 @@ class IntegrationValidator(ContentEntityValidator):
         json_file_path=None,
         validate_all=False,
         deprecation_validator=None,
+        using_git=False,
     ):
         super().__init__(
             structure_validator,
@@ -92,6 +95,7 @@ class IntegrationValidator(ContentEntityValidator):
             json_file_path=json_file_path,
             skip_docker_check=skip_docker_check,
         )
+        self.running_validations_using_git = using_git
         self.validate_all = validate_all
         self.deprecation_validator = deprecation_validator
 
@@ -173,6 +177,7 @@ class IntegrationValidator(ContentEntityValidator):
             self.are_common_outputs_with_description(),
             self.is_native_image_does_not_exist_in_yml(),
             self.validate_unit_test_exists(),
+            self.is_line_ends_with_dot(),
         ]
 
         return all(answers)
@@ -1671,12 +1676,11 @@ class IntegrationValidator(ContentEntityValidator):
 
     @error_codes("IN138,IN137")
     def is_valid_integration_file_path(self) -> bool:
-        absolute_file_path = self.file_path
-        integrations_folder = os.path.basename(os.path.dirname(absolute_file_path))
-        integration_file = os.path.basename(absolute_file_path)
+        absolute_file_path = Path(self.file_path)
+        integrations_folder = absolute_file_path.parent.name
 
         # drop file extension
-        integration_file, _ = os.path.splitext(integration_file)
+        integration_file = Path(absolute_file_path.name).stem
 
         if integrations_folder == "Integrations":
             if not integration_file.startswith("integration-"):
@@ -1727,10 +1731,10 @@ class IntegrationValidator(ContentEntityValidator):
             os.path.dirname(self.file_path), ["py"], False
         )
         invalid_files = []
-        integrations_folder = os.path.basename(os.path.dirname(self.file_path))
+        integrations_folder = Path(os.path.dirname(self.file_path)).name
 
         for file_path in files_to_check:
-            file_name = os.path.basename(file_path)
+            file_name = Path(file_path).name
 
             # If the file is in an exclusion list, skip it.
             if file_name in excluded_files or any(
@@ -1785,7 +1789,7 @@ class IntegrationValidator(ContentEntityValidator):
         valid = True
 
         dir_path = os.path.dirname(self.file_path)
-        if not os.path.exists(os.path.join(dir_path, "README.md")):
+        if not Path(dir_path, "README.md").exists():
             return True
 
         # Only run validation if the validation has not run with is_context_different_in_yml on readme
@@ -1861,7 +1865,7 @@ class IntegrationValidator(ContentEntityValidator):
             true if the name is valid and there are no separators, and false if not.
         """
 
-        integration_folder_name = os.path.basename(os.path.dirname(self.file_path))
+        integration_folder_name = Path(os.path.dirname(self.file_path)).name
         valid_folder_name = self.remove_separators_from_name(integration_folder_name)
 
         if valid_folder_name != integration_folder_name:
@@ -1891,8 +1895,7 @@ class IntegrationValidator(ContentEntityValidator):
         valid_files = []
 
         for file_path in files_to_check:
-            file_name = os.path.basename(file_path)
-            if file_name.startswith("README"):
+            if (file_name := Path(file_path).name).startswith("README"):
                 continue
 
             if (
@@ -2211,7 +2214,7 @@ class IntegrationValidator(ContentEntityValidator):
         )
         if missing_commands_from_readme:
             error_message, error_code = Errors.missing_commands_from_readme(
-                os.path.basename(self.file_path), missing_commands_from_readme
+                Path(self.file_path).name, missing_commands_from_readme
             )
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 is_valid = False
@@ -2350,4 +2353,35 @@ class IntegrationValidator(ContentEntityValidator):
                 if self.handle_error(error_message, error_code, self.file_path):
                     return False
 
+        return True
+
+    @error_codes("DS108")
+    def is_line_ends_with_dot(self):
+        lines_with_missing_dot = ""
+        if self.running_validations_using_git:
+            for command in self.current_file.get("script", {}).get("commands", []):
+                current_command = super().is_line_ends_with_dot(command, "arguments")
+                if current_command:
+                    lines_with_missing_dot += (
+                        f"- In command {command.get('name')}:\n{current_command}"
+                    )
+            stripped_description = strip_description(
+                self.current_file.get("description", "")
+            )
+
+            if not stripped_description.endswith(".") and not is_string_ends_with_url(
+                stripped_description
+            ):
+                lines_with_missing_dot += "The file's description field is missing a '.' in the end of the sentence."
+            if lines_with_missing_dot:
+                error_message, error_code = Errors.description_missing_dot_at_the_end(
+                    lines_with_missing_dot
+                )
+                if self.handle_error(
+                    error_message,
+                    error_code,
+                    file_path=self.file_path,
+                    suggested_fix=Errors.suggest_fix(self.file_path),
+                ):
+                    return False
         return True

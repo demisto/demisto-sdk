@@ -18,10 +18,11 @@ from wcmatch.pathlib import Path, PosixPath
 import demisto_sdk
 from demisto_sdk.commands.common.constants import (
     API_MODULES_PACK,
+    DEMISTO_DEFAULT_BRANCH,
     PACKS_PACK_META_FILE_NAME,
     TYPE_PWSH,
     TYPE_PYTHON,
-    DemistoException, DEMISTO_DEFAULT_BRANCH,
+    DemistoException,
 )
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.docker_helper import init_global_docker_client
@@ -381,7 +382,10 @@ class LintManager:
             for item in content_repo.active_branch.commit.tree.diff(None, paths=pkgs)
         }
 
-        if base_branch == DEMISTO_DEFAULT_BRANCH and content_repo.active_branch.name == DEMISTO_DEFAULT_BRANCH:
+        if (
+            base_branch == DEMISTO_DEFAULT_BRANCH
+            and content_repo.active_branch.name == DEMISTO_DEFAULT_BRANCH
+        ):
             # case 1: comparing master against the latest previous commit
             last_common_commit = content_repo.remote().refs.master.commit.parents[0]
             logger.info(

@@ -4,7 +4,12 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from demisto_sdk.commands.common.constants import TYPE_PWSH, TYPE_PYTHON, FileType, DEMISTO_DEFAULT_BRANCH
+from demisto_sdk.commands.common.constants import (
+    DEMISTO_DEFAULT_BRANCH,
+    TYPE_PWSH,
+    TYPE_PYTHON,
+    FileType,
+)
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.content_graph.interface import (
     ContentGraphInterface,

@@ -5,10 +5,12 @@ from pathlib import Path
 from typing import Callable, List
 
 from demisto_sdk.commands.common.constants import (
+    DEMISTO_DEFAULT_BRANCH,
+    DEMISTO_DEFAULT_REMOTE,
     KNOWN_FILE_STATUSES,
     PACKS_PACK_META_FILE_NAME,
     TESTS_AND_DOC_DIRECTORIES,
-    FileType, DEMISTO_DEFAULT_BRANCH, DEMISTO_DEFAULT_REMOTE,
+    FileType,
 )
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.base_validator import BaseValidator
@@ -39,7 +41,9 @@ def get_current_working_branch() -> str:
     return ""
 
 
-def get_changed_files(from_branch: str = DEMISTO_DEFAULT_BRANCH, filter_results: Callable = None):
+def get_changed_files(
+    from_branch: str = DEMISTO_DEFAULT_BRANCH, filter_results: Callable = None
+):
     temp_files = run_command(f"git diff --name-status {from_branch}").split("\n")
     files: List = []
     for file in temp_files:
@@ -282,7 +286,9 @@ def get_modified_and_added_files(
 
 
 # flake8: noqa: C901
-def filter_changed_files(files_string, tag=DEMISTO_DEFAULT_BRANCH, print_ignored_files=False):
+def filter_changed_files(
+    files_string, tag=DEMISTO_DEFAULT_BRANCH, print_ignored_files=False
+):
     """Get lists of the modified files in your branch according to the files string.
 
     Args:

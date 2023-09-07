@@ -9,7 +9,7 @@ from git import InvalidGitRepositoryError, Repo
 from git.diff import Lit_change_type
 from git.remote import Remote
 
-from demisto_sdk.commands.common.constants import PACKS_FOLDER, DEMISTO_DEFAULT_REMOTE
+from demisto_sdk.commands.common.constants import DEMISTO_DEFAULT_REMOTE, PACKS_FOLDER
 
 
 class GitUtil:

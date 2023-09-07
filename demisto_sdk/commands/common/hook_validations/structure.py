@@ -15,10 +15,11 @@ from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import (
     ACCEPTED_FILE_EXTENSIONS,
     CHECKED_TYPES_REGEXES,
+    DEMISTO_DEFAULT_BRANCH,
     FILE_TYPES_PATHS_TO_VALIDATE,
     OLD_REPUTATION,
     SCHEMA_TO_REGEX,
-    FileType, DEMISTO_DEFAULT_BRANCH,
+    FileType,
 )
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json

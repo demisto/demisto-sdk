@@ -15,6 +15,8 @@ from demisto_sdk.commands.common.constants import (
     AUTHOR_IMAGE_FILE_NAME,
     CONTENT_ENTITIES_DIRS,
     DEFAULT_CONTENT_ITEM_TO_VERSION,
+    DEMISTO_DEFAULT_BRANCH,
+    DEMISTO_DEFAULT_REMOTE,
     GENERIC_FIELDS_DIR,
     GENERIC_TYPES_DIR,
     IGNORED_PACK_NAMES,
@@ -26,7 +28,7 @@ from demisto_sdk.commands.common.constants import (
     XSIAM_DASHBOARDS_DIR,
     FileType,
     FileType_ALLOWED_TO_DELETE,
-    PathLevel, DEMISTO_DEFAULT_BRANCH, DEMISTO_DEFAULT_REMOTE,
+    PathLevel,
 )
 from demisto_sdk.commands.common.content import Content
 from demisto_sdk.commands.common.content_constant_paths import (
@@ -1998,7 +2000,9 @@ class ValidateManager:
                 continue
             # if the repo does not have remotes, get the .pack-ignore content from the master branch in Github api
             # if the repo is not in remote / file cannot be found from Github api, try to take it from the latest commit on the default branch (usually master/main)
-            old_pack_ignore_content = get_remote_file(old_file_path, DEMISTO_DEFAULT_BRANCH)
+            old_pack_ignore_content = get_remote_file(
+                old_file_path, DEMISTO_DEFAULT_BRANCH
+            )
             if old_pack_ignore_content == b"":  # found as empty file in remote
                 old_pack_ignore_content = ""
             elif old_pack_ignore_content == {}:  # not found in remote

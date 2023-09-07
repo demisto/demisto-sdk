@@ -624,7 +624,9 @@ def filter_files_on_pack(pack: str, file_paths_list="") -> set:
     return files_paths_on_pack
 
 
-def filter_packagify_changes(modified_files, added_files, removed_files, tag=DEMISTO_DEFAULT_BRANCH):
+def filter_packagify_changes(
+    modified_files, added_files, removed_files, tag=DEMISTO_DEFAULT_BRANCH
+):
     """
     Mark scripts/integrations that were removed and added as modified.
 
@@ -2026,7 +2028,7 @@ def get_content_path(relative_path: Optional[Path] = None) -> Path:
         try:
             remote_url = git_repo.remote(name=DEMISTO_DEFAULT_REMOTE).urls.__next__()
         except ValueError:
-            remote_url = ''
+            remote_url = ""
         is_fork_repo = "content" in remote_url
         is_external_repo = is_external_repository()
 

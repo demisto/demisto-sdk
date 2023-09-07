@@ -10,11 +10,12 @@ from bs4 import BeautifulSoup
 
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import (
+    DEMISTO_DEFAULT_REMOTE,
     PACKS_DIR,
     PACKS_INTEGRATION_README_REGEX,
     PACKS_WHITELIST_FILE_NAME,
     FileType,
-    re, DEMISTO_DEFAULT_REMOTE,
+    re,
 )
 from demisto_sdk.commands.common.content import Content
 from demisto_sdk.commands.common.git_util import GitUtil

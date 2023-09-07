@@ -15,6 +15,8 @@ from packaging.version import Version, parse
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import (  # PACK_METADATA_PRICE,
     API_MODULES_PACK,
+    DEMISTO_DEFAULT_BRANCH,
+    DEMISTO_DEFAULT_REMOTE,
     EXCLUDED_DISPLAY_NAME_WORDS,
     INTEGRATIONS_DIR,
     MARKETPLACE_KEY_PACK_METADATA,
@@ -39,7 +41,7 @@ from demisto_sdk.commands.common.constants import (  # PACK_METADATA_PRICE,
     PACKS_README_FILE_NAME,
     PACKS_WHITELIST_FILE_NAME,
     VERSION_REGEX,
-    MarketplaceVersions, DEMISTO_DEFAULT_BRANCH, DEMISTO_DEFAULT_REMOTE,
+    MarketplaceVersions,
 )
 from demisto_sdk.commands.common.content import Content
 from demisto_sdk.commands.common.content.objects.pack_objects.pack import Pack

@@ -17,6 +17,7 @@ from demisto_sdk.commands.common.constants import (
     CONTENT_ITEMS_DISPLAY_FOLDERS,
     CORRELATION_RULES_DIR,
     DASHBOARDS_DIR,
+    DEMISTO_DEFAULT_BRANCH,
     DOCUMENTATION_DIR,
     GENERIC_DEFINITIONS_DIR,
     GENERIC_FIELDS_DIR,
@@ -49,7 +50,7 @@ from demisto_sdk.commands.common.constants import (
     XSIAM_REPORTS_DIR,
     ContentItems,
     FileType,
-    MarketplaceVersions, DEMISTO_DEFAULT_BRANCH,
+    MarketplaceVersions,
 )
 from demisto_sdk.commands.common.content import (
     Content,
@@ -1461,7 +1462,9 @@ def content_files_handler(
             and content_object.code_path.name == "CommonServerPython.py"
         ):
             # Modify CommonServerPython.py global variables
-            modify_common_server_constants(content_object.code_path, "0.0.0", DEMISTO_DEFAULT_BRANCH)
+            modify_common_server_constants(
+                content_object.code_path, "0.0.0", DEMISTO_DEFAULT_BRANCH
+            )
 
         # Delete yaml which created by Unifier in packs and to_version/toVersion lower than NEWEST_SUPPORTED_VERSION
         for file_path in files_to_remove:

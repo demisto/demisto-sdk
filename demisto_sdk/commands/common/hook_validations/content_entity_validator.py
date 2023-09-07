@@ -10,6 +10,7 @@ from packaging.version import Version
 from demisto_sdk.commands.common.constants import (
     API_MODULES_PACK,
     DEFAULT_CONTENT_ITEM_FROM_VERSION,
+    DEMISTO_DEFAULT_REMOTE,
     ENTITY_NAME_SEPARATORS,
     EXCLUDED_DISPLAY_NAME_WORDS,
     FEATURE_BRANCHES,
@@ -23,7 +24,7 @@ from demisto_sdk.commands.common.constants import (
     PARSING_RULE,
     PARSING_RULE_ID_SUFFIX,
     PARSING_RULE_NAME_SUFFIX,
-    FileType, DEMISTO_DEFAULT_REMOTE,
+    FileType,
 )
 from demisto_sdk.commands.common.content import Content
 from demisto_sdk.commands.common.content_constant_paths import CONF_PATH, CONTENT_PATH

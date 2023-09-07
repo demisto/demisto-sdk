@@ -64,6 +64,7 @@ def update_content_graph(
     ):
         logger.info("Content graph is up to date, no need to update graph")
         return
+    builder.preprepare_database()
     if not use_current:
         content_graph_interface.clean_import_dir()
         if not imported_path:

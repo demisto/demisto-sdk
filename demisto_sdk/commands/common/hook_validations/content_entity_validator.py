@@ -802,6 +802,15 @@ class ContentEntityValidator(BaseValidator):
         return line_with_missing_dot
 
     def is_valid_description(self, stripped_description):
+        """
+        Verifies the following::
+            1. The description string exists (was extracted correctly from its field).
+            2. The description string ends with a dot.
+            OR
+               The description string ends with an URL.
+            OR
+               The description string is empty
+        """
         return (
             stripped_description
             and not stripped_description.endswith(".")

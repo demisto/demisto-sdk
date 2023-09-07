@@ -27,7 +27,7 @@ def mock_git(mocker):
     from demisto_sdk.commands.common.content import Content
 
     # Mock git working directory
-    mocker.patch.object(Content, "git")
+    mocker.patch.object(Content, "git_util")
     Content.git_util().repo.working_tree_dir = TEST_CONTENT_REPO
     yield
 

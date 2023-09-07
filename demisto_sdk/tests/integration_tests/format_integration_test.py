@@ -102,7 +102,7 @@ CONF_JSON_ORIGINAL_CONTENT = {
 @pytest.fixture(autouse=True)
 def set_git_test_env(mocker):
     mocker.patch.object(ValidateManager, "setup_git_params", return_value=True)
-    mocker.patch.object(Content, "git", return_value=GitUtil())
+    mocker.patch.object(Content, "git_util", return_value=GitUtil())
     mocker.patch.object(ValidateManager, "setup_prev_ver", return_value="origin/master")
     mocker.patch.object(GitUtil, "_is_file_git_ignored", return_value=False)
 

@@ -544,7 +544,7 @@ class ScriptValidator(ContentEntityValidator):
                 self.current_file, "args"
             )
             stripped_comment = strip_description(self.current_file.get("comment", ""))
-            if super().is_valid_description(stripped_comment):
+            if super().is_invalid_description_sentence(stripped_comment):
                 line_with_missing_dot += "The comment field should end with a period."
 
             if line_with_missing_dot:

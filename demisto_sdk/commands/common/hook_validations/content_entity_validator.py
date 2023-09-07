@@ -793,15 +793,15 @@ class ContentEntityValidator(BaseValidator):
         line_with_missing_dot = ""
         for arg in dict_to_test.get(arg_field, []):
             stripped_description = strip_description(arg.get("description", ""))
-            if self.is_valid_description(stripped_description):
+            if self.is_invalid_description_sentence(stripped_description):
                 line_with_missing_dot += f"The argument {arg.get('name')} description should end with a period.\n"
         for output in dict_to_test.get("outputs") or []:
             stripped_description = strip_description(output.get("description", ""))
-            if self.is_valid_description(stripped_description):
+            if self.is_invalid_description_sentence(stripped_description):
                 line_with_missing_dot += f"The context path {output.get('contextPath')} description should end with a period.\n"
         return line_with_missing_dot
 
-    def is_valid_description(self, stripped_description: str) -> bool:
+    def is_invalid_description_sentence(self, stripped_description: str) -> bool:
         """
         Args:
             stripped_description: (str) a description or comment section from script / integration yml.
@@ -812,8 +812,8 @@ class ContentEntityValidator(BaseValidator):
             OR
                The description string ends with an URL.
         """
-        return (
-            stripped_description
-            and not stripped_description.endswith(".")
-            and not is_string_ends_with_url(stripped_description)
+        return not (
+            not stripped_description
+            or stripped_description.endswith(".")
+            or is_string_ends_with_url(stripped_description)
         )

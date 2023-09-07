@@ -2368,7 +2368,7 @@ class IntegrationValidator(ContentEntityValidator):
                 self.current_file.get("description", "")
             )
 
-            if super().is_valid_description(stripped_description):
+            if super().is_invalid_description_sentence(stripped_description):
                 lines_with_missing_dot += "The file's description field is missing a '.' in the end of the sentence."
             if lines_with_missing_dot:
                 error_message, error_code = Errors.description_missing_dot_at_the_end(

@@ -4,7 +4,7 @@
 * Fixed an issue where **validate** falsly failed with error `DS108` on descriptions ending with a newline.
 * The content graph will now include the **python_version** field that each script/integration uses.
 * Updated the **update-release-notes** command message structure when is run with **--force** flag.
-* Added the **engineinfo** in to the script schema (specifies which engine the script should run from).
+* Added the **engineinfo** in to the script schema. This field specifies on which engine the script will run.
 * Added support for lazy loading the of widgets in XSIAM dashboards.
 
 ## 1.20.1

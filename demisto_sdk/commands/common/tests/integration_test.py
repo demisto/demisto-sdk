@@ -2805,6 +2805,26 @@ class TestisContextChanged:
                 True,
                 True,
             ),
+            (
+                {
+                    "description": "a yml description with a dot at the end.",
+                    "script": {
+                        "commands": [
+                            {
+                                "outputs": [
+                                    {
+                                        "contextPath": "test.path",
+                                        "description": "",
+                                    }
+                                ]
+                            }
+                        ],
+                        "name": "test_command",
+                    },
+                },
+                True,
+                True,
+            ),
         ],
     )
     def test_is_line_ends_with_dot(
@@ -2823,6 +2843,7 @@ class TestisContextChanged:
             - Case 8: A yml content with a description that ends with example quotes with a dot only inside the example quotes, and use_git flag set to True.
             - Case 9: A yml content with a description that ends with a dot followed by new line, and use_git flag set to True.
             - Case 10: A yml content with an empty description, and use_git flag set to True.
+            - Case 11: A yml content with a command with an empty description for the output contextPath, and use_git flag set to True.
         When:
             - when executing the is_line_ends_with_dot method
         Then:
@@ -2836,6 +2857,7 @@ class TestisContextChanged:
             - Case 8: make sure the validation fails.
             - Case 9: make sure the validation pass.
             - Case 10: make sure the validation pass.
+            - Case 11: make sure the validation pass.
         """
         pack = repo.create_pack("test")
         integration = pack.create_integration(yml=yml_content)

@@ -195,8 +195,8 @@ class ModelingRule(YAMLContentUnifiedObject):
         r"(?P<header>\[MODEL:[\w\W]*?\])(\s*(^\s*?(?!\s*\[MODEL:[\w\W]*?\]).*?$))+",
         flags=re.M,
     )
-    RULE_RULE_REGEX = re.compile(
-        r"(?P<header>\[RULE:[\w\W]*?\])(\s*(^\s*?(?!\s*\[RULE:[\w\W]*?\])(?!\s*\[MODEL:[\w\W]*?\]).*?$))+",
+    RULE_REGEX = re.compile(
+        r"(?P<rule_header>\[RULE:[\w\W]*?\])(\s*(^\s*?(?!\s*\[RULE:[\w\W]*?\])(?!\s*\[MODEL:[\w\W]*?\]).*?$))+",
         flags=re.M,
     )
     TESTDATA_FILE_SUFFIX = "_testdata.json"

@@ -6,9 +6,9 @@ import click
 try:
     import git
 except ImportError:
-    from logging import getLogger
-    logger = getLogger("demisto-sdk")
-    sys.exit(click.style("Git executable cannot be found, or is invalid", fg="red"))
+    from demisto_sdk.commands.common.logger import logger
+    logger.error("Git executable cannot be found, or is invalid")
+    sys.exit(1)
 
 import copy
 import functools

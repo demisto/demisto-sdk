@@ -329,7 +329,7 @@ def test_initiate_file_validator(mocker, is_old_file, function_validate):
             "comment without dot and 'new_line' in the end \n",
             "comment without dot and 'new_line' in the end.",
             "description without dot and 'new_line' in the end \n",
-            "description without dot and 'new_line' in the end.",
+            "description without dot and 'new_line' in the end.",  # Simulates a case when the description starts with pipe -|
         ),
     ],
     ids=[
@@ -341,8 +341,8 @@ def test_initiate_file_validator(mocker, is_old_file, function_validate):
         "with single-quotes in double-quotes",
         "with dot and empty string in the end",
         "without dot and empty string in the end",
-        "with dot and new line in the end",
-        "without dot and new line in the end",
+        "case when the description starts with pipe with dot",
+        "case when the description starts with pipe without dot",
     ],
 )
 def test_adds_period_to_description(

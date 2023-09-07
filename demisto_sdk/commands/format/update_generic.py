@@ -1,7 +1,8 @@
 import os
 import re
 from copy import deepcopy
-from typing import Any, Dict, Set, Union
+from pathlib import Path
+from typing import Any, Dict, Optional, Set, Union
 
 import dictdiffer
 
@@ -18,6 +19,7 @@ from demisto_sdk.commands.common.tools import (
     get_remote_file,
     get_yaml,
     is_file_from_content_repo,
+    is_string_ends_with_url,
 )
 from demisto_sdk.commands.format.format_constants import (
     DEFAULT_VERSION,
@@ -115,7 +117,7 @@ class BaseUpdate:
         """
         if not output_file_path:
             source_dir = os.path.dirname(self.source_file)
-            file_name = os.path.basename(self.source_file)
+            file_name = Path(self.source_file).name
             if self.__class__.__name__ == "PlaybookYMLFormat":
                 if "Pack" not in source_dir:
                     if not file_name.startswith("playbook-"):
@@ -463,3 +465,35 @@ class BaseUpdate:
                 else:
                     self.data[self.from_version_key] = current_from_server_version
                     self.data.pop(self.json_from_server_version_key)
+
+    def adds_period_to_description(self):
+        """Adds a period to the end of the descriptions
+        if it does not already end with a period."""
+
+        def _add_period(value: Optional[str]) -> Optional[str]:
+            if (
+                value
+                and isinstance(value, str)
+                and not value.endswith(".")
+                and not is_string_ends_with_url(value)
+            ):
+                return f"{value}."
+            return value
+
+        if data_description := self.data.get("description", {}):
+            self.data["description"] = _add_period(data_description)
+
+        if (script := self.data.get("script", {})) and isinstance(
+            script, dict
+        ):  # script could be a 'LiteralScalarString' object.
+            for command in script.get("commands", ()):
+                if command_description := command.get("description"):
+                    command["description"] = _add_period(command_description)
+
+                for argument in command.get("arguments", ()):
+                    if argument_description := argument.get("description"):
+                        argument["description"] = _add_period(argument_description)
+
+                for output in command.get("outputs", ()):
+                    if output_description := output.get("description"):
+                        output["description"] = _add_period(output_description)

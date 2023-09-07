@@ -16,7 +16,7 @@ from enum import Enum
 from functools import lru_cache
 from hashlib import sha1
 from pathlib import Path, PosixPath
-from subprocess import DEVNULL, PIPE, Popen, check_output
+from subprocess import PIPE, Popen
 from time import sleep
 from typing import (
     TYPE_CHECKING,
@@ -101,6 +101,7 @@ from demisto_sdk.commands.common.constants import (
     TRIGGER_DIR,
     TYPE_PWSH,
     UNRELEASE_HEADER,
+    URL_REGEX,
     UUID_REGEX,
     WIDGETS_DIR,
     XDRC_TEMPLATE_DIR,
@@ -455,7 +456,21 @@ def get_remote_file_from_api(
     git_content_config: Optional[GitContentConfig],
     tag: str = DEMISTO_DEFAULT_BRANCH,
     return_content: bool = False,
-):
+    encoding: Optional[str] = None,
+) -> Union[bytes, Dict, List]:
+    """
+    Returns a remote file from Github/Gitlab repo using the api
+
+    Args:
+        full_file_path: file path in the GitHub/Gitlab repository
+        git_content_config: GitContentConfig config object
+        tag: from which commit / branch to take the file in the remote repository
+        return_content: whether to return the raw content of the file (bytes)
+        encoding: whether to decode the remote file with special encoding
+
+    Returns:
+        bytes | Dict | List: raw response of the file or as a python object (list, dict)
+    """
     if not git_content_config:
         git_content_config = GitContentConfig()
     if git_content_config.git_provider == GitProvider.GitLab:
@@ -517,9 +532,14 @@ def get_remote_file_from_api(
             f"Reason: {err_msg}[/yellow]"
         )
         return {}
+
     file_content = res.content
+
     if return_content:
         return file_content
+    if encoding:
+        file_content = file_content.decode(encoding)  # type: ignore[assignment]
+
     return get_file_details(file_content, full_file_path)
 
 
@@ -912,7 +932,7 @@ def get_api_module_ids(file_list) -> Set:
                 if f"/{API_MODULES_PACK}/Scripts/" in parent:
                     pf = parent
             if parent != pf:
-                api_module_set.add(os.path.basename(pf))
+                api_module_set.add(Path(pf).name)
     return api_module_set
 
 
@@ -1058,7 +1078,7 @@ def old_get_release_notes_file_path(file_path):
         return file_path
 
     # outside of packages, change log file will include the original file name.
-    file_name = os.path.basename(file_path)
+    file_name = Path(file_path).name
     return os.path.join(dir_name, os.path.splitext(file_name)[0] + "_CHANGELOG.md")
 
 
@@ -1517,44 +1537,6 @@ def get_docker_images_from_yml(script_obj) -> List[str]:
                 imgs.extend(script_obj.get(key))
 
     return imgs
-
-
-def get_python_version(docker_image):
-    """
-    Get the python version of a docker image
-    Arguments:
-        docker_image {string} -- Docker image being used by the project
-    Return:
-        python version as a float (2.7, 3.7)
-    Raises:
-        ValueError -- if version is not supported
-    """
-    py_ver = check_output(
-        [
-            "docker",
-            "run",
-            "--rm",
-            docker_image,
-            "python",
-            "-c",
-            "import sys;logger.info('{}.{}'.format(sys.version_info[0], sys.version_info[1]))",
-        ],
-        text=True,
-        stderr=DEVNULL,
-    ).strip()
-    logger.debug(
-        f"Detected python version: [{py_ver}] for docker image: {docker_image}"
-    )
-
-    py_num = float(py_ver)
-    if py_num < 2.7 or (3 < py_num < 3.4):  # pylint can only work on python 3.4 and up
-        raise ValueError(
-            "Python vesion for docker image: {} is not supported: {}. "
-            "We only support python 2.7.* and python3 >= 3.4.".format(
-                docker_image, py_num
-            )
-        )
-    return py_num
 
 
 def get_pipenv_dir(py_version, envs_dirs_base):
@@ -2420,71 +2402,71 @@ def _get_file_id(file_type: str, file_content: Dict):
 
 def is_path_of_integration_directory(path: str) -> bool:
     """Returns true if directory is integration directory false if not."""
-    return os.path.basename(path) == INTEGRATIONS_DIR
+    return Path(path).name == INTEGRATIONS_DIR
 
 
 def is_path_of_script_directory(path: str) -> bool:
     """Returns true if directory is script directory false if not."""
-    return os.path.basename(path) == SCRIPTS_DIR
+    return Path(path).name == SCRIPTS_DIR
 
 
 def is_path_of_playbook_directory(path: str) -> bool:
     """Returns true if directory is playbook directory false if not."""
-    return os.path.basename(path) == PLAYBOOKS_DIR
+    return Path(path).name == PLAYBOOKS_DIR
 
 
 def is_path_of_test_playbook_directory(path: str) -> bool:
     """Returns true if directory is test_playbook directory false if not."""
-    return os.path.basename(path) == TEST_PLAYBOOKS_DIR
+    return Path(path).name == TEST_PLAYBOOKS_DIR
 
 
 def is_path_of_report_directory(path: str) -> bool:
     """Returns true if directory is report directory false if not."""
-    return os.path.basename(path) == REPORTS_DIR
+    return Path(path).name == REPORTS_DIR
 
 
 def is_path_of_dashboard_directory(path: str) -> bool:
     """Returns true if directory is integration directory false if not."""
-    return os.path.basename(path) == DASHBOARDS_DIR
+    return Path(path).name == DASHBOARDS_DIR
 
 
 def is_path_of_widget_directory(path: str) -> bool:
     """Returns true if directory is integration directory false if not."""
-    return os.path.basename(path) == WIDGETS_DIR
+    return Path(path).name == WIDGETS_DIR
 
 
 def is_path_of_incident_field_directory(path: str) -> bool:
     """Returns true if directory is integration directory false if not."""
-    return os.path.basename(path) == INCIDENT_FIELDS_DIR
+    return Path(path).name == INCIDENT_FIELDS_DIR
 
 
 def is_path_of_incident_type_directory(path: str) -> bool:
     """Returns true if directory is integration directory false if not."""
-    return os.path.basename(path) == INCIDENT_TYPES_DIR
+    return Path(path).name == INCIDENT_TYPES_DIR
 
 
 def is_path_of_indicator_field_directory(path: str) -> bool:
     """Returns true if directory is integration directory false if not."""
-    return os.path.basename(path) == INDICATOR_FIELDS_DIR
+    return Path(path).name == INDICATOR_FIELDS_DIR
 
 
 def is_path_of_layout_directory(path: str) -> bool:
     """Returns true if directory is integration directory false if not."""
-    return os.path.basename(path) == LAYOUTS_DIR
+    return Path(path).name == LAYOUTS_DIR
 
 
 def is_path_of_pre_process_rules_directory(path: str) -> bool:
     """Returns true if directory is pre-processing rules directory, false if not."""
-    return os.path.basename(path) == PRE_PROCESS_RULES_DIR
+    return Path(path).name == PRE_PROCESS_RULES_DIR
 
 
 def is_path_of_lists_directory(path: str) -> bool:
-    return os.path.basename(path) == LISTS_DIR
+    return Path(path).name == LISTS_DIR
 
 
 def is_path_of_classifier_directory(path: str) -> bool:
     """Returns true if directory is integration directory false if not."""
-    return os.path.basename(path) == CLASSIFIERS_DIR
+    return Path(path).name == CLASSIFIERS_DIR
 
 
 def get_parent_directory_name(path: str, abs_path: bool = False) -> str:
@@ -2497,7 +2479,7 @@ def get_parent_directory_name(path: str, abs_path: bool = False) -> str:
     parent_dir_name = os.path.dirname(os.path.abspath(path))
     if abs_path:
         return parent_dir_name
-    return os.path.basename(parent_dir_name)
+    return Path(parent_dir_name).name
 
 
 def get_code_lang(file_data: dict, file_entity: str) -> str:
@@ -2748,7 +2730,7 @@ def get_file_displayed_name(file_path):
     elif file_type == FileType.REPUTATION:
         return get_json(file_path).get("id")
     else:
-        return os.path.basename(file_path)
+        return Path(file_path).name
 
 
 def compare_context_path_in_yml_and_readme(yml_dict, readme_content):
@@ -2929,7 +2911,7 @@ def is_pack_path(input_path: str) -> bool:
         - True if the input path is for a given pack.
         - False if the input path is not for a given pack.
     """
-    return os.path.basename(os.path.dirname(input_path)) == PACKS_DIR
+    return Path(input_path).parent.name == PACKS_DIR
 
 
 def is_xsoar_supported_pack(file_path: str) -> bool:
@@ -3531,7 +3513,7 @@ def get_display_name(file_path, file_data={}) -> str:
         name = r_name.get("report_name")
 
     else:
-        name = os.path.basename(file_path)
+        name = Path(file_path).name
     return name
 
 
@@ -3903,6 +3885,31 @@ def extract_error_codes_from_file(pack_name: str) -> Set[str]:
                     error_codes_list.extend(error_codes)
 
     return set(error_codes_list)
+
+
+def is_string_ends_with_url(str: str) -> bool:
+    """
+    Args:
+        str: a string to test.
+    Returns: True if the string ends with a url adress. Otherwise, return False.
+    """
+    return bool(re.search(f"{URL_REGEX}$", str))
+
+
+def strip_description(description):
+    """
+    Args:
+        description: a description string.
+    Returns: the description stripped from quotes mark if they appear both in the beggining and in the end of the string.
+    """
+    description = description.strip()
+    return (
+        description.strip('"')
+        if description.startswith('"') and description.endswith('"')
+        else description.strip("'")
+        if description.startswith("'") and description.endswith("'")
+        else description
+    )
 
 
 def is_file_in_pack(file: Path, pack_name: str) -> bool:

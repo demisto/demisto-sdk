@@ -1438,7 +1438,7 @@ def test_get_file_displayed_name__image(repo):
     integration.create_default_integration()
     with ChangeCWD(repo.path):
         display_name = get_file_displayed_name(integration.image.path)
-        assert display_name == os.path.basename(integration.image.rel_path)
+        assert display_name == Path(integration.image.rel_path).name
 
 
 INCIDENTS_TYPE_FILES_INPUTS = [

@@ -3185,7 +3185,7 @@ def test_validate_no_disallowed_terms_in_customer_facing_docs_end_to_end(repo, m
         (
             {"Packs/test1/.pack-ignore"},
             "[file:test.yml]\nignore=BA108,BA109,DS107\n[file:test2.yml]\nignore=BA108,BA109,DS107\n",
-            "",
+            {},
             "[file:test.yml]\nignore=BA108,BA109,DS107\n",
             {"Packs/test1/Integrations/test2/test2.yml"},
         ),
@@ -3248,3 +3248,54 @@ def test_get_all_files_edited_in_pack_ignore(
         validate_manager.get_all_files_edited_in_pack_ignore(modified_files)
         == expected_results
     )
+
+
+def test_get_all_files_edited_in_pack_ignore_with_git_error(mocker):
+    """
+    Given:
+    - empty .pack-ignore returned from git api
+    - an exception raised when trying to retrieve the .pack-ignore locally
+
+    When:
+    - Running get_all_files_edited_in_pack_ignore.
+
+    Then:
+    - Ensure no exception is raised
+    - ensure that the updated file from the new .pack-ignore is found
+    """
+    from git import GitCommandError
+
+    logger_warning = mocker.patch.object(logging.getLogger("demisto-sdk"), "warning")
+
+    mocker.patch.object(
+        GitUtil,
+        "get_all_files",
+        return_value={
+            Path("Packs/test/Integrations/test/test.yml"),
+            Path("Packs/test1/Integrations/test/test.yml"),
+            Path("Packs/test1/Integrations/test2/test2.yml"),
+        },
+    )
+
+    mocker.patch(
+        "demisto_sdk.commands.validate.validate_manager.get_remote_file",
+        return_value={},
+    )
+    mocker.patch.object(GitUtil, "find_primary_branch", return_value="main")
+    mocker.patch.object(
+        GitUtil, "get_local_remote_file_content", side_effect=GitCommandError("error")
+    )
+
+    validate_manager = ValidateManager()
+    config = ConfigParser(allow_no_value=True)
+    config.read_string("[file:test.yml]\nignore=BA108,BA109,DS107")
+
+    mocker.patch(
+        "demisto_sdk.commands.validate.validate_manager.get_pack_ignore_content",
+        return_value=config,
+    )
+
+    assert validate_manager.get_all_files_edited_in_pack_ignore(
+        {"Packs/test/.pack-ignore"}
+    ) == {"Packs/test/Integrations/test/test.yml"}
+    assert logger_warning.called

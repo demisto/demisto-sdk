@@ -612,11 +612,13 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         self._id_to_obj = {}
         return not has_infra_graph_been_changed
 
-    def export_graph(self, output_path: Optional[Path] = None) -> None:
+    def export_graph(
+        self, output_path: Optional[Path] = None, override_commit: bool = False
+    ) -> None:
         self.clean_import_dir()
         with self.driver.session() as session:
             session.execute_write(export_graphml, self.repo_path.name)
-        self.dump_metadata()
+        self.dump_metadata(override_commit)
         if output_path:
             self.zip_import_dir(output_path)
 

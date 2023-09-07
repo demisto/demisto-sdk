@@ -54,6 +54,9 @@ def update_content_graph(
         dependencies (bool): Whether to create the dependencies.
         output_path (Path): The path to export the graph zip to.
     """
+    if not use_current and not imported_path and not use_git:
+        logger.info("No arguments were given, using git")
+        use_git = True
     git_util = GitUtil()
     packs_to_update = list(packs_to_update) if packs_to_update else []
     builder = ContentGraphBuilder(content_graph_interface)
@@ -100,7 +103,7 @@ def update_content_graph(
         content_graph_interface.create_pack_dependencies()
     if output_path:
         output_path = output_path / marketplace.value
-    content_graph_interface.export_graph(output_path)
+    content_graph_interface.export_graph(output_path, override_commit=use_git)
     logger.info(
         f"Successfully updated the content graph. UI representation is available at {NEO4J_DATABASE_HTTP} "
         f"(username: {NEO4J_USERNAME}, password: {NEO4J_PASSWORD})"

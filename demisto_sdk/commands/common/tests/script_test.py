@@ -647,6 +647,20 @@ class TestScriptValidator:
                 True,
                 False,
             ),
+            (
+                {
+                    "comment": "a yml with a description that has a trailing new line.\n",
+                },
+                True,
+                True,
+            ),
+            (
+                {
+                    "comment": "",
+                },
+                True,
+                True,
+            ),
         ],
     )
     def test_is_line_ends_with_dot(
@@ -663,6 +677,8 @@ class TestScriptValidator:
             - Case 6: A yml content with a comment that ends with a url address and not dot, and use_git flag set to True.
             - Case 7: A yml content with a comment that has a url in the middle of the sentence and no comment in the end, and use_git flag set to True.
             - Case 8: A yml content with a comment that ends with example quotes with a dot only inside the example quotes, and use_git flag set to True.
+            - Case 9: A yml content with a comment that ends with a dot followed by new line, and use_git flag set to True.
+            - Case 10: A yml content with an empty comment, and use_git flag set to True.
         When:
             - when executing the is_line_ends_with_dot method
         Then:
@@ -674,6 +690,8 @@ class TestScriptValidator:
             - Case 6: make sure the validation pass.
             - Case 7: make sure the validation fails.
             - Case 8: make sure the validation fails.
+            - Case 9: make sure the validation pass.
+            - Case 10: make sure the validation pass.
         """
         pack = repo.create_pack("test")
         script = pack.create_script(yml=yml_content)

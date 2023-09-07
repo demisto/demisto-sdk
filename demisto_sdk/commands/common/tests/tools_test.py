@@ -634,14 +634,14 @@ class TestGetRemoteFileLocally:
         origin_branch = self.main_branch
         if not origin_branch.startswith("origin"):
             origin_branch = "origin/" + origin_branch
-        example_repo.git_util.checkout("-b", f"{origin_branch}")
+        example_repo.git.checkout("-b", f"{origin_branch}")
         with open(os.path.join(self.REPO_NAME, self.FILE_NAME), "w+") as somefile:
             somefile.write(self.FILE_CONTENT)
-        example_repo.git_util.add(self.FILE_NAME)
-        example_repo.git_util.config("user.email", "automatic@example.com")
-        example_repo.git_util.config("user.name", "AutomaticTest")
-        example_repo.git_util.commit("-m", "test_commit", "-a")
-        example_repo.git_util.checkout("-b", self.main_branch)
+        example_repo.git.add(self.FILE_NAME)
+        example_repo.git.config("user.email", "automatic@example.com")
+        example_repo.git.config("user.name", "AutomaticTest")
+        example_repo.git.commit("-m", "test_commit", "-a")
+        example_repo.git.checkout("-b", self.main_branch)
 
     def test_get_file_from_master_when_in_private_repo(self, mocker):
         mocker.patch.object(tools, "is_external_repository", return_value=True)

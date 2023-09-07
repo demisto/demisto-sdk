@@ -24,7 +24,11 @@ class GitUtil:
         path: Optional[Path] = None,
         search_parent_directories: bool = True,
     ):
-        repo_path = path or Path.cwd()
+
+        if isinstance(path, str):
+            repo_path = Path(path)
+        else:
+            repo_path = path or Path.cwd()
 
         try:
             self.repo = Repo(

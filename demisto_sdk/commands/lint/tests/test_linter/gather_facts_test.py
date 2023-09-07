@@ -77,7 +77,7 @@ class TestYamlParse:
         script = pack.create_script("CommonServerPython")
         script.create_default_script()
         script_path = Path(script.path)
-        runner = initiate_linter(pack.path, script_path)
+        runner = initiate_linter(Path(pack.path), script_path)
         runner._gather_facts(modules={})
         common_server_python_path = runner._facts.get("lint_files")[0]
         assert "Packs/Base/Scripts/CommonServerPython/CommonServerPython.py" in str(
@@ -262,7 +262,7 @@ class TestDockerImagesCollection:
         # Run lint:
         with ChangeCWD(pack.repo_path):
             runner = initiate_linter(
-                pack.repo_path,
+                Path(pack.repo_path),
                 test_integration.path,
                 True,
                 docker_image_flag=docker_image_flag,

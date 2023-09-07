@@ -151,7 +151,7 @@ class PackIgnore(dict):
 
     def __map_files_to_ignored_validations(self):
         for section in filter(
-            lambda _section: _section.startswith("file:"), self._content.sections()
+            lambda _section: _section.startswith(self.Section.FILE), self._content.sections()
         ):
             self.add(
                 section,
@@ -194,10 +194,10 @@ class PackIgnore(dict):
         pack_ignore.__map_files_to_ignored_validations()
         return pack_ignore
 
-    def add(self, key: str, section: Any, cast_func: Callable = lambda x: x):
+    def add(self, key: str, section: Any, cast_func: Callable = lambda x: x) -> None:
         self.__setitem__(key, cast_func(section))
 
-    def get(self, key: str, default: Any = None, cast_func: Callable = lambda x: x):
+    def get(self, key: str, default: Any = None, cast_func: Callable = lambda x: x) -> Any:
         """
         Get a section from the .pack-ignore, in case key does not exist, will add it for caching purposes
 

@@ -1676,12 +1676,11 @@ class IntegrationValidator(ContentEntityValidator):
 
     @error_codes("IN138,IN137")
     def is_valid_integration_file_path(self) -> bool:
-        absolute_file_path = self.file_path
-        integrations_folder = os.path.basename(os.path.dirname(absolute_file_path))
-        integration_file = os.path.basename(absolute_file_path)
+        absolute_file_path = Path(self.file_path)
+        integrations_folder = absolute_file_path.parent.name
 
         # drop file extension
-        integration_file, _ = os.path.splitext(integration_file)
+        integration_file = Path(absolute_file_path.name).stem
 
         if integrations_folder == "Integrations":
             if not integration_file.startswith("integration-"):
@@ -1732,10 +1731,10 @@ class IntegrationValidator(ContentEntityValidator):
             os.path.dirname(self.file_path), ["py"], False
         )
         invalid_files = []
-        integrations_folder = os.path.basename(os.path.dirname(self.file_path))
+        integrations_folder = Path(os.path.dirname(self.file_path)).name
 
         for file_path in files_to_check:
-            file_name = os.path.basename(file_path)
+            file_name = Path(file_path).name
 
             # If the file is in an exclusion list, skip it.
             if file_name in excluded_files or any(
@@ -1866,7 +1865,7 @@ class IntegrationValidator(ContentEntityValidator):
             true if the name is valid and there are no separators, and false if not.
         """
 
-        integration_folder_name = os.path.basename(os.path.dirname(self.file_path))
+        integration_folder_name = Path(os.path.dirname(self.file_path)).name
         valid_folder_name = self.remove_separators_from_name(integration_folder_name)
 
         if valid_folder_name != integration_folder_name:
@@ -1896,8 +1895,7 @@ class IntegrationValidator(ContentEntityValidator):
         valid_files = []
 
         for file_path in files_to_check:
-            file_name = os.path.basename(file_path)
-            if file_name.startswith("README"):
+            if (file_name := Path(file_path).name).startswith("README"):
                 continue
 
             if (
@@ -2216,7 +2214,7 @@ class IntegrationValidator(ContentEntityValidator):
         )
         if missing_commands_from_readme:
             error_message, error_code = Errors.missing_commands_from_readme(
-                os.path.basename(self.file_path), missing_commands_from_readme
+                Path(self.file_path).name, missing_commands_from_readme
             )
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 is_valid = False

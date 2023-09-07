@@ -49,7 +49,7 @@ from demisto_sdk.commands.common.constants import (
     XSIAM_REPORTS_DIR,
     ContentItems,
     FileType,
-    MarketplaceVersions,
+    MarketplaceVersions, DEMISTO_DEFAULT_BRANCH,
 )
 from demisto_sdk.commands.common.content import (
     Content,
@@ -1450,7 +1450,7 @@ def content_files_handler(
             modify_common_server_constants(
                 content_object.code_path,
                 artifact_manager.content_version,
-                "master" if not repo else repo.active_branch,
+                DEMISTO_DEFAULT_BRANCH if not repo else repo.active_branch,
             )
         yield files_to_remove
     finally:
@@ -1461,7 +1461,7 @@ def content_files_handler(
             and content_object.code_path.name == "CommonServerPython.py"
         ):
             # Modify CommonServerPython.py global variables
-            modify_common_server_constants(content_object.code_path, "0.0.0", "master")
+            modify_common_server_constants(content_object.code_path, "0.0.0", DEMISTO_DEFAULT_BRANCH)
 
         # Delete yaml which created by Unifier in packs and to_version/toVersion lower than NEWEST_SUPPORTED_VERSION
         for file_path in files_to_remove:

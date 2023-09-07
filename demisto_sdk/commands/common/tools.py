@@ -53,6 +53,8 @@ from demisto_sdk.commands.common.constants import (
     DEF_DOCKER_PWSH,
     DEFAULT_CONTENT_ITEM_FROM_VERSION,
     DEFAULT_CONTENT_ITEM_TO_VERSION,
+    DEMISTO_DEFAULT_BRANCH,
+    DEMISTO_DEFAULT_REMOTE,
     DOC_FILES_DIR,
     ENV_DEMISTO_SDK_MARKETPLACE,
     ENV_SDK_WORKING_OFFLINE,
@@ -432,7 +434,7 @@ def get_core_pack_list(marketplaces: List[MarketplaceVersions] = None) -> list:
 
 def get_local_remote_file(
     full_file_path: str,
-    tag: str = "master",
+    tag: str = DEMISTO_DEFAULT_BRANCH,
     return_content: bool = False,
 ):
     repo = git.Repo(
@@ -451,7 +453,7 @@ def get_local_remote_file(
 def get_remote_file_from_api(
     full_file_path: str,
     git_content_config: Optional[GitContentConfig],
-    tag: str = "master",
+    tag: str = DEMISTO_DEFAULT_BRANCH,
     return_content: bool = False,
 ):
     if not git_content_config:
@@ -540,7 +542,7 @@ def get_file_details(
 @lru_cache(maxsize=128)
 def get_remote_file(
     full_file_path: str,
-    tag: str = "master",
+    tag: str = DEMISTO_DEFAULT_BRANCH,
     return_content: bool = False,
     git_content_config: Optional[GitContentConfig] = None,
     default_value=None,
@@ -548,7 +550,7 @@ def get_remote_file(
     """
     Args:
         full_file_path:The full path of the file.
-        tag: The branch name. default is 'master'
+        tag: The branch name. default is 'master' or default branch name from env.
         return_content: Determines whether to return the file's raw content or the dict representation of it.
         git_content_config: The content config to take the file from
         default_value: The method returns this value if using the SDK in offline mode. default_value cannot be None,
@@ -562,7 +564,7 @@ def get_remote_file(
             raise NoInternetConnectionException
         return default_value
 
-    tag = tag.replace("origin/", "").replace("demisto/", "")
+    tag = tag.replace(f"{DEMISTO_DEFAULT_REMOTE}/", "").replace("demisto/", "")
     if not git_content_config:
         try:
             if not (
@@ -602,14 +604,14 @@ def filter_files_on_pack(pack: str, file_paths_list="") -> set:
     return files_paths_on_pack
 
 
-def filter_packagify_changes(modified_files, added_files, removed_files, tag="master"):
+def filter_packagify_changes(modified_files, added_files, removed_files, tag=DEMISTO_DEFAULT_BRANCH):
     """
     Mark scripts/integrations that were removed and added as modified.
 
     :param modified_files: list of modified files in branch
     :param added_files: list of new files in branch
     :param removed_files: list of removed files in branch
-    :param tag: tag of compared revision
+    :param tag: tag of compared revision, default is default branch name from env.
 
     :return: tuple of updated lists: (modified_files, updated_added_files, removed_files)
     """
@@ -2039,7 +2041,10 @@ def get_content_path(relative_path: Optional[Path] = None) -> Path:
         else:
             git_repo = git.Repo(Path.cwd(), search_parent_directories=True)
 
-        remote_url = git_repo.remote().urls.__next__()
+        try:
+            remote_url = git_repo.remote(name=DEMISTO_DEFAULT_REMOTE).urls.__next__()
+        except ValueError:
+            remote_url = ''
         is_fork_repo = "content" in remote_url
         is_external_repo = is_external_repository()
 

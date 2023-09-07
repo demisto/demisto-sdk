@@ -24,7 +24,7 @@ from demisto_sdk.commands.common.constants import (
     PARSING_RULE,
     PARSING_RULE_ID_SUFFIX,
     PARSING_RULE_NAME_SUFFIX,
-    FileType,
+    FileType, DEMISTO_DEFAULT_REMOTE,
 )
 from demisto_sdk.commands.common.content import Content
 from demisto_sdk.commands.common.content_constant_paths import CONF_PATH, CONTENT_PATH
@@ -304,7 +304,7 @@ class ContentEntityValidator(BaseValidator):
         git_util = GitUtil(repo=Content.git())
         main_branch = git_util.handle_prev_ver()[1]
         if not main_branch.startswith("origin"):
-            main_branch = "origin/" + main_branch
+            main_branch = f"{DEMISTO_DEFAULT_REMOTE}/" + main_branch
 
         diff_string_config_yml = run_command(
             f"git diff {main_branch} .circleci/config.yml"

@@ -39,7 +39,7 @@ from demisto_sdk.commands.common.constants import (  # PACK_METADATA_PRICE,
     PACKS_README_FILE_NAME,
     PACKS_WHITELIST_FILE_NAME,
     VERSION_REGEX,
-    MarketplaceVersions,
+    MarketplaceVersions, DEMISTO_DEFAULT_BRANCH, DEMISTO_DEFAULT_REMOTE,
 )
 from demisto_sdk.commands.common.content import Content
 from demisto_sdk.commands.common.content.objects.pack_objects.pack import Pack
@@ -138,7 +138,7 @@ class PackUniqueFilesValidator(BaseValidator):
             git_util = GitUtil(repo=Content.git())
             main_branch = git_util.handle_prev_ver()[1]
             self.prev_ver = (
-                f"origin/{main_branch}"
+                f"{DEMISTO_DEFAULT_REMOTE}/{main_branch}"
                 if not main_branch.startswith("origin")
                 else main_branch
             )
@@ -984,14 +984,14 @@ class PackUniqueFilesValidator(BaseValidator):
         current_repo = Repo(Path.cwd(), search_parent_directories=True)
 
         # if running on master branch in private repo - do not run the test
-        if current_repo.active_branch == "master":
+        if current_repo.active_branch == DEMISTO_DEFAULT_BRANCH:
             logger.debug(
                 "[yellow]Running on master branch - skipping price change validation[/yellow]"
             )
             return None
         try:
             tag = self.prev_ver
-            tag = tag.replace("origin/", "").replace("demisto/", "")
+            tag = tag.replace(f"{DEMISTO_DEFAULT_REMOTE}/", "").replace("demisto/", "")
             old_meta_file_content = get_local_remote_file(
                 full_file_path=metadata_file_path, tag=tag, return_content=True
             )

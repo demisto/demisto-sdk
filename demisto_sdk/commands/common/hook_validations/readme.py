@@ -21,7 +21,7 @@ from demisto_sdk.commands.common.constants import (
     PACKS_DIR,
     RELATIVE_HREF_URL_REGEX,
     RELATIVE_MARKDOWN_URL_REGEX,
-    URL_IMAGE_LINK_REGEX,
+    URL_IMAGE_LINK_REGEX, DEMISTO_DEFAULT_BRANCH,
 )
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.docker_helper import init_global_docker_client
@@ -549,7 +549,7 @@ class ReadMeValidator(BaseValidator):
                 url_path_elem_list = urlparse(img_url).path.split("/")[1:]
                 if len(url_path_elem_list) >= 3 and (
                     url_path_elem_list[2] == working_branch_name
-                    and working_branch_name != "master"
+                    and working_branch_name != DEMISTO_DEFAULT_BRANCH
                 ):
                     error_message, error_code = Errors.invalid_readme_image_error(
                         img_url,

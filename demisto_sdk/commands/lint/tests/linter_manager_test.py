@@ -4,7 +4,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from demisto_sdk.commands.common.constants import TYPE_PWSH, TYPE_PYTHON, FileType
+from demisto_sdk.commands.common.constants import TYPE_PWSH, TYPE_PYTHON, FileType, DEMISTO_DEFAULT_BRANCH
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.content_graph.interface import (
     ContentGraphInterface,
@@ -21,7 +21,7 @@ def mock_lint_manager(mocker):
         input="",
         git=False,
         all_packs=False,
-        prev_ver="master",
+        prev_ver=DEMISTO_DEFAULT_BRANCH,
         json_file_path="path",
     )
 
@@ -985,7 +985,7 @@ def test_get_api_module_dependent_items(
         input="",
         git=False,
         all_packs=False,
-        prev_ver="master",
+        prev_ver=DEMISTO_DEFAULT_BRANCH,
         json_file_path="path",
         check_dependent_api_module=cdam_flag,
     )
@@ -1067,7 +1067,7 @@ def test_get_api_module_dependent_items_which_were_changed(
         input="",
         git=False,
         all_packs=False,
-        prev_ver="master",
+        prev_ver=DEMISTO_DEFAULT_BRANCH,
         json_file_path="path",
         check_dependent_api_module=cdam_flag,
     )

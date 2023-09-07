@@ -9,7 +9,7 @@ from git import InvalidGitRepositoryError, Repo
 from git.diff import Lit_change_type
 from git.remote import Remote
 
-from demisto_sdk.commands.common.constants import PACKS_FOLDER
+from demisto_sdk.commands.common.constants import PACKS_FOLDER, DEMISTO_DEFAULT_REMOTE
 
 
 class GitUtil:
@@ -596,9 +596,9 @@ class GitUtil:
                 return ""
             for current_remote_ref in current_remote.refs:
                 current_remote_ref_str = str(current_remote_ref)
-                if current_remote_ref_str == "origin/main":
+                if current_remote_ref_str == f"{DEMISTO_DEFAULT_REMOTE}/main":
                     return "main"
-                elif current_remote_ref_str == "origin/master":
+                elif current_remote_ref_str == f"{DEMISTO_DEFAULT_REMOTE}/master":
                     return "master"
         return ""
 

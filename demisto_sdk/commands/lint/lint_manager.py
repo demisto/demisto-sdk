@@ -21,7 +21,7 @@ from demisto_sdk.commands.common.constants import (
     PACKS_PACK_META_FILE_NAME,
     TYPE_PWSH,
     TYPE_PYTHON,
-    DemistoException,
+    DemistoException, DEMISTO_DEFAULT_BRANCH,
 )
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.docker_helper import init_global_docker_client
@@ -271,7 +271,7 @@ class LintManager:
         input: Union[str, List[str]],
         git: bool = False,
         all_packs: bool = False,
-        base_branch: str = "master",
+        base_branch: str = DEMISTO_DEFAULT_BRANCH,
     ) -> List[PosixPath]:
         """Get packages paths to run lint command.
 
@@ -381,7 +381,7 @@ class LintManager:
             for item in content_repo.active_branch.commit.tree.diff(None, paths=pkgs)
         }
 
-        if base_branch == "master" and content_repo.active_branch.name == "master":
+        if base_branch == DEMISTO_DEFAULT_BRANCH and content_repo.active_branch.name == DEMISTO_DEFAULT_BRANCH:
             # case 1: comparing master against the latest previous commit
             last_common_commit = content_repo.remote().refs.master.commit.parents[0]
             logger.info(

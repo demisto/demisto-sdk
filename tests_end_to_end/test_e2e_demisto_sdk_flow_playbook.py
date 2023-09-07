@@ -3,6 +3,7 @@ from pathlib import Path
 import e2e_tests_utils
 from demisto_client.demisto_api.rest import ApiException
 
+from demisto_sdk.commands.common.constants import DEMISTO_DEFAULT_BRANCH
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.download.downloader import Downloader
 from demisto_sdk.commands.format.format_module import format_manager
@@ -16,7 +17,7 @@ def test_e2e_demisto_sdk_flow_playbook_testsuite(tmpdir):
     # Importing TestSuite classes from Demisto-SDK, as they are excluded when pip installing the SDK.
     e2e_tests_utils.cli(f"mkdir {tmpdir}/git")
     e2e_tests_utils.git_clone_demisto_sdk(
-        destination_folder=f"{tmpdir}/git/demisto-sdk", sdk_git_branch="master"
+        destination_folder=f"{tmpdir}/git/demisto-sdk", sdk_git_branch=DEMISTO_DEFAULT_BRANCH
     )
     from TestSuite.playbook import Playbook
     from TestSuite.repo import Repo

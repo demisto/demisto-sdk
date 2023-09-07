@@ -1,3 +1,4 @@
+import os
 import re
 from enum import Enum
 from functools import reduce
@@ -98,6 +99,8 @@ EVENT_COLLECTOR = "EventCollector"
 # ENV VARIABLES
 
 ENV_DEMISTO_SDK_MARKETPLACE = "DEMISTO_SDK_MARKETPLACE"
+DEMISTO_DEFAULT_BRANCH = os.getenv('DEMISTO_DEFAULT_BRANCH') or 'master'
+DEMISTO_DEFAULT_REMOTE = os.getenv('DEMISTO_DEFAULT_REMOTE') or 'origin'
 
 
 class FileType(str, Enum):

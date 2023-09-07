@@ -7,7 +7,7 @@ import dictdiffer
 
 from demisto_sdk.commands.common.constants import (
     GENERAL_DEFAULT_FROMVERSION,
-    VERSION_5_5_0,
+    VERSION_5_5_0, DEMISTO_DEFAULT_BRANCH,
 )
 from demisto_sdk.commands.common.handlers import YAML_Handler
 from demisto_sdk.commands.common.logger import logger
@@ -56,7 +56,7 @@ class BaseUpdate:
         output: str = "",
         path: str = "",
         from_version: str = "",
-        prev_ver: str = "master",
+        prev_ver: str = DEMISTO_DEFAULT_BRANCH,
         no_validate: bool = False,
         assume_answer: Union[bool, None] = None,
         interactive: bool = True,

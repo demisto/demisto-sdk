@@ -17,7 +17,7 @@ from demisto_sdk.commands.common.constants import (
     FILE_TYPES_PATHS_TO_VALIDATE,
     OLD_REPUTATION,
     SCHEMA_TO_REGEX,
-    FileType,
+    FileType, DEMISTO_DEFAULT_BRANCH,
 )
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
@@ -60,7 +60,7 @@ class StructureValidator(BaseValidator):
         fromversion=False,
         configuration=Configuration(),
         ignored_errors=None,
-        tag="master",
+        tag=DEMISTO_DEFAULT_BRANCH,
         branch_name="",
         json_file_path=None,
         skip_schema_check=False,

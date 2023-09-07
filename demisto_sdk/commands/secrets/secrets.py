@@ -14,7 +14,7 @@ from demisto_sdk.commands.common.constants import (
     PACKS_INTEGRATION_README_REGEX,
     PACKS_WHITELIST_FILE_NAME,
     FileType,
-    re,
+    re, DEMISTO_DEFAULT_REMOTE,
 )
 from demisto_sdk.commands.common.content import Content
 from demisto_sdk.commands.common.git_util import GitUtil
@@ -121,8 +121,8 @@ class SecretsValidator:
         self.white_list_path = white_list_path
         self.ignore_entropy = ignore_entropy
         self.prev_ver = prev_ver
-        if self.prev_ver and not self.prev_ver.startswith("origin"):
-            self.prev_ver = "origin/" + self.prev_ver
+        if self.prev_ver and not self.prev_ver.startswith(DEMISTO_DEFAULT_REMOTE):
+            self.prev_ver = f"{DEMISTO_DEFAULT_REMOTE}/" + self.prev_ver
 
     def get_secrets(self, branch_name, is_circle):
         secret_to_location_mapping = {}
@@ -183,8 +183,8 @@ class SecretsValidator:
             if not prev_ver:
                 self.git_util = GitUtil(repo=Content.git())
                 prev_ver = self.git_util.handle_prev_ver()[1]
-            if not prev_ver.startswith("origin"):
-                prev_ver = "origin/" + prev_ver
+            if not prev_ver.startswith(DEMISTO_DEFAULT_REMOTE):
+                prev_ver = f"{DEMISTO_DEFAULT_REMOTE}/" + prev_ver
             logger.info(f"Running secrets validation against {prev_ver}")
 
             changed_files_string = run_command(

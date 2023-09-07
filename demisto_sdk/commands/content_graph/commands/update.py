@@ -59,6 +59,7 @@ def update_content_graph(
     builder = ContentGraphBuilder(content_graph_interface)
     if (
         not imported_path
+        and not use_current
         and content_graph_interface.commit == git_util.get_current_commit_hash()
     ):
         logger.info("Content graph is up to date, no need to update graph")

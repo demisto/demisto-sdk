@@ -803,6 +803,8 @@ class ContentEntityValidator(BaseValidator):
 
     def is_valid_description(self, stripped_description):
         """
+        Args:
+            stripped_description: (str) a description or comment section from script / integration yml.
         Verifies the following::
             1. The description string exists (was extracted correctly from its field).
             2. The description string ends with a dot.

@@ -58,7 +58,7 @@ class ContentGraphInterface(ABC):
             return self.metadata.get("schema")
         return None
 
-    def dump_metadata(self, override_commit: bool = False) -> None:
+    def dump_metadata(self, override_commit: bool = True) -> None:
         """Adds metadata to the graph."""
         metadata = {
             "commit": GitUtil().get_current_commit_hash()
@@ -115,7 +115,7 @@ class ContentGraphInterface(ABC):
 
     @abstractmethod
     def export_graph(
-        self, output_path: Optional[Path] = None, override_commit: bool = False
+        self, output_path: Optional[Path] = None, override_commit: bool = True
     ) -> None:
         pass
 

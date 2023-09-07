@@ -613,7 +613,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         return not has_infra_graph_been_changed
 
     def export_graph(
-        self, output_path: Optional[Path] = None, override_commit: bool = False
+        self, output_path: Optional[Path] = None, override_commit: bool = True
     ) -> None:
         self.clean_import_dir()
         with self.driver.session() as session:

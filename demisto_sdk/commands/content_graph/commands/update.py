@@ -32,6 +32,23 @@ from demisto_sdk.commands.content_graph.interface import ContentGraphInterface
 app = typer.Typer()
 
 
+def should_update_graph(
+    content_graph_interface: ContentGraphInterface,
+    git_util: GitUtil,
+    imported_path: Optional[Path] = None,
+    use_current: bool = False,
+):
+    return any(
+        (
+            imported_path,
+            use_current,
+            content_graph_interface.commit != git_util.get_current_commit_hash(),
+            content_graph_interface.content_parser_latest_hash
+            == content_graph_interface._get_latest_content_parser_hash(),
+        )
+    )
+
+
 @recover_if_fails
 def update_content_graph(
     content_graph_interface: ContentGraphInterface,
@@ -60,12 +77,13 @@ def update_content_graph(
     git_util = GitUtil()
     packs_to_update = list(packs_to_update) if packs_to_update else []
     builder = ContentGraphBuilder(content_graph_interface)
-    if (
-        not imported_path
-        and not use_current
-        and content_graph_interface.commit == git_util.get_current_commit_hash()
+    if not should_update_graph(
+        content_graph_interface, git_util, imported_path, use_current
     ):
-        logger.info("Content graph is up to date, no need to update graph")
+        logger.info(
+            f"Content graph is up to date, no need to update. UI representation is available at {NEO4J_DATABASE_HTTP} "
+            f"(username: {NEO4J_USERNAME}, password: {NEO4J_PASSWORD})"
+        )
         return
     builder.preprepare_database()
     if not use_current:

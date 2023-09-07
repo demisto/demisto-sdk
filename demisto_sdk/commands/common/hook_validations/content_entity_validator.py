@@ -805,13 +805,15 @@ class ContentEntityValidator(BaseValidator):
         """
         Args:
             stripped_description: (str) a description or comment section from script / integration yml.
-        Return False if none of the following conditions are met:
-        - The description string doesn't exist/empty.
-        - The description string ends with a dot.
-        - The description string ends with an URL.
+        Return True (the description string is invalid) if all of the following conditions are met:
+        - The description string exist and not empty.
+        - The description string doesn't end with a dot.
+        - The description string doesn't end with an URL.
         """
-        return not (
-            not stripped_description
-            or stripped_description.endswith(".")
-            or is_string_ends_with_url(stripped_description)
+        return all(
+            [
+                stripped_description,
+                not stripped_description.endswith("."),
+                not is_string_ends_with_url(stripped_description),
+            ]
         )

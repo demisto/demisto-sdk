@@ -1,5 +1,5 @@
 import itertools
-from pathlib import Path, PosixPath
+from pathlib import Path
 
 import pytest
 
@@ -9,6 +9,7 @@ from demisto_sdk.commands.pre_commit.hooks.hook import join_files
 from demisto_sdk.commands.pre_commit.hooks.mypy import MypyHook
 from demisto_sdk.commands.pre_commit.hooks.ruff import RuffHook
 from demisto_sdk.commands.pre_commit.pre_commit_command import (
+    PYTHON2_SUPPORTED_HOOKS,
     GitUtil,
     group_by_python_version,
     preprocess_files,
@@ -22,9 +23,9 @@ TEST_DATA_PATH = (
 )
 
 PYTHON_VERSION_TO_FILES = {
-    "3.8": {PosixPath("Packs/Pack1/Integrations/integration1/integration1.py")},
-    "3.9": {PosixPath("Packs/Pack1/Integrations/integration2/integration2.py")},
-    "3.10": {PosixPath("Packs/Pack1/Integrations/integration3/integration3.py")},
+    "3.8": {Path("Packs/Pack1/Integrations/integration1/integration1.py")},
+    "3.9": {Path("Packs/Pack1/Integrations/integration2/integration2.py")},
+    "3.10": {Path("Packs/Pack1/Integrations/integration3/integration3.py")},
 }
 
 
@@ -67,6 +68,10 @@ def test_config_files(mocker, repo: Repo, is_test: bool):
         "integration3", docker_image="demisto/python3:3.8.2.14969"
     )
     script1 = pack1.create_script("script1", docker_image="demisto/python3:2.7.1.14969")
+    integration_deprecated = pack1.create_integration(
+        "integration_deprecated", docker_image="demisto/python3:3.10.2.14969"
+    )
+    integration_deprecated.yml.update({"deprecated": "true"})
     incident_field = pack1.create_incident_field("incident_field")
     classifier = pack1.create_classifier("classifier")
     mocker.patch.object(yaml, "dump", side_effect=lambda *args: [])
@@ -85,8 +90,9 @@ def test_config_files(mocker, repo: Repo, is_test: bool):
     files_to_run = preprocess_files([Path(pack1.path)])
     assert files_to_run == relative_paths
 
+    python_version_to_files, _ = group_by_python_version(files_to_run)
     pre_commit = pre_commit_command.PreCommitRunner(
-        None, group_by_python_version(files_to_run), ""
+        None, None, python_version_to_files, ""
     )
     assert (
         Path(script1.yml.path).relative_to(repo.path)
@@ -108,6 +114,10 @@ def test_config_files(mocker, repo: Repo, is_test: bool):
         Path(obj.path).relative_to(repo.path)
         in pre_commit.python_version_to_files["3.10"]
         for obj in (incident_field, classifier)
+    )
+    assert (
+        Path(integration_deprecated.yml.path).relative_to(repo.path)
+        not in pre_commit.python_version_to_files["3.10"]
     )
 
     pre_commit.run(unit_test=is_test)
@@ -214,7 +224,7 @@ class TestPreprocessFiles:
         assert output == expected_output
 
 
-def test_handle_python2_files_with_unit_test(mocker, repo: Repo):
+def test_exclude_some_hooks_from_python2_files(mocker, repo: Repo):
     """
     Given:
         python_version_to_files with python 2.7 and python 3.8 files, and unit_test is True
@@ -236,53 +246,18 @@ def test_handle_python2_files_with_unit_test(mocker, repo: Repo):
     mocker.patch.object(pre_commit_command, "logger")
     python_version_to_files = {"2.7": {"file1.py"}, "3.8": {"file2.py"}}
     pre_commit_runner = pre_commit_command.PreCommitRunner(
-        None, python_version_to_files, ""
+        None, None, python_version_to_files, ""
     )
 
-    python2_files = pre_commit_runner.exclude_some_hooks_from_python2_files()
+    pre_commit_runner.exclude_some_hooks_from_python2_files()
 
-    assert python2_files == ["file1.py"]
-    assert pre_commit_runner.python_version_to_files == {"3.8": {"file2.py"}}
     assert (
-        pre_commit_command.logger.info.call_args[0][0]
-        == "Running pre-commit run-unit-tests with Python 2.7 on file1.py"
+        "Python 2.7 files running only with the following hooks:"
+        in pre_commit_command.logger.info.call_args[0][0]
     )
 
     for hook in pre_commit_runner.hooks.values():
-        if hook["hook"]["id"] == "run-unit-tests":
+        if hook["hook"]["id"] in PYTHON2_SUPPORTED_HOOKS:
             assert hook["hook"].get("exclude") is None
         else:
-            assert hook["hook"]["exclude"] == "file1.py"
-
-
-def test_handle_python2_files_no_unit_test(mocker, repo: Repo):
-    """
-    Given:
-        python_version_to_files with python 2.7 and python 3.8 files, and unit_test is False
-    When:
-        Calling handle_python2_files
-    Then:
-        1. python2_files contain an empty list
-        2. python_version_to_files should contain only python 3.8 files
-        3. The logger should print the message that unit-tests were not selected
-    """
-    mocker.patch.object(
-        pre_commit_command,
-        "PRECOMMIT_TEMPLATE_PATH",
-        TEST_DATA_PATH / ".pre-commit-config_template.yaml",
-    )
-    mocker.patch.object(pre_commit_command, "CONTENT_PATH", Path(repo.path))
-    mocker.patch.object(pre_commit_command, "logger")
-    python_version_to_files = {"2.7": {"file1.py"}, "3.8": {"file2.py"}}
-    pre_commit_runner = pre_commit_command.PreCommitRunner(
-        None, python_version_to_files, ""
-    )
-
-    python2_files = pre_commit_runner.exclude_some_hooks_from_python2_files()
-
-    assert python2_files == []
-    assert pre_commit_runner.python_version_to_files == {"3.8": {"file2.py"}}
-    assert (
-        pre_commit_command.logger.info.call_args[0][0]
-        == "Skipping pre-commit with Python 2.7 because unit-tests were not selected"
-    )
+            assert "file1.py" in hook["hook"]["exclude"]

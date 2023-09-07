@@ -309,9 +309,9 @@ def test_initiate_file_validator(mocker, is_old_file, function_validate):
         ),
         (
             "comment with dot and empty string in the end. ",
-            "comment with dot and empty string in the end.",
+            "comment with dot and empty string in the end. ",
             "description with dot and empty string in the end. ",
-            "description with dot and empty string in the end.",
+            "description with dot and empty string in the end. ",
         ),
         (
             "comment without dot and empty string in the end ",
@@ -321,9 +321,9 @@ def test_initiate_file_validator(mocker, is_old_file, function_validate):
         ),
         (
             "comment with dot and 'new_line' in the end. \n",
-            "comment with dot and 'new_line' in the end.",
+            "comment with dot and 'new_line' in the end. \n",
             "description with dot and 'new_line' in the end. \n",
-            "description with dot and 'new_line' in the end.",
+            "description with dot and 'new_line' in the end. \n",
         ),
         (
             "comment without dot and 'new_line' in the end \n",

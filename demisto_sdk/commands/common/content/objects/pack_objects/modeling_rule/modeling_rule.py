@@ -192,7 +192,11 @@ class ModelingRule(YAMLContentUnifiedObject):
     """
 
     MODEL_RULE_REGEX = re.compile(
-        r"(?P<header>\[MODEL:[\w\W]*?\])(\s*(^\s*?(?!\s*\[MODEL:[\w\W]*?\]).*?$))+",
+        r"(?P<header>\[MODEL:[\w\W]*?\])(\s*(^\s*?(?!\s*\[RULE:[\w\W]*?\])(?!\s*\[MODEL:[\w\W]*?\]).*?$))+",
+        flags=re.M,
+    )
+    RULE_RULE_REGEX = re.compile(
+        r"(?P<header>\[RULE:[\w\W]*?\])(\s*(^\s*?(?!\s*\[RULE:[\w\W]*?\])(?!\s*\[MODEL:[\w\W]*?\]).*?$))+",
         flags=re.M,
     )
     TESTDATA_FILE_SUFFIX = "_testdata.json"
@@ -227,8 +231,16 @@ class ModelingRule(YAMLContentUnifiedObject):
                     rules_text = self.rules_path.read_text()
                 else:
                     rules_text = self.get("rules", "")
-                matches = self.MODEL_RULE_REGEX.finditer(rules_text)
-                _rules.extend(SingleModelingRule(match.group()) for match in matches)
+
+                model_matches = self.MODEL_RULE_REGEX.finditer(rules_text)
+                rule_matches = self.RULE_RULE_REGEX.finditer(rules_text)
+                model_section_text_list = [match.group() for match in model_matches]
+                rule_section_text_list = [match.group() for match in rule_matches]
+                # We should filter tht all relevant rules and send it to the SingleModelingRule
+                for model_section_text in model_section_text_list:
+
+                entire_model_text = ''
+                _rules.extend(SingleModelingRule(model_text) for model_text in entire_model_text)
                 self.rules = _rules
             except ValueError as ve:
                 rule_initialization_errs.append(ve)

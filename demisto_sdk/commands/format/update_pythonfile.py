@@ -1,19 +1,14 @@
 import subprocess
-from pathlib import Path
 from shutil import copy
 from typing import Tuple
 
-from demisto_sdk.commands.common.constants import FileType
 from demisto_sdk.commands.common.logger import logger
-from demisto_sdk.commands.common.tools import find_type
 from demisto_sdk.commands.format.format_constants import (
     ERROR_RETURN_CODE,
     SKIP_VALIDATE_PY_RETURN_CODE,
     SUCCESS_RETURN_CODE,
 )
 from demisto_sdk.commands.format.update_generic_yml import BaseUpdate
-from demisto_sdk.commands.format.update_integration import IntegrationYMLFormat
-from demisto_sdk.commands.format.update_script import ScriptYMLFormat
 
 AUTOPEP_LINE_LENGTH = "130"
 
@@ -36,7 +31,6 @@ class PythonFileFormat(BaseUpdate):
         path: str = "",
         from_version: str = "",
         no_validate: bool = True,
-        update_docker: bool = False,
         **kwargs,
     ):
         super().__init__(
@@ -47,34 +41,6 @@ class PythonFileFormat(BaseUpdate):
             no_validate=no_validate,
             **kwargs,
         )
-        self.update_docker = update_docker
-        if not self.update_docker:
-            self.yml_formatter = None
-            return
-
-        py_path = Path(self.output_file)
-        yml_file_path = str(Path(py_path.parent, py_path.stem + ".yml"))
-        yml_type = find_type(yml_file_path)
-        if yml_type == FileType.INTEGRATION:
-            self.yml_formatter = IntegrationYMLFormat(
-                input=yml_file_path,
-                output=yml_file_path,
-                path=path,
-                from_version=from_version,
-                no_validate=True,
-                update_docker=update_docker,
-                **kwargs
-            )
-        else:
-            self.yml_formatter = ScriptYMLFormat(
-                input=yml_file_path,
-                output=yml_file_path,
-                path=path,
-                from_version=from_version,
-                no_validate=True,
-                update_docker=update_docker,
-                **kwargs
-            )
 
     @staticmethod
     def format_py_using_autopep(py_file_path):
@@ -116,8 +82,7 @@ class PythonFileFormat(BaseUpdate):
         if self.output_file != self.source_file:
             self.create_output_file()
             py_file_path = self.output_file
-        if self.update_docker:
-            self.yml_formatter.update_docker_image()
+
         is_autopep_passed = self.format_py_using_autopep(py_file_path)
         if is_autopep_passed:
             return SUCCESS_RETURN_CODE

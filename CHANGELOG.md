@@ -5,6 +5,7 @@
 * The content graph will now include the **python_version** field that each script/integration uses.
 * Updated the **update-release-notes** command message structure when is run with **--force** flag.
 * Added the **engineinfo** in to the script schema (specifies which engine the script should run from).
+* Added support for lazy loading the of widgets in XSIAM dashboards.
 
 ## 1.20.1
 * Added formatting for yml files when period is missing in the end of description field, in the **format** command.

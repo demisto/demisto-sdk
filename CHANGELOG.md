@@ -3,7 +3,7 @@
 * Fixed an issue where the **coverage-analyze** command was not parsing the logs correctly.
 * The content graph will now include the **python_version** field that each script/integration uses.
 * Updated the **update-release-notes** command message structure when is run with **--force** flag.
-* Fixed an issue where *engineinfo* was not in the script schema.
+* Added the **engineinfo** in to the script schema (specifies which engine the script should run from).
 
 ## 1.20.1
 * Added formatting for yml files when period is missing in the end of description field, in the **format** command.

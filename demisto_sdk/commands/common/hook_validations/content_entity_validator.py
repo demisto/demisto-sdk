@@ -805,12 +805,10 @@ class ContentEntityValidator(BaseValidator):
         """
         Args:
             stripped_description: (str) a description or comment section from script / integration yml.
-        Verifies the following::
-               The description string exists and not empty (was extracted correctly from its field).
-            OR
-               The description string ends with a dot.
-            OR
-               The description string ends with an URL.
+        Return False if none of the following conditions are met:
+        - The description string doesn't exist/empty.
+        - The description string ends with a dot.
+        - The description string ends with an URL.
         """
         return not (
             not stripped_description

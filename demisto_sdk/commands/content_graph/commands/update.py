@@ -54,8 +54,15 @@ def update_content_graph(
         dependencies (bool): Whether to create the dependencies.
         output_path (Path): The path to export the graph zip to.
     """
+    git_util = GitUtil()
     packs_to_update = list(packs_to_update) if packs_to_update else []
     builder = ContentGraphBuilder(content_graph_interface)
+    if (
+        not imported_path
+        and content_graph_interface.commit == git_util.get_current_commit_hash()
+    ):
+        logger.info("Content graph is up to date, no need to update graph")
+        return
     if not use_current:
         content_graph_interface.clean_import_dir()
         if not imported_path:
@@ -81,7 +88,7 @@ def update_content_graph(
         return
 
     if use_git and (commit := content_graph_interface.commit):
-        packs_to_update.extend(GitUtil().get_all_changed_pack_ids(commit))
+        packs_to_update.extend(git_util.get_all_changed_pack_ids(commit))
 
     packs_str = "\n".join([f"- {p}" for p in packs_to_update])
     logger.info(f"Updating the following packs:\n{packs_str}")

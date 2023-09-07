@@ -9,7 +9,7 @@ from demisto_sdk.commands.common.constants import (
     MarketplaceVersions,
 )
 from demisto_sdk.commands.common.logger import logger
-from demisto_sdk.commands.common.tools import find_type
+from demisto_sdk.commands.common.tools import FileType, find_type
 from demisto_sdk.commands.content_graph.common import (
     UNIFIED_FILES_SUFFIXES,
     ContentType,
@@ -107,18 +107,18 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
                     raise InvalidContentItemException
 
             else:
-                if file_type := find_type(str(path)):
-                    logger.error(f"Could not determine content type for {path}: {e}")
+                file_type: Optional[FileType] = None
+                if (file_type := find_type(str(path))) and not file_type:
+                    logger.error(f"Could not determine content type for {path}")
                     raise InvalidContentItemException
 
-                file_type_to_content_type = FileType2ContentType.get(file_type)
+                file_type_to_content_type = FileType2ContentType.get(file_type)  # type: ignore
                 if not file_type_to_content_type:
-                    logger.error(
-                        f"Could not convert from file type to cntent type {path}: {e}"
-                    )
+                    logger.error(f"Cotent item in {path=} is not supported")
                     raise InvalidContentItemException
 
                 content_type = file_type_to_content_type
+                path = path.parent
 
         if parser_cls := ContentItemParser.content_type_to_parser.get(content_type):
             try:

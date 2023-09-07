@@ -1743,7 +1743,7 @@ def find_type(
     ignore_sub_categories: bool = False,
     ignore_invalid_schema_file: bool = False,
     clear_cache: bool = False,
-):
+) -> Optional[FileType]:
     """
     returns the content file type
 

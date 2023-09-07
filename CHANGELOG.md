@@ -31,6 +31,7 @@
 * Fixed an issue where the (`GR108`) validation did not fail in the validate command with the `-a` flag.
 * Modified **prepare_content** command to be platform specific. For xsoar-saas and XSIAM regarding pack readme and integration description images in markdown files.
 * Fixed an issue where the **lint** command was parsing % that may exist in the log data.
+* Added a **validate** check for correlation rules, making sure that `search_window` cannot be empty when `execution_mode` is set to `SCHEDULED`.
 
 ## 1.19.2
 * Added a period at the end of lines produced by the **generate-docs** command that state the tested version of the product.

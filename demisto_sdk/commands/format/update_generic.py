@@ -473,8 +473,10 @@ class BaseUpdate:
 
         def _add_period(value: Optional[str]) -> Optional[str]:
             if value and isinstance(value, str):
-                value = strip_description(value)
-                if not value.endswith(".") and not is_string_ends_with_url(value):
+                strip_value = strip_description(value)
+                if not strip_value.endswith(".") and not is_string_ends_with_url(
+                    strip_value
+                ):
                     return f"{value}."
             return value
 

@@ -89,6 +89,7 @@ def create_table(expected: Dict[str, Any], received: Dict[str, Any]) -> str:
         data,
         tablefmt="fancy_grid",
         headers=["Model Field", "Expected Value", "Received Value"],
+        maxcolwidths=[60, 40, 40],
     )
 
 
@@ -318,7 +319,7 @@ def verify_results_against_test_data(
                 logger.debug(f"[cyan]{out}[/cyan]", extra={"markup": True})
                 result_test_case_system_out.append(out)
 
-                if type(result_val) == type(val) and result_val == val:
+                if result_val == val:
                     out = f"Value:{result_val} and Type:{get_type_pretty_name(result_val)} Matched for key {key}"
                     result_test_case_system_out.append(out)
                     logger.debug(out)
@@ -881,13 +882,16 @@ def validate_modeling_rule(
             )
         test_data = TestData.parse_file(modeling_rule.testdata_path.as_posix())
 
-        schema_test_case = TestCase("Validate Schema", classname="Modeling Rule")
+        schema_test_case = TestCase(
+            "Validate Schema",
+            classname=f"Modeling Rule {get_relative_path_to_content(modeling_rule.schema_path)}",
+        )
         if schema_path := modeling_rule.schema_path:
             with open(modeling_rule.schema_path) as schema_file:
                 try:
                     schema = json.load(schema_file)
                 except json.JSONDecodeError as ex:
-                    err = f"Failed to parse schema file {modeling_rule.schema_path} as JSON"
+                    err = f"Failed to parse schema file {get_relative_path_to_content(modeling_rule.schema_path)} as JSON"
                     logger.error(
                         f"[red]{err}[/red]",
                         extra={"markup": True},
@@ -897,7 +901,7 @@ def validate_modeling_rule(
                         err, schema_test_case, modeling_rule_test_suite
                     )
         else:
-            err = f"Schema file does not exist in path {modeling_rule.schema_path}"
+            err = f"Schema file does not exist in path {get_relative_path_to_content(modeling_rule.schema_path)}"
             return log_error_to_test_case(
                 err, schema_test_case, modeling_rule_test_suite
             )

@@ -5,7 +5,7 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Any, Callable, List, Set
 
-from demisto_sdk.commands.common.constants import PACKS_PACK_IGNORE_FILE_NAME
+from demisto_sdk.commands.common.constants import PACKS_PACK_IGNORE_FILE_NAME, PACKS_DIR
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import get_remote_file_from_api
@@ -60,14 +60,27 @@ class PackIgnore(dict):
             )
 
     @classmethod
-    def from_path(cls, path: Path) -> "PackIgnore":
+    def from_pack_file_path(cls, path: Path) -> "PackIgnore":
+        """
+        init the PackIgnore from a local pack file path.
+
+        Args:
+            path (Path): path of a file within the pack, or path of the pack itself
+        """
+        while path.parent.name != PACKS_DIR:
+            path = path.parent
+
+        return cls.__load(CONTENT_PATH / path / PACKS_PACK_IGNORE_FILE_NAME)
+
+    @classmethod
+    def from_any_path(cls, path: Path) -> "PackIgnore":
         """
         init the PackIgnore from a local file path.
 
         Args:
-            path (Path): path of the pack.
+            path (Path): full path to the .pack-ignore file.
         """
-        return cls.__load(CONTENT_PATH / path / PACKS_PACK_IGNORE_FILE_NAME)
+        return cls.__load(path)
 
     @classmethod
     @lru_cache

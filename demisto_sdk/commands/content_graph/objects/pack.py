@@ -144,7 +144,7 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
     @property
     def pack_ignore(self) -> Optional[PackIgnore]:
         try:
-            return PackIgnore.from_path(self.path)
+            return PackIgnore.from_pack_file_path(self.path)
         except (FileNotFoundError, MissingSectionHeaderError) as error:
             logger.debug(
                 f"Error when trying to get .pack-ignore of pack {self.object_id}: {error}"

@@ -100,7 +100,7 @@ class PackIgnore(dict):
             prefix=f'{remote_path.replace("/", "_")}:{tag}-'
         ) as pack_ignore_path:
             pack_ignore_path.write(pack_ignore_file_content)
-            pack_ignore = cls.__load(Path(pack_ignore_path.name))
+            pack_ignore = cls.from_any_path(Path(pack_ignore_path.name))
 
         pack_ignore.__map_files_to_ignored_validations()
         return pack_ignore

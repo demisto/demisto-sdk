@@ -10,6 +10,7 @@
 * Fixed an issue where **validate** falsely failed with error `DS108` on empty descriptions.
 * Added support for lazy loading the of widgets in XSIAM dashboards.
 * Added a **validate** check for correlation rules, making sure that `search_window` cannot be empty when `execution_mode` is set to `SCHEDULED`.
+* Added the *metadata* key to the XSIAM dashboard schema. This field adds support for dynamic parameters in the dashboards.
 
 ## 1.20.1
 * Added formatting for yml files when period is missing in the end of description field, in the **format** command.
@@ -81,7 +82,6 @@
 * Updated the **format** command to use the content graph instead of the id_set file.
 * Updated **format** command not to fail on unexpected values that returns from the graph, and just add it to the log.
 * Removed a redundant debug log on the `tools.get_file` function.
-* Added the *metadata* key to the XSIAM dashboard schema. This field adds support for dynamic parameters in the dashboards.
 
 ## 1.18.1
 * Fixed an issue where the coloring directives where showing in log messages.

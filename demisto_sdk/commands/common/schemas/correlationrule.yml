@@ -32,12 +32,12 @@ mapping:
   execution_mode:
     type: str
     required: true
+    enum: ['REAL_TIME', 'SCHEDULED']
   mitre_defs:
     type: map
     allowempty: true
   search_window:
     type: str
-    required: true
   severity:
     type: str
     required: true

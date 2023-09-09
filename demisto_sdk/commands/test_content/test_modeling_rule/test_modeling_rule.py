@@ -262,14 +262,17 @@ def verify_results(
 
     test_cases = []
     for i, result in enumerate(results, start=1):
+        td_event_id = result.pop(f"{tested_dataset}.test_data_event_id")
+        msg = (
+            f"Modeling rule - {get_relative_path_to_content(modeling_rule.path)} {i}/{len(results)}"
+            f" test_data_event_id:{td_event_id}"
+        )
         logger.info(
-            f"\n[cyan][underline]Result {i}/{len(results)}[/underline][/cyan]",
+            f"[cyan]{msg}[/cyan]",
             extra={"markup": True},
         )
-        td_event_id = result.pop(f"{tested_dataset}.test_data_event_id")
         result_test_case = TestCase(
-            f"Modeling rule - {get_relative_path_to_content(modeling_rule.path)} {i}/{len(results)}"
-            f" test_data_event_id:{td_event_id}",
+            msg,
             classname=f"test_data_event_id:{td_event_id}",
         )
         verify_results_against_test_data(
@@ -751,8 +754,8 @@ def verify_pack_exists_on_tenant(
                 "[red]Pack does not exist on the tenant. Please install or upload the pack and try again[/red]",
                 extra={"markup": True},
             )
-            typer.echo(
-                f"demisto-sdk upload -z -x -i {containing_pack.path}\ndemisto-sdk modeling-rules test {mr.path.parent}"
+            logger.info(
+                f"\ndemisto-sdk upload -z -x -i {containing_pack.path}\ndemisto-sdk modeling-rules test {mr.path.parent}"
             )
             return False
     return True
@@ -807,10 +810,6 @@ def validate_modeling_rule(
         interactive (bool): Whether command is being run in interactive mode.
         ctx (typer.Context): Typer context.
     """
-    logger.info(
-        f"[cyan]<<<< Test Modeling Rule: {get_relative_path_to_content(modeling_rule_directory)} >>>>[/cyan]",
-        extra={"markup": True},
-    )
     modeling_rule = ModelingRule(modeling_rule_directory.as_posix())
     modeling_rule_file_name = Path(modeling_rule.path).name
     containing_pack = get_containing_pack(modeling_rule)
@@ -1048,17 +1047,15 @@ def validate_modeling_rule(
                 )
                 logger.error(
                     f"[red]Please create a test data file for "
-                    f"{get_relative_path_to_content(modeling_rule_directory)} and then rerun[/red]",
+                    f"{get_relative_path_to_content(modeling_rule_directory)} and then rerun\n{executed_command}[/red]",
                     extra={"markup": True},
                 )
-                typer.echo(executed_command)
         else:
             logger.error(
                 f"[red]Please create a test data file for "
-                f"{get_relative_path_to_content(modeling_rule_directory)} and then rerun[/red]",
+                f"{get_relative_path_to_content(modeling_rule_directory)} and then rerun\n{executed_command}[/red]",
                 extra={"markup": True},
             )
-            typer.echo(executed_command)
         return False, None
 
 
@@ -1257,19 +1254,19 @@ def test_modeling_rule(
         "INFO",
         "-clt",
         "--console-log-threshold",
-        help=("Minimum logging threshold for the console logger."),
+        help="Minimum logging threshold for the console logger.",
     ),
     file_log_threshold: str = typer.Option(
         "DEBUG",
         "-flt",
         "--file-log-threshold",
-        help=("Minimum logging threshold for the file logger."),
+        help="Minimum logging threshold for the file logger.",
     ),
     log_file_path: str = typer.Option(
         "demisto_sdk_debug.log",
         "-lp",
         "--log-file-path",
-        help=("Path to the log file. Default: ./demisto_sdk_debug.log."),
+        help="Path to the log file. Default: ./demisto_sdk_debug.log.",
     ),
 ):
     """
@@ -1283,16 +1280,26 @@ def test_modeling_rule(
     handle_deprecated_args(ctx.args)
 
     logger.info(
-        f"[cyan]Modeling Rules directories to test: {inputs}[/cyan]",
+        "[cyan]Test Modeling Rules directories to test:[/cyan]",
         extra={"markup": True},
     )
+
+    for modeling_rule_directory in inputs:
+        logger.info(
+            f"[cyan]\t{get_relative_path_to_content(modeling_rule_directory)}[/cyan]",
+            extra={"markup": True},
+        )
 
     retrying_caller = create_retrying_caller(retry_attempts, sleep_interval)
 
     errors = False
     xml = JUnitXml()
     start_time = datetime.now(timezone.utc)
-    for modeling_rule_directory in inputs:
+    for i, modeling_rule_directory in enumerate(inputs, start=1):
+        logger.info(
+            f"[cyan][{i}/{len(inputs)}] Test Modeling Rule: {get_relative_path_to_content(modeling_rule_directory)}[/cyan]",
+            extra={"markup": True},
+        )
         success, modeling_rule_test_suite = validate_modeling_rule(
             modeling_rule_directory,
             # can ignore the types since if they are not set to str values an error occurs
@@ -1306,10 +1313,15 @@ def test_modeling_rule(
             interactive,
             ctx,
         )
-        if not success:
+        if success:
+            logger.info(
+                f"[green]Test Modeling rule {get_relative_path_to_content(modeling_rule_directory)} passed[/green]",
+                extra={"markup": True},
+            )
+        else:
             errors = True
             logger.error(
-                f"[red]Error testing modeling rule {get_relative_path_to_content(modeling_rule_directory)}[/red]",
+                f"[red]Test Modeling rule {get_relative_path_to_content(modeling_rule_directory)} failed[/red]",
                 extra={"markup": True},
             )
         if modeling_rule_test_suite:
@@ -1317,10 +1329,28 @@ def test_modeling_rule(
             xml.add_testsuite(modeling_rule_test_suite)
 
     if output_junit_file:
+        logger.info(
+            f"[cyan]Writing JUnit XML to {output_junit_file}[/cyan]",
+            extra={"markup": True},
+        )
         xml.write(output_junit_file.as_posix(), pretty=True)
+    else:
+        logger.info(
+            "[cyan]No JUnit XML file path was passed - skipping writing JUnit XML[/cyan]",
+            extra={"markup": True},
+        )
 
+    duration = duration_since_start_time(start_time)
     if errors:
+        logger.info(
+            f"[red]Test Modeling Rules: Failed, took:{duration} seconds[/red]",
+            extra={"markup": True},
+        )
         raise typer.Exit(1)
+    logger.info(
+        f"[green]Test Modeling Rules: Passed, took:{duration} seconds[/green]",
+        extra={"markup": True},
+    )
 
 
 if __name__ == "__main__":

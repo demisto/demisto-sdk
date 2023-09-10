@@ -191,9 +191,17 @@ class ModelingRule(YAMLContentUnifiedObject):
             Modeling Rule content entity.
     """
 
-    MODEL_RULE_REGEX = re.compile(
-        r"(?P<header>\[MODEL:[\w\W]*?\])(\s*(^\s*?(?!\s*\[MODEL:[\w\W]*?\]).*?$))+",
+    MODEL_REGEX = re.compile(
+        r"(?P<model_header>\[MODEL:[\w\W]*?\])(\s*(^\s*?(?!\s*\[MODEL:[\w\W]*?\])(?!\s*\[RULE:[\w\W]*?\]).*?$))+",
         flags=re.M,
+    )
+    RULE_REGEX = re.compile(
+        r"(?P<rule_header>\[RULE:\s*(?P<rule_name>[\w\W]*?)\])(\s*(^\s*?(?!\s*\[MODEL:[\w\W]*?\])(?!\s*\[RULE:[\w\W]*?\]).*?$))+",
+        flags=re.M,
+    )
+    CALL_RULE_REGEX = re.compile(
+        r"call\s*(?P<rule_name>\w+)",
+        flags=re.IGNORECASE,
     )
     TESTDATA_FILE_SUFFIX = "_testdata.json"
     SCHEMA_FILE_SUFFIX = "_schema.json"
@@ -201,6 +209,7 @@ class ModelingRule(YAMLContentUnifiedObject):
     def __init__(self, path: Union[Path, str]):
         super().__init__(path, FileType.MODELING_RULE, MODELING_RULE)
         self._rules: List[SingleModelingRule] = []
+        self.rules_dict = dict()
 
     def normalize_file_name(self) -> str:
         return generate_xsiam_normalized_name(self._path.name, MODELING_RULE)
@@ -217,6 +226,13 @@ class ModelingRule(YAMLContentUnifiedObject):
         # return client.import_modeling_rules(file=self.path)
         pass
 
+    def get_nested_rules(self, modal_text: str) -> str:
+        if rule_name_match := self.CALL_RULE_REGEX.search(modal_text):
+            rule_name = rule_name_match.group()
+            return self.get_nested_rules(modal_text.replace(rule_name, self.rules_dict.get(rule_name)))
+        else:
+            return modal_text
+
     @property
     def rules(self):
         if not self._rules:
@@ -227,8 +243,10 @@ class ModelingRule(YAMLContentUnifiedObject):
                     rules_text = self.rules_path.read_text()
                 else:
                     rules_text = self.get("rules", "")
-                matches = self.MODEL_RULE_REGEX.finditer(rules_text)
-                _rules.extend(SingleModelingRule(match.group()) for match in matches)
+
+                self.rules_dict = {f"call {rule.groupdict().get('rule_name')}": rule.group() for rule in self.RULE_REGEX.finditer(rules_text)}
+                matches = self.MODEL_REGEX.finditer(rules_text)
+                _rules.extend(SingleModelingRule(self.get_nested_rules(match.group())) for match in matches)
                 self.rules = _rules
             except ValueError as ve:
                 rule_initialization_errs.append(ve)

@@ -2,10 +2,15 @@
 ## Unreleased
 * Fixed an issue where the **coverage-analyze** command was not parsing the logs correctly.
 * Fixed an issue where **validate** falsly failed with error `DS108` on descriptions ending with a newline.
+* Added formatting for script yml files when period is missing in the end of comment field, in the **format** command.
+* Fixed an issue where **format** add a newline with a period when the description field missing a period.
 * The content graph will now include the **python_version** field that each script/integration uses.
 * Updated the **update-release-notes** command message structure when is run with **--force** flag.
-* Fixed an issue where **validate** falsly failed with error `DS108` on empty descriptions.
+* Added the **engineinfo** in to the script schema. This field specifies on which engine the script will run.
+* Fixed an issue where **validate** falsely failed with error `DS108` on empty descriptions.
 * Added support for lazy loading the of widgets in XSIAM dashboards.
+* Added a **validate** check for correlation rules, making sure that `search_window` cannot be empty when `execution_mode` is set to `SCHEDULED`.
+* Added the *metadata* key to the XSIAM dashboard schema. This field adds support for dynamic parameters in the dashboards.
 
 ## 1.20.1
 * Added formatting for yml files when period is missing in the end of description field, in the **format** command.
@@ -31,7 +36,6 @@
 * Fixed an issue where the (`GR108`) validation did not fail in the validate command with the `-a` flag.
 * Modified **prepare_content** command to be platform specific. For xsoar-saas and XSIAM regarding pack readme and integration description images in markdown files.
 * Fixed an issue where the **lint** command was parsing % that may exist in the log data.
-* Added a **validate** check for correlation rules, making sure that `search_window` cannot be empty when `execution_mode` is set to `SCHEDULED`.
 
 ## 1.19.2
 * Added a period at the end of lines produced by the **generate-docs** command that state the tested version of the product.

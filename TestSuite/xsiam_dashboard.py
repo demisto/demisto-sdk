@@ -56,6 +56,7 @@ class XSIAMDashboard(JSONBased):
                         ],
                         "default_dashboard_id": 1,
                         "global_id": "f9c52470483a41e4a6afa65c93f70a4b",
+                        "metadata": "{}",
                     }
                 ],
                 "widgets_data": [

@@ -3936,7 +3936,7 @@ def parse_int_or_default(value: Any, default: int) -> int:
         return default
 
 
-def is_sentence_ends_with_bracket(description):
+def is_sentence_ends_with_bracket(description: str):
     """
     Check if the sentence ends with a bracket and valid.
     Args:

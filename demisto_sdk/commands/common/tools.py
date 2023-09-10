@@ -2028,7 +2028,9 @@ def get_content_path(relative_path: Optional[Path] = None) -> Path:
         try:
             remote_url = git_repo.remote(name=DEMISTO_DEFAULT_REMOTE).urls.__next__()
         except ValueError:
-            logger.warning(f"Could not find remote with name {DEMISTO_DEFAULT_REMOTE} for repo {git_repo.working_dir}")
+            logger.warning(
+                f"Could not find remote with name {DEMISTO_DEFAULT_REMOTE} for repo {git_repo.working_dir}"
+            )
             remote_url = ""
         is_fork_repo = "content" in remote_url
         is_external_repo = is_external_repository()

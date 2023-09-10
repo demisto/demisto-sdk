@@ -2,7 +2,7 @@ import argparse
 import logging
 import sys
 
-from demisto_sdk.commands.changelog.changelog import Changelog
+from demisto_sdk.scripts.changelog.changelog import Changelog
 
 logger = logging.getLogger("demisto-sdk")
 
@@ -11,8 +11,8 @@ def validate_changelog_and_logs(pr_num: str, pr_name: str) -> bool:
     try:
         Changelog(pr_num, pr_name).validate()
         sys.exit(0)
-    except Exception as e:
-        logger.info(f"[red]{e}[/red]")
+    except Exception:
+        logger.exception("Changelog validation failed.")
         sys.exit(1)
 
 

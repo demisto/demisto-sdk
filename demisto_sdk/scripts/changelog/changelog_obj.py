@@ -4,7 +4,7 @@ from typing import Dict, List, Tuple, Union
 from pydantic import BaseModel, validator
 
 INITIAL_DESCRIPTION = "enter description about this PR"
-INITIAL_TYPE = "<fix|feature|breaking>"
+INITIAL_TYPE = "<fix|feature|breaking|internal>"
 
 INITIAL_LOG: Dict[str, Union[str, List[dict]]] = {
     "logs": [
@@ -20,7 +20,18 @@ class LogType(str, Enum):
     fix = "fix"
     feature = "feature"
     breaking = "breaking"
+    internal = "internal"
     initial = INITIAL_TYPE
+
+
+class LogLine:
+    def __init__(self, description: str, pr_number: str, type_: LogType) -> None:
+        self.description = description
+        self.pr_number = pr_number
+        self.type = type_
+
+    def to_string(self):
+        return f"* {self.description} - [#{self.pr_number}](https://github.com/demisto/demisto-sdk/pull/{self.pr_number})"
 
 
 class LogEntry(BaseModel):
@@ -49,28 +60,9 @@ class LogEntry(BaseModel):
         return value
 
 
-class LogObject(BaseModel):
+class LogFileObject(BaseModel):
     logs: List[LogEntry]
     pr_number: str
 
-    def build_log(cls) -> Tuple[List[str], ...]:
-        """
-        Extracts all entries from the object and separates them by types
-        """
-        breaking_logs: List[str] = []
-        feature_logs: List[str] = []
-        fix_logs: List[str] = []
-        for log in cls.logs:
-            if log.type == LogType.breaking:
-                breaking_logs.append(
-                    f"* {log.description} - [#{cls.pr_number}](https://github.com/demisto/demisto-sdk/pull/{cls.pr_number})\n"
-                )
-            elif log.type == LogType.feature:
-                feature_logs.append(
-                    f"* {log.description} - [#{cls.pr_number}](https://github.com/demisto/demisto-sdk/pull/{cls.pr_number})\n"
-                )
-            elif log.type == LogType.fix:
-                fix_logs.append(
-                    f"* {log.description} - [#{cls.pr_number}](https://github.com/demisto/demisto-sdk/pull/{cls.pr_number})\n"
-                )
-        return breaking_logs, feature_logs, fix_logs
+    def get_log_entries(cls) -> List[LogLine]:
+        return [LogLine(log_entry.description, cls.pr_number, log_entry.type) for log_entry in cls.logs]

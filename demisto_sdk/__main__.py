@@ -12,7 +12,6 @@ import git
 import typer
 from pkg_resources import DistributionNotFound, get_distribution
 
-from demisto_sdk.commands.changelog.changelog import changelog_management
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import (
     ENV_DEMISTO_SDK_MARKETPLACE,
@@ -321,50 +320,6 @@ def split(ctx, config, **kwargs):
             new_module_file=kwargs.get("new_module_file"),  # type: ignore[arg-type]
         )
         return json_splitter.split_json()
-
-
-# ====================== changelog ====================== #
-@main.command(
-    context_settings=dict(
-        ignore_unknown_options=True,
-        allow_extra_args=True,
-    ),
-    short_help="""Generates a log file for the current PR""",
-)
-@click.help_option("-h", "--help")
-@click.option(
-    "--init",
-    help="Generates a log file for the current PR",
-    is_flag=True,
-    default=False,
-)
-@click.option(
-    "--validate",
-    help="Checks whether there is a log file for the current PR, if so checks whether the log file is valid",
-    is_flag=True,
-    default=False,
-)
-@click.option(
-    "--release",
-    help="releasing",
-    is_flag=True,
-    default=False,
-)
-@click.option("-t", "--pr-title", help="The PR title", default="")
-@click.option(
-    "-n",
-    "--pr-number",
-    help="The PR number",
-)
-@click.pass_context
-@logging_setup_decorator
-def changelog(ctx, **kwargs):
-    """ """
-    try:
-        changelog_management(**kwargs)
-    except Exception as e:
-        logger.info(f"[red]{e}[/red]")
-        sys.exit(1)
 
 
 # ====================== extract-code ====================== #

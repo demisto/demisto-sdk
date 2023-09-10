@@ -4,14 +4,13 @@ on: pull_request
 jobs:
   validate-changelog:
     runs-on: ubuntu-latest
-    if: github.repository == 'demisto/demisto-sdk'
     steps:
 
       - name: Setup Poetry
         uses: Gr1N/setup-poetry@v8
 
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
@@ -28,5 +27,5 @@ jobs:
           PR_NUMBER: ${{ github.event.pull_request.number }}
           PR_TITLE: ${{ github.event.pull_request.title }}
         run: |
-          echo "Run validate changelog for PR: $PR_NUMBER with Name: $PR_TITLE"
+          echo "Validating changelog for PR: $PR_NUMBER with Name: $PR_TITLE"
           poetry run python ./Utils/github_workflow_scripts/changelog_validation_scripts/validate_changelog.py -n "$PR_NUMBER" -t "$PR_TITLE"

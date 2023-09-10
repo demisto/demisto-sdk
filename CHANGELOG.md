@@ -1,5 +1,9 @@
 # Changelog
 ## Unreleased
+
+## 1.20.2
+* Updated the **pre-commit** command to run on all python versions in one run.
+* Added the *--dry-run* flag to the **pre-commit** command, to create the config file without running the command.
 * Fixed an issue where the **coverage-analyze** command was not parsing the logs correctly.
 * Fixed an issue where **validate** falsly failed with error `DS108` on descriptions ending with a newline.
 * Added formatting for script yml files when period is missing in the end of comment field, in the **format** command.
@@ -11,6 +15,7 @@
 * Added support for lazy loading the of widgets in XSIAM dashboards.
 * Demisto-SDK will now exit gracefully with an appropriate error message when *git* is not installed.
 * Added a **validate** check for correlation rules, making sure that `search_window` cannot be empty when `execution_mode` is set to `SCHEDULED`.
+* Added the *metadata* key to the XSIAM dashboard schema. This field adds support for dynamic parameters in the dashboards.
 
 ## 1.20.1
 * Added formatting for yml files when period is missing in the end of description field, in the **format** command.

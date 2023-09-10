@@ -1,5 +1,6 @@
 # Changelog
 ## Unreleased
+* Fixed an issue where **validate** falsely failed with error `DS108` on descriptions ending with brackets with a dot inside.
 * Fixed an issue where the **coverage-analyze** command was not parsing the logs correctly.
 * Fixed an issue where **validate** falsly failed with error `DS108` on descriptions ending with a newline.
 * Added formatting for script yml files when period is missing in the end of comment field, in the **format** command.

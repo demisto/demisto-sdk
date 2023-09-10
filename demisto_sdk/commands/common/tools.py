@@ -3934,3 +3934,18 @@ def parse_int_or_default(value: Any, default: int) -> int:
         return int(value)
     except (ValueError, TypeError):
         return default
+
+
+def is_sentence_ends_with_bracket(description):
+    """
+    Check if the sentence ends with a bracket and valid.
+    Args:
+        description: The description sentence to test.
+
+    Returns:
+        boolean: True if the sentence ends with a bracket and valid.
+
+    """
+    return (
+        description.endswith(")") and len(description) >= 2 and description[-2] == "."
+    )

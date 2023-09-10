@@ -3,7 +3,7 @@ from configparser import ConfigParser, MissingSectionHeaderError
 from enum import Enum
 from functools import lru_cache
 from pathlib import Path
-from typing import Any, Callable, List, Set
+from typing import Any, Callable, List, Set, Union
 
 from demisto_sdk.commands.common.constants import PACKS_DIR, PACKS_PACK_IGNORE_FILE_NAME
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
@@ -73,14 +73,14 @@ class PackIgnore(dict):
         return cls.from_any_path(CONTENT_PATH / path / PACKS_PACK_IGNORE_FILE_NAME)
 
     @classmethod
-    def from_any_path(cls, path: Path) -> "PackIgnore":
+    def from_any_path(cls, path: Union[Path, str]) -> "PackIgnore":
         """
         init the PackIgnore from a local file path.
 
         Args:
             path (Path): full path to the .pack-ignore file.
         """
-        return cls.__load(path)
+        return cls.__load(Path(path))
 
     @classmethod
     @lru_cache
@@ -121,6 +121,7 @@ class PackIgnore(dict):
         """
         if self._content.has_section(key):
             section = self._content[key]
+
             if not super().get(key):
                 self.add(key, section, cast_func)
             return super().get(key)

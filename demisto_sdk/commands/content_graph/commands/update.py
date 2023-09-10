@@ -61,7 +61,7 @@ def update_content_graph(
         output_path (Path): The path to export the graph zip to.
     """
     if is_external_repository():
-        packs_to_update = (CONTENT_PATH / "Packs").iterdir()  # type: ignore
+        packs_to_update = [path.name for path in (CONTENT_PATH / "Packs").iterdir()]
 
     packs_to_update = list(packs_to_update) if packs_to_update else []
 

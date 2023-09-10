@@ -15,9 +15,9 @@ from packaging.version import Version, parse
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import (  # PACK_METADATA_PRICE,
     API_MODULES_PACK,
+    EXCLUDED_DISPLAY_NAME_WORDS,
     GIT_PRIMARY_BRANCH,
     GIT_UPSTREAM,
-    EXCLUDED_DISPLAY_NAME_WORDS,
     INTEGRATIONS_DIR,
     MARKETPLACE_KEY_PACK_METADATA,
     MODULES,

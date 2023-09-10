@@ -15,10 +15,10 @@ from demisto_sdk.commands.common.constants import (
     AUTHOR_IMAGE_FILE_NAME,
     CONTENT_ENTITIES_DIRS,
     DEFAULT_CONTENT_ITEM_TO_VERSION,
-    GIT_PRIMARY_BRANCH,
-    GIT_UPSTREAM,
     GENERIC_FIELDS_DIR,
     GENERIC_TYPES_DIR,
+    GIT_PRIMARY_BRANCH,
+    GIT_UPSTREAM,
     IGNORED_PACK_NAMES,
     OLDEST_SUPPORTED_VERSION,
     PACKS_DIR,
@@ -2000,9 +2000,7 @@ class ValidateManager:
                 continue
             # if the repo does not have remotes, get the .pack-ignore content from the master branch in Github api
             # if the repo is not in remote / file cannot be found from Github api, try to take it from the latest commit on the default branch (usually master/main)
-            old_pack_ignore_content = get_remote_file(
-                old_file_path, GIT_PRIMARY_BRANCH
-            )
+            old_pack_ignore_content = get_remote_file(old_file_path, GIT_PRIMARY_BRANCH)
             if old_pack_ignore_content == b"":  # found as empty file in remote
                 old_pack_ignore_content = ""
             elif old_pack_ignore_content == {}:  # not found in remote

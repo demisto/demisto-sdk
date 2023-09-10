@@ -549,8 +549,8 @@ class ReadMeValidator(BaseValidator):
                 # example 'https://raw.githubusercontent.com/demisto/content/<branch-name>/Packs/.../image.png'
                 url_path_elem_list = urlparse(img_url).path.split("/")[1:]
                 if len(url_path_elem_list) >= 3 and (
-                        url_path_elem_list[2] == working_branch_name
-                        and working_branch_name != GIT_PRIMARY_BRANCH
+                    url_path_elem_list[2] == working_branch_name
+                    and working_branch_name != GIT_PRIMARY_BRANCH
                 ):
                     error_message, error_code = Errors.invalid_readme_image_error(
                         img_url,

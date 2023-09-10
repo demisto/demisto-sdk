@@ -15,8 +15,8 @@ from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import (
     ACCEPTED_FILE_EXTENSIONS,
     CHECKED_TYPES_REGEXES,
-    GIT_PRIMARY_BRANCH,
     FILE_TYPES_PATHS_TO_VALIDATE,
+    GIT_PRIMARY_BRANCH,
     OLD_REPUTATION,
     SCHEMA_TO_REGEX,
     FileType,

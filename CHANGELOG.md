@@ -1,5 +1,7 @@
 # Changelog
 ## Unreleased
+
+## 1.20.2
 * Updated the **pre-commit** command to run on all python versions in one run.
 * Added the *--dry-run* flag to the **pre-commit** command, to create the config file without running the command.
 * Fixed an issue where the **coverage-analyze** command was not parsing the logs correctly.

@@ -6,7 +6,6 @@ from pathlib import Path
 from tempfile import NamedTemporaryFile, TemporaryDirectory
 from typing import Callable, List, Optional, Tuple, Union
 
-import git
 import pytest
 import requests
 
@@ -626,12 +625,12 @@ class TestGetRemoteFileLocally:
     FILE_NAME = "somefile.json"
     FILE_CONTENT = '{"id": "some_file"}'
 
-    git_util = GitUtil(repo=Content.git())
+    git_util = Content.git_util()
     main_branch = git_util.handle_prev_ver()[1]
 
     def setup_method(self):
         # create local git repo
-        example_repo = git.Repo.init(self.REPO_NAME)
+        example_repo = GitUtil.REPO_CLS.init(self.REPO_NAME)
         origin_branch = self.main_branch
         if not origin_branch.startswith("origin"):
             origin_branch = "origin/" + origin_branch
@@ -1437,7 +1436,7 @@ def test_get_file_displayed_name__image(repo):
     integration.create_default_integration()
     with ChangeCWD(repo.path):
         display_name = get_file_displayed_name(integration.image.path)
-        assert display_name == os.path.basename(integration.image.rel_path)
+        assert display_name == Path(integration.image.rel_path).name
 
 
 INCIDENTS_TYPE_FILES_INPUTS = [

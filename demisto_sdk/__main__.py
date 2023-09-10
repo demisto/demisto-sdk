@@ -1,14 +1,20 @@
 # Site packages
+import sys
+
+import click
+
+try:
+    import git
+except ImportError:
+    sys.exit(click.style("Git executable cannot be found, or is invalid", fg="red"))
+
 import copy
 import functools
 import logging
 import os
-import sys
 from pathlib import Path
 from typing import IO, Any, Dict, Iterable, Tuple, Union
 
-import click
-import git
 import typer
 from pkg_resources import DistributionNotFound, get_distribution
 
@@ -3413,6 +3419,12 @@ def update_content_graph(
     help="The demisto-sdk ref to use for the pre-commit hooks",
     default="",
 )
+@click.option(
+    "--dry-run",
+    help="Whether to run the pre-commit hooks in dry-run mode, which will only create the config file",
+    is_flag=True,
+    default=False,
+)
 @click.argument(
     "file_paths",
     nargs=-1,
@@ -3435,6 +3447,7 @@ def pre_commit(
     show_diff_on_failure: bool,
     sdk_ref: str,
     file_paths: Iterable[Path],
+    dry_run: bool,
     **kwargs,
 ):
     from demisto_sdk.commands.pre_commit.pre_commit_command import pre_commit_manager
@@ -3445,7 +3458,7 @@ def pre_commit(
         )
     input_files = []
     if input:
-        input_files = [Path(i) for i in input.split(",")]
+        input_files = [Path(i) for i in input.split(",") if i]
     elif file_paths:
         input_files = list(file_paths)
     if skip:
@@ -3465,6 +3478,7 @@ def pre_commit(
             verbose,
             show_diff_on_failure,
             sdk_ref=sdk_ref,
+            dry_run=dry_run,
         )
     )
 

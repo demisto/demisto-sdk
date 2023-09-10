@@ -10,7 +10,7 @@ from wcmatch.pathlib import Path
 from demisto_sdk.commands.common.hook_validations.docker import DockerImageValidator
 from demisto_sdk.commands.lint import linter
 from TestSuite.pack import Pack
-from TestSuite.test_tools import ChangeCWD
+from TestSuite.test_tools import ChangeCWD, str_in_call_args_list
 
 logger = logging.getLogger("demisto-sdk")
 
@@ -77,7 +77,7 @@ class TestYamlParse:
         script = pack.create_script("CommonServerPython")
         script.create_default_script()
         script_path = Path(script.path)
-        runner = initiate_linter(pack.path, script_path)
+        runner = initiate_linter(Path(pack.path), script_path)
         runner._gather_facts(modules={})
         common_server_python_path = runner._facts.get("lint_files")[0]
         assert "Packs/Base/Scripts/CommonServerPython/CommonServerPython.py" in str(
@@ -101,7 +101,10 @@ class TestPythonPack:
     def test_package_is_python_pack_api_module_script(
         self, demisto_content, pack, mocker
     ):
+        from demisto_sdk.commands.common.git_util import Repo
+
         script = pack.create_script(name="TestApiModule")
+        mocker.patch.object(Repo, "ignored", return_value=[])
         mocker.patch.object(linter.Linter, "_update_support_level")
         runner = initiate_linter(demisto_content, script.path)
         assert not runner._gather_facts(modules={})
@@ -259,7 +262,7 @@ class TestDockerImagesCollection:
         # Run lint:
         with ChangeCWD(pack.repo_path):
             runner = initiate_linter(
-                pack.repo_path,
+                Path(pack.repo_path),
                 test_integration.path,
                 True,
                 docker_image_flag=docker_image_flag,
@@ -349,6 +352,10 @@ class TestDockerImagesCollection:
         # Crete integration to test on:
         integration_name = "TestIntegration"
         test_integration = pack.create_integration(name=integration_name)
+        mocker.patch(
+            "demisto_sdk.commands.lint.linter.get_python_version",
+            return_value=None,
+        )
 
         # Run lint:
         invalid_docker_image = "demisto/blabla:1.0.0.40800"
@@ -359,7 +366,7 @@ class TestDockerImagesCollection:
                 True,
                 docker_image_flag=invalid_docker_image,
             )
-            with pytest.raises(RuntimeError) as e:
+            with pytest.raises(ValueError) as e:
                 runner._gather_facts(modules={})
                 assert "Failed detecting Python version for image" in str(e.value)
 
@@ -375,6 +382,10 @@ class TestDockerImagesCollection:
         Then
             - Ensure that a suitable log was written.
         """
+        mocker.patch(
+            "demisto_sdk.commands.lint.linter.get_python_version",
+            return_value=None,
+        )
         # Crete integration to test on:
         integration_name = "TestIntegration"
         docker_image_yml = "demisto/py3-tools:1.0.0.42258"
@@ -409,7 +420,7 @@ class TestDockerImagesCollection:
                 docker_image_flag=linter.DockerImageFlagOption.NATIVE_TARGET.value,
                 docker_image_target=invalid_docker_image,
             )
-            with pytest.raises(RuntimeError) as e:
+            with pytest.raises(ValueError) as e:
                 runner._gather_facts(modules={})
                 assert "Failed detecting Python version for image" in str(e.value)
 
@@ -546,7 +557,7 @@ class TestDockerImagesCollection:
         )
 
     def test_docker_image_flag_version_not_exists_in_native_config_file(
-        self, mocker, pack
+        self, mocker, repo
     ):
         """
         This test checks that if a native docker image flag was given, and the flag doesn't have a mapped native
@@ -561,6 +572,8 @@ class TestDockerImagesCollection:
         Then
             - Ensure that the docker images list is empty, and that a suitable log message (skipping) was written.
         """
+        from demisto_sdk.commands.common.native_image import NativeImageConfig
+
         # Mock:
         native_image_config_mock = {
             "native_images": {
@@ -590,22 +603,31 @@ class TestDockerImagesCollection:
             },
         }
 
-        mocker.patch.object(linter, "get_python_version", return_value=Version("3.8"))
-        mocker.patch(
-            "demisto_sdk.commands.common.native_image.NativeImageConfig.load",
-            return_value=native_image_config_mock,
+        repo.docker_native_image_config.write_native_image_config(
+            native_image_config_mock
         )
+
+        # this needs to be done because the singleton is executed for the entire test class, and because of that
+        # we need to mock the get_instance with the updated native_image_config_mock
+        native_image_config = NativeImageConfig.from_path(
+            repo.docker_native_image_config.path
+        )
+        mocker.patch.object(
+            NativeImageConfig, "get_instance", return_value=native_image_config
+        )
+
+        mocker.patch.object(linter, "get_python_version", return_value=Version("3.8"))
         log = mocker.patch.object(logger, "info")
 
-        # Crete integration to test on:
+        # Create integration to test on:
         integration_name = "TestIntegration"
-        test_integration = pack.create_integration(name=integration_name)
+        test_integration = repo.create_pack().create_integration(name="TestIntegration")
 
         # Run lint:
         docker_image_flag = "native:maintenance"
-        with ChangeCWD(pack.repo_path):
+        with ChangeCWD(repo.path):
             runner = initiate_linter(
-                pack.repo_path,
+                repo.path,
                 test_integration.path,
                 True,
                 docker_image_flag=docker_image_flag,
@@ -614,14 +636,16 @@ class TestDockerImagesCollection:
 
         # Verify docker images:
         assert runner._facts["images"] == []
-        assert (
+        assert str_in_call_args_list(
+            log.call_args_list,
             f"Skipping checks on docker for '{docker_image_flag}' - The requested native image:"
             f" '{docker_image_flag}' is not supported. For supported native image versions please see:"
-            f" 'Tests/docker_native_image_config.json'" in log.call_args_list[-2][0][0]
+            f" 'Tests/docker_native_image_config.json'",
         )
-        assert (
+        assert str_in_call_args_list(
+            log.call_args_list,
             f"{integration_name} - Facts - No docker images to run on - "
-            f"Skipping run lint in host as well." in log.call_args_list[-1][0][0]
+            f"Skipping run lint in host as well.",
         )
 
 
@@ -715,7 +739,10 @@ class TestTestsCollection:
         - Case A: gather facts should indicate script is skipped
         - Case B: gather father should indicate script is not skipped
         """
+        from demisto_sdk.commands.common.git_util import Repo
+
         script.yml.update({"deprecated": True})
+        mocker.patch.object(Repo, "ignored", return_value=[])
         mocker.patch.object(linter.Linter, "_update_support_level")
         runner = initiate_linter(
             demisto_content, script.path, True, all_packs=all_packs
@@ -815,7 +842,7 @@ def test_remove_gitignore_files(mocker, demisto_content):
         def ignored(self, files):
             return files[-1:]
 
-    mocker.patch("git.Repo", return_value=GitMock())
+    mocker.patch("demisto_sdk.commands.common.git_util.Repo", return_value=GitMock())
     runner = initiate_linter(demisto_content, "")
     runner._facts["lint_files"] = files_paths
     assert files_paths[-1] in runner._facts["lint_files"]

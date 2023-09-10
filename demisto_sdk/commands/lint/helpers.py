@@ -111,7 +111,7 @@ def build_skipped_exit_code(
 
 
 def get_test_modules(
-    content_repo: Optional[git.Repo], is_external_repo: bool
+    content_repo: Optional[git.Repo], is_external_repo: bool  # noqa: TID251
 ) -> Dict[Path, bytes]:
     """Get required test modules from content repository - {remote}/master
     1. Tests/demistomock/demistomock.py

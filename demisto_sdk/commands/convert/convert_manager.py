@@ -1,5 +1,6 @@
+from pathlib import Path
+
 from demisto_sdk.commands.common.content.objects.pack_objects.pack import Pack
-from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.convert.dir_convert_managers import *  # lgtm [py/polluting-import]
 
 
@@ -63,6 +64,6 @@ class ConvertManager:
         pack_path = (
             self.input_path
             if is_pack_path(self.input_path)
-            else os.path.dirname(self.input_path)
+            else Path(self.input_path).parent
         )
         return Pack(pack_path)

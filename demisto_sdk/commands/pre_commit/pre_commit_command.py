@@ -117,7 +117,7 @@ class PreCommitRunner:
                     SKIPPED_HOOKS.add(hook["id"])
         return hooks
 
-    def exclude_some_hooks_from_python2_files(self) -> None:
+    def exclude_python2_of_non_supported_hooks(self) -> None:
         """
         This function handles the python2 files.
         Files with python2 run only the hooks that in PYTHON2_SUPPORTED_HOOKS.
@@ -186,7 +186,7 @@ class PreCommitRunner:
         )
         precommit_env["DEMISTO_SDK_CONTENT_PATH"] = str(CONTENT_PATH)
 
-        self.exclude_some_hooks_from_python2_files()
+        self.exclude_python2_of_non_supported_hooks()
 
         precommit_config = deepcopy(self.precommit_template)
         for (

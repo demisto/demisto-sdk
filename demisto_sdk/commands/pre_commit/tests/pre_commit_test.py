@@ -224,7 +224,7 @@ class TestPreprocessFiles:
         assert output == expected_output
 
 
-def test_exclude_some_hooks_from_python2_files(mocker, repo: Repo):
+def test_exclude_python2_of_non_supported_hooks(mocker, repo: Repo):
     """
     Given:
         python_version_to_files with python 2.7 and python 3.8 files, and unit_test is True
@@ -249,7 +249,7 @@ def test_exclude_some_hooks_from_python2_files(mocker, repo: Repo):
         None, None, python_version_to_files, ""
     )
 
-    pre_commit_runner.exclude_some_hooks_from_python2_files()
+    pre_commit_runner.exclude_python2_of_non_supported_hooks()
 
     assert (
         "Python 2.7 files running only with the following hooks:"

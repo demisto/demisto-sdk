@@ -262,7 +262,8 @@ def changelog_management(
         return changelog.release()
     else:
         raise ValueError(
-            "Missing arguments, run `demisto-sdk changelog --help` to see which arguments are required"
+            "One of the following arguments is required [`--init`, `--validate`, `--release`],"
+            "\nrun `demisto-sdk changelog --help` for more information"
         )
 
 

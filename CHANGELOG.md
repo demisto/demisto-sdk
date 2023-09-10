@@ -1,5 +1,6 @@
 # Changelog
 ## Unreleased
+* Demisto-SDK will now exit gracefully with an appropriate error message when *git* is not installed.
 
 ## 1.20.2
 * Updated the **pre-commit** command to run on all python versions in one run.

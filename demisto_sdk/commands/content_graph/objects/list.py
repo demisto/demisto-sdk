@@ -1,13 +1,14 @@
 import logging
-from pathlib import Path
-from tempfile import TemporaryDirectory
 
 import demisto_client
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
+from demisto_sdk.commands.common.handlers import JSON_Handler
 
+
+json = JSON_Handler()
 logger = logging.getLogger("demisto-sdk")
 
 
@@ -19,13 +20,10 @@ class List(ContentItem, content_type=ContentType.LIST):  # type: ignore[call-arg
         client: demisto_client,
         marketplace: MarketplaceVersions,
     ) -> None:
-        with TemporaryDirectory("w") as f:
-            dir_path = Path(f)
-            self.dump(dir_path, marketplace=marketplace)
-
+        with self.path.open("r") as _list:
             client.generic_request(
                 method="POST",
                 path="lists/save",
-                body=dir_path / self.normalize_name,
+                body=json.load(_list),
                 response_type="object",
             )

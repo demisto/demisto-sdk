@@ -1,5 +1,6 @@
 # Changelog
 ## Unreleased
+* Fixed an issue where the **upload** failed when trying to upload a `List`.
 
 ## 1.20.2
 * Updated the **pre-commit** command to run on all python versions in one run.

@@ -6,7 +6,7 @@ import click
 try:
     import git
 except ImportError:
-    sys.exit(click.style("Git executable cannot be found, or is invalid", fg='red'))
+    sys.exit(click.style("Git executable cannot be found, or is invalid", fg="red"))
 
 import copy
 import functools

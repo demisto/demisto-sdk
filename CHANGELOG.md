@@ -1,5 +1,6 @@
 # Changelog
 ## Unreleased
+* Demisto-SDK will now exit gracefully with an appropriate error message when *git* is not installed.
 
 ## 1.20.2
 * Updated the **pre-commit** command to run on all python versions in one run.
@@ -13,7 +14,6 @@
 * Added the **engineinfo** in to the script schema. This field specifies on which engine the script will run.
 * Fixed an issue where **validate** falsely failed with error `DS108` on empty descriptions.
 * Added support for lazy loading the of widgets in XSIAM dashboards.
-* Demisto-SDK will now exit gracefully with an appropriate error message when *git* is not installed.
 * Added a **validate** check for correlation rules, making sure that `search_window` cannot be empty when `execution_mode` is set to `SCHEDULED`.
 * Added the *metadata* key to the XSIAM dashboard schema. This field adds support for dynamic parameters in the dashboards.
 

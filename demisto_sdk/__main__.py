@@ -1,14 +1,20 @@
 # Site packages
+import sys
+
+import click
+
+try:
+    import git
+except ImportError:
+    sys.exit(click.style("Git executable cannot be found, or is invalid", fg="red"))
+
 import copy
 import functools
 import logging
 import os
-import sys
 from pathlib import Path
 from typing import IO, Any, Dict, Iterable, Tuple, Union
 
-import click
-import git
 import typer
 from pkg_resources import DistributionNotFound, get_distribution
 

@@ -15,7 +15,7 @@ from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import (
     ACCEPTED_FILE_EXTENSIONS,
     CHECKED_TYPES_REGEXES,
-    DEMISTO_DEFAULT_BRANCH,
+    GIT_PRIMARY_BRANCH,
     FILE_TYPES_PATHS_TO_VALIDATE,
     OLD_REPUTATION,
     SCHEMA_TO_REGEX,
@@ -62,7 +62,7 @@ class StructureValidator(BaseValidator):
         fromversion=False,
         configuration=Configuration(),
         ignored_errors=None,
-        tag=DEMISTO_DEFAULT_BRANCH,
+        tag=GIT_PRIMARY_BRANCH,
         branch_name="",
         json_file_path=None,
         skip_schema_check=False,

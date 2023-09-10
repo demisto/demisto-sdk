@@ -10,7 +10,7 @@ from packaging.version import Version
 from demisto_sdk.commands.common.constants import (
     API_MODULES_PACK,
     DEFAULT_CONTENT_ITEM_FROM_VERSION,
-    DEMISTO_DEFAULT_REMOTE,
+    GIT_UPSTREAM,
     ENTITY_NAME_SEPARATORS,
     EXCLUDED_DISPLAY_NAME_WORDS,
     FEATURE_BRANCHES,
@@ -306,8 +306,8 @@ class ContentEntityValidator(BaseValidator):
         """
         git_util = GitUtil(repo=Content.git())
         main_branch = git_util.handle_prev_ver()[1]
-        if not main_branch.startswith("origin"):
-            main_branch = f"{DEMISTO_DEFAULT_REMOTE}/" + main_branch
+        if not main_branch.startswith(GIT_UPSTREAM):
+            main_branch = f"{GIT_UPSTREAM}/" + main_branch
 
         diff_string_config_yml = run_command(
             f"git diff {main_branch} .circleci/config.yml"

@@ -15,8 +15,8 @@ from demisto_sdk.commands.common.constants import (
     AUTHOR_IMAGE_FILE_NAME,
     CONTENT_ENTITIES_DIRS,
     DEFAULT_CONTENT_ITEM_TO_VERSION,
-    DEMISTO_DEFAULT_BRANCH,
-    DEMISTO_DEFAULT_REMOTE,
+    GIT_PRIMARY_BRANCH,
+    GIT_UPSTREAM,
     GENERIC_FIELDS_DIR,
     GENERIC_TYPES_DIR,
     IGNORED_PACK_NAMES,
@@ -282,8 +282,8 @@ class ValidateManager:
                 self.git_util = None  # type: ignore[assignment]
                 self.branch_name = ""
 
-        if prev_ver and not prev_ver.startswith(DEMISTO_DEFAULT_REMOTE):
-            self.prev_ver = self.setup_prev_ver(f"{DEMISTO_DEFAULT_REMOTE}/" + prev_ver)
+        if prev_ver and not prev_ver.startswith(GIT_UPSTREAM):
+            self.prev_ver = self.setup_prev_ver(f"{GIT_UPSTREAM}/" + prev_ver)
         else:
             self.prev_ver = self.setup_prev_ver(prev_ver)
 
@@ -2001,7 +2001,7 @@ class ValidateManager:
             # if the repo does not have remotes, get the .pack-ignore content from the master branch in Github api
             # if the repo is not in remote / file cannot be found from Github api, try to take it from the latest commit on the default branch (usually master/main)
             old_pack_ignore_content = get_remote_file(
-                old_file_path, DEMISTO_DEFAULT_BRANCH
+                old_file_path, GIT_PRIMARY_BRANCH
             )
             if old_pack_ignore_content == b"":  # found as empty file in remote
                 old_pack_ignore_content = ""
@@ -2114,7 +2114,7 @@ class ValidateManager:
 
         """
         file_path = str(file_path)
-        file_dict = get_remote_file(file_path, tag=DEMISTO_DEFAULT_BRANCH)
+        file_dict = get_remote_file(file_path, tag=GIT_PRIMARY_BRANCH)
         file_type = find_type(file_path, file_dict)
         return file_type in FileType_ALLOWED_TO_DELETE or not file_type
 
@@ -2130,7 +2130,7 @@ class ValidateManager:
         if added_files:
             deleted_file_path = str(deleted_file_path)
             deleted_file_dict = get_remote_file(
-                deleted_file_path, tag=DEMISTO_DEFAULT_BRANCH
+                deleted_file_path, tag=GIT_PRIMARY_BRANCH
             )  # for detecting deleted files
             if deleted_file_type := find_type(deleted_file_path, deleted_file_dict):
                 deleted_file_id = _get_file_id(
@@ -2382,10 +2382,10 @@ class ValidateManager:
 
             # Otherwise, use git to get the primary branch
             _, branch = self.git_util.handle_prev_ver()
-            return f"{DEMISTO_DEFAULT_REMOTE}/" + branch
+            return f"{GIT_UPSTREAM}/" + branch
 
         # Default to 'origin/master'
-        return f"{DEMISTO_DEFAULT_REMOTE}/master"
+        return f"{GIT_UPSTREAM}/master"
 
     def setup_git_params(self):
         """Setting up the git relevant params"""
@@ -2418,7 +2418,7 @@ class ValidateManager:
             self.always_valid = True
 
         # On main or master don't check RN
-        elif self.branch_name in ["master", "main", DEMISTO_DEFAULT_BRANCH]:
+        elif self.branch_name in ["master", "main", GIT_PRIMARY_BRANCH]:
             self.skip_pack_rn_validation = True
             error_message, error_code = Errors.running_on_master_with_git()
             if self.handle_error(
@@ -2440,7 +2440,7 @@ class ValidateManager:
 
             if self.branch_name in [
                 self.prev_ver,
-                self.prev_ver.replace(f"{DEMISTO_DEFAULT_REMOTE}/", ""),
+                self.prev_ver.replace(f"{GIT_UPSTREAM}/", ""),
             ]:  # pragma: no cover
                 logger.info("Running only on last commit")
 

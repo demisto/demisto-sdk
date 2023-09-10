@@ -10,7 +10,7 @@ from bs4 import BeautifulSoup
 
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import (
-    DEMISTO_DEFAULT_REMOTE,
+    GIT_UPSTREAM,
     PACKS_DIR,
     PACKS_INTEGRATION_README_REGEX,
     PACKS_WHITELIST_FILE_NAME,
@@ -122,8 +122,8 @@ class SecretsValidator:
         self.white_list_path = white_list_path
         self.ignore_entropy = ignore_entropy
         self.prev_ver = prev_ver
-        if self.prev_ver and not self.prev_ver.startswith(DEMISTO_DEFAULT_REMOTE):
-            self.prev_ver = f"{DEMISTO_DEFAULT_REMOTE}/" + self.prev_ver
+        if self.prev_ver and not self.prev_ver.startswith(GIT_UPSTREAM):
+            self.prev_ver = f"{GIT_UPSTREAM}/" + self.prev_ver
 
     def get_secrets(self, branch_name, is_circle):
         secret_to_location_mapping = {}
@@ -184,8 +184,8 @@ class SecretsValidator:
             if not prev_ver:
                 self.git_util = GitUtil(repo=Content.git())
                 prev_ver = self.git_util.handle_prev_ver()[1]
-            if not prev_ver.startswith(DEMISTO_DEFAULT_REMOTE):
-                prev_ver = f"{DEMISTO_DEFAULT_REMOTE}/" + prev_ver
+            if not prev_ver.startswith(GIT_UPSTREAM):
+                prev_ver = f"{GIT_UPSTREAM}/" + prev_ver
             logger.info(f"Running secrets validation against {prev_ver}")
 
             changed_files_string = run_command(

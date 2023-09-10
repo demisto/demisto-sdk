@@ -77,7 +77,7 @@ class TestYamlParse:
         script = pack.create_script("CommonServerPython")
         script.create_default_script()
         script_path = Path(script.path)
-        runner = initiate_linter(pack.path, script_path)
+        runner = initiate_linter(Path(pack.path), script_path)
         runner._gather_facts(modules={})
         common_server_python_path = runner._facts.get("lint_files")[0]
         assert "Packs/Base/Scripts/CommonServerPython/CommonServerPython.py" in str(
@@ -101,7 +101,10 @@ class TestPythonPack:
     def test_package_is_python_pack_api_module_script(
         self, demisto_content, pack, mocker
     ):
+        from demisto_sdk.commands.common.git_util import Repo
+
         script = pack.create_script(name="TestApiModule")
+        mocker.patch.object(Repo, "ignored", return_value=[])
         mocker.patch.object(linter.Linter, "_update_support_level")
         runner = initiate_linter(demisto_content, script.path)
         assert not runner._gather_facts(modules={})
@@ -259,7 +262,7 @@ class TestDockerImagesCollection:
         # Run lint:
         with ChangeCWD(pack.repo_path):
             runner = initiate_linter(
-                pack.repo_path,
+                Path(pack.repo_path),
                 test_integration.path,
                 True,
                 docker_image_flag=docker_image_flag,
@@ -736,7 +739,10 @@ class TestTestsCollection:
         - Case A: gather facts should indicate script is skipped
         - Case B: gather father should indicate script is not skipped
         """
+        from demisto_sdk.commands.common.git_util import Repo
+
         script.yml.update({"deprecated": True})
+        mocker.patch.object(Repo, "ignored", return_value=[])
         mocker.patch.object(linter.Linter, "_update_support_level")
         runner = initiate_linter(
             demisto_content, script.path, True, all_packs=all_packs
@@ -836,7 +842,7 @@ def test_remove_gitignore_files(mocker, demisto_content):
         def ignored(self, files):
             return files[-1:]
 
-    mocker.patch("git.Repo", return_value=GitMock())
+    mocker.patch("demisto_sdk.commands.common.git_util.Repo", return_value=GitMock())
     runner = initiate_linter(demisto_content, "")
     runner._facts["lint_files"] = files_paths
     assert files_paths[-1] in runner._facts["lint_files"]

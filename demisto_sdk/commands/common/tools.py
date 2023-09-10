@@ -339,7 +339,7 @@ def src_root() -> Path:
     Returns:
         Path: src root path.
     """
-    git_dir = git.Repo(Path.cwd(), search_parent_directories=True).working_tree_dir
+    git_dir = GitUtil().repo.working_tree_dir
 
     return Path(git_dir) / "demisto_sdk"  # type: ignore
 
@@ -436,10 +436,7 @@ def get_local_remote_file(
     tag: str = "master",
     return_content: bool = False,
 ):
-    repo = git.Repo(
-        search_parent_directories=True
-    )  # the full file path could be a git file path
-    repo_git_util = GitUtil(repo)
+    repo_git_util = GitUtil()
     git_path = repo_git_util.get_local_remote_file_path(full_file_path, tag)
     file_content = repo_git_util.get_local_remote_file_content(git_path)
     if return_content:
@@ -1958,7 +1955,7 @@ def is_external_repository() -> bool:
 
     """
     try:
-        git_repo = git.Repo(os.getcwd(), search_parent_directories=True)
+        git_repo = GitUtil().repo
         private_settings_path = os.path.join(git_repo.working_dir, ".private-repo-settings")  # type: ignore
         return Path(private_settings_path).exists()
     except git.InvalidGitRepositoryError:
@@ -2016,10 +2013,10 @@ def get_content_path(relative_path: Optional[Path] = None) -> Path:
             )
     try:
         if content_path := os.getenv("DEMISTO_SDK_CONTENT_PATH"):
-            git_repo = git.Repo(content_path)
+            git_repo = GitUtil(Path(content_path), search_parent_directories=False).repo
             logger.debug(f"Using content path: {content_path}")
         else:
-            git_repo = git.Repo(Path.cwd(), search_parent_directories=True)
+            git_repo = GitUtil().repo
 
         remote_url = git_repo.remote().urls.__next__()
         is_fork_repo = "content" in remote_url
@@ -2122,7 +2119,7 @@ def is_file_from_content_repo(file_path: str) -> Tuple[bool, str]:
         str: relative path of file in content repo.
     """
     try:
-        git_repo = git.Repo(os.getcwd(), search_parent_directories=True)
+        git_repo = GitUtil().repo
         remote_url = git_repo.remote().urls.__next__()
         is_fork_repo = "content" in remote_url
         is_external_repo = is_external_repository()
@@ -3150,7 +3147,7 @@ def extract_docker_image_from_text(text: str, with_no_tag: bool = False):
 
 def get_current_repo() -> Tuple[str, str, str]:
     try:
-        git_repo = git.Repo(os.getcwd(), search_parent_directories=True)
+        git_repo = GitUtil().repo
         parsed_git = giturlparse.parse(git_repo.remotes.origin.url)
         host = parsed_git.host
         if "@" in host:

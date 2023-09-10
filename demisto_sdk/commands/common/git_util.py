@@ -1,11 +1,14 @@
 import os
 import re
 from pathlib import Path
-from typing import Set, Tuple, Union
+from typing import Optional, Set, Tuple, Union
 
 import click
 import gitdb
-from git import InvalidGitRepositoryError, Repo
+from git import (
+    InvalidGitRepositoryError,
+    Repo,  # noqa: TID251: required to create GitUtil
+)
 from git.diff import Lit_change_type
 from git.remote import Remote
 
@@ -13,18 +16,28 @@ from demisto_sdk.commands.common.constants import PACKS_FOLDER
 
 
 class GitUtil:
-    repo: Repo
+    # in order to use Repo class/static methods
+    REPO_CLS = Repo
 
-    def __init__(self, repo: Repo = None):
-        if not repo:
-            try:
-                self.repo = Repo(Path.cwd(), search_parent_directories=True)
-            except InvalidGitRepositoryError:
-                raise InvalidGitRepositoryError(
-                    "Unable to find Repository from current working directory - aborting"
-                )
+    def __init__(
+        self,
+        path: Optional[Path] = None,
+        search_parent_directories: bool = True,
+    ):
+
+        if isinstance(path, str):
+            repo_path = Path(path)
         else:
-            self.repo = repo
+            repo_path = path or Path.cwd()
+
+        try:
+            self.repo = Repo(
+                repo_path, search_parent_directories=search_parent_directories
+            )
+        except InvalidGitRepositoryError:
+            raise InvalidGitRepositoryError(
+                f"Unable to find Repository from current {repo_path.absolute()} - aborting"
+            )
 
     def get_all_files(self) -> Set[Path]:
         return set(map(Path, self.repo.git.ls_files().split("\n")))

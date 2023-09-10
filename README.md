@@ -39,6 +39,12 @@ The library supports Python 3.8-3.10. _Python 3.8 support will be removed soon._
       ```bash
       unset XSIAM_AUTH_ID
       ```
+      
+      In case your main git branch is not named **master**, or your upstream is not named **origin**, you can set the following env vars:
+      ```bash
+      export DEMISTO_DEFAULT_BRANCH = main_barnch_title
+      export DEMISTO_DEFAULT_REMOTE = upstream_title
+      ```
 
       >For more configurations, check the [demisto-py](https://github.com/demisto/demisto-py) repo (the SDK uses demisto-py to communicate with Cortex XSOAR).
 

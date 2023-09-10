@@ -570,7 +570,7 @@ def get_remote_file(
     """
     Args:
         full_file_path:The full path of the file.
-        tag: The branch name. default is 'master' or default branch name from env.
+        tag: The branch name. default is the content of DEMISTO_DEFAULT_BRANCH env variable.
         return_content: Determines whether to return the file's raw content or the dict representation of it.
         git_content_config: The content config to take the file from
         default_value: The method returns this value if using the SDK in offline mode. default_value cannot be None,
@@ -633,7 +633,7 @@ def filter_packagify_changes(
     :param modified_files: list of modified files in branch
     :param added_files: list of new files in branch
     :param removed_files: list of removed files in branch
-    :param tag: tag of compared revision, default is default branch name from env.
+    :param tag: The branch name. default is the content of DEMISTO_DEFAULT_BRANCH env variable.
 
     :return: tuple of updated lists: (modified_files, updated_added_files, removed_files)
     """

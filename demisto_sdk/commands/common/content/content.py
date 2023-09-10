@@ -3,7 +3,7 @@ from __future__ import annotations
 import os
 from typing import Any, Iterator
 
-from git import InvalidGitRepositoryError, Repo
+from git import InvalidGitRepositoryError
 from wcmatch.pathlib import Path
 
 from demisto_sdk.commands.common.constants import (
@@ -24,6 +24,7 @@ from demisto_sdk.commands.common.content.objects.root_objects import (
     Documentation,
 )
 from demisto_sdk.commands.common.content.objects_factory import path_to_pack_object
+from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.logger import logger
 
 
@@ -53,17 +54,14 @@ class Content:
         TODO:
             1. Add attribute which init only changed objects by git.
         """
-        repo = cls.git()
-        if repo:
-            content = Content(repo.working_tree_dir)  # type: ignore
-        else:
-            content = Content(Path.cwd())
-
-        return content
+        try:
+            return Content(str(cls.git_util().repo.working_tree_dir))
+        except InvalidGitRepositoryError:
+            return Content(Path.cwd())
 
     @staticmethod
-    def git() -> Repo | None:
-        """Git repository object.
+    def git_util() -> GitUtil:
+        """Git Util object.
 
         Returns:
             Repo: Repo object of content repo if exists else retun None.
@@ -74,17 +72,13 @@ class Content:
         Notes:
             1. Should be called when cwd inside content repository.
         """
-        try:
-            if content_path := os.getenv("DEMISTO_SDK_CONTENT_PATH"):
-                repo = Repo(content_path)
-                logger.debug(f"Using content path: {content_path}")
-            else:
-                repo = Repo(Path.cwd(), search_parent_directories=True)
-        except InvalidGitRepositoryError:
-            logger.debug("Git repo was not found.")
-            repo = None
+        if content_path := os.getenv("DEMISTO_SDK_CONTENT_PATH"):
+            git_util = GitUtil(Path(content_path))
+            logger.debug(f"Using content path: {content_path}")
+        else:
+            git_util = GitUtil(search_parent_directories=True)
 
-        return repo
+        return git_util
 
     @property
     def path(self) -> Path:

@@ -3,7 +3,7 @@ import os
 from typing import NamedTuple
 
 import pytest
-from git import Repo
+from git import Repo  # noqa: TID251
 
 from demisto_sdk.commands.common.git_content_config import (
     GitContentConfig,

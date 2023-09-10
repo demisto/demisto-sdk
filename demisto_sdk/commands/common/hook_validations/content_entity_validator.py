@@ -28,7 +28,6 @@ from demisto_sdk.commands.common.constants import (
 from demisto_sdk.commands.common.content import Content
 from demisto_sdk.commands.common.content_constant_paths import CONF_PATH, CONTENT_PATH
 from demisto_sdk.commands.common.errors import Errors
-from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
 from demisto_sdk.commands.common.hook_validations.base_validator import (
@@ -303,7 +302,7 @@ class ContentEntityValidator(BaseValidator):
         Returns:
             (bool): is release branch
         """
-        git_util = GitUtil(repo=Content.git())
+        git_util = Content.git_util()
         main_branch = git_util.handle_prev_ver()[1]
         if not main_branch.startswith("origin"):
             main_branch = "origin/" + main_branch

@@ -1,5 +1,10 @@
 # Changelog
 ## Unreleased
+* Demisto-SDK will now exit gracefully with an appropriate error message when *git* is not installed.
+
+## 1.20.2
+* Updated the **pre-commit** command to run on all python versions in one run.
+* Added the *--dry-run* flag to the **pre-commit** command, to create the config file without running the command.
 * Fixed an issue where the **coverage-analyze** command was not parsing the logs correctly.
 * Fixed an issue where **validate** falsly failed with error `DS108` on descriptions ending with a newline.
 * Added formatting for script yml files when period is missing in the end of comment field, in the **format** command.

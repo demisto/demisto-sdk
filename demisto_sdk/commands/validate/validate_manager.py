@@ -268,7 +268,7 @@ class ValidateManager:
         self.deprecation_validator = DeprecationValidator(id_set_file=self.id_set_file)
 
         try:
-            self.git_util = GitUtil(repo=Content.git())
+            self.git_util = Content.git_util()
             self.branch_name = self.git_util.get_current_git_branch_or_hash()
         except (InvalidGitRepositoryError, TypeError):
             # if we are using git - fail the validation by raising the exception.

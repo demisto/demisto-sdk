@@ -5,8 +5,12 @@ from typer.testing import CliRunner
 from demisto_sdk.commands.test_content.xsiam_tools.test_data import TestData
 
 ONE_MODEL_RULE_TEXT = """
+[RULE: rule_a]
+alter xdm.alert.rule_a = "";
 [MODEL: dataset=fake_fakerson_raw]
-alter
+call rule_a
+| call rule_c
+| alter
     xdm.session_context_id = externalId,
     xdm.observer.action = act,
     xdm.event.outcome = outcome,
@@ -36,6 +40,11 @@ alter
     xdm.observer.product = _product,
     xdm.observer.vendor = _vendor,
     xdm.target.process.executable.file_type = fileType;
+[RULE: rule_b]
+alter xdm.alert.rule_b = "";
+[RULE: rule_c]
+call rule_b
+| alter xdm.alert.rule_c = "";
 """
 MULTI_DATASETS_MODEL_RULE_TEXT = """
 [MODEL: dataset=fake_fakerson_raw]

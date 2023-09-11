@@ -173,6 +173,30 @@ def get_type_pretty_name(obj: Any) -> str:
     }.get(type(obj), str(type(obj)))
 
 
+def get_type_based_on_expected(
+    received_value: Any, expected_type: str
+) -> Tuple[str, Any]:
+    """
+    XSIAM returns numeric values from the API always as float, so we need to check if the expected type is int and if that's the
+    case and the value returned is a numeric without a floating point value, we can assume it's an int.
+    Args:
+        expected_type: The expected type of the object.
+        received_value: The object to get the type for.
+
+    Returns:
+        The expected type of the object, and the object itself.
+    """
+    received_value_type = get_type_pretty_name(received_value)
+    # The values returned from XSIAM for int/float are always float, so we need to check if the expected type is int.
+    if (
+        expected_type == "int"
+        and received_value_type == "float"
+        and int(received_value) == received_value
+    ):
+        return "int", int(received_value)
+    return received_value_type, received_value
+
+
 def create_retrying_caller(retry_attempts: int, sleep_interval: int) -> Retrying:
     """Create a Retrying object with the given retry_attempts and sleep_interval."""
     sleep_interval = parse_int_or_default(sleep_interval, XSIAM_CLIENT_SLEEP_INTERVAL)
@@ -315,44 +339,56 @@ def verify_results_against_test_data(
             )
         table_result = create_table(expected_values, result)
         logger.info(f"\n{table_result}")
-        for key, val in expected_values.items():
-            if val:
-                result_val = result.get(key)
-                out = f"Checking for key {key}:\n - expected: {val}\n - received: {result_val}"
+        for expected_key, expected_value in expected_values.items():
+            if expected_value:
+                received_value_before = result.get(expected_key)
+                expected_value_type = get_type_pretty_name(expected_value)
+                received_value_type, received_value = get_type_based_on_expected(
+                    received_value_before, expected_value_type
+                )
+                out = (
+                    f"Checking for key {expected_key} - "
+                    f"expected:{expected_value} expected type:{expected_value_type} "
+                    f"received:{received_value} received type:{received_value_type} "
+                    f"before transform by expected - received:{received_value_before} received type: "
+                    f"{get_type_pretty_name(received_value_before)}"
+                )
                 logger.debug(f"[cyan]{out}[/cyan]", extra={"markup": True})
                 result_test_case_system_out.append(out)
-
-                if result_val == val:
-                    out = f"Value:{result_val} and Type:{get_type_pretty_name(result_val)} Matched for key {key}"
+                if (
+                    received_value == expected_value
+                    and received_value_type == expected_value_type
+                ):
+                    out = f"Value:{received_value} and Type:{received_value_type} Matched for key {expected_key}"
                     result_test_case_system_out.append(out)
                     logger.debug(out)
                 else:
-                    if type(result_val) == type(val):
+                    if received_value_type == expected_value_type:
                         err = (
-                            f"Expected value does not match for key {key}: - expected: {val} - received: {result_val} "
-                            f"Types match:{get_type_pretty_name(result_val)}"
+                            f"Expected value does not match for key {expected_key}: - expected: {expected_value} - "
+                            f"received: {received_value} Types match:{received_value_type}"
                         )
                         logger.error(
-                            f'[red][bold]{key}[/bold] --- "{result_val}" != "{val}" '
-                            f"Types match:{get_type_pretty_name(result_val)}[/red]",
+                            f'[red][bold]{expected_key}[/bold] --- "{received_value}" != "{expected_value}" '
+                            f"Types match:{received_value_type}[/red]",
                             extra={"markup": True},
                         )
                     else:
                         err = (
-                            f"Expected value and type do not match for key {key}: - expected: {val} - received: {result_val} "
-                            f"expected type: {get_type_pretty_name(val)} "
-                            f"received type: {get_type_pretty_name(result_val)}"
+                            f"Expected value and type do not match for key {expected_key}: - expected: {expected_value} - "
+                            f"received: {received_value} expected type: {expected_value_type} "
+                            f"received type: {received_value_type}"
                         )
                         logger.error(
-                            f'[red][bold]{key}[/bold][red] --- "{result_val}" != "{val}"\n'
-                            f' [bold]{key}[/bold][red] --- Received value type: "{get_type_pretty_name(result_val)}" '
-                            f'!= Expected value type: "{get_type_pretty_name(val)}"[/red]',
+                            f'[red][bold]{expected_key}[/bold][red] --- "{received_value}" != "{expected_value}"\n'
+                            f' [bold]{expected_key}[/bold][red] --- Received value type: "{received_value_type}" '
+                            f'!= Expected value type: "{expected_value_type}"[/red]',
                             extra={"markup": True},
                         )
                     result_test_case_system_err.append(err)
                     result_test_case_results.append(Failure(err))
             else:
-                err = f"No mapping for this {key} - skipping checking match"
+                err = f"No mapping for this {expected_key} - skipping checking match"
                 result_test_case_system_out.append(err)
                 result_test_case_results.append(Skipped(err))
                 logger.debug(f"[cyan]{err}[/cyan]", extra={"markup": True})

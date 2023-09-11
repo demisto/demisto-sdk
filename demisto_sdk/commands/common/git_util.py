@@ -9,7 +9,7 @@ from git import InvalidGitRepositoryError, Repo
 from git.diff import Lit_change_type
 from git.remote import Remote
 
-from demisto_sdk.commands.common.constants import GIT_UPSTREAM, PACKS_FOLDER
+from demisto_sdk.commands.common.constants import GIT_UPSTREAM, PACKS_FOLDER, GIT_PRIMARY_BRANCH
 
 
 class GitUtil:
@@ -600,6 +600,8 @@ class GitUtil:
                     return "main"
                 elif current_remote_ref_str == f"{GIT_UPSTREAM}/master":
                     return "master"
+                elif current_remote_ref_str == f"{GIT_UPSTREAM}/{GIT_PRIMARY_BRANCH}":
+                    return GIT_PRIMARY_BRANCH
         return ""
 
     def handle_prev_ver(self, prev_ver: str = ""):

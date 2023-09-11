@@ -5,6 +5,7 @@
 * Demisto-SDK will now exit gracefully with an appropriate error message when *git* is not installed.
 * Fixed the support in **validate** for `svg` images to have their theme suffix.
 * Updated the **engineinfo** type in the script schema.
+* The **modeling-rules init & test** commands will now support RULE section fields.
 
 ## 1.20.2
 * Updated the **pre-commit** command to run on all python versions in one run.

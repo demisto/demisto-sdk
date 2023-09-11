@@ -206,7 +206,7 @@ def _match(
     where_str = "WHERE " + " AND ".join(where) if where else ""
     query = f"""// Retrieves nodes according to given parameters.
 MATCH {to_node_pattern(properties, content_type=content_type, list_properties=get_list_properties(tx))}
-{where_str}
+{"WHERE elementId(node) IN $filter_list" if ids_list else ""}
 RETURN node"""
 
     return [

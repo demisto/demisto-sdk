@@ -639,7 +639,7 @@ class TestUpdateContentGraph:
                 packs_to_update=pack_ids_to_update,
                 dependencies=True,
                 output_path=tmp_path,
-                use_local_import_folder=True,
+                use_local_import=True,
             )
             packs_from_graph = interface.search(
                 marketplace=MarketplaceVersions.XSOAR,
@@ -736,7 +736,7 @@ class TestUpdateContentGraph:
                 packs_to_update=pack_ids_to_update,
                 dependencies=True,
                 output_path=tmp_path,
-                use_local_import_folder=True,
+                use_local_import=True,
             )
             packs_from_graph = interface.search(
                 marketplace=MarketplaceVersions.XSOAR,

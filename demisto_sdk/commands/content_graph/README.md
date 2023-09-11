@@ -108,7 +108,7 @@ When the graph update is completed, it will be available in http://localhost:747
 
     Path to content graph zip file to import.
 
-* **--use-local-import-folder**
+* **--use-local-import**
 
     Whether to use the current import folder to import graph.
 

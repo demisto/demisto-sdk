@@ -6,6 +6,8 @@
 * Fixed the support in **validate** for `svg` images to have their theme suffix.
 * Fixed an issue where **modeling-rule test** command failed to properly compare types of fields.
 * Updated the **engineinfo** type in the script schema.
+* Stability improvements for **graph create** and **graph update** commands.
+
 
 ## 1.20.2
 * Updated the **pre-commit** command to run on all python versions in one run.

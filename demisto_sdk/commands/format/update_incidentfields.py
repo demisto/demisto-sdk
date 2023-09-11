@@ -3,8 +3,8 @@ from typing import List, Tuple
 from packaging.version import Version
 
 from demisto_sdk.commands.common.constants import (
-    DEFAULT_CONTENT_ITEM_TO_VERSION,
     OLDEST_INCIDENT_FIELD_SUPPORTED_VERSION,
+    MarketplaceVersions,
 )
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.logger import logger
@@ -77,16 +77,15 @@ class IncidentFieldJSONFormat(BaseUpdateJSON):
                 return
 
             for item in self._get_incident_fields_by_aliases(aliases):
-                alias_marketplaces = item.get("marketplaces", [])
-                alias_file_path = item.get("path", "")
-                alias_toversion = Version(
-                    item.get("toversion", DEFAULT_CONTENT_ITEM_TO_VERSION)
-                )
+                alias_marketplaces = item.marketplaces
+                alias_file_path = item.path
+                alias_toversion = Version(item.toversion)
 
                 if alias_toversion > Version(
                     OLDEST_INCIDENT_FIELD_SUPPORTED_VERSION
                 ) and (
-                    len(alias_marketplaces) != 1 or alias_marketplaces[0] != "xsoar"
+                    len(alias_marketplaces) != 1
+                    or alias_marketplaces[0] != MarketplaceVersions.XSOAR.value
                 ):
 
                     logger.info(
@@ -95,7 +94,9 @@ class IncidentFieldJSONFormat(BaseUpdateJSON):
 
                     with open(alias_file_path, "r+") as f:
                         alias_file_content = json.load(f)
-                        alias_file_content["marketplaces"] = ["xsoar"]
+                        alias_file_content["marketplaces"] = [
+                            MarketplaceVersions.XSOAR.value
+                        ]
 
                     self._save_alias_field_file(
                         dest_file_path=alias_file_path, field_data=alias_file_content
@@ -113,10 +114,9 @@ class IncidentFieldJSONFormat(BaseUpdateJSON):
         """
         alias_ids: set = {f'{alias.get("cliName")}' for alias in aliases}
         return (
-            self.graph.get_content_items_by_identifier(
-                identifier_values_list=list(alias_ids),
+            self.graph.search(
+                cli_name=alias_ids,
                 content_type=ContentType.INCIDENT_FIELD,
-                identifier="cli_name",
             )
             if self.graph
             else []

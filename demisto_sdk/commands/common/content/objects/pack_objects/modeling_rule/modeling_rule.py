@@ -228,8 +228,10 @@ class ModelingRule(YAMLContentUnifiedObject):
 
     def get_nested_rules(self, modal_text: str) -> str:
         if rule_name_match := self.CALL_RULE_REGEX.search(modal_text):
-            rule_name = rule_name_match.groupdict().get('rule_name')
-            return self.get_nested_rules(modal_text.replace(f'call {rule_name}', self.rules_dict.get(rule_name)))
+            rule_name = rule_name_match.groupdict().get("rule_name")
+            return self.get_nested_rules(
+                modal_text.replace(f"call {rule_name}", self.rules_dict.get(rule_name, ''))
+            )
         else:
             return modal_text
 
@@ -245,9 +247,12 @@ class ModelingRule(YAMLContentUnifiedObject):
                     rules_text = self.get("rules", "")
 
                 for rule in self.RULE_REGEX.finditer(rules_text):
-                    self.rules_dict[rule.groupdict().get('rule_name')] = rule.group()
+                    self.rules_dict[rule.groupdict().get("rule_name")] = rule.group()
                 matches = self.MODEL_REGEX.finditer(rules_text)
-                _rules.extend(SingleModelingRule(self.get_nested_rules(match.group())) for match in matches)
+                _rules.extend(
+                    SingleModelingRule(self.get_nested_rules(match.group()))
+                    for match in matches
+                )
                 self.rules = _rules
             except ValueError as ve:
                 rule_initialization_errs.append(ve)

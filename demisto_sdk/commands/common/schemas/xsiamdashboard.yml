@@ -43,6 +43,8 @@ schema;dashboards_data_schema:
       required: true
       sequence:
         - include: layout_schema
+    metadata:
+      type: str
 
 
 schema;layout_schema:

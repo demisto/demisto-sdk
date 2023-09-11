@@ -24,7 +24,6 @@ from demisto_sdk.commands.common.content.objects.abstract_objects import TextObj
 from demisto_sdk.commands.common.content.objects.pack_objects.abstract_pack_objects.yaml_content_object import (
     YAMLContentObject,
 )
-from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     add_default_pack_known_words,
@@ -85,7 +84,7 @@ class DocReviewer:
         self.git_util = None
 
         if use_git:
-            self.git_util = GitUtil(repo=Content.git())
+            self.git_util = Content.git_util()
             self.prev_ver = self.git_util.handle_prev_ver()[1]
         else:
             self.prev_ver = prev_ver if prev_ver else "demisto/master"

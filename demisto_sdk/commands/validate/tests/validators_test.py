@@ -167,7 +167,7 @@ class MyRepo:
 @pytest.fixture(autouse=False)
 def set_git_test_env(mocker):
     mocker.patch.object(ValidateManager, "setup_git_params", return_value=True)
-    mocker.patch.object(Content, "git", return_value=MyRepo())
+    mocker.patch.object(Content, "git_util", return_value=GitUtil())
     mocker.patch.object(ValidateManager, "setup_prev_ver", return_value="origin/master")
     mocker.patch.object(GitUtil, "_is_file_git_ignored", return_value=False)
 
@@ -3203,6 +3203,33 @@ def test_validate_no_disallowed_terms_in_customer_facing_docs_end_to_end(repo, m
             "[file:test.yml]\nignore=BA108,BA109,DS107\n",
             {"Packs/test1/Integrations/test2/test2.yml"},
         ),
+        (
+            {"Packs/test/.pack-ignore"},
+            "[file:test.yml]\nignore=BA108\n",
+            b"\n\n",
+            "",
+            {
+                "Packs/test/Integrations/test/test.yml",
+            },
+        ),
+        (
+            {"Packs/test/.pack-ignore"},
+            "[file:test.yml]\nignore=BA108\n",
+            b"    ",
+            "",
+            {
+                "Packs/test/Integrations/test/test.yml",
+            },
+        ),
+        (
+            {"Packs/test/.pack-ignore"},
+            "[file:test.yml]\nignore=BA108\n",
+            b"    \n   \n   ",
+            "",
+            {
+                "Packs/test/Integrations/test/test.yml",
+            },
+        ),
     ],
 )
 def test_get_all_files_edited_in_pack_ignore(
@@ -3221,6 +3248,9 @@ def test_get_all_files_edited_in_pack_ignore(
     - Case 3: pack-ignore mocks where each file is pointed to a different integration yml.
     - Case 4: old .pack-ignore that is empty and current .pack-ignore that was updated with ignored validation
     - Case 5: old .pack-ignore which is not in the remote branch repo, but only exist in the local branch
+    - Case 6: old empty .pack-ignore which contains newlines.
+    - Case 7: old empty .pack-ignore which contains only spaces.
+    - Case 8: old empty .pack-ignore which contains only spaces and newlines.
 
     When:
     - Running get_all_files_edited_in_pack_ignore.
@@ -3232,6 +3262,7 @@ def test_get_all_files_edited_in_pack_ignore(
     - Case 3: Should return both file names.
     - Case 4: Ensure the file that was changed in the .pack-ignore is collected
     - Case 5: Ensure the file that was changed in the .pack-ignore is collected from the local repo
+    - Case 6 + 7 + 8: Ensure the file that was changed in the .pack-ignore is collected
     """
     mocker.patch.object(
         GitUtil,

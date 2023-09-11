@@ -20,6 +20,7 @@ from demisto_sdk.commands.common.tools import (
     get_yaml,
     is_file_from_content_repo,
     is_string_ends_with_url,
+    strip_description,
 )
 from demisto_sdk.commands.format.format_constants import (
     DEFAULT_VERSION,
@@ -467,19 +468,23 @@ class BaseUpdate:
                     self.data.pop(self.json_from_server_version_key)
 
     def adds_period_to_description(self):
-        """Adds a period to the end of the descriptions
+        """Adds a period to the end of the descriptions or comments
         if it does not already end with a period."""
 
         def _add_period(value: Optional[str]) -> Optional[str]:
-            if (
-                value
-                and isinstance(value, str)
-                and not value.endswith(".")
-                and not is_string_ends_with_url(value)
-            ):
-                return f"{value}."
+            if value and isinstance(value, str):
+                strip_value = strip_description(value)
+                if not strip_value.endswith(".") and not is_string_ends_with_url(
+                    strip_value
+                ):
+                    return f"{strip_value}."
             return value
 
+        # script yml
+        if comment_script := self.data.get("comment", {}):
+            self.data["comment"] = _add_period(comment_script)
+
+        # integration yml
         if data_description := self.data.get("description", {}):
             self.data["description"] = _add_period(data_description)
 

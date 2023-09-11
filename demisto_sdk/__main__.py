@@ -3294,7 +3294,7 @@ def create_content_graph(
     "-uli",
     "--use-local-import",
     is_flag=True,
-    help="    Whether to use the current import folder to import graph.",
+    help="Whether to use the current import files to import the graph.",
     default=False,
 )
 @click.option(

@@ -1,7 +1,12 @@
 # Changelog
 ## Unreleased
+* Fixed an issue where **validate** falsely failed with error `DS108` on descriptions ending with brackets that contains a dot at the end of them.
+* Fixed an issue where the **validate -g** failed reading a `.pack-ignore` file that contained only newlines and spaces.
 * Demisto-SDK will now exit gracefully with an appropriate error message when *git* is not installed.
 * Updated validation *RN116* to support the structure of **--force** flag in *update-release-notes* command.
+* Fixed the support in **validate** for `svg` images to have their theme suffix.
+* Fixed an issue where **modeling-rule test** command failed to properly compare types of fields.
+* Updated the **engineinfo** type in the script schema.
 
 ## 1.20.2
 * Updated the **pre-commit** command to run on all python versions in one run.

@@ -1639,7 +1639,10 @@ def find_type_by_path(path: Union[str, Path] = "") -> Optional[FileType]:
         elif LAYOUT_RULES_DIR in path.parts:
             return FileType.LAYOUT_RULE
 
-    elif path.stem.endswith("_image") and path.suffix in (".png", ".svg"):
+    elif (path.stem.endswith("_image") and path.suffix == ".png") or (
+        (path.stem.endswith("_dark") or path.stem.endswith("_light"))
+        and path.suffix == ".svg"
+    ):
         if path.name.endswith("Author_image.png"):
             return FileType.AUTHOR_IMAGE
         elif XSIAM_DASHBOARDS_DIR in path.parts:
@@ -3931,3 +3934,18 @@ def parse_int_or_default(value: Any, default: int) -> int:
         return int(value)
     except (ValueError, TypeError):
         return default
+
+
+def is_sentence_ends_with_bracket(description: str):
+    """
+    Check if the sentence ends with a bracket and valid.
+    Args:
+        description: The description sentence to test.
+
+    Returns:
+        boolean: True if the sentence ends with a bracket and valid.
+
+    """
+    return (
+        description.endswith(")") and len(description) >= 2 and description[-2] == "."
+    )

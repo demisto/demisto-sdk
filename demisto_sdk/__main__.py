@@ -1475,7 +1475,7 @@ def upload(ctx, **kwargs):
     default=False,
 )
 @click.option(
-    "--auto-replace-uuids",
+    "--auto-replace-uuids/--no-auto-replace-uuids",
     help="Whether to replace the uuids.",
     is_flag=True,
     default=True,

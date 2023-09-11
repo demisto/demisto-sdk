@@ -826,3 +826,7 @@ class GitUtil:
 
     def fetch(self):
         self.repo.remote().fetch()
+
+    def fetch_all(self):
+        for remote in self.repo.remotes:
+            remote.fetch()

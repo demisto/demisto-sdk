@@ -139,6 +139,7 @@ from demisto_sdk.tests.constants_test import (
     VALID_REPUTATION_FILE,
     VALID_SCRIPT_PATH,
     VALID_WIDGET_PATH,
+    VALID_LIST_PATH
 )
 from demisto_sdk.tests.test_files.validate_integration_test_valid_types import (
     LAYOUT,
@@ -334,6 +335,7 @@ class TestGenericFunctions:
         (VALID_GENERIC_FIELD_PATH, FileType.GENERIC_FIELD),
         (VALID_GENERIC_MODULE_PATH, FileType.GENERIC_MODULE),
         (VALID_GENERIC_DEFINITION_PATH, FileType.GENERIC_DEFINITION),
+        (VALID_LIST_PATH, FileType.LISTS),
         (IGNORED_PNG, None),
         ("Author_image.png", FileType.AUTHOR_IMAGE),
         (FileType.PACK_IGNORE.value, FileType.PACK_IGNORE),

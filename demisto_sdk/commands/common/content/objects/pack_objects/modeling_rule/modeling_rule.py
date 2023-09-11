@@ -230,7 +230,9 @@ class ModelingRule(YAMLContentUnifiedObject):
         if rule_name_match := self.CALL_RULE_REGEX.search(modal_text):
             rule_name = rule_name_match.groupdict().get("rule_name")
             return self.get_nested_rules(
-                modal_text.replace(f"call {rule_name}", self.rules_dict.get(rule_name, ''))
+                modal_text.replace(
+                    f"call {rule_name}", self.rules_dict.get(rule_name, "")
+                )
             )
         else:
             return modal_text

@@ -111,6 +111,7 @@ def update_content_graph(
         return
 
     if use_git and (commit := content_graph_interface.commit):
+        git_util.fetch()
         packs_to_update.extend(git_util.get_all_changed_pack_ids(commit))
 
     packs_str = "\n".join([f"- {p}" for p in packs_to_update])

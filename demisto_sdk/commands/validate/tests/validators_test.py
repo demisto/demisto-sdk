@@ -3189,6 +3189,15 @@ def test_validate_no_disallowed_terms_in_customer_facing_docs_end_to_end(repo, m
             "[file:test.yml]\nignore=BA108,BA109,DS107\n",
             {"Packs/test1/Integrations/test2/test2.yml"},
         ),
+        (
+            {"Packs/test/.pack-ignore"},
+            "[file:test.yml]\nignore=BA108\n",
+            b"\n",
+            "",
+            {
+                "Packs/test/Integrations/test/test.yml",
+            },
+        ),
     ],
 )
 def test_get_all_files_edited_in_pack_ignore(
@@ -3207,6 +3216,7 @@ def test_get_all_files_edited_in_pack_ignore(
     - Case 3: pack-ignore mocks where each file is pointed to a different integration yml.
     - Case 4: old .pack-ignore that is empty and current .pack-ignore that was updated with ignored validation
     - Case 5: old .pack-ignore which is not in the remote branch repo, but only exist in the local branch
+    - Case 6: old empty .pack-ignore which contains newlines.
 
     When:
     - Running get_all_files_edited_in_pack_ignore.
@@ -3218,6 +3228,7 @@ def test_get_all_files_edited_in_pack_ignore(
     - Case 3: Should return both file names.
     - Case 4: Ensure the file that was changed in the .pack-ignore is collected
     - Case 5: Ensure the file that was changed in the .pack-ignore is collected from the local repo
+    - Case 6: Ensure the file that was changed in the .pack-ignore is collected
     """
     mocker.patch.object(
         GitUtil,

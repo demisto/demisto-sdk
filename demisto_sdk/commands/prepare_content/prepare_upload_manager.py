@@ -70,8 +70,10 @@ class PrepareUploadManager:
             raise FileExistsError(
                 f"Output file {output} already exists. Use --force to overwrite."
             )
-        with output.open("wb") as f:
-            content_item.handler.dump(data, f)
+        logger.info(data)
+        safe_write_unicode(lambda f: content_item.handler.dump(data, f), Path(output))
+        # with output.open("wb") as f:
+        #     content_item.handler.dump(data, f)
 
         logger.info(f"[green]Output saved in: {str(output.absolute())}[/green]")
         return output

@@ -51,6 +51,7 @@ class PacksZipper:
                     or (None, None) if the pack names are empty
 
         """
+        print("BOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOB")
         if self.artifacts_manager.pack_names:
             self.artifacts_manager.dump_packs()
             return self.artifacts_manager.output_path, self.artifacts_manager.pack_names

@@ -16,7 +16,7 @@ from demisto_sdk.commands.common.constants import (
 from demisto_sdk.commands.common.content.objects.abstract_objects import JSONObject
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.logger import logger
-from demisto_sdk.commands.common.tools import get_core_pack_list
+from demisto_sdk.commands.common.tools import get_core_pack_list, safe_write_unicode, get_file
 from demisto_sdk.commands.find_dependencies.find_dependencies import PackDependencies
 
 DATETIME_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
@@ -523,8 +523,9 @@ class PackMetaData(JSONObject):
                 file_content["previewOnly"] = True
 
         new_metadata_path = os.path.join(dest_dir, "metadata.json")
-        with open(new_metadata_path, "w", encoding="utf-8") as metadata_file:
-            json.dump(file_content, metadata_file, indent=4)
+        safe_write_unicode(lambda f: json.dump(file_content, f, indent=4), Path(new_metadata_path))
+        # with open(new_metadata_path, "w", encoding="utf-8") as metadata_file:
+        #     json.dump(file_content, metadata_file, indent=4)
 
         return [Path(new_metadata_path)]
 
@@ -551,7 +552,7 @@ class PackMetaData(JSONObject):
             return None
 
         try:
-            user_metadata = get_json(user_metadata_path)  # loading user metadata
+            user_metadata = get_file(user_metadata_path)  # loading user metadata
             # part of old packs are initialized with empty list
             if isinstance(user_metadata, list):
                 user_metadata = {}

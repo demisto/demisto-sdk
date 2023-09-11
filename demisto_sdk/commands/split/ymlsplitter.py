@@ -20,7 +20,7 @@ from demisto_sdk.commands.common.constants import (
 )
 from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
 from demisto_sdk.commands.common.logger import logger
-from demisto_sdk.commands.common.tools import get_yaml, pascal_case
+from demisto_sdk.commands.common.tools import pascal_case, safe_write_unicode, get_file
 from demisto_sdk.commands.prepare_content.integration_script_unifier import (
     IntegrationScriptUnifier,
 )
@@ -68,7 +68,7 @@ class YmlSplitter:
         self.lines_inserted_at_code_start = 0
         self.config = configuration or Configuration()
         self.auto_create_dir = not no_auto_create_dir
-        self.yml_data = get_yaml(self.input)
+        self.yml_data = get_file(self.input)
         self.api_module_path: Optional[str] = None
 
     def get_output_path(self):
@@ -117,9 +117,10 @@ class YmlSplitter:
         self.extract_image(f"{output_path}/{base_name}_image.png")
         self.extract_long_description(f"{output_path}/{base_name}_description.md")
         yaml_out = f"{output_path}/{base_name}.yml"
-        logger.debug(f"Creating yml file: {yaml_out} ...")
-        yaml_obj = get_yaml(self.input)
+        logger.debug(f"Creating yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyml file: {yaml_out} ...")
+        yaml_obj = get_file(self.input)
         script_obj = yaml_obj
+        #logger.debug(f"BOB {script_obj} ...")
 
         if self.file_type in ("modelingrule", "parsingrule"):
             self.extract_rules(f"{output_path}/{base_name}.xif")
@@ -133,8 +134,9 @@ class YmlSplitter:
             if "samples" in yaml_obj:
                 self.extract_rule_schema_and_samples(f"{output_path}/{base_name}.json")
                 del yaml_obj["samples"]
-            with open(yaml_out, "wb") as yf:
-                yaml.dump(yaml_obj, yf)
+            # with open(yaml_out, "wb") as yf:
+            #     yaml.dump(yaml_obj, yf)
+            safe_write_unicode(lambda f: yaml.dump(yaml_obj, f), Path(yaml_out))
         else:
             code_file = f"{code_file}{TYPE_TO_EXTENSION[lang_type]}"
             if self.file_type in (BETA_INTEGRATION, INTEGRATION):
@@ -148,8 +150,9 @@ class YmlSplitter:
             if code_type == TYPE_PWSH and not yaml_obj.get("fromversion"):
                 logger.debug("Setting fromversion for PowerShell to: 5.5.0")
                 yaml_obj["fromversion"] = "5.5.0"
-            with open(yaml_out, "wb") as yf:
-                yaml.dump(yaml_obj, yf)
+            # with open(yaml_out, "wb") as yf:
+            #     yaml.dump(yaml_obj, yf)
+            safe_write_unicode(lambda f: yaml.dump(yaml_obj, f), Path(yaml_out))
             # check if there is a README and if found, set found_readme to True
             if self.readme:
                 yml_readme = self.input.parent / f"{self.input.stem}_README.md"
@@ -159,8 +162,9 @@ class YmlSplitter:
                     shutil.copy(yml_readme, readme)
                 else:
                     # open an empty file
-                    with open(readme, "w"):
-                        pass
+                    safe_write_unicode(lambda f: yaml.dump("", f), Path(readme))
+                    # with open(readme, "w"):
+                    #     pass
         logger.debug(
             f"Finished splitting the yml file - you can find the split results here: {output_path}"
         )
@@ -227,6 +231,7 @@ class YmlSplitter:
         im_field = self.yml_data.get("image")
         if im_field and len(im_field.split(",")) >= 2:
             image_b64 = self.yml_data["image"].split(",")[1]
+            # safe_write_unicode(base64.decodebytes(image_b64.encode("utf-8")), Path(output_path)) # ??
             with open(output_path, "wb") as image_file:
                 image_file.write(base64.decodebytes(image_b64.encode("utf-8")))
         return 0
@@ -263,8 +268,9 @@ class YmlSplitter:
         if long_description:
             long_description = self.remove_integration_documentation(long_description)
             logger.debug(f"Extracting long description to: {output_path} ...")
-            with open(output_path, "w", encoding="utf-8") as desc_file:
-                desc_file.write(long_description)
+            safe_write_unicode(long_description, Path(output_path))
+            # with open(output_path, "w", encoding="utf-8") as desc_file:
+            #     desc_file.write(long_description)
         return 0
 
     def extract_rules(self, output_path) -> int:
@@ -276,8 +282,9 @@ class YmlSplitter:
         rules = self.yml_data.get("rules")
         if rules:
             logger.debug(f"Extracting rules to: {output_path} ...")
-            with open(output_path, "w", encoding="utf-8") as rules_file:
-                rules_file.write(rules)
+            safe_write_unicode(rules, Path(output_path))
+            # with open(output_path, "w", encoding="utf-8") as rules_file:
+            #     rules_file.write(rules)
         return 0
 
     def extract_rule_schema_and_samples(self, output_path) -> int:
@@ -291,15 +298,17 @@ class YmlSplitter:
         schema = self.yml_data.get("schema")
         if schema:
             logger.debug(f"Extracting rules schema to: {output_path} ...")
-            with open(output_path, "w", encoding="utf-8") as rules_file:
-                rules_file.write(schema)
+            safe_write_unicode(schema, Path(output_path))
+            # with open(output_path, "w", encoding="utf-8") as rules_file:
+            #     rules_file.write(schema)
 
         # Parsing rules
         samples = self.yml_data.get("samples")
         if samples:
             logger.debug(f"Extracting rules samples to: {output_path} ...")
-            with open(output_path, "w", encoding="utf-8") as rules_file:
-                rules_file.write(samples)
+            safe_write_unicode(samples, Path(output_path))
+            # with open(output_path, "w", encoding="utf-8") as rules_file:
+            #     rules_file.write(samples)
         return 0
 
     def update_api_module_contribution(self, lines: list, imported_line: str):
@@ -323,10 +332,14 @@ class YmlSplitter:
             self.api_module_path = os.path.join(
                 "./Packs", "ApiModules", "Scripts", module_name, module_name + ".py"
             )
-            with open(self.api_module_path, "w") as f:
-                f.write("from CommonServerPython import *  # noqa: F401\n")
-                f.write("import demistomock as demisto  # noqa: F401\n")
-                f.write("\n".join(updated_lines))
+            import_to_write = "from CommonServerPython import *  # noqa: F401\n"
+            import_to_write += "import demistomock as demisto  # noqa: F401\n"
+            import_to_write += "\n".join(updated_lines)
+            safe_write_unicode(import_to_write, Path(self.api_module_path))
+            # with open(self.api_module_path, "w") as f:
+            #     f.write("from CommonServerPython import *  # noqa: F401\n")
+            #     f.write("import demistomock as demisto  # noqa: F401\n")
+            #     f.write("\n".join(updated_lines))
 
     def replace_imported_code(
         self, script, executed_from_contrib_converter: bool = False

@@ -38,6 +38,10 @@ from demisto_sdk.commands.content_graph.interface import ContentGraphInterface
 app = typer.Typer()
 
 
+def get_packs_from_external_repo() -> list:
+    return [path.name for path in (CONTENT_PATH / "Packs").iterdir()]
+
+
 @recover_if_fails
 def update_content_graph(
     content_graph_interface: ContentGraphInterface,
@@ -61,7 +65,7 @@ def update_content_graph(
         output_path (Path): The path to export the graph zip to.
     """
     if is_external_repository():
-        packs_to_update = [path.name for path in (CONTENT_PATH / "Packs").iterdir()]
+        packs_to_update = get_packs_from_external_repo()
 
     packs_to_update = list(packs_to_update) if packs_to_update else []
 

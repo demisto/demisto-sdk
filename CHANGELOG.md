@@ -4,7 +4,7 @@
 * Fixed an issue where the **validate -g** failed reading a `.pack-ignore` file that contained only newlines and spaces.
 * Demisto-SDK will now exit gracefully with an appropriate error message when *git* is not installed.
 * Fixed the support in **validate** for `svg` images to have their theme suffix.
-* Fixed the **engineinfo** key type in the script schema. This field specifies on which engine the script will run.
+* Updated the **engineinfo** type in the script schema.
 
 ## 1.20.2
 * Updated the **pre-commit** command to run on all python versions in one run.

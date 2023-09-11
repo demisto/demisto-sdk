@@ -14,6 +14,7 @@
 * Fixed an issue where **format** add a newline with a period when the description field missing a period.
 * The content graph will now include the **python_version** field that each script/integration uses.
 * Updated the **update-release-notes** command message structure when is run with **--force** flag.
+* Fixed an issue where **modeling-rule test** command failed to properly compare types of fields.
 * Added the **engineinfo** in to the script schema. This field specifies on which engine the script will run.
 * Fixed an issue where **validate** falsely failed with error `DS108` on empty descriptions.
 * Added support for lazy loading the of widgets in XSIAM dashboards.

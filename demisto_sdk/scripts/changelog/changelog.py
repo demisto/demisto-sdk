@@ -1,7 +1,6 @@
 import itertools
 import re
 import shutil
-import sys
 from pathlib import Path
 from typing import Dict, List
 
@@ -9,7 +8,6 @@ import typer
 from git import Repo
 from pydantic import ValidationError
 
-# from demisto_sdk.__main__ import logging_setup_decorator, main
 from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.logger import logger
@@ -37,7 +35,14 @@ class Changelog:
 
     def validate(self) -> None:
         """
-        ...
+        Checks the following:
+            - If the PR is a release:
+                - checks that the `.changelog` folder is empty
+                - checks that the `CHANGELOG.md` file has changed
+            - If the PR is normal:
+                - checks that the `CHANGELOG.md` file has not changed
+                - checks that a log file has been added and its name is the same as the PR name
+                - ensure that the added log file is valid according to the `LogFileObject` model convention
         """
         if is_release(self.pr_name):
             _validate_release()
@@ -76,7 +81,7 @@ class Changelog:
         new_changelog = compile_changelog_md(
             self.pr_name, new_log_entries, get_old_changelog()[1:]
         )
-        write_to_changelog_file(new_changelog)
+        update_changelog_md(new_changelog)
         logger.info("The changelog.md file has been successfully updated")
         clear_changelogs_folder()
         logger.info(f"Combined {len(logs)} changelog files into CHANGELOG.md")
@@ -100,6 +105,11 @@ def is_log_yml_exist(pr_number: str) -> bool:
 
 
 def validate_log_yml(pr_number: str) -> None:
+    """
+    - imports the log file that belongs to the current PR by the PR name
+    - ensure that the log file added to the PR is valid
+      according to the conventions of the 'LogFileObject' model
+    """
     data = get_yaml(CHANGELOG_FOLDER / f"{pr_number}.yml")
 
     try:
@@ -136,10 +146,10 @@ def get_new_log_entries(logs: List[LogFileObject]) -> Dict[str, List[LogLine]]:
     for log_file in logs:
         all_logs_unreleased.extend(log_file.get_log_entries())
 
-    all_logs_unreleased_as_dict: Dict[str, List[LogLine]] = {}
+    new_log_entries: Dict[str, List[LogLine]] = {}
     for type_, log_lines in itertools.groupby(all_logs_unreleased, lambda x: x.type):
-        all_logs_unreleased_as_dict[type_] = list(log_lines)
-    return all_logs_unreleased_as_dict
+        new_log_entries[type_] = list(log_lines)
+    return new_log_entries
 
 
 def get_old_changelog():
@@ -158,18 +168,8 @@ def compile_changelog_md(
     new_changelog.append(f"## {pr_name[1:]}")  # removes "v" prefix
     # Collecting the new log entries in the following order:
     # breaking, feature, fix, internal
-    new_changelog.extend(
-        [log_line.to_string() for log_line in new_logs.get(LogType.breaking, [])]
-    )
-    new_changelog.extend(
-        [log_line.to_string() for log_line in new_logs.get(LogType.feature, [])]
-    )
-    new_changelog.extend(
-        [log_line.to_string() for log_line in new_logs.get(LogType.fix, [])]
-    )
-    new_changelog.extend(
-        [log_line.to_string() for log_line in new_logs.get(LogType.internal, [])]
-    )
+    for log_type in (LogType.breaking, LogType.feature, LogType.fix, LogType.internal):
+        new_changelog.extend(log.to_string() for log in new_logs.get(log_type, ()))
     # A new line separates versions
     new_changelog.append("\n")
     # Collecting the old changelog
@@ -177,7 +177,7 @@ def compile_changelog_md(
     return "\n".join(new_changelog)
 
 
-def write_to_changelog_file(new_changelog: str) -> None:
+def update_changelog_md(new_changelog: str) -> None:
     with CHANGELOG_MD_FILE.open("w") as f:
         f.write(new_changelog)
 
@@ -237,7 +237,9 @@ validate = typer.Option(
 
 pr_number = typer.Option(..., "--pr_number", "-n", help="Pull request number")
 
-pr_title = typer.Option("", "--pr_title", "-t", help="Pull request title (used for release)")
+pr_title = typer.Option(
+    "", "--pr_title", "-t", help="Pull request title (used for release)"
+)
 
 
 @main.command()
@@ -251,8 +253,6 @@ def changelog_management(
     pr_name = pr_name
     pr_number = pr_number
 
-    if not pr_number:
-        raise ValueError("No provided the `pr_number` argument")
     changelog = Changelog(pr_number, pr_name)
     if validate:
         return changelog.validate()

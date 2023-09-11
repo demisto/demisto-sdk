@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import Dict, List, Tuple, Union
+from typing import Dict, List, Union
 
 from pydantic import BaseModel, validator
 
@@ -31,7 +31,7 @@ class LogLine:
         self.type = type_
 
     def to_string(self):
-        return f"* {self.description} - [#{self.pr_number}](https://github.com/demisto/demisto-sdk/pull/{self.pr_number})"
+        return f"* {self.description} [#{self.pr_number}](https://github.com/demisto/demisto-sdk/pull/{self.pr_number})"
 
 
 class LogEntry(BaseModel):
@@ -64,5 +64,8 @@ class LogFileObject(BaseModel):
     logs: List[LogEntry]
     pr_number: str
 
-    def get_log_entries(cls) -> List[LogLine]:
-        return [LogLine(log_entry.description, cls.pr_number, log_entry.type) for log_entry in cls.logs]
+    def get_log_entries(self) -> List[LogLine]:
+        return [
+            LogLine(log_entry.description, self.pr_number, log_entry.type)
+            for log_entry in self.logs
+        ]

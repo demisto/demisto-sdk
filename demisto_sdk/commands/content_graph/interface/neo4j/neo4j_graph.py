@@ -295,7 +295,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
     def _search(
         self,
         marketplace: MarketplaceVersions = None,
-        content_type: Optional[ContentType] = None,
+        content_type: ContentType = ContentType.BASE_CONTENT,
         ids_list: Optional[Iterable[int]] = None,
         all_level_dependencies: bool = False,
         all_level_imports: bool = False,
@@ -631,7 +631,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
     def search(
         self,
         marketplace: MarketplaceVersions = None,
-        content_type: Optional[ContentType] = None,
+        content_type: ContentType = ContentType.BASE_CONTENT,
         ids_list: Optional[Iterable[int]] = None,
         all_level_dependencies: bool = False,
         all_level_imports: bool = False,
@@ -642,7 +642,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
 
         Args:
             marketplace (MarketplaceVersions, optional): Marketplace to search by. Defaults to None.
-            content_type (Optional[ContentType], optional): The content_type to filter. Defaults to None.
+            content_type (ContentType): The content_type to filter. Defaults to ContentType.BASE_CONTENT.
             ids_list (Optional[Iterable[int]], optional): A list of unique IDs to filter. Defaults to None.
             all_level_dependencies (bool, optional): Whether to return all level dependencies. Defaults to False.
             **properties: A key, value filter for the search. For example: `search(object_id="QRadar")`.

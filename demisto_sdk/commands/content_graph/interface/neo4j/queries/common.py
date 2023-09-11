@@ -82,8 +82,6 @@ def to_node_pattern(
 ) -> str:
     if not list_properties:
         list_properties = []
-    if not content_type:
-        content_type = ContentType.BASE_CONTENT
     neo4j_primitive_types = (str, bool, Path, int, float)
     exact_match_properties = {
         k: v

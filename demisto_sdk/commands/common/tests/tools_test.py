@@ -3198,7 +3198,7 @@ def test_get_content_path_no_remote(mocker):
     When:
         - Running get_content_path
     Then:
-        Validate that a warning is issued as an exception will be raised.
+        Validate that a warning is issued as (resulting from a raised exception).
     """
     from git import Repo
 

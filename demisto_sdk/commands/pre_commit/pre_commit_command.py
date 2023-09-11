@@ -3,13 +3,14 @@ import multiprocessing
 import os
 import re
 import subprocess
+import sys
 from collections import defaultdict
 from copy import deepcopy
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, Iterable, List, Optional, Set
+from typing import Dict, Iterable, List, Optional, Set, Tuple
 
-import more_itertools
+from packaging.version import Version
 
 from demisto_sdk.commands.common.constants import (
     DEFAULT_PYTHON2_VERSION,
@@ -18,19 +19,20 @@ from demisto_sdk.commands.common.constants import (
     SCRIPTS_DIR,
 )
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH, PYTHONPATH
-from demisto_sdk.commands.common.docker_helper import get_python_version
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     get_file_or_remote,
     get_last_remote_release_version,
+    get_remote_file,
     string_to_bool,
 )
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.content_graph.objects.integration_script import (
     IntegrationScript,
 )
+from demisto_sdk.commands.pre_commit.hooks.hook import join_files
 from demisto_sdk.commands.pre_commit.hooks.mypy import MypyHook
 from demisto_sdk.commands.pre_commit.hooks.pycln import PyclnHook
 from demisto_sdk.commands.pre_commit.hooks.ruff import RuffHook
@@ -39,7 +41,8 @@ from demisto_sdk.commands.pre_commit.hooks.validate_format import ValidateFormat
 
 IS_GITHUB_ACTIONS = string_to_bool(os.getenv("GITHUB_ACTIONS"), False)
 
-PRECOMMIT_TEMPLATE_PATH = CONTENT_PATH / ".pre-commit-config_template.yaml"
+PRECOMMIT_TEMPLATE_NAME = ".pre-commit-config_template.yaml"
+PRECOMMIT_TEMPLATE_PATH = CONTENT_PATH / PRECOMMIT_TEMPLATE_NAME
 PRECOMMIT_PATH = CONTENT_PATH / ".pre-commit-config-content.yaml"
 SOURCERY_CONFIG_PATH = CONTENT_PATH / ".sourcery.yaml"
 
@@ -48,12 +51,23 @@ SKIPPED_HOOKS = {"format", "validate", "secrets"}
 
 INTEGRATION_SCRIPT_REGEX = re.compile(r"^Packs/.*/(?:Integrations|Scripts)/.*.yml$")
 
+PYTHON2_SUPPORTED_HOOKS = {
+    "check-json",
+    "check-yaml",
+    "check-ast",
+    "check-merge-conflict",
+    "run-unit-tests",
+    "validate",
+    "format",
+}
+
 
 @dataclass
 class PreCommitRunner:
     """This class is responsible of running pre-commit hooks."""
 
-    input_files: Optional[Iterable[Path]]
+    input_mode: bool
+    all_files: bool
     python_version_to_files: Dict[str, Set[Path]]
     demisto_sdk_commit_hash: str
 
@@ -61,10 +75,15 @@ class PreCommitRunner:
         """
         We initialize the hooks and all_files for later use.
         """
-        self.all_files = set(
+        self.files_to_run = set(
             itertools.chain.from_iterable(self.python_version_to_files.values())
         )
         self.precommit_template = get_file_or_remote(PRECOMMIT_TEMPLATE_PATH)
+        remote_config_file = get_remote_file(str(PRECOMMIT_TEMPLATE_PATH))
+        if remote_config_file and remote_config_file != self.precommit_template:
+            logger.info(
+                f"Your local {PRECOMMIT_TEMPLATE_NAME} is not up to date to the remote one."
+            )
         if not isinstance(self.precommit_template, dict):
             raise TypeError(
                 f"Pre-commit template in {PRECOMMIT_TEMPLATE_PATH} is not a dictionary."
@@ -83,30 +102,57 @@ class PreCommitRunner:
             repos[repo["repo"]] = repo
         return repos
 
-    @staticmethod
-    def _get_hooks(pre_commit_config: dict) -> dict:
+    def _get_hooks(self, pre_commit_config: dict) -> dict:
         hooks = {}
         for repo in pre_commit_config["repos"]:
             for hook in repo["hooks"]:
-                hooks[hook["id"]] = hook
+                hooks[hook["id"]] = {
+                    "repo": repo,
+                    "hook": hook,
+                    "all_files": self.all_files,
+                    "input_mode": self.input_mode,
+                }
                 # if the hook has a skip key, we add it to the SKIPPED_HOOKS set
                 if hook.pop("skip", None):
                     SKIPPED_HOOKS.add(hook["id"])
         return hooks
 
+    def exclude_python2_of_non_supported_hooks(self) -> None:
+        """
+        This function handles the python2 files.
+        Files with python2 run only the hooks that in PYTHON2_SUPPORTED_HOOKS.
+        """
+        python2_files = self.python_version_to_files.get(DEFAULT_PYTHON2_VERSION)
+        if not python2_files:
+            return
+
+        logger.info(
+            f"Python {DEFAULT_PYTHON2_VERSION} files running only with the following hooks: {', '.join(PYTHON2_SUPPORTED_HOOKS)}"
+        )
+
+        join_files_string = join_files(python2_files)
+        for hook in self.hooks.values():
+            if hook["hook"]["id"] in PYTHON2_SUPPORTED_HOOKS:
+                continue
+            elif hook["hook"].get("exclude"):
+                hook["hook"]["exclude"] += f"|{join_files_string}"
+            else:
+                hook["hook"]["exclude"] = join_files_string
+
     def prepare_hooks(
         self,
         hooks: dict,
-        python_version: str,
     ) -> None:
-        PyclnHook(hooks["pycln"]).prepare_hook(PYTHONPATH)
-        RuffHook(hooks["ruff"]).prepare_hook(python_version, IS_GITHUB_ACTIONS)
-        MypyHook(hooks["mypy"]).prepare_hook(python_version)
-        SourceryHook(hooks["sourcery"]).prepare_hook(
-            python_version, config_file_path=SOURCERY_CONFIG_PATH
+        PyclnHook(**hooks["pycln"]).prepare_hook(PYTHONPATH)
+        RuffHook(**hooks["ruff"]).prepare_hook(
+            self.python_version_to_files, IS_GITHUB_ACTIONS
         )
-        ValidateFormatHook(hooks["validate"]).prepare_hook(self.input_files)
-        ValidateFormatHook(hooks["format"]).prepare_hook(self.input_files)
+        MypyHook(**hooks["mypy"]).prepare_hook(self.python_version_to_files)
+        SourceryHook(**hooks["sourcery"]).prepare_hook(
+            self.python_version_to_files, config_file_path=SOURCERY_CONFIG_PATH
+        )
+        ValidateFormatHook(**hooks["validate"]).prepare_hook(self.files_to_run)
+        ValidateFormatHook(**hooks["format"]).prepare_hook(self.files_to_run)
 
     def run(
         self,
@@ -117,11 +163,13 @@ class PreCommitRunner:
         secrets: bool = False,
         verbose: bool = False,
         show_diff_on_failure: bool = False,
+        exclude_files: Optional[Set[Path]] = None,
+        dry_run: bool = False,
     ) -> int:
         ret_val = 0
         precommit_env = os.environ.copy()
         skipped_hooks: set = SKIPPED_HOOKS
-        skipped_hooks |= set(skip_hooks or [])
+        skipped_hooks.update(set(skip_hooks or ()))
         if not unit_test:
             skipped_hooks.add("run-unit-tests")
         if validate and "validate" in skipped_hooks:
@@ -137,64 +185,62 @@ class PreCommitRunner:
             str(path) for path in sorted(PYTHONPATH) if "site-packages" not in str(path)
         )
         precommit_env["DEMISTO_SDK_CONTENT_PATH"] = str(CONTENT_PATH)
-        for python_version, changed_files in self.python_version_to_files.items():
-            precommit_config = deepcopy(self.precommit_template)
-            assert isinstance(precommit_config, dict)
+
+        self.exclude_python2_of_non_supported_hooks()
+
+        precommit_config = deepcopy(self.precommit_template)
+        for (
+            python_version,
+            changed_files_by_version,
+        ) in self.python_version_to_files.items():
             changed_files_string = ", ".join(
-                sorted((str(changed_path) for changed_path in changed_files))
+                sorted(str(file) for file in changed_files_by_version)
             )
             logger.info(
                 f"Running pre-commit with Python {python_version} on {changed_files_string}"
             )
-            if python_version.startswith("2"):
-                with open(PRECOMMIT_PATH, "w") as f:
-                    yaml.dump(precommit_config, f)
-                if unit_test:
-                    response = subprocess.run(
-                        [
-                            "pre-commit",
-                            "run",
-                            "run-unit-tests",
-                            "-c",
-                            str(PRECOMMIT_PATH),
-                            "--files",
-                            *changed_files,
-                            "-v" if verbose else "",
-                        ],
-                        env=precommit_env,
-                        cwd=CONTENT_PATH,
-                    )
-                    if response.returncode:
-                        ret_val = response.returncode
-                continue
-            self.prepare_hooks(self._get_hooks(precommit_config), python_version)
-            with open(PRECOMMIT_PATH, "w") as f:
-                yaml.dump(precommit_config, f)
-            # use chunks because OS does not support such large comments
-            for chunk in more_itertools.chunked_even(changed_files, 10_000):
-                response = subprocess.run(
+
+        self.prepare_hooks(self._get_hooks(precommit_config))
+        if self.all_files:
+            precommit_config["exclude"] += f"|{join_files(exclude_files or {})}"
+        else:
+            precommit_config["files"] = join_files(self.files_to_run)
+        with open(PRECOMMIT_PATH, "w") as f:
+            yaml.dump(precommit_config, f)
+        if dry_run:
+            logger.info(
+                "Dry run, skipping pre-commit.\nConfig file saved to .pre-commit-config-content.yaml"
+            )
+            return ret_val
+        response = subprocess.run(
+            list(
+                filter(
+                    None,
                     [
-                        "pre-commit",
+                        sys.executable,
+                        "-m",
+                        "pre_commit",
                         "run",
+                        "-a",
                         "-c",
                         str(PRECOMMIT_PATH),
                         "--show-diff-on-failure" if show_diff_on_failure else "",
-                        "--files",
-                        *chunk,
                         "-v" if verbose else "",
                     ],
-                    env=precommit_env,
-                    cwd=CONTENT_PATH,
                 )
-                if response.returncode:
-                    ret_val = 1
+            ),
+            env=precommit_env,
+            cwd=CONTENT_PATH,
+        )
+        if response.returncode:
+            ret_val = 1
 
         # remove the config file in the end of the flow
         PRECOMMIT_PATH.unlink(missing_ok=True)
         return ret_val
 
 
-def group_by_python_version(files: Set[Path]) -> Dict[str, set]:
+def group_by_python_version(files: Set[Path]) -> Tuple[Dict[str, Set], Set[Path]]:
     """This function groups the files to run pre-commit on by the python version.
 
     Args:
@@ -226,34 +272,54 @@ def group_by_python_version(files: Set[Path]) -> Dict[str, set]:
         else:
             infra_files.append(file)
 
-    python_versions_to_files = defaultdict(set)
+    python_versions_to_files: Dict[str, Set] = defaultdict(set)
     with multiprocessing.Pool() as pool:
         integrations_scripts = pool.map(
             BaseContent.from_path, integrations_scripts_mapping.keys()
         )
 
+    exclude_integration_script = set()
     for integration_script in integrations_scripts:
         if not integration_script or not isinstance(
             integration_script, IntegrationScript
         ):
             continue
         if integration_script.deprecated:
-            logger.info(
-                f"Skipping pre-commit on deprecated integration {integration_script.name}"
-            )
+            if integration_script.is_unified:
+                exclude_integration_script.add(
+                    integration_script.path.relative_to(CONTENT_PATH)
+                )
+            else:
+                exclude_integration_script.add(
+                    integration_script.path.parent.relative_to(CONTENT_PATH)
+                )
             continue
 
         code_file_path = integration_script.path.parent
-        python_version = get_python_version(integration_script.docker_image)
-        python_version_string = f"{python_version.major}.{python_version.minor}"
+        if python_version := integration_script.python_version:
+            version = Version(python_version)
+            python_version_string = f"{version.major}.{version.minor}"
+        else:
+            # Skip cases of powershell scripts
+            exclude_integration_script.add(
+                integration_script.path.relative_to(CONTENT_PATH)
+            )
+            continue
         python_versions_to_files[
             python_version_string or DEFAULT_PYTHON2_VERSION
         ].update(
-            integrations_scripts_mapping[code_file_path] | {integration_script.path}
+            integrations_scripts_mapping[code_file_path],
+            {integration_script.path.relative_to(CONTENT_PATH)},
         )
 
-    python_versions_to_files[DEFAULT_PYTHON_VERSION].update(infra_files)
-    return python_versions_to_files
+    if infra_files:
+        python_versions_to_files[DEFAULT_PYTHON_VERSION].update(infra_files)
+
+    if exclude_integration_script:
+        logger.info(
+            f"Skipping deprecated or powershell integrations or scripts: {join_files(exclude_integration_script, ', ')}"
+        )
+    return python_versions_to_files, exclude_integration_script
 
 
 def pre_commit_manager(
@@ -269,6 +335,7 @@ def pre_commit_manager(
     verbose: bool = False,
     show_diff_on_failure: bool = False,
     sdk_ref: Optional[str] = None,
+    dry_run: bool = False,
 ) -> Optional[int]:
     """Run pre-commit hooks .
 
@@ -302,12 +369,14 @@ def pre_commit_manager(
         sorted((str(changed_path) for changed_path in files_to_run))
     )
 
-    logger.info(f"Running pre-commit on {files_to_run_string}")
+    # This is the files that pre-commit received, but in fact it will run on files returned from group_by_python_version
+    logger.info(f"pre-commit received the following files: {files_to_run_string}")
 
     if not sdk_ref:
         sdk_ref = f"v{get_last_remote_release_version()}"
+    python_version_to_files, exclude_files = group_by_python_version(files_to_run)
     pre_commit_runner = PreCommitRunner(
-        input_files, group_by_python_version(files_to_run), sdk_ref
+        bool(input_files), all_files, python_version_to_files, sdk_ref
     )
     return pre_commit_runner.run(
         unit_test,
@@ -317,6 +386,8 @@ def pre_commit_manager(
         secrets,
         verbose,
         show_diff_on_failure,
+        exclude_files,
+        dry_run,
     )
 
 
@@ -328,13 +399,13 @@ def preprocess_files(
 ) -> Set[Path]:
     git_util = GitUtil()
     staged_files = git_util._get_staged_files()
-    all_git_files = git_util.get_all_files() | staged_files
+    all_git_files = git_util.get_all_files().union(staged_files)
     if input_files:
         raw_files = set(input_files)
     elif staged_only:
         raw_files = staged_files
     elif use_git:
-        raw_files = git_util._get_all_changed_files() | staged_files
+        raw_files = git_util._get_all_changed_files().union(staged_files)
     elif all_files:
         raw_files = all_git_files
     else:
@@ -344,7 +415,7 @@ def preprocess_files(
     files_to_run: Set[Path] = set()
     for file in raw_files:
         if file.is_dir():
-            files_to_run |= {file for file in file.rglob("*") if file.is_file()}
+            files_to_run.update({path for path in file.rglob("*") if path.is_file()})
         else:
             files_to_run.add(file)
 

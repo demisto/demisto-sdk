@@ -1914,6 +1914,8 @@ class TestIntegrationValidator:
                     MarketplaceVersions.XSOAR,
                     MarketplaceVersions.MarketplaceV2,
                     MarketplaceVersions.XPANSE,
+                    MarketplaceVersions.XSOAR_SAAS,
+                    MarketplaceVersions.XSOAR_ON_PREM,
                 ],
                 False,
             ),
@@ -2591,9 +2593,9 @@ class TestisContextChanged:
         When: running validate on integration with at least one command
         Then: Validate it's synced with the README.
         """
-        patcher = patch("os.path.exists")
+        patcher = patch("pathlib.Path.exists")
         mock_thing = patcher.start()
-        mock_thing.side_effect = lambda x: True
+        mock_thing.side_effect = lambda: True
         with patch("builtins.open", mock_open(read_data=readme)) as _:
             current = {"script": {}}
             structure = mock_structure("Pack/Test", current)
@@ -2683,3 +2685,206 @@ class TestisContextChanged:
             integration_validator.is_native_image_does_not_exist_in_yml()
             == is_validation_ok
         )
+
+    @pytest.mark.parametrize(
+        "yml_content, use_git, expected_results",
+        [
+            ({"description": "description without dot"}, False, True),
+            (
+                {
+                    "description": "a yml description with a dot at the end.",
+                    "script": {
+                        "commands": [
+                            {
+                                "arguments": [
+                                    {
+                                        "name": "test_arg",
+                                        "description": "description without dot",
+                                    }
+                                ]
+                            }
+                        ],
+                        "name": "test_command",
+                    },
+                },
+                True,
+                False,
+            ),
+            (
+                {
+                    "description": "a yml description with a dot at the end.",
+                    "script": {
+                        "commands": [
+                            {
+                                "outputs": [
+                                    {
+                                        "contextPath": "test.path",
+                                        "description": "description without dot",
+                                    }
+                                ]
+                            }
+                        ],
+                        "name": "test_command",
+                    },
+                },
+                True,
+                False,
+            ),
+            (
+                {
+                    "description": "a yml description with a dot at the end.",
+                    "script": {
+                        "commands": [
+                            {
+                                "arguments": [
+                                    {
+                                        "name": "test_arg",
+                                        "description": "description with dot.",
+                                    }
+                                ]
+                            }
+                        ],
+                        "name": "test_command",
+                    },
+                },
+                True,
+                True,
+            ),
+            (
+                {
+                    "description": "a yml description with a dot at the end.",
+                    "script": {
+                        "commands": [
+                            {
+                                "outputs": [
+                                    {
+                                        "contextPath": "test.path",
+                                        "description": "description with dot.",
+                                    }
+                                ]
+                            }
+                        ],
+                        "name": "test_command",
+                    },
+                },
+                True,
+                True,
+            ),
+            (
+                {
+                    "description": "a yml description that ends with a url www.test.com",
+                },
+                True,
+                True,
+            ),
+            (
+                {
+                    "description": "a yml with a description that has www.test.com in the middle of the sentence",
+                },
+                True,
+                False,
+            ),
+            (
+                {
+                    "description": "a yml with a description that has an 'example without dot at the end of the string.'",
+                },
+                True,
+                False,
+            ),
+            (
+                {
+                    "description": "a yml with a description that has a trailing new line.\n",
+                },
+                True,
+                True,
+            ),
+            (
+                {
+                    "description": "a yml with a description that has a trailing new line.\n",
+                },
+                True,
+                True,
+            ),
+            (
+                {
+                    "description": "a yml description with a dot at the end.",
+                    "script": {
+                        "commands": [
+                            {
+                                "outputs": [
+                                    {
+                                        "contextPath": "test.path",
+                                        "description": "",
+                                    }
+                                ]
+                            }
+                        ],
+                        "name": "test_command",
+                    },
+                },
+                True,
+                True,
+            ),
+            (
+                {
+                    "description": "a yml description with a dot in the bracket (like this.)",
+                    "script": {
+                        "commands": [
+                            {
+                                "outputs": [
+                                    {
+                                        "contextPath": "test.path",
+                                        "description": "a contextPath description with a dot in the bracket (like this.)",
+                                    }
+                                ]
+                            }
+                        ],
+                        "name": "test_command",
+                    },
+                },
+                True,
+                True,
+            ),
+        ],
+    )
+    def test_is_line_ends_with_dot(
+        self, repo, yml_content: dict, use_git: bool, expected_results: bool
+    ):
+        """
+        Given:
+            A yml content, use_git flag, and expected_results.
+            - Case 1: A yml content with a description without a dot at the end of the sentence, and use_git flag set to False.
+            - Case 2: A yml content with a command that an argument with a description without a dot at the end of the sentence, and use_git flag set to True.
+            - Case 3: A yml content with a command that a context path with a description without a dot at the end of the sentence, and use_git flag set to True.
+            - Case 4: A yml content with a command that an argument with a description with a dot at the end of the sentence, and use_git flag set to True.
+            - Case 5: A yml content with a command that a context path with a description with a dot at the end of the sentence, and use_git flag set to True.
+            - Case 6: A yml content with a description that ends with a url address and not dot, and use_git flag set to True.
+            - Case 7: A yml content with a description that has a url in the middle of the sentence and no comment in the end, and use_git flag set to True.
+            - Case 8: A yml content with a description that ends with example quotes with a dot only inside the example quotes, and use_git flag set to True.
+            - Case 9: A yml content with a description that ends with a dot followed by new line, and use_git flag set to True.
+            - Case 10: A yml content with an empty description, and use_git flag set to True.
+            - Case 11: A yml content with a command with an empty description for the output contextPath, and use_git flag set to True.
+            - Case 12: A yml content with a description and contextPath with a description that ends with a dot inside a bracket, and use_git flag set to True.
+        When:
+            - when executing the is_line_ends_with_dot method
+        Then:
+            - Case 1: make sure the validation pass.
+            - Case 2: make sure the validation fails.
+            - Case 3: make sure the validation fails.
+            - Case 4: make sure the validation pass.
+            - Case 5: make sure the validation pass.
+            - Case 6: make sure the validation pass.
+            - Case 7: make sure the validation fails.
+            - Case 8: make sure the validation fails.
+            - Case 9: make sure the validation pass.
+            - Case 10: make sure the validation pass.
+            - Case 11: make sure the validation pass.
+            - Case 12: make sure the validation pass.
+        """
+        pack = repo.create_pack("test")
+        integration = pack.create_integration(yml=yml_content)
+        structure_validator = StructureValidator(integration.yml.path)
+        integration_validator = IntegrationValidator(
+            structure_validator, json_file_path=integration.yml.path, using_git=use_git
+        )
+        assert integration_validator.is_line_ends_with_dot() is expected_results

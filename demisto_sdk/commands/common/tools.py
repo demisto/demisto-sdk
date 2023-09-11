@@ -16,7 +16,7 @@ from enum import Enum
 from functools import lru_cache
 from hashlib import sha1
 from pathlib import Path, PosixPath
-from subprocess import DEVNULL, PIPE, Popen, check_output
+from subprocess import PIPE, Popen
 from time import sleep
 from typing import (
     TYPE_CHECKING,
@@ -99,6 +99,7 @@ from demisto_sdk.commands.common.constants import (
     TRIGGER_DIR,
     TYPE_PWSH,
     UNRELEASE_HEADER,
+    URL_REGEX,
     UUID_REGEX,
     WIDGETS_DIR,
     XDRC_TEMPLATE_DIR,
@@ -132,13 +133,11 @@ GRAPH_SUPPORTED_FILE_TYPES = ["yml", "json"]
 
 
 class TagParser:
-    def __init__(self, tag_prefix: str, tag_suffix: str, remove_tag_text: bool = True):
-        self._tag_prefix = tag_prefix
-        self._tag_suffix = tag_suffix
-        self._pattern = re.compile(rf"{tag_prefix}((.|\s)+?){tag_suffix}")
-        self._remove_tag_text = remove_tag_text
+    def __init__(self, marketplace_tag):
+        self.pattern = rf"<~{marketplace_tag}>.*?</~{marketplace_tag}>|<~{marketplace_tag}>\n.*?\n</~{marketplace_tag}>\n"
+        self.only_tags_pattern = rf"<~{marketplace_tag}>|</~{marketplace_tag}>|<~{marketplace_tag}>\n|\n</~{marketplace_tag}>\n"
 
-    def parse(self, text: str, remove_tag: Optional[bool] = None) -> str:
+    def parse(self, text: str, remove_tag: Optional[bool] = False) -> str:
         """
         Given a prefix and suffix of an expected tag, remove the tag and the text it's wrapping, or just the wrappers
         Args:
@@ -148,65 +147,29 @@ class TagParser:
         Returns:
             Text with no wrapper tags.
         """
-        if text and 0 <= text.find(self._tag_prefix) < text.find(self._tag_suffix):
-            remove_tag = (
-                remove_tag if isinstance(remove_tag, bool) else self._remove_tag_text
-            )
-            # collect {orignal_text: text_to_replace}
-            matches = re.finditer(self._pattern, text)
-            replace_map = {}
-            for match in matches:
-                replace_val = "" if remove_tag else match.group(1)
-                replace_map[re.escape(match.group())] = replace_val
+        if remove_tag:
+            text = re.sub(self.pattern, "", text)
 
-            # replace collected text->replacement
-            pattern = re.compile("|".join(replace_map.keys()))
-            text = pattern.sub(lambda m: replace_map[re.escape(m.group(0))], text)
+        text = re.sub(self.only_tags_pattern, "", text)
         return text
 
 
 class MarketplaceTagParser:
-    XSOAR_PREFIX = "<~XSOAR>\n"
-    XSOAR_SUFFIX = "\n</~XSOAR>\n"
-    XSOAR_INLINE_PREFIX = "<~XSOAR>"
-    XSOAR_INLINE_SUFFIX = "</~XSOAR>"
-
-    XSIAM_PREFIX = "<~XSIAM>\n"
-    XSIAM_SUFFIX = "\n</~XSIAM>\n"
-    XSIAM_INLINE_PREFIX = "<~XSIAM>"
-    XSIAM_INLINE_SUFFIX = "</~XSIAM>"
-
-    XPANSE_PREFIX = "<~XPANSE>\n"
-    XPANSE_SUFFIX = "\n</~XPANSE>\n"
-    XPANSE_INLINE_PREFIX = "<~XPANSE>"
-    XPANSE_INLINE_SUFFIX = "</~XPANSE>"
+    XSOAR_TAG = "XSOAR"
+    XSIAM_TAG = "XSIAM"
+    XPANSE_TAG = "XPANSE"
+    XSOAR_SAAS_TAG = "XSOAR_SAAS"
+    XSOAR_ON_PREM_TAG = "XSOAR_ON_PREM"
 
     def __init__(self, marketplace: str = MarketplaceVersions.XSOAR.value):
+
         self.marketplace = marketplace
-        self._xsoar_parser = TagParser(
-            tag_prefix=self.XSOAR_PREFIX,
-            tag_suffix=self.XSOAR_SUFFIX,
-        )
-        self._xsoar_inline_parser = TagParser(
-            tag_prefix=self.XSOAR_INLINE_PREFIX,
-            tag_suffix=self.XSOAR_INLINE_SUFFIX,
-        )
-        self._xsiam_parser = TagParser(
-            tag_prefix=self.XSIAM_PREFIX,
-            tag_suffix=self.XSIAM_SUFFIX,
-        )
-        self._xsiam_inline_parser = TagParser(
-            tag_prefix=self.XSIAM_INLINE_PREFIX,
-            tag_suffix=self.XSIAM_INLINE_SUFFIX,
-        )
-        self._xpanse_parser = TagParser(
-            tag_prefix=self.XPANSE_PREFIX,
-            tag_suffix=self.XPANSE_SUFFIX,
-        )
-        self._xpanse_inline_parser = TagParser(
-            tag_prefix=self.XPANSE_INLINE_PREFIX,
-            tag_suffix=self.XPANSE_INLINE_SUFFIX,
-        )
+
+        self._xsoar_parser = TagParser(marketplace_tag=self.XSOAR_TAG)
+        self._xsiam_parser = TagParser(marketplace_tag=self.XSIAM_TAG)
+        self._xpanse_parser = TagParser(marketplace_tag=self.XPANSE_TAG)
+        self._xsoar_saas_parser = TagParser(marketplace_tag=self.XSOAR_SAAS_TAG)
+        self._xsoar_on_prem_parser = TagParser(marketplace_tag=self.XSOAR_ON_PREM_TAG)
 
     @property
     def marketplace(self):
@@ -215,35 +178,41 @@ class MarketplaceTagParser:
     @marketplace.setter
     def marketplace(self, marketplace):
         self._marketplace = marketplace
-        self._should_remove_xsoar_text = marketplace != MarketplaceVersions.XSOAR.value
+        self._should_remove_xsoar_text = marketplace not in [
+            MarketplaceVersions.XSOAR.value,
+            MarketplaceVersions.XSOAR_ON_PREM.value,
+            MarketplaceVersions.XSOAR_SAAS.value,
+        ]
         self._should_remove_xsiam_text = (
             marketplace != MarketplaceVersions.MarketplaceV2.value
         )
         self._should_remove_xpanse_text = (
             marketplace != MarketplaceVersions.XPANSE.value
         )
+        self._should_remove_xsoar_saas_text = (
+            marketplace != MarketplaceVersions.XSOAR_SAAS.value
+        )
+        self._should_remove_xsoar_on_prem_text = marketplace not in [
+            MarketplaceVersions.XSOAR_ON_PREM.value,
+            MarketplaceVersions.XSOAR.value,
+        ]
 
     def parse_text(self, text):
-        # the order of parse is important. inline should always be checked after paragraph tag
-        # xsoar->xsoar_inline->xsiam->xsiam_inline->xpanse->xpanse_inline
-        return self._xpanse_inline_parser.parse(
-            remove_tag=self._should_remove_xpanse_text,
-            text=self._xpanse_parser.parse(
-                remove_tag=self._should_remove_xpanse_text,
-                text=self._xsiam_inline_parser.parse(
-                    remove_tag=self._should_remove_xsiam_text,
-                    text=self._xsiam_parser.parse(
-                        remove_tag=self._should_remove_xsiam_text,
-                        text=self._xsoar_inline_parser.parse(
-                            remove_tag=self._should_remove_xsoar_text,
-                            text=self._xsoar_parser.parse(
-                                remove_tag=self._should_remove_xsoar_text,
-                                text=text,
-                            ),
-                        ),
-                    ),
-                ),
-            ),
+        # Remove the tags of the products if specified should_remove.
+        text = self._xsoar_parser.parse(
+            remove_tag=self._should_remove_xsoar_text, text=text
+        )
+        text = self._xsoar_saas_parser.parse(
+            remove_tag=self._should_remove_xsoar_saas_text, text=text
+        )
+        text = self._xsiam_parser.parse(
+            remove_tag=self._should_remove_xsiam_text, text=text
+        )
+        text = self._xsoar_on_prem_parser.parse(
+            remove_tag=self._should_remove_xsoar_on_prem_text, text=text
+        )
+        return self._xpanse_parser.parse(
+            remove_tag=self._should_remove_xpanse_text, text=text
         )
 
 
@@ -311,6 +280,7 @@ def get_files_in_dir(
     file_endings: list,
     recursive: bool = True,
     ignore_test_files: bool = False,
+    exclude_list: Optional[list] = None,
 ) -> list:
     """
     Gets the project directory and returns the path of all yml, json and py files in it
@@ -318,10 +288,14 @@ def get_files_in_dir(
         project_dir: String path to the project_dir
         file_endings: List of file endings to search for in a given directory
         recursive: Indicates whether search should be recursive or not
+        exclude_list: List of file/directory names to exclude.
     :return: The path of files with file_endings in the current dir
     """
     files = []
     excludes = []
+    exclude_all_list = exclude_list.copy() if exclude_list else []
+    if ignore_test_files:
+        exclude_all_list.extend(TESTS_AND_DOC_DIRECTORIES)
 
     project_path = Path(project_dir)
     glob_function = project_path.rglob if recursive else project_path.glob
@@ -329,10 +303,9 @@ def get_files_in_dir(
         pattern = f"*.{file_type}"
         if project_dir.endswith(file_type):
             return [project_dir]
-        if ignore_test_files:
-            for test_dir in TESTS_AND_DOC_DIRECTORIES:
-                exclude_pattern = f"**/{test_dir}/" + pattern
-                excludes.extend([str(f) for f in glob_function(exclude_pattern)])
+        for exclude_item in exclude_all_list:
+            exclude_pattern = f"**/{exclude_item}/" + pattern
+            excludes.extend([str(f) for f in glob_function(exclude_pattern)])
         files.extend([str(f) for f in glob_function(pattern)])
     return list(set(files) - set(excludes))
 
@@ -366,7 +339,7 @@ def src_root() -> Path:
     Returns:
         Path: src root path.
     """
-    git_dir = git.Repo(Path.cwd(), search_parent_directories=True).working_tree_dir
+    git_dir = GitUtil().repo.working_tree_dir
 
     return Path(git_dir) / "demisto_sdk"  # type: ignore
 
@@ -463,10 +436,7 @@ def get_local_remote_file(
     tag: str = "master",
     return_content: bool = False,
 ):
-    repo = git.Repo(
-        search_parent_directories=True
-    )  # the full file path could be a git file path
-    repo_git_util = GitUtil(repo)
+    repo_git_util = GitUtil()
     git_path = repo_git_util.get_local_remote_file_path(full_file_path, tag)
     file_content = repo_git_util.get_local_remote_file_content(git_path)
     if return_content:
@@ -481,7 +451,21 @@ def get_remote_file_from_api(
     git_content_config: Optional[GitContentConfig],
     tag: str = "master",
     return_content: bool = False,
-):
+    encoding: Optional[str] = None,
+) -> Union[bytes, Dict, List]:
+    """
+    Returns a remote file from Github/Gitlab repo using the api
+
+    Args:
+        full_file_path: file path in the GitHub/Gitlab repository
+        git_content_config: GitContentConfig config object
+        tag: from which commit / branch to take the file in the remote repository
+        return_content: whether to return the raw content of the file (bytes)
+        encoding: whether to decode the remote file with special encoding
+
+    Returns:
+        bytes | Dict | List: raw response of the file or as a python object (list, dict)
+    """
     if not git_content_config:
         git_content_config = GitContentConfig()
     if git_content_config.git_provider == GitProvider.GitLab:
@@ -543,9 +527,14 @@ def get_remote_file_from_api(
             f"Reason: {err_msg}[/yellow]"
         )
         return {}
+
     file_content = res.content
+
     if return_content:
         return file_content
+    if encoding:
+        file_content = file_content.decode(encoding)  # type: ignore[assignment]
+
     return get_file_details(file_content, full_file_path)
 
 
@@ -557,6 +546,8 @@ def get_file_details(
         file_details = json.loads(file_content)
     elif full_file_path.endswith(("yml", "yaml")):
         file_details = yaml.load(file_content)
+    elif full_file_path.endswith(".pack-ignore"):
+        return file_content
     # if neither yml nor json then probably a CHANGELOG or README file.
     else:
         file_details = {}
@@ -709,7 +700,7 @@ def get_child_files(directory):
     child_files = [
         os.path.join(directory, path)
         for path in os.listdir(directory)
-        if os.path.isfile(os.path.join(directory, path))
+        if Path(directory, path).is_file()
     ]
     return child_files
 
@@ -936,7 +927,7 @@ def get_api_module_ids(file_list) -> Set:
                 if f"/{API_MODULES_PACK}/Scripts/" in parent:
                     pf = parent
             if parent != pf:
-                api_module_set.add(os.path.basename(pf))
+                api_module_set.add(Path(pf).name)
     return api_module_set
 
 
@@ -1082,12 +1073,12 @@ def old_get_release_notes_file_path(file_path):
         return file_path
 
     # outside of packages, change log file will include the original file name.
-    file_name = os.path.basename(file_path)
+    file_name = Path(file_path).name
     return os.path.join(dir_name, os.path.splitext(file_name)[0] + "_CHANGELOG.md")
 
 
 def old_get_latest_release_notes_text(rn_path):
-    if not os.path.isfile(rn_path):
+    if not Path(rn_path).is_file():
         # releaseNotes were not provided
         return None
 
@@ -1543,44 +1534,6 @@ def get_docker_images_from_yml(script_obj) -> List[str]:
     return imgs
 
 
-def get_python_version(docker_image):
-    """
-    Get the python version of a docker image
-    Arguments:
-        docker_image {string} -- Docker image being used by the project
-    Return:
-        python version as a float (2.7, 3.7)
-    Raises:
-        ValueError -- if version is not supported
-    """
-    py_ver = check_output(
-        [
-            "docker",
-            "run",
-            "--rm",
-            docker_image,
-            "python",
-            "-c",
-            "import sys;logger.info('{}.{}'.format(sys.version_info[0], sys.version_info[1]))",
-        ],
-        text=True,
-        stderr=DEVNULL,
-    ).strip()
-    logger.debug(
-        f"Detected python version: [{py_ver}] for docker image: {docker_image}"
-    )
-
-    py_num = float(py_ver)
-    if py_num < 2.7 or (3 < py_num < 3.4):  # pylint can only work on python 3.4 and up
-        raise ValueError(
-            "Python vesion for docker image: {} is not supported: {}. "
-            "We only support python 2.7.* and python3 >= 3.4.".format(
-                docker_image, py_num
-            )
-        )
-    return py_num
-
-
 def get_pipenv_dir(py_version, envs_dirs_base):
     """
     Get the direcotry holding pipenv files for the specified python version
@@ -2002,9 +1955,9 @@ def is_external_repository() -> bool:
 
     """
     try:
-        git_repo = git.Repo(os.getcwd(), search_parent_directories=True)
+        git_repo = GitUtil().repo
         private_settings_path = os.path.join(git_repo.working_dir, ".private-repo-settings")  # type: ignore
-        return os.path.exists(private_settings_path)
+        return Path(private_settings_path).exists()
     except git.InvalidGitRepositoryError:
         return True
 
@@ -2060,10 +2013,10 @@ def get_content_path(relative_path: Optional[Path] = None) -> Path:
             )
     try:
         if content_path := os.getenv("DEMISTO_SDK_CONTENT_PATH"):
-            git_repo = git.Repo(content_path)
+            git_repo = GitUtil(Path(content_path), search_parent_directories=False).repo
             logger.debug(f"Using content path: {content_path}")
         else:
-            git_repo = git.Repo(Path.cwd(), search_parent_directories=True)
+            git_repo = GitUtil().repo
 
         remote_url = git_repo.remote().urls.__next__()
         is_fork_repo = "content" in remote_url
@@ -2166,7 +2119,7 @@ def is_file_from_content_repo(file_path: str) -> Tuple[bool, str]:
         str: relative path of file in content repo.
     """
     try:
-        git_repo = git.Repo(os.getcwd(), search_parent_directories=True)
+        git_repo = GitUtil().repo
         remote_url = git_repo.remote().urls.__next__()
         is_fork_repo = "content" in remote_url
         is_external_repo = is_external_repository()
@@ -2441,71 +2394,71 @@ def _get_file_id(file_type: str, file_content: Dict):
 
 def is_path_of_integration_directory(path: str) -> bool:
     """Returns true if directory is integration directory false if not."""
-    return os.path.basename(path) == INTEGRATIONS_DIR
+    return Path(path).name == INTEGRATIONS_DIR
 
 
 def is_path_of_script_directory(path: str) -> bool:
     """Returns true if directory is script directory false if not."""
-    return os.path.basename(path) == SCRIPTS_DIR
+    return Path(path).name == SCRIPTS_DIR
 
 
 def is_path_of_playbook_directory(path: str) -> bool:
     """Returns true if directory is playbook directory false if not."""
-    return os.path.basename(path) == PLAYBOOKS_DIR
+    return Path(path).name == PLAYBOOKS_DIR
 
 
 def is_path_of_test_playbook_directory(path: str) -> bool:
     """Returns true if directory is test_playbook directory false if not."""
-    return os.path.basename(path) == TEST_PLAYBOOKS_DIR
+    return Path(path).name == TEST_PLAYBOOKS_DIR
 
 
 def is_path_of_report_directory(path: str) -> bool:
     """Returns true if directory is report directory false if not."""
-    return os.path.basename(path) == REPORTS_DIR
+    return Path(path).name == REPORTS_DIR
 
 
 def is_path_of_dashboard_directory(path: str) -> bool:
     """Returns true if directory is integration directory false if not."""
-    return os.path.basename(path) == DASHBOARDS_DIR
+    return Path(path).name == DASHBOARDS_DIR
 
 
 def is_path_of_widget_directory(path: str) -> bool:
     """Returns true if directory is integration directory false if not."""
-    return os.path.basename(path) == WIDGETS_DIR
+    return Path(path).name == WIDGETS_DIR
 
 
 def is_path_of_incident_field_directory(path: str) -> bool:
     """Returns true if directory is integration directory false if not."""
-    return os.path.basename(path) == INCIDENT_FIELDS_DIR
+    return Path(path).name == INCIDENT_FIELDS_DIR
 
 
 def is_path_of_incident_type_directory(path: str) -> bool:
     """Returns true if directory is integration directory false if not."""
-    return os.path.basename(path) == INCIDENT_TYPES_DIR
+    return Path(path).name == INCIDENT_TYPES_DIR
 
 
 def is_path_of_indicator_field_directory(path: str) -> bool:
     """Returns true if directory is integration directory false if not."""
-    return os.path.basename(path) == INDICATOR_FIELDS_DIR
+    return Path(path).name == INDICATOR_FIELDS_DIR
 
 
 def is_path_of_layout_directory(path: str) -> bool:
     """Returns true if directory is integration directory false if not."""
-    return os.path.basename(path) == LAYOUTS_DIR
+    return Path(path).name == LAYOUTS_DIR
 
 
 def is_path_of_pre_process_rules_directory(path: str) -> bool:
     """Returns true if directory is pre-processing rules directory, false if not."""
-    return os.path.basename(path) == PRE_PROCESS_RULES_DIR
+    return Path(path).name == PRE_PROCESS_RULES_DIR
 
 
 def is_path_of_lists_directory(path: str) -> bool:
-    return os.path.basename(path) == LISTS_DIR
+    return Path(path).name == LISTS_DIR
 
 
 def is_path_of_classifier_directory(path: str) -> bool:
     """Returns true if directory is integration directory false if not."""
-    return os.path.basename(path) == CLASSIFIERS_DIR
+    return Path(path).name == CLASSIFIERS_DIR
 
 
 def get_parent_directory_name(path: str, abs_path: bool = False) -> str:
@@ -2518,7 +2471,7 @@ def get_parent_directory_name(path: str, abs_path: bool = False) -> str:
     parent_dir_name = os.path.dirname(os.path.abspath(path))
     if abs_path:
         return parent_dir_name
-    return os.path.basename(parent_dir_name)
+    return Path(parent_dir_name).name
 
 
 def get_code_lang(file_data: dict, file_entity: str) -> str:
@@ -2769,7 +2722,7 @@ def get_file_displayed_name(file_path):
     elif file_type == FileType.REPUTATION:
         return get_json(file_path).get("id")
     else:
-        return os.path.basename(file_path)
+        return Path(file_path).name
 
 
 def compare_context_path_in_yml_and_readme(yml_dict, readme_content):
@@ -2950,7 +2903,7 @@ def is_pack_path(input_path: str) -> bool:
         - True if the input path is for a given pack.
         - False if the input path is not for a given pack.
     """
-    return os.path.basename(os.path.dirname(input_path)) == PACKS_DIR
+    return Path(input_path).parent.name == PACKS_DIR
 
 
 def is_xsoar_supported_pack(file_path: str) -> bool:
@@ -3194,7 +3147,7 @@ def extract_docker_image_from_text(text: str, with_no_tag: bool = False):
 
 def get_current_repo() -> Tuple[str, str, str]:
     try:
-        git_repo = git.Repo(os.getcwd(), search_parent_directories=True)
+        git_repo = GitUtil().repo
         parsed_git = giturlparse.parse(git_repo.remotes.origin.url)
         host = parsed_git.host
         if "@" in host:
@@ -3552,7 +3505,7 @@ def get_display_name(file_path, file_data={}) -> str:
         name = r_name.get("report_name")
 
     else:
-        name = os.path.basename(file_path)
+        name = Path(file_path).name
     return name
 
 
@@ -3876,6 +3829,8 @@ def sha1_update_from_dir(directory: Union[str, Path], hash_):
     """This will recursivly iterate all the files in the directory and update the hash object"""
     assert Path(directory).is_dir()
     for path in sorted(Path(directory).iterdir(), key=lambda p: str(p).lower()):
+        if path.name == "__pycache__":
+            continue
         hash_.update(path.name.encode())
         if path.is_file():
             hash_ = sha1_update_from_file(path, hash_)
@@ -3922,3 +3877,72 @@ def extract_error_codes_from_file(pack_name: str) -> Set[str]:
                     error_codes_list.extend(error_codes)
 
     return set(error_codes_list)
+
+
+def is_string_ends_with_url(str: str) -> bool:
+    """
+    Args:
+        str: a string to test.
+    Returns: True if the string ends with a url adress. Otherwise, return False.
+    """
+    return bool(re.search(f"{URL_REGEX}$", str))
+
+
+def strip_description(description):
+    """
+    Args:
+        description: a description string.
+    Returns: the description stripped from quotes mark if they appear both in the beggining and in the end of the string.
+    """
+    description = description.strip()
+    return (
+        description.strip('"')
+        if description.startswith('"') and description.endswith('"')
+        else description.strip("'")
+        if description.startswith("'") and description.endswith("'")
+        else description
+    )
+
+
+def is_file_in_pack(file: Path, pack_name: str) -> bool:
+    """
+    Return wether the given file is under the given pack.
+    Args:
+        file: The file to check.
+        pack_name: The name of the pack we want to ensure the given file is under.
+    """
+    return (
+        len(file.parts) > 2 and file.parts[0] == "Packs" and file.parts[1] == pack_name
+    )
+
+
+def parse_int_or_default(value: Any, default: int) -> int:
+    """
+    Parse int or return default value
+    Args:
+        value: value to parse
+        default: default value to return if parsing failed
+
+    Returns:
+        int: parsed value or default value
+
+    """
+    try:
+        return int(value)
+    except (ValueError, TypeError):
+        return default
+
+
+def is_sentence_ends_with_bracket(description: str):
+    """
+    Check if the sentence ends with a bracket and valid.
+    Args:
+        description: The description sentence to test.
+
+    Returns:
+        boolean: True if the sentence ends with a bracket and valid.
+
+    """
+    return (
+        description.endswith(")") and len(description) >= 2 and description[-2] == "."
+    )

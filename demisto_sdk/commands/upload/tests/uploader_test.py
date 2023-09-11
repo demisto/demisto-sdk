@@ -35,6 +35,7 @@ from demisto_sdk.commands.content_graph.objects.integration_script import (
 )
 from demisto_sdk.commands.content_graph.objects.layout import Layout
 from demisto_sdk.commands.content_graph.objects.mapper import Mapper
+from demisto_sdk.commands.content_graph.objects.pack_metadata import PackMetadata
 from demisto_sdk.commands.content_graph.objects.playbook import Playbook
 from demisto_sdk.commands.content_graph.objects.script import Script
 from demisto_sdk.commands.content_graph.objects.widget import Widget
@@ -921,6 +922,9 @@ class TestZippedPackUpload:
         mocker.patch.object(
             API_CLIENT, "upload_content_packs", return_value=({}, 200, None)
         )
+        mocker.patch.object(
+            PackMetadata, "_get_tags_from_landing_page", retrun_value={}
+        )
 
         with TemporaryDirectory() as dir:
             click.Context(command=upload).invoke(
@@ -1100,6 +1104,7 @@ def test_zip_multiple_packs(tmp_path: Path, integration, mocker):
     shutil.rmtree(pack_to_zip.path)  # leave only the zip
     zipped_pack_path = tmp_path / "zipped.zip"
     mocker.patch.object(BaseContent, "from_path", side_effect=[pack0, pack1, None])
+    mocker.patch.object(PackMetadata, "_get_tags_from_landing_page", retrun_value={})
     zip_multiple_packs(
         [pack0.path, pack1.path, zipped_pack_path],
         MarketplaceVersions.XSOAR,

@@ -1,5 +1,6 @@
 import os
 import sys
+from pathlib import Path
 from typing import Dict, Optional
 
 from demisto_sdk.commands.common.constants import PACKS_DIR, FileType
@@ -33,7 +34,7 @@ class GenericModuleUnifier:
         self.pack_name = get_pack_name(file_path=self.input_path)
         self.pack_path = os.path.join(PACKS_DIR, self.pack_name)
 
-        self.input_file_name = os.path.basename(self.input_path).rstrip(".json")
+        self.input_file_name = Path(self.input_path).name.rstrip(".json")
         self.use_force = force
         self.marketplace = marketplace
 
@@ -111,7 +112,7 @@ class GenericModuleUnifier:
             unified_generic_module_json: unified GenericModule
 
         """
-        if os.path.isfile(self.dest_path) and self.use_force is False:
+        if Path(self.dest_path).is_file() and self.use_force is False:
             raise ValueError(
                 f"Output file already exists: {self.dest_path}."
                 " Make sure to remove this file from source control, set a different output dir or set the"

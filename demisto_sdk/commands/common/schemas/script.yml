@@ -90,6 +90,8 @@ mapping:
   subtype:
     type: str
     enum: ['python2', 'python3']
+  engineinfo:
+    type: str
   contentitemexportablefields:
     type: map
     mapping:
@@ -106,7 +108,7 @@ mapping:
     type: seq
     sequence:
       - type: str
-        enum: ['xsoar', 'marketplacev2', 'xpanse']
+        enum: ['xsoar', 'marketplacev2', 'xpanse', 'xsoar_saas', 'xsoar_on_prem']
   skipprepare:
     type: seq
     sequence:

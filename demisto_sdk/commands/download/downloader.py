@@ -652,9 +652,8 @@ class Downloader:
         """
         output_pack_path = self.output_pack_path
         if not (
-            os.path.isdir(output_pack_path)
-            and os.path.basename(os.path.dirname(os.path.abspath(output_pack_path)))
-            == "Packs"
+            Path(output_pack_path).is_dir()
+            and Path(output_pack_path).absolute().parent.name == "Packs"
         ):
             logger.info(
                 f"[red]Path {output_pack_path} is not a valid Path pack. The designated output pack's path is"
@@ -669,9 +668,7 @@ class Downloader:
         For example check out the PACK_CONTENT variable in downloader_test.py
         """
         for content_entity_path in get_child_directories(self.output_pack_path):
-            raw_content_entity: str = os.path.basename(
-                os.path.normpath(content_entity_path)
-            )
+            raw_content_entity: str = Path(os.path.normpath(content_entity_path)).name
             content_entity: str = raw_content_entity
             if content_entity in (INTEGRATIONS_DIR, SCRIPTS_DIR):
                 # If entity is of type integration/script it will have dirs, otherwise files
@@ -774,7 +771,7 @@ class Downloader:
         ):
             if os.path.isdir(entity_instance_path):
                 _, main_file_path = get_yml_paths_in_dir(entity_instance_path)
-            elif os.path.isfile(entity_instance_path):
+            elif Path(entity_instance_path).is_file():
                 main_file_path = entity_instance_path
 
             if main_file_path:
@@ -783,7 +780,7 @@ class Downloader:
         # Entities which are json files (md files are ignored - changelog/readme)
         else:
             if (
-                os.path.isfile(entity_instance_path)
+                Path(entity_instance_path).is_file()
                 and retrieve_file_ending(entity_instance_path) == "json"
             ):
                 main_file_data = get_json(entity_instance_path)
@@ -1190,7 +1187,7 @@ class Downloader:
         file_ending: str = custom_content_object["file_ending"]
 
         dir_output_path: str = os.path.join(self.output_pack_path, file_entity)
-        file_output_name: str = os.path.basename(file_path)
+        file_output_name: str = Path(file_path).name
         file_output_path: str = os.path.join(dir_output_path, file_output_name)
         try:
             shutil.move(src=file_path, dst=file_output_path)

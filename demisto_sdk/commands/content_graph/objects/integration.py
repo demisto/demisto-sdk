@@ -22,12 +22,13 @@ class Command(BaseContent, content_type=ContentType.COMMAND):  # type: ignore[ca
     name: str
 
     # From HAS_COMMAND relationship
-    deprecated: bool = False
-    description: Optional[str] = ""
+    deprecated: bool = Field(False)
+    description: Optional[str] = Field("")
 
     # missing attributes in DB
-    node_id: str = ""
-    object_id: str = Field("", alias="id")
+    node_id: str = Field("", exclude=True)
+    object_id: str = Field("", alias="id", exclude=True)
+    marketplaces: List[MarketplaceVersions] = Field([], exclude=True)
 
     @property
     def integrations(self) -> List["Integration"]:
@@ -42,8 +43,8 @@ class Command(BaseContent, content_type=ContentType.COMMAND):  # type: ignore[ca
 
 
 class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # type: ignore[call-arg]
-    is_fetch: bool = False
-    is_fetch_events: bool = False
+    is_fetch: bool = Field(False, alias="isfetch")
+    is_fetch_events: bool = Field(False, alias="isfetchevents")
     is_fetch_events_and_assets: bool = False
     is_feed: bool = False
     category: str
@@ -70,15 +71,31 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
         ]
         self.commands = commands
 
+    def summary(
+        self,
+        marketplace: Optional[MarketplaceVersions] = None,
+        incident_to_alert: bool = False,
+    ) -> dict:
+        summary = super().summary(marketplace, incident_to_alert)
+        if self.unified_data:
+            summary["name"] = self.unified_data.get("display")
+        return summary
+
     def metadata_fields(self):
-        return {
-            "name": True,
-            "description": True,
-            "category": True,
-            "commands": {
-                "__all__": {"name": True, "description": True}
-            },  # for all commands, keep the name and description
-        }
+        return (
+            super()
+            .metadata_fields()
+            .union(
+                {
+                    "category": True,
+                    "commands": {
+                        "__all__": {"name": True, "description": True}
+                    },  # for all commands, keep the name and description
+                    "is_fetch": True,
+                    "is_fetch_events": True,
+                }
+            )
+        )
 
     def prepare_for_upload(
         self,

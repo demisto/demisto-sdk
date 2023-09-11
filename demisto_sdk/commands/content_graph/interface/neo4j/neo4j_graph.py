@@ -90,7 +90,6 @@ def _parse_node(element_id: str, node: dict) -> BaseContent:
     obj: BaseContent
     content_type = node.get("content_type", "")
     if node.get("not_in_repository"):
-        node["name"] = node.get("object_id", "")
         obj = UnknownContent.parse_obj(node)
 
     else:
@@ -568,7 +567,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
     ) -> None:
         logger.info("Creating graph relationships...")
         with self.driver.session() as session:
-            session.execute_write(create_relationships, relationships)
+            session.execute_write(create_relationships, relationships, timeout=120)
             if self._rels_to_preserve:
                 session.execute_write(
                     return_preserved_relationships, self._rels_to_preserve

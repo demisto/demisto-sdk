@@ -53,7 +53,7 @@ def to_neo4j_map(properties: dict) -> str:
     return params_str
 
 
-def run_query(tx: Transaction, query: str, **kwargs: Dict[str, Any]) -> Result:
+def run_query(tx: Transaction, query: str, **kwargs) -> Result:
     try:
         start_time: datetime = datetime.now()
         logger.debug(f"Running query:\n{query}")

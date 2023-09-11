@@ -2,6 +2,7 @@ import contextlib
 import logging
 import os
 import sys
+from configparser import ConfigParser
 from io import StringIO
 from pathlib import Path
 from shutil import copyfile
@@ -165,7 +166,7 @@ class MyRepo:
 @pytest.fixture(autouse=False)
 def set_git_test_env(mocker):
     mocker.patch.object(ValidateManager, "setup_git_params", return_value=True)
-    mocker.patch.object(Content, "git", return_value=MyRepo())
+    mocker.patch.object(Content, "git_util", return_value=GitUtil())
     mocker.patch.object(ValidateManager, "setup_prev_ver", return_value="origin/master")
     mocker.patch.object(GitUtil, "_is_file_git_ignored", return_value=False)
 
@@ -176,7 +177,7 @@ class TestValidators:
     @classmethod
     def setup_class(cls):
         for dir_to_create in DIR_LIST:
-            if not os.path.exists(dir_to_create):
+            if not Path(dir_to_create).exists():
                 cls.CREATED_DIRS.append(dir_to_create)
                 os.makedirs(dir_to_create)
         copyfile(CONF_JSON_MOCK_PATH, CONF_PATH)
@@ -185,7 +186,7 @@ class TestValidators:
     def teardown_class(cls):
         Path(CONF_PATH).unlink()
         for dir_to_delete in cls.CREATED_DIRS:
-            if os.path.exists(dir_to_delete):
+            if Path(dir_to_delete).exists():
                 os.rmdir(dir_to_delete)
 
     INPUTS_IS_VALID_VERSION = [
@@ -1694,8 +1695,9 @@ class TestValidators:
         """
         rn = pack.create_release_notes("1_0_1", is_bc=True)
         rn_config_path: str = str(rn.path).replace("md", "json")
-        validate_manager: ValidateManager = ValidateManager()
-        assert validate_manager.run_validations_on_file(rn_config_path, list())
+        with ChangeCWD(pack.repo_path):
+            validate_manager: ValidateManager = ValidateManager()
+            assert validate_manager.run_validations_on_file(rn_config_path, list())
 
     @pytest.mark.parametrize(
         "answer, integration_id", [(True, "MyIntegration"), (False, "MyIntegration  ")]
@@ -1791,7 +1793,6 @@ class TestValidators:
             "Packs/pack_id/Integrations/integration_id/command_examples",
             "Packs/pack_id/Integrations/integration_id/test.txt",
             "Packs/pack_id/.secrets-ignore",
-            "Packs/pack_id/.pack-ignore",
         ],
     )
     def test_ignore_files_irrelevant_for_validation_test_file(self, file_path: str):
@@ -2340,19 +2341,23 @@ def test_check_file_relevance_and_format_path_type_missing_file(mocker):
     - file type is not supported
 
     Then
-    - return None, call error handler
+    - make sure that empty strings are returned
+    - make sure BA102 is returned as the file cannot be recognized
     """
     validator_obj = ValidateManager(is_external_repo=True, check_is_unskipped=False)
-    mocked_handler = mocker.patch.object(
-        validator_obj, "handle_error", return_value=False
-    )
+    logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
+
     mocker.patch(
         "demisto_sdk.commands.validate.validate_manager.find_type", return_value=None
     )
     assert validator_obj.check_file_relevance_and_format_path(
         "Packs/type_missing_filename", None, set()
     ) == ("", "", False)
-    mocked_handler.assert_called()
+
+    assert str_in_call_args_list(
+        logger_error.call_args_list,
+        "[BA102] - File Packs/type_missing_filename is not supported in the validate command",
+    )
 
 
 @pytest.mark.parametrize(
@@ -2830,12 +2835,15 @@ def test_validate_contributors_file(repo):
     """
 
     pack = repo.create_pack()
-    contributors_file = pack.create_contributors_file('["- Test UserName"]')
+    with ChangeCWD(repo.path):
+        contributors_file = pack.create_contributors_file('["- Test UserName"]')
 
-    validate_manager = ValidateManager(
-        check_is_unskipped=False, file_path=contributors_file.path, skip_conf_json=True
-    )
-    assert validate_manager.run_validation_on_specific_files()
+        validate_manager = ValidateManager(
+            check_is_unskipped=False,
+            file_path=contributors_file.path,
+            skip_conf_json=True,
+        )
+        assert validate_manager.run_validation_on_specific_files()
 
 
 def test_validate_pack_name(repo):
@@ -3117,22 +3125,177 @@ def test_validate_no_disallowed_terms_in_customer_facing_docs_end_to_end(repo, m
     integration_readme_file = integration.readme
     integration_description_file = integration.description
     playbook_readme_file = pack.create_playbook(readme=file_content).readme
+    with ChangeCWD(pack.repo_path):
+        validate_manager = ValidateManager()
+
+        assert not validate_manager.run_validations_on_file(
+            file_path=rn_file.path, pack_error_ignore_list=[]
+        )
+        assert not validate_manager.run_validations_on_file(
+            file_path=integration_readme_file.path, pack_error_ignore_list=[]
+        )
+        assert not validate_manager.run_validations_on_file(
+            file_path=integration_description_file.path, pack_error_ignore_list=[]
+        )
+        assert not validate_manager.run_validations_on_file(
+            file_path=playbook_readme_file.path, pack_error_ignore_list=[]
+        )
+
+        # Assure errors were logged (1 error per validated file)
+        assert count_str_in_call_args_list(logger_error.call_args_list, "BA125") == 4
+        pass
+
+
+@pytest.mark.parametrize(
+    "modified_files, new_file_content, remote_file_content, local_file_content, expected_results",
+    [
+        (
+            {"Packs/test/.pack-ignore"},
+            "[file:test.yml]\nignore=BA108,BA109\n",
+            "[file:test.yml]\nignore=BA108,BA109,DS107\n",
+            "",
+            {"Packs/test/Integrations/test/test.yml"},
+        ),
+        (
+            {"Packs/test/.pack-ignore"},
+            "[file:test.yml]\nignore=BA108,BA109,DS107\n",
+            "[file:test.yml]\nignore=BA108,BA109,DS107\n",
+            "",
+            set(),
+        ),
+        (
+            {"Packs/test1/.pack-ignore"},
+            "[file:test.yml]\nignore=BA108,BA109,DS107\n",
+            "[file:test2.yml]\nignore=BA108,BA109,DS107\n",
+            "",
+            {
+                "Packs/test1/Integrations/test/test.yml",
+                "Packs/test1/Integrations/test2/test2.yml",
+            },
+        ),
+        (
+            {"Packs/test/.pack-ignore"},
+            "[file:test.yml]\nignore=BA108\n",
+            b"",
+            "",
+            {
+                "Packs/test/Integrations/test/test.yml",
+            },
+        ),
+        (
+            {"Packs/test1/.pack-ignore"},
+            "[file:test.yml]\nignore=BA108,BA109,DS107\n[file:test2.yml]\nignore=BA108,BA109,DS107\n",
+            {},
+            "[file:test.yml]\nignore=BA108,BA109,DS107\n",
+            {"Packs/test1/Integrations/test2/test2.yml"},
+        ),
+    ],
+)
+def test_get_all_files_edited_in_pack_ignore(
+    mocker,
+    modified_files,
+    new_file_content,
+    remote_file_content,
+    local_file_content,
+    expected_results,
+):
+    """
+    Given:
+    - modified files set, edited pack-ignore mock, and master's pack-ignore mock.
+    - Case 1: pack-ignore mocks which vary by 1 validation.
+    - Case 2: pack-ignore mocks which no differences.
+    - Case 3: pack-ignore mocks where each file is pointed to a different integration yml.
+    - Case 4: old .pack-ignore that is empty and current .pack-ignore that was updated with ignored validation
+    - Case 5: old .pack-ignore which is not in the remote branch repo, but only exist in the local branch
+
+    When:
+    - Running get_all_files_edited_in_pack_ignore.
+
+    Then:
+    - Ensure that the right files were returned.
+    - Case 1: Should return the file path only from the relevant pack (there's a similar file in a different pack)
+    - Case 2: Should return empty set of extra files to test.
+    - Case 3: Should return both file names.
+    - Case 4: Ensure the file that was changed in the .pack-ignore is collected
+    - Case 5: Ensure the file that was changed in the .pack-ignore is collected from the local repo
+    """
+    mocker.patch.object(
+        GitUtil,
+        "get_all_files",
+        return_value={
+            Path("Packs/test/Integrations/test/test.yml"),
+            Path("Packs/test1/Integrations/test/test.yml"),
+            Path("Packs/test1/Integrations/test2/test2.yml"),
+        },
+    )
+    mocker.patch(
+        "demisto_sdk.commands.validate.validate_manager.get_remote_file",
+        return_value=remote_file_content,
+    )
+    mocker.patch.object(GitUtil, "find_primary_branch", return_value="main")
+    mocker.patch.object(
+        GitUtil, "get_local_remote_file_content", return_value=local_file_content
+    )
+    validate_manager = ValidateManager()
+    config = ConfigParser(allow_no_value=True)
+    config.read_string(new_file_content)
+
+    mocker.patch(
+        "demisto_sdk.commands.validate.validate_manager.get_pack_ignore_content",
+        return_value=config,
+    )
+    assert (
+        validate_manager.get_all_files_edited_in_pack_ignore(modified_files)
+        == expected_results
+    )
+
+
+def test_get_all_files_edited_in_pack_ignore_with_git_error(mocker):
+    """
+    Given:
+    - empty .pack-ignore returned from git api
+    - an exception raised when trying to retrieve the .pack-ignore locally
+
+    When:
+    - Running get_all_files_edited_in_pack_ignore.
+
+    Then:
+    - Ensure no exception is raised
+    - ensure that the updated file from the new .pack-ignore is found
+    """
+    from git import GitCommandError
+
+    logger_warning = mocker.patch.object(logging.getLogger("demisto-sdk"), "warning")
+
+    mocker.patch.object(
+        GitUtil,
+        "get_all_files",
+        return_value={
+            Path("Packs/test/Integrations/test/test.yml"),
+            Path("Packs/test1/Integrations/test/test.yml"),
+            Path("Packs/test1/Integrations/test2/test2.yml"),
+        },
+    )
+
+    mocker.patch(
+        "demisto_sdk.commands.validate.validate_manager.get_remote_file",
+        return_value={},
+    )
+    mocker.patch.object(GitUtil, "find_primary_branch", return_value="main")
+    mocker.patch.object(
+        GitUtil, "get_local_remote_file_content", side_effect=GitCommandError("error")
+    )
 
     validate_manager = ValidateManager()
+    config = ConfigParser(allow_no_value=True)
+    config.read_string("[file:test.yml]\nignore=BA108,BA109,DS107")
 
-    assert not validate_manager.run_validations_on_file(
-        file_path=rn_file.path, pack_error_ignore_list=[]
-    )
-    assert not validate_manager.run_validations_on_file(
-        file_path=integration_readme_file.path, pack_error_ignore_list=[]
-    )
-    assert not validate_manager.run_validations_on_file(
-        file_path=integration_description_file.path, pack_error_ignore_list=[]
-    )
-    assert not validate_manager.run_validations_on_file(
-        file_path=playbook_readme_file.path, pack_error_ignore_list=[]
+    mocker.patch(
+        "demisto_sdk.commands.validate.validate_manager.get_pack_ignore_content",
+        return_value=config,
     )
 
-    # Assure errors were logged (1 error per validated file)
-    assert count_str_in_call_args_list(logger_error.call_args_list, "BA125") == 4
-    pass
+    assert validate_manager.get_all_files_edited_in_pack_ignore(
+        {"Packs/test/.pack-ignore"}
+    ) == {"Packs/test/Integrations/test/test.yml"}
+    assert logger_warning.called

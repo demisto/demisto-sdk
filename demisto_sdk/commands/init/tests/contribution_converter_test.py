@@ -106,7 +106,7 @@ def rename_file_in_zip(
         updated_file_name (str): The name the original file will be renamed to
     """
     modded_zip_file = os.path.join(
-        os.path.dirname(path_to_zip), "Edit" + os.path.basename(path_to_zip)
+        os.path.dirname(path_to_zip), "Edit" + Path(path_to_zip).name
     )
     tmp_zf = ZipFile(modded_zip_file, "w")
     with ZipFile(path_to_zip, "r") as zf:
@@ -140,7 +140,6 @@ def test_convert_contribution_zip_updated_pack(tmp_path, mocker):
     - Ensure that readme file has not been changed.
 
     """
-    mocker.patch.object(GitUtil, "__init__", return_value=None)
     mocker.patch.object(GitUtil, "added_files", return_value=set())
     mocker.patch.object(GitUtil, "modified_files", return_value=set())
     # Create all Necessary Temporary directories
@@ -222,7 +221,6 @@ def test_convert_contribution_zip_outputs_structure(tmp_path, mocker):
     - Ensure the unified yaml files of the integration and script have been removed from the output created by
       converting the contribution zip file
     """
-    mocker.patch.object(GitUtil, "__init__", return_value=None)
     mocker.patch.object(GitUtil, "added_files", return_value=set())
     mocker.patch.object(GitUtil, "modified_files", return_value=set())
 
@@ -364,7 +362,6 @@ def test_convert_contribution_zip(tmp_path, mocker):
     - Ensure script and integration are componentized and in valid directory structure
     - Ensure readme_files is not empty and the generated docs exists.
     """
-    mocker.patch.object(GitUtil, "__init__", return_value=None)
     mocker.patch.object(GitUtil, "added_files", return_value=set())
     mocker.patch.object(GitUtil, "modified_files", return_value=set())
     # Create all Necessary Temporary directories
@@ -497,7 +494,6 @@ def test_convert_contribution_zip_with_args(tmp_path, mocker):
     - Ensure that the pack's 'pack_metadata.json' file's 'githubUser' field a list containing only 'octocat'
     - Ensure that the pack's 'pack_metadata.json' file's 'email' field is the empty string
     """
-    mocker.patch.object(GitUtil, "__init__", return_value=None)
     mocker.patch.object(GitUtil, "added_files", return_value=set())
     mocker.patch.object(GitUtil, "modified_files", return_value=set())
 
@@ -695,7 +691,7 @@ def test_rearranging_before_conversion(zip_path: str, expected_directories: set)
     )
     results = set()
     for directory in unpacked_contribution_dirs:
-        results.add(os.path.basename(directory))
+        results.add(Path(directory).name)
     assert expected_directories == results
 
 
@@ -757,12 +753,7 @@ def test_create_contribution_items_version_note():
  @
 > In case you are requested by your reviewer to improve the code or to make changes, submit them through the **GitHub Codespaces** and **Not through the XSOAR UI**.
 >
-> **To use the GitHub Codespaces, do the following:**
-> 1. Click the **'Code'** button in the right upper corner of this PR.
-> 2. Click **'Create codespace on Transformers'**.
-> 3. Click **'Authorize and continue'**.
-> 4. Wait until your Codespace environment is generated. When it is, you can edit your code.
-> 5. Commit and push your changes to the head branch of the PR.
+> **To use the GitHub Codespaces, see the following [link](https://xsoar.pan.dev/docs/tutorials/tut-setup-dev-codespace) for more information.**
 """
     )
 

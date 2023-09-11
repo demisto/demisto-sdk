@@ -351,8 +351,8 @@ def verify_results_against_test_data(
                 )
                 out = (
                     f"Checking for key {expected_key} - "
-                    f"expected:{expected_value} expected type:{expected_value_type} "
-                    f"received:{received_value} received type:{received_value_type} "
+                    f"expected value:{expected_value} expected type:{expected_value_type} "
+                    f"received value:{received_value} received type:{received_value_type} "
                     f"before transform by expected - received:{received_value_before} received type: "
                     f"{get_type_pretty_name(received_value_before)}"
                 )
@@ -377,6 +377,8 @@ def verify_results_against_test_data(
                             extra={"markup": True},
                         )
                     else:
+                        # Types don't match, so values are not matching either,
+                        # so it means that both do not match.
                         err = (
                             f"Expected value and type do not match for key {expected_key}: - expected: {expected_value} - "
                             f"received: {received_value} expected type: {expected_value_type} "
@@ -391,7 +393,7 @@ def verify_results_against_test_data(
                     result_test_case_system_err.append(err)
                     result_test_case_results.append(Failure(err))
             else:
-                err = f"No mapping for this {expected_key} - skipping checking match"
+                err = f"No mapping for key {expected_key} - skipping checking match"
                 result_test_case_system_out.append(err)
                 result_test_case_results.append(Skipped(err))
                 logger.debug(f"[cyan]{err}[/cyan]", extra={"markup": True})
@@ -1360,7 +1362,7 @@ def test_modeling_rule(
         else:
             errors = True
             logger.error(
-                f"[red]Test Modeling rule {get_relative_path_to_content(modeling_rule_directory)} failed[/red]",
+                f"[red]Test Modeling Rule {get_relative_path_to_content(modeling_rule_directory)} failed[/red]",
                 extra={"markup": True},
             )
         if modeling_rule_test_suite:

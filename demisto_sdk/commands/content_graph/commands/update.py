@@ -36,12 +36,12 @@ def should_update_graph(
     content_graph_interface: ContentGraphInterface,
     git_util: GitUtil,
     imported_path: Optional[Path] = None,
-    use_current: bool = False,
+    use_local_import_folder: bool = False,
 ):
     return any(
         (
             imported_path,
-            use_current,
+            use_local_import_folder,
             content_graph_interface.commit != git_util.get_current_commit_hash(),
             content_graph_interface.content_parser_latest_hash
             == content_graph_interface._get_latest_content_parser_hash(),

@@ -3285,10 +3285,10 @@ def create_content_graph(
     help="Path to content graph zip file to import",
 )
 @click.option(
-    "-uc",
-    "--use-current",
+    "-ulif",
+    "--use-local-import-folder",
     is_flag=True,
-    help="Whether to use the current content graph to update",
+    help="    Whether to use the current import folder to import graph.",
     default=False,
 )
 @click.option(

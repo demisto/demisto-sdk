@@ -1,12 +1,19 @@
 # Changelog
 ## Unreleased
 * Fixed an issue where **validate** falsely failed with error `DS108` on descriptions ending with brackets that contains a dot at the end of them.
+* Fixed an issue where running **validate -g** failed reading a `.pack-ignore` file that contained only newlines and spaces.
 * Fixed an issue where the **upload** failed when trying to upload a list content item.
 * Fixed an issue where the **download** would skip downloading list content items assigned to specific user roles with no roles.
-* Fixed an issue where the **validate -g** failed reading a `.pack-ignore` file that contained only newlines and spaces.
 * Demisto-SDK will now exit gracefully with an appropriate error message when *git* is not installed.
+* Updated validation *RN116* to support the structure of **--force** flag in *update-release-notes* command.
+* Fixed an issue where the release notes file was not added automatically to git when using the *update-release-notes* command.
+* Fixed the structure in *update-release-notes* command when used with the **--force** flag. Now the header will display the pack display name.
 * Fixed the support in **validate** for `svg` images to have their theme suffix.
+* Modified **validate** to support only .svg files ending with *_dark* or *_light* suffixes.
+* Fixed an issue where **modeling-rule test** command failed to properly compare types of fields.
 * Updated the **engineinfo** type in the script schema.
+* Stability improvements for **graph create** and **graph update** commands.
+
 
 ## 1.20.2
 * Updated the **pre-commit** command to run on all python versions in one run.
@@ -17,7 +24,6 @@
 * Fixed an issue where **format** add a newline with a period when the description field missing a period.
 * The content graph will now include the **python_version** field that each script/integration uses.
 * Updated the **update-release-notes** command message structure when is run with **--force** flag.
-* Fixed an issue where **modeling-rule test** command failed to properly compare types of fields.
 * Added the **engineinfo** in to the script schema. This field specifies on which engine the script will run.
 * Fixed an issue where **validate** falsely failed with error `DS108` on empty descriptions.
 * Added support for lazy loading the of widgets in XSIAM dashboards.

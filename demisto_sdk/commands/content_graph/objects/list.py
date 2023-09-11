@@ -26,4 +26,6 @@ class List(ContentItem, content_type=ContentType.LIST):  # type: ignore[call-arg
                 body=json.load(_list),
                 response_type="object",
             )
-            logger.debug(f'upload list {self.object_id} from path {self.path} successfully')
+            logger.debug(
+                f"upload list {self.object_id} from path {self.path} successfully"
+            )

@@ -2,6 +2,7 @@
 ## Unreleased
 * Fixed an issue where **validate** falsely failed with error `DS108` on descriptions ending with brackets that contains a dot at the end of them.
 * Fixed an issue where the **upload** failed when trying to upload a `List`.
+* Fixed an issue where the **download** would skip downloading some `Lists` 
 * Demisto-SDK will now exit gracefully with an appropriate error message when *git* is not installed.
 
 ## 1.20.2

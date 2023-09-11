@@ -760,7 +760,7 @@ class TestPackUniqueFilesValidator:
             active_branch = "master"
 
         mocker.patch(
-            "demisto_sdk.commands.common.hook_validations.pack_unique_files.Repo",
+            "demisto_sdk.commands.common.git_util.Repo",
             return_value=MyRepo,
         )
         res = self.validator.get_master_private_repo_meta_file(
@@ -810,12 +810,10 @@ class TestPackUniqueFilesValidator:
             git = gitClass()
 
         mocker.patch(
-            "demisto_sdk.commands.common.hook_validations.pack_unique_files.Repo",
+            "demisto_sdk.commands.common.git_util.Repo",
             return_value=MyRepo(),
         )
-        mocker.patch(
-            "demisto_sdk.commands.common.tools.git.Repo", return_value=MyRepo()
-        )
+
         with ChangeCWD(repo.path):
             res = self.validator.get_master_private_repo_meta_file(
                 str(pack.pack_metadata.path)
@@ -864,11 +862,8 @@ class TestPackUniqueFilesValidator:
             git = gitClass()
 
         mocker.patch(
-            "demisto_sdk.commands.common.hook_validations.pack_unique_files.Repo",
+            "demisto_sdk.commands.common.git_util.Repo",
             return_value=MyRepo(),
-        )
-        mocker.patch(
-            "demisto_sdk.commands.common.tools.git.Repo", return_value=MyRepo()
         )
         res = self.validator.get_master_private_repo_meta_file(
             str(pack.pack_metadata.path)
@@ -925,13 +920,6 @@ class TestPackUniqueFilesValidator:
 
             git = gitClass()
 
-        mocker.patch(
-            "demisto_sdk.commands.common.hook_validations.pack_unique_files.Repo",
-            return_value=MyRepo(),
-        )
-        mocker.patch(
-            "demisto_sdk.commands.common.tools.git.Repo", return_value=MyRepo()
-        )
         mocker.patch("demisto_sdk.commands.common.git_util.Repo", return_value=MyRepo())
 
         with ChangeCWD(repo.path):

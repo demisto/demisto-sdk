@@ -2,6 +2,7 @@
 ## Unreleased
 * Fixed an issue where **validate** falsely failed with error `DS108` on descriptions ending with brackets that contains a dot at the end of them.
 * Demisto-SDK will now exit gracefully with an appropriate error message when *git* is not installed.
+* Fixed the support in **validate** for `svg` images to have their theme suffix.
 
 ## 1.20.2
 * Updated the **pre-commit** command to run on all python versions in one run.

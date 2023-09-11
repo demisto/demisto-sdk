@@ -55,7 +55,7 @@ def update_content_graph(
     marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR,
     use_git: bool = False,
     imported_path: Optional[Path] = None,
-    use_current: bool = False,
+    use_local_import_folder: bool = False,
     packs_to_update: Optional[List[str]] = None,
     dependencies: bool = True,
     output_path: Optional[Path] = None,
@@ -66,19 +66,19 @@ def update_content_graph(
         marketplace (MarketplaceVersions): The marketplace to update.
         use_git (bool): Whether to use git to get the packs to update.
         imported_path (Path): The path to the imported graph.
-        use_current (bool): Whether to use the current graph.
+        use_local_import_folder (bool): Whether to use the current import folder to import graph.
         packs_to_update (List[str]): The packs to update.
         dependencies (bool): Whether to create the dependencies.
         output_path (Path): The path to export the graph zip to.
     """
-    if not use_current and not imported_path and not use_git:
+    if not use_local_import_folder and not imported_path and not use_git:
         logger.info("No arguments were given, using git")
         use_git = True
     git_util = GitUtil()
     packs_to_update = list(packs_to_update) if packs_to_update else []
     builder = ContentGraphBuilder(content_graph_interface)
     if not should_update_graph(
-        content_graph_interface, git_util, imported_path, use_current
+        content_graph_interface, git_util, imported_path, use_local_import_folder
     ):
         logger.info(
             f"Content graph is up to date, no need to update. UI representation is available at {NEO4J_DATABASE_HTTP} "
@@ -86,7 +86,7 @@ def update_content_graph(
         )
         return
     builder.preprepare_database()
-    if not use_current:
+    if not use_local_import_folder:
         content_graph_interface.clean_import_dir()
         if not imported_path:
             # getting the graph from remote, so we need to clean the import dir
@@ -147,12 +147,12 @@ def update(
         "--marketplace",
         help="The marketplace to generate the graph for.",
     ),
-    use_current: bool = typer.Option(
+    use_local_import_folder: bool = typer.Option(
         False,
-        "-uc",
-        "--use-current",
+        "-ulif",
+        "--use-local-import-folder",
         is_flag=True,
-        help="Whether to use the current content graph to update.",
+        help="Whether to use the current import folder to import graph.",
     ),
     imported_path: Path = typer.Option(
         None,
@@ -233,7 +233,7 @@ def update(
             marketplace=marketplace,
             use_git=use_git,
             imported_path=imported_path,
-            use_current=use_current,
+            use_local_import_folder=use_local_import_folder,
             packs_to_update=list(packs_to_update) if packs_to_update else [],
             dependencies=not no_dependencies,
             output_path=output_path,

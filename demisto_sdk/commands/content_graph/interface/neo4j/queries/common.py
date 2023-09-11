@@ -84,7 +84,7 @@ def to_node_pattern(
         list_properties = []
     if not content_type:
         content_type = ContentType.BASE_CONTENT
-    neo4j_primitive_types = (str, bool, Path)
+    neo4j_primitive_types = (str, bool, Path, int, float)
     exact_match_properties = {
         k: v
         for k, v in properties.items()
@@ -96,7 +96,7 @@ def to_node_pattern(
         if k in list_properties
         or (not isinstance(v, neo4j_primitive_types) and isinstance(v, Iterable))
     }
-    return f"({varname}:{labels_of(content_type)}{to_neo4j_map(exact_match_properties)} {to_neo4j_predicates(predicates_match_properties, varname, list_properties)})"
+    return f"({varname}:{content_type}{to_neo4j_map(exact_match_properties)} {to_neo4j_predicates(predicates_match_properties, varname, list_properties)})"
 
 
 def run_query(tx: Transaction, query: str, **kwargs) -> Result:

@@ -1475,10 +1475,10 @@ def upload(ctx, **kwargs):
     default=False,
 )
 @click.option(
-    "-aruuids",
     "--auto-replace-uuids",
-    help="Whether to run demisto-sdk format on downloaded files or not",
+    help="Whether to replace the uuids.",
     is_flag=True,
+    default=True,
 )
 
 @click.pass_context
@@ -3466,7 +3466,6 @@ def exit_from_program(result=0, **kwargs):
 
 
 # ====================== modeling-rules command group ====================== #
-
 app = typer.Typer(name="modeling-rules", hidden=True, no_args_is_help=True)
 app.command("test", no_args_is_help=True)(test_modeling_rule.test_modeling_rule)
 app.command("init-test-data", no_args_is_help=True)(init_test_data.init_test_data)

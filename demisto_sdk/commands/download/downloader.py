@@ -141,6 +141,7 @@ class Downloader:
         item_type (str): The items type to download, use just when downloading system items.
         init (bool): Initialize a new Pack and download the items to it. This will create an empty folder for each supported content item type.
         keep_empty_folders (bool): Whether to keep empty folders when using init.
+        auto_replace_uuids (bool):  Whether to replace the UUIDs.
     """
 
     def __init__(
@@ -352,7 +353,7 @@ class Downloader:
                 content_item_as_string = self.download_playbook_yaml(
                     content_item_as_string
                 )
-            if self.auto-replace-uuids:
+            if self.auto_replace_uuids:
                 content_item_as_string = self.replace_uuids(
                     content_item_as_string, scripts_id_to_name, file_name
                 )

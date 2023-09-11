@@ -173,7 +173,7 @@ def get_type_pretty_name(obj: Any) -> str:
     }.get(type(obj), str(type(obj)))
 
 
-def transform_received_value_by_expected_type(
+def sanitize_received_value_by_expected_type(
     received_value: Any, expected_type: str
 ) -> Tuple[str, Any]:
     """
@@ -184,7 +184,7 @@ def transform_received_value_by_expected_type(
         received_value: The object to get the type for.
 
     Returns:
-        The expected type of the object, and the object itself after being transformed.
+        The expected type of the object, and the object itself after being sanitized.
     """
     received_value_type = get_type_pretty_name(received_value)
     # The values returned from XSIAM for int/float are always float, so we need to check if the expected type is int.
@@ -341,39 +341,39 @@ def verify_results_against_test_data(
         logger.info(f"\n{table_result}")
         for expected_key, expected_value in expected_values.items():
             if expected_value:
-                received_value_before = result.get(expected_key)
+                received_value = result.get(expected_key)
                 expected_value_type = get_type_pretty_name(expected_value)
                 (
-                    received_value_type,
-                    received_value,
-                ) = transform_received_value_by_expected_type(
-                    received_value_before, expected_value_type
+                    received_value_type_sanitized,
+                    received_value_sanitized,
+                ) = sanitize_received_value_by_expected_type(
+                    received_value, expected_value_type
                 )
                 out = (
                     f"Checking for key {expected_key} - "
                     f"expected value:{expected_value} expected type:{expected_value_type} "
-                    f"received value:{received_value} received type:{received_value_type} "
-                    f"before transform by expected - received:{received_value_before} received type: "
-                    f"{get_type_pretty_name(received_value_before)}"
+                    f"received value:{received_value_sanitized} received type:{received_value_type_sanitized} "
+                    f"before sanitization - received value:{received_value} received type: "
+                    f"{get_type_pretty_name(received_value)}"
                 )
                 logger.debug(f"[cyan]{out}[/cyan]", extra={"markup": True})
                 result_test_case_system_out.append(out)
                 if (
-                    received_value == expected_value
-                    and received_value_type == expected_value_type
+                    received_value_sanitized == expected_value
+                    and received_value_type_sanitized == expected_value_type
                 ):
-                    out = f"Value:{received_value} and Type:{received_value_type} Matched for key {expected_key}"
+                    out = f"Value:{received_value_sanitized} and Type:{received_value_type_sanitized} Matched for key {expected_key}"
                     result_test_case_system_out.append(out)
                     logger.debug(out)
                 else:
-                    if received_value_type == expected_value_type:
+                    if received_value_type_sanitized == expected_value_type:
                         err = (
                             f"Expected value does not match for key {expected_key}: - expected: {expected_value} - "
-                            f"received: {received_value} Types match:{received_value_type}"
+                            f"received: {received_value_sanitized} Types match:{received_value_type_sanitized}"
                         )
                         logger.error(
-                            f'[red][bold]{expected_key}[/bold] --- "{received_value}" != "{expected_value}" '
-                            f"Types match:{received_value_type}[/red]",
+                            f'[red][bold]{expected_key}[/bold] --- "{received_value_sanitized}" != "{expected_value}" '
+                            f"Types match:{received_value_type_sanitized}[/red]",
                             extra={"markup": True},
                         )
                     else:
@@ -381,12 +381,12 @@ def verify_results_against_test_data(
                         # so it means that both do not match.
                         err = (
                             f"Expected value and type do not match for key {expected_key}: - expected: {expected_value} - "
-                            f"received: {received_value} expected type: {expected_value_type} "
-                            f"received type: {received_value_type}"
+                            f"received: {received_value_sanitized} expected type: {expected_value_type} "
+                            f"received type: {received_value_type_sanitized}"
                         )
                         logger.error(
-                            f'[red][bold]{expected_key}[/bold][red] --- "{received_value}" != "{expected_value}"\n'
-                            f' [bold]{expected_key}[/bold][red] --- Received value type: "{received_value_type}" '
+                            f'[red][bold]{expected_key}[/bold][red] --- "{received_value_sanitized}" != "{expected_value}"\n'
+                            f' [bold]{expected_key}[/bold][red] --- Received value type: "{received_value_type_sanitized}" '
                             f'!= Expected value type: "{expected_value_type}"[/red]',
                             extra={"markup": True},
                         )

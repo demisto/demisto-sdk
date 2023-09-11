@@ -90,6 +90,7 @@ class BaseContent(ABC, BaseModel, metaclass=BaseContentMetaclass):
     database_id: Optional[str] = Field(None, exclude=True)  # used for the database
     object_id: str = Field(alias="id")
     content_type: ClassVar[ContentType] = Field(include=True)
+    source_repo: str = CONTENT_PATH.name
     node_id: str
     marketplaces: List[MarketplaceVersions] = list(MarketplaceVersions)
 

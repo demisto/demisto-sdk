@@ -30,5 +30,5 @@ def test_to_neo4j_pattern():
     )
     assert (
         pattern
-        == "(node:Integration{name: \"test\", version: \"1\", version_float: \"1.0\"} WHERE node.object_ids IN ['1', '2'] AND 'xsoar' IN node.marketplaces)"
+        == "(node:Integration{name: \"test\", version: 1, version_float: 1.0} WHERE node.object_ids IN ['1', '2'] AND 'xsoar' IN node.marketplaces)"
     )

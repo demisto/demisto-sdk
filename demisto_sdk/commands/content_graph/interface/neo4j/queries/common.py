@@ -55,7 +55,7 @@ def to_neo4j_map(properties: dict) -> str:
         str: The neo4j map cypher query.
     """
     properties = {
-        k: f'"{v}"' if isinstance(v, (str, Path, int, float)) else str(v).lower()
+        k: f'"{v}"' if isinstance(v, (str, Path)) else str(v).lower()
         for k, v in properties.items()
     }
     params_str = ", ".join(f"{k}: {v}" for k, v in properties.items())

@@ -46,6 +46,7 @@ from demisto_sdk.commands.common.tools import (
     get_pack_name,
     get_remote_file,
     get_yaml,
+    is_sentence_ends_with_bracket,
     is_string_ends_with_url,
     is_test_config_match,
     run_command,
@@ -808,11 +809,13 @@ class ContentEntityValidator(BaseValidator):
         - The description string exist and not empty.
         - The description string doesn't end with a dot.
         - The description string doesn't end with an URL.
+        - The description string doesn't end with a dot inside brackets.
         """
         return all(
             [
                 stripped_description,
                 not stripped_description.endswith("."),
                 not is_string_ends_with_url(stripped_description),
+                not is_sentence_ends_with_bracket(stripped_description),
             ]
         )

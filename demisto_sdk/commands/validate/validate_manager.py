@@ -1999,7 +1999,10 @@ class ValidateManager:
             # if the repo does not have remotes, get the .pack-ignore content from the master branch in Github api
             # if the repo is not in remote / file cannot be found from Github api, try to take it from the latest commit on the default branch (usually master/main)
             old_pack_ignore_content = get_remote_file(old_file_path, "master")
-            if old_pack_ignore_content == b"":  # found as empty file in remote
+            if (
+                isinstance(old_pack_ignore_content, bytes)
+                and old_pack_ignore_content.strip() == b""
+            ):  # found an empty file in remote
                 old_pack_ignore_content = ""
             elif old_pack_ignore_content == {}:  # not found in remote
                 logger.debug(

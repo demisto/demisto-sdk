@@ -4,6 +4,7 @@
 * Fixed an issue where the **validate -g** failed reading a `.pack-ignore` file that contained only newlines and spaces.
 * Demisto-SDK will now exit gracefully with an appropriate error message when *git* is not installed.
 * Fixed the support in **validate** for `svg` images to have their theme suffix.
+* Fixed an issue where **modeling-rule test** command failed to properly compare types of fields.
 * Updated the **engineinfo** type in the script schema.
 * The **modeling-rules init & test** commands will now support RULE section fields.
 
@@ -16,7 +17,6 @@
 * Fixed an issue where **format** add a newline with a period when the description field missing a period.
 * The content graph will now include the **python_version** field that each script/integration uses.
 * Updated the **update-release-notes** command message structure when is run with **--force** flag.
-* Fixed an issue where **modeling-rule test** command failed to properly compare types of fields.
 * Added the **engineinfo** in to the script schema. This field specifies on which engine the script will run.
 * Fixed an issue where **validate** falsely failed with error `DS108` on empty descriptions.
 * Added support for lazy loading the of widgets in XSIAM dashboards.

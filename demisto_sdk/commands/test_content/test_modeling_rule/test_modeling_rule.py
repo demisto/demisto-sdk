@@ -173,7 +173,7 @@ def get_type_pretty_name(obj: Any) -> str:
     }.get(type(obj), str(type(obj)))
 
 
-def get_type_based_on_expected(
+def transform_received_value_by_expected_type(
     received_value: Any, expected_type: str
 ) -> Tuple[str, Any]:
     """
@@ -184,7 +184,7 @@ def get_type_based_on_expected(
         received_value: The object to get the type for.
 
     Returns:
-        The expected type of the object, and the object itself.
+        The expected type of the object, and the object itself after being transformed.
     """
     received_value_type = get_type_pretty_name(received_value)
     # The values returned from XSIAM for int/float are always float, so we need to check if the expected type is int.
@@ -343,7 +343,10 @@ def verify_results_against_test_data(
             if expected_value:
                 received_value_before = result.get(expected_key)
                 expected_value_type = get_type_pretty_name(expected_value)
-                received_value_type, received_value = get_type_based_on_expected(
+                (
+                    received_value_type,
+                    received_value,
+                ) = transform_received_value_by_expected_type(
                     received_value_before, expected_value_type
                 )
                 out = (

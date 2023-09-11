@@ -7,8 +7,11 @@
 * Fixed an issue where the release notes file was not added automatically to git when using the *update-release-notes* command.
 * Fixed the structure in *update-release-notes* command when used with the **--force** flag. Now the header will display the pack display name.
 * Fixed the support in **validate** for `svg` images to have their theme suffix.
+* Modified **validate** to support only .svg files ending with *_dark* or *_light* suffixes.
 * Fixed an issue where **modeling-rule test** command failed to properly compare types of fields.
 * Updated the **engineinfo** type in the script schema.
+* Stability improvements for **graph create** and **graph update** commands.
+
 
 ## 1.20.2
 * Updated the **pre-commit** command to run on all python versions in one run.

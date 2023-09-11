@@ -180,9 +180,10 @@ class ReleaseNotesValidator(BaseValidator):
             True if the RN has a first level header, False otherwise.
         """
         first_level_header_index = re.search(
-            r"\s#{4}\B", f"\n{self.latest_release_notes}"
+            r"\s#{4}\s", f"\n{self.latest_release_notes}"
         )
-        if not first_level_header_index:
+        force_header_index = re.search(r"\s#{2}\s", f"\n{self.latest_release_notes}")
+        if not (first_level_header_index or force_header_index):
             (
                 error_message,
                 error_code,
@@ -452,12 +453,11 @@ class ReleaseNotesValidator(BaseValidator):
         Return:
             True if the release notes headers are valid, False otherwise.
         """
-
-        validations = []
-        validations.append(self.validate_first_level_header_exists())
         headers = self.extract_rn_headers()
+        validations = [self.validate_first_level_header_exists()]
         self.filter_rn_headers(headers=headers)
         for content_type, content_items in headers.items():
+
             validations.append(
                 self.rn_valid_header_format(
                     content_type=content_type, content_items=content_items

@@ -28,7 +28,6 @@ from demisto_sdk.commands.common.constants import (
 from demisto_sdk.commands.common.content import Content
 from demisto_sdk.commands.common.content_constant_paths import CONF_PATH, CONTENT_PATH
 from demisto_sdk.commands.common.errors import Errors
-from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
 from demisto_sdk.commands.common.hook_validations.base_validator import (
@@ -47,6 +46,7 @@ from demisto_sdk.commands.common.tools import (
     get_pack_name,
     get_remote_file,
     get_yaml,
+    is_sentence_ends_with_bracket,
     is_string_ends_with_url,
     is_test_config_match,
     run_command,
@@ -303,7 +303,7 @@ class ContentEntityValidator(BaseValidator):
         Returns:
             (bool): is release branch
         """
-        git_util = GitUtil(repo=Content.git())
+        git_util = Content.git_util()
         main_branch = git_util.handle_prev_ver()[1]
         if not main_branch.startswith("origin"):
             main_branch = "origin/" + main_branch
@@ -809,11 +809,13 @@ class ContentEntityValidator(BaseValidator):
         - The description string exist and not empty.
         - The description string doesn't end with a dot.
         - The description string doesn't end with an URL.
+        - The description string doesn't end with a dot inside brackets.
         """
         return all(
             [
                 stripped_description,
                 not stripped_description.endswith("."),
                 not is_string_ends_with_url(stripped_description),
+                not is_sentence_ends_with_bracket(stripped_description),
             ]
         )

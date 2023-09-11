@@ -119,7 +119,7 @@ def test_init_test_data_create(pack):
     event_fields: dict = test_data.data[0].expected_values or {}
     assert len(test_data.data) == count
     assert dict(sorted(event_fields.items())) == test_data.data[0].expected_values
-    rule_fields = ['xdm.alert.rule_a', 'xdm.alert.rule_b', 'xdm.alert.rule_c']
+    rule_fields = ["xdm.alert.rule_a", "xdm.alert.rule_b", "xdm.alert.rule_c"]
     assert all(field in test_data.data[0].expected_values for field in rule_fields)
 
 

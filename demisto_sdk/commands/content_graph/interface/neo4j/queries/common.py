@@ -45,8 +45,17 @@ def node_map(properties: Dict[str, Any]) -> str:
 
 
 def to_neo4j_map(properties: dict) -> str:
+    """This function creates a neo4j map cypher query.
+    The idea is to filter the node by the given properties.
+
+    Args:
+        properties (dict): The properties to filter by.
+
+    Returns:
+        str: The neo4j map cypher query.
+    """
     properties = {
-        k: f'"{v}"' if isinstance(v, (str, Path)) else str(v).lower()
+        k: f'"{v}"' if isinstance(v, (str, Path, int, float)) else str(v).lower()
         for k, v in properties.items()
     }
     params_str = ", ".join(f"{k}: {v}" for k, v in properties.items())
@@ -56,6 +65,17 @@ def to_neo4j_map(properties: dict) -> str:
 def to_neo4j_predicates(
     properties: dict, varname: str = "node", list_properties: Optional[List[str]] = None
 ) -> str:
+    """This function creates a neo4j predicates cypher query.
+    The idea is to create a predicates which will filter the node by the properties, in case we cannot use neo4j map.
+
+    Args:
+        properties (dict): The properties to filter by.
+        varname (str, optional): The varname of the node of the query. Defaults to "node".
+        list_properties (Optional[List[str]], optional): List of list properties in the neo4j database. Defaults to None.
+
+    Returns:
+        str: The neo4j predicates cypher query.
+    """
     if not list_properties:
         list_properties = []
     predicates = [
@@ -80,6 +100,19 @@ def to_node_pattern(
     content_type: ContentType = ContentType.BASE_CONTENT,
     list_properties: Optional[List[str]] = None,
 ) -> str:
+    """
+    This function creates a node pattern cypher query.
+    The idea is to create a node pattern which will filter the node by the content type and the propertes
+
+    Args:
+        properties (dict): The properties to filter by.
+        varname (str, optional): The varname of the node of the query. Defaults to "node".
+        content_type (ContentType, optional): The content type to filter on. Defaults to ContentType.BASE_CONTENT.
+        list_properties (Optional[List[str]], optional): List of list properties in the neo4j database. Defaults to None.
+
+    Returns:
+        str: The node pattern cypher query.
+    """
     if not list_properties:
         list_properties = []
     neo4j_primitive_types = (str, bool, Path, int, float)

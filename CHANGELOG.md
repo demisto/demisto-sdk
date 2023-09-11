@@ -1,7 +1,7 @@
 # Changelog
 ## Unreleased
 * Fixed an issue where **validate** falsely failed with error `DS108` on descriptions ending with brackets that contains a dot at the end of them.
-* Fixed an issue where the **validate -g** failed reading a `.pack-ignore` file that was previously empty with newlines.
+* Fixed an issue where the **validate -g** failed reading a `.pack-ignore` file that contained only newlines and spaces.
 * Demisto-SDK will now exit gracefully with an appropriate error message when *git* is not installed.
 * Fixed the support in **validate** for `svg` images to have their theme suffix.
 

@@ -2002,7 +2002,7 @@ class ValidateManager:
             if (
                 isinstance(old_pack_ignore_content, bytes)
                 and old_pack_ignore_content.strip() == b""
-            ):  # found as empty file in remote
+            ):  # found an empty file in remote
                 old_pack_ignore_content = ""
             elif old_pack_ignore_content == {}:  # not found in remote
                 logger.debug(

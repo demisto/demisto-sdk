@@ -1869,7 +1869,7 @@ def find_type(
         ):
             return FileType.PRE_PROCESS_RULES
 
-        if "allRead" in _dict and "truncated" in _dict:
+        if "allRead" in _dict or "truncated" in _dict or "data" in _dict:
             return FileType.LISTS
 
         if "definitionIds" in _dict and "views" in _dict:

@@ -120,9 +120,7 @@ VALID_DASHBOARD_PATH = f"{GIT_ROOT}/demisto_sdk/tests/test_files/dashboard-valid
 INVALID_DASHBOARD_PATH = (
     f"{GIT_ROOT}/demisto_sdk/tests/test_files/dashboard-invalid.json"
 )
-VALID_LIST_PATH = (
-    f"{GIT_ROOT}/demisto_sdk/tests/test_files/list-valid.json"
-)
+VALID_LIST_PATH = f"{GIT_ROOT}/demisto_sdk/tests/test_files/list-valid.json"
 VALID_INCIDENT_FIELD_PATH = (
     f"{GIT_ROOT}/demisto_sdk/tests/test_files/incidentfield-valid.json"
 )

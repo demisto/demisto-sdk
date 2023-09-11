@@ -134,12 +134,12 @@ from demisto_sdk.tests.constants_test import (
     VALID_INCIDENT_TYPE_PATH,
     VALID_INTEGRATION_TEST_PATH,
     VALID_LAYOUT_PATH,
+    VALID_LIST_PATH,
     VALID_MD,
     VALID_PLAYBOOK_ID_PATH,
     VALID_REPUTATION_FILE,
     VALID_SCRIPT_PATH,
     VALID_WIDGET_PATH,
-    VALID_LIST_PATH
 )
 from demisto_sdk.tests.test_files.validate_integration_test_valid_types import (
     LAYOUT,

@@ -209,7 +209,7 @@ class ModelingRule(YAMLContentUnifiedObject):
     def __init__(self, path: Union[Path, str]):
         super().__init__(path, FileType.MODELING_RULE, MODELING_RULE)
         self._rules: List[SingleModelingRule] = []
-        self.rules_dict = dict()
+        self.rules_dict: dict = {}
 
     def normalize_file_name(self) -> str:
         return generate_xsiam_normalized_name(self._path.name, MODELING_RULE)
@@ -228,8 +228,8 @@ class ModelingRule(YAMLContentUnifiedObject):
 
     def get_nested_rules(self, modal_text: str) -> str:
         if rule_name_match := self.CALL_RULE_REGEX.search(modal_text):
-            rule_name = rule_name_match.group()
-            return self.get_nested_rules(modal_text.replace(rule_name, self.rules_dict.get(rule_name)))
+            rule_name = rule_name_match.groupdict().get('rule_name')
+            return self.get_nested_rules(modal_text.replace(f'call {rule_name}', self.rules_dict.get(rule_name)))
         else:
             return modal_text
 
@@ -244,7 +244,8 @@ class ModelingRule(YAMLContentUnifiedObject):
                 else:
                     rules_text = self.get("rules", "")
 
-                self.rules_dict = {f"call {rule.groupdict().get('rule_name')}": rule.group() for rule in self.RULE_REGEX.finditer(rules_text)}
+                for rule in self.RULE_REGEX.finditer(rules_text):
+                    self.rules_dict[rule.groupdict().get('rule_name')] = rule.group()
                 matches = self.MODEL_REGEX.finditer(rules_text)
                 _rules.extend(SingleModelingRule(self.get_nested_rules(match.group())) for match in matches)
                 self.rules = _rules

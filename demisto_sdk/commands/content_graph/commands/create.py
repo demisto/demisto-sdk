@@ -41,7 +41,7 @@ def create_content_graph(
         output_path (Path): The path to export the graph zip to.
     """
     builder = ContentGraphBuilder(content_graph_interface)
-    builder.preprepare_database()
+    builder.init_database()
     builder.create_graph()
     if dependencies:
         content_graph_interface.create_pack_dependencies()

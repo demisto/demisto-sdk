@@ -85,7 +85,7 @@ def update_content_graph(
             f"(username: {NEO4J_USERNAME}, password: {NEO4J_PASSWORD})"
         )
         return
-    builder.preprepare_database()
+    builder.init_database()
     if not use_local_import:
         content_graph_interface.clean_import_dir()
         if not imported_path:

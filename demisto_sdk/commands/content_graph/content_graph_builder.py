@@ -39,7 +39,7 @@ class ContentGraphBuilder:
         self._parse_and_model_content(packs_to_update)
         self._create_or_update_graph()
 
-    def preprepare_database(self) -> None:
+    def init_database(self) -> None:
         self.content_graph.clean_graph()
         self.content_graph.create_indexes_and_constraints()
 

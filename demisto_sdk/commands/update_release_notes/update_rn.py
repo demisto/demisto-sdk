@@ -429,28 +429,6 @@ class UpdateRN:
             master_current_version = master_metadata.get("currentVersion", "0.0.0")
         return master_current_version
 
-    def get_pack_display_name(self) -> str:
-        """
-        Gets the pack display name from the metadata file. If not found return the pack name.
-
-        :rtype: ``str``
-        :return
-            Pack display name
-
-        """
-        pack_display_name = self.pack
-        master_metadata = None
-        try:
-            master_metadata = get_remote_file(self.metadata_path)
-        except Exception:
-            logger.exception(
-                f"[red]Failed fetching {self.metadata_path} from remote master branch."
-                "Using the local version (if exists), instead[/red]",
-            )
-        if master_metadata:
-            pack_display_name = master_metadata.get("name")
-        return pack_display_name
-
     def is_bump_required(self) -> bool:
         """
         Checks if the currentVersion in the pack metadata has been changed or not. Additionally, it will verify
@@ -698,7 +676,7 @@ class UpdateRN:
             return rn_string
         rn_template_as_dict: dict = {}
         if self.is_force:
-            pack_display_name = self.get_pack_display_name()
+            pack_display_name = self.get_pack_metadata().get("name", self.pack)
             rn_string = self.build_rn_desc(
                 content_name=pack_display_name, text=self.text
             )

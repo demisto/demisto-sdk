@@ -468,12 +468,13 @@ def test_update_release_notes_modified_apimodule(demisto_client, repo, mocker):
 
         def search(self, object_id, all_level_imports):
             # Simulate the graph search
-            if object_id == "ApiModules_script":
-                return [MockedApiModuleNode()]
+            if "ApiModules_script" in object_id:
+                return [MockedApiModuleNode(id_) for id_ in object_id]
             return []
 
     class MockedApiModuleNode:
-        def __init__(self):
+        def __init__(self, object_id):
+            self.object_id = object_id
             self.imported_by = [
                 MockedDependencyNode().integration
             ]  # Simulate a list of dependencies

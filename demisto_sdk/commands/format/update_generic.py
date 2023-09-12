@@ -7,6 +7,7 @@ from typing import Any, Dict, Optional, Set, Union
 import dictdiffer
 
 from demisto_sdk.commands.common.constants import (
+    DEMISTO_GIT_PRIMARY_BRANCH,
     GENERAL_DEFAULT_FROMVERSION,
     VERSION_5_5_0,
 )
@@ -59,7 +60,7 @@ class BaseUpdate:
         output: str = "",
         path: str = "",
         from_version: str = "",
-        prev_ver: str = "master",
+        prev_ver: str = DEMISTO_GIT_PRIMARY_BRANCH,
         no_validate: bool = False,
         assume_answer: Union[bool, None] = None,
         interactive: bool = True,

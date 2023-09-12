@@ -12,7 +12,11 @@ from git import (
 from git.diff import Lit_change_type
 from git.remote import Remote
 
-from demisto_sdk.commands.common.constants import PACKS_FOLDER
+from demisto_sdk.commands.common.constants import (
+    DEMISTO_GIT_PRIMARY_BRANCH,
+    DEMISTO_GIT_UPSTREAM,
+    PACKS_FOLDER,
+)
 
 
 class GitUtil:
@@ -529,6 +533,7 @@ class GitUtil:
         Returns:
             Set: of Paths to files changed in the current branch.
         """
+        self.fetch()
         remote, branch = self.handle_prev_ver(prev_ver)
         current_hash = self.get_current_commit_hash()
 
@@ -609,10 +614,15 @@ class GitUtil:
                 return ""
             for current_remote_ref in current_remote.refs:
                 current_remote_ref_str = str(current_remote_ref)
-                if current_remote_ref_str == "origin/main":
+                if current_remote_ref_str == f"{DEMISTO_GIT_UPSTREAM}/main":
                     return "main"
-                elif current_remote_ref_str == "origin/master":
+                elif current_remote_ref_str == f"{DEMISTO_GIT_UPSTREAM}/master":
                     return "master"
+                elif (
+                    current_remote_ref_str
+                    == f"{DEMISTO_GIT_UPSTREAM}/{DEMISTO_GIT_PRIMARY_BRANCH}"
+                ):
+                    return DEMISTO_GIT_PRIMARY_BRANCH
         return ""
 
     def handle_prev_ver(self, prev_ver: str = ""):
@@ -802,6 +812,7 @@ class GitUtil:
         Returns:
             Set. A set of all the changed files in the given branch when comparing to prev_ver
         """
+        self.fetch()
         modified_files: Set[Path] = self.modified_files(
             prev_ver=prev_ver,
             committed_only=committed_only,
@@ -834,3 +845,10 @@ class GitUtil:
             bool: True if the file is ignored. Otherwise, return False.
         """
         return bool(self.repo.ignored(file_path))
+
+    def fetch(self):
+        self.repo.remote().fetch()
+
+    def fetch_all(self):
+        for remote in self.repo.remotes:
+            remote.fetch()

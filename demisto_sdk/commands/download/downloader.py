@@ -352,7 +352,7 @@ class Downloader:
             if self.should_download_playbook(file_name):
                 content_item_as_string = self.download_playbook_yaml(
                     content_item_as_string
-                )
+                )            
             if self.auto_replace_uuids:
                 content_item_as_string = self.replace_uuids(
                     content_item_as_string, scripts_id_to_name, file_name

@@ -16,7 +16,6 @@ from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import (
     CONTENT_ENTITIES_DIRS,
     FILETYPE_TO_DEFAULT_FROMVERSION,
-    FIRST_LEVEL_FOLDERS,
     FIRST_LEVEL_FOLDERS_ALLOWED_TO_CONTAIN_FILES,
     PACKS_PACK_META_FILE_NAME,
     TEST_PLAYBOOK,
@@ -79,7 +78,10 @@ from demisto_sdk.commands.content_graph.tests.create_content_graph_test import (
 from demisto_sdk.commands.prepare_content.integration_script_unifier import (
     IntegrationScriptUnifier,
 )
-from demisto_sdk.commands.validate.validate_manager import ValidateManager
+from demisto_sdk.commands.validate.validate_manager import (
+    FIRST_LEVEL_FOLDERS,
+    ValidateManager,
+)
 from demisto_sdk.tests.constants_test import (
     CONF_JSON_MOCK_PATH,
     DASHBOARD_TARGET,
@@ -481,8 +483,8 @@ class TestValidators:
 
         test_package = list()
 
-        for (dummy_file, file_type) in changelog_needed:
-            for (release_notes_file, answer) in changelog_files_answer:
+        for dummy_file, file_type in changelog_needed:
+            for release_notes_file, answer in changelog_files_answer:
                 if file_type == "Script":
                     test_package.append(
                         (
@@ -3371,8 +3373,9 @@ def test_content_entities_dir_length():
 
 
 folders_not_allowed_to_contain_files = tuple(
-    (set(CONTENT_ENTITIES_DIRS).union(FIRST_LEVEL_FOLDERS)).difference(
-        FIRST_LEVEL_FOLDERS_ALLOWED_TO_CONTAIN_FILES
+    (
+        (set(CONTENT_ENTITIES_DIRS) | (FIRST_LEVEL_FOLDERS))
+        - FIRST_LEVEL_FOLDERS_ALLOWED_TO_CONTAIN_FILES
     )
 )
 
@@ -3406,7 +3409,7 @@ def test_is_path_allowed__invalid_first_level(repo, mocker, nested: bool):
     Then
             Make sure the validation fails, and a proper message is shown
     """
-    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+    logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
     validate_manager = ValidateManager(check_is_unskipped=False, skip_conf_json=True)
 
     folder_name = "folder_name"
@@ -3417,7 +3420,7 @@ def test_is_path_allowed__invalid_first_level(repo, mocker, nested: bool):
 
     assert not validate_manager.is_valid_path(Path(pack.path, *mid_path, "file"))
 
-    assert str_in_call_args_list(logger_info.call_args_list, "[BA121]")
+    assert str_in_call_args_list(logger_error.call_args_list, "[BA121]")
 
 
 @pytest.mark.parametrize(
@@ -3476,7 +3479,7 @@ def test_is_path_allowed__fail_file_in_pack_root(tmpdir, mocker):
     Then
             Make sure it fails with an appropriate error
     """
-    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+    logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
     validate_manager = ValidateManager(check_is_unskipped=False, skip_conf_json=True)
 
     pack = Path(tmpdir, "Packs", "myPack")
@@ -3489,7 +3492,7 @@ def test_is_path_allowed__fail_file_in_pack_root(tmpdir, mocker):
     with contextlib.redirect_stdout(std_output):
         with ChangeCWD(tmpdir):
             assert not validate_manager.is_valid_path(file_path)
-    assert str_in_call_args_list(logger_info.call_args_list, "[BA122]")
+    assert str_in_call_args_list(logger_error.call_args_list, "[BA122]")
 
 
 @pytest.mark.parametrize(
@@ -3526,11 +3529,9 @@ def test_is_path_allowed__dir(repo):
     pack = repo.create_pack("myPack")
     integration = pack.create_integration()
     for folder in (pack.path, integration.path):
-        with pytest.raises(ValueError) as e:
-            ValidateManager(
-                check_is_unskipped=False, skip_conf_json=True
-            ).is_valid_path(Path(folder))
-        assert "should not be run on folders" in e.value.args[0]
+        assert ValidateManager(
+            check_is_unskipped=False, skip_conf_json=True
+        ).is_valid_path(Path(folder))
 
 
 def test_is_path_allowed__outside_pack(tmpdir, mocker):
@@ -3542,7 +3543,7 @@ def test_is_path_allowed__outside_pack(tmpdir, mocker):
     Then
             Make sure it fails with an appropriate error
     """
-    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+    logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
     validate_manager = ValidateManager(check_is_unskipped=False, skip_conf_json=True)
 
     packs = tmpdir / "Packs"
@@ -3555,4 +3556,4 @@ def test_is_path_allowed__outside_pack(tmpdir, mocker):
     with contextlib.redirect_stdout(std_output):
         with ChangeCWD(tmpdir):
             assert not validate_manager.is_valid_path(file_path)
-    assert str_in_call_args_list(logger_info.call_args_list, "[BA123]")
+    assert str_in_call_args_list(logger_error.call_args_list, "[BA123]")

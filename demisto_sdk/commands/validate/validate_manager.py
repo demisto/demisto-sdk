@@ -18,7 +18,7 @@ from demisto_sdk.commands.common.constants import (
     DEMISTO_GIT_PRIMARY_BRANCH,
     DEMISTO_GIT_UPSTREAM,
     DEPRECATED_CONTENT_PACK,
-    FIRST_LEVEL_FOLDERS,
+    DOC_FILES_DIR,
     FIRST_LEVEL_FOLDERS_ALLOWED_TO_CONTAIN_FILES,
     GENERIC_FIELDS_DIR,
     GENERIC_TYPES_DIR,
@@ -27,6 +27,7 @@ from demisto_sdk.commands.common.constants import (
     PACK_ROOT_FILE_NAMES,
     PACKS_DIR,
     PACKS_PACK_META_FILE_NAME,
+    RELEASE_NOTES_DIR,
     SKIP_RELEASE_NOTES_FOR_TYPES,
     VALIDATION_USING_GIT_IGNORABLE_DATA,
     XSIAM_DASHBOARDS_DIR,
@@ -163,6 +164,7 @@ from demisto_sdk.commands.common.tools import (
     open_id_set_file,
     run_command_os,
 )
+from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
 
 SKIPPED_FILES = [
@@ -170,6 +172,11 @@ SKIPPED_FILES = [
     "demistomock.py",
     "DemistoClassApiModule.py",
 ]
+
+FIRST_LEVEL_FOLDERS = frozenset(ContentType.folders()) | {
+    RELEASE_NOTES_DIR,
+    DOC_FILES_DIR,
+}
 
 
 class ValidateManager:

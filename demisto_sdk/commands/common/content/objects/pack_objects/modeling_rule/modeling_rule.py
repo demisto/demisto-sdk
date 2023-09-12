@@ -192,11 +192,11 @@ class ModelingRule(YAMLContentUnifiedObject):
     """
 
     MODEL_REGEX = re.compile(
-        r"(?P<model_header>\[MODEL:[\w\W]*?\])(\s*(^\s*?(?!\s*\[MODEL:[\w\W]*?\])(?!\s*\[RULE:[\w\W]*?\]).*?$))+",
+        r"(?P<model_header>\[MODEL:.*?\])(\s*(^\s*?(?!\s*\[MODEL:.*?\])(?!\s*\[RULE:.*?\]).*?$))+",
         flags=re.M,
     )
     RULE_REGEX = re.compile(
-        r"(?P<rule_header>\[RULE:\s*(?P<rule_name>[\w\W]*?)\])(\s*(^\s*?(?!\s*\[MODEL:[\w\W]*?\])(?!\s*\[RULE:[\w\W]*?\]).*?$))+",
+        r"(?P<rule_header>\[RULE:\s*(?P<rule_name>.*?)\])(\s*(^\s*?(?!\s*\[MODEL:.*?\])(?!\s*\[RULE:.*?\]).*?$))+",
         flags=re.M,
     )
     CALL_RULE_REGEX = re.compile(
@@ -226,7 +226,7 @@ class ModelingRule(YAMLContentUnifiedObject):
         # return client.import_modeling_rules(file=self.path)
         pass
 
-    def get_nested_rules(self, model_text: str) -> str:
+    def get_nested_rules(self, modal_text: str) -> str:
         """
         Returns the model with the rules text instead of rule call
             Original modeling rule file text:
@@ -234,7 +234,7 @@ class ModelingRule(YAMLContentUnifiedObject):
                 modal_a: "call <rule_a>"
 
         Args:
-            model_text: The original model text with the rule call's.
+            modal_text: The original model text with the rule call's.
                 Gets:
                     modal_a: "call <rule_a>"
 
@@ -243,15 +243,15 @@ class ModelingRule(YAMLContentUnifiedObject):
                 Returns:
                     modal_a: "some text..."
         """
-        if rule_name_match := self.CALL_RULE_REGEX.search(model_text):
+        if rule_name_match := self.CALL_RULE_REGEX.search(modal_text):
             rule_name = rule_name_match.groupdict().get("rule_name")
             return self.get_nested_rules(
-                model_text.replace(
+                modal_text.replace(
                     f"call {rule_name}", self.rules_dict.get(rule_name, "")
                 )
             )
         else:
-            return model_text
+            return modal_text
 
     @property
     def rules(self):

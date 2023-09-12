@@ -331,6 +331,18 @@ def test_initiate_file_validator(mocker, is_old_file, function_validate):
             "description without dot and 'new_line' in the end \n",
             "description without dot and 'new_line' in the end.",  # Simulates a case when the description starts with pipe -|
         ),
+        (
+            "comment with a dot in the bracket (like this.)",
+            "comment with a dot in the bracket (like this.)",
+            "description with a dot in the bracket (like this.)",
+            "description with a dot in the bracket (like this.)",
+        ),
+        (
+            "comment without a dot in the bracket (like this)",
+            "comment without a dot in the bracket (like this).",
+            "description without a dot in the bracket (like this)",
+            "description without a dot in the bracket (like this).",
+        ),
     ],
     ids=[
         "empty string",
@@ -343,6 +355,8 @@ def test_initiate_file_validator(mocker, is_old_file, function_validate):
         "without dot and empty string in the end",
         "case when the description starts with pipe with dot",
         "case when the description starts with pipe without dot",
+        "ends with a dot inside a bracket",
+        "ends without a dot inside a bracket",
     ],
 )
 def test_adds_period_to_description(
@@ -364,9 +378,11 @@ def test_adds_period_to_description(
         the description in the YAML data should have a period added if is not end with url.
     """
     yml_data = {
-        "comment": comment,
+        "comment": comment,  # script yml
         "description": description,
-        "script": {
+        "args": [{"description": description}],  # script yml
+        "outputs": [{"description": description}],  # script yml
+        "script": {  # integration yml
             "commands": [
                 {
                     "arguments": [
@@ -389,6 +405,8 @@ def test_adds_period_to_description(
     expected__yml_data = {
         "comment": expected_comment,
         "description": expected_description,
+        "args": [{"description": expected_description}],  # script yml
+        "outputs": [{"description": expected_description}],  # script yml
         "script": {
             "commands": [
                 {

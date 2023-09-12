@@ -20,6 +20,7 @@ from demisto_sdk.commands.common.tools import (
     get_remote_file,
     get_yaml,
     is_file_from_content_repo,
+    is_sentence_ends_with_bracket,
     is_string_ends_with_url,
     strip_description,
 )
@@ -475,15 +476,25 @@ class BaseUpdate:
         def _add_period(value: Optional[str]) -> Optional[str]:
             if value and isinstance(value, str):
                 strip_value = strip_description(value)
-                if not strip_value.endswith(".") and not is_string_ends_with_url(
-                    strip_value
+                if (
+                    not strip_value.endswith(".")
+                    and not is_string_ends_with_url(strip_value)
+                    and not is_sentence_ends_with_bracket(strip_value)
                 ):
                     return f"{strip_value}."
             return value
 
         # script yml
-        if comment_script := self.data.get("comment", {}):
-            self.data["comment"] = _add_period(comment_script)
+        if comment := self.data.get("comment"):
+            self.data["comment"] = _add_period(comment)
+        if args := self.data.get("args"):
+            for arg in args:
+                if description := arg.get("description"):
+                    arg["description"] = _add_period(description)
+        if outputs := self.data.get("outputs"):
+            for output in outputs:
+                if description := output.get("description"):
+                    output["description"] = _add_period(description)
 
         # integration yml
         if data_description := self.data.get("description", {}):

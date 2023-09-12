@@ -1,9 +1,6 @@
 name: SDK Release
 on:
   pull_request:
-    types:
-      - opened
-      - edited
     branches:
       - 'v2.33.4'
 

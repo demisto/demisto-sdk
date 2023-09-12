@@ -5,15 +5,19 @@ from typing import List, Optional
 
 import typer
 
-from demisto_sdk.commands.common.constants import (
-    MarketplaceVersions,
+from demisto_sdk.commands.common.constants import PACKS_DIR, MarketplaceVersions
+from demisto_sdk.commands.common.content_constant_paths import (
+    CONTENT_PATH,
 )
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.logger import (
     logger,
     logging_setup,
 )
-from demisto_sdk.commands.common.tools import download_content_graph
+from demisto_sdk.commands.common.tools import (
+    download_content_graph,
+    is_external_repository,
+)
 from demisto_sdk.commands.content_graph.commands.common import recover_if_fails
 from demisto_sdk.commands.content_graph.commands.create import (
     create,
@@ -49,6 +53,10 @@ def should_update_graph(
     )
 
 
+def get_packs_from_external_repo() -> list:
+    return [path.name for path in (CONTENT_PATH / PACKS_DIR).iterdir()]
+
+
 @recover_if_fails
 def update_content_graph(
     content_graph_interface: ContentGraphInterface,
@@ -75,6 +83,9 @@ def update_content_graph(
         logger.info("No arguments were given, using git")
         use_git = True
     git_util = GitUtil()
+
+    if is_external_repository():
+        packs_to_update = get_packs_from_external_repo()
     packs_to_update = list(packs_to_update) if packs_to_update else []
     builder = ContentGraphBuilder(content_graph_interface)
     if not should_update_graph(
@@ -102,7 +113,7 @@ def update_content_graph(
                 )
                 return
     is_graph_up_to_date = content_graph_interface.import_graph(imported_path)
-    if not imported_path and not is_graph_up_to_date:
+    if not imported_path and not is_graph_up_to_date and not is_external_repository():
         # if we import a graph from a specific path, it make no sense to create a new graph
         logger.warning("Failed to import the content graph, will create a new graph")
         create_content_graph(
@@ -110,7 +121,11 @@ def update_content_graph(
         )
         return
 
-    if use_git and (commit := content_graph_interface.commit):
+    if (
+        use_git
+        and (commit := content_graph_interface.commit)
+        and not is_external_repository()
+    ):
         packs_to_update.extend(git_util.get_all_changed_pack_ids(commit))
 
     packs_str = "\n".join([f"- {p}" for p in packs_to_update])

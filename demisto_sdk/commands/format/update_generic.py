@@ -487,12 +487,10 @@ class BaseUpdate:
         # script yml
         if comment := self.data.get("comment"):
             self.data["comment"] = _add_period(comment)
-        if args := self.data.get("args"):
-            for arg in args:
+        for arg in self.data.get("args", ());
                 if description := arg.get("description"):
                     arg["description"] = _add_period(description)
-        if outputs := self.data.get("outputs"):
-            for output in outputs:
+        for output in self.data.get("outputs", ()):
                 if description := output.get("description"):
                     output["description"] = _add_period(description)
 

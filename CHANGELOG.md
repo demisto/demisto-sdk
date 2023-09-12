@@ -1,7 +1,7 @@
 # Changelog
 ## Unreleased
-* Fixed an issue where **format** add unnecessary period at the end of descriptions that ending with brackets that contains a dot at the end of them.
-* Fixed an issue where **format** was not adding a period at the end of description filed in script yml files.
+* Fixed an issue where **format** would add unnecessary period at the end of descriptions ending with brackets.
+* Fixed an issue where **format** would not add a period at the end of descriptions, when running on in script files.
 * Fixed an issue where **validate** falsely failed with error `DS108` on descriptions ending with brackets that contains a dot at the end of them.
 * Fixed an issue where running **validate -g** failed reading a `.pack-ignore` file that contained only newlines and spaces.
 * Demisto-SDK will now exit gracefully with an appropriate error message when *git* is not installed.
@@ -12,9 +12,9 @@
 * Modified **validate** to support only .svg files ending with *_dark* or *_light* suffixes.
 * Fixed an issue where **modeling-rule test** command failed to properly compare types of fields.
 * Updated the **engineinfo** type in the script schema.
+* Updated the **modeling-rules init & test** commands to support RULE section fields.
 * Stability improvements for **graph create** and **graph update** commands.
 * Fixed the *metadata* type in the XSIAM dashboard schema to *map*.
-
 
 ## 1.20.2
 * Updated the **pre-commit** command to run on all python versions in one run.

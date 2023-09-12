@@ -11,6 +11,7 @@
 * Fixed an issue where **modeling-rule test** command failed to properly compare types of fields.
 * Updated the **engineinfo** type in the script schema.
 * Stability improvements for **graph create** and **graph update** commands.
+* Fixed the *metadata* type in the XSIAM dashboard schema to *map*.
 
 
 ## 1.20.2

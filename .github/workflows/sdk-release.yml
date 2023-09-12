@@ -20,3 +20,9 @@ jobs:
 
       - name: Install dependencies
         run: poetry install
+      
+      - name: Releasing
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+        run: sdk-changelog --release -n "$PR_NUMBER" -t "$PR_TITLE"

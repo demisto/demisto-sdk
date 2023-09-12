@@ -274,72 +274,50 @@ def test_initiate_file_validator(mocker, is_old_file, function_validate):
 
 
 @pytest.mark.parametrize(
-    "comment, expected_comment, description, expected_description",
+    "description, expected_description",
     [
-        ("", "", "", ""),
+        ("", ""),
         (
-            "comment without dot",
-            "comment without dot.",
             "description without dot",
             "description without dot.",
         ),
         (
-            "comment with dot.",
-            "comment with dot.",
             "description with dot at the end.",
             "description with dot at the end.",
         ),
         (
-            "comment with url and no dot at the end https://www.test.com",
-            "comment with url and no dot at the end https://www.test.com",
             "description with url and no dot at the end https://www.test.com",
             "description with url and no dot at the end https://www.test.com",
         ),
         (
-            "comment with url and dot at the end https://www.test.com.",
-            "comment with url and dot at the end https://www.test.com.",
             "description that has https://www.test.com in the middle of the sentence",
             "description that has https://www.test.com in the middle of the sentence.",
         ),
         (
-            "comment with url and dot at the end https://www.test.com.",
-            "comment with url and dot at the end https://www.test.com.",
             "description that has an 'example without dot at the end of the string'",
             "description that has an 'example without dot at the end of the string'.",
         ),
         (
-            "comment with dot and empty string in the end. ",
-            "comment with dot and empty string in the end. ",
             "description with dot and empty string in the end. ",
             "description with dot and empty string in the end. ",
         ),
         (
-            "comment without dot and empty string in the end ",
-            "comment without dot and empty string in the end.",
             "description without dot and empty string in the end ",
             "description without dot and empty string in the end.",
         ),
         (
-            "comment with dot and 'new_line' in the end. \n",
-            "comment with dot and 'new_line' in the end. \n",
             "description with dot and 'new_line' in the end. \n",
             "description with dot and 'new_line' in the end. \n",
         ),
         (
-            "comment without dot and 'new_line' in the end \n",
-            "comment without dot and 'new_line' in the end.",
             "description without dot and 'new_line' in the end \n",
             "description without dot and 'new_line' in the end.",  # Simulates a case when the description starts with pipe -|
         ),
         (
-            "comment with a dot in the bracket (like this.)",
-            "comment with a dot in the bracket (like this.)",
             "description with a dot in the bracket (like this.)",
             "description with a dot in the bracket (like this.)",
         ),
         (
-            "comment without a dot in the bracket (like this)",
-            "comment without a dot in the bracket (like this).",
             "description without a dot in the bracket (like this)",
             "description without a dot in the bracket (like this).",
         ),
@@ -359,16 +337,14 @@ def test_initiate_file_validator(mocker, is_old_file, function_validate):
         "ends without a dot inside a bracket",
     ],
 )
-def test_adds_period_to_description(
+def test_adds_period_to_description_in_integration(
     mocker: MockerFixture,
-    comment: str,
-    expected_comment: str,
     description: str,
     expected_description: str,
 ) -> None:
     """
     Test case for the `adds_period_to_description`.
-    for integration, script yml files.
+    for integration yml files.
     Given:
         a comment and its expected comment with a period,
         a description and its expected description with a period,
@@ -378,10 +354,7 @@ def test_adds_period_to_description(
         the description in the YAML data should have a period added if is not end with url.
     """
     yml_data = {
-        "comment": comment,  # script yml
         "description": description,
-        "args": [{"description": description}],  # script yml
-        "outputs": [{"description": description}],  # script yml
         "script": {  # integration yml
             "commands": [
                 {
@@ -403,10 +376,7 @@ def test_adds_period_to_description(
         },
     }
     expected__yml_data = {
-        "comment": expected_comment,
         "description": expected_description,
-        "args": [{"description": expected_description}],  # script yml
-        "outputs": [{"description": expected_description}],  # script yml
         "script": {
             "commands": [
                 {
@@ -426,6 +396,106 @@ def test_adds_period_to_description(
                 }
             ]
         },
+    }
+
+    mocker.patch(
+        "demisto_sdk.commands.format.update_generic.get_dict_from_file",
+        return_value=(yml_data, "mock_type"),
+    )
+    base_update = BaseUpdate(input="test")
+    base_update.adds_period_to_description()
+    assert base_update.data == expected__yml_data
+
+
+@pytest.mark.parametrize(
+    "description, expected_description",
+    [
+        ("", ""),
+        (
+            "description without dot",
+            "description without dot.",
+        ),
+        (
+            "description with dot at the end.",
+            "description with dot at the end.",
+        ),
+        (
+            "description with url and no dot at the end https://www.test.com",
+            "description with url and no dot at the end https://www.test.com",
+        ),
+        (
+            "description that has https://www.test.com in the middle of the sentence",
+            "description that has https://www.test.com in the middle of the sentence.",
+        ),
+        (
+            "description that has an 'example without dot at the end of the string'",
+            "description that has an 'example without dot at the end of the string'.",
+        ),
+        (
+            "description with dot and empty string in the end. ",
+            "description with dot and empty string in the end. ",
+        ),
+        (
+            "description without dot and empty string in the end ",
+            "description without dot and empty string in the end.",
+        ),
+        (
+            "description with dot and 'new_line' in the end. \n",
+            "description with dot and 'new_line' in the end. \n",
+        ),
+        (
+            "description without dot and 'new_line' in the end \n",
+            "description without dot and 'new_line' in the end.",  # Simulates a case when the description starts with pipe -|
+        ),
+        (
+            "description with a dot in the bracket (like this.)",
+            "description with a dot in the bracket (like this.)",
+        ),
+        (
+            "description without a dot in the bracket (like this)",
+            "description without a dot in the bracket (like this).",
+        ),
+    ],
+    ids=[
+        "empty string",
+        "Without dot",
+        "with dot",
+        "url in the end",
+        "url in the middle",
+        "with single-quotes in double-quotes",
+        "with dot and empty string in the end",
+        "without dot and empty string in the end",
+        "case when the description starts with pipe with dot",
+        "case when the description starts with pipe without dot",
+        "ends with a dot inside a bracket",
+        "ends without a dot inside a bracket",
+    ],
+)
+def test_adds_period_to_description_in_script(
+    mocker: MockerFixture,
+    description: str,
+    expected_description: str,
+) -> None:
+    """
+    Test case for the `adds_period_to_description`.
+    for  script yml files.
+    Given:
+        a comment and its expected comment with a period,
+        a description and its expected description with a period,
+    When:
+        the `adds_period_to_description` method is called,
+    Then:
+        the description in the YAML data should have a period added if is not end with url.
+    """
+    yml_data = {
+        "comment": description,
+        "args": [{"description": description}],
+        "outputs": [{"description": description}],
+    }
+    expected__yml_data = {
+        "comment": expected_description,
+        "args": [{"description": expected_description}],
+        "outputs": [{"description": expected_description}],
     }
 
     mocker.patch(

@@ -1,5 +1,5 @@
 name: SDK Release
-on: pull_request
+on: workflow_dispatch
 
 jobs:
   SDK-Release:

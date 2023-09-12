@@ -10,7 +10,7 @@ from demisto_sdk.commands.format.format_constants import VERSION_6_0_0
 from demisto_sdk.commands.format.update_generic import BaseUpdate
 from demisto_sdk.commands.validate.validate_manager import ValidateManager
 
-DESCRIPTION_TEST = [
+DESCRIPTION_TEST = (
     pytest.param("", "", id="empty string"),
     pytest.param(
         "description without dot", "description without dot.", id="Without dot"
@@ -65,7 +65,7 @@ DESCRIPTION_TEST = [
         "description without a dot in the bracket (like this).",
         id="ends without a dot inside a bracket",
     ),
-]
+)
 
 
 class TestFormattingFromVersionKey:

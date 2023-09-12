@@ -1,13 +1,10 @@
 name: SDK Release
-on:
-  pull_request:
-    branches:
-      - 'V2.33.4'
+on: pull_request
 
 jobs:
   SDK-Release:
     runs-on: ubuntu-latest
-    if: 
+    if: github.event.pull_request.title == V2.33.4
     steps:
       - name: Setup Poetry
         uses: Gr1N/setup-poetry@v8

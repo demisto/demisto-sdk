@@ -7,8 +7,8 @@ from typing import Any, Dict, Optional, Set, Union
 import dictdiffer
 
 from demisto_sdk.commands.common.constants import (
-    GENERAL_DEFAULT_FROMVERSION,
     DEMISTO_GIT_PRIMARY_BRANCH,
+    GENERAL_DEFAULT_FROMVERSION,
     VERSION_5_5_0,
 )
 from demisto_sdk.commands.common.handlers import YAML_Handler

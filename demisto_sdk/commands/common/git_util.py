@@ -618,7 +618,10 @@ class GitUtil:
                     return "main"
                 elif current_remote_ref_str == f"{DEMISTO_GIT_UPSTREAM}/master":
                     return "master"
-                elif current_remote_ref_str == f"{DEMISTO_GIT_UPSTREAM}/{DEMISTO_GIT_PRIMARY_BRANCH}":
+                elif (
+                    current_remote_ref_str
+                    == f"{DEMISTO_GIT_UPSTREAM}/{DEMISTO_GIT_PRIMARY_BRANCH}"
+                ):
                     return DEMISTO_GIT_PRIMARY_BRANCH
         return ""
 

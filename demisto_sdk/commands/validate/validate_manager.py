@@ -15,6 +15,8 @@ from demisto_sdk.commands.common.constants import (
     AUTHOR_IMAGE_FILE_NAME,
     CONTENT_ENTITIES_DIRS,
     DEFAULT_CONTENT_ITEM_TO_VERSION,
+    DEMISTO_GIT_PRIMARY_BRANCH,
+    DEMISTO_GIT_UPSTREAM,
     DEPRECATED_CONTENT_PACK,
     FIRST_LEVEL_FOLDERS,
     FIRST_LEVEL_FOLDERS_ALLOWED_TO_CONTAIN_FILES,
@@ -272,7 +274,7 @@ class ValidateManager:
         self.deprecation_validator = DeprecationValidator(id_set_file=self.id_set_file)
 
         try:
-            self.git_util = GitUtil(repo=Content.git())
+            self.git_util = Content.git_util()
             self.branch_name = self.git_util.get_current_git_branch_or_hash()
         except (InvalidGitRepositoryError, TypeError):
             # if we are using git - fail the validation by raising the exception.
@@ -284,8 +286,8 @@ class ValidateManager:
                 self.git_util = None  # type: ignore[assignment]
                 self.branch_name = ""
 
-        if prev_ver and not prev_ver.startswith("origin"):
-            self.prev_ver = self.setup_prev_ver("origin/" + prev_ver)
+        if prev_ver and not prev_ver.startswith(DEMISTO_GIT_UPSTREAM):
+            self.prev_ver = self.setup_prev_ver(f"{DEMISTO_GIT_UPSTREAM}/" + prev_ver)
         else:
             self.prev_ver = self.setup_prev_ver(prev_ver)
 
@@ -412,7 +414,7 @@ class ValidateManager:
             return PathLevel.FILE
 
         file_path = file_path.rstrip("/")
-        dir_name = os.path.basename(file_path)
+        dir_name = Path(file_path).name
         if dir_name in CONTENT_ENTITIES_DIRS:
             return PathLevel.CONTENT_ENTITY_DIR
 
@@ -421,7 +423,7 @@ class ValidateManager:
         ).endswith(GENERIC_FIELDS_DIR):
             return PathLevel.CONTENT_GENERIC_ENTITY_DIR
 
-        if os.path.basename(os.path.dirname(file_path)) == PACKS_DIR:
+        if Path(file_path).parent.name == PACKS_DIR:
             return PathLevel.PACK
 
         else:
@@ -596,7 +598,7 @@ class ValidateManager:
             skip_files = set()
 
         pack_entities_validation_results = set()
-        pack_error_ignore_list = self.get_error_ignore_list(os.path.basename(pack_path))
+        pack_error_ignore_list = self.get_error_ignore_list(Path(pack_path).name)
 
         pack_entities_validation_results.add(
             self.validate_pack_unique_files(pack_path, pack_error_ignore_list)
@@ -1067,9 +1069,10 @@ class ValidateManager:
         ):
             logger.info(f"Validating {file_type.value} file: {file_path}")
             if self.validate_all:
+                file_name = Path(file_path).name
                 error_ignore_list = pack_error_ignore_list.copy()
-                error_ignore_list.setdefault(os.path.basename(file_path), [])
-                error_ignore_list.get(os.path.basename(file_path)).append("MR104")
+                error_ignore_list.setdefault(file_name, [])
+                error_ignore_list.get(file_name).append("MR104")
                 return self.validate_modeling_rule(
                     structure_validator, error_ignore_list
                 )
@@ -1943,7 +1946,7 @@ class ValidateManager:
 
         logger.info(f"\nValidating {pack_path} unique pack files")
         pack_unique_files_validator = PackUniqueFilesValidator(
-            pack=os.path.basename(pack_path),
+            pack=Path(pack_path).name,
             pack_path=pack_path,
             ignored_errors=pack_error_ignore_list,
             should_version_raise=should_version_raise,
@@ -2010,8 +2013,13 @@ class ValidateManager:
                 continue
             # if the repo does not have remotes, get the .pack-ignore content from the master branch in Github api
             # if the repo is not in remote / file cannot be found from Github api, try to take it from the latest commit on the default branch (usually master/main)
-            old_pack_ignore_content = get_remote_file(old_file_path, "master")
-            if old_pack_ignore_content == b"":  # found as empty file in remote
+            old_pack_ignore_content = get_remote_file(
+                old_file_path, DEMISTO_GIT_PRIMARY_BRANCH
+            )
+            if (
+                isinstance(old_pack_ignore_content, bytes)
+                and old_pack_ignore_content.strip() == b""
+            ):  # found an empty file in remote
                 old_pack_ignore_content = ""
             elif old_pack_ignore_content == {}:  # not found in remote
                 logger.debug(
@@ -2122,7 +2130,7 @@ class ValidateManager:
 
         """
         file_path = str(file_path)
-        file_dict = get_remote_file(file_path, tag="master")
+        file_dict = get_remote_file(file_path, tag=DEMISTO_GIT_PRIMARY_BRANCH)
         file_type = find_type(file_path, file_dict)
         return file_type in FileType_ALLOWED_TO_DELETE or not file_type
 
@@ -2138,7 +2146,7 @@ class ValidateManager:
         if added_files:
             deleted_file_path = str(deleted_file_path)
             deleted_file_dict = get_remote_file(
-                deleted_file_path, tag="master"
+                deleted_file_path, tag=DEMISTO_GIT_PRIMARY_BRANCH
             )  # for detecting deleted files
             if deleted_file_type := find_type(deleted_file_path, deleted_file_dict):
                 deleted_file_id = _get_file_id(
@@ -2390,10 +2398,10 @@ class ValidateManager:
 
             # Otherwise, use git to get the primary branch
             _, branch = self.git_util.handle_prev_ver()
-            return "origin/" + branch
+            return f"{DEMISTO_GIT_UPSTREAM}/" + branch
 
         # Default to 'origin/master'
-        return "origin/master"
+        return f"{DEMISTO_GIT_UPSTREAM}/master"
 
     def setup_git_params(self):
         """Setting up the git relevant params"""
@@ -2426,7 +2434,7 @@ class ValidateManager:
             self.always_valid = True
 
         # On main or master don't check RN
-        elif self.branch_name in ["master", "main"]:
+        elif self.branch_name in ["master", "main", DEMISTO_GIT_PRIMARY_BRANCH]:
             self.skip_pack_rn_validation = True
             error_message, error_code = Errors.running_on_master_with_git()
             if self.handle_error(
@@ -2448,7 +2456,7 @@ class ValidateManager:
 
             if self.branch_name in [
                 self.prev_ver,
-                self.prev_ver.replace("origin/", ""),
+                self.prev_ver.replace(f"{DEMISTO_GIT_UPSTREAM}/", ""),
             ]:  # pragma: no cover
                 logger.info("Running only on last commit")
 

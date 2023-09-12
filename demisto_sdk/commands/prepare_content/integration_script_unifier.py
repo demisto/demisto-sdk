@@ -292,7 +292,7 @@ class IntegrationScriptUnifier(Unifier):
             return os.path.join(package_path, "CommonServerUserPowerShell.ps1")
         if package_path.endswith(API_MODULE_FILE_SUFFIX):
             return os.path.join(
-                package_path, os.path.basename(os.path.normpath(package_path)) + ".py"
+                package_path, Path(os.path.normpath(package_path)).name + ".py"
             )
 
         script_path_list = list(

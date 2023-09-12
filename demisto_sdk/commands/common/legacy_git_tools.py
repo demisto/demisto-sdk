@@ -5,6 +5,8 @@ from pathlib import Path
 from typing import Callable, List
 
 from demisto_sdk.commands.common.constants import (
+    DEMISTO_GIT_PRIMARY_BRANCH,
+    DEMISTO_GIT_UPSTREAM,
     KNOWN_FILE_STATUSES,
     PACKS_PACK_META_FILE_NAME,
     TESTS_AND_DOC_DIRECTORIES,
@@ -39,7 +41,9 @@ def get_current_working_branch() -> str:
     return ""
 
 
-def get_changed_files(from_branch: str = "master", filter_results: Callable = None):
+def get_changed_files(
+    from_branch: str = DEMISTO_GIT_PRIMARY_BRANCH, filter_results: Callable = None
+):
     temp_files = run_command(f"git diff --name-status {from_branch}").split("\n")
     files: List = []
     for file in temp_files:
@@ -66,7 +70,7 @@ def add_origin(branch_name, prev_ver):
     if "/" not in prev_ver and not (
         branch_name.startswith("20.") or branch_name.startswith("21.")
     ):
-        prev_ver = "origin/" + prev_ver
+        prev_ver = f"{DEMISTO_GIT_UPSTREAM}/" + prev_ver
     return prev_ver
 
 
@@ -282,7 +286,9 @@ def get_modified_and_added_files(
 
 
 # flake8: noqa: C901
-def filter_changed_files(files_string, tag="master", print_ignored_files=False):
+def filter_changed_files(
+    files_string, tag=DEMISTO_GIT_PRIMARY_BRANCH, print_ignored_files=False
+):
     """Get lists of the modified files in your branch according to the files string.
 
     Args:

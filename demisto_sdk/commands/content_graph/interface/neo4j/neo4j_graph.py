@@ -294,7 +294,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
 
     def _search(
         self,
-        marketplace: Union[MarketplaceVersions, str] = None,
+        marketplace: MarketplaceVersions = None,
         content_type: ContentType = ContentType.BASE_CONTENT,
         ids_list: Optional[Iterable[int]] = None,
         all_level_dependencies: bool = False,

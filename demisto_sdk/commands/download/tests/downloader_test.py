@@ -1141,7 +1141,7 @@ class TestMergeNewFile:
             output_dir_path = f"{temp_dir}/{entity}"
             os.mkdir(output_dir_path)
             old_file_path = param["custom_content_object"]["path"]
-            new_file_path = f"{output_dir_path}/{os.path.basename(old_file_path)}"
+            new_file_path = f"{output_dir_path}/{Path(old_file_path).name}"
             downloader = Downloader(output=temp_dir, input="", regex="")
             downloader.merge_new_file(param["custom_content_object"])
             assert Path(new_file_path).is_file()

@@ -90,6 +90,11 @@ mapping:
   subtype:
     type: str
     enum: ['python2', 'python3']
+  engineinfo:
+    type: map
+    mapping:
+      engine:
+        type: str
   contentitemexportablefields:
     type: map
     mapping:

@@ -1,4 +1,5 @@
 import glob
+import logging
 import os
 import shutil
 from configparser import ConfigParser
@@ -6,7 +7,6 @@ from pathlib import Path
 from tempfile import NamedTemporaryFile, TemporaryDirectory
 from typing import Callable, List, Optional, Tuple, Union
 
-import git
 import pytest
 import requests
 
@@ -151,7 +151,7 @@ from TestSuite.file import File
 from TestSuite.pack import Pack
 from TestSuite.playbook import Playbook
 from TestSuite.repo import Repo
-from TestSuite.test_tools import ChangeCWD
+from TestSuite.test_tools import ChangeCWD, str_in_call_args_list
 
 GIT_ROOT = git_path()
 
@@ -626,12 +626,12 @@ class TestGetRemoteFileLocally:
     FILE_NAME = "somefile.json"
     FILE_CONTENT = '{"id": "some_file"}'
 
-    git_util = GitUtil(repo=Content.git())
+    git_util = Content.git_util()
     main_branch = git_util.handle_prev_ver()[1]
 
     def setup_method(self):
         # create local git repo
-        example_repo = git.Repo.init(self.REPO_NAME)
+        example_repo = GitUtil.REPO_CLS.init(self.REPO_NAME)
         origin_branch = self.main_branch
         if not origin_branch.startswith("origin"):
             origin_branch = "origin/" + origin_branch
@@ -1437,7 +1437,7 @@ def test_get_file_displayed_name__image(repo):
     integration.create_default_integration()
     with ChangeCWD(repo.path):
         display_name = get_file_displayed_name(integration.image.path)
-        assert display_name == os.path.basename(integration.image.rel_path)
+        assert display_name == Path(integration.image.rel_path).name
 
 
 INCIDENTS_TYPE_FILES_INPUTS = [
@@ -3188,6 +3188,32 @@ def test_get_content_path(input_path, expected_output):
         Validate that the given path is correct
     """
     assert tools.get_content_path(input_path) == expected_output
+
+
+def test_get_content_path_no_remote(mocker):
+    """
+    Given:
+        - A path to a file or directory in the content repo, with no remote
+    When:
+        - Running get_content_path
+    Then:
+        Validate that a warning is issued as (resulting from a raised exception).
+    """
+    from git import Repo  # noqa: TID251
+
+    def raise_value_exception(name):
+        raise ValueError()
+
+    mocker.patch.object(Repo, "remote", side_effect=raise_value_exception)
+    mocker.patch(
+        "demisto_sdk.commands.common.tools.is_external_repository", return_value=False
+    )
+    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+    tools.get_content_path(Path("/User/username/test"))
+    assert str_in_call_args_list(
+        logger_info.call_args_list,
+        "[yellow]Please run demisto-sdk in content repository![/yellow]",
+    )
 
 
 @pytest.mark.parametrize(

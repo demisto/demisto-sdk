@@ -71,6 +71,7 @@ from demisto_sdk.commands.common.hook_validations.xsiam_dashboard import (
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.content_graph.tests.create_content_graph_test import (
     mock_integration,
+    mock_pack,
 )
 from demisto_sdk.commands.prepare_content.integration_script_unifier import (
     IntegrationScriptUnifier,
@@ -1392,6 +1393,8 @@ class TestValidators:
         Then:
             - return a True as there are no release notes missing
         """
+        from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
+
         mocker.patch.object(
             BaseValidator, "update_checked_flags_by_support_level", return_value=""
         )
@@ -1403,6 +1406,17 @@ class TestValidators:
             "Packs/ApiModules/ReleaseNotes/1_0_0.md",
             "Packs/ApiDependent/ReleaseNotes/1_0_0.md",
         }
+        integration_mock = mock_integration("ApiDependent")
+        mocker.patch(
+            "demisto_sdk.commands.validate.validate_manager.get_api_module_dependencies_from_graph",
+            return_value=[integration_mock],
+        )
+
+        mocker.patch.object(
+            ContentItem,
+            "in_pack",
+            mock_pack("ApiDependent", path=Path("Packs/ApiDependent")),
+        )
         with ChangeCWD(repo.path):
             assert (
                 validate_manager.validate_no_missing_release_notes(
@@ -3189,6 +3203,33 @@ def test_validate_no_disallowed_terms_in_customer_facing_docs_end_to_end(repo, m
             "[file:test.yml]\nignore=BA108,BA109,DS107\n",
             {"Packs/test1/Integrations/test2/test2.yml"},
         ),
+        (
+            {"Packs/test/.pack-ignore"},
+            "[file:test.yml]\nignore=BA108\n",
+            b"\n\n",
+            "",
+            {
+                "Packs/test/Integrations/test/test.yml",
+            },
+        ),
+        (
+            {"Packs/test/.pack-ignore"},
+            "[file:test.yml]\nignore=BA108\n",
+            b"    ",
+            "",
+            {
+                "Packs/test/Integrations/test/test.yml",
+            },
+        ),
+        (
+            {"Packs/test/.pack-ignore"},
+            "[file:test.yml]\nignore=BA108\n",
+            b"    \n   \n   ",
+            "",
+            {
+                "Packs/test/Integrations/test/test.yml",
+            },
+        ),
     ],
 )
 def test_get_all_files_edited_in_pack_ignore(
@@ -3207,6 +3248,9 @@ def test_get_all_files_edited_in_pack_ignore(
     - Case 3: pack-ignore mocks where each file is pointed to a different integration yml.
     - Case 4: old .pack-ignore that is empty and current .pack-ignore that was updated with ignored validation
     - Case 5: old .pack-ignore which is not in the remote branch repo, but only exist in the local branch
+    - Case 6: old empty .pack-ignore which contains newlines.
+    - Case 7: old empty .pack-ignore which contains only spaces.
+    - Case 8: old empty .pack-ignore which contains only spaces and newlines.
 
     When:
     - Running get_all_files_edited_in_pack_ignore.
@@ -3218,6 +3262,7 @@ def test_get_all_files_edited_in_pack_ignore(
     - Case 3: Should return both file names.
     - Case 4: Ensure the file that was changed in the .pack-ignore is collected
     - Case 5: Ensure the file that was changed in the .pack-ignore is collected from the local repo
+    - Case 6 + 7 + 8: Ensure the file that was changed in the .pack-ignore is collected
     """
     mocker.patch.object(
         GitUtil,

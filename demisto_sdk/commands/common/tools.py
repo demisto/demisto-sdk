@@ -1639,7 +1639,10 @@ def find_type_by_path(path: Union[str, Path] = "") -> Optional[FileType]:
         elif LAYOUT_RULES_DIR in path.parts:
             return FileType.LAYOUT_RULE
 
-    elif path.stem.endswith("_image") and path.suffix in (".png", ".svg"):
+    elif (path.stem.endswith("_image") and path.suffix == ".png") or (
+        (path.stem.endswith("_dark") or path.stem.endswith("_light"))
+        and path.suffix == ".svg"
+    ):
         if path.name.endswith("Author_image.png"):
             return FileType.AUTHOR_IMAGE
         elif XSIAM_DASHBOARDS_DIR in path.parts:
@@ -3750,24 +3753,21 @@ def get_api_module_dependencies_from_graph(
 ) -> List:
     if changed_api_modules:
         dependent_items = []
-        for changed_api_module in changed_api_modules:
+        api_module_nodes = graph.search(
+            object_id=changed_api_modules, all_level_imports=True
+        )
+        if missing_api_modules := changed_api_modules - {
+            node.object_id for node in api_module_nodes
+        }:
+            raise ValueError(
+                f"The modified API modules {','.join(missing_api_modules)} were not found in the "
+                f"content graph."
+            )
+        for api_module_node in api_module_nodes:
             logger.info(
-                f"Checking for packages dependent on the modified API module {changed_api_module}..."
+                f"Checking for packages dependent on the modified API module {api_module_node.object_id}"
             )
-            api_module_nodes = graph.search(
-                object_id=changed_api_module, all_level_imports=True
-            )
-            # search return the one node of the changed_api_module
-            api_module_node = api_module_nodes[0] if api_module_nodes else None
-            if not api_module_node:
-                raise ValueError(
-                    f"The modified API module `{changed_api_module}` was not found in the "
-                    f"content graph."
-                )
-
-            dependent_items += [
-                dependency for dependency in api_module_node.imported_by
-            ]
+            dependent_items += list(api_module_node.imported_by)
 
         if dependent_items:
             logger.info(

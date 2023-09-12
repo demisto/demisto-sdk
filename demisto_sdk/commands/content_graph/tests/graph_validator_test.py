@@ -46,6 +46,17 @@ def setup_method(mocker):
     bc.CONTENT_PATH = GIT_PATH
     mocker.patch.object(neo4j_service, "REPO_PATH", GIT_PATH)
     mocker.patch.object(ContentGraphInterface, "repo_path", GIT_PATH)
+    mocker.patch(
+        "demisto_sdk.commands.common.docker_images_metadata.get_remote_file_from_api",
+        return_value={
+            "docker_images": {
+                "python3": {
+                    "3.10.11.54799": {"python_version": "3.10.11"},
+                    "3.10.12.63474": {"python_version": "3.10.11"},
+                }
+            }
+        },
+    )
 
 
 @pytest.fixture
@@ -450,7 +461,7 @@ def mock_script(name, marketplaces=[MarketplaceVersions.XSOAR], skip_prepare=[])
         marketplaces=marketplaces,
         deprecated=False,
         type="python3",
-        docker_image="mock:docker",
+        docker_image="demisto/python3:3.10.11.54799",
         tags=[],
         is_test=False,
         skip_prepare=skip_prepare,
@@ -470,7 +481,7 @@ def mock_integration(name: str = "SampleIntegration", deprecated: bool = False):
         marketplaces=[MarketplaceVersions.XSOAR, MarketplaceVersions.MarketplaceV2],
         deprecated=deprecated,
         type="python3",
-        docker_image="mock:docker",
+        docker_image="demisto/python3:3.10.11.54799",
         category="blabla",
         commands=[
             Command(name="test-command", description=""),

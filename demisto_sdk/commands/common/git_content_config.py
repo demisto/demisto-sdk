@@ -13,6 +13,7 @@ import giturlparse
 # dirs
 import requests
 
+from demisto_sdk.commands.common.constants import DOCKERFILES_INFO_REPO
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 
@@ -67,6 +68,7 @@ class GitContentConfig:
         (GITHUB_USER_CONTENT, OFFICIAL_CONTENT_REPO_NAME),
         (GITHUB, OFFICIAL_CONTENT_REPO_NAME),
         (CODE_PAN_RUN, OFFICIAL_CONTENT_PROJECT_ID),
+        (GITHUB_USER_CONTENT, DOCKERFILES_INFO_REPO),
     }
 
     CREDENTIALS = GitCredentials()

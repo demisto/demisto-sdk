@@ -89,6 +89,7 @@ def create_table(expected: Dict[str, Any], received: Dict[str, Any]) -> str:
         data,
         tablefmt="fancy_grid",
         headers=["Model Field", "Expected Value", "Received Value"],
+        maxcolwidths=[60, 40, 40],
     )
 
 
@@ -170,6 +171,30 @@ def get_type_pretty_name(obj: Any) -> str:
         bool: "boolean",
         datetime: "datetime",
     }.get(type(obj), str(type(obj)))
+
+
+def sanitize_received_value_by_expected_type(
+    received_value: Any, expected_type: str
+) -> Tuple[str, Any]:
+    """
+    XSIAM returns numeric values from the API always as float, so we need to check if the expected type is int and if that's the
+    case and the value returned is a numeric without a floating point value, we can assume it's an int.
+    Args:
+        expected_type: The expected type of the object.
+        received_value: The object to get the type for.
+
+    Returns:
+        The expected type of the object, and the object itself after being sanitized.
+    """
+    received_value_type = get_type_pretty_name(received_value)
+    # The values returned from XSIAM for int/float are always float, so we need to check if the expected type is int.
+    if (
+        expected_type == "int"
+        and received_value_type == "float"
+        and int(received_value) == received_value
+    ):
+        return "int", int(received_value)
+    return received_value_type, received_value
 
 
 def create_retrying_caller(retry_attempts: int, sleep_interval: int) -> Retrying:
@@ -261,14 +286,17 @@ def verify_results(
 
     test_cases = []
     for i, result in enumerate(results, start=1):
+        td_event_id = result.pop(f"{tested_dataset}.test_data_event_id")
+        msg = (
+            f"Modeling rule - {get_relative_path_to_content(modeling_rule.path)} {i}/{len(results)}"
+            f" test_data_event_id:{td_event_id}"
+        )
         logger.info(
-            f"\n[cyan][underline]Result {i}/{len(results)}[/underline][/cyan]",
+            f"[cyan]{msg}[/cyan]",
             extra={"markup": True},
         )
-        td_event_id = result.pop(f"{tested_dataset}.test_data_event_id")
         result_test_case = TestCase(
-            f"Modeling rule - {get_relative_path_to_content(modeling_rule.path)} {i}/{len(results)}"
-            f" test_data_event_id:{td_event_id}",
+            msg,
             classname=f"test_data_event_id:{td_event_id}",
         )
         verify_results_against_test_data(
@@ -311,44 +339,61 @@ def verify_results_against_test_data(
             )
         table_result = create_table(expected_values, result)
         logger.info(f"\n{table_result}")
-        for key, val in expected_values.items():
-            if val:
-                result_val = result.get(key)
-                out = f"Checking for key {key}:\n - expected: {val}\n - received: {result_val}"
+        for expected_key, expected_value in expected_values.items():
+            if expected_value:
+                received_value = result.get(expected_key)
+                expected_value_type = get_type_pretty_name(expected_value)
+                (
+                    received_value_type_sanitized,
+                    received_value_sanitized,
+                ) = sanitize_received_value_by_expected_type(
+                    received_value, expected_value_type
+                )
+                out = (
+                    f"Checking for key {expected_key} - "
+                    f"expected value:{expected_value} expected type:{expected_value_type} "
+                    f"received value:{received_value_sanitized} received type:{received_value_type_sanitized} "
+                    f"before sanitization - received value:{received_value} received type: "
+                    f"{get_type_pretty_name(received_value)}"
+                )
                 logger.debug(f"[cyan]{out}[/cyan]", extra={"markup": True})
                 result_test_case_system_out.append(out)
-
-                if type(result_val) == type(val) and result_val == val:
-                    out = f"Value:{result_val} and Type:{get_type_pretty_name(result_val)} Matched for key {key}"
+                if (
+                    received_value_sanitized == expected_value
+                    and received_value_type_sanitized == expected_value_type
+                ):
+                    out = f"Value:{received_value_sanitized} and Type:{received_value_type_sanitized} Matched for key {expected_key}"
                     result_test_case_system_out.append(out)
                     logger.debug(out)
                 else:
-                    if type(result_val) == type(val):
+                    if received_value_type_sanitized == expected_value_type:
                         err = (
-                            f"Expected value does not match for key {key}: - expected: {val} - received: {result_val} "
-                            f"Types match:{get_type_pretty_name(result_val)}"
+                            f"Expected value does not match for key {expected_key}: - expected: {expected_value} - "
+                            f"received: {received_value_sanitized} Types match:{received_value_type_sanitized}"
                         )
                         logger.error(
-                            f'[red][bold]{key}[/bold] --- "{result_val}" != "{val}" '
-                            f"Types match:{get_type_pretty_name(result_val)}[/red]",
+                            f'[red][bold]{expected_key}[/bold] --- "{received_value_sanitized}" != "{expected_value}" '
+                            f"Types match:{received_value_type_sanitized}[/red]",
                             extra={"markup": True},
                         )
                     else:
+                        # Types don't match, so values are not matching either,
+                        # so it means that both do not match.
                         err = (
-                            f"Expected value and type do not match for key {key}: - expected: {val} - received: {result_val} "
-                            f"expected type: {get_type_pretty_name(val)} "
-                            f"received type: {get_type_pretty_name(result_val)}"
+                            f"Expected value and type do not match for key {expected_key}: - expected: {expected_value} - "
+                            f"received: {received_value_sanitized} expected type: {expected_value_type} "
+                            f"received type: {received_value_type_sanitized}"
                         )
                         logger.error(
-                            f'[red][bold]{key}[/bold][red] --- "{result_val}" != "{val}"\n'
-                            f' [bold]{key}[/bold][red] --- Received value type: "{get_type_pretty_name(result_val)}" '
-                            f'!= Expected value type: "{get_type_pretty_name(val)}"[/red]',
+                            f'[red][bold]{expected_key}[/bold][red] --- "{received_value_sanitized}" != "{expected_value}"\n'
+                            f' [bold]{expected_key}[/bold][red] --- Received value type: "{received_value_type_sanitized}" '
+                            f'!= Expected value type: "{expected_value_type}"[/red]',
                             extra={"markup": True},
                         )
                     result_test_case_system_err.append(err)
                     result_test_case_results.append(Failure(err))
             else:
-                err = f"No mapping for this {key} - skipping checking match"
+                err = f"No mapping for key {expected_key} - skipping checking match"
                 result_test_case_system_out.append(err)
                 result_test_case_results.append(Skipped(err))
                 logger.debug(f"[cyan]{err}[/cyan]", extra={"markup": True})
@@ -750,8 +795,8 @@ def verify_pack_exists_on_tenant(
                 "[red]Pack does not exist on the tenant. Please install or upload the pack and try again[/red]",
                 extra={"markup": True},
             )
-            typer.echo(
-                f"demisto-sdk upload -z -x -i {containing_pack.path}\ndemisto-sdk modeling-rules test {mr.path.parent}"
+            logger.info(
+                f"\ndemisto-sdk upload -z -x -i {containing_pack.path}\ndemisto-sdk modeling-rules test {mr.path.parent}"
             )
             return False
     return True
@@ -806,10 +851,6 @@ def validate_modeling_rule(
         interactive (bool): Whether command is being run in interactive mode.
         ctx (typer.Context): Typer context.
     """
-    logger.info(
-        f"[cyan]<<<< Test Modeling Rule: {get_relative_path_to_content(modeling_rule_directory)} >>>>[/cyan]",
-        extra={"markup": True},
-    )
     modeling_rule = ModelingRule(modeling_rule_directory.as_posix())
     modeling_rule_file_name = Path(modeling_rule.path).name
     containing_pack = get_containing_pack(modeling_rule)
@@ -881,13 +922,16 @@ def validate_modeling_rule(
             )
         test_data = TestData.parse_file(modeling_rule.testdata_path.as_posix())
 
-        schema_test_case = TestCase("Validate Schema", classname="Modeling Rule")
+        schema_test_case = TestCase(
+            "Validate Schema",
+            classname=f"Modeling Rule {get_relative_path_to_content(modeling_rule.schema_path)}",
+        )
         if schema_path := modeling_rule.schema_path:
             with open(modeling_rule.schema_path) as schema_file:
                 try:
                     schema = json.load(schema_file)
                 except json.JSONDecodeError as ex:
-                    err = f"Failed to parse schema file {modeling_rule.schema_path} as JSON"
+                    err = f"Failed to parse schema file {get_relative_path_to_content(modeling_rule.schema_path)} as JSON"
                     logger.error(
                         f"[red]{err}[/red]",
                         extra={"markup": True},
@@ -897,7 +941,7 @@ def validate_modeling_rule(
                         err, schema_test_case, modeling_rule_test_suite
                     )
         else:
-            err = f"Schema file does not exist in path {modeling_rule.schema_path}"
+            err = f"Schema file does not exist in path {get_relative_path_to_content(modeling_rule.schema_path)}"
             return log_error_to_test_case(
                 err, schema_test_case, modeling_rule_test_suite
             )
@@ -1044,17 +1088,15 @@ def validate_modeling_rule(
                 )
                 logger.error(
                     f"[red]Please create a test data file for "
-                    f"{get_relative_path_to_content(modeling_rule_directory)} and then rerun[/red]",
+                    f"{get_relative_path_to_content(modeling_rule_directory)} and then rerun\n{executed_command}[/red]",
                     extra={"markup": True},
                 )
-                typer.echo(executed_command)
         else:
             logger.error(
                 f"[red]Please create a test data file for "
-                f"{get_relative_path_to_content(modeling_rule_directory)} and then rerun[/red]",
+                f"{get_relative_path_to_content(modeling_rule_directory)} and then rerun\n{executed_command}[/red]",
                 extra={"markup": True},
             )
-            typer.echo(executed_command)
         return False, None
 
 
@@ -1253,19 +1295,19 @@ def test_modeling_rule(
         "INFO",
         "-clt",
         "--console-log-threshold",
-        help=("Minimum logging threshold for the console logger."),
+        help="Minimum logging threshold for the console logger.",
     ),
     file_log_threshold: str = typer.Option(
         "DEBUG",
         "-flt",
         "--file-log-threshold",
-        help=("Minimum logging threshold for the file logger."),
+        help="Minimum logging threshold for the file logger.",
     ),
     log_file_path: str = typer.Option(
         "demisto_sdk_debug.log",
         "-lp",
         "--log-file-path",
-        help=("Path to the log file. Default: ./demisto_sdk_debug.log."),
+        help="Path to the log file. Default: ./demisto_sdk_debug.log.",
     ),
 ):
     """
@@ -1279,16 +1321,26 @@ def test_modeling_rule(
     handle_deprecated_args(ctx.args)
 
     logger.info(
-        f"[cyan]Modeling Rules directories to test: {inputs}[/cyan]",
+        "[cyan]Test Modeling Rules directories to test:[/cyan]",
         extra={"markup": True},
     )
+
+    for modeling_rule_directory in inputs:
+        logger.info(
+            f"[cyan]\t{get_relative_path_to_content(modeling_rule_directory)}[/cyan]",
+            extra={"markup": True},
+        )
 
     retrying_caller = create_retrying_caller(retry_attempts, sleep_interval)
 
     errors = False
     xml = JUnitXml()
     start_time = datetime.now(timezone.utc)
-    for modeling_rule_directory in inputs:
+    for i, modeling_rule_directory in enumerate(inputs, start=1):
+        logger.info(
+            f"[cyan][{i}/{len(inputs)}] Test Modeling Rule: {get_relative_path_to_content(modeling_rule_directory)}[/cyan]",
+            extra={"markup": True},
+        )
         success, modeling_rule_test_suite = validate_modeling_rule(
             modeling_rule_directory,
             # can ignore the types since if they are not set to str values an error occurs
@@ -1302,10 +1354,15 @@ def test_modeling_rule(
             interactive,
             ctx,
         )
-        if not success:
+        if success:
+            logger.info(
+                f"[green]Test Modeling rule {get_relative_path_to_content(modeling_rule_directory)} passed[/green]",
+                extra={"markup": True},
+            )
+        else:
             errors = True
             logger.error(
-                f"[red]Error testing modeling rule {get_relative_path_to_content(modeling_rule_directory)}[/red]",
+                f"[red]Test Modeling Rule {get_relative_path_to_content(modeling_rule_directory)} failed[/red]",
                 extra={"markup": True},
             )
         if modeling_rule_test_suite:
@@ -1313,10 +1370,28 @@ def test_modeling_rule(
             xml.add_testsuite(modeling_rule_test_suite)
 
     if output_junit_file:
+        logger.info(
+            f"[cyan]Writing JUnit XML to {output_junit_file}[/cyan]",
+            extra={"markup": True},
+        )
         xml.write(output_junit_file.as_posix(), pretty=True)
+    else:
+        logger.info(
+            "[cyan]No JUnit XML file path was passed - skipping writing JUnit XML[/cyan]",
+            extra={"markup": True},
+        )
 
+    duration = duration_since_start_time(start_time)
     if errors:
+        logger.info(
+            f"[red]Test Modeling Rules: Failed, took:{duration} seconds[/red]",
+            extra={"markup": True},
+        )
         raise typer.Exit(1)
+    logger.info(
+        f"[green]Test Modeling Rules: Passed, took:{duration} seconds[/green]",
+        extra={"markup": True},
+    )
 
 
 if __name__ == "__main__":

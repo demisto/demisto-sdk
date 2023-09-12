@@ -30,7 +30,6 @@ from demisto_sdk.commands.common.content.objects.pack_objects import (
 from demisto_sdk.commands.common.content.objects.pack_objects.abstract_pack_objects.yaml_content_object import (
     YAMLContentObject,
 )
-from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
@@ -161,7 +160,7 @@ class UpdateRN:
         self.should_delete_existing_rn = False
         self.pack_metadata_only = pack_metadata_only
         self.is_force = is_force
-        git_util = GitUtil(repo=Content.git())
+        git_util = Content.git_util()
         self.main_branch = git_util.handle_prev_ver()[1]
         self.metadata_path = os.path.join(self.pack_path, "pack_metadata.json")
         self.master_version = self.get_master_version()
@@ -633,7 +632,10 @@ class UpdateRN:
             return rn_string
         rn_template_as_dict: dict = {}
         if self.is_force:
-            rn_string = self.build_rn_desc(content_name=self.pack, text=self.text)
+            pack_display_name = self.get_pack_metadata().get("name", self.pack)
+            rn_string = self.build_rn_desc(
+                content_name=pack_display_name, text=self.text
+            )
         # changed_items.items() looks like that: [((name, type), {...}), (name, type), {...}] and we want to sort
         # them by type (x[0][1])
 
@@ -882,6 +884,12 @@ class UpdateRN:
             self.existing_rn_changed = True
             with open(release_notes_path, "w") as fp:
                 fp.write(rn_string)
+        try:
+            run_command(f"git add {release_notes_path}", exit_on_error=False)
+        except RuntimeError:
+            logger.warning(
+                f"Could not add the release note files to git: {release_notes_path}"
+            )
 
     def rn_with_docker_image(self, rn_string: str, docker_image: Optional[str]) -> str:
         """

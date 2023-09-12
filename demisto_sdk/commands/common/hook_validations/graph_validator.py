@@ -5,7 +5,6 @@ from typing import List, Optional
 from demisto_sdk.commands.common.constants import PACKS_DIR
 from demisto_sdk.commands.common.content.content import Content
 from demisto_sdk.commands.common.errors import Errors
-from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.hook_validations.base_validator import (
     BaseValidator,
     error_codes,
@@ -251,7 +250,7 @@ class GraphValidator(BaseValidator):
         For existing content, a warning is raised.
         """
         is_valid = True
-        new_files = GitUtil(repo=Content.git()).added_files()
+        new_files = Content.git_util().added_files()
         items: List[dict] = self.graph.find_items_using_deprecated_items(
             self.file_paths
         )

@@ -665,6 +665,91 @@ class TestUpdateContentGraph:
                 for file in extracted_files
             )
 
+    data_test_update_content_graph_external_repo = [
+        pytest.param(
+            _testcase1__pack3_pack4__script2_uses_script4,
+            False,
+            id="New pack with USES relationship, causing adding a dependency",
+        ),
+        pytest.param(
+            _testcase3__no_change,
+            True,
+            id="No change in repository",
+        ),
+    ]
+
+    @pytest.mark.parametrize(
+        "commit_func, is_external",
+        data_test_update_content_graph_external_repo,
+    )
+    def test_update_content_graph_external_repo(
+        self,
+        tmp_path,
+        repository: ContentDTO,
+        mocker,
+        commit_func: Callable[[ContentDTO], List[Pack]],
+        is_external: bool,
+    ):
+        """
+        Given:
+            - A ContentDTO model representing the repository state on master branch.
+            - A function representing a commit (an update of certain packs in the repository).
+            - .
+        When:
+            - Running create_content_graph() on master.
+            - Running update_content_graph() from external repo.
+        Then:
+            - Make sure the pack models from the interface are equal to the pack models from ContentDTO
+                before and after the updating the graph with the external repo packs.
+        """
+        with ContentGraphInterface() as interface:
+            # create the graph with dependencies
+            create_content_graph(interface, dependencies=True, output_path=tmp_path)
+            packs_from_graph = interface.search(
+                marketplace=MarketplaceVersions.XSOAR,
+                content_type=ContentType.PACK,
+                all_level_dependencies=True,
+            )
+
+            compare(
+                repository.packs,
+                packs_from_graph,
+                [],
+                [],
+                after_update=False,
+            )
+
+            pack_ids_to_update = update_repository(repository, commit_func)
+            mocker.patch(
+                "demisto_sdk.commands.content_graph.commands.update.is_external_repository",
+                return_value=is_external,
+            )
+            mocker.patch(
+                "demisto_sdk.commands.content_graph.commands.update.get_packs_from_external_repo",
+                return_value=["SamplePack", "SamplePack2", "SamplePack3"],
+            )
+
+            # update the graph accordingly
+            update_content_graph(
+                interface,
+                packs_to_update=pack_ids_to_update,
+                dependencies=True,
+                output_path=tmp_path,
+                use_current=True,
+            )
+            packs_from_graph = interface.search(
+                marketplace=MarketplaceVersions.XSOAR,
+                content_type=ContentType.PACK,
+                all_level_dependencies=True,
+            )
+            compare(
+                repository.packs,
+                packs_from_graph,
+                [],
+                [],
+                after_update=True,
+            )
+
     @pytest.mark.parametrize(
         "commit_func, expected_added_dependencies, expected_removed_dependencies",
         data_test_update_content_graph,

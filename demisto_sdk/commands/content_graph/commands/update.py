@@ -5,9 +5,7 @@ from typing import List, Optional
 
 import typer
 
-from demisto_sdk.commands.common.constants import (
-    MarketplaceVersions,
-)
+from demisto_sdk.commands.common.constants import PACKS_DIR, MarketplaceVersions
 from demisto_sdk.commands.common.content_constant_paths import (
     CONTENT_PATH,
 )
@@ -39,7 +37,7 @@ app = typer.Typer()
 
 
 def get_packs_from_external_repo() -> list:
-    return [path.name for path in (CONTENT_PATH / "Packs").iterdir()]
+    return [path.name for path in (CONTENT_PATH / PACKS_DIR).iterdir()]
 
 
 @recover_if_fails

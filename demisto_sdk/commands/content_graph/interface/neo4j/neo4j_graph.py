@@ -150,7 +150,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         self,
         session: Session,
         result: Dict[str, Neo4jRelationshipResult],
-        marketplace: Optional[Union[MarketplaceVersions, str]] = None,
+        marketplace: Optional[MarketplaceVersions] = None,
     ):
         """This adds relationships to given object
 
@@ -228,7 +228,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         session: Session,
         node_ids: Iterable[str],
         relationship_type: RelationshipType,
-        marketplace: Union[MarketplaceVersions, str] = None,
+        marketplace: MarketplaceVersions = None,
     ):
         """Helper method to add all level dependencies
 

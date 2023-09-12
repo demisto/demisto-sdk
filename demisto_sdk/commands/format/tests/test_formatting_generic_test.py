@@ -10,6 +10,63 @@ from demisto_sdk.commands.format.format_constants import VERSION_6_0_0
 from demisto_sdk.commands.format.update_generic import BaseUpdate
 from demisto_sdk.commands.validate.validate_manager import ValidateManager
 
+DESCRIPTION_TEST = (
+    pytest.param("", "", id="empty string"),
+    pytest.param(
+        "description without dot", "description without dot.", id="Without dot"
+    ),
+    pytest.param(
+        "description with dot at the end.",
+        "description with dot at the end.",
+        id="with dot",
+    ),
+    pytest.param(
+        "description with url and no dot at the end https://www.test.com",
+        "description with url and no dot at the end https://www.test.com",
+        id="url in the end",
+    ),
+    pytest.param(
+        "description that has https://www.test.com in the middle of the sentence",
+        "description that has https://www.test.com in the middle of the sentence.",
+        id="url in the middle",
+    ),
+    pytest.param(
+        "description that has an 'example without dot at the end of the string'",
+        "description that has an 'example without dot at the end of the string'.",
+        id="with single-quotes in double-quotes",
+    ),
+    pytest.param(
+        "description with dot and empty string in the end. ",
+        "description with dot and empty string in the end. ",
+        id="with dot and empty string in the end",
+    ),
+    pytest.param(
+        "description without dot and empty string in the end ",
+        "description without dot and empty string in the end.",
+        id="without dot and empty string in the end",
+    ),
+    pytest.param(
+        "description with dot and 'new_line' in the end. \n",
+        "description with dot and 'new_line' in the end. \n",
+        id="with dot and new_line in the end",
+    ),
+    pytest.param(
+        "description without dot and 'new_line' in the end \n",
+        "description without dot and 'new_line' in the end.",  # Simulates a case when the description starts with pipe -|
+        id="case when the description starts with pipe without dot",
+    ),
+    pytest.param(
+        "description with a dot in the bracket (like this.)",
+        "description with a dot in the bracket (like this.)",
+        id="ends with a dot inside a bracket",
+    ),
+    pytest.param(
+        "description without a dot in the bracket (like this)",
+        "description without a dot in the bracket (like this).",
+        id="ends without a dot inside a bracket",
+    ),
+)
+
 
 class TestFormattingFromVersionKey:
     def init_BaseUpdate(
@@ -273,88 +330,15 @@ def test_initiate_file_validator(mocker, is_old_file, function_validate):
     assert result.call_count == 1
 
 
-@pytest.mark.parametrize(
-    "comment, expected_comment, description, expected_description",
-    [
-        ("", "", "", ""),
-        (
-            "comment without dot",
-            "comment without dot.",
-            "description without dot",
-            "description without dot.",
-        ),
-        (
-            "comment with dot.",
-            "comment with dot.",
-            "description with dot at the end.",
-            "description with dot at the end.",
-        ),
-        (
-            "comment with url and no dot at the end https://www.test.com",
-            "comment with url and no dot at the end https://www.test.com",
-            "description with url and no dot at the end https://www.test.com",
-            "description with url and no dot at the end https://www.test.com",
-        ),
-        (
-            "comment with url and dot at the end https://www.test.com.",
-            "comment with url and dot at the end https://www.test.com.",
-            "description that has https://www.test.com in the middle of the sentence",
-            "description that has https://www.test.com in the middle of the sentence.",
-        ),
-        (
-            "comment with url and dot at the end https://www.test.com.",
-            "comment with url and dot at the end https://www.test.com.",
-            "description that has an 'example without dot at the end of the string'",
-            "description that has an 'example without dot at the end of the string'.",
-        ),
-        (
-            "comment with dot and empty string in the end. ",
-            "comment with dot and empty string in the end. ",
-            "description with dot and empty string in the end. ",
-            "description with dot and empty string in the end. ",
-        ),
-        (
-            "comment without dot and empty string in the end ",
-            "comment without dot and empty string in the end.",
-            "description without dot and empty string in the end ",
-            "description without dot and empty string in the end.",
-        ),
-        (
-            "comment with dot and 'new_line' in the end. \n",
-            "comment with dot and 'new_line' in the end. \n",
-            "description with dot and 'new_line' in the end. \n",
-            "description with dot and 'new_line' in the end. \n",
-        ),
-        (
-            "comment without dot and 'new_line' in the end \n",
-            "comment without dot and 'new_line' in the end.",
-            "description without dot and 'new_line' in the end \n",
-            "description without dot and 'new_line' in the end.",  # Simulates a case when the description starts with pipe -|
-        ),
-    ],
-    ids=[
-        "empty string",
-        "Without dot",
-        "with dot",
-        "url in the end",
-        "url in the middle",
-        "with single-quotes in double-quotes",
-        "with dot and empty string in the end",
-        "without dot and empty string in the end",
-        "case when the description starts with pipe with dot",
-        "case when the description starts with pipe without dot",
-    ],
-)
-def test_adds_period_to_description(
+@pytest.mark.parametrize("description, expected_description", DESCRIPTION_TEST)
+def test_adds_period_to_description_in_integration(
     mocker: MockerFixture,
-    comment: str,
-    expected_comment: str,
     description: str,
     expected_description: str,
 ) -> None:
     """
     Test case for the `adds_period_to_description`.
-    for integration, script yml files.
+    for integration yml files.
     Given:
         a comment and its expected comment with a period,
         a description and its expected description with a period,
@@ -364,9 +348,8 @@ def test_adds_period_to_description(
         the description in the YAML data should have a period added if is not end with url.
     """
     yml_data = {
-        "comment": comment,
         "description": description,
-        "script": {
+        "script": {  # integration yml
             "commands": [
                 {
                     "arguments": [
@@ -387,7 +370,6 @@ def test_adds_period_to_description(
         },
     }
     expected__yml_data = {
-        "comment": expected_comment,
         "description": expected_description,
         "script": {
             "commands": [
@@ -408,6 +390,46 @@ def test_adds_period_to_description(
                 }
             ]
         },
+    }
+
+    mocker.patch(
+        "demisto_sdk.commands.format.update_generic.get_dict_from_file",
+        return_value=(yml_data, "mock_type"),
+    )
+    base_update = BaseUpdate(input="test")
+    base_update.adds_period_to_description()
+    assert base_update.data == expected__yml_data
+
+
+@pytest.mark.parametrize(
+    "description, expected_description",
+    DESCRIPTION_TEST,
+)
+def test_adds_period_to_description_in_script(
+    mocker: MockerFixture,
+    description: str,
+    expected_description: str,
+) -> None:
+    """
+    Test case for the `adds_period_to_description`.
+    for  script yml files.
+    Given:
+        a comment and its expected comment with a period,
+        a description and its expected description with a period,
+    When:
+        the `adds_period_to_description` method is called,
+    Then:
+        the description in the YAML data should have a period added if is not end with url.
+    """
+    yml_data = {
+        "comment": description,
+        "args": [{"description": description}],
+        "outputs": [{"description": description}],
+    }
+    expected__yml_data = {
+        "comment": expected_description,
+        "args": [{"description": expected_description}],
+        "outputs": [{"description": expected_description}],
     }
 
     mocker.patch(

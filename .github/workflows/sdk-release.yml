@@ -25,4 +25,4 @@ jobs:
         env:
           PR_NUMBER: ${{ github.event.pull_request.number }}
           PR_TITLE: ${{ github.event.pull_request.title }}
-        run: poetry sdk-changelog --release -n "$PR_NUMBER" -t "$PR_TITLE"
+        run: poetry ./demisto_sdk/scripts/changelog/changelog.py --release -n "$PR_NUMBER" -t "$PR_TITLE"

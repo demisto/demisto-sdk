@@ -2,11 +2,12 @@ name: SDK Release
 on:
   pull_request:
     branches:
-      - 'v2.33.4'
+      - 'V2.33.4'
 
 jobs:
   SDK-Release:
     runs-on: ubuntu-latest
+    if: 
     steps:
       - name: Setup Poetry
         uses: Gr1N/setup-poetry@v8

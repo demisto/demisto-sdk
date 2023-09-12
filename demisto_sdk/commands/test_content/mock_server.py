@@ -13,6 +13,7 @@ from typing import Dict, Iterator
 import demisto_client.demisto_api
 import urllib3
 
+from demisto_sdk.commands.common.constants import DEMISTO_GIT_PRIMARY_BRANCH
 from demisto_sdk.commands.test_content.constants import SSH_USER
 
 VALID_FILENAME_CHARS = f"-_.() {string.ascii_letters}{string.digits}"
@@ -175,7 +176,7 @@ class MITMProxy:
         repo_folder=MOCKS_GIT_PATH,
         tmp_folder=MOCKS_TMP_PATH,
     ):
-        is_branch_master = branch_name == "master"
+        is_branch_master = branch_name == DEMISTO_GIT_PRIMARY_BRANCH
         self.internal_ip = internal_ip
         self.current_folder = self.repo_folder = repo_folder
         self.tmp_folder = tmp_folder

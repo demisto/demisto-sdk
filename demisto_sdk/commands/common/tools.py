@@ -1903,7 +1903,7 @@ def find_type(
         if "rule_id" in _dict:
             return FileType.LAYOUT_RULE
 
-        if "data" in _dict or "allRead" in _dict or "truncated" in _dict:
+        if {"data", "allRead", "truncated"}.intersection(_dict.keys()):
             return FileType.LISTS
 
         # When using it for all files validation- sometimes 'id' can be integer

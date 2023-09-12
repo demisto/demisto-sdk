@@ -25,10 +25,9 @@ class List(ContentItem, content_type=ContentType.LIST):  # type: ignore[call-arg
             dir_path = Path(f)
             self.dump(dir_path, marketplace=marketplace)
 
-            with (dir_path / self.normalize_name).open("r") as _list:
-                client.generic_request(
-                    method="POST",
-                    path="lists/save",
-                    body=json.load(_list),
-                    response_type="object",
-                )
+            client.generic_request(
+                method="POST",
+                path="lists/save",
+                body=json.loads((dir_path / self.normalize_name).read_text()),
+                response_type="object",
+            )

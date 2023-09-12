@@ -18,7 +18,7 @@ from wcmatch.pathlib import Path, PosixPath
 import demisto_sdk
 from demisto_sdk.commands.common.constants import (
     API_MODULES_PACK,
-    GIT_PRIMARY_BRANCH,
+    DEMISTO_GIT_PRIMARY_BRANCH,
     PACKS_PACK_META_FILE_NAME,
     TYPE_PWSH,
     TYPE_PYTHON,
@@ -273,7 +273,7 @@ class LintManager:
         input: Union[str, List[str]],
         git: bool = False,
         all_packs: bool = False,
-        base_branch: str = GIT_PRIMARY_BRANCH,
+        base_branch: str = DEMISTO_GIT_PRIMARY_BRANCH,
     ) -> List[PosixPath]:
         """Get packages paths to run lint command.
 
@@ -384,8 +384,8 @@ class LintManager:
         }
 
         if (
-            base_branch == GIT_PRIMARY_BRANCH
-            and content_repo.active_branch.name == GIT_PRIMARY_BRANCH
+            base_branch == DEMISTO_GIT_PRIMARY_BRANCH
+            and content_repo.active_branch.name == DEMISTO_GIT_PRIMARY_BRANCH
         ):
             # case 1: comparing master against the latest previous commit
             last_common_commit = content_repo.remote().refs.master.commit.parents[0]

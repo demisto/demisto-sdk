@@ -22,7 +22,7 @@ from demisto_sdk.commands.common.constants import (
     GENERIC_FIELDS_DIR,
     GENERIC_MODULES_DIR,
     GENERIC_TYPES_DIR,
-    GIT_PRIMARY_BRANCH,
+    DEMISTO_GIT_PRIMARY_BRANCH,
     INCIDENT_FIELDS_DIR,
     INCIDENT_TYPES_DIR,
     INDICATOR_FIELDS_DIR,
@@ -1451,7 +1451,7 @@ def content_files_handler(
             modify_common_server_constants(
                 content_object.code_path,
                 artifact_manager.content_version,
-                GIT_PRIMARY_BRANCH if not repo else repo.active_branch,
+                DEMISTO_GIT_PRIMARY_BRANCH if not repo else repo.active_branch,
             )
         yield files_to_remove
     finally:
@@ -1463,7 +1463,7 @@ def content_files_handler(
         ):
             # Modify CommonServerPython.py global variables
             modify_common_server_constants(
-                content_object.code_path, "0.0.0", GIT_PRIMARY_BRANCH
+                content_object.code_path, "0.0.0", DEMISTO_GIT_PRIMARY_BRANCH
             )
 
         # Delete yaml which created by Unifier in packs and to_version/toVersion lower than NEWEST_SUPPORTED_VERSION

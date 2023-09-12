@@ -56,8 +56,8 @@ from demisto_sdk.commands.common.constants import (
     DOC_FILES_DIR,
     ENV_DEMISTO_SDK_MARKETPLACE,
     ENV_SDK_WORKING_OFFLINE,
-    GIT_PRIMARY_BRANCH,
-    GIT_UPSTREAM,
+    DEMISTO_GIT_PRIMARY_BRANCH,
+    DEMISTO_GIT_UPSTREAM,
     ID_IN_COMMONFIELDS,
     ID_IN_ROOT,
     INCIDENT_FIELDS_DIR,
@@ -435,7 +435,7 @@ def get_core_pack_list(marketplaces: List[MarketplaceVersions] = None) -> list:
 
 def get_local_remote_file(
     full_file_path: str,
-    tag: str = GIT_PRIMARY_BRANCH,
+    tag: str = DEMISTO_GIT_PRIMARY_BRANCH,
     return_content: bool = False,
 ):
     repo_git_util = GitUtil()
@@ -451,7 +451,7 @@ def get_local_remote_file(
 def get_remote_file_from_api(
     full_file_path: str,
     git_content_config: Optional[GitContentConfig],
-    tag: str = GIT_PRIMARY_BRANCH,
+    tag: str = DEMISTO_GIT_PRIMARY_BRANCH,
     return_content: bool = False,
     encoding: Optional[str] = None,
 ) -> Union[bytes, Dict, List]:
@@ -559,7 +559,7 @@ def get_file_details(
 @lru_cache(maxsize=128)
 def get_remote_file(
     full_file_path: str,
-    tag: str = GIT_PRIMARY_BRANCH,
+    tag: str = DEMISTO_GIT_PRIMARY_BRANCH,
     return_content: bool = False,
     git_content_config: Optional[GitContentConfig] = None,
     default_value=None,
@@ -581,7 +581,7 @@ def get_remote_file(
             raise NoInternetConnectionException
         return default_value
 
-    tag = tag.replace(f"{GIT_UPSTREAM}/", "").replace("demisto/", "")
+    tag = tag.replace(f"{DEMISTO_GIT_UPSTREAM}/", "").replace("demisto/", "")
     if not git_content_config:
         try:
             if not (
@@ -622,7 +622,7 @@ def filter_files_on_pack(pack: str, file_paths_list="") -> set:
 
 
 def filter_packagify_changes(
-    modified_files, added_files, removed_files, tag=GIT_PRIMARY_BRANCH
+    modified_files, added_files, removed_files, tag=DEMISTO_GIT_PRIMARY_BRANCH
 ):
     """
     Mark scripts/integrations that were removed and added as modified.
@@ -2026,11 +2026,11 @@ def get_content_path(relative_path: Optional[Path] = None) -> Path:
             git_repo = GitUtil().repo
 
         try:
-            remote_url = git_repo.remote(name=GIT_UPSTREAM).urls.__next__()
+            remote_url = git_repo.remote(name=DEMISTO_GIT_UPSTREAM).urls.__next__()
         except ValueError:
             if not os.getenv("DEMISTO_SDK_IGNORE_CONTENT_WARNING"):
                 logger.warning(
-                    f"Could not find remote with name {GIT_UPSTREAM} for repo {git_repo.working_dir}"
+                    f"Could not find remote with name {DEMISTO_GIT_UPSTREAM} for repo {git_repo.working_dir}"
                 )
             remote_url = ""
         is_fork_repo = "content" in remote_url

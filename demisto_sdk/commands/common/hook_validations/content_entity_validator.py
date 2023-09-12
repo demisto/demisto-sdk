@@ -15,7 +15,7 @@ from demisto_sdk.commands.common.constants import (
     FEATURE_BRANCHES,
     FROM_TO_VERSION_REGEX,
     GENERIC_OBJECTS_OLDEST_SUPPORTED_VERSION,
-    GIT_UPSTREAM,
+    DEMISTO_GIT_UPSTREAM,
     MARKETPLACE_KEY_PACK_METADATA,
     MODELING_RULE,
     MODELING_RULE_ID_SUFFIX,
@@ -306,8 +306,8 @@ class ContentEntityValidator(BaseValidator):
         """
         git_util = Content.git_util()
         main_branch = git_util.handle_prev_ver()[1]
-        if not main_branch.startswith(GIT_UPSTREAM):
-            main_branch = f"{GIT_UPSTREAM}/" + main_branch
+        if not main_branch.startswith(DEMISTO_GIT_UPSTREAM):
+            main_branch = f"{DEMISTO_GIT_UPSTREAM}/" + main_branch
 
         diff_string_config_yml = run_command(
             f"git diff {main_branch} .circleci/config.yml"

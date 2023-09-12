@@ -305,6 +305,8 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         This is the implementation for the search function.
 
         """
+        if not isinstance(marketplace, MarketplaceVersions):
+            marketplace = MarketplaceVersions(marketplace)
         with self.driver.session() as session:
             results: List[graph.Node] = session.execute_read(
                 _match, marketplace, content_type, ids_list, **properties

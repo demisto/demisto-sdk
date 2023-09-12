@@ -1,4 +1,4 @@
-from typing import Any, Dict, Iterable, List, Optional, Union
+from typing import Any, Dict, Iterable, List, Optional
 
 from neo4j import Transaction, graph
 
@@ -181,7 +181,7 @@ def create_nodes_by_type(
 
 def _match(
     tx: Transaction,
-    marketplace: Union[MarketplaceVersions, str] = None,
+    marketplace: MarketplaceVersions = None,
     content_type: ContentType = ContentType.BASE_CONTENT,
     ids_list: Optional[Iterable[int]] = None,
     **properties,

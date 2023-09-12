@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional
 
 from neo4j import Transaction
 
@@ -221,7 +221,7 @@ def create_relationships_by_type(
 def _match_relationships(
     tx: Transaction,
     ids_list: List[str],
-    marketplace: Union[MarketplaceVersions, str] = None,
+    marketplace: MarketplaceVersions = None,
 ) -> Dict[int, Neo4jRelationshipResult]:
     """Match relationships of the given ids list.
 

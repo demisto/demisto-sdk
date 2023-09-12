@@ -3199,7 +3199,7 @@ def test_get_content_path_no_remote(mocker):
     Then:
         Validate that a warning is issued as (resulting from a raised exception).
     """
-    from git import Repo # noqa: TID251
+    from git import Repo  # noqa: TID251
 
     def raise_value_exception(name):
         raise ValueError()

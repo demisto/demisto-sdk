@@ -1,6 +1,6 @@
 import os
 from pathlib import Path
-from typing import Dict, List
+from typing import Dict, List, Union
 
 from neo4j import Transaction
 
@@ -32,7 +32,7 @@ def get_all_level_packs_relationships(
     tx: Transaction,
     relationship_type: RelationshipType,
     ids_list: List[str],
-    marketplace: MarketplaceVersions,
+    marketplace: Union[MarketplaceVersions, str],
     mandatorily: bool = False,
     **properties,
 ) -> Dict[int, Neo4jRelationshipResult]:

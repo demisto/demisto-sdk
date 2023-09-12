@@ -24,7 +24,6 @@ class ContentGraphBuilder:
         self.content_graph = content_graph
         self.nodes: Nodes = Nodes()
         self.relationships: Relationships = Relationships()
-        self._preprepare_database()
 
     def update_graph(
         self,
@@ -40,7 +39,7 @@ class ContentGraphBuilder:
         self._parse_and_model_content(packs_to_update)
         self._create_or_update_graph()
 
-    def _preprepare_database(self) -> None:
+    def init_database(self) -> None:
         self.content_graph.clean_graph()
         self.content_graph.create_indexes_and_constraints()
 

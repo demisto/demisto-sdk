@@ -17,7 +17,6 @@ from demisto_sdk.commands.common.constants import (
     re,
 )
 from demisto_sdk.commands.common.content import Content
-from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
@@ -181,7 +180,7 @@ class SecretsValidator:
         if is_circle:
             prev_ver = self.prev_ver
             if not prev_ver:
-                self.git_util = GitUtil(repo=Content.git())
+                self.git_util = Content.git_util()
                 prev_ver = self.git_util.handle_prev_ver()[1]
             if not prev_ver.startswith("origin"):
                 prev_ver = "origin/" + prev_ver
@@ -260,7 +259,7 @@ class SecretsValidator:
                 )
                 continue
             # Init vars for current loop
-            file_name = os.path.basename(file_path)
+            file_name = Path(file_path).name
             _, file_extension = os.path.splitext(file_path)
             # get file contents
             file_contents = self.get_file_contents(file_path, file_extension)
@@ -370,9 +369,7 @@ class SecretsValidator:
     @staticmethod
     def retrieve_related_yml(integration_path):
         matching_yml_file_contents = None
-        yml_file = os.path.join(
-            integration_path, os.path.basename(integration_path) + ".yml"
-        )
+        yml_file = str(Path(integration_path, Path(integration_path).name + ".yml"))
         if Path(yml_file).exists():
             with open(yml_file, encoding="utf-8") as matching_yml_file:
                 matching_yml_file_contents = matching_yml_file.read()

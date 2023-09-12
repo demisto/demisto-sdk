@@ -268,7 +268,7 @@ class ValidateManager:
         self.deprecation_validator = DeprecationValidator(id_set_file=self.id_set_file)
 
         try:
-            self.git_util = GitUtil(repo=Content.git())
+            self.git_util = Content.git_util()
             self.branch_name = self.git_util.get_current_git_branch_or_hash()
         except (InvalidGitRepositoryError, TypeError):
             # if we are using git - fail the validation by raising the exception.
@@ -408,7 +408,7 @@ class ValidateManager:
             return PathLevel.FILE
 
         file_path = file_path.rstrip("/")
-        dir_name = os.path.basename(file_path)
+        dir_name = Path(file_path).name
         if dir_name in CONTENT_ENTITIES_DIRS:
             return PathLevel.CONTENT_ENTITY_DIR
 
@@ -417,7 +417,7 @@ class ValidateManager:
         ).endswith(GENERIC_FIELDS_DIR):
             return PathLevel.CONTENT_GENERIC_ENTITY_DIR
 
-        if os.path.basename(os.path.dirname(file_path)) == PACKS_DIR:
+        if Path(file_path).parent.name == PACKS_DIR:
             return PathLevel.PACK
 
         else:
@@ -593,7 +593,7 @@ class ValidateManager:
             skip_files = set()
 
         pack_entities_validation_results = set()
-        pack_error_ignore_list = self.get_error_ignore_list(os.path.basename(pack_path))
+        pack_error_ignore_list = self.get_error_ignore_list(Path(pack_path).name)
 
         pack_entities_validation_results.add(
             self.validate_pack_unique_files(pack_path, pack_error_ignore_list)
@@ -1054,9 +1054,10 @@ class ValidateManager:
         ):
             logger.info(f"Validating {file_type.value} file: {file_path}")
             if self.validate_all:
+                file_name = Path(file_path).name
                 error_ignore_list = pack_error_ignore_list.copy()
-                error_ignore_list.setdefault(os.path.basename(file_path), [])
-                error_ignore_list.get(os.path.basename(file_path)).append("MR104")
+                error_ignore_list.setdefault(file_name, [])
+                error_ignore_list.get(file_name).append("MR104")
                 return self.validate_modeling_rule(
                     structure_validator, error_ignore_list
                 )
@@ -1930,7 +1931,7 @@ class ValidateManager:
 
         logger.info(f"\nValidating {pack_path} unique pack files")
         pack_unique_files_validator = PackUniqueFilesValidator(
-            pack=os.path.basename(pack_path),
+            pack=Path(pack_path).name,
             pack_path=pack_path,
             ignored_errors=pack_error_ignore_list,
             should_version_raise=should_version_raise,
@@ -1998,7 +1999,10 @@ class ValidateManager:
             # if the repo does not have remotes, get the .pack-ignore content from the master branch in Github api
             # if the repo is not in remote / file cannot be found from Github api, try to take it from the latest commit on the default branch (usually master/main)
             old_pack_ignore_content = get_remote_file(old_file_path, "master")
-            if old_pack_ignore_content == b"":  # found as empty file in remote
+            if (
+                isinstance(old_pack_ignore_content, bytes)
+                and old_pack_ignore_content.strip() == b""
+            ):  # found an empty file in remote
                 old_pack_ignore_content = ""
             elif old_pack_ignore_content == {}:  # not found in remote
                 logger.debug(

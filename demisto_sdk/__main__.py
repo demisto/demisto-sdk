@@ -1,14 +1,20 @@
 # Site packages
+import sys
+
+import click
+
+try:
+    import git
+except ImportError:
+    sys.exit(click.style("Git executable cannot be found, or is invalid", fg="red"))
+
 import copy
 import functools
 import logging
 import os
-import sys
 from pathlib import Path
 from typing import IO, Any, Dict, Iterable, Tuple, Union
 
-import click
-import git
 import typer
 from pkg_resources import DistributionNotFound, get_distribution
 
@@ -3285,10 +3291,10 @@ def create_content_graph(
     help="Path to content graph zip file to import",
 )
 @click.option(
-    "-uc",
-    "--use-current",
+    "-uli",
+    "--use-local-import",
     is_flag=True,
-    help="Whether to use the current content graph to update",
+    help="Whether to use the current import files to import the graph.",
     default=False,
 )
 @click.option(
@@ -3318,7 +3324,7 @@ def update_content_graph(
     ctx,
     use_git: bool = False,
     marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR,
-    use_current: bool = False,
+    use_local_import: bool = False,
     imported_path: Path = None,
     packs: list = None,
     no_dependencies: bool = False,
@@ -3330,7 +3336,7 @@ def update_content_graph(
         ctx,
         use_git=use_git,
         marketplace=marketplace,
-        use_current=use_current,
+        use_local_import=use_local_import,
         imported_path=imported_path,
         packs_to_update=packs,
         no_dependencies=no_dependencies,
@@ -3413,6 +3419,12 @@ def update_content_graph(
     help="The demisto-sdk ref to use for the pre-commit hooks",
     default="",
 )
+@click.option(
+    "--dry-run",
+    help="Whether to run the pre-commit hooks in dry-run mode, which will only create the config file",
+    is_flag=True,
+    default=False,
+)
 @click.argument(
     "file_paths",
     nargs=-1,
@@ -3435,6 +3447,7 @@ def pre_commit(
     show_diff_on_failure: bool,
     sdk_ref: str,
     file_paths: Iterable[Path],
+    dry_run: bool,
     **kwargs,
 ):
     from demisto_sdk.commands.pre_commit.pre_commit_command import pre_commit_manager
@@ -3445,7 +3458,7 @@ def pre_commit(
         )
     input_files = []
     if input:
-        input_files = [Path(i) for i in input.split(",")]
+        input_files = [Path(i) for i in input.split(",") if i]
     elif file_paths:
         input_files = list(file_paths)
     if skip:
@@ -3465,6 +3478,7 @@ def pre_commit(
             verbose,
             show_diff_on_failure,
             sdk_ref=sdk_ref,
+            dry_run=dry_run,
         )
     )
 

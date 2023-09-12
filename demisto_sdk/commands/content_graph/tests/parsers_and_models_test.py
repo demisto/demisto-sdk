@@ -1571,6 +1571,50 @@ class TestParsersAndModels:
         pack_ids = {pack.object_id for pack in model.packs}
         assert pack_ids == {"sample1", "sample2"}
 
+    def test_lazy_properties_in_the_model(self, mocker, pack):
+        """
+        Given:
+            - an integration
+        When:
+            - creating integration model
+        Then:
+            - Verify that the lazy property (python_version) is not loaded into the model when parsing it
+            - Verify that only when the lazy property (python_version) is called directly its added into the model
+        """
+
+        from packaging.version import Version
+
+        from demisto_sdk.commands.content_graph.objects.integration import Integration
+        from demisto_sdk.commands.content_graph.parsers.integration import (
+            IntegrationParser,
+        )
+
+        expected_python_version = "3.10.11"
+        mocker.patch(
+            "demisto_sdk.commands.common.docker_helper._get_python_version_from_dockerhub_api",
+            return_value=Version(expected_python_version),
+        )
+
+        integration = pack.create_integration(yml=load_yaml("integration.yml"))
+        integration.code.write("from MicrosoftApiModule import *")
+        integration.yml.update({"tests": ["test_playbook"]})
+
+        integration_path = Path(integration.path)
+        parser = IntegrationParser(integration_path, list(MarketplaceVersions))
+        RelationshipsVerifier.run(
+            parser.relationships,
+            integration_commands=["test-command"],
+            imports=["MicrosoftApiModule"],
+            tests=["test_playbook"],
+        )
+        model = Integration.from_orm(parser)
+        # make sure that the python_version is not in the model because it was not called directly
+        assert "python_version" not in str(model)
+
+        assert model.python_version == expected_python_version
+        # make sure that only after we called directly to the lazy property of the model, its loaded into the model
+        assert "python_version" in str(model)
+
 
 @pytest.mark.parametrize(
     "name,type_,expected_change",

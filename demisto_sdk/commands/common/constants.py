@@ -1864,6 +1864,7 @@ NATIVE_IMAGE_DOCKER_NAME = "demisto/py3-native"
 FORMATTING_SCRIPT = "indicator-format"
 
 ENV_SDK_WORKING_OFFLINE = "DEMISTO_SDK_OFFLINE_ENV"
+DOCKERFILES_INFO_REPO = "demisto/dockerfiles-info"
 
 TEST_COVERAGE_DEFAULT_URL = "https://storage.googleapis.com/marketplace-dist-dev/code-coverage-reports/coverage-min.json"
 

@@ -221,7 +221,7 @@ def format_manager(
                 ]
             ):
                 # If it is not an unskippable file, skip if needed
-                if os.path.basename(file_path) in SKIP_FORMATTING_FILES:
+                if Path(file_path).name in SKIP_FORMATTING_FILES:
                     continue
 
             if file_type and file_type.value not in UNFORMATTED_FILES:

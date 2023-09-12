@@ -1,7 +1,20 @@
-class Singleton:
+from abc import abstractmethod
+
+
+class PydanticSingleton:
     _instance = None
 
-    def __new__(cls, *args, **kwargs):
-        if not isinstance(cls._instance, cls):
-            cls._instance = super().__new__(cls)
+    @classmethod
+    def get_instance(cls, *args, **kwargs):
+        if cls._instance is None:
+            cls._instance = cls.get_instance_from(*args, **kwargs)
         return cls._instance
+
+    @classmethod
+    @abstractmethod
+    def get_instance_from(cls, *args, **kwargs):
+        """
+        Pydantic objects should be initialized with class methods and not from the class constructor.
+        Each Singleton that is based on pydantic should implement this abstract method.
+        """
+        pass

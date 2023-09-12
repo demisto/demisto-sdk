@@ -228,8 +228,7 @@ class ColorConsoleFormatter(logging.Formatter):
     def _record_contains_escapes(record: logging.LogRecord) -> bool:
         message = record.getMessage()
         return any(
-            not key.startswith("[/]") and key in message
-            for key, _ in DEMISTO_LOG_ALLOWED_ESCAPES
+            not key.startswith("[/]") and key in message for key in DEMISTO_LOG_LOOKUP
         )
 
     @staticmethod

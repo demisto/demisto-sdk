@@ -1,6 +1,34 @@
 # Changelog
-
 ## Unreleased
+* Fixed an issue where **validate** falsely failed with error `DS108` on descriptions ending with brackets that contains a dot at the end of them.
+* Fixed an issue where running **validate -g** failed reading a `.pack-ignore` file that contained only newlines and spaces.
+* Demisto-SDK will now exit gracefully with an appropriate error message when *git* is not installed.
+* Updated validation *RN116* to support the structure of **--force** flag in *update-release-notes* command.
+* Fixed an issue where the release notes file was not added automatically to git when using the *update-release-notes* command.
+* Fixed the structure in *update-release-notes* command when used with the **--force** flag. Now the header will display the pack display name.
+* Fixed the support in **validate** for `svg` images to have their theme suffix.
+* Modified **validate** to support only .svg files ending with *_dark* or *_light* suffixes.
+* Fixed an issue where **modeling-rule test** command failed to properly compare types of fields.
+* Updated the **engineinfo** type in the script schema.
+* Stability improvements for **graph create** and **graph update** commands.
+
+
+## 1.20.2
+* Updated the **pre-commit** command to run on all python versions in one run.
+* Added the *--dry-run* flag to the **pre-commit** command, to create the config file without running the command.
+* Fixed an issue where the **coverage-analyze** command was not parsing the logs correctly.
+* Fixed an issue where **validate** falsly failed with error `DS108` on descriptions ending with a newline.
+* Added formatting for script yml files when period is missing in the end of comment field, in the **format** command.
+* Fixed an issue where **format** add a newline with a period when the description field missing a period.
+* The content graph will now include the **python_version** field that each script/integration uses.
+* Updated the **update-release-notes** command message structure when is run with **--force** flag.
+* Added the **engineinfo** in to the script schema. This field specifies on which engine the script will run.
+* Fixed an issue where **validate** falsely failed with error `DS108` on empty descriptions.
+* Added support for lazy loading the of widgets in XSIAM dashboards.
+* Added a **validate** check for correlation rules, making sure that `search_window` cannot be empty when `execution_mode` is set to `SCHEDULED`.
+* Added the *metadata* key to the XSIAM dashboard schema. This field adds support for dynamic parameters in the dashboards.
+
+## 1.20.1
 * Added formatting for yml files when period is missing in the end of description field, in the **format** command.
 * Fixed an issue where logging arguments were not in the standard kebab-case. The new arguments are: **console-log-threshold**, **file-log-threshold**, **log-file-path**.
 * Added a new validation (`DS108`) to ensure that each description in the yml of script/integration ends with a dot.
@@ -10,7 +38,6 @@
 * Fixed an issue where the **upload** command failed for private repositories while trying to find the landing_page.json file.
 * Added a log when a content item is missing from the repo, in **graph create** and **graph update**.
 * Replaced logs with a progress bar in **graph create** and **graph update**.
-* Updated the **update-release-notes** command message structure when is run with **--force** flag.
 
 
 ## 1.20.0

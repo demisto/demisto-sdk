@@ -2997,9 +2997,7 @@ class ValidateManager:
                 - BA123: Files are not allowed outside of a pack.
         """
         if path.is_dir():
-            raise ValueError(
-                "is_allowed_modified_file_path should not be run on folders"
-            )
+            return True  # irrelevant for folders
 
         if PACKS_DIR not in path.parts:
             logger.debug(
@@ -3045,6 +3043,11 @@ class ValidateManager:
             # Packs/MyPack/SomeFolder/<modified file> OR DEEPER
             first_level_folder = path.parts[-depth + 1]
 
+            if first_level_folder not in FIRST_LEVEL_FOLDERS and _handle_error(
+                Errors.invalid_first_level_folder
+            ):
+                # Packs/MyPack/SomeFolderThatShouldntBeFirstLevel/<modified file>
+                return False
             if (
                 depth == 3
                 and first_level_folder
@@ -3053,13 +3056,6 @@ class ValidateManager:
             ):
                 # Packs/MyPack/SomeFolderThatShouldntHaveFilesDirectly/<modified file>
                 return False
-
-            if first_level_folder not in FIRST_LEVEL_FOLDERS and _handle_error(
-                Errors.invalid_first_level_folder
-            ):
-                # Packs/MyPack/SomeFolderThatShouldntBeFirstLevel/<modified file>
-                return False
-
         return True  # this part is reached when a _hanlde method returns False
 
 

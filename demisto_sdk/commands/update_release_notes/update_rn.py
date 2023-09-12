@@ -676,7 +676,10 @@ class UpdateRN:
             return rn_string
         rn_template_as_dict: dict = {}
         if self.is_force:
-            rn_string = self.build_rn_desc(content_name=self.pack, text=self.text)
+            pack_display_name = self.get_pack_metadata().get("name", self.pack)
+            rn_string = self.build_rn_desc(
+                content_name=pack_display_name, text=self.text
+            )
         # changed_items.items() looks like that: [((name, type), {...}), (name, type), {...}] and we want to sort
         # them by type (x[0][1])
 
@@ -925,6 +928,12 @@ class UpdateRN:
             self.existing_rn_changed = True
             with open(release_notes_path, "w") as fp:
                 fp.write(rn_string)
+        try:
+            run_command(f"git add {release_notes_path}", exit_on_error=False)
+        except RuntimeError:
+            logger.warning(
+                f"Could not add the release note files to git: {release_notes_path}"
+            )
 
     def rn_with_docker_image(self, rn_string: str, docker_image: Optional[str]) -> str:
         """

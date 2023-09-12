@@ -18,7 +18,6 @@ from demisto_sdk.commands.common.constants import (
     re,
 )
 from demisto_sdk.commands.common.content import Content
-from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
@@ -182,7 +181,7 @@ class SecretsValidator:
         if is_circle:
             prev_ver = self.prev_ver
             if not prev_ver:
-                self.git_util = GitUtil(repo=Content.git())
+                self.git_util = Content.git_util()
                 prev_ver = self.git_util.handle_prev_ver()[1]
             if not prev_ver.startswith(GIT_UPSTREAM):
                 prev_ver = f"{GIT_UPSTREAM}/" + prev_ver

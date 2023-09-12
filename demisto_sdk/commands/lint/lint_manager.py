@@ -26,6 +26,7 @@ from demisto_sdk.commands.common.constants import (
 )
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.docker_helper import init_global_docker_client
+from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.timers import report_time_measurements
@@ -186,7 +187,7 @@ class LintManager:
         # Get content repo object
         is_external_repo = False
         try:
-            git_repo = git.Repo(os.getcwd(), search_parent_directories=True)
+            git_repo = GitUtil().repo
             remote_url = git_repo.remote().urls.__next__()
             is_fork_repo = "content" in remote_url
             is_external_repo = is_external_repository()
@@ -268,7 +269,7 @@ class LintManager:
 
     def _get_packages(
         self,
-        content_repo: git.Repo,
+        content_repo: git.Repo,  # noqa: TID251
         input: Union[str, List[str]],
         git: bool = False,
         all_packs: bool = False,
@@ -360,7 +361,7 @@ class LintManager:
 
     @staticmethod
     def _filter_changed_packages(
-        content_repo: git.Repo, pkgs: List[PosixPath], base_branch: str
+        content_repo: git.Repo, pkgs: List[PosixPath], base_branch: str  # noqa: TID251
     ) -> List[PosixPath]:
         """Checks which packages had changes in them and should run on Lint.
         The diff is calculated using git, and is done by the following cases:

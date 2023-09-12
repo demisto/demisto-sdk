@@ -1447,7 +1447,7 @@ def content_files_handler(
             and content_object.code_path.name == "CommonServerPython.py"
         ):
             # Modify CommonServerPython.py global variables
-            repo = artifact_manager.content.git()
+            repo = artifact_manager.content.git_util().repo
             modify_common_server_constants(
                 content_object.code_path,
                 artifact_manager.content_version,

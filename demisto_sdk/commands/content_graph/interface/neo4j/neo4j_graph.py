@@ -650,7 +650,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         Returns:
             List[BaseContent]: The search results
         """
-        if marketplace is not None and not isinstance(marketplace, MarketplaceVersions):
+        if isinstance(marketplace, str):
             marketplace = MarketplaceVersions(marketplace)
 
         super().search()

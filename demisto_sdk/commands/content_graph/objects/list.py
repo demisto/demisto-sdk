@@ -1,4 +1,6 @@
 import logging
+from pathlib import Path
+from tempfile import TemporaryDirectory
 
 import demisto_client
 
@@ -19,13 +21,14 @@ class List(ContentItem, content_type=ContentType.LIST):  # type: ignore[call-arg
         client: demisto_client,
         marketplace: MarketplaceVersions,
     ) -> None:
-        with self.path.open("r") as _list:
-            client.generic_request(
-                method="POST",
-                path="lists/save",
-                body=json.load(_list),
-                response_type="object",
-            )
-            logger.debug(
-                f"Uploaded list {self.object_id} from path {self.path} successfully"
-            )
+        with TemporaryDirectory("w") as f:
+            dir_path = Path(f)
+            self.dump(dir_path, marketplace=marketplace)
+
+            with (dir_path / self.normalize_name).open("r") as _list:
+                client.generic_request(
+                    method="POST",
+                    path="lists/save",
+                    body=json.load(_list),
+                    response_type="object",
+                )

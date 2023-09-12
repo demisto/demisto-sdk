@@ -12,8 +12,9 @@
 * Modified **validate** to support only .svg files ending with *_dark* or *_light* suffixes.
 * Fixed an issue where **modeling-rule test** command failed to properly compare types of fields.
 * Updated the **engineinfo** type in the script schema.
+* Updated the **modeling-rules init & test** commands to support RULE section fields.
 * Stability improvements for **graph create** and **graph update** commands.
-
+* Fixed the *metadata* type in the XSIAM dashboard schema to *map*.
 
 ## 1.20.2
 * Updated the **pre-commit** command to run on all python versions in one run.
@@ -66,6 +67,7 @@
 * Fixed an issue where the coloring of the logging messages was not working properly when mixing both Console log and Parallel log handlers.
 * Calling **graph create** or **graph update** now run the commands with default arguments, instead of showing the command help.
 * Removed the use of chunks when calculating content relationships.
+* Added the new environment variables **DEMISTO_DEFAULT_REMOTE** and **DEMISTO_DEFAULT_BRANCH**.
 * Fixed an issue where the url regex in the **validate** command was wrong.
 * Fixed an issue where **pre-commit** command failed when using global environment.
 * Fixed an issue where **validate** would fail in external repos when trying to ignore `BA102`.

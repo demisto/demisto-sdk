@@ -198,10 +198,11 @@ def _match(
         List[graph.Node]: list of neo4j nodes.
     """
     if marketplace:
-        properties["marketplaces"] = marketplace.value
-    where = []
-    if ids_list:
-        where.append("elementId(node) IN $filter_list")
+        properties["marketplaces"] = (
+            marketplace.value
+            if isinstance(marketplace, MarketplaceVersions)
+            else marketplace
+        )
 
     query = f"""// Retrieves nodes according to given parameters.
 MATCH {to_node_pattern(properties, content_type=content_type, list_properties=get_list_properties(tx))}

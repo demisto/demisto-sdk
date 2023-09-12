@@ -226,7 +226,7 @@ class ModelingRule(YAMLContentUnifiedObject):
         # return client.import_modeling_rules(file=self.path)
         pass
 
-    def get_nested_rules(self, modal_text: str) -> str:
+    def get_nested_rules(self, model_text: str) -> str:
         """
         Returns the model with the rules text instead of rule call
             Original modeling rule file text:
@@ -234,7 +234,7 @@ class ModelingRule(YAMLContentUnifiedObject):
                 modal_a: "call <rule_a>"
 
         Args:
-            modal_text: The original model text with the rule call's.
+            model_text: The original model text with the rule call's.
                 Gets:
                     modal_a: "call <rule_a>"
 
@@ -243,15 +243,15 @@ class ModelingRule(YAMLContentUnifiedObject):
                 Returns:
                     modal_a: "some text..."
         """
-        if rule_name_match := self.CALL_RULE_REGEX.search(modal_text):
+        if rule_name_match := self.CALL_RULE_REGEX.search(model_text):
             rule_name = rule_name_match.groupdict().get("rule_name")
             return self.get_nested_rules(
-                modal_text.replace(
+                model_text.replace(
                     f"call {rule_name}", self.rules_dict.get(rule_name, "")
                 )
             )
         else:
-            return modal_text
+            return model_text
 
     @property
     def rules(self):

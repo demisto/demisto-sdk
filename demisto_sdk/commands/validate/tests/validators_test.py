@@ -71,6 +71,7 @@ from demisto_sdk.commands.common.hook_validations.xsiam_dashboard import (
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.content_graph.tests.create_content_graph_test import (
     mock_integration,
+    mock_pack,
 )
 from demisto_sdk.commands.prepare_content.integration_script_unifier import (
     IntegrationScriptUnifier,
@@ -1392,6 +1393,8 @@ class TestValidators:
         Then:
             - return a True as there are no release notes missing
         """
+        from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
+
         mocker.patch.object(
             BaseValidator, "update_checked_flags_by_support_level", return_value=""
         )
@@ -1403,6 +1406,17 @@ class TestValidators:
             "Packs/ApiModules/ReleaseNotes/1_0_0.md",
             "Packs/ApiDependent/ReleaseNotes/1_0_0.md",
         }
+        integration_mock = mock_integration("ApiDependent")
+        mocker.patch(
+            "demisto_sdk.commands.validate.validate_manager.get_api_module_dependencies_from_graph",
+            return_value=[integration_mock],
+        )
+
+        mocker.patch.object(
+            ContentItem,
+            "in_pack",
+            mock_pack("ApiDependent", path=Path("Packs/ApiDependent")),
+        )
         with ChangeCWD(repo.path):
             assert (
                 validate_manager.validate_no_missing_release_notes(

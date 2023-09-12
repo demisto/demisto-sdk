@@ -3291,10 +3291,10 @@ def create_content_graph(
     help="Path to content graph zip file to import",
 )
 @click.option(
-    "-uc",
-    "--use-current",
+    "-uli",
+    "--use-local-import",
     is_flag=True,
-    help="Whether to use the current content graph to update",
+    help="Whether to use the current import files to import the graph.",
     default=False,
 )
 @click.option(
@@ -3324,7 +3324,7 @@ def update_content_graph(
     ctx,
     use_git: bool = False,
     marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR,
-    use_current: bool = False,
+    use_local_import: bool = False,
     imported_path: Path = None,
     packs: list = None,
     no_dependencies: bool = False,
@@ -3336,7 +3336,7 @@ def update_content_graph(
         ctx,
         use_git=use_git,
         marketplace=marketplace,
-        use_current=use_current,
+        use_local_import=use_local_import,
         imported_path=imported_path,
         packs_to_update=packs,
         no_dependencies=no_dependencies,

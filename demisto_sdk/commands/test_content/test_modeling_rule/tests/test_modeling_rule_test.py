@@ -1025,6 +1025,12 @@ class TestTheTestModelingRuleCommandSingleRule:
                         logger_info.call_args_list,
                         "All mappings validated successfully",
                     )
+                    # make sure the schema validation was skipped.
+                    schema_path = pack.modeling_rules[0].schema.path
+                    assert str_in_call_args_list(
+                        logger_info.call_args_list,
+                        f"Skipping the validation to check that the schema {schema_path} is aligned with TestData file",
+                    )
         except typer.Exit:
             assert False, "No exception should be raised in this scenario."
 

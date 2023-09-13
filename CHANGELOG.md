@@ -17,7 +17,7 @@
 * Updated the **engineinfo** type in the script schema.
 * Updated the **modeling-rules init & test** commands to support RULE section fields.
 * Stability improvements for **graph create** and **graph update** commands.
-* Added the ability to ignore failures on test modeling rules, by adding the `test_data expected_value` flag to the test data file.
+* Updated the **modeling-rules test** command to ignore failures on test modeling rules, by adding the `test_data_config_ignore` flag to the test data file.
 * Fixed the *metadata* type in the XSIAM dashboard schema to *map*.
 
 ## 1.20.2

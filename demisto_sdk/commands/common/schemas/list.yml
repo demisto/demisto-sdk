@@ -2,10 +2,8 @@ type: map
 mapping:
   allRead:
     type: bool
-    required: True
   allReadWrite:
     type: bool
-    required: True
   data:
     type: str
   dbotCreatedBy:

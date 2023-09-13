@@ -1,7 +1,7 @@
 import os
 from multiprocessing import Pool
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Optional, Set, Tuple
+from typing import Any, Dict, Iterable, List, Optional, Set, Tuple, Union
 
 from neo4j import Driver, GraphDatabase, Session, graph
 
@@ -630,7 +630,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
 
     def search(
         self,
-        marketplace: MarketplaceVersions = None,
+        marketplace: Union[MarketplaceVersions, str] = None,
         content_type: ContentType = ContentType.BASE_CONTENT,
         ids_list: Optional[Iterable[int]] = None,
         all_level_dependencies: bool = False,
@@ -650,6 +650,9 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         Returns:
             List[BaseContent]: The search results
         """
+        if isinstance(marketplace, str):
+            marketplace = MarketplaceVersions(marketplace)
+
         super().search()
         return self._search(
             marketplace,

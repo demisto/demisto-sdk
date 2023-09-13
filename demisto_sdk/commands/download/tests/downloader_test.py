@@ -1495,24 +1495,30 @@ def test_get_system_playbook_failure(mocker, exception, mock_value, expected_cal
     assert get_id_by_name_mock.call_count == expected_call
 
 
-
-
 @pytest.mark.parametrize(
     "auto_replace_uuids",
     [True, False],
 )
-def test_write_custom_content(
-    mocker, auto_replace_uuids
-):
+def test_write_custom_content(mocker, auto_replace_uuids):
+    """
+    Given: auto_replace_uuids value.
+    When: calling write_custom_content function.
+    Then:
+        - Ensure that when it sets to false replace_uuids isn't running.
+        - Ensure that when it sets to true replace_uuids is running.
+    """
     downloader = Downloader(
         output="",
         input="",
         regex="",
         auto_replace_uuids=auto_replace_uuids,
     )
-    mock_replace_uuids = mocker.patch.object(Downloader, "replace_uuids", return_value="mocked")
-    downloader.write_custom_content([('content', 'file.yml')], {'uuid1': 'script1'})
-    assert (mock_replace_uuids.called if auto_replace_uuids else not(mock_replace_uuids.called))
-    
-    
-
+    mock_replace_uuids = mocker.patch.object(
+        Downloader, "replace_uuids", return_value="mocked"
+    )
+    downloader.write_custom_content([("content", "file.yml")], {"uuid1": "script1"})
+    assert (
+        mock_replace_uuids.called
+        if auto_replace_uuids
+        else not (mock_replace_uuids.called)
+    )

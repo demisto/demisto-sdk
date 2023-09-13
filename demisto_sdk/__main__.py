@@ -1479,7 +1479,6 @@ def upload(ctx, **kwargs):
     help="Whether to replace the uuids.",
     default=True,
 )
-
 @click.pass_context
 @logging_setup_decorator
 def download(ctx, **kwargs):

@@ -719,7 +719,7 @@ def push_test_data_to_tenant(
         push_test_data_test_case.system_err = "\n".join(system_errors)
         push_test_data_test_case.result += [Failure(FAILURE_TO_PUSH_EXPLANATION)]
     else:
-        system_out = f"Test data pushed successfully for Modeling rule:{get_relative_path_to_content(mr.path)}"
+        system_out = f"Test data pushed successfully for Modeling rule: {get_relative_path_to_content(mr.path)}"
         push_test_data_test_case.system_out = system_out
         logger.info(f"[green]{system_out}[/green]", extra={"markup": True})
     push_test_data_test_case.time = duration_since_start_time(
@@ -1005,20 +1005,34 @@ def validate_modeling_rule(
         logger.info(
             "[cyan]Validating expected_values...[/cyan]", extra={"markup": True}
         )
-        validate_expected_values_test_cases = validate_expected_values(
-            xsiam_client, retrying_caller, modeling_rule, test_data
-        )
-        modeling_rule_test_suite.add_testcases(validate_expected_values_test_cases)
         if (
-            not modeling_rule_test_suite.errors
-            and not modeling_rule_test_suite.failures
+                Validations.EXPECTED_VALUES_ALIGN_WITH_RECEIVED_VALUES.value
+                not in test_data.ignored_validations
         ):
             logger.info(
-                "[green]All mappings validated successfully[/green]",
+                "[green]Validating that the received values match the expected values[/green]",
                 extra={"markup": True},
             )
+            validate_expected_values_test_cases = validate_expected_values(
+                xsiam_client, retrying_caller, modeling_rule, test_data
+            )
+            modeling_rule_test_suite.add_testcases(validate_expected_values_test_cases)
+            if (
+                not modeling_rule_test_suite.errors
+                and not modeling_rule_test_suite.failures
+            ):
+                logger.info(
+                    "[green]All mappings validated successfully[/green]",
+                    extra={"markup": True},
+                )
+                return True, modeling_rule_test_suite
+            return False, modeling_rule_test_suite
+        else:
+            logger.info(
+                f"[green]Skipping the validation that the received values match the expected values[/green]",
+                extra={"markup": True}
+            )
             return True, modeling_rule_test_suite
-        return False, modeling_rule_test_suite
     else:
         logger.warning(
             f"[yellow]No test data file found for {get_relative_path_to_content(modeling_rule_directory)}[/yellow]",

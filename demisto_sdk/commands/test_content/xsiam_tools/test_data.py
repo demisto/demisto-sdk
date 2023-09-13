@@ -7,6 +7,7 @@ from pydantic import BaseModel, Field, validator
 
 class Validations(str, Enum):
     SCHEMA_TYPES_ALIGNED_WITH_TEST_DATA = "schema_test_data_types"
+    EXPECTED_VALUES_ALIGN_WITH_RECEIVED_VALUES = "test_data_expected_values"
 
     @classmethod
     def as_set(cls):

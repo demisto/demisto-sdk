@@ -227,7 +227,7 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
             self._format_metadata(marketplace, self.content_items, self.depends_on)
         )
         safe_write_unicode(
-            lambda f: json.dump(metadata, f, indent=4, sort_keys=4), path
+            lambda f: json.dump(metadata, f, indent=4, sort_keys=True), path
         )
 
     def dump_readme(self, path: Path, marketplace: MarketplaceVersions) -> None:

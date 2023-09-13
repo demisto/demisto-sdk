@@ -3236,9 +3236,9 @@ def get_mp_types_from_metadata_by_item(file_path):
         metadata_path = Path(*metadata_path_parts) / METADATA_FILE_NAME
 
     try:
-        metadata = get_file(metadata_path)
-        marketplaces = metadata.get(MARKETPLACE_KEY_PACK_METADATA)
-        if not marketplaces:
+        if not (
+            marketplaces := get_file(metadata_path).get(MARKETPLACE_KEY_PACK_METADATA)
+        ):
             return [MarketplaceVersions.XSOAR.value]
         return marketplaces
     except FileNotFoundError:

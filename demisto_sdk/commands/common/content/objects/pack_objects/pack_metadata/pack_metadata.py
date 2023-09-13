@@ -526,7 +526,7 @@ class PackMetaData(JSONObject):
             if self.preview_only:
                 file_content["previewOnly"] = True
 
-        new_metadata_path = Path(str(dest_dir)).joinpath("metadata.json")
+        new_metadata_path = Path(str(dest_dir), "metadata.json")
         safe_write_unicode(
             lambda f: json.dump(file_content, f, indent=4), new_metadata_path
         )

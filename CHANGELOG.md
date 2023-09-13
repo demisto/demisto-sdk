@@ -1,4 +1,8 @@
 # Changelog
+## 2.33.5
+* Added the **changelog** new command for management the changelog.md file. [#3177](https://github.com/demisto/demisto-sdk/pull/3177)
+
+
 ## Unreleased
 * Improved performance when reading `yml` files.
 * Fixed an issue where **format** would add unnecessary period at the end of descriptions ending with brackets.

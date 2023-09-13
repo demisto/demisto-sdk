@@ -7,6 +7,7 @@ from packaging.version import Version
 from pydantic import DirectoryPath
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
+from demisto_sdk.commands.common.tools import safe_write_unicode
 from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.objects.content_item import (
     ContentItem,
@@ -14,7 +15,6 @@ from demisto_sdk.commands.content_graph.objects.content_item import (
 from demisto_sdk.commands.upload.exceptions import (
     NotIndivitudallyUploadableException,
 )
-from demisto_sdk.commands.common.tools import safe_write_unicode
 
 
 class ContentItemXSIAM(ContentItem, ABC):
@@ -38,7 +38,7 @@ class ContentItemXSIAM(ContentItem, ABC):
             output_paths.append(dir / f"external-{self.normalize_name}")
             output_paths.append(dir / self.normalize_name)
 
-        data = self.prepare_for_upload(
+        self.prepare_for_upload(
             marketplace,
         )
 

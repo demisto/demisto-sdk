@@ -151,5 +151,7 @@ def upload_markdown_images_to_artifacts(
         else:
             markdown_images_data_dict.update(images_dict)
 
-        safe_write_unicode(lambda f: json.dump(markdown_images_data_dict, f, indent=4), Path(artifacts_markdown_images_path))
-
+        safe_write_unicode(
+            lambda f: json.dump(markdown_images_data_dict, f, indent=4),
+            Path(artifacts_markdown_images_path),
+        )

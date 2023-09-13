@@ -66,6 +66,7 @@ class PrepareUploadManager:
             raise ValueError(
                 f"Unsupported input for {input}. Please provide a path to a content item. Got: {content_item}"
             )
+        content_item: ContentItem
         data = content_item.prepare_for_upload(marketplace, **kwargs)
         if output.exists() and not force:
             raise FileExistsError(

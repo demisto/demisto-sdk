@@ -20,7 +20,12 @@ from demisto_sdk.commands.common.constants import (
 )
 from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
 from demisto_sdk.commands.common.logger import logger
-from demisto_sdk.commands.common.tools import get_yaml, pascal_case, get_file, safe_write_unicode
+from demisto_sdk.commands.common.tools import (
+    get_file,
+    get_yaml,
+    pascal_case,
+    safe_write_unicode,
+)
 from demisto_sdk.commands.prepare_content.integration_script_unifier import (
     IntegrationScriptUnifier,
 )

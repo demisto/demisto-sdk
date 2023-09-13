@@ -8,7 +8,7 @@ from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.logger import logger
-from demisto_sdk.commands.common.tools import get_file, sha1_dir, safe_write_unicode
+from demisto_sdk.commands.common.tools import get_file, safe_write_unicode, sha1_dir
 from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
@@ -67,7 +67,9 @@ class ContentGraphInterface(ABC):
             "content_parser_latest_hash": self._get_latest_content_parser_hash(),
             "schema": self.get_schema(),
         }
-        safe_write_unicode(lambda f: json.dump(metadata, f), self.import_path / self.METADATA_FILE_NAME)
+        safe_write_unicode(
+            lambda f: json.dump(metadata, f), self.import_path / self.METADATA_FILE_NAME
+        )
 
     def _get_latest_content_parser_hash(self) -> Optional[str]:
         parsers_path = Path(__file__).parent.parent / "parsers"

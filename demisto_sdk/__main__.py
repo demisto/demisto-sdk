@@ -34,12 +34,12 @@ from demisto_sdk.commands.common.hook_validations.readme import ReadMeValidator
 from demisto_sdk.commands.common.logger import handle_deprecated_args, logging_setup
 from demisto_sdk.commands.common.tools import (
     find_type,
+    get_file,
     get_last_remote_release_version,
     get_release_note_entries,
     is_external_repository,
     is_sdk_defined_working_offline,
     parse_marketplace_kwargs,
-    get_file
 )
 from demisto_sdk.commands.content_graph.commands.create import create
 from demisto_sdk.commands.content_graph.commands.get_relationships import (

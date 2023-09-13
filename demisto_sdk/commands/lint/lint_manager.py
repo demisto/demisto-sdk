@@ -36,7 +36,8 @@ from demisto_sdk.commands.common.tools import (
     get_file_displayed_name,
     get_json,
     is_external_repository,
-    retrieve_file_ending, safe_write_unicode,
+    retrieve_file_ending,
+    safe_write_unicode,
 )
 from demisto_sdk.commands.content_graph.commands.update import (
     update_content_graph,
@@ -1202,7 +1203,9 @@ class LintManager:
             elif check.get("linter") == "XSOAR_linter":
                 self.xsoar_linter_error_formatter(check, json_contents)
 
-        safe_write_unicode(lambda f: json.dump(json_contents, f, indent=4), Path(self.json_file_path))
+        safe_write_unicode(
+            lambda f: json.dump(json_contents, f, indent=4), Path(self.json_file_path)
+        )
         logger.info(f"Logs saved to {self.json_file_path}")
 
     def flake8_error_formatter(self, errors: Dict, json_contents: List) -> None:

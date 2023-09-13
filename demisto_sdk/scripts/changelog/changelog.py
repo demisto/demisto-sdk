@@ -268,5 +268,4 @@ def changelog_management(
 
 
 if __name__ == "__main__":
-    # main()
-    Repo(".").git.diff("HEAD..origin/master", name_only=True).split()
+    main()

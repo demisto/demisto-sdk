@@ -71,7 +71,7 @@ class Changelog:
 
     """ RELEASE """
 
-    def release(self) -> None:
+    def release(self, branch_name: str = None) -> None:
         if not is_release(self.pr_name):
             raise ValueError("The PR name should match `v0.0.0` to start a release.")
         # get all log files as `LogFileObject`
@@ -84,6 +84,8 @@ class Changelog:
         update_changelog_md(new_changelog)
         logger.info("The changelog.md file has been successfully updated")
         clear_changelogs_folder()
+        if branch_name:
+            commit_changes(branch_name)
         logger.info(f"Combined {len(logs)} changelog files into CHANGELOG.md")
 
     """ HELPER FUNCTIONS """
@@ -222,6 +224,12 @@ def _validate_branch(pr_number: str) -> None:
     validate_log_yml(pr_number)
 
 
+def commit_changes(branch_name: str):
+    repo = Repo(".")
+    repo.git.checkout(branch_name)
+    repo.index.add(".")
+    repo.index.commit("Combined all changelog files into CHANGELOG.md")
+    
 main = typer.Typer()
 
 release = typer.Option(False, "--release", help="releasing", is_flag=True)
@@ -241,6 +249,10 @@ pr_title = typer.Option(
     "", "--pr_title", "-t", help="Pull request title (used for release)"
 )
 
+branch_name = typer.Option(
+    None, "--branch_name", "-bn", help="The branch name (use only release)"
+)
+
 
 @main.command()
 def changelog_management(
@@ -249,6 +261,7 @@ def changelog_management(
     release: bool = release,
     pr_number: str = pr_number,
     pr_name: str = pr_title,
+    branch_name: str = branch_name,
 ):
     pr_name = pr_name
     pr_number = pr_number
@@ -259,7 +272,7 @@ def changelog_management(
     elif init:
         return changelog.init()
     elif release:
-        return changelog.release()
+        return changelog.release(branch_name=branch_name)
     else:
         raise ValueError(
             "One of the following arguments is required [`--init`, `--validate`, `--release`],"

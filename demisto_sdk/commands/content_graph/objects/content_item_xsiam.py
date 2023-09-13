@@ -38,12 +38,12 @@ class ContentItemXSIAM(ContentItem, ABC):
             output_paths.append(dir / f"external-{self.normalize_name}")
             output_paths.append(dir / self.normalize_name)
 
-        self.prepare_for_upload(
+        data = self.prepare_for_upload(
             marketplace,
         )
 
         for file in output_paths:
-            safe_write_unicode(lambda f: self.handler.dump(file, f), path=file)
+            safe_write_unicode(lambda f: self.handler.dump(data, f), path=file)
 
     def _upload(
         self,

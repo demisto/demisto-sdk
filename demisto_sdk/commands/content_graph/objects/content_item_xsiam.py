@@ -14,6 +14,7 @@ from demisto_sdk.commands.content_graph.objects.content_item import (
 from demisto_sdk.commands.upload.exceptions import (
     NotIndivitudallyUploadableException,
 )
+from demisto_sdk.commands.common.tools import safe_write_unicode
 
 
 class ContentItemXSIAM(ContentItem, ABC):
@@ -42,11 +43,7 @@ class ContentItemXSIAM(ContentItem, ABC):
         )
 
         for file in output_paths:
-            with open(file, "w") as f:
-                self.handler.dump(
-                    data,
-                    f,
-                )
+            safe_write_unicode(lambda f: self.handler.dump(file, f), path=file)
 
     def _upload(
         self,

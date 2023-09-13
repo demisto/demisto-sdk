@@ -14,7 +14,7 @@ from demisto_sdk.commands.common.constants import (
 )
 from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.logger import logger
-from demisto_sdk.commands.common.tools import get_file
+from demisto_sdk.commands.common.tools import get_file, safe_write_unicode
 
 json = JSON_Handler()
 
@@ -151,5 +151,5 @@ def upload_markdown_images_to_artifacts(
         else:
             markdown_images_data_dict.update(images_dict)
 
-        with open(artifacts_markdown_images_path, "w") as fp:
-            json.dump(markdown_images_data_dict, fp, indent=4)
+        safe_write_unicode(lambda f: json.dump(markdown_images_data_dict, f, indent=4), Path(artifacts_markdown_images_path))
+

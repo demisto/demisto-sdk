@@ -56,6 +56,7 @@ from demisto_sdk.commands.upload.tools import (
     parse_error_response,
     parse_upload_response,
 )
+from demisto_sdk.commands.common.tools import safe_write_unicode
 
 if TYPE_CHECKING:
     from demisto_sdk.commands.content_graph.objects.relationship import RelationshipData
@@ -226,9 +227,8 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
         metadata.update(
             self._format_metadata(marketplace, self.content_items, self.depends_on)
         )
+        safe_write_unicode(lambda f: json.dump(metadata, f, indent=4, sort_keys=4), path)
 
-        with open(path, "w") as f:
-            json.dump(metadata, f, indent=4, sort_keys=True)
 
     def dump_readme(self, path: Path, marketplace: MarketplaceVersions) -> None:
 

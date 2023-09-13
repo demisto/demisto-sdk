@@ -510,11 +510,9 @@ class Downloader:
             for item in system_items_list:  # type: ignore
                 file_name: str = self.build_file_name(item)
                 file_path: str = os.path.join(self.system_content_temp_dir, file_name)
-                with open(file_path, "w") as file:
-                    if file_path.endswith("json"):
-                        json.dump(item, file)
-                    else:
-                        yaml.dump(item, file)
+                dumper = json.dump if file_name.endswith("json") else yaml.dump
+                safe_write_unicode(lambda f: dumper(item, f), Path(file_path))
+
             return True
 
         except ApiException as e:

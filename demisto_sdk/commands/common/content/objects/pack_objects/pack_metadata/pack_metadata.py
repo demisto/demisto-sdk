@@ -16,7 +16,7 @@ from demisto_sdk.commands.common.constants import (
 from demisto_sdk.commands.common.content.objects.abstract_objects import JSONObject
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.logger import logger
-from demisto_sdk.commands.common.tools import get_core_pack_list, get_file
+from demisto_sdk.commands.common.tools import get_core_pack_list, get_file, safe_write_unicode
 from demisto_sdk.commands.find_dependencies.find_dependencies import PackDependencies
 
 DATETIME_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
@@ -522,11 +522,10 @@ class PackMetaData(JSONObject):
             if self.preview_only:
                 file_content["previewOnly"] = True
 
-        new_metadata_path = os.path.join(dest_dir, "metadata.json")
-        with open(new_metadata_path, "w") as metadata_file:
-            json.dump(file_content, metadata_file, indent=4)
+        new_metadata_path = Path(dest_dir).joinpath("metadata.json")
+        safe_write_unicode(lambda f: json.dump(file_content, f, indent=4), new_metadata_path)
 
-        return [Path(new_metadata_path)]
+        return [new_metadata_path]
 
     def load_user_metadata(
         self, pack_id: str, pack_name: str, pack_path: Path, logger: logging.Logger

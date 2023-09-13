@@ -26,7 +26,7 @@ from demisto_sdk.commands.common.tools import (
     get_file_or_remote,
     get_last_remote_release_version,
     get_remote_file,
-    string_to_bool,
+    string_to_bool, safe_write_unicode,
 )
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.content_graph.objects.integration_script import (
@@ -205,8 +205,9 @@ class PreCommitRunner:
             precommit_config["exclude"] += f"|{join_files(exclude_files or {})}"
         else:
             precommit_config["files"] = join_files(self.files_to_run)
-        with open(PRECOMMIT_PATH, "w") as f:
-            yaml.dump(precommit_config, f)
+
+        safe_write_unicode(lambda f: yaml.dump(precommit_config, f), PRECOMMIT_PATH)
+
         if dry_run:
             logger.info(
                 "Dry run, skipping pre-commit.\nConfig file saved to .pre-commit-config-content.yaml"

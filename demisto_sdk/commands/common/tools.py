@@ -544,6 +544,7 @@ def get_file_details(
     file_content,
     full_file_path: str,
 ) -> Dict:
+
     if full_file_path.endswith("json"):
         file_details = json.loads(file_content)
     elif full_file_path.endswith(("yml", "yaml")):
@@ -2818,8 +2819,7 @@ def compare_context_path_in_yml_and_readme(yml_dict, readme_content):
 
 
 def write_yml(yml_path: str, yml_data: Dict):
-    with open(yml_path, "w") as f:
-        yaml.dump(yml_data, f)  # ruamel preservers multilines
+    safe_write_unicode(lambda f: yaml.dump(yml_data, f), Path(yml_path))
 
 
 def to_kebab_case(s: str):

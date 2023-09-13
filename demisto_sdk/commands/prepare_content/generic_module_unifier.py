@@ -6,7 +6,7 @@ from typing import Dict, Optional
 from demisto_sdk.commands.common.constants import PACKS_DIR, FileType
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.logger import logger
-from demisto_sdk.commands.common.tools import find_type, get_pack_name, get_file
+from demisto_sdk.commands.common.tools import find_type, get_pack_name, get_file, safe_write_unicode
 
 
 class GenericModuleUnifier:
@@ -117,5 +117,5 @@ class GenericModuleUnifier:
                 "-f argument to True in order to overwrite the preexisting file."
             )
 
-        with open(self.dest_path, mode="w") as file:
-            json.dump(unified_generic_module_json, file, indent=4)
+        safe_write_unicode(lambda f: json.dump(unified_generic_module_json, f, indent=4), Path(self.dest_path))
+

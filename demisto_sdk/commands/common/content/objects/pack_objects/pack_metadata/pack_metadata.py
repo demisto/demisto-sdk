@@ -18,7 +18,6 @@ from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     get_core_pack_list,
-    get_file,
     safe_write_unicode,
 )
 from demisto_sdk.commands.find_dependencies.find_dependencies import PackDependencies
@@ -556,9 +555,11 @@ class PackMetaData(JSONObject):
             return None
 
         try:
-            user_metadata = get_file(user_metadata_path)
-            if isinstance(user_metadata, list):
-                user_metadata = {}
+            with open(user_metadata_path) as user_metadata_file:
+                user_metadata = json.load(user_metadata_file)  # loading user metadata
+                # part of old packs are initialized with empty list
+                if isinstance(user_metadata, list):
+                    user_metadata = {}
 
             self.id = pack_id
             self.name = user_metadata.get("name", "")

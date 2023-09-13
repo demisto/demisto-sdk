@@ -34,7 +34,6 @@ from demisto_sdk.commands.common.hook_validations.readme import ReadMeValidator
 from demisto_sdk.commands.common.logger import handle_deprecated_args, logging_setup
 from demisto_sdk.commands.common.tools import (
     find_type,
-    get_file,
     get_last_remote_release_version,
     get_release_note_entries,
     is_external_repository,
@@ -2599,7 +2598,7 @@ def postman_codegen(
     from demisto_sdk.commands.split.ymlsplitter import YmlSplitter
 
     postman_config = postman_to_autogen_configuration(
-        collection=get_file(input),
+        collection=json.load(input),
         name=name,
         command_prefix=command_prefix,
         context_path_prefix=output_prefix,
@@ -2774,7 +2773,8 @@ def openapi_codegen(ctx, **kwargs):
     configuration = None
     if kwargs.get("config_file"):
         try:
-            configuration = get_file(kwargs["config_file"])
+            with open(kwargs["config_file"]) as config_file:
+                configuration = json.load(config_file)
         except Exception as e:
             logger.info(f"[red]Failed to load configuration file: {e}[/red]")
 

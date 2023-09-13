@@ -11,7 +11,7 @@
 * Fixed an issue where **modeling-rule test** command failed to properly compare types of fields.
 * Updated the **engineinfo** type in the script schema.
 * Stability improvements for **graph create** and **graph update** commands.
-
+* Added the ability to ignore failures on test modeling rules, by adding the `test_data expected_value` flag to the test data file.
 
 ## 1.20.2
 * Updated the **pre-commit** command to run on all python versions in one run.

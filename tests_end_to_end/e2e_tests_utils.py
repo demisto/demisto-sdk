@@ -3,11 +3,14 @@ import sys
 
 import demisto_client
 
+from demisto_sdk.commands.common.constants import DEMISTO_GIT_PRIMARY_BRANCH
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import get_demisto_version
 
 
-def git_clone_demisto_sdk(destination_folder: str, sdk_git_branch: str = "master"):
+def git_clone_demisto_sdk(
+    destination_folder: str, sdk_git_branch: str = DEMISTO_GIT_PRIMARY_BRANCH
+):
     """Clone demisto-sdk from GitHub and add it to sys.path"""
     from demisto_sdk.commands.common.git_util import GitUtil
 

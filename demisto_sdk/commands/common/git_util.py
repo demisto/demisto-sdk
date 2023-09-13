@@ -12,7 +12,11 @@ from git import (
 from git.diff import Lit_change_type
 from git.remote import Remote
 
-from demisto_sdk.commands.common.constants import PACKS_FOLDER
+from demisto_sdk.commands.common.constants import (
+    DEMISTO_GIT_PRIMARY_BRANCH,
+    DEMISTO_GIT_UPSTREAM,
+    PACKS_FOLDER,
+)
 
 
 class GitUtil:
@@ -610,10 +614,15 @@ class GitUtil:
                 return ""
             for current_remote_ref in current_remote.refs:
                 current_remote_ref_str = str(current_remote_ref)
-                if current_remote_ref_str == "origin/main":
+                if current_remote_ref_str == f"{DEMISTO_GIT_UPSTREAM}/main":
                     return "main"
-                elif current_remote_ref_str == "origin/master":
+                elif current_remote_ref_str == f"{DEMISTO_GIT_UPSTREAM}/master":
                     return "master"
+                elif (
+                    current_remote_ref_str
+                    == f"{DEMISTO_GIT_UPSTREAM}/{DEMISTO_GIT_PRIMARY_BRANCH}"
+                ):
+                    return DEMISTO_GIT_PRIMARY_BRANCH
         return ""
 
     def handle_prev_ver(self, prev_ver: str = ""):

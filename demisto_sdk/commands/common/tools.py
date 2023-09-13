@@ -53,6 +53,8 @@ from demisto_sdk.commands.common.constants import (
     DEF_DOCKER_PWSH,
     DEFAULT_CONTENT_ITEM_FROM_VERSION,
     DEFAULT_CONTENT_ITEM_TO_VERSION,
+    DEMISTO_GIT_PRIMARY_BRANCH,
+    DEMISTO_GIT_UPSTREAM,
     DOC_FILES_DIR,
     ENV_DEMISTO_SDK_MARKETPLACE,
     ENV_SDK_WORKING_OFFLINE,
@@ -433,7 +435,7 @@ def get_core_pack_list(marketplaces: List[MarketplaceVersions] = None) -> list:
 
 def get_local_remote_file(
     full_file_path: str,
-    tag: str = "master",
+    tag: str = DEMISTO_GIT_PRIMARY_BRANCH,
     return_content: bool = False,
 ):
     repo_git_util = GitUtil()
@@ -449,7 +451,7 @@ def get_local_remote_file(
 def get_remote_file_from_api(
     full_file_path: str,
     git_content_config: Optional[GitContentConfig],
-    tag: str = "master",
+    tag: str = DEMISTO_GIT_PRIMARY_BRANCH,
     return_content: bool = False,
     encoding: Optional[str] = None,
 ) -> Union[bytes, Dict, List]:
@@ -557,7 +559,7 @@ def get_file_details(
 @lru_cache(maxsize=128)
 def get_remote_file(
     full_file_path: str,
-    tag: str = "master",
+    tag: str = DEMISTO_GIT_PRIMARY_BRANCH,
     return_content: bool = False,
     git_content_config: Optional[GitContentConfig] = None,
     default_value=None,
@@ -565,7 +567,7 @@ def get_remote_file(
     """
     Args:
         full_file_path:The full path of the file.
-        tag: The branch name. default is 'master'
+        tag: The branch name. default is the content of DEMISTO_DEFAULT_BRANCH env variable.
         return_content: Determines whether to return the file's raw content or the dict representation of it.
         git_content_config: The content config to take the file from
         default_value: The method returns this value if using the SDK in offline mode. default_value cannot be None,
@@ -579,7 +581,7 @@ def get_remote_file(
             raise NoInternetConnectionException
         return default_value
 
-    tag = tag.replace("origin/", "").replace("demisto/", "")
+    tag = tag.replace(f"{DEMISTO_GIT_UPSTREAM}/", "").replace("demisto/", "")
     if not git_content_config:
         try:
             if not (
@@ -619,14 +621,16 @@ def filter_files_on_pack(pack: str, file_paths_list="") -> set:
     return files_paths_on_pack
 
 
-def filter_packagify_changes(modified_files, added_files, removed_files, tag="master"):
+def filter_packagify_changes(
+    modified_files, added_files, removed_files, tag=DEMISTO_GIT_PRIMARY_BRANCH
+):
     """
     Mark scripts/integrations that were removed and added as modified.
 
     :param modified_files: list of modified files in branch
     :param added_files: list of new files in branch
     :param removed_files: list of removed files in branch
-    :param tag: tag of compared revision
+    :param tag: The branch name. default is the content of DEMISTO_DEFAULT_BRANCH env variable.
 
     :return: tuple of updated lists: (modified_files, updated_added_files, removed_files)
     """
@@ -815,7 +819,7 @@ def get_file(
     file_path: Union[str, Path],
     clear_cache: bool = False,
     return_content: bool = False,
-    keep_order: bool = True,
+    keep_order: bool = False,
 ):
     if clear_cache:
         get_file.cache_clear()
@@ -882,7 +886,7 @@ def get_file_or_remote(file_path: Path, clear_cache=False):
         return get_remote_file(str(relative_file_path))
 
 
-def get_yaml(file_path, cache_clear=False, keep_order: bool = True):
+def get_yaml(file_path, cache_clear=False, keep_order: bool = False):
     if cache_clear:
         get_file.cache_clear()
     return get_file(file_path, clear_cache=cache_clear, keep_order=keep_order)
@@ -1872,9 +1876,6 @@ def find_type(
         ):
             return FileType.PRE_PROCESS_RULES
 
-        if "allRead" in _dict and "truncated" in _dict:
-            return FileType.LISTS
-
         if "definitionIds" in _dict and "views" in _dict:
             return FileType.GENERIC_MODULE
 
@@ -1905,6 +1906,11 @@ def find_type(
 
         if "rule_id" in _dict:
             return FileType.LAYOUT_RULE
+
+        if isinstance(_dict, dict) and {"data", "allRead", "truncated"}.intersection(
+            _dict.keys()
+        ):
+            return FileType.LISTS
 
         # When using it for all files validation- sometimes 'id' can be integer
         if "id" in _dict:
@@ -2021,7 +2027,14 @@ def get_content_path(relative_path: Optional[Path] = None) -> Path:
         else:
             git_repo = GitUtil().repo
 
-        remote_url = git_repo.remote().urls.__next__()
+        try:
+            remote_url = git_repo.remote(name=DEMISTO_GIT_UPSTREAM).urls.__next__()
+        except ValueError:
+            if not os.getenv("DEMISTO_SDK_IGNORE_CONTENT_WARNING"):
+                logger.warning(
+                    f"Could not find remote with name {DEMISTO_GIT_UPSTREAM} for repo {git_repo.working_dir}"
+                )
+            remote_url = ""
         is_fork_repo = "content" in remote_url
         is_external_repo = is_external_repository()
 

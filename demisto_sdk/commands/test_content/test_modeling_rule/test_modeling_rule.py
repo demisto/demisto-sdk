@@ -896,122 +896,122 @@ def validate_modeling_rule(
             f"Checking that event data was added to the test data file[/cyan]",
             extra={"markup": True},
         )
-        missing_event_data, _ = is_test_data_exists_on_server(
-            modeling_rule.testdata_path
-        )
-
-        # initialize xsiam client
-        xsiam_client_cfg = XsiamApiClientConfig(
-            base_url=xsiam_url,  # type: ignore[arg-type]
-            api_key=api_key,  # type: ignore[arg-type]
-            auth_id=auth_id,  # type: ignore[arg-type]
-            token=xsiam_token,  # type: ignore[arg-type]
-            collector_token=collector_token,  # type: ignore[arg-type]
-        )
-        xsiam_client = XsiamApiClient(xsiam_client_cfg)
-        if not verify_pack_exists_on_tenant(
-            xsiam_client, retrying_caller, modeling_rule, interactive
-        ):
-            test_case = TestCase(
-                "Pack not installed on tenant", classname="Modeling Rule"
-            )
-            return add_result_to_test_case(
-                "Pack not installed on tenant",
-                test_case,
-                modeling_rule_test_suite,
-            )
         test_data = TestData.parse_file(modeling_rule.testdata_path.as_posix())
-
-        schema_test_case = TestCase(
-            "Validate Schema",
-            classname=f"Modeling Rule {get_relative_path_to_content(modeling_rule.schema_path)}",
-        )
-        if schema_path := modeling_rule.schema_path:
-            with open(modeling_rule.schema_path) as schema_file:
-                try:
-                    schema = json.load(schema_file)
-                except json.JSONDecodeError as ex:
-                    err = f"Failed to parse schema file {get_relative_path_to_content(modeling_rule.schema_path)} as JSON"
-                    logger.error(
-                        f"[red]{err}[/red]",
-                        extra={"markup": True},
-                    )
-                    schema_test_case.system_err = str(ex)
-                    return add_result_to_test_case(
-                        err, schema_test_case, modeling_rule_test_suite
-                    )
-        else:
-            err = f"Schema file does not exist in path {get_relative_path_to_content(modeling_rule.schema_path)}"
-            return log_error_to_test_case(
-                err, schema_test_case, modeling_rule_test_suite
-            )
         if (
-            Validations.SCHEMA_TYPES_ALIGNED_WITH_TEST_DATA.value
-            not in test_data.ignored_validations
-        ):
-            logger.info(
-                f"[green]Validating that the schema {get_relative_path_to_content(schema_path)} "
-                "is aligned with TestData file.[/green]",
-                extra={"markup": True},
-            )
-
-            success, results = validate_schema_aligned_with_test_data(
-                test_data=test_data, schema=schema
-            )
-            schema_test_case.result += results
-            if not success:
-                err = (
-                    f"The schema {get_relative_path_to_content(schema_path)} is not aligned with the test data file "
-                    f"{get_relative_path_to_content(modeling_rule.testdata_path)}"
-                )
-                return log_error_to_test_case(
-                    err, schema_test_case, modeling_rule_test_suite
-                )
-        else:
-            skipped = (
-                f"Skipping the validation to check that the schema {get_relative_path_to_content(schema_path)} "
-                "is aligned with TestData file."
-            )
-            logger.info(f"[green]{skipped}[/green]", extra={"markup": True})
-            schema_test_case.result += [Skipped(skipped)]
-            modeling_rule_test_suite.add_testcase(schema_test_case)
-
-        if push:
-            if missing_event_data:
-                return handle_missing_event_data_in_modeling_rule(
-                    missing_event_data,
-                    modeling_rule,
-                    modeling_rule_test_suite,
-                    executed_command,
-                )
-            push_test_data_test_case = push_test_data_to_tenant(
-                xsiam_client, retrying_caller, modeling_rule, test_data
-            )
-            modeling_rule_test_suite.add_testcase(push_test_data_test_case)
-            if not push_test_data_test_case.is_passed:
-                return False, modeling_rule_test_suite
-
-            dataset_set_test_case = check_dataset_exists(
-                xsiam_client, retrying_caller, test_data
-            )
-            modeling_rule_test_suite.add_testcase(dataset_set_test_case)
-            if not dataset_set_test_case.is_passed:
-                return False, modeling_rule_test_suite
-        else:
-            logger.info(
-                '[cyan]The command flag "--no-push" was passed - skipping pushing of test data[/cyan]',
-                extra={"markup": True},
-            )
-        logger.info(
-            "[cyan]Validating expected_values...[/cyan]", extra={"markup": True}
-        )
-        if (
-                Validations.EXPECTED_VALUES_ALIGN_WITH_RECEIVED_VALUES.value
+                Validations.TEST_DATA_CONFIG_IGNORE.value
                 not in test_data.ignored_validations
         ):
             logger.info(
-                "[green]Validating that the received values match the expected values[/green]",
+                "[green]test data config is not ignored starting the test data validation...[/green]",
                 extra={"markup": True},
+            )
+            missing_event_data, _ = is_test_data_exists_on_server(
+                modeling_rule.testdata_path
+            )
+
+            # initialize xsiam client
+            xsiam_client_cfg = XsiamApiClientConfig(
+                base_url=xsiam_url,  # type: ignore[arg-type]
+                api_key=api_key,  # type: ignore[arg-type]
+                auth_id=auth_id,  # type: ignore[arg-type]
+                token=xsiam_token,  # type: ignore[arg-type]
+                collector_token=collector_token,  # type: ignore[arg-type]
+            )
+            xsiam_client = XsiamApiClient(xsiam_client_cfg)
+            if not verify_pack_exists_on_tenant(
+                xsiam_client, retrying_caller, modeling_rule, interactive
+            ):
+                test_case = TestCase(
+                    "Pack not installed on tenant", classname="Modeling Rule"
+                )
+                return add_result_to_test_case(
+                    "Pack not installed on tenant",
+                    test_case,
+                    modeling_rule_test_suite,
+                )
+
+            schema_test_case = TestCase(
+                "Validate Schema",
+                classname=f"Modeling Rule {get_relative_path_to_content(modeling_rule.schema_path)}",
+            )
+            if schema_path := modeling_rule.schema_path:
+                with open(modeling_rule.schema_path) as schema_file:
+                    try:
+                        schema = json.load(schema_file)
+                    except json.JSONDecodeError as ex:
+                        err = f"Failed to parse schema file {get_relative_path_to_content(modeling_rule.schema_path)} as JSON"
+                        logger.error(
+                            f"[red]{err}[/red]",
+                            extra={"markup": True},
+                        )
+                        schema_test_case.system_err = str(ex)
+                        return add_result_to_test_case(
+                            err, schema_test_case, modeling_rule_test_suite
+                        )
+            else:
+                err = f"Schema file does not exist in path {get_relative_path_to_content(modeling_rule.schema_path)}"
+                return log_error_to_test_case(
+                    err, schema_test_case, modeling_rule_test_suite
+                )
+            if (
+                Validations.SCHEMA_TYPES_ALIGNED_WITH_TEST_DATA.value
+                not in test_data.ignored_validations
+            ):
+                logger.info(
+                    f"[green]Validating that the schema {get_relative_path_to_content(schema_path)} "
+                    "is aligned with TestData file.[/green]",
+                    extra={"markup": True},
+                )
+
+                success, results = validate_schema_aligned_with_test_data(
+                    test_data=test_data, schema=schema
+                )
+                schema_test_case.result += results
+                if not success:
+                    err = (
+                        f"The schema {get_relative_path_to_content(schema_path)} is not aligned with the test data file "
+                        f"{get_relative_path_to_content(modeling_rule.testdata_path)}"
+                    )
+                    return log_error_to_test_case(
+                        err, schema_test_case, modeling_rule_test_suite
+                    )
+            else:
+                skipped = (
+                    f"Skipping the validation to check that the schema {get_relative_path_to_content(schema_path)} "
+                    "is aligned with TestData file."
+                )
+                logger.info(f"[green]{skipped}[/green]", extra={"markup": True})
+                schema_test_case.result += [Skipped(skipped)]
+                modeling_rule_test_suite.add_testcase(schema_test_case)
+
+            if push:
+                if missing_event_data:
+                    return handle_missing_event_data_in_modeling_rule(
+                        missing_event_data,
+                        modeling_rule,
+                        modeling_rule_test_suite,
+                        executed_command,
+                    )
+                push_test_data_test_case = push_test_data_to_tenant(
+                    xsiam_client, retrying_caller, modeling_rule, test_data
+                )
+                modeling_rule_test_suite.add_testcase(push_test_data_test_case)
+                if not push_test_data_test_case.is_passed:
+                    return False, modeling_rule_test_suite
+
+                dataset_set_test_case = check_dataset_exists(
+                    xsiam_client, retrying_caller, test_data
+                )
+                modeling_rule_test_suite.add_testcase(dataset_set_test_case)
+                if not dataset_set_test_case.is_passed:
+                    return False, modeling_rule_test_suite
+            else:
+                logger.info(
+                    '[cyan]The command flag "--no-push" was passed - skipping pushing of test data[/cyan]',
+                    extra={"markup": True},
+                )
+            logger.info(
+                "[cyan]Validating expected_values...[/cyan]", extra={"markup": True}
             )
             validate_expected_values_test_cases = validate_expected_values(
                 xsiam_client, retrying_caller, modeling_rule, test_data
@@ -1029,7 +1029,7 @@ def validate_modeling_rule(
             return False, modeling_rule_test_suite
         else:
             logger.info(
-                f"[green]Skipping the validation that the received values match the expected values[/green]",
+                f"[green]test data config is ignored skipping the test data validation[/green]",
                 extra={"markup": True}
             )
             return True, modeling_rule_test_suite

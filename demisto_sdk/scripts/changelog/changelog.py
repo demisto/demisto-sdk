@@ -21,7 +21,7 @@ from demisto_sdk.scripts.changelog.changelog_obj import (
 
 CHANGELOG_FOLDER = Path(f"{git_path()}/.changelog")
 CHANGELOG_MD_FILE = Path(f"{git_path()}/CHANGELOG.md")
-RELEASE_VERSION_REGEX = re.compile(r"v\d{1,2}\.\d{1,2}\.\d{1,2}")
+RELEASE_VERSION_REGEX = re.compile(r"[vV]\d{1,2}\.\d{1,2}\.\d{1,2}")
 
 yaml = DEFAULT_YAML_HANDLER
 

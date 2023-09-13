@@ -39,6 +39,7 @@ from demisto_sdk.commands.common.tools import (
     is_external_repository,
     is_sdk_defined_working_offline,
     parse_marketplace_kwargs,
+    get_file
 )
 from demisto_sdk.commands.content_graph.commands.create import create
 from demisto_sdk.commands.content_graph.commands.get_relationships import (
@@ -2598,7 +2599,7 @@ def postman_codegen(
     from demisto_sdk.commands.split.ymlsplitter import YmlSplitter
 
     postman_config = postman_to_autogen_configuration(
-        collection=json.load(input),
+        collection=get_file(input),
         name=name,
         command_prefix=command_prefix,
         context_path_prefix=output_prefix,
@@ -2773,8 +2774,7 @@ def openapi_codegen(ctx, **kwargs):
     configuration = None
     if kwargs.get("config_file"):
         try:
-            with open(kwargs["config_file"]) as config_file:
-                configuration = json.load(config_file)
+            configuration = get_file(kwargs["config_file"])
         except Exception as e:
             logger.info(f"[red]Failed to load configuration file: {e}[/red]")
 

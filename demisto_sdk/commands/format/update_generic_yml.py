@@ -27,6 +27,7 @@ from demisto_sdk.commands.common.tools import (
     is_uuid,
     listdir_fullpath,
     search_and_delete_from_conf,
+    get_file
 )
 from demisto_sdk.commands.format.format_constants import (
     ERROR_RETURN_CODE,
@@ -86,8 +87,7 @@ class BaseUpdateYML(BaseUpdate):
         Returns:
             The content of the json file
         """
-        with open(CONF_PATH) as data_file:
-            return json.load(data_file)
+        return get_file(CONF_PATH)
 
     def get_id_and_version_path_object(self):
         """Gets the dict that holds the id and version fields.

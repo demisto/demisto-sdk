@@ -10,6 +10,7 @@ from demisto_sdk.commands.common.constants import SAMPLES_DIR, MarketplaceVersio
 from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.prepare_content.unifier import Unifier
+from demisto_sdk.commands.common.tools import get_file
 
 json = JSON_Handler()
 
@@ -39,14 +40,11 @@ class RuleUnifier(Unifier):
         if os.path.isdir(samples_dir):
             samples = defaultdict(list)
             for sample_file in os.listdir(samples_dir):
-                with open(
-                    os.path.join(samples_dir, sample_file), encoding="utf-8"
-                ) as samples_file_object:
-                    sample = json.loads(samples_file_object.read())
-                    if data.get("id") in sample.get("rules", []):
-                        samples[
-                            f'{sample.get("vendor")}_{sample.get("product")}'
-                        ].extend(sample.get("samples"))
+                sample = get_file(Path(samples_dir) / sample_file)
+                if data.get("id") in sample.get("rules", []):
+                    samples[
+                        f'{sample.get("vendor")}_{sample.get("product")}'
+                    ].extend(sample.get("samples"))
             if samples:
                 data["samples"] = FoldedScalarString(json.dumps(samples, indent=4))
                 logger.info(f"Added {len(samples)} samples.")

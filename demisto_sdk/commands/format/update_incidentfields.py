@@ -14,6 +14,7 @@ from demisto_sdk.commands.format.format_constants import (
     SKIP_RETURN_CODE,
     SUCCESS_RETURN_CODE,
 )
+from demisto_sdk.commands.common.tools import get_file
 from demisto_sdk.commands.format.update_generic_json import BaseUpdateJSON
 
 
@@ -91,12 +92,10 @@ class IncidentFieldJSONFormat(BaseUpdateJSON):
                     logger.info(
                         f"\n[blue]================= Updating file {alias_file_path} =================[/blue]"
                     )
-
-                    with open(alias_file_path, "r+") as f:
-                        alias_file_content = json.load(f)
-                        alias_file_content["marketplaces"] = [
-                            MarketplaceVersions.XSOAR.value
-                        ]
+                    alias_file_content = get_file(alias_file_path)
+                    alias_file_content["marketplaces"] = [
+                        MarketplaceVersions.XSOAR.value
+                    ]
 
                     self._save_alias_field_file(
                         dest_file_path=alias_file_path, field_data=alias_file_content

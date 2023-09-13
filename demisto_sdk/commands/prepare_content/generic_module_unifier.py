@@ -6,7 +6,7 @@ from typing import Dict, Optional
 from demisto_sdk.commands.common.constants import PACKS_DIR, FileType
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.logger import logger
-from demisto_sdk.commands.common.tools import find_type, get_pack_name
+from demisto_sdk.commands.common.tools import find_type, get_pack_name, get_file
 
 
 class GenericModuleUnifier:
@@ -66,8 +66,7 @@ class GenericModuleUnifier:
             file_path = os.path.join(dashboards_dir_path, file_name)
             if find_type(file_path) == FileType.DASHBOARD:
                 # it's a dashboard
-                with open(file_path) as f:
-                    dashboard = json.load(f)
+                dashboard = get_file(file_path)
                 if dashboard.get("id") == dashboard_id:
                     # the searched dashboard was found
                     return dashboard
@@ -79,8 +78,7 @@ class GenericModuleUnifier:
 
         Returns: the unified GenericModule
         """
-        with open(self.input_path) as f:
-            generic_module = json.load(f)
+        generic_module = get_file(self.input_path)
 
         views = generic_module.get("views", [])
         for view in views:

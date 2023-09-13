@@ -4,6 +4,7 @@ from wcmatch.pathlib import Path
 
 import demisto_sdk.commands.common.content.errors as exc
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
+from demisto_sdk.commands.common.tools import get_file
 
 from .dictionary_based_object import DictionaryBasedObject
 
@@ -46,7 +47,7 @@ class JSONObject(DictionaryBasedObject):
     def _deserialize(self) -> None:
         """Load json to dictionary"""
         try:
-            self._as_dict = json.load(self._path.open())
+            self._as_dict = get_file(self._path)
         except ValueError as e:
             raise exc.ContentSerializeError(self, self.path, str(e))
 

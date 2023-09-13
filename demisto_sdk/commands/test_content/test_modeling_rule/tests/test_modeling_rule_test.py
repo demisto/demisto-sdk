@@ -1240,7 +1240,7 @@ class TestTheTestModelingRuleCommandSingleRule:
     ):
         """
         Given:
-            - A test data file including ignoring EXPECTED_VALUES_ALIGN_WITH_RECEIVED_VALUES validation names.
+            - A test data file including ignoring modeling rule test data.
 
         When:
             - The pack is simulated to be on the tenant.
@@ -1280,7 +1280,7 @@ class TestTheTestModelingRuleCommandSingleRule:
         fake_test_data = TestData.parse_file(path_to_fake_test_data_file.as_posix())
         test_data_file.write_text(fake_test_data.json(indent=4))
         test_data_file.update(
-            {"ignored_validations": [Validations.EXPECTED_VALUES_ALIGN_WITH_RECEIVED_VALUES]}
+            {"ignored_validations": [Validations.TEST_DATA_CONFIG_IGNORE]}
         )
 
         try:
@@ -1354,7 +1354,7 @@ class TestTheTestModelingRuleCommandSingleRule:
                         ],
                     )
                     # Assert
-                    assert result.exit_code == 1
+                    assert result.exit_code == 0
                     assert str_in_call_args_list(
                         logger_info.call_args_list, "xdm.event.outcome_reason"
                     )

@@ -939,3 +939,48 @@ class TestXSIAMStructureValidator(TestStructureValidator):
         xsiam_report.remove_field_by_path("templates_data.[0].global_id")
         validator = StructureValidator(xsiam_report.path)
         assert not validator.is_valid_scheme()
+
+    DEPRECATED_WITH_COMMENT = {
+        "comment": "Deprecated. No available replacement.",
+        "deprecated": True,
+    }
+
+    DEPRECATED_RULE = {
+        "deprecated": True,
+    }
+
+    @pytest.mark.parametrize(
+        "yml_data_update",
+        [DEPRECATED_RULE, DEPRECATED_WITH_COMMENT],
+    )
+    def test_deprecated_parsing_rule_is_valid(self, repo, yml_data_update):
+        """
+        Given:
+            A deprecated parsing rule with: (a) just deprecated (b) deprecated with a comment.
+        When: running is_schema_types_valid
+        Then: Validate that the parsing rule is invalid
+        """
+        with ChangeCWD(repo.path):
+            pack = repo.create_pack("TestPack")
+            parsing_rule = pack.create_parsing_rule(name="MyParsingRule")
+            parsing_rule.yml.update(yml_data_update)
+            structure_validator = StructureValidator(parsing_rule.yml.path)
+        assert structure_validator.is_valid_file()
+
+    @pytest.mark.parametrize(
+        "yml_data_update",
+        [DEPRECATED_RULE, DEPRECATED_WITH_COMMENT],
+    )
+    def test_deprecated_modeling_rule_is_valid(self, repo, yml_data_update):
+        """
+        Given:
+            A deprecated modeling rule with: (a) just deprecated (b) deprecated with a comment.
+        When: running is_schema_types_valid
+        Then: Validate that the modeling rule is invalid
+        """
+        with ChangeCWD(repo.path):
+            pack = repo.create_pack("TestPack")
+            modeling_rule = pack.create_modeling_rule("MyModelingRule")
+            modeling_rule.yml.update(yml_data_update)
+            structure_validator = StructureValidator(modeling_rule.yml.path)
+            assert structure_validator.is_valid_file()

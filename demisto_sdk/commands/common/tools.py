@@ -657,8 +657,7 @@ def filter_packagify_changes(
             if PACKS_README_FILE_NAME in file_path:
                 updated_added_files.add(file_path)
                 continue
-            with open(file_path) as f:
-                details = yaml.load(f)
+            details = get_file(file_path)
 
             uniq_identifier = "_".join(
                 [

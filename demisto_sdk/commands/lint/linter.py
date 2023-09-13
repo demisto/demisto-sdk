@@ -47,6 +47,7 @@ from demisto_sdk.commands.common.tools import (
     get_pack_name,
     get_yaml,
     run_command_os,
+    get_file
 )
 from demisto_sdk.commands.lint.commands_builder import (
     build_bandit_command,
@@ -1281,8 +1282,8 @@ class Linter:
         )
         pack_metadata_file = pack_dir / PACKS_PACK_META_FILE_NAME
         logger.debug(f"Before reading content of {pack_metadata_file}")
-        with pack_metadata_file.open() as f:
-            pack_meta_content: Dict = json.load(f)
+        pack_meta_content = get_file(pack_metadata_file)
+
         logger.debug(f"After reading content of {pack_metadata_file}")
         self._facts["support_level"] = pack_meta_content.get("support")
         if self._facts["support_level"] == "partner" and pack_meta_content.get(

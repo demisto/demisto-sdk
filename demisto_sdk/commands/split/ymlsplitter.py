@@ -20,7 +20,7 @@ from demisto_sdk.commands.common.constants import (
 )
 from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
 from demisto_sdk.commands.common.logger import logger
-from demisto_sdk.commands.common.tools import get_yaml, pascal_case
+from demisto_sdk.commands.common.tools import get_yaml, pascal_case, get_file
 from demisto_sdk.commands.prepare_content.integration_script_unifier import (
     IntegrationScriptUnifier,
 )
@@ -118,8 +118,7 @@ class YmlSplitter:
         self.extract_long_description(f"{output_path}/{base_name}_description.md")
         yaml_out = f"{output_path}/{base_name}.yml"
         logger.debug(f"Creating yml file: {yaml_out} ...")
-        with open(self.input) as yf:
-            yaml_obj = yaml.load(yf)
+        yaml_obj = get_file(self.input)
         script_obj = yaml_obj
 
         if self.file_type in ("modelingrule", "parsingrule"):

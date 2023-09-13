@@ -10,6 +10,7 @@ from bs4 import BeautifulSoup
 
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import (
+    DEMISTO_GIT_UPSTREAM,
     PACKS_DIR,
     PACKS_INTEGRATION_README_REGEX,
     PACKS_WHITELIST_FILE_NAME,
@@ -17,7 +18,6 @@ from demisto_sdk.commands.common.constants import (
     re,
 )
 from demisto_sdk.commands.common.content import Content
-from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
@@ -121,8 +121,8 @@ class SecretsValidator:
         self.white_list_path = white_list_path
         self.ignore_entropy = ignore_entropy
         self.prev_ver = prev_ver
-        if self.prev_ver and not self.prev_ver.startswith("origin"):
-            self.prev_ver = "origin/" + self.prev_ver
+        if self.prev_ver and not self.prev_ver.startswith(DEMISTO_GIT_UPSTREAM):
+            self.prev_ver = f"{DEMISTO_GIT_UPSTREAM}/" + self.prev_ver
 
     def get_secrets(self, branch_name, is_circle):
         secret_to_location_mapping = {}
@@ -181,10 +181,10 @@ class SecretsValidator:
         if is_circle:
             prev_ver = self.prev_ver
             if not prev_ver:
-                self.git_util = GitUtil(repo=Content.git())
+                self.git_util = Content.git_util()
                 prev_ver = self.git_util.handle_prev_ver()[1]
-            if not prev_ver.startswith("origin"):
-                prev_ver = "origin/" + prev_ver
+            if not prev_ver.startswith(DEMISTO_GIT_UPSTREAM):
+                prev_ver = f"{DEMISTO_GIT_UPSTREAM}/" + prev_ver
             logger.info(f"Running secrets validation against {prev_ver}")
 
             changed_files_string = run_command(
@@ -260,7 +260,7 @@ class SecretsValidator:
                 )
                 continue
             # Init vars for current loop
-            file_name = os.path.basename(file_path)
+            file_name = Path(file_path).name
             _, file_extension = os.path.splitext(file_path)
             # get file contents
             file_contents = self.get_file_contents(file_path, file_extension)
@@ -370,10 +370,8 @@ class SecretsValidator:
     @staticmethod
     def retrieve_related_yml(integration_path):
         matching_yml_file_contents = None
-        yml_file = os.path.join(
-            integration_path, os.path.basename(integration_path) + ".yml"
-        )
-        if os.path.exists(yml_file):
+        yml_file = str(Path(integration_path, Path(integration_path).name + ".yml"))
+        if Path(yml_file).exists():
             with open(yml_file, encoding="utf-8") as matching_yml_file:
                 matching_yml_file_contents = matching_yml_file.read()
         return matching_yml_file_contents

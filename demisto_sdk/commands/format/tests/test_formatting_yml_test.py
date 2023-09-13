@@ -258,9 +258,7 @@ class TestFormatting:
                 __file__, "..", "..", "..", "common", "schemas", f"{file_type}.yml"
             )
         )
-        saved_file_path = os.path.join(
-            os.path.dirname(source_path), os.path.basename(destination_path)
-        )
+        saved_file_path = str(Path(source_path).parent / Path(destination_path).name)
         base_yml = formatter(
             input=source_path, output=saved_file_path, path=schema_path
         )
@@ -550,9 +548,7 @@ class TestFormatting:
                 __file__, "..", "..", "..", "common", "schemas", f"{file_type}.yml"
             )
         )
-        saved_file_path = os.path.join(
-            os.path.dirname(source_path), os.path.basename(destination_path)
-        )
+        saved_file_path = str(Path(source_path).parent / Path(destination_path).name)
         base_yml = formatter(
             input=source_path, output=saved_file_path, path=schema_path
         )

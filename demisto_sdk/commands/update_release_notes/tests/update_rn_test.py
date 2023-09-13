@@ -1716,8 +1716,8 @@ class TestRNUpdateUnit:
             modified_files_in_pack={"HelloWorld"},
             added_files=set(),
         )
-        filepath = os.path.join(TestRNUpdate.FILES_PATH, "ReleaseNotes/1_1_1.md")
-        md_string = "### Test"
+        filepath = os.path.join(TestRNUpdate.FILES_PATH, "ReleaseNotes/1_1_67.md")
+        md_string = "### Shelly"
         update_rn.create_markdown(
             release_notes_path=filepath, rn_string=md_string, changed_files={}
         )
@@ -2428,11 +2428,11 @@ class TestRNUpdateUnit:
                 f.write(json.dumps(existing_conf_data))
         client.build_rn_config_file("1.0.1")
         if expected_conf_data:
-            assert os.path.exists(conf_path)
+            assert Path(conf_path).exists()
             with open(conf_path) as f:
                 assert json.loads(f.read()) == expected_conf_data
         else:
-            assert not os.path.exists(conf_path)
+            assert not Path(conf_path).exists()
 
 
 def test_get_from_version_at_update_rn(integration):
@@ -2590,7 +2590,10 @@ def test_handle_existing_rn_with_docker_image(
 
 @pytest.mark.parametrize(
     "text, expected_rn_string",
-    [("Testing the upload", "##### PackName\n\n- Testing the upload\n")],
+    [
+        ("Testing the upload", "## PackName\n\n- Testing the upload\n"),
+        ("", "## PackName\n\n- %%UPDATE_RN%%\n"),
+    ],
 )
 def test_force_and_text_update_rn(repo, text, expected_rn_string):
     """
@@ -2599,9 +2602,11 @@ def test_force_and_text_update_rn(repo, text, expected_rn_string):
 
     When:
     - Updating release notes with *--force* and *--text* flags
+    - Updating release notes with *--force* and without the *--text* flag
 
     Then:
-    - Ensure the release note includes the given text
+    - Ensure the release note includes the "Testing the upload" text
+    - Ensure the release note includes the "%%UPDATE_RN%%" text
     """
     pack = repo.create_pack("PackName")
     client = UpdateRN(
@@ -2788,3 +2793,31 @@ def test_no_release_notes_for_first_version(mocker):
     with pytest.raises(ValueError) as e:
         update_rn.get_new_version_and_metadata()
         assert str(e) == "Release notes do not need to be updated for version '1.0.0'."
+
+
+def test_git_add_release_notes(mocker):
+    """
+    Given:
+        - a filepath for a release notes file and a markdown string
+    When:
+        - creating a new markdown file and adding it
+    Then:
+        - create the file and then remove it.
+    """
+    from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
+
+    mocker.patch.object(UpdateRN, "get_master_version", return_value="0.0.0")
+    update_rn = UpdateRN(
+        pack_path="Packs/VulnDB",
+        update_type="minor",
+        modified_files_in_pack={"HelloWorld"},
+        added_files=set(),
+    )
+    filepath = os.path.join(TestRNUpdate.FILES_PATH, "ReleaseNotes/1_1_2.md")
+    md_string = "### Test Release Notes"
+    update_rn.create_markdown(
+        release_notes_path=filepath, rn_string=md_string, changed_files={}
+    )
+    assert Path(filepath).exists()
+    Path(filepath).unlink()
+    assert not Path(filepath).exists()

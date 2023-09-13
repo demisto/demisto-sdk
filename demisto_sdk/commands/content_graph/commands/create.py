@@ -40,7 +40,9 @@ def create_content_graph(
         dependencies (bool): Whether to create the dependencies.
         output_path (Path): The path to export the graph zip to.
     """
-    ContentGraphBuilder(content_graph_interface).create_graph()
+    builder = ContentGraphBuilder(content_graph_interface)
+    builder.init_database()
+    builder.create_graph()
     if dependencies:
         content_graph_interface.create_pack_dependencies()
     if output_path:
@@ -83,19 +85,19 @@ def create(
     console_log_threshold: str = typer.Option(
         "INFO",
         "-clt",
-        "--console_log_threshold",
+        "--console-log-threshold",
         help=("Minimum logging threshold for the console logger."),
     ),
     file_log_threshold: str = typer.Option(
         "DEBUG",
         "-flt",
-        "--file_log_threshold",
+        "--file-log-threshold",
         help=("Minimum logging threshold for the file logger."),
     ),
     log_file_path: str = typer.Option(
         "demisto_sdk_debug.log",
         "-lp",
-        "--log_file_path",
+        "--log-file-path",
         help=("Path to the log file. Default: ./demisto_sdk_debug.log."),
     ),
 ) -> None:

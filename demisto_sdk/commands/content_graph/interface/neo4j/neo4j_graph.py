@@ -1,7 +1,7 @@
 import os
 from multiprocessing import Pool
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Optional, Set, Tuple
+from typing import Any, Dict, Iterable, List, Optional, Set, Tuple, Union
 
 from neo4j import Driver, GraphDatabase, Session, graph
 
@@ -42,8 +42,8 @@ from demisto_sdk.commands.content_graph.interface.neo4j.queries.nodes import (
     _match,
     create_nodes,
     delete_all_graph_nodes,
-    get_items_by_type_and_identifier,
     get_relationships_to_preserve,
+    get_schema,
     remove_content_private_nodes,
     remove_empty_properties,
     remove_packs_before_creation,
@@ -90,7 +90,6 @@ def _parse_node(element_id: str, node: dict) -> BaseContent:
     obj: BaseContent
     content_type = node.get("content_type", "")
     if node.get("not_in_repository"):
-        node["name"] = node.get("object_id", "")
         obj = UnknownContent.parse_obj(node)
 
     else:
@@ -296,7 +295,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
     def _search(
         self,
         marketplace: MarketplaceVersions = None,
-        content_type: Optional[ContentType] = None,
+        content_type: ContentType = ContentType.BASE_CONTENT,
         ids_list: Optional[Iterable[int]] = None,
         all_level_dependencies: bool = False,
         all_level_imports: bool = False,
@@ -613,11 +612,13 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         self._id_to_obj = {}
         return not has_infra_graph_been_changed
 
-    def export_graph(self, output_path: Optional[Path] = None) -> None:
+    def export_graph(
+        self, output_path: Optional[Path] = None, override_commit: bool = True
+    ) -> None:
         self.clean_import_dir()
         with self.driver.session() as session:
             session.execute_write(export_graphml, self.repo_path.name)
-        self.dump_metadata()
+        self.dump_metadata(override_commit)
         if output_path:
             self.zip_import_dir(output_path)
 
@@ -629,8 +630,8 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
 
     def search(
         self,
-        marketplace: MarketplaceVersions = None,
-        content_type: Optional[ContentType] = None,
+        marketplace: Union[MarketplaceVersions, str] = None,
+        content_type: ContentType = ContentType.BASE_CONTENT,
         ids_list: Optional[Iterable[int]] = None,
         all_level_dependencies: bool = False,
         all_level_imports: bool = False,
@@ -641,7 +642,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
 
         Args:
             marketplace (MarketplaceVersions, optional): Marketplace to search by. Defaults to None.
-            content_type (Optional[ContentType], optional): The content_type to filter. Defaults to None.
+            content_type (ContentType): The content_type to filter. Defaults to ContentType.BASE_CONTENT.
             ids_list (Optional[Iterable[int]], optional): A list of unique IDs to filter. Defaults to None.
             all_level_dependencies (bool, optional): Whether to return all level dependencies. Defaults to False.
             **properties: A key, value filter for the search. For example: `search(object_id="QRadar")`.
@@ -649,6 +650,9 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         Returns:
             List[BaseContent]: The search results
         """
+        if isinstance(marketplace, str):
+            marketplace = MarketplaceVersions(marketplace)
+
         super().search()
         return self._search(
             marketplace,
@@ -664,6 +668,10 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         with self.driver.session() as session:
             session.execute_write(create_pack_dependencies)
 
+    def get_schema(self) -> dict:
+        with self.driver.session() as session:
+            return session.execute_read(get_schema)
+
     def run_single_query(self, query: str, **kwargs) -> Any:
         with self.driver.session() as session:
             try:
@@ -676,27 +684,3 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             except Exception as e:
                 logger.error(f"Error when running query: {e}")
                 raise e
-
-    def get_content_items_by_identifier(
-        self,
-        identifier_values_list: List[str],
-        content_type: ContentType,
-        identifier: str,
-    ) -> List:
-        """
-        This searches the database for content items and returns a list of them, including their relationships
-        Args:
-            identifier_values_list (List[str]): A list of identifier values of the wanted content items.
-                                            (The value of the object ids, cli_names etc.)
-            content_type (ContentType): The type of the wanted content item (ContentType.LAYOUT etc.)
-            identifier (str): An identifier for the wanted content item (object_id, cli_name etc.)
-        Returns:
-            list: A list of dictionaries, each dictionary represent an incident field.
-        """
-        with self.driver.session() as session:
-            return session.execute_read(
-                get_items_by_type_and_identifier,
-                identifier_values_list,
-                content_type,
-                identifier,
-            )

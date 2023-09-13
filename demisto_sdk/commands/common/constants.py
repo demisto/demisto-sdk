@@ -1,3 +1,4 @@
+import os
 import re
 from enum import Enum
 from functools import reduce
@@ -98,6 +99,8 @@ EVENT_COLLECTOR = "EventCollector"
 # ENV VARIABLES
 
 ENV_DEMISTO_SDK_MARKETPLACE = "DEMISTO_SDK_MARKETPLACE"
+DEMISTO_GIT_PRIMARY_BRANCH = os.getenv("DEMISTO_DEFAULT_BRANCH", "master")
+DEMISTO_GIT_UPSTREAM = os.getenv("DEMISTO_DEFAULT_REMOTE", "origin")
 
 
 class FileType(str, Enum):
@@ -658,6 +661,7 @@ RELATIVE_HREF_URL_REGEX = r'(<.*?href\s*=\s*"((?!(?:https?:\/\/)|#|(?:mailto:)).
 RELATIVE_MARKDOWN_URL_REGEX = (
     r"(?<![!])(\[.*?\])\(((?!(?:https?:\/\/)|#|(?:mailto:)).*?)\)"
 )
+URL_REGEX = r"(((http|https)\:\/\/)?[a-zA-Z0-9\.\/\?\:@\-_=#]+\.([a-zA-Z]){2,6}([a-zA-Z0-9\.\&\/\?\:@\-_=#])*)"
 
 # old classifier structure
 _PACKS_CLASSIFIER_BASE_5_9_9_REGEX = (
@@ -1595,6 +1599,7 @@ SKIP_RELEASE_NOTES_FOR_TYPES = (
     None,
     FileType.RELEASE_NOTES_CONFIG,
     FileType.CONTRIBUTORS,
+    FileType.PACK_IGNORE,
 )
 
 LAYOUT_AND_MAPPER_BUILT_IN_FIELDS = [
@@ -1862,6 +1867,7 @@ NATIVE_IMAGE_DOCKER_NAME = "demisto/py3-native"
 FORMATTING_SCRIPT = "indicator-format"
 
 ENV_SDK_WORKING_OFFLINE = "DEMISTO_SDK_OFFLINE_ENV"
+DOCKERFILES_INFO_REPO = "demisto/dockerfiles-info"
 
 TEST_COVERAGE_DEFAULT_URL = "https://storage.googleapis.com/marketplace-dist-dev/code-coverage-reports/coverage-min.json"
 

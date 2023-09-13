@@ -1,14 +1,67 @@
 # Changelog
 ## Unreleased
+* Improved performance when reading `yml` files.
+* Fixed an issue where **format** would add unnecessary period at the end of descriptions ending with brackets.
+* Fixed an issue where **format** would not add a period at the end of descriptions, when running on in script files.
+* Fixed an issue where **validate** falsely failed with error `DS108` on descriptions ending with brackets that contains a dot at the end of them.
+* Fixed an issue where running **validate -g** failed reading a `.pack-ignore` file that contained only newlines and spaces.
+* Fixed an issue where **upload** failed when trying to upload a list content item.
+* Fixed an issue where **download** would skip downloading list content items assigned to specific user roles with no roles.
+* Demisto-SDK will now exit gracefully with an appropriate error message when *git* is not installed.
+* Updated validation *RN116* to support the structure of **--force** flag in *update-release-notes* command.
+* Fixed an issue where the release notes file was not added automatically to git when using the *update-release-notes* command.
+* Fixed the structure in *update-release-notes* command when used with the **--force** flag. Now the header will display the pack display name.
+* Fixed the support in **validate** for `svg` images to have their theme suffix.
+* Modified **validate** to support only .svg files ending with *_dark* or *_light* suffixes.
+* Fixed an issue where **modeling-rule test** command failed to properly compare types of fields.
+* Updated the **engineinfo** type in the script schema.
+* Updated the **modeling-rules init & test** commands to support RULE section fields.
+* Stability improvements for **graph create** and **graph update** commands.
+* Fixed the *metadata* type in the XSIAM dashboard schema to *map*.
+
+## 1.20.2
+* Updated the **pre-commit** command to run on all python versions in one run.
+* Added the *--dry-run* flag to the **pre-commit** command, to create the config file without running the command.
+* Fixed an issue where the **coverage-analyze** command was not parsing the logs correctly.
+* Fixed an issue where **validate** falsly failed with error `DS108` on descriptions ending with a newline.
+* Added formatting for script yml files when period is missing in the end of comment field, in the **format** command.
+* Fixed an issue where **format** add a newline with a period when the description field missing a period.
+* The content graph will now include the **python_version** field that each script/integration uses.
+* Updated the **update-release-notes** command message structure when is run with **--force** flag.
+* Added the **engineinfo** in to the script schema. This field specifies on which engine the script will run.
+* Fixed an issue where **validate** falsely failed with error `DS108` on empty descriptions.
+* Added support for lazy loading the of widgets in XSIAM dashboards.
+* Added a **validate** check for correlation rules, making sure that `search_window` cannot be empty when `execution_mode` is set to `SCHEDULED`.
+* Added the *metadata* key to the XSIAM dashboard schema. This field adds support for dynamic parameters in the dashboards.
+
+## 1.20.1
+* Added formatting for yml files when period is missing in the end of description field, in the **format** command.
+* Fixed an issue where logging arguments were not in the standard kebab-case. The new arguments are: **console-log-threshold**, **file-log-threshold**, **log-file-path**.
+* Added a new validation (`DS108`) to ensure that each description in the yml of script/integration ends with a dot.
+* Fixed an issue where the **validate -g** failed reading a `.pack-ignore` file that was previously empty.
+* Fixed an issue where the **update-release-notes** failed when changing the `.pack-ignore` file.
+* Fixed an issue where the **GR103** validation output was malformed.
+* Fixed an issue where the **upload** command failed for private repositories while trying to find the landing_page.json file.
+* Added a log when a content item is missing from the repo, in **graph create** and **graph update**.
+* Replaced logs with a progress bar in **graph create** and **graph update**.
+
+
+## 1.20.0
 * Fixed an issue where **update-release-notes** generated "available from Cortex XSOAR" instead of "from XSIAM" when run on XSIAM event collectors.
 * Added support for controlling the sleep interval and retry count for **modeling-rules test** command.
 * Added support for a new marketplace tag `xsoar_saas`.
+* Fixed an issue where the **validate -g** failed on `BA102` in external repos even when ignored.
+* Fixed an issue where the **validate -g** failed getting the content of `.pack-ignore` files when the external repository is not hosted in Github.
+* Fixed an issue where the **validate -g** failed when updating an empty `.pack-ignore` file.
 * Added support for yml hidden parameters for `xsoar_saas` marketplace, as part of the **prepare_content** command.
 * Added support for custom documentation that will appear only in `xsoar_saas` marketplace, as part of the **prepare_content** command.
+* Fixed an issue where the (`GR108`) validation did not fail in the validate command with the `-a` flag.
 * Modified **prepare_content** command to be platform specific. For xsoar-saas and XSIAM regarding pack readme and integration description images in markdown files.
+* Fixed an issue where the **lint** command was parsing % that may exist in the log data.
 
 ## 1.19.2
 * Added a period at the end of lines produced by the **generate-docs** command that state the tested version of the product.
+* Added the '--junit-path' flag to the **modeling-rules test** command, to allow saving the test results in a JUnit XML file.
 * Update `RN112` validation's docs reference link.
 * Added support to control the maximum file size and log rotation files count in the sdk logger.
 * Fixed an issue with where passing the deprecated logging arguments to any command presented an incorrect recommendation for argument substitution.
@@ -17,6 +70,7 @@
 * Fixed an issue where the coloring of the logging messages was not working properly when mixing both Console log and Parallel log handlers.
 * Calling **graph create** or **graph update** now run the commands with default arguments, instead of showing the command help.
 * Removed the use of chunks when calculating content relationships.
+* Added the new environment variables **DEMISTO_DEFAULT_REMOTE** and **DEMISTO_DEFAULT_BRANCH**.
 * Fixed an issue where the url regex in the **validate** command was wrong.
 * Fixed an issue where **pre-commit** command failed when using global environment.
 * Fixed an issue where **validate** would fail in external repos when trying to ignore `BA102`.

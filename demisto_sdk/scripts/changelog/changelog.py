@@ -269,4 +269,3 @@ def changelog_management(
 
 if __name__ == "__main__":
     main()
-    # test for git push

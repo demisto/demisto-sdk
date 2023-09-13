@@ -17,6 +17,7 @@
 * Updated the **engineinfo** type in the script schema.
 * Updated the **modeling-rules init & test** commands to support RULE section fields.
 * Stability improvements for **graph create** and **graph update** commands.
+* Fixed an issue where deprecating parsing rules or modeling rules using **format** failed due to schema discrepancies.
 * Fixed the *metadata* type in the XSIAM dashboard schema to *map*.
 
 ## 1.20.2

@@ -70,6 +70,7 @@
 * Fixed an issue where the coloring of the logging messages was not working properly when mixing both Console log and Parallel log handlers.
 * Calling **graph create** or **graph update** now run the commands with default arguments, instead of showing the command help.
 * Removed the use of chunks when calculating content relationships.
+* Added the new environment variables **DEMISTO_DEFAULT_REMOTE** and **DEMISTO_DEFAULT_BRANCH**.
 * Fixed an issue where the url regex in the **validate** command was wrong.
 * Fixed an issue where **pre-commit** command failed when using global environment.
 * Fixed an issue where **validate** would fail in external repos when trying to ignore `BA102`.

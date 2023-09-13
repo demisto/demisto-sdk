@@ -898,8 +898,8 @@ def validate_modeling_rule(
         )
         test_data = TestData.parse_file(modeling_rule.testdata_path.as_posix())
         if (
-                Validations.TEST_DATA_CONFIG_IGNORE.value
-                not in test_data.ignored_validations
+            Validations.TEST_DATA_CONFIG_IGNORE.value
+            not in test_data.ignored_validations
         ):
             logger.info(
                 "[green]test data config is not ignored starting the test data validation...[/green]",
@@ -1029,8 +1029,8 @@ def validate_modeling_rule(
             return False, modeling_rule_test_suite
         else:
             logger.info(
-                f"[green]test data config is ignored skipping the test data validation[/green]",
-                extra={"markup": True}
+                "[green]test data config is ignored skipping the test data validation[/green]",
+                extra={"markup": True},
             )
             return True, modeling_rule_test_suite
     else:

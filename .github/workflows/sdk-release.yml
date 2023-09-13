@@ -10,6 +10,10 @@ on:
         description: 'The PR title'
         required: true
         type: string
+      branch_name:
+        description: 'The branch name'
+        required: true
+        type: string
 
 jobs:
   SDK-Release:
@@ -35,6 +39,7 @@ jobs:
         env:
           PR_NUMBER: ${{ inputs.pr_number }}
           PR_TITLE: ${{ inputs.pr_title }}
+          BRANCH_NAME: ${{ inputs.branch_name }}
         run: |
           echo "run releasing for PR: $PR_NUMBER with Name: $PR_TITLE"
-          poetry run python ./demisto_sdk/scripts/changelog/changelog.py --release -n "$PR_NUMBER" -t "$PR_TITLE"
+          poetry run python ./demisto_sdk/scripts/changelog/changelog.py --release -n "$PR_NUMBER" -t "$PR_TITLE" -bn "$BRANCH_NAME"

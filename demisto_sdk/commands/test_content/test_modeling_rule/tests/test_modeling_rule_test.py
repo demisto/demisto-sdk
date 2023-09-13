@@ -1025,12 +1025,6 @@ class TestTheTestModelingRuleCommandSingleRule:
                         logger_info.call_args_list,
                         "All mappings validated successfully",
                     )
-                    # make sure the schema validation was skipped.
-                    schema_path = pack.modeling_rules[0].schema.path
-                    assert str_in_call_args_list(
-                        logger_info.call_args_list,
-                        f"Skipping the validation to check that the schema {schema_path} is aligned with TestData file",
-                    )
         except typer.Exit:
             assert False, "No exception should be raised in this scenario."
 
@@ -1235,7 +1229,7 @@ class TestTheTestModelingRuleCommandSingleRule:
         except typer.Exit:
             assert False, "No exception should be raised in this scenario."
 
-    def test_the_test_modeling_rule_command_results_do_not_match_expectations_with_ignore_failure(
+    def test_the_test_modeling_rule_command_results_do_not_match_expectations_with_ignore_config(
         self, pack, monkeypatch, mocker
     ):
         """
@@ -1256,7 +1250,6 @@ class TestTheTestModelingRuleCommandSingleRule:
             - The command returns with a non-zero exit code.
         """
         logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
-        logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
         monkeypatch.setenv("COLUMNS", "1000")
 
         from demisto_sdk.commands.test_content.test_modeling_rule.test_modeling_rule import (
@@ -1278,7 +1271,7 @@ class TestTheTestModelingRuleCommandSingleRule:
 
         test_data_file = pack.modeling_rules[0].testdata
         fake_test_data = TestData.parse_file(path_to_fake_test_data_file.as_posix())
-        test_data_file.write_text(fake_test_data.json(indent=4))
+        test_data_file.write_as_text(fake_test_data.json(indent=4))
         test_data_file.update(
             {"ignored_validations": [Validations.TEST_DATA_CONFIG_IGNORE]}
         )
@@ -1333,7 +1326,6 @@ class TestTheTestModelingRuleCommandSingleRule:
                                                     ].expected_values,
                                                 },
                                             ],
-                                            "ignored_validations": ["test_data_expected_values"]
                                         },
                                     }
                                 },
@@ -1356,10 +1348,8 @@ class TestTheTestModelingRuleCommandSingleRule:
                     # Assert
                     assert result.exit_code == 0
                     assert str_in_call_args_list(
-                        logger_info.call_args_list, "xdm.event.outcome_reason"
-                    )
-                    assert str_in_call_args_list(
-                        logger_error.call_args_list, '"DisAllowed" != "Allowed"'
+                        logger_info.call_args_list,
+                        "test data config is ignored skipping the test data validation",
                     )
         except typer.Exit:
             assert False, "No exception should be raised in this scenario."

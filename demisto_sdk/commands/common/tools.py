@@ -819,7 +819,7 @@ def get_file(
     clear_cache: bool = False,
     return_content: bool = False,
     keep_order: bool = False,
-    should_raise: bool = False
+    should_raise: bool = False,
 ):
     if clear_cache:
         get_file.cache_clear()

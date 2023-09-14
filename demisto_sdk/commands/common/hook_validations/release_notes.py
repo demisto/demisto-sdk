@@ -29,7 +29,6 @@ from demisto_sdk.commands.common.tools import (
     get_release_notes_file_path,
     get_yaml,
 )
-from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
 
 CONTENT_TYPE_SECTION_REGEX = re.compile(
     r"^#### ([\w ]+)$\n([\w\W]*?)(?=^#### )|^#### ([\w ]+)$\n([\w\W]*)", re.M
@@ -270,20 +269,8 @@ class ReleaseNotesValidator(BaseValidator):
                 elif (
                     checked_file_pack_name and checked_file_pack_name == self.pack_name
                 ):
-                    # Refer image and description file paths to the corresponding yml files
-                    file = UpdateRN.change_image_or_desc_file_path(file)
-                    update_rn_util = UpdateRN(
-                        pack_path=self.pack_path,
-                        modified_files_in_pack=set(),
-                        update_type=None,
-                        added_files=[],
-                        pack=self.pack_name,
-                    )
-                    (
-                        file_name,
-                        file_type,
-                    ) = update_rn_util.get_changed_file_name_and_type(file)
-                    # file_type = find_type(file)
+                    file_type = find_type(file)
+                    file_name = get_display_name(file)
                     if file_name and file_type and file_type in RN_HEADER_BY_FILE_TYPE:
                         if (
                             RN_HEADER_BY_FILE_TYPE[file_type]

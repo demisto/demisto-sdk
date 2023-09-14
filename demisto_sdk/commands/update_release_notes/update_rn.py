@@ -168,40 +168,6 @@ class UpdateRN:
         self.is_bc = is_bc
         self.bc_path = ""
 
-    # @staticmethod
-    # def change_image_or_desc_file_path(content_item: ContentItem) -> ContentItem:
-    #     """Changes image and description file paths to the corresponding yml file path.
-    #     if a non-image or description file path is given, it remains unchanged.
-    #
-    #     :param content_item: The content item to check.
-    #
-    #     :rtype: ``ContentItem``
-    #     :return
-    #         The content item.
-    #     """
-    #     def validate_new_path(expected_path: str):
-    #         if not Path(expected_path).exists():
-    #             logger.info(
-    #                 f"[yellow]file {content_item.path} implies the existence of {str(expected_path)},
-    #                 which is missing. "
-    #                 f"Did you mistype {content_item.path}?[/yellow]"
-    #             )
-    #     file_path = str(content_item.path)
-    #     if file_path.endswith("_image.png"):
-    #         if Path(file_path).parent.name in (XSIAM_DASHBOARDS_DIR, XSIAM_REPORTS_DIR):
-    #             new_path = file_path.replace("_image.png", ".json")
-    #         else:
-    #             new_path = file_path.replace("_image.png", ".yml")
-    #         validate_new_path(new_path)
-    #         return new_path
-    #
-    #     elif file_path.endswith("_description.md"):
-    #         new_path = file_path.replace("_description.md", ".yml")
-    #         validate_new_path(new_path)
-    #         return new_path
-    #     print(file_path)
-    #     return content_item
-
     def handle_existing_rn_version_path(self, rn_path: str) -> str:
         """Checks whether the existing RN version path exists and return it's content.
 

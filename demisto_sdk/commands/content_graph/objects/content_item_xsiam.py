@@ -7,7 +7,9 @@ from packaging.version import Version
 from pydantic import DirectoryPath
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
-from demisto_sdk.commands.common.tools import safe_write_unicode
+from demisto_sdk.commands.common.tools import (
+    safe_write_unicode_yml_or_json,
+)
 from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.objects.content_item import (
     ContentItem,
@@ -43,7 +45,7 @@ class ContentItemXSIAM(ContentItem, ABC):
         )
 
         for file in output_paths:
-            safe_write_unicode(lambda f: self.handler.dump(data, f), path=file)
+            safe_write_unicode_yml_or_json(file, data=data, handler=self.handler)
 
     def _upload(
         self,

@@ -4,13 +4,12 @@ from pathlib import Path
 from typing import Dict, Optional
 
 from demisto_sdk.commands.common.constants import PACKS_DIR, FileType
-from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     find_type,
     get_file,
     get_pack_name,
-    safe_write_unicode, safe_write_unicode_json,
+    safe_write_unicode_json,
 )
 
 
@@ -122,4 +121,6 @@ class GenericModuleUnifier:
                 "-f argument to True in order to overwrite the preexisting file."
             )
 
-        safe_write_unicode_json(self.dest_path, json_data=unified_generic_module_json, indent=4)
+        safe_write_unicode_json(
+            self.dest_path, json_data=unified_generic_module_json, indent=4
+        )

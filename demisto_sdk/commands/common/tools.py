@@ -117,9 +117,13 @@ from demisto_sdk.commands.common.constants import (
 from demisto_sdk.commands.common.cpu_count import cpu_count
 from demisto_sdk.commands.common.git_content_config import GitContentConfig, GitProvider
 from demisto_sdk.commands.common.git_util import GitUtil
-from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json, XSOAR_Handler
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
-from demisto_sdk.commands.common.handlers import YAML_Handler
+from demisto_sdk.commands.common.handlers import (
+    JSON_Handler,
+    XSOAR_Handler,
+    YAML_Handler,
+)
 
 if TYPE_CHECKING:
     from demisto_sdk.commands.content_graph.interface import ContentGraphInterface
@@ -2820,12 +2824,86 @@ def compare_context_path_in_yml_and_readme(yml_dict, readme_content):
     return different_contexts
 
 
-def safe_write_unicode_yml(yml_path: Path | str, yml_data: Dict, handler: XSOAR_Handler = yaml, indent: int = 0, sort_keys: bool = False, **kwargs):
-    safe_write_unicode(lambda f: handler.dump(yml_data, f, indent=indent, sort_keys=sort_keys, **kwargs), Path(yml_path))
+def safe_write_unicode_yml_or_json(
+    path: Path | str,
+    data: Dict,
+    handler: XSOAR_Handler = None,
+    indent: int = 0,
+    sort_keys: bool = False,
+    **kwargs,
+):
+    path = Path(path)
+
+    if handler:
+        if isinstance(handler, JSON_Handler):
+            safe_write_unicode_json(
+                path,
+                json_data=data,
+                handler=handler,
+                indent=indent,
+                sort_keys=sort_keys,
+                **kwargs,
+            )
+        else:
+            safe_write_unicode_yml(
+                path,
+                yml_data=data,
+                handler=handler,
+                indent=indent,
+                sort_keys=sort_keys,
+                **kwargs,
+            )
+    else:
+        if path.suffix.lower() == ".json":
+            safe_write_unicode_json(
+                path,
+                json_data=data,
+                handler=handler if handler else json,
+                indent=indent,
+                sort_keys=sort_keys,
+                **kwargs,
+            )
+        else:
+            safe_write_unicode_yml(
+                path,
+                yml_data=data,
+                handler=handler if handler else yaml,
+                indent=indent,
+                sort_keys=sort_keys,
+                **kwargs,
+            )
 
 
-def safe_write_unicode_json(json_path: Path | str, json_data: Dict, handler: XSOAR_Handler = json, indent: int = 0, sort_keys: bool = False, **kwargs):
-    safe_write_unicode(lambda f: handler.dump(json_data, f, indent=indent, sort_keys=sort_keys, **kwargs), Path(json_path))
+def safe_write_unicode_yml(
+    yml_path: Path | str,
+    yml_data: Dict,
+    handler: XSOAR_Handler = yaml,
+    indent: int = 0,
+    sort_keys: bool = False,
+    **kwargs,
+):
+    safe_write_unicode(
+        lambda f: handler.dump(
+            yml_data, f, indent=indent, sort_keys=sort_keys, **kwargs
+        ),
+        Path(yml_path),
+    )
+
+
+def safe_write_unicode_json(
+    json_path: Path | str,
+    json_data: Dict,
+    handler: XSOAR_Handler = json,
+    indent: int = 0,
+    sort_keys: bool = False,
+    **kwargs,
+):
+    safe_write_unicode(
+        lambda f: handler.dump(
+            json_data, f, indent=indent, sort_keys=sort_keys, **kwargs
+        ),
+        Path(json_path),
+    )
 
 
 def to_kebab_case(s: str):

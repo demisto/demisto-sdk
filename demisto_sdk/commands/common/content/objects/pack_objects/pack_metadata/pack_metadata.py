@@ -18,7 +18,7 @@ from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     get_core_pack_list,
-    safe_write_unicode, safe_write_unicode_json,
+    safe_write_unicode_json,
 )
 from demisto_sdk.commands.find_dependencies.find_dependencies import PackDependencies
 

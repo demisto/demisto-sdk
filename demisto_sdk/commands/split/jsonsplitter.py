@@ -1,18 +1,16 @@
 import os
-from pathlib import Path
 
 from demisto_sdk.commands.common.constants import (
     DASHBOARDS_DIR,
     GENERIC_MODULES_DIR,
     PACKS_DIR,
 )
-from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     get_file,
     get_pack_name,
     is_external_repository,
-    safe_write_unicode, safe_write_unicode_json,
+    safe_write_unicode_json,
 )
 
 
@@ -101,7 +99,9 @@ class JsonSplitter:
                     )
 
                     logger.debug(f"Creating dashboard: {full_dashboard_path}")
-                    safe_write_unicode_json(full_dashboard_path, json_data=dashboard_data, indent=4)
+                    safe_write_unicode_json(
+                        full_dashboard_path, json_data=dashboard_data, indent=4
+                    )
                     tab["dashboard"] = {"id": dashboard_data.get("id")}
 
     def create_module(self):
@@ -126,5 +126,6 @@ class JsonSplitter:
 
             module_file_path = os.path.join(self.module_dir, file_name)
 
-        safe_write_unicode_json(module_file_path, json_data=self.module_json_data, indent=4)
-
+        safe_write_unicode_json(
+            module_file_path, json_data=self.module_json_data, indent=4
+        )

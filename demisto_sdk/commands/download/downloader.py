@@ -1279,9 +1279,9 @@ class Downloader:
             merge(file_data, preserved_data)
 
         if file_ending == "yml":
-            safe_write_unicode_json(output_path, json_data=file_data)
+            safe_write_unicode_yml(output_path, yml_data=file_data)
         elif file_ending == "json":
-            safe_write_unicode_yml(output_path, yml_data=file_data, indent=4)
+            safe_write_unicode_json(output_path, json_data=file_data, indent=4)
         else:
             raise RuntimeError(f"cannot merge file extension {file_ending}")
 

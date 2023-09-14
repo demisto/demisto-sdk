@@ -1,8 +1,10 @@
+import platform
 from tempfile import NamedTemporaryFile
 from typing import Optional, Set
 
 import demisto_client
 from pydantic import Field
+from wcmatch.pathlib import Path
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.common.handlers import JSON_Handler
@@ -34,7 +36,16 @@ class IncidentField(ContentItem, content_type=ContentType.INCIDENT_FIELD):  # ty
         client: demisto_client,
         marketplace: MarketplaceVersions,
     ) -> None:
-        with NamedTemporaryFile(suffix=".json", mode="r+") as file:
+        is_win_os = platform.system() == "Windows"
+
+        # Set delete to False if a Windows operating system is detected
+        # On Windows operating systems, NamedTemporaryFile objects cannot be
+        # opened a second time while open in a context manager
+        with NamedTemporaryFile(
+            suffix=".json",
+            mode="r+",
+            delete=not is_win_os,
+        ) as file:
             json.dump(
                 # Wrapping the data as the server expects to receive it
                 {"incidentFields": [self.prepare_for_upload(marketplace=marketplace)]},
@@ -42,4 +53,14 @@ class IncidentField(ContentItem, content_type=ContentType.INCIDENT_FIELD):  # ty
             )
             file.flush()
             file.seek(0)
-            return client.import_incident_fields(file=file.name)
+
+            filename = file.name
+
+            if not is_win_os:
+                return client.import_incident_fields(file=filename)
+
+        # This section only runs if Windows is the detected operating system
+        res = client.import_incident_fields(file=filename)
+        # Delete the NamedTemporaryFile object
+        Path(filename).unlink()
+        return res

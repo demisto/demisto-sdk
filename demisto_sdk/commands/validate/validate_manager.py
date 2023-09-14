@@ -309,6 +309,7 @@ class ValidateManager:
             FileType.INI,
             FileType.PEM,
             FileType.METADATA,
+            FileType.VULTURE_WHITELIST,
         )
 
         self.is_external_repo = is_external_repo

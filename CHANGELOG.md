@@ -18,6 +18,7 @@
 * Updated the **modeling-rules init & test** commands to support RULE section fields.
 * Stability improvements for **graph create** and **graph update** commands.
 * Fixed the *metadata* type in the XSIAM dashboard schema to *map*.
+* Fixed an issue where using **prepare-content**, **upload**, **zip-packs** and **download** on non-unicode content caused errors.
 
 ## 1.20.2
 * Updated the **pre-commit** command to run on all python versions in one run.

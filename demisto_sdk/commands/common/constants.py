@@ -1136,7 +1136,6 @@ VALIDATION_USING_GIT_IGNORABLE_DATA = (
     "doc_files",
     "doc_imgs",
     ".secrets-ignore",
-    ".vulture_whitelist.py",
 )
 
 FILE_TYPES_FOR_TESTING = [".py", ".js", ".yml", ".ps1"]

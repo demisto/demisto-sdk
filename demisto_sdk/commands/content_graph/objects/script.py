@@ -83,7 +83,9 @@ class Script(IntegrationScript, content_type=ContentType.SCRIPT):  # type: ignor
                     }
                 )
             try:
-                safe_write_unicode(lambda f: obj.handler.dump(data, f), dir / obj.normalize_name)
+                safe_write_unicode(
+                    lambda f: obj.handler.dump(data, f), dir / obj.normalize_name
+                )
             except FileNotFoundError as e:
                 logger.warning(f"Failed to dump {obj.path} to {dir}: {e}")
 

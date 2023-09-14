@@ -4,7 +4,7 @@ from wcmatch.pathlib import Path
 
 import demisto_sdk.commands.common.content.errors as exc
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
-from demisto_sdk.commands.common.tools import safe_write_unicode, get_file
+from demisto_sdk.commands.common.tools import get_file, safe_write_unicode
 
 from .dictionary_based_object import DictionaryBasedObject
 

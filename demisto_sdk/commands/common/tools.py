@@ -2826,7 +2826,7 @@ def compare_context_path_in_yml_and_readme(yml_dict, readme_content):
 def safe_write_unicode_yml_or_json(
     path: Union[Path, str],
     data: Dict,
-    handler: XSOAR_Handler = None,
+    handler: XSOAR_Handler,
     indent: int = 0,
     sort_keys: bool = False,
     **kwargs,
@@ -2836,20 +2836,20 @@ def safe_write_unicode_yml_or_json(
     """
     path = Path(path)
 
-    if path.suffix.lower() == ".json":
-        safe_write_unicode_json(
+    if isinstance(handler, YAML_Handler):
+        safe_write_unicode_yml(
             path,
-            json_data=data,
-            handler=handler if handler else json,
+            yml_data=data,
+            handler=handler,
             indent=indent,
             sort_keys=sort_keys,
             **kwargs,
         )
     else:
-        safe_write_unicode_yml(
+        safe_write_unicode_json(
             path,
-            yml_data=data,
-            handler=handler if handler else yaml,
+            json_data=data,
+            handler=handler,
             indent=indent,
             sort_keys=sort_keys,
             **kwargs,

@@ -46,7 +46,6 @@ PRECOMMIT_TEMPLATE_PATH = CONTENT_PATH / PRECOMMIT_TEMPLATE_NAME
 PRECOMMIT_PATH = CONTENT_PATH / ".pre-commit-config-content.yaml"
 SOURCERY_CONFIG_PATH = CONTENT_PATH / ".sourcery.yaml"
 
-CONTENT_PATH
 SKIPPED_HOOKS = {"format", "validate", "secrets"}
 
 INTEGRATION_SCRIPT_REGEX = re.compile(r"^Packs/.*/(?:Integrations|Scripts)/.*.yml$")

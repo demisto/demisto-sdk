@@ -120,7 +120,6 @@ from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
 from demisto_sdk.commands.common.handlers import (
-    JSON_Handler,
     XSOAR_Handler,
     YAML_Handler,
 )
@@ -2830,7 +2829,7 @@ def safe_write_unicode_yml_or_json(
     handler: XSOAR_Handler = None,
     indent: int = 0,
     sort_keys: bool = False,
-    **kwargs
+    **kwargs,
 ):
     """
     Write unicode content into a json/yml file.

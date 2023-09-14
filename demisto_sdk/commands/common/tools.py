@@ -820,6 +820,7 @@ def get_file(
     clear_cache: bool = False,
     return_content: bool = False,
     keep_order: bool = True,
+    should_raise: bool = False
 ):
     if clear_cache:
         get_file.cache_clear()
@@ -855,6 +856,8 @@ def get_file(
         logger.error(
             f"{file_path} has a structure issue of file type {type_of_file}\n{e}"
         )
+        if should_raise:
+            raise
         return {}
 
 

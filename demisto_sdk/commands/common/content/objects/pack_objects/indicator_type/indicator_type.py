@@ -1,4 +1,3 @@
-import os
 import platform
 from tempfile import NamedTemporaryFile
 from typing import Union
@@ -57,7 +56,7 @@ class IndicatorType(JSONContentObject):
         # This section only runs if Windows is the detected operating system
         res = client.import_reputation_handler(file=filename)
         # Delete the NamedTemporaryFile object
-        os.remove(filename)
+        Path(filename).unlink()
         return res
 
     def type(self):

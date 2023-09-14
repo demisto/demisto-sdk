@@ -1,11 +1,10 @@
-import json
-import os
 import platform
 from tempfile import NamedTemporaryFile
 from typing import Optional, Set
 
 import demisto_client
 from pydantic import Field
+from wcmatch.pathlib import Path
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.common.handlers import JSON_Handler
@@ -63,5 +62,5 @@ class IncidentField(ContentItem, content_type=ContentType.INCIDENT_FIELD):  # ty
         # This section only runs if Windows is the detected operating system
         res = client.import_incident_fields(file=filename)
         # Delete the NamedTemporaryFile object
-        os.remove(filename)
+        Path(filename).unlink()
         return res

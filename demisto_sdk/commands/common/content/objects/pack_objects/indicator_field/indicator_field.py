@@ -1,4 +1,3 @@
-import os
 import platform
 from tempfile import NamedTemporaryFile
 from typing import Union
@@ -92,7 +91,7 @@ class IndicatorField(JSONContentObject):
         # This section only runs if Windows is the detected operating system
         res = client.import_incident_fields(file=filename)
         # Delete the NamedTemporaryFile object
-        os.remove(filename)
+        Path(filename).unlink()
         return res
 
     def type(self):

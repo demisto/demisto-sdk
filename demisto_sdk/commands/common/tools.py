@@ -822,7 +822,7 @@ def get_file(
     clear_cache: bool = False,
     return_content: bool = False,
     keep_order: bool = False,
-    should_raise: bool = False,
+    raise_on_error: bool = False,
 ):
     if clear_cache:
         get_file.cache_clear()
@@ -858,7 +858,7 @@ def get_file(
         logger.error(
             f"{file_path} has a structure issue of file type {type_of_file}\n{e}"
         )
-        if should_raise:
+        if raise_on_error:
             raise
         return {}
 
@@ -2823,7 +2823,7 @@ def compare_context_path_in_yml_and_readme(yml_dict, readme_content):
     return different_contexts
 
 
-def safe_write_unicode_yml_or_json(
+def write_dict(
     path: Union[Path, str],
     data: Dict,
     handler: XSOAR_Handler,

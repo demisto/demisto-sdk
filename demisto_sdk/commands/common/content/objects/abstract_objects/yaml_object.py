@@ -53,7 +53,7 @@ class YAMLObject(DictionaryBasedObject):
     def _deserialize(self):
         """Load yaml to dictionary"""
         try:
-            self._as_dict = get_file(self.path, should_raise=True)
+            self._as_dict = get_file(self.path, raise_on_error=True)
         except ScannerError as e:
             raise exc.ContentSerializeError(self, self.path, e.problem)
 

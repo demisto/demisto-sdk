@@ -49,7 +49,7 @@ class JSONObject(DictionaryBasedObject):
     def _deserialize(self) -> None:
         """Load json to dictionary"""
         try:
-            self._as_dict = get_file(self._path, should_raise=True)
+            self._as_dict = get_file(self._path, raise_on_error=True)
         except ValueError as e:
             raise exc.ContentSerializeError(self, self.path, str(e))
 

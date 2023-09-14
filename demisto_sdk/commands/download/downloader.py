@@ -58,7 +58,7 @@ from demisto_sdk.commands.common.tools import (
     retrieve_file_ending,
     safe_write_unicode_json,
     safe_write_unicode_yml,
-    safe_write_unicode_yml_or_json,
+    write_dict,
 )
 from demisto_sdk.commands.format.format_module import format_manager
 from demisto_sdk.commands.init.initiator import Initiator
@@ -512,7 +512,7 @@ class Downloader:
             for item in system_items_list:  # type: ignore
                 file_name: str = self.build_file_name(item)
                 file_path: str = os.path.join(self.system_content_temp_dir, file_name)
-                safe_write_unicode_yml_or_json(
+                write_dict(
                     file_path,
                     data=item,
                     handler=json if file_path.endswith("json") else yaml,

@@ -30,7 +30,7 @@ from demisto_sdk.commands.common.tools import (
     get_file,
     get_pack_name,
     replace_incident_to_alert,
-    safe_write_unicode_yml_or_json,
+    write_dict,
 )
 from demisto_sdk.commands.content_graph.common import (
     ContentType,
@@ -278,7 +278,7 @@ class ContentItem(BaseContent):
             return
         dir.mkdir(exist_ok=True, parents=True)
         try:
-            safe_write_unicode_yml_or_json(
+            write_dict(
                 dir / self.normalize_name,
                 data=self.prepare_for_upload(current_marketplace=marketplace),
                 handler=self.handler,

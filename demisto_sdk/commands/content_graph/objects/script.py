@@ -9,7 +9,7 @@ from demisto_sdk.commands.common.constants import (
 )
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
-    safe_write_unicode_yml_or_json,
+    write_dict,
 )
 from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
@@ -85,7 +85,7 @@ class Script(IntegrationScript, content_type=ContentType.SCRIPT):  # type: ignor
                     }
                 )
             try:
-                safe_write_unicode_yml_or_json(
+                write_dict(
                     dir / obj.normalize_name, data=data, handler=obj.handler
                 )
 

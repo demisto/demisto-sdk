@@ -5,7 +5,7 @@ from typing import Optional, Union
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
-    safe_write_unicode_yml_or_json,
+    write_dict,
 )
 from demisto_sdk.commands.content_graph.commands.update import update_content_graph
 from demisto_sdk.commands.content_graph.interface import (
@@ -74,7 +74,7 @@ class PrepareUploadManager:
             raise FileExistsError(
                 f"Output file {output} already exists. Use --force to overwrite."
             )
-        safe_write_unicode_yml_or_json(output, data=data, handler=content_item.handler)
+        write_dict(output, data=data, handler=content_item.handler)
 
         logger.info(f"[green]Output saved in: {str(output.absolute())}[/green]")
         return output

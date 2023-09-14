@@ -12,7 +12,7 @@ from demisto_sdk.commands.common.tools import (
     get_file,
     get_pack_name,
     is_external_repository,
-    safe_write_unicode,
+    safe_write_unicode, safe_write_unicode_json,
 )
 
 
@@ -101,11 +101,7 @@ class JsonSplitter:
                     )
 
                     logger.debug(f"Creating dashboard: {full_dashboard_path}")
-                    safe_write_unicode(
-                        lambda f: json.dump(dashboard_data, f, indent=4),
-                        Path(full_dashboard_path),
-                    )
-
+                    safe_write_unicode_json(full_dashboard_path, json_data=dashboard_data, indent=4)
                     tab["dashboard"] = {"id": dashboard_data.get("id")}
 
     def create_module(self):
@@ -130,7 +126,5 @@ class JsonSplitter:
 
             module_file_path = os.path.join(self.module_dir, file_name)
 
-        safe_write_unicode(
-            lambda f: json.dump(self.module_json_data, f, indent=4),
-            Path(module_file_path),
-        )
+        safe_write_unicode_json(module_file_path, json_data=self.module_json_data, indent=4)
+

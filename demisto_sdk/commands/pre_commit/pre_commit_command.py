@@ -27,7 +27,7 @@ from demisto_sdk.commands.common.tools import (
     get_last_remote_release_version,
     get_remote_file,
     safe_write_unicode,
-    string_to_bool,
+    string_to_bool, safe_write_unicode_yml,
 )
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.content_graph.objects.integration_script import (
@@ -207,7 +207,7 @@ class PreCommitRunner:
         else:
             precommit_config["files"] = join_files(self.files_to_run)
 
-        safe_write_unicode(lambda f: yaml.dump(precommit_config, f), PRECOMMIT_PATH)
+        safe_write_unicode_yml(PRECOMMIT_PATH, yml_data=precommit_config)
 
         if dry_run:
             logger.info(

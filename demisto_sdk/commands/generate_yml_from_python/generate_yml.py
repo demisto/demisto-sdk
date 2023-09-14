@@ -12,7 +12,7 @@ from typing import Any, AnyStr, Callable, List, Optional, Tuple, Union
 from unittest import mock
 
 from demisto_sdk.commands.common.logger import logger
-from demisto_sdk.commands.common.tools import write_yml
+from demisto_sdk.commands.common.tools import safe_write_unicode_yml
 from demisto_sdk.commands.generate_yml_from_python.yml_metadata_collector import (
     CommandMetadata,
     ConfKey,
@@ -727,5 +727,5 @@ class MetadataToDict:
         """Save the dict to an output file."""
         logger.debug(f"Writing collected metadata to {output_file}.")
 
-        write_yml(output_file, self.metadata_dict)
+        safe_write_unicode_yml(output_file, self.metadata_dict)
         logger.info("[green]Finished successfully.[/green]")

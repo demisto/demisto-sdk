@@ -117,7 +117,7 @@ from demisto_sdk.commands.common.constants import (
 from demisto_sdk.commands.common.cpu_count import cpu_count
 from demisto_sdk.commands.common.git_content_config import GitContentConfig, GitProvider
 from demisto_sdk.commands.common.git_util import GitUtil
-from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json, XSOAR_Handler
 from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
 from demisto_sdk.commands.common.handlers import YAML_Handler
 
@@ -2820,8 +2820,12 @@ def compare_context_path_in_yml_and_readme(yml_dict, readme_content):
     return different_contexts
 
 
-def write_yml(yml_path: str, yml_data: Dict):
-    safe_write_unicode(lambda f: yaml.dump(yml_data, f), Path(yml_path))
+def safe_write_unicode_yml(yml_path: Path | str, yml_data: Dict, handler: XSOAR_Handler = yaml, indent: int = 0, sort_keys: bool = False, **kwargs):
+    safe_write_unicode(lambda f: handler.dump(yml_data, f, indent=indent, sort_keys=sort_keys, **kwargs), Path(yml_path))
+
+
+def safe_write_unicode_json(json_path: Path | str, json_data: Dict, handler: XSOAR_Handler = json, indent: int = 0, sort_keys: bool = False, **kwargs):
+    safe_write_unicode(lambda f: handler.dump(json_data, f, indent=indent, sort_keys=sort_keys, **kwargs), Path(json_path))
 
 
 def to_kebab_case(s: str):

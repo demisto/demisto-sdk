@@ -24,7 +24,7 @@ from demisto_sdk.commands.common.tools import (
     get_file,
     get_yaml,
     pascal_case,
-    safe_write_unicode,
+    safe_write_unicode, safe_write_unicode_yml,
 )
 from demisto_sdk.commands.prepare_content.integration_script_unifier import (
     IntegrationScriptUnifier,
@@ -139,8 +139,8 @@ class YmlSplitter:
                 self.extract_rule_schema_and_samples(f"{output_path}/{base_name}.json")
                 del yaml_obj["samples"]
 
-            safe_write_unicode(lambda f: yaml.dump(yaml_obj, f), Path(yaml_out))
-
+            safe_write_unicode_yml(yaml_out, yml_data=yaml_obj)
+            
         else:
             code_file = f"{code_file}{TYPE_TO_EXTENSION[lang_type]}"
             if self.file_type in (BETA_INTEGRATION, INTEGRATION):
@@ -155,7 +155,8 @@ class YmlSplitter:
                 logger.debug("Setting fromversion for PowerShell to: 5.5.0")
                 yaml_obj["fromversion"] = "5.5.0"
 
-            safe_write_unicode(lambda f: yaml.dump(yaml_obj, f), Path(yaml_out))
+            safe_write_unicode_yml(yaml_out, yml_data=yaml_obj)
+
 
             # check if there is a README and if found, set found_readme to True
             if self.readme:

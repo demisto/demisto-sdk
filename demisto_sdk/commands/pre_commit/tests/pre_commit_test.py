@@ -14,8 +14,8 @@ from demisto_sdk.commands.pre_commit.pre_commit_command import (
     group_by_python_version,
     preprocess_files,
     subprocess,
-    yaml,
 )
+from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
 from TestSuite.repo import Repo
 
 TEST_DATA_PATH = (

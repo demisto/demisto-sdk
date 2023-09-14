@@ -38,7 +38,9 @@ class RuffHook(Hook):
             hook["args"] = [
                 f"--target-version={self._python_version_to_ruff(python_version)}",
             ]
-            if not self.all_files:
+            if self.all_files:
+                hook["args"].append("--config=nightly_ruff.toml")
+            else:
                 hook["args"].append("--fix")
             if github_actions:
                 hook["args"].append("--format=github")

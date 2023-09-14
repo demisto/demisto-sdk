@@ -14,8 +14,8 @@ class PyclnHook(Hook):
         Returns:
             None
         """
-        self.base_hook["args"] = [
+        self.base_hook["args"].append(
             f"--skip-imports={','.join(path.name for path in python_path)},demisto,CommonServerUserPython"
-        ]
+        )
 
         self.hooks.append(self.base_hook)

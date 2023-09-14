@@ -544,7 +544,6 @@ def get_file_details(
     file_content,
     full_file_path: str,
 ) -> Dict:
-
     if full_file_path.endswith("json"):
         file_details = json.loads(file_content)
     elif full_file_path.endswith(("yml", "yaml")):
@@ -819,8 +818,8 @@ def get_file(
     file_path: Union[str, Path],
     clear_cache: bool = False,
     return_content: bool = False,
-    keep_order: bool = True,
-    should_raise: bool = False,
+    keep_order: bool = False,
+    should_raise: bool = False
 ):
     if clear_cache:
         get_file.cache_clear()
@@ -889,7 +888,7 @@ def get_file_or_remote(file_path: Path, clear_cache=False):
         return get_remote_file(str(relative_file_path))
 
 
-def get_yaml(file_path, cache_clear=False, keep_order: bool = True):
+def get_yaml(file_path, cache_clear=False, keep_order: bool = False):
     if cache_clear:
         get_file.cache_clear()
     return get_file(file_path, clear_cache=cache_clear, keep_order=keep_order)

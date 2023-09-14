@@ -2868,10 +2868,7 @@ def safe_write_unicode_yml(
     Write unicode content into a yml file.
     """
     safe_write_unicode(
-        lambda f: handler.dump(
-            yml_data, f, indent, sort_keys, **kwargs
-        ),
-        Path(yml_path)
+        lambda f: handler.dump(yml_data, f, indent, sort_keys, **kwargs), Path(yml_path)
     )
 
 
@@ -2890,7 +2887,7 @@ def safe_write_unicode_json(
         lambda f: handler.dump(
             json_data, f, indent=indent, sort_keys=sort_keys, **kwargs
         ),
-        Path(json_path)
+        Path(json_path),
     )
 
 

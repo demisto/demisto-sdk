@@ -85,9 +85,7 @@ class Script(IntegrationScript, content_type=ContentType.SCRIPT):  # type: ignor
                     }
                 )
             try:
-                write_dict(
-                    dir / obj.normalize_name, data=data, handler=obj.handler
-                )
+                write_dict(dir / obj.normalize_name, data=data, handler=obj.handler)
 
             except FileNotFoundError as e:
                 logger.warning(f"Failed to dump {obj.path} to {dir}: {e}")

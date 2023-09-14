@@ -56,7 +56,9 @@ from demisto_sdk.commands.common.tools import (
     get_yml_paths_in_dir,
     is_sdk_defined_working_offline,
     retrieve_file_ending,
-    safe_write_unicode, safe_write_unicode_yml_or_json, safe_write_unicode_json, safe_write_unicode_yml,
+    safe_write_unicode_json,
+    safe_write_unicode_yml,
+    safe_write_unicode_yml_or_json,
 )
 from demisto_sdk.commands.format.format_module import format_manager
 from demisto_sdk.commands.init.initiator import Initiator

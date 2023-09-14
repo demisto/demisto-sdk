@@ -8,6 +8,7 @@ from demisto_sdk.commands.common.constants import (
     MarketplaceVersions,
 )
 from demisto_sdk.commands.common.logger import logger
+from demisto_sdk.commands.common.tools import safe_write_unicode
 from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.content_graph.objects.integration_script import (
@@ -82,8 +83,7 @@ class Script(IntegrationScript, content_type=ContentType.SCRIPT):  # type: ignor
                     }
                 )
             try:
-                with (dir / obj.normalize_name).open("w") as f:
-                    obj.handler.dump(data, f)
+                safe_write_unicode(lambda f: obj.handler.dump(data, f), dir / obj.normalize_name)
             except FileNotFoundError as e:
                 logger.warning(f"Failed to dump {obj.path} to {dir}: {e}")
 

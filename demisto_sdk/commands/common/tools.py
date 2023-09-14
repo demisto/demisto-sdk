@@ -2884,9 +2884,7 @@ def safe_write_unicode_json(
     Write unicode content into a json file.
     """
     safe_write_unicode(
-        lambda f: handler.dump(
-            json_data, f, indent=indent, sort_keys=sort_keys, **kwargs
-        ),
+        lambda f: handler.dump(json_data, f, indent, sort_keys, **kwargs),
         Path(json_path),
     )
 

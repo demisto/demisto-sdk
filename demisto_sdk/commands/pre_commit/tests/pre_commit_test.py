@@ -4,6 +4,7 @@ from pathlib import Path
 import pytest
 
 import demisto_sdk.commands.pre_commit.pre_commit_command as pre_commit_command
+from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.pre_commit.hooks.hook import join_files
 from demisto_sdk.commands.pre_commit.hooks.mypy import MypyHook
@@ -15,7 +16,6 @@ from demisto_sdk.commands.pre_commit.pre_commit_command import (
     preprocess_files,
     subprocess,
 )
-from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
 from TestSuite.repo import Repo
 
 TEST_DATA_PATH = (

@@ -2869,9 +2869,9 @@ def safe_write_unicode_yml(
     """
     safe_write_unicode(
         lambda f: handler.dump(
-            yml_data, f, indent=indent, sort_keys=sort_keys, **kwargs
+            yml_data, f, indent, sort_keys, **kwargs
         ),
-        Path(yml_path),
+        Path(yml_path)
     )
 
 
@@ -2890,7 +2890,7 @@ def safe_write_unicode_json(
         lambda f: handler.dump(
             json_data, f, indent=indent, sort_keys=sort_keys, **kwargs
         ),
-        Path(json_path),
+        Path(json_path)
     )
 
 

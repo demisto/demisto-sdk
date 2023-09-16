@@ -3,6 +3,7 @@ import shutil
 from pathlib import Path
 from typing import List, Optional
 
+from demisto_sdk.commands.common.git_util import GitUtil
 from TestSuite.conf_json import ConfJSON
 from TestSuite.docker_native_image_config import DockerNativeImageConfiguration
 from TestSuite.global_secrets import GlobalSecrets
@@ -28,6 +29,7 @@ class Repo:
     """
 
     def __init__(self, tmpdir: Path):
+        self.git_repo = GitUtil.REPO_CLS.init(tmpdir)
         self.packs: List[Pack] = list()
         self._tmpdir = tmpdir
         self._packs_path = tmpdir / "Packs"

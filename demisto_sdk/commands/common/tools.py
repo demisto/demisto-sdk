@@ -2836,12 +2836,10 @@ def write_dict(
     """
     path = Path(path)
 
-    if not handler:
-        suffix = path.suffix.lower()
-        handler = json if suffix == "json" else yaml
+    file_handler = handler or (json if path.suffix.lower() else yaml)
 
     safe_write_unicode(
-        lambda f: handler.dump(data, f, indent, sort_keys, **kwargs), path  # type: ignore[union-attr]
+        lambda f: file_handler.dump(data, f, indent, sort_keys, **kwargs), path
     )
 
 

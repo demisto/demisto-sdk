@@ -121,6 +121,4 @@ class GenericModuleUnifier:
                 "-f argument to True in order to overwrite the preexisting file."
             )
 
-        write_dict(
-            self.dest_path, json_data=unified_generic_module_json, indent=4
-        )
+        write_dict(self.dest_path, data=unified_generic_module_json, indent=4)

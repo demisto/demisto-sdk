@@ -526,7 +526,7 @@ class PackMetaData(JSONObject):
                 file_content["previewOnly"] = True
 
         new_metadata_path = Path(str(dest_dir), "metadata.json")
-        write_dict(new_metadata_path, json_data=file_content, indent=4)
+        write_dict(new_metadata_path, data=file_content, indent=4)
 
         return [new_metadata_path]
 

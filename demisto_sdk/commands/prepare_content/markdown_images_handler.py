@@ -156,6 +156,6 @@ def upload_markdown_images_to_artifacts(
 
         write_dict(
             artifacts_markdown_images_path,
-            json_data=markdown_images_data_dict,
+            data=markdown_images_data_dict,
             indent=4,
         )

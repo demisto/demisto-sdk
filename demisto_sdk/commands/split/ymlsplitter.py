@@ -138,7 +138,7 @@ class YmlSplitter:
                 self.extract_rule_schema_and_samples(f"{output_path}/{base_name}.json")
                 del yaml_obj["samples"]
 
-            write_dict(yaml_out, yml_data=yaml_obj)
+            write_dict(yaml_out, data=yaml_obj)
 
         else:
             code_file = f"{code_file}{TYPE_TO_EXTENSION[lang_type]}"
@@ -154,7 +154,7 @@ class YmlSplitter:
                 logger.debug("Setting fromversion for PowerShell to: 5.5.0")
                 yaml_obj["fromversion"] = "5.5.0"
 
-            write_dict(yaml_out, yml_data=yaml_obj)
+            write_dict(yaml_out, data=yaml_obj)
 
             # check if there is a README and if found, set found_readme to True
             if self.readme:

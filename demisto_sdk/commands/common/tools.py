@@ -2841,7 +2841,7 @@ def write_dict(
         handler = json if suffix == "json" else yaml
 
     safe_write_unicode(
-        lambda f: handler.dump(data, f, indent, sort_keys, **kwargs), path
+        lambda f: handler.dump(data, f, indent, sort_keys, **kwargs), path  # type: ignore[union-attr]
     )
 
 

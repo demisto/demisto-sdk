@@ -99,9 +99,7 @@ class JsonSplitter:
                     )
 
                     logger.debug(f"Creating dashboard: {full_dashboard_path}")
-                    write_dict(
-                        full_dashboard_path, json_data=dashboard_data, indent=4
-                    )
+                    write_dict(full_dashboard_path, data=dashboard_data, indent=4)
                     tab["dashboard"] = {"id": dashboard_data.get("id")}
 
     def create_module(self):
@@ -126,6 +124,4 @@ class JsonSplitter:
 
             module_file_path = os.path.join(self.module_dir, file_name)
 
-        write_dict(
-            module_file_path, json_data=self.module_json_data, indent=4
-        )
+        write_dict(module_file_path, data=self.module_json_data, indent=4)

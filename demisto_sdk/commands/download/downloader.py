@@ -56,7 +56,7 @@ from demisto_sdk.commands.common.tools import (
     get_yml_paths_in_dir,
     is_sdk_defined_working_offline,
     retrieve_file_ending,
-    write_dict
+    write_dict,
 )
 from demisto_sdk.commands.format.format_module import format_manager
 from demisto_sdk.commands.init.initiator import Initiator

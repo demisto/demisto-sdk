@@ -9,8 +9,8 @@ from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     get_file,
-    write_dict,
     sha1_dir,
+    write_dict,
 )
 from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
@@ -71,9 +71,7 @@ class ContentGraphInterface(ABC):
             "schema": self.get_schema(),
         }
 
-        write_dict(
-            self.import_path / self.METADATA_FILE_NAME, json_data=metadata
-        )
+        write_dict(self.import_path / self.METADATA_FILE_NAME, data=metadata)
 
     def _get_latest_content_parser_hash(self) -> Optional[str]:
         parsers_path = Path(__file__).parent.parent / "parsers"

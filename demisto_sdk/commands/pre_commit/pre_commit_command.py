@@ -25,8 +25,8 @@ from demisto_sdk.commands.common.tools import (
     get_file_or_remote,
     get_last_remote_release_version,
     get_remote_file,
-    write_dict,
     string_to_bool,
+    write_dict,
 )
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.content_graph.objects.integration_script import (
@@ -205,7 +205,7 @@ class PreCommitRunner:
         else:
             precommit_config["files"] = join_files(self.files_to_run)
 
-        write_dict(PRECOMMIT_PATH, yml_data=precommit_config)
+        write_dict(PRECOMMIT_PATH, data=precommit_config)
 
         if dry_run:
             logger.info(

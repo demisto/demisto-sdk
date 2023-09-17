@@ -60,7 +60,7 @@ class YAMLObject(DictionaryBasedObject):
     def _serialize(self, dest_dir: Path):
         """Dump dictionary to yml file"""
         dest_file = self._create_target_dump_dir(dest_dir) / self.normalize_file_name()
-        write_dict(dest_file, yml_data=self._as_dict, handler=yaml)
+        write_dict(dest_file, data=self._as_dict, handler=yaml)
         return [dest_file]
 
     def dump(self, dest_dir: Optional[Union[Path, str]] = None):

@@ -2835,7 +2835,7 @@ def write_dict(
     Write unicode content into a json/yml file.
     """
     path = Path(path)
-    file_handler = handler or (json if path.suffix.lower() else yaml)
+    file_handler = handler or (json if path.suffix.lower() == ".json" else yaml)
 
     safe_write_unicode(
         lambda f: file_handler.dump(data, f, indent, sort_keys, **kwargs), path

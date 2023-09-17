@@ -18,7 +18,7 @@ from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     get_core_pack_list,
-    safe_write_unicode_json,
+    write_dict,
 )
 from demisto_sdk.commands.find_dependencies.find_dependencies import PackDependencies
 
@@ -526,7 +526,7 @@ class PackMetaData(JSONObject):
                 file_content["previewOnly"] = True
 
         new_metadata_path = Path(str(dest_dir), "metadata.json")
-        safe_write_unicode_json(new_metadata_path, json_data=file_content, indent=4)
+        write_dict(new_metadata_path, json_data=file_content, indent=4)
 
         return [new_metadata_path]
 

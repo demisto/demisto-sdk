@@ -9,7 +9,7 @@ from demisto_sdk.commands.common.tools import (
     find_type,
     get_file,
     get_pack_name,
-    safe_write_unicode_json,
+    write_dict,
 )
 
 
@@ -121,6 +121,6 @@ class GenericModuleUnifier:
                 "-f argument to True in order to overwrite the preexisting file."
             )
 
-        safe_write_unicode_json(
+        write_dict(
             self.dest_path, json_data=unified_generic_module_json, indent=4
         )

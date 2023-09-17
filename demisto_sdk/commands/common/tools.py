@@ -2826,7 +2826,7 @@ def compare_context_path_in_yml_and_readme(yml_dict, readme_content):
 def write_dict(
     path: Union[Path, str],
     data: Dict,
-    handler: XSOAR_Handler,
+    handler: Optional[XSOAR_Handler] = None,
     indent: int = 0,
     sort_keys: bool = False,
     **kwargs,
@@ -2836,56 +2836,12 @@ def write_dict(
     """
     path = Path(path)
 
-    if isinstance(handler, YAML_Handler):
-        safe_write_unicode_yml(
-            path,
-            yml_data=data,
-            handler=handler,
-            indent=indent,
-            sort_keys=sort_keys,
-            **kwargs,
-        )
-    else:
-        safe_write_unicode_json(
-            path,
-            json_data=data,
-            handler=handler,
-            indent=indent,
-            sort_keys=sort_keys,
-            **kwargs,
-        )
+    if not handler:
+        suffix = path.suffix.lower()
+        handler = json if suffix == "json" else yaml
 
-
-def safe_write_unicode_yml(
-    yml_path: Union[Path, str],
-    yml_data: Dict,
-    handler: XSOAR_Handler = yaml,
-    indent: int = 0,
-    sort_keys: bool = False,
-    **kwargs,
-):
-    """
-    Write unicode content into a yml file.
-    """
     safe_write_unicode(
-        lambda f: handler.dump(yml_data, f, indent, sort_keys, **kwargs), Path(yml_path)
-    )
-
-
-def safe_write_unicode_json(
-    json_path: Union[Path, str],
-    json_data: Dict,
-    handler: XSOAR_Handler = json,
-    indent: int = 0,
-    sort_keys: bool = False,
-    **kwargs,
-):
-    """
-    Write unicode content into a json file.
-    """
-    safe_write_unicode(
-        lambda f: handler.dump(json_data, f, indent, sort_keys, **kwargs),
-        Path(json_path),
+        lambda f: handler.dump(data, f, indent, sort_keys, **kwargs), path
     )
 
 

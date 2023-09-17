@@ -9,7 +9,7 @@ from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     get_file,
-    safe_write_unicode_json,
+    write_dict,
     sha1_dir,
 )
 from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
@@ -70,7 +70,8 @@ class ContentGraphInterface(ABC):
             "content_parser_latest_hash": self._get_latest_content_parser_hash(),
             "schema": self.get_schema(),
         }
-        safe_write_unicode_json(
+
+        write_dict(
             self.import_path / self.METADATA_FILE_NAME, json_data=metadata
         )
 

@@ -5,7 +5,7 @@ from wcmatch.pathlib import Path
 import demisto_sdk.commands.common.content.errors as exc
 from demisto_sdk.commands.common.tools import (
     get_file,
-    safe_write_unicode_json,
+    write_dict,
 )
 
 from .dictionary_based_object import DictionaryBasedObject
@@ -56,7 +56,7 @@ class JSONObject(DictionaryBasedObject):
     def _serialize(self, dest_dir: Path):
         """Dump dictionary to json file"""
         dest_file = self._create_target_dump_dir(dest_dir) / self.normalize_file_name()
-        safe_write_unicode_json(dest_file, json_data=self.to_dict())
+        write_dict(dest_file, json_data=self.to_dict())
         return [dest_file]
 
     def dump(self, dest_dir: Optional[Union[Path, str]] = None):

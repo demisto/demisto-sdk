@@ -510,11 +510,7 @@ class Downloader:
             for item in system_items_list:  # type: ignore
                 file_name: str = self.build_file_name(item)
                 file_path: str = os.path.join(self.system_content_temp_dir, file_name)
-                write_dict(
-                    file_path,
-                    data=item,
-                    handler=json if file_path.endswith("json") else yaml,
-                )
+                write_dict(file_path, data=item)
 
             return True
 

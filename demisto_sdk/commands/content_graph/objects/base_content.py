@@ -241,8 +241,6 @@ class BaseContent(ABC, BaseModel, metaclass=BaseContentMetaclass):
 
     @staticmethod
     def get_path(v: Path, source_repo) -> Path:
-        if v.is_absolute():
-            return v
         if not CONTENT_PATH.name:
             return CONTENT_PATH / v
         return CONTENT_PATH.with_name(source_repo) / v

@@ -120,6 +120,7 @@ VALID_DASHBOARD_PATH = f"{GIT_ROOT}/demisto_sdk/tests/test_files/dashboard-valid
 INVALID_DASHBOARD_PATH = (
     f"{GIT_ROOT}/demisto_sdk/tests/test_files/dashboard-invalid.json"
 )
+VALID_LIST_PATH = f"{GIT_ROOT}/demisto_sdk/tests/test_files/list-valid.json"
 VALID_INCIDENT_FIELD_PATH = (
     f"{GIT_ROOT}/demisto_sdk/tests/test_files/incidentfield-valid.json"
 )
@@ -539,3 +540,7 @@ INVALID_XSIAM_CORRELATION_PATH = (
 )
 
 XSIAM_CORRELATION_TARGET = f"{PACK_TARGET}/CorrelationRules/correlationrule-mock.yml"
+
+VULTURE_WHITELIST_PATH = (
+    "Packs/TestPack/Integrations/TestIntegration/.vulture_whitelist.py"
+)

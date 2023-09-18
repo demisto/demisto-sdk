@@ -819,7 +819,7 @@ def get_file(
     file_path: Union[str, Path],
     clear_cache: bool = False,
     return_content: bool = False,
-    keep_order: bool = True,
+    keep_order: bool = False,
 ):
     if clear_cache:
         get_file.cache_clear()
@@ -886,7 +886,7 @@ def get_file_or_remote(file_path: Path, clear_cache=False):
         return get_remote_file(str(relative_file_path))
 
 
-def get_yaml(file_path, cache_clear=False, keep_order: bool = True):
+def get_yaml(file_path, cache_clear=False, keep_order: bool = False):
     if cache_clear:
         get_file.cache_clear()
     return get_file(file_path, clear_cache=cache_clear, keep_order=keep_order)
@@ -1661,6 +1661,9 @@ def find_type_by_path(path: Union[str, Path] = "") -> Optional[FileType]:
     elif path.suffix == ".ps1":
         return FileType.POWERSHELL_FILE
 
+    elif path.name == ".vulture_whitelist.py":
+        return FileType.VULTURE_WHITELIST
+
     elif path.suffix == ".py":
         return FileType.PYTHON_FILE
 
@@ -1728,6 +1731,7 @@ def find_type_by_path(path: Union[str, Path] = "") -> Optional[FileType]:
         or path.suffix.lower() == ".txt"
     ):
         return FileType.TXT
+
     elif path.name == ".pylintrc":
         return FileType.PYLINTRC
 
@@ -1876,9 +1880,6 @@ def find_type(
         ):
             return FileType.PRE_PROCESS_RULES
 
-        if "allRead" in _dict and "truncated" in _dict:
-            return FileType.LISTS
-
         if "definitionIds" in _dict and "views" in _dict:
             return FileType.GENERIC_MODULE
 
@@ -1909,6 +1910,11 @@ def find_type(
 
         if "rule_id" in _dict:
             return FileType.LAYOUT_RULE
+
+        if isinstance(_dict, dict) and {"data", "allRead", "truncated"}.intersection(
+            _dict.keys()
+        ):
+            return FileType.LISTS
 
         # When using it for all files validation- sometimes 'id' can be integer
         if "id" in _dict:

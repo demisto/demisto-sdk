@@ -1,7 +1,13 @@
 # Changelog
 ## Unreleased
+* Added the `FileType.VULTURE_WHITELIST` to the `FileType` enum for `.vulture_whitelist.py` files.
+* Improved performance when reading `yml` files.
+* Fixed an issue where **format** would add unnecessary period at the end of descriptions ending with brackets.
+* Fixed an issue where **format** would not add a period at the end of descriptions, when running on in script files.
 * Fixed an issue where **validate** falsely failed with error `DS108` on descriptions ending with brackets that contains a dot at the end of them.
 * Fixed an issue where running **validate -g** failed reading a `.pack-ignore` file that contained only newlines and spaces.
+* Fixed an issue where **upload** failed when trying to upload a list content item.
+* Fixed an issue where **download** would skip downloading list content items assigned to specific user roles with no roles.
 * Demisto-SDK will now exit gracefully with an appropriate error message when *git* is not installed.
 * Updated validation *RN116* to support the structure of **--force** flag in *update-release-notes* command.
 * Fixed an issue where the release notes file was not added automatically to git when using the *update-release-notes* command.
@@ -10,9 +16,9 @@
 * Modified **validate** to support only .svg files ending with *_dark* or *_light* suffixes.
 * Fixed an issue where **modeling-rule test** command failed to properly compare types of fields.
 * Updated the **engineinfo** type in the script schema.
+* Updated the **modeling-rules init & test** commands to support RULE section fields.
 * Stability improvements for **graph create** and **graph update** commands.
-* Fixed the *metadata* type in the XSIAM dashboard schema to *map*.
-
+* Fixed the *metadata* type in the XSIAM dashboard schema to *map*, with possible values: **lazy_load** and **cache_ttl**
 
 ## 1.20.2
 * Updated the **pre-commit** command to run on all python versions in one run.

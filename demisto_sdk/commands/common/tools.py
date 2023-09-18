@@ -1671,6 +1671,9 @@ def find_type_by_path(path: Union[str, Path] = "") -> Optional[FileType]:
     elif path.suffix == ".ps1":
         return FileType.POWERSHELL_FILE
 
+    elif path.name == ".vulture_whitelist.py":
+        return FileType.VULTURE_WHITELIST
+
     elif path.suffix == ".py":
         return FileType.PYTHON_FILE
 
@@ -1738,6 +1741,7 @@ def find_type_by_path(path: Union[str, Path] = "") -> Optional[FileType]:
         or path.suffix.lower() == ".txt"
     ):
         return FileType.TXT
+
     elif path.name == ".pylintrc":
         return FileType.PYLINTRC
 

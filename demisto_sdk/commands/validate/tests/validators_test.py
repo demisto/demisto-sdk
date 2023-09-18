@@ -137,6 +137,9 @@ from demisto_sdk.tests.constants_test import (
     VALID_ONE_LINE_CHANGELOG_PATH,
     VALID_ONE_LINE_LIST_CHANGELOG_PATH,
     VALID_PACK,
+    VALID_PACK_IGNORE_PATH,
+    VALID_PIPEFILE_LOCK_PATH,
+    VALID_PIPEFILE_PATH,
     VALID_PLAYBOOK_CONDITION,
     VALID_REPUTATION_PATH,
     VALID_SCRIPT_PATH,
@@ -1068,7 +1071,36 @@ class TestValidators:
             INVALID_IGNORED_UNIFIED_INTEGRATION, None
         )
 
-    def test_skipped_file_types(self, mocker):
+    @pytest.mark.parametrize(
+        "file_type, path_to_file",
+        [
+            (FileType.CHANGELOG, VALID_ONE_LINE_CHANGELOG_PATH),
+            (FileType.DOC_IMAGE, "image.png"),
+            (
+                FileType.MODELING_RULE_SCHEMA,
+                "Packs/some/ModelingRules/Some/Some_schema.json",
+            ),
+            (
+                FileType.XSIAM_REPORT_IMAGE,
+                "Packs/XSIAMPack/XSIAMReports/XSIAM_Some_Report.json",
+            ),
+            (FileType.PIPFILE, VALID_PIPEFILE_PATH),
+            (FileType.PIPFILE_LOCK, VALID_PIPEFILE_LOCK_PATH),
+            (FileType.TXT, "txt_file.txt"),
+            (FileType.JAVASCRIPT_FILE, "java_script_file.js"),
+            (FileType.POWERSHELL_FILE, "powershell_file.ps1"),
+            (FileType.PYLINTRC, ".pylintrc"),
+            (FileType.SECRET_IGNORE, ".secrets-ignore"),
+            (FileType.LICENSE, "LICENSE"),
+            (FileType.UNIFIED_YML, "Packs/DummyPack/Scripts/DummyScript_unified.yml"),
+            (FileType.PACK_IGNORE, VALID_PACK_IGNORE_PATH),
+            (FileType.INI, "ini_file.ini"),
+            (FileType.PEM, "pem_file.pem"),
+            (FileType.METADATA, ".pack_metadata.json"),
+            (FileType.VULTURE_WHITELIST, VULTURE_WHITELIST_PATH),
+        ],
+    )
+    def test_skipped_file_types(self, mocker, file_type, path_to_file):
         """
         Given:
             - A file of a type that should be skipped
@@ -1081,12 +1113,12 @@ class TestValidators:
         mocker.patch.object(
             demisto_sdk.commands.common.tools,
             "find_type",
-            return_value=FileType.VULTURE_WHITELIST,
+            return_value=file_type,
         )
 
         validate_manager = ValidateManager()
-        assert validate_manager.run_validations_on_file(VULTURE_WHITELIST_PATH, None)
-        assert VULTURE_WHITELIST_PATH in validate_manager.ignored_files
+        assert validate_manager.run_validations_on_file(path_to_file, None)
+        assert path_to_file in validate_manager.ignored_files
 
     def test_non_integration_png_files_ignored(self, set_git_test_env):
         """

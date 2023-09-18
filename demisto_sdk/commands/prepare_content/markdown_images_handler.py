@@ -135,7 +135,9 @@ def upload_markdown_images_to_artifacts(
                 # If this is the first pack init the file with an empty dict.
                 json.dump({}, f)
 
-        markdown_images_data_dict = get_file(artifacts_markdown_images_path, raise_on_error=True)
+        markdown_images_data_dict = get_file(
+            artifacts_markdown_images_path, raise_on_error=True
+        )
         if pack_name in markdown_images_data_dict:
             integration_desc = ImagesFolderNames.INTEGRATION_DESCRIPTION_IMAGES.value
             if (

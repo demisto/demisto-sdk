@@ -3269,7 +3269,9 @@ def get_mp_types_from_metadata_by_item(file_path):
 
     try:
         if not (
-            marketplaces := get_file(metadata_path, raise_on_error=True).get(MARKETPLACE_KEY_PACK_METADATA)
+            marketplaces := get_file(metadata_path, raise_on_error=True).get(
+                MARKETPLACE_KEY_PACK_METADATA
+            )
         ):
             return [MarketplaceVersions.XSOAR.value]
         return marketplaces

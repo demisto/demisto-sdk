@@ -19,6 +19,7 @@
 * Updated the **modeling-rules init & test** commands to support RULE section fields.
 * Stability improvements for **graph create** and **graph update** commands.
 * Fixed the *metadata* type in the XSIAM dashboard schema to *map*, with possible values: **lazy_load** and **cache_ttl**
+* Added validation to check if custom outputs were used in a command outputs, they should follow the mandatory context standards.
 
 ## 1.20.2
 * Updated the **pre-commit** command to run on all python versions in one run.
@@ -34,7 +35,6 @@
 * Added support for lazy loading the of widgets in XSIAM dashboards.
 * Added a **validate** check for correlation rules, making sure that `search_window` cannot be empty when `execution_mode` is set to `SCHEDULED`.
 * Added the *metadata* key to the XSIAM dashboard schema. This field adds support for dynamic parameters in the dashboards.
-* Added validation to check if custom outputs were used in a command outputs, they should follow the mandatory context standards.
 
 ## 1.20.1
 * Added formatting for yml files when period is missing in the end of description field, in the **format** command.

@@ -1,5 +1,7 @@
 # Changelog
 ## Unreleased
+* Updated the **update-content-graph** command to work with external repositories.
+* Updated the **validate** command to work with external repositories when using the *--graph* flag.
 
 ## 1.20.3
 * Added the `FileType.VULTURE_WHITELIST` to the `FileType` enum for `.vulture_whitelist.py` files.
@@ -36,8 +38,6 @@
 * Added support for lazy loading the of widgets in XSIAM dashboards.
 * Added a **validate** check for correlation rules, making sure that `search_window` cannot be empty when `execution_mode` is set to `SCHEDULED`.
 * Added the *metadata* key to the XSIAM dashboard schema. This field adds support for dynamic parameters in the dashboards.
-* Updated the **update-content-graph** command to work with external repositories.
-* Updated the **validate** command to work with external repositories when using the *--graph* flag.
 
 ## 1.20.1
 * Added formatting for yml files when period is missing in the end of description field, in the **format** command.

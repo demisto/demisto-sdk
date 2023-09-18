@@ -9,6 +9,8 @@
 The Demisto SDK library can be used to manage your Cortex XSOAR content with ease and efficiency.
 The library supports Python 3.8-3.10. _Python 3.8 support will be removed soon._
 
+In order to function properly, the Demisto SDK requires git to be installed. If git isn't installed, an appropriate message will be raised.
+
 ## Usage
 
 ### Installation
@@ -38,6 +40,12 @@ The library supports Python 3.8-3.10. _Python 3.8 support will be removed soon._
       In order to set Demisto SDK to work with Cortex XSOAR instance, you need to delete the XSIAM_AUTH_ID parameter from your environment.
       ```bash
       unset XSIAM_AUTH_ID
+      ```
+
+      In case the primary git branch is not **master**, or the upstream is not named **origin**, set them with environment variables:
+      ```bash
+      export DEMISTO_DEFAULT_BRANCH = <branch name here>
+      export DEMISTO_DEFAULT_REMOTE = <upstream name here>
       ```
 
       >For more configurations, check the [demisto-py](https://github.com/demisto/demisto-py) repo (the SDK uses demisto-py to communicate with Cortex XSOAR).

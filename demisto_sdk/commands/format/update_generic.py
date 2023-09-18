@@ -7,6 +7,7 @@ from typing import Any, Dict, Optional, Set, Union
 import dictdiffer
 
 from demisto_sdk.commands.common.constants import (
+    DEMISTO_GIT_PRIMARY_BRANCH,
     GENERAL_DEFAULT_FROMVERSION,
     VERSION_5_5_0,
 )
@@ -19,6 +20,7 @@ from demisto_sdk.commands.common.tools import (
     get_remote_file,
     get_yaml,
     is_file_from_content_repo,
+    is_sentence_ends_with_bracket,
     is_string_ends_with_url,
     strip_description,
 )
@@ -59,7 +61,7 @@ class BaseUpdate:
         output: str = "",
         path: str = "",
         from_version: str = "",
-        prev_ver: str = "master",
+        prev_ver: str = DEMISTO_GIT_PRIMARY_BRANCH,
         no_validate: bool = False,
         assume_answer: Union[bool, None] = None,
         interactive: bool = True,
@@ -101,7 +103,7 @@ class BaseUpdate:
             )
         try:
             self.data, self.file_type = get_dict_from_file(
-                self.source_file, clear_cache=clear_cache
+                self.source_file, clear_cache=clear_cache, keep_order=True
             )
         except Exception:
             raise Exception(f"Provided file {self.source_file} is not a valid file.")
@@ -474,15 +476,23 @@ class BaseUpdate:
         def _add_period(value: Optional[str]) -> Optional[str]:
             if value and isinstance(value, str):
                 strip_value = strip_description(value)
-                if not strip_value.endswith(".") and not is_string_ends_with_url(
-                    strip_value
+                if (
+                    not strip_value.endswith(".")
+                    and not is_string_ends_with_url(strip_value)
+                    and not is_sentence_ends_with_bracket(strip_value)
                 ):
                     return f"{strip_value}."
             return value
 
         # script yml
-        if comment_script := self.data.get("comment", {}):
-            self.data["comment"] = _add_period(comment_script)
+        if comment := self.data.get("comment"):
+            self.data["comment"] = _add_period(comment)
+        for arg in self.data.get("args", ()):
+            if description := arg.get("description"):
+                arg["description"] = _add_period(description)
+        for output in self.data.get("outputs", ()):
+            if description := output.get("description"):
+                output["description"] = _add_period(description)
 
         # integration yml
         if data_description := self.data.get("description", {}):

@@ -9,12 +9,14 @@ from pathlib import Path
 from typing import Dict, List, Set, Tuple
 
 from dateutil import parser
-from git import GitCommandError, Repo
+from git import GitCommandError
 from packaging.version import Version, parse
 
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import (  # PACK_METADATA_PRICE,
     API_MODULES_PACK,
+    DEMISTO_GIT_PRIMARY_BRANCH,
+    DEMISTO_GIT_UPSTREAM,
     EXCLUDED_DISPLAY_NAME_WORDS,
     INTEGRATIONS_DIR,
     MARKETPLACE_KEY_PACK_METADATA,
@@ -135,11 +137,11 @@ class PackUniqueFilesValidator(BaseValidator):
         self.metadata_content: Dict = dict()
 
         if not prev_ver:
-            git_util = GitUtil(repo=Content.git())
+            git_util = Content.git_util()
             main_branch = git_util.handle_prev_ver()[1]
             self.prev_ver = (
-                f"origin/{main_branch}"
-                if not main_branch.startswith("origin")
+                f"{DEMISTO_GIT_UPSTREAM}/{main_branch}"
+                if not main_branch.startswith(DEMISTO_GIT_UPSTREAM)
                 else main_branch
             )
         else:
@@ -981,17 +983,17 @@ class PackUniqueFilesValidator(BaseValidator):
         return True
 
     def get_master_private_repo_meta_file(self, metadata_file_path: str):
-        current_repo = Repo(Path.cwd(), search_parent_directories=True)
+        current_repo = GitUtil().repo
 
         # if running on master branch in private repo - do not run the test
-        if current_repo.active_branch == "master":
+        if current_repo.active_branch == DEMISTO_GIT_PRIMARY_BRANCH:
             logger.debug(
                 "[yellow]Running on master branch - skipping price change validation[/yellow]"
             )
             return None
         try:
             tag = self.prev_ver
-            tag = tag.replace("origin/", "").replace("demisto/", "")
+            tag = tag.replace(f"{DEMISTO_GIT_UPSTREAM}/", "").replace("demisto/", "")
             old_meta_file_content = get_local_remote_file(
                 full_file_path=metadata_file_path, tag=tag, return_content=True
             )

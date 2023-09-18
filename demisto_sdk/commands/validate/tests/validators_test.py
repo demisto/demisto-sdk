@@ -71,6 +71,7 @@ from demisto_sdk.commands.common.hook_validations.xsiam_dashboard import (
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.content_graph.tests.create_content_graph_test import (
     mock_integration,
+    mock_pack,
 )
 from demisto_sdk.commands.prepare_content.integration_script_unifier import (
     IntegrationScriptUnifier,
@@ -141,6 +142,7 @@ from demisto_sdk.tests.constants_test import (
     VALID_SCRIPT_PATH,
     VALID_TEST_PLAYBOOK_PATH,
     VALID_WIDGET_PATH,
+    VULTURE_WHITELIST_PATH,
     WIDGET_TARGET,
     XSIAM_CORRELATION_TARGET,
     XSIAM_DASHBOARD_TARGET,
@@ -166,7 +168,7 @@ class MyRepo:
 @pytest.fixture(autouse=False)
 def set_git_test_env(mocker):
     mocker.patch.object(ValidateManager, "setup_git_params", return_value=True)
-    mocker.patch.object(Content, "git", return_value=MyRepo())
+    mocker.patch.object(Content, "git_util", return_value=GitUtil())
     mocker.patch.object(ValidateManager, "setup_prev_ver", return_value="origin/master")
     mocker.patch.object(GitUtil, "_is_file_git_ignored", return_value=False)
 
@@ -1066,6 +1068,26 @@ class TestValidators:
             INVALID_IGNORED_UNIFIED_INTEGRATION, None
         )
 
+    def test_skipped_file_types(self, mocker):
+        """
+        Given:
+            - A file of a type that should be skipped
+        When:
+            - Validating the file
+        Then:
+            - The file should be skipped
+        """
+
+        mocker.patch.object(
+            demisto_sdk.commands.common.tools,
+            "find_type",
+            return_value=FileType.VULTURE_WHITELIST,
+        )
+
+        validate_manager = ValidateManager()
+        assert validate_manager.run_validations_on_file(VULTURE_WHITELIST_PATH, None)
+        assert VULTURE_WHITELIST_PATH in validate_manager.ignored_files
+
     def test_non_integration_png_files_ignored(self, set_git_test_env):
         """
         Given
@@ -1392,6 +1414,8 @@ class TestValidators:
         Then:
             - return a True as there are no release notes missing
         """
+        from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
+
         mocker.patch.object(
             BaseValidator, "update_checked_flags_by_support_level", return_value=""
         )
@@ -1403,6 +1427,17 @@ class TestValidators:
             "Packs/ApiModules/ReleaseNotes/1_0_0.md",
             "Packs/ApiDependent/ReleaseNotes/1_0_0.md",
         }
+        integration_mock = mock_integration("ApiDependent")
+        mocker.patch(
+            "demisto_sdk.commands.validate.validate_manager.get_api_module_dependencies_from_graph",
+            return_value=[integration_mock],
+        )
+
+        mocker.patch.object(
+            ContentItem,
+            "in_pack",
+            mock_pack("ApiDependent", path=Path("Packs/ApiDependent")),
+        )
         with ChangeCWD(repo.path):
             assert (
                 validate_manager.validate_no_missing_release_notes(
@@ -2264,6 +2299,7 @@ def test_check_file_relevance_and_format_path_non_formatted_relevant_file(mocker
         "Packs/pack_id/Scripts/script_id/test_data/file.json",
         "Packs/pack_id/TestPlaybooks/test_data/file.json",
         "Packs/pack_id/Integrations/integration_id/command_examples",
+        "Packs/pack_id/Integrations/integration_id/.vulture_whitelist.py",
     ],
 )
 def test_check_file_relevance_and_format_path_ignored_files(input_file_path):
@@ -3189,6 +3225,33 @@ def test_validate_no_disallowed_terms_in_customer_facing_docs_end_to_end(repo, m
             "[file:test.yml]\nignore=BA108,BA109,DS107\n",
             {"Packs/test1/Integrations/test2/test2.yml"},
         ),
+        (
+            {"Packs/test/.pack-ignore"},
+            "[file:test.yml]\nignore=BA108\n",
+            b"\n\n",
+            "",
+            {
+                "Packs/test/Integrations/test/test.yml",
+            },
+        ),
+        (
+            {"Packs/test/.pack-ignore"},
+            "[file:test.yml]\nignore=BA108\n",
+            b"    ",
+            "",
+            {
+                "Packs/test/Integrations/test/test.yml",
+            },
+        ),
+        (
+            {"Packs/test/.pack-ignore"},
+            "[file:test.yml]\nignore=BA108\n",
+            b"    \n   \n   ",
+            "",
+            {
+                "Packs/test/Integrations/test/test.yml",
+            },
+        ),
     ],
 )
 def test_get_all_files_edited_in_pack_ignore(
@@ -3207,6 +3270,9 @@ def test_get_all_files_edited_in_pack_ignore(
     - Case 3: pack-ignore mocks where each file is pointed to a different integration yml.
     - Case 4: old .pack-ignore that is empty and current .pack-ignore that was updated with ignored validation
     - Case 5: old .pack-ignore which is not in the remote branch repo, but only exist in the local branch
+    - Case 6: old empty .pack-ignore which contains newlines.
+    - Case 7: old empty .pack-ignore which contains only spaces.
+    - Case 8: old empty .pack-ignore which contains only spaces and newlines.
 
     When:
     - Running get_all_files_edited_in_pack_ignore.
@@ -3218,6 +3284,7 @@ def test_get_all_files_edited_in_pack_ignore(
     - Case 3: Should return both file names.
     - Case 4: Ensure the file that was changed in the .pack-ignore is collected
     - Case 5: Ensure the file that was changed in the .pack-ignore is collected from the local repo
+    - Case 6 + 7 + 8: Ensure the file that was changed in the .pack-ignore is collected
     """
     mocker.patch.object(
         GitUtil,

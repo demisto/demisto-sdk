@@ -19,6 +19,9 @@ mapping:
       lazy_load:
         type: bool
         required: false
+      cache_ttl:
+        type: number
+        required: false
 
 
 schema;dashboards_data_schema:
@@ -44,7 +47,9 @@ schema;dashboards_data_schema:
       sequence:
         - include: layout_schema
     metadata:
-      type: str
+      type: map
+      required: false
+      allowempty: true
 
 
 schema;layout_schema:

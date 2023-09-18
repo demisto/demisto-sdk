@@ -141,6 +141,7 @@ from demisto_sdk.tests.constants_test import (
     VALID_REPUTATION_FILE,
     VALID_SCRIPT_PATH,
     VALID_WIDGET_PATH,
+    VULTURE_WHITELIST_PATH,
 )
 from demisto_sdk.tests.test_files.validate_integration_test_valid_types import (
     LAYOUT,
@@ -344,6 +345,7 @@ class TestGenericFunctions:
         (Path(DOC_FILES_DIR) / "foo", FileType.DOC_FILE),
         (METADATA_FILE_NAME, FileType.METADATA),
         ("", None),
+        (VULTURE_WHITELIST_PATH, FileType.VULTURE_WHITELIST),
     ]
 
     @pytest.mark.parametrize("path, _type", data_test_find_type)

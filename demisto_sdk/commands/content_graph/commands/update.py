@@ -5,10 +5,7 @@ from typing import List, Optional
 
 import typer
 
-from demisto_sdk.commands.common.constants import PACKS_DIR, MarketplaceVersions
-from demisto_sdk.commands.common.content_constant_paths import (
-    CONTENT_PATH,
-)
+from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.logger import (
     logger,
@@ -16,6 +13,7 @@ from demisto_sdk.commands.common.logger import (
 )
 from demisto_sdk.commands.common.tools import (
     download_content_graph,
+    get_all_repo_pack_ids,
     is_external_repository,
 )
 from demisto_sdk.commands.content_graph.commands.common import recover_if_fails
@@ -53,10 +51,6 @@ def should_update_graph(
     )
 
 
-def get_packs_from_external_repo() -> list:
-    return [path.name for path in (CONTENT_PATH / PACKS_DIR).iterdir()]
-
-
 @recover_if_fails
 def update_content_graph(
     content_graph_interface: ContentGraphInterface,
@@ -85,7 +79,7 @@ def update_content_graph(
     git_util = GitUtil()
 
     if is_external_repository():
-        packs_to_update = get_packs_from_external_repo()
+        packs_to_update = get_all_repo_pack_ids()
     packs_to_update = list(packs_to_update) if packs_to_update else []
     builder = ContentGraphBuilder(content_graph_interface)
     if not should_update_graph(

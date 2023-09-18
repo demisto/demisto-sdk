@@ -725,7 +725,7 @@ class TestUpdateContentGraph:
                 return_value=is_external,
             )
             mocker.patch(
-                "demisto_sdk.commands.content_graph.commands.update.get_packs_from_external_repo",
+                "demisto_sdk.commands.content_graph.commands.update.get_all_repo_pack_ids",
                 return_value=["SamplePack", "SamplePack2", "SamplePack3"],
             )
 

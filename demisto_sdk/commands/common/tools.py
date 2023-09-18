@@ -114,6 +114,9 @@ from demisto_sdk.commands.common.constants import (
     MarketplaceVersions,
     urljoin,
 )
+from demisto_sdk.commands.common.content_constant_paths import (
+    CONTENT_PATH,
+)
 from demisto_sdk.commands.common.cpu_count import cpu_count
 from demisto_sdk.commands.common.git_content_config import GitContentConfig, GitProvider
 from demisto_sdk.commands.common.git_util import GitUtil
@@ -3963,3 +3966,7 @@ def is_sentence_ends_with_bracket(description: str):
     return (
         description.endswith(")") and len(description) >= 2 and description[-2] == "."
     )
+
+
+def get_all_repo_pack_ids() -> list:
+    return [path.name for path in (CONTENT_PATH / PACKS_DIR).iterdir()]

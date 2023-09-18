@@ -2933,7 +2933,7 @@ class TestisContextChanged:
 
     @pytest.mark.parametrize("outputs, result", IS_OUTPUT_FOR_REPUTATION_INPUTS)
     def test_is_valid_command_custom_outputs(
-        self, outputs: List[dict[str]], result: bool
+        self, outputs: List[Dict[str, Any]], result: bool
     ):
         content = {
             "script": {"commands": [{"name": "command_name", "outputs": outputs}]}

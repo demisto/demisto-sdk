@@ -20,7 +20,6 @@
 * Stability improvements for **graph create** and **graph update** commands.
 * Fixed the *metadata* type in the XSIAM dashboard schema to *map*, with possible values: **lazy_load** and **cache_ttl**
 * Updated the **modeling-rules test** command to ignore failures on test modeling rules, by adding the `test_data_config_ignore` flag to the test data file.
-* Fixed the *metadata* type in the XSIAM dashboard schema to *map*.
 
 ## 1.20.2
 * Updated the **pre-commit** command to run on all python versions in one run.

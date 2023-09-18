@@ -35,7 +35,7 @@ from demisto_sdk.commands.common.logger import (
     logger,
     logging_setup,
 )
-from demisto_sdk.commands.common.tools import is_epoch_datetime, parse_int_or_default
+from demisto_sdk.commands.common.tools import is_epoch_datetime, parse_int_or_default, get_file
 from demisto_sdk.commands.test_content.test_modeling_rule.constants import (
     EXPECTED_SCHEMA_MAPPINGS,
     FAILURE_TO_PUSH_EXPLANATION,
@@ -935,19 +935,18 @@ def validate_modeling_rule(
                 classname=f"Modeling Rule {get_relative_path_to_content(modeling_rule.schema_path)}",
             )
             if schema_path := modeling_rule.schema_path:
-                with open(modeling_rule.schema_path) as schema_file:
-                    try:
-                        schema = json.load(schema_file)
-                    except json.JSONDecodeError as ex:
-                        err = f"Failed to parse schema file {get_relative_path_to_content(modeling_rule.schema_path)} as JSON"
-                        logger.error(
-                            f"[red]{err}[/red]",
-                            extra={"markup": True},
-                        )
-                        schema_test_case.system_err = str(ex)
-                        return add_result_to_test_case(
-                            err, schema_test_case, modeling_rule_test_suite
-                        )
+                try:
+                    schema = get_file(modeling_rule.schema_path)
+                except json.JSONDecodeError as ex:
+                    err = f"Failed to parse schema file {get_relative_path_to_content(modeling_rule.schema_path)} as JSON"
+                    logger.error(
+                        f"[red]{err}[/red]",
+                        extra={"markup": True},
+                    )
+                    schema_test_case.system_err = str(ex)
+                    return add_result_to_test_case(
+                        err, schema_test_case, modeling_rule_test_suite
+                    )
             else:
                 err = f"Schema file does not exist in path {get_relative_path_to_content(modeling_rule.schema_path)}"
                 return log_error_to_test_case(

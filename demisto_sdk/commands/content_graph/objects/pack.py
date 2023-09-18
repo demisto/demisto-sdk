@@ -121,7 +121,7 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
             return v
         if not CONTENT_PATH.name:
             return CONTENT_PATH / v
-        return CONTENT_PATH.with_name(values.get("source", "content")) / v
+        return CONTENT_PATH.with_name(values.get("source_repo", "content")) / v
 
     @property
     def is_private(self) -> bool:

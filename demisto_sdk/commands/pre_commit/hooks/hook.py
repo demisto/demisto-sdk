@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from copy import deepcopy
 from pathlib import Path
-from typing import Set
+from typing import Any, Dict, Set
 
 
 class Hook(ABC):
@@ -34,3 +34,25 @@ def join_files(files: Set[Path], separator: str = "|") -> str:
         str: The joined string.
     """
     return separator.join(map(str, files))
+
+
+def create_or_update_list_in_dict(dict: Dict[str, list], key: str, value: Any) -> None:
+    """
+    Creates or updates a list in a dictionary.
+
+    This function takes a dictionary, a key, and a value as input.
+    If the key already exists in the dictionary, the value is appended to the existing list.
+    If the key does not exist, a new key-value pair is added to the dictionary.
+
+    Args:
+        dict (Dict[str, list]): The dictionary in which to create or update the list.
+        key (str): The key to use for the list in the dictionary.
+        value (Any): The value to append to the list.
+
+    Returns:
+        None
+    """
+    if key in dict:
+        dict[key].append(value)
+    else:
+        dict[key] = [value]

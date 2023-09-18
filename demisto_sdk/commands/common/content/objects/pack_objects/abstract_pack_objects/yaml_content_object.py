@@ -87,7 +87,7 @@ class YAMLContentObject(YAMLObject):
             1. Version object - https://github.com/pypa/packaging
             2. Attribute info - https://xsoar.pan.dev/docs/integrations/yaml-file#version-and-tests
         """
-        return Version(self.get("fromversion", DEFAULT_CONTENT_ITEM_FROM_VERSION))
+        return Version(self.get("fromversion") or DEFAULT_CONTENT_ITEM_FROM_VERSION)
 
     @property
     def to_version(self) -> Version:
@@ -100,7 +100,7 @@ class YAMLContentObject(YAMLObject):
             1. Version object - https://github.com/pypa/packaging
             2. Attribute info - https://xsoar.pan.dev/docs/integrations/yaml-file#version-and-tests
         """
-        return Version(self.get("toversion", DEFAULT_CONTENT_ITEM_TO_VERSION))
+        return Version(self.get("toversion") or DEFAULT_CONTENT_ITEM_TO_VERSION)
 
     def dump(
         self,

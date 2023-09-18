@@ -117,8 +117,10 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
 
     @validator("path", always=True)
     def validate_path(cls, v: Path, values) -> Path:
-        if v == Path(".") or v.is_absolute():
+        if v.is_absolute():
             return v
+        if not CONTENT_PATH.name:
+            return CONTENT_PATH / v
         return CONTENT_PATH.with_name(values.get("source", "content")) / v
 
     @property

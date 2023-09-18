@@ -1,5 +1,6 @@
 # Changelog
 ## Unreleased
+* Added the `FileType.VULTURE_WHITELIST` to the `FileType` enum for `.vulture_whitelist.py` files.
 * Improved performance when reading `yml` files.
 * Fixed an issue where **format** would add unnecessary period at the end of descriptions ending with brackets.
 * Fixed an issue where **format** would not add a period at the end of descriptions, when running on in script files.

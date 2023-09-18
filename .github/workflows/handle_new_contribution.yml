@@ -1,7 +1,8 @@
 name: Handle New Contribution
 
-on: pull_request
-    # types: [opened, ready_for_review]
+on:
+  pull_request_target:
+    types: [opened, ready_for_review]
 
 permissions:
   pull-requests: write
@@ -10,6 +11,7 @@ permissions:
 jobs:
   assign:
     runs-on: ubuntu-latest
+    if: github.event.pull_request.head.repo.fork == true
     steps:
       - name: Assign a reviewer and assignee
         env:

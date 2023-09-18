@@ -40,7 +40,7 @@ class RuleUnifier(Unifier):
         if os.path.isdir(samples_dir):
             samples = defaultdict(list)
             for sample_file in os.listdir(samples_dir):
-                sample = get_file(Path(samples_dir) / sample_file)
+                sample = get_file(Path(samples_dir) / sample_file, raise_on_error=True)
                 if data.get("id") in sample.get("rules", []):
                     samples[f'{sample.get("vendor")}_{sample.get("product")}'].extend(
                         sample.get("samples")

@@ -39,7 +39,7 @@ class JsonSplitter:
         self.autocreate_dir = not no_auto_create_dir
         self.new_module_file = new_module_file
 
-        self.module_json_data = get_file(self.input)
+        self.module_json_data = get_file(self.input, raise_on_error=True)
 
     def split_json(self):
         logger.debug(

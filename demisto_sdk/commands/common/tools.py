@@ -660,7 +660,7 @@ def filter_packagify_changes(
             if PACKS_README_FILE_NAME in file_path:
                 updated_added_files.add(file_path)
                 continue
-            details = get_file(file_path)
+            details = get_file(file_path, raise_on_error=True)
 
             uniq_identifier = "_".join(
                 [
@@ -824,6 +824,11 @@ def get_file(
     keep_order: bool = False,
     raise_on_error: bool = False,
 ):
+    """
+    Get file contents.
+
+    if raise_on_error = False, this function will return empty dict
+    """
     if clear_cache:
         get_file.cache_clear()
     file_path = Path(file_path)  # type: ignore[arg-type]
@@ -2835,10 +2840,17 @@ def write_dict(
     Write unicode content into a json/yml file.
     """
     path = Path(path)
-    file_handler = handler or (json if path.suffix.lower() == ".json" else yaml)
+    if not handler:
+        suffix = path.suffix.lower()
+        if suffix == ".json":
+            handler = json
+        elif suffix in {".yaml", ".yml"}:
+            handler = yaml
+        else:
+            raise ValueError(f"The file {path} is neither json/yml")
 
     safe_write_unicode(
-        lambda f: file_handler.dump(data, f, indent, sort_keys, **kwargs), path
+        lambda f: handler.dump(data, f, indent, sort_keys, **kwargs), path  # type: ignore[union-attr]
     )
 
 
@@ -3257,7 +3269,7 @@ def get_mp_types_from_metadata_by_item(file_path):
 
     try:
         if not (
-            marketplaces := get_file(metadata_path).get(MARKETPLACE_KEY_PACK_METADATA)
+            marketplaces := get_file(metadata_path, raise_on_error=True).get(MARKETPLACE_KEY_PACK_METADATA)
         ):
             return [MarketplaceVersions.XSOAR.value]
         return marketplaces

@@ -70,7 +70,7 @@ class GenericModuleUnifier:
             file_path = os.path.join(dashboards_dir_path, file_name)
             if find_type(file_path) == FileType.DASHBOARD:
                 # it's a dashboard
-                dashboard = get_file(file_path)
+                dashboard = get_file(file_path, raise_on_error=True)
                 if dashboard.get("id") == dashboard_id:
                     # the searched dashboard was found
                     return dashboard
@@ -82,7 +82,7 @@ class GenericModuleUnifier:
 
         Returns: the unified GenericModule
         """
-        generic_module = get_file(self.input_path)
+        generic_module = get_file(self.input_path, raise_on_error=True)
 
         views = generic_module.get("views", [])
         for view in views:

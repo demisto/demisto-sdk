@@ -470,7 +470,7 @@ class SecretsValidator:
         ioc_white_list = []
         files_while_list = []
         if Path(whitelist_path).is_file():
-            secrets_white_list_file = get_file(whitelist_path)
+            secrets_white_list_file = get_file(whitelist_path, raise_on_error=True)
             for name, white_list in secrets_white_list_file.items():  # type: ignore
                 if name == "iocs":
                     for sublist in white_list:

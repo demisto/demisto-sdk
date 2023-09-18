@@ -92,7 +92,7 @@ class IncidentFieldJSONFormat(BaseUpdateJSON):
                     logger.info(
                         f"\n[blue]================= Updating file {alias_file_path} =================[/blue]"
                     )
-                    alias_file_content = get_file(alias_file_path)
+                    alias_file_content = get_file(alias_file_path, raise_on_error=True)
                     alias_file_content["marketplaces"] = [
                         MarketplaceVersions.XSOAR.value
                     ]

@@ -39,7 +39,7 @@ class ContentGraphInterface(ABC):
     @property
     def metadata(self) -> Optional[dict]:
         try:
-            return get_file(self.import_path / self.METADATA_FILE_NAME)
+            return get_file(self.import_path / self.METADATA_FILE_NAME, raise_on_error=True)
         except FileNotFoundError:
             return None
 

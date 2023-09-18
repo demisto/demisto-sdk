@@ -1282,7 +1282,7 @@ class Linter:
         )
         pack_metadata_file = pack_dir / PACKS_PACK_META_FILE_NAME
         logger.debug(f"Before reading content of {pack_metadata_file}")
-        pack_meta_content: Dict = get_file(pack_metadata_file)
+        pack_meta_content: Dict = get_file(pack_metadata_file, raise_on_error=True)
 
         logger.debug(f"After reading content of {pack_metadata_file}")
         self._facts["support_level"] = pack_meta_content.get("support")

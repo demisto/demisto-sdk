@@ -122,7 +122,7 @@ class YmlSplitter:
         self.extract_long_description(f"{output_path}/{base_name}_description.md")
         yaml_out = f"{output_path}/{base_name}.yml"
         logger.debug(f"Creating yml file: {yaml_out} ...")
-        yaml_obj = get_file(self.input)
+        yaml_obj = get_file(self.input, raise_on_error=True)
         script_obj = yaml_obj
 
         if self.file_type in ("modelingrule", "parsingrule"):

@@ -107,7 +107,7 @@ def update_content_graph(
                 )
                 return
     is_graph_up_to_date = content_graph_interface.import_graph(imported_path)
-    if not imported_path and not is_graph_up_to_date and not is_external_repository():
+    if not any([imported_path, is_graph_up_to_date, is_external_repository()]):
         # if we import a graph from a specific path, it make no sense to create a new graph
         logger.warning("Failed to import the content graph, will create a new graph")
         create_content_graph(

@@ -239,6 +239,14 @@ class BaseContent(ABC, BaseModel, metaclass=BaseContentMetaclass):
             return
         self.relationships_data[relationship_type].add(relationship)
 
+    @staticmethod
+    def get_path(v: Path, source_repo) -> Path:
+        if v.is_absolute():
+            return v
+        if not CONTENT_PATH.name:
+            return CONTENT_PATH / v
+        return CONTENT_PATH.with_name(source_repo) / v
+
 
 class UnknownContent(BaseContent):
     """A model for non-existing content items used by existing content items."""

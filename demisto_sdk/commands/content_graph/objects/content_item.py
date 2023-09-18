@@ -58,7 +58,7 @@ class ContentItem(BaseContent):
     def validate_path(cls, v: Path, values) -> Path:
         if v.is_absolute():
             return v
-        return CONTENT_PATH.with_name(values.get("source", "content")) / v
+        return CONTENT_PATH.absolute().with_name(values.get("source", "content")) / v
 
     @property
     def pack_id(self) -> str:

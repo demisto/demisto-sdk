@@ -119,7 +119,7 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
     def validate_path(cls, v: Path, values) -> Path:
         if v.is_absolute():
             return v
-        return CONTENT_PATH.with_name(values.get("source", "content")) / v
+        return CONTENT_PATH.absolute().with_name(values.get("source", "content")) / v
 
     @property
     def is_private(self) -> bool:

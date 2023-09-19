@@ -19,8 +19,8 @@ class SourceryHook(Hook):
         """
         config_file = tools.get_file_or_remote(config_file_path)
         config_file["rule_settings"]["python_version"] = python_version
-        tf = tempfile.NamedTemporaryFile(delete=False)
-        tools.write_yml(tf.name, config_file)
+        tf = tempfile.NamedTemporaryFile(delete=False, suffix=".yml")
+        tools.write_dict(tf.name, data=config_file)
         return tf.name
 
     def prepare_hook(

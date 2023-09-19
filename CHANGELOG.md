@@ -1,5 +1,8 @@
 # Changelog
 ## Unreleased
+* Fixed an issue where using **prepare-content**, **upload**, **zip-packs** and **download** on machines with default encoding other than unicode caused errors.
+
+## 1.20.3
 * Added the `FileType.VULTURE_WHITELIST` to the `FileType` enum for `.vulture_whitelist.py` files.
 * Improved performance when reading `yml` files.
 * Fixed an issue where **format** would add unnecessary period at the end of descriptions ending with brackets.

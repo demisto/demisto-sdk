@@ -6,9 +6,12 @@ from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.git_util import GitUtil
-from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.logger import logger
-from demisto_sdk.commands.common.tools import get_file, sha1_dir
+from demisto_sdk.commands.common.tools import (
+    get_file,
+    sha1_dir,
+    write_dict,
+)
 from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
@@ -36,7 +39,9 @@ class ContentGraphInterface(ABC):
     @property
     def metadata(self) -> Optional[dict]:
         try:
-            return get_file(self.import_path / self.METADATA_FILE_NAME)
+            return get_file(
+                self.import_path / self.METADATA_FILE_NAME, raise_on_error=True
+            )
         except FileNotFoundError:
             return None
 
@@ -67,8 +72,8 @@ class ContentGraphInterface(ABC):
             "content_parser_latest_hash": self._get_latest_content_parser_hash(),
             "schema": self.get_schema(),
         }
-        with open(self.import_path / self.METADATA_FILE_NAME, "w") as f:
-            json.dump(metadata, f)
+
+        write_dict(self.import_path / self.METADATA_FILE_NAME, data=metadata)
 
     def _get_latest_content_parser_hash(self) -> Optional[str]:
         parsers_path = Path(__file__).parent.parent / "parsers"

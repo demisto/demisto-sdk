@@ -1502,11 +1502,11 @@ class Integration:
                     else param_conf["name"]
                 )
                 if key in {"credentials", "creds_apikey"}:
-                    credentials = params[key]
+                    params[key]
                     param_value = {
                         "credential": "",
-                        "identifier": credentials.get("identifier", ""),
-                        "password": credentials["password"],
+                        "identifier": "identifier",
+                        "password": "password",
                         "passwordChanged": False,
                     }
                 else:

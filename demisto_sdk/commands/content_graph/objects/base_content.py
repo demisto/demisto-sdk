@@ -105,14 +105,6 @@ class BaseContent(ABC, BaseModel, metaclass=BaseContentMetaclass):
         orm_mode = True  # allows using from_orm() method
         allow_population_by_field_name = True  # when loading from orm, ignores the aliases and uses the property name
 
-    @classmethod
-    def get_real_path(cls, v: Path, values) -> Path:
-        if v.is_absolute():
-            return v
-        if not CONTENT_PATH.name:
-            return CONTENT_PATH / v
-        return CONTENT_PATH.with_name(values.get("source_repo", "content")) / v
-
     def __getstate__(self):
         """Needed to for the object to be pickled correctly (to use multiprocessing)"""
         if "relationships_data" not in self.__dict__:

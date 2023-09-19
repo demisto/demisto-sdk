@@ -126,14 +126,11 @@ from demisto_sdk.commands.content_graph.parsers.xsiam_report import XSIAMReportP
 
 if TYPE_CHECKING:
     from demisto_sdk.commands.content_graph.interface import ContentGraphInterface
+ 
 
 
-from demisto_sdk.commands.content_graph.parsers import (
-    ClassifierParser,
-    MapperParser,
-    ReportParser,
-    XSIAMDashboardParser,
-)
+from demisto_sdk.commands.content_graph.parsers import * 
+
 
 logger = logging.getLogger("demisto-sdk")
 
@@ -1795,34 +1792,32 @@ def find_type(
         if path.lower().endswith("_unified.yml"):
             return FileType.UNIFIED_YML
 
-        if "category" in _dict:
-            if _dict.get("beta") and not ignore_sub_categories:
+        if IntegrationParser.match(_dict, path):
+            if (_dict.get("beta") and not ignore_sub_categories):
                 return FileType.BETA_INTEGRATION
 
             return FileType.INTEGRATION
 
-        if "script" in _dict:
+        if ScriptParser.match(_dict, path):
             if TEST_PLAYBOOKS_DIR in Path(path).parts and not ignore_sub_categories:
                 return FileType.TEST_SCRIPT
 
             return FileType.SCRIPT
 
-        if "tasks" in _dict:
+        if PlaybookParser.match(_dict, path):
             if TEST_PLAYBOOKS_DIR in Path(path).parts:
                 return FileType.TEST_PLAYBOOK
-
+        
             return FileType.PLAYBOOK
 
-        if "rules" in _dict:
-            if "samples" in _dict and PARSING_RULES_DIR in Path(path).parts:
-                return FileType.PARSING_RULE
+        # Had to duplicate the rules and used the path.. 
+        if ParsingRuleParser.match(_dict, path):
+            return FileType.PARSING_RULE
 
-            if MODELING_RULES_DIR in Path(path).parts:
-                return FileType.MODELING_RULE
+        if ModelingRuleParser.match(_dict, path):
+            return FileType.MODELING_RULE
 
-        if "global_rule_id" in _dict or (
-            isinstance(_dict, list) and _dict and "global_rule_id" in _dict[0]
-        ):
+        if CorrelationRuleParser.match(_dict, path):
             return FileType.CORRELATION_RULE
 
     if file_type == "json" or path.lower().endswith(".json"):
@@ -1832,7 +1827,7 @@ def find_type(
         ):
             return FileType.MODELING_RULE_SCHEMA
 
-        if "widgetType" in _dict:
+        if WidgetParser.match(_dict, path):
             return FileType.WIDGET
 
         if ReportParser.match(_dict):
@@ -1857,7 +1852,7 @@ def find_type(
 
         if ClassifierParser.match(_dict):
             return FileType.CLASSIFIER
-        
+
         if MapperParser.match(_dict):
             return FileType.MAPPER
 
@@ -1865,11 +1860,14 @@ def find_type(
             return FileType.CONNECTION
 
         if (
-            "layout" in _dict or "kind" in _dict
-        ):  # it's a Layout or Dashboard but not a Generic Object
-            if "kind" in _dict or "typeId" in _dict:
-                return FileType.LAYOUT
+            "layout" in _dict
+            and ("kind" in _dict or "typeId" in _dict)
+            or "layout" not in _dict
+            and "kind" in _dict
+        ):
+            return FileType.LAYOUT
 
+        elif "layout" in _dict:
             return FileType.DASHBOARD
 
         if "group" in _dict and LAYOUT_CONTAINER_FIELDS.intersection(_dict):
@@ -1906,7 +1904,7 @@ def find_type(
         if XSIAMDashboardParser.match(_dict):
             return FileType.XSIAM_DASHBOARD
 
-        
+
         if XSIAMReportParser.match(_dict):
             return FileType.XSIAM_REPORT
 

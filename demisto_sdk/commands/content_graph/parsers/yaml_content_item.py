@@ -88,3 +88,7 @@ class YAMLContentItemParser(ContentItemParser):
 
         self.path = Path(yaml_path)
         return get_yaml(self.path.as_posix(), keep_order=False)
+
+    @staticmethod
+    def match(_dict: dict, path: str) -> bool:
+        return path.lower().endswith(".yml")

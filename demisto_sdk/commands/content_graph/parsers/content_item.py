@@ -263,7 +263,7 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
 
     @abstractmethod
     @staticmethod
-    def match(_dict) -> bool:
+    def match(_dict: dict, path: str) -> bool:
         # Gets a file data and determines if this is a file related to the specific content item parser.
         pass
 

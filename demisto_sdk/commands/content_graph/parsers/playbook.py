@@ -203,3 +203,7 @@ class PlaybookParser(YAMLContentItemParser, content_type=ContentType.PLAYBOOK):
             self.handle_script_task(task, is_mandatory)
             self.handle_command_task(task, is_mandatory)
             self.handle_field_mapping(task, is_mandatory)
+
+    @staticmethod
+    def match(_dict: dict, path: str) -> bool:
+        return YAMLContentItemParser.match(_dict, path) and "tasks" in _dict

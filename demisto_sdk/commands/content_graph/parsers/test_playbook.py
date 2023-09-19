@@ -44,3 +44,7 @@ class TestPlaybookParser(PlaybookParser, content_type=ContentType.TEST_PLAYBOOK)
             MarketplaceVersions.XSOAR_SAAS,
             MarketplaceVersions.XSOAR_ON_PREM,
         }
+
+    @staticmethod
+    def match(_dict) -> bool:
+        return "tasks" in _dict

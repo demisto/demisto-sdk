@@ -76,3 +76,8 @@ class ScriptParser(IntegrationScriptParser, content_type=ContentType.SCRIPT):
         if not code:
             raise ValueError("Script code is not available")
         return set(EXECUTE_CMD_PATTERN.findall(code))
+    
+
+    @staticmethod 
+    def match(_dict: dict, path: str) -> bool:
+        return IntegrationScriptParser.match(_dict, path) and "script" in _dict

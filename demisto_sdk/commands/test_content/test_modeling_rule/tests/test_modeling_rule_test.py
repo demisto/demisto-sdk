@@ -1235,6 +1235,131 @@ class TestTheTestModelingRuleCommandSingleRule:
         except typer.Exit:
             assert False, "No exception should be raised in this scenario."
 
+    def test_the_test_modeling_rule_command_results_do_not_match_expectations_with_ignore_config(
+        self, pack, monkeypatch, mocker
+    ):
+        """
+        Given:
+            - A test data file including ignoring modeling rule test data.
+
+        When:
+            - The pack is simulated to be on the tenant.
+            - The command is run in non-interactive mode.
+            - The push of the test data is simulated to succeed.
+            - Checking the dataset exists is simulated to succeed.
+            - Starting the XQL query is simulated to succeed.
+            - Getting the XQL query results is simulated to succeed.
+            - The results do not match the expectations.
+
+        Then:
+            - Verify we get a message saying the results do not match the expectations.
+            - The command returns with a non-zero exit code.
+        """
+        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+        monkeypatch.setenv("COLUMNS", "1000")
+
+        from demisto_sdk.commands.test_content.test_modeling_rule.test_modeling_rule import (
+            app as test_modeling_rule_cmd,
+        )
+        from demisto_sdk.commands.test_content.xsiam_tools.test_data import TestData
+
+        runner = CliRunner()
+        mocker.patch("time.sleep", return_value=None)
+
+        # Create Test Data File
+        pack.create_modeling_rule(DEFAULT_MODELING_RULE_NAME, rules=ONE_MODEL_RULE_TEXT)
+        modeling_rule_directory = Path(
+            pack._modeling_rules_path / DEFAULT_MODELING_RULE_NAME
+        )
+        path_to_fake_test_data_file = (
+            Path(__file__).parent / "test_data/fake_test_data_file.json"
+        )
+
+        test_data_file = pack.modeling_rules[0].testdata
+        fake_test_data = TestData.parse_file(path_to_fake_test_data_file.as_posix())
+        test_data_file.write_as_text(fake_test_data.json(indent=4))
+        test_data_file.update(
+            {"ignored_validations": [Validations.TEST_DATA_CONFIG_IGNORE]}
+        )
+
+        try:
+            with requests_mock.Mocker() as m:
+                with SetFakeXsiamClientEnvironmentVars() as fake_env_vars:
+                    # Arrange
+                    m.get(
+                        f"{fake_env_vars.demisto_base_url}/xsoar/contentpacks/metadata/installed",
+                        json=[{"name": pack.name, "id": pack.name}],
+                    )
+                    m.post(
+                        f"{fake_env_vars.demisto_base_url}/logs/v1/xsiam",
+                        json={},
+                        status_code=200,
+                    )
+                    m.post(
+                        f"{fake_env_vars.demisto_base_url}/public_api/v1/xql/start_xql_query/",
+                        json={"reply": "fake-execution-id"},
+                        status_code=200,
+                    )
+
+                    id_key = f"{fake_test_data.data[0].dataset}.test_data_event_id"
+                    event_id_1 = str(fake_test_data.data[0].test_data_event_id)
+                    event_id_2 = str(fake_test_data.data[1].test_data_event_id)
+                    query_results_1 = fake_test_data.data[0].expected_values.copy()
+                    query_results_1["xdm.event.outcome_reason"] = "DisAllowed"
+                    m.post(
+                        f"{fake_env_vars.demisto_base_url}/public_api/v1/xql/get_query_results/",
+                        [
+                            {
+                                "json": {
+                                    "reply": {
+                                        "status": "SUCCESS",
+                                        "results": {"data": ["some-results"]},
+                                    }
+                                },
+                                "status_code": 200,
+                            },
+                            {
+                                "json": {
+                                    "reply": {
+                                        "status": "SUCCESS",
+                                        "results": {
+                                            "data": [
+                                                {id_key: event_id_1, **query_results_1},
+                                                {
+                                                    id_key: event_id_2,
+                                                    **fake_test_data.data[
+                                                        1
+                                                    ].expected_values,
+                                                },
+                                            ],
+                                        },
+                                    }
+                                },
+                                "status_code": 200,
+                            },
+                        ],
+                    )
+                    # Act
+                    result = runner.invoke(
+                        test_modeling_rule_cmd,
+                        [
+                            modeling_rule_directory.as_posix(),
+                            "--non-interactive",
+                            "--sleep_interval",
+                            "0",
+                            "--retry_attempts",
+                            "0",
+                        ],
+                    )
+                    # Assert
+                    assert result.exit_code == 0
+                    assert str_in_call_args_list(
+                        logger_info.call_args_list,
+                        "test data config is ignored skipping the test data validation",
+                    )
+        except typer.Exit:
+            assert False, "No exception should be raised in this scenario."
+
 
 class TestTheTestModelingRuleCommandMultipleRules:
     def test_fail_one_pass_second(self, repo, monkeypatch, mocker):

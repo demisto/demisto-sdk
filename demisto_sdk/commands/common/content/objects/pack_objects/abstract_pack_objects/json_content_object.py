@@ -78,6 +78,7 @@ class JSONContentObject(JSONObject):
     @property
     def from_version(self) -> Version:
         """Object from_version attribute.
+        Note: On Packaging>=v23, Version('') is no longer equivalent to Version("0.0.0"), which is why we do the `or 0.0.0`
 
         Returns:
             version: Version object which able to be compared with other Version object.
@@ -91,6 +92,7 @@ class JSONContentObject(JSONObject):
     @property
     def to_version(self) -> Version:
         """Object to_version attribute.
+        Note: On Packaging>=v23, Version('') is no longer equivalent to Version("0.0.0"), which is why we do the `or 0.0.0`
 
         Returns:
             version: Version object which able to be compared with other Version object.

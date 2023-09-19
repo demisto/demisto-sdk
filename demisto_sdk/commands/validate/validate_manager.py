@@ -320,6 +320,7 @@ class ValidateManager:
             FileType.INI,
             FileType.PEM,
             FileType.METADATA,
+            FileType.VULTURE_WHITELIST,
         )
 
         self.is_external_repo = is_external_repo
@@ -2658,6 +2659,9 @@ class ValidateManager:
 
         if file_type == FileType.CONF_JSON:
             return file_path, "", True
+
+        if file_type == FileType.VULTURE_WHITELIST:
+            return irrelevant_file_output
 
         if self.ignore_files_irrelevant_for_validation(
             file_path, check_metadata_files=check_metadata_files

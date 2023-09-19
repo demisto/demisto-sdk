@@ -200,7 +200,7 @@ class ModelingRule(YAMLContentUnifiedObject):
         flags=re.M,
     )
     CALL_RULE_REGEX = re.compile(
-        r"call\s*(?P<rule_name>\w+)",
+        r"call\s+(?P<rule_name>\w+)",
         flags=re.IGNORECASE,
     )
     TESTDATA_FILE_SUFFIX = "_testdata.json"

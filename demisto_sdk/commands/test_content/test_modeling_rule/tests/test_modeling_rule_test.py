@@ -1690,10 +1690,13 @@ def test_day_suffix(day, suffix):
     assert day_suffix(day) == suffix
 
 
-@pytest.mark.parametrize('mr_text, expected_result', [
-    ('historically', False),
-    ('call a', True),
-])
+@pytest.mark.parametrize(
+    "mr_text, expected_result",
+    [
+        ("historically", False),
+        ("call a", True),
+    ],
+)
 def test_call_rule_regex(mr_text, expected_result):
     """
     Test the CALL_RULE_REGEX regex matches text containing 'call'.
@@ -1708,7 +1711,10 @@ def test_call_rule_regex(mr_text, expected_result):
     Then:
         - The search result should match expected_result
     """
-    from demisto_sdk.commands.common.content.objects.pack_objects.modeling_rule.modeling_rule import ModelingRule
+    from demisto_sdk.commands.common.content.objects.pack_objects.modeling_rule.modeling_rule import (
+        ModelingRule,
+    )
+
     mr = ModelingRule
     assert bool(mr.CALL_RULE_REGEX.search(mr_text)) == expected_result
 

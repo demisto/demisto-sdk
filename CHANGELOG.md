@@ -19,7 +19,7 @@
 * Updated the **modeling-rules init & test** commands to support RULE section fields.
 * Stability improvements for **graph create** and **graph update** commands.
 * Fixed the *metadata* type in the XSIAM dashboard schema to *map*, with possible values: **lazy_load** and **cache_ttl**
-* Added validation to check if custom outputs were used in a command outputs, they should follow the mandatory context standards.
+* Added validation to check if reputation commands' outputs were used in a non reputation command outputs, they should follow the mandatory context standards for reputation commands.
 
 ## 1.20.2
 * Updated the **pre-commit** command to run on all python versions in one run.

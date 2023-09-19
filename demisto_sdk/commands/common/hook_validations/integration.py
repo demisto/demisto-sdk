@@ -1,7 +1,7 @@
 import os
 import re
 from pathlib import Path
-from typing import Dict, Optional, Set, Tuple
+from typing import Dict, List, Optional, Set
 
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import (
@@ -28,7 +28,6 @@ from demisto_sdk.commands.common.constants import (
     RELIABILITY_PARAMETER_NAMES,
     REPUTATION_COMMAND_NAMES,
     TYPE_PWSH,
-    XSOAR_CONTEXT_AND_OUTPUTS_URL,
     XSOAR_CONTEXT_STANDARD_URL,
     XSOAR_SUPPORT,
     MarketplaceVersions,
@@ -70,6 +69,20 @@ from demisto_sdk.commands.common.tools import (
 )
 
 default_additional_info = load_default_additional_info_dict()
+
+
+class OutputsResults:
+    def __init__(
+        self,
+        context_outputs_paths: Set,
+        misspelled_outputs: List,
+        misspelled_outputs_objects: Set,
+        reputation_objects: Set,
+    ):
+        self.context_outputs_paths: Set = context_outputs_paths
+        self.misspelled_outputs: List = misspelled_outputs
+        self.misspelled_outputs_objects: Set = misspelled_outputs_objects
+        self.reputation_objects: Set = reputation_objects
 
 
 class IntegrationValidator(ContentEntityValidator):
@@ -602,7 +615,7 @@ class IntegrationValidator(ContentEntityValidator):
 
         return missing_outputs, missing_descriptions
 
-    def check_all_reputation_outputs(
+    def validate_all_reputation_outputs_exist(
         self, command_name: str, outputs: Set[str], used_reputation_objects: Set[str]
     ) -> bool:
         """check if all mandatory outputs for custom object do exist.
@@ -613,34 +626,36 @@ class IntegrationValidator(ContentEntityValidator):
         Returns:
             bool: Whether all mandatory outputs of custom outputs exist or not
         """
-        missing_outputs = []
         objects_missing_outputs = set()
         outputs_exist = True
+        missing_outputs_map = {}
 
         for ioc in used_reputation_objects:
+            missing_outputs = []
             for output in IOC_OUTPUTS_DICT.get(ioc.lower(), ()):
                 if output not in outputs:
                     missing_outputs.append(output)
                     objects_missing_outputs.add(ioc)
+            missing_outputs_map[ioc] = missing_outputs
+        for ioc, outputs in missing_outputs_map.items():
+            if outputs:
+                error_message, error_code = Errors.command_reputation_output_is_missing(
+                    command_name,
+                    outputs,
+                    ioc,
+                )
+                if self.handle_error(
+                    error_message,
+                    error_code,
+                    file_path=self.file_path,
+                    warning=self.structure_validator.quiet_bc,
+                ):
+                    outputs_exist = False
 
-        if missing_outputs:
-            error_message, error_code = Errors.command_reputation_output_is_missing(
-                command_name,
-                missing_outputs,
-                objects_missing_outputs,
-                XSOAR_CONTEXT_STANDARD_URL,
-            )
-            if self.handle_error(
-                error_message,
-                error_code,
-                file_path=self.file_path,
-                warning=self.structure_validator.quiet_bc,
-            ):
-                outputs_exist = False
         return outputs_exist
 
     @staticmethod
-    def get_outputs(command: dict) -> Tuple[set, list, set, set]:
+    def get_outputs(command: dict) -> OutputsResults:
         """get outputs of a command, and find custom objects used in the command outputs.
 
         Returns:
@@ -651,6 +666,7 @@ class IntegrationValidator(ContentEntityValidator):
         custom_objects = set()
         context_outputs_paths = set()
         used_iocs = set()
+        # invalid_outputs_map = {}
         for output in command.get("outputs") or []:
             context_path = output.get("contextPath", "")
             context_outputs_paths.add(context_path)
@@ -669,7 +685,10 @@ class IntegrationValidator(ContentEntityValidator):
                 ):  # the output is not spelled as expected
                     invalid_outputs.append(context_path)
                     custom_objects.add(custom_context_output)
-        return context_outputs_paths, invalid_outputs, custom_objects, used_iocs
+        return OutputsResults(
+            context_outputs_paths, invalid_outputs, custom_objects, used_iocs
+        )
+        # return context_outputs_paths, invalid_outputs, custom_objects, used_iocs
 
     @error_codes("IN158")
     def is_valid_reputation_command_outputs(self) -> bool:
@@ -684,19 +703,22 @@ class IntegrationValidator(ContentEntityValidator):
         outputs_valid = True
         outputs_exist = True
         for command in commands:
-            (
-                context_outputs_paths,
-                invalid_outputs,
-                custom_objects,
-                used_iocs,
-            ) = self.get_outputs(command)
+            outputs_results = self.get_outputs(command)
+            # (
+            #     context_outputs_paths,
+            #     invalid_outputs,
+            #     custom_objects,
+            #     used_iocs,
+            # ) = self.get_outputs(command)
 
-            if invalid_outputs:
-                error_message, error_code = Errors.command_reputation_output_is_invalid(
+            if outputs_results.misspelled_outputs:
+                (
+                    error_message,
+                    error_code,
+                ) = Errors.command_reputation_output_capitalization_incorrect(
                     command.get("name"),
-                    invalid_outputs,
-                    custom_objects,
-                    XSOAR_CONTEXT_AND_OUTPUTS_URL,
+                    outputs_results.misspelled_outputs,
+                    outputs_results.misspelled_outputs_objects,
                 )
                 if self.handle_error(
                     error_message,
@@ -705,8 +727,10 @@ class IntegrationValidator(ContentEntityValidator):
                     warning=self.structure_validator.quiet_bc,
                 ):
                     outputs_valid = False
-            outputs_exist = self.check_all_reputation_outputs(
-                command.get("name"), context_outputs_paths, used_iocs
+            outputs_exist = self.validate_all_reputation_outputs_exist(
+                command.get("name"),
+                outputs_results.context_outputs_paths,
+                outputs_results.reputation_objects,
             )
         return all([outputs_valid, outputs_exist])
 

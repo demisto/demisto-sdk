@@ -21,6 +21,8 @@ from demisto_sdk.commands.common.constants import (
     RELIABILITY_PARAMETER_NAMES,
     RN_CONTENT_ENTITY_WITH_STARS,
     RN_HEADER_BY_FILE_TYPE,
+    XSOAR_CONTEXT_AND_OUTPUTS_URL,
+    XSOAR_CONTEXT_STANDARD_URL,
     FileType,
     MarketplaceVersions,
 )
@@ -717,7 +719,7 @@ ERROR_CODE: Dict = {
         "code": "IN157",
         "related_field": "script",
     },
-    "command_reputation_output_is_invalid": {
+    "command_reputation_output_capitalization_incorrect": {
         "code": "IN158",
         "related_field": "outputs",
     },
@@ -1570,8 +1572,8 @@ ALLOWED_IGNORE_ERRORS = (
         "IN107",
         "DB100",
         "GR103",
-        "IN158",
-        "IN159",
+        # "IN158",
+        # "IN159",
     ]
 )
 
@@ -4407,16 +4409,15 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def command_reputation_output_is_invalid(
+    def command_reputation_output_capitalization_incorrect(
         command_name: str,
         invalid_outputs: list[str],
         used_objects: set,
-        context_outputs_url: str,
     ):
         return (
             f"The {command_name} command returns the following reputation outputs:\n{invalid_outputs}\nwhich is"
-            f" using mandatory objects:\n{used_objects} spelled incorrectly. Please fix accordingly."
-            f"\nFor further information: {context_outputs_url}"
+            f" using mandatory objects:\n{used_objects} with incorrect capitalization. Please fix accordingly."
+            f"\nFor further information: {XSOAR_CONTEXT_AND_OUTPUTS_URL}"
         )
 
     @staticmethod
@@ -4424,11 +4425,10 @@ class Errors:
     def command_reputation_output_is_missing(
         command_name: str,
         reputation_output: list,
-        objects_missing_outputs: set[str],
-        context_standard: str,
+        objects_missing_outputs: str,
     ):
         return (
             f"The {command_name} command is using a reputation command context objects: {objects_missing_outputs},"
             f" which is missing the following mandatory outputs: {reputation_output}. "
-            f"For further info: {context_standard}"
+            f"For further info: {XSOAR_CONTEXT_STANDARD_URL}"
         )

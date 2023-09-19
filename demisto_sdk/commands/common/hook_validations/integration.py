@@ -664,7 +664,7 @@ class IntegrationValidator(ContentEntityValidator):
         )
         return reputation_objects[0] if reputation_objects else None
 
-    def get_outputs(cls, command: dict) -> OutputsResults:
+    def handle_command_outputs(cls, command: dict) -> OutputsResults:
         """get outputs of a command, and find custom objects used in the command outputs.
 
         Returns:
@@ -705,13 +705,7 @@ class IntegrationValidator(ContentEntityValidator):
         outputs_valid = True
         outputs_exist = True
         for command in commands:
-            outputs_results = self.get_outputs(command)
-            # (
-            #     context_outputs_paths,
-            #     invalid_outputs,
-            #     custom_objects,
-            #     used_iocs,
-            # ) = self.get_outputs(command)
+            outputs_results = self.handle_command_outputs(command)
 
             if outputs_results.misspelled_outputs:
                 (

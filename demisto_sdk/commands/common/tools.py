@@ -118,9 +118,15 @@ from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
 from demisto_sdk.commands.common.handlers import YAML_Handler
+from demisto_sdk.commands.content_graph.parsers.generic_module import GenericModuleParser
+from demisto_sdk.commands.content_graph.parsers.list import ListParser
+from demisto_sdk.commands.content_graph.parsers.xsiam_report import XSIAMReportParser
 
 if TYPE_CHECKING:
     from demisto_sdk.commands.content_graph.interface import ContentGraphInterface
+
+
+from demisto_sdk.commands.content_graph.parsers import ClassifierParser, MapperParser, ReportParser, XSIAMDashboardParser
 
 logger = logging.getLogger("demisto-sdk")
 
@@ -1822,7 +1828,7 @@ def find_type(
         if "widgetType" in _dict:
             return FileType.WIDGET
 
-        if "orientation" in _dict:
+        if ReportParser.match(_dict):
             return FileType.REPORT
 
         if "color" in _dict and "cliName" not in _dict:
@@ -1842,12 +1848,11 @@ def find_type(
         if "brandName" in _dict and "transformer" in _dict:
             return FileType.OLD_CLASSIFIER
 
-        if ("transformer" in _dict and "keyTypeMap" in _dict) or "mapping" in _dict:
-            if _dict.get("type") and _dict.get("type") == "classification":
-                return FileType.CLASSIFIER
-            elif _dict.get("type") and "mapping" in _dict.get("type"):
-                return FileType.MAPPER
-            return None
+        if ClassifierParser.match(_dict):
+            return FileType.CLASSIFIER
+        
+        if MapperParser.match(_dict):
+            return FileType.MAPPER
 
         if "canvasContextConnections" in _dict:
             return FileType.CONNECTION
@@ -1872,10 +1877,10 @@ def find_type(
         ):
             return FileType.PRE_PROCESS_RULES
 
-        if "allRead" in _dict and "truncated" in _dict:
+        if ListParser.match(_dict):
             return FileType.LISTS
 
-        if "definitionIds" in _dict and "views" in _dict:
+        if GenericModuleParser.match(_dict):
             return FileType.GENERIC_MODULE
 
         if "auditable" in _dict:
@@ -1891,10 +1896,11 @@ def find_type(
         if isinstance(_dict, dict) and "wizard" in _dict:
             return FileType.WIZARD
 
-        if "dashboards_data" in _dict:
+        if XSIAMDashboardParser.match(_dict):
             return FileType.XSIAM_DASHBOARD
 
-        if "templates_data" in _dict:
+        
+        if XSIAMReportParser.match(_dict):
             return FileType.XSIAM_REPORT
 
         if "trigger_id" in _dict:

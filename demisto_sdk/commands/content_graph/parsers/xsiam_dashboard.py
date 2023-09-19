@@ -1,3 +1,4 @@
+from abc import abstractmethod
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set
 
@@ -41,3 +42,7 @@ class XSIAMDashboardParser(
         return (
             self.original_json_data.get("toVersion") or DEFAULT_CONTENT_ITEM_TO_VERSION
         )
+
+    @staticmethod
+    def match(_dict) -> bool:
+        return 'dashboards_data' in _dict

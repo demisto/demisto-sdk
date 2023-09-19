@@ -24,3 +24,7 @@ class ListParser(JSONContentItemParser, content_type=ContentType.LIST):
             MarketplaceVersions.XSOAR_SAAS,
             MarketplaceVersions.XSOAR_ON_PREM,
         }
+
+    @staticmethod
+    def match(_dict) -> bool:
+        return "allRead" in _dict and "truncated" in _dict

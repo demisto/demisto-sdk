@@ -105,3 +105,14 @@ class MapperParser(JSONContentItemParser, content_type=ContentType.MAPPER):
                     self.get_filters_and_transformers_from_complex_value(
                         incident_field_complex
                     )
+
+    
+    @staticmethod
+    def match(_dict) -> bool:
+        return bool(
+            (
+                ("transformer" in _dict and "keyTypeMap" in _dict)
+                or "mapping" in _dict
+            )
+            and (_dict.get("type") and "mapping" in _dict.get("type"))
+        )

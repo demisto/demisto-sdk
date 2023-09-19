@@ -24,3 +24,7 @@ class GenericModuleParser(
             MarketplaceVersions.XSOAR_SAAS,
             MarketplaceVersions.XSOAR_ON_PREM,
         }
+
+    @staticmethod
+    def match(_dict) -> bool:
+        return "definitionIds" in _dict and "views" in _dict

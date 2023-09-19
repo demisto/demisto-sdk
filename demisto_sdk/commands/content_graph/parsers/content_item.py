@@ -114,7 +114,7 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
 
                 file_type_to_content_type = FileType2ContentType.get(file_type)  # type: ignore
                 if not file_type_to_content_type:
-                    logger.error(f"Cotent item in {path=} is not supported")
+                    logger.error(f"Content item in {path=} is not supported")
                     raise InvalidContentItemException
 
                 content_type = file_type_to_content_type
@@ -260,6 +260,12 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
                 self.is_above_marketplace_min_version(),
             ]
         )
+
+    @abstractmethod
+    @staticmethod
+    def match(_dict) -> bool:
+        # Gets a file data and determines if this is a file related to the specific content item parser.
+        pass
 
     def is_above_marketplace_min_version(self) -> bool:
         return Version(self.toversion) >= Version(MARKETPLACE_MIN_VERSION)

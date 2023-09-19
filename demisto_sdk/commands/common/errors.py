@@ -4414,11 +4414,9 @@ class Errors:
         invalid_outputs: list[str],
         used_objects: set,
     ):
-        return (
-            f"The {command_name} command returns the following reputation outputs:\n{invalid_outputs}\nwhich is"
-            f" using mandatory objects:\n{used_objects} with incorrect capitalization. Please fix accordingly."
-            f"\nFor further information: {XSOAR_CONTEXT_AND_OUTPUTS_URL}"
-        )
+        return f"The {command_name} command returns the following reputation outputs:\n{invalid_outputs}\nwhich is\
+using mandatory objects:\n{used_objects} with incorrect capitalization. Please fix accordingly.\
+\nFor further information: {XSOAR_CONTEXT_AND_OUTPUTS_URL}"
 
     @staticmethod
     @error_code_decorator
@@ -4427,8 +4425,6 @@ class Errors:
         reputation_output: list,
         objects_missing_outputs: str,
     ):
-        return (
-            f"The {command_name} command is using a reputation command context objects: {objects_missing_outputs},"
-            f" which is missing the following mandatory outputs: {reputation_output}. "
-            f"For further info: {XSOAR_CONTEXT_STANDARD_URL}"
-        )
+        return f"The {command_name} command is using a reputation command context objects: {objects_missing_outputs},\
+which is missing the following mandatory outputs: {reputation_output}.\
+For further info: {XSOAR_CONTEXT_STANDARD_URL}"

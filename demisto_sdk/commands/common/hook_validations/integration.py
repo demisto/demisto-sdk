@@ -655,7 +655,16 @@ class IntegrationValidator(ContentEntityValidator):
         return outputs_exist
 
     @staticmethod
-    def get_outputs(command: dict) -> OutputsResults:
+    def get_reputation_output(context_path):
+        reputation_objects = list(
+            filter(
+                lambda context: context_path.lower().startswith(context.lower()),
+                MANDATORY_REPUTATION_CONTEXT_OBJECTS_NAMES,
+            )
+        )
+        return reputation_objects[0] if reputation_objects else None
+
+    def get_outputs(cls, command: dict) -> OutputsResults:
         """get outputs of a command, and find custom objects used in the command outputs.
 
         Returns:
@@ -666,29 +675,22 @@ class IntegrationValidator(ContentEntityValidator):
         custom_objects = set()
         context_outputs_paths = set()
         used_iocs = set()
-        # invalid_outputs_map = {}
         for output in command.get("outputs") or []:
             context_path = output.get("contextPath", "")
             context_outputs_paths.add(context_path)
-            reputation_objects_outputs = list(
-                filter(
-                    lambda context: context_path.lower().startswith(context.lower()),
-                    MANDATORY_REPUTATION_CONTEXT_OBJECTS_NAMES,
-                )
-            )
 
-            if reputation_objects_outputs:  # custom context output is used
-                custom_context_output = reputation_objects_outputs[0]
-                used_iocs.add(custom_context_output)
+            reputation_object = cls.get_reputation_output(context_path)
+
+            if reputation_object:  # custom context output is used
+                used_iocs.add(reputation_object)
                 if (
-                    custom_context_output not in context_path
+                    reputation_object not in context_path
                 ):  # the output is not spelled as expected
                     invalid_outputs.append(context_path)
-                    custom_objects.add(custom_context_output)
+                    custom_objects.add(reputation_object)
         return OutputsResults(
             context_outputs_paths, invalid_outputs, custom_objects, used_iocs
         )
-        # return context_outputs_paths, invalid_outputs, custom_objects, used_iocs
 
     @error_codes("IN158")
     def is_valid_reputation_command_outputs(self) -> bool:

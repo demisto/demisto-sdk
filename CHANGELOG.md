@@ -1,5 +1,6 @@
 # Changelog
 ## Unreleased
+* Fixed an issue where using **prepare-content**, **upload**, **zip-packs** and **download** on machines with default encoding other than unicode caused errors.
 
 ## 1.20.3
 * Added the `FileType.VULTURE_WHITELIST` to the `FileType` enum for `.vulture_whitelist.py` files.

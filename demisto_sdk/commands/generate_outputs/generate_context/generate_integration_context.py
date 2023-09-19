@@ -1,7 +1,7 @@
 from typing import Dict, List, Optional
 
 from demisto_sdk.commands.common.logger import logger
-from demisto_sdk.commands.common.tools import get_yaml, write_yml
+from demisto_sdk.commands.common.tools import get_yaml, write_dict
 from demisto_sdk.commands.generate_docs.common import build_example_dict
 from demisto_sdk.commands.generate_docs.generate_integration_doc import (
     get_command_examples,
@@ -127,7 +127,7 @@ def generate_integration_context(
 
         # Make the changes in place the input yml
         logger.info(f"[green]Writing outputs to {output_path}[/green]")
-        write_yml(output_path, yml_data)
+        write_dict(output_path, yml_data)
     except ValueError as ex:
         logger.info(f"[red]Error: {str(ex)}[/red]")
         return 1

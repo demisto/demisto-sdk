@@ -1,14 +1,20 @@
 # Site packages
+import sys
+
+import click
+
+try:
+    import git
+except ImportError:
+    sys.exit(click.style("Git executable cannot be found, or is invalid", fg="red"))
+
 import copy
 import functools
 import logging
 import os
-import sys
 from pathlib import Path
 from typing import IO, Any, Dict, Iterable, Tuple, Union
 
-import click
-import git
 import typer
 from pkg_resources import DistributionNotFound, get_distribution
 
@@ -136,25 +142,25 @@ def logging_setup_decorator(func, *args, **kwargs):
         return None
 
     @click.option(
-        "--console_log_threshold",
+        "--console-log-threshold",
         help="Minimum logging threshold for the console logger."
         " Possible values: DEBUG, INFO, WARNING, ERROR.",
     )
     @click.option(
-        "--file_log_threshold",
+        "--file-log-threshold",
         help="Minimum logging threshold for the file logger."
         " Possible values: DEBUG, INFO, WARNING, ERROR.",
     )
     @click.option(
-        "--log_file_path",
+        "--log-file-path",
         help="Path to the log file. Default: Content root path.",
     )
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
         logging_setup(
-            console_log_threshold=kwargs.get("console_log_threshold") or logging.INFO,
-            file_log_threshold=kwargs.get("file_log_threshold") or logging.DEBUG,
-            log_file_path=kwargs.get("log_file_path") or None,
+            console_log_threshold=kwargs.get("console-log-threshold") or logging.INFO,
+            file_log_threshold=kwargs.get("file-log-threshold") or logging.DEBUG,
+            log_file_path=kwargs.get("log-file-path") or None,
         )
 
         handle_deprecated_args(get_context_arg(args).args)
@@ -189,9 +195,9 @@ def logging_setup_decorator(func, *args, **kwargs):
 @click.pass_context
 def main(ctx, config, version, release_notes, **kwargs):
     logging_setup(
-        console_log_threshold=kwargs.get("console_log_threshold", logging.INFO),
-        file_log_threshold=kwargs.get("file_log_threshold", logging.DEBUG),
-        log_file_path=kwargs.get("log_file_path"),
+        console_log_threshold=kwargs.get("console-log-threshold", logging.INFO),
+        file_log_threshold=kwargs.get("file-log-threshold", logging.DEBUG),
+        log_file_path=kwargs.get("log-file-path"),
     )
     global logger
     logger = logging.getLogger("demisto-sdk")
@@ -199,11 +205,6 @@ def main(ctx, config, version, release_notes, **kwargs):
 
     config.configuration = Configuration()
     import dotenv
-
-    if sys.version_info[:2] == (3, 8):
-        logger.info(
-            "[red]Demisto-SDK will soon stop supporting Python 3.8. Please update your python environment.[/red]"
-        )
 
     dotenv.load_dotenv(CONTENT_PATH / ".env", override=True)  # type: ignore # load .env file from the cwd
     if (
@@ -214,7 +215,7 @@ def main(ctx, config, version, release_notes, **kwargs):
         except DistributionNotFound:
             __version__ = "dev"
             logger.info(
-                "[yellow]Cound not find the version of the demisto-sdk. This usually happens when running in a development environment.[/yellow]"
+                "[yellow]Could not find the version of the demisto-sdk. This usually happens when running in a development environment.[/yellow]"
             )
         else:
             last_release = ""
@@ -424,7 +425,7 @@ def extract_code(ctx, config, **kwargs):
     help="The marketplace the content items are created for, that determines usage of marketplace "
     "unique text. Default is the XSOAR marketplace.",
     default="xsoar",
-    type=click.Choice(["xsoar", "marketplacev2", "v2"]),
+    type=click.Choice([mp.value for mp in list(MarketplaceVersions)] + ["v2"]),
 )
 @click.pass_context
 @logging_setup_decorator
@@ -1176,9 +1177,9 @@ def lint(ctx, **kwargs):
 @click.pass_context
 def coverage_analyze(ctx, **kwargs):
     logger = logging_setup(
-        console_log_threshold=kwargs.get("console_log_threshold") or logging.INFO,
-        file_log_threshold=kwargs.get("file_log_threshold") or logging.DEBUG,
-        log_file_path=kwargs.get("log_file_path") or None,
+        console_log_threshold=kwargs.get("console-log-threshold") or logging.INFO,
+        file_log_threshold=kwargs.get("file-log-threshold") or logging.DEBUG,
+        log_file_path=kwargs.get("log-file-path") or None,
     )
     from demisto_sdk.commands.coverage_analyze.coverage_report import CoverageReport
 
@@ -2145,14 +2146,12 @@ def _generate_docs_for_file(kwargs: Dict[str, Any]):
         if command:
             if (
                 output_path
-                and (not os.path.isfile(os.path.join(output_path, "README.md")))
+                and (not Path(output_path, "README.md").is_file())
                 or (not output_path)
                 and (
-                    not os.path.isfile(
-                        os.path.join(
-                            os.path.dirname(os.path.realpath(input_path)), "README.md"
-                        )
-                    )
+                    not Path(
+                        os.path.dirname(os.path.realpath(input_path)), "README.md"
+                    ).is_file()
                 )
             ):
                 raise Exception(
@@ -2170,7 +2169,7 @@ def _generate_docs_for_file(kwargs: Dict[str, Any]):
                 "[red]File is not an Integration, Script, Playbook or a README.[/red]"
             )
 
-        if old_version and not os.path.isfile(old_version):
+        if old_version and not Path(old_version).is_file():
             raise Exception(
                 f"[red]Input old version file {old_version} was not found.[/red]"
             )
@@ -2589,9 +2588,9 @@ def postman_codegen(
 ):
     """Generates a Cortex XSOAR integration given a Postman collection 2.1 JSON file."""
     logger = logging_setup(
-        console_log_threshold=kwargs.get("console_log_threshold") or logging.INFO,
-        file_log_threshold=kwargs.get("file_log_threshold") or logging.DEBUG,
-        log_file_path=kwargs.get("log_file_path") or None,
+        console_log_threshold=kwargs.get("console-log-threshold") or logging.INFO,
+        file_log_threshold=kwargs.get("file-log-threshold") or logging.DEBUG,
+        log_file_path=kwargs.get("log-file-path") or None,
     )
     from demisto_sdk.commands.postman_codegen.postman_codegen import (
         postman_to_autogen_configuration,
@@ -2738,7 +2737,7 @@ def openapi_codegen(ctx, **kwargs):
         output_dir = kwargs["output_dir"]
 
     # Check the directory exists and if not, try to create it
-    if not os.path.exists(output_dir):
+    if not Path(output_dir).exists():
         try:
             os.mkdir(output_dir)
         except Exception as err:
@@ -2806,8 +2805,8 @@ def openapi_codegen(ctx, **kwargs):
             if root_objects:
                 command_to_run = command_to_run + f' -r "{root_objects}"'
             if (
-                kwargs.get("console_log_threshold")
-                and int(kwargs.get("console_log_threshold", logging.INFO))
+                kwargs.get("console-log-threshold")
+                and int(kwargs.get("console-log-threshold", logging.INFO))
                 >= logging.DEBUG
             ):
                 command_to_run = command_to_run + " -v"
@@ -3292,10 +3291,10 @@ def create_content_graph(
     help="Path to content graph zip file to import",
 )
 @click.option(
-    "-uc",
-    "--use-current",
+    "-uli",
+    "--use-local-import",
     is_flag=True,
-    help="Whether to use the current content graph to update",
+    help="Whether to use the current import files to import the graph.",
     default=False,
 )
 @click.option(
@@ -3325,7 +3324,7 @@ def update_content_graph(
     ctx,
     use_git: bool = False,
     marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR,
-    use_current: bool = False,
+    use_local_import: bool = False,
     imported_path: Path = None,
     packs: list = None,
     no_dependencies: bool = False,
@@ -3337,7 +3336,7 @@ def update_content_graph(
         ctx,
         use_git=use_git,
         marketplace=marketplace,
-        use_current=use_current,
+        use_local_import=use_local_import,
         imported_path=imported_path,
         packs_to_update=packs,
         no_dependencies=no_dependencies,
@@ -3420,6 +3419,12 @@ def update_content_graph(
     help="The demisto-sdk ref to use for the pre-commit hooks",
     default="",
 )
+@click.option(
+    "--dry-run",
+    help="Whether to run the pre-commit hooks in dry-run mode, which will only create the config file",
+    is_flag=True,
+    default=False,
+)
 @click.argument(
     "file_paths",
     nargs=-1,
@@ -3442,6 +3447,7 @@ def pre_commit(
     show_diff_on_failure: bool,
     sdk_ref: str,
     file_paths: Iterable[Path],
+    dry_run: bool,
     **kwargs,
 ):
     from demisto_sdk.commands.pre_commit.pre_commit_command import pre_commit_manager
@@ -3452,7 +3458,7 @@ def pre_commit(
         )
     input_files = []
     if input:
-        input_files = [Path(i) for i in input.split(",")]
+        input_files = [Path(i) for i in input.split(",") if i]
     elif file_paths:
         input_files = list(file_paths)
     if skip:
@@ -3472,6 +3478,7 @@ def pre_commit(
             verbose,
             show_diff_on_failure,
             sdk_ref=sdk_ref,
+            dry_run=dry_run,
         )
     )
 
@@ -3529,8 +3536,8 @@ main.add_command(typer_click_object2, "generate-modeling-rules")
 # ====================== graph command group ====================== #
 
 graph_cmd_group = typer.Typer(name="graph", hidden=True, no_args_is_help=True)
-graph_cmd_group.command("create", no_args_is_help=True)(create)
-graph_cmd_group.command("update", no_args_is_help=True)(update)
+graph_cmd_group.command("create", no_args_is_help=False)(create)
+graph_cmd_group.command("update", no_args_is_help=False)(update)
 graph_cmd_group.command("get-relationships", no_args_is_help=True)(get_relationships)
 main.add_command(typer.main.get_command(graph_cmd_group), "graph")
 

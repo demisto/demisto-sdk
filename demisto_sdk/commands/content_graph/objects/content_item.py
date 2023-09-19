@@ -1,4 +1,3 @@
-from abc import abstractmethod
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import TYPE_CHECKING, Callable, List, Optional, Set
@@ -31,6 +30,7 @@ from demisto_sdk.commands.common.tools import (
     get_file,
     get_pack_name,
     replace_incident_to_alert,
+    write_dict,
 )
 from demisto_sdk.commands.content_graph.common import (
     ContentType,
@@ -52,7 +52,7 @@ class ContentItem(BaseContent):
     toversion: str
     display_name: str
     deprecated: bool
-    description: Optional[str]
+    description: Optional[str] = ""
     is_test: bool = False
 
     @validator("path", always=True)
@@ -211,24 +211,33 @@ class ContentItem(BaseContent):
             data = self.data
             if "id" in summary_res:
                 summary_res["id"] = (
-                    data.get("commonfields", {}).get("id_x2") or self.object_id
+                    data.get("commonfields", {}).get("id") or self.object_id
                 )
             if "name" in summary_res:
-                summary_res["name"] = data.get("name_x2") or self.name
+                summary_res["name"] = data.get("name") or self.name
 
             if incident_to_alert:
-                if "name" in summary_res:
-                    summary_res["name"] = replace_incident_to_alert(summary_res["name"])
-                if "description" in summary_res:
-                    summary_res["description"] = replace_incident_to_alert(
-                        summary_res["description"]
-                    )
+                summary_res.update(
+                    {
+                        "id": replace_incident_to_alert(summary_res["id"]),
+                        "name": replace_incident_to_alert(summary_res["name"]),
+                        "description": replace_incident_to_alert(
+                            summary_res["description"]
+                        ),
+                    }
+                )
 
         return summary_res
 
-    @abstractmethod
     def metadata_fields(self) -> Set[str]:
-        raise NotImplementedError("Should be implemented in subclasses")
+        return {
+            "object_id",
+            "name",
+            "description",
+            "fromversion",
+            "toversion",
+            "deprecated",
+        }
 
     @property
     def normalize_name(self) -> str:
@@ -269,11 +278,11 @@ class ContentItem(BaseContent):
             return
         dir.mkdir(exist_ok=True, parents=True)
         try:
-            with (dir / self.normalize_name).open("w") as f:
-                self.handler.dump(
-                    self.prepare_for_upload(current_marketplace=marketplace),
-                    f,
-                )
+            write_dict(
+                dir / self.normalize_name,
+                data=self.prepare_for_upload(current_marketplace=marketplace),
+                handler=self.handler,
+            )
         except FileNotFoundError as e:
             logger.warning(f"Failed to dump {self.path} to {dir}: {e}")
 

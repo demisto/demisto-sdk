@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "demisto-sdk"
-version = "1.19.1"
+version = "1.20.3"
 description = "\"A Python library for the Demisto SDK\""
 authors = ["Demisto"]
 license = "MIT"
@@ -52,12 +52,13 @@ requests = "^2.27.1"
 "ruamel.yaml" = "^0.17.21"
 slack-sdk = "^3.17.0"
 
+tenacity = "^8.2.3"
 tabulate = ">=0.8.9,<0.10.0"
 ujson = "^5.1.0"
 urllib3 = "^1.26.9"
 wcmatch = "^8.3"
 yamlordereddictloader = "^0.4.0"
-GitPython = "^3.1.27,<3.1.31"
+GitPython = "^3.1.32"
 Pebble = ">=4.6.3,<6.0.0"
 PyPDF2 = "^1.28.6"
 giturlparse = "^0.10.0"
@@ -102,7 +103,7 @@ types-pkg-resources = "^0.1.3"
 packaging = "<22"
 orjson = "^3.8.3"
 more-itertools = "^9.0.0"
-junitparser = "^2.8.0"
+junitparser = "^3.1.0"
 
 [tool.poetry.group.dev.dependencies]
 mitmproxy = "^8.0.0"
@@ -168,6 +169,9 @@ select = [
     "TID251",
     "W",
     "PTH107",
+    "PTH113",
+    "PTH110",
+    "PTH119",
 ]
 
 target-version = "py38"
@@ -184,3 +188,4 @@ max-complexity = 30
 "ruamel.yaml".msg = "use YAML_Handler instead"
 "distutils.version".msg = "Use packaging.version.Version instead"
 "packaging.version.LooseVersion".msg = "Use packaging.version.Version instead"
+"git.Repo".msg = "Use GitUtil instead"

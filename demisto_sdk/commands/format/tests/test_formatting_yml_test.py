@@ -258,14 +258,12 @@ class TestFormatting:
                 __file__, "..", "..", "..", "common", "schemas", f"{file_type}.yml"
             )
         )
-        saved_file_path = os.path.join(
-            os.path.dirname(source_path), os.path.basename(destination_path)
-        )
+        saved_file_path = str(Path(source_path).parent / Path(destination_path).name)
         base_yml = formatter(
             input=source_path, output=saved_file_path, path=schema_path
         )
         base_yml.save_yml_to_destination_file()
-        assert os.path.isfile(saved_file_path)
+        assert Path(saved_file_path).is_file()
         Path(saved_file_path).unlink()
 
     INTEGRATION_PROXY_SSL_PACK = [
@@ -550,14 +548,12 @@ class TestFormatting:
                 __file__, "..", "..", "..", "common", "schemas", f"{file_type}.yml"
             )
         )
-        saved_file_path = os.path.join(
-            os.path.dirname(source_path), os.path.basename(destination_path)
-        )
+        saved_file_path = str(Path(source_path).parent / Path(destination_path).name)
         base_yml = formatter(
             input=source_path, output=saved_file_path, path=schema_path
         )
         base_yml.save_yml_to_destination_file()
-        assert os.path.isfile(saved_file_path)
+        assert Path(saved_file_path).is_file()
 
         with open(saved_file_path) as f:
             yaml_content = yaml.load(f)

@@ -27,6 +27,7 @@ from demisto_sdk.commands.content_graph.objects.integration_script import (
     IntegrationScript,
 )
 from demisto_sdk.commands.content_graph.objects.pack import Pack
+from demisto_sdk.commands.content_graph.objects.pack_metadata import PackMetadata
 from demisto_sdk.commands.content_graph.objects.playbook import Playbook
 from demisto_sdk.commands.content_graph.objects.repository import ContentDTO
 from demisto_sdk.commands.content_graph.objects.script import Script
@@ -47,6 +48,17 @@ def setup_method(mocker, repo: Repo):
     bc.CONTENT_PATH = Path(repo.path)
     mocker.patch.object(ContentGraphInterface, "repo_path", Path(repo.path))
     mocker.patch.object(neo4j_service, "REPO_PATH", Path(repo.path))
+    mocker.patch(
+        "demisto_sdk.commands.common.docker_images_metadata.get_remote_file_from_api",
+        return_value={
+            "docker_images": {
+                "python3": {
+                    "3.10.11.54799": {"python_version": "3.10.11"},
+                    "3.10.12.63474": {"python_version": "3.10.11"},
+                }
+            }
+        },
+    )
     neo4j_service.stop()
 
 
@@ -109,7 +121,7 @@ def mock_integration(
         marketplaces=[MarketplaceVersions.XSOAR],
         deprecated=False,
         type="python3",
-        docker_image="mock:docker",
+        docker_image="demisto/python3:3.10.11.54799",
         category="blabla",
         commands=[Command(name="test-command", description="")],
     )
@@ -141,7 +153,7 @@ def mock_script(
         marketplaces=marketplaces,
         deprecated=False,
         type="python3",
-        docker_image="mock:docker",
+        docker_image="demisto/python3:3.10.11.54799",
         tags=[],
         is_test=False,
         skip_prepare=skip_prepare,
@@ -600,6 +612,9 @@ class TestCreateContentGraph:
         mocker.patch.object(
             IntegrationScript, "get_supported_native_images", return_value=[]
         )
+        mocker.patch.object(
+            PackMetadata, "_get_tags_from_landing_page", retrun_value={}
+        )
 
         pack = repo.create_pack("TestPack")
         pack.pack_metadata.write_json(load_json("pack_metadata.json"))
@@ -921,7 +936,7 @@ class TestCreateContentGraph:
         When:
             - Running create_content_graph().
         Then:
-            - Make sure the the integrations are not recognized as duplicates and the command succeeds.
+            - Make sure the integrations are not recognized as duplicates and the command succeeds.
         """
         pack = mock_pack()
         integration = mock_integration()
@@ -1000,7 +1015,7 @@ class TestCreateContentGraph:
         When:
             - Running create_content_graph().
         Then:
-            - Make sure the the integrations are not recognized as duplicates and the command succeeds.
+            - Make sure the integrations are not recognized as duplicates and the command succeeds.
         """
         pack = mock_pack()
         integration = mock_integration()
@@ -1097,11 +1112,17 @@ class TestCreateContentGraph:
         mocker.patch.object(
             IntegrationScript, "get_supported_native_images", return_value=[]
         )
+        mocker.patch.object(
+            PackMetadata, "_get_tags_from_landing_page", retrun_value={}
+        )
 
         pack = repo.create_pack("TestPack")
         pack.pack_metadata.write_json(load_json("pack_metadata.json"))
         pack.create_script(name="getIncident")
-        pack.create_script(name="setIncident", skip_prepare=[SKIP_PREPARE_SCRIPT_NAME])
+        pack.create_script(
+            name="setIncident",
+            skip_prepare=[SKIP_PREPARE_SCRIPT_NAME],
+        )
 
         with ContentGraphInterface() as interface:
             create_content_graph(interface, output_path=tmp_path)
@@ -1158,3 +1179,51 @@ class TestCreateContentGraph:
             )
 
             assert not data
+
+    @pytest.mark.parametrize(
+        "docker_image, expected_python_version, is_taken_from_dockerhub",
+        [
+            ("demisto/python3:3.10.11.54799", "3.10.11", False),
+            ("demisto/pan-os-python:1.0.0.68955", "3.10.5", True),
+        ],
+    )
+    def test_create_content_graph_with_python_version(
+        self,
+        mocker,
+        repo: Repo,
+        docker_image: str,
+        expected_python_version: str,
+        is_taken_from_dockerhub: bool,
+    ):
+        """
+        Given:
+            Case A: docker image that its python version exists in the dockerfiles metadata file
+            Case B: docker image that its python version does not exist in the dockerfiles metadata file
+
+        When:
+            - Running create_content_graph()
+
+        Then:
+            - make sure that in both cases the python_version (lazy property) was loaded into the Integration
+              model because we want it in the graph metadata
+            Case A: the python version was taken from the dockerfiles metadata file
+            Case B: the python version was taken from the dockerhub api
+        """
+        from packaging.version import Version
+
+        dockerhub_api_mocker = mocker.patch(
+            "demisto_sdk.commands.common.docker_helper._get_python_version_from_dockerhub_api",
+            return_value=Version(expected_python_version),
+        )
+
+        pack = repo.create_pack()
+        pack.create_integration(docker_image=docker_image)
+
+        with ContentGraphInterface() as interface:
+            create_content_graph(interface)
+            integrations = interface.search(
+                marketplace=MarketplaceVersions.XSOAR,
+                content_type=ContentType.INTEGRATION,
+            )
+        assert expected_python_version == integrations[0].to_dict()["python_version"]
+        assert dockerhub_api_mocker.called == is_taken_from_dockerhub

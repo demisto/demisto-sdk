@@ -28,7 +28,11 @@ from demisto_sdk.commands.common.constants import (
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.logger import logger
-from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
+from demisto_sdk.commands.content_graph.common import (
+    ContentType,
+    LazyProperty,
+    RelationshipType,
+)
 from demisto_sdk.commands.content_graph.parsers.content_item import (
     ContentItemParser,
     InvalidContentItemException,
@@ -51,6 +55,9 @@ class BaseContentMetaclass(ModelMetaclass):
         If `content_type` is passed as an argument of the class, we add a mapping between the content type
         and the model class object.
 
+        In case there are lazy properties in the class model, will add them as a class member so we would be able
+        to load them during graph creation
+
         After all the model classes are created, `content_type_to_model` has a full mapping between content types
         and models, and only then we are ready to determine which model class to use based on a content item's type.
 
@@ -69,11 +76,18 @@ class BaseContentMetaclass(ModelMetaclass):
         if content_type:
             content_type_to_model[content_type] = model_cls
             model_cls.content_type = content_type
+
+        if lazy_properties := {
+            attr
+            for attr in dir(model_cls)
+            if isinstance(getattr(super_cls, attr), LazyProperty)
+        }:
+            model_cls._lazy_properties = lazy_properties  # type: ignore[attr-defined]
         return model_cls
 
 
 class BaseContent(ABC, BaseModel, metaclass=BaseContentMetaclass):
-    database_id: Optional[str] = Field(None)  # used for the database
+    database_id: Optional[str] = Field(None, exclude=True)  # used for the database
     object_id: str = Field(alias="id")
     content_type: ClassVar[ContentType] = Field(include=True)
     node_id: str
@@ -120,19 +134,32 @@ class BaseContent(ABC, BaseModel, metaclass=BaseContentMetaclass):
         # if has name attribute, return it, otherwise return the object id
         return self.object_id
 
+    def __add_lazy_properties(self):
+        """
+        This method would load the lazy properties into the model by calling their property methods.
+        Lazy properties are not loaded into the model until they are called directly.
+        """
+        if hasattr(self, "_lazy_properties"):
+            for _property in self._lazy_properties:  # type: ignore[attr-defined]
+                getattr(self, _property)
+
     def to_dict(self) -> Dict[str, Any]:
         """
-        This returns a JSON dictionary representation of the class.
+        This function is used to create the graph nodes, we use this method when creating the graph.
+        when creating the graph we want to load the lazy properties into the model.
+
         We use it instead of `self.dict()` because sometimes we need only the primitive values.
 
         Returns:
-            Dict[str, Any]: _description_
+            Dict[str, Any]: JSON dictionary representation of the class.
         """
+        self.__add_lazy_properties()
 
         json_dct = json.loads(self.json(exclude={"commands", "database_id"}))
         if "path" in json_dct and Path(json_dct["path"]).is_absolute():
             json_dct["path"] = (Path(json_dct["path"]).relative_to(CONTENT_PATH)).as_posix()  # type: ignore
         json_dct["content_type"] = self.content_type
+
         return json_dct
 
     @staticmethod

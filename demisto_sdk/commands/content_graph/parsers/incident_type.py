@@ -13,11 +13,11 @@ class IncidentTypeParser(JSONContentItemParser, content_type=ContentType.INCIDEN
         self, path: Path, pack_marketplaces: List[MarketplaceVersions]
     ) -> None:
         super().__init__(path, pack_marketplaces)
-        self.playbook = self.json_data.get("playbookId")
+        self.playbook = self.json_data.get("playbookId") or ""
         self.hours = self.json_data.get("hours")
         self.days = self.json_data.get("days")
         self.weeks = self.json_data.get("weeks")
-        self.closure_script = self.json_data.get("closureScript") or None
+        self.closure_script = self.json_data.get("closureScript", "")
 
         self.connect_to_dependencies()
 
@@ -27,6 +27,8 @@ class IncidentTypeParser(JSONContentItemParser, content_type=ContentType.INCIDEN
             MarketplaceVersions.XSOAR,
             MarketplaceVersions.MarketplaceV2,
             MarketplaceVersions.XPANSE,
+            MarketplaceVersions.XSOAR_SAAS,
+            MarketplaceVersions.XSOAR_ON_PREM,
         }
 
     def connect_to_dependencies(self) -> None:

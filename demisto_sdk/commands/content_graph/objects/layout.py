@@ -1,5 +1,5 @@
 import logging
-from typing import Callable, List, Optional, Set, Union
+from typing import Callable, List, Optional, Union
 
 import demisto_client
 from pydantic import Field
@@ -24,9 +24,6 @@ class Layout(ContentItem, content_type=ContentType.LAYOUT):  # type: ignore[call
     details: bool
     details_v2: bool
     mobile: bool
-
-    def metadata_fields(self) -> Set[str]:
-        return {"name", "description"}
 
     def prepare_for_upload(
         self,

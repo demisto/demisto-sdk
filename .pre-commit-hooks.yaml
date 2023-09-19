@@ -53,5 +53,6 @@
   name: update-additional-dependencies
   entry: update-additional-dependencies
   language: python
+  files: poetry.lock
   require_serial: true
   pass_filenames: false

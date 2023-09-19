@@ -20,13 +20,13 @@ from demisto_sdk.commands.common.constants import (
 )
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH, PYTHONPATH
 from demisto_sdk.commands.common.git_util import GitUtil
-from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     get_file_or_remote,
     get_last_remote_release_version,
     get_remote_file,
     string_to_bool,
+    write_dict,
 )
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.content_graph.objects.integration_script import (
@@ -46,7 +46,6 @@ PRECOMMIT_TEMPLATE_PATH = CONTENT_PATH / PRECOMMIT_TEMPLATE_NAME
 PRECOMMIT_PATH = CONTENT_PATH / ".pre-commit-config-content.yaml"
 SOURCERY_CONFIG_PATH = CONTENT_PATH / ".sourcery.yaml"
 
-CONTENT_PATH
 SKIPPED_HOOKS = {"format", "validate", "secrets"}
 
 INTEGRATION_SCRIPT_REGEX = re.compile(r"^Packs/.*/(?:Integrations|Scripts)/.*.yml$")
@@ -205,8 +204,9 @@ class PreCommitRunner:
             precommit_config["exclude"] += f"|{join_files(exclude_files or {})}"
         else:
             precommit_config["files"] = join_files(self.files_to_run)
-        with open(PRECOMMIT_PATH, "w") as f:
-            yaml.dump(precommit_config, f)
+
+        write_dict(PRECOMMIT_PATH, data=precommit_config)
+
         if dry_run:
             logger.info(
                 "Dry run, skipping pre-commit.\nConfig file saved to .pre-commit-config-content.yaml"

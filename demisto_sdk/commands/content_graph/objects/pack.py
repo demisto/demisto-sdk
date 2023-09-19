@@ -18,9 +18,11 @@ from demisto_sdk.commands.common.constants import (
     MarketplaceVersions,
 )
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
-from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.logger import logger
-from demisto_sdk.commands.common.tools import MarketplaceTagParser
+from demisto_sdk.commands.common.tools import (
+    MarketplaceTagParser,
+    write_dict,
+)
 from demisto_sdk.commands.content_graph.common import (
     PACK_METADATA_FILENAME,
     ContentType,
@@ -228,9 +230,7 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
         metadata.update(
             self._format_metadata(marketplace, self.content_items, self.depends_on)
         )
-
-        with open(path, "w") as f:
-            json.dump(metadata, f, indent=4, sort_keys=True)
+        write_dict(path, data=metadata, indent=4, sort_keys=True)
 
     def dump_readme(self, path: Path, marketplace: MarketplaceVersions) -> None:
 

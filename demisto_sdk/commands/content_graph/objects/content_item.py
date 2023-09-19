@@ -30,6 +30,7 @@ from demisto_sdk.commands.common.tools import (
     get_file,
     get_pack_name,
     replace_incident_to_alert,
+    write_dict,
 )
 from demisto_sdk.commands.content_graph.common import (
     ContentType,
@@ -279,11 +280,11 @@ class ContentItem(BaseContent):
             return
         dir.mkdir(exist_ok=True, parents=True)
         try:
-            with (dir / self.normalize_name).open("w") as f:
-                self.handler.dump(
-                    self.prepare_for_upload(current_marketplace=marketplace),
-                    f,
-                )
+            write_dict(
+                dir / self.normalize_name,
+                data=self.prepare_for_upload(current_marketplace=marketplace),
+                handler=self.handler,
+            )
         except FileNotFoundError as e:
             logger.warning(f"Failed to dump {self.path} to {dir}: {e}")
 

@@ -1,5 +1,6 @@
 # Changelog
 ## Unreleased
+* Fixed an issue where using **prepare-content**, **upload**, **zip-packs** and **download** on machines with default encoding other than unicode caused errors.
 * Updated the **update-content-graph** command to work with external repositories.
 * Updated the **validate** command to work with external repositories when using the *--graph* flag.
 

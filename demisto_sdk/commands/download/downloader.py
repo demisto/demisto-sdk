@@ -56,7 +56,7 @@ from demisto_sdk.commands.common.tools import (
     get_yml_paths_in_dir,
     is_sdk_defined_working_offline,
     retrieve_file_ending,
-    safe_write_unicode,
+    write_dict,
 )
 from demisto_sdk.commands.format.format_module import format_manager
 from demisto_sdk.commands.init.initiator import Initiator
@@ -510,11 +510,8 @@ class Downloader:
             for item in system_items_list:  # type: ignore
                 file_name: str = self.build_file_name(item)
                 file_path: str = os.path.join(self.system_content_temp_dir, file_name)
-                with open(file_path, "w") as file:
-                    if file_path.endswith("json"):
-                        json.dump(item, file)
-                    else:
-                        yaml.dump(item, file)
+                write_dict(file_path, data=item)
+
             return True
 
         except ApiException as e:
@@ -1276,11 +1273,9 @@ class Downloader:
             merge(file_data, preserved_data)
 
         if file_ending == "yml":
-            safe_write_unicode(lambda f: yaml.dump(file_data, f), Path(output_path))
+            write_dict(output_path, data=file_data, handler=yaml)
         elif file_ending == "json":
-            safe_write_unicode(
-                lambda f: json.dump(data=file_data, fp=f, indent=4), Path(output_path)
-            )
+            write_dict(output_path, data=file_data, handler=json, indent=4)
         else:
             raise RuntimeError(f"cannot merge file extension {file_ending}")
 

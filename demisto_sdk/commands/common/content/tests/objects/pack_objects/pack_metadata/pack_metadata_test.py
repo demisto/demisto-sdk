@@ -157,7 +157,7 @@ def test_price_setter_bad_int(new_price, expected_price):
 
 
 def test_dump_with_price(mocker):
-    def mock_json_dump(file_content, metadata_file, indent):
+    def mock_json_dump(file_content, metadata_file, indent, sort_keys):
         assert file_content["premium"] is not None
         assert file_content["vendorId"]
         assert file_content["vendorName"]

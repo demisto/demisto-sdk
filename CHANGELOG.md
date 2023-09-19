@@ -1,5 +1,9 @@
 # Changelog
 ## Unreleased
+* Fixed an issue where using **prepare-content**, **upload**, **zip-packs** and **download** on machines with default encoding other than unicode caused errors.
+* Added validation to check if reputation commands' outputs were used in a non reputation command outputs, they should follow the mandatory context standards for reputation commands.
+
+## 1.20.3
 * Added the `FileType.VULTURE_WHITELIST` to the `FileType` enum for `.vulture_whitelist.py` files.
 * Improved performance when reading `yml` files.
 * Fixed an issue where **format** would add unnecessary period at the end of descriptions ending with brackets.
@@ -19,7 +23,7 @@
 * Updated the **modeling-rules init & test** commands to support RULE section fields.
 * Stability improvements for **graph create** and **graph update** commands.
 * Fixed the *metadata* type in the XSIAM dashboard schema to *map*, with possible values: **lazy_load** and **cache_ttl**
-* Added validation to check if reputation commands' outputs were used in a non reputation command outputs, they should follow the mandatory context standards for reputation commands.
+* The **modeling-rules-test** will now ignore test data files containing the `test_data_config_ignore` key.
 
 ## 1.20.2
 * Updated the **pre-commit** command to run on all python versions in one run.
@@ -46,6 +50,7 @@
 * Fixed an issue where the **upload** command failed for private repositories while trying to find the landing_page.json file.
 * Added a log when a content item is missing from the repo, in **graph create** and **graph update**.
 * Replaced logs with a progress bar in **graph create** and **graph update**.
+
 
 ## 1.20.0
 * Fixed an issue where **update-release-notes** generated "available from Cortex XSOAR" instead of "from XSIAM" when run on XSIAM event collectors.

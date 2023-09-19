@@ -118,7 +118,9 @@ from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
 from demisto_sdk.commands.common.handlers import YAML_Handler
-from demisto_sdk.commands.content_graph.parsers.generic_module import GenericModuleParser
+from demisto_sdk.commands.content_graph.parsers.generic_module import (
+    GenericModuleParser,
+)
 from demisto_sdk.commands.content_graph.parsers.list import ListParser
 from demisto_sdk.commands.content_graph.parsers.xsiam_report import XSIAMReportParser
 
@@ -126,7 +128,12 @@ if TYPE_CHECKING:
     from demisto_sdk.commands.content_graph.interface import ContentGraphInterface
 
 
-from demisto_sdk.commands.content_graph.parsers import ClassifierParser, MapperParser, ReportParser, XSIAMDashboardParser
+from demisto_sdk.commands.content_graph.parsers import (
+    ClassifierParser,
+    MapperParser,
+    ReportParser,
+    XSIAMDashboardParser,
+)
 
 logger = logging.getLogger("demisto-sdk")
 

@@ -1695,6 +1695,19 @@ def test_day_suffix(day, suffix):
     ('call a', True),
 ])
 def test_call_rule_regex(mr_text, expected_result):
+    """
+    Test the CALL_RULE_REGEX regex matches text containing 'call'.
+
+    Given:
+        - mr_text: Text to search for 'call'
+        - expected_result: Whether we expect mr_text to match
+
+    When:
+        - Search mr_text with ModelingRule.CALL_RULE_REGEX
+
+    Then:
+        - The search result should match expected_result
+    """
     from demisto_sdk.commands.common.content.objects.pack_objects.modeling_rule.modeling_rule import ModelingRule
     mr = ModelingRule
     assert bool(mr.CALL_RULE_REGEX.search(mr_text)) == expected_result

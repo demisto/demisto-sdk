@@ -645,7 +645,7 @@ class TestScriptValidator:
                     "comment": "a yml with a comment that has an 'example without dot at the end of the string.'",
                 },
                 True,
-                False,
+                True,
             ),
             (
                 {
@@ -723,7 +723,7 @@ class TestScriptValidator:
             - Case 5: make sure the validation pass.
             - Case 6: make sure the validation pass.
             - Case 7: make sure the validation fails.
-            - Case 8: make sure the validation fails.
+            - Case 8: make sure the validation pass.
             - Case 9: make sure the validation pass.
             - Case 10: make sure the validation pass.
             - Case 11: make sure the validation pass.

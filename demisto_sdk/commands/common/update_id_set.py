@@ -2733,7 +2733,7 @@ def re_create_id_set(  # noqa: C901
 
     logger.info("[green]Starting the creation of the id_set[/green]")
 
-    with click.progressbar(
+    with click.progressbar(  # type:ignore[var-annotated]
         length=len(objects_to_create), label="Creating id-set"
     ) as progress_bar:
         if "Packs" in objects_to_create:

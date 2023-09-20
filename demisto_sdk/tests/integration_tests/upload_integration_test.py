@@ -407,6 +407,7 @@ def test_upload_single_indicator_field(mocker, pack):
     Then
     - Ensure the indicator field is uploaded successfully.
     """
+    from demisto_sdk.commands.common.constants import GENERAL_DEFAULT_FROMVERSION
     from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 
     indicator_field = pack.create_indicator_field(
@@ -423,12 +424,14 @@ def test_upload_single_indicator_field(mocker, pack):
         },
     )
 
+    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+
     mocker.patch(
         "demisto_sdk.commands.upload.uploader.demisto_client", return_valure="object"
     )
     mocker.patch(
         "demisto_sdk.commands.upload.uploader.get_demisto_version",
-        return_value=Version("6.8.0"),
+        return_value=Version(GENERAL_DEFAULT_FROMVERSION),
     )
 
     mocker.patch.object(ContentItem, "pack_name", return_value="PackWithIndicatorField")
@@ -442,3 +445,4 @@ def test_upload_single_indicator_field(mocker, pack):
             [UPLOAD_CMD, "-i", indicator_field.path],
         )
     assert result.exit_code == SUCCESS_RETURN_CODE
+    assert str_in_call_args_list(logger_info.call_args_list, "SUCCESSFUL UPLOADS")

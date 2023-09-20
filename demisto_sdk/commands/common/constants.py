@@ -1582,7 +1582,7 @@ VALIDATED_PACK_ITEM_TYPES = [
     "Wizards",
 ]
 
-SUFFIX_THAT_DONT_NEED_PERIOD = ["!", "?"]
+VALID_SENTENCE_SUFFIX = [".", "!", "?", ".)", ".'", '."']
 
 FIRST_FETCH = "first_fetch"
 

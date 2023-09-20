@@ -1,12 +1,12 @@
 # Changelog
 ## Unreleased
+* Fixed an issue where **validate** falsely failed with error `DS108` on descriptions ending with brackets that contains a dot at the end of them.
 * Fixed an issue were format added a dot at end of the description that already ends with question mark and exclamation mark.
 
 ## 1.20.4
 * Fixed an issue where using **prepare-content**, **upload**, **zip-packs** and **download** on machines with default encoding other than unicode caused errors.
 * The **modeling-rules-test** will now ignore test data files containing the `test_data_config_ignore` key.
 * Fixed an issue where **modeling-rules init-test-data** command failed on modeling rules that contain the text `call` even not as a separate word.
-* Fixed an issue where **validate** falsely failed with error `DS108` on descriptions ending with brackets that contains a dot at the end of them.
 * Unlocked the dependency on `packaging`.
 
 ## 1.20.3

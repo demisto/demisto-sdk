@@ -1,5 +1,6 @@
 # Changelog
 ## Unreleased
+* Fixed an issue where **validate** falsely failed with error `DS108` on descriptions ending with brackets that contains a dot at the end of them.
 * Fixed an issue were format added a dot at end of the description that already ends with question mark and exclamation mark.
 
 ## 1.20.4
@@ -13,7 +14,6 @@
 * Improved performance when reading `yml` files.
 * Fixed an issue where **format** would add unnecessary period at the end of descriptions ending with brackets.
 * Fixed an issue where **format** would not add a period at the end of descriptions, when running on in script files.
-* Fixed an issue where **validate** falsely failed with error `DS108` on descriptions ending with brackets that contains a dot at the end of them.
 * Fixed an issue where running **validate -g** failed reading a `.pack-ignore` file that contained only newlines and spaces.
 * Fixed an issue where **upload** failed when trying to upload a list content item.
 * Fixed an issue where **download** would skip downloading list content items assigned to specific user roles with no roles.

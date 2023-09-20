@@ -6,6 +6,7 @@
 * Fixed an issue where using **prepare-content**, **upload**, **zip-packs** and **download** on machines with default encoding other than unicode caused errors.
 * The **modeling-rules-test** will now ignore test data files containing the `test_data_config_ignore` key.
 * Fixed an issue where **modeling-rules init-test-data** command failed on modeling rules that contain the text `call` even not as a separate word.
+* Fixed an issue where **validate** falsely failed with error `DS108` on descriptions ending with brackets that contains a dot at the end of them.
 * Unlocked the dependency on `packaging`.
 
 ## 1.20.3
@@ -13,7 +14,6 @@
 * Improved performance when reading `yml` files.
 * Fixed an issue where **format** would add unnecessary period at the end of descriptions ending with brackets.
 * Fixed an issue where **format** would not add a period at the end of descriptions, when running on in script files.
-* Fixed an issue where **validate** falsely failed with error `DS108` on descriptions ending with brackets that contains a dot at the end of them.
 * Fixed an issue where running **validate -g** failed reading a `.pack-ignore` file that contained only newlines and spaces.
 * Fixed an issue where **upload** failed when trying to upload a list content item.
 * Fixed an issue where **download** would skip downloading list content items assigned to specific user roles with no roles.

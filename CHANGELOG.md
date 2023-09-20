@@ -22,6 +22,7 @@
 * Fixed the support in **validate** for `svg` images to have their theme suffix.
 * Modified **validate** to support only .svg files ending with *_dark* or *_light* suffixes.
 * Fixed an issue where **modeling-rule test** command failed to properly compare types of fields.
+* Fixed an issue where **validate** falsely failed with error `DS108` on descriptions ending with question mark and exclamation mark.
 * Updated the **engineinfo** type in the script schema.
 * Updated the **modeling-rules init & test** commands to support RULE section fields.
 * Stability improvements for **graph create** and **graph update** commands.

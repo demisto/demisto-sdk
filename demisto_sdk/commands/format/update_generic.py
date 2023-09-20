@@ -9,8 +9,8 @@ import dictdiffer
 from demisto_sdk.commands.common.constants import (
     DEMISTO_GIT_PRIMARY_BRANCH,
     GENERAL_DEFAULT_FROMVERSION,
-    VERSION_5_5_0,
     VALID_SENTENCE_SUFFIX,
+    VERSION_5_5_0,
 )
 from demisto_sdk.commands.common.handlers import YAML_Handler
 from demisto_sdk.commands.common.logger import logger
@@ -477,8 +477,7 @@ class BaseUpdate:
             if value and isinstance(value, str):
                 strip_value = strip_description(value)
                 if not is_string_ends_with_url(strip_value) and not any(
-                    strip_value.endswith(suffix)
-                    for suffix in VALID_SENTENCE_SUFFIX
+                    strip_value.endswith(suffix) for suffix in VALID_SENTENCE_SUFFIX
                 ):
                     return f"{strip_value}."
             return value

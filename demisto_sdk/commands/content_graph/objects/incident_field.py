@@ -23,6 +23,3 @@ class IncidentField(IndicatorIncidentField, content_type=ContentType.INCIDENT_FI
         summary = super().summary(marketplace, incident_to_alert)
         summary["id"] = f"incident_{self.object_id}"
         return summary
-
-    def metadata_fields(self) -> Set[str]:
-        return super().metadata_fields().union({"field_type"})

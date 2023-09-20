@@ -1,4 +1,5 @@
 from tempfile import NamedTemporaryFile
+from typing import Set
 
 import demisto_client
 from pydantic import Field
@@ -26,3 +27,6 @@ class IndicatorIncidentField(ContentItem):
             file.flush()
             file.seek(0)
             return client.import_incident_fields(file=file.name)
+
+    def metadata_fields(self) -> Set[str]:
+        return super().metadata_fields().union({"field_type"})

@@ -12,7 +12,6 @@ json = JSON_Handler()
 
 class IndicatorIncidentField(ContentItem):
     cli_name: str = Field(alias="cliName")
-    associated_to_all: bool = Field(alias="associatedToAll")
 
     def _upload(
         self,

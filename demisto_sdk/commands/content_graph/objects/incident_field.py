@@ -14,6 +14,7 @@ json = JSON_Handler()
 
 class IncidentField(IndicatorIncidentField, content_type=ContentType.INCIDENT_FIELD):  # type: ignore[call-arg]
     field_type: str = Field(alias="type")
+    associated_to_all: bool = Field(False, alias="associatedToAll")
 
     def summary(
         self,

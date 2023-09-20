@@ -7,14 +7,15 @@ import pytest
 import demisto_sdk.commands.content_graph.neo4j_service as neo4j_service
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.common.legacy_git_tools import git_path
-from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
-from demisto_sdk.commands.content_graph.content_graph_commands import (
+from demisto_sdk.commands.content_graph.commands.create import (
     create_content_graph,
-    stop_content_graph,
+)
+from demisto_sdk.commands.content_graph.commands.update import (
     update_content_graph,
 )
-from demisto_sdk.commands.content_graph.interface.neo4j.neo4j_graph import (
-    Neo4jContentGraphInterface as ContentGraphInterface,
+from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
+from demisto_sdk.commands.content_graph.interface import (
+    ContentGraphInterface,
 )
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 from demisto_sdk.commands.content_graph.objects.integration import Integration
@@ -46,7 +47,18 @@ def setup_method(mocker):
     bc.CONTENT_PATH = GIT_PATH
     mocker.patch.object(neo4j_service, "REPO_PATH", GIT_PATH)
     mocker.patch.object(ContentGraphInterface, "repo_path", GIT_PATH)
-    stop_content_graph()
+    mocker.patch(
+        "demisto_sdk.commands.common.docker_images_metadata.get_remote_file_from_api",
+        return_value={
+            "docker_images": {
+                "python3": {
+                    "3.10.11.54799": {"python_version": "3.10.11"},
+                    "3.10.12.63474": {"python_version": "3.10.11"},
+                }
+            }
+        },
+    )
+    neo4j_service.stop()
 
 
 @pytest.fixture
@@ -185,7 +197,6 @@ def repository(mocker) -> ContentDTO:
         "demisto_sdk.commands.content_graph.content_graph_builder.ContentGraphBuilder._create_content_dtos",
         side_effect=mock__create_content_dto,
     )
-
     return repository
 
 
@@ -528,52 +539,54 @@ class TestUpdateContentGraph:
             assert get_nodes_count_by_type(interface, ContentType.COMMAND) == 1
             assert get_nodes_count_by_type(interface, ContentType.CLASSIFIER) == 1
 
+    data_test_update_content_graph = [
+        pytest.param(
+            _testcase1__pack3_pack4__script2_uses_script4,
+            [mock_dependency("SamplePack3", "SamplePack4")],
+            [],
+            id="New pack with USES relationship, causing adding a dependency",
+        ),
+        pytest.param(
+            _testcase2__pack3__remove_relationship,
+            [],
+            [mock_dependency("SamplePack2", "SamplePack3")],
+            id="Remove USES relationship, causing removing a dependency",
+        ),
+        pytest.param(
+            _testcase3__no_change,
+            [],
+            [],
+            id="No change in repository",
+        ),
+        pytest.param(
+            _testcase4__new_integration_with_existing_command,
+            [],
+            [],
+            id="New integration with existing command test-command",
+        ),
+        pytest.param(
+            _testcase5__move_script_from_pack3_to_pack1,
+            [mock_dependency("SamplePack2", "SamplePack")],
+            [mock_dependency("SamplePack2", "SamplePack3")],
+            id="Moved script - dependency pack2 -> pack3 changed to pack2 -> pack1",
+        ),
+        pytest.param(
+            _testcase6__move_script_from_pack3_to_pack2,
+            [],
+            [mock_dependency("SamplePack2", "SamplePack3")],
+            id="Moved script - removed dependency between pack2 and pack3",
+        ),
+        pytest.param(
+            _testcase7__changed_script2_fromversion,
+            [],
+            [],
+            id="Changed fromversion of script",
+        ),
+    ]
+
     @pytest.mark.parametrize(
         "commit_func, expected_added_dependencies, expected_removed_dependencies",
-        [
-            pytest.param(
-                _testcase1__pack3_pack4__script2_uses_script4,
-                [mock_dependency("SamplePack3", "SamplePack4")],
-                [],
-                id="New pack with USES relationship, causing adding a dependency",
-            ),
-            pytest.param(
-                _testcase2__pack3__remove_relationship,
-                [],
-                [mock_dependency("SamplePack2", "SamplePack3")],
-                id="Remove USES relationship, causing removing a dependency",
-            ),
-            pytest.param(
-                _testcase3__no_change,
-                [],
-                [],
-                id="No change in repository",
-            ),
-            pytest.param(
-                _testcase4__new_integration_with_existing_command,
-                [],
-                [],
-                id="New integration with existing command test-command",
-            ),
-            pytest.param(
-                _testcase5__move_script_from_pack3_to_pack1,
-                [mock_dependency("SamplePack2", "SamplePack")],
-                [mock_dependency("SamplePack2", "SamplePack3")],
-                id="Moved script - dependency pack2 -> pack3 changed to pack2 -> pack1",
-            ),
-            pytest.param(
-                _testcase6__move_script_from_pack3_to_pack2,
-                [],
-                [mock_dependency("SamplePack2", "SamplePack3")],
-                id="Moved script - removed dependency between pack2 and pack3",
-            ),
-            pytest.param(
-                _testcase7__changed_script2_fromversion,
-                [],
-                [],
-                id="Changed fromversion of script",
-            ),
-        ],
+        data_test_update_content_graph,
     )
     def test_update_content_graph(
         self,
@@ -626,7 +639,7 @@ class TestUpdateContentGraph:
                 packs_to_update=pack_ids_to_update,
                 dependencies=True,
                 output_path=tmp_path,
-                use_current=True,
+                use_local_import=True,
             )
             packs_from_graph = interface.search(
                 marketplace=MarketplaceVersions.XSOAR,
@@ -640,6 +653,105 @@ class TestUpdateContentGraph:
                 expected_removed_dependencies,
                 after_update=True,
             )
+        # make sure that the output file zip is created
+        assert Path.exists(tmp_path / "xsoar.zip")
+        with ZipFile(tmp_path / "xsoar.zip", "r") as zip_obj:
+            zip_obj.extractall(tmp_path / "extracted")
+            # make sure that the extracted files are all .csv
+            extracted_files = list(tmp_path.glob("extracted/*"))
+            assert extracted_files
+            assert all(
+                file.suffix == ".graphml" or file.name == "metadata.json"
+                for file in extracted_files
+            )
+
+    @pytest.mark.parametrize(
+        "commit_func, expected_added_dependencies, expected_removed_dependencies",
+        data_test_update_content_graph,
+    )
+    def test_create_content_graph_if_needed(
+        self,
+        tmp_path,
+        repository: ContentDTO,
+        mocker,
+        commit_func: Callable[[ContentDTO], List[Pack]],
+        expected_added_dependencies: List[Dict[str, Any]],
+        expected_removed_dependencies: List[Dict[str, Any]],
+    ):
+        """
+        Given:
+            - A ContentDTO model representing the repository state on master branch.
+            - A function representing a commit (an update of certain packs in the repository).
+            - Lists of the expected added & removed pack dependencies after the update.
+        When:
+            - Running create_content_graph() on master.
+            - Pushing a commit with the pack updates.
+            - Running update_content_graph().
+        Then:
+            - Make sure the pack models from the interface are equal to the pack models from ContentDTO
+                before and after the update.
+            - Make sure the expected added dependencies actually don't exist before the update
+                and exist after the update.
+            - Make sure the expected removed dependencies actually exist before the update
+                and don't exist after the update.
+        """
+        import demisto_sdk.commands.content_graph.commands.update as update
+
+        create_content_graph_spy = mocker.spy(update, "create_content_graph")
+
+        with ContentGraphInterface() as interface:
+            # create the graph with dependencies
+            update.create_content_graph(
+                interface, dependencies=True, output_path=tmp_path
+            )
+            packs_from_graph = interface.search(
+                marketplace=MarketplaceVersions.XSOAR,
+                content_type=ContentType.PACK,
+                all_level_dependencies=True,
+            )
+
+            file_added = (
+                Path(__file__).parent.parent / "parsers" / "content_graph_test.txt"
+            )
+            file_added.write_text(
+                "this file is created by a test in "
+                "demisto_sdk/commands/content_graph/tests/update_content_graph_test.py"
+                " and should be removed when the test passes"
+            )
+
+            compare(
+                repository.packs,
+                packs_from_graph,
+                expected_added_dependencies,
+                expected_removed_dependencies,
+                after_update=False,
+            )
+
+            # perform the update on ContentDTO
+            pack_ids_to_update = update_repository(repository, commit_func)
+
+            # update the graph accordingly
+            update.update_content_graph(
+                interface,
+                packs_to_update=pack_ids_to_update,
+                dependencies=True,
+                output_path=tmp_path,
+                use_local_import=True,
+            )
+            packs_from_graph = interface.search(
+                marketplace=MarketplaceVersions.XSOAR,
+                content_type=ContentType.PACK,
+                all_level_dependencies=True,
+            )
+            compare(
+                repository.packs,
+                packs_from_graph,
+                expected_added_dependencies,
+                expected_removed_dependencies,
+                after_update=True,
+            )
+        file_added.unlink()
+        assert create_content_graph_spy.call_count == 2
         # make sure that the output file zip is created
         assert Path.exists(tmp_path / "xsoar.zip")
         with ZipFile(tmp_path / "xsoar.zip", "r") as zip_obj:

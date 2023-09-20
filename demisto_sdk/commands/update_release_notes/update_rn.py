@@ -14,6 +14,7 @@ from demisto_sdk.commands.common.constants import (
     ALL_FILES_VALIDATION_IGNORE_WHITELIST,
     DEPRECATED_DESC_REGEX,
     DEPRECATED_NO_REPLACE_DESC_REGEX,
+    EVENT_COLLECTOR,
     IGNORED_PACK_NAMES,
     RN_CONTENT_ENTITY_WITH_STARS,
     RN_HEADER_BY_FILE_TYPE,
@@ -31,7 +32,6 @@ from demisto_sdk.commands.common.content.objects.pack_objects import (
 from demisto_sdk.commands.common.content.objects.pack_objects.abstract_pack_objects.yaml_content_object import (
     YAMLContentObject,
 )
-from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
@@ -49,8 +49,9 @@ from demisto_sdk.commands.common.tools import (
     pack_name_to_path,
     run_command,
 )
-from demisto_sdk.commands.content_graph.interface.neo4j.neo4j_graph import (
-    Neo4jContentGraphInterface,
+from demisto_sdk.commands.content_graph.commands.update import update_content_graph
+from demisto_sdk.commands.content_graph.interface import (
+    ContentGraphInterface,
 )
 
 CLASS_BY_FILE_TYPE = {
@@ -170,7 +171,7 @@ class UpdateRN:
         self.should_delete_existing_rn = False
         self.pack_metadata_only = pack_metadata_only
         self.is_force = is_force
-        git_util = GitUtil(repo=Content.git())
+        git_util = Content.git_util()
         self.main_branch = git_util.handle_prev_ver()[1]
         self.metadata_path = os.path.join(self.pack_path, "pack_metadata.json")
         self.master_version = self.get_master_version()
@@ -345,7 +346,7 @@ class UpdateRN:
         )
         self.bc_path = bc_file_path
         bc_file_data: dict = dict()
-        if os.path.exists(bc_file_path):
+        if Path(bc_file_path).exists():
             with open(bc_file_path) as f:
                 bc_file_data = json.loads(f.read())
         bc_file_data["breakingChanges"] = True
@@ -398,7 +399,7 @@ class UpdateRN:
         :return
             Whether the pack metadata exists
         """
-        if not os.path.isfile(self.metadata_path):
+        if not Path(self.metadata_path).is_file():
             logger.info(
                 f'[red]"{self.metadata_path}" file does not exist, create one in the root of the pack[/red]'
             )
@@ -651,7 +652,7 @@ class UpdateRN:
         :param rn_path: The RN path to check/create
 
         """
-        if not os.path.exists(os.path.dirname(rn_path)):
+        if not Path(rn_path).parent.exists():
             try:
                 os.makedirs(os.path.dirname(rn_path))
             except OSError as exc:  # Guard against race condition
@@ -675,7 +676,10 @@ class UpdateRN:
             return rn_string
         rn_template_as_dict: dict = {}
         if self.is_force:
-            rn_string = self.build_rn_desc(content_name=self.pack, text=self.text)
+            pack_display_name = self.get_pack_metadata().get("name", self.pack)
+            rn_string = self.build_rn_desc(
+                content_name=pack_display_name, text=self.text
+            )
         # changed_items.items() looks like that: [((name, type), {...}), (name, type), {...}] and we want to sort
         # them by type (x[0][1])
 
@@ -740,15 +744,21 @@ class UpdateRN:
                 rn_desc = f"- New: **{content_name}**\n"
             else:
                 rn_desc = f"- **{content_name}**\n"
+
+        elif self.is_force:
+            rn_desc = f"## {content_name}\n\n"
+            rn_desc += f'- {text or "%%UPDATE_RN%%"}\n'
         else:
             if is_new_file:
                 rn_desc = f"##### New: {content_name}\n\n"
                 if desc:
                     rn_desc += f"- New: {desc}"
-                if from_version and _type not in SIEM_ONLY_ENTITIES:
-                    rn_desc += f" (Available from Cortex XSOAR {from_version})."
-                elif _type in SIEM_ONLY_ENTITIES:
+                if _type in SIEM_ONLY_ENTITIES or content_name.replace(
+                    " ", ""
+                ).lower().endswith(EVENT_COLLECTOR.lower()):
                     rn_desc += "(Available from Cortex XSIAM %%XSIAM_VERSION%%)."
+                elif from_version and _type not in SIEM_ONLY_ENTITIES:
+                    rn_desc += f" (Available from Cortex XSOAR {from_version})."
                 rn_desc += "\n"
             else:
                 rn_desc = f"##### {content_name}\n\n"
@@ -905,7 +915,7 @@ class UpdateRN:
             docker_image_name: The docker image name
 
         """
-        if os.path.exists(release_notes_path) and self.update_type is not None:
+        if Path(release_notes_path).exists() and self.update_type is not None:
             logger.info(
                 f"[yellow]Release notes were found at {release_notes_path}. Skipping[/yellow]"
             )
@@ -918,6 +928,12 @@ class UpdateRN:
             self.existing_rn_changed = True
             with open(release_notes_path, "w") as fp:
                 fp.write(rn_string)
+        try:
+            run_command(f"git add {release_notes_path}", exit_on_error=False)
+        except RuntimeError:
+            logger.warning(
+                f"Could not add the release note files to git: {release_notes_path}"
+            )
 
     def rn_with_docker_image(self, rn_string: str, docker_image: Optional[str]) -> str:
         """
@@ -962,7 +978,7 @@ def get_file_description(path, file_type) -> str:
     :return
     The file description if exists otherwise returns %%UPDATE_RN%%
     """
-    if not os.path.isfile(path):
+    if not Path(path).is_file():
         logger.info(
             f'[yellow]Cannot get file description: "{path}" file does not exist[/yellow]'
         )
@@ -1024,8 +1040,11 @@ def update_api_modules_dependents_rn(
         f"[yellow]Changes were found in the following APIModules : {api_module_set}, updating all dependent "
         f"integrations.[/yellow]"
     )
-    with Neo4jContentGraphInterface(update_graph=True) as graph:
+    with ContentGraphInterface() as graph:
+        update_content_graph(graph, use_git=True, dependencies=True)
         integrations = get_api_module_dependencies_from_graph(api_module_set, graph)
+        if integrations:
+            logger.info("Executing update-release-notes on those as well.")
         for integration in integrations:
             integration_pack_name = integration.pack_id
             integration_path = integration.path
@@ -1089,7 +1108,7 @@ def get_from_version_at_update_rn(path: str) -> Optional[str]:
         Fromversion if there is a fromversion key in the yml file
 
     """
-    if not os.path.isfile(path):
+    if not Path(path).is_file():
         logger.info(
             f'[yellow]Cannot get file fromversion: "{path}" file does not exist[/yellow]'
         )

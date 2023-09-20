@@ -1,4 +1,4 @@
-import os
+from pathlib import Path
 
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.split.jsonsplitter import JsonSplitter
@@ -37,7 +37,7 @@ def test_split_json(repo):
     with ChangeCWD(pack.repo_path):
         res = json_splitter.split_json()
         assert res == 0
-        assert os.path.isfile(expected_dashboard_path)
+        assert Path(expected_dashboard_path).is_file()
 
         with open(expected_dashboard_path) as f:
             result_dashboard = json.load(f)

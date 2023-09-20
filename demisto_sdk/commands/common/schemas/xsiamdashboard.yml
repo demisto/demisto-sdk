@@ -12,6 +12,16 @@ mapping:
     type: str
   toVersion:
     type: str
+  metadata:
+    type: map
+    required: false
+    mapping:
+      lazy_load:
+        type: bool
+        required: false
+      cache_ttl:
+        type: number
+        required: false
 
 
 schema;dashboards_data_schema:
@@ -36,6 +46,10 @@ schema;dashboards_data_schema:
       required: true
       sequence:
         - include: layout_schema
+    metadata:
+      type: map
+      required: false
+      allowempty: true
 
 
 schema;layout_schema:

@@ -3,19 +3,22 @@ from pathlib import Path
 import e2e_tests_utils
 from demisto_client.demisto_api.rest import ApiException
 
+from demisto_sdk.commands.common.constants import DEMISTO_GIT_PRIMARY_BRANCH
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.download.downloader import Downloader
 from demisto_sdk.commands.format.format_module import format_manager
 from demisto_sdk.commands.generate_docs import generate_playbook_doc
 from demisto_sdk.commands.upload.uploader import Uploader
 from demisto_sdk.commands.validate.validate_manager import ValidateManager
+from TestSuite.test_tools import ChangeCWD
 
 
 def test_e2e_demisto_sdk_flow_playbook_testsuite(tmpdir):
     # Importing TestSuite classes from Demisto-SDK, as they are excluded when pip installing the SDK.
     e2e_tests_utils.cli(f"mkdir {tmpdir}/git")
     e2e_tests_utils.git_clone_demisto_sdk(
-        destination_folder=f"{tmpdir}/git/demisto-sdk", sdk_git_branch="master"
+        destination_folder=f"{tmpdir}/git/demisto-sdk",
+        sdk_git_branch=DEMISTO_GIT_PRIMARY_BRANCH,
     )
     from TestSuite.playbook import Playbook
     from TestSuite.repo import Repo
@@ -57,21 +60,29 @@ def test_e2e_demisto_sdk_flow_playbook_testsuite(tmpdir):
     assert dest_playbook_path.with_name(f"{playbook_name}_README.md").exists()
 
     logger.info(f"Formating playbook {dest_playbook_path}")
-    format_manager(
-        input=str(dest_playbook_path),
-        assume_answer=True,
-    )
-    logger.info(f"Validating playbook {dest_playbook_path}")
-    ValidateManager(file_path=str(dest_playbook_path)).run_validation()
+    with ChangeCWD(pack.repo_path):
+        format_manager(
+            input=str(dest_playbook_path),
+            assume_answer=True,
+        )
+        logger.info(f"Validating playbook {dest_playbook_path}")
+        ValidateManager(file_path=str(dest_playbook_path)).run_validation()
 
-    logger.info(f"Uploading updated playbook {dest_playbook_path}")
-    Uploader(
-        input=dest_playbook_path,
-        insecure=True,
-    ).upload()
+        logger.info(f"Uploading updated playbook {dest_playbook_path}")
+        Uploader(
+            input=dest_playbook_path,
+            insecure=True,
+        ).upload()
 
 
 def test_e2e_demisto_sdk_flow_playbook_client(tmpdir, insecure: bool = True):
+    unique_id = 789
+    pack_name = "foo_" + str(unique_id)
+    playbook_name = "pb_" + str(unique_id)
+    dest_playbook_path = Path(
+        f"{tmpdir}/Packs/{pack_name}_client/Playbooks/{playbook_name}.yml"
+    )
+
     unique_id = 789
     pack_name = "foo_" + str(unique_id)
     playbook_name = "pb_" + str(unique_id)
@@ -135,15 +146,17 @@ def test_e2e_demisto_sdk_flow_playbook_client(tmpdir, insecure: bool = True):
     ).exists()
 
     logger.info(f"Formating playbook {dest_playbook_path}")
-    format_manager(
-        input=str(dest_playbook_path),
-        assume_answer=True,
-    )
-    logger.info(f"Validating playbook {dest_playbook_path}")
-    ValidateManager(file_path=str(dest_playbook_path)).run_validation()
 
-    logger.info(f"Uploading updated playbook {dest_playbook_path}")
-    Uploader(
-        input=dest_playbook_path,
-        insecure=True,
-    ).upload()
+    with ChangeCWD(str(dest_playbook_path.parent)):
+        format_manager(
+            input=str(dest_playbook_path),
+            assume_answer=True,
+        )
+        logger.info(f"Validating playbook {dest_playbook_path}")
+        ValidateManager(file_path=str(dest_playbook_path)).run_validation()
+
+        logger.info(f"Uploading updated playbook {dest_playbook_path}")
+        Uploader(
+            input=dest_playbook_path,
+            insecure=True,
+        ).upload()

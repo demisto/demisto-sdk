@@ -2,7 +2,7 @@
 ---
 
 Lists all of the security vulnerabilities for various products (OS,Applications) etc)
-This integration was integrated and tested with version xx of VulnDB
+This integration was integrated and tested with version xx of VulnDB.
 ## VulnDB Playbook
 ---
 

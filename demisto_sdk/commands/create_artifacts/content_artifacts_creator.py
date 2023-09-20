@@ -17,6 +17,7 @@ from demisto_sdk.commands.common.constants import (
     CONTENT_ITEMS_DISPLAY_FOLDERS,
     CORRELATION_RULES_DIR,
     DASHBOARDS_DIR,
+    DEMISTO_GIT_PRIMARY_BRANCH,
     DOCUMENTATION_DIR,
     GENERIC_DEFINITIONS_DIR,
     GENERIC_FIELDS_DIR,
@@ -163,6 +164,7 @@ XPANSE_MARKETPLACE_ITEMS_TO_DUMP = [
 
 MARKETPLACE_TO_ITEMS_MAPPING = {
     MarketplaceVersions.XSOAR.value: XSOAR_MARKETPLACE_ITEMS_TO_DUMP,
+    MarketplaceVersions.XSOAR_SAAS.value: XSOAR_MARKETPLACE_ITEMS_TO_DUMP,
     MarketplaceVersions.MarketplaceV2.value: XSIAM_MARKETPLACE_ITEMS_TO_DUMP,
     MarketplaceVersions.XPANSE.value: XPANSE_MARKETPLACE_ITEMS_TO_DUMP,
 }
@@ -268,8 +270,7 @@ class ArtifactsManager:
             # Add suffix
             suffix_handler(self)
 
-        if os.path.exists("keyfile"):
-            os.remove("keyfile")
+        Path("keyfile").unlink(missing_ok=True)
         logger.info(f"\nExecution time: {time.time() - self.execution_start} seconds")
 
         return self.exit_code
@@ -684,8 +685,7 @@ def ProcessPoolHandler(artifact_manager: ArtifactsManager) -> ProcessPool:
             pool.close()
             pool.join()
         finally:
-            if os.path.exists("keyfile"):
-                os.remove("keyfile")
+            Path("keyfile").unlink(missing_ok=True)
 
 
 def wait_futures_complete(
@@ -1447,11 +1447,11 @@ def content_files_handler(
             and content_object.code_path.name == "CommonServerPython.py"
         ):
             # Modify CommonServerPython.py global variables
-            repo = artifact_manager.content.git()
+            repo = artifact_manager.content.git_util().repo
             modify_common_server_constants(
                 content_object.code_path,
                 artifact_manager.content_version,
-                "master" if not repo else repo.active_branch,
+                DEMISTO_GIT_PRIMARY_BRANCH if not repo else repo.active_branch,
             )
         yield files_to_remove
     finally:
@@ -1462,7 +1462,9 @@ def content_files_handler(
             and content_object.code_path.name == "CommonServerPython.py"
         ):
             # Modify CommonServerPython.py global variables
-            modify_common_server_constants(content_object.code_path, "0.0.0", "master")
+            modify_common_server_constants(
+                content_object.code_path, "0.0.0", DEMISTO_GIT_PRIMARY_BRANCH
+            )
 
         # Delete yaml which created by Unifier in packs and to_version/toVersion lower than NEWEST_SUPPORTED_VERSION
         for file_path in files_to_remove:

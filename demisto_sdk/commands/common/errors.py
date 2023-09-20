@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Set, Union
 
 import decorator
 from packaging.version import Version
@@ -52,7 +52,7 @@ PRESET_ERROR_TO_CHECK = {
     "deprecated": ["ST", "BC", "BA", "IN127", "IN128", "PB104", "SC101"],
 }
 
-ERROR_CODE = {
+ERROR_CODE: Dict = {
     # BA - Basic
     "wrong_version": {
         "code": "BA100",
@@ -331,6 +331,10 @@ ERROR_CODE = {
     "description_contains_demisto_word": {
         "code": "DS107",
         "related_field": "detaileddescription",
+    },
+    "description_missing_dot_at_the_end": {
+        "code": "DS108",
+        "related_field": "description",
     },
     # GF - Generic Fields
     "invalid_generic_field_group_value": {
@@ -962,6 +966,10 @@ ERROR_CODE = {
         "code": "PA136",
         "related_field": "",
     },
+    "pack_have_nonignorable_error": {
+        "code": "PA137",
+        "related_field": "",
+    },
     # PB - Playbooks
     "playbook_cant_have_rolename": {
         "code": "PB100",
@@ -1400,6 +1408,10 @@ ERROR_CODE = {
         "code": "CR101",
         "related_field": "",
     },
+    "correlation_rules_missing_search_window": {
+        "code": "CR102",
+        "related_field": "",
+    },
     # XR - XSIAM Reports
     "xsiam_report_files_naming_error": {
         "code": "XR100",
@@ -1457,6 +1469,11 @@ ERROR_CODE = {
         "code": "GR107",
         "related_field": "",
     },
+    "hidden_pack_not_mandatory_dependency": {
+        "code": "GR108",
+        "ui_applicable": False,
+        "related_field": "",
+    },
 }
 
 
@@ -1477,6 +1494,7 @@ ALLOWED_IGNORE_ERRORS = (
         "BA119",
         "BA124",
         "BA125",
+        "DS108",
         "DS107",
         "GF102",
         "IF100",
@@ -1543,6 +1561,7 @@ ALLOWED_IGNORE_ERRORS = (
         "LO107",
         "IN107",
         "DB100",
+        "GR103",
     ]
 )
 
@@ -2659,7 +2678,8 @@ class Errors:
             f'A new release notes file contains the phrase "breaking changes" '
             "without a matching JSON file (with the same name as the release note file, e.g. 1_2_3.json). "
             f'Please run "demisto-sdk update-release-notes -i {json_path[:-4]}md -bc". '
-            "For more information, refer to the following documentation: https://xsoar.pan.dev/docs/documentation/release-notes"
+            "For more information, refer to the following documentation: "
+            "https://xsoar.pan.dev/docs/documentation/release-notes#breaking-changes-version"
         )
 
     @staticmethod
@@ -2910,6 +2930,13 @@ class Errors:
     @error_code_decorator
     def description_contains_demisto_word(line_nums, yml_or_file):
         return f"Found the word 'Demisto' in the description content {yml_or_file} in lines: {line_nums}."
+
+    @staticmethod
+    @error_code_decorator
+    def description_missing_dot_at_the_end(details: str):
+        return (
+            f'Description must end with a period ("."), fix the following:\n{details}'
+        )
 
     @staticmethod
     @error_code_decorator
@@ -4350,3 +4377,20 @@ class Errors:
             "is replaced by the word Incident/Incidents\nfor example: if there is a script `getIncident'"
             "it will not be possible to create a script with the name `getAlert`)"
         )
+
+    @staticmethod
+    @error_code_decorator
+    def hidden_pack_not_mandatory_dependency(
+        hidden_pack: str, dependant_packs_ids: Set[str]
+    ):
+        return f"{', '.join(dependant_packs_ids)} pack(s) cannot have a mandatory dependency on the hidden pack {hidden_pack}."
+
+    @staticmethod
+    @error_code_decorator
+    def pack_have_nonignorable_error(nonignorable_errors: List[str]):
+        return f"The following errors can not be ignored: {', '.join(nonignorable_errors)}, remove them from .pack-ignore files"
+
+    @staticmethod
+    @error_code_decorator
+    def correlation_rules_missing_search_window():
+        return "The 'search_window' key must exist and cannot be empty when the 'execution_mode' is set to 'SCHEDULED'."

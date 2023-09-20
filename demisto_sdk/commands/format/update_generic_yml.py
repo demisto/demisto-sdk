@@ -21,6 +21,7 @@ from demisto_sdk.commands.common.tools import (
     _get_file_id,
     find_type,
     get_entity_id_by_entity_type,
+    get_file,
     get_not_registered_tests,
     get_scripts_and_commands_from_yml_data,
     get_yaml,
@@ -86,8 +87,7 @@ class BaseUpdateYML(BaseUpdate):
         Returns:
             The content of the json file
         """
-        with open(CONF_PATH) as data_file:
-            return json.load(data_file)
+        return get_file(CONF_PATH, raise_on_error=True)
 
     def get_id_and_version_path_object(self):
         """Gets the dict that holds the id and version fields.
@@ -148,6 +148,7 @@ class BaseUpdateYML(BaseUpdate):
         """Manager function for the generic YML updates."""
 
         self.remove_copy_and_dev_suffixes_from_name()
+        self.adds_period_to_description()
         self.remove_unnecessary_keys()
         self.remove_spaces_end_of_id_and_name()
         self.set_fromVersion(

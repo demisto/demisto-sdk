@@ -1634,7 +1634,7 @@ def get_parsing_rule_data(path: str, packs: Dict[str, Dict] = None):
     if (
         not id_ and "marketplacev2" in marketplaces
     ):  # TODO: Should be removed after we have an agreed id field for parsing rule
-        id_ = f"{pack}-{os.path.basename(path).split('.')[0]}"
+        id_ = f"{pack}-{Path(path).stem}"
 
     data = create_common_entity_data(
         path=path,
@@ -1662,7 +1662,7 @@ def get_modeling_rule_data(path: str, packs: Dict[str, Dict] = None):
     if (
         not id_ and "marketplacev2" in marketplaces
     ):  # TODO: Should be removed after we have an agreed id field for modeling rule
-        id_ = f"{pack}-{os.path.basename(path).split('.')[0]}"
+        id_ = f"{pack}-{Path(path).stem}"
 
     data = create_common_entity_data(
         path=path,
@@ -1753,7 +1753,7 @@ def process_integration(
     res = []
     excluded_items_from_id_set: dict = {}
     try:
-        if os.path.isfile(file_path):
+        if Path(file_path).is_file():
             if should_skip_item_by_mp(
                 file_path,
                 marketplace,
@@ -1771,7 +1771,7 @@ def process_integration(
                 res.append(get_integration_data(file_path, packs=packs))
         else:
             # package integration
-            package_name = os.path.basename(file_path)
+            package_name = Path(file_path).name
             file_path = os.path.join(file_path, f"{package_name}.yml")
             if should_skip_item_by_mp(
                 file_path,
@@ -1781,7 +1781,7 @@ def process_integration(
                 print_logs=print_logs,
             ):
                 return [], excluded_items_from_id_set
-            if os.path.isfile(file_path):
+            if Path(file_path).is_file():
                 # locally, might have leftover dirs without committed files
                 if print_logs:
                     logger.info(f"adding {file_path} to id_set")
@@ -1811,7 +1811,7 @@ def process_script(
     res = []
     excluded_items_from_id_set: dict = {}
     try:
-        if os.path.isfile(file_path):
+        if Path(file_path).is_file():
             if should_skip_item_by_mp(
                 file_path,
                 marketplace,
@@ -1927,7 +1927,7 @@ def process_indicator_types(
             return [], excluded_items_from_id_set
         # ignore old reputations.json files
         if (
-            not os.path.basename(file_path) == "reputations.json"
+            not Path(file_path).name == "reputations.json"
             and find_type(file_path) == FileType.REPUTATION
         ):
             if print_logs:
@@ -2145,7 +2145,7 @@ def process_general_items(
     res = []
     excluded_items_from_id_set: dict = {}
     try:
-        if os.path.isfile(file_path):
+        if Path(file_path).is_file():
             item_type = find_type(file_path)
             if item_type in expected_file_types:
                 if should_skip_item_by_mp(
@@ -2161,10 +2161,10 @@ def process_general_items(
                     logger.info(f"adding {file_path} to id_set")
                 res.append(data_extraction_func(file_path, packs=packs))
         else:
-            package_name = os.path.basename(file_path)
+            package_name = Path(file_path).name
             file_path = os.path.join(file_path, f"{package_name}.{suffix}")
             item_type = find_type(file_path)
-            if os.path.isfile(file_path) and item_type in expected_file_types:
+            if Path(file_path).is_file() and item_type in expected_file_types:
                 if should_skip_item_by_mp(
                     file_path,
                     marketplace,
@@ -2653,7 +2653,7 @@ def re_create_id_set(  # noqa: C901
         else:
             objects_to_create = CONTENT_ENTITIES
 
-    if id_set_path and os.path.exists(id_set_path):
+    if id_set_path and Path(id_set_path).exists():
         try:
             refresh_interval = int(os.getenv("DEMISTO_SDK_ID_SET_REFRESH_INTERVAL", -1))
         except ValueError:

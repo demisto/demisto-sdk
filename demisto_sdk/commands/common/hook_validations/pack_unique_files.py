@@ -9,12 +9,14 @@ from pathlib import Path
 from typing import Dict, List, Set, Tuple
 
 from dateutil import parser
-from git import GitCommandError, Repo
+from git import GitCommandError
 from packaging.version import Version, parse
 
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import (  # PACK_METADATA_PRICE,
     API_MODULES_PACK,
+    DEMISTO_GIT_PRIMARY_BRANCH,
+    DEMISTO_GIT_UPSTREAM,
     EXCLUDED_DISPLAY_NAME_WORDS,
     INTEGRATIONS_DIR,
     MARKETPLACE_KEY_PACK_METADATA,
@@ -43,7 +45,7 @@ from demisto_sdk.commands.common.constants import (  # PACK_METADATA_PRICE,
 )
 from demisto_sdk.commands.common.content import Content
 from demisto_sdk.commands.common.content.objects.pack_objects.pack import Pack
-from demisto_sdk.commands.common.errors import Errors
+from demisto_sdk.commands.common.errors import ALLOWED_IGNORE_ERRORS, Errors
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.hook_validations.base_validator import (
@@ -53,6 +55,7 @@ from demisto_sdk.commands.common.hook_validations.base_validator import (
 from demisto_sdk.commands.common.hook_validations.readme import ReadMeValidator
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
+    extract_error_codes_from_file,
     get_core_pack_list,
     get_json,
     get_local_remote_file,
@@ -134,11 +137,11 @@ class PackUniqueFilesValidator(BaseValidator):
         self.metadata_content: Dict = dict()
 
         if not prev_ver:
-            git_util = GitUtil(repo=Content.git())
+            git_util = Content.git_util()
             main_branch = git_util.handle_prev_ver()[1]
             self.prev_ver = (
-                f"origin/{main_branch}"
-                if not main_branch.startswith("origin")
+                f"{DEMISTO_GIT_UPSTREAM}/{main_branch}"
+                if not main_branch.startswith(DEMISTO_GIT_UPSTREAM)
                 else main_branch
             )
         else:
@@ -198,7 +201,7 @@ class PackUniqueFilesValidator(BaseValidator):
             (str): The lastest version of RN.
         """
         list_of_files = glob.glob(self.pack_path + "/ReleaseNotes/*")
-        list_of_release_notes = [os.path.basename(file) for file in list_of_files]
+        list_of_release_notes = [Path(file).name for file in list_of_files]
         list_of_versions = [
             rn[: rn.rindex(".")].replace("_", ".") for rn in list_of_release_notes
         ]
@@ -215,7 +218,7 @@ class PackUniqueFilesValidator(BaseValidator):
         is_required is True means that absence of the file should block other tests from running
             (see BlockingValidationFailureException).
         """
-        if not os.path.isfile(self._get_pack_file_path(file_name)):
+        if not Path(self._get_pack_file_path(file_name)).is_file():
             error_function = (
                 Errors.required_pack_file_does_not_exist
                 if is_required
@@ -344,7 +347,7 @@ class PackUniqueFilesValidator(BaseValidator):
     def validate_author_image_exists(self):
         if self.metadata_content.get(PACK_METADATA_SUPPORT) == "partner":
             author_image_path = os.path.join(self.pack_path, "Author_image.png")
-            if not os.path.exists(author_image_path):
+            if not Path(author_image_path).exists():
                 if self._add_error(
                     Errors.author_image_is_missing(author_image_path),
                     file_path=author_image_path,
@@ -360,7 +363,7 @@ class PackUniqueFilesValidator(BaseValidator):
         """
         playbooks_path = os.path.join(self.pack_path, "Playbooks")
         contains_playbooks = (
-            os.path.exists(playbooks_path) and len(os.listdir(playbooks_path)) != 0
+            Path(playbooks_path).exists() and len(os.listdir(playbooks_path)) != 0
         )
         if (
             self.support == "partner" or contains_playbooks
@@ -404,7 +407,8 @@ class PackUniqueFilesValidator(BaseValidator):
         if self._is_pack_file_exists(self.pack_ignore_file) and all(
             [self._is_pack_ignore_file_structure_valid()]
         ):
-            return True
+            if self.validate_non_ignorable_error():
+                return True
 
         return False
 
@@ -422,6 +426,23 @@ class PackUniqueFilesValidator(BaseValidator):
                 return True
 
         return False
+
+    @error_codes("PA137")
+    def validate_non_ignorable_error(self):
+        """
+        Check if .pack-ignore includes error codes that cannot be ignored.
+        Returns False if an non-ignorable error code is found,
+        or True if all ignored errors are indeed ignorable.
+        """
+        error_codes = extract_error_codes_from_file(self.pack)
+        if error_codes:
+            nonignoable_errors = error_codes.difference(ALLOWED_IGNORE_ERRORS)
+            if nonignoable_errors and self._add_error(
+                Errors.pack_have_nonignorable_error(nonignoable_errors),
+                self.pack_ignore_file,
+            ):
+                return False
+        return True
 
     # pack metadata validation
     def validate_pack_meta_file(self):
@@ -932,9 +953,9 @@ class PackUniqueFilesValidator(BaseValidator):
         layouts_path = os.path.join(self.pack_path, "Layouts")
 
         answers = [
-            os.path.exists(playbooks_path) and len(os.listdir(playbooks_path)) != 0,
-            os.path.exists(incidents_path) and len(os.listdir(incidents_path)) != 0,
-            os.path.exists(layouts_path) and len(os.listdir(layouts_path)) != 0,
+            Path(playbooks_path).exists() and len(os.listdir(playbooks_path)) != 0,
+            Path(incidents_path).exists() and len(os.listdir(incidents_path)) != 0,
+            Path(layouts_path).exists() and len(os.listdir(layouts_path)) != 0,
         ]
         return any(answers)
 
@@ -962,17 +983,17 @@ class PackUniqueFilesValidator(BaseValidator):
         return True
 
     def get_master_private_repo_meta_file(self, metadata_file_path: str):
-        current_repo = Repo(Path.cwd(), search_parent_directories=True)
+        current_repo = GitUtil().repo
 
         # if running on master branch in private repo - do not run the test
-        if current_repo.active_branch == "master":
+        if current_repo.active_branch == DEMISTO_GIT_PRIMARY_BRANCH:
             logger.debug(
                 "[yellow]Running on master branch - skipping price change validation[/yellow]"
             )
             return None
         try:
             tag = self.prev_ver
-            tag = tag.replace("origin/", "").replace("demisto/", "")
+            tag = tag.replace(f"{DEMISTO_GIT_UPSTREAM}/", "").replace("demisto/", "")
             old_meta_file_content = get_local_remote_file(
                 full_file_path=metadata_file_path, tag=tag, return_content=True
             )

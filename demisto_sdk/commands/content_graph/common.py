@@ -2,7 +2,7 @@ import enum
 import os
 import re
 from pathlib import Path
-from typing import Any, Dict, Iterator, List, NamedTuple, Set
+from typing import Any, Callable, Dict, Iterator, List, NamedTuple, Set
 
 from neo4j import graph
 
@@ -14,7 +14,7 @@ NEO4J_DATABASE_HTTP = os.getenv(
     "DEMISTO_SDK_NEO4J_DATABASE_HTTP", "http://127.0.0.1:7474"
 )
 NEO4J_DATABASE_URL = os.getenv(
-    "DEMISTO_SDK_NEO4J_DATABASE_URL", "bolt://127.0.0.1:7687"
+    "DEMISTO_SDK_NEO4J_DATABASE_URL", "neo4j://127.0.0.1:7687"
 )
 NEO4J_USERNAME = os.getenv("DEMISTO_SDK_NEO4J_USERNAME", "neo4j")
 NEO4J_PASSWORD = os.getenv("DEMISTO_SDK_NEO4J_PASSWORD", "contentgraph")
@@ -274,7 +274,53 @@ class Nodes(dict):
             self.add_batch(data)
 
 
-SERVER_CONTENT_ITEMS = {
+class PackTags:
+    """Pack tag constants"""
+
+    TRENDING = "Trending"
+    NEW = "New"
+    TIM = "TIM"
+    USE_CASE = "Use Case"
+    TRANSFORMER = "Transformer"
+    FILTER = "Filter"
+    COLLECTION = "Collection"
+    DATA_SOURCE = "Data Source"
+
+
+class LazyProperty(property):
+    """
+    Used to define the properties which are lazy properties
+    """
+
+    pass
+
+
+def lazy_property(property_func: Callable):
+    """
+    lazy property: specifies that this property should be added to the pydantic model lazily
+    only when the instance property is first accessed.
+
+    Note:
+        make sure that the lazy property returns only primitive objects (bool, str, int, float, list).
+
+    Use this decorator on your property in case you need it to be added to the model only if its called directly
+    """
+
+    def _lazy_decorator(self):
+        property_name = property_func.__name__
+
+        if property_output := self.__dict__.get(property_name):
+            return property_output
+
+        property_output = property_func(self)
+
+        self.__dict__[property_name] = property_output
+        return property_output
+
+    return LazyProperty(_lazy_decorator)
+
+
+SERVER_CONTENT_ITEMS: dict = {
     ContentType.INCIDENT_FIELD: [
         "name",
         "details",
@@ -774,5 +820,63 @@ SERVER_CONTENT_ITEMS = {
         "kafka",
         "syslog",
         "fcm",
+    ],
+}
+
+
+# Used to remove content-private nodes, as a temporary temporary workaround.
+# For more details: https://jira-hq.paloaltonetworks.local/browse/CIAC-7149
+CONTENT_PRIVATE_ITEMS: dict = {
+    ContentType.INCIDENT_FIELD: [
+        "Employee ID",
+        "employeeid",
+        "Employee Number",
+        "employeenumber",
+        "Employee Type",
+        "employeetype",
+        "Employment Status",
+        "employmentstatus",
+        "Hire Date",
+        "hiredate",
+        "Last Day of Work",
+        "lastdayofwork",
+        "Prehire Flag",
+        "prehireflag",
+        "Rehired Employee",
+        "rehiredemployee",
+        "Termination Date",
+        "terminationdate",
+        "userprofile",
+        "organization",
+        "actor",
+        "Termination Trigger",
+        "terminationtrigger",
+        "State Name",
+        "statename",
+        "profileid",
+        "timezonesidkey",
+        "localesidkey",
+    ],
+    ContentType.INCIDENT_TYPE: [
+        "IAM - AD User Activation",
+        "IAM - AD User Deactivation",
+        "IAM - New Hire",
+        "IAM - Rehire User",
+        "IAM - Sync User",
+        "IAM - Terminate User",
+        "IAM - Update User",
+        "User Profile - Create",
+        "User Profile - Update",
+        "User Profile",
+        "IAM - App Add",
+        "IAM - Group Membership Update",
+        "IAM - App Remove",
+        "IAM - App Update",
+    ],
+    ContentType.SCRIPT: [
+        "IAM-Init-AD-User",
+    ],
+    ContentType.LAYOUT: [
+        "MITRE Layout",
     ],
 }

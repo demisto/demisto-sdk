@@ -23,7 +23,7 @@ from demisto_sdk.commands.content_graph.interface.neo4j.queries.common import (
 )
 
 json = JSON_Handler()
-IGNORED_PACKS_IN_DEPENDENCY_CALC = ["NonSupported", "Base", "ApiModules"]
+IGNORED_PACKS_IN_DEPENDENCY_CALC = ["NonSupported", "ApiModules"]
 
 MAX_DEPTH = 5
 
@@ -31,7 +31,7 @@ MAX_DEPTH = 5
 def get_all_level_packs_relationships(
     tx: Transaction,
     relationship_type: RelationshipType,
-    ids_list: List[int],
+    ids_list: List[str],
     marketplace: MarketplaceVersions,
     mandatorily: bool = False,
     **properties,
@@ -42,7 +42,7 @@ def get_all_level_packs_relationships(
         query = f"""
             UNWIND $ids_list AS node_id
             MATCH path = shortestPath((p1:{ContentType.PACK}{params_str})-[r:{relationship_type}*..{MAX_DEPTH}]->(p2:{ContentType.PACK}))
-            WHERE id(p1) = node_id AND id(p1) <> id(p2)
+            WHERE elementId(p1) = node_id AND elementId(p1) <> elementId(p2)
             AND all(n IN nodes(path) WHERE "{marketplace}" IN n.marketplaces)
             AND all(r IN relationships(path) WHERE NOT r.is_test {"AND r.mandatorily = true)" if mandatorily else ""}
             RETURN node_id, collect(r) as relationships, collect(p2) AS nodes_to
@@ -51,7 +51,7 @@ def get_all_level_packs_relationships(
         # search all the content items that import the 'node_from' content item
         query = f"""UNWIND $ids_list AS node_id
             MATCH path=shortestPath((node_from) <- [relationship:{relationship_type}*..{MAX_DEPTH}] - (node_to))
-            WHERE id(node_from) = node_id and node_from <> node_to
+            WHERE elementId(node_from) = node_id and node_from <> node_to
             return node_id, node_from, collect(relationship) AS relationships,
             collect(node_to) AS nodes_to
         """
@@ -59,7 +59,7 @@ def get_all_level_packs_relationships(
     result = run_query(tx, query, ids_list=list(ids_list))
     logger.debug("Found dependencies.")
     return {
-        int(item.get("node_id")): Neo4jRelationshipResult(
+        item.get("node_id"): Neo4jRelationshipResult(
             node_from=item.get("node_from"),
             nodes_to=item.get("nodes_to"),
             relationships=item.get("relationships"),
@@ -85,17 +85,13 @@ MATCH (source) - [r:{RelationshipType.USES}] -> (target) - [:{RelationshipType.I
 (:{ContentType.PACK}{{object_id: "{DEPRECATED_CONTENT_PACK}"}})
 DELETE r
 RETURN source.node_id AS source, target.node_id AS target"""
-    result = run_query(tx, query).data()
-    for row in result:
-        source = row["source"]
-        target = row["target"]
-        logger.debug(f"Deleted relationship USES between {source} and {target}")
+    run_query(tx, query)
 
 
 def remove_existing_depends_on_relationships(tx: Transaction) -> None:
     query = f"""// Removes all existing DEPENDS_ON relationships before recalculation
 MATCH ()-[r:{RelationshipType.DEPENDS_ON}]->()
-WHERE r.from_metadata IS NULL
+WHERE r.from_metadata = false
 DELETE r"""
     run_query(tx, query)
 
@@ -139,18 +135,7 @@ RETURN
     collect(integration.object_id) AS integrations,
     u.mandatorily AS is_integ_mandatory,
     command.name AS command"""
-    result = run_query(tx, query)
-    for row in result:
-        content_item = row["content_item"]
-        command = row["command"]
-        is_cmd_mandatory = "mandatory" if row["is_cmd_mandatory"] else "optional"
-        integrations = row["integrations"]
-        is_integ_mandatory = "mandatory" if row["is_integ_mandatory"] else "optional"
-        msg = (
-            f"{content_item} uses command {command} ({is_cmd_mandatory}), "
-            f"new {is_integ_mandatory} relationships to integrations: {integrations}"
-        )
-        logger.debug(msg)
+    run_query(tx, query)
 
 
 def create_depends_on_relationships(tx: Transaction) -> None:
@@ -158,19 +143,19 @@ def create_depends_on_relationships(tx: Transaction) -> None:
 MATCH (pack_a:{ContentType.BASE_CONTENT})<-[:{RelationshipType.IN_PACK}]-(a)
     -[r:{RelationshipType.USES}]->(b)-[:{RelationshipType.IN_PACK}]->(pack_b:{ContentType.BASE_CONTENT})
 WHERE ANY(marketplace IN pack_a.marketplaces WHERE marketplace IN pack_b.marketplaces)
-AND id(pack_a) <> id(pack_b)
+AND elementId(pack_a) <> elementId(pack_b)
 AND NOT pack_b.object_id IN pack_a.excluded_dependencies
 AND NOT pack_a.name IN {IGNORED_PACKS_IN_DEPENDENCY_CALC}
 AND NOT pack_b.name IN {IGNORED_PACKS_IN_DEPENDENCY_CALC}
 WITH pack_a, a, r, b, pack_b
 MERGE (pack_a)-[dep:{RelationshipType.DEPENDS_ON}]->(pack_b)
 ON CREATE
-    SET dep.is_test = a.is_test
+    SET dep.is_test = a.is_test,
+        dep.from_metadata = false,
+        dep.mandatorily = r.mandatorily
 ON MATCH
-    SET dep.is_test = dep.is_test AND a.is_test
-
-WITH dep, pack_a, a, r, b, pack_b
-SET dep.mandatorily = CASE WHEN dep.from_metadata THEN dep.mandatorily
+    SET dep.is_test = dep.is_test AND a.is_test,
+        dep.mandatorily = CASE WHEN dep.from_metadata THEN dep.mandatorily
                 ELSE r.mandatorily OR dep.mandatorily END
 WITH
     pack_a.object_id AS pack_a,
@@ -188,12 +173,6 @@ RETURN
         pack_a = row["pack_a"]
         pack_b = row["pack_b"]
         outputs.setdefault(pack_a, {}).setdefault(pack_b, []).extend(row["reasons"])
-    for pack_a, pack_b in outputs.items():
-        for pack_b, reasons in pack_b.items():
-            msg = f"Created a DEPENDS_ON relationship between {pack_a} and {pack_b}. Reasons:\n"
-            for idx, reason in enumerate(reasons, 1):
-                msg += f"{idx}. [{reason.get('source')}] -> [{reason.get('target')}] (mandatorily: {reason.get('mandatorily')})\n"
-            logger.debug(msg)
 
     if (artifacts_folder := os.getenv("ARTIFACTS_FOLDER")) and Path(
         artifacts_folder

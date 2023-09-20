@@ -1,4 +1,4 @@
-import os
+from pathlib import Path
 
 from demisto_sdk.commands.common.constants import FileType
 from demisto_sdk.commands.common.legacy_git_tools import (
@@ -26,7 +26,7 @@ def test_filter_changed_files(mocker):
         - Ensure ignored files are set correctly.
     """
 
-    mocker.patch.object(os.path, "isfile", return_value=True)
+    mocker.patch.object(Path, "is_file", return_value=True)
     diff_string = (
         f"M	{VALID_INCIDENT_FIELD_PATH}\n"
         f"M	{VALID_PYTHON_INTEGRATION_PATH}\n"
@@ -137,7 +137,7 @@ def test_staged(mocker):
         side_effect=run_command_effect,
     )
     mocker.patch(
-        "demisto_sdk.commands.common.legacy_git_tools.os.path.isfile", return_value=True
+        "demisto_sdk.commands.common.legacy_git_tools.Path.is_file", return_value=True
     )
     mocker.patch(
         "demisto_sdk.commands.common.legacy_git_tools.find_type",

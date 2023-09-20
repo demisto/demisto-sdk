@@ -2,7 +2,6 @@ import logging
 import os
 import re
 from enum import Enum
-from os import path
 from pathlib import Path
 from typing import List
 
@@ -66,7 +65,7 @@ class TestDocReviewFilesAreFound:
         doc_review = DocReviewer(file_paths=[valid_spelled_content_pack.path])
         doc_review.get_files_to_run_on(file_path=valid_spelled_content_pack.path)
         for file in doc_review.files:
-            assert path.exists(file)
+            assert Path(file).exists()
 
     def test_find_single_file(self, valid_spelled_content_pack):
         """
@@ -86,7 +85,7 @@ class TestDocReviewFilesAreFound:
             file_path=valid_spelled_content_pack.integrations[0].yml.path
         )
         for file in doc_review.files:
-            assert path.exists(file)
+            assert Path(file).exists()
 
     def test_find_files_from_git(self, mocker, valid_spelled_content_pack):
         """
@@ -1415,3 +1414,35 @@ def test_camel_case_split(word, parts):
 def test_replace_escape_characters(sentence, expected):
     result = replace_escape_characters(sentence)
     assert result == expected, "The escape sequence was removed"
+
+
+@pytest.mark.parametrize(
+    "use_pack_known_words, expected_param_value",
+    [
+        (["--use-packs-known-words"], True),
+        (["--skip-packs-known-words"], False),
+        ([""], True),
+        (["--skip-packs-known-words", "--use-packs-known-words"], True),
+    ],
+)
+def test_pack_known_word_arg(use_pack_known_words, expected_param_value, mocker):
+    """
+    Given:
+        - the --use-pack-known-words parameter
+    When:
+        - running the doc-review command
+    Then:
+        - Validate that given --use-packs-known-words" the load_known_words_from_pack is True
+        - Validate that given --skip-packs-known-words" the load_known_words_from_pack is False
+        - Validate that no param the default load_known_words_from_pack is True
+        - Validate that given --use-packs-known-words and --skip-packs-known-words the load_known_words_from_pack is True
+    """
+    runner = CliRunner()
+    mock_doc_reviewer = mocker.MagicMock(name="DocReviewer")
+    mock_doc_reviewer.run_doc_review.return_value = True
+    m = mocker.patch(
+        "demisto_sdk.commands.doc_reviewer.doc_reviewer.DocReviewer",
+        return_value=mock_doc_reviewer,
+    )
+    runner.invoke(__main__.doc_review, use_pack_known_words)
+    assert m.call_args.kwargs.get("load_known_words_from_pack") == expected_param_value

@@ -4,6 +4,7 @@ import string
 import time
 import unicodedata
 from contextlib import contextmanager
+from pathlib import Path
 from pprint import pformat
 from subprocess import STDOUT, CalledProcessError, call, check_call, check_output
 from threading import Lock
@@ -12,6 +13,7 @@ from typing import Dict, Iterator
 import demisto_client.demisto_api
 import urllib3
 
+from demisto_sdk.commands.common.constants import DEMISTO_GIT_PRIMARY_BRANCH
 from demisto_sdk.commands.test_content.constants import SSH_USER
 
 VALID_FILENAME_CHARS = f"-_.() {string.ascii_letters}{string.digits}"
@@ -122,7 +124,7 @@ class AMIConnection:
             stdout="null",
             **kwargs,
         )
-        return os.path.join(dst, os.path.basename(src))
+        return str(Path(dst, Path(src).name))
 
     def run_script(self, script, *args):
         """Copy a script to the AMI and run it.
@@ -174,7 +176,7 @@ class MITMProxy:
         repo_folder=MOCKS_GIT_PATH,
         tmp_folder=MOCKS_TMP_PATH,
     ):
-        is_branch_master = branch_name == "master"
+        is_branch_master = branch_name == DEMISTO_GIT_PRIMARY_BRANCH
         self.internal_ip = internal_ip
         self.current_folder = self.repo_folder = repo_folder
         self.tmp_folder = tmp_folder

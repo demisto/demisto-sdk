@@ -78,6 +78,7 @@ class JSONContentObject(JSONObject):
     @property
     def from_version(self) -> Version:
         """Object from_version attribute.
+        Note: On Packaging>=v23, Version('') is no longer equivalent to Version("0.0.0"), which is why we do the `or 0.0.0`
 
         Returns:
             version: Version object which able to be compared with other Version object.
@@ -91,6 +92,7 @@ class JSONContentObject(JSONObject):
     @property
     def to_version(self) -> Version:
         """Object to_version attribute.
+        Note: On Packaging>=v23, Version('') is no longer equivalent to Version("0.0.0"), which is why we do the `or 0.0.0`
 
         Returns:
             version: Version object which able to be compared with other Version object.
@@ -99,7 +101,9 @@ class JSONContentObject(JSONObject):
             1. Version object - https://github.com/pypa/packaging
             2. Attribute info - https://xsoar.pan.dev/docs/integrations/yaml-file#version-and-tests
         """
-        return Version(self.get("toVersion") or DEFAULT_CONTENT_ITEM_TO_VERSION)
+        return Version(
+            self.get("toVersion", DEFAULT_CONTENT_ITEM_TO_VERSION) or "0.0.0"
+        )
 
     def dump(
         self,

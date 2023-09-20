@@ -27,6 +27,7 @@ from demisto_sdk.commands.common.tools import (
     get_pack_name,
     get_relative_path_from_packs_dir,
     get_yaml,
+    str2bool,
 )
 
 
@@ -190,7 +191,7 @@ class BaseValidator:
             if not isinstance(file_path, str):
                 file_path = str(file_path)
 
-            file_name = os.path.basename(file_path)
+            file_name = Path(file_path).name
             try:
                 self.check_file_flags(file_name, file_path)
             except FileNotFoundError:
@@ -260,6 +261,17 @@ class BaseValidator:
 
         self.json_output(file_path, error_code, error_message, warning)
         self.add_to_report_error_list(error_code, file_path, FOUND_FILES_AND_ERRORS)
+        if (not warning) and str2bool(
+            os.getenv("GITHUB_ACTIONS")
+        ):  # warnings are not printed
+            github_annotation_message = (
+                f"{error_message}\n{suggested_fix}" if suggested_fix else error_message
+            ).replace(
+                "\n", "%0A"
+            )  # GitHub action syntax
+            print(  # noqa: T201
+                f"::error file={file_path},line=1,endLine=1,title=Validation Error {error_code}::{github_annotation_message}"
+            )
         return formatted_error
 
     def check_file_flags(self, file_name, file_path):
@@ -277,7 +289,7 @@ class BaseValidator:
 
     @staticmethod
     def get_metadata_file_content(meta_file_path):
-        if not os.path.exists(meta_file_path):
+        if not Path(meta_file_path).exists():
             return {}
 
         with open(meta_file_path, encoding="utf-8") as file:
@@ -362,7 +374,7 @@ class BaseValidator:
 
         json_contents = []
         existing_json = ""
-        if os.path.exists(self.json_file_path):
+        if Path(self.json_file_path).exists():
             try:
                 existing_json = get_json(self.json_file_path)
             except ValueError:

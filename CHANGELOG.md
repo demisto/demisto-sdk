@@ -1,6 +1,7 @@
 # Changelog
 ## Unreleased
 * Fixed an issue where using **prepare-content**, **upload**, **zip-packs** and **download** on machines with default encoding other than unicode caused errors.
+* Fixed an issue where **upload** failed when trying to upload an indicator field.
 * The **modeling-rules-test** will now ignore test data files containing the `test_data_config_ignore` key.
 * Fixed an issue where **modeling-rules init-test-data** command failed on modeling rules that contain the text `call` even not as a separate word.
 * Unlocked the dependency on `packaging`.

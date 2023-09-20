@@ -1582,6 +1582,8 @@ VALIDATED_PACK_ITEM_TYPES = [
     "Wizards",
 ]
 
+SUFFIX_THAT_DONT_NEED_PERIOD = ["!", "?"]
+
 FIRST_FETCH = "first_fetch"
 
 MAX_FETCH = "max_fetch"

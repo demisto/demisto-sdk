@@ -5,6 +5,7 @@
 * Demisto-SDK will now exit gracefully with an appropriate error message when *git* is not installed.
 * Fixed the support in **validate** for `svg` images to have their theme suffix.
 * Fixed an issue where **modeling-rule test** command failed to properly compare types of fields.
+* Fixed an issue where **validate** falsely failed with error `DS108` on descriptions ending with question mark and exclamation mark.
 * Updated the **engineinfo** type in the script schema.
 
 ## 1.20.2

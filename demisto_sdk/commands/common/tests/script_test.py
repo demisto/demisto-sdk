@@ -687,6 +687,11 @@ class TestScriptValidator:
                 True,
                 True,
             ),
+            (
+                {"comment": "is this description okay?"},
+                True,
+                True,
+            ),
         ],
     )
     def test_is_line_ends_with_dot(
@@ -707,6 +712,7 @@ class TestScriptValidator:
             - Case 10: A yml content with an empty comment, and use_git flag set to True.
             - Case 11: A yml content with a contextPath with empty description, and use_git flag set to True.
             - Case 12: A yml content with a comment and contextPath with a description that ends with a dot inside a bracket, and use_git flag set to True.
+            - Case 13: A yml content with a comment that ends with a question mark, and use_git flag set to True.
         When:
             - when executing the is_line_ends_with_dot method
         Then:
@@ -722,6 +728,7 @@ class TestScriptValidator:
             - Case 10: make sure the validation pass.
             - Case 11: make sure the validation pass.
             - Case 12: make sure the validation pass.
+            - Case 13: make sure the validation pass.
         """
         pack = repo.create_pack("test")
         script = pack.create_script(yml=yml_content)

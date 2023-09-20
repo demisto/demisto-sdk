@@ -1,5 +1,13 @@
 # Changelog
 ## Unreleased
+* Fixed an issue where using **prepare-content**, **upload**, **zip-packs** and **download** on machines with default encoding other than unicode caused errors.
+* The **modeling-rules-test** will now ignore test data files containing the `test_data_config_ignore` key.
+* Fixed an issue where **modeling-rules init-test-data** command failed on modeling rules that contain the text `call` even not as a separate word.
+* Unlocked the dependency on `packaging`.
+
+## 1.20.3
+* Added the `FileType.VULTURE_WHITELIST` to the `FileType` enum for `.vulture_whitelist.py` files.
+* Improved performance when reading `yml` files.
 * Fixed an issue where **format** would add unnecessary period at the end of descriptions ending with brackets.
 * Fixed an issue where **format** would not add a period at the end of descriptions, when running on in script files.
 * Fixed an issue where **validate** falsely failed with error `DS108` on descriptions ending with brackets that contains a dot at the end of them.
@@ -16,8 +24,7 @@
 * Updated the **engineinfo** type in the script schema.
 * Updated the **modeling-rules init & test** commands to support RULE section fields.
 * Stability improvements for **graph create** and **graph update** commands.
-* Fixed the *metadata* type in the XSIAM dashboard schema to *map*.
-* Added the *--delete_existing_dataset/-dd* flag to the **modeling-rules test** command to delete an existing dataset in the tenant.
+* Fixed the *metadata* type in the XSIAM dashboard schema to *map*, with possible values: **lazy_load** and **cache_ttl**
 
 ## 1.20.2
 * Updated the **pre-commit** command to run on all python versions in one run.

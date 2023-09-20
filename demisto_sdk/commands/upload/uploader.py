@@ -479,9 +479,7 @@ class Uploader:
 class ConfigFileParser:
     def __init__(self, path: Path):
         self.path = path
-
-        with self.path.open() as f:
-            self.content = json.load(f)
+        self.content = get_file(self.path, raise_on_error=True)
 
         self.custom_packs_paths: Tuple[Path, ...] = tuple(
             Path(pack["url"]) for pack in self.content.get("custom_packs", ())

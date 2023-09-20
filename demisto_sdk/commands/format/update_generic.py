@@ -103,7 +103,7 @@ class BaseUpdate:
             )
         try:
             self.data, self.file_type = get_dict_from_file(
-                self.source_file, clear_cache=clear_cache
+                self.source_file, clear_cache=clear_cache, keep_order=True
             )
         except Exception:
             raise Exception(f"Provided file {self.source_file} is not a valid file.")

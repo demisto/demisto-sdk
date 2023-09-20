@@ -14,7 +14,10 @@ from demisto_sdk.commands.common.constants import (
 )
 from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.logger import logger
-from demisto_sdk.commands.common.tools import get_file
+from demisto_sdk.commands.common.tools import (
+    get_file,
+    write_dict,
+)
 
 json = JSON_Handler()
 
@@ -132,7 +135,9 @@ def upload_markdown_images_to_artifacts(
                 # If this is the first pack init the file with an empty dict.
                 json.dump({}, f)
 
-        markdown_images_data_dict = get_file(artifacts_markdown_images_path)
+        markdown_images_data_dict = get_file(
+            artifacts_markdown_images_path, raise_on_error=True
+        )
         if pack_name in markdown_images_data_dict:
             integration_desc = ImagesFolderNames.INTEGRATION_DESCRIPTION_IMAGES.value
             if (
@@ -151,5 +156,8 @@ def upload_markdown_images_to_artifacts(
         else:
             markdown_images_data_dict.update(images_dict)
 
-        with open(artifacts_markdown_images_path, "w") as fp:
-            json.dump(markdown_images_data_dict, fp, indent=4)
+        write_dict(
+            artifacts_markdown_images_path,
+            data=markdown_images_data_dict,
+            indent=4,
+        )

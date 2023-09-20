@@ -35,6 +35,10 @@ class TestPrintChecker(pylint.testutils.CheckerTestCase):
             pylint.testutils.MessageTest(
                 msg_id="print-exists",
                 node=node_b,
+                line=3,
+                col_offset=4,
+                end_line=3,
+                end_col_offset=29,
             ),
         ):
             self.checker.visit_call(node_b)
@@ -75,7 +79,7 @@ class TestPrintChecker(pylint.testutils.CheckerTestCase):
                 return True
         """
         )
-        assert node_a is None
+        assert not node_a
         with self.assertNoMessages():
             self.checker.visit_call(node_a)
 
@@ -98,15 +102,23 @@ class TestPrintChecker(pylint.testutils.CheckerTestCase):
                 return True
         """
         )
-        assert node_a is not None and node_b is not None
+        assert node_a and node_b
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="print-exists",
                 node=node_b,
+                col_offset=8,
+                end_line=6,
+                end_col_offset=23,
+                line=6,
             ),
             pylint.testutils.MessageTest(
                 msg_id="print-exists",
                 node=node_a,
+                col_offset=4,
+                end_line=3,
+                end_col_offset=18,
+                line=3,
             ),
         ):
             self.checker.visit_call(node_b)

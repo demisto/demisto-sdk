@@ -1604,7 +1604,14 @@ def dump_link_files(
                 new_created_files.append(new_file)
     # Handle case where object first time dump.
     else:
-        new_created_files.extend(content_object.dump(dest_dir=dest_dir))
+        target = dest_dir / content_object.normalize_file_name()
+        if (
+            target.exists()
+            and target.stat().st_mtime >= artifact_manager.execution_start
+        ):
+            raise DuplicateFiles(target, content_object.path)
+        else:
+            new_created_files.extend(content_object.dump(dest_dir=dest_dir))
 
     return new_created_files
 

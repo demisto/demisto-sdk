@@ -1,6 +1,9 @@
 # Changelog
 ## Unreleased
 * Fixed an issue where using **prepare-content**, **upload**, **zip-packs** and **download** on machines with default encoding other than unicode caused errors.
+* The **modeling-rules-test** will now ignore test data files containing the `test_data_config_ignore` key.
+* Fixed an issue where **modeling-rules init-test-data** command failed on modeling rules that contain the text `call` even not as a separate word.
+* Unlocked the dependency on `packaging`.
 
 ## 1.20.3
 * Added the `FileType.VULTURE_WHITELIST` to the `FileType` enum for `.vulture_whitelist.py` files.
@@ -22,7 +25,6 @@
 * Updated the **modeling-rules init & test** commands to support RULE section fields.
 * Stability improvements for **graph create** and **graph update** commands.
 * Fixed the *metadata* type in the XSIAM dashboard schema to *map*, with possible values: **lazy_load** and **cache_ttl**
-* The **modeling-rules-test** will now ignore test data files containing the `test_data_config_ignore` key.
 
 ## 1.20.2
 * Updated the **pre-commit** command to run on all python versions in one run.

@@ -93,7 +93,6 @@ def create_table(expected: Dict[str, Any], received: Dict[str, Any]) -> str:
         data,
         tablefmt="fancy_grid",
         headers=["Model Field", "Expected Value", "Received Value"],
-        maxcolwidths=[60, 40, 40],
     )
 
 

@@ -764,7 +764,7 @@ class TestUpdateContentGraph:
                 for file in extracted_files
             )
 
-    def test_update_content_graph_external_repo(self, mocker, repository):
+    def test_update_content_graph_external_repo(self, mocker):
         """
         Given:
             - A ContentDTO model representing the repository state on master branch.

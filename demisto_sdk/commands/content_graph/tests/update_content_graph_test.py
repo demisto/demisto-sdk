@@ -764,26 +764,7 @@ class TestUpdateContentGraph:
                 for file in extracted_files
             )
 
-    #
-    # data_test_update_content_graph_external_repo = [
-    #     pytest.param(
-    #         True,
-    #         id="New pack with USES relationship, causing adding a dependency",
-    #     ),
-    #     pytest.param(
-    #         True,
-    #         id="No change in repository",
-    #     ),
-    # ]
-    #
-    # @pytest.mark.parametrize(
-    #     "is_external",
-    #     data_test_update_content_graph_external_repo,
-    # )
-    def test_update_content_graph_external_repo(
-        self,
-        mocker,
-    ):
+    def test_update_content_graph_external_repo(self, mocker, repository):
         """
         Given:
             - A ContentDTO model representing the repository state on master branch.

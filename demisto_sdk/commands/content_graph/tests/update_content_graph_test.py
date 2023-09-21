@@ -200,6 +200,31 @@ def repository(mocker) -> ContentDTO:
     return repository
 
 
+@pytest.fixture
+def external_repository(mocker) -> ContentDTO:
+    repository = ContentDTO(
+        path=GIT_PATH,
+        packs=[],
+    )
+
+    pack1 = mock_pack("ExternalPack")
+    pack1.content_items.integration.append(mock_integration())
+    repository.packs.extend([pack1])
+
+    def mock__create_content_dto(packs_to_update: List[str]) -> List[ContentDTO]:
+        if not packs_to_update:
+            return [repository]
+        repo_copy = repository.copy()
+        repo_copy.packs = [p for p in repo_copy.packs if p.object_id in packs_to_update]
+        return [repo_copy]
+
+    mocker.patch(
+        "demisto_sdk.commands.content_graph.content_graph_builder.ContentGraphBuilder._create_content_dtos",
+        side_effect=mock__create_content_dto,
+    )
+    return repository
+
+
 # HELPERS
 
 
@@ -764,7 +789,7 @@ class TestUpdateContentGraph:
                 for file in extracted_files
             )
 
-    def test_update_content_graph_external_repo(self, mocker):
+    def test_update_content_graph_external_repo(self, mocker, external_repository):
         """
         Given:
             - A ContentDTO model representing the repository state on master branch.
@@ -788,7 +813,7 @@ class TestUpdateContentGraph:
             )
             mocker.patch(
                 "demisto_sdk.commands.content_graph.commands.update.get_all_repo_pack_ids",
-                return_value=["SamplePack2"],
+                return_value=["ExternalPack"],
             )
 
             # update the graph accordingly

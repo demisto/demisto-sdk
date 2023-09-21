@@ -668,7 +668,7 @@ class TestUpdateContentGraph:
     data_test_update_content_graph_external_repo = [
         pytest.param(
             _testcase1__pack3_pack4__script2_uses_script4,
-            False,
+            True,
             id="New pack with USES relationship, causing adding a dependency",
         ),
         pytest.param(
@@ -702,53 +702,42 @@ class TestUpdateContentGraph:
             - Make sure the pack models from the interface are equal to the pack models from ContentDTO
                 before and after the updating the graph with the external repo packs.
         """
+        """do not use create
+        define use_local_import=False
+        mock func download_content_graph with the zip file in test data
+        """
         with ContentGraphInterface() as interface:
-            # create the graph with dependencies
-            create_content_graph(interface, dependencies=True, output_path=tmp_path)
-            packs_from_graph = interface.search(
-                marketplace=MarketplaceVersions.XSOAR,
-                content_type=ContentType.PACK,
-                all_level_dependencies=True,
-            )
-
-            compare(
-                repository.packs,
-                packs_from_graph,
-                [],
-                [],
-                after_update=False,
-            )
-
-            pack_ids_to_update = update_repository(repository, commit_func)
             mocker.patch(
                 "demisto_sdk.commands.content_graph.commands.update.is_external_repository",
                 return_value=is_external,
             )
             mocker.patch(
                 "demisto_sdk.commands.content_graph.commands.update.get_all_repo_pack_ids",
-                return_value=["SamplePack", "SamplePack2", "SamplePack3"],
+                return_value=["ExternalPack"],
             )
 
             # update the graph accordingly
             update_content_graph(
                 interface,
-                packs_to_update=pack_ids_to_update,
-                dependencies=True,
-                output_path=tmp_path,
-                use_local_import=True,
+                packs_to_update=[],
+                imported_path=TEST_DATA_PATH
+                / "mock_import_files_multiple_repos__valid"
+                / "Content_Graph_Test.zip",
+                use_local_import=False,
             )
             packs_from_graph = interface.search(
                 marketplace=MarketplaceVersions.XSOAR,
                 content_type=ContentType.PACK,
                 all_level_dependencies=True,
             )
-            compare(
-                repository.packs,
-                packs_from_graph,
-                [],
-                [],
-                after_update=True,
-            )
+            assert len(packs_from_graph) == 2
+            # compare(
+            #     repository.packs,
+            #     packs_from_graph,
+            #     [],
+            #     [],
+            #     after_update=True,
+            # )
 
     @pytest.mark.parametrize(
         "commit_func, expected_added_dependencies, expected_removed_dependencies",

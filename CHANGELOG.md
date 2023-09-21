@@ -2,6 +2,7 @@
 ## Unreleased
 * Fixed an issue where **validate** falsely failed with error `DS108` on descriptions ending with brackets that contains a dot at the end of them.
 * Fixed an issue were format added a dot at end of the description that already ends with question mark and exclamation mark.
+* Fixed an issue where **upload** failed when trying to upload an indicator field.
 
 ## 1.20.4
 * Fixed an issue where using **prepare-content**, **upload**, **zip-packs** and **download** on machines with default encoding other than unicode caused errors.

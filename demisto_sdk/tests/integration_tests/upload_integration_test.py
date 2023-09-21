@@ -354,3 +354,95 @@ def test_integration_upload_pack_invalid_connection_params(mocker):
         logger_info.call_args_list,
         "Could not connect to the server. Try checking your connection configurations.",
     )
+
+
+def test_upload_single_list(mocker, pack):
+    """
+    Given
+    - Content pack with list content item.
+
+    When
+    - Uploading the list content item.
+
+    Then
+    - Ensure the list is uploaded successfully.
+    """
+    from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
+
+    with (Path(DEMISTO_SDK_PATH) / "tests/test_files/list-valid.json").open(
+        "r"
+    ) as _list_content:
+        _list_data = pack.create_list(
+            name="test-valid-list-upload", content=json.load(_list_content)
+        )
+
+    mocker.patch(
+        "demisto_sdk.commands.upload.uploader.demisto_client", return_valure="object"
+    )
+    mocker.patch(
+        "demisto_sdk.commands.upload.uploader.get_demisto_version",
+        return_value=Version("6.8.0"),
+    )
+    mocker.patch.object(ContentItem, "pack_name", return_value="PackWithList")
+    mocker.patch.object(ContentItem, "pack_version", return_value="1.2.0")
+
+    runner = CliRunner(mix_stderr=False)
+
+    with ChangeCWD(pack.repo_path):
+        result = runner.invoke(
+            main,
+            [UPLOAD_CMD, "-i", _list_data.path],
+        )
+    assert result.exit_code == SUCCESS_RETURN_CODE
+
+
+def test_upload_single_indicator_field(mocker, pack):
+    """
+    Given
+    - Content pack with an indicator field.
+
+    When
+    - Uploading the indicator field.
+
+    Then
+    - Ensure the indicator field is uploaded successfully.
+    """
+    from demisto_sdk.commands.common.constants import GENERAL_DEFAULT_FROMVERSION
+    from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
+
+    indicator_field = pack.create_indicator_field(
+        "test-upload",
+        content={
+            "id": "indicator_testupload",
+            "version": -1,
+            "name": "test",
+            "cliName": "test",
+            "type": "markdown",
+            "description": "test",
+            "associatedToAll": False,
+            "fromVersion": "5.5.0",
+        },
+    )
+
+    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+
+    mocker.patch(
+        "demisto_sdk.commands.upload.uploader.demisto_client", return_valure="object"
+    )
+    mocker.patch(
+        "demisto_sdk.commands.upload.uploader.get_demisto_version",
+        return_value=Version(GENERAL_DEFAULT_FROMVERSION),
+    )
+
+    mocker.patch.object(ContentItem, "pack_name", return_value="PackWithIndicatorField")
+    mocker.patch.object(ContentItem, "pack_version", return_value="1.2.0")
+
+    runner = CliRunner(mix_stderr=False)
+
+    with ChangeCWD(pack.repo_path):
+        result = runner.invoke(
+            main,
+            [UPLOAD_CMD, "-i", indicator_field.path],
+        )
+    assert result.exit_code == SUCCESS_RETURN_CODE
+    assert str_in_call_args_list(logger_info.call_args_list, "SUCCESSFUL UPLOADS")

@@ -53,6 +53,8 @@ from demisto_sdk.commands.common.constants import (
     DEF_DOCKER_PWSH,
     DEFAULT_CONTENT_ITEM_FROM_VERSION,
     DEFAULT_CONTENT_ITEM_TO_VERSION,
+    DEMISTO_GIT_PRIMARY_BRANCH,
+    DEMISTO_GIT_UPSTREAM,
     DOC_FILES_DIR,
     ENV_DEMISTO_SDK_MARKETPLACE,
     ENV_SDK_WORKING_OFFLINE,
@@ -117,7 +119,10 @@ from demisto_sdk.commands.common.git_content_config import GitContentConfig, Git
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
-from demisto_sdk.commands.common.handlers import YAML_Handler
+from demisto_sdk.commands.common.handlers import (
+    XSOAR_Handler,
+    YAML_Handler,
+)
 from demisto_sdk.commands.content_graph.parsers.generic_module import (
     GenericModuleParser,
 )
@@ -347,7 +352,7 @@ def src_root() -> Path:
     Returns:
         Path: src root path.
     """
-    git_dir = git.Repo(Path.cwd(), search_parent_directories=True).working_tree_dir
+    git_dir = GitUtil().repo.working_tree_dir
 
     return Path(git_dir) / "demisto_sdk"  # type: ignore
 
@@ -441,13 +446,10 @@ def get_core_pack_list(marketplaces: List[MarketplaceVersions] = None) -> list:
 
 def get_local_remote_file(
     full_file_path: str,
-    tag: str = "master",
+    tag: str = DEMISTO_GIT_PRIMARY_BRANCH,
     return_content: bool = False,
 ):
-    repo = git.Repo(
-        search_parent_directories=True
-    )  # the full file path could be a git file path
-    repo_git_util = GitUtil(repo)
+    repo_git_util = GitUtil()
     git_path = repo_git_util.get_local_remote_file_path(full_file_path, tag)
     file_content = repo_git_util.get_local_remote_file_content(git_path)
     if return_content:
@@ -460,7 +462,7 @@ def get_local_remote_file(
 def get_remote_file_from_api(
     full_file_path: str,
     git_content_config: Optional[GitContentConfig],
-    tag: str = "master",
+    tag: str = DEMISTO_GIT_PRIMARY_BRANCH,
     return_content: bool = False,
     encoding: Optional[str] = None,
 ) -> Union[bytes, Dict, List]:
@@ -568,7 +570,7 @@ def get_file_details(
 @lru_cache(maxsize=128)
 def get_remote_file(
     full_file_path: str,
-    tag: str = "master",
+    tag: str = DEMISTO_GIT_PRIMARY_BRANCH,
     return_content: bool = False,
     git_content_config: Optional[GitContentConfig] = None,
     default_value=None,
@@ -576,7 +578,7 @@ def get_remote_file(
     """
     Args:
         full_file_path:The full path of the file.
-        tag: The branch name. default is 'master'
+        tag: The branch name. default is the content of DEMISTO_DEFAULT_BRANCH env variable.
         return_content: Determines whether to return the file's raw content or the dict representation of it.
         git_content_config: The content config to take the file from
         default_value: The method returns this value if using the SDK in offline mode. default_value cannot be None,
@@ -590,7 +592,7 @@ def get_remote_file(
             raise NoInternetConnectionException
         return default_value
 
-    tag = tag.replace("origin/", "").replace("demisto/", "")
+    tag = tag.replace(f"{DEMISTO_GIT_UPSTREAM}/", "").replace("demisto/", "")
     if not git_content_config:
         try:
             if not (
@@ -630,14 +632,16 @@ def filter_files_on_pack(pack: str, file_paths_list="") -> set:
     return files_paths_on_pack
 
 
-def filter_packagify_changes(modified_files, added_files, removed_files, tag="master"):
+def filter_packagify_changes(
+    modified_files, added_files, removed_files, tag=DEMISTO_GIT_PRIMARY_BRANCH
+):
     """
     Mark scripts/integrations that were removed and added as modified.
 
     :param modified_files: list of modified files in branch
     :param added_files: list of new files in branch
     :param removed_files: list of removed files in branch
-    :param tag: tag of compared revision
+    :param tag: The branch name. default is the content of DEMISTO_DEFAULT_BRANCH env variable.
 
     :return: tuple of updated lists: (modified_files, updated_added_files, removed_files)
     """
@@ -664,8 +668,7 @@ def filter_packagify_changes(modified_files, added_files, removed_files, tag="ma
             if PACKS_README_FILE_NAME in file_path:
                 updated_added_files.add(file_path)
                 continue
-            with open(file_path) as f:
-                details = yaml.load(f)
+            details = get_file(file_path, raise_on_error=True)
 
             uniq_identifier = "_".join(
                 [
@@ -826,8 +829,14 @@ def get_file(
     file_path: Union[str, Path],
     clear_cache: bool = False,
     return_content: bool = False,
-    keep_order: bool = True,
+    keep_order: bool = False,
+    raise_on_error: bool = False,
 ):
+    """
+    Get file contents.
+
+    if raise_on_error = False, this function will return empty dict
+    """
     if clear_cache:
         get_file.cache_clear()
     file_path = Path(file_path)  # type: ignore[arg-type]
@@ -862,6 +871,8 @@ def get_file(
         logger.error(
             f"{file_path} has a structure issue of file type {type_of_file}\n{e}"
         )
+        if raise_on_error:
+            raise
         return {}
 
 
@@ -893,7 +904,7 @@ def get_file_or_remote(file_path: Path, clear_cache=False):
         return get_remote_file(str(relative_file_path))
 
 
-def get_yaml(file_path, cache_clear=False, keep_order: bool = True):
+def get_yaml(file_path, cache_clear=False, keep_order: bool = False):
     if cache_clear:
         get_file.cache_clear()
     return get_file(file_path, clear_cache=cache_clear, keep_order=keep_order)
@@ -1650,7 +1661,10 @@ def find_type_by_path(path: Union[str, Path] = "") -> Optional[FileType]:
         elif LAYOUT_RULES_DIR in path.parts:
             return FileType.LAYOUT_RULE
 
-    elif path.stem.endswith("_image") and path.suffix in (".png", ".svg"):
+    elif (path.stem.endswith("_image") and path.suffix == ".png") or (
+        (path.stem.endswith("_dark") or path.stem.endswith("_light"))
+        and path.suffix == ".svg"
+    ):
         if path.name.endswith("Author_image.png"):
             return FileType.AUTHOR_IMAGE
         elif XSIAM_DASHBOARDS_DIR in path.parts:
@@ -1664,6 +1678,9 @@ def find_type_by_path(path: Union[str, Path] = "") -> Optional[FileType]:
 
     elif path.suffix == ".ps1":
         return FileType.POWERSHELL_FILE
+
+    elif path.name == ".vulture_whitelist.py":
+        return FileType.VULTURE_WHITELIST
 
     elif path.suffix == ".py":
         return FileType.PYTHON_FILE
@@ -1732,6 +1749,7 @@ def find_type_by_path(path: Union[str, Path] = "") -> Optional[FileType]:
         or path.suffix.lower() == ".txt"
     ):
         return FileType.TXT
+
     elif path.name == ".pylintrc":
         return FileType.PYLINTRC
 
@@ -1903,6 +1921,11 @@ def find_type(
 
         if LayoutRuleParser.match(_dict, path):
             return FileType.LAYOUT_RULE
+        
+            if isinstance(_dict, dict) and {"data", "allRead", "truncated"}.intersection(
+            _dict.keys()
+        ):
+            return FileType.LISTS
 
         # When using it for all files validation- sometimes 'id' can be integer
         if GenericFieldParser.match(_dict, path):
@@ -1952,7 +1975,7 @@ def is_external_repository() -> bool:
 
     """
     try:
-        git_repo = git.Repo(os.getcwd(), search_parent_directories=True)
+        git_repo = GitUtil().repo
         private_settings_path = os.path.join(git_repo.working_dir, ".private-repo-settings")  # type: ignore
         return Path(private_settings_path).exists()
     except git.InvalidGitRepositoryError:
@@ -2010,12 +2033,19 @@ def get_content_path(relative_path: Optional[Path] = None) -> Path:
             )
     try:
         if content_path := os.getenv("DEMISTO_SDK_CONTENT_PATH"):
-            git_repo = git.Repo(content_path)
+            git_repo = GitUtil(Path(content_path), search_parent_directories=False).repo
             logger.debug(f"Using content path: {content_path}")
         else:
-            git_repo = git.Repo(Path.cwd(), search_parent_directories=True)
+            git_repo = GitUtil().repo
 
-        remote_url = git_repo.remote().urls.__next__()
+        try:
+            remote_url = git_repo.remote(name=DEMISTO_GIT_UPSTREAM).urls.__next__()
+        except ValueError:
+            if not os.getenv("DEMISTO_SDK_IGNORE_CONTENT_WARNING"):
+                logger.warning(
+                    f"Could not find remote with name {DEMISTO_GIT_UPSTREAM} for repo {git_repo.working_dir}"
+                )
+            remote_url = ""
         is_fork_repo = "content" in remote_url
         is_external_repo = is_external_repository()
 
@@ -2116,7 +2146,7 @@ def is_file_from_content_repo(file_path: str) -> Tuple[bool, str]:
         str: relative path of file in content repo.
     """
     try:
-        git_repo = git.Repo(os.getcwd(), search_parent_directories=True)
+        git_repo = GitUtil().repo
         remote_url = git_repo.remote().urls.__next__()
         is_fork_repo = "content" in remote_url
         is_external_repo = is_external_repository()
@@ -2799,9 +2829,30 @@ def compare_context_path_in_yml_and_readme(yml_dict, readme_content):
     return different_contexts
 
 
-def write_yml(yml_path: str, yml_data: Dict):
-    with open(yml_path, "w") as f:
-        yaml.dump(yml_data, f)  # ruamel preservers multilines
+def write_dict(
+    path: Union[Path, str],
+    data: Dict,
+    handler: Optional[XSOAR_Handler] = None,
+    indent: int = 0,
+    sort_keys: bool = False,
+    **kwargs,
+):
+    """
+    Write unicode content into a json/yml file.
+    """
+    path = Path(path)
+    if not handler:
+        suffix = path.suffix.lower()
+        if suffix == ".json":
+            handler = json
+        elif suffix in {".yaml", ".yml"}:
+            handler = yaml
+        else:
+            raise ValueError(f"The file {path} is neither json/yml")
+
+    safe_write_unicode(
+        lambda f: handler.dump(data, f, indent, sort_keys, **kwargs), path  # type: ignore[union-attr]
+    )
 
 
 def to_kebab_case(s: str):
@@ -3144,7 +3195,7 @@ def extract_docker_image_from_text(text: str, with_no_tag: bool = False):
 
 def get_current_repo() -> Tuple[str, str, str]:
     try:
-        git_repo = git.Repo(os.getcwd(), search_parent_directories=True)
+        git_repo = GitUtil().repo
         parsed_git = giturlparse.parse(git_repo.remotes.origin.url)
         host = parsed_git.host
         if "@" in host:
@@ -3218,12 +3269,13 @@ def get_mp_types_from_metadata_by_item(file_path):
         metadata_path = Path(*metadata_path_parts) / METADATA_FILE_NAME
 
     try:
-        with open(metadata_path) as metadata_file:
-            metadata = json.load(metadata_file)
-            marketplaces = metadata.get(MARKETPLACE_KEY_PACK_METADATA)
-            if not marketplaces:
-                return [MarketplaceVersions.XSOAR.value]
-            return marketplaces
+        if not (
+            marketplaces := get_file(metadata_path, raise_on_error=True).get(
+                MARKETPLACE_KEY_PACK_METADATA
+            )
+        ):
+            return [MarketplaceVersions.XSOAR.value]
+        return marketplaces
     except FileNotFoundError:
         return []
 
@@ -3747,24 +3799,21 @@ def get_api_module_dependencies_from_graph(
 ) -> List:
     if changed_api_modules:
         dependent_items = []
-        for changed_api_module in changed_api_modules:
+        api_module_nodes = graph.search(
+            object_id=changed_api_modules, all_level_imports=True
+        )
+        if missing_api_modules := changed_api_modules - {
+            node.object_id for node in api_module_nodes
+        }:
+            raise ValueError(
+                f"The modified API modules {','.join(missing_api_modules)} were not found in the "
+                f"content graph."
+            )
+        for api_module_node in api_module_nodes:
             logger.info(
-                f"Checking for packages dependent on the modified API module {changed_api_module}..."
+                f"Checking for packages dependent on the modified API module {api_module_node.object_id}"
             )
-            api_module_nodes = graph.search(
-                object_id=changed_api_module, all_level_imports=True
-            )
-            # search return the one node of the changed_api_module
-            api_module_node = api_module_nodes[0] if api_module_nodes else None
-            if not api_module_node:
-                raise ValueError(
-                    f"The modified API module `{changed_api_module}` was not found in the "
-                    f"content graph."
-                )
-
-            dependent_items += [
-                dependency for dependency in api_module_node.imported_by
-            ]
+            dependent_items += list(api_module_node.imported_by)
 
         if dependent_items:
             logger.info(

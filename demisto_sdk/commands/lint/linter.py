@@ -30,6 +30,7 @@ from demisto_sdk.commands.common.docker_helper import (
     get_python_version,
     init_global_docker_client,
 )
+from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.handlers import YAML_Handler
 from demisto_sdk.commands.common.hook_validations.docker import DockerImageValidator
@@ -41,6 +42,7 @@ from demisto_sdk.commands.common.native_image import (
 from demisto_sdk.commands.common.timers import timer
 from demisto_sdk.commands.common.tools import (
     get_docker_images_from_yml,
+    get_file,
     get_id,
     get_pack_ignore_content,
     get_pack_name,
@@ -519,7 +521,7 @@ class Linter:
 
         """
         try:
-            repo = git.Repo(self._content_repo)
+            repo = GitUtil(self._content_repo).repo
             files_to_ignore = repo.ignored(self._facts["lint_files"])
             for file in files_to_ignore:
                 logger.info(f"{log_prompt} - Skipping gitignore file {file}")
@@ -1280,8 +1282,8 @@ class Linter:
         )
         pack_metadata_file = pack_dir / PACKS_PACK_META_FILE_NAME
         logger.debug(f"Before reading content of {pack_metadata_file}")
-        with pack_metadata_file.open() as f:
-            pack_meta_content: Dict = json.load(f)
+        pack_meta_content: Dict = get_file(pack_metadata_file, raise_on_error=True)
+
         logger.debug(f"After reading content of {pack_metadata_file}")
         self._facts["support_level"] = pack_meta_content.get("support")
         if self._facts["support_level"] == "partner" and pack_meta_content.get(

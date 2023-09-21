@@ -12,10 +12,12 @@ from demisto_sdk.commands.content_graph.common import (
 )
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.common import (
     run_query,
-    to_neo4j_map,
+    to_node_pattern,
 )
 
 NESTING_LEVEL = 5
+
+LIST_PROPERTIES: List[str] = []
 
 CREATE_CONTENT_ITEM_NODES_BY_TYPE_TEMPLATE = """// Creates content items with labels {labels}
 UNWIND $data AS node_data
@@ -180,7 +182,7 @@ def create_nodes_by_type(
 def _match(
     tx: Transaction,
     marketplace: MarketplaceVersions = None,
-    content_type: Optional[ContentType] = None,
+    content_type: ContentType = ContentType.BASE_CONTENT,
     ids_list: Optional[Iterable[int]] = None,
     **properties,
 ) -> List[graph.Node]:
@@ -195,24 +197,13 @@ def _match(
     Returns:
         List[graph.Node]: list of neo4j nodes.
     """
-    params_str = to_neo4j_map(properties)
+    if marketplace:
+        properties["marketplaces"] = marketplace.value
 
-    content_type_str = f":{content_type}" if content_type else ""
-    where = []
-    if marketplace or ids_list:
-        where.append("WHERE")
-        if ids_list:
-            where.append("node_id = elementId(node)")
-        if ids_list and marketplace:
-            where.append("AND")
-        if marketplace:
-            where.append(f"'{marketplace}' IN node.marketplaces")
     query = f"""// Retrieves nodes according to given parameters.
-MATCH (node{content_type_str}{params_str})
-    {" ".join(where)}
+MATCH {to_node_pattern(properties, content_type=content_type, list_properties=get_list_properties(tx))}
+{"WHERE elementId(node) IN $filter_list" if ids_list else ""}
 RETURN node"""
-    if ids_list:
-        query = "UNWIND $filter_list AS node_id\n" + query
 
     return [
         item.get("node")
@@ -220,6 +211,47 @@ RETURN node"""
             tx, query, filter_list=list(ids_list) if ids_list else None
         )
     ]
+
+
+def get_schema(tx: Transaction) -> dict:
+    """Get the schema of the graph.
+
+    Args:
+        tx: Neo4j transaction.
+
+    Returns:
+        dict: The schema of the graph.
+    """
+    query = """// Retrieves the schema of the graph.
+    CALL apoc.meta.schema()
+    YIELD value
+    UNWIND keys(value) AS label
+    RETURN label, keys(value[label].properties) as properties
+    """
+    return {item["label"]: item["properties"] for item in run_query(tx, query).data()}
+
+
+def get_list_properties(tx: Transaction) -> List[str]:
+    """
+    Get all list properties in the graph
+    We will store the result in the global variable of LIST_PROPERTIES, so we will not need to run this query again
+
+    Note: The reason we don't use cache decorator is because we want to cache this data for different transactions.
+    """
+    global LIST_PROPERTIES
+    if LIST_PROPERTIES:
+        return LIST_PROPERTIES
+    query = """
+    CALL apoc.meta.schema()
+    YIELD value
+    UNWIND keys(value) AS label
+    UNWIND keys(value[label].properties) AS property
+    WITH label, property, value[label].properties[property] AS schema
+    WHERE schema.type = "LIST"
+    RETURN collect(distinct property) as list_properties
+    """
+    LIST_PROPERTIES = run_query(tx, query).single()["list_properties"]
+    return LIST_PROPERTIES
 
 
 def delete_all_graph_nodes(tx: Transaction) -> None:
@@ -231,28 +263,3 @@ DETACH DELETE n"""
 
 def remove_empty_properties(tx: Transaction) -> None:
     run_query(tx, REMOVE_EMPTY_PROPERTIES)
-
-
-def get_items_by_type_and_identifier(
-    tx: Transaction,
-    identifier_values_list: List[str],
-    content_type: ContentType,
-    identifier: str,
-) -> List:
-    """Return a list of dictionaries representing the wanted incident fields.
-    Args:
-        tx (Transaction): The neo4j transaction.
-        identifier_values_list (List[str]): A list of identifier values of the wanted content items.
-                                            (The value of the object ids, cli_names etc.)
-        content_type (str): The type of the wanted content item (ContentType.LAYOUT etc.)
-        identifier (str): An identifier for the wanted content item (object_id, cli_name etc.)
-
-    Returns:
-        list: A list of dictionaries, each dictionary represent an incident field.
-    """
-    query = f"""//Returns all the matching content items of type content_type where the content item identifier value
-                //is in the given list.
-MATCH (content_item:{content_type}) WHERE content_item.{identifier} in {identifier_values_list} RETURN content_item
-"""
-    results = run_query(tx, query).data()
-    return [item.get("content_item", {}) for item in results]

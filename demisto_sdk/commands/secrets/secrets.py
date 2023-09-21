@@ -10,6 +10,7 @@ from bs4 import BeautifulSoup
 
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import (
+    DEMISTO_GIT_UPSTREAM,
     PACKS_DIR,
     PACKS_INTEGRATION_README_REGEX,
     PACKS_WHITELIST_FILE_NAME,
@@ -17,11 +18,10 @@ from demisto_sdk.commands.common.constants import (
     re,
 )
 from demisto_sdk.commands.common.content import Content
-from demisto_sdk.commands.common.git_util import GitUtil
-from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     find_type,
+    get_file,
     get_pack_name,
     is_file_path_in_pack,
     run_command,
@@ -121,8 +121,8 @@ class SecretsValidator:
         self.white_list_path = white_list_path
         self.ignore_entropy = ignore_entropy
         self.prev_ver = prev_ver
-        if self.prev_ver and not self.prev_ver.startswith("origin"):
-            self.prev_ver = "origin/" + self.prev_ver
+        if self.prev_ver and not self.prev_ver.startswith(DEMISTO_GIT_UPSTREAM):
+            self.prev_ver = f"{DEMISTO_GIT_UPSTREAM}/" + self.prev_ver
 
     def get_secrets(self, branch_name, is_circle):
         secret_to_location_mapping = {}
@@ -181,10 +181,10 @@ class SecretsValidator:
         if is_circle:
             prev_ver = self.prev_ver
             if not prev_ver:
-                self.git_util = GitUtil(repo=Content.git())
+                self.git_util = Content.git_util()
                 prev_ver = self.git_util.handle_prev_ver()[1]
-            if not prev_ver.startswith("origin"):
-                prev_ver = "origin/" + prev_ver
+            if not prev_ver.startswith(DEMISTO_GIT_UPSTREAM):
+                prev_ver = f"{DEMISTO_GIT_UPSTREAM}/" + prev_ver
             logger.info(f"Running secrets validation against {prev_ver}")
 
             changed_files_string = run_command(
@@ -470,25 +470,22 @@ class SecretsValidator:
         ioc_white_list = []
         files_while_list = []
         if Path(whitelist_path).is_file():
-            with open(whitelist_path, encoding="utf-8") as secrets_white_list_file:
-                secrets_white_list_file = json.load(secrets_white_list_file)
-                for name, white_list in secrets_white_list_file.items():  # type: ignore
-                    if name == "iocs":
-                        for sublist in white_list:
-                            ioc_white_list += [
-                                white_item
-                                for white_item in white_list[sublist]
-                                if len(white_item) > 4
-                            ]
-                        final_white_list += ioc_white_list
-                    elif name == "files":
-                        files_while_list = white_list
-                    else:
-                        final_white_list += [
+            secrets_white_list_file = get_file(whitelist_path, raise_on_error=True)
+            for name, white_list in secrets_white_list_file.items():  # type: ignore
+                if name == "iocs":
+                    for sublist in white_list:
+                        ioc_white_list += [
                             white_item
-                            for white_item in white_list
+                            for white_item in white_list[sublist]
                             if len(white_item) > 4
                         ]
+                    final_white_list += ioc_white_list
+                elif name == "files":
+                    files_while_list = white_list
+                else:
+                    final_white_list += [
+                        white_item for white_item in white_list if len(white_item) > 4
+                    ]
 
         return final_white_list, ioc_white_list, files_while_list
 

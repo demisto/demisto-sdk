@@ -683,10 +683,7 @@ class TestUpdateContentGraph:
     # )
     def test_update_content_graph_external_repo(
         self,
-        tmp_path,
-        repository: ContentDTO,
         mocker,
-        is_external: bool,
     ):
         """
         Given:

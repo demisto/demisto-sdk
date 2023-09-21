@@ -113,9 +113,7 @@ class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGR
         return IntegrationScriptUnifier.get_script_or_integration_package_data(
             self.path.parent
         )[1]
-    
 
-    @staticmethod 
+    @staticmethod
     def match(_dict: dict, path: str) -> bool:
         return IntegrationScriptParser.match(_dict, path) and "category" in _dict
-   

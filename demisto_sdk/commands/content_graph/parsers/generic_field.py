@@ -39,3 +39,16 @@ class GenericFieldParser(JSONContentItemParser, content_type=ContentType.GENERIC
             self.add_dependency_by_name(
                 system_associated_type, ContentType.GENERIC_TYPE, is_mandatory=False
             )
+
+    @staticmethod
+    def match(_dict: dict, path: str) -> bool:
+        return (
+            JSONContentItemParser.match(_dict, path)
+            and (
+                "definitionId" in _dict
+                and (_dict["definitionId"])
+                and (isinstance(_dict["definitionId"], str))
+                and (_dict["definitionId"].lower() not in ["incident", "indicator"])
+            )
+            and ("cliName" in _dict)
+        )

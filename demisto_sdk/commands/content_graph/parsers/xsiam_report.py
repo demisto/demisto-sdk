@@ -47,7 +47,7 @@ class XSIAMReportParser(JSONContentItemParser, content_type=ContentType.XSIAM_RE
         return (
             self.original_json_data.get("toVersion") or DEFAULT_CONTENT_ITEM_TO_VERSION
         )
-    
+
     @staticmethod
-    def match(_dict) -> bool:
-        return "templates_data" in _dict
+    def match(_dict, path) -> bool:
+        return JSONContentItemParser.match(_dict, path) and ("templates_data" in _dict)

@@ -36,3 +36,14 @@ class JobParser(JSONContentItemParser, content_type=ContentType.JOB):
             )
         if playbook := self.json_data.get("playbookId"):
             self.add_dependency_by_id(playbook, ContentType.PLAYBOOK)
+
+    @staticmethod
+    def match(_dict: dict, path: str) -> bool:
+        return JSONContentItemParser.match(_dict, path) and (
+            isinstance(_dict, dict)
+            and {
+                "isAllFeeds",
+                "selectedFeeds",
+                "isFeed",
+            }.issubset(_dict.keys())
+        )

@@ -40,3 +40,7 @@ class LayoutRuleParser(JSONContentItemParser, content_type=ContentType.LAYOUT_RU
         """Collects t he playbook used in the trigger as a mandatory dependency."""
         if layout := self.json_data.get("layout_id"):
             self.add_dependency_by_id(layout, ContentType.LAYOUT)
+
+    @staticmethod
+    def match(_dict: dict, path: str) -> bool:
+        return JSONContentItemParser.match(_dict, path) and "rule_id" in _dict

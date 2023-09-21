@@ -58,3 +58,14 @@ class IncidentFieldParser(
 
         if field_calc_script := self.json_data.get("fieldCalcScript"):
             self.add_dependency_by_id(field_calc_script, ContentType.SCRIPT)
+
+    @staticmethod
+    def match(_dict: dict, path: str) -> bool:
+        if (
+            JSONContentItemParser.match(_dict, path)
+            and ("id" in _dict)
+            and (isinstance(_dict["id"], str))
+        ):
+            if (_id := _dict["id"].lower()) and (_id.startswith("incident")):
+                return True
+        return False

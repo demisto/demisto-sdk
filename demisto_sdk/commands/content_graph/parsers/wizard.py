@@ -52,3 +52,11 @@ class WizardParser(JSONContentItemParser, content_type=ContentType.WIZARD):
         for playbook in self.json_data.get("wizard", {}).get("set_playbook", []):
             playbooks.append(playbook.get("name"))
         return playbooks
+
+    @staticmethod
+    def match(_dict: dict, path: str) -> bool:
+        return (
+            JSONContentItemParser.match(_dict, path)
+            and ("wizard" in _dict)
+            and (isinstance(_dict, dict))
+        )

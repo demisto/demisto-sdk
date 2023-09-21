@@ -82,13 +82,10 @@ class ClassifierParser(JSONContentItemParser, content_type=ContentType.CLASSIFIE
             MarketplaceVersions.XSOAR_SAAS,
             MarketplaceVersions.XSOAR_ON_PREM,
         }
-    
+
     @staticmethod
-    def match(_dict) -> bool:
-        return bool(
-            (
-                ("transformer" in _dict and "keyTypeMap" in _dict)
-                or "mapping" in _dict
-            )
+    def match(_dict: dict, path: str) -> bool:
+        return JSONContentItemParser.match(_dict, path) and bool(
+            (("transformer" in _dict and "keyTypeMap" in _dict) or "mapping" in _dict)
             and (_dict.get("type") and _dict.get("type") == "classification")
         )

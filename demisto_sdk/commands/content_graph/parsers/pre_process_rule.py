@@ -17,3 +17,13 @@ class PreProcessRuleParser(
             MarketplaceVersions.XSOAR_SAAS,
             MarketplaceVersions.XSOAR_ON_PREM,
         }
+
+    @staticmethod
+    def match(_dict: dict, path: str) -> bool:
+        return JSONContentItemParser.match(_dict, path) and (
+            "scriptName" in _dict
+            and "existingEventsFilters" in _dict
+            and "readyExistingEventsFilters" in _dict
+            and "newEventFilters" in _dict
+            and "readyNewEventFilters" in _dict
+        )

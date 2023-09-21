@@ -32,6 +32,10 @@ class WidgetParser(JSONContentItemParser, content_type=ContentType.WIDGET):
             if script := self.json_data.get("query"):
                 self.add_dependency_by_id(script, ContentType.SCRIPT)
 
-    @staticmethod 
+    @staticmethod
     def match(_dict: dict, path: str) -> bool:
-        return JSONContentItemParser.match(_dict, path) and "widgetType" in _dict
+        return (
+            JSONContentItemParser.match(_dict, path)
+            and "widgetType" in _dict
+            and "orientation" not in _dict
+        )

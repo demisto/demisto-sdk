@@ -24,10 +24,9 @@ class CorrelationRuleParser(
     def supported_marketplaces(self) -> Set[MarketplaceVersions]:
         return {MarketplaceVersions.MarketplaceV2}
 
-    @staticmethod   
+    @staticmethod
     def match(_dict: dict, path: str) -> bool:
-        return (YAMLContentItemParser.match(_dict, path)
-                and 
-                ("global_rule_id" in _dict or 
-                (isinstance(_dict, list) and _dict and "global_rule_id" in _dict[0])
-                ))
+        return YAMLContentItemParser.match(_dict, path) and (
+            "global_rule_id" in _dict
+            or (isinstance(_dict, list) and _dict and "global_rule_id" in _dict[0])
+        )

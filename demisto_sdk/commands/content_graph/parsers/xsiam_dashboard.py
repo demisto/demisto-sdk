@@ -43,5 +43,5 @@ class XSIAMDashboardParser(
         )
 
     @staticmethod
-    def match(_dict) -> bool:
-        return 'dashboards_data' in _dict
+    def match(_dict, path) -> bool:
+        return JSONContentItemParser.match(_dict, path) and "dashboards_data" in _dict

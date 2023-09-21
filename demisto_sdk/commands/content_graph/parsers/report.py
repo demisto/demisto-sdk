@@ -33,7 +33,7 @@ class ReportParser(JSONContentItemParser, content_type=ContentType.REPORT):
                     self.add_dependency_by_id(
                         script_name, ContentType.SCRIPT, is_mandatory=False
                     )
-    
+
     @staticmethod
-    def match(_dict) -> bool:
-        return "orientation" in _dict
+    def match(_dict: dict, path: str) -> bool:
+        return JSONContentItemParser.match(_dict, path) and "orientation" in _dict

@@ -29,3 +29,15 @@ class GenericTypeParser(JSONContentItemParser, content_type=ContentType.GENERIC_
         """Collects the layouts used in the generic type as mandatory dependencies."""
         if layout := self.json_data.get("layout"):
             self.add_dependency_by_id(layout, ContentType.LAYOUT)
+
+    @staticmethod
+    def match(_dict: dict, path: str) -> bool:
+        return (
+            JSONContentItemParser.match(_dict, path)
+            and ("color" in _dict and "cliName" not in _dict)
+            and (
+                "definitionId" in _dict
+                and _dict["definitionId"]
+                and _dict["definitionId"].lower() not in ["incident", "indicator"]
+            )
+        )

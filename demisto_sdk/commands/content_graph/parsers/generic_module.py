@@ -26,5 +26,9 @@ class GenericModuleParser(
         }
 
     @staticmethod
-    def match(_dict) -> bool:
-        return "definitionIds" in _dict and "views" in _dict
+    def match(_dict: dict, path: str) -> bool:
+        return (
+            JSONContentItemParser.match(_dict, path)
+            and ("definitionIds" in _dict)
+            and ("views" in _dict)
+        )

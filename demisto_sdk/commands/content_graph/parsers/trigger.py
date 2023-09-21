@@ -32,3 +32,7 @@ class TriggerParser(JSONContentItemParser, content_type=ContentType.TRIGGER):
         """Collects the playbook used in the trigger as a mandatory dependency."""
         if playbook := self.json_data.get("playbook_id"):
             self.add_dependency_by_id(playbook, ContentType.PLAYBOOK)
+
+    @staticmethod
+    def match(_dict: dict, path: str) -> bool:
+        return JSONContentItemParser.match(_dict, path) and ("trigger_id" in _dict)

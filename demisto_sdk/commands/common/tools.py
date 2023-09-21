@@ -126,11 +126,9 @@ from demisto_sdk.commands.content_graph.parsers.xsiam_report import XSIAMReportP
 
 if TYPE_CHECKING:
     from demisto_sdk.commands.content_graph.interface import ContentGraphInterface
- 
 
 
-from demisto_sdk.commands.content_graph.parsers import * 
-
+from demisto_sdk.commands.content_graph.parsers import *
 
 logger = logging.getLogger("demisto-sdk")
 
@@ -1793,7 +1791,7 @@ def find_type(
             return FileType.UNIFIED_YML
 
         if IntegrationParser.match(_dict, path):
-            if (_dict.get("beta") and not ignore_sub_categories):
+            if _dict.get("beta") and not ignore_sub_categories:
                 return FileType.BETA_INTEGRATION
 
             return FileType.INTEGRATION
@@ -1807,10 +1805,10 @@ def find_type(
         if PlaybookParser.match(_dict, path):
             if TEST_PLAYBOOKS_DIR in Path(path).parts:
                 return FileType.TEST_PLAYBOOK
-        
+
             return FileType.PLAYBOOK
 
-        # Had to duplicate the rules and used the path.. 
+        # Had to duplicate the rules and used the path..
         if ParsingRuleParser.match(_dict, path):
             return FileType.PARSING_RULE
 
@@ -1827,19 +1825,19 @@ def find_type(
         ):
             return FileType.MODELING_RULE_SCHEMA
 
+        # both of the content items can contain the value of widgetType but added not contain oriantation (make sure)
         if WidgetParser.match(_dict, path):
             return FileType.WIDGET
 
-        if ReportParser.match(_dict):
+        if ReportParser.match(_dict, path):
             return FileType.REPORT
 
-        if "color" in _dict and "cliName" not in _dict:
-            if (
-                "definitionId" in _dict
-                and _dict["definitionId"]
-                and _dict["definitionId"].lower() not in ["incident", "indicator"]
-            ):
-                return FileType.GENERIC_TYPE
+        # required fields: ['mapping.id', 'mapping.version', 'mapping.name', 'mapping.color', 'mapping.definitionId', 'mapping.genericModuleId']
+        if GenericTypeParser.match(_dict, path):
+            return FileType.GENERIC_TYPE
+
+        # required fields: ['mapping.id', 'mapping.version', 'mapping.name', 'mapping.color']
+        if IncidentTypeParser.match(_dict, path):
             return FileType.INCIDENT_TYPE
 
         # 'regex' key can be found in new reputations files while 'reputations' key is for the old reputations
@@ -1873,68 +1871,53 @@ def find_type(
         if "group" in _dict and LAYOUT_CONTAINER_FIELDS.intersection(_dict):
             return FileType.LAYOUTS_CONTAINER
 
-        if (
-            "scriptName" in _dict
-            and "existingEventsFilters" in _dict
-            and "readyExistingEventsFilters" in _dict
-            and "newEventFilters" in _dict
-            and "readyNewEventFilters" in _dict
-        ):
+        if PreProcessRuleParser.match(_dict, path):
             return FileType.PRE_PROCESS_RULES
 
-        if ListParser.match(_dict):
+        if ListParser.match(_dict, path):
             return FileType.LISTS
 
-        if GenericModuleParser.match(_dict):
+        if GenericModuleParser.match(_dict, path):
             return FileType.GENERIC_MODULE
 
-        if "auditable" in _dict:
+        if GenericDefinitionParser.match(_dict, path):
             return FileType.GENERIC_DEFINITION
 
-        if isinstance(_dict, dict) and {
-            "isAllFeeds",
-            "selectedFeeds",
-            "isFeed",
-        }.issubset(_dict.keys()):
+        if JobParser.match(_dict, path):
             return FileType.JOB
 
-        if isinstance(_dict, dict) and "wizard" in _dict:
+        if WizardParser.match(_dict, path):
             return FileType.WIZARD
 
-        if XSIAMDashboardParser.match(_dict):
+        if XSIAMDashboardParser.match(_dict, path):
             return FileType.XSIAM_DASHBOARD
 
-
-        if XSIAMReportParser.match(_dict):
+        if XSIAMReportParser.match(_dict, path):
             return FileType.XSIAM_REPORT
 
-        if "trigger_id" in _dict:
+        if TriggerParser.match(_dict, path):
             return FileType.TRIGGER
 
-        if "profile_type" in _dict and "yaml_template" in _dict:
+        if XDRCTemplateParser.match(_dict, path):
             return FileType.XDRC_TEMPLATE
 
-        if "rule_id" in _dict:
+        if LayoutRuleParser.match(_dict, path):
             return FileType.LAYOUT_RULE
 
         # When using it for all files validation- sometimes 'id' can be integer
-        if "id" in _dict:
-            if isinstance(_dict["id"], str):
-                if (
-                    "definitionId" in _dict
-                    and _dict["definitionId"]
-                    and _dict["definitionId"].lower() not in ["incident", "indicator"]
-                ):
-                    return FileType.GENERIC_FIELD
-                _id = _dict["id"].lower()
-                if _id.startswith("incident"):
-                    return FileType.INCIDENT_FIELD
-                if _id.startswith("indicator"):
-                    return FileType.INDICATOR_FIELD
-            else:
-                logger.info(
-                    f'The file {path} could not be recognized, please update the "id" to be a string'
-                )
+        if GenericFieldParser.match(_dict, path):
+            return FileType.GENERIC_FIELD
+
+        if IncidentFieldParser.match(_dict, path):
+            return FileType.INCIDENT_FIELD
+
+        if IndicatorFieldParser.match(_dict, path):
+            return FileType.INDICATOR_FIELD
+
+        if "id" in _dict and not isinstance(_dict["id"], str):
+            logger.info(
+                f'The file {path} could not be recognized, please update the "id" to be a string'
+            )
 
     return None
 

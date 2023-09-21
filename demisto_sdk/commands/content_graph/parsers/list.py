@@ -26,5 +26,9 @@ class ListParser(JSONContentItemParser, content_type=ContentType.LIST):
         }
 
     @staticmethod
-    def match(_dict) -> bool:
-        return "allRead" in _dict and "truncated" in _dict
+    def match(_dict, path) -> bool:
+        return (
+            JSONContentItemParser.match(_dict, path)
+            and ("allRead" in _dict)
+            and ("truncated" in _dict)
+        )

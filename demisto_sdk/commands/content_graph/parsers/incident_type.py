@@ -41,3 +41,10 @@ class IncidentTypeParser(JSONContentItemParser, content_type=ContentType.INCIDEN
 
         if layout := self.json_data.get("layout"):
             self.add_dependency_by_id(layout, ContentType.LAYOUT, is_mandatory=False)
+
+    @staticmethod
+    def match(_dict: dict, path: str) -> bool:
+        return JSONContentItemParser.match(_dict, path) and (
+            ("color" in _dict and "cliName" not in _dict)
+            and ("genericModuleId" not in _dict)
+        )

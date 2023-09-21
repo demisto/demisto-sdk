@@ -24,3 +24,9 @@ class XDRCTemplateParser(JSONContentItemParser, content_type=ContentType.XDRC_TE
     @property
     def object_id(self) -> Optional[str]:
         return self.json_data.get("content_global_id")
+
+    @staticmethod
+    def match(_dict: dict, path: str) -> bool:
+        return JSONContentItemParser.match(_dict, path) and (
+            "profile_type" in _dict and "yaml_template" in _dict
+        )

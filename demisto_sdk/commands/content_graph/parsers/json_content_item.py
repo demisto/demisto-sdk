@@ -70,7 +70,6 @@ class JSONContentItemParser(ContentItemParser):
                 )
             self.path = Path(json_files_in_dir[0])
         return get_json(self.path.as_posix())
-    
 
     @staticmethod
     def match(_dict: dict, path: str) -> bool:

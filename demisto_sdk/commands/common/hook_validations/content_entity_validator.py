@@ -24,6 +24,7 @@ from demisto_sdk.commands.common.constants import (
     PARSING_RULE,
     PARSING_RULE_ID_SUFFIX,
     PARSING_RULE_NAME_SUFFIX,
+    VALID_SENTENCE_SUFFIX,
     FileType,
 )
 from demisto_sdk.commands.common.content import Content
@@ -47,7 +48,6 @@ from demisto_sdk.commands.common.tools import (
     get_pack_name,
     get_remote_file,
     get_yaml,
-    is_sentence_ends_with_bracket,
     is_string_ends_with_url,
     is_test_config_match,
     run_command,
@@ -808,15 +808,19 @@ class ContentEntityValidator(BaseValidator):
             stripped_description: (str) a description or comment section from script / integration yml.
         Return True (the description string is invalid) if all of the following conditions are met:
         - The description string exist and not empty.
-        - The description string doesn't end with a dot.
+        - The description string doesn't end with a dot, question mark or exclamation mark.
         - The description string doesn't end with an URL.
-        - The description string doesn't end with a dot inside brackets.
+        - The description string doesn't end with a dot inside brackets or quote.
         """
         return all(
             [
                 stripped_description,
-                not stripped_description.endswith("."),
+                not any(
+                    [
+                        stripped_description.endswith(suffix)
+                        for suffix in VALID_SENTENCE_SUFFIX
+                    ]
+                ),
                 not is_string_ends_with_url(stripped_description),
-                not is_sentence_ends_with_bracket(stripped_description),
             ]
         )

@@ -8,6 +8,7 @@ import time
 import urllib.parse
 import uuid
 from copy import deepcopy
+from datetime import datetime, timezone
 from math import ceil
 from pathlib import Path
 from pprint import pformat
@@ -17,11 +18,13 @@ from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
 import demisto_client
 import prettytable
 import requests
-import urllib3
 from demisto_client.demisto_api import DefaultApi, Incident
 from demisto_client.demisto_api.rest import ApiException
+from junitparser import JUnitXml, TestSuite, TestCase
+from junitparser.junitparser import Result, Failure
 from packaging.version import Version
 from slack_sdk import WebClient as SlackClient
+from urllib3.exceptions import ReadTimeoutError
 
 from demisto_sdk.commands.common.constants import (
     DEFAULT_CONTENT_ITEM_FROM_VERSION,
@@ -33,13 +36,13 @@ from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.tools import get_demisto_version
 from demisto_sdk.commands.test_content.Docker import Docker
 from demisto_sdk.commands.test_content.IntegrationsLock import acquire_test_lock
+from demisto_sdk.commands.test_content.ParallelLoggingManager import (
+    ParallelLoggingManager,
+)
 from demisto_sdk.commands.test_content.mock_server import (
     RESULT,
     MITMProxy,
     run_with_mock,
-)
-from demisto_sdk.commands.test_content.ParallelLoggingManager import (
-    ParallelLoggingManager,
 )
 from demisto_sdk.commands.test_content.tools import (
     get_ui_url,
@@ -59,7 +62,7 @@ RETRIES_THRESHOLD = ceil(MAX_RETRIES / 2)
 
 SLACK_MEM_CHANNEL_ID = "CM55V7J8K"
 XSIAM_SERVER_TYPE = "XSIAM"
-# For now we run all xsiam tests
+# For now, we run all xsiam tests
 IS_XSIAM = False
 
 __all__ = [
@@ -203,6 +206,7 @@ class TestPlaybook:
         """
         self.build_context = build_context
         self.configuration: TestConfiguration = test_configuration
+        self.test_context: TestContext = TestContext(self.build_context, self,
         self.is_mockable: bool = (
             self.configuration.playbook_id not in build_context.unmockable_test_ids
         )
@@ -241,6 +245,7 @@ class TestPlaybook:
                 self.build_context.logging_module.debug(
                     f"Skipping {self} because it's not in filtered tests"
                 )
+                self.
                 skipped_tests_collected[
                     self.configuration.playbook_id
                 ] = "not in filtered tests"
@@ -634,6 +639,7 @@ class TestPlaybook:
 
 class BuildContext:
     def __init__(self, kwargs: dict, logging_module: ParallelLoggingManager):
+        self.start_time = datetime.now(timezone.utc)
         global IS_XSIAM
         self.is_xsiam = True if kwargs["server_type"] == XSIAM_SERVER_TYPE else False
         IS_XSIAM = self.is_xsiam
@@ -1016,6 +1022,7 @@ class TestResults:
         self.skipped_integrations = dict()
         self.rerecorded_tests = []
         self.empty_files = []
+        self.test_suite = JUnitXml()
         self.unmockable_integrations = unmockable_integrations
         self.playbook_skipped_integration = set()
 
@@ -1039,6 +1046,8 @@ class TestResults:
             "./Tests/test_playbooks_report.json", "w"
         ) as test_playbooks_report_file:
             json.dump(self.playbook_report, test_playbooks_report_file, indent=4)
+
+        self.test_suite.write("./Tests/tests_results.xml", pretty=True)
 
     def print_test_summary(
         self,
@@ -1631,7 +1640,7 @@ class Integration:
                     f"{get_ui_url(client.api_client.configuration.host)}"
                 )
                 return False
-            except urllib3.exceptions.ReadTimeoutError:
+            except ReadTimeoutError:
                 self.build_context.logging_module.warning(
                     f"Could not connect. Trying to connect for the {i + 1} time"
                 )
@@ -1744,6 +1753,71 @@ class TestContext:
         self.incident_id: Optional[str] = None
         self.test_docker_images: Set[str] = set()
         self.client: DefaultApi = client
+        self.test_suite = TestSuite()
+        self.test_suite_system_out = []
+        self.test_suite_system_err = []
+        server_url = get_ui_url(self.client.api_client.configuration.host)
+        self.test_suite.add_property("build_number", self.build_context.build_number)
+        self.test_suite.add_property("is_local_run", self.build_context.is_local_run)
+        self.test_suite.add_property("is_nightly", self.build_context.is_nightly)
+        self.test_suite.add_property("is_xsiam", self.build_context.is_xsiam)
+        self.test_suite.add_property("memCheck", self.build_context.memCheck)
+        self.test_suite.add_property(
+            "server_numeric_version", self.build_context.server_numeric_version
+        )
+        self.test_suite.add_property(
+            "server_version", self.build_context.server_version
+        )
+        self.test_suite.add_property(
+            "xsiam_servers_path", self.build_context.xsiam_servers_path
+        )
+        self.test_suite.add_property("xsiam_ui_path", self.build_context.xsiam_ui_path)
+        self.test_suite.add_property(
+            "instances_ips", ",".join(self.build_context.instances_ips)
+        )
+
+        self.test_suite.add_property("server_url", server_url)
+
+        self.test_suite.add_property("playbook.is_mockable", self.playbook.is_mockable)
+        self.test_suite.add_property(
+            "configuration.is_mockable", self.playbook.configuration.is_mockable
+        )
+        self.test_suite.add_property(
+            "configuration.playbook_id", self.playbook.configuration.playbook_id
+        )
+        self.test_suite.add_property(
+            "configuration.from_version", self.playbook.configuration.from_version
+        )
+        self.test_suite.add_property(
+            "configuration.to_version", self.playbook.configuration.to_version
+        )
+        self.test_suite.add_property(
+            "configuration.nightly_test", self.playbook.configuration.nightly_test
+        )
+        self.test_suite.add_property(
+            "configuration.pid_threshold", self.playbook.configuration.pid_threshold
+        )
+        self.test_suite.add_property(
+            "configuration.memory_threshold",
+            self.playbook.configuration.memory_threshold,
+        )
+        self.test_suite.add_property(
+            "configuration.pid_threshold", self.playbook.configuration.pid_threshold
+        )
+        self.test_suite.add_property(
+            "configuration.timeout", self.playbook.configuration.timeout
+        )
+        self.test_suite.add_property(
+            "playbook.test_instance_names",
+            ",".join(self.playbook.configuration.test_instance_names),
+        )
+        self.test_suite.add_property(
+            "playbook.integrations", ",".join(map(str, self.playbook.integrations))
+        )
+        self.test_suite.add_property(
+            "configuration.runnable_on_docker_only",
+            self.playbook.configuration.runnable_on_docker_only,
+        )
 
     def _get_investigation_playbook_state(self) -> str:
         """
@@ -1795,6 +1869,9 @@ class TestContext:
             docker_images = integration.get_docker_images()
             if docker_images:
                 self.test_docker_images.update(docker_images)
+        self.test_suite.add_property(
+            "test_docker_images", ",".join(self.test_docker_images)
+        )
 
     def _print_investigation_error(self):
         try:
@@ -1818,7 +1895,7 @@ class TestContext:
                         )
                         # Checks for passwords and replaces them with "******"
                         parent_content = re.sub(
-                            r' (P|p)assword="[^";]*"',
+                            r' ([Pp])assword="[^";]*"',
                             " password=******",
                             entry["parentContent"],
                         )
@@ -1924,6 +2001,7 @@ class TestContext:
                     f"Failed to get investigation id of incident: {incident}"
                 )
                 return ""
+            self.test_suite.add_property("investigation_id", investigation_id)
 
             self.build_context.logging_module.info(
                 f"Found incident with incident ID: {investigation_id}."
@@ -1972,7 +2050,7 @@ class TestContext:
             PB_Status.NOT_SUPPORTED_VERSION,
         )
         # batchDelete is not supported in XSIAM, only close.
-        # in XSAIAM we are closing both successful and failed incidents
+        # in XSIAM we are closing both successful and failed incidents
         if IS_XSIAM and self.incident_id:
             self.playbook.close_incident(self.client, self.incident_id)
             self.playbook.delete_integration_instances(self.client)
@@ -2050,13 +2128,30 @@ class TestContext:
                 },
             )
 
+    def _close_test_suite(self, results: list[Result] | None = None):
+        results = results or []
+        duration = (
+            datetime.now(timezone.utc) - self.build_context.start_time
+        ).total_seconds()
+        test_case = TestCase(
+            f"Test Playbook {self.playbook.configuration.playbook_id}",
+            "TestPlaybook",
+            duration,
+        )
+        test_case.system_out = "\n".join(self.test_suite_system_out)
+        test_case.system_err = "\n".join(self.test_suite_system_err)
+        test_case.result += results
+        self.test_suite.add_testcase(test_case)
+
     def _add_to_succeeded_playbooks(self) -> None:
         """
         Adds the playbook to the succeeded playbooks list
         """
+
         self.build_context.tests_data_keeper.succeeded_playbooks.append(
             self.playbook.configuration.playbook_id
         )
+        self._close_test_suite()
 
     def _add_details_to_failed_tests_report(
         self, playbook_name: str, failed_stage: str
@@ -2120,8 +2215,11 @@ class TestContext:
         self._add_details_to_failed_tests_report(
             self.playbook.configuration.playbook_id, failed_stage
         )
-        self.build_context.logging_module.error(f"Test failed: {self}")
+        err = f"Test failed: {self}"
+        self.build_context.logging_module.error(err)
         self.build_context.tests_data_keeper.failed_playbooks.add(playbook_name_to_add)
+        self.test_suite.add_property("playbook_name_to_add", playbook_name_to_add)
+        self._close_test_suite([Failure(err)])
 
     @staticmethod
     def _get_circle_memory_data() -> Tuple[str, str]:
@@ -2582,7 +2680,7 @@ class ServerContext:
             except Empty:
                 continue
             self._configure_new_client()
-            test_executed = TestContext(
+            test_executed =
                 self.build_context, test_playbook, self.client, self
             ).execute_test(self.proxy)
             if test_executed:

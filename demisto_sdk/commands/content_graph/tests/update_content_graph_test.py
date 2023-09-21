@@ -807,7 +807,7 @@ class TestUpdateContentGraph:
             )
             mocker.patch(
                 "demisto_sdk.commands.content_graph.commands.update.get_all_repo_pack_ids",
-                return_value=["ExternalPack"],
+                return_value=["SamplePack2"],
             )
 
             # update the graph accordingly
@@ -825,10 +825,3 @@ class TestUpdateContentGraph:
                 all_level_dependencies=True,
             )
             assert len(packs_from_graph) == 2
-            # compare(
-            #     repository.packs,
-            #     packs_from_graph,
-            #     [],
-            #     [],
-            #     after_update=True,
-            # )

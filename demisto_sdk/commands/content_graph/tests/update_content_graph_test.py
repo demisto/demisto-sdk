@@ -208,7 +208,6 @@ def external_repository(mocker) -> ContentDTO:
     )
 
     pack1 = mock_pack("ExternalPack")
-    pack1.content_items.integration.append(mock_integration())
     repository.packs.extend([pack1])
 
     def mock__create_content_dto(packs_to_update: List[str]) -> List[ContentDTO]:

@@ -1098,7 +1098,6 @@ class TestValidators:
             (FileType.PYLINTRC, ".pylintrc"),
             (FileType.SECRET_IGNORE, ".secrets-ignore"),
             (FileType.LICENSE, "LICENSE"),
-            (FileType.UNIFIED_YML, "Packs/DummyPack/Scripts/DummyScript_unified.yml"),
             (FileType.PACK_IGNORE, VALID_PACK_IGNORE_PATH),
             (FileType.INI, "ini_file.ini"),
             (FileType.PEM, "pem_file.pem"),
@@ -3444,13 +3443,13 @@ def test_file_not_allowed_contain_folder__fail(repo, mocker, folder: str):
     Then
             Make sure the validation fails, and a proper message is shown
     """
-    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+    logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
     validate_manager = ValidateManager(check_is_unskipped=False, skip_conf_json=True)
 
     pack = repo.create_pack()
     assert not validate_manager.is_valid_path(Path(pack.path, folder, "file"))
 
-    assert str_in_call_args_list(logger_info.call_args_list, "[BA120]")
+    assert str_in_call_args_list(logger_error.call_args_list, "[BA120]")
 
 
 @pytest.mark.parametrize("nested", (True, False))

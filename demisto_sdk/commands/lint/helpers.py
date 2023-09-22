@@ -24,6 +24,7 @@ from demisto_sdk.commands.common.constants import (
     TYPE_PWSH,
     TYPE_PYTHON,
     DemistoException,
+    PACKS_DIR,
 )
 from demisto_sdk.commands.common.logger import logger
 
@@ -236,6 +237,22 @@ def add_typing_module(lint_files: List[Path], python_version: str):
             if back_file.exists():
                 original_name = back_file.with_suffix(".py")
                 back_file.rename(original_name)
+
+
+def get_pack_test_data_dir(input):
+    if Path(input).parent.name == PACKS_DIR:
+        return Path(input) / 'test_data'
+    else:
+        for p in  Path(input).parents:
+            if Path(p).parent.name == PACKS_DIR:
+                    return Path(p / 'test_data')
+
+
+def add_pack_test_data(pack_path, pack_test_data_dir):
+    for f in pack_test_data_dir.iterdir():
+        copied_test_data_path = pack_path / 'test_data' / f.name
+        if not copied_test_data_path.exists():
+            copied_test_data_path.write_bytes(f.read_bytes())
 
 
 @contextmanager

@@ -53,6 +53,7 @@ from demisto_sdk.commands.lint.helpers import (
     build_skipped_exit_code,
     generate_coverage_report,
     get_test_modules,
+    get_pack_test_data_dir,
 )
 from demisto_sdk.commands.lint.linter import DockerImageFlagOption, Linter
 
@@ -90,6 +91,7 @@ class LintManager:
 
         # Gather facts for manager
         self._facts: dict = self._gather_facts()
+        self.pack_test_data_dir = get_pack_test_data_dir(input)
         self._prev_ver = prev_ver
         self._all_packs = all_packs
         # Set 'git' to true if no packs have been specified, 'lint' should operate as 'lint -g'
@@ -505,6 +507,7 @@ class LintManager:
                             no_pwsh_analyze=no_pwsh_analyze,
                             no_pwsh_test=no_pwsh_test,
                             modules=self._facts["test_modules"],
+                            pack_test_data_dir=self.pack_test_data_dir,
                             keep_container=keep_container,
                             test_xml=test_xml,
                             no_coverage=no_coverage,

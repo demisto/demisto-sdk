@@ -68,6 +68,7 @@ from demisto_sdk.commands.lint.helpers import (
     SUCCESS,
     WARNING,
     add_tmp_lint_files,
+    add_pack_test_data,
     add_typing_module,
     coverage_report_editor,
     get_file_from_container,
@@ -212,6 +213,7 @@ class Linter:
         no_pwsh_test: bool,
         no_test: bool,
         modules: dict,
+        pack_test_data_dir: dict,
         keep_container: bool,
         test_xml: str,
         no_coverage: bool,
@@ -247,6 +249,14 @@ class Linter:
             # If not python pack - skip pack
             if skip:
                 return self._pkg_lint_status
+
+            # Copy shared test_data files
+            if pack_test_data_dir.exists():
+                add_pack_test_data(
+                    pack_path=self._pack_abs_dir,
+                    pack_test_data_dir=pack_test_data_dir,
+                )
+
             # Locate mandatory files in pack path - for more info checkout the context manager LintFiles
             with add_tmp_lint_files(
                 content_repo=self._content_repo,

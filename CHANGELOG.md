@@ -4,6 +4,7 @@
 * Fixed an issue where **modeling-rule test** command failed to properly render the comparison table when boolean value were printed.
 * Fixed an issue were format added a dot at end of the description that already ends with question mark and exclamation mark.
 * Fixed an issue where **upload** failed when trying to upload an indicator field.
+* Added support for sharing test_data folder in a content pack.
 
 ## 1.20.4
 * Fixed an issue where using **prepare-content**, **upload**, **zip-packs** and **download** on machines with default encoding other than unicode caused errors.

@@ -1,4 +1,7 @@
 # Changelog
+## 2.33.41
+* Added the **changelog** new command for management the changelog.md file. [#3177](https://github.com/demisto/demisto-sdk/pull/3177)
+
 ## Unreleased
 * Fixed an issue where **validate** falsely failed with error `DS108` on descriptions ending with brackets that contains a dot at the end of them.
 * Fixed an issue where **modeling-rule test** command failed to properly render the comparison table when boolean value were printed.

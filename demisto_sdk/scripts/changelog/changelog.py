@@ -1,6 +1,5 @@
 import itertools
 import re
-import shutil
 from pathlib import Path
 from typing import Dict, List
 
@@ -21,7 +20,7 @@ from demisto_sdk.scripts.changelog.changelog_obj import (
 
 CHANGELOG_FOLDER = Path(f"{git_path()}/.changelog")
 CHANGELOG_MD_FILE = Path(f"{git_path()}/CHANGELOG.md")
-RELEASE_VERSION_REGEX = re.compile(r"[vV]\d{1,2}\.\d{1,2}\.\d{1,2}")
+RELEASE_VERSION_REGEX = re.compile(r"demisto-sdk release \d{1,2}\.\d{1,2}\.\d{1,2}")
 
 yaml = DEFAULT_YAML_HANDLER
 
@@ -45,7 +44,7 @@ class Changelog:
                 - ensure that the added log file is valid according to the `LogFileObject` model convention
         """
         if is_release(self.pr_name):
-            _validate_release()
+            return
         else:
             _validate_branch(self.pr_number)
 
@@ -71,7 +70,7 @@ class Changelog:
 
     """ RELEASE """
 
-    def release(self, branch_name: str = None) -> None:
+    def release(self, branch_name: str) -> None:
         if not is_release(self.pr_name):
             raise ValueError("The PR name should match `v0.0.0` to start a release.")
         # get all log files as `LogFileObject`
@@ -79,13 +78,13 @@ class Changelog:
         # get a dict sorted by type of log entry
         new_log_entries = get_new_log_entries(logs)
         new_changelog = compile_changelog_md(
-            self.pr_name, new_log_entries, get_old_changelog()[1:]
+            branch_name, new_log_entries, get_old_changelog()[1:]
         )
         update_changelog_md(new_changelog)
         logger.info("The changelog.md file has been successfully updated")
         clear_changelogs_folder()
-        if branch_name:
-            commit_and_push(branch_name=branch_name)
+        # commit and push CHANGELOG.md
+        commit_and_push(branch_name=branch_name)
         logger.info(f"Combined {len(logs)} changelog files into CHANGELOG.md")
 
     """ HELPER FUNCTIONS """
@@ -96,10 +95,6 @@ def is_changelog_modified() -> bool:
         "CHANGELOG.md"
         in Repo(".").git.diff("HEAD..origin/master", name_only=True).split()
     )
-
-
-def is_log_folder_empty() -> bool:
-    return not any(CHANGELOG_FOLDER.iterdir())
 
 
 def is_log_yml_exist(pr_number: str) -> bool:
@@ -128,6 +123,8 @@ def get_all_logs() -> List[LogFileObject]:
     changelogs: List[LogFileObject] = []
     errors: Dict[str, str] = {}
     for path in CHANGELOG_FOLDER.iterdir():
+        if path.suffix.endswith(".md"):
+            continue
         try:
             changelogs.append(LogFileObject(**get_yaml(path)))
         except ValidationError as e:
@@ -159,7 +156,7 @@ def get_old_changelog():
 
 
 def compile_changelog_md(
-    pr_name: str, new_logs: Dict[str, List[LogLine]], old_changelog: List[str]
+    release_version: str, new_logs: Dict[str, List[LogLine]], old_changelog: List[str]
 ) -> str:
     """
     Builds the CHANGELOG.md content in stages
@@ -167,7 +164,7 @@ def compile_changelog_md(
     # The title
     new_changelog = ["# Changelog"]
     # New version (x.x.x)
-    new_changelog.append(f"## {pr_name[1:]}")  # removes "v" prefix
+    new_changelog.append(f"## {release_version}")
     # Collecting the new log entries in the following order:
     # breaking, feature, fix, internal
     for log_type in (LogType.breaking, LogType.feature, LogType.fix, LogType.internal):
@@ -185,28 +182,15 @@ def update_changelog_md(new_changelog: str) -> None:
 
 
 def clear_changelogs_folder() -> None:
-    shutil.rmtree(CHANGELOG_FOLDER)
-    CHANGELOG_FOLDER.mkdir()
+    for path in CHANGELOG_FOLDER.iterdir():
+        if path.suffix.endswith(".md"):
+            continue
+        path.unlink()
     logger.info("Cleanup of `.changelog` folder completed successfully")
 
 
 def is_release(pr_name: str) -> bool:
     return pr_name is not None and RELEASE_VERSION_REGEX.match(pr_name) is not None
-
-
-def _validate_release() -> None:
-    if not is_log_folder_empty():
-        raise ValueError(
-            "Logs folder is not empty,\n"
-            "It is not possible to release until the `changelog.md` "
-            "file is updated, and the `.changelog` folder is empty"
-        )
-    if not is_changelog_modified():
-        raise ValueError(
-            "The file `changelog.md` is not updated\n"
-            "It is not possible to release until the `changelog.md` "
-            "file is updated, and the `.changelog` folder is empty"
-        )
 
 
 def _validate_branch(pr_number: str) -> None:
@@ -274,6 +258,10 @@ def changelog_management(
     elif init:
         return changelog.init()
     elif release:
+        if not branch_name:
+            raise ValueError(
+                "You must specify a branch name using --branch_name when using --release"
+            )
         return changelog.release(branch_name)
     else:
         raise ValueError(

@@ -9,7 +9,6 @@ from demisto_sdk.scripts.changelog.changelog import (
     clear_changelogs_folder,
     get_all_logs,
     get_new_log_entries,
-    is_log_folder_empty,
     is_log_yml_exist,
     is_release,
 )
@@ -18,7 +17,7 @@ from demisto_sdk.scripts.changelog.changelog_obj import LogType
 yaml = YAML_Handler()
 
 DUMMY_PR_NUMBER = "12345"
-DUMMY_PR_NAME = "v2.2.2"
+DUMMY_PR_NAME = "demisto-sdk release 2.2.2"
 
 LOG_FILE_1 = {
     "logs": [{"description": "fixed an issue where test", "type": "fix"}],
@@ -55,7 +54,7 @@ def changelog_folder_mock(tmpdir, mocker):
 
 @pytest.mark.parametrize(
     "pr_name, expected_result",
-    [("", False), ("test", False), ("v1.10.2", True), ("1.2.3", False)],
+    [("", False), ("test", False), ("demisto-sdk release 1.10.2", True), ("1.2.3", False)],
 )
 def test_is_release(pr_name: str, expected_result: bool):
     """
@@ -67,20 +66,6 @@ def test_is_release(pr_name: str, expected_result: bool):
         - Ensure return True only if pr_name is in vX.X.X format
     """
     assert is_release(pr_name) == expected_result
-
-
-def test_is_log_folder_empty(changelog_folder_mock: Path):
-    """
-    Given:
-        - Changelog obj and a temporary path with a .changelog folder
-    When:
-        - run the is_log_folder_empty method
-    Then:
-        - Ensure return True only if there is a file in the .changelog folder
-    """
-    assert is_log_folder_empty()
-    (changelog_folder_mock / "12345.yml").write_text("test: test")
-    assert not is_log_folder_empty()
 
 
 @pytest.mark.parametrize("pr_name", ("", DUMMY_PR_NUMBER))
@@ -132,13 +117,11 @@ def test_validate(mocker, changelog_mock: Changelog, pr_name: str):
           (for a PR name that corresponds to the release, the `_validate_release` function
           will be activated, otherwise the `_validate_branch` function will be activated)
     """
-    mock_validate_release = mocker.patch.object(changelog, "_validate_release")
     mock_validate_branch = mocker.patch.object(changelog, "_validate_branch")
     changelog_mock.pr_name = pr_name
     changelog_mock.validate()
 
     assert mock_validate_branch.call_count == int(not bool(pr_name))
-    assert mock_validate_release.call_count == int(bool(pr_name))
 
 
 def test_clear_changelogs_folder(changelog_folder_mock: Path):
@@ -152,8 +135,10 @@ def test_clear_changelogs_folder(changelog_folder_mock: Path):
     """
     with (changelog_folder_mock / "12345.yml").open("w") as f:
         f.write("test: test")
+    with (changelog_folder_mock / "README.md").open("w") as f:
+        f.write("## Changelog folder")
     clear_changelogs_folder()
-    assert not any(changelog_folder_mock.iterdir())
+    assert len(list(changelog_folder_mock.iterdir())) == 1
 
 
 def test_get_new_log_entries(changelog_folder_mock: Path):

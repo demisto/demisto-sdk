@@ -18,9 +18,13 @@ from demisto_sdk.commands.common.constants import (
     TYPE_PYTHON,
     TYPE_TO_EXTENSION,
 )
-from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
 from demisto_sdk.commands.common.logger import logger
-from demisto_sdk.commands.common.tools import get_yaml, pascal_case
+from demisto_sdk.commands.common.tools import (
+    get_file,
+    get_yaml,
+    pascal_case,
+    write_dict,
+)
 from demisto_sdk.commands.prepare_content.integration_script_unifier import (
     IntegrationScriptUnifier,
 )
@@ -118,8 +122,7 @@ class YmlSplitter:
         self.extract_long_description(f"{output_path}/{base_name}_description.md")
         yaml_out = f"{output_path}/{base_name}.yml"
         logger.debug(f"Creating yml file: {yaml_out} ...")
-        with open(self.input) as yf:
-            yaml_obj = yaml.load(yf)
+        yaml_obj = get_file(self.input, raise_on_error=True)
         script_obj = yaml_obj
 
         if self.file_type in ("modelingrule", "parsingrule"):
@@ -134,8 +137,9 @@ class YmlSplitter:
             if "samples" in yaml_obj:
                 self.extract_rule_schema_and_samples(f"{output_path}/{base_name}.json")
                 del yaml_obj["samples"]
-            with open(yaml_out, "w") as yf:
-                yaml.dump(yaml_obj, yf)
+
+            write_dict(yaml_out, data=yaml_obj)
+
         else:
             code_file = f"{code_file}{TYPE_TO_EXTENSION[lang_type]}"
             if self.file_type in (BETA_INTEGRATION, INTEGRATION):
@@ -149,8 +153,9 @@ class YmlSplitter:
             if code_type == TYPE_PWSH and not yaml_obj.get("fromversion"):
                 logger.debug("Setting fromversion for PowerShell to: 5.5.0")
                 yaml_obj["fromversion"] = "5.5.0"
-            with open(yaml_out, "w") as yf:
-                yaml.dump(yaml_obj, yf)
+
+            write_dict(yaml_out, data=yaml_obj)
+
             # check if there is a README and if found, set found_readme to True
             if self.readme:
                 yml_readme = self.input.parent / f"{self.input.stem}_README.md"

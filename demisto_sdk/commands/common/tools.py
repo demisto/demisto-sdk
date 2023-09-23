@@ -119,7 +119,10 @@ from demisto_sdk.commands.common.git_content_config import GitContentConfig, Git
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
-from demisto_sdk.commands.common.handlers import YAML_Handler
+from demisto_sdk.commands.common.handlers import (
+    XSOAR_Handler,
+    YAML_Handler,
+)
 
 if TYPE_CHECKING:
     from demisto_sdk.commands.content_graph.interface import ContentGraphInterface
@@ -657,8 +660,7 @@ def filter_packagify_changes(
             if PACKS_README_FILE_NAME in file_path:
                 updated_added_files.add(file_path)
                 continue
-            with open(file_path) as f:
-                details = yaml.load(f)
+            details = get_file(file_path, raise_on_error=True)
 
             uniq_identifier = "_".join(
                 [
@@ -820,7 +822,13 @@ def get_file(
     clear_cache: bool = False,
     return_content: bool = False,
     keep_order: bool = False,
+    raise_on_error: bool = False,
 ):
+    """
+    Get file contents.
+
+    if raise_on_error = False, this function will return empty dict
+    """
     if clear_cache:
         get_file.cache_clear()
     file_path = Path(file_path)  # type: ignore[arg-type]
@@ -855,6 +863,8 @@ def get_file(
         logger.error(
             f"{file_path} has a structure issue of file type {type_of_file}\n{e}"
         )
+        if raise_on_error:
+            raise
         return {}
 
 
@@ -1661,6 +1671,9 @@ def find_type_by_path(path: Union[str, Path] = "") -> Optional[FileType]:
     elif path.suffix == ".ps1":
         return FileType.POWERSHELL_FILE
 
+    elif path.name == ".vulture_whitelist.py":
+        return FileType.VULTURE_WHITELIST
+
     elif path.suffix == ".py":
         return FileType.PYTHON_FILE
 
@@ -1728,6 +1741,7 @@ def find_type_by_path(path: Union[str, Path] = "") -> Optional[FileType]:
         or path.suffix.lower() == ".txt"
     ):
         return FileType.TXT
+
     elif path.name == ".pylintrc":
         return FileType.PYLINTRC
 
@@ -2818,9 +2832,30 @@ def compare_context_path_in_yml_and_readme(yml_dict, readme_content):
     return different_contexts
 
 
-def write_yml(yml_path: str, yml_data: Dict):
-    with open(yml_path, "w") as f:
-        yaml.dump(yml_data, f)  # ruamel preservers multilines
+def write_dict(
+    path: Union[Path, str],
+    data: Dict,
+    handler: Optional[XSOAR_Handler] = None,
+    indent: int = 0,
+    sort_keys: bool = False,
+    **kwargs,
+):
+    """
+    Write unicode content into a json/yml file.
+    """
+    path = Path(path)
+    if not handler:
+        suffix = path.suffix.lower()
+        if suffix == ".json":
+            handler = json
+        elif suffix in {".yaml", ".yml"}:
+            handler = yaml
+        else:
+            raise ValueError(f"The file {path} is neither json/yml")
+
+    safe_write_unicode(
+        lambda f: handler.dump(data, f, indent, sort_keys, **kwargs), path  # type: ignore[union-attr]
+    )
 
 
 def to_kebab_case(s: str):
@@ -3237,12 +3272,13 @@ def get_mp_types_from_metadata_by_item(file_path):
         metadata_path = Path(*metadata_path_parts) / METADATA_FILE_NAME
 
     try:
-        with open(metadata_path) as metadata_file:
-            metadata = json.load(metadata_file)
-            marketplaces = metadata.get(MARKETPLACE_KEY_PACK_METADATA)
-            if not marketplaces:
-                return [MarketplaceVersions.XSOAR.value]
-            return marketplaces
+        if not (
+            marketplaces := get_file(metadata_path, raise_on_error=True).get(
+                MARKETPLACE_KEY_PACK_METADATA
+            )
+        ):
+            return [MarketplaceVersions.XSOAR.value]
+        return marketplaces
     except FileNotFoundError:
         return []
 
@@ -3944,18 +3980,3 @@ def parse_int_or_default(value: Any, default: int) -> int:
         return int(value)
     except (ValueError, TypeError):
         return default
-
-
-def is_sentence_ends_with_bracket(description: str):
-    """
-    Check if the sentence ends with a bracket and valid.
-    Args:
-        description: The description sentence to test.
-
-    Returns:
-        boolean: True if the sentence ends with a bracket and valid.
-
-    """
-    return (
-        description.endswith(")") and len(description) >= 2 and description[-2] == "."
-    )

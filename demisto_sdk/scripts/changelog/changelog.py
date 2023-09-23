@@ -170,10 +170,10 @@ def compile_changelog_md(
     for log_type in (LogType.breaking, LogType.feature, LogType.fix, LogType.internal):
         new_changelog.extend(log.to_string() for log in new_logs.get(log_type, ()))
     # A new line separates versions
-    new_changelog.append("\n")
+    new_changelog.append("")
     # Collecting the old changelog
     new_changelog.extend(old_changelog)
-    return "\n".join(new_changelog)
+    return "\n".join(new_changelog) + "\n"
 
 
 def update_changelog_md(new_changelog: str) -> None:

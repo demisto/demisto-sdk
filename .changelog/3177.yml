@@ -1,0 +1,4 @@
+logs:
+- description: Added the **changelog** new command for management the changelog.md file.
+  type: feature
+pr_number: '3177'

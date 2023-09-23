@@ -7,10 +7,10 @@ from demisto_sdk.scripts.changelog import changelog
 from demisto_sdk.scripts.changelog.changelog import (
     Changelog,
     clear_changelogs_folder,
-    get_all_logs,
     get_new_log_entries,
     is_log_yml_exist,
     is_release,
+    read_log_files,
 )
 from demisto_sdk.scripts.changelog.changelog_obj import LogType
 
@@ -54,7 +54,12 @@ def changelog_folder_mock(tmpdir, mocker):
 
 @pytest.mark.parametrize(
     "pr_name, expected_result",
-    [("", False), ("test", False), ("demisto-sdk release 1.10.2", True), ("1.2.3", False)],
+    [
+        ("", False),
+        ("test", False),
+        ("demisto-sdk release 1.10.2", True),
+        ("1.2.3", False),
+    ],
 )
 def test_is_release(pr_name: str, expected_result: bool):
     """
@@ -80,8 +85,7 @@ def test_is_log_yml_exist(changelog_folder_mock: Path, pr_name: str):
           with the same name as pr_number in the .changelog folder
     """
     if pr_name:
-        with (changelog_folder_mock / f"{pr_name}.yml").open("w") as f:
-            f.write("test: test")
+        (changelog_folder_mock / f"{pr_name}.yml").write_text("test: test")
     assert is_log_yml_exist(pr_name) is (pr_name == DUMMY_PR_NUMBER)
 
 
@@ -100,7 +104,7 @@ def test_get_all_logs(changelog_folder_mock: Path):
         yaml.dump(LOG_FILE_1, f)
     with (changelog_folder_mock / "43524.yml").open("w") as f:
         yaml.dump(LOG_FILE_2, f)
-    log_files = get_all_logs()
+    log_files = read_log_files()
     assert len(log_files) == 2
     assert len(log_files[0].logs) == 2
 
@@ -153,7 +157,7 @@ def test_get_new_log_entries(changelog_folder_mock: Path):
     for i, log_file in enumerate((LOG_FILE_1, LOG_FILE_2, LOG_FILE_3)):
         with (changelog_folder_mock / f"{i}.yml").open("w") as f:
             yaml.dump(log_file, f)
-    logs = get_all_logs()
+    logs = read_log_files()
     results = get_new_log_entries(logs)
     for type_ in (log_type for log_type in LogType if log_type != LogType.initial):
         assert type_ in results

@@ -74,11 +74,11 @@ class Changelog:
         if not is_release(self.pr_name):
             raise ValueError("The PR name should match `v0.0.0` to start a release.")
         # get all log files as `LogFileObject`
-        logs = get_all_logs()
+        logs = read_log_files()
         # get a dict sorted by type of log entry
         new_log_entries = get_new_log_entries(logs)
         new_changelog = compile_changelog_md(
-            branch_name, new_log_entries, get_old_changelog()[1:]
+            branch_name, new_log_entries, read_old_changelog()[1:]
         )
         update_changelog_md(new_changelog)
         logger.info("The changelog.md file has been successfully updated")
@@ -115,7 +115,7 @@ def validate_log_yml(pr_number: str) -> None:
         raise ValueError(e.json())
 
 
-def get_all_logs() -> List[LogFileObject]:
+def read_log_files() -> List[LogFileObject]:
     """
     Get all the log files under the .changelog folder,
     in case that one of the logs is not valid, an error is raised
@@ -141,17 +141,17 @@ def get_new_log_entries(logs: List[LogFileObject]) -> Dict[str, List[LogLine]]:
     """
     Parses each LogFileObject and returns a dictionary classified by the type of log entry
     """
-    all_logs_unreleased: List[LogLine] = []
+    unreleased_logs: List[LogLine] = []
     for log_file in logs:
-        all_logs_unreleased.extend(log_file.get_log_entries())
+        unreleased_logs.extend(log_file.get_log_entries())
 
     new_log_entries: Dict[str, List[LogLine]] = {}
-    for type_, log_lines in itertools.groupby(all_logs_unreleased, lambda x: x.type):
+    for type_, log_lines in itertools.groupby(unreleased_logs, lambda x: x.type):
         new_log_entries[type_] = list(log_lines)
     return new_log_entries
 
 
-def get_old_changelog():
+def read_old_changelog():
     return CHANGELOG_MD_FILE.read_text().splitlines()
 
 
@@ -177,8 +177,7 @@ def compile_changelog_md(
 
 
 def update_changelog_md(new_changelog: str) -> None:
-    with CHANGELOG_MD_FILE.open("w") as f:
-        f.write(new_changelog)
+    CHANGELOG_MD_FILE.write_text(new_changelog)
 
 
 def clear_changelogs_folder() -> None:
@@ -190,7 +189,7 @@ def clear_changelogs_folder() -> None:
 
 
 def is_release(pr_name: str) -> bool:
-    return pr_name is not None and RELEASE_VERSION_REGEX.match(pr_name) is not None
+    return bool(pr_name is not None and RELEASE_VERSION_REGEX.match(pr_name))
 
 
 def _validate_branch(pr_number: str) -> None:
@@ -247,7 +246,7 @@ def changelog_management(
     release: bool = release,
     pr_number: str = pr_number,
     pr_name: str = pr_title,
-    branch_name: str = branch_name
+    branch_name: str = branch_name,
 ):
     pr_name = pr_name
     pr_number = pr_number

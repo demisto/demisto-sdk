@@ -828,7 +828,7 @@ class TestUpdateContentGraph:
                     use_local_import=False,
                 )
             except IsADirectoryError:
-                Path(file_path).rmdir()
+                pass
             packs_from_graph = interface.search(
                 marketplace=MarketplaceVersions.XSOAR,
                 content_type=ContentType.PACK,

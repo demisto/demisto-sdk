@@ -43,6 +43,43 @@ class GitUtil:
                 f"Unable to find Repository from current {repo_path.absolute()} - aborting"
             )
 
+    @classmethod
+    def from_content_path(cls, path: Optional[Path] = None) -> "GitUtil":
+        if content_path := os.getenv("DEMISTO_SDK_CONTENT_PATH"):
+            return cls(Path(content_path), search_parent_directories=False)
+        return cls(path)
+
+    def path_from_git_root(self, path: Union[Path, str]) -> Path:
+        return Path(path).relative_to(Path(self.repo.working_dir))
+
+    def is_file_exist_in_commit_or_branch(
+        self, path: Union[Path, str], commit_or_branch: str, remote: bool = False
+    ) -> bool:
+        if remote:
+            # check if file exist in remote branch
+            try:
+                remote_branch = self.repo.refs[  # type: ignore[index]
+                    f"{DEMISTO_GIT_UPSTREAM}/{commit_or_branch}"
+                ]
+                commit = remote_branch.commit
+            except IndexError:
+                # there isn't remote branch like this
+                return False
+        else:
+            # check if file exist in a local branch/commit
+            try:
+                commit = self.repo.commit(commit_or_branch)
+            except ValueError:
+                # commit/branch does not exist
+                return False
+
+        path = str(self.path_from_git_root(path))
+
+        try:
+            return commit.tree[path].path == path
+        except KeyError:
+            return False
+
     def get_all_files(self) -> Set[Path]:
         return set(map(Path, self.repo.git.ls_files().split("\n")))
 
@@ -773,25 +810,30 @@ class GitUtil:
         file_content = self.repo.git.show(git_file_path)
         return file_content
 
-    def get_local_remote_file_path(self, full_file_path: str, tag: str) -> str:
+    def get_local_remote_file_path(
+        self, full_file_path: str, tag: str, from_remote: bool = True
+    ) -> str:
         """Get local file path of remote branch. For example get origin/master:README.md
 
         Args:
             full_file_path: The file path to fetch. For example 'content/README.md'
             tag: The tag of the branch. For example 'master'
+            from_remote: whether to build the file path for remote branch or local branch
 
         Returns:
             The git file path. For example get origin/master:README.md
         """
-        relative_file_path = os.path.relpath(full_file_path, self.git_path())
-        try:
-            remote_name: Union[Remote, str] = self.repo.remote()
-        except ValueError as exc:
-            if "Remote named 'origin' didn't exist" in str(exc):
-                remote_name = "origin"
-            else:
-                raise exc
-        return f"{remote_name}/{tag}:{relative_file_path}"
+        if from_remote:
+            relative_file_path = self.path_from_git_root(full_file_path)
+            try:
+                remote_name: Union[Remote, str] = self.repo.remote()
+            except ValueError as exc:
+                if "Remote named 'origin' didn't exist" in str(exc):
+                    remote_name = "origin"
+                else:
+                    raise exc
+            return f"{remote_name}/{tag}:{relative_file_path}"
+        return f"{tag}:{self.path_from_git_root(full_file_path)}"
 
     def get_all_changed_files(
         self,

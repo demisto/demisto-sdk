@@ -814,16 +814,21 @@ class TestUpdateContentGraph:
                 "demisto_sdk.commands.content_graph.commands.update.get_all_repo_pack_ids",
                 return_value=["ExternalPack"],
             )
-
-            # update the graph accordingly
-            update_content_graph(
-                interface,
-                packs_to_update=[],
-                imported_path=TEST_DATA_PATH
-                / "mock_import_files_multiple_repos__valid"
-                / "Content_Graph_Test.zip",
-                use_local_import=False,
-            )
+            try:
+                # update the graph accordingly
+                file_path = (
+                    TEST_DATA_PATH
+                    / "mock_import_files_multiple_repos__valid"
+                    / "Content_Graph_Test.zip"
+                )
+                update_content_graph(
+                    interface,
+                    packs_to_update=[],
+                    imported_path=file_path,
+                    use_local_import=False,
+                )
+            except IsADirectoryError:
+                Path(file_path).rmdir()
             packs_from_graph = interface.search(
                 marketplace=MarketplaceVersions.XSOAR,
                 content_type=ContentType.PACK,

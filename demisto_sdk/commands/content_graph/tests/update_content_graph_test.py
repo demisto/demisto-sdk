@@ -788,7 +788,7 @@ class TestUpdateContentGraph:
                 for file in extracted_files
             )
 
-    def test_update_content_graph_external_repo(self, mocker):
+    def test_update_content_graph_external_repo(self, mocker, external_repo):
         """
         Given:
             - A ContentDTO model representing the repository state on master branch.
@@ -814,21 +814,21 @@ class TestUpdateContentGraph:
                 "demisto_sdk.commands.content_graph.commands.update.get_all_repo_pack_ids",
                 return_value=["ExternalPack"],
             )
-            try:
-                # update the graph accordingly
-                file_path = (
-                    TEST_DATA_PATH
-                    / "mock_import_files_multiple_repos__valid"
-                    / "Content_Graph_Test.zip"
-                )
-                update_content_graph(
-                    interface,
-                    packs_to_update=[],
-                    imported_path=file_path,
-                    use_local_import=False,
-                )
-            except IsADirectoryError:
-                pass
+            # try:
+            # update the graph accordingly
+            file_path = (
+                TEST_DATA_PATH
+                / "mock_import_files_multiple_repos__valid"
+                / "Content_Graph_Test.zip"
+            )
+            update_content_graph(
+                interface,
+                packs_to_update=[],
+                imported_path=file_path,
+                use_local_import=False,
+            )
+            # except IsADirectoryError:
+            #     pass
             packs_from_graph = interface.search(
                 marketplace=MarketplaceVersions.XSOAR,
                 content_type=ContentType.PACK,

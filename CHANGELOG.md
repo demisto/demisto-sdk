@@ -6,6 +6,7 @@
 * Fixed an issue where **upload** failed when trying to upload an indicator field.
 * Updated the **update-content-graph** command to work with external repositories.
 * Updated the **validate** command to work with external repositories when using the *--graph* flag.
+* Fixed an issue where **validate** falsely failed with error `RN115` on release notes with linefeed at the end of the file.
 
 ## 1.20.4
 * Fixed an issue where using **prepare-content**, **upload**, **zip-packs** and **download** on machines with default encoding other than unicode caused errors.

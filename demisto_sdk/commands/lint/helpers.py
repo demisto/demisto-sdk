@@ -250,7 +250,9 @@ def get_pack_test_data_dir(input):
 
 def add_pack_test_data(pack_path, pack_test_data_dir):
     for f in pack_test_data_dir.iterdir():
-        copied_test_data_path = pack_path / 'test_data' / f.name
+        pack_dir = pack_path / 'test_data'
+        pack_dir.mkdir(exist_ok=True)
+        copied_test_data_path = pack_dir / f.name
         if not copied_test_data_path.exists():
             copied_test_data_path.write_bytes(f.read_bytes())
 

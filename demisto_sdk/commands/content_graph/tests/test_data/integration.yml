@@ -31,7 +31,7 @@ script:
           required: false
           isArray: false
           defaultValue: "2020-01-01"
-  isfetcheventsandassets: true
+  isfetchassets: true
   dockerimage: demisto/bs4:1.0.0.7863
 tests:
 - No tests

@@ -731,7 +731,7 @@ class TestParsersAndModels:
             expected_toversion=DEFAULT_CONTENT_ITEM_TO_VERSION,
         )
         assert model.is_fetch_events is True
-        assert model.is_fetch_events_and_assets is True
+        assert model.is_fetch_assets is True
 
     def test_unified_integration_parser(self, pack: Pack):
         """

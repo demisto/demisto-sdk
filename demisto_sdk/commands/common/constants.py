@@ -1627,6 +1627,8 @@ VALIDATED_PACK_ITEM_TYPES = [
     "Wizards",
 ]
 
+VALID_SENTENCE_SUFFIX = [".", "!", "?", ".)", ".'", '."']
+
 FIRST_FETCH = "first_fetch"
 
 MAX_FETCH = "max_fetch"

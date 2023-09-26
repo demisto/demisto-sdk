@@ -9,6 +9,7 @@ import dictdiffer
 from demisto_sdk.commands.common.constants import (
     DEMISTO_GIT_PRIMARY_BRANCH,
     GENERAL_DEFAULT_FROMVERSION,
+    VALID_SENTENCE_SUFFIX,
     VERSION_5_5_0,
 )
 from demisto_sdk.commands.common.handlers import YAML_Handler
@@ -20,7 +21,6 @@ from demisto_sdk.commands.common.tools import (
     get_remote_file,
     get_yaml,
     is_file_from_content_repo,
-    is_sentence_ends_with_bracket,
     is_string_ends_with_url,
     strip_description,
 )
@@ -476,10 +476,8 @@ class BaseUpdate:
         def _add_period(value: Optional[str]) -> Optional[str]:
             if value and isinstance(value, str):
                 strip_value = strip_description(value)
-                if (
-                    not strip_value.endswith(".")
-                    and not is_string_ends_with_url(strip_value)
-                    and not is_sentence_ends_with_bracket(strip_value)
+                if not is_string_ends_with_url(strip_value) and not any(
+                    strip_value.endswith(suffix) for suffix in VALID_SENTENCE_SUFFIX
                 ):
                     return f"{strip_value}."
             return value

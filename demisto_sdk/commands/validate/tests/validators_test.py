@@ -487,8 +487,8 @@ class TestValidators:
 
         test_package = list()
 
-        for dummy_file, file_type in changelog_needed:
-            for release_notes_file, answer in changelog_files_answer:
+        for (dummy_file, file_type) in changelog_needed:
+            for (release_notes_file, answer) in changelog_files_answer:
                 if file_type == "Script":
                     test_package.append(
                         (

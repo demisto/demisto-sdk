@@ -65,6 +65,16 @@ DESCRIPTION_TEST = (
         "description without a dot in the bracket (like this).",
         id="ends without a dot inside a bracket",
     ),
+    pytest.param(
+        "description end with ?",
+        "description end with ?",
+        id="ends with question mark",
+    ),
+    pytest.param(
+        "description end with !",
+        "description end with !",
+        id="ends with exclamation mark",
+    ),
 )
 
 

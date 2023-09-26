@@ -831,7 +831,7 @@ class TestUpdateContentGraph:
             file_path = (
                 TEST_DATA_PATH
                 / "mock_import_files_multiple_repos__valid"
-                / "Content_Graph_Test.zip"
+                / "valid_graph.zip"
             )
             update_content_graph(
                 interface,
@@ -846,4 +846,4 @@ class TestUpdateContentGraph:
                 content_type=ContentType.PACK,
                 all_level_dependencies=True,
             )
-            assert len(packs_from_graph) == 2
+            assert len(packs_from_graph) == 3

@@ -8,6 +8,7 @@ from demisto_sdk.commands.common.constants import (
 )
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.logger import logger
+from demisto_sdk.commands.common.tools import get_file
 from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.format.format_constants import (
     ERROR_RETURN_CODE,
@@ -91,12 +92,10 @@ class IncidentFieldJSONFormat(BaseUpdateJSON):
                     logger.info(
                         f"\n[blue]================= Updating file {alias_file_path} =================[/blue]"
                     )
-
-                    with open(alias_file_path, "r+") as f:
-                        alias_file_content = json.load(f)
-                        alias_file_content["marketplaces"] = [
-                            MarketplaceVersions.XSOAR.value
-                        ]
+                    alias_file_content = get_file(alias_file_path, raise_on_error=True)
+                    alias_file_content["marketplaces"] = [
+                        MarketplaceVersions.XSOAR.value
+                    ]
 
                     self._save_alias_field_file(
                         dest_file_path=alias_file_path, field_data=alias_file_content

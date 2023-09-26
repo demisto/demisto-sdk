@@ -644,7 +644,7 @@ class TestParsersAndModels:
             expected_fromversion="5.0.0",
             expected_toversion=DEFAULT_CONTENT_ITEM_TO_VERSION,
         )
-        assert model.type == "shortText"
+        assert model.field_type == "shortText"
         assert model.cli_name == "email"
         assert not model.associated_to_all
 

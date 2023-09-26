@@ -568,7 +568,7 @@ class TestUpdateContentGraph:
                 packs_to_update=[],
                 imported_path=TEST_DATA_PATH
                 / "mock_import_files_multiple_repos__valid"
-                / "valid_graph.zip",
+                / "Content_Graph_Test.zip",
             )
             assert get_nodes_count_by_type(interface, ContentType.PACK) == 2
             assert get_nodes_count_by_type(interface, ContentType.INTEGRATION) == 2

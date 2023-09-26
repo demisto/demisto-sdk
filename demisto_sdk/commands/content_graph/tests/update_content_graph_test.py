@@ -221,6 +221,18 @@ def external_repository(mocker) -> ContentDTO:
         "demisto_sdk.commands.content_graph.content_graph_builder.ContentGraphBuilder._create_content_dtos",
         side_effect=mock__create_content_dto,
     )
+
+    def mock__create_content_dto(packs_to_update: List[str]) -> List[ContentDTO]:
+        if not packs_to_update:
+            return [repository]
+        repo_copy = repository.copy()
+        repo_copy.packs = [p for p in repo_copy.packs if p.object_id in packs_to_update]
+        return [repo_copy]
+
+    mocker.patch(
+        "demisto_sdk.commands.content_graph.content_graph_builder.ContentGraphBuilder._create_content_dtos",
+        side_effect=mock__create_content_dto,
+    )
     return repository
 
 

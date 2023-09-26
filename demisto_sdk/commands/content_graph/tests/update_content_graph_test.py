@@ -803,20 +803,15 @@ class TestUpdateContentGraph:
     def test_update_content_graph_external_repo(self, mocker, external_repository):
         """
         Given:
-            - A ContentDTO model representing the repository state on master branch.
-            - A function representing a commit (an update of certain packs in the repository).
-            - .
+            - A content graph interface.
+            - Valid neo4j CSV files of two repositories to import, with two repository, each with one pack.
+            - an external repository with one pack
         When:
-            - Running create_content_graph() on master.
-            - Running update_content_graph() from external repo.
+            - Running update_graph() command.
         Then:
-            - Make sure the pack models from the interface are equal to the pack models from ContentDTO
-                before and after the updating the graph with the external repo packs.
+            - Make sure that the graph has three packs now.
         """
-        """do not use create
-        define use_local_import=False
-        mock func download_content_graph with the zip file in test data
-        """
+
         with ContentGraphInterface() as interface:
             mocker.patch(
                 "demisto_sdk.commands.content_graph.commands.update.is_external_repository",
@@ -826,21 +821,16 @@ class TestUpdateContentGraph:
                 "demisto_sdk.commands.content_graph.commands.update.get_all_repo_pack_ids",
                 return_value=["ExternalPack"],
             )
-            # try:
-            # update the graph accordingly
-            file_path = (
-                TEST_DATA_PATH
-                / "mock_import_files_multiple_repos__valid"
-                / "valid_graph.zip"
-            )
+
             update_content_graph(
                 interface,
                 packs_to_update=[],
-                imported_path=file_path,
+                imported_path=TEST_DATA_PATH
+                / "mock_import_files_multiple_repos__valid"
+                / "valid_graph.zip",
                 use_local_import=False,
             )
-            # except IsADirectoryError:
-            #     pass
+
             packs_from_graph = interface.search(
                 marketplace=MarketplaceVersions.XSOAR,
                 content_type=ContentType.PACK,

@@ -60,7 +60,7 @@ class RepositoryParser:
             for pack in packs_to_parse:
                 path = packs_folder / pack
                 if not path.is_dir():
-                    raise FileNotFoundError(f"Pack {pack} does not exist. path: {path}")
+                    raise FileNotFoundError(f"Pack {pack} does not exist.")
                 if self.should_parse_pack(path):
                     yield path
 

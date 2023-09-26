@@ -1,15 +1,12 @@
 # Changelog
 ## Unreleased
-<<<<<<< HEAD
 * Added a **validate** step checking for misplaced files (i.e. directly under `Integrations`, or under mistyped folder name)
-=======
 * Fixed an issue where **validate** falsely failed with error `DS108` on descriptions ending with brackets that contains a dot at the end of them.
 * Fixed an issue where **modeling-rule test** command failed to properly render the comparison table when boolean value were printed.
 * Fixed an issue were format added a dot at end of the description that already ends with question mark and exclamation mark.
 * Fixed an issue where **upload** failed when trying to upload an indicator field.
 
 ## 1.20.4
->>>>>>> 56c7d670b48f4c3ba13abf9f637cd0be65ec0135
 * Fixed an issue where using **prepare-content**, **upload**, **zip-packs** and **download** on machines with default encoding other than unicode caused errors.
 * The **modeling-rules-test** will now ignore test data files containing the `test_data_config_ignore` key.
 * Fixed an issue where **modeling-rules init-test-data** command failed on modeling rules that contain the text `call` even not as a separate word.

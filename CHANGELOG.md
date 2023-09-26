@@ -4,6 +4,8 @@
 * Fixed an issue where **modeling-rule test** command failed to properly render the comparison table when boolean value were printed.
 * Fixed an issue were format added a dot at end of the description that already ends with question mark and exclamation mark.
 * Fixed an issue where **upload** failed when trying to upload an indicator field.
+* Updated the **update-content-graph** command to work with external repositories.
+* Updated the **validate** command to work with external repositories when using the *--graph* flag.
 
 ## 1.20.4
 * Fixed an issue where using **prepare-content**, **upload**, **zip-packs** and **download** on machines with default encoding other than unicode caused errors.

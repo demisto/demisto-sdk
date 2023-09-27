@@ -1513,7 +1513,7 @@ class TestFormatting:
     ):
         """
         Given
-            - An playbook yml to deprecate.
+            - A playbook yml to deprecate.
         When
             - Running update_deprecate.
         Then
@@ -1543,7 +1543,12 @@ class TestFormatting:
     ):
         """
         Given
-            - An playbook yml to deprecate.
+            Case a:
+                - A playbook yml to deprecate.
+                - No replacement entity from the user input.
+            Case b:
+                - A playbook yml to deprecate.
+                - A replacement entity from the user input.
         When
             - Running update_deprecate.
         Then
@@ -1573,7 +1578,12 @@ class TestFormatting:
     ):
         """
         Given
-            - An playbook yml to deprecate.
+            Case a:
+                - A playbook yml to deprecate.
+                - No replacement entity from the user input.
+            Case b:
+                - A playbook yml to deprecate.
+                - A replacement entity from the user input.
         When
             - Running update_deprecate.
         Then

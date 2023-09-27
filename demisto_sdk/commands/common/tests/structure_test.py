@@ -956,9 +956,14 @@ class TestXSIAMStructureValidator(TestStructureValidator):
     def test_deprecated_parsing_rule_is_valid(self, repo, yml_data_update):
         """
         Given:
-            A deprecated parsing rule with: (a) just deprecated (b) deprecated with a comment.
-        When: running is_schema_types_valid
-        Then: Validate that the parsing rule is invalid
+            Case a:
+                - A deprecated parsing rule without a comment.
+            Case b:
+                - A deprecated parsing rule with a comment.
+        When:
+            - Running is_schema_types_valid.
+        Then:
+            - Validate that the parsing rule is invalid.
         """
         with ChangeCWD(repo.path):
             pack = repo.create_pack("TestPack")
@@ -974,9 +979,14 @@ class TestXSIAMStructureValidator(TestStructureValidator):
     def test_deprecated_modeling_rule_is_valid(self, repo, yml_data_update):
         """
         Given:
-            A deprecated modeling rule with: (a) just deprecated (b) deprecated with a comment.
-        When: running is_schema_types_valid
-        Then: Validate that the modeling rule is invalid
+            Case a:
+                - A deprecated modeling rule without a comment.
+            Case b:
+                - A deprecated modeling rule with a comment.
+        When:
+            - Running is_schema_types_valid.
+        Then:
+            - Validate that the modeling rule is invalid.
         """
         with ChangeCWD(repo.path):
             pack = repo.create_pack("TestPack")

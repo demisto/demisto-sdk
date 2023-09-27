@@ -10,6 +10,7 @@ from demisto_sdk.commands.common.constants import (
     INTEGRATION,
     NO_TESTS_DEPRECATED,
     PLAYBOOK,
+    SCRIPT,
     TEST_PLAYBOOKS_DIR,
     FileType,
 )
@@ -364,7 +365,9 @@ class BaseUpdateYML(BaseUpdate):
         """
 
         self.data["deprecated"] = True
-        self.data["tests"] = [NO_TESTS_DEPRECATED]
+
+        if self.data.get("tests") or file_type in (INTEGRATION, PLAYBOOK, SCRIPT):
+            self.data["tests"] = [NO_TESTS_DEPRECATED]
 
         if file_type in [INTEGRATION, PLAYBOOK]:
 

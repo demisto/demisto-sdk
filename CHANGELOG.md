@@ -1,5 +1,8 @@
 # Changelog
+* Fixed an issue where kebab-case arguments were not parsed correctly.
+
 ## Unreleased
+* Fixed an issue where deprecating parsing rules or modeling rules using **format** failed due to schema discrepancies.
 
 ## 1.20.5
 * Fixed an issue where **validate** falsely failed with error `DS108` on descriptions ending with brackets that contains a dot at the end of them.

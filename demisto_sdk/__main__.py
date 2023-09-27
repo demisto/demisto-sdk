@@ -158,9 +158,9 @@ def logging_setup_decorator(func, *args, **kwargs):
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
         logging_setup(
-            console_log_threshold=kwargs.get("console-log-threshold") or logging.INFO,
-            file_log_threshold=kwargs.get("file-log-threshold") or logging.DEBUG,
-            log_file_path=kwargs.get("log-file-path") or None,
+            console_log_threshold=kwargs.get("console_log_threshold") or logging.INFO,
+            file_log_threshold=kwargs.get("file_log_threshold") or logging.DEBUG,
+            log_file_path=kwargs.get("log_file_path") or None,
         )
 
         handle_deprecated_args(get_context_arg(args).args)
@@ -195,9 +195,9 @@ def logging_setup_decorator(func, *args, **kwargs):
 @click.pass_context
 def main(ctx, config, version, release_notes, **kwargs):
     logging_setup(
-        console_log_threshold=kwargs.get("console-log-threshold", logging.INFO),
-        file_log_threshold=kwargs.get("file-log-threshold", logging.DEBUG),
-        log_file_path=kwargs.get("log-file-path"),
+        console_log_threshold=kwargs.get("console_log_threshold", logging.INFO),
+        file_log_threshold=kwargs.get("file_log_threshold", logging.DEBUG),
+        log_file_path=kwargs.get("log_file_path"),
     )
     global logger
     logger = logging.getLogger("demisto-sdk")
@@ -1177,9 +1177,9 @@ def lint(ctx, **kwargs):
 @click.pass_context
 def coverage_analyze(ctx, **kwargs):
     logger = logging_setup(
-        console_log_threshold=kwargs.get("console-log-threshold") or logging.INFO,
-        file_log_threshold=kwargs.get("file-log-threshold") or logging.DEBUG,
-        log_file_path=kwargs.get("log-file-path") or None,
+        console_log_threshold=kwargs.get("console_log_threshold") or logging.INFO,
+        file_log_threshold=kwargs.get("file_log_threshold") or logging.DEBUG,
+        log_file_path=kwargs.get("log_file_path") or None,
     )
     from demisto_sdk.commands.coverage_analyze.coverage_report import CoverageReport
 
@@ -2588,9 +2588,9 @@ def postman_codegen(
 ):
     """Generates a Cortex XSOAR integration given a Postman collection 2.1 JSON file."""
     logger = logging_setup(
-        console_log_threshold=kwargs.get("console-log-threshold") or logging.INFO,
-        file_log_threshold=kwargs.get("file-log-threshold") or logging.DEBUG,
-        log_file_path=kwargs.get("log-file-path") or None,
+        console_log_threshold=kwargs.get("console_log_threshold") or logging.INFO,
+        file_log_threshold=kwargs.get("file_log_threshold") or logging.DEBUG,
+        log_file_path=kwargs.get("log_file_path") or None,
     )
     from demisto_sdk.commands.postman_codegen.postman_codegen import (
         postman_to_autogen_configuration,
@@ -2805,8 +2805,8 @@ def openapi_codegen(ctx, **kwargs):
             if root_objects:
                 command_to_run = command_to_run + f' -r "{root_objects}"'
             if (
-                kwargs.get("console-log-threshold")
-                and int(kwargs.get("console-log-threshold", logging.INFO))
+                kwargs.get("console_log_threshold")
+                and int(kwargs.get("console_log_threshold", logging.INFO))
                 >= logging.DEBUG
             ):
                 command_to_run = command_to_run + " -v"

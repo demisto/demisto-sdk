@@ -1,4 +1,6 @@
 # Changelog
+* Fixed an issue where kebab-case arguments were not parsed correctly.
+
 ## Unreleased
 * Fixed an issue where deprecating parsing rules or modeling rules using **format** failed due to schema discrepancies.
 

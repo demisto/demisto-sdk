@@ -137,11 +137,15 @@ from demisto_sdk.tests.constants_test import (
     VALID_ONE_LINE_CHANGELOG_PATH,
     VALID_ONE_LINE_LIST_CHANGELOG_PATH,
     VALID_PACK,
+    VALID_PACK_IGNORE_PATH,
+    VALID_PIPEFILE_LOCK_PATH,
+    VALID_PIPEFILE_PATH,
     VALID_PLAYBOOK_CONDITION,
     VALID_REPUTATION_PATH,
     VALID_SCRIPT_PATH,
     VALID_TEST_PLAYBOOK_PATH,
     VALID_WIDGET_PATH,
+    VULTURE_WHITELIST_PATH,
     WIDGET_TARGET,
     XSIAM_CORRELATION_TARGET,
     XSIAM_DASHBOARD_TARGET,
@@ -1066,6 +1070,55 @@ class TestValidators:
         assert validate_manager.run_validations_on_file(
             INVALID_IGNORED_UNIFIED_INTEGRATION, None
         )
+
+    @pytest.mark.parametrize(
+        "file_type, path_to_file",
+        [
+            (FileType.CHANGELOG, VALID_ONE_LINE_CHANGELOG_PATH),
+            (FileType.DOC_IMAGE, "image.png"),
+            (
+                FileType.MODELING_RULE_SCHEMA,
+                "Packs/some/ModelingRules/Some/Some_schema.json",
+            ),
+            (
+                FileType.XSIAM_REPORT_IMAGE,
+                "Packs/XSIAMPack/XSIAMReports/XSIAM_Some_Report.json",
+            ),
+            (FileType.PIPFILE, VALID_PIPEFILE_PATH),
+            (FileType.PIPFILE_LOCK, VALID_PIPEFILE_LOCK_PATH),
+            (FileType.TXT, "txt_file.txt"),
+            (FileType.JAVASCRIPT_FILE, "java_script_file.js"),
+            (FileType.POWERSHELL_FILE, "powershell_file.ps1"),
+            (FileType.PYLINTRC, ".pylintrc"),
+            (FileType.SECRET_IGNORE, ".secrets-ignore"),
+            (FileType.LICENSE, "LICENSE"),
+            (FileType.UNIFIED_YML, "Packs/DummyPack/Scripts/DummyScript_unified.yml"),
+            (FileType.PACK_IGNORE, VALID_PACK_IGNORE_PATH),
+            (FileType.INI, "ini_file.ini"),
+            (FileType.PEM, "pem_file.pem"),
+            (FileType.METADATA, ".pack_metadata.json"),
+            (FileType.VULTURE_WHITELIST, VULTURE_WHITELIST_PATH),
+        ],
+    )
+    def test_skipped_file_types(self, mocker, file_type, path_to_file):
+        """
+        Given:
+            - A file of a type that should be skipped
+        When:
+            - Validating the file
+        Then:
+            - The file should be skipped
+        """
+
+        mocker.patch.object(
+            demisto_sdk.commands.common.tools,
+            "find_type",
+            return_value=file_type,
+        )
+
+        validate_manager = ValidateManager()
+        assert validate_manager.run_validations_on_file(path_to_file, None)
+        assert path_to_file in validate_manager.ignored_files
 
     def test_non_integration_png_files_ignored(self, set_git_test_env):
         """
@@ -2278,6 +2331,7 @@ def test_check_file_relevance_and_format_path_non_formatted_relevant_file(mocker
         "Packs/pack_id/Scripts/script_id/test_data/file.json",
         "Packs/pack_id/TestPlaybooks/test_data/file.json",
         "Packs/pack_id/Integrations/integration_id/command_examples",
+        "Packs/pack_id/Integrations/integration_id/.vulture_whitelist.py",
     ],
 )
 def test_check_file_relevance_and_format_path_ignored_files(input_file_path):

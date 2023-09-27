@@ -180,6 +180,7 @@ class FileType(str, Enum):
     UNIFIED_YML = "unified_yml"
     INI = "ini"
     PEM = "pem"
+    VULTURE_WHITELIST = "vulture_whitelist"
 
 
 RN_HEADER_BY_FILE_TYPE = {
@@ -1584,6 +1585,8 @@ VALIDATED_PACK_ITEM_TYPES = [
     "Jobs",
     "Wizards",
 ]
+
+VALID_SENTENCE_SUFFIX = [".", "!", "?", ".)", ".'", '."']
 
 FIRST_FETCH = "first_fetch"
 

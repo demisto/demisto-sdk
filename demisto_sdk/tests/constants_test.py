@@ -540,3 +540,7 @@ INVALID_XSIAM_CORRELATION_PATH = (
 )
 
 XSIAM_CORRELATION_TARGET = f"{PACK_TARGET}/CorrelationRules/correlationrule-mock.yml"
+
+VULTURE_WHITELIST_PATH = (
+    "Packs/TestPack/Integrations/TestIntegration/.vulture_whitelist.py"
+)

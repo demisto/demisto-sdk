@@ -1,5 +1,5 @@
 # Changelog
-* Fixed an issue where kebab-case arguments were not parsed correctly. 
+* Fixed an issue where kebab-case arguments were not parsed correctly.
 
 ## Unreleased
 

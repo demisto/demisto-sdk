@@ -49,7 +49,7 @@ def _add_pr_comment(comment, logging_module):
                 res["items"][0].get("comments_url") if res.get("items", []) else None
             )
             if issue_url:
-                # Check if a comment about skipped tests already exists. If there is delete it first and then post a
+                # Check if a comment about skipped tests already exists. If there is,first delete it and then post a
                 # new comment:
                 response = requests.get(issue_url, headers=headers, verify=False)
                 issue_comments = _handle_github_response(response, logging_module)
@@ -81,6 +81,7 @@ def execute_test_content(**kwargs):
     logging_manager = ParallelLoggingManager(
         "Run_Tests.log", real_time_logs_only=not kwargs["nightly"]
     )
+    logging_manager.info(f'Starting to run tests on {kwargs["instance_role"]}')
     build_context = BuildContext(kwargs, logging_manager)
     use_retries_mechanism = kwargs.get("use_retries", False)
     threads_list = []
@@ -99,11 +100,16 @@ def execute_test_content(**kwargs):
     for t in threads_list:
         t.join()
 
+    logging_manager.info("Finished running tests.")
     if (
         not build_context.unmockable_tests_to_run.empty()
         or not build_context.mockable_tests_to_run.empty()
     ):
-        raise Exception("Not all tests have been executed")
+        logging_manager.critical(
+            "Not all tests have been executed. Not destroying instances.",
+            real_time=True,
+        )
+        sys.exit(1)
     if (
         build_context.tests_data_keeper.playbook_skipped_integration
         and build_context.build_name != "master"

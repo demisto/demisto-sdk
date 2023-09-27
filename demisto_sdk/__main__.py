@@ -2845,6 +2845,11 @@ def openapi_codegen(ctx, **kwargs):
     required=True,
 )
 @click.option(
+    "--instance-role",
+    help="Which instance role is running the tests",
+    default="Server Master",
+)
+@click.option(
     "-k", "--api-key", help="The Demisto API key for the server", required=True
 )
 @click.option("-s", "--server", help="The server URL to connect to")

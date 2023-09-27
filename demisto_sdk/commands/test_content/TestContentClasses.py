@@ -225,6 +225,7 @@ class TestPlaybook:
         self.populate_test_suite()
 
     def populate_test_suite(self):
+        self.test_suite.add_property("instance_role", self.build_context.instance_role)
         self.test_suite.add_property("build_number", self.build_context.build_number)
         self.test_suite.add_property("is_local_run", self.build_context.is_local_run)
         self.test_suite.add_property("is_nightly", self.build_context.is_nightly)
@@ -299,6 +300,9 @@ class TestPlaybook:
         test_case.system_err = "\n".join(self.test_suite_system_err)
         test_case.result += results
         self.test_suite.add_testcase(test_case)
+        self.build_context.tests_data_keeper.test_results_xml_file.add_testsuite(
+            self.test_suite
+        )
 
     def __str__(self):
         return f'"{self.configuration.playbook_id}"'
@@ -742,6 +746,7 @@ class BuildContext:
         self.isAMI = False if self.is_xsiam else kwargs["is_ami"]
         self.memCheck = kwargs["mem_check"]
         self.server_version = kwargs["server_version"]  # AMI Role
+        self.instance_role = kwargs["instance_role"]
         self.is_local_run = self.server is not None
         self.server_numeric_version = self._get_server_numeric_version()
         self.instances_ips = self._get_instances_ips()
@@ -1083,16 +1088,16 @@ class BuildContext:
 
 class TestResults:
     def __init__(self, unmockable_integrations, artifacts_path: Path):
-        self.succeeded_playbooks = []
-        self.failed_playbooks = set()
-        self.playbook_report = {}
-        self.skipped_tests = {}
-        self.skipped_integrations = {}
-        self.rerecorded_tests = []
-        self.empty_files = []
-        self.test_suite = JUnitXml()
+        self.succeeded_playbooks: List[str] = []
+        self.failed_playbooks: Set[str] = set()
+        self.playbook_report: Dict[str, List[Dict[Any, Any]]] = {}
+        self.skipped_tests: Dict[str, str] = {}
+        self.skipped_integrations: Dict[str, str] = {}
+        self.rerecorded_tests: List[str] = []
+        self.empty_files: List[str] = []
+        self.test_results_xml_file = JUnitXml()
         self.unmockable_integrations = unmockable_integrations
-        self.playbook_skipped_integration = set()
+        self.playbook_skipped_integration: Set[str] = set()
         self.artifacts_path = artifacts_path
 
     def add_proxy_related_test_data(self, proxy):
@@ -1120,8 +1125,8 @@ class TestResults:
         ) as test_playbooks_report_file:
             json.dump(self.playbook_report, test_playbooks_report_file, indent=4)
 
-        self.test_suite.write(
-            (self.artifacts_path / "tests_results.xml").as_posix(), pretty=True
+        self.test_results_xml_file.write(
+            (self.artifacts_path / "test_playbooks_report.xml").as_posix(), pretty=True
         )
 
     def print_test_summary(

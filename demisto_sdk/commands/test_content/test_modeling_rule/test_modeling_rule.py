@@ -895,7 +895,7 @@ def validate_modeling_rule(
         modeling_rule_test_suite.add_property("ci_pipeline_id", CI_PIPELINE_ID)
     if modeling_rule.testdata_path:
         logger.info(
-            f"[cyan]Test data file found at {modeling_rule.testdata_path}\n"
+            f"[cyan]Test data file found at {get_relative_path_to_content(modeling_rule.testdata_path)}\n"
             f"Checking that event data was added to the test data file[/cyan]",
             extra={"markup": True},
         )
@@ -1387,7 +1387,7 @@ def test_modeling_rule(
 
     if output_junit_file:
         logger.info(
-            f"[cyan]Writing JUnit XML to {output_junit_file}[/cyan]",
+            f"[cyan]Writing JUnit XML to {get_relative_path_to_content(output_junit_file)}[/cyan]",
             extra={"markup": True},
         )
         xml.write(output_junit_file.as_posix(), pretty=True)

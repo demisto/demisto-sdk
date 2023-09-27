@@ -1544,15 +1544,20 @@ class TestFormatting:
         """
         Given
             Case a:
-                - A playbook yml to deprecate.
+                - A modeling rule yml to deprecate.
                 - No replacement entity from the user input.
             Case b:
-                - A playbook yml to deprecate.
+                - A modeling rule yml to deprecate.
                 - A replacement entity from the user input.
         When
             - Running update_deprecate.
         Then
-            - Ensure that the yaml fields that need to be changed are changed.
+            Case a:
+                - Ensure the deprecated field is updated.
+                - Ensure the comment is 'Deprecated. No available replacement.'
+            Case b:
+                - Ensure the deprecated field is updated.
+                - Ensure the comment is 'Deprecated. Use Replacement entity instead.'
         """
         modeling_rule = pack.create_modeling_rule("my_modeling_rule")
         monkeypatch.setattr("builtins.input", lambda _: user_input)
@@ -1579,17 +1584,22 @@ class TestFormatting:
         """
         Given
             Case a:
-                - A playbook yml to deprecate.
+                - A parsing rule yml to deprecate.
                 - No replacement entity from the user input.
             Case b:
-                - A playbook yml to deprecate.
+                - A parsing rule yml to deprecate.
                 - A replacement entity from the user input.
         When
             - Running update_deprecate.
         Then
-            - Ensure that the yaml fields that need to be changed are changed.
+            Case a:
+                - Ensure the deprecated field is updated.
+                - Ensure the comment is 'Deprecated. No available replacement.'
+            Case b:
+                - Ensure the deprecated field is updated.
+                - Ensure the comment is 'Deprecated. Use Replacement entity instead.'
         """
-        parsing_rule = pack.create_modeling_rule("my_parsing_rule")
+        parsing_rule = pack.create_parsing_rule("my_parsing_rule")
         monkeypatch.setattr("builtins.input", lambda _: user_input)
         mocker.patch.object(
             BaseUpdateYML, "get_id_and_version_path_object", return_value={}

@@ -2837,6 +2837,14 @@ def openapi_codegen(ctx, **kwargs):
 )
 @click.help_option("-h", "--help")
 @click.option(
+    "-a",
+    "--artifacts_path",
+    help="Destination directory to create the artifacts.",
+    type=click.Path(file_okay=False, resolve_path=True),
+    default=Path("./Tests"),
+    required=True,
+)
+@click.option(
     "-k", "--api-key", help="The Demisto API key for the server", required=True
 )
 @click.option("-s", "--server", help="The server URL to connect to")

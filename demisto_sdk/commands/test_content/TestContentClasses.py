@@ -746,7 +746,9 @@ class BuildContext:
         self.server_numeric_version = self._get_server_numeric_version()
         self.instances_ips = self._get_instances_ips()
         self.filtered_tests = self._extract_filtered_tests()
-        self.tests_data_keeper = TestResults(self.conf.unmockable_integrations)
+        self.tests_data_keeper = TestResults(
+            self.conf.unmockable_integrations, kwargs["artifacts_path"]
+        )
         self.conf_unmockable_tests = self._get_unmockable_tests_from_conf()
         self.unmockable_test_ids: Set[str] = set()
         (
@@ -1080,7 +1082,7 @@ class BuildContext:
 
 
 class TestResults:
-    def __init__(self, unmockable_integrations):
+    def __init__(self, unmockable_integrations, artifacts_path: Path):
         self.succeeded_playbooks = []
         self.failed_playbooks = set()
         self.playbook_report = {}
@@ -1091,6 +1093,7 @@ class TestResults:
         self.test_suite = JUnitXml()
         self.unmockable_integrations = unmockable_integrations
         self.playbook_skipped_integration = set()
+        self.artifacts_path = artifacts_path
 
     def add_proxy_related_test_data(self, proxy):
         # Using multiple appends and not extend since append is guaranteed to be thread safe
@@ -1100,20 +1103,26 @@ class TestResults:
             self.empty_files.append(playbook_id)
 
     def create_result_files(self):
-        with open("./Tests/succeeded_tests.txt", "w") as succeeded_tests_file:
+        with open(
+            self.artifacts_path / "succeeded_tests.txt", "w"
+        ) as succeeded_tests_file:
             succeeded_tests_file.write("\n".join(self.succeeded_playbooks))
-        with open("./Tests/failed_tests.txt", "w") as failed_tests_file:
+        with open(self.artifacts_path / "failed_tests.txt", "w") as failed_tests_file:
             failed_tests_file.write("\n".join(self.failed_playbooks))
-        with open("./Tests/skipped_tests.txt", "w") as skipped_tests_file:
+        with open(self.artifacts_path / "skipped_tests.txt", "w") as skipped_tests_file:
             skipped_tests_file.write("\n".join(self.skipped_tests))
-        with open("./Tests/skipped_integrations.txt", "w") as skipped_integrations_file:
+        with open(
+            self.artifacts_path / "skipped_integrations.txt", "w"
+        ) as skipped_integrations_file:
             skipped_integrations_file.write("\n".join(self.skipped_integrations))
         with open(
-            "./Tests/test_playbooks_report.json", "w"
+            self.artifacts_path / "test_playbooks_report.json", "w"
         ) as test_playbooks_report_file:
             json.dump(self.playbook_report, test_playbooks_report_file, indent=4)
 
-        self.test_suite.write("./Tests/tests_results.xml", pretty=True)
+        self.test_suite.write(
+            (self.artifacts_path / "tests_results.xml").as_posix(), pretty=True
+        )
 
     def print_test_summary(
         self,

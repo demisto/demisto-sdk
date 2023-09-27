@@ -45,7 +45,7 @@ class Command(BaseContent, content_type=ContentType.COMMAND):  # type: ignore[ca
 class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # type: ignore[call-arg]
     is_fetch: bool = Field(False, alias="isfetch")
     is_fetch_events: bool = Field(False, alias="isfetchevents")
-    is_fetch_events_and_assets: bool = False
+    is_fetch_assets: bool = False
     is_feed: bool = False
     category: str
     commands: List[Command] = []

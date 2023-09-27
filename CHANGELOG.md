@@ -1,4 +1,6 @@
 # Changelog
+* Fixed an issue where kebab-case arguments were not parsed correctly.
+
 ## Unreleased
 
 ## 1.20.5

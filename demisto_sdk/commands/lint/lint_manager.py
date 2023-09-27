@@ -18,6 +18,7 @@ from wcmatch.pathlib import Path, PosixPath
 import demisto_sdk
 from demisto_sdk.commands.common.constants import (
     API_MODULES_PACK,
+    DEMISTO_GIT_PRIMARY_BRANCH,
     PACKS_PACK_META_FILE_NAME,
     TYPE_PWSH,
     TYPE_PYTHON,
@@ -25,6 +26,7 @@ from demisto_sdk.commands.common.constants import (
 )
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.docker_helper import init_global_docker_client
+from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.timers import report_time_measurements
@@ -185,7 +187,7 @@ class LintManager:
         # Get content repo object
         is_external_repo = False
         try:
-            git_repo = git.Repo(os.getcwd(), search_parent_directories=True)
+            git_repo = GitUtil().repo
             remote_url = git_repo.remote().urls.__next__()
             is_fork_repo = "content" in remote_url
             is_external_repo = is_external_repository()
@@ -267,11 +269,11 @@ class LintManager:
 
     def _get_packages(
         self,
-        content_repo: git.Repo,
+        content_repo: git.Repo,  # noqa: TID251
         input: Union[str, List[str]],
         git: bool = False,
         all_packs: bool = False,
-        base_branch: str = "master",
+        base_branch: str = DEMISTO_GIT_PRIMARY_BRANCH,
     ) -> List[PosixPath]:
         """Get packages paths to run lint command.
 
@@ -293,8 +295,9 @@ class LintManager:
             if isinstance(input, str):
                 input = input.split(",")
             for item in input:
-                is_pack = os.path.isdir(item) and os.path.exists(
-                    os.path.join(item, PACKS_PACK_META_FILE_NAME)
+                is_pack = (
+                    Path(item).is_dir()
+                    and Path(item, PACKS_PACK_META_FILE_NAME).exists()
                 )
                 if is_pack:
                     pkgs.extend(LintManager._get_all_packages(content_dir=item))
@@ -358,7 +361,7 @@ class LintManager:
 
     @staticmethod
     def _filter_changed_packages(
-        content_repo: git.Repo, pkgs: List[PosixPath], base_branch: str
+        content_repo: git.Repo, pkgs: List[PosixPath], base_branch: str  # noqa: TID251
     ) -> List[PosixPath]:
         """Checks which packages had changes in them and should run on Lint.
         The diff is calculated using git, and is done by the following cases:
@@ -380,7 +383,10 @@ class LintManager:
             for item in content_repo.active_branch.commit.tree.diff(None, paths=pkgs)
         }
 
-        if base_branch == "master" and content_repo.active_branch.name == "master":
+        if (
+            base_branch == DEMISTO_GIT_PRIMARY_BRANCH
+            and content_repo.active_branch.name == DEMISTO_GIT_PRIMARY_BRANCH
+        ):
             # case 1: comparing master against the latest previous commit
             last_common_commit = content_repo.remote().refs.master.commit.parents[0]
             logger.info(
@@ -1175,7 +1181,7 @@ class LintManager:
         if not self.json_file_path:
             return
 
-        if os.path.exists(self.json_file_path):
+        if Path(self.json_file_path).exists():
             json_contents = get_json(self.json_file_path)
             if not (isinstance(json_contents, list)):
                 json_contents = []

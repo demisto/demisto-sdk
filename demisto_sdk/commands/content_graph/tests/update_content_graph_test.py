@@ -47,6 +47,17 @@ def setup_method(mocker):
     bc.CONTENT_PATH = GIT_PATH
     mocker.patch.object(neo4j_service, "REPO_PATH", GIT_PATH)
     mocker.patch.object(ContentGraphInterface, "repo_path", GIT_PATH)
+    mocker.patch(
+        "demisto_sdk.commands.common.docker_images_metadata.get_remote_file_from_api",
+        return_value={
+            "docker_images": {
+                "python3": {
+                    "3.10.11.54799": {"python_version": "3.10.11"},
+                    "3.10.12.63474": {"python_version": "3.10.11"},
+                }
+            }
+        },
+    )
     neo4j_service.stop()
 
 
@@ -186,7 +197,42 @@ def repository(mocker) -> ContentDTO:
         "demisto_sdk.commands.content_graph.content_graph_builder.ContentGraphBuilder._create_content_dtos",
         side_effect=mock__create_content_dto,
     )
+    return repository
 
+
+@pytest.fixture
+def external_repository(mocker) -> ContentDTO:
+    repository = ContentDTO(
+        path=GIT_PATH,
+        packs=[],
+    )
+
+    pack1 = mock_pack("ExternalPack")
+    repository.packs.extend([pack1])
+
+    def mock__create_content_dto(packs_to_update: List[str]) -> List[ContentDTO]:
+        if not packs_to_update:
+            return [repository]
+        repo_copy = repository.copy()
+        repo_copy.packs = [p for p in repo_copy.packs if p.object_id in packs_to_update]
+        return [repo_copy]
+
+    mocker.patch(
+        "demisto_sdk.commands.content_graph.content_graph_builder.ContentGraphBuilder._create_content_dtos",
+        side_effect=mock__create_content_dto,
+    )
+
+    def mock__create_content_dto(packs_to_update: List[str]) -> List[ContentDTO]:
+        if not packs_to_update:
+            return [repository]
+        repo_copy = repository.copy()
+        repo_copy.packs = [p for p in repo_copy.packs if p.object_id in packs_to_update]
+        return [repo_copy]
+
+    mocker.patch(
+        "demisto_sdk.commands.content_graph.content_graph_builder.ContentGraphBuilder._create_content_dtos",
+        side_effect=mock__create_content_dto,
+    )
     return repository
 
 
@@ -629,7 +675,7 @@ class TestUpdateContentGraph:
                 packs_to_update=pack_ids_to_update,
                 dependencies=True,
                 output_path=tmp_path,
-                use_current=True,
+                use_local_import=True,
             )
             packs_from_graph = interface.search(
                 marketplace=MarketplaceVersions.XSOAR,
@@ -726,7 +772,7 @@ class TestUpdateContentGraph:
                 packs_to_update=pack_ids_to_update,
                 dependencies=True,
                 output_path=tmp_path,
-                use_current=True,
+                use_local_import=True,
             )
             packs_from_graph = interface.search(
                 marketplace=MarketplaceVersions.XSOAR,
@@ -753,3 +799,41 @@ class TestUpdateContentGraph:
                 file.suffix == ".graphml" or file.name == "metadata.json"
                 for file in extracted_files
             )
+
+    def test_update_content_graph_external_repo(self, mocker, external_repository):
+        """
+        Given:
+            - A content graph interface.
+            - Valid neo4j CSV files of two repositories to import, with two repository, each with one pack.
+            - an external repository with one pack
+        When:
+            - Running update_graph() command.
+        Then:
+            - Make sure that the graph has three packs now.
+        """
+
+        with ContentGraphInterface() as interface:
+            mocker.patch(
+                "demisto_sdk.commands.content_graph.commands.update.is_external_repository",
+                return_value=True,
+            )
+            mocker.patch(
+                "demisto_sdk.commands.content_graph.commands.update.get_all_repo_pack_ids",
+                return_value=["ExternalPack"],
+            )
+
+            update_content_graph(
+                interface,
+                packs_to_update=[],
+                imported_path=TEST_DATA_PATH
+                / "mock_import_files_multiple_repos__valid"
+                / "valid_graph.zip",
+                use_local_import=False,
+            )
+
+            packs_from_graph = interface.search(
+                marketplace=MarketplaceVersions.XSOAR,
+                content_type=ContentType.PACK,
+                all_level_dependencies=True,
+            )
+            assert len(packs_from_graph) == 3

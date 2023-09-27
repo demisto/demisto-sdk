@@ -221,7 +221,7 @@ def format_manager(
                 ]
             ):
                 # If it is not an unskippable file, skip if needed
-                if os.path.basename(file_path) in SKIP_FORMATTING_FILES:
+                if Path(file_path).name in SKIP_FORMATTING_FILES:
                     continue
 
             if file_type and file_type.value not in UNFORMATTED_FILES:
@@ -315,7 +315,7 @@ def get_files_to_format_from_git(
 
         # get the file extension without the '.'
         file_extension = os.path.splitext(str_file_path)[1][1:]
-        if file_extension in supported_file_types and os.path.exists(str_file_path):
+        if file_extension in supported_file_types and Path(str_file_path).exists():
             filtered_files.append(str_file_path)
 
     if filtered_files:

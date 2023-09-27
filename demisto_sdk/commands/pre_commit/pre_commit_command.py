@@ -5,7 +5,6 @@ import re
 import subprocess
 import sys
 from collections import defaultdict
-from copy import deepcopy
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, Iterable, List, Optional, Set, Tuple
@@ -67,6 +66,7 @@ class PreCommitRunner:
 
     input_mode: bool
     all_files: bool
+    mode: Optional[str]
     python_version_to_files: Dict[str, Set[Path]]
     demisto_sdk_commit_hash: str
 
@@ -87,6 +87,8 @@ class PreCommitRunner:
             raise TypeError(
                 f"Pre-commit template in {PRECOMMIT_TEMPLATE_PATH} is not a dictionary."
             )
+        if self.mode:
+            logger.info(f"Running pre-commit hooks in `{self.mode}` mode.")
         # changes the demisto-sdk revision to the latest release version (or the debug commit hash)
         # to debug, modify the DEMISTO_SDK_COMMIT_HASH_DEBUG variable to your demisto-sdk commit hash
         self._get_repos(self.precommit_template)[
@@ -108,8 +110,6 @@ class PreCommitRunner:
                 hooks[hook["id"]] = {
                     "repo": repo,
                     "hook": hook,
-                    "all_files": self.all_files,
-                    "input_mode": self.input_mode,
                 }
                 # if the hook has a skip key, we add it to the SKIPPED_HOOKS set
                 if hook.pop("skip", None):
@@ -142,16 +142,23 @@ class PreCommitRunner:
         self,
         hooks: dict,
     ) -> None:
-        PyclnHook(**hooks["pycln"]).prepare_hook(PYTHONPATH)
-        RuffHook(**hooks["ruff"]).prepare_hook(
+        kwargs = {
+            "mode": self.mode,
+            "all_files": self.all_files,
+            "input_mode": self.input_mode,
+        }
+        PyclnHook(**hooks["pycln"], **kwargs).prepare_hook(PYTHONPATH)
+        RuffHook(**hooks["ruff"], **kwargs).prepare_hook(
             self.python_version_to_files, IS_GITHUB_ACTIONS
         )
-        MypyHook(**hooks["mypy"]).prepare_hook(self.python_version_to_files)
-        SourceryHook(**hooks["sourcery"]).prepare_hook(
+        MypyHook(**hooks["mypy"], **kwargs).prepare_hook(self.python_version_to_files)
+        SourceryHook(**hooks["sourcery"], **kwargs).prepare_hook(
             self.python_version_to_files, config_file_path=SOURCERY_CONFIG_PATH
         )
-        ValidateFormatHook(**hooks["validate"]).prepare_hook(self.files_to_run)
-        ValidateFormatHook(**hooks["format"]).prepare_hook(self.files_to_run)
+        ValidateFormatHook(**hooks["validate"], **kwargs).prepare_hook(
+            self.files_to_run
+        )
+        ValidateFormatHook(**hooks["format"], **kwargs).prepare_hook(self.files_to_run)
 
     def run(
         self,
@@ -187,7 +194,6 @@ class PreCommitRunner:
 
         self.exclude_python2_of_non_supported_hooks()
 
-        precommit_config = deepcopy(self.precommit_template)
         for (
             python_version,
             changed_files_by_version,
@@ -199,13 +205,13 @@ class PreCommitRunner:
                 f"Running pre-commit with Python {python_version} on {changed_files_string}"
             )
 
-        self.prepare_hooks(self._get_hooks(precommit_config))
+        self.prepare_hooks(self.hooks)
         if self.all_files:
-            precommit_config["exclude"] += f"|{join_files(exclude_files or {})}"
+            self.precommit_template["exclude"] += f"|{join_files(exclude_files or {})}"
         else:
-            precommit_config["files"] = join_files(self.files_to_run)
+            self.precommit_template["files"] = join_files(self.files_to_run)
 
-        write_dict(PRECOMMIT_PATH, data=precommit_config)
+        write_dict(PRECOMMIT_PATH, data=self.precommit_template)
 
         if dry_run:
             logger.info(
@@ -327,6 +333,7 @@ def pre_commit_manager(
     staged_only: bool = False,
     git_diff: bool = False,
     all_files: bool = False,
+    mode: str = None,
     unit_test: bool = False,
     skip_hooks: Optional[List[str]] = None,
     validate: bool = False,
@@ -376,7 +383,7 @@ def pre_commit_manager(
         sdk_ref = f"v{get_last_remote_release_version()}"
     python_version_to_files, exclude_files = group_by_python_version(files_to_run)
     pre_commit_runner = PreCommitRunner(
-        bool(input_files), all_files, python_version_to_files, sdk_ref
+        bool(input_files), all_files, mode, python_version_to_files, sdk_ref
     )
     return pre_commit_runner.run(
         unit_test,

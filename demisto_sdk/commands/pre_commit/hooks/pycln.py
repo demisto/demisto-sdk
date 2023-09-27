@@ -3,7 +3,7 @@ from typing import Sequence
 
 from demisto_sdk.commands.pre_commit.hooks.hook import (
     Hook,
-    create_or_update_list_in_dict,
+    safe_update_hook_args,
 )
 
 
@@ -18,6 +18,6 @@ class PyclnHook(Hook):
             None
         """
         skip_imports = f"--skip-imports={','.join(path.name for path in python_path)},demisto,CommonServerUserPython"
-        create_or_update_list_in_dict(self.base_hook, "args", skip_imports)
+        safe_update_hook_args(self.base_hook, skip_imports)
 
         self.hooks.append(self.base_hook)

@@ -3,6 +3,8 @@ import sys
 
 import click
 
+from demisto_sdk.commands.pre_commit.hooks.hook import PRE_COMMIT_MODE_OPTIONS
+
 try:
     import git
 except ImportError:
@@ -3377,6 +3379,10 @@ def update_content_graph(
     default=False,
 )
 @click.option(
+    "--mode",
+    help=f"Special mode to run the pre-commit with. supported modes: {PRE_COMMIT_MODE_OPTIONS}",
+)
+@click.option(
     "-ut/--no-ut",
     "--unit-test/--no-unit-test",
     help="Whether to run unit tests for content items",
@@ -3438,6 +3444,7 @@ def pre_commit(
     staged_only: bool,
     git_diff: bool,
     all_files: bool,
+    mode: str,
     unit_test: bool,
     skip: str,
     validate: bool,
@@ -3463,6 +3470,9 @@ def pre_commit(
         input_files = list(file_paths)
     if skip:
         skip = skip.split(",")  # type: ignore[assignment]
+    if mode and mode not in PRE_COMMIT_MODE_OPTIONS:
+        logger.error(f"The flag `--mode` must be one of: {PRE_COMMIT_MODE_OPTIONS}")
+        sys.exit(1)
 
     sys.exit(
         pre_commit_manager(
@@ -3470,6 +3480,7 @@ def pre_commit(
             staged_only,
             git_diff,
             all_files,
+            mode,
             unit_test,
             skip,
             validate,

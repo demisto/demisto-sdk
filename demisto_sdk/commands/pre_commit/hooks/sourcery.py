@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import Any, Dict
 
 from demisto_sdk.commands.common import tools
-from demisto_sdk.commands.pre_commit.hooks.hook import Hook, join_files
+from demisto_sdk.commands.pre_commit.hooks.hook import NIGHTLY_MODE, Hook, join_files
 
 
 class SourceryHook(Hook):
@@ -43,7 +43,7 @@ class SourceryHook(Hook):
             hook["args"].append(
                 f"--config={self._get_temp_config_file(config_file_path, python_version)}"
             )
-            if not self.all_files:
+            if not self.mode == NIGHTLY_MODE:
                 hook["args"].append("--fix")
             hook["files"] = join_files(python_version_to_files[python_version])
 

@@ -3,14 +3,23 @@ from copy import deepcopy
 from pathlib import Path
 from typing import Any, Dict, Set
 
+NIGHTLY_MODE = "nightly"
+PRE_COMMIT_MODE_OPTIONS = NIGHTLY_MODE
+
 
 class Hook(ABC):
     def __init__(
-        self, hook: dict, repo: dict, all_files: bool = False, input_mode: bool = False
+        self,
+        hook: dict,
+        repo: dict,
+        mode: str = None,
+        all_files: bool = False,
+        input_mode: bool = False,
     ) -> None:
         self.hooks = repo["hooks"]
         self.base_hook = deepcopy(hook)
         self.hooks.remove(self.base_hook)
+        self.mode = mode
         self.all_files = all_files
         self.input_mode = input_mode
 
@@ -36,23 +45,17 @@ def join_files(files: Set[Path], separator: str = "|") -> str:
     return separator.join(map(str, files))
 
 
-def create_or_update_list_in_dict(dict: Dict[str, list], key: str, value: Any) -> None:
+def safe_update_hook_args(hook: Dict, value: Any) -> None:
     """
-    Creates or updates a list in a dictionary.
-
-    This function takes a dictionary, a key, and a value as input.
-    If the key already exists in the dictionary, the value is appended to the existing list.
-    If the key does not exist, a new key-value pair is added to the dictionary.
-
+    Updates the 'args' key in the given hook dictionary with the provided value.
     Args:
-        dict (Dict[str, list]): The dictionary in which to create or update the list.
-        key (str): The key to use for the list in the dictionary.
-        value (Any): The value to append to the list.
-
+        hook (Dict): The hook dictionary to update.
+        value (Any): The value to append to the 'args' key.
     Returns:
         None
     """
-    if key in dict:
-        dict[key].append(value)
+    args_key = "args"
+    if args_key in hook:
+        hook[args_key].append(value)
     else:
-        dict[key] = [value]
+        hook[args_key] = [value]

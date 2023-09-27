@@ -6,6 +6,9 @@
 * Fixed an issue where **upload** failed when trying to upload an indicator field.
 * Updated the **update-content-graph** command to work with external repositories.
 * Updated the **validate** command to work with external repositories when using the *--graph* flag.
+* Added the *--mode* flag to the **pre-commit** command, to run pre-commit with special mode.
+* Modified the `validate` and `format` pre-commit hooks to run with the `--all` flag only when `--mode` is set to `nightly` and the `--all` flag is given.
+* Modified the `ruff` pre-commit hook to run with `--config=nightly_ruff.toml` flag when running **pre-commit** command wite the `--mode nightly` flag.
 
 ## 1.20.4
 * Fixed an issue where using **prepare-content**, **upload**, **zip-packs** and **download** on machines with default encoding other than unicode caused errors.
@@ -32,7 +35,6 @@
 * Updated the **engineinfo** type in the script schema.
 * Updated the **modeling-rules init & test** commands to support RULE section fields.
 * Stability improvements for **graph create** and **graph update** commands.
-* Modified the `ruff` pre-commit hook to run with `--config=nightly_ruff.toml` flag when running **pre-commit** command wite the `--all` flag.
 * Fixed the *metadata* type in the XSIAM dashboard schema to *map*, with possible values: **lazy_load** and **cache_ttl**
 
 ## 1.20.2

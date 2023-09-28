@@ -7,7 +7,7 @@ from demisto_sdk.commands.common.constants import (
     DEFAULT_CONTENT_ITEM_TO_VERSION,
     MarketplaceVersions,
 )
-from demisto_sdk.commands.common.tools import get_yaml, get_yml_paths_in_dir, get_file
+from demisto_sdk.commands.common.tools import get_file, get_yml_paths_in_dir
 from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
 from demisto_sdk.commands.content_graph.parsers.content_item import (
     ContentItemParser,

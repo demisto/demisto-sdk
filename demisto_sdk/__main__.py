@@ -13,7 +13,7 @@ import functools
 import logging
 import os
 from pathlib import Path
-from typing import IO, Any, Dict, Iterable, Tuple, Union
+from typing import IO, Any, Dict, Iterable, Optional, Tuple, Union
 
 import typer
 from pkg_resources import DistributionNotFound, get_distribution
@@ -23,6 +23,7 @@ from demisto_sdk.commands.common.constants import (
     ENV_DEMISTO_SDK_MARKETPLACE,
     FileType,
     MarketplaceVersions,
+    PreCommitModes,
 )
 from demisto_sdk.commands.common.content_constant_paths import (
     ALL_PACKS_DEPENDENCIES_DEFAULT_PATH,
@@ -3385,6 +3386,11 @@ def update_content_graph(
     default=False,
 )
 @click.option(
+    "--mode",
+    help="Special mode to run the pre-commit with",
+    type=click.Choice([mode.value for mode in list(PreCommitModes)]),
+)
+@click.option(
     "-ut/--no-ut",
     "--unit-test/--no-unit-test",
     help="Whether to run unit tests for content items",
@@ -3446,6 +3452,7 @@ def pre_commit(
     staged_only: bool,
     git_diff: bool,
     all_files: bool,
+    mode: Optional[str],
     unit_test: bool,
     skip: str,
     validate: bool,
@@ -3460,6 +3467,7 @@ def pre_commit(
 ):
     from demisto_sdk.commands.pre_commit.pre_commit_command import pre_commit_manager
 
+    mode = PreCommitModes(mode) if mode else None
     if file_paths and input:
         logger.info(
             "Both `--input` parameter and `file_paths` arguments were provided. Will use the `--input` parameter."
@@ -3478,6 +3486,7 @@ def pre_commit(
             staged_only,
             git_diff,
             all_files,
+            mode,
             unit_test,
             skip,
             validate,

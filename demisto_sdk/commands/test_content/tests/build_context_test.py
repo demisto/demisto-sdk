@@ -222,6 +222,7 @@ def get_mocked_build_context(
         "server_version": server_version,
         "mem_check": False,
         "server_type": "XSOAR",
+        "artifacts_path": tmp_file,
     }
     return BuildContext(kwargs, logging_manager)
 
@@ -281,6 +282,7 @@ def create_xsiam_build(mocker, tmp_file):
         "xsiam_servers_path": xsiam_servers_path,
         "xsiam_machine": "qa2-test-111111",
         "xsiam_servers_api_keys_path": xsiam_api_keys_path,
+        "artifacts_path": tmp_file,
     }
     return BuildContext(kwargs, logging_manager)
 

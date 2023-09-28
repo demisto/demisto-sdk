@@ -127,7 +127,7 @@ class TestConfiguration:
             "fromversion", DEFAULT_CONTENT_ITEM_FROM_VERSION
         )
         self.to_version = test_configuration.get(
-            "version", DEFAULT_CONTENT_ITEM_TO_VERSION
+            "toversion", DEFAULT_CONTENT_ITEM_TO_VERSION
         )
         self.timeout = test_configuration.get("timeout", default_test_timeout)
         self.memory_threshold = test_configuration.get(

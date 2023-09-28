@@ -1087,7 +1087,7 @@ class BuildContext:
 
 
 class TestResults:
-    def __init__(self, unmockable_integrations, artifacts_path: Path):
+    def __init__(self, unmockable_integrations, artifacts_path: str):
         self.succeeded_playbooks: List[str] = []
         self.failed_playbooks: Set[str] = set()
         self.playbook_report: Dict[str, List[Dict[Any, Any]]] = {}
@@ -1098,7 +1098,7 @@ class TestResults:
         self.test_results_xml_file = JUnitXml()
         self.unmockable_integrations = unmockable_integrations
         self.playbook_skipped_integration: Set[str] = set()
-        self.artifacts_path = artifacts_path
+        self.artifacts_path = Path(artifacts_path)
 
     def add_proxy_related_test_data(self, proxy):
         # Using multiple appends and not extend since append is guaranteed to be thread safe

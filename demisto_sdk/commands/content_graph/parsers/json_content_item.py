@@ -6,7 +6,7 @@ from demisto_sdk.commands.common.constants import (
     DEFAULT_CONTENT_ITEM_TO_VERSION,
     MarketplaceVersions,
 )
-from demisto_sdk.commands.common.tools import get_files_in_dir, get_json
+from demisto_sdk.commands.common.tools import get_files_in_dir, get_file
 from demisto_sdk.commands.content_graph.parsers.content_item import (
     ContentItemParser,
     InvalidContentItemException,
@@ -69,4 +69,4 @@ class JSONContentItemParser(ContentItemParser):
                     f"Directory {self.path} must have a single JSON file."
                 )
             self.path = Path(json_files_in_dir[0])
-        return get_json(self.path.as_posix())
+        return get_file(self.path.as_posix())

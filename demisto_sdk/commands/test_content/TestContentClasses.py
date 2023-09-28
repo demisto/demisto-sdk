@@ -225,7 +225,6 @@ class TestPlaybook:
         self.populate_test_suite()
 
     def populate_test_suite(self):
-        self.test_suite.add_property("instance_role", self.build_context.instance_role)
         self.test_suite.add_property("build_number", self.build_context.build_number)
         self.test_suite.add_property("is_local_run", self.build_context.is_local_run)
         self.test_suite.add_property("is_nightly", self.build_context.is_nightly)
@@ -746,7 +745,6 @@ class BuildContext:
         self.isAMI = False if self.is_xsiam else kwargs["is_ami"]
         self.memCheck = kwargs["mem_check"]
         self.server_version = kwargs["server_version"]  # AMI Role
-        self.instance_role = kwargs["instance_role"]
         self.is_local_run = self.server is not None
         self.server_numeric_version = self._get_server_numeric_version()
         self.instances_ips = self._get_instances_ips()

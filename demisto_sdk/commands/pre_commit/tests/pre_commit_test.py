@@ -4,11 +4,13 @@ from pathlib import Path
 import pytest
 
 import demisto_sdk.commands.pre_commit.pre_commit_command as pre_commit_command
+from demisto_sdk.commands.common.constants import PreCommitModes
 from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.pre_commit.hooks.hook import join_files
 from demisto_sdk.commands.pre_commit.hooks.mypy import MypyHook
 from demisto_sdk.commands.pre_commit.hooks.ruff import RuffHook
+from demisto_sdk.commands.pre_commit.hooks.validate_format import ValidateFormatHook
 from demisto_sdk.commands.pre_commit.pre_commit_command import (
     PYTHON2_SUPPORTED_HOOKS,
     GitUtil,
@@ -159,7 +161,7 @@ def test_mypy_hooks():
 @pytest.mark.parametrize("github_actions", [True, False])
 def test_ruff_hook(github_actions):
     """
-    Testing mypy hook created successfully (the python version is correct and github action created successfully)
+    Testing ruff hook created successfully (the python version is correct and github action created successfully)
     """
     ruff_hook = create_hook({})
     RuffHook(**ruff_hook).prepare_hook(PYTHON_VERSION_TO_FILES, github_actions)
@@ -176,6 +178,63 @@ def test_ruff_hook(github_actions):
         assert hook["files"] == join_files(PYTHON_VERSION_TO_FILES[python_version])
         if github_actions:
             assert hook["args"][2] == "--format=github"
+
+
+def test_ruff_hook_nightly_mode():
+    """
+    Testing ruff hook created successfully in nightly mode (the --fix flag is not exist and the --config arg is added)
+    """
+    ruff_hook = create_hook({})
+    RuffHook(**ruff_hook, mode=PreCommitModes.NIGHTLY).prepare_hook(
+        PYTHON_VERSION_TO_FILES
+    )
+
+    for (hook, _) in itertools.zip_longest(
+        ruff_hook["repo"]["hooks"], PYTHON_VERSION_TO_FILES.keys()
+    ):
+        assert "--fix" not in hook["args"]
+        assert "--config=nightly_ruff.toml" in hook["args"]
+
+
+def test_validate_format_hook_nightly_mode_and_all_files():
+    """
+    Testing validate_format hook created successfully (the -a flag is added and the -i arg is not exist)
+    """
+    validate_format_hook = create_hook({"args": []})
+    kwargs = {"mode": PreCommitModes.NIGHTLY, "all_files": True}
+    ValidateFormatHook(**validate_format_hook, **kwargs).prepare_hook(
+        PYTHON_VERSION_TO_FILES
+    )
+
+    assert "-a" in validate_format_hook["repo"]["hooks"][0]["args"]
+    assert "-i" not in validate_format_hook["repo"]["hooks"][0]["args"]
+
+
+def test_validate_format_hook_nightly_mode():
+    """
+    Testing validate_format hook created successfully (the -i arg is added and the -a flag is not exist, even in nightly mode)
+    """
+    validate_format_hook = create_hook({"args": []})
+    kwargs = {"mode": PreCommitModes.NIGHTLY, "input_mode": True}
+    ValidateFormatHook(**validate_format_hook, **kwargs).prepare_hook(
+        PYTHON_VERSION_TO_FILES
+    )
+
+    assert "-a" not in validate_format_hook["repo"]["hooks"][0]["args"]
+    assert "-i" in validate_format_hook["repo"]["hooks"][0]["args"]
+
+
+def test_validate_format_hook_all_files():
+    """
+    Testing validate_format hook created successfully (the -i arg is added and the -a flag is not exist)
+    """
+    validate_format_hook = create_hook({"args": []})
+    ValidateFormatHook(**validate_format_hook, **{"all_files": True}).prepare_hook(
+        PYTHON_VERSION_TO_FILES
+    )
+
+    assert "-a" not in validate_format_hook["repo"]["hooks"][0]["args"]
+    assert "-i" in validate_format_hook["repo"]["hooks"][0]["args"]
 
 
 class TestPreprocessFiles:

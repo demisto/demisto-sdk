@@ -334,6 +334,7 @@ def group_by_python_version(files: Set[Path]) -> Tuple[Dict[str, Set], Set[Path]
 def pre_commit_manager(
     input_files: Optional[Iterable[Path]] = None,
     staged_only: bool = False,
+    no_staged: bool = False,
     git_diff: bool = False,
     all_files: bool = False,
     mode: Optional[PreCommitModes] = None,
@@ -352,6 +353,7 @@ def pre_commit_manager(
     Args:
         input_files (Iterable[Path], optional): Input files to run pre-commit on. Defaults to None.
         staged_only (bool, optional): Whether to run on staged files only. Defaults to False.
+        no_staged (bool, optional): Whether to skip collecting staged files. Defaults to False.
         git_diff (bool, optional): Whether use git to determine precommit files. Defaults to False.
         all_files (bool, optional): Whether to run on all_files. Defaults to False.
         mode (PreCommitModes, optional): The mode to run pre-commit in. Defaults to None.
@@ -372,7 +374,9 @@ def pre_commit_manager(
         logger.info("No arguments were given, running on staged files and git changes.")
         git_diff = True
 
-    files_to_run = preprocess_files(input_files, staged_only, git_diff, all_files)
+    files_to_run = preprocess_files(
+        input_files, staged_only, no_staged, git_diff, all_files
+    )
     if not files_to_run:
         logger.info("No files were changed, skipping pre-commit.")
         return None
@@ -406,6 +410,7 @@ def pre_commit_manager(
 def preprocess_files(
     input_files: Optional[Iterable[Path]] = None,
     staged_only: bool = False,
+    no_staged: bool = False,
     use_git: bool = False,
     all_files: bool = False,
 ) -> Set[Path]:
@@ -417,7 +422,9 @@ def preprocess_files(
     elif staged_only:
         raw_files = staged_files
     elif use_git:
-        raw_files = git_util._get_all_changed_files().union(staged_files)
+        raw_files = git_util._get_all_changed_files()
+        if not no_staged:
+            raw_files = raw_files.union(staged_files)
     elif all_files:
         raw_files = all_git_files
     else:

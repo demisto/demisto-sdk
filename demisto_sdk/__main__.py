@@ -13,7 +13,7 @@ import functools
 import logging
 import os
 from pathlib import Path
-from typing import IO, Any, Dict, Iterable, Tuple, Union
+from typing import IO, Any, Dict, Iterable, Optional, Tuple, Union
 
 import typer
 from pkg_resources import DistributionNotFound, get_distribution
@@ -3444,7 +3444,7 @@ def pre_commit(
     staged_only: bool,
     git_diff: bool,
     all_files: bool,
-    mode: str,
+    mode: Optional[PreCommitModes],
     unit_test: bool,
     skip: str,
     validate: bool,

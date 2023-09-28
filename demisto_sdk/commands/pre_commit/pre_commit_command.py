@@ -16,6 +16,7 @@ from demisto_sdk.commands.common.constants import (
     DEFAULT_PYTHON_VERSION,
     INTEGRATIONS_DIR,
     SCRIPTS_DIR,
+    PreCommitModes,
 )
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH, PYTHONPATH
 from demisto_sdk.commands.common.git_util import GitUtil
@@ -66,7 +67,7 @@ class PreCommitRunner:
 
     input_mode: bool
     all_files: bool
-    mode: Optional[str]
+    mode: Optional[PreCommitModes]
     python_version_to_files: Dict[str, Set[Path]]
     demisto_sdk_commit_hash: str
 
@@ -88,7 +89,9 @@ class PreCommitRunner:
                 f"Pre-commit template in {PRECOMMIT_TEMPLATE_PATH} is not a dictionary."
             )
         if self.mode:
-            logger.info(f"Running pre-commit hooks in `{self.mode}` mode.")
+            logger.info(
+                f"[yellow]Running pre-commit hooks in `{self.mode}` mode.[/yellow]"
+            )
         # changes the demisto-sdk revision to the latest release version (or the debug commit hash)
         # to debug, modify the DEMISTO_SDK_COMMIT_HASH_DEBUG variable to your demisto-sdk commit hash
         self._get_repos(self.precommit_template)[
@@ -333,7 +336,7 @@ def pre_commit_manager(
     staged_only: bool = False,
     git_diff: bool = False,
     all_files: bool = False,
-    mode: str = None,
+    mode: PreCommitModes = None,
     unit_test: bool = False,
     skip_hooks: Optional[List[str]] = None,
     validate: bool = False,
@@ -351,11 +354,13 @@ def pre_commit_manager(
         staged_only (bool, optional): Whether to run on staged files only. Defaults to False.
         git_diff (bool, optional): Whether use git to determine precommit files. Defaults to False.
         all_files (bool, optional): Whether to run on all_files. Defaults to False.
+        mode (PreCommitModes, optional): The mode to run pre-commit in. Defaults to None.
         test (bool, optional): Whether to run unit-tests. Defaults to False.
         skip_hooks (Optional[List[str]], optional): List of hooks to skip. Defaults to None.
         force_run_hooks (Optional[List[str]], optional): List for hooks to force run. Defaults to None.
         verbose (bool, optional): Whether run pre-commit in verbose mode. Defaults to False.
         show_diff_on_failure (bool, optional): Whether show git diff after pre-commit failure. Defaults to False.
+        dry_run (bool, optional): Whether to run the pre-commit hooks in dry-run mode, which will only create the config file.
 
     Returns:
         int: Return code of pre-commit.

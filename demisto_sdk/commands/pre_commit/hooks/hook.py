@@ -1,7 +1,9 @@
 from abc import ABC, abstractmethod
 from copy import deepcopy
 from pathlib import Path
-from typing import Any, Dict, Set
+from typing import Any, Dict, Optional, Set
+
+from demisto_sdk.commands.common.constants import PreCommitModes
 
 
 class Hook(ABC):
@@ -9,7 +11,7 @@ class Hook(ABC):
         self,
         hook: dict,
         repo: dict,
-        mode: str = None,
+        mode: Optional[PreCommitModes],
         all_files: bool = False,
         input_mode: bool = False,
     ) -> None:

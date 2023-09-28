@@ -1,7 +1,10 @@
 from pathlib import Path
 from typing import Sequence
 
-from demisto_sdk.commands.pre_commit.hooks.hook import Hook
+from demisto_sdk.commands.pre_commit.hooks.hook import (
+    Hook,
+    safe_update_hook_args,
+)
 
 
 class PyclnHook(Hook):
@@ -14,8 +17,7 @@ class PyclnHook(Hook):
         Returns:
             None
         """
-        self.base_hook["args"] = [
-            f"--skip-imports={','.join(path.name for path in python_path)},demisto,CommonServerUserPython"
-        ]
+        skip_imports = f"--skip-imports={','.join(path.name for path in python_path)},demisto,CommonServerUserPython"
+        safe_update_hook_args(self.base_hook, skip_imports)
 
         self.hooks.append(self.base_hook)

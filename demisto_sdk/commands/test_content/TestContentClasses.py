@@ -602,7 +602,8 @@ class TestPlaybook:
         while True:
             try:
                 incidents = client.search_incidents(filter=search_filter)
-                return incidents.data[0]
+                if len(incidents.data):
+                    return incidents.data[0]
             except ApiException:
                 if self.build_context.is_xsiam:
                     self.build_context.logging_module.exception(

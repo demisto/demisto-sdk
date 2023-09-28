@@ -2,7 +2,8 @@ from copy import deepcopy
 from pathlib import Path
 from typing import Any, Dict, Set
 
-from demisto_sdk.commands.pre_commit.hooks.hook import NIGHTLY_MODE, Hook, join_files
+from demisto_sdk.commands.common.constants import PreCommitModes
+from demisto_sdk.commands.pre_commit.hooks.hook import Hook, join_files
 
 
 class RuffHook(Hook):
@@ -38,7 +39,7 @@ class RuffHook(Hook):
             hook["args"] = [
                 f"--target-version={self._python_version_to_ruff(python_version)}",
             ]
-            if self.mode == NIGHTLY_MODE:
+            if self.mode == PreCommitModes.NIGHTLY:
                 hook["args"].append("--config=nightly_ruff.toml")
             else:
                 hook["args"].append("--fix")

@@ -246,7 +246,7 @@ def test_exclude_python2_of_non_supported_hooks(mocker, repo: Repo):
     mocker.patch.object(pre_commit_command, "logger")
     python_version_to_files = {"2.7": {"file1.py"}, "3.8": {"file2.py"}}
     pre_commit_runner = pre_commit_command.PreCommitRunner(
-        None, None, python_version_to_files, ""
+        None, None, None, python_version_to_files, ""
     )
 
     pre_commit_runner.exclude_python2_of_non_supported_hooks()

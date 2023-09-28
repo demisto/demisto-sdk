@@ -3,8 +3,8 @@
 
 ## Unreleased
 * Added the *--mode* flag to the **pre-commit** command, to run pre-commit with special mode.
-* Modified the `validate` and `format` pre-commit hooks to run with the `--all` flag only when the `--mode nightly` and `--all` flags were given.
-* Modified the `ruff` pre-commit hook to run with `--config=nightly_ruff.toml` flag when running **pre-commit** command wite the `--mode nightly` flag.
+* Modified the `validate` and `format` pre-commit hooks to run with the `--all` flag only when the `--mode=nightly` and `--all` flags were given.
+* Modified the `ruff` pre-commit hook to run with `--config=nightly_ruff.toml` flag when running **pre-commit** command wite the `--mode=nightly` flag.
 * Fixed an issue where deprecating parsing rules or modeling rules using **format** failed due to schema discrepancies.
 
 ## 1.20.5

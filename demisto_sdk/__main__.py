@@ -3,8 +3,6 @@ import sys
 
 import click
 
-from demisto_sdk.commands.pre_commit.hooks.hook import PRE_COMMIT_MODE_OPTIONS
-
 try:
     import git
 except ImportError:
@@ -25,6 +23,7 @@ from demisto_sdk.commands.common.constants import (
     ENV_DEMISTO_SDK_MARKETPLACE,
     FileType,
     MarketplaceVersions,
+    PreCommitModes,
 )
 from demisto_sdk.commands.common.content_constant_paths import (
     ALL_PACKS_DEPENDENCIES_DEFAULT_PATH,
@@ -3380,7 +3379,8 @@ def update_content_graph(
 )
 @click.option(
     "--mode",
-    help=f"Special mode to run the pre-commit with. supported modes: {PRE_COMMIT_MODE_OPTIONS}",
+    help="Special mode to run the pre-commit with",
+    type=click.Choice([mode.value for mode in list(PreCommitModes)]),
 )
 @click.option(
     "-ut/--no-ut",
@@ -3470,9 +3470,6 @@ def pre_commit(
         input_files = list(file_paths)
     if skip:
         skip = skip.split(",")  # type: ignore[assignment]
-    if mode and mode not in PRE_COMMIT_MODE_OPTIONS:
-        logger.error(f"The flag `--mode` must be one of: {PRE_COMMIT_MODE_OPTIONS}")
-        sys.exit(1)
 
     sys.exit(
         pre_commit_manager(

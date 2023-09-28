@@ -3,9 +3,6 @@ from copy import deepcopy
 from pathlib import Path
 from typing import Any, Dict, Set
 
-NIGHTLY_MODE = "nightly"
-PRE_COMMIT_MODE_OPTIONS = NIGHTLY_MODE
-
 
 class Hook(ABC):
     def __init__(

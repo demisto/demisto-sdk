@@ -1156,18 +1156,6 @@ class TestResults:
         logging_module.info(
             f"Number of playbooks tested - {succeed_count + failed_count}"
         )
-        if failed_count:
-            logging_module.error(f"Number of failed tests - {failed_count}:")
-            logging_module.error(
-                "Failed Tests: {}".format(
-                    "".join(
-                        [
-                            f"\n\t\t\t\t\t\t\t - {playbook_id}"
-                            for playbook_id in failed_playbooks
-                        ]
-                    )
-                )
-            )
         if succeed_count:
             logging_module.success(f"Number of succeeded tests - {succeed_count}")
             logging_module.success(
@@ -1229,6 +1217,19 @@ class TestResults:
                 "Unmockable Integrations",
                 unmocklable_integrations,
                 logging_module.debug,
+            )
+
+        if failed_count:
+            logging_module.error(f"Number of failed tests - {failed_count}:")
+            logging_module.error(
+                "Failed Tests: {}".format(
+                    "".join(
+                        [
+                            f"\n\t\t\t\t\t\t\t - {playbook_id}"
+                            for playbook_id in failed_playbooks
+                        ]
+                    )
+                )
             )
 
     @staticmethod

@@ -180,6 +180,7 @@ class FileType(str, Enum):
     UNIFIED_YML = "unified_yml"
     INI = "ini"
     PEM = "pem"
+    VULTURE_WHITELIST = "vulture_whitelist"
 
 
 RN_HEADER_BY_FILE_TYPE = {
@@ -1585,6 +1586,8 @@ VALIDATED_PACK_ITEM_TYPES = [
     "Wizards",
 ]
 
+VALID_SENTENCE_SUFFIX = [".", "!", "?", ".)", ".'", '."']
+
 FIRST_FETCH = "first_fetch"
 
 MAX_FETCH = "max_fetch"
@@ -1907,3 +1910,7 @@ SERVER_API_TO_STORAGE = "api/marketplace/file?name=content/packs"
 class ImagesFolderNames(str, Enum):
     README_IMAGES = "readme_images"
     INTEGRATION_DESCRIPTION_IMAGES = "integration_description_images"
+
+
+class PreCommitModes(str, Enum):
+    NIGHTLY = "nightly"

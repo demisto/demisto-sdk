@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import Any, Dict
 
 from demisto_sdk.commands.common import tools
+from demisto_sdk.commands.common.constants import PreCommitModes
 from demisto_sdk.commands.pre_commit.hooks.hook import Hook, join_files
 
 
@@ -19,8 +20,8 @@ class SourceryHook(Hook):
         """
         config_file = tools.get_file_or_remote(config_file_path)
         config_file["rule_settings"]["python_version"] = python_version
-        tf = tempfile.NamedTemporaryFile(delete=False)
-        tools.write_yml(tf.name, config_file)
+        tf = tempfile.NamedTemporaryFile(delete=False, suffix=".yml")
+        tools.write_dict(tf.name, data=config_file)
         return tf.name
 
     def prepare_hook(
@@ -43,7 +44,7 @@ class SourceryHook(Hook):
             hook["args"].append(
                 f"--config={self._get_temp_config_file(config_file_path, python_version)}"
             )
-            if not self.all_files:
+            if not self.mode == PreCommitModes.NIGHTLY:
                 hook["args"].append("--fix")
             hook["files"] = join_files(python_version_to_files[python_version])
 

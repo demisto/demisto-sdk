@@ -5,7 +5,6 @@ import re
 import subprocess
 import sys
 from collections import defaultdict
-from copy import deepcopy
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, Iterable, List, Optional, Set, Tuple
@@ -17,16 +16,17 @@ from demisto_sdk.commands.common.constants import (
     DEFAULT_PYTHON_VERSION,
     INTEGRATIONS_DIR,
     SCRIPTS_DIR,
+    PreCommitModes,
 )
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH, PYTHONPATH
 from demisto_sdk.commands.common.git_util import GitUtil
-from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     get_file_or_remote,
     get_last_remote_release_version,
     get_remote_file,
     string_to_bool,
+    write_dict,
 )
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.content_graph.objects.integration_script import (
@@ -46,7 +46,6 @@ PRECOMMIT_TEMPLATE_PATH = CONTENT_PATH / PRECOMMIT_TEMPLATE_NAME
 PRECOMMIT_PATH = CONTENT_PATH / ".pre-commit-config-content.yaml"
 SOURCERY_CONFIG_PATH = CONTENT_PATH / ".sourcery.yaml"
 
-CONTENT_PATH
 SKIPPED_HOOKS = {"format", "validate", "secrets"}
 
 INTEGRATION_SCRIPT_REGEX = re.compile(r"^Packs/.*/(?:Integrations|Scripts)/.*.yml$")
@@ -68,6 +67,7 @@ class PreCommitRunner:
 
     input_mode: bool
     all_files: bool
+    mode: Optional[PreCommitModes]
     python_version_to_files: Dict[str, Set[Path]]
     demisto_sdk_commit_hash: str
 
@@ -87,6 +87,10 @@ class PreCommitRunner:
         if not isinstance(self.precommit_template, dict):
             raise TypeError(
                 f"Pre-commit template in {PRECOMMIT_TEMPLATE_PATH} is not a dictionary."
+            )
+        if self.mode:
+            logger.info(
+                f"[yellow]Running pre-commit hooks in `{self.mode}` mode.[/yellow]"
             )
         # changes the demisto-sdk revision to the latest release version (or the debug commit hash)
         # to debug, modify the DEMISTO_SDK_COMMIT_HASH_DEBUG variable to your demisto-sdk commit hash
@@ -109,8 +113,6 @@ class PreCommitRunner:
                 hooks[hook["id"]] = {
                     "repo": repo,
                     "hook": hook,
-                    "all_files": self.all_files,
-                    "input_mode": self.input_mode,
                 }
                 # if the hook has a skip key, we add it to the SKIPPED_HOOKS set
                 if hook.pop("skip", None):
@@ -143,16 +145,23 @@ class PreCommitRunner:
         self,
         hooks: dict,
     ) -> None:
-        PyclnHook(**hooks["pycln"]).prepare_hook(PYTHONPATH)
-        RuffHook(**hooks["ruff"]).prepare_hook(
+        kwargs = {
+            "mode": self.mode,
+            "all_files": self.all_files,
+            "input_mode": self.input_mode,
+        }
+        PyclnHook(**hooks["pycln"], **kwargs).prepare_hook(PYTHONPATH)
+        RuffHook(**hooks["ruff"], **kwargs).prepare_hook(
             self.python_version_to_files, IS_GITHUB_ACTIONS
         )
-        MypyHook(**hooks["mypy"]).prepare_hook(self.python_version_to_files)
-        SourceryHook(**hooks["sourcery"]).prepare_hook(
+        MypyHook(**hooks["mypy"], **kwargs).prepare_hook(self.python_version_to_files)
+        SourceryHook(**hooks["sourcery"], **kwargs).prepare_hook(
             self.python_version_to_files, config_file_path=SOURCERY_CONFIG_PATH
         )
-        ValidateFormatHook(**hooks["validate"]).prepare_hook(self.files_to_run)
-        ValidateFormatHook(**hooks["format"]).prepare_hook(self.files_to_run)
+        ValidateFormatHook(**hooks["validate"], **kwargs).prepare_hook(
+            self.files_to_run
+        )
+        ValidateFormatHook(**hooks["format"], **kwargs).prepare_hook(self.files_to_run)
 
     def run(
         self,
@@ -188,7 +197,6 @@ class PreCommitRunner:
 
         self.exclude_python2_of_non_supported_hooks()
 
-        precommit_config = deepcopy(self.precommit_template)
         for (
             python_version,
             changed_files_by_version,
@@ -200,13 +208,14 @@ class PreCommitRunner:
                 f"Running pre-commit with Python {python_version} on {changed_files_string}"
             )
 
-        self.prepare_hooks(self._get_hooks(precommit_config))
+        self.prepare_hooks(self.hooks)
         if self.all_files:
-            precommit_config["exclude"] += f"|{join_files(exclude_files or {})}"
+            self.precommit_template["exclude"] += f"|{join_files(exclude_files or {})}"
         else:
-            precommit_config["files"] = join_files(self.files_to_run)
-        with open(PRECOMMIT_PATH, "w") as f:
-            yaml.dump(precommit_config, f)
+            self.precommit_template["files"] = join_files(self.files_to_run)
+
+        write_dict(PRECOMMIT_PATH, data=self.precommit_template)
+
         if dry_run:
             logger.info(
                 "Dry run, skipping pre-commit.\nConfig file saved to .pre-commit-config-content.yaml"
@@ -327,6 +336,7 @@ def pre_commit_manager(
     staged_only: bool = False,
     git_diff: bool = False,
     all_files: bool = False,
+    mode: Optional[PreCommitModes] = None,
     unit_test: bool = False,
     skip_hooks: Optional[List[str]] = None,
     validate: bool = False,
@@ -344,11 +354,13 @@ def pre_commit_manager(
         staged_only (bool, optional): Whether to run on staged files only. Defaults to False.
         git_diff (bool, optional): Whether use git to determine precommit files. Defaults to False.
         all_files (bool, optional): Whether to run on all_files. Defaults to False.
+        mode (PreCommitModes, optional): The mode to run pre-commit in. Defaults to None.
         test (bool, optional): Whether to run unit-tests. Defaults to False.
         skip_hooks (Optional[List[str]], optional): List of hooks to skip. Defaults to None.
         force_run_hooks (Optional[List[str]], optional): List for hooks to force run. Defaults to None.
         verbose (bool, optional): Whether run pre-commit in verbose mode. Defaults to False.
         show_diff_on_failure (bool, optional): Whether show git diff after pre-commit failure. Defaults to False.
+        dry_run (bool, optional): Whether to run the pre-commit hooks in dry-run mode, which will only create the config file.
 
     Returns:
         int: Return code of pre-commit.
@@ -376,7 +388,7 @@ def pre_commit_manager(
         sdk_ref = f"v{get_last_remote_release_version()}"
     python_version_to_files, exclude_files = group_by_python_version(files_to_run)
     pre_commit_runner = PreCommitRunner(
-        bool(input_files), all_files, python_version_to_files, sdk_ref
+        bool(input_files), all_files, mode, python_version_to_files, sdk_ref
     )
     return pre_commit_runner.run(
         unit_test,

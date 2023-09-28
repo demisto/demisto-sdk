@@ -11,7 +11,7 @@ class Hook(ABC):
         self,
         hook: dict,
         repo: dict,
-        mode: Optional[PreCommitModes],
+        mode: Optional[PreCommitModes] = None,
         all_files: bool = False,
         input_mode: bool = False,
     ) -> None:

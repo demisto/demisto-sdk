@@ -336,7 +336,7 @@ def pre_commit_manager(
     staged_only: bool = False,
     git_diff: bool = False,
     all_files: bool = False,
-    mode: PreCommitModes = None,
+    mode: Optional[PreCommitModes] = None,
     unit_test: bool = False,
     skip_hooks: Optional[List[str]] = None,
     validate: bool = False,

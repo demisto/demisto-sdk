@@ -192,8 +192,9 @@ def test_ruff_hook_nightly_mode():
     for (hook, _) in itertools.zip_longest(
         ruff_hook["repo"]["hooks"], PYTHON_VERSION_TO_FILES.keys()
     ):
-        assert "--fix" not in hook["args"]
-        assert "--config=nightly_ruff.toml" in hook["args"]
+        hook_args = hook["args"]
+        assert "--fix" not in hook_args
+        assert "--config=nightly_ruff.toml" in hook_args
 
 
 def test_validate_format_hook_nightly_mode_and_all_files():
@@ -206,8 +207,9 @@ def test_validate_format_hook_nightly_mode_and_all_files():
         PYTHON_VERSION_TO_FILES
     )
 
-    assert "-a" in validate_format_hook["repo"]["hooks"][0]["args"]
-    assert "-i" not in validate_format_hook["repo"]["hooks"][0]["args"]
+    hook_args = validate_format_hook["repo"]["hooks"][0]["args"]
+    assert "-a" in hook_args
+    assert "-i" not in hook_args
 
 
 def test_validate_format_hook_nightly_mode():
@@ -220,8 +222,9 @@ def test_validate_format_hook_nightly_mode():
         PYTHON_VERSION_TO_FILES
     )
 
-    assert "-a" not in validate_format_hook["repo"]["hooks"][0]["args"]
-    assert "-i" in validate_format_hook["repo"]["hooks"][0]["args"]
+    hook_args = validate_format_hook["repo"]["hooks"][0]["args"]
+    assert "-a" not in hook_args
+    assert "-i" in hook_args
 
 
 def test_validate_format_hook_all_files():
@@ -233,8 +236,9 @@ def test_validate_format_hook_all_files():
         PYTHON_VERSION_TO_FILES
     )
 
-    assert "-a" not in validate_format_hook["repo"]["hooks"][0]["args"]
-    assert "-i" in validate_format_hook["repo"]["hooks"][0]["args"]
+    hook_args = validate_format_hook["repo"]["hooks"][0]["args"]
+    assert "-a" not in hook_args
+    assert "-i" in hook_args
 
 
 class TestPreprocessFiles:

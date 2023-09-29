@@ -229,6 +229,7 @@ class TestPlaybook:
         self.test_suite.add_property("is_local_run", self.build_context.is_local_run)
         self.test_suite.add_property("is_nightly", self.build_context.is_nightly)
         self.test_suite.add_property("is_xsiam", self.build_context.is_xsiam)
+        self.test_suite.add_property("server_type", self.build_context.server_type)
         self.test_suite.add_property("memCheck", self.build_context.memCheck)
         self.test_suite.add_property(
             "server_numeric_version", self.build_context.server_numeric_version
@@ -245,34 +246,18 @@ class TestPlaybook:
         )
 
         self.test_suite.add_property("playbook.is_mockable", self.is_mockable)
+        self.test_suite.add_property("is_mockable", self.configuration.is_mockable)
+        self.test_suite.add_property("playbook_id", self.configuration.playbook_id)
+        self.test_suite.add_property("from_version", self.configuration.from_version)
+        self.test_suite.add_property("to_version", self.configuration.to_version)
+        self.test_suite.add_property("nightly_test", self.configuration.nightly_test)
+        self.test_suite.add_property("pid_threshold", self.configuration.pid_threshold)
         self.test_suite.add_property(
-            "configuration.is_mockable", self.configuration.is_mockable
-        )
-        self.test_suite.add_property(
-            "configuration.playbook_id", self.configuration.playbook_id
-        )
-        self.test_suite.add_property(
-            "configuration.from_version", self.configuration.from_version
-        )
-        self.test_suite.add_property(
-            "configuration.to_version", self.configuration.to_version
-        )
-        self.test_suite.add_property(
-            "configuration.nightly_test", self.configuration.nightly_test
-        )
-        self.test_suite.add_property(
-            "configuration.pid_threshold", self.configuration.pid_threshold
-        )
-        self.test_suite.add_property(
-            "configuration.memory_threshold",
+            "memory_threshold",
             self.configuration.memory_threshold,
         )
-        self.test_suite.add_property(
-            "configuration.pid_threshold", self.configuration.pid_threshold
-        )
-        self.test_suite.add_property(
-            "configuration.timeout", self.configuration.timeout
-        )
+        self.test_suite.add_property("pid_threshold", self.configuration.pid_threshold)
+        self.test_suite.add_property("timeout", self.configuration.timeout)
         self.test_suite.add_property(
             "playbook.test_instance_names",
             ",".join(self.configuration.test_instance_names),
@@ -281,7 +266,7 @@ class TestPlaybook:
             "playbook.integrations", ",".join(map(str, self.integrations))
         )
         self.test_suite.add_property(
-            "configuration.runnable_on_docker_only",
+            "runnable_on_docker_only",
             self.configuration.runnable_on_docker_only,
         )
 
@@ -717,6 +702,7 @@ class BuildContext:
     def __init__(self, kwargs: dict, logging_module: ParallelLoggingManager):
         self.start_time = datetime.now(timezone.utc)
         self.is_xsiam = kwargs["server_type"] == XSIAM_SERVER_TYPE
+        self.server_type = kwargs["server_type"]
         self.logging_module: ParallelLoggingManager = logging_module
         self.server = kwargs["server"]
         self.xsiam_machine = kwargs.get("xsiam_machine")

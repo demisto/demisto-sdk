@@ -107,7 +107,7 @@ class File(ABC, BaseModel):
 
     @abstractmethod
     def load(self, file_content: str) -> Any:
-        pass
+        raise NotImplementedError(f'load must be implemented for each File concrete object')
 
     @classmethod
     @lru_cache
@@ -208,7 +208,7 @@ class File(ABC, BaseModel):
 
     @abstractmethod
     def write(self, data: Any, encoding: Optional[str] = None) -> None:
-        raise NotImplementedError("write must be implemented for each File object")
+        raise NotImplementedError("write must be implemented for each File concrete object")
 
     def write_safe_unicode(self, data: Any) -> None:
         def _write_safe_unicode():

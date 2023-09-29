@@ -3,8 +3,6 @@ import shutil
 from pathlib import Path
 from typing import List, Optional
 
-import git
-
 from demisto_sdk.commands.common.git_util import GitUtil
 from TestSuite.conf_json import ConfJSON
 from TestSuite.docker_native_image_config import DockerNativeImageConfiguration
@@ -86,7 +84,7 @@ class Repo:
             GitUtil.REPO_CLS.init(self.path)
             self.git_util = GitUtil(Path(self.path))
         else:
-            self.git_util = None
+            self.git_util = None  # type: ignore[assignment]
 
     def __del__(self):
         shutil.rmtree(self.path, ignore_errors=True)
@@ -94,7 +92,8 @@ class Repo:
     @classmethod
     def init_as_git_repo(cls, tmpdir: Path) -> "Repo":
         content_repo = cls(tmpdir, as_git_repo=True)
-        content_repo.git_util.commit_all()
+        # commit all files
+        content_repo.git_util.commit_files("Initial Commit")
         content_repo.git_util.repo.create_head("master").checkout()
         return content_repo
 

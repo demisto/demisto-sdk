@@ -1,7 +1,7 @@
 import os
 import re
 from pathlib import Path
-from typing import Optional, Set, Tuple, Union
+from typing import Optional, Set, Tuple, Union, List
 
 import click
 import gitdb
@@ -852,3 +852,7 @@ class GitUtil:
     def fetch_all(self):
         for remote in self.repo.remotes:
             remote.fetch()
+
+    def commit_all(self, commit_message: str, files: Union[List, str] = "."):
+        self.repo.git.add(files)
+        self.repo.index.commit(commit_message)

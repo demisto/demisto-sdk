@@ -41,18 +41,15 @@ class IniFile(TextFile):
             logger.error(f"Error when retrieving the content of {self.input_path}")
             return None
 
+    def read_git_file(
+        self, tag: str = DEMISTO_GIT_PRIMARY_BRANCH, from_remote: bool = True
+    ):
+        return self.__read_as_config_parser(
+            super().read_git_file(tag, from_remote=from_remote)
+        )
+
     def read_local_file(self) -> Optional[ConfigParser]:
         return self.__read_as_config_parser(super().read_local_file())
-
-    def read_local_file_git(
-        self, tag: str = DEMISTO_GIT_PRIMARY_BRANCH
-    ) -> Optional[ConfigParser]:
-        return self.__read_as_config_parser(super().read_local_file_git(tag))
-
-    def read_origin_file_git(
-        self, branch: str = DEMISTO_GIT_PRIMARY_BRANCH
-    ) -> Optional[ConfigParser]:
-        return self.__read_as_config_parser(super().read_origin_file_git(branch=branch))
 
     def write(self, data: Dict, encoding: Optional[str] = None) -> None:
         config = ConfigParser()

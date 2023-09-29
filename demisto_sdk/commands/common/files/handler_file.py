@@ -23,15 +23,10 @@ class HandlerFile(TextFile):
     def read_local_file(self) -> Union[List, Dict]:
         return self.load(super().read_local_file())
 
-    def read_local_file_git(
-        self, tag: str = DEMISTO_GIT_PRIMARY_BRANCH
-    ) -> Union[List, Dict]:
-        return self.load(super().read_local_file_git(tag=tag))
-
-    def read_origin_file_git(
-        self, branch: str = DEMISTO_GIT_PRIMARY_BRANCH
-    ) -> Union[List, Dict]:
-        return self.load(super().read_origin_file_git(branch=branch))
+    def read_git_file(
+        self, tag: str = DEMISTO_GIT_PRIMARY_BRANCH, from_remote: bool = True
+    ):
+        return self.load(super().read_git_file(tag, from_remote=from_remote))
 
     def load(self, file_content: Union[StringIO, str]) -> Union[List, Dict]:
         if not isinstance(file_content, StringIO):

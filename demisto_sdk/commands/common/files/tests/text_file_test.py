@@ -35,10 +35,10 @@ class TestTextFileReadMethods(FileReadMethodsTesting):
         ], pack.repo_path
 
     @staticmethod
-    def run(items, repo, read_method):
+    def run(items, repo, read_method, **read_method_kwargs):
         with ChangeCWD(repo):
             for item in items:
-                result = read_method(item.path)
+                result = read_method(item.path, **read_method_kwargs)
                 if hasattr(item, "read_text"):
                     assert result == item.read_text()
                 elif hasattr(item, "read"):
@@ -48,18 +48,16 @@ class TestTextFileReadMethods(FileReadMethodsTesting):
         items, repo = input_files
         self.run(items, repo, TextFile.read_from_local_path)
 
-    def test_read_from_origin_git_path(self, mocker, input_files):
-        mocker.patch.object(
-            GitUtil,
-            "get_local_remote_file_path",
-            side_effect=self.get_local_remote_file_path_side_effect,
-        )
-        mocker.patch.object(
-            GitUtil, "is_file_exist_in_commit_or_branch", return_value=True
-        )
+    @pytest.mark.parametrize("from_remote", [True, False])
+    def test_read_from_git_path(self, mocker, input_files, from_remote):
+        if from_remote:
+            mocker.patch.object(
+                GitUtil,
+                "get_local_remote_file_path",
+                side_effect=self.get_local_remote_file_path_side_effect,
+            )
+            mocker.patch.object(
+                GitUtil, "is_file_exist_in_commit_or_branch", return_value=True
+            )
         items, repo = input_files
-        self.run(items, repo, TextFile.read_from_origin_git_path)
-
-    def test_read_from_local_git_path(self, input_files):
-        items, repo = input_files
-        self.run(items, repo, TextFile.read_from_local_git_path)
+        self.run(items, repo, TextFile.read_from_git_path, from_remote=from_remote)

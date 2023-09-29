@@ -168,17 +168,18 @@ class File(ABC, BaseModel):
 
     @classmethod
     @lru_cache
-    def read_from_origin_git_path(
+    def read_from_git_path(
         cls,
         path: Union[str, Path],
         tag: str = DEMISTO_GIT_PRIMARY_BRANCH,
         git_util: Optional[GitUtil] = None,
+        from_remote: bool = True,
         **kwargs,
     ) -> Any:
         model = cls.from_path(input_path=path, git_util=git_util, **kwargs)
-        return model.read_origin_file_git(tag)
+        return model.read_git_file(tag, from_remote=from_remote)
 
-    def _read_git_file(
+    def read_git_file(
         self, tag: str = DEMISTO_GIT_PRIMARY_BRANCH, from_remote: bool = True
     ):
         if not self.git_util.is_file_exist_in_commit_or_branch(
@@ -196,26 +197,6 @@ class File(ABC, BaseModel):
             return self.git_util.get_local_remote_file_content(git_file_path)
         except GitCommandError as e:
             raise GitFileReadError(self.input_path, tag=tag, exc=e)
-
-    def read_origin_file_git(self, branch: str = DEMISTO_GIT_PRIMARY_BRANCH) -> str:
-        return self._read_git_file(branch)
-
-    @classmethod
-    @lru_cache
-    def read_from_local_git_path(
-        cls,
-        path: Union[str, Path],
-        tag: str = DEMISTO_GIT_PRIMARY_BRANCH,
-        git_util: Optional[GitUtil] = None,
-        **kwargs,
-    ) -> Any:
-        model = cls.from_path(input_path=path, git_util=git_util, **kwargs)
-        return model.read_local_file_git(tag)
-
-    def read_local_file_git(
-        self, tag: str = DEMISTO_GIT_PRIMARY_BRANCH
-    ) -> Optional[str]:
-        return self._read_git_file(tag, from_remote=False)
 
     @abstractmethod
     def write(self, data: Any, encoding: Optional[str] = None) -> None:

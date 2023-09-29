@@ -24,11 +24,12 @@ class BinaryFile(File):
                 file_content.encode(self.input_path_original_encoding)
             ).read()
 
-    def read_local_file_git(self, tag: str = DEMISTO_GIT_PRIMARY_BRANCH) -> bytes:
-        return self._file_content_to_bytes(super().read_local_file_git(tag))
-
-    def read_origin_file_git(self, branch: str = DEMISTO_GIT_PRIMARY_BRANCH) -> bytes:
-        return self._file_content_to_bytes(super().read_origin_file_git(branch))
+    def read_git_file(
+        self, tag: str = DEMISTO_GIT_PRIMARY_BRANCH, from_remote: bool = True
+    ):
+        return self._file_content_to_bytes(
+            super().read_git_file(tag, from_remote=from_remote)
+        )
 
     def write(self, data: Any, encoding: Optional[str] = None) -> None:
         self.output_path.write_bytes(data)

@@ -80,10 +80,7 @@ class FileReadMethodsTesting(ABC):
     def test_read_from_local_path(self, input_files):
         pass
 
+    @pytest.mark.parametrize("from_remote", [True, False])
     @abstractmethod
-    def test_read_from_origin_git_path(self, mocker, input_files):
-        pass
-
-    @abstractmethod
-    def test_read_from_local_git_path(self, input_files):
+    def test_read_from_git_path(self, mocker, input_files, from_remote):
         pass

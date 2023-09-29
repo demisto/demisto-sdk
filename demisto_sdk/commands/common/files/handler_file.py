@@ -4,9 +4,6 @@ from typing import Any, Dict, List, Optional, Type, Union
 
 from pydantic import Field, validator
 
-from demisto_sdk.commands.common.constants import (
-    DEMISTO_GIT_PRIMARY_BRANCH,
-)
 from demisto_sdk.commands.common.files.text_file import TextFile
 from demisto_sdk.commands.common.handlers.xsoar_handler import XSOAR_Handler
 
@@ -19,14 +16,6 @@ class HandlerFile(TextFile):
     @abstractmethod
     def validate_handler(cls, v: Type[XSOAR_Handler]) -> Type[XSOAR_Handler]:
         raise NotImplementedError("validate_handler must be implemented")
-
-    def read_local_file(self) -> Union[List, Dict]:
-        return self.load(super().read_local_file())
-
-    def read_git_file(
-        self, tag: str = DEMISTO_GIT_PRIMARY_BRANCH, from_remote: bool = True
-    ):
-        return self.load(super().read_git_file(tag, from_remote=from_remote))
 
     def load(self, file_content: Union[StringIO, str]) -> Union[List, Dict]:
         if not isinstance(file_content, StringIO):

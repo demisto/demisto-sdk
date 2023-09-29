@@ -105,6 +105,10 @@ class File(ABC, BaseModel):
 
         raise UnknownFileException(path)
 
+    @abstractmethod
+    def load(self, file_content: str) -> Any:
+        pass
+
     @classmethod
     @lru_cache
     def from_path(
@@ -155,11 +159,13 @@ class File(ABC, BaseModel):
 
     def read_local_file(self) -> Union[str, Dict, List, bytes, ConfigParser]:
         try:
-            return self.input_path.read_text(encoding=self.default_encoding)
+            return self.load(self.input_path.read_text(encoding=self.default_encoding))
         except UnicodeDecodeError:
             try:
                 # guesses the original encoding
-                return UnicodeDammit(self.input_path.read_bytes()).unicode_markup
+                return self.load(
+                    UnicodeDammit(self.input_path.read_bytes()).unicode_markup
+                )
             except UnicodeDecodeError:
                 logger.warning(
                     f"could not auto-detect encoding for file {self.input_path}"
@@ -194,7 +200,7 @@ class File(ABC, BaseModel):
         )
 
         try:
-            return self.git_util.get_local_remote_file_content(git_file_path)
+            return self.load(self.git_util.get_local_remote_file_content(git_file_path))
         except GitCommandError as e:
             raise GitFileReadError(self.input_path, tag=tag, exc=e)
 

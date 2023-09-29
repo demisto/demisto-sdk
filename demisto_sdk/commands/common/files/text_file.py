@@ -7,7 +7,7 @@ from demisto_sdk.commands.common.files.file import File
 class TextFile(File):
     @property
     def num_lines(self):
-        return len(super().read_local_file().splitlines())
+        return len(self.read_local_file().splitlines())
 
     @classmethod
     def known_files(cls):
@@ -22,6 +22,9 @@ class TextFile(File):
             ".md",
             ".xif",
         }
+
+    def load(self, file_content: str) -> Any:
+        return file_content
 
     def search_text(self, regex_pattern: str) -> List[str]:
         return re.findall(regex_pattern, string=super().read_local_file())

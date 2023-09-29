@@ -2,9 +2,6 @@ from configparser import ConfigParser, MissingSectionHeaderError
 from pathlib import Path
 from typing import Dict, Optional, Set
 
-from demisto_sdk.commands.common.constants import (
-    DEMISTO_GIT_PRIMARY_BRANCH,
-)
 from demisto_sdk.commands.common.files.text_file import TextFile
 from demisto_sdk.commands.common.logger import logger
 
@@ -32,7 +29,7 @@ class IniFile(TextFile):
             logger.debug(f"Got error when trying to parse INI file, error: {e}")
             return False
 
-    def __read_as_config_parser(self, file_content: str) -> Optional[ConfigParser]:
+    def load(self, file_content: str) -> Optional[ConfigParser]:
         try:
             config_parser = ConfigParser(allow_no_value=True)
             config_parser.read_string(file_content)
@@ -40,16 +37,6 @@ class IniFile(TextFile):
         except MissingSectionHeaderError:
             logger.error(f"Error when retrieving the content of {self.input_path}")
             return None
-
-    def read_git_file(
-        self, tag: str = DEMISTO_GIT_PRIMARY_BRANCH, from_remote: bool = True
-    ):
-        return self.__read_as_config_parser(
-            super().read_git_file(tag, from_remote=from_remote)
-        )
-
-    def read_local_file(self) -> Optional[ConfigParser]:
-        return self.__read_as_config_parser(super().read_local_file())
 
     def write(self, data: Dict, encoding: Optional[str] = None) -> None:
         config = ConfigParser()

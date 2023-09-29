@@ -1,5 +1,5 @@
 from io import BytesIO
-from typing import Any, Set
+from typing import Any, Optional, Set
 
 from demisto_sdk.commands.common.constants import (
     DEMISTO_GIT_PRIMARY_BRANCH,
@@ -30,5 +30,5 @@ class BinaryFile(File):
     def read_origin_file_git(self, branch: str = DEMISTO_GIT_PRIMARY_BRANCH) -> bytes:
         return self._file_content_to_bytes(super().read_origin_file_git(branch))
 
-    def write(self, data: Any) -> None:
+    def write(self, data: Any, encoding: Optional[str] = None) -> None:
         self.output_path.write_bytes(data)

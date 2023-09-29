@@ -70,7 +70,9 @@ class FileReadMethodsTesting(ABC):
         pass
 
     @staticmethod
-    def get_local_remote_file_path_side_effect(full_file_path: str, tag: str):
+    def get_local_remote_file_path_side_effect(
+        full_file_path: str, tag: str, from_remote: bool
+    ):
         git_util = GitUtil.from_content_path()
         return f"{tag}:{git_util.path_from_git_root(full_file_path)}"
 

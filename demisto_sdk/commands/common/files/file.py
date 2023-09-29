@@ -218,7 +218,7 @@ class File(ABC, BaseModel):
         return self._read_git_file(tag, from_remote=False)
 
     @abstractmethod
-    def write(self, data: Any) -> None:
+    def write(self, data: Any, encoding: Optional[str] = None) -> None:
         raise NotImplementedError("write must be implemented for each File object")
 
     def write_safe_unicode(self, data: Any) -> None:

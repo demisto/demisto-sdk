@@ -54,10 +54,12 @@ class IniFile(TextFile):
     ) -> Optional[ConfigParser]:
         return self.__read_as_config_parser(super().read_origin_file_git(branch=branch))
 
-    def write(self, data: Dict) -> None:
+    def write(self, data: Dict, encoding: Optional[str] = None) -> None:
         config = ConfigParser()
         for section, values in data.items():
             config[section] = values
 
-        with self.output_path.open("w", encoding=self.default_encoding) as ini_file:
+        with self.output_path.open(
+            "w", encoding=encoding or self.default_encoding
+        ) as ini_file:
             config.write(ini_file)

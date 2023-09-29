@@ -1,17 +1,17 @@
 from abc import abstractmethod
 from io import StringIO
-from typing import Any, Dict, List, Type, Union
+from typing import Any, Dict, List, Optional, Type, Union
 
 from pydantic import Field, validator
 
 from demisto_sdk.commands.common.constants import (
     DEMISTO_GIT_PRIMARY_BRANCH,
 )
-from demisto_sdk.commands.common.files.file import File
+from demisto_sdk.commands.common.files.text_file import TextFile
 from demisto_sdk.commands.common.handlers.xsoar_handler import XSOAR_Handler
 
 
-class HandlerFile(File):
+class HandlerFile(TextFile):
 
     handler: XSOAR_Handler = Field(None, exclude=True)
 
@@ -38,6 +38,8 @@ class HandlerFile(File):
             file_content = StringIO(file_content)
         return self.handler.load(file_content)
 
-    def write(self, data: Any) -> None:
-        with self.output_path.open("w", encoding=self.default_encoding) as output_file:
+    def write(self, data: Any, encoding: Optional[str] = None) -> None:
+        with self.output_path.open(
+            "w", encoding=encoding or self.default_encoding
+        ) as output_file:
             self.handler.dump(data, output_file)

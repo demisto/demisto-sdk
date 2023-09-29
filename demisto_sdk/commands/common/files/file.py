@@ -192,7 +192,9 @@ class File(ABC, BaseModel):
             self.input_path, commit_or_branch=tag, remote=from_remote
         ):
             raise GitFileNotFoundError(
-                self.input_path, tag=tag, remote=DEMISTO_GIT_UPSTREAM
+                self.input_path,
+                tag=tag,
+                remote=DEMISTO_GIT_UPSTREAM if from_remote else None,
             )
 
         git_file_path = self.git_util.get_local_remote_file_path(

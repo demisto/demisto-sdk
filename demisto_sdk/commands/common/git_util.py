@@ -823,8 +823,9 @@ class GitUtil:
         Returns:
             The git file path. For example get origin/master:README.md
         """
+        git_file_path = f"{tag}:{self.path_from_git_root(full_file_path)}"
+
         if from_remote:
-            relative_file_path = self.path_from_git_root(full_file_path)
             try:
                 remote_name: Union[Remote, str] = self.repo.remote()
             except ValueError as exc:
@@ -832,8 +833,9 @@ class GitUtil:
                     remote_name = "origin"
                 else:
                     raise exc
-            return f"{remote_name}/{tag}:{relative_file_path}"
-        return f"{tag}:{self.path_from_git_root(full_file_path)}"
+            return f"{remote_name}/{git_file_path}"
+
+        return git_file_path
 
     def get_all_changed_files(
         self,

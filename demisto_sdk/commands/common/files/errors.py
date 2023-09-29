@@ -9,7 +9,7 @@ class UnknownFileException(ValueError):
         super().__init__(f"file {path} is unknown")
 
 
-class GitFileReadError(ValueError):
+class GitFileReadError(RuntimeError):
     def __init__(self, path: Path, tag: str, exc: GitCommandError):
         self.__git_command_error = exc
         super().__init__(

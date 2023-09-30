@@ -2,14 +2,21 @@ from abc import ABC, abstractmethod
 from functools import lru_cache
 from pathlib import Path
 from typing import Any, Dict, Optional, Set, Type, Union
+from urllib.parse import urlparse
 
+import requests
 from bs4.dammit import UnicodeDammit
 from pydantic import BaseModel, validator
+from requests.exceptions import RequestException
 
 from demisto_sdk.commands.common.constants import (
     DEMISTO_GIT_PRIMARY_BRANCH,
 )
-from demisto_sdk.commands.common.files.errors import FileReadError, UnknownFileError
+from demisto_sdk.commands.common.files.errors import (
+    FileReadError,
+    InvalidFileUrlError,
+    UnknownFileError,
+)
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers.xsoar_handler import XSOAR_Handler
 from demisto_sdk.commands.common.logger import logger
@@ -99,7 +106,7 @@ class File(ABC, BaseModel):
         raise UnknownFileError(path)
 
     def load(self, file_content: str) -> Any:
-        return file_content
+        raise NotImplementedError("load must be implemented for each File concrete object")
 
     @classmethod
     @lru_cache
@@ -138,26 +145,12 @@ class File(ABC, BaseModel):
             model = cls.parse_obj(model_attributes)
         return model
 
-    @classmethod
-    @lru_cache
-    def read_from_local_path(
-        cls,
-        path: Union[Path, str],
-        git_util: Optional[GitUtil] = None,
-        handler: Optional[XSOAR_Handler] = None,
-    ) -> Any:
-        model = cls.from_path(input_path=path, git_util=git_util, handler=handler)
-        return model.read_local_file()
-
-    def read_local_file(self) -> Any:
+    def __read(self, file_content: bytes) -> Any:
         try:
-            file_content = self.input_path.read_text(self.default_encoding)
+            file_content = file_content.decode(self.default_encoding)
         except UnicodeDecodeError:
             try:
-                # guesses the original encoding
-                file_content = UnicodeDammit(
-                    self.input_path.read_bytes()
-                ).unicode_markup
+                file_content = UnicodeDammit(file_content).unicode_markup
             except UnicodeDecodeError as e:
                 logger.error(
                     f"Could not auto detect encoding for file {self.input_path}"
@@ -171,42 +164,71 @@ class File(ABC, BaseModel):
 
     @classmethod
     @lru_cache
+    def read_from_local_path(
+        cls,
+        path: Union[Path, str],
+        git_util: Optional[GitUtil] = None,
+        handler: Optional[XSOAR_Handler] = None,
+    ) -> Any:
+        model = cls.from_path(input_path=path, git_util=git_util, handler=handler)
+        return model.read_local_file()
+
+    def read_local_file(self) -> Any:
+        return self.__read(self.input_path.read_bytes())
+
+    @classmethod
+    @lru_cache
     def read_from_git_path(
         cls,
         path: Union[str, Path],
         tag: str = DEMISTO_GIT_PRIMARY_BRANCH,
         git_util: Optional[GitUtil] = None,
         from_remote: bool = True,
-        **kwargs,
+        handler: Optional[XSOAR_Handler] = None,
     ) -> Any:
-        model = cls.from_path(input_path=path, git_util=git_util, **kwargs)
+        model = cls.from_path(input_path=path, git_util=git_util, handler=handler)
         return model.read_git_file(tag, from_remote=from_remote)
 
     def read_git_file(
         self, tag: str = DEMISTO_GIT_PRIMARY_BRANCH, from_remote: bool = True
     ):
         try:
-            file_as_binary = self.git_util.read_file_content(
+            file_content = self.git_util.read_file_content(
                 self.input_path, commit_or_branch=tag, from_remote=from_remote
             )
         except Exception as e:
             raise FileReadError(self.input_path, exc=e)
 
-        try:
-            file_content = file_as_binary.decode(self.default_encoding)
-        except UnicodeDecodeError:
-            try:
-                file_content = UnicodeDammit(file_as_binary).unicode_markup
-            except UnicodeDecodeError as e:
-                logger.error(
-                    f"Could not auto detect encoding for file {self.input_path}"
-                )
-                raise FileReadError(path=self.input_path, exc=e)
+        return self.__read(file_content)
+
+    @classmethod
+    @lru_cache
+    def read_from_http_request(
+        cls,
+        path: Union[str, Path],
+        url: str,
+        headers: Optional[Dict] = None,
+        params: Optional[Dict] = None,
+        git_util: Optional[GitUtil] = None,
+        handler: Optional[XSOAR_Handler] = None,
+    ):
+        pass
+
+    def read_file_http_request(
+        self, url: str, headers: Optional[Dict] = None, params: Optional[Dict] = None
+    ):
+        url = str(self.input_path)
+        parsed_url = urlparse(url)
+        if not parsed_url.scheme or not parsed_url.netloc:
+            raise InvalidFileUrlError(url)
 
         try:
-            return self.load(file_content)
-        except Exception as e:
+            response = requests.get(url, params=params, headers=headers, verify=False)
+            response.raise_for_status()
+        except RequestException as e:
             raise FileReadError(self.input_path, exc=e)
+
+        return self.__read(response.content)
 
     @abstractmethod
     def write(self, data: Any, encoding: Optional[str] = None) -> None:

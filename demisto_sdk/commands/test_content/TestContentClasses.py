@@ -2275,6 +2275,7 @@ class TestContext:
             playbook_state == PB_Status.COMPLETED
             and self.server_context.is_instance_using_docker
         ) and not self.build_context.is_xsiam:
+            #  currently not supported on XSIAM (etc/#47908)
             docker_test_results = self._run_docker_threshold_test()
             if not docker_test_results:
                 playbook_state = PB_Status.FAILED_DOCKER_TEST

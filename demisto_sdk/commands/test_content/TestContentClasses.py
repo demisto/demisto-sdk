@@ -840,7 +840,7 @@ class BuildContext:
         if self.server or not self.isAMI or self.is_xsiam:
             unmockable_tests = all_tests
             self.unmockable_test_ids = {test.playbook_id for test in all_tests}
-        else:
+        elif self.isAMI:
             unmockable_tests = self.conf_unmockable_tests
             self.unmockable_test_ids = {
                 test.playbook_id for test in self.conf_unmockable_tests

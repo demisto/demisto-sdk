@@ -837,6 +837,7 @@ class BuildContext:
         """
         all_tests = self._get_all_tests()
         # for xsiam, set all tests to unmockable.
+        unmockable_tests = []
         if self.server or not self.isAMI or self.is_xsiam:
             unmockable_tests = all_tests
             self.unmockable_test_ids = {test.playbook_id for test in all_tests}

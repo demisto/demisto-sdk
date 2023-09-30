@@ -207,12 +207,6 @@ def main(ctx, config, version, release_notes, **kwargs):
     import dotenv
 
     dotenv.load_dotenv(CONTENT_PATH / ".env", override=True)  # type: ignore # load .env file from the cwd
-    from demisto_sdk.commands.common.files.binary_file import BinaryFile
-
-    BinaryFile.read_from_git_path(
-        "/Users/gafik/dev/demisto/content/Packs/UrlScan/Author_image.png"
-    )
-    print()
     if (
         (not os.getenv("DEMISTO_SDK_SKIP_VERSION_CHECK")) or version
     ) and not is_sdk_defined_working_offline():  # If the key exists/called to version

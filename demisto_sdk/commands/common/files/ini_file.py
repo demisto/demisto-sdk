@@ -1,4 +1,4 @@
-from configparser import ConfigParser, MissingSectionHeaderError
+from configparser import ConfigParser
 from pathlib import Path
 from typing import Dict, Optional, Set
 
@@ -17,7 +17,6 @@ class IniFile(TextFile):
 
     @classmethod
     def is_class_type(cls, path: Path) -> bool:
-
         if super().is_class_type(path):
             return True
 
@@ -26,19 +25,34 @@ class IniFile(TextFile):
             parser.read(path)
             return bool(parser.sections())
         except Exception as e:
-            logger.debug(f"Got error when trying to parse INI file, error: {e}")
+            logger.debug(f"Got error when trying to parse INI file\nerror:{e}")
             return False
 
     def load(self, file_content: str) -> Optional[ConfigParser]:
-        try:
-            config_parser = ConfigParser(allow_no_value=True)
-            config_parser.read_string(file_content)
-            return config_parser
-        except MissingSectionHeaderError:
-            logger.error(f"Error when retrieving the content of {self.input_path}")
-            return None
+        config_parser = ConfigParser(allow_no_value=True)
+        config_parser.read_string(file_content)
+        return config_parser
 
     def write(self, data: Dict, encoding: Optional[str] = None) -> None:
+        """
+
+        Args:
+            data:
+            encoding:
+
+        Returns:
+
+        data example:
+        data = {
+            'file:APIVoid.yml': {
+                'ignore': 'BA124'
+            },
+            'known_words': {
+                'apivoid': None
+            }
+        }
+
+        """
         config = ConfigParser()
         for section, values in data.items():
             config[section] = values

@@ -2,19 +2,15 @@ from abc import ABC, abstractmethod
 from functools import lru_cache
 from pathlib import Path
 from typing import Any, Dict, Optional, Set, Type, Union
-from urllib.parse import urlparse
 
-import requests
 from bs4.dammit import UnicodeDammit
 from pydantic import BaseModel, validator
-from requests.exceptions import RequestException
 
 from demisto_sdk.commands.common.constants import (
     DEMISTO_GIT_PRIMARY_BRANCH,
 )
 from demisto_sdk.commands.common.files.errors import (
     FileReadError,
-    InvalidFileUrlError,
     UnknownFileError,
 )
 from demisto_sdk.commands.common.git_util import GitUtil
@@ -69,9 +65,7 @@ class File(ABC, BaseModel):
         if v.is_absolute():
             return v
         else:
-            logger.debug(
-                f"File {v} does not exist, getting path relative to repository root"
-            )
+            logger.debug(f"File {v} does not exist, getting full relative path")
 
         git_util: GitUtil = values["git_util"]
 
@@ -90,7 +84,7 @@ class File(ABC, BaseModel):
         )
 
     @classmethod
-    def __file_factory(cls, path: Path) -> Type["File"]:
+    def file_factory(cls, path: Path) -> Type["File"]:
         def _file_factory(_cls):
             for subclass in _cls.__subclasses__():
                 if subclass.is_class_type(path):
@@ -106,7 +100,9 @@ class File(ABC, BaseModel):
         raise UnknownFileError(path)
 
     def load(self, file_content: str) -> Any:
-        raise NotImplementedError("load must be implemented for each File concrete object")
+        raise NotImplementedError(
+            "load must be implemented for each File concrete object"
+        )
 
     @classmethod
     @lru_cache
@@ -138,29 +134,12 @@ class File(ABC, BaseModel):
         model_attributes.update(kwargs)
 
         if cls is File:
-            model = cls.__file_factory(input_path or output_path).parse_obj(  # type: ignore[arg-type]
+            model = cls.file_factory(input_path or output_path).parse_obj(  # type: ignore[arg-type]
                 model_attributes
             )
         else:
             model = cls.parse_obj(model_attributes)
         return model
-
-    def __read(self, file_content: bytes) -> Any:
-        try:
-            file_content = file_content.decode(self.default_encoding)
-        except UnicodeDecodeError:
-            try:
-                file_content = UnicodeDammit(file_content).unicode_markup
-            except UnicodeDecodeError as e:
-                logger.error(
-                    f"Could not auto detect encoding for file {self.input_path}"
-                )
-                raise FileReadError(self.input_path, exc=e)
-
-        try:
-            return self.load(file_content)
-        except Exception as e:
-            raise FileReadError(self.input_path, exc=e)
 
     @classmethod
     @lru_cache
@@ -174,7 +153,7 @@ class File(ABC, BaseModel):
         return model.read_local_file()
 
     def read_local_file(self) -> Any:
-        return self.__read(self.input_path.read_bytes())
+        return self.input_path.read_bytes()
 
     @classmethod
     @lru_cache
@@ -193,42 +172,11 @@ class File(ABC, BaseModel):
         self, tag: str = DEMISTO_GIT_PRIMARY_BRANCH, from_remote: bool = True
     ):
         try:
-            file_content = self.git_util.read_file_content(
+            return self.git_util.read_file_content(
                 self.input_path, commit_or_branch=tag, from_remote=from_remote
             )
         except Exception as e:
             raise FileReadError(self.input_path, exc=e)
-
-        return self.__read(file_content)
-
-    @classmethod
-    @lru_cache
-    def read_from_http_request(
-        cls,
-        path: Union[str, Path],
-        url: str,
-        headers: Optional[Dict] = None,
-        params: Optional[Dict] = None,
-        git_util: Optional[GitUtil] = None,
-        handler: Optional[XSOAR_Handler] = None,
-    ):
-        pass
-
-    def read_file_http_request(
-        self, url: str, headers: Optional[Dict] = None, params: Optional[Dict] = None
-    ):
-        url = str(self.input_path)
-        parsed_url = urlparse(url)
-        if not parsed_url.scheme or not parsed_url.netloc:
-            raise InvalidFileUrlError(url)
-
-        try:
-            response = requests.get(url, params=params, headers=headers, verify=False)
-            response.raise_for_status()
-        except RequestException as e:
-            raise FileReadError(self.input_path, exc=e)
-
-        return self.__read(response.content)
 
     @abstractmethod
     def write(self, data: Any, encoding: Optional[str] = None) -> None:
@@ -243,7 +191,7 @@ class File(ABC, BaseModel):
         try:
             _write_safe_unicode()
         except UnicodeDecodeError:
-            if self.output_path_original_encoding == "utf-8":
+            if self.output_path_original_encoding == self.default_encoding:
                 logger.error(
                     f"{self.output_path} is encoded as unicode, cannot handle the error, raising it"
                 )

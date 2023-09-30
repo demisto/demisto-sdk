@@ -8,7 +8,7 @@ class FileReadError(IOError):
 
 class UnknownFileError(FileReadError, ValueError):
     def __init__(self, path: Path):
-        super().__init__(f"file {path} is unknown")
+        super().__init__(f"file {path} has unknown format")
 
 
 class InvalidFileUrlError(FileReadError, ValueError):

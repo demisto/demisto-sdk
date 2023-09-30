@@ -4,12 +4,14 @@ from pathlib import Path
 from typing import Optional, Set, Tuple, Union
 
 import click
+import git
 import gitdb
 from git import (
     InvalidGitRepositoryError,
     Repo,  # noqa: TID251: required to create GitUtil
 )
 from git.diff import Lit_change_type
+from git.exc import GitError, NoSuchPathError
 from git.remote import Remote
 
 from demisto_sdk.commands.common.constants import (
@@ -17,6 +19,26 @@ from demisto_sdk.commands.common.constants import (
     DEMISTO_GIT_UPSTREAM,
     PACKS_FOLDER,
 )
+
+
+class CommitOrBranchNotFoundError(GitError):
+    def __init__(
+        self, commit_or_branch: str, exception: Exception, from_remote: bool = True
+    ):
+        if from_remote:
+            commit_or_branch = f"{DEMISTO_GIT_UPSTREAM}/{commit_or_branch}"
+        super().__init__(
+            f"Commit/Branch {commit_or_branch} could not be found, error: {exception}"
+        )
+
+
+class GitFileNotFoundError(NoSuchPathError):
+    def __init__(self, commit_or_branch: str, path: str, from_remote: bool = True):
+        if from_remote:
+            commit_or_branch = f"{DEMISTO_GIT_UPSTREAM}/{commit_or_branch}"
+        super().__init__(
+            f"file {path} could not be found in commit/branch {commit_or_branch}"
+        )
 
 
 class GitUtil:
@@ -50,28 +72,57 @@ class GitUtil:
         return cls(path)
 
     def path_from_git_root(self, path: Union[Path, str]) -> Path:
-        return Path(path).relative_to(Path(self.repo.working_dir))
+        try:
+            return Path(path).relative_to(Path(self.repo.working_dir))
+        except ValueError as e:
+            raise NoSuchPathError(str(e))
 
-    def is_file_exist_in_commit_or_branch(
-        self, path: Union[Path, str], commit_or_branch: str, remote: bool = False
-    ) -> bool:
-        if remote:
+    def get_commit(self, commit_or_branch: str, from_remote: bool = True) -> git.Commit:
+        if from_remote:
             # check if file exist in remote branch
             try:
                 remote_branch = self.repo.refs[  # type: ignore[index]
                     f"{DEMISTO_GIT_UPSTREAM}/{commit_or_branch}"
                 ]
-                commit = remote_branch.commit
-            except IndexError:
+                return remote_branch.commit
+            except IndexError as e:
                 # there isn't remote branch like this
-                return False
+                raise CommitOrBranchNotFoundError(
+                    commit_or_branch, from_remote=from_remote, exception=e
+                )
         else:
             # check if file exist in a local branch/commit
             try:
-                commit = self.repo.commit(commit_or_branch)
-            except ValueError:
+                return self.repo.commit(commit_or_branch)
+            except ValueError as e:
                 # commit/branch does not exist
-                return False
+                raise CommitOrBranchNotFoundError(
+                    commit_or_branch, from_remote=from_remote, exception=e
+                )
+
+    def read_file_content(
+        self, path: Union[Path, str], commit_or_branch: str, from_remote: bool = True
+    ) -> bytes:
+
+        commit = self.get_commit(commit_or_branch, from_remote=from_remote)
+        path = str(self.path_from_git_root(path))
+
+        try:
+            blob: git.Blob = commit.tree / path
+        except KeyError:
+            raise GitFileNotFoundError(
+                commit_or_branch, path=path, from_remote=from_remote
+            )
+        return blob.data_stream.read()
+
+    def is_file_exist_in_commit_or_branch(
+        self, path: Union[Path, str], commit_or_branch: str, from_remote: bool = True
+    ) -> bool:
+
+        try:
+            commit = self.get_commit(commit_or_branch, from_remote=from_remote)
+        except CommitOrBranchNotFoundError:
+            return False
 
         path = str(self.path_from_git_root(path))
 
@@ -807,7 +858,7 @@ class GitUtil:
         Returns:
             The fetched file content.
         """
-        file_content = self.repo.git.show(git_file_path)
+        file_content = self.repo.git.show(git_file_path, binary=True)
         return file_content
 
     def get_local_remote_file_path(

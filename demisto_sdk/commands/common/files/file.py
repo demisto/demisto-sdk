@@ -1,22 +1,15 @@
 from abc import ABC, abstractmethod
-from configparser import ConfigParser
 from functools import lru_cache
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set, Type, Union
+from typing import Any, Dict, Optional, Set, Type, Union
 
 from bs4.dammit import UnicodeDammit
-from git import GitCommandError
 from pydantic import BaseModel, validator
 
 from demisto_sdk.commands.common.constants import (
     DEMISTO_GIT_PRIMARY_BRANCH,
-    DEMISTO_GIT_UPSTREAM,
 )
-from demisto_sdk.commands.common.files.errors import (
-    GitFileNotFoundError,
-    GitFileReadError,
-    UnknownFileException,
-)
+from demisto_sdk.commands.common.files.errors import FileReadError, UnknownFileError
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers.xsoar_handler import XSOAR_Handler
 from demisto_sdk.commands.common.logger import logger
@@ -103,11 +96,10 @@ class File(ABC, BaseModel):
         if file_object := _file_factory(cls):
             return file_object
 
-        raise UnknownFileException(path)
+        raise UnknownFileError(path)
 
-    @abstractmethod
     def load(self, file_content: str) -> Any:
-        raise NotImplementedError(f'load must be implemented for each File concrete object')
+        return file_content
 
     @classmethod
     @lru_cache
@@ -157,20 +149,25 @@ class File(ABC, BaseModel):
         model = cls.from_path(input_path=path, git_util=git_util, handler=handler)
         return model.read_local_file()
 
-    def read_local_file(self) -> Union[str, Dict, List, bytes, ConfigParser]:
+    def read_local_file(self) -> Any:
         try:
-            return self.load(self.input_path.read_text(encoding=self.default_encoding))
+            file_content = self.input_path.read_text(self.default_encoding)
         except UnicodeDecodeError:
             try:
                 # guesses the original encoding
-                return self.load(
-                    UnicodeDammit(self.input_path.read_bytes()).unicode_markup
+                file_content = UnicodeDammit(
+                    self.input_path.read_bytes()
+                ).unicode_markup
+            except UnicodeDecodeError as e:
+                logger.error(
+                    f"Could not auto detect encoding for file {self.input_path}"
                 )
-            except UnicodeDecodeError:
-                logger.warning(
-                    f"could not auto-detect encoding for file {self.input_path}"
-                )
-                raise
+                raise FileReadError(self.input_path, exc=e)
+
+        try:
+            return self.load(file_content)
+        except Exception as e:
+            raise FileReadError(self.input_path, exc=e)
 
     @classmethod
     @lru_cache
@@ -188,27 +185,34 @@ class File(ABC, BaseModel):
     def read_git_file(
         self, tag: str = DEMISTO_GIT_PRIMARY_BRANCH, from_remote: bool = True
     ):
-        if not self.git_util.is_file_exist_in_commit_or_branch(
-            self.input_path, commit_or_branch=tag, remote=from_remote
-        ):
-            raise GitFileNotFoundError(
-                self.input_path,
-                tag=tag,
-                remote=DEMISTO_GIT_UPSTREAM if from_remote else None,
+        try:
+            file_as_binary = self.git_util.read_file_content(
+                self.input_path, commit_or_branch=tag, from_remote=from_remote
             )
-
-        git_file_path = self.git_util.get_local_remote_file_path(
-            str(self.input_path), tag=tag, from_remote=from_remote
-        )
+        except Exception as e:
+            raise FileReadError(self.input_path, exc=e)
 
         try:
-            return self.load(self.git_util.get_local_remote_file_content(git_file_path))
-        except GitCommandError as e:
-            raise GitFileReadError(self.input_path, tag=tag, exc=e)
+            file_content = file_as_binary.decode(self.default_encoding)
+        except UnicodeDecodeError:
+            try:
+                file_content = UnicodeDammit(file_as_binary).unicode_markup
+            except UnicodeDecodeError as e:
+                logger.error(
+                    f"Could not auto detect encoding for file {self.input_path}"
+                )
+                raise FileReadError(path=self.input_path, exc=e)
+
+        try:
+            return self.load(file_content)
+        except Exception as e:
+            raise FileReadError(self.input_path, exc=e)
 
     @abstractmethod
     def write(self, data: Any, encoding: Optional[str] = None) -> None:
-        raise NotImplementedError("write must be implemented for each File concrete object")
+        raise NotImplementedError(
+            "write must be implemented for each File concrete object"
+        )
 
     def write_safe_unicode(self, data: Any) -> None:
         def _write_safe_unicode():

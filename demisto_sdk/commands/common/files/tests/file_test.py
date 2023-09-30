@@ -5,7 +5,7 @@ from typing import Type
 import pytest
 
 from demisto_sdk.commands.common.files.binary_file import BinaryFile
-from demisto_sdk.commands.common.files.errors import UnknownFileException
+from demisto_sdk.commands.common.files.errors import UnknownFileError
 from demisto_sdk.commands.common.files.file import File
 from demisto_sdk.commands.common.files.ini_file import IniFile
 from demisto_sdk.commands.common.files.json_file import JsonFile
@@ -35,7 +35,7 @@ class TestFileFromPath:
         assert isinstance(File.from_path(input_path), expected_class)
 
     def test_from_path_input_file_unknown_file(self):
-        with pytest.raises(UnknownFileException):
+        with pytest.raises(UnknownFileError):
             File.from_path("path_does_not_exist")
 
     def test_from_path_input_file_does_not_exist(self):

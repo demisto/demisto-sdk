@@ -7,6 +7,7 @@
 * Updated the **prepare-content** to add a clarification to the `detaileddescription` field of partner event collectors that they are under the support of PANW.
 * Fixed an issue where kebab-case arguments were not parsed correctly.
 * Fixed an issue where **validate** falsely failed with error `RN115` on release notes with linefeed at the end of the file.
+* Fixed an issue where an error log message changed the terminal color.
 
 
 ## 1.20.5

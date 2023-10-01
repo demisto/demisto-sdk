@@ -4,9 +4,9 @@
 * Modified the `validate` and `format` pre-commit hooks to run with the `--all` flag only when the `--mode=nightly` argument and `--all` flag were given.
 * Modified the `ruff` pre-commit hook to run with `--config=nightly_ruff.toml` argument when running **pre-commit** command wite the `--mode=nightly` argument.
 * Fixed an issue where deprecating parsing rules or modeling rules using **format** failed due to schema discrepancies.
+* Updated the **prepare-content** to add a clarification to the `detaileddescription` field of partner event collectors that they are under the support of PANW.
 * Fixed an issue where kebab-case arguments were not parsed correctly.
 * Fixed an issue where **validate** falsely failed with error `RN115` on release notes with linefeed at the end of the file.
-* The **prepare-content** now adds a clarification to the `detaileddescription` field of partner event collectors that they are under the support of PANW.  
 
 
 ## 1.20.5

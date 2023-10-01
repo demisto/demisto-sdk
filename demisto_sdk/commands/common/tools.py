@@ -3980,3 +3980,7 @@ def parse_int_or_default(value: Any, default: int) -> int:
         return int(value)
     except (ValueError, TypeError):
         return default
+
+
+def get_all_repo_pack_ids() -> list:
+    return [path.name for path in (Path(get_content_path()) / PACKS_DIR).iterdir()]

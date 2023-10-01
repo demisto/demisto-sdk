@@ -27,14 +27,8 @@ class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGR
         self.script_info: Dict[str, Any] = self.yml_data.get("script", {})
         self.category = self.yml_data["category"]
         self.is_fetch = self.script_info.get("isfetch", False)
-        self.is_fetch_events_and_assets = self.script_info.get(
-            "isfetcheventsandassets", False
-        )
-        # if the integration fetches assets, it fetches events as well
-        self.is_fetch_events = (
-            self.script_info.get("isfetchevents", False)
-            or self.is_fetch_events_and_assets
-        )
+        self.is_fetch_assets = self.script_info.get("isfetchassets", False)
+        self.is_fetch_events = self.script_info.get("isfetchevents", False)
         self.is_feed = self.script_info.get("feed", False)
         self.type = self.script_info.get("subtype") or self.script_info.get("type")
         if self.type == "python":

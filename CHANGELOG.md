@@ -6,6 +6,7 @@
 * Fixed an issue where deprecating parsing rules or modeling rules using **format** failed due to schema discrepancies.
 * Fixed an issue where kebab-case arguments were not parsed correctly.
 * Fixed an issue where **validate** falsely failed with error `RN115` on release notes with linefeed at the end of the file.
+* The **prepare-content** now adds a clarification to the `detaileddescription` field of partner event collectors that they are under the support of PANW.  
 
 
 ## 1.20.5

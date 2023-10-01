@@ -53,6 +53,8 @@ class PlaybookParser(YAMLContentItemParser, content_type=ContentType.PLAYBOOK):
             MarketplaceVersions.XSOAR,
             MarketplaceVersions.MarketplaceV2,
             MarketplaceVersions.XPANSE,
+            MarketplaceVersions.XSOAR_SAAS,
+            MarketplaceVersions.XSOAR_ON_PREM,
         }
 
     def is_mandatory_dependency(self, task_id: str) -> bool:

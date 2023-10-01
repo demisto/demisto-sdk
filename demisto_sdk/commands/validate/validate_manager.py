@@ -1,24 +1,22 @@
 import os
 from concurrent.futures._base import Future, as_completed
-from configparser import ConfigParser, MissingSectionHeaderError
+from configparser import ConfigParser
 from pathlib import Path
 from typing import Callable, List, Optional, Set, Tuple
 
 import pebble
-from git import InvalidGitRepositoryError
+from git import GitCommandError, InvalidGitRepositoryError
 from packaging import version
 
 from demisto_sdk.commands.common import tools
-from demisto_sdk.commands.common.content.objects.pack_objects.integration.integration import (
-    Integration,
-)
-from demisto_sdk.commands.common.cpu_count import cpu_count
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import (
     API_MODULES_PACK,
     AUTHOR_IMAGE_FILE_NAME,
     CONTENT_ENTITIES_DIRS,
     DEFAULT_CONTENT_ITEM_TO_VERSION,
+    DEMISTO_GIT_PRIMARY_BRANCH,
+    DEMISTO_GIT_UPSTREAM,
     GENERIC_FIELDS_DIR,
     GENERIC_TYPES_DIR,
     IGNORED_PACK_NAMES,
@@ -27,16 +25,17 @@ from demisto_sdk.commands.common.constants import (
     PACKS_PACK_META_FILE_NAME,
     SKIP_RELEASE_NOTES_FOR_TYPES,
     VALIDATION_USING_GIT_IGNORABLE_DATA,
+    XSIAM_DASHBOARDS_DIR,
     FileType,
     FileType_ALLOWED_TO_DELETE,
     PathLevel,
-    XSIAM_DASHBOARDS_DIR,
 )
 from demisto_sdk.commands.common.content import Content
 from demisto_sdk.commands.common.content_constant_paths import (
     CONTENT_PATH,
     DEFAULT_ID_SET_PATH,
 )
+from demisto_sdk.commands.common.cpu_count import cpu_count
 from demisto_sdk.commands.common.errors import (
     FOUND_FILES_AND_ERRORS,
     FOUND_FILES_AND_IGNORED_ERRORS,
@@ -151,12 +150,12 @@ from demisto_sdk.commands.common.tools import (
     get_api_module_ids,
     get_file,
     get_pack_ignore_content,
-    get_pack_ignore_file_path,
     get_pack_name,
     get_pack_names_from_files,
     get_relative_path_from_packs_dir,
     get_remote_file,
     get_yaml,
+    is_file_in_pack,
     open_id_set_file,
     run_command_os,
 )
@@ -271,7 +270,7 @@ class ValidateManager:
         self.deprecation_validator = DeprecationValidator(id_set_file=self.id_set_file)
 
         try:
-            self.git_util = GitUtil(repo=Content.git())
+            self.git_util = Content.git_util()
             self.branch_name = self.git_util.get_current_git_branch_or_hash()
         except (InvalidGitRepositoryError, TypeError):
             # if we are using git - fail the validation by raising the exception.
@@ -283,8 +282,8 @@ class ValidateManager:
                 self.git_util = None  # type: ignore[assignment]
                 self.branch_name = ""
 
-        if prev_ver and not prev_ver.startswith("origin"):
-            self.prev_ver = self.setup_prev_ver("origin/" + prev_ver)
+        if prev_ver and not prev_ver.startswith(DEMISTO_GIT_UPSTREAM):
+            self.prev_ver = self.setup_prev_ver(f"{DEMISTO_GIT_UPSTREAM}/" + prev_ver)
         else:
             self.prev_ver = self.setup_prev_ver(prev_ver)
 
@@ -310,6 +309,7 @@ class ValidateManager:
             FileType.INI,
             FileType.PEM,
             FileType.METADATA,
+            FileType.VULTURE_WHITELIST,
         )
 
         self.is_external_repo = is_external_repo
@@ -407,11 +407,11 @@ class ValidateManager:
         Returns:
             PathLevel. File, ContentDir, ContentGenericDir, Pack or Package - depending on the file path level.
         """
-        if os.path.isfile(file_path):
+        if Path(file_path).is_file():
             return PathLevel.FILE
 
         file_path = file_path.rstrip("/")
-        dir_name = os.path.basename(file_path)
+        dir_name = Path(file_path).name
         if dir_name in CONTENT_ENTITIES_DIRS:
             return PathLevel.CONTENT_ENTITY_DIR
 
@@ -420,7 +420,7 @@ class ValidateManager:
         ).endswith(GENERIC_FIELDS_DIR):
             return PathLevel.CONTENT_GENERIC_ENTITY_DIR
 
-        if os.path.basename(os.path.dirname(file_path)) == PACKS_DIR:
+        if Path(file_path).parent.name == PACKS_DIR:
             return PathLevel.PACK
 
         else:
@@ -477,7 +477,7 @@ class ValidateManager:
 
         if self.validate_graph:
             logger.info(
-                f"\n[cyan]================= Validating graph =================[/cyan]"
+                "\n[cyan]================= Validating graph =================[/cyan]"
             )
             with GraphValidator(
                 specific_validations=self.specific_validations,
@@ -567,7 +567,7 @@ class ValidateManager:
                 count += 1
         if self.validate_graph:
             logger.info(
-                f"\n[cyan]================= Validating graph =================[/cyan]"
+                "\n[cyan]================= Validating graph =================[/cyan]"
             )
             specific_validations_list = (
                 self.specific_validations if self.specific_validations else []
@@ -596,7 +596,7 @@ class ValidateManager:
             skip_files = set()
 
         pack_entities_validation_results = set()
-        pack_error_ignore_list = self.get_error_ignore_list(os.path.basename(pack_path))
+        pack_error_ignore_list = self.get_error_ignore_list(Path(pack_path).name)
 
         pack_entities_validation_results.add(
             self.validate_pack_unique_files(pack_path, pack_error_ignore_list)
@@ -630,7 +630,7 @@ class ValidateManager:
         ) or content_entity_dir_path.endswith(GENERIC_TYPES_DIR):
             for dir_name in os.listdir(content_entity_dir_path):
                 dir_path = os.path.join(content_entity_dir_path, dir_name)
-                if not os.path.isfile(dir_path):
+                if not Path(dir_path).is_file():
                     # should be only directories (not files) in generic types/fields directory
                     content_entities_validation_results.add(
                         self.run_validation_on_generic_entities(
@@ -642,7 +642,7 @@ class ValidateManager:
         else:
             for file_name in os.listdir(content_entity_dir_path):
                 file_path = os.path.join(content_entity_dir_path, file_name)
-                if os.path.isfile(file_path):
+                if Path(file_path).is_file():
                     if (
                         file_path.endswith(".json")
                         or file_path.endswith(".yml")
@@ -826,7 +826,8 @@ class ValidateManager:
             return xsoar_config_validator.is_valid_xsoar_config_file()
 
         if not self.check_only_schema:
-            validation_print = f"\nValidating {file_path} as {file_type.value}"
+            # if file_type = None, it means BA102 was ignored in an external repo.
+            validation_print = f"\nValidating {file_path} as {file_type.value if file_type else 'unknown-file'}"
             if self.print_percent:
                 if FOUND_FILES_AND_ERRORS:
                     validation_print += f" [red][{self.completion_percentage}%][/red]"
@@ -1056,9 +1057,10 @@ class ValidateManager:
         ):
             logger.info(f"Validating {file_type.value} file: {file_path}")
             if self.validate_all:
+                file_name = Path(file_path).name
                 error_ignore_list = pack_error_ignore_list.copy()
-                error_ignore_list.setdefault(os.path.basename(file_path), [])
-                error_ignore_list.get(os.path.basename(file_path)).append("MR104")
+                error_ignore_list.setdefault(file_name, [])
+                error_ignore_list.get(file_name).append("MR104")
                 return self.validate_modeling_rule(
                     structure_validator, error_ignore_list
                 )
@@ -1299,24 +1301,24 @@ class ValidateManager:
             )
         )
         validation_results.add(self.validate_deleted_files(deleted_files, added_files))
-        logger.debug(f"*** after adding validate_deleted_files")
+        logger.debug("*** after adding validate_deleted_files")
 
         logger.debug(
             f"*** Before ifs, {old_format_files=}, {self.skip_pack_rn_validation=}"
         )
         if old_format_files:
             logger.info(
-                f"\n[cyan]================= Running validation on old format files =================[/cyan]"
+                "\n[cyan]================= Running validation on old format files =================[/cyan]"
             )
             validation_results.add(self.validate_no_old_format(old_format_files))
-            logger.info(f"*** after adding validate_no_old_format")
+            logger.info("*** after adding validate_no_old_format")
 
         if not self.skip_pack_rn_validation:
-            logger.info(f"*** adding validate_no_duplicated_release_notes")
+            logger.info("*** adding validate_no_duplicated_release_notes")
             validation_results.add(
                 self.validate_no_duplicated_release_notes(added_files)
             )
-            logger.info(f"*** after adding validate_no_duplicated_release_notes")
+            logger.info("*** after adding validate_no_duplicated_release_notes")
 
         all_files_set = list(
             set().union(
@@ -1325,7 +1327,7 @@ class ValidateManager:
         )
         if self.validate_graph:
             logger.info(
-                f"\n[cyan]================= Validating graph =================[/cyan]"
+                "\n[cyan]================= Validating graph =================[/cyan]"
             )
             if all_files_set:
                 with GraphValidator(
@@ -1345,7 +1347,7 @@ class ValidateManager:
 
         if self.packs_with_mp_change:
             logger.info(
-                f"\n[cyan]================= Running validation on Marketplace Changed Packs =================[/cyan]"
+                "\n[cyan]================= Running validation on Marketplace Changed Packs =================[/cyan]"
             )
             logger.debug(
                 f"Found marketplace change in the following packs: {self.packs_with_mp_change}"
@@ -1359,7 +1361,7 @@ class ValidateManager:
                     )[0]
                 )
 
-            logger.debug(f"Finished validating marketplace changed packs.")
+            logger.debug("Finished validating marketplace changed packs.")
 
         return all(validation_results)
 
@@ -1508,6 +1510,7 @@ class ValidateManager:
             json_file_path=self.json_file_path,
             validate_all=self.validate_all,
             deprecation_validator=self.deprecation_validator,
+            using_git=self.use_git,
         )
 
         deprecated_result = self.check_and_validate_deprecated(
@@ -1551,6 +1554,7 @@ class ValidateManager:
             json_file_path=self.json_file_path,
             validate_all=self.validate_all,
             deprecation_validator=self.deprecation_validator,
+            using_git=self.use_git,
         )
 
         deprecated_result = self.check_and_validate_deprecated(
@@ -1581,6 +1585,7 @@ class ValidateManager:
             skip_docker_check=self.skip_docker_checks,
             json_file_path=self.json_file_path,
             validate_all=self.validate_all,
+            using_git=self.use_git,
         )
         return integration_validator.is_valid_beta_integration()
 
@@ -1929,7 +1934,7 @@ class ValidateManager:
 
         logger.info(f"\nValidating {pack_path} unique pack files")
         pack_unique_files_validator = PackUniqueFilesValidator(
-            pack=os.path.basename(pack_path),
+            pack=Path(pack_path).name,
             pack_path=pack_path,
             ignored_errors=pack_error_ignore_list,
             should_version_raise=should_version_raise,
@@ -1949,7 +1954,7 @@ class ValidateManager:
 
         # check author image
         author_image_path = os.path.join(pack_path, AUTHOR_IMAGE_FILE_NAME)
-        if os.path.exists(author_image_path):
+        if Path(author_image_path).exists():
             logger.info("Validating pack author image")
             author_valid = self.validate_author_image(
                 author_image_path, pack_error_ignore_list
@@ -1973,34 +1978,109 @@ class ValidateManager:
 
         return is_valid
 
-    def validate_modified_files(self, modified_files):
-        logger.info(
-            f"\n[cyan]================= Running validation on modified files =================[/cyan]"
-        )
-        valid_files = set()
+    def get_old_file_path(self, file_path):
+        """
+        Extract the old file path from the given file
+        Args:
+            file_path: the path to extract the old file path from.
+        """
+        return file_path[:2] if isinstance(file_path, tuple) else (file_path, file_path)
+
+    def get_all_files_edited_in_pack_ignore(self, modified_files: set) -> set:
+        """
+        Extract all the files the file paths of files that there pack-ignore section was ignored somehow.
+        Args:
+            modified_files: The list of modified files.
+        """
+        all_files = self.git_util.get_all_files()
+        all_files_edited_in_pack_ignore: set = set()
         for file_path in modified_files:
             # handle renamed files
-            if isinstance(file_path, tuple):
-                old_file_path = file_path[0]
-                file_path = file_path[1]
+            old_file_path, file_path = self.get_old_file_path(file_path)
+            if not file_path.endswith(".pack-ignore"):
+                continue
+            # if the repo does not have remotes, get the .pack-ignore content from the master branch in Github api
+            # if the repo is not in remote / file cannot be found from Github api, try to take it from the latest commit on the default branch (usually master/main)
+            old_pack_ignore_content = get_remote_file(
+                old_file_path, DEMISTO_GIT_PRIMARY_BRANCH
+            )
+            if (
+                isinstance(old_pack_ignore_content, bytes)
+                and old_pack_ignore_content.strip() == b""
+            ):  # found an empty file in remote
+                old_pack_ignore_content = ""
+            elif old_pack_ignore_content == {}:  # not found in remote
+                logger.debug(
+                    f"Could not get {old_file_path} from remote master branch, trying to get it from local branch"
+                )
+                primary_branch = GitUtil.find_primary_branch(self.git_util.repo)
+                _pack_ignore_default_branch_path = f"{primary_branch}:{old_file_path}"
+                try:
+                    old_pack_ignore_content = (
+                        self.git_util.get_local_remote_file_content(
+                            _pack_ignore_default_branch_path
+                        )
+                    )
+                except GitCommandError:
+                    logger.warning(
+                        f"could not retrieve {_pack_ignore_default_branch_path} from {primary_branch} because {primary_branch} is not a valid ref, assuming .pack-ignore is empty"
+                    )
+                    old_pack_ignore_content = ""
 
-            else:
-                old_file_path = None
+            config = ConfigParser(allow_no_value=True)
+            config.read_string(old_pack_ignore_content)
+            old_pack_ignore_content = self.get_error_ignore_list(config=config)
+            pack_name = get_pack_name(str(file_path))
+            file_content = self.get_error_ignore_list(pack_name)
+            files_to_test = set()
+            for key, value in old_pack_ignore_content.items():
+                if not (section_values := file_content.get(key, [])) or not set(
+                    section_values
+                ) == set(value):
+                    files_to_test.add(key)
+            for key, value in file_content.items():
+                if not (
+                    section_values := old_pack_ignore_content.get(key, [])
+                ) or not set(section_values) == set(value):
+                    files_to_test.add(key)
+
+            all_files_mapper = {
+                file.name: str(file)
+                for file in all_files
+                if is_file_in_pack(file, pack_name)
+            }
+            for file in files_to_test:
+                if file in all_files_mapper:
+                    all_files_edited_in_pack_ignore.add(all_files_mapper.get(file))
+        return all_files_edited_in_pack_ignore
+
+    def validate_modified_files(self, modified_files):
+        logger.info(
+            "\n[cyan]================= Running validation on modified files =================[/cyan]"
+        )
+        valid_files = set()
+        all_files_edited_in_pack_ignore = self.get_all_files_edited_in_pack_ignore(
+            modified_files
+        )
+        for file_path in modified_files.union(all_files_edited_in_pack_ignore):
+            # handle renamed files
+            old_file_path, file_path = self.get_old_file_path(file_path)
 
             pack_name = get_pack_name(file_path)
             valid_files.add(
                 self.run_validations_on_file(
                     file_path,
                     self.get_error_ignore_list(pack_name),
-                    is_modified=True,
+                    is_modified=file_path in modified_files,
                     old_file_path=old_file_path,
                 )
             )
+
         return all(valid_files)
 
     def validate_added_files(self, added_files, modified_files):
         logger.info(
-            f"\n[cyan]================= Running validation on newly added files =================[/cyan]"
+            "\n[cyan]================= Running validation on newly added files =================[/cyan]"
         )
 
         valid_files = set()
@@ -2038,7 +2118,7 @@ class ValidateManager:
 
         """
         file_path = str(file_path)
-        file_dict = get_remote_file(file_path, tag="master")
+        file_dict = get_remote_file(file_path, tag=DEMISTO_GIT_PRIMARY_BRANCH)
         file_type = find_type(file_path, file_dict)
         return file_type in FileType_ALLOWED_TO_DELETE or not file_type
 
@@ -2054,7 +2134,7 @@ class ValidateManager:
         if added_files:
             deleted_file_path = str(deleted_file_path)
             deleted_file_dict = get_remote_file(
-                deleted_file_path, tag="master"
+                deleted_file_path, tag=DEMISTO_GIT_PRIMARY_BRANCH
             )  # for detecting deleted files
             if deleted_file_type := find_type(deleted_file_path, deleted_file_dict):
                 deleted_file_id = _get_file_id(
@@ -2065,8 +2145,7 @@ class ValidateManager:
                         file = str(file)
                         file_type = find_type(file)
                         if file_type == deleted_file_type:
-                            file_suffix = Path(deleted_file_path).suffix
-                            file_dict = get_file(file, file_suffix)
+                            file_dict = get_file(file)
                             if deleted_file_id == _get_file_id(
                                 file_type.value, file_dict
                             ):
@@ -2076,7 +2155,7 @@ class ValidateManager:
     @error_codes("BA115")
     def validate_deleted_files(self, deleted_files: set, added_files: set) -> bool:
         logger.info(
-            f"\n[cyan]================= Checking for prohibited deleted files =================[/cyan]"
+            "\n[cyan]================= Checking for prohibited deleted files =================[/cyan]"
         )
 
         is_valid = True
@@ -2115,7 +2194,7 @@ class ValidateManager:
         self, modified_files, added_files, old_format_files, changed_meta_files
     ):
         logger.info(
-            f"\n[cyan]================= Running validation on changed pack unique files =================[/cyan]"
+            "\n[cyan]================= Running validation on changed pack unique files =================[/cyan]"
         )
         valid_pack_files = set()
 
@@ -2184,7 +2263,7 @@ class ValidateManager:
             bool. True if no duplications found, false otherwise
         """
         logger.info(
-            f"\n[cyan]================= Verifying no duplicated release notes =================[/cyan]"
+            "\n[cyan]================= Verifying no duplicated release notes =================[/cyan]"
         )
         added_rn = set()
         for file in added_files:
@@ -2307,10 +2386,10 @@ class ValidateManager:
 
             # Otherwise, use git to get the primary branch
             _, branch = self.git_util.handle_prev_ver()
-            return "origin/" + branch
+            return f"{DEMISTO_GIT_UPSTREAM}/" + branch
 
         # Default to 'origin/master'
-        return "origin/master"
+        return f"{DEMISTO_GIT_UPSTREAM}/master"
 
     def setup_git_params(self):
         """Setting up the git relevant params"""
@@ -2343,7 +2422,7 @@ class ValidateManager:
             self.always_valid = True
 
         # On main or master don't check RN
-        elif self.branch_name in ["master", "main"]:
+        elif self.branch_name in ["master", "main", DEMISTO_GIT_PRIMARY_BRANCH]:
             self.skip_pack_rn_validation = True
             error_message, error_code = Errors.running_on_master_with_git()
             if self.handle_error(
@@ -2365,7 +2444,7 @@ class ValidateManager:
 
             if self.branch_name in [
                 self.prev_ver,
-                self.prev_ver.replace("origin/", ""),
+                self.prev_ver.replace(f"{DEMISTO_GIT_UPSTREAM}/", ""),
             ]:  # pragma: no cover
                 logger.info("Running only on last commit")
 
@@ -2544,7 +2623,7 @@ class ValidateManager:
         :returns a tuple(string, string, bool) where
             - the first element is the path of the file that should be returned, if the file isn't relevant then returns an empty string
             - the second element is the old path in case the file was renamed, if the file wasn't renamed then return an empty string
-            - true if the file type is supported, false otherwise
+            - true if the file type is supported OR file type is not supported, but should be ignored, false otherwise
         """
         irrelevant_file_output = "", "", True
         if file_path.split(os.path.sep)[0] in (
@@ -2561,20 +2640,17 @@ class ValidateManager:
         if file_type == FileType.CONF_JSON:
             return file_path, "", True
 
+        if file_type == FileType.VULTURE_WHITELIST:
+            return irrelevant_file_output
+
         if self.ignore_files_irrelevant_for_validation(
             file_path, check_metadata_files=check_metadata_files
         ):
             return irrelevant_file_output
 
-        if not file_type:
-            if str(file_path).endswith(".png"):
-                error_message, error_code = Errors.invalid_image_name_or_location()
-            else:
-                error_message, error_code = Errors.file_type_not_supported(
-                    None, file_path
-                )
-
-            self.handle_error(error_message, error_code, file_path=file_path)
+        if not self.is_valid_file_type(
+            file_type, file_path, self.get_error_ignore_list(get_pack_name(file_path))
+        ):
             return "", "", False
 
         # redirect non-test code files to the associated yml file
@@ -2701,20 +2777,21 @@ class ValidateManager:
                 self.create_ignored_errors_list(PRESET_ERROR_TO_CHECK.get(key))
             )
 
-    def get_error_ignore_list(self, pack_name):
+    def get_error_ignore_list(self, pack_name="", config=None):
         ignored_errors_list: dict = {}
         if pack_name:
-            if config := get_pack_ignore_content(pack_name):
-                # create file specific ignored errors list
-                for section in filter(
-                    lambda section: section.startswith("file:"), config.sections()
-                ):
-                    file_name = section[5:]
-                    ignored_errors_list[file_name] = []
-                    for key in config[section]:
-                        self.add_ignored_errors_to_list(
-                            config, section, key, ignored_errors_list[file_name]
-                        )
+            config = get_pack_ignore_content(pack_name)
+        if config:
+            # create file specific ignored errors list
+            for section in filter(
+                lambda section: section.startswith("file:"), config.sections()
+            ):
+                file_name = section[len("file:") :]
+                ignored_errors_list[file_name] = []
+                for key in config[section]:
+                    self.add_ignored_errors_to_list(
+                        config, section, key, ignored_errors_list[file_name]
+                    )
 
         return ignored_errors_list
 
@@ -2781,6 +2858,7 @@ class ValidateManager:
                 FileType.DOC_IMAGE,
                 FileType.AUTHOR_IMAGE,
                 FileType.CONTRIBUTORS,
+                FileType.PACK_IGNORE,
             },
         )
 
@@ -2830,7 +2908,7 @@ class ValidateManager:
             str: is_set file path
         """
         id_set = {}
-        if not os.path.isfile(id_set_path):
+        if not Path(id_set_path).is_file():
             if not skip_id_set_creation:
                 id_set, _, _ = IDSetCreator(print_logs=False).create_id_set()
 

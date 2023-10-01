@@ -52,7 +52,7 @@ def validate_unknown_content(
         RETURN content_item_from, collect(r) as relationships, collect(n) as nodes_to
         """
     return {
-        int(item.get("content_item_from").id): Neo4jRelationshipResult(
+        item.get("content_item_from").element_id: Neo4jRelationshipResult(
             node_from=item.get("content_item_from"),
             relationships=item.get("relationships"),
             nodes_to=item.get("nodes_to"),
@@ -77,14 +77,14 @@ AND n.fromversion <> "{DEFAULT_CONTENT_ITEM_FROM_VERSION}"  // skips types with 
         )
     query += f"""
 OPTIONAL MATCH (n2{{object_id: n.object_id, content_type: n.content_type}})
-WHERE id(n) <> id(n2)
+WHERE elementId(n) <> elementId(n2)
 AND {versioned('content_item_from.fromversion')} >= {versioned('n2.fromversion')}
 
 WITH content_item_from, r, n, n2
 WHERE NOT exists((content_item_from)-[:{RelationshipType.USES}{{mandatorily:true}}]->(n2))
 RETURN content_item_from, collect(r) as relationships, collect(n) as nodes_to"""
     return {
-        int(item.get("content_item_from").id): Neo4jRelationshipResult(
+        item.get("content_item_from").element_id: Neo4jRelationshipResult(
             node_from=item.get("content_item_from"),
             relationships=item.get("relationships"),
             nodes_to=item.get("nodes_to"),
@@ -108,14 +108,14 @@ AND {versioned('content_item_from.toversion')} {op} {versioned(GENERAL_DEFAULT_F
         )
     query += f"""
 OPTIONAL MATCH (n2{{object_id: n.object_id, content_type: n.content_type}})
-WHERE id(n) <> id(n2)
+WHERE elementId(n) <> elementId(n2)
 AND {versioned('content_item_from.toversion')} <= {versioned('n2.toversion')}
 
 WITH content_item_from, r, n, n2
 WHERE NOT exists((content_item_from)-[:{RelationshipType.USES}{{mandatorily:true}}]->(n2))
 RETURN content_item_from, collect(r) as relationships, collect(n) as nodes_to"""
     return {
-        int(item.get("content_item_from").id): Neo4jRelationshipResult(
+        item.get("content_item_from").element_id: Neo4jRelationshipResult(
             node_from=item.get("content_item_from"),
             relationships=item.get("relationships"),
             nodes_to=item.get("nodes_to"),
@@ -125,7 +125,6 @@ RETURN content_item_from, collect(r) as relationships, collect(n) as nodes_to"""
 
 
 def get_items_using_deprecated(tx: Transaction, file_paths: List[str]):
-
     return get_items_using_deprecated_commands(
         tx, file_paths
     ) + get_items_using_deprecated_content_items(tx, file_paths)
@@ -138,7 +137,7 @@ def get_items_using_deprecated_commands(tx: Transaction, file_paths: List[str]):
     command_query = f"""// Returning all the items which using deprecated commands
 MATCH (p{{deprecated: false}})-[:USES]->(c:Command)<-[:HAS_COMMAND{{deprecated: true}}]-(i:Integration) WHERE NOT p.is_test
 OPTIONAL MATCH (i2:Integration)-[:HAS_COMMAND{{deprecated: false}}]->(c)
-WHERE id(i) <> id(i2)
+WHERE elementId(i) <> elementId(i2)
 WITH p, c, i2
 WHERE i2 IS NULL
 {files_filter}
@@ -174,7 +173,7 @@ WHERE not all(elem IN content_item_from.marketplaces WHERE elem IN n.marketplace
         query += f"AND (p1.object_id in {pack_ids} OR p2.object_id in {pack_ids})"
     query += f"""
 OPTIONAL MATCH (n2{{object_id: n.object_id, content_type: n.content_type}})
-WHERE id(n) <> id(n2)
+WHERE elementId(n) <> elementId(n2)
 AND all(elem IN content_item_from.marketplaces WHERE elem IN n2.marketplaces)
 
 WITH content_item_from, r, n, n2
@@ -182,7 +181,7 @@ WHERE NOT exists((content_item_from)-[:{RelationshipType.USES}{{mandatorily:true
 RETURN content_item_from, collect(r) as relationships, collect(n) as nodes_to
 """
     return {
-        int(item.get("content_item_from").id): Neo4jRelationshipResult(
+        item.get("content_item_from").element_id: Neo4jRelationshipResult(
             node_from=item.get("content_item_from"),
             relationships=item.get("relationships"),
             nodes_to=item.get("nodes_to"),
@@ -201,7 +200,7 @@ WHERE a.name = b.name
     if file_paths:
         query += f"AND a.path in {file_paths}"
     query += """
-AND id(a) <> id(b)
+AND elementId(a) <> elementId(b)
 RETURN a.object_id AS a_object_id, collect(b.object_id) AS b_object_ids
 """
     return [
@@ -249,7 +248,6 @@ def validate_core_packs_dependencies(
     marketplace: MarketplaceVersions,
     core_pack_list: List[str],
 ):
-
     query = f"""// Returns DEPENDS_ON relationships to content items who are not core packs
     MATCH (pack1)-[r:DEPENDS_ON{{mandatorily:true}}]->(pack2)
     WHERE pack1.object_id in {pack_ids}
@@ -260,7 +258,29 @@ def validate_core_packs_dependencies(
     RETURN pack1, collect(r) as relationships, collect(pack2) as nodes_to
     """
     return {
-        int(item.get("pack1").id): Neo4jRelationshipResult(
+        item.get("pack1").element_id: Neo4jRelationshipResult(
+            node_from=item.get("pack1"),
+            relationships=item.get("relationships"),
+            nodes_to=item.get("nodes_to"),
+        )
+        for item in run_query(tx, query)
+    }
+
+
+def validate_hidden_pack_dependencies(
+    tx: Transaction,
+    pack_ids: List[str],
+):
+    query = f"""// Returns DEPENDS_ON relationships to packs which are hidden
+MATCH (pack1)-[r:{RelationshipType.DEPENDS_ON}{{mandatorily:true}}]->(pack2{{hidden: true}})
+WHERE {f'(pack1.object_id in {pack_ids} OR pack2.object_id in {pack_ids}) AND' if pack_ids else ""}
+NOT r.is_test
+and NOT pack1.hidden
+and NOT pack1.deprecated
+RETURN pack1, collect(r) as relationships, collect(pack2) as nodes_to
+        """
+    return {
+        item.get("pack1").element_id: Neo4jRelationshipResult(
             node_from=item.get("pack1"),
             relationships=item.get("relationships"),
             nodes_to=item.get("nodes_to"),
@@ -275,7 +295,7 @@ def validate_duplicate_ids(
     query = f"""// Returns duplicate content items with same id
     MATCH (content_item)
     MATCH (duplicate_content_item)
-    WHERE id(content_item) <> id(duplicate_content_item)
+    WHERE elementId(content_item) <> elementId(duplicate_content_item)
     AND content_item.object_id = duplicate_content_item.object_id
     AND content_item.content_type = duplicate_content_item.content_type
     AND {is_target_available('content_item', 'duplicate_content_item')}

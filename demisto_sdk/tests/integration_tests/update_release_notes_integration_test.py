@@ -1,5 +1,4 @@
 import logging
-import os
 from os.path import join
 from pathlib import Path
 
@@ -88,13 +87,12 @@ def test_update_release_notes_new_integration(demisto_client, mocker):
     )
     mocker.patch.object(UpdateRN, "get_master_version", return_value="1.0.0")
 
-    if os.path.exists(rn_path):
-        os.remove(rn_path)
+    Path(rn_path).unlink(missing_ok=True)
     result = runner.invoke(
         main, [UPDATE_RN_COMMAND, "-i", join("Packs", "FeedAzureValid")]
     )
     assert result.exit_code == 0
-    assert os.path.isfile(rn_path)
+    assert Path(rn_path).is_file()
     assert not result.exception
     assert all(
         [
@@ -160,15 +158,14 @@ def test_update_release_notes_modified_integration(demisto_client, mocker):
     )
     mocker.patch.object(UpdateRN, "get_master_version", return_value="1.0.0")
 
-    if os.path.exists(rn_path):
-        os.remove(rn_path)
+    Path(rn_path).unlink(missing_ok=True)
 
     result = runner.invoke(
         main, [UPDATE_RN_COMMAND, "-i", join("Packs", "FeedAzureValid")]
     )
 
     assert result.exit_code == 0
-    assert os.path.isfile(rn_path)
+    assert Path(rn_path).is_file()
     assert not result.exception
     assert all(
         [
@@ -226,15 +223,14 @@ def test_update_release_notes_incident_field(demisto_client, mocker):
     )
     mocker.patch.object(UpdateRN, "get_master_version", return_value="1.0.0")
 
-    if os.path.exists(rn_path):
-        os.remove(rn_path)
+    Path(rn_path).unlink(missing_ok=True)
 
     result = runner.invoke(
         main, [UPDATE_RN_COMMAND, "-i", join("Packs", "FeedAzureValid")]
     )
 
     assert result.exit_code == 0
-    assert os.path.isfile(rn_path)
+    assert Path(rn_path).is_file()
     assert not result.exception
     assert all(
         [
@@ -291,8 +287,7 @@ def test_update_release_notes_unified_yml_integration(demisto_client, mocker):
     )
     mocker.patch.object(UpdateRN, "get_master_version", return_value="1.0.0")
 
-    if os.path.exists(rn_path):
-        os.remove(rn_path)
+    Path(rn_path).unlink(missing_ok=True)
 
     result = runner.invoke(main, [UPDATE_RN_COMMAND, "-i", join("Packs", "VMware")])
     assert result.exit_code == 0
@@ -307,7 +302,7 @@ def test_update_release_notes_unified_yml_integration(demisto_client, mocker):
         ]
     )
 
-    assert os.path.isfile(rn_path)
+    assert Path(rn_path).is_file()
     with open(rn_path) as f:
         rn = f.read()
     assert expected_rn == rn
@@ -423,7 +418,7 @@ def test_update_release_notes_existing(demisto_client, mocker):
     )
 
     assert result.exit_code == 0
-    assert os.path.exists(rn_path)
+    assert Path(rn_path).exists()
     assert not result.exception
     assert str_in_call_args_list(
         logger_info.call_args_list,
@@ -432,7 +427,7 @@ def test_update_release_notes_existing(demisto_client, mocker):
 
     with open(rn_path) as f:
         rn = f.read()
-    os.remove(rn_path)
+    Path(rn_path).unlink()
     assert expected_rn == rn
 
 
@@ -473,12 +468,13 @@ def test_update_release_notes_modified_apimodule(demisto_client, repo, mocker):
 
         def search(self, object_id, all_level_imports):
             # Simulate the graph search
-            if object_id == "ApiModules_script":
-                return [MockedApiModuleNode()]
+            if "ApiModules_script" in object_id:
+                return [MockedApiModuleNode(id_) for id_ in object_id]
             return []
 
     class MockedApiModuleNode:
-        def __init__(self):
+        def __init__(self, object_id):
+            self.object_id = object_id
             self.imported_by = [
                 MockedDependencyNode().integration
             ]  # Simulate a list of dependencies
@@ -487,10 +483,12 @@ def test_update_release_notes_modified_apimodule(demisto_client, repo, mocker):
         integration = taxii_feed_integration
 
     mocker.patch(
-        "demisto_sdk.commands.update_release_notes.update_rn.Neo4jContentGraphInterface",
+        "demisto_sdk.commands.update_release_notes.update_rn.ContentGraphInterface",
         return_value=MockedContentGraphInterface(),
     )
-
+    mocker.patch(
+        "demisto_sdk.commands.update_release_notes.update_rn.update_content_graph",
+    )
     modified_files = {api_module_script_path}
     runner = CliRunner(mix_stderr=False)
 
@@ -829,8 +827,7 @@ def test_force_update_release(demisto_client, mocker, repo):
     logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
 
     rn_path = join(THINKCANARY_RN_FOLDER, "1_0_1.md")
-    if os.path.exists(rn_path):
-        os.remove(rn_path)
+    Path(rn_path).unlink(missing_ok=True)
     mocker.patch.object(UpdateRN, "is_bump_required", return_value=True)
     mocker.patch.object(
         ValidateManager,
@@ -869,4 +866,39 @@ def test_force_update_release(demisto_client, mocker, repo):
 
     with open(rn_path) as f:
         rn = f.read()
-    assert "##### ThinkCanary\n\n- %%UPDATE_RN%%\n" == rn
+    assert "## ThinkCanary\n\n- %%UPDATE_RN%%\n" == rn
+
+
+def test_update_release_notes_only_pack_ignore_changed(mocker, pack):
+    """
+    Given
+    - only .pack-ignore file that was changed within a pack
+
+    When
+    - Running demisto-sdk update-release-notes command with -i flag
+
+    Then
+    - Ensure no release-notes need to be updated
+    """
+    mocker.patch.object(
+        UpdateReleaseNotesManager,
+        "get_git_changed_files",
+        return_value=({pack.pack_ignore.path}, set(), set()),
+    )
+    mocker.patch.object(UpdateRN, "is_bump_required", return_value=True)
+    mocker.patch.object(
+        UpdateRN,
+        "bump_version_number",
+        return_value=("1.2.3", {"currentVersion": "1.2.3"}),
+    )
+
+    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+
+    runner = CliRunner(mix_stderr=True)
+    result = runner.invoke(main, [UPDATE_RN_COMMAND, "-g"])
+    assert result.exit_code == 0
+    assert not result.exception
+    assert str_in_call_args_list(
+        logger_info.call_args_list,
+        "No changes that require release notes were detected. If such changes were made, please commit the changes and rerun the command",
+    )

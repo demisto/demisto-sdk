@@ -1,5 +1,6 @@
 import re
-from distutils.version import LooseVersion
+
+from packaging.version import Version
 
 from demisto_sdk.commands.common.constants import DEFAULT_CONTENT_ITEM_FROM_VERSION
 from demisto_sdk.commands.common.errors import Errors
@@ -101,7 +102,7 @@ class IncidentTypeValidator(ContentEntityValidator):
             from_version = self.current_file.get(
                 "fromVersion", DEFAULT_CONTENT_ITEM_FROM_VERSION
             )
-            if LooseVersion(from_version) >= LooseVersion("5.0.0"):
+            if Version(from_version) >= Version("5.0.0"):
                 for field in fields_to_include:
                     int_field = self.current_file.get(field, -1)
                     if not isinstance(int_field, int) or int_field < 0:

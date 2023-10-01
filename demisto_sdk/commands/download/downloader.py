@@ -54,8 +54,9 @@ from demisto_sdk.commands.common.tools import (
     get_json,
     get_yaml,
     get_yml_paths_in_dir,
+    is_sdk_defined_working_offline,
     retrieve_file_ending,
-    safe_write_unicode,
+    write_dict,
 )
 from demisto_sdk.commands.format.format_module import format_manager
 from demisto_sdk.commands.init.initiator import Initiator
@@ -181,6 +182,11 @@ class Downloader:
         self.num_added_files = 0
         self.init = init
         self.keep_empty_folders = keep_empty_folders
+        if is_sdk_defined_working_offline() and self.run_format:
+            self.run_format = False
+            logger.info(
+                "format is not supported when the DEMISTO_SDK_OFFLINE_ENV environment variable is set, skipping it."
+            )
 
     def download(self) -> int:
         """
@@ -504,11 +510,8 @@ class Downloader:
             for item in system_items_list:  # type: ignore
                 file_name: str = self.build_file_name(item)
                 file_path: str = os.path.join(self.system_content_temp_dir, file_name)
-                with open(file_path, "w") as file:
-                    if file_path.endswith("json"):
-                        json.dump(item, file)
-                    else:
-                        yaml.dump(item, file)
+                write_dict(file_path, data=item)
+
             return True
 
         except ApiException as e:
@@ -646,9 +649,8 @@ class Downloader:
         """
         output_pack_path = self.output_pack_path
         if not (
-            os.path.isdir(output_pack_path)
-            and os.path.basename(os.path.dirname(os.path.abspath(output_pack_path)))
-            == "Packs"
+            Path(output_pack_path).is_dir()
+            and Path(output_pack_path).absolute().parent.name == "Packs"
         ):
             logger.info(
                 f"[red]Path {output_pack_path} is not a valid Path pack. The designated output pack's path is"
@@ -663,9 +665,7 @@ class Downloader:
         For example check out the PACK_CONTENT variable in downloader_test.py
         """
         for content_entity_path in get_child_directories(self.output_pack_path):
-            raw_content_entity: str = os.path.basename(
-                os.path.normpath(content_entity_path)
-            )
+            raw_content_entity: str = Path(os.path.normpath(content_entity_path)).name
             content_entity: str = raw_content_entity
             if content_entity in (INTEGRATIONS_DIR, SCRIPTS_DIR):
                 # If entity is of type integration/script it will have dirs, otherwise files
@@ -768,7 +768,7 @@ class Downloader:
         ):
             if os.path.isdir(entity_instance_path):
                 _, main_file_path = get_yml_paths_in_dir(entity_instance_path)
-            elif os.path.isfile(entity_instance_path):
+            elif Path(entity_instance_path).is_file():
                 main_file_path = entity_instance_path
 
             if main_file_path:
@@ -777,7 +777,7 @@ class Downloader:
         # Entities which are json files (md files are ignored - changelog/readme)
         else:
             if (
-                os.path.isfile(entity_instance_path)
+                Path(entity_instance_path).is_file()
                 and retrieve_file_ending(entity_instance_path) == "json"
             ):
                 main_file_data = get_json(entity_instance_path)
@@ -1184,7 +1184,7 @@ class Downloader:
         file_ending: str = custom_content_object["file_ending"]
 
         dir_output_path: str = os.path.join(self.output_pack_path, file_entity)
-        file_output_name: str = os.path.basename(file_path)
+        file_output_name: str = Path(file_path).name
         file_output_path: str = os.path.join(dir_output_path, file_output_name)
         try:
             shutil.move(src=file_path, dst=file_output_path)
@@ -1268,16 +1268,14 @@ class Downloader:
             splitter="dot",
         )
 
-        file_data = get_file(output_path, type_of_file=file_ending, clear_cache=True)
+        file_data = get_file(output_path, clear_cache=True)
         if pack_obj_data:
             merge(file_data, preserved_data)
 
         if file_ending == "yml":
-            safe_write_unicode(lambda f: yaml.dump(file_data, f), Path(output_path))
+            write_dict(output_path, data=file_data, handler=yaml)
         elif file_ending == "json":
-            safe_write_unicode(
-                lambda f: json.dump(data=file_data, fp=f, indent=4), Path(output_path)
-            )
+            write_dict(output_path, data=file_data, handler=json, indent=4)
         else:
             raise RuntimeError(f"cannot merge file extension {file_ending}")
 

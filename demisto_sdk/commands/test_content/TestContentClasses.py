@@ -8,8 +8,8 @@ import time
 import urllib.parse
 import uuid
 from copy import deepcopy
-from distutils.version import LooseVersion
 from math import ceil
+from pathlib import Path
 from pprint import pformat
 from queue import Empty, Queue
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
@@ -20,6 +20,7 @@ import requests
 import urllib3
 from demisto_client.demisto_api import DefaultApi, Incident
 from demisto_client.demisto_api.rest import ApiException
+from packaging.version import Version
 from slack_sdk import WebClient as SlackClient
 
 from demisto_sdk.commands.common.constants import (
@@ -282,9 +283,9 @@ class TestPlaybook:
 
         def version_mismatch():
             if not (
-                LooseVersion(self.configuration.from_version)
-                <= LooseVersion(self.build_context.server_numeric_version)
-                <= LooseVersion(self.configuration.to_version)
+                Version(self.configuration.from_version)
+                <= Version(self.build_context.server_numeric_version)
+                <= Version(self.configuration.to_version)
             ):
                 self.build_context.logging_module.warning(
                     f"Test {self} ignored due to version mismatch "
@@ -890,7 +891,7 @@ class BuildContext:
 
     @staticmethod
     def _load_env_results_json():
-        if not os.path.isfile(ENV_RESULTS_PATH):
+        if not Path(ENV_RESULTS_PATH).is_file():
             return {}
 
         with open(ENV_RESULTS_PATH) as json_file:
@@ -930,6 +931,7 @@ class BuildContext:
             "Server 6.9": "6.9.0",
             "Server 6.10": "6.10.0",
             "Server 6.11": "6.11.0",
+            "Server 6.12": "6.12.0",
             "Server Master": default_version,
             "XSIAM 1.2": "6.9.0",
             "XSIAM Master": default_version,
@@ -2674,7 +2676,6 @@ class ServerContext:
         time.sleep(10)
 
     def execute_tests(self):
-
         try:
             self.build_context.logging_module.info(
                 f"Starts tests with server url - {get_ui_url(self.server_url)}",
@@ -2821,7 +2822,7 @@ def replace_external_playbook_configuration(
     # Checking server version
     server_version = get_demisto_version(client)
 
-    if LooseVersion(server_version.base_version) < LooseVersion("6.2.0"):  # type: ignore
+    if Version(server_version.base_version) < Version("6.2.0"):  # type: ignore
         logger_module.info(
             "External Playbook not supported in versions previous to 6.2.0, skipping re-configuration."
         )

@@ -1,6 +1,7 @@
 import logging
 import os
 from contextlib import nullcontext as does_not_raise
+from pathlib import Path
 
 import pytest
 import requests_mock
@@ -182,7 +183,7 @@ class TestPackUniqueFilesValidator:
         Then
         - Ensure validate found errors.
         """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+        logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
         monkeypatch.setenv("COLUMNS", "1000")
 
         pack_metadata_no_email_and_url = PACK_METADATA_PARTNER.copy()
@@ -216,7 +217,7 @@ class TestPackUniqueFilesValidator:
             runner = CliRunner(mix_stderr=False)
             runner.invoke(main, [VALIDATE_CMD, "-i", pack.path], catch_exceptions=False)
         assert str_in_call_args_list(
-            logger_info.call_args_list,
+            logger_error.call_args_list,
             "Contributed packs must include email or url",
         )
 
@@ -241,7 +242,7 @@ class TestPackUniqueFilesValidator:
         Then
         - Ensure validate finds errors accordingly.
         """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+        logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
         monkeypatch.setenv("COLUMNS", "1000")
 
         pack_metadata_changed_url = PACK_METADATA_PARTNER.copy()
@@ -278,9 +279,9 @@ class TestPackUniqueFilesValidator:
             "The metadata URL leads to a GitHub repo instead of a support page."
         )
         if is_valid:
-            assert not str_in_call_args_list(logger_info.call_args_list, error_text)
+            assert not str_in_call_args_list(logger_error.call_args_list, error_text)
         else:
-            assert str_in_call_args_list(logger_info.call_args_list, error_text)
+            assert str_in_call_args_list(logger_error.call_args_list, error_text)
 
     def test_validate_partner_contribute_pack_metadata_price_change(
         self, mocker, monkeypatch, repo
@@ -295,7 +296,7 @@ class TestPackUniqueFilesValidator:
         Then
         - Ensure validate found errors.
         """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+        logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
         monkeypatch.setenv("COLUMNS", "1000")
 
         pack_metadata_price_changed = PACK_METADATA_PARTNER.copy()
@@ -328,7 +329,7 @@ class TestPackUniqueFilesValidator:
             runner = CliRunner(mix_stderr=False)
             runner.invoke(main, [VALIDATE_CMD, "-i", pack.path], catch_exceptions=False)
         assert str_in_call_args_list(
-            logger_info.call_args_list,
+            logger_error.call_args_list,
             "The pack price was changed from 2 to 3 - revert the change",
         )
 
@@ -759,7 +760,7 @@ class TestPackUniqueFilesValidator:
             active_branch = "master"
 
         mocker.patch(
-            "demisto_sdk.commands.common.hook_validations.pack_unique_files.Repo",
+            "demisto_sdk.commands.common.git_util.Repo",
             return_value=MyRepo,
         )
         res = self.validator.get_master_private_repo_meta_file(
@@ -809,12 +810,10 @@ class TestPackUniqueFilesValidator:
             git = gitClass()
 
         mocker.patch(
-            "demisto_sdk.commands.common.hook_validations.pack_unique_files.Repo",
+            "demisto_sdk.commands.common.git_util.Repo",
             return_value=MyRepo(),
         )
-        mocker.patch(
-            "demisto_sdk.commands.common.tools.git.Repo", return_value=MyRepo()
-        )
+
         with ChangeCWD(repo.path):
             res = self.validator.get_master_private_repo_meta_file(
                 str(pack.pack_metadata.path)
@@ -863,11 +862,8 @@ class TestPackUniqueFilesValidator:
             git = gitClass()
 
         mocker.patch(
-            "demisto_sdk.commands.common.hook_validations.pack_unique_files.Repo",
+            "demisto_sdk.commands.common.git_util.Repo",
             return_value=MyRepo(),
-        )
-        mocker.patch(
-            "demisto_sdk.commands.common.tools.git.Repo", return_value=MyRepo()
         )
         res = self.validator.get_master_private_repo_meta_file(
             str(pack.pack_metadata.path)
@@ -924,13 +920,6 @@ class TestPackUniqueFilesValidator:
 
             git = gitClass()
 
-        mocker.patch(
-            "demisto_sdk.commands.common.hook_validations.pack_unique_files.Repo",
-            return_value=MyRepo(),
-        )
-        mocker.patch(
-            "demisto_sdk.commands.common.tools.git.Repo", return_value=MyRepo()
-        )
         mocker.patch("demisto_sdk.commands.common.git_util.Repo", return_value=MyRepo())
 
         with ChangeCWD(repo.path):
@@ -1099,32 +1088,32 @@ class TestPackUniqueFilesValidator:
             errors = self.validator.get_errors()
         assert not result
         assert (
-            "Detected the following image relative path: ![Identity with High Risk Score](doc_files/High_Risk_User.png)"
+            "Detected the following image relative path: doc_files/High_Risk_User.png"
             in errors
         )
         assert (
-            "Detected the following image relative path: ![Identity with High Risk Score](home/test1/test2/doc_files/High_Risk_User.png)"
+            "Detected the following image relative path: home/test1/test2/doc_files/High_Risk_User.png"
             in errors
         )
         assert (
-            "Detected the following image relative path: (../../doc_files/Access_investigation_-_Generic_4_5.png)"
+            "Detected the following image relative path: ../../doc_files/Access_investigation_-_Generic_4_5.png"
             in errors
         )
         assert (
-            "Image link was not found, either insert it or remove it:\n![Account Enrichment](Insert the link to your image here)"
+            "Image link was not found, either insert it or remove it:\nInsert the link to your image here"
             in errors
         )
 
         assert (
-            "please repair it:\n![Identity with High Risk Score](https://github.com/demisto/content/raw/test1.png)"
+            "please repair it:\nhttps://github.com/demisto/content/raw/test1.png"
             in errors
         )
         assert (
-            "please repair it:\n![Identity with High Risk Score](https://raw.githubusercontent.com/demisto/content/raw/test1.png)"
+            "please repair it:\nhttps://raw.githubusercontent.com/demisto/content/raw/test1.png"
             in errors
         )
         assert (
-            "please repair it:\n(https://raw.githubusercontent.com/demisto/content/raw/test1.jpg)"
+            "please repair it:\nhttps://raw.githubusercontent.com/demisto/content/raw/test1.jpg"
             in errors
         )
         # this path is not an image path and should not be shown.
@@ -1242,7 +1231,7 @@ class TestPackUniqueFilesValidator:
         self.validator.pack_path = pack.path
 
         with ChangeCWD(repo.path):
-            os.remove(pack.readme.path)
+            Path(pack.readme.path).unlink()
             assert self.validator.validate_pack_readme_and_pack_description()
             assert (
                 '"README.md" file does not exist, create one in the root of the pack'
@@ -1339,7 +1328,7 @@ class TestPackUniqueFilesValidator:
         author_image_path = pack.author_image.path
 
         with ChangeCWD(repo.path):
-            os.remove(author_image_path)
+            Path(author_image_path).unlink()
             res = self.validator.validate_author_image_exists()
             assert not res
             assert (

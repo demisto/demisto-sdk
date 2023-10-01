@@ -1,7 +1,7 @@
 import logging
-import os
 from contextlib import contextmanager
 from datetime import datetime
+from pathlib import Path
 from shutil import rmtree
 
 import pytest
@@ -157,7 +157,7 @@ def test_price_setter_bad_int(new_price, expected_price):
 
 
 def test_dump_with_price(mocker):
-    def mock_json_dump(file_content, metadata_file, indent):
+    def mock_json_dump(file_content, metadata_file, indent, sort_keys):
         assert file_content["premium"] is not None
         assert file_content["vendorId"]
         assert file_content["vendorName"]
@@ -318,7 +318,7 @@ def test_load_user_metadata_no_metadata_file(repo, monkeypatch, caplog):
             "vendorName": "vendorName",
         }
     )
-    os.remove(pack_1.pack_metadata.path)
+    Path(pack_1.pack_metadata.path).unlink()
 
     content_object_pack = Pack(pack_1.path)
     pack_1_metadata = content_object_pack.metadata

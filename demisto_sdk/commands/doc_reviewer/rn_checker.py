@@ -1,8 +1,25 @@
 import pprint
 from typing import List
 
+from demisto_sdk.commands.common.constants import (
+    XPANSE_INLINE_PREFIX_TAG,
+    XPANSE_INLINE_SUFFIX_TAG,
+    XPANSE_PREFIX_TAG,
+    XPANSE_SUFFIX_TAG,
+    XSIAM_INLINE_PREFIX_TAG,
+    XSIAM_INLINE_SUFFIX_TAG,
+    XSIAM_PREFIX_TAG,
+    XSIAM_SUFFIX_TAG,
+    XSOAR_INLINE_PREFIX_TAG,
+    XSOAR_INLINE_SUFFIX_TAG,
+    XSOAR_PREFIX_TAG,
+    XSOAR_SAAS_INLINE_PREFIX_TAG,
+    XSOAR_SAAS_INLINE_SUFFIX_TAG,
+    XSOAR_SAAS_PREFIX_TAG,
+    XSOAR_SAAS_SUFFIX_TAG,
+    XSOAR_SUFFIX_TAG,
+)
 from demisto_sdk.commands.common.logger import logger
-from demisto_sdk.commands.common.tools import MarketplaceTagParser
 
 
 def print_template_examples():
@@ -117,12 +134,22 @@ class ReleaseNotesChecker:
     }
 
     MP_TAGS = {
-        MarketplaceTagParser.XSOAR_INLINE_PREFIX,
-        MarketplaceTagParser.XSOAR_INLINE_SUFFIX,
-        MarketplaceTagParser.XSIAM_INLINE_PREFIX,
-        MarketplaceTagParser.XSIAM_INLINE_SUFFIX,
-        MarketplaceTagParser.XPANSE_INLINE_PREFIX,
-        MarketplaceTagParser.XPANSE_INLINE_SUFFIX,
+        XSOAR_PREFIX_TAG,
+        XSOAR_SUFFIX_TAG,
+        XSOAR_INLINE_PREFIX_TAG,
+        XSOAR_INLINE_SUFFIX_TAG,
+        XSOAR_SAAS_PREFIX_TAG,
+        XSOAR_SAAS_SUFFIX_TAG,
+        XSOAR_SAAS_INLINE_PREFIX_TAG,
+        XSOAR_SAAS_INLINE_SUFFIX_TAG,
+        XSIAM_PREFIX_TAG,
+        XSIAM_SUFFIX_TAG,
+        XSIAM_INLINE_PREFIX_TAG,
+        XSIAM_INLINE_SUFFIX_TAG,
+        XPANSE_PREFIX_TAG,
+        XPANSE_SUFFIX_TAG,
+        XPANSE_INLINE_PREFIX_TAG,
+        XPANSE_INLINE_SUFFIX_TAG,
     }
 
     def __init__(
@@ -188,7 +215,7 @@ class ReleaseNotesChecker:
         is_new_content_item = False
 
         line: str
-        for line in self.file_content:
+        for line_number, line in enumerate(self.file_content, start=1):
             for tag in self.MP_TAGS:
                 line = line.replace(tag, "")
 
@@ -212,7 +239,7 @@ class ReleaseNotesChecker:
                 show_template_message = True
                 self.add_note(
                     line,
-                    "Line is not using one of our templates, consider "
+                    f"Line #{line_number} is not using one of our templates, consider "
                     "changing it to fit our standard.",
                 )
 
@@ -220,14 +247,16 @@ class ReleaseNotesChecker:
                 show_template_message = True
                 self.add_note(
                     line,
-                    "Line is using one of our banned templates, please change it to fit our standard.",
+                    f"Line #{line_number} is using one of our banned templates, please change it to fit our standard.",
                 )
 
             if line[0].isalpha() and not line[0].isupper():
-                self.add_note(line, "Line should start with capital letter.")
+                self.add_note(
+                    line, f"Line #{line_number} should start with capital letter."
+                )
 
             if line[-1] not in [".", ":"]:
-                self.add_note(line, "Line should end with a period (.)")
+                self.add_note(line, f"Line #{line_number} should end with a period (.)")
 
             if "bug" in line.lower():
                 self.add_note(

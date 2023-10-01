@@ -5,8 +5,12 @@ from typer.testing import CliRunner
 from demisto_sdk.commands.test_content.xsiam_tools.test_data import TestData
 
 ONE_MODEL_RULE_TEXT = """
+[RULE: rule_a]
+alter xdm.alert.rule_a = "value_a";
 [MODEL: dataset=fake_fakerson_raw]
-alter
+call rule_a
+| call rule_c
+| alter
     xdm.session_context_id = externalId,
     xdm.observer.action = act,
     xdm.event.outcome = outcome,
@@ -36,6 +40,11 @@ alter
     xdm.observer.product = _product,
     xdm.observer.vendor = _vendor,
     xdm.target.process.executable.file_type = fileType;
+[RULE: rule_b]
+alter xdm.alert.rule_b = "value_b";
+[RULE: rule_c]
+call rule_b
+| alter xdm.alert.rule_c = "value_c";
 """
 MULTI_DATASETS_MODEL_RULE_TEXT = """
 [MODEL: dataset=fake_fakerson_raw]
@@ -86,6 +95,7 @@ def test_init_test_data_create(pack):
     Then:
         - Ensure the test data file is created.
         - Ensure the test data file contains the correct number of events.
+        - Ensure the event fields are sorted.
     """
     from demisto_sdk.commands.test_content.test_modeling_rule.init_test_data import (
         app as init_test_data_app,
@@ -106,7 +116,11 @@ def test_init_test_data_create(pack):
     assert result.exit_code == 0
     assert test_data_file.exists() is True
     test_data = TestData.parse_file(test_data_file.as_posix())
+    event_fields: dict = test_data.data[0].expected_values or {}
     assert len(test_data.data) == count
+    assert dict(sorted(event_fields.items())) == test_data.data[0].expected_values
+    rule_fields = ["xdm.alert.rule_a", "xdm.alert.rule_b", "xdm.alert.rule_c"]
+    assert all(field in test_data.data[0].expected_values for field in rule_fields)
 
 
 def test_init_test_data_update_with_unchanged_modeling_rule(pack):
@@ -119,6 +133,7 @@ def test_init_test_data_update_with_unchanged_modeling_rule(pack):
         - The test data file exists.
     Then:
         - Ensure the test data file contains the correct number of events.
+        - Ensure the event fields are sorted.
     """
     from demisto_sdk.commands.test_content.test_modeling_rule.init_test_data import (
         app as init_test_data_app,
@@ -143,7 +158,9 @@ def test_init_test_data_update_with_unchanged_modeling_rule(pack):
     assert result.exit_code == 0
     assert test_data_file.exists() is True
     test_data = TestData.parse_file(test_data_file.as_posix())
+    first_event_fields: dict = test_data.data[0].expected_values or {}
     assert len(test_data.data) == count
+    assert dict(sorted(first_event_fields.items())) == test_data.data[0].expected_values
 
 
 def test_init_test_data_update_with_reduced_modeling_rule(pack):

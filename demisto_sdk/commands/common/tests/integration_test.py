@@ -1,6 +1,7 @@
 import logging
 import os
 from copy import deepcopy
+from pathlib import Path
 from typing import Any, Dict, List, Optional
 from unittest.mock import mock_open, patch
 
@@ -318,7 +319,7 @@ class TestIntegrationValidator:
     def test_no_change_to_context_path(
         self, current, old, answer, changed_command_names, mocker
     ):
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+        logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
         current = {"script": {"commands": current}}
         old = {"script": {"commands": old}}
         structure = mock_structure("", current, old)
@@ -326,7 +327,7 @@ class TestIntegrationValidator:
         assert validator.no_change_to_context_path() is answer
         for changed_command_name in changed_command_names:
             assert str_in_call_args_list(
-                logger_info.call_args_list, changed_command_name
+                logger_error.call_args_list, changed_command_name
             )
         structure.quiet_bc = True
         assert (
@@ -420,13 +421,13 @@ class TestIntegrationValidator:
         Ensure that the error massage was created correctly.
         - Case 1: Should include both command_test_name_1 and command_test_name_2 in the commands list in the error as they both have BC break changes.
         """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+        logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
         current = {"script": {"commands": current}}
         old = {"script": {"commands": old}}
         structure = mock_structure("", current, old)
         validator = IntegrationValidator(structure)
         validator.no_changed_command_name_or_arg()
-        assert str_in_call_args_list(logger_info.call_args_list, expected_error_msg)
+        assert str_in_call_args_list(logger_error.call_args_list, expected_error_msg)
 
     WITHOUT_DUP = [{"name": "test"}, {"name": "test1"}]
     DUPLICATE_PARAMS_INPUTS = [(WITHOUT_DUP, True)]
@@ -1297,6 +1298,48 @@ class TestIntegrationValidator:
 
         assert validator.is_valid_display_name_for_siem() is answer
 
+    V2_VALID_SIEM_1 = {
+        "display": "Test Event Collector",
+        "script": {"isfetchevents": True},
+        "marketplaces": ["marketplacev2"],
+    }
+    V2_INVALID_SIEM = {
+        "display": "Test Event Collector",
+        "script": {"isfetchevents": True},
+        "marketplaces": ["marketplacev2", "xsoar"],
+    }
+    V2_INVALID_SIEM_2 = {
+        "display": "Test Event Collector",
+        "script": {"isfetchevents": True},
+        "marketplaces": ["xsoar"],
+    }
+
+    V2_SIEM_MARKETPLACE_INPUTS = [
+        (V2_VALID_SIEM_1, True),
+        (V2_INVALID_SIEM, False),
+        (V2_INVALID_SIEM_2, False),
+    ]
+
+    @pytest.mark.parametrize("current, answer", V2_SIEM_MARKETPLACE_INPUTS)
+    def test_is_valid_xsiam_marketplace(self, current, answer):
+        """
+        Given
+            - Valid marketplaces field (only with marketplacev2)
+            - Invalid marketplaces field (with 2 entries - suppose to be only 1)
+            - Invalid marketplaces field (with xsaor value instead of marketplacev2)
+
+        When
+            - running is_valid_xsiam_marketplace.
+
+        Then
+            - Check that the function returns True if valid, else False.
+        """
+        structure = mock_structure("", current)
+        validator = IntegrationValidator(structure)
+        validator.current_file = current
+
+        assert validator.is_valid_xsiam_marketplace() is answer
+
     VALID_DEFAULTVALUE_CHECKBOX_1 = {
         "configuration": [{"defaultvalue": "true", "type": 8}]
     }
@@ -1871,12 +1914,13 @@ class TestIntegrationValidator:
                     MarketplaceVersions.XSOAR,
                     MarketplaceVersions.MarketplaceV2,
                     MarketplaceVersions.XPANSE,
+                    MarketplaceVersions.XSOAR_SAAS,
+                    MarketplaceVersions.XSOAR_ON_PREM,
                 ],
                 False,
             ),
             ("🥲", False),
             ("Trüe", False),
-            ("TRUE", False),
             ([MarketplaceVersions.XSOAR, None], False),
             ([MarketplaceVersions.MarketplaceV2, None], False),
             ([MarketplaceVersions.XSOAR, True], False),
@@ -1906,7 +1950,7 @@ class TestIntegrationValidator:
 
 
 class TestIsFetchParamsExist:
-    def setup(self):
+    def setup_method(self):
         config = {
             "configuration": deepcopy(INCIDENT_FETCH_REQUIRED_PARAMS),
             "script": {"isfetch": True},
@@ -2044,7 +2088,7 @@ class TestIsValidMaxFetchAndFirstFetch:
     - make sure max_fetch param has a default value
     """
 
-    def setup(self):
+    def setup_method(self):
         config = {
             "configuration": deepcopy([FIRST_FETCH_PARAM, MAX_FETCH_PARAM]),
             "script": {"isfetch": True},
@@ -2096,7 +2140,7 @@ class TestIsValidMaxFetchAndFirstFetch:
 
 
 class TestIsFeedParamsExist:
-    def setup(self):
+    def setup_method(self):
         config = {
             "configuration": deepcopy(FEED_REQUIRED_PARAMS_STRUCTURE),
             "script": {"feed": True},
@@ -2549,9 +2593,9 @@ class TestisContextChanged:
         When: running validate on integration with at least one command
         Then: Validate it's synced with the README.
         """
-        patcher = patch("os.path.exists")
+        patcher = patch("pathlib.Path.exists")
         mock_thing = patcher.start()
-        mock_thing.side_effect = lambda x: True
+        mock_thing.side_effect = lambda: True
         with patch("builtins.open", mock_open(read_data=readme)) as _:
             current = {"script": {}}
             structure = mock_structure("Pack/Test", current)
@@ -2601,7 +2645,7 @@ class TestisContextChanged:
             structure_validator, validate_all=validate_all
         )
         if remove_readme:
-            os.remove(integration.readme.path)
+            Path(integration.readme.path).unlink()
         assert (
             integration_validator.validate_readme_exists(
                 integration_validator.validate_all
@@ -2641,3 +2685,213 @@ class TestisContextChanged:
             integration_validator.is_native_image_does_not_exist_in_yml()
             == is_validation_ok
         )
+
+    @pytest.mark.parametrize(
+        "yml_content, use_git, expected_results",
+        [
+            ({"description": "description without dot"}, False, True),
+            (
+                {
+                    "description": "a yml description with a dot at the end.",
+                    "script": {
+                        "commands": [
+                            {
+                                "arguments": [
+                                    {
+                                        "name": "test_arg",
+                                        "description": "description without dot",
+                                    }
+                                ]
+                            }
+                        ],
+                        "name": "test_command",
+                    },
+                },
+                True,
+                False,
+            ),
+            (
+                {
+                    "description": "a yml description with a dot at the end.",
+                    "script": {
+                        "commands": [
+                            {
+                                "outputs": [
+                                    {
+                                        "contextPath": "test.path",
+                                        "description": "description without dot",
+                                    }
+                                ]
+                            }
+                        ],
+                        "name": "test_command",
+                    },
+                },
+                True,
+                False,
+            ),
+            (
+                {
+                    "description": "a yml description with a dot at the end.",
+                    "script": {
+                        "commands": [
+                            {
+                                "arguments": [
+                                    {
+                                        "name": "test_arg",
+                                        "description": "description with dot.",
+                                    }
+                                ]
+                            }
+                        ],
+                        "name": "test_command",
+                    },
+                },
+                True,
+                True,
+            ),
+            (
+                {
+                    "description": "a yml description with a dot at the end.",
+                    "script": {
+                        "commands": [
+                            {
+                                "outputs": [
+                                    {
+                                        "contextPath": "test.path",
+                                        "description": "description with dot.",
+                                    }
+                                ]
+                            }
+                        ],
+                        "name": "test_command",
+                    },
+                },
+                True,
+                True,
+            ),
+            (
+                {
+                    "description": "a yml description that ends with a url www.test.com",
+                },
+                True,
+                True,
+            ),
+            (
+                {
+                    "description": "a yml with a description that has www.test.com in the middle of the sentence",
+                },
+                True,
+                False,
+            ),
+            (
+                {
+                    "description": "a yml with a description that has an 'example without dot at the end of the string.'",
+                },
+                True,
+                True,
+            ),
+            (
+                {
+                    "description": "a yml with a description that has a trailing new line.\n",
+                },
+                True,
+                True,
+            ),
+            (
+                {
+                    "description": "a yml with a description that has a trailing new line.\n",
+                },
+                True,
+                True,
+            ),
+            (
+                {
+                    "description": "a yml description with a dot at the end.",
+                    "script": {
+                        "commands": [
+                            {
+                                "outputs": [
+                                    {
+                                        "contextPath": "test.path",
+                                        "description": "",
+                                    }
+                                ]
+                            }
+                        ],
+                        "name": "test_command",
+                    },
+                },
+                True,
+                True,
+            ),
+            (
+                {
+                    "description": "a yml description with a dot in the bracket (like this.)",
+                    "script": {
+                        "commands": [
+                            {
+                                "outputs": [
+                                    {
+                                        "contextPath": "test.path",
+                                        "description": "a contextPath description with a dot in the bracket (like this.)",
+                                    }
+                                ]
+                            }
+                        ],
+                        "name": "test_command",
+                    },
+                },
+                True,
+                True,
+            ),
+            (
+                {"description": "This description is okay!"},
+                True,
+                True,
+            ),
+        ],
+    )
+    def test_is_line_ends_with_dot(
+        self, repo, yml_content: dict, use_git: bool, expected_results: bool
+    ):
+        """
+        Given:
+            A yml content, use_git flag, and expected_results.
+            - Case 1: A yml content with a description without a dot at the end of the sentence, and use_git flag set to False.
+            - Case 2: A yml content with a command that an argument with a description without a dot at the end of the sentence, and use_git flag set to True.
+            - Case 3: A yml content with a command that a context path with a description without a dot at the end of the sentence, and use_git flag set to True.
+            - Case 4: A yml content with a command that an argument with a description with a dot at the end of the sentence, and use_git flag set to True.
+            - Case 5: A yml content with a command that a context path with a description with a dot at the end of the sentence, and use_git flag set to True.
+            - Case 6: A yml content with a description that ends with a url address and not dot, and use_git flag set to True.
+            - Case 7: A yml content with a description that has a url in the middle of the sentence and no comment in the end, and use_git flag set to True.
+            - Case 8: A yml content with a description that ends with example quotes with a dot only inside the example quotes, and use_git flag set to True.
+            - Case 9: A yml content with a description that ends with a dot followed by new line, and use_git flag set to True.
+            - Case 10: A yml content with an empty description, and use_git flag set to True.
+            - Case 11: A yml content with a command with an empty description for the output contextPath, and use_git flag set to True.
+            - Case 12: A yml content with a description and contextPath with a description that ends with a dot inside a bracket, and use_git flag set to True.
+            - Case 13: A yml content with a description that ends with exclamation mark, and use_git flag set to True.
+        When:
+            - when executing the is_line_ends_with_dot method
+        Then:
+            - Case 1: make sure the validation pass.
+            - Case 2: make sure the validation fails.
+            - Case 3: make sure the validation fails.
+            - Case 4: make sure the validation pass.
+            - Case 5: make sure the validation pass.
+            - Case 6: make sure the validation pass.
+            - Case 7: make sure the validation fails.
+            - Case 8: make sure the validation pass.
+            - Case 9: make sure the validation pass.
+            - Case 10: make sure the validation pass.
+            - Case 11: make sure the validation pass.
+            - Case 12: make sure the validation pass.
+            - Case 13: make sure the validation pass.
+        """
+        pack = repo.create_pack("test")
+        integration = pack.create_integration(yml=yml_content)
+        structure_validator = StructureValidator(integration.yml.path)
+        integration_validator = IntegrationValidator(
+            structure_validator, json_file_path=integration.yml.path, using_git=use_git
+        )
+        assert integration_validator.is_line_ends_with_dot() is expected_results

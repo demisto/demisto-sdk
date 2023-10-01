@@ -174,7 +174,7 @@ def __delete_integration_instance_if_determined_by_name(
             method="POST",
             path="/settings/integration/search",
             body={"size": 1000},
-            response_type="object"
+            response_type="object",
         )
     except ApiException:
         logging_manager.exception(

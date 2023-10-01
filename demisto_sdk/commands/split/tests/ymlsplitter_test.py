@@ -1,5 +1,4 @@
 import base64
-import os
 from pathlib import Path
 from unittest.mock import mock_open
 
@@ -43,7 +42,7 @@ def test_extract_long_description(tmpdir):
     extractor.extract_long_description(extractor.output)
     with open(extractor.output, "rb") as temp_description:
         assert temp_description.read().decode("utf-8") == "detaileddescription"
-    os.remove(extractor.output)
+    Path(extractor.output).unlink()
 
 
 def test_extract_modeling_rules(tmpdir):
@@ -65,7 +64,7 @@ def test_extract_modeling_rules(tmpdir):
     with open(output, "rb") as temp_rules:
         temp_rules = temp_rules.read()
         assert "[MODEL: dataset=okta_okta_raw, model=Audit]" in str(temp_rules)
-    os.remove(output)
+    Path(output).unlink()
 
 
 def test_extract_modeling_rules_schema(tmpdir):
@@ -93,7 +92,7 @@ def test_extract_modeling_rules_schema(tmpdir):
     with open(output, "rb") as temp_rules:
         temp_rules = temp_rules.read()
         assert schema == json.loads(temp_rules)
-    os.remove(output)
+    Path(output).unlink()
 
 
 def test_extract_parsing_rules(tmpdir):
@@ -115,7 +114,7 @@ def test_extract_parsing_rules(tmpdir):
     with open(output, "rb") as temp_rules:
         temp_rules = temp_rules.read()
         assert "[RULE:extract_hipmatch_only_fields]" in str(temp_rules)
-    os.remove(output)
+    Path(output).unlink()
 
 
 def test_extract_parsing_rules_sampels(tmpdir):
@@ -146,7 +145,7 @@ def test_extract_parsing_rules_sampels(tmpdir):
     with open(output, "rb") as temp_rules:
         temp_rules = temp_rules.read()
         assert sample == json.loads(temp_rules)
-    os.remove(output)
+    Path(output).unlink()
 
 
 def test_extract_to_package_format_modeling_rule(tmpdir):
@@ -304,7 +303,7 @@ def test_extract_code(tmpdir, file_path, file_type):
         assert "### pack version: 1.0.3" not in file_data
         assert "# pack version: 1.0.3" not in file_data
         assert "#### pack version: 1.0.3" not in file_data
-    os.remove(extractor.output)
+    Path(extractor.output).unlink()
 
     extractor.common_server = False
     extractor.demisto_mock = False
@@ -546,7 +545,7 @@ def test_update_api_module_contribution(mocker):
     import_name = "from MicrosoftApiModule import *  # noqa: E402"
     module_name = "MicrosoftApiModule"
     code = IntegrationScriptUnifier.insert_module_code(
-        DUMMY_SCRIPT, {import_name: module_name}
+        DUMMY_SCRIPT, {import_name: module_name}, Path()
     )
     yml_splitter = YmlSplitter(
         input=f"{git_path()}/demisto_sdk/tests/test_files/modelingrule-OktaModelingRules.yml",

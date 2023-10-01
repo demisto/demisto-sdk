@@ -1,9 +1,10 @@
+from collections import defaultdict
 from pathlib import Path
 from typing import List, Optional
 
+from demisto_sdk.commands.common.constants import PACKS_DIR
 from demisto_sdk.commands.common.content.content import Content
 from demisto_sdk.commands.common.errors import Errors
-from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.hook_validations.base_validator import (
     BaseValidator,
     error_codes,
@@ -14,8 +15,9 @@ from demisto_sdk.commands.common.tools import (
     get_pack_name,
     replace_incident_to_alert,
 )
-from demisto_sdk.commands.content_graph.interface.neo4j.neo4j_graph import (
-    Neo4jContentGraphInterface as ContentGraphInterface,
+from demisto_sdk.commands.content_graph.commands.update import update_content_graph
+from demisto_sdk.commands.content_graph.interface import (
+    ContentGraphInterface,
 )
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 
@@ -33,7 +35,13 @@ class GraphValidator(BaseValidator):
     ):
         super().__init__(specific_validations=specific_validations)
         self.include_optional = include_optional_deps
-        self.graph = ContentGraphInterface(update_graph=update_graph)
+        self.graph = ContentGraphInterface()
+        if update_graph:
+            update_content_graph(
+                self.graph,
+                use_git=True,
+                output_path=self.graph.output_path,
+            )
         self.file_paths: List[str] = git_files or get_all_content_objects_paths_in_dir(
             input_files
         )
@@ -51,6 +59,7 @@ class GraphValidator(BaseValidator):
 
     def is_valid_content_graph(self) -> bool:
         is_valid = (
+            self.validate_hidden_packs_do_not_have_mandatory_dependencies(),
             self.validate_dependencies(),
             self.validate_marketplaces_fields(),
             self.validate_fromversion_fields(),
@@ -241,7 +250,7 @@ class GraphValidator(BaseValidator):
         For existing content, a warning is raised.
         """
         is_valid = True
-        new_files = GitUtil(repo=Content.git()).added_files()
+        new_files = Content.git_util().added_files()
         items: List[dict] = self.graph.find_items_using_deprecated_items(
             self.file_paths
         )
@@ -366,5 +375,44 @@ class GraphValidator(BaseValidator):
                     file_path,
                 ):
                     is_valid = False
+
+        return is_valid
+
+    @error_codes("GR108")
+    def validate_hidden_packs_do_not_have_mandatory_dependencies(self):
+        """
+        Validate that hidden pack(s) do not have dependant packs which the
+        hidden pack is a mandatory dependency for them.
+        """
+        is_valid = True
+
+        if dependant_packs := self.graph.find_mandatory_hidden_packs_dependencies(
+            pack_ids=self.pack_ids
+        ):
+            hidden_pack_id_to_dependant_pack_ids: dict = defaultdict(set)
+
+            for pack in dependant_packs:
+                for relationship in pack.depends_on:
+                    hidden_pack_id = relationship.content_item_to.object_id
+                    hidden_pack_id_to_dependant_pack_ids[hidden_pack_id].add(
+                        pack.object_id
+                    )
+
+            for pack_id in hidden_pack_id_to_dependant_pack_ids:
+                if dependant_packs_ids := hidden_pack_id_to_dependant_pack_ids.get(
+                    pack_id
+                ):
+                    (
+                        error_message,
+                        error_code,
+                    ) = Errors.hidden_pack_not_mandatory_dependency(
+                        hidden_pack=pack_id, dependant_packs_ids=dependant_packs_ids
+                    )
+                    if self.handle_error(
+                        error_message=error_message,
+                        error_code=error_code,
+                        file_path=f"{PACKS_DIR}/{pack_id}",
+                    ):
+                        is_valid = False
 
         return is_valid

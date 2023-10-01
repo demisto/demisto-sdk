@@ -5,13 +5,12 @@ import pytest
 from demisto_sdk.commands.common.native_image import (
     NativeImageConfig,
     ScriptIntegrationSupportedNativeImages,
-    file_to_native_image_config,
 )
 
 
 @pytest.fixture
 def native_image_config(repo) -> NativeImageConfig:
-    return file_to_native_image_config(repo.docker_native_image_config.path)
+    return NativeImageConfig.from_path(repo.docker_native_image_config.path)
 
 
 def test_load_native_image_config(native_image_config):
@@ -93,7 +92,7 @@ class TestScriptIntegrationSupportedNativeImages:
             (
                 "Prisma Cloud Compute",
                 "demisto/python3:3.10.1.25933",
-                ["8.1", "8.2", "candidate"],
+                ["8.1", "8.2"],
             ),
             ("SSDeepSimilarity", "demisto/ssdeep:1.0.0.23743", []),
             ("TimeComponents", "demisto/python3:3.10.1.25933", ["8.1", "8.2"]),
@@ -111,7 +110,7 @@ class TestScriptIntegrationSupportedNativeImages:
         - Case A: a script that its docker-image is supported in 8.1 and 8.2, but should be ignored in 8.1.
         - Case B: an integration that its docker-image is supported only in 8.2, but should also be ignored in 8.2
         - Case C: an integration that its docker-image is supported in 8.1 and 8.2, but should be ignored in both.
-        - Case D: an integration that its docker image is supported in 8.1, 8.2 and candidate and should not be ignored.
+        - Case D: an integration that its docker image is supported in 8.1, 8.2, but should not be ignored.
         - Case E: an integration that its docker image is not supported in any native image.
         - Case F: an integration not supported only by candidate.
 

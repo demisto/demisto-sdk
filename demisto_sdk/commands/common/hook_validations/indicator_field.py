@@ -1,8 +1,9 @@
 """
 This module is designed to validate the correctness of incident field entities in content.
 """
-from distutils.version import LooseVersion
 from typing import Optional
+
+from packaging.version import Version
 
 from demisto_sdk.commands.common.constants import INDICATOR_FIELD_TYPE_TO_MIN_VERSION
 from demisto_sdk.commands.common.hook_validations.field_base_validator import (
@@ -111,9 +112,7 @@ class IndicatorFieldValidator(FieldBaseValidator):
         indicator_field_type: Optional[str] = self.current_file.get("type")
         if indicator_field_type not in INDICATOR_FIELD_TYPE_TO_MIN_VERSION:
             return True
-        min_version: LooseVersion = INDICATOR_FIELD_TYPE_TO_MIN_VERSION[
-            indicator_field_type
-        ]
+        min_version: Version = INDICATOR_FIELD_TYPE_TO_MIN_VERSION[indicator_field_type]
         return self.is_valid_from_version_field(
             min_version, f"Indicator field of type {indicator_field_type}."
         )

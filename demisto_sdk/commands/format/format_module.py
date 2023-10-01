@@ -10,7 +10,16 @@ from demisto_sdk.commands.common.constants import (
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import find_type, get_files_in_dir
-from demisto_sdk.commands.format.format_constants import SCHEMAS_PATH
+from demisto_sdk.commands.content_graph.commands.update import update_content_graph
+from demisto_sdk.commands.content_graph.interface.neo4j.neo4j_graph import (
+    Neo4jContentGraphInterface as ContentGraphInterface,
+)
+from demisto_sdk.commands.format.format_constants import (
+    SCHEMAS_PATH,
+    SKIP_FORMATTING_DIRS,
+    SKIP_FORMATTING_FILES,
+    UNSKIP_FORMATTING_FILES,
+)
 from demisto_sdk.commands.format.update_classifier import (
     ClassifierJSONFormat,
     OldClassifierJSONFormat,
@@ -47,7 +56,6 @@ from demisto_sdk.commands.format.update_readme import ReadmeFormat
 from demisto_sdk.commands.format.update_report import ReportJSONFormat
 from demisto_sdk.commands.format.update_script import ScriptYMLFormat
 from demisto_sdk.commands.format.update_widget import WidgetJSONFormat
-from demisto_sdk.commands.lint.commands_builder import excluded_files
 
 FILE_TYPE_AND_LINKED_CLASS = {
     "integration": IntegrationYMLFormat,
@@ -106,6 +114,14 @@ VALIDATE_RES_FAILED_CODE = 3
 
 CONTENT_ENTITY_IDS_TO_UPDATE: Dict = {}
 
+# The content items that use the graph in format
+CONTENT_ITEMS_WITH_GRAPH = [
+    FileType.INCIDENT_FIELD.value,
+    FileType.LAYOUTS_CONTAINER.value,
+    FileType.LAYOUT.value,
+    FileType.MAPPER.value,
+]
+
 
 def format_manager(
     input: str = None,
@@ -122,6 +138,7 @@ def format_manager(
     interactive: bool = True,
     id_set_path: str = None,
     clear_cache: bool = False,
+    use_graph: bool = True,
 ):
     """
     Format_manager is a function that activated format command on different type of files.
@@ -140,9 +157,13 @@ def format_manager(
         add_tests (bool): Whether to exclude tests automatically.
         id_set_path (str): The path of the id_set.json file.
         clear_cache (bool): wether to clear the cache
+        use_graph (bool): wheter to use the graph in format
     Returns:
         int 0 in case of success 1 otherwise
     """
+
+    if id_set_path:
+        logger.error("The --id-set-path argument is deprecated.")
 
     prev_ver = prev_ver if prev_ver else "demisto/master"
     supported_file_types = ["json", "yml", "py", "md"]
@@ -151,7 +172,13 @@ def format_manager(
     if input:
         files = []
         for i in input.split(","):
-            files.extend(get_files_in_dir(i, supported_file_types))
+            files.extend(
+                get_files_in_dir(
+                    project_dir=i,
+                    file_endings=supported_file_types,
+                    exclude_list=SKIP_FORMATTING_DIRS + TESTS_AND_DOC_DIRECTORIES,
+                )
+            )
 
     elif use_git:
         files = get_files_to_format_from_git(
@@ -171,18 +198,31 @@ def format_manager(
     log_list = []
     error_list: List[Tuple[int, int]] = []
     if files:
+        graph = (
+            ContentGraphInterface()
+            if is_graph_related_files(files, clear_cache) and use_graph
+            else None
+        )
+        if graph:
+            update_content_graph(
+                graph,
+                use_git=True,
+                output_path=graph.output_path,
+            )
         for file in files:
-            file_path = file.replace("\\", "/")
+            file_path = str(Path(file))
             file_type = find_type(file_path, clear_cache=clear_cache)
 
-            current_excluded_files = excluded_files[:]
-            dirname = os.path.dirname(file_path)
-            if dirname.endswith("CommonServerPython"):
-                current_excluded_files.remove("CommonServerPython.py")
-            if os.path.basename(file_path) in current_excluded_files:
-                continue
-            if any(test_dir in str(dirname) for test_dir in TESTS_AND_DOC_DIRECTORIES):
-                continue
+            # Check if this is an unskippable file
+            if not any(
+                [
+                    file_path.endswith(unskippable_file)
+                    for unskippable_file in UNSKIP_FORMATTING_FILES
+                ]
+            ):
+                # If it is not an unskippable file, skip if needed
+                if Path(file_path).name in SKIP_FORMATTING_FILES:
+                    continue
 
             if file_type and file_type.value not in UNFORMATTED_FILES:
                 file_type = file_type.value
@@ -197,7 +237,7 @@ def format_manager(
                     assume_answer=assume_answer,
                     deprecate=deprecate,
                     add_tests=add_tests,
-                    id_set_path=id_set_path,
+                    graph=graph,
                 )
                 if err_res:
                     log_list.extend([(err_res, "red")])
@@ -224,7 +264,10 @@ def format_manager(
                         "red",
                     )
                 )
-
+        if (
+            graph
+        ):  # In case that the graph was activated, we need to call exit in order to close it.
+            graph.__exit__()
         update_content_entity_ids(files)
 
     else:
@@ -272,7 +315,7 @@ def get_files_to_format_from_git(
 
         # get the file extension without the '.'
         file_extension = os.path.splitext(str_file_path)[1][1:]
-        if file_extension in supported_file_types and os.path.exists(str_file_path):
+        if file_extension in supported_file_types and Path(str_file_path).exists():
             filtered_files.append(str_file_path)
 
     if filtered_files:
@@ -338,18 +381,10 @@ def run_format_on_file(
     if file_type not in ("integration", "playbook", "script") and "add_tests" in kwargs:
         # adding tests is relevant only for integrations, playbooks and scripts.
         del kwargs["add_tests"]
-    if (
-        file_type
-        not in (
-            FileType.INCIDENT_FIELD.value,
-            FileType.LAYOUTS_CONTAINER.value,
-            FileType.LAYOUT.value,
-            FileType.MAPPER.value,
-        )
-        and "id_set_path" in kwargs
-    ):
+    if file_type not in CONTENT_ITEMS_WITH_GRAPH and "graph" in kwargs:
         # relevant only for incidentfield/layouts/mappers
-        del kwargs["id_set_path"]
+        del kwargs["graph"]
+
     updater_class = FILE_TYPE_AND_LINKED_CLASS.get(file_type)
     if not updater_class:  # fail format so long as xsiam entities dont have formatters
         logger.info(
@@ -405,3 +440,24 @@ def format_output(
         info_list.append(f"Format Status   on file: {input} - Success")
         info_list.append(f"Validate Status on file: {input} - Success")
     return info_list, error_list, skipped_list
+
+
+def is_graph_related_files(files: List[str], clear_cache: bool) -> bool:
+    """
+    Check if the files that Format should check are of type mapper, layout or incident fields.
+    Otherwise, we don't need to start the graph.
+
+    Args:
+        files (List[str]): a list of the paths of the files Format should check.
+        clear_cache (bool): wether to clear the cache.
+
+    Returns:
+        True if the files are of type mapper, layout or incident fields, else False.
+    """
+    for file in files:
+        file_path = str(Path(file))
+        if file_type := find_type(file_path, clear_cache=clear_cache):
+            file_type = file_type.value
+            if file_type in CONTENT_ITEMS_WITH_GRAPH:
+                return True
+    return False

@@ -177,6 +177,9 @@ class PackModelVerifier:
         expected_description: Optional[str] = None,
         expected_created: Optional[str] = None,
         expected_updated: Optional[str] = None,
+        expected_legacy: Optional[bool] = None,
+        expected_eulaLink: Optional[str] = None,
+        expected_author_image: Optional[str] = None,
         expected_support: Optional[str] = None,
         expected_email: Optional[str] = None,
         expected_url: Optional[str] = None,
@@ -196,6 +199,7 @@ class PackModelVerifier:
         expected_preview_only: Optional[bool] = None,
         expected_marketplaces: Optional[List[MarketplaceVersions]] = None,
         expected_content_items: Dict[str, ContentType] = {},
+        expected_deprecated: Optional[bool] = None,
     ) -> None:
         assert model.content_type == ContentType.PACK
         assert expected_id is None or model.object_id == expected_id
@@ -205,7 +209,13 @@ class PackModelVerifier:
         assert expected_created is None or model.created == expected_created
         assert expected_updated is None or model.updated == expected_updated
         assert expected_support is None or model.support == expected_support
+        assert expected_legacy is None or model.legacy == expected_legacy
+        assert expected_eulaLink is None or model.eulaLink == expected_eulaLink
+        assert (
+            expected_author_image is None or model.author_image == expected_author_image
+        )
         assert expected_email is None or model.email == expected_email
+        assert expected_deprecated is None or model.deprecated == expected_deprecated
         assert expected_url is None or model.url == expected_url
         assert expected_author is None or model.author == expected_author
         assert (
@@ -634,7 +644,7 @@ class TestParsersAndModels:
             expected_fromversion="5.0.0",
             expected_toversion=DEFAULT_CONTENT_ITEM_TO_VERSION,
         )
-        assert model.type == "shortText"
+        assert model.field_type == "shortText"
         assert model.cli_name == "email"
         assert not model.associated_to_all
 
@@ -720,8 +730,8 @@ class TestParsersAndModels:
             expected_fromversion="5.0.0",
             expected_toversion=DEFAULT_CONTENT_ITEM_TO_VERSION,
         )
-        assert model.is_fetch_events is True
-        assert model.is_fetch_events_and_assets is True
+        assert model.is_fetch_events is False
+        assert model.is_fetch_assets is True
 
     def test_unified_integration_parser(self, pack: Pack):
         """
@@ -1105,7 +1115,7 @@ class TestParsersAndModels:
 
         playbook = pack.create_playbook()
         playbook.create_default_playbook(name="sample")
-        playbook.yml.update({"description": "test\\ test2\\\n \\ test3"})
+        playbook.yml.update({"description": "test\\ test2\\\n \\  test3\n   - test4  "})
         playbook_path = Path(playbook.path)
         parser = PlaybookParser(playbook_path, list(MarketplaceVersions))
         RelationshipsVerifier.run(
@@ -1122,7 +1132,7 @@ class TestParsersAndModels:
             expected_content_type=ContentType.PLAYBOOK,
             expected_fromversion="5.0.0",
             expected_toversion=DEFAULT_CONTENT_ITEM_TO_VERSION,
-            expected_description="test test2 test3",
+            expected_description="test test2 test3\n   - test4 ",
         )
         assert not model.is_test
 
@@ -1515,21 +1525,26 @@ class TestParsersAndModels:
             expected_path=pack_path,
             expected_description="This is the Hello World integration for getting started.",
             expected_created="2020-03-10T08:37:18Z",
+            expected_author_image="content/packs/HelloWorld/Author_image.png",
+            expected_legacy=True,
+            expected_eulaLink="https://github.com/demisto/content/blob/master/LICENSE",
             expected_support="community",
             expected_url="https://www.paloaltonetworks.com/cortex",
             expected_author="Cortex XSOAR",
-            expected_certification="",
+            expected_certification="verified",
             expected_hidden=False,
             expected_current_version="1.2.12",
-            expected_tags=[],
+            expected_tags=["TIM"],
             expected_categories=["Utilities"],
-            expected_use_cases=[],
+            expected_use_cases=["Identity And Access Management"],
             expected_keywords=[],
             expected_marketplaces=[
-                MarketplaceVersions.XSOAR,
                 MarketplaceVersions.MarketplaceV2,
+                MarketplaceVersions.XSOAR,
+                MarketplaceVersions.XSOAR_SAAS,
             ],
             expected_content_items=expected_content_items,
+            expected_deprecated=False,
         )
 
     def test_repo_parser(self, repo: Repo):
@@ -1555,6 +1570,50 @@ class TestParsersAndModels:
         model = ContentDTO.from_orm(parser)
         pack_ids = {pack.object_id for pack in model.packs}
         assert pack_ids == {"sample1", "sample2"}
+
+    def test_lazy_properties_in_the_model(self, mocker, pack):
+        """
+        Given:
+            - an integration
+        When:
+            - creating integration model
+        Then:
+            - Verify that the lazy property (python_version) is not loaded into the model when parsing it
+            - Verify that only when the lazy property (python_version) is called directly its added into the model
+        """
+
+        from packaging.version import Version
+
+        from demisto_sdk.commands.content_graph.objects.integration import Integration
+        from demisto_sdk.commands.content_graph.parsers.integration import (
+            IntegrationParser,
+        )
+
+        expected_python_version = "3.10.11"
+        mocker.patch(
+            "demisto_sdk.commands.common.docker_helper._get_python_version_from_dockerhub_api",
+            return_value=Version(expected_python_version),
+        )
+
+        integration = pack.create_integration(yml=load_yaml("integration.yml"))
+        integration.code.write("from MicrosoftApiModule import *")
+        integration.yml.update({"tests": ["test_playbook"]})
+
+        integration_path = Path(integration.path)
+        parser = IntegrationParser(integration_path, list(MarketplaceVersions))
+        RelationshipsVerifier.run(
+            parser.relationships,
+            integration_commands=["test-command"],
+            imports=["MicrosoftApiModule"],
+            tests=["test_playbook"],
+        )
+        model = Integration.from_orm(parser)
+        # make sure that the python_version is not in the model because it was not called directly
+        assert "python_version" not in str(model)
+
+        assert model.python_version == expected_python_version
+        # make sure that only after we called directly to the lazy property of the model, its loaded into the model
+        assert "python_version" in str(model)
 
 
 @pytest.mark.parametrize(
@@ -1598,3 +1657,67 @@ def test_fix_layout_incident_to_alert(
         "name": expected_name,
         "type": type_,
     }
+
+
+@pytest.mark.parametrize(
+    "marketplace, expected_market_place_set",
+    [
+        (
+            {MarketplaceVersions.XSOAR},
+            {MarketplaceVersions.XSOAR, MarketplaceVersions.XSOAR_SAAS},
+        ),
+        ({MarketplaceVersions.MarketplaceV2}, {MarketplaceVersions.MarketplaceV2}),
+        ({MarketplaceVersions.XPANSE}, {MarketplaceVersions.XPANSE}),
+        (
+            {MarketplaceVersions.XSOAR_ON_PREM},
+            {MarketplaceVersions.XSOAR_ON_PREM, MarketplaceVersions.XSOAR},
+        ),
+        (
+            {MarketplaceVersions.XSOAR_ON_PREM, MarketplaceVersions.XSOAR_SAAS},
+            {
+                MarketplaceVersions.XSOAR_ON_PREM,
+                MarketplaceVersions.XSOAR_SAAS,
+                MarketplaceVersions.XSOAR,
+            },
+        ),
+        (
+            {MarketplaceVersions.XSOAR_ON_PREM, MarketplaceVersions.MarketplaceV2},
+            {
+                MarketplaceVersions.XSOAR_ON_PREM,
+                MarketplaceVersions.MarketplaceV2,
+                MarketplaceVersions.XSOAR,
+            },
+        ),
+        ({}, {}),
+    ],
+)
+def test_updated_marketplaces_set(marketplace, expected_market_place_set):
+    """
+    Given:
+        - XSOAR marketplace
+        - XSIAM marketplace
+        - XPANSE marketplace
+        - XSOAR_ON_PREM marketplace
+        - XSOAR_ON_PREM AND XSIAM
+        - empty marketplace set
+
+    When:
+        - Parsing the content item to determine if the content item should enter the marketplace
+
+    Then:
+        - Check that XSOAR_SAAS was also added to the marketplace_set
+        - Check the only XSAIM marketplace is on the list
+        - Check the only XPANSE marketplace is on the list
+        - Check that XSOAR_ON_PREM and XSOAR was added to the marketplace_set
+        - Check that XSAIM remains and XSOAR marketplace is added
+        - remains empty
+
+    """
+    from demisto_sdk.commands.content_graph.parsers.content_item import (
+        ContentItemParser,
+    )
+
+    assert (
+        expected_market_place_set
+        == ContentItemParser.update_marketplaces_set_with_xsoar_values(marketplace)
+    )

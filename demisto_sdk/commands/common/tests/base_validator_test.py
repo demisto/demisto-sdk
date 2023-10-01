@@ -1,6 +1,7 @@
 import logging
 import os
 from os.path import join
+from typing import Optional
 
 import pytest
 
@@ -60,7 +61,7 @@ def test_handle_error_on_unignorable_error_codes(
     - Ensure that the un-ignorable errors are in FOUND_FILES_AND_ERRORS list.
     - Ensure that the un-ignorable errors are not in FOUND_FILES_AND_IGNORED_ERRORS list.
     """
-    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+    logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
     monkeypatch.setenv("COLUMNS", "1000")
 
     base_validator = BaseValidator(ignored_errors=ignored_errors)
@@ -73,9 +74,64 @@ def test_handle_error_on_unignorable_error_codes(
         suggested_fix="fix",
     )
     assert expected_error in result
-    assert str_in_call_args_list(logger_info.call_args_list, expected_error)
+    assert str_in_call_args_list(logger_error.call_args_list, expected_error)
     assert f"file_name - [{error_code}]" in FOUND_FILES_AND_ERRORS
     assert f"file_name - [{error_code}]" not in FOUND_FILES_AND_IGNORED_ERRORS
+
+
+@pytest.mark.parametrize(
+    "is_github_actions, suggested_fix, is_warning, expected_result",
+    [
+        (
+            True,
+            "fix",
+            False,
+            "::error file=PATH,line=1,endLine=1,title=Validation Error SC102::Error-message%0Afix\n",
+        ),
+        (
+            True,
+            None,
+            False,
+            "::error file=PATH,line=1,endLine=1,title=Validation Error SC102::Error-message\n",
+        ),
+        (True, None, True, ""),
+        (False, "fix", False, ""),
+        (False, None, False, ""),
+    ],
+)
+def test_handle_error_github_annotation(
+    monkeypatch,
+    capsys,
+    is_github_actions: bool,
+    suggested_fix: Optional[str],
+    is_warning: bool,
+    expected_result: str,
+):
+    """
+    Given
+    - is_github_actions - True to mock running in CI
+    - suggested_fix - a suggestion for fixing the error
+    - warning
+    - expected_result
+
+    When
+    - executing handle_error function
+
+    Then
+    - Ensure the message was printed if needed, and not if not
+    - Ensure the message includes the suggested_fix if exists
+    """
+    monkeypatch.setenv("GITHUB_ACTIONS", is_github_actions)
+    base_validator = BaseValidator()
+    base_validator.handle_error(
+        error_message="Error-message",
+        error_code="SC102",
+        file_path="PATH",
+        suggested_fix=suggested_fix,
+        warning=is_warning,
+    )
+    captured = capsys.readouterr()
+    assert captured.out == expected_result
 
 
 def test_handle_error(mocker, caplog):

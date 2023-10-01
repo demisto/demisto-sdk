@@ -1,10 +1,9 @@
 import os
 from multiprocessing import Pool
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Optional, Set, Tuple
+from typing import Any, Dict, Iterable, List, Optional, Set, Tuple, Union
 
 from neo4j import Driver, GraphDatabase, Session, graph
-from pydantic import ValidationError
 
 import demisto_sdk.commands.content_graph.neo4j_service as neo4j_service
 from demisto_sdk.commands.common.constants import MarketplaceVersions
@@ -17,9 +16,6 @@ from demisto_sdk.commands.content_graph.common import (
     ContentType,
     Neo4jRelationshipResult,
     RelationshipType,
-)
-from demisto_sdk.commands.content_graph.content_graph_commands import (
-    update_content_graph,
 )
 from demisto_sdk.commands.content_graph.interface.graph import ContentGraphInterface
 from demisto_sdk.commands.content_graph.interface.neo4j.import_utils import (
@@ -47,6 +43,8 @@ from demisto_sdk.commands.content_graph.interface.neo4j.queries.nodes import (
     create_nodes,
     delete_all_graph_nodes,
     get_relationships_to_preserve,
+    get_schema,
+    remove_content_private_nodes,
     remove_empty_properties,
     remove_packs_before_creation,
     remove_server_nodes,
@@ -55,12 +53,15 @@ from demisto_sdk.commands.content_graph.interface.neo4j.queries.nodes import (
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.relationships import (
     _match_relationships,
     create_relationships,
+    get_sources_by_path,
+    get_targets_by_path,
 )
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.validations import (
     get_items_using_deprecated,
     validate_core_packs_dependencies,
     validate_duplicate_ids,
     validate_fromversion,
+    validate_hidden_pack_dependencies,
     validate_marketplaces,
     validate_multiple_packs_with_same_display_name,
     validate_multiple_script_with_same_name,
@@ -77,7 +78,7 @@ from demisto_sdk.commands.content_graph.objects.pack import Pack
 from demisto_sdk.commands.content_graph.objects.relationship import RelationshipData
 
 
-def _parse_node(element_id: int, node: dict) -> BaseContent:
+def _parse_node(element_id: str, node: dict) -> BaseContent:
     """Parses nodes to content objects and adds it to mapping
 
     Args:
@@ -105,15 +106,13 @@ class NoModelException(Exception):
 
 
 class Neo4jContentGraphInterface(ContentGraphInterface):
-
     # this is used to save cache of packs and integrations which queried
     _import_handler = Neo4jImportHandler()
 
     def __init__(
         self,
-        update_graph: bool = False,
     ) -> None:
-        self._id_to_obj: Dict[int, BaseContent] = {}
+        self._id_to_obj: Dict[str, BaseContent] = {}
 
         if not neo4j_service.is_alive():
             neo4j_service.start()
@@ -123,12 +122,10 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             NEO4J_DATABASE_URL,
             auth=(NEO4J_USERNAME, NEO4J_PASSWORD),
         )
-        if update_graph:
-            output_path = None
-            if artifacts_folder := os.getenv("ARTIFACTS_FOLDER"):
-                output_path = Path(artifacts_folder) / "content_graph"
-                output_path.mkdir(parents=True, exist_ok=True)
-            update_content_graph(self, use_git=True, output_path=output_path)
+        self.output_path = None
+        if artifacts_folder := os.getenv("ARTIFACTS_FOLDER"):
+            self.output_path = Path(artifacts_folder) / "content_graph"
+            self.output_path.mkdir(parents=True, exist_ok=True)
 
     def __enter__(self) -> "Neo4jContentGraphInterface":
         return self
@@ -152,7 +149,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
     def _add_relationships_to_objects(
         self,
         session: Session,
-        result: Dict[int, Neo4jRelationshipResult],
+        result: Dict[str, Neo4jRelationshipResult],
         marketplace: Optional[MarketplaceVersions] = None,
     ):
         """This adds relationships to given object
@@ -164,7 +161,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         Returns:
             List[BaseContent]: The objects to return with relationships
         """
-        content_item_nodes: Set[int] = set()
+        content_item_nodes: Set[str] = set()
         packs: List[Pack] = []
         nodes_to = []
         for res in result.values():
@@ -176,7 +173,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             if isinstance(obj, Pack) and not obj.content_items:
                 packs.append(obj)
                 content_item_nodes.update(
-                    node.id
+                    node.element_id
                     for node, rel in zip(res.nodes_to, res.relationships)
                     if rel.type == RelationshipType.IN_PACK
                 )
@@ -218,9 +215,9 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
                 RelationshipType(rel.type),
                 RelationshipData(
                     relationship_type=rel.type,
-                    source_id=rel.start_node.id,
-                    target_id=rel.end_node.id,
-                    content_item_to=self._id_to_obj[node_to.id],
+                    source_id=rel.start_node.element_id,
+                    target_id=rel.end_node.element_id,
+                    content_item_to=self._id_to_obj[node_to.element_id],
                     is_direct=True,
                     **rel,
                 ),
@@ -229,7 +226,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
     def _add_all_level_relationships(
         self,
         session: Session,
-        node_ids: Iterable[int],
+        node_ids: Iterable[str],
         relationship_type: RelationshipType,
         marketplace: MarketplaceVersions = None,
     ):
@@ -240,7 +237,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             marketplace (MarketplaceVersions): Marketplace version to check for dependencies
             pack_nodes (List[graph.Node]): List of the pack nodes
         """
-        relationships: Dict[int, Neo4jRelationshipResult] = session.execute_read(
+        relationships: Dict[str, Neo4jRelationshipResult] = session.execute_read(
             get_all_level_packs_relationships,
             relationship_type,
             node_ids,
@@ -255,12 +252,12 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         for content_item_id, content_item_relationship in relationships.items():
             obj = self._id_to_obj[content_item_id]
             for node in content_item_relationship.nodes_to:
-                target = self._id_to_obj[node.id]
+                target = self._id_to_obj[node.element_id]
                 source_id = content_item_id
-                target_id = node.id
+                target_id = node.element_id
                 if relationship_type == RelationshipType.IMPORTS:
                     # the import relationship is from the integration to the content item
-                    source_id = node.id
+                    source_id = node.element_id
                     target_id = content_item_id
                 obj.add_relationship(
                     relationship_type,
@@ -280,7 +277,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         Args:
             nodes (List[graph.Node]): list of nodes to add
         """
-        nodes = filter(lambda node: node.id not in self._id_to_obj, nodes)
+        nodes = filter(lambda node: node.element_id not in self._id_to_obj, nodes)
         if not nodes:
             logger.debug(
                 "No nodes to parse packs because all of them in mapping",
@@ -289,7 +286,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             return
         with Pool(processes=cpu_count()) as pool:
             results = pool.starmap(
-                _parse_node, ((node.id, dict(node.items())) for node in nodes)
+                _parse_node, ((node.element_id, dict(node.items())) for node in nodes)
             )
             for result in results:
                 assert result.database_id is not None
@@ -298,7 +295,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
     def _search(
         self,
         marketplace: MarketplaceVersions = None,
-        content_type: Optional[ContentType] = None,
+        content_type: ContentType = ContentType.BASE_CONTENT,
         ids_list: Optional[Iterable[int]] = None,
         all_level_dependencies: bool = False,
         all_level_imports: bool = False,
@@ -315,22 +312,22 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             self._add_nodes_to_mapping(results)
 
             nodes_without_relationships = {
-                result.id
+                result.element_id
                 for result in results
-                if not self._id_to_obj[result.id].relationships_data
+                if not self._id_to_obj[result.element_id].relationships_data
             }
 
-            relationships: Dict[int, Neo4jRelationshipResult] = session.execute_read(
+            relationships: Dict[str, Neo4jRelationshipResult] = session.execute_read(
                 _match_relationships, nodes_without_relationships, marketplace
             )
             self._add_relationships_to_objects(session, relationships, marketplace)
 
             pack_nodes = {
-                result.id
+                result.element_id
                 for result in results
-                if isinstance(self._id_to_obj[result.id], Pack)
+                if isinstance(self._id_to_obj[result.element_id], Pack)
             }
-            nodes = {result.id for result in results}
+            nodes = {result.element_id for result in results}
             if all_level_imports:
                 self._add_all_level_relationships(
                     session, nodes, RelationshipType.IMPORTS
@@ -339,7 +336,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
                 self._add_all_level_relationships(
                     session, pack_nodes, RelationshipType.DEPENDS_ON, marketplace
                 )
-            return [self._id_to_obj[result.id] for result in results]
+            return [self._id_to_obj[result.element_id] for result in results]
 
     def create_indexes_and_constraints(self) -> None:
         logger.info("Creating graph indexes and constraints...")
@@ -358,11 +355,60 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             session.execute_write(create_nodes, nodes)
             session.execute_write(remove_empty_properties)
 
+    def get_relationships_by_path(
+        self,
+        path: Path,
+        relationship_type: RelationshipType,
+        content_type: ContentType,
+        depth: int,
+        marketplace: MarketplaceVersions,
+        retrieve_sources: bool,
+        retrieve_targets: bool,
+        mandatory_only: bool,
+        include_tests: bool,
+        include_deprecated: bool,
+        include_hidden: bool,
+    ) -> Tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
+        with self.driver.session() as session:
+            sources = (
+                session.execute_read(
+                    get_sources_by_path,
+                    path,
+                    relationship_type,
+                    content_type,
+                    depth,
+                    marketplace,
+                    mandatory_only,
+                    include_tests,
+                    include_deprecated,
+                    include_hidden,
+                )
+                if retrieve_sources
+                else []
+            )
+            targets = (
+                session.execute_read(
+                    get_targets_by_path,
+                    path,
+                    relationship_type,
+                    content_type,
+                    depth,
+                    marketplace,
+                    mandatory_only,
+                    include_tests,
+                    include_deprecated,
+                    include_hidden,
+                )
+                if retrieve_targets
+                else []
+            )
+            return sources, targets
+
     def get_unknown_content_uses(
         self, file_paths: List[str], raises_error: bool, include_optional: bool = False
     ) -> List[BaseContent]:
         with self.driver.session() as session:
-            results: Dict[int, Neo4jRelationshipResult] = session.execute_read(
+            results: Dict[str, Neo4jRelationshipResult] = session.execute_read(
                 validate_unknown_content, file_paths, raises_error, include_optional
             )
             self._add_nodes_to_mapping(result.node_from for result in results.values())
@@ -398,8 +444,8 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         self._add_nodes_to_mapping(all_nodes)
         duplicate_models = []
         for content_item, dups in duplicates:
-            dups = [self._id_to_obj[duplicate.id] for duplicate in dups]
-            duplicate_models.append((self._id_to_obj[content_item.id], dups))
+            dups = [self._id_to_obj[duplicate.element_id] for duplicate in dups]
+            duplicate_models.append((self._id_to_obj[content_item.element_id], dups))
         return duplicate_models
 
     def find_uses_paths_with_invalid_fromversion(
@@ -415,7 +461,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             List[BaseContent]: The content items who use content items with a lower fromvesion.
         """
         with self.driver.session() as session:
-            results: Dict[int, Neo4jRelationshipResult] = session.execute_read(
+            results: Dict[str, Neo4jRelationshipResult] = session.execute_read(
                 validate_fromversion, file_paths, for_supported_versions
             )
             self._add_nodes_to_mapping(result.node_from for result in results.values())
@@ -435,7 +481,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             List[BaseContent]: The content items who use content items with a higher toversion.
         """
         with self.driver.session() as session:
-            results: Dict[int, Neo4jRelationshipResult] = session.execute_read(
+            results: Dict[str, Neo4jRelationshipResult] = session.execute_read(
                 validate_toversion, file_paths, for_supported_versions
             )
             self._add_nodes_to_mapping(result.node_from for result in results.values())
@@ -467,7 +513,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             List[BaseContent]: The content items who use content items with invalid marketplaces.
         """
         with self.driver.session() as session:
-            results: Dict[int, Neo4jRelationshipResult] = session.execute_read(
+            results: Dict[str, Neo4jRelationshipResult] = session.execute_read(
                 validate_marketplaces, pack_ids
             )
             self._add_nodes_to_mapping(result.node_from for result in results.values())
@@ -490,9 +536,28 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             List[BaseContent]: The core packs who depends on content items who are not core packs.
         """
         with self.driver.session() as session:
-            results: Dict[int, Neo4jRelationshipResult] = session.execute_read(
+            results: Dict[str, Neo4jRelationshipResult] = session.execute_read(
                 validate_core_packs_dependencies, pack_ids, marketplace, core_pack_list
             )
+            self._add_nodes_to_mapping(result.node_from for result in results.values())
+            self._add_relationships_to_objects(session, results)
+            return [self._id_to_obj[result] for result in results]
+
+    def find_mandatory_hidden_packs_dependencies(
+        self, pack_ids: List[str]
+    ) -> List[BaseContent]:
+        """
+        Retrieves all the packs that are dependent on hidden packs
+
+        Args:
+            pack_ids (List[str]): A list of content items pack_ids to check.
+
+        Returns:
+            List[BaseContent]: Packs which depend on hidden packs in case exist.
+
+        """
+        with self.driver.session() as session:
+            results = session.execute_read(validate_hidden_pack_dependencies, pack_ids)
             self._add_nodes_to_mapping(result.node_from for result in results.values())
             self._add_relationships_to_objects(session, results)
             return [self._id_to_obj[result] for result in results]
@@ -502,14 +567,17 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
     ) -> None:
         logger.info("Creating graph relationships...")
         with self.driver.session() as session:
-            session.execute_write(create_relationships, relationships)
+            session.execute_write(create_relationships, relationships, timeout=120)
             if self._rels_to_preserve:
                 session.execute_write(
                     return_preserved_relationships, self._rels_to_preserve
                 )
 
-    def remove_server_items(self) -> None:
+    def remove_non_repo_items(self) -> None:
         with self.driver.session() as session:
+            # Removing content-private nodes should be a temporary workaround.
+            # For more details: https://jira-hq.paloaltonetworks.local/browse/CIAC-7149
+            session.execute_write(remove_content_private_nodes)
             session.execute_write(remove_server_nodes)
 
     def import_graph(self, imported_path: Optional[Path] = None) -> bool:
@@ -540,23 +608,17 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
                 session.execute_write(merge_duplicate_content_items)
                 session.execute_write(create_constraints)
                 session.execute_write(remove_empty_properties)
-        try:
-            # Test that the imported graph is valid by marshaling it
-            self.marshal_graph(MarketplaceVersions.XSOAR)
-            result = True
-        except ValidationError as e:
-            logger.warning("Failed to import the content graph")
-            logger.debug(f"Validation Error: {e}")
-            result = False
-        # clear cache after loading the graph
+        has_infra_graph_been_changed = self._has_infra_graph_been_changed()
         self._id_to_obj = {}
-        return result
+        return not has_infra_graph_been_changed
 
-    def export_graph(self, output_path: Optional[Path] = None) -> None:
+    def export_graph(
+        self, output_path: Optional[Path] = None, override_commit: bool = True
+    ) -> None:
         self.clean_import_dir()
         with self.driver.session() as session:
             session.execute_write(export_graphml, self.repo_path.name)
-        self.dump_metadata()
+        self.dump_metadata(override_commit)
         if output_path:
             self.zip_import_dir(output_path)
 
@@ -568,8 +630,8 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
 
     def search(
         self,
-        marketplace: MarketplaceVersions = None,
-        content_type: Optional[ContentType] = None,
+        marketplace: Union[MarketplaceVersions, str] = None,
+        content_type: ContentType = ContentType.BASE_CONTENT,
         ids_list: Optional[Iterable[int]] = None,
         all_level_dependencies: bool = False,
         all_level_imports: bool = False,
@@ -580,7 +642,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
 
         Args:
             marketplace (MarketplaceVersions, optional): Marketplace to search by. Defaults to None.
-            content_type (Optional[ContentType], optional): The content_type to filter. Defaults to None.
+            content_type (ContentType): The content_type to filter. Defaults to ContentType.BASE_CONTENT.
             ids_list (Optional[Iterable[int]], optional): A list of unique IDs to filter. Defaults to None.
             all_level_dependencies (bool, optional): Whether to return all level dependencies. Defaults to False.
             **properties: A key, value filter for the search. For example: `search(object_id="QRadar")`.
@@ -588,6 +650,9 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         Returns:
             List[BaseContent]: The search results
         """
+        if isinstance(marketplace, str):
+            marketplace = MarketplaceVersions(marketplace)
+
         super().search()
         return self._search(
             marketplace,
@@ -603,13 +668,19 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         with self.driver.session() as session:
             session.execute_write(create_pack_dependencies)
 
+    def get_schema(self) -> dict:
+        with self.driver.session() as session:
+            return session.execute_read(get_schema)
+
     def run_single_query(self, query: str, **kwargs) -> Any:
         with self.driver.session() as session:
             try:
                 tx = session.begin_transaction()
-                tx.run(query, **kwargs)
+                res = tx.run(query, **kwargs)
+                data = res.data()
                 tx.commit()
                 tx.close()
+                return data
             except Exception as e:
                 logger.error(f"Error when running query: {e}")
                 raise e

@@ -5,9 +5,13 @@ from demisto_sdk.commands.common.constants import (
     GENERIC_MODULES_DIR,
     PACKS_DIR,
 )
-from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.logger import logger
-from demisto_sdk.commands.common.tools import get_pack_name, is_external_repository
+from demisto_sdk.commands.common.tools import (
+    get_file,
+    get_pack_name,
+    is_external_repository,
+    write_dict,
+)
 
 
 class JsonSplitter:
@@ -35,8 +39,7 @@ class JsonSplitter:
         self.autocreate_dir = not no_auto_create_dir
         self.new_module_file = new_module_file
 
-        with open(self.input, "rb") as json_file:
-            self.module_json_data = json.load(json_file)
+        self.module_json_data = get_file(self.input, raise_on_error=True)
 
     def split_json(self):
         logger.debug(
@@ -96,10 +99,7 @@ class JsonSplitter:
                     )
 
                     logger.debug(f"Creating dashboard: {full_dashboard_path}")
-
-                    with open(full_dashboard_path, "w") as dashboard_file:
-                        json.dump(dashboard_data, dashboard_file, indent=4)
-
+                    write_dict(full_dashboard_path, data=dashboard_data, indent=4)
                     tab["dashboard"] = {"id": dashboard_data.get("id")}
 
     def create_module(self):
@@ -124,5 +124,4 @@ class JsonSplitter:
 
             module_file_path = os.path.join(self.module_dir, file_name)
 
-        with open(module_file_path, "w") as module_file:
-            json.dump(self.module_json_data, module_file, indent=4)
+        write_dict(module_file_path, data=self.module_json_data, indent=4)

@@ -9,13 +9,12 @@ from demisto_sdk.commands.common.constants import (
 )
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.tools import get_yaml
-from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
-from demisto_sdk.commands.content_graph.content_graph_commands import (
+from demisto_sdk.commands.content_graph.commands.create import (
     create_content_graph,
-    stop_content_graph,
 )
-from demisto_sdk.commands.content_graph.interface.neo4j.neo4j_graph import (
-    Neo4jContentGraphInterface as ContentGraphInterface,
+from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
+from demisto_sdk.commands.content_graph.interface import (
+    ContentGraphInterface,
 )
 from demisto_sdk.commands.content_graph.objects.repository import ContentDTO
 from demisto_sdk.commands.content_graph.tests.create_content_graph_test import (
@@ -33,14 +32,25 @@ GIT_ROOT = git_path()
 
 
 @pytest.fixture(autouse=True)
-def setup(mocker, repo: Repo):
+def setup_method(mocker, repo: Repo):
     """Auto-used fixture for setup before every test run"""
     import demisto_sdk.commands.content_graph.objects.base_content as bc
 
     bc.CONTENT_PATH = Path(repo.path)
     mocker.patch.object(ContentGraphInterface, "repo_path", Path(repo.path))
     mocker.patch.object(neo4j_service, "REPO_PATH", Path(repo.path))
-    stop_content_graph()
+    mocker.patch(
+        "demisto_sdk.commands.common.docker_images_metadata.get_remote_file_from_api",
+        return_value={
+            "docker_images": {
+                "python3": {
+                    "3.10.11.54799": {"python_version": "3.10.11"},
+                    "3.10.12.63474": {"python_version": "3.10.11"},
+                }
+            }
+        },
+    )
+    neo4j_service.stop()
 
 
 @pytest.fixture
@@ -57,7 +67,6 @@ def repository(mocker):
 
 
 def create_mini_content(repository: ContentDTO):
-
     relationships = {
         RelationshipType.IN_PACK: [
             mock_relationship(

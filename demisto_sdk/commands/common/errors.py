@@ -1,10 +1,10 @@
 from __future__ import annotations
 
-from distutils.version import LooseVersion
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Set, Union
 
 import decorator
+from packaging.version import Version
 from requests import Response
 
 from demisto_sdk.commands.common.constants import (
@@ -25,89 +25,10 @@ from demisto_sdk.commands.common.constants import (
     MarketplaceVersions,
 )
 from demisto_sdk.commands.common.content_constant_paths import CONF_PATH
+from demisto_sdk.commands.common.tools import is_external_repository
 
 FOUND_FILES_AND_ERRORS: list = []
 FOUND_FILES_AND_IGNORED_ERRORS: list = []
-# allowed errors to be ignored in any supported pack (XSOAR/Partner/Community) only if they appear in the .pack-ignore
-ALLOWED_IGNORE_ERRORS = [
-    "BA101",
-    "BA106",
-    "BA108",
-    "BA109",
-    "BA110",
-    "BA111",
-    "BA112",
-    "BA113",
-    "BA116",
-    "BA119",
-    "BA124",
-    "DS107",
-    "GF102",
-    "IF100",
-    "IF106",
-    "IF113",
-    "IF115",
-    "IF116",
-    "IN109",
-    "IN110",
-    "IN122",
-    "IN124",
-    "IN126",
-    "IN128",
-    "IN135",
-    "IN136",
-    "IN139",
-    "IN144",
-    "IN145",
-    "IN153",
-    "IN154",
-    "MP106",
-    "PA113",
-    "PA116",
-    "PA124",
-    "PA125",
-    "PA127",
-    "PA129",
-    "PB104",
-    "PB105",
-    "PB106",
-    "PB110",
-    "PB111",
-    "PB114",
-    "PB115",
-    "PB116",
-    "PB107",
-    "PB118",
-    "PB119",
-    "PB121",
-    "RM100",
-    "RM102",
-    "RM104",
-    "RM106",
-    "RM108",
-    "RM110",
-    "RM112",
-    "RM113",
-    "RP102",
-    "RP104",
-    "SC100",
-    "SC101",
-    "SC105",
-    "SC106",
-    "IM111",
-    "RN112",
-    "RN113",
-    "RN114",
-    "RN115",
-    "RN116",
-    "MR104",
-    "MR105",
-    "MR108",
-    "PR101",
-    "LO107",
-    "IN107",
-    "DB100",
-]
 
 # predefined errors to be ignored in partner/community supported packs even if they do not appear in .pack-ignore
 PRESET_ERROR_TO_IGNORE = {
@@ -131,7 +52,7 @@ PRESET_ERROR_TO_CHECK = {
     "deprecated": ["ST", "BC", "BA", "IN127", "IN128", "PB104", "SC101"],
 }
 
-ERROR_CODE = {
+ERROR_CODE: Dict = {
     # BA - Basic
     "wrong_version": {
         "code": "BA100",
@@ -213,6 +134,10 @@ ERROR_CODE = {
     "missing_unit_test_file": {
         "code": "BA124",
         "related_field": "",
+    },
+    "customer_facing_docs_disallowed_terms": {
+        "code": "BA125",
+        "related_field": "description",
     },
     # BC - Backward Compatible
     "breaking_backwards_subtype": {
@@ -407,6 +332,10 @@ ERROR_CODE = {
         "code": "DS107",
         "related_field": "detaileddescription",
     },
+    "description_missing_dot_at_the_end": {
+        "code": "DS108",
+        "related_field": "description",
+    },
     # GF - Generic Fields
     "invalid_generic_field_group_value": {
         "code": "GF100",
@@ -484,7 +413,7 @@ ERROR_CODE = {
         "code": "IF115",
         "related_field": "unsearchable",
     },
-    "select_values_cannot_contain_empty_values": {
+    "select_values_cannot_contain_empty_values_in_multi_select_types": {
         "code": "IF116",
         "related_field": "selectValues",
     },
@@ -495,6 +424,10 @@ ERROR_CODE = {
     "aliases_with_inner_alias": {
         "code": "IF118",
         "related_field": "Aliases",
+    },
+    "select_values_cannot_contain_multiple_or_only_empty_values_in_single_select_types": {
+        "code": "IF119",
+        "related_field": "selectValues",
     },
     # IM - Images
     "no_image_given": {
@@ -750,6 +683,10 @@ ERROR_CODE = {
     },
     "invalid_siem_integration_name": {
         "code": "IN150",
+        "related_field": "display",
+    },
+    "invalid_siem_marketplaces_entry": {
+        "code": "IN151",
         "related_field": "display",
     },
     "empty_command_arguments": {
@@ -1027,6 +964,10 @@ ERROR_CODE = {
     },
     "pack_metadata_modules_for_non_xsiam": {
         "code": "PA136",
+        "related_field": "",
+    },
+    "pack_have_nonignorable_error": {
+        "code": "PA137",
         "related_field": "",
     },
     # PB - Playbooks
@@ -1467,6 +1408,10 @@ ERROR_CODE = {
         "code": "CR101",
         "related_field": "",
     },
+    "correlation_rules_missing_search_window": {
+        "code": "CR102",
+        "related_field": "",
+    },
     # XR - XSIAM Reports
     "xsiam_report_files_naming_error": {
         "code": "XR100",
@@ -1524,7 +1469,101 @@ ERROR_CODE = {
         "code": "GR107",
         "related_field": "",
     },
+    "hidden_pack_not_mandatory_dependency": {
+        "code": "GR108",
+        "ui_applicable": False,
+        "related_field": "",
+    },
 }
+
+
+# allowed errors to be ignored in any supported pack (XSOAR/Partner/Community) only if they appear in the .pack-ignore
+ALLOWED_IGNORE_ERRORS = (
+    [err["code"] for err in ERROR_CODE.values()]
+    if is_external_repository()
+    else [
+        "BA101",
+        "BA106",
+        "BA108",
+        "BA109",
+        "BA110",
+        "BA111",
+        "BA112",
+        "BA113",
+        "BA116",
+        "BA119",
+        "BA124",
+        "BA125",
+        "DS108",
+        "DS107",
+        "GF102",
+        "IF100",
+        "IF106",
+        "IF113",
+        "IF115",
+        "IF116",
+        "IN109",
+        "IN110",
+        "IN122",
+        "IN124",
+        "IN126",
+        "IN128",
+        "IN135",
+        "IN136",
+        "IN139",
+        "IN144",
+        "IN145",
+        "IN153",
+        "IN154",
+        "MP106",
+        "PA113",
+        "PA116",
+        "PA124",
+        "PA125",
+        "PA127",
+        "PA129",
+        "PB104",
+        "PB105",
+        "PB106",
+        "PB110",
+        "PB111",
+        "PB114",
+        "PB115",
+        "PB116",
+        "PB107",
+        "PB118",
+        "PB119",
+        "PB121",
+        "RM100",
+        "RM102",
+        "RM104",
+        "RM106",
+        "RM108",
+        "RM110",
+        "RM112",
+        "RM113",
+        "RP102",
+        "RP104",
+        "SC100",
+        "SC101",
+        "SC105",
+        "SC106",
+        "IM111",
+        "RN112",
+        "RN113",
+        "RN114",
+        "RN115",
+        "RN116",
+        "MR104",
+        "MR105",
+        "MR108",
+        "PR101",
+        "LO107",
+        "IN107",
+        "DB100",
+        "GR103",
+    ]
+)
 
 
 def get_all_error_codes() -> List:
@@ -1665,8 +1704,8 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def field_version_is_not_correct(
-        from_version_set: LooseVersion,
-        expected_from_version: LooseVersion,
+        from_version_set: Version,
+        expected_from_version: Version,
         reason_for_version: str,
     ):
         return (
@@ -1676,18 +1715,35 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def select_values_cannot_contain_empty_values():
-        return "the field selectValues cannot contain empty values. Please remove."
+    def select_values_cannot_contain_empty_values_in_multi_select_types():
+        return "Multiselect types cannot contain empty values in the selectValues field"
+
+    @staticmethod
+    @error_code_decorator
+    def select_values_cannot_contain_multiple_or_only_empty_values_in_single_select_types():
+        return "singleSelect types cannot contain only empty value or more than one empty values in the field selectValues. Please remove."
 
     @staticmethod
     @error_code_decorator
     def unsearchable_key_should_be_true_incident_field():
-        return "The unsearchable key in indicator and incident fields should be set to true."
+        return (
+            "Warning: Indicator and incident fields should include the `unsearchable` key set to true. When missing"
+            " or set to false, the platform will index the data in this field. Unnecessary indexing of fields might"
+            " affect the performance and disk usage in environments."
+            "While considering the above mentioned warning, you can bypass this error by adding it to the"
+            " .pack-ignore file."
+        )
 
     @staticmethod
     @error_code_decorator
     def unsearchable_key_should_be_true_generic_field():
-        return "The unsearchable key in a generic field should be set to true."
+        return (
+            "Warning: Generic fields should include the `unsearchable` key set to true. When missing"
+            " or set to false, the platform will index the data in this field. Unnecessary indexing of fields might"
+            " affect the performance and disk usage in environments."
+            "While considering the above mentioned warning, you can bypass this error by adding it to the"
+            " .pack-ignore file."
+        )
 
     @staticmethod
     @error_code_decorator
@@ -2054,6 +2110,14 @@ class Errors:
             f"The display name of this siem integration is incorrect , "
             f'should end with "Event Collector".\n'
             f"e.g: {display_name} Event Collector"
+        )
+
+    @staticmethod
+    @error_code_decorator
+    def invalid_siem_marketplaces_entry():
+        return (
+            "The marketplaces field of this XSIAM integration is incorrect.\n"
+            'This field should have only the "marketplacev2" value.'
         )
 
     @staticmethod
@@ -2614,7 +2678,8 @@ class Errors:
             f'A new release notes file contains the phrase "breaking changes" '
             "without a matching JSON file (with the same name as the release note file, e.g. 1_2_3.json). "
             f'Please run "demisto-sdk update-release-notes -i {json_path[:-4]}md -bc". '
-            "For more information, refer to the following documentation: https://xsoar.pan.dev/docs/documentation/release-notes"
+            "For more information, refer to the following documentation: "
+            "https://xsoar.pan.dev/docs/documentation/release-notes#breaking-changes-version"
         )
 
     @staticmethod
@@ -2865,6 +2930,13 @@ class Errors:
     @error_code_decorator
     def description_contains_demisto_word(line_nums, yml_or_file):
         return f"Found the word 'Demisto' in the description content {yml_or_file} in lines: {line_nums}."
+
+    @staticmethod
+    @error_code_decorator
+    def description_missing_dot_at_the_end(details: str):
+        return (
+            f'Description must end with a period ("."), fix the following:\n{details}'
+        )
 
     @staticmethod
     @error_code_decorator
@@ -4028,6 +4100,14 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
+    def customer_facing_docs_disallowed_terms(found_terms: List[str]):
+        return (
+            f"Found internal terms in a customer-facing documentation file: "
+            f"{', '.join(found_terms)}"
+        )
+
+    @staticmethod
+    @error_code_decorator
     def missing_commands_from_readme(yml_name, missing_commands_from_readme):
         error_msg = (
             f"The following commands appear in {yml_name} but not in the README file:\n"
@@ -4297,3 +4377,20 @@ class Errors:
             "is replaced by the word Incident/Incidents\nfor example: if there is a script `getIncident'"
             "it will not be possible to create a script with the name `getAlert`)"
         )
+
+    @staticmethod
+    @error_code_decorator
+    def hidden_pack_not_mandatory_dependency(
+        hidden_pack: str, dependant_packs_ids: Set[str]
+    ):
+        return f"{', '.join(dependant_packs_ids)} pack(s) cannot have a mandatory dependency on the hidden pack {hidden_pack}."
+
+    @staticmethod
+    @error_code_decorator
+    def pack_have_nonignorable_error(nonignorable_errors: List[str]):
+        return f"The following errors can not be ignored: {', '.join(nonignorable_errors)}, remove them from .pack-ignore files"
+
+    @staticmethod
+    @error_code_decorator
+    def correlation_rules_missing_search_window():
+        return "The 'search_window' key must exist and cannot be empty when the 'execution_mode' is set to 'SCHEDULED'."

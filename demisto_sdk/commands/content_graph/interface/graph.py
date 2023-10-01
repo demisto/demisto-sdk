@@ -6,18 +6,22 @@ from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.git_util import GitUtil
-from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
+from demisto_sdk.commands.common.logger import logger
+from demisto_sdk.commands.common.tools import (
+    get_file,
+    sha1_dir,
+    write_dict,
+)
 from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 from demisto_sdk.commands.content_graph.objects.pack import Pack
 from demisto_sdk.commands.content_graph.objects.repository import ContentDTO
 
-METADATA_FILE_NAME = "metadata.json"
-
 
 class ContentGraphInterface(ABC):
     repo_path = CONTENT_PATH  # type: ignore
+    METADATA_FILE_NAME = "metadata.json"
 
     @property
     @abstractmethod
@@ -35,8 +39,9 @@ class ContentGraphInterface(ABC):
     @property
     def metadata(self) -> Optional[dict]:
         try:
-            with (self.import_path / METADATA_FILE_NAME).open() as f:
-                return json.load(f)
+            return get_file(
+                self.import_path / self.METADATA_FILE_NAME, raise_on_error=True
+            )
         except FileNotFoundError:
             return None
 
@@ -46,16 +51,50 @@ class ContentGraphInterface(ABC):
             return self.metadata.get("commit")
         return None
 
-    def dump_metadata(self) -> None:
+    @property
+    def content_parser_latest_hash(self) -> Optional[str]:
+        if self.metadata:
+            return self.metadata.get("content_parser_latest_hash")
+        return None
+
+    @property
+    def schema(self) -> Optional[dict]:
+        if self.metadata:
+            return self.metadata.get("schema")
+        return None
+
+    def dump_metadata(self, override_commit: bool = True) -> None:
         """Adds metadata to the graph."""
         metadata = {
-            "commit": GitUtil().get_current_commit_hash(),
+            "commit": GitUtil().get_current_commit_hash()
+            if override_commit
+            else self.commit,
+            "content_parser_latest_hash": self._get_latest_content_parser_hash(),
+            "schema": self.get_schema(),
         }
-        with open(self.import_path / METADATA_FILE_NAME, "w") as f:
-            json.dump(metadata, f)
+
+        write_dict(self.import_path / self.METADATA_FILE_NAME, data=metadata)
+
+    def _get_latest_content_parser_hash(self) -> Optional[str]:
+        parsers_path = Path(__file__).parent.parent / "parsers"
+        parsers_sha1 = sha1_dir(parsers_path)
+        logger.debug(f"Content parser hash: {parsers_sha1}")
+        return parsers_sha1
+
+    def _has_infra_graph_been_changed(self) -> bool:
+        if not self.content_parser_latest_hash:
+            logger.warning("The content parser hash is missing.")
+        elif self.content_parser_latest_hash != self._get_latest_content_parser_hash():
+            logger.warning("The content parser has been changed.")
+            return True
+        return False
 
     def zip_import_dir(self, output_file: Path) -> None:
         shutil.make_archive(str(output_file), "zip", self.import_path)
+
+    @abstractmethod
+    def get_schema(self) -> dict:
+        pass
 
     @abstractmethod
     def create_indexes_and_constraints(self) -> None:
@@ -72,7 +111,7 @@ class ContentGraphInterface(ABC):
         pass
 
     @abstractmethod
-    def remove_server_items(self) -> None:
+    def remove_non_repo_items(self) -> None:
         pass
 
     @abstractmethod
@@ -80,7 +119,9 @@ class ContentGraphInterface(ABC):
         pass
 
     @abstractmethod
-    def export_graph(self, output_path: Optional[Path] = None) -> None:
+    def export_graph(
+        self, output_path: Optional[Path] = None, override_commit: bool = True
+    ) -> None:
         pass
 
     @abstractmethod
@@ -123,7 +164,9 @@ class ContentGraphInterface(ABC):
         pass
 
     @abstractmethod
-    def validate_duplicate_ids(self, file_paths: List[str]) -> None:
+    def validate_duplicate_ids(
+        self, file_paths: List[str]
+    ) -> List[Tuple[BaseContent, List[BaseContent]]]:
         pass
 
     @abstractmethod
@@ -135,10 +178,27 @@ class ContentGraphInterface(ABC):
         pass
 
     @abstractmethod
+    def get_relationships_by_path(
+        self,
+        path: Path,
+        relationship_type: RelationshipType,
+        content_type: ContentType,
+        depth: int,
+        marketplace: MarketplaceVersions,
+        retrieve_sources: bool,
+        retrieve_targets: bool,
+        mandatory_only: bool,
+        include_tests: bool,
+        include_deprecated: bool,
+        include_hidden: bool,
+    ) -> Tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
+        pass
+
+    @abstractmethod
     def search(
         self,
-        marketplace: MarketplaceVersions = None,
-        content_type: Optional[ContentType] = None,
+        marketplace: Union[MarketplaceVersions, str] = None,
+        content_type: ContentType = ContentType.BASE_CONTENT,
         ids_list: Optional[Iterable[int]] = None,
         all_level_dependencies: bool = False,
         **properties,
@@ -148,7 +208,7 @@ class ContentGraphInterface(ABC):
 
         Args:
             marketplace (MarketplaceVersions, optional): Marketplace to search by. Defaults to None.
-            content_type (Optional[ContentType], optional): The content_type to filter. Defaults to None.
+            content_type (ContentType]): The content_type to filter. Defaults to ContentType.BASE_CONTENT.
             ids_list (Optional[Iterable[int]], optional): A list of unique IDs to filter. Defaults to None.
             all_level_dependencies (bool, optional): Whether to return all level dependencies. Defaults to False.
             **properties: A key, value filter for the search. For example: `search(object_id="QRadar")`.
@@ -215,4 +275,10 @@ class ContentGraphInterface(ABC):
 
     @abstractmethod
     def run_single_query(self, query: str, **kwargs) -> Any:
+        pass
+
+    @abstractmethod
+    def find_mandatory_hidden_packs_dependencies(
+        self, pack_ids: List[str]
+    ) -> List[BaseContent]:
         pass

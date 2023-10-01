@@ -54,7 +54,7 @@ class TestGenericModuleUnifier:
             )
         assert result.exit_code == 0
         assert os.getenv(ENV_DEMISTO_SDK_MARKETPLACE) == "marketplacev2"
-        assert os.path.isfile(saving_path)
+        assert Path(saving_path).is_file()
         with open(saving_path) as f:
             saved_generic_module = json.load(f)
         assert saved_generic_module == UNIFIED_GENERIC_MODULE
@@ -206,7 +206,6 @@ class TestIntegrationScriptUnifier:
                 assert unified_yml_data.get("script").get("nativeimage") == [
                     "8.1",
                     "8.2",
-                    "candidate",
                 ]
 
     def test_add_custom_section_flag(self, repo):
@@ -234,11 +233,7 @@ class TestIntegrationScriptUnifier:
             ) as unified_yml:
                 unified_yml_data = yaml.load(unified_yml)
                 assert unified_yml_data.get("name") == "sample_scriptTest"
-                assert unified_yml_data.get("nativeimage") == [
-                    "8.1",
-                    "8.2",
-                    "candidate",
-                ]
+                assert unified_yml_data.get("nativeimage") == ["8.1", "8.2"]
 
     def test_ignore_native_image_integration(self, repo):
         """

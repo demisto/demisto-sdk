@@ -4,8 +4,12 @@ from typing import Optional, Union
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.common.logger import logger
-from demisto_sdk.commands.content_graph.interface.neo4j.neo4j_graph import (
-    Neo4jContentGraphInterface,
+from demisto_sdk.commands.common.tools import (
+    write_dict,
+)
+from demisto_sdk.commands.content_graph.commands.update import update_content_graph
+from demisto_sdk.commands.content_graph.interface import (
+    ContentGraphInterface,
 )
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
@@ -38,7 +42,11 @@ class PrepareUploadManager:
 
         if graph:
             # enrich the content item with the graph
-            with Neo4jContentGraphInterface(update_graph=not skip_update) as interface:
+            with ContentGraphInterface() as interface:
+                if not skip_update:
+                    update_content_graph(
+                        interface, use_git=True, output_path=interface.output_path
+                    )
                 content_item = interface.from_path(
                     path=content_item.path,
                     marketplace=marketplace,
@@ -60,13 +68,13 @@ class PrepareUploadManager:
             raise ValueError(
                 f"Unsupported input for {input}. Please provide a path to a content item. Got: {content_item}"
             )
+        content_item: ContentItem
         data = content_item.prepare_for_upload(marketplace, **kwargs)
         if output.exists() and not force:
             raise FileExistsError(
                 f"Output file {output} already exists. Use --force to overwrite."
             )
-        with output.open("w") as f:
-            content_item.handler.dump(data, f)
+        write_dict(output, data=data, handler=content_item.handler)
 
         logger.info(f"[green]Output saved in: {str(output.absolute())}[/green]")
         return output

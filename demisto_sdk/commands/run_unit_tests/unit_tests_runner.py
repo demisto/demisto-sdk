@@ -120,7 +120,7 @@ def unit_test_runner(file_paths: List[Path], verbose: bool = False) -> int:
 
         working_dir = f"/content/{relative_integration_script_path.parent}"
         docker_images = [integration_script.docker_image or DEFAULT_DOCKER_IMAGE]
-        if os.getenv("GITLAB_CI"):
+        if os.getenv("CONTENT_GITLAB_CI"):
             docker_images = [
                 f"docker-io.art.code.pan.run/{docker_image}"
                 for docker_image in docker_images

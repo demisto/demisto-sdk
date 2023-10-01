@@ -6,6 +6,7 @@ import logging
 import os
 import re
 import string
+from pathlib import Path
 from typing import List, Optional, Tuple
 
 from pykwalify.core import Core
@@ -14,6 +15,7 @@ from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import (
     ACCEPTED_FILE_EXTENSIONS,
     CHECKED_TYPES_REGEXES,
+    DEMISTO_GIT_PRIMARY_BRANCH,
     FILE_TYPES_PATHS_TO_VALIDATE,
     OLD_REPUTATION,
     SCHEMA_TO_REGEX,
@@ -60,7 +62,7 @@ class StructureValidator(BaseValidator):
         fromversion=False,
         configuration=Configuration(),
         ignored_errors=None,
-        tag="master",
+        tag=DEMISTO_GIT_PRIMARY_BRANCH,
         branch_name="",
         json_file_path=None,
         skip_schema_check=False,
@@ -74,7 +76,7 @@ class StructureValidator(BaseValidator):
             specific_validations=specific_validations,
         )
         self.is_valid = True
-        self.valid_extensions = [".yml", ".json", ".md", ".png", ".py"]
+        self.valid_extensions = [".yml", ".json", ".md", ".png", ".py", ".svg"]
         self.file_path = file_path.replace("\\", "/")
         self.skip_schema_check = skip_schema_check
         self.pykwalify_logs = pykwalify_logs
@@ -160,7 +162,7 @@ class StructureValidator(BaseValidator):
             or self.skip_schema_check
             or (
                 self.scheme_name == FileType.REPUTATION
-                and os.path.basename(self.file_path) == OLD_REPUTATION
+                and Path(self.file_path).name == OLD_REPUTATION
             )
         ):
             return True
@@ -505,7 +507,7 @@ class StructureValidator(BaseValidator):
 
     @error_codes("BA103")
     def check_for_spaces_in_file_name(self):
-        file_name = os.path.basename(self.file_path)
+        file_name = Path(self.file_path).name
         if file_name.count(" ") > 0:
             error_message, error_code = Errors.file_name_include_spaces_error(file_name)
             if self.handle_error(error_message, error_code, self.file_path):

@@ -65,21 +65,6 @@ def get_integration_params(project_id: str, secret_id: str):
     return json5.loads(payload).get("params")
 
 
-def copy_demistomock(integration_script: IntegrationScript):
-    if integration_script.type == "powershell":
-        (integration_script.path.parent / "demistomock.ps1").unlink(missing_ok=True)
-        shutil.copy(
-            CONTENT_PATH / "Tests" / "demistomock" / "demistomock.ps1",
-            integration_script.path.parent / "demistomock.ps1",
-        )
-    else:
-        (integration_script.path.parent / "demistomock.py").unlink(missing_ok=True)
-        shutil.copy(
-            CONTENT_PATH / "Tests" / "demistomock" / "demistomock.py",
-            integration_script.path.parent / "demistomock.py",
-        )
-
-
 def add_init_file_in_test_data(integration_script: IntegrationScript):
     if (integration_script.path.parent / "test_data").exists():
         (integration_script.path.parent / "test_data" / "__init__.py").touch()
@@ -267,7 +252,6 @@ def setup(
         assert isinstance(
             integration_script, IntegrationScript
         ), "Expected Integration Script"
-        copy_demistomock(integration_script)
         add_init_file_in_test_data(integration_script)
         configure_dotenv()
         docker_image = integration_script.docker_image

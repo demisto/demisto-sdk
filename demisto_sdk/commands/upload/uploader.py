@@ -134,14 +134,7 @@ class Uploader:
                         logger.info(
                             "[red]Are you sure you want to continue? y/[N][/red]"
                         )
-                        try:
-                            return string_to_bool(
-                                str(input()),
-                                accept_yes_no=True,
-                                accept_single_letter=True,
-                            )
-                        except ValueError:
-                            return False
+                        return string_to_bool(str(input()), default_when_empty=False)
             return True
 
         def _parse_internal_pack_names(zip_path: Path) -> Optional[Tuple[str, ...]]:
@@ -486,9 +479,7 @@ class Uploader:
 class ConfigFileParser:
     def __init__(self, path: Path):
         self.path = path
-
-        with self.path.open() as f:
-            self.content = json.load(f)
+        self.content = get_file(self.path, raise_on_error=True)
 
         self.custom_packs_paths: Tuple[Path, ...] = tuple(
             Path(pack["url"]) for pack in self.content.get("custom_packs", ())
@@ -531,9 +522,9 @@ class ItemDetacher:
 
         all_files = glob.glob(f"{self.file_path}/**/*", recursive=True)
         for file_path in all_files:
-            if os.path.isfile(file_path) and self.is_valid_file_for_detach(file_path):
+            if Path(file_path).is_file() and self.is_valid_file_for_detach(file_path):
                 file_type = self.find_item_type_to_detach(file_path)
-                file_data = get_file(file_path, file_type)
+                file_data = get_file(file_path)
                 file_id = file_data.get("id", "")
                 if file_id:
                     detach_files_list.append(
@@ -557,8 +548,8 @@ class ItemDetacher:
         return "yml" if "Playbooks" in file_path or "Scripts" in file_path else "json"
 
     def find_item_id_to_detach(self):
-        file_type = self.find_item_type_to_detach(self.file_path)
-        file_data = get_file(self.file_path, file_type)
+        self.find_item_type_to_detach(self.file_path)
+        file_data = get_file(self.file_path)
         return file_data.get("id")
 
     def detach(self, upload_file: bool = False) -> List[str]:
@@ -575,7 +566,7 @@ class ItemDetacher:
                         marketplace=self.marketplace,
                     ).upload()
 
-        elif os.path.isfile(self.file_path):
+        elif Path(self.file_path).is_file():
             file_id = self.find_item_id_to_detach()
             detach_files_list.append({"file_id": file_id, "file_path": self.file_path})
             self.detach_item(file_id=file_id, file_path=self.file_path)

@@ -1,7 +1,8 @@
-import os
 from abc import ABC, abstractmethod
-from distutils.version import LooseVersion
+from pathlib import Path
 from typing import Dict, List
+
+from packaging.version import Version
 
 from demisto_sdk.commands.common.constants import (
     DEFAULT_CONTENT_ITEM_FROM_VERSION,
@@ -77,7 +78,7 @@ class LayoutBaseValidator(ContentEntityValidator, ABC):
             bool. True if to version field is higher than from version field, else False.
         """
         if self.to_version and self.from_version:
-            if LooseVersion(self.to_version) <= LooseVersion(self.from_version):
+            if Version(self.to_version) <= Version(self.from_version):
                 error_message, error_code = Errors.from_version_higher_to_version()
                 if self.handle_error(
                     error_message, error_code, file_path=self.file_path
@@ -175,9 +176,7 @@ class LayoutsContainerValidator(LayoutBaseValidator):
         Returns:
             bool. True if from version field is valid, else False.
         """
-        if LooseVersion(self.from_version) < LooseVersion(
-            FROM_VERSION_LAYOUTS_CONTAINER
-        ):
+        if Version(self.from_version) < Version(FROM_VERSION_LAYOUTS_CONTAINER):
             error_message, error_code = Errors.invalid_version_in_layoutscontainer(
                 "fromVersion"
             )
@@ -192,7 +191,7 @@ class LayoutsContainerValidator(LayoutBaseValidator):
         Returns:
             bool. True if to version field is valid, else False.
         """
-        if self.to_version and LooseVersion(self.to_version) < LooseVersion(
+        if self.to_version and Version(self.to_version) < Version(
             FROM_VERSION_LAYOUTS_CONTAINER
         ):
             error_message, error_code = Errors.invalid_version_in_layoutscontainer(
@@ -204,7 +203,7 @@ class LayoutsContainerValidator(LayoutBaseValidator):
 
     @error_codes("LO103")
     def is_valid_file_path(self) -> bool:
-        output_basename = os.path.basename(self.file_path)
+        output_basename = Path(self.file_path).name
         if not output_basename.startswith("layoutscontainer-"):
             error_message, error_code = Errors.invalid_file_path_layoutscontainer(
                 output_basename
@@ -321,9 +320,7 @@ class LayoutValidator(LayoutBaseValidator):
             bool. True if from version field is valid, else False.
         """
         if self.from_version:
-            if LooseVersion(self.from_version) >= LooseVersion(
-                FROM_VERSION_LAYOUTS_CONTAINER
-            ):
+            if Version(self.from_version) >= Version(FROM_VERSION_LAYOUTS_CONTAINER):
                 error_message, error_code = Errors.invalid_version_in_layout(
                     "fromVersion"
                 )
@@ -340,7 +337,7 @@ class LayoutValidator(LayoutBaseValidator):
         Returns:
             bool. True if to version field is valid, else False.
         """
-        if not self.to_version or LooseVersion(self.to_version) >= LooseVersion(
+        if not self.to_version or Version(self.to_version) >= Version(
             FROM_VERSION_LAYOUTS_CONTAINER
         ):
             error_message, error_code = Errors.invalid_version_in_layout("toVersion")
@@ -350,7 +347,7 @@ class LayoutValidator(LayoutBaseValidator):
 
     @error_codes("LO102")
     def is_valid_file_path(self) -> bool:
-        output_basename = os.path.basename(self.file_path)
+        output_basename = Path(self.file_path).name
         if not output_basename.startswith("layout-"):
             error_message, error_code = Errors.invalid_file_path_layout(output_basename)
             if self.handle_error(error_message, error_code, file_path=self.file_path):

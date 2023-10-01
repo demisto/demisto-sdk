@@ -6,12 +6,13 @@ import os
 import re
 import traceback
 from enum import Enum, EnumMeta
+from pathlib import Path
 from types import FunctionType
 from typing import Any, AnyStr, Callable, List, Optional, Tuple, Union
 from unittest import mock
 
 from demisto_sdk.commands.common.logger import logger
-from demisto_sdk.commands.common.tools import write_yml
+from demisto_sdk.commands.common.tools import write_dict
 from demisto_sdk.commands.generate_yml_from_python.yml_metadata_collector import (
     CommandMetadata,
     ConfKey,
@@ -200,7 +201,7 @@ class YMLGenerator:
         """Write the yml file based on the collected details."""
         yml_filename = self.get_yml_filename()
 
-        if os.path.exists(yml_filename) and not self.force:
+        if Path(yml_filename).exists() and not self.force:
             logger.warning(
                 f"[red]File {yml_filename} already exists, not writing. To override add --force.[/red]"
             )
@@ -726,5 +727,5 @@ class MetadataToDict:
         """Save the dict to an output file."""
         logger.debug(f"Writing collected metadata to {output_file}.")
 
-        write_yml(output_file, self.metadata_dict)
+        write_dict(output_file, self.metadata_dict)
         logger.info("[green]Finished successfully.[/green]")

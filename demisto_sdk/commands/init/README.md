@@ -27,6 +27,8 @@ under PUBLISHER section. File should be up to 4kb and in the dimensions of 120x5
 Copy the demistomock. Relevant for initialization of Scripts and Integrations within a Pack.
 * **--common-server**
 Copy the CommonServerPython. Relevant for initialization of Scripts and Integrations within a Pack.
+* **--xsiam**
+Create an Event Collector based on a template, and create matching sub directories.
 
 **Notes**
 * If `integration` or `script` not set - the command will automatically create a pack, even if `pack` was not set.
@@ -44,6 +46,7 @@ The pack/integration/script will be created in your current working directory.
 * If a pack was created but no `author_image` was given - an empty 'Author_image.png' will be created at pack root
   directory. Later, when validating, user will be asked to add it manually.
 * The default templates are based on "StarterPack/BaseIntegration" and "StarterPack/BaseScript" found in content repo.
+* If `xsiam` and `integration` are set `output` is required.
 
 **Examples**
 
@@ -69,3 +72,12 @@ This will create a named "MyScript" under the "Scripts" directory and the yml fi
 
 This will create a new pack named "My_Pack" under the "Packs" directory in content repo, and add an author image that
 will be presented under PUBLISHER section in marketplace. Image file will be created under pack root directory.
+
+`demisto-sdk init --pack -n My_Pack --xsiam`
+
+This will create a new pack named "My_Pack" under the "Packs" directory in content repo, and add the relevant empty XSIAM directories under "My_Pack" directory.
+
+`demisto-sdk init --integration -n MyNewIntegration -o path/Packs/My_Pack/Integration --xsiam`
+
+This will create a new integration named MyNewIntegrationEventCollector within "path/Packs/My_Pack/Integration" directory,
+In addition, this will create the relevant folders and files for parsing rules and modeling rules under My_Pack.

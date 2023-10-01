@@ -160,6 +160,9 @@ def stop(force: bool = False, clean: bool = False):
     _stop_neo4j_service_docker(docker_client)
     if clean:
         shutil.rmtree(REPO_PATH / NEO4J_FOLDER / NEO4J_DATA_FOLDER, ignore_errors=True)
+        shutil.rmtree(
+            REPO_PATH / NEO4J_FOLDER / NEO4J_PLUGINS_FOLDER, ignore_errors=True
+        )
 
 
 def is_alive():

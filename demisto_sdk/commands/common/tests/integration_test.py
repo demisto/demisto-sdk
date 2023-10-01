@@ -2850,6 +2850,11 @@ class TestisContextChanged:
                 True,
                 True,
             ),
+            (
+                {"description": "This description ends with a list [This, is, a, test]"},
+                True,
+                True,
+            ),
         ],
     )
     def test_is_line_ends_with_dot(
@@ -2871,6 +2876,7 @@ class TestisContextChanged:
             - Case 11: A yml content with a command with an empty description for the output contextPath, and use_git flag set to True.
             - Case 12: A yml content with a description and contextPath with a description that ends with a dot inside a bracket, and use_git flag set to True.
             - Case 13: A yml content with a description that ends with exclamation mark, and use_git flag set to True.
+            - Case 14: a yml content with a description that ends with square bracket, and use_git flag set to True.
         When:
             - when executing the is_line_ends_with_dot method
         Then:
@@ -2887,6 +2893,7 @@ class TestisContextChanged:
             - Case 11: make sure the validation pass.
             - Case 12: make sure the validation pass.
             - Case 13: make sure the validation pass.
+            - Case 14: make sure the validation pass.
         """
         pack = repo.create_pack("test")
         integration = pack.create_integration(yml=yml_content)

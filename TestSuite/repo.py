@@ -28,7 +28,7 @@ class Repo:
         packs: A list of created packs
     """
 
-    def __init__(self, tmpdir: Path, as_git_repo: bool = False):
+    def __init__(self, tmpdir: Path, git_util: Optional[GitUtil] = None):
         self.packs: List[Pack] = list()
         self._tmpdir = tmpdir
         self._packs_path = tmpdir / "Packs"
@@ -80,21 +80,19 @@ class Repo:
                 "Wizards": [],
             }
         )
-        if as_git_repo:
-            GitUtil.REPO_CLS.init(self.path)
-            self.git_util = GitUtil(Path(self.path))
-        else:
-            self.git_util = None  # type: ignore[assignment]
+        self.git_util = git_util
 
     def __del__(self):
         shutil.rmtree(self.path, ignore_errors=True)
 
     @classmethod
-    def init_as_git_repo(cls, tmpdir: Path) -> "Repo":
-        content_repo = cls(tmpdir, as_git_repo=True)
+    def git_repo(cls, tmpdir: Path) -> "Repo":
+        GitUtil.REPO_CLS.init(tmpdir)
+        content_repo = cls(tmpdir, git_util=GitUtil(tmpdir))
         # commit all files
-        content_repo.git_util.commit_files("Initial Commit")
-        content_repo.git_util.repo.create_head("master").checkout()
+        if content_repo.git_util:
+            content_repo.git_util.commit_files("Initial Commit")
+            content_repo.git_util.repo.create_head("master").checkout()
         return content_repo
 
     def setup_one_pack(

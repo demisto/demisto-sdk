@@ -486,7 +486,6 @@ class TestDocReviewXSOAROnly:
         assert result.exit_code == self.CommandResultCode.FAIL.value
 
 
-@pytest.mark.usefixtures("are_mock_calls_supported_in_python_version")
 class TestDocReviewPrinting:
     """
     Test scenarios of doc-review printing.

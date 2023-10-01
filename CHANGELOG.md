@@ -6,8 +6,8 @@
 * Fixed an issue where deprecating parsing rules or modeling rules using **format** failed due to schema discrepancies.
 * Fixed an issue where kebab-case arguments were not parsed correctly.
 * Fixed an issue where **validate** falsely failed with error `RN115` on release notes with linefeed at the end of the file.
+* Fixed an issue where **graph** commands would not clean their temporary files properly, causing successive commands to fail.
 * Fixed an issue where an error log message changed the terminal color.
-
 
 ## 1.20.5
 * Fixed an issue where **validate** falsely failed with error `DS108` on descriptions ending with brackets that contains a dot at the end of them.

@@ -5,15 +5,17 @@ from typing import List, Optional
 
 import typer
 
-from demisto_sdk.commands.common.constants import (
-    MarketplaceVersions,
-)
+from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.logger import (
     logger,
     logging_setup,
 )
-from demisto_sdk.commands.common.tools import download_content_graph
+from demisto_sdk.commands.common.tools import (
+    download_content_graph,
+    get_all_repo_pack_ids,
+    is_external_repository,
+)
 from demisto_sdk.commands.content_graph.commands.common import recover_if_fails
 from demisto_sdk.commands.content_graph.commands.create import (
     create,
@@ -75,6 +77,9 @@ def update_content_graph(
         logger.info("No arguments were given, using git")
         use_git = True
     git_util = GitUtil()
+
+    if is_external_repository():
+        packs_to_update = get_all_repo_pack_ids()
     packs_to_update = list(packs_to_update) if packs_to_update else []
     builder = ContentGraphBuilder(content_graph_interface)
     if not should_update_graph(
@@ -102,7 +107,7 @@ def update_content_graph(
                 )
                 return
     is_graph_up_to_date = content_graph_interface.import_graph(imported_path)
-    if not imported_path and not is_graph_up_to_date:
+    if not any([imported_path, is_graph_up_to_date, is_external_repository()]):
         # if we import a graph from a specific path, it make no sense to create a new graph
         logger.warning("Failed to import the content graph, will create a new graph")
         create_content_graph(
@@ -110,7 +115,11 @@ def update_content_graph(
         )
         return
 
-    if use_git and (commit := content_graph_interface.commit):
+    if (
+        use_git
+        and (commit := content_graph_interface.commit)
+        and not is_external_repository()
+    ):
         packs_to_update.extend(git_util.get_all_changed_pack_ids(commit))
 
     packs_str = "\n".join([f"- {p}" for p in packs_to_update])

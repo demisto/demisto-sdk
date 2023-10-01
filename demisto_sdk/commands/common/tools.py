@@ -3982,16 +3982,5 @@ def parse_int_or_default(value: Any, default: int) -> int:
         return default
 
 
-def is_sentence_ends_with_bracket(description: str):
-    """
-    Check if the sentence ends with a bracket and valid.
-    Args:
-        description: The description sentence to test.
-
-    Returns:
-        boolean: True if the sentence ends with a bracket and valid.
-
-    """
-    return (
-        description.endswith(")") and len(description) >= 2 and description[-2] == "."
-    )
+def get_all_repo_pack_ids() -> list:
+    return [path.name for path in (Path(get_content_path()) / PACKS_DIR).iterdir()]

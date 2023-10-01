@@ -46,14 +46,14 @@ class GitContentConfig:
         r"https://api.github.com/repos/demisto/demisto-sdk/releases"
     )
     OFFICIAL_CONTENT_REPO_NAME = "demisto/content"
-    OFFICIAL_CONTENT_PROJECT_ID = os.getenv('CI_PROJECT_ID', '2596')
+    OFFICIAL_CONTENT_PROJECT_ID = os.getenv("CI_PROJECT_ID", "2596")
     CONTENT_GITHUB_UPSTREAM = r"upstream.*demisto/content"
     CONTENT_GITHUB_ORIGIN = r"origin.*demisto/content"
     GITHUB_USER_CONTENT = "githubusercontent.com"
 
     GITHUB = "github.com"
     GITLAB = "gitlab.com"
-    CI_SERVER_HOST = os.getenv("CI_SERVER_HOST","code.pan.run")
+    CI_SERVER_HOST = os.getenv("CI_SERVER_HOST", "code.pan.run")
 
     BASE_RAW_GITLAB_LINK = (
         "https://{GITLAB_HOST}/api/v4/projects/{GITLAB_ID}/repository"

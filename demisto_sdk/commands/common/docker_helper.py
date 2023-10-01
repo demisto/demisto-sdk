@@ -198,9 +198,7 @@ class DockerBase:
         for _ in range(2):
             try:
 
-                test_image_name_to_push = image.replace(
-                    f"{DOCKER_IO}/", ""
-                )
+                test_image_name_to_push = image.replace(f"{DOCKER_IO}/", "")
                 docker_push_output = init_global_docker_client().images.push(
                     test_image_name_to_push
                 )

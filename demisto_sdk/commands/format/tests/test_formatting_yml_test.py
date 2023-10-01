@@ -1513,7 +1513,7 @@ class TestFormatting:
     ):
         """
         Given
-            - An playbook yml to deprecate.
+            - A playbook yml to deprecate.
         When
             - Running update_deprecate.
         Then
@@ -1530,6 +1530,86 @@ class TestFormatting:
         assert base_update_yml.data["deprecated"]
         assert base_update_yml.data["tests"] == [NO_TESTS_DEPRECATED]
         assert base_update_yml.data["description"] == description_result
+
+    @pytest.mark.parametrize(
+        "user_input, description_result",
+        [
+            ("", "Deprecated. No available replacement."),
+            ("Replacement entity", "Deprecated. Use Replacement entity instead."),
+        ],
+    )
+    def test_update_deprecate_in_modeling_rules(
+        self, pack, mocker, monkeypatch, user_input, description_result
+    ):
+        """
+        Given
+            Case a:
+                - A modeling rule yml to deprecate.
+                - No replacement entity from the user input.
+            Case b:
+                - A modeling rule yml to deprecate.
+                - A replacement entity from the user input.
+        When
+            - Running update_deprecate.
+        Then
+            Case a:
+                - Ensure the deprecated field is updated.
+                - Ensure the comment is 'Deprecated. No available replacement.'
+            Case b:
+                - Ensure the deprecated field is updated.
+                - Ensure the comment is 'Deprecated. Use Replacement entity instead.'
+        """
+        modeling_rule = pack.create_modeling_rule("my_modeling_rule")
+        monkeypatch.setattr("builtins.input", lambda _: user_input)
+        mocker.patch.object(
+            BaseUpdateYML, "get_id_and_version_path_object", return_value={}
+        )
+        base_update_yml = BaseUpdateYML(input=modeling_rule.yml.path, deprecate=True)
+        base_update_yml.update_deprecate(file_type="modeling_rule")
+
+        assert base_update_yml.data["deprecated"]
+        assert base_update_yml.data["comment"] == description_result
+        assert not base_update_yml.data.get("tests")
+
+    @pytest.mark.parametrize(
+        "user_input, description_result",
+        [
+            ("", "Deprecated. No available replacement."),
+            ("Replacement entity", "Deprecated. Use Replacement entity instead."),
+        ],
+    )
+    def test_update_deprecate_in_parsing_rules(
+        self, pack, mocker, monkeypatch, user_input, description_result
+    ):
+        """
+        Given
+            Case a:
+                - A parsing rule yml to deprecate.
+                - No replacement entity from the user input.
+            Case b:
+                - A parsing rule yml to deprecate.
+                - A replacement entity from the user input.
+        When
+            - Running update_deprecate.
+        Then
+            Case a:
+                - Ensure the deprecated field is updated.
+                - Ensure the comment is 'Deprecated. No available replacement.'
+            Case b:
+                - Ensure the deprecated field is updated.
+                - Ensure the comment is 'Deprecated. Use Replacement entity instead.'
+        """
+        parsing_rule = pack.create_parsing_rule("my_parsing_rule")
+        monkeypatch.setattr("builtins.input", lambda _: user_input)
+        mocker.patch.object(
+            BaseUpdateYML, "get_id_and_version_path_object", return_value={}
+        )
+        base_update_yml = BaseUpdateYML(input=parsing_rule.yml.path, deprecate=True)
+        base_update_yml.update_deprecate(file_type="parsing_rule")
+
+        assert base_update_yml.data["deprecated"]
+        assert base_update_yml.data["comment"] == description_result
+        assert not base_update_yml.data.get("tests")
 
     @pytest.mark.parametrize(
         "name", ["MyIntegration", "MyIntegration ", " MyIntegration "]

@@ -76,6 +76,8 @@ from demisto_sdk.commands.lint.helpers import (
     stream_docker_container_output,
 )
 
+DOCKER_IO = os.getenv("DOCKER_IO", "docker-io.art.code.pan.run")
+
 # 3-rd party packages
 
 # Local packages
@@ -365,7 +367,7 @@ class Linter:
             # we want to use the docker-io.art.code.pan.run only if we run in content build (and not CI/CD for example)
             if os.getenv("CONTENT_GITLAB_CI", False):
                 self._facts["images"] = [
-                    [f"docker-io.art.code.pan.run/{image[0]}", -1]
+                    [f"{DOCKER_IO}/{image[0]}", -1]
                     for image in self._facts["images"]
                 ]
             # Gather environment variables for docker execution

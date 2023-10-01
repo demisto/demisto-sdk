@@ -46,14 +46,14 @@ class GitContentConfig:
         r"https://api.github.com/repos/demisto/demisto-sdk/releases"
     )
     OFFICIAL_CONTENT_REPO_NAME = "demisto/content"
-    OFFICIAL_CONTENT_PROJECT_ID = 2596
+    OFFICIAL_CONTENT_PROJECT_ID = os.getenv('CI_PROJECT_ID', '2596')
     CONTENT_GITHUB_UPSTREAM = r"upstream.*demisto/content"
     CONTENT_GITHUB_ORIGIN = r"origin.*demisto/content"
     GITHUB_USER_CONTENT = "githubusercontent.com"
 
     GITHUB = "github.com"
     GITLAB = "gitlab.com"
-    CODE_PAN_RUN = "code.pan.run"
+    CI_SERVER_HOST = os.getenv("CI_SERVER_HOST","code.pan.run")
 
     BASE_RAW_GITLAB_LINK = (
         "https://{GITLAB_HOST}/api/v4/projects/{GITLAB_ID}/repository"
@@ -67,7 +67,7 @@ class GitContentConfig:
     ALLOWED_REPOS = {
         (GITHUB_USER_CONTENT, OFFICIAL_CONTENT_REPO_NAME),
         (GITHUB, OFFICIAL_CONTENT_REPO_NAME),
-        (CODE_PAN_RUN, OFFICIAL_CONTENT_PROJECT_ID),
+        (CI_SERVER_HOST, OFFICIAL_CONTENT_PROJECT_ID),
         (GITHUB_USER_CONTENT, DOCKERFILES_INFO_REPO),
     }
 

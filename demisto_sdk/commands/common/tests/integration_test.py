@@ -2851,7 +2851,9 @@ class TestisContextChanged:
                 True,
             ),
             (
-                {"description": "This description ends with a list [This, is, a, test]"},
+                {
+                    "description": "This description ends with a list [This, is, a, test]"
+                },
                 True,
                 True,
             ),

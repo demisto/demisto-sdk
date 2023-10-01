@@ -693,7 +693,9 @@ class TestScriptValidator:
                 True,
             ),
             (
-                {"comment": 'This description ends with a list a json object {"name": "example json"}'},
+                {
+                    "comment": 'This description ends with a list a json object {"name": "example json"}'
+                },
                 True,
                 True,
             ),

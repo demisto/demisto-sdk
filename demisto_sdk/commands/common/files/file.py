@@ -199,22 +199,25 @@ class File(ABC, BaseModel):
             "write must be implemented for each File concrete object"
         )
 
-    def write(self, data: Any) -> None:
+    def write(self, data: Any, encoding: Optional[str] = None) -> None:
         def _write_safe_unicode():
             self._write(data)
 
-        try:
-            _write_safe_unicode()
-        except UnicodeDecodeError:
-            if self.output_path_original_encoding == self.default_encoding:
-                logger.error(
-                    f"{self.output_path} is encoded as unicode, cannot handle the error, raising it"
-                )
-                raise
+        if encoding:
+            self._write(data, encoding=encoding)
+        else:
+            try:
+                _write_safe_unicode()
+            except UnicodeDecodeError:
+                if self.output_path_original_encoding == self.default_encoding:
+                    logger.error(
+                        f"{self.output_path} is encoded as unicode, cannot handle the error, raising it"
+                    )
+                    raise
 
-            logger.debug(
-                f"deleting {self.output_path} - it will be rewritten as unicode (was {self.output_path_original_encoding})"
-            )
-            self.output_path.unlink()  # deletes the file
-            logger.debug(f"rewriting {self.output_path} as unicode file")
-            _write_safe_unicode()  # recreates the file
+                logger.debug(
+                    f"deleting {self.output_path} - it will be rewritten as unicode (was {self.output_path_original_encoding})"
+                )
+                self.output_path.unlink()  # deletes the file
+                logger.debug(f"rewriting {self.output_path} as unicode file")
+                _write_safe_unicode()  # recreates the file

@@ -219,7 +219,8 @@ class TestPlaybook:
             for integration in self.integrations
             if integration.name not in self.build_context.conf.parallel_integrations
         ]
-        self.test_suite = TestSuite()
+        self.test_suite = TestSuite(self.configuration.playbook_id)
+        self.start_time = datetime.now(timezone.utc)
         self.test_suite_system_out: List[str] = []
         self.test_suite_system_err: List[str] = []
         self.populate_test_suite()
@@ -272,11 +273,9 @@ class TestPlaybook:
 
     def close_test_suite(self, results: Optional[List[Result]] = None):
         results = results or []
-        duration = (
-            datetime.now(timezone.utc) - self.build_context.start_time
-        ).total_seconds()
+        duration = (datetime.now(timezone.utc) - self.start_time).total_seconds()
         test_case = TestCase(
-            f"Test Playbook {self.configuration.playbook_id}",
+            f"Test Playbook {self.configuration.playbook_id} on {self.build_context.server_version}",
             "TestPlaybook",
             duration,
         )
@@ -700,7 +699,6 @@ class TestPlaybook:
 
 class BuildContext:
     def __init__(self, kwargs: dict, logging_module: ParallelLoggingManager):
-        self.start_time = datetime.now(timezone.utc)
         self.is_xsiam = kwargs["server_type"] == XSIAM_SERVER_TYPE
         self.server_type = kwargs["server_type"]
         self.logging_module: ParallelLoggingManager = logging_module

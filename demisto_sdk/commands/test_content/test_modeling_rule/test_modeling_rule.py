@@ -842,8 +842,11 @@ def verify_event_id_does_not_exist_on_tenant(
         modeling_rule (ModelingRule): Modeling rule object parsed from the modeling rule file.
         test_data (init_test_data.TestData): Test data object parsed from the test data file.
     """
-    logger.debug("Verifying that the event ID does not exist on the tenant.")
-    success_msg = "[green]The event ids does not exists on the tenant[/green]"
+    logger.info(
+        "[cyan]Verifying that the event IDs does not exist on the tenant[/cyan]",
+        extra={"markup": True},
+    )
+    success_msg = "[green]The event IDs does not exists on the tenant[/green]"
     error_msg = "[red]The event id already exists in the tenant[/red]"
     validate_expected_values_test_cases = []
 

@@ -458,8 +458,6 @@ def test_extraction_with_period_in_filename(tmpdir):
     When: Running YmlSplitter on this file
     Then: Files are extracted with the appropriate filenames
     """
-    # This unit test was created following an issue where an integration named "Zoom-v1.0" for example, would have
-    # its Python file named as "Zoom-v1.py" instead of "Zoom-v1.0.py" due to '.0' being identified as an extension.
     extractor = YmlSplitter(
         input=f"{git_path()}/demisto_sdk/tests/test_files/integration-Zoom-v1.0.yml",
         output=tmpdir,

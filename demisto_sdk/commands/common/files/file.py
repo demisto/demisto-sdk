@@ -149,7 +149,10 @@ class File(ABC, BaseModel):
         path: Union[Path, str],
         git_util: Optional[GitUtil] = None,
         handler: Optional[XSOAR_Handler] = None,
+        clear_cache: bool = False
     ) -> Any:
+        if clear_cache:
+            cls.read_from_local_path.clear_cache()
         model = cls.from_path(input_path=path, git_util=git_util, handler=handler)
         return model.read_local_file()
 
@@ -165,7 +168,10 @@ class File(ABC, BaseModel):
         git_util: Optional[GitUtil] = None,
         from_remote: bool = True,
         handler: Optional[XSOAR_Handler] = None,
+        clear_cache: bool = False
     ) -> Any:
+        if clear_cache:
+            cls.read_from_git_path.clear_cache()
         model = cls.from_path(input_path=path, git_util=git_util, handler=handler)
         return model.read_git_file(tag, from_remote=from_remote)
 

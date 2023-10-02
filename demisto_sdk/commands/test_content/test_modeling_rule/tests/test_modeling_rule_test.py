@@ -343,6 +343,11 @@ class TestTheTestModelingRuleCommandSingleRule:
                         f"{fake_env_vars.demisto_base_url}/logs/v1/xsiam",
                         status_code=500,
                     )
+                    m.post(
+                        f"{fake_env_vars.demisto_base_url}/public_api/v1/xql/start_xql_query/",
+                        json={},
+                        status_code=500,
+                    )
                     # Act
                     result = runner.invoke(
                         test_modeling_rule_cmd,
@@ -690,7 +695,10 @@ class TestTheTestModelingRuleCommandSingleRule:
         id_key = f"{fake_test_data.data[0].dataset}.test_data_event_id"
         event_id_1 = str(fake_test_data.data[0].test_data_event_id)
         event_id_2 = str(fake_test_data.data[1].test_data_event_id)
-
+        mocker.patch(
+            "demisto_sdk.commands.test_content.xsiam_tools.test_data.uuid4",
+            side_effect=[event_id_1, event_id_2] * 3,
+        )
         try:
             with requests_mock.Mocker() as m:
                 with SetFakeXsiamClientEnvironmentVars() as fake_env_vars:
@@ -719,6 +727,15 @@ class TestTheTestModelingRuleCommandSingleRule:
                     m.post(
                         f"{fake_env_vars.demisto_base_url}/public_api/v1/xql/get_query_results/",
                         [
+                            {
+                                "json": {
+                                    "reply": {
+                                        "status": "SUCCESS",
+                                        "results": {"data": []},
+                                    }
+                                },
+                                "status_code": 200,
+                            },
                             {
                                 "json": {
                                     "reply": {
@@ -836,6 +853,10 @@ class TestTheTestModelingRuleCommandSingleRule:
                     id_key = f"{fake_test_data.data[0].dataset}.test_data_event_id"
                     event_id_1 = str(fake_test_data.data[0].test_data_event_id)
                     event_id_2 = str(fake_test_data.data[1].test_data_event_id)
+                    mocker.patch(
+                        "demisto_sdk.commands.test_content.xsiam_tools.test_data.uuid4",
+                        side_effect=[event_id_1, event_id_2] * 3,
+                    )
                     m.post(
                         f"{fake_env_vars.demisto_base_url}/public_api/v1/xql/get_query_results/",
                         [
@@ -969,6 +990,10 @@ class TestTheTestModelingRuleCommandSingleRule:
                     id_key = f"{fake_test_data.data[0].dataset}.test_data_event_id"
                     event_id_1 = str(fake_test_data.data[0].test_data_event_id)
                     event_id_2 = str(fake_test_data.data[1].test_data_event_id)
+                    mocker.patch(
+                        "demisto_sdk.commands.test_content.xsiam_tools.test_data.uuid4",
+                        side_effect=[event_id_1, event_id_2] * 3,
+                    )
                     m.post(
                         f"{fake_env_vars.demisto_base_url}/public_api/v1/xql/get_query_results/",
                         [
@@ -1177,11 +1202,24 @@ class TestTheTestModelingRuleCommandSingleRule:
                     id_key = f"{fake_test_data.data[0].dataset}.test_data_event_id"
                     event_id_1 = str(fake_test_data.data[0].test_data_event_id)
                     event_id_2 = str(fake_test_data.data[1].test_data_event_id)
+                    mocker.patch(
+                        "demisto_sdk.commands.test_content.xsiam_tools.test_data.uuid4",
+                        side_effect=[event_id_1, event_id_1] * 3,
+                    )
                     query_results_1 = fake_test_data.data[0].expected_values.copy()
                     query_results_1["xdm.event.outcome_reason"] = "DisAllowed"
                     m.post(
                         f"{fake_env_vars.demisto_base_url}/public_api/v1/xql/get_query_results/",
                         [
+                            {
+                                "json": {
+                                    "reply": {
+                                        "status": "SUCCESS",
+                                        "results": {"data": []},
+                                    }
+                                },
+                                "status_code": 200,
+                            },
                             {
                                 "json": {
                                     "reply": {
@@ -1455,9 +1493,22 @@ class TestTheTestModelingRuleCommandMultipleRules:
                     id_key = f"{fake_test_data.data[0].dataset}.test_data_event_id"
                     event_id_1 = str(fake_test_data.data[0].test_data_event_id)
                     event_id_2 = str(fake_test_data.data[1].test_data_event_id)
+                    mocker.patch(
+                        "demisto_sdk.commands.test_content.xsiam_tools.test_data.uuid4",
+                        side_effect=[event_id_1, event_id_2] * 6,
+                    )
                     m.post(
                         f"{fake_env_vars.demisto_base_url}/public_api/v1/xql/get_query_results/",
                         [
+                            {
+                                "json": {
+                                    "reply": {
+                                        "status": "SUCCESS",
+                                        "results": {"data": []},
+                                    }
+                                },
+                                "status_code": 200,
+                            },
                             {
                                 "json": {
                                     "reply": {

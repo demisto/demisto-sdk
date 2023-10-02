@@ -9,6 +9,7 @@ from demisto_sdk.commands.common.constants import DEFAULT_IMAGE_BASE64
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
 from demisto_sdk.commands.common.legacy_git_tools import git_path
+from demisto_sdk.commands.common.tools import get_child_files
 from demisto_sdk.commands.prepare_content.integration_script_unifier import (
     IntegrationScriptUnifier,
 )
@@ -356,11 +357,10 @@ def test_extract_javascript_code(tmpdir, file_type):
 def test_extract_powershell_code(tmpdir, file_type):
     """
     Given
-    Case 1: a unified integration file of powershell format.
-    Case 2: a unified beta-integration file of powershell format.
+        Case 1: a unified integration file of powershell format.
+        Case 2: a unified beta-integration file of powershell format.
     When
     - Running the YmlSplitter extract_code function.
-
     Then
     - Ensure the "### pack version: ..." comment was removed successfully.
     """
@@ -390,7 +390,7 @@ def test_extract_code__with_apimodule(tmpdir, file_type):
         Case 1: A unified integration YML which ApiModule code is auto-generated there
         Case 2: A unified beta-integration YML which ApiModule code is auto-generated there
     When:
-        - run YmlSpltter on this code
+        - Run YmlSplitter on this code
     Then:
         - Ensure generated code is being deleted, and the import line exists
     """
@@ -450,6 +450,35 @@ def test_extract_code_pwsh(tmpdir, file_type):
         file_data = temp_code.read()
         assert ". $PSScriptRoot\\CommonServerPowerShell.ps1\n" in file_data
         assert file_data[-1] == "\n"
+
+
+def test_extraction_with_period_in_filename(tmpdir):
+    """
+    Given: A unified YAML file with a filename containing a period (that might be identified as an extension)
+    When: Running YmlSplitter on this file
+    Then: Files are extracted with the appropriate filenames
+    """
+    # This unit test was created following an issue where an integration named "Zoom-v1.0" for example, would have
+    # its Python file named as "Zoom-v1.py" instead of "Zoom-v1.0.py" due to '.0' being identified as an extension.
+    extractor = YmlSplitter(
+        input=f"{git_path()}/demisto_sdk/tests/test_files/integration-Zoom-v1.0.yml",
+        output=tmpdir,
+        base_name="Zoom-v1.0",
+        file_type="integration",
+    )
+    extractor.extract_to_package_format()
+    extracted_file_paths = get_child_files(tmpdir)
+
+    assert len(extracted_file_paths) == 5
+    extracted_files = [Path(path).name for path in extracted_file_paths]
+
+    assert {
+        "README.md",
+        "Zoom-v1.0_description.md",
+        "Zoom-v1.0_image.png",
+        "Zoom-v1.0.py",
+        "Zoom-v1.0.yml",
+    } == set(extracted_files)
 
 
 def test_get_output_path():

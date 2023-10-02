@@ -11,7 +11,7 @@ permissions:
 jobs:
   assign:
     runs-on: ubuntu-latest
-    # if: github.event.pull_request.head.repo.fork == true
+    if: github.event.pull_request.head.repo.fork == true
     steps:
       - name: Add assignee
         env:

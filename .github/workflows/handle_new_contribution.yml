@@ -39,7 +39,7 @@ jobs:
         run: |
           echo "Getting the contribution TL"
           cd Utils/github_workflow_scripts
-          poetry run ./handle_new_contribution.py) 
+          poetry run ./handle_new_contribution.py)
           echo "Finished retrieving the contribution TL username"
           echo "$CONTRIB_TL"
       - name: Add assignee

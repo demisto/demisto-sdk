@@ -22,7 +22,7 @@ class HandlerFile(TextFile):
             file_content = StringIO(file_content)
         return self.handler.load(file_content)
 
-    def write(self, data: Any, encoding: Optional[str] = None) -> None:
+    def _write(self, data: Any, encoding: Optional[str] = None) -> None:
         with self.output_path.open(
             "w", encoding=encoding or self.default_encoding
         ) as output_file:

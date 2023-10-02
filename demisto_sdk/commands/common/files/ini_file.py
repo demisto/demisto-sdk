@@ -33,7 +33,7 @@ class IniFile(TextFile):
         config_parser.read_string(file_content)
         return config_parser
 
-    def write(self, data: Dict, encoding: Optional[str] = None) -> None:
+    def _write(self, data: Dict, encoding: Optional[str] = None) -> None:
         """
 
         Args:

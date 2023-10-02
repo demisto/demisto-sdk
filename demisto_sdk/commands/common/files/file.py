@@ -99,6 +99,7 @@ class File(ABC, BaseModel):
 
         raise UnknownFileError(path)
 
+    @abstractmethod
     def load(self, file_content: str) -> Any:
         raise NotImplementedError(
             "load must be implemented for each File concrete object"
@@ -179,14 +180,14 @@ class File(ABC, BaseModel):
             raise FileReadError(self.input_path, exc=e)
 
     @abstractmethod
-    def write(self, data: Any, encoding: Optional[str] = None) -> None:
+    def _write(self, data: Any, encoding: Optional[str] = None) -> None:
         raise NotImplementedError(
             "write must be implemented for each File concrete object"
         )
 
-    def write_safe_unicode(self, data: Any) -> None:
+    def write(self, data: Any) -> None:
         def _write_safe_unicode():
-            self.write(data)
+            self._write(data)
 
         try:
             _write_safe_unicode()

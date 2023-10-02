@@ -1586,7 +1586,7 @@ VALIDATED_PACK_ITEM_TYPES = [
     "Wizards",
 ]
 
-VALID_SENTENCE_SUFFIX = [".", "!", "?", ".)", ".'", '."', "}", "]"]
+VALID_SENTENCE_SUFFIX = [".", "!", "?", ".)", ".'", '."', "\n}", "\n]"]
 
 FIRST_FETCH = "first_fetch"
 

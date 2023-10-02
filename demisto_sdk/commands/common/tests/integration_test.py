@@ -2852,7 +2852,7 @@ class TestisContextChanged:
             ),
             (
                 {
-                    "description": "This description ends with a list [This, is, a, test]"
+                    "description": 'This description ends with a json list [\n{\n"name": "example json ending on another line"\n}\n]'
                 },
                 True,
                 True,
@@ -2878,7 +2878,7 @@ class TestisContextChanged:
             - Case 11: A yml content with a command with an empty description for the output contextPath, and use_git flag set to True.
             - Case 12: A yml content with a description and contextPath with a description that ends with a dot inside a bracket, and use_git flag set to True.
             - Case 13: A yml content with a description that ends with exclamation mark, and use_git flag set to True.
-            - Case 14: a yml content with a description that ends with square bracket, and use_git flag set to True.
+            - Case 14: a yml content with a description that ends with new line followed by square bracket, and use_git flag set to True.
         When:
             - when executing the is_line_ends_with_dot method
         Then:

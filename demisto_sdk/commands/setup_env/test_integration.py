@@ -1,27 +1,17 @@
 from __future__ import print_function
 
 import ast
-import copy
-import logging
-import os
-import re
 import time
 import urllib.parse
 from pprint import pformat
-from typing import Optional, Tuple
 
 import demisto_client
-import requests.exceptions
 import urllib3
-from demisto_client.demisto_api import DefaultApi
-from demisto_client.demisto_api.models.incident import Incident
 from demisto_client.demisto_api.rest import ApiException
 
-from demisto_sdk.commands.common.constants import PB_Status
 from demisto_sdk.commands.common.logger import logger
 
 # Disable insecure warnings
-from demisto_sdk.commands.test_content.tools import update_server_configuration
 
 urllib3.disable_warnings()
 
@@ -123,43 +113,32 @@ def test_integration_instance(client, module_instance):
     return success, failure_message
 
 
-def __set_server_keys(client, logging_manager, integration_params, integration_name):
-    """Adds server configuration keys using the demisto_client.
-
-    Args:
-        client (demisto_client): The configured client to use.
-        logging_manager (ParallelLoggingManager): logging manager object.
-        integration_params (dict): The values to use for an integration's parameters to configure an instance.
-        integration_name (str): The name of the integration which the server configurations keys are related to.
-
-    """
-    if "server_keys" not in integration_params:
-        return
-
-    logging_manager.debug(f"Setting server keys for integration: {integration_name}")
-
-    data: dict = {"data": {}, "version": -1}
-
-    for key, value in integration_params.get("server_keys").items():
-        data["data"][key] = value
-
-    update_server_configuration(
-        client=client,
-        server_configuration=integration_params.get("server_keys"),
-        error_msg="Failed to set server keys",
-        logging_manager=logging_manager,
-    )
+# return True if delete-integration-instance succeeded, False otherwise
+def __delete_integration_instance(client, instance_id):
+    try:
+        res = demisto_client.generic_request_func(
+            self=client,
+            method="DELETE",
+            path=f"/settings/integration/{urllib.parse.quote(instance_id)}",
+        )
+    except ApiException:
+        logger.exception(
+            "Failed to delete integration instance, error trying to communicate with demisto."
+        )
+        return False
+    if int(res[1]) != 200:
+        logger.error(f"delete integration instance failed\nStatus code {res[1]}")
+        logger.error(pformat(res))
+        return False
+    return True
 
 
-def __delete_integration_instance_if_determined_by_name(
-    client, instance_name, logging_manager
-):
+def __delete_integration_instance_if_determined_by_name(client, instance_name):
     """Deletes integration instance by it's name.
 
     Args:
         client (demisto_client): The configured client to use.
         instance_name (str): The name of the instance to delete.
-        logging_manager (ParallelLoggingManager): logging manager object.
 
     Notes:
         This function is needed when the name of the instance is pre-defined in the tests configuration, and the test
@@ -177,25 +156,25 @@ def __delete_integration_instance_if_determined_by_name(
             response_type="object",
         )
     except ApiException:
-        logging_manager.exception(
+        logger.exception(
             "Failed to delete integrations instance, error trying to communicate with demisto server"
         )
         return
     if int(int_instances[1]) != 200:
-        logging_manager.error(
+        logger.error(
             f"Get integration instance failed with status code: {int_instances[1]}"
         )
         return
     if "instances" not in int_instances:
-        logging_manager.info("No integrations instances found to delete")
+        logger.info("No integrations instances found to delete")
         return
 
     for instance in int_instances["instances"]:
         if instance.get("name") == instance_name:
-            logging_manager.info(
+            logger.info(
                 f"Deleting integration instance {instance_name} since it is defined by name"
             )
-            __delete_integration_instance(client, instance.get("id"), logging_manager)
+            __delete_integration_instance(client, instance.get("id"))
 
 
 # return instance name if succeed, None otherwise
@@ -204,7 +183,6 @@ def create_integration_instance(
     integration_instance_name,
     integration_params,
     is_byoi,
-    logging_manager=logger,
     validate_test=True,
 ):
     failure_message = ""
@@ -219,10 +197,10 @@ def create_integration_instance(
         module_configuration = []
 
     __delete_integration_instance_if_determined_by_name(
-        integration_conf_client, integration_instance_name, logging_manager
+        integration_conf_client, integration_instance_name
     )
 
-    logging_manager.info(
+    logger.info(
         f'Configuring instance for {integration_name} (instance name: {integration_instance_name}, validate "Test": {validate_test})'
     )
     # define module instance
@@ -239,15 +217,6 @@ def create_integration_instance(
         "passwordProtected": False,
         "version": 0,
     }
-
-    # set server keys
-    __set_server_keys(
-        integration_conf_client,
-        logging_manager,
-        integration_params,
-        configuration["name"],
-    )
-
     # set module params
     for param_conf in module_configuration:
         if (
@@ -289,13 +258,13 @@ def create_integration_instance(
         error_message = (
             f"Error trying to create instance for integration: {integration_name}"
         )
-        logging_manager.exception(error_message)
+        logger.exception(error_message)
         return None, error_message
 
     if res[1] != 200:
         error_message = f"create instance failed with status code  {res[1]}"
-        logging_manager.error(error_message)
-        logging_manager.error(pformat(res[0]))
+        logger.error(error_message)
+        logger.error(pformat(res[0]))
         return None, error_message
 
     integration_config = res[0]
@@ -308,7 +277,7 @@ def create_integration_instance(
             refreshed_client, module_instance
         )
     else:
-        logging_manager.debug(
+        logger.debug(
             f"Skipping test validation for integration: {integration_name} (it has test_validate set to false)"
         )
         test_succeed = True
@@ -349,353 +318,3 @@ def __disable_integrations_instances(client, module_instances):
 
         if res[1] != 200:
             logger.error(f"disable instance failed, Error: {pformat(res)}")
-
-
-# create incident with given name & playbook, and then fetch & return the incident
-def __create_incident_with_playbook(
-    client: DefaultApi,
-    name,
-    playbook_id,
-    integrations,
-    logging_manager,
-) -> Tuple[Optional[Incident], int]:
-    # create incident
-    create_incident_request = demisto_client.demisto_api.CreateIncidentRequest()
-    create_incident_request.create_investigation = True
-    create_incident_request.playbook_id = playbook_id
-    create_incident_request.name = name
-
-    try:
-        response = client.create_incident(
-            create_incident_request=create_incident_request
-        )
-    except ApiException:
-        logging_manager.exception(
-            f"Failed to create incident with name {name} for playbook {playbook_id}"
-        )
-
-    try:
-        inc_id = response.id
-    except AttributeError:
-        integration_names = [
-            integration["name"] for integration in integrations if "name" in integration
-        ]
-        error_message = (
-            f"Failed to create incident for integration names: {integration_names} "
-            f"and playbookID: {playbook_id}."
-            "Possible reasons are:\nMismatch between playbookID in conf.json and "
-            "the id of the real playbook you were trying to use,"
-            "or schema problems in the TestPlaybook."
-        )
-        logging_manager.error(error_message)
-        return None, -1
-
-    # get incident
-    search_filter = demisto_client.demisto_api.SearchIncidentsData()
-    inc_filter = demisto_client.demisto_api.IncidentFilter()
-    inc_filter.query = "id:" + str(inc_id)
-    # inc_filter.query
-    search_filter.filter = inc_filter
-
-    incident_search_responses = []
-
-    found_incidents = 0
-    # poll the incidents queue for a max time of 300 seconds
-    timeout = time.time() + 300
-    while found_incidents < 1:
-        try:
-            incidents = client.search_incidents(filter=search_filter)
-            found_incidents = incidents.total
-            incident_search_responses.append(incidents)
-        except ApiException:
-            logging_manager.exception(f"Searching incident with id {inc_id} failed")
-        if time.time() > timeout:
-            logging_manager.error(
-                f"Got timeout for searching incident with id {inc_id}"
-            )
-            logging_manager.error(
-                f"Incident search responses: {incident_search_responses}"
-            )
-            return None, -1
-
-        time.sleep(10)
-
-    return incidents.data[0], inc_id
-
-
-# returns current investigation playbook state - 'inprogress'/'failed'/'completed'
-def __get_investigation_playbook_state(client, inv_id, logging_manager):
-    try:
-        investigation_playbook_raw = demisto_client.generic_request_func(
-            self=client, method="GET", path="/inv-playbook/" + inv_id
-        )
-        investigation_playbook = ast.literal_eval(investigation_playbook_raw[0])
-    except ApiException:
-        logging_manager.exception(
-            "Failed to get investigation playbook state, error trying to communicate with demisto server"
-        )
-        return PB_Status.FAILED
-
-    return investigation_playbook.get("state", PB_Status.NOT_SUPPORTED_VERSION)
-
-
-# return True if delete-incident succeeded, False otherwise
-def __delete_incident(client: DefaultApi, incident: Incident, logging_manager):
-    try:
-        body = {"ids": [incident.id], "filter": {}, "all": False}
-        res = demisto_client.generic_request_func(
-            self=client, method="POST", path="/incident/batchDelete", body=body
-        )
-    except ApiException:
-        logging_manager.exception(
-            "Failed to delete incident, error trying to communicate with demisto server"
-        )
-        return False
-
-    if int(res[1]) != 200:
-        logging_manager.error(f"delete incident failed with Status code {res[1]}")
-        logging_manager.error(pformat(res))
-        return False
-
-    return True
-
-
-# return True if delete-integration-instance succeeded, False otherwise
-def __delete_integration_instance(client, instance_id, logging_manager=logging):
-    try:
-        res = demisto_client.generic_request_func(
-            self=client,
-            method="DELETE",
-            path="/settings/integration/" + urllib.parse.quote(instance_id),
-        )
-    except ApiException:
-        logging_manager.exception(
-            "Failed to delete integration instance, error trying to communicate with demisto."
-        )
-        return False
-    if int(res[1]) != 200:
-        logging_manager.error(
-            f"delete integration instance failed\nStatus code {res[1]}"
-        )
-        logging_manager.error(pformat(res))
-        return False
-    return True
-
-
-# delete all integration instances, return True if all succeed delete all
-def __delete_integrations_instances(client, module_instances, logging_manager=logging):
-    succeed = True
-    for module_instance in module_instances:
-        succeed = (
-            __delete_integration_instance(
-                client, module_instance["id"], logging_manager
-            )
-            and succeed
-        )
-    return succeed
-
-
-def __print_investigation_error(client, playbook_id, investigation_id, logging_manager):
-    try:
-        empty_json = {"pageSize": 1000}
-        res = demisto_client.generic_request_func(
-            self=client,
-            method="POST",
-            path="/investigation/" + urllib.parse.quote(investigation_id),
-            body=empty_json,
-        )
-        if res and int(res[1]) == 200:
-            resp_json = ast.literal_eval(res[0])
-            entries = resp_json["entries"]
-            logging_manager.error(f"Playbook {playbook_id} has failed:")
-            for entry in entries:
-                if entry["type"] == ENTRY_TYPE_ERROR and entry["parentContent"]:
-                    logging_manager.error(f'- Task ID: {entry["taskId"]}')
-                    # Checks for passwords and replaces them with "******"
-                    parent_content = re.sub(
-                        r' (P|p)assword="[^";]*"',
-                        " password=******",
-                        entry["parentContent"],
-                    )
-                    logging_manager.error(f"  Command: {parent_content}")
-                    logging_manager.error(f'  Body:\n{entry["contents"]}')
-        else:
-            logging_manager.error(
-                f"Failed getting entries for investigation: {investigation_id}. Res: {res}"
-            )
-    except ApiException:
-        logging_manager.exception(
-            "Failed to print investigation error, error trying to communicate with demisto server"
-        )
-
-
-# Configure integrations to work with mock
-def configure_proxy_unsecure(integration_params):
-    """Copies the integration parameters dictionary.
-        Set proxy and insecure integration parameters to true.
-
-    Args:
-        integration_params: dict of the integration parameters.
-    """
-    integration_params_copy = copy.deepcopy(integration_params)
-    for param in ("proxy", "useProxy", "insecure", "unsecure"):
-        integration_params[param] = True
-
-    return integration_params_copy
-
-
-# 1. create integrations instances
-# 2. create incident with playbook
-# 3. wait for playbook to finish run
-# 4. if test pass - delete incident & instance
-# return playbook status
-def check_integration(
-    client,
-    integrations,
-    playbook_id,
-    logger=logger,
-    options=None,
-    is_mock_run=False,
-):
-    options = options if options is not None else {}
-    # create integrations instances
-    module_instances: list = []
-
-    for integration in integrations:
-        integration_name = integration.get("name", None)
-        integration_instance_name = integration.get("instance_name", "")
-        integration_params = integration.get("params", None)
-        is_byoi = integration.get("byoi", True)
-        validate_test = integration.get("validate_test", False)
-
-        if is_mock_run:
-            configure_proxy_unsecure(integration_params)
-
-        module_instance, failure_message = create_integration_instance(
-            integration_name,
-            integration_instance_name,
-            integration_params,
-            is_byoi,
-            logger,
-            validate_test=validate_test,
-        )
-        if module_instance is None:
-            failure_message = (
-                failure_message
-                if failure_message
-                else "No failure message could be found"
-            )
-            logger.error(f"Failed to create instance: {failure_message}")
-            __delete_integrations_instances(client, module_instances, logger)
-            return False, -1
-
-        module_instances.append(module_instance)
-
-        logger.info(f"Create integration {integration_name} succeed")
-
-    # create incident with playbook
-    incident, inc_id = __create_incident_with_playbook(
-        client, f"inc_{playbook_id}", playbook_id, integrations, logger
-    )
-
-    if not incident:
-        return False, -1
-
-    investigation_id = incident.investigation_id
-    if investigation_id is None or len(investigation_id) == 0:
-        logger.error(f"Failed to get investigation id of incident: {incident}")
-        return False, -1
-
-    logger.info(
-        f"Investigation URL: {os.getenv('DEMISTO_BASE_URL')}/#/WorkPlan/{investigation_id}"
-    )
-
-    timeout_amount = options["timeout"] if "timeout" in options else DEFAULT_TIMEOUT
-    timeout = time.time() + timeout_amount
-
-    i = 1
-    # wait for playbook to finish run
-    while True:
-        # give playbook time to run
-        time.sleep(1)
-
-        try:
-            # fetch status
-            playbook_state = __get_investigation_playbook_state(
-                client, investigation_id, logger
-            )
-        except demisto_client.demisto_api.rest.ApiException:
-            playbook_state = "Pending"
-            client = demisto_client.configure(
-                base_url=client.api_client.configuration.host,
-                api_key=client.api_client.configuration.api_key,
-                verify_ssl=False,
-            )
-
-        if playbook_state in (PB_Status.COMPLETED, PB_Status.NOT_SUPPORTED_VERSION):
-            break
-        if playbook_state == PB_Status.FAILED:
-            logger.error(f"{playbook_id} failed with error/s")
-            __print_investigation_error(client, playbook_id, investigation_id, logger)
-            break
-        if time.time() > timeout:
-            logger.error(f"{playbook_id} failed on timeout")
-            break
-
-        if i % DEFAULT_INTERVAL == 0:
-            logger.info(
-                f"loop no. {i / DEFAULT_INTERVAL}, playbook state is {playbook_state}"
-            )
-        i = i + 1
-
-    __disable_integrations_instances(client, module_instances)
-
-    test_pass = playbook_state in (PB_Status.COMPLETED, PB_Status.NOT_SUPPORTED_VERSION)
-    if test_pass:
-        # delete incident
-        __delete_incident(client, incident, logger)
-
-        # delete integration instance
-        __delete_integrations_instances(client, module_instances, logger)
-
-    return playbook_state, inc_id
-
-
-def disable_all_integrations(dem_client, logging_manager=logging):
-    """
-    Disable all enabled integrations. Should be called at start of test loop to start out clean
-
-    Arguments:
-        client -- demisto py client
-    """
-    try:
-        body = {"size": 1000}
-        int_resp = demisto_client.generic_request_func(
-            self=dem_client,
-            method="POST",
-            path="/settings/integration/search",
-            body=body,
-        )
-        int_instances = ast.literal_eval(int_resp[0])
-    except requests.exceptions.RequestException:
-        logging_manager.exception(
-            "Failed to disable all integrations, error trying to communicate with demisto server"
-        )
-        return
-    if int(int_resp[1]) != 200:
-        logging_manager.error(
-            f"Get all integration instances failed with status code: {int_resp[1]}"
-        )
-        return
-    if "instances" not in int_instances:
-        logging_manager.info("No integrations instances found to disable all")
-        return
-    to_disable = []
-    for instance in int_instances["instances"]:
-        if instance.get("enabled") == "true" and instance.get("isIntegrationScript"):
-            logging_manager.debug(
-                f'Adding to disable list. Name: {instance.get("name")}. Brand: {instance.get("brand")}'
-            )
-            to_disable.append(instance)
-    if len(to_disable) > 0:
-        __disable_integrations_instances(dem_client, to_disable)

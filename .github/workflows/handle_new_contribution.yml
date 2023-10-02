@@ -11,12 +11,12 @@ permissions:
 jobs:
   assign:
     runs-on: ubuntu-latest
-    if: github.event.pull_request.head.repo.fork == true
+    # if: github.event.pull_request.head.repo.fork == true
     steps:
-      - name: Assign a reviewer and assignee
+      - name: Add assignee
         env:
           GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
           PR_URL: ${{github.event.pull_request.html_url}}
         run: |
-          echo "Add an assignee, a reviewer and a Contribution label"
+          echo "Add an assignee and a Contribution label"
           gh pr edit --add-assignee RotemAmit --add-label Contribution "$PR_URL"

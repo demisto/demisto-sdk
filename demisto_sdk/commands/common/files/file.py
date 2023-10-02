@@ -1,3 +1,4 @@
+import shutil
 from abc import ABC, abstractmethod
 from functools import lru_cache
 from pathlib import Path
@@ -59,6 +60,13 @@ class File(ABC, BaseModel):
     @validator("git_util", always=True, pre=True)
     def validate_git_util(cls, v: Optional[GitUtil]) -> GitUtil:
         return v or GitUtil.from_content_path()
+
+    def copy_file(self, destination_path: Union[Path, str]):
+        shutil.copyfile(self.input_path, destination_path)
+
+    def move_file(self, destination_path: Union[Path, str]):
+        shutil.move(self.input_path, destination_path)
+        self.__dict__[self.input_path] = destination_path
 
     @validator("input_path", always=True)
     def validate_input_path(cls, v: Path, values) -> Path:
@@ -149,7 +157,7 @@ class File(ABC, BaseModel):
         path: Union[Path, str],
         git_util: Optional[GitUtil] = None,
         handler: Optional[XSOAR_Handler] = None,
-        clear_cache: bool = False
+        clear_cache: bool = False,
     ) -> Any:
         if clear_cache:
             cls.read_from_local_path.clear_cache()
@@ -168,7 +176,7 @@ class File(ABC, BaseModel):
         git_util: Optional[GitUtil] = None,
         from_remote: bool = True,
         handler: Optional[XSOAR_Handler] = None,
-        clear_cache: bool = False
+        clear_cache: bool = False,
     ) -> Any:
         if clear_cache:
             cls.read_from_git_path.clear_cache()

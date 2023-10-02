@@ -481,6 +481,18 @@ class TestGenericFunctions:
 
         assert files == output
 
+    @pytest.mark.parametrize("path, output", [("demisto.json", "json"), ("wow", "")])
+    def test_retrieve_file_ending(self, path, output):
+        assert retrieve_file_ending(path) == output
+
+    @pytest.mark.parametrize(
+        "data, entity, output",
+        [
+            ({"script": {"type": "javascript"}}, INTEGRATIONS_DIR, "javascript"),
+            ({"type": "javascript"}, SCRIPTS_DIR, "javascript"),
+            ({}, LAYOUTS_DIR, ""),
+        ],
+    )
     def test_get_code_lang(self, data, entity, output):
         assert get_code_lang(data, entity) == output
 

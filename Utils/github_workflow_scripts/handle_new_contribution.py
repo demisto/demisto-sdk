@@ -4,7 +4,7 @@ from pathlib import Path
 import json
 from typing import Any
 
-CONTENT_ROOT_PATH = os.path.abspath(os.path.join(__file__, '../../..'))  # full path to content root repo
+CONTENT_ROOT_PATH = os.path.abspath(os.path.join(__file__, '../../../..'))  # full path to content root repo
 CONTENT_ROLES_PATH = Path(os.path.join(CONTENT_ROOT_PATH, ".github", "content_roles.json"))
 
 

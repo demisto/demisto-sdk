@@ -202,9 +202,7 @@ class IntegrationScriptUnifier(Unifier):
             image_data = image_prefix + base64.b64encode(image_data).decode("utf-8")
             yml_unified["image"] = image_data
         else:
-            logger.warning(
-                f"Failed getting image data for '{package_path}'."
-            )
+            logger.warning(f"Failed getting image data for '{package_path}'.")
 
         return yml_unified, found_img_path
 

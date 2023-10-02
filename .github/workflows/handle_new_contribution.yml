@@ -13,10 +13,33 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event.pull_request.head.repo.fork == true
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+      - name: Setup Python
+        uses: actions/setup-python@v3
+        with:
+          python-version: '3.10'
+      - name: Print Context
+        run: |
+          echo "$GITHUB_CONTEXT"
+        env:
+          GITHUB_CONTEXT: ${{ toJson(github) }}
+      - name: Install Python Dependencies
+        run: |
+          poetry install --with ci
+      - name: Get the contribution TL github username
+        run: |
+          echo "Getting the contribution TL"
+          cd Utils/github_workflow_scripts
+          export CONTRIB_TL=$(poetry run ./handle_new_contribution.py) 
+          echo "Finished retrieving the contribution TL username"
+          echo "$CONTRIB_TL"
       - name: Add assignee
         env:
           GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
           PR_URL: ${{github.event.pull_request.html_url}}
         run: |
           echo "Add an assignee and a Contribution label"
-          gh pr edit --add-assignee RotemAmit --add-label Contribution "$PR_URL"
+          gh pr edit --add-assignee "$CONTRIB_TL" --add-label Contribution "$PR_URL"

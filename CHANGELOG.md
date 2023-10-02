@@ -9,6 +9,7 @@
 * Fixed an issue where **validate** falsely failed with error `DS108` on descriptions ending with new lines followed by square/curly brackets.
 * Fixed an issue where **graph** commands would not clean their temporary files properly, causing successive commands to fail.
 * Fixed an issue where an error log message changed the terminal color.
+* Added the *--delete_existing_dataset/-dd* flag to the **modeling-rules test** command to delete an existing dataset in the tenant.
 
 ## 1.20.5
 * Fixed an issue where **validate** falsely failed with error `DS108` on descriptions ending with brackets that contains a dot at the end of them.

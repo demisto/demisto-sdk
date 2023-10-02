@@ -9,7 +9,7 @@
 * Fixed an issue where **validate** falsely failed with error `DS108` on descriptions ending with new lines followed by square/curly brackets.
 * Fixed an issue where **graph** commands would not clean their temporary files properly, causing successive commands to fail.
 * Fixed an issue where an error log message changed the terminal color.
-
+* Improved error and warning messages for unifier.
 ## 1.20.5
 * Fixed an issue where **validate** falsely failed with error `DS108` on descriptions ending with brackets that contains a dot at the end of them.
 * Fixed an issue where **modeling-rule test** command failed to properly render the comparison table when boolean value were printed.

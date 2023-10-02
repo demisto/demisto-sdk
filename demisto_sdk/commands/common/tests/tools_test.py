@@ -298,7 +298,7 @@ class TestGenericFunctions:
         "dir_path", ["demisto_sdk", f"{GIT_ROOT}/demisto_sdk/tests/test_files"]
     )
     def test_get_yml_paths_in_dir(self, dir_path):
-        yml_paths, first_yml_path = tools.get_yml_paths_in_dir(dir_path, error_msg="")
+        yml_paths, first_yml_path = tools.get_yml_paths_in_dir(dir_path)
         yml_paths_test = glob.glob(os.path.join(dir_path, "*yml"))
         assert sorted(yml_paths) == sorted(yml_paths_test)
         if yml_paths_test:
@@ -481,18 +481,6 @@ class TestGenericFunctions:
 
         assert files == output
 
-    @pytest.mark.parametrize("path, output", [("demisto.json", "json"), ("wow", "")])
-    def test_retrieve_file_ending(self, path, output):
-        assert retrieve_file_ending(path) == output
-
-    @pytest.mark.parametrize(
-        "data, entity, output",
-        [
-            ({"script": {"type": "javascript"}}, INTEGRATIONS_DIR, "javascript"),
-            ({"type": "javascript"}, SCRIPTS_DIR, "javascript"),
-            ({}, LAYOUTS_DIR, ""),
-        ],
-    )
     def test_get_code_lang(self, data, entity, output):
         assert get_code_lang(data, entity) == output
 

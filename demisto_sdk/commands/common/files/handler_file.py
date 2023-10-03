@@ -1,4 +1,4 @@
-from abc import abstractmethod
+from abc import abstractmethod, ABC
 from io import StringIO
 from typing import Any, Dict, List, Optional, Type, Union
 
@@ -8,7 +8,7 @@ from demisto_sdk.commands.common.files.text_file import TextFile
 from demisto_sdk.commands.common.handlers.xsoar_handler import XSOAR_Handler
 
 
-class HandlerFile(TextFile):
+class HandlerFile(TextFile, ABC):
 
     handler: XSOAR_Handler = Field(None, exclude=True)
 

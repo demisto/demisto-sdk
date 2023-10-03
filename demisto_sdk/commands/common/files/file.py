@@ -31,6 +31,12 @@ class File(ABC, BaseModel):
         )
 
     @property
+    def normalized_suffix(self) -> str:
+        if suffix := self.input_path.suffix:
+            return suffix[1:]
+        return suffix
+
+    @property
     def input_path_original_encoding(self) -> Optional[str]:
         return UnicodeDammit(self.input_path.read_bytes()).original_encoding
 

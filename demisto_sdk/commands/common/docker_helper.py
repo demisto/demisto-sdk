@@ -5,6 +5,7 @@ import re
 import shutil
 import tarfile
 import tempfile
+import time
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple, Union
 
@@ -416,8 +417,9 @@ def _get_python_version_from_tag_by_regex(image: str) -> Optional[Version]:
     return None
 
 
-def _get_docker_hub_token(repo: str) -> str:
+def _get_docker_hub_token(repo: str, timeout: int = 20, num_of_retries: int = 5) -> str:
     auth = None
+
 
     # If the user has credentials for docker hub, use them to get the token
     if (docker_user := os.getenv("DOCKERHUB_USER")) and (
@@ -426,12 +428,15 @@ def _get_docker_hub_token(repo: str) -> str:
         logger.debug("Using docker hub credentials to get token")
         auth = (docker_user, docker_pass)
 
-    response = requests.get(
-        f"https://auth.docker.io/token?service=registry.docker.io&scope=repository:{repo}:pull",
-        auth=auth,
-    )
+    for _ in range(num_of_retries):
+        response = requests.get(
+            f"https://auth.docker.io/token?service=registry.docker.io&scope=repository:{repo}:pull",  auth=auth)
+        if response.ok:
+            break
+
+        time.sleep(timeout)
     if not response.ok:
-        raise RuntimeError(f"Failed to get docker hub token: {response.text}")
+        raise RuntimeError(f"Response to get docker hub token failed: {response.text}")
     try:
         return response.json()["token"]
     except (JSONDecodeError, KeyError) as e:

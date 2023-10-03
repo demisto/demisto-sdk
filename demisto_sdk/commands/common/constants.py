@@ -108,13 +108,13 @@ DEMISTO_SDK_OFFICIAL_CONTENT_PROJECT_ID = os.getenv(
 )  # the default is the id of the content repo in code.pan.run
 
 # Marketplaces
-MARKETPLACE_XSOAR_DIST = os.getenv("GCS_MARKET_BUCKET", "marketplace-dist")
-MARKETPLACE_XSIAM_DIST = os.getenv("GCS_MARKET_V2_BUCKET", "marketplace-v2-dist")
-MARKETPLACE_XPANSE_DIST = os.getenv("GCS_MARKET_XPANSE_BUCKET", "xpanse-dist")
-MARKETPLACE_XSOAR_SAAS_DIST = os.getenv(
+DEMISTO_SDK_MARKETPLACE_XSOAR_DIST = os.getenv("GCS_MARKET_BUCKET", "marketplace-dist")
+DEMISTO_SDK_MARKETPLACE_XSIAM_DIST = os.getenv("GCS_MARKET_V2_BUCKET", "marketplace-v2-dist")
+DEMISTO_SDK_MARKETPLACE_XPANSE_DIST = os.getenv("GCS_MARKET_XPANSE_BUCKET", "xpanse-dist")
+DEMISTO_SDK_MARKETPLACE_XSOAR_SAAS_DIST = os.getenv(
     "GCS_MARKET_XSOAR_SAAS_BUCKET", "marketplace-saas-dist"
 )
-MARKETPLACE_XSOAR_DIST_DEV = os.getenv("GCS_MARKET_BUCKET_DEV", "marketplace-dist-dev")
+DEMISTO_SDK_MARKETPLACE_XSOAR_DIST_DEV = os.getenv("GCS_MARKET_BUCKET_DEV", "marketplace-dist-dev")
 
 
 class FileType(str, Enum):
@@ -1177,15 +1177,15 @@ def urljoin(*args: str):
 
 
 OFFICIAL_CONTENT_ID_SET_PATH = (
-    f"https://storage.googleapis.com/{MARKETPLACE_XSOAR_DIST}/content/id_set.json"
+    f"https://storage.googleapis.com/{DEMISTO_SDK_MARKETPLACE_XSOAR_DIST}/content/id_set.json"
 )
 
 OFFICIAL_CONTENT_GRAPH_PATH = (
-    f"https://storage.googleapis.com/{MARKETPLACE_XSOAR_DIST_DEV}/content_graph"
+    f"https://storage.googleapis.com/{DEMISTO_SDK_MARKETPLACE_XSOAR_DIST_DEV}/content_graph"
 )
 
 OFFICIAL_INDEX_JSON_PATH = (
-    f"https://storage.googleapis.com/{MARKETPLACE_XSOAR_DIST}/content/packs/index.json"
+    f"https://storage.googleapis.com/{DEMISTO_SDK_MARKETPLACE_XSOAR_DIST}/content/packs/index.json"
 )
 
 # Run all test signal
@@ -1750,10 +1750,10 @@ class MarketplaceVersions(str, Enum):
 
 
 MarketplaceVersionToMarketplaceName = {
-    MarketplaceVersions.XSOAR.value: MARKETPLACE_XSOAR_DIST,
-    MarketplaceVersions.MarketplaceV2.value: MARKETPLACE_XSIAM_DIST,
-    MarketplaceVersions.XPANSE.value: MARKETPLACE_XPANSE_DIST,
-    MarketplaceVersions.XSOAR_SAAS.value: MARKETPLACE_XSOAR_SAAS_DIST,
+    MarketplaceVersions.XSOAR.value: DEMISTO_SDK_MARKETPLACE_XSOAR_DIST,
+    MarketplaceVersions.MarketplaceV2.value: DEMISTO_SDK_MARKETPLACE_XSIAM_DIST,
+    MarketplaceVersions.XPANSE.value: DEMISTO_SDK_MARKETPLACE_XPANSE_DIST,
+    MarketplaceVersions.XSOAR_SAAS.value: DEMISTO_SDK_MARKETPLACE_XSOAR_SAAS_DIST,
 }
 
 MARKETPLACE_TO_CORE_PACKS_FILE: Dict[MarketplaceVersions, str] = {
@@ -1881,7 +1881,7 @@ FORMATTING_SCRIPT = "indicator-format"
 ENV_SDK_WORKING_OFFLINE = "DEMISTO_SDK_OFFLINE_ENV"
 DOCKERFILES_INFO_REPO = "demisto/dockerfiles-info"
 
-TEST_COVERAGE_DEFAULT_URL = f"https://storage.googleapis.com/{MARKETPLACE_XSOAR_DIST_DEV}/code-coverage-reports/coverage-min.json"
+TEST_COVERAGE_DEFAULT_URL = f"https://storage.googleapis.com/{DEMISTO_SDK_MARKETPLACE_XSOAR_DIST_DEV}/code-coverage-reports/coverage-min.json"
 
 URL_IMAGE_LINK_REGEX = r"(\!\[.*?\])\((?P<url>https://[a-zA-Z_/\.0-9\- :%]*?)\)((].*)?)"
 

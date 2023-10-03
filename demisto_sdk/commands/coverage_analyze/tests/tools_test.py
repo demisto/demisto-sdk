@@ -4,7 +4,7 @@ from datetime import datetime
 import pytest
 
 from demisto_sdk.commands.common.constants import (
-    MARKETPLACE_XSOAR_DIST_DEV,
+    DEMISTO_SDK_MARKETPLACE_XSOAR_DIST_DEV,
 )
 from demisto_sdk.commands.coverage_analyze.tests.helpers_test import (
     JSON_MIN_DATA_FILE,
@@ -36,7 +36,7 @@ class TestGetTotalCoverage:
         date = datetime.now()
         requests_mock.get(
             HISTORY_URL.format(
-                MARKETPLACE_XSOAR_DIST_DEV=MARKETPLACE_XSOAR_DIST_DEV,
+                DEMISTO_SDK_MARKETPLACE_XSOAR_DIST_DEV=DEMISTO_SDK_MARKETPLACE_XSOAR_DIST_DEV,
                 date=date.strftime("%Y-%m-%d"),
             ),
             json=read_file(JSON_MIN_DATA_FILE),

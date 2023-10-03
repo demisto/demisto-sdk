@@ -4411,18 +4411,18 @@ class Errors:
     @error_code_decorator
     def command_reputation_output_capitalization_incorrect(
         command_name: str,
-        invalid_outputs: list[str],
-        used_objects: set,
+        invalid_output: str,
+        used_object: str,
     ):
-        return f"The {command_name} command returns the following reputation outputs:\n{invalid_outputs}\nwhich is\
-using mandatory objects:\n{used_objects} with incorrect capitalization. Please fix accordingly.\
+        return f"The {command_name} command returns the following reputation output:\n{invalid_output}\nwhich is\
+using mandatory object:\n{used_object} with incorrect capitalization. Please fix accordingly.\
 \nFor further information: {XSOAR_CONTEXT_AND_OUTPUTS_URL}"
 
     @staticmethod
     @error_code_decorator
     def command_reputation_output_is_missing(
         command_name: str,
-        reputation_output: list,
+        reputation_output: str,
         objects_missing_outputs: str,
     ):
         return f"The {command_name} command is using a reputation command context objects: {objects_missing_outputs},\

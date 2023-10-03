@@ -2948,4 +2948,4 @@ class TestisContextChanged:
         structure = mock_structure("", content)
         validator = IntegrationValidator(structure)
         validator.current_file = content
-        assert validator.is_valid_reputation_command_outputs() is result
+        assert validator.validate_command_outputs() is result

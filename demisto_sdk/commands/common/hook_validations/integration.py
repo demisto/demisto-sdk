@@ -1,7 +1,7 @@
 import os
 import re
 from pathlib import Path
-from typing import Dict, List, Optional, Set
+from typing import Dict, Optional, Set
 
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import (
@@ -18,7 +18,6 @@ from demisto_sdk.commands.common.constants import (
     FIRST_FETCH,
     FIRST_FETCH_PARAM,
     INCIDENT_FETCH_REQUIRED_PARAMS,
-    IOC_OUTPUTS_DICT,
     MANDATORY_REPUTATION_CONTEXT_OBJECTS_NAMES,
     MAX_FETCH,
     MAX_FETCH_PARAM,
@@ -27,6 +26,7 @@ from demisto_sdk.commands.common.constants import (
     PYTHON_SUBTYPES,
     RELIABILITY_PARAMETER_NAMES,
     REPUTATION_COMMAND_NAMES,
+    REPUTATION_TO_REQUIRED_OUTPUT,
     TYPE_PWSH,
     XSOAR_CONTEXT_STANDARD_URL,
     XSOAR_SUPPORT,
@@ -74,15 +74,17 @@ default_additional_info = load_default_additional_info_dict()
 class OutputsResults:
     def __init__(
         self,
-        context_outputs_paths: Set,
-        misspelled_outputs: List,
-        misspelled_outputs_objects: Set,
-        reputation_objects: Set,
+        context_outputs_paths: Set = set(),
+        reputation_objects: Set = set(),
     ):
         self.context_outputs_paths: Set = context_outputs_paths
-        self.misspelled_outputs: List = misspelled_outputs
-        self.misspelled_outputs_objects: Set = misspelled_outputs_objects
         self.reputation_objects: Set = reputation_objects
+
+    def add_path(self, context_output_path: str):
+        self.context_outputs_paths.add(context_output_path)
+
+    def add_reputation_object(self, reputation_object: str):
+        self.reputation_objects.add(reputation_object)
 
 
 class IntegrationValidator(ContentEntityValidator):
@@ -227,7 +229,7 @@ class IntegrationValidator(ContentEntityValidator):
             self.verify_reputation_commands_has_reliability(),
             self.is_integration_deprecated_and_used(),
             self.is_outputs_for_reputations_commands_valid(),
-            self.is_valid_reputation_command_outputs(),
+            self.validate_command_outputs(),
         ]
 
         if check_is_unskipped:
@@ -616,7 +618,7 @@ class IntegrationValidator(ContentEntityValidator):
         return missing_outputs, missing_descriptions
 
     def validate_all_reputation_outputs_exist(
-        self, command_name: str, outputs: Set[str], used_reputation_objects: Set[str]
+        self, command: dict, output_results: OutputsResults
     ) -> bool:
         """check if all mandatory outputs for custom object do exist.
         Args:
@@ -626,109 +628,93 @@ class IntegrationValidator(ContentEntityValidator):
         Returns:
             bool: Whether all mandatory outputs of custom outputs exist or not
         """
-        objects_missing_outputs = set()
-        outputs_exist = True
-        missing_outputs_map = {}
+        required_outputs: Set[str] = set()
+        for ioc in output_results.reputation_objects:
+            required_outputs.update(REPUTATION_TO_REQUIRED_OUTPUT.get(ioc.lower(), ()))
 
-        for ioc in used_reputation_objects:
-            missing_outputs = []
-            for output in IOC_OUTPUTS_DICT.get(ioc.lower(), ()):
-                if output not in outputs:
-                    missing_outputs.append(output)
-                    objects_missing_outputs.add(ioc)
-            missing_outputs_map[ioc] = missing_outputs
-        for ioc, outputs in missing_outputs_map.items():
-            if outputs:
-                error_message, error_code = Errors.command_reputation_output_is_missing(
-                    command_name,
-                    outputs,
-                    ioc,
-                )
-                if self.handle_error(
-                    error_message,
-                    error_code,
-                    file_path=self.file_path,
-                    warning=self.structure_validator.quiet_bc,
-                ):
-                    outputs_exist = False
+        missing_outputs = required_outputs - set(output_results.context_outputs_paths)
 
-        return outputs_exist
+        for output in missing_outputs:
+            error_message, error_code = Errors.command_reputation_output_is_missing(
+                command.get("name", ""),
+                output,
+                ioc,
+            )
+            if self.handle_error(
+                error_message,
+                error_code,
+                file_path=self.file_path,
+                warning=self.structure_validator.quiet_bc,
+            ):
+                return False
+
+        return True
 
     @staticmethod
-    def get_reputation_output(context_path):
-        reputation_objects = list(
-            filter(
-                lambda context: context_path.lower().startswith(context.lower()),
-                MANDATORY_REPUTATION_CONTEXT_OBJECTS_NAMES,
-            )
-        )
-        return reputation_objects[0] if reputation_objects else None
+    def extract_object_name(context_path):
+        for object_name in MANDATORY_REPUTATION_CONTEXT_OBJECTS_NAMES:
+            if object_name.lower() in context_path.lower():
+                return object_name
+        return None
 
-    def handle_command_outputs(cls, command: dict) -> OutputsResults:
-        """get outputs of a command, and find custom objects used in the command outputs.
-
+    def validate_spelling(self, command: dict, outputs_results: OutputsResults) -> bool:
+        """Validates command ouputs listed MANDATORY_REPUTATION_CONTEXT_OBJECTS_NAMES
+           are spelled and capitalized correctly.
         Returns:
-            tuple: (all outputs of the command, all outputs using custom objects, and the custom object used
-             in outputs)
+            True if command outputs are spelled right.
         """
-        invalid_outputs = []
-        custom_objects = set()
-        context_outputs_paths = set()
-        used_iocs = set()
         for output in command.get("outputs") or []:
             context_path = output.get("contextPath", "")
-            context_outputs_paths.add(context_path)
+            outputs_results.add_path(context_path)
 
-            reputation_object = cls.get_reputation_output(context_path)
-
-            if reputation_object:  # custom context output is used
-                used_iocs.add(reputation_object)
+            if reputation_object := self.extract_object_name(context_path):
+                outputs_results.add_reputation_object(reputation_object)
                 if (
                     reputation_object not in context_path
                 ):  # the output is not spelled as expected
-                    invalid_outputs.append(context_path)
-                    custom_objects.add(reputation_object)
-        return OutputsResults(
-            context_outputs_paths, invalid_outputs, custom_objects, used_iocs
-        )
+                    (
+                        error_message,
+                        error_code,
+                    ) = Errors.command_reputation_output_capitalization_incorrect(
+                        command.get("name"), context_path, reputation_object
+                    )
+                    if self.handle_error(
+                        error_message,
+                        error_code,
+                        file_path=self.file_path,
+                        warning=self.structure_validator.quiet_bc,
+                    ):
+                        return False
+        return True
 
     @error_codes("IN158")
-    def is_valid_reputation_command_outputs(self) -> bool:
-        """Check if a a command is using custom objects (file, ip, endpoint, email, domain, url, cve,
-        infofile, certificate), if so, check if it using them with their outputs according to context standard
-        https://xsoar.pan.dev/docs/integrations/context-standards
-
+    def validate_command_outputs(self) -> bool:
+        """Check if a command is using the following objects: file, ip, endpoint, email, domain, url, cve,
+        infofile, certificate, if so, validate it is according to context
+        standards: https://xsoar.pan.dev/docs/integrations/context-standards
         Returns:
-            bool. Whether a command is using the custom objects and their outputs according to the context standards or not
+            bool.
+            Whether a command is using the mentioned objects and their outputs
+            according to the context standards
         """
-        commands = self.current_file.get("script", {}).get("commands") or []
-        outputs_valid = True
-        outputs_exist = True
+        commands = self.current_file.get("script", {}).get("commands", [])
+        output_results = OutputsResults()
         for command in commands:
-            outputs_results = self.handle_command_outputs(command)
-
-            if outputs_results.misspelled_outputs:
-                (
-                    error_message,
-                    error_code,
-                ) = Errors.command_reputation_output_capitalization_incorrect(
-                    command.get("name"),
-                    outputs_results.misspelled_outputs,
-                    outputs_results.misspelled_outputs_objects,
-                )
-                if self.handle_error(
-                    error_message,
-                    error_code,
-                    file_path=self.file_path,
-                    warning=self.structure_validator.quiet_bc,
-                ):
-                    outputs_valid = False
-            outputs_exist = self.validate_all_reputation_outputs_exist(
-                command.get("name"),
-                outputs_results.context_outputs_paths,
-                outputs_results.reputation_objects,
-            )
-        return all([outputs_valid, outputs_exist])
+            if not (
+                self.validate_spelling(command, output_results)
+                and self.validate_all_reputation_outputs_exist(command, output_results)
+            ):
+                return False
+        return True
+        # return all(
+        #     (
+        #         self.handle_command_outputs(command, output_results)
+        #         and self.validate_all_reputation_outputs_exist(
+        #             command, output_results
+        #         )
+        #     )
+        #     for command in commands
+        # )
 
     @error_codes("DB100,DB101,IN107")
     def is_outputs_for_reputations_commands_valid(self) -> bool:
@@ -787,7 +773,7 @@ class IntegrationValidator(ContentEntityValidator):
                             output_for_reputation_valid = False
 
                 # validate the IOC output
-                reputation_output = IOC_OUTPUTS_DICT.get(command_name)
+                reputation_output = REPUTATION_TO_REQUIRED_OUTPUT.get(command_name)
                 if reputation_output and not reputation_output.intersection(
                     context_outputs_paths
                 ):

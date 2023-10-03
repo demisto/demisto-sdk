@@ -1374,7 +1374,7 @@ DBOT_SCORES_DICT = {
     "DBotScore.Score": "The actual score.",
 }
 
-IOC_OUTPUTS_DICT = {
+REPUTATION_TO_REQUIRED_OUTPUT = {
     "domain": {"Domain.Name"},
     "file": {"File.MD5", "File.SHA1", "File.SHA256"},
     "ip": {"IP.Address"},

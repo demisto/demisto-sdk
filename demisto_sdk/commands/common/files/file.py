@@ -2,15 +2,17 @@ import shutil
 from abc import ABC, abstractmethod
 from functools import lru_cache
 from pathlib import Path
-from typing import Any, Dict, Optional, Set, Type, Union
 from tempfile import NamedTemporaryFile
+from typing import Any, Dict, Optional, Set, Type, Union
 
 import requests
 from bs4.dammit import UnicodeDammit
 from pydantic import BaseModel, validator
+from requests.exceptions import RequestException
 
 from demisto_sdk.commands.common.constants import (
-    DEMISTO_GIT_PRIMARY_BRANCH, urljoin,
+    DEMISTO_GIT_PRIMARY_BRANCH,
+    urljoin,
 )
 from demisto_sdk.commands.common.files.errors import (
     FileReadError,
@@ -20,7 +22,6 @@ from demisto_sdk.commands.common.git_content_config import GitContentConfig
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers.xsoar_handler import XSOAR_Handler
 from demisto_sdk.commands.common.logger import logger
-from requests.exceptions import RequestException
 
 
 class File(ABC, BaseModel):
@@ -219,33 +220,63 @@ class File(ABC, BaseModel):
         git_path = urljoin(git_content_config.base_api, tag, path)
         github_token = git_content_config.CREDENTIALS.github_token
 
+        timeout = 10
+
         try:
-            response = requests.get(
+            return cls.read_from_http_request(
                 git_path,
-                verify=False,
-                timeout=10,
                 headers={
                     "Authorization": f"Bearer {github_token}" if github_token else "",
                     "Accept": "application/vnd.github.VERSION.raw",
                 },
-            )  # Sometime we need headers
-            if not response.ok:  # sometime we need param token
-                response = requests.get(
-                    git_path, verify=False, timeout=10, params={"token": github_token}
-                )
-            response.raise_for_status()
-        except RequestException as e:
-            raise FileReadError(git_path, exc=e)
-
-        file_content = response.content
-
-        with NamedTemporaryFile(mode="wb", prefix=f'Github-{path}', suffix=tag) as github_file:
-            github_file.write(file_content)
-            return cls.read_from_local_path(github_file.name, git_util=git_util, handler=handler, clear_cache=clear_cache)
+                timeout=timeout,
+                git_util=git_util,
+                handler=handler,
+                clear_cache=clear_cache,
+            )
+        except FileReadError as e:
+            logger.warning(
+                f"Received error {e} when trying to retrieve {git_path} content, retrying"
+            )
+            return cls.read_from_http_request(
+                git_path, params={"token": github_token}, timeout=timeout
+            )
 
     @classmethod
-    def read_from_http_request(cls, url: str, headers: Dict, params: Dict, verify: bool = False):
-        pass
+    def read_from_http_request(
+        cls,
+        url: str,
+        headers: Optional[Dict] = None,
+        params: Optional[Dict] = None,
+        verify: bool = True,
+        timeout: Optional[int] = None,
+        git_util: Optional[GitUtil] = None,
+        handler: Optional[XSOAR_Handler] = None,
+        clear_cache: bool = False,
+    ):
+        try:
+            response = requests.get(
+                url,
+                params=params,
+                verify=verify,
+                timeout=timeout,
+                headers=headers,
+            )  # Sometime we need headers
+            response.raise_for_status()
+        except RequestException as e:
+            raise FileReadError(Path(url), exc=e)
+
+        file_content = response.content
+        with NamedTemporaryFile(
+            mode="wb", prefix=f'{url.replace("/", "-")}'
+        ) as remote_file:
+            remote_file.write(file_content)
+            return cls.read_from_local_path(
+                remote_file.name,
+                git_util=git_util,
+                handler=handler,
+                clear_cache=clear_cache,
+            )
 
     @abstractmethod
     def _write(self, data: Any, encoding: Optional[str] = None) -> None:

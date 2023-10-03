@@ -1,10 +1,11 @@
-from typing import Any, Set, List
 import zipfile
+from typing import Any, List, Set
+
+from pydantic import validator
 
 from demisto_sdk.commands.common.constants import DEMISTO_GIT_PRIMARY_BRANCH
 from demisto_sdk.commands.common.files.compressed_file import CompressedFile
 from demisto_sdk.commands.common.files.file import File
-from pydantic import validator
 
 
 class ZipFile(CompressedFile):
@@ -13,11 +14,11 @@ class ZipFile(CompressedFile):
 
     @classmethod
     def known_extensions(cls) -> Set[str]:
-        return {'.zip'}
+        return {".zip"}
 
     @validator("zip_file")
     def validate_zip_file(self, values):
-        return zipfile.ZipFile(values["input_path"], mode='a')
+        return zipfile.ZipFile(values["input_path"], mode="a")
 
     def files_names(self) -> List[str]:
         return self.zip_file.namelist()

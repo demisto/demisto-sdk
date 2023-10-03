@@ -1,9 +1,10 @@
-from typing import Any, Set, List
-import zipfile
+import tarfile
+from typing import Any, List, Set
+
+from pydantic import validator
+
 from demisto_sdk.commands.common.files.compressed_file import CompressedFile
 from demisto_sdk.commands.common.files.file import File
-from pydantic import validator
-import tarfile
 
 
 class TarFile(CompressedFile):
@@ -12,11 +13,11 @@ class TarFile(CompressedFile):
 
     @classmethod
     def known_extensions(cls) -> Set[str]:
-        return {'.tar'}
+        return {".tar"}
 
     @validator("tar_file")
     def validate_tar_file(self, values):
-        return tarfile.open(values["input_path"], mode='a')
+        return tarfile.open(values["input_path"], mode="a")
 
     @property
     def files_names(self) -> List[str]:

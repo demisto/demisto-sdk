@@ -706,15 +706,6 @@ class IntegrationValidator(ContentEntityValidator):
             ):
                 return False
         return True
-        # return all(
-        #     (
-        #         self.handle_command_outputs(command, output_results)
-        #         and self.validate_all_reputation_outputs_exist(
-        #             command, output_results
-        #         )
-        #     )
-        #     for command in commands
-        # )
 
     @error_codes("DB100,DB101,IN107")
     def is_outputs_for_reputations_commands_valid(self) -> bool:

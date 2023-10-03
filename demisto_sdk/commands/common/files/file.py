@@ -1,4 +1,5 @@
 import shutil
+import urllib.parse
 from abc import ABC, abstractmethod
 from functools import lru_cache
 from pathlib import Path
@@ -243,6 +244,33 @@ class File(ABC, BaseModel):
             )
 
     @classmethod
+    def read_from_gitlab_api(
+        cls,
+        path: str,
+        git_util: Optional[GitUtil] = None,
+        git_content_config: Optional[GitContentConfig] = None,
+        tag: str = DEMISTO_GIT_PRIMARY_BRANCH,
+        handler: Optional[XSOAR_Handler] = None,
+        clear_cache: bool = False,
+    ):
+        if not git_content_config:
+            git_content_config = GitContentConfig()
+
+        git_path = urljoin(
+            git_content_config.base_api, "files", urllib.parse.quote_plus(path), "raw"
+        )
+        gitlab_token = git_content_config.CREDENTIALS.gitlab_token
+        return cls.read_from_http_request(
+            git_path,
+            headers={"PRIVATE-TOKEN": gitlab_token},
+            params={"ref": tag},
+            git_util=git_util,
+            handler=handler,
+            clear_cache=clear_cache,
+        )
+
+    @classmethod
+    @lru_cache
     def read_from_http_request(
         cls,
         url: str,
@@ -254,6 +282,8 @@ class File(ABC, BaseModel):
         handler: Optional[XSOAR_Handler] = None,
         clear_cache: bool = False,
     ):
+        if clear_cache:
+            cls.read_from_http_request.clear_cache()
         try:
             response = requests.get(
                 url,

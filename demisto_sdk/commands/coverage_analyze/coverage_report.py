@@ -4,6 +4,9 @@ from typing import Dict, Optional, Union
 
 import coverage
 
+from demisto_sdk.commands.common.constants import (
+    MARKETPLACE_XSOAR_DIST_DEV,
+)
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.coverage_analyze.helpers import (
     CoverageSummary,
@@ -27,7 +30,7 @@ class CoverageReport:
         no_degradation_check: Optional[bool] = False,
         previous_coverage_report_url: Optional[
             str
-        ] = "https://storage.googleapis.com/marketplace-dist-dev/code-coverage-reports/coverage-min.json",
+        ] = f"https://storage.googleapis.com/{MARKETPLACE_XSOAR_DIST_DEV}/code-coverage-reports/coverage-min.json",
     ):
         self.report_dir = report_dir
         self._cov: Optional[coverage.Coverage] = None

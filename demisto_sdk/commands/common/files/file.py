@@ -291,12 +291,13 @@ class File(ABC, BaseModel):
                 verify=verify,
                 timeout=timeout,
                 headers=headers,
-            )  # Sometime we need headers
+            )
             response.raise_for_status()
         except RequestException as e:
             raise FileReadError(Path(url), exc=e)
 
         file_content = response.content
+
         with NamedTemporaryFile(
             mode="wb", prefix=f'{url.replace("/", "-")}'
         ) as remote_file:

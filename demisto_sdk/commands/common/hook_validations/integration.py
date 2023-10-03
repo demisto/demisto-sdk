@@ -71,22 +71,6 @@ from demisto_sdk.commands.common.tools import (
 default_additional_info = load_default_additional_info_dict()
 
 
-class OutputsResults:
-    def __init__(
-        self,
-        context_outputs_paths: Set = set(),
-        reputation_objects: Set = set(),
-    ):
-        self.context_outputs_paths: Set = context_outputs_paths
-        self.reputation_objects: Set = reputation_objects
-
-    def add_path(self, context_output_path: str):
-        self.context_outputs_paths.add(context_output_path)
-
-    def add_reputation_object(self, reputation_object: str):
-        self.reputation_objects.add(reputation_object)
-
-
 class IntegrationValidator(ContentEntityValidator):
     """IntegrationValidator is designed to validate the correctness of the file structure we enter to content repo. And
     also try to catch possible Backward compatibility breaks due to the preformed changes.
@@ -618,21 +602,21 @@ class IntegrationValidator(ContentEntityValidator):
         return missing_outputs, missing_descriptions
 
     def validate_all_reputation_outputs_exist(
-        self, command: dict, output_results: OutputsResults
+        self, command: dict, reputation_objects: set, context_outputs_paths: set
     ) -> bool:
         """check if all mandatory outputs for custom object do exist.
         Args:
-            command_name: the command name
-            outputs: outputs of the command
-            used_reputation_objects: reputation objects (like url, ip, etc) used in the command's context outputs.
+            command: the command
+            reputation_objects:
+            context_outputs_paths:
         Returns:
             bool: Whether all mandatory outputs of custom outputs exist or not
         """
         required_outputs: Set[str] = set()
-        for ioc in output_results.reputation_objects:
+        for ioc in reputation_objects:
             required_outputs.update(REPUTATION_TO_REQUIRED_OUTPUT.get(ioc.lower(), ()))
 
-        missing_outputs = required_outputs - set(output_results.context_outputs_paths)
+        missing_outputs = required_outputs - context_outputs_paths
 
         for output in missing_outputs:
             error_message, error_code = Errors.command_reputation_output_is_missing(
@@ -650,25 +634,27 @@ class IntegrationValidator(ContentEntityValidator):
 
         return True
 
-    @staticmethod
-    def extract_object_name(context_path):
-        for object_name in MANDATORY_REPUTATION_CONTEXT_OBJECTS_NAMES:
-            if object_name.lower() in context_path.lower():
-                return object_name
-        return None
-
-    def validate_spelling(self, command: dict, outputs_results: OutputsResults) -> bool:
+    def validate_spelling(
+        self, command: dict, reputation_objects: set, context_outputs_paths: set
+    ) -> bool:
         """Validates command ouputs listed MANDATORY_REPUTATION_CONTEXT_OBJECTS_NAMES
            are spelled and capitalized correctly.
         Returns:
             True if command outputs are spelled right.
         """
+        result = True
         for output in command.get("outputs") or []:
             context_path = output.get("contextPath", "")
-            outputs_results.add_path(context_path)
+            context_outputs_paths.add(context_path)
 
-            if reputation_object := self.extract_object_name(context_path):
-                outputs_results.add_reputation_object(reputation_object)
+            reputation_object = None
+            for object_name in MANDATORY_REPUTATION_CONTEXT_OBJECTS_NAMES:
+                if object_name.lower() in context_path.lower():
+                    reputation_object = object_name
+                    break
+
+            if reputation_object:
+                reputation_objects.add(reputation_object)
                 if (
                     reputation_object not in context_path
                 ):  # the output is not spelled as expected
@@ -684,8 +670,8 @@ class IntegrationValidator(ContentEntityValidator):
                         file_path=self.file_path,
                         warning=self.structure_validator.quiet_bc,
                     ):
-                        return False
-        return True
+                        result = False
+        return result
 
     @error_codes("IN158")
     def validate_command_outputs(self) -> bool:
@@ -698,14 +684,20 @@ class IntegrationValidator(ContentEntityValidator):
             according to the context standards
         """
         commands = self.current_file.get("script", {}).get("commands", [])
-        output_results = OutputsResults()
+        reputation_objects: Set[str] = set()
+        context_outputs_paths: Set[str] = set()
+        result = True
         for command in commands:
             if not (
-                self.validate_spelling(command, output_results)
-                and self.validate_all_reputation_outputs_exist(command, output_results)
+                self.validate_spelling(
+                    command, reputation_objects, context_outputs_paths
+                )
+                and self.validate_all_reputation_outputs_exist(
+                    command, reputation_objects, context_outputs_paths
+                )
             ):
-                return False
-        return True
+                result = False
+        return result
 
     @error_codes("DB100,DB101,IN107")
     def is_outputs_for_reputations_commands_valid(self) -> bool:

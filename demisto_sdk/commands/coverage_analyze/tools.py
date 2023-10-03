@@ -45,7 +45,10 @@ def get_total_coverage(
         elif date is None:
             url = LATEST_URL
         else:
-            url = HISTORY_URL.format(MARKETPLACE_XSOAR_DIST_DEV=MARKETPLACE_XSOAR_DIST_DEV, date=date.strftime("%Y-%m-%d"))
+            url = HISTORY_URL.format(
+                MARKETPLACE_XSOAR_DIST_DEV=MARKETPLACE_XSOAR_DIST_DEV,
+                date=date.strftime("%Y-%m-%d"),
+            )
 
         res = requests.get(url)
         res.raise_for_status()

@@ -18,15 +18,15 @@ from demisto_sdk.commands.content_graph.objects.integration_script import (
 )
 from demisto_sdk.commands.coverage_analyze.helpers import coverage_files
 from demisto_sdk.commands.lint.helpers import stream_docker_container_output
+from demisto_sdk.commands.common.constants import (
+    DOCKER_IO,
+)
 
 DOCKER_PYTHONPATH = [
     f"/content/{path.relative_to(CONTENT_PATH)}"
     for path in PYTHONPATH
     if path.is_relative_to(CONTENT_PATH)
 ]
-from demisto_sdk.commands.common.constants import (
-    DOCKER_IO,
-)
 
 DEFAULT_DOCKER_IMAGE = "demisto/python:1.3-alpine"
 

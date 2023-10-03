@@ -106,8 +106,11 @@ DEMISTO_GIT_UPSTREAM = os.getenv("DEMISTO_DEFAULT_REMOTE", "origin")
 MARKETPLACE_XSOAR_DIST = os.getenv("GCS_MARKET_BUCKET", "marketplace-dist")
 MARKETPLACE_XSIAM_DIST = os.getenv("GCS_MARKET_V2_BUCKET", "marketplace-v2-dist")
 MARKETPLACE_XPANSE_DIST = os.getenv("GCS_MARKET_XPANSE_BUCKET", "xpanse-dist")
-MARKETPLACE_XSOAR_SAAS_DIST = os.getenv("GCS_MARKET_XSOAR_SAAS_BUCKET", "marketplace-saas-dist")
+MARKETPLACE_XSOAR_SAAS_DIST = os.getenv(
+    "GCS_MARKET_XSOAR_SAAS_BUCKET", "marketplace-saas-dist"
+)
 MARKETPLACE_XSOAR_DIST_DEV = os.getenv("GCS_MARKET_BUCKET_DEV", "marketplace-dist-dev")
+
 
 class FileType(str, Enum):
     INTEGRATION = "integration"

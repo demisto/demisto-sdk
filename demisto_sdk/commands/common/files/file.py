@@ -218,14 +218,14 @@ class File(ABC, BaseModel):
         if not git_content_config:
             git_content_config = GitContentConfig()
 
-        git_path = urljoin(git_content_config.base_api, tag, path)
+        git_path_url = urljoin(git_content_config.base_api, tag, path)
         github_token = git_content_config.CREDENTIALS.github_token
 
         timeout = 10
 
         try:
             return cls.read_from_http_request(
-                git_path,
+                git_path_url,
                 headers={
                     "Authorization": f"Bearer {github_token}" if github_token else "",
                     "Accept": "application/vnd.github.VERSION.raw",
@@ -237,10 +237,10 @@ class File(ABC, BaseModel):
             )
         except FileReadError as e:
             logger.warning(
-                f"Received error {e} when trying to retrieve {git_path} content, retrying"
+                f"Received error {e} when trying to retrieve {git_path_url} content, retrying"
             )
             return cls.read_from_http_request(
-                git_path, params={"token": github_token}, timeout=timeout
+                git_path_url, params={"token": github_token}, timeout=timeout
             )
 
     @classmethod
@@ -256,12 +256,12 @@ class File(ABC, BaseModel):
         if not git_content_config:
             git_content_config = GitContentConfig()
 
-        git_path = urljoin(
+        git_path_url = urljoin(
             git_content_config.base_api, "files", urllib.parse.quote_plus(path), "raw"
         )
         gitlab_token = git_content_config.CREDENTIALS.gitlab_token
         return cls.read_from_http_request(
-            git_path,
+            git_path_url,
             headers={"PRIVATE-TOKEN": gitlab_token},
             params={"ref": tag},
             git_util=git_util,
@@ -307,6 +307,13 @@ class File(ABC, BaseModel):
                 handler=handler,
                 clear_cache=clear_cache,
             )
+
+    @classmethod
+    def write_file(
+        cls, data: Any, output_path: Union[Path, str], encoding: Optional[str] = None
+    ):
+        model = cls.from_path(output_path=output_path)
+        model.write(data, encoding=encoding)
 
     @abstractmethod
     def _write(self, data: Any, encoding: Optional[str] = None) -> None:

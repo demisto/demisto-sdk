@@ -9,9 +9,11 @@ import requests
 
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.logger import logger
+from demisto_sdk.commands.common.constants import (
+    MARKETPLACE_XSOAR_DIST_DEV,
+)
 
 ONE_DAY = timedelta(days=1)
-MARKETPLACE_XSOAR_DIST_DEV = os.getenv("GCS_MARKET_BUCKET_DEV", "marketplace-dist-dev")
 LATEST_URL = f"https://storage.googleapis.com/{MARKETPLACE_XSOAR_DIST_DEV}/code-coverage-reports/coverage-min.json"
 HISTORY_URL = f"https://storage.googleapis.com/{MARKETPLACE_XSOAR_DIST_DEV}/code-coverage-reports/history/coverage-min/{date}.json"
 

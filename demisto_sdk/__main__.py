@@ -23,6 +23,7 @@ from demisto_sdk.commands.common.constants import (
     ENV_DEMISTO_SDK_MARKETPLACE,
     FileType,
     MarketplaceVersions,
+    MARKETPLACE_XSOAR_DIST_DEV,
 )
 from demisto_sdk.commands.common.content_constant_paths import (
     ALL_PACKS_DEPENDENCIES_DEFAULT_PATH,
@@ -62,7 +63,6 @@ SDK_OFFLINE_ERROR_MESSAGE = (
     "[red]An internet connection is required for this command. If connected to the "
     "internet, un-set the DEMISTO_SDK_OFFLINE_ENV environment variable.[/red]"
 )
-MARKETPLACE_XSOAR_DIST_DEV = os.getenv("GCS_MARKET_BUCKET_DEV", "marketplace-dist-dev")
 
 logger = logging.getLogger("demisto-sdk")
 

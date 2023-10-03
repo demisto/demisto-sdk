@@ -13,9 +13,9 @@ from demisto_sdk.commands.coverage_analyze.helpers import (
     parse_report_type,
     percent_to_float,
 )
-
-MARKETPLACE_XSOAR_DIST_DEV = os.getenv("GCS_MARKET_BUCKET_DEV", "marketplace-dist-dev")
-
+from demisto_sdk.commands.common.constants import (
+    MARKETPLACE_XSOAR_DIST_DEV,
+)
 
 class CoverageReport:
     def __init__(

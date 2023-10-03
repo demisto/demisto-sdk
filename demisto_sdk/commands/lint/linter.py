@@ -16,6 +16,7 @@ from wcmatch.pathlib import NEGATE, Path
 
 from demisto_sdk.commands.common.constants import (
     API_MODULE_FILE_SUFFIX,
+    DOCKER_IO,
     FORMATTING_SCRIPT,
     INTEGRATIONS_DIR,
     NATIVE_IMAGE_DOCKER_NAME,
@@ -75,8 +76,6 @@ from demisto_sdk.commands.lint.helpers import (
     split_warnings_errors,
     stream_docker_container_output,
 )
-
-DOCKER_IO = os.getenv("DOCKER_IO", "docker-io.art.code.pan.run")
 
 # 3-rd party packages
 

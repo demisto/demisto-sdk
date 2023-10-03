@@ -18,6 +18,7 @@ from requests import JSONDecodeError
 from demisto_sdk.commands.common.constants import (
     DEFAULT_PYTHON2_VERSION,
     DEFAULT_PYTHON_VERSION,
+    DOCKER_IO,
     DOCKERFILES_INFO_REPO,
     TYPE_PWSH,
     TYPE_PYTHON,
@@ -43,7 +44,6 @@ DEMISTO_PYTHON_BASE_IMAGE_REGEX = re.compile(
 )
 
 TEST_REQUIREMENTS_DIR = Path(__file__).parent.parent / "lint" / "resources"
-DOCKER_IO = os.getenv("DOCKER_IO", "docker-io.art.code.pan.run")
 
 
 class DockerException(Exception):

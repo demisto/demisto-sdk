@@ -101,6 +101,11 @@ EVENT_COLLECTOR = "EventCollector"
 ENV_DEMISTO_SDK_MARKETPLACE = "DEMISTO_SDK_MARKETPLACE"
 DEMISTO_GIT_PRIMARY_BRANCH = os.getenv("DEMISTO_DEFAULT_BRANCH", "master")
 DEMISTO_GIT_UPSTREAM = os.getenv("DEMISTO_DEFAULT_REMOTE", "origin")
+DOCKER_IO = os.getenv("DOCKER_IO", "docker-io.art.code.pan.run")
+DEMISTO_SDK_CI_SERVER_HOST = os.getenv("CI_SERVER_HOST", "code.pan.run")
+DEMISTO_SDK_OFFICIAL_CONTENT_PROJECT_ID = os.getenv(
+    "CI_PROJECT_ID", "2596"
+)  # the default is the id of the content repo in code.pan.run
 
 
 class FileType(str, Enum):

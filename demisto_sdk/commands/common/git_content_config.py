@@ -46,7 +46,7 @@ class GitContentConfig:
         r"https://api.github.com/repos/demisto/demisto-sdk/releases"
     )
     OFFICIAL_CONTENT_REPO_NAME = "demisto/content"
-    OFFICIAL_CONTENT_PROJECT_ID = 2596
+    OFFICIAL_CONTENT_PROJECT_ID = os.getenv('CI_PROJECT_ID', '2596')
     CONTENT_GITHUB_UPSTREAM = r"upstream.*demisto/content"
     CONTENT_GITHUB_ORIGIN = r"origin.*demisto/content"
     GITHUB_USER_CONTENT = "githubusercontent.com"

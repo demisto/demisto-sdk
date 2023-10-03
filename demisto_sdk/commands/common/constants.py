@@ -102,6 +102,12 @@ ENV_DEMISTO_SDK_MARKETPLACE = "DEMISTO_SDK_MARKETPLACE"
 DEMISTO_GIT_PRIMARY_BRANCH = os.getenv("DEMISTO_DEFAULT_BRANCH", "master")
 DEMISTO_GIT_UPSTREAM = os.getenv("DEMISTO_DEFAULT_REMOTE", "origin")
 
+# Marketplaces
+MARKETPLACE_XSOAR_DIST = os.getenv("GCS_MARKET_BUCKET", "marketplace-dist")
+MARKETPLACE_XSIAM_DIST = os.getenv("GCS_MARKET_V2_BUCKET", "marketplace-v2-dist")
+MARKETPLACE_XPANSE_DIST = os.getenv("GCS_MARKET_XPANSE_BUCKET", "xpanse-dist")
+MARKETPLACE_XSOAR_SAAS_DIST = os.getenv("GCS_MARKET_XSOAR_SAAS_BUCKET", "marketplace-saas-dist")
+MARKETPLACE_XSOAR_DIST_DEV = os.getenv("GCS_MARKET_BUCKET_DEV", "marketplace-dist-dev")
 
 class FileType(str, Enum):
     INTEGRATION = "integration"
@@ -1163,15 +1169,15 @@ def urljoin(*args: str):
 
 
 OFFICIAL_CONTENT_ID_SET_PATH = (
-    "https://storage.googleapis.com/marketplace-dist/content/id_set.json"
+    f"https://storage.googleapis.com/{MARKETPLACE_XSOAR_DIST}/content/id_set.json"
 )
 
 OFFICIAL_CONTENT_GRAPH_PATH = (
-    "https://storage.googleapis.com/marketplace-dist-dev/content_graph"
+    f"https://storage.googleapis.com/{MARKETPLACE_XSOAR_DIST_DEV}/content_graph"
 )
 
 OFFICIAL_INDEX_JSON_PATH = (
-    "https://storage.googleapis.com/marketplace-dist/content/packs/index.json"
+    f"https://storage.googleapis.com/{MARKETPLACE_XSOAR_DIST}/content/packs/index.json"
 )
 
 # Run all test signal
@@ -1735,11 +1741,6 @@ class MarketplaceVersions(str, Enum):
     XSOAR_ON_PREM = "xsoar_on_prem"
 
 
-MARKETPLACE_XSOAR_DIST = "marketplace-dist"
-MARKETPLACE_XSIAM_DIST = "marketplace-v2-dist"
-MARKETPLACE_XPANSE_DIST = "xpanse-dist"
-MARKETPLACE_XSOAR_SAAS_DIST = "marketplace-saas-dist"
-
 MarketplaceVersionToMarketplaceName = {
     MarketplaceVersions.XSOAR.value: MARKETPLACE_XSOAR_DIST,
     MarketplaceVersions.MarketplaceV2.value: MARKETPLACE_XSIAM_DIST,
@@ -1872,7 +1873,7 @@ FORMATTING_SCRIPT = "indicator-format"
 ENV_SDK_WORKING_OFFLINE = "DEMISTO_SDK_OFFLINE_ENV"
 DOCKERFILES_INFO_REPO = "demisto/dockerfiles-info"
 
-TEST_COVERAGE_DEFAULT_URL = "https://storage.googleapis.com/marketplace-dist-dev/code-coverage-reports/coverage-min.json"
+TEST_COVERAGE_DEFAULT_URL = f"https://storage.googleapis.com/{MARKETPLACE_XSOAR_DIST_DEV}/code-coverage-reports/coverage-min.json"
 
 URL_IMAGE_LINK_REGEX = r"(\!\[.*?\])\((?P<url>https://[a-zA-Z_/\.0-9\- :%]*?)\)((].*)?)"
 

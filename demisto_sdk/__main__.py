@@ -21,9 +21,9 @@ from pkg_resources import DistributionNotFound, get_distribution
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import (
     ENV_DEMISTO_SDK_MARKETPLACE,
+    MARKETPLACE_XSOAR_DIST_DEV,
     FileType,
     MarketplaceVersions,
-    MARKETPLACE_XSOAR_DIST_DEV,
 )
 from demisto_sdk.commands.common.content_constant_paths import (
     ALL_PACKS_DEPENDENCIES_DEFAULT_PATH,

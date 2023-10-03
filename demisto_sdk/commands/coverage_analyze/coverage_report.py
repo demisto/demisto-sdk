@@ -4,6 +4,9 @@ from typing import Dict, Optional, Union
 
 import coverage
 
+from demisto_sdk.commands.common.constants import (
+    MARKETPLACE_XSOAR_DIST_DEV,
+)
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.coverage_analyze.helpers import (
     CoverageSummary,
@@ -13,9 +16,7 @@ from demisto_sdk.commands.coverage_analyze.helpers import (
     parse_report_type,
     percent_to_float,
 )
-from demisto_sdk.commands.common.constants import (
-    MARKETPLACE_XSOAR_DIST_DEV,
-)
+
 
 class CoverageReport:
     def __init__(

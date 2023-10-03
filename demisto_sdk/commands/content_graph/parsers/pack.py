@@ -13,7 +13,7 @@ from demisto_sdk.commands.common.constants import (
 )
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.logger import logger
-from demisto_sdk.commands.common.tools import capital_case, get_json
+from demisto_sdk.commands.common.tools import capital_case, get_file
 from demisto_sdk.commands.content_graph.common import (
     PACK_CONTRIBUTORS_FILENAME,
     PACK_METADATA_FILENAME,
@@ -226,7 +226,7 @@ class PackParser(BaseContentParser, PackMetadataParser):
         BaseContentParser.__init__(self, path)
 
         try:
-            metadata = get_json(path / PACK_METADATA_FILENAME)
+            metadata = get_file(path / PACK_METADATA_FILENAME)
         except FileNotFoundError:
             raise NotAContentItemException(
                 f"{PACK_METADATA_FILENAME} not found in pack in {path=}"
@@ -238,7 +238,7 @@ class PackParser(BaseContentParser, PackMetadataParser):
         self.relationships: Relationships = Relationships()
         self.connect_pack_dependencies(metadata)
         try:
-            self.contributors: List[str] = get_json(path / PACK_CONTRIBUTORS_FILENAME)
+            self.contributors: List[str] = get_file(path / PACK_CONTRIBUTORS_FILENAME)
         except FileNotFoundError:
             logger.debug(f"No contributors file found in {path}")
         logger.debug(f"Parsing {self.node_id}")

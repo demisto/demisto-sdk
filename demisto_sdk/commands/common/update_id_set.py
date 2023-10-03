@@ -3794,9 +3794,9 @@ def is_same_source(source1, source2) -> bool:
     host1, owner1, repo1 = source1
     host2, owner2, repo2 = source2
     if (
-        host1 in {"github.com", "code.pan.run", DEMISTO_SDK_CI_SERVER_HOST}
+        host1 in {"github.com", DEMISTO_SDK_CI_SERVER_HOST}
         and owner1 in {"demisto", "xsoar"}
-        and host2 in {"github.com", "code.pan.run", DEMISTO_SDK_CI_SERVER_HOST}
+        and host2 in {"github.com", DEMISTO_SDK_CI_SERVER_HOST}
         and owner2 in {"demisto", "xsoar"}
     ):
         return repo1 == repo2

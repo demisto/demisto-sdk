@@ -249,7 +249,7 @@ class TestGitContentConfig:
         git_config = GitContentConfig()
         assert (
             git_config.project_id == 3606
-        )  # this is the project id of `content-internal-dist` in code.pan.run
+        )  # this is the project id of `content-internal-dist`
         assert git_config.base_api == GitContentConfig.BASE_RAW_GITLAB_LINK.format(
             GITLAB_HOST=host, GITLAB_ID=3606
         )

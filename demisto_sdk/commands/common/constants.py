@@ -109,12 +109,18 @@ DEMISTO_SDK_OFFICIAL_CONTENT_PROJECT_ID = os.getenv(
 
 # Marketplaces
 DEMISTO_SDK_MARKETPLACE_XSOAR_DIST = os.getenv("GCS_MARKET_BUCKET", "marketplace-dist")
-DEMISTO_SDK_MARKETPLACE_XSIAM_DIST = os.getenv("GCS_MARKET_V2_BUCKET", "marketplace-v2-dist")
-DEMISTO_SDK_MARKETPLACE_XPANSE_DIST = os.getenv("GCS_MARKET_XPANSE_BUCKET", "xpanse-dist")
+DEMISTO_SDK_MARKETPLACE_XSIAM_DIST = os.getenv(
+    "GCS_MARKET_V2_BUCKET", "marketplace-v2-dist"
+)
+DEMISTO_SDK_MARKETPLACE_XPANSE_DIST = os.getenv(
+    "GCS_MARKET_XPANSE_BUCKET", "xpanse-dist"
+)
 DEMISTO_SDK_MARKETPLACE_XSOAR_SAAS_DIST = os.getenv(
     "GCS_MARKET_XSOAR_SAAS_BUCKET", "marketplace-saas-dist"
 )
-DEMISTO_SDK_MARKETPLACE_XSOAR_DIST_DEV = os.getenv("GCS_MARKET_BUCKET_DEV", "marketplace-dist-dev")
+DEMISTO_SDK_MARKETPLACE_XSOAR_DIST_DEV = os.getenv(
+    "GCS_MARKET_BUCKET_DEV", "marketplace-dist-dev"
+)
 
 
 class FileType(str, Enum):
@@ -1176,17 +1182,11 @@ def urljoin(*args: str):
     ).rstrip("/")
 
 
-OFFICIAL_CONTENT_ID_SET_PATH = (
-    f"https://storage.googleapis.com/{DEMISTO_SDK_MARKETPLACE_XSOAR_DIST}/content/id_set.json"
-)
+OFFICIAL_CONTENT_ID_SET_PATH = f"https://storage.googleapis.com/{DEMISTO_SDK_MARKETPLACE_XSOAR_DIST}/content/id_set.json"
 
-OFFICIAL_CONTENT_GRAPH_PATH = (
-    f"https://storage.googleapis.com/{DEMISTO_SDK_MARKETPLACE_XSOAR_DIST_DEV}/content_graph"
-)
+OFFICIAL_CONTENT_GRAPH_PATH = f"https://storage.googleapis.com/{DEMISTO_SDK_MARKETPLACE_XSOAR_DIST_DEV}/content_graph"
 
-OFFICIAL_INDEX_JSON_PATH = (
-    f"https://storage.googleapis.com/{DEMISTO_SDK_MARKETPLACE_XSOAR_DIST}/content/packs/index.json"
-)
+OFFICIAL_INDEX_JSON_PATH = f"https://storage.googleapis.com/{DEMISTO_SDK_MARKETPLACE_XSOAR_DIST}/content/packs/index.json"
 
 # Run all test signal
 RUN_ALL_TESTS_FORMAT = "Run all tests"

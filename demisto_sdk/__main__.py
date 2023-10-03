@@ -20,8 +20,8 @@ from pkg_resources import DistributionNotFound, get_distribution
 
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import (
-    ENV_DEMISTO_SDK_MARKETPLACE,
     DEMISTO_SDK_MARKETPLACE_XSOAR_DIST_DEV,
+    ENV_DEMISTO_SDK_MARKETPLACE,
     FileType,
     MarketplaceVersions,
     PreCommitModes,

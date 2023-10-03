@@ -3,20 +3,24 @@ from abc import ABC, abstractmethod
 from functools import lru_cache
 from pathlib import Path
 from typing import Any, Dict, Optional, Set, Type, Union
+from tempfile import NamedTemporaryFile
 
+import requests
 from bs4.dammit import UnicodeDammit
 from pydantic import BaseModel, validator
 
 from demisto_sdk.commands.common.constants import (
-    DEMISTO_GIT_PRIMARY_BRANCH,
+    DEMISTO_GIT_PRIMARY_BRANCH, urljoin,
 )
 from demisto_sdk.commands.common.files.errors import (
     FileReadError,
     UnknownFileError,
 )
+from demisto_sdk.commands.common.git_content_config import GitContentConfig
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers.xsoar_handler import XSOAR_Handler
 from demisto_sdk.commands.common.logger import logger
+from requests.exceptions import RequestException
 
 
 class File(ABC, BaseModel):
@@ -32,7 +36,7 @@ class File(ABC, BaseModel):
 
     @property
     def normalized_suffix(self) -> str:
-        if suffix := self.input_path.suffix:
+        if suffix := self.input_path.suffix.lower():
             return suffix[1:]
         return suffix
 
@@ -72,7 +76,7 @@ class File(ABC, BaseModel):
 
     def move_file(self, destination_path: Union[Path, str]):
         shutil.move(self.input_path, destination_path)
-        self.__dict__[self.input_path] = destination_path
+        self.__dict__[self.input_path] = Path(destination_path)
 
     @validator("input_path", always=True)
     def validate_input_path(cls, v: Path, values) -> Path:
@@ -198,6 +202,50 @@ class File(ABC, BaseModel):
             )
         except Exception as e:
             raise FileReadError(self.input_path, exc=e)
+
+    @classmethod
+    def read_from_github_api(
+        cls,
+        path: str,
+        git_util: Optional[GitUtil] = None,
+        git_content_config: Optional[GitContentConfig] = None,
+        tag: str = DEMISTO_GIT_PRIMARY_BRANCH,
+        handler: Optional[XSOAR_Handler] = None,
+        clear_cache: bool = False,
+    ):
+        if not git_content_config:
+            git_content_config = GitContentConfig()
+
+        git_path = urljoin(git_content_config.base_api, tag, path)
+        github_token = git_content_config.CREDENTIALS.github_token
+
+        try:
+            response = requests.get(
+                git_path,
+                verify=False,
+                timeout=10,
+                headers={
+                    "Authorization": f"Bearer {github_token}" if github_token else "",
+                    "Accept": "application/vnd.github.VERSION.raw",
+                },
+            )  # Sometime we need headers
+            if not response.ok:  # sometime we need param token
+                response = requests.get(
+                    git_path, verify=False, timeout=10, params={"token": github_token}
+                )
+            response.raise_for_status()
+        except RequestException as e:
+            raise FileReadError(git_path, exc=e)
+
+        file_content = response.content
+
+        with NamedTemporaryFile(mode="wb", prefix=f'Github-{path}', suffix=tag) as github_file:
+            github_file.write(file_content)
+            return cls.read_from_local_path(github_file.name, git_util=git_util, handler=handler, clear_cache=clear_cache)
+
+    @classmethod
+    def read_from_http_request(cls, url: str, headers: Dict, params: Dict, verify: bool = False):
+        pass
 
     @abstractmethod
     def _write(self, data: Any, encoding: Optional[str] = None) -> None:

@@ -76,10 +76,6 @@ class File(ABC, BaseModel):
     def copy_file(self, destination_path: Union[Path, str]):
         shutil.copyfile(self.input_path, destination_path)
 
-    def move_file(self, destination_path: Union[Path, str]):
-        shutil.move(self.input_path, destination_path)
-        self.__dict__[self.input_path] = Path(destination_path)
-
     @validator("input_path", always=True)
     def validate_input_path(cls, v: Path, values) -> Path:
         if v.is_absolute():

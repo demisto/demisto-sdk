@@ -3,12 +3,12 @@ abstract class for xsoar handlers (yaml, json, etc...)
 """
 
 from abc import ABC, abstractmethod
-from typing import IO, Any
+from typing import IO, Any, Union
 
 
 class XSOAR_Handler(ABC):
     @abstractmethod
-    def load(self, stream: IO[str]) -> Any:
+    def load(self, stream: IO[Union[str, bytes]]) -> Any:
         pass
 
     @abstractmethod

@@ -9,7 +9,6 @@ from demisto_sdk.commands.common.constants import DEFAULT_IMAGE_BASE64
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
 from demisto_sdk.commands.common.legacy_git_tools import git_path
-from demisto_sdk.commands.common.tools import get_child_files
 from demisto_sdk.commands.prepare_content.integration_script_unifier import (
     IntegrationScriptUnifier,
 )
@@ -19,8 +18,6 @@ from demisto_sdk.commands.prepare_content.tests.yml_unifier_test import (
 )
 from demisto_sdk.commands.split.ymlsplitter import YmlSplitter
 from TestSuite.test_tools import ChangeCWD
-from TestSuite.pack import Pack
-from TestSuite.repo import Repo
 
 
 def test_extract_long_description(tmpdir):

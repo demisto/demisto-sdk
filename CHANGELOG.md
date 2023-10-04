@@ -1,5 +1,6 @@
 # Changelog
 ## Unreleased
+* Improved logging for **lint** and **prepare-content** commands.
 * Internal: Added the `GCS_MARKET_BUCKET`, `GCS_MARKET_BUCKET_DEV`, `GCS_MARKET_XPANSE_BUCKET`, `GCS_MARKET_V2_BUCKET`, `GCS_MARKET_XSOAR_SAAS_BUCKET`, `DOCKER_IO`, `CI_PROJECT_ID`, `CI_PROJECT_ID` environment variables.
 
 ## 1.20.6

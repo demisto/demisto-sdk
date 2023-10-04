@@ -834,6 +834,7 @@ def verify_event_id_does_not_exist_on_tenant(
     xsiam_client: XsiamApiClient,
     modeling_rule: ModelingRule,
     test_data: TestData,
+    retrying_caller: Retrying,
 ) -> List[TestCase]:
     """
     Verify that the event ID does not exist on the tenant.
@@ -841,18 +842,19 @@ def verify_event_id_does_not_exist_on_tenant(
         xsiam_client (XsiamApiClient): Xsiam API client.
         modeling_rule (ModelingRule): Modeling rule object parsed from the modeling rule file.
         test_data (init_test_data.TestData): Test data object parsed from the test data file.
+        retrying_caller (Retrying): The retrying caller object.
     """
     logger.info(
         "[cyan]Verifying that the event IDs does not exist on the tenant[/cyan]",
         extra={"markup": True},
     )
     success_msg = "[green]The event IDs does not exists on the tenant[/green]"
-    error_msg = "[red]The event id already exists in the tenant[/red]"
+    error_msg = "The event id already exists in the tenant"
     validate_expected_values_test_cases = []
 
     for rule in modeling_rule.rules:
         validate_event_id_does_not_exist_on_tenant_test_case = TestCase(
-            f"Validate event_id_does_not_exist_on_tenant {modeling_rule.path} dataset:{rule.dataset} "
+            f"Validate event_id_does_not_exist_on_tenant {get_relative_path_to_content(modeling_rule.path)} dataset:{rule.dataset} "
             f"vendor:{rule.vendor} product:{rule.product}",
             classname="Validate event id does not exist query",
         )
@@ -865,29 +867,25 @@ def verify_event_id_does_not_exist_on_tenant(
         query = f"config timeframe = 10y | datamodel dataset in({rule.dataset}) | filter {rule.dataset}.test_data_event_id in({td_event_ids})"
 
         try:
-            result = xsiam_execute_query(xsiam_client, query)
+            result = retrying_caller(xsiam_execute_query, xsiam_client, query)
         except requests.exceptions.HTTPError:
             logger.info(
                 success_msg,
                 extra={"markup": True},
             )
-            validate_event_id_does_not_exist_on_tenant_test_case.result += [success_msg]
         else:
             if not result:
                 logger.info(
                     success_msg,
                     extra={"markup": True},
                 )
-                validate_event_id_does_not_exist_on_tenant_test_case.result += [
-                    success_msg
-                ]
             else:
                 logger.error(
                     error_msg,
                     extra={"markup": True},
                 )
                 validate_event_id_does_not_exist_on_tenant_test_case.result += [
-                    error_msg
+                    Error(error_msg)
                 ]
         validate_expected_values_test_cases.append(
             validate_event_id_does_not_exist_on_tenant_test_case
@@ -1106,7 +1104,7 @@ def validate_modeling_rule(
 
             if push:
                 event_id_exists_test_case = verify_event_id_does_not_exist_on_tenant(
-                    xsiam_client, modeling_rule, test_data
+                    xsiam_client, modeling_rule, test_data, retrying_caller
                 )
                 modeling_rule_test_suite.add_testcases(event_id_exists_test_case)
                 if missing_event_data:
@@ -1448,7 +1446,7 @@ def test_modeling_rule(
         False,
         "--delete_existing_dataset",
         "-dd",
-        help=("Deletion of the existing dataset from the tenant. Default: False."),
+        help="Deletion of the existing dataset from the tenant. Default: False.",
     ),
 ):
     """

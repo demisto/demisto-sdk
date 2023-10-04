@@ -617,7 +617,7 @@ class IntegrationValidator(ContentEntityValidator):
             required_outputs.update(REPUTATION_TO_REQUIRED_OUTPUT.get(ioc.lower(), ()))
 
         missing_outputs = required_outputs - context_outputs_paths
-
+        result = True
         for output in missing_outputs:
             error_message, error_code = Errors.command_reputation_output_is_missing(
                 command.get("name", ""),
@@ -630,9 +630,9 @@ class IntegrationValidator(ContentEntityValidator):
                 file_path=self.file_path,
                 warning=self.structure_validator.quiet_bc,
             ):
-                return False
+                result = False
 
-        return True
+        return result
 
     def validate_spelling(
         self, command: dict, reputation_objects: set, context_outputs_paths: set
@@ -647,33 +647,28 @@ class IntegrationValidator(ContentEntityValidator):
             context_path = output.get("contextPath", "")
             context_outputs_paths.add(context_path)
 
-            reputation_object = None
-            for object_name in MANDATORY_REPUTATION_CONTEXT_OBJECTS_NAMES:
-                if object_name.lower() in context_path.lower():
-                    reputation_object = object_name
-                    break
-
-            if reputation_object:
-                reputation_objects.add(reputation_object)
-                if (
-                    reputation_object not in context_path
-                ):  # the output is not spelled as expected
-                    (
-                        error_message,
-                        error_code,
-                    ) = Errors.command_reputation_output_capitalization_incorrect(
-                        command.get("name"), context_path, reputation_object
-                    )
-                    if self.handle_error(
-                        error_message,
-                        error_code,
-                        file_path=self.file_path,
-                        warning=self.structure_validator.quiet_bc,
-                    ):
-                        result = False
+            for reputation_object in MANDATORY_REPUTATION_CONTEXT_OBJECTS_NAMES:
+                if reputation_object.lower() in context_path.lower():
+                    reputation_objects.add(reputation_object)
+                    if (
+                        reputation_object not in context_path
+                    ):  # the output is not spelled as expected
+                        (
+                            error_message,
+                            error_code,
+                        ) = Errors.command_reputation_output_capitalization_incorrect(
+                            command.get("name"), context_path, reputation_object
+                        )
+                        if self.handle_error(
+                            error_message,
+                            error_code,
+                            file_path=self.file_path,
+                            warning=self.structure_validator.quiet_bc,
+                        ):
+                            result = False
         return result
 
-    @error_codes("IN158")
+    @error_codes("IN158,IN158")
     def validate_command_outputs(self) -> bool:
         """Check if a command is using the following objects: file, ip, endpoint, email, domain, url, cve,
         infofile, certificate, if so, validate it is according to context

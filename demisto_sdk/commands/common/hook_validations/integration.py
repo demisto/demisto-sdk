@@ -602,7 +602,10 @@ class IntegrationValidator(ContentEntityValidator):
         return missing_outputs, missing_descriptions
 
     def validate_all_reputation_outputs_exist(
-        self, command: dict, reputation_objects: set, context_outputs_paths: set
+        self,
+        command: dict,
+        reputation_objects: Set[str],
+        context_outputs_paths: Set[str],
     ) -> bool:
         """check if all mandatory outputs for custom object do exist.
         Args:
@@ -620,7 +623,7 @@ class IntegrationValidator(ContentEntityValidator):
         result = True
         for output in missing_outputs:
             error_message, error_code = Errors.command_reputation_output_is_missing(
-                command.get("name", ""),
+                command["name"],
                 output,
                 ioc,
             )
@@ -634,9 +637,7 @@ class IntegrationValidator(ContentEntityValidator):
 
         return result
 
-    def validate_spelling(
-        self, command: dict, reputation_objects: set, context_outputs_paths: set
-    ) -> bool:
+    def validate_spelling(self, command: dict) -> bool:
         """Validates command ouputs listed MANDATORY_REPUTATION_CONTEXT_OBJECTS_NAMES
            are spelled and capitalized correctly.
         Returns:
@@ -645,11 +646,9 @@ class IntegrationValidator(ContentEntityValidator):
         result = True
         for output in command.get("outputs") or []:
             context_path = output.get("contextPath", "")
-            context_outputs_paths.add(context_path)
 
             for reputation_object in MANDATORY_REPUTATION_CONTEXT_OBJECTS_NAMES:
                 if reputation_object.lower() in context_path.lower():
-                    reputation_objects.add(reputation_object)
                     if (
                         reputation_object not in context_path
                     ):  # the output is not spelled as expected
@@ -679,14 +678,18 @@ class IntegrationValidator(ContentEntityValidator):
             according to the context standards
         """
         commands = self.current_file.get("script", {}).get("commands", [])
-        reputation_objects: Set[str] = set()
-        context_outputs_paths: Set[str] = set()
         result = True
         for command in commands:
+            reputation_objects: Set[str] = set()
+            context_outputs_paths: Set[str] = set()
+            for output in command.get("outputs") or []:
+                context_path = output.get("contextPath", "")
+                context_outputs_paths.add(context_path)
+                for reputation_object in MANDATORY_REPUTATION_CONTEXT_OBJECTS_NAMES:
+                    if reputation_object.lower() in context_path.lower():
+                        reputation_objects.add(reputation_object)
             if not (
-                self.validate_spelling(
-                    command, reputation_objects, context_outputs_paths
-                )
+                self.validate_spelling(command)
                 and self.validate_all_reputation_outputs_exist(
                     command, reputation_objects, context_outputs_paths
                 )

@@ -1,5 +1,6 @@
 # Changelog
 ## Unreleased
+* Internal: Added the `GCS_MARKET_BUCKET`, `GCS_MARKET_BUCKET_DEV`, `GCS_MARKET_XPANSE_BUCKET`, `GCS_MARKET_V2_BUCKET`, `GCS_MARKET_XSOAR_SAAS_BUCKET`, `DOCKER_IO`, `CI_PROJECT_ID`, `CI_PROJECT_ID` environment variables.
 
 ## 1.20.6
 * Added the *--mode* argument to the **pre-commit** command, to run pre-commit with special mode (to run with different settings), supported mode are: 'nightly'.
@@ -11,7 +12,6 @@
 * Fixed an issue where **validate** falsely failed with error `DS108` on descriptions ending with new lines followed by square/curly brackets.
 * Fixed an issue where **graph** commands would not clean their temporary files properly, causing successive commands to fail.
 * Fixed an issue where an error log message changed the terminal color.
-* Added the `GCS_MARKET_BUCKET`, `GCS_MARKET_BUCKET_DEV`, `GCS_MARKET_XPANSE_BUCKET`, `GCS_MARKET_V2_BUCKET`, `GCS_MARKET_XSOAR_SAAS_BUCKET`, `DOCKER_IO`, `CI_PROJECT_ID`, `CI_PROJECT_ID` environment variables.
 
 ## 1.20.5
 * Fixed an issue where **validate** falsely failed with error `DS108` on descriptions ending with brackets that contains a dot at the end of them.

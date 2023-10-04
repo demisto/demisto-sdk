@@ -81,7 +81,9 @@ def execute_test_content(**kwargs):
     logging_manager = ParallelLoggingManager(
         "Run_Tests.log", real_time_logs_only=not kwargs["nightly"]
     )
-    logging_manager.info(f'Starting to run tests on {kwargs["server_version"]}')
+    logging_manager.info(
+        f'Starting to run tests on Server version:{kwargs["server_version"]} Server Type:{kwargs["server_type"]}'
+    )
     build_context = BuildContext(kwargs, logging_manager)
     use_retries_mechanism = kwargs.get("use_retries", False)
     threads_list = []

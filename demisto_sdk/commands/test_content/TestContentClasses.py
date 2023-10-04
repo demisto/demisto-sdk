@@ -61,6 +61,7 @@ RETRIES_THRESHOLD = ceil(MAX_RETRIES / 2)
 
 SLACK_MEM_CHANNEL_ID = "CM55V7J8K"
 XSIAM_SERVER_TYPE = "XSIAM"
+XSOAR_SAAS_SERVER_TYPE = "XSOAR SAAS"
 
 __all__ = [
     "BuildContext",
@@ -699,8 +700,8 @@ class TestPlaybook:
 
 class BuildContext:
     def __init__(self, kwargs: dict, logging_module: ParallelLoggingManager):
-        self.is_xsiam = kwargs["server_type"] == XSIAM_SERVER_TYPE
         self.server_type = kwargs["server_type"]
+        self.is_xsiam = self.server_type in [XSIAM_SERVER_TYPE, XSOAR_SAAS_SERVER_TYPE]
         self.logging_module: ParallelLoggingManager = logging_module
         self.server = kwargs["server"]
         self.xsiam_machine = kwargs.get("xsiam_machine")

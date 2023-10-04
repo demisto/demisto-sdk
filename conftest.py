@@ -26,7 +26,7 @@ def get_repo(request: FixtureRequest, tmp_path_factory: TempPathFactory) -> Repo
 
 def get_git_repo(request: FixtureRequest, tmp_path_factory: TempPathFactory) -> Repo:
     tmp_dir = _mk_tmp(request, tmp_path_factory)
-    return Repo.git_repo(tmp_dir)
+    return Repo(tmp_dir, init_git=True)
 
 
 def get_pack(request: FixtureRequest, tmp_path_factory: TempPathFactory) -> Pack:

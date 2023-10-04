@@ -25,7 +25,7 @@ class GitUtil:
 
     def __init__(
         self,
-        path: Optional[Path] = None,
+        path: Optional[Union[str, Path]] = None,
         search_parent_directories: bool = True,
     ):
 

@@ -3,6 +3,7 @@ import shutil
 from pathlib import Path
 from typing import List, Optional
 
+from demisto_sdk.commands.common.constants import DEMISTO_GIT_PRIMARY_BRANCH
 from demisto_sdk.commands.common.git_util import GitUtil
 from TestSuite.conf_json import ConfJSON
 from TestSuite.docker_native_image_config import DockerNativeImageConfiguration
@@ -28,7 +29,7 @@ class Repo:
         packs: A list of created packs
     """
 
-    def __init__(self, tmpdir: Path, git_util: Optional[GitUtil] = None):
+    def __init__(self, tmpdir: Path, init_git: bool = False):
         self.packs: List[Pack] = list()
         self._tmpdir = tmpdir
         self._packs_path = tmpdir / "Packs"
@@ -80,20 +81,18 @@ class Repo:
                 "Wizards": [],
             }
         )
-        self.git_util = git_util
+
+        self.git_util: Optional[GitUtil]
+        if init_git:
+            GitUtil.REPO_CLS.init(self.path)
+            self.git_util = GitUtil(self.path)
+            self.git_util.commit_files("Initial Commit")
+            self.git_util.repo.create_head(DEMISTO_GIT_PRIMARY_BRANCH)
+        else:
+            self.git_util = None
 
     def __del__(self):
         shutil.rmtree(self.path, ignore_errors=True)
-
-    @classmethod
-    def git_repo(cls, tmpdir: Path) -> "Repo":
-        GitUtil.REPO_CLS.init(tmpdir)
-        content_repo = cls(tmpdir, git_util=GitUtil(tmpdir))
-        # commit all files
-        if content_repo.git_util:
-            content_repo.git_util.commit_files("Initial Commit")
-            content_repo.git_util.repo.create_head("master").checkout()
-        return content_repo
 
     def setup_one_pack(
         self, name: Optional[str] = None, marketplaces: List[str] = DEFAULT_MARKETPLACES

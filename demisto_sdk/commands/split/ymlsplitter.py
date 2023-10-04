@@ -24,6 +24,7 @@ from demisto_sdk.commands.common.tools import (
     get_yaml,
     pascal_case,
     write_dict,
+    safe_write_unicode
 )
 from demisto_sdk.commands.prepare_content.integration_script_unifier import (
     IntegrationScriptUnifier,
@@ -202,6 +203,7 @@ class YmlSplitter:
         ext = TYPE_TO_EXTENSION[lang_type]
         code_file_path = code_file_path.with_suffix(ext)
         logger.debug(f"Extracting code to: {code_file_path} ...")
+
         with open(code_file_path, "w") as code_file:
             if lang_type == TYPE_PYTHON and self.demisto_mock:
                 code_file.write("import demistomock as demisto  # noqa: F401\n")
@@ -215,7 +217,7 @@ class YmlSplitter:
                     self.lines_inserted_at_code_start += 1
             script = self.replace_imported_code(script, executed_from_contrib_converter)
             script = self.replace_section_headers_code(script)
-            code_file.write(script)
+            safe_write_unicode(lambda f: f.write(script), code_file_path)
             if script and script[-1] != "\n":
                 # make sure files end with a new line (pyml seems to strip the last newline)
                 code_file.write("\n")

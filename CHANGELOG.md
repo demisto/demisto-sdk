@@ -1,5 +1,6 @@
 # Changelog
 ## Unreleased
+* Improved logging for **lint** and **prepare-content** commands.
 
 ## 1.20.6
 * Added the *--mode* argument to the **pre-commit** command, to run pre-commit with special mode (to run with different settings), supported mode are: 'nightly'.

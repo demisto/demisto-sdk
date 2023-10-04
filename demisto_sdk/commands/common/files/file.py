@@ -104,7 +104,7 @@ class File(ABC, BaseModel):
         )
 
     @classmethod
-    def file_factory(cls, path: Path) -> Type["File"]:
+    def __file_factory(cls, path: Path) -> Type["File"]:
         def _file_factory(_cls):
             for subclass in _cls.__subclasses__():
                 if subclass.is_class_type(path):
@@ -155,7 +155,7 @@ class File(ABC, BaseModel):
         model_attributes.update(kwargs)
 
         if cls is File:
-            model = cls.file_factory(input_path or output_path).parse_obj(  # type: ignore[arg-type]
+            model = cls.__file_factory(input_path or output_path).parse_obj(  # type: ignore[arg-type]
                 model_attributes
             )
         else:

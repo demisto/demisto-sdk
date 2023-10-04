@@ -1,6 +1,6 @@
 from configparser import ConfigParser
 from pathlib import Path
-from typing import Dict, Optional, Set
+from typing import Any, Optional, Set
 
 from demisto_sdk.commands.common.files.text_file import TextFile
 from demisto_sdk.commands.common.logger import logger
@@ -33,7 +33,7 @@ class IniFile(TextFile):
         config_parser.read_string(file_content)
         return config_parser
 
-    def _write(self, data: Dict, encoding: Optional[str] = None) -> None:
+    def _write(self, data: Any, path: Path, encoding: Optional[str] = None) -> None:
         """
 
         Args:
@@ -57,7 +57,7 @@ class IniFile(TextFile):
         for section, values in data.items():
             config[section] = values
 
-        with self.output_path.open(
+        with path.open(
             "w", encoding=encoding or self.default_encoding
         ) as ini_file:
             config.write(ini_file)

@@ -1,3 +1,4 @@
+from pathlib import Path
 from typing import Any, Optional, Set
 
 from demisto_sdk.commands.common.files.file import File
@@ -8,5 +9,5 @@ class BinaryFile(File):
     def known_extensions(cls) -> Set[str]:
         return {".png", ".bin"}
 
-    def _write(self, data: Any, encoding: Optional[str] = None) -> None:
-        self.output_path.write_bytes(data)
+    def _write(self, data: Any, path: Path, encoding: Optional[str] = None) -> None:
+        path.write_bytes(data)

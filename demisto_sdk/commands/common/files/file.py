@@ -28,7 +28,6 @@ from demisto_sdk.commands.common.logger import logger
 class File(ABC, BaseModel):
     git_util: GitUtil
     input_path: Path
-    output_path: Path
     default_encoding: str = "utf-8"  # default encoding is utf-8
 
     class Config:
@@ -45,10 +44,6 @@ class File(ABC, BaseModel):
     @property
     def input_path_original_encoding(self) -> Optional[str]:
         return UnicodeDammit(self.input_path.read_bytes()).original_encoding
-
-    @property
-    def output_path_original_encoding(self) -> Optional[str]:
-        return UnicodeDammit(self.output_path.read_bytes()).original_encoding
 
     @property
     def input_file_size(self) -> int:
@@ -77,7 +72,9 @@ class File(ABC, BaseModel):
         shutil.copyfile(self.input_path, destination_path)
 
     @validator("input_path", always=True)
-    def validate_input_path(cls, v: Path, values) -> Path:
+    def validate_input_path(cls, v: Optional[Path], values) -> Optional[Path]:
+        if not v:
+            return None
         if v.is_absolute():
             return v
         else:
@@ -90,14 +87,6 @@ class File(ABC, BaseModel):
             return path
 
         raise FileNotFoundError(f"File {path} does not exist")
-
-    @validator("output_path", always=True)
-    def validate_output_path(cls, v: Path) -> Path:
-        if v.suffix.lower() or v.name in cls.known_files():
-            return v
-        raise ValueError(
-            f"output file {v} does not contain suffix, make sure to add file suffix"
-        )
 
     @classmethod
     def __file_factory(cls, path: Path) -> Type["File"]:
@@ -126,32 +115,19 @@ class File(ABC, BaseModel):
     def from_path(
         cls,
         input_path: Optional[Union[Path, str]] = None,
-        output_path: Optional[Union[Path, str]] = None,
         git_util: Optional[GitUtil] = None,
         **kwargs,
     ) -> "File":
-        if input_path and output_path:
-            input_path = Path(input_path)
-            output_path = Path(output_path)
-        elif input_path and not output_path:
-            input_path = Path(input_path)
-            output_path = Path(input_path)
-        elif output_path and not input_path:
-            input_path = Path(output_path)
-            output_path = Path(output_path)
-        else:
-            raise ValueError("Either input_path or output_path must be provided")
 
         model_attributes: Dict[str, Any] = {
             "input_path": input_path,
-            "output_path": output_path,
             "git_util": git_util,
         }
 
         model_attributes.update(kwargs)
 
-        if cls is File:
-            model = cls.__file_factory(input_path or output_path).parse_obj(  # type: ignore[arg-type]
+        if cls is File and input_path:
+            model = cls.__file_factory(input_path).parse_obj(  # type: ignore[arg-type]
                 model_attributes
             )
         else:
@@ -309,34 +285,39 @@ class File(ABC, BaseModel):
     def write_file(
         cls, data: Any, output_path: Union[Path, str], encoding: Optional[str] = None
     ):
-        model = cls.from_path(output_path=output_path)
-        model.write(data, encoding=encoding)
+        model = cls.from_path()
+        model.write(data, path=Path(output_path), encoding=encoding)
 
     @abstractmethod
-    def _write(self, data: Any, encoding: Optional[str] = None) -> None:
+    def _write(self, data: Any, path: Path, encoding: Optional[str] = None) -> None:
         raise NotImplementedError(
             "write must be implemented for each File concrete object"
         )
 
-    def write(self, data: Any, encoding: Optional[str] = None) -> None:
+    def write(
+        self, data: Any, path: Union[str, Path], encoding: Optional[str] = None
+    ) -> None:
         def _write_safe_unicode():
-            self._write(data)
+            self._write(data, path=path)
 
         if encoding:
-            self._write(data, encoding=encoding)
+            self._write(data, path=path, encoding=encoding)
         else:
             try:
                 _write_safe_unicode()
             except UnicodeDecodeError:
-                if self.output_path_original_encoding == self.default_encoding:
+                original_file_encoding = UnicodeDammit(
+                    path.read_bytes()
+                ).original_encoding
+                if original_file_encoding == self.default_encoding:
                     logger.error(
-                        f"{self.output_path} is encoded as unicode, cannot handle the error, raising it"
+                        f"{path} is encoded as unicode, cannot handle the error, raising it"
                     )
                     raise
 
                 logger.debug(
-                    f"deleting {self.output_path} - it will be rewritten as unicode (was {self.output_path_original_encoding})"
+                    f"deleting {path} - it will be rewritten as unicode (was {original_file_encoding})"
                 )
-                self.output_path.unlink()  # deletes the file
-                logger.debug(f"rewriting {self.output_path} as unicode file")
+                path.unlink()  # deletes the file
+                logger.debug(f"rewriting {path} as unicode file")
                 _write_safe_unicode()  # recreates the file

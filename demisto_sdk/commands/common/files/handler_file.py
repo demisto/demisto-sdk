@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from io import StringIO
+from pathlib import Path
 from typing import Any, Dict, List, Optional, Type, Union
 
 from pydantic import Field, validator
@@ -22,8 +23,6 @@ class HandlerFile(TextFile, ABC):
             file_content = StringIO(file_content)
         return self.handler.load(file_content)
 
-    def _write(self, data: Any, encoding: Optional[str] = None) -> None:
-        with self.output_path.open(
-            "w", encoding=encoding or self.default_encoding
-        ) as output_file:
+    def _write(self, data: Any, path: Path, encoding: Optional[str] = None) -> None:
+        with path.open("w", encoding=encoding or self.default_encoding) as output_file:
             self.handler.dump(data, output_file)

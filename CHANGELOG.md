@@ -2,7 +2,7 @@
 ## Unreleased
 * Fixed an issue where unified integrations / scripts with a period in their name would not split properly.
 * Improved logging for **lint** and **prepare-content** commands.
-* Internal: Added the `GCS_MARKET_BUCKET`, `GCS_MARKET_BUCKET_DEV`, `GCS_MARKET_XPANSE_BUCKET`, `GCS_MARKET_V2_BUCKET`, `GCS_MARKET_XSOAR_SAAS_BUCKET`, `DOCKER_IO`, `CI_PROJECT_ID`, `CI_PROJECT_ID` environment variables.
+* Internal: Updated the code to use `DOCKER_IO`, `CI_SERVER_HOST`, `CI_PROJECT_ID` environment variables.
 
 ## 1.20.6
 * Added the *--mode* argument to the **pre-commit** command, to run pre-commit with special mode (to run with different settings), supported mode are: 'nightly'.

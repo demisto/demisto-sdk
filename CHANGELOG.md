@@ -8,6 +8,7 @@
 * Fixed an issue where **validate** falsely failed with error `RN115` on release notes with linefeed at the end of the file.
 * Fixed an issue where **validate** falsely failed with error `DS108` on descriptions ending with new lines followed by square/curly brackets.
 * Fixed an issue where **graph** commands would not clean their temporary files properly, causing successive commands to fail.
+* Fixed an issue where the documentation was out of date with the current structure of **demisto-sdk** which does not support command auto-completion.
 * Fixed an issue where an error log message changed the terminal color.
 
 ## 1.20.5

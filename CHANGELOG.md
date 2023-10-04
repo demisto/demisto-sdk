@@ -1,5 +1,6 @@
 # Changelog
 ## Unreleased
+* Fixed an issue where unified integrations / scripts with a period in their name would not split properly.
 
 ## 1.20.6
 * Added the *--mode* argument to the **pre-commit** command, to run pre-commit with special mode (to run with different settings), supported mode are: 'nightly'.
@@ -11,7 +12,6 @@
 * Fixed an issue where **validate** falsely failed with error `DS108` on descriptions ending with new lines followed by square/curly brackets.
 * Fixed an issue where **graph** commands would not clean their temporary files properly, causing successive commands to fail.
 * Fixed an issue where an error log message changed the terminal color.
-* Fixed an issue where in some cases, splitting unified integrations / scripts with a period in their name would result in an incorrect filename being used for the code file.
 
 ## 1.20.5
 * Fixed an issue where **validate** falsely failed with error `DS108` on descriptions ending with brackets that contains a dot at the end of them.

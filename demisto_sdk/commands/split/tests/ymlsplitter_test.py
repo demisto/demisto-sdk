@@ -19,6 +19,8 @@ from demisto_sdk.commands.prepare_content.tests.yml_unifier_test import (
 )
 from demisto_sdk.commands.split.ymlsplitter import YmlSplitter
 from TestSuite.test_tools import ChangeCWD
+from TestSuite.pack import Pack
+from TestSuite.repo import Repo
 
 
 def test_extract_long_description(tmpdir):
@@ -452,23 +454,30 @@ def test_extract_code_pwsh(tmpdir, file_type):
         assert file_data[-1] == "\n"
 
 
-def test_extraction_with_period_in_filename(tmpdir):
+def test_extraction_with_period_in_filename(pack):
     """
     Given: A unified YAML file with a filename containing a period (that might be identified as an extension)
     When: Running YmlSplitter on this file
     Then: Files are extracted with the appropriate filenames
     """
-    extractor = YmlSplitter(
-        input=f"{git_path()}/demisto_sdk/tests/test_files/integration-Zoom-v1.0.yml",
-        output=tmpdir,
+    integration = pack.create_integration(
+        name="Zoom-v1.0",
+        description="Test",
+        create_unified=True,
+    )
+
+    YmlSplitter(
+        input=integration.yml.path,
+        output=str(Path(pack.path) / "Integrations"),
         base_name="Zoom-v1.0",
         file_type="integration",
-    )
-    extractor.extract_to_package_format()
-    extracted_file_paths = get_child_files(tmpdir)
+    ).extract_to_package_format()
 
-    assert len(extracted_file_paths) == 5
-    extracted_files = [Path(path).name for path in extracted_file_paths]
+    expected_integration_dir = Path(pack.path) / "Integrations" / "ZoomV10"
+    assert expected_integration_dir.exists()
+
+    extracted_files = [str(file.name) for file in expected_integration_dir.glob("*")]
+    assert len(extracted_files) == 5
 
     assert {
         "README.md",

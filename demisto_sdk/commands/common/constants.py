@@ -1586,7 +1586,7 @@ VALIDATED_PACK_ITEM_TYPES = [
     "Wizards",
 ]
 
-VALID_SENTENCE_SUFFIX = [".", "!", "?", ".)", ".'", '."']
+VALID_SENTENCE_SUFFIX = [".", "!", "?", ".)", ".'", '."', "\n}", "\n]"]
 
 FIRST_FETCH = "first_fetch"
 
@@ -1910,3 +1910,7 @@ SERVER_API_TO_STORAGE = "api/marketplace/file?name=content/packs"
 class ImagesFolderNames(str, Enum):
     README_IMAGES = "readme_images"
     INTEGRATION_DESCRIPTION_IMAGES = "integration_description_images"
+
+
+class PreCommitModes(str, Enum):
+    NIGHTLY = "nightly"

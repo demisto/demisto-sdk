@@ -1761,7 +1761,7 @@ def find_type(
     ignore_sub_categories: bool = False,
     ignore_invalid_schema_file: bool = False,
     clear_cache: bool = False,
-):
+) -> FileType | None:
     """
     returns the content file type
 
@@ -1772,14 +1772,14 @@ def find_type(
         ignore_sub_categories (bool): ignore the sub categories, True to ignore, False otherwise.
         ignore_invalid_schema_file (bool): whether to ignore raising error on invalid schema files,
             True to ignore, False otherwise.
-        clear_cache (bool): wether to clear the cache
+        clear_cache (bool): whether to clear the cache.
 
     Returns:
-        FileType: string representing of the content file type, None otherwise.
+        FileType: Enum representation of the content file type, None otherwise.
     """
-    type_by_path = find_type_by_path(path)
-    if type_by_path:
+    if type_by_path := find_type_by_path(path):
         return type_by_path
+
     try:
         if not _dict and not file_type:
             _dict, file_type = get_dict_from_file(
@@ -2506,7 +2506,7 @@ def get_parent_directory_name(path: str, abs_path: bool = False) -> str:
 
 def get_code_lang(file_data: dict, file_entity: str) -> str:
     """
-    Returns the code language by the file entity
+    Returns content item's code language (python / javascript).
     :param file_data: The file data
     :param file_entity: The file entity
     :return: The code language
@@ -3509,7 +3509,7 @@ def remove_copy_and_dev_suffixes_from_str(field_name: str) -> str:
     return field_name
 
 
-def get_display_name(file_path, file_data={}) -> str:
+def get_display_name(file_path: str, file_data: dict | None = None) -> str:
     """Gets the entity display name from the file.
 
     :param file_path: The entity file path
@@ -3519,46 +3519,42 @@ def get_display_name(file_path, file_data={}) -> str:
     :return The display name
     """
     if not file_data:
-        file_extension = os.path.splitext(file_path)[1]
-        if file_extension in [".yml", ".json"]:
+        file_extension = Path(file_path).suffix
+        if file_extension in [".yml", ".yaml", ".json"]:
             file_data = get_file(file_path)
 
     if "display" in file_data:
-        name = file_data.get("display", None)
+        return file_data.get("display")
     elif "layout" in file_data and isinstance(file_data["layout"], dict):
-        name = file_data["layout"].get("id")
+        return file_data["layout"].get("id")
     elif "name" in file_data:
-        name = file_data.get("name", None)
+        return file_data.get("name")
     elif "TypeName" in file_data:
-        name = file_data.get("TypeName", None)
+        return file_data.get("TypeName")
     elif "brandName" in file_data:
-        name = file_data.get("brandName", None)
+        return file_data.get("brandName")
     elif "id" in file_data:
-        name = file_data.get("id", None)
+        return file_data.get("id")
     elif "trigger_name" in file_data:
-        name = file_data.get("trigger_name")
+        return file_data.get("trigger_name")
     elif "rule_name" in file_data:
-        name = file_data.get("rule_name")
-
+        return file_data.get("rule_name")
     elif (
         "dashboards_data" in file_data
         and file_data.get("dashboards_data")
         and isinstance(file_data["dashboards_data"], list)
     ):
         dashboard_data = file_data.get("dashboards_data", [{}])[0]
-        name = dashboard_data.get("name")
-
+        return dashboard_data.get("name")
     elif (
         "templates_data" in file_data
         and file_data.get("templates_data")
         and isinstance(file_data["templates_data"], list)
     ):
         r_name = file_data.get("templates_data", [{}])[0]
-        name = r_name.get("report_name")
+        return r_name.get("report_name")
 
-    else:
-        name = Path(file_path).name
-    return name
+    return Path(file_path).name
 
 
 def get_invalid_incident_fields_from_mapper(
@@ -3752,7 +3748,7 @@ def get_id(file_content: Dict) -> Union[str, None]:
         file_content: the content of the file.
 
     Returns:
-        str: the ID of the content item in case found, None otherwise.
+        str | None: the ID of the content item in case found, None otherwise.
     """
     if "commonfields" in file_content:
         return file_content["commonfields"].get("id")

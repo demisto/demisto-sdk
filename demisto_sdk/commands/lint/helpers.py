@@ -106,6 +106,8 @@ def build_skipped_exit_code(
             skipped_code |= EXIT_CODES["pwsh_analyze"]
         if no_pwsh_test or not docker_engine:
             skipped_code |= EXIT_CODES["pwsh_test"]
+        if no_test:
+            skipped_code |= EXIT_CODES["coverage-analyze"]
 
     return skipped_code
 

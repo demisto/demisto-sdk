@@ -687,16 +687,23 @@ def filter_packagify_changes(
     return modified_files, updated_added_files, removed_files
 
 
-def get_child_directories(directory):
-    """Return a list of paths of immediate child directories of the 'directory' argument"""
-    if not os.path.isdir(directory):
-        return []
-    child_directories = [
-        os.path.join(directory, path)
-        for path in os.listdir(directory)
-        if os.path.isdir(os.path.join(directory, path))
-    ]
-    return child_directories
+def get_child_directories(directory: str | Path) -> list[str]:
+    """
+    Get a list of all directories within a directory.
+    Does not search recursively.
+    Args:
+        directory (str | Path): The directory to search in
+    Returns:
+        list[str]: A list of paths (in string format) of immediate child directories of the 'directory' argument
+    """
+    directory_path = Path(directory)
+
+    if directory_path.is_dir():
+        return [
+            str(path) for path in directory_path.iterdir() if path.is_dir()
+        ]
+
+    return []
 
 
 def get_child_files(directory):

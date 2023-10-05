@@ -157,7 +157,7 @@ class File(ABC, BaseModel):
         try:
             return model.load(file_content)
         except LocalFileReadError as e:
-            logger.exception(f"Could not read file content as {cls.__name__} file")
+            logger.error(f"Could not read file content as {cls.__name__} file")
             raise FileContentReadError(file_content, exc=e.original_exc)
 
     @classmethod
@@ -237,8 +237,13 @@ class File(ABC, BaseModel):
 
         timeout = 10
 
+        if cls is File:
+            model = cls.__file_factory(Path(path))
+        else:
+            model = cls
+
         try:
-            return cls.read_from_http_request(
+            return model.read_from_http_request(
                 git_path_url,
                 headers={
                     "Authorization": f"Bearer {github_token}" if github_token else "",
@@ -252,7 +257,7 @@ class File(ABC, BaseModel):
             logger.warning(
                 f"Received error {e} when trying to retrieve {git_path_url} content from Github, retrying"
             )
-            return cls.read_from_http_request(
+            return model.read_from_http_request(
                 git_path_url, params={"token": github_token}, timeout=timeout
             )
 
@@ -272,6 +277,17 @@ class File(ABC, BaseModel):
             git_content_config.base_api, "files", urllib.parse.quote_plus(path), "raw"
         )
         gitlab_token = git_content_config.CREDENTIALS.gitlab_token
+
+        if cls is File:
+            model = cls.__file_factory(Path(path))
+            return model.read_from_http_request(
+                git_path_url,
+                headers={"PRIVATE-TOKEN": gitlab_token},
+                params={"ref": tag},
+                handler=handler,
+                clear_cache=clear_cache,
+            )
+
         return cls.read_from_http_request(
             git_path_url,
             headers={"PRIVATE-TOKEN": gitlab_token},

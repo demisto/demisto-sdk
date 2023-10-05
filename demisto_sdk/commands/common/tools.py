@@ -3532,8 +3532,12 @@ def get_display_name(file_path: str, file_data: dict | None = None) -> str:
     """
     if not file_data:
         file_extension = Path(file_path).suffix
+
         if file_extension in [".yml", ".yaml", ".json"]:
             file_data = get_file(file_path)
+
+        else:
+            raise ValueError(f"Unsupported file extension: '{file_extension}'")
 
     if "display" in file_data:
         return file_data.get("display")

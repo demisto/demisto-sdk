@@ -264,19 +264,19 @@ def get_mp_tag_parser():
     return MARKETPLACE_TAG_PARSER
 
 
-def get_yml_paths_in_dir(project_dir: str, error_msg: str = "") -> Tuple[list, str]:
+def get_yml_paths_in_dir(project_dir: str | Path) -> Tuple[list, str]:
     """
     Gets the project directory and returns the path of the first yml file in that directory
-    :param project_dir: string path to the project_dir
-    :param error_msg: the error msg to show to the user in case not yml files found in the directory
+    :param project_dir: path to the project_dir
     :return: first returned argument is the list of all yml files paths in the directory, second returned argument is a
     string path to the first yml file in project_dir
     """
-    yml_files = glob.glob(os.path.join(project_dir, "*.yml"))
+    project_dir_path = Path(project_dir)
+    yml_files = [str(path) for path in project_dir_path.glob("*.yml")]
+
     if not yml_files:
-        if error_msg:
-            logger.info(error_msg)
         return [], ""
+
     return yml_files, yml_files[0]
 
 

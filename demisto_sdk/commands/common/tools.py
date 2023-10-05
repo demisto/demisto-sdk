@@ -1,11 +1,11 @@
 import contextlib
 import glob
-import io
 import logging
 import os
 import re
 import shlex
 import sys
+import traceback
 import urllib.parse
 from collections import OrderedDict
 from concurrent.futures import as_completed
@@ -15,6 +15,7 @@ from datetime import datetime
 from enum import Enum
 from functools import lru_cache
 from hashlib import sha1
+from io import StringIO, TextIOWrapper
 from pathlib import Path, PosixPath
 from subprocess import PIPE, Popen
 from time import sleep
@@ -765,8 +766,8 @@ def get_last_remote_release_version():
                 f'{exc_msg[exc_msg.find(">") + 3:-3]}.\n'
                 f"This may happen if you are not connected to the internet."
             )
-        logger.info(
-            f"[yellow]Could not get latest demisto-sdk version.\nEncountered error: {exc_msg}[/yellow]"
+        logger.warning(
+            f"Could not find the latest version of 'demisto-sdk'.\nError: {exc_msg}"
         )
         return ""
 
@@ -794,7 +795,7 @@ def _read_file(file_path: Path) -> str:
 
 
 def safe_write_unicode(
-    write_method: Callable[[io.TextIOWrapper], Any],
+    write_method: Callable[[TextIOWrapper], Any],
     path: Path,
 ):
     # Write unicode content into a file.
@@ -825,7 +826,7 @@ def safe_write_unicode(
 
 @lru_cache
 def get_file(
-    file_path: Union[str, Path],
+    file_path: str | Path,
     clear_cache: bool = False,
     return_content: bool = False,
     keep_order: bool = False,
@@ -853,17 +854,18 @@ def get_file(
         if return_content:
             return file_content
     except IOError as e:
-        logger.error(f"Could not read file {file_path}.\nError: {e}")
+        logger.error(f"Could not read file '{file_path}': {e}")
+        logger.debug("Traceback:\n" + traceback.format_exc())
         return {}
     try:
         if type_of_file.lstrip(".") in {"yml", "yaml"}:
-            replaced = io.StringIO(
+            replaced = StringIO(
                 re.sub(r"(simple: \s*\n*)(=)(\s*\n)", r'\1"\2"\3', file_content)
             )
 
             return yaml.load(replaced) if keep_order else yaml_safe_load.load(replaced)
         else:
-            result = json.load(io.StringIO(file_content))
+            result = json.load(StringIO(file_content))
             # It's possible to that the result will be `str` after loading it. In this case, we need to load it again.
             return json.loads(result) if isinstance(result, str) else result
     except Exception as e:
@@ -903,13 +905,13 @@ def get_file_or_remote(file_path: Path, clear_cache=False):
         return get_remote_file(str(relative_file_path))
 
 
-def get_yaml(file_path, cache_clear=False, keep_order: bool = False):
+def get_yaml(file_path: str | Path, cache_clear=False, keep_order: bool = False):
     if cache_clear:
         get_file.cache_clear()
     return get_file(file_path, clear_cache=cache_clear, keep_order=keep_order)
 
 
-def get_json(file_path, cache_clear=False):
+def get_json(file_path: str | Path, cache_clear=False):
     if cache_clear:
         get_file.cache_clear()
     return get_file(file_path, clear_cache=cache_clear)

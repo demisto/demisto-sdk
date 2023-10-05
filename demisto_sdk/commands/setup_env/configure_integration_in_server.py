@@ -63,7 +63,7 @@ def __get_integration_config(client, integration_name):
     return match_configurations[0]
 
 
-def test_integration_instance(client, module_instance):
+def __test_integration_instance(client, module_instance):
     connection_retries = 5
     response_code = 0
     integration_of_instance = module_instance.get("brand", "")
@@ -177,7 +177,40 @@ def __delete_integration_instance_if_determined_by_name(client, instance_name):
             __delete_integration_instance(client, instance.get("id"))
 
 
+def __disable_integrations_instances(client, module_instances):
+    for configured_instance in module_instances:
+        # tested with POSTMAN, this is the minimum required fields for the request.
+        module_instance = {
+            key: configured_instance[key]
+            for key in [
+                "id",
+                "brand",
+                "name",
+                "data",
+                "isIntegrationScript",
+            ]
+        }
+        module_instance["enable"] = "false"
+        module_instance["version"] = -1
+        logger.debug(f'Disabling integration {module_instance.get("name")}')
+        try:
+            res = demisto_client.generic_request_func(
+                self=client,
+                method="PUT",
+                path="/settings/integration",
+                body=module_instance,
+            )
+        except ApiException:
+            logger.exception("Failed to disable integration instance")
+            return
+
+        if res[1] != 200:
+            logger.error(f"disable instance failed, Error: {pformat(res)}")
+
+
 # return instance name if succeed, None otherwise
+
+
 def create_integration_instance(
     integration_name,
     integration_instance_name,
@@ -273,7 +306,7 @@ def create_integration_instance(
     # test integration
     refreshed_client = demisto_client.configure()
     if validate_test:
-        test_succeed, failure_message = test_integration_instance(
+        test_succeed, failure_message = __test_integration_instance(
             refreshed_client, module_instance
         )
     else:
@@ -287,34 +320,3 @@ def create_integration_instance(
         return None, failure_message
 
     return module_instance, ""
-
-
-def __disable_integrations_instances(client, module_instances):
-    for configured_instance in module_instances:
-        # tested with POSTMAN, this is the minimum required fields for the request.
-        module_instance = {
-            key: configured_instance[key]
-            for key in [
-                "id",
-                "brand",
-                "name",
-                "data",
-                "isIntegrationScript",
-            ]
-        }
-        module_instance["enable"] = "false"
-        module_instance["version"] = -1
-        logger.debug(f'Disabling integration {module_instance.get("name")}')
-        try:
-            res = demisto_client.generic_request_func(
-                self=client,
-                method="PUT",
-                path="/settings/integration",
-                body=module_instance,
-            )
-        except ApiException:
-            logger.exception("Failed to disable integration instance")
-            return
-
-        if res[1] != 200:
-            logger.error(f"disable instance failed, Error: {pformat(res)}")

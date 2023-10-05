@@ -23,6 +23,9 @@ from demisto_sdk.commands.content_graph.objects.integration_script import (
     IntegrationScript,
 )
 from demisto_sdk.commands.content_graph.objects.pack import Pack
+from demisto_sdk.commands.setup_env.configure_integration_in_server import (
+    create_integration_instance,
+)
 
 json5 = JSON5_Handler()
 json = JSON_Handler()
@@ -262,6 +265,22 @@ def setup(
             integration_script, Integration
         ):
             params = get_integration_params(project_id, secret_id)
+            if params and instance_name:
+                if (
+                    instance_created := create_integration_instance(
+                        integration_script.name,
+                        instance_name,
+                        params,
+                        params.get("byoi", True),
+                    )
+                ) and instance_created[0]:
+                    logger.info(
+                        f"Created integration instance {instance_created[0]['name']}"
+                    )
+                else:
+                    logger.warning(
+                        f"Failed to create integration instance {instance_name}"
+                    )
             with open(CONTENT_PATH / ".vscode" / "params.json", "w") as f:
                 json.dump(params, f, indent=4)
         else:

@@ -3518,7 +3518,7 @@ def run_unit_tests(
     sys.exit(unit_test_runner(file_paths, verbose))
 
 
-@main.command(short_help="Run unit tests in a docker for integrations and scripts")
+@main.command(short_help="Setup integration environments")
 @click.option(
     "-i",
     "--input",

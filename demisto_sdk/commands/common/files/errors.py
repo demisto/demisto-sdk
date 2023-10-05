@@ -1,5 +1,4 @@
 from pathlib import Path
-from typing import Optional
 
 
 class FileReadError(IOError):
@@ -18,11 +17,7 @@ class FileContentReadError(FileReadError):
 
 
 class GitFileReadError(FileReadError):
-    def __init__(
-        self, path: Path, tag: str, exc: Exception, remote_name: Optional[str] = None
-    ):
-        if remote_name:
-            tag = f"{remote_name}:{tag}"
+    def __init__(self, path: Path, tag: str, exc: Exception):
         super().__init__(
             f"Could not get file {path} from branch/commit {tag}, full_error:\n{exc}"
         )

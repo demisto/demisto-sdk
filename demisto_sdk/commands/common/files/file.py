@@ -157,6 +157,7 @@ class File(ABC, BaseModel):
         try:
             return model.load(file_content)
         except LocalFileReadError as e:
+            logger.exception(f"Could not read file content as {cls.__name__} file")
             raise FileContentReadError(file_content, exc=e.original_exc)
 
     @classmethod
@@ -174,7 +175,13 @@ class File(ABC, BaseModel):
         return model.read_local_file()
 
     def read_local_file(self) -> Any:
-        return self.load(self.input_path.read_bytes())
+        try:
+            return self.load(self.input_path.read_bytes())
+        except FileReadError:
+            logger.exception(
+                f"Could not read file {self.input_path} as {self.__class__.__name__} file"
+            )
+            raise
 
     @classmethod
     @lru_cache
@@ -202,11 +209,15 @@ class File(ABC, BaseModel):
                 )
             )
         except Exception as e:
+            if from_remote:
+                tag = f"{DEMISTO_GIT_UPSTREAM}:{tag}"
+            logger.exception(
+                f"Could not read git file {self.input_path} from {tag} as {self.__class__.__name__} file"
+            )
             raise GitFileReadError(
                 self.input_path,
                 tag=tag,
                 exc=e,
-                remote_name=DEMISTO_GIT_UPSTREAM if from_remote else None,
             )
 
     @classmethod
@@ -239,7 +250,7 @@ class File(ABC, BaseModel):
             )
         except FileReadError as e:
             logger.warning(
-                f"Received error {e} when trying to retrieve {git_path_url} content, retrying"
+                f"Received error {e} when trying to retrieve {git_path_url} content from Github, retrying"
             )
             return cls.read_from_http_request(
                 git_path_url, params={"token": github_token}, timeout=timeout
@@ -293,9 +304,14 @@ class File(ABC, BaseModel):
             )
             response.raise_for_status()
         except RequestException as e:
+            logger.exception(f"Could not retrieve file from {url}")
             raise HttpFileReadError(url, exc=e)
 
-        return cls.read_from_file_content(response.content, handler=handler)
+        try:
+            return cls.read_from_file_content(response.content, handler=handler)
+        except FileContentReadError as e:
+            logger.exception(f"Could not read file from {url} as {cls.__name__} file")
+            raise HttpFileReadError(url=url, exc=e)
 
     @classmethod
     def write_file(

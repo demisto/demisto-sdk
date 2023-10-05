@@ -9,5 +9,8 @@ class BinaryFile(File):
     def known_extensions(cls) -> Set[str]:
         return {".png", ".bin"}
 
+    def load(self, file_content: bytes):
+        return file_content
+
     def _write(self, data: Any, path: Path, encoding: Optional[str] = None) -> None:
         path.write_bytes(data)

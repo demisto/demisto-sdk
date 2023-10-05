@@ -3,7 +3,6 @@ import urllib.parse
 from abc import ABC, abstractmethod
 from functools import lru_cache
 from pathlib import Path
-from tempfile import NamedTemporaryFile
 from typing import Any, Dict, Optional, Set, Type, Union
 
 import requests
@@ -13,10 +12,15 @@ from requests.exceptions import RequestException
 
 from demisto_sdk.commands.common.constants import (
     DEMISTO_GIT_PRIMARY_BRANCH,
+    DEMISTO_GIT_UPSTREAM,
     urljoin,
 )
 from demisto_sdk.commands.common.files.errors import (
+    FileContentReadError,
     FileReadError,
+    GitFileReadError,
+    HttpFileReadError,
+    LocalFileReadError,
     UnknownFileError,
 )
 from demisto_sdk.commands.common.git_content_config import GitContentConfig
@@ -105,7 +109,7 @@ class File(ABC, BaseModel):
         raise UnknownFileError(path)
 
     @abstractmethod
-    def load(self, file_content: str) -> Any:
+    def load(self, file_content: bytes):
         raise NotImplementedError(
             "load must be implemented for each File concrete object"
         )
@@ -136,6 +140,27 @@ class File(ABC, BaseModel):
 
     @classmethod
     @lru_cache
+    def read_from_file_content(
+        cls,
+        file_content: bytes,
+        handler: Optional[XSOAR_Handler] = None,
+    ):
+        model_attributes: Dict[str, Any] = {"handler": handler}
+
+        if cls is File:
+            raise ValueError(
+                "when reading from file content please specify concrete class"
+            )
+
+        model = cls.parse_obj(model_attributes)
+
+        try:
+            return model.load(file_content)
+        except LocalFileReadError as e:
+            raise FileContentReadError(file_content, exc=e.original_exc)
+
+    @classmethod
+    @lru_cache
     def read_from_local_path(
         cls,
         path: Union[Path, str],
@@ -149,7 +174,7 @@ class File(ABC, BaseModel):
         return model.read_local_file()
 
     def read_local_file(self) -> Any:
-        return self.input_path.read_bytes()
+        return self.load(self.input_path.read_bytes())
 
     @classmethod
     @lru_cache
@@ -171,17 +196,23 @@ class File(ABC, BaseModel):
         self, tag: str = DEMISTO_GIT_PRIMARY_BRANCH, from_remote: bool = True
     ):
         try:
-            return self.git_util.read_file_content(
-                self.input_path, commit_or_branch=tag, from_remote=from_remote
+            return self.load(
+                self.git_util.read_file_content(
+                    self.input_path, commit_or_branch=tag, from_remote=from_remote
+                )
             )
         except Exception as e:
-            raise FileReadError(self.input_path, exc=e)
+            raise GitFileReadError(
+                self.input_path,
+                tag=tag,
+                exc=e,
+                remote_name=DEMISTO_GIT_UPSTREAM if from_remote else None,
+            )
 
     @classmethod
     def read_from_github_api(
         cls,
         path: str,
-        git_util: Optional[GitUtil] = None,
         git_content_config: Optional[GitContentConfig] = None,
         tag: str = DEMISTO_GIT_PRIMARY_BRANCH,
         handler: Optional[XSOAR_Handler] = None,
@@ -203,7 +234,6 @@ class File(ABC, BaseModel):
                     "Accept": "application/vnd.github.VERSION.raw",
                 },
                 timeout=timeout,
-                git_util=git_util,
                 handler=handler,
                 clear_cache=clear_cache,
             )
@@ -219,7 +249,6 @@ class File(ABC, BaseModel):
     def read_from_gitlab_api(
         cls,
         path: str,
-        git_util: Optional[GitUtil] = None,
         git_content_config: Optional[GitContentConfig] = None,
         tag: str = DEMISTO_GIT_PRIMARY_BRANCH,
         handler: Optional[XSOAR_Handler] = None,
@@ -236,7 +265,6 @@ class File(ABC, BaseModel):
             git_path_url,
             headers={"PRIVATE-TOKEN": gitlab_token},
             params={"ref": tag},
-            git_util=git_util,
             handler=handler,
             clear_cache=clear_cache,
         )
@@ -250,7 +278,6 @@ class File(ABC, BaseModel):
         params: Optional[Dict] = None,
         verify: bool = True,
         timeout: Optional[int] = None,
-        git_util: Optional[GitUtil] = None,
         handler: Optional[XSOAR_Handler] = None,
         clear_cache: bool = False,
     ):
@@ -266,20 +293,9 @@ class File(ABC, BaseModel):
             )
             response.raise_for_status()
         except RequestException as e:
-            raise FileReadError(Path(url), exc=e)
+            raise HttpFileReadError(url, exc=e)
 
-        file_content = response.content
-
-        with NamedTemporaryFile(
-            mode="wb", prefix=f'{url.replace("/", "-")}'
-        ) as remote_file:
-            remote_file.write(file_content)
-            return cls.read_from_local_path(
-                remote_file.name,
-                git_util=git_util,
-                handler=handler,
-                clear_cache=clear_cache,
-            )
+        return cls.read_from_file_content(response.content, handler=handler)
 
     @classmethod
     def write_file(

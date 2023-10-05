@@ -18,10 +18,8 @@ class HandlerFile(TextFile, ABC):
     def validate_handler(cls, v: Type[XSOAR_Handler]) -> Type[XSOAR_Handler]:
         raise NotImplementedError("validate_handler must be implemented")
 
-    def load(self, file_content: Union[StringIO, str]) -> Union[List, Dict]:
-        if not isinstance(file_content, StringIO):
-            file_content = StringIO(file_content)
-        return self.handler.load(file_content)
+    def load(self, file_content: bytes) -> Union[List, Dict]:
+        return self.handler.load(StringIO(super().load(file_content)))
 
     def _write(self, data: Any, path: Path, encoding: Optional[str] = None) -> None:
         with path.open("w", encoding=encoding or self.default_encoding) as output_file:

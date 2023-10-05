@@ -28,9 +28,9 @@ class IniFile(TextFile):
             logger.debug(f"Got error when trying to parse INI file\nerror:{e}")
             return False
 
-    def load(self, file_content: str) -> Optional[ConfigParser]:
+    def load(self, file_content: bytes) -> Optional[ConfigParser]:
         config_parser = ConfigParser(allow_no_value=True)
-        config_parser.read_string(file_content)
+        config_parser.read_string(super().load(file_content))
         return config_parser
 
     def _write(self, data: Any, path: Path, encoding: Optional[str] = None) -> None:
@@ -57,7 +57,5 @@ class IniFile(TextFile):
         for section, values in data.items():
             config[section] = values
 
-        with path.open(
-            "w", encoding=encoding or self.default_encoding
-        ) as ini_file:
+        with path.open("w", encoding=encoding or self.default_encoding) as ini_file:
             config.write(ini_file)

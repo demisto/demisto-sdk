@@ -772,25 +772,28 @@ def get_last_remote_release_version():
         return ""
 
 
-def _read_file(file_path: Path) -> str:
-    """returns the body of a text-based file, after reading it as UTF8, or trying to guess its encoding.
+def safe_read_unicode(bytes_data: bytes) -> str:
+    """
+    Safely read unicode data from bytes.
 
     Args:
-        file_path (Path): file to read
+        bytes_data (bytes): bytes to read.
 
     Returns:
-        str: file contents
+        str: A string representation of the parsed bytes.
     """
     try:
-        return file_path.read_text(encoding="utf8")
+        return bytes_data.decode("utf-8")
 
     except UnicodeDecodeError:
         try:
-            # guesses the original encoding
-            return UnicodeDammit(file_path.read_bytes()).unicode_markup
+            logger.debug(
+                f"Could not read data using UTF-8 encoding. Trying to auto-detect encoding..."
+            )
+            return UnicodeDammit(bytes_data).unicode_markup
 
         except UnicodeDecodeError:
-            logger.info(f"could not auto-detect encoding for file {file_path}")
+            logger.error(f"Could not auto-detect encoding.")
             raise
 
 
@@ -850,7 +853,7 @@ def get_file(
         raise FileNotFoundError(file_path)
 
     try:
-        file_content = _read_file(file_path)
+        file_content = safe_read_unicode(file_path.read_bytes())
         if return_content:
             return file_content
     except IOError as e:

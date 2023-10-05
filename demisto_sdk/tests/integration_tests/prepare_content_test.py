@@ -108,6 +108,7 @@ class TestPrepareContentIntegration:
                 "commands": [],
             },
             "configuration": [],
+            "support_level_header": "xsoar",
         }
         integration = pack.create_integration(name, yml=yml, description=description)
         with ChangeCWD(pack.repo_path):

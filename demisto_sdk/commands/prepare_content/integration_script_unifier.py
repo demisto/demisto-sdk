@@ -15,6 +15,7 @@ from ruamel.yaml.scalarstring import (  # noqa: TID251 - only importing FoldedSc
 from demisto_sdk.commands.common.constants import (
     API_MODULE_FILE_SUFFIX,
     DEFAULT_IMAGE_PREFIX,
+    PARTNER_SUPPORT,
     TYPE_TO_EXTENSION,
     FileType,
     ImagesFolderNames,
@@ -592,31 +593,30 @@ class IntegrationScriptUnifier(Unifier):
                 contributor_type.capitalize()
             )
         existing_detailed_description = unified_yml.get("detaileddescription", "")
+
+        if support_level_header := unified_yml.get("support_level_header"):
+            contributor_type = support_level_header
+
         if contributor_type == COMMUNITY_CONTRIBUTOR:
             contributor_description = CONTRIBUTOR_COMMUNITY_DETAILED_DESC.format(author)
-        else:
-            # in partner collectors the support is by PANW
-            if (script := (unified_yml.get("script") or {})) and (
-                script.get("isfetchevents") or script.get("isfetcheventsandassets")
-            ):
-                contributor_description = (
-                    "**This integration is supported by Palo Alto Networks.**"
-                )
-            else:
-                contributor_description = CONTRIBUTOR_DETAILED_DESC.format(
-                    contributor_type.capitalize(), author
-                )
-                if contributor_email:
-                    email_list: List[str] = arg_to_list(contributor_email, ",")
-                    for email in email_list:
-                        contributor_description += (
-                            f"\n- **Email**: [{email}](mailto:{email})"
-                        )
-                if contributor_url:
+        elif contributor_type == PARTNER_SUPPORT:
+            contributor_description = CONTRIBUTOR_DETAILED_DESC.format(
+                contributor_type.capitalize(), author
+            )
+            if contributor_email:
+                email_list: List[str] = arg_to_list(contributor_email, ",")
+                for email in email_list:
                     contributor_description += (
-                        f"\n- **URL**: [{contributor_url}]({contributor_url})"
+                        f"\n- **Email**: [{email}](mailto:{email})"
                     )
-
+            if contributor_url:
+                contributor_description += (
+                    f"\n- **URL**: [{contributor_url}]({contributor_url})"
+                )
+        else:  # if support_level_header = xsoar, need to add to description that integration is supported by PANW
+            contributor_description = (
+                "**This integration is supported by Palo Alto Networks.**"
+            )
         contrib_details = re.findall(
             r"### .* Contributed Integration", existing_detailed_description
         )

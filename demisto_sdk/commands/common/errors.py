@@ -589,8 +589,12 @@ ERROR_CODE: Dict = {
         "code": "IN157",
         "related_field": "deprecated",
     },
-    "invalid_deprecation__only_description_deprecated": {
+    "partner_collector_does_not_have_xsoar_support_level": {
         "code": "IN158",
+        "related_field": "deprecated",
+    },
+    "dsd": {
+        "code": "IN159",
         "related_field": "deprecated",
     },
     "invalid_deprecated_integration_description": {
@@ -2215,6 +2219,11 @@ class Errors:
             "All integrations whose description states are deprecated, must have `deprecated:true`."
             f"Please run demisto-sdk format --deprecate -i {path}"
         )
+
+    @staticmethod
+    @error_code_decorator
+    def partner_collector_does_not_have_xsoar_support_level(path: str):
+        return f"the integration {path} should have the header_support_level = xsoar key in its yml"
 
     @staticmethod
     @error_code_decorator

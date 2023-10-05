@@ -23,6 +23,7 @@ from demisto_sdk.commands.common.constants import (
     MAX_FETCH_PARAM,
     PACKS_DIR,
     PACKS_PACK_META_FILE_NAME,
+    PARTNER_SUPPORT,
     PYTHON_SUBTYPES,
     RELIABILITY_PARAMETER_NAMES,
     REPUTATION_COMMAND_NAMES,
@@ -2352,6 +2353,24 @@ class IntegrationValidator(ContentEntityValidator):
                 if self.handle_error(error_message, error_code, self.file_path):
                     return False
 
+        return True
+
+    @error_codes("IN159")
+    def is_partner_collector_has_xsoar_support_level_header(self):
+        pack_name = get_pack_name(self.file_path)
+        if pack_name:
+            metadata_path = Path(PACKS_DIR, pack_name, PACKS_PACK_META_FILE_NAME)
+            metadata_content = self.get_metadata_file_content(metadata_path)
+            if metadata_content.get("support", "").lower() == PARTNER_SUPPORT:
+                if self.current_file.get("support_level_header") != XSOAR_SUPPORT:
+                    (
+                        error_message,
+                        error_code,
+                    ) = Errors.partner_collector_does_not_have_xsoar_support_level(
+                        self.file_path
+                    )
+                    if self.handle_error(error_message, error_code, self.file_path):
+                        return False
         return True
 
     @error_codes("DS108")

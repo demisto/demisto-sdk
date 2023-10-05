@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import contextlib
 import glob
 import logging
@@ -700,9 +702,7 @@ def get_child_directories(directory: str | Path) -> list[str]:
     directory_path = Path(directory)
 
     if directory_path.is_dir():
-        return [
-            str(path) for path in directory_path.iterdir() if path.is_dir()
-        ]
+        return [str(path) for path in directory_path.iterdir() if path.is_dir()]
 
     return []
 
@@ -788,12 +788,12 @@ def safe_read_unicode(bytes_data: bytes) -> str:
     except UnicodeDecodeError:
         try:
             logger.debug(
-                f"Could not read data using UTF-8 encoding. Trying to auto-detect encoding..."
+                "Could not read data using UTF-8 encoding. Trying to auto-detect encoding..."
             )
             return UnicodeDammit(bytes_data).unicode_markup
 
         except UnicodeDecodeError:
-            logger.error(f"Could not auto-detect encoding.")
+            logger.error("Could not auto-detect encoding.")
             raise
 
 

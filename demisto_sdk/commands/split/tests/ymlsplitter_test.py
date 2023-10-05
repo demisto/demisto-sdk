@@ -356,11 +356,10 @@ def test_extract_javascript_code(tmpdir, file_type):
 def test_extract_powershell_code(tmpdir, file_type):
     """
     Given
-    Case 1: a unified integration file of powershell format.
-    Case 2: a unified beta-integration file of powershell format.
+        Case 1: a unified integration file of powershell format.
+        Case 2: a unified beta-integration file of powershell format.
     When
     - Running the YmlSplitter extract_code function.
-
     Then
     - Ensure the "### pack version: ..." comment was removed successfully.
     """
@@ -390,7 +389,7 @@ def test_extract_code__with_apimodule(tmpdir, file_type):
         Case 1: A unified integration YML which ApiModule code is auto-generated there
         Case 2: A unified beta-integration YML which ApiModule code is auto-generated there
     When:
-        - run YmlSpltter on this code
+        - Run YmlSplitter on this code
     Then:
         - Ensure generated code is being deleted, and the import line exists
     """
@@ -450,6 +449,40 @@ def test_extract_code_pwsh(tmpdir, file_type):
         file_data = temp_code.read()
         assert ". $PSScriptRoot\\CommonServerPowerShell.ps1\n" in file_data
         assert file_data[-1] == "\n"
+
+
+def test_extraction_with_period_in_filename(pack):
+    """
+    Given: A unified YAML file with a filename containing a period (that might be identified as an extension)
+    When: Running YmlSplitter on this file
+    Then: Files are extracted with the appropriate filenames
+    """
+    integration = pack.create_integration(
+        name="Zoom-v1.0",
+        description="Test",
+        create_unified=True,
+    )
+
+    YmlSplitter(
+        input=integration.yml.path,
+        output=str(Path(pack.path) / "Integrations"),
+        base_name="Zoom-v1.0",
+        file_type="integration",
+    ).extract_to_package_format()
+
+    expected_integration_dir = Path(pack.path) / "Integrations" / "ZoomV10"
+    assert expected_integration_dir.exists()
+
+    extracted_files = [str(file.name) for file in expected_integration_dir.glob("*")]
+    assert len(extracted_files) == 5
+
+    assert {
+        "README.md",
+        "Zoom-v1.0_description.md",
+        "Zoom-v1.0_image.png",
+        "Zoom-v1.0.py",
+        "Zoom-v1.0.yml",
+    } == set(extracted_files)
 
 
 def test_get_output_path():

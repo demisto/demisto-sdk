@@ -108,18 +108,13 @@ DEMISTO_SDK_OFFICIAL_CONTENT_PROJECT_ID = os.getenv(
 )  # the default is the id of the content repo in code.pan.run
 
 # Marketplaces
-if os.getenv("TEST_XDR_ENV"):
-    DEMISTO_SDK_MARKETPLACE_XSOAR_DIST = "cortex-marketplace-dist"
-    DEMISTO_SDK_MARKETPLACE_XSIAM_DIST = "cortex-marketplace-v2-dist"
-    DEMISTO_SDK_MARKETPLACE_XPANSE_DIST = "cortex-xpanse-dist"
-    DEMISTO_SDK_MARKETPLACE_XSOAR_SAAS_DIST = "cortex-marketplace-saas-dist"
-    DEMISTO_SDK_MARKETPLACE_XSOAR_DIST_DEV = "cortex-marketplace-dist-dev"
-else:
-    DEMISTO_SDK_MARKETPLACE_XSOAR_DIST = "marketplace-dist"
-    DEMISTO_SDK_MARKETPLACE_XSIAM_DIST = "marketplace-v2-dist"
-    DEMISTO_SDK_MARKETPLACE_XPANSE_DIST = "xpanse-dist"
-    DEMISTO_SDK_MARKETPLACE_XSOAR_SAAS_DIST = "marketplace-saas-dist"
-    DEMISTO_SDK_MARKETPLACE_XSOAR_DIST_DEV = "marketplace-dist-dev"
+TEST_XDR_PREFIX = os.getenv("TEST_XDR_PREFIX", '')
+
+DEMISTO_SDK_MARKETPLACE_XSOAR_DIST = TEST_XDR_PREFIX+"marketplace-dist"
+DEMISTO_SDK_MARKETPLACE_XSIAM_DIST = TEST_XDR_PREFIX+"marketplace-v2-dist"
+DEMISTO_SDK_MARKETPLACE_XPANSE_DIST = TEST_XDR_PREFIX+"xpanse-dist"
+DEMISTO_SDK_MARKETPLACE_XSOAR_SAAS_DIST = TEST_XDR_PREFIX+"marketplace-saas-dist"
+DEMISTO_SDK_MARKETPLACE_XSOAR_DIST_DEV = TEST_XDR_PREFIX+"marketplace-dist-dev"
 
 
 class FileType(str, Enum):

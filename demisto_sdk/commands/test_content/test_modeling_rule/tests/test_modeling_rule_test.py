@@ -2053,10 +2053,9 @@ class TestDeleteExistingDataset:
             - The command is run with 'delete_existing_dataset' flag.
 
         Then:
-            - verify 'Typer.exception' is raised.
-            - verify that there was not warning raised
-            - verify that error was raised indicating that the testdata contains events that has the same key with
-              different types.
+            - Verify no exception is raised.
+            - Verify we get a message saying the dataset was deleted.
+
         """
         logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
         monkeypatch.setenv("COLUMNS", "1000")

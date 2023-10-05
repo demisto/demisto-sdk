@@ -1,4 +1,4 @@
-from typing import IO, Any, AnyStr, Union
+from typing import IO, Any, AnyStr
 
 import ujson  # noqa: TID251 - this is the handler
 
@@ -26,7 +26,7 @@ class UJSON_Handler(XSOAR_Handler):
         except ValueError as e:
             raise JSONDecodeError(f"input: {s!r}, error: {e}") from e
 
-    def load(self, fp: IO[Union[str, bytes]]):
+    def load(self, fp: IO[str]):
         try:
             return self.json.load(fp)
         except ValueError as e:

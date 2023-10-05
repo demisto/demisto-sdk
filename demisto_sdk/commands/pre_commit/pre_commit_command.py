@@ -38,6 +38,7 @@ from demisto_sdk.commands.pre_commit.hooks.pycln import PyclnHook
 from demisto_sdk.commands.pre_commit.hooks.ruff import RuffHook
 from demisto_sdk.commands.pre_commit.hooks.sourcery import SourceryHook
 from demisto_sdk.commands.pre_commit.hooks.validate_format import ValidateFormatHook
+from demisto_sdk.commands.pre_commit.hooks.coverage_analyze import CoverageAnalyzeHook
 
 IS_GITHUB_ACTIONS = string_to_bool(os.getenv("GITHUB_ACTIONS"), False)
 
@@ -162,6 +163,7 @@ class PreCommitRunner:
             self.files_to_run
         )
         ValidateFormatHook(**hooks["format"], **kwargs).prepare_hook(self.files_to_run)
+        CoverageAnalyzeHook(**hooks["coverage-analyze"], **kwargs).prepare_hook()
 
     def run(
         self,

@@ -67,6 +67,7 @@ def fix_coverage_report_path(coverage_file: Path) -> bool:
                         not (CONTENT_PATH / file).exists()
                         or file.parent.name
                         not in file.name  # For example, in `QRadar_v3` directory we only care for `QRadar_v3.py`
+                        or file.name == 'conftest.py'
                     ):
                         logger.debug(f"Removing {file} from coverage report")
                         cursor.execute(

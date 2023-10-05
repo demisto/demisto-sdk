@@ -33,6 +33,13 @@
   pass_filenames: false
   language: python
 
+- id: coverage-analyze
+  name: coverage-analyze
+  entry: demisto-sdk coverage-analyze
+  description: Running demisto-sdk coverage-analyze and showing a coverage report.
+  language: python
+  args: ["-i", ".coverage"]
+
 - id: no-implicit-optional
   name: no implicit optional
   description: Making code implicit-optional type hints PEP 484 compliant.

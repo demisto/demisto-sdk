@@ -1,7 +1,7 @@
 import shutil
 import urllib.parse
 from abc import ABC, abstractmethod
-from functools import cached_property, lru_cache
+from functools import lru_cache
 from pathlib import Path
 from typing import Any, Dict, Optional, Set, Type, Union
 
@@ -39,8 +39,8 @@ class File(ABC, BaseModel):
             True  # allows having custom classes for properties in model
         )
 
-    @cached_property
-    def input_file_content(self):
+    @property
+    def input_file_content(self) -> bytes:
         return self.input_path.read_bytes()
 
     @property
@@ -127,6 +127,9 @@ class File(ABC, BaseModel):
         **kwargs,
     ) -> "File":
 
+        if input_path:
+            input_path = Path(input_path)
+
         model_attributes: Dict[str, Any] = {
             "input_path": input_path,
             "git_util": git_util,
@@ -150,14 +153,17 @@ class File(ABC, BaseModel):
         file_content: bytes,
         handler: Optional[XSOAR_Handler] = None,
     ):
-        model_attributes: Dict[str, Any] = {"handler": handler}
-
         if cls is File:
             raise ValueError(
                 "when reading from file content please specify concrete class"
             )
 
-        model = cls.parse_obj(model_attributes)
+        model_attributes: Dict[str, Any] = {}
+        if handler:
+            model_attributes["handler"] = handler
+
+        # builds up the object without validations, when loading from file content, no need to init path and git_util
+        model = cls.construct(**model_attributes)
 
         try:
             return model.load(file_content)
@@ -242,10 +248,10 @@ class File(ABC, BaseModel):
 
         timeout = 10
 
-        model = cls.__file_factory(Path(path)) if cls is File else cls
+        cls.__file_factory(Path(path)) if cls is File else cls
 
         try:
-            return model.read_from_http_request(
+            return cls.read_from_http_request(
                 git_path_url,
                 headers={
                     "Authorization": f"Bearer {github_token}" if github_token else "",
@@ -259,7 +265,7 @@ class File(ABC, BaseModel):
             logger.warning(
                 f"Received error {e} when trying to retrieve {git_path_url} content from Github, retrying"
             )
-            return model.read_from_http_request(
+            return cls.read_from_http_request(
                 git_path_url, params={"token": github_token}, timeout=timeout
             )
 
@@ -290,7 +296,6 @@ class File(ABC, BaseModel):
         )
 
     @classmethod
-    @lru_cache
     def read_from_http_request(
         cls,
         url: str,
@@ -301,8 +306,8 @@ class File(ABC, BaseModel):
         handler: Optional[XSOAR_Handler] = None,
         clear_cache: bool = False,
     ):
-        if clear_cache:
-            cls.read_from_http_request.clear_cache()
+        # if clear_cache:
+        #     cls.read_from_http_request.clear_cache()
         try:
             response = requests.get(
                 url,

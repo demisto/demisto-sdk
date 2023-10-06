@@ -207,6 +207,16 @@ def main(ctx, config, version, release_notes, **kwargs):
     config.configuration = Configuration()
     import dotenv
 
+    from demisto_sdk.commands.common.files.binary_file import BinaryFile
+    from demisto_sdk.commands.common.files.yml_file import YmlFile
+
+    YmlFile.read_from_file_content(
+        BinaryFile.read_from_local_path(
+            "Packs/AccentureCTI/Playbooks/playbook-ACTI_Block_High_Severity_Indicators.yml"
+        )
+    )
+    print()
+
     dotenv.load_dotenv(CONTENT_PATH / ".env", override=True)  # type: ignore # load .env file from the cwd
     if (
         (not os.getenv("DEMISTO_SDK_SKIP_VERSION_CHECK")) or version

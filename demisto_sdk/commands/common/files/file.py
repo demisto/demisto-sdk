@@ -1,7 +1,7 @@
 import shutil
 import urllib.parse
 from abc import ABC, abstractmethod
-from functools import lru_cache
+from functools import cached_property, lru_cache
 from pathlib import Path
 from typing import Any, Dict, Optional, Set, Type, Union
 
@@ -39,6 +39,10 @@ class File(ABC, BaseModel):
             True  # allows having custom classes for properties in model
         )
 
+    @cached_property
+    def input_file_content(self):
+        return self.input_path.read_bytes()
+
     @property
     def normalized_suffix(self) -> str:
         if suffix := self.input_path.suffix.lower():
@@ -47,7 +51,7 @@ class File(ABC, BaseModel):
 
     @property
     def input_path_original_encoding(self) -> Optional[str]:
-        return UnicodeDammit(self.input_path.read_bytes()).original_encoding
+        return UnicodeDammit(self.input_file_content).original_encoding
 
     @property
     def input_file_size(self) -> int:
@@ -136,6 +140,7 @@ class File(ABC, BaseModel):
             )
         else:
             model = cls.parse_obj(model_attributes)
+        logger.debug(f"Using model {model} for file {input_path}")
         return model
 
     @classmethod
@@ -176,7 +181,7 @@ class File(ABC, BaseModel):
 
     def read_local_file(self) -> Any:
         try:
-            return self.load(self.input_path.read_bytes())
+            return self.load(self.input_file_content)
         except FileReadError:
             logger.exception(
                 f"Could not read file {self.input_path} as {self.__class__.__name__} file"
@@ -237,10 +242,7 @@ class File(ABC, BaseModel):
 
         timeout = 10
 
-        if cls is File:
-            model = cls.__file_factory(Path(path))
-        else:
-            model = cls
+        model = cls.__file_factory(Path(path)) if cls is File else cls
 
         try:
             return model.read_from_http_request(
@@ -278,17 +280,8 @@ class File(ABC, BaseModel):
         )
         gitlab_token = git_content_config.CREDENTIALS.gitlab_token
 
-        if cls is File:
-            model = cls.__file_factory(Path(path))
-            return model.read_from_http_request(
-                git_path_url,
-                headers={"PRIVATE-TOKEN": gitlab_token},
-                params={"ref": tag},
-                handler=handler,
-                clear_cache=clear_cache,
-            )
-
-        return cls.read_from_http_request(
+        model = cls.__file_factory(Path(path)) if cls is File else cls
+        return model.read_from_http_request(
             git_path_url,
             headers={"PRIVATE-TOKEN": gitlab_token},
             params={"ref": tag},

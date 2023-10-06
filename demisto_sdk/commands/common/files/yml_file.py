@@ -1,5 +1,6 @@
 from functools import lru_cache
-from typing import Optional, Set
+from io import BytesIO
+from typing import Optional, Set, Union
 
 from pydantic import Field, validator
 
@@ -23,7 +24,9 @@ class YmlFile(HandlerFile):
     @lru_cache
     def read_from_file_content(
         cls,
-        file_content: bytes,
+        file_content: Union[bytes, BytesIO],
         handler: Optional[XSOAR_Handler] = None,
     ):
-        return super().read_from_file_content(file_content, handler=handler or yaml)
+        return super().read_from_file_content(
+            file_content, handler=cls.validate_handler(handler)
+        )

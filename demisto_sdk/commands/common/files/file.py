@@ -2,6 +2,7 @@ import shutil
 import urllib.parse
 from abc import ABC, abstractmethod
 from functools import lru_cache
+from io import BytesIO
 from pathlib import Path
 from typing import Any, Dict, Optional, Set, Type, Union
 
@@ -150,7 +151,7 @@ class File(ABC, BaseModel):
     @lru_cache
     def read_from_file_content(
         cls,
-        file_content: bytes,
+        file_content: Union[bytes, BytesIO],
         handler: Optional[XSOAR_Handler] = None,
     ):
         if cls is File:
@@ -164,6 +165,9 @@ class File(ABC, BaseModel):
 
         # builds up the object without validations, when loading from file content, no need to init path and git_util
         model = cls.construct(**model_attributes)
+
+        if isinstance(file_content, BytesIO):
+            file_content = file_content.read()
 
         try:
             return model.load(file_content)

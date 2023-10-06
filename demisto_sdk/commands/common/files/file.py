@@ -81,9 +81,7 @@ class File(ABC, BaseModel):
         shutil.copyfile(self.input_path, destination_path)
 
     @validator("input_path", always=True)
-    def validate_input_path(cls, v: Optional[Path], values) -> Optional[Path]:
-        if not v:
-            return None
+    def validate_input_path(cls, v: Path, values) -> Optional[Path]:
         if v.is_absolute():
             return v
         else:
@@ -123,13 +121,12 @@ class File(ABC, BaseModel):
     @lru_cache
     def from_path(
         cls,
-        input_path: Optional[Union[Path, str]] = None,
+        input_path: Union[Path, str],
         git_util: Optional[GitUtil] = None,
         **kwargs,
     ) -> "File":
 
-        if input_path:
-            input_path = Path(input_path)
+        input_path = Path(input_path)
 
         model_attributes: Dict[str, Any] = {
             "input_path": input_path,
@@ -138,7 +135,7 @@ class File(ABC, BaseModel):
 
         model_attributes.update(kwargs)
 
-        if cls is File and input_path:
+        if cls is File:
             model = cls.__file_factory(input_path).parse_obj(  # type: ignore[arg-type]
                 model_attributes
             )
@@ -154,7 +151,7 @@ class File(ABC, BaseModel):
         file_content: Union[bytes, BytesIO],
         handler: Optional[XSOAR_Handler] = None,
     ):
-        if issubclass(cls, ABC):
+        if cls is File:
             raise ValueError(
                 "when reading from file content please specify concrete class"
             )
@@ -252,15 +249,19 @@ class File(ABC, BaseModel):
 
         timeout = 10
 
-        cls.__file_factory(Path(path)) if cls is File else cls
+        model = cls.__file_factory(Path(path)) if cls is File else cls
 
         try:
-            return cls.read_from_http_request(
+            return model.read_from_http_request(
                 git_path_url,
-                headers={
-                    "Authorization": f"Bearer {github_token}" if github_token else "",
-                    "Accept": "application/vnd.github.VERSION.raw",
-                },
+                headers=frozenset(
+                    {
+                        "Authorization": f"Bearer {github_token}"
+                        if github_token
+                        else "",
+                        "Accept": "application/vnd.github.VERSION.raw",
+                    }.items()
+                ),
                 timeout=timeout,
                 handler=handler,
                 clear_cache=clear_cache,
@@ -269,8 +270,10 @@ class File(ABC, BaseModel):
             logger.warning(
                 f"Received error {e} when trying to retrieve {git_path_url} content from Github, retrying"
             )
-            return cls.read_from_http_request(
-                git_path_url, params={"token": github_token}, timeout=timeout
+            return model.read_from_http_request(
+                git_path_url,
+                params=frozenset({"token": github_token}.items()),
+                timeout=timeout,
             )
 
     @classmethod
@@ -293,32 +296,33 @@ class File(ABC, BaseModel):
         model = cls.__file_factory(Path(path)) if cls is File else cls
         return model.read_from_http_request(
             git_path_url,
-            headers={"PRIVATE-TOKEN": gitlab_token},
-            params={"ref": tag},
+            headers=frozenset({"PRIVATE-TOKEN": gitlab_token}.items()),
+            params=frozenset({"ref": tag}.items()),
             handler=handler,
             clear_cache=clear_cache,
         )
 
     @classmethod
+    @lru_cache
     def read_from_http_request(
         cls,
         url: str,
-        headers: Optional[Dict] = None,
-        params: Optional[Dict] = None,
+        headers: Optional[frozenset] = None,
+        params: Optional[frozenset] = None,
         verify: bool = True,
         timeout: Optional[int] = None,
         handler: Optional[XSOAR_Handler] = None,
         clear_cache: bool = False,
     ):
-        # if clear_cache:
-        #     cls.read_from_http_request.clear_cache()
+        if clear_cache:
+            cls.read_from_http_request.clear_cache()
         try:
             response = requests.get(
                 url,
-                params=params,
+                params={key: value for key, value in params},
                 verify=verify,
                 timeout=timeout,
-                headers=headers,
+                headers={key: value for key, value in headers},
             )
             response.raise_for_status()
         except RequestException as e:
@@ -339,10 +343,14 @@ class File(ABC, BaseModel):
         encoding: Optional[str] = None,
         handler: Optional[XSOAR_Handler] = None,
     ):
+        if cls is File:
+            raise ValueError("when writing file please specify concrete class")
+
         model_attributes: Dict[str, Any] = {}
         if handler:
             model_attributes["handler"] = handler
 
+        # builds up the object without validations, when writing file, no need to init path and git_util
         model = cls.construct(**model_attributes)
         model.write(data, path=Path(output_path), encoding=encoding)
 

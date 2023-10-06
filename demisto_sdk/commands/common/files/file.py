@@ -33,6 +33,7 @@ from demisto_sdk.commands.common.logger import logger
 class File(ABC, BaseModel):
     git_util: GitUtil
     input_path: Path
+    _input_path_content: bytes = None
     default_encoding: str = "utf-8"  # default encoding is utf-8
 
     class Config:
@@ -42,7 +43,9 @@ class File(ABC, BaseModel):
 
     @property
     def input_file_content(self) -> bytes:
-        return self.input_path.read_bytes()
+        if self._input_path_content is None:
+            self._input_path_content = self.input_path.read_bytes()
+        return self._input_path_content
 
     @property
     def normalized_suffix(self) -> str:
@@ -57,6 +60,9 @@ class File(ABC, BaseModel):
     @property
     def input_file_size(self) -> int:
         return self.input_path.stat().st_size
+
+    def copy_file(self, destination_path: Union[Path, str]):
+        shutil.copyfile(self.input_path, destination_path)
 
     @classmethod
     def is_class_type(cls, path: Path) -> bool:
@@ -76,9 +82,6 @@ class File(ABC, BaseModel):
     @validator("git_util", always=True, pre=True)
     def validate_git_util(cls, v: Optional[GitUtil]) -> GitUtil:
         return v or GitUtil.from_content_path()
-
-    def copy_file(self, destination_path: Union[Path, str]):
-        shutil.copyfile(self.input_path, destination_path)
 
     @validator("input_path", always=True)
     def validate_input_path(cls, v: Path, values) -> Optional[Path]:
@@ -156,13 +159,12 @@ class File(ABC, BaseModel):
                 "when reading from file content please specify concrete class"
             )
 
-        model_attributes: Dict[str, Any] = {}
+        model_attributes: Dict[str, Any] = {"_input_path_content": file_content}
         if handler:
             model_attributes["handler"] = handler
 
         # builds up the object without validations, when loading from file content, no need to init path and git_util
         model = cls.construct(**model_attributes)
-
         if isinstance(file_content, BytesIO):
             file_content = file_content.read()
 

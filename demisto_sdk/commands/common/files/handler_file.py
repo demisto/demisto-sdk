@@ -27,7 +27,7 @@ class HandlerFile(TextFile, ABC):
         handler: Optional[XSOAR_Handler] = None,
     ):
         return super().read_from_file_content(
-            file_content, handler=cls.validate_handler()
+            file_content, handler=cls.validate_handler(handler)
         )
 
     def load(self, file_content: bytes) -> Union[List, Dict]:

@@ -333,9 +333,17 @@ class File(ABC, BaseModel):
 
     @classmethod
     def write_file(
-        cls, data: Any, output_path: Union[Path, str], encoding: Optional[str] = None
+        cls,
+        data: Any,
+        output_path: Union[Path, str],
+        encoding: Optional[str] = None,
+        handler: Optional[XSOAR_Handler] = None,
     ):
-        model = cls.from_path()
+        model_attributes: Dict[str, Any] = {}
+        if handler:
+            model_attributes["handler"] = handler
+
+        model = cls.construct(**model_attributes)
         model.write(data, path=Path(output_path), encoding=encoding)
 
     @abstractmethod

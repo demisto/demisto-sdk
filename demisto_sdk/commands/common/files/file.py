@@ -154,7 +154,7 @@ class File(ABC, BaseModel):
         file_content: Union[bytes, BytesIO],
         handler: Optional[XSOAR_Handler] = None,
     ):
-        if cls is File:
+        if issubclass(cls, ABC):
             raise ValueError(
                 "when reading from file content please specify concrete class"
             )

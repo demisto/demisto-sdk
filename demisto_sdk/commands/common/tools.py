@@ -3536,43 +3536,39 @@ def get_display_name(file_path, file_data={}) -> str:
             file_data = get_file(file_path)
 
     if "display" in file_data:
-        name = file_data.get("display")
+        return file_data.get("display")
     elif "layout" in file_data and isinstance(file_data["layout"], dict):
-        name = file_data["layout"].get("id")
+        return file_data["layout"].get("id")
     elif "name" in file_data:
-        name = file_data.get("name")
+        return file_data.get("name")
     elif "TypeName" in file_data:
-        name = file_data.get("TypeName")
+        return file_data.get("TypeName")
     elif "brandName" in file_data:
-        name = file_data.get("brandName")
+        return file_data.get("brandName")
     elif "reputationCommand" in file_data:
-        name = file_data.get("details")
+        return file_data.get("details")
     elif "id" in file_data:
-        name = file_data.get("id")
+        return file_data.get("id")
     elif "trigger_name" in file_data:
-        name = file_data.get("trigger_name")
+        return file_data.get("trigger_name")
     elif "rule_name" in file_data:
-        name = file_data.get("rule_name")
-
+        return file_data.get("rule_name")
     elif (
         "dashboards_data" in file_data
         and file_data.get("dashboards_data")
         and isinstance(file_data["dashboards_data"], list)
     ):
         dashboard_data = file_data.get("dashboards_data", [{}])[0]
-        name = dashboard_data.get("name")
-
+        return dashboard_data.get("name")
     elif (
         "templates_data" in file_data
         and file_data.get("templates_data")
         and isinstance(file_data["templates_data"], list)
     ):
         r_name = file_data.get("templates_data", [{}])[0]
-        name = r_name.get("report_name")
+        return r_name.get("report_name")
 
-    else:
-        name = Path(file_path).name
-    return name
+    return Path(file_path).name
 
 
 def get_invalid_incident_fields_from_mapper(

@@ -1962,12 +1962,15 @@ class TestIntegrationValidator:
     ):
         """
         Given
-        - yml file of integration as config
+        - Case A: support_level_header = xsoar
+        - Case B: support_level_header = partner
+
         When
-        - run validate checks
+        - run is_partner_collector_has_xsoar_support_level_header
+
         Then
-        - if the isfetch identifier is true make sure the first_fetch and max_fetch params exists
-        - make sure max_fetch param has a default value
+        - Case A: make sure the validation succeed
+        - Case B: make sure the validation fails
         """
         name = "test"
         yml = {

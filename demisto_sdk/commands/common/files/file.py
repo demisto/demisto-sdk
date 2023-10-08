@@ -321,10 +321,10 @@ class File(ABC, BaseModel):
         try:
             response = requests.get(
                 url,
-                params={key: value for key, value in params},
+                params={key: value for key, value in params} if params else None,
                 verify=verify,
                 timeout=timeout,
-                headers={key: value for key, value in headers},
+                headers={key: value for key, value in headers} if params else None,
             )
             response.raise_for_status()
         except RequestException as e:

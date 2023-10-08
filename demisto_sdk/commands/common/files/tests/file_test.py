@@ -5,7 +5,7 @@ from typing import Type
 import pytest
 
 from demisto_sdk.commands.common.files.binary_file import BinaryFile
-from demisto_sdk.commands.common.files.errors import UnknownFileError
+from demisto_sdk.commands.common.files.errors import HttpFileReadError, UnknownFileError
 from demisto_sdk.commands.common.files.file import File
 from demisto_sdk.commands.common.files.ini_file import IniFile
 from demisto_sdk.commands.common.files.json_file import JsonFile
@@ -42,25 +42,17 @@ class TestFileFromPath:
         with pytest.raises(FileNotFoundError):
             File.from_path("path_does_not_exist.yml")
 
-    @pytest.mark.parametrize(
-        "output_path, expected_class",
-        [
-            (DEMISTO_SDK_PATH / "test.txt", TextFile),
-            (DEMISTO_SDK_PATH / "test.json", JsonFile),
-            (DEMISTO_SDK_PATH / "test.yml", YmlFile),
-            (DEMISTO_SDK_PATH / "test.ini", IniFile),
-            (DEMISTO_SDK_PATH / "test.png", BinaryFile),
-            (DEMISTO_SDK_PATH / ".pack-ignore", IniFile),
-            (DEMISTO_SDK_PATH / ".secrets-ignore", TextFile),
-            (DEMISTO_SDK_PATH / "command_examples", TextFile),
-        ],
-    )
-    def test_from_path_output_file(self, output_path: Path, expected_class: Type[File]):
-        assert isinstance(File.from_path(output_path=output_path), expected_class)
-
-    def test_from_path_output_file_no_suffix(self):
+    def test_read_from_file_content_error(self):
         with pytest.raises(ValueError):
-            File.from_path(output_path="bla")
+            File.read_from_file_content(b"")
+
+    def test_read_from_http_request_invalid_url(self):
+        with pytest.raises(HttpFileReadError):
+            File.read_from_http_request("not/valid/url")
+
+    def test_write_file_error(self):
+        with pytest.raises(ValueError):
+            File.write_file({}, output_path="some/path")
 
 
 class FileReadMethodsTesting(ABC):

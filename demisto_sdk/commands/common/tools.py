@@ -3521,7 +3521,7 @@ def remove_copy_and_dev_suffixes_from_str(field_name: str) -> str:
     return field_name
 
 
-def get_display_name(file_path: str, file_data: dict | None = None) -> str:
+def get_display_name(file_path, file_data={}) -> str:
     """Gets the entity display name from the file.
 
     :param file_path: The entity file path
@@ -3531,46 +3531,46 @@ def get_display_name(file_path: str, file_data: dict | None = None) -> str:
     :return The display name
     """
     if not file_data:
-        file_extension = Path(file_path).suffix
-
-        if file_extension in [".yml", ".yaml", ".json"]:
+        file_extension = os.path.splitext(file_path)[1]
+        if file_extension in [".yml", ".json"]:
             file_data = get_file(file_path)
 
-        else:
-            raise ValueError(f"Unsupported file extension: '{file_extension}'")
-
     if "display" in file_data:
-        return file_data.get("display")
+        name = file_data.get("display", None)
     elif "layout" in file_data and isinstance(file_data["layout"], dict):
-        return file_data["layout"].get("id")
+        name = file_data["layout"].get("id")
     elif "name" in file_data:
-        return file_data.get("name")
+        name = file_data.get("name", None)
     elif "TypeName" in file_data:
-        return file_data.get("TypeName")
+        name = file_data.get("TypeName", None)
     elif "brandName" in file_data:
-        return file_data.get("brandName")
+        name = file_data.get("brandName", None)
     elif "id" in file_data:
-        return file_data.get("id")
+        name = file_data.get("id", None)
     elif "trigger_name" in file_data:
-        return file_data.get("trigger_name")
+        name = file_data.get("trigger_name")
     elif "rule_name" in file_data:
-        return file_data.get("rule_name")
+        name = file_data.get("rule_name")
+
     elif (
         "dashboards_data" in file_data
         and file_data.get("dashboards_data")
         and isinstance(file_data["dashboards_data"], list)
     ):
         dashboard_data = file_data.get("dashboards_data", [{}])[0]
-        return dashboard_data.get("name")
+        name = dashboard_data.get("name")
+
     elif (
         "templates_data" in file_data
         and file_data.get("templates_data")
         and isinstance(file_data["templates_data"], list)
     ):
         r_name = file_data.get("templates_data", [{}])[0]
-        return r_name.get("report_name")
+        name = r_name.get("report_name")
 
-    return Path(file_path).name
+    else:
+        name = Path(file_path).name
+    return name
 
 
 def get_invalid_incident_fields_from_mapper(

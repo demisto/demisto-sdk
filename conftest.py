@@ -82,12 +82,17 @@ def integration(
 
 @pytest.fixture
 def repo(request: FixtureRequest, tmp_path_factory: TempPathFactory) -> Repo:
-    """Mocking tmp_path"""
+    """
+    Initializes a repo without git.
+    """
     return get_repo(request, tmp_path_factory)
 
 
 @pytest.fixture
 def git_repo(request: FixtureRequest, tmp_path_factory: TempPathFactory):
+    """
+    Initializes a repo with git.
+    """
     return get_git_repo(request, tmp_path_factory)
 
 

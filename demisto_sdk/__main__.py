@@ -3554,13 +3554,13 @@ def setup_env(
     input, file_paths, create_virtualenv, overwrite_virtualenv, secret_id, instance_name
 ):
     from demisto_sdk.commands.setup_env.setup_environment import (
-        setup,
+        setup_env,
     )
 
     if input:
         file_paths = tuple(input.split(","))
 
-    setup(
+    setup_env(
         file_paths,
         create_virtualenv=create_virtualenv,
         overwrite_virtualenv=overwrite_virtualenv,

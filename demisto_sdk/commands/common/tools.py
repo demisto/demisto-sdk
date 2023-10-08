@@ -1773,7 +1773,7 @@ def find_type(
     ignore_sub_categories: bool = False,
     ignore_invalid_schema_file: bool = False,
     clear_cache: bool = False,
-) -> FileType | None:
+):
     """
     returns the content file type
 
@@ -1789,9 +1789,9 @@ def find_type(
     Returns:
         FileType: Enum representation of the content file type, None otherwise.
     """
-    if type_by_path := find_type_by_path(path):
+    type_by_path = find_type_by_path(path)
+    if type_by_path:
         return type_by_path
-
     try:
         if not _dict and not file_type:
             _dict, file_type = get_dict_from_file(

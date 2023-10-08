@@ -14,9 +14,9 @@ from demisto_sdk.commands.common.constants import (
     INCIDENT_FETCH_REQUIRED_PARAMS,
     MAX_FETCH_PARAM,
     PARTNER_SUPPORT,
+    SUPPORT_LEVEL_HEADER,
     XSOAR_SUPPORT,
     MarketplaceVersions,
-    SUPPORT_LEVEL_HEADER
 )
 from demisto_sdk.commands.common.default_additional_info_loader import (
     load_default_additional_info_dict,

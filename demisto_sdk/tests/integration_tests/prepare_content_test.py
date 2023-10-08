@@ -4,10 +4,10 @@ import pytest
 from click.testing import CliRunner
 
 from demisto_sdk.__main__ import main
+from demisto_sdk.commands.common.constants import SUPPORT_LEVEL_HEADER
 from demisto_sdk.commands.common.tools import get_file
 from TestSuite.pack import Pack
 from TestSuite.test_tools import ChangeCWD
-from demisto_sdk.commands.common.constants import SUPPORT_LEVEL_HEADER
 
 PREPARE_CONTENT_CMD = "prepare-content"
 

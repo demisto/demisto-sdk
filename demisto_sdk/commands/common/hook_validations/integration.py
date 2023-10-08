@@ -179,6 +179,7 @@ class IntegrationValidator(ContentEntityValidator):
             self.is_native_image_does_not_exist_in_yml(),
             self.validate_unit_test_exists(),
             self.is_line_ends_with_dot(),
+            self.is_partner_collector_has_xsoar_support_level_header(),
         ]
 
         return all(answers)

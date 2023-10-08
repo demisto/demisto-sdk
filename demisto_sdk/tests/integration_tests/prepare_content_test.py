@@ -7,6 +7,7 @@ from demisto_sdk.__main__ import main
 from demisto_sdk.commands.common.tools import get_file
 from TestSuite.pack import Pack
 from TestSuite.test_tools import ChangeCWD
+from demisto_sdk.commands.common.constants import SUPPORT_LEVEL_HEADER
 
 PREPARE_CONTENT_CMD = "prepare-content"
 
@@ -108,7 +109,7 @@ class TestPrepareContentIntegration:
                 "commands": [],
             },
             "configuration": [],
-            "support_level_header": "xsoar",
+            SUPPORT_LEVEL_HEADER: "xsoar",
         }
         integration = pack.create_integration(name, yml=yml, description=description)
         with ChangeCWD(pack.repo_path):

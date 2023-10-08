@@ -4,9 +4,9 @@
 * Modified the `validate` and `format` pre-commit hooks to run with the `--all` flag only when the `--mode=nightly` argument and `--all` flag were given.
 * Modified the `ruff` pre-commit hook to run with `--config=nightly_ruff.toml` argument when running **pre-commit** command wite the `--mode=nightly` argument.
 * Fixed an issue where deprecating parsing rules or modeling rules using **format** failed due to schema discrepancies.
-* Updated the **prepare-content** to add contributor details to the `detaileddescription` field based on **support_level_header** key.
-* Added a new key **support_level_header** to the integration schema.
-* Added a new validation (`IN159`) to ensure that each event collector under partner supported packs have the *xsoar* **support_level_header** in its yml.
+* Updated the **prepare-content** to add contributor details to the `detaileddescription` field based on **supportlevelheader** key.
+* Added a new key **supportlevelheader** to the integration schema.
+* Added a new validation (`IN159`) to ensure that each event collector under partner supported packs have the *xsoar* **supportlevelheader** in its yml.
 * Fixed an issue where kebab-case arguments were not parsed correctly.
 * Fixed an issue where **validate** falsely failed with error `RN115` on release notes with linefeed at the end of the file.
 * Fixed an issue where an error log message changed the terminal color.

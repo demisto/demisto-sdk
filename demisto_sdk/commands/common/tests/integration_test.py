@@ -16,6 +16,7 @@ from demisto_sdk.commands.common.constants import (
     PARTNER_SUPPORT,
     XSOAR_SUPPORT,
     MarketplaceVersions,
+    SUPPORT_LEVEL_HEADER
 )
 from demisto_sdk.commands.common.default_additional_info_loader import (
     load_default_additional_info_dict,
@@ -1987,7 +1988,7 @@ class TestIntegrationValidator:
                 "commands": [],
             },
             "configuration": [],
-            "support_level_header": support_level_header,
+            SUPPORT_LEVEL_HEADER: support_level_header,
         }
 
         integration = pack.create_integration(name, yml=yml)

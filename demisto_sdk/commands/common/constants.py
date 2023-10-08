@@ -1380,7 +1380,7 @@ MARKETPLACE_LIVE_DISCUSSIONS = "https://live.paloaltonetworks.com/t5/cortex-xsoa
 EXCLUDED_DISPLAY_NAME_WORDS = ["partner", "community"]
 MARKETPLACES = ["xsoar", "marketplacev2"]
 MODULES = ["compliance"]
-SUPPORT_LEVEL_HEADER = "support_level_header"
+SUPPORT_LEVEL_HEADER = "supportlevelheader"
 
 # From Version constants
 FILETYPE_TO_DEFAULT_FROMVERSION = {

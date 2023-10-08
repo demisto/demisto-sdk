@@ -3,6 +3,8 @@ import shutil
 from pathlib import Path
 from typing import List, Optional
 
+from demisto_sdk.commands.common.constants import DEMISTO_GIT_PRIMARY_BRANCH
+from demisto_sdk.commands.common.git_util import GitUtil
 from TestSuite.conf_json import ConfJSON
 from TestSuite.docker_native_image_config import DockerNativeImageConfiguration
 from TestSuite.global_secrets import GlobalSecrets
@@ -27,7 +29,7 @@ class Repo:
         packs: A list of created packs
     """
 
-    def __init__(self, tmpdir: Path):
+    def __init__(self, tmpdir: Path, init_git: bool = False):
         self.packs: List[Pack] = list()
         self._tmpdir = tmpdir
         self._packs_path = tmpdir / "Packs"
@@ -79,6 +81,15 @@ class Repo:
                 "Wizards": [],
             }
         )
+
+        self.git_util: Optional[GitUtil]
+        if init_git:
+            GitUtil.REPO_CLS.init(self.path)
+            self.git_util = GitUtil(self.path)
+            self.git_util.commit_files("Initial Commit")
+            self.git_util.repo.create_head(DEMISTO_GIT_PRIMARY_BRANCH)
+        else:
+            self.git_util = None
 
     def __del__(self):
         shutil.rmtree(self.path, ignore_errors=True)

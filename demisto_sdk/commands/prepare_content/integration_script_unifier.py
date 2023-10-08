@@ -20,6 +20,7 @@ from demisto_sdk.commands.common.constants import (
     FileType,
     ImagesFolderNames,
     MarketplaceVersions,
+    SUPPORT_LEVEL_HEADER
 )
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.logger import logger
@@ -594,7 +595,7 @@ class IntegrationScriptUnifier(Unifier):
             )
         existing_detailed_description = unified_yml.get("detaileddescription", "")
 
-        if support_level_header := unified_yml.get("support_level_header"):
+        if support_level_header := unified_yml.get(SUPPORT_LEVEL_HEADER):
             contributor_type = support_level_header
 
         if contributor_type == COMMUNITY_CONTRIBUTOR:

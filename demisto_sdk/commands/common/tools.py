@@ -3521,7 +3521,7 @@ def remove_copy_and_dev_suffixes_from_str(field_name: str) -> str:
     return field_name
 
 
-def get_display_name(file_path, file_data={}) -> str:
+def get_display_name(file_path: str, file_data: dict | None = None) -> str:
     """Gets the entity display name from the file.
 
     :param file_path: The entity file path
@@ -3530,43 +3530,58 @@ def get_display_name(file_path, file_data={}) -> str:
     :rtype: ``str``
     :return The display name
     """
-    if not file_data:
-        file_extension = os.path.splitext(file_path)[1]
-        if file_extension in [".yml", ".json"]:
-            file_data = get_file(file_path)
+    _file_data: dict
 
-    if "display" in file_data:
-        return file_data.get("display")
-    elif "layout" in file_data and isinstance(file_data["layout"], dict):
-        return file_data["layout"].get("id")
-    elif "name" in file_data:
-        return file_data.get("name")
-    elif "TypeName" in file_data:
-        return file_data.get("TypeName")
-    elif "brandName" in file_data:
-        return file_data.get("brandName")
-    elif "reputationCommand" in file_data:
-        return file_data.get("details")
-    elif "id" in file_data:
-        return file_data.get("id")
-    elif "trigger_name" in file_data:
-        return file_data.get("trigger_name")
-    elif "rule_name" in file_data:
-        return file_data.get("rule_name")
+    if file_data:
+        _file_data = file_data
+
+    else:
+        file_extension = Path(file_path).suffix
+
+        if file_extension in [".yml", ".yaml", ".json"]:
+            _file_data = get_file(file_path)
+
+        else:
+            raise ValueError(f"Unsupported file extension: '{file_extension}'.")
+
+    if "display" in _file_data:
+        return _file_data["display"]
     elif (
-        "dashboards_data" in file_data
-        and file_data.get("dashboards_data")
-        and isinstance(file_data["dashboards_data"], list)
+        "layout" in _file_data
+        and isinstance(_file_data["layout"], dict)
+        and "id" in _file_data["layout"]
     ):
-        dashboard_data = file_data.get("dashboards_data", [{}])[0]
-        return dashboard_data.get("name")
+        return _file_data["layout"]["id"]
+    elif "name" in _file_data:
+        return _file_data["name"]
+    elif "TypeName" in _file_data:
+        return _file_data["TypeName"]
+    elif "brandName" in _file_data:
+        return _file_data["brandName"]
+    elif "reputationCommand" in _file_data and "details" in _file_data:
+        return _file_data["details"]
+    elif "id" in _file_data:
+        return _file_data["id"]
+    elif "trigger_name" in _file_data:
+        return _file_data["trigger_name"]
+    elif "rule_name" in _file_data:
+        return _file_data["rule_name"]
     elif (
-        "templates_data" in file_data
-        and file_data.get("templates_data")
-        and isinstance(file_data["templates_data"], list)
+        "dashboards_data" in _file_data
+        and "dashboards_data" in _file_data
+        and isinstance(_file_data["dashboards_data"], list)
+        and len(_file_data["dashboards_data"]) > 0
+        and "name" in _file_data["dashboards_data"][0]
     ):
-        r_name = file_data.get("templates_data", [{}])[0]
-        return r_name.get("report_name")
+        return _file_data["dashboards_data"][0]["name"]
+    elif (
+        "templates_data" in _file_data
+        and "templates_data" in _file_data
+        and isinstance(_file_data["templates_data"], list)
+        and len(_file_data["templates_data"]) > 0
+        and "report_name" in _file_data["templates_data"][0]
+    ):
+        return _file_data["templates_data"][0]["report_name"]
 
     return Path(file_path).name
 

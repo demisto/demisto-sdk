@@ -24,6 +24,11 @@ DOCKER_PYTHONPATH = [
     for path in PYTHONPATH
     if path.is_relative_to(CONTENT_PATH)
 ]
+DOCKER_PYTHONPATHv2 = [
+    f"/src/{path.relative_to(CONTENT_PATH)}"
+    for path in PYTHONPATH
+    if path.is_relative_to(CONTENT_PATH)
+]
 
 DEFAULT_DOCKER_IMAGE = "demisto/python:1.3-alpine"
 

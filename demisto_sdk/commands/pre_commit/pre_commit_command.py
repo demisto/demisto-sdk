@@ -35,11 +35,13 @@ from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.content_graph.objects.integration_script import (
     IntegrationScript,
 )
+from demisto_sdk.commands.lint.helpers import get_test_modules
 from demisto_sdk.commands.pre_commit.hooks.mypy import MypyHook
 from demisto_sdk.commands.pre_commit.hooks.pycln import PyclnHook
 from demisto_sdk.commands.pre_commit.hooks.ruff import RuffHook
 from demisto_sdk.commands.pre_commit.hooks.sourcery import SourceryHook
 from demisto_sdk.commands.pre_commit.hooks.validate_format import ValidateFormatHook
+from demisto_sdk.commands.run_unit_tests.unit_tests_runner import DOCKER_PYTHONPATHv2
 
 IS_GITHUB_ACTIONS = string_to_bool(os.getenv("GITHUB_ACTIONS"), False)
 
@@ -82,20 +84,6 @@ def devtest_image(param):
         return image
 
 
-def python_files_for_lint(files):
-    # any yml that has a corressponding py file should be linted. Any python file has a yml file
-    python_files = {file for file in files if file.suffix in (".py", ".yml")}
-
-    def python_file_from_yml(file):
-        return file.parent / file.name.replace(".yml", ".py")  # todo find unit tests
-
-    return {
-        python_file_from_yml(file)
-        for file in python_files
-        if python_file_from_yml(file).is_file()
-    }
-
-
 def file_exact_match_regex(files_to_run_on_hook: list[str]) -> str:
     """
     Creates a string to override a hooks 'files' property
@@ -106,27 +94,12 @@ def file_exact_match_regex(files_to_run_on_hook: list[str]) -> str:
         A string representing the regex to put into a precommit file to return exact file matching
 
     """
-    return '(?x)^(\n' + '|\n'.join(files_to_run_on_hook) + '\n)$'
+    return "(?x)^(\n" + "|\n".join(files_to_run_on_hook) + "\n)$"
 
 
-def set_files_on_hook(hook, files):
-    """
-    Mutates a hook, setting a regex for file exact match on the hook
-    according to the file's *file* and *exclude* properties
-    Args:
-        hook: The hook to mutate
-        files: The files to set on the hook
-    """
-    if files_reg := hook.get("files"):
-        include_pattern = re.compile(files_reg)
-    if exclude_reg := hook.get("exclude"):
-        exclude_pattern = re.compile(exclude_reg)
-    files_to_run_on_hook = [file for file in
-                            [str(file) for file in files]
-                            if not files_reg or re.search(include_pattern, file) # include all if not defined
-                            and not (exclude_reg and re.search(exclude_pattern, file))] # only exclude if defined
-    hook['files'] = LiteralScalarString(file_exact_match_regex(files_to_run_on_hook))
-    del hook['exclude']
+@functools.cache
+def get_docker_python_path():
+    ":".join(str(path) for path in sorted(DOCKER_PYTHONPATHv2))
 
 
 @dataclass
@@ -136,6 +109,7 @@ class PreCommitRunner:
     input_files: Optional[Iterable[Path]]
     python_version_to_files: Dict[str, Set[Path]]
     demisto_sdk_commit_hash: str
+    git_util: GitUtil
 
     def __post_init__(self):
         """
@@ -180,14 +154,38 @@ class PreCommitRunner:
         return {
             devtest_image(image): list(group)
             for image, group in itertools.groupby(
-                [
-                    file
-                    for file in python_files_for_lint(allfiles)
-                    if docker_image_for_file(file)
-                ],
+                [file for file in allfiles if docker_image_for_file(file)],
                 lambda f: docker_image_for_file(f),
             )
         }
+
+    def set_files_on_hook(self, hook, files) -> int:
+        """
+        Mutates a hook, setting a regex for file exact match on the hook
+        according to the file's *file* and *exclude* properties
+        Args:
+            hook: The hook to mutate
+            files: The files to set on the hook
+        Returns:
+            The number of files set
+        """
+        if files_reg := hook.get("files"):
+            include_pattern = re.compile(files_reg)
+        if exclude_reg := hook.get("exclude"):
+            exclude_pattern = re.compile(exclude_reg)
+        files_to_run_on_hook = [
+            file
+            for file in [str(file) for file in files]
+            if file in self.git_util.get_all_files()
+            and not files_reg
+            or re.search(include_pattern, file)  # include all if not defined
+            and not (exclude_reg and re.search(exclude_pattern, file))
+        ]  # only exclude if defined
+        hook["files"] = LiteralScalarString(
+            file_exact_match_regex(files_to_run_on_hook)
+        )
+        hook.pop("exclude", None)
+        return len(files_to_run_on_hook)
 
     def prepare_docker_hooks(self, hooks) -> list:
         all_hooks = []
@@ -199,9 +197,12 @@ class PreCommitRunner:
                 new_hook = hook.copy()
                 new_hook["id"] = f"{hook['id']}-{counter}"
                 new_hook["language"] = "docker_image"
-                new_hook["entry"] = f"--entrypoint '{hook['entry']}' {tag}"
-                set_files_on_hook(new_hook, files)
-                all_hooks.append(new_hook)
+                new_hook[
+                    "entry"
+                ] = f"--entrypoint '{hook['entry']}' -e {get_docker_python_path()} {tag}"
+                number_files_set = self.set_files_on_hook(new_hook, files)
+                if number_files_set:
+                    all_hooks.append(new_hook)
         return all_hooks
 
     def update_config_with_docker_hooks(self, hooks, config):
@@ -256,6 +257,7 @@ class PreCommitRunner:
             str(path) for path in sorted(PYTHONPATH) if "site-packages" not in str(path)
         )
         precommit_env["DEMISTO_SDK_CONTENT_PATH"] = str(CONTENT_PATH)
+
         for python_version, changed_files in self.python_version_to_files.items():
             precommit_config = deepcopy(self.precommit_template)
             assert isinstance(precommit_config, dict)
@@ -315,7 +317,9 @@ class PreCommitRunner:
         return ret_val
 
 
-def group_by_python_version(files: Set[Path]) -> Dict[str, set]:
+def group_by_python_version(
+    files: Set[Path], modules, git_util: GitUtil
+) -> Dict[str, set]:
     """This function groups the files to run pre-commit on by the python version.
 
     Args:
@@ -367,15 +371,36 @@ def group_by_python_version(files: Set[Path]) -> Dict[str, set]:
         code_file_path = integration_script.path.parent
         python_version = get_python_version(integration_script.docker_image)
         python_version_string = f"{python_version.major}.{python_version.minor}"
+        code_files_to_include = code_files_to_include_for_path(
+            integration_script, git_util
+        )
         python_versions_to_files[
             python_version_string or DEFAULT_PYTHON2_VERSION
         ].update(
             integrations_scripts_mapping[code_file_path]
+            | code_files_to_include
             | {integration_script.path}  # add the python including files here
         )
+        # add_tmp_lint_files(content_repo=CONTENT_PATH,
+        #                    modules=modules,
+        #                    lint_files=list(code_files_to_include),
+        #                    pack_path=integration_script.path.parent,
+        #                    pack_type=TYPE_PYTHON if any(file.suffix == '.py' for file in code_files_to_include) else TYPE_PWSH).__enter__()
 
     python_versions_to_files[DEFAULT_PYTHON_VERSION].update(infra_files)
     return python_versions_to_files
+
+
+def code_files_to_include_for_path(content: BaseContent, git_util: GitUtil) -> set:
+    parent = content.path.parent
+    return {
+        path.relative_to(CONTENT_PATH)
+        for path in {
+            parent / f
+            for f in os.listdir(parent)
+            if f.endswith(".py") or f.endswith(".ps1")
+        }
+    } & git_util.get_all_files()
 
 
 def pre_commit_manager(
@@ -414,8 +439,10 @@ def pre_commit_manager(
     if not any((input_files, staged_only, git_diff, all_files)):
         logger.info("No arguments were given, running on staged files and git changes.")
         git_diff = True
-
-    files_to_run = preprocess_files(input_files, staged_only, git_diff, all_files)
+    git_util = GitUtil()
+    files_to_run = preprocess_files(
+        input_files, staged_only, git_diff, all_files, git_util
+    )
     if not files_to_run:
         logger.info("No files were changed, skipping pre-commit.")
         return None
@@ -429,7 +456,12 @@ def pre_commit_manager(
     if not sdk_ref:
         sdk_ref = f"v{get_last_remote_release_version()}"
     pre_commit_runner = PreCommitRunner(
-        input_files, group_by_python_version(files_to_run), sdk_ref
+        input_files,
+        group_by_python_version(
+            files_to_run, get_test_modules(git_util.repo), git_util
+        ),
+        sdk_ref,
+        git_util,
     )
     return pre_commit_runner.run(
         unit_test,
@@ -447,8 +479,8 @@ def preprocess_files(
     staged_only: bool = False,
     use_git: bool = False,
     all_files: bool = False,
+    git_util=GitUtil(),
 ) -> Set[Path]:
-    git_util = GitUtil()
     staged_files = git_util._get_staged_files()
     all_git_files = git_util.get_all_files() | staged_files
     if input_files:

@@ -1,3 +1,4 @@
+import functools
 import os
 import re
 from pathlib import Path
@@ -26,6 +27,7 @@ class GitUtil:
         else:
             self.repo = repo
 
+    @functools.cache
     def get_all_files(self) -> Set[Path]:
         return set(map(Path, self.repo.git.ls_files().split("\n")))
 
@@ -497,6 +499,7 @@ class GitUtil:
 
         return extracted_paths
 
+    @functools.cache
     def _get_staged_files(self) -> Set[Path]:
         """Get only staged files
 

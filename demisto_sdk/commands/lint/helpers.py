@@ -28,7 +28,7 @@ from demisto_sdk.commands.common.constants import (
 from demisto_sdk.commands.common.logger import logger
 
 # Python2 requirements
-from demisto_sdk.commands.common.tools import get_remote_file
+from demisto_sdk.commands.common.tools import get_remote_file, is_external_repository
 
 PYTHON2_REQ = ["flake8", "vulture"]
 
@@ -111,7 +111,7 @@ def build_skipped_exit_code(
 
 
 def get_test_modules(
-    content_repo: Optional[git.Repo], is_external_repo: bool
+    content_repo: Optional[git.Repo], is_external_repo: bool = is_external_repository()
 ) -> Dict[Path, bytes]:
     """Get required test modules from content repository - {remote}/master
     1. Tests/demistomock/demistomock.py

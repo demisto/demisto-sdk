@@ -2103,7 +2103,7 @@ def generate_docs(ctx, **kwargs):
 
         else:
             raise Exception(
-                f"[red]Input {input_path} is neither a valid yml file, nor a folder named Playbooks, nor a readme file."
+                f"[red]Input {input_path} is neither a valid yml file, nor a folder named Playbooks, nor a readme file.[/red]"
             )
 
         return 0

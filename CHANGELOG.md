@@ -1,12 +1,19 @@
 # Changelog
 ## Unreleased
+* Fixed an issue where unified integrations / scripts with a period in their name would not split properly.
+* Fixed an issue where the documentation was out of date with the current structure of **demisto-sdk** which does not support command auto-completion.
+* Improved logging for **lint** and **prepare-content** commands.
+
+## 1.20.6
 * Added the *--mode* argument to the **pre-commit** command, to run pre-commit with special mode (to run with different settings), supported mode are: 'nightly'.
 * Modified the `validate` and `format` pre-commit hooks to run with the `--all` flag only when the `--mode=nightly` argument and `--all` flag were given.
 * Modified the `ruff` pre-commit hook to run with `--config=nightly_ruff.toml` argument when running **pre-commit** command wite the `--mode=nightly` argument.
 * Fixed an issue where deprecating parsing rules or modeling rules using **format** failed due to schema discrepancies.
 * Fixed an issue where kebab-case arguments were not parsed correctly.
 * Fixed an issue where **validate** falsely failed with error `RN115` on release notes with linefeed at the end of the file.
-
+* Fixed an issue where **validate** falsely failed with error `DS108` on descriptions ending with new lines followed by square/curly brackets.
+* Fixed an issue where **graph** commands would not clean their temporary files properly, causing successive commands to fail.
+* Fixed an issue where an error log message changed the terminal color.
 
 ## 1.20.5
 * Fixed an issue where **validate** falsely failed with error `DS108` on descriptions ending with brackets that contains a dot at the end of them.

@@ -3521,7 +3521,7 @@ def remove_copy_and_dev_suffixes_from_str(field_name: str) -> str:
     return field_name
 
 
-def get_display_name(file_path: str, file_data: dict | None = None) -> str:
+def get_display_name(file_path: str | Path, file_data: dict | None = None) -> str:
     """Gets the entity display name from the file.
 
     :param file_path: The entity file path
@@ -3530,19 +3530,11 @@ def get_display_name(file_path: str, file_data: dict | None = None) -> str:
     :rtype: ``str``
     :return The display name
     """
-    _file_data: dict
+    _file_path = Path(file_path)
+    _file_data: dict = file_data or {}
 
-    if file_data:
-        _file_data = file_data
-
-    else:
-        file_extension = Path(file_path).suffix
-
-        if file_extension in [".yml", ".yaml", ".json"]:
-            _file_data = get_file(file_path)
-
-        else:
-            raise ValueError(f"Unsupported file extension: '{file_extension}'.")
+    if not file_data and _file_path.suffix in (".yml", ".yaml", ".json"):
+        _file_data = get_file(_file_path)
 
     if "display" in _file_data:
         return _file_data["display"]
@@ -3583,7 +3575,7 @@ def get_display_name(file_path: str, file_data: dict | None = None) -> str:
     ):
         return _file_data["templates_data"][0]["report_name"]
 
-    return Path(file_path).name
+    return Path(_file_path).name
 
 
 def get_invalid_incident_fields_from_mapper(

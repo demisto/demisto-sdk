@@ -787,7 +787,7 @@ class Downloader:
                 main_file_data = get_json(entity_instance_path)
 
         main_id = get_entity_id_by_entity_type(main_file_data, content_entity)
-        main_name = get_display_name(file_path="", file_data=main_file_data)
+        main_name = get_display_name(file_path=main_file_path, file_data=main_file_data)
 
         return main_id, main_name
 
@@ -904,7 +904,7 @@ class Downloader:
             existing, file_type
         )  # For example: Integrations
         file_id: str = get_entity_id_by_entity_type(existing, file_entity)
-        file_name: str = get_display_name(file_path="", file_data=existing)
+        file_name: str = get_display_name(file_path=file_path, file_data=existing)
 
         if not file_name:
             file_name = existing.get("id", "")

@@ -18,7 +18,6 @@ from requests import JSONDecodeError
 from demisto_sdk.commands.common.constants import (
     DEFAULT_PYTHON2_VERSION,
     DEFAULT_PYTHON_VERSION,
-    DOCKER_IO,
     DOCKERFILES_INFO_REPO,
     TYPE_PWSH,
     TYPE_PYTHON,
@@ -198,7 +197,9 @@ class DockerBase:
         for _ in range(2):
             try:
 
-                test_image_name_to_push = image.replace(f"{DOCKER_IO}/", "")
+                test_image_name_to_push = image.replace(
+                    "docker-io.art.code.pan.run/", ""
+                )
                 docker_push_output = init_global_docker_client().images.push(
                     test_image_name_to_push
                 )
@@ -262,7 +263,7 @@ class DockerBase:
         )
         if os.getenv("CONTENT_GITLAB_CI"):
             container.commit(
-                repository=repository.replace(f"{DOCKER_IO}/", ""),
+                repository=repository.replace("docker-io.art.code.pan.run/", ""),
                 tag=tag,
                 changes=self.changes[container_type],
             )
@@ -565,7 +566,7 @@ def _get_python_version_from_dockerhub_api(image: str) -> Version:
         repo, tag = image.split(":")
     if os.getenv("CONTENT_GITLAB_CI"):
         # we need to remove the gitlab prefix, as we query the API
-        repo = repo.replace(f"{DOCKER_IO}/", "")
+        repo = repo.replace("docker-io.art.code.pan.run/", "")
     try:
         token = _get_docker_hub_token(repo)
         digest = _get_image_digest(repo, tag, token)

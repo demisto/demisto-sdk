@@ -10,9 +10,6 @@ import coverage
 from junitparser import JUnitXml
 
 import demisto_sdk.commands.common.docker_helper as docker_helper
-from demisto_sdk.commands.common.constants import (
-    DOCKER_IO,
-)
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH, PYTHONPATH
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
@@ -33,6 +30,7 @@ DEFAULT_DOCKER_IMAGE = "demisto/python:1.3-alpine"
 PYTEST_COMMAND = "python -m pytest . -v --rootdir=/content --override-ini='asyncio_mode=auto' --override-ini='junit_family=xunit1' --junitxml=.report_pytest.xml --cov-report= --cov=."
 PWSH_COMMAND = "pwsh -Command Invoke-Pester -Configuration '@{Run=@{Exit=$true}; Output=@{Verbosity=\"Detailed\"}}'"
 TEST_REQUIREMENTS_DIR = Path(__file__).parent.parent / "lint" / "resources"
+
 
 NO_TESTS_COLLECTED = 5
 
@@ -124,7 +122,8 @@ def unit_test_runner(file_paths: List[Path], verbose: bool = False) -> int:
         docker_images = [integration_script.docker_image or DEFAULT_DOCKER_IMAGE]
         if os.getenv("CONTENT_GITLAB_CI"):
             docker_images = [
-                f"{DOCKER_IO}/{docker_image}" for docker_image in docker_images
+                f"docker-io.art.code.pan.run/{docker_image}"
+                for docker_image in docker_images
             ]
         logger.debug(f"{docker_images=}")
         for docker_image in docker_images:

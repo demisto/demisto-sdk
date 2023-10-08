@@ -16,7 +16,6 @@ from wcmatch.pathlib import NEGATE, Path
 
 from demisto_sdk.commands.common.constants import (
     API_MODULE_FILE_SUFFIX,
-    DOCKER_IO,
     FORMATTING_SCRIPT,
     INTEGRATIONS_DIR,
     NATIVE_IMAGE_DOCKER_NAME,
@@ -366,7 +365,8 @@ class Linter:
             # we want to use the docker-io.art.code.pan.run only if we run in content build (and not CI/CD for example)
             if os.getenv("CONTENT_GITLAB_CI", False):
                 self._facts["images"] = [
-                    [f"{DOCKER_IO}/{image[0]}", -1] for image in self._facts["images"]
+                    [f"docker-io.art.code.pan.run/{image[0]}", -1]
+                    for image in self._facts["images"]
                 ]
             # Gather environment variables for docker execution
             self._facts["env_vars"] = {

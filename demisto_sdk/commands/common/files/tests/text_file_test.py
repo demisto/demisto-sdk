@@ -1,14 +1,16 @@
+from typing import List, Tuple
+
 import pytest
 
-from demisto_sdk.commands.common.files.tests.file_test import FileReadMethodsTesting
+from demisto_sdk.commands.common.files.tests.file_test import FileObjectsTesting
 from demisto_sdk.commands.common.files.text_file import TextFile
-from demisto_sdk.commands.common.git_util import GitUtil
 from TestSuite.test_tools import ChangeCWD
 
 
-class TestTextFileReadMethods(FileReadMethodsTesting):
+class TestTextFile(FileObjectsTesting):
     @pytest.fixture(autouse=True)
-    def input_files(self, pack):
+    def input_files(self, git_repo):
+        pack = git_repo.create_pack("test")
         integration = pack.create_integration(
             commands_txt="hello-world-command",
             readme="this is the readme",
@@ -19,45 +21,56 @@ class TestTextFileReadMethods(FileReadMethodsTesting):
         release_notes = pack.create_release_notes(
             version="1.1.1", content="\n#### Integrations\n##### test\n- added feature"
         )
-        repo = GitUtil.REPO_CLS.init(pack.repo_path)
-        repo.git.add(".")
-        repo.index.commit("Initial commit")
-        master_branch = repo.create_head("master")
-        master_branch.checkout()
+        if git_util := git_repo.git_util:
+            git_util.commit_files("commit all text files")
 
-        return [
-            release_notes,
-            integration.commands_txt,
-            integration.readme,
-            integration.description,
-            integration.code,
-            integration.test,
-        ], pack.repo_path
+        text_file_paths = [
+            release_notes.path,
+            integration.commands_txt.path,
+            integration.readme.path,
+            integration.description.path,
+            integration.code.path,
+            integration.test.path,
+        ]
+        return text_file_paths, git_repo.path
 
-    @staticmethod
-    def run(items, repo, read_method, **read_method_kwargs):
-        with ChangeCWD(repo):
-            for item in items:
-                result = read_method(item.path, **read_method_kwargs)
-                if hasattr(item, "read_text"):
-                    assert result == item.read_text()
-                elif hasattr(item, "read"):
-                    assert result == item.read()
+    def test_read_from_local_path(self, input_files: Tuple[List[str], str]):
 
-    def test_read_from_local_path(self, input_files):
-        items, repo = input_files
-        self.run(items, repo, TextFile.read_from_local_path)
+        text_file_paths, _ = input_files
+
+        for path in text_file_paths:
+            with open(path, "r") as file:
+                expected_file_content = file.read()
+
+            actual_file_content = TextFile.read_from_local_path(path)
+            assert (
+                actual_file_content == expected_file_content
+            ), f"Could not read text file {path} properly, expected: {expected_file_content}, actual: {actual_file_content}"
 
     @pytest.mark.parametrize("from_remote", [True, False])
-    def test_read_from_git_path(self, mocker, input_files, from_remote):
-        if from_remote:
-            mocker.patch.object(
-                GitUtil,
-                "get_local_remote_file_path",
-                side_effect=self.get_local_remote_file_path_side_effect,
-            )
-            mocker.patch.object(
-                GitUtil, "is_file_exist_in_commit_or_branch", return_value=True
-            )
-        items, repo = input_files
-        self.run(items, repo, TextFile.read_from_git_path, from_remote=from_remote)
+    def test_read_from_git_path(
+        self, mocker, input_files: Tuple[List[str], str], from_remote: bool
+    ):
+
+        text_file_paths, git_repo_path = input_files
+        with ChangeCWD(git_repo_path):
+            for path in text_file_paths:
+                with open(path, "r") as file:
+                    expected_file_content = file.read()
+
+            actual_file_content = TextFile.read_from_git_path(path)
+            assert (
+                actual_file_content == expected_file_content
+            ), f"Could not read text file {path} properly from git, expected: {expected_file_content}, actual: {actual_file_content}"
+
+    def test_read_from_github_api(self):
+        pass
+
+    def test_read_from_gitlab_api(self):
+        pass
+
+    def test_read_from_http_request(self):
+        pass
+
+    def test_write_file(self):
+        pass

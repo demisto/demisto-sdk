@@ -13,6 +13,7 @@ from demisto_sdk.commands.common.files.text_file import TextFile
 from demisto_sdk.commands.common.files.yml_file import YmlFile
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.legacy_git_tools import git_path
+from TestSuite.repo import Repo
 
 DEMISTO_SDK_PATH = Path(f"{git_path()}", "demisto_sdk")
 
@@ -33,6 +34,14 @@ class TestFileFromPath:
     )
     def test_from_path_input_file(self, input_path: Path, expected_class: Type[File]):
         assert isinstance(File.from_path(input_path), expected_class)
+
+    def test_from_path_with_input_path_from_content(self, git_repo: Repo):
+        integration = git_repo.create_pack("test").create_integration("test")
+        if git_util := git_repo.git_util:
+            git_util: GitUtil
+            assert isinstance(
+                File.from_path(git_util.path_from_git_root(integration.path)), YmlFile
+            )
 
     def test_from_path_input_file_unknown_file(self):
         with pytest.raises(UnknownFileError):
@@ -55,7 +64,7 @@ class TestFileFromPath:
             File.write_file({}, output_path="some/path")
 
 
-class FileReadMethodsTesting(ABC):
+class FileObjectsTesting(ABC):
     @pytest.fixture(autouse=True)
     @abstractmethod
     def input_files(self):
@@ -75,4 +84,20 @@ class FileReadMethodsTesting(ABC):
     @pytest.mark.parametrize("from_remote", [True, False])
     @abstractmethod
     def test_read_from_git_path(self, mocker, input_files, from_remote):
+        pass
+
+    @abstractmethod
+    def test_read_from_github_api(self):
+        pass
+
+    @abstractmethod
+    def test_read_from_gitlab_api(self):
+        pass
+
+    @abstractmethod
+    def test_read_from_http_request(self):
+        pass
+
+    @abstractmethod
+    def test_write_file(self):
         pass

@@ -8,7 +8,7 @@ from typing import Any, Dict, Optional, Set, Type, Union
 
 import requests
 from bs4.dammit import UnicodeDammit
-from pydantic import BaseModel, validator
+from pydantic import BaseModel, PrivateAttr, validator
 from requests.exceptions import RequestException
 
 from demisto_sdk.commands.common.constants import (
@@ -33,7 +33,7 @@ from demisto_sdk.commands.common.logger import logger
 class File(ABC, BaseModel):
     git_util: GitUtil
     input_path: Path
-    _input_path_content: bytes = None
+    _input_path_content: bytes = PrivateAttr(None)
     default_encoding: str = "utf-8"  # default encoding is utf-8
 
     class Config:
@@ -84,7 +84,7 @@ class File(ABC, BaseModel):
         return v or GitUtil.from_content_path()
 
     @validator("input_path", always=True)
-    def validate_input_path(cls, v: Path, values) -> Optional[Path]:
+    def validate_input_path(cls, v: Path, values) -> Path:
         if v.is_absolute():
             return v
         else:
@@ -128,8 +128,6 @@ class File(ABC, BaseModel):
         git_util: Optional[GitUtil] = None,
         **kwargs,
     ) -> "File":
-
-        input_path = Path(input_path)
 
         model_attributes: Dict[str, Any] = {
             "input_path": input_path,

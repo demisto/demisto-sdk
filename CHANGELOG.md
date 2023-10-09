@@ -138,6 +138,7 @@
 * Updated the **format** command to use the content graph instead of the id_set file.
 * Updated **format** command not to fail on unexpected values that returns from the graph, and just add it to the log.
 * Removed a redundant debug log on the `tools.get_file` function.
+* Added the *auto-replace-uuids* flag to the **download** command. set this flag to False to avoid UUID replacements when downloading using download command.
 
 ## 1.18.1
 * Fixed an issue where the coloring directives where showing in log messages.

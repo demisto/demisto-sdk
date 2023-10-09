@@ -3,6 +3,7 @@
 * Fixed an issue where unified integrations / scripts with a period in their name would not split properly.
 * Fixed an issue where the documentation was out of date with the current structure of **demisto-sdk** which does not support command auto-completion.
 * Improved logging for **lint** and **prepare-content** commands.
+* Internal: Added the `CI_SERVER_HOST`, `CI_PROJECT_ID` environment variables.
 * Added the *--delete_existing_dataset/-dd* flag to the **modeling-rules test** command to delete an existing dataset in the tenant.
 
 ## 1.20.6

@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Type
+from typing import List, Tuple, Type
 
 import pytest
 
@@ -80,15 +80,15 @@ class FileObjectsTesting(ABC):
         return f"{tag}:{git_util.path_from_git_root(full_file_path)}"
 
     @abstractmethod
-    def test_read_from_local_path(self, input_files):
+    def test_read_from_local_path(self, input_files: Tuple[List[str], str]):
         pass
 
     @abstractmethod
-    def test_read_from_git_path(self, mocker, input_files):
+    def test_read_from_git_path(self, input_files: Tuple[List[str], str]):
         pass
 
     @abstractmethod
-    def test_read_from_github_api(self):
+    def test_read_from_github_api(self, mocker, input_files: Tuple[List[str], str]):
         pass
 
     @abstractmethod

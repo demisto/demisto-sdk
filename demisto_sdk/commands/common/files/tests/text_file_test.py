@@ -1,7 +1,9 @@
+from pathlib import Path
 from typing import List, Tuple
 
 import pytest
 
+from demisto_sdk.commands.common.constants import DEMISTO_GIT_PRIMARY_BRANCH
 from demisto_sdk.commands.common.files.tests.file_test import FileObjectsTesting
 from demisto_sdk.commands.common.files.text_file import TextFile
 from TestSuite.test_tools import ChangeCWD
@@ -39,30 +41,42 @@ class TestTextFile(FileObjectsTesting):
         text_file_paths, _ = input_files
 
         for path in text_file_paths:
-            with open(path, "r") as file:
-                expected_file_content = file.read()
-
+            expected_file_content = Path(path).read_text()
             actual_file_content = TextFile.read_from_local_path(path)
             assert (
                 actual_file_content == expected_file_content
             ), f"Could not read text file {path} properly, expected: {expected_file_content}, actual: {actual_file_content}"
 
-    def test_read_from_git_path(self, mocker, input_files: Tuple[List[str], str]):
+    def test_read_from_git_path(self, input_files: Tuple[List[str], str]):
 
         text_file_paths, git_repo_path = input_files
 
         with ChangeCWD(git_repo_path):
             for path in text_file_paths:
-                with open(path, "r") as file:
-                    expected_file_content = file.read()
+                expected_file_content = Path(path).read_text()
+                actual_file_content = TextFile.read_from_git_path(
+                    path, from_remote=False
+                )
+                assert (
+                    actual_file_content == expected_file_content
+                ), f"Could not read text file {path} properly from git, expected: {expected_file_content}, actual: {actual_file_content}"
 
-            actual_file_content = TextFile.read_from_git_path(path, from_remote=False)
+    def test_read_from_github_api(self, mocker, input_files: Tuple[List[str], str]):
+        import requests
+
+        text_file_paths, _ = input_files
+        for path in text_file_paths:
+            api_response = requests.Response()
+            api_response.status_code = 200
+            api_response._content = Path(path).read_bytes()
+            requests_mocker = mocker.patch.object(
+                requests, "get", return_value=api_response
+            )
+            assert TextFile.read_from_github_api(path) == Path(path).read_text()
+            # make sure that the URL is sent correctly
             assert (
-                actual_file_content == expected_file_content
-            ), f"Could not read text file {path} properly from git, expected: {expected_file_content}, actual: {actual_file_content}"
-
-    def test_read_from_github_api(self):
-        pass
+                f"{DEMISTO_GIT_PRIMARY_BRANCH}{path}" in requests_mocker.call_args[0][0]
+            )
 
     def test_read_from_gitlab_api(self):
         pass

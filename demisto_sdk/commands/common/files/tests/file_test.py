@@ -11,7 +11,6 @@ from demisto_sdk.commands.common.files.ini_file import IniFile
 from demisto_sdk.commands.common.files.json_file import JsonFile
 from demisto_sdk.commands.common.files.text_file import TextFile
 from demisto_sdk.commands.common.files.yml_file import YmlFile
-from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from TestSuite.repo import Repo
 from TestSuite.test_tools import ChangeCWD
@@ -19,7 +18,7 @@ from TestSuite.test_tools import ChangeCWD
 DEMISTO_SDK_PATH = Path(f"{git_path()}", "demisto_sdk")
 
 
-class TestFileFromPath:
+class TestFile:
     @pytest.mark.parametrize(
         "input_path, expected_class",
         [
@@ -66,18 +65,11 @@ class TestFileFromPath:
             File.write_file({}, output_path="some/path")
 
 
-class FileObjectsTesting(ABC):
+class FileTesting(ABC):
     @pytest.fixture(autouse=True)
     @abstractmethod
     def input_files(self):
         pass
-
-    @staticmethod
-    def get_local_remote_file_path_side_effect(
-        full_file_path: str, tag: str, from_remote: bool
-    ):
-        git_util = GitUtil.from_content_path()
-        return f"{tag}:{git_util.path_from_git_root(full_file_path)}"
 
     @abstractmethod
     def test_read_from_local_path(self, input_files: Tuple[List[str], str]):

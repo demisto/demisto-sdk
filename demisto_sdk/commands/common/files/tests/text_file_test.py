@@ -4,13 +4,13 @@ from typing import List, Tuple
 import pytest
 
 from demisto_sdk.commands.common.constants import DEMISTO_GIT_PRIMARY_BRANCH
-from demisto_sdk.commands.common.files.tests.file_test import FileObjectsTesting
+from demisto_sdk.commands.common.files.tests.file_test import FileTesting
 from demisto_sdk.commands.common.files.text_file import TextFile
 from demisto_sdk.commands.common.git_content_config import GitContentConfig, GitProvider
 from TestSuite.test_tools import ChangeCWD
 
 
-class TestTextFile(FileObjectsTesting):
+class TestTextFile(FileTesting):
     @pytest.fixture(autouse=True)
     def input_files(self, git_repo):
         pack = git_repo.create_pack("test")

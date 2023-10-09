@@ -1,5 +1,8 @@
 # Changelog
 ## Unreleased
+* Added the *auto-replace-uuids* flag to the **download** command. set this flag to False to avoid UUID replacements when downloading using download command.
+
+## 1.20.7
 * Fixed an issue where unified integrations / scripts with a period in their name would not split properly.
 * Fixed an issue where the documentation was out of date with the current structure of **demisto-sdk** which does not support command auto-completion.
 * Improved logging for **lint** and **prepare-content** commands.
@@ -139,7 +142,6 @@
 * Updated the **format** command to use the content graph instead of the id_set file.
 * Updated **format** command not to fail on unexpected values that returns from the graph, and just add it to the log.
 * Removed a redundant debug log on the `tools.get_file` function.
-* Added the *auto-replace-uuids* flag to the **download** command. set this flag to False to avoid UUID replacements when downloading using download command.
 
 ## 1.18.1
 * Fixed an issue where the coloring directives where showing in log messages.

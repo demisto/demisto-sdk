@@ -6,6 +6,7 @@ import pytest
 from demisto_sdk.commands.common.constants import DEMISTO_GIT_PRIMARY_BRANCH
 from demisto_sdk.commands.common.files.tests.file_test import FileObjectsTesting
 from demisto_sdk.commands.common.files.text_file import TextFile
+from demisto_sdk.commands.common.git_content_config import GitContentConfig, GitProvider
 from TestSuite.test_tools import ChangeCWD
 
 
@@ -75,14 +76,53 @@ class TestTextFile(FileObjectsTesting):
             assert TextFile.read_from_github_api(path) == Path(path).read_text()
             # make sure that the URL is sent correctly
             assert (
-                f"{DEMISTO_GIT_PRIMARY_BRANCH}{path}" in requests_mocker.call_args[0][0]
+                f"{DEMISTO_GIT_PRIMARY_BRANCH}{path}"
+                in requests_mocker.call_args.args[0]
             )
 
-    def test_read_from_gitlab_api(self):
-        pass
+    def test_read_from_gitlab_api(self, mocker, input_files: Tuple[List[str], str]):
+        from urllib.parse import unquote
 
-    def test_read_from_http_request(self):
-        pass
+        import requests
 
-    def test_write_file(self):
-        pass
+        text_file_paths, _ = input_files
+        for path in text_file_paths:
+            api_response = requests.Response()
+            api_response.status_code = 200
+            api_response._content = Path(path).read_bytes()
+            requests_mocker = mocker.patch.object(
+                requests, "get", return_value=api_response
+            )
+            assert (
+                TextFile.read_from_gitlab_api(
+                    path,
+                    git_content_config=GitContentConfig(
+                        repo_hostname="test.com",
+                        git_provider=GitProvider.GitLab,
+                        project_id=1234,
+                    ),
+                )
+                == Path(path).read_text()
+            )
+            # make sure that the URL is sent correctly
+            assert path in unquote(requests_mocker.call_args.args[0])
+            assert requests_mocker.call_args.kwargs["params"] == {
+                "ref": DEMISTO_GIT_PRIMARY_BRANCH
+            }
+
+    def test_read_from_http_request(self, mocker, input_files: Tuple[List[str], str]):
+        import requests
+
+        text_file_paths, _ = input_files
+        for path in text_file_paths:
+            api_response = requests.Response()
+            api_response.status_code = 200
+            api_response._content = Path(path).read_bytes()
+            mocker.patch.object(requests, "get", return_value=api_response)
+            assert TextFile.read_from_http_request(path) == Path(path).read_text()
+
+    def test_write_file(self, git_repo):
+        _path = Path(git_repo.path) / "file.txt"
+        TextFile.write_file("text", output_path=_path)
+        assert _path.exists()
+        assert _path.read_text() == "text"

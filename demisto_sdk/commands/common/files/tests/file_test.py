@@ -92,13 +92,13 @@ class FileObjectsTesting(ABC):
         pass
 
     @abstractmethod
-    def test_read_from_gitlab_api(self):
+    def test_read_from_gitlab_api(self, mocker, input_files: Tuple[List[str], str]):
         pass
 
     @abstractmethod
-    def test_read_from_http_request(self):
+    def test_read_from_http_request(self, mocker, input_files: Tuple[List[str], str]):
         pass
 
     @abstractmethod
-    def test_write_file(self):
+    def test_write_file(self, git_repo):
         pass

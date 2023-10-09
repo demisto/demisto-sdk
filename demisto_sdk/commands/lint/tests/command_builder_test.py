@@ -29,7 +29,7 @@ def test_build_xsoar_linter_py3_command(files):
     """Build xsoar linter command"""
     from demisto_sdk.commands.lint.commands_builder import build_xsoar_linter_command
 
-    output = build_xsoar_linter_command(files, "base", all_packs=True)
+    output = build_xsoar_linter_command(files, "base")
     files = [str(file) for file in files]
     expected = (
         f"pylint --ignore=CommonServerPython.py,demistomock.py,CommonServerUserPython.py,"
@@ -45,7 +45,7 @@ def test_build_xsoar_linter_py2_command(files):
     """Build xsoar linter command"""
     from demisto_sdk.commands.lint.commands_builder import build_xsoar_linter_command
 
-    output = build_xsoar_linter_command(files, "base", all_packs=True)
+    output = build_xsoar_linter_command(files, "base")
     files = [str(file) for file in files]
     expected = (
         f"pylint --ignore=CommonServerPython.py,demistomock.py,CommonServerUserPython.py,"

@@ -332,6 +332,10 @@ ERROR_CODE: Dict = {
         "code": "DS107",
         "related_field": "detaileddescription",
     },
+    "description_missing_dot_at_the_end": {
+        "code": "DS108",
+        "related_field": "description",
+    },
     # GF - Generic Fields
     "invalid_generic_field_group_value": {
         "code": "GF100",
@@ -1404,6 +1408,10 @@ ERROR_CODE: Dict = {
         "code": "CR101",
         "related_field": "",
     },
+    "correlation_rules_missing_search_window": {
+        "code": "CR102",
+        "related_field": "",
+    },
     # XR - XSIAM Reports
     "xsiam_report_files_naming_error": {
         "code": "XR100",
@@ -1486,6 +1494,7 @@ ALLOWED_IGNORE_ERRORS = (
         "BA119",
         "BA124",
         "BA125",
+        "DS108",
         "DS107",
         "GF102",
         "IF100",
@@ -2669,7 +2678,8 @@ class Errors:
             f'A new release notes file contains the phrase "breaking changes" '
             "without a matching JSON file (with the same name as the release note file, e.g. 1_2_3.json). "
             f'Please run "demisto-sdk update-release-notes -i {json_path[:-4]}md -bc". '
-            "For more information, refer to the following documentation: https://xsoar.pan.dev/docs/documentation/release-notes"
+            "For more information, refer to the following documentation: "
+            "https://xsoar.pan.dev/docs/documentation/release-notes#breaking-changes-version"
         )
 
     @staticmethod
@@ -2920,6 +2930,13 @@ class Errors:
     @error_code_decorator
     def description_contains_demisto_word(line_nums, yml_or_file):
         return f"Found the word 'Demisto' in the description content {yml_or_file} in lines: {line_nums}."
+
+    @staticmethod
+    @error_code_decorator
+    def description_missing_dot_at_the_end(details: str):
+        return (
+            f'Description must end with a period ("."), fix the following:\n{details}'
+        )
 
     @staticmethod
     @error_code_decorator
@@ -4372,3 +4389,8 @@ class Errors:
     @error_code_decorator
     def pack_have_nonignorable_error(nonignorable_errors: List[str]):
         return f"The following errors can not be ignored: {', '.join(nonignorable_errors)}, remove them from .pack-ignore files"
+
+    @staticmethod
+    @error_code_decorator
+    def correlation_rules_missing_search_window():
+        return "The 'search_window' key must exist and cannot be empty when the 'execution_mode' is set to 'SCHEDULED'."

@@ -473,7 +473,7 @@ def test_get_remote_templates__valid(mocker, initiator):
     assert res
     assert "Test im in file" in file_content
 
-    os.remove(os.path.join(PACK_NAME, "Test.py"))
+    Path(PACK_NAME, "Test.py").unlink()
     os.rmdir(PACK_NAME)
 
 
@@ -496,7 +496,7 @@ def test_get_remote_templates__invalid(mocker, initiator):
 
     assert not res
 
-    os.remove(os.path.join(PACK_NAME, "Test.py"))
+    Path(PACK_NAME, "Test.py").unlink()
     os.rmdir(PACK_NAME)
 
 
@@ -604,7 +604,7 @@ def test_template_integration_init(initiator, tmpdir, monkeypatch, mocker, templ
     assert os.path.isdir(integration_path)
     diff = expected_files.difference(integration_dir_files)
     assert not diff, f"There's a missing file in the copied files, diff is {diff}"
-    assert not os.path.exists(secrets_ignore_path)
+    assert not Path(secrets_ignore_path).exists()
 
 
 @pytest.mark.parametrize("template", ["HelloWorld", "FeedHelloWorld"])
@@ -726,7 +726,7 @@ def test_script_init(initiator, tmpdir, monkeypatch, mocker):
     assert (
         not diff
     ), f"There are missing file's in the files you expected to create, The missing file's are {diff}"
-    assert not os.path.exists(secrets_ignore_path)
+    assert not Path(secrets_ignore_path).exists()
 
 
 def test_script_init_with_ignore_secrets(initiator, tmpdir, monkeypatch, mocker):

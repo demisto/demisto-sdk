@@ -6,9 +6,12 @@ from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.git_util import GitUtil
-from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.logger import logger
-from demisto_sdk.commands.common.tools import get_file, sha1_dir
+from demisto_sdk.commands.common.tools import (
+    get_file,
+    sha1_dir,
+    write_dict,
+)
 from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
@@ -36,7 +39,9 @@ class ContentGraphInterface(ABC):
     @property
     def metadata(self) -> Optional[dict]:
         try:
-            return get_file(self.import_path / self.METADATA_FILE_NAME)
+            return get_file(
+                self.import_path / self.METADATA_FILE_NAME, raise_on_error=True
+            )
         except FileNotFoundError:
             return None
 
@@ -52,18 +57,29 @@ class ContentGraphInterface(ABC):
             return self.metadata.get("content_parser_latest_hash")
         return None
 
-    def dump_metadata(self) -> None:
+    @property
+    def schema(self) -> Optional[dict]:
+        if self.metadata:
+            return self.metadata.get("schema")
+        return None
+
+    def dump_metadata(self, override_commit: bool = True) -> None:
         """Adds metadata to the graph."""
         metadata = {
-            "commit": GitUtil().get_current_commit_hash(),
+            "commit": GitUtil().get_current_commit_hash()
+            if override_commit
+            else self.commit,
             "content_parser_latest_hash": self._get_latest_content_parser_hash(),
+            "schema": self.get_schema(),
         }
-        with open(self.import_path / self.METADATA_FILE_NAME, "w") as f:
-            json.dump(metadata, f)
+
+        write_dict(self.import_path / self.METADATA_FILE_NAME, data=metadata)
 
     def _get_latest_content_parser_hash(self) -> Optional[str]:
         parsers_path = Path(__file__).parent.parent / "parsers"
-        return sha1_dir(parsers_path)
+        parsers_sha1 = sha1_dir(parsers_path)
+        logger.debug(f"Content parser hash: {parsers_sha1}")
+        return parsers_sha1
 
     def _has_infra_graph_been_changed(self) -> bool:
         if not self.content_parser_latest_hash:
@@ -71,17 +87,14 @@ class ContentGraphInterface(ABC):
         elif self.content_parser_latest_hash != self._get_latest_content_parser_hash():
             logger.warning("The content parser has been changed.")
             return True
-        try:
-            self.marshal_graph(MarketplaceVersions.XSOAR)
-        except Exception as e:
-            logger.warning("Failed to load the content graph.")
-            logger.debug(f"Validation Error: {e}")
-            return True
-
         return False
 
     def zip_import_dir(self, output_file: Path) -> None:
         shutil.make_archive(str(output_file), "zip", self.import_path)
+
+    @abstractmethod
+    def get_schema(self) -> dict:
+        pass
 
     @abstractmethod
     def create_indexes_and_constraints(self) -> None:
@@ -106,7 +119,9 @@ class ContentGraphInterface(ABC):
         pass
 
     @abstractmethod
-    def export_graph(self, output_path: Optional[Path] = None) -> None:
+    def export_graph(
+        self, output_path: Optional[Path] = None, override_commit: bool = True
+    ) -> None:
         pass
 
     @abstractmethod
@@ -182,8 +197,8 @@ class ContentGraphInterface(ABC):
     @abstractmethod
     def search(
         self,
-        marketplace: MarketplaceVersions = None,
-        content_type: Optional[ContentType] = None,
+        marketplace: Union[MarketplaceVersions, str] = None,
+        content_type: ContentType = ContentType.BASE_CONTENT,
         ids_list: Optional[Iterable[int]] = None,
         all_level_dependencies: bool = False,
         **properties,
@@ -193,7 +208,7 @@ class ContentGraphInterface(ABC):
 
         Args:
             marketplace (MarketplaceVersions, optional): Marketplace to search by. Defaults to None.
-            content_type (Optional[ContentType], optional): The content_type to filter. Defaults to None.
+            content_type (ContentType]): The content_type to filter. Defaults to ContentType.BASE_CONTENT.
             ids_list (Optional[Iterable[int]], optional): A list of unique IDs to filter. Defaults to None.
             all_level_dependencies (bool, optional): Whether to return all level dependencies. Defaults to False.
             **properties: A key, value filter for the search. For example: `search(object_id="QRadar")`.
@@ -266,13 +281,4 @@ class ContentGraphInterface(ABC):
     def find_mandatory_hidden_packs_dependencies(
         self, pack_ids: List[str]
     ) -> List[BaseContent]:
-        pass
-
-    @abstractmethod
-    def get_content_items_by_identifier(
-        self,
-        identifier_values_list: List[str],
-        content_type: ContentType,
-        identifier: str,
-    ) -> Any:
         pass

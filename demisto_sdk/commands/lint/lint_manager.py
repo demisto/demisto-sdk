@@ -18,6 +18,7 @@ from wcmatch.pathlib import Path, PosixPath
 import demisto_sdk
 from demisto_sdk.commands.common.constants import (
     API_MODULES_PACK,
+    DEMISTO_GIT_PRIMARY_BRANCH,
     PACKS_PACK_META_FILE_NAME,
     TYPE_PWSH,
     TYPE_PYTHON,
@@ -25,6 +26,7 @@ from demisto_sdk.commands.common.constants import (
 )
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.docker_helper import init_global_docker_client
+from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.timers import report_time_measurements
@@ -34,7 +36,6 @@ from demisto_sdk.commands.common.tools import (
     get_file_displayed_name,
     get_json,
     is_external_repository,
-    retrieve_file_ending,
 )
 from demisto_sdk.commands.content_graph.commands.update import (
     update_content_graph,
@@ -185,7 +186,7 @@ class LintManager:
         # Get content repo object
         is_external_repo = False
         try:
-            git_repo = git.Repo(os.getcwd(), search_parent_directories=True)
+            git_repo = GitUtil().repo
             remote_url = git_repo.remote().urls.__next__()
             is_fork_repo = "content" in remote_url
             is_external_repo = is_external_repository()
@@ -207,20 +208,21 @@ class LintManager:
                 content_repo=facts["content_repo"],  # type: ignore
                 is_external_repo=is_external_repo,
             )
-            logger.debug("Test mandatory modules successfully collected")
+            logger.debug("Test mandatory modules successfully collected.")
         except (git.GitCommandError, DemistoException) as e:
             if is_external_repo:
-                logger.info(
-                    "[red]You are running on an external repo - "
-                    "run `.hooks/bootstrap` before running the demisto-sdk lint command\n"
-                    "See here for additional information: https://xsoar.pan.dev/docs/concepts/dev-setup[/red]"
+                logger.error(
+                    "When running on an external repository, you are required to first run "
+                    "the '.hooks/bootstrap' script before running the demisto-sdk lint command.\n"
+                    "For additional information, refer to: https://xsoar.pan.dev/docs/concepts/dev-setup"
                 )
             else:
-                logger.info(
-                    "[red]Unable to get test-modules demisto-mock.py etc - Aborting! corrupt repository or pull from master[/red]"
+                logger.error(
+                    "Unable to fetch mandatory files (test-modules, demisto-mock.py, etc.) - "
+                    "corrupt repository or pull from master. Aborting!"
                 )
             logger.error(
-                f"demisto-sdk-unable to get mandatory test-modules demisto-mock.py etc {e}"
+                f"demisto-sdk-unable to fetch mandatory files (test-modules, demisto-mock.py, etc.): {e}"
             )
             sys.exit(1)
         except (
@@ -267,11 +269,11 @@ class LintManager:
 
     def _get_packages(
         self,
-        content_repo: git.Repo,
+        content_repo: git.Repo,  # noqa: TID251
         input: Union[str, List[str]],
         git: bool = False,
         all_packs: bool = False,
-        base_branch: str = "master",
+        base_branch: str = DEMISTO_GIT_PRIMARY_BRANCH,
     ) -> List[PosixPath]:
         """Get packages paths to run lint command.
 
@@ -293,8 +295,9 @@ class LintManager:
             if isinstance(input, str):
                 input = input.split(",")
             for item in input:
-                is_pack = os.path.isdir(item) and os.path.exists(
-                    os.path.join(item, PACKS_PACK_META_FILE_NAME)
+                is_pack = (
+                    Path(item).is_dir()
+                    and Path(item, PACKS_PACK_META_FILE_NAME).exists()
                 )
                 if is_pack:
                     pkgs.extend(LintManager._get_all_packages(content_dir=item))
@@ -358,7 +361,7 @@ class LintManager:
 
     @staticmethod
     def _filter_changed_packages(
-        content_repo: git.Repo, pkgs: List[PosixPath], base_branch: str
+        content_repo: git.Repo, pkgs: List[PosixPath], base_branch: str  # noqa: TID251
     ) -> List[PosixPath]:
         """Checks which packages had changes in them and should run on Lint.
         The diff is calculated using git, and is done by the following cases:
@@ -380,7 +383,10 @@ class LintManager:
             for item in content_repo.active_branch.commit.tree.diff(None, paths=pkgs)
         }
 
-        if base_branch == "master" and content_repo.active_branch.name == "master":
+        if (
+            base_branch == DEMISTO_GIT_PRIMARY_BRANCH
+            and content_repo.active_branch.name == DEMISTO_GIT_PRIMARY_BRANCH
+        ):
             # case 1: comparing master against the latest previous commit
             last_common_commit = content_repo.remote().refs.master.commit.parents[0]
             logger.info(
@@ -1175,7 +1181,7 @@ class LintManager:
         if not self.json_file_path:
             return
 
-        if os.path.exists(self.json_file_path):
+        if Path(self.json_file_path).exists():
             json_contents = get_json(self.json_file_path)
             if not (isinstance(json_contents, list)):
                 json_contents = []
@@ -1236,7 +1242,7 @@ class LintManager:
         mypy_errors: list = []
         gather_error: list = []
         for line in error_messages:
-            if os.path.isfile(line.split(":")[0]):
+            if Path(line.split(":")[0]).is_file():
                 if gather_error:
                     mypy_errors.append("\n".join(gather_error))
                     gather_error = []
@@ -1300,7 +1306,7 @@ class LintManager:
 
     @staticmethod
     def get_full_file_path_for_vulture(file_name: str, content_path: str) -> str:
-        """Get the full file path to a file with a given name name from the content path
+        """Get the full file path to a file with a given name from the content path
 
         Args:
             file_name (str): The file name of the file to find
@@ -1309,11 +1315,11 @@ class LintManager:
         Returns:
             str. The path to the file
         """
-        file_ending = retrieve_file_ending(file_name)
-        if not file_ending:
+        file_extension = Path(file_name).suffix
+        if not file_extension:
             file_name = f"{file_name}.py"
-        elif file_ending != "py":
-            file_name = file_name.replace(file_ending, "py")
+        elif file_extension != ".py":
+            file_name = file_name.replace(file_extension, ".py")
         return find_file(content_path, file_name)
 
     def vulture_error_formatter(self, errors: Dict, json_contents: List) -> None:

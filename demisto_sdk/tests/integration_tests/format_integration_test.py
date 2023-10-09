@@ -1,6 +1,5 @@
 import logging
-import os
-from pathlib import PosixPath
+from pathlib import Path, PosixPath
 from typing import List
 
 import pytest
@@ -100,17 +99,10 @@ CONF_JSON_ORIGINAL_CONTENT = {
 }
 
 
-class MyRepo:
-    active_branch = "not-master"
-
-    def remote(self):
-        return "remote_path"
-
-
 @pytest.fixture(autouse=True)
 def set_git_test_env(mocker):
     mocker.patch.object(ValidateManager, "setup_git_params", return_value=True)
-    mocker.patch.object(Content, "git", return_value=MyRepo())
+    mocker.patch.object(Content, "git_util", return_value=GitUtil())
     mocker.patch.object(ValidateManager, "setup_prev_ver", return_value="origin/master")
     mocker.patch.object(GitUtil, "_is_file_git_ignored", return_value=False)
 
@@ -273,7 +265,7 @@ def test_integration_format_configuring_conf_json_no_interactive_positive(
         json.dump(CONF_JSON_ORIGINAL_CONTENT, file, indent=4)
 
     test_playbooks = ["test1", "test2"]
-    saved_file_path = str(tmp_path / os.path.basename(destination_path))
+    saved_file_path = str(tmp_path / Path(destination_path).name)
     runner = CliRunner()
     # Running format in the first time
     result = runner.invoke(
@@ -329,7 +321,7 @@ def test_integration_format_configuring_conf_json_positive(
     mocker.patch.object(BaseUpdate, "set_default_from_version", return_value=None)
 
     test_playbooks = ["test1", "test2"]
-    saved_file_path = str(tmp_path / os.path.basename(destination_path))
+    saved_file_path = str(tmp_path / Path(destination_path).name)
     runner = CliRunner()
     # Running format in the first time
     with ChangeCWD(tmp_path):
@@ -394,7 +386,7 @@ def test_integration_format_configuring_conf_json_negative(
     with open(conf_json_path, "w") as file:
         json.dump(CONF_JSON_ORIGINAL_CONTENT, file, indent=4)
 
-    saved_file_path = str(tmp_path / os.path.basename(destination_path))
+    saved_file_path = str(tmp_path / Path(destination_path).name)
     runner = CliRunner()
     # Running format in the first time
     result = runner.invoke(
@@ -524,7 +516,7 @@ def test_format_on_valid_py(mocker, repo):
                 "-nv",
                 "-i",
                 integration.code.path,
-                "--console_log_threshold",
+                "--console-log-threshold",
                 "DEBUG",
                 "-ngr",
             ],
@@ -577,7 +569,7 @@ def test_format_on_invalid_py_empty_lines(mocker, repo):
                 "-nv",
                 "-i",
                 integration.code.path,
-                "--console_log_threshold",
+                "--console-log-threshold",
                 "DEBUG",
                 "-ngr",
             ],
@@ -630,7 +622,7 @@ def test_format_on_invalid_py_dict(mocker, repo):
                 "-nv",
                 "-i",
                 integration.code.path,
-                "--console_log_threshold",
+                "--console-log-threshold",
                 "DEBUG",
                 "-ngr",
             ],
@@ -687,7 +679,7 @@ def test_format_on_invalid_py_long_dict(mocker, repo, caplog, monkeypatch):
                 "-nv",
                 "-i",
                 integration.code.path,
-                "--console_log_threshold",
+                "--console-log-threshold",
                 "DEBUG",
                 "-ngr",
             ],
@@ -745,7 +737,7 @@ def test_format_on_invalid_py_long_dict_no_verbose(mocker, repo, monkeypatch):
                 "-nv",
                 "-i",
                 integration.code.path,
-                "--console_log_threshold",
+                "--console-log-threshold",
                 "INFO",
                 "-ngr",
             ],
@@ -1970,12 +1962,11 @@ def test_verify_deletion_from_conf_pack_format_with_deprecate_flag(
     pack_path = pack.path
     repo_path = repo.path
     # We don't need to format empty readme files
-    if os.path.exists(
-        f"{repo_path}/Packs/TestPack/Integrations/TestIntegration/README.md"
-    ):
-        os.remove(f"{repo_path}/Packs/TestPack/Integrations/TestIntegration/README.md")
-    if os.path.exists(f"{repo_path}/Packs/TestPack/README.md"):
-        os.remove(f"{repo_path}/Packs/TestPack/README.md")
+    Path(f"{repo_path}/Packs/TestPack/Integrations/TestIntegration/README.md").unlink(
+        missing_ok=True
+    )
+
+    Path(f"{repo_path}/Packs/TestPack/README.md").unlink(missing_ok=True)
 
     # Prepare conf
     test_conf_data = {
@@ -2037,10 +2028,10 @@ def test_verify_deletion_from_conf_script_format_with_deprecate_flag(
     repo_path = repo.path
 
     # We don't need to format empty readme files
-    if os.path.exists(f"{repo_path}/Packs/TestPack/Scripts/TestScript/README.md"):
-        os.remove(f"{repo_path}/Packs/TestPack/Scripts/TestScript/README.md")
-    if os.path.exists(f"{repo_path}/Packs/TestPack/README.md"):
-        os.remove(f"{repo_path}/Packs/TestPack/README.md")
+    Path(f"{repo_path}/Packs/TestPack/Scripts/TestScript/README.md").unlink(
+        missing_ok=True
+    )
+    Path(f"{repo_path}/Packs/TestPack/README.md").unlink(missing_ok=True)
 
     # Prepare conf
     test_conf_data = {

@@ -888,7 +888,7 @@ def main():
             verify=verify_certificate,
             proxy=proxy)
         command = demisto.command()
-        demisto.info(f'Command being called is {command}')
+        LOG(f'Command being called is {command}')
         # Commands dict
         commands: Dict[str, Callable[[Client, Dict[str, str]], Tuple[str, dict, dict]]] = {
             'test-module': test_module,
@@ -901,7 +901,7 @@ def main():
             'kace-ticket-delete': delete_ticket_command,
         }
         if command in commands:
-            return_results(*commands[command](client, demisto.args()))
+            return_outputs(*commands[command](client, demisto.args()))
         elif command == 'fetch-incidents':
             incidents = fetch_incidents(client, fetch_time=fetch_time, fetch_shaping=fetch_shaping,
                                         fetch_filter=fetch_filter, fetch_limit=fetch_limit,

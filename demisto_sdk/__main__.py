@@ -1,22 +1,30 @@
 # Site packages
+import sys
+
+import click
+
+try:
+    import git
+except ImportError:
+    sys.exit(click.style("Git executable cannot be found, or is invalid", fg="red"))
+
 import copy
 import functools
 import logging
 import os
-import sys
 from pathlib import Path
-from typing import IO, Any, Dict, Iterable, Tuple, Union
+from typing import IO, Any, Dict, Iterable, Optional, Tuple, Union
 
-import click
-import git
 import typer
 from pkg_resources import DistributionNotFound, get_distribution
 
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import (
+    DEMISTO_SDK_MARKETPLACE_XSOAR_DIST_DEV,
     ENV_DEMISTO_SDK_MARKETPLACE,
     FileType,
     MarketplaceVersions,
+    PreCommitModes,
 )
 from demisto_sdk.commands.common.content_constant_paths import (
     ALL_PACKS_DEPENDENCIES_DEFAULT_PATH,
@@ -39,6 +47,7 @@ from demisto_sdk.commands.content_graph.commands.get_relationships import (
     get_relationships,
 )
 from demisto_sdk.commands.content_graph.commands.update import update
+from demisto_sdk.commands.content_graph.objects.repository import all_content_repo
 from demisto_sdk.commands.generate_modeling_rules import generate_modeling_rules
 from demisto_sdk.commands.prepare_content.prepare_upload_manager import (
     PrepareUploadManager,
@@ -135,17 +144,17 @@ def logging_setup_decorator(func, *args, **kwargs):
         return None
 
     @click.option(
-        "--console_log_threshold",
+        "--console-log-threshold",
         help="Minimum logging threshold for the console logger."
         " Possible values: DEBUG, INFO, WARNING, ERROR.",
     )
     @click.option(
-        "--file_log_threshold",
+        "--file-log-threshold",
         help="Minimum logging threshold for the file logger."
         " Possible values: DEBUG, INFO, WARNING, ERROR.",
     )
     @click.option(
-        "--log_file_path",
+        "--log-file-path",
         help="Path to the log file. Default: Content root path.",
     )
     @functools.wraps(func)
@@ -199,11 +208,6 @@ def main(ctx, config, version, release_notes, **kwargs):
     config.configuration = Configuration()
     import dotenv
 
-    if sys.version_info[:2] == (3, 8):
-        logger.info(
-            "[red]Demisto-SDK will soon stop supporting Python 3.8. Please update your python environment.[/red]"
-        )
-
     dotenv.load_dotenv(CONTENT_PATH / ".env", override=True)  # type: ignore # load .env file from the cwd
     if (
         (not os.getenv("DEMISTO_SDK_SKIP_VERSION_CHECK")) or version
@@ -213,7 +217,7 @@ def main(ctx, config, version, release_notes, **kwargs):
         except DistributionNotFound:
             __version__ = "dev"
             logger.info(
-                "[yellow]Cound not find the version of the demisto-sdk. This usually happens when running in a development environment.[/yellow]"
+                "[yellow]Could not find the version of the demisto-sdk. This usually happens when running in a development environment.[/yellow]"
             )
         else:
             last_release = ""
@@ -370,9 +374,15 @@ def extract_code(ctx, config, **kwargs):
 @click.option(
     "-i",
     "--input",
-    help="The directory path to the files or path to the file to unify",
-    required=True,
-    type=click.Path(dir_okay=True),
+    help="Comma-separated list of paths to directories or files to unify.",
+    required=False,
+    type=PathsParamType(dir_okay=True, exists=True),
+)
+@click.option(
+    "-a",
+    "--all",
+    is_flag=True,
+    help="Run prepare-content on all content packs. If no output path is given, will dump the result in the current working path.",
 )
 @click.option(
     "-g",
@@ -417,7 +427,7 @@ def extract_code(ctx, config, **kwargs):
     help="The marketplace the content items are created for, that determines usage of marketplace "
     "unique text. Default is the XSOAR marketplace.",
     default="xsoar",
-    type=click.Choice(["xsoar", "marketplacev2", "v2"]),
+    type=click.Choice([mp.value for mp in list(MarketplaceVersions)] + ["v2"]),
 )
 @click.pass_context
 @logging_setup_decorator
@@ -425,29 +435,62 @@ def prepare_content(ctx, **kwargs):
     """
     This command is used to prepare the content to be used in the platform.
     """
-    if click.get_current_context().info_name == "unify":
-        kwargs["unify_only"] = True
+    assert (
+        sum([bool(kwargs["all"]), bool(kwargs["input"])]) == 1
+    ), "Exactly one of the '-a' or '-i' parameters must be provided."
 
-    check_configuration_file("unify", kwargs)
-    # Input is of type Path.
-    kwargs["input"] = str(kwargs["input"])
-    file_type = find_type(kwargs["input"])
-    if marketplace := kwargs.get("marketplace"):
-        os.environ[ENV_DEMISTO_SDK_MARKETPLACE] = marketplace.lower()
-    if file_type == FileType.GENERIC_MODULE:
-        from demisto_sdk.commands.prepare_content.generic_module_unifier import (
-            GenericModuleUnifier,
+    if kwargs["all"]:
+        content_DTO = all_content_repo()
+        output_path = kwargs.get("output", ".") or "."
+        content_DTO.dump(
+            dir=Path(output_path, "prepare-content-tmp"),
+            marketplace=parse_marketplace_kwargs(kwargs),
         )
+        return 0
 
-        # pass arguments to GenericModule unifier and call the command
-        generic_module_unifier = GenericModuleUnifier(**kwargs)
-        generic_module_unifier.merge_generic_module_with_its_dashboards()
-    else:
-        PrepareUploadManager.prepare_for_upload(**kwargs)
+    inputs = []
+    if input_ := kwargs["input"]:
+        inputs = input_.split(",")
+
+    if output_path := kwargs["output"]:
+        if "." in Path(output_path).name:  # check if the output path is a file
+            if len(inputs) > 1:
+                raise ValueError(
+                    "When passing multiple inputs, the output path should be a directory and not a file."
+                )
+        else:
+            dest_path = Path(output_path)
+            dest_path.mkdir(exist_ok=True)
+
+    for input_content in inputs:
+        if output_path and len(inputs) > 1:
+            path_name = Path(input_content).name
+            kwargs["output"] = str(Path(output_path, path_name))
+
+        if click.get_current_context().info_name == "unify":
+            kwargs["unify_only"] = True
+
+        check_configuration_file("unify", kwargs)
+        # Input is of type Path.
+        kwargs["input"] = str(input_content)
+        file_type = find_type(kwargs["input"])
+        if marketplace := kwargs.get("marketplace"):
+            os.environ[ENV_DEMISTO_SDK_MARKETPLACE] = marketplace.lower()
+        if file_type == FileType.GENERIC_MODULE:
+            from demisto_sdk.commands.prepare_content.generic_module_unifier import (
+                GenericModuleUnifier,
+            )
+
+            # pass arguments to GenericModule unifier and call the command
+            generic_module_unifier = GenericModuleUnifier(**kwargs)
+            generic_module_unifier.merge_generic_module_with_its_dashboards()
+        else:
+            PrepareUploadManager.prepare_for_upload(**kwargs)
     return 0
 
 
 main.add_command(prepare_content, name="unify")
+
 
 # ====================== zip-packs ====================== #
 
@@ -1130,7 +1173,7 @@ def lint(ctx, **kwargs):
 @click.option(
     "--previous-coverage-report-url",
     help="URL of the previous coverage report.",
-    default="https://storage.googleapis.com/marketplace-dist-dev/code-coverage-reports/coverage-min.json",
+    default=f"https://storage.googleapis.com/{DEMISTO_SDK_MARKETPLACE_XSOAR_DIST_DEV}/code-coverage-reports/coverage-min.json",
     type=str,
 )
 @click.pass_context
@@ -2027,6 +2070,13 @@ def init(ctx, **kwargs):
     help="The readme template that should be appended to the given README.md file",
     type=click.Choice(["syslog", "xdrc", "http-collector"]),
 )
+@click.option(
+    "-gr/-ngr",
+    "--graph/--no-graph",
+    help="Whether to use the content graph or not.",
+    is_flag=True,
+    default=True,
+)
 @click.pass_context
 @logging_setup_decorator
 def generate_docs(ctx, **kwargs):
@@ -2059,7 +2109,7 @@ def generate_docs(ctx, **kwargs):
 
         else:
             raise Exception(
-                f"[red]Input {input_path} is neither a valid yml file, nor a folder named Playbooks, nor a readme file."
+                f"[red]Input {input_path} is neither a valid yml file, nor a folder named Playbooks, nor a readme file.[/red]"
             )
 
         return 0
@@ -2097,19 +2147,18 @@ def _generate_docs_for_file(kwargs: Dict[str, Any]):
     skip_breaking_changes: bool = kwargs.get("skip_breaking_changes", False)
     custom_image_path: str = kwargs.get("custom_image_path", "")
     readme_template: str = kwargs.get("readme_template", "")
+    use_graph = kwargs.get("graph", True)
 
     try:
         if command:
             if (
                 output_path
-                and (not os.path.isfile(os.path.join(output_path, "README.md")))
+                and (not Path(output_path, "README.md").is_file())
                 or (not output_path)
                 and (
-                    not os.path.isfile(
-                        os.path.join(
-                            os.path.dirname(os.path.realpath(input_path)), "README.md"
-                        )
-                    )
+                    not Path(
+                        os.path.dirname(os.path.realpath(input_path)), "README.md"
+                    ).is_file()
                 )
             ):
                 raise Exception(
@@ -2127,7 +2176,7 @@ def _generate_docs_for_file(kwargs: Dict[str, Any]):
                 "[red]File is not an Integration, Script, Playbook or a README.[/red]"
             )
 
-        if old_version and not os.path.isfile(old_version):
+        if old_version and not Path(old_version).is_file():
             raise Exception(
                 f"[red]Input old version file {old_version} was not found.[/red]"
             )
@@ -2163,6 +2212,7 @@ def _generate_docs_for_file(kwargs: Dict[str, Any]):
                 permissions=permissions,
                 limitations=limitations,
                 insecure=insecure,
+                use_graph=use_graph,
             )
         elif file_type == FileType.PLAYBOOK:
             logger.info(f"Generating {file_type.value.lower()} documentation")
@@ -2694,7 +2744,7 @@ def openapi_codegen(ctx, **kwargs):
         output_dir = kwargs["output_dir"]
 
     # Check the directory exists and if not, try to create it
-    if not os.path.exists(output_dir):
+    if not Path(output_dir).exists():
         try:
             os.mkdir(output_dir)
         except Exception as err:
@@ -3248,10 +3298,10 @@ def create_content_graph(
     help="Path to content graph zip file to import",
 )
 @click.option(
-    "-uc",
-    "--use-current",
+    "-uli",
+    "--use-local-import",
     is_flag=True,
-    help="Whether to use the current content graph to update",
+    help="Whether to use the current import files to import the graph.",
     default=False,
 )
 @click.option(
@@ -3281,7 +3331,7 @@ def update_content_graph(
     ctx,
     use_git: bool = False,
     marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR,
-    use_current: bool = False,
+    use_local_import: bool = False,
     imported_path: Path = None,
     packs: list = None,
     no_dependencies: bool = False,
@@ -3293,7 +3343,7 @@ def update_content_graph(
         ctx,
         use_git=use_git,
         marketplace=marketplace,
-        use_current=use_current,
+        use_local_import=use_local_import,
         imported_path=imported_path,
         packs_to_update=packs,
         no_dependencies=no_dependencies,
@@ -3332,6 +3382,11 @@ def update_content_graph(
     help="Whether to run on all files",
     is_flag=True,
     default=False,
+)
+@click.option(
+    "--mode",
+    help="Special mode to run the pre-commit with",
+    type=click.Choice([mode.value for mode in list(PreCommitModes)]),
 )
 @click.option(
     "-ut/--no-ut",
@@ -3376,6 +3431,12 @@ def update_content_graph(
     help="The demisto-sdk ref to use for the pre-commit hooks",
     default="",
 )
+@click.option(
+    "--dry-run",
+    help="Whether to run the pre-commit hooks in dry-run mode, which will only create the config file",
+    is_flag=True,
+    default=False,
+)
 @click.argument(
     "file_paths",
     nargs=-1,
@@ -3389,6 +3450,7 @@ def pre_commit(
     staged_only: bool,
     git_diff: bool,
     all_files: bool,
+    mode: Optional[str],
     unit_test: bool,
     skip: str,
     validate: bool,
@@ -3398,17 +3460,19 @@ def pre_commit(
     show_diff_on_failure: bool,
     sdk_ref: str,
     file_paths: Iterable[Path],
+    dry_run: bool,
     **kwargs,
 ):
     from demisto_sdk.commands.pre_commit.pre_commit_command import pre_commit_manager
 
+    mode = PreCommitModes(mode) if mode else None
     if file_paths and input:
         logger.info(
             "Both `--input` parameter and `file_paths` arguments were provided. Will use the `--input` parameter."
         )
     input_files = []
     if input:
-        input_files = [Path(i) for i in input.split(",")]
+        input_files = [Path(i) for i in input.split(",") if i]
     elif file_paths:
         input_files = list(file_paths)
     if skip:
@@ -3420,6 +3484,7 @@ def pre_commit(
             staged_only,
             git_diff,
             all_files,
+            mode,
             unit_test,
             skip,
             validate,
@@ -3428,6 +3493,7 @@ def pre_commit(
             verbose,
             show_diff_on_failure,
             sdk_ref=sdk_ref,
+            dry_run=dry_run,
         )
     )
 
@@ -3470,7 +3536,6 @@ app.command("init-test-data", no_args_is_help=True)(init_test_data.init_test_dat
 typer_click_object = typer.main.get_command(app)
 main.add_command(typer_click_object, "modeling-rules")
 
-
 app_generate_modeling_rules = typer.Typer(
     name="generate-modeling-rules", no_args_is_help=True
 )
@@ -3485,8 +3550,8 @@ main.add_command(typer_click_object2, "generate-modeling-rules")
 # ====================== graph command group ====================== #
 
 graph_cmd_group = typer.Typer(name="graph", hidden=True, no_args_is_help=True)
-graph_cmd_group.command("create", no_args_is_help=True)(create)
-graph_cmd_group.command("update", no_args_is_help=True)(update)
+graph_cmd_group.command("create", no_args_is_help=False)(create)
+graph_cmd_group.command("update", no_args_is_help=False)(update)
 graph_cmd_group.command("get-relationships", no_args_is_help=True)(get_relationships)
 main.add_command(typer.main.get_command(graph_cmd_group), "graph")
 

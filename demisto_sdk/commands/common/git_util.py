@@ -1,30 +1,47 @@
 import os
 import re
 from pathlib import Path
-from typing import Set, Tuple, Union
+from typing import List, Optional, Set, Tuple, Union
 
 import click
 import gitdb
-from git import InvalidGitRepositoryError, Repo
+from git import (
+    InvalidGitRepositoryError,
+    Repo,  # noqa: TID251: required to create GitUtil
+)
 from git.diff import Lit_change_type
 from git.remote import Remote
 
-from demisto_sdk.commands.common.constants import PACKS_FOLDER
+from demisto_sdk.commands.common.constants import (
+    DEMISTO_GIT_PRIMARY_BRANCH,
+    DEMISTO_GIT_UPSTREAM,
+    PACKS_FOLDER,
+)
 
 
 class GitUtil:
-    repo: Repo
+    # in order to use Repo class/static methods
+    REPO_CLS = Repo
 
-    def __init__(self, repo: Repo = None):
-        if not repo:
-            try:
-                self.repo = Repo(Path.cwd(), search_parent_directories=True)
-            except InvalidGitRepositoryError:
-                raise InvalidGitRepositoryError(
-                    "Unable to find Repository from current working directory - aborting"
-                )
+    def __init__(
+        self,
+        path: Optional[Union[str, Path]] = None,
+        search_parent_directories: bool = True,
+    ):
+
+        if isinstance(path, str):
+            repo_path = Path(path)
         else:
-            self.repo = repo
+            repo_path = path or Path.cwd()
+
+        try:
+            self.repo = Repo(
+                repo_path, search_parent_directories=search_parent_directories
+            )
+        except InvalidGitRepositoryError:
+            raise InvalidGitRepositoryError(
+                f"Unable to find Repository from current {repo_path.absolute()} - aborting"
+            )
 
     def get_all_files(self) -> Set[Path]:
         return set(map(Path, self.repo.git.ls_files().split("\n")))
@@ -516,6 +533,7 @@ class GitUtil:
         Returns:
             Set: of Paths to files changed in the current branch.
         """
+        self.fetch()
         remote, branch = self.handle_prev_ver(prev_ver)
         current_hash = self.get_current_commit_hash()
 
@@ -596,10 +614,15 @@ class GitUtil:
                 return ""
             for current_remote_ref in current_remote.refs:
                 current_remote_ref_str = str(current_remote_ref)
-                if current_remote_ref_str == "origin/main":
+                if current_remote_ref_str == f"{DEMISTO_GIT_UPSTREAM}/main":
                     return "main"
-                elif current_remote_ref_str == "origin/master":
+                elif current_remote_ref_str == f"{DEMISTO_GIT_UPSTREAM}/master":
                     return "master"
+                elif (
+                    current_remote_ref_str
+                    == f"{DEMISTO_GIT_UPSTREAM}/{DEMISTO_GIT_PRIMARY_BRANCH}"
+                ):
+                    return DEMISTO_GIT_PRIMARY_BRANCH
         return ""
 
     def handle_prev_ver(self, prev_ver: str = ""):
@@ -789,6 +812,7 @@ class GitUtil:
         Returns:
             Set. A set of all the changed files in the given branch when comparing to prev_ver
         """
+        self.fetch()
         modified_files: Set[Path] = self.modified_files(
             prev_ver=prev_ver,
             committed_only=committed_only,
@@ -821,3 +845,14 @@ class GitUtil:
             bool: True if the file is ignored. Otherwise, return False.
         """
         return bool(self.repo.ignored(file_path))
+
+    def fetch(self):
+        self.repo.remote().fetch()
+
+    def fetch_all(self):
+        for remote in self.repo.remotes:
+            remote.fetch()
+
+    def commit_files(self, commit_message: str, files: Union[List, str] = "."):
+        self.repo.git.add(files)
+        self.repo.index.commit(commit_message)

@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 
 import pytest
 
@@ -421,7 +422,7 @@ def test_are_release_notes_complete_rn_config(pack):
     validator = ReleaseNotesValidator(
         rn.path,
         modified_files=[rn.path.replace("md", "json")],
-        pack_name=os.path.basename(pack.path),
+        pack_name=Path(pack.path).name,
     )
     assert validator.are_release_notes_complete()
 
@@ -566,7 +567,7 @@ def test_is_docker_image_same_as_yml(
     validator = ReleaseNotesValidator(
         rn.path,
         modified_files=[category.yml.path],
-        pack_name=os.path.basename(pack.path),
+        pack_name=Path(pack.path).name,
     )
     assert validator.is_docker_image_same_as_yml() == filled_expected_result
 
@@ -844,6 +845,7 @@ def test_invalid_headers(mocker, repo, content, content_type, expected_result):
         ("#### Scripts\n- Some description.", True),
         ("##### script_name\n- Some description.", False),
         ("- Some description.", False),
+        ("## script_name\n- Some description.", True),
     ],
 )
 def test_validate_first_level_header_exists(mocker, rn_content, expected_result):
@@ -854,6 +856,7 @@ def test_validate_first_level_header_exists(mocker, rn_content, expected_result)
     - Case 2: Release notes with only first level header and description.
     - Case 3: Release notes with only second level header and description.
     - Case 4: Release notes only with description.
+    - Case 5: Release notes that was created with the --force flag
     When
     - Calling validate_first_level_header_exists.
     Then
@@ -862,8 +865,9 @@ def test_validate_first_level_header_exists(mocker, rn_content, expected_result)
     - Case 2: Should return True.
     - Case 3: Should return False.
     - Case 4: Should return False.
+    - Case 5: Should return True.
     """
     mocker.patch.object(ReleaseNotesValidator, "__init__", lambda a, b: None)
     validator = get_validator(rn_content)
     results = validator.validate_first_level_header_exists()
-    expected_result == results
+    assert results == expected_result

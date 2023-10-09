@@ -1,11 +1,15 @@
 import logging
-import os
-from pathlib import PosixPath
+from pathlib import Path, PosixPath
 from unittest.mock import MagicMock
 
 import pytest
 
-from demisto_sdk.commands.common.constants import TYPE_PWSH, TYPE_PYTHON, FileType
+from demisto_sdk.commands.common.constants import (
+    DEMISTO_GIT_PRIMARY_BRANCH,
+    TYPE_PWSH,
+    TYPE_PYTHON,
+    FileType,
+)
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.content_graph.interface import (
     ContentGraphInterface,
@@ -22,7 +26,7 @@ def mock_lint_manager(mocker):
         input="",
         git=False,
         all_packs=False,
-        prev_ver="master",
+        prev_ver=DEMISTO_GIT_PRIMARY_BRANCH,
         json_file_path="path",
     )
 
@@ -90,14 +94,14 @@ def test_create_failed_unit_tests_report_with_failed_tests():
     path = f"{git_path()}/demisto_sdk/commands/lint/tests"
     lint_manager.LintManager._create_failed_packs_report(lint_status, path)
     file_path = f"{path}/failed_lint_report.txt"
-    assert os.path.isfile(file_path)
+    assert Path(file_path).is_file()
     with open(file_path) as file:
         content = file.read()
         fail_list = content.split("\n")
         assert len(fail_list) == 2
         assert "HelloWorld" in fail_list
         assert "Infoblox" in fail_list
-    os.remove(file_path)
+    Path(file_path).unlink()
 
 
 def test_create_failed_unit_tests_report_no_failed_tests():
@@ -128,7 +132,7 @@ def test_create_failed_unit_tests_report_no_failed_tests():
     path = f"{git_path()}/demisto_sdk/commands/lint/tests"
     lint_manager.LintManager._create_failed_packs_report(lint_status, path)
     file_path = f"{path}/failed_lint_report.txt"
-    assert not os.path.isfile(file_path)
+    assert not Path(file_path).is_file()
 
 
 def test_report_warning_lint_checks_not_packages_tests(mocker):
@@ -986,7 +990,7 @@ def test_get_api_module_dependent_items(
         input="",
         git=False,
         all_packs=False,
-        prev_ver="master",
+        prev_ver=DEMISTO_GIT_PRIMARY_BRANCH,
         json_file_path="path",
         check_dependent_api_module=cdam_flag,
     )
@@ -1068,7 +1072,7 @@ def test_get_api_module_dependent_items_which_were_changed(
         input="",
         git=False,
         all_packs=False,
-        prev_ver="master",
+        prev_ver=DEMISTO_GIT_PRIMARY_BRANCH,
         json_file_path="path",
         check_dependent_api_module=cdam_flag,
     )

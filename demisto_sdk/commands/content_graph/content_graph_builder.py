@@ -2,6 +2,7 @@ import gc
 from typing import List, Optional
 
 import more_itertools
+import tqdm
 
 from demisto_sdk.commands.content_graph.common import Nodes, Relationships
 from demisto_sdk.commands.content_graph.interface.graph import ContentGraphInterface
@@ -23,7 +24,6 @@ class ContentGraphBuilder:
         self.content_graph = content_graph
         self.nodes: Nodes = Nodes()
         self.relationships: Relationships = Relationships()
-        self._preprepare_database()
 
     def update_graph(
         self,
@@ -39,7 +39,7 @@ class ContentGraphBuilder:
         self._parse_and_model_content(packs_to_update)
         self._create_or_update_graph()
 
-    def _preprepare_database(self) -> None:
+    def init_database(self) -> None:
         self.content_graph.clean_graph()
         self.content_graph.create_indexes_and_constraints()
 
@@ -51,9 +51,7 @@ class ContentGraphBuilder:
         for content_dto in content_dtos:
             self._collect_nodes_and_relationships_from_model(content_dto)
 
-    def _create_content_dtos(
-        self, packs_to_parse: Optional[List[str]]
-    ) -> List[ContentDTO]:
+    def _create_content_dtos(self, packs: Optional[List[str]]) -> List[ContentDTO]:
         """Parses the repository, then creates and returns a repository model.
 
         Args:
@@ -62,13 +60,22 @@ class ContentGraphBuilder:
         """
         content_dtos = []
         repository_parser = RepositoryParser(self.content_graph.repo_path)
-        for packs_batch in more_itertools.chunked_even(
-            repository_parser.iter_packs(packs_to_parse), PACKS_PER_BATCH
-        ):
-            repository_parser.parse(packs_batch)
-            content_dtos.append(ContentDTO.from_orm(repository_parser))
-            repository_parser.clear()
-            gc.collect()
+        packs_to_parse = tuple(repository_parser.iter_packs(packs))
+        # parse the content packs with a progress bar
+        with tqdm.tqdm(
+            total=len(packs_to_parse),
+            unit="packs",
+            desc="Parsing packs",
+            position=0,
+            leave=True,
+        ) as progress_bar:
+            for packs_batch in more_itertools.chunked(packs_to_parse, PACKS_PER_BATCH):
+                repository_parser.parse(packs_batch)
+                content_dtos.append(ContentDTO.from_orm(repository_parser))
+                progress_bar.update(len(packs_batch))
+
+                repository_parser.clear()
+                gc.collect()
         return content_dtos
 
     def _collect_nodes_and_relationships_from_model(

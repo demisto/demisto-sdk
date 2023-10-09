@@ -2,23 +2,27 @@ import shutil
 from collections import defaultdict
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import TYPE_CHECKING, Any, Generator, List, Optional
+from typing import TYPE_CHECKING, List, Optional
 
 import demisto_client
 from demisto_client.demisto_api.rest import ApiException
 from packaging.version import Version, parse
-from pydantic import BaseModel, DirectoryPath, Field, validator
+from pydantic import DirectoryPath, Field, validator
 
 from demisto_sdk.commands.common.constants import (
     BASE_PACK,
     CONTRIBUTORS_README_TEMPLATE,
+    DEFAULT_CONTENT_ITEM_FROM_VERSION,
     MARKETPLACE_MIN_VERSION,
+    ImagesFolderNames,
     MarketplaceVersions,
 )
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
-from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.logger import logger
-from demisto_sdk.commands.common.tools import MarketplaceTagParser
+from demisto_sdk.commands.common.tools import (
+    MarketplaceTagParser,
+    write_dict,
+)
 from demisto_sdk.commands.content_graph.common import (
     PACK_METADATA_FILENAME,
     ContentType,
@@ -29,46 +33,21 @@ from demisto_sdk.commands.content_graph.common import (
 from demisto_sdk.commands.content_graph.objects.base_content import (
     BaseContent,
 )
-from demisto_sdk.commands.content_graph.objects.classifier import Classifier
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 from demisto_sdk.commands.content_graph.objects.content_item_xsiam import (
     NotIndivitudallyUploadableException,
 )
-from demisto_sdk.commands.content_graph.objects.correlation_rule import CorrelationRule
-from demisto_sdk.commands.content_graph.objects.dashboard import Dashboard
 from demisto_sdk.commands.content_graph.objects.exceptions import (
     FailedUploadException,
     FailedUploadMultipleException,
 )
-from demisto_sdk.commands.content_graph.objects.generic_definition import (
-    GenericDefinition,
+from demisto_sdk.commands.content_graph.objects.pack_content_items import (
+    PackContentItems,
 )
-from demisto_sdk.commands.content_graph.objects.generic_field import GenericField
-from demisto_sdk.commands.content_graph.objects.generic_module import GenericModule
-from demisto_sdk.commands.content_graph.objects.generic_type import GenericType
-from demisto_sdk.commands.content_graph.objects.incident_field import IncidentField
-from demisto_sdk.commands.content_graph.objects.incident_type import IncidentType
-from demisto_sdk.commands.content_graph.objects.indicator_field import IndicatorField
-from demisto_sdk.commands.content_graph.objects.indicator_type import IndicatorType
-from demisto_sdk.commands.content_graph.objects.integration import Integration
-from demisto_sdk.commands.content_graph.objects.job import Job
-from demisto_sdk.commands.content_graph.objects.layout import Layout
-from demisto_sdk.commands.content_graph.objects.layout_rule import LayoutRule
-from demisto_sdk.commands.content_graph.objects.list import List as ListObject
-from demisto_sdk.commands.content_graph.objects.mapper import Mapper
-from demisto_sdk.commands.content_graph.objects.modeling_rule import ModelingRule
-from demisto_sdk.commands.content_graph.objects.parsing_rule import ParsingRule
-from demisto_sdk.commands.content_graph.objects.playbook import Playbook
-from demisto_sdk.commands.content_graph.objects.pre_process_rule import PreProcessRule
-from demisto_sdk.commands.content_graph.objects.report import Report
-from demisto_sdk.commands.content_graph.objects.script import Script
-from demisto_sdk.commands.content_graph.objects.test_playbook import TestPlaybook
-from demisto_sdk.commands.content_graph.objects.trigger import Trigger
-from demisto_sdk.commands.content_graph.objects.widget import Widget
-from demisto_sdk.commands.content_graph.objects.wizard import Wizard
-from demisto_sdk.commands.content_graph.objects.xdrc_template import XDRCTemplate
-from demisto_sdk.commands.content_graph.objects.xsiam_dashboard import XSIAMDashboard
-from demisto_sdk.commands.content_graph.objects.xsiam_report import XSIAMReport
+from demisto_sdk.commands.content_graph.objects.pack_metadata import PackMetadata
+from demisto_sdk.commands.prepare_content.markdown_images_handler import (
+    replace_markdown_urls_and_upload_to_artifacts,
+)
 from demisto_sdk.commands.upload.constants import (
     CONTENT_TYPES_EXCLUDED_FROM_UPLOAD,
     MULTIPLE_ZIPPED_PACKS_FILE_NAME,
@@ -129,96 +108,7 @@ def upload_zip(
     return True
 
 
-class PackContentItems(BaseModel):
-    # The alias is for marshalling purposes
-    classifier: List[Classifier] = Field([], alias=ContentType.CLASSIFIER.value)
-    correlation_rule: List[CorrelationRule] = Field(
-        [], alias=ContentType.CORRELATION_RULE.value
-    )
-    dashboard: List[Dashboard] = Field([], alias=ContentType.DASHBOARD.value)
-    generic_definition: List[GenericDefinition] = Field(
-        [], alias=ContentType.GENERIC_DEFINITION.value
-    )
-    generic_field: List[GenericField] = Field([], alias=ContentType.GENERIC_FIELD.value)
-    generic_module: List[GenericModule] = Field(
-        [], alias=ContentType.GENERIC_MODULE.value
-    )
-    generic_type: List[GenericType] = Field([], alias=ContentType.GENERIC_TYPE.value)
-    incident_field: List[IncidentField] = Field(
-        [], alias=ContentType.INCIDENT_FIELD.value
-    )
-    incident_type: List[IncidentType] = Field([], alias=ContentType.INCIDENT_TYPE.value)
-    indicator_field: List[IndicatorField] = Field(
-        [], alias=ContentType.INDICATOR_FIELD.value
-    )
-    indicator_type: List[IndicatorType] = Field(
-        [], alias=ContentType.INDICATOR_TYPE.value
-    )
-    integration: List[Integration] = Field([], alias=ContentType.INTEGRATION.value)
-    job: List[Job] = Field([], alias=ContentType.JOB.value)
-    layout: List[Layout] = Field([], alias=ContentType.LAYOUT.value)
-    list: List[ListObject] = Field([], alias=ContentType.LIST.value)
-    mapper: List[Mapper] = Field([], alias=ContentType.MAPPER.value)
-    modeling_rule: List[ModelingRule] = Field([], alias=ContentType.MODELING_RULE.value)
-    parsing_rule: List[ParsingRule] = Field([], alias=ContentType.PARSING_RULE.value)
-    playbook: List[Playbook] = Field([], alias=ContentType.PLAYBOOK.value)
-    report: List[Report] = Field([], alias=ContentType.REPORT.value)
-    script: List[Script] = Field([], alias=ContentType.SCRIPT.value)
-    test_playbook: List[TestPlaybook] = Field([], alias=ContentType.TEST_PLAYBOOK.value)
-    trigger: List[Trigger] = Field([], alias=ContentType.TRIGGER.value)
-    widget: List[Widget] = Field([], alias=ContentType.WIDGET.value)
-    wizard: List[Wizard] = Field([], alias=ContentType.WIZARD.value)
-    xsiam_dashboard: List[XSIAMDashboard] = Field(
-        [], alias=ContentType.XSIAM_DASHBOARD.value
-    )
-    xsiam_report: List[XSIAMReport] = Field([], alias=ContentType.XSIAM_REPORT.value)
-    xdrc_template: List[XDRCTemplate] = Field([], alias=ContentType.XDRC_TEMPLATE.value)
-    layout_rule: List[LayoutRule] = Field([], alias=ContentType.LAYOUT_RULE.value)
-    preprocess_rule: List[PreProcessRule] = Field(
-        [], alias=ContentType.PREPROCESS_RULE.value
-    )
-
-    def __iter__(self) -> Generator[ContentItem, Any, Any]:  # type: ignore
-        """Defines the iteration of the object. Each iteration yields a single content item."""
-        for content_items in vars(self).values():
-            yield from content_items
-
-    def __bool__(self) -> bool:
-        """Used for easier determination of content items existence in a pack."""
-        return bool(list(self))
-
-    class Config:
-        arbitrary_types_allowed = True
-        orm_mode = True
-        allow_population_by_field_name = True
-
-
-class PackMetadata(BaseModel):
-    name: str
-    description: Optional[str]
-    created: Optional[str]
-    updated: Optional[str]
-    support: Optional[str]
-    email: Optional[str]
-    url: Optional[str]
-    author: Optional[str]
-    certification: Optional[str]
-    hidden: Optional[bool]
-    server_min_version: Optional[str] = Field(alias="serverMinVersion")
-    current_version: Optional[str] = Field(alias="currentVersion")
-    tags: Optional[List[str]]
-    categories: Optional[List[str]]
-    use_cases: Optional[List[str]] = Field(alias="useCases")
-    keywords: Optional[List[str]]
-    price: Optional[int] = None
-    premium: Optional[bool] = None
-    vendor_id: Optional[str] = Field(None, alias="vendorId")
-    vendor_name: Optional[str] = Field(None, alias="vendorName")
-    preview_only: Optional[bool] = Field(None, alias="previewOnly")
-    excluded_dependencies: Optional[List[str]]
-
-
-class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: ignore[call-arg]
+class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
     path: Path
     contributors: Optional[List[str]] = None
     relationships: Relationships = Field(Relationships(), exclude=True)
@@ -228,10 +118,16 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: i
     )
 
     @validator("path", always=True)
-    def validate_path(cls, v: Path) -> Path:
+    def validate_path(cls, v: Path, values) -> Path:
         if v.is_absolute():
             return v
-        return CONTENT_PATH / v
+        if not CONTENT_PATH.name:
+            return CONTENT_PATH / v
+        return CONTENT_PATH.with_name(values.get("source_repo", "content")) / v
+
+    @property
+    def is_private(self) -> bool:
+        return self.premium or False
 
     @property
     def pack_id(self) -> str:
@@ -288,68 +184,56 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: i
         min_content_items_version = MARKETPLACE_MIN_VERSION
         if content_items:
             min_content_items_version = str(
-                min(parse(content_item.fromversion) for content_item in content_items)
+                min(
+                    [
+                        parse(content_item.fromversion)
+                        for content_item in content_items
+                        if not content_item.is_test
+                        and content_item.fromversion
+                        != DEFAULT_CONTENT_ITEM_FROM_VERSION
+                    ],
+                    default=MARKETPLACE_MIN_VERSION,
+                )
             )
         self.server_min_version = self.server_min_version or min_content_items_version
         self.content_items = PackContentItems(**content_item_dct)
 
     def dump_metadata(self, path: Path, marketplace: MarketplaceVersions) -> None:
+        """Dumps the pack metadata file.
+
+        Args:
+            path (Path): The path of the file to dump the metadata.
+            marketplace (MarketplaceVersions): The marketplace to which the pack should belong to.
+        """
         self.server_min_version = self.server_min_version or MARKETPLACE_MIN_VERSION
-        metadata = self.dict(
-            exclude={"path", "node_id", "content_type", "excluded_dependencies"},
-            by_alias=True,
-        )
-        metadata["contentItems"] = {}
-        metadata["id"] = self.object_id
-        for content_item in self.content_items:
+        self._enhance_pack_properties(marketplace, self.object_id, self.content_items)
 
-            if content_item.content_type == ContentType.TEST_PLAYBOOK:
-                logger.debug(
-                    f"Skip loading the {content_item.name} test playbook into metadata.json"
-                )
-                continue
-            if content_item.is_incident_to_alert(marketplace):
-                metadata["contentItems"].setdefault(
-                    content_item.content_type.metadata_name, []
-                ).append(content_item.summary(marketplace, incident_to_alert=True))
-
-            metadata["contentItems"].setdefault(
-                content_item.content_type.metadata_name, []
-            ).append(content_item.summary(marketplace))
-
-        metadata["contentDisplays"] = self.get_content_display(metadata["contentItems"])
-
-        with open(path, "w") as f:
-            json.dump(metadata, f, indent=4, sort_keys=True)
-
-    def get_content_display(self, content_items):
-
-        content_displays: dict = {}
-        for content_item in self.content_items:
-            try:
-                content_displays[
-                    content_item.content_type.metadata_name
-                ] = (
-                    content_item.content_type.metadata_display_name
-                )  # type: ignore[index]
-            except TypeError as e:
-                raise Exception(
-                    f"Could not set metadata_name of type {content_item.content_type.metadata_name} - "
-                    f"{content_item.content_type.metadata_display_name} in {content_displays}\n{e}"
-                )
-        content_displays = {
-            content_type: content_type_display
-            if (
-                content_items.get(content_type)
-                and len(content_items.get(content_type)) == 1
-            )
-            else f"{content_type_display}s"
-            for content_type, content_type_display in content_displays.items()
+        excluded_fields_from_metadata = {
+            "path",
+            "node_id",
+            "content_type",
+            "url",
+            "email",
+            "database_id",
         }
+        if not self.is_private:
+            excluded_fields_from_metadata |= {
+                "premium",
+                "vendor_id",
+                "partner_id",
+                "partner_name",
+                "preview_only",
+                "disable_monthly",
+            }
 
-        return content_displays
+        metadata = self.dict(exclude=excluded_fields_from_metadata, by_alias=True)
+        metadata.update(
+            self._format_metadata(marketplace, self.content_items, self.depends_on)
+        )
+        write_dict(path, data=metadata, indent=4, sort_keys=True)
 
     def dump_readme(self, path: Path, marketplace: MarketplaceVersions) -> None:
+
         shutil.copyfile(self.path / "README.md", path)
         if self.contributors:
             fixed_contributor_names = [
@@ -363,6 +247,12 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: i
         with open(path, "r+") as f:
             try:
                 text = f.read()
+
+                if (
+                    marketplace == MarketplaceVersions.XSOAR
+                    and MarketplaceVersions.XSOAR_ON_PREM in self.marketplaces
+                ):
+                    marketplace = MarketplaceVersions.XSOAR_ON_PREM
                 parsed_text = MarketplaceTagParser(marketplace).parse_text(text)
                 if len(text) != len(parsed_text):
                     f.seek(0)
@@ -370,6 +260,10 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: i
                     f.truncate()
             except Exception as e:
                 logger.error(f"Failed dumping readme: {e}")
+
+        replace_markdown_urls_and_upload_to_artifacts(
+            path, marketplace, self.object_id, file_type=ImagesFolderNames.README_IMAGES
+        )
 
     def dump(
         self,

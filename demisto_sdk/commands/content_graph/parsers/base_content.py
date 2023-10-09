@@ -2,6 +2,9 @@ from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Optional
 
+from demisto_sdk.commands.common.content_constant_paths import (
+    CONTENT_PATH,
+)
 from demisto_sdk.commands.content_graph.common import ContentType
 
 
@@ -27,3 +30,7 @@ class BaseContentParser(ABC):
     @property
     def node_id(self) -> str:
         return f"{self.content_type}:{self.object_id}"
+
+    @property
+    def source_repo(self) -> Optional[str]:
+        return CONTENT_PATH.name

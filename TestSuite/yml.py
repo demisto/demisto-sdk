@@ -21,9 +21,15 @@ class YAML(File):
     def read_dict(self):
         return yaml.load(self._tmp_path.open())
 
-    def update(self, update_obj: dict):
+    def update(self, update_obj: dict, key_dict_to_update: str = None):
         yml_contents = self.read_dict()
-        yml_contents.update(update_obj)
+        if key_dict_to_update:
+            if key_dict_to_update in yml_contents:
+                yml_contents.get(key_dict_to_update).update(update_obj)
+            else:
+                yml_contents[key_dict_to_update] = update_obj
+        else:
+            yml_contents.update(update_obj)
         self.write_dict(yml_contents)
 
     def delete_key(self, key: str):

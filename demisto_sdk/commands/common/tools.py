@@ -1,3 +1,4 @@
+import contextlib
 import glob
 import io
 import logging
@@ -15,7 +16,7 @@ from enum import Enum
 from functools import lru_cache
 from hashlib import sha1
 from pathlib import Path, PosixPath
-from subprocess import DEVNULL, PIPE, Popen, check_output
+from subprocess import PIPE, Popen
 from time import sleep
 from typing import (
     TYPE_CHECKING,
@@ -52,6 +53,8 @@ from demisto_sdk.commands.common.constants import (
     DEF_DOCKER_PWSH,
     DEFAULT_CONTENT_ITEM_FROM_VERSION,
     DEFAULT_CONTENT_ITEM_TO_VERSION,
+    DEMISTO_GIT_PRIMARY_BRANCH,
+    DEMISTO_GIT_UPSTREAM,
     DOC_FILES_DIR,
     ENV_DEMISTO_SDK_MARKETPLACE,
     ENV_SDK_WORKING_OFFLINE,
@@ -98,6 +101,7 @@ from demisto_sdk.commands.common.constants import (
     TRIGGER_DIR,
     TYPE_PWSH,
     UNRELEASE_HEADER,
+    URL_REGEX,
     UUID_REGEX,
     WIDGETS_DIR,
     XDRC_TEMPLATE_DIR,
@@ -115,7 +119,10 @@ from demisto_sdk.commands.common.git_content_config import GitContentConfig, Git
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
-from demisto_sdk.commands.common.handlers import YAML_Handler
+from demisto_sdk.commands.common.handlers import (
+    XSOAR_Handler,
+    YAML_Handler,
+)
 
 if TYPE_CHECKING:
     from demisto_sdk.commands.content_graph.interface import ContentGraphInterface
@@ -131,13 +138,11 @@ GRAPH_SUPPORTED_FILE_TYPES = ["yml", "json"]
 
 
 class TagParser:
-    def __init__(self, tag_prefix: str, tag_suffix: str, remove_tag_text: bool = True):
-        self._tag_prefix = tag_prefix
-        self._tag_suffix = tag_suffix
-        self._pattern = re.compile(rf"{tag_prefix}((.|\s)+?){tag_suffix}")
-        self._remove_tag_text = remove_tag_text
+    def __init__(self, marketplace_tag):
+        self.pattern = rf"<~{marketplace_tag}>.*?</~{marketplace_tag}>|<~{marketplace_tag}>\n.*?\n</~{marketplace_tag}>\n"
+        self.only_tags_pattern = rf"<~{marketplace_tag}>|</~{marketplace_tag}>|<~{marketplace_tag}>\n|\n</~{marketplace_tag}>\n"
 
-    def parse(self, text: str, remove_tag: Optional[bool] = None) -> str:
+    def parse(self, text: str, remove_tag: Optional[bool] = False) -> str:
         """
         Given a prefix and suffix of an expected tag, remove the tag and the text it's wrapping, or just the wrappers
         Args:
@@ -147,65 +152,29 @@ class TagParser:
         Returns:
             Text with no wrapper tags.
         """
-        if text and 0 <= text.find(self._tag_prefix) < text.find(self._tag_suffix):
-            remove_tag = (
-                remove_tag if isinstance(remove_tag, bool) else self._remove_tag_text
-            )
-            # collect {orignal_text: text_to_replace}
-            matches = re.finditer(self._pattern, text)
-            replace_map = {}
-            for match in matches:
-                replace_val = "" if remove_tag else match.group(1)
-                replace_map[re.escape(match.group())] = replace_val
+        if remove_tag:
+            text = re.sub(self.pattern, "", text)
 
-            # replace collected text->replacement
-            pattern = re.compile("|".join(replace_map.keys()))
-            text = pattern.sub(lambda m: replace_map[re.escape(m.group(0))], text)
+        text = re.sub(self.only_tags_pattern, "", text)
         return text
 
 
 class MarketplaceTagParser:
-    XSOAR_PREFIX = "<~XSOAR>\n"
-    XSOAR_SUFFIX = "\n</~XSOAR>\n"
-    XSOAR_INLINE_PREFIX = "<~XSOAR>"
-    XSOAR_INLINE_SUFFIX = "</~XSOAR>"
-
-    XSIAM_PREFIX = "<~XSIAM>\n"
-    XSIAM_SUFFIX = "\n</~XSIAM>\n"
-    XSIAM_INLINE_PREFIX = "<~XSIAM>"
-    XSIAM_INLINE_SUFFIX = "</~XSIAM>"
-
-    XPANSE_PREFIX = "<~XPANSE>\n"
-    XPANSE_SUFFIX = "\n</~XPANSE>\n"
-    XPANSE_INLINE_PREFIX = "<~XPANSE>"
-    XPANSE_INLINE_SUFFIX = "</~XPANSE>"
+    XSOAR_TAG = "XSOAR"
+    XSIAM_TAG = "XSIAM"
+    XPANSE_TAG = "XPANSE"
+    XSOAR_SAAS_TAG = "XSOAR_SAAS"
+    XSOAR_ON_PREM_TAG = "XSOAR_ON_PREM"
 
     def __init__(self, marketplace: str = MarketplaceVersions.XSOAR.value):
+
         self.marketplace = marketplace
-        self._xsoar_parser = TagParser(
-            tag_prefix=self.XSOAR_PREFIX,
-            tag_suffix=self.XSOAR_SUFFIX,
-        )
-        self._xsoar_inline_parser = TagParser(
-            tag_prefix=self.XSOAR_INLINE_PREFIX,
-            tag_suffix=self.XSOAR_INLINE_SUFFIX,
-        )
-        self._xsiam_parser = TagParser(
-            tag_prefix=self.XSIAM_PREFIX,
-            tag_suffix=self.XSIAM_SUFFIX,
-        )
-        self._xsiam_inline_parser = TagParser(
-            tag_prefix=self.XSIAM_INLINE_PREFIX,
-            tag_suffix=self.XSIAM_INLINE_SUFFIX,
-        )
-        self._xpanse_parser = TagParser(
-            tag_prefix=self.XPANSE_PREFIX,
-            tag_suffix=self.XPANSE_SUFFIX,
-        )
-        self._xpanse_inline_parser = TagParser(
-            tag_prefix=self.XPANSE_INLINE_PREFIX,
-            tag_suffix=self.XPANSE_INLINE_SUFFIX,
-        )
+
+        self._xsoar_parser = TagParser(marketplace_tag=self.XSOAR_TAG)
+        self._xsiam_parser = TagParser(marketplace_tag=self.XSIAM_TAG)
+        self._xpanse_parser = TagParser(marketplace_tag=self.XPANSE_TAG)
+        self._xsoar_saas_parser = TagParser(marketplace_tag=self.XSOAR_SAAS_TAG)
+        self._xsoar_on_prem_parser = TagParser(marketplace_tag=self.XSOAR_ON_PREM_TAG)
 
     @property
     def marketplace(self):
@@ -214,35 +183,41 @@ class MarketplaceTagParser:
     @marketplace.setter
     def marketplace(self, marketplace):
         self._marketplace = marketplace
-        self._should_remove_xsoar_text = marketplace != MarketplaceVersions.XSOAR.value
+        self._should_remove_xsoar_text = marketplace not in [
+            MarketplaceVersions.XSOAR.value,
+            MarketplaceVersions.XSOAR_ON_PREM.value,
+            MarketplaceVersions.XSOAR_SAAS.value,
+        ]
         self._should_remove_xsiam_text = (
             marketplace != MarketplaceVersions.MarketplaceV2.value
         )
         self._should_remove_xpanse_text = (
             marketplace != MarketplaceVersions.XPANSE.value
         )
+        self._should_remove_xsoar_saas_text = (
+            marketplace != MarketplaceVersions.XSOAR_SAAS.value
+        )
+        self._should_remove_xsoar_on_prem_text = marketplace not in [
+            MarketplaceVersions.XSOAR_ON_PREM.value,
+            MarketplaceVersions.XSOAR.value,
+        ]
 
     def parse_text(self, text):
-        # the order of parse is important. inline should always be checked after paragraph tag
-        # xsoar->xsoar_inline->xsiam->xsiam_inline->xpanse->xpanse_inline
-        return self._xpanse_inline_parser.parse(
-            remove_tag=self._should_remove_xpanse_text,
-            text=self._xpanse_parser.parse(
-                remove_tag=self._should_remove_xpanse_text,
-                text=self._xsiam_inline_parser.parse(
-                    remove_tag=self._should_remove_xsiam_text,
-                    text=self._xsiam_parser.parse(
-                        remove_tag=self._should_remove_xsiam_text,
-                        text=self._xsoar_inline_parser.parse(
-                            remove_tag=self._should_remove_xsoar_text,
-                            text=self._xsoar_parser.parse(
-                                remove_tag=self._should_remove_xsoar_text,
-                                text=text,
-                            ),
-                        ),
-                    ),
-                ),
-            ),
+        # Remove the tags of the products if specified should_remove.
+        text = self._xsoar_parser.parse(
+            remove_tag=self._should_remove_xsoar_text, text=text
+        )
+        text = self._xsoar_saas_parser.parse(
+            remove_tag=self._should_remove_xsoar_saas_text, text=text
+        )
+        text = self._xsiam_parser.parse(
+            remove_tag=self._should_remove_xsiam_text, text=text
+        )
+        text = self._xsoar_on_prem_parser.parse(
+            remove_tag=self._should_remove_xsoar_on_prem_text, text=text
+        )
+        return self._xpanse_parser.parse(
+            remove_tag=self._should_remove_xpanse_text, text=text
         )
 
 
@@ -310,6 +285,7 @@ def get_files_in_dir(
     file_endings: list,
     recursive: bool = True,
     ignore_test_files: bool = False,
+    exclude_list: Optional[list] = None,
 ) -> list:
     """
     Gets the project directory and returns the path of all yml, json and py files in it
@@ -317,10 +293,14 @@ def get_files_in_dir(
         project_dir: String path to the project_dir
         file_endings: List of file endings to search for in a given directory
         recursive: Indicates whether search should be recursive or not
+        exclude_list: List of file/directory names to exclude.
     :return: The path of files with file_endings in the current dir
     """
     files = []
     excludes = []
+    exclude_all_list = exclude_list.copy() if exclude_list else []
+    if ignore_test_files:
+        exclude_all_list.extend(TESTS_AND_DOC_DIRECTORIES)
 
     project_path = Path(project_dir)
     glob_function = project_path.rglob if recursive else project_path.glob
@@ -328,10 +308,9 @@ def get_files_in_dir(
         pattern = f"*.{file_type}"
         if project_dir.endswith(file_type):
             return [project_dir]
-        if ignore_test_files:
-            for test_dir in TESTS_AND_DOC_DIRECTORIES:
-                exclude_pattern = f"**/{test_dir}/" + pattern
-                excludes.extend([str(f) for f in glob_function(exclude_pattern)])
+        for exclude_item in exclude_all_list:
+            exclude_pattern = f"**/{exclude_item}/" + pattern
+            excludes.extend([str(f) for f in glob_function(exclude_pattern)])
         files.extend([str(f) for f in glob_function(pattern)])
     return list(set(files) - set(excludes))
 
@@ -365,7 +344,7 @@ def src_root() -> Path:
     Returns:
         Path: src root path.
     """
-    git_dir = git.Repo(Path.cwd(), search_parent_directories=True).working_tree_dir
+    git_dir = GitUtil().repo.working_tree_dir
 
     return Path(git_dir) / "demisto_sdk"  # type: ignore
 
@@ -459,13 +438,10 @@ def get_core_pack_list(marketplaces: List[MarketplaceVersions] = None) -> list:
 
 def get_local_remote_file(
     full_file_path: str,
-    tag: str = "master",
+    tag: str = DEMISTO_GIT_PRIMARY_BRANCH,
     return_content: bool = False,
 ):
-    repo = git.Repo(
-        search_parent_directories=True
-    )  # the full file path could be a git file path
-    repo_git_util = GitUtil(repo)
+    repo_git_util = GitUtil()
     git_path = repo_git_util.get_local_remote_file_path(full_file_path, tag)
     file_content = repo_git_util.get_local_remote_file_content(git_path)
     if return_content:
@@ -478,9 +454,23 @@ def get_local_remote_file(
 def get_remote_file_from_api(
     full_file_path: str,
     git_content_config: Optional[GitContentConfig],
-    tag: str = "master",
+    tag: str = DEMISTO_GIT_PRIMARY_BRANCH,
     return_content: bool = False,
-):
+    encoding: Optional[str] = None,
+) -> Union[bytes, Dict, List]:
+    """
+    Returns a remote file from Github/Gitlab repo using the api
+
+    Args:
+        full_file_path: file path in the GitHub/Gitlab repository
+        git_content_config: GitContentConfig config object
+        tag: from which commit / branch to take the file in the remote repository
+        return_content: whether to return the raw content of the file (bytes)
+        encoding: whether to decode the remote file with special encoding
+
+    Returns:
+        bytes | Dict | List: raw response of the file or as a python object (list, dict)
+    """
     if not git_content_config:
         git_content_config = GitContentConfig()
     if git_content_config.git_provider == GitProvider.GitLab:
@@ -542,9 +532,14 @@ def get_remote_file_from_api(
             f"Reason: {err_msg}[/yellow]"
         )
         return {}
+
     file_content = res.content
+
     if return_content:
         return file_content
+    if encoding:
+        file_content = file_content.decode(encoding)  # type: ignore[assignment]
+
     return get_file_details(file_content, full_file_path)
 
 
@@ -556,6 +551,8 @@ def get_file_details(
         file_details = json.loads(file_content)
     elif full_file_path.endswith(("yml", "yaml")):
         file_details = yaml.load(file_content)
+    elif full_file_path.endswith(".pack-ignore"):
+        return file_content
     # if neither yml nor json then probably a CHANGELOG or README file.
     else:
         file_details = {}
@@ -565,7 +562,7 @@ def get_file_details(
 @lru_cache(maxsize=128)
 def get_remote_file(
     full_file_path: str,
-    tag: str = "master",
+    tag: str = DEMISTO_GIT_PRIMARY_BRANCH,
     return_content: bool = False,
     git_content_config: Optional[GitContentConfig] = None,
     default_value=None,
@@ -573,7 +570,7 @@ def get_remote_file(
     """
     Args:
         full_file_path:The full path of the file.
-        tag: The branch name. default is 'master'
+        tag: The branch name. default is the content of DEMISTO_DEFAULT_BRANCH env variable.
         return_content: Determines whether to return the file's raw content or the dict representation of it.
         git_content_config: The content config to take the file from
         default_value: The method returns this value if using the SDK in offline mode. default_value cannot be None,
@@ -587,7 +584,7 @@ def get_remote_file(
             raise NoInternetConnectionException
         return default_value
 
-    tag = tag.replace("origin/", "").replace("demisto/", "")
+    tag = tag.replace(f"{DEMISTO_GIT_UPSTREAM}/", "").replace("demisto/", "")
     if not git_content_config:
         try:
             if not (
@@ -627,14 +624,16 @@ def filter_files_on_pack(pack: str, file_paths_list="") -> set:
     return files_paths_on_pack
 
 
-def filter_packagify_changes(modified_files, added_files, removed_files, tag="master"):
+def filter_packagify_changes(
+    modified_files, added_files, removed_files, tag=DEMISTO_GIT_PRIMARY_BRANCH
+):
     """
     Mark scripts/integrations that were removed and added as modified.
 
     :param modified_files: list of modified files in branch
     :param added_files: list of new files in branch
     :param removed_files: list of removed files in branch
-    :param tag: tag of compared revision
+    :param tag: The branch name. default is the content of DEMISTO_DEFAULT_BRANCH env variable.
 
     :return: tuple of updated lists: (modified_files, updated_added_files, removed_files)
     """
@@ -661,8 +660,7 @@ def filter_packagify_changes(modified_files, added_files, removed_files, tag="ma
             if PACKS_README_FILE_NAME in file_path:
                 updated_added_files.add(file_path)
                 continue
-            with open(file_path) as f:
-                details = yaml.load(f)
+            details = get_file(file_path, raise_on_error=True)
 
             uniq_identifier = "_".join(
                 [
@@ -708,7 +706,7 @@ def get_child_files(directory):
     child_files = [
         os.path.join(directory, path)
         for path in os.listdir(directory)
-        if os.path.isfile(os.path.join(directory, path))
+        if Path(directory, path).is_file()
     ]
     return child_files
 
@@ -823,8 +821,14 @@ def get_file(
     file_path: Union[str, Path],
     clear_cache: bool = False,
     return_content: bool = False,
-    keep_order: bool = True,
+    keep_order: bool = False,
+    raise_on_error: bool = False,
 ):
+    """
+    Get file contents.
+
+    if raise_on_error = False, this function will return empty dict
+    """
     if clear_cache:
         get_file.cache_clear()
     file_path = Path(file_path)  # type: ignore[arg-type]
@@ -859,6 +863,8 @@ def get_file(
         logger.error(
             f"{file_path} has a structure issue of file type {type_of_file}\n{e}"
         )
+        if raise_on_error:
+            raise
         return {}
 
 
@@ -890,7 +896,7 @@ def get_file_or_remote(file_path: Path, clear_cache=False):
         return get_remote_file(str(relative_file_path))
 
 
-def get_yaml(file_path, cache_clear=False, keep_order: bool = True):
+def get_yaml(file_path, cache_clear=False, keep_order: bool = False):
     if cache_clear:
         get_file.cache_clear()
     return get_file(file_path, clear_cache=cache_clear, keep_order=keep_order)
@@ -935,7 +941,7 @@ def get_api_module_ids(file_list) -> Set:
                 if f"/{API_MODULES_PACK}/Scripts/" in parent:
                     pf = parent
             if parent != pf:
-                api_module_set.add(os.path.basename(pf))
+                api_module_set.add(Path(pf).name)
     return api_module_set
 
 
@@ -1081,12 +1087,12 @@ def old_get_release_notes_file_path(file_path):
         return file_path
 
     # outside of packages, change log file will include the original file name.
-    file_name = os.path.basename(file_path)
+    file_name = Path(file_path).name
     return os.path.join(dir_name, os.path.splitext(file_name)[0] + "_CHANGELOG.md")
 
 
 def old_get_latest_release_notes_text(rn_path):
-    if not os.path.isfile(rn_path):
+    if not Path(rn_path).is_file():
         # releaseNotes were not provided
         return None
 
@@ -1542,44 +1548,6 @@ def get_docker_images_from_yml(script_obj) -> List[str]:
     return imgs
 
 
-def get_python_version(docker_image):
-    """
-    Get the python version of a docker image
-    Arguments:
-        docker_image {string} -- Docker image being used by the project
-    Return:
-        python version as a float (2.7, 3.7)
-    Raises:
-        ValueError -- if version is not supported
-    """
-    py_ver = check_output(
-        [
-            "docker",
-            "run",
-            "--rm",
-            docker_image,
-            "python",
-            "-c",
-            "import sys;logger.info('{}.{}'.format(sys.version_info[0], sys.version_info[1]))",
-        ],
-        text=True,
-        stderr=DEVNULL,
-    ).strip()
-    logger.debug(
-        f"Detected python version: [{py_ver}] for docker image: {docker_image}"
-    )
-
-    py_num = float(py_ver)
-    if py_num < 2.7 or (3 < py_num < 3.4):  # pylint can only work on python 3.4 and up
-        raise ValueError(
-            "Python vesion for docker image: {} is not supported: {}. "
-            "We only support python 2.7.* and python3 >= 3.4.".format(
-                docker_image, py_num
-            )
-        )
-    return py_num
-
-
 def get_pipenv_dir(py_version, envs_dirs_base):
     """
     Get the direcotry holding pipenv files for the specified python version
@@ -1685,7 +1653,10 @@ def find_type_by_path(path: Union[str, Path] = "") -> Optional[FileType]:
         elif LAYOUT_RULES_DIR in path.parts:
             return FileType.LAYOUT_RULE
 
-    elif path.stem.endswith("_image") and path.suffix in (".png", ".svg"):
+    elif (path.stem.endswith("_image") and path.suffix == ".png") or (
+        (path.stem.endswith("_dark") or path.stem.endswith("_light"))
+        and path.suffix == ".svg"
+    ):
         if path.name.endswith("Author_image.png"):
             return FileType.AUTHOR_IMAGE
         elif XSIAM_DASHBOARDS_DIR in path.parts:
@@ -1699,6 +1670,9 @@ def find_type_by_path(path: Union[str, Path] = "") -> Optional[FileType]:
 
     elif path.suffix == ".ps1":
         return FileType.POWERSHELL_FILE
+
+    elif path.name == ".vulture_whitelist.py":
+        return FileType.VULTURE_WHITELIST
 
     elif path.suffix == ".py":
         return FileType.PYTHON_FILE
@@ -1767,6 +1741,7 @@ def find_type_by_path(path: Union[str, Path] = "") -> Optional[FileType]:
         or path.suffix.lower() == ".txt"
     ):
         return FileType.TXT
+
     elif path.name == ".pylintrc":
         return FileType.PYLINTRC
 
@@ -1915,9 +1890,6 @@ def find_type(
         ):
             return FileType.PRE_PROCESS_RULES
 
-        if "allRead" in _dict and "truncated" in _dict:
-            return FileType.LISTS
-
         if "definitionIds" in _dict and "views" in _dict:
             return FileType.GENERIC_MODULE
 
@@ -1948,6 +1920,11 @@ def find_type(
 
         if "rule_id" in _dict:
             return FileType.LAYOUT_RULE
+
+        if isinstance(_dict, dict) and {"data", "allRead", "truncated"}.intersection(
+            _dict.keys()
+        ):
+            return FileType.LISTS
 
         # When using it for all files validation- sometimes 'id' can be integer
         if "id" in _dict:
@@ -2001,9 +1978,9 @@ def is_external_repository() -> bool:
 
     """
     try:
-        git_repo = git.Repo(os.getcwd(), search_parent_directories=True)
+        git_repo = GitUtil().repo
         private_settings_path = os.path.join(git_repo.working_dir, ".private-repo-settings")  # type: ignore
-        return os.path.exists(private_settings_path)
+        return Path(private_settings_path).exists()
     except git.InvalidGitRepositoryError:
         return True
 
@@ -2042,19 +2019,36 @@ def get_latest_upload_flow_commit_hash() -> str:
     return last_commit
 
 
-def get_content_path() -> Path:
+def get_content_path(relative_path: Optional[Path] = None) -> Path:
     """Get abs content path, from any CWD
+    Args:
+        Optional[Path]: Path to file or folder in content repo. If not provided, the environment variable or cwd will be used.
     Returns:
         str: Absolute content path
     """
+    # ValueError can be suppressed since as default, the environment variable or git.Repo can be used to find the content path.
+    with contextlib.suppress(ValueError):
+        if relative_path:
+            return (
+                relative_path.absolute().parent
+                if relative_path.name == "Packs"
+                else find_pack_folder(relative_path.absolute()).parent.parent
+            )
     try:
         if content_path := os.getenv("DEMISTO_SDK_CONTENT_PATH"):
-            git_repo = git.Repo(content_path)
+            git_repo = GitUtil(Path(content_path), search_parent_directories=False).repo
             logger.debug(f"Using content path: {content_path}")
         else:
-            git_repo = git.Repo(Path.cwd(), search_parent_directories=True)
+            git_repo = GitUtil().repo
 
-        remote_url = git_repo.remote().urls.__next__()
+        try:
+            remote_url = git_repo.remote(name=DEMISTO_GIT_UPSTREAM).urls.__next__()
+        except ValueError:
+            if not os.getenv("DEMISTO_SDK_IGNORE_CONTENT_WARNING"):
+                logger.warning(
+                    f"Could not find remote with name {DEMISTO_GIT_UPSTREAM} for repo {git_repo.working_dir}"
+                )
+            remote_url = ""
         is_fork_repo = "content" in remote_url
         is_external_repo = is_external_repository()
 
@@ -2155,7 +2149,7 @@ def is_file_from_content_repo(file_path: str) -> Tuple[bool, str]:
         str: relative path of file in content repo.
     """
     try:
-        git_repo = git.Repo(os.getcwd(), search_parent_directories=True)
+        git_repo = GitUtil().repo
         remote_url = git_repo.remote().urls.__next__()
         is_fork_repo = "content" in remote_url
         is_external_repo = is_external_repository()
@@ -2430,71 +2424,71 @@ def _get_file_id(file_type: str, file_content: Dict):
 
 def is_path_of_integration_directory(path: str) -> bool:
     """Returns true if directory is integration directory false if not."""
-    return os.path.basename(path) == INTEGRATIONS_DIR
+    return Path(path).name == INTEGRATIONS_DIR
 
 
 def is_path_of_script_directory(path: str) -> bool:
     """Returns true if directory is script directory false if not."""
-    return os.path.basename(path) == SCRIPTS_DIR
+    return Path(path).name == SCRIPTS_DIR
 
 
 def is_path_of_playbook_directory(path: str) -> bool:
     """Returns true if directory is playbook directory false if not."""
-    return os.path.basename(path) == PLAYBOOKS_DIR
+    return Path(path).name == PLAYBOOKS_DIR
 
 
 def is_path_of_test_playbook_directory(path: str) -> bool:
     """Returns true if directory is test_playbook directory false if not."""
-    return os.path.basename(path) == TEST_PLAYBOOKS_DIR
+    return Path(path).name == TEST_PLAYBOOKS_DIR
 
 
 def is_path_of_report_directory(path: str) -> bool:
     """Returns true if directory is report directory false if not."""
-    return os.path.basename(path) == REPORTS_DIR
+    return Path(path).name == REPORTS_DIR
 
 
 def is_path_of_dashboard_directory(path: str) -> bool:
     """Returns true if directory is integration directory false if not."""
-    return os.path.basename(path) == DASHBOARDS_DIR
+    return Path(path).name == DASHBOARDS_DIR
 
 
 def is_path_of_widget_directory(path: str) -> bool:
     """Returns true if directory is integration directory false if not."""
-    return os.path.basename(path) == WIDGETS_DIR
+    return Path(path).name == WIDGETS_DIR
 
 
 def is_path_of_incident_field_directory(path: str) -> bool:
     """Returns true if directory is integration directory false if not."""
-    return os.path.basename(path) == INCIDENT_FIELDS_DIR
+    return Path(path).name == INCIDENT_FIELDS_DIR
 
 
 def is_path_of_incident_type_directory(path: str) -> bool:
     """Returns true if directory is integration directory false if not."""
-    return os.path.basename(path) == INCIDENT_TYPES_DIR
+    return Path(path).name == INCIDENT_TYPES_DIR
 
 
 def is_path_of_indicator_field_directory(path: str) -> bool:
     """Returns true if directory is integration directory false if not."""
-    return os.path.basename(path) == INDICATOR_FIELDS_DIR
+    return Path(path).name == INDICATOR_FIELDS_DIR
 
 
 def is_path_of_layout_directory(path: str) -> bool:
     """Returns true if directory is integration directory false if not."""
-    return os.path.basename(path) == LAYOUTS_DIR
+    return Path(path).name == LAYOUTS_DIR
 
 
 def is_path_of_pre_process_rules_directory(path: str) -> bool:
     """Returns true if directory is pre-processing rules directory, false if not."""
-    return os.path.basename(path) == PRE_PROCESS_RULES_DIR
+    return Path(path).name == PRE_PROCESS_RULES_DIR
 
 
 def is_path_of_lists_directory(path: str) -> bool:
-    return os.path.basename(path) == LISTS_DIR
+    return Path(path).name == LISTS_DIR
 
 
 def is_path_of_classifier_directory(path: str) -> bool:
     """Returns true if directory is integration directory false if not."""
-    return os.path.basename(path) == CLASSIFIERS_DIR
+    return Path(path).name == CLASSIFIERS_DIR
 
 
 def get_parent_directory_name(path: str, abs_path: bool = False) -> str:
@@ -2507,7 +2501,7 @@ def get_parent_directory_name(path: str, abs_path: bool = False) -> str:
     parent_dir_name = os.path.dirname(os.path.abspath(path))
     if abs_path:
         return parent_dir_name
-    return os.path.basename(parent_dir_name)
+    return Path(parent_dir_name).name
 
 
 def get_code_lang(file_data: dict, file_entity: str) -> str:
@@ -2758,7 +2752,7 @@ def get_file_displayed_name(file_path):
     elif file_type == FileType.REPUTATION:
         return get_json(file_path).get("id")
     else:
-        return os.path.basename(file_path)
+        return Path(file_path).name
 
 
 def compare_context_path_in_yml_and_readme(yml_dict, readme_content):
@@ -2838,9 +2832,30 @@ def compare_context_path_in_yml_and_readme(yml_dict, readme_content):
     return different_contexts
 
 
-def write_yml(yml_path: str, yml_data: Dict):
-    with open(yml_path, "w") as f:
-        yaml.dump(yml_data, f)  # ruamel preservers multilines
+def write_dict(
+    path: Union[Path, str],
+    data: Dict,
+    handler: Optional[XSOAR_Handler] = None,
+    indent: int = 0,
+    sort_keys: bool = False,
+    **kwargs,
+):
+    """
+    Write unicode content into a json/yml file.
+    """
+    path = Path(path)
+    if not handler:
+        suffix = path.suffix.lower()
+        if suffix == ".json":
+            handler = json
+        elif suffix in {".yaml", ".yml"}:
+            handler = yaml
+        else:
+            raise ValueError(f"The file {path} is neither json/yml")
+
+    safe_write_unicode(
+        lambda f: handler.dump(data, f, indent, sort_keys, **kwargs), path  # type: ignore[union-attr]
+    )
 
 
 def to_kebab_case(s: str):
@@ -2939,7 +2954,7 @@ def is_pack_path(input_path: str) -> bool:
         - True if the input path is for a given pack.
         - False if the input path is not for a given pack.
     """
-    return os.path.basename(os.path.dirname(input_path)) == PACKS_DIR
+    return Path(input_path).parent.name == PACKS_DIR
 
 
 def is_xsoar_supported_pack(file_path: str) -> bool:
@@ -3183,7 +3198,7 @@ def extract_docker_image_from_text(text: str, with_no_tag: bool = False):
 
 def get_current_repo() -> Tuple[str, str, str]:
     try:
-        git_repo = git.Repo(os.getcwd(), search_parent_directories=True)
+        git_repo = GitUtil().repo
         parsed_git = giturlparse.parse(git_repo.remotes.origin.url)
         host = parsed_git.host
         if "@" in host:
@@ -3257,12 +3272,13 @@ def get_mp_types_from_metadata_by_item(file_path):
         metadata_path = Path(*metadata_path_parts) / METADATA_FILE_NAME
 
     try:
-        with open(metadata_path) as metadata_file:
-            metadata = json.load(metadata_file)
-            marketplaces = metadata.get(MARKETPLACE_KEY_PACK_METADATA)
-            if not marketplaces:
-                return [MarketplaceVersions.XSOAR.value]
-            return marketplaces
+        if not (
+            marketplaces := get_file(metadata_path, raise_on_error=True).get(
+                MARKETPLACE_KEY_PACK_METADATA
+            )
+        ):
+            return [MarketplaceVersions.XSOAR.value]
+        return marketplaces
     except FileNotFoundError:
         return []
 
@@ -3424,11 +3440,16 @@ def get_url_with_retries(url: str, retries: int, backoff_factor: int = 1, **kwar
     kwargs["stream"] = True
     session = requests.Session()
     exception = Exception()
-    for _ in range(retries):
+    for i in range(retries):
+        logger.debug(f"attempting to get {url}")
         response = session.get(url, **kwargs)
         try:
             response.raise_for_status()
         except HTTPError as error:
+            logger.debug(
+                f"Got error while trying to fetch {url}. {retries - i - 1} retries left.",
+                exc_info=True,
+            )
             exception = error
         else:
             return response
@@ -3536,7 +3557,7 @@ def get_display_name(file_path, file_data={}) -> str:
         name = r_name.get("report_name")
 
     else:
-        name = os.path.basename(file_path)
+        name = Path(file_path).name
     return name
 
 
@@ -3781,29 +3802,25 @@ def get_api_module_dependencies_from_graph(
 ) -> List:
     if changed_api_modules:
         dependent_items = []
-        for changed_api_module in changed_api_modules:
+        api_module_nodes = graph.search(
+            object_id=changed_api_modules, all_level_imports=True
+        )
+        if missing_api_modules := changed_api_modules - {
+            node.object_id for node in api_module_nodes
+        }:
+            raise ValueError(
+                f"The modified API modules {','.join(missing_api_modules)} were not found in the "
+                f"content graph."
+            )
+        for api_module_node in api_module_nodes:
             logger.info(
-                f"Checking for packages dependent on the modified API module {changed_api_module}..."
+                f"Checking for packages dependent on the modified API module {api_module_node.object_id}"
             )
-            api_module_nodes = graph.search(
-                object_id=changed_api_module, all_level_imports=True
-            )
-            # search return the one node of the changed_api_module
-            api_module_node = api_module_nodes[0] if api_module_nodes else None
-            if not api_module_node:
-                raise ValueError(
-                    f"The modified API module `{changed_api_module}` was not found in the "
-                    f"content graph."
-                )
-
-            dependent_items += [
-                dependency for dependency in api_module_node.imported_by
-            ]
+            dependent_items += list(api_module_node.imported_by)
 
         if dependent_items:
             logger.info(
-                f"Found [cyan]{len(dependent_items)}[/cyan] content items that import- {changed_api_module}. "
-                "Executing update-release-notes on those as well."
+                f"Found [cyan]{len(dependent_items)}[/cyan] content items that import the following modified API modules: {changed_api_modules}. "
             )
         return dependent_items
 
@@ -3861,6 +3878,8 @@ def sha1_update_from_dir(directory: Union[str, Path], hash_):
     """This will recursivly iterate all the files in the directory and update the hash object"""
     assert Path(directory).is_dir()
     for path in sorted(Path(directory).iterdir(), key=lambda p: str(p).lower()):
+        if path.name == "__pycache__":
+            continue
         hash_.update(path.name.encode())
         if path.is_file():
             hash_ = sha1_update_from_file(path, hash_)
@@ -3907,3 +3926,61 @@ def extract_error_codes_from_file(pack_name: str) -> Set[str]:
                     error_codes_list.extend(error_codes)
 
     return set(error_codes_list)
+
+
+def is_string_ends_with_url(str: str) -> bool:
+    """
+    Args:
+        str: a string to test.
+    Returns: True if the string ends with a url adress. Otherwise, return False.
+    """
+    return bool(re.search(f"{URL_REGEX}$", str))
+
+
+def strip_description(description):
+    """
+    Args:
+        description: a description string.
+    Returns: the description stripped from quotes mark if they appear both in the beggining and in the end of the string.
+    """
+    description = description.strip()
+    return (
+        description.strip('"')
+        if description.startswith('"') and description.endswith('"')
+        else description.strip("'")
+        if description.startswith("'") and description.endswith("'")
+        else description
+    )
+
+
+def is_file_in_pack(file: Path, pack_name: str) -> bool:
+    """
+    Return wether the given file is under the given pack.
+    Args:
+        file: The file to check.
+        pack_name: The name of the pack we want to ensure the given file is under.
+    """
+    return (
+        len(file.parts) > 2 and file.parts[0] == "Packs" and file.parts[1] == pack_name
+    )
+
+
+def parse_int_or_default(value: Any, default: int) -> int:
+    """
+    Parse int or return default value
+    Args:
+        value: value to parse
+        default: default value to return if parsing failed
+
+    Returns:
+        int: parsed value or default value
+
+    """
+    try:
+        return int(value)
+    except (ValueError, TypeError):
+        return default
+
+
+def get_all_repo_pack_ids() -> list:
+    return [path.name for path in (Path(get_content_path()) / PACKS_DIR).iterdir()]

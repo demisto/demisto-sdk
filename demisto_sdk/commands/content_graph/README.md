@@ -71,7 +71,7 @@ When the graph creation is completed, it will be available in http://localhost:7
 
     Quiet output, only output results in the end.
 
-* **-lp, --log-path**
+* **-lp, --log_file_path**
 
     Path to store all levels of logs.
 
@@ -108,9 +108,9 @@ When the graph update is completed, it will be available in http://localhost:747
 
     Path to content graph zip file to import.
 
-* **--use-current**
+* **--use-local-import**
 
-    Whether to use the current content graph to update.
+    Whether to use the current import folder to import graph.
 
 * **-nd, --no-dependencies**
 
@@ -124,7 +124,7 @@ When the graph update is completed, it will be available in http://localhost:747
 
     Quiet output, only output results in the end.
 
-* **-lp, --log-path**
+* **-lp, --log_file_path**
 
     Path to store all levels of logs.
 

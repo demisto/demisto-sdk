@@ -104,7 +104,7 @@ class TestTimeStampReplacer:
             "server_replay_ignore_payload_params": "payload_key1 payload_key2",
             "keys_to_replace": "key_to_replace1 key_to_replace2",
         }
-        mocker.patch("os.path.exists", return_value=True)
+        mocker.patch("pathlib.Path.exists", return_value=True)
         mocker.patch("builtins.open", mock_open(read_data=json.dumps(problematic_keys)))
         time_stamp_replacer = TimestampReplacer()
         time_stamp_replacer.running()

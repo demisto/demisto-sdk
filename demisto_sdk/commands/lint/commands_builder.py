@@ -1,17 +1,11 @@
 # STD python packages
 import os
 from pathlib import Path
-from typing import List, Literal, Optional
+from typing import List, Optional
 
 from packaging.version import parse
 
 from demisto_sdk.commands.lint.resources.pylint_plugins.base_checker import base_msg
-from demisto_sdk.commands.lint.resources.pylint_plugins.branch_base_checker import (
-    branch_base_msg,
-)
-from demisto_sdk.commands.lint.resources.pylint_plugins.branch_partner_level_checker import (
-    branch_partner_msg,
-)
 from demisto_sdk.commands.lint.resources.pylint_plugins.certified_partner_level_checker import (
     cert_partner_msg,
 )
@@ -102,12 +96,7 @@ def build_bandit_command(files: List[Path]) -> str:
 
 
 def build_xsoar_linter_command(
-    files: List[Path],
-    support_level: Literal[
-        "base", "community", "partner", "certified partner", "xsoar"
-    ] = "base",
-    formatting_script: bool = False,
-    all_packs: bool = False,
+    files: List[Path], support_level: str = "base", formatting_script: bool = False
 ) -> str:
     """Build command to execute with xsoar linter module
     Args:
@@ -115,7 +104,6 @@ def build_xsoar_linter_command(
         files(List[Path]): files to execute lint
         support_level: Support level for the file
         formatting_script: if the file being checked is a formatting script
-        all_packs (bool): Should be true if lint is running on all packs, False otherwise.
 
     Returns:
        str: xsoar linter command using pylint load plugins
@@ -124,7 +112,7 @@ def build_xsoar_linter_command(
         support_level = "base"
 
     # linters by support level
-    all_packs_support_levels = {
+    support_levels = {
         "base": "base_checker",
         "community": "base_checker,community_level_checker",
         "partner": "base_checker,community_level_checker,partner_level_checker",
@@ -134,29 +122,13 @@ def build_xsoar_linter_command(
         "xsoar_level_checker",
     }
 
-    # linters by support level
-    on_branch_support_levels = {
-        "base": "branch_base_checker,base_checker",
-        "community": "branch_base_checker,base_checker,community_level_checker",
-        "partner": "branch_base_checker,base_checker,community_level_checker,branch_partner_level_checker,"
-        "partner_level_checker",
-        "certified partner": "branch_base_checker,base_checker,community_level_checker,partner_level_checker,"
-        "certified_partner_level_checker",
-        "xsoar": "branch_base_checker,base_checker,community_level_checker,branch_partner_level_checker,"
-        "partner_level_checker,certified_partner_level_checker,xsoar_level_checker",
-    }
-
-    support_levels = all_packs_support_levels if all_packs else on_branch_support_levels
-
     # messages from all level linters
     Msg_XSOAR_linter = {
         "base_checker": base_msg,
-        "branch_base_checker": branch_base_msg,
         "community_level_checker": community_msg,
         "partner_level_checker": partner_msg,
         "certified_partner_level_checker": cert_partner_msg,
         "xsoar_level_checker": xsoar_msg,
-        "branch_partner_level_checker": branch_partner_msg,
     }
 
     checker_path = ""

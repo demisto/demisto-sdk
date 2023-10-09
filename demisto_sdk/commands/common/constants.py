@@ -1,3 +1,4 @@
+import os
 import re
 from enum import Enum
 from functools import reduce
@@ -98,6 +99,21 @@ EVENT_COLLECTOR = "EventCollector"
 # ENV VARIABLES
 
 ENV_DEMISTO_SDK_MARKETPLACE = "DEMISTO_SDK_MARKETPLACE"
+DEMISTO_GIT_PRIMARY_BRANCH = os.getenv("DEMISTO_DEFAULT_BRANCH", "master")
+DEMISTO_GIT_UPSTREAM = os.getenv("DEMISTO_DEFAULT_REMOTE", "origin")
+DEMISTO_SDK_CI_SERVER_HOST = os.getenv("CI_SERVER_HOST", "code.pan.run")
+DEMISTO_SDK_OFFICIAL_CONTENT_PROJECT_ID = os.getenv(
+    "CI_PROJECT_ID", "2596"
+)  # the default is the id of the content repo in code.pan.run
+
+# Marketplaces
+TEST_XDR_PREFIX = os.getenv("TEST_XDR_PREFIX", "")
+
+DEMISTO_SDK_MARKETPLACE_XSOAR_DIST = TEST_XDR_PREFIX + "marketplace-dist"
+DEMISTO_SDK_MARKETPLACE_XSIAM_DIST = TEST_XDR_PREFIX + "marketplace-v2-dist"
+DEMISTO_SDK_MARKETPLACE_XPANSE_DIST = TEST_XDR_PREFIX + "xpanse-dist"
+DEMISTO_SDK_MARKETPLACE_XSOAR_SAAS_DIST = TEST_XDR_PREFIX + "marketplace-saas-dist"
+DEMISTO_SDK_MARKETPLACE_XSOAR_DIST_DEV = TEST_XDR_PREFIX + "marketplace-dist-dev"
 
 
 class FileType(str, Enum):
@@ -177,6 +193,7 @@ class FileType(str, Enum):
     UNIFIED_YML = "unified_yml"
     INI = "ini"
     PEM = "pem"
+    VULTURE_WHITELIST = "vulture_whitelist"
 
 
 RN_HEADER_BY_FILE_TYPE = {
@@ -658,6 +675,7 @@ RELATIVE_HREF_URL_REGEX = r'(<.*?href\s*=\s*"((?!(?:https?:\/\/)|#|(?:mailto:)).
 RELATIVE_MARKDOWN_URL_REGEX = (
     r"(?<![!])(\[.*?\])\(((?!(?:https?:\/\/)|#|(?:mailto:)).*?)\)"
 )
+URL_REGEX = r"(((http|https)\:\/\/)?[a-zA-Z0-9\.\/\?\:@\-_=#]+\.([a-zA-Z]){2,6}([a-zA-Z0-9\.\&\/\?\:@\-_=#])*)"
 
 # old classifier structure
 _PACKS_CLASSIFIER_BASE_5_9_9_REGEX = (
@@ -1131,7 +1149,6 @@ VALIDATION_USING_GIT_IGNORABLE_DATA = (
     "doc_files",
     "doc_imgs",
     ".secrets-ignore",
-    ".pack-ignore",
 )
 
 FILE_TYPES_FOR_TESTING = [".py", ".js", ".yml", ".ps1"]
@@ -1158,21 +1175,17 @@ def urljoin(*args: str):
     ).rstrip("/")
 
 
-OFFICIAL_CONTENT_ID_SET_PATH = (
-    "https://storage.googleapis.com/marketplace-dist/content/id_set.json"
-)
+OFFICIAL_CONTENT_ID_SET_PATH = f"https://storage.googleapis.com/{DEMISTO_SDK_MARKETPLACE_XSOAR_DIST}/content/id_set.json"
 
-OFFICIAL_CONTENT_GRAPH_PATH = (
-    "https://storage.googleapis.com/marketplace-dist-dev/content_graph"
-)
+OFFICIAL_CONTENT_GRAPH_PATH = f"https://storage.googleapis.com/{DEMISTO_SDK_MARKETPLACE_XSOAR_DIST_DEV}/content_graph"
 
-OFFICIAL_INDEX_JSON_PATH = (
-    "https://storage.googleapis.com/marketplace-dist/content/packs/index.json"
-)
+OFFICIAL_INDEX_JSON_PATH = f"https://storage.googleapis.com/{DEMISTO_SDK_MARKETPLACE_XSOAR_DIST}/content/packs/index.json"
 
 # Run all test signal
 RUN_ALL_TESTS_FORMAT = "Run all tests"
 FILTER_CONF = "./artifacts/filter_file.txt"
+
+GOOGLE_CLOUD_STORAGE_PUBLIC_BASE_PATH = "https://storage.googleapis.com"
 
 
 class PB_Status:
@@ -1580,6 +1593,8 @@ VALIDATED_PACK_ITEM_TYPES = [
     "Wizards",
 ]
 
+VALID_SENTENCE_SUFFIX = [".", "!", "?", ".)", ".'", '."', "\n}", "\n]"]
+
 FIRST_FETCH = "first_fetch"
 
 MAX_FETCH = "max_fetch"
@@ -1594,6 +1609,7 @@ SKIP_RELEASE_NOTES_FOR_TYPES = (
     None,
     FileType.RELEASE_NOTES_CONFIG,
     FileType.CONTRIBUTORS,
+    FileType.PACK_IGNORE,
 )
 
 LAYOUT_AND_MAPPER_BUILT_IN_FIELDS = [
@@ -1722,10 +1738,21 @@ class MarketplaceVersions(str, Enum):
     XSOAR = "xsoar"
     MarketplaceV2 = "marketplacev2"
     XPANSE = "xpanse"
+    XSOAR_SAAS = "xsoar_saas"
+    XSOAR_ON_PREM = "xsoar_on_prem"
 
+
+MarketplaceVersionToMarketplaceName = {
+    MarketplaceVersions.XSOAR.value: DEMISTO_SDK_MARKETPLACE_XSOAR_DIST,
+    MarketplaceVersions.MarketplaceV2.value: DEMISTO_SDK_MARKETPLACE_XSIAM_DIST,
+    MarketplaceVersions.XPANSE.value: DEMISTO_SDK_MARKETPLACE_XPANSE_DIST,
+    MarketplaceVersions.XSOAR_SAAS.value: DEMISTO_SDK_MARKETPLACE_XSOAR_SAAS_DIST,
+}
 
 MARKETPLACE_TO_CORE_PACKS_FILE: Dict[MarketplaceVersions, str] = {
     MarketplaceVersions.XSOAR: "Tests/Marketplace/core_packs_list.json",
+    MarketplaceVersions.XSOAR_SAAS: "Tests/Marketplace/core_packs_list.json",
+    MarketplaceVersions.XSOAR_ON_PREM: "Tests/Marketplace/core_packs_list.json",
     MarketplaceVersions.MarketplaceV2: "Tests/Marketplace/core_packs_mpv2_list.json",
     MarketplaceVersions.XPANSE: "Tests/Marketplace/core_packs_xpanse_list.json",
 }
@@ -1845,5 +1872,47 @@ NATIVE_IMAGE_DOCKER_NAME = "demisto/py3-native"
 FORMATTING_SCRIPT = "indicator-format"
 
 ENV_SDK_WORKING_OFFLINE = "DEMISTO_SDK_OFFLINE_ENV"
+DOCKERFILES_INFO_REPO = "demisto/dockerfiles-info"
 
-TEST_COVERAGE_DEFAULT_URL = "https://storage.googleapis.com/marketplace-dist-dev/code-coverage-reports/coverage-min.json"
+TEST_COVERAGE_DEFAULT_URL = f"https://storage.googleapis.com/{DEMISTO_SDK_MARKETPLACE_XSOAR_DIST_DEV}/code-coverage-reports/coverage-min.json"
+
+URL_IMAGE_LINK_REGEX = r"(\!\[.*?\])\((?P<url>https://[a-zA-Z_/\.0-9\- :%]*?)\)((].*)?)"
+
+HTML_IMAGE_LINK_REGEX = r'(<img.*?src\s*=\s*"(https://.*?)")'
+
+XSOAR_PREFIX_TAG = "<~XSOAR>\n"
+XSOAR_SUFFIX_TAG = "\n</~XSOAR>\n"
+XSOAR_INLINE_PREFIX_TAG = "<~XSOAR>"
+XSOAR_INLINE_SUFFIX_TAG = "</~XSOAR>"
+
+XSOAR_SAAS_PREFIX_TAG = "<~XSOAR_SAAS>\n"
+XSOAR_SAAS_SUFFIX_TAG = "\n</~XSOAR_SAAS>\n"
+XSOAR_SAAS_INLINE_PREFIX_TAG = "<~XSOAR_SAAS>"
+XSOAR_SAAS_INLINE_SUFFIX_TAG = "</~XSOAR_SAAS>"
+
+XSOAR_ON_PREM_PREFIX_TAG = "<~XSOAR_ON_PREM>\n"
+XSOAR_ON_PREM_SUFFIX_TAG = "\n</~XSOAR_ON_PREM>\n"
+XSOAR_ON_PREM_INLINE_PREFIX_TAG = "<~XSOAR_ON_PREM>"
+XSOAR_ON_PREM_INLINE_SUFFIX_TAG = "</~XSOAR_ON_PREM>"
+
+XSIAM_PREFIX_TAG = "<~XSIAM>\n"
+XSIAM_SUFFIX_TAG = "\n</~XSIAM>\n"
+XSIAM_INLINE_PREFIX_TAG = "<~XSIAM>"
+XSIAM_INLINE_SUFFIX_TAG = "</~XSIAM>"
+
+XPANSE_PREFIX_TAG = "<~XPANSE>\n"
+XPANSE_SUFFIX_TAG = "\n</~XPANSE>\n"
+XPANSE_INLINE_PREFIX_TAG = "<~XPANSE>"
+XPANSE_INLINE_SUFFIX_TAG = "</~XPANSE>"
+
+MARKDOWN_IMAGES_ARTIFACT_FILE_NAME = "markdown_images.json"
+SERVER_API_TO_STORAGE = "api/marketplace/file?name=content/packs"
+
+
+class ImagesFolderNames(str, Enum):
+    README_IMAGES = "readme_images"
+    INTEGRATION_DESCRIPTION_IMAGES = "integration_description_images"
+
+
+class PreCommitModes(str, Enum):
+    NIGHTLY = "nightly"

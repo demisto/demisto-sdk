@@ -47,18 +47,16 @@ class TestTextFile(FileObjectsTesting):
                 actual_file_content == expected_file_content
             ), f"Could not read text file {path} properly, expected: {expected_file_content}, actual: {actual_file_content}"
 
-    @pytest.mark.parametrize("from_remote", [True, False])
-    def test_read_from_git_path(
-        self, mocker, input_files: Tuple[List[str], str], from_remote: bool
-    ):
+    def test_read_from_git_path(self, mocker, input_files: Tuple[List[str], str]):
 
         text_file_paths, git_repo_path = input_files
+
         with ChangeCWD(git_repo_path):
             for path in text_file_paths:
                 with open(path, "r") as file:
                     expected_file_content = file.read()
 
-            actual_file_content = TextFile.read_from_git_path(path)
+            actual_file_content = TextFile.read_from_git_path(path, from_remote=False)
             assert (
                 actual_file_content == expected_file_content
             ), f"Could not read text file {path} properly from git, expected: {expected_file_content}, actual: {actual_file_content}"

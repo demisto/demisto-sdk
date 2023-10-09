@@ -100,6 +100,14 @@ class File(ABC, BaseModel):
 
     @classmethod
     def __file_factory(cls, path: Path) -> Type["File"]:
+
+        if not path.exists():
+            git_util = GitUtil.from_content_path()
+            path = git_util.repo.working_dir / path
+
+        if not path.exists():
+            raise FileNotFoundError(f"File {path} does not exist")
+
         def _file_factory(_cls):
             for subclass in _cls.__subclasses__():
                 if subclass.is_class_type(path):

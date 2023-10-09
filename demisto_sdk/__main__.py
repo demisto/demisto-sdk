@@ -1517,6 +1517,11 @@ def upload(ctx, **kwargs):
     is_flag=True,
     default=False,
 )
+@click.option(
+    "--auto-replace-uuids/--no-auto-replace-uuids",
+    help="Whether to replace the uuids.",
+    default=True,
+)
 @click.pass_context
 @logging_setup_decorator
 def download(ctx, **kwargs):
@@ -3525,7 +3530,6 @@ def exit_from_program(result=0, **kwargs):
 
 
 # ====================== modeling-rules command group ====================== #
-
 app = typer.Typer(name="modeling-rules", hidden=True, no_args_is_help=True)
 app.command("test", no_args_is_help=True)(test_modeling_rule.test_modeling_rule)
 app.command("init-test-data", no_args_is_help=True)(init_test_data.init_test_data)

@@ -3,8 +3,10 @@ from typing import List, Tuple
 
 import pytest
 
+from demisto_sdk.commands.common.constants import DEMISTO_GIT_PRIMARY_BRANCH
 from demisto_sdk.commands.common.files.tests.file_test import FileObjectsTesting
 from demisto_sdk.commands.common.files.yml_file import YmlFile
+from demisto_sdk.commands.common.git_content_config import GitContentConfig, GitProvider
 from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
 from TestSuite.test_tools import ChangeCWD
 
@@ -12,13 +14,14 @@ from TestSuite.test_tools import ChangeCWD
 class TestYMLFile(FileObjectsTesting):
     @pytest.fixture(autouse=True)
     def input_files(self, git_repo):
+        file_content = {"test": "test"}
         pack = git_repo.create_pack("test")
-        integration = pack.create_integration(yml={"test": "test"})
-        script = pack.create_script(yml={"test": "test"})
-        playbook = pack.create_playbook(yml={"test": "test"})
-        modeling_rule = pack.create_modeling_rule(yml={"test": "test"})
+        integration = pack.create_integration(yml=file_content)
+        script = pack.create_script(yml=file_content)
+        playbook = pack.create_playbook(yml=file_content)
+        modeling_rule = pack.create_modeling_rule(yml=file_content)
         correlation_rule = pack.create_correlation_rule(
-            name="test", content={"test": "test"}
+            name="test", content=file_content
         )
 
         if git_util := git_repo.git_util:
@@ -29,7 +32,7 @@ class TestYMLFile(FileObjectsTesting):
             script.yml.path,
             playbook.yml.path,
             modeling_rule.yml.path,
-            correlation_rule.correlation_rule_tmp_path,
+            correlation_rule.path,
         ]
         return yml_file_paths, git_repo.path
 
@@ -41,7 +44,7 @@ class TestYMLFile(FileObjectsTesting):
             actual_file_content = YmlFile.read_from_local_path(path)
             assert (
                 actual_file_content == expected_file_content
-            ), f"Could not read text file {path} properly, expected: {expected_file_content}, actual: {actual_file_content}"
+            ), f"Could not read yml file {path} properly, expected: {expected_file_content}, actual: {actual_file_content}"
 
     def test_read_from_git_path(self, input_files: Tuple[List[str], str]):
         yml_file_paths, git_repo_path = input_files
@@ -54,16 +57,70 @@ class TestYMLFile(FileObjectsTesting):
                 )
                 assert (
                     actual_file_content == expected_file_content
-                ), f"Could not read text file {path} properly from git, expected: {expected_file_content}, actual: {actual_file_content}"
+                ), f"Could not read yml file {path} properly from git, expected: {expected_file_content}, actual: {actual_file_content}"
 
     def test_read_from_github_api(self, mocker, input_files: Tuple[List[str], str]):
-        pass
+        import requests
+
+        text_file_paths, _ = input_files
+        for path in text_file_paths:
+            api_response = requests.Response()
+            api_response.status_code = 200
+            api_response._content = Path(path).read_bytes()
+            requests_mocker = mocker.patch.object(
+                requests, "get", return_value=api_response
+            )
+            assert YmlFile.read_from_github_api(path) == yaml.load(
+                Path(path).read_text()
+            )
+            # make sure that the URL is sent correctly
+            assert (
+                f"{DEMISTO_GIT_PRIMARY_BRANCH}{path}"
+                in requests_mocker.call_args.args[0]
+            )
 
     def test_read_from_gitlab_api(self, mocker, input_files: Tuple[List[str], str]):
-        pass
+        from urllib.parse import unquote
+
+        import requests
+
+        text_file_paths, _ = input_files
+        for path in text_file_paths:
+            api_response = requests.Response()
+            api_response.status_code = 200
+            api_response._content = Path(path).read_bytes()
+            requests_mocker = mocker.patch.object(
+                requests, "get", return_value=api_response
+            )
+            assert YmlFile.read_from_gitlab_api(
+                path,
+                git_content_config=GitContentConfig(
+                    repo_hostname="test.com",
+                    git_provider=GitProvider.GitLab,
+                    project_id=1234,
+                ),
+            ) == yaml.load(Path(path).read_text())
+            # make sure that the URL is sent correctly
+            assert path in unquote(requests_mocker.call_args.args[0])
+            assert requests_mocker.call_args.kwargs["params"] == {
+                "ref": DEMISTO_GIT_PRIMARY_BRANCH
+            }
 
     def test_read_from_http_request(self, mocker, input_files: Tuple[List[str], str]):
-        pass
+        import requests
+
+        text_file_paths, _ = input_files
+        for path in text_file_paths:
+            api_response = requests.Response()
+            api_response.status_code = 200
+            api_response._content = Path(path).read_bytes()
+            mocker.patch.object(requests, "get", return_value=api_response)
+            assert YmlFile.read_from_http_request(path) == yaml.load(
+                Path(path).read_text()
+            )
 
     def test_write_file(self, git_repo):
-        pass
+        _path = Path(git_repo.path) / "file.yml"
+        YmlFile.write_file({"test": "test"}, output_path=_path)
+        assert _path.exists()
+        assert yaml.load(Path(_path).read_text()) == {"test": "test"}

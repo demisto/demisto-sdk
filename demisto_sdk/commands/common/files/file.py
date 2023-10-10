@@ -136,6 +136,7 @@ class File(ABC, BaseModel):
         git_util: Optional[GitUtil] = None,
         **kwargs,
     ) -> "File":
+        input_path = Path(input_path)
 
         model_attributes: Dict[str, Any] = {
             "input_path": input_path,

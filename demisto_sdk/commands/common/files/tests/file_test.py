@@ -15,19 +15,30 @@ from demisto_sdk.commands.common.legacy_git_tools import git_path
 from TestSuite.repo import Repo
 from TestSuite.test_tools import ChangeCWD
 
-DEMISTO_SDK_PATH = Path(f"{git_path()}", "demisto_sdk")
+DEMISTO_SDK_PATH = Path(f"{git_path()}")
 
 
 class TestFile:
     @pytest.mark.parametrize(
         "input_path, expected_class",
         [
-            (DEMISTO_SDK_PATH / "tests/test_files/just_a_txt_file.txt", TextFile),
-            (DEMISTO_SDK_PATH / "tests/test_files/layout-valid.json", JsonFile),
-            (DEMISTO_SDK_PATH / "tests/test_files/script-test_script.yml", YmlFile),
+            (
+                DEMISTO_SDK_PATH / "demisto_sdk/tests/test_files/just_a_txt_file.txt",
+                TextFile,
+            ),
+            (
+                DEMISTO_SDK_PATH / "demisto_sdk/tests/test_files/layout-valid.json",
+                JsonFile,
+            ),
+            (
+                DEMISTO_SDK_PATH
+                / "demisto_sdk/tests/test_files/script-test_script.yml",
+                YmlFile,
+            ),
             (DEMISTO_SDK_PATH / "pytest.ini", IniFile),
             (
-                DEMISTO_SDK_PATH / "tests/test_files/fake_pack/Author_image.png",
+                DEMISTO_SDK_PATH
+                / "demisto_sdk/tests/test_files/fake_pack/Author_image.png",
                 BinaryFile,
             ),
         ],
@@ -44,9 +55,15 @@ class TestFile:
                     YmlFile,
                 )
 
-    def test_from_path_input_file_unknown_file(self):
-        with pytest.raises(UnknownFileError):
+    def test_from_path_input_file_non_existent_file(self):
+        with pytest.raises(FileNotFoundError):
             File.from_path("path_does_not_exist")
+
+    def test_from_path_input_file_unknown_file(self, repo):
+        _path = Path(repo.path) / "test.xml"
+        TextFile.write_file("<to>Test</to>", output_path=_path)
+        with pytest.raises(UnknownFileError):
+            File.from_path(_path)
 
     def test_from_path_input_file_does_not_exist(self):
         with pytest.raises(FileNotFoundError):

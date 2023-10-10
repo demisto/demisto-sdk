@@ -24,7 +24,7 @@ from demisto_sdk.commands.common.files.errors import (
     LocalFileReadError,
     UnknownFileError,
 )
-from demisto_sdk.commands.common.git_content_config import GitContentConfig, GitProvider
+from demisto_sdk.commands.common.git_content_config import GitContentConfig
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers.xsoar_handler import XSOAR_Handler
 from demisto_sdk.commands.common.logger import logger
@@ -295,7 +295,7 @@ class File(ABC, BaseModel):
         clear_cache: bool = False,
     ):
         if not git_content_config:
-            git_content_config = GitContentConfig(git_provider=GitProvider.GitLab)
+            git_content_config = GitContentConfig()
 
         git_path_url = urljoin(
             git_content_config.base_api, "files", urllib.parse.quote_plus(path), "raw"

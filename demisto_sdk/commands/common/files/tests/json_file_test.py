@@ -24,7 +24,7 @@ class TestJsonFile(FileTesting):
         _list = pack.create_list("test", content=file_content)
 
         if git_util := git_repo.git_util:
-            git_util.commit_files("commit all yml files")
+            git_util.commit_files("commit all json files")
 
         json_file_paths = [
             indicator_field.path,

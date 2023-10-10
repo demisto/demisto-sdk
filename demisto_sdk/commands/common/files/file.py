@@ -8,7 +8,7 @@ from typing import Any, Dict, Optional, Set, Type, Union
 
 import requests
 from bs4.dammit import UnicodeDammit
-from pydantic import BaseModel, PrivateAttr, validator
+from pydantic import BaseModel, PrivateAttr
 from requests.exceptions import RequestException
 
 from demisto_sdk.commands.common.constants import (
@@ -79,25 +79,6 @@ class File(ABC, BaseModel):
     def known_extensions(cls) -> Set[str]:
         return set()
 
-    @validator("git_util", always=True, pre=True)
-    def validate_git_util(cls, v: Optional[GitUtil]) -> GitUtil:
-        return v or GitUtil.from_content_path()
-
-    @validator("input_path", always=True)
-    def validate_input_path(cls, v: Path, values) -> Path:
-        if v.is_absolute():
-            return v
-        else:
-            logger.debug(f"File {v} does not exist, getting full relative path")
-
-        git_util: GitUtil = values["git_util"]
-
-        path = git_util.repo.working_dir / v
-        if path.exists():
-            return path
-
-        raise FileNotFoundError(f"File {path} does not exist")
-
     @classmethod
     def __file_factory(cls, path: Path) -> Type["File"]:
 
@@ -137,6 +118,16 @@ class File(ABC, BaseModel):
         **kwargs,
     ) -> "File":
         input_path = Path(input_path)
+
+        git_util = git_util or GitUtil.from_content_path()
+        if not input_path.is_absolute():
+            logger.debug(
+                f"path {input_path} is not absolute, trying to get full relative path from {git_util.repo.working_dir}"
+            )
+            input_path = git_util.repo.working_dir / input_path
+
+        if not input_path.exists():
+            raise FileNotFoundError(f"File {input_path} does not exist")
 
         model_attributes: Dict[str, Any] = {
             "input_path": input_path,

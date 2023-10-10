@@ -4,6 +4,7 @@
 * **format** command will run without the content graph if graph creation fails.
 * Internal: Replaced the `tools._read_file` function with a more generic `tools.safe_read_unicode` function.
 * Internal: Added `pathlib.Path` support to the `tools.get_yml_paths_in_dir` and `tools.get_child_directories` functions.
+* Fixed an issue in the **test-modeling-rule** command, where possible exceptions were not caught.
 
 ## 1.20.7
 * Fixed an issue where unified integrations / scripts with a period in their name would not split properly.

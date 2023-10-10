@@ -2359,7 +2359,9 @@ class IntegrationValidator(ContentEntityValidator):
 
     @error_codes("IN159")
     def is_partner_collector_has_xsoar_support_level_header(self) -> bool:
-
+        """
+        Validates that event collectors under partner supported packs always has the supportlevelheader = xsoar key:value.
+        """
         if (script := (self.current_file.get("script") or {})) and (
             script.get("isfetchevents") or script.get("isfetcheventsandassets")
         ):

@@ -16,11 +16,11 @@ from demisto_sdk.commands.common.constants import (
     API_MODULE_FILE_SUFFIX,
     DEFAULT_IMAGE_PREFIX,
     PARTNER_SUPPORT,
+    SUPPORT_LEVEL_HEADER,
     TYPE_TO_EXTENSION,
     FileType,
     ImagesFolderNames,
     MarketplaceVersions,
-    SUPPORT_LEVEL_HEADER
 )
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.logger import logger

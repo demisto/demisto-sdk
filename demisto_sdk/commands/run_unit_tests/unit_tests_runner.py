@@ -134,7 +134,13 @@ def unit_test_runner(file_paths: List[Path], verbose: bool = False) -> int:
                     log_prompt=f"Unit test {integration_script.name}",
                 )
                 if errors:
-                    raise RuntimeError(f"Creating docker failed due to {errors}")
+                    if errors == "'javascript'":
+                        logger.info(
+                            f"Skipping tests for '{integration_script.name}' since it is a JavaScript integration/script"
+                        )
+                        continue
+                    else:
+                        raise RuntimeError(f"Creating docker failed due to {errors}")
                 (integration_script.path.parent / "conftest.py").unlink(missing_ok=True)
                 (integration_script.path.parent / "conftest.py").symlink_to(
                     (

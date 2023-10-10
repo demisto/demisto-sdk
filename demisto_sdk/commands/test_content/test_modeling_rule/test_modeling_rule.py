@@ -207,7 +207,7 @@ def create_retrying_caller(retry_attempts: int, sleep_interval: int) -> Retrying
     retry_params: Dict[str, Any] = {
         "reraise": True,
         "before_sleep": before_sleep_log(logger, logging.DEBUG),
-        "retry": retry_if_exception_type(requests.exceptions.HTTPError),
+        "retry": retry_if_exception_type(requests.exceptions.RequestException),
         "stop": stop_after_attempt(retry_attempts),
         "wait": wait_fixed(sleep_interval),
     }
@@ -460,7 +460,7 @@ def validate_expected_values(
         validate_expected_values_test_case_system_out = [query_info]
         try:
             results = retrying_caller(xsiam_execute_query, xsiam_client, query)
-        except requests.exceptions.HTTPError:
+        except requests.exceptions.RequestException:
             logger.error(
                 f"[red]{XQL_QUERY_ERROR_EXPLANATION}[/red]",
                 extra={"markup": True},
@@ -636,7 +636,7 @@ def check_dataset_exists(
                     extra={"markup": True},
                 )
                 results_exist = True
-        except requests.exceptions.HTTPError:
+        except requests.exceptions.RequestException:
             results = []
 
         # There are no results from the dataset, but it exists.
@@ -707,7 +707,7 @@ def push_test_data_to_tenant(
         )
         try:
             retrying_caller(xsiam_push_to_dataset, xsiam_client, events_test_data, rule)
-        except requests.exceptions.HTTPError:
+        except requests.exceptions.RequestException:
             system_err = (
                 f"Failed pushing test data to tenant for dataset {rule.dataset}"
             )

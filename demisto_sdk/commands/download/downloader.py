@@ -141,6 +141,7 @@ class Downloader:
         item_type (str): The items type to download, use just when downloading system items.
         init (bool): Initialize a new Pack and download the items to it. This will create an empty folder for each supported content item type.
         keep_empty_folders (bool): Whether to keep empty folders when using init.
+        auto_replace_uuids (bool):  Whether to replace the UUIDs.
     """
 
     def __init__(
@@ -157,6 +158,7 @@ class Downloader:
         item_type: str = "",
         init: bool = False,
         keep_empty_folders: bool = False,
+        auto_replace_uuids: bool = True,
         **kwargs,
     ):
         self.output_pack_path = output
@@ -182,6 +184,7 @@ class Downloader:
         self.num_added_files = 0
         self.init = init
         self.keep_empty_folders = keep_empty_folders
+        self.auto_replace_uuids = auto_replace_uuids
         if is_sdk_defined_working_offline() and self.run_format:
             self.run_format = False
             logger.info(
@@ -350,9 +353,10 @@ class Downloader:
                 content_item_as_string = self.download_playbook_yaml(
                     content_item_as_string
                 )
-            content_item_as_string = self.replace_uuids(
-                content_item_as_string, scripts_id_to_name, file_name
-            )
+            if self.auto_replace_uuids:
+                content_item_as_string = self.replace_uuids(
+                    content_item_as_string, scripts_id_to_name, file_name
+                )
             file_name = self.update_file_prefix(file_name.strip("/"))
             path = Path(self.custom_content_temp_dir, file_name)
             try:

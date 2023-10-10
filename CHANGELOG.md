@@ -1,8 +1,13 @@
 # Changelog
 ## Unreleased
+* Added the *auto-replace-uuids* flag to the **download** command. set this flag to False to avoid UUID replacements when downloading using download command.
+* **format** command will run without the content graph if graph creation fails.
+
+## 1.20.7
 * Fixed an issue where unified integrations / scripts with a period in their name would not split properly.
 * Fixed an issue where the documentation was out of date with the current structure of **demisto-sdk** which does not support command auto-completion.
 * Improved logging for **lint** and **prepare-content** commands.
+* Internal: Added the `CI_SERVER_HOST`, `CI_PROJECT_ID` environment variables.
 
 ## 1.20.6
 * Added the *--mode* argument to the **pre-commit** command, to run pre-commit with special mode (to run with different settings), supported mode are: 'nightly'.

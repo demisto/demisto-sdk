@@ -25,7 +25,7 @@ class GitFileReadError(FileReadError):
 
 class HttpFileReadError(IOError):
     def __init__(self, url: str, exc: Exception):
-        super().__init__(f"Could not read file from {url} url, full error:\n{exc}")
+        super().__init__(f"Could not read file from {url}, full error:\n{exc}")
 
 
 class UnknownFileError(FileReadError, ValueError):

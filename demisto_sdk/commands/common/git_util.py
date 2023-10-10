@@ -4,7 +4,6 @@ from pathlib import Path
 from typing import List, Optional, Set, Tuple, Union
 
 import click
-import git
 import gitdb
 from git import (
     InvalidGitRepositoryError,
@@ -12,6 +11,7 @@ from git import (
 )
 from git.diff import Lit_change_type
 from git.exc import GitError, NoSuchPathError
+from git.objects import Blob, Commit
 from git.remote import Remote
 
 from demisto_sdk.commands.common.constants import (
@@ -77,7 +77,7 @@ class GitUtil:
         except ValueError as e:
             raise NoSuchPathError(str(e))
 
-    def get_commit(self, commit_or_branch: str, from_remote: bool = True) -> git.Commit:
+    def get_commit(self, commit_or_branch: str, from_remote: bool = True) -> Commit:
         if from_remote:
             # check if file exist in remote branch
             try:
@@ -108,7 +108,7 @@ class GitUtil:
         path = str(self.path_from_git_root(path))
 
         try:
-            blob: git.Blob = commit.tree / path
+            blob: Blob = commit.tree / path
         except KeyError:
             raise GitFileNotFoundError(
                 commit_or_branch, path=path, from_remote=from_remote

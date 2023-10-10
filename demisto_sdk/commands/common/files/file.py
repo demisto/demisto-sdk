@@ -174,7 +174,7 @@ class File(ABC, BaseModel):
         clear_cache: bool = False,
     ) -> Any:
         if clear_cache:
-            cls.read_from_local_path.clear_cache()
+            cls.read_from_local_path.cache_clear()
         model = cls.from_path(input_path=path, git_util=git_util, handler=handler)
         return model.read_local_file()
 
@@ -199,7 +199,7 @@ class File(ABC, BaseModel):
         clear_cache: bool = False,
     ) -> Any:
         if clear_cache:
-            cls.read_from_git_path.clear_cache()
+            cls.read_from_git_path.cache_clear()
         model = cls.from_path(input_path=path, git_util=git_util, handler=handler)
         return model.read_git_file(tag, from_remote=from_remote)
 
@@ -307,14 +307,14 @@ class File(ABC, BaseModel):
         clear_cache: bool = False,
     ):
         if clear_cache:
-            cls.read_from_http_request.clear_cache()
+            cls.read_from_http_request.cache_clear()
         try:
             response = requests.get(
                 url,
                 params={key: value for key, value in params} if params else None,
                 verify=verify,
                 timeout=timeout,
-                headers={key: value for key, value in headers} if params else None,
+                headers={key: value for key, value in headers} if headers else None,
             )
             response.raise_for_status()
         except RequestException as e:
@@ -352,9 +352,7 @@ class File(ABC, BaseModel):
             "write must be implemented for each File concrete object"
         )
 
-    def write(
-        self, data: Any, path: Union[str, Path], encoding: Optional[str] = None
-    ) -> None:
+    def write(self, data: Any, path: Path, encoding: Optional[str] = None) -> None:
         def _write_safe_unicode():
             self._write(data, path=path)
 

@@ -2,7 +2,7 @@
 ## Unreleased
 * Added the *auto-replace-uuids* flag to the **download** command. set this flag to False to avoid UUID replacements when downloading using download command.
 * **format** command will run without the content graph if graph creation fails.
-* Fixed an issue in the **test-modeling-rule** command, where a ReadTimeout exception was not caught.
+* Fixed an issue in the **test-modeling-rule** command, where possible exceptions were not caught.
 
 ## 1.20.7
 * Fixed an issue where unified integrations / scripts with a period in their name would not split properly.

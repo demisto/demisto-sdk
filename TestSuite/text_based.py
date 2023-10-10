@@ -1,5 +1,4 @@
 from pathlib import Path
-from typing import Optional
 
 
 class TextBased:
@@ -12,9 +11,6 @@ class TextBased:
 
     def write_text(self, text: str = ""):
         self._file_path.write_text(data=text, encoding=None)
-
-    def read_text(self, encoding: Optional[str] = None):
-        return self._file_path.read_text(encoding)
 
     def write_list(self, lst: list):
         self._file_path.write_text(data="\n".join(lst), encoding=None)

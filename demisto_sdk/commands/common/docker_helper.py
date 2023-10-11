@@ -336,11 +336,7 @@ class DockerBase:
                 )
             except (docker.errors.BuildError, docker.errors.APIError, Exception) as e:
                 errors = str(e)
-                error_log = f"{log_prompt} - Build errors occurred: {errors}"
-                if errors == "'javascript'":
-                    logger.warning(error_log)
-                else:
-                    logger.critical(error_log)
+                logger.critical(f"{log_prompt} - Build errors occurred: {errors}")
 
         return test_docker_image, errors
 

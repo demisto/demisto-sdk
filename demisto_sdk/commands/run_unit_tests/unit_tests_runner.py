@@ -10,6 +10,7 @@ import coverage
 from junitparser import JUnitXml
 
 import demisto_sdk.commands.common.docker_helper as docker_helper
+from demisto_sdk.commands.common.constants import TYPE_JS
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH, PYTHONPATH
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
@@ -128,19 +129,18 @@ def unit_test_runner(file_paths: List[Path], verbose: bool = False) -> int:
         logger.debug(f"{docker_images=}")
         for docker_image in docker_images:
             try:
+                if integration_script.type == TYPE_JS:
+                    logger.info(
+                        f"Skipping tests for '{integration_script.name}' since it is a JavaScript integration/script"
+                    )
+                    continue
                 test_docker_image, errors = docker_base.pull_or_create_test_image(
                     docker_image,
                     integration_script.type,
                     log_prompt=f"Unit test {integration_script.name}",
                 )
                 if errors:
-                    if errors == "'javascript'":
-                        logger.info(
-                            f"Skipping tests for '{integration_script.name}' since it is a JavaScript integration/script"
-                        )
-                        continue
-                    else:
-                        raise RuntimeError(f"Creating docker failed due to {errors}")
+                    raise RuntimeError(f"Creating docker failed due to {errors}")
                 (integration_script.path.parent / "conftest.py").unlink(missing_ok=True)
                 (integration_script.path.parent / "conftest.py").symlink_to(
                     (

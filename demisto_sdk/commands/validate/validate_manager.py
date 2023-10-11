@@ -2439,35 +2439,34 @@ class ValidateManager:
         logger.info(
             f"\n[cyan]================= Running validation on branch {self.branch_name} =================[/cyan]"
         )
-        if not self.no_configuration_prints:
-            logger.info(f"Validating against {self.prev_ver}")
+        logger.info(f"Validating against {self.prev_ver}")
 
-            if self.branch_name in [
-                self.prev_ver,
-                self.prev_ver.replace(f"{DEMISTO_GIT_UPSTREAM}/", ""),
-            ]:  # pragma: no cover
-                logger.info("Running only on last commit")
+        if self.branch_name in [
+            self.prev_ver,
+            self.prev_ver.replace(f"{DEMISTO_GIT_UPSTREAM}/", ""),
+        ]:  # pragma: no cover
+            logger.info("Running only on last commit")
 
-            elif self.is_circle:
-                logger.info("Running only on committed files")
+        elif self.is_circle:
+            logger.info("Running only on committed files")
 
-            elif self.staged:
-                logger.info("Running only on staged files")
+        elif self.staged:
+            logger.info("Running only on staged files")
 
-            else:
-                logger.info("Running on committed and staged files")
+        else:
+            logger.info("Running on committed and staged files")
 
-            if self.skip_pack_rn_validation:
-                logger.info("Skipping release notes validation")
+        if self.skip_pack_rn_validation:
+            logger.info("Skipping release notes validation")
 
-            if self.skip_docker_checks:
-                logger.info("Skipping Docker checks")
+        if self.skip_docker_checks:
+            logger.info("Skipping Docker checks")
 
-            if not self.is_backward_check:
-                logger.info("Skipping backwards compatibility checks")
+        if not self.is_backward_check:
+            logger.info("Skipping backwards compatibility checks")
 
-            if self.skip_dependencies:
-                logger.info("Skipping pack dependencies check")
+        if self.skip_dependencies:
+            logger.info("Skipping pack dependencies check")
 
     def get_unfiltered_changed_files_from_git(self) -> Tuple[Set, Set, Set]:
         """

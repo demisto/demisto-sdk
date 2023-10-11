@@ -723,6 +723,24 @@ def zip_packs(ctx, **kwargs) -> int:
     help="Run specific validations by stating the error codes.",
     is_flag=False,
 )
+@click.option(
+    "--category-to-run",
+    help="Run specific validations by stating category they're listed under in the config file.",
+    is_flag=False,
+)
+@click.option(
+    "-af",
+    "--allow-fix",
+    help="wether to autofix failing validations with an available auto fix or not.",
+    is_flag=True,
+    default=False
+)
+@click.option(
+    "--config-path",
+    help="path for a config file to run, if not given - will run the default path at: ...",
+    is_flag=False
+)
+
 @click.argument("file_paths", nargs=-1, type=click.Path(exists=True, resolve_path=True))
 @pass_config
 @click.pass_context
@@ -730,6 +748,9 @@ def zip_packs(ctx, **kwargs) -> int:
 def validate(ctx, config, file_paths: str, **kwargs):
     """Validate your content files. If no additional flags are given, will validated only committed files."""
     from demisto_sdk.commands.validate.validate_manager import ValidateManager
+    from demisto_sdk.commands.validate.validate_manager_v2 import (
+        ValidateManager as ValidateManagerV2,
+    )
 
     if is_sdk_defined_working_offline():
         logger.error(SDK_OFFLINE_ERROR_MESSAGE)
@@ -784,7 +805,23 @@ def validate(ctx, config, file_paths: str, **kwargs):
             check_is_unskipped=not kwargs.get("allow_skipped", False),
             specific_validations=kwargs.get("run_specific_validations"),
         )
-        return validator.run_validation()
+        validator_v2 = ValidateManagerV2(
+            only_committed_files=kwargs["post_commit"],
+            prev_ver=kwargs["prev_ver"],
+            use_git=kwargs["use_git"],
+            file_path=file_path,
+            validate_all=kwargs.get("validate_all"),
+            is_external_repo=is_external_repo,
+            staged=kwargs["staged"],
+            json_file_path=kwargs.get("json_file"),
+            debug_git=kwargs.get("debug_git"),
+            include_untracked=kwargs.get("include_untracked"),
+            multiprocessing=run_with_mp,
+            config_file_category_to_run=not kwargs.get("category_to_run"),
+            allow_autofix=kwargs.get("allow_fix"),
+            config_file_path=kwargs.get("config_path")
+        )
+        return validator.run_validation() + validator_v2.run_validation()
     except (git.InvalidGitRepositoryError, git.NoSuchPathError, FileNotFoundError) as e:
         logger.info(f"[red]{e}[/red]")
         logger.info(

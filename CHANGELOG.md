@@ -1,6 +1,7 @@
 # Changelog
 ## Unreleased
-* updated the **run-unit-tests** command to not fail on JavaScript items, but skip them instead.
+* Updated the **run-unit-tests** command to not fail on JavaScript items, but skip them instead.
+* Updated the `validate` pre-commit hook to run before the `run-unit-tests` hook. This will prevent `validate` from falling on errors about temporary files that are sometimes created when running unit-tests.
 * Added the *auto-replace-uuids* flag to the **download** command. set this flag to False to avoid UUID replacements when downloading using download command.
 * **format** command will run without the content graph if graph creation fails.
 * Internal: Replaced the `tools._read_file` function with a more generic `tools.safe_read_unicode` function.

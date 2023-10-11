@@ -19,6 +19,7 @@ from demisto_sdk.commands.common.constants import (
     FIRST_FETCH_PARAM,
     INCIDENT_FETCH_REQUIRED_PARAMS,
     IOC_OUTPUTS_DICT,
+    MANDATORY_REPUTATION_CONTEXT_NAMES,
     MAX_FETCH,
     MAX_FETCH_PARAM,
     PACKS_DIR,
@@ -599,7 +600,53 @@ class IntegrationValidator(ContentEntityValidator):
 
         return missing_outputs, missing_descriptions
 
-    @error_codes("DB100,DB101,IN107")
+    def validate_reputation_name_spelling(
+        self, command_name: str, context_output_path: str
+    ) -> bool:
+        result = True
+        for reputation_name in MANDATORY_REPUTATION_CONTEXT_NAMES:
+            if context_output_path.lower().startswith(f"{reputation_name.lower()}."):
+                if reputation_name not in context_output_path:
+                    (
+                        error_message,
+                        error_code,
+                    ) = Errors.command_reputation_output_capitalization_incorrect(
+                        command_name, context_output_path, reputation_name
+                    )
+                    if self.handle_error(
+                        error_message,
+                        error_code,
+                        file_path=self.file_path,
+                        warning=self.structure_validator.quiet_bc,
+                    ):
+                        result = False
+        return result
+
+    # def validate_all_reputation_outputs_exist(self, command_name, reputation_name: str, context_output_path: str) -> bool:
+    #     result = True
+    #     if required_output_paths := REPUTATION_TO_REQUIRED_OUTPUT.get(reputation_name.lower(), None):
+    #         if context_output_path not in required_output_paths:
+    #             error_message, error_code = Errors.command_reputation_output_is_missing(
+    #                 command_name,
+    #                 required_output_paths,
+    #                 context_output_path)
+    #             if self.handle_error(
+    #                 error_message,
+    #                 error_code,
+    #                 file_path=self.file_path,
+    #                 warning=self.structure_validator.quiet_bc):
+    #                 result = False
+    #     return result
+
+    # def validate_context_reputation_output(self, context_output_path: str, command_name: str) -> bool:
+    #     result = True
+    #     for reputation_name in MANDATORY_REPUTATION_CONTEXT_NAMES:
+    #         if context_output_path.lower().startswith(f"{reputation_name.lower()}."):
+    #             result = self.validate_reputation_name_spelling(reputation_name, context_output_path, command_name) and\
+    #                 self.validate_all_reputation_outputs_exist(command_name, reputation_name, context_output_path)
+    #     return result
+
+    @error_codes("DB100,DB101,IN107,IN158,IN159")
     def is_outputs_for_reputations_commands_valid(self) -> bool:
         """Check if a reputation command (domain/email/file/ip/url)
             has the correct DBotScore outputs according to the context standard
@@ -614,12 +661,20 @@ class IntegrationValidator(ContentEntityValidator):
         for command in commands:
             command_name = command.get("name")
             # look for reputations commands
-            if command_name in BANG_COMMAND_NAMES:
+            if (
+                command_name in BANG_COMMAND_NAMES
+                or command_name in MANDATORY_REPUTATION_CONTEXT_NAMES
+            ):
                 context_outputs_paths = set()
                 context_outputs_descriptions = set()
                 for output in command.get("outputs", []):
                     context_outputs_paths.add(output.get("contextPath"))
                     context_outputs_descriptions.add(output.get("description"))
+                    output_for_reputation_valid = (
+                        self.validate_reputation_name_spelling(
+                            command_name, output.get("contextPath")
+                        )
+                    )
 
                 # validate DBotScore outputs and descriptions
                 if command_name in REPUTATION_COMMAND_NAMES:

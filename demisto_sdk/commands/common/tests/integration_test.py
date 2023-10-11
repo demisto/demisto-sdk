@@ -2904,3 +2904,49 @@ class TestisContextChanged:
             structure_validator, json_file_path=integration.yml.path, using_git=use_git
         )
         assert integration_validator.is_line_ends_with_dot() is expected_results
+
+    VALID_COMMAND_OUTPUTS = {
+        "name": "url",
+        "outputs": [
+            {
+                "contextPath": "URL.Data",
+                "description": "test description.",
+                "type": "string",
+            }
+        ],
+    }
+    INVALID_COMMAND_OUTPUTS = {
+        "name": "url",
+        "outputs": [
+            {
+                "contextPath": "Url.Data",
+                "description": "data.",
+                "type": "string",
+            }
+        ],
+    }
+    MISSING_COMMAND_OUTPUTS = {
+        "name": "endpoint",
+        "outputs": [
+            {
+                "contextPath": "Endpoint.Hostname",
+                "description": "endpoint hostname",
+                "type": "string",
+            }
+        ],
+    }
+    IS_OUTPUT_FOR_REPUTATION_INPUTS = [
+        (VALID_COMMAND_OUTPUTS, True),
+        (INVALID_COMMAND_OUTPUTS, False),
+        (MISSING_COMMAND_OUTPUTS, False),
+    ]
+
+    @pytest.mark.parametrize("outputs, result", IS_OUTPUT_FOR_REPUTATION_INPUTS)
+    def test_is_valid_command_custom_outputs(
+        self, outputs: List[Dict[str, Any]], result: bool
+    ):
+        content = {"script": {"commands": [outputs]}}
+        structure = mock_structure("", content)
+        validator = IntegrationValidator(structure)
+        validator.current_file = content
+        assert validator.is_outputs_for_reputations_commands_valid() is result

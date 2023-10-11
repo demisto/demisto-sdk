@@ -16,14 +16,14 @@ class ValidationResult(BaseModel):
     @property
     def format_readable_message(self):
         return f"{str(self.file_path)}: {self.error_code} - {self.message}"
-    
+
     @property
     def format_json_message(self):
         return {
             "file path": self.file_path,
             "is_valid": self.is_valid,
             "error code": self.error_code,
-            "message": self.message
+            "message": self.message,
         }
 
 

@@ -33,10 +33,12 @@ class ValidateManager:
         debug_git=False,
         include_untracked=False,
         allow_autofix=False,
-        config_file_path=None
+        config_file_path=None,
     ):
-        self.config_reader = ConfigReader(config_file_path=config_file_path,
-                                          category_to_run=config_file_category_to_run)
+        self.config_reader = ConfigReader(
+            config_file_path=config_file_path,
+            category_to_run=config_file_category_to_run,
+        )
         self.objects_to_run = self.gather_objects_to_run(
             file_path, use_git, validate_all
         )

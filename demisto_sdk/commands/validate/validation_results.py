@@ -30,12 +30,12 @@ class ValidationResults:
                     logger.error(f"[red]{result.format_readable_message}[/red]")
                     exit_code = 1
         return exit_code
-    
+
     def write_validation_results(self):
         json_validations_list = [result.format_json_message for result in self.results]
-        
+
         json_object = json.dumps(json_validations_list, indent=4)
-        
+
         # Writing to sample.json
         with open(self.json_file_path, "w") as outfile:
             outfile.write(json_object)

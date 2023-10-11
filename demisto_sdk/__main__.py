@@ -733,14 +733,13 @@ def zip_packs(ctx, **kwargs) -> int:
     "--allow-fix",
     help="wether to autofix failing validations with an available auto fix or not.",
     is_flag=True,
-    default=False
+    default=False,
 )
 @click.option(
     "--config-path",
     help="path for a config file to run, if not given - will run the default path at: ...",
-    is_flag=False
+    is_flag=False,
 )
-
 @click.argument("file_paths", nargs=-1, type=click.Path(exists=True, resolve_path=True))
 @pass_config
 @click.pass_context
@@ -819,7 +818,7 @@ def validate(ctx, config, file_paths: str, **kwargs):
             multiprocessing=run_with_mp,
             config_file_category_to_run=not kwargs.get("category_to_run"),
             allow_autofix=kwargs.get("allow_fix"),
-            config_file_path=kwargs.get("config_path")
+            config_file_path=kwargs.get("config_path"),
         )
         return validator.run_validation() + validator_v2.run_validation()
     except (git.InvalidGitRepositoryError, git.NoSuchPathError, FileNotFoundError) as e:

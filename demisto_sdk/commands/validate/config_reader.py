@@ -3,6 +3,8 @@ import toml
 CONFIG_FILE_PATH = "/Users/yhayun/dev/demisto/demisto-sdk/demisto_sdk/commands/validate_poc/validation_conf.toml"
 USE_GIT = "use_git"
 VALIDATE_ALL = "validate_all"
+
+
 class ConfigReader:
     def __init__(self, config_file_path, category_to_run):
         if not config_file_path:
@@ -19,6 +21,5 @@ class ConfigReader:
             section.get("ignore"),
             section.get("warning"),
             section.get("ignorable_errors"),
-            self.config_file_content.get("support_level", {})
-            
+            self.config_file_content.get("support_level", {}),
         )

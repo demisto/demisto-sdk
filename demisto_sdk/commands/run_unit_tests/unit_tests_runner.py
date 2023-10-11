@@ -128,12 +128,12 @@ def unit_test_runner(file_paths: List[Path], verbose: bool = False) -> int:
             ]
         logger.debug(f"{docker_images=}")
         for docker_image in docker_images:
+            if integration_script.type == TYPE_JS:
+                logger.info(
+                    f"Skipping tests for '{integration_script.name}' since it is a JavaScript integration/script"
+                )
+                continue
             try:
-                if integration_script.type == TYPE_JS:
-                    logger.info(
-                        f"Skipping tests for '{integration_script.name}' since it is a JavaScript integration/script"
-                    )
-                    continue
                 test_docker_image, errors = docker_base.pull_or_create_test_image(
                     docker_image,
                     integration_script.type,

@@ -1,14 +1,10 @@
 from pathlib import Path
-from typing import Any, Optional, Set
+from typing import Any, Optional
 
 from demisto_sdk.commands.common.files.file import File
 
 
 class BinaryFile(File):
-    @classmethod
-    def known_extensions(cls) -> Set[str]:
-        return {".png", ".bin"}
-
     def load(self, file_content: bytes):
         return file_content
 

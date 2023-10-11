@@ -1,5 +1,3 @@
-from typing import Set
-
 from pydantic import Field, validator
 
 from demisto_sdk.commands.common.files.handler_file import HandlerFile
@@ -13,7 +11,3 @@ class YmlFile(HandlerFile):
     @validator("handler", always=True)
     def validate_handler(cls, v: YAML_Handler) -> YAML_Handler:
         return v or yaml
-
-    @classmethod
-    def known_extensions(cls) -> Set[str]:
-        return {".yaml", ".yml"}

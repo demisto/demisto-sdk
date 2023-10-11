@@ -1,33 +1,11 @@
 from configparser import ConfigParser
 from pathlib import Path
-from typing import Any, Optional, Set
+from typing import Any, Optional
 
 from demisto_sdk.commands.common.files.text_file import TextFile
-from demisto_sdk.commands.common.logger import logger
 
 
 class IniFile(TextFile):
-    @classmethod
-    def known_files(cls) -> Set[str]:
-        return {".pack-ignore"}
-
-    @classmethod
-    def known_extensions(cls) -> Set[str]:
-        return {".ini"}
-
-    @classmethod
-    def is_class_type(cls, path: Path) -> bool:
-        if super().is_class_type(path):
-            return True
-
-        try:
-            parser = ConfigParser()
-            parser.read(path)
-            return bool(parser.sections())
-        except Exception as e:
-            logger.debug(f"Got error when trying to parse INI file\nerror:{e}")
-            return False
-
     def load(self, file_content: bytes) -> Optional[ConfigParser]:
         config_parser = ConfigParser(allow_no_value=True)
         config_parser.read_string(super().load(file_content))

@@ -1,6 +1,6 @@
 import re
 from pathlib import Path
-from typing import Any, List, Optional, Set
+from typing import Any, List, Optional
 
 from bs4.dammit import UnicodeDammit
 
@@ -13,20 +13,6 @@ class TextFile(File):
     @property
     def num_lines(self):
         return len(self.read_local_file().splitlines())
-
-    @classmethod
-    def known_files(cls):
-        return {".secrets-ignore", "command_examples"}
-
-    @classmethod
-    def known_extensions(cls) -> Set[str]:
-        return {
-            ".txt",
-            ".text",
-            ".py",
-            ".md",
-            ".xif",
-        }
 
     def load(self, file_content: bytes) -> Any:
         try:

@@ -4,11 +4,11 @@ from abc import ABC, abstractmethod
 from functools import lru_cache
 from io import BytesIO
 from pathlib import Path
-from typing import Any, Dict, Optional, Set, Type, Union
+from typing import Any, Dict, Optional, Union
 
 import requests
 from bs4.dammit import UnicodeDammit
-from pydantic import BaseModel, PrivateAttr
+from pydantic import BaseModel, PrivateAttr, validator
 from requests.exceptions import RequestException
 
 from demisto_sdk.commands.common.constants import (
@@ -22,7 +22,6 @@ from demisto_sdk.commands.common.files.errors import (
     GitFileReadError,
     HttpFileReadError,
     LocalFileReadError,
-    UnknownFileError,
 )
 from demisto_sdk.commands.common.git_content_config import GitContentConfig
 from demisto_sdk.commands.common.git_util import GitUtil
@@ -40,6 +39,28 @@ class File(ABC, BaseModel):
         arbitrary_types_allowed = (
             True  # allows having custom classes for properties in model
         )
+
+    @validator("git_util", pre=True, always=True)
+    def get_git_util(cls, v: Optional[GitUtil]) -> GitUtil:
+        return v or GitUtil.from_content_path()
+
+    @validator("input_path", always=True)
+    def get_input_path(cls, v: Path, values: Dict) -> Path:
+        input_path = v
+        git_util = values["git_util"]
+
+        if input_path.is_absolute():
+            return input_path
+        else:
+            logger.debug(
+                f"path {input_path} is not absolute, trying to get full relative path from {git_util.repo.working_dir}"
+            )
+
+        input_path = git_util.repo.working_dir / input_path
+        if not input_path.exists():
+            raise FileNotFoundError(f"File {input_path} does not exist")
+
+        return input_path
 
     @property
     def input_file_content(self) -> bytes:
@@ -64,37 +85,6 @@ class File(ABC, BaseModel):
     def copy_file(self, destination_path: Union[Path, str]):
         shutil.copyfile(self.input_path, destination_path)
 
-    @classmethod
-    def is_class_type(cls, path: Path) -> bool:
-        return (
-            path.name in cls.known_files()
-            or path.suffix.lower() in cls.known_extensions()
-        )
-
-    @classmethod
-    def known_files(cls) -> Set[str]:
-        return set()
-
-    @classmethod
-    def known_extensions(cls) -> Set[str]:
-        return set()
-
-    @classmethod
-    def __file_factory(cls, path: Path) -> Type["File"]:
-        def _file_factory(_cls):
-            for subclass in _cls.__subclasses__():
-                if subclass.is_class_type(path):
-                    return subclass
-                if _subclass := _file_factory(subclass):
-                    return _subclass
-
-            return None
-
-        if file_object := _file_factory(cls):
-            return file_object
-
-        raise UnknownFileError(path)
-
     @abstractmethod
     def load(self, file_content: bytes):
         raise NotImplementedError(
@@ -109,17 +99,12 @@ class File(ABC, BaseModel):
         git_util: Optional[GitUtil] = None,
         **kwargs,
     ) -> "File":
-        input_path = Path(input_path)
-
-        git_util = git_util or GitUtil.from_content_path()
-        if not input_path.is_absolute():
-            logger.debug(
-                f"path {input_path} is not absolute, trying to get full relative path from {git_util.repo.working_dir}"
+        if cls is File:
+            raise ValueError(
+                "when reading from file content please specify concrete class"
             )
-            input_path = git_util.repo.working_dir / input_path
 
-        if not input_path.exists():
-            raise FileNotFoundError(f"File {input_path} does not exist")
+        input_path = Path(input_path)
 
         model_attributes: Dict[str, Any] = {
             "input_path": input_path,
@@ -128,12 +113,7 @@ class File(ABC, BaseModel):
 
         model_attributes.update(kwargs)
 
-        if cls is File:
-            model = cls.__file_factory(input_path).parse_obj(  # type: ignore[arg-type]
-                model_attributes
-            )
-        else:
-            model = cls.parse_obj(model_attributes)
+        model = cls.parse_obj(model_attributes)
         logger.debug(f"Using model {model} for file {input_path}")
         return model
 
@@ -241,10 +221,8 @@ class File(ABC, BaseModel):
 
         timeout = 10
 
-        model = cls.__file_factory(Path(path)) if cls is File else cls
-
         try:
-            return model.read_from_http_request(
+            return cls.read_from_http_request(
                 git_path_url,
                 headers=frozenset(
                     {
@@ -262,7 +240,7 @@ class File(ABC, BaseModel):
             logger.warning(
                 f"Received error {e} when trying to retrieve {git_path_url} content from Github, retrying"
             )
-            return model.read_from_http_request(
+            return cls.read_from_http_request(
                 git_path_url,
                 params=frozenset({"token": github_token}.items()),
                 timeout=timeout,
@@ -285,8 +263,7 @@ class File(ABC, BaseModel):
         )
         gitlab_token = git_content_config.CREDENTIALS.gitlab_token
 
-        model = cls.__file_factory(Path(path)) if cls is File else cls
-        return model.read_from_http_request(
+        return cls.read_from_http_request(
             git_path_url,
             headers=frozenset({"PRIVATE-TOKEN": gitlab_token}.items()),
             params=frozenset({"ref": tag}.items()),
@@ -306,6 +283,10 @@ class File(ABC, BaseModel):
         handler: Optional[XSOAR_Handler] = None,
         clear_cache: bool = False,
     ):
+        if cls is File:
+            raise ValueError(
+                "when reading from file content please specify concrete class"
+            )
         if clear_cache:
             cls.read_from_http_request.cache_clear()
         try:

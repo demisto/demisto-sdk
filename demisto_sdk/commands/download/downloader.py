@@ -33,7 +33,6 @@ from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
-    create_stringio_object,
     find_type,
     get_child_files,
     get_code_lang,
@@ -47,6 +46,7 @@ from demisto_sdk.commands.common.tools import (
     get_yaml,
     get_yml_paths_in_dir,
     is_sdk_defined_working_offline,
+    safe_read_unicode,
     write_dict,
 )
 from demisto_sdk.commands.format.format_module import format_manager
@@ -120,6 +120,7 @@ class Downloader:
         system_item_type (str): The items type to download (relevant only for system items).
         init (bool): Whether to initialize a new Pack structure in the output path and download the items to it.
         keep_empty_folders (bool): Whether to keep empty folders when using init.
+        auto_replace_uuids (bool):  Whether to replace the UUIDs.
     """
     def __init__(
         self,
@@ -135,6 +136,7 @@ class Downloader:
         item_type: str | None = None,
         init: bool = False,
         keep_empty_folders: bool = False,
+        auto_replace_uuids: bool = True,
         **kwargs,
     ):
         self.output_pack_path = output
@@ -150,6 +152,7 @@ class Downloader:
         self.client = None
         self.init = init
         self.keep_empty_folders = keep_empty_folders
+        self.auto_replace_uuids = auto_replace_uuids
         if is_sdk_defined_working_offline() and self.run_format:
             self.run_format = False
             logger.warning(
@@ -204,14 +207,15 @@ class Downloader:
                     logger.info(f"No custom content matching the provided input filters was found.")
                     return 0
 
-                # Replace UUID IDs with names in filtered content (only content we download)
-                changed_uuids_count = 0
-                for file_object in downloaded_content_objects.values():
-                    if self.replace_uuid_ids(custom_content_object=file_object, uuid_mapping=uuid_mapping):
-                        changed_uuids_count += 1
+                if self.auto_replace_uuids:
+                    # Replace UUID IDs with names in filtered content (only content we download)
+                    changed_uuids_count = 0
+                    for file_object in downloaded_content_objects.values():
+                        if self.replace_uuid_ids(custom_content_object=file_object, uuid_mapping=uuid_mapping):
+                            changed_uuids_count += 1
 
-                if changed_uuids_count > 0:
-                    logger.info(f"Replaced UUID IDs with names in {changed_uuids_count} custom content items.")
+                    if changed_uuids_count > 0:
+                        logger.info(f"Replaced UUID IDs with names in {changed_uuids_count} custom content items.")
 
             existing_pack_data = self.build_existing_pack_structure(existing_pack_path=output_path)
 
@@ -387,7 +391,7 @@ class Downloader:
             logger.debug("Loading custom content bundle to memory...")
             for file in tar_members:
                 file_name = file.name.lstrip("/")
-                file_data = create_stringio_object(tar.extractfile(file).read())
+                file_data = StringIO(safe_read_unicode(tar.extractfile(file).read()))
                 loaded_files[file_name] = file_data
 
         logger.debug("Custom content items loaded to memory successfully.")
@@ -419,7 +423,7 @@ class Downloader:
                 custom_content_object["id"] = uuid_mapping[custom_content_object["id"]]
 
             # Update custom content object
-            custom_content_object["file"] = create_stringio_object(content_item_file_str)
+            custom_content_object["file"] = StringIO(content_item_file_str)
             loaded_file_data = get_file_details(content_item_file_str,
                                                 full_file_path=custom_content_object["file_name"])
             custom_content_object["data"] = loaded_file_data
@@ -572,7 +576,7 @@ class Downloader:
         for content_item in downloaded_items:
             file_name = self.generate_content_file_name(content_item=content_item,
                                                         content_item_type=self.system_item_type)
-            file_data = create_stringio_object(file_data=json.dumps(content_item))
+            file_data = StringIO(json.dumps(content_item))
             content_object = self.create_content_item_object(file_name=file_name,
                                                              file_data=file_data,
                                                              _loaded_data=content_item)

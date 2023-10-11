@@ -1,6 +1,7 @@
+from __future__ import annotations
+
 import contextlib
 import glob
-import io
 import logging
 import os
 import re
@@ -16,7 +17,7 @@ from datetime import datetime
 from enum import Enum
 from functools import lru_cache
 from hashlib import sha1
-from io import StringIO
+from io import StringIO, TextIOWrapper
 from pathlib import Path, PosixPath
 from subprocess import PIPE, Popen
 from time import sleep
@@ -269,17 +270,17 @@ def get_mp_tag_parser():
 def get_yml_paths_in_dir(project_dir: str | Path) -> Tuple[list, str]:
     """
     Gets the project directory and returns the path of the first yml file in that directory
-    :param project_dir: string path to the project_dir
+    :param project_dir: path to the project_dir
     :return: first returned argument is the list of all yml files paths in the directory, second returned argument is a
     string path to the first yml file in project_dir
     """
     project_dir_path = Path(project_dir)
     yml_files = [str(path) for path in project_dir_path.glob("*.yml")]
 
-    if yml_files:
-        return yml_files, yml_files[0]
+    if not yml_files:
+        return [], ""
 
-    return [], ""
+    return yml_files, yml_files[0]
 
 
 def get_files_in_dir(
@@ -693,19 +694,15 @@ def get_child_directories(directory: str | Path) -> list[str]:
     """
     Get a list of all directories within a directory.
     Does not search recursively.
-
     Args:
         directory (str | Path): The directory to search in
-
     Returns:
         list[str]: A list of paths (in string format) of immediate child directories of the 'directory' argument
     """
     directory_path = Path(directory)
 
     if directory_path.is_dir():
-        return [
-            str(path) for path in directory_path.iterdir() if path.is_dir()
-        ]
+        return [str(path) for path in directory_path.iterdir() if path.is_dir()]
 
     return []
 
@@ -769,64 +766,39 @@ def get_last_remote_release_version():
                 f'{exc_msg[exc_msg.find(">") + 3:-3]}.\n'
                 f"This may happen if you are not connected to the internet."
             )
-        logger.info(
-            f"[yellow]Could not get latest demisto-sdk version.\nEncountered error: {exc_msg}[/yellow]"
+        logger.warning(
+            f"Could not find the latest version of 'demisto-sdk'.\nError: {exc_msg}"
         )
         return ""
 
 
-def _read_file(file_path: Path) -> str:
+def safe_read_unicode(bytes_data: bytes) -> str:
     """
-    Returns the body of a text-based file, after reading it as UTF8, or trying to guess its encoding.
+    Safely read unicode data from bytes.
 
     Args:
-        file_path (Path): file to read
+        bytes_data (bytes): bytes to read.
 
     Returns:
-        str: file contents
+        str: A string representation of the parsed bytes.
     """
     try:
-        return file_path.read_text(encoding="utf8")
+        return bytes_data.decode("utf-8")
 
     except UnicodeDecodeError:
         try:
-            logger.debug(f"Could not read file '{file_path}' using UTF-8 encoding. Trying to auto-detect encoding...")
-            return UnicodeDammit(file_path.read_bytes()).unicode_markup  # Guess the original encoding
+            logger.debug(
+                "Could not read data using UTF-8 encoding. Trying to auto-detect encoding..."
+            )
+            return UnicodeDammit(bytes_data).unicode_markup
 
         except UnicodeDecodeError:
-            logger.debug(f"Could not auto-detect encoding for file '{file_path}'.")
-            raise
-
-
-def create_stringio_object(file_data: bytes | str) -> StringIO:
-    """
-    Create a StringIO object from file bytes (while considering different encodings like the '_read_file' function),
-    or a string.
-
-    Args:
-        file_data (bytes | str): file bytes, or a string representing the content of the file
-
-    Returns:
-        StringIO: A StringIO object representing the file data
-    """
-    if isinstance(file_data, str):
-        return StringIO(file_data)
-
-    try:
-        return StringIO(file_data.decode("utf-8"))
-
-    except UnicodeDecodeError:
-        try:
-            logger.debug("Could not read file using UTF-8 encoding. Trying to auto-detect encoding...")
-            return StringIO(UnicodeDammit(markup=file_data).unicode_markup)  # Guess the original encoding
-
-        except UnicodeDecodeError:
-            logger.debug("Could not auto-detect encoding.", exc_info=True)
+            logger.error("Could not auto-detect encoding.")
             raise
 
 
 def safe_write_unicode(
-    write_method: Callable[[io.TextIOWrapper], Any],
+    write_method: Callable[[TextIOWrapper], Any],
     path: Path,
 ):
     # Write unicode content into a file.
@@ -857,7 +829,7 @@ def safe_write_unicode(
 
 @lru_cache
 def get_file(
-    file_path: Union[str, Path],
+    file_path: str | Path,
     clear_cache: bool = False,
     return_content: bool = False,
     keep_order: bool = False,
@@ -881,7 +853,7 @@ def get_file(
         raise FileNotFoundError(file_path)
 
     try:
-        file_content = _read_file(file_path)
+        file_content = safe_read_unicode(file_path.read_bytes())
         if return_content:
             return file_content
     except IOError as e:
@@ -1791,14 +1763,14 @@ def find_type(
         ignore_sub_categories (bool): ignore the sub categories, True to ignore, False otherwise.
         ignore_invalid_schema_file (bool): whether to ignore raising error on invalid schema files,
             True to ignore, False otherwise.
-        clear_cache (bool): whether to clear the cache
+        clear_cache (bool): whether to clear the cache.
 
     Returns:
         FileType: Enum representation of the content file type, None otherwise.
     """
-    if type_by_path := find_type_by_path(path):
+    type_by_path = find_type_by_path(path)
+    if type_by_path:
         return type_by_path
-
     try:
         if not _dict and not file_type:
             _dict, file_type = get_dict_from_file(
@@ -1908,9 +1880,6 @@ def find_type(
             and "readyNewEventFilters" in _dict
         ):
             return FileType.PRE_PROCESS_RULES
-
-        if "allRead" in _dict and "truncated" in _dict:
-            return FileType.LISTS
 
         if "definitionIds" in _dict and "views" in _dict:
             return FileType.GENERIC_MODULE
@@ -2514,7 +2483,7 @@ def get_parent_directory_name(path: str, abs_path: bool = False) -> str:
 
 def get_code_lang(file_data: dict, file_entity: str) -> str:
     """
-    Returns content item's code language (python / javascript)
+    Returns content item's code language (python / javascript).
     :param file_data: The file data
     :param file_entity: The file entity
     :return: The code language
@@ -3761,7 +3730,7 @@ def get_id(file_content: Dict) -> Union[str, None]:
         file_content: the content of the file.
 
     Returns:
-        str | None: ID of the content item. None if not found.
+        str | None: the ID of the content item in case found, None otherwise.
     """
     if "commonfields" in file_content:
         return file_content["commonfields"].get("id")

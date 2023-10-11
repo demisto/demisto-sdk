@@ -6,12 +6,15 @@ from typing import Optional
 
 import requests
 
+from demisto_sdk.commands.common.constants import (
+    DEMISTO_SDK_MARKETPLACE_XSOAR_DIST_DEV,
+)
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.logger import logger
 
 ONE_DAY = timedelta(days=1)
-LATEST_URL = "https://storage.googleapis.com/marketplace-dist-dev/code-coverage-reports/coverage-min.json"
-HISTORY_URL = "https://storage.googleapis.com/marketplace-dist-dev/code-coverage-reports/history/coverage-min/{date}.json"
+LATEST_URL = f"https://storage.googleapis.com/{DEMISTO_SDK_MARKETPLACE_XSOAR_DIST_DEV}/code-coverage-reports/coverage-min.json"
+HISTORY_URL = "https://storage.googleapis.com/{DEMISTO_SDK_MARKETPLACE_XSOAR_DIST_DEV}/code-coverage-reports/history/coverage-min/{date}.json"
 
 
 def get_total_coverage(
@@ -42,7 +45,10 @@ def get_total_coverage(
         elif date is None:
             url = LATEST_URL
         else:
-            url = HISTORY_URL.format(date=date.strftime("%Y-%m-%d"))
+            url = HISTORY_URL.format(
+                DEMISTO_SDK_MARKETPLACE_XSOAR_DIST_DEV=DEMISTO_SDK_MARKETPLACE_XSOAR_DIST_DEV,
+                date=date.strftime("%Y-%m-%d"),
+            )
 
         res = requests.get(url)
         res.raise_for_status()

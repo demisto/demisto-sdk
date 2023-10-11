@@ -574,8 +574,8 @@ class TestBuildCustomContent:
         ]
         downloader = Downloader()
         for param in parameters:
-            with open(param["path"], "r") as file:
-                loaded_file = create_stringio_object(file.read())
+            with open(param["path"], "rb") as file:
+                loaded_file = StringIO(safe_read_unicode(file.read()))
 
             result = downloader.create_content_item_object(
                 file_name=param["path"].name, file_data=loaded_file
@@ -1053,12 +1053,12 @@ def test_safe_write_unicode_to_non_unicode(
     assert set(result.values()) == {SENTENCE_WITH_UMLAUTS}
 
 
-def test_uuids_find_and_replacement_in_content_items(mocker):
+def test_uuids_replacement_in_content_items(mocker):
     """
     Given:
         A mock tar file download_tar.tar
     When:
-        calling create_uuid_to_name_mapping on the mock tar
+        Running the download command with "auto_replace_uuids" set to true
     Then:
         Assure UUIDs are properly mapped and replaced.
     """
@@ -1082,6 +1082,7 @@ def test_uuids_find_and_replacement_in_content_items(mocker):
 
     downloader = Downloader(
         all_custom_content=True,
+        auto_replace_uuids=True,
     )
 
     all_custom_content_data = downloader.download_custom_content()
@@ -1219,3 +1220,47 @@ def test_list_files_flag(mocker):
 
     assert content_table_mock.call_count == 1
     assert expected_table in content_table_mock.spy_return
+
+
+@pytest.mark.parametrize(
+    "auto_replace_uuids",
+    [True, False],
+)
+def test_auto_replace_uuids_flag(mocker, auto_replace_uuids: bool):
+    """
+    Given: auto_replace_uuids value.
+    When: Downloading custom content items
+    Then:
+        - Ensure that when 'auto_replace_uuids' is set to true, the 'replace_uuid_ids' method is called.
+        - Ensure that when 'auto_replace_uuids' is set to false, the 'replace_uuid_ids' method is not called.
+    """
+    mock_bundle_data = (
+        TEST_DATA_FOLDER / "custom_content" / "download_tar.tar.gz"
+    ).read_bytes()
+    mock_bundle_response = HTTPResponse(body=mock_bundle_data, status=200)
+    mocker.patch.object(
+        demisto_client,
+        "generic_request_func",
+        return_value=(mock_bundle_response, None, None),
+    )
+
+    downloader = Downloader(
+        all_custom_content=True,
+        auto_replace_uuids=auto_replace_uuids,
+        output="fake_output_dir",
+    )
+
+    mocker.patch.object(downloader, "verify_output_path", return_value=True)
+    mocker.patch.object(downloader, "build_existing_pack_structure", return_value={})
+    mocker.patch.object(downloader, "write_files_into_output_path", return_value=True)
+    mock_replace_uuids = mocker.patch.object(
+        downloader, "replace_uuid_ids"
+    )
+
+    downloader.download()
+
+    if auto_replace_uuids:
+        assert mock_replace_uuids.called
+
+    else:
+        assert not mock_replace_uuids.called

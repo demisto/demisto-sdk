@@ -8,6 +8,7 @@
 * Internal: Added `pathlib.Path` support to the `tools.get_yml_paths_in_dir` and `tools.get_child_directories` functions.
 * Fixed an issue in the **test-modeling-rule** command, where possible exceptions were not caught.
 * Added the *--delete_existing_dataset/-dd* flag to the **modeling-rules test** command to delete an existing dataset in the tenant.
+* Internal: Added a `loaded_data` parameter to `YmlSplitter` to allow passing preloaded YAML data.
 
 ## 1.20.7
 * Fixed an issue where unified integrations / scripts with a period in their name would not split properly.

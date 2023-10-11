@@ -1,6 +1,6 @@
 # Changelog
 ## Unreleased
-* Fixed an issue where custom reputation content items would be listed with an incorrect name when using the **download** command with the `-lf` flag.
+* Internal: Fixed an issue where the `tools.get_display_name` function would return incorrect values for reputation content items.
 * Updated the **run-unit-tests** command to not fail on JavaScript items, but skip them instead.
 * Updated the `validate` pre-commit hook to run before the `run-unit-tests` hook. This will prevent `validate` from falling on errors about temporary files that are sometimes created when running unit-tests.
 * Added the *auto-replace-uuids* flag to the **download** command. set this flag to False to avoid UUID replacements when downloading using download command.

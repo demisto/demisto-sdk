@@ -143,7 +143,7 @@ class File(ABC, BaseModel):
             return model.load(file_content)
         except LocalFileReadError as e:
             logger.error(f"Could not read file content as {cls.__name__} file")
-            raise FileContentReadError(file_content, exc=e.original_exc)
+            raise FileContentReadError(exc=e.original_exc)
 
     @classmethod
     @lru_cache

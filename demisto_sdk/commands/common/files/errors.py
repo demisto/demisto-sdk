@@ -17,8 +17,8 @@ class LocalFileReadError(FileReadError):
 
 
 class FileContentReadError(FileReadError):
-    def __init__(self, file_content: bytes, exc: Exception):
-        super().__init__(f"file {file_content} could not be read, full error:\n{exc}")
+    def __init__(self, exc: Exception):
+        super().__init__(f"file could not be read, full error:\n{exc}")
 
 
 class GitFileReadError(FileReadError):

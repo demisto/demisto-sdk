@@ -1357,15 +1357,15 @@ BANG_COMMAND_ARGS_MAPPING_DICT: Dict[str, dict] = {
 }
 
 MANDATORY_REPUTATION_CONTEXT_NAMES = {
-    "File",
-    "Email",
-    "Domain",
-    "URL",
-    "IP",
-    "CVE",
-    "Endpoint",
-    "InfoFile",
     "Certificate",
+    "CVE",
+    "Domain",
+    "Email",
+    "Endpoint",
+    "File",
+    "InfoFile",
+    "IP",
+    "URL",
 }
 
 ENDPOINT_FLEXIBLE_REQUIRED_ARGS = ["ip", "id", "hostname"]

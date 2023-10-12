@@ -41,7 +41,7 @@ class YmlSplitter:
     Attributes:
         input (str): input yml file path
         output (str): output path
-        loaded_data (dict | None): preloaded YAML data. if not provided, data will be loaded from input
+        input_file_data (dict | None): preloaded YAML data. if not provided, data will be loaded from input
         no_demisto_mock (bool): whether to add an import for demistomock
         no_common_server (bool): whether to add an import for common server
         no_auto_create_dir (bool): whether to create a dir
@@ -57,7 +57,7 @@ class YmlSplitter:
         input: str,
         output: str = "",
         file_type: str = "",
-        loaded_data: dict | None = None,
+        input_file_data: dict | None = None,
         no_demisto_mock: bool = False,
         no_common_server: bool = False,
         no_auto_create_dir: bool = False,
@@ -76,7 +76,7 @@ class YmlSplitter:
         self.lines_inserted_at_code_start = 0
         self.config = configuration or Configuration()
         self.auto_create_dir = not no_auto_create_dir
-        self.yml_data = loaded_data if loaded_data is not None else get_yaml(self.input)
+        self.yml_data = input_file_data if input_file_data is not None else get_yaml(self.input)
         self.api_module_path: Optional[str] = None
 
     def get_output_path(self):

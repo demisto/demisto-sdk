@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from functools import lru_cache
 from io import BytesIO, StringIO
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Type, Union
+from typing import Any, Optional, Type, Union
 
 from pydantic import Field, validator
 
@@ -25,12 +25,12 @@ class HandlerFile(TextFile, ABC):
         cls,
         file_content: Union[bytes, BytesIO],
         handler: Optional[XSOAR_Handler] = None,
-    ):
+    ) -> Any:
         return super().read_from_file_content(
             file_content, handler=cls.validate_handler(handler)
         )
 
-    def load(self, file_content: bytes) -> Union[List, Dict]:
+    def load(self, file_content: bytes) -> Any:
         return self.handler.load(StringIO(super().load(file_content)))
 
     @classmethod
@@ -41,7 +41,7 @@ class HandlerFile(TextFile, ABC):
         encoding: Optional[str] = None,
         handler: Optional[XSOAR_Handler] = None,
     ):
-        return super().write_file(
+        super().write_file(
             data,
             output_path=output_path,
             encoding=encoding,

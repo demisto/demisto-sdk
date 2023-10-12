@@ -86,7 +86,7 @@ class File(ABC, BaseModel):
         shutil.copyfile(self.input_path, destination_path)
 
     @abstractmethod
-    def load(self, file_content: bytes):
+    def load(self, file_content: bytes) -> Any:
         raise NotImplementedError(
             "load must be implemented for each File concrete object"
         )
@@ -123,7 +123,7 @@ class File(ABC, BaseModel):
         cls,
         file_content: Union[bytes, BytesIO],
         handler: Optional[XSOAR_Handler] = None,
-    ):
+    ) -> Any:
         if cls is File:
             raise ValueError(
                 "when reading from file content please specify concrete class"
@@ -185,7 +185,7 @@ class File(ABC, BaseModel):
 
     def read_git_file(
         self, tag: str = DEMISTO_GIT_PRIMARY_BRANCH, from_remote: bool = True
-    ):
+    ) -> Any:
         try:
             return self.load(
                 self.git_util.read_file_content(
@@ -212,7 +212,7 @@ class File(ABC, BaseModel):
         tag: str = DEMISTO_GIT_PRIMARY_BRANCH,
         handler: Optional[XSOAR_Handler] = None,
         clear_cache: bool = False,
-    ):
+    ) -> Any:
         if not git_content_config:
             git_content_config = GitContentConfig()
 
@@ -254,7 +254,7 @@ class File(ABC, BaseModel):
         tag: str = DEMISTO_GIT_PRIMARY_BRANCH,
         handler: Optional[XSOAR_Handler] = None,
         clear_cache: bool = False,
-    ):
+    ) -> Any:
         if not git_content_config:
             git_content_config = GitContentConfig()
 
@@ -282,7 +282,7 @@ class File(ABC, BaseModel):
         timeout: Optional[int] = None,
         handler: Optional[XSOAR_Handler] = None,
         clear_cache: bool = False,
-    ):
+    ) -> Any:
         if cls is File:
             raise ValueError(
                 "when reading from file content please specify concrete class"

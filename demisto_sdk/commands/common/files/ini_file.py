@@ -6,12 +6,12 @@ from demisto_sdk.commands.common.files.text_file import TextFile
 
 
 class IniFile(TextFile):
-    def load(self, file_content: bytes) -> Optional[ConfigParser]:
+    def load(self, file_content: bytes) -> ConfigParser:
         config_parser = ConfigParser(allow_no_value=True)
         config_parser.read_string(super().load(file_content))
         return config_parser
 
-    def _write(self, data: Any, path: Path, encoding: Optional[str] = None) -> None:
+    def _write(self, data: Any, path: Path, encoding: Optional[str] = None):
         """
 
         Args:

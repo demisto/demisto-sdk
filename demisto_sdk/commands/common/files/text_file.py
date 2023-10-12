@@ -25,6 +25,8 @@ class TextFile(File):
                     f"Could not auto detect encoding for file {self.input_path}"
                 )
                 raise LocalFileReadError(self.input_path, exc=e)
+        except Exception as e:
+            raise LocalFileReadError(self.input_path, exc=e)
 
     def search_text(self, regex_pattern: str) -> List[str]:
         return re.findall(regex_pattern, string=self.read_local_file())

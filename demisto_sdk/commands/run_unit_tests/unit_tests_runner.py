@@ -10,6 +10,7 @@ import coverage
 from junitparser import JUnitXml
 
 import demisto_sdk.commands.common.docker_helper as docker_helper
+from demisto_sdk.commands.common.constants import TYPE_JS
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH, PYTHONPATH
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
@@ -109,6 +110,12 @@ def unit_test_runner(file_paths: List[Path], verbose: bool = False) -> int:
         integration_script = BaseContent.from_path(Path(filename))
         if not isinstance(integration_script, IntegrationScript):
             logger.warning(f"Skipping {filename} as it is not a content item.")
+            continue
+
+        if integration_script.type == TYPE_JS:
+            logger.info(
+                f"Skipping tests for '{integration_script.name}' since it is a JavaScript integration/script"
+            )
             continue
 
         relative_integration_script_path = integration_script.path.relative_to(

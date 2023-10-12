@@ -56,9 +56,6 @@ mapping:
     type: str
   autoconfiginstance:
     type: bool
-  supportlevelheader:
-    type: str
-    enum: ['xsoar', 'partner', 'community']
   configuration:
     type: seq
     required: true

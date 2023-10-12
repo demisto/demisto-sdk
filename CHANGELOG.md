@@ -3,7 +3,6 @@
 * Added the *auto-replace-uuids* flag to the **download** command. set this flag to False to avoid UUID replacements when downloading using download command.
 * **format** command will run without the content graph if graph creation fails.
 * Updated the **prepare-content** to add contributor details to the `detaileddescription` field based on **supportlevelheader** key.
-* Added a new key **supportlevelheader** to the integration schema.
 * Added a new validation (`IN159`) to ensure that each event collector under partner supported packs have the *xsoar* value for the **supportlevelheader** key in its yml.
 * Fixed an issue in the **test-modeling-rule** command, where possible exceptions were not caught.
 

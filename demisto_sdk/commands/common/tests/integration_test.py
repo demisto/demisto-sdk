@@ -3002,9 +3002,19 @@ class TestisContextChanged:
     ]
 
     @pytest.mark.parametrize("outputs, result", IS_OUTPUT_FOR_REPUTATION_INPUTS)
-    def test_is_valid_command_custom_outputs(
+    def test_is_valid_spelling_command_custom_outputs(
         self, outputs: List[Dict[str, Any]], result: bool
     ):
+        """
+        Cover IN158 validation which validates the spelling of command output paths for reputation commands.
+        Given
+        - The outputs and command_name of a command context.
+        When
+        - Calling the is_outputs_for_reputations_commands_valid validation.
+        Then
+        - Upon valid spelling defined in constants.py: MANDATORY_REPUTATION_CONTEXT_NAMES
+        will return True otherwise False
+        """
         content = {"script": {"commands": [outputs]}}
         structure = mock_structure("", content)
         validator = IntegrationValidator(structure)

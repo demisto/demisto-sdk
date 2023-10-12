@@ -603,14 +603,15 @@ class IntegrationValidator(ContentEntityValidator):
     def validate_reputation_name_spelling(
         self, command_name: str, context_output_path: str
     ) -> bool:
-        """Validates that the reputation name follows naming conventions.
+        """Validates that the reputation name follows naming conventions,
+        the correct spelling is defined in constants:MANDATORY_REPUTATION_CONTEXT_NAMES:
+        'Certificate', 'CVE', 'Domain', 'Email', 'Endpoint', 'File', 'InfoFile', 'IP', 'URL'
+        the validation is case sensitive.
         Args:
             command_name (str): The name of the command being validated.
             context_output_path (str): The path to the context output file.
         Returns:
-            bool: True if the reputation name passes validation, False otherwise.
-        This checks that the reputation name is according to MANDATORY_REPUTATION_CONTEXT_NAMES:
-        is: 'Certificate', 'CVE', 'Domain', 'Email', 'Endpoint', 'File', 'InfoFile', 'IP', 'URL'"""
+            bool: True if the reputation name is spelled correctly, False otherwise."""
         result = True
         for reputation_name in MANDATORY_REPUTATION_CONTEXT_NAMES:
             if context_output_path.lower().startswith(f"{reputation_name.lower()}."):

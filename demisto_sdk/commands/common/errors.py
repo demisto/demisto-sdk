@@ -4405,7 +4405,7 @@ class Errors:
     def command_reputation_output_capitalization_incorrect(
         command_name: str,
         invalid_output: str,
-        used_object: str,
+        reputation_name: str,
     ):
-        return f"The {command_name} command returns the following reputation output:\n{invalid_output} for object: {used_object}.\
+        return f"The {command_name} command returns the following reputation output:\n{invalid_output} for object: {reputation_name}.\
 The capitalization is incorrect. For further information: {XSOAR_CONTEXT_AND_OUTPUTS_URL}"

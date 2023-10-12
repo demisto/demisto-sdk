@@ -19,6 +19,7 @@ from demisto_sdk.commands.common.constants import (
 from demisto_sdk.commands.common.files.errors import (
     FileContentReadError,
     FileReadError,
+    FileWriteError,
     GitFileReadError,
     HttpFileReadError,
     LocalFileReadError,
@@ -316,6 +317,8 @@ class File(ABC, BaseModel):
         encoding: Optional[str] = None,
         handler: Optional[XSOAR_Handler] = None,
     ):
+        output_path = Path(output_path)
+
         if cls is File:
             raise ValueError("when writing file please specify concrete class")
 
@@ -325,12 +328,16 @@ class File(ABC, BaseModel):
 
         # builds up the object without validations, when writing file, no need to init path and git_util
         model = cls.construct(**model_attributes)
-        model.write(data, path=Path(output_path), encoding=encoding)
+        try:
+            model.write(data, path=output_path, encoding=encoding)
+        except Exception as e:
+            logger.exception(f"Could not write {output_path} as {cls.__name__} file")
+            raise FileWriteError(output_path, exc=e)
 
     @abstractmethod
     def _write(self, data: Any, path: Path, encoding: Optional[str] = None) -> None:
         raise NotImplementedError(
-            "write must be implemented for each File concrete object"
+            "_write must be implemented for each File concrete object"
         )
 
     def write(self, data: Any, path: Path, encoding: Optional[str] = None) -> None:

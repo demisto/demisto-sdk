@@ -5,6 +5,11 @@ class FileReadError(IOError):
     pass
 
 
+class FileWriteError(IOError):
+    def __init__(self, path: Path, exc: Exception):
+        super().__init__(f"could not write file {path}, full error:\n{exc}")
+
+
 class LocalFileReadError(FileReadError):
     def __init__(self, path: Path, exc: Exception):
         self.original_exc = exc
